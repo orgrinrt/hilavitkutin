@@ -1,0 +1,15 @@
+[package]
+name = "hilavitkutin-api"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+arvo.workspace = true
+arvo-bitmask.workspace = true
+
+[build-dependencies]
+mockspace.workspace = true
+
+[features]
+default = []

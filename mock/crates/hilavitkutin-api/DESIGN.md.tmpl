@@ -1,0 +1,188 @@
+# hilavitkutin-api — Design
+
+Consumer-facing types, traits, and platform contracts. Consumers
+(polka-dots, saalis, loimu) depend on this crate to define WorkUnits.
+The engine crate (hilavitkutin) also depends on it. `#![no_std]`,
+no alloc. All index, count, and size types use arvo newtypes.
+
+## Store types (domain 06)
+
+Three store types, one scheduling mechanism:
+
+```rust
+pub struct Resource<T>(PhantomData<T>);  // singleton, one value
+pub struct Column<T>(PhantomData<T>);    // collection, morsel-chunked
+pub struct Virtual<T>(PhantomData<T>);   // zero-data, DAG edge only
+```
+
+The scheduler sees StoreId pairs for edge construction. Does not care
+about cardinality. `Write<Resource<X>> → Read<Resource<X>>` builds
+the same edge as `Write<Column<Y>> → Read<Column<Y>>`.
+
+`StoreId` — dense index assigned at plan time. Wraps an arvo
+fixed-point newtype (not raw u16). `AccessMask` — arvo-bitmask
+`Mask64` (≤64 stores) or `Mask256` (≤256 stores). All scheduler ops
+= single-instruction bitwise.
+
+`AccessSet` — trait on tuples. `(Column<PosX>, Column<PosY>,
+Resource<Gravity>)` implements AccessSet. Compile-time store
+descriptors. Plan phase converts to runtime AccessMask via
+monomorphised generic functions (the monomorphised function IS the
+type identity — no TypeId, no std::any).
+
+ZST erasure: column marker types constrain the DAG, enforce type
+safety, and determine morsel sizes at compile time. Erased to plain
+indices by execution time.
+
+## ColumnValue trait (domain 05, R4)
+
+```rust
+pub trait ColumnValue: Copy + 'static {
+    const BIT_WIDTH: usize;  // no default on trait itself
+}
+
+// Blanket impl via min_specialization
+impl<T: Copy + 'static> ColumnValue for T {
+    default const BIT_WIDTH: usize = core::mem::size_of::<Self>() * 8;
+}
+```
+
+Any `Copy + 'static` type ≤16 bytes is column-storable. Zero friction
+for consumers. BIT_WIDTH informs the storage engine for bitpacking.
+Sub-byte arvo types specialise (e.g. `UFixed<1,0>` → BIT_WIDTH=1).
+No pack/unpack — type IS the storage (R3, R4).
+
+## WorkUnit trait (domain 09)
+
+```rust
+pub trait WorkUnit<Schedule = Always>: Send + Sync + 'static {
+    type Read: AccessSet;
+    type Write: AccessSet;
+    type Hint: SchedulingHint = (Immediate, Atomic, Normal);
+    const COMMUTATIVE: bool;
+    fn execute(&self, ctx: Context<Self::Read, Self::Write>);
+}
+```
+
+No NAME const. WU identity is the type itself. Naming is a consumer
+concern — they can implement their own trait or use wrappers.
+
+Schedule conditions:
+- `Always` — unconditional (default)
+- `On<V>` — when virtual V fires
+
+Write-write ambiguity resolved by scheduling hint priority across
+three dimensions. Tie-break: most deps first, then deterministic
+fallback.
+
+WU authoring guideline: ≤8 unique columns per WU (register pressure
+guideline, not engine constraint).
+
+## Context (domains 09, 19)
+
+```rust
+pub struct Context<'a, R: AccessSet, W: AccessSet> { ... }
+```
+
+`&self` receiver is load-bearing: prevents LLVM noalias metadata that
+would reorder writes across fused WUs. All access through raw
+pointers:
+
+- `unsafe fn read<T>(&self, i: usize) -> T where R: Contains<Column<T>>`
+- `unsafe fn write<T>(&self, i: usize, val: T) where W: Contains<Column<T>>`
+- `fn resource<T>(&self) -> &T where R: Contains<Resource<T>>`
+- `fn fire<V>(&self) where W: Contains<Virtual<V>>`
+
+Op registration for the fusion engine:
+- `ctx.each(|...| { ... })` — per-element, fusible
+- `ctx.batch(|...| { ... })` — full morsel slice, non-fusible
+- `ctx.reduce(init, |acc, ...| { ... })` — accumulation
+
+`Contains<S>` — compile-time membership trait on tuples. Accessing a
+store not declared in Read or Write is a compile error.
+
+## Scheduling hints (domain 09)
+
+Three axes as `repr(u8)` ZST carriers:
+
+**Urgency:** `Immediate` (255), `Steady` (170), `Relaxed` (85),
+`Deferred` (0).
+
+**Divisibility:** `Atomic` (255), `Adaptive` (128),
+`Interruptible` (0).
+
+**Significance:** `Critical` (255), `Important` (192), `Normal` (128),
+`Opportunistic` (64), `Optional` (0).
+
+`SchedulingHint` trait on tuples: `(U: UrgencyValue, D:
+DivisibilityValue, S: SignificanceValue)`. Lower discriminant = higher
+priority.
+
+## Platform traits (domain 02)
+
+```rust
+pub trait MemoryProvider: Send + Sync {
+    unsafe fn allocate(&self, len: usize, align: usize) -> *mut u8;
+    unsafe fn deallocate(&self, ptr: *mut u8, len: usize);
+    unsafe fn protect(&self, ptr: *mut u8, len: usize,
+                      read: bool, write: bool);
+}
+
+pub trait ThreadPool: Send + Sync {
+    fn spawn(&self, f: impl FnOnce() + Send + 'static);
+    fn worker_count(&self) -> usize;
+}
+
+pub trait Clock: Send + Sync {
+    fn now_ns(&self) -> u64;
+}
+```
+
+All consumed via monomorphisation. The Scheduler is generic over the
+platform types. Storing `dyn MemoryProvider` would violate the dyn
+ban. Each tier (no_os, os, std) ships defaults. Consumer overrides
+via scheduler builder.
+
+Note: `len`, `align`, `worker_count`, `now_ns` parameters and return
+types should use arvo newtypes in the final API (e.g. `ByteCount`,
+`Alignment`, `CoreCount`, `Nanoseconds`). Exact arvo type mappings
+determined during src CL.
+
+## Resource model (domain 07, R5)
+
+```rust
+pub struct Field<T: ColumnValue>(PhantomData<T>);  // scalar ≤16 bytes
+pub struct Seq<T, const N: usize>(PhantomData<T>);  // const-sized array
+pub struct Map<K, V, const N: usize>(PhantomData<(K, V)>);  // const-sized map
+```
+
+No dynamic collections. Allocation size is const generic. Field<T>
+is stack-local cached (LLVM promotes to registers). Seq/Map are
+arena-allocated. Write resource collections count toward L1 morsel
+budget; read-only ride L2 prefetcher.
+
+Resource data is behind pointer indirection to external slab storage.
+NOT inline in Context. Writing inline data through `&self` is UB.
+
+## Virtual flag system (domain 10)
+
+Bit-packed fire flags using arvo-bitmask types. One bit per registered
+Virtual type. Packed into arvo words, grouped into Mask64/Mask256.
+Hierarchical check: word == 0 → skip. Affinity-ordered bit assignment
+at plan time. Epoch-based reset (increment, not memset).
+
+Per-(virtual, consumer) bit tracking. Clear-on-dispatch. Re-fire
+during execution → consumer runs again next pass. No lost fires.
+
+## What this crate does NOT contain
+
+- Engine internals (scheduling, dispatch codegen, phase analysis)
+- Platform implementations (mmap, pthread — those are in hilavitkutin)
+- Build-time optimisations (LLVM passes — those are in hilavitkutin-build)
+- Naming/identity for WUs (consumer concern)
+
+## Sources
+
+- Domains 02, 04-10 from consolidation topic
+- R1 (Column<T> only), R3 (type-native stride), R4 (ColumnValue),
+  R5 (resource model), R7 (abort), R8 (record), R9 (fiber/vocab)
