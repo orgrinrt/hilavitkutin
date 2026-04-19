@@ -1,4 +1,3 @@
-//! hilavitkutin-persistence — hot-cold storage bridge.
+//! hilavitkutin-persistence — nuked.
 //!
-//! no_std, no alloc. rkyv-based cold store for hilavitkutin
-//! column data. SIEVE eviction. MemoryProvider-backed.
+//! Nuked by `cargo mock --nuke`. Rewrite from design docs (mechanical, no reinterpretation).
