@@ -110,6 +110,65 @@ macro_rules! tuple {
     };
 }
 
+/// Generates an accessor trait for an API trait parameterised over
+/// a single type parameter.
+///
+/// Usage:
+/// ```ignore
+/// provider_generic!(<R: AccessSet> ColumnReaderApi as HasColumnReader => reader);
+/// ```
+///
+/// Assumes the API trait and accessor trait both take one type
+/// parameter matching `$R`. Generic methods on the API trait may
+/// carry further bounds on `$R` (e.g. `where R: Contains<...>`) —
+/// those flow through unchanged.
+///
+/// Consumers call the accessor method on the provider tuple
+/// (bringing the accessor trait into scope). Unlike `provider!`,
+/// this macro does NOT emit a `Context<P>` inherent delegation:
+/// Rust's orphan rule forbids inherent impls on foreign types from
+/// downstream crates. If you need `ctx.method()` sugar, wrap the
+/// provider tuple in your own `MyCtx` newtype and implement
+/// accessor methods on it directly.
+#[macro_export]
+macro_rules! provider_generic {
+    (
+        < $R:ident : $RBound:path >
+        $ApiTrait:ident as $AccTrait:ident => $method:ident
+    ) => {
+        pub trait $AccTrait<$R: $RBound> {
+            type Provider: $ApiTrait<$R>;
+            fn $method(&self) -> &Self::Provider;
+        }
+    };
+}
+
+/// Two-parameter variant of `provider_generic!`.
+///
+/// Usage:
+/// ```ignore
+/// provider_generic2!(<R: AccessSet, W: AccessSet>
+///                    EachApi as HasEach => each);
+/// ```
+///
+/// Separate macro because Rust declarative macros can't cleanly
+/// match a variable-length generic parameter list. Extend with
+/// `provider_generic3!` etc. if a 3+ parameter need surfaces.
+/// Same orphan-rule caveat as `provider_generic!` — no
+/// `Context<P>` delegation is emitted.
+#[macro_export]
+macro_rules! provider_generic2 {
+    (
+        < $R:ident : $RBound:path, $W:ident : $WBound:path >
+        $ApiTrait:ident as $AccTrait:ident => $method:ident
+    ) => {
+        pub trait $AccTrait<$R: $RBound, $W: $WBound> {
+            type Provider: $ApiTrait<$R, $W>;
+            fn $method(&self) -> &Self::Provider;
+        }
+    };
+}
+
 /// Facade macro: declares providers and tuple layouts in one call.
 ///
 /// Usage:
