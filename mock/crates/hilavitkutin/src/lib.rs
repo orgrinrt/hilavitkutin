@@ -39,6 +39,8 @@ compile_error!(
 
 pub mod platform;
 pub mod resource;
+pub mod scheduler;
+pub mod strategy;
 
 #[cfg(feature = "platform-os")]
 pub use platform::{OsClock, OsMemoryProvider, OsThreadPool};
