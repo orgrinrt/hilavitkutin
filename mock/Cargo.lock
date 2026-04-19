@@ -132,6 +132,7 @@ version = "0.1.0"
 dependencies = [
  "arvo",
  "arvo-bitmask",
+ "hilavitkutin-ctx",
  "mockspace",
 ]
 
