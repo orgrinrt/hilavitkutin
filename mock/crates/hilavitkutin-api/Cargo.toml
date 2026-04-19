@@ -7,6 +7,7 @@ license.workspace = true
 [dependencies]
 arvo.workspace = true
 arvo-bitmask.workspace = true
+hilavitkutin-ctx.workspace = true
 
 [build-dependencies]
 mockspace.workspace = true
