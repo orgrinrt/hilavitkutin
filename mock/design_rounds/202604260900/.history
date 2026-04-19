@@ -1,0 +1,20 @@
+ef5b3ad chore: lock src CL 202604261000 for ctx parameterised providers
+0bffa3d chore: standardise nuked-crate markers on persistence + str
+87259f9 feat: add provider_generic! and provider_generic2! macros
+4f637ae chore: disable loimu-bleed lints that don't apply to hilavitkutin
+77e074c docs: add src CL for ctx parameterised providers round
+313b301 chore: lock doc CL 202604260900 for ctx parameterised providers
+60404f3 docs: ctx DESIGN + BACKLOG for parameterised providers round
+bced4cb docs: start hilavitkutin-ctx parameterised providers round
+cc4445f chore: deprecate #34 doc CL — scope changing to ctx-first, api-second
+d89b885 chore: unlock #34 doc CL — rescope via ctx extension first
+1bd9f25 docs: add src CL for hilavitkutin-api contracts round
+955706d chore: lock doc CL 202604260700 for hilavitkutin-api contracts
+6150a02 docs: add hilavitkutin-api BACKLOG for deferred items
+7562c21 docs: start hilavitkutin-api contracts round (Phase 4c)
+32db53d chore: unblock arvo dep and bootstrap toolchain
+cd9e2ba refactor: compress PREAMBLE and POSTAMBLE to <=25 words each
+c3311da chore: gitignore mockspace-generated agent artifact paths
+d4ee4cb refactor: rewrite mock/agent for hilavitkutin domain; add lints, hooks, config
+7a510d8 fix: add rkyv workspace dep; correct workflow text; sync nuke wording
+29c17ec initial: mockspace seed — hilavitkutin pipeline execution engine
