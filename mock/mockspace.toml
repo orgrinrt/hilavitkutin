@@ -121,3 +121,88 @@ rules = [
     { scope = "hilavitkutin-persistence", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_str::*", reason = "hilavitkutin-persistence is a standalone extension; keep it independently usable" },
     { scope = "hilavitkutin-str", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*", reason = "hilavitkutin-str is a standalone extension; keep it independently usable" },
 ]
+
+# --- Built-in mockspace lints that don't apply to hilavitkutin -------------
+# Disables a family of lints carried over from loimu (the original home of
+# mockspace) that encode loimu's plugin / registrable / visibility-macro
+# conventions. hilavitkutin is no_std + no_alloc + no_dyn + no runtime
+# registration; the native lints cover those invariants. The loimu-ancestry
+# lints are irrelevant noise in this project and match the disables used in
+# saalis's mockspace.toml (which originated hilavitkutin-ctx / -persistence
+# / -str).
+
+[lints.no-bare-pub]
+commit = "off"
+build = "off"
+push = "off"
+
+[lints.registrable-completeness]
+commit = "off"
+build = "off"
+push = "off"
+
+[lints.no-bare-macro-types]
+commit = "off"
+build = "off"
+push = "off"
+
+[lints.no-bare-result]
+commit = "off"
+build = "off"
+push = "off"
+
+[lints.no-bare-string]
+commit = "off"
+build = "off"
+push = "off"
+
+[lints.no-box]
+commit = "off"
+build = "off"
+push = "off"
+
+[lints.no-manual-id]
+commit = "off"
+build = "off"
+push = "off"
+
+[lints.no-primitive-key]
+commit = "off"
+build = "off"
+push = "off"
+
+[lints.no-raw-error-outside-primitives]
+commit = "off"
+build = "off"
+push = "off"
+
+[lints.no-self-define]
+commit = "off"
+build = "off"
+push = "off"
+
+[lints.no-pool-access]
+commit = "off"
+build = "off"
+push = "off"
+
+[lints.no-adhoc-error-enum]
+commit = "off"
+build = "off"
+push = "off"
+
+[lints.no-adhoc-framework]
+commit = "off"
+build = "off"
+push = "off"
+
+[lints.no-entry-suffix]
+commit = "off"
+build = "off"
+push = "off"
+
+[lints.no-float]
+commit = "off"
+build = "off"
+push = "off"
+
