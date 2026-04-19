@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# @matchers: Bash, Write, Edit
+# @timeout: 5
+# Agent hook: block runtime plugin-registration patterns in
+# hilavitkutin* sources.
+#
+# Mirrors `mock/lints/no_runtime_registration.rs`. All composition
+# is static: consumers register WorkUnits with the scheduler builder
+# at construction time. Runtime global registries defeat dead-code
+# elimination and break the fused-pipeline monomorphisation.
+
+set -uo pipefail
+
+__INPUT=$(cat)
+
+{{HOOK_HELPERS}}
+
+TARGET=$(_extract "file_path")
+CONTENT=$(_extract "new_string")
+if [[ -z "$CONTENT" ]]; then
+    CONTENT=$(_extract "content")
+fi
+
+if ! echo "$TARGET" | grep -qE 'hilavitkutin[^/]*/src/.*\.rs$'; then
+    allow
+fi
+
+if echo "$CONTENT" | grep -qE 'inventory::(submit|collect)!|use inventory'; then
+    deny "BLOCKED: \`inventory\` crate — hilavitkutin uses static composition via the scheduler builder, not a global runtime registry. Register WorkUnits in the builder tuple at call site."
+fi
+
+if echo "$CONTENT" | grep -qE '#\[ctor(::ctor)?\]|use ctor'; then
+    deny "BLOCKED: \`#[ctor]\` pre-main constructors — composition is static. Initialise in Builder::new."
+fi
+
+if echo "$CONTENT" | grep -qE '#\[distributed_slice\]|distributed_slice!|use linkme'; then
+    deny "BLOCKED: \`linkme\` / \`#[distributed_slice]\` — static-link registration breaks dead-code elimination. Register WorkUnits in the scheduler builder."
+fi
+
+allow

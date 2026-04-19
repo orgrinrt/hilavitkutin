@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# @matchers: Bash, Write, Edit
+# @timeout: 5
+# Agent hook: block alloc types in hilavitkutin* source files.
+#
+# Mirrors `mock/lints/no_alloc_enforcer.rs`. The engine never
+# allocates at runtime. Plan-time structures use const-generic arvo
+# primitives; runtime buffers come from the consumer-provided
+# MemoryProvider trait.
+
+set -uo pipefail
+
+__INPUT=$(cat)
+
+{{HOOK_HELPERS}}
+
+TARGET=$(_extract "file_path")
+CONTENT=$(_extract "new_string")
+if [[ -z "$CONTENT" ]]; then
+    CONTENT=$(_extract "content")
+fi
+
+if ! echo "$TARGET" | grep -qE 'hilavitkutin[^/]*/src/.*\.rs$'; then
+    allow
+fi
+
+if echo "$CONTENT" | grep -qE '^\s*(pub\s+)?use\s+alloc::'; then
+    deny "BLOCKED: \`use alloc::\` — hilavitkutin is no-alloc. Use arvo const-generic structures or a MemoryProvider-backed buffer."
+fi
+
+if echo "$CONTENT" | grep -qE '^\s*extern\s+crate\s+alloc'; then
+    deny "BLOCKED: \`extern crate alloc;\` — hilavitkutin is no-alloc. Remove it."
+fi
+
+if echo "$CONTENT" | grep -qE '(^|[^a-zA-Z_])Vec<'; then
+    deny "BLOCKED: \`Vec<T>\` in source. Use arvo const-generic bitmasks, sparse structures, or a MemoryProvider-backed buffer. If this is plan-time scratch, use an arvo fixed-capacity container."
+fi
+
+if echo "$CONTENT" | grep -qE '(^|[^a-zA-Z_])String([^a-zA-Z_]|$)'; then
+    deny "BLOCKED: \`String\` in source. Use \`hilavitkutin-str\` interned IDs or a fixed-size byte buffer."
+fi
+
+if echo "$CONTENT" | grep -qE '(^|[^a-zA-Z_])Box<'; then
+    deny "BLOCKED: \`Box<T>\` in source. Monomorphised types only — no heap boxing. If you need indirection, make the type generic."
+fi
+
+if echo "$CONTENT" | grep -qE '(^|[^a-zA-Z_])(Rc|Arc)<'; then
+    deny "BLOCKED: \`Rc\` / \`Arc\` in source. The engine has no ref-counting; lifetimes are carried by the scheduler context."
+fi
+
+allow

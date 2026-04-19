@@ -1,0 +1,19 @@
+# After acting — verify hilavitkutin discipline
+
+Before finishing a task, check each of these:
+
+- `cargo check` inside `mock/` succeeds.
+- `cargo mock` (or `cargo mock --lint-only --strict`) fires no new
+  errors. If a custom lint flags something, fix the code — never
+  reach for `#[allow]` without documented justification.
+- Changelist state machine matches the change scope:
+  - Doc-only work → `DOC` phase (`*_changelist.doc.md` active).
+  - Source work → `SRC` phase (both doc-lock and `src.md` present).
+  - No orphan locks, no hand-renamed suffixes.
+- Vocabulary is canonical. No `chain`, `chain_group`, `partition`,
+  `archetype`, `entity`, `row`, `order` in new source.
+- `hilavitkutin-api` hasn't grown a dep on `hilavitkutin`, and the
+  extensions (`-ctx`, `-persistence`, `-str`) haven't grown deps on
+  each other or on the engine.
+- Commit message matches `type: lowercase imperative` and respects
+  the byline policy in `mock/agent/config.toml`.

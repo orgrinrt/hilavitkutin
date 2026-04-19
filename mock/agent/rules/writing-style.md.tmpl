@@ -21,11 +21,12 @@ No "Sure!", no emojis, no exclamation marks in prose.
 Use `///` for items, `//!` for modules.
 
 ```rust
-/// A resolved path to a dotfile source.
+/// A declared read/write access mask over named columns.
 ///
-/// Paths are resolved relative to the project root and validated
-/// against the catalogue before use.
-pub struct ResolvedPath { ... }
+/// Computed at plan time from a WorkUnit's `type Access`
+/// associated type. Used by the phase planner to detect waists
+/// and by the dispatch emitter to emit per-fiber resource slots.
+pub struct AccessSet { ... }
 ```
 
 First line: brief summary. Empty line, then details if needed.
@@ -38,8 +39,9 @@ Focus on what and why, not implementation.
 - Lowercase for brief notes.
 
 ```rust
-// offset because the catalogue is 0-indexed but display is 1-indexed
-let display_idx = idx + 1;
+// hybrid wake: spin first, park if not done after 128 iterations
+for _ in 0..128 { if ready.load(Acquire) { return; } spin_loop(); }
+park();
 ```
 
 ## Error messages
@@ -48,10 +50,22 @@ State the problem and how to fix:
 
 ```rust
 // Bad
-Error: entry not found
+Error: access mismatch
 
 // Good
-Error: catalogue entry {name:?} not found. Is it listed in polka.toml [catalogue]?
+Error: WorkUnit {wu:?} declares Write(Column<{col}>) but fiber {fiber_id}
+       has no writer slot for that column. Either narrow the AccessSet
+       or re-plan with a wider fiber.
+```
+
+```rust
+// Bad
+Error: fiber poisoned
+
+// Good
+Error: fiber {fiber_id} poisoned by upstream failure in fiber {src_id}.
+       Dependent fibers: {dependents:?}. Independent fibers still ran.
+       Consult PipelineResult for per-fiber status.
 ```
 
 ## Quick rules

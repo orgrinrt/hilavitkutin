@@ -6,38 +6,107 @@ apply_to: ["crates/**/*.rs", "src/**/*.rs"]
 
 ### Mock-first workflow
 
-Design changes start in the mock workspace. Implement in mock first (trait signatures,
-struct definitions), validate with `cargo check`, then port to real implementation.
+Design changes start in the mock workspace. Implement in mock first
+(trait signatures, struct definitions), validate with `cargo check`,
+regenerate docs with `cargo mock`, then port to real implementation
+once the per-crate design stabilises.
 
-### Architecture rules
+### Monomorphisation discipline
 
-- Dependencies flow downward only. Extensions → SDK only. Core → SDK. CLI → Core.
-- SDK exports only traits, `repr(C)` types, and proc macros. No concrete implementations.
-- Plugins register via `#[register]` on trait impl blocks. `inventory` handles discovery.
-- No `toml::Value` outside of `polka-data` — use `DataValue` trait from SDK
-- No `&Ui` below the CLI layer — return structured results
-- All commands go through `polka-project::load()`
-- Platform is an extensible trait, not a closed enum
+- No `dyn Trait`. Every dispatch must be static.
+- No `TypeId`, no `std::any`. Type identity is the monomorphised
+  function.
+- WorkUnits are generic over their `AccessSet`. The `AccessSet` is
+  declared as an associated type (`type Access: AccessSetDecl;`).
+  The engine composes WUs into fused per-core programs that LLVM
+  devirtualises into straight-line code.
+- No `Box<dyn Fn(...)>` or `Box<dyn Any>`. All closures are
+  monomorphised; all state is strongly typed.
+- Generics over const values (fiber width, morsel size) are the
+  norm. Runtime-sized values are computed at plan time and stored
+  in arvo bitmasks / sparse structures.
 
-### Type taxonomy
+### Static composition
 
-- **Trait** — varying behavior, shared contract, extensible
-- **Newtype** — fixed representation, validation at construction
-- **`repr(C)` enum** — closed set, crosses ABI boundary
-- **Primitive** — no semantic meaning beyond raw value
+- WUs are registered with the scheduler builder at compile time.
+- No `inventory::submit!`, no `#[ctor]`, no
+  `#[distributed_slice]`. The `no-runtime-registration` lint and
+  hook block these tokens outright.
+- The `scheduler::Builder` takes a tuple of WU types; composition
+  completes at type-level. Plan parameters (fiber width, morsel
+  size, core pinning) adapt at plan time; composition does not.
+- Consumers extend the engine by adding WUs to their builder tuple,
+  not by injecting descriptors into a global registry.
 
-If it might need plugin extensions → trait, not enum.
+### No runtime spawn
 
-### Plugin registration
+- No `thread::spawn`, `std::thread::spawn`, `tokio::spawn`,
+  `async_std::spawn`. Threads are spawned once at pipeline
+  construction via a consumer-provided `ThreadPool` implementation.
+- Between frames, pool threads park. Wakeup is hybrid: spin 128
+  iterations, then park. Predictive parking at sync points:
+  <100ns spin, 100ns-10µs `spin_loop`, >10µs park.
+- No work-stealing by default. Morsels are assigned deterministically
+  at plan time. Consumers who need stealing implement a custom
+  `Executor` trait.
 
-- `#[register]` on impl blocks generates `repr(C)` descriptors + `inventory::submit!`
-- `Named` + `Registrable` base traits with blanket impl
-- `Descriptor` trait for common metadata (name, SDK version)
-- `Registry` trait for typed discovery with built-in validation
+### Columns, not tables
+
+Use the canonical vocabulary everywhere in source (comments,
+docstrings, type names, field names):
+
+- `pipeline`, `core`, `phase`, `waist`, `trunk`, `fiber`, `branch`,
+  `bridge`, `morsel`, `micro-morsel`, `entry`, `record`.
+
+Never use the dead terms in source code: `chain`, `chain_group`,
+`partition`, `archetype`, `entity`, `row`, `order`. The vocabulary
+lint and reminder hook will catch them. If you find yourself
+reaching for one of these words, re-read `mock/DESIGN.md.tmpl`
+"Vocabulary" section — there's a canonical term for the concept.
+
+- `Column<T>` holds N records for one field. Columns are independent.
+- `Resource<T>` is a single-value shared resource.
+- `Virtual<T>` is a computed view.
+- No tabular joins. Access is column-scoped; the `AccessSet` declares
+  which columns a WU reads and writes.
+
+### Deterministic morsel assignment
+
+- Morsel size is computed from record count, phase width, and the
+  consumer's `Strategy` (Hot / Warm / Cold / Precise).
+- Assignment is static once computed. The dispatch emitter bakes
+  `(fiber_id, morsel_range)` tuples into per-core programs.
+- If consumer wants adaptive / work-stealing behaviour, they wire
+  an `Executor` that implements stealing semantics. The built-in
+  executor does not steal.
+
+### Schedule reuse
+
+- `ExecutionPlan` is computed once per pipeline structure. Frame
+  execution reuses it verbatim.
+- Plan recompute is triggered only by: new WU composition, record
+  count crossing a rebalance threshold, DAG structure change.
+- Recompute cost is microseconds on typical DAGs — amortised over
+  thousands of frames of reuse.
+
+### Error handling
+
+- WU `execute() -> ()`. The default is abort on failure.
+- Consumers who want tolerance wire error columns/virtuals into
+  their pipeline. A fiber failure freezes that fiber and poisons
+  dependents; independent fibers continue.
+- `PipelineResult` reports per-fiber status (Completed / Failed /
+  Poisoned).
 
 ### Code conventions
 
-- `anyhow` for errors, `?` propagation, no `unwrap()` in non-test code
-- Target < 300 LOC per file
-- Tests alongside source in `#[cfg(test)] mod tests`
-- Commit format: `type: lowercase imperative message`
+- `#![no_std]` in every `lib.rs`.
+- No `unwrap()` in non-test code. Plan-time errors are surfaced
+  through `PlanResult`; runtime errors use the error column
+  pattern.
+- Target < 300 LOC per file, max 500 (the `file-size` lint
+  enforces).
+- Tests alongside source in `#[cfg(test)] mod tests`.
+- Doc comments `///` on every public item. The
+  `undocumented-type` lint flags types missing from any DESIGN
+  doc.
