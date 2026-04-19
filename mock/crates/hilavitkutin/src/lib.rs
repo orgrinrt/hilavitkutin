@@ -38,6 +38,7 @@ compile_error!(
 );
 
 pub mod platform;
+pub mod plan;
 pub mod resource;
 pub mod scheduler;
 pub mod strategy;
