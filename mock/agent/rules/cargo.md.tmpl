@@ -1,0 +1,32 @@
+---
+apply_to: ["**/Cargo.toml"]
+---
+
+## Cargo workspace rules
+
+### Mock workspace
+
+- All polka crates use `version.workspace = true`, `edition.workspace = true`
+- Sibling dependencies use `.workspace = true` syntax
+- External dependencies declared in `[workspace.dependencies]`
+- Edition 2024 for all crates
+
+### Dependency direction
+
+- **SDK** (primitives, derive, sdk): no polka crate deps (primitives), or only lower SDK crates
+- **Core: Data** (data, catalogue, project): depends on polka-sdk
+- **Core: Execution** (pipeline, scheduler, audit): depends on polka-sdk + relevant core:data crates
+- **CLI** (cli): depends on core crates + polka-sdk
+- **Extensions** (lang-polka, source-brew, etc.): depends on polka-sdk ONLY
+
+### Proc-macro crates
+
+- `polka-derive` is `[lib] proc-macro = true`
+- Only exports procedural macros
+- Depends on polka-primitives for type references
+
+### Extension crates (cdylib)
+
+- Extension crates use `[lib] crate-type = ["cdylib"]`
+- Depend on polka-sdk only — no core crate dependencies
+- Compiled as dynamic libraries for plugin loading

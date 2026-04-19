@@ -1,0 +1,65 @@
+project_name = "hilavitkutin"
+crate_prefix = "hilavitkutin"
+abi_version = 1
+
+proc_macro_crates = []
+module_crates = []
+
+# Which macro to track per-crate in domain items
+primary_domain_macro = "wu"
+primary_domain_label = "WorkUnits"
+
+# Layer labels by depth index
+layers = [
+    "API",          # hilavitkutin-api (contracts)
+    "Engine",       # hilavitkutin (plan/dispatch/exec)
+    "Build",        # hilavitkutin-build (LLVM/MIR)
+    "Ext:ctx",      # hilavitkutin-ctx
+    "Ext:persist",  # hilavitkutin-persistence
+    "Ext:str",      # hilavitkutin-str
+]
+
+# Domain kind labels for STRUCTURE.md domain items table
+[domain_kinds]
+wu = "⚙️ WorkUnit"
+
+# Known macros for DESIGN.md table (description | usage)
+[known_macros]
+
+# Crate header colors for dependency graph (bg_color | fg_color)
+[crate_colors]
+hilavitkutin-api = "#E8EEF7 | #3A6EA5"
+hilavitkutin = "#EDE6F3 | #5C2D82"
+hilavitkutin-build = "#FDF0E0 | #C05C00"
+hilavitkutin-ctx = "#E6F2E6 | #2D6A2D"
+hilavitkutin-persistence = "#E6F2E6 | #2D6A2D"
+hilavitkutin-str = "#E6F2E6 | #2D6A2D"
+
+# ---------------------------------------------------------------------------
+# Lint configuration
+# ---------------------------------------------------------------------------
+
+[lints.no-empty-crate]
+commit = "off"
+build = "warn"
+push = "warn"
+
+[lints.no-todo]
+commit = "off"
+build = "warn"
+push = "error"
+
+[lints.no-fixme]
+commit = "off"
+build = "warn"
+push = "error"
+
+[lints.no-std]
+commit = "error"
+build = "error"
+push = "error"
+
+[lints.no-alloc]
+commit = "error"
+build = "error"
+push = "error"

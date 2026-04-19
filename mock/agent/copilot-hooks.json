@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "type": "command",
+        "bash": "{{REPO_ROOT}}/.github/hooks/check-byline.sh",
+        "timeoutSec": 10,
+        "comment": "Enforce byline policy on git commits"
+      },
+      {
+        "type": "command",
+        "bash": "{{REPO_ROOT}}/.github/hooks/mockspace-write-guard.sh",
+        "timeoutSec": 5,
+        "comment": "Block writes to forbidden mockspace files based on round state"
+      }
+    ]
+  }
+}

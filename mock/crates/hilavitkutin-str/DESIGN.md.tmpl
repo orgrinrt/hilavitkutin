@@ -1,0 +1,142 @@
+# hilavitkutin-str — Design Overview
+
+`#![no_std]`, zero external dependencies. Interned string system
+for the hilavitkutin ecosystem. Shared across saalis, polka-dots,
+loimu. Lives in saalis workspace for now, will be extracted to
+hilavitkutin repo when stabilised.
+
+## `Str` — interned string handle
+
+```rust
+#[repr(C)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash)]
+pub struct Str(u32);
+```
+
+u32 handle into the string table. Comparison is integer equality.
+`Copy`, `repr(C)`, ABI-stable, 4 bytes everywhere.
+
+Bit layout (nibble-aligned):
+- bit 31: `0` = const (compile-time), `1` = runtime (arena)
+- bits 30-28: reserved flags
+- bits 27-0: 28-bit ID (268M unique entries)
+
+Const IDs are content hashes (deterministic, stable across
+sessions and builds). Runtime IDs are sequential (fast, ephemeral).
+
+## `str_const!()` — compile-time string creation
+
+```rust
+macro_rules! str_const {
+    ($s:literal) => {{
+        #[used]
+        #[link_section = ".hilavitkutin_strings"]
+        static __ENTRY: StaticStrEntry = StaticStrEntry {
+            hash: Str::__make(const_fnv1a($s) & 0x0FFF_FFFF),
+            value: $s,
+        };
+        Str::__make(const_fnv1a($s) & 0x0FFF_FFFF)
+    }};
+}
+```
+
+One macro call produces the handle AND registers the string in a
+linker section. No external deps — no `inventory`. Platform-
+specific section walking at startup:
+- Linux: `__start_hilavitkutin_strings` / `__stop_hilavitkutin_strings`
+- macOS: `getsectiondata` on `__DATA,hilavitkutin_strings`
+
+`Str::__make` is not public — `str_const!` is the only way to
+create const handles.
+
+## `StaticStrEntry` — linker-section registration
+
+```rust
+#[repr(C)]
+pub struct StaticStrEntry {
+    pub hash: Str,
+    pub value: &'static str,
+}
+```
+
+Collected via linker section. The interner reads this section at
+startup to build the const resolution table.
+
+## `ArenaInterner` — host-implemented trait
+
+```rust
+pub trait ArenaInterner {
+    fn arena_intern(&self, s: &str) -> u32;
+    fn arena_resolve(&self, id: u32) -> &str;
+}
+```
+
+Minimal contract. The host implements with whatever backing
+storage it wants. Only handles runtime strings — const strings
+handled by the wrapper.
+
+## `StringInterner<A>` — wrapper
+
+```rust
+pub struct StringInterner<A: ArenaInterner> {
+    arena: A,
+}
+```
+
+Wraps `ArenaInterner` with const table handling. The const table
+(linker section) is always consulted first. The host only
+implements `ArenaInterner`.
+
+Methods:
+- `intern(&self, s: &str) -> Str` — check const table, fall back
+  to arena, set runtime bit
+- `intern_static(&self, s: &'static str) -> Str` — same but arena
+  can avoid copying
+- `resolve(&self, s: Str) -> &str` — if const: linker section;
+  if runtime: delegate to arena
+
+## `AsStr` — cheap handle access
+
+```rust
+pub trait AsStr {
+    fn as_str(&self) -> Str;
+}
+```
+
+For any type that wraps or carries a `Str`.
+
+## `IntoStr` — conversion with interning
+
+```rust
+pub trait IntoStr {
+    fn into_str(self, interner: &StringInterner<impl ArenaInterner>) -> Str;
+}
+
+impl IntoStr for Str {
+    fn into_str(self, _: &StringInterner<impl ArenaInterner>) -> Str { self }
+}
+
+impl IntoStr for &'static str {
+    fn into_str(self, interner: &StringInterner<impl ArenaInterner>) -> Str {
+        interner.intern_static(self)
+    }
+}
+```
+
+Accepts `Str` (passthrough) or `&'static str` (interns via
+interner). Used at API boundaries for ergonomic string acceptance.
+
+## Content hashing
+
+`const_fnv1a` — FNV-1a hash computable in const context. Used
+for `str_const!` handle derivation. Also used by
+`hilavitkutin-persistence` for stable on-disk string identity.
+
+The content hash is the file-level identity of a string. The
+sequential runtime ID is the session-level identity. They never
+need to agree — the hash is stable, the runtime ID is ephemeral.
+
+## Design rule
+
+No external deps. No alloc. No std. Linker sections for
+registration — no `inventory` crate.

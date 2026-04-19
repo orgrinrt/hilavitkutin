@@ -1,0 +1,13 @@
+[package]
+name = "hilavitkutin-build"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+
+[build-dependencies]
+mockspace.workspace = true
+
+[features]
+default = []

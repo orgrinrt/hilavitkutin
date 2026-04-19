@@ -1,0 +1,22 @@
+[package]
+name = "hilavitkutin"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+hilavitkutin-api.workspace = true
+arvo.workspace = true
+arvo-bitmask.workspace = true
+arvo-graph.workspace = true
+arvo-sparse.workspace = true
+arvo-spectral.workspace = true
+arvo-comb.workspace = true
+
+[build-dependencies]
+mockspace.workspace = true
+
+[features]
+default = ["os"]
+os = []
+std = []

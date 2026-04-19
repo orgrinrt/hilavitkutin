@@ -1,0 +1,73 @@
+---
+skill_name: commit-style
+skill_description: Guide for commit message formatting. Use this when making git commits, writing commit messages, or reviewing commit message style.
+---
+
+# Commit style
+
+Format: `type: lowercase imperative message`
+
+## Rules
+
+1. Type is required
+2. Exactly `: ` after the type
+3. NO PARENTHESES ever — never `type(scope):`
+4. Lowercase message
+5. No period at end
+6. Imperative mood ("add" not "added")
+7. Under 72 characters
+
+## Types
+
+`feat`, `fix`, `refactor`, `docs`, `test`, `chore`
+
+Breaking: `feat!: message` or `refactor!: message`
+
+## Examples
+
+```
+feat: add catalogue entry validation
+fix: handle missing loadout in project load
+refactor: extract platform detection to shared crate
+test: add pipeline manifest tests
+docs: update data store design
+chore: bump clap to 4.5
+feat!: change language trait signature
+```
+
+## Agent byline policy
+
+The question is: who did the thinking?
+
+**Agent as primary contributor** (agent makes design decisions, chooses the
+approach, authors logic beyond what a human specified):
+- `Co-Authored-By` byline is MANDATORY.
+- Format: `Co-Authored-By: Agent Name <email>`
+- Place at the end of the commit body, separated by a blank line.
+- This includes: autonomous agents on CI/CD, GitHub Actions, Claude cowork,
+  remote runners, background agents, and any case where the agent drove the
+  design rather than just executing it.
+
+**Agent as assistant** (human developer drives the work; agent implements
+according to human-provided design, generates boilerplate, executes mechanical
+changes):
+- No byline needed. The human is the author; the agent is a tool.
+- This is the typical case when a developer uses an agent interactively.
+
+The distinction exists for transparency. When reviewing PRs, the byline tells
+you instantly whether a human drove the work. Agent-primary commits get extra
+scrutiny.
+
+Agent hooks (Claude and Copilot) catch commits from agent-identifiable git
+credentials that lack a byline. Dev machines may additionally reject unnecessary
+bylines via hooks.
+
+## Wrong
+
+```
+feat(data): add thing          # parentheses
+Added new feature              # no type, past tense, capitalized
+feat: Add Data Store           # capitalized message
+feat add data store            # missing colon
+feat: add data store.          # period at end
+```

@@ -1,0 +1,163 @@
+# hilavitkutin-persistence — Design Overview
+
+`#![no_std]`, no alloc. Generic hot-cold storage bridge for the
+hilavitkutin ecosystem. All serialisation via rkyv. All memory
+from shared `MemoryProvider`. Reusable by any hilavitkutin
+consumer (saalis, polka-dots, loimu).
+
+Lives in saalis workspace for now. Will be extracted to
+hilavitkutin repo when stabilised.
+
+## Dependencies
+
+- `hilavitkutin-str` — Str type, content hashing
+- `rkyv` — zero-copy archive format (no_std, no alloc for reads)
+
+Does NOT depend on hilavitkutin engine directly. Operates on
+raw column data via the evict/inject pattern (R2). The consumer
+provides the ColumnStorage interface.
+
+## Core responsibility
+
+Bridge between hilavitkutin's in-memory columnar hot store and
+on-disk rkyv-archived cold store. Consumer-agnostic — knows
+nothing about metadata tables, entities, or domain schemas.
+
+## Serialisation boundary
+
+Everything crosses hot↔cold via rkyv `Archive` trait.
+
+### Standard types — identity
+
+`ColumnValue` types (`u32`, `i64`, `bool`, fixed-point, float)
+archive as themselves. `type Archived = Self`. Zero overhead.
+
+### `Str` — content hash translation
+
+`Str(u32)` handles are session-specific. On disk, stored as
+content hashes (stable across sessions).
+
+```rust
+impl Archive for Str {
+    type Archived = u32;  // content hash
+}
+```
+
+Evict: `handle → resolve → bytes → content_hash(bytes)`
+Inject: `content_hash → lookup string table → intern → handle`
+
+Const handles (bit 31 = 0) are already content hashes — identity
+on evict. On inject, matched against const table first.
+
+### Extending
+
+Consumer types needing custom serialisation boundary handling
+impl `Archive` directly. Same mechanism, no new traits.
+
+## Cold store
+
+### File layout (per consumer)
+
+```
+data_dir/
+  manifest.rkyv         — table directory, metadata
+  tables/
+    <name>.rkyv         — archived column data per table
+  strings/
+    runtime.rkyv        — runtime string table: content_hash → bytes
+```
+
+Consumer extends with domain-specific files (locale overlays,
+search indices, warmup manifests, etc.).
+
+### Data flow
+
+**Evict (hot → cold):**
+```
+column data (raw typed arrays)
+  → rkyv serialize (with PersistenceContext carrying interner)
+    → Str values: handle → content_hash
+    → all else: identity
+  → write to .rkyv file via MemoryProvider
+```
+
+**Inject (cold → hot):**
+```
+mmap .rkyv file (via MemoryProvider)
+  → rkyv archived data directly accessible (zero-copy)
+  → Str columns: content_hash → intern → runtime handle
+  → all else: pointer handoff
+  → inject into ColumnStorage
+```
+
+### Flush coordination
+
+The cold store provides the mechanism. The consumer decides
+when to flush:
+- `flush(dirty_set)` — serialise dirty data to disk
+- `load(table)` — mmap and inject a table
+- `snapshot(target)` — copy all files for backup
+
+## SIEVE eviction
+
+`WeightedSieveCache` wrapping ColumnStorage. Keyed by
+`(TableId, SegmentRange)`, weighted by byte size.
+
+Key invariant: dirty data is flushed before eviction. The
+hot store is fully reconstructable from cold store files.
+
+The consumer provides:
+- Memory budget (how much RAM the hot store gets)
+- Budget phase changes (e.g., game launch → shrink)
+- Eviction granularity preferences
+
+## String table persistence
+
+Runtime strings persisted as `(content_hash, string_bytes)`
+pairs in `runtime.rkyv`. On load:
+1. Const table available from binary (linker section)
+2. Load `runtime.rkyv` → intern each pair → sequential IDs
+3. Column data `Str` values resolved via content hash lookup
+
+Content hash = stable file-level identity.
+Sequential ID = ephemeral session-level identity.
+
+## Manifest
+
+```rust
+struct Manifest {
+    tables: /* map of table_id → TableMeta */,
+}
+
+struct TableMeta {
+    name_hash: u32,
+    version: u32,
+    row_count: u64,
+    columns: /* column metadata */,
+}
+```
+
+All rkyv-archived. Consumer extends with domain-specific
+metadata (schema versions, migration state, etc.).
+
+## Backup
+
+Snapshot = copy the data directory. All files are rkyv archives,
+always consistent (complete writes via MemoryProvider). Consumer
+wraps in whatever container format they want (.saalis ZIP+zstd,
+.polka format, etc.).
+
+## Key types
+
+| Type | Purpose |
+|------|---------|
+| `ColdStore` | File-backed rkyv cold store |
+| `SieveCache` | WeightedSieveCache for eviction |
+| `StringTable` | Runtime string persistence |
+| `Manifest` | Table directory and metadata |
+| `PersistenceContext` | Interner + MemoryProvider access |
+
+## Design rule
+
+No std. No alloc. No domain knowledge. Consumer-agnostic.
+Reusable across hilavitkutin ecosystem.

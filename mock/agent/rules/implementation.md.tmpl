@@ -1,0 +1,43 @@
+---
+apply_to: ["crates/**/*.rs", "src/**/*.rs"]
+---
+
+## Implementation rules
+
+### Mock-first workflow
+
+Design changes start in the mock workspace. Implement in mock first (trait signatures,
+struct definitions), validate with `cargo check`, then port to real implementation.
+
+### Architecture rules
+
+- Dependencies flow downward only. Extensions → SDK only. Core → SDK. CLI → Core.
+- SDK exports only traits, `repr(C)` types, and proc macros. No concrete implementations.
+- Plugins register via `#[register]` on trait impl blocks. `inventory` handles discovery.
+- No `toml::Value` outside of `polka-data` — use `DataValue` trait from SDK
+- No `&Ui` below the CLI layer — return structured results
+- All commands go through `polka-project::load()`
+- Platform is an extensible trait, not a closed enum
+
+### Type taxonomy
+
+- **Trait** — varying behavior, shared contract, extensible
+- **Newtype** — fixed representation, validation at construction
+- **`repr(C)` enum** — closed set, crosses ABI boundary
+- **Primitive** — no semantic meaning beyond raw value
+
+If it might need plugin extensions → trait, not enum.
+
+### Plugin registration
+
+- `#[register]` on impl blocks generates `repr(C)` descriptors + `inventory::submit!`
+- `Named` + `Registrable` base traits with blanket impl
+- `Descriptor` trait for common metadata (name, SDK version)
+- `Registry` trait for typed discovery with built-in validation
+
+### Code conventions
+
+- `anyhow` for errors, `?` propagation, no `unwrap()` in non-test code
+- Target < 300 LOC per file
+- Tests alongside source in `#[cfg(test)] mod tests`
+- Commit format: `type: lowercase imperative message`

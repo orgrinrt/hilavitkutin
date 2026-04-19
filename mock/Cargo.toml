@@ -1,0 +1,38 @@
+[workspace]
+resolver = "2"
+members = [
+    # Core triad (from polka-dots consolidation)
+    "crates/hilavitkutin-api",
+    "crates/hilavitkutin",
+    "crates/hilavitkutin-build",
+    # Ecosystem extensions (from saalis)
+    "crates/hilavitkutin-ctx",
+    "crates/hilavitkutin-persistence",
+    "crates/hilavitkutin-str",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MPL-2.0"
+
+[workspace.dependencies]
+mockspace = { git = "ssh://git@github.com/hiisi-digital/mockspace.git", branch = "main" }
+
+# arvo substrate — referenced via path when developing in tandem, via
+# crates.io / git dep once published. For now the mockspace validates
+# shapes against design docs; consumers path-override as needed.
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
+arvo-bits = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
+arvo-bitmask = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
+arvo-graph = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
+arvo-sparse = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
+arvo-spectral = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
+arvo-comb = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
+
+hilavitkutin-api = { path = "crates/hilavitkutin-api" }
+hilavitkutin = { path = "crates/hilavitkutin" }
+hilavitkutin-build = { path = "crates/hilavitkutin-build" }
+hilavitkutin-ctx = { path = "crates/hilavitkutin-ctx" }
+hilavitkutin-persistence = { path = "crates/hilavitkutin-persistence" }
+hilavitkutin-str = { path = "crates/hilavitkutin-str" }
