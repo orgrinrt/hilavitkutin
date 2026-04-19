@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# @matchers: Write, Edit
+# @timeout: 5
+# Agent hook: warn on dead vocabulary terms in hilavitkutin* sources.
+#
+# Mirrors `mock/lints/vocabulary_discipline.rs` at ADVISORY severity.
+# This hook uses `context()` (nudge, not block) because the dead
+# terms are also common English words; over-blocking would frustrate
+# legitimate uses in comments / string literals.
+
+set -uo pipefail
+
+__INPUT=$(cat)
+
+{{HOOK_HELPERS}}
+
+TARGET=$(_extract "file_path")
+CONTENT=$(_extract "new_string")
+if [[ -z "$CONTENT" ]]; then
+    CONTENT=$(_extract "content")
+fi
+
+if ! echo "$TARGET" | grep -qE 'hilavitkutin[^/]*/(src|.*\.md\.tmpl).*'; then
+    allow
+fi
+
+HITS=""
+if echo "$CONTENT" | grep -qwE 'chain_group'; then HITS+="  chain_group -> trunk\n"; fi
+if echo "$CONTENT" | grep -qwE 'chain'; then HITS+="  chain -> fiber\n"; fi
+if echo "$CONTENT" | grep -qwE 'partition'; then HITS+="  partition -> phase\n"; fi
+if echo "$CONTENT" | grep -qwE 'archetype'; then HITS+="  archetype -> fiber\n"; fi
+if echo "$CONTENT" | grep -qwE 'entity|Entity'; then HITS+="  entity -> record\n"; fi
+
+if [[ -n "$HITS" ]]; then
+    context "Vocabulary reminder: the following dead terms appear in your edit. Prefer the canonical terms (DESIGN.md 'Vocabulary'):\n${HITS}If the term is load-bearing (e.g. discussing prior art), ignore this reminder or add a \`// lint:allow(vocabulary-discipline) -- <reason>\` comment."
+fi
+
+allow
