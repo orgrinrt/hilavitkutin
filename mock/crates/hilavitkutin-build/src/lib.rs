@@ -1,3 +1,3 @@
 //! hilavitkutin-build — nuked.
 //!
-//! Nuked by `cargo mock --nuke`. Regenerate from design docs.
+//! Nuked by `cargo mock --nuke`. Rewrite from design docs (mechanical, no reinterpretation).
