@@ -125,3 +125,56 @@ below is a separate downstream round.
 - Intrinsics: platform-specific inline asm paths (x86_64
   PREFETCHT0, aarch64 PRFM). Useful when the LLVM intrinsic
   doesn't emit the exact instruction the profile wants.
+
+## Engine 5a4 follow-ups
+
+The 5a4 round ships the thread (domain 20) + adapt (domain 22)
+type surface with stub coordination/decision bodies. Each entry
+below is a separate downstream round.
+
+### Threading follow-ups
+
+- Actual pthread / Win32 / OS-thread spawning (gated on a future
+  `threading-std` feature; introduces the feature flag + spawn
+  method on `ThreadPool` together).
+- Hybrid spin-park wake implementation — 128 spin iters default
+  via `core::hint::spin_loop`, then park on a platform primitive
+  (futex on Linux, `ulock_wait` on macOS, `WaitOnAddress` on
+  Windows).
+- Heterogeneous-core detection — CPUID leaf 0x1A on x86, sysfs
+  (`/sys/devices/cpu_core` vs `/sys/devices/cpu_atom`) on Linux,
+  IOKit / hwloc on macOS.
+- Core pinning per platform — `pthread_setaffinity_np` on Linux,
+  `thread_policy_set` with `THREAD_AFFINITY_POLICY` on macOS,
+  `SetThreadAffinityMask` on Windows.
+- Work-stealing `Executor` trait — consumer-provided override for
+  variable per-record workloads. `steal_fallback` stub gains a
+  real `Executor` bound once the trait ships.
+- Head+tail convergence merge implementations — addition path
+  for additive/commutative accumulators; sequential fallback for
+  non-commutative fibers. Both need `Convergence::meeting_record`
+  semantics (whichever thread crosses midpoint first publishes).
+- Phase pipeline parallelism wiring — `ProgressCounter` exists
+  from 5a3; the thread scheduler has to consult it between
+  phases so phase N+1 starts as soon as N produces a morsel's
+  worth.
+- `classify_cores` signature should become `<const MAX_CORES: usize>`
+  generic instead of hard-coded `[CoreClass; 256]` once a
+  follow-up round needs the flexibility.
+
+### Adapt follow-ups
+
+- PMC / `perf_event` integration for `cache_miss_rate` and
+  `branch_miss_rate` sampling (Linux `perf_event_open`, macOS
+  `kpc`, Windows PerfCounter APIs).
+- Phase completion time measurement — monotonic clock via the
+  `hilavitkutin-api::Clock` trait (already shipped in platform
+  round); wire into `AdaptMetrics::phase_completion_time_ns`.
+- Adaptive mode selection heuristic — latency vs throughput
+  trade-off feeding `select_adapt_config`. EMA-based per DESIGN
+  (1/8 decay).
+- Per-phase config hot-swap during pipeline execution — between
+  frames only, per DESIGN (during-execution swaps would
+  invalidate monomorphised dispatch).
+- Telemetry hooks for exporting adapt decisions to the consumer
+  (observability / tuning dashboards, hung on a future trait).
