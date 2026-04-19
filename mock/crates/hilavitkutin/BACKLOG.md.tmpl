@@ -56,3 +56,40 @@ Tracked in the engine-impl task description (#35):
   morsel-loop ends).
 - mlock/madvise integration for resource pages — nice-to-have
   performance knob.
+
+## Engine 5a2 follow-ups
+
+The 5a2 round ships the plan-stage type surface + stub function
+signatures; every algorithm step is `todo!()`. Each entry below is
+a separate downstream micro-round that fills in one step's body.
+
+- Step 1: DAG construction from AccessMask overlap
+  (`plan::build_dag`).
+- Step 2: Topological sort + node renumbering
+  (`plan::topo_sort`).
+- Step 3: Upward rank + critical path
+  (`plan::upward_rank`).
+- Step 4: Waist detection → phase boundaries
+  (`plan::detect_waists`).
+- Step 5: RCM reordering → fiber grouping order
+  (`plan::rcm_reorder`).
+- Step 6: Block diagonal + D-M → phase validation
+  (`plan::block_diagonal`).
+- Step 7: Spectral partitioning for >5 fibers
+  (`plan::spectral_partition`).
+- Step 8: Fiber grouping (greedy + matrix chain DP)
+  (`plan::group_fibers`).
+- Step 9: Per-fiber morsel sizing
+  (`plan::size_morsels`).
+- Step 10: Per-phase adaptive configs
+  (`plan::adaptive_config`).
+- Step 11: Column classification per fiber
+  (`plan::classify_columns`).
+- Step 12: Dirty propagation masks for incremental skip
+  (`plan::propagate_dirty`).
+- Swap AccessMask bit-backing for arvo-bitmask once const-generic
+  bitmask support lands in arvo.
+- Swap DependencyGraph `[[bool; N]; N]` matrix for arvo-graph CSR
+  once arvo-graph gains const-generic support.
+- Top-level `build_plan` orchestration body: wires the 12 steps
+  into a single pass once all step bodies exist.
