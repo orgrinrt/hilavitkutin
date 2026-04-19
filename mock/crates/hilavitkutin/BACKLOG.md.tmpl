@@ -36,3 +36,13 @@ Tracked in the engine-impl task description (#35):
 - 5a4 thread + adapt
 - 5a5 resource caching
 - 5a6 strategy + scheduler
+
+## Resource-caching follow-ups (5a5 skeleton deferrals)
+
+- Generic-closure combine function (AccumulatorSlot currently
+  takes fn-pointer combiners; closure variant lands with 5a4 when
+  the thread-pool generic spawn story ships).
+- Write-back batching (coalesce per-resource writes after a
+  morsel-loop ends).
+- mlock/madvise integration for resource pages — nice-to-have
+  performance knob.
