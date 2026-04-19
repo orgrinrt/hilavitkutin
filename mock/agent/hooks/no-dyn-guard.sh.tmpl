@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# @matchers: Bash, Write, Edit
+# @timeout: 5
+# Agent hook: block dynamic-dispatch tokens in hilavitkutin* sources.
+#
+# Mirrors `mock/lints/no_dynamic_dispatch.rs`. Monomorphisation is
+# the dispatch — the fused pipeline must devirtualise to straight-
+# line code. Trait objects, TypeId, and std::any break that.
+
+set -uo pipefail
+
+__INPUT=$(cat)
+
+{{HOOK_HELPERS}}
+
+TARGET=$(_extract "file_path")
+CONTENT=$(_extract "new_string")
+if [[ -z "$CONTENT" ]]; then
+    CONTENT=$(_extract "content")
+fi
+
+if ! echo "$TARGET" | grep -qE 'hilavitkutin[^/]*/src/.*\.rs$'; then
+    allow
+fi
+
+# ` dyn ` (with surrounding space) catches `dyn Trait`, `&dyn Trait`,
+# `Box<dyn Trait>`, etc. without matching identifiers like `dynamic`.
+if echo "$CONTENT" | grep -qE '( dyn |<dyn |&dyn |&mut dyn )'; then
+    deny "BLOCKED: \`dyn Trait\` trait object in a monomorphisation-only engine. Make the consumer generic over the trait (\`fn f<T: Trait>(...)\`) or use an enum wrapper for a fixed set of impls."
+fi
+
+if echo "$CONTENT" | grep -qE 'TypeId|std::any::|core::any::'; then
+    deny "BLOCKED: \`TypeId\` / \`std::any\` — the monomorphised function IS the type identity. No runtime type erasure."
+fi
+
+allow

@@ -1,0 +1,25 @@
+# Before acting — hilavitkutin invariants
+
+Re-check these before every write or code change. The build
+pipeline will reject violations; catching them here saves a cycle.
+
+- `#![no_std]` in every crate. No `alloc`, no `Vec`, no `String`,
+  no `Box`, no `extern crate alloc;`.
+- Monomorphisation is the dispatch. No `dyn`, no `TypeId`, no
+  `std::any`. WorkUnits are generic over their `AccessSet`.
+- Static composition only. No `inventory::`, no `#[ctor]`, no
+  `#[distributed_slice]`, no runtime plugin registration.
+- Pre-allocated thread pool. No `thread::spawn`, `tokio::spawn`,
+  `async_std::spawn` at runtime.
+- Canonical vocabulary: `pipeline`, `phase`, `waist`, `trunk`,
+  `fiber`, `branch`, `bridge`, `morsel`, `micro-morsel`, `entry`,
+  `record`. Dead terms (do not introduce): `chain`, `chain_group`,
+  `partition`, `archetype`, `entity`, `row`, `order`.
+- `hilavitkutin-api` is contract-only; never let it depend on
+  `hilavitkutin` engine internals.
+- `hilavitkutin-build` is build-dep only; no runtime linkage.
+- Edit templates in `mock/agent/`, not generated files under
+  `.claude/` or `.github/`.
+- Use `cargo mock` state-machine subcommands for `design_rounds/`
+  transitions. Never hand-rename `.lock.md` / `.deprecated.md`
+  suffixes.

@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# @matchers: Bash, Write, Edit
+# @timeout: 5
+# Agent hook: block `use std::` in hilavitkutin* source files.
+#
+# Mirrors `mock/lints/no_std_enforcer.rs`. The lint catches violations
+# at build time; this hook rejects them before they are written so
+# agents don't waste tokens on work that will be rejected.
+
+set -uo pipefail
+
+__INPUT=$(cat)
+
+{{HOOK_HELPERS}}
+
+TARGET=$(_extract "file_path")
+CONTENT=$(_extract "new_string")
+if [[ -z "$CONTENT" ]]; then
+    CONTENT=$(_extract "content")
+fi
+
+# Only check hilavitkutin* crate sources.
+if ! echo "$TARGET" | grep -qE 'hilavitkutin[^/]*/src/.*\.rs$'; then
+    allow
+fi
+
+if echo "$CONTENT" | grep -qE '^\s*(pub\s+)?use\s+std::'; then
+    deny "BLOCKED: \`use std::\` in a no_std crate. hilavitkutin is \`#![no_std]\` in every crate. Use \`core::\` instead, or ask the consumer's provider (MemoryProvider, Clock, ThreadPool) to supply the capability."
+fi
+
+if echo "$CONTENT" | grep -qE '^\s*extern\s+crate\s+std'; then
+    deny "BLOCKED: \`extern crate std;\` — hilavitkutin is no_std. Remove and rely on \`core::\`."
+fi
+
+allow
