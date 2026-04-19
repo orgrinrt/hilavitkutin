@@ -30,6 +30,10 @@ arvo-sparse = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" 
 arvo-spectral = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
 arvo-comb = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
 
+# Persistence dep for hilavitkutin-persistence (zero-copy serde, no_std + no alloc).
+# Version aligned with saalis's mockspace for consistency.
+rkyv = { version = "0.8", default-features = false }
+
 hilavitkutin-api = { path = "crates/hilavitkutin-api" }
 hilavitkutin = { path = "crates/hilavitkutin" }
 hilavitkutin-build = { path = "crates/hilavitkutin-build" }
