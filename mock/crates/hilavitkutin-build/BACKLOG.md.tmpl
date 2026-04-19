@@ -1,0 +1,61 @@
+# hilavitkutin-build — backlog
+
+## rustc workspace wrapper script generation
+
+DESIGN Q4 part 3: `RUSTC_WORKSPACE_WRAPPER` is a thin shell around
+rustc that inspects `CARGO_CFG_*` env vars and computes flag sets
+from the three axes (Target, Tier, Passes). The skeleton ships the
+Rust-side type surface; the bash / PowerShell script emitter lands
+in a follow-up round after the pragma types are battle-tested
+against a concrete consumer.
+
+## LLVM pass plugin C++ source
+
+DESIGN describes a ~40-line C++ LLVM plugin with two extension
+points: `VectorizerStartEP` (IRCE, LoopPredication, SimplifyCFG,
+LoopInterchange, LoopDistribute) and `OptimizerLastEP`
+(LoopDataPrefetch, SeparateConstOffsetFromGEP, LoopFusion
+conditional). Delivery: a pre-built dylib per target triple
+shipped alongside the toolchain. Lands in its own round with
+build-system (CMake) + distribution story.
+
+## PGO / BOLT tier integration
+
+DESIGN Q5 tiers:
+- Static BOLT (3-5% gain).
+- PGO (10-20% branch / inline).
+- Profile-guided BOLT on PGO (additional 5-10%).
+Each tier is an independent round with its own profraw collection,
+sample-conversion tooling, and CI integration. Profile staleness
+warning (>50 commits diverged) ships with the PGO round.
+
+## hilavitkutin-config.toml schema
+
+Skeleton writes a placeholder file. Real schema serialises the
+resolved `PragmaSet` for downstream tools (e.g. ide-helper,
+build-introspection). Follow-up round pins the TOML shape and
+adds a reader.
+
+## Consumer build.rs migration
+
+Every hilavitkutin-* crate's build.rs calls
+`mockspace::bootstrap::bootstrap_from_buildscript()`. Migrating to
+also-call `hilavitkutin_build::bootstrap_from_buildscript()` is a
+separate infra round that lands piecewise as each crate's
+pragmas become observable.
+
+## Windows MSVC toolchain support
+
+DESIGN leans Linux + macOS. Windows MSVC needs its own flag-set
+mapping for the three axes. Defer until a Windows consumer
+surfaces.
+
+## Apple Container workflow for macOS
+
+DESIGN mentions `-Z llvm-plugins` is Linux-only; macOS uses
+`-C passes=` or an Apple Container (Virtualization.framework,
+<1s boot). The container-based workflow needs a trigger: when
+the host is macOS + the pragma set requires an LLVM plugin,
+hilavitkutin-build should be able to spawn an ARM Linux container
+for the plugin pass. Defer until someone builds out the
+orchestration.
