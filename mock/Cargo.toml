@@ -37,6 +37,9 @@ rkyv = { version = "0.8", default-features = false }
 hilavitkutin-api = { path = "crates/hilavitkutin-api" }
 hilavitkutin = { path = "crates/hilavitkutin" }
 hilavitkutin-build = { path = "crates/hilavitkutin-build" }
+
+# Platform dep for hilavitkutin engine os-tier syscalls.
+libc = { version = "0.2", default-features = false }
 hilavitkutin-ctx = { path = "crates/hilavitkutin-ctx" }
 hilavitkutin-persistence = { path = "crates/hilavitkutin-persistence" }
 hilavitkutin-str = { path = "crates/hilavitkutin-str" }

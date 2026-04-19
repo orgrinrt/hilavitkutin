@@ -1,0 +1,38 @@
+# hilavitkutin — backlog
+
+## Windows os-tier
+
+Current os-tier covers Linux + macOS via mmap + pthread +
+clock_gettime. Windows needs VirtualAlloc + CreateThread +
+QueryPerformanceCounter wrappers. Defer until a Windows consumer
+surfaces or the distribution story demands it.
+
+## no_os tier documentation
+
+The no_os tier is trait-only — consumers ship their own
+MemoryProviderApi / ThreadPoolApi / ClockApi impls. A concrete
+example (for an embedded target) would help third-party
+adoption. Defer until a consumer surfaces.
+
+## Memory protection (mprotect)
+
+`OsMemoryProvider::protect` stubs to Ok this round. Real mprotect
+integration with the read/write flag combinations lands with the
+persistence follow-up round that actually exercises protection
+(memory-mapped file rehydration).
+
+## ThreadPool tests
+
+Pool primitives ship without dedicated tests this round; dispatch
+round (5a3) exercises them against the fused-WU monomorphised
+function. Adding targeted unit tests here would add negative
+value today.
+
+## Engine-wide items (post-platform sub-rounds)
+
+Tracked in the engine-impl task description (#35):
+- 5a2 plan-stage analysis
+- 5a3 dispatch + intrinsics
+- 5a4 thread + adapt
+- 5a5 resource caching
+- 5a6 strategy + scheduler
