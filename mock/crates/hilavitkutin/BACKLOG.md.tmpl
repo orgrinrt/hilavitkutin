@@ -37,6 +37,16 @@ Tracked in the engine-impl task description (#35):
 - 5a5 resource caching
 - 5a6 strategy + scheduler
 
+## Scheduler follow-ups (5a6 skeleton deferrals)
+
+- Real execution loop — needs 5a2 (plan-stage) + 5a3 (dispatch)
+  + 5a4 (thread) before it can actually run work.
+- Self-hosting meta pipeline proper (PlanStage → ScheduleReady →
+  PassStart → ScheduleEnd): resource types ship now; the pipeline
+  logic follows once engine execution exists.
+- Version-stamp parallel arrays (SoA) depend on 5a2 defining the
+  store layout shape.
+
 ## Resource-caching follow-ups (5a5 skeleton deferrals)
 
 - Generic-closure combine function (AccumulatorSlot currently
