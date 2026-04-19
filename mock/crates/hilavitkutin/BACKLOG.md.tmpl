@@ -93,3 +93,35 @@ a separate downstream micro-round that fills in one step's body.
   once arvo-graph gains const-generic support.
 - Top-level `build_plan` orchestration body: wires the 12 steps
   into a single pass once all step bodies exist.
+
+## Engine 5a3 follow-ups
+
+The 5a3 round ships the dispatch (domain 17) + intrinsics
+(domain 13) type surface with stub code-gen bodies. Each entry
+below is a separate downstream round.
+
+- `select_approach` body — record-count thresholds (10K cutover
+  between IndirectPerFiber/TrunkMega and ScheduleMega; exact
+  boundary is benchmarked).
+- `codegen_fiber` body — emit the monomorphised per-fiber
+  dispatch function. Needs LLVM hooks or a build-time plugin
+  from hilavitkutin-build (ExpandedLto pragma).
+- `codegen_core` body — emit the per-core pipeline: encodes
+  phases + morsel boundaries + sync points + per-fiber dispatch
+  records. Depends on `codegen_fiber`.
+- ExpandedLto pragma integration — required for the LLVM
+  devirtualisation of the `&[WuFn]` slice into straight-line
+  code. Depends on hilavitkutin-build 5a4+.
+- Rust-pipe pattern wiring — stack-cached resource snapshot at
+  morsel head, fiber-input column reads at morsel start,
+  DSE-friendly internal column reads, grouped output stores at
+  morsel tail. Depends on `codegen_fiber` body.
+- Progress counter thread-safety stress tests — loom / miri
+  coverage over the Release-store / Acquire-load contract.
+- Intrinsics: real `core::intrinsics::prefetch_*` wiring on
+  nightly (gated behind a `nightly-intrinsics` feature; the
+  current `intrinsics-std` feature only enables `core::hint`
+  + `core::sync::atomic::compiler_fence`).
+- Intrinsics: platform-specific inline asm paths (x86_64
+  PREFETCHT0, aarch64 PRFM). Useful when the LLVM intrinsic
+  doesn't emit the exact instruction the profile wants.
