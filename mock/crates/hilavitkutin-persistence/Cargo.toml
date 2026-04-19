@@ -9,6 +9,11 @@ hilavitkutin-str.workspace = true
 hilavitkutin-api.workspace = true
 # rkyv pulled in by follow-up round; skeleton ships without it.
 
+[dev-dependencies]
+# arvo for USize / Bool newtypes used by test-local MemoryProviderApi
+# stubs. Library code stays dep-free of arvo.
+arvo.workspace = true
+
 [build-dependencies]
 mockspace.workspace = true
 
