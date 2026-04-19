@@ -1,0 +1,34 @@
+# hilavitkutin-str — backlog
+
+## Windows PE section walker
+
+Current linker-section walking ships Linux (`__start_` /
+`__stop_` sentinels) + macOS (`getsectiondata` on
+`__DATA,hilavitkutin_strings`). Windows PE has its own section
+convention (`#pragma section` + extern linker-defined symbols)
+that needs a third code path. Defer until a Windows consumer
+surfaces a concrete need.
+
+## Non-64-bit platform sanity
+
+The Str handle is u32 and the bit layout is width-neutral, but the
+startup scan relies on pointer-arithmetic over linker-section
+boundaries. On 32-bit targets the pointer math is identical but
+needs verification. No active 32-bit consumer; defer.
+
+## Alternative arena backings
+
+`ArenaInterner` is a trait so hosts can pick any backing. Possible
+future sibling types: `FixedArenaInterner<N>` (const-sized, no
+alloc), `SlabInterner` (uses MemoryProvider slabs from
+hilavitkutin-api). These ship as their own crates or
+hilavitkutin-persistence features when a second consumer needs a
+different backing than the one first saalis / hilavitkutin supply.
+
+## 28-bit ID exhaustion
+
+The 28-bit runtime ID space allows 268M entries. If a consumer
+pipeline exceeds that at runtime, a follow-up round widens to a
+u64 handle (reserving the extra bits for flags + larger ID space).
+Current estimates keep every known consumer well under 1M runtime
+strings per session, so this is not imminent.
