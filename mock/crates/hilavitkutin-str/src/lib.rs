@@ -1,4 +1,3 @@
-//! hilavitkutin-str — interned string primitives.
+//! hilavitkutin-str — nuked.
 //!
-//! no_std, zero deps. Str(u32) handle, str_const! macro,
-//! ArenaInterner trait, StringInterner wrapper.
+//! Nuked by `cargo mock --nuke`. Rewrite from design docs (mechanical, no reinterpretation).
