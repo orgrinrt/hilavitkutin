@@ -22,13 +22,13 @@ mockspace = { git = "ssh://git@github.com/hiisi-digital/mockspace.git", branch =
 # arvo substrate — referenced via path when developing in tandem, via
 # crates.io / git dep once published. For now the mockspace validates
 # shapes against design docs; consumers path-override as needed.
-arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
-arvo-bits = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
-arvo-bitmask = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
-arvo-graph = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
-arvo-sparse = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
-arvo-spectral = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
-arvo-comb = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev" }
+arvo-bits = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev" }
+arvo-bitmask = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev" }
+arvo-graph = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev" }
+arvo-sparse = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev" }
+arvo-spectral = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev" }
+arvo-comb = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev" }
 
 # Persistence dep for hilavitkutin-persistence (zero-copy serde, no_std + no alloc).
 # Version aligned with saalis's mockspace for consistency.
