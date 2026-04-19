@@ -37,6 +37,8 @@ compile_error!(
     "hilavitkutin: one of `platform-os`, `platform-std`, or `platform-no-os` must be enabled"
 );
 
+pub mod dispatch;
+pub mod intrinsics;
 pub mod platform;
 pub mod plan;
 pub mod resource;
