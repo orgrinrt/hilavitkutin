@@ -6,4 +6,11 @@ license.workspace = true
 
 [dependencies]
 hilavitkutin-str.workspace = true
-rkyv.workspace = true
+hilavitkutin-api.workspace = true
+# rkyv pulled in by follow-up round; skeleton ships without it.
+
+[build-dependencies]
+mockspace.workspace = true
+
+[features]
+default = []
