@@ -233,22 +233,3 @@ handled at that round's boundary.
   `dulmage_mendelsohn` returns a full `DulmageMendelsohn` struct.
   Split step 6 into `block_diagonal_components` and
   `dulmage_mendelsohn_decompose` when its body is filled in.
-
-## Domain-alias newtype candidates
-
-RecordIndex / CoreCount / FiberCount / MorselLen are pub type
-aliases over raw u64 / u16 / u16 / u32 in hilavitkutin::aliases
-(Task #72). Promote to newtype wrappers if a later round introduces
-arithmetic semantics that benefit from stronger typing — e.g.
-RecordIndex arithmetic with overflow protection, MorselLen
-saturation, CoreCount distinctions between total/active/reserved.
-Alias-only form is sufficient for the current public API surface.
-
-## AccessMask::raw / DirtyMask::raw u128 backing
-
-Both mask types back the storage with a raw u128. The raw accessors
-are documented as low-level bit-pattern access and carry
-allow-bare-numeric: tracked: #72. Replace with a typed
-arvo-bitmask::Mask128 once that crate gains const-generic masks
-(already noted in both files' doc comments as the upstream
-BACKLOG). Gated on arvo-bitmask; not on hilavitkutin.
