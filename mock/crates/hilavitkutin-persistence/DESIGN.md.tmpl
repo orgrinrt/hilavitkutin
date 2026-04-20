@@ -32,27 +32,54 @@ Everything crosses hot↔cold via rkyv `Archive` trait.
 `ColumnValue` types (`u32`, `i64`, `bool`, fixed-point, float)
 archive as themselves. `type Archived = Self`. Zero overhead.
 
-### `Str` — content hash translation
+### Str — content hash translation
 
-`Str(u32)` handles are session-specific. On disk, stored as
-content hashes (stable across sessions).
+Str handles are session-specific (runtime IDs). On disk, stored as
+content hashes (stable across sessions). The runtime API uses
+arvo_hash ContentHash for the hash value; the rkyv Archived form
+is a bare u32 to pin the on-disk byte layout.
 
 ```rust
 impl Archive for Str {
-    type Archived = u32;  // content hash
+    // Disk-layout ABI: low 28 bits carry the FNV content hash, bit
+    // 31 is the const/runtime flag. Runtime API uses ContentHash.
+    type Archived = u32;
 }
 ```
 
-Evict: `handle → resolve → bytes → content_hash(bytes)`
-Inject: `content_hash → lookup string table → intern → handle`
+Evict: handle resolves to bytes, then to a content hash.
+Inject: content hash looks up the string table, interns, returns a
+runtime handle.
 
-Const handles (bit 31 = 0) are already content hashes — identity
-on evict. On inject, matched against const table first.
+Const handles (bit 31 = 0) are already content hashes on evict
+(identity). On inject, matched against the const table first.
+
+### Disk-layout types (rkyv ABI)
+
+Every value that crosses the rkyv boundary on disk is specified by
+its byte layout, not by its runtime type surface. The Archived
+associated type on an impl Archive names the disk form; the
+runtime type names the in-memory form.
+
+Current disk-layout types, pinned:
+
+- Str Archived to u32. Low 28 bits carry the FNV content hash; bit
+  31 is the const/runtime flag.
+- Integer primitive columns archive to themselves (identity).
+
+The runtime API carries the hash value as arvo_hash ContentHash,
+an alias for arvo_bits Bits<28>. Conversion at the rkyv boundary
+is a single masked cast; no format change.
+
+Disk-layout types are exempt from the primitive-vocabulary
+discipline. They exist to pin a byte layout across sessions. Giving
+them a semantic newtype would add a conversion call at the hottest
+serialisation path without changing the on-disk format.
 
 ### Extending
 
 Consumer types needing custom serialisation boundary handling
-impl `Archive` directly. Same mechanism, no new traits.
+impl Archive directly. Same mechanism, no new traits.
 
 ## Cold store
 
@@ -127,18 +154,28 @@ Sequential ID = ephemeral session-level identity.
 ```rust
 struct Manifest {
     tables: /* map of table_id → TableMeta */,
+    count: ColumnCount,
 }
 
 struct TableMeta {
-    name_hash: u32,
-    version: u32,
-    row_count: u64,
+    name_hash: ContentHash,
+    version: SchemaVersion,
+    row_count: RowCount,
+    column_count: ColumnCount,
     columns: /* column metadata */,
 }
 ```
 
-All rkyv-archived. Consumer extends with domain-specific
-metadata (schema versions, migration state, etc.).
+Domain aliases:
+
+- ContentHash comes from arvo_hash (alias for arvo_bits Bits<28>).
+- SchemaVersion, RowCount, ColumnCount, Cardinality,
+  BufferOffset, BufferLen, BitWidth, EvictionWeight are
+  persistence-local newtypes over USize or raw integer (when the bit
+  width is load-bearing, as with SchemaVersion's u32 ordinal).
+
+All rkyv-archived. Consumer extends with domain-specific metadata
+(schema versions, migration state, etc).
 
 ## Backup
 
@@ -156,6 +193,12 @@ wraps in whatever container format they want (.saalis ZIP+zstd,
 | `StringTable` | Runtime string persistence |
 | `Manifest` | Table directory and metadata |
 | `PersistenceContext` | Interner + MemoryProvider access |
+| ContentHash (from arvo_hash) | 28-bit FNV content-hash identity |
+| BufferOffset / BufferLen | Byte-offset and byte-length domain aliases over USize |
+| RowCount / ColumnCount / Cardinality | Count domain aliases over USize |
+| SchemaVersion | Ordinal table-schema version (u32 backing) |
+| EvictionWeight | SieveCache weight (u64 backing) |
+| BitWidth | Column bit-width declaration (u32 backing) |
 
 ## Design rule
 
