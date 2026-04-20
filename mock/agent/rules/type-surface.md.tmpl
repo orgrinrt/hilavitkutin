@@ -4,7 +4,26 @@ apply_to: ["crates/**/*.rs", "src/**/*.rs"]
 
 # Think in traits, not types. The trait is the contract; the type is an implementation.
 
-Before writing any `pub` signature, ask:
+## Scope is physical, not API-visibility
+
+Bare `u8..u128`, `i8..i128`, `f32`, `f64`, `usize`, `isize`, `bool`
+do not appear anywhere in hilavitkutin source. Not in public fn
+signatures, not in private fields, not in `let` bindings, not in
+cast expressions, not in literal suffixes (`0u32`, `1_usize`), not
+in array element types, not in `const` declarations, not in trait
+method parameter types, not in tuple-struct fields. Same for bare
+`Option`, `Result`, `String`, non-static `&str`. The
+`arvo-types-only`, `no-bare-numeric`, `no-bare-option`,
+`no-bare-result`, `no-bare-string`, and `no-public-raw-field` lints
+scan every line of every `.rs` file and block the commit the moment
+a bare primitive is physically written.
+
+Escape hatch: `// lint:allow(<rule>) reason: ...; tracked: #N` —
+only when a foreign crate's contract or an unavoidable language
+feature forces the bare primitive and no arvo impl of that contract
+is possible.
+
+Before writing ANY signature (pub or private), field, or local, ask:
 
 1. What OPERATION does this position perform?
 2. Is there a trait that describes that operation? If yes, use it. If
@@ -19,16 +38,17 @@ Before writing any `pub` signature, ask:
 > "Can I imagine two implementations with different behavior?"
 >
 > - Yes → trait.
-> - No → look at the 4 type categories below.
+> - No → look at the 3 type categories below.
 
-## 4 type categories
+## 3 type categories
 
 | Category | When | Examples |
 |----------|------|----------|
 | **Trait** | Varying behavior, shared contract | `UArith<BITS>`, `IArith<BITS>`, `BitSequence`, `BitAccess`, `Bool: Try` |
-| **Newtype** | Fixed rep, validation at construction | `UFixed<I, F, S>`, `FastFloat`, `StrictFloat`, `USize`, `Cap` |
+| **Newtype** | Fixed rep, validation at construction | `UFixed<I, F, S>`, `FastFloat`, `StrictFloat`, `USize`, `Cap`, `ContentHash` |
 | **`repr(C)` enum** | Closed set, crosses ABI | `Strategy` markers, `Priority`, `ErrorClass` |
-| **Primitive** | No semantic meaning beyond raw value | `const N: usize` (const-generic position only) |
+
+There is no fourth "bare primitive" category.
 
 ## DO ✓ (trait-first)
 
@@ -37,17 +57,18 @@ Before writing any `pub` signature, ask:
 - Arithmetic generic: `<T: UArith<BITS>>` instead of concrete `u8` /
   `u16`
 - Associated types when the implementor chooses concrete storage
-- Newtypes at public boundaries: `Cap`, `USize`, `FastFloat`
+- Newtypes anywhere — `Cap`, `USize`, `FastFloat`, `ContentHash`
 - Scalar returns: `Outcome<T, E>`, `Maybe<T>`, `Just<T>` (from notko)
 
-## DON'T ✗ (concrete-type leakage)
+## DON'T ✗ (concrete-type leakage — anywhere in source)
 
-- Bare `Option<T>` or `Result<T, E>` — use `Maybe<T>` / `Outcome<T, E>`
-- Concrete collections in pub sigs: `Vec<T>`, `HashMap`, `Seq<T, N>`,
+- Bare `Option<T>` or `Result<T, E>` in ANY position — use `Maybe<T>` / `Outcome<T, E>`
+- Concrete collections anywhere: `Vec<T>`, `HashMap`, `Seq<T, N>`,
   `Map<K, V, N>`
-- Raw numerics in pub sigs: `usize`, `f32`, `f64`, `bool`, `u32`, `i32`
-  — use the arvo newtypes or a trait bound
-- `String` / non-static `&str` — use `&'static str` or `hilavitkutin_str::Str`
+- Raw numerics anywhere (pub fn, private field, local, cast, literal
+  suffix, array size expression): `usize`, `f32`, `f64`, `bool`,
+  `u32`, `i32`, `u64` — use the arvo newtypes or a trait bound
+- `String` / non-static `&str` in ANY position — use `&'static str` or `hilavitkutin_str::Str`
 - Concrete types when a trait exists: don't write `fn add(a: u32, b:
   u32) -> u32` when `UArith<32>` is available
 
