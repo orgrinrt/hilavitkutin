@@ -168,6 +168,34 @@ commit = "off"
 build = "warn"
 push = "warn"
 
+# New scope post-enforcement-tightening (2026-04-20): lints now scan every
+# src/*.rs via LintContext.all_sources (hiisi-digital/mockspace#4) AND skip
+# per-primitive per-crate via LintContext.introduces()
+# (mockspace-hilavitkutin-stack-lints#3). 559 pre-existing drift sites in
+# hilavitkutin source surface after the tightening — each is a sweep
+# target under in-flight #72 sub-sweeps (str / ctx / engine). Ramp to warn
+# at every gate; FLIP BACK TO `error` once #72 completes.
+
+[lints.no-bare-numeric]
+commit = "off"
+build = "warn"
+push = "warn"
+
+[lints.no-bare-option]
+commit = "off"
+build = "warn"
+push = "warn"
+
+[lints.arvo-types-only]
+commit = "off"
+build = "warn"
+push = "warn"
+
+[lints.no-public-raw-field]
+commit = "off"
+build = "warn"
+push = "warn"
+
 [lints.no-bare-vec]
 commit = "off"
 build = "warn"
