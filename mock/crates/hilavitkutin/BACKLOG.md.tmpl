@@ -178,3 +178,18 @@ below is a separate downstream round.
   invalidate monomorphised dispatch).
 - Telemetry hooks for exporting adapt decisions to the consumer
   (observability / tuning dashboards, hung on a future trait).
+
+## Engine skeleton post-review notes
+
+- **POSIX fn*/void* cast in `platform/os.rs` `spawn_fn`.** The
+  current pattern smuggles `fn()` via `usize` as a
+  `pthread_create` argument. POSIX does not guarantee that `fn*`
+  and `void*` have matching size; all Rust tier-1 targets happen
+  to comply in practice, but the threading-std implementation
+  round should switch to `Box<fn()>` or a static work-queue slot
+  to be POSIX-clean.
+- **`OnceLock` MSRV in `platform/std_tier.rs`.** Uses
+  `std::sync::OnceLock` which requires Rust 1.70+. The workspace
+  does not yet pin a toolchain. When a toolchain policy is
+  decided, either pin 1.70+ in `rust-toolchain.toml` or replace
+  with an `AtomicBool` init-once pattern.
