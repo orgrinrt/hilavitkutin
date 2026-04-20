@@ -2,8 +2,9 @@
 
 use arvo::newtype::{Bool, USize};
 use hilavitkutin_api::MemoryProviderApi;
-use hilavitkutin_persistence::{ColdStore, PersistenceContext, PersistenceError};
+use hilavitkutin_persistence::{ColdStore, ColumnCount, PersistenceContext, PersistenceError};
 use hilavitkutin_str::{ArenaInterner, StringInterner};
+use notko::Outcome;
 
 struct StubMemory;
 
@@ -31,7 +32,10 @@ fn make_store<'a>(
     interner: &'a StringInterner<StubArena>,
 ) -> ColdStore<'a, StubMemory, StubArena> {
     let ctx = PersistenceContext::new(memory, interner);
-    ColdStore::open(ctx).expect("open ok")
+    match ColdStore::open(ctx) {
+        Outcome::Ok(s) => s,
+        Outcome::Err(_) => panic!("open ok"),
+    }
 }
 
 #[test]
@@ -39,7 +43,7 @@ fn open_returns_store_with_default_manifest() {
     let memory = StubMemory;
     let interner = StringInterner::new(StubArena);
     let store = make_store(&memory, &interner);
-    assert_eq!(store.manifest().count, 0);
+    assert_eq!(store.manifest().count, ColumnCount(USize(0)));
 }
 
 #[test]
@@ -56,7 +60,10 @@ fn flush_is_noop_ok() {
     let memory = StubMemory;
     let interner = StringInterner::new(StubArena);
     let mut store = make_store(&memory, &interner);
-    assert_eq!(store.flush(), Ok(()));
+    match store.flush() {
+        Outcome::Ok(()) => {}
+        Outcome::Err(_) => panic!("flush ok"),
+    }
 }
 
 #[test]
@@ -64,7 +71,10 @@ fn snapshot_is_noop_ok() {
     let memory = StubMemory;
     let interner = StringInterner::new(StubArena);
     let store = make_store(&memory, &interner);
-    assert_eq!(store.snapshot(), Ok(()));
+    match store.snapshot() {
+        Outcome::Ok(()) => {}
+        Outcome::Err(_) => panic!("snapshot ok"),
+    }
 }
 
 #[test]
@@ -72,5 +82,8 @@ fn load_returns_missing() {
     let memory = StubMemory;
     let interner = StringInterner::new(StubArena);
     let mut store = make_store(&memory, &interner);
-    assert_eq!(store.load(), Err(PersistenceError::Missing));
+    match store.load() {
+        Outcome::Err(e) => assert_eq!(e, PersistenceError::Missing),
+        Outcome::Ok(()) => panic!("expected missing"),
+    }
 }

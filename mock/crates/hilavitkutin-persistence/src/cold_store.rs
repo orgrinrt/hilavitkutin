@@ -8,6 +8,7 @@
 
 use hilavitkutin_api::MemoryProviderApi;
 use hilavitkutin_str::ArenaInterner;
+use notko::Outcome;
 
 use crate::context::PersistenceContext;
 use crate::error::PersistenceError;
@@ -27,8 +28,8 @@ impl<'a, M: MemoryProviderApi, A: ArenaInterner> ColdStore<'a, M, A> {
     /// Skeleton: returns a default-Manifest instance with an empty
     /// StringTable. Follow-up round mmap-loads `manifest.rkyv` +
     /// `strings/runtime.rkyv` via `ctx.memory()`.
-    pub fn open(ctx: PersistenceContext<'a, M, A>) -> Result<Self, PersistenceError> {
-        Ok(Self {
+    pub fn open(ctx: PersistenceContext<'a, M, A>) -> Outcome<Self, PersistenceError> {
+        Outcome::Ok(Self {
             context: ctx,
             manifest: Manifest::new(),
             string_table: StringTable::empty(),
@@ -54,23 +55,23 @@ impl<'a, M: MemoryProviderApi, A: ArenaInterner> ColdStore<'a, M, A> {
     ///
     /// Skeleton: no-op. Follow-up round serialises dirty tables via
     /// rkyv and writes through `MemoryProvider`.
-    pub fn flush(&mut self) -> Result<(), PersistenceError> {
-        Ok(())
+    pub fn flush(&mut self) -> Outcome<(), PersistenceError> {
+        Outcome::Ok(())
     }
 
     /// Load a table from disk into the hot store.
     ///
     /// Skeleton: returns `Missing`. Follow-up round mmaps the table
     /// file and hands the archived view off to the consumer.
-    pub fn load(&mut self) -> Result<(), PersistenceError> {
-        Err(PersistenceError::Missing)
+    pub fn load(&mut self) -> Outcome<(), PersistenceError> {
+        Outcome::Err(PersistenceError::Missing)
     }
 
     /// Snapshot the cold store for backup.
     ///
     /// Skeleton: no-op. Follow-up round enumerates files in the data
     /// directory and atomically copies them to the target path.
-    pub fn snapshot(&self) -> Result<(), PersistenceError> {
-        Ok(())
+    pub fn snapshot(&self) -> Outcome<(), PersistenceError> {
+        Outcome::Ok(())
     }
 }
