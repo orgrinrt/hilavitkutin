@@ -91,3 +91,23 @@ generate from the trait name (e.g. a macro-derived accessor might
 be `memory_provider()` / `thread_pool()` / `clock()`). Either
 document the asymmetry or rename for consistency. Both options
 require touching every consumer; defer to a breaking round.
+
+## Sink / codec extensions — post-sweep
+
+Landed in the #83 round: capability atoms, named composites,
+`NullSink` / `CountingSink` / `TeeSink`, stateful Encoder/Decoder
+pair with oneshot Ext adapters, tuple blanket impls arity 2+3.
+
+Deferred until a concrete consumer surfaces demand:
+
+- Higher-arity tuple blanket impls (>3).
+- SizeHint / LenHint capability for iterator-shaped sinks that know
+  their remaining item count.
+- Flush / Fuse capability for buffered byte emitters with back-
+  pressure semantics.
+- Specific framed codec families (JSON, clause bytecode, paradox
+  save format). The contract ships here; concrete codecs live in
+  owner crates. Don't promote into this crate.
+- Blanket impls over Vec / Seq under a test-helper gate. Those live
+  in a dedicated test-helper crate (#81) so hilavitkutin-api stays
+  heap-free and no_std.
