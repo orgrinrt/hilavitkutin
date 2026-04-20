@@ -11,8 +11,13 @@
 pub struct Str(pub u32);
 
 impl Str {
-    /// Mask for the const-origin bit (bit 31 = 0).
-    pub const CONST_MASK: u32 = 0 << 31;
+    /// The const-origin polarity at bit 31: bit *cleared* means the
+    /// handle was produced by `str_const!` (compile-time). This is a
+    /// *flag pattern*, not a non-zero mask — its value is `0` because
+    /// the runtime bit is the one set by `__runtime`. To test origin,
+    /// call `is_const()` / `is_runtime()` — do not AND against this
+    /// constant expecting a non-zero result on a const handle.
+    pub const CONST_ORIGIN_FLAG: u32 = 0;
     /// Mask for the runtime-origin bit (bit 31 = 1).
     pub const RUNTIME_MASK: u32 = 1 << 31;
     /// Mask for the 28-bit ID (bits 27-0).

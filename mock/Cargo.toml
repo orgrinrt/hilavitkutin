@@ -15,6 +15,8 @@ members = [
 version = "0.1.0"
 edition = "2024"
 license = "MPL-2.0"
+description = "Pipeline execution engine — provider-driven, const-generic, no_std"
+repository = "https://github.com/orgrinrt/hilavitkutin"
 
 [workspace.dependencies]
 mockspace = { git = "ssh://git@github.com/hiisi-digital/mockspace.git", branch = "main" }

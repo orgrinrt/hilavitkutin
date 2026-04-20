@@ -3,6 +3,8 @@ name = "hilavitkutin-persistence"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+description = "Zero-copy persistence for hilavitkutin pipeline state"
+repository.workspace = true
 
 [dependencies]
 hilavitkutin-str.workspace = true
