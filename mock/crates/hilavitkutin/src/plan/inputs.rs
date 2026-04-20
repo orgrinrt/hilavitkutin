@@ -8,9 +8,12 @@ use super::access::AccessMask;
 
 /// Newtype wrapping a unit (WorkUnit) index. `#[repr(transparent)]`
 /// so it round-trips through FFI cleanly.
+///
+/// Named `UnitId` (not `NodeId`) to avoid a name collision with
+/// `arvo_bitmask::NodeId` at plan-stage integration sites.
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash, Ord, PartialOrd)]
 #[repr(transparent)]
-pub struct NodeId(pub u32);
+pub struct UnitId(pub u32);
 
 /// Descriptor bundle for `build_plan`. `MAX_UNITS` bounds the
 /// number of WUs; `MAX_STORES` bounds the number of distinct

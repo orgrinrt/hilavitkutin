@@ -6,7 +6,9 @@
 //! cross-wiring.
 //!
 //! Skeleton uses `u128` backing; swap for arvo-bitmask once const-
-//! generic bitmask support lands (BACKLOG).
+//! generic bitmask support lands (BACKLOG). Target variant depends
+//! on `MAX_STORES`: Mask64 for ≤ 64, Mask256 for ≤ 256, const-
+//! generic `Mask<N>` for larger (tracked as arvo BACKLOG).
 
 /// Per-store dirty bit. Same shape as `AccessMask` — kept distinct
 /// so `overlaps`-vs-access checks and `union_with`-vs-dirty checks
