@@ -29,12 +29,28 @@ pub fn prefetch_l2<T>(ptr: *const T) {
     let _ = ptr;
 }
 
+/// # WARNING — compiler fence only, not a hardware barrier
+///
+/// This prevents the *compiler* from reordering memory ops past
+/// this fence, but emits NO CPU-level memory barrier. On
+/// architectures with weak memory models (ARM, RISC-V) this is
+/// INSUFFICIENT for cross-thread ordering. Use atomic
+/// Release/Acquire loads/stores for thread-to-thread handoff.
+///
 /// Release-ordered compiler fence. Prevents the compiler from
 /// reordering prior stores past the fence.
 pub fn compiler_fence_release() {
     compiler_fence(Ordering::Release);
 }
 
+/// # WARNING — compiler fence only, not a hardware barrier
+///
+/// This prevents the *compiler* from reordering memory ops past
+/// this fence, but emits NO CPU-level memory barrier. On
+/// architectures with weak memory models (ARM, RISC-V) this is
+/// INSUFFICIENT for cross-thread ordering. Use atomic
+/// Release/Acquire loads/stores for thread-to-thread handoff.
+///
 /// Acquire-ordered compiler fence. Prevents the compiler from
 /// reordering later loads before the fence.
 pub fn compiler_fence_acquire() {
