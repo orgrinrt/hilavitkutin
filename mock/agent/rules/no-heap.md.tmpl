@@ -1,0 +1,50 @@
+---
+apply_to: ["crates/**/*.rs", "src/**/*.rs"]
+---
+
+## No heap. Ever.
+
+No ad-hoc allocations. Allocation is scheduler-managed, declared at
+compile time, never runtime-fabricated. `#![no_std]` + `#![no_alloc]`
+aren't crate attributes first — they're the universe. `Vec`, `Box`,
+`Rc`, `Arc`, `HashMap`, `String`, `format!` don't exist in this code.
+
+Every lint that forbids `alloc::*` / `Vec` / `Box` / `String` / `HashMap`
+is a consequence of this first principle, not a standalone rule.
+
+### Red flags (stop and reshape)
+
+- "I need a list temporarily" → the heap is never temporarily available.
+- "I'll Vec::new() just for a moment" → there is no moment.
+- "Push results to a Vec and return it" → take a trait-bound sink
+  (`&mut impl Collector<T>` / `&mut impl DiagnosticSink` /
+  `&mut impl ByteEmitter`).
+- "Format!() into a String" → borrow `&'static str`, or
+  `hilavitkutin_str::Str`, or write into a caller-provided byte sink.
+- "Box<dyn Trait>" → monomorphise. `impl Trait` or `<T: Trait>`.
+- "HashMap<K, V>" → type-level `Map<K, V, N: Cap>` at
+  `hilavitkutin-api::store`, or `&mut impl KeyValueStore<K, V>`.
+- "extern crate alloc" → WRONG UNIVERSE. Remove it. Reshape the surface.
+
+### Decision test
+
+Before writing any container type or return type:
+
+> "Does this imply runtime heap allocation?"
+
+If yes, reshape to a trait-bound emitter / iterator / bounded store. If
+the reshape feels heavier than "just Vec", that's friction the ecosystem
+should close (ship the shorthand), NOT a reason to escape to std.
+
+### Sanctioned use of std primitives
+
+The heap-using std types still appear in std trait impls whose
+signatures are fixed by the language:
+
+- `Iterator::next(&mut self) -> Option<Self::Item>`
+- `PartialOrd::partial_cmp(...) -> Option<Ordering>`
+- `Display::fmt(..., f: &mut fmt::Formatter<'_>) -> fmt::Result`
+
+Anywhere else in public API, use the notko/arvo/hilavitkutin-api
+vocabulary. `lint:allow(...)` is for tracked debt with a linked task id
+only — never skeleton convenience.

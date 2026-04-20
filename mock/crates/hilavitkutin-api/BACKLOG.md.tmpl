@@ -1,0 +1,113 @@
+# hilavitkutin-api — backlog
+
+## Mask256-backed AccessMask variant
+
+Current ships with AccessMask = Mask64 (≤64 stores). A Mask256 sibling
+lets pipelines address ≤256 stores at the cost of four-word bitmask
+ops instead of one. polka-dots research shows typical pipelines stay
+under 50 stores, so this is a non-urgent widening. Promote when a
+concrete consumer exceeds 64.
+
+## Arena runtime layout for Seq / Map
+
+Seq<T, N> and Map<K, V, N> ship here as type-surface only. Arena
+placement (stack vs co-located store arena), element layout, and
+iteration contract belong to the engine round (Task #35, domain 07).
+Consumers still get the const-generic type today; their runtime
+location is an engine concern.
+
+## Virtual flag bit-assignment algorithm
+
+hilavitkutin-api carries the Virtual<T> marker and the virtual flag
+surface. The plan-time assignment of virtuals to bit positions
+(affinity-ordered via arvo-comb::bin_pack for hierarchical skip) is
+engine-side (domain 10, Task #35).
+
+## Contains<S> proof-obligation macros
+
+The `Contains<S>` compile-time membership trait works today with
+hand-written tuple impls. A macro producing `impl_contains!((A, B,
+C))` for common tuple arities would reduce boilerplate. Ergonomic
+helper; not needed for correctness.
+
+## Runtime-replaceable platform defaults
+
+MemoryProvider / ThreadPool / Clock ship as monomorphised trait
+bounds. Default no_os / std implementations are intended to live in
+the engine crate; this crate stays platform-agnostic. Consumer
+override is via the scheduler builder, not via dyn.
+
+## Scheduling hint tuple specialisation
+
+`SchedulingHint = (Urgency, Divisibility, Significance)` uses a sealed
+trait on tuples. A future change could expose a builder-style API
+(`.immediate().atomic().critical()`) if consumer ergonomics surface
+as a friction point. Today's tuple form matches the rest of the
+compile-time composition model (AccessSet, WorkUnit generics).
+
+## ColumnValue specialisation coverage
+
+The blanket `min_specialization` default covers every `Copy + 'static`
+type via `size_of::<Self>() * 8`. arvo sub-byte types (UFixed<1, 0>,
+UFixed<2, 0>, etc.) need explicit specialisation to report their
+non-byte BIT_WIDTH. This crate ships with a handful of specialisations
+matching arvo's concrete aliases; additional arvo widths (if arvo
+ever adds them) need follow-up specialisations here.
+
+## Non-engine post-review notes
+
+### `WorkUnit::Ctx` carries all 7 provider bounds unconditionally
+
+Every WorkUnit's `Ctx` associated type requires the full provider
+bound set (`HasEach + HasBatch + HasReduce +
+HasMemoryProvider + HasThreadPool + HasClock + HasWorker`, or the
+current equivalent) regardless of which iteration APIs the WU
+actually uses. Two possible follow-ups:
+
+- Per-method bound splitting, e.g. `fn execute_each` bounded only
+  by `HasEach`, `fn execute_batch` only by `HasBatch`, etc. Each
+  WU declares which iteration methods it implements and only
+  those pay the bound cost.
+- Document the blanket no-op impl pattern for unused APIs on
+  provider tuples, so a WU that only wants Each can still satisfy
+  HasBatch / HasReduce with a provider that no-ops.
+
+Design decision deferred until a concrete WU surfaces friction.
+
+### EachApi / BatchApi / ReduceApi all name method `run()`
+
+At any call site on a provider tuple implementing all three,
+fully-qualified syntax is required
+(`<P as EachApi>::run(...)`). Ergonomic friction. Consider
+renaming to `run_each` / `run_batch` / `run_reduce`. Breaking
+change; holds until a separate signal (or a deliberate breaking
+round on the api crate).
+
+### HasMemoryProvider / HasThreadPool / HasClock accessor naming
+
+The three bounds ship accessor methods `memory()` / `threads()` /
+`clock()`, which don't match whatever the `provider!` macro would
+generate from the trait name (e.g. a macro-derived accessor might
+be `memory_provider()` / `thread_pool()` / `clock()`). Either
+document the asymmetry or rename for consistency. Both options
+require touching every consumer; defer to a breaking round.
+
+## Sink / codec extensions — post-sweep
+
+Landed in the #83 round: capability atoms, named composites,
+`NullSink` / `CountingSink` / `TeeSink`, stateful Encoder/Decoder
+pair with oneshot Ext adapters, tuple blanket impls arity 2+3.
+
+Deferred until a concrete consumer surfaces demand:
+
+- Higher-arity tuple blanket impls (>3).
+- SizeHint / LenHint capability for iterator-shaped sinks that know
+  their remaining item count.
+- Flush / Fuse capability for buffered byte emitters with back-
+  pressure semantics.
+- Specific framed codec families (JSON, clause bytecode, paradox
+  save format). The contract ships here; concrete codecs live in
+  owner crates. Don't promote into this crate.
+- Blanket impls over Vec / Seq under a test-helper gate. Those live
+  in a dedicated test-helper crate (#81) so hilavitkutin-api stays
+  heap-free and no_std.

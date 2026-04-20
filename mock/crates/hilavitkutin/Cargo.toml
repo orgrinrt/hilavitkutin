@@ -3,6 +3,8 @@ name = "hilavitkutin"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+description = "Pipeline execution engine — provider-driven, const-generic, no_std"
+repository.workspace = true
 
 [dependencies]
 hilavitkutin-api.workspace = true
@@ -12,11 +14,17 @@ arvo-graph.workspace = true
 arvo-sparse.workspace = true
 arvo-spectral.workspace = true
 arvo-comb.workspace = true
+libc = { workspace = true, optional = true }
 
 [build-dependencies]
 mockspace.workspace = true
 
 [features]
-default = ["os"]
-os = []
-std = []
+default = ["platform-os"]
+platform-os = ["dep:libc"]
+platform-std = []
+platform-no-os = []
+# Opt-in intrinsics upgrade. Still core-only; enables
+# `core::hint::black_box` for `noinline_barrier`. Nightly
+# `core::intrinsics::prefetch_*` is a follow-up (BACKLOG).
+intrinsics-std = []

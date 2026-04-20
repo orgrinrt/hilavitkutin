@@ -3,6 +3,8 @@ name = "hilavitkutin-build"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+description = "Build-time helpers for the hilavitkutin pipeline engine"
+repository.workspace = true
 
 [dependencies]
 

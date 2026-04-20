@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# @matchers: Bash, Write, Edit
+# @timeout: 5
+# Agent hook: block runtime thread spawn in hilavitkutin* sources.
+#
+# Mirrors `mock/lints/no_runtime_spawn.rs`. The engine uses a pre-
+# allocated thread pool constructed once at pipeline build; threads
+# park between frames and are woken via hybrid spin-then-park.
+
+set -uo pipefail
+
+__INPUT=$(cat)
+
+{{HOOK_HELPERS}}
+
+TARGET=$(_extract "file_path")
+CONTENT=$(_extract "new_string")
+if [[ -z "$CONTENT" ]]; then
+    CONTENT=$(_extract "content")
+fi
+
+if ! echo "$TARGET" | grep -qE 'hilavitkutin[^/]*/src/.*\.rs$'; then
+    allow
+fi
+
+if echo "$CONTENT" | grep -qE 'thread::spawn|std::thread::spawn|std::thread::Builder'; then
+    deny "BLOCKED: \`thread::spawn\` — hilavitkutin uses a pre-allocated thread pool. Spawn only through the consumer-provided \`ThreadPool\` trait; between frames, pool threads park."
+fi
+
+if echo "$CONTENT" | grep -qE 'tokio::spawn|tokio::task::spawn|async_std::task::spawn|smol::spawn|rayon::spawn'; then
+    deny "BLOCKED: async runtime / rayon spawn — the engine is sync and owns its own pool. Route work through WorkUnits and the scheduler, not an external runtime."
+fi
+
+allow

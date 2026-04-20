@@ -6,27 +6,85 @@ apply_to: ["**/Cargo.toml"]
 
 ### Mock workspace
 
-- All polka crates use `version.workspace = true`, `edition.workspace = true`
-- Sibling dependencies use `.workspace = true` syntax
-- External dependencies declared in `[workspace.dependencies]`
-- Edition 2024 for all crates
+- All hilavitkutin crates use `version.workspace = true`,
+  `edition.workspace = true`, `license.workspace = true`.
+- Sibling dependencies use `.workspace = true` syntax.
+- External dependencies declared in `[workspace.dependencies]`.
+- Edition 2024 for all crates.
+
+### Crate structure
+
+Six crates, flat — no proc-macro crates, no cdylib, no plugin-dlopen
+targets:
+
+- `hilavitkutin-api` — consumer-facing contracts. Traits and data
+  shapes only; no concrete engine logic.
+- `hilavitkutin` — the engine. Depends on `hilavitkutin-api` and
+  on arvo substrate crates.
+- `hilavitkutin-build` — **build-dep only**. Declared under
+  `[build-dependencies]` in the consumer, never under
+  `[dependencies]`. No runtime linkage.
+- `hilavitkutin-ctx`, `hilavitkutin-persistence`, `hilavitkutin-str`
+  — standalone extensions. Each is independently usable. They do
+  not depend on the engine, on `hilavitkutin-api`, or on each other.
 
 ### Dependency direction
 
-- **SDK** (primitives, derive, sdk): no polka crate deps (primitives), or only lower SDK crates
-- **Core: Data** (data, catalogue, project): depends on polka-sdk
-- **Core: Execution** (pipeline, scheduler, audit): depends on polka-sdk + relevant core:data crates
-- **CLI** (cli): depends on core crates + polka-sdk
-- **Extensions** (lang-polka, source-brew, etc.): depends on polka-sdk ONLY
+- `hilavitkutin-api`: no hilavitkutin crate deps. May depend on
+  arvo substrate if it needs numeric types. Must never depend on
+  `hilavitkutin` (circular).
+- `hilavitkutin` → `hilavitkutin-api` + arvo substrate crates.
+- `hilavitkutin-build`: zero hilavitkutin crate deps; may depend on
+  LLVM / cargo / rustc toolchain crates. Strictly build-time.
+- `hilavitkutin-ctx`, `-persistence`, `-str`: independent. Each
+  may depend on arvo substrate; none depend on the engine or on
+  each other.
 
-### Proc-macro crates
+### `no_std` + `no_alloc` enforcement
 
-- `polka-derive` is `[lib] proc-macro = true`
-- Only exports procedural macros
-- Depends on polka-primitives for type references
+Every crate's `lib.rs` starts with:
 
-### Extension crates (cdylib)
+```rust
+#![no_std]
+#![deny(unsafe_op_in_unsafe_fn)]
+// no `extern crate alloc;`
+```
 
-- Extension crates use `[lib] crate-type = ["cdylib"]`
-- Depend on polka-sdk only — no core crate dependencies
-- Compiled as dynamic libraries for plugin loading
+`Cargo.toml` must not pull `std`-feature variants of any dependency.
+If an arvo crate exposes a `std` feature, it stays off.
+
+### ExpandedLto pragma
+
+`hilavitkutin-build` provides the `ExpandedLto` pragma (domain 03
+in the consolidation topic). The consumer's release profile must
+opt into it. This requirement is documented in
+`hilavitkutin-build`'s DESIGN doc; lint enforcement comes later
+when the pragma's concrete shape lands.
+
+### Substrate (arvo)
+
+Arvo crates are git dependencies on the workspace dev branch for
+now. When both projects stabilise, they become versioned crates.io
+releases.
+
+```toml
+[workspace.dependencies]
+arvo          = { git = "https://github.com/orgrinrt/arvo.git", branch = "dev" }
+arvo-bits     = { git = "https://github.com/orgrinrt/arvo.git", branch = "dev" }
+arvo-bitmask  = { git = "https://github.com/orgrinrt/arvo.git", branch = "dev" }
+arvo-graph    = { git = "https://github.com/orgrinrt/arvo.git", branch = "dev" }
+arvo-sparse   = { git = "https://github.com/orgrinrt/arvo.git", branch = "dev" }
+arvo-spectral = { git = "https://github.com/orgrinrt/arvo.git", branch = "dev" }
+arvo-comb     = { git = "https://github.com/orgrinrt/arvo.git", branch = "dev" }
+```
+
+When iterating on changes crossing the arvo / hilavitkutin
+boundary, add a local `[patch]` temporarily — remove before
+pushing.
+
+### Forbidden crate types
+
+- No `[lib] proc-macro = true` in any crate.
+- No `crate-type = ["cdylib"]` — there are no dynamic plugins;
+  composition is static.
+- No runtime plugin crates of any shape.

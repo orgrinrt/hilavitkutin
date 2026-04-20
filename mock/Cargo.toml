@@ -15,24 +15,39 @@ members = [
 version = "0.1.0"
 edition = "2024"
 license = "MPL-2.0"
+description = "Pipeline execution engine — provider-driven, const-generic, no_std"
+repository = "https://github.com/orgrinrt/hilavitkutin"
 
 [workspace.dependencies]
 mockspace = { git = "ssh://git@github.com/hiisi-digital/mockspace.git", branch = "main" }
 
+# notko foundation — Just / Maybe / Outcome / Boundable / NonZeroable
+# primitives. Consumed by hilavitkutin-api for its contract traits
+# (BoundedPush, Decoder) and by any downstream crate needing the
+# fallibility ladder.
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false }
+
 # arvo substrate — referenced via path when developing in tandem, via
 # crates.io / git dep once published. For now the mockspace validates
 # shapes against design docs; consumers path-override as needed.
-arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
-arvo-bits = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
-arvo-bitmask = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
-arvo-graph = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
-arvo-sparse = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
-arvo-spectral = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
-arvo-comb = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+arvo-bits = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+arvo-bitmask = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+arvo-graph = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+arvo-sparse = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+arvo-spectral = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+arvo-comb = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+
+# Persistence dep for hilavitkutin-persistence (zero-copy serde, no_std + no alloc).
+# Version aligned with saalis's mockspace for consistency.
+rkyv = { version = "0.8", default-features = false }
 
 hilavitkutin-api = { path = "crates/hilavitkutin-api" }
 hilavitkutin = { path = "crates/hilavitkutin" }
 hilavitkutin-build = { path = "crates/hilavitkutin-build" }
+
+# Platform dep for hilavitkutin engine os-tier syscalls.
+libc = { version = "0.2", default-features = false }
 hilavitkutin-ctx = { path = "crates/hilavitkutin-ctx" }
 hilavitkutin-persistence = { path = "crates/hilavitkutin-persistence" }
 hilavitkutin-str = { path = "crates/hilavitkutin-str" }

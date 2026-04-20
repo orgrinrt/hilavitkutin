@@ -3,3 +3,5 @@ name = "hilavitkutin-ctx"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+description = "Per-WorkUnit context framework for hilavitkutin"
+repository.workspace = true

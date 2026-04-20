@@ -1,0 +1,235 @@
+# hilavitkutin — backlog
+
+## Windows os-tier
+
+Current os-tier covers Linux + macOS via mmap + pthread +
+clock_gettime. Windows needs VirtualAlloc + CreateThread +
+QueryPerformanceCounter wrappers. Defer until a Windows consumer
+surfaces or the distribution story demands it.
+
+## no_os tier documentation
+
+The no_os tier is trait-only — consumers ship their own
+MemoryProviderApi / ThreadPoolApi / ClockApi impls. A concrete
+example (for an embedded target) would help third-party
+adoption. Defer until a consumer surfaces.
+
+## Memory protection (mprotect)
+
+`OsMemoryProvider::protect` stubs to Ok this round. Real mprotect
+integration with the read/write flag combinations lands with the
+persistence follow-up round that actually exercises protection
+(memory-mapped file rehydration).
+
+## ThreadPool tests
+
+Pool primitives ship without dedicated tests this round; dispatch
+round (5a3) exercises them against the fused-WU monomorphised
+function. Adding targeted unit tests here would add negative
+value today.
+
+## Engine-wide items (post-platform sub-rounds)
+
+Tracked in the engine-impl task description (#35):
+- 5a2 plan-stage analysis
+- 5a3 dispatch + intrinsics
+- 5a4 thread + adapt
+- 5a5 resource caching
+- 5a6 strategy + scheduler
+
+## Scheduler follow-ups (5a6 skeleton deferrals)
+
+- Real execution loop — needs 5a2 (plan-stage) + 5a3 (dispatch)
+  + 5a4 (thread) before it can actually run work.
+- Self-hosting meta pipeline proper (PlanStage → ScheduleReady →
+  PassStart → ScheduleEnd): resource types ship now; the pipeline
+  logic follows once engine execution exists.
+- Version-stamp parallel arrays (SoA) depend on 5a2 defining the
+  store layout shape.
+
+## Resource-caching follow-ups (5a5 skeleton deferrals)
+
+- Generic-closure combine function (AccumulatorSlot currently
+  takes fn-pointer combiners; closure variant lands with 5a4 when
+  the thread-pool generic spawn story ships).
+- Write-back batching (coalesce per-resource writes after a
+  morsel-loop ends).
+- mlock/madvise integration for resource pages — nice-to-have
+  performance knob.
+
+## Engine 5a2 follow-ups
+
+The 5a2 round ships the plan-stage type surface + stub function
+signatures; every algorithm step is `todo!()`. Each entry below is
+a separate downstream micro-round that fills in one step's body.
+
+- Step 1: DAG construction from AccessMask overlap
+  (`plan::build_dag`).
+- Step 2: Topological sort + node renumbering
+  (`plan::topo_sort`).
+- Step 3: Upward rank + critical path
+  (`plan::upward_rank`).
+- Step 4: Waist detection → phase boundaries
+  (`plan::detect_waists`).
+- Step 5: RCM reordering → fiber grouping order
+  (`plan::rcm_reorder`).
+- Step 6: Block diagonal + D-M → phase validation
+  (`plan::block_diagonal`).
+- Step 7: Spectral partitioning for >5 fibers
+  (`plan::spectral_partition`).
+- Step 8: Fiber grouping (greedy + matrix chain DP)
+  (`plan::group_fibers`).
+- Step 9: Per-fiber morsel sizing
+  (`plan::size_morsels`).
+- Step 10: Per-phase adaptive configs
+  (`plan::adaptive_config`).
+- Step 11: Column classification per fiber
+  (`plan::classify_columns`).
+- Step 12: Dirty propagation masks for incremental skip
+  (`plan::propagate_dirty`).
+- Swap AccessMask bit-backing for arvo-bitmask once const-generic
+  bitmask support lands in arvo.
+- Swap DependencyGraph `[[bool; N]; N]` matrix for arvo-graph CSR
+  once arvo-graph gains const-generic support.
+- Top-level `build_plan` orchestration body: wires the 12 steps
+  into a single pass once all step bodies exist.
+
+## Engine 5a3 follow-ups
+
+The 5a3 round ships the dispatch (domain 17) + intrinsics
+(domain 13) type surface with stub code-gen bodies. Each entry
+below is a separate downstream round.
+
+- `select_approach` body — record-count thresholds (10K cutover
+  between IndirectPerFiber/TrunkMega and ScheduleMega; exact
+  boundary is benchmarked).
+- `codegen_fiber` body — emit the monomorphised per-fiber
+  dispatch function. Needs LLVM hooks or a build-time plugin
+  from hilavitkutin-build (ExpandedLto pragma).
+- `codegen_core` body — emit the per-core pipeline: encodes
+  phases + morsel boundaries + sync points + per-fiber dispatch
+  records. Depends on `codegen_fiber`.
+- ExpandedLto pragma integration — required for the LLVM
+  devirtualisation of the `&[WuFn]` slice into straight-line
+  code. Depends on hilavitkutin-build 5a4+.
+- Rust-pipe pattern wiring — stack-cached resource snapshot at
+  morsel head, fiber-input column reads at morsel start,
+  DSE-friendly internal column reads, grouped output stores at
+  morsel tail. Depends on `codegen_fiber` body.
+- Progress counter thread-safety stress tests — loom / miri
+  coverage over the Release-store / Acquire-load contract.
+- Intrinsics: real `core::intrinsics::prefetch_*` wiring on
+  nightly (gated behind a `nightly-intrinsics` feature; the
+  current `intrinsics-std` feature only enables `core::hint`
+  + `core::sync::atomic::compiler_fence`).
+- Intrinsics: platform-specific inline asm paths (x86_64
+  PREFETCHT0, aarch64 PRFM). Useful when the LLVM intrinsic
+  doesn't emit the exact instruction the profile wants.
+
+## Engine 5a4 follow-ups
+
+The 5a4 round ships the thread (domain 20) + adapt (domain 22)
+type surface with stub coordination/decision bodies. Each entry
+below is a separate downstream round.
+
+### Threading follow-ups
+
+- Actual pthread / Win32 / OS-thread spawning (gated on a future
+  `threading-std` feature; introduces the feature flag + spawn
+  method on `ThreadPool` together).
+- Hybrid spin-park wake implementation — 128 spin iters default
+  via `core::hint::spin_loop`, then park on a platform primitive
+  (futex on Linux, `ulock_wait` on macOS, `WaitOnAddress` on
+  Windows).
+- Heterogeneous-core detection — CPUID leaf 0x1A on x86, sysfs
+  (`/sys/devices/cpu_core` vs `/sys/devices/cpu_atom`) on Linux,
+  IOKit / hwloc on macOS.
+- Core pinning per platform — `pthread_setaffinity_np` on Linux,
+  `thread_policy_set` with `THREAD_AFFINITY_POLICY` on macOS,
+  `SetThreadAffinityMask` on Windows.
+- Work-stealing `Executor` trait — consumer-provided override for
+  variable per-record workloads. `steal_fallback` stub gains a
+  real `Executor` bound once the trait ships.
+- Head+tail convergence merge implementations — addition path
+  for additive/commutative accumulators; sequential fallback for
+  non-commutative fibers. Both need `Convergence::meeting_record`
+  semantics (whichever thread crosses midpoint first publishes).
+- Phase pipeline parallelism wiring — `ProgressCounter` exists
+  from 5a3; the thread scheduler has to consult it between
+  phases so phase N+1 starts as soon as N produces a morsel's
+  worth.
+- `classify_cores` signature should become `<const MAX_CORES: usize>`
+  generic instead of hard-coded `[CoreClass; 256]` once a
+  follow-up round needs the flexibility.
+
+### Adapt follow-ups
+
+- PMC / `perf_event` integration for `cache_miss_rate` and
+  `branch_miss_rate` sampling (Linux `perf_event_open`, macOS
+  `kpc`, Windows PerfCounter APIs).
+- Phase completion time measurement — monotonic clock via the
+  `hilavitkutin-api::Clock` trait (already shipped in platform
+  round); wire into `AdaptMetrics::phase_completion_time_ns`.
+- Adaptive mode selection heuristic — latency vs throughput
+  trade-off feeding `select_adapt_config`. EMA-based per DESIGN
+  (1/8 decay).
+- Per-phase config hot-swap during pipeline execution — between
+  frames only, per DESIGN (during-execution swaps would
+  invalidate monomorphised dispatch).
+- Telemetry hooks for exporting adapt decisions to the consumer
+  (observability / tuning dashboards, hung on a future trait).
+
+## Engine skeleton post-review notes
+
+- **POSIX fn*/void* cast in `platform/os.rs` `spawn_fn`.** The
+  current pattern smuggles `fn()` via `usize` as a
+  `pthread_create` argument. POSIX does not guarantee that `fn*`
+  and `void*` have matching size; all Rust tier-1 targets happen
+  to comply in practice, but the threading-std implementation
+  round should switch to `Box<fn()>` or a static work-queue slot
+  to be POSIX-clean.
+- **`OnceLock` MSRV in `platform/std_tier.rs`.** Uses
+  `std::sync::OnceLock` which requires Rust 1.70+. The workspace
+  does not yet pin a toolchain. When a toolchain policy is
+  decided, either pin 1.70+ in `rust-toolchain.toml` or replace
+  with an `AtomicBool` init-once pattern.
+
+## Cross-repo integration pre-empted issues
+
+Surfaced by the 2026-04-20 arvo↔hilavitkutin cross-repo review.
+Each will block a specific plan-stage step impl round unless
+handled at that round's boundary.
+
+- **`Cap` literal in const-generic position** —
+  `generic_const_exprs` disallows `Cap(USize(MAX_UNITS))` in a
+  turbofish or where-clause. Plan-stage impls that call arvo
+  algorithms keyed on `Cap` must declare a named local
+  `const N: Cap = Cap(USize(MAX_UNITS));` and monomorphise from
+  there.
+
+- **`upward_rank` weight type needs `arvo::FromConstant`** — when
+  step 3 (critical path / longest path) lands, the weight `u32`
+  must satisfy `FromConstant`. If arvo L0 lacks primitive integer
+  impls, add them on the arvo side or wrap the weight here.
+
+- **`spectral_partition` adapter (step 7)** —
+  `arvo_spectral::k_way_partition` takes `&Matrix<W, N>` (dense
+  weight matrix). The skeleton `DependencyGraph<MAX_UNITS>` is a
+  bool adjacency matrix. The adapter must synthesise edge weights
+  (or reach for an arvo helper that accepts adjacency + uniform
+  weight) before the spectral call lands.
+
+- **`rcm_reorder` length equivalence (step 5)** — arvo returns
+  `[arvo_bitmask::NodeId; cap_size(N)]`. The step signature
+  returns `[UnitId; MAX_UNITS]` (after the Fix 1 rename). The
+  equivalence `cap_size(Cap(USize(MAX_UNITS))) == MAX_UNITS` may
+  not hold as a where-clause under current `generic_const_exprs`;
+  use a runtime `debug_assert_eq!` at the call site until it
+  becomes expressible.
+
+- **`block_diagonal` return shape (step 6)** — the skeleton stub
+  returns `bool`. Arvo's actual `block_diagonal` returns
+  `(USize, [USize; N])` (component count + per-node IDs), and
+  `dulmage_mendelsohn` returns a full `DulmageMendelsohn` struct.
+  Split step 6 into `block_diagonal_components` and
+  `dulmage_mendelsohn_decompose` when its body is filled in.

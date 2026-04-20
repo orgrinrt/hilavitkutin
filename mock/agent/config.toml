@@ -1,0 +1,12 @@
+# Agent integration config. See mockspace README for details.
+
+[attribution]
+# Byline policy when HILAVITKUTIN_AGENT_MODE is unset or "assistant".
+# Empty = no Co-Authored-By permitted (human is sole author).
+# Non-empty glob = bylines matching this pattern are accepted.
+non_autonomous = ""
+
+# Byline policy when HILAVITKUTIN_AGENT_MODE=autonomous.
+# Empty = autonomous mode errors at commit time. Set this before switching modes.
+# Example: "Claude * <noreply@anthropic.com>" for any Claude model.
+autonomous = ""
