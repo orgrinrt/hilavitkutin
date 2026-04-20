@@ -1,0 +1,115 @@
+---
+apply_to: ["crates/**/*.rs", "src/**/*.rs"]
+---
+
+# Cookbook — intent → trait / type
+
+A pattern book for "I need to X" questions. Pick the matching intent,
+use the suggested trait / type. When none fits, the correct answer is
+usually "add a trait to hilavitkutin-api", not "use a std primitive".
+
+## "I need to return an optional value"
+
+Return `Maybe<T>` (from `notko`). `Maybe::Is(v)` / `Maybe::Isnt`.
+
+## "I need a fallible operation"
+
+Return `Outcome<T, E>` (from `notko`). `E` is a `repr(C)` enum.
+
+## "I need an infallible value (hot path)"
+
+Return `Just<T>` or plain `T`. Mark the function with
+`#[optimize_for(hot)]` to get the macro rewrite (AST-level Ok→Just,
+Err→panic in internal release).
+
+## "I need to emit errors / diagnostics from a phase"
+
+Take `&mut impl DiagnosticSink<E>` as a parameter. Return
+`Outcome<Success, Aborted>`. DO NOT return `Vec<Error>`. The sink
+trait ships in `hilavitkutin-api` (pending #83); until then, author a
+local trait and promote later.
+
+## "I need to emit bytes (serialization, codegen)"
+
+Take `&mut impl ByteEmitter` as a parameter. Return
+`Outcome<Meta, EmitterFull>`. DO NOT return `Vec<u8>`.
+
+## "I need to collect items into bounded storage"
+
+Take `&mut impl Collector<T>` as a parameter. Implementors can be
+Seq-backed, array-backed, channel-backed, etc.
+
+## "I need to declare a WorkUnit's access set"
+
+```rust
+impl WorkUnit for MyUnit {
+    type Access = (Read<Column<Input>>, Write<Column<Output>>);
+    fn execute(ctx: &Self::Ctx) { ... }
+}
+```
+
+## "I need a context / environment binding"
+
+Declare via associated type: `type Ctx: HasReader<Input> +
+HasWriter<Output>`. Caller provides any type that satisfies the bound.
+
+## "I need a bit pattern"
+
+`Mask64` for ≤ 64 bits, `Mask256` for ≤ 256. From `arvo-bitmask`. For
+bit-level contracts, `arvo-bits::BitSequence`.
+
+## "I need a type-level storage declaration"
+
+`Seq<T, N: Cap>` for ordered, `Map<K, V, N: Cap>` for keyed. These are
+`hilavitkutin-api::store` ZSTs — declarative, not Vec-like. Allocation
+is scheduler-managed.
+
+## "I need key→value lookup"
+
+Take `&impl KeyValueStore<K, V>`. Internally use `Map<K, V, CAP>`
+(type-level descriptor).
+
+## "I need an interned string"
+
+`Str` from `hilavitkutin-str`. Construct const: `str_const!("foo")`.
+Runtime-intern via `StringInterner`.
+
+## "I need a FIFO cache"
+
+`hilavitkutin-persistence::Sieve<K, V, CAP>`.
+
+## "I need to iterate a bounded source"
+
+`impl IntoIterator<Item = T>` or `&[T]`.
+
+## "I need a measurement / capacity / index"
+
+`USize` (not raw `usize`). `Cap` for const-generic capacity.
+
+## "I need threading"
+
+Take `&impl ThreadPoolApi`. Engine provides the implementation; never
+call `thread::spawn`, `tokio::spawn`, `async_std::spawn` yourself.
+
+## "I need memory"
+
+Take `&mut impl MemoryProviderApi`. Never `Box::new`, `Vec::new`,
+`alloc::alloc`. The engine's memory layout is planned, not fabricated.
+
+## "I need time"
+
+Take `&impl ClockApi`. Never `std::time::Instant::now()`.
+
+## "I genuinely need std"
+
+Hilavitkutin is `#![no_std]`, no alloc, no dynamic dispatch — by
+design. If you think you need std, the API shape is wrong. File a
+design round. The 22 traits in `hilavitkutin-api` cover access /
+context / platform / hints — pick one or add one.
+
+## See also
+
+- `.claude/rules/type-surface.md` — the decision test, DO/DON'T table
+- `.claude/rules/no-heap.md` — dedicated no-heap rule
+- `PRINCIPLES.md` — first principles
+- hilavitkutin-api crate docs — the 22-trait surface
