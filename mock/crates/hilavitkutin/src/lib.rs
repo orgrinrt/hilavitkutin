@@ -37,6 +37,7 @@ compile_error!(
     "hilavitkutin: one of `platform-os`, `platform-std`, or `platform-no-os` must be enabled"
 );
 
+pub mod adapt;
 pub mod dispatch;
 pub mod intrinsics;
 pub mod platform;
@@ -44,6 +45,7 @@ pub mod plan;
 pub mod resource;
 pub mod scheduler;
 pub mod strategy;
+pub mod thread;
 
 #[cfg(feature = "platform-os")]
 pub use platform::{OsClock, OsMemoryProvider, OsThreadPool};
