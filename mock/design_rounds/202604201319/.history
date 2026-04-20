@@ -1,0 +1,50 @@
+6accbcf chore: lock src changelist for #72 persistence sub-sweep
+d09c60c feat: hilavitkutin-persistence primitive-vocabulary sweep (#72)
+30d0028 plan: open src CL for hilavitkutin-persistence sweep (#72)
+3d207ae chore: lock doc changelist for #72 persistence sweep
+6754f0e docs: apply DOC phase for hilavitkutin-persistence sweep (#72)
+b82728c chore: flatten active round files for #72
+4ea86e1 plan: open doc CL for hilavitkutin-persistence sweep (#72)
+3af0971 plan: open topic for hilavitkutin-persistence sweep (#72)
+b571f57 docs: tighten writing-style + wire shared fragment injection markers
+d42ab21 docs: sync refined writing-style rules from arvo
+5f292fe docs: port expanded writing-style rules from arvo
+cab852e Revert "docs: hilavitkutin sweep primitive vocab + semantic aliases (doc phase, #72)"
+27d2e87 docs: hilavitkutin sweep primitive vocab + semantic aliases (doc phase, #72)
+873eba2 chore: realign design_rounds timestamps to actual close times
+f6c23fe chore: close #83 design round 202604201048
+05c1d75 chore: lock src changelist for #83
+4ed7122 feat: ship #83 contract surface — capability/sink/codec in hilavitkutin-api
+84b0982 docs: open #83 src CL — capability/sink/codec source plan
+ad9e19d chore: lock doc changelist for #83
+31fbea2 docs: apply #83 doc phase — contract surface in hilavitkutin-api
+092f69a docs: open #83 doc CL — sink/collector/codec contract plan
+672b79c docs: open #83 topic — sink/collector/codec contracts
+c1f5091 feat: add type-surface-review skill (#91)
+01dc9c4 feat: add type-surface-review skill (#91)
+202e3c3 feat: extend pre-tool guard with bare Option / Result detection (#77)
+b7446b5 docs: add type-surface + cookbook agent rules (#89, #90)
+5e3062e docs: enable drift-catching lints at warn + add no-heap rule (#84, #97)
+87dd836 docs: port shared principles + initial mockspace doc render
+39d8e47 chore: close design round 202604264700
+0427483 chore: lock src CL 202604264800 for cross-repo integration polish
+a1926ad fix: cross-repo integration polish — UnitId rename, arvo default-features, Mask variants, arvo_bits lint
+43f5d01 docs: add src CL for cross-repo integration polish
+42dcc02 chore: lock doc CL 202604264700 for cross-repo integration polish
+1124372 docs: expand BACKLOG for cross-repo integration polish
+8cb5d15 docs: start hilavitkutin cross-repo integration polish round
+3742f67 chore: close design round 202604264300
+9098bd8 chore: lock src changelist for 202604264400_changelist.src.lock.md
+5d4459c fix: non-engine post-review — CONST_MASK/Cargo metadata/sentinel
+768469c docs: add src CL for non-engine polish
+41907c4 chore: lock doc changelist for 202604264300_changelist.doc.lock.md
+d55b246 docs: add non-engine post-review notes to BACKLOGs
+64c62da docs: start non-engine polish post-review round
+b80a802 chore: close design round 202604264100
+ddfc47f chore: lock src changelist for 202604264200_changelist.src.lock.md
+341314d fix: engine skeleton Send/Sync + intrinsics warning docs
+b70ea51 docs: add src CL for engine polish
+4910e37 chore: lock doc changelist for 202604264100_changelist.doc.lock.md
+fe638d8 docs: add engine skeleton post-review notes to BACKLOG
+f35044a docs: start engine polish post-review round
+c3802b2 chore: close design round 202604263900
