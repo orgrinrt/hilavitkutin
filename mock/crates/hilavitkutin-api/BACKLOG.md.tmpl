@@ -53,3 +53,41 @@ UFixed<2, 0>, etc.) need explicit specialisation to report their
 non-byte BIT_WIDTH. This crate ships with a handful of specialisations
 matching arvo's concrete aliases; additional arvo widths (if arvo
 ever adds them) need follow-up specialisations here.
+
+## Non-engine post-review notes
+
+### `WorkUnit::Ctx` carries all 7 provider bounds unconditionally
+
+Every WorkUnit's `Ctx` associated type requires the full provider
+bound set (`HasEach + HasBatch + HasReduce +
+HasMemoryProvider + HasThreadPool + HasClock + HasWorker`, or the
+current equivalent) regardless of which iteration APIs the WU
+actually uses. Two possible follow-ups:
+
+- Per-method bound splitting, e.g. `fn execute_each` bounded only
+  by `HasEach`, `fn execute_batch` only by `HasBatch`, etc. Each
+  WU declares which iteration methods it implements and only
+  those pay the bound cost.
+- Document the blanket no-op impl pattern for unused APIs on
+  provider tuples, so a WU that only wants Each can still satisfy
+  HasBatch / HasReduce with a provider that no-ops.
+
+Design decision deferred until a concrete WU surfaces friction.
+
+### EachApi / BatchApi / ReduceApi all name method `run()`
+
+At any call site on a provider tuple implementing all three,
+fully-qualified syntax is required
+(`<P as EachApi>::run(...)`). Ergonomic friction. Consider
+renaming to `run_each` / `run_batch` / `run_reduce`. Breaking
+change; holds until a separate signal (or a deliberate breaking
+round on the api crate).
+
+### HasMemoryProvider / HasThreadPool / HasClock accessor naming
+
+The three bounds ship accessor methods `memory()` / `threads()` /
+`clock()`, which don't match whatever the `provider!` macro would
+generate from the trait name (e.g. a macro-derived accessor might
+be `memory_provider()` / `thread_pool()` / `clock()`). Either
+document the asymmetry or rename for consistency. Both options
+require touching every consumer; defer to a breaking round.
