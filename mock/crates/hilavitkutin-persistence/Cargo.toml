@@ -9,12 +9,16 @@ repository.workspace = true
 [dependencies]
 hilavitkutin-str.workspace = true
 hilavitkutin-api.workspace = true
+
+# Primitive-vocabulary deps (sweep #72, round 202604201319):
+arvo.workspace = true           # USize, Bool, Cap at pub API boundary
+arvo-hash.workspace = true      # ContentHash = Bits<28>
+notko.workspace = true          # Maybe, Outcome
+
 # rkyv pulled in by follow-up round; skeleton ships without it.
 
 [dev-dependencies]
-# arvo for USize / Bool newtypes used by test-local MemoryProviderApi
-# stubs. Library code stays dep-free of arvo.
-arvo.workspace = true
+# (arvo already declared above under [dependencies])
 
 [build-dependencies]
 mockspace.workspace = true
