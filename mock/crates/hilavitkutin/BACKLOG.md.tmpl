@@ -193,3 +193,43 @@ below is a separate downstream round.
   does not yet pin a toolchain. When a toolchain policy is
   decided, either pin 1.70+ in `rust-toolchain.toml` or replace
   with an `AtomicBool` init-once pattern.
+
+## Cross-repo integration pre-empted issues
+
+Surfaced by the 2026-04-20 arvo↔hilavitkutin cross-repo review.
+Each will block a specific plan-stage step impl round unless
+handled at that round's boundary.
+
+- **`Cap` literal in const-generic position** —
+  `generic_const_exprs` disallows `Cap(USize(MAX_UNITS))` in a
+  turbofish or where-clause. Plan-stage impls that call arvo
+  algorithms keyed on `Cap` must declare a named local
+  `const N: Cap = Cap(USize(MAX_UNITS));` and monomorphise from
+  there.
+
+- **`upward_rank` weight type needs `arvo::FromConstant`** — when
+  step 3 (critical path / longest path) lands, the weight `u32`
+  must satisfy `FromConstant`. If arvo L0 lacks primitive integer
+  impls, add them on the arvo side or wrap the weight here.
+
+- **`spectral_partition` adapter (step 7)** —
+  `arvo_spectral::k_way_partition` takes `&Matrix<W, N>` (dense
+  weight matrix). The skeleton `DependencyGraph<MAX_UNITS>` is a
+  bool adjacency matrix. The adapter must synthesise edge weights
+  (or reach for an arvo helper that accepts adjacency + uniform
+  weight) before the spectral call lands.
+
+- **`rcm_reorder` length equivalence (step 5)** — arvo returns
+  `[arvo_bitmask::NodeId; cap_size(N)]`. The step signature
+  returns `[UnitId; MAX_UNITS]` (after the Fix 1 rename). The
+  equivalence `cap_size(Cap(USize(MAX_UNITS))) == MAX_UNITS` may
+  not hold as a where-clause under current `generic_const_exprs`;
+  use a runtime `debug_assert_eq!` at the call site until it
+  becomes expressible.
+
+- **`block_diagonal` return shape (step 6)** — the skeleton stub
+  returns `bool`. Arvo's actual `block_diagonal` returns
+  `(USize, [USize; N])` (component count + per-node IDs), and
+  `dulmage_mendelsohn` returns a full `DulmageMendelsohn` struct.
+  Split step 6 into `block_diagonal_components` and
+  `dulmage_mendelsohn_decompose` when its body is filled in.
