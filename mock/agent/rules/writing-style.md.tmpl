@@ -7,90 +7,72 @@ apply_to:
 
 # Writing style
 
-These rules apply to every piece of written content in this repo. PRINCIPLES, DESIGN, WORKFLOW, README, per-crate docs, agent rules, agent skills, Rust doc and inline comments, topic and changelist files under `mock/design_rounds/`, research notes, commit messages. Public-facing docs (the first group) are additionally gated at commit and push time by a threshold-based check; round artifacts and research are not gated but still follow the rules as a matter of discipline.
-
-The guide is long because the rules that matter are easy to miss when folded into one or two lines. Nothing here is optional.
+<!-- BEGIN: shared writing-style (synced from clause-dev/.shared/writing-style-fragment.md — do not edit in place) -->
 
 ## Tone
 
-Low-ego, nonchalant, factual. Expert-to-expert. No marketing speak, no cheerleading, no hype. Describe what something does, not how great it is. Confident, calm, to the point. Lead with context and facts.
+Low-ego, factual, expert-to-expert. No marketing speak, no hype, no cheerleading. Describe what it does, not how great it is.
 
-## Structure
+## Top of document
 
-**Prose before enumeration.** The first three or four sections or paragraphs of any public-facing document are reserved for prose that frames the piece. Lists, bulleted enumeration, feature dumps, and similar structural content come after the reader has the framing. A document that opens with a flat bulleted list reads as a TLDR dump rather than a considered piece.
+The first three or four sections or paragraphs are prose that frames the piece. Lists, feature dumps, bulleted TLDRs, and similar structural content come after the framing. A document that opens with a flat bulleted list reads as a TLDR dump, not a considered piece.
 
-Exceptions to the top-of-document rule:
+Exceptions allowed at the top:
 
-Round-artifact metadata blocks (`**Date:** / **Phase:** / **Scope:** / **Source topics:**`) carry bullets by convention inside `mock/design_rounds/` files. That convention overrides.
-
-Tables are allowed at the top when they carry real reference content: at least two columns wide and at least three rows of data. Parallel-column information belongs in parallel-column form, and a status or comparison table often frames a document better than a paragraph would. Tiny tables (single-column, or two rows) are not reference material, just prose wearing a table costume; rewrite them as prose.
-
-Table of Contents (`## Table of contents` or equivalent) is the one list form that belongs at the top. If a TOC exists in a document, it must be the first or second section, never buried lower. A TOC halfway down a doc is worse than no TOC.
-
-**Short sentences, simple words.** Prefer plain English. Avoid multi-clause constructions. When you reach for a subordinate clause, it is usually a signal to split the sentence in two.
-
-**One section, one thought.** Headings carve the piece into self-contained sections. A section should make sense if pulled out of the document and read alone.
+- Round-artifact metadata (`**Date:** / **Phase:** / **Scope:** / **Source topics:**`) inside `mock/design_rounds/` files.
+- Tables with at least two columns and at least three rows of real content. Parallel-column information belongs in parallel-column form; single-column or two-row "tables" are prose wearing a costume.
+- Table of Contents. If a TOC exists, it must be section one or two, never buried lower.
 
 ## Punctuation
 
-### Em-dashes
+Em-dashes (`—`) sparingly. Appropriate for emphasis or a parenthetical aside where a comma is too quiet and parens too heavy. Wrong when a period, colon, semicolon, or parens would carry the same load without interrupting the reader. Overuse smell: more than one per roughly ten lines of prose. Replace most with periods, commas, or parens.
 
-Em-dashes (`—`) are used sparingly, not as a default separator between clauses. An em-dash is the right choice for genuine emphasis, or a parenthetical aside where a comma would be too quiet and parens would be too heavy. It is the wrong choice when a period would split the sentence into two clean sentences, or when a colon, semicolon, or pair of parens would carry the same load without interrupting the reader.
-
-Symptoms of overuse: more than one or two em-dashes in a paragraph, or more than one per roughly ten lines of prose. At that density, replace most of them with periods (short declarative sentences), commas (parentheticals), colons (introducing enumeration), semicolons (tightly linked clauses), or parentheses (brief asides). Save em-dashes for the few cases where nothing else reads as well.
-
-### Exclamation marks
-
-None in prose. Not in intros, not in calls to action, not in punchlines. They read as amateur copy.
-
-### Semicolons
-
-Use sparingly to link two tightly related independent clauses. Easy to overuse as a way to avoid committing to a period. When in doubt, use a period.
-
-### Colons
-
-Use to introduce a list, a quote, or a clarifying phrase. Not as a mid-sentence separator.
+No exclamation marks in prose. Semicolons sparingly to link two tightly related independent clauses; when in doubt, use a period. Colons introduce lists, quotes, or clarifying phrases, not mid-sentence separators.
 
 ## Word choice
 
-**No hype words.** "Blazing", "seamless", "powerful", "amazing", "incredible", "game-changing", "best-in-class" and the like do not belong in public-facing docs. They describe feelings the author wants the reader to have, not properties the software actually has.
+No hype words: "blazing", "seamless", "powerful", "amazing", "incredible", "game-changing", "best-in-class".
 
-**No corporate jargon.** "Leverage" becomes "use". "Utilize" becomes "use". "Unlock" becomes "enable" or the specific action. "Streamline" becomes a description of what was removed. "Synergy", "holistic", "paradigm", "robust", "scalable" (as adjectives about the thing itself): cut them or replace with a specific claim the reader can verify.
+No corporate jargon: "leverage" becomes "use", "utilize" becomes "use", "unlock" becomes "enable" or the specific action, "streamline" becomes a description of what was removed. "Synergy", "holistic", "paradigm", "robust", "scalable" as loose adjectives: cut or replace with a verifiable claim.
 
-**No greeting openers.** Public docs are read by someone with a goal. Skip "Sure!", "Happy to help!", "Let me explain" and similar. State the first fact.
+No greeting openers: "Sure!", "Happy to help!", "Let me explain". Public docs are read by someone with a goal; state the first fact.
 
-**Avoid filler.** "It should be noted that", "essentially", "basically", "at the end of the day", "for all intents and purposes": delete them. They add length without content.
+No filler: "it should be noted that", "essentially", "basically", "at the end of the day", "for all intents and purposes".
 
 ## Emoji
 
-None in public-facing prose. Emoji in diagrams or explicit UI mocks where they carry semantic weight is the only exception.
+None in public prose. Only exception: semantic UI mocks or diagrams where an emoji carries information a word cannot.
 
-## Doc comments (Rust)
+## Lists
 
-Use `///` for items, `//!` for modules. First line is a brief one-line summary under about 80 characters, because that line renders into rustdoc summary text on module and crate index pages. Empty line, then details if needed. Focus on what and why, not implementation.
+Good for hierarchical content, genuine enumeration, and ordered steps. Long-form bullets with real content are fine; a bullet with three sentences is a structured paragraph.
+
+Forbidden everywhere: bullets of the form `- <label>: <short description>`. The label-plus-colon form is cheat-sheet, not writing. Use a glossary table or prose instead.
+
+Forbidden at the top of a document: flat single-line bulleted lists without hierarchy. (Exceptions above apply.)
+
+Prefer ordered lists when order matters, unordered otherwise.
+
+## Doc comments and inline comments (Rust)
+
+`///` for items, `//!` for modules. First line is a brief summary under about 80 characters, because it renders into rustdoc index pages. Empty line, then details.
+
+Inline comments explain why, not what; the code already tells the reader what.
 
 ```rust
-/// A resolved path to a dotfile source.
+/// A resolved handle to a registered entry.
 ///
-/// Paths are resolved relative to the project root and validated
-/// against the catalogue before use.
-pub struct ResolvedPath { ... }
-```
+/// Handles are resolved once at construction and reused across
+/// lookups.
+pub struct Handle { ... }
 
-## Inline comments
-
-Keep them short. Explain why, not what (the code already tells you what). Lowercase for brief notes. An inline comment should answer a question a careful reader would ask at that specific line.
-
-```rust
 // offset because the catalogue is 0-indexed but display is 1-indexed
 let display_idx = idx + 1;
 ```
 
-Bad: `// increment idx by 1`. That is what the code says, not why.
-
 ## Error messages
 
-State the problem and the fix. Name the types, values, or operations involved. Name the remediation. An error message is a micro-doc, and the same prose rules apply.
+State the problem and the fix. Name the types, values, and operations involved. Name the remediation.
 
 ```rust
 // Bad
@@ -104,34 +86,18 @@ width.
 
 ## Headings
 
-Title Case for top-level `#` (the document title). Sentence case for `##` and below. Headings are imperative or nominal, not interrogative. "Error messages", not "What do error messages look like?".
-
-## Lists
-
-Lists are a good choice for hierarchical content that benefits from visual structure, for genuine enumeration where items can be evaluated independently, and for steps where order matters. Long-form prose bullets are fine. A bullet with three full sentences that carries real content is a structured paragraph; it has not stopped being a bullet.
-
-What lists should not be:
-
-Short-label TLDRs of the form `- <word or two>: <short definition>`. That pattern compresses content into captions and tells the reader what to think without showing them. The label-plus-colon form is fine for a glossary entry or a reference table. It is not fine as the main vehicle for ideas in a PRINCIPLES, DESIGN, or README document. When you reach for that form, the prose version is usually the right call.
-
-Feature dumps and capability lists of the form `- Does X. - Does Y. - Does Z.`. That pattern is a marketing tactic rather than a description. Write the prose that connects X, Y, and Z into a picture of why they exist together.
-
-Prefer ordered lists (`1.`) when order matters (steps, priority). Prefer unordered lists (`-`) when order is incidental. Use a list when the hierarchy helps the reader find their place; use prose when a paragraph reads more naturally than bullets.
-
-## Tables
-
-Use tables for reference material with two or more parallel columns (forbidden/use, before/after, size/width). Do not use a table where a short paragraph would carry the same content with less visual weight.
+Title Case for the top-level `#` (document title). Sentence case for `##` and below. Imperative or nominal, not interrogative.
 
 ## Commit messages
 
-Format: `type: lowercase imperative message`. Types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`. Breaking change: `feat!:` / `refactor!:`. No parentheses, no capitals, no period at the end. Under 72 characters for the subject line.
+Format: `type: lowercase imperative message`. Types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`. Breaking: `feat!:` / `refactor!:`. No parentheses, no capitals, no trailing period. Under 72 characters for the subject line. Body optional; explain why, not what.
 
-Body (optional): explain the why, not the what (the diff carries the what). Wrap at 72 characters.
+## Enforcement scope
 
-## Enforcement
+Rules apply to every piece of written content in the repo. The difference is automation, not standard.
 
-Every rule above applies to every piece of written content in the repo. The difference is lint enforcement, not standard.
+Public-facing docs are gated at commit and push: `mock/PRINCIPLES.md.tmpl`, `mock/DESIGN.md.tmpl`, `mock/WORKFLOW.md.tmpl`, `README.md`, `mock/crates/**/*.md.tmpl`, `mock/agent/**/*.md.tmpl`, Rust doc and inline comments under `crates/**/*.rs`. The gate flags runaway em-dash density, leading-paragraph lists, hype words, exclamation marks in prose, and the banned jargon. Single-occurrence use passes; runaway usage blocks.
 
-Public-facing documents (PRINCIPLES, DESIGN, WORKFLOW, README, per-crate docs under `mock/crates/`, agent rules and skills under `mock/agent/`, Rust doc and inline comments under `crates/`) are checked at commit and push time by a threshold-based gate. The gate flags runaway em-dash usage (more than about one per ten lines), leading-paragraph lists, hype words, exclamation marks in prose, and the banned corporate jargon. A single em-dash in a genuinely useful spot is fine; ten em-dashes in a section are not.
+Round artifacts under `mock/design_rounds/` and research notes follow the same rules as a matter of discipline but are not gated.
 
-Round artifacts under `mock/design_rounds/` (topic files, doc and src changelists, research notes, deprecated CLs) and other internal content are not gated but still follow the same rules. The bar is the same; the automation is narrower.
+<!-- END: shared writing-style -->
