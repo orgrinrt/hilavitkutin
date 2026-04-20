@@ -1,5 +1,144 @@
 # hilavitkutin — Architecture Principles
 
+<!-- BEGIN: shared cross-ecosystem principles (synced from clause-dev/.shared/principles-fragment.md — do not edit in place) -->
+
+## No heap. Ever.
+
+No ad-hoc allocations. Allocation is scheduler-managed, declared at
+compile time, never runtime-fabricated. `#![no_std]` + `#![no_alloc]`
+aren't crate attributes first — they're the universe. `Vec`, `Box`,
+`Rc`, `Arc`, `HashMap`, `String`, `format!` don't exist here.
+
+If an API feels like it wants a runtime-growable container, the shape
+is wrong: reshape toward a trait-bound emitter / iterator / bounded
+store. The heap is not temporarily available; there is no "just for
+this moment".
+
+## Think in traits, not types
+
+Signatures take trait bounds. The concrete type is whatever the
+caller brings.
+
+**The question isn't "what type goes here"; it's "what is the contract
+this position represents".** Monomorphisation makes trait-generic
+signatures compile to the same code as concrete ones. Inference at
+call sites means no turbofish.
+
+Patterns throughout the stack are instances of this single mental
+model: arvo's `UArith<BITS>` / `IArith<BITS>`, arvo-bits' `Bool: Try`,
+hilavitkutin-api's 22 access/context/platform traits, saalis's
+"no Vec in trait signatures". All the same rule.
+
+**Decision test:** "Can I imagine two implementations with different
+behavior?" If yes, it's a trait slot, not a concrete type.
+
+## No `Vec` or `Box<[T]>` in trait signatures
+
+Direct consequence of the two principles above. Trait return types
+use `impl IntoIterator`, `AsRef<[T]>`, or associated types. Sink
+positions take `&mut impl Collector<T>` / `&mut impl DiagnosticSink`
+/ `&mut impl ByteEmitter`. Concrete collection types are
+implementation choices, not contracts.
+
+Collections never cross ecosystem API boundaries. They live below
+the boundary, on the implementer's side. The boundary carries data
+flow, not storage.
+
+## No `dyn`, no `Box<dyn>`, no runtime dispatch
+
+All dispatch goes through monomorphised trait bounds. `dyn Trait`
+forces late binding, heap via `Box<dyn>`, and vtable layouts that
+aren't stable across compilations or `dlopen` boundaries.
+
+Where extension across an ABI boundary is required, use registered
+traits + `repr(C)` descriptors (inventory pattern), not `dyn`.
+
+## Type taxonomy
+
+Every type in a public surface falls into one of four categories:
+
+| Category | When | Examples |
+|----------|------|----------|
+| **Trait** | Varying behavior, shared contract, extensible | arithmetic ops, sinks, platform providers |
+| **Newtype** | Fixed representation, validation at construction | `UnitId`, strategy markers |
+| **`repr(C)` enum** | Closed set, crosses ABI boundary | `Priority`, `ErrorClass` |
+| **Primitive** | No semantic meaning beyond raw value | `u64` with Strategy marker |
+
+Decision test is the same as above: if two plausible implementations
+could differ, it's a trait.
+
+If you're asking "should this enum have room for plugin extensions?"
+— it shouldn't be an enum. It should be a trait.
+
+## Sizes are const at type level
+
+Every container's capacity lives at type level: `Mask64`, `Mask256`,
+`Seq<T, N: Cap>`, `Map<K, V, N: Cap>`. No runtime resize, no runtime
+grow. If a consumer needs a bigger container, they pick the bigger
+type.
+
+This is what the "no heap" principle bottoms out in at the storage
+layer: capacity is a compile-time choice the consumer makes once,
+not a runtime allocation the callee fabricates.
+
+## One mechanism, not two
+
+If two subsystems solve the same problem differently, one must go.
+No parallel versioning tables, no parallel serialization paths, no
+"fast path" alongside a "slow path". One mechanism per concern.
+
+## Registered traits over `repr(C)` enums
+
+If a concept might need extension, it's a trait + `#[register]` (or
+the stack's inventory equivalent), not a `repr(C)` enum. Enums are
+for truly closed sets only (`Priority`, `ErrorClass`, `FieldKind`,
+`HealthStatus`).
+
+## `Named::NAME` single source of truth
+
+Every registrable type has `const NAME: &'static str`. The
+descriptor's name field is a const pointer to it. No duplication,
+no copies, no parallel naming.
+
+## ZST markers for discrimination
+
+Schema kinds, events, settings domains, storage locations, access
+levels, HTTP methods — all ZSTs. Marker types carry compile-time
+identity without runtime footprint.
+
+## Primitive vocabulary (the stack's own)
+
+Public APIs use the stack's designed primitives, never bare std
+types in load-bearing positions:
+
+| Don't | Do | Lives in |
+|-------|----|----------|
+| `Option<T>` | `Maybe<T>` | `notko` |
+| `Result<T, E>` | `Outcome<T, E>` | `notko` |
+| `Vec<T>` return | `impl IntoIterator<Item=T>` / trait-bound sink | trait at the API boundary |
+| `&mut Vec<T>` param | `&mut impl Collector<T>` | hilavitkutin-api contracts |
+| `HashMap<K, V>` | `&mut impl KeyValueStore<K, V>` / `Map<K, V, N>` | hilavitkutin-api |
+| `String` owned | `Str` | `hilavitkutin-str` |
+| `&str` non-static | `&'static str` or `Str` | as above |
+| `usize` / `isize` | `USize` / `ISize` / `Cap` / domain newtype | `arvo::newtype` |
+| `u8..u128` / `i8..i128` | `UFixed` / `IFixed` / `T: Boundable` / `T: NonZeroable` | `arvo` / `notko` traits |
+| `f32` / `f64` | `FastFloat` / `StrictFloat` | `arvo::newtype` |
+| `bool` | `Bool` | `arvo-bits` |
+
+Escape hatches: std trait method impls only (e.g., `fn next() ->
+Option<Self::Item>`, `fn partial_cmp() -> Option<Ordering>`,
+`fn fmt() -> fmt::Result`). Everywhere else, the rule stands.
+
+`lint:allow(...)` is NOT for skeleton convenience; it's for tracked
+debt with a linked task id. If the suppression isn't traceable to a
+specific follow-up, the design is wrong, not the rule.
+
+<!-- END: shared cross-ecosystem principles -->
+
+---
+
+*The following principles are specific to hilavitkutin.*
+
 ## no_std, no alloc
 
 Every crate is `#![no_std]` with no allocation. Consumers provide a

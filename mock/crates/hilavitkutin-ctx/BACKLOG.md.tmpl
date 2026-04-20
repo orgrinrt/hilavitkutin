@@ -1,0 +1,31 @@
+# hilavitkutin-ctx — backlog
+
+## define_providers_generic! facade
+
+A single-call facade mixing concrete and parameterised providers,
+analogous to `define_providers!`. Nice-to-have for consumers that
+declare many providers at once. Not needed until a second
+multi-provider consumer surfaces that mixes the two shapes.
+
+## Higher-arity tuple_generic! impls
+
+`tuple_generic!` ships with enough arity to cover hilavitkutin's
+WU-context needs (roughly 5-7 providers per layout). If a consumer
+exceeds the shipping arity, extend the macro with additional
+match arms. Purely mechanical.
+
+## Proc-macro rewrite
+
+The declarative macros are approaching their limits. A proc-macro
+could simplify the repeated per-arity expansions and give better
+error messages. Defer until either:
+- the declarative arm count becomes painful to maintain, or
+- a consumer surfaces an error message that's opaque enough to
+  justify the proc-macro compile-time cost.
+
+## Optional `Context<P>` inherent methods
+
+Today `Context<P>` just wraps `providers: P`. Some consumers may
+want `Context::new(providers)` / `Context::into_inner()` /
+`Context::as_providers(&self) -> &P` helpers. Add when a consumer
+demands them; keep the wrapper minimal until then.

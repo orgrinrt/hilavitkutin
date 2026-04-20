@@ -1,0 +1,46 @@
+# hilavitkutin-persistence — backlog
+
+## rkyv integration follow-up round
+
+Full `Archive` impls for `Manifest`, `TableMeta`, `StringTable`,
+`ColdStore` archived subrecords. Requires:
+- Vetting rkyv 0.8's `no_std` + `no_alloc` story against
+  MemoryProvider-backed buffers.
+- Decision on deserialize vs zero-copy access for each type.
+- Version-tolerant schema (for future migration).
+
+The skeleton round (202604261700) shipped only the `Archive`
+impl for `Str` as that's pure bit-layout logic. Everything else
+stubs `#[rkyv::Archive]` derives.
+
+## mmap-backed file I/O
+
+`ColdStore::flush` / `load` / `snapshot` are stubs. The real impls
+delegate to `MemoryProvider::allocate` + `protect` for
+mmap-equivalent behaviour. Depends on the hilavitkutin engine
+round (#35) shipping a concrete `MemoryProvider` impl that
+supports memory mapping.
+
+## Weighted eviction policy tuning
+
+`SieveCache` stub ships a FIFO baseline. DESIGN specifies
+WeightedSieveCache (weighted by byte size). The tuning — the
+weight-reference tracking, the protection bit, the eviction
+scan — follows the SIEVE paper. Lands when a consumer profiles
+real eviction pressure.
+
+## Backup / snapshot mechanism
+
+`ColdStore::snapshot` is a stub. Real impl: atomic-rename
+file-copy over the data directory, optionally wrapping in a
+consumer-chosen container (saalis's ZIP+zstd, polka's .polka,
+etc.). Consumer-side API composition; persistence provides the
+file enumeration + checksum primitive.
+
+## Domain-schema versioning
+
+`Manifest` has a per-table `version: u32` field. The migration
+strategy (what happens when a loaded table has a version the
+running code doesn't know about) is consumer-defined; persistence
+just carries the field. A migration-trait API could land here if a
+consumer surfaces a clean shape.

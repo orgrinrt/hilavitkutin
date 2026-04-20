@@ -3,3 +3,5 @@ name = "hilavitkutin-str"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+description = "Interned string handle + arena + linker-section const table"
+repository.workspace = true

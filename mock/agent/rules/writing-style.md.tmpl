@@ -1,69 +1,103 @@
 ---
-apply_to: ["**/*.md"]
+apply_to:
+  - "**/*.md"
+  - "**/*.md.tmpl"
+  - "**/*.rs"
 ---
 
 # Writing style
 
-Tone: low-ego, nonchalant, factual. No marketing speak.
-Plain English, short sentences. Avoid em-dashes; use semicolons sparingly.
-No "Sure!", no emojis, no exclamation marks in prose.
+<!-- BEGIN: shared writing-style (synced from clause-dev/.shared/writing-style-fragment.md — do not edit in place) -->
 
-## Core principles
+## Tone
 
-- Low ego: describe what it does, not how great it is.
-- Nonchalant: confident, calm, to the point.
-- High signal: lead with context and facts.
-- Actionable: include recovery steps for problems.
-- Plain English: short sentences, simple words.
+Low-ego, factual, expert-to-expert. No marketing speak, no hype, no cheerleading. Describe what it does, not how great it is.
 
-## Doc comments (Rust)
+## Top of document
 
-Use `///` for items, `//!` for modules.
+The first three or four sections or paragraphs are prose that frames the piece. Lists, feature dumps, bulleted TLDRs, and similar structural content come after the framing. A document that opens with a flat bulleted list reads as a TLDR dump, not a considered piece.
+
+Exceptions allowed at the top:
+
+- Round-artifact metadata (`**Date:** / **Phase:** / **Scope:** / **Source topics:**`) inside `mock/design_rounds/` files.
+- Tables with at least two columns and at least three rows of real content. Parallel-column information belongs in parallel-column form; single-column or two-row "tables" are prose wearing a costume.
+- Table of Contents. If a TOC exists, it must be section one or two, never buried lower.
+
+## Punctuation
+
+Em-dashes (`—`) sparingly. Appropriate for emphasis or a parenthetical aside where a comma is too quiet and parens too heavy. Wrong when a period, colon, semicolon, or parens would carry the same load without interrupting the reader. Overuse smell: more than one per roughly ten lines of prose. Replace most with periods, commas, or parens.
+
+No exclamation marks in prose. Semicolons sparingly to link two tightly related independent clauses; when in doubt, use a period. Colons introduce lists, quotes, or clarifying phrases, not mid-sentence separators.
+
+## Word choice
+
+No hype words: "blazing", "seamless", "powerful", "amazing", "incredible", "game-changing", "best-in-class".
+
+No corporate jargon: "leverage" becomes "use", "utilize" becomes "use", "unlock" becomes "enable" or the specific action, "streamline" becomes a description of what was removed. "Synergy", "holistic", "paradigm", "robust", "scalable" as loose adjectives: cut or replace with a verifiable claim.
+
+No greeting openers: "Sure!", "Happy to help!", "Let me explain". Public docs are read by someone with a goal; state the first fact.
+
+No filler: "it should be noted that", "essentially", "basically", "at the end of the day", "for all intents and purposes".
+
+## Emoji
+
+None in public prose. Only exception: semantic UI mocks or diagrams where an emoji carries information a word cannot.
+
+## Lists
+
+Good for hierarchical content, genuine enumeration, and ordered steps. Long-form bullets with real content are fine; a bullet with three sentences is a structured paragraph.
+
+Forbidden everywhere: bullets of the form `- <label>: <short description>`. The label-plus-colon form is cheat-sheet, not writing. Use a glossary table or prose instead.
+
+Forbidden at the top of a document: flat single-line bulleted lists without hierarchy. (Exceptions above apply.)
+
+Prefer ordered lists when order matters, unordered otherwise.
+
+## Doc comments and inline comments (Rust)
+
+`///` for items, `//!` for modules. First line is a brief summary under about 80 characters, because it renders into rustdoc index pages. Empty line, then details.
+
+Inline comments explain why, not what; the code already tells the reader what.
 
 ```rust
-/// A resolved path to a dotfile source.
+/// A resolved handle to a registered entry.
 ///
-/// Paths are resolved relative to the project root and validated
-/// against the catalogue before use.
-pub struct ResolvedPath { ... }
-```
+/// Handles are resolved once at construction and reused across
+/// lookups.
+pub struct Handle { ... }
 
-First line: brief summary. Empty line, then details if needed.
-Focus on what and why, not implementation.
-
-## Inline comments
-
-- Keep them short.
-- Explain why, not what.
-- Lowercase for brief notes.
-
-```rust
 // offset because the catalogue is 0-indexed but display is 1-indexed
 let display_idx = idx + 1;
 ```
 
 ## Error messages
 
-State the problem and how to fix:
+State the problem and the fix. Name the types, values, and operations involved. Name the remediation.
 
 ```rust
 // Bad
-Error: entry not found
+Error: width out of range
 
 // Good
-Error: catalogue entry {name:?} not found. Is it listed in polka.toml [catalogue]?
+Error: UFixed<{I}, {F}> with S = Hot requires I + F <= 64 (Hot
+container is u64 max). Use S = Warm or Precise for wider logical
+width.
 ```
 
-## Quick rules
+## Headings
 
-- No hype words ("blazing", "seamless", "powerful").
-- No corporate jargon ("leverage", "utilize"; just use "use").
-- Bullets over paragraphs.
-- Facts over opinions.
-- Expert-to-expert tone.
+Title Case for the top-level `#` (document title). Sentence case for `##` and below. Imperative or nominal, not interrogative.
 
 ## Commit messages
 
-Format: `type: lowercase imperative message`
-Types: feat, fix, refactor, docs, test, chore.
-No parentheses, no capitals, no periods.
+Format: `type: lowercase imperative message`. Types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`. Breaking: `feat!:` / `refactor!:`. No parentheses, no capitals, no trailing period. Under 72 characters for the subject line. Body optional; explain why, not what.
+
+## Enforcement scope
+
+Rules apply to every piece of written content in the repo. The difference is automation, not standard.
+
+Public-facing docs are gated at commit and push: `mock/PRINCIPLES.md.tmpl`, `mock/DESIGN.md.tmpl`, `mock/WORKFLOW.md.tmpl`, `README.md`, `mock/crates/**/*.md.tmpl`, `mock/agent/**/*.md.tmpl`, Rust doc and inline comments under `crates/**/*.rs`. The gate flags runaway em-dash density, leading-paragraph lists, hype words, exclamation marks in prose, and the banned jargon. Single-occurrence use passes; runaway usage blocks.
+
+Round artifacts under `mock/design_rounds/` and research notes follow the same rules as a matter of discipline but are not gated.
+
+<!-- END: shared writing-style -->

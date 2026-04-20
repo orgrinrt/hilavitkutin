@@ -1,0 +1,50 @@
+ea34b2e chore: lock src changelist for 202604264000_changelist.src.lock.md
+4a023ff feat: engine 5a4 thread + adapt skeleton
+668ce77 docs: add src CL for engine 5a4 thread + adapt
+469d00a chore: lock doc changelist for 202604263900_changelist.doc.lock.md
+967631f docs: expand BACKLOG for engine 5a4 thread + adapt follow-ups
+9eed7da docs: start engine 5a4 thread + adapt skeleton round
+295ca43 chore: close design round 202604263700
+bc27c52 chore: lock src CL 202604263800 for engine 5a3
+415f0f3 feat: engine 5a3 dispatch + intrinsics skeleton
+27905bf docs: add src CL for engine 5a3 dispatch
+2fac97d chore: lock doc CL 202604263700 for engine 5a3
+d63e5d8 docs: expand BACKLOG for engine 5a3 dispatch follow-ups
+45b6cd1 docs: start engine 5a3 dispatch + intrinsics skeleton round
+1b25e38 chore: close design round 202604263500
+a267d99 chore: lock src CL 202604263600 for engine 5a2
+4078f88 feat: engine 5a2 plan-stage skeleton
+f8ac904 docs: add src CL for engine 5a2 plan-stage
+384536b chore: lock doc CL 202604263500 for engine 5a2
+45174ed docs: start engine 5a2 plan-stage skeleton round (doc CL + BACKLOG)
+db13c8b chore: close design round 202604263300
+07ca79d chore: lock src changelist for 202604263400_changelist.src.lock.md
+b0c058d feat: engine 5a6 strategy + scheduler skeleton
+5924466 docs: add src CL for engine 5a6 scheduler + strategy
+2de209c chore: lock doc CL 202604263300 for engine 5a6
+0c17c53 docs: start engine 5a6 scheduler + strategy skeleton round
+49fe72a chore: close engine 5a5 round 202604263100
+fa7c39f chore: lock src CL 202604263200 for engine 5a5
+5f06ea7 feat: engine 5a5 resource caching skeleton
+d910bd5 docs: add src CL for engine 5a5 resource caching
+44be063 chore: lock doc CL 202604263100 for engine 5a5
+03c99e6 docs: start engine 5a5 resource caching round
+1d23dba chore: close engine 5a1 round 202604262700
+b77c96c chore: lock src CL 202604262800 for engine 5a1
+b808545 feat: hilavitkutin engine 5a1 — platform tiers (os/std)
+2749d35 docs: add src CL for engine 5a1 platform
+0c5654e chore: lock doc CL 202604262700 for engine 5a1
+c2ffc62 docs: start engine 5a1 platform round (doc CL + BACKLOG + Cargo.toml deps)
+6a7747d chore: close build skeleton round 202604261900
+7a32cb0 chore: lock src CL 202604262000 for build skeleton
+2a30515 feat: hilavitkutin-build skeleton (pragma + profile + axis types)
+ff49822 docs: add src CL for build skeleton
+2415ba9 chore: lock doc CL 202604261900 for build skeleton
+7deef5c docs: start hilavitkutin-build skeleton round
+dd9f432 chore: close persistence skeleton round 202604261700
+f161135 chore: lock src CL 202604261800 for persistence skeleton
+5961f12 feat: hilavitkutin-persistence skeleton (types + stubs)
+f9d5f39 docs: add src CL for persistence skeleton
+028df3a chore: lock doc CL 202604261700 for persistence skeleton
+ee324b4 docs: start hilavitkutin-persistence skeleton round
+d3768c3 chore: close str impl round 202604261300
