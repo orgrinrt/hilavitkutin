@@ -93,7 +93,7 @@ fn inject_runtime_via_string_table() {
     let injected = inject_str(hash, &interner, &table).expect("inject ok");
     // Runtime handle bit set, id truncated to 28 bits.
     assert!(injected.is_runtime());
-    assert_eq!(interner.resolve(injected), "table-roundtrip");
+    assert_eq!(interner.resolve(injected), Some("table-roundtrip"));
 }
 
 #[test]
@@ -116,7 +116,7 @@ fn evict_then_inject_runtime_roundtrips() {
     };
 
     let reinjected = inject_str(evicted, &interner, &table).expect("inject ok");
-    assert_eq!(interner.resolve(reinjected), "roundtrip-string");
+    assert_eq!(interner.resolve(reinjected), Some("roundtrip-string"));
 }
 
 #[test]

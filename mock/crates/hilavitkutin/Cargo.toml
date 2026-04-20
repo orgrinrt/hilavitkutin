@@ -3,6 +3,8 @@ name = "hilavitkutin"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+description = "Pipeline execution engine — provider-driven, const-generic, no_std"
+repository.workspace = true
 
 [dependencies]
 hilavitkutin-api.workspace = true

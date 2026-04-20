@@ -46,7 +46,7 @@ fn runtime_intern_roundtrip() {
     let interner = StringInterner::new(VecInterner::new());
     let h = interner.intern("ephemeral-runtime-a");
     assert!(h.is_runtime());
-    assert_eq!(interner.resolve(h), "ephemeral-runtime-a");
+    assert_eq!(interner.resolve(h), Some("ephemeral-runtime-a"));
 }
 
 #[test]
@@ -75,7 +75,7 @@ fn const_short_circuits_on_intern() {
     assert_eq!(c, i);
     assert!(i.is_const());
     // Resolve should come back via the linker-section table.
-    assert_eq!(interner.resolve(i), "interner-const-hit");
+    assert_eq!(interner.resolve(i), Some("interner-const-hit"));
 }
 
 #[test]
@@ -92,5 +92,5 @@ fn resolve_runtime_delegates_to_arena() {
     let interner = StringInterner::new(VecInterner::new());
     let h: Str = interner.intern("arena-delegate");
     assert!(h.is_runtime());
-    assert_eq!(interner.resolve(h), "arena-delegate");
+    assert_eq!(interner.resolve(h), Some("arena-delegate"));
 }

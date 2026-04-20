@@ -3,6 +3,8 @@ name = "hilavitkutin-api"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+description = "WorkUnit + provider trait surface for the hilavitkutin pipeline engine"
+repository.workspace = true
 
 [dependencies]
 arvo.workspace = true

@@ -24,7 +24,9 @@ pub fn evict_str<A: ArenaInterner>(handle: Str, interner: &StringInterner<A>) ->
     if handle.is_const() {
         handle.id()
     } else {
-        let s = interner.resolve(handle);
+        let s = interner
+            .resolve(handle)
+            .expect("runtime handles always resolve via arena");
         (const_fnv1a(s) & Str::ID_MASK as u64) as u32
     }
 }
@@ -46,8 +48,7 @@ pub fn inject_str<A: ArenaInterner>(
     // const handle unchanged; a miss falls through to the runtime
     // lookup path.
     let candidate = Str::__make(masked);
-    let resolved = interner.resolve(candidate);
-    if !resolved.is_empty() {
+    if let Some(resolved) = interner.resolve(candidate) {
         // Confirm the const entry hashes back to the same masked id.
         let back = (const_fnv1a(resolved) & Str::ID_MASK as u64) as u32;
         if back == masked {

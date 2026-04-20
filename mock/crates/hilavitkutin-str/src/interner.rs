@@ -51,13 +51,19 @@ impl<A: ArenaInterner> StringInterner<A> { // lint:allow(no-alloc) -- interner w
         Str::__runtime(id)
     }
 
-    /// Resolve a handle back to a string. Const handles go to the
-    /// linker-section table; runtime handles delegate to the arena.
-    pub fn resolve(&self, s: Str) -> &str {
+    /// Resolve a handle back to a string.
+    ///
+    /// Const handles delegate to the linker-section table; a
+    /// const-table miss returns `None`. Runtime handles always
+    /// resolve via the arena — an arena that cannot resolve is
+    /// outside the `ArenaInterner` contract (the interner hands
+    /// out ids it can resolve), so the runtime branch returns
+    /// `Some(...)` unconditionally.
+    pub fn resolve(&self, s: Str) -> Option<&str> {
         if s.is_const() {
-            lookup_const_by_handle(s).unwrap_or("")
+            lookup_const_by_handle(s)
         } else {
-            self.arena.arena_resolve(s.id())
+            Some(self.arena.arena_resolve(s.id()))
         }
     }
 }
