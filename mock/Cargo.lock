@@ -14,7 +14,7 @@ dependencies = [
 [[package]]
 name = "arvo"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#3dd912c03b443d26f247b1f99e221680a6810200"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#541e4c775c7dba31c5e905c316a95330c35d3461"
 dependencies = [
  "mockspace",
  "notko",
@@ -23,7 +23,7 @@ dependencies = [
 [[package]]
 name = "arvo-bitmask"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#3dd912c03b443d26f247b1f99e221680a6810200"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#541e4c775c7dba31c5e905c316a95330c35d3461"
 dependencies = [
  "arvo",
  "arvo-bits",
@@ -33,7 +33,7 @@ dependencies = [
 [[package]]
 name = "arvo-bits"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#3dd912c03b443d26f247b1f99e221680a6810200"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#541e4c775c7dba31c5e905c316a95330c35d3461"
 dependencies = [
  "arvo",
  "mockspace",
@@ -42,7 +42,7 @@ dependencies = [
 [[package]]
 name = "arvo-comb"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#3dd912c03b443d26f247b1f99e221680a6810200"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#541e4c775c7dba31c5e905c316a95330c35d3461"
 dependencies = [
  "arvo",
  "arvo-bitmask",
@@ -52,7 +52,7 @@ dependencies = [
 [[package]]
 name = "arvo-graph"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#3dd912c03b443d26f247b1f99e221680a6810200"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#541e4c775c7dba31c5e905c316a95330c35d3461"
 dependencies = [
  "arvo",
  "arvo-bitmask",
@@ -62,7 +62,7 @@ dependencies = [
 [[package]]
 name = "arvo-hash"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#3dd912c03b443d26f247b1f99e221680a6810200"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#541e4c775c7dba31c5e905c316a95330c35d3461"
 dependencies = [
  "arvo-bits",
  "mockspace",
@@ -71,7 +71,7 @@ dependencies = [
 [[package]]
 name = "arvo-sparse"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#3dd912c03b443d26f247b1f99e221680a6810200"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#541e4c775c7dba31c5e905c316a95330c35d3461"
 dependencies = [
  "arvo",
  "arvo-bitmask",
@@ -82,7 +82,7 @@ dependencies = [
 [[package]]
 name = "arvo-spectral"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#3dd912c03b443d26f247b1f99e221680a6810200"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#541e4c775c7dba31c5e905c316a95330c35d3461"
 dependencies = [
  "arvo",
  "arvo-bitmask",
@@ -211,7 +211,7 @@ checksum = "f8ca58f447f06ed17d5fc4043ce1b10dd205e060fb3ce5b979b8ed8e59ff3f79"
 [[package]]
 name = "mockspace"
 version = "0.1.0"
-source = "git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main#23ea4dca8680ddb3680179b0af7ca9fb1a1543bb"
+source = "git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main#32283beaa35dbbc81e7b00cac0eb6e209e50c72a"
 dependencies = [
  "libloading",
  "mockspace-lint-rules",
@@ -224,7 +224,7 @@ dependencies = [
 [[package]]
 name = "mockspace-lint-rules"
 version = "0.1.0"
-source = "git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main#23ea4dca8680ddb3680179b0af7ca9fb1a1543bb"
+source = "git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main#32283beaa35dbbc81e7b00cac0eb6e209e50c72a"
 dependencies = [
  "tree-sitter",
  "tree-sitter-rust",
