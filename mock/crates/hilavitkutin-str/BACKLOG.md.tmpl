@@ -32,3 +32,13 @@ pipeline exceeds that at runtime, a follow-up round widens to a
 u64 handle (reserving the extra bits for flags + larger ID space).
 Current estimates keep every known consumer well under 1M runtime
 strings per session, so this is not imminent.
+
+## str_const! hardcoded ID mask
+
+`str_const!` in `src/macros.rs` hardcodes `0x0FFF_FFFF` in two
+places (the static-entry `hash` field and the returned handle
+value) instead of referencing `$crate::Str::ID_MASK`. If the bit
+layout ever shifts the ID width (see the 28-bit exhaustion entry
+above), the macro silently desyncs from the `Str` constants.
+Replace both occurrences with `$crate::Str::ID_MASK` so the
+layout stays authoritative in one place.
