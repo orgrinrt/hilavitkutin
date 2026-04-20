@@ -1,15 +1,15 @@
 //! Plan-stage type surface tests (5a2 skeleton).
 
 use hilavitkutin::plan::{
-    AccessMask, ColumnClassification, DependencyGraph, FiberId, NodeId, PhaseId,
+    AccessMask, ColumnClassification, DependencyGraph, FiberId, UnitId, PhaseId,
 };
 
 #[test]
-fn node_id_copy_eq_default() {
-    let a = NodeId(7);
+fn unit_id_copy_eq_default() {
+    let a = UnitId(7);
     let b = a;
     assert_eq!(a, b);
-    assert_eq!(NodeId::default(), NodeId(0));
+    assert_eq!(UnitId::default(), UnitId(0));
 }
 
 #[test]

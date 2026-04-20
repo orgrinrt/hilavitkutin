@@ -31,7 +31,7 @@ pub use column::ColumnClassification;
 pub use dirty::DirtyMask;
 pub use fiber::{FiberGrouping, FiberId};
 pub use graph::DependencyGraph;
-pub use inputs::{NodeId, PlanInputs};
+pub use inputs::{PlanInputs, UnitId};
 pub use phase::{PhaseBoundaries, PhaseId};
 
 /// Build an `ExecutionPlan` from `PlanInputs`.

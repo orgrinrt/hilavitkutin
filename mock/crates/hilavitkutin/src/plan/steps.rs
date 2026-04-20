@@ -11,7 +11,7 @@ use super::column::ColumnClassification;
 use super::dirty::DirtyMask;
 use super::fiber::FiberGrouping;
 use super::graph::DependencyGraph;
-use super::inputs::{NodeId, PlanInputs};
+use super::inputs::{UnitId, PlanInputs};
 use super::phase::PhaseBoundaries;
 
 /// Step 1 — DAG construction from AccessMask overlap (domain 11).
@@ -25,7 +25,7 @@ pub fn build_dag<const MAX_UNITS: usize, const MAX_STORES: usize>(
 /// Step 2 — Topological sort + node renumbering (domain 15).
 pub fn topo_sort<const MAX_UNITS: usize>(
     graph: &DependencyGraph<MAX_UNITS>,
-) -> [NodeId; MAX_UNITS] {
+) -> [UnitId; MAX_UNITS] {
     let _ = graph;
     todo!("5a2 step 2: topological sort + node renumbering")
 }
@@ -49,7 +49,7 @@ pub fn detect_waists<const MAX_UNITS: usize, const MAX_PHASES: usize>(
 /// Step 5 — RCM reordering → fiber grouping order (domain 15).
 pub fn rcm_reorder<const MAX_UNITS: usize>(
     graph: &DependencyGraph<MAX_UNITS>,
-) -> [NodeId; MAX_UNITS] {
+) -> [UnitId; MAX_UNITS] {
     let _ = graph;
     todo!("5a2 step 5: RCM reordering → fiber grouping order")
 }

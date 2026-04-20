@@ -1,9 +1,14 @@
 //! Access mask: which stores a WU touches (domain 11).
 //!
 //! Skeleton uses `u128` backing; swap for arvo-bitmask once const-
-//! generic bitmask support lands (BACKLOG). Callers see a stable
-//! surface (`empty` / `set` / `contains` / `overlaps` / `union_with`)
-//! across that swap.
+//! generic bitmask support lands (BACKLOG). Target variant depends
+//! on `MAX_STORES`:
+//!   - `MAX_STORES <= 64`  → `arvo_bitmask::Mask64`
+//!   - `MAX_STORES <= 256` → `arvo_bitmask::Mask256`
+//!   - `MAX_STORES > 256`  → needs a const-generic `Mask<N>` in
+//!     arvo-bitmask (arvo BACKLOG).
+//! Callers see a stable surface (`empty` / `set` / `contains` /
+//! `overlaps` / `union_with`) across that swap.
 
 /// Bit pattern identifying which stores (indexed 0..MAX_STORES) a
 /// WU reads or writes. Skeleton supports MAX_STORES ≤ 128.
