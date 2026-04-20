@@ -224,3 +224,22 @@ build = "off"
 push = "off"
 
 
+
+# Pack lints — graceful ramp. These fire against pre-existing code that
+# will be fixed in the respective sweep (#72). Set to advisory during
+# the sweep, flip to error afterwards.
+[lints.lint-allow-requires-task-id]
+severity = "advisory"
+
+# ---------------------------------------------------------------------------
+# External lint packs (mockspace #94 feature)
+# ---------------------------------------------------------------------------
+#
+# Git-based dep spec only — committed config must be portable.
+
+[lint-crates]
+mockspace-hilavitkutin-stack-lints = { git = "ssh://git@github.com/orgrinrt/mockspace-hilavitkutin-stack-lints.git", branch = "main" }
+
+# Writing-style gate — pre-existing docs trip this until sweeps tidy them.
+[lints.writing-style]
+severity = "advisory"
