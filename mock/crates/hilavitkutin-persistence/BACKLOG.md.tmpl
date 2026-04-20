@@ -44,3 +44,14 @@ strategy (what happens when a loaded table has a version the
 running code doesn't know about) is consumer-defined; persistence
 just carries the field. A migration-trait API could land here if a
 consumer surfaces a clean shape.
+
+## SieveWeight / ContentHash newtype candidates
+
+Tracked under Task #72's allow-bare-numeric annotations on
+Sieve::insert(weight: u64) and StringTable::lookup(content_hash:
+u32). Both are value-semantic today — weights sort and
+compare-less-than without needing unit arithmetic; content hashes
+are identity values. Collapse into newtypes if a later round
+introduces weight-arithmetic semantics (e.g. admission-curve decay
+computed in-engine) or hash-comparison traits that benefit from
+stronger typing. No timeline.

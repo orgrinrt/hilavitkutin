@@ -59,3 +59,13 @@ the host is macOS + the pragma set requires an LLVM plugin,
 hilavitkutin-build should be able to spawn an ARM Linux container
 for the plugin pass. Defer until someone builds out the
 orchestration.
+
+## CodegenUnits newtype
+
+Tracked under Task #72's allow-bare-numeric annotation on
+BuildPragma::parallel_codegen_units (inner u8 inside Maybe<u8>).
+Rustc's own codegen-units argument is small-integer today; the
+raw u8 is unambiguous. Collapse into a CodegenUnits(u8) newtype
+once a second build-pragma surface needs codegen-unit typing or
+we see a second call site passing the value between functions.
+No timeline.

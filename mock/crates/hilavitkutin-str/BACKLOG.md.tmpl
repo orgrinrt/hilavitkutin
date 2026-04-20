@@ -42,3 +42,13 @@ layout ever shifts the ID width (see the 28-bit exhaustion entry
 above), the macro silently desyncs from the `Str` constants.
 Replace both occurrences with `$crate::Str::ID_MASK` so the
 layout stays authoritative in one place.
+
+## StrId newtype
+
+Str::id() -> u32, Str::__make(id: u32), Str::__runtime(id: u32)
+carry the opaque 32-bit handle representation (28-bit ID +
+flag bits). Currently raw u32 with allow-bare-numeric: tracked:
+#72. Collapsing into StrId(u32) is a candidate only if a later
+round ships arithmetic / ordering semantics on handles; today the
+raw form matches the bit-layout doc comment and reads clearly in
+construction context. No timeline.
