@@ -151,20 +151,37 @@ commit = "off"
 build = "off"
 push = "off"
 
+# --- Drift-catching primitive-vocabulary lints (task #84) ------------------
+# Enabled at warn pending the sweep (#72) that will migrate Option/Result
+# → Maybe/Outcome, Vec → trait-bound sinks, String → Str. Upgrade to error
+# once the sweep lands. Part of the primitive-vocabulary retrofit after
+# fidelity audit 2026-04-20 surfaced 15 bare Option uses + raw String/usize
+# across the engine.
+
 [lints.no-bare-result]
 commit = "off"
-build = "off"
-push = "off"
+build = "warn"
+push = "warn"
 
 [lints.no-bare-string]
 commit = "off"
-build = "off"
-push = "off"
+build = "warn"
+push = "warn"
+
+[lints.no-bare-vec]
+commit = "off"
+build = "warn"
+push = "warn"
 
 [lints.no-box]
 commit = "off"
-build = "off"
-push = "off"
+build = "warn"
+push = "warn"
+
+[lints.no-float]
+commit = "off"
+build = "warn"
+push = "warn"
 
 [lints.no-manual-id]
 commit = "off"
@@ -206,8 +223,4 @@ commit = "off"
 build = "off"
 push = "off"
 
-[lints.no-float]
-commit = "off"
-build = "off"
-push = "off"
 
