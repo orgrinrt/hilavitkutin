@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+# @matchers: Write, Edit
+# @timeout: 5
+# Agent hook: block bare primitive identifiers anywhere in
+# hilavitkutin crate source.
+#
+# The rule: `u8..u128`, `i8..i128`, `f32`, `f64`, `usize`, `isize`,
+# `bool`, `Option`, `Result`, `String`, and non-static `&str` do not
+# exist in this stack. Not in public fn sigs, not in private fields,
+# not in `let` bindings, not in cast expressions (`as u32`), not in
+# literal suffixes (`0u32`), not in tuple-struct fields, not in
+# trait method parameter types. Wrap through arvo types (`UFixed` /
+# `IFixed` / `FastFloat` / `StrictFloat` / `USize` / `Cap` / `Bool` /
+# `ContentHash` / ...) or notko's `Maybe` / `Outcome` / `Just`.
+#
+# Escape hatch: `// lint:allow(<rule>) reason: ...; tracked: #N` on
+# the offending line. Rule name matches the violation.
+#
+# The build-time lint pack (mockspace-hilavitkutin-stack-lints)
+# backstops this hook with the same coverage.
+
+set -uo pipefail
+
+__INPUT=$(cat)
+
+{{HOOK_HELPERS}}
+
+TARGET=$(_extract "file_path")
+CONTENT=$(_extract "new_string")
+if [[ -z "$CONTENT" ]]; then
+    CONTENT=$(_extract "content")
+fi
+
+if ! echo "$TARGET" | grep -qE 'hilavitkutin[^/]*/src/.*\.rs$'; then
+    allow
+fi
+
+if [[ -z "$CONTENT" ]]; then
+    allow
+fi
+
+BARE_NUMS='u8|u16|u32|u64|u128|i8|i16|i32|i64|i128|f32|f64|usize|isize|bool'
+
+while IFS= read -r LINE; do
+    case "$LINE" in
+        '' ) continue ;;
+        *'lint:allow('* ) continue ;;
+    esac
+    TRIMMED=$(printf '%s' "$LINE" | sed -e 's/^[[:space:]]*//')
+    case "$TRIMMED" in
+        '//'* ) continue ;;
+    esac
+
+    STRIPPED=$(printf '%s' "$LINE" | sed -e 's/"[^"]*"//g' -e "s/'[^']*'//g")
+
+    if printf '%s' "$STRIPPED" | grep -qE "(^|[^a-zA-Z0-9_])($BARE_NUMS)([^a-zA-Z0-9_]|$)"; then
+        deny "hilavitkutin has no bare numeric/bool primitives. Line: \`$TRIMMED\`. Use UFixed / IFixed / FastFloat / StrictFloat / USize / Cap / Bool or a domain alias. Escape: \`// lint:allow(no-bare-numeric) reason: ...; tracked: #N\`."
+    fi
+
+    if printf '%s' "$STRIPPED" | grep -qE "(^|[^a-zA-Z0-9_])Option([^a-zA-Z0-9_]|$)"; then
+        deny "hilavitkutin has no bare \`Option\`. Use \`notko::Maybe<T>\`. Line: \`$TRIMMED\`. Escape: \`// lint:allow(no-bare-option) reason: std trait parity; tracked: #N\`."
+    fi
+
+    if printf '%s' "$STRIPPED" | grep -qE "(^|[^a-zA-Z0-9_])Result([^a-zA-Z0-9_]|$)"; then
+        if ! printf '%s' "$STRIPPED" | grep -qE "(fmt|io)::Result"; then
+            deny "hilavitkutin has no bare \`Result\`. Use \`notko::Outcome<T, E>\` (cold) or \`notko::Just<T>\` (hot). Line: \`$TRIMMED\`. Escape: \`// lint:allow(no-bare-result) reason: ...; tracked: #N\`."
+        fi
+    fi
+
+    if printf '%s' "$STRIPPED" | grep -qE "(^|[^a-zA-Z0-9_])String([^a-zA-Z0-9_]|$)"; then
+        deny "hilavitkutin has no bare \`String\` (heap-allocated). Use \`hilavitkutin_str::Str\`. Line: \`$TRIMMED\`."
+    fi
+
+    if printf '%s' "$STRIPPED" | grep -qE "(^|[^a-zA-Z0-9_'])&[[:space:]]*(mut[[:space:]]+)?str([^a-zA-Z0-9_]|$)"; then
+        deny "hilavitkutin has no non-static \`&str\`. Use \`&'static str\` or \`hilavitkutin_str::Str\`. Line: \`$TRIMMED\`."
+    fi
+done <<< "$CONTENT"
+
+allow
