@@ -14,6 +14,32 @@ is wrong: reshape toward a trait-bound emitter / iterator / bounded
 store. The heap is not temporarily available; there is no "just for
 this moment".
 
+## No bare primitives. Anywhere.
+
+`u8` through `u128`, `i8` through `i128`, `f32`, `f64`, `usize`,
+`isize`, `bool`, `Option`, `Result`, `String`, non-static `&str` —
+**they do not exist in this stack.** Not in public signatures, not
+in private fields, not in internal `let` bindings, not in cast
+expressions, not in literal suffixes, not in type aliases, not in
+`const`/`static` declarations, not in trait method parameter types,
+not in `where` clauses, not in tuple-struct fields.
+
+Substitute vocabulary lives in arvo (`UFixed` / `IFixed` /
+`FastFloat` / `StrictFloat` / `USize` / `Cap` / `Bool`) and notko
+(`Maybe` / `Outcome` / `Just`). hilavitkutin-str supplies `Str` for
+interned string identity. The `arvo-types-only`, `no-bare-numeric`,
+`no-bare-option`, `no-bare-result`, `no-bare-string`, and
+`no-public-raw-field` lints scan every line of every `.rs` file and
+block commits the moment a bare primitive is physically written.
+
+If a foreign crate's trait or an unavoidable language feature forces
+a specific std primitive, the first question is: *can we implement
+the foreign contract on an arvo type instead?* If yes, that's the
+path. If no, the crate smells like ass and we drop it. The escape
+hatch `// lint:allow(<rule>) reason: ...; tracked: #N` exists only
+for the genuinely unavoidable boundary, always with a tracked
+remediation task.
+
 ## Think in traits, not types
 
 Signatures take trait bounds. The concrete type is whatever the
@@ -55,14 +81,18 @@ traits + `repr(C)` descriptors (inventory pattern), not `dyn`.
 
 ## Type taxonomy
 
-Every type in a public surface falls into one of four categories:
+Every type anywhere in source — public or private, fn sig or field,
+local or cast expression — falls into one of three categories:
 
 | Category | When | Examples |
 |----------|------|----------|
 | **Trait** | Varying behavior, shared contract, extensible | arithmetic ops, sinks, platform providers |
-| **Newtype** | Fixed representation, validation at construction | `UnitId`, strategy markers |
+| **Newtype** | Fixed representation, validation at construction | `UFixed<I, F, S>`, `USize`, `Bool`, `ContentHash`, strategy markers |
 | **`repr(C)` enum** | Closed set, crosses ABI boundary | `Priority`, `ErrorClass` |
-| **Primitive** | No semantic meaning beyond raw value | `u64` with Strategy marker |
+
+There is no fourth "bare primitive" category. Raw `u8`..`u128`,
+`i8`..`i128`, `f32`, `f64`, `usize`, `isize`, `bool` never appear in
+source; every numeric identity flows through arvo's type system.
 
 Decision test is the same as above: if two plausible implementations
 could differ, it's a trait.
@@ -108,8 +138,10 @@ identity without runtime footprint.
 
 ## Primitive vocabulary (the stack's own)
 
-Public APIs use the stack's designed primitives, never bare std
-types in load-bearing positions:
+The rule is "no bare primitives anywhere" (section above); the table
+here documents WHICH stack type replaces WHICH bare primitive. It is
+not a "for public API only" table. Every mapping applies everywhere
+the bare primitive might otherwise appear.
 
 | Don't | Do | Lives in |
 |-------|----|----------|
@@ -123,11 +155,13 @@ types in load-bearing positions:
 | `usize` / `isize` | `USize` / `ISize` / `Cap` / domain newtype | `arvo::newtype` |
 | `u8..u128` / `i8..i128` | `UFixed` / `IFixed` / `T: Boundable` / `T: NonZeroable` | `arvo` / `notko` traits |
 | `f32` / `f64` | `FastFloat` / `StrictFloat` | `arvo::newtype` |
-| `bool` | `Bool` | `arvo-bits` |
+| `bool` | `Bool` | `arvo::newtype` |
 
-Escape hatches: std trait method impls only (e.g., `fn next() ->
-Option<Self::Item>`, `fn partial_cmp() -> Option<Ordering>`,
-`fn fmt() -> fmt::Result`). Everywhere else, the rule stands.
+Escape hatches: std trait method impls whose signatures are fixed by
+the language (`fn next() -> Option<Self::Item>`, `fn partial_cmp() ->
+Option<Ordering>`, `fn fmt() -> fmt::Result`). Each one carries
+`// lint:allow(<rule>) reason: std trait parity; tracked: #N`.
+Everywhere else, the rule stands.
 
 `lint:allow(...)` is NOT for skeleton convenience; it's for tracked
 debt with a linked task id. If the suppression isn't traceable to a
