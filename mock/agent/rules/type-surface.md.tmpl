@@ -1,0 +1,90 @@
+---
+apply_to: ["crates/**/*.rs", "src/**/*.rs"]
+---
+
+# Think in traits, not types. The trait is the contract; the type is an implementation.
+
+Before writing any `pub` signature, ask:
+
+1. What OPERATION does this position perform?
+2. Is there a trait that describes that operation? If yes, use it. If
+   no, create one.
+3. Would two plausible implementations differ? If yes, it's a trait
+   position.
+4. Is the caller forced to pick a concrete type here? If yes, you
+   leaked an implementation detail.
+
+## Decision test
+
+> "Can I imagine two implementations with different behavior?"
+>
+> - Yes → trait.
+> - No → look at the 4 type categories below.
+
+## 4 type categories
+
+| Category | When | Examples |
+|----------|------|----------|
+| **Trait** | Varying behavior, shared contract | `UArith<BITS>`, `IArith<BITS>`, `BitSequence`, `BitAccess`, `Bool: Try` |
+| **Newtype** | Fixed rep, validation at construction | `UFixed<I, F, S>`, `FastFloat`, `StrictFloat`, `USize`, `Cap` |
+| **`repr(C)` enum** | Closed set, crosses ABI | `Strategy` markers, `Priority`, `ErrorClass` |
+| **Primitive** | No semantic meaning beyond raw value | `const N: usize` (const-generic position only) |
+
+## DO ✓ (trait-first)
+
+- Trait bounds for data flow: `&mut impl Collector<T>`, `impl
+  IntoIterator<Item = T>`, `&[T]`
+- Arithmetic generic: `<T: UArith<BITS>>` instead of concrete `u8` /
+  `u16`
+- Associated types when the implementor chooses concrete storage
+- Newtypes at public boundaries: `Cap`, `USize`, `FastFloat`
+- Scalar returns: `Outcome<T, E>`, `Maybe<T>`, `Just<T>` (from notko)
+
+## DON'T ✗ (concrete-type leakage)
+
+- Bare `Option<T>` or `Result<T, E>` — use `Maybe<T>` / `Outcome<T, E>`
+- Concrete collections in pub sigs: `Vec<T>`, `HashMap`, `Seq<T, N>`,
+  `Map<K, V, N>`
+- Raw numerics in pub sigs: `usize`, `f32`, `f64`, `bool`, `u32`, `i32`
+  — use the arvo newtypes or a trait bound
+- `String` / non-static `&str` — use `&'static str` or `hilavitkutin_str::Str`
+- Concrete types when a trait exists: don't write `fn add(a: u32, b:
+  u32) -> u32` when `UArith<32>` is available
+
+## Red flags — STOP and reshape
+
+| If your code looks like… | Reshape to… |
+|---|---|
+| `fn X() -> usize` | `fn X() -> USize` |
+| `fn add(a: u32, b: u32) -> u32` | `fn add<T: UArith<32>>(a: T::T, b: T::T) -> T::T` |
+| `fn lookup(k) -> Option<&V>` | `fn lookup(k) -> Maybe<&V>` |
+| `fn try_x(...) -> Result<T, E>` | `fn try_x(...) -> Outcome<T, E>` |
+| `fn sum() -> Vec<T>` | `fn sum<C: Collector<T>>(sink: &mut C) -> Outcome<(), _>` |
+
+## The canonical example: arvo's arithmetic surface
+
+arvo's numeric ops are traits (`UArith<BITS>`, `IArith<BITS>`) — not
+methods on concrete `u8` / `u16`. Any consumer that does arithmetic
+takes a trait bound and works for Hot/Warm/Cold/Precise strategies
+generically. Callers don't need turbofish; Rust infers.
+
+This is the pattern everywhere. The monomorphised function IS the type
+identity; there's no runtime cost compared to the concrete-type
+version.
+
+## If no existing trait fits
+
+The correct answer is "add a trait" — not "use a std type". File a
+design round describing the contract.
+
+## The escape-hatch rule
+
+`// lint:allow(<rule>) reason: …; tracked: #<task-id>` — every escape
+is tracked debt. No `lint:allow` for skeleton convenience. If the rule
+seems not to fit, the design is wrong, not the rule.
+
+## See also
+
+- `PRINCIPLES.md` — first principles (including "No heap. Ever.")
+- `.claude/rules/cookbook.md` — intent → trait mapping
+- `.claude/rules/no-heap.md` — dedicated no-heap rule
