@@ -17,7 +17,15 @@ Low-ego, nonchalant, factual. Expert-to-expert. No marketing speak, no cheerlead
 
 ## Structure
 
-**Prose before enumeration.** The first and second paragraphs of any public-facing document, and of any major section, are short prose that frame the piece. Lists, tables, code blocks, and other enumerated content come after the reader has the framing. A document that opens with a bulleted list reads as a TLDR dump rather than a considered piece. Exception: the mockspace round-artifact metadata block (`**Date:** / **Phase:** / **Scope:** / **Source topics:**`) carries bullets by convention, and that convention overrides inside `mock/design_rounds/` files only.
+**Prose before enumeration.** The first three or four sections or paragraphs of any public-facing document are reserved for prose that frames the piece. Lists, bulleted enumeration, feature dumps, and similar structural content come after the reader has the framing. A document that opens with a flat bulleted list reads as a TLDR dump rather than a considered piece.
+
+Exceptions to the top-of-document rule:
+
+Round-artifact metadata blocks (`**Date:** / **Phase:** / **Scope:** / **Source topics:**`) carry bullets by convention inside `mock/design_rounds/` files. That convention overrides.
+
+Tables are allowed at the top when they carry real reference content: at least two columns wide and at least three rows of data. Parallel-column information belongs in parallel-column form, and a status or comparison table often frames a document better than a paragraph would. Tiny tables (single-column, or two rows) are not reference material, just prose wearing a table costume; rewrite them as prose.
+
+Table of Contents (`## Table of contents` or equivalent) is the one list form that belongs at the top. If a TOC exists in a document, it must be the first or second section, never buried lower. A TOC halfway down a doc is worse than no TOC.
 
 **Short sentences, simple words.** Prefer plain English. Avoid multi-clause constructions. When you reach for a subordinate clause, it is usually a signal to split the sentence in two.
 
@@ -100,11 +108,15 @@ Title Case for top-level `#` (the document title). Sentence case for `##` and be
 
 ## Lists
 
-Use lists for genuine enumeration: items that belong to the same category and can be evaluated independently of each other. Do not use lists as a substitute for prose. If your bullets form sentences that flow into each other, the prose form is correct.
+Lists are a good choice for hierarchical content that benefits from visual structure, for genuine enumeration where items can be evaluated independently, and for steps where order matters. Long-form prose bullets are fine. A bullet with three full sentences that carries real content is a structured paragraph; it has not stopped being a bullet.
 
-Prefer ordered lists (`1.`) when order matters (steps, priority). Prefer unordered lists (`-`) when order is incidental.
+What lists should not be:
 
-Keep bullets short. A bullet with three full sentences has stopped being a bullet.
+Short-label TLDRs of the form `- <word or two>: <short definition>`. That pattern compresses content into captions and tells the reader what to think without showing them. The label-plus-colon form is fine for a glossary entry or a reference table. It is not fine as the main vehicle for ideas in a PRINCIPLES, DESIGN, or README document. When you reach for that form, the prose version is usually the right call.
+
+Feature dumps and capability lists of the form `- Does X. - Does Y. - Does Z.`. That pattern is a marketing tactic rather than a description. Write the prose that connects X, Y, and Z into a picture of why they exist together.
+
+Prefer ordered lists (`1.`) when order matters (steps, priority). Prefer unordered lists (`-`) when order is incidental. Use a list when the hierarchy helps the reader find their place; use prose when a paragraph reads more naturally than bullets.
 
 ## Tables
 
