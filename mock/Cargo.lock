@@ -135,6 +135,7 @@ dependencies = [
  "arvo-bitmask",
  "hilavitkutin-ctx",
  "mockspace",
+ "notko",
 ]
 
 [[package]]
@@ -215,6 +216,11 @@ dependencies = [
  "tree-sitter",
  "tree-sitter-rust",
 ]
+
+[[package]]
+name = "notko"
+version = "0.1.0"
+source = "git+ssh://git@github.com/orgrinrt/notko.git?branch=dev#d76b04a4aa0cd2c2ab0bb21ff80834d1e4290c67"
 
 [[package]]
 name = "proc-macro2"

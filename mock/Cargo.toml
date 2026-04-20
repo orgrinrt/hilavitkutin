@@ -21,6 +21,12 @@ repository = "https://github.com/orgrinrt/hilavitkutin"
 [workspace.dependencies]
 mockspace = { git = "ssh://git@github.com/hiisi-digital/mockspace.git", branch = "main" }
 
+# notko foundation — Just / Maybe / Outcome / Boundable / NonZeroable
+# primitives. Consumed by hilavitkutin-api for its contract traits
+# (BoundedPush, Decoder) and by any downstream crate needing the
+# fallibility ladder.
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false }
+
 # arvo substrate — referenced via path when developing in tandem, via
 # crates.io / git dep once published. For now the mockspace validates
 # shapes against design docs; consumers path-override as needed.
