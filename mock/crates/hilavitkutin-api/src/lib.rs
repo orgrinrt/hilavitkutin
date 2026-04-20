@@ -22,15 +22,20 @@ mod sealed {
 }
 
 pub mod access;
+pub mod capability;
+pub mod codec;
 pub mod column_value;
 pub mod context;
 pub mod hint;
 pub mod id;
 pub mod platform;
+pub mod sink;
 pub mod store;
 pub mod work_unit;
 
 pub use access::{AccessSet, Contains};
+pub use capability::{BoundedPush, BulkPush, Capacity, Full, Len, Push};
+pub use codec::{DecodeError, Decoder, DecoderExt, Encoder, EncoderExt};
 pub use column_value::ColumnValue;
 pub use context::{
     BatchApi, ColumnReaderApi, ColumnWriterApi, EachApi, HasBatch, HasColumnReader,
@@ -46,5 +51,6 @@ pub use id::{AccessMask, StoreId};
 pub use platform::{
     ClockApi, HasClock, HasMemoryProvider, HasThreadPool, MemoryProviderApi, ThreadPoolApi,
 };
+pub use sink::{ByteEmitter, Collector, CountingSink, DiagnosticSink, NullSink, TeeSink};
 pub use store::{Column, Field, Map, Resource, Seq, Virtual};
 pub use work_unit::{Always, On, WorkUnit};
