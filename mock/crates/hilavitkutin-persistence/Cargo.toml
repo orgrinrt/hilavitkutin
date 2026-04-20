@@ -9,6 +9,7 @@ repository.workspace = true
 [dependencies]
 hilavitkutin-str.workspace = true
 hilavitkutin-api.workspace = true
+notko.workspace = true
 # rkyv pulled in by follow-up round; skeleton ships without it.
 
 [dev-dependencies]

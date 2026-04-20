@@ -1,9 +1,28 @@
 # hilavitkutin-str — Design Overview
 
-`#![no_std]`, zero external dependencies. Interned string system
-for the hilavitkutin ecosystem. Shared across saalis, polka-dots,
-loimu. Lives in saalis workspace for now, will be extracted to
-hilavitkutin repo when stabilised.
+`#![no_std]`, with `notko` (for `Maybe`) and `arvo` (for `Bool`) as
+the only dependencies. Interned string system for the hilavitkutin
+ecosystem. Shared across saalis, polka-dots, loimu. Lives in saalis
+workspace for now, will be extracted to hilavitkutin repo when
+stabilised.
+
+## Primitive vocabulary
+
+`Interner::resolve(&self, s: Str)` returns `notko::Maybe<&str>` —
+`Maybe::Is(&str)` when `s` was interned in this arena,
+`Maybe::Isnt` otherwise. The `&str` borrow remains non-`'static`
+because the lifetime anchors to the interner's arena, not to program
+memory. `Str::is_const` and `Str::is_runtime` return
+`arvo::newtype::Bool`.
+
+`const_fnv1a` returns `Hash64 = u64` — a semantic alias over the raw
+FNV-1a 64-bit hash value.
+
+`Str::id / Str::__make / Str::__runtime` carry the opaque 32-bit
+handle representation (28-bit ID + flag bits) as raw `u32` with
+`allow-bare-numeric: tracked: #72`. The `u32` is literally the
+bit-packed handle, not a count or index; newtype-collapsing is
+tracked in BACKLOG.
 
 ## `Str` — interned string handle
 

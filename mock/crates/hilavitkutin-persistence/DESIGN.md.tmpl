@@ -8,6 +8,31 @@ consumer (saalis, polka-dots, loimu).
 Lives in saalis workspace for now. Will be extracted to
 hilavitkutin repo when stabilised.
 
+## Primitive vocabulary
+
+`Sieve::{len, capacity}` return `arvo::newtype::USize`; `is_empty`
+returns `arvo::newtype::Bool`; `insert` / `get` / `evict` return
+`notko::Maybe<...>`; `ColdStore::{open, flush, load, snapshot}` return
+`notko::Outcome<_, PersistenceError>`; `StringTable::lookup` returns
+`notko::Maybe<&[u8]>`.
+
+Two semantic aliases in `hilavitkutin_persistence::aliases` replace
+the raw forms in public signatures:
+
+```rust
+pub type SieveWeight = u64;  // LFU admission weight
+pub type ContentHash = u32;  // interned-string content hash
+```
+
+`Sieve::insert(weight: SieveWeight)`, `StringTable::lookup(content_hash:
+ContentHash)`, `archive_str::evict_str -> ContentHash`. Pure aliases
+(no wrapping); the underlying `u64`/`u32` are unchanged. Newtype
+promotion is tracked in BACKLOG.
+
+A third value-semantic raw-numeric case lives in
+`hilavitkutin-build::BuildPragma::parallel_codegen_units` (`CodegenUnits
+= u8`).
+
 ## Dependencies
 
 - `hilavitkutin-str` — Str type, content hashing

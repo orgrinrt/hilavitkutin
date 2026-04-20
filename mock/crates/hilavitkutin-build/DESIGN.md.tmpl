@@ -5,6 +5,18 @@ consumer's build.rs calls `hilavitkutin_build::configure().run()`.
 Independent of hilavitkutin runtime — optimises HOW code is compiled,
 not what it does. Standalone, no runtime deps.
 
+## Primitive vocabulary
+
+`BuildPragma::contains` and `BuildConfig::fast_math` return
+`arvo::newtype::Bool`. `BuildPragma::parallel_codegen_units` returns
+`notko::Maybe<CodegenUnits>` where `CodegenUnits = u8` is a semantic
+alias declared in `hilavitkutin_build::aliases`. The `u8` width
+matches rustc's own codegen-units convention. Newtype-collapse
+tracked in BACKLOG.
+
+`impl Iterator for PragmaIter { fn next(&mut self) -> Option<Pragma> }`
+remains on the std-trait signature.
+
 ## Entry point
 
 ```rust

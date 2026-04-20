@@ -9,6 +9,52 @@ newtypes.
 The consolidation topic (202603181200) is the authoritative design
 source. This document maps domains to engine modules.
 
+## Primitive vocabulary
+
+Public method returns follow the clause-dev discipline:
+`Bool` (from `arvo::newtype::Bool`) in place of bare `bool`;
+`USize` (from `arvo::newtype::USize`) in place of bare `usize`;
+`notko::Maybe<T>` in place of bare `Option<T>`; `notko::Outcome<T, E>`
+in place of bare `Result<T, E>`. Const-generic capacities are typed
+`Cap` (from `arvo::newtype::Cap`).
+
+`impl Iterator for ...` etc. keep std-trait signatures
+(`Option<Self::Item>`, `Result<T, E>`) — designated escape hatch.
+
+Representation-layer accessors keep their raw types with a tracked
+exception: `AccessMask::raw -> u128` and `DirtyMask::raw -> u128`
+expose the literal bit pattern, and both carry
+`allow-bare-numeric: tracked: #72`. Replace with `Mask128` once
+arvo-bitmask ships a const-generic mask (tracked in-file).
+
+## Domain aliases
+
+Semantic aliases over raw primitives, declared in
+`hilavitkutin::aliases`. Pure `pub type` aliases — structurally
+transparent, zero runtime cost, readable signatures:
+
+```rust
+pub type RecordIndex = u64;  // record position in a column/store
+pub type CoreCount   = u16;  // CPU core count
+pub type FiberCount  = u16;  // concurrent fiber count
+pub type MorselLen   = u32;  // records per morsel
+```
+
+Public positions reuse existing domain types where present:
+
+- `UnitId` (from `plan::inputs`, `pub struct UnitId(pub u32)`) —
+  work-unit graph node identifier. Used by `DependencyGraph::{has_edge,
+  add_edge}`.
+- `StoreId` (from `hilavitkutin-api::id`, `pub struct StoreId(pub USize)`)
+  — store bitmask slot index. Used by `AccessMask::{set, contains}`
+  and `DirtyMask::{set, contains}`.
+- `FiberId` (from `hilavitkutin-api::id`) — fiber identifier. Used
+  by `dispatch::sync::Sync::new`.
+
+Promote any alias to a newtype wrapper if a later round surfaces
+arithmetic / ordering / conversion semantics that benefit from
+stronger typing.
+
 ## Domain map
 
 | Module | Domains | What it does |

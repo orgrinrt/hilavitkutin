@@ -14,6 +14,7 @@ arvo-graph.workspace = true
 arvo-sparse.workspace = true
 arvo-spectral.workspace = true
 arvo-comb.workspace = true
+notko.workspace = true
 libc = { workspace = true, optional = true }
 
 [build-dependencies]
