@@ -1,10 +1,14 @@
-//! `hilavitkutin-str` — `no_std`, zero-dep interned string system.
+//! `hilavitkutin-str` — `no_std` interned string system.
 //!
 //! Shared across the hilavitkutin ecosystem. All construction paths
 //! for `Str` go through [`str_const!`] (compile-time) or
 //! [`StringInterner`] (runtime).
 
 #![no_std]
+#![feature(adt_const_params)]
+#![feature(generic_const_exprs)]
+#![feature(macro_metavar_expr_concat)]
+#![allow(incomplete_features)]
 
 mod entry;
 mod ergonomics;

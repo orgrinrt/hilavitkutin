@@ -43,9 +43,9 @@ pub use context::{
     ResourceProviderApi, VirtualFirerApi,
 };
 pub use hint::{
-    Adaptive, Atomic, Critical, Deferred, DivisibilityValue, Immediate, Important,
-    Interruptible, Normal, Opportunistic, Optional, Relaxed, SchedulingHint, SignificanceValue,
-    Steady, UrgencyValue,
+    Adaptive, Atomic, Critical, Deferred, Divisibility, DivisibilityValue, Immediate, Important,
+    Interruptible, Normal, Opportunistic, Optional, Relaxed, SchedulingHint, Significance,
+    SignificanceValue, Steady, Urgency, UrgencyValue,
 };
 pub use id::{AccessMask, StoreId};
 pub use platform::{

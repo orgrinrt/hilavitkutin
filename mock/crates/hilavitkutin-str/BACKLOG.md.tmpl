@@ -1,5 +1,16 @@
 # hilavitkutin-str — backlog
 
+## Str layout via dedicated arvo Bitfield primitive
+
+Str is currently a thin newtype over `arvo_bits::Bits<32>`. The
+accessors (`is_const`, `is_runtime`, `id`) project the
+origin-flag + reserved + ID sub-ranges in code. The designed
+long-term home is a `Bitfield` primitive in arvo that carries the
+named sub-ranges at type level — the packing becomes part of the
+type, not the method bodies. Tracked in the arvo workspace as
+task #127. When it lands, Str promotes to that primitive; the
+public API (`is_const`, `is_runtime`, `id`) stays identical.
+
 ## Windows PE section walker
 
 Current linker-section walking ships Linux (`__start_` /

@@ -154,20 +154,23 @@ discipline that the engine proves at plan time.
 
 ## Scheduling hints (domain 09)
 
-Three axes as `repr(u8)` ZST carriers:
+Three axes. Each axis is a sealed trait with a fixed set of ZST
+carrier types. Each trait's `VALUE` const is typed as the narrowest
+arvo `UFixed<N, 0, Hot>` alias that fits the axis.
 
-**Urgency:** `Immediate` (255), `Steady` (170), `Relaxed` (85),
-`Deferred` (0).
-
-**Divisibility:** `Atomic` (255), `Adaptive` (128),
-`Interruptible` (0).
-
-**Significance:** `Critical` (255), `Important` (192), `Normal` (128),
-`Opportunistic` (64), `Optional` (0).
+| Axis | Alias | Width | Markers | Discriminants |
+|------|-------|------:|---------|---------------|
+| Urgency | `Urgency = UFixed<2, 0, Hot>` | 2 bits | `Immediate`, `Steady`, `Relaxed`, `Deferred` | 3, 2, 1, 0 |
+| Divisibility | `Divisibility = UFixed<2, 0, Hot>` | 2 bits | `Atomic`, `Adaptive`, `Interruptible` | 2, 1, 0 |
+| Significance | `Significance = UFixed<3, 0, Hot>` | 3 bits | `Critical`, `Important`, `Normal`, `Opportunistic`, `Optional` | 4, 3, 2, 1, 0 |
 
 `SchedulingHint` trait on tuples: `(U: UrgencyValue, D:
-DivisibilityValue, S: SignificanceValue)`. Lower discriminant = higher
-priority.
+DivisibilityValue, S: SignificanceValue)`. Higher discriminant =
+higher priority (ordering derived from `UFixed`'s `PartialOrd`).
+
+Three axes pack into 7 bits; u8-discriminant thinking would take
+24 bits. Exact-width substrate is how the stack pays this memory
+back at every WU.
 
 ## Platform traits (domain 02)
 
