@@ -29,13 +29,13 @@ bitfield! {
 pub struct Str(StrLayout);
 
 impl Str {
-    /// The const-origin polarity at bit 31: bit *cleared* means the
-    /// handle was produced by `str_const!` (compile-time).
-    pub const CONST_ORIGIN_FLAG: Bits<32, Hot> = Bits::<32>::new(0);
-    /// Mask for the runtime-origin bit (bit 31 = 1).
-    pub const RUNTIME_MASK: Bits<32, Hot> = Bits::<32>::new(1u64 << 31);
-    /// Mask for the 28-bit ID (bits 27-0).
-    pub const ID_MASK: Bits<32, Hot> = Bits::<32>::new(0x0FFF_FFFF);
+    /// Mask for the runtime-origin bit (bit 31 = 1). Forwards to
+    /// `StrLayout::origin_MASK` — authoritative declaration on the
+    /// layout.
+    pub const RUNTIME_MASK: Bits<32, Hot> = StrLayout::origin_MASK;
+    /// Mask for the 28-bit ID (bits 27-0). Forwards to
+    /// `StrLayout::id_MASK`.
+    pub const ID_MASK: Bits<32, Hot> = StrLayout::id_MASK;
 
     /// Construct a const-origin `Str` from a 28-bit ID. Not for direct
     /// use — `str_const!()` is the only intended caller.
