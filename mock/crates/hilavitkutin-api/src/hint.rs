@@ -1,12 +1,15 @@
 //! Scheduling hints.
 //!
 //! Three orthogonal axes: urgency, divisibility, significance. Each
-//! axis has its own sealed trait and a fixed set of ZST carrier
-//! types. A WU declares `type Hint = (U, D, S)` where each position
-//! is a marker on the matching axis.
+//! axis has its own sealed trait, its own exact-width `UFixed` alias,
+//! and a fixed set of ZST carrier types. A WU declares
+//! `type Hint = (U, D, S)` where each position is a marker on the
+//! matching axis.
 //!
-//! Lower discriminant is lower priority. Tie-break by most deps
+//! Higher discriminant = higher priority. Tie-break by most deps
 //! first, then deterministic fallback.
+
+use arvo::{FBits, IBits, UFixed, strategy::Hot};
 
 mod hint_sealed {
     /// Hint-subsystem private seal. Separate from the crate-level
@@ -15,22 +18,31 @@ mod hint_sealed {
     pub trait Sealed {} // lint:allow(undocumented_type)
 }
 
+/// How soon the WU must run. 4 levels fit in 2 bits.
+pub type Urgency = UFixed<{ IBits(2) }, { FBits::ZERO }, Hot>;
+
+/// Whether the WU can be split or paused. 3 levels fit in 2 bits.
+pub type Divisibility = UFixed<{ IBits(2) }, { FBits::ZERO }, Hot>;
+
+/// Relative importance of the WU's output. 5 levels fit in 3 bits.
+pub type Significance = UFixed<{ IBits(3) }, { FBits::ZERO }, Hot>;
+
 /// Axis 1: how soon the WU must run.
 pub trait UrgencyValue: hint_sealed::Sealed + 'static {
     /// Discriminant. Higher = higher urgency.
-    const VALUE: u8;
+    const VALUE: Urgency;
 }
 
 /// Axis 2: whether the WU can be split or paused.
 pub trait DivisibilityValue: hint_sealed::Sealed + 'static {
     /// Discriminant. Higher = more rigid scheduling.
-    const VALUE: u8;
+    const VALUE: Divisibility;
 }
 
 /// Axis 3: relative importance of the WU's output.
 pub trait SignificanceValue: hint_sealed::Sealed + 'static {
     /// Discriminant. Higher = more significant.
-    const VALUE: u8;
+    const VALUE: Significance;
 }
 
 /// A full scheduling hint: one marker per axis.
@@ -52,7 +64,7 @@ impl<U: UrgencyValue, D: DivisibilityValue, S: SignificanceValue> SchedulingHint
 pub struct Immediate;
 impl hint_sealed::Sealed for Immediate {}
 impl UrgencyValue for Immediate {
-    const VALUE: u8 = 255;
+    const VALUE: Urgency = Urgency::from_raw(3);
 }
 
 /// Run at the frame's steady cadence.
@@ -60,7 +72,7 @@ impl UrgencyValue for Immediate {
 pub struct Steady;
 impl hint_sealed::Sealed for Steady {}
 impl UrgencyValue for Steady {
-    const VALUE: u8 = 170;
+    const VALUE: Urgency = Urgency::from_raw(2);
 }
 
 /// Run when convenient.
@@ -68,7 +80,7 @@ impl UrgencyValue for Steady {
 pub struct Relaxed;
 impl hint_sealed::Sealed for Relaxed {}
 impl UrgencyValue for Relaxed {
-    const VALUE: u8 = 85;
+    const VALUE: Urgency = Urgency::from_raw(1);
 }
 
 /// Run at idle only.
@@ -76,7 +88,7 @@ impl UrgencyValue for Relaxed {
 pub struct Deferred;
 impl hint_sealed::Sealed for Deferred {}
 impl UrgencyValue for Deferred {
-    const VALUE: u8 = 0;
+    const VALUE: Urgency = Urgency::from_raw(0);
 }
 
 // ---- Divisibility markers --------------------------------------------
@@ -86,7 +98,7 @@ impl UrgencyValue for Deferred {
 pub struct Atomic;
 impl hint_sealed::Sealed for Atomic {}
 impl DivisibilityValue for Atomic {
-    const VALUE: u8 = 255;
+    const VALUE: Divisibility = Divisibility::from_raw(2);
 }
 
 /// Splittable at morsel boundaries.
@@ -94,7 +106,7 @@ impl DivisibilityValue for Atomic {
 pub struct Adaptive;
 impl hint_sealed::Sealed for Adaptive {}
 impl DivisibilityValue for Adaptive {
-    const VALUE: u8 = 128;
+    const VALUE: Divisibility = Divisibility::from_raw(1);
 }
 
 /// Pausable mid-morsel.
@@ -102,7 +114,7 @@ impl DivisibilityValue for Adaptive {
 pub struct Interruptible;
 impl hint_sealed::Sealed for Interruptible {}
 impl DivisibilityValue for Interruptible {
-    const VALUE: u8 = 0;
+    const VALUE: Divisibility = Divisibility::from_raw(0);
 }
 
 // ---- Significance markers --------------------------------------------
@@ -112,7 +124,7 @@ impl DivisibilityValue for Interruptible {
 pub struct Critical;
 impl hint_sealed::Sealed for Critical {}
 impl SignificanceValue for Critical {
-    const VALUE: u8 = 255;
+    const VALUE: Significance = Significance::from_raw(4);
 }
 
 /// High-value output; skipping degrades results.
@@ -120,7 +132,7 @@ impl SignificanceValue for Critical {
 pub struct Important;
 impl hint_sealed::Sealed for Important {}
 impl SignificanceValue for Important {
-    const VALUE: u8 = 192;
+    const VALUE: Significance = Significance::from_raw(3);
 }
 
 /// Default significance.
@@ -128,7 +140,7 @@ impl SignificanceValue for Important {
 pub struct Normal;
 impl hint_sealed::Sealed for Normal {}
 impl SignificanceValue for Normal {
-    const VALUE: u8 = 128;
+    const VALUE: Significance = Significance::from_raw(2);
 }
 
 /// Run when slack permits.
@@ -136,7 +148,7 @@ impl SignificanceValue for Normal {
 pub struct Opportunistic;
 impl hint_sealed::Sealed for Opportunistic {}
 impl SignificanceValue for Opportunistic {
-    const VALUE: u8 = 64;
+    const VALUE: Significance = Significance::from_raw(1);
 }
 
 /// Drop under pressure.
@@ -144,5 +156,5 @@ impl SignificanceValue for Opportunistic {
 pub struct Optional;
 impl hint_sealed::Sealed for Optional {}
 impl SignificanceValue for Optional {
-    const VALUE: u8 = 0;
+    const VALUE: Significance = Significance::from_raw(0);
 }
