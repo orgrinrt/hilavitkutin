@@ -1,6 +1,8 @@
 //! `ArenaInterner` + `StringInterner<A>` — runtime interning with
 //! const-table short-circuit.
 
+use arvo_bits::Bits;
+
 use crate::handle::Str;
 use crate::hash::const_fnv1a;
 use crate::section::static_entries;
@@ -38,7 +40,7 @@ impl<A: ArenaInterner> StringInterner<A> { // lint:allow(no-alloc) -- interner w
             return h;
         }
         let id = self.arena.arena_intern(s);
-        Str::__runtime(id)
+        Str::__runtime(Bits::<28>::new(id as u64))
     }
 
     /// Intern a `'static` string. Same semantics as `intern`; the
@@ -48,7 +50,7 @@ impl<A: ArenaInterner> StringInterner<A> { // lint:allow(no-alloc) -- interner w
             return h;
         }
         let id = self.arena.arena_intern(s);
-        Str::__runtime(id)
+        Str::__runtime(Bits::<28>::new(id as u64))
     }
 
     /// Resolve a handle back to a string.
@@ -63,7 +65,7 @@ impl<A: ArenaInterner> StringInterner<A> { // lint:allow(no-alloc) -- interner w
         if s.is_const() {
             lookup_const_by_handle(s)
         } else {
-            Some(self.arena.arena_resolve(s.id()))
+            Some(self.arena.arena_resolve(s.id().bits() as u32))
         }
     }
 }
@@ -71,10 +73,9 @@ impl<A: ArenaInterner> StringInterner<A> { // lint:allow(no-alloc) -- interner w
 /// Linear scan for a const-section entry matching `s` (by hash, then
 /// by content to rule out 28-bit truncation collisions).
 fn lookup_const_by_value(s: &str) -> Option<Str> {
-    let want_id = (const_fnv1a(s) & 0x0FFF_FFFF as u64) as u32;
-    let want = Str::__make(want_id);
+    let want = Str::__make(Bits::<28>::new(const_fnv1a(s) & 0x0FFF_FFFF));
     for entry in static_entries() {
-        if entry.hash.0 == want.0 && str_eq(entry.value, s) {
+        if entry.hash == want && str_eq(entry.value, s) {
             return Some(entry.hash);
         }
     }
@@ -84,7 +85,7 @@ fn lookup_const_by_value(s: &str) -> Option<Str> {
 /// Linear scan for a const-section entry matching a handle.
 fn lookup_const_by_handle(h: Str) -> Option<&'static str> {
     for entry in static_entries() {
-        if entry.hash.0 == h.0 {
+        if entry.hash == h {
             return Some(entry.value);
         }
     }
