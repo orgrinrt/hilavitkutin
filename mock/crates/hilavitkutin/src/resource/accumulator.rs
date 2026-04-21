@@ -4,6 +4,8 @@
 //! accumulator; merged after convergence via a fn-pointer combiner
 //! (addition for additive, sequential fallback for non-commutative).
 
+use arvo::USize;
+
 #[derive(Copy, Clone)]
 pub struct AccumulatorSlot<T: Copy> {
     pub value: T,
@@ -18,11 +20,11 @@ impl<T: Copy> AccumulatorSlot<T> {
 
 /// Const-sized per-thread accumulator buffer.
 #[derive(Copy, Clone)]
-pub struct ConvergenceBuffer<T: Copy, const N: usize> {
+pub struct ConvergenceBuffer<T: Copy, const N: usize> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     slots: [AccumulatorSlot<T>; N],
 }
 
-impl<T: Copy, const N: usize> ConvergenceBuffer<T, N> {
+impl<T: Copy, const N: usize> ConvergenceBuffer<T, N> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     #[inline(always)]
     pub const fn new(zero: T) -> Self {
         Self {
@@ -31,13 +33,13 @@ impl<T: Copy, const N: usize> ConvergenceBuffer<T, N> {
     }
 
     #[inline(always)]
-    pub fn get(&self, i: usize) -> T {
-        self.slots[i].value
+    pub fn get(&self, i: USize) -> T {
+        self.slots[*i].value
     }
 
     #[inline(always)]
-    pub fn set(&mut self, i: usize, v: T) {
-        self.slots[i].value = v;
+    pub fn set(&mut self, i: USize, v: T) {
+        self.slots[*i].value = v;
     }
 
     /// Merge all slots through a fn-pointer combiner.
