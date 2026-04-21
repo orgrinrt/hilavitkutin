@@ -18,6 +18,8 @@ pub mod progress;
 pub mod sync;
 pub mod wu_fn;
 
+use arvo::USize;
+
 pub use approach::DispatchApproach;
 pub use core_dispatch::CoreDispatch;
 pub use fiber_dispatch::FiberDispatch;
@@ -31,7 +33,7 @@ pub use wu_fn::WuFn;
 ///
 /// Skeleton: `todo!()`. Real thresholds (10K cutover target) land
 /// with benchmarks — see BACKLOG.
-pub fn select_approach(record_count: u64, fiber_count: u16) -> DispatchApproach {
+pub fn select_approach(record_count: USize, fiber_count: USize) -> DispatchApproach {
     let _ = (record_count, fiber_count);
     todo!("5a3: approach selection (record-count thresholds)")
 }
