@@ -19,14 +19,14 @@ pub use result::PipelineResult;
 
 /// Top-level scheduler with const-sized capacity.
 pub struct Scheduler<
-    const MAX_UNITS: usize,
-    const MAX_STORES: usize,
-    const MAX_LANES: usize,
+    const MAX_UNITS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_STORES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_LANES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
 > {
     _phantom: PhantomData<()>,
 }
 
-impl<const MAX_UNITS: usize, const MAX_STORES: usize, const MAX_LANES: usize>
+impl<const MAX_UNITS: usize, const MAX_STORES: usize, const MAX_LANES: usize> // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     Scheduler<MAX_UNITS, MAX_STORES, MAX_LANES>
 {
     pub const fn builder() -> SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES> {
@@ -36,7 +36,7 @@ impl<const MAX_UNITS: usize, const MAX_STORES: usize, const MAX_LANES: usize>
     }
 }
 
-impl<const MAX_UNITS: usize, const MAX_STORES: usize, const MAX_LANES: usize> Default
+impl<const MAX_UNITS: usize, const MAX_STORES: usize, const MAX_LANES: usize> Default // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     for Scheduler<MAX_UNITS, MAX_STORES, MAX_LANES>
 {
     fn default() -> Self {
@@ -48,14 +48,14 @@ impl<const MAX_UNITS: usize, const MAX_STORES: usize, const MAX_LANES: usize> De
 
 /// Builder for Scheduler. Chains static composition.
 pub struct SchedulerBuilder<
-    const MAX_UNITS: usize,
-    const MAX_STORES: usize,
-    const MAX_LANES: usize,
+    const MAX_UNITS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_STORES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_LANES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
 > {
     _phantom: PhantomData<()>,
 }
 
-impl<const MAX_UNITS: usize, const MAX_STORES: usize, const MAX_LANES: usize>
+impl<const MAX_UNITS: usize, const MAX_STORES: usize, const MAX_LANES: usize> // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES>
 {
     pub fn add<WU: 'static>(self) -> Self {
