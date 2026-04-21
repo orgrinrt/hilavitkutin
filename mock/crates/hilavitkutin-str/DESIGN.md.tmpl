@@ -37,7 +37,7 @@ impl Str {
 }
 ```
 
-No duplication of layout information — the mask values live on
+No duplication of layout information. The mask values live on
 StrLayout and Str forwards them under consumer-friendly names.
 
 Const IDs are content hashes (deterministic, stable across
@@ -60,7 +60,7 @@ macro_rules! str_const {
 ```
 
 One macro call produces the handle AND registers the string in a
-linker section. No external deps — no `inventory`. Platform-
+linker section. No external deps, no `inventory`. Platform-
 specific section walking at startup:
 - Linux: `__start_hilavitkutin_strings` / `__stop_hilavitkutin_strings`
 - macOS: `getsectiondata` on `__DATA,hilavitkutin_strings`
@@ -91,7 +91,7 @@ pub trait ArenaInterner {
 ```
 
 Minimal contract. The host implements with whatever backing
-storage it wants. Only handles runtime strings — const strings
+storage it wants. Only handles runtime strings; const strings are
 handled by the wrapper.
 
 ## `StringInterner<A>` — wrapper
@@ -153,7 +153,7 @@ for `str_const!` handle derivation. Also used by
 
 The content hash is the file-level identity of a string. The
 sequential runtime ID is the session-level identity. They never
-need to agree — the hash is stable, the runtime ID is ephemeral.
+need to agree. The hash is stable; the runtime ID is ephemeral.
 
 ## Design rule
 

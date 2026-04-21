@@ -1,5 +1,7 @@
 # Workflow
 
+This document describes the authored development flow for hilavitkutin: the pre-work checks an agent runs before touching anything, the ordered phases from design through documentation, and the graduation path that moves a crate out of the mock workspace once its design locks. The sections that follow are ordered by when they apply during a session.
+
 ## Pre-work checklist
 
 - On main? If not, you are on a PR branch.
@@ -12,16 +14,16 @@
 
 **Current phase: design.** The mockspace validates design via `cargo
 check` + doc generation. Source is not expected to have real
-implementations yet — the goal is every DESIGN.md.tmpl agrees with
+implementations yet. The goal is every DESIGN.md.tmpl agrees with
 every other and the types compile.
 
-1. Design — update the mock workspace crate sources and documentation.
-2. Validate — `cargo check` in the mock workspace. It must compile.
-3. Regenerate — `cargo mock` to produce generated docs.
-4. Types — declare internal types if needed.
-5. Tests — write to fail first.
-6. Implement — code until tests pass.
-7. Document — STRUCTURE is auto-generated; verify it reflects changes.
+1. Design: update the mock workspace crate sources and documentation.
+2. Validate: `cargo check` in the mock workspace. It must compile.
+3. Regenerate: `cargo mock` to produce generated docs.
+4. Types: declare internal types if needed.
+5. Tests: write to fail first.
+6. Implement: code until tests pass.
+7. Document: STRUCTURE is auto-generated; verify it reflects changes.
 
 Rules:
 - Do not change tests to make them pass; fix design or code.

@@ -17,25 +17,13 @@ The canonical spec is
 
 {{crate_count}} crates, flat structure, four logical groupings:
 
-**API — consumer-facing contracts:**
-- `hilavitkutin-api` — `WorkUnit`, `AccessSet`, `Column<T>`,
-  `Resource<T>`, `Virtual<T>`, `Context`, `Contains`, platform
-  contracts (`Clock`, `MemoryProvider`, `ThreadPool`).
+**API (consumer-facing contracts).** `hilavitkutin-api` ships `WorkUnit`, `AccessSet`, `Column<T>`, `Resource<T>`, `Virtual<T>`, `Context`, `Contains`, and the platform contracts (`Clock`, `MemoryProvider`, `ThreadPool`).
 
-**Engine — the scheduler and runtime:**
-- `hilavitkutin` — `plan` (phase, fiber, analysis, morsel, loading),
-  `dispatch`, `resource`, `thread`, `strategy`, `adapt`, `scheduler`,
-  `intrinsics`, `platform`.
+**Engine (the scheduler and runtime).** `hilavitkutin` houses `plan` (phase, fiber, analysis, morsel, loading), `dispatch`, `resource`, `thread`, `strategy`, `adapt`, `scheduler`, `intrinsics`, and `platform`.
 
-**Build-time — build-dep only, no runtime linkage:**
-- `hilavitkutin-build` — LLVM passes, MIR manipulation, cfg emission,
-  PGO / BOLT workflows, ExpandedLto pragma support. Consumer's
-  `build.rs` uses this; the runtime crate never links to it.
+**Build-time (build-dep only, no runtime linkage).** `hilavitkutin-build` holds LLVM passes, MIR manipulation, cfg emission, PGO / BOLT workflows, and ExpandedLto pragma support. Consumer's `build.rs` uses this; the runtime crate never links to it.
 
-**Extensions — standalone opt-in sub-libraries:**
-- `hilavitkutin-ctx` — provider-gated context framework.
-- `hilavitkutin-persistence` — generic hot/cold storage bridge.
-- `hilavitkutin-str` — interned string system.
+**Extensions (standalone opt-in sub-libraries).** `hilavitkutin-ctx` is the provider-gated context framework, `hilavitkutin-persistence` is the generic hot/cold storage bridge, and `hilavitkutin-str` is the interned string system.
 
 ## Crate table
 
@@ -70,7 +58,7 @@ The canonical spec is
   They do not depend on each other and do not depend on the engine.
 - Substrate dependency: the engine consumes `arvo` for numeric and
   analysis primitives (`arvo-graph`, `arvo-bitmask`, `arvo-sparse`,
-  `arvo-spectral`, `arvo-comb`). Keep the boundary clean — no
+  `arvo-spectral`, `arvo-comb`). Keep the boundary clean; no
   re-export of arvo types through `hilavitkutin-api`.
 
 ## Vocabulary
