@@ -44,7 +44,7 @@ pub fn select_adapt_config(phase: PhaseId, metrics: &AdaptMetrics) -> AdaptConfi
 /// Skeleton: `todo!()`. Real implementation walks phases +
 /// updates `max_fuse_threshold`, `morsel_size_multiplier`,
 /// `split_threshold` per EMA decay — see BACKLOG.
-pub fn update_adapt<const MAX_PHASES: usize>(
+pub fn update_adapt<const MAX_PHASES: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     configs: &mut [AdaptConfig; MAX_PHASES],
     metrics: &AdaptMetrics,
 ) {
