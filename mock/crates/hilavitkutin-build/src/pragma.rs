@@ -21,7 +21,7 @@ pub enum Pragma {
     Bolt,
     Profiling,
     BuildStd,
-    ParallelCodegen(u8),
+    ParallelCodegen(u8), // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: pragma parameter: unit count, bounded [0, 255]; tracked: #72
     SharedGenerics,
     LoopFusion,
     MimallocAllocator,
@@ -31,8 +31,8 @@ impl Pragma {
     /// Stable bit index for this pragma. `ParallelCodegen` collapses
     /// to a single slot because its param is stored separately in
     /// `PragmaSet::parallel_codegen_units`.
-    const fn bit(self) -> u16 {
-        let idx: u8 = match self {
+    const fn bit(self) -> u16 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: 13-pragma bit-mask algorithmic width; build-dep only; tracked: #72
+        let idx: u8 = match self { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: pragma discriminant; tracked: #72
             Pragma::LoopOptimization => 0,
             Pragma::Polly => 1,
             Pragma::MathPeephole => 2,
@@ -53,7 +53,7 @@ impl Pragma {
     /// Inverse of `bit`: rebuild the canonical `Pragma` value for a
     /// given bit index. `ParallelCodegen`'s param is supplied
     /// separately by the caller (from `PragmaSet::parallel_codegen_units`).
-    const fn from_index(idx: u8, parallel_units: u8) -> Option<Pragma> {
+    const fn from_index(idx: u8, parallel_units: u8) -> Option<Pragma> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-option) reason: internal pragma reconstructor; u8 discriminant + parallel unit count; Option is internal; tracked: #72
         match idx {
             0 => Some(Pragma::LoopOptimization),
             1 => Some(Pragma::Polly),
@@ -77,8 +77,8 @@ impl Pragma {
 /// `ParallelCodegen`'s `u8` parameter stored separately.
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq)]
 pub struct PragmaSet {
-    mask: u16,
-    parallel_codegen_units: Option<u8>,
+    mask: u16, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-public-raw-field) reason: 13-pragma bit-mask algorithmic width; tracked: #72
+    parallel_codegen_units: Option<u8>, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-option) lint:allow(no-public-raw-field) reason: pragma parameter storage; Option because pragma may be absent from the set; tracked: #72
 }
 
 impl PragmaSet {
@@ -113,12 +113,12 @@ impl PragmaSet {
     /// Check membership. For `ParallelCodegen(n)`, matches on the
     /// slot (ignores `n`) — use `parallel_codegen_units()` to read
     /// the stored param.
-    pub const fn contains(self, p: Pragma) -> bool {
+    pub const fn contains(self, p: Pragma) -> bool { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: build-time predicate; consumer output flows into `build.rs` stdout; tracked: #72
         (self.mask & p.bit()) != 0
     }
 
     /// The stored `ParallelCodegen` unit count, if the pragma is set.
-    pub const fn parallel_codegen_units(self) -> Option<u8> {
+    pub const fn parallel_codegen_units(self) -> Option<u8> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-option) reason: stored pragma parameter; Option because pragma may be absent; tracked: #72
         self.parallel_codegen_units
     }
 
@@ -136,15 +136,15 @@ impl PragmaSet {
 /// bit-index order (matches the order of the `Pragma` enum's declared
 /// variants).
 pub struct PragmaIter {
-    mask: u16,
-    parallel_units: u8,
-    idx: u8,
+    mask: u16, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-public-raw-field) reason: PragmaIter scans the 13-pragma bit-mask; mirrors PragmaSet width; tracked: #72
+    parallel_units: u8, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-public-raw-field) reason: unit count carried through iteration; tracked: #72
+    idx: u8, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-public-raw-field) reason: iterator cursor over 13 pragma bits; tracked: #72
 }
 
 impl Iterator for PragmaIter {
     type Item = Pragma;
 
-    fn next(&mut self) -> Option<Pragma> {
+    fn next(&mut self) -> Option<Pragma> { // lint:allow(no-bare-option) reason: std `Iterator::next` trait return; cannot deviate; tracked: #72
         while self.idx < 13 {
             let bit = 1u16 << self.idx;
             let i = self.idx;
