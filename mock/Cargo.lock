@@ -148,6 +148,7 @@ dependencies = [
  "hilavitkutin-api",
  "libc",
  "mockspace",
+ "notko",
 ]
 
 [[package]]
