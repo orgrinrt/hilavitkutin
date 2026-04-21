@@ -7,4 +7,6 @@ description = "Interned string handle + arena + linker-section const table"
 repository.workspace = true
 
 [dependencies]
+arvo.workspace = true
 arvo-bits.workspace = true
+notko.workspace = true

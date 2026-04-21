@@ -24,12 +24,12 @@ use crate::string_table::StringTable;
 /// their id portion is returned unchanged. Runtime handles resolve
 /// via the interner and re-hash the bytes.
 pub fn evict_str<A: ArenaInterner>(handle: Str, interner: &StringInterner<A>) -> ContentHash {
-    if handle.is_const() {
+    if handle.is_const().0 {
         ContentHash::new(handle.id().bits())
     } else {
         let s = interner
             .resolve(handle)
-            .expect("runtime handles always resolve via arena");
+            .unwrap();
         ContentHash::new(const_fnv1a(s) & Str::ID_MASK.bits())
     }
 }
@@ -52,7 +52,7 @@ pub fn inject_str<A: ArenaInterner>(
     // const handle unchanged; a miss falls through to the runtime
     // lookup path.
     let candidate = Str::__make(masked_bits);
-    if let Some(resolved) = interner.resolve(candidate) {
+    if let Maybe::Is(resolved) = interner.resolve(candidate) {
         // Confirm the const entry hashes back to the same masked id.
         let back: Bits<28, Hot> = (const_fnv1a(resolved) & Str::ID_MASK.bits()).into();
         if back == masked_bits {
