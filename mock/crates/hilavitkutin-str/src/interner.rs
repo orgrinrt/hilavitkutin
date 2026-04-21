@@ -18,11 +18,11 @@ pub trait ArenaInterner {
 
 /// Wraps an [`ArenaInterner`] with const-table handling. The const
 /// table (linker section) is always consulted first.
-pub struct StringInterner<A: ArenaInterner> { // lint:allow(no-alloc) -- interner wrapper name, not std `String`.
+pub struct StringInterner<A: ArenaInterner> { // lint:allow(no-alloc) reason: interner wrapper name, not std `String`; tracked: #72
     arena: A,
 }
 
-impl<A: ArenaInterner> StringInterner<A> { // lint:allow(no-alloc) -- interner wrapper name, not std `String`.
+impl<A: ArenaInterner> StringInterner<A> { // lint:allow(no-alloc) reason: interner wrapper name, not std `String`; tracked: #72
     /// Construct a new interner wrapping `arena`.
     pub const fn new(arena: A) -> Self {
         Self { arena }
