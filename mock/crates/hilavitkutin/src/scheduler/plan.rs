@@ -2,33 +2,35 @@
 //!
 //! Per-lane WU assignment; cached and reused across frames.
 
-#[derive(Copy, Clone, Debug, Default)]
+use arvo::USize;
+
+#[derive(Copy, Clone, Debug)]
 pub struct LaneAssignment {
-    pub lane_id: u32,
-    pub first_unit: u32,
-    pub unit_count: u32,
+    pub lane_id: USize,
+    pub first_unit: USize,
+    pub unit_count: USize,
 }
 
 #[derive(Copy, Clone)]
-pub struct ExecutionPlan<const MAX_LANES: usize> {
+pub struct ExecutionPlan<const MAX_LANES: usize> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     pub lanes: [LaneAssignment; MAX_LANES],
-    pub count: usize,
+    pub count: USize,
 }
 
-impl<const MAX_LANES: usize> ExecutionPlan<MAX_LANES> {
+impl<const MAX_LANES: usize> ExecutionPlan<MAX_LANES> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     pub const fn new() -> Self {
         Self {
             lanes: [LaneAssignment {
-                lane_id: 0,
-                first_unit: 0,
-                unit_count: 0,
+                lane_id: USize(0),
+                first_unit: USize(0),
+                unit_count: USize(0),
             }; MAX_LANES],
-            count: 0,
+            count: USize(0),
         }
     }
 }
 
-impl<const MAX_LANES: usize> Default for ExecutionPlan<MAX_LANES> {
+impl<const MAX_LANES: usize> Default for ExecutionPlan<MAX_LANES> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     fn default() -> Self {
         Self::new()
     }
