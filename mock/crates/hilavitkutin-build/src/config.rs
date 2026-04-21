@@ -19,7 +19,7 @@ use crate::profile::Profile;
 pub struct BuildConfig {
     pub profile: Profile,
     pub pragmas: PragmaSet,
-    pub target: Option<TargetAxis>,
+    pub target: Option<TargetAxis>, // lint:allow(no-bare-option) reason: cargo env optionality; mirrors `std::env::var` result semantics; tracked: #72
     pub tier: TierAxis,
     pub passes: PassesAxis,
 }
@@ -54,7 +54,7 @@ impl BuildConfig {
 
     /// `true` when the `FastMath` pragma is active. Drives the
     /// `arvo_fast_math` cfg emission in `bootstrap_from_buildscript`.
-    pub const fn fast_math(&self) -> bool {
+    pub const fn fast_math(&self) -> bool { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: build-time predicate; drives the `arvo_fast_math` cfg emission; tracked: #72
         self.pragmas.contains(Pragma::FastMath)
     }
 }
@@ -63,8 +63,8 @@ impl BuildConfig {
 /// feature list to the coarsest matching `TargetAxis`.
 ///
 /// Precedence (richest first): Avx512 > Avx2 > Sve > Neon > Iss64.
-fn resolve_target_axis(features: &str) -> TargetAxis {
-    let has = |needle: &str| features.split(',').any(|f| f.trim() == needle);
+fn resolve_target_axis(features: &str) -> TargetAxis { // lint:allow(no-bare-string) reason: cargo env `CARGO_CFG_TARGET_FEATURE` value; tracked: #72
+    let has = |needle: &str| features.split(',').any(|f| f.trim() == needle); // lint:allow(no-bare-string) reason: feature-list closure operand; tracked: #72
 
     if has("avx512f") || has("avx512") {
         TargetAxis::Avx512
