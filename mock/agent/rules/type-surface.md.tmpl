@@ -33,6 +33,28 @@ Before writing ANY signature (pub or private), field, or local, ask:
 4. Is the caller forced to pick a concrete type here? If yes, you
    leaked an implementation detail.
 
+## Exact widths, not std-primitive buckets
+
+arvo's numeric types take a bit count as an input. Do not think in
+u8 / u16 / u32 / u64 buckets. Pick the SMALLEST `N` that covers the
+domain's range and use `UFixed<N, 0, S>` (for discriminants) or
+`Bits<N>` (for opaque bit patterns).
+
+- Boolean → `Bool` (or `UFixed<1, 0, Hot>` / `Bits<1>`).
+- 3 to 4 discrete values → `UFixed<2, 0, Hot>`.
+- 5 to 8 discrete values → `UFixed<3, 0, Hot>`.
+- Max value `M` → `UFixed<ceil(log2(M+1)), 0, Hot>`.
+
+Storage packs to exactly `N` bits. Hot-path logic dispatches to the
+optimal host primitive (u8 / u16 / u32 / u64) via `S: Strategy` — the
+consumer never picks that. Choosing `UFixed<8, 0, Hot>` when the
+domain has 4 values wastes 6 bits per stored field; across millions
+of elements that is cache, bandwidth, and SIMD density.
+
+Pair the exact-width type with a domain alias: `pub type Priority =
+UFixed<2, 0, Hot>;`. The alias carries the name; the width is the
+implementation.
+
 ## Decision test
 
 > "Can I imagine two implementations with different behavior?"
