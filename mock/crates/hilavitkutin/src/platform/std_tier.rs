@@ -11,6 +11,7 @@ use core::ptr;
 
 use arvo::newtype::{Bool, USize};
 use hilavitkutin_api::platform::{ClockApi, MemoryProviderApi, ThreadPoolApi};
+use hilavitkutin_api::Nanos;
 use std::alloc::{alloc, dealloc, Layout};
 use std::sync::OnceLock;
 use std::time::Instant;
@@ -34,14 +35,14 @@ impl StdMemoryProvider {
     /// Normalise alignment to a non-zero power of two.
     #[inline]
     fn layout_for(len: USize, align: USize) -> Layout {
-        let a = if *align == 0 { core::mem::align_of::<usize>() } else { *align };
+        let a = if *align == 0 { core::mem::align_of::<usize>() } else { *align }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: Layout ABI default alignment; tracked: #72
         // SAFETY: `len` and `a` satisfy Layout's invariants for
         // any caller honouring the trait contract (power-of-two
         // alignment). Callers that violate this get an Err from
         // from_size_align, which we translate to a zero-sized
         // layout — the subsequent `alloc` will return null.
         Layout::from_size_align(*len, a).unwrap_or_else(|_| {
-            Layout::from_size_align(0, core::mem::align_of::<usize>()).unwrap()
+            Layout::from_size_align(0, core::mem::align_of::<usize>()).unwrap() // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: Layout ABI fallback alignment; tracked: #72
         })
     }
 }
@@ -54,7 +55,7 @@ impl Default for StdMemoryProvider {
 }
 
 impl MemoryProviderApi for StdMemoryProvider {
-    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
+    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer; tracked: #72
         let layout = Self::layout_for(len, align);
         if layout.size() == 0 {
             return ptr::null_mut();
@@ -64,20 +65,20 @@ impl MemoryProviderApi for StdMemoryProvider {
         unsafe { alloc(layout) }
     }
 
-    unsafe fn deallocate(&self, ptr: *mut u8, len: USize) {
+    unsafe fn deallocate(&self, ptr: *mut u8, len: USize) { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer; tracked: #72
         if ptr.is_null() || *len == 0 {
             return;
         }
         // The trait contract requires the caller to pass the same
         // `len` used for allocate; alignment defaults to word size
         // for matching.
-        let layout = Self::layout_for(len, USize(core::mem::align_of::<usize>()));
+        let layout = Self::layout_for(len, USize(core::mem::align_of::<usize>())); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: Layout ABI word alignment default; tracked: #72
         // SAFETY: contract delegated to the caller per
         // `MemoryProviderApi::deallocate`.
         unsafe { dealloc(ptr, layout) }
     }
 
-    unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {
+    unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer; tracked: #72
         // std::alloc has no page-protection primitive. Matching
         // the OS tier's skeleton-Ok stance until the persistence
         // round wires a real backend.
@@ -154,8 +155,9 @@ impl Default for StdClock {
 }
 
 impl ClockApi for StdClock {
-    fn now_ns(&self) -> u64 {
+    fn now_ns(&self) -> Nanos {
         let epoch = EPOCH.get_or_init(Instant::now);
-        Instant::now().duration_since(*epoch).as_nanos() as u64
+        let raw = Instant::now().duration_since(*epoch).as_nanos() as u64; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: Duration::as_nanos returns u128; truncate to u64 for Nanos; tracked: #72
+        Nanos::from_raw(raw)
     }
 }
