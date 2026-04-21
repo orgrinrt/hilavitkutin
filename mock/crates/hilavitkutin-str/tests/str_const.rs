@@ -26,5 +26,5 @@ fn handle_is_const_origin() {
 #[test]
 fn handle_id_fits_28_bits() {
     let h = str_const!("delta");
-    assert_eq!(h.0 & !Str::ID_MASK, 0);
+    assert_eq!(h.to_bits().bits() & !Str::ID_MASK.bits(), 0);
 }

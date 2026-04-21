@@ -12,6 +12,7 @@ hilavitkutin-api.workspace = true
 
 # Primitive-vocabulary deps (sweep #72, round 202604201319):
 arvo.workspace = true           # USize, Bool, Cap at pub API boundary
+arvo-bits.workspace = true      # Bits<28> for masked id arithmetic
 arvo-hash.workspace = true      # ContentHash = Bits<28>
 notko.workspace = true          # Maybe, Outcome
 
