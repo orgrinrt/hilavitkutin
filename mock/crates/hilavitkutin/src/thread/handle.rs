@@ -1,9 +1,10 @@
 //! Thread handle: pool thread index (domain 20).
 //!
-//! `#[repr(transparent)]` newtype over u16. u16 is plenty — even
-//! a 512-core plan rarely approaches the addressable range.
+//! `#[repr(transparent)]` newtype over `USize`.
+
+use arvo::USize;
 
 /// Thread index in the pool.
-#[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash, Ord, PartialOrd)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[repr(transparent)]
-pub struct ThreadHandle(pub u16);
+pub struct ThreadHandle(pub USize);
