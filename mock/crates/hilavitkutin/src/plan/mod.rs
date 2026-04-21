@@ -40,9 +40,9 @@ pub use phase::{PhaseBoundaries, PhaseId};
 /// (see [`steps`]) and lands once all 12 bodies exist — tracked
 /// in BACKLOG → Engine 5a2 follow-ups.
 pub fn build_plan<
-    const MAX_UNITS: usize,
-    const MAX_STORES: usize,
-    const MAX_LANES: usize,
+    const MAX_UNITS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_STORES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_LANES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
 >(
     inputs: &PlanInputs<MAX_UNITS, MAX_STORES>,
 ) -> crate::scheduler::ExecutionPlan<MAX_LANES> {
