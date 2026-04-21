@@ -9,6 +9,7 @@
 //! generates the `#[repr(transparent)]` struct over `Bits<32, Hot>`
 //! plus per-field accessors and setters typed as `Bits<W, Hot>`.
 
+use arvo::newtype::Bool;
 use arvo_bits::{bitfield, Bit, Bits, Hot};
 
 bitfield! {
@@ -52,13 +53,13 @@ impl Str {
     }
 
     /// `true` if this handle was produced by `str_const!()`.
-    pub const fn is_const(self) -> bool {
-        self.0.origin().bits() == 0
+    pub const fn is_const(self) -> Bool {
+        Bool(self.0.origin().bits() == 0)
     }
 
     /// `true` if this handle was produced by the runtime interner.
-    pub const fn is_runtime(self) -> bool {
-        !self.is_const()
+    pub const fn is_runtime(self) -> Bool {
+        Bool(!self.is_const().0)
     }
 
     /// The 28-bit ID portion of this handle.
