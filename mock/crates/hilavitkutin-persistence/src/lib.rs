@@ -31,4 +31,4 @@ pub use primitives::{
     SchemaVersion,
 };
 pub use sieve::SieveCache;
-pub use string_table::{StringTable, StringTableEntry}; // lint:allow(no-alloc) -- `StringTable` / `StringTableEntry` are the persistence string header types, not std `String`.
+pub use string_table::{StringTable, StringTableEntry}; // lint:allow(no-alloc) reason: `StringTable` / `StringTableEntry` are persistence string header types, not std `String`; tracked: #72

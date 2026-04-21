@@ -15,7 +15,7 @@ mod hint_sealed {
     /// Hint-subsystem private seal. Separate from the crate-level
     /// `sealed::Sealed` to avoid clashing with the tuple impls in
     /// `access.rs`.
-    pub trait Sealed {} // lint:allow(undocumented_type)
+    pub trait Sealed {} // lint:allow(undocumented_type) reason: sealing marker trait; semantics live on parent trait docs; tracked: #72
 }
 
 /// How soon the WU must run. 4 levels fit in 2 bits.

@@ -18,7 +18,7 @@
 mod sealed {
     /// Crate-private sealing supertrait. Consumers cannot impl traits
     /// that use it as a supertrait.
-    pub(crate) trait Sealed {} // lint:allow(undocumented_type)
+    pub(crate) trait Sealed {} // lint:allow(undocumented_type) reason: crate-private sealing supertrait; semantics live on mod + parent trait docs; tracked: #72
 }
 
 pub mod access;
