@@ -10,6 +10,7 @@
 //! the reverse: match the const table first; otherwise look up bytes
 //! in the string table and intern.
 
+use arvo_bits::Bits;
 use arvo_hash::ContentHash;
 use hilavitkutin_str::{const_fnv1a, ArenaInterner, Str, StringInterner};
 use notko::{Maybe, Outcome};
@@ -24,12 +25,12 @@ use crate::string_table::StringTable;
 /// via the interner and re-hash the bytes.
 pub fn evict_str<A: ArenaInterner>(handle: Str, interner: &StringInterner<A>) -> ContentHash {
     if handle.is_const() {
-        ContentHash::new(handle.id() as u64)
+        ContentHash::new(handle.id().bits())
     } else {
         let s = interner
             .resolve(handle)
             .expect("runtime handles always resolve via arena");
-        ContentHash::new(const_fnv1a(s) & Str::ID_MASK as u64)
+        ContentHash::new(const_fnv1a(s) & Str::ID_MASK.bits())
     }
 }
 
@@ -44,7 +45,7 @@ pub fn inject_str<A: ArenaInterner>(
     interner: &StringInterner<A>,
     string_table: &StringTable,
 ) -> Outcome<Str, PersistenceError> {
-    let masked_bits = content_hash.bits() as u32 & Str::ID_MASK;
+    let masked_bits = Bits::<28>::new(content_hash.bits() & Str::ID_MASK.bits());
 
     // Consult const table via the interner. A const hit returns the
     // const handle unchanged; a miss falls through to the runtime
@@ -52,7 +53,7 @@ pub fn inject_str<A: ArenaInterner>(
     let candidate = Str::__make(masked_bits);
     if let Some(resolved) = interner.resolve(candidate) {
         // Confirm the const entry hashes back to the same masked id.
-        let back = (const_fnv1a(resolved) & Str::ID_MASK as u64) as u32;
+        let back = Bits::<28>::new(const_fnv1a(resolved) & Str::ID_MASK.bits());
         if back == masked_bits {
             return Outcome::Ok(candidate);
         }
@@ -60,7 +61,7 @@ pub fn inject_str<A: ArenaInterner>(
 
     // Runtime path: look up bytes in the string table, intern via
     // the arena, return a runtime handle.
-    let bytes = match string_table.lookup(ContentHash::new(masked_bits as u64)) {
+    let bytes = match string_table.lookup(ContentHash::new(masked_bits.bits())) {
         Maybe::Is(b) => b,
         Maybe::Isnt => return Outcome::Err(PersistenceError::Missing),
     };

@@ -1,25 +1,33 @@
 # hilavitkutin-str — Design Overview
 
-`#![no_std]`, zero external dependencies. Interned string system
-for the hilavitkutin ecosystem. Shared across saalis, polka-dots,
-loimu. Lives in saalis workspace for now, will be extracted to
-hilavitkutin repo when stabilised.
+`#![no_std]`. Depends on `arvo-bits` for the `Bits<32>` substrate.
+Interned string system for the hilavitkutin ecosystem. Shared
+across saalis, polka-dots, loimu. Lives in saalis workspace for
+now, will be extracted to hilavitkutin repo when stabilised.
 
 ## `Str` — interned string handle
 
 ```rust
-#[repr(C)]
-#[derive(Copy, Clone, Eq, PartialEq, Hash)]
-pub struct Str(u32);
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
+pub struct Str(Bits<32>);
 ```
 
-u32 handle into the string table. Comparison is integer equality.
-`Copy`, `repr(C)`, ABI-stable, 4 bytes everywhere.
+Packed 32-bit identity into the string table. Comparison is
+integer equality. `Copy`, `repr(transparent)`, ABI-stable, 4 bytes
+everywhere.
 
 Bit layout (nibble-aligned):
 - bit 31: `0` = const (compile-time), `1` = runtime (arena)
 - bits 30-28: reserved flags
 - bits 27-0: 28-bit ID (268M unique entries)
+
+`Bits<32>` is the arvo substrate for "opaque 32-bit pattern"; Str
+uses it as the container. The designed future is a dedicated
+`Bitfield` primitive carrying the named sub-ranges (origin flag,
+reserved, ID) at type level — tracked as arvo task #127. Until
+then Str's accessors (`is_const`, `is_runtime`, `id`) project the
+layout in code.
 
 Const IDs are content hashes (deterministic, stable across
 sessions and builds). Runtime IDs are sequential (fast, ephemeral).

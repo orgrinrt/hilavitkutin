@@ -3,6 +3,7 @@
 use std::cell::RefCell;
 
 use arvo::USize;
+use arvo_bits::Bits;
 use arvo_hash::ContentHash;
 use hilavitkutin_persistence::{
     evict_str, inject_str, BufferLen, BufferOffset, PersistenceError, StringTable,
@@ -46,13 +47,13 @@ impl ArenaInterner for VecInterner {
 }
 
 fn content_hash(s: &str) -> ContentHash {
-    ContentHash::new(const_fnv1a(s) & Str::ID_MASK as u64)
+    ContentHash::new(const_fnv1a(s) & Str::ID_MASK.bits())
 }
 
 #[test]
 fn evict_const_is_identity() {
     let interner = StringInterner::new(VecInterner::new());
-    let h = Str::__make(0x0012_3456);
+    let h = Str::__make(Bits::<28>::new(0x0012_3456));
     assert!(h.is_const());
     let evicted = evict_str(h, &interner);
     assert_eq!(evicted, ContentHash::new(0x0012_3456));
