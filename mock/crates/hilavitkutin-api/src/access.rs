@@ -5,6 +5,8 @@
 //! constrains its `Read` set to implement `Contains<Column<X>>`.
 //! Violating that at a call site fails to compile.
 
+use arvo::USize;
+
 use crate::sealed;
 
 /// Sealed marker on tuple read/write sets.
@@ -14,7 +16,7 @@ use crate::sealed;
 #[allow(private_bounds)]
 pub trait AccessSet: sealed::Sealed + 'static {
     /// Number of member types in the set.
-    const LEN: usize;
+    const LEN: USize;
 }
 
 /// Sealed membership witness: the implementing `AccessSet` contains
@@ -33,7 +35,7 @@ pub trait Contains<S>: AccessSet {}
 // Arity 0.
 impl sealed::Sealed for () {}
 impl AccessSet for () {
-    const LEN: usize = 0;
+    const LEN: USize = USize(0);
 }
 
 // Declarative macro: emit AccessSet for one arity plus Contains at
@@ -44,7 +46,7 @@ macro_rules! impl_access_set {
     ($len:expr; $($T:ident),+ $(,)?) => {
         impl<$($T: 'static),+> sealed::Sealed for ($($T,)+) {}
         impl<$($T: 'static),+> AccessSet for ($($T,)+) {
-            const LEN: usize = $len;
+            const LEN: USize = USize($len);
         }
     };
 }
