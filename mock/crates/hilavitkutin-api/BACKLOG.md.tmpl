@@ -1,5 +1,15 @@
 # hilavitkutin-api — backlog
 
+## Axis discriminant construction via FromConstant
+
+UrgencyValue / DivisibilityValue / SignificanceValue impls currently
+construct their VALUE via UFixed::from_raw(N) because arvo's
+FromConstant trait takes u8 and is not available at these
+narrower widths. Once arvo task #123 lands (FromConstant takes
+USize), revisit the three axis traits and switch to the arvo
+const builder. Non-urgent; from_raw is a designated
+impl-internal escape today.
+
 ## Mask256-backed AccessMask variant
 
 Current ships with AccessMask = Mask64 (≤64 stores). A Mask256 sibling
