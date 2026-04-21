@@ -43,7 +43,7 @@ impl StringTable {
     /// Look up bytes for a content hash. O(n) linear scan this
     /// skeleton round; a perfect-hash lookup lands in the follow-up
     /// round when the lookup hot path is measured.
-    pub fn lookup(&self, content_hash: ContentHash) -> Maybe<&[u8]> {
+    pub fn lookup(&self, content_hash: ContentHash) -> Maybe<&[u8]> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: mmap byte-slice return; u8 is the canonical byte primitive; tracked: #72
         let mut i = 0;
         while i < self.entries.len() {
             let e = &self.entries[i];
