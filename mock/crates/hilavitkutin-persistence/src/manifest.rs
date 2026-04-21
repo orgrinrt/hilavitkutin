@@ -14,13 +14,13 @@ use crate::primitives::{BitWidth, Cardinality, ColumnCount, RowCount, SchemaVers
 /// Maximum number of tables a single Manifest can hold.
 ///
 /// Bare `usize` required by Rust array-size const-eval.
-// lint:allow(no-bare-numeric) -- tracked: #72; array-size const must be usize
+// lint:allow(no-bare-numeric) reason: array-size const must be usize (rust grammar); tracked: #72
 pub const MAX_TABLES: usize = 256;
 
 /// Maximum number of columns a single TableMeta can hold.
 ///
 /// Bare `usize` required by Rust array-size const-eval.
-// lint:allow(no-bare-numeric) -- tracked: #72; array-size const must be usize
+// lint:allow(no-bare-numeric) reason: array-size const must be usize (rust grammar); tracked: #72
 pub const MAX_COLUMNS_PER_TABLE: usize = 64;
 
 /// Per-column metadata.
