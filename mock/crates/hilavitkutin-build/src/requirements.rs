@@ -82,7 +82,7 @@ pub const REQUIREMENTS: &[PragmaRequirement] = &[
         requires: &[],
     },
     PragmaRequirement {
-        pragma: Pragma::ParallelCodegen(u8::MAX),
+        pragma: Pragma::ParallelCodegen(u8::MAX), // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: sentinel for discriminant-only lookup; param irrelevant; tracked: #72
         requires: &[],
     },
     PragmaRequirement {
@@ -110,7 +110,7 @@ pub fn requirements_for(p: Pragma) -> &'static [Requirement] {
     &[]
 }
 
-const fn same_variant(a: Pragma, b: Pragma) -> bool {
+const fn same_variant(a: Pragma, b: Pragma) -> bool { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal discriminant-equality helper; tracked: #72
     use Pragma::*;
     matches!(
         (a, b),
