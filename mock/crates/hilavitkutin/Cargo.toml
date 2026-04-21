@@ -9,6 +9,7 @@ repository.workspace = true
 [dependencies]
 hilavitkutin-api.workspace = true
 arvo.workspace = true
+notko.workspace = true
 arvo-bitmask.workspace = true
 arvo-graph.workspace = true
 arvo-sparse.workspace = true
