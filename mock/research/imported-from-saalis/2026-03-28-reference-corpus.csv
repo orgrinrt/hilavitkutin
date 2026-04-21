@@ -1,0 +1,97 @@
+id,title,authors,year,type,venue,related_concept,source_url,source_type,status
+A53a,On a Problem in Combinations,"Kirkman, T.P.",1847,paper,"Cambridge & Dublin Math. J. 2, 191-204",Kirkman schoolgirl problem,https://en.wikipedia.org/wiki/Kirkman%27s_schoolgirl_problem,archive,confirmed
+A20a,Recreations Mathematiques Vol. 2,"Lucas, E.",1883,paper,book,polygon 1-factorization,https://archive.org/details/rcrationsmathmat02eacu,archive,confirmed
+A38a,Sur les operations dans les ensembles abstraits et leur application aux equations integrales,"Banach, S.",1922,paper,Fundamenta Mathematicae 3,Banach fixed-point / contraction map,https://eudml.org/doc/213289,archive,confirmed
+A27a,Note on a Method for Calculating Corrected Sums of Squares and Products,"Welford, B.P.",1962,paper,Technometrics 4(3),online variance computation,https://www.tandfonline.com/doi/abs/10.1080/00401706.1962.10490022,publisher,confirmed
+A19a,On an Estimate of the Chromatic Class of a p-Graph,"Vizing, V.G.",1964,paper,Diskretnyj Analiz 3,Vizing theorem edge coloring,https://cir.nii.ac.jp/crid/1571980075458819456?lang=en,archive,confirmed
+CM4a,Weighted sums of certain dependent random variables,"Azuma, K.",1967,paper,Tohoku Math. J. 19(3),Azuma inequality concentration bound,https://projecteuclid.org/journals/tohoku-mathematical-journal/volume-19/issue-3/Weighted-sums-of-certain-dependent-random-variables/10.2748/tmj/1178243286.full,publisher,confirmed
+A26a,Algebraic Connectivity of Graphs,"Fiedler, M.",1973,paper,Czechoslovak Math. J. 23(2),Fiedler value graph connectivity,https://eudml.org/doc/12723,archive,confirmed
+B7a,Self-Stabilizing Systems in Spite of Distributed Control,"Dijkstra, E.W.",1974,paper,CACM 17(11),self-stabilization,https://dl.acm.org/doi/10.1145/361179.361202,publisher,confirmed
+A28a,Self-entrainment of a population of coupled non-linear oscillators,"Kuramoto, Y.",1975,paper,LNPS 39 Springer,Kuramoto order parameter,https://link.springer.com/chapter/10.1007/BFb0013365,publisher,confirmed
+A14a,Time Clocks and the Ordering of Events in a Distributed System,"Lamport, L.",1978,paper,CACM 21(7),Lamport clock,https://dl.acm.org/doi/10.1145/359545.359563,publisher,confirmed
+B20a,On the Security of Public Key Protocols,"Dolev, Yao",1983,paper,IEEE Trans. Info Theory 29(2),Dolev-Yao adversary model,https://ieeexplore.ieee.org/document/1056650/,publisher,confirmed
+B1a,Impossibility of Distributed Consensus with One Faulty Process,"Fischer, Lynch, Paterson",1985,paper,JACM 32(2),FLP impossibility,https://dl.acm.org/doi/10.1145/3149.214121,publisher,confirmed
+CC2a,Typestate: A Programming Language Concept for Enhancing Software Reliability,"Strom, Yemini",1986,paper,IEEE TSE 12(1),typestate compile-time enforcement,https://ieeexplore.ieee.org/document/6312929/,publisher,confirmed
+B4a,Epidemic Algorithms for Replicated Database Maintenance,Demers et al.,1987,paper,PODC 1987,anti-entropy reconciliation,https://dl.acm.org/doi/10.1145/41840.41841,publisher,confirmed
+A16a,A Digital Signature Based on a Conventional Encryption Function,"Merkle, R.",1988,paper,CRYPTO 1987,Merkle tree,https://link.springer.com/chapter/10.1007/3-540-48184-2_32,publisher,confirmed
+A29a,Probabilistic Clock Synchronization,"Cristian, F.",1989,paper,Distributed Computing 3,Cristian clock sync,https://link.springer.com/article/10.1007/BF01784024,publisher,confirmed
+A11a,Optimization of Cyclic Redundancy-Check Codes with 24 and 32 Parity Bits,"Castagnoli, Braeuer, Herrman",1993,paper,IEEE Trans. Communications 41(6),CRC-32C checksum,https://ieeexplore.ieee.org/document/231911/,publisher,confirmed
+B19a,Random Oracles are Practical: A Paradigm for Designing Efficient Protocols,"Bellare, Rogaway",1993,paper,CCS 1993,random oracle model,https://dl.acm.org/doi/10.1145/168588.168596,publisher,confirmed
+B19b,Entity Authentication and Key Distribution,"Bellare, Rogaway",1993,paper,CRYPTO 1993,authenticated key exchange model,https://link.springer.com/chapter/10.1007/3-540-48329-2_21,publisher,confirmed
+A10a,Keying Hash Functions for Message Authentication,"Bellare, Canetti, Krawczyk",1996,paper,CRYPTO 1996,HMAC construction,https://link.springer.com/chapter/10.1007/3-540-68697-5_1,publisher,confirmed
+B6a,Unreliable Failure Detectors for Reliable Distributed Systems,"Chandra, Toueg",1996,paper,JACM 43(2),failure detector classification,https://dl.acm.org/doi/10.1145/226643.226647,publisher,confirmed
+B5a,Consistent Hashing and Random Trees,Karger et al.,1997,paper,STOC 1997,consistent hashing,https://dl.acm.org/doi/10.1145/258533.258660,publisher,confirmed
+A21a,Secure Group Communications Using Key Graphs,"Wong, Gouda, Lam",1998,paper,IEEE/ACM Trans. Networking,LKH key management,https://ieeexplore.ieee.org/document/836475/,publisher,confirmed
+B10a,Randomized Rumor Spreading,"Karp, Schindelhauer, Shenker, Vocking",2000,paper,FOCS 2000,epidemic dissemination bound,https://archive.cone.informatik.uni-freiburg.de/pubs/rumor.pdf,grey,confirmed
+A30a,An Efficient Cryptographic Protocol Verifier Based on Prolog Rules,"Blanchet, B.",2001,paper,CSFW 2001,ProVerif verification,https://people.mpi-sws.org/~dg/teaching/lis2014/modules/proverif-1-blanchet01.pdf,grey,confirmed
+B9a,Universally Composable Security: A New Paradigm for Cryptographic Protocols,"Canetti, R.",2001,paper,FOCS 2001,UC composition framework,https://dl.acm.org/doi/10.1145/3402457,publisher,confirmed
+CD12a,PAST: A Large-Scale Persistent Peer-to-Peer Storage Utility,"Druschel, Rowstron",2001,paper,HotOS VIII,consistent-hash content placement,https://www.freepastry.org/PAST/hotos.pdf,grey,confirmed
+A32a,The Sybil Attack,"Douceur, J.",2002,paper,IPTPS 2002,Sybil resistance,https://www.microsoft.com/en-us/research/publication/the-sybil-attack/,grey,confirmed
+A47a,Authenticated-Encryption with Associated-Data,"Rogaway, P.",2002,paper,CCS 2002,AEAD composition,https://dl.acm.org/doi/10.1145/586110.586125,publisher,confirmed
+B2a,Brewer's Conjecture and the Feasibility of Consistent Available Partition-Tolerant Web Services,"Gilbert, Lynch",2002,paper,ACM SIGACT News 33(2),CAP theorem,https://dl.acm.org/doi/10.1145/564585.564601|https://api.semanticscholar.org/graph/v1/paper/bbe7a291e74d12d0bcad6f623d8a13e084b83255?fields=title,tldr,publisher,confirmed
+A43a,Routing in Multi-Radio Multi-Hop Wireless Mesh Networks,"Draves, Padhye, Zill",2004,paper,MobiCom 2004,ETT metric,https://dl.acm.org/doi/10.1145/1023720.1023732,publisher,confirmed
+CC1a,Nonce-Based Symmetric Encryption,"Rogaway, P.",2004,paper,FSE 2004 LNCS 3017,nonce-based encryption paradigm,https://link.springer.com/chapter/10.1007/978-3-540-25937-4_22,publisher,confirmed
+CC1b,Nonce-Based Symmetric Encryption,"Rogaway, P.",2004,paper,author preprint,nonce-based encryption paradigm,https://www.cs.ucdavis.edu/~rogaway/papers/nonce.pdf,grey,confirmed
+A8b,The Poly1305-AES message-authentication code,"Bernstein, D.J.",2005,paper,FSE 2005,Poly1305 MAC,https://link.springer.com/chapter/10.1007/11502760_3,publisher,confirmed
+CC7a,Second Preimages on n-Bit Hash Functions for Much Less than 2^n Work,"Kelsey, Schneier",2005,paper,EUROCRYPT 2005 LNCS 3494,hash concatenation fragility,https://link.springer.com/chapter/10.1007/11426639_28,publisher,confirmed
+CC7b,Second Preimages on n-Bit Hash Functions for Much Less than 2^n Work,"Kelsey, Schneier",2005,paper,ePrint 2004/304,hash concatenation fragility,https://eprint.iacr.org/2004/304,preprint,confirmed
+CC8a,A Model and Architecture for Pseudo-Random Generation with Applications to /dev/random,"Barak, Halevi",2005,paper,CCS 2005,CSPRNG security model,https://eprint.iacr.org/2005/029,preprint,confirmed
+A2a,Curve25519: New Diffie-Hellman Speed Records,"Bernstein, D.J.",2006,paper,PKC 2006,X25519 key agreement,https://link.springer.com/chapter/10.1007/11745853_14,publisher,confirmed
+A25a,Randomized Gossip Algorithms,"Boyd, Ghosh, Prabhakar, Shah",2006,paper,IEEE Trans. Info Theory 52(6),gossip protocol mixing time,https://web.stanford.edu/~boyd/papers/pdf/gossip.pdf|https://api.semanticscholar.org/graph/v1/paper/54d96ab8cd2102319faf26750c63d74b4f2852cf?fields=title,openAccessPdf,grey,confirmed-pdf-binary
+A46a,New Proofs for NMAC and HMAC: Security without Collision-Resistance,"Bellare, M.",2006,paper,CRYPTO 2006,HMAC-PRF security,https://link.springer.com/chapter/10.1007/11818175_36,publisher,confirmed
+CD9a,A Provable-Security Treatment of the Key-Wrap Problem,"Rogaway, Shrimpton",2006,paper,EUROCRYPT 2006,key-wrapping security notion,https://link.springer.com/chapter/10.1007/11761679_23,publisher,confirmed
+CD10a,Efficient and Adaptive Epidemic-Style Protocols for Reliable and Scalable Multicast,"Gupta, Kermarrec, Ganesh",2006,paper,IEEE TPDS 17(7),epidemic protocol efficiency,https://ieeexplore.ieee.org/document/1642637/,publisher,confirmed
+A18a,Epidemic Broadcast Trees,"Leitao, Pereira, Rodrigues",2007,paper,SRDS 2007,Plumtree protocol,https://dl.acm.org/doi/10.5555/1308172.1308243,publisher,confirmed
+CC4a,HyParView: A Membership Protocol for Reliable Gossip-Based Broadcast,"Leitao, Pereira, Rodrigues",2007,paper,DSN 2007,partial view membership protocol,https://ieeexplore.ieee.org/document/4272993/,publisher,confirmed
+CC4b,HyParView: A Membership Protocol for Reliable Gossip-Based Broadcast,"Leitao, Pereira, Rodrigues",2007,paper,author preprint,partial view membership protocol,https://asc.di.fct.unl.pt/~jleitao/pdf/dsn07-leitao.pdf|https://www.researchgate.net/publication/4261663_HyParView_A_Membership_Protocol_for_Reliable_Gossip-Based_Broadcast,grey,confirmed
+A8a,ChaCha a variant of Salsa20,"Bernstein, D.J.",2008,paper,SASC 2008,ChaCha20 stream cipher,https://cr.yp.to/chacha/chacha-20080120.pdf,grey,confirmed
+A49a,A Computationally Sound Mechanized Prover for Security Protocols,"Blanchet, B.",2008,paper,IEEE TDSC 5(4),ProVerif computational soundness,https://ieeexplore.ieee.org/document/4358700/,publisher,confirmed
+A6a,Cryptographic Extraction and Key Derivation: The HKDF Scheme,"Krawczyk, H.",2010,paper,CRYPTO 2010,key derivation,https://eprint.iacr.org/2010/264.pdf,preprint,confirmed
+CD11a,Throughput Optimal Total Order Broadcast for Cluster Environments,"Guerraoui, Levy, Pochon, Quema",2010,paper,ACM TOCS 28(2),bandwidth-optimal gossip,https://dl.acm.org/doi/10.1145/1813654.1813656,publisher,confirmed
+A13a,Conflict-free Replicated Data Types,"Shapiro, Preguica, Baquero, Zawirski",2011,paper,SSS 2011 / INRIA RR-7506,GSet CRDT,https://inria.hal.science/hal-00932836,preprint,confirmed
+CC11a,Evaluation of Some Blockcipher Modes of Operation,"Rogaway, P.",2011,paper,CRYPTREC report,nonce-misuse resistance analysis,https://web.cs.ucdavis.edu/~rogaway/papers/modes.pdf,grey,confirmed
+CC11b,Evaluation of Some Blockcipher Modes of Operation,"Rogaway, P.",2011,paper,CRYPTREC report,nonce-misuse resistance analysis,https://www.cryptrec.go.jp/exreport/cryptrec-ex-2012-2010r1.pdf,grey,confirmed
+A1a,High-speed high-security signatures,"Bernstein, Duif, Lange, Schwabe, Yang",2012,paper,J. Cryptographic Engineering 2(2),Ed25519 signing,https://link.springer.com/article/10.1007/s13389-012-0027-1,publisher,confirmed
+A48a,Eventual Consistency Today: Limitations Extensions and Beyond,"Bailis, Ghodsi",2013,paper,ACM Queue 11(3),eventual consistency,https://queue.acm.org/detail.cfm?id=2462076|http://www.bailis.org/papers/eventual-queue2013.pdf,publisher,confirmed
+A15a,Logical Physical Clocks and Consistent Snapshots in Globally Distributed Databases,"Kulkarni, Demirbas, Madappa, Avva, Leone",2014,paper,OPODIS 2014,hybrid logical clock,https://link.springer.com/chapter/10.1007/978-3-319-14472-6_2,publisher,confirmed
+A17a,Cuckoo Filter: Practically Better Than Bloom,"Fan, Andersen, Kaminsky, Mitzenmacher",2014,paper,CoNEXT 2014,cuckoo filter,https://dl.acm.org/doi/10.1145/2674005.2674994,publisher,confirmed
+B3a,Consistency in Non-Transactional Distributed Storage Systems,"Viotti, Vukolic",2016,paper,ACM Computing Surveys 49(1),consistency model taxonomy,https://dl.acm.org/doi/10.1145/2926965|https://api.semanticscholar.org/graph/v1/paper/f736336e6d7c5803095e84e02c9823d0a38faa37?fields=title,abstract,tldr,publisher,confirmed
+A50a,Limits on Authenticated Encryption Use in TLS,"Luykx, Paterson",2017,paper,unpublished / ePrint 2024/051,multi-key AE limits,https://eprint.iacr.org/2024/051,preprint,confirmed
+CD6a,Pure Operation-Based Replicated Data Types,"Baquero, Almeida, Shoker",2017,paper,arXiv 1710.04469,pure op-based CRDTs,https://arxiv.org/abs/1710.04469,preprint,confirmed
+A5a,The Noise Protocol Framework (Revision 34),"Perrin, T.",2018,paper,noiseprotocol.org,Noise KK/XX handshake,https://noiseprotocol.org/noise.html,docs,confirmed
+CD3a,Delta State Replicated Data Types,"Almeida, Shoker, Baquero",2018,paper,J. Parallel and Distributed Computing 111,delta-state CRDTs,https://www.sciencedirect.com/science/article/abs/pii/S0743731517302332,publisher,confirmed
+CD3b,Delta State Replicated Data Types,"Almeida, Shoker, Baquero",2018,paper,arXiv 1603.01529,delta-state CRDTs,https://arxiv.org/abs/1603.01529,preprint,confirmed
+CD7a,A Cryptographic Analysis of the WireGuard Protocol,"Dowling, Paterson",2018,paper,ACNS 2018,Noise-based key exchange security,https://link.springer.com/chapter/10.1007/978-3-319-93387-0_1,publisher,confirmed
+A45a,Noise Explorer: Fully Automated Modeling and Verification for Arbitrary Noise Protocols,"Kobeissi, Bhargavan",2019,paper,IEEE EuroS&P 2019,Noise protocol verification,https://hal.science/hal-01948964/,preprint,confirmed
+CD2a,Local-First Software: You Own Your Data in Spite of the Cloud,"Kleppmann, Wiggins, van Hardenberg, McGranaghan",2019,paper,Onward! 2019,local-first architecture,https://dl.acm.org/doi/10.1145/3359591.3359737,publisher,confirmed
+A7a,BLAKE3 -- one function fast everywhere,"Aumasson, Neves, O'Hearn, Winnerlein",2020,paper,BLAKE3 specification,BLAKE3 hashing,https://github.com/BLAKE3-team/BLAKE3-specs/blob/master/blake3.pdf,github,confirmed
+A9a,XChaCha20-Poly1305 Construction,"Arciszewski, S.",2020,paper,IRTF CFRG draft,XChaCha20-Poly1305 AEAD,https://datatracker.ietf.org/doc/draft-arciszewski-xchacha/,ietf,confirmed
+B13a,Taming the Many EdDSAs,"Chalkias, Garillot, Nikolaenko",2020,paper,SSR 2020 LNCS 12529,Ed25519 malleability,https://link.springer.com/chapter/10.1007/978-3-030-64357-7_4,publisher,confirmed
+B13b,Taming the Many EdDSAs,"Chalkias, Garillot, Nikolaenko",2020,paper,ePrint 2020/1244,Ed25519 malleability,https://eprint.iacr.org/2020/1244,preprint,confirmed
+CD4a,State-Machine Replication for Planet-Scale Systems,"Enes, Baquero, Rezende, Gotsman, Perrin, Sutra",2020,paper,EuroSys 2020,planet-scale consistency trade-offs,https://dl.acm.org/doi/abs/10.1145/3342195.3387543|https://arxiv.org/abs/2003.11789,publisher,confirmed
+B14a,A Cryptographic Analysis of the TLS 1.3 Handshake Protocol,"Dowling, Fischlin, Guenther, Stebila",2021,paper,J. Cryptology,Noise-style key exchange security,https://link.springer.com/article/10.1007/s00145-021-09384-1,publisher,confirmed
+A48b,TCP Selective Acknowledgment Options,"Mathis, Mahdavi, Floyd, Romanow",1996,rfc,RFC 2018,SACK delivery ratio,https://datatracker.ietf.org/doc/html/rfc2018,ietf,confirmed
+A10b,HMAC: Keyed-Hashing for Message Authentication,"Krawczyk, Bellare, Canetti",1997,rfc,RFC 2104,HMAC construction,https://www.rfc-editor.org/rfc/rfc2104,ietf,confirmed
+A22a,Key Management for Multicast: Issues and Architectures,"Wallner, Harder, Agee",1999,rfc,RFC 2627,LKH multicast key management,https://www.rfc-editor.org/rfc/rfc2627.html,ietf,confirmed
+A24a,IP Encapsulating Security Payload (ESP),"Kent, S.",2005,rfc,RFC 4303,anti-replay sliding window,https://www.rfc-editor.org/rfc/rfc4303.html,ietf,confirmed
+A6b,HMAC-based Extract-and-Expand Key Derivation Function (HKDF),"Krawczyk, Eronen",2010,rfc,RFC 5869,HKDF key derivation,https://www.rfc-editor.org/rfc/rfc5869.html,ietf,confirmed
+A51a,ZRTP: Media Path Key Agreement for Unicast Secure RTP,"Zimmermann, Johnston, Callas",2011,rfc,RFC 6189,SAS verification,https://datatracker.ietf.org/doc/rfc6189/,ietf,confirmed
+A12a,Low Extra Delay Background Transport (LEDBAT),Shalunov et al.,2012,rfc,RFC 6817,background transport,https://datatracker.ietf.org/doc/html/rfc6817,ietf,confirmed
+CC12a,Elliptic Curves for Security,"Langley, Hamburg, Turner",2016,rfc,RFC 7748,X25519 scalar multiplication,https://www.rfc-editor.org/rfc/rfc7748,ietf,confirmed
+CD8a,J-PAKE: Password-Authenticated Key Exchange by Juggling,"Hao, F.",2017,rfc,RFC 8236,PAKE protocol,https://www.rfc-editor.org/rfc/rfc8236.html,ietf,confirmed
+A35a,ChaCha20 and Poly1305 for IETF Protocols,"Nir, Langley",2018,rfc,RFC 8439,ChaCha20-Poly1305 AEAD,https://www.rfc-editor.org/rfc/rfc8439.html,ietf,confirmed
+A31a,QUIC: A UDP-Based Multiplexed and Secure Transport,"Iyengar, Thomson",2021,rfc,RFC 9000,QUIC PATH_CHALLENGE,https://www.rfc-editor.org/rfc/rfc9000.html,ietf,confirmed
+CC9a,Embedded Multi-Media Card (eMMC) Electrical Standard (5.1),JEDEC,2015,standard,JESD84-B51,eMMC sector atomicity,https://www.jedec.org/standards-documents/docs/jesd84-b51,publisher,confirmed
+B11a,Combinatorial Designs and Tournaments,"Anderson, I.",1997,book,Oxford University Press,1-factorizations of complete graphs,https://global.oup.com/academic/product/combinatorial-designs-and-tournaments-9780198500292?cc=us&lang=en,publisher,confirmed
+A52a,Specifying Systems: The TLA+ Language and Tools for Hardware and Software Engineers,"Lamport, L.",2002,book,Addison-Wesley,TLA+ formal verification,https://lamport.azurewebsites.net/tla/book.html,docs,confirmed
+B21a,Introduction to Combinatorial Designs (2nd ed.),"Wallis, W.D.",2007,book,Chapman & Hall/CRC,1-factorization existence,https://www.routledge.com/Introduction-to-Combinatorial-Designs/Wallis/p/book/9781584888383,publisher,confirmed
+CD1a,Designing Data-Intensive Applications,"Kleppmann, M.",2017,book,O'Reilly,consistency and replication,https://www.oreilly.com/library/view/designing-data-intensive-applications/9781491903063/,publisher,confirmed
+A40a,nl80211: Linux WiFi configuration interface,Linux kernel,2007,spec,kernel.org,WiFi interface discovery,https://wireless.docs.kernel.org/en/latest/en/developers/documentation/nl80211.html,docs,confirmed
+A30b,ProVerif: Cryptographic protocol verifier,"Blanchet, B.",2001,tool,INRIA,protocol verification,https://bblanche.gitlabpages.inria.fr/proverif/,docs,confirmed
+A44a,Bao: BLAKE3 verified streaming,"O'Connor, J.",2019,tool,github.com,BLAKE3 streaming verification,https://github.com/oconnor663/bao,github,confirmed
+A23a,age: A simple modern and secure file encryption tool,"Valsorda, F.",2019,tool,github.com,age encryption,https://github.com/FiloSottile/age,github,confirmed
+A42a,zeroize: secure memory zeroing,iqlusion (Arcieri),2018,crate,crates.io,secret memory zeroing,https://crates.io/crates/zeroize,crates_io,confirmed
+A43b,ed25519-dalek,dalek-cryptography,2018,crate,crates.io,Ed25519 signatures,https://crates.io/crates/ed25519-dalek,crates_io,confirmed
+A44b,x25519-dalek,dalek-cryptography,2018,crate,crates.io,X25519 key agreement,https://crates.io/crates/x25519-dalek,crates_io,confirmed
+A41a,inventory: distributed plugin registration,"Dtolnay, D.",2019,crate,crates.io,plugin registration,https://crates.io/crates/inventory,crates_io,confirmed
+# Total references: 95 rows (89 unique works)

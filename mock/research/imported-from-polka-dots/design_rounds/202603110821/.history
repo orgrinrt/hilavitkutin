@@ -1,0 +1,50 @@
+3706648 feat: implement architecture signatures for all 16 mock crates
+f30d171 chore: lock src changelist for architecture-signatures round
+7cf7f17 chore: lock doc changelist for architecture-signatures round
+c531ef6 chore: remove stale plan docs and old root agent templates
+2f6c951 chore: regenerate docs and agent rules for new architecture
+70a36a0 chore: restructure mock workspace for plugin-first architecture
+0d0fd16 chore: archive old design round, nuke workspace, start new round
+6f9ff5f chore: portable cargo mock alias via proxy crate
+e21303a chore: regenerate with resolve_mock_dir fallback fix
+f4d800c chore: update mockspace and regenerate with absolute --dir fix
+168c5a1 chore: migrate mock workspace to mockspace build-dep
+5cd0eea chore: snapshot mock workspace, xtask pipeline, and design docs
+92bfe0d chore: nuke entire dsl, stdlib, and all dsl-dependent code
+d18a502 chore: snapshot before nuke — ast refactor, cleanup phases 1-6, design docs
+09d136d feat: multi-arm pattern matching macros (macro_rules! style)
+57c3751 feat: wire extern dispatch to existing builtin handlers
+351bcc3 feat: add extern, unsafe, and return grammar rules
+4654649 feat: add extern, unsafe, and return AST nodes
+15a338c docs: add stdlib implementation plan (15 tasks, 5 phases)
+3db258c docs: stdlib, macro system, and extern API design
+62156c0 refactor: remove hardcoded platform lists from stage, control, and validate
+28b41b3 refactor: make restart targets and permission urls registry-driven
+b2b0ba3 refactor: remove legacy template rendering, use polka process instead
+54aabe3 refactor: replace ConfigKind enum with inventory-based validator dispatch
+51c9a89 refactor: remove health check system from rust, will become polka pipeline steps
+b9792f0 refactor: delete fleet transform, replaced by polka DSL
+dde2b1a refactor: delete legacy Format enum and hardcoded keybind dispatch tables
+ef4b9b4 refactor: migrate keybind callers to inventory-based format dispatch
+3778123 feat: add inventory-based KeybindFormat with data-driven base resolution
+af19894 refactor: replace outdated source dispatch with inventory self-registration
+4a6975d feat: replace hand-rolled parser with pest PEG grammar
+4fc1bc3 fix: harden rhai sandbox, topo sort, and prompt_choice TTY guard
+2ec7708 feat: add fleet transform, machine schema, and setup extensions
+3baa8a8 test: add end-to-end workflow integration tests
+7422fa6 feat: add --all, --only, --skip flags for workflow selection
+46c02ea feat: wire workflow execution into deploy pipeline
+311dd04 feat: add interactive pipeline TUI for workflow selection
+f91c0df feat: add prompt_choice and confirm UI helpers for workflows
+b36c1f9 feat: wire workflows through build pipeline
+6457ace feat: add rhai-based workflow executor
+206ef8c feat: add ResolvedWorkflow to expansion pipeline
+320183d feat: add workflow types to parser AST
+273f4a5 refactor: make Ui cloneable for rhai closure registration
+824b387 chore: add rhai and crossterm dependencies
+af6e7e0 docs: add workflow system phase 1 implementation plan
+0b87941 docs: add polka language evolution design (workflows, rhai, pest)
+25e4357 docs: add fleet management and multi-module .polka design
+6a79feb docs: regenerate agent docs with new transforms, secret!(), and commands
+e878cfb feat: add setup, scheduler, brewfile, run commands and trash system
+cdb7256 feat: standardize .polka comment syntax to # with // as legacy
