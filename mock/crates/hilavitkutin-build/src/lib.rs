@@ -1,4 +1,4 @@
-//! hilavitkutin-build — shared build-dependency crate.
+//! hilavitkutin-build: shared build-dependency crate.
 //!
 //! Every hilavitkutin crate and every consumer's `build.rs` calls
 //! [`bootstrap_from_buildscript`]. The crate optimises HOW code is
@@ -19,34 +19,34 @@
 //!
 //! # Layout
 //!
-//! - [`pragma`] — `Pragma` enum + `PragmaSet` bitmask.
-//! - [`profile`] — `Profile` + default pragma sets.
-//! - [`axis`] — three-axis classification (Target / Tier / Passes).
-//! - [`config`] — `BuildConfig::from_cargo_env()`.
-//! - [`requirements`] — static pragma -> external-tool table.
-//! - [`bootstrap`] — build-script entry point.
-//! - [`guards`] — `compile_error!` macro helpers.
+//! [`pragma`] defines the `Pragma` enum and `PragmaSet` bitmask.
+//! [`profile`] defines `Profile` and its default pragma sets.
+//! [`axis`] holds the three-axis classification (Target / Tier /
+//! Passes). [`config`] exposes `BuildConfig::from_cargo_env()`.
+//! [`requirements`] contains the static pragma-to-external-tool
+//! table. [`bootstrap`] is the build-script entry point. [`guards`]
+//! exposes `compile_error!` macro helpers.
 //!
 //! # Pragma roster
 //!
 //! The 13 pragmas that `Pragma` exposes (definitions live in
 //! [`pragma`]; external-tool requirements in [`requirements`]):
 //!
-//! - `LoopOptimization` — IRCE, LoopPredication, SimplifyCFG,
-//!   LoopInterchange, LoopDistribute, LoopDataPrefetch,
-//!   SeparateConstOffsetFromGEP via `polka-passes.so`.
-//! - `Polly` — polyhedral optimiser; requires Polly-enabled LLVM.
-//! - `MathPeephole` — float peephole rewrites via `math-peephole.so`.
-//! - `FastMath` — LLVM `unsafe-fp-math` flag + `arvo_fast_math` cfg.
-//! - `ExpandedLto` — fat LTO + codegen-units=1 (generated Cargo config).
-//! - `Pgo` — consume PGO profiles when present on disk.
-//! - `Bolt` — post-link binary rewriting (Linux ELF only).
-//! - `Profiling` — run profiling benchmarks post-build.
-//! - `BuildStd` — rebuild std from source with optimisation flags.
-//! - `ParallelCodegen` — `-Zthreads=N` (0 = auto-detect).
-//! - `SharedGenerics` — `-Zshare-generics=y`.
-//! - `LoopFusion` — experimental; fuse adjacent loops.
-//! - `MimallocAllocator` — advisory mimalloc recommendation.
+//! | Pragma | Effect |
+//! |--------|--------|
+//! | `LoopOptimization` | IRCE, LoopPredication, SimplifyCFG, LoopInterchange, LoopDistribute, LoopDataPrefetch, SeparateConstOffsetFromGEP via `polka-passes.so`. |
+//! | `Polly` | Polyhedral optimiser; requires Polly-enabled LLVM. |
+//! | `MathPeephole` | Float peephole rewrites via `math-peephole.so`. |
+//! | `FastMath` | LLVM `unsafe-fp-math` flag plus the `arvo_fast_math` cfg. |
+//! | `ExpandedLto` | Fat LTO with codegen-units=1 (generated Cargo config). |
+//! | `Pgo` | Consume PGO profiles when present on disk. |
+//! | `Bolt` | Post-link binary rewriting (Linux ELF only). |
+//! | `Profiling` | Run profiling benchmarks post-build. |
+//! | `BuildStd` | Rebuild std from source with optimisation flags. |
+//! | `ParallelCodegen` | `-Zthreads=N` (0 = auto-detect). |
+//! | `SharedGenerics` | `-Zshare-generics=y`. |
+//! | `LoopFusion` | Experimental; fuse adjacent loops. |
+//! | `MimallocAllocator` | Advisory mimalloc recommendation. |
 //!
 //! The generated config file `Cargo.toml`-shaped overrides (Profiles
 //! etc.) are deferred to a follow-up round per `BACKLOG`.

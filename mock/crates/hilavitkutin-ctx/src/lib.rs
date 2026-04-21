@@ -1,7 +1,7 @@
-//! hilavitkutin-ctx — provider-gated context framework.
+//! hilavitkutin-ctx: provider-gated context framework.
 //!
-//! no_std, zero deps. Provides `Context<P>`, `provider!` macro
-//! for accessor trait generation, and `tuple!` macro for
+//! no_std, zero deps. Provides `Context<P>`, the `provider!` macro
+//! for accessor trait generation, and the `tuple!` macro for
 //! positional accessor impls on tuples.
 
 #![no_std]
