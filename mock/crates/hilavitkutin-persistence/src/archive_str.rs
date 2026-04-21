@@ -10,7 +10,7 @@
 //! the reverse: match the const table first; otherwise look up bytes
 //! in the string table and intern.
 
-use arvo_bits::Bits;
+use arvo_bits::{Bits, Hot};
 use arvo_hash::ContentHash;
 use hilavitkutin_str::{const_fnv1a, ArenaInterner, Str, StringInterner};
 use notko::{Maybe, Outcome};
@@ -45,7 +45,8 @@ pub fn inject_str<A: ArenaInterner>(
     interner: &StringInterner<A>,
     string_table: &StringTable,
 ) -> Outcome<Str, PersistenceError> {
-    let masked_bits = Bits::<28>::new(content_hash.bits() & Str::ID_MASK.bits());
+    let masked_bits: Bits<28, Hot> =
+        (content_hash.bits() & Str::ID_MASK.bits()).into();
 
     // Consult const table via the interner. A const hit returns the
     // const handle unchanged; a miss falls through to the runtime
@@ -53,7 +54,7 @@ pub fn inject_str<A: ArenaInterner>(
     let candidate = Str::__make(masked_bits);
     if let Some(resolved) = interner.resolve(candidate) {
         // Confirm the const entry hashes back to the same masked id.
-        let back = Bits::<28>::new(const_fnv1a(resolved) & Str::ID_MASK.bits());
+        let back: Bits<28, Hot> = (const_fnv1a(resolved) & Str::ID_MASK.bits()).into();
         if back == masked_bits {
             return Outcome::Ok(candidate);
         }
