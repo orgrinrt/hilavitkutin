@@ -6,6 +6,8 @@
 
 use core::marker::PhantomData;
 
+use arvo::newtype::Bool;
+
 use crate::access::AccessSet;
 use crate::context::{
     HasBatch, HasColumnReader, HasColumnWriter, HasEach, HasReduce, HasResourceProvider,
@@ -53,8 +55,8 @@ pub trait WorkUnit<Schedule = Always>: Send + Sync + 'static {
     /// True if the WU's writes commute across record order.
     ///
     /// Enables the scheduler to emit a reduce-style pattern instead
-    /// of serialising. Default `false`: consumer opts in.
-    const COMMUTATIVE: bool = false;
+    /// of serialising. Default `Bool::FALSE`: consumer opts in.
+    const COMMUTATIVE: Bool = Bool::FALSE;
 
     /// Run one pass of this WU against the provided context.
     fn execute(&self, ctx: &Self::Ctx);

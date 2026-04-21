@@ -49,7 +49,7 @@ pub use hint::{
 };
 pub use id::{AccessMask, StoreId};
 pub use platform::{
-    ClockApi, HasClock, HasMemoryProvider, HasThreadPool, MemoryProviderApi, ThreadPoolApi,
+    ClockApi, HasClock, HasMemoryProvider, HasThreadPool, MemoryProviderApi, Nanos, ThreadPoolApi,
 };
 pub use sink::{ByteEmitter, Collector, CountingSink, DiagnosticSink, NullSink, TeeSink};
 pub use store::{Column, Field, Map, Resource, Seq, Virtual};
