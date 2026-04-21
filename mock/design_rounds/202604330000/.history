@@ -1,0 +1,50 @@
+7264db6 chore: lock src changelist for 202604330000_changelist.src.lock.md
+2be3442 refactor: hilavitkutin-api primitive sweep (#72)
+644c13a docs: open src CL for 202604330000 — per-site hilavitkutin-api plan
+87eba19 chore: lock doc changelist for 202604330000_changelist.doc.lock.md
+4af0cdd docs: open doc CL for 202604330000 — no template changes
+125e318 docs: open round 202604330000 — hilavitkutin-api primitive sweep topic (#72)
+627261e refactor: complete str/lib.rs lint:allow reformat (#72 residual) (#18)
+d30ff31 refactor: reformat 9 lint:allow comments to reason+tracked form (#72) (#17)
+c1423e6 Merge pull request #16 from orgrinrt/feat/str-use-layout-masks
+4eb32c1 chore: close design round 202604310500
+b536631 chore: lock src changelist for 202604310500_changelist.src.lock.md
+7377426 refactor: Str masks forward to StrLayout; persistence uses .into()
+9ca0ed5 docs: add src changelist for str mask-forward round
+af217d3 chore: lock doc changelist for 202604310500_changelist.doc.lock.md
+72b2bc1 docs: describe Str's mask forwarding to StrLayout
+3201b13 docs: open str-layout mask-forward polish round
+5d057ac Merge pull request #15 from orgrinrt/feat/exact-widths-str-and-hints
+fa05ee1 chore: close design round 202604290000
+a9fcd1b chore: lock src changelist for 202604290000_changelist.src.lock.md
+df8ec45 refactor!: apply exact-widths round (Str via bitfield!, hints via UFixed)
+1868ccd docs: add src changelist for exact-widths round
+18dd557 chore: lock doc changelist for 202604290000_changelist.doc.lock.md
+c10fb70 docs: apply exact-widths round doc edits
+ae484a8 docs: open exact-widths round for Str and scheduling hints
+9965e10 Merge pull request #14 from orgrinrt/feat/port-legacy-research-bulk
+e7578c6 docs: import legacy hilavitkutin research from polka-dots and saalis
+7a6c199 Merge pull request #13 from orgrinrt/feat/port-polka-research
+d040811 docs: import polka-dots build/llvm research verbatim
+60b922c Merge pull request #12 from orgrinrt/feat/hilavitkutin-build-research-audit
+48f98ad docs: audit hilavitkutin-build design against polka-dots origin
+6cfd2b1 Merge pull request #11 from orgrinrt/feat/exact-widths-rule
+c198d27 docs: teach exact-widths principle in type-surface rule
+47d0144 Merge pull request #10 from orgrinrt/feat/no-bare-static-str-cascade
+04b0b23 feat: enable no-bare-static-str lint + tag hilavitkutin-str as introducer
+a6ee092 Merge pull request #9 from orgrinrt/feat/cascade-tightened-lints
+1abcd70 chore: cascade tightened bare-primitive lints with graceful ramp
+f3dd14d Merge pull request #8 from orgrinrt/feat/tighten-bare-primitive-enforcement
+2815b81 feat: tighten bare-primitive enforcement — anywhere in source
+8504c51 chore: close design round 202604201319 (#72 persistence)
+b2a595b chore: lock src changelist for #72 persistence sub-sweep
+f3ea051 feat: hilavitkutin-persistence primitive-vocabulary sweep (#72)
+44dd18b plan: open src CL for hilavitkutin-persistence sweep (#72)
+207683b chore: lock doc changelist for #72 persistence sweep
+6aa8c3c docs: apply DOC phase for hilavitkutin-persistence sweep (#72)
+f00584d chore: flatten active round files for #72
+67c6ce8 plan: open doc CL for hilavitkutin-persistence sweep (#72)
+8c99a33 plan: open topic for hilavitkutin-persistence sweep (#72)
+31a7acc chore: sync writing-style fragment + advisory override (#6)
+b571f57 docs: tighten writing-style + wire shared fragment injection markers
+d42ab21 docs: sync refined writing-style rules from arvo
