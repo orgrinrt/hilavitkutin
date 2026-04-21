@@ -14,7 +14,7 @@ dependencies = [
 [[package]]
 name = "arvo"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#541e4c775c7dba31c5e905c316a95330c35d3461"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#f1a221b814a1a92c2de127f13328ed1f5d2c5d12"
 dependencies = [
  "mockspace",
  "notko",
@@ -23,17 +23,18 @@ dependencies = [
 [[package]]
 name = "arvo-bitmask"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#541e4c775c7dba31c5e905c316a95330c35d3461"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#f1a221b814a1a92c2de127f13328ed1f5d2c5d12"
 dependencies = [
  "arvo",
  "arvo-bits",
+ "arvo-tensor",
  "mockspace",
 ]
 
 [[package]]
 name = "arvo-bits"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#541e4c775c7dba31c5e905c316a95330c35d3461"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#f1a221b814a1a92c2de127f13328ed1f5d2c5d12"
 dependencies = [
  "arvo",
  "mockspace",
@@ -42,17 +43,18 @@ dependencies = [
 [[package]]
 name = "arvo-comb"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#541e4c775c7dba31c5e905c316a95330c35d3461"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#f1a221b814a1a92c2de127f13328ed1f5d2c5d12"
 dependencies = [
  "arvo",
  "arvo-bitmask",
+ "arvo-tensor",
  "mockspace",
 ]
 
 [[package]]
 name = "arvo-graph"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#541e4c775c7dba31c5e905c316a95330c35d3461"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#f1a221b814a1a92c2de127f13328ed1f5d2c5d12"
 dependencies = [
  "arvo",
  "arvo-bitmask",
@@ -62,7 +64,7 @@ dependencies = [
 [[package]]
 name = "arvo-hash"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#541e4c775c7dba31c5e905c316a95330c35d3461"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#f1a221b814a1a92c2de127f13328ed1f5d2c5d12"
 dependencies = [
  "arvo-bits",
  "mockspace",
@@ -71,7 +73,7 @@ dependencies = [
 [[package]]
 name = "arvo-sparse"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#541e4c775c7dba31c5e905c316a95330c35d3461"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#f1a221b814a1a92c2de127f13328ed1f5d2c5d12"
 dependencies = [
  "arvo",
  "arvo-bitmask",
@@ -82,10 +84,20 @@ dependencies = [
 [[package]]
 name = "arvo-spectral"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#541e4c775c7dba31c5e905c316a95330c35d3461"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#f1a221b814a1a92c2de127f13328ed1f5d2c5d12"
 dependencies = [
  "arvo",
  "arvo-bitmask",
+ "arvo-tensor",
+ "mockspace",
+]
+
+[[package]]
+name = "arvo-tensor"
+version = "0.1.0"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#f1a221b814a1a92c2de127f13328ed1f5d2c5d12"
+dependencies = [
+ "arvo",
  "mockspace",
 ]
 
@@ -165,6 +177,7 @@ name = "hilavitkutin-persistence"
 version = "0.1.0"
 dependencies = [
  "arvo",
+ "arvo-bits",
  "arvo-hash",
  "hilavitkutin-api",
  "hilavitkutin-str",
@@ -175,6 +188,9 @@ dependencies = [
 [[package]]
 name = "hilavitkutin-str"
 version = "0.1.0"
+dependencies = [
+ "arvo-bits",
+]
 
 [[package]]
 name = "indexmap"
