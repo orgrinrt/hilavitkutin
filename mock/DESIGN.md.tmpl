@@ -67,11 +67,11 @@ Per-module design lives in `crates/hilavitkutin/DESIGN.md.tmpl`.
 
 ## Principles (see PRINCIPLES.md.tmpl)
 
-1. `#![no_std]`, no alloc — every crate.
-2. Monomorphisation is the dispatch — no dyn, no TypeId.
-3. Pre-allocated thread pool — no runtime spawn beyond plan-time.
-4. Schedule once, reuse across frames — plan recompute is rare.
-5. Self-hosting meta pipeline — the scheduler schedules itself.
+1. `#![no_std]`, no alloc, every crate.
+2. Monomorphisation is the dispatch (no dyn, no TypeId).
+3. Pre-allocated thread pool; no runtime spawn beyond plan-time.
+4. Schedule once, reuse across frames. Plan recompute is rare.
+5. Self-hosting meta pipeline. The scheduler schedules itself.
 
 ## Status
 
