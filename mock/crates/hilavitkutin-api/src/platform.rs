@@ -4,7 +4,16 @@
 //! allocation and protection, thread-pool spawn and sizing, and a
 //! monotonic clock. Consumed by monomorphisation — no `dyn`.
 
-use arvo::newtype::{Bool, USize};
+use arvo::newtype::{Bool, FBits, IBits, USize};
+use arvo::strategy::Hot;
+use arvo::ufixed::UFixed;
+
+/// Nanoseconds since a platform-defined epoch.
+///
+/// Monotonic instant type returned by `ClockApi::now_ns`. Backed by
+/// `arvo::UFixed<64, 0, Hot>`; the `Hot` strategy dispatches to the
+/// host's native 64-bit unsigned.
+pub type Nanos = UFixed<{ IBits(64) }, { FBits::ZERO }, Hot>;
 
 /// Memory provider.
 ///
@@ -20,7 +29,7 @@ pub trait MemoryProviderApi: Send + Sync + 'static {
     /// Returned pointer is valid until a matching `deallocate`.
     /// Alignment must be a power of two. OOM returns null; caller
     /// checks.
-    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8;
+    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI returns raw pointer by contract; tracked: #72
 
     /// Release a previously-allocated block.
     ///
@@ -28,7 +37,7 @@ pub trait MemoryProviderApi: Send + Sync + 'static {
     ///
     /// `ptr` must come from a prior `allocate` on the same provider
     /// with the same `len`. Deallocation invalidates the pointer.
-    unsafe fn deallocate(&self, ptr: *mut u8, len: USize);
+    unsafe fn deallocate(&self, ptr: *mut u8, len: USize); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer; tracked: #72
 
     /// Change page permissions over a block.
     ///
@@ -36,7 +45,7 @@ pub trait MemoryProviderApi: Send + Sync + 'static {
     ///
     /// `ptr` must cover `len` bytes of pages owned by this provider.
     /// Revoking read or write while a live borrow exists is UB.
-    unsafe fn protect(&self, ptr: *mut u8, len: USize, read: Bool, write: Bool);
+    unsafe fn protect(&self, ptr: *mut u8, len: USize, read: Bool, write: Bool); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer; tracked: #72
 }
 
 /// Thread-pool provider.
@@ -60,7 +69,7 @@ pub trait ThreadPoolApi: Send + Sync + 'static {
 /// Monotonic clock.
 pub trait ClockApi: Send + Sync + 'static {
     /// Current time in nanoseconds since a platform-defined epoch.
-    fn now_ns(&self) -> u64;
+    fn now_ns(&self) -> Nanos;
 }
 
 // Accessor traits expressed directly rather than via ctx's

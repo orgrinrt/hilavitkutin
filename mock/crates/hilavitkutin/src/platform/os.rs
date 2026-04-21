@@ -9,7 +9,7 @@ use core::ffi::c_void;
 use core::ptr;
 
 use arvo::newtype::{Bool, USize};
-use hilavitkutin_api::platform::{ClockApi, MemoryProviderApi, ThreadPoolApi};
+use hilavitkutin_api::platform::{ClockApi, MemoryProviderApi, Nanos, ThreadPoolApi};
 
 /// mmap/munmap-backed memory provider.
 ///
@@ -183,7 +183,7 @@ impl Default for OsClock {
 }
 
 impl ClockApi for OsClock {
-    fn now_ns(&self) -> u64 {
+    fn now_ns(&self) -> Nanos {
         let mut ts = libc::timespec {
             tv_sec: 0,
             tv_nsec: 0,
@@ -193,6 +193,7 @@ impl ClockApi for OsClock {
         // value is ignored; CLOCK_MONOTONIC is available on every
         // tier-1 unix target.
         let _ = unsafe { libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut ts) };
-        (ts.tv_sec as u64).wrapping_mul(1_000_000_000).wrapping_add(ts.tv_nsec as u64)
+        let raw = (ts.tv_sec as u64).wrapping_mul(1_000_000_000).wrapping_add(ts.tv_nsec as u64);
+        Nanos::from_raw(raw)
     }
 }
