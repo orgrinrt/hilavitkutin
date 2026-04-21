@@ -40,7 +40,7 @@ impl<A: ArenaInterner> StringInterner<A> { // lint:allow(no-alloc) -- interner w
             return h;
         }
         let id = self.arena.arena_intern(s);
-        Str::__runtime(Bits::<28>::new(id as u64))
+        Str::__runtime((id as u64).into())
     }
 
     /// Intern a `'static` string. Same semantics as `intern`; the
@@ -50,7 +50,7 @@ impl<A: ArenaInterner> StringInterner<A> { // lint:allow(no-alloc) -- interner w
             return h;
         }
         let id = self.arena.arena_intern(s);
-        Str::__runtime(Bits::<28>::new(id as u64))
+        Str::__runtime((id as u64).into())
     }
 
     /// Resolve a handle back to a string.
@@ -73,7 +73,7 @@ impl<A: ArenaInterner> StringInterner<A> { // lint:allow(no-alloc) -- interner w
 /// Linear scan for a const-section entry matching `s` (by hash, then
 /// by content to rule out 28-bit truncation collisions).
 fn lookup_const_by_value(s: &str) -> Option<Str> {
-    let want = Str::__make(Bits::<28>::new(const_fnv1a(s) & 0x0FFF_FFFF));
+    let want = Str::__make((const_fnv1a(s) & 0x0FFF_FFFF).into());
     for entry in static_entries() {
         if entry.hash == want && str_eq(entry.value, s) {
             return Some(entry.hash);
