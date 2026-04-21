@@ -201,6 +201,15 @@ commit = "off"
 build = "warn"
 push = "warn"
 
+# Pre-hilavitkutin-str crates must gate any `const NAME: &str` / `static
+# NAME: &str` behind `#[cfg(debug_assertions)]`; hilavitkutin-str itself
+# declares the `static-string` category in [primitive-introductions]
+# below and is exempt (task #125).
+[lints.no-bare-static-str]
+commit = "off"
+build = "warn"
+push = "warn"
+
 [lints.no-box]
 commit = "off"
 build = "warn"
@@ -271,3 +280,22 @@ mockspace-hilavitkutin-stack-lints = { git = "ssh://git@github.com/orgrinrt/mock
 # Writing-style gate — pre-existing docs trip this until sweeps tidy them.
 [lints.writing-style]
 severity = "advisory"
+
+# ---------------------------------------------------------------------------
+# Primitive-substrate introducers (task #125)
+# ---------------------------------------------------------------------------
+#
+# Categories (not specific type names) a crate legitimately defines.
+# When a bare-primitive lint's category is in this list, the lint
+# self-exempts for the crate — the crate IS the source-of-truth for
+# that substrate. Categories stay stable as the stack evolves; adding
+# a new designed type means tagging its introducer with the right
+# category, no lint-pack change.
+#
+# hilavitkutin-str introduces the `static-string` substrate: it is
+# the interning home that replaces bare `const NAME: &str` / `static
+# NAME: &str` across the stack. Its own internals are the legitimate
+# site for static string tables.
+
+[primitive-introductions]
+hilavitkutin-str = ["static-string"]
