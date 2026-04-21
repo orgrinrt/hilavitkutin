@@ -1,0 +1,50 @@
+ffab784 chore: lock primitives src CL
+071f769 feat: saalis-primitives — 7 repr(C) enums + ABI version
+500922b docs: primitives src changelist
+a4739fd chore: lock primitives doc CL
+2c6bfe9 docs: saalis-primitives design + doc changelist
+f512e6e chore: set file-size lint to 300 LOC limit
+4149d92 docs: topic — saalis-primitives design round
+6c140d4 chore: archive abandoned wiring round, clean design_rounds root
+7c842f9 chore: deprecate doc changelist — back to TOPIC
+3d0578d chore: deprecate wiring round
+dfc0ce2 chore: nuke all source + clear all DESIGN.md.tmpl — starting over
+358d372 docs: src changelist — wiring round
+cccc099 chore: lock doc changelist — wiring round
+2f4327f docs: update DESIGN.md.tmpl files for wiring round + fix undocumented types
+41bf831 docs: doc changelist — wiring round
+831fd61 docs: topic — wiring context API to ColdStore and gallery
+61aea10 chore: close implementation round 202603162300
+0c09498 chore: lock src changelist — implementation round complete
+d7a5f50 feat: Phase 6 — extension crates with working #[register]
+8cf3009 feat: Phase 4 + Phase 5 — core engine + web server
+be171c2 feat: Phase 3 — scheduler with DAG and sequential dispatch
+1491aad feat: Phase 1 + Phase 2 — registration infrastructure + ColdStore
+3e08667 docs: src changelist — full implementation across 6 phases
+dd93367 chore: lock doc changelist — implementation round docs complete
+c663f6a docs: implementation details for all 11 crates
+85e623e docs: doc changelist — implementation round (all 6 phases)
+3a5fe40 docs: topic — implementation roadmap from stubs to working core
+ac55586 chore: close design round 202603161400
+b694f4a chore: lock src changelist — round complete (DONE phase)
+b5f8a08 feat: add Op enum to saalis-primitives (query comparison operators)
+8111e5a docs: src changelist v2 — add Op enum (only remaining item)
+22b5a74 chore: lock doc changelist — transition to SRC-PLAN
+d76466f docs: fix 32 undocumented-type lint errors in DESIGN.md.tmpl files
+b12640c chore: remove builtin-duplicated agent templates
+1a6a5d7 chore: unlock doc changelist — return to DOC phase to fix undocumented types
+6d5f52b chore: deprecate src changelist, revert lint loosening
+994dea7 chore: update mockspace — builtin templates, lint-derived content, toml_edit
+482fb25 chore: update mockspace — toml_edit parser, lint config now parsed
+57be0ae chore: update mockspace dependency — builtin hooks, auto settings, forbidden-imports
+3bf6b2b refactor: forbidden-imports rules as inline array of tables
+e44ba6f refactor: prepare for mockspace builtin hooks + forbidden-imports
+d4f63da feat: saalis-specific agent hooks for architectural guardrails
+f6bedec feat: saalis custom lints + per-gate lint config in mockspace.toml
+fac87cc feat: SRC phase — type signatures for 11-crate workspace
+664863b docs: src changelist — type signatures for 11 crates
+d4bfe16 chore: lock doc changelist — transition to SRC-PLAN phase
+65030c2 docs: update doc changelist — mark done items, defer deepdives
+f639165 docs: execute doc changelist — 11-crate workspace with DESIGN templates
+9378d8f docs: doc changelist — initial architecture round
+a9a5031 docs: topic — crate taxonomy decisions (11 crates)
