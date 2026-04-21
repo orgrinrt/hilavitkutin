@@ -18,7 +18,7 @@ method parameter types, not in tuple-struct fields. Same for bare
 scan every line of every `.rs` file and block the commit the moment
 a bare primitive is physically written.
 
-Escape hatch: `// lint:allow(<rule>) reason: ...; tracked: #N` —
+Escape hatch: `// lint:allow(<rule>) reason: ...; tracked: #N`,
 only when a foreign crate's contract or an unavoidable language
 feature forces the bare primitive and no arvo impl of that contract
 is possible.
@@ -46,7 +46,7 @@ domain's range and use `UFixed<N, 0, S>` (for discriminants) or
 - Max value `M` → `UFixed<ceil(log2(M+1)), 0, Hot>`.
 
 Storage packs to exactly `N` bits. Hot-path logic dispatches to the
-optimal host primitive (u8 / u16 / u32 / u64) via `S: Strategy` — the
+optimal host primitive (u8 / u16 / u32 / u64) via `S: Strategy`; the
 consumer never picks that. Choosing `UFixed<8, 0, Hot>` when the
 domain has 4 values wastes 6 bits per stored field; across millions
 of elements that is cache, bandwidth, and SIMD density.
@@ -122,7 +122,7 @@ design round describing the contract.
 
 ## The escape-hatch rule
 
-`// lint:allow(<rule>) reason: …; tracked: #<task-id>` — every escape
+`// lint:allow(<rule>) reason: …; tracked: #<task-id>`. Every escape
 is tracked debt. No `lint:allow` for skeleton convenience. If the rule
 seems not to fit, the design is wrong, not the rule.
 

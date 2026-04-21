@@ -54,8 +54,8 @@ Tracked in the engine-impl task description (#35):
   the thread-pool generic spawn story ships).
 - Write-back batching (coalesce per-resource writes after a
   morsel-loop ends).
-- mlock/madvise integration for resource pages — nice-to-have
-  performance knob.
+- mlock/madvise integration for resource pages (nice-to-have
+  performance knob).
 
 ## Engine 5a2 follow-ups
 
@@ -167,10 +167,10 @@ below is a separate downstream round.
 - PMC / `perf_event` integration for `cache_miss_rate` and
   `branch_miss_rate` sampling (Linux `perf_event_open`, macOS
   `kpc`, Windows PerfCounter APIs).
-- Phase completion time measurement — monotonic clock via the
+- Phase completion time measurement. Monotonic clock via the
   `hilavitkutin-api::Clock` trait (already shipped in platform
   round); wire into `AdaptMetrics::phase_completion_time_ns`.
-- Adaptive mode selection heuristic — latency vs throughput
+- Adaptive mode selection heuristic. Latency vs throughput
   trade-off feeding `select_adapt_config`. EMA-based per DESIGN
   (1/8 decay).
 - Per-phase config hot-swap during pipeline execution — between
