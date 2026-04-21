@@ -39,13 +39,13 @@ pub struct Cardinality(pub USize);
 /// Ordinal table-schema version. `next()` increments; no
 /// arithmetic beyond that.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-pub struct SchemaVersion(pub u32);
+pub struct SchemaVersion(pub u32); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-public-raw-field) reason: wire-format bit width fixed for on-disk representation; exact-width refinement tracked: #72
 
 impl SchemaVersion {
-    pub const fn new(v: u32) -> Self {
+    pub const fn new(v: u32) -> Self { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: wire-format bit width fixed for on-disk representation; exact-width refinement tracked: #72
         Self(v)
     }
-    pub const fn bits(self) -> u32 {
+    pub const fn bits(self) -> u32 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: wire-format bit width fixed for on-disk representation; exact-width refinement tracked: #72
         self.0
     }
     pub const fn next(self) -> Self {
@@ -55,26 +55,26 @@ impl SchemaVersion {
 
 /// SieveCache eviction-priority weight. Comparable, opaque.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-pub struct EvictionWeight(pub u64);
+pub struct EvictionWeight(pub u64); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-public-raw-field) reason: wire-format bit width fixed for on-disk representation; exact-width refinement tracked: #72
 
 impl EvictionWeight {
-    pub const fn new(w: u64) -> Self {
+    pub const fn new(w: u64) -> Self { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: wire-format bit width fixed for on-disk representation; exact-width refinement tracked: #72
         Self(w)
     }
-    pub const fn bits(self) -> u64 {
+    pub const fn bits(self) -> u64 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: wire-format bit width fixed for on-disk representation; exact-width refinement tracked: #72
         self.0
     }
 }
 
 /// Column bit-width declaration.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-pub struct BitWidth(pub u32);
+pub struct BitWidth(pub u32); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-public-raw-field) reason: wire-format bit width fixed for on-disk representation; exact-width refinement tracked: #72
 
 impl BitWidth {
-    pub const fn new(b: u32) -> Self {
+    pub const fn new(b: u32) -> Self { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: wire-format bit width fixed for on-disk representation; exact-width refinement tracked: #72
         Self(b)
     }
-    pub const fn bits(self) -> u32 {
+    pub const fn bits(self) -> u32 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: wire-format bit width fixed for on-disk representation; exact-width refinement tracked: #72
         self.0
     }
 }
