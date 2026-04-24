@@ -4,6 +4,8 @@ Type-surface reminder: every pub signature in this crate uses notko's fallibilit
 
 Host-layer source was brought into conformance with this DESIGN in round 202604241201 (post-landing conformance sweep). Prior source drift on `ExtensionError`, `ExtensionAbiStatus`, `ExtensionVersion`, `CapabilityId`, `CapabilityExport`, `ExtensionMeta::NAME`, `InitHandler::init`, `ExtensionHost::new`, `ExtensionHost::load`, and `Extension::capability` is now resolved.
 
+Round 202604241317 ramped the primitive-vocabulary lints back to `error` across commit / build / push. Ninety-plus legitimate FFI-boundary sites in `src/descriptor.rs` / `src/error.rs` / `src/extension.rs` / `src/host.rs` carry `lint:allow` annotations pointing at task #206 (FFI descriptor boundary allow policy). Those are load-bearing C-ABI shapes the lint is right to flag but wrong to block in this specific crate whose entire job is the ABI layer.
+
 ## Designed, deferred
 
 ### Hot-reload orchestration with ref-counted unload
