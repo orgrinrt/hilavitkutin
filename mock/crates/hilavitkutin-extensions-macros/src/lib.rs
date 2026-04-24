@@ -224,14 +224,14 @@ pub fn export_extension(attr: TokenStream, item: TokenStream) -> TokenStream {
         static __HILAVITKUTIN_EXT_DESCRIPTOR:
             ::hilavitkutin_extensions::ExtensionDescriptor =
         ::hilavitkutin_extensions::ExtensionDescriptor {
-            abi_version: ::hilavitkutin_extensions::HOST_ABI_VERSION,
+            abi_version: ::hilavitkutin_extensions::HOST_ABI_VERSION.0,
             name_ptr: __EXT_NAME.as_ptr(),
-            name_len: __EXT_NAME.len(),
+            name_len: ::arvo::USize(__EXT_NAME.len()),
             version: __EXT_VERSION,
             capabilities_ptr: __EXT_CAPABILITIES.as_ptr(),
-            capabilities_len: __EXT_CAPABILITIES.len(),
+            capabilities_len: ::arvo::USize(__EXT_CAPABILITIES.len()),
             required_host_caps_ptr: __EXT_REQUIRED_CAPS.as_ptr(),
-            required_host_caps_len: __EXT_REQUIRED_CAPS.len(),
+            required_host_caps_len: ::arvo::USize(__EXT_REQUIRED_CAPS.len()),
             init_fn: #init_slot,
             shutdown_fn: #shutdown_slot,
         };

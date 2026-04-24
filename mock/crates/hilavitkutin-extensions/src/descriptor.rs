@@ -5,6 +5,7 @@
 //! struct; lifecycle, capability dispatch, and version gating all
 //! derive from the descriptor's fields.
 
+use arvo::USize;
 use core::ffi::{CStr, c_void};
 
 /// Host-side ABI version newtype.
@@ -14,7 +15,7 @@ use core::ffi::{CStr, c_void};
 /// the error path and the `HOST_ABI_VERSION` constant.
 #[repr(transparent)]
 #[derive(Copy, Clone, PartialEq, Eq)]
-pub struct AbiVersion(pub u32);
+pub struct AbiVersion(pub u32); // lint:allow(no-public-raw-field) tracked: #206
 
 /// Host-side ABI version the extensions crate speaks at build time.
 ///
@@ -43,7 +44,7 @@ pub const DESCRIPTOR_SYMBOL: &CStr = unsafe {
 /// representation matches a plain u64 across platforms.
 #[repr(transparent)]
 #[derive(Copy, Clone, PartialEq, Eq)]
-pub struct CapabilityId(pub u64);
+pub struct CapabilityId(pub u64); // lint:allow(no-public-raw-field) tracked: #206
 
 impl CapabilityId {
     /// Compute the capability id from an ASCII name at compile time.
@@ -71,11 +72,14 @@ impl CapabilityId {
 /// future extension (flags, build kind, locale).
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, Eq)]
+// The four u16 fields below are bare FFI-wire primitives by deliberate
+// choice. arvo has no wire-stable 16-bit newtype yet; see
+// BACKLOG.md.tmpl `Flip bare-primitive FFI-wire sites to UWire<N>`.
 pub struct ExtensionVersion {
-    pub major: u16,
-    pub minor: u16,
-    pub patch: u16,
-    pub _reserved: u16,
+    pub major: u16, // lint:allow(arvo-types-only, no-bare-numeric, no-public-raw-field) tracked: #206
+    pub minor: u16, // lint:allow(arvo-types-only, no-bare-numeric, no-public-raw-field) tracked: #206
+    pub patch: u16, // lint:allow(arvo-types-only, no-bare-numeric, no-public-raw-field) tracked: #206
+    pub _reserved: u16, // lint:allow(arvo-types-only, no-bare-numeric, no-public-raw-field) tracked: #206
 }
 
 /// C-ABI status returned by init and shutdown handler trampolines.
@@ -116,14 +120,14 @@ unsafe impl Sync for CapabilityEntry {}
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct ExtensionDescriptor {
-    pub abi_version: u32,
+    pub abi_version: u32, // lint:allow(arvo-types-only, no-bare-numeric, no-public-raw-field) tracked: #206
     pub name_ptr: *const u8,
-    pub name_len: usize,
+    pub name_len: USize,
     pub version: ExtensionVersion,
     pub capabilities_ptr: *const CapabilityEntry,
-    pub capabilities_len: usize,
+    pub capabilities_len: USize,
     pub required_host_caps_ptr: *const CapabilityId,
-    pub required_host_caps_len: usize,
+    pub required_host_caps_len: USize,
     pub init_fn: Option<
         unsafe extern "C" fn(host_ctx: *mut c_void) -> ExtensionAbiStatus,
     >,
