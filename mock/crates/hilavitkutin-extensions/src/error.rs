@@ -1,35 +1,34 @@
 //! Host-level extension error shape.
 //!
 //! Disjoint from `hilavitkutin_linking::LinkError`. The linking layer
-//! surfaces low-level load / resolve / close failures; this crate
-//! surfaces contract-level failures (descriptor missing, abi skew,
-//! init handler non-zero, required host capability unavailable, and
-//! so on).
+//! surfaces load / resolve / close failures; this crate surfaces
+//! contract-level failures (descriptor missing or malformed, abi skew,
+//! init handler non-`Ok`, required host capability unavailable, and so
+//! on).
 
-use arvo::USize;
 use hilavitkutin_linking::LinkError;
 
-use crate::descriptor::CapabilityId;
+use crate::descriptor::{CapabilityId, ExtensionAbiStatus};
 
 /// Host-side extension error.
 #[non_exhaustive]
 #[repr(C)]
 pub enum ExtensionError {
     /// The underlying linking layer failed to load or resolve.
-    Link(LinkError),
+    LinkFailed { cause: LinkError },
     /// The extension did not export `__hilavitkutin_extension_descriptor`.
     DescriptorMissing,
-    /// The descriptor symbol resolved but pointed to invalid or
-    /// unparseable payload.
+    /// The descriptor symbol resolved but pointed to invalid payload.
     DescriptorInvalid,
-    /// Abi version skew the host cannot accept.
+    /// Descriptor `abi_version` does not match host.
+    AbiVersionMismatch { expected: u32, got: u32 },
+    /// Host declines to accept the extension's semantic version (reserved
+    /// for consumer-layer policies; the base host does not apply any).
     ExtensionVersionUnsupported,
-    /// Extension's `init_fn` returned a non-zero platform code.
-    InitFailed { platform_code: USize },
-    /// Required host capability was not registered on the host.
-    NotSupported { missing: CapabilityId },
-    /// Argument passed by the host was malformed.
-    InvalidArg,
-    /// Host-internal error (resource exhaustion, unexpected state).
-    Internal,
+    /// A capability the extension requires is not in the host's advertised set.
+    RequiredHostCapabilityMissing { cap: CapabilityId },
+    /// Extension's `init_fn` returned a non-`Ok` status.
+    InitFailed { status: ExtensionAbiStatus },
+    /// Extension's `shutdown_fn` returned a non-`Ok` status.
+    ShutdownFailed { status: ExtensionAbiStatus },
 }

@@ -1,0 +1,5 @@
+error: unknown #[export_extension] parameter `typo_parameter`. Supported keys: name, version, required_host_caps, capabilities, init, shutdown.
+ --> tests/fixtures/fail/unknown_attr.rs:5:20
+  |
+5 | #[export_extension(typo_parameter = "oops")]
+  |                    ^^^^^^^^^^^^^^

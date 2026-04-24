@@ -17,5 +17,9 @@ syn = { version = "2", features = ["full"] }
 [build-dependencies]
 mockspace.workspace = true
 
+[dev-dependencies]
+trybuild = "1"
+hilavitkutin-extensions.workspace = true
+
 [features]
 default = []
