@@ -178,10 +178,10 @@ pub fn export_extension(attr: TokenStream, item: TokenStream) -> TokenStream {
                         }
                     }
                 },
-                quote! { Some(#fn_ident) },
+                quote! { ::hilavitkutin_extensions::MaybeNull::new(#fn_ident) },
             )
         }
-        None => (quote! {}, quote! { None }),
+        None => (quote! {}, quote! { ::hilavitkutin_extensions::MaybeNull::isnt() }),
     };
 
     let (shutdown_trampoline, shutdown_slot) = match attrs.shutdown {
@@ -200,10 +200,10 @@ pub fn export_extension(attr: TokenStream, item: TokenStream) -> TokenStream {
                         }
                     }
                 },
-                quote! { Some(#fn_ident) },
+                quote! { ::hilavitkutin_extensions::MaybeNull::new(#fn_ident) },
             )
         }
-        None => (quote! {}, quote! { None }),
+        None => (quote! {}, quote! { ::hilavitkutin_extensions::MaybeNull::isnt() }),
     };
 
     let expanded = quote! {

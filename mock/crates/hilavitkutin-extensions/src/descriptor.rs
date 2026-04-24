@@ -6,6 +6,7 @@
 //! derive from the descriptor's fields.
 
 use core::ffi::c_void;
+use notko::MaybeNull;
 
 /// Host-side ABI version the extensions crate speaks at build time.
 ///
@@ -107,10 +108,10 @@ pub struct ExtensionDescriptor {
     pub capabilities_len: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-public-raw-field) reason: #[repr(C)] ABI length field; tracked: #206
     pub required_host_caps_ptr: *const CapabilityId,
     pub required_host_caps_len: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-public-raw-field) reason: #[repr(C)] ABI length field; tracked: #206
-    pub init_fn: Option< // lint:allow(no-bare-option) reason: Option<fn> is the Rust idiom for nullable function pointers with null-pointer-niche ABI guarantee; notko::Maybe has no such guarantee; tracked: #206
+    pub init_fn: MaybeNull<
         unsafe extern "C" fn(host_ctx: *mut c_void) -> ExtensionAbiStatus,
     >,
-    pub shutdown_fn: Option< // lint:allow(no-bare-option) reason: Option<fn> is the Rust idiom for nullable function pointers with null-pointer-niche ABI guarantee; notko::Maybe has no such guarantee; tracked: #206
+    pub shutdown_fn: MaybeNull<
         unsafe extern "C" fn(host_ctx: *mut c_void) -> ExtensionAbiStatus,
     >,
 }

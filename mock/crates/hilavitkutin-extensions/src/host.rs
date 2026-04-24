@@ -162,7 +162,7 @@ impl ExtensionHost {
             }
         }
 
-        if let Some(init) = descriptor.init_fn {
+        if let Maybe::Is(init) = descriptor.init_fn.into_maybe() {
             // SAFETY: init is declared by the extension; host_ctx is
             // the per-load opaque pointer the contract requires.
             let status = unsafe { init(host_ctx) };

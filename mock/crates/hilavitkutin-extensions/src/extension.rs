@@ -96,7 +96,7 @@ impl Extension {
         };
         core::mem::forget(self);
 
-        if let Some(shutdown_fn) = shutdown {
+        if let Maybe::Is(shutdown_fn) = shutdown.into_maybe() {
             // SAFETY: shutdown is declared by the extension; host_ctx
             // is the pointer the host threaded in at load time.
             let status = unsafe { shutdown_fn(host_ctx) };
@@ -122,7 +122,7 @@ impl Extension {
 
 impl Drop for Extension {
     fn drop(&mut self) {
-        if let Some(shutdown) = self.descriptor.shutdown_fn {
+        if let Maybe::Is(shutdown) = self.descriptor.shutdown_fn.into_maybe() {
             // SAFETY: shutdown is declared by the extension; host_ctx
             // is the pointer it received at init time.
             let _ = unsafe { shutdown(self.host_ctx) };

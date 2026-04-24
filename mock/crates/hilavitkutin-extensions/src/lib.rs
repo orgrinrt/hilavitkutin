@@ -36,6 +36,9 @@ pub use host::{
 };
 pub use traits::{CapabilityExport, ExtensionMeta, InitHandler, ShutdownHandler};
 
+#[doc(hidden)]
+pub use notko::MaybeNull;
+
 #[cfg(test)]
 mod tests {
     // Tests in this module validate the ABI layout itself: FNV-1a hash
