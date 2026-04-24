@@ -1,6 +1,8 @@
 # Hilavitkutin Extensions & Plugins: Research & Analysis
 
-This document synthesizes research from across the workspace (`loimu`, `saalis`, `polka-dots`) regarding dynamic extension and plugin architectures. It analyzes the design decisions made in each project, identifies strengths and pitfalls, and establishes the architectural baseline for `hilavitkutin-extensions` and `hilavitkutin-plugins`.
+> **Rename note (round 202604240615):** crate names referenced below have shifted. What this document calls `hilavitkutin-extensions` (the dlopen primitive, section 3.1) became `hilavitkutin-linking`; what it calls `hilavitkutin-plugins` (the contract-bound host orchestration, section 3.2) became `hilavitkutin-extensions`. The new `hilavitkutin-extensions-macros` crate (proc-macro companion) was introduced in the same round. The synthesis and architectural directives below are unchanged in substance.
+
+This document synthesizes research from across the workspace (`loimu`, `saalis`, `polka-dots`) regarding dynamic extension and plugin architectures. It analyzes the design decisions made in each project, identifies strengths and pitfalls, and establishes the architectural baseline for the hilavitkutin plugin-host layer.
 
 ## 1. Context & Prior Art
 

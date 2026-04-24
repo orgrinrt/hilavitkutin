@@ -14,65 +14,100 @@ apply_to: ["**/Cargo.toml"]
 
 ### Crate structure
 
-Seven crates today, flat — all plain `rlib`, no proc-macro crates.
-(Eighth crate `hilavitkutin-plugins` lands in a follow-up round.)
+Nine crates total: eight plain `rlib` crates plus one proc-macro
+crate. Flat structure.
 
-- `hilavitkutin-api` — consumer-facing contracts. Traits and data
-  shapes only; no concrete engine logic.
-- `hilavitkutin` — the engine. Depends on `hilavitkutin-api` and
+- `hilavitkutin-api` is the consumer-facing contract crate. Traits
+  and data shapes only; no concrete engine logic.
+- `hilavitkutin` is the engine. Depends on `hilavitkutin-api` and
   on arvo substrate crates.
-- `hilavitkutin-build` — **build-dep only**. Declared under
+- `hilavitkutin-build` is build-dep only. Declared under
   `[build-dependencies]` in the consumer, never under
   `[dependencies]`. No runtime linkage.
 - `hilavitkutin-ctx`, `hilavitkutin-persistence`, `hilavitkutin-str`
-  — standalone extensions. Each is independently usable. They do
-  not depend on the engine, on `hilavitkutin-api`, or on each other.
-- `hilavitkutin-extensions` — plugin-host layer: cross-platform
-  dynamic library loader primitive. `no_std`, no allocator.
-  Provides abstractions that downstream consumer hosts (viola,
-  loimu, etc.) use to load their own cdylib plugins. Depends
-  only on notko / arvo / arvo-bits substrate and on libc /
+  are standalone ecosystem crates. Each is independently usable.
+  They do not depend on the engine, on `hilavitkutin-api`, or on
+  each other.
+- `hilavitkutin-linking` is the cross-platform dynamic library
+  loader primitive in the plugin-host layer. `no_std`, no
+  allocator. Provides abstractions that downstream consumer hosts
+  (viola, loimu, etc.) use to load their own cdylib extensions.
+  Depends only on notko / arvo / arvo-bits substrate and on libc /
   windows-sys for raw FFI. Must never depend on
-  `hilavitkutin-api` or `hilavitkutin`.
+  `hilavitkutin-api`, `hilavitkutin`, or any other hilavitkutin
+  crate. Renamed from prior `hilavitkutin-extensions` in round
+  202604240615.
+- `hilavitkutin-extensions` is the contract-bound host orchestration
+  layered over `hilavitkutin-linking`. Owns descriptor shape,
+  pull-based discovery, lifecycle, capability dispatch, failure
+  policy. `no_std`, no allocator, no dyn. Depends on
+  `hilavitkutin-linking` plus notko and arvo.
+- `hilavitkutin-extensions-macros` is the proc-macro companion to
+  `hilavitkutin-extensions`. It ships `#[export_extension]` which
+  emits the repr-C descriptor, exported-symbol fn, capability
+  table, and per-capability trampolines on behalf of an extension
+  author. The only proc-macro crate in the stack. Its emitted
+  output is `no_std`-compatible.
 
 ### Plugin host crates (layer, not loophole)
 
-`hilavitkutin-extensions` is itself a plain `rlib`. It provides
-abstractions for loading cdylib plugins; it is not a cdylib target
-itself. No hilavitkutin crate is a cdylib target — the dynamic
-`cdylib` ecosystems exist only downstream of this layer, in the
-consumer hosts that use it.
+The three plugin-host crates (`hilavitkutin-linking`,
+`hilavitkutin-extensions`, `hilavitkutin-extensions-macros`) layer
+into a reusable downstream-consumer loader foundation:
 
-The upcoming `hilavitkutin-plugins` crate (separate design round)
-will sit above `hilavitkutin-extensions` and provide plugin
-descriptor registration, lifecycle orchestration, and role/capability
-dispatch — still domain-agnostic, still a plain `rlib`. Domain-
-specific contract crates (viola-plugin-abi, etc.) layer further on
-top in consumer repos.
+```
+  hilavitkutin-extensions-macros  (proc-macro, emits against host)
+          |
+          +-- emitted output references ---v
+  hilavitkutin-extensions          (contract host, rlib)
+          |
+          v (consumes)
+  hilavitkutin-linking             (dlopen primitive, rlib)
+          |
+          v (platform FFI)
+  OS dynamic loader
+```
+
+`hilavitkutin-linking` and `hilavitkutin-extensions` are plain
+`rlib`s. They provide abstractions for loading and orchestrating
+cdylib extensions; they are not cdylib targets themselves. No
+hilavitkutin crate is a cdylib target. The dynamic `cdylib`
+ecosystems exist only downstream of this layer, in consumer hosts
+(viola, future loimu, future clause extension surfaces).
 
 This layering is deliberate. The engine stays at strict static
 composition; downstream consumers get a reusable plugin-host
-foundation without every consumer rewriting raw dlopen.
+foundation without every consumer rewriting raw dlopen or
+reinventing descriptor formats.
 
 ### Dependency direction
 
 - `hilavitkutin-api`: no hilavitkutin crate deps. May depend on
   arvo substrate if it needs numeric types. Must never depend on
   `hilavitkutin` (circular).
-- `hilavitkutin` → `hilavitkutin-api` + arvo substrate crates.
+- `hilavitkutin` depends on `hilavitkutin-api` plus arvo substrate.
 - `hilavitkutin-build`: zero hilavitkutin crate deps; may depend on
   LLVM / cargo / rustc toolchain crates. Strictly build-time.
 - `hilavitkutin-ctx`, `-persistence`, `-str`: independent. Each
   may depend on arvo substrate; none depend on the engine or on
   each other.
-- `hilavitkutin-extensions`: depends only on notko / arvo / arvo-bits
+- `hilavitkutin-linking`: depends only on notko / arvo / arvo-bits
   substrate and on libc (unix) / windows-sys (windows) for raw FFI.
   Must never depend on `hilavitkutin-api`, `hilavitkutin`, or any
   other hilavitkutin crate.
+- `hilavitkutin-extensions`: depends on `hilavitkutin-linking`
+  plus notko and arvo. Must never depend on `hilavitkutin-api`,
+  `hilavitkutin`, `hilavitkutin-build`, or the ecosystem crates.
+- `hilavitkutin-extensions-macros`: depends on proc-macro2 + syn +
+  quote at macro-execution time. Its emitted output references
+  `::hilavitkutin_extensions::*` paths, so downstream consumers
+  must add `hilavitkutin-extensions` as a regular dependency
+  alongside the macro crate. Must never be depended on at runtime
+  by engine, api, build-time, or ecosystem crates.
 
 ### `no_std` + `no_alloc` enforcement
 
-Every crate's `lib.rs` starts with:
+Every rlib crate's `lib.rs` starts with:
 
 ```rust
 #![no_std]
@@ -82,6 +117,11 @@ Every crate's `lib.rs` starts with:
 
 `Cargo.toml` must not pull `std`-feature variants of any dependency.
 If an arvo crate exposes a `std` feature, it stays off.
+
+`hilavitkutin-extensions-macros` is the sole exception to the
+`no_std` rule at the crate level: proc-macro crates run in the
+compiler host context and necessarily use `std`. The code the
+macro emits must still be `no_std`-compatible.
 
 ### ExpandedLto pragma
 
@@ -108,50 +148,24 @@ arvo-spectral = { git = "https://github.com/orgrinrt/arvo.git", branch = "dev" }
 arvo-comb     = { git = "https://github.com/orgrinrt/arvo.git", branch = "dev" }
 ```
 
-When iterating on changes crossing the arvo / hilavitkutin
-boundary, add a local `[patch]` temporarily — remove before
-pushing.
+When iterating on changes crossing the arvo / hilavitkutin boundary, add a local `[patch]` temporarily; remove before pushing.
 
 ### Arbitrary-time linking (consumer invariant)
 
-The plugin-host layer assumes any extension can be loaded, invoked,
-and dropped at arbitrary points in the host's execution, independent
-of other extensions. Consumer code that uses the plugin-host layer
-MUST tolerate that pattern. Assumptions like "all plugins are loaded
-before any are invoked", "init ordering gates invocation", or "the
-ecosystem of plugins must be known before proceeding" are forbidden
-at the framework level.
+The plugin-host layer assumes any extension can be loaded, invoked, and dropped at arbitrary points in the host's execution, independent of other extensions. Consumer code that uses the plugin-host layer MUST tolerate that pattern. Assumptions like "all extensions are loaded before any are invoked", "init ordering gates invocation", or "the ecosystem of extensions must be known before proceeding" are forbidden at the framework level.
 
-The framework intentionally does not build runtime plugin discovery.
-If a downstream consumer (for example loimu) wants runtime discovery
-semantics, it builds that abstraction in its own consumer layer on
-top of `hilavitkutin-extensions` and `hilavitkutin-plugins`. The
-base layer supports this by enforcing only arbitrary-time-compatible
-contracts:
+The framework intentionally does not build runtime extension discovery. If a downstream consumer (for example loimu) wants runtime discovery semantics, it builds that abstraction in its own consumer layer on top of `hilavitkutin-linking` and `hilavitkutin-extensions`. The base layer supports this by enforcing only arbitrary-time-compatible contracts:
 
 - No global static registry reads in any public API.
-- Symbol handles carry loader lifetimes so dropping an extension
-  invalidates symbols at compile time.
+- Symbol handles carry loader lifetimes so dropping an extension invalidates symbols at compile time.
 - Lifecycle functions are per-extension; no ecosystem-wide init gate.
-- Plugin descriptors never depend on siblings being loaded.
+- Extension descriptors never depend on siblings being loaded.
 
-The invariant propagates forward into `hilavitkutin-plugins` and into
-any downstream consumer contract crate. Every layer preserves it or
-explicitly documents where and why it is broken.
+The invariant propagates forward into `hilavitkutin-extensions` and into any downstream consumer contract crate (viola-plugin-abi etc.). Every layer preserves it or explicitly documents where and why it is broken.
 
 ### Forbidden crate types
 
-- No `[lib] proc-macro = true` in any hilavitkutin crate.
-- No `crate-type = ["cdylib"]` on any hilavitkutin crate. The engine
-  composes statically; the plugin-host layer
-  (`hilavitkutin-extensions`, and later `hilavitkutin-plugins`)
-  LOADS cdylibs but is not itself a cdylib target.
-- No linker-magic discovery in any hilavitkutin crate. `inventory`,
-  `ctor`, `#[distributed_slice]`, `.init_array`-based registration
-  are banned on both the producer and consumer sides of the loader
-  boundary. `hilavitkutin-extensions` enforces pull-based explicit-
-  symbol resolution only.
-- No runtime WU discovery in the engine. The engine's WorkUnit
-  composition is strictly static. This constraint does not extend
-  to consumer hosts' plugin ecosystems, which route through the
-  plugin-host layer.
+- No `[lib] proc-macro = true` on any hilavitkutin crate EXCEPT `hilavitkutin-extensions-macros`. Exactly one proc-macro crate in the stack; adding a second requires a design round.
+- No `crate-type = ["cdylib"]` on any hilavitkutin crate. The engine composes statically; the plugin-host layer (`hilavitkutin-linking`, `hilavitkutin-extensions`) LOADS cdylibs but is not itself a cdylib target.
+- No linker-magic discovery in any hilavitkutin crate. `inventory`, `ctor`, `#[distributed_slice]`, `.init_array`-based registration are banned on both the producer and consumer sides of the loader boundary. `hilavitkutin-linking` and `hilavitkutin-extensions` enforce pull-based explicit-symbol resolution only.
+- No runtime WU discovery in the engine. The engine's WorkUnit composition is strictly static. This constraint does not extend to consumer hosts' extension ecosystems, which route through the plugin-host layer.

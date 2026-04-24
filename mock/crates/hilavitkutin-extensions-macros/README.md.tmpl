@@ -1,0 +1,14 @@
+# hilavitkutin-extensions-macros
+
+Proc-macro companion to `hilavitkutin-extensions`. Ships the primary
+`#[export_extension]` attribute that emits the `#[repr(C)]` descriptor
+constant, the well-known exported symbol fn, the capability table, and
+per-capability C-ABI trampolines from a user-authored extension struct
+that implements the capability traits.
+
+Necessarily `std`-backed at macro execution time (proc-macros run in
+the compiler host context). Emitted output is `no_std`-compatible and
+compiles under the same restrictions as the rest of the hilavitkutin
+stack. Intended to be wrapped by downstream consumer contract crates
+under domain-named macros (for example `#[viola::plugin]`) that expand
+to `#[export_extension]` internally.

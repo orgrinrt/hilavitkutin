@@ -1,6 +1,6 @@
 //! Windows backend: LoadLibraryW / GetProcAddress / FreeLibrary.
 
-use crate::error::ExtensionError;
+use crate::error::LinkError;
 use arvo::USize;
 use core::ffi::c_void;
 use notko::Outcome;
@@ -15,14 +15,14 @@ const MAX_PATH_WIDE: usize = 260;
 
 pub(crate) fn platform_load(
     path: &[u8],
-) -> Outcome<*mut c_void, ExtensionError> {
+) -> Outcome<*mut c_void, LinkError> {
     let Some(wide) = ascii_to_wide(path) else {
-        return Outcome::Err(ExtensionError::PathNotFound);
+        return Outcome::Err(LinkError::PathNotFound);
     };
     // SAFETY: wide is null-terminated UTF-16.
     let module: HMODULE = unsafe { LoadLibraryW(wide.as_ptr()) };
     if module.is_null() {
-        return Outcome::Err(ExtensionError::LoadFailed {
+        return Outcome::Err(LinkError::LoadFailed {
             platform_code: read_last_error(),
         });
     }
@@ -32,9 +32,9 @@ pub(crate) fn platform_load(
 pub(crate) fn platform_resolve(
     handle: *mut c_void,
     name: &[u8],
-) -> Outcome<*const c_void, ExtensionError> {
+) -> Outcome<*const c_void, LinkError> {
     if !is_null_terminated(name) {
-        return Outcome::Err(ExtensionError::SymbolMissing);
+        return Outcome::Err(LinkError::SymbolMissing);
     }
     // SAFETY: handle came from LoadLibraryW; name is null-terminated.
     let proc = unsafe {
@@ -42,17 +42,17 @@ pub(crate) fn platform_resolve(
     };
     match proc {
         Some(p) => Outcome::Ok(p as *const c_void),
-        None => Outcome::Err(ExtensionError::SymbolMissing),
+        None => Outcome::Err(LinkError::SymbolMissing),
     }
 }
 
-pub(crate) fn platform_close(handle: *mut c_void) -> Outcome<(), ExtensionError> {
+pub(crate) fn platform_close(handle: *mut c_void) -> Outcome<(), LinkError> {
     // SAFETY: handle came from LoadLibraryW.
     let rc = unsafe { FreeLibrary(handle as HMODULE) };
     if rc != 0 {
         Outcome::Ok(())
     } else {
-        Outcome::Err(ExtensionError::LoadFailed {
+        Outcome::Err(LinkError::LoadFailed {
             platform_code: read_last_error(),
         })
     }

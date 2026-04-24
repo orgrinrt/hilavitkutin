@@ -1,13 +1,13 @@
-//! Integration tests for hilavitkutin-extensions.
+//! Integration tests for hilavitkutin-linking.
 //!
 //! These tests load a well-known system library (`libc`) and exercise
 //! the public surface: function-pointer resolution via `Symbol`,
-//! static-data resolution via `StaticRef`, explicit `Extension::close`,
+//! static-data resolution via `StaticRef`, explicit `Library::close`,
 //! and compatibility_check.
 
 #![cfg_attr(not(any(unix, windows)), allow(unused))]
 
-use hilavitkutin_extensions::{Extension, ExtensionError, compatibility_check};
+use hilavitkutin_linking::{Library, LinkError, compatibility_check};
 use notko::Outcome;
 
 #[cfg(target_os = "macos")]
@@ -24,7 +24,7 @@ const LIBC_PATH: &[u8] = b"msvcrt.dll\0";
 
 // `optopt` is a standard libc global of type `int` on unix. It lives at
 // a known symbol and serves as a test fixture for StaticRef::get
-// (pointer-to-static-data resolution, the typical plugin descriptor
+// (pointer-to-static-data resolution, the typical extension descriptor
 // access pattern).
 #[cfg(target_os = "macos")]
 const STATIC_SYMBOL_NAME: &[u8] = b"optopt\0";
@@ -35,7 +35,7 @@ const STATIC_SYMBOL_NAME: &[u8] = b"optopt\0";
 #[cfg(any(target_os = "macos", target_os = "linux", windows))]
 #[test]
 fn load_system_libc() {
-    match Extension::load(LIBC_PATH) {
+    match Library::load(LIBC_PATH) {
         Outcome::Ok(_ext) => {}
         Outcome::Err(_) => panic!("system libc should load"),
     }
@@ -44,7 +44,7 @@ fn load_system_libc() {
 #[cfg(any(target_os = "macos", target_os = "linux"))]
 #[test]
 fn resolve_known_symbol() {
-    let ext = match Extension::load(LIBC_PATH) {
+    let ext = match Library::load(LIBC_PATH) {
         Outcome::Ok(ext) => ext,
         Outcome::Err(_) => panic!("system libc should load"),
     };
@@ -62,7 +62,7 @@ fn resolve_known_symbol() {
 #[cfg(any(target_os = "macos", target_os = "linux"))]
 #[test]
 fn resolve_static_known_symbol() {
-    let ext = match Extension::load(LIBC_PATH) {
+    let ext = match Library::load(LIBC_PATH) {
         Outcome::Ok(ext) => ext,
         Outcome::Err(_) => panic!("system libc should load"),
     };
@@ -84,7 +84,7 @@ fn resolve_static_known_symbol() {
 #[cfg(any(target_os = "macos", target_os = "linux"))]
 #[test]
 fn explicit_close_happy_path() {
-    let ext = match Extension::load(LIBC_PATH) {
+    let ext = match Library::load(LIBC_PATH) {
         Outcome::Ok(ext) => ext,
         Outcome::Err(_) => panic!("system libc should load"),
     };
@@ -96,11 +96,11 @@ fn explicit_close_happy_path() {
 
 // Compile-only test for higher-arity fn pointer resolution. The
 // symbol will not exist, so the test only verifies the type compiles
-// through the ExtensionSymbol sealed trait at arity 5.
+// through the LibrarySymbol sealed trait at arity 5.
 #[cfg(any(target_os = "macos", target_os = "linux"))]
 #[test]
 fn extended_arity_type_compiles() {
-    let ext = match Extension::load(LIBC_PATH) {
+    let ext = match Library::load(LIBC_PATH) {
         Outcome::Ok(ext) => ext,
         Outcome::Err(_) => panic!("system libc should load"),
     };
@@ -109,26 +109,26 @@ fn extended_arity_type_compiles() {
     // that the type-level plumbing through arity 5 works.
     match ext.resolve::<FiveArgFn>(b"this_symbol_does_not_exist_5args\0") {
         Outcome::Ok(_) => panic!("symbol should not exist"),
-        Outcome::Err(ExtensionError::SymbolMissing) => {}
+        Outcome::Err(LinkError::SymbolMissing) => {}
         Outcome::Err(_) => panic!("wrong error variant"),
     }
 }
 
 #[test]
 fn reject_missing_path() {
-    match Extension::load(b"/nonexistent/library/path.so\0") {
+    match Library::load(b"/nonexistent/library/path.so\0") {
         Outcome::Ok(_) => panic!("nonexistent path should not load"),
-        Outcome::Err(ExtensionError::LoadFailed { .. }) => {}
-        Outcome::Err(ExtensionError::PathNotFound) => {}
+        Outcome::Err(LinkError::LoadFailed { .. }) => {}
+        Outcome::Err(LinkError::PathNotFound) => {}
         Outcome::Err(_) => panic!("wrong error variant"),
     }
 }
 
 #[test]
 fn reject_path_without_null_terminator() {
-    match Extension::load(b"/some/path") {
+    match Library::load(b"/some/path") {
         Outcome::Ok(_) => panic!("un-terminated path should not load"),
-        Outcome::Err(ExtensionError::PathNotFound) => {}
+        Outcome::Err(LinkError::PathNotFound) => {}
         Outcome::Err(_) => panic!("wrong error variant"),
     }
 }
@@ -136,14 +136,14 @@ fn reject_path_without_null_terminator() {
 #[cfg(any(target_os = "macos", target_os = "linux"))]
 #[test]
 fn reject_missing_symbol() {
-    let ext = match Extension::load(LIBC_PATH) {
+    let ext = match Library::load(LIBC_PATH) {
         Outcome::Ok(ext) => ext,
         Outcome::Err(_) => panic!("system libc should load"),
     };
     type Nothing = extern "C" fn() -> i32;
     match ext.resolve::<Nothing>(b"absolutely_does_not_exist_xyz\0") {
         Outcome::Ok(_) => panic!("nonexistent symbol should not resolve"),
-        Outcome::Err(ExtensionError::SymbolMissing) => {}
+        Outcome::Err(LinkError::SymbolMissing) => {}
         Outcome::Err(_) => panic!("wrong error variant"),
     }
 }
