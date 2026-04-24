@@ -9,14 +9,16 @@ API — the crate returns typed symbol handles, not containers of them.
 
 ## Designed, deferred
 
-### Explicit unload
+### Hot-reload ref-counting unload
 
-v1 ships RAII unload only. When an Extension handle drops, the OS
-unloads the library. No explicit unload API is exposed. A follow-up
-may add explicit unload, but only after the symbol-handle lifetime
-story is hardened on all three platforms — on some systems an in-flight
-symbol call racing with library unload is undefined behaviour, and the
-RAII model provides the simplest sound story for v1.
+v1 ships RAII unload plus an explicit `Extension::close` that returns
+load-status. Both unload the library once. A future evolution may add
+ref-counted unload to support hot-reload scenarios where a consumer
+wants to reload the same library path while old handles may still
+exist. The current API rejects that use pattern by construction — the
+lifetime system prevents outstanding symbols from outliving their
+loader. Hot-reload needs a different contract (likely a versioned
+handle token) and that redesign is out of v1 scope.
 
 ### Async loading wrappers
 
