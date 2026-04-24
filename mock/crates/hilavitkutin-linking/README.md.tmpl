@@ -1,0 +1,12 @@
+# hilavitkutin-linking
+
+Cross-platform dynamic library loading primitive for the hilavitkutin
+extension stack. Pull-based explicit-symbol resolution over dlopen on
+Unix and LoadLibrary on Windows. `#![no_std]`, no allocator.
+
+Domain-agnostic: this crate knows how to open a shared library and
+resolve a named symbol. It does not know what an extension is. Higher-
+level descriptor and lifecycle orchestration lives in
+hilavitkutin-extensions.
+
+Renamed from `hilavitkutin-extensions` during design round 202604240615.

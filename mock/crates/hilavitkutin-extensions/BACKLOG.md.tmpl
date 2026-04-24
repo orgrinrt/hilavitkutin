@@ -1,56 +1,37 @@
 # hilavitkutin-extensions backlog
 
-Type-surface reminder: every pub signature in this crate uses notko's
-fallibility ladder (Just / Maybe / Outcome), arvo primitives for
-numeric and boolean values, and fixed-capacity structured errors with
-no heap payloads. Path and symbol-name inputs are raw null-terminated
-byte slices at the FFI boundary. Collections do not cross the public
-API — the crate returns typed symbol handles, not containers of them.
+Type-surface reminder: every pub signature in this crate uses notko's fallibility ladder (Just / Maybe / Outcome), arvo primitives for numeric and boolean values, and fixed-capacity structured errors with no heap payloads. Collections do not cross the public API. The crate returns single `Extension` handles and small static-reference accessors, not container types.
 
 ## Designed, deferred
 
-### Hot-reload ref-counting unload
+### Hot-reload orchestration with ref-counted unload
 
-v1 ships RAII unload plus an explicit `Extension::close` that returns
-load-status. Both unload the library once. A future evolution may add
-ref-counted unload to support hot-reload scenarios where a consumer
-wants to reload the same library path while old handles may still
-exist. The current API rejects that use pattern by construction — the
-lifetime system prevents outstanding symbols from outliving their
-loader. Hot-reload needs a different contract (likely a versioned
-handle token) and that redesign is out of v1 scope.
+V1 is load-once, drop-once. Some downstream consumers will want hot-reload: atomically replace an extension at a path while outstanding `Extension` handles are still live. That requires ref-counting at the host layer and a versioned handle-token contract with the linking layer. Out of v1 scope because it changes the `Extension`-to-`Library` lifetime story.
 
-### Async loading wrappers
+### Type-level capability identifiers
 
-v1 is synchronous. Loading a library blocks the calling thread for the
-duration of the OS dlopen call. A future evolution may layer async
-wrappers on top for hosts that want non-blocking load. The sync core
-stays — the async layer is purely additive.
+V1 uses `CapabilityId` (a plain u64 newtype) for lookups. A richer design would introduce a `Capability` marker trait with associated `ID: CapabilityId` and `Interface` type, letting the host return a typed `&Interface` directly from capability lookup. Ergonomic improvement for consumers; requires macro-side cooperation and affects the export macro shape. Deferred to a future round.
 
-### Wasm dlopen
+### Lifecycle observability hooks
 
-The wasm32 targets do not expose a dlopen equivalent at the ABI level;
-wasm-component-model is a different mechanism entirely. Extending this
-crate to wasm32 is out of scope. If hilavitkutin-plugins needs wasm
-plugin support, it lands via a separate transport.
+Hooks for load, init, capability invocation, and shutdown transitions. Today consumers instrument around `ExtensionHost::load` and each `Extension::capability` call in their own code. In-crate hooks would standardise this and enable out-of-band telemetry without consumer cooperation. Adds either `dyn` or an additional fn-pointer slot on `ExtensionHost`; deferred pending a concrete consumer pain-point.
+
+### Wasm-backend extensions
+
+A wasm transport (via wasmtime or a similar engine) alongside the cdylib transport, with a matching wasm descriptor convention. Out of v1 scope; the architectural question of whether to unify the two transports under one host or ship separate hosts is a whole design round.
 
 ### Capability-level compatibility negotiation
 
-v1 exposes a narrow compatibility_check helper with three fixed
-incompatibility categories. Full ABI-schema negotiation, capability
-introspection, or feature-flag matching belongs to hilavitkutin-plugins
-or consumer-owned contract crates — not the loader.
+V1 exposes `required_host_caps` as presence-or-absence. Richer negotiation (minimum capability versions, feature-flag matching, optional sub-capabilities) would require extending `CapabilityEntry` with more fields and defining a negotiation protocol between host and extension at load time.
 
-### Signing and signature verification
+### Stateful consumer-supplied policy functions
 
-The loader trusts whatever the OS loader trusts. Signed-library
-enforcement, hash verification, or provenance policy is not handled
-here. Consumer-side policy layers that need these checks apply them
-before or after calling into this crate.
+`FailurePolicyFn` is a plain fn pointer in v1 to avoid `dyn` and heap. Consumers wanting stateful policies (for example "abort after the third optional extension fails") today pack state into the extension's own instance and expose a plain fn reading from a static. A more ergonomic pattern would be a policy trait with associated state that mockspace can monomorphise through; deferred pending concrete need.
 
-### Loader telemetry hooks
+### Extension telemetry surfaces
 
-Counters for load count, load-time distribution, and failure rates
-are not exposed in v1. A future addition under a feature flag may add
-them if downstream consumers need loader visibility without having to
-wrap every call site.
+Per-load timing, per-invocation timing, capability-lookup counters. Part of the lifecycle hooks story above but decoupled: telemetry could ship first as a separate crate-level feature even before general hooks land.
+
+### Probe without init
+
+`ExtensionHost::probe(path)` that reads and validates the descriptor without calling `init_fn` or returning an `Extension`. Useful for consumers that want a "list extensions in this directory" UX before committing to load. Two-line addition; intentionally held back from v1 pending confirmation it fits the host flow elsewhere.
