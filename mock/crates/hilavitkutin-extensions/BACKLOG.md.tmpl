@@ -2,6 +2,8 @@
 
 Type-surface reminder: every pub signature in this crate uses notko's fallibility ladder (Just / Maybe / Outcome), arvo primitives for numeric and boolean values, and fixed-capacity structured errors with no heap payloads. Collections do not cross the public API. The crate returns single `Extension` handles and small static-reference accessors, not container types.
 
+Host-layer source was brought into conformance with this DESIGN in round 202604241201 (post-landing conformance sweep). Prior source drift on `ExtensionError`, `ExtensionAbiStatus`, `ExtensionVersion`, `CapabilityId`, `CapabilityExport`, `ExtensionMeta::NAME`, `InitHandler::init`, `ExtensionHost::new`, `ExtensionHost::load`, and `Extension::capability` is now resolved.
+
 ## Designed, deferred
 
 ### Hot-reload orchestration with ref-counted unload
