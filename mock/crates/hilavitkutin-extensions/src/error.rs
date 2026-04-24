@@ -8,7 +8,7 @@
 
 use hilavitkutin_linking::LinkError;
 
-use crate::descriptor::{CapabilityId, ExtensionAbiStatus};
+use crate::descriptor::{AbiVersion, CapabilityId, ExtensionAbiStatus};
 
 /// Host-side extension error.
 #[non_exhaustive]
@@ -21,7 +21,7 @@ pub enum ExtensionError {
     /// The descriptor symbol resolved but pointed to invalid payload.
     DescriptorInvalid,
     /// Descriptor `abi_version` does not match host.
-    AbiVersionMismatch { expected: u32, got: u32 },
+    AbiVersionMismatch { expected: AbiVersion, got: AbiVersion },
     /// Host declines to accept the extension's semantic version (reserved
     /// for consumer-layer policies; the base host does not apply any).
     ExtensionVersionUnsupported,
