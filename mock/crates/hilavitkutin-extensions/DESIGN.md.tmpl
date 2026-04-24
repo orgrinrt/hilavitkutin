@@ -60,11 +60,11 @@ No linker sections are scanned, no constructor-registration tricks are used, and
 
 ## Lifecycle contract
 
-Init: the host calls `init_fn(host_ctx)` exactly once, immediately after descriptor validation and capability verification, and before any capability is invoked. If `init_fn` is `None`, init is a no-op. If it returns anything other than `ExtensionAbiStatus::Ok`, the load aborts with `ExtensionError::InitFailed` and the library is dropped.
+Init: the host calls `init_fn(host_ctx)` exactly once, immediately after descriptor validation and capability verification, and before any capability is invoked. If `init_fn` is absent (`MaybeNull::isnt()`), init is a no-op. If it returns anything other than `ExtensionAbiStatus::Ok`, the load aborts with `ExtensionError::InitFailed` and the library is dropped.
 
 Invoke: the host does not invoke capabilities directly. The consumer looks up a `*const c_void` vtable pointer via `Extension::capability(id)`, then dispatches through a consumer-generated trampoline. This is where macro-driven monomorphisation reconstructs the typed Rust interface at the consumer side of the cdylib boundary.
 
-Shutdown: either drop runs `shutdown_fn(host_ctx)` and swallows errors, or `Extension::close(self)` runs it and returns the error. In both cases `shutdown_fn` is called at most once. If `None`, shutdown is a no-op.
+Shutdown: either drop runs `shutdown_fn(host_ctx)` and swallows errors, or `Extension::close(self)` runs it and returns the error. In both cases `shutdown_fn` is called at most once. If absent (`MaybeNull::isnt()`), shutdown is a no-op.
 
 The host-opaque pointer (`*mut c_void`) is per-extension. The host allocates it (or passes null) at load time and threads the same pointer through init and shutdown. Two simultaneously-loaded extensions never see each other's `host_ctx` through this channel. This is one of the API-level enforcements of the arbitrary-time linking invariant.
 
