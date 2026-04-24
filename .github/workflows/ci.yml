@@ -1,0 +1,57 @@
+name: CI
+
+# Security note: this workflow does not consume any untrusted GitHub
+# event inputs (issue bodies, PR titles, commit messages, etc.) in its
+# run: steps. The only ${{ }} interpolation is matrix.os, which comes
+# from the workflow itself, not from user-supplied event data. Add
+# env: blocks if future steps need to consume event payloads.
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-D warnings"
+
+jobs:
+  check-test:
+    name: check + test
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install nightly toolchain
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: cargo check
+        working-directory: mock
+        run: cargo check -p hilavitkutin-extensions
+
+      - name: cargo test
+        working-directory: mock
+        run: cargo test -p hilavitkutin-extensions
+
+  windows-cross-check:
+    name: cross-compile check (windows-gnu)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install nightly toolchain with windows-gnu target
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          targets: x86_64-pc-windows-gnu
+
+      - name: Install mingw cross-compiler
+        run: sudo apt-get update && sudo apt-get install -y gcc-mingw-w64-x86-64
+
+      - name: cargo check (windows cross)
+        working-directory: mock
+        run: cargo check --target x86_64-pc-windows-gnu -p hilavitkutin-extensions
