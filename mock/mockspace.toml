@@ -2,7 +2,7 @@ project_name = "hilavitkutin"
 crate_prefix = "hilavitkutin"
 abi_version = 1
 
-proc_macro_crates = []
+proc_macro_crates = ["hilavitkutin-extensions-macros"]
 module_crates = []
 
 # Which macro to track per-crate in domain items

@@ -180,6 +180,26 @@ name = "hilavitkutin-extensions"
 version = "0.1.0"
 dependencies = [
  "arvo",
+ "hilavitkutin-linking",
+ "mockspace",
+ "notko",
+]
+
+[[package]]
+name = "hilavitkutin-extensions-macros"
+version = "0.1.0"
+dependencies = [
+ "mockspace",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "hilavitkutin-linking"
+version = "0.1.0"
+dependencies = [
+ "arvo",
  "arvo-bits",
  "libc",
  "mockspace",

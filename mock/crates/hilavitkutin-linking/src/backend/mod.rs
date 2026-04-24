@@ -5,9 +5,9 @@
 //! Backend contract (both platforms implement the same shape):
 //!
 //! ```ignore
-//! fn platform_load(path: &[u8]) -> Outcome<PlatformHandle, ExtensionError>;
-//! fn platform_resolve(handle: PlatformHandle, name: &[u8]) -> Outcome<*const c_void, ExtensionError>;
-//! fn platform_close(handle: PlatformHandle) -> Outcome<(), ExtensionError>;
+//! fn platform_load(path: &[u8]) -> Outcome<PlatformHandle, LinkError>;
+//! fn platform_resolve(handle: PlatformHandle, name: &[u8]) -> Outcome<*const c_void, LinkError>;
+//! fn platform_close(handle: PlatformHandle) -> Outcome<(), LinkError>;
 //! ```
 //!
 //! Both functions enforce null-termination expectations by rejecting
