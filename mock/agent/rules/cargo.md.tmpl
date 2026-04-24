@@ -14,8 +14,8 @@ apply_to: ["**/Cargo.toml"]
 
 ### Crate structure
 
-Six crates, flat — no proc-macro crates, no cdylib, no plugin-dlopen
-targets:
+Seven crates today, flat — all plain `rlib`, no proc-macro crates.
+(Eighth crate `hilavitkutin-plugins` lands in a follow-up round.)
 
 - `hilavitkutin-api` — consumer-facing contracts. Traits and data
   shapes only; no concrete engine logic.
@@ -27,6 +27,32 @@ targets:
 - `hilavitkutin-ctx`, `hilavitkutin-persistence`, `hilavitkutin-str`
   — standalone extensions. Each is independently usable. They do
   not depend on the engine, on `hilavitkutin-api`, or on each other.
+- `hilavitkutin-extensions` — plugin-host layer: cross-platform
+  dynamic library loader primitive. `no_std`, no allocator.
+  Provides abstractions that downstream consumer hosts (viola,
+  loimu, etc.) use to load their own cdylib plugins. Depends
+  only on notko / arvo / arvo-bits substrate and on libc /
+  windows-sys for raw FFI. Must never depend on
+  `hilavitkutin-api` or `hilavitkutin`.
+
+### Plugin host crates (layer, not loophole)
+
+`hilavitkutin-extensions` is itself a plain `rlib`. It provides
+abstractions for loading cdylib plugins; it is not a cdylib target
+itself. No hilavitkutin crate is a cdylib target — the dynamic
+`cdylib` ecosystems exist only downstream of this layer, in the
+consumer hosts that use it.
+
+The upcoming `hilavitkutin-plugins` crate (separate design round)
+will sit above `hilavitkutin-extensions` and provide plugin
+descriptor registration, lifecycle orchestration, and role/capability
+dispatch — still domain-agnostic, still a plain `rlib`. Domain-
+specific contract crates (viola-plugin-abi, etc.) layer further on
+top in consumer repos.
+
+This layering is deliberate. The engine stays at strict static
+composition; downstream consumers get a reusable plugin-host
+foundation without every consumer rewriting raw dlopen.
 
 ### Dependency direction
 
@@ -39,6 +65,10 @@ targets:
 - `hilavitkutin-ctx`, `-persistence`, `-str`: independent. Each
   may depend on arvo substrate; none depend on the engine or on
   each other.
+- `hilavitkutin-extensions`: depends only on notko / arvo / arvo-bits
+  substrate and on libc (unix) / windows-sys (windows) for raw FFI.
+  Must never depend on `hilavitkutin-api`, `hilavitkutin`, or any
+  other hilavitkutin crate.
 
 ### `no_std` + `no_alloc` enforcement
 
@@ -84,7 +114,17 @@ pushing.
 
 ### Forbidden crate types
 
-- No `[lib] proc-macro = true` in any crate.
-- No `crate-type = ["cdylib"]` — there are no dynamic plugins;
-  composition is static.
-- No runtime plugin crates of any shape.
+- No `[lib] proc-macro = true` in any hilavitkutin crate.
+- No `crate-type = ["cdylib"]` on any hilavitkutin crate. The engine
+  composes statically; the plugin-host layer
+  (`hilavitkutin-extensions`, and later `hilavitkutin-plugins`)
+  LOADS cdylibs but is not itself a cdylib target.
+- No linker-magic discovery in any hilavitkutin crate. `inventory`,
+  `ctor`, `#[distributed_slice]`, `.init_array`-based registration
+  are banned on both the producer and consumer sides of the loader
+  boundary. `hilavitkutin-extensions` enforces pull-based explicit-
+  symbol resolution only.
+- No runtime WU discovery in the engine. The engine's WorkUnit
+  composition is strictly static. This constraint does not extend
+  to consumer hosts' plugin ecosystems, which route through the
+  plugin-host layer.

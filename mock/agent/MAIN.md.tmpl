@@ -15,7 +15,7 @@ The canonical spec is
 
 ## Identity
 
-{{crate_count}} crates, flat structure, four logical groupings:
+{{crate_count}} crates, flat structure, five logical groupings:
 
 **API (consumer-facing contracts).** `hilavitkutin-api` ships `WorkUnit`, `AccessSet`, `Column<T>`, `Resource<T>`, `Virtual<T>`, `Context`, `Contains`, and the platform contracts (`Clock`, `MemoryProvider`, `ThreadPool`).
 
@@ -24,6 +24,8 @@ The canonical spec is
 **Build-time (build-dep only, no runtime linkage).** `hilavitkutin-build` holds LLVM passes, MIR manipulation, cfg emission, PGO / BOLT workflows, and ExpandedLto pragma support. Consumer's `build.rs` uses this; the runtime crate never links to it.
 
 **Extensions (standalone opt-in sub-libraries).** `hilavitkutin-ctx` is the provider-gated context framework, `hilavitkutin-persistence` is the generic hot/cold storage bridge, and `hilavitkutin-str` is the interned string system.
+
+**Plugin host infrastructure (reusable downstream loader layer).** `hilavitkutin-extensions` is the cross-platform dynamic library loader primitive: pull-based explicit-symbol resolution over dlopen / LoadLibrary, `no_std`, no allocator. A follow-up round introduces `hilavitkutin-plugins` as the host orchestration layer (descriptor registration, lifecycle, role/capability dispatch). Both remain domain-agnostic; downstream consumers (viola, etc.) layer their own contract crates on top.
 
 ## Crate table
 
@@ -36,10 +38,19 @@ The canonical spec is
 - Monomorphisation is the dispatch. No `dyn`, no `TypeId`, no
   `std::any`. WorkUnits are generic over their `AccessSet`; the
   monomorphised function IS the type identity.
-- Static composition only. All WUs are registered at compile time
-  via the scheduler builder. No `inventory::`, no `#[ctor]`, no
-  `#[distributed_slice]`, no runtime plugin discovery. Plan
-  parameters adapt; composition does not.
+- Static composition only inside the engine. All hilavitkutin
+  WorkUnits are registered at compile time via the scheduler
+  builder. Plan parameters adapt; engine composition does not.
+  Linker-magic registration (`inventory::`, `#[ctor]`,
+  `#[distributed_slice]`, `.init_array`) is banned on every
+  hilavitkutin crate, both inside the engine and inside the
+  plugin-host layer.
+- The plugin-host layer (`hilavitkutin-extensions`, and later
+  `hilavitkutin-plugins`) provides pull-based explicit-symbol
+  dynamic loading for downstream consumer hosts. This is distinct
+  from runtime WU discovery — the engine never loads WUs at
+  runtime, and the plugin-host crates use pull-based discovery
+  only, never linker-magic.
 - Pre-allocated thread pool. No `thread::spawn`, `tokio::spawn`,
   `async_std::spawn` at runtime. Threads are spawned once at
   pipeline construction; they park between frames.
@@ -110,8 +121,15 @@ commit time.
   `TypeId` to any `hilavitkutin*` crate.
 - Do not introduce runtime spawn (`thread::spawn`, `tokio::spawn`,
   `async_std::spawn`). The pool is pre-allocated at plan time.
-- Do not introduce runtime registration (`inventory::submit!`,
-  `#[ctor]`, `#[distributed_slice]`). All WU composition is static.
+- Do not introduce linker-magic registration (`inventory::submit!`,
+  `#[ctor]`, `#[distributed_slice]`, `.init_array`-based registries)
+  in any hilavitkutin crate. Engine WU composition is static.
+  Plugin-host discovery is pull-based explicit symbols only.
+- Do not confuse engine-scope rules with plugin-host-scope rules.
+  Runtime dlopen of downstream consumer plugins routed through
+  `hilavitkutin-extensions` / `hilavitkutin-plugins` is the
+  permitted mechanism and is not the same as the banned
+  linker-magic registration pattern.
 - Do not use the dead vocabulary terms (`chain`, `chain_group`,
   `partition`, `archetype`, `entity`, `row`, `order`) for any
   engine-domain concept.
