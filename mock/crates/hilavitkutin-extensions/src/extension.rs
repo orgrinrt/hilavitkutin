@@ -33,7 +33,7 @@ impl Extension {
         if self.descriptor.capabilities_ptr.is_null() {
             return Maybe::Isnt;
         }
-        let len = self.descriptor.capabilities_len;
+        let len = self.descriptor.capabilities_len.0;
         let mut i = 0;
         while i < len {
             // SAFETY: capabilities_ptr + capabilities_len form a valid
@@ -51,7 +51,7 @@ impl Extension {
     /// Slice view of the extension's full capability table.
     pub fn capabilities(&self) -> &[CapabilityEntry] {
         if self.descriptor.capabilities_ptr.is_null()
-            || self.descriptor.capabilities_len == 0
+            || self.descriptor.capabilities_len.0 == 0
         {
             return &[];
         }
@@ -60,21 +60,21 @@ impl Extension {
         unsafe {
             core::slice::from_raw_parts(
                 self.descriptor.capabilities_ptr,
-                self.descriptor.capabilities_len,
+                self.descriptor.capabilities_len.0,
             )
         }
     }
 
     /// Name slice as declared by the extension.
     pub fn name(&self) -> &[u8] {
-        if self.descriptor.name_ptr.is_null() || self.descriptor.name_len == 0 {
+        if self.descriptor.name_ptr.is_null() || self.descriptor.name_len.0 == 0 {
             return &[];
         }
         // SAFETY: name_ptr + name_len form a valid static byte slice.
         unsafe {
             core::slice::from_raw_parts(
                 self.descriptor.name_ptr,
-                self.descriptor.name_len,
+                self.descriptor.name_len.0,
             )
         }
     }
