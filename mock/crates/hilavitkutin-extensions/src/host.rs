@@ -142,7 +142,7 @@ impl ExtensionHost {
         }
 
         // Verify every required-host-cap is in our advertised set.
-        let req_len = descriptor.required_host_caps_len;
+        let req_len = descriptor.required_host_caps_len.0;
         if !descriptor.required_host_caps_ptr.is_null() && req_len > 0 {
             let mut i = 0;
             while i < req_len {
