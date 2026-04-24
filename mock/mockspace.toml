@@ -42,23 +42,23 @@ hilavitkutin-str = "#E6F2E6 | #2D6A2D"
 # --- Built-in quality lints ------------------------------------------------
 
 [lints.no-empty-crate]
-commit = "off"
+commit = "warn"
 build = "warn"
 push = "warn"
 
 [lints.no-todo]
-commit = "off"
+commit = "warn"
 build = "warn"
 push = "error"
 
 [lints.no-fixme]
-commit = "off"
+commit = "warn"
 build = "warn"
 push = "error"
 
 [lints.file-size]
-commit = "warn"
-build = "warn"
+commit = "error"
+build = "error"
 push = "error"
 max_lines = "500"
 
@@ -102,7 +102,7 @@ push = "warn"
 # Enforces module-path boundaries the token-level lints cannot express.
 
 [lints.forbidden-imports]
-commit = "warn"
+commit = "error"
 build = "error"
 push = "error"
 rules = [
@@ -164,9 +164,9 @@ push = "off"
 # across the engine.
 
 [lints.no-bare-result]
-commit = "off"
-build = "warn"
-push = "warn"
+commit = "error"
+build = "error"
+push = "error"
 
 [lints.no-bare-string]
 commit = "off"
@@ -202,28 +202,28 @@ build = "warn"
 push = "warn"
 
 [lints.no-bare-vec]
-commit = "off"
-build = "warn"
-push = "warn"
+commit = "error"
+build = "error"
+push = "error"
 
 # Pre-hilavitkutin-str crates must gate any `const NAME: &str` / `static
 # NAME: &str` behind `#[cfg(debug_assertions)]`; hilavitkutin-str itself
 # declares the `static-string` category in [primitive-introductions]
 # below and is exempt (task #125).
 [lints.no-bare-static-str]
-commit = "off"
-build = "warn"
-push = "warn"
+commit = "error"
+build = "error"
+push = "error"
 
 [lints.no-box]
-commit = "off"
-build = "warn"
-push = "warn"
+commit = "error"
+build = "error"
+push = "error"
 
 [lints.no-float]
-commit = "off"
-build = "warn"
-push = "warn"
+commit = "error"
+build = "error"
+push = "error"
 
 [lints.no-manual-id]
 commit = "off"
