@@ -1,0 +1,5 @@
+error: version must be MAJOR.MINOR.PATCH (three dot-separated integers)
+ --> tests/fixtures/fail/malformed_version.rs:5:30
+  |
+5 | #[export_extension(version = "not-a-semver")]
+  |                              ^^^^^^^^^^^^^^
