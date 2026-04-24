@@ -6,6 +6,10 @@ Host-layer source was brought into conformance with this DESIGN in round 2026042
 
 ## Designed, deferred
 
+### Flip bare-primitive FFI-wire sites to UWire<N> once arvo ships it
+
+Round 202604510000 (#206) decided the FFI-wire primitive policy: arvo transparent newtypes (USize / Bool) at wire-identical sites, bare primitives at sites where no wire-stable arvo newtype exists yet. The bare sites today are `ExtensionDescriptor.abi_version: u32`, the four `u16` fields inside `ExtensionVersion`, and the inner `u64` of `CapabilityId`. All are marked with trailing `lint:allow(...) tracked: #206` annotations. When arvo ships a `UWire<N>` primitive (fixed backing per N wire bits, no Strategy axis), flip those sites to `UWire<32>` / `UWire<16>` / `UWire<64>` and drop the lint:allow annotations. Cross-referenced to the counterpart arvo BACKLOG entry.
+
 ### Hot-reload orchestration with ref-counted unload
 
 V1 is load-once, drop-once. Some downstream consumers will want hot-reload: atomically replace an extension at a path while outstanding `Extension` handles are still live. That requires ref-counting at the host layer and a versioned handle-token contract with the linking layer. Out of v1 scope because it changes the `Extension`-to-`Library` lifetime story.
