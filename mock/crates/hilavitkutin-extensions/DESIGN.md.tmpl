@@ -19,30 +19,22 @@ separately) or in consumer-specific contract crates such as
 viola-plugin-abi. This crate is deliberately kept narrow so those higher
 layers can be written or rewritten without churning the loader.
 
+## Public items
+
+Six items make up the public surface:
+
+- `Extension` — opaque loader handle. RAII closes the library on drop. Every `Symbol` resolved from an `Extension` borrows it via a lifetime parameter.
+- `Symbol` — typed handle to a resolved symbol. The lifetime parameter ties the handle to its source `Extension`. `T` is restricted by the sealed `ExtensionSymbol` marker.
+- `ExtensionSymbol` — sealed marker trait. v1 admits `extern "C"` function pointer shapes at arities zero through four. Downstream crates cannot add new impls.
+- `ExtensionError` — load / resolve error enum. Fixed-shape variants; no heap payloads. Carries `arvo::USize` platform codes where relevant.
+- `IncompatibilityError` — narrow compatibility-check error enum. Three variants: version skew, arch mismatch, ABI mismatch.
+- `compatibility_check` — free function exposing the narrow compatibility hook colocated with `IncompatibilityError`. v1 policy is placeholder; consumers layer richer policy on top.
+
 ## Shape
 
-The public surface is small. It names five types (opaque loader handle,
-lifetime-tied symbol handle, sealed marker trait for resolvable shapes,
-helper for static-descriptor patterns) plus two error enums and one
-free helper function for narrow compatibility checks. Exact type names,
-method signatures, and trait bounds are locked in the src CL of the
-design round introducing this crate; they are named there once the
-implementation exists and can be verified by the design-doc-source
-lint. During the DOC phase of that round the surface is described in
-prose only, because the lint enforces matched existence of backticked
-names and source declarations.
+The public surface is small. `Extension` opens a library given a null-terminated byte-slice path interpreted per the host platform. `Extension::resolve<T>` takes a null-terminated byte-slice symbol name and a type parameter naming an FFI-safe function pointer shape; it returns a `Symbol<'ext, T>`. `Symbol::get` returns the function pointer by value via the `transmute_copy`-from-raw-pointer pattern that matches the platform loader's contract for function symbols. `Symbol::as_raw` exposes the raw pointer as an escape hatch.
 
-The loader opens a library given a byte-slice path interpreted per the
-host platform. Resolution takes a null-terminated byte-slice symbol
-name and a type parameter naming an FFI-safe shape. The handle holds a
-reference to the loader via a lifetime parameter, so the borrow checker
-prevents use-after-close at compile time. Dropping the loader unloads
-the library.
-
-Error shapes are fixed enum variants with no heap payloads. On Unix,
-OS error codes are carried by platform integer values the consumer
-can format if it has allocator access; this crate never owns a
-formatted string.
+The handle holds a reference to the loader via a lifetime parameter, so the borrow checker prevents use-after-close at compile time. Dropping the loader unloads the library. Error shapes are fixed enum variants with no heap payloads. OS error codes are carried as `arvo::USize` values (non-negative on both unix errno and Windows GetLastError ranges).
 
 ## Architectural position
 
