@@ -1,0 +1,21 @@
+[package]
+name = "hilavitkutin-extensions-macros"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Proc-macro companion to hilavitkutin-extensions (#[export_extension])"
+repository.workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1"
+quote = "1"
+syn = { version = "2", features = ["full"] }
+
+[build-dependencies]
+mockspace.workspace = true
+
+[features]
+default = []

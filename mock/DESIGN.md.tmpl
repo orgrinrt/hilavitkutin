@@ -14,10 +14,12 @@ The authoritative source is `design_rounds/202603181200_topic.hilavitkutin-desig
 | `hilavitkutin-api` | Consumer-facing types + traits + platform contracts. WorkUnit, AccessSet, Column/Resource/Virtual, Context, Contains, Clock/MemoryProvider/ThreadPool. Consumer contract surface (capability / sink / codec) for API positions that receive or emit items outside WU execution. |
 | `hilavitkutin` | Engine: plan, dispatch, resource, thread, strategy, adapt, scheduler. |
 | `hilavitkutin-build` | Build-time optimisations (LLVM passes, MIR, cfg emission, PGO/BOLT workflows). Standalone build-dep — no runtime deps. |
-| `hilavitkutin-ctx` | Provider-gated context framework (ecosystem extension, standalone). |
-| `hilavitkutin-extensions` | Cross-platform dynamic library loading primitive (plugin-host layer, standalone). Pull-based explicit-symbol resolution over dlopen / LoadLibrary. `no_std`, no allocator. |
-| `hilavitkutin-persistence` | Generic hot-cold storage bridge (ecosystem extension). |
-| `hilavitkutin-str` | Interned string system (ecosystem extension). |
+| `hilavitkutin-ctx` | Provider-gated context framework (ecosystem, standalone). |
+| `hilavitkutin-extensions` | Contract-bound extension host orchestration (descriptor, lifecycle, capability dispatch, failure policy) layered over `hilavitkutin-linking`. Domain-agnostic. `no_std`, no allocator, no dyn. |
+| `hilavitkutin-extensions-macros` | Proc-macro companion to `hilavitkutin-extensions`. Emits `#[repr(C)]` descriptor + exported-symbol fn + capability trampolines via `#[export_extension]`. Only proc-macro crate in the stack. |
+| `hilavitkutin-linking` | Cross-platform dynamic library loading primitive (dlopen / LoadLibrary + typed Symbol / StaticRef). Pull-based explicit-symbol resolution. `no_std`, no allocator. Renamed from prior `hilavitkutin-extensions` in round 202604240615. |
+| `hilavitkutin-persistence` | Generic hot-cold storage bridge (ecosystem, standalone). |
+| `hilavitkutin-str` | Interned string system (ecosystem, standalone). |
 
 ## Dependency graph
 
@@ -33,8 +35,9 @@ consumer build.rs
   └─ hilavitkutin-build  (no runtime deps)
 ```
 
-hilavitkutin-ctx, -persistence, -str are standalone extensions that
-consumers opt into — not part of the engine core.
+hilavitkutin-ctx, -persistence, -str are standalone ecosystem crates that consumers opt into; not part of the engine core.
+
+hilavitkutin-linking, hilavitkutin-extensions, hilavitkutin-extensions-macros make up the plugin-host layer. Downstream consumers (viola, future loimu, future clause extension surfaces) build domain-specific contract crates on top.
 
 ## Vocabulary
 

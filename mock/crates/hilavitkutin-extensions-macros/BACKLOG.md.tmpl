@@ -1,0 +1,29 @@
+# hilavitkutin-extensions-macros backlog
+
+Type-surface reminder: macro output uses types from `hilavitkutin-extensions` exclusively. Emitted code must compile under `#![no_std]`, no `alloc`, no `dyn`, no runtime hashing. All capability ids are const-evaluated; all descriptor pointers reference static const data.
+
+## Designed, deferred
+
+### Compile-time check of capability completeness
+
+Verify at macro expansion time that the target struct implements every `CapabilityExport` listed in the descriptor's `capabilities_ptr` table, and vice versa. A missing impl today produces a downstream trait-resolution error with poor span fidelity; an in-macro check produces a precise error pointing at the user's attribute invocation.
+
+### Enhanced error messages
+
+Rich diagnostics for malformed attribute parameters (unrecognised keys, wrong types, missing required values). Today the parser returns generic `syn::Error`s; a pass over the parse result would upgrade them to user-facing guidance with fix hints.
+
+### Shared capability-id interning across multiple consumer contract crates
+
+When two consumer crates (e.g. `viola-plugin-abi` and `clause-plugin-abi`) share a capability concept, they today redeclare the same `CapabilityId::from_name(...)` independently. A helper macro that exposes a shared capability via a cross-crate const re-export would deduplicate the declaration.
+
+### Host-ABI-version build-time check
+
+Detect ABI skew between the macro's output (derived from the version of `hilavitkutin-extensions` the macro was compiled against) and the version of `hilavitkutin-extensions` the consumer links against. A build-time assertion would catch the mismatch at compile time rather than at runtime via `AbiVersionMismatch`.
+
+### `impl`-block mode
+
+V1 placement is on the struct. An alternative placement on an `impl` block (e.g. `#[export_extension] impl Linter for MyLinter { ... }`) would let the macro pick up trait impls the user has already written without requiring them to be declared via the trait-method-parse path. Deferred pending ergonomic evaluation once consumers have written a few extensions.
+
+### Darling / procmacro-builder integration
+
+The attribute parser currently uses hand-written `syn` parsing. Swapping to `darling` for attribute parameter parsing would reduce hand-written code and standardise error reporting. Deferred pending a third or fourth attribute parameter that pushes hand-written parsing past its convenience window.

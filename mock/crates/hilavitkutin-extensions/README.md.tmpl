@@ -1,9 +1,12 @@
 # hilavitkutin-extensions
 
-Cross-platform dynamic library loading primitive for the hilavitkutin
-plugin stack. Pull-based explicit-symbol resolution over dlopen on Unix
-and LoadLibrary on Windows. `#![no_std]`, no allocator.
+Contract-bound extension host layer over `hilavitkutin-linking`. Owns
+descriptor shape, pull-based discovery, lifecycle orchestration, and
+capability dispatch. Domain-agnostic: knows about descriptors and
+capabilities, not about any specific domain like NAM or diagnostics.
 
-Domain-agnostic: this crate knows how to open a shared library and
-resolve a named symbol. It does not know what a plugin is. Higher-level
-descriptor and lifecycle orchestration lives in hilavitkutin-plugins.
+`#![no_std]`, no allocator, no dyn. Downstream consumer contract crates
+(viola-plugin-abi, clause-plugin-abi, loimu-plugin-abi) layer their
+domain-specific types on top. The sibling proc-macro crate
+`hilavitkutin-extensions-macros` emits the repr-C descriptor and
+trampolines on the extension author's behalf.
