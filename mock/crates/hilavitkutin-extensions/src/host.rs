@@ -5,8 +5,8 @@ use hilavitkutin_linking::Library;
 use notko::{Maybe, Outcome};
 
 use crate::descriptor::{
-    CapabilityId, DESCRIPTOR_SYMBOL, ExtensionAbiStatus, ExtensionDescriptor,
-    HOST_ABI_VERSION,
+    AbiVersion, CapabilityId, DESCRIPTOR_SYMBOL, ExtensionAbiStatus,
+    ExtensionDescriptor, HOST_ABI_VERSION,
 };
 use crate::error::ExtensionError;
 use crate::extension::Extension;
@@ -103,7 +103,7 @@ impl ExtensionHost {
         };
 
         type DescriptorFn = extern "C" fn() -> *const ExtensionDescriptor;
-        let sym = match library.resolve::<DescriptorFn>(DESCRIPTOR_SYMBOL) {
+        let sym = match library.resolve::<DescriptorFn>(DESCRIPTOR_SYMBOL.to_bytes_with_nul()) {
             Outcome::Ok(sym) => sym,
             Outcome::Err(_) => {
                 return policy_translate(
@@ -129,13 +129,14 @@ impl ExtensionHost {
         let descriptor: &'static ExtensionDescriptor =
             unsafe { &*descriptor_ptr };
 
-        if descriptor.abi_version != HOST_ABI_VERSION {
+        let extension_abi = AbiVersion(descriptor.abi_version);
+        if extension_abi != HOST_ABI_VERSION {
             return policy_translate(
                 self.policy,
                 requirement,
                 ExtensionError::AbiVersionMismatch {
                     expected: HOST_ABI_VERSION,
-                    got: descriptor.abi_version,
+                    got: extension_abi,
                 },
             );
         }
