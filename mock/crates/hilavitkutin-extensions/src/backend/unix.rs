@@ -65,7 +65,7 @@ fn is_null_terminated(bytes: &[u8]) -> bool {
 fn read_errno() -> USize {
     // libc exposes errno via thread-local; extracting it portably
     // without std means calling through __errno_location / __error
-    // per-platform. For v1 we return a sentinel 0 — the variant
+    // per-platform. For v1 we return a sentinel 0. The variant
     // conveys the error category even when the numeric code is not
     // captured. Follow-up round refines this if callers need the
     // exact errno value.

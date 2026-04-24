@@ -21,16 +21,22 @@ mod error;
 mod symbol;
 
 pub use error::{ExtensionError, IncompatibilityError};
-pub use symbol::{ExtensionSymbol, Symbol};
+pub use symbol::{ExtensionSymbol, StaticRef, Symbol};
 
+use core::mem::ManuallyDrop;
 use notko::Outcome;
 
 /// Opaque handle to a loaded dynamic library.
 ///
 /// RAII: dropping the `Extension` closes the library on the OS side.
-/// Every `Symbol<'_, T>` resolved from an `Extension` borrows it, so
-/// the library remains loaded for the lifetime of any outstanding
-/// symbol handles — enforced by the borrow checker.
+/// `Extension::close` is the explicit form that returns the OS close
+/// result, for consumers that want to surface unload errors instead
+/// of dropping them silently.
+///
+/// Every `Symbol<'_, T>` or `StaticRef<'_, T>` resolved from an
+/// `Extension` borrows it, so the library remains loaded for the
+/// lifetime of any outstanding symbol handles. Enforced by the
+/// borrow checker.
 pub struct Extension {
     handle: backend::PlatformHandle,
 }
@@ -48,10 +54,11 @@ impl Extension {
         }
     }
 
-    /// Resolve a named symbol from this library into a typed handle.
+    /// Resolve a named *function-pointer* symbol from this library.
     ///
-    /// `name` is a null-terminated byte sequence naming the exported
-    /// symbol. `T` must satisfy the sealed `ExtensionSymbol` marker.
+    /// `T` must satisfy the sealed `ExtensionSymbol` marker, namely
+    /// an `extern "C"` function pointer of arity 0-8. For static-data
+    /// symbols use `resolve_static` instead.
     pub fn resolve<T: ExtensionSymbol>(
         &self,
         name: &[u8],
@@ -61,13 +68,46 @@ impl Extension {
             Outcome::Err(e) => Outcome::Err(e),
         }
     }
+
+    /// Resolve a named *static-data* symbol from this library.
+    ///
+    /// Returns a `StaticRef<'_, T>` whose `get()` dereferences to
+    /// `&T`. Use for the typical pattern where a plugin exports a
+    /// `#[no_mangle] pub static PLUGIN_DESCRIPTOR: PluginDescriptor
+    /// = ...;`. The resolved symbol is the address of the static,
+    /// not a function pointer to it.
+    pub fn resolve_static<T: 'static>(
+        &self,
+        name: &[u8],
+    ) -> Outcome<StaticRef<'_, T>, ExtensionError> {
+        match backend::platform_resolve(self.handle, name) {
+            Outcome::Ok(ptr) => Outcome::Ok(StaticRef::from_raw(ptr)),
+            Outcome::Err(e) => Outcome::Err(e),
+        }
+    }
+
+    /// Explicitly unload the library and surface the platform close
+    /// result.
+    ///
+    /// Consumes `self` so the compiler prevents double-close. The
+    /// `Drop` impl still works for the default RAII path; `close` is
+    /// the explicit form for consumers that want to handle unload
+    /// errors instead of discarding them.
+    pub fn close(self) -> Outcome<(), ExtensionError> {
+        // SAFETY: ManuallyDrop::new consumes self; the subsequent
+        // manual close call performs the unload exactly once. The
+        // inner Drop must not also run, which ManuallyDrop guarantees.
+        let this = ManuallyDrop::new(self);
+        backend::platform_close(this.handle)
+    }
 }
 
 impl Drop for Extension {
     fn drop(&mut self) {
-        // Platform close: the return code is advisory; we have no
-        // alloc path to propagate a failure, and RAII drop is
-        // infallible by convention.
+        // Platform close: the return code is advisory here; we have
+        // no alloc path to propagate a failure, and RAII drop is
+        // infallible by convention. Consumers that want to surface
+        // unload errors call `close` instead.
         let _ = backend::platform_close(self.handle);
     }
 }
@@ -77,14 +117,10 @@ impl Drop for Extension {
 ///
 /// This crate performs no manifest parsing; the bytes are passed
 /// through to a caller-provided comparison. v1 treats any non-empty
-/// byte slice starting with a known compatibility marker byte as
-/// compatible; refinement is a follow-up concern.
+/// byte slice as compatible; consumers layer richer policies on top.
 pub fn compatibility_check(bytes: &[u8]) -> Outcome<(), IncompatibilityError> {
     if bytes.is_empty() {
         return Outcome::Err(IncompatibilityError::VersionSkew);
     }
-    // v1 placeholder: all non-empty inputs compatible. Consumers
-    // layer richer policies on top if needed; this hook exists to
-    // keep the IncompatibilityError enum colocated with the loader.
     Outcome::Ok(())
 }
