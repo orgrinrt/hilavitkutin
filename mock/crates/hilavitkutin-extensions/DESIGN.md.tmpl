@@ -1,0 +1,123 @@
+# hilavitkutin-extensions
+
+Cross-platform dynamic library loading primitive. One layer above the
+OS loader, one layer below plugin-contract orchestration. Single
+concern: open a shared library, resolve an explicit named symbol,
+return a typed handle whose lifetime is bound to the loader.
+
+The crate is `#![no_std]`. It pulls libc for Unix targets and
+windows-sys for Windows targets. It does not depend on any other
+hilavitkutin crate — not the engine, not the api, not the build-time
+crate, and not the other standalone extensions. The three substrate
+dependencies are notko for the fallibility ladder, arvo for numeric
+primitives, and arvo-bits for boolean values.
+
+Everything about plugin descriptors, lifecycle stages, role declaration,
+capability matching, failure policy, host orchestration, or downstream
+domain contracts sits above this layer in hilavitkutin-plugins (planned
+separately) or in consumer-specific contract crates such as
+viola-plugin-abi. This crate is deliberately kept narrow so those higher
+layers can be written or rewritten without churning the loader.
+
+## Shape
+
+The public surface is small. It names five types (opaque loader handle,
+lifetime-tied symbol handle, sealed marker trait for resolvable shapes,
+helper for static-descriptor patterns) plus two error enums and one
+free helper function for narrow compatibility checks. Exact type names,
+method signatures, and trait bounds are locked in the src CL of the
+design round introducing this crate; they are named there once the
+implementation exists and can be verified by the design-doc-source
+lint. During the DOC phase of that round the surface is described in
+prose only, because the lint enforces matched existence of backticked
+names and source declarations.
+
+The loader opens a library given a byte-slice path interpreted per the
+host platform. Resolution takes a null-terminated byte-slice symbol
+name and a type parameter naming an FFI-safe shape. The handle holds a
+reference to the loader via a lifetime parameter, so the borrow checker
+prevents use-after-close at compile time. Dropping the loader unloads
+the library.
+
+Error shapes are fixed enum variants with no heap payloads. On Unix,
+OS error codes are carried by platform integer values the consumer
+can format if it has allocator access; this crate never owns a
+formatted string.
+
+## Architectural position
+
+The loader sits at the bottom of the plugin stack. Conceptually:
+
+```
+  consumer-specific contract crate (viola-plugin-abi, etc.)
+  --------------------------------------------------------
+  hilavitkutin-plugins  <-- domain-agnostic orchestration
+  --------------------------------------------------------
+  hilavitkutin-extensions  <-- this crate
+  --------------------------------------------------------
+  OS dynamic loader  (dlopen / LoadLibrary)
+```
+
+No hilavitkutin crate depends upward from this one. The engine itself
+never uses this crate — the engine is static composition. Dynamic
+loading through this crate exists strictly for downstream consumers
+(viola, future hosts) whose plugin ecosystems use cdylib plugins.
+
+## Dependencies
+
+Workspace dependencies only:
+
+- notko — Just / Maybe / Outcome primitives for the fallibility ladder on public signatures.
+- arvo — USize / Cap and similar numeric primitives where public signatures express sizes or capacities.
+- arvo-bits — Bool where public signatures express boolean values.
+
+Platform dependencies:
+
+- libc (cfg(unix)) — raw FFI bindings for dlopen / dlsym / dlclose.
+- windows-sys (cfg(windows)) — raw FFI bindings for LoadLibraryW / GetProcAddress / FreeLibrary under the minimal feature set.
+
+Build-time dependency:
+
+- mockspace — workspace convention, bootstraps the mock workflow via build.rs.
+
+No dependency on hilavitkutin, hilavitkutin-api, hilavitkutin-build,
+hilavitkutin-ctx, hilavitkutin-persistence, or hilavitkutin-str. The
+extensions layer is deliberately isolated.
+
+## Platform coverage
+
+v1 supports:
+
+- macOS aarch64 and x86_64
+- Linux x86_64 and aarch64
+- Windows x86_64
+
+Additional platforms can be added without changing the public API.
+wasm32 is explicitly out of scope — the model is different enough to
+warrant a separate transport.
+
+## Non-scope
+
+This crate does not:
+
+- Define plugin descriptor shapes, role identifiers, or capability IDs. Those live in hilavitkutin-plugins and consumer contract crates.
+- Scan linker sections for registration. `inventory`, `ctor`, `#[distributed_slice]`, `.init_array` discovery are all explicitly rejected. Discovery is pull-based only: the host asks for a named symbol; the plugin must export it.
+- Parse plugin manifests, version strings, or capability sets. It exposes one narrow compatibility helper; all other parsing is above.
+- Host or orchestrate lifecycle. Calling init / invoke / shutdown on a loaded plugin is the consumer's responsibility.
+- Support Rust `dylib` crate type. Only C-ABI `cdylib` plugins are loadable. This preserves the LLVM optimisation barrier and the Rust ABI stability boundary that the broader plugin architecture requires.
+- Provide async loading wrappers, telemetry, or signature verification in v1. Those are BACKLOG items.
+
+## Cross-references
+
+- Round topic: `design_rounds/202604240745_topic.hilavitkutin-extensions.md`.
+- Research input: `EXTENSIONS_RESEARCH.md` at the repo root (loimu / saalis / polka-dots synthesis).
+- Higher layer: hilavitkutin-plugins, scheduled as its own design round (task #191).
+- Downstream consumer reference: `viola/docs/PLUGIN-ABI-V1-DESIGN.md` — describes how a domain-specific contract crate builds on top of the hilavitkutin plugin-host machinery.
+
+## Shipping commitment
+
+The shape described here plus the specific type and method names locked
+in the src CL of the round introducing this crate. Follow-up design
+rounds may extend the crate (for example to add explicit unload,
+telemetry, or additional platform targets) but must preserve the v1
+contract unless explicit deprecation is scheduled.
