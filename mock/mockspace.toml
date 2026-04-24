@@ -286,6 +286,17 @@ mockspace-hilavitkutin-stack-lints = { git = "ssh://git@github.com/orgrinrt/mock
 [lints.writing-style]
 severity = "advisory"
 
+# undocumented-type: built-in lint's proc-macro-crate exemption uses a
+# hardcoded static list, not the runtime `proc_macro_crates` config from
+# mockspace.toml. Private parser helpers inside
+# `hilavitkutin-extensions-macros` (e.g. `ExtAttrs`, `AttrEntry`) are
+# legitimately undocumented internals of the proc-macro crate. Downgrade
+# to advisory until the lint respects the config. Tracked as #205.
+[lints.undocumented-type]
+commit = "warn"
+build = "warn"
+push = "warn"
+
 # ---------------------------------------------------------------------------
 # Primitive-substrate introducers (task #125)
 # ---------------------------------------------------------------------------
