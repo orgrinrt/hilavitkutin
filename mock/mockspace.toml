@@ -2,7 +2,7 @@ project_name = "hilavitkutin"
 crate_prefix = "hilavitkutin"
 abi_version = 1
 
-proc_macro_crates = []
+proc_macro_crates = ["hilavitkutin-extensions-macros"]
 module_crates = []
 
 # Which macro to track per-crate in domain items
@@ -116,11 +116,15 @@ rules = [
     # Build-time crate has zero runtime linkage.
     { scope = "hilavitkutin-build", forbidden = "hilavitkutin::*, hilavitkutin_api::*", reason = "hilavitkutin-build is build-dep-only and must not link into the runtime binary" },
 
-    # Extensions are standalone sub-libraries — no cross-deps, no engine dep.
-    { scope = "hilavitkutin-ctx", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_persistence::*, hilavitkutin_str::*", reason = "hilavitkutin-ctx is a standalone extension; keep it independently usable" },
-    { scope = "hilavitkutin-persistence", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_str::*", reason = "hilavitkutin-persistence is a standalone extension; keep it independently usable" },
-    { scope = "hilavitkutin-str", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*", reason = "hilavitkutin-str is a standalone extension; keep it independently usable" },
-    { scope = "hilavitkutin-extensions", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*, hilavitkutin_str::*", reason = "hilavitkutin-extensions is the plugin-host loader primitive; it must stay domain-agnostic and must not depend on engine, api, or other extensions" },
+    # Ecosystem crates are standalone sub-libraries; no cross-deps, no engine dep.
+    { scope = "hilavitkutin-ctx", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_persistence::*, hilavitkutin_str::*", reason = "hilavitkutin-ctx is a standalone ecosystem crate; keep it independently usable" },
+    { scope = "hilavitkutin-persistence", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_str::*", reason = "hilavitkutin-persistence is a standalone ecosystem crate; keep it independently usable" },
+    { scope = "hilavitkutin-str", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*", reason = "hilavitkutin-str is a standalone ecosystem crate; keep it independently usable" },
+
+    # Plugin-host layer: three crates, strict layering.
+    { scope = "hilavitkutin-linking", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*, hilavitkutin_str::*, hilavitkutin_extensions::*", reason = "hilavitkutin-linking is the dlopen primitive; it must stay domain-agnostic and depend only on substrate (notko, arvo, arvo-bits) and platform FFI" },
+    { scope = "hilavitkutin-extensions", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*, hilavitkutin_str::*, hilavitkutin_build::*", reason = "hilavitkutin-extensions is the contract-bound host layer; depends only on hilavitkutin-linking plus substrate. Must not depend on engine, api, ecosystem, or build-time" },
+    { scope = "hilavitkutin-extensions-macros", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*, hilavitkutin_str::*, hilavitkutin_build::*, hilavitkutin_linking::*", reason = "proc-macro crate; emitted output references ::hilavitkutin_extensions::* paths only. No other hilavitkutin-crate references at proc-macro runtime or in emission" },
 
     # Engine consumes arvo bit contracts via the L2 `arvo-bitmask` surface,
     # never directly from L1 `arvo-bits`. Direct L1 coupling would bypass the

@@ -1,6 +1,6 @@
 //! Unix backend: raw dlopen / dlsym / dlclose over libc.
 
-use crate::error::ExtensionError;
+use crate::error::LinkError;
 use arvo::USize;
 use core::ffi::{c_char, c_int, c_void};
 use notko::Outcome;
@@ -15,15 +15,15 @@ unsafe extern "C" {
 
 pub(crate) fn platform_load(
     path: &[u8],
-) -> Outcome<*mut c_void, ExtensionError> {
+) -> Outcome<*mut c_void, LinkError> {
     if !is_null_terminated(path) {
-        return Outcome::Err(ExtensionError::PathNotFound);
+        return Outcome::Err(LinkError::PathNotFound);
     }
     // SAFETY: path is non-empty, null-terminated, and passed to a
     // libc function that treats it as a C string.
     let handle = unsafe { dlopen(path.as_ptr() as *const c_char, RTLD_NOW) };
     if handle.is_null() {
-        return Outcome::Err(ExtensionError::LoadFailed {
+        return Outcome::Err(LinkError::LoadFailed {
             platform_code: read_errno(),
         });
     }
@@ -33,26 +33,26 @@ pub(crate) fn platform_load(
 pub(crate) fn platform_resolve(
     handle: *mut c_void,
     name: &[u8],
-) -> Outcome<*const c_void, ExtensionError> {
+) -> Outcome<*const c_void, LinkError> {
     if !is_null_terminated(name) {
-        return Outcome::Err(ExtensionError::SymbolMissing);
+        return Outcome::Err(LinkError::SymbolMissing);
     }
     // SAFETY: handle was produced by a prior successful dlopen; name
     // is null-terminated.
     let ptr = unsafe { dlsym(handle, name.as_ptr() as *const c_char) };
     if ptr.is_null() {
-        return Outcome::Err(ExtensionError::SymbolMissing);
+        return Outcome::Err(LinkError::SymbolMissing);
     }
     Outcome::Ok(ptr as *const c_void)
 }
 
-pub(crate) fn platform_close(handle: *mut c_void) -> Outcome<(), ExtensionError> {
+pub(crate) fn platform_close(handle: *mut c_void) -> Outcome<(), LinkError> {
     // SAFETY: handle was produced by a prior successful dlopen.
     let rc = unsafe { dlclose(handle) };
     if rc == 0 {
         Outcome::Ok(())
     } else {
-        Outcome::Err(ExtensionError::LoadFailed {
+        Outcome::Err(LinkError::LoadFailed {
             platform_code: read_errno(),
         })
     }
