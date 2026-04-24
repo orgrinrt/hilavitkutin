@@ -22,10 +22,10 @@ primary export attribute under their own domain-named macro.
 
 ## Public items
 
-- `ExtensionDescriptor` is the `#[repr(C)]` manifest the extension exposes to the host. Fixed-size fields cover ABI version, extension name pointer and length, version triple, required host capabilities pointer and length, capabilities table pointer and length, optional init function pointer, and optional shutdown function pointer.
-- `ExtensionVersion` is the `#[repr(C)]` semver triple used in the descriptor. Four u16 fields: major, minor, patch, and a padding slot for future use.
+- `ExtensionDescriptor` is the `#[repr(C)]` manifest the extension exposes to the host. Fixed-size fields cover ABI version (`u32` wire), extension name pointer and length (`*const u8`, `USize`), version triple, required host capabilities pointer and length (`*const CapabilityId`, `USize`), capabilities table pointer and length (`*const CapabilityEntry`, `USize`), optional init function pointer, and optional shutdown function pointer. See "FFI-wire primitive policy" below for the rule that governs which fields are arvo newtypes and which are bare primitives.
+- `ExtensionVersion` is the `#[repr(C)]` semver triple used in the descriptor. Four `u16` fields: major, minor, patch, and a padding slot for future use. The fields are bare `u16` by FFI-wire policy (see below); arvo has no wire-stable 16-bit newtype yet.
 - `CapabilityEntry` is one capability table row: `(CapabilityId, *const c_void)`. The void pointer is the opaque vtable the consumer-generated trampoline casts back to its domain-specific interface.
-- `CapabilityId` is a `#[repr(transparent)]` u64 derived at compile time from an ASCII byte-string name via a FNV-64 const function. Consumer contract crates declare capability ids as `const` items.
+- `CapabilityId` is a `#[repr(transparent)]` newtype over `u64` derived at compile time from an ASCII byte-string name via a FNV-64 const function. Consumer contract crates declare capability ids as `const` items. The `pub u64` field is the deliberate FFI-wire constructor pattern.
 - `ExtensionAbiStatus` is the `#[repr(u32)]` status enum returned by the init and shutdown C-ABI function pointers. Variants: `Ok`, `InitFailed`, `InvalidArg`, `NotSupported`, `Internal`.
 - `AbiVersion` is a `#[repr(transparent)]` newtype over `u32` wrapping the host-side ABI version value. FFI wire layout identical to `u32`; host code reads `ExtensionDescriptor.abi_version` and wraps into `AbiVersion` explicitly before comparison with `HOST_ABI_VERSION`.
 - `HOST_ABI_VERSION: AbiVersion` is the constant the host advertises and the descriptor must match for compatibility. Starts at 1. Bumps on any descriptor layout change or symbol name change.
@@ -42,6 +42,17 @@ primary export attribute under their own domain-named macro.
 - `InitHandler` is the optional trait for authors who want init behaviour beyond the no-op default. Its single method is `extern "C" fn init(host_ctx: *mut c_void) -> ExtensionAbiStatus`.
 - `ShutdownHandler` is the matching optional trait for shutdown behaviour.
 - `CapabilityExport` is the trait extension authors implement (typically via a consumer-domain macro) to advertise a capability: `const ID: CapabilityId` plus `const VTABLE_PTR: *const c_void`.
+
+## FFI-wire primitive policy
+
+`#[repr(C)]` descriptor fields cross the Rust / extension boundary and demand a wire-stable footprint. The crate follows a two-tier rule:
+
+1. Use an arvo `#[repr(transparent)]` newtype when its backing is wire-identical to the C type. `USize(pub usize)` is transparent over `usize` and slots into every `len` field paired with a pointer. `Bool(pub bool)` is transparent over `bool`. When an arvo newtype fits, it wins; the field gets the semantic name and the lint is clean.
+2. Retain a bare primitive when no wire-stable arvo newtype exists. `UFixed<I, F, S>` is `#[repr(transparent)]` over its backing, but the backing width comes from `S: Strategy` and is not pinned to exactly the C integer width. An FFI descriptor cannot accept that variability. `abi_version: u32`, `ExtensionVersion { major: u16, ... }`, and `CapabilityId`'s inner `u64` are bare primitives by deliberate choice; each site carries a trailing `// lint:allow(...) tracked: #206` comment that records the contract.
+
+Raw pointer fields (`*const u8`, `*const CapabilityEntry`, `*const CapabilityId`) fall outside the numeric-lint scope and stay as-is.
+
+A future arvo primitive `UWire<N>` (fixed backing for exactly `N` wire bits, no `Strategy` axis) would collapse the second tier back into the first. BACKLOG records the dependency.
 
 ## Shape
 
