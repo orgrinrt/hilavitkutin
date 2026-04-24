@@ -1,0 +1,56 @@
+# hilavitkutin-extensions backlog
+
+Type-surface reminder: every pub signature in this crate uses notko's
+fallibility ladder (Just / Maybe / Outcome), arvo primitives for
+numeric and boolean values, and fixed-capacity structured errors with
+no heap payloads. Path and symbol-name inputs are raw null-terminated
+byte slices at the FFI boundary. Collections do not cross the public
+API — the crate returns typed symbol handles, not containers of them.
+
+## Designed, deferred
+
+### Hot-reload ref-counting unload
+
+v1 ships RAII unload plus an explicit `Extension::close` that returns
+load-status. Both unload the library once. A future evolution may add
+ref-counted unload to support hot-reload scenarios where a consumer
+wants to reload the same library path while old handles may still
+exist. The current API rejects that use pattern by construction — the
+lifetime system prevents outstanding symbols from outliving their
+loader. Hot-reload needs a different contract (likely a versioned
+handle token) and that redesign is out of v1 scope.
+
+### Async loading wrappers
+
+v1 is synchronous. Loading a library blocks the calling thread for the
+duration of the OS dlopen call. A future evolution may layer async
+wrappers on top for hosts that want non-blocking load. The sync core
+stays — the async layer is purely additive.
+
+### Wasm dlopen
+
+The wasm32 targets do not expose a dlopen equivalent at the ABI level;
+wasm-component-model is a different mechanism entirely. Extending this
+crate to wasm32 is out of scope. If hilavitkutin-plugins needs wasm
+plugin support, it lands via a separate transport.
+
+### Capability-level compatibility negotiation
+
+v1 exposes a narrow compatibility_check helper with three fixed
+incompatibility categories. Full ABI-schema negotiation, capability
+introspection, or feature-flag matching belongs to hilavitkutin-plugins
+or consumer-owned contract crates — not the loader.
+
+### Signing and signature verification
+
+The loader trusts whatever the OS loader trusts. Signed-library
+enforcement, hash verification, or provenance policy is not handled
+here. Consumer-side policy layers that need these checks apply them
+before or after calling into this crate.
+
+### Loader telemetry hooks
+
+Counters for load count, load-time distribution, and failure rates
+are not exposed in v1. A future addition under a feature flag may add
+them if downstream consumers need loader visibility without having to
+wrap every call site.

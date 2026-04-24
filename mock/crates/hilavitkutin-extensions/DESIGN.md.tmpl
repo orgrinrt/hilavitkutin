@@ -1,0 +1,163 @@
+# hilavitkutin-extensions
+
+Cross-platform dynamic library loading primitive. One layer above the
+OS loader, one layer below plugin-contract orchestration. Single
+concern: open a shared library, resolve an explicit named symbol,
+return a typed handle whose lifetime is bound to the loader.
+
+The crate is `#![no_std]`. It pulls libc for Unix targets and
+windows-sys for Windows targets. It does not depend on any other
+hilavitkutin crate — not the engine, not the api, not the build-time
+crate, and not the other standalone extensions. The three substrate
+dependencies are notko for the fallibility ladder, arvo for numeric
+primitives, and arvo-bits for boolean values.
+
+Everything about plugin descriptors, lifecycle stages, role declaration,
+capability matching, failure policy, host orchestration, or downstream
+domain contracts sits above this layer in hilavitkutin-plugins (planned
+separately) or in consumer-specific contract crates such as
+viola-plugin-abi. This crate is deliberately kept narrow so those higher
+layers can be written or rewritten without churning the loader.
+
+## Public items
+
+Seven items make up the public surface:
+
+- `Extension` — opaque loader handle. RAII closes the library on drop; `Extension::close` is the explicit form that surfaces unload errors. Every `Symbol` or `StaticRef` resolved from an `Extension` borrows it via a lifetime parameter.
+- `Symbol` — typed handle to a resolved *function-pointer* symbol. `T` is restricted by the sealed `ExtensionSymbol` marker. `Symbol::get(&self) -> T` returns the function pointer by value.
+- `StaticRef` — typed handle to a resolved *static-data* symbol (the pointer-to-static-struct pattern every plugin ABI uses for its descriptor export). `T: 'static` is arbitrary data. `StaticRef::get(&self) -> &T` dereferences the pointer.
+- `ExtensionSymbol` — sealed marker trait over function pointer shapes. v1 admits `extern "C"` function pointers at arities zero through eight. Downstream crates cannot add new impls; the arity set covers realistic plugin-ABI shapes.
+- `ExtensionError` — load / resolve / unload error enum. Fixed-shape variants; no heap payloads. Carries `arvo::USize` platform codes where relevant.
+- `IncompatibilityError` — narrow compatibility-check error enum. Three variants: version skew, arch mismatch, ABI mismatch.
+- `compatibility_check` — free function exposing the narrow compatibility hook colocated with `IncompatibilityError`.
+
+## Shape
+
+`Extension::load(path)` opens a library given a null-terminated byte-slice path. Two resolution methods then produce typed handles from that loader:
+
+- `Extension::resolve<F: ExtensionSymbol>(&self, name)` resolves a function-pointer symbol into `Symbol<'_, F>`. `Symbol::get` returns the fn pointer by value via the `transmute_copy`-from-raw-pointer pattern that matches the platform loader's contract for function symbols.
+- `Extension::resolve_static<T: 'static>(&self, name)` resolves a static-data symbol into `StaticRef<'_, T>`. `StaticRef::get` dereferences the resolved pointer to `&T`. This is the pattern every plugin ABI uses for its descriptor export (for example `#[no_mangle] pub static PLUGIN_DESCRIPTOR: PluginDescriptor = ...;`).
+
+Both handles expose `as_raw` as an escape hatch for cases outside the typed wrappers. The lifetime parameter `'ext` ties either handle to its source `Extension`, so use-after-close is a compile-time error.
+
+`Symbol` and `StaticRef` are deliberately separate types. The pointer reinterpretation rules differ: for function pointers the resolved address IS the function-pointer value (transmute); for static data the address is the location of a `T` (deref). Hiding the distinction behind a single type would force runtime branching or unsafe; two types keep the soundness explicit.
+
+`Extension::close(self)` explicitly unloads the library and returns `Outcome<(), ExtensionError>`. Dropping the `Extension` achieves the same effect but discards any platform error at unload. Consumers that want to surface those errors call `close`.
+
+Error shapes are fixed enum variants with no heap payloads. OS error codes are carried as `arvo::USize` values (non-negative on both unix errno and Windows GetLastError ranges).
+
+## Architectural position
+
+The loader sits at the bottom of the plugin stack. Conceptually:
+
+```
+  consumer-specific contract crate (viola-plugin-abi, etc.)
+  --------------------------------------------------------
+  hilavitkutin-plugins  <-- domain-agnostic orchestration
+  --------------------------------------------------------
+  hilavitkutin-extensions  <-- this crate
+  --------------------------------------------------------
+  OS dynamic loader  (dlopen / LoadLibrary)
+```
+
+No hilavitkutin crate depends upward from this one. The engine itself
+never uses this crate — the engine is static composition. Dynamic
+loading through this crate exists strictly for downstream consumers
+(viola, future hosts) whose plugin ecosystems use cdylib plugins.
+
+## Dependencies
+
+Workspace dependencies only:
+
+- notko — Just / Maybe / Outcome primitives for the fallibility ladder on public signatures.
+- arvo — USize / Cap and similar numeric primitives where public signatures express sizes or capacities.
+- arvo-bits — Bool where public signatures express boolean values.
+
+Platform dependencies:
+
+- libc (cfg(unix)) — raw FFI bindings for dlopen / dlsym / dlclose.
+- windows-sys (cfg(windows)) — raw FFI bindings for LoadLibraryW / GetProcAddress / FreeLibrary under the minimal feature set.
+
+Build-time dependency:
+
+- mockspace — workspace convention, bootstraps the mock workflow via build.rs.
+
+No dependency on hilavitkutin, hilavitkutin-api, hilavitkutin-build,
+hilavitkutin-ctx, hilavitkutin-persistence, or hilavitkutin-str. The
+extensions layer is deliberately isolated.
+
+## Platform coverage
+
+v1 supports:
+
+- macOS aarch64 and x86_64
+- Linux x86_64 and aarch64
+- Windows x86_64
+
+Additional platforms can be added without changing the public API.
+wasm32 is explicitly out of scope — the model is different enough to
+warrant a separate transport.
+
+## Arbitrary-time linking invariant
+
+One non-negotiable assumption governs everything in this crate: any
+library can be loaded at any point in the host's execution, invoked
+immediately, and dropped at any time, independent of other libraries.
+The ABI, trait contracts, and typed symbol handle semantics all enforce
+this by construction.
+
+No global registry exists. The host never reads a static "currently
+loaded extensions" collection; every handle is explicit. No init
+ordering is assumed — extensions do not depend on other extensions
+being loaded first, and each loader handle is self-contained. The
+lifetime parameter on the typed symbol handle ties it to its loader,
+so dropping the loader at any time invalidates outstanding symbols at
+compile time. Lifecycle is strictly per-extension, never ecosystem-
+wide: a consumer may load extension A at time T, invoke it at T+1,
+drop it at T+2, load extension B at T+3, and that is correct use.
+
+The consumer-side obligation is that host code built on top of this
+crate tolerates arbitrary-time loading. Assumptions like "all plugins
+are loaded before any are invoked", "init ordering gates invocation",
+or "the full plugin ecosystem must be known before proceeding" are
+forbidden at the framework level. Any consumer that needs ecosystem-
+wide semantics builds them in its own higher layer.
+
+The base crate does not build runtime plugin discovery. Consumers
+that want "find all plugins of kind X" (loimu-style runtime
+expansion, viola-style grammar lookup) layer that abstraction on
+top. The base layer supports arbitrary-time-compatible contracts and
+nothing more, which keeps it reusable across hosts with different
+loading semantics.
+
+This invariant propagates forward into the upper plugin-host layer
+(`hilavitkutin-plugins`, planned separately) and into any downstream
+consumer contract crate (viola-plugin-abi, and so on). Every layer
+in the stack preserves the invariant or explicitly documents the
+loss.
+
+## Non-scope
+
+This crate does not:
+
+- Define plugin descriptor shapes, role identifiers, or capability IDs. Those live in hilavitkutin-plugins and consumer contract crates.
+- Scan linker sections for registration. `inventory`, `ctor`, `#[distributed_slice]`, `.init_array` discovery are all explicitly rejected. Discovery is pull-based only: the host asks for a named symbol; the plugin must export it.
+- Parse plugin manifests, version strings, or capability sets. It exposes one narrow compatibility helper; all other parsing is above.
+- Host or orchestrate lifecycle. Calling init / invoke / shutdown on a loaded plugin is the consumer's responsibility.
+- Support Rust `dylib` crate type. Only C-ABI `cdylib` plugins are loadable. This preserves the LLVM optimisation barrier and the Rust ABI stability boundary that the broader plugin architecture requires.
+- Provide async loading wrappers, telemetry, or signature verification in v1. Those are BACKLOG items.
+
+## Cross-references
+
+- Round topic: `design_rounds/202604240745_topic.hilavitkutin-extensions.md`.
+- Research input: `EXTENSIONS_RESEARCH.md` at the repo root (loimu / saalis / polka-dots synthesis).
+- Higher layer: hilavitkutin-plugins, scheduled as its own design round (task #191).
+- Downstream consumer reference: `viola/docs/PLUGIN-ABI-V1-DESIGN.md` — describes how a domain-specific contract crate builds on top of the hilavitkutin plugin-host machinery.
+
+## Shipping commitment
+
+The shape described here plus the specific type and method names locked
+in the src CL of the round introducing this crate. Follow-up design
+rounds may extend the crate (for example to add explicit unload,
+telemetry, or additional platform targets) but must preserve the v1
+contract unless explicit deprecation is scheduled.
