@@ -24,9 +24,23 @@ Exceptions allowed at the top:
 
 ## Punctuation
 
-Em-dashes (`—`) sparingly. Appropriate for emphasis or a parenthetical aside where a comma is too quiet and parens too heavy. Wrong when a period, colon, semicolon, or parens would carry the same load without interrupting the reader. Overuse smell: more than one per roughly ten lines of prose. Replace most with periods, commas, or parens.
+**Em-dashes (`—`) are forbidden.** Not "sparingly", not "rarely", not "where nothing else fits". Zero em-dashes in any written content: prose, doc comments, commit messages, changelog entries, rule templates, anything. No real human writing for other humans reaches for the em-dash key; the people who do are either academic-writing stylists or shit-posting on the internet, neither of which is the register this work operates in. The em-dash interrupts a reader's rhythm and signals "look at me, I'm punctuating cleverly" when the underlying sentence would have read fine with ordinary marks.
 
-No exclamation marks in prose. Semicolons sparingly to link two tightly related independent clauses; when in doubt, use a period. Colons introduce lists, quotes, or clarifying phrases, not mid-sentence separators.
+Use one of the alternatives instead, always:
+
+- **Period.** Break the sentence. Two short sentences almost always beat one long sentence bridged by an em-dash. When in doubt, pick the period.
+- **Comma,** if the aside is brief and tightly bound to the clause before it.
+- **Parentheses** (when the aside is genuinely parenthetical and removable without loss).
+- **Colon:** if the second clause explains or expands what the first declares.
+- **Semicolon;** if two independent clauses are so tightly coupled they belong in one sentence. Use sparingly; when in doubt, period.
+
+Hyphens (`-`) are fine for compound modifiers (`fixed-point`, `lifetime-tied`, `zero-copy`). Do not conflate them with em-dashes.
+
+En-dashes (`–`) are also forbidden in body text. Use "to" or "through" for ranges in prose (`lines 5 to 12`, `arities zero through eight`); en-dash is acceptable only in typeset numeric ranges where the style is established (rare).
+
+No exclamation marks in prose. Public documentation is not a sales pitch and not a chat message.
+
+Colons introduce lists, quotes, or clarifying phrases. They do not act as mid-sentence separators replacing a comma or period.
 
 ## Word choice
 
@@ -37,6 +51,29 @@ No corporate jargon: "leverage" becomes "use", "utilize" becomes "use", "unlock"
 No greeting openers: "Sure!", "Happy to help!", "Let me explain". Public docs are read by someone with a goal; state the first fact.
 
 No filler: "it should be noted that", "essentially", "basically", "at the end of the day", "for all intents and purposes".
+
+## ASCII diagrams
+
+No hand-drawn ASCII box-and-arrow graphs, tree diagrams, or flow charts in prose. The effort-to-signal ratio is terrible: they take real time to align, they break under any font change or copy-paste, and they signal "I had free time to spare" rather than conveying information the reader could not have gotten from prose. The same content in a short paragraph, a nested bullet list, or a two-column table reads faster and stays correct when the underlying shape changes.
+
+Allowed when the shape itself is the content and prose cannot carry it: a Mermaid code fence for a real graph (GitHub renders these), a short UML fence where the tool chain renders it, or an actual rendered image committed alongside the doc. A sequence of boxed nodes connected by `|` and `↑` in a fenced block is not one of these cases; rewrite as prose or as a hierarchical list.
+
+```markdown
+<!-- Bad: ASCII stack graph -->
+notko  (zero deps)
+  ↑
+  ├── arvo
+  │     ↑
+  │     └── clause-*
+
+<!-- Good: nested list -->
+- `notko` (zero deps)
+  - `arvo` (depends on `notko`)
+    - `clause-*` (depends on `arvo`, `notko`)
+
+<!-- Good: prose -->
+`notko` has no dependencies. `arvo` builds on `notko`. The `clause-*` crates build on both.
+```
 
 ## Emoji
 
@@ -58,12 +95,14 @@ Prefer ordered lists when order matters, unordered otherwise.
 
 Inline comments explain why, not what; the code already tells the reader what.
 
+Em-dashes are banned in doc comments and inline comments just as strictly as in prose. Replace with periods, commas, parentheses, colons, or a full rewrite.
+
 ```rust
 /// A resolved handle to a registered entry.
 ///
 /// Handles are resolved once at construction and reused across
 /// lookups.
-pub struct Handle { ... }
+pub struct Handle { /* ... */ }
 
 // offset because the catalogue is 0-indexed but display is 1-indexed
 let display_idx = idx + 1;
@@ -89,13 +128,13 @@ Title Case for the top-level `#` (document title). Sentence case for `##` and be
 
 ## Commit messages
 
-Format: `type: lowercase imperative message`. Types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`. Breaking: `feat!:` / `refactor!:`. No parentheses, no capitals, no trailing period. Under 72 characters for the subject line. Body optional; explain why, not what.
+Format: `type: lowercase imperative message`. Types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`. Breaking: `feat!:` / `refactor!:`. No parentheses, no capitals, no trailing period. Under 72 characters for the subject line. Body optional; explain why, not what. No em-dashes in the subject or the body.
 
 ## Enforcement scope
 
 Rules apply to every piece of written content in the repo. The difference is automation, not standard.
 
-Public-facing docs are gated at commit and push: `mock/PRINCIPLES.md.tmpl`, `mock/DESIGN.md.tmpl`, `mock/WORKFLOW.md.tmpl`, `README.md`, `mock/crates/**/*.md.tmpl`, `mock/agent/**/*.md.tmpl`, Rust doc and inline comments under `crates/**/*.rs`. The gate flags runaway em-dash density, leading-paragraph lists, hype words, exclamation marks in prose, and the banned jargon. Single-occurrence use passes; runaway usage blocks.
+Public-facing docs are gated at commit and push: `mock/PRINCIPLES.md.tmpl`, `mock/DESIGN.md.tmpl`, `mock/WORKFLOW.md.tmpl`, `README.md`, `mock/crates/**/*.md.tmpl`, `mock/agent/**/*.md.tmpl`, Rust doc and inline comments under `crates/**/*.rs`. The gate flags any em-dash occurrence, leading-paragraph lists, hype words, exclamation marks in prose, and the banned jargon. Em-dash detection is a hard block: any occurrence is a violation; prior "sparingly" framing is retired.
 
 Round artifacts under `mock/design_rounds/` and research notes follow the same rules as a matter of discipline but are not gated.
 <!-- END: shared writing-style -->
