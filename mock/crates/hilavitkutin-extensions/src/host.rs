@@ -1,5 +1,6 @@
 //! Host state: extension loader + failure policy surface.
 
+use arvo::Bool;
 use core::ffi::c_void;
 use hilavitkutin_linking::Library;
 use notko::{Maybe, Outcome};
@@ -72,22 +73,22 @@ impl ExtensionHost {
         self
     }
 
-    /// Return true if `id` appears in the host's advertised set.
-    pub fn has_capability(&self, id: CapabilityId) -> bool {
+    /// Return `Bool::TRUE` if `id` appears in the host's advertised set.
+    pub fn has_capability(&self, id: CapabilityId) -> Bool {
         let mut i = 0;
         while i < self.host_capabilities.len() {
             if self.host_capabilities[i] == id {
-                return true;
+                return Bool(true);
             }
             i += 1;
         }
-        false
+        Bool(false)
     }
 
     /// Load one extension from disk.
     pub fn load(
         &self,
-        path: &[u8],
+        path: &[u8], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: null-terminated byte path for dlopen/LoadLibraryW; byte string is the loader input unit; tracked: #206
         requirement: ExtensionRequirement,
         host_ctx: *mut c_void,
     ) -> Outcome<Maybe<Extension>, ExtensionError> {
@@ -148,7 +149,7 @@ impl ExtensionHost {
                 // SAFETY: required_host_caps_ptr + _len valid static slice.
                 let required =
                     unsafe { *descriptor.required_host_caps_ptr.add(i) };
-                if !self.has_capability(required) {
+                if !self.has_capability(required).0 {
                     return policy_translate(
                         self.policy,
                         requirement,

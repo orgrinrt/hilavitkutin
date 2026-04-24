@@ -12,13 +12,13 @@ use core::ffi::c_void;
 /// Extensions declare the ABI version they target via
 /// `ExtensionDescriptor::abi_version`; the host compares and rejects
 /// mismatches via `ExtensionError::AbiVersionMismatch`.
-pub const HOST_ABI_VERSION: u32 = 1;
+pub const HOST_ABI_VERSION: u32 = 1; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: C-ABI version counter width fixed by contract; tracked: #206
 
 /// Well-known exported symbol name that every extension `cdylib`
 /// resolves to `extern "C" fn() -> *const ExtensionDescriptor`.
 ///
 /// Null-terminated for direct use with `Library::resolve`.
-pub const DESCRIPTOR_SYMBOL: &[u8] = b"__hilavitkutin_extension_descriptor\0";
+pub const DESCRIPTOR_SYMBOL: &[u8] = b"__hilavitkutin_extension_descriptor\0"; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: null-terminated byte string matching the dlsym linker name; tracked: #206
 
 /// Stable capability identifier. Compile-time hash of an ASCII name.
 ///
@@ -26,21 +26,21 @@ pub const DESCRIPTOR_SYMBOL: &[u8] = b"__hilavitkutin_extension_descriptor\0";
 /// representation matches a plain u64 across platforms.
 #[repr(transparent)]
 #[derive(Copy, Clone, PartialEq, Eq)]
-pub struct CapabilityId(pub u64);
+pub struct CapabilityId(pub u64); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-public-raw-field) reason: #[repr(transparent)] over u64; FNV-1a hash width fixed by algorithm and ABI; tracked: #206
 
 impl CapabilityId {
     /// Compute the capability id from an ASCII name at compile time.
     ///
     /// FNV-1a over the raw byte contents. Constant-folded at the call
     /// site; no runtime cost.
-    pub const fn from_name(name: &str) -> Self {
-        const FNV_OFFSET_BASIS: u64 = 0xcbf29ce484222325;
-        const FNV_PRIME: u64 = 0x100000001b3;
+    pub const fn from_name(name: &str) -> Self { // lint:allow(no-bare-string) reason: const-fn input; Str has no const constructor at macro-expansion time; tracked: #206
+        const FNV_OFFSET_BASIS: u64 = 0xcbf29ce484222325; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FNV-1a algorithm constant; tracked: #206
+        const FNV_PRIME: u64 = 0x100000001b3; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FNV-1a algorithm constant; tracked: #206
         let bytes = name.as_bytes();
-        let mut hash: u64 = FNV_OFFSET_BASIS;
+        let mut hash: u64 = FNV_OFFSET_BASIS; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FNV-1a state width; tracked: #206
         let mut i = 0;
         while i < bytes.len() {
-            hash ^= bytes[i] as u64;
+            hash ^= bytes[i] as u64; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FNV-1a step cast; tracked: #206
             hash = hash.wrapping_mul(FNV_PRIME);
             i += 1;
         }
@@ -55,10 +55,10 @@ impl CapabilityId {
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub struct ExtensionVersion {
-    pub major: u16,
-    pub minor: u16,
-    pub patch: u16,
-    pub _reserved: u16,
+    pub major: u16, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-public-raw-field) reason: #[repr(C)] ABI field; tracked: #206
+    pub minor: u16, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-public-raw-field) reason: #[repr(C)] ABI field; tracked: #206
+    pub patch: u16, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-public-raw-field) reason: #[repr(C)] ABI field; tracked: #206
+    pub _reserved: u16, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-public-raw-field) reason: #[repr(C)] ABI padding slot; tracked: #206
 }
 
 /// C-ABI status returned by init and shutdown handler trampolines.
@@ -66,9 +66,9 @@ pub struct ExtensionVersion {
 /// `#[repr(u32)]` so it transits the FFI boundary as a plain u32. The
 /// host maps non-`Ok` statuses into `ExtensionError::InitFailed` or
 /// `ExtensionError::ShutdownFailed` carrying this enum.
-#[repr(u32)]
+#[repr(u32)] // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: #[repr(u32)] attribute itself; C-ABI return value representation; tracked: #206
 #[derive(Copy, Clone, PartialEq, Eq)]
-pub enum ExtensionAbiStatus {
+pub enum ExtensionAbiStatus { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: #[repr(u32)] C-ABI return value discriminants; tracked: #206
     Ok = 0,
     InitFailed = 1,
     InvalidArg = 2,
@@ -99,18 +99,18 @@ unsafe impl Sync for CapabilityEntry {}
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct ExtensionDescriptor {
-    pub abi_version: u32,
-    pub name_ptr: *const u8,
-    pub name_len: usize,
+    pub abi_version: u32, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-public-raw-field) reason: #[repr(C)] ABI field; tracked: #206
+    pub name_ptr: *const u8, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: byte pointer to extension name; tracked: #206
+    pub name_len: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-public-raw-field) reason: #[repr(C)] ABI length field; tracked: #206
     pub version: ExtensionVersion,
     pub capabilities_ptr: *const CapabilityEntry,
-    pub capabilities_len: usize,
+    pub capabilities_len: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-public-raw-field) reason: #[repr(C)] ABI length field; tracked: #206
     pub required_host_caps_ptr: *const CapabilityId,
-    pub required_host_caps_len: usize,
-    pub init_fn: Option<
+    pub required_host_caps_len: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-public-raw-field) reason: #[repr(C)] ABI length field; tracked: #206
+    pub init_fn: Option< // lint:allow(no-bare-option) reason: Option<fn> is the Rust idiom for nullable function pointers with null-pointer-niche ABI guarantee; notko::Maybe has no such guarantee; tracked: #206
         unsafe extern "C" fn(host_ctx: *mut c_void) -> ExtensionAbiStatus,
     >,
-    pub shutdown_fn: Option<
+    pub shutdown_fn: Option< // lint:allow(no-bare-option) reason: Option<fn> is the Rust idiom for nullable function pointers with null-pointer-niche ABI guarantee; notko::Maybe has no such guarantee; tracked: #206
         unsafe extern "C" fn(host_ctx: *mut c_void) -> ExtensionAbiStatus,
     >,
 }

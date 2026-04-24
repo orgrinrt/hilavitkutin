@@ -42,17 +42,17 @@ hilavitkutin-str = "#E6F2E6 | #2D6A2D"
 # --- Built-in quality lints ------------------------------------------------
 
 [lints.no-empty-crate]
-commit = "off"
+commit = "warn"
 build = "warn"
 push = "warn"
 
 [lints.no-todo]
-commit = "off"
+commit = "warn"
 build = "warn"
 push = "error"
 
 [lints.no-fixme]
-commit = "off"
+commit = "warn"
 build = "warn"
 push = "error"
 
@@ -142,9 +142,9 @@ rules = [
 # / -str).
 
 [lints.no-bare-pub]
-commit = "off"
-build = "off"
-push = "off"
+commit = "warn"
+build = "warn"
+push = "warn"
 
 [lints.registrable-completeness]
 commit = "off"
@@ -164,14 +164,14 @@ push = "off"
 # across the engine.
 
 [lints.no-bare-result]
-commit = "off"
-build = "warn"
-push = "warn"
+commit = "error"
+build = "error"
+push = "error"
 
 [lints.no-bare-string]
-commit = "off"
-build = "warn"
-push = "warn"
+commit = "error"
+build = "error"
+push = "error"
 
 # New scope post-enforcement-tightening (2026-04-20): lints now scan every
 # src/*.rs via LintContext.all_sources (hiisi-digital/mockspace#4) AND skip
@@ -182,58 +182,58 @@ push = "warn"
 # at every gate; FLIP BACK TO `error` once #72 completes.
 
 [lints.no-bare-numeric]
-commit = "off"
-build = "warn"
-push = "warn"
+commit = "error"
+build = "error"
+push = "error"
 
 [lints.no-bare-option]
-commit = "off"
-build = "warn"
-push = "warn"
+commit = "error"
+build = "error"
+push = "error"
 
 [lints.arvo-types-only]
-commit = "off"
-build = "warn"
-push = "warn"
+commit = "error"
+build = "error"
+push = "error"
 
 [lints.no-public-raw-field]
-commit = "off"
-build = "warn"
-push = "warn"
+commit = "error"
+build = "error"
+push = "error"
 
 [lints.no-bare-vec]
-commit = "off"
-build = "warn"
-push = "warn"
+commit = "error"
+build = "error"
+push = "error"
 
 # Pre-hilavitkutin-str crates must gate any `const NAME: &str` / `static
 # NAME: &str` behind `#[cfg(debug_assertions)]`; hilavitkutin-str itself
 # declares the `static-string` category in [primitive-introductions]
 # below and is exempt (task #125).
 [lints.no-bare-static-str]
-commit = "off"
-build = "warn"
-push = "warn"
+commit = "warn"
+build = "error"
+push = "error"
 
 [lints.no-box]
-commit = "off"
-build = "warn"
-push = "warn"
+commit = "warn"
+build = "error"
+push = "error"
 
 [lints.no-float]
-commit = "off"
-build = "warn"
-push = "warn"
+commit = "error"
+build = "error"
+push = "error"
 
 [lints.no-manual-id]
-commit = "off"
-build = "off"
-push = "off"
+commit = "warn"
+build = "warn"
+push = "error"
 
 [lints.no-primitive-key]
-commit = "off"
-build = "off"
-push = "off"
+commit = "warn"
+build = "warn"
+push = "error"
 
 [lints.no-raw-error-outside-primitives]
 commit = "off"

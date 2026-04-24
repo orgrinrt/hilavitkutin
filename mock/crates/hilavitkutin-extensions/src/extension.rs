@@ -66,7 +66,7 @@ impl Extension {
     }
 
     /// Name slice as declared by the extension.
-    pub fn name(&self) -> &[u8] {
+    pub fn name(&self) -> &[u8] { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: byte slice view into the extension-declared name_ptr/name_len ABI fields; tracked: #206
         if self.descriptor.name_ptr.is_null() || self.descriptor.name_len == 0 {
             return &[];
         }

@@ -21,7 +21,7 @@ pub enum ExtensionError {
     /// The descriptor symbol resolved but pointed to invalid payload.
     DescriptorInvalid,
     /// Descriptor `abi_version` does not match host.
-    AbiVersionMismatch { expected: u32, got: u32 },
+    AbiVersionMismatch { expected: u32, got: u32 }, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-public-raw-field) reason: FFI pass-through of ExtensionDescriptor::abi_version u32 values; tracked: #206
     /// Host declines to accept the extension's semantic version (reserved
     /// for consumer-layer policies; the base host does not apply any).
     ExtensionVersionUnsupported,

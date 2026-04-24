@@ -14,7 +14,7 @@ unsafe extern "C" {
 }
 
 pub(crate) fn platform_load(
-    path: &[u8],
+    path: &[u8], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: null-terminated byte path for dlopen; byte string is the loader input unit; tracked: #206
 ) -> Outcome<*mut c_void, LinkError> {
     if !is_null_terminated(path) {
         return Outcome::Err(LinkError::PathNotFound);
@@ -32,7 +32,7 @@ pub(crate) fn platform_load(
 
 pub(crate) fn platform_resolve(
     handle: *mut c_void,
-    name: &[u8],
+    name: &[u8], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: null-terminated byte symbol name for dlsym; byte string is the resolver input unit; tracked: #206
 ) -> Outcome<*const c_void, LinkError> {
     if !is_null_terminated(name) {
         return Outcome::Err(LinkError::SymbolMissing);
@@ -58,7 +58,7 @@ pub(crate) fn platform_close(handle: *mut c_void) -> Outcome<(), LinkError> {
     }
 }
 
-fn is_null_terminated(bytes: &[u8]) -> bool {
+fn is_null_terminated(bytes: &[u8]) -> bool { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: helper over FFI byte string input; tracked: #206
     !bytes.is_empty() && bytes[bytes.len() - 1] == 0
 }
 

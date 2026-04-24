@@ -38,6 +38,10 @@ pub use traits::{CapabilityExport, ExtensionMeta, InitHandler, ShutdownHandler};
 
 #[cfg(test)]
 mod tests {
+    // Tests in this module validate the ABI layout itself: FNV-1a hash
+    // widths, `#[repr(u32)]` discriminants, struct sizes, transparent
+    // repr equivalence. They necessarily reference raw primitives
+    // because they verify the ABI contract. All tracked: #206.
     use super::*;
 
     #[test]
@@ -45,11 +49,11 @@ mod tests {
         // FNV-1a over "cap.a": stable bit-equality across platforms.
         const CAP: CapabilityId = CapabilityId::from_name("cap.a");
         // Recompute with an independent FNV-1a run to cross-check.
-        const FNV_OFFSET_BASIS: u64 = 0xcbf29ce484222325;
-        const FNV_PRIME: u64 = 0x100000001b3;
-        let mut h: u64 = FNV_OFFSET_BASIS;
+        const FNV_OFFSET_BASIS: u64 = 0xcbf29ce484222325; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test verifies FNV-1a algorithm width; tracked: #206
+        const FNV_PRIME: u64 = 0x100000001b3; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test verifies FNV-1a algorithm width; tracked: #206
+        let mut h: u64 = FNV_OFFSET_BASIS; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test FNV-1a state; tracked: #206
         for &b in b"cap.a" {
-            h ^= b as u64;
+            h ^= b as u64; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test FNV-1a step cast; tracked: #206
             h = h.wrapping_mul(FNV_PRIME);
         }
         assert_eq!(CAP.0, h);
@@ -93,9 +97,9 @@ mod tests {
         const CAP_Z: CapabilityId = CapabilityId::from_name("cap.z");
         static CAPS: &[CapabilityId] = &[CAP_X, CAP_Y];
         let host = ExtensionHost::new(CAPS);
-        assert!(host.has_capability(CAP_X));
-        assert!(host.has_capability(CAP_Y));
-        assert!(!host.has_capability(CAP_Z));
+        assert!(host.has_capability(CAP_X).0);
+        assert!(host.has_capability(CAP_Y).0);
+        assert!(!host.has_capability(CAP_Z).0);
     }
 
     #[test]
@@ -122,21 +126,21 @@ mod tests {
     fn capability_id_is_transparent_u64() {
         assert_eq!(
             core::mem::size_of::<CapabilityId>(),
-            core::mem::size_of::<u64>(),
+            core::mem::size_of::<u64>(), // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test asserts #[repr(transparent)] equivalence to u64; tracked: #206
         );
         assert_eq!(
             core::mem::align_of::<CapabilityId>(),
-            core::mem::align_of::<u64>(),
+            core::mem::align_of::<u64>(), // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test asserts #[repr(transparent)] equivalence to u64; tracked: #206
         );
     }
 
     #[test]
     fn extension_abi_status_is_u32_repr() {
-        assert_eq!(ExtensionAbiStatus::Ok as u32, 0);
-        assert_eq!(ExtensionAbiStatus::InitFailed as u32, 1);
-        assert_eq!(ExtensionAbiStatus::InvalidArg as u32, 2);
-        assert_eq!(ExtensionAbiStatus::NotSupported as u32, 3);
-        assert_eq!(ExtensionAbiStatus::Internal as u32, 4);
+        assert_eq!(ExtensionAbiStatus::Ok as u32, 0); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test asserts #[repr(u32)] discriminant; tracked: #206
+        assert_eq!(ExtensionAbiStatus::InitFailed as u32, 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: same; tracked: #206
+        assert_eq!(ExtensionAbiStatus::InvalidArg as u32, 2); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: same; tracked: #206
+        assert_eq!(ExtensionAbiStatus::NotSupported as u32, 3); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: same; tracked: #206
+        assert_eq!(ExtensionAbiStatus::Internal as u32, 4); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: same; tracked: #206
         assert_eq!(core::mem::size_of::<ExtensionAbiStatus>(), 4);
     }
 }
