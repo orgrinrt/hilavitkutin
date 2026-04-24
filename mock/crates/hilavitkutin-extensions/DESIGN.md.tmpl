@@ -96,6 +96,44 @@ Additional platforms can be added without changing the public API.
 wasm32 is explicitly out of scope — the model is different enough to
 warrant a separate transport.
 
+## Arbitrary-time linking invariant
+
+One non-negotiable assumption governs everything in this crate: any
+library can be loaded at any point in the host's execution, invoked
+immediately, and dropped at any time, independent of other libraries.
+The ABI, trait contracts, and typed symbol handle semantics all enforce
+this by construction.
+
+No global registry exists. The host never reads a static "currently
+loaded extensions" collection; every handle is explicit. No init
+ordering is assumed — extensions do not depend on other extensions
+being loaded first, and each loader handle is self-contained. The
+lifetime parameter on the typed symbol handle ties it to its loader,
+so dropping the loader at any time invalidates outstanding symbols at
+compile time. Lifecycle is strictly per-extension, never ecosystem-
+wide: a consumer may load extension A at time T, invoke it at T+1,
+drop it at T+2, load extension B at T+3, and that is correct use.
+
+The consumer-side obligation is that host code built on top of this
+crate tolerates arbitrary-time loading. Assumptions like "all plugins
+are loaded before any are invoked", "init ordering gates invocation",
+or "the full plugin ecosystem must be known before proceeding" are
+forbidden at the framework level. Any consumer that needs ecosystem-
+wide semantics builds them in its own higher layer.
+
+The base crate does not build runtime plugin discovery. Consumers
+that want "find all plugins of kind X" (loimu-style runtime
+expansion, viola-style grammar lookup) layer that abstraction on
+top. The base layer supports arbitrary-time-compatible contracts and
+nothing more, which keeps it reusable across hosts with different
+loading semantics.
+
+This invariant propagates forward into the upper plugin-host layer
+(`hilavitkutin-plugins`, planned separately) and into any downstream
+consumer contract crate (viola-plugin-abi, and so on). Every layer
+in the stack preserves the invariant or explicitly documents the
+loss.
+
 ## Non-scope
 
 This crate does not:

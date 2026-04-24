@@ -112,6 +112,33 @@ When iterating on changes crossing the arvo / hilavitkutin
 boundary, add a local `[patch]` temporarily — remove before
 pushing.
 
+### Arbitrary-time linking (consumer invariant)
+
+The plugin-host layer assumes any extension can be loaded, invoked,
+and dropped at arbitrary points in the host's execution, independent
+of other extensions. Consumer code that uses the plugin-host layer
+MUST tolerate that pattern. Assumptions like "all plugins are loaded
+before any are invoked", "init ordering gates invocation", or "the
+ecosystem of plugins must be known before proceeding" are forbidden
+at the framework level.
+
+The framework intentionally does not build runtime plugin discovery.
+If a downstream consumer (for example loimu) wants runtime discovery
+semantics, it builds that abstraction in its own consumer layer on
+top of `hilavitkutin-extensions` and `hilavitkutin-plugins`. The
+base layer supports this by enforcing only arbitrary-time-compatible
+contracts:
+
+- No global static registry reads in any public API.
+- Symbol handles carry loader lifetimes so dropping an extension
+  invalidates symbols at compile time.
+- Lifecycle functions are per-extension; no ecosystem-wide init gate.
+- Plugin descriptors never depend on siblings being loaded.
+
+The invariant propagates forward into `hilavitkutin-plugins` and into
+any downstream consumer contract crate. Every layer preserves it or
+explicitly documents where and why it is broken.
+
 ### Forbidden crate types
 
 - No `[lib] proc-macro = true` in any hilavitkutin crate.

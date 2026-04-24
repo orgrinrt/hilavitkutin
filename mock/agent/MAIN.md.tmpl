@@ -130,6 +130,16 @@ commit time.
   `hilavitkutin-extensions` / `hilavitkutin-plugins` is the
   permitted mechanism and is not the same as the banned
   linker-magic registration pattern.
+- Do not build runtime plugin discovery into the plugin-host layer.
+  Downstream consumer ecosystems (loimu's runtime expansion, viola's
+  grammar set, and so on) build that abstraction on top.
+  `hilavitkutin-extensions` and `hilavitkutin-plugins` support
+  arbitrary-time loading of individual plugins and no more.
+- Do not design ABI surfaces that assume "all plugins loaded before
+  any invoked" or any similar ecosystem-wide gate. The framework's
+  assumption is that any extension loads, runs, and drops at
+  arbitrary points independent of siblings. Consumer code MUST
+  tolerate this; framework code MUST enforce it.
 - Do not use the dead vocabulary terms (`chain`, `chain_group`,
   `partition`, `archetype`, `entity`, `row`, `order`) for any
   engine-domain concept.
