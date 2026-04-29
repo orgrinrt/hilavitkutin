@@ -7,8 +7,7 @@
 //! Signatures are stable: downstream rounds implement a body and
 //! add tests, without changing the surface.
 
-use arvo::USize;
-use arvo::newtype::Bool;
+use arvo::{Bool, USize};
 
 use super::column::ColumnClassification;
 use super::dirty::DirtyMask;

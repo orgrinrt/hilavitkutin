@@ -12,6 +12,7 @@
 
 use arvo_bits::{Bits, Hot};
 use arvo_hash::ContentHash;
+use arvo_narrow::Narrow;
 use hilavitkutin_str::{const_fnv1a, ArenaInterner, Str, StringInterner};
 use notko::{Maybe, Outcome};
 
@@ -25,12 +26,12 @@ use crate::string_table::StringTable;
 /// via the interner and re-hash the bytes.
 pub fn evict_str<A: ArenaInterner>(handle: Str, interner: &StringInterner<A>) -> ContentHash {
     if handle.is_const().0 {
-        ContentHash::new(handle.id().bits())
+        ContentHash::from_raw(handle.id().to_raw() as u64) // lint:allow(no-bare-numeric) reason: Bits<28, Hot> u32 container widened to ContentHash u64; arvo lacks a Widen counterpart to Narrow; tracked: #290
     } else {
         let s = interner
             .resolve(handle)
             .unwrap();
-        ContentHash::new(const_fnv1a(s) & Str::ID_MASK.bits())
+        ContentHash::from_raw(const_fnv1a(s) & Str::ID_MASK.to_raw() as u64) // lint:allow(no-bare-numeric) reason: u32 ID_MASK widened to u64 to AND with the u64 hash; arvo lacks a Widen counterpart to Narrow; tracked: #290
     }
 }
 
@@ -45,8 +46,7 @@ pub fn inject_str<A: ArenaInterner>(
     interner: &StringInterner<A>,
     string_table: &StringTable,
 ) -> Outcome<Str, PersistenceError> {
-    let masked_bits: Bits<28, Hot> =
-        (content_hash.bits() & Str::ID_MASK.bits()).into();
+    let masked_bits: Bits<28, Hot> = content_hash.narrow_to::<28>();
 
     // Consult const table via the interner. A const hit returns the
     // const handle unchanged; a miss falls through to the runtime
@@ -54,7 +54,7 @@ pub fn inject_str<A: ArenaInterner>(
     let candidate = Str::__make(masked_bits);
     if let Maybe::Is(resolved) = interner.resolve(candidate) {
         // Confirm the const entry hashes back to the same masked id.
-        let back: Bits<28, Hot> = (const_fnv1a(resolved) & Str::ID_MASK.bits()).into();
+        let back: Bits<28, Hot> = Bits::<64, Hot>::from_raw(const_fnv1a(resolved)).narrow_to::<28>();
         if back == masked_bits {
             return Outcome::Ok(candidate);
         }
@@ -62,7 +62,8 @@ pub fn inject_str<A: ArenaInterner>(
 
     // Runtime path: look up bytes in the string table, intern via
     // the arena, return a runtime handle.
-    let bytes = match string_table.lookup(ContentHash::new(masked_bits.bits())) {
+    let lookup_hash = ContentHash::from_raw(masked_bits.to_raw() as u64); // lint:allow(no-bare-numeric) reason: Bits<28, Hot> u32 widened to ContentHash u64 for table lookup; arvo lacks a Widen counterpart to Narrow; tracked: #290
+    let bytes = match string_table.lookup(lookup_hash) {
         Maybe::Is(b) => b,
         Maybe::Isnt => return Outcome::Err(PersistenceError::Missing),
     };

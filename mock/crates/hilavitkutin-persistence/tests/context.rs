@@ -1,6 +1,6 @@
 //! PersistenceContext accessor roundtrip via test-local stubs.
 
-use arvo::newtype::{Bool, USize};
+use arvo::{Bool, USize};
 use hilavitkutin_api::MemoryProviderApi;
 use hilavitkutin_persistence::PersistenceContext;
 use hilavitkutin_str::{ArenaInterner, StringInterner};

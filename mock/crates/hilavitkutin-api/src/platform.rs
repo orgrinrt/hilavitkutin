@@ -4,16 +4,16 @@
 //! allocation and protection, thread-pool spawn and sizing, and a
 //! monotonic clock. Consumed by monomorphisation — no `dyn`.
 
-use arvo::newtype::{Bool, FBits, IBits, USize};
 use arvo::strategy::Hot;
 use arvo::ufixed::UFixed;
+use arvo::{fbits, ibits, Bool, USize};
 
 /// Nanoseconds since a platform-defined epoch.
 ///
 /// Monotonic instant type returned by `ClockApi::now_ns`. Backed by
 /// `arvo::UFixed<64, 0, Hot>`; the `Hot` strategy dispatches to the
 /// host's native 64-bit unsigned.
-pub type Nanos = UFixed<{ IBits(64) }, { FBits::ZERO }, Hot>;
+pub type Nanos = UFixed<{ ibits(64) }, { fbits(0) }, Hot>;
 
 /// Memory provider.
 ///

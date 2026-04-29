@@ -5,10 +5,9 @@
 //! type auto-qualifies with `BIT_WIDTH = size_of * 8`. Sub-byte arvo
 //! types specialise to their true bit width.
 
-use arvo::newtype::{FBits, IBits};
 use arvo::strategy::Hot;
 use arvo::ufixed::UFixed;
-use arvo::USize;
+use arvo::{fbits, ibits, USize};
 
 /// Types that can be stored in a `Column<T>`.
 ///
@@ -29,14 +28,14 @@ impl<T: Copy + 'static> ColumnValue for T {
 // narrows to byte-aligned widths; these are the packed column
 // types the engine bitpacks.
 
-impl ColumnValue for UFixed<{ IBits(1) }, { FBits::ZERO }, Hot> {
+impl ColumnValue for UFixed<{ ibits(1) }, { fbits(0) }, Hot> {
     const BIT_WIDTH: USize = USize(1);
 }
 
-impl ColumnValue for UFixed<{ IBits(2) }, { FBits::ZERO }, Hot> {
+impl ColumnValue for UFixed<{ ibits(2) }, { fbits(0) }, Hot> {
     const BIT_WIDTH: USize = USize(2);
 }
 
-impl ColumnValue for UFixed<{ IBits(4) }, { FBits::ZERO }, Hot> {
+impl ColumnValue for UFixed<{ ibits(4) }, { fbits(0) }, Hot> {
     const BIT_WIDTH: USize = USize(4);
 }
