@@ -55,7 +55,7 @@ fn into_str_interns_static_str() {
     let interner = StringInterner::new(NullArena::new());
     let out: Str = "into-str-new-runtime".into_str(&interner);
     // Not previously declared in any str_const!, so runtime.
-    assert!(out.is_runtime());
+    assert!(out.is_runtime().0);
 }
 
 #[test]
@@ -64,5 +64,5 @@ fn into_str_short_circuits_on_known_const() {
     let interner = StringInterner::new(NullArena::new());
     let out: Str = "ergo-const-hit".into_str(&interner);
     assert_eq!(out, c);
-    assert!(out.is_const());
+    assert!(out.is_const().0);
 }

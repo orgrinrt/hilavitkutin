@@ -12,8 +12,9 @@ hilavitkutin-api.workspace = true
 
 # Primitive-vocabulary deps (sweep #72, round 202604201319):
 arvo.workspace = true           # USize, Bool, Cap at pub API boundary
-arvo-bits.workspace = true      # Bits<28> for masked id arithmetic
-arvo-hash.workspace = true      # ContentHash = Bits<28>
+arvo-bits.workspace = true      # Bits<N> for masked id arithmetic
+arvo-hash.workspace = true      # ContentHash = Bits<64, Hot>
+arvo-narrow.workspace = true    # Narrow<T> trait for Bits<M> -> Bits<N> projection
 notko.workspace = true          # Maybe, Outcome
 
 # rkyv pulled in by follow-up round; skeleton ships without it.

@@ -1,7 +1,8 @@
 //! `ArenaInterner` + `StringInterner<A>` — runtime interning with
 //! const-table short-circuit.
 
-use arvo_bits::Bits;
+use arvo_bits::{Bits, Hot};
+use arvo_narrow::Narrow;
 use notko::Maybe;
 
 use crate::handle::Str;
@@ -41,7 +42,7 @@ impl<A: ArenaInterner> StringInterner<A> { // lint:allow(no-alloc) reason: inter
             return h;
         }
         let id = self.arena.arena_intern(s);
-        Str::__runtime((id as u64).into()) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: u32 id widened to u64 for `Bits<28>::from`; tracked: #72
+        Str::__runtime(Bits::<28, Hot>::from_raw(id))
     }
 
     /// Intern a `'static` string. Same semantics as `intern`; the
@@ -51,7 +52,7 @@ impl<A: ArenaInterner> StringInterner<A> { // lint:allow(no-alloc) reason: inter
             return h;
         }
         let id = self.arena.arena_intern(s);
-        Str::__runtime((id as u64).into()) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: u32 id widened to u64 for `Bits<28>::from`; tracked: #72
+        Str::__runtime(Bits::<28, Hot>::from_raw(id))
     }
 
     /// Resolve a handle back to a string.
@@ -66,7 +67,7 @@ impl<A: ArenaInterner> StringInterner<A> { // lint:allow(no-alloc) reason: inter
         if s.is_const().0 {
             lookup_const_by_handle(s)
         } else {
-            Maybe::Is(self.arena.arena_resolve(s.id().bits() as u32)) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: u32 cast from Bits back to id width for arena resolve; tracked: #72
+            Maybe::Is(self.arena.arena_resolve(s.id().to_raw()))
         }
     }
 }
@@ -74,7 +75,7 @@ impl<A: ArenaInterner> StringInterner<A> { // lint:allow(no-alloc) reason: inter
 /// Linear scan for a const-section entry matching `s` (by hash, then
 /// by content to rule out 28-bit truncation collisions).
 fn lookup_const_by_value(s: &str) -> Maybe<Str> { // lint:allow(no-bare-string) reason: interner-internal &str math; mirrors boundary width; tracked: #72
-    let want = Str::__make((const_fnv1a(s) & 0x0FFF_FFFF).into());
+    let want = Str::__make(Bits::<64, Hot>::from_raw(const_fnv1a(s)).narrow_to::<28>());
     for entry in static_entries() {
         if entry.hash == want && str_eq(entry.value, s) {
             return Maybe::Is(entry.hash);

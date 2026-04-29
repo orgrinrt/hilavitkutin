@@ -10,8 +10,7 @@
 //! Callers see a stable surface (`empty` / `set` / `contains` /
 //! `overlaps` / `union_with`) across that swap.
 
-use arvo::USize;
-use arvo::newtype::Bool;
+use arvo::{Bool, USize};
 
 /// Bit pattern identifying which stores (indexed 0..MAX_STORES) a
 /// WU reads or writes. Skeleton supports MAX_STORES ≤ 64.
