@@ -5,7 +5,7 @@
 
 #![cfg(feature = "platform-std")]
 
-use arvo::newtype::{Bool, USize};
+use arvo::{Bool, USize};
 use hilavitkutin::{StdClock, StdMemoryProvider};
 use hilavitkutin_api::platform::{ClockApi, MemoryProviderApi};
 

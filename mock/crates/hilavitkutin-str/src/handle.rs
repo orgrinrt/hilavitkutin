@@ -5,12 +5,12 @@
 //! - bits 30-28: reserved flags
 //! - bits 27-0: 28-bit ID (268M unique entries)
 //!
-//! The layout is declared via `arvo_bits::bitfield!`, which
-//! generates the `#[repr(transparent)]` struct over `Bits<32, Hot>`
-//! plus per-field accessors and setters typed as `Bits<W, Hot>`.
+//! The layout is declared via `arvo::bitfield!`, which generates
+//! the `#[repr(transparent)]` struct over `Bits<32, Hot>` plus
+//! per-field accessors and setters typed as `Bits<W, Hot>`.
 
-use arvo::newtype::Bool;
-use arvo_bits::{bitfield, Bit, Bits, Hot};
+use arvo::{bitfield, Bool};
+use arvo_bits::{Bit, Bits, Hot};
 
 bitfield! {
     /// Internal layout carrier for `Str`. Not part of the public API.
@@ -49,12 +49,12 @@ impl Str {
     /// use — `StringInterner` is the only intended caller.
     #[doc(hidden)]
     pub const fn __runtime(id: Bits<28, Hot>) -> Self {
-        Self(StrLayout::new().with_id(id).with_origin(Bit::<Hot>::new(1)))
+        Self(StrLayout::new().with_id(id).with_origin(Bit::<Hot>::from_raw(1)))
     }
 
     /// `true` if this handle was produced by `str_const!()`.
     pub const fn is_const(self) -> Bool {
-        Bool(self.0.origin().bits() == 0)
+        Bool(self.0.origin().to_raw() == 0)
     }
 
     /// `true` if this handle was produced by the runtime interner.

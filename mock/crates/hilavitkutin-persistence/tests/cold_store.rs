@@ -1,6 +1,6 @@
 //! ColdStore skeleton method surface.
 
-use arvo::newtype::{Bool, USize};
+use arvo::{Bool, USize};
 use hilavitkutin_api::MemoryProviderApi;
 use hilavitkutin_persistence::{ColdStore, ColumnCount, PersistenceContext, PersistenceError};
 use hilavitkutin_str::{ArenaInterner, StringInterner};
