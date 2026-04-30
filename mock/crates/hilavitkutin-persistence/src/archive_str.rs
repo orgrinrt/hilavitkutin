@@ -12,7 +12,7 @@
 
 use arvo_bits::{Bits, Hot};
 use arvo_hash::ContentHash;
-use arvo_narrow::Narrow;
+use arvo_refit::{Narrow, Widen};
 use hilavitkutin_str::{const_fnv1a, ArenaInterner, Str, StringInterner};
 use notko::{Maybe, Outcome};
 
@@ -26,12 +26,12 @@ use crate::string_table::StringTable;
 /// via the interner and re-hash the bytes.
 pub fn evict_str<A: ArenaInterner>(handle: Str, interner: &StringInterner<A>) -> ContentHash {
     if handle.is_const().0 {
-        ContentHash::from_raw(handle.id().to_raw() as u64) // lint:allow(no-bare-numeric) reason: Bits<28, Hot> u32 container widened to ContentHash u64; arvo lacks a Widen counterpart to Narrow; tracked: #290
+        ContentHash::from_raw(handle.id().widen_to())
     } else {
         let s = interner
             .resolve(handle)
             .unwrap();
-        ContentHash::from_raw(const_fnv1a(s) & (Str::ID_MASK.to_raw() as u64)) // lint:allow(no-bare-numeric) reason: u32 ID_MASK widened to u64 to AND with the u64 hash; arvo lacks a Widen counterpart to Narrow; tracked: #290
+        ContentHash::from_raw(const_fnv1a(s) & <Bits<32> as Widen<u64>>::widen_to(Str::ID_MASK))
     }
 }
 
@@ -62,7 +62,7 @@ pub fn inject_str<A: ArenaInterner>(
 
     // Runtime path: look up bytes in the string table, intern via
     // the arena, return a runtime handle.
-    let lookup_hash = ContentHash::from_raw(masked_bits.to_raw() as u64); // lint:allow(no-bare-numeric) reason: Bits<28, Hot> u32 widened to ContentHash u64 for table lookup; arvo lacks a Widen counterpart to Narrow; tracked: #290
+    let lookup_hash = ContentHash::from_raw(masked_bits.widen_to());
     let bytes = match string_table.lookup(lookup_hash) {
         Maybe::Is(b) => b,
         Maybe::Isnt => return Outcome::Err(PersistenceError::Missing),

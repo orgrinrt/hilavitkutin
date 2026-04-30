@@ -2,7 +2,7 @@
 //! const-table short-circuit.
 
 use arvo_bits::{Bits, Hot};
-use arvo_narrow::Narrow;
+use arvo_refit::Narrow;
 use notko::Maybe;
 
 use crate::handle::Str;
