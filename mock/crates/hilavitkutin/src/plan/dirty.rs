@@ -10,8 +10,7 @@
 //! on `MAX_STORES`: Mask64 for ≤ 64, Mask256 for ≤ 256, const-
 //! generic `Mask<N>` for larger (tracked as arvo BACKLOG).
 
-use arvo::USize;
-use arvo::newtype::Bool;
+use arvo::{Bool, USize};
 
 /// Per-store dirty bit. Same shape as `AccessMask` — kept distinct
 /// so `overlaps`-vs-access checks and `union_with`-vs-dirty checks

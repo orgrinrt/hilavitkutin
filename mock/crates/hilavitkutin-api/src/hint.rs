@@ -9,7 +9,7 @@
 //! Higher discriminant = higher priority. Tie-break by most deps
 //! first, then deterministic fallback.
 
-use arvo::{FBits, IBits, UFixed, strategy::Hot};
+use arvo::{fbits, ibits, strategy::Hot, UFixed};
 
 mod hint_sealed {
     /// Hint-subsystem private seal. Separate from the crate-level
@@ -19,13 +19,13 @@ mod hint_sealed {
 }
 
 /// How soon the WU must run. 4 levels fit in 2 bits.
-pub type Urgency = UFixed<{ IBits(2) }, { FBits::ZERO }, Hot>;
+pub type Urgency = UFixed<{ ibits(2) }, { fbits(0) }, Hot>;
 
 /// Whether the WU can be split or paused. 3 levels fit in 2 bits.
-pub type Divisibility = UFixed<{ IBits(2) }, { FBits::ZERO }, Hot>;
+pub type Divisibility = UFixed<{ ibits(2) }, { fbits(0) }, Hot>;
 
 /// Relative importance of the WU's output. 5 levels fit in 3 bits.
-pub type Significance = UFixed<{ IBits(3) }, { FBits::ZERO }, Hot>;
+pub type Significance = UFixed<{ ibits(3) }, { fbits(0) }, Hot>;
 
 /// Axis 1: how soon the WU must run.
 pub trait UrgencyValue: hint_sealed::Sealed + 'static {

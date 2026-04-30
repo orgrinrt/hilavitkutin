@@ -3,13 +3,13 @@
 //! `StoreId` is a dense plan-time index into the store table. The
 //! scheduler operates on `AccessMask` bitwords; one bit per store.
 
-use arvo::newtype::USize;
+use arvo::USize;
 use arvo_bitmask::Mask64;
 
 /// Dense store index assigned at plan time.
 ///
-/// Wraps `arvo::newtype::USize` so boundary types stay inside the
-/// arvo newtype family. Transparent repr means no wrapping cost at
+/// Wraps `arvo::USize` so boundary types stay inside the arvo
+/// newtype family. Transparent repr means no wrapping cost at
 /// runtime.
 #[repr(transparent)]
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]

@@ -8,7 +8,7 @@
 use core::ffi::c_void;
 use core::ptr;
 
-use arvo::newtype::{Bool, USize};
+use arvo::{Bool, USize};
 use hilavitkutin_api::platform::{ClockApi, MemoryProviderApi, Nanos, ThreadPoolApi};
 
 /// mmap/munmap-backed memory provider.

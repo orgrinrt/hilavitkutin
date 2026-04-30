@@ -35,7 +35,7 @@ pub struct ColumnMeta {
 impl ColumnMeta {
     /// Default empty-column metadata.
     pub const EMPTY: Self = Self {
-        name_hash: ContentHash::new(0),
+        name_hash: ContentHash::from_raw(0),
         bit_width: BitWidth::new(0),
         cardinality: Cardinality(USize(0)),
     };
@@ -66,7 +66,7 @@ pub struct TableMeta {
 impl TableMeta {
     /// Default empty-table metadata.
     pub const EMPTY: Self = Self {
-        name_hash: ContentHash::new(0),
+        name_hash: ContentHash::from_raw(0),
         version: SchemaVersion::new(0),
         row_count: RowCount(USize(0)),
         columns: [ColumnMeta::EMPTY; MAX_COLUMNS_PER_TABLE],

@@ -9,4 +9,5 @@ repository.workspace = true
 [dependencies]
 arvo.workspace = true
 arvo-bits.workspace = true
+arvo-refit.workspace = true
 notko.workspace = true

@@ -5,9 +5,9 @@
 #![feature(generic_const_exprs)]
 #![allow(incomplete_features)]
 
-use arvo::newtype::{FBits, IBits};
 use arvo::strategy::Hot;
 use arvo::ufixed::UFixed;
+use arvo::{fbits, ibits};
 use hilavitkutin_api::ColumnValue;
 
 #[test]
@@ -33,7 +33,7 @@ fn blanket_u64() {
 #[test]
 fn specialised_one_bit() {
     assert_eq!(
-        <UFixed<{ IBits(1) }, { FBits::ZERO }, Hot> as ColumnValue>::BIT_WIDTH,
+        <UFixed<{ ibits(1) }, { fbits(0) }, Hot> as ColumnValue>::BIT_WIDTH,
         1
     );
 }
@@ -41,7 +41,7 @@ fn specialised_one_bit() {
 #[test]
 fn specialised_two_bit() {
     assert_eq!(
-        <UFixed<{ IBits(2) }, { FBits::ZERO }, Hot> as ColumnValue>::BIT_WIDTH,
+        <UFixed<{ ibits(2) }, { fbits(0) }, Hot> as ColumnValue>::BIT_WIDTH,
         2
     );
 }
@@ -49,7 +49,7 @@ fn specialised_two_bit() {
 #[test]
 fn specialised_four_bit() {
     assert_eq!(
-        <UFixed<{ IBits(4) }, { FBits::ZERO }, Hot> as ColumnValue>::BIT_WIDTH,
+        <UFixed<{ ibits(4) }, { fbits(0) }, Hot> as ColumnValue>::BIT_WIDTH,
         4
     );
 }

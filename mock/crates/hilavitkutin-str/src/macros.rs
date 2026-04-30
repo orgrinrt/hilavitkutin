@@ -19,13 +19,13 @@ macro_rules! str_const {
             unsafe(link_section = "__DATA,__hvkstr")
         )]
         static __ENTRY: $crate::StaticStrEntry = $crate::StaticStrEntry {
-            hash: $crate::Str::__make(::arvo_bits::Bits::<28>::new(
-                $crate::const_fnv1a($s) & 0x0FFF_FFFF,
+            hash: $crate::Str::__make(::arvo_bits::Bits::<28>::from_narrowed(
+                $crate::const_fnv1a($s),
             )),
             value: $s,
         };
-        $crate::Str::__make(::arvo_bits::Bits::<28>::new(
-            $crate::const_fnv1a($s) & 0x0FFF_FFFF,
+        $crate::Str::__make(::arvo_bits::Bits::<28>::from_narrowed(
+            $crate::const_fnv1a($s),
         ))
     }};
 }
