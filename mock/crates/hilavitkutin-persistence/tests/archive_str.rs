@@ -47,7 +47,7 @@ impl ArenaInterner for VecInterner {
 }
 
 fn content_hash(s: &str) -> ContentHash {
-    ContentHash::from_raw(const_fnv1a(s) & Str::ID_MASK.to_raw() as u64) // lint:allow(no-bare-numeric) reason: u32 ID_MASK widened to u64 to AND with u64 hash; arvo lacks a Widen counterpart to Narrow; tracked: #290
+    ContentHash::from_raw(const_fnv1a(s) & (Str::ID_MASK.to_raw() as u64)) // lint:allow(no-bare-numeric) reason: u32 ID_MASK widened to u64 to AND with u64 hash; arvo lacks a Widen counterpart to Narrow; tracked: #290
 }
 
 #[test]

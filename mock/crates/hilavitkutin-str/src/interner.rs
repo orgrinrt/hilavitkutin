@@ -42,6 +42,9 @@ impl<A: ArenaInterner> StringInterner<A> { // lint:allow(no-alloc) reason: inter
             return h;
         }
         let id = self.arena.arena_intern(s);
+        // Bits::from_raw is transparent; the 28-bit invariant is enforced by
+        // StrLayout::with_id (bitfield setter masks to field width). See the
+        // `make_masks_to_28_bits` test in tests/handle.rs for the contract.
         Str::__runtime(Bits::<28, Hot>::from_raw(id))
     }
 
@@ -52,6 +55,7 @@ impl<A: ArenaInterner> StringInterner<A> { // lint:allow(no-alloc) reason: inter
             return h;
         }
         let id = self.arena.arena_intern(s);
+        // Same 28-bit invariant as `intern`; enforced by StrLayout::with_id.
         Str::__runtime(Bits::<28, Hot>::from_raw(id))
     }
 

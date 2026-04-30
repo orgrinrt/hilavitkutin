@@ -20,7 +20,7 @@ macro_rules! str_const {
         )]
         static __ENTRY: $crate::StaticStrEntry = $crate::StaticStrEntry {
             hash: $crate::Str::__make(::arvo_bits::Bits::<28>::from_raw(
-                ($crate::const_fnv1a($s) & 0x0FFF_FFFF) as u32, // lint:allow(no-bare-numeric) reason: hash truncated to 28 bits then narrowed to Bits<28, Hot> u32 container; arvo lacks a Widen counterpart to Narrow; tracked: #290
+                ($crate::const_fnv1a($s) & 0x0FFF_FFFF) as u32, // lint:allow(no-bare-numeric) reason: hash 28-bit-masked then narrowed to Bits<28, Hot> u32 container; arvo lacks a Widen counterpart to Narrow; tracked: #290
             )),
             value: $s,
         };
