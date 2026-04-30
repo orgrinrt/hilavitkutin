@@ -6,7 +6,7 @@
 
 #![no_std]
 
-use arvo::newtype::USize;
+use arvo::USize;
 use hilavitkutin_api::{
     AccessSet, Always, BatchApi, Column, ColumnReaderApi, ColumnValue, ColumnWriterApi,
     Contains, EachApi, HasBatch, HasColumnReader, HasColumnWriter, HasEach, HasReduce,

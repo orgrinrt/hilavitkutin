@@ -9,7 +9,7 @@ extern crate std;
 
 use core::ptr;
 
-use arvo::newtype::{Bool, USize};
+use arvo::{Bool, USize};
 use hilavitkutin_api::platform::{ClockApi, MemoryProviderApi, ThreadPoolApi};
 use hilavitkutin_api::Nanos;
 use std::alloc::{alloc, dealloc, Layout};

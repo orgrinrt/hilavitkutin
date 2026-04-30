@@ -47,16 +47,16 @@ impl ArenaInterner for VecInterner {
 }
 
 fn content_hash(s: &str) -> ContentHash {
-    ContentHash::new(const_fnv1a(s) & Str::ID_MASK.bits())
+    ContentHash::from_raw(const_fnv1a(s) & (Str::ID_MASK.to_raw() as u64)) // lint:allow(no-bare-numeric) reason: u32 ID_MASK widened to u64 to AND with u64 hash; arvo lacks a Widen counterpart to Narrow; tracked: #290
 }
 
 #[test]
 fn evict_const_is_identity() {
     let interner = StringInterner::new(VecInterner::new());
-    let h = Str::__make(Bits::<28>::new(0x0012_3456));
+    let h = Str::__make(Bits::<28>::from_raw(0x0012_3456));
     assert!(h.is_const());
     let evicted = evict_str(h, &interner);
-    assert_eq!(evicted, ContentHash::new(0x0012_3456));
+    assert_eq!(evicted, ContentHash::from_raw(0x0012_3456));
 }
 
 #[test]
@@ -72,7 +72,7 @@ fn evict_runtime_hashes_bytes() {
 fn inject_missing_hash_returns_missing() {
     let interner = StringInterner::new(VecInterner::new());
     let table = StringTable::default();
-    let r = inject_str(ContentHash::new(0x0042_0042), &interner, &table);
+    let r = inject_str(ContentHash::from_raw(0x0042_0042), &interner, &table);
     match r {
         Outcome::Err(e) => assert_eq!(e, PersistenceError::Missing),
         Outcome::Ok(_) => panic!("expected missing"),
@@ -136,14 +136,14 @@ fn evict_then_inject_runtime_roundtrips() {
 #[test]
 fn string_table_lookup_misses_are_isnt() {
     let table = StringTable::default();
-    assert!(table.lookup(ContentHash::new(0x1234_5678)).isnt());
+    assert!(table.lookup(ContentHash::from_raw(0x1234_5678)).isnt());
 }
 
 #[test]
 fn string_table_lookup_hits_return_bytes() {
     let payload: &'static [u8] = b"lookup-hit";
     let entries: &'static [StringTableEntry] = Box::leak(Box::new([StringTableEntry {
-        content_hash: ContentHash::new(0xABCD),
+        content_hash: ContentHash::from_raw(0xABCD),
         bytes_offset: BufferOffset(USize(0)),
         bytes_len: BufferLen(USize(payload.len())),
     }]));
@@ -151,7 +151,7 @@ fn string_table_lookup_hits_return_bytes() {
         entries,
         buffer: payload,
     };
-    match table.lookup(ContentHash::new(0xABCD)) {
+    match table.lookup(ContentHash::from_raw(0xABCD)) {
         Maybe::Is(b) => assert_eq!(b, &payload[..]),
         Maybe::Isnt => panic!("expected hit"),
     }

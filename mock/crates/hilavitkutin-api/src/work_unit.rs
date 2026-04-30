@@ -6,7 +6,7 @@
 
 use core::marker::PhantomData;
 
-use arvo::newtype::Bool;
+use arvo::Bool;
 
 use crate::access::AccessSet;
 use crate::context::{
