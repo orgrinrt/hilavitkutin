@@ -2,8 +2,7 @@
 //!
 //! One morsel's slice of the global record index space.
 
-use arvo::newtype::Bool;
-use arvo::USize;
+use arvo::{Bool, USize};
 
 /// Half-open `[start, start + len)` record range for one morsel.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]

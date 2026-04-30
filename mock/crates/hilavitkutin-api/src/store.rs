@@ -8,7 +8,7 @@
 
 use core::marker::PhantomData;
 
-use arvo::newtype::Cap;
+use arvo::Cap;
 
 use crate::column_value::ColumnValue;
 

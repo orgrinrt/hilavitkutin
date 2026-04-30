@@ -4,8 +4,7 @@
 //! estimate + commutativity flags. Populated by the scheduler
 //! builder during WU registration (domain 11).
 
-use arvo::USize;
-use arvo::newtype::Bool;
+use arvo::{Bool, USize};
 
 use super::access::AccessMask;
 

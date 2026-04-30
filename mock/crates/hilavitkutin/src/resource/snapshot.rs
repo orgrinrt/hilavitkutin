@@ -5,17 +5,16 @@
 //! data → promotes to registers. Zero resource memory ops in
 //! hot loop.
 
-use arvo::newtype::{FBits, IBits};
 use arvo::strategy::Hot;
 use arvo::ufixed::UFixed;
-use arvo::USize;
+use arvo::{fbits, ibits, USize};
 
 /// Placeholder slot payload. Real storage lives in per-width
 /// variants landing with 5a2 / 5a3 once the WU data layout needs
 /// surface.
 #[derive(Copy, Clone, Default)]
 #[repr(transparent)]
-pub struct Slot(pub UFixed<{ IBits(64) }, { FBits::ZERO }, Hot>);
+pub struct Slot(pub UFixed<{ ibits(64) }, { fbits(0) }, Hot>);
 
 /// Const-sized stack-local snapshot of up to `N` resource slots.
 #[derive(Copy, Clone)]

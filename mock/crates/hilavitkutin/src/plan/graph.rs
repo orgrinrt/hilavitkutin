@@ -4,8 +4,7 @@
 //! graph CSR once arvo-graph gains const-generic support (BACKLOG).
 //! Surface API (`has_edge` / `add_edge`) is stable across the swap.
 
-use arvo::USize;
-use arvo::newtype::Bool;
+use arvo::{Bool, USize};
 use core::fmt;
 
 /// Dense adjacency matrix over `MAX_UNITS` nodes.
