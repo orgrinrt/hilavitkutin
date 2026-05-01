@@ -22,6 +22,7 @@ mod sealed {
 }
 
 pub mod access;
+pub mod builder;
 pub mod capability;
 pub mod codec;
 pub mod column_value;
@@ -34,6 +35,7 @@ pub mod store;
 pub mod work_unit;
 
 pub use access::{AccessSet, Contains};
+pub use builder::{Buildable, WuSatisfied};
 pub use capability::{BoundedPush, BulkPush, Capacity, Full, Len, Push};
 pub use codec::{DecodeError, Decoder, DecoderExt, Encoder, EncoderExt};
 pub use column_value::ColumnValue;

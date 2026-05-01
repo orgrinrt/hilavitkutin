@@ -175,3 +175,10 @@ impl_contains!((T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11), T8);
 impl_contains!((T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11), T9);
 impl_contains!((T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11), T10);
 impl_contains!((T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11), T11);
+
+// Cons-list recursion. The scheduler builder accumulates Stores
+// as (H, R) at every step, where R is itself a cons-list. The
+// arity-2 `Contains<T0> for (T0, T1)` impl above covers head
+// matches. This recursive impl propagates membership down the
+// tail. `#[marker]` on `Contains` permits the overlap.
+impl<H: 'static, R: 'static, T: 'static> Contains<T> for (H, R) where R: Contains<T> {}
