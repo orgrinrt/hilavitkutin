@@ -1,0 +1,9 @@
+### hilavitkutin-kit
+
+Kit preset trait for the hilavitkutin scheduler builder. `no_std`,
+zero deps. Ships exactly one trait, `Kit<B>`, that lets a consumer
+bundle a related set of `Resource<T>` / `Column<T>` / `Virtual<T>`
+registrations into a single `.add_kit(k)` call. The engine
+(`hilavitkutin`) depends on this crate; `hilavitkutin-providers`
+will ship a default set of Kits against this trait. Bevy-style
+plugin pattern; raw builder chains remain the surface.

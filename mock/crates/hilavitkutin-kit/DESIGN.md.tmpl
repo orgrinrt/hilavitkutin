@@ -1,0 +1,146 @@
+# hilavitkutin-kit Design Overview
+
+`#![no_std]`, zero deps. Ships exactly one trait, `Kit<B>`. The
+hilavitkutin engine depends on this crate so its `SchedulerBuilder`
+can offer `.add_kit(k)`; the reverse direction does not exist. A
+Kit is a preset that bundles related `Resource<T>` / `Column<T>` /
+`Virtual<T>` registrations under a single name, so a consumer can
+write `.add_kit(InternerKit)` instead of repeating five `.resource`
+calls every time.
+
+## Purpose
+
+The scheduler builder accumulates type-state across each
+registration call. Most consumer apps register the same handful of
+stores together: an interner with its arena, a workspace plus a
+files column, a clock plus a thread pool. A Kit captures one such
+bundle. Authoring a Kit is just declaring the input builder type
+the Kit accepts, the output builder type with the Kit's
+contributions prepended, and an `install` body that calls the
+builder's existing methods.
+
+The crate exists separately so the Kit shape lives below the
+engine but above the api / ctx layer. A consumer can author Kits
+without pulling the engine in. Future Kit-related helpers (if any
+recurring patterns surface) ship here.
+
+## The trait
+
+```rust
+pub trait Kit<B> {
+    type Output;
+    fn install(self, builder: B) -> Self::Output;
+}
+```
+
+`B` is the input builder type. `Self::Output` is the resulting
+builder type after the Kit's registrations have been applied. The
+type-state evolves through whatever mechanism the builder already
+has (the engine's `SchedulerBuilder<MAX_*, Wus, Stores>` accumulates
+WUs into `Wus` and stores into `Stores`; see the engine DESIGN).
+
+A Kit's `install` body is typically a chain like
+`builder.resource(Foo).column::<Bar>().resource(Baz)`. Nothing
+Kit-specific lives at the type level; the bundle is just a name
+plus a fixed sequence of builder calls.
+
+## Authoring a Kit
+
+A consumer-side Kit that registers `Resource<Interner>`:
+
+```rust
+pub struct InternerKit;
+
+impl<Wus, Stores> Kit<SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES, Wus, Stores>>
+    for InternerKit
+where
+    Wus: AccessSet,
+    Stores: AccessSet,
+    (Resource<Interner>, Stores): AccessSet,
+{
+    type Output =
+        SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES, Wus, (Resource<Interner>, Stores)>;
+
+    fn install(
+        self,
+        builder: SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES, Wus, Stores>,
+    ) -> Self::Output {
+        builder.resource(Interner)
+    }
+}
+```
+
+A Kit that registers two stores at once (a `Workspace` resource
+plus a `FileInfo` column) declares the doubly-extended `Stores`
+tuple in `Output` and chains the calls in `install`:
+
+```rust
+pub struct WorkspaceKit;
+
+impl<Wus, Stores> Kit<SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES, Wus, Stores>>
+    for WorkspaceKit
+where
+    Wus: AccessSet,
+    Stores: AccessSet,
+    (Resource<Workspace>, Stores): AccessSet,
+    (Column<FileInfo>, (Resource<Workspace>, Stores)): AccessSet,
+{
+    type Output = SchedulerBuilder<
+        MAX_UNITS, MAX_STORES, MAX_LANES,
+        Wus,
+        (Column<FileInfo>, (Resource<Workspace>, Stores)),
+    >;
+
+    fn install(
+        self,
+        builder: SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES, Wus, Stores>,
+    ) -> Self::Output {
+        builder.resource(Workspace).column::<FileInfo>()
+    }
+}
+```
+
+The order of contributions in the `Output` tuple matches the
+reverse order of the chained calls (each builder method prepends a
+new head, so the last `.column` ends up at the head of the tuple).
+
+## Composition
+
+Kits chain naturally: `.add_kit(k1).add_kit(k2)`. Each
+`.add_kit(k)` returns the type-state produced by `k.install(self)`,
+which is the next builder receiving its own `.add_kit` call.
+
+A Kit can install another Kit inside its own `install` body by
+calling `.add_kit` on the builder it received. Nothing in the
+trait shape blocks that.
+
+A Kit composed with raw builder calls is fine too:
+`.add_kit(WorkspaceKit).resource(SomeOther)`. Kits and raw calls
+are interchangeable.
+
+## Why a separate crate
+
+`hilavitkutin-kit` slots between `hilavitkutin-ctx` and the
+engine. The crate carries no other dependencies; the engine
+depends on it for `.add_kit()`, but the reverse never happens. A
+consumer can author a Kit in a downstream crate that depends only
+on `hilavitkutin-kit` plus the bare api markers (`Resource<T>`,
+`Column<T>`, `Virtual<T>` from `hilavitkutin-api`) without
+pulling the engine in.
+
+The layering is the same shape `hilavitkutin-ctx` has: an
+ecosystem crate the engine consumes for one specific contract.
+
+## Deferred ergonomics
+
+A declarative `app!` / `define_app!` macro that folds
+`.add::<WU>()` / `.resource()` / `.column()` / `.add_kit()` calls
+into a single block was considered and parked at task #295 (P2,
+likely never). Bevy proves the raw builder pattern is
+ergonomically sufficient at the call counts viola, vehje, and
+similar consumers reach (around ten registrations per app). The
+macro adds complexity without a measurable readability win at
+that scale.
+
+If a downstream consumer surfaces a real ergonomics complaint,
+revisit #295.
