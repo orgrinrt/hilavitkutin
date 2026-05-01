@@ -29,6 +29,7 @@ pub mod column_value;
 pub mod context;
 pub mod hint;
 pub mod id;
+pub mod macros;
 pub mod platform;
 pub mod sink;
 pub mod store;
