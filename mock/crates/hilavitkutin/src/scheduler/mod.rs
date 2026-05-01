@@ -19,7 +19,9 @@ use core::marker::PhantomData;
 
 use hilavitkutin_api::access::AccessSet;
 use hilavitkutin_api::builder::Buildable;
+use hilavitkutin_api::platform::{ClockApi, MemoryProviderApi, ThreadPoolApi};
 use hilavitkutin_api::store::{Column, Resource, Virtual};
+use hilavitkutin_api::work_unit::WorkUnit;
 use hilavitkutin_kit::Kit;
 
 pub mod metrics;
@@ -85,7 +87,7 @@ where
     Stores: AccessSet,
 {
     /// Register a WU type. Prepends `W` onto `Wus`.
-    pub fn add<W: 'static>(self) -> SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES, (W, Wus), Stores>
+    pub fn add<W: WorkUnit>(self) -> SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES, (W, Wus), Stores>
     where
         (W, Wus): AccessSet,
     {
@@ -141,15 +143,15 @@ where
         k.install(self)
     }
 
-    pub fn memory<M: 'static>(self, _provider: M) -> Self {
+    pub fn memory<M: MemoryProviderApi + 'static>(self, _provider: M) -> Self {
         self
     }
 
-    pub fn threads<P: 'static>(self, _pool: P) -> Self {
+    pub fn threads<P: ThreadPoolApi + 'static>(self, _pool: P) -> Self {
         self
     }
 
-    pub fn clock<C: 'static>(self, _clock: C) -> Self {
+    pub fn clock<C: ClockApi + 'static>(self, _clock: C) -> Self {
         self
     }
 }
