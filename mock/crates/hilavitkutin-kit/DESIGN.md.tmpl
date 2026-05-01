@@ -104,6 +104,16 @@ The order of contributions in the `Output` tuple matches the
 reverse order of the chained calls (each builder method prepends a
 new head, so the last `.column` ends up at the head of the tuple).
 
+The engine's `.add_kit` carries `K::Output: BuilderExtending<B>`
+as a where-clause (see `hilavitkutin-api` "BuilderExtending"
+subsection). The bound forces `Output` to keep the input `Wus`
+intact and only extend `Stores`. A Kit `install` body that tried
+to drop a registration would compile fine at the Kit declaration
+but fail at the engine's call site, with the error pointing at the
+Kit's `Output` declaration. Authoring a Kit that only uses
+`builder.resource` / `.column` / `.add_virtual` / `.add_kit` calls
+satisfies the bound automatically.
+
 ## Composition
 
 Kits chain naturally: `.add_kit(k1).add_kit(k2)`. Each
@@ -130,6 +140,18 @@ pulling the engine in.
 
 The layering is the same shape `hilavitkutin-ctx` has: an
 ecosystem crate the engine consumes for one specific contract.
+
+## Crate-internal recursion limit
+
+This crate declares `#![recursion_limit = "512"]` defensively. A
+consumer composing deep Kit chains (each Kit's `install` body
+building against the previous output's accumulators) sends the
+trait solver through the cons-list at each step. The default 128
+suffices for shallow chains; 512 covers realistic compositions
+without consumer-side awareness. If a consumer's own crate hits
+the limit anyway (very deep chains plus very deep per-Kit
+contributions), the consumer declares its own
+`#![recursion_limit = "..."]` at the consumer crate root.
 
 ## Deferred ergonomics
 
