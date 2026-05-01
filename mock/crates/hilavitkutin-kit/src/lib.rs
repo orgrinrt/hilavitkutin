@@ -6,6 +6,7 @@
 //! `.add_kit(k)` call on the engine's `SchedulerBuilder`.
 
 #![no_std]
+#![recursion_limit = "512"]
 
 /// A preset that bundles a set of registrations onto a builder.
 ///
