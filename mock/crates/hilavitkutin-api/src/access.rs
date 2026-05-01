@@ -30,6 +30,10 @@ pub trait AccessSet: sealed::Sealed + 'static {
 /// coexist: a tuple with two equal member types still implements
 /// `Contains<T>` once per position without coherence conflict.
 #[marker]
+#[diagnostic::on_unimplemented(
+    message = "store `{Self}` does not contain `{S}`",
+    note = "Register it with `.resource::<T>(initial)`, `.column::<T>()`, `.add_virtual::<T>()`, or install a Kit that registers it."
+)]
 pub trait Contains<S>: AccessSet {}
 
 // Arity 0.
