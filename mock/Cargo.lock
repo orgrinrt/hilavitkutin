@@ -239,6 +239,7 @@ dependencies = [
  "arvo-sparse",
  "arvo-spectral",
  "hilavitkutin-api",
+ "hilavitkutin-kit",
  "libc",
  "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
