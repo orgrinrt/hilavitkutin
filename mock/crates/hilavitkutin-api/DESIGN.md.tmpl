@@ -143,14 +143,117 @@ provider_generic2!(<R: AccessSet, W: AccessSet> BatchApi as HasBatch => batch);
 provider_generic2!(<R: AccessSet, W: AccessSet> ReduceApi as HasReduce => reduce);
 ```
 
-`Contains<S>` — sealed compile-time membership trait on tuples.
+`Contains<S>` is a sealed compile-time membership trait on tuples.
 Accessing a store not declared in Read / Write fails to compile at
-the relevant API-trait method's where-clause.
+the relevant API-trait method's where-clause. Implemented as
+`#[marker]`, so overlapping impls are permitted.
+
+Two impl families are shipped:
+
+1. **Flat-tuple impls.** One `Contains<Tᵢ>` impl per position per
+   arity, for arities 0..=12. These cover `WorkUnit::Read` and
+   `WorkUnit::Write` declarations, which are flat tuples at the
+   consumer level.
+2. **Cons-list recursion impl.** One additional impl that
+   propagates membership down arbitrarily-deep cons-list-shaped
+   tuples:
+
+   ```rust
+   impl<H: 'static, R: 'static, T: 'static> Contains<T> for (H, R)
+   where R: Contains<T> {}
+   ```
+
+   This impl exists for the scheduler builder's `Stores`
+   accumulator, which grows as `(H, (H, (H, ())))` per
+   registration. Combined with the arity-2 head match
+   (`Contains<T0> for (T0, T1)`), membership chains correctly down
+   any depth. Permitted because `Contains` is `#[marker]`.
 
 `&self` receiver on every provider method is load-bearing: prevents
 LLVM noalias metadata that would reorder writes across fused WUs.
 Raw-pointer access `unsafe read / write` pinky-swears ownership
 discipline that the engine proves at plan time.
+
+## Builder support (domain 23, round 202605010900)
+
+Two sealed traits ship in api so that the engine's
+`SchedulerBuilder<MAX_*, Wus, Stores>` can carry a where-clause on
+`.build()` proving every registered WU's `Ctx` bound is satisfied
+by the registered providers. They live here, not in the engine,
+because `WorkUnit` authors and `.build()` callers both reference
+them at consumer-API positions.
+
+### `Buildable<Stores>` sealed trait
+
+```rust
+pub trait Buildable<Stores: AccessSet>: Sealed {}
+```
+
+Implemented per `Wus`-tuple arity (0..=12, matching the
+`AccessSet` cap). Each impl reduces to:
+
+```text
+Stores: WuSatisfied<W₁::Read>
+      + WuSatisfied<W₁::Write>
+      + WuSatisfied<W₂::Read>
+      + WuSatisfied<W₂::Write>
+      + ...
+      + WuSatisfied<Wₙ::Read>
+      + WuSatisfied<Wₙ::Write>
+```
+
+for every `Wᵢ` in the tuple. Sealed; consumers cannot impl
+directly.
+
+### `WuSatisfied<A>` sealed trait
+
+```rust
+pub trait WuSatisfied<A: AccessSet>: Sealed<A> {}
+```
+
+Implemented per `A`-tuple arity (0..=12, the same `AccessSet`
+cap). "All members of `A` are present in `Self`." Each impl
+reduces to:
+
+```text
+Self: Contains<T₁> + Contains<T₂> + ... + Contains<Tₘ>
+```
+
+for every `Tⱼ` in `A`. Sealed.
+
+### `.build()` where-clause (engine side)
+
+The engine's `SchedulerBuilder::build` carries:
+
+```rust
+where Wus: Buildable<Stores>, Stores: AccessSet
+```
+
+This unfolds via the per-arity impls into the conjunction of
+per-WU `WuSatisfied<...>` proofs, which unfold into the
+conjunction of per-store `Contains<...>` proofs against `Stores`.
+The cons-list recursion impl on `Contains` makes `Stores`
+membership work at arbitrary depth.
+
+When a consumer registers a WU whose `Read` mentions a store not
+in `Stores`, rustc reports the missing `Contains<...>` membership
+directly:
+
+```text
+trait bound `(): Contains<Resource<Interner>>` was not satisfied
+```
+
+The error names the missing store by type, so the consumer reads
+"I forgot to register `Resource<Interner>`" and adds the
+appropriate `.resource(Interner)` or `.add_kit(InternerKit)` call.
+
+### Why these live in api, not in kit
+
+`Buildable` and `WuSatisfied` are contract-shape artefacts referenced
+in `WorkUnit::Ctx` bound conjunctions and at `.build()` call
+sites. They belong with `AccessSet` and `Contains` in api. The
+`Kit` trait in `hilavitkutin-kit` is purely about composing onto
+whatever the builder is; it does not need to see these proofs.
 
 ## Scheduling hints (domain 09)
 
