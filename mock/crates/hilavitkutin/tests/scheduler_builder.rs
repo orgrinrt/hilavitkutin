@@ -19,10 +19,10 @@
 use arvo::USize;
 use hilavitkutin::scheduler::{Scheduler, SchedulerBuilder};
 use hilavitkutin_api::{
-    AccessSet, Always, BatchApi, Column, ColumnReaderApi, ColumnValue, ColumnWriterApi, Contains,
-    EachApi, HasBatch, HasColumnReader, HasColumnWriter, HasEach, HasReduce, HasResourceProvider,
-    HasVirtualFirer, Atomic, Immediate, Normal, ReduceApi, Resource, ResourceProviderApi,
-    Virtual, VirtualFirerApi, WorkUnit,
+    AccessSet, Always, BatchApi, BuilderExtending, Column, ColumnReaderApi, ColumnValue,
+    ColumnWriterApi, Contains, Depth, EachApi, HasBatch, HasColumnReader, HasColumnWriter, HasEach,
+    HasReduce, HasResourceProvider, HasVirtualFirer, Atomic, Immediate, Normal, ReduceApi,
+    Resource, ResourceProviderApi, Virtual, VirtualFirerApi, WorkUnit, read, write,
 };
 use hilavitkutin_kit::Kit;
 
@@ -162,7 +162,7 @@ impl<R: AccessSet> ColumnReaderApi<R> for Stub {
     where
         R: Contains<Column<T>>,
     {
-        unsafe { core::mem::zeroed() }
+        unimplemented!()
     }
 }
 
@@ -179,7 +179,7 @@ impl<R: AccessSet> ResourceProviderApi<R> for Stub {
     where
         R: Contains<Resource<T>>,
     {
-        unsafe { &*(self as *const _ as *const T) }
+        unimplemented!()
     }
 }
 
@@ -276,7 +276,7 @@ impl<R: AccessSet, W: AccessSet> HasReduce<R, W> for TestCtx {
 struct ReadInterner;
 
 impl WorkUnit<Always> for ReadInterner {
-    type Read = (Resource<Interner>,);
+    type Read = read![Resource<Interner>];
     type Write = ();
     type Hint = (Immediate, Atomic, Normal);
     type Ctx = TestCtx;
@@ -288,8 +288,8 @@ impl WorkUnit<Always> for ReadInterner {
 struct DiscoverFiles;
 
 impl WorkUnit<Always> for DiscoverFiles {
-    type Read = (Resource<Workspace>,);
-    type Write = (Column<FileInfo>,);
+    type Read = read![Resource<Workspace>];
+    type Write = write![Column<FileInfo>];
     type Hint = (Immediate, Atomic, Normal);
     type Ctx = TestCtx;
     fn execute(&self, _ctx: &TestCtx) {}
@@ -338,6 +338,8 @@ fn kit_extends_stores_type() {
         W: AccessSet,
         S: AccessSet,
         (Resource<Interner>, S): AccessSet,
+        SchedulerBuilder<M, N, L, W, (Resource<Interner>, S)>:
+            BuilderExtending<SchedulerBuilder<M, N, L, W, S>>,
     {
         b.add_kit(InternerKit)
     }
@@ -360,3 +362,106 @@ fn kit_extends_stores_type() {
 //         .add::<ReadInterner>()
 //         .build();
 // }
+
+// ---------------------------------------------------------------------
+// Wus uncap stress: 50 WUs in one builder. Validates that Buildable's
+// recursive cons-list shape compiles past any per-arity cap. The
+// previous round's per-arity macro stopped at 12; this test drives
+// past it. Uses a no-store WU so WuSatisfied<()> and WuSatisfied<()>
+// trivially hold for all 50.
+// ---------------------------------------------------------------------
+
+struct NoStores;
+impl WorkUnit<Always> for NoStores {
+    type Read = ();
+    type Write = ();
+    type Hint = (Immediate, Atomic, Normal);
+    type Ctx = TestCtx;
+    fn execute(&self, _ctx: &TestCtx) {}
+}
+
+#[test]
+fn smoke_fifty_wus() {
+    let _ = Scheduler::<64, 16, 4>::builder()
+        .add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>()
+        .add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>()
+        .add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>()
+        .add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>()
+        .add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>()
+        .add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>()
+        .add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>()
+        .add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>()
+        .add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>()
+        .add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>()
+        .build();
+}
+
+// ---------------------------------------------------------------------
+// WuSatisfied uncap stress: a single WU with 16 stores in its Read
+// set. Validates that WuSatisfied's recursive cons-list shape
+// compiles past the previous per-arity cap of 12. Uses the read!
+// macro to produce the cons-list shape from flat-tuple syntax.
+// ---------------------------------------------------------------------
+
+struct S0;
+struct S1;
+struct S2;
+struct S3;
+struct S4;
+struct S5;
+struct S6;
+struct S7;
+struct S8;
+struct S9;
+struct S10;
+struct S11;
+struct S12;
+struct S13;
+struct S14;
+struct S15;
+
+struct SixteenStores;
+impl WorkUnit<Always> for SixteenStores {
+    type Read = read![
+        Resource<S0>, Resource<S1>, Resource<S2>, Resource<S3>,
+        Resource<S4>, Resource<S5>, Resource<S6>, Resource<S7>,
+        Resource<S8>, Resource<S9>, Resource<S10>, Resource<S11>,
+        Resource<S12>, Resource<S13>, Resource<S14>, Resource<S15>,
+    ];
+    type Write = ();
+    type Hint = (Immediate, Atomic, Normal);
+    type Ctx = TestCtx;
+    fn execute(&self, _ctx: &TestCtx) {}
+}
+
+#[test]
+fn smoke_wu_with_sixteen_stores() {
+    let _ = Scheduler::<8, 32, 4>::builder()
+        .resource(S0).resource(S1).resource(S2).resource(S3)
+        .resource(S4).resource(S5).resource(S6).resource(S7)
+        .resource(S8).resource(S9).resource(S10).resource(S11)
+        .resource(S12).resource(S13).resource(S14).resource(S15)
+        .add::<SixteenStores>()
+        .build();
+}
+
+// ---------------------------------------------------------------------
+// Depth compile-time assertion: validate that Depth::D counts
+// cons-list elements correctly. Builds a 50-element cons-list type
+// and asserts D == 50 at const eval time.
+// ---------------------------------------------------------------------
+
+type Cons50 = (
+    NoStores, (NoStores, (NoStores, (NoStores, (NoStores,
+    (NoStores, (NoStores, (NoStores, (NoStores, (NoStores,
+    (NoStores, (NoStores, (NoStores, (NoStores, (NoStores,
+    (NoStores, (NoStores, (NoStores, (NoStores, (NoStores,
+    (NoStores, (NoStores, (NoStores, (NoStores, (NoStores,
+    (NoStores, (NoStores, (NoStores, (NoStores, (NoStores,
+    (NoStores, (NoStores, (NoStores, (NoStores, (NoStores,
+    (NoStores, (NoStores, (NoStores, (NoStores, (NoStores,
+    (NoStores, (NoStores, (NoStores, (NoStores, (NoStores,
+    (NoStores, (NoStores, (NoStores, (NoStores, (NoStores,
+    ()))))))))))))))))))))))))))))))))))))))))))))))))));
+
+const _: () = assert!(<Cons50 as Depth>::D.0 == 50);
