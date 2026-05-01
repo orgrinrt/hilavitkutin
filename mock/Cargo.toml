@@ -9,6 +9,7 @@ members = [
     "crates/hilavitkutin-ctx",
     "crates/hilavitkutin-persistence",
     "crates/hilavitkutin-str",
+    "crates/hilavitkutin-kit",
     # Plugin host infrastructure
     "crates/hilavitkutin-linking",
     "crates/hilavitkutin-extensions",

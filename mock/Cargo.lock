@@ -291,6 +291,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "hilavitkutin-kit"
+version = "0.1.0"
+
+[[package]]
 name = "hilavitkutin-linking"
 version = "0.1.0"
 dependencies = [
