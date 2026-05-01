@@ -1,18 +1,37 @@
-//! Builder support traits for the scheduler builder's `.build()`.
+//! Builder support traits for the scheduler builder.
 //!
-//! Two sealed traits prove that a registered `Wus` tuple of
-//! `WorkUnit` types is satisfied by a `Stores` tuple of
-//! registered `Resource<T>` / `Column<T>` / `Virtual<T>` markers.
+//! Four sealed contracts ship in api so the engine's
+//! `SchedulerBuilder<MAX_*, Wus, Stores>` can carry where-clauses on
+//! `.build()` and on `add_kit`. They live here, not in the engine,
+//! because consumers reference them at WU declarations and at
+//! `.build()` call sites.
 //!
-//! `Buildable<Stores>` reduces per `Wus`-tuple arity into the
-//! conjunction of `Stores: WuSatisfied<Wᵢ::Read> +
-//! WuSatisfied<Wᵢ::Write>` for every `Wᵢ`. `WuSatisfied<A>`
-//! reduces per `A`-tuple arity into the conjunction of `Self:
-//! Contains<Tⱼ>` for every `Tⱼ` in `A`. Both arity series cap at
-//! 12, matching `AccessSet`.
+//! `Buildable<Stores>` proves every WorkUnit in `Wus` has its
+//! `Read` / `Write` access sets satisfied by `Stores`. Two impls:
+//! base `()` and recursive `(H, R)`. No per-arity cap. Linear
+//! trait-solver depth in the size of `Wus`.
 //!
-//! Both traits are sealed via private supertraits in this module;
-//! consumers cannot impl them.
+//! `WuSatisfied<A>` proves every member of `A` is present in
+//! `Self`. `A` is a cons-list shape produced by the [`crate::read`]
+//! / [`crate::write`] macros from a consumer's flat-tuple syntax.
+//! Two impls: base `()` and recursive `(H, R)`. No per-arity cap.
+//!
+//! `BuilderExtending<B>` constrains `Kit::Output` so a Kit cannot
+//! drop prior registrations. `Wus` must match the input builder's;
+//! `NewStores` must satisfy `WuSatisfied<OldStores>`. The single
+//! impl lives in the engine; the trait + sealing module live here
+//! to keep the consumer-visible bound declarable from api alone.
+//!
+//! `Depth` reports total cons-list element count. Two impls: `()`
+//! and `(H, R: Depth)`. Plan-stage code uses `Depth::D` for
+//! recursive total counts. `AccessSet::LEN` reports
+//! immediate-tuple-arity (always 2 for cons-list cells); the two
+//! consts coexist with distinct contracts.
+//!
+//! All four traits are sealed via private supertraits; consumers
+//! cannot impl them.
+
+use arvo::USize;
 
 use crate::access::{AccessSet, Contains};
 use crate::work_unit::WorkUnit;
@@ -25,12 +44,29 @@ mod wu_satisfied_sealed {
     pub trait Sealed<A> {}
 }
 
+#[doc(hidden)]
+pub mod extending_sealed {
+    pub trait Sealed<B> {}
+}
+
+mod depth_sealed {
+    pub trait Sealed {}
+}
+
 /// Proof that every WorkUnit in `Wus` has its `Read` and `Write`
 /// access sets satisfied by `Stores`.
 ///
 /// The engine's `SchedulerBuilder::build` carries `Wus:
-/// Buildable<Stores>` as its where-clause. Per-arity blanket impls
-/// (0..=12) reduce this into per-WU `WuSatisfied<...>` proofs.
+/// Buildable<Stores>` as its where-clause. Two recursive impls
+/// (base `()` and step `(H, R)`) reduce this into per-WU
+/// `WuSatisfied<...>` proofs at every cons-list step. No per-arity
+/// cap; linear trait-solver depth in the size of `Wus`.
+///
+/// rustc's default `recursion_limit = 128` accommodates apps up to
+/// roughly 30 WUs by 30 stores. Larger workloads need
+/// `#![recursion_limit = "512"]` at the consumer crate root. The
+/// `hilavitkutin-api`, `hilavitkutin`, and `hilavitkutin-kit` crates
+/// already declare 512 internally for their own machinery.
 ///
 /// Sealed; consumers cannot impl directly.
 #[allow(private_bounds)]
@@ -39,440 +75,95 @@ pub trait Buildable<Stores: AccessSet>: buildable_sealed::Sealed {}
 /// Proof that all members of `A` are present in `Self`.
 ///
 /// `Self` is the registered `Stores` tuple; `A` is a WU's `Read`
-/// or `Write` access set. Per-arity blanket impls (0..=12) reduce
-/// this into per-store `Self: Contains<Tⱼ>` proofs.
+/// or `Write` access set in cons-list shape (produced by the
+/// [`crate::read`] / [`crate::write`] macros). Two recursive
+/// impls reduce this into per-store `Self: Contains<H>` proofs at
+/// every step. No per-arity cap.
 ///
 /// Sealed; consumers cannot impl directly.
 #[allow(private_bounds)]
 pub trait WuSatisfied<A: AccessSet>: wu_satisfied_sealed::Sealed<A> {}
 
-// ---------------------------------------------------------------------
-// WuSatisfied per `A` arity (0..=12).
-// ---------------------------------------------------------------------
+/// Proof that `Self` extends `B`: same `Wus`, and the new `Stores`
+/// contains every store from the old `Stores`.
+///
+/// Used as `K::Output: BuilderExtending<Self>` on the engine's
+/// `add_kit` to prevent a buggy Kit from wiping prior
+/// registrations. The single legal impl lives in the engine; the
+/// trait + sealing module live here so consumer-visible bounds
+/// stay declarable from api alone.
+///
+/// Sealed; only the engine's `SchedulerBuilder` impl is permitted.
+#[allow(private_bounds)]
+pub trait BuilderExtending<B>: extending_sealed::Sealed<B> {}
 
-// Arity 0: trivially satisfied.
-impl<S: AccessSet> wu_satisfied_sealed::Sealed<()> for S {}
-impl<S: AccessSet> WuSatisfied<()> for S {}
-
-// Arity 1.
-impl<S, T0: 'static> wu_satisfied_sealed::Sealed<(T0,)> for S where S: Contains<T0> {}
-impl<S, T0: 'static> WuSatisfied<(T0,)> for S where S: Contains<T0> + AccessSet {}
-
-// Arity 2.
-impl<S, T0: 'static, T1: 'static> wu_satisfied_sealed::Sealed<(T0, T1)> for S
-where
-    S: Contains<T0> + Contains<T1>,
-{
-}
-impl<S, T0: 'static, T1: 'static> WuSatisfied<(T0, T1)> for S
-where
-    S: Contains<T0> + Contains<T1> + AccessSet,
-{
-}
-
-// Arity 3.
-impl<S, T0: 'static, T1: 'static, T2: 'static> wu_satisfied_sealed::Sealed<(T0, T1, T2)> for S
-where
-    S: Contains<T0> + Contains<T1> + Contains<T2>,
-{
-}
-impl<S, T0: 'static, T1: 'static, T2: 'static> WuSatisfied<(T0, T1, T2)> for S
-where
-    S: Contains<T0> + Contains<T1> + Contains<T2> + AccessSet,
-{
-}
-
-// Arity 4.
-impl<S, T0: 'static, T1: 'static, T2: 'static, T3: 'static>
-    wu_satisfied_sealed::Sealed<(T0, T1, T2, T3)> for S
-where
-    S: Contains<T0> + Contains<T1> + Contains<T2> + Contains<T3>,
-{
-}
-impl<S, T0: 'static, T1: 'static, T2: 'static, T3: 'static> WuSatisfied<(T0, T1, T2, T3)> for S
-where
-    S: Contains<T0> + Contains<T1> + Contains<T2> + Contains<T3> + AccessSet,
-{
-}
-
-// Arity 5.
-impl<S, T0: 'static, T1: 'static, T2: 'static, T3: 'static, T4: 'static>
-    wu_satisfied_sealed::Sealed<(T0, T1, T2, T3, T4)> for S
-where
-    S: Contains<T0> + Contains<T1> + Contains<T2> + Contains<T3> + Contains<T4>,
-{
-}
-impl<S, T0: 'static, T1: 'static, T2: 'static, T3: 'static, T4: 'static>
-    WuSatisfied<(T0, T1, T2, T3, T4)> for S
-where
-    S: Contains<T0> + Contains<T1> + Contains<T2> + Contains<T3> + Contains<T4> + AccessSet,
-{
-}
-
-// Arity 6.
-impl<S, T0: 'static, T1: 'static, T2: 'static, T3: 'static, T4: 'static, T5: 'static>
-    wu_satisfied_sealed::Sealed<(T0, T1, T2, T3, T4, T5)> for S
-where
-    S: Contains<T0> + Contains<T1> + Contains<T2> + Contains<T3> + Contains<T4> + Contains<T5>,
-{
-}
-impl<S, T0: 'static, T1: 'static, T2: 'static, T3: 'static, T4: 'static, T5: 'static>
-    WuSatisfied<(T0, T1, T2, T3, T4, T5)> for S
-where
-    S: Contains<T0>
-        + Contains<T1>
-        + Contains<T2>
-        + Contains<T3>
-        + Contains<T4>
-        + Contains<T5>
-        + AccessSet,
-{
-}
-
-// Arity 7.
-impl<S, T0: 'static, T1: 'static, T2: 'static, T3: 'static, T4: 'static, T5: 'static, T6: 'static>
-    wu_satisfied_sealed::Sealed<(T0, T1, T2, T3, T4, T5, T6)> for S
-where
-    S: Contains<T0>
-        + Contains<T1>
-        + Contains<T2>
-        + Contains<T3>
-        + Contains<T4>
-        + Contains<T5>
-        + Contains<T6>,
-{
-}
-impl<S, T0: 'static, T1: 'static, T2: 'static, T3: 'static, T4: 'static, T5: 'static, T6: 'static>
-    WuSatisfied<(T0, T1, T2, T3, T4, T5, T6)> for S
-where
-    S: Contains<T0>
-        + Contains<T1>
-        + Contains<T2>
-        + Contains<T3>
-        + Contains<T4>
-        + Contains<T5>
-        + Contains<T6>
-        + AccessSet,
-{
-}
-
-// Arity 8.
-impl<
-    S,
-    T0: 'static,
-    T1: 'static,
-    T2: 'static,
-    T3: 'static,
-    T4: 'static,
-    T5: 'static,
-    T6: 'static,
-    T7: 'static,
-> wu_satisfied_sealed::Sealed<(T0, T1, T2, T3, T4, T5, T6, T7)> for S
-where
-    S: Contains<T0>
-        + Contains<T1>
-        + Contains<T2>
-        + Contains<T3>
-        + Contains<T4>
-        + Contains<T5>
-        + Contains<T6>
-        + Contains<T7>,
-{
-}
-impl<
-    S,
-    T0: 'static,
-    T1: 'static,
-    T2: 'static,
-    T3: 'static,
-    T4: 'static,
-    T5: 'static,
-    T6: 'static,
-    T7: 'static,
-> WuSatisfied<(T0, T1, T2, T3, T4, T5, T6, T7)> for S
-where
-    S: Contains<T0>
-        + Contains<T1>
-        + Contains<T2>
-        + Contains<T3>
-        + Contains<T4>
-        + Contains<T5>
-        + Contains<T6>
-        + Contains<T7>
-        + AccessSet,
-{
-}
-
-// Arity 9.
-impl<
-    S,
-    T0: 'static,
-    T1: 'static,
-    T2: 'static,
-    T3: 'static,
-    T4: 'static,
-    T5: 'static,
-    T6: 'static,
-    T7: 'static,
-    T8: 'static,
-> wu_satisfied_sealed::Sealed<(T0, T1, T2, T3, T4, T5, T6, T7, T8)> for S
-where
-    S: Contains<T0>
-        + Contains<T1>
-        + Contains<T2>
-        + Contains<T3>
-        + Contains<T4>
-        + Contains<T5>
-        + Contains<T6>
-        + Contains<T7>
-        + Contains<T8>,
-{
-}
-impl<
-    S,
-    T0: 'static,
-    T1: 'static,
-    T2: 'static,
-    T3: 'static,
-    T4: 'static,
-    T5: 'static,
-    T6: 'static,
-    T7: 'static,
-    T8: 'static,
-> WuSatisfied<(T0, T1, T2, T3, T4, T5, T6, T7, T8)> for S
-where
-    S: Contains<T0>
-        + Contains<T1>
-        + Contains<T2>
-        + Contains<T3>
-        + Contains<T4>
-        + Contains<T5>
-        + Contains<T6>
-        + Contains<T7>
-        + Contains<T8>
-        + AccessSet,
-{
-}
-
-// Arity 10.
-impl<
-    S,
-    T0: 'static,
-    T1: 'static,
-    T2: 'static,
-    T3: 'static,
-    T4: 'static,
-    T5: 'static,
-    T6: 'static,
-    T7: 'static,
-    T8: 'static,
-    T9: 'static,
-> wu_satisfied_sealed::Sealed<(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9)> for S
-where
-    S: Contains<T0>
-        + Contains<T1>
-        + Contains<T2>
-        + Contains<T3>
-        + Contains<T4>
-        + Contains<T5>
-        + Contains<T6>
-        + Contains<T7>
-        + Contains<T8>
-        + Contains<T9>,
-{
-}
-impl<
-    S,
-    T0: 'static,
-    T1: 'static,
-    T2: 'static,
-    T3: 'static,
-    T4: 'static,
-    T5: 'static,
-    T6: 'static,
-    T7: 'static,
-    T8: 'static,
-    T9: 'static,
-> WuSatisfied<(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9)> for S
-where
-    S: Contains<T0>
-        + Contains<T1>
-        + Contains<T2>
-        + Contains<T3>
-        + Contains<T4>
-        + Contains<T5>
-        + Contains<T6>
-        + Contains<T7>
-        + Contains<T8>
-        + Contains<T9>
-        + AccessSet,
-{
-}
-
-// Arity 11.
-impl<
-    S,
-    T0: 'static,
-    T1: 'static,
-    T2: 'static,
-    T3: 'static,
-    T4: 'static,
-    T5: 'static,
-    T6: 'static,
-    T7: 'static,
-    T8: 'static,
-    T9: 'static,
-    T10: 'static,
-> wu_satisfied_sealed::Sealed<(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)> for S
-where
-    S: Contains<T0>
-        + Contains<T1>
-        + Contains<T2>
-        + Contains<T3>
-        + Contains<T4>
-        + Contains<T5>
-        + Contains<T6>
-        + Contains<T7>
-        + Contains<T8>
-        + Contains<T9>
-        + Contains<T10>,
-{
-}
-impl<
-    S,
-    T0: 'static,
-    T1: 'static,
-    T2: 'static,
-    T3: 'static,
-    T4: 'static,
-    T5: 'static,
-    T6: 'static,
-    T7: 'static,
-    T8: 'static,
-    T9: 'static,
-    T10: 'static,
-> WuSatisfied<(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)> for S
-where
-    S: Contains<T0>
-        + Contains<T1>
-        + Contains<T2>
-        + Contains<T3>
-        + Contains<T4>
-        + Contains<T5>
-        + Contains<T6>
-        + Contains<T7>
-        + Contains<T8>
-        + Contains<T9>
-        + Contains<T10>
-        + AccessSet,
-{
-}
-
-// Arity 12.
-impl<
-    S,
-    T0: 'static,
-    T1: 'static,
-    T2: 'static,
-    T3: 'static,
-    T4: 'static,
-    T5: 'static,
-    T6: 'static,
-    T7: 'static,
-    T8: 'static,
-    T9: 'static,
-    T10: 'static,
-    T11: 'static,
-> wu_satisfied_sealed::Sealed<(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)> for S
-where
-    S: Contains<T0>
-        + Contains<T1>
-        + Contains<T2>
-        + Contains<T3>
-        + Contains<T4>
-        + Contains<T5>
-        + Contains<T6>
-        + Contains<T7>
-        + Contains<T8>
-        + Contains<T9>
-        + Contains<T10>
-        + Contains<T11>,
-{
-}
-impl<
-    S,
-    T0: 'static,
-    T1: 'static,
-    T2: 'static,
-    T3: 'static,
-    T4: 'static,
-    T5: 'static,
-    T6: 'static,
-    T7: 'static,
-    T8: 'static,
-    T9: 'static,
-    T10: 'static,
-    T11: 'static,
-> WuSatisfied<(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)> for S
-where
-    S: Contains<T0>
-        + Contains<T1>
-        + Contains<T2>
-        + Contains<T3>
-        + Contains<T4>
-        + Contains<T5>
-        + Contains<T6>
-        + Contains<T7>
-        + Contains<T8>
-        + Contains<T9>
-        + Contains<T10>
-        + Contains<T11>
-        + AccessSet,
-{
+/// Total cons-list element count.
+///
+/// `<()>::D == USize(0)`. `<(H, R)>::D == R::D + 1`. Impl'd ONLY
+/// on cons-list shapes (`()` and `(H, R: Depth)`). Flat tuples of
+/// arity 3+ deliberately do not impl `Depth`.
+///
+/// Plan-stage code uses `Depth::D` for total recursive counts.
+/// [`AccessSet::LEN`] reports immediate-tuple-arity (always 2 for
+/// cons-list cells); the two consts coexist with distinct
+/// contracts.
+///
+/// Sealed; consumers cannot impl directly.
+#[allow(private_bounds)]
+pub trait Depth: depth_sealed::Sealed {
+    const D: USize;
 }
 
 // ---------------------------------------------------------------------
-// Buildable per `Wus` arity (0..=12).
+// Buildable: recursive over the Wus cons-list. No arity cap.
+// Coherence trivially holds: () and (H, R) are disjoint shapes.
 // ---------------------------------------------------------------------
 
-// Arity 0: trivially buildable.
 impl buildable_sealed::Sealed for () {}
 impl<Stores: AccessSet> Buildable<Stores> for () {}
 
-// Helper macro: per-arity Buildable impl.
-//
-// `impl_buildable!(N; W0, W1, ..., W{N-1});` emits
-// `(W0, (W1, (..., (W{N-1}, ()))))` cons-list and the where-clause
-// requiring `Stores: WuSatisfied<Wᵢ::Read> + WuSatisfied<Wᵢ::Write>`
-// for every `Wᵢ`.
-macro_rules! impl_buildable {
-    ($($W:ident),+) => {
-        impl<$($W: WorkUnit),+> buildable_sealed::Sealed
-            for impl_buildable!(@cons $($W),+) {}
-
-        impl<Stores, $($W: WorkUnit),+> Buildable<Stores>
-            for impl_buildable!(@cons $($W),+)
-        where
-            Stores: AccessSet $(
-                + WuSatisfied<<$W as WorkUnit>::Read>
-                + WuSatisfied<<$W as WorkUnit>::Write>
-            )+,
-        {
-        }
-    };
-    (@cons $H:ident) => { ($H, ()) };
-    (@cons $H:ident, $($T:ident),+) => { ($H, impl_buildable!(@cons $($T),+)) };
+impl<H, R> buildable_sealed::Sealed for (H, R) {}
+impl<H, R, Stores> Buildable<Stores> for (H, R)
+where
+    H: WorkUnit,
+    R: Buildable<Stores>,
+    Stores: AccessSet + WuSatisfied<<H as WorkUnit>::Read> + WuSatisfied<<H as WorkUnit>::Write>,
+{
 }
 
-impl_buildable!(W0);
-impl_buildable!(W0, W1);
-impl_buildable!(W0, W1, W2);
-impl_buildable!(W0, W1, W2, W3);
-impl_buildable!(W0, W1, W2, W3, W4);
-impl_buildable!(W0, W1, W2, W3, W4, W5);
-impl_buildable!(W0, W1, W2, W3, W4, W5, W6);
-impl_buildable!(W0, W1, W2, W3, W4, W5, W6, W7);
-impl_buildable!(W0, W1, W2, W3, W4, W5, W6, W7, W8);
-impl_buildable!(W0, W1, W2, W3, W4, W5, W6, W7, W8, W9);
-impl_buildable!(W0, W1, W2, W3, W4, W5, W6, W7, W8, W9, W10);
-impl_buildable!(W0, W1, W2, W3, W4, W5, W6, W7, W8, W9, W10, W11);
+// ---------------------------------------------------------------------
+// WuSatisfied: recursive over the cons-list shape of A. No arity cap.
+// Consumer's WorkUnit::Read / WorkUnit::Write must be cons-list
+// (use the read! / write! macros).
+// ---------------------------------------------------------------------
+
+impl<S: AccessSet> wu_satisfied_sealed::Sealed<()> for S {}
+impl<S: AccessSet> WuSatisfied<()> for S {}
+
+impl<S, H: 'static, R> wu_satisfied_sealed::Sealed<(H, R)> for S
+where
+    S: WuSatisfied<R>,
+    R: AccessSet,
+{
+}
+impl<S, H: 'static, R> WuSatisfied<(H, R)> for S
+where
+    S: Contains<H> + AccessSet + WuSatisfied<R>,
+    R: AccessSet,
+{
+}
+
+// ---------------------------------------------------------------------
+// Depth: total cons-list element count. Two impls, no specialization,
+// no marker overlap. () and (H, R) are disjoint shapes.
+// ---------------------------------------------------------------------
+
+impl depth_sealed::Sealed for () {}
+impl<H, R: Depth> depth_sealed::Sealed for (H, R) {}
+
+impl Depth for () {
+    const D: USize = USize(0);
+}
+impl<H, R: Depth> Depth for (H, R) {
+    const D: USize = USize(R::D.0 + 1);
+}
