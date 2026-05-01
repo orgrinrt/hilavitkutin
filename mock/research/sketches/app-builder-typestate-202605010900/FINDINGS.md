@@ -1,18 +1,17 @@
 # Findings: app-builder type-state sketch (202605010900)
 
-## Update 2026-05-01 (round 202605011500 in flight)
+## Update 2026-05-01 round 202605011500 (final design after third reviewer)
 
-The original Buildable shape used per-arity macro expansion (impl_buildable! 0..=12), capping registered WUs at 12. A 13th WU produced a confusing missing-impl error. Real consumer workloads (vehje compiler ~50+ WUs, clause-* pass family) hit this cap immediately.
+Five substantive fixes validated. The third reviewer caught three issues neither the first two reviewers nor the author saw. All landed in the sketch.
 
-Replacement: single recursive impl + base case, mirroring the cons-list `Contains` recursion already used for `Stores`.
+### 1. Buildable Wus uncap (recursive impl)
+
+Original per-arity macro expansion `impl_buildable!(W0..W11)` capped registered WUs at 12. Replacement: one base case + one recursive impl. No cap.
 
 ```rust
-// Base.
 impl build_sealed::Sealed for () {}
 impl<Stores: AccessSet> Buildable<Stores> for () {}
 
-// Recursion. Note: Sealed impl carries no Stores param (Sealed has
-// no parameter); the Buildable impl carries it separately.
 impl<H, R> build_sealed::Sealed for (H, R) {}
 impl<H, R, Stores> Buildable<Stores> for (H, R)
 where
@@ -22,9 +21,88 @@ where
 {}
 ```
 
-Verified by `smoke_sixteen_wus` in sketch.rs: 16 distinct WUs registered, `.build()` typechecks. Compiles clean on nightly.
+Verified by `smoke_fifty_wus` (50 WUs in one builder chain). Coherence: `()` and `(H, R)` are disjoint, no `#[marker]` needed.
 
-`WuSatisfied<A>` stays per-arity 0..=12 because `A` is a flat tuple (consumer's declared `Read` / `Write`), and 12 stores per WU is comfortable headroom.
+### 2. WuSatisfied uncap via cons-list shape
+
+The original per-arity 0..=12 cap on `WuSatisfied<A>` bites real consumers (vehje typecheck legitimately reads from 16+ stores: Interner, TypeEnv, ConstEnv, ImportTable, ScopeStack, SealedRegistry, OrphanRules, Definitions, Bodies, Mir, Spans, ResolvedTypes, NameTables, Macros, Diagnostic, Errors).
+
+Fix: ship `read!` / `write!` macros that convert flat-tuple syntax to cons-list shape. `WuSatisfied<A>` becomes recursive over the cons-list, no cap.
+
+```rust
+#[macro_export]
+macro_rules! read {
+    () => { () };
+    ($T:ty $(,)?) => { ($T, ()) };
+    ($T:ty, $($rest:ty),+ $(,)?) => { ($T, $crate::read!($($rest),+)) };
+}
+
+impl<S: AccessSet> WuSatisfied<()> for S {}
+impl<S, H: 'static, R> WuSatisfied<(H, R)> for S
+where S: Contains<H> + AccessSet + WuSatisfied<R>, R: AccessSet,
+{}
+```
+
+Consumer migrates from `type Read = (Resource<X>, Column<Y>);` to `type Read = read![Resource<X>, Column<Y>];`. Verified by `smoke_wu_with_sixteen_stores` (a single WU declaring 16 stores in Read).
+
+### 3. Kit::Output structurally constrained via BuilderExtending<B>
+
+A buggy Kit could previously declare `type Output = SchedulerBuilder<(), ()>` and silently wipe registrations. Fix: new sealed trait `BuilderExtending<B>` proves the Kit's output preserves the input's WUs and contains every store the input had.
+
+```rust
+pub trait BuilderExtending<B>: extending_sealed::Sealed<B> {}
+
+impl<Wus, Stores, NewStores> BuilderExtending<SchedulerBuilder<Wus, Stores>>
+    for SchedulerBuilder<Wus, NewStores>
+where
+    Wus: AccessSet,
+    Stores: AccessSet,
+    NewStores: AccessSet + WuSatisfied<Stores>,  // proves no store wiped
+{}
+
+// Engine method:
+pub fn add_kit<K>(self, k: K) -> K::Output
+where
+    K: Kit<Self>,
+    K::Output: BuilderExtending<Self>,
+{ k.install(self) }
+```
+
+The `Wus` parameter is identical between input and output (Kit can only add stores, not WUs). The `NewStores: WuSatisfied<Stores>` clause proves nothing was dropped. Verified by `smoke_buggy_kit_rejected` (commented out compile-fail case).
+
+### 4. Depth trait for plan-stage code
+
+`AccessSet::LEN` reports immediate-tuple-arity (always 2 on cons-list cells). Plan-stage code needs total cons-list depth. Ship a sealed `Depth` trait scoped to cons-list shapes only.
+
+```rust
+mod depth_sealed { pub trait Sealed {} }
+
+#[allow(private_bounds)]
+pub trait Depth: depth_sealed::Sealed {
+    const D: USize;
+}
+
+impl depth_sealed::Sealed for () {}
+impl<H, R: Depth> depth_sealed::Sealed for (H, R) {}
+
+impl Depth for () { const D: USize = 0; }
+impl<H, R: Depth> Depth for (H, R) { const D: USize = R::D + 1; }
+```
+
+Two impls. No specialization. Disjoint shapes. Compile-time assertion `<FiftyWusType as Depth>::D == 50` passes.
+
+`Depth` is only impl'd on cons-list shapes. Flat tuples beyond `()` and `(T,)` don't get `Depth`. This is correct: plan-stage code consumes the engine's `Wus` / `Stores` accumulators (always cons-list), and consumer-declared `Read` / `Write` use the macros (cons-list). If a code path ever needs Depth on a flat tuple, that's an architectural smell.
+
+### 5. Recursion limit
+
+Set `#![recursion_limit = "512"]` at the api crate level. A 50-WU consumer with 50 stores per app produces ~1M trait-solver sub-obligations during `.build()`. Default 128 won't cut it. Engine, kit, and consumer crates may also need to declare it; document in api lib.rs preamble.
+
+### Decisions vs alternatives
+
+- **No specialization.** Tried `min_specialization` for `Depth`; rejected (can't specialize on trait bounds). Full `specialization` is unsound and won't stabilize. Sealed two-impl pattern works without it.
+- **No `#[marker]` on `Depth`** (markers can't have associated consts).
+- **No new lint cops.** All sealing via private supertrait + `#[allow(private_bounds)]`.
+- **No structural-coincidence reliance.** The cons-list pattern is now explicit at every level: `Buildable`, `WuSatisfied`, `Depth` all have explicit cons-list impls. `AccessSet` is documented as shape-based (LEN reports immediate-tuple-arity); cons-list code paths use `Depth` instead.
 
 
 
