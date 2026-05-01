@@ -8,6 +8,7 @@ repository.workspace = true
 
 [dependencies]
 hilavitkutin-api.workspace = true
+hilavitkutin-kit.workspace = true
 arvo.workspace = true
 notko.workspace = true
 arvo-bitmask.workspace = true
