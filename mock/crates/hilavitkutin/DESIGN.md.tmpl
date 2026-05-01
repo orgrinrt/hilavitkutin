@@ -150,6 +150,17 @@ spin_loop, >10µs park.
 
 ## Scheduler builder + meta (domain 23)
 
+`Scheduler<MAX_UNITS, MAX_STORES, MAX_LANES>` keeps its three
+const-generic capacity parameters governing engine-internal sizes.
+
+`SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES, Wus, Stores>`
+gains two phantom-tuple type parameters for type-state
+accumulation. `Wus` carries the registered WU types. `Stores`
+unifies registered `Resource<T>`, `Column<T>`, `Virtual<T>`
+markers (matching how `WorkUnit::Read` is shaped in
+`hilavitkutin-api`). Initial state on `Scheduler::builder()` is
+`SchedulerBuilder<..., (), ()>`.
+
 Builder API:
 ```
 Scheduler::<MAX_UNITS, MAX_STORES, MAX_LANES>::builder()
@@ -157,14 +168,84 @@ Scheduler::<MAX_UNITS, MAX_STORES, MAX_LANES>::builder()
     .resource::<T>(initial)
     .resource_default::<T>()
     .column::<T>()
+    .virtual_::<T>()
+    .add_kit(MyKit)
     .memory(my_provider)
     .threads(my_pool)
     .clock(my_clock)
     .build()
 ```
 
+Method shapes (registration methods evolve the type-state):
+
+```rust
+impl<..., Wus, Stores> SchedulerBuilder<..., Wus, Stores>
+where Wus: AccessSet, Stores: AccessSet,
+{
+    pub fn add<W: WorkUnit>(self) -> SchedulerBuilder<..., (W, Wus), Stores>
+    where (W, Wus): AccessSet;
+
+    pub fn resource<T: 'static>(self, _init: T)
+        -> SchedulerBuilder<..., Wus, (Resource<T>, Stores)>
+    where (Resource<T>, Stores): AccessSet;
+
+    pub fn column<T: 'static>(self) -> SchedulerBuilder<..., Wus, (Column<T>, Stores)>
+    where (Column<T>, Stores): AccessSet;
+
+    pub fn virtual_<T: 'static>(self) -> SchedulerBuilder<..., Wus, (Virtual<T>, Stores)>
+    where (Virtual<T>, Stores): AccessSet;
+
+    pub fn add_kit<K: Kit<Self>>(self, k: K) -> K::Output;
+
+    pub fn memory<M: 'static>(self, _provider: M) -> Self;
+    pub fn threads<P: 'static>(self, _pool: P) -> Self;
+    pub fn clock<C: 'static>(self, _clock: C) -> Self;
+}
+
+impl<..., Wus, Stores> SchedulerBuilder<..., Wus, Stores>
+where
+    Wus: Buildable<Stores>,
+    Stores: AccessSet,
+{
+    pub fn build(self) -> Scheduler<MAX_UNITS, MAX_STORES, MAX_LANES>;
+}
+```
+
+`.add::<W>()`, `.resource(_)`, `.column()`, `.virtual_()` each
+prepend a marker to one of the type-state tuples. `.add_kit(k)`
+returns whatever `k.install(self)` produces (Kit-defined). The
+platform-provider methods (`.memory`, `.threads`, `.clock`) thread
+through `Self` unchanged for this round; type-state tracking for
+platform providers is a future round if a call site demands it.
+
+`.build()` carries `Wus: Buildable<Stores>` from `hilavitkutin-api`.
+This unfolds (per-arity blanket impls) into the conjunction of
+`Stores: WuSatisfied<Wᵢ::Read> + WuSatisfied<Wᵢ::Write>` for every
+`Wᵢ`, which itself unfolds into per-store `Stores: Contains<Tⱼ>`
+proofs. The cons-list recursion impl on `Contains` handles
+arbitrary-depth `Stores` accumulators.
+
+When a registered WU's `Read` mentions a store that was not
+registered, `.build()` fails to compile with a pointed error. For
+example, a WU with `type Read = (Resource<Interner>,)` and no
+`.resource(Interner)` or `.add_kit(InternerKit)` produces:
+
+```text
+trait bound `(): Contains<Resource<Interner>>` was not satisfied
+```
+
+The error names the missing store directly, by type. The
+consumer reads "I forgot to register `Resource<Interner>`" and
+adds the appropriate call.
+
 Static composition (R6): all WUs registered at compile time. No
 runtime registration. Plan parameters adapt; composition does not.
+
+Kit composition: see `hilavitkutin-kit/DESIGN.md`. A Kit is a
+Bevy-style preset that bundles a set of `.resource` / `.column` /
+`.virtual_` calls under one name. Kits chain freely with each
+other and with raw builder calls; each `.add_kit(k)` returns the
+type-state produced by the Kit's install method.
 
 Self-hosting meta pipeline: PlanStage → ScheduleReady → PassStart →
 ScheduleEnd. Meta resources: Dag, ExecutionPlan, LaneAssignment,
