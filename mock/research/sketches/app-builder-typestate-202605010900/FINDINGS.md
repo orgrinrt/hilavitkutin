@@ -1,5 +1,33 @@
 # Findings: app-builder type-state sketch (202605010900)
 
+## Update 2026-05-01 (round 202605011500 in flight)
+
+The original Buildable shape used per-arity macro expansion (impl_buildable! 0..=12), capping registered WUs at 12. A 13th WU produced a confusing missing-impl error. Real consumer workloads (vehje compiler ~50+ WUs, clause-* pass family) hit this cap immediately.
+
+Replacement: single recursive impl + base case, mirroring the cons-list `Contains` recursion already used for `Stores`.
+
+```rust
+// Base.
+impl build_sealed::Sealed for () {}
+impl<Stores: AccessSet> Buildable<Stores> for () {}
+
+// Recursion. Note: Sealed impl carries no Stores param (Sealed has
+// no parameter); the Buildable impl carries it separately.
+impl<H, R> build_sealed::Sealed for (H, R) {}
+impl<H, R, Stores> Buildable<Stores> for (H, R)
+where
+    H: WorkUnit,
+    R: Buildable<Stores>,
+    Stores: AccessSet + WuSatisfied<H::Read> + WuSatisfied<H::Write>,
+{}
+```
+
+Verified by `smoke_sixteen_wus` in sketch.rs: 16 distinct WUs registered, `.build()` typechecks. Compiles clean on nightly.
+
+`WuSatisfied<A>` stays per-arity 0..=12 because `A` is a flat tuple (consumer's declared `Read` / `Write`), and 12 stores per WU is comfortable headroom.
+
+
+
 **Date:** 2026-05-01
 **Backs:** Round `202605010900` (#255). The DOC changelist relies on these findings for concrete signatures.
 **Sketch:** `sketch.rs`. Self-contained, `no_std` plus `feature(marker_trait_attr)`. Compiles clean on nightly with three positive smoke tests; the negative test (registered WU with no matching `Resource<T>`) is verified to fail compilation with a pointed error.

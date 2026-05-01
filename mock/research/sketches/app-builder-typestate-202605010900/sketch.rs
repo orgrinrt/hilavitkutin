@@ -180,8 +180,15 @@ where
 }
 
 // -----------------------------------------------------------------------
-// .build() carries: Wus: Buildable<Stores>. Buildable per-arity reduces
-// to Stores: WuSatisfied<Wn::Read> + WuSatisfied<Wn::Write>.
+// .build() carries: Wus: Buildable<Stores>. Buildable is recursive over
+// the cons-list shape of Wus: each cons cell adds two WuSatisfied
+// obligations (Read + Write) and recurses on the tail.
+//
+// Round 202605011500 fix: the original implementation expanded per-arity
+// 0..=12, which capped the total registered WUs at 12. Real consumers
+// (vehje compiler, etc.) hit 50+ WUs. The cons-list recursion shape that
+// already worked for Stores (via Contains) applies symmetrically here
+// for Wus and removes the cap.
 // -----------------------------------------------------------------------
 
 mod build_sealed {
@@ -191,47 +198,20 @@ mod build_sealed {
 #[allow(private_bounds)]
 pub trait Buildable<Stores: AccessSet>: build_sealed::Sealed {}
 
-// (): trivially buildable.
+// Base case: no WUs to satisfy.
 impl build_sealed::Sealed for () {}
 impl<Stores: AccessSet> Buildable<Stores> for () {}
 
-// (W0, ()): require Stores satisfies W0's Read and Write.
-impl<W0: WorkUnit> build_sealed::Sealed for (W0, ()) {}
-impl<W0, Stores> Buildable<Stores> for (W0, ())
-where
-    W0: WorkUnit,
-    Stores: AccessSet + WuSatisfied<W0::Read> + WuSatisfied<W0::Write>,
-{
-}
+// Recursive case: head WU's Read + Write satisfied, tail recursively
+// buildable. () and (H, R) are disjoint shapes, so coherence is
+// trivially preserved without #[marker].
+impl<H, R> build_sealed::Sealed for (H, R) {}
 
-// (W0, (W1, ())): both.
-impl<W0: WorkUnit, W1: WorkUnit> build_sealed::Sealed for (W0, (W1, ())) {}
-impl<W0, W1, Stores> Buildable<Stores> for (W0, (W1, ()))
+impl<H, R, Stores> Buildable<Stores> for (H, R)
 where
-    W0: WorkUnit,
-    W1: WorkUnit,
-    Stores: AccessSet
-        + WuSatisfied<W0::Read>
-        + WuSatisfied<W0::Write>
-        + WuSatisfied<W1::Read>
-        + WuSatisfied<W1::Write>,
-{
-}
-
-// (W0, (W1, (W2, ()))): three.
-impl<W0: WorkUnit, W1: WorkUnit, W2: WorkUnit> build_sealed::Sealed for (W0, (W1, (W2, ()))) {}
-impl<W0, W1, W2, Stores> Buildable<Stores> for (W0, (W1, (W2, ())))
-where
-    W0: WorkUnit,
-    W1: WorkUnit,
-    W2: WorkUnit,
-    Stores: AccessSet
-        + WuSatisfied<W0::Read>
-        + WuSatisfied<W0::Write>
-        + WuSatisfied<W1::Read>
-        + WuSatisfied<W1::Write>
-        + WuSatisfied<W2::Read>
-        + WuSatisfied<W2::Write>,
+    H: WorkUnit,
+    R: Buildable<Stores>,
+    Stores: AccessSet + WuSatisfied<H::Read> + WuSatisfied<H::Write>,
 {
 }
 
@@ -394,6 +374,51 @@ pub fn smoke_mixed_kit_and_raw() -> Scheduler {
         .column::<Diagnostic>() // raw column
         .add::<DiscoverFiles>()
         .add::<EmitDiagnostics>()
+        .build()
+}
+
+// -----------------------------------------------------------------------
+// Stress test for the Wus-uncap fix (round 202605011500).
+//
+// Registers 16 distinct WUs to confirm the recursive Buildable impl
+// handles depths >12 (the prior per-arity macro cap). Each WU declares
+// trivial Read=() / Write=() so the Buildable resolution chain still
+// runs through 16 cons-list nodes plus 32 WuSatisfied<()> obligations.
+// -----------------------------------------------------------------------
+
+macro_rules! decl_dummy_wus {
+    ($($name:ident),+ $(,)?) => {
+        $(
+            pub struct $name;
+            impl WorkUnit for $name {
+                type Read = ();
+                type Write = ();
+            }
+        )+
+    };
+}
+
+decl_dummy_wus!(W00, W01, W02, W03, W04, W05, W06, W07);
+decl_dummy_wus!(W08, W09, W10, W11, W12, W13, W14, W15);
+
+pub fn smoke_sixteen_wus() -> Scheduler {
+    SchedulerBuilder::new()
+        .add::<W00>()
+        .add::<W01>()
+        .add::<W02>()
+        .add::<W03>()
+        .add::<W04>()
+        .add::<W05>()
+        .add::<W06>()
+        .add::<W07>()
+        .add::<W08>()
+        .add::<W09>()
+        .add::<W10>()
+        .add::<W11>()
+        .add::<W12>()
+        .add::<W13>()
+        .add::<W14>()
+        .add::<W15>()
         .build()
 }
 
