@@ -18,7 +18,7 @@
 use core::marker::PhantomData;
 
 use hilavitkutin_api::access::AccessSet;
-use hilavitkutin_api::builder::Buildable;
+use hilavitkutin_api::builder::{Buildable, BuilderExtending, WuSatisfied, extending_sealed};
 use hilavitkutin_api::platform::{ClockApi, MemoryProviderApi, ThreadPoolApi};
 use hilavitkutin_api::store::{Column, Resource, Virtual};
 use hilavitkutin_api::work_unit::WorkUnit;
@@ -128,7 +128,7 @@ where
     }
 
     /// Register a `Virtual<T>`. Prepends `Virtual<T>` onto `Stores`.
-    pub fn virtual_<T: 'static>(
+    pub fn add_virtual<T: 'static>(
         self,
     ) -> SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES, Wus, (Virtual<T>, Stores)>
     where
@@ -139,7 +139,17 @@ where
 
     /// Install a Kit, returning the type-state the Kit's `install`
     /// produces.
-    pub fn add_kit<K: Kit<Self>>(self, k: K) -> K::Output {
+    ///
+    /// `K::Output: BuilderExtending<Self>` proves the Kit kept the
+    /// same `Wus` (Kits never add WUs, only stores) and only extended
+    /// `Stores`. A buggy Kit that returned `SchedulerBuilder<..., (), ()>`
+    /// would fail this bound at the call site, with the error pointing
+    /// at the Kit's `Output` declaration.
+    pub fn add_kit<K>(self, k: K) -> K::Output
+    where
+        K: Kit<Self>,
+        K::Output: BuilderExtending<Self>,
+    {
         k.install(self)
     }
 
@@ -178,4 +188,42 @@ where
     pub fn build(self) -> Scheduler<MAX_UNITS, MAX_STORES, MAX_LANES> {
         Scheduler::default()
     }
+}
+
+// ---------------------------------------------------------------------
+// BuilderExtending impl. The single legal impl: `Wus` identical, new
+// `Stores` proves WuSatisfied of old `Stores` (every old store is
+// still present). Sealed via api's private supertrait.
+// ---------------------------------------------------------------------
+
+impl<
+    const MAX_UNITS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_STORES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_LANES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    Wus,
+    OldStores,
+    NewStores,
+> extending_sealed::Sealed<SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES, Wus, OldStores>>
+    for SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES, Wus, NewStores>
+where
+    Wus: AccessSet,
+    OldStores: AccessSet,
+    NewStores: AccessSet + WuSatisfied<OldStores>,
+{
+}
+
+impl<
+    const MAX_UNITS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_STORES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_LANES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    Wus,
+    OldStores,
+    NewStores,
+> BuilderExtending<SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES, Wus, OldStores>>
+    for SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES, Wus, NewStores>
+where
+    Wus: AccessSet,
+    OldStores: AccessSet,
+    NewStores: AccessSet + WuSatisfied<OldStores>,
+{
 }
