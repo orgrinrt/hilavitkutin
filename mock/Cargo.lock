@@ -332,7 +332,9 @@ version = "0.1.0"
 dependencies = [
  "arvo",
  "arvo-bits",
+ "hilavitkutin",
  "hilavitkutin-api",
+ "hilavitkutin-kit",
  "hilavitkutin-str",
  "notko",
 ]
