@@ -3,7 +3,7 @@
 **Scope:** hilavitkutin-api (1 trait + 1 sealed module + 1 impl), hilavitkutin (1 BuilderResource impl), hilavitkutin-providers (InternerKit type + Kit impl + tests)
 **Source topics:** #329 (carry-over from round 202605041257 deferral)
 
-# Topic: hilavitkutin-providers v0.1 — InternerKit + BuilderResource bridge
+# Topic: hilavitkutin-providers v0.1: InternerKit + BuilderResource bridge
 
 ## Background
 

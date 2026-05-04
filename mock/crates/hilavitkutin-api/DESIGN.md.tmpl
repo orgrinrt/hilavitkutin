@@ -287,6 +287,53 @@ at the Kit's `Output` declaration, not at a downstream `.build()`.
 Sealed via private supertrait `Sealed<B>`; only the engine's own
 `SchedulerBuilder` impl is permitted.
 
+### `BuilderResource<T>` sealed trait
+
+```rust
+#[allow(private_bounds)]
+pub trait BuilderResource<T: 'static>: Sealed<T> {
+    type WithResource;
+    fn with_resource(self, init: T) -> Self::WithResource;
+}
+
+impl<MAX_UNITS, MAX_STORES, MAX_LANES, Wus, Stores, T>
+    BuilderResource<T>
+    for SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES, Wus, Stores>
+where
+    T: 'static,
+    Wus: AccessSet,
+    Stores: AccessSet,
+    (Resource<T>, Stores): AccessSet,
+{
+    type WithResource =
+        SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES, Wus, (Resource<T>, Stores)>;
+
+    fn with_resource(self, init: T) -> Self::WithResource {
+        self.resource(init)
+    }
+}
+```
+
+Lets a Kit declared in a crate that cannot import the engine call
+`builder.with_resource(value)` against any builder type implementing
+the trait. The single legal impl is the engine's, forwarding to the
+existing inherent `SchedulerBuilder::resource(init)`. The associated
+type `WithResource` carries the same type-state extension the
+inherent method produces.
+
+`hilavitkutin-providers`'s `InternerKit` is the first caller. Its
+Kit impl is generic over `B: BuilderResource<T>` for the relevant
+`T`, so the impl never names `SchedulerBuilder` directly. The
+forbidden-imports rule on `hilavitkutin-providers` (which blocks
+`hilavitkutin::*`) stays intact.
+
+Sealed via private supertrait `Sealed<T>`; only the engine's
+`SchedulerBuilder` impl is permitted. A future round adds symmetric
+`BuilderColumn<T>` and `BuilderVirtual<T>` traits when consumer Kits
+need to register columns or virtuals; v0.1 ships
+`BuilderResource<T>` only because the InternerKit registers a
+single resource.
+
 ### `Depth` trait
 
 ```rust
