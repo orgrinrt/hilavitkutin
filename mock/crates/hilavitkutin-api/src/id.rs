@@ -1,10 +1,9 @@
-//! Store identity and access mask.
+//! Store identity.
 //!
-//! `StoreId` is a dense plan-time index into the store table. The
-//! scheduler operates on `AccessMask` bitwords; one bit per store.
+//! `StoreId` is a dense plan-time index into the store table. Bitmask
+//! shapes used by the engine live at `hilavitkutin::plan::access::AccessMask`.
 
 use arvo::USize;
-use arvo_bitmask::Mask64;
 
 /// Dense store index assigned at plan time.
 ///
@@ -28,9 +27,3 @@ impl core::hash::Hash for StoreId {
         self.0.0.hash(state);
     }
 }
-
-/// Access mask: bit per store, up to 64 stores per mask word.
-///
-/// Read/write set bitmasks at plan time use this shape. Single-
-/// instruction bitwise set ops.
-pub type AccessMask = Mask64;

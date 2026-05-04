@@ -32,6 +32,7 @@
 //! cannot impl them.
 
 use arvo::USize;
+use arvo::strategy::Identity;
 
 use crate::access::{AccessSet, Contains};
 use crate::work_unit::WorkUnit;
@@ -99,7 +100,7 @@ pub trait BuilderExtending<B>: extending_sealed::Sealed<B> {}
 
 /// Total cons-list element count.
 ///
-/// `<()>::D == USize(0)`. `<(H, R)>::D == R::D + 1`. Impl'd ONLY
+/// `<()>::D == USize::ZERO`. `<(H, R)>::D == R::D + USize::ONE`. Impl'd ONLY
 /// on cons-list shapes (`()` and `(H, R: Depth)`). Flat tuples of
 /// arity 3+ deliberately do not impl `Depth`.
 ///
@@ -162,8 +163,8 @@ impl depth_sealed::Sealed for () {}
 impl<H, R: Depth> depth_sealed::Sealed for (H, R) {}
 
 impl Depth for () {
-    const D: USize = USize(0);
+    const D: USize = USize::ZERO;
 }
 impl<H, R: Depth> Depth for (H, R) {
-    const D: USize = USize(R::D.0 + 1);
+    const D: USize = R::D + USize::ONE;
 }
