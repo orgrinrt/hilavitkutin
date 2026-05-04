@@ -168,9 +168,27 @@ pub fn export_extension(attr: TokenStream, item: TokenStream) -> TokenStream {
                 format_ident!("__ext_init_trampoline_{}", struct_ident);
             (
                 quote! {
+                    // External linkage via `#[unsafe(no_mangle)]` keeps
+                    // the symbol out of the linker's identical-code-
+                    // folding (ICF) merge candidates. Without it, two
+                    // trampolines with structurally identical bodies
+                    // (e.g. both returning `Ok` from trivial impls)
+                    // can be folded into one symbol, leaving the
+                    // descriptor's other fn-pointer slot pointing at
+                    // a folded-away address. `#[inline(never)]` is
+                    // additional belt-and-suspenders against an LTO
+                    // path that would inline the body into the
+                    // descriptor static initializer.
+                    #[unsafe(no_mangle)]
+                    #[inline(never)]
                     unsafe extern "C" fn #fn_ident(
                         host_ctx: *mut ::core::ffi::c_void,
                     ) -> ::hilavitkutin_extensions::ExtensionAbiStatus {
+                        // Per-role byte-string discriminator forces the
+                        // trampoline body to differ from the shutdown
+                        // trampoline at the byte level, defeating ICF
+                        // address aliasing for trivial-impl cases.
+                        let _ = ::core::hint::black_box(b"init");
                         // SAFETY: caller is the host, which passes the
                         // pointer it allocated for this specific load.
                         unsafe {
@@ -190,9 +208,12 @@ pub fn export_extension(attr: TokenStream, item: TokenStream) -> TokenStream {
                 format_ident!("__ext_shutdown_trampoline_{}", struct_ident);
             (
                 quote! {
+                    #[unsafe(no_mangle)]
+                    #[inline(never)]
                     unsafe extern "C" fn #fn_ident(
                         host_ctx: *mut ::core::ffi::c_void,
                     ) -> ::hilavitkutin_extensions::ExtensionAbiStatus {
+                        let _ = ::core::hint::black_box(b"shutdown");
                         // SAFETY: caller is the host, which passes the
                         // pointer it threaded through at load time.
                         unsafe {

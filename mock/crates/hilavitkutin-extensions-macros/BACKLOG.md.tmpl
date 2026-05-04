@@ -26,6 +26,14 @@ Detect ABI skew between the macro's output (derived from the version of `hilavit
 
 V1 placement is on the struct. An alternative placement on an `impl` block (e.g. `#[export_extension] impl Linter for MyLinter { ... }`) would let the macro pick up trait impls the user has already written without requiring them to be declared via the trait-method-parse path. Deferred pending ergonomic evaluation once consumers have written a few extensions.
 
+### LTO smoke runtime callability
+
+The `tests/lto_smoke.rs` test in this crate verifies trampoline symbol survival under `lto = "fat"` via `nm` output. Runtime callability (dlopen the fixture, resolve the descriptor, call `init_fn` via the fn-pointer, assert `ExtensionAbiStatus::Ok`) becomes free once a real consumer extension exercises the descriptor's fn-pointer end-to-end. Symbol survival catches the more likely failure mode; the runtime check is the belt-and-suspenders extension of it.
+
+### LTO smoke on Windows
+
+The current fixture uses `nm` for symbol observation, which does not exist on Windows toolchains. A parallel harness using `dumpbin /SYMBOLS` or the `object` crate would close the cross-platform gap. Deferred until a Windows consumer extension lands.
+
 ### Darling / procmacro-builder integration
 
 The attribute parser currently uses hand-written `syn` parsing. Swapping to `darling` for attribute parameter parsing would reduce hand-written code and standardise error reporting. Deferred pending a third or fourth attribute parameter that pushes hand-written parsing past its convenience window.
