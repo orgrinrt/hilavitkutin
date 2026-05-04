@@ -1,4 +1,4 @@
-//! `hilavitkutin-providers` — default Resource-backed providers
+//! `hilavitkutin-providers`: default Resource-backed providers
 //! for the hilavitkutin scheduler.
 //!
 //! Standalone ecosystem crate. Consumed by the engine via Kit

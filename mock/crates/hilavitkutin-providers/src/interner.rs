@@ -132,20 +132,33 @@ impl<const BYTES: usize, const ENTRIES: usize> ArenaInterner for MemoryArena<BYT
         }
 
         // Append bytes to the buffer.
-        // SAFETY: `cursor + len <= BYTES` checked above; no other
-        // borrows of `self.bytes` are live (single-threaded by
-        // !Sync invariant).
+        // SAFETY: pointer-arithmetic-only write avoids `&mut`
+        // reborrow over the buffer place. Stacked Borrows /
+        // Tree Borrows admit overlapping `&self` calls (e.g.
+        // arena_intern issued while a previously-returned `&str`
+        // from arena_resolve is still live); creating `&mut` over
+        // the same allocation under those borrow stacks would be
+        // UB. The append-only allocator invariant guarantees the
+        // bytes at `[cursor..cursor+len]` are not read by any
+        // outstanding `&str` (which can only point into prior
+        // ranges `[old_offset..old_offset+old_len]` with
+        // `old_offset+old_len <= cursor`). `cursor + len <= BYTES`
+        // checked above; the arena is `!Sync` so no concurrent
+        // mutator on another thread either.
         unsafe {
-            let buf_ptr = (*self.bytes.get()).as_mut_ptr().add(cursor);
+            let buf_ptr = (self.bytes.get() as *mut u8).add(cursor);
             core::ptr::copy_nonoverlapping(bytes.as_ptr(), buf_ptr, len);
         }
 
         // Record the entry.
-        // SAFETY: same single-threaded invariant; `count < ENTRIES`
-        // checked above.
+        // SAFETY: pointer-arithmetic-only write to the entry table
+        // for the same Stacked Borrows reason as above. `count <
+        // ENTRIES` checked above; previously-returned `Entry`
+        // values were `read()` by value (Copy), so no shared borrow
+        // remains pointing into `self.entries`.
         unsafe {
-            let entries = &mut *self.entries.get();
-            entries[count] = Entry { offset: USize(cursor), len: USize(len) };
+            let entries_ptr = self.entries.get() as *mut Entry;
+            entries_ptr.add(count).write(Entry { offset: USize(cursor), len: USize(len) });
         }
 
         let id = count as u32; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: ArenaInterner contract returns u32 ids; tracked: #72
