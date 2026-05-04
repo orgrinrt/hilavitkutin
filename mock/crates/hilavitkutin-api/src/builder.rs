@@ -54,6 +54,11 @@ mod depth_sealed {
     pub trait Sealed {}
 }
 
+#[doc(hidden)]
+pub mod builder_resource_sealed {
+    pub trait Sealed<T> {}
+}
+
 /// Proof that every WorkUnit in `Wus` has its `Read` and `Write`
 /// access sets satisfied by `Stores`.
 ///
@@ -97,6 +102,34 @@ pub trait WuSatisfied<A: AccessSet>: wu_satisfied_sealed::Sealed<A> {}
 /// Sealed; only the engine's `SchedulerBuilder` impl is permitted.
 #[allow(private_bounds)]
 pub trait BuilderExtending<B>: extending_sealed::Sealed<B> {}
+
+/// Lets a Kit declared in a crate that cannot import the engine
+/// register a `Resource<T>` on the builder via a trait bound on
+/// the input builder type.
+///
+/// `WithResource` is the resulting builder type after the
+/// resource is registered. The single legal impl lives in the
+/// engine's `SchedulerBuilder`, forwarding to its inherent
+/// `.resource()` method.
+///
+/// `hilavitkutin-providers`'s `InternerKit` is the first caller.
+/// Its `Kit<B>` impl uses `B: BuilderResource<...>` instead of
+/// naming `SchedulerBuilder`, keeping providers free of an engine
+/// dep.
+///
+/// Sealed; consumers cannot impl directly. Future rounds add
+/// symmetric `BuilderColumn<T>` and `BuilderVirtual<T>` traits if
+/// a Kit needs to register columns or virtuals from outside the
+/// engine crate.
+#[allow(private_bounds)]
+pub trait BuilderResource<T: 'static>: builder_resource_sealed::Sealed<T> {
+    /// Builder type produced after `with_resource` runs.
+    type WithResource;
+
+    /// Register a `Resource<T>` constructed from `init` on the
+    /// builder, returning the new type-state.
+    fn with_resource(self, init: T) -> Self::WithResource;
+}
 
 /// Total cons-list element count.
 ///

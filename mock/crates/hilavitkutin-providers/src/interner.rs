@@ -10,6 +10,8 @@
 use core::cell::{Cell, UnsafeCell};
 
 use arvo::USize;
+use hilavitkutin_api::BuilderResource;
+use hilavitkutin_kit::Kit;
 use hilavitkutin_str::{ArenaInterner, Str, StringInterner};
 use notko::Maybe;
 
@@ -208,4 +210,26 @@ impl<const BYTES: usize, const ENTRIES: usize> ArenaInterner for MemoryArena<BYT
 pub const fn default_interner<const BYTES: usize, const ENTRIES: usize>() // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array sizes; tracked: #121
 -> StringInterner<MemoryArena<BYTES, ENTRIES>> { // lint:allow(no-alloc) reason: StringInterner is the no-alloc interner wrapper, not std String; tracked: #72
     StringInterner::new(MemoryArena::new())
+}
+
+/// Kit preset that registers a default-configured
+/// `Resource<StringInterner<MemoryArena<BYTES, ENTRIES>>>` on the
+/// scheduler builder via `add_kit`.
+///
+/// Composes via the api-level [`BuilderResource<T>`] sealed trait,
+/// so the impl never names the engine's `SchedulerBuilder`
+/// directly. Use as
+/// `Scheduler::builder().add_kit(InternerKit::<BYTES, ENTRIES>)`.
+pub struct InternerKit<const BYTES: usize, const ENTRIES: usize>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array sizes; tracked: #121
+
+impl<B, const BYTES: usize, const ENTRIES: usize> Kit<B> // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array sizes; tracked: #121
+    for InternerKit<BYTES, ENTRIES>
+where
+    B: BuilderResource<StringInterner<MemoryArena<BYTES, ENTRIES>>>,
+{
+    type Output = B::WithResource;
+
+    fn install(self, builder: B) -> Self::Output {
+        builder.with_resource(default_interner::<BYTES, ENTRIES>())
+    }
 }

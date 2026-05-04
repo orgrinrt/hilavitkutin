@@ -1,8 +1,12 @@
-//! Smoke test for hilavitkutin-providers v0.
+//! Smoke test for hilavitkutin-providers.
 
 #![no_std]
 
-use hilavitkutin_providers::{InternerApi, MemoryArena, default_interner};
+use hilavitkutin::scheduler::Scheduler;
+use hilavitkutin_kit::Kit;
+use hilavitkutin_providers::{
+    InternerApi, InternerKit, MemoryArena, default_interner,
+};
 use hilavitkutin_str::ArenaInterner;
 use notko::Maybe;
 
@@ -66,4 +70,25 @@ fn resolve_borrow_survives_subsequent_intern() {
     // not stomped by the second intern.
     assert_eq!(resolved_first, "first");
     assert_eq!(arena.arena_resolve(id_second), "second");
+}
+
+/// `InternerKit::install` composes against `SchedulerBuilder` via
+/// the api-level `BuilderResource<T>` bridge: providers does not
+/// import the engine, the engine impls the trait, and the Kit's
+/// `install` body resolves at the call site. The test type-checks
+/// the chain end-to-end against the real builder.
+#[test]
+fn internerkit_installs_via_scheduler_builder() {
+    let builder = Scheduler::<8, 8, 4>::builder();
+    let _extended = InternerKit::<128, 8>.install(builder);
+}
+
+/// `Scheduler::builder().add_kit(InternerKit::<...>)` is the
+/// idiomatic surface the round delivers. Type-checks the engine's
+/// `add_kit` (with its `K::Output: BuilderExtending<Self>` bound)
+/// composed with the providers Kit, end-to-end.
+#[test]
+fn internerkit_installs_via_add_kit() {
+    let _extended =
+        Scheduler::<8, 8, 4>::builder().add_kit(InternerKit::<128, 8>);
 }
