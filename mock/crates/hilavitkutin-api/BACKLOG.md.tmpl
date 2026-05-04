@@ -20,7 +20,7 @@ impl-internal escape today.
 
 Current ships with AccessMask = Mask64 (≤64 stores). A Mask256 sibling
 lets pipelines address ≤256 stores at the cost of four-word bitmask
-ops instead of one. polka-dots research shows typical pipelines stay
+ops instead of one. Prior consumer-ecosystem research shows typical pipelines stay
 under 50 stores, so this is a non-urgent widening. Promote when a
 concrete consumer exceeds 64.
 

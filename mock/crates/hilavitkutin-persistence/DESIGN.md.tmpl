@@ -3,10 +3,10 @@
 `#![no_std]`, no alloc. Generic hot-cold storage bridge for the
 hilavitkutin ecosystem. All serialisation via rkyv. All memory
 from shared `MemoryProvider`. Reusable by any hilavitkutin
-consumer (saalis, polka-dots, loimu).
+consumer.
 
-Lives in saalis workspace for now. Will be extracted to
-hilavitkutin repo when stabilised.
+Currently developed alongside the hilavitkutin engine. Will be
+extracted to its own publishable crate when stabilised.
 
 ## Dependencies
 
@@ -181,8 +181,8 @@ All rkyv-archived. Consumer extends with domain-specific metadata
 
 Snapshot = copy the data directory. All files are rkyv archives,
 always consistent (complete writes via MemoryProvider). Consumer
-wraps in whatever container format they want (.saalis ZIP+zstd,
-.polka format, etc.).
+wraps in whatever container format they want (consumer-defined ZIP
+plus zstd archives, custom binary formats, etc.).
 
 ## Key types
 

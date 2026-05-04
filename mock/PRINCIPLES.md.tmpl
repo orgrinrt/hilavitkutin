@@ -52,8 +52,8 @@ call sites means no turbofish.
 
 Patterns throughout the stack are instances of this single mental
 model: arvo's `UArith<BITS>` / `IArith<BITS>`, arvo-bits' `Bool: Try`,
-hilavitkutin-api's 22 access/context/platform traits, saalis's
-"no Vec in trait signatures". All the same rule.
+hilavitkutin-api's 22 access/context/platform traits, the engine's own
+"no Vec in trait signatures" rule. All the same rule.
 
 **Decision test:** "Can I imagine two implementations with different
 behavior?" If yes, it's a trait slot, not a concrete type.
