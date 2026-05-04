@@ -32,10 +32,11 @@ primary export attribute under their own domain-named macro.
 - `DESCRIPTOR_SYMBOL: &CStr` is the null-terminated C string naming the single well-known exported symbol extensions expose. Constructed at const via `CStr::from_bytes_with_nul_unchecked` over a literal with known trailing nul. Shared between host and extension author through the macro's emission path.
 - `Extension` is the host-level handle returned by `ExtensionHost::load`. Holds the lower-layer `Library` (from `hilavitkutin-linking`), the `&'static ExtensionDescriptor` resolved at load time, and the host-opaque `*mut c_void` threaded through init and shutdown. Its drop runs shutdown exactly once, then drops the `Library`.
 - `Extension::close` is the explicit-shutdown counterpart to drop. Returns `Outcome<(), ExtensionError>` so shutdown errors can be surfaced; drop swallows them (drop cannot fail).
-- `ExtensionHost` is the entry point for loading. `ExtensionHost::new(host_capabilities)` constructs a host with the capabilities the host offers; `with_policy(policy)` supplies an optional failure policy override; `load(path, requirement, host_ctx)` loads one extension from disk.
+- `ExtensionHost` is the entry point for loading. `ExtensionHost::new(host_capabilities)` constructs a host with the capabilities the host offers; `with_policy(policy)` supplies an optional failure policy override; `with_shutdown_observer(observer)` supplies an optional observer that fires from `Extension::close` and the `Drop` path; `load(path, requirement, host_ctx)` loads one extension from disk.
 - `ExtensionRequirement` classifies each load as `Required` or `Optional`.
 - `PolicyVerdict` is the result of consulting the failure policy: `Continue` or `Abort`.
 - `FailurePolicyFn` is the `fn`-pointer type for consumer-supplied policy hooks. No `dyn`; consumers who need stateful policies hold state in their own instance and expose a plain `fn`.
+- `ShutdownObserverFn` is the `fn`-pointer type for consumer-supplied shutdown observers. Signature: `fn(name: &[u8], status: ExtensionAbiStatus)`. Fires once per extension from either `close()` or `Drop`. No `dyn`; consumers who need stateful observers hold state in static memory and expose a plain `fn`, the same constraint as `FailurePolicyFn`.
 - `default_policy` implements the built-in behaviour: required-plus-failure aborts; optional-plus-failure continues. Used when the consumer provides no policy.
 - `ExtensionError` is the `#[repr(C)] #[non_exhaustive]` host-layer error enum. Variants: `LinkFailed { cause: LinkError }`, `DescriptorMissing`, `DescriptorInvalid`, `AbiVersionMismatch { expected: AbiVersion, got: AbiVersion }`, `ExtensionVersionUnsupported`, `RequiredHostCapabilityMissing { cap: CapabilityId }`, `InitFailed { status: ExtensionAbiStatus }`, `ShutdownFailed { status: ExtensionAbiStatus }`.
 - `ExtensionMeta` is the trait that extension authors implement to feed name, version, and required host capability metadata into the `#[export_extension]` macro. Associated constants: `NAME: &'static [u8]`, `VERSION: ExtensionVersion`, `REQUIRED_HOST_CAPS: &'static [CapabilityId]`.
@@ -62,7 +63,7 @@ On any failure path, the host classifies by `requirement` and consults the polic
 
 `Extension::capability(id)` returns `Maybe<*const c_void>`. The consumer casts the pointer back to its domain-specific vtable type via a consumer-owned trampoline. The host never dereferences the vtable pointer.
 
-`Extension::close(self)` calls `shutdown_fn(host_ctx)` if present, then drops the inner `Library`, returning `Outcome<(), ExtensionError>` carrying any shutdown error. `Drop` performs the same sequence but discards errors.
+`Extension::close(self)` calls `shutdown_fn(host_ctx)` if present, then drops the inner `Library`, returning `Outcome<(), ExtensionError>` carrying any shutdown error. `Drop` performs the same sequence but discards errors. Both paths fire the host's `ShutdownObserverFn` if one was installed via `ExtensionHost::with_shutdown_observer`, passing the extension's declared name and the status returned by `shutdown_fn` (or `ExtensionAbiStatus::Ok` if the extension declared no shutdown).
 
 ## Pull-based discovery protocol
 
@@ -89,6 +90,8 @@ Collisions at 64 bits are vanishingly rare but not impossible. If they occur, co
 ## Failure policy
 
 Each `ExtensionHost::load` takes a `requirement` argument. The default policy is stateless and simple: required failure aborts, optional failure continues. Consumers with richer needs construct their host via `ExtensionHost::new(caps).with_policy(their_fn)`. `FailurePolicyFn` is a plain function pointer with signature `fn(&ExtensionError, ExtensionRequirement) -> PolicyVerdict`. No `dyn`, no heap, no closures: consumers carrying state pack it into the extension instance they are loading for and expose a plain `fn` that pulls from a well-known static.
+
+The shutdown observer is a separate hook from the failure policy. Drop has no caller to surface errors to; consumers that need to log shutdown failures or attribute them to extensions install an observer at host construction. `close()` already returns the error directly, but the observer fires there too for symmetry: a host that wants every shutdown observed installs one observer and gets notified on either path. Observer signature `fn(name: &[u8], status: ExtensionAbiStatus)` matches the same no-`dyn`, no-heap constraints as the policy hook.
 
 ## Architectural position
 
