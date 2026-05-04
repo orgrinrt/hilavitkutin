@@ -1,9 +1,11 @@
+#![feature(const_trait_impl)]
 //! `StringInterner` exercised with a test-local `VecInterner`
 //! implementing `ArenaInterner`.
 
 use std::cell::RefCell;
 
 use hilavitkutin_str::{str_const, ArenaInterner, Str, StringInterner};
+use notko::Maybe;
 
 struct VecInterner {
     strings: RefCell<Vec<String>>,
@@ -46,7 +48,7 @@ fn runtime_intern_roundtrip() {
     let interner = StringInterner::new(VecInterner::new());
     let h = interner.intern("ephemeral-runtime-a");
     assert!(h.is_runtime().0);
-    assert_eq!(interner.resolve(h), Some("ephemeral-runtime-a"));
+    assert_eq!(interner.resolve(h), Maybe::Is("ephemeral-runtime-a"));
 }
 
 #[test]
@@ -75,7 +77,7 @@ fn const_short_circuits_on_intern() {
     assert_eq!(c, i);
     assert!(i.is_const().0);
     // Resolve should come back via the linker-section table.
-    assert_eq!(interner.resolve(i), Some("interner-const-hit"));
+    assert_eq!(interner.resolve(i), Maybe::Is("interner-const-hit"));
 }
 
 #[test]
@@ -92,5 +94,5 @@ fn resolve_runtime_delegates_to_arena() {
     let interner = StringInterner::new(VecInterner::new());
     let h: Str = interner.intern("arena-delegate");
     assert!(h.is_runtime().0);
-    assert_eq!(interner.resolve(h), Some("arena-delegate"));
+    assert_eq!(interner.resolve(h), Maybe::Is("arena-delegate"));
 }
