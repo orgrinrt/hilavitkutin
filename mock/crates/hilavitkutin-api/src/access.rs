@@ -6,6 +6,7 @@
 //! Violating that at a call site fails to compile.
 
 use arvo::USize;
+use arvo::strategy::Identity;
 
 use crate::sealed;
 
@@ -39,7 +40,7 @@ pub trait Contains<S>: AccessSet {}
 // Arity 0.
 impl sealed::Sealed for () {}
 impl AccessSet for () {
-    const LEN: USize = USize(0);
+    const LEN: USize = USize::ZERO;
 }
 
 // Declarative macro: emit AccessSet for one arity plus Contains at
