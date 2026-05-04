@@ -1,15 +1,15 @@
 # hilavitkutin-providers
 
 Default Resource-backed providers for the hilavitkutin scheduler.
-The crate ships Kit impls consumers wire onto the
-`SchedulerBuilder` via `add_kit`, producing
-`Resource<T>` registrations the engine then dispatches through
-WorkUnit Context bounds. Standalone ecosystem crate: consumed by
-the engine via Kit installation, no reverse dep.
+Standalone ecosystem crate: consumed by the engine via Kit
+installation (or, in v0, via direct `builder.resource(...)` wiring),
+no reverse dep.
 
-v0 covers the interner. Future modules (ColumnStorage default,
-Clock default, MemoryProvider default for libc/Unix) land in
-their own rounds when an actual consumer surfaces the need.
+v0 covers the interner value-type surface. Future rounds add the
+InternerKit Kit impl (v0.1, requires an api-side `BuilderResource<T>`
+bridging trait) and other provider modules (ColumnStorage default,
+Clock default, MemoryProvider default for libc/Unix) per consumer
+demand.
 
 ## Surface
 
@@ -17,8 +17,8 @@ their own rounds when an actual consumer surfaces the need.
 |------|---------|
 | `InternerApi` | Provider-shape trait paralleling `MemoryProviderApi` / `ClockApi`. Methods `intern(&str) -> Str`, `resolve(Str) -> Maybe<&str>`. |
 | `HasInterner` | Accessor trait for the Context-provider tuple. Mirrors `HasMemoryProvider` / `HasClock`. |
-| `MemoryArena<CAP, ENTRIES>` | Inline-storage `ArenaInterner` impl. Const-generic byte-cap and entry-cap. Backs the v0 default `StringInterner`. |
-| `InternerKit<CAP, ENTRIES>` | `Kit<B>` impl that registers `Resource<StringInterner<MemoryArena<CAP, ENTRIES>>>` on the builder. |
+| `MemoryArena<BYTES, ENTRIES>` | Inline-storage `ArenaInterner` impl. Const-generic byte-cap and entry-cap. Backs the v0 default `StringInterner`. |
+| `default_interner<BYTES, ENTRIES>()` | Free fn building `StringInterner<MemoryArena<BYTES, ENTRIES>>`. v0 wiring entry point in lieu of the InternerKit. |
 
 ### `InternerApi`
 
@@ -27,8 +27,11 @@ walkers, diagnostic emitters, etc.) declare `HasInterner` in their
 `Ctx` tuple bound and call `ctx.interner().intern(s)` /
 `ctx.interner().resolve(handle)` from within `execute()`.
 
-The trait carries `Send + Sync + 'static` so the value can live
-in a `Resource<T>` accessed across phase boundaries.
+The trait carries `'static` so the value can live in a
+`Resource<T>`. v0 does not require `Send + Sync` on the provider
+because the engine's resource access pattern is sequential during
+single-thread morsel dispatch. The Sync arena variant in BACKLOG
+tracks the future generalisation.
 
 ### `HasInterner`
 
@@ -44,9 +47,9 @@ contracts in api (memory / threadpool / clock) are the
 engine-required surfaces; the interner is an opt-in provider, not
 an engine prerequisite.
 
-### `MemoryArena<CAP, ENTRIES>`
+### `MemoryArena<BYTES, ENTRIES>`
 
-Inline-storage `ArenaInterner` impl. Holds `[u8; CAP]` bytes plus
+Inline-storage `ArenaInterner` impl. Holds `[u8; BYTES]` bytes plus
 an `[Entry; ENTRIES]` table where each entry records `(offset,
 len)` for a previously-interned string. Interior mutability via
 `Cell` for the cursor and entry count, `UnsafeCell` for the
@@ -57,41 +60,41 @@ entry index). `arena_resolve(id)` looks up the entry and slices
 `[offset..offset+len]` from the byte buffer.
 
 Capacity overflow (out of bytes or out of entry slots) returns
-sentinel id `u32::MAX` from `arena_intern`. `StringInterner`
-already returns `Maybe::Isnt` from `resolve` for unresolvable
-ids, so the failure path is observable. Consumers tune `CAP` and
-`ENTRIES` to their workload.
+sentinel id `u32::MAX` from `arena_intern`. Consumers tune
+`BYTES` and `ENTRIES` to their workload.
 
 `MemoryArena` is `!Sync` by default. The eventual
 `Resource<StringInterner<MemoryArena<...>>>` will need either a
 consumer-supplied Mutex shim or a future SyncArena variant for
 multi-thread access. Tracked in BACKLOG.
 
-### `InternerKit<CAP, ENTRIES>`
-
-`Kit<B>` impl with a one-line `install` body:
+### `default_interner()` constructor
 
 ```rust
-impl<B, const CAP: usize, const ENTRIES: usize> Kit<B>
-    for InternerKit<CAP, ENTRIES>
-where
-    B: BuilderResource<StringInterner<MemoryArena<CAP, ENTRIES>>>,
+pub const fn default_interner<const BYTES: usize, const ENTRIES: usize>()
+    -> StringInterner<MemoryArena<BYTES, ENTRIES>>
 {
-    type Output = B::WithResource;
-    fn install(self, builder: B) -> Self::Output {
-        builder.resource(StringInterner::new(MemoryArena::new()))
-    }
+    StringInterner::new(MemoryArena::new())
 }
 ```
 
-(The `BuilderResource` trait shape is the engine's
-`SchedulerBuilder::resource` method, exposed via the
-`BuilderExtending` machinery from #255.)
+Consumers wire it onto the scheduler with
+`builder.resource(default_interner::<BYTES, ENTRIES>())`. Two
+const generics because byte capacity and entry-count are
+independent dimensions a consumer tunes.
 
 ## What v0 deliberately does not ship
 
+- **`InternerKit<BYTES, ENTRIES>` Kit impl.** Deferred to v0.1.
+  Shipping the Kit impl from this crate requires an api-side
+  `BuilderResource<T>` sealed trait that engine impls for
+  `SchedulerBuilder<...>`. The forbidden-imports rule on
+  `hilavitkutin-providers` blocks `hilavitkutin::*`, so the Kit
+  cannot directly reference the engine's builder. v0.1 adds the
+  bridge (3-crate change: api + engine + providers) under its own
+  doc CL.
 - **`M: HasMemoryProvider` parameter on `MemoryArena`.** The
-  original 2026-05-01 task description named `MemoryArena<M, CAP>`
+  original 2026-05-01 task description named `MemoryArena<M, BYTES>`
   parameterised over a runtime memory provider. v0 uses inline
   storage at the type level instead. Reintroducing the M parameter
   needs allocate-at-builder-time plumbing the substrate does not
@@ -101,8 +104,8 @@ where
 
 ## Cross-references
 
-- `hilavitkutin-kit::Kit<B>` for the trait this crate's `InternerKit`
-  implements.
+- `hilavitkutin-kit::Kit<B>` for the trait the v0.1 InternerKit
+  will implement.
 - `hilavitkutin-str::{Str, StringInterner, ArenaInterner}` for the
   interner contract this crate's `MemoryArena` implements.
 - `hilavitkutin-api::HasMemoryProvider` / `MemoryProviderApi` for

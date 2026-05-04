@@ -20,7 +20,7 @@ The authoritative source is `design_rounds/202603181200_topic.hilavitkutin-desig
 | `hilavitkutin-kit` | Kit preset trait. Bundles related Resources / Columns registrations for the scheduler builder. Standalone (no other hilavitkutin-crate deps). Engine depends on it for `.add_kit()`. |
 | `hilavitkutin-linking` | Cross-platform dynamic library loading primitive (dlopen / LoadLibrary + typed Symbol / StaticRef). Pull-based explicit-symbol resolution. `no_std`, no allocator. Renamed from prior `hilavitkutin-extensions` in round 202604240615. |
 | `hilavitkutin-persistence` | Generic hot-cold storage bridge (ecosystem, standalone). |
-| `hilavitkutin-providers` | Default Resource-backed providers for the scheduler. v0 ships InternerKit (interner via inline-storage MemoryArena + StringInterner). Future modules add ColumnStorage / Clock / Memory defaults per consumer demand. Standalone (no engine dep). |
+| `hilavitkutin-providers` | Default Resource-backed providers for the scheduler. v0 ships the interner value-type surface (InternerApi / HasInterner / MemoryArena + default_interner constructor). Future modules add the InternerKit Kit impl (v0.1) and ColumnStorage / Clock / Memory defaults per consumer demand. Standalone (no engine dep). |
 | `hilavitkutin-str` | Interned string system (ecosystem, standalone). |
 
 ## Dependency graph
