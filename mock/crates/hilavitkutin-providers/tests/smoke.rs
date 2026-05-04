@@ -48,3 +48,22 @@ fn default_interner_intern_and_resolve_round_trip() {
         Maybe::Isnt => panic!("beta resolution failed"),
     }
 }
+
+/// Holding a resolved `&str` across a subsequent `arena_intern`
+/// must not invalidate the live borrow. The append-only allocator
+/// invariant plus pointer-arithmetic-only writes inside `arena_intern`
+/// keep this sound. Confirms the symmetric unsafe shape between
+/// `arena_intern` and `arena_resolve` (no `&mut` reborrow over the
+/// underlying allocations).
+#[test]
+fn resolve_borrow_survives_subsequent_intern() {
+    let arena: MemoryArena<1024, 32> = MemoryArena::new();
+    let id_first = arena.arena_intern("first");
+    let resolved_first: &str = arena.arena_resolve(id_first);
+    // Issue another intern while `resolved_first` is still live.
+    let id_second = arena.arena_intern("second");
+    // Re-read the prior resolve result to confirm the bytes were
+    // not stomped by the second intern.
+    assert_eq!(resolved_first, "first");
+    assert_eq!(arena.arena_resolve(id_second), "second");
+}
