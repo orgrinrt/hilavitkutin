@@ -1,3 +1,4 @@
+#![feature(const_trait_impl)]
 //! `AsStr` + `IntoStr` across `Str` and `&'static str`.
 
 use std::cell::RefCell;

@@ -9,6 +9,7 @@
 #[macro_export]
 macro_rules! str_const {
     ($s:literal) => {{
+        use ::arvo_bits::BitsRefitCtor as _;
         #[used]
         #[cfg_attr(
             any(target_os = "linux", target_os = "android"),

@@ -1,3 +1,4 @@
+#![feature(const_trait_impl)]
 //! `str_const!()` smoke + determinism.
 
 use hilavitkutin_str::{str_const, Str};
