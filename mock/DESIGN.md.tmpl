@@ -17,6 +17,7 @@ The authoritative source is `design_rounds/202603181200_topic.hilavitkutin-desig
 | `hilavitkutin-ctx` | Provider-gated context framework (ecosystem, standalone). |
 | `hilavitkutin-extensions` | Contract-bound extension host orchestration (descriptor, lifecycle, capability dispatch, failure policy) layered over `hilavitkutin-linking`. Domain-agnostic. `no_std`, no allocator, no dyn. |
 | `hilavitkutin-extensions-macros` | Proc-macro companion to `hilavitkutin-extensions`. Emits `#[repr(C)]` descriptor + exported-symbol fn + capability trampolines via `#[export_extension]`. Only proc-macro crate in the stack. |
+| `hilavitkutin-kit` | Kit preset trait. Bundles related Resources / Columns registrations for the scheduler builder. Standalone (no other hilavitkutin-crate deps). Engine depends on it for `.add_kit()`. |
 | `hilavitkutin-linking` | Cross-platform dynamic library loading primitive (dlopen / LoadLibrary + typed Symbol / StaticRef). Pull-based explicit-symbol resolution. `no_std`, no allocator. Renamed from prior `hilavitkutin-extensions` in round 202604240615. |
 | `hilavitkutin-persistence` | Generic hot-cold storage bridge (ecosystem, standalone). |
 | `hilavitkutin-str` | Interned string system (ecosystem, standalone). |
@@ -35,7 +36,7 @@ consumer build.rs
   └─ hilavitkutin-build  (no runtime deps)
 ```
 
-hilavitkutin-ctx, -persistence, -str are standalone ecosystem crates that consumers opt into; not part of the engine core.
+hilavitkutin-ctx, -persistence, -str, -kit are standalone ecosystem crates that consumers opt into. The first three are pure ecosystem (engine does not depend on them). hilavitkutin-kit is a contract crate the engine depends on for its `.add_kit()` method, but it has no reverse dependency on the engine; consumers can author Kits without pulling the engine in.
 
 hilavitkutin-linking, hilavitkutin-extensions, hilavitkutin-extensions-macros make up the plugin-host layer. Downstream consumers (viola, future loimu, future clause extension surfaces) build domain-specific contract crates on top.
 

@@ -8,6 +8,7 @@
 //! types use arvo newtypes.
 
 #![no_std]
+#![recursion_limit = "512"]
 #![deny(unsafe_op_in_unsafe_fn)]
 #![feature(adt_const_params)]
 #![feature(generic_const_exprs)]
@@ -22,18 +23,21 @@ mod sealed {
 }
 
 pub mod access;
+pub mod builder;
 pub mod capability;
 pub mod codec;
 pub mod column_value;
 pub mod context;
 pub mod hint;
 pub mod id;
+pub mod macros;
 pub mod platform;
 pub mod sink;
 pub mod store;
 pub mod work_unit;
 
 pub use access::{AccessSet, Contains};
+pub use builder::{Buildable, BuilderExtending, Depth, WuSatisfied};
 pub use capability::{BoundedPush, BulkPush, Capacity, Full, Len, Push};
 pub use codec::{DecodeError, Decoder, DecoderExt, Encoder, EncoderExt};
 pub use column_value::ColumnValue;

@@ -1,0 +1,50 @@
+544374b chore: lock src changelist for round 202605011500
+a89c64b chore: tighten hilavitkutin-kit forbidden-imports to ban substrate deps
+333cd81 feat: hilavitkutin-kit recursion_limit + crate-isolation test
+b24c4e6 test: migrate to read!/write!, fix Stub UB, add 50-WU + 16-store + Depth tests
+9ce0c24 feat!: rename virtual_ to add_virtual + add BuilderExtending<Self> bound on add_kit
+13303f7 test: migrate Integrate WU to read! / write! cons-list macros
+53663ba feat!: rewrite Buildable/WuSatisfied as cons-list recursive + add BuilderExtending + Depth
+23974d7 feat: ship read! / write! cons-list macros in hilavitkutin-api
+22d57c7 feat: add Contains diagnostic::on_unimplemented
+cea83fd docs: open SRC CL for round 202605011500
+610e071 chore: lock doc changelist for round 202605011500
+b595acc docs: hilavitkutin-kit BuilderExtending citation + recursion-limit note (round 202605011500)
+6a04845 docs: hilavitkutin scheduler builder rename + BuilderExtending + recursion limit (round 202605011500)
+c4fddef docs: hilavitkutin-api builder support rewrite + backlog follow-ups (round 202605011500)
+67dda0a docs: open DOC CL for round 202605011500
+aa97c58 chore: gitignore sketch rustc artefacts
+ce0b133 docs: third-reviewer addendum to round 202605011500 + sketch validates 4 fixes
+3c4a447 chore: scrub libsketch.rmeta build artifact
+de663d0 docs: open round 202605011500 topic + validate Wus uncap in sketch
+0b22e4c chore: close design round 202605011000
+8704ad9 chore: lock src CL for 202605011000
+7593b8f fix(scheduler): tighten add<W: WorkUnit> + platform-API bounds + WU tests
+a703cb8 docs: open src CL for round 202605011000
+2f0557b chore: lock doc CL for 202605011000_changelist.doc.lock.md
+1c28acf docs: open empty doc CL for round 202605011000 (source-only round)
+d23bea2 docs: open post-review-polish round 202605011000
+2bc0069 chore: close design round 202605010900
+656b0b3 chore: lock src changelist for 202605010900_changelist.src.lock.md
+cb0db53 feat: SchedulerBuilder type-state with phantom-tuple Wus + Stores
+018c06a feat: ship hilavitkutin-kit crate with Kit preset trait
+9177e70 feat: add Buildable, WuSatisfied + cons-list Contains in api
+659f529 docs: open src CL for round 202605010900
+630ebaa chore: lock doc changelist for 202605010900_changelist.doc.lock.md
+6e09218 docs: engine DESIGN documents new SchedulerBuilder type-state shape
+2362a6c docs: api DESIGN documents Buildable, WuSatisfied, recursive Contains
+270e10c chore: move round 202605010900 CLs to design_rounds top level
+a018c7a docs: add hilavitkutin-kit to mock/DESIGN crate table
+4114343 docs: add hilavitkutin-kit crate templates for round 202605010900
+0f3ee41 docs: open doc CL for round 202605010900
+da61c6f docs: validate app-builder type-state sketch for round 202605010900
+dd2c2a8 docs: open round 202605010900 topic for #255
+7caa07e feat: hilavitkutin arvo Round D adoption (#45)
+3661063 docs: extend byline policy to PR titles, descriptions, comments (#44)
+2eaf523 Merge pull request #43 from orgrinrt/feat/hilavitkutin-severity-ramp
+a6c02e6 chore: ramp hilavitkutin lint severities to match strict posture (#219)
+fbd5679 Merge pull request #42 from orgrinrt/feat/hilavitkutin-ffi-boundary-policy
+431295a docs: ban ASCII box-and-arrow diagrams in writing-style rules (#38)
+8af03c3 chore: archive round 202604510000 (FFI-boundary primitive policy)
+c7b4eef chore: lock src changelist for 202604510000_changelist.src.lock.md
+ddf8a49 refactor: apply FFI-boundary primitive policy to extensions (round 202604510000)
