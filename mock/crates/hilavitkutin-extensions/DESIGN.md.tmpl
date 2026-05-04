@@ -108,7 +108,7 @@ The shutdown observer is a separate hook from the failure policy. Drop has no ca
 ## Architectural position
 
 ```
-  viola-plugin-abi / clause-plugin-abi / loimu-plugin-abi
+  viola-plugin-abi and similar consumer-side ABI crates
     <-- consumer contract crates. Define domain-specific Capability
         types that implement CapabilityExport. Optionally wrap
         #[export_extension] under a domain-named attribute
@@ -176,7 +176,7 @@ and gets the full repr-C descriptor, trampolines, and exported symbol with no di
 This crate does not:
 
 - Define domain contracts (NAM, AST shapes, diagnostic formats, roles). Those live in consumer contract crates.
-- Walk directories to discover extensions, parse manifests to select extensions, or compute load order. Those are higher-layer concerns. Downstream consumers (loimu, viola-cli) build them on top.
+- Walk directories to discover extensions, parse manifests to select extensions, or compute load order. Those are higher-layer concerns. Downstream consumers (e.g. viola-cli) build them on top.
 - Provide cross-extension communication channels. Extensions are independent; any coordination is the host's responsibility via the capabilities it invokes.
 - Sandbox extensions or meter resource usage. V1 is full-trust native code; no isolation.
 - Support hot-reload with ref-counted unload. V1 is load-once, drop-once. BACKLOG.

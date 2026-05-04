@@ -39,8 +39,8 @@ real eviction pressure.
 
 `ColdStore::snapshot` is a stub. Real impl: atomic-rename
 file-copy over the data directory, optionally wrapping in a
-consumer-chosen container (saalis's ZIP+zstd, polka's .polka,
-etc.). Consumer-side API composition; persistence provides the
+consumer-chosen container (e.g. ZIP plus zstd archives, custom
+binary formats, etc.). Consumer-side API composition; persistence provides the
 file enumeration + checksum primitive.
 
 ## Domain-schema versioning
