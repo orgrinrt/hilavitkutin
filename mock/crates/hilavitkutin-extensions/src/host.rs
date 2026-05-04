@@ -38,6 +38,14 @@ pub enum PolicyVerdict {
 pub type FailurePolicyFn =
     fn(error: &ExtensionError, requirement: ExtensionRequirement) -> PolicyVerdict;
 
+/// Observer signature for extension shutdown completion.
+///
+/// Receives the extension's declared name and the status returned
+/// from the extension's `shutdown_fn` (or `ExtensionAbiStatus::Ok`
+/// if the extension declared no shutdown). Fires once per extension
+/// from either `Extension::close()` or the `Drop` path.
+pub type ShutdownObserverFn = fn(name: &[u8], status: ExtensionAbiStatus);
+
 /// Default failure policy.
 pub fn default_policy(
     _error: &ExtensionError,
@@ -58,17 +66,32 @@ pub fn default_policy(
 pub struct ExtensionHost {
     host_capabilities: &'static [CapabilityId],
     policy: FailurePolicyFn,
+    observer: Maybe<ShutdownObserverFn>,
 }
 
 impl ExtensionHost {
     /// Construct a host advertising `host_capabilities`.
     pub fn new(host_capabilities: &'static [CapabilityId]) -> Self {
-        Self { host_capabilities, policy: default_policy }
+        Self {
+            host_capabilities,
+            policy: default_policy,
+            observer: Maybe::Isnt,
+        }
     }
 
     /// Override the failure policy.
     pub fn with_policy(mut self, policy: FailurePolicyFn) -> Self {
         self.policy = policy;
+        self
+    }
+
+    /// Install a shutdown observer that fires from `Extension::close`
+    /// and the `Drop` path.
+    pub fn with_shutdown_observer(
+        mut self,
+        observer: ShutdownObserverFn,
+    ) -> Self {
+        self.observer = Maybe::Is(observer);
         self
     }
 
@@ -175,7 +198,12 @@ impl ExtensionHost {
             }
         }
 
-        Outcome::Ok(Maybe::Is(Extension::from_parts(library, descriptor, host_ctx)))
+        Outcome::Ok(Maybe::Is(Extension::from_parts(
+            library,
+            descriptor,
+            host_ctx,
+            self.observer,
+        )))
     }
 }
 

@@ -9,6 +9,7 @@ use crate::descriptor::{
     ExtensionVersion,
 };
 use crate::error::ExtensionError;
+use crate::host::ShutdownObserverFn;
 
 /// Loaded extension bound to a live `Library`.
 ///
@@ -20,6 +21,7 @@ pub struct Extension {
     library: Library,
     descriptor: &'static ExtensionDescriptor,
     host_ctx: *mut c_void,
+    observer: Maybe<ShutdownObserverFn>,
 }
 
 impl Extension {
@@ -89,6 +91,8 @@ impl Extension {
     pub fn close(self) -> Outcome<(), ExtensionError> {
         let shutdown = self.descriptor.shutdown_fn;
         let host_ctx = self.host_ctx;
+        let observer = self.observer;
+        let descriptor: &'static ExtensionDescriptor = self.descriptor;
         // Forget self so our Drop does not double-call shutdown.
         let lib = unsafe {
             let lib_ptr = &raw const self.library;
@@ -96,18 +100,38 @@ impl Extension {
         };
         core::mem::forget(self);
 
-        if let Some(shutdown_fn) = shutdown {
+        let status = if let Some(shutdown_fn) = shutdown {
             // SAFETY: shutdown is declared by the extension; host_ctx
             // is the pointer the host threaded in at load time.
-            let status = unsafe { shutdown_fn(host_ctx) };
-            if status != ExtensionAbiStatus::Ok {
-                // lib drops here, releasing the OS handle.
-                drop(lib);
-                return Outcome::Err(ExtensionError::ShutdownFailed { status });
-            }
+            unsafe { shutdown_fn(host_ctx) }
+        } else {
+            ExtensionAbiStatus::Ok
+        };
+
+        if let Maybe::Is(observer_fn) = observer {
+            let name: &[u8] = if descriptor.name_ptr.is_null()
+                || descriptor.name_len.0 == 0
+            {
+                &[]
+            } else {
+                // SAFETY: descriptor is 'static; name_ptr + name_len
+                // form a valid byte slice for that lifetime.
+                unsafe {
+                    core::slice::from_raw_parts(
+                        descriptor.name_ptr,
+                        descriptor.name_len.0,
+                    )
+                }
+            };
+            observer_fn(name, status);
         }
+
         drop(lib);
-        Outcome::Ok(())
+        if status != ExtensionAbiStatus::Ok {
+            Outcome::Err(ExtensionError::ShutdownFailed { status })
+        } else {
+            Outcome::Ok(())
+        }
     }
 
     #[doc(hidden)]
@@ -115,17 +139,23 @@ impl Extension {
         library: Library,
         descriptor: &'static ExtensionDescriptor,
         host_ctx: *mut c_void,
+        observer: Maybe<ShutdownObserverFn>,
     ) -> Self {
-        Self { library, descriptor, host_ctx }
+        Self { library, descriptor, host_ctx, observer }
     }
 }
 
 impl Drop for Extension {
     fn drop(&mut self) {
-        if let Some(shutdown) = self.descriptor.shutdown_fn {
+        let status = if let Some(shutdown) = self.descriptor.shutdown_fn {
             // SAFETY: shutdown is declared by the extension; host_ctx
             // is the pointer it received at init time.
-            let _ = unsafe { shutdown(self.host_ctx) };
+            unsafe { shutdown(self.host_ctx) }
+        } else {
+            ExtensionAbiStatus::Ok
+        };
+        if let Maybe::Is(observer_fn) = self.observer {
+            observer_fn(self.name(), status);
         }
         // Library's own Drop runs after this returns.
     }
