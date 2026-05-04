@@ -295,9 +295,9 @@ pub trait Depth: Sealed {
     const D: USize;
 }
 
-impl Depth for () { const D: USize = 0; }
+impl Depth for () { const D: USize = USize::ZERO; }
 impl<H, R: Depth> Depth for (H, R) {
-    const D: USize = R::D + 1;
+    const D: USize = R::D + USize::ONE;
 }
 ```
 
