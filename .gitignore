@@ -22,3 +22,6 @@ mock/research/hilavitkutin_bench
 /.github/skills/
 # === end mockspace-managed ===
 mock/research/sketches/*/libsketch.rmeta
+
+# Standalone test-fixture target dir (cargo subproject)
+mock/crates/hilavitkutin-extensions-macros/tests/lto_smoke_fixture/target/
