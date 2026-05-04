@@ -17,7 +17,7 @@ pub(crate) fn platform_load(
     path: &[u8],
 ) -> Outcome<*mut c_void, LinkError> {
     let Some(wide) = ascii_to_wide(path) else {
-        return Outcome::Err(LinkError::PathNotFound);
+        return Outcome::Err(LinkError::PathEncodingUnsupported);
     };
     // SAFETY: wide is null-terminated UTF-16.
     let module: HMODULE = unsafe { LoadLibraryW(wide.as_ptr()) };

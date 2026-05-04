@@ -39,6 +39,18 @@ pub enum LinkError {
 
     /// A compatibility check ahead of load rejected the artefact.
     IncompatibleVersion,
+
+    /// The supplied path could not be converted to the platform's
+    /// native encoding.
+    ///
+    /// On Windows, this fires when the path contains non-ASCII bytes
+    /// (v1 lacks a UTF-8 to UTF-16 transcoder) or exceeds the classic
+    /// `MAX_PATH` (260 wchars). Unix has no analogue: the OS loader
+    /// treats the path as opaque bytes and never returns this
+    /// variant. Distinct from `PathNotFound` so consumers can
+    /// distinguish "the loader cannot speak this path" from "no file
+    /// at this path".
+    PathEncodingUnsupported,
 }
 
 /// Errors produced by the optional `compatibility_check` helper.
