@@ -1,4 +1,4 @@
-//! `str_const!()` — compile-time string registration + handle derivation.
+//! `str_const!()`: compile-time string registration + handle derivation.
 
 /// Register a string literal in the `.hilavitkutin_strings` linker section
 /// and return its const-origin `Str` handle.

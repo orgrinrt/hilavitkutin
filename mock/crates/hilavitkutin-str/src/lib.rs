@@ -1,4 +1,4 @@
-//! `hilavitkutin-str` — `no_std` interned string system.
+//! `hilavitkutin-str`: `no_std` interned string system.
 //!
 //! Shared across the hilavitkutin ecosystem. All construction paths
 //! for `Str` go through [`str_const!`] (compile-time) or

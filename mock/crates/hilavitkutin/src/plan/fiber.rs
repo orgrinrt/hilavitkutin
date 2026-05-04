@@ -8,7 +8,7 @@ use arvo::USize;
 use arvo::strategy::Identity;
 
 /// Newtype wrapping a fiber index. `#[repr(transparent)]` for
-/// stable FFI. u16 is plenty — even a 64-core plan rarely exceeds
+/// stable FFI. u16 is plenty: even a 64-core plan rarely exceeds
 /// 100 fibers.
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash, Ord, PartialOrd)]
 #[repr(transparent)]

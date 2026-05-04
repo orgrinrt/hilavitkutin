@@ -40,7 +40,7 @@ macro_rules! provider {
 
 /// Generates accessor trait impls on a tuple for a specific layout.
 ///
-/// Each position gets ONE bound — no coherence conflicts.
+/// Each position gets ONE bound: no coherence conflicts.
 ///
 /// Usage:
 /// ```ignore
@@ -120,7 +120,7 @@ macro_rules! tuple {
 ///
 /// Assumes the API trait and accessor trait both take one type
 /// parameter matching `$R`. Generic methods on the API trait may
-/// carry further bounds on `$R` (e.g. `where R: Contains<...>`) —
+/// carry further bounds on `$R` (e.g. `where R: Contains<...>`);
 /// those flow through unchanged.
 ///
 /// Consumers call the accessor method on the provider tuple
@@ -154,7 +154,7 @@ macro_rules! provider_generic {
 /// Separate macro because Rust declarative macros can't cleanly
 /// match a variable-length generic parameter list. Extend with
 /// `provider_generic3!` etc. if a 3+ parameter need surfaces.
-/// Same orphan-rule caveat as `provider_generic!` — no
+/// Same orphan-rule caveat as `provider_generic!`: no
 /// `Context<P>` delegation is emitted.
 #[macro_export]
 macro_rules! provider_generic2 {

@@ -1,4 +1,4 @@
-//! Std platform tier — fallback using `std::alloc`, `std::thread`,
+//! Std platform tier: fallback using `std::alloc`, `std::thread`,
 //! `std::time::Instant`.
 //!
 //! Used when `platform-std` is active (typically in CI or on hosts
@@ -40,7 +40,7 @@ impl StdMemoryProvider {
         // any caller honouring the trait contract (power-of-two
         // alignment). Callers that violate this get an Err from
         // from_size_align, which we translate to a zero-sized
-        // layout — the subsequent `alloc` will return null.
+        // layout: the subsequent `alloc` will return null.
         Layout::from_size_align(*len, a).unwrap_or_else(|_| {
             Layout::from_size_align(0, core::mem::align_of::<usize>()).unwrap() // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: Layout ABI fallback alignment; tracked: #72
         })
@@ -87,7 +87,7 @@ impl MemoryProviderApi for StdMemoryProvider {
 
 /// `std::thread`-backed thread pool.
 ///
-/// Skeleton — `spawn` accepts only a parameterless `fn()` via
+/// Skeleton: `spawn` accepts only a parameterless `fn()` via
 /// `std::thread::spawn` without `Box<dyn _>`. Generic-closure
 /// dispatch lands in sub-round 5a4.
 #[derive(Copy, Clone, Debug)]
@@ -120,7 +120,7 @@ impl ThreadPoolApi for StdThreadPool {
     where
         F: FnOnce() + Send + 'static,
     {
-        // See os.rs — generic-closure support arrives in 5a4.
+        // See os.rs: generic-closure support arrives in 5a4.
         let _ = _f;
     }
 

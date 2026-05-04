@@ -1,4 +1,4 @@
-//! AccessSet and Contains — compile-time store membership.
+//! AccessSet and Contains: compile-time store membership.
 //!
 //! `AccessSet` is sealed on tuples of arities 0..=12. `Contains<S>`
 //! is sealed on (tuple, member) pairs: a WU that reads `Column<X>`

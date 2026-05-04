@@ -1,4 +1,4 @@
-//! hilavitkutin-api — consumer-facing contracts.
+//! hilavitkutin-api: consumer-facing contracts.
 //!
 //! Traits, marker types, and platform contracts that downstream
 //! pipelines build WorkUnits against. The engine crate

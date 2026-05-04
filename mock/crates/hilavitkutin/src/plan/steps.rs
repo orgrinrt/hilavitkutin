@@ -16,7 +16,7 @@ use super::graph::DependencyGraph;
 use super::inputs::{PlanInputs, UnitId};
 use super::phase::PhaseBoundaries;
 
-/// Step 1 — DAG construction from AccessMask overlap (domain 11).
+/// Step 1: DAG construction from AccessMask overlap (domain 11).
 pub fn build_dag<const MAX_UNITS: usize, const MAX_STORES: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     inputs: &PlanInputs<MAX_UNITS, MAX_STORES>,
 ) -> DependencyGraph<MAX_UNITS> {
@@ -24,7 +24,7 @@ pub fn build_dag<const MAX_UNITS: usize, const MAX_STORES: usize>( // lint:allow
     todo!("5a2 step 1: build DAG from AccessMask overlap")
 }
 
-/// Step 2 — Topological sort + node renumbering (domain 15).
+/// Step 2: Topological sort + node renumbering (domain 15).
 pub fn topo_sort<const MAX_UNITS: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     graph: &DependencyGraph<MAX_UNITS>,
 ) -> [UnitId; MAX_UNITS] {
@@ -32,7 +32,7 @@ pub fn topo_sort<const MAX_UNITS: usize>( // lint:allow(no-bare-numeric) lint:al
     todo!("5a2 step 2: topological sort + node renumbering")
 }
 
-/// Step 3 — Upward rank + critical path (domain 15).
+/// Step 3: Upward rank + critical path (domain 15).
 pub fn upward_rank<const MAX_UNITS: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     graph: &DependencyGraph<MAX_UNITS>,
 ) -> [USize; MAX_UNITS] {
@@ -40,7 +40,7 @@ pub fn upward_rank<const MAX_UNITS: usize>( // lint:allow(no-bare-numeric) lint:
     todo!("5a2 step 3: upward rank + critical path")
 }
 
-/// Step 4 — Waist detection → phase boundaries (domain 11).
+/// Step 4: Waist detection → phase boundaries (domain 11).
 pub fn detect_waists<const MAX_UNITS: usize, const MAX_PHASES: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     graph: &DependencyGraph<MAX_UNITS>,
 ) -> PhaseBoundaries<MAX_PHASES> {
@@ -48,7 +48,7 @@ pub fn detect_waists<const MAX_UNITS: usize, const MAX_PHASES: usize>( // lint:a
     todo!("5a2 step 4: waist detection → phase boundaries")
 }
 
-/// Step 5 — RCM reordering → fiber grouping order (domain 15).
+/// Step 5: RCM reordering → fiber grouping order (domain 15).
 pub fn rcm_reorder<const MAX_UNITS: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     graph: &DependencyGraph<MAX_UNITS>,
 ) -> [UnitId; MAX_UNITS] {
@@ -56,7 +56,7 @@ pub fn rcm_reorder<const MAX_UNITS: usize>( // lint:allow(no-bare-numeric) lint:
     todo!("5a2 step 5: RCM reordering → fiber grouping order")
 }
 
-/// Step 6 — Block diagonal + D-M → phase validation (domain 15).
+/// Step 6: Block diagonal + D-M → phase validation (domain 15).
 pub fn block_diagonal<const MAX_UNITS: usize, const MAX_PHASES: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     graph: &DependencyGraph<MAX_UNITS>,
     phases: &PhaseBoundaries<MAX_PHASES>,
@@ -65,7 +65,7 @@ pub fn block_diagonal<const MAX_UNITS: usize, const MAX_PHASES: usize>( // lint:
     todo!("5a2 step 6: block diagonal + D-M → phase validation")
 }
 
-/// Step 7 — Spectral partitioning for >5 fibers (domain 15).
+/// Step 7: Spectral partitioning for >5 fibers (domain 15).
 pub fn spectral_partition<const MAX_UNITS: usize, const MAX_FIBERS: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     graph: &DependencyGraph<MAX_UNITS>,
 ) -> FiberGrouping<MAX_UNITS, MAX_FIBERS> {
@@ -73,7 +73,7 @@ pub fn spectral_partition<const MAX_UNITS: usize, const MAX_FIBERS: usize>( // l
     todo!("5a2 step 7: spectral partitioning for >5 fibers")
 }
 
-/// Step 8 — Fiber grouping (greedy + matrix chain DP, domain 14).
+/// Step 8: Fiber grouping (greedy + matrix chain DP, domain 14).
 pub fn group_fibers<const MAX_UNITS: usize, const MAX_FIBERS: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     graph: &DependencyGraph<MAX_UNITS>,
 ) -> FiberGrouping<MAX_UNITS, MAX_FIBERS> {
@@ -81,13 +81,13 @@ pub fn group_fibers<const MAX_UNITS: usize, const MAX_FIBERS: usize>( // lint:al
     todo!("5a2 step 8: fiber grouping (greedy + matrix chain DP)")
 }
 
-/// Step 9 — Per-fiber morsel sizing (domain 12).
+/// Step 9: Per-fiber morsel sizing (domain 12).
 pub fn size_morsels<const MAX_FIBERS: usize>(record_count: USize) -> [USize; MAX_FIBERS] { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     let _ = record_count;
     todo!("5a2 step 9: per-fiber morsel sizing")
 }
 
-/// Step 10 — Per-phase adaptive configs (domain 11).
+/// Step 10: Per-phase adaptive configs (domain 11).
 pub fn adaptive_config<const MAX_PHASES: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     phases: &PhaseBoundaries<MAX_PHASES>,
 ) -> [USize; MAX_PHASES] {
@@ -95,7 +95,7 @@ pub fn adaptive_config<const MAX_PHASES: usize>( // lint:allow(no-bare-numeric) 
     todo!("5a2 step 10: per-phase adaptive configs")
 }
 
-/// Step 11 — Column classification per fiber (domain 15).
+/// Step 11: Column classification per fiber (domain 15).
 pub fn classify_columns<const MAX_UNITS: usize, const MAX_FIBERS: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     fibers: &FiberGrouping<MAX_UNITS, MAX_FIBERS>,
 ) -> [ColumnClassification; MAX_FIBERS] {
@@ -103,7 +103,7 @@ pub fn classify_columns<const MAX_UNITS: usize, const MAX_FIBERS: usize>( // lin
     todo!("5a2 step 11: column classification per fiber")
 }
 
-/// Step 12 — Dirty propagation masks (domain 16).
+/// Step 12: Dirty propagation masks (domain 16).
 pub fn propagate_dirty<const MAX_UNITS: usize, const MAX_STORES: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     inputs: &PlanInputs<MAX_UNITS, MAX_STORES>,
 ) -> DirtyMask<MAX_STORES> {

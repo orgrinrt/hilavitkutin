@@ -11,12 +11,12 @@ use crate::plan::PhaseId;
 
 /// Per-phase adaptive tuning parameters.
 ///
-/// - `max_fuse_threshold` — max records fuseable into a single
+/// - `max_fuse_threshold`: max records fuseable into a single
 ///   WU body.
-/// - `morsel_size_multiplier` — basis-points-style multiplier
+/// - `morsel_size_multiplier`: basis-points-style multiplier
 ///   (100 = 1.0x, 200 = 2.0x). Integer avoids float in
 ///   no-std + no-alloc context.
-/// - `split_threshold` — record count above which a phase
+/// - `split_threshold`: record count above which a phase
 ///   splits into additional morsels.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct AdaptConfig {

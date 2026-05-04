@@ -1,4 +1,4 @@
-//! `ArenaInterner` + `StringInterner<A>` — runtime interning with
+//! `ArenaInterner` + `StringInterner<A>`: runtime interning with
 //! const-table short-circuit.
 
 use arvo_bits::{Bits, Hot};
@@ -9,13 +9,13 @@ use crate::handle::Str;
 use crate::hash::const_fnv1a;
 use crate::section::static_entries;
 
-/// Host-implemented arena contract. Only handles runtime strings —
+/// Host-implemented arena contract. Only handles runtime strings;
 /// const strings are short-circuited by `StringInterner`.
 pub trait ArenaInterner {
     /// Insert `s` into the arena and return its 28-bit ID.
-    fn arena_intern(&self, s: &str) -> u32; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-string) reason: interner boundary — &str is the input string the arena wraps; u32 is the 28-bit id width; tracked: #72
+    fn arena_intern(&self, s: &str) -> u32; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-string) reason: interner boundary: &str is the input string the arena wraps; u32 is the 28-bit id width; tracked: #72
     /// Resolve a previously-returned arena ID back to the stored string.
-    fn arena_resolve(&self, id: u32) -> &str; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-string) reason: interner boundary — resolved &str; u32 is the 28-bit id width; tracked: #72
+    fn arena_resolve(&self, id: u32) -> &str; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-string) reason: interner boundary: resolved &str; u32 is the 28-bit id width; tracked: #72
 }
 
 /// Wraps an [`ArenaInterner`] with const-table handling. The const
@@ -37,7 +37,7 @@ impl<A: ArenaInterner> StringInterner<A> { // lint:allow(no-alloc) reason: inter
 
     /// Intern a string. Checks the const linker section first; on miss,
     /// falls back to the arena and tags the result as runtime.
-    pub fn intern(&self, s: &str) -> Str { // lint:allow(no-bare-string) reason: interner boundary — incoming &str; tracked: #72
+    pub fn intern(&self, s: &str) -> Str { // lint:allow(no-bare-string) reason: interner boundary: incoming &str; tracked: #72
         if let Maybe::Is(h) = lookup_const_by_value(s) {
             return h;
         }
@@ -63,11 +63,11 @@ impl<A: ArenaInterner> StringInterner<A> { // lint:allow(no-alloc) reason: inter
     ///
     /// Const handles delegate to the linker-section table; a
     /// const-table miss returns `Maybe::Isnt`. Runtime handles
-    /// always resolve via the arena — an arena that cannot resolve
+    /// always resolve via the arena: an arena that cannot resolve
     /// is outside the `ArenaInterner` contract (the interner hands
     /// out ids it can resolve), so the runtime branch returns
     /// `Maybe::Is(...)` unconditionally.
-    pub fn resolve(&self, s: Str) -> Maybe<&str> { // lint:allow(no-bare-string) reason: interner boundary — resolved &str; tracked: #72
+    pub fn resolve(&self, s: Str) -> Maybe<&str> { // lint:allow(no-bare-string) reason: interner boundary: resolved &str; tracked: #72
         if s.is_const().0 {
             lookup_const_by_handle(s)
         } else {

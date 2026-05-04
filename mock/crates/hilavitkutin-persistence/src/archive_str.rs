@@ -1,4 +1,4 @@
-//! `Str` eviction and injection — pure bit-layout logic.
+//! `Str` eviction and injection: pure bit-layout logic.
 //!
 //! The DESIGN describes an `Archive` trait relationship; the real
 //! trait lands with rkyv. This round ships the pure bit-layout halves

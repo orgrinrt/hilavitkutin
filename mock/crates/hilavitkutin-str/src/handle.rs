@@ -1,4 +1,4 @@
-//! `Str` — 4-byte interned string handle.
+//! `Str`: 4-byte interned string handle.
 //!
 //! Bit layout (nibble-aligned):
 //! - bit 31: `0` = const (compile-time), `1` = runtime (arena)
@@ -31,7 +31,7 @@ pub struct Str(StrLayout);
 
 impl Str {
     /// Mask for the runtime-origin bit (bit 31 = 1). Forwards to
-    /// `StrLayout::origin_MASK` — authoritative declaration on the
+    /// `StrLayout::origin_MASK`: authoritative declaration on the
     /// layout.
     pub const RUNTIME_MASK: Bits<32, Hot> = StrLayout::origin_MASK;
     /// Mask for the 28-bit ID (bits 27-0). Forwards to
@@ -39,14 +39,14 @@ impl Str {
     pub const ID_MASK: Bits<32, Hot> = StrLayout::id_MASK;
 
     /// Construct a const-origin `Str` from a 28-bit ID. Not for direct
-    /// use — `str_const!()` is the only intended caller.
+    /// use: `str_const!()` is the only intended caller.
     #[doc(hidden)]
     pub const fn __make(id: Bits<28, Hot>) -> Self {
         Self(StrLayout::new().with_id(id))
     }
 
     /// Construct a runtime-origin `Str` from a 28-bit ID. Not for direct
-    /// use — `StringInterner` is the only intended caller.
+    /// use: `StringInterner` is the only intended caller.
     #[doc(hidden)]
     pub const fn __runtime(id: Bits<28, Hot>) -> Self {
         Self(StrLayout::new().with_id(id).with_origin(Bit::<Hot>::from_raw(1)))

@@ -18,14 +18,14 @@ pub const NO_TRUNK: USize = USize(u16::MAX as usize); // lint:allow(no-bare-nume
 
 /// Per-core role record.
 ///
-/// - `trunk_index[i]` — which trunk core `i` owns. `NO_TRUNK`
+/// - `trunk_index[i]`: which trunk core `i` owns. `NO_TRUNK`
 ///   means the core has no trunk assigned (available for
 ///   branches / convergence / leftover work).
-/// - `fiber_assignments[i]` — primary fiber pinned to core `i`.
-/// - `morsel_size_multiplier[i]` — size multiplier in
+/// - `fiber_assignments[i]`: primary fiber pinned to core `i`.
+/// - `morsel_size_multiplier[i]`: size multiplier in
 ///   basis-points-style units (100 = 1.0x, 200 = 2.0x). Integer
 ///   avoids float in no-std + no-alloc context.
-/// - `assigned_count` — count of populated slots
+/// - `assigned_count`: count of populated slots
 ///   (0..=MAX_CORES).
 #[derive(Copy, Clone, Debug)]
 pub struct CoreAssignment<const MAX_CORES: usize> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121

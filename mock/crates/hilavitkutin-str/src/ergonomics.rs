@@ -1,4 +1,4 @@
-//! `AsStr` + `IntoStr` — ergonomic conversions at API boundaries.
+//! `AsStr` + `IntoStr`: ergonomic conversions at API boundaries.
 
 use crate::handle::Str;
 use crate::interner::{ArenaInterner, StringInterner}; // lint:allow(no-alloc) reason: interner wrapper import, not std `String`; tracked: #72
