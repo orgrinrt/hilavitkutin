@@ -98,6 +98,49 @@ fn trampolines_survive_lto() {
         symbols,
     );
 
+    // dlopen the cdylib and assert that init_fn and shutdown_fn fn-pointer
+    // slots in the descriptor resolve to distinct addresses. nm-substring
+    // survival is necessary; distinct fn-pointer addresses is what the
+    // framework's contract actually requires (and what ICF address aliasing
+    // would silently break for non-trivial consumer impls).
+    use core::ffi::c_void;
+    use hilavitkutin_extensions::{ExtensionAbiStatus, ExtensionDescriptor};
+
+    type DescriptorFn = unsafe extern "C" fn() -> *const ExtensionDescriptor;
+    type LifecycleFn = unsafe extern "C" fn(*mut c_void) -> ExtensionAbiStatus;
+
+    let lib = unsafe {
+        libloading::Library::new(cdylib).expect("dlopen the LTO fixture")
+    };
+    let descriptor_fn = unsafe {
+        lib.get::<DescriptorFn>(b"__hilavitkutin_extension_descriptor")
+            .expect("resolve descriptor symbol")
+    };
+    let descriptor_ptr = unsafe { descriptor_fn() };
+    assert!(
+        !descriptor_ptr.is_null(),
+        "descriptor function returned null pointer",
+    );
+    // SAFETY: descriptor function returned a non-null pointer to the
+    // extension's static descriptor; valid for the lifetime of the
+    // loaded library, which is the rest of this test.
+    let descriptor = unsafe { &*descriptor_ptr };
+    let init_fn: Option<LifecycleFn> = descriptor.init_fn;
+    let shutdown_fn: Option<LifecycleFn> = descriptor.shutdown_fn;
+    assert!(init_fn.is_some(), "fixture should declare init_fn");
+    assert!(shutdown_fn.is_some(), "fixture should declare shutdown_fn");
+
+    let init_addr = init_fn.unwrap() as usize;
+    let shutdown_addr = shutdown_fn.unwrap() as usize;
+    assert_ne!(
+        init_addr, shutdown_addr,
+        "init_fn and shutdown_fn must resolve to distinct addresses; ICF \
+         address-aliasing would silently break consumers whose impls compile \
+         to non-byte-identical bodies. The per-trampoline byte-string \
+         discriminator (b\"init\" vs b\"shutdown\" via core::hint::black_box) \
+         is what keeps the addresses distinct.",
+    );
+
     // Suppress the unused-import warning on platforms that compile this
     // module but skip the body via cfg.
     let _ = FIXTURE_PKG;

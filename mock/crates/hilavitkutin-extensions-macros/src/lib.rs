@@ -184,6 +184,11 @@ pub fn export_extension(attr: TokenStream, item: TokenStream) -> TokenStream {
                     unsafe extern "C" fn #fn_ident(
                         host_ctx: *mut ::core::ffi::c_void,
                     ) -> ::hilavitkutin_extensions::ExtensionAbiStatus {
+                        // Per-role byte-string discriminator forces the
+                        // trampoline body to differ from the shutdown
+                        // trampoline at the byte level, defeating ICF
+                        // address aliasing for trivial-impl cases.
+                        let _ = ::core::hint::black_box(b"init");
                         // SAFETY: caller is the host, which passes the
                         // pointer it allocated for this specific load.
                         unsafe {
@@ -208,6 +213,7 @@ pub fn export_extension(attr: TokenStream, item: TokenStream) -> TokenStream {
                     unsafe extern "C" fn #fn_ident(
                         host_ctx: *mut ::core::ffi::c_void,
                     ) -> ::hilavitkutin_extensions::ExtensionAbiStatus {
+                        let _ = ::core::hint::black_box(b"shutdown");
                         // SAFETY: caller is the host, which passes the
                         // pointer it threaded through at load time.
                         unsafe {
