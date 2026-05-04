@@ -1,0 +1,35 @@
+# hilavitkutin-providers backlog
+
+Designed-but-deferred surfaces. Names stay unbacktickled so the
+design-doc-source-mismatch lint ignores them. Promoted into
+DESIGN.md.tmpl when shipped.
+
+## M-parameterised arena variant (v1)
+
+A MemoryArena variant parameterised over `M: HasMemoryProvider`
+that pulls slab bytes from the consumer's runtime memory provider
+at scheduler construction. v0 uses inline `[u8; CAP]` storage at
+the type level; v1 covers the case where slab capacity is a
+runtime decision (large arenas measured in megabytes that don't
+fit a const-generic literal).
+
+Gated on: a real consumer needs runtime slab allocation. Viola's
+first integration may surface this if its workload's interner
+volume exceeds reasonable inline caps.
+
+## Sync arena variant (v1)
+
+A SyncArena variant using either spinlocks (no_std safe) or
+atomics for the cursor and entry table. Today MemoryArena uses
+`Cell` + `UnsafeCell` for interior mutability and is `!Sync` as
+a result.
+
+Gated on: hilavitkutin's multi-thread scheduling path actually
+exercises shared interner access from multiple worker threads. The
+single-thread path through morsel dispatch may not need it.
+
+## Future provider modules
+
+ColumnStorage default, Clock default, MemoryProvider default for
+libc/Unix targets. Each lands in its own round when consumer
+demand surfaces. Per task #253 v0 scope: interner-only.
