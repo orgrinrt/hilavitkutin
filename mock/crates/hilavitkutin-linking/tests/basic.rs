@@ -129,6 +129,7 @@ fn reject_path_without_null_terminator() {
     match Library::load(b"/some/path") {
         Outcome::Ok(_) => panic!("un-terminated path should not load"),
         Outcome::Err(LinkError::PathNotFound) => {}
+        Outcome::Err(LinkError::PathEncodingUnsupported) => {}
         Outcome::Err(_) => panic!("wrong error variant"),
     }
 }
