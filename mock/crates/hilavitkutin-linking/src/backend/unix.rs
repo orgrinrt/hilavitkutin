@@ -6,6 +6,7 @@ use core::ffi::{c_char, c_int, c_void};
 use notko::Outcome;
 
 const RTLD_NOW: c_int = 2;
+const RTLD_LOCAL: c_int = 4;
 
 unsafe extern "C" {
     fn dlopen(path: *const c_char, flags: c_int) -> *mut c_void;
@@ -21,7 +22,8 @@ pub(crate) fn platform_load(
     }
     // SAFETY: path is non-empty, null-terminated, and passed to a
     // libc function that treats it as a C string.
-    let handle = unsafe { dlopen(path.as_ptr() as *const c_char, RTLD_NOW) };
+    let handle =
+        unsafe { dlopen(path.as_ptr() as *const c_char, RTLD_NOW | RTLD_LOCAL) };
     if handle.is_null() {
         return Outcome::Err(LinkError::LoadFailed {
             platform_code: read_errno(),
