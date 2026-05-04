@@ -63,11 +63,60 @@ fn is_null_terminated(bytes: &[u8]) -> bool {
 }
 
 fn read_errno() -> USize {
-    // libc exposes errno via thread-local; extracting it portably
-    // without std means calling through __errno_location / __error
-    // per-platform. For v1 we return a sentinel 0. The variant
-    // conveys the error category even when the numeric code is not
-    // captured. Follow-up round refines this if callers need the
-    // exact errno value.
-    USize(0)
+    // Per-libc symbol that returns the address of the thread-local
+    // `errno` integer. Linux/Android use `__errno_location`; Darwin
+    // and the BSDs use `__error`. Solaris/Haiku/etc. fall through to
+    // the zero sentinel.
+    #[cfg(any(target_os = "linux", target_os = "android"))]
+    unsafe extern "C" {
+        fn __errno_location() -> *mut c_int;
+    }
+    #[cfg(any(
+        target_os = "macos",
+        target_os = "ios",
+        target_os = "tvos",
+        target_os = "watchos",
+        target_os = "freebsd",
+        target_os = "openbsd",
+        target_os = "netbsd",
+        target_os = "dragonfly",
+    ))]
+    unsafe extern "C" {
+        fn __error() -> *mut c_int;
+    }
+
+    // SAFETY: each per-platform symbol returns a thread-local pointer
+    // that is always valid for the lifetime of the calling thread per
+    // libc contract. Reading a single `c_int` at that address is the
+    // documented way to observe errno.
+    #[cfg(any(target_os = "linux", target_os = "android"))]
+    let val: c_int = unsafe { *__errno_location() };
+    #[cfg(any(
+        target_os = "macos",
+        target_os = "ios",
+        target_os = "tvos",
+        target_os = "watchos",
+        target_os = "freebsd",
+        target_os = "openbsd",
+        target_os = "netbsd",
+        target_os = "dragonfly",
+    ))]
+    let val: c_int = unsafe { *__error() };
+    #[cfg(not(any(
+        target_os = "linux",
+        target_os = "android",
+        target_os = "macos",
+        target_os = "ios",
+        target_os = "tvos",
+        target_os = "watchos",
+        target_os = "freebsd",
+        target_os = "openbsd",
+        target_os = "netbsd",
+        target_os = "dragonfly",
+    )))]
+    let val: c_int = 0;
+
+    // errno values are non-negative when set; the cast is lossless on
+    // every supported platform.
+    USize(val as usize)
 }

@@ -13,9 +13,20 @@ pub enum LinkError {
     PathNotFound,
 
     /// The OS loader rejected the library. `platform_code` carries
-    /// `errno` on unix or `GetLastError()` on Windows. Unsigned
-    /// because both forms are non-negative on the platforms we
-    /// target.
+    /// the platform's numeric error code at the failure site.
+    ///
+    /// On Windows this is `GetLastError()` and is always populated.
+    /// On Unix this is the thread-local `errno` read via the per-libc
+    /// helper (`__errno_location` on Linux/Android, `__error` on
+    /// Darwin and BSD). POSIX does not require `dlopen` to set
+    /// `errno`, so the value is best-effort: in practice every libc
+    /// this crate targets propagates the underlying syscall failure
+    /// (ENOENT, EACCES, ENOMEM, etc.) into `errno`, but a future libc
+    /// is free to leave it untouched. On unsupported unixes the value
+    /// is `0`.
+    ///
+    /// Unsigned because both forms are non-negative on the platforms
+    /// we target.
     LoadFailed { platform_code: USize },
 
     /// Symbol lookup returned null; the library did not export the
