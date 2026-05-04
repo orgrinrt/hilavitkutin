@@ -10,6 +10,7 @@ members = [
     "crates/hilavitkutin-persistence",
     "crates/hilavitkutin-str",
     "crates/hilavitkutin-kit",
+    "crates/hilavitkutin-providers",
     # Plugin host infrastructure
     "crates/hilavitkutin-linking",
     "crates/hilavitkutin-extensions",
@@ -59,6 +60,7 @@ hilavitkutin-ctx = { path = "crates/hilavitkutin-ctx" }
 hilavitkutin-persistence = { path = "crates/hilavitkutin-persistence" }
 hilavitkutin-str = { path = "crates/hilavitkutin-str" }
 hilavitkutin-kit = { path = "crates/hilavitkutin-kit" }
+hilavitkutin-providers = { path = "crates/hilavitkutin-providers" }
 
 # Plugin host infrastructure
 hilavitkutin-linking = { path = "crates/hilavitkutin-linking" }

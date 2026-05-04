@@ -1,0 +1,8 @@
+# `hilavitkutin-providers`
+
+Default Resource-backed providers for the hilavitkutin scheduler.
+Standalone ecosystem crate; consumed by the engine via Kit
+installation, no reverse dependency. v0 ships the InternerKit
+(an inline-storage MemoryArena wrapped by `StringInterner`).
+Future modules add ColumnStorage, Clock, and Memory defaults as
+consumer demand surfaces.
