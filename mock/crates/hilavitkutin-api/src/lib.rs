@@ -11,6 +11,8 @@
 #![recursion_limit = "512"]
 #![deny(unsafe_op_in_unsafe_fn)]
 #![feature(adt_const_params)]
+#![feature(const_ops)]
+#![feature(const_trait_impl)]
 #![feature(generic_const_exprs)]
 #![feature(specialization)]
 #![feature(marker_trait_attr)]
@@ -51,7 +53,7 @@ pub use hint::{
     Interruptible, Normal, Opportunistic, Optional, Relaxed, SchedulingHint, Significance,
     SignificanceValue, Steady, Urgency, UrgencyValue,
 };
-pub use id::{AccessMask, StoreId};
+pub use id::StoreId;
 pub use platform::{
     ClockApi, HasClock, HasMemoryProvider, HasThreadPool, MemoryProviderApi, Nanos, ThreadPoolApi,
 };
