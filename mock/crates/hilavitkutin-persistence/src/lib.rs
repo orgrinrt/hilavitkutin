@@ -1,4 +1,4 @@
-//! `hilavitkutin-persistence` — `#![no_std]`, no alloc cold-store
+//! `hilavitkutin-persistence`: `#![no_std]`, no alloc cold-store
 //! bridge for the hilavitkutin ecosystem.
 //!
 //! Skeleton round: wires the type surface described in DESIGN.md

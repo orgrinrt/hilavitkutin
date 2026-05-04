@@ -1,4 +1,4 @@
-//! Manifest, TableMeta, ColumnMeta — const-sized directory of
+//! Manifest, TableMeta, ColumnMeta: const-sized directory of
 //! table metadata for the cold store.
 //!
 //! Const arrays are the skeleton's chosen representation: they

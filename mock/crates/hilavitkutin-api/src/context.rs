@@ -7,7 +7,7 @@
 //!
 //! The `HasX` accessor traits come from `hilavitkutin-ctx`'s
 //! `provider_generic!` / `provider_generic2!` macros. They do not
-//! emit `Context<P>` delegations — consumers that want sugar wrap
+//! emit `Context<P>` delegations: consumers that want sugar wrap
 //! the provider tuple in their own newtype.
 
 use arvo::USize;

@@ -2,7 +2,7 @@
 //!
 //! Three runtime surfaces the engine needs from the host: memory
 //! allocation and protection, thread-pool spawn and sizing, and a
-//! monotonic clock. Consumed by monomorphisation — no `dyn`.
+//! monotonic clock. Consumed by monomorphisation: no `dyn`.
 
 use arvo::strategy::Hot;
 use arvo::ufixed::UFixed;

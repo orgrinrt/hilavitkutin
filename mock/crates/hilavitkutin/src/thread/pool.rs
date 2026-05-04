@@ -1,6 +1,6 @@
 //! Pre-allocated thread pool (domain 20).
 //!
-//! Skeleton record this round — real OS thread spawning is
+//! Skeleton record this round: real OS thread spawning is
 //! feature-gated on a future `threading-std` feature (see BACKLOG).
 //! The record fields capture the pool's intended shape so
 //! downstream code can reference it now.

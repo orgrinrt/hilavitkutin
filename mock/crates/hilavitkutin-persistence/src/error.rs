@@ -7,7 +7,7 @@
 /// Failure modes for persistence operations.
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum PersistenceError {
-    /// I/O failure — mmap, allocate, or protect did not succeed.
+    /// I/O failure: mmap, allocate, or protect did not succeed.
     Io,
     /// rkyv archive format violation (when real impls land).
     Archive,

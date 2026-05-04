@@ -153,7 +153,7 @@ impl WorkUnit<Always> for Integrate {
     type Ctx = Ctx;
 
     fn execute(&self, _ctx: &Ctx) {
-        // Body is trivial — the test is that this compiles.
+        // Body is trivial: the test is that this compiles.
     }
 }
 

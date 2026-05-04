@@ -7,12 +7,12 @@ use arvo::USize;
 use arvo::strategy::Identity;
 
 /// Newtype wrapping a phase index. `#[repr(transparent)]`. u8 is
-/// plenty — phases rarely exceed 20.
+/// plenty: phases rarely exceed 20.
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash, Ord, PartialOrd)]
 #[repr(transparent)]
 pub struct PhaseId(pub u8); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-public-raw-field) reason: domain id newtype; bit-width fixed at 8; exact-width refinement tracked: #72
 
-/// Phase split points — `boundaries[i]` is the first node index of
+/// Phase split points: `boundaries[i]` is the first node index of
 /// phase `i`. Phase 0 always starts at node 0.
 #[derive(Copy, Clone, Debug)]
 pub struct PhaseBoundaries<const MAX_PHASES: usize> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121

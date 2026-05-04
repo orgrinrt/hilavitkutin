@@ -1,4 +1,4 @@
-//! ColdStore — file-backed cold store handle.
+//! ColdStore: file-backed cold store handle.
 //!
 //! Skeleton round: `open` returns a default Manifest + empty
 //! StringTable. `flush` / `snapshot` are no-op `Ok(())`. `load`
