@@ -10,6 +10,7 @@
 use core::cell::{Cell, UnsafeCell};
 
 use arvo::USize;
+use arvo::strategy::Identity;
 use hilavitkutin_api::BuilderResource;
 use hilavitkutin_kit::Kit;
 use hilavitkutin_str::{ArenaInterner, Str, StringInterner};
@@ -105,10 +106,10 @@ impl<const BYTES: usize, const ENTRIES: usize> MemoryArena<BYTES, ENTRIES> { // 
         Self {
             bytes: UnsafeCell::new([0u8; BYTES]), // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic byte buffer initialisation; tracked: #121
             entries: UnsafeCell::new(
-                [Entry { offset: USize(0), len: USize(0) }; ENTRIES],
+                [Entry { offset: USize::ZERO, len: USize::ZERO }; ENTRIES],
             ),
-            cursor: Cell::new(USize(0)),
-            count: Cell::new(USize(0)),
+            cursor: Cell::new(USize::ZERO),
+            count: Cell::new(USize::ZERO),
         }
     }
 }

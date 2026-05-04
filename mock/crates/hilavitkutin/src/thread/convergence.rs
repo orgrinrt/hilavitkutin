@@ -6,6 +6,7 @@
 //! observes via `meeting_record.load` and stops its half.
 
 use arvo::USize;
+use arvo::strategy::Identity;
 
 use super::ThreadHandle;
 use crate::dispatch::ProgressCounter;
@@ -24,7 +25,7 @@ impl Convergence {
         Self {
             head_thread: head,
             tail_thread: tail,
-            meeting_record: ProgressCounter::new(USize(0)),
+            meeting_record: ProgressCounter::new(USize::ZERO),
         }
     }
 }

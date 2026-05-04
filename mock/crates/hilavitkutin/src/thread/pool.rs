@@ -6,6 +6,7 @@
 //! downstream code can reference it now.
 
 use arvo::USize;
+use arvo::strategy::Identity;
 
 use super::WakeStrategy;
 
@@ -25,7 +26,7 @@ impl ThreadPool {
         let spin_budget = match wake {
             WakeStrategy::HybridSpinPark { spin_iters } => spin_iters,
             WakeStrategy::PureSpin => USize(usize::MAX), // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: pure-spin sentinel = never park; tracked: #72
-            WakeStrategy::PurePark => USize(0),
+            WakeStrategy::PurePark => USize::ZERO,
         };
         Self {
             thread_count: core_count,

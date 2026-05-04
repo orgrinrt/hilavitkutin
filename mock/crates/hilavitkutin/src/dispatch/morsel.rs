@@ -3,6 +3,7 @@
 //! One morsel's slice of the global record index space.
 
 use arvo::{Bool, USize};
+use arvo::strategy::Identity;
 
 /// Half-open `[start, start + len)` record range for one morsel.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -33,8 +34,8 @@ impl MorselRange {
 impl Default for MorselRange {
     fn default() -> Self {
         Self {
-            start: USize(0),
-            len: USize(0),
+            start: USize::ZERO,
+            len: USize::ZERO,
         }
     }
 }

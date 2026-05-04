@@ -90,7 +90,7 @@ fn inject_runtime_via_string_table() {
     let hash = content_hash("table-roundtrip");
     let entries: &'static [StringTableEntry] = Box::leak(Box::new([StringTableEntry {
         content_hash: hash,
-        bytes_offset: BufferOffset(USize(0)),
+        bytes_offset: BufferOffset(USize::ZERO),
         bytes_len: BufferLen(USize(payload.len())),
     }]));
     let table = StringTable {
@@ -118,7 +118,7 @@ fn evict_then_inject_runtime_roundtrips() {
     // Build a string-table entry that re-supplies the bytes.
     let entries: &'static [StringTableEntry] = Box::leak(Box::new([StringTableEntry {
         content_hash: evicted,
-        bytes_offset: BufferOffset(USize(0)),
+        bytes_offset: BufferOffset(USize::ZERO),
         bytes_len: BufferLen(USize(original_bytes.len())),
     }]));
     let table = StringTable {
@@ -144,7 +144,7 @@ fn string_table_lookup_hits_return_bytes() {
     let payload: &'static [u8] = b"lookup-hit";
     let entries: &'static [StringTableEntry] = Box::leak(Box::new([StringTableEntry {
         content_hash: ContentHash::from_raw(0xABCD),
-        bytes_offset: BufferOffset(USize(0)),
+        bytes_offset: BufferOffset(USize::ZERO),
         bytes_len: BufferLen(USize(payload.len())),
     }]));
     let table = StringTable {

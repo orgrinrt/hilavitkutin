@@ -10,14 +10,14 @@ use hilavitkutin_persistence::{
 #[test]
 fn manifest_default_is_empty() {
     let m = Manifest::default();
-    assert_eq!(m.count, ColumnCount(USize(0)));
+    assert_eq!(m.count, ColumnCount(USize::ZERO));
     assert_eq!(m.tables.len(), MAX_TABLES);
 }
 
 #[test]
 fn manifest_new_is_empty() {
     let m = Manifest::new();
-    assert_eq!(m.count, ColumnCount(USize(0)));
+    assert_eq!(m.count, ColumnCount(USize::ZERO));
 }
 
 #[test]
@@ -25,8 +25,8 @@ fn table_meta_default_is_empty() {
     let t = TableMeta::default();
     assert_eq!(t.name_hash, ContentHash::from_raw(0));
     assert_eq!(t.version, SchemaVersion::new(0));
-    assert_eq!(t.row_count, RowCount(USize(0)));
-    assert_eq!(t.column_count, ColumnCount(USize(0)));
+    assert_eq!(t.row_count, RowCount(USize::ZERO));
+    assert_eq!(t.column_count, ColumnCount(USize::ZERO));
     assert_eq!(t.columns.len(), MAX_COLUMNS_PER_TABLE);
 }
 
@@ -35,7 +35,7 @@ fn column_meta_default_is_empty() {
     let c = ColumnMeta::default();
     assert_eq!(c.name_hash, ContentHash::from_raw(0));
     assert_eq!(c.bit_width, BitWidth::new(0));
-    assert_eq!(c.cardinality, Cardinality(USize(0)));
+    assert_eq!(c.cardinality, Cardinality(USize::ZERO));
 }
 
 #[test]

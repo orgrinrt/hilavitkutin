@@ -8,7 +8,7 @@ use notko::Maybe;
 fn new_cache_is_empty() {
     let c: SieveCache<u32, u32, 4> = SieveCache::new();
     assert_eq!(c.is_empty(), Bool(true));
-    assert_eq!(c.len(), USize(0));
+    assert_eq!(c.len(), USize::ZERO);
     assert_eq!(c.capacity(), Cap(USize(4)));
 }
 
