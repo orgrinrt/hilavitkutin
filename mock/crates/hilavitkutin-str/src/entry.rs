@@ -1,4 +1,4 @@
-//! `StaticStrEntry` — linker-section registration record.
+//! `StaticStrEntry`: linker-section registration record.
 
 use crate::handle::Str;
 

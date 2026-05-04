@@ -1,4 +1,4 @@
-//! hilavitkutin — pipeline execution engine.
+//! hilavitkutin: pipeline execution engine.
 //!
 //! Morsel-driven pipeline engine. Consumes WorkUnit declarations
 //! from `hilavitkutin-api`, analyses them into phases/trunks/fibers,

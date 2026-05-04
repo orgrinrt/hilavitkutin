@@ -1,4 +1,4 @@
-//! Parameterised provider macro — accessor trait with a type
+//! Parameterised provider macro: accessor trait with a type
 //! parameter carries through generic-method calls.
 
 #![no_std]

@@ -3,7 +3,7 @@
 //! Encodes the phases this core walks through, plus the fiber
 //! assignments inside each phase, plus the morsel boundaries +
 //! sync points the core respects while doing so. No dynamic
-//! dispatch at runtime — every slot is monomorphised at plan
+//! dispatch at runtime: every slot is monomorphised at plan
 //! time.
 
 use arvo::USize;

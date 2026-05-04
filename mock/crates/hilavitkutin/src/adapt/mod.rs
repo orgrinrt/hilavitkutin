@@ -31,7 +31,7 @@ use crate::plan::PhaseId;
 ///
 /// Skeleton: `todo!()`. Real heuristic (EMA latency vs
 /// throughput, 1/8 decay per DESIGN) lands as a follow-up
-/// round — see BACKLOG.
+/// round: see BACKLOG.
 pub fn select_adapt_config(phase: PhaseId, metrics: &AdaptMetrics) -> AdaptConfig {
     let _ = (phase, metrics);
     todo!("5a4: adaptive mode selection heuristic")
@@ -43,7 +43,7 @@ pub fn select_adapt_config(phase: PhaseId, metrics: &AdaptMetrics) -> AdaptConfi
 ///
 /// Skeleton: `todo!()`. Real implementation walks phases +
 /// updates `max_fuse_threshold`, `morsel_size_multiplier`,
-/// `split_threshold` per EMA decay — see BACKLOG.
+/// `split_threshold` per EMA decay: see BACKLOG.
 pub fn update_adapt<const MAX_PHASES: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     configs: &mut [AdaptConfig; MAX_PHASES],
     metrics: &AdaptMetrics,

@@ -1,4 +1,4 @@
-//! Progress counter — per-fiber monotonic record index (domain 17).
+//! Progress counter: per-fiber monotonic record index (domain 17).
 //!
 //! Release store / Acquire load. Lock-free by construction. Ships
 //! `#[repr(transparent)]` over `AtomicUsize` so downstream can lay

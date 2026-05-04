@@ -35,7 +35,7 @@ pub fn bootstrap_from_buildscript() {
 fn write_placeholder_config(cfg: &BuildConfig) {
     let out_dir = match std::env::var_os("OUT_DIR") {
         Some(p) => std::path::PathBuf::from(p),
-        // No OUT_DIR — either the script is being probed outside
+        // No OUT_DIR: either the script is being probed outside
         // cargo or cargo ran us in an unusual configuration. Degrade
         // silently: the wrapper-generation round will formalise the
         // failure modes.

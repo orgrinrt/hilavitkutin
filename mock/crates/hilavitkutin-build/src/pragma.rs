@@ -8,7 +8,7 @@
 /// One of the 13 built-in compilation pragmas documented in
 /// `DESIGN.md` (§Pragma system, Q4f).
 ///
-/// `ParallelCodegen` carries a `u8` parameter — `0` means auto-detect
+/// `ParallelCodegen` carries a `u8` parameter: `0` means auto-detect
 /// via `std::thread::available_parallelism()` at wrapper time.
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum Pragma {
@@ -111,7 +111,7 @@ impl PragmaSet {
     }
 
     /// Check membership. For `ParallelCodegen(n)`, matches on the
-    /// slot (ignores `n`) — use `parallel_codegen_units()` to read
+    /// slot (ignores `n`): use `parallel_codegen_units()` to read
     /// the stored param.
     pub const fn contains(self, p: Pragma) -> bool { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: build-time predicate; consumer output flows into `build.rs` stdout; tracked: #72
         (self.mask & p.bit()) != 0

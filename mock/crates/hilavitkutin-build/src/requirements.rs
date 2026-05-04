@@ -7,7 +7,7 @@
 //! the wrapper-script round can consume it as data.
 //!
 //! Pragma-to-pragma ordering constraints (e.g. `Profiling` implies
-//! `Any<(Pgo, Bolt)>`) are NOT modelled here — they belong to the
+//! `Any<(Pgo, Bolt)>`) are NOT modelled here: they belong to the
 //! pragma-resolution stage (follow-up round).
 
 use crate::pragma::Pragma;
@@ -41,7 +41,7 @@ pub struct PragmaRequirement {
 /// exactly once; pragmas with no external requirement list an empty
 /// slice.
 ///
-/// `ParallelCodegen` is listed with `u8::MAX` as a sentinel — the
+/// `ParallelCodegen` is listed with `u8::MAX` as a sentinel: the
 /// param is irrelevant for requirement lookup; callers should match
 /// on the discriminant only.
 pub const REQUIREMENTS: &[PragmaRequirement] = &[
@@ -100,7 +100,7 @@ pub const REQUIREMENTS: &[PragmaRequirement] = &[
 ];
 
 /// Look up the requirements row for a given pragma. Matches on the
-/// discriminant — `ParallelCodegen(n)` lookups ignore `n`.
+/// discriminant: `ParallelCodegen(n)` lookups ignore `n`.
 pub fn requirements_for(p: Pragma) -> &'static [Requirement] {
     for row in REQUIREMENTS {
         if same_variant(row.pragma, p) {
