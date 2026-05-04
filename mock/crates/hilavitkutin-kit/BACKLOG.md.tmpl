@@ -1,0 +1,32 @@
+# hilavitkutin-kit backlog
+
+> **Type-surface reminder**: new entries use `arvo::USize` /
+> `Bool` / `UFixed<N, 0, S>` instead of `usize` / `bool` / `u*`;
+> `notko::Maybe` / `Outcome` instead of `Option` / `Result`;
+> `hilavitkutin_str::Str` instead of `&str` / `String`. See
+> `rules/type-surface.md`.
+
+## Helper types for common Kit-composition patterns
+
+If a real consumer surfaces a recurring Kit-shape pattern (for
+example, a Kit that registers N resources from a config struct,
+or a Kit that conditionally installs a sibling Kit based on a
+build cfg), promote the helper to this crate. Until then, none.
+
+The Kit trait itself is intentionally minimal. Helpers ship here
+when they earn it from concrete consumer use.
+
+## `app!` / `define_app!` macro
+
+Parked at task #295 (P2, likely never). The macro would fold the
+chain `SchedulerBuilder::new().add_kit(K1).add_kit(K2).add::<W1>()
+.add::<W2>().build()` into one declarative block. Skipped this
+round because:
+
+- Bevy proves the raw builder pattern is ergonomically sufficient
+  at the consumer call counts reached by viola, vehje, and similar
+  hilavitkutin apps (roughly ten registrations per app).
+- The macro adds complexity (declarative or proc-macro) without a
+  measurable readability win at that scale.
+- If a downstream consumer authors a Kit chain long enough that
+  the raw form actually obscures intent, revisit #295.

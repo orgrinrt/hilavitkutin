@@ -21,3 +21,4 @@ mock/research/hilavitkutin_bench
 /.github/instructions/
 /.github/skills/
 # === end mockspace-managed ===
+mock/research/sketches/*/libsketch.rmeta

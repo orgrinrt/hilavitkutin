@@ -46,6 +46,25 @@ hand-written tuple impls. A macro producing `impl_contains!((A, B,
 C))` for common tuple arities would reduce boilerplate. Ergonomic
 helper; not needed for correctness.
 
+## Round 202605011500 follow-ups (filed as tasks)
+
+Captured as workspace tasks #296 to #299; promote here only if a
+concrete consumer surfaces the friction.
+
+- Trybuild compile-fail fixture for the buggy-Kit case (Output
+  drops registrations, fails BuilderExtending) and for the
+  missing-store case (.build() reports the diagnostic on
+  Contains). Task #296.
+- Verify the type-state machinery under -Znext-solver=globally
+  before nightly flips the default. The shape uses cons-list
+  recursion with disjoint impls and #[marker] traits; old solver
+  is happy, new solver is the open question. Task #297.
+- Error-message hygiene: do_not_recommend on the Contains
+  recursion impl, plus newtype wrappers around Wus and Stores so
+  rustc errors do not dump deep cons-lists. Task #298.
+- add_kit::<K: Default>() ergonomic overload that constructs the
+  Kit on the fly when it implements Default. Task #299.
+
 ## Runtime-replaceable platform defaults
 
 MemoryProvider / ThreadPool / Clock ship as monomorphised trait
