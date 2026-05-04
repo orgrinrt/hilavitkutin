@@ -82,3 +82,13 @@ fn internerkit_installs_via_scheduler_builder() {
     let builder = Scheduler::<8, 8, 4>::builder();
     let _extended = InternerKit::<128, 8>.install(builder);
 }
+
+/// `Scheduler::builder().add_kit(InternerKit::<...>)` is the
+/// idiomatic surface the round delivers. Type-checks the engine's
+/// `add_kit` (with its `K::Output: BuilderExtending<Self>` bound)
+/// composed with the providers Kit, end-to-end.
+#[test]
+fn internerkit_installs_via_add_kit() {
+    let _extended =
+        Scheduler::<8, 8, 4>::builder().add_kit(InternerKit::<128, 8>);
+}
