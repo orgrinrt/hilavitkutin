@@ -6,6 +6,7 @@
 
 use arvo::ufixed::UFixed;
 use arvo::USize;
+use arvo::strategy::Identity;
 use hilavitkutin_api::Nanos;
 
 /// Runtime counters feeding adapt decisions. Default-zero.
@@ -27,8 +28,8 @@ impl AdaptMetrics {
     /// Construct a zero-initialised metrics record.
     pub const fn new() -> Self {
         Self {
-            cache_miss_rate: USize(0),
-            branch_miss_rate: USize(0),
+            cache_miss_rate: USize::ZERO,
+            branch_miss_rate: USize::ZERO,
             phase_completion_time_ns: UFixed::from_raw(0),
         }
     }

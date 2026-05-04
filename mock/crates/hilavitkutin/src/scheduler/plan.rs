@@ -3,6 +3,7 @@
 //! Per-lane WU assignment; cached and reused across frames.
 
 use arvo::USize;
+use arvo::strategy::Identity;
 
 #[derive(Copy, Clone, Debug)]
 pub struct LaneAssignment {
@@ -21,11 +22,11 @@ impl<const MAX_LANES: usize> ExecutionPlan<MAX_LANES> { // lint:allow(no-bare-nu
     pub const fn new() -> Self {
         Self {
             lanes: [LaneAssignment {
-                lane_id: USize(0),
-                first_unit: USize(0),
-                unit_count: USize(0),
+                lane_id: USize::ZERO,
+                first_unit: USize::ZERO,
+                unit_count: USize::ZERO,
             }; MAX_LANES],
-            count: USize(0),
+            count: USize::ZERO,
         }
     }
 }

@@ -11,6 +11,7 @@
 //! generic `Mask<N>` for larger (tracked as arvo BACKLOG).
 
 use arvo::{Bool, USize};
+use arvo::strategy::Identity;
 
 /// Per-store dirty bit. Same shape as `AccessMask` — kept distinct
 /// so `overlaps`-vs-access checks and `union_with`-vs-dirty checks
@@ -23,7 +24,7 @@ pub struct DirtyMask<const MAX_STORES: usize> { // lint:allow(no-bare-numeric) l
 impl<const MAX_STORES: usize> DirtyMask<MAX_STORES> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     /// Empty mask — nothing dirty.
     pub const fn empty() -> Self {
-        Self { bits: USize(0) }
+        Self { bits: USize::ZERO }
     }
 
     /// True iff nothing is dirty.

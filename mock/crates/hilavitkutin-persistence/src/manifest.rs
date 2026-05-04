@@ -7,6 +7,7 @@
 //! lands with a later round if consumer pressure surfaces it.
 
 use arvo::USize;
+use arvo::strategy::Identity;
 use arvo_hash::ContentHash;
 
 use crate::primitives::{BitWidth, Cardinality, ColumnCount, RowCount, SchemaVersion};
@@ -37,7 +38,7 @@ impl ColumnMeta {
     pub const EMPTY: Self = Self {
         name_hash: ContentHash::from_raw(0),
         bit_width: BitWidth::new(0),
-        cardinality: Cardinality(USize(0)),
+        cardinality: Cardinality(USize::ZERO),
     };
 }
 
@@ -68,9 +69,9 @@ impl TableMeta {
     pub const EMPTY: Self = Self {
         name_hash: ContentHash::from_raw(0),
         version: SchemaVersion::new(0),
-        row_count: RowCount(USize(0)),
+        row_count: RowCount(USize::ZERO),
         columns: [ColumnMeta::EMPTY; MAX_COLUMNS_PER_TABLE],
-        column_count: ColumnCount(USize(0)),
+        column_count: ColumnCount(USize::ZERO),
     };
 }
 
@@ -94,7 +95,7 @@ impl Manifest {
     /// Default empty manifest.
     pub const EMPTY: Self = Self {
         tables: [TableMeta::EMPTY; MAX_TABLES],
-        count: ColumnCount(USize(0)),
+        count: ColumnCount(USize::ZERO),
     };
 
     /// Construct an empty manifest.

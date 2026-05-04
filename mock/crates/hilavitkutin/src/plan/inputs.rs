@@ -5,6 +5,7 @@
 //! builder during WU registration (domain 11).
 
 use arvo::{Bool, USize};
+use arvo::strategy::Identity;
 
 use super::access::AccessMask;
 
@@ -45,8 +46,8 @@ impl<const MAX_UNITS: usize, const MAX_STORES: usize> PlanInputs<MAX_UNITS, MAX_
             writes: [AccessMask::empty(); MAX_UNITS],
             reads: [AccessMask::empty(); MAX_UNITS],
             commutative: [Bool::FALSE; MAX_UNITS],
-            unit_count: USize(0),
-            record_count: USize(0),
+            unit_count: USize::ZERO,
+            record_count: USize::ZERO,
         }
     }
 }
