@@ -18,7 +18,10 @@
 use core::marker::PhantomData;
 
 use hilavitkutin_api::access::AccessSet;
-use hilavitkutin_api::builder::{Buildable, BuilderExtending, WuSatisfied, extending_sealed};
+use hilavitkutin_api::builder::{
+    Buildable, BuilderExtending, BuilderResource, WuSatisfied, builder_resource_sealed,
+    extending_sealed,
+};
 use hilavitkutin_api::platform::{ClockApi, MemoryProviderApi, ThreadPoolApi};
 use hilavitkutin_api::store::{Column, Resource, Virtual};
 use hilavitkutin_api::work_unit::WorkUnit;
@@ -226,4 +229,49 @@ where
     OldStores: AccessSet,
     NewStores: AccessSet + WuSatisfied<OldStores>,
 {
+}
+
+// ---------------------------------------------------------------------
+// BuilderResource impl. Single legal impl: forwards to the inherent
+// `.resource()` method, inheriting the type-state extension.
+// Sealed via api's private supertrait.
+// ---------------------------------------------------------------------
+
+impl<
+    const MAX_UNITS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_STORES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_LANES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    Wus,
+    Stores,
+    T,
+> builder_resource_sealed::Sealed<T>
+    for SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES, Wus, Stores>
+where
+    T: 'static,
+    Wus: AccessSet,
+    Stores: AccessSet,
+    (Resource<T>, Stores): AccessSet,
+{
+}
+
+impl<
+    const MAX_UNITS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_STORES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_LANES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    Wus,
+    Stores,
+    T,
+> BuilderResource<T> for SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES, Wus, Stores>
+where
+    T: 'static,
+    Wus: AccessSet,
+    Stores: AccessSet,
+    (Resource<T>, Stores): AccessSet,
+{
+    type WithResource =
+        SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES, Wus, (Resource<T>, Stores)>;
+
+    fn with_resource(self, init: T) -> Self::WithResource {
+        self.resource(init)
+    }
 }
