@@ -18,6 +18,7 @@ layers = [
     "Ext:persist",  # hilavitkutin-persistence
     "Ext:str",      # hilavitkutin-str
     "Ext:kit",      # hilavitkutin-kit
+    "Ext:providers", # hilavitkutin-providers
 ]
 
 # Domain kind labels for STRUCTURE.md domain items table
@@ -36,6 +37,7 @@ hilavitkutin-ctx = "#E6F2E6 | #2D6A2D"
 hilavitkutin-persistence = "#E6F2E6 | #2D6A2D"
 hilavitkutin-str = "#E6F2E6 | #2D6A2D"
 hilavitkutin-kit = "#E6F2E6 | #2D6A2D"
+hilavitkutin-providers = "#E6F2E6 | #2D6A2D"
 
 # ---------------------------------------------------------------------------
 # Lint configuration
@@ -123,6 +125,7 @@ rules = [
     { scope = "hilavitkutin-persistence", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_str::*", reason = "hilavitkutin-persistence is a standalone ecosystem crate; keep it independently usable" },
     { scope = "hilavitkutin-str", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*", reason = "hilavitkutin-str is a standalone ecosystem crate; keep it independently usable" },
     { scope = "hilavitkutin-kit", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*, hilavitkutin_str::*, arvo::*, arvo_bits::*, arvo_bitmask::*, arvo_graph::*, arvo_sparse::*, arvo_spectral::*, arvo_comb::*, arvo_hash::*, notko::*", reason = "hilavitkutin-kit defines the Kit preset trait only; standalone, no engine, ecosystem, or substrate deps. Engine depends on it, not the reverse" },
+    { scope = "hilavitkutin-providers", forbidden = "hilavitkutin::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*, hilavitkutin_build::*, hilavitkutin_linking::*, hilavitkutin_extensions::*", reason = "hilavitkutin-providers ships default Kit impls; depends on api + str + kit + substrate. Must not depend on engine, build-time, ctx/persistence siblings, or plugin-host layer" },
 
     # Plugin-host layer: three crates, strict layering.
     { scope = "hilavitkutin-linking", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*, hilavitkutin_str::*, hilavitkutin_extensions::*", reason = "hilavitkutin-linking is the dlopen primitive; it must stay domain-agnostic and depend only on substrate (notko, arvo, arvo-bits) and platform FFI" },
