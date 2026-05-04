@@ -327,6 +327,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "hilavitkutin-providers"
+version = "0.1.0"
+dependencies = [
+ "arvo",
+ "arvo-bits",
+ "hilavitkutin-api",
+ "hilavitkutin-str",
+ "notko",
+]
+
+[[package]]
 name = "hilavitkutin-str"
 version = "0.1.0"
 dependencies = [
