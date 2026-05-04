@@ -4,20 +4,6 @@ Designed-but-deferred surfaces. Names stay unbacktickled so the
 design-doc-source-mismatch lint ignores them. Promoted into
 DESIGN.md.tmpl when shipped.
 
-## InternerKit Kit impl (v0.1)
-
-Ship the Kit impl that registers
-Resource<StringInterner<MemoryArena<BYTES, ENTRIES>>> on the
-scheduler builder via add_kit. The impl needs an api-side
-BuilderResource<T> sealed trait that the engine impls for
-SchedulerBuilder, so the Kit body can call B::resource(...)
-without importing the engine. v0.1 is the right scope: api +
-engine + providers, one round, one PR.
-
-Gated on: the round can land alongside or after a consumer
-actually exercises the Kit shape (viola is the obvious first
-caller).
-
 ## M-parameterised arena variant (v1)
 
 A MemoryArena variant parameterised over `M: HasMemoryProvider`

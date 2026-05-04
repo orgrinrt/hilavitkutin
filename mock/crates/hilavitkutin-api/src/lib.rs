@@ -39,7 +39,7 @@ pub mod store;
 pub mod work_unit;
 
 pub use access::{AccessSet, Contains};
-pub use builder::{Buildable, BuilderExtending, Depth, WuSatisfied};
+pub use builder::{Buildable, BuilderExtending, BuilderResource, Depth, WuSatisfied};
 pub use capability::{BoundedPush, BulkPush, Capacity, Full, Len, Push};
 pub use codec::{DecodeError, Decoder, DecoderExt, Encoder, EncoderExt};
 pub use column_value::ColumnValue;
