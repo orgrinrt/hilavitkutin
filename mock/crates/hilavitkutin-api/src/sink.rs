@@ -12,6 +12,7 @@
 use core::marker::PhantomData;
 
 use arvo::USize;
+use arvo::strategy::Identity;
 
 use crate::capability::{BulkPush, Len, Push};
 
@@ -71,7 +72,7 @@ impl<T> CountingSink<T> {
     /// Fresh sink starting at count 0.
     pub const fn new() -> Self {
         Self {
-            count: USize(0),
+            count: USize::ZERO,
             _m: PhantomData,
         }
     }

@@ -289,6 +289,7 @@ name = "hilavitkutin-extensions-macros"
 version = "0.1.0"
 dependencies = [
  "hilavitkutin-extensions",
+ "libloading",
  "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "proc-macro2",
  "quote",
