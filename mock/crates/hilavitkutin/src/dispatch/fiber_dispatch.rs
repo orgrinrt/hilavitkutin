@@ -5,6 +5,7 @@
 //! the right sync conditions.
 
 use arvo::USize;
+use arvo::strategy::Identity;
 use notko::Maybe;
 
 use super::{MorselRange, SyncPoint, WuFn};
@@ -33,14 +34,14 @@ impl<Ctx: 'static, const MAX_CORES: usize> FiberDispatch<Ctx, MAX_CORES> { // li
             fiber_id: FiberId(0),
             phase: PhaseId(0),
             morsel_range: MorselRange {
-                start: USize(0),
-                len: USize(0),
+                start: USize::ZERO,
+                len: USize::ZERO,
             },
             sync_points: [SyncPoint {
                 fiber_id: FiberId(0),
-                min_records: USize(0),
+                min_records: USize::ZERO,
             }; MAX_CORES],
-            sync_point_count: USize(0),
+            sync_point_count: USize::ZERO,
         }
     }
 }

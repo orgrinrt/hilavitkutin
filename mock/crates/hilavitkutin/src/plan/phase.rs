@@ -4,6 +4,7 @@
 //! (narrow cut points in the DAG). Produced by step 4.
 
 use arvo::USize;
+use arvo::strategy::Identity;
 
 /// Newtype wrapping a phase index. `#[repr(transparent)]`. u8 is
 /// plenty — phases rarely exceed 20.
@@ -24,8 +25,8 @@ impl<const MAX_PHASES: usize> PhaseBoundaries<MAX_PHASES> { // lint:allow(no-bar
     /// Single phase starting at node 0.
     pub const fn new() -> Self {
         Self {
-            boundaries: [USize(0); MAX_PHASES],
-            phase_count: USize(0),
+            boundaries: [USize::ZERO; MAX_PHASES],
+            phase_count: USize::ZERO,
         }
     }
 }

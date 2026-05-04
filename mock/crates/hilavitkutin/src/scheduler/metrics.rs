@@ -5,6 +5,7 @@
 
 use arvo::ufixed::UFixed;
 use arvo::USize;
+use arvo::strategy::Identity;
 use hilavitkutin_api::Nanos;
 
 #[derive(Copy, Clone)]
@@ -18,8 +19,8 @@ impl SchedulerMetrics {
     pub const fn new() -> Self {
         Self {
             frame_time_ns: UFixed::from_raw(0),
-            morsels_dispatched: USize(0),
-            changes_detected: USize(0),
+            morsels_dispatched: USize::ZERO,
+            changes_detected: USize::ZERO,
         }
     }
 }
