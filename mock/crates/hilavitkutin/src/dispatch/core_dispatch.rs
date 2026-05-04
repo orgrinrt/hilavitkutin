@@ -7,6 +7,7 @@
 //! time.
 
 use arvo::USize;
+use arvo::strategy::Identity;
 
 use super::{FiberDispatch, MorselRange, SyncPoint};
 use crate::plan::{FiberId, PhaseId};
@@ -33,19 +34,19 @@ impl<Ctx: 'static, const MAX_FIBERS: usize> CoreDispatch<Ctx, MAX_FIBERS> { // l
     pub fn new() -> Self {
         Self {
             fibers: core::array::from_fn(|_| FiberDispatch::new()),
-            fiber_count: USize(0),
+            fiber_count: USize::ZERO,
             phases: [PhaseId(0); MAX_FIBERS],
-            phase_count: USize(0),
+            phase_count: USize::ZERO,
             morsel_boundaries: [MorselRange {
-                start: USize(0),
-                len: USize(0),
+                start: USize::ZERO,
+                len: USize::ZERO,
             }; MAX_FIBERS],
-            boundary_count: USize(0),
+            boundary_count: USize::ZERO,
             sync_points: [SyncPoint {
                 fiber_id: FiberId(0),
-                min_records: USize(0),
+                min_records: USize::ZERO,
             }; MAX_FIBERS],
-            sync_point_count: USize(0),
+            sync_point_count: USize::ZERO,
         }
     }
 }

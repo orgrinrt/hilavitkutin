@@ -9,6 +9,7 @@
 use core::mem;
 
 use arvo::{Bool, Cap, USize};
+use arvo::strategy::Identity;
 use notko::Maybe;
 
 use crate::primitives::EvictionWeight;
@@ -48,8 +49,8 @@ impl<K: Copy + Eq, V, const CAP: usize> SieveCache<K, V, CAP> { // lint:allow(no
     pub fn new() -> Self {
         Self {
             slots: [const { Slot::<K, V>::EMPTY }; CAP],
-            head: USize(0),
-            count: USize(0),
+            head: USize::ZERO,
+            count: USize::ZERO,
         }
     }
 

@@ -5,6 +5,7 @@
 //! steps 5-8 in the plan-stage algorithm.
 
 use arvo::USize;
+use arvo::strategy::Identity;
 
 /// Newtype wrapping a fiber index. `#[repr(transparent)]` for
 /// stable FFI. u16 is plenty — even a 64-core plan rarely exceeds
@@ -27,7 +28,7 @@ impl<const MAX_UNITS: usize, const MAX_FIBERS: usize> FiberGrouping<MAX_UNITS, M
     pub const fn new() -> Self {
         Self {
             assignment: [FiberId(0); MAX_UNITS],
-            fiber_count: USize(0),
+            fiber_count: USize::ZERO,
         }
     }
 }

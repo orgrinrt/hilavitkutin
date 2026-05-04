@@ -43,7 +43,7 @@ fn open_returns_store_with_default_manifest() {
     let memory = StubMemory;
     let interner = StringInterner::new(StubArena);
     let store = make_store(&memory, &interner);
-    assert_eq!(store.manifest().count, ColumnCount(USize(0)));
+    assert_eq!(store.manifest().count, ColumnCount(USize::ZERO));
 }
 
 #[test]

@@ -11,6 +11,7 @@
 //! `overlaps` / `union_with`) across that swap.
 
 use arvo::{Bool, USize};
+use arvo::strategy::Identity;
 
 /// Bit pattern identifying which stores (indexed 0..MAX_STORES) a
 /// WU reads or writes. Skeleton supports MAX_STORES ≤ 64.
@@ -22,7 +23,7 @@ pub struct AccessMask<const MAX_STORES: usize> { // lint:allow(no-bare-numeric) 
 impl<const MAX_STORES: usize> AccessMask<MAX_STORES> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     /// Empty mask — touches no stores.
     pub const fn empty() -> Self {
-        Self { bits: USize(0) }
+        Self { bits: USize::ZERO }
     }
 
     /// True iff no store is touched.
