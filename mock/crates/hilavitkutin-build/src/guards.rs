@@ -7,7 +7,7 @@
 //! BACKLOG.
 
 /// Emit a `compile_error!` stating which `-C target-feature` flag
-/// the consumer needs. The macro always expands to a hard error , 
+/// the consumer needs. The macro always expands to a hard error;
 /// call it inside a `#[cfg(...)]` that only fires on mismatch.
 ///
 /// ```ignore

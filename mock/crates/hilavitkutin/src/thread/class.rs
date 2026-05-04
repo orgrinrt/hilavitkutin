@@ -2,7 +2,7 @@
 //!
 //! P-cores get critical-path trunks + larger morsels. E-cores
 //! get branches/leaves + proportionally smaller ranges. Runtime
-//! detection is a follow-up (CPUID leaf 0x1A / sysfs / IOKit , 
+//! detection is a follow-up (CPUID leaf 0x1A / sysfs / IOKit;
 //! see BACKLOG).
 
 /// Heterogeneous-core class.

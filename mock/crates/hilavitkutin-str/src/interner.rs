@@ -9,7 +9,7 @@ use crate::handle::Str;
 use crate::hash::const_fnv1a;
 use crate::section::static_entries;
 
-/// Host-implemented arena contract. Only handles runtime strings , 
+/// Host-implemented arena contract. Only handles runtime strings;
 /// const strings are short-circuited by `StringInterner`.
 pub trait ArenaInterner {
     /// Insert `s` into the arena and return its 28-bit ID.

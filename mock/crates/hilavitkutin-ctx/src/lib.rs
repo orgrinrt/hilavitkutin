@@ -120,7 +120,7 @@ macro_rules! tuple {
 ///
 /// Assumes the API trait and accessor trait both take one type
 /// parameter matching `$R`. Generic methods on the API trait may
-/// carry further bounds on `$R` (e.g. `where R: Contains<...>`) , 
+/// carry further bounds on `$R` (e.g. `where R: Contains<...>`);
 /// those flow through unchanged.
 ///
 /// Consumers call the accessor method on the provider tuple

@@ -54,7 +54,7 @@ pub fn classify_cores(total_cores: USize, p_cores: USize) -> [CoreClass; 256] {
 /// Work-stealing fallback against a consumer-provided Executor.
 ///
 /// Skeleton: `todo!()`. Real signature will constrain
-/// `T: Executor` once the trait ships in a follow-up round , 
+/// `T: Executor` once the trait ships in a follow-up round;
 /// see BACKLOG.
 pub fn steal_fallback<T>(executor: &T, fiber_id: crate::plan::FiberId) {
     let _ = (executor, fiber_id);
