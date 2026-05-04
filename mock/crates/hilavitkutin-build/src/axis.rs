@@ -9,7 +9,7 @@
 /// ISA / feature-set classification. Detected from
 /// `CARGO_CFG_TARGET_FEATURE` at build-script time.
 ///
-/// `Iss64` stands for the baseline 64-bit instruction set — the
+/// `Iss64` stands for the baseline 64-bit instruction set: the
 /// neutral default when no specific feature is detected.
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TargetAxis {
@@ -31,7 +31,7 @@ impl Default for TargetAxis {
     }
 }
 
-/// Optimisation tier. Additive per DESIGN §Optimisation tiers —
+/// Optimisation tier. Additive per DESIGN §Optimisation tiers , 
 /// `PgoBolt` implies PGO data + BOLT post-link rewriting.
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TierAxis {

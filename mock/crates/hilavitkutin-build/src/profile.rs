@@ -28,7 +28,7 @@ impl Default for Profile {
 impl Profile {
     /// The default `PragmaSet` for this profile per DESIGN Q3.
     ///
-    /// `ParallelCodegen(0)` means "auto-detect codegen units" — the
+    /// `ParallelCodegen(0)` means "auto-detect codegen units": the
     /// rustc wrapper resolves `0` via `available_parallelism()` at
     /// generation time. A concrete consumer may replace with
     /// `ParallelCodegen(N)` post-construction.

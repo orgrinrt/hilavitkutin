@@ -1,4 +1,4 @@
-//! OS platform tier — raw syscalls via libc.
+//! OS platform tier: raw syscalls via libc.
 //!
 //! Backs `MemoryProviderApi` with mmap/munmap, `ClockApi` with
 //! `clock_gettime(CLOCK_MONOTONIC)`, and `ThreadPoolApi` with a
@@ -76,7 +76,7 @@ impl MemoryProviderApi for OsMemoryProvider {
 
 /// pthread-backed thread pool.
 ///
-/// Skeleton — `spawn` accepts only a parameterless `fn()` via a
+/// Skeleton: `spawn` accepts only a parameterless `fn()` via a
 /// trampoline over a thin function pointer. Generic-closure
 /// support with queue integration lands in sub-round 5a4.
 /// `worker_count` returns `USize(1)` until the same round wires
@@ -123,7 +123,7 @@ impl OsThreadPool {
     }
 }
 
-/// pthread entry-point trampoline. Monomorphic over `fn()` — the
+/// pthread entry-point trampoline. Monomorphic over `fn()`: the
 /// raw pointer argument encodes the consumer-supplied function.
 extern "C" fn trampoline(arg: *mut c_void) -> *mut c_void {
     let raw = arg as usize; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: trampoline arg smuggled as usize bit pattern; tracked: #72

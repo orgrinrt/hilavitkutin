@@ -10,7 +10,7 @@
 //! `upward_rank`, `detect_waists`, `rcm_reorder`, `block_diagonal`,
 //! `spectral_partition`, `group_fibers`, `size_morsels`,
 //! `adaptive_config`, `classify_columns`, `propagate_dirty`) stubs
-//! to `todo!()`. Each becomes its own downstream round — see
+//! to `todo!()`. Each becomes its own downstream round: see
 //! BACKLOG → Engine 5a2 follow-ups.
 //!
 //! The top-level orchestration function `build_plan` is also a
@@ -37,7 +37,7 @@ pub use phase::{PhaseBoundaries, PhaseId};
 /// Build an `ExecutionPlan` from `PlanInputs`.
 ///
 /// Skeleton: `todo!()`. The real orchestration wires steps 1-12
-/// (see [`steps`]) and lands once all 12 bodies exist — tracked
+/// (see [`steps`]) and lands once all 12 bodies exist: tracked
 /// in BACKLOG → Engine 5a2 follow-ups.
 pub fn build_plan<
     const MAX_UNITS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
@@ -47,5 +47,5 @@ pub fn build_plan<
     inputs: &PlanInputs<MAX_UNITS, MAX_STORES>,
 ) -> crate::scheduler::ExecutionPlan<MAX_LANES> {
     let _ = inputs;
-    todo!("skeleton — plan-stage algorithm split across follow-up rounds")
+    todo!("skeleton: plan-stage algorithm split across follow-up rounds")
 }
