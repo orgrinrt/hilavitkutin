@@ -1,4 +1,4 @@
-# hilavitkutin-persistence — backlog
+# hilavitkutin-persistence, backlog
 
 > **Type-surface reminder**: new entries use `arvo::USize` /
 > `Bool` / `UFixed<N, 0, S>` instead of `usize` / `bool` / `u*`;
@@ -30,17 +30,17 @@ supports memory mapping.
 ## Weighted eviction policy tuning
 
 `SieveCache` stub ships a FIFO baseline. DESIGN specifies
-WeightedSieveCache (weighted by byte size). The tuning — the
+WeightedSieveCache (weighted by byte size). The tuning, the
 weight-reference tracking, the protection bit, the eviction
-scan — follows the SIEVE paper. Lands when a consumer profiles
+scan, follows the SIEVE paper. Lands when a consumer profiles
 real eviction pressure.
 
 ## Backup / snapshot mechanism
 
 `ColdStore::snapshot` is a stub. Real impl: atomic-rename
 file-copy over the data directory, optionally wrapping in a
-consumer-chosen container (e.g. ZIP plus zstd archives, custom
-binary formats, etc.). Consumer-side API composition; persistence provides the
+consumer-chosen container (ZIP+zstd, custom container format,
+etc.). Consumer-side API composition; persistence provides the
 file enumeration + checksum primitive.
 
 ## Domain-schema versioning

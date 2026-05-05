@@ -66,7 +66,7 @@ This crate does not own:
 
 ## Arbitrary-time linking invariant
 
-The emitted output preserves the invariant because it is fundamentally per-extension: one `DESCRIPTOR` constant per extension, one exported fn per extension, one capability table per extension. No cross-extension registration is emitted, no linker sections are touched, no ordering assumptions are baked in. The macro has no concept of "all extensions" or "the ecosystem"; each invocation is independent.
+The emitted output preserves the invariant because it is per-extension: one `DESCRIPTOR` constant per extension, one exported fn per extension, one capability table per extension. No cross-extension registration is emitted, no linker sections are touched, no ordering assumptions are baked in. The macro has no concept of "all extensions" or "the ecosystem"; each invocation is independent.
 
 ## Cross-references
 

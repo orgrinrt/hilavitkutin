@@ -1,4 +1,4 @@
-# hilavitkutin-str — backlog
+# hilavitkutin-str, backlog
 
 > **Type-surface reminder**: new entries use `arvo::USize` /
 > `Bool` / `UFixed<N, 0, S>` instead of `usize` / `bool` / `u*`;
@@ -12,7 +12,7 @@ Str is currently a thin newtype over `arvo_bits::Bits<32>`. The
 accessors (`is_const`, `is_runtime`, `id`) project the
 origin-flag + reserved + ID sub-ranges in code. The designed
 long-term home is a `Bitfield` primitive in arvo that carries the
-named sub-ranges at type level — the packing becomes part of the
+named sub-ranges at type level, the packing becomes part of the
 type, not the method bodies. Tracked in the arvo workspace as
 task #127. When it lands, Str promotes to that primitive; the
 public API (`is_const`, `is_runtime`, `id`) stays identical.
@@ -40,7 +40,7 @@ future sibling types: `FixedArenaInterner<N>` (const-sized, no
 alloc), `SlabInterner` (uses MemoryProvider slabs from
 hilavitkutin-api). These ship as their own crates or
 hilavitkutin-persistence features when a second consumer needs a
-different backing than the one the initial consumer-stack supplies.
+different backing than the one hilavitkutin supplies.
 
 ## 28-bit ID exhaustion
 
