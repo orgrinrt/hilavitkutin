@@ -239,3 +239,21 @@ handled at that round's boundary.
   `dulmage_mendelsohn` returns a full `DulmageMendelsohn` struct.
   Split step 6 into `block_diagonal_components` and
   `dulmage_mendelsohn_decompose` when its body is filled in.
+
+## Trait-solver error message richness at depth 6+
+
+S1b confirms depth 5 is workable: the missing-marker name
+(`Empty: Contains<Clock>`) appears on the first inline line of the
+diagnostic, with the verbose Cons chain following but not burying
+the marker name. At depth 6+ the chain grows and the marker name
+may become harder to find in the noise.
+
+Polish path: a richer `#[diagnostic::on_unimplemented]` annotation
+on `Contains<X>` that surfaces the marker name even more
+prominently (for example, "store `Clock` is required by some
+WorkUnit but not registered on the SchedulerBuilder; add
+`.resource::<Clock>()` before `.build()`"), plus a `trybuild`
+fixture that asserts the marker name is in the inline text.
+
+Round-5+ scope. The audit C3 / M3 decision criterion (marker name
+in inline text) is met at depth 5 without this work.
