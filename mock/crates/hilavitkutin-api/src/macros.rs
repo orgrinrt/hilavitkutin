@@ -1,24 +1,21 @@
-//! Cons-list-shape macros for `WorkUnit::Read` / `WorkUnit::Write`.
+//! Cons-list-shape macros for `WorkUnit::Read` / `WorkUnit::Write`
+//! and Kit `Units` / `Owned`.
 //!
-//! `read![T0, T1, T2]` expands to `(T0, (T1, (T2, ())))`. The
-//! cons-list shape lets `WuSatisfied` reduce by recursion at any
-//! depth, removing the per-arity cap that flat-tuple-shaped
-//! declarations imposed.
-//!
-//! Empty `read![]` yields `()`. Single-store `read![T]` yields
-//! `(T, ())`. The `write!` macro has identical shape and applies to
+//! `read![T0, T1, T2]` expands to `Cons<T0, Cons<T1, Cons<T2, Empty>>>`.
+//! Empty `read![]` yields `Empty`. Single-element `read![T]` yields
+//! `Cons<T, Empty>`. `write!` is identical in shape and applies to
 //! `WorkUnit::Write` declarations.
 
 #[macro_export]
 macro_rules! read {
-    () => { () };
-    ($T:ty $(,)?) => { ($T, ()) };
-    ($T:ty, $($rest:ty),+ $(,)?) => { ($T, $crate::read!($($rest),+)) };
+    () => { $crate::Empty };
+    ($T:ty $(,)?) => { $crate::Cons<$T, $crate::Empty> };
+    ($T:ty, $($rest:ty),+ $(,)?) => { $crate::Cons<$T, $crate::read!($($rest),+)> };
 }
 
 #[macro_export]
 macro_rules! write {
-    () => { () };
-    ($T:ty $(,)?) => { ($T, ()) };
-    ($T:ty, $($rest:ty),+ $(,)?) => { ($T, $crate::write!($($rest),+)) };
+    () => { $crate::Empty };
+    ($T:ty $(,)?) => { $crate::Cons<$T, $crate::Empty> };
+    ($T:ty, $($rest:ty),+ $(,)?) => { $crate::Cons<$T, $crate::write!($($rest),+)> };
 }

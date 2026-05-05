@@ -300,6 +300,9 @@ dependencies = [
 [[package]]
 name = "hilavitkutin-kit"
 version = "0.1.0"
+dependencies = [
+ "hilavitkutin-api",
+]
 
 [[package]]
 name = "hilavitkutin-linking"

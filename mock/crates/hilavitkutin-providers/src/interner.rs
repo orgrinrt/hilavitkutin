@@ -11,7 +11,7 @@ use core::cell::{Cell, UnsafeCell};
 
 use arvo::USize;
 use arvo::strategy::Identity;
-use hilavitkutin_api::BuilderResource;
+use hilavitkutin_api::{Cons, Empty, Resource};
 use hilavitkutin_kit::Kit;
 use hilavitkutin_str::{ArenaInterner, Str, StringInterner};
 use notko::Maybe;
@@ -213,24 +213,16 @@ pub const fn default_interner<const BYTES: usize, const ENTRIES: usize>() // lin
     StringInterner::new(MemoryArena::new())
 }
 
-/// Kit preset that registers a default-configured
-/// `Resource<StringInterner<MemoryArena<BYTES, ENTRIES>>>` on the
-/// scheduler builder via `add_kit`.
+/// Kit preset declaring a `Resource<StringInterner<MemoryArena<BYTES, ENTRIES>>>`
+/// among its Owned types.
 ///
-/// Composes via the api-level [`BuilderResource<T>`] sealed trait,
-/// so the impl never names the engine's `SchedulerBuilder`
-/// directly. Use as
-/// `Scheduler::builder().add_kit(InternerKit::<BYTES, ENTRIES>)`.
+/// Round 4 declarative shape: declares the type-level commitment
+/// only. The default value is supplied by the app at the call site
+/// via `builder.resource(default_interner::<BYTES, ENTRIES>())`.
 pub struct InternerKit<const BYTES: usize, const ENTRIES: usize>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array sizes; tracked: #121
 
-impl<B, const BYTES: usize, const ENTRIES: usize> Kit<B> // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array sizes; tracked: #121
-    for InternerKit<BYTES, ENTRIES>
-where
-    B: BuilderResource<StringInterner<MemoryArena<BYTES, ENTRIES>>>,
+impl<const BYTES: usize, const ENTRIES: usize> Kit for InternerKit<BYTES, ENTRIES> // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array sizes; tracked: #121
 {
-    type Output = B::WithResource;
-
-    fn install(self, builder: B) -> Self::Output {
-        builder.with_resource(default_interner::<BYTES, ENTRIES>())
-    }
+    type Units = Empty;
+    type Owned = Cons<Resource<StringInterner<MemoryArena<BYTES, ENTRIES>>>, Empty>;
 }

@@ -119,3 +119,31 @@ impl<K, V, const N: Cap> Default for Map<K, V, N> {
         Map(PhantomData)
     }
 }
+
+// ---------------------------------------------------------------------
+// Round 4 substrate: StoreBundle + Replaceable.
+//
+// StoreBundle marks Cons-list bundles of store markers (Resource /
+// Column / Virtual / Field / Seq / Map / mixed). Used by Kit's
+// 'type Owned' bound; the engine's add_kit reads K::Owned at compile
+// time.
+//
+// Replaceable opts a store-typed value into Scheduler::replace_resource
+// override semantics. Apps impl Replaceable per-type to opt their
+// Resources into override semantics; non-opt-in types stay locked.
+// Single substrate-enforced annotation on Owned types per
+// topic_round_4_layered_enforcement.md.
+// ---------------------------------------------------------------------
+
+use crate::access::{Cons, Empty};
+
+/// Marker for a Cons-list of stores.
+pub trait StoreBundle {}
+
+impl StoreBundle for Empty {}
+impl<H, T: StoreBundle> StoreBundle for Cons<H, T> {}
+
+/// Opt-in marker for store types whose Resource value can be
+/// replaced via Scheduler::replace_resource.
+pub trait Replaceable {}
+
