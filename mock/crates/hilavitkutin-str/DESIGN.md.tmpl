@@ -1,13 +1,10 @@
-# hilavitkutin-str — Design Overview
+# hilavitkutin-str, Design Overview
 
 `#![no_std]`. Depends on `arvo-bits` for `Bits<N>` and the
 `bitfield!` macro that generates the 32-bit `StrLayout` carrier.
-Interned string system for the hilavitkutin ecosystem. Shared
-across multiple consumer ecosystems. Currently developed alongside
-the hilavitkutin engine, will be extracted to its own publishable
-crate when stabilised.
+Interned string system for the hilavitkutin ecosystem.
 
-## `Str` — interned string handle
+## `Str`, interned string handle
 
 ```rust
 #[repr(transparent)]
@@ -44,7 +41,7 @@ StrLayout and Str forwards them under consumer-friendly names.
 Const IDs are content hashes (deterministic, stable across
 sessions and builds). Runtime IDs are sequential (fast, ephemeral).
 
-## `str_const!()` — compile-time string creation
+## `str_const!()`, compile-time string creation
 
 ```rust
 macro_rules! str_const {
@@ -66,10 +63,10 @@ specific section walking at startup:
 - Linux: `__start_hilavitkutin_strings` / `__stop_hilavitkutin_strings`
 - macOS: `getsectiondata` on `__DATA,hilavitkutin_strings`
 
-`Str::__make` is not public — `str_const!` is the only way to
+`Str::__make` is not public, `str_const!` is the only way to
 create const handles.
 
-## `StaticStrEntry` — linker-section registration
+## `StaticStrEntry`, linker-section registration
 
 ```rust
 #[repr(C)]
@@ -82,7 +79,7 @@ pub struct StaticStrEntry {
 Collected via linker section. The interner reads this section at
 startup to build the const resolution table.
 
-## `ArenaInterner` — host-implemented trait
+## `ArenaInterner`, host-implemented trait
 
 ```rust
 pub trait ArenaInterner {
@@ -95,7 +92,7 @@ Minimal contract. The host implements with whatever backing
 storage it wants. Only handles runtime strings; const strings are
 handled by the wrapper.
 
-## `StringInterner<A>` — wrapper
+## `StringInterner<A>`, wrapper
 
 ```rust
 pub struct StringInterner<A: ArenaInterner> {
@@ -108,14 +105,14 @@ Wraps `ArenaInterner` with const table handling. The const table
 implements `ArenaInterner`.
 
 Methods:
-- `intern(&self, s: &str) -> Str` — check const table, fall back
+- `intern(&self, s: &str) -> Str`, check const table, fall back
   to arena, set runtime bit
-- `intern_static(&self, s: &'static str) -> Str` — same but arena
+- `intern_static(&self, s: &'static str) -> Str`, same but arena
   can avoid copying
-- `resolve(&self, s: Str) -> &str` — if const: linker section;
+- `resolve(&self, s: Str) -> &str`, if const: linker section;
   if runtime: delegate to arena
 
-## `AsStr` — cheap handle access
+## `AsStr`, cheap handle access
 
 ```rust
 pub trait AsStr {
@@ -125,7 +122,7 @@ pub trait AsStr {
 
 For any type that wraps or carries a `Str`.
 
-## `IntoStr` — conversion with interning
+## `IntoStr`, conversion with interning
 
 ```rust
 pub trait IntoStr {
@@ -148,7 +145,7 @@ interner). Used at API boundaries for ergonomic string acceptance.
 
 ## Content hashing
 
-`const_fnv1a` — FNV-1a hash computable in const context. Used
+`const_fnv1a`, FNV-1a hash computable in const context. Used
 for `str_const!` handle derivation. Also used by
 `hilavitkutin-persistence` for stable on-disk string identity.
 
@@ -159,4 +156,4 @@ need to agree. The hash is stable; the runtime ID is ephemeral.
 ## Design rule
 
 No external deps. No alloc. No std. Linker sections for
-registration — no `inventory` crate.
+registration, no `inventory` crate.

@@ -46,7 +46,7 @@ The engine's canonical hierarchy, coarsest to finest:
 
 ```
 pipeline → core → phase ↔ waist → trunk → fiber ↔ branch ↔ bridge
-  → morsel → micro-morsel → entry
+  → morsel → micro-morsel → record
 ```
 
 A `record` is one data point in a column, never a `row`, never an `entity`. A `morsel` windows into a range of records. Columns are independent; there is no tabular join.
@@ -78,7 +78,7 @@ Consumers that want only the contract surface (to define WorkUnits without linki
 
 ## Positioning
 
-`hilavitkutin` depends on [`notko`](https://github.com/orgrinrt/notko) (foundation primitives: `Just`, `Maybe`, `Outcome`, `MaybeNull`) and [`arvo`](https://github.com/orgrinrt/arvo) (numeric and analysis substrate). The engine uses `arvo-graph` for DAG topology, `arvo-bitmask` for access masks, `arvo-sparse` for RCM reordering, `arvo-spectral` for trunk formation, and `arvo-comb` for fiber grouping. arvo types do not leak through `hilavitkutin-api`; consumers that need arvo depend on it directly.
+`hilavitkutin` depends on [`notko`](https://github.com/orgrinrt/notko) (foundation primitives: `Just`, `Maybe`, `Outcome`, `MaybeNull`) and [`arvo`](https://github.com/orgrinrt/arvo) (numeric and analysis foundations). The engine uses `arvo-graph` for DAG topology, `arvo-bitmask` for access masks, `arvo-sparse` for RCM reordering, `arvo-spectral` for trunk formation, and `arvo-comb` for fiber grouping. arvo types do not leak through `hilavitkutin-api`; consumers that need arvo depend on it directly.
 
 ## Support
 

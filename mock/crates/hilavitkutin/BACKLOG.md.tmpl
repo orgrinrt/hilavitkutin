@@ -1,4 +1,4 @@
-# hilavitkutin — backlog
+# hilavitkutin, backlog
 
 > **Type-surface reminder**: new entries use `arvo::USize` /
 > `Bool` / `UFixed<N, 0, S>` instead of `usize` / `bool` / `u*`;
@@ -15,7 +15,7 @@ surfaces or the distribution story demands it.
 
 ## no_os tier documentation
 
-The no_os tier is trait-only — consumers ship their own
+The no_os tier is trait-only, consumers ship their own
 MemoryProviderApi / ThreadPoolApi / ClockApi impls. A concrete
 example (for an embedded target) would help third-party
 adoption. Defer until a consumer surfaces.
@@ -45,7 +45,7 @@ Tracked in the engine-impl task description (#35):
 
 ## Scheduler follow-ups (5a6 skeleton deferrals)
 
-- Real execution loop — needs 5a2 (plan-stage) + 5a3 (dispatch)
+- Real execution loop, needs 5a2 (plan-stage) + 5a3 (dispatch)
   + 5a4 (thread) before it can actually run work.
 - Self-hosting meta pipeline proper (PlanStage → ScheduleReady →
   PassStart → ScheduleEnd): resource types ship now; the pipeline
@@ -106,23 +106,23 @@ The 5a3 round ships the dispatch (domain 17) + intrinsics
 (domain 13) type surface with stub code-gen bodies. Each entry
 below is a separate downstream round.
 
-- `select_approach` body — record-count thresholds (10K cutover
+- `select_approach` body, record-count thresholds (10K cutover
   between IndirectPerFiber/TrunkMega and ScheduleMega; exact
   boundary is benchmarked).
-- `codegen_fiber` body — emit the monomorphised per-fiber
+- `codegen_fiber` body, emit the monomorphised per-fiber
   dispatch function. Needs LLVM hooks or a build-time plugin
   from hilavitkutin-build (ExpandedLto pragma).
-- `codegen_core` body — emit the per-core pipeline: encodes
+- `codegen_core` body, emit the per-core pipeline: encodes
   phases + morsel boundaries + sync points + per-fiber dispatch
   records. Depends on `codegen_fiber`.
-- ExpandedLto pragma integration — required for the LLVM
+- ExpandedLto pragma integration, required for the LLVM
   devirtualisation of the `&[WuFn]` slice into straight-line
   code. Depends on hilavitkutin-build 5a4+.
-- Rust-pipe pattern wiring — stack-cached resource snapshot at
+- Rust-pipe pattern wiring, stack-cached resource snapshot at
   morsel head, fiber-input column reads at morsel start,
   DSE-friendly internal column reads, grouped output stores at
   morsel tail. Depends on `codegen_fiber` body.
-- Progress counter thread-safety stress tests — loom / miri
+- Progress counter thread-safety stress tests, loom / miri
   coverage over the Release-store / Acquire-load contract.
 - Intrinsics: real `core::intrinsics::prefetch_*` wiring on
   nightly (gated behind a `nightly-intrinsics` feature; the
@@ -143,24 +143,24 @@ below is a separate downstream round.
 - Actual pthread / Win32 / OS-thread spawning (gated on a future
   `threading-std` feature; introduces the feature flag + spawn
   method on `ThreadPool` together).
-- Hybrid spin-park wake implementation — 128 spin iters default
+- Hybrid spin-park wake implementation, 128 spin iters default
   via `core::hint::spin_loop`, then park on a platform primitive
   (futex on Linux, `ulock_wait` on macOS, `WaitOnAddress` on
   Windows).
-- Heterogeneous-core detection — CPUID leaf 0x1A on x86, sysfs
+- Heterogeneous-core detection, CPUID leaf 0x1A on x86, sysfs
   (`/sys/devices/cpu_core` vs `/sys/devices/cpu_atom`) on Linux,
   IOKit / hwloc on macOS.
-- Core pinning per platform — `pthread_setaffinity_np` on Linux,
+- Core pinning per platform, `pthread_setaffinity_np` on Linux,
   `thread_policy_set` with `THREAD_AFFINITY_POLICY` on macOS,
   `SetThreadAffinityMask` on Windows.
-- Work-stealing `Executor` trait — consumer-provided override for
+- Work-stealing `Executor` trait, consumer-provided override for
   variable per-record workloads. `steal_fallback` stub gains a
   real `Executor` bound once the trait ships.
-- Head+tail convergence merge implementations — addition path
+- Head+tail convergence merge implementations, addition path
   for additive/commutative accumulators; sequential fallback for
   non-commutative fibers. Both need `Convergence::meeting_record`
   semantics (whichever thread crosses midpoint first publishes).
-- Phase pipeline parallelism wiring — `ProgressCounter` exists
+- Phase pipeline parallelism wiring, `ProgressCounter` exists
   from 5a3; the thread scheduler has to consult it between
   phases so phase N+1 starts as soon as N produces a morsel's
   worth.
@@ -179,7 +179,7 @@ below is a separate downstream round.
 - Adaptive mode selection heuristic. Latency vs throughput
   trade-off feeding `select_adapt_config`. EMA-based per DESIGN
   (1/8 decay).
-- Per-phase config hot-swap during pipeline execution — between
+- Per-phase config hot-swap during pipeline execution, between
   frames only, per DESIGN (during-execution swaps would
   invalidate monomorphised dispatch).
 - Telemetry hooks for exporting adapt decisions to the consumer
@@ -206,26 +206,26 @@ Surfaced by the 2026-04-20 arvo↔hilavitkutin cross-repo review.
 Each will block a specific plan-stage step impl round unless
 handled at that round's boundary.
 
-- **`Cap` literal in const-generic position** —
+- **`Cap` literal in const-generic position**.
   `generic_const_exprs` disallows `Cap(USize(MAX_UNITS))` in a
   turbofish or where-clause. Plan-stage impls that call arvo
   algorithms keyed on `Cap` must declare a named local
   `const N: Cap = Cap(USize(MAX_UNITS));` and monomorphise from
   there.
 
-- **`upward_rank` weight type needs `arvo::FromConstant`** — when
+- **`upward_rank` weight type needs `arvo::FromConstant`**, when
   step 3 (critical path / longest path) lands, the weight `u32`
   must satisfy `FromConstant`. If arvo L0 lacks primitive integer
   impls, add them on the arvo side or wrap the weight here.
 
-- **`spectral_partition` adapter (step 7)** —
+- **`spectral_partition` adapter (step 7)**.
   `arvo_spectral::k_way_partition` takes `&Matrix<W, N>` (dense
   weight matrix). The skeleton `DependencyGraph<MAX_UNITS>` is a
   bool adjacency matrix. The adapter must synthesise edge weights
   (or reach for an arvo helper that accepts adjacency + uniform
   weight) before the spectral call lands.
 
-- **`rcm_reorder` length equivalence (step 5)** — arvo returns
+- **`rcm_reorder` length equivalence (step 5)**, arvo returns
   `[arvo_bitmask::NodeId; cap_size(N)]`. The step signature
   returns `[UnitId; MAX_UNITS]` (after the Fix 1 rename). The
   equivalence `cap_size(Cap(USize(MAX_UNITS))) == MAX_UNITS` may
@@ -233,7 +233,7 @@ handled at that round's boundary.
   use a runtime `debug_assert_eq!` at the call site until it
   becomes expressible.
 
-- **`block_diagonal` return shape (step 6)** — the skeleton stub
+- **`block_diagonal` return shape (step 6)**, the skeleton stub
   returns `bool`. Arvo's actual `block_diagonal` returns
   `(USize, [USize; N])` (component count + per-node IDs), and
   `dulmage_mendelsohn` returns a full `DulmageMendelsohn` struct.

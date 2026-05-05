@@ -1,17 +1,14 @@
-# hilavitkutin-persistence — Design Overview
+# hilavitkutin-persistence, Design Overview
 
 `#![no_std]`, no alloc. Generic hot-cold storage bridge for the
 hilavitkutin ecosystem. All serialisation via rkyv. All memory
 from shared `MemoryProvider`. Reusable by any hilavitkutin
 consumer.
 
-Currently developed alongside the hilavitkutin engine. Will be
-extracted to its own publishable crate when stabilised.
-
 ## Dependencies
 
-- `hilavitkutin-str` — Str type, content hashing
-- `rkyv` — zero-copy archive format (no_std, no alloc for reads)
+- `hilavitkutin-str`, Str type, content hashing
+- `rkyv`, zero-copy archive format (no_std, no alloc for reads)
 
 Does NOT depend on hilavitkutin engine directly. Operates on
 raw column data via the evict/inject pattern (R2). The consumer
@@ -20,19 +17,19 @@ provides the ColumnStorage interface.
 ## Core responsibility
 
 Bridge between hilavitkutin's in-memory columnar hot store and
-on-disk rkyv-archived cold store. Consumer-agnostic — knows
+on-disk rkyv-archived cold store. Consumer-agnostic, knows
 nothing about metadata tables, entities, or domain schemas.
 
 ## Serialisation boundary
 
 Everything crosses hot↔cold via rkyv `Archive` trait.
 
-### Standard types — identity
+### Standard types, identity
 
 `ColumnValue` types (`u32`, `i64`, `bool`, fixed-point, float)
 archive as themselves. `type Archived = Self`. Zero overhead.
 
-### Str — content hash translation
+### Str, content hash translation
 
 Str handles are session-specific (runtime IDs). On disk, stored as
 content hashes (stable across sessions). The runtime API uses
@@ -87,11 +84,11 @@ impl Archive directly. Same mechanism, no new traits.
 
 ```
 data_dir/
-  manifest.rkyv         — table directory, metadata
+  manifest.rkyv        , table directory, metadata
   tables/
-    <name>.rkyv         — archived column data per table
+    <name>.rkyv        , archived column data per table
   strings/
-    runtime.rkyv        — runtime string table: content_hash → bytes
+    runtime.rkyv       , runtime string table: content_hash → bytes
 ```
 
 Consumer extends with domain-specific files (locale overlays,
@@ -121,9 +118,9 @@ mmap .rkyv file (via MemoryProvider)
 
 The cold store provides the mechanism. The consumer decides
 when to flush:
-- `flush(dirty_set)` — serialise dirty data to disk
-- `load(table)` — mmap and inject a table
-- `snapshot(target)` — copy all files for backup
+- `flush(dirty_set)`, serialise dirty data to disk
+- `load(table)`, mmap and inject a table
+- `snapshot(target)`, copy all files for backup
 
 ## SIEVE eviction
 
@@ -181,8 +178,8 @@ All rkyv-archived. Consumer extends with domain-specific metadata
 
 Snapshot = copy the data directory. All files are rkyv archives,
 always consistent (complete writes via MemoryProvider). Consumer
-wraps in whatever container format they want (consumer-defined ZIP
-plus zstd archives, custom binary formats, etc.).
+wraps in whatever container format they want (ZIP+zstd, custom
+container, etc.).
 
 ## Key types
 

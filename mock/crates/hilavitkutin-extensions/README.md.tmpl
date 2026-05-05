@@ -6,7 +6,6 @@ capability dispatch. Domain-agnostic: knows about descriptors and
 capabilities, not about any specific domain like NAM or diagnostics.
 
 `#![no_std]`, no allocator, no dyn. Downstream consumer contract crates
-(viola-plugin-abi and similar consumer-side ABI crates) layer their
-domain-specific types on top. The sibling proc-macro crate
+layer their domain-specific types on top. The sibling proc-macro crate
 `hilavitkutin-extensions-macros` emits the repr-C descriptor and
 trampolines on the extension author's behalf.
