@@ -1,0 +1,50 @@
+b0c63cd chore: lock src changelist for 202605042200_changelist.src.lock.md
+f4122e1 docs: regenerate after round 4 source rewrite
+18d1771 feat!: round 4 source rewrite for Kit trait split
+2ad4aa8 docs: write src CL for round 202605042200
+72664e2 chore: allow hilavitkutin-api dep in hilavitkutin-kit forbidden-imports
+0910f72 chore: lock doc changelist for 202605042200_changelist.doc.lock.md
+1b59cfd docs: regenerate after round 4 doc CL template edits
+a505b6f docs: round 202605042200 doc CL steps 5-6
+1cd1b96 docs: rewrite hilavitkutin-providers InternerKit for round 4
+6c2f785 docs: rewrite hilavitkutin engine SchedulerBuilder for round 4
+748284d docs: rewrite hilavitkutin-kit DESIGN for round 4 declarative Kit
+d72b0f4 docs: rewrite hilavitkutin-api Builder support for round 4 Kit shape
+832f678 docs: round 202605042200 doc CL em-dash cleanup
+02db48c docs: round 202605042200 doc CL
+2084683 docs: round 202605042200 audit C2/M4 — layered enforcement framing
+319c604 docs: round 202605042200 audit C4 — marker_trait_attr risk + bitset fallback note
+fcf04d4 docs: round 202605042200 audit M6 — drop requirements_doc claim
+75c110d docs: round 202605042200 audit M2 — dedup-on-Concat investigation
+b5bedd4 docs: round 202605042200 audit M1 — correct S2 FINDINGS factual errors
+5ab587d docs: round 202605042200 audit C3/M3/M5 — depth-5 typestate sketch
+42aab5f docs: round 202605042200 audit C1 — real S5 sketch.rs + visibility finding
+ca44e0e docs: round 202605042200 audit findings (C1-C4, M1-M6)
+85abfe8 docs: round 202605042200 findings synthesis topic
+efb80ef research: round 202605042200 sketch S5 (kit taxonomy)
+2d5c917 research: round 202605042200 sketch S4 (replaceable polarity)
+41af131 research: round 202605042200 sketch S1 (deep stacking) + gitignore
+93363eb research: round 202605042200 sketch S2 (AccessSet arity)
+9d48bf2 docs: round 202605042200 sketch topic (S1-S5 hypotheses)
+72055dc docs: round 202605042200 topics 1-3 + round-3 NotIn sketch evidence
+de484d7 fix: harden trampoline emission with no_mangle + inline(never), add LTO smoke (#349) (#54)
+c2532e2 feat: add shutdown observer hook on ExtensionHost (#346) (#53)
+4b3ac12 fix: add PathEncodingUnsupported variant on windows path rejection (#348) (#52)
+d37e851 fix: surface real errno on unix dlopen failure (#347) (#51)
+0f13b67 chore: close design round 202605041402 (#50)
+ca81379 feat: hilavitkutin-providers v0.1 InternerKit + BuilderResource bridge (#329) (#49)
+54d58c6 feat: hilavitkutin-providers v0 interner surface (#253) (#48)
+825947e feat: adopt arvo rounds 1-8 + complete typed-const Depth shape (#327) (#47)
+adf5dfe feat: hilavitkutin-kit + SchedulerBuilder type-state (#255) (#46)
+7caa07e feat: hilavitkutin arvo Round D adoption (#45)
+3661063 docs: extend byline policy to PR titles, descriptions, comments (#44)
+2eaf523 Merge pull request #43 from orgrinrt/feat/hilavitkutin-severity-ramp
+a6c02e6 chore: ramp hilavitkutin lint severities to match strict posture (#219)
+fbd5679 Merge pull request #42 from orgrinrt/feat/hilavitkutin-ffi-boundary-policy
+431295a docs: ban ASCII box-and-arrow diagrams in writing-style rules (#38)
+8af03c3 chore: archive round 202604510000 (FFI-boundary primitive policy)
+c7b4eef chore: lock src changelist for 202604510000_changelist.src.lock.md
+ddf8a49 refactor: apply FFI-boundary primitive policy to extensions (round 202604510000)
+5e1a63b docs: open src changelist for 202604510000 round
+884b9ea chore: lock doc changelist for 202604510000_changelist.doc.lock.md
+10c2c92 docs: apply FFI-boundary policy DOC CL (round 202604510000)

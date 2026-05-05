@@ -1,28 +1,28 @@
 //! SchedulerBuilder type-state tests.
 //!
-//! Two layers:
+//! Round 4 reshape: Kit becomes declarative
+//! (`type Units; type Owned`), `add_kit` is type-level only,
+//! SchedulerBuilder loses cap const generics, `.build()` proves
+//! `Stores: ContainsAll<Wus::AccumRead> + ContainsAll<Wus::AccumWrite>`.
 //!
-//! 1. Smoke tests with `Wus = ()` exercising store accumulation
-//!    (raw resource / column / virtual registration, Kit install,
-//!    Kit chaining, mixed Kit + raw). `.build()` reduces via the
-//!    arity-0 Buildable impl.
+//! Two layers of tests:
 //!
-//! 2. WU-bearing tests with a `Stub + TestCtx` shim providing the
-//!    seven HasX accessor traits. These exercise the load-bearing
-//!    `Buildable<Stores>` -> `WuSatisfied<W::Read/Write>` ->
-//!    `Contains<Tᵢ>` reduction with non-empty Wus.
+//! 1. Smoke tests with `Wus = Empty` exercising store accumulation.
+//! 2. WU-bearing tests with a Stub + TestCtx shim. These exercise
+//!    the load-bearing ContainsAll proof reduction.
 //!
 //! The negative case (`.add::<ReadInterner>().build()` without a
 //! matching resource) is verified manually as a compile-fail; a
 //! trybuild fixture is tracked in #296.
 
 use arvo::USize;
-use hilavitkutin::scheduler::{Scheduler, SchedulerBuilder};
+use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::{
-    AccessSet, Always, BatchApi, BuilderExtending, Column, ColumnReaderApi, ColumnValue,
-    ColumnWriterApi, Contains, Depth, EachApi, HasBatch, HasColumnReader, HasColumnWriter, HasEach,
-    HasReduce, HasResourceProvider, HasVirtualFirer, Atomic, Immediate, Normal, ReduceApi,
-    Resource, ResourceProviderApi, Virtual, VirtualFirerApi, WorkUnit, read, write,
+    AccessSet, Always, BatchApi, Column, ColumnReaderApi, ColumnValue,
+    ColumnWriterApi, Cons, Contains, Depth, EachApi, Empty, HasBatch, HasColumnReader,
+    HasColumnWriter, HasEach, HasReduce, HasResourceProvider, HasVirtualFirer, Atomic,
+    Immediate, Normal, ReduceApi, Resource, ResourceProviderApi, Virtual,
+    VirtualFirerApi, WorkUnit, read, write,
 };
 use hilavitkutin_kit::Kit;
 
@@ -35,107 +35,61 @@ pub struct Workspace;
 pub struct FileInfo;
 
 // ---------------------------------------------------------------------
-// Kits.
+// Kits (declarative shape).
 // ---------------------------------------------------------------------
 
 pub struct InternerKit;
 
-impl<
-    const MAX_UNITS: usize,
-    const MAX_STORES: usize,
-    const MAX_LANES: usize,
-    Wus,
-    Stores,
-> Kit<SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES, Wus, Stores>> for InternerKit
-where
-    Wus: AccessSet,
-    Stores: AccessSet,
-    (Resource<Interner>, Stores): AccessSet,
-{
-    type Output =
-        SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES, Wus, (Resource<Interner>, Stores)>;
-
-    fn install(
-        self,
-        builder: SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES, Wus, Stores>,
-    ) -> Self::Output {
-        builder.resource(Interner)
-    }
+impl Kit for InternerKit {
+    type Units = Empty;
+    type Owned = Cons<Resource<Interner>, Empty>;
 }
 
 pub struct WorkspaceKit;
 
-impl<
-    const MAX_UNITS: usize,
-    const MAX_STORES: usize,
-    const MAX_LANES: usize,
-    Wus,
-    Stores,
-> Kit<SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES, Wus, Stores>> for WorkspaceKit
-where
-    Wus: AccessSet,
-    Stores: AccessSet,
-    (Resource<Workspace>, Stores): AccessSet,
-    (Column<FileInfo>, (Resource<Workspace>, Stores)): AccessSet,
-{
-    type Output = SchedulerBuilder<
-        MAX_UNITS,
-        MAX_STORES,
-        MAX_LANES,
-        Wus,
-        (Column<FileInfo>, (Resource<Workspace>, Stores)),
-    >;
-
-    fn install(
-        self,
-        builder: SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES, Wus, Stores>,
-    ) -> Self::Output {
-        builder.resource(Workspace).column::<FileInfo>()
-    }
+impl Kit for WorkspaceKit {
+    type Units = Empty;
+    type Owned = Cons<Column<FileInfo>, Cons<Resource<Workspace>, Empty>>;
 }
 
 // ---------------------------------------------------------------------
 // Positive smoke tests.
-//
-// All build with `Wus = ()` so `Buildable<Stores>` reduces
-// trivially via the arity-0 impl. The Stores-accumulation path is
-// exercised independently from WU declarations.
 // ---------------------------------------------------------------------
 
 #[test]
 fn empty_build() {
-    let _ = Scheduler::<8, 16, 4>::builder().build();
+    let _ = Scheduler::builder().build();
 }
 
 #[test]
 fn raw_resource_registration_builds() {
-    let _ = Scheduler::<8, 16, 4>::builder()
+    let _ = Scheduler::builder()
         .resource(Interner)
         .build();
 }
 
 #[test]
 fn raw_column_registration_builds() {
-    let _ = Scheduler::<8, 16, 4>::builder().column::<FileInfo>().build();
+    let _ = Scheduler::builder().column::<FileInfo>().build();
 }
 
 #[test]
 fn kit_only_builds() {
-    let _ = Scheduler::<8, 16, 4>::builder().add_kit(InternerKit).build();
+    let _ = Scheduler::builder().add_kit::<InternerKit>().build();
 }
 
 #[test]
 fn two_kits_chained_build() {
-    let _ = Scheduler::<8, 16, 4>::builder()
-        .add_kit(InternerKit)
-        .add_kit(WorkspaceKit)
+    let _ = Scheduler::builder()
+        .add_kit::<InternerKit>()
+        .add_kit::<WorkspaceKit>()
         .build();
 }
 
 #[test]
 fn mixed_kit_and_raw_build() {
-    let _ = Scheduler::<8, 16, 4>::builder()
-        .add_kit(WorkspaceKit)
+    let _ = Scheduler::builder()
+        .add_kit::<WorkspaceKit>()
         .resource(Interner)
         .column::<FileInfo>()
         .build();
@@ -143,16 +97,11 @@ fn mixed_kit_and_raw_build() {
 
 #[test]
 fn default_scheduler_constructs() {
-    let _: Scheduler<4, 8, 2> = Scheduler::default();
+    let _: Scheduler = Scheduler::default();
 }
 
 // ---------------------------------------------------------------------
 // WU-bearing tests.
-//
-// These tests exercise the load-bearing piece of the round: the
-// Buildable<Stores> → WuSatisfied<W::Read/Write> → Contains<Tᵢ>
-// reduction with non-empty Wus. The Stub + TestCtx pattern below
-// is the same shape used in hilavitkutin-api/tests/work_unit.rs.
 // ---------------------------------------------------------------------
 
 struct Stub;
@@ -270,21 +219,18 @@ impl<R: AccessSet, W: AccessSet> HasReduce<R, W> for TestCtx {
     }
 }
 
-// A WU that reads the Interner resource. Read mentions
-// `Resource<Interner>`; .build() must prove `Stores:
-// Contains<Resource<Interner>>` after registration.
+// A WU that reads the Interner resource.
 struct ReadInterner;
 
 impl WorkUnit<Always> for ReadInterner {
     type Read = read![Resource<Interner>];
-    type Write = ();
+    type Write = read![];
     type Hint = (Immediate, Atomic, Normal);
     type Ctx = TestCtx;
     fn execute(&self, _ctx: &TestCtx) {}
 }
 
-// A WU with write set: writes Column<FileInfo>. Confirms .build()
-// proof handles non-empty Write tuples too.
+// A WU with write set: writes Column<FileInfo>.
 struct DiscoverFiles;
 
 impl WorkUnit<Always> for DiscoverFiles {
@@ -297,7 +243,7 @@ impl WorkUnit<Always> for DiscoverFiles {
 
 #[test]
 fn wu_with_raw_resource_builds() {
-    let _ = Scheduler::<8, 16, 4>::builder()
+    let _ = Scheduler::builder()
         .resource(Interner)
         .add::<ReadInterner>()
         .build();
@@ -305,76 +251,42 @@ fn wu_with_raw_resource_builds() {
 
 #[test]
 fn wu_with_kit_builds() {
-    let _ = Scheduler::<8, 16, 4>::builder()
-        .add_kit(InternerKit)
+    let _ = Scheduler::builder()
+        .add_kit::<InternerKit>()
         .add::<ReadInterner>()
         .build();
 }
 
 #[test]
 fn two_wus_with_two_kits_build() {
-    let _ = Scheduler::<8, 16, 4>::builder()
-        .add_kit(InternerKit)
-        .add_kit(WorkspaceKit)
+    let _ = Scheduler::builder()
+        .add_kit::<InternerKit>()
+        .add_kit::<WorkspaceKit>()
         .add::<ReadInterner>()
         .add::<DiscoverFiles>()
         .build();
 }
 
 // ---------------------------------------------------------------------
-// Type-state shape verification.
-//
-// Asserts the Kit's `Output` type matches the documented contract:
-// `InternerKit::install(builder)` returns a builder with
-// `Resource<Interner>` prepended onto the previous `Stores`.
+// Type-state shape verification (declarative Kit).
 // ---------------------------------------------------------------------
 
 #[test]
-fn kit_extends_stores_type() {
-    fn _type_check_only<const M: usize, const N: usize, const L: usize, W, S>(
-        b: SchedulerBuilder<M, N, L, W, S>,
-    ) -> SchedulerBuilder<M, N, L, W, (Resource<Interner>, S)>
-    where
-        W: AccessSet,
-        S: AccessSet,
-        (Resource<Interner>, S): AccessSet,
-        SchedulerBuilder<M, N, L, W, (Resource<Interner>, S)>:
-            BuilderExtending<SchedulerBuilder<M, N, L, W, S>>,
-    {
-        b.add_kit(InternerKit)
-    }
+fn kit_declarative_shape_typechecks() {
+    fn _type_check_only<K: Kit>() {}
+    _type_check_only::<InternerKit>();
+    _type_check_only::<WorkspaceKit>();
 }
 
-// Negative-case verification: ReadInterner declares Read =
-// (Resource<Interner>,) but no .resource(Interner) and no
-// InternerKit registered. Uncommenting the body must produce a
-// compile error of the form:
-//
-//   trait bound `(): Contains<Resource<Interner>>` was not satisfied
-//   which is required by `(ReadInterner, ()): Buildable<()>`
-//
-// The error names the missing store directly. Verified manually
-// 2026-05-01 against this commit. Captured as compile_fail
-// trybuild fixture in #296 follow-up.
-//
-// fn _negative_compile_fail() {
-//     let _ = Scheduler::<8, 16, 4>::builder()
-//         .add::<ReadInterner>()
-//         .build();
-// }
-
 // ---------------------------------------------------------------------
-// Wus uncap stress: 50 WUs in one builder. Validates that Buildable's
-// recursive cons-list shape compiles past any per-arity cap. The
-// previous round's per-arity macro stopped at 12; this test drives
-// past it. Uses a no-store WU so WuSatisfied<()> and WuSatisfied<()>
-// trivially hold for all 50.
+// Wus uncap stress: 50 WUs in one builder. Validates the recursive
+// HList accumulator handles realistic depth.
 // ---------------------------------------------------------------------
 
 struct NoStores;
 impl WorkUnit<Always> for NoStores {
-    type Read = ();
-    type Write = ();
+    type Read = read![];
+    type Write = write![];
     type Hint = (Immediate, Atomic, Normal);
     type Ctx = TestCtx;
     fn execute(&self, _ctx: &TestCtx) {}
@@ -382,7 +294,7 @@ impl WorkUnit<Always> for NoStores {
 
 #[test]
 fn smoke_fifty_wus() {
-    let _ = Scheduler::<64, 16, 4>::builder()
+    let _ = Scheduler::builder()
         .add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>()
         .add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>()
         .add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>()
@@ -398,9 +310,8 @@ fn smoke_fifty_wus() {
 
 // ---------------------------------------------------------------------
 // WuSatisfied uncap stress: a single WU with 16 stores in its Read
-// set. Validates that WuSatisfied's recursive cons-list shape
-// compiles past the previous per-arity cap of 12. Uses the read!
-// macro to produce the cons-list shape from flat-tuple syntax.
+// set. Validates the recursive ContainsAll proof handles realistic
+// store-count depth via the read! macro emitting Cons cells.
 // ---------------------------------------------------------------------
 
 struct S0;
@@ -428,7 +339,7 @@ impl WorkUnit<Always> for SixteenStores {
         Resource<S8>, Resource<S9>, Resource<S10>, Resource<S11>,
         Resource<S12>, Resource<S13>, Resource<S14>, Resource<S15>,
     ];
-    type Write = ();
+    type Write = write![];
     type Hint = (Immediate, Atomic, Normal);
     type Ctx = TestCtx;
     fn execute(&self, _ctx: &TestCtx) {}
@@ -436,7 +347,7 @@ impl WorkUnit<Always> for SixteenStores {
 
 #[test]
 fn smoke_wu_with_sixteen_stores() {
-    let _ = Scheduler::<8, 32, 4>::builder()
+    let _ = Scheduler::builder()
         .resource(S0).resource(S1).resource(S2).resource(S3)
         .resource(S4).resource(S5).resource(S6).resource(S7)
         .resource(S8).resource(S9).resource(S10).resource(S11)
@@ -446,22 +357,12 @@ fn smoke_wu_with_sixteen_stores() {
 }
 
 // ---------------------------------------------------------------------
-// Depth compile-time assertion: validate that Depth::D counts
-// cons-list elements correctly. Builds a 50-element cons-list type
-// and asserts D == 50 at const eval time.
+// Depth compile-time assertion using the Cons<H, R> impl.
 // ---------------------------------------------------------------------
 
-type Cons50 = (
-    NoStores, (NoStores, (NoStores, (NoStores, (NoStores,
-    (NoStores, (NoStores, (NoStores, (NoStores, (NoStores,
-    (NoStores, (NoStores, (NoStores, (NoStores, (NoStores,
-    (NoStores, (NoStores, (NoStores, (NoStores, (NoStores,
-    (NoStores, (NoStores, (NoStores, (NoStores, (NoStores,
-    (NoStores, (NoStores, (NoStores, (NoStores, (NoStores,
-    (NoStores, (NoStores, (NoStores, (NoStores, (NoStores,
-    (NoStores, (NoStores, (NoStores, (NoStores, (NoStores,
-    (NoStores, (NoStores, (NoStores, (NoStores, (NoStores,
-    (NoStores, (NoStores, (NoStores, (NoStores, (NoStores,
-    ()))))))))))))))))))))))))))))))))))))))))))))))))));
+type Cons1<T> = Cons<NoStores, T>;
+type Cons5<T> = Cons1<Cons1<Cons1<Cons1<Cons1<T> > > > >;
+type Cons10<T> = Cons5<Cons5<T> >;
+type Cons50 = Cons10<Cons10<Cons10<Cons10<Cons10<Empty> > > > >;
 
 const _: () = assert!(<Cons50 as Depth>::D.0 == 50);

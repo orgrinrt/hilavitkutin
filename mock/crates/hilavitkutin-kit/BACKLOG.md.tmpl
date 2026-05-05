@@ -30,3 +30,26 @@ round because:
   measurable readability win at that scale.
 - If a downstream consumer authors a Kit chain long enough that
   the raw form actually obscures intent, revisit #295.
+
+## `Kit::default_resources()` auto-wiring
+
+The round-4 InternerKit-style preset declares `Owned` types but
+does not supply default Resource values; the consumer calls
+`builder.resource(default_interner(...))` separately for the
+value. A future Kit-trait extension could add a
+`default_resources()` association the engine reads to wire defaults
+automatically. Shape sketch:
+
+```
+impl Kit for InternerKit<...> {
+    type Units = read![];
+    type Owned = read![Resource<StringInterner<...>>];
+    fn default_resources() -> Self::Owned { ... }
+}
+```
+
+The engine's `.add_kit::<K>()` would call `K::default_resources()`
+and prepend the resulting values into the runtime data plane.
+
+Not in round-4. Defer to consumer demand. Tracked here so the
+shape stays visible.
