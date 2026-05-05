@@ -38,8 +38,8 @@ pub mod sink;
 pub mod store;
 pub mod work_unit;
 
-pub use access::{AccessSet, Contains};
-pub use builder::{Buildable, BuilderExtending, BuilderResource, Depth, WuSatisfied};
+pub use access::{AccessSet, Concat, Cons, Contains, ContainsAll, Empty};
+pub use builder::Depth;
 pub use capability::{BoundedPush, BulkPush, Capacity, Full, Len, Push};
 pub use codec::{DecodeError, Decoder, DecoderExt, Encoder, EncoderExt};
 pub use column_value::ColumnValue;
@@ -58,5 +58,5 @@ pub use platform::{
     ClockApi, HasClock, HasMemoryProvider, HasThreadPool, MemoryProviderApi, Nanos, ThreadPoolApi,
 };
 pub use sink::{ByteEmitter, Collector, CountingSink, DiagnosticSink, NullSink, TeeSink};
-pub use store::{Column, Field, Map, Resource, Seq, Virtual};
-pub use work_unit::{Always, On, WorkUnit};
+pub use store::{Column, Field, Map, Replaceable, Resource, Seq, StoreBundle, Virtual};
+pub use work_unit::{Always, On, WorkUnit, WorkUnitBundle};

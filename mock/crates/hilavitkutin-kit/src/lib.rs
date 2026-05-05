@@ -1,31 +1,36 @@
 //! Kit preset trait for the hilavitkutin scheduler builder.
 //!
-//! `no_std`, zero deps. Ships exactly one trait, [`Kit<B>`], that
-//! lets a consumer bundle a related set of `Resource<T>` /
-//! `Column<T>` / `Virtual<T>` registrations into a single
-//! `.add_kit(k)` call on the engine's `SchedulerBuilder`.
+//! Round 4 declarative shape: a Kit names what it owns
+//! (`type Owned: StoreBundle`) and what work it contributes
+//! (`type Units: WorkUnitBundle`). The engine's `.add_kit::<K>()`
+//! reads these at compile time. No `install` method, no `B`
+//! parameter, no `Output`.
 
 #![no_std]
 #![recursion_limit = "512"]
 
-/// A preset that bundles a set of registrations onto a builder.
-///
-/// `B` is the input builder type. `Self::Output` is the resulting
-/// builder type after the Kit's contributions have been applied.
-/// The implementation calls the builder's existing registration
-/// methods; the type-state evolves through whatever mechanism the
-/// builder already uses (engine-side, per
-/// `hilavitkutin/DESIGN.md`, the builder is parameterised by `Wus`
-/// and `Stores` tuples).
-///
-/// A Kit's `install` body is typically a chain like
-/// `builder.resource(Foo).column::<Bar>()`. Nothing Kit-specific
-/// lives at the type level; the bundle is just a name plus a
-/// fixed sequence of builder calls.
-pub trait Kit<B> {
-    /// Builder type produced after `install` runs.
-    type Output;
+use hilavitkutin_api::{StoreBundle, WorkUnitBundle};
 
-    /// Apply the Kit's registrations to `builder`.
-    fn install(self, builder: B) -> Self::Output;
+/// A declarative bundle of WorkUnits and Owned stores.
+///
+/// `Units` names the WorkUnits the kit contributes (Cons-list of
+/// WorkUnit types satisfying `WorkUnitBundle`). `Owned` names the
+/// Resources / Columns / Virtuals the kit owns (Cons-list of
+/// store-marker types satisfying `StoreBundle`).
+///
+/// Kit authors implement `Kit` by naming `Units` and `Owned` as
+/// associated types. The engine's `.add_kit::<K>()` reads these at
+/// compile time and accumulates them into the SchedulerBuilder
+/// typestate. App-side wiring (default values for Resources,
+/// Replaceable opt-in) lives at the call site.
+pub trait Kit {
+    /// Cons-list of WorkUnit types the kit contributes. Use the
+    /// `read!` / `write!` macros from `hilavitkutin-api` to construct
+    /// the shape, or `hilavitkutin_api::Empty` for none.
+    type Units: WorkUnitBundle;
+
+    /// Cons-list of Owned store-marker types the kit owns
+    /// (`Resource<T>` / `Column<T>` / `Virtual<T>`). Use the same
+    /// macros, or `hilavitkutin_api::Empty` for none.
+    type Owned: StoreBundle;
 }

@@ -61,3 +61,41 @@ pub trait WorkUnit<Schedule = Always>: Send + Sync + 'static {
     /// Run one pass of this WU against the provided context.
     fn execute(&self, ctx: &Self::Ctx);
 }
+
+// ---------------------------------------------------------------------
+// Round 4 substrate: WorkUnitBundle.
+//
+// Cons-list bundle of WorkUnit types with accumulated Read / Write
+// access sets. AccumRead is the Concat-projected union of every WU's
+// Read over the bundle; AccumWrite is the symmetric projection over
+// Write. Used by Kit's 'type Units' bound; the engine reads
+// Wus::AccumRead and Wus::AccumWrite at compile time.
+// ---------------------------------------------------------------------
+
+use crate::access::{Concat, Cons, Empty};
+
+/// Cons-list bundle of WorkUnit types with accumulated Read / Write
+/// access sets.
+pub trait WorkUnitBundle {
+    type AccumRead: AccessSet;
+    type AccumWrite: AccessSet;
+}
+
+impl WorkUnitBundle for Empty {
+    type AccumRead = Empty;
+    type AccumWrite = Empty;
+}
+
+impl<W, T> WorkUnitBundle for Cons<W, T>
+where
+    W: WorkUnit,
+    T: WorkUnitBundle,
+    W::Read: Concat<T::AccumRead>,
+    W::Write: Concat<T::AccumWrite>,
+    <W::Read as Concat<T::AccumRead>>::Out: AccessSet,
+    <W::Write as Concat<T::AccumWrite>>::Out: AccessSet,
+{
+    type AccumRead = <W::Read as Concat<T::AccumRead>>::Out;
+    type AccumWrite = <W::Write as Concat<T::AccumWrite>>::Out;
+}
+
