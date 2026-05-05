@@ -1,7 +1,7 @@
-# hilavitkutin-ctx — Design Overview
+# hilavitkutin-ctx, Design Overview
 
 `#![no_std]`, zero dependencies. Provider-gated context framework.
-Reusable across hilavitkutin consumer ecosystems.
+Reusable across hilavitkutin consumer applications.
 
 ## Consumer DX
 
@@ -133,9 +133,9 @@ trait Enricher {
 Arbitrary methods, arbitrary return types. The framework doesn't
 prescribe method shapes.
 
-## Framework DX — macros
+## Framework DX, macros
 
-### `provider!` — one per provider kind
+### `provider!`, one per provider kind
 
 ```rust
 provider!(ConnectorApi as HasConnector => connection);
@@ -147,7 +147,7 @@ Generates:
 1. Accessor trait (`HasConnector`)
 2. Context delegation (`impl<P: HasConnector> Context<P> { fn connection()... }`)
 
-### `tuple!` — one per layout
+### `tuple!`, one per layout
 
 ```rust
 tuple!(ConnectorApi: HasConnector => connection,
@@ -160,7 +160,7 @@ tuple!(ConnectorApi: HasConnector => connection,
 
 Generates accessor trait impls on the tuple for each position.
 
-### `define_providers!` — facade (optional)
+### `define_providers!`, facade (optional)
 
 Wraps `provider!` + `tuple!` calls:
 
@@ -185,7 +185,7 @@ declares which tuple shapes exist.
 
 Each domain trait has its own `type Ctx`. `Self::Ctx` resolves
 per-trait, not per-type. A single struct can impl `Cataloguer`
-AND `Enricher` with different `Ctx` types — no ambiguity.
+AND `Enricher` with different `Ctx` types, no ambiguity.
 
 The trait bounds on `type Ctx` (e.g. `HasConnector + HasWriter`)
 enforce at compile time which providers must be in the tuple.
@@ -229,8 +229,7 @@ Simpler, fewer moving parts, same consumer DX.
 
 ## Parameterised accessor / API traits
 
-Some consumers need accessor traits that carry a type parameter —
-typically to express a compile-time bound (like "this reader only
+Some consumers need accessor traits that carry a type parameter, typically to express a compile-time bound (like "this reader only
 touches stores in set R") or to host a generic method whose bound
 changes per call site. hilavitkutin's WorkUnit `Context` is the
 driving example: a `ColumnReader` accessor parameterised over

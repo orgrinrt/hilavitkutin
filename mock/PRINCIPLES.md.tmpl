@@ -1,4 +1,4 @@
-# hilavitkutin — Architecture Principles
+# hilavitkutin, Architecture Principles
 
 [//]: # (BEGIN shared cross-ecosystem principles, synced from clause-dev/.shared/principles-fragment.md, do not edit in place)
 
@@ -6,7 +6,7 @@
 
 No ad-hoc allocations. Allocation is scheduler-managed, declared at
 compile time, never runtime-fabricated. `#![no_std]` + `#![no_alloc]`
-aren't crate attributes first — they're the universe. `Vec`, `Box`,
+aren't crate attributes first, they're the universe. `Vec`, `Box`,
 `Rc`, `Arc`, `HashMap`, `String`, `format!` don't exist here.
 
 If an API feels like it wants a runtime-growable container, the shape
@@ -17,8 +17,7 @@ this moment".
 ## No bare primitives. Anywhere.
 
 `u8` through `u128`, `i8` through `i128`, `f32`, `f64`, `usize`,
-`isize`, `bool`, `Option`, `Result`, `String`, non-static `&str` —
-**they do not exist in this stack.** Not in public signatures, not
+`isize`, `bool`, `Option`, `Result`, `String`, non-static `&str`, **they do not exist in this stack.** Not in public signatures, not
 in private fields, not in internal `let` bindings, not in cast
 expressions, not in literal suffixes, not in type aliases, not in
 `const`/`static` declarations, not in trait method parameter types,
@@ -52,7 +51,7 @@ call sites means no turbofish.
 
 Patterns throughout the stack are instances of this single mental
 model: arvo's `UArith<BITS>` / `IArith<BITS>`, arvo-bits' `Bool: Try`,
-hilavitkutin-api's 22 access/context/platform traits, the engine's own
+hilavitkutin-api's 22 access/context/platform traits, the
 "no Vec in trait signatures" rule. All the same rule.
 
 **Decision test:** "Can I imagine two implementations with different
@@ -81,8 +80,8 @@ traits + `repr(C)` descriptors (inventory pattern), not `dyn`.
 
 ## Type taxonomy
 
-Every type anywhere in source — public or private, fn sig or field,
-local or cast expression — falls into one of three categories:
+Every type anywhere in source, public or private, fn sig or field,
+local or cast expression, falls into one of three categories:
 
 | Category | When | Examples |
 |----------|------|----------|
@@ -98,7 +97,7 @@ Decision test is the same as above: if two plausible implementations
 could differ, it's a trait.
 
 If you're asking "should this enum have room for plugin extensions?"
-— it shouldn't be an enum. It should be a trait.
+It shouldn't be an enum. It should be a trait.
 
 ## Sizes are const at type level
 
@@ -133,7 +132,7 @@ no copies, no parallel naming.
 ## ZST markers for discrimination
 
 Schema kinds, events, settings domains, storage locations, access
-levels, HTTP methods — all ZSTs. Marker types carry compile-time
+levels, HTTP methods, all ZSTs. Marker types carry compile-time
 identity without runtime footprint.
 
 ## Primitive vocabulary (the stack's own)
@@ -205,7 +204,7 @@ sync points: <100ns spin, 100ns-10µs spin_loop, >10µs park.
 
 Plan recomputes only on pipeline structure change (new WUs, record
 count change, DAG mod). Microsecond cost on const-generic bitmask
-structures — but amortised over many frames.
+structures, but amortised over many frames.
 
 ## Self-hosting meta pipeline
 
@@ -244,7 +243,7 @@ implementation for variable per-record workloads.
 ## Vocabulary discipline
 
 Use canonical terms: pipeline, core, phase, waist, trunk, fiber,
-branch, bridge, morsel, micro-morsel, entry, record.
+branch, bridge, morsel, micro-morsel, record.
 
 Never use dead terms: chain, chain group, partition, archetype,
-entity, row, order.
+entity, row, entry, order.
