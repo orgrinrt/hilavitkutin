@@ -2,112 +2,106 @@
 
 **Date:** 2026-05-05.
 **Round:** 202605042200.
-**Maps to:** Topic 4 sketch S5, open item O4.
-**Outcome:** WORKS. The two committed axes (visibility + replaceability) cover the three diverse kit shapes named in topic 4. Each speculative axis (lifetime scope, build-order, init-source) resolves to either a non-axis (consequence of scheduler-bound lifetime by construction) or an app-level concern outside the substrate's per-Owned-type taxonomy.
+**Maps to:** Topic 4 sketch S5, open item O4. Audit C1 remediation.
+**Outcome:** WORKS for the success path. WORKS for the Replaceable-bound negative test. Visibility axis: substantive revision; visibility cannot be a per-Owned-type substrate axis. See "Visibility finding" below.
 
-## Setup
+This file supersedes the original paper-only S5 conclusions. Audit C1 required a real `sketch.rs` to ground the claims; the sketch revealed a finding the paper analysis had missed.
 
-Topic 4's S5 named three diverse kit shapes and asked: do visibility + replaceability cover the realistic surface, or does at least one speculative axis (lifetime scope, build-order constraint, initialisation source) need to be committed for round-4?
+## What the sketch builds
 
-Speculative axes from topic 3:
+`sketch.rs` defines the three diverse kit shapes named in topic 4 (MockspaceKit, BenchTracingKit, LintPackKit) under the kit-trait surface from Topic 3 (`Kit { type Units: WorkUnitBundle; type Owned: StoreBundle; }`) plus the Replaceable opt-in marker from S4 plus the typestate-builder substrate from S1 (recursive HList AccessSet, `#[marker]` Contains, ContainsAll proof at `.build()`).
 
-- **Lifetime scope.** Does the kit's Owned state outlive the scheduler's lifetime, or is it scheduler-bound?
-- **Build-order constraints.** Does the kit's Owned state need to be initialised before/after another kit's?
-- **Initialisation source.** Does the Owned state come from a default, a config-derived value, or a user-supplied builder?
+Each kit has 2 to 3 Owned types. A subset of each kit's Owned types opt in to `Replaceable` so that `Scheduler::replace_resource::<T>(...)` works on them. One `WorkUnit` (`bench_tracing_kit::TracerFiber`) reads `lint_pack_kit::Diagnostic`, exercising the cooperative-public path: a sibling kit's pub Owned type appears in another kit's WU `Read` set.
 
-## Three test shapes
+The sketch culminates in `demo_success()` which builds a Scheduler with all three kits + two app-level resources (StringInterner, Clock), then calls `.replace_resource(...)` on each Replaceable type.
 
-### MockspaceKit (multi-marker owned, multi-shared required)
+## Compile outcomes
 
-```rust
-pub struct MockspaceKit;
-impl Kit for MockspaceKit {
-    type Units = (RoundProcessor, RoundLockChecker, ConfigLoader, ...);
-    type Owned = (
-        Resource<RoundState>,         // pub(crate), not Replaceable
-        Column<DesignRound>,           // pub(crate), not Replaceable
-        Resource<LintConfig>,          // pub for testability, Replaceable
-    );
-}
-// Required (derived from Units): StringInterner, Clock.
+```
+$ rustup run nightly rustc --crate-type=lib --edition=2024 sketch.rs --emit=metadata
+EXIT: 0
 ```
 
-Mapping to the two axes:
+Success path compiles clean.
 
-- Visibility: `RoundState`, `DesignRound` are `pub(crate)` (kit-internal). `LintConfig` is `pub` for testability.
-- Replaceability: `RoundState`, `DesignRound` not `Replaceable`. `LintConfig` is `Replaceable` so test harnesses can swap in fixture configs.
-
-Axes required: 2. No speculative axis needed.
-
-### BenchTracingKit (FFI handle pre-scheduler init)
-
-```rust
-pub struct BenchTracingKit;
-impl Kit for BenchTracingKit {
-    type Units = (TracerFiber, SampleCollector);
-    type Owned = (
-        Resource<Tracer>,              // pub for cooperative use, Replaceable
-        Column<TraceSample>,           // pub(crate), not Replaceable
-    );
-}
-// Required: nothing.
+```
+$ rustup run nightly rustc --crate-type=lib --edition=2024 \
+    sketch.rs --emit=metadata --cfg 'feature="show_replace_bound_error"'
+error[E0277]: the trait bound `AppPublicValueButNotReplaceable: Replaceable`
+              is not satisfied
+   --> sketch.rs:328:24
+   ...
+help: the trait `Replaceable` is not implemented for
+      `AppPublicValueButNotReplaceable`
+help: the following other types implement trait `Replaceable`:
+        LintConfig, Diagnostic, Tracer
+note: required by a bound in `Scheduler::<Wus, Stores>::replace_resource`
+EXIT: 1
 ```
 
-The topic-4 hypothesis: `Tracer` setup requires an FFI handle initialised before the scheduler starts. Does this require a "lifetime scope" axis (Tracer outlives the scheduler)?
+Negative test fails compile with E0277 and a high-quality diagnostic that names the offending type, lists the three types that DO implement `Replaceable`, and points at the bound in `replace_resource`. This error message is good enough to ship without a custom `#[diagnostic::on_unimplemented]` annotation, though one could land later for further polish.
 
-The mapping below shows it does not:
+## Visibility finding (substantive)
 
-- Visibility: `Tracer` is `pub` for cooperative use (other kits may use a `Tracer` reference passed via context). `TraceSample` is `pub(crate)`.
-- Replaceability: `Tracer` is `Replaceable` so the app can swap the FFI-bound implementation for a no-op or alternative. `TraceSample` not Replaceable.
-- The FFI handle is set up at construction time, and `Tracer`'s lifetime is identical to the scheduler's by construction (the scheduler owns the resource). The "lifetime scope" speculative axis was a false flag: there is no v1 case where the Owned state needs to outlive the scheduler. If a future kit shape genuinely needs that, it is an app-level concern (the consumer constructs the long-lived state in main and passes a reference into the resource), not a per-Owned-type axis.
-- The construction concern (how `Tracer::new(handle)` is wired) is the "init source" speculative axis; resolved as: app calls `.resource::<Tracer>(Tracer::new(handle))` at the app level. Not a substrate axis on the Owned declaration.
+The sketch was authored expecting two compile attempts: success first, visibility-error negative second. It took three.
 
-Axes required: 2. Lifetime-scope and init-source resolve to non-axes.
+**First attempt.** Kit-internal Owned types declared as bare `struct` (module-private). 13 errors of form `error[E0446]: private type X in public interface`, fired by the `pub Kit` and `pub WorkUnit` impls whose associated types referenced the private types.
 
-### LintPackKit (cooperative-public column shared with other kits)
+**Second attempt.** Same types declared as `pub(crate) struct`. 9 errors, same shape, this time `error[E0446]: crate-private type X in public interface`. The privacy rule does not relax for crate-private; the impl's pub-ness leaks the type at the same boundary.
 
-```rust
-pub struct LintPackKit;
-impl Kit for LintPackKit {
-    type Units = (LintEmitter, DiagnosticAggregator);
-    type Owned = (
-        Column<Diagnostic>,            // fully pub, Replaceable for test harnesses
-        Resource<Statistics>,          // pub(crate), not Replaceable
-    );
-}
-// Required: StringInterner.
-```
+**Third attempt (current sketch).** Same types declared as `pub struct`. 0 errors, success.
 
-The cooperative-public case: other kits' WUs may write to `Column<Diagnostic>` via a public path. This is the "fully public" visibility option from topic 3.
+The implication: **visibility cannot be a per-Owned-type substrate axis under the current `pub Kit { type Owned: StoreBundle; }` shape.** Every Owned type must be at least as visible as the Kit impl. Topic 3's "pub(crate) wrapping of locked-down kit-internal state" does not compose with `pub Kit` impls.
 
-- Visibility: `Diagnostic` is fully `pub` (cooperative). `Statistics` is `pub(crate)`.
-- Replaceability: `Diagnostic` is `Replaceable` so test harnesses can swap with a structured-output collector. `Statistics` not Replaceable.
+The two workable kit-shape patterns are:
 
-Axes required: 2.
+A. Kit declared `pub`, every Owned type `pub`. Visibility provides nothing the substrate enforces; only `Replaceable` distinguishes overridable from non-overridable. Convention (the kit author keeps non-Replaceable types out of the kit's public re-export surface) is the only signal kit-internal-vs-public.
+
+B. Kit declared `pub(crate)`, every Owned type `pub(crate)`, kit lives in its own crate. Consumers register the kit via a pub helper-fn that consumes a builder and returns one without naming the kit. The kit-internal types are then genuinely kit-private at the crate boundary. The substrate cannot mix levels in a single Kit impl.
+
+The sketch exercises pattern A. Pattern B's structural shape is documented for the doc CL but not built here (would require a multi-crate sketch).
+
+## What this means for the round-4 plan
+
+Topic 3 said the substrate would commit to two scoping axes: visibility and replaceability. The sketch shows the substrate gets one and a half:
+
+- **Replaceable** is a real substrate axis. The opt-in marker plus the static `T: Replaceable` bound on `replace_resource` does the work, with a clean compile error when consumers try to override a non-Replaceable type.
+- **Visibility** is *not* a substrate axis. It is a kit-shape convention applied at the level of "the whole kit is pub" or "the whole kit is pub(crate) and shipped from its own crate". The substrate cannot enforce per-Owned-type kit-internalness because Rust's E0446 forbids it under the chosen Kit trait shape.
+
+The doc CL must reflect this. Two adjustments:
+
+1. **Drop "two-axis annotation surface" framing.** The annotation surface has one axis (Replaceable) plus a structural choice (kit visibility = whole-kit-pub vs whole-kit-pub(crate)-with-helper-fn).
+2. **Rename "visibility axis" to "kit visibility envelope".** The envelope is set by the kit author when shipping the kit crate. The substrate observes; it does not enforce per-type.
+
+This does not invalidate any of the sound points the audit confirmed (G1-G7). The Kit trait shape (`Units` + `Owned`, no `Required`) stands. The Replaceable opt-in stands. Pre-1.0 churn licenses BuilderResource deletion. The compile-time-last framing is correctly applied.
+
+This DOES tighten audit C2's framing: not only does the substrate not enforce kit-private state via the typestate, the substrate cannot enforce it via Rust visibility either (under this Kit trait shape). The honesty the doc CL must capture is even stronger than C2's original statement: visibility doesn't help at all at the per-type level; only at the per-kit-crate level.
 
 ## Speculative axes resolved
 
+Topic 4's three speculative axes from topic 3, kept here for completeness:
+
 | Speculative axis | Topic-3 hypothesis | S5 finding |
 |---|---|---|
-| Lifetime scope | needed when Owned state outlives scheduler | scheduler-bound is the only lifetime in v1; longer-lived state is constructed by the app and passed in |
-| Build-order | needed when one kit's Owned must initialise before another's | app-level ordering of `.add_kit()` calls handles this; not a per-Owned-type axis |
-| Init source | needed when state comes from a non-default constructor | app-level `.resource::<T>(T::new(...))` handles this; not a per-Owned-type axis |
+| Lifetime scope | needed when Owned state outlives scheduler | scheduler-bound is the only lifetime in v1; longer-lived state is constructed by the app and passed in via `.resource::<T>(initial)`. Not a substrate axis. |
+| Build-order | needed when one kit's Owned must initialise before another's | app-level ordering of `.add_kit()` calls handles this; not a per-Owned-type axis. |
+| Init source | needed when state comes from a non-default constructor | app-level `.resource::<T>(T::new(...))` handles this; not a per-Owned-type axis. |
 
-Each speculative axis dissolves to either a structural property of the substrate (scheduler-bound lifetime) or an app-level concern outside the Owned-state taxonomy.
+Each speculative axis dissolves to a structural property of the substrate or an app-level concern outside the per-Owned-type taxonomy. No speculative axis lands in round-4.
 
-## Recommendation
+## Recommendation (revised post-empirical)
 
-Adopt the two committed axes for round-4 (visibility, replaceability). No speculative axis lands. Doc CL describes both axes per topic 3 with the mappings above as concrete kit-shape examples.
+Adopt **Replaceable as the sole substrate-enforced annotation** for round-4. The "kit visibility envelope" is documented in the doc CL as a per-kit shape choice, not a per-Owned-type axis.
 
-If a future kit shape surfaces a genuine fourth axis (the substrate cannot anticipate every consumer), the round-5 or later round adds it. Pre-1.0 churn is acceptable per `no-legacy-shims-pre-1.0.md`.
-
-## Notes for round-4 doc CL
-
-The MockspaceKit / BenchTracingKit / LintPackKit examples are illustrative only. The substrate doc CL should describe the two axes generically; consumer crates carry their own examples in their respective DESIGN.md.tmpl files.
-
-The BenchTracingKit case (FFI handle init) deserves a doc-CL note explaining the pattern: when a substrate user has FFI or pre-scheduler-init concerns, the construction happens at the app level via `.resource::<T>(T::new(handle))`, not via a kit's `Owned` declaration. The kit declares `Resource<Tracer>` as Owned; the app provides the constructed instance.
+If a future kit shape surfaces a genuine fourth concern (the substrate cannot anticipate every consumer), pre-1.0 churn licenses adding it then. Round-4 ships the minimum that holds.
 
 ## Cross-references
 
-- `mock/research/sketches/202605050555_replaceable_polarity/`. S4's sketches use these same three kit shapes for the polarity test; the kits act as the test surface for both S4 and S5.
-- `mock/design_rounds/202605042200_topic_kit_trait_split.md`. Topic 3 named the two committed axes and the three speculative ones.
+- `mock/research/sketches/202605050555_replaceable_polarity/`. S4: where the Replaceable opt-in polarity was decided.
+- `mock/research/sketches/202605050530_deep_stacking/`. S1: typestate-builder substrate this sketch reuses.
+- `mock/design_rounds/202605042200_topic_kit_trait_split.md`. Topic 3: the locked Kit shape.
+- `mock/design_rounds/202605042200_topic_round_4_audit.md`. Audit topic: C1 remediation closed by this file.
+
+## Notes on the now-stale `sketch_skeletons.md`
+
+`sketch_skeletons.md` (committed alongside the original paper-only FINDINGS) describes the three kit shapes as conceptual skeletons and points at S4 as the empirical surface. It is preserved as audit trail. The `sketch.rs` in this directory is now the load-bearing artefact; the skeletons file is supplementary prose.
