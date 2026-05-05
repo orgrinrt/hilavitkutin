@@ -1,4 +1,4 @@
-# hilavitkutin-api — backlog
+# hilavitkutin-api, backlog
 
 > **Type-surface reminder**: new entries use `arvo::USize` /
 > `Bool` / `UFixed<N, 0, S>` instead of `usize` / `bool` / `u*`;
@@ -20,9 +20,8 @@ impl-internal escape today.
 
 Current ships with AccessMask = Mask64 (≤64 stores). A Mask256 sibling
 lets pipelines address ≤256 stores at the cost of four-word bitmask
-ops instead of one. Prior consumer-ecosystem research shows typical pipelines stay
-under 50 stores, so this is a non-urgent widening. Promote when a
-concrete consumer exceeds 64.
+ops instead of one. Typical pipelines stay under 50 stores, so this
+is a non-urgent widening. Promote when a concrete consumer exceeds 64.
 
 ## Arena runtime layout for Seq / Map
 
@@ -127,7 +126,7 @@ be `memory_provider()` / `thread_pool()` / `clock()`). Either
 document the asymmetry or rename for consistency. Both options
 require touching every consumer; defer to a breaking round.
 
-## Sink / codec extensions — post-sweep
+## Sink / codec extensions, post-sweep
 
 Landed in the #83 round: capability atoms, named composites,
 `NullSink` / `CountingSink` / `TeeSink`, stateful Encoder/Decoder
@@ -146,3 +145,31 @@ Deferred until a concrete consumer surfaces demand:
 - Blanket impls over Vec / Seq under a test-helper gate. Those live
   in a dedicated test-helper crate (#81) so hilavitkutin-api stays
   heap-free and no_std.
+
+## Type-level dedup on Concat
+
+AccumRead and AccumWrite carry duplicates by design at round-4.
+Logical dedup via `#[marker] Contains` makes duplicates correctness-
+irrelevant: the trait solver picks any matching occurrence and
+stops. Trait-solver chain length grows linearly with duplicate
+count; not pathological at the validated depth-5 / 25-WU scale
+(0.53s wall clock, ~36-element chain for 13 distinct stores).
+
+Physical dedup is research-deferred. The naive `ConcatDedup<R>`
+shape (skip-if-contained vs prepend-if-absent) hits the same E0119
+coherence wall as round-3's NotIn proof; round-4's M2 sketch at
+`mock/research/sketches/202605050800_dedup_concat/FINDINGS.md`
+captures the failure modes. Path forward: either `feature(specialization)`
+stabilises to a usable subset, or a coherence-clean alternative
+encoding surfaces. Round-5+ scope.
+
+## Bitset-backed AccessSet fallback
+
+If `feature(marker_trait_attr)` becomes unviable (rustc removes or
+restricts marker-trait coherence; cross-crate marker resolution
+shifts), the AccessSet machinery redesigns as a compile-time
+bitset over a per-app StoreIndex ConstParamTy. Shape sketched in
+`mock/research/marker_trait_attr_bitset_fallback.md`. Not built
+in round-4; documented as the planned response. Triggered by a
+concrete signal that the keystone is breaking; otherwise stays in
+research.

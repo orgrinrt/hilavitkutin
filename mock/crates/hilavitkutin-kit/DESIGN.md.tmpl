@@ -1,23 +1,28 @@
 # hilavitkutin-kit Design Overview
 
-`#![no_std]`, zero deps. Ships exactly one trait, `Kit<B>`. The
-hilavitkutin engine depends on this crate so its `SchedulerBuilder`
-can offer `.add_kit(k)`; the reverse direction does not exist. A
-Kit is a preset that bundles related `Resource<T>` / `Column<T>` /
-`Virtual<T>` registrations under a single name, so a consumer can
-write `.add_kit(InternerKit)` instead of repeating five `.resource`
-calls every time.
+`#![no_std]`, zero deps. Ships exactly one trait, `Kit`. The
+hilavitkutin engine depends on this crate so its
+`SchedulerBuilder<Wus, Stores>` can offer `.add_kit::<K>()`. The
+reverse direction does not exist. A Kit is a declarative bundle:
+it names the WorkUnits it ships and the stores it owns. The engine
+reads those declarations at compile time and accumulates them into
+the scheduler's typestate.
 
 ## Purpose
 
 The scheduler builder accumulates type-state across each
 registration call. Most consumer apps register the same handful of
-stores together: an interner with its arena, a workspace plus a
-files column, a clock plus a thread pool. A Kit captures one such
-bundle. Authoring a Kit is just declaring the input builder type
-the Kit accepts, the output builder type with the Kit's
-contributions prepended, and an `install` body that calls the
-builder's existing methods.
+WorkUnits and stores together: a runner WU plus its column outputs,
+a logger WU plus its diagnostic store, an interner Resource. A Kit
+captures one such bundle by declaring `type Units` (the WorkUnits)
+and `type Owned` (the stores).
+
+Authoring a Kit is purely a type-level statement. Kit authors do
+not write an `install` method, do not compose builder method
+chains, do not name `SchedulerBuilder` anywhere. The engine's
+`.add_kit::<K>()` reads `K::Units` and `K::Owned` at compile time
+and prepends them onto the SchedulerBuilder's accumulators via
+`Concat`.
 
 The crate exists separately so the Kit shape lives below the
 engine but above the api / ctx layer. A consumer can author Kits
@@ -27,133 +32,193 @@ recurring patterns surface) ship here.
 ## The trait
 
 ```rust
-pub trait Kit<B> {
-    type Output;
-    fn install(self, builder: B) -> Self::Output;
+pub trait Kit {
+    type Units: WorkUnitBundle;
+    type Owned: StoreBundle;
 }
 ```
 
-`B` is the input builder type. `Self::Output` is the resulting
-builder type after the Kit's registrations have been applied. The
-type-state evolves through whatever mechanism the builder already
-has (the engine's `SchedulerBuilder<MAX_*, Wus, Stores>` accumulates
-WUs into `Wus` and stores into `Stores`; see the engine DESIGN).
+Two associated types only. `Units` is a cons-list of `WorkUnit`
+declarations the Kit ships; `Owned` is a cons-list of store markers
+(`Resource<T>` / `Column<T>` / `Virtual<T>`) the Kit declares as
+its own. Both bounds (`WorkUnitBundle`, `StoreBundle`) are
+core primitives in `hilavitkutin-api`.
 
-A Kit's `install` body is typically a chain like
-`builder.resource(Foo).column::<Bar>().resource(Baz)`. Nothing
-Kit-specific lives at the type level; the bundle is just a name
-plus a fixed sequence of builder calls.
+The trait carries no `Required` member and no `requirements_doc()`
+helper. Topic 3 originally proposed `Required` as an associated
+type derivable from `Units::AccessSet \ Owned`; the audit M6
+investigation (`mock/research/sketches/202605050800_dedup_concat/`)
+confirmed that the type-level set difference operator hits the
+same coherence wall as round-3's NotIn proof. Round-4 drops the
+claim. "What a kit requires" lives in prose: the kit author
+documents required external Resources (Resources the kit reads but
+does not own) in the Kit's rustdoc.
 
 ## Authoring a Kit
 
-A consumer-side Kit that registers `Resource<Interner>`:
+A consumer-side Kit that owns a `RunnerKit` shape with one WU plus
+two output columns:
 
 ```rust
-pub struct InternerKit;
+pub struct RunnerKit;
 
-impl<Wus, Stores> Kit<SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES, Wus, Stores>>
-    for InternerKit
-where
-    Wus: AccessSet,
-    Stores: AccessSet,
-    (Resource<Interner>, Stores): AccessSet,
-{
-    type Output =
-        SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES, Wus, (Resource<Interner>, Stores)>;
-
-    fn install(
-        self,
-        builder: SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES, Wus, Stores>,
-    ) -> Self::Output {
-        builder.resource(Interner)
-    }
+impl Kit for RunnerKit {
+    type Units = read![RunnerWu];
+    type Owned = read![Column<RunnerOutput>, Column<RunnerStats>];
 }
 ```
 
-A Kit that registers two stores at once (a `Workspace` resource
-plus a `FileInfo` column) declares the doubly-extended `Stores`
-tuple in `Output` and chains the calls in `install`:
+The `read!` macro from `hilavitkutin-api` expands the flat list
+into the `Cons<H, T>` cons-list shape `WorkUnitBundle` and
+`StoreBundle` recursive impls consume.
+
+A Kit that bundles WUs but no Owned state (for example a "tracing
+fiber" preset that reads several columns and writes to a Resource
+the app provides):
 
 ```rust
-pub struct WorkspaceKit;
+pub struct TracingKit;
 
-impl<Wus, Stores> Kit<SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES, Wus, Stores>>
-    for WorkspaceKit
-where
-    Wus: AccessSet,
-    Stores: AccessSet,
-    (Resource<Workspace>, Stores): AccessSet,
-    (Column<FileInfo>, (Resource<Workspace>, Stores)): AccessSet,
-{
-    type Output = SchedulerBuilder<
-        MAX_UNITS, MAX_STORES, MAX_LANES,
-        Wus,
-        (Column<FileInfo>, (Resource<Workspace>, Stores)),
-    >;
-
-    fn install(
-        self,
-        builder: SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES, Wus, Stores>,
-    ) -> Self::Output {
-        builder.resource(Workspace).column::<FileInfo>()
-    }
+impl Kit for TracingKit {
+    type Units = read![TracerFiber, SampleCollector];
+    type Owned = read![];
 }
 ```
 
-The order of contributions in the `Output` tuple matches the
-reverse order of the chained calls (each builder method prepends a
-new head, so the last `.column` ends up at the head of the tuple).
+Empty `Owned` is fine; the empty cons-list satisfies `StoreBundle`
+trivially. The Kit's WUs read from external Resources (Tracer,
+Diagnostic, etc.) which the app registers separately or via other
+Kits' `Owned` declarations.
 
-The engine's `.add_kit` carries `K::Output: BuilderExtending<B>`
-as a where-clause (see `hilavitkutin-api` "BuilderExtending"
-subsection). The bound forces `Output` to keep the input `Wus`
-intact and only extend `Stores`. A Kit `install` body that tried
-to drop a registration would compile fine at the Kit declaration
-but fail at the engine's call site, with the error pointing at the
-Kit's `Output` declaration. Authoring a Kit that only uses
-`builder.resource` / `.column` / `.add_virtual` / `.add_kit` calls
-satisfies the bound automatically.
+A Kit that ships only Owned state with no WUs of its own (a pure
+provider-preset, like `InternerKit` from `hilavitkutin-providers`):
+
+```rust
+pub struct InternerKit<const BYTES: usize, const ENTRIES: usize>;
+
+impl<const BYTES: usize, const ENTRIES: usize> Kit
+    for InternerKit<BYTES, ENTRIES>
+{
+    type Units = read![];
+    type Owned = read![Resource<StringInterner<MemoryArena<BYTES, ENTRIES>>>];
+}
+```
+
+The kit declares the type-level commitment that the StringInterner
+Resource exists in `Stores`. The actual value is supplied at the
+app's call site via `builder.resource(default_interner::<...>())`,
+since the api has no `Kit::default_resources()` association
+(see BACKLOG entry).
+
+### Kit-internal types and visibility
+
+Kit authors face one structural constraint surfaced by the round-4
+S5 sketch: every type appearing in a `pub Kit` impl's `type Owned`
+position must be at least as visible as the impl itself. Rust's
+E0446 ("private type in public interface") forbids `pub(crate)`
+or module-private types in pub-trait associated-type positions.
+The two workable kit-shape patterns:
+
+1. **Whole-kit pub**: the Kit struct, every Owned type, every
+   WorkUnit type are all `pub`. "Kit-internal" is a documentation
+   convention applied by the kit author (typically by keeping
+   non-Replaceable types out of the kit's public re-export
+   surface). The kit framework cannot enforce kit-internalness;
+   convention is the only signal.
+2. **Whole-kit pub(crate) within a per-kit crate**: the kit ships
+   in its own crate; Kit struct and Owned types are all
+   `pub(crate)`. Consumers outside the kit's crate cannot name the
+   kit directly; the kit's crate provides a `pub` helper-fn that
+   consumes a builder and returns one without naming the kit. This
+   is the genuine kit-private mode.
+
+A single Kit impl cannot mix levels. Round-4 kits ship using
+pattern (1); switching to pattern (2) is an optional kit-author
+choice when kit-private state is genuinely required at the crate
+boundary.
+
+See `mock/research/sketches/202605050615_kit_taxonomy/FINDINGS.md`
+for the empirical evidence behind this constraint and
+`mock/design_rounds/202605042200_topic_round_4_layered_enforcement.md`
+for the corresponding framing.
 
 ### Kits in crates that cannot import the engine
 
-The InternerKit example above names `SchedulerBuilder` directly
-because the example's authoring crate is free to depend on the
-engine. Crates that cannot (a forbidden-imports rule blocks
-`hilavitkutin::*`) need a different shape. The api crate ships
-`BuilderResource<T>` and future sibling traits (`BuilderColumn<T>`,
-`BuilderVirtual<T>`) for exactly this case. A Kit declared in such
-a crate generalises over `B: BuilderResource<T> + ...` instead of
-naming `SchedulerBuilder`. The engine impls those bridging traits
-once for `SchedulerBuilder`, so the Kit composes against any builder
-that implements them.
+The Kit declaration is purely a type-level statement; it depends
+only on `hilavitkutin-api` (for `WorkUnitBundle`, `StoreBundle`,
+`Replaceable`, plus the `Resource<T>` / `Column<T>` / `Virtual<T>`
+markers) and on `hilavitkutin-kit` itself (for the `Kit` trait).
+Kit-author crates do not import `hilavitkutin::*` directly; the
+forbidden-imports rule continues to apply and is trivially
+satisfied by the new shape.
 
-`hilavitkutin-providers::InternerKit` is the canonical example. Its
-shape is `impl<B, ...> Kit<B> for InternerKit<...> where B:
-BuilderResource<...>`, with `install` calling
-`builder.with_resource(value)`. See providers's `DESIGN.md.tmpl`.
+The v0.1 BuilderResource bridge layer (which let a Kit's `install`
+method call `builder.with_resource(...)` against any builder type)
+is gone. The new shape has no `install` method and never names a
+builder; the bridge is unnecessary.
 
 ## Composition
 
-Kits chain naturally: `.add_kit(k1).add_kit(k2)`. Each
-`.add_kit(k)` returns the type-state produced by `k.install(self)`,
-which is the next builder receiving its own `.add_kit` call.
+Kits compose by being added in sequence on the SchedulerBuilder:
 
-A Kit can install another Kit inside its own `install` body by
-calling `.add_kit` on the builder it received. Nothing in the
-trait shape blocks that.
+```rust
+let scheduler = Scheduler::builder()
+    .resource::<StringInterner<...>>(default_interner())
+    .add_kit::<RunnerKit>()
+    .add_kit::<LinterKit>()
+    .add_kit::<TracingKit>()
+    .build();
+```
 
-A Kit composed with raw builder calls is fine too:
-`.add_kit(WorkspaceKit).resource(SomeOther)`. Kits and raw calls
-are interchangeable.
+Each `.add_kit::<K>()` accumulates `K::Units` into the bundle and
+`K::Owned` into the stores via type-level `Concat`. Order matters
+for the `ContainsAll<Wus::AccumRead>` proof at `.build()`: a Kit
+whose WUs read from another Kit's Owned state is fine, but the
+Owned state must be in the accumulated `Stores` by the time
+`.build()` resolves the bound. Adding kits in dependency order is
+the simplest discipline; the builder accepts any order that
+satisfies the proof.
+
+A Kit cannot install another Kit inside its declaration; there is
+no install body to write. Kit composition is the consumer's
+choice via the builder chain. If a kit author wants to bundle
+multiple kits behind a single registration, they declare a
+"super-kit" whose `Units` and `Owned` are the union of the inner
+kits' projections (achievable via `Concat` composition at the type
+level, written out in the super-kit's impl).
+
+## Replaceable: enforced override gating
+
+`Replaceable` is the only enforced annotation on Owned types.
+The marker lives in `hilavitkutin-api`; kit authors opt in
+per type:
+
+```rust
+pub struct LintConfig;
+impl Replaceable for LintConfig {}  // app may override via .replace_resource
+
+pub struct RoundState;
+// no impl Replaceable: locked, cannot be overridden
+```
+
+The static `T: Replaceable` bound on
+`Scheduler::replace_resource::<T>(value)` (declared in the engine
+crate) rejects override attempts on non-opt-in types at compile
+time. See `hilavitkutin-api::Replaceable` and
+`hilavitkutin::Scheduler::replace_resource` for the trait
+documentation; see S4 (`mock/research/sketches/202605050555_replaceable_polarity/`)
+for the polarity decision (opt-in is safer-by-default per the
+"tools, not policies" workspace rule).
 
 ## Why a separate crate
 
 `hilavitkutin-kit` slots between `hilavitkutin-ctx` and the
 engine. The crate carries no other dependencies; the engine
-depends on it for `.add_kit()`, but the reverse never happens. A
-consumer can author a Kit in a downstream crate that depends only
-on `hilavitkutin-kit` plus the bare api markers (`Resource<T>`,
-`Column<T>`, `Virtual<T>` from `hilavitkutin-api`) without
+depends on it for `.add_kit::<K>()`, but the reverse never
+happens. A consumer can author a Kit in a downstream crate that
+depends only on `hilavitkutin-kit` plus the bare api markers
+(`Resource<T>`, `Column<T>`, `Virtual<T>`, `WorkUnitBundle`,
+`StoreBundle`, `Replaceable` from `hilavitkutin-api`) without
 pulling the engine in.
 
 The layering is the same shape `hilavitkutin-ctx` has: an
@@ -162,14 +227,18 @@ ecosystem crate the engine consumes for one specific contract.
 ## Crate-internal recursion limit
 
 This crate declares `#![recursion_limit = "512"]` defensively. A
-consumer composing deep Kit chains (each Kit's `install` body
-building against the previous output's accumulators) sends the
-trait solver through the cons-list at each step. The default 128
-suffices for shallow chains; 512 covers realistic compositions
-without consumer-side awareness. If a consumer's own crate hits
-the limit anyway (very deep chains plus very deep per-Kit
-contributions), the consumer declares its own
-`#![recursion_limit = "..."]` at the consumer crate root.
+consumer composing deep Kit chains sends the trait solver through
+the cons-list at each `.add_kit` call (Concat recursion) and again
+at `.build()` (ContainsAll recursion plus WorkUnitBundle accumulator
+recursion). The default 128 suffices for shallow chains; 512
+covers realistic compositions without consumer-side awareness. If
+a consumer's own crate hits the limit anyway, the consumer
+declares its own `#![recursion_limit = "..."]` at the consumer
+crate root.
+
+S1b's depth-5 sketch (`mock/research/sketches/202605050700_deep_stacking_d5/`)
+confirms 25 WUs at 5 tiers compile in 0.53s without exceeding the
+512 limit.
 
 ## Deferred ergonomics
 

@@ -1,4 +1,4 @@
-# hilavitkutin — Design
+# hilavitkutin, Design
 
 Morsel-driven pipeline execution engine. Takes WorkUnit declarations
 (from hilavitkutin-api), analyses them into phases/trunks/fibers,
@@ -14,7 +14,7 @@ source. This document maps domains to engine modules.
 | Module | Domains | What it does |
 |---|---|---|
 | plan::phase | 11 | Waist detection, trunk/branch/bridge assignment |
-| plan::fiber | 14 | Fiber formation, holistic feasibility check, co-located arena |
+| plan::fiber | 14 | Fiber formation, whole-fiber feasibility check, co-located arena |
 | plan::analysis | 15 | Access matrix, RCM, block diagonal, spectral, DP |
 | plan::morsel | 12 | Write-only morsel sizing, 3D morsel cube, change detection |
 | plan::loading | 16 | Loader WU handling, plan recomputation triggers |
@@ -70,7 +70,7 @@ function encoding its entire pipeline (phases, record ranges, morsel
 boundaries, sync points). No dynamic dispatch at runtime.
 
 Progress counters: AtomicUsize per fiber, monotonic record index.
-Plain store (Release) — not RMW, cheapest atomic. Lock-free by
+Plain store (Release), not RMW, cheapest atomic. Lock-free by
 construction (library guarantee, T3 decisions #103-104).
 
 Dispatch approach selected by record count:
@@ -150,26 +150,29 @@ spin_loop, >10µs park.
 
 ## Scheduler builder + meta (domain 23)
 
-`Scheduler<MAX_UNITS, MAX_STORES, MAX_LANES>` keeps its three
-const-generic capacity parameters governing engine-internal sizes.
+`Scheduler<Wus, Stores>` is the engine's runtime handle. The two
+phantom-tuple type parameters carry the typestate accumulated at
+build time: `Wus` is the registered WUs (cons-list of `WorkUnit`
+declarations), `Stores` is the registered stores (cons-list unifying
+`Resource<T>`, `Column<T>`, `Virtual<T>` markers). The v0.1
+`MAX_UNITS` / `MAX_STORES` / `MAX_LANES` capacity const generics
+are dropped in round-4; the typestate alone carries the shape, and
+runtime sizes are derived from the typestate's `Depth::D`
+projections rather than from explicit caps.
 
-`SchedulerBuilder<MAX_UNITS, MAX_STORES, MAX_LANES, Wus, Stores>`
-gains two phantom-tuple type parameters for type-state
-accumulation. `Wus` carries the registered WU types. `Stores`
-unifies registered `Resource<T>`, `Column<T>`, `Virtual<T>`
-markers (matching how `WorkUnit::Read` is shaped in
-`hilavitkutin-api`). Initial state on `Scheduler::builder()` is
-`SchedulerBuilder<..., (), ()>`.
+`SchedulerBuilder<Wus, Stores>` accumulates typestate across each
+registration call. Initial state on `Scheduler::builder()` is
+`SchedulerBuilder<Empty, Empty>`.
 
 Builder API:
 ```
-Scheduler::<MAX_UNITS, MAX_STORES, MAX_LANES>::builder()
+Scheduler::builder()
     .add::<MyWU>()
     .resource::<T>(initial)
     .resource_default::<T>()
     .column::<T>()
     .add_virtual::<T>()
-    .add_kit(MyKit)
+    .add_kit::<MyKit>()
     .memory(my_provider)
     .threads(my_pool)
     .clock(my_clock)
@@ -179,77 +182,89 @@ Scheduler::<MAX_UNITS, MAX_STORES, MAX_LANES>::builder()
 Method shapes (registration methods evolve the type-state):
 
 ```rust
-impl<..., Wus, Stores> SchedulerBuilder<..., Wus, Stores>
+impl<Wus, Stores> SchedulerBuilder<Wus, Stores>
 where Wus: AccessSet, Stores: AccessSet,
 {
-    pub fn add<W: WorkUnit>(self) -> SchedulerBuilder<..., (W, Wus), Stores>
-    where (W, Wus): AccessSet;
+    pub fn add<W: WorkUnit>(self) -> SchedulerBuilder<Cons<W, Wus>, Stores>
+    where Cons<W, Wus>: AccessSet;
 
     pub fn resource<T: 'static>(self, _init: T)
-        -> SchedulerBuilder<..., Wus, (Resource<T>, Stores)>
-    where (Resource<T>, Stores): AccessSet;
+        -> SchedulerBuilder<Wus, Cons<Resource<T>, Stores>>
+    where Cons<Resource<T>, Stores>: AccessSet;
 
-    pub fn column<T: 'static>(self) -> SchedulerBuilder<..., Wus, (Column<T>, Stores)>
-    where (Column<T>, Stores): AccessSet;
+    pub fn column<T: 'static>(self) -> SchedulerBuilder<Wus, Cons<Column<T>, Stores>>
+    where Cons<Column<T>, Stores>: AccessSet;
 
-    pub fn add_virtual<T: 'static>(self) -> SchedulerBuilder<..., Wus, (Virtual<T>, Stores)>
-    where (Virtual<T>, Stores): AccessSet;
+    pub fn add_virtual<T: 'static>(self) -> SchedulerBuilder<Wus, Cons<Virtual<T>, Stores>>
+    where Cons<Virtual<T>, Stores>: AccessSet;
 
-    pub fn add_kit<K>(self, k: K) -> K::Output
+    pub fn add_kit<K: Kit>(self) -> SchedulerBuilder<
+        <K::Units as Concat<Wus>>::Out,
+        <K::Owned as Concat<Stores>>::Out,
+    >
     where
-        K: Kit<Self>,
-        K::Output: BuilderExtending<Self>;
+        K::Units: Concat<Wus>,
+        K::Owned: Concat<Stores>;
 
     pub fn memory<M: 'static>(self, _provider: M) -> Self;
     pub fn threads<P: 'static>(self, _pool: P) -> Self;
     pub fn clock<C: 'static>(self, _clock: C) -> Self;
 }
 
-impl<..., Wus, Stores> SchedulerBuilder<..., Wus, Stores>
+impl<Wus, Stores> SchedulerBuilder<Wus, Stores>
 where
-    Wus: Buildable<Stores>,
-    Stores: AccessSet,
+    Wus: WorkUnitBundle,
+    Stores: AccessSet + StoreBundle
+        + ContainsAll<Wus::AccumRead>
+        + ContainsAll<Wus::AccumWrite>,
 {
-    pub fn build(self) -> Scheduler<MAX_UNITS, MAX_STORES, MAX_LANES>;
+    pub fn build(self) -> Scheduler<Wus, Stores>;
 }
 ```
 
 `.add::<W>()`, `.resource(_)`, `.column()`, `.add_virtual()` each
-prepend a marker to one of the type-state tuples. `.add_kit(k)`
-returns whatever `k.install(self)` produces (Kit-defined). The
-platform-provider methods (`.memory`, `.threads`, `.clock`) thread
-through `Self` unchanged for this round; type-state tracking for
-platform providers is a future round if a call site demands it.
+prepend a marker to one of the typestate accumulators (Wus or
+Stores). `.add_kit::<K>()` is type-only: the Kit instance is never
+constructed; the engine reads `K::Units` and `K::Owned` at compile
+time and prepends them onto the typestate via type-level `Concat`.
+The platform-provider methods (`.memory`, `.threads`, `.clock`)
+thread through `Self` unchanged for this round; typestate tracking
+for platform providers is a future round if a call site demands
+it.
 
-`.add_kit` carries `K::Output: BuilderExtending<Self>` from
-`hilavitkutin-api`. The bound proves the Kit kept the same `Wus`
-(Kits never add WUs, only stores) and only extended `Stores`
-(`WuSatisfied<Stores>` proves no prior store was wiped). A buggy
-Kit returning `SchedulerBuilder<..., (), ()>` fails this bound at
-the call site with a clean compile error pointed at the Kit's
-`Output` declaration, not at a downstream `.build()`.
+The v0.1 Kit shape (`pub trait Kit<B> { type Output; fn install(self, B) -> Self::Output }`)
+is gone. The new declarative `pub trait Kit { type Units; type Owned }`
+shape (in `hilavitkutin-kit`) lets the engine accumulate
+without invoking an install method. The v0.1 `BuilderExtending<B>`
+sealed trait that bounded `K::Output` is therefore also gone; the
+new shape has no `Output` to bound.
 
-`.build()` carries `Wus: Buildable<Stores>` from `hilavitkutin-api`.
-This unfolds (recursive cons-list impls) into the conjunction of
-`Stores: WuSatisfied<Wᵢ::Read> + WuSatisfied<Wᵢ::Write>` for every
-`Wᵢ`, which itself unfolds into per-store `Stores: Contains<Tⱼ>`
-proofs. The cons-list recursion impls handle arbitrary-depth
-`Wus` and `Stores` accumulators with no per-arity cap.
+`.build()` carries `Wus: WorkUnitBundle, Stores: ContainsAll<Wus::AccumRead> + ContainsAll<Wus::AccumWrite>`
+from `hilavitkutin-api`. The accumulator is computed once at the
+type level via the recursive `WorkUnitBundle for Cons<W, T>` impl;
+the proof unfolds via the recursive `ContainsAll` impl into
+per-store `Stores: Contains<Tᵢ>` proofs. With `#[marker]` on both
+`Contains` and `ContainsAll`, overlapping resolutions are
+permitted; duplicates in `Wus::AccumRead/Write` extend traversal
+but do not duplicate proof work.
 
 When a registered WU's `Read` mentions a store that was not
 registered, `.build()` fails to compile with a pointed error. For
 example, a WU with `type Read = read![Resource<Interner>]` and no
-`.resource(Interner)` or `.add_kit(InternerKit)` triggers the
+`.resource(Interner)` or `.add_kit::<InternerKit>()` triggers the
 `Contains` `#[diagnostic::on_unimplemented]` message:
 
 ```text
-note: store `()` does not contain `Resource<Interner>`. Register it with
+note: store `Empty` does not contain `Resource<Interner>`. Register it with
       `.resource::<Interner>(initial)`, `.column::<Interner>()`,
-      `.add_virtual::<Interner>()`, or install a Kit that registers it.
+      `.add_virtual::<Interner>()`, or install a Kit that owns it.
 ```
 
-The error names the missing store directly, by type, and lists
-the four registration paths.
+The error names the missing store directly, by type, on the first
+inline line of the diagnostic. The verbose accumulator chain
+follows but does not bury the marker name. Empirically validated
+to depth 5 with 25 WUs and 13 stores; see
+`mock/research/sketches/202605050700_deep_stacking_d5/FINDINGS.md`.
 
 The engine declares `#![recursion_limit = "512"]` at its crate
 root. This accommodates `.build()` against 50-WU by 50-store apps
@@ -261,11 +276,47 @@ Static composition (R6): all WUs registered at compile time. No
 runtime registration. Plan parameters adapt; composition does not.
 
 Kit composition: see `hilavitkutin-kit/DESIGN.md`. A Kit is a
-Bevy-style preset that bundles a set of `.resource` / `.column` /
-`.add_virtual` calls under one name. Kits chain freely with each
-other and with raw builder calls; each `.add_kit(k)` returns the
-type-state produced by the Kit's install method, constrained by
-`BuilderExtending<Self>`.
+declarative bundle: `type Units` (cons-list of WorkUnits) plus
+`type Owned` (cons-list of stores). Kits chain freely with each other
+and with raw builder calls; each `.add_kit::<K>()` accumulates
+`K::Units` into the bundle and `K::Owned` into the stores via
+type-level `Concat`. Order matters for the `ContainsAll` proof at
+`.build()`: a Kit whose WUs read from another Kit's Owned state
+must come after the owning Kit in the builder chain (or after the
+relevant `.resource(_)` / `.column()` calls).
+
+### `Scheduler::replace_resource`
+
+```rust
+impl<Wus, Stores> Scheduler<Wus, Stores> {
+    pub fn replace_resource<T: Replaceable>(&mut self, _new: T)
+    where
+        Stores: Contains<Resource<T>>;
+}
+```
+
+App-level method to swap the existing `Resource<T>` instance in
+the scheduler's data plane. The static `T: Replaceable` bound
+rejects override attempts on types that did not opt in via
+`impl Replaceable for T {}`. The `Stores: Contains<Resource<T>>`
+bound proves the resource exists in the registered stores.
+
+Replaceable opt-in is the only enforced annotation on
+Owned types (per audit C2/M4 plus the S5 visibility-axis
+finding); see `hilavitkutin-api::Replaceable` and
+`mock/design_rounds/202605042200_topic_round_4_layered_enforcement.md`.
+
+When a consumer attempts `scheduler.replace_resource(NotReplaceable)`,
+rustc emits an E0277 with a high-quality diagnostic that names
+the offending type, lists the types that DO impl `Replaceable`,
+and points at the bound declaration. See
+`mock/research/sketches/202605050615_kit_taxonomy/FINDINGS.md`
+for the empirical evidence.
+
+`replace_resource` is app-only. Called between `.build()` and
+`scheduler.run()`. Not a hot-path operation; the typestate change
+is logical only (the `Resource<T>` slot's value is replaced; its
+type-level identity in `Stores` is unchanged).
 
 Self-hosting meta pipeline: PlanStage → ScheduleReady → PassStart →
 ScheduleEnd. Meta resources: Dag, ExecutionPlan, LaneAssignment,
