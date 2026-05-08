@@ -35,6 +35,10 @@ impl Extension {
         if self.descriptor.capabilities_ptr.is_null() {
             return Maybe::Isnt;
         }
+        // The u32 to usize cast cannot truncate: descriptor went
+        // through validate_descriptor at load time, which bounds the
+        // length at MAX_DESCRIPTOR_LIST_LEN (1 << 20) and every
+        // supported target has usize >= 32 bits.
         let len = self.descriptor.capabilities_len as usize;
         let mut i = 0;
         while i < len {
