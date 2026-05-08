@@ -2,7 +2,7 @@
 
 Type-surface reminder: macro output uses types from `hilavitkutin-extensions` exclusively. Emitted code must compile under `#![no_std]`, no `alloc`, no `dyn`, no runtime hashing. All capability ids are const-evaluated; all descriptor pointers reference static const data.
 
-V1 emission lands in round 202604241201. The entries below describe enrichments that remain deferred after v1.
+V1 emission lands. The entries below describe enrichments that remain deferred after v1.
 
 ## Designed, deferred
 
@@ -24,7 +24,7 @@ Detect ABI skew between the macro's output (derived from the version of `hilavit
 
 ### `impl`-block mode
 
-V1 placement is on the struct. An alternative placement on an `impl` block (e.g. `#[export_extension] impl Linter for MyLinter { ... }`) would let the macro pick up trait impls the user has already written without requiring them to be declared via the trait-method-parse path. Deferred pending ergonomic evaluation once consumers have written a few extensions.
+V1 placement is on the struct. An alternative placement on an `impl` block (e.g. `#[export_extension] impl Linter for MyLinter {... }`) would let the macro pick up trait impls the user has already written without requiring them to be declared via the trait-method-parse path. Deferred pending ergonomic evaluation once consumers have written a few extensions.
 
 ### LTO smoke runtime callability
 

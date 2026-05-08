@@ -1,4 +1,4 @@
-# hilavitkutin, Architecture Principles
+# Hilavitkutin: Architecture Principles
 
 [//]: # (BEGIN shared cross-ecosystem principles, synced from clause-dev/.shared/principles-fragment.md, do not edit in place)
 
@@ -35,7 +35,7 @@ If a foreign crate's trait or an unavoidable language feature forces
 a specific std primitive, the first question is: *can we implement
 the foreign contract on an arvo type instead?* If yes, that's the
 path. If no, the crate smells like ass and we drop it. The escape
-hatch `// lint:allow(<rule>) reason: ...; tracked: #N` exists only
+hatch `// lint:allow(<rule>) reason:...; tracked: #N` exists only
 for the genuinely unavoidable boundary, always with a tracked
 remediation task.
 

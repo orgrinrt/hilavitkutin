@@ -17,13 +17,13 @@ is a consequence of this first principle, not a standalone rule.
 - "I need a list temporarily" → the heap is never temporarily available.
 - "I'll Vec::new() just for a moment" → there is no moment.
 - "Push results to a Vec and return it" → take a trait-bound sink
-  (`&mut impl Collector<T>` / `&mut impl DiagnosticSink` /
-  `&mut impl ByteEmitter`).
+ (`&mut impl Collector<T>` / `&mut impl DiagnosticSink` /
+ `&mut impl ByteEmitter`).
 - "Format!() into a String" → borrow `&'static str`, or
-  `hilavitkutin_str::Str`, or write into a caller-provided byte sink.
+ `hilavitkutin_str::Str`, or write into a caller-provided byte sink.
 - "Box<dyn Trait>" → monomorphise. `impl Trait` or `<T: Trait>`.
 - "HashMap<K, V>" → type-level `Map<K, V, N: Cap>` at
-  `hilavitkutin-api::store`, or `&mut impl KeyValueStore<K, V>`.
+ `hilavitkutin-api::store`, or `&mut impl KeyValueStore<K, V>`.
 - "extern crate alloc" → WRONG UNIVERSE. Remove it. Reshape the surface.
 
 ### Decision test

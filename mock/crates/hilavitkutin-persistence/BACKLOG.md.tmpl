@@ -11,7 +11,7 @@
 Full `Archive` impls for `Manifest`, `TableMeta`, `StringTable`,
 `ColdStore` archived subrecords. Requires:
 - Vetting rkyv 0.8's `no_std` + `no_alloc` story against
-  MemoryProvider-backed buffers.
+ MemoryProvider-backed buffers.
 - Decision on deserialize vs zero-copy access for each type.
 - Version-tolerant schema (for future migration).
 
@@ -30,7 +30,7 @@ supports memory mapping.
 ## Weighted eviction policy tuning
 
 `SieveCache` stub ships a FIFO baseline. DESIGN specifies
-WeightedSieveCache (weighted by byte size). The tuning, the
+`SieveCache` (weighted by byte size). The tuning, the
 weight-reference tracking, the protection bit, the eviction
 scan, follows the SIEVE paper. Lands when a consumer profiles
 real eviction pressure.

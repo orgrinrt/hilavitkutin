@@ -14,12 +14,12 @@ The crate has no public types. Its contract is the macro attribute and the shape
 
 `#[export_extension]` reads two sources of information about the extension:
 
-1. Attribute parameters on the invocation site. Supported keys: `name = "..."` (byte-string literal; defaults to the struct ident in kebab-case), `version = "MAJOR.MINOR.PATCH"` (string literal; defaults to reading `CARGO_PKG_VERSION` via `env!`), `required_host_caps = [CAP_A, CAP_B, ...]` (path expressions resolving to `CapabilityId` const items; defaults to empty).
+1. Attribute parameters on the invocation site. Supported keys: `name = "..."` (byte-string literal; defaults to the struct ident in kebab-case), `version = "MAJOR.MINOR.PATCH"` (string literal; defaults to reading `CARGO_PKG_VERSION` via `env!`), `required_host_caps = [CAP_A, CAP_B,...]` (path expressions resolving to `CapabilityId` const items; defaults to empty).
 2. Trait implementations on the target type in the surrounding module. `ExtensionMeta`, `InitHandler`, and `ShutdownHandler` are discovered via path-qualification in emitted code; the macro does not parse arbitrary `impl` blocks to find them. `CapabilityExport` impls on the target type (one per capability) drive the capability table generation.
 
 The emission has four components:
 
-1. A `const DESCRIPTOR: ExtensionDescriptor = ExtensionDescriptor { ... }` item whose fields are filled from the attribute parameters and trait-derived values. The `capabilities_ptr` field points at a second static constant (`const CAPABILITIES: &[CapabilityEntry] = &[ ... ];`), populated from each `CapabilityExport` impl on the target type.
+1. A `const DESCRIPTOR: ExtensionDescriptor = ExtensionDescriptor {... }` item whose fields are filled from the attribute parameters and trait-derived values. The `capabilities_ptr` field points at a second static constant (`const CAPABILITIES: &[CapabilityEntry] = &[... ];`), populated from each `CapabilityExport` impl on the target type.
 2. `#[no_mangle] pub extern "C" fn __hilavitkutin_extension_descriptor() -> *const ExtensionDescriptor { &DESCRIPTOR }`. The fn name uses the `DESCRIPTOR_SYMBOL` byte-string content (without the trailing null). Rust compile-time checks that the fn name matches the constant is not enforced by the macro (both come from the same crate-version pairing).
 3. Per-capability trampolines: for each `CapabilityExport` impl, an `extern "C" fn trampoline_<cap>(args...) -> Ret` that calls into the typed Rust method on the target type with appropriate argument marshalling. The specific signatures depend on consumer-defined domain types that implement `CapabilityExport`; this crate only provides the dispatching shell.
 4. Optional `init_fn` / `shutdown_fn` trampolines emitted only when the target type implements `InitHandler` / `ShutdownHandler`. When those traits are absent, the descriptor's `init_fn` / `shutdown_fn` fields are `None`.
@@ -76,4 +76,4 @@ The emitted output preserves the invariant because it is per-extension: one `DES
 
 ## Shipping commitment
 
-The emitted shape locked in the src CL of round 202604240615. Follow-up rounds may extend the macro (check that the author implements every capability the descriptor advertises; more attribute parameters; shared-capability helpers) but must preserve the v1 emission contract.
+The emitted shape is locked at v1. Follow-up rounds may extend the macro (check that the author implements every capability the descriptor advertises; more attribute parameters; shared-capability helpers) but must preserve the v1 emission contract.

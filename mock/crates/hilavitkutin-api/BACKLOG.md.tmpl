@@ -45,24 +45,24 @@ hand-written tuple impls. A macro producing `impl_contains!((A, B,
 C))` for common tuple arities would reduce boilerplate. Ergonomic
 helper; not needed for correctness.
 
-## Round 202605011500 follow-ups (filed as tasks)
+## Currently follow-ups (filed as tasks)
 
 Captured as workspace tasks #296 to #299; promote here only if a
 concrete consumer surfaces the friction.
 
 - Trybuild compile-fail fixture for the buggy-Kit case (Output
-  drops registrations, fails BuilderExtending) and for the
-  missing-store case (.build() reports the diagnostic on
-  Contains). Task #296.
+ drops registrations, fails BuilderExtending) and for the
+ missing-store case (.build() reports the diagnostic on
+ Contains). Task #296.
 - Verify the type-state machinery under -Znext-solver=globally
-  before nightly flips the default. The shape uses cons-list
-  recursion with disjoint impls and #[marker] traits; old solver
-  is happy, new solver is the open question. Task #297.
+ before nightly flips the default. The shape uses cons-list
+ recursion with disjoint impls and #[marker] traits; old solver
+ is happy, new solver is the open question. Task #297.
 - Error-message hygiene: do_not_recommend on the Contains
-  recursion impl, plus newtype wrappers around Wus and Stores so
-  rustc errors do not dump deep cons-lists. Task #298.
+ recursion impl, plus newtype wrappers around Wus and Stores so
+ rustc errors do not dump deep cons-lists. Task #298.
 - add_kit::<K: Default>() ergonomic overload that constructs the
-  Kit on the fly when it implements Default. Task #299.
+ Kit on the fly when it implements Default. Task #299.
 
 ## Runtime-replaceable platform defaults
 
@@ -99,12 +99,12 @@ current equivalent) regardless of which iteration APIs the WU
 actually uses. Two possible follow-ups:
 
 - Per-method bound splitting, e.g. `fn execute_each` bounded only
-  by `HasEach`, `fn execute_batch` only by `HasBatch`, etc. Each
-  WU declares which iteration methods it implements and only
-  those pay the bound cost.
+ by `HasEach`, `fn execute_batch` only by `HasBatch`, etc. Each
+ WU declares which iteration methods it implements and only
+ those pay the bound cost.
 - Document the blanket no-op impl pattern for unused APIs on
-  provider tuples, so a WU that only wants Each can still satisfy
-  HasBatch / HasReduce with a provider that no-ops.
+ provider tuples, so a WU that only wants Each can still satisfy
+ HasBatch / HasReduce with a provider that no-ops.
 
 Design decision deferred until a concrete WU surfaces friction.
 
@@ -136,15 +136,15 @@ Deferred until a concrete consumer surfaces demand:
 
 - Higher-arity tuple blanket impls (>3).
 - SizeHint / LenHint capability for iterator-shaped sinks that know
-  their remaining item count.
+ their remaining item count.
 - Flush / Fuse capability for buffered byte emitters with back-
-  pressure semantics.
+ pressure semantics.
 - Specific framed codec families (JSON, clause bytecode, paradox
-  save format). The contract ships here; concrete codecs live in
-  owner crates. Don't promote into this crate.
+ save format). The contract ships here; concrete codecs live in
+ owner crates. Don't promote into this crate.
 - Blanket impls over Vec / Seq under a test-helper gate. Those live
-  in a dedicated test-helper crate (#81) so hilavitkutin-api stays
-  heap-free and no_std.
+ in a dedicated test-helper crate (#81) so hilavitkutin-api stays
+ heap-free and no_std.
 
 ## Type-level dedup on Concat
 
