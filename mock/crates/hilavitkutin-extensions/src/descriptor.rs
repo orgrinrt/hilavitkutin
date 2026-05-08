@@ -5,7 +5,6 @@
 //! struct; lifecycle, capability dispatch, and version gating all
 //! derive from the descriptor's fields.
 
-use arvo::USize;
 use core::ffi::{CStr, c_void};
 
 /// Host-side ABI version newtype.
@@ -19,11 +18,31 @@ pub struct AbiVersion(pub u32); // lint:allow(no-public-raw-field) tracked: #206
 
 /// Host-side ABI version the extensions crate speaks at build time.
 ///
-/// Extensions declare the ABI version they target via
-/// `ExtensionDescriptor::abi_version`; the host wraps that `u32` into
-/// `AbiVersion` at read time, compares against this constant, and
-/// reports mismatches via `ExtensionError::AbiVersionMismatch`.
-pub const HOST_ABI_VERSION: AbiVersion = AbiVersion(1);
+/// Bumped from 1 to 2 alongside the v1.1 descriptor reshape: the
+/// descriptor gained `tag` and `descriptor_size` fields, the
+/// `abi_version` field type changed from bare `u32` to `AbiVersion`,
+/// and the three length fields flipped from `USize` to bare `u32` for
+/// platform-stable wire layout. Per the workspace
+/// no-legacy-shims-pre-1.0 rule, no v1 read path exists; descriptors
+/// built against `AbiVersion(1)` fail the abi_version check on load.
+pub const HOST_ABI_VERSION: AbiVersion = AbiVersion(2);
+
+/// Magic tag the host validates first when reading any
+/// `ExtensionDescriptor`. The four bytes spell ASCII "HILE" when read
+/// in memory order on little-endian targets, which is the platform set
+/// the linking layer commits to. A descriptor with a wrong tag
+/// surfaces `ExtensionError::DescriptorTagMismatch` and aborts the
+/// load before any further field is read.
+pub const EXTENSION_DESCRIPTOR_TAG: u32 = 0x454C4948; // lint:allow(arvo-types-only, no-bare-numeric) tracked: #206
+
+/// Hard ceiling on per-descriptor list lengths (`name_len`,
+/// `capabilities_len`, `required_host_caps_len`). Validated at
+/// descriptor-read time; a value above the ceiling surfaces
+/// `ExtensionError::DescriptorBoundsExceeded`. The one-million-entry
+/// bound is well above any plausible extension's surface area; combined
+/// with the largest entry size (`CapabilityEntry` at 16 bytes on
+/// 64-bit) the worst-case slice byte size bounds at roughly 16 MiB.
+pub const MAX_DESCRIPTOR_LIST_LEN: u32 = 1 << 20; // lint:allow(arvo-types-only, no-bare-numeric) tracked: #206
 
 /// Well-known exported symbol name that every extension `cdylib`
 /// resolves to `extern "C" fn() -> *const ExtensionDescriptor`.
@@ -117,17 +136,26 @@ unsafe impl Sync for CapabilityEntry {}
 
 /// Top-level `#[repr(C)]` descriptor the host reads from each
 /// loaded extension.
+///
+/// The field order is fixed and load-bearing. The host validates
+/// `tag` first (so a wrong layout is caught before any other field is
+/// trusted), then `descriptor_size` (so the host knows what byte
+/// range it can rely on for the v1.1 prefix), then `abi_version`
+/// (which gates the rest of the layout under the v1.1 contract), and
+/// only after that does it read the pointer-and-length pairs.
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct ExtensionDescriptor {
-    pub abi_version: u32, // lint:allow(arvo-types-only, no-bare-numeric, no-public-raw-field) tracked: #206
+    pub tag: u32, // lint:allow(arvo-types-only, no-bare-numeric, no-public-raw-field) tracked: #206
+    pub descriptor_size: u32, // lint:allow(arvo-types-only, no-bare-numeric, no-public-raw-field) tracked: #206
+    pub abi_version: AbiVersion,
     pub name_ptr: *const u8,
-    pub name_len: USize,
+    pub name_len: u32, // lint:allow(arvo-types-only, no-bare-numeric, no-public-raw-field) tracked: #206
     pub version: ExtensionVersion,
     pub capabilities_ptr: *const CapabilityEntry,
-    pub capabilities_len: USize,
+    pub capabilities_len: u32, // lint:allow(arvo-types-only, no-bare-numeric, no-public-raw-field) tracked: #206
     pub required_host_caps_ptr: *const CapabilityId,
-    pub required_host_caps_len: USize,
+    pub required_host_caps_len: u32, // lint:allow(arvo-types-only, no-bare-numeric, no-public-raw-field) tracked: #206
     pub init_fn: Option<
         unsafe extern "C" fn(host_ctx: *mut c_void) -> ExtensionAbiStatus,
     >,
