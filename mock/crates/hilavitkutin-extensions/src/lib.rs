@@ -25,14 +25,15 @@ mod host;
 mod traits;
 
 pub use descriptor::{
-    CapabilityEntry, CapabilityId, DESCRIPTOR_SYMBOL, ExtensionAbiStatus,
-    ExtensionDescriptor, ExtensionVersion, HOST_ABI_VERSION,
+    AbiVersion, CapabilityEntry, CapabilityId, DESCRIPTOR_SYMBOL,
+    EXTENSION_DESCRIPTOR_TAG, ExtensionAbiStatus, ExtensionDescriptor,
+    ExtensionVersion, HOST_ABI_VERSION, MAX_DESCRIPTOR_LIST_LEN,
 };
 pub use error::ExtensionError;
 pub use extension::Extension;
 pub use host::{
     ExtensionHost, ExtensionRequirement, FailurePolicyFn, PolicyVerdict,
-    default_policy,
+    default_policy, validate_descriptor,
 };
 pub use traits::{CapabilityExport, ExtensionMeta, InitHandler, ShutdownHandler};
 
@@ -64,8 +65,8 @@ mod tests {
     }
 
     #[test]
-    fn host_abi_version_is_one() {
-        assert_eq!(HOST_ABI_VERSION, 1);
+    fn host_abi_version_is_two() {
+        assert_eq!(HOST_ABI_VERSION.0, 2);
     }
 
     #[test]
@@ -100,9 +101,10 @@ mod tests {
 
     #[test]
     fn descriptor_symbol_is_null_terminated() {
-        assert_eq!(DESCRIPTOR_SYMBOL.last(), Some(&0));
+        let bytes = DESCRIPTOR_SYMBOL.to_bytes_with_nul();
+        assert_eq!(bytes.last(), Some(&0));
         assert_eq!(
-            &DESCRIPTOR_SYMBOL[..DESCRIPTOR_SYMBOL.len() - 1],
+            &bytes[..bytes.len() - 1],
             b"__hilavitkutin_extension_descriptor",
         );
     }
