@@ -8,7 +8,7 @@
 //! complete; every code-emit function (`select_approach`,
 //! `codegen_fiber`, `codegen_core`) stubs to `todo!()`. The
 //! real LLVM / ExpandedLto wiring + rust-pipe emission pattern
-//! land as follow-ups — see BACKLOG → Engine 5a3 follow-ups.
+//! land as follow-ups: see BACKLOG → Engine 5a3 follow-ups.
 
 pub mod approach;
 pub mod core_dispatch;
@@ -17,6 +17,8 @@ pub mod morsel;
 pub mod progress;
 pub mod sync;
 pub mod wu_fn;
+
+use arvo::USize;
 
 pub use approach::DispatchApproach;
 pub use core_dispatch::CoreDispatch;
@@ -30,8 +32,8 @@ pub use wu_fn::WuFn;
 /// count.
 ///
 /// Skeleton: `todo!()`. Real thresholds (10K cutover target) land
-/// with benchmarks — see BACKLOG.
-pub fn select_approach(record_count: u64, fiber_count: u16) -> DispatchApproach {
+/// with benchmarks: see BACKLOG.
+pub fn select_approach(record_count: USize, fiber_count: USize) -> DispatchApproach {
     let _ = (record_count, fiber_count);
     todo!("5a3: approach selection (record-count thresholds)")
 }
@@ -39,7 +41,7 @@ pub fn select_approach(record_count: u64, fiber_count: u16) -> DispatchApproach 
 /// Emit the monomorphised per-fiber dispatch function.
 ///
 /// Skeleton: `todo!()`. Needs LLVM hooks or a build-time plugin
-/// from hilavitkutin-build — see BACKLOG.
+/// from hilavitkutin-build: see BACKLOG.
 pub fn codegen_fiber<Ctx: 'static, const MAX_CORES: usize>() -> FiberDispatch<Ctx, MAX_CORES> {
     todo!("5a3: emit monomorphised per-fiber dispatch function")
 }

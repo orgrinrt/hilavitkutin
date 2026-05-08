@@ -15,27 +15,17 @@ The canonical spec is
 
 ## Identity
 
-{{crate_count}} crates, flat structure, four logical groupings:
+{{crate_count}} crates, flat structure, five logical groupings:
 
-**API — consumer-facing contracts:**
-- `hilavitkutin-api` — `WorkUnit`, `AccessSet`, `Column<T>`,
-  `Resource<T>`, `Virtual<T>`, `Context`, `Contains`, platform
-  contracts (`Clock`, `MemoryProvider`, `ThreadPool`).
+**API (consumer-facing contracts).** `hilavitkutin-api` ships `WorkUnit`, `AccessSet`, `Column<T>`, `Resource<T>`, `Virtual<T>`, `Context`, `Contains`, and the platform contracts (`Clock`, `MemoryProvider`, `ThreadPool`).
 
-**Engine — the scheduler and runtime:**
-- `hilavitkutin` — `plan` (phase, fiber, analysis, morsel, loading),
-  `dispatch`, `resource`, `thread`, `strategy`, `adapt`, `scheduler`,
-  `intrinsics`, `platform`.
+**Engine (the scheduler and runtime).** `hilavitkutin` houses `plan` (phase, fiber, analysis, morsel, loading), `dispatch`, `resource`, `thread`, `strategy`, `adapt`, `scheduler`, `intrinsics`, and `platform`.
 
-**Build-time — build-dep only, no runtime linkage:**
-- `hilavitkutin-build` — LLVM passes, MIR manipulation, cfg emission,
-  PGO / BOLT workflows, ExpandedLto pragma support. Consumer's
-  `build.rs` uses this; the runtime crate never links to it.
+**Build-time (build-dep only, no runtime linkage).** `hilavitkutin-build` holds LLVM passes, MIR manipulation, cfg emission, PGO / BOLT workflows, and ExpandedLto pragma support. Consumer's `build.rs` uses this; the runtime crate never links to it.
 
-**Extensions — standalone opt-in sub-libraries:**
-- `hilavitkutin-ctx` — provider-gated context framework.
-- `hilavitkutin-persistence` — generic hot/cold storage bridge.
-- `hilavitkutin-str` — interned string system.
+**Ecosystem (standalone opt-in sub-libraries).** `hilavitkutin-ctx` is the provider-gated context framework, `hilavitkutin-persistence` is the generic hot/cold storage bridge, and `hilavitkutin-str` is the interned string system.
+
+**Plugin host infrastructure (reusable downstream loader layer).** Three crates make up the layer. `hilavitkutin-linking` is the cross-platform dynamic library loader primitive: pull-based explicit-symbol resolution over dlopen / LoadLibrary, `no_std`, no allocator. `hilavitkutin-extensions` is the contract-bound host orchestration layered above it: `ExtensionDescriptor` shape, lifecycle with per-extension host-opaque context pointer, capability dispatch via stable `CapabilityId`, required-versus-optional failure policy. `hilavitkutin-extensions-macros` is the proc-macro companion that emits the `#[repr(C)]` descriptor, the `__hilavitkutin_extension_descriptor` exported fn, and the capability trampolines via `#[export_extension]`. All three remain domain-agnostic; downstream consumers (viola, etc.) layer their own contract crates on top.
 
 ## Crate table
 
@@ -48,10 +38,22 @@ The canonical spec is
 - Monomorphisation is the dispatch. No `dyn`, no `TypeId`, no
   `std::any`. WorkUnits are generic over their `AccessSet`; the
   monomorphised function IS the type identity.
-- Static composition only. All WUs are registered at compile time
-  via the scheduler builder. No `inventory::`, no `#[ctor]`, no
-  `#[distributed_slice]`, no runtime plugin discovery. Plan
-  parameters adapt; composition does not.
+- Static composition only inside the engine. All hilavitkutin
+  WorkUnits are registered at compile time via the scheduler
+  builder. Plan parameters adapt; engine composition does not.
+  Linker-magic registration (`inventory::`, `#[ctor]`,
+  `#[distributed_slice]`, `.init_array`) is banned on every
+  hilavitkutin crate, both inside the engine and inside the
+  plugin-host layer.
+- The plugin-host layer (`hilavitkutin-linking`,
+  `hilavitkutin-extensions`, `hilavitkutin-extensions-macros`)
+  provides pull-based explicit-symbol dynamic loading and contract-
+  bound orchestration for downstream consumer hosts. This is
+  distinct from runtime WU discovery: the engine never loads WUs at
+  runtime, and the plugin-host crates use pull-based discovery
+  only, never linker-magic. `hilavitkutin-extensions-macros` is the
+  sole proc-macro crate in the stack; its emitted output is
+  `no_std`-compatible.
 - Pre-allocated thread pool. No `thread::spawn`, `tokio::spawn`,
   `async_std::spawn` at runtime. Threads are spawned once at
   pipeline construction; they park between frames.
@@ -70,7 +72,7 @@ The canonical spec is
   They do not depend on each other and do not depend on the engine.
 - Substrate dependency: the engine consumes `arvo` for numeric and
   analysis primitives (`arvo-graph`, `arvo-bitmask`, `arvo-sparse`,
-  `arvo-spectral`, `arvo-comb`). Keep the boundary clean — no
+  `arvo-spectral`, `arvo-comb`). Keep the boundary clean; no
   re-export of arvo types through `hilavitkutin-api`.
 
 ## Vocabulary
@@ -122,8 +124,26 @@ commit time.
   `TypeId` to any `hilavitkutin*` crate.
 - Do not introduce runtime spawn (`thread::spawn`, `tokio::spawn`,
   `async_std::spawn`). The pool is pre-allocated at plan time.
-- Do not introduce runtime registration (`inventory::submit!`,
-  `#[ctor]`, `#[distributed_slice]`). All WU composition is static.
+- Do not introduce linker-magic registration (`inventory::submit!`,
+  `#[ctor]`, `#[distributed_slice]`, `.init_array`-based registries)
+  in any hilavitkutin crate. Engine WU composition is static.
+  Plugin-host discovery is pull-based explicit symbols only.
+- Do not confuse engine-scope rules with plugin-host-scope rules.
+  Runtime dlopen of downstream consumer extensions routed through
+  `hilavitkutin-linking` / `hilavitkutin-extensions` is the
+  permitted mechanism and is not the same as the banned
+  linker-magic registration pattern.
+- Do not build runtime extension discovery into the plugin-host
+  layer. Downstream consumer ecosystems (loimu's runtime expansion,
+  viola's grammar set, and so on) build that abstraction on top.
+  `hilavitkutin-linking`, `hilavitkutin-extensions`, and
+  `hilavitkutin-extensions-macros` support arbitrary-time loading of
+  individual extensions and no more.
+- Do not design ABI surfaces that assume "all plugins loaded before
+  any invoked" or any similar ecosystem-wide gate. The framework's
+  assumption is that any extension loads, runs, and drops at
+  arbitrary points independent of siblings. Consumer code MUST
+  tolerate this; framework code MUST enforce it.
 - Do not use the dead vocabulary terms (`chain`, `chain_group`,
   `partition`, `archetype`, `entity`, `row`, `order`) for any
   engine-domain concept.

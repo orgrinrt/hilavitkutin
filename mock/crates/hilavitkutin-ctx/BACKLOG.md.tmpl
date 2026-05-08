@@ -1,13 +1,19 @@
-# hilavitkutin-ctx — backlog
+# hilavitkutin-ctx, backlog
 
-## define_providers_generic! facade
+> **Type-surface reminder**: new entries use `arvo::USize` /
+> `Bool` / `UFixed<N, 0, S>` instead of `usize` / `bool` / `u*`;
+> `notko::Maybe` / `Outcome` instead of `Option` / `Result`;
+> `hilavitkutin_str::Str` instead of `&str` / `String`. See
+> `rules/type-surface.md`.
+
+## `define_providers_generic!` facade
 
 A single-call facade mixing concrete and parameterised providers,
 analogous to `define_providers!`. Nice-to-have for consumers that
 declare many providers at once. Not needed until a second
 multi-provider consumer surfaces that mixes the two shapes.
 
-## Higher-arity tuple_generic! impls
+## Higher-arity `tuple_generic!` impls
 
 `tuple_generic!` ships with enough arity to cover hilavitkutin's
 WU-context needs (roughly 5-7 providers per layout). If a consumer

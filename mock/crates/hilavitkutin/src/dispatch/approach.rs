@@ -3,7 +3,7 @@
 //! Which codegen approach the plan picked. Selected by record
 //! count + fiber count: small record counts (<10K target) get
 //! `IndirectPerFiber` or `TrunkMega`; large record counts get
-//! `ScheduleMega`. Exact thresholds are benchmarked — see BACKLOG
+//! `ScheduleMega`. Exact thresholds are benchmarked: see BACKLOG
 //! → `select_approach` follow-up.
 
 /// Dispatch codegen approach.

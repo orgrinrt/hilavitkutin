@@ -1,0 +1,50 @@
+441e2f4 chore: close design round 202604500000 (extensions cop-out cleanup)
+9fb1dba refactor: wrap AbiVersion + DESCRIPTOR_SYMBOL as &CStr (round 202604500000)
+452e6ea docs: open src changelist for 202604500000 round
+dcdf028 chore: lock doc changelist for 202604500000_changelist.doc.lock.md
+d54425f docs: flatten round 202604500000 layout + apply doc CL template edits
+8fb1e83 docs: open extensions cop-out cleanup round 202604500000
+41bf867 feat: extensions source conformance + full #[export_extension] emission (#36)
+a41adb4 refactor!: rename hilavitkutin-extensions to -linking, add host layer + macros (#35)
+7a33eba feat: hilavitkutin-extensions (merged PR #34)
+c526448 docs: add EXTENSIONS_RESEARCH and plugin scaffolding
+56d3256 docs: type-surface reminder block at top of every BACKLOG.md.tmpl (#92) (#33)
+a7f72ad docs: hilavitkutin writing-style sweep (#32)
+a90f4a4 chore: bump mockspace to pick up no-empty-crate fix (#31)
+6b01f6f refactor: hilavitkutin-build primitive-vocabulary sweep (#72) (#30)
+b3971f9 refactor: hilavitkutin-str primitive-vocabulary sweep (#72) (#29)
+7d5ec90 refactor: hilavitkutin-persistence primitive-vocabulary sweep (#72) (#28)
+5e3e6cc refactor: hilavitkutin::plan module sweep (#72) (#27)
+cb45d2a refactor: hilavitkutin::scheduler skeleton sweep (#72) (#26)
+3a84831 refactor: hilavitkutin::dispatch skeleton sweep (#72) (#25)
+ef543fc refactor: hilavitkutin::thread skeleton sweep (#72) (#24)
+21ca497 refactor: hilavitkutin::platform shim sweep (#72) (#23)
+4a559a8 refactor: hilavitkutin::adapt USize + Nanos sweep (#72) (#22)
+c53c770 refactor: hilavitkutin::resource USize + Slot sweep (#72) (#21)
+17004e8 refactor: hilavitkutin::strategy USize sweep (#72) (#20)
+1e84b66 refactor: hilavitkutin-api primitive sweep (#72) (#19)
+627261e refactor: complete str/lib.rs lint:allow reformat (#72 residual) (#18)
+d30ff31 refactor: reformat 9 lint:allow comments to reason+tracked form (#72) (#17)
+c1423e6 Merge pull request #16 from orgrinrt/feat/str-use-layout-masks
+4eb32c1 chore: close design round 202604310500
+b536631 chore: lock src changelist for 202604310500_changelist.src.lock.md
+7377426 refactor: Str masks forward to StrLayout; persistence uses .into()
+9ca0ed5 docs: add src changelist for str mask-forward round
+af217d3 chore: lock doc changelist for 202604310500_changelist.doc.lock.md
+72b2bc1 docs: describe Str's mask forwarding to StrLayout
+3201b13 docs: open str-layout mask-forward polish round
+5d057ac Merge pull request #15 from orgrinrt/feat/exact-widths-str-and-hints
+fa05ee1 chore: close design round 202604290000
+a9fcd1b chore: lock src changelist for 202604290000_changelist.src.lock.md
+df8ec45 refactor!: apply exact-widths round (Str via bitfield!, hints via UFixed)
+1868ccd docs: add src changelist for exact-widths round
+18dd557 chore: lock doc changelist for 202604290000_changelist.doc.lock.md
+c10fb70 docs: apply exact-widths round doc edits
+ae484a8 docs: open exact-widths round for Str and scheduling hints
+9965e10 Merge pull request #14 from orgrinrt/feat/port-legacy-research-bulk
+e7578c6 docs: import legacy hilavitkutin research from polka-dots and saalis
+7a6c199 Merge pull request #13 from orgrinrt/feat/port-polka-research
+d040811 docs: import polka-dots build/llvm research verbatim
+60b922c Merge pull request #12 from orgrinrt/feat/hilavitkutin-build-research-audit
+48f98ad docs: audit hilavitkutin-build design against polka-dots origin
+6cfd2b1 Merge pull request #11 from orgrinrt/feat/exact-widths-rule

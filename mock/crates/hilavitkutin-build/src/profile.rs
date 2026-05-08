@@ -28,7 +28,7 @@ impl Default for Profile {
 impl Profile {
     /// The default `PragmaSet` for this profile per DESIGN Q3.
     ///
-    /// `ParallelCodegen(0)` means "auto-detect codegen units" — the
+    /// `ParallelCodegen(0)` means "auto-detect codegen units": the
     /// rustc wrapper resolves `0` via `available_parallelism()` at
     /// generation time. A concrete consumer may replace with
     /// `ParallelCodegen(N)` post-construction.
@@ -67,7 +67,7 @@ impl Profile {
 
     /// Resolve from a cargo `$PROFILE` env value. Unknown names fall
     /// through to `Dev` per src CL §Impl-time decisions item 2.
-    pub fn from_cargo_profile(name: &str) -> Self {
+    pub fn from_cargo_profile(name: &str) -> Self { // lint:allow(no-bare-string) reason: cargo env `$PROFILE` value; tracked: #72
         match name {
             "dev" => Profile::Dev,
             "dev-opt" => Profile::DevOpt,

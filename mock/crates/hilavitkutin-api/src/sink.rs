@@ -12,6 +12,7 @@
 use core::marker::PhantomData;
 
 use arvo::USize;
+use arvo::strategy::Identity;
 
 use crate::capability::{BulkPush, Len, Push};
 
@@ -33,8 +34,8 @@ impl<E, S: Push<E> + Len + ?Sized> DiagnosticSink<E> for S {}
 /// Byte-stream: per-byte push + bulk-write capability.
 ///
 /// Codec `Encoder<T>` and `Decoder<T>` write through this trait.
-pub trait ByteEmitter: Push<u8> + BulkPush<u8> {}
-impl<S: Push<u8> + BulkPush<u8> + ?Sized> ByteEmitter for S {}
+pub trait ByteEmitter: Push<u8> + BulkPush<u8> {} // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: byte-stream trait bound; bytes are the 8-bit I/O unit of the contract; tracked: #72
+impl<S: Push<u8> + BulkPush<u8> + ?Sized> ByteEmitter for S {} // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: matches ByteEmitter bound above; tracked: #72
 
 /// Discards everything pushed to it.
 ///
@@ -71,7 +72,7 @@ impl<T> CountingSink<T> {
     /// Fresh sink starting at count 0.
     pub const fn new() -> Self {
         Self {
-            count: USize(0),
+            count: USize::ZERO,
             _m: PhantomData,
         }
     }

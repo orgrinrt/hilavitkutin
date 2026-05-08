@@ -6,7 +6,7 @@
 
 #![cfg(feature = "platform-os")]
 
-use arvo::newtype::{Bool, USize};
+use arvo::{Bool, USize};
 use hilavitkutin::{OsClock, OsMemoryProvider};
 use hilavitkutin_api::platform::{ClockApi, MemoryProviderApi};
 

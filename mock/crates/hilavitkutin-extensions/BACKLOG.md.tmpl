@@ -1,0 +1,43 @@
+# hilavitkutin-extensions backlog
+
+Type-surface reminder: every pub signature in this crate uses notko's fallibility ladder (Just / Maybe / Outcome), arvo primitives for numeric and boolean values, and fixed-capacity structured errors with no heap payloads. Collections do not cross the public API. The crate returns single `Extension` handles and small static-reference accessors, not container types.
+
+Host-layer source was brought into conformance with this DESIGN in round 202604241201 (post-landing conformance sweep). Prior source drift on `ExtensionError`, `ExtensionAbiStatus`, `ExtensionVersion`, `CapabilityId`, `CapabilityExport`, `ExtensionMeta::NAME`, `InitHandler::init`, `ExtensionHost::new`, `ExtensionHost::load`, and `Extension::capability` is now resolved.
+
+## Designed, deferred
+
+### Flip bare-primitive FFI-wire sites to UWire<N> once arvo ships it
+
+Round 202604510000 (#206) decided the FFI-wire primitive policy: arvo transparent newtypes (USize / Bool) at wire-identical sites, bare primitives at sites where no wire-stable arvo newtype exists yet. The bare sites today are `ExtensionDescriptor.abi_version: u32`, the four `u16` fields inside `ExtensionVersion`, and the inner `u64` of `CapabilityId`. All are marked with trailing `lint:allow(...) tracked: #206` annotations. When arvo ships a `UWire<N>` primitive (fixed backing per N wire bits, no Strategy axis), flip those sites to `UWire<32>` / `UWire<16>` / `UWire<64>` and drop the lint:allow annotations. Cross-referenced to the counterpart arvo BACKLOG entry.
+
+### Hot-reload orchestration with ref-counted unload
+
+V1 is load-once, drop-once. Some downstream consumers will want hot-reload: atomically replace an extension at a path while outstanding `Extension` handles are still live. That requires ref-counting at the host layer and a versioned handle-token contract with the linking layer. Out of v1 scope because it changes the `Extension`-to-`Library` lifetime story.
+
+### Type-level capability identifiers
+
+V1 uses `CapabilityId` (a plain u64 newtype) for lookups. A richer design would introduce a `Capability` marker trait with associated `ID: CapabilityId` and `Interface` type, letting the host return a typed `&Interface` directly from capability lookup. Ergonomic improvement for consumers; requires macro-side cooperation and affects the export macro shape. Deferred to a future round.
+
+### Lifecycle observability hooks
+
+Hooks for load, init, capability invocation, and shutdown transitions. Today consumers instrument around `ExtensionHost::load` and each `Extension::capability` call in their own code. In-crate hooks would standardise this and enable out-of-band telemetry without consumer cooperation. Adds either `dyn` or an additional fn-pointer slot on `ExtensionHost`; deferred pending a concrete consumer pain-point.
+
+### Wasm-backend extensions
+
+A wasm transport (via wasmtime or a similar engine) alongside the cdylib transport, with a matching wasm descriptor convention. Out of v1 scope; the architectural question of whether to unify the two transports under one host or ship separate hosts is a whole design round.
+
+### Capability-level compatibility negotiation
+
+V1 exposes `required_host_caps` as presence-or-absence. Richer negotiation (minimum capability versions, feature-flag matching, optional sub-capabilities) would require extending `CapabilityEntry` with more fields and defining a negotiation protocol between host and extension at load time.
+
+### Stateful consumer-supplied policy functions
+
+`FailurePolicyFn` is a plain fn pointer in v1 to avoid `dyn` and heap. Consumers wanting stateful policies (for example "abort after the third optional extension fails") today pack state into the extension's own instance and expose a plain fn reading from a static. A more ergonomic pattern would be a policy trait with associated state that mockspace can monomorphise through; deferred pending concrete need.
+
+### Extension telemetry surfaces
+
+Per-load timing, per-invocation timing, capability-lookup counters. Part of the lifecycle hooks story above but decoupled: telemetry could ship first as a separate crate-level feature even before general hooks land.
+
+### Probe without init
+
+`ExtensionHost::probe(path)` that reads and validates the descriptor without calling `init_fn` or returning an `Extension`. Useful for consumers that want a "list extensions in this directory" UX before committing to load. Two-line addition; intentionally held back from v1 pending confirmation it fits the host flow elsewhere.

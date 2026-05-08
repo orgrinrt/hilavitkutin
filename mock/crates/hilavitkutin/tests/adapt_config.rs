@@ -24,7 +24,7 @@ fn adapt_config_default_is_zero() {
 
 #[test]
 fn adapt_mode_is_phase_strategy_alias() {
-    // AdaptMode is a type alias for PhaseStrategy — the two
+    // AdaptMode is a type alias for PhaseStrategy: the two
     // should be interchangeable. Spell each variant through
     // both paths and compare.
     let a: AdaptMode = AdaptMode::MaxFuse;
@@ -60,7 +60,7 @@ fn adapt_metrics_new_is_zero() {
     assert_eq!(m.phase_completion_time_ns, 0);
 }
 
-// update_adapt is `todo!()` this round — don't call it, just
+// update_adapt is `todo!()` this round: don't call it, just
 // verify the signature compiles by taking a function pointer to
 // it with an explicit const param.
 #[test]

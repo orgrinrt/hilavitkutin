@@ -1,0 +1,195 @@
+# hilavitkutin-extensions
+
+Contract-bound extension host orchestration, layered on the
+`hilavitkutin-linking` loader primitive. Owns the `ExtensionDescriptor`
+`#[repr(C)]` shape, pull-based discovery via a single well-known
+exported symbol, per-extension lifecycle (init with host-opaque pointer,
+shutdown via drop or explicit close), capability dispatch by stable
+identifier plus opaque vtable pointer, required-versus-optional
+classification, and a pluggable failure policy.
+
+The crate is `#![no_std]`. It has no `alloc`, no `dyn`, no linker-magic
+registration. Descriptors are `&'static`, capability tables are
+`&'static [CapabilityEntry]`, and errors are fixed-size enums with
+fixed-width payloads.
+
+This crate is domain-agnostic. It knows what a descriptor is, what a
+capability id is, and what a lifecycle hook is. It does not know about
+diagnostics, AST shapes, linter interfaces, or any specific consumer
+domain. Downstream consumer contract crates (for example
+`viola-plugin-abi`) carry the domain-specific types and may wrap the
+primary export attribute under their own domain-named macro.
+
+## Public items
+
+- `ExtensionDescriptor` is the `#[repr(C)]` manifest the extension exposes to the host. Fixed-size fields cover ABI version (`u32` wire), extension name pointer and length (`*const u8`, `USize`), version triple, required host capabilities pointer and length (`*const CapabilityId`, `USize`), capabilities table pointer and length (`*const CapabilityEntry`, `USize`), optional init function pointer, and optional shutdown function pointer. See "FFI-wire primitive policy" below for the rule that governs which fields are arvo newtypes and which are bare primitives.
+- `ExtensionVersion` is the `#[repr(C)]` semver triple used in the descriptor. Four `u16` fields: major, minor, patch, and a padding slot for future use. The fields are bare `u16` by FFI-wire policy (see below); arvo has no wire-stable 16-bit newtype yet.
+- `CapabilityEntry` is one capability table row: `(CapabilityId, *const c_void)`. The void pointer is the opaque vtable the consumer-generated trampoline casts back to its domain-specific interface.
+- `CapabilityId` is a `#[repr(transparent)]` newtype over `u64` derived at compile time from an ASCII byte-string name via a FNV-64 const function. Consumer contract crates declare capability ids as `const` items. The `pub u64` field is the deliberate FFI-wire constructor pattern.
+- `ExtensionAbiStatus` is the `#[repr(u32)]` status enum returned by the init and shutdown C-ABI function pointers. Variants: `Ok`, `InitFailed`, `InvalidArg`, `NotSupported`, `Internal`.
+- `AbiVersion` is a `#[repr(transparent)]` newtype over `u32` wrapping the host-side ABI version value. FFI wire layout identical to `u32`; host code reads `ExtensionDescriptor.abi_version` and wraps into `AbiVersion` explicitly before comparison with `HOST_ABI_VERSION`.
+- `HOST_ABI_VERSION: AbiVersion` is the constant the host advertises and the descriptor must match for compatibility. Starts at 1. Bumps on any descriptor layout change or symbol name change.
+- `DESCRIPTOR_SYMBOL: &CStr` is the null-terminated C string naming the single well-known exported symbol extensions expose. Constructed at const via `CStr::from_bytes_with_nul_unchecked` over a literal with known trailing nul. Shared between host and extension author through the macro's emission path.
+- `Extension` is the host-level handle returned by `ExtensionHost::load`. Holds the lower-layer `Library` (from `hilavitkutin-linking`), the `&'static ExtensionDescriptor` resolved at load time, and the host-opaque `*mut c_void` threaded through init and shutdown. Its drop runs shutdown exactly once, then drops the `Library`.
+- `Extension::close` is the explicit-shutdown counterpart to drop. Returns `Outcome<(), ExtensionError>` so shutdown errors can be surfaced; drop swallows them (drop cannot fail).
+- `ExtensionHost` is the entry point for loading. `ExtensionHost::new(host_capabilities)` constructs a host with the capabilities the host offers; `with_policy(policy)` supplies an optional failure policy override; `with_shutdown_observer(observer)` supplies an optional observer that fires from `Extension::close` and the `Drop` path; `load(path, requirement, host_ctx)` loads one extension from disk.
+- `ExtensionRequirement` classifies each load as `Required` or `Optional`.
+- `PolicyVerdict` is the result of consulting the failure policy: `Continue` or `Abort`.
+- `FailurePolicyFn` is the `fn`-pointer type for consumer-supplied policy hooks. No `dyn`; consumers who need stateful policies hold state in their own instance and expose a plain `fn`.
+- `ShutdownObserverFn` is the `fn`-pointer type for consumer-supplied shutdown observers. Signature: `fn(name: &[u8], status: ExtensionAbiStatus)`. Fires once per extension from either `close()` or `Drop`. No `dyn`; consumers who need stateful observers hold state in static memory and expose a plain `fn`, the same constraint as `FailurePolicyFn`.
+- `default_policy` implements the built-in behaviour: required-plus-failure aborts; optional-plus-failure continues. Used when the consumer provides no policy.
+- `ExtensionError` is the `#[repr(C)] #[non_exhaustive]` host-layer error enum. Variants: `LinkFailed { cause: LinkError }`, `DescriptorMissing`, `DescriptorInvalid`, `AbiVersionMismatch { expected: AbiVersion, got: AbiVersion }`, `ExtensionVersionUnsupported`, `RequiredHostCapabilityMissing { cap: CapabilityId }`, `InitFailed { status: ExtensionAbiStatus }`, `ShutdownFailed { status: ExtensionAbiStatus }`.
+- `ExtensionMeta` is the trait that extension authors implement to feed name, version, and required host capability metadata into the `#[export_extension]` macro. Associated constants: `NAME: &'static [u8]`, `VERSION: ExtensionVersion`, `REQUIRED_HOST_CAPS: &'static [CapabilityId]`.
+- `InitHandler` is the optional trait for authors who want init behaviour beyond the no-op default. Its single method is `extern "C" fn init(host_ctx: *mut c_void) -> ExtensionAbiStatus`.
+- `ShutdownHandler` is the matching optional trait for shutdown behaviour.
+- `CapabilityExport` is the trait extension authors implement (typically via a consumer-domain macro) to advertise a capability: `const ID: CapabilityId` plus `const VTABLE_PTR: *const c_void`.
+
+## FFI-wire primitive policy
+
+`#[repr(C)]` descriptor fields cross the Rust / extension boundary and demand a wire-stable footprint. The crate follows a two-tier rule:
+
+1. Use an arvo `#[repr(transparent)]` newtype when its backing is wire-identical to the C type. `USize(pub usize)` is transparent over `usize` and slots into every `len` field paired with a pointer. `Bool(pub bool)` is transparent over `bool`. When an arvo newtype fits, it wins; the field gets the semantic name and the lint is clean.
+2. Retain a bare primitive when no wire-stable arvo newtype exists. `UFixed<I, F, S>` is `#[repr(transparent)]` over its backing, but the backing width comes from `S: Strategy` and is not pinned to exactly the C integer width. An FFI descriptor cannot accept that variability. `abi_version: u32`, `ExtensionVersion { major: u16, ... }`, and `CapabilityId`'s inner `u64` are bare primitives by deliberate choice; each site carries a trailing `// lint:allow(...) tracked: #206` comment that records the contract.
+
+Raw pointer fields (`*const u8`, `*const CapabilityEntry`, `*const CapabilityId`) fall outside the numeric-lint scope and stay as-is.
+
+A future arvo primitive `UWire<N>` (fixed backing for exactly `N` wire bits, no `Strategy` axis) would collapse the second tier back into the first. BACKLOG records the dependency.
+
+## Shape
+
+`ExtensionHost::load(path, requirement, host_ctx)` performs the full load sequence: open the path via `hilavitkutin-linking::Library::load`, resolve the `DESCRIPTOR_SYMBOL` via `Library::resolve_static`, validate `abi_version == HOST_ABI_VERSION`, verify every `required_host_caps` id appears in the host's advertised capabilities, run `init_fn` with `host_ctx` if present, and return `Extension` wrapping the composed state.
+
+On any failure path, the host classifies by `requirement` and consults the policy. Required failures propagate up through `Outcome::Err`. Optional failures either produce `Outcome::Ok(Maybe::Nothing)` (policy said continue) or propagate via `Outcome::Err` (policy said abort). The `Outcome::Ok(Maybe::Nothing)` shape is the correct modelling for a best-effort consumer: loaded something or didn't, both are normal outcomes.
+
+`Extension::capability(id)` returns `Maybe<*const c_void>`. The consumer casts the pointer back to its domain-specific vtable type via a consumer-owned trampoline. The host never dereferences the vtable pointer.
+
+`Extension::close(self)` calls `shutdown_fn(host_ctx)` if present, then drops the inner `Library`, returning `Outcome<(), ExtensionError>` carrying any shutdown error. `Drop` performs the same sequence but discards errors. Both paths fire the host's `ShutdownObserverFn` if one was installed via `ExtensionHost::with_shutdown_observer`, passing the extension's declared name and the status returned by `shutdown_fn` (or `ExtensionAbiStatus::Ok` if the extension declared no shutdown).
+
+## Pull-based discovery protocol
+
+The discovery protocol has exactly one step beyond opening the library: call the function exported at the symbol name `DESCRIPTOR_SYMBOL`. That function returns `*const ExtensionDescriptor` pointing at extension-static memory. The descriptor contents plus the host's advertised capability set fully determine validation.
+
+No linker sections are scanned, no constructor-registration tricks are used, and no static `inventory`-style collectors run. The extension-side emission (typically via `#[export_extension]`) defines the symbol as `#[no_mangle] pub extern "C" fn __hilavitkutin_extension_descriptor() -> *const ExtensionDescriptor`, backed by a `const` descriptor whose address the function returns.
+
+## Trampoline preservation under LTO
+
+The proc-macro emits two trampolines (`__ext_init_trampoline_<Struct>`, `__ext_shutdown_trampoline_<Struct>`) that wrap the consumer's `init` / `shutdown` types. Their addresses are stored as fn-pointer constants in the `__HILAVITKUTIN_EXT_DESCRIPTOR` static. The static is `#[used]`, and the descriptor function (`__hilavitkutin_extension_descriptor`, `#[unsafe(no_mangle)] pub extern "C"`) returns its address. This chain preserves the trampoline bytes under aggressive LTO + cdylib stripping: the export forces the descriptor function to keep, the function returns the static, the static is `#[used]`, and LLVM cannot elide a function whose address has been taken in a preserved static.
+
+The trampolines additionally carry `#[unsafe(no_mangle)] #[inline(never)]`. `no_mangle` gives external linkage, which keeps both trampoline names in the symbol table after LTO. `inline(never)` prevents an LTO path that would inline a trampoline body into the descriptor static's initializer expression. Neither attribute prevents the linker's identical-code-folding (ICF) pass from aliasing two trampolines to a single address when their bodies are byte-identical. ICF aliasing is benign for the framework's contract: when both impls inline to the same return value (e.g. trivial `init` and `shutdown` both returning `ExtensionAbiStatus::Ok`), the descriptor's two fn-pointer slots refer to one shared body and runtime calls produce the same correct result through either slot. Real consumer extensions ship `init` and `shutdown` impls that compile to non-identical bytes, so ICF does not fold them in practice.
+
+Macro emission goes one step further as a defensive measure: each trampoline body embeds a per-role byte-string constant (`b"init"` for the init trampoline, `b"shutdown"` for the shutdown trampoline) consumed via `core::hint::black_box`. The discriminator forces the trampoline bodies to differ at the byte level even when the wrapped impls are byte-identical, so ICF cannot alias them. The cost is one constant load plus a `black_box` no-op assembly fence per trampoline call, which is negligible because trampolines fire only at extension load and drop.
+
+The `RTLD_LOCAL` flag in `hilavitkutin-linking::backend::unix::platform_load` keeps each cdylib's symbols private to the loading scope. Combined with the trampoline names embedding the consumer's struct ident (`__ext_init_trampoline_<Struct>`), this means the only collision pathway for `#[unsafe(no_mangle)]` trampolines requires a host loading two extensions whose struct names overlap into the same `RTLD_GLOBAL` namespace, which is a configuration the framework does not produce.
+
+A regression test under `hilavitkutin-extensions-macros/tests/lto_smoke.rs` builds a sample cdylib with `lto = "fat"`, asserts both trampoline names survive in `nm` output, dlopens the cdylib, resolves the descriptor, and asserts that `descriptor.init_fn` and `descriptor.shutdown_fn` resolve to distinct addresses. The test caught both an early `inline(never)`-only design that left `shutdown_fn` symbolless, and the subsequent ICF address-aliasing case that the discriminator addresses.
+
+## Lifecycle contract
+
+Init: the host calls `init_fn(host_ctx)` exactly once, immediately after descriptor validation and capability verification, and before any capability is invoked. If `init_fn` is `None`, init is a no-op. If it returns anything other than `ExtensionAbiStatus::Ok`, the load aborts with `ExtensionError::InitFailed` and the library is dropped.
+
+Invoke: the host does not invoke capabilities directly. The consumer looks up a `*const c_void` vtable pointer via `Extension::capability(id)`, then dispatches through a consumer-generated trampoline. This is where macro-driven monomorphisation reconstructs the typed Rust interface at the consumer side of the cdylib boundary.
+
+Shutdown: either drop runs `shutdown_fn(host_ctx)` and swallows errors, or `Extension::close(self)` runs it and returns the error. In both cases `shutdown_fn` is called at most once. If `None`, shutdown is a no-op.
+
+The host-opaque pointer (`*mut c_void`) is per-extension. The host allocates it (or passes null) at load time and threads the same pointer through init and shutdown. Two simultaneously-loaded extensions never see each other's `host_ctx` through this channel. This is one of the API-level enforcements of the arbitrary-time linking invariant.
+
+## Capability identification
+
+`CapabilityId::from_name(name)` is `const fn` using FNV-64. Consumer contract crates declare capability names as const byte strings (e.g. `pub const CAP_LINTER: CapabilityId = CapabilityId::from_name(b"viola.linter.v1");`). The id is compile-time evaluated on both the host and extension sides of the boundary, guaranteeing stable bit-equality across independently compiled binaries.
+
+Collisions at 64 bits are vanishingly rare but not impossible. If they occur, consumers rename. The const nature of derivation means rename is a compile-time operation on both sides; no runtime collision detection is needed.
+
+## Failure policy
+
+Each `ExtensionHost::load` takes a `requirement` argument. The default policy is stateless and simple: required failure aborts, optional failure continues. Consumers with richer needs construct their host via `ExtensionHost::new(caps).with_policy(their_fn)`. `FailurePolicyFn` is a plain function pointer with signature `fn(&ExtensionError, ExtensionRequirement) -> PolicyVerdict`. No `dyn`, no heap, no closures: consumers carrying state pack it into the extension instance they are loading for and expose a plain `fn` that pulls from a well-known static.
+
+The shutdown observer is a separate hook from the failure policy. Drop has no caller to surface errors to; consumers that need to log shutdown failures or attribute them to extensions install an observer at host construction. `close()` already returns the error directly, but the observer fires there too for symmetry: a host that wants every shutdown observed installs one observer and gets notified on either path. Observer signature `fn(name: &[u8], status: ExtensionAbiStatus)` matches the same no-`dyn`, no-heap constraints as the policy hook.
+
+## Architectural position
+
+```
+  consumer-plugin-abi crates (e.g. viola-plugin-abi)
+    <-- consumer contract crates. Define domain-specific Capability
+        types that implement CapabilityExport. Optionally wrap
+        #[export_extension] under a domain-named attribute
+        (e.g. #[viola::plugin]).
+
+  hilavitkutin-extensions-macros
+    <-- proc-macro crate. Emits the #[repr(C)] descriptor,
+        the DESCRIPTOR_SYMBOL export, the capability table,
+        and trampolines from user trait impls.
+
+  hilavitkutin-extensions  <-- this crate
+    <-- descriptor types, discovery protocol, lifecycle
+        orchestrator, capability lookup, failure policy.
+
+  hilavitkutin-linking
+    <-- dlopen / LoadLibrary + typed Library / Symbol / StaticRef.
+
+  OS dynamic loader
+```
+
+Dependency flow is strictly downward. The engine crate (`hilavitkutin`) does not depend on this one. Nor does the api, build-time, or ecosystem crates.
+
+## Dependencies
+
+Workspace dependencies:
+
+- hilavitkutin-linking for the loader primitive.
+- notko for Outcome / Maybe / Just primitives on public signatures.
+- arvo for USize and other numeric primitives where public signatures express sizes.
+
+No dependencies on hilavitkutin, hilavitkutin-api, hilavitkutin-build, hilavitkutin-ctx, hilavitkutin-persistence, hilavitkutin-str.
+
+Build-time: mockspace (workspace convention).
+
+## Arbitrary-time linking invariant
+
+The invariant propagates forward from `hilavitkutin-linking`. This crate preserves it at the API level by construction:
+
+- No global registry exists. `ExtensionHost::load` returns one `Extension`; no API accumulates them into a static collection. Consumers choose their own holding pattern (`Vec`, `Seq<Extension, N>`, `HashMap`, drop-immediately).
+- No ecosystem-wide init barrier exists. There is no `load_all_extensions(manifest)` entry point; no `initialize_ecosystem()` call. Each `Extension` completes its init before `load` returns; nothing waits on sibling extensions.
+- No cross-extension channel exists. The host-opaque pointer threaded through init and shutdown is per-extension; two extensions never share state through this crate.
+- Drop is independent and per-extension. `Extension::drop` closes exactly one extension and releases exactly one `Library`. No drop side-effect is visible to other extensions.
+
+The consumer-side obligation is that host code built on top of this crate tolerates arbitrary-time loading. Assumptions like "all extensions loaded before any invoked", "init ordering gates invocation", or "the full extension ecosystem must be known before proceeding" are forbidden at the framework level. Consumers that need ecosystem-wide semantics build them in their own higher layer.
+
+## Relationship to hilavitkutin-extensions-macros
+
+The sibling proc-macro crate is a companion: in principle a consumer could author extensions without it by hand-writing the descriptor constant plus the `__hilavitkutin_extension_descriptor` exported fn plus the trampolines. In practice the macro is the default path for anyone writing an extension, because it collapses the hand-written boilerplate to a single `#[export_extension]` attribute plus the trait impls the consumer would write anyway.
+
+Consumer contract crates can wrap `#[export_extension]` inside their own domain-named attribute. For example a viola-plugin-abi crate might ship `#[viola::plugin]` that expands internally to `#[export_extension(required_host_caps = [viola::CAP_NAM])]` plus viola-specific trait bounds on the target type. The user then writes:
+
+```rust
+#[viola::plugin]
+struct MyLinter;
+
+impl viola::Linter for MyLinter {
+    fn lint(&self, ast: &viola::Ast) -> viola::Diagnostics { /* ... */ }
+}
+```
+
+and gets the full repr-C descriptor, trampolines, and exported symbol with no direct contact with the lower-layer machinery.
+
+## Non-scope
+
+This crate does not:
+
+- Define domain contracts (NAM, AST shapes, diagnostic formats, roles). Those live in consumer contract crates.
+- Walk directories to discover extensions, parse manifests to select extensions, or compute load order. Those are higher-layer concerns. Downstream consumer hosts build them on top.
+- Provide cross-extension communication channels. Extensions are independent; any coordination is the host's responsibility via the capabilities it invokes.
+- Sandbox extensions or meter resource usage. V1 is full-trust native code; no isolation.
+- Support hot-reload with ref-counted unload. V1 is load-once, drop-once. BACKLOG.
+- Fetch extensions from remote sources, verify signatures, or interact with extension stores. Out of scope.
+
+## Cross-references
+
+- Round topics: `design_rounds/202604240615_topic.hilavitkutin-extensions-host.md` and `design_rounds/202604240615_topic.rename-extensions-to-linking.md`.
+- Lower layer: `hilavitkutin-linking`.
+- Proc-macro companion: `hilavitkutin-extensions-macros`.
+- Research input: `EXTENSIONS_RESEARCH.md` at the repo root.
+- Downstream reference: `viola/docs/PLUGIN-ABI-V1-DESIGN.md` (describes how a domain-specific contract crate builds on top).
+
+## Shipping commitment
+
+The public surface described here plus the specific type and method names locked in the src CL of round 202604240615. Follow-up rounds may extend the crate (type-level capability ids, lifecycle logging hooks, hot-reload orchestration) but must preserve the v1 contract unless explicit deprecation is scheduled.

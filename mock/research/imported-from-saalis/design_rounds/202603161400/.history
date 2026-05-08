@@ -1,0 +1,50 @@
+b694f4a chore: lock src changelist — round complete (DONE phase)
+b5f8a08 feat: add Op enum to saalis-primitives (query comparison operators)
+8111e5a docs: src changelist v2 — add Op enum (only remaining item)
+22b5a74 chore: lock doc changelist — transition to SRC-PLAN
+d76466f docs: fix 32 undocumented-type lint errors in DESIGN.md.tmpl files
+b12640c chore: remove builtin-duplicated agent templates
+1a6a5d7 chore: unlock doc changelist — return to DOC phase to fix undocumented types
+6d5f52b chore: deprecate src changelist, revert lint loosening
+994dea7 chore: update mockspace — builtin templates, lint-derived content, toml_edit
+482fb25 chore: update mockspace — toml_edit parser, lint config now parsed
+57be0ae chore: update mockspace dependency — builtin hooks, auto settings, forbidden-imports
+3bf6b2b refactor: forbidden-imports rules as inline array of tables
+e44ba6f refactor: prepare for mockspace builtin hooks + forbidden-imports
+d4f63da feat: saalis-specific agent hooks for architectural guardrails
+f6bedec feat: saalis custom lints + per-gate lint config in mockspace.toml
+fac87cc feat: SRC phase — type signatures for 11-crate workspace
+664863b docs: src changelist — type signatures for 11 crates
+d4bfe16 chore: lock doc changelist — transition to SRC-PLAN phase
+65030c2 docs: update doc changelist — mark done items, defer deepdives
+f639165 docs: execute doc changelist — 11-crate workspace with DESIGN templates
+9378d8f docs: doc changelist — initial architecture round
+a9a5031 docs: topic — crate taxonomy decisions (11 crates)
+6ad5765 docs: topic — crate taxonomy revision post-research
+8630066 chore: add full agent infrastructure — rules, hooks, skills, settings
+16e9700 fix: remove duplicate PREAMBLE/POSTAMBLE from agent template
+d24541d chore: bootstrap mockspace workspace, reorganise all docs
+3fd634f docs: decision D9 — unified Storage trait family with capability supertraits
+898d43f docs: decision D8 — QueryFilter as registered trait
+3743663 docs: decision D7 — CompositeField as registered trait
+4dfb3d0 docs: decision D6 — FTS5 search, dual path (hot prefix + cold ranked)
+9b49e31 docs: decision D5 — SIEVE hot store memory management
+b6b070c docs: decision D4 — nullable columns via As<Option<V>>
+a088fa9 docs: decision D3 — ColdStore hot↔cold bridge
+0fd1a86 docs: D1 fix — _saalis_schema for ALL tables, no PRAGMA user_version
+f847a8b docs: decisions D1 (rusqlite) and D2 (ColumnValue trait) approved
+e275ee2 docs: deep-dive — SeaORM migrations evaluation vs rusqlite_migration
+04cad46 docs: topic — architecture revisions from research findings
+79fe43d docs: add research index to integration topic file
+6cad007 docs: synthesis — developer onboarding guide (4.5k words)
+26f5f4d docs: deep-dive — concurrency primitives for sync-core architecture
+93401bc docs: deep-dive — axum web framework patterns for HTMX + SSE
+3e8119d docs: deep-dive — serde patterns and performance optimization
+bb289e9 docs: deep-dive — error handling patterns across plugin ABI boundary
+eb2f220 docs: deep-dive — cross-compilation and CI/CD for ARM deployment
+31320f6 docs: deep-dive — backup, restore, and data portability
+2586fc3 docs: deep-dive — accessibility for HTMX + gamepad UI
+58869ad docs: deep-dives — security considerations + observability/tracing
+ba07c9f docs: synthesis — definitive implementation stack for saalis v1
+2c3d086 docs: deep-dive — testing strategies for saalis
+388aa9f docs: deep-dive — i18n/localization (Fluent, ICU4X, Maud integration)

@@ -32,7 +32,7 @@ mod imp {
             if start.is_null() || stop.is_null() || stop < start {
                 return &[];
             }
-            let len = stop.offset_from(start) as usize;
+            let len = stop.offset_from(start) as usize; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: slice length from raw pointer `offset_from`; host-width usize required by `core::slice::from_raw_parts`; tracked: #72
             core::slice::from_raw_parts(start, len)
         }
     }
@@ -60,7 +60,7 @@ mod imp {
             if start.is_null() || stop.is_null() || stop < start {
                 return &[];
             }
-            let len = stop.offset_from(start) as usize;
+            let len = stop.offset_from(start) as usize; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: slice length from raw pointer `offset_from`; host-width usize required by `core::slice::from_raw_parts`; tracked: #72
             core::slice::from_raw_parts(start, len)
         }
     }

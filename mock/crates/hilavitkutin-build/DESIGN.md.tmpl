@@ -1,8 +1,8 @@
-# hilavitkutin-build — Design
+# hilavitkutin-build, Design
 
 Shared build-dependency crate. Every hilavitkutin crate and every
 consumer's build.rs calls `hilavitkutin_build::configure().run()`.
-Independent of hilavitkutin runtime — optimises HOW code is compiled,
+Independent of hilavitkutin runtime, optimises HOW code is compiled,
 not what it does. Standalone, no runtime deps.
 
 ## Entry point
@@ -22,7 +22,7 @@ fn main() {
 (CARGO_CFG_TARGET_ARCH, CARGO_CFG_TARGET_VENDOR,
 CARGO_CFG_TARGET_FEATURE), emits `cargo:rustc-cfg` lines and
 `cargo:rerun-if-changed`, and generates the rustc wrapper and config
-files. Does NOT do live CPUID/sysctl detection — hardware topology
+files. Does NOT do live CPUID/sysctl detection, hardware topology
 (L1 sizes, core counts, P/E ratio) is a runtime concern handled by
 LazyLock in hilavitkutin's scheduler.
 
@@ -31,7 +31,7 @@ LazyLock in hilavitkutin's scheduler.
 **1. hilavitkutin-build (this crate):** reads cargo env vars, emits
 cfg flags, generates the rustc wrapper script and config file. Runs
 in every crate's build.rs. Does NOT handle LLVM codegen flags
-directly — that's the wrapper's job.
+directly, that's the wrapper's job.
 
 **2. No custom cargo features (T4 §Q2):** the compiler already
 provides everything needed. ISA capabilities via `target_feature`.
@@ -50,7 +50,7 @@ CARGO_CFG_TARGET_FEATURE and computes flags from three axes:
 - **Passes:** which LLVM passes to activate beyond default pipeline
 
 Each (target, tier) pair gets EXACTLY the flags optimal for it.
-Can grow to hundreds of lines — more precision is more value.
+Can grow to hundreds of lines, more precision is more value.
 
 Configured in `.cargo/config.toml`:
 ```toml
@@ -74,7 +74,7 @@ natively. arvo detects hardware capabilities in its own build.rs
 via `CARGO_CFG_TARGET_FEATURE`, not custom flags from this crate.
 
 The only cfg this crate emits:
-- `arvo_fast_math` — when the FastMath pragma is active. arvo uses
+- `arvo_fast_math`, when the FastMath pragma is active. arvo uses
   this to gate fast-math float semantics.
 
 ## Pragma system (T4 §Q4f)
@@ -131,25 +131,25 @@ A ~40-line C++ file compiled against LLVM headers. Registers passes
 at two extension points in the LLVM pipeline:
 
 **VectorizerStartEP (before vectorizer):**
-1. IRCE — bounds check elimination
-2. LoopPredication — guard hoisting
-3. SimplifyCFG — dead branch cleanup after IRCE/Predication
-4. LoopInterchange — fix nested loop order for sequential access
-5. LoopDistribute — break dependent loops for partial vectorization
+1. IRCE, bounds check elimination
+2. LoopPredication, guard hoisting
+3. SimplifyCFG, dead branch cleanup after IRCE/Predication
+4. LoopInterchange, fix nested loop order for sequential access
+5. LoopDistribute, break dependent loops for partial vectorization
 
 **OptimizerLastEP (after vectorizer):**
-6. LoopDataPrefetch — prefetch the vectorized access pattern
-7. SeparateConstOffsetFromGEP — CSE of column base pointers
-8. LoopFusion — fuse adjacent loops (conditional: only when
+6. LoopDataPrefetch, prefetch the vectorized access pattern
+7. SeparateConstOffsetFromGEP, CSE of column base pointers
+8. LoopFusion, fuse adjacent loops (conditional: only when
    LoopFusion pragma is active)
 
 The IR cleanup pipeline (passes 1-3) runs BEFORE Polly to make Rust
 IR Polly-friendly (remove bounds checks, panic branches, dead code).
 Callback registration order at VectorizerStartEP determines execution
-order — cleanup callbacks register before Polly's callbacks.
+order, cleanup callbacks register before Polly's callbacks.
 
 **Platform constraint:** `-Z llvm-plugins` only works on Linux
-(dynamic LLVM). macOS/Windows ship static LLVM — no plugin loading.
+(dynamic LLVM). macOS/Windows ship static LLVM, no plugin loading.
 Dev builds on macOS use `-C passes=` and `-C llvm-args=` (built-in
 passes, no plugin). Release builds use the container workflow.
 
@@ -268,16 +268,16 @@ Four config files, three committed, one generated:
 
 The following already exist in the repo:
 
-- `scripts/llvm-passes/polka-passes.cpp` — the LLVM pass plugin
+- `scripts/llvm-passes/polka-passes.cpp`, the LLVM pass plugin
   (94 lines). Registers IRCE, LoopPredication, SimplifyCFG,
   LoopInterchange, LoopDistribute at VectorizerStartEP.
   LoopDataPrefetch, SeparateConstOffsetFromGEP at OptimizerLastEP.
   Compiles against LLVM headers inside the release container.
 
-- `scripts/llvm-passes/math-peephole.cpp` — float math peephole
+- `scripts/llvm-passes/math-peephole.cpp`, float math peephole
   rewrite plugin. Fired by the MathPeephole pragma.
 
-- `scripts/release-container.sh` — Apple Container workflow (407
+- `scripts/release-container.sh`, Apple Container workflow (407
   lines). Persistent named container, first-time toolchain setup
   (rustup nightly + matching LLVM binary release downloaded
   automatically), hash-based plugin compilation skip, cargo build

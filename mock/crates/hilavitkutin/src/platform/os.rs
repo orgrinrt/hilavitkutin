@@ -1,4 +1,4 @@
-//! OS platform tier — raw syscalls via libc.
+//! OS platform tier: raw syscalls via libc.
 //!
 //! Backs `MemoryProviderApi` with mmap/munmap, `ClockApi` with
 //! `clock_gettime(CLOCK_MONOTONIC)`, and `ThreadPoolApi` with a
@@ -8,8 +8,8 @@
 use core::ffi::c_void;
 use core::ptr;
 
-use arvo::newtype::{Bool, USize};
-use hilavitkutin_api::platform::{ClockApi, MemoryProviderApi, ThreadPoolApi};
+use arvo::{Bool, USize};
+use hilavitkutin_api::platform::{ClockApi, MemoryProviderApi, Nanos, ThreadPoolApi};
 
 /// mmap/munmap-backed memory provider.
 ///
@@ -38,7 +38,7 @@ impl Default for OsMemoryProvider {
 }
 
 impl MemoryProviderApi for OsMemoryProvider {
-    unsafe fn allocate(&self, len: USize, _align: USize) -> *mut u8 {
+    unsafe fn allocate(&self, len: USize, _align: USize) -> *mut u8 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer; tracked: #72
         // MAP_ANON | MAP_PRIVATE, PROT_READ | PROT_WRITE.
         // Caller responsibility (per trait contract): null on OOM.
         let addr = unsafe {
@@ -55,11 +55,11 @@ impl MemoryProviderApi for OsMemoryProvider {
         if addr == libc::MAP_FAILED {
             ptr::null_mut()
         } else {
-            addr as *mut u8
+            addr as *mut u8 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: libc mmap returns *mut c_void; cast to allocator ABI ptr; tracked: #72
         }
     }
 
-    unsafe fn deallocate(&self, ptr: *mut u8, len: USize) {
+    unsafe fn deallocate(&self, ptr: *mut u8, len: USize) { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer; tracked: #72
         // Ignore the return value; a failed munmap on a pointer
         // produced by our allocate would be a consumer bug. The
         // trait contract says the pointer becomes invalid after
@@ -67,7 +67,7 @@ impl MemoryProviderApi for OsMemoryProvider {
         let _ = unsafe { libc::munmap(ptr as *mut c_void, *len as libc::size_t) };
     }
 
-    unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {
+    unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer; tracked: #72
         // Skeleton: real mprotect wiring lands with the persistence
         // mmap-file round. Tracked in BACKLOG under "Memory
         // protection (mprotect)".
@@ -76,7 +76,7 @@ impl MemoryProviderApi for OsMemoryProvider {
 
 /// pthread-backed thread pool.
 ///
-/// Skeleton — `spawn` accepts only a parameterless `fn()` via a
+/// Skeleton: `spawn` accepts only a parameterless `fn()` via a
 /// trampoline over a thin function pointer. Generic-closure
 /// support with queue integration lands in sub-round 5a4.
 /// `worker_count` returns `USize(1)` until the same round wires
@@ -110,7 +110,7 @@ impl OsThreadPool {
     pub fn spawn_fn(&self, f: fn()) {
         // Box-free trampoline: smuggle the fn pointer through a
         // usize cast (same size on every target tier-1).
-        let raw = f as usize;
+        let raw = f as usize; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: pthread_create arg smuggling via usize bit pattern; tracked: #72
         let mut tid: libc::pthread_t = unsafe { core::mem::zeroed() };
         let _ = unsafe {
             libc::pthread_create(
@@ -123,14 +123,14 @@ impl OsThreadPool {
     }
 }
 
-/// pthread entry-point trampoline. Monomorphic over `fn()` — the
+/// pthread entry-point trampoline. Monomorphic over `fn()`: the
 /// raw pointer argument encodes the consumer-supplied function.
 extern "C" fn trampoline(arg: *mut c_void) -> *mut c_void {
-    let raw = arg as usize;
+    let raw = arg as usize; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: trampoline arg smuggled as usize bit pattern; tracked: #72
     // SAFETY: `raw` was produced from a `fn()` pointer in
     // `OsThreadPool::spawn_fn`. The cast round-trip preserves the
     // ABI-compatible bit pattern on all tier-1 targets.
-    let f: fn() = unsafe { core::mem::transmute::<usize, fn()>(raw) };
+    let f: fn() = unsafe { core::mem::transmute::<usize, fn()>(raw) }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: recover fn() from smuggled usize; tracked: #72
     f();
     ptr::null_mut()
 }
@@ -183,7 +183,7 @@ impl Default for OsClock {
 }
 
 impl ClockApi for OsClock {
-    fn now_ns(&self) -> u64 {
+    fn now_ns(&self) -> Nanos {
         let mut ts = libc::timespec {
             tv_sec: 0,
             tv_nsec: 0,
@@ -193,6 +193,7 @@ impl ClockApi for OsClock {
         // value is ignored; CLOCK_MONOTONIC is available on every
         // tier-1 unix target.
         let _ = unsafe { libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut ts) };
-        (ts.tv_sec as u64).wrapping_mul(1_000_000_000).wrapping_add(ts.tv_nsec as u64)
+        let raw = (ts.tv_sec as u64).wrapping_mul(1_000_000_000).wrapping_add(ts.tv_nsec as u64); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: CLOCK_MONOTONIC timespec -> ns bit pattern for Nanos; tracked: #72
+        Nanos::from_raw(raw)
     }
 }

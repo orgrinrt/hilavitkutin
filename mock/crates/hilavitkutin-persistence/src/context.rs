@@ -1,4 +1,4 @@
-//! PersistenceContext — bundle of references the cold store needs.
+//! PersistenceContext: bundle of references the cold store needs.
 //!
 //! Holds a memory provider (for mmap / allocate / protect) and a
 //! string interner (for Str eviction / injection). Consumers assemble

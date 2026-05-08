@@ -1,0 +1,36 @@
+# Standalone (non-workspace-member) cdylib fixture for the LTO smoke test.
+# Inherits the workstation's rustc toolchain (nightly is required because the
+# extensions stack uses nightly features). Built explicitly by the parent
+# crate's `tests/lto_smoke.rs` integration test via `cargo build --release
+# --manifest-path .../Cargo.toml`.
+
+[workspace]
+# Empty `[workspace]` declares this crate as its own root, so it does NOT
+# inherit the parent workspace at `mock/Cargo.toml`. The parent workspace
+# does not list this manifest as a member.
+
+[package]
+name = "lto-smoke-fixture"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+path = "src/lib.rs"
+
+[profile.release]
+lto = "fat"
+codegen-units = 1
+opt-level = 3
+panic = "abort"
+# Keep symbols visible so `nm` can observe trampoline survival. A consumer
+# release profile may set `strip = "symbols"`; the descriptor's `#[used]`
+# static still keeps the trampoline bytes, but the symbol-level observation
+# we want here requires unstripped output.
+strip = false
+
+[dependencies]
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+hilavitkutin-extensions = { path = "../../../hilavitkutin-extensions" }
+hilavitkutin-extensions-macros = { path = "../.." }

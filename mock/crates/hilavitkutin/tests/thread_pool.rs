@@ -52,7 +52,7 @@ fn thread_handle_copy_and_eq() {
     assert_eq!(a, b);
     assert_eq!(a, ThreadHandle(3));
     assert_ne!(a, ThreadHandle(4));
-    // ThreadHandle is Copy — original still usable.
+    // ThreadHandle is Copy: original still usable.
     let _ = a.0;
 }
 
