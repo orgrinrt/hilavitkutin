@@ -140,7 +140,7 @@ use crate::access::{Cons, Empty};
 /// Marker for a Cons-list of stores.
 #[diagnostic::on_unimplemented(
     message = "`{Self}` is not a StoreBundle",
-    note = "StoreBundle is auto-implemented for `Empty` and `Cons<H, T>` where `T: StoreBundle`. Build the bundle through the scheduler builder's `.resource::<T>(initial)`, `.column::<T>()`, and `.add_virtual::<T>()` calls, or install a Kit whose `Owned` declares it."
+    note = "StoreBundle is auto-implemented for `Empty` and `Cons<H, T>` where `T: StoreBundle`. Build the bundle through the scheduler builder's `.add_resource::<T>(initial)`, `.add_column::<T>()`, and `.add_virtual::<T>()` calls, or install a Kit whose `Owned` declares it."
 )]
 pub trait StoreBundle {}
 

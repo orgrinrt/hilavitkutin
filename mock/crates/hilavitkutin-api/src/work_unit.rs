@@ -82,7 +82,7 @@ use crate::access::{Concat, Cons, Empty};
 /// access sets.
 #[diagnostic::on_unimplemented(
     message = "`{Self}` is not a WorkUnitBundle",
-    note = "WorkUnitBundle is auto-implemented for `Empty` and for `Cons<W, T>` where `W: WorkUnit` and `T: WorkUnitBundle`. Build the bundle through the scheduler builder's `.add::<W>()` calls."
+    note = "WorkUnitBundle is auto-implemented for `Empty` and for `Cons<W, T>` where `W: WorkUnit` and `T: WorkUnitBundle`. Build the bundle through the scheduler builder's `.add_unit::<W>()` calls."
 )]
 pub trait WorkUnitBundle {
     type AccumRead: AccessSet;
