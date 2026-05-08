@@ -5,8 +5,9 @@ use hilavitkutin_linking::Library;
 use notko::{Maybe, Outcome};
 
 use crate::descriptor::{
-    AbiVersion, CapabilityId, DESCRIPTOR_SYMBOL, ExtensionAbiStatus,
-    ExtensionDescriptor, HOST_ABI_VERSION,
+    CapabilityId, DESCRIPTOR_SYMBOL, EXTENSION_DESCRIPTOR_TAG,
+    ExtensionAbiStatus, ExtensionDescriptor, HOST_ABI_VERSION,
+    MAX_DESCRIPTOR_LIST_LEN,
 };
 use crate::error::ExtensionError;
 use crate::extension::Extension;
@@ -152,20 +153,12 @@ impl ExtensionHost {
         let descriptor: &'static ExtensionDescriptor =
             unsafe { &*descriptor_ptr };
 
-        let extension_abi = AbiVersion(descriptor.abi_version);
-        if extension_abi != HOST_ABI_VERSION {
-            return policy_translate(
-                self.policy,
-                requirement,
-                ExtensionError::AbiVersionMismatch {
-                    expected: HOST_ABI_VERSION,
-                    got: extension_abi,
-                },
-            );
+        if let Outcome::Err(err) = validate_descriptor(descriptor) {
+            return policy_translate(self.policy, requirement, err);
         }
 
         // Verify every required-host-cap is in our advertised set.
-        let req_len = descriptor.required_host_caps_len.0;
+        let req_len = descriptor.required_host_caps_len as usize;
         if !descriptor.required_host_caps_ptr.is_null() && req_len > 0 {
             let mut i = 0;
             while i < req_len {
@@ -216,4 +209,64 @@ fn policy_translate(
         PolicyVerdict::Abort => Outcome::Err(error),
         PolicyVerdict::Continue => Outcome::Ok(Maybe::Isnt),
     }
+}
+
+/// Validate descriptor structural invariants in the order required for
+/// safe field access: tag, descriptor_size, abi_version, length
+/// bounds. The required-host-capability check happens at the call
+/// site after this returns, because it depends on the host's
+/// advertised capability set.
+///
+/// Returns `Outcome::Ok(())` on success. The first failed check
+/// surfaces; subsequent fields are not read. Public so consumers can
+/// validate a descriptor pointer they obtained outside the standard
+/// load path (e.g. from a probe-only inspection or a custom loader),
+/// and so the integration test suite can exercise the contract
+/// directly.
+pub fn validate_descriptor(
+    descriptor: &ExtensionDescriptor,
+) -> Outcome<(), ExtensionError> {
+    if descriptor.tag != EXTENSION_DESCRIPTOR_TAG {
+        return Outcome::Err(ExtensionError::DescriptorTagMismatch {
+            found: descriptor.tag,
+        });
+    }
+
+    let host_size = core::mem::size_of::<ExtensionDescriptor>() as u32;
+    if descriptor.descriptor_size < host_size {
+        return Outcome::Err(ExtensionError::DescriptorSizeTooSmall {
+            advertised: descriptor.descriptor_size,
+            minimum: host_size,
+        });
+    }
+
+    if descriptor.abi_version != HOST_ABI_VERSION {
+        return Outcome::Err(ExtensionError::AbiVersionMismatch {
+            expected: HOST_ABI_VERSION,
+            got: descriptor.abi_version,
+        });
+    }
+
+    if descriptor.name_len > MAX_DESCRIPTOR_LIST_LEN {
+        return Outcome::Err(ExtensionError::DescriptorBoundsExceeded {
+            field: "name",
+            len: descriptor.name_len,
+        });
+    }
+
+    if descriptor.capabilities_len > MAX_DESCRIPTOR_LIST_LEN {
+        return Outcome::Err(ExtensionError::DescriptorBoundsExceeded {
+            field: "capabilities",
+            len: descriptor.capabilities_len,
+        });
+    }
+
+    if descriptor.required_host_caps_len > MAX_DESCRIPTOR_LIST_LEN {
+        return Outcome::Err(ExtensionError::DescriptorBoundsExceeded {
+            field: "required_host_caps",
+            len: descriptor.required_host_caps_len,
+        });
+    }
+
+    Outcome::Ok(())
 }
