@@ -1,11 +1,15 @@
 //! Compile-time Contains<S> membership for arities 1..=6.
 //!
-//! The test is that this file compiles: each `fn requires_...`
-//! forces the trait bound at monomorphisation.
+//! Post round 202605082142 the legacy flat-tuple `AccessSet`/`Contains`
+//! impls are gone; the cons-list shape is the sole substrate. Each
+//! `requires_*` invocation forces the trait bound at monomorphisation
+//! against an `read!`-built cons-list. The test is that this file
+//! compiles.
 
 #![no_std]
 
-use hilavitkutin_api::{AccessSet, Contains};
+use hilavitkutin_api::access::{AccessSet, Contains};
+use hilavitkutin_api::read;
 
 struct A;
 struct B;
@@ -18,45 +22,45 @@ fn requires<S, Ts: AccessSet + Contains<S>>() {}
 
 #[test]
 fn arity_1() {
-    requires::<A, (A,)>();
+    requires::<A, read![A]>();
 }
 
 #[test]
 fn arity_2() {
-    requires::<A, (A, B)>();
-    requires::<B, (A, B)>();
+    requires::<A, read![A, B]>();
+    requires::<B, read![A, B]>();
 }
 
 #[test]
 fn arity_3() {
-    requires::<A, (A, B, C)>();
-    requires::<B, (A, B, C)>();
-    requires::<C, (A, B, C)>();
+    requires::<A, read![A, B, C]>();
+    requires::<B, read![A, B, C]>();
+    requires::<C, read![A, B, C]>();
 }
 
 #[test]
 fn arity_4() {
-    requires::<A, (A, B, C, D)>();
-    requires::<B, (A, B, C, D)>();
-    requires::<C, (A, B, C, D)>();
-    requires::<D, (A, B, C, D)>();
+    requires::<A, read![A, B, C, D]>();
+    requires::<B, read![A, B, C, D]>();
+    requires::<C, read![A, B, C, D]>();
+    requires::<D, read![A, B, C, D]>();
 }
 
 #[test]
 fn arity_5() {
-    requires::<A, (A, B, C, D, E)>();
-    requires::<B, (A, B, C, D, E)>();
-    requires::<C, (A, B, C, D, E)>();
-    requires::<D, (A, B, C, D, E)>();
-    requires::<E, (A, B, C, D, E)>();
+    requires::<A, read![A, B, C, D, E]>();
+    requires::<B, read![A, B, C, D, E]>();
+    requires::<C, read![A, B, C, D, E]>();
+    requires::<D, read![A, B, C, D, E]>();
+    requires::<E, read![A, B, C, D, E]>();
 }
 
 #[test]
 fn arity_6() {
-    requires::<A, (A, B, C, D, E, F)>();
-    requires::<B, (A, B, C, D, E, F)>();
-    requires::<C, (A, B, C, D, E, F)>();
-    requires::<D, (A, B, C, D, E, F)>();
-    requires::<E, (A, B, C, D, E, F)>();
-    requires::<F, (A, B, C, D, E, F)>();
+    requires::<A, read![A, B, C, D, E, F]>();
+    requires::<B, read![A, B, C, D, E, F]>();
+    requires::<C, read![A, B, C, D, E, F]>();
+    requires::<D, read![A, B, C, D, E, F]>();
+    requires::<E, read![A, B, C, D, E, F]>();
+    requires::<F, read![A, B, C, D, E, F]>();
 }

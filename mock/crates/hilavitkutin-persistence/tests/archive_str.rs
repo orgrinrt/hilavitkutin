@@ -2,7 +2,7 @@
 
 use std::cell::RefCell;
 
-use arvo::USize;
+use arvo::{Identity, USize};
 use arvo_bits::Bits;
 use arvo_hash::ContentHash;
 use hilavitkutin_persistence::{
@@ -54,7 +54,7 @@ fn content_hash(s: &str) -> ContentHash {
 fn evict_const_is_identity() {
     let interner = StringInterner::new(VecInterner::new());
     let h = Str::__make(Bits::<28>::from_raw(0x0012_3456));
-    assert!(h.is_const());
+    assert!(h.is_const().0);
     let evicted = evict_str(h, &interner);
     assert_eq!(evicted, ContentHash::from_raw(0x0012_3456));
 }
@@ -63,7 +63,7 @@ fn evict_const_is_identity() {
 fn evict_runtime_hashes_bytes() {
     let interner = StringInterner::new(VecInterner::new());
     let h = interner.intern("runtime-evict-sample");
-    assert!(h.is_runtime());
+    assert!(h.is_runtime().0);
     let evicted = evict_str(h, &interner);
     assert_eq!(evicted, content_hash("runtime-evict-sample"));
 }
@@ -103,9 +103,11 @@ fn inject_runtime_via_string_table() {
         Outcome::Err(_) => panic!("inject ok"),
     };
     // Runtime handle bit set, id truncated to 28 bits.
-    assert!(injected.is_runtime());
-    assert_eq!(interner.resolve(injected), Some("table-roundtrip"));
+    assert!(injected.is_runtime().0);
+    assert_eq!(interner.resolve(injected), Maybe::Is("table-roundtrip"));
 }
+
+
 
 #[test]
 fn evict_then_inject_runtime_roundtrips() {
@@ -130,7 +132,7 @@ fn evict_then_inject_runtime_roundtrips() {
         Outcome::Ok(h) => h,
         Outcome::Err(_) => panic!("inject ok"),
     };
-    assert_eq!(interner.resolve(reinjected), Some("roundtrip-string"));
+    assert_eq!(interner.resolve(reinjected), Maybe::Is("roundtrip-string"));
 }
 
 #[test]
