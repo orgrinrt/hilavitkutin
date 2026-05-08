@@ -1,14 +1,11 @@
 //! Tests for the v1.1 descriptor validation steps: tag check,
 //! descriptor_size check, abi_version check, length-bounds checks.
 //!
-//! The host's `validate_descriptor` helper is `pub(crate)`. This test
-//! file uses a thin construct-and-validate path that exercises the
-//! same logic by constructing a descriptor literal in test memory and
-//! calling the public `ExtensionHost::load`-equivalent code path
-//! through a re-exported test hook. Since `validate_descriptor` does
-//! not depend on a live `Library`, the test path bypasses linking by
-//! invoking the helper directly via a `pub` test hook gated on
-//! `cfg(test)`.
+//! `validate_descriptor` is part of the public surface; consumers
+//! probing descriptors outside the standard `ExtensionHost::load`
+//! path call it directly. These tests exercise it the same way:
+//! construct a descriptor literal in test memory, hand it to the
+//! helper, assert the surfaced outcome.
 
 use core::ffi::c_void;
 
