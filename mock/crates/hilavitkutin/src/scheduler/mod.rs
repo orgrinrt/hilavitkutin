@@ -76,13 +76,13 @@ pub struct SchedulerBuilder<Wus, Stores> {
 
 impl<Wus, Stores> SchedulerBuilder<Wus, Stores> {
     /// Register a WU type. Prepends `W` onto `Wus`.
-    pub fn add<W: WorkUnit>(self) -> SchedulerBuilder<Cons<W, Wus>, Stores> {
+    pub fn add_unit<W: WorkUnit>(self) -> SchedulerBuilder<Cons<W, Wus>, Stores> {
         SchedulerBuilder { _phantom: PhantomData }
     }
 
     /// Register a `Resource<T>` with an initial value. Prepends
     /// `Resource<T>` onto `Stores`.
-    pub fn resource<T: 'static>(
+    pub fn add_resource<T: 'static>(
         self,
         _init: T,
     ) -> SchedulerBuilder<Wus, Cons<Resource<T>, Stores>> {
@@ -90,14 +90,14 @@ impl<Wus, Stores> SchedulerBuilder<Wus, Stores> {
     }
 
     /// Register a `Resource<T>` constructed via `Default`.
-    pub fn resource_default<T: Default + 'static>(
+    pub fn add_resource_default<T: Default + 'static>(
         self,
     ) -> SchedulerBuilder<Wus, Cons<Resource<T>, Stores>> {
         SchedulerBuilder { _phantom: PhantomData }
     }
 
     /// Register a `Column<T>`. Prepends `Column<T>` onto `Stores`.
-    pub fn column<T: 'static>(self) -> SchedulerBuilder<Wus, Cons<Column<T>, Stores>> {
+    pub fn add_column<T: 'static>(self) -> SchedulerBuilder<Wus, Cons<Column<T>, Stores>> {
         SchedulerBuilder { _phantom: PhantomData }
     }
 
@@ -125,15 +125,18 @@ impl<Wus, Stores> SchedulerBuilder<Wus, Stores> {
         SchedulerBuilder { _phantom: PhantomData }
     }
 
-    pub fn memory<M: MemoryProviderApi + 'static>(self, _provider: M) -> Self {
+    /// Bind a `MemoryProviderApi` impl as the memory provider.
+    pub fn with_memory<M: MemoryProviderApi + 'static>(self, _provider: M) -> Self {
         self
     }
 
-    pub fn threads<P: ThreadPoolApi + 'static>(self, _pool: P) -> Self {
+    /// Bind a `ThreadPoolApi` impl as the thread pool.
+    pub fn with_threads<P: ThreadPoolApi + 'static>(self, _pool: P) -> Self {
         self
     }
 
-    pub fn clock<C: ClockApi + 'static>(self, _clock: C) -> Self {
+    /// Bind a `ClockApi` impl as the clock.
+    pub fn with_clock<C: ClockApi + 'static>(self, _clock: C) -> Self {
         self
     }
 }
