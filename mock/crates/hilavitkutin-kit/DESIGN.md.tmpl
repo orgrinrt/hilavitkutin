@@ -106,7 +106,7 @@ impl<const BYTES: usize, const ENTRIES: usize> Kit
 
 The kit declares the type-level commitment that the StringInterner
 Resource exists in `Stores`. The actual value is supplied at the
-app's call site via `builder.resource(default_interner::<...>())`,
+app's call site via `builder.add_resource(default_interner::<...>())`,
 since the api has no `Kit::default_resources()` association
 (see BACKLOG entry).
 
@@ -249,8 +249,9 @@ diagnostic without reading the api docs first.
 ## Deferred ergonomics
 
 A declarative `app!` / `define_app!` macro that folds
-`.add::<WU>()` / `.resource()` / `.column()` / `.add_kit()` calls
-into a single block was considered and parked at task #295 (P2,
+`.add_unit::<WU>()` / `.add_resource()` / `.add_column()` /
+`.add_kit()` calls into a single block was considered and parked
+at task #295 (P2,
 likely never). Bevy proves the raw builder pattern is
 ergonomically sufficient at the call counts viola, vehje, and
 similar consumers reach (around ten registrations per app). The
