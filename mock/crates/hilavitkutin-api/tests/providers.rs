@@ -8,6 +8,7 @@
 #![no_std]
 
 use arvo::USize;
+use hilavitkutin_api::access::Empty;
 use hilavitkutin_api::{
     AccessSet, BatchApi, Column, ColumnReaderApi, ColumnValue, ColumnWriterApi, Contains,
     EachApi, HasBatch, HasColumnReader, HasColumnWriter, HasEach, HasReduce,
@@ -160,11 +161,11 @@ fn accessors_dispatch_through_bundle() {
 
     // Fix the generic parameters by binding once through the
     // accessor trait. The accessor method call shape:
-    let _r: &ReaderP = <Bundle as HasColumnReader<()>>::reader(&b);
-    let _w: &WriterP = <Bundle as HasColumnWriter<()>>::writer(&b);
-    let _rs: &ResourceP = <Bundle as HasResourceProvider<()>>::resources(&b);
-    let _fi: &FirerP = <Bundle as HasVirtualFirer<()>>::virtuals(&b);
-    let _ea: &EachP = <Bundle as HasEach<(), ()>>::each(&b);
-    let _ba: &BatchP = <Bundle as HasBatch<(), ()>>::batch(&b);
-    let _rd: &ReduceP = <Bundle as HasReduce<(), ()>>::reduce(&b);
+    let _r: &ReaderP = <Bundle as HasColumnReader<Empty>>::reader(&b);
+    let _w: &WriterP = <Bundle as HasColumnWriter<Empty>>::writer(&b);
+    let _rs: &ResourceP = <Bundle as HasResourceProvider<Empty>>::resources(&b);
+    let _fi: &FirerP = <Bundle as HasVirtualFirer<Empty>>::virtuals(&b);
+    let _ea: &EachP = <Bundle as HasEach<Empty, Empty>>::each(&b);
+    let _ba: &BatchP = <Bundle as HasBatch<Empty, Empty>>::batch(&b);
+    let _rd: &ReduceP = <Bundle as HasReduce<Empty, Empty>>::reduce(&b);
 }
