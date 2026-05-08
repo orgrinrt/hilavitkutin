@@ -28,18 +28,30 @@ pub type Divisibility = UFixed<{ ibits(2) }, { fbits(0) }, Hot>;
 pub type Significance = UFixed<{ ibits(3) }, { fbits(0) }, Hot>;
 
 /// Axis 1: how soon the WU must run.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` is not an Urgency marker",
+    note = "Available markers: `Immediate`, `Steady`, `Relaxed`, `Deferred`. Sealed; consumer-defined markers are not supported."
+)]
 pub trait UrgencyValue: hint_sealed::Sealed + 'static {
     /// Discriminant. Higher = higher urgency.
     const VALUE: Urgency;
 }
 
 /// Axis 2: whether the WU can be split or paused.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` is not a Divisibility marker",
+    note = "Available markers: `Atomic`, `Adaptive`, `Interruptible`. Sealed; consumer-defined markers are not supported."
+)]
 pub trait DivisibilityValue: hint_sealed::Sealed + 'static {
     /// Discriminant. Higher = more rigid scheduling.
     const VALUE: Divisibility;
 }
 
 /// Axis 3: relative importance of the WU's output.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` is not a Significance marker",
+    note = "Available markers: `Critical`, `Important`, `Normal`, `Opportunistic`, `Optional`. Sealed; consumer-defined markers are not supported."
+)]
 pub trait SignificanceValue: hint_sealed::Sealed + 'static {
     /// Discriminant. Higher = more significant.
     const VALUE: Significance;
@@ -49,6 +61,10 @@ pub trait SignificanceValue: hint_sealed::Sealed + 'static {
 ///
 /// Sealed. The only implementer is the 3-tuple
 /// `(U: UrgencyValue, D: DivisibilityValue, S: SignificanceValue)`.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` is not a SchedulingHint tuple",
+    note = "SchedulingHint is implemented on the tuple `(U: UrgencyValue, D: DivisibilityValue, S: SignificanceValue)`. Use the substrate-provided ZST markers (`Immediate` / `Steady` / `Relaxed` / `Deferred` for U; `Atomic` / `Adaptive` / `Interruptible` for D; `Critical` / `Important` / `Normal` / `Opportunistic` / `Optional` for S)."
+)]
 pub trait SchedulingHint: hint_sealed::Sealed + 'static {}
 
 impl<U: UrgencyValue, D: DivisibilityValue, S: SignificanceValue> hint_sealed::Sealed
