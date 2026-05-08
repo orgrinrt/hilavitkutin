@@ -56,6 +56,13 @@ concrete consumer surfaces the friction.
  rustc errors do not dump deep cons-lists. Task #298.
 - add_kit::<K: Default>() ergonomic overload that constructs the
  Kit on the fly when it implements Default. Task #299.
+- Reintroduce `recursion_limit_for_kits!()` macro when rustc
+ accepts macro-expansion of crate-level inner attributes at
+ crate root. Current rustc rejects the shape with "an inner
+ attribute is not permitted in this context". Tracked as task
+ #396; sketch
+ `mock/research/sketches/202605082230_recursion_limit_macro/`
+ records the failed-probe artefact.
 
 ## Runtime-replaceable platform defaults
 
