@@ -11,7 +11,7 @@
 //! 2. WU-bearing tests with a Stub + TestCtx shim. These exercise
 //!    the load-bearing ContainsAll proof reduction.
 //!
-//! The negative case (`.add::<ReadInterner>().build()` without a
+//! The negative case (`.add_unit::<ReadInterner>().build()` without a
 //! matching resource) is verified manually as a compile-fail; a
 //! trybuild fixture is tracked in #296.
 
@@ -64,13 +64,13 @@ fn empty_build() {
 #[test]
 fn raw_resource_registration_builds() {
     let _ = Scheduler::builder()
-        .resource(Interner)
+        .add_resource(Interner)
         .build();
 }
 
 #[test]
 fn raw_column_registration_builds() {
-    let _ = Scheduler::builder().column::<FileInfo>().build();
+    let _ = Scheduler::builder().add_column::<FileInfo>().build();
 }
 
 #[test]
@@ -90,8 +90,8 @@ fn two_kits_chained_build() {
 fn mixed_kit_and_raw_build() {
     let _ = Scheduler::builder()
         .add_kit::<WorkspaceKit>()
-        .resource(Interner)
-        .column::<FileInfo>()
+        .add_resource(Interner)
+        .add_column::<FileInfo>()
         .build();
 }
 
@@ -244,8 +244,8 @@ impl WorkUnit<Always> for DiscoverFiles {
 #[test]
 fn wu_with_raw_resource_builds() {
     let _ = Scheduler::builder()
-        .resource(Interner)
-        .add::<ReadInterner>()
+        .add_resource(Interner)
+        .add_unit::<ReadInterner>()
         .build();
 }
 
@@ -253,7 +253,7 @@ fn wu_with_raw_resource_builds() {
 fn wu_with_kit_builds() {
     let _ = Scheduler::builder()
         .add_kit::<InternerKit>()
-        .add::<ReadInterner>()
+        .add_unit::<ReadInterner>()
         .build();
 }
 
@@ -262,8 +262,8 @@ fn two_wus_with_two_kits_build() {
     let _ = Scheduler::builder()
         .add_kit::<InternerKit>()
         .add_kit::<WorkspaceKit>()
-        .add::<ReadInterner>()
-        .add::<DiscoverFiles>()
+        .add_unit::<ReadInterner>()
+        .add_unit::<DiscoverFiles>()
         .build();
 }
 
@@ -295,16 +295,16 @@ impl WorkUnit<Always> for NoStores {
 #[test]
 fn smoke_fifty_wus() {
     let _ = Scheduler::builder()
-        .add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>()
-        .add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>()
-        .add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>()
-        .add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>()
-        .add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>()
-        .add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>()
-        .add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>()
-        .add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>()
-        .add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>()
-        .add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>().add::<NoStores>()
+        .add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>()
+        .add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>()
+        .add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>()
+        .add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>()
+        .add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>()
+        .add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>()
+        .add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>()
+        .add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>()
+        .add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>()
+        .add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>()
         .build();
 }
 
@@ -348,11 +348,11 @@ impl WorkUnit<Always> for SixteenStores {
 #[test]
 fn smoke_wu_with_sixteen_stores() {
     let _ = Scheduler::builder()
-        .resource(S0).resource(S1).resource(S2).resource(S3)
-        .resource(S4).resource(S5).resource(S6).resource(S7)
-        .resource(S8).resource(S9).resource(S10).resource(S11)
-        .resource(S12).resource(S13).resource(S14).resource(S15)
-        .add::<SixteenStores>()
+        .add_resource(S0).add_resource(S1).add_resource(S2).add_resource(S3)
+        .add_resource(S4).add_resource(S5).add_resource(S6).add_resource(S7)
+        .add_resource(S8).add_resource(S9).add_resource(S10).add_resource(S11)
+        .add_resource(S12).add_resource(S13).add_resource(S14).add_resource(S15)
+        .add_unit::<SixteenStores>()
         .build();
 }
 
