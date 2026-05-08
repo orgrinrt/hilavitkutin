@@ -167,15 +167,15 @@ registration call. Initial state on `Scheduler::builder()` is
 Builder API:
 ```
 Scheduler::builder()
-.add::<MyWU>()
-.resource::<T>(initial)
-.resource_default::<T>()
-.column::<T>()
+.add_unit::<MyWU>()
+.add_resource::<T>(initial)
+.add_resource_default::<T>()
+.add_column::<T>()
 .add_virtual::<T>()
 .add_kit::<MyKit>()
-.memory(my_provider)
-.threads(my_pool)
-.clock(my_clock)
+.with_memory(my_provider)
+.with_threads(my_pool)
+.with_clock(my_clock)
 .build()
 ```
 
@@ -185,14 +185,18 @@ Method shapes (registration methods evolve the type-state):
 impl<Wus, Stores> SchedulerBuilder<Wus, Stores>
 where Wus: AccessSet, Stores: AccessSet,
 {
- pub fn add<W: WorkUnit>(self) -> SchedulerBuilder<Cons<W, Wus>, Stores>
+ pub fn add_unit<W: WorkUnit>(self) -> SchedulerBuilder<Cons<W, Wus>, Stores>
  where Cons<W, Wus>: AccessSet;
 
- pub fn resource<T: 'static>(self, _init: T)
+ pub fn add_resource<T: 'static>(self, _init: T)
  -> SchedulerBuilder<Wus, Cons<Resource<T>, Stores>>
  where Cons<Resource<T>, Stores>: AccessSet;
 
- pub fn column<T: 'static>(self) -> SchedulerBuilder<Wus, Cons<Column<T>, Stores>>
+ pub fn add_resource_default<T: Default + 'static>(self)
+ -> SchedulerBuilder<Wus, Cons<Resource<T>, Stores>>
+ where Cons<Resource<T>, Stores>: AccessSet;
+
+ pub fn add_column<T: 'static>(self) -> SchedulerBuilder<Wus, Cons<Column<T>, Stores>>
  where Cons<Column<T>, Stores>: AccessSet;
 
  pub fn add_virtual<T: 'static>(self) -> SchedulerBuilder<Wus, Cons<Virtual<T>, Stores>>
@@ -206,9 +210,9 @@ where Wus: AccessSet, Stores: AccessSet,
  K::Units: Concat<Wus>,
  K::Owned: Concat<Stores>;
 
- pub fn memory<M: 'static>(self, _provider: M) -> Self;
- pub fn threads<P: 'static>(self, _pool: P) -> Self;
- pub fn clock<C: 'static>(self, _clock: C) -> Self;
+ pub fn with_memory<M: 'static>(self, _provider: M) -> Self;
+ pub fn with_threads<P: 'static>(self, _pool: P) -> Self;
+ pub fn with_clock<C: 'static>(self, _clock: C) -> Self;
 }
 
 impl<Wus, Stores> SchedulerBuilder<Wus, Stores>
@@ -222,15 +226,15 @@ where
 }
 ```
 
-`.add::<W>()`, `.resource(_)`, `.column()`, `.add_virtual()` each
-prepend a marker to one of the typestate accumulators (Wus or
-Stores). `.add_kit::<K>()` is type-only: the Kit instance is never
-constructed; the engine reads `K::Units` and `K::Owned` at compile
-time and prepends them onto the typestate via type-level `Concat`.
-The platform-provider methods (`.memory`, `.threads`, `.clock`)
-thread through `Self` unchanged for this round; typestate tracking
-for platform providers is a future round if a call site demands
-it.
+`.add_unit::<W>()`, `.add_resource(_)`, `.add_column()`,
+`.add_virtual()` each prepend a marker to one of the typestate
+accumulators (Wus or Stores). `.add_kit::<K>()` is type-only: the
+Kit instance is never constructed; the engine reads `K::Units` and
+`K::Owned` at compile time and prepends them onto the typestate
+via type-level `Concat`. The platform-provider methods
+(`.with_memory`, `.with_threads`, `.with_clock`) thread through
+`Self` unchanged for this round; typestate tracking for platform
+providers is a future round if a call site demands it.
 
 The v0.1 Kit shape (`pub trait Kit<B> { type Output; fn install(self, B) -> Self::Output }`)
 is gone. The new declarative `pub trait Kit { type Units; type Owned }`
@@ -251,12 +255,12 @@ but do not duplicate proof work.
 When a registered WU's `Read` mentions a store that was not
 registered, `.build()` fails to compile with a pointed error. For
 example, a WU with `type Read = read![Resource<Interner>]` and no
-`.resource(Interner)` or `.add_kit::<InternerKit>()` triggers the
-`Contains` `#[diagnostic::on_unimplemented]` message:
+`.add_resource(Interner)` or `.add_kit::<InternerKit>()` triggers
+the `Contains` `#[diagnostic::on_unimplemented]` message:
 
 ```text
 note: store `Empty` does not contain `Resource<Interner>`. Register it with
- `.resource::<Interner>(initial)`, `.column::<Interner>()`,
+ `.add_resource::<Interner>(initial)`, `.add_column::<Interner>()`,
  `.add_virtual::<Interner>()`, or install a Kit that owns it.
 ```
 
@@ -283,7 +287,7 @@ and with raw builder calls; each `.add_kit::<K>()` accumulates
 type-level `Concat`. Order matters for the `ContainsAll` proof at
 `.build()`: a Kit whose WUs read from another Kit's Owned state
 must come after the owning Kit in the builder chain (or after the
-relevant `.resource(_)` / `.column()` calls).
+relevant `.add_resource(_)` / `.add_column()` calls).
 
 ### `Scheduler::replace_resource`
 
