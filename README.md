@@ -12,7 +12,7 @@
 
 </div>
 
-Typed WorkUnits declare their read / write access sets to the scheduler builder. Each `.add::<W>()` accumulates the WorkUnit type onto the builder's typestate; each `.column::<T>()`, `.resource::<T>(initial)`, or `.add_virtual::<T>()` registers a store. At `.build()`, every declared access is type-checked against the registered stores. A WorkUnit that names a store the builder does not have fails to compile, with the diagnostic pointing at the missing marker.
+Typed WorkUnits declare their read / write access sets to the scheduler builder. Each `.add_unit::<W>()` accumulates the WorkUnit type onto the builder's typestate; each `.add_column::<T>()`, `.add_resource::<T>(initial)`, or `.add_virtual::<T>()` registers a store. At `.build()`, every declared access is type-checked against the registered stores. A WorkUnit that names a store the builder does not have fails to compile, with the diagnostic pointing at the missing marker.
 
 `.build()` then runs the plan stage end to end. Access-set overlap builds the dependency graph; topological sort and upward rank find the critical path; waist detection partitions phases; RCM reordering and block-diagonal layout cluster adjacent work for cache locality; spectral partitioning groups trunks; combinatorial DP groups fibers; per-fiber morsels are sized to cache. The output is a per-core dispatch program: a monomorphised function per physical core encoding phases, record ranges, morsel boundaries, and sync points.
 
@@ -22,18 +22,18 @@ At run time, the dispatch programs drive a pre-allocated thread pool. Trunks of 
 
 The scheduler builder is a typestate. Each registration accumulates a type parameter onto the builder; `.build()` reads the accumulated state and type-checks every registered WorkUnit's read / write access against the registered stores.
 
-Three registration shapes cover the surface. `.add::<W>()` adds one `WorkUnit` type to the typestate. `.column::<T>()`, `.resource::<T>(initial)`, and `.add_virtual::<T>()` each register one store. `.add_kit::<K>()` reads a `Kit` impl's `type Units` and `type Owned` declarations at compile time and prepends them onto the accumulators in one step; Kits are how a crate ships a bundled set of WorkUnits and stores under a single named registration.
+Three registration shapes cover the surface. `.add_unit::<W>()` adds one `WorkUnit` type to the typestate. `.add_column::<T>()`, `.add_resource::<T>(initial)`, and `.add_virtual::<T>()` each register one store. `.add_kit::<K>()` reads a `Kit` impl's `type Units` and `type Owned` declarations at compile time and prepends them onto the accumulators in one step; Kits are how a crate ships a bundled set of WorkUnits and stores under a single named registration.
 
 ```rust
 use hilavitkutin::Scheduler;
 use hilavitkutin_providers::{InternerKit, default_interner};
 
 let scheduler = Scheduler::builder()
-    .resource(default_interner::<4096, 256>())
+    .add_resource(default_interner::<4096, 256>())
     .add_kit::<InternerKit<4096, 256>>()
     .add_kit::<RunnerKit>()
     .add_kit::<LinterKit>()
-    .add::<MyWU>()
+    .add_unit::<MyWU>()
     .build();
 ```
 
@@ -41,11 +41,11 @@ let scheduler = Scheduler::builder()
 
 ```text
 note: store `Empty` does not contain `Resource<Interner>`. Register it with
-      `.resource::<Interner>(initial)`, `.column::<Interner>()`,
+      `.add_resource::<Interner>(initial)`, `.add_column::<Interner>()`,
       `.add_virtual::<Interner>()`, or install a Kit that owns it.
 ```
 
-Order of registration matters for the type-level proof. A Kit whose WorkUnits read from another Kit's owned state must come after the owning Kit in the chain (or after the relevant `.resource(_)` / `.column()` calls). The builder accepts any order that satisfies the proof; the diagnostic above pinpoints what is missing when it does not.
+Order of registration matters for the type-level proof. A Kit whose WorkUnits read from another Kit's owned state must come after the owning Kit in the chain (or after the relevant `.add_resource(_)` / `.add_column()` calls). The builder accepts any order that satisfies the proof; the diagnostic above pinpoints what is missing when it does not.
 
 Once `.build()` returns, the resulting `Scheduler<Wus, Stores>` is the runtime handle. The two type parameters are phantom and carry the typestate forward; methods on `Scheduler` consume that typestate to dispatch work and, for stores marked `Replaceable`, to allow targeted resource swaps between runs.
 
@@ -165,7 +165,7 @@ fn main() {
 
 Three standalone crates round out the ecosystem. `hilavitkutin-persistence` is the generic hot/cold storage bridge: rkyv-archived cold store on disk, SIEVE eviction over the hot store, content-hash translation for `Str` values across the persistence boundary so handles stay session-specific while disk identity stays stable. `hilavitkutin-str` is the interned string system: `Str` is `#[repr(transparent)]` over a 32-bit packed bitfield (one bit distinguishes const from runtime origin, 28 bits hold the id), const handles content-hash via FNV-1a at compile time and register through linker sections, runtime handles get sequential ids from a host-supplied `ArenaInterner` impl.
 
-`hilavitkutin-providers` ships default Kit implementations on top of the api primitives. v0 is the `InternerKit<BYTES, ENTRIES>` plus a `default_interner()` constructor backed by an inline `MemoryArena<BYTES, ENTRIES>`; future modules add default ColumnStorage, Clock, and MemoryProvider as consumer demand surfaces. Each of the three crates is independently usable and none depend on the engine; the engine reaches for them only when registered via `.add_kit::<K>()` or direct `.resource(_)` / `.column()` calls on the scheduler builder.
+`hilavitkutin-providers` ships default Kit implementations on top of the api primitives. v0 is the `InternerKit<BYTES, ENTRIES>` plus a `default_interner()` constructor backed by an inline `MemoryArena<BYTES, ENTRIES>`; future modules add default ColumnStorage, Clock, and MemoryProvider as consumer demand surfaces. Each of the three crates is independently usable and none depend on the engine; the engine reaches for them only when registered via `.add_kit::<K>()` or direct `.add_resource(_)` / `.add_column()` calls on the scheduler builder.
 
 ```rust
 use hilavitkutin_persistence::ColdStore;

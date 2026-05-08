@@ -34,7 +34,7 @@ pub trait AccessSet: sealed::Sealed + 'static {
 #[marker]
 #[diagnostic::on_unimplemented(
     message = "store `{Self}` does not contain `{S}`",
-    note = "Register it with `.resource::<T>(initial)`, `.column::<T>()`, `.add_virtual::<T>()`, or install a Kit that registers it. If `.build()` reports `overflow evaluating the requirement`, declare `#![recursion_limit = \"1024\"]` at your crate root."
+    note = "Register it with `.add_resource::<T>(initial)`, `.add_column::<T>()`, `.add_virtual::<T>()`, or install a Kit that registers it. If `.build()` reports `overflow evaluating the requirement`, declare `#![recursion_limit = \"1024\"]` at your crate root."
 )]
 pub trait Contains<S>: AccessSet {}
 
@@ -104,7 +104,7 @@ where
 #[marker]
 #[diagnostic::on_unimplemented(
     message = "store bundle `{Self}` does not contain every element of `{L}`",
-    note = "Register the missing store with `.resource::<T>(initial)`, `.column::<T>()`, `.add_virtual::<T>()`, or install a Kit that registers it. If `.build()` reports `overflow evaluating the requirement`, declare `#![recursion_limit = \"1024\"]` at your crate root."
+    note = "Register the missing store with `.add_resource::<T>(initial)`, `.add_column::<T>()`, `.add_virtual::<T>()`, or install a Kit that registers it. If `.build()` reports `overflow evaluating the requirement`, declare `#![recursion_limit = \"1024\"]` at your crate root."
 )]
 pub trait ContainsAll<L>: AccessSet {}
 

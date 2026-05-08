@@ -19,8 +19,8 @@ when they earn it from concrete consumer use.
 ## `app!` / `define_app!` macro
 
 Parked at task #295 (P2, likely never). The macro would fold the
-chain `SchedulerBuilder::new().add_kit(K1).add_kit(K2).add::<W1>()
-.add::<W2>().build()` into one declarative block. Skipped this
+chain `SchedulerBuilder::new().add_kit(K1).add_kit(K2).add_unit::<W1>()
+.add_unit::<W2>().build()` into one declarative block. Skipped this
 round because:
 
 - Bevy proves the raw builder pattern is ergonomically sufficient
@@ -35,7 +35,7 @@ round because:
 
 The round-4 InternerKit-style preset declares `Owned` types but
 does not supply default Resource values; the consumer calls
-`builder.resource(default_interner(...))` separately for the
+`builder.add_resource(default_interner(...))` separately for the
 value. A future Kit-trait extension could add a
 `default_resources()` association the engine reads to wire defaults
 automatically. Shape sketch:

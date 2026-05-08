@@ -2,7 +2,7 @@
 //! for the hilavitkutin scheduler.
 //!
 //! Standalone ecosystem crate. Consumed by the engine via Kit
-//! installation or via direct `builder.resource(...)` wiring. No
+//! installation or via direct `builder.add_resource(...)` wiring. No
 //! reverse dep on the engine.
 //!
 //! Ships the interner surface today: [`InternerApi`],
