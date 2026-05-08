@@ -1,6 +1,6 @@
 //! Manifest / TableMeta / ColumnMeta construction + access.
 
-use arvo::USize;
+use arvo::{Identity, USize};
 use arvo_hash::ContentHash;
 use hilavitkutin_persistence::{
     BitWidth, Cardinality, ColumnCount, ColumnMeta, Manifest, RowCount, SchemaVersion, TableMeta,

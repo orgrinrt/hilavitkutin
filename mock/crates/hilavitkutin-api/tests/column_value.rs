@@ -7,34 +7,34 @@
 
 use arvo::strategy::Hot;
 use arvo::ufixed::UFixed;
-use arvo::{fbits, ibits};
+use arvo::{fbits, ibits, USize};
 use hilavitkutin_api::ColumnValue;
 
 #[test]
 fn blanket_u8() {
-    assert_eq!(<u8 as ColumnValue>::BIT_WIDTH, 8);
+    assert_eq!(<u8 as ColumnValue>::BIT_WIDTH, USize(8));
 }
 
 #[test]
 fn blanket_u16() {
-    assert_eq!(<u16 as ColumnValue>::BIT_WIDTH, 16);
+    assert_eq!(<u16 as ColumnValue>::BIT_WIDTH, USize(16));
 }
 
 #[test]
 fn blanket_u32() {
-    assert_eq!(<u32 as ColumnValue>::BIT_WIDTH, 32);
+    assert_eq!(<u32 as ColumnValue>::BIT_WIDTH, USize(32));
 }
 
 #[test]
 fn blanket_u64() {
-    assert_eq!(<u64 as ColumnValue>::BIT_WIDTH, 64);
+    assert_eq!(<u64 as ColumnValue>::BIT_WIDTH, USize(64));
 }
 
 #[test]
 fn specialised_one_bit() {
     assert_eq!(
         <UFixed<{ ibits(1) }, { fbits(0) }, Hot> as ColumnValue>::BIT_WIDTH,
-        1
+        USize(1)
     );
 }
 
@@ -42,7 +42,7 @@ fn specialised_one_bit() {
 fn specialised_two_bit() {
     assert_eq!(
         <UFixed<{ ibits(2) }, { fbits(0) }, Hot> as ColumnValue>::BIT_WIDTH,
-        2
+        USize(2)
     );
 }
 
@@ -50,6 +50,6 @@ fn specialised_two_bit() {
 fn specialised_four_bit() {
     assert_eq!(
         <UFixed<{ ibits(4) }, { fbits(0) }, Hot> as ColumnValue>::BIT_WIDTH,
-        4
+        USize(4)
     );
 }
