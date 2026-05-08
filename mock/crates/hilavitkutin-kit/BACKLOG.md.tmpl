@@ -24,12 +24,12 @@ chain `SchedulerBuilder::new().add_kit(K1).add_kit(K2).add::<W1>()
 round because:
 
 - Bevy proves the raw builder pattern is ergonomically sufficient
-  at the consumer call counts reached by viola, vehje, and similar
-  hilavitkutin apps (roughly ten registrations per app).
+ at the consumer call counts reached by viola, vehje, and similar
+ hilavitkutin apps (roughly ten registrations per app).
 - The macro adds complexity (declarative or proc-macro) without a
-  measurable readability win at that scale.
+ measurable readability win at that scale.
 - If a downstream consumer authors a Kit chain long enough that
-  the raw form actually obscures intent, revisit #295.
+ the raw form actually obscures intent, revisit #295.
 
 ## `Kit::default_resources()` auto-wiring
 
@@ -42,9 +42,9 @@ automatically. Shape sketch:
 
 ```
 impl Kit for InternerKit<...> {
-    type Units = read![];
-    type Owned = read![Resource<StringInterner<...>>];
-    fn default_resources() -> Self::Owned { ... }
+ type Units = read![];
+ type Owned = read![Resource<StringInterner<...>>];
+ fn default_resources() -> Self::Owned {... }
 }
 ```
 
