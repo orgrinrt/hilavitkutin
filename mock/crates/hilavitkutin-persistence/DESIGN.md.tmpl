@@ -157,7 +157,7 @@ struct Manifest {
 struct TableMeta {
  name_hash: ContentHash,
  version: SchemaVersion,
- row_count: record_count,
+ record_count: USize,
  column_count: ColumnCount,
  columns: /* column metadata */,
 }
