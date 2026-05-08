@@ -240,6 +240,12 @@ S1b's depth-5 sketch (`mock/research/sketches/202605050700_deep_stacking_d5/`)
 confirms 25 WUs at 5 tiers compile in 0.53s without exceeding the
 512 limit.
 
+The api crate's `### Recursion limit` subsection documents the
+consumer-side `#![recursion_limit = "1024"]` directive. The Kit
+trait diagnostic message references that fallback when applicable;
+consumers building deep Kit chains land on the directive via the
+diagnostic without reading the api docs first.
+
 ## Deferred ergonomics
 
 A declarative `app!` / `define_app!` macro that folds

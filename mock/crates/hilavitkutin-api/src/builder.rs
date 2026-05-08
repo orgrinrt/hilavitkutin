@@ -29,6 +29,10 @@ mod depth_sealed {
 ///
 /// Sealed; consumers cannot impl directly.
 #[allow(private_bounds)]
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` does not carry a Depth",
+    note = "Depth is sealed and implemented internally by the scheduler builder. If you reach this from consumer code, you have likely named a builder shape that does not exist; check the builder method chain."
+)]
 pub trait Depth: depth_sealed::Sealed {
     const D: USize;
 }
