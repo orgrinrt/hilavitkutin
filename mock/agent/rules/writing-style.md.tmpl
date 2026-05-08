@@ -1,8 +1,8 @@
 ---
 apply_to:
-  - "**/*.md"
-  - "**/*.md.tmpl"
-  - "**/*.rs"
+ - "**/*.md"
+ - "**/*.md.tmpl"
+ - "**/*.rs"
 ---
 
 # Writing style
@@ -60,16 +60,16 @@ Allowed when the shape itself is the content and prose cannot carry it: a Mermai
 
 ```markdown
 <!-- Bad: ASCII stack graph -->
-notko  (zero deps)
-  ↑
-  ├── arvo
-  │     ↑
-  │     └── clause-*
+notko (zero deps)
+ ↑
+ ├── arvo
+ │ ↑
+ │ └── clause-*
 
 <!-- Good: nested list -->
 - `notko` (zero deps)
-  - `arvo` (depends on `notko`)
-    - `clause-*` (depends on `arvo`, `notko`)
+ - `arvo` (depends on `notko`)
+ - `clause-*` (depends on `arvo`, `notko`)
 
 <!-- Good: prose -->
 `notko` has no dependencies. `arvo` builds on `notko`. The `clause-*` crates build on both.
@@ -102,7 +102,7 @@ Em-dashes are banned in doc comments and inline comments just as strictly as in 
 ///
 /// Handles are resolved once at construction and reused across
 /// lookups.
-pub struct Handle { /* ... */ }
+pub struct Handle { /*... */ }
 
 // offset because the catalogue is 0-indexed but display is 1-indexed
 let display_idx = idx + 1;
@@ -134,7 +134,7 @@ Format: `type: lowercase imperative message`. Types: `feat`, `fix`, `refactor`, 
 
 Rules apply to every piece of written content in the repo. The difference is automation, not standard.
 
-Public-facing docs are gated at commit and push: `mock/PRINCIPLES.md.tmpl`, `mock/DESIGN.md.tmpl`, `mock/WORKFLOW.md.tmpl`, `README.md`, `mock/crates/**/*.md.tmpl`, `mock/agent/**/*.md.tmpl`, Rust doc and inline comments under `crates/**/*.rs`. The gate flags any em-dash occurrence, leading-paragraph lists, hype words, exclamation marks in prose, and the banned jargon. Em-dash detection is a hard block: any occurrence is a violation; prior "sparingly" framing is retired.
+Public-facing docs are gated at commit and push: `mock/PRINCIPLES.md.tmpl`, `mock/DESIGN.md`, `mock/WORKFLOW.md.tmpl`, `README.md`, `mock/crates/**/*.md.tmpl`, `mock/agent/**/*.md.tmpl`, Rust doc and inline comments under `crates/**/*.rs`. The gate flags any em-dash occurrence, leading-paragraph lists, hype words, exclamation marks in prose, and the banned jargon. Em-dash detection is a hard block: any occurrence is a violation; prior "sparingly" framing is retired.
 
 Round artifacts under `mock/design_rounds/` and research notes follow the same rules as a matter of discipline but are not gated.
 <!-- END: shared writing-style -->

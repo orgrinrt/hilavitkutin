@@ -43,8 +43,8 @@ Seq-backed, array-backed, channel-backed, etc.
 
 ```rust
 impl WorkUnit for MyUnit {
-    type Access = (Read<Column<Input>>, Write<Column<Output>>);
-    fn execute(ctx: &Self::Ctx) { ... }
+ type Access = (Read<Column<Input>>, Write<Column<Output>>);
+ fn execute(ctx: &Self::Ctx) {... }
 }
 ```
 

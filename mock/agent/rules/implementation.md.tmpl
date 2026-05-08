@@ -15,40 +15,40 @@ once the per-crate design stabilises.
 
 - No `dyn Trait`. Every dispatch must be static.
 - No `TypeId`, no `std::any`. Type identity is the monomorphised
-  function.
+ function.
 - WorkUnits are generic over their `AccessSet`. The `AccessSet` is
-  declared as an associated type (`type Access: AccessSetDecl;`).
-  The engine composes WUs into fused per-core programs that LLVM
-  devirtualises into straight-line code.
+ declared as an associated type (`type Access: AccessSetDecl;`).
+ The engine composes WUs into fused per-core programs that LLVM
+ devirtualises into straight-line code.
 - No `Box<dyn Fn(...)>` or `Box<dyn Any>`. All closures are
-  monomorphised; all state is strongly typed.
+ monomorphised; all state is strongly typed.
 - Generics over const values (fiber width, morsel size) are the
-  norm. Runtime-sized values are computed at plan time and stored
-  in arvo bitmasks / sparse structures.
+ norm. Runtime-sized values are computed at plan time and stored
+ in arvo bitmasks / sparse structures.
 
 ### Static composition
 
 - WUs are registered with the scheduler builder at compile time.
 - No `inventory::submit!`, no `#[ctor]`, no
-  `#[distributed_slice]`. The `no-runtime-registration` lint and
-  hook block these tokens outright.
+ `#[distributed_slice]`. The `no-runtime-registration` lint and
+ hook block these tokens outright.
 - The `scheduler::Builder` takes a tuple of WU types; composition
-  completes at type-level. Plan parameters (fiber width, morsel
-  size, core pinning) adapt at plan time; composition does not.
+ completes at type-level. Plan parameters (fiber width, morsel
+ size, core pinning) adapt at plan time; composition does not.
 - Consumers extend the engine by adding WUs to their builder tuple,
-  not by injecting descriptors into a global registry.
+ not by injecting descriptors into a global registry.
 
 ### No runtime spawn
 
 - No `thread::spawn`, `std::thread::spawn`, `tokio::spawn`,
-  `async_std::spawn`. Threads are spawned once at pipeline
-  construction via a consumer-provided `ThreadPool` implementation.
+ `async_std::spawn`. Threads are spawned once at pipeline
+ construction via a consumer-provided `ThreadPool` implementation.
 - Between frames, pool threads park. Wakeup is hybrid: spin 128
-  iterations, then park. Predictive parking at sync points:
-  <100ns spin, 100ns-10µs `spin_loop`, >10µs park.
+ iterations, then park. Predictive parking at sync points:
+ <100ns spin, 100ns-10µs `spin_loop`, >10µs park.
 - No work-stealing by default. Morsels are assigned deterministically
-  at plan time. Consumers who need stealing implement a custom
-  `Executor` trait.
+ at plan time. Consumers who need stealing implement a custom
+ `Executor` trait.
 
 ### Columns, not tables
 
@@ -56,57 +56,57 @@ Use the canonical vocabulary everywhere in source (comments,
 docstrings, type names, field names):
 
 - `pipeline`, `core`, `phase`, `waist`, `trunk`, `fiber`, `branch`,
-  `bridge`, `morsel`, `micro-morsel`, `entry`, `record`.
+ `bridge`, `morsel`, `micro-morsel`, `entry`, `record`.
 
 Never use the dead terms in source code: `chain`, `chain_group`,
 `partition`, `archetype`, `entity`, `row`, `order`. The vocabulary
 lint and reminder hook will catch them. If you find yourself
-reaching for one of these words, re-read `mock/DESIGN.md.tmpl`
+reaching for one of these words, re-read `mock/DESIGN.md`
 "Vocabulary" section — there's a canonical term for the concept.
 
 - `Column<T>` holds N records for one field. Columns are independent.
 - `Resource<T>` is a single-value shared resource.
 - `Virtual<T>` is a computed view.
 - No tabular joins. Access is column-scoped; the `AccessSet` declares
-  which columns a WU reads and writes.
+ which columns a WU reads and writes.
 
 ### Deterministic morsel assignment
 
 - Morsel size is computed from record count, phase width, and the
-  consumer's `Strategy` (Hot / Warm / Cold / Precise).
+ consumer's `Strategy` (Hot / Warm / Cold / Precise).
 - Assignment is static once computed. The dispatch emitter bakes
-  `(fiber_id, morsel_range)` tuples into per-core programs.
+ `(fiber_id, morsel_range)` tuples into per-core programs.
 - If consumer wants adaptive / work-stealing behaviour, they wire
-  an `Executor` that implements stealing semantics. The built-in
-  executor does not steal.
+ an `Executor` that implements stealing semantics. The built-in
+ executor does not steal.
 
 ### Schedule reuse
 
 - `ExecutionPlan` is computed once per pipeline structure. Frame
-  execution reuses it verbatim.
+ execution reuses it verbatim.
 - Plan recompute is triggered only by: new WU composition, record
-  count crossing a rebalance threshold, DAG structure change.
+ count crossing a rebalance threshold, DAG structure change.
 - Recompute cost is microseconds on typical DAGs — amortised over
-  thousands of frames of reuse.
+ thousands of frames of reuse.
 
 ### Error handling
 
 - WU `execute() -> ()`. The default is abort on failure.
 - Consumers who want tolerance wire error columns/virtuals into
-  their pipeline. A fiber failure freezes that fiber and poisons
-  dependents; independent fibers continue.
+ their pipeline. A fiber failure freezes that fiber and poisons
+ dependents; independent fibers continue.
 - `PipelineResult` reports per-fiber status (Completed / Failed /
-  Poisoned).
+ Poisoned).
 
 ### Code conventions
 
 - `#![no_std]` in every `lib.rs`.
 - No `unwrap()` in non-test code. Plan-time errors are surfaced
-  through `PlanResult`; runtime errors use the error column
-  pattern.
+ through `PlanResult`; runtime errors use the error column
+ pattern.
 - Target < 300 LOC per file, max 500 (the `file-size` lint
-  enforces).
+ enforces).
 - Tests alongside source in `#[cfg(test)] mod tests`.
 - Doc comments `///` on every public item. The
-  `undocumented-type` lint flags types missing from any DESIGN
-  doc.
+ `undocumented-type` lint flags types missing from any DESIGN
+ doc.

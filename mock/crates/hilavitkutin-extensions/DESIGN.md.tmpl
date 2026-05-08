@@ -49,7 +49,7 @@ primary export attribute under their own domain-named macro.
 `#[repr(C)]` descriptor fields cross the Rust / extension boundary and demand a wire-stable footprint. The crate follows a two-tier rule:
 
 1. Use an arvo `#[repr(transparent)]` newtype when its backing is wire-identical to the C type. `USize(pub usize)` is transparent over `usize` and slots into every `len` field paired with a pointer. `Bool(pub bool)` is transparent over `bool`. When an arvo newtype fits, it wins; the field gets the semantic name and the lint is clean.
-2. Retain a bare primitive when no wire-stable arvo newtype exists. `UFixed<I, F, S>` is `#[repr(transparent)]` over its backing, but the backing width comes from `S: Strategy` and is not pinned to exactly the C integer width. An FFI descriptor cannot accept that variability. `abi_version: u32`, `ExtensionVersion { major: u16, ... }`, and `CapabilityId`'s inner `u64` are bare primitives by deliberate choice; each site carries a trailing `// lint:allow(...) tracked: #206` comment that records the contract.
+2. Retain a bare primitive when no wire-stable arvo newtype exists. `UFixed<I, F, S>` is `#[repr(transparent)]` over its backing, but the backing width comes from `S: Strategy` and is not pinned to exactly the C integer width. An FFI descriptor cannot accept that variability. `abi_version: u32`, `ExtensionVersion { major: u16,... }`, and `CapabilityId`'s inner `u64` are bare primitives by deliberate choice; each site carries a trailing `// lint:allow(...) tracked: #206` comment that records the contract.
 
 Raw pointer fields (`*const u8`, `*const CapabilityEntry`, `*const CapabilityId`) fall outside the numeric-lint scope and stay as-is.
 
@@ -107,27 +107,22 @@ The shutdown observer is a separate hook from the failure policy. Drop has no ca
 
 ## Architectural position
 
-```
-  consumer-plugin-abi crates (e.g. viola-plugin-abi)
-    <-- consumer contract crates. Define domain-specific Capability
-        types that implement CapabilityExport. Optionally wrap
-        #[export_extension] under a domain-named attribute
-        (e.g. #[viola::plugin]).
+The extension stack layers downward from the consumer's domain crate
+to the OS:
 
-  hilavitkutin-extensions-macros
-    <-- proc-macro crate. Emits the #[repr(C)] descriptor,
-        the DESCRIPTOR_SYMBOL export, the capability table,
-        and trampolines from user trait impls.
-
-  hilavitkutin-extensions  <-- this crate
-    <-- descriptor types, discovery protocol, lifecycle
-        orchestrator, capability lookup, failure policy.
-
-  hilavitkutin-linking
-    <-- dlopen / LoadLibrary + typed Library / Symbol / StaticRef.
-
-  OS dynamic loader
-```
+- Consumer plugin ABI crates (e.g. `viola-plugin-abi`) define
+  domain-specific `Capability` types that implement `CapabilityExport`.
+  These crates optionally wrap `#[export_extension]` under a domain-
+  named attribute (e.g. `#[viola::plugin]`).
+- `hilavitkutin-extensions-macros` is the proc-macro crate. It emits
+  the `#[repr(C)]` descriptor, the `DESCRIPTOR_SYMBOL` export, the
+  capability table, and trampolines from user trait impls.
+- `hilavitkutin-extensions` (this crate) holds descriptor types, the
+  discovery protocol, the lifecycle orchestrator, capability lookup,
+  and failure policy.
+- `hilavitkutin-linking` ships `dlopen` / `LoadLibrary` plus typed
+  `Library` / `Symbol` / `StaticRef`.
+- The OS dynamic loader sits underneath.
 
 Dependency flow is strictly downward. The engine crate (`hilavitkutin`) does not depend on this one. Nor does the api, build-time, or ecosystem crates.
 
@@ -165,7 +160,7 @@ Consumer contract crates can wrap `#[export_extension]` inside their own domain-
 struct MyLinter;
 
 impl viola::Linter for MyLinter {
-    fn lint(&self, ast: &viola::Ast) -> viola::Diagnostics { /* ... */ }
+ fn lint(&self, ast: &viola::Ast) -> viola::Diagnostics { /*... */ }
 }
 ```
 
@@ -184,7 +179,6 @@ This crate does not:
 
 ## Cross-references
 
-- Round topics: `design_rounds/202604240615_topic.hilavitkutin-extensions-host.md` and `design_rounds/202604240615_topic.rename-extensions-to-linking.md`.
 - Lower layer: `hilavitkutin-linking`.
 - Proc-macro companion: `hilavitkutin-extensions-macros`.
 - Research input: `EXTENSIONS_RESEARCH.md` at the repo root.
@@ -192,4 +186,4 @@ This crate does not:
 
 ## Shipping commitment
 
-The public surface described here plus the specific type and method names locked in the src CL of round 202604240615. Follow-up rounds may extend the crate (type-level capability ids, lifecycle logging hooks, hot-reload orchestration) but must preserve the v1 contract unless explicit deprecation is scheduled.
+The public surface described here plus the specific type and method names locked in the src CL of. Follow-up rounds may extend the crate (type-level capability ids, lifecycle logging hooks, hot-reload orchestration) but must preserve the v1 contract unless explicit deprecation is scheduled.
