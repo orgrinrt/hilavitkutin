@@ -30,7 +30,7 @@ pub type Significance = UFixed<{ ibits(3) }, { fbits(0) }, Hot>;
 /// Axis 1: how soon the WU must run.
 #[diagnostic::on_unimplemented(
     message = "`{Self}` is not an Urgency marker",
-    note = "Available markers: `Immediate`, `Deferred`, `Steady`, `Adaptive`, `Relaxed`, `Opportunistic`. Sealed; consumer-defined markers are not supported."
+    note = "Available markers: `Immediate`, `Steady`, `Relaxed`, `Deferred`. Sealed; consumer-defined markers are not supported."
 )]
 pub trait UrgencyValue: hint_sealed::Sealed + 'static {
     /// Discriminant. Higher = higher urgency.
@@ -40,7 +40,7 @@ pub trait UrgencyValue: hint_sealed::Sealed + 'static {
 /// Axis 2: whether the WU can be split or paused.
 #[diagnostic::on_unimplemented(
     message = "`{Self}` is not a Divisibility marker",
-    note = "Available markers: `Atomic`, `Interruptible`, `Divisibility`. Sealed; consumer-defined markers are not supported."
+    note = "Available markers: `Atomic`, `Adaptive`, `Interruptible`. Sealed; consumer-defined markers are not supported."
 )]
 pub trait DivisibilityValue: hint_sealed::Sealed + 'static {
     /// Discriminant. Higher = more rigid scheduling.
@@ -50,7 +50,7 @@ pub trait DivisibilityValue: hint_sealed::Sealed + 'static {
 /// Axis 3: relative importance of the WU's output.
 #[diagnostic::on_unimplemented(
     message = "`{Self}` is not a Significance marker",
-    note = "Available markers: `Critical`, `Important`, `Normal`, `Optional`, `Significance`. Sealed; consumer-defined markers are not supported."
+    note = "Available markers: `Critical`, `Important`, `Normal`, `Opportunistic`, `Optional`. Sealed; consumer-defined markers are not supported."
 )]
 pub trait SignificanceValue: hint_sealed::Sealed + 'static {
     /// Discriminant. Higher = more significant.
@@ -63,7 +63,7 @@ pub trait SignificanceValue: hint_sealed::Sealed + 'static {
 /// `(U: UrgencyValue, D: DivisibilityValue, S: SignificanceValue)`.
 #[diagnostic::on_unimplemented(
     message = "`{Self}` is not a SchedulingHint tuple",
-    note = "SchedulingHint is implemented on the tuple `(U: UrgencyValue, D: DivisibilityValue, S: SignificanceValue)`. Use the substrate-provided ZST markers (`Immediate` / `Deferred` / `Steady` / `Adaptive` / `Relaxed` / `Opportunistic` for U; `Atomic` / `Interruptible` / `Divisibility` for D; `Critical` / `Important` / `Normal` / `Optional` / `Significance` for S)."
+    note = "SchedulingHint is implemented on the tuple `(U: UrgencyValue, D: DivisibilityValue, S: SignificanceValue)`. Use the substrate-provided ZST markers (`Immediate` / `Steady` / `Relaxed` / `Deferred` for U; `Atomic` / `Adaptive` / `Interruptible` for D; `Critical` / `Important` / `Normal` / `Opportunistic` / `Optional` for S)."
 )]
 pub trait SchedulingHint: hint_sealed::Sealed + 'static {}
 
