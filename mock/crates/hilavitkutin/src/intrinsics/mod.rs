@@ -3,11 +3,11 @@
 //! Portable, no-alloc, no-std. Ships as zero-cost stubs on stable
 //! (`prefetch_l1`/`prefetch_l2` are no-ops; `noinline_barrier` is
 //! identity) with optional upgrades under the `intrinsics-std`
-//! feature (still core-only — pulls in `core::hint::black_box`).
+//! feature (still core-only: pulls in `core::hint::black_box`).
 //!
 //! Real `core::intrinsics::prefetch_*` wiring and platform-specific
 //! inline asm paths (x86_64 PREFETCHT0, aarch64 PRFM) land as
-//! follow-ups — see BACKLOG → Engine 5a3 follow-ups.
+//! follow-ups: see BACKLOG → Engine 5a3 follow-ups.
 
 use core::sync::atomic::{Ordering, compiler_fence};
 
@@ -29,7 +29,7 @@ pub fn prefetch_l2<T>(ptr: *const T) {
     let _ = ptr;
 }
 
-/// # WARNING — compiler fence only, not a hardware barrier
+/// # WARNING: compiler fence only, not a hardware barrier
 ///
 /// This prevents the *compiler* from reordering memory ops past
 /// this fence, but emits NO CPU-level memory barrier. On
@@ -43,7 +43,7 @@ pub fn compiler_fence_release() {
     compiler_fence(Ordering::Release);
 }
 
-/// # WARNING — compiler fence only, not a hardware barrier
+/// # WARNING: compiler fence only, not a hardware barrier
 ///
 /// This prevents the *compiler* from reordering memory ops past
 /// this fence, but emits NO CPU-level memory barrier. On

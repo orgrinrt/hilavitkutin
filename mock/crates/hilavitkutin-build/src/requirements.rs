@@ -7,7 +7,7 @@
 //! the wrapper-script round can consume it as data.
 //!
 //! Pragma-to-pragma ordering constraints (e.g. `Profiling` implies
-//! `Any<(Pgo, Bolt)>`) are NOT modelled here — they belong to the
+//! `Any<(Pgo, Bolt)>`) are NOT modelled here: they belong to the
 //! pragma-resolution stage (follow-up round).
 
 use crate::pragma::Pragma;
@@ -41,7 +41,7 @@ pub struct PragmaRequirement {
 /// exactly once; pragmas with no external requirement list an empty
 /// slice.
 ///
-/// `ParallelCodegen` is listed with `u8::MAX` as a sentinel — the
+/// `ParallelCodegen` is listed with `u8::MAX` as a sentinel: the
 /// param is irrelevant for requirement lookup; callers should match
 /// on the discriminant only.
 pub const REQUIREMENTS: &[PragmaRequirement] = &[
@@ -82,7 +82,7 @@ pub const REQUIREMENTS: &[PragmaRequirement] = &[
         requires: &[],
     },
     PragmaRequirement {
-        pragma: Pragma::ParallelCodegen(u8::MAX),
+        pragma: Pragma::ParallelCodegen(u8::MAX), // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: sentinel for discriminant-only lookup; param irrelevant; tracked: #72
         requires: &[],
     },
     PragmaRequirement {
@@ -100,7 +100,7 @@ pub const REQUIREMENTS: &[PragmaRequirement] = &[
 ];
 
 /// Look up the requirements row for a given pragma. Matches on the
-/// discriminant — `ParallelCodegen(n)` lookups ignore `n`.
+/// discriminant: `ParallelCodegen(n)` lookups ignore `n`.
 pub fn requirements_for(p: Pragma) -> &'static [Requirement] {
     for row in REQUIREMENTS {
         if same_variant(row.pragma, p) {
@@ -110,7 +110,7 @@ pub fn requirements_for(p: Pragma) -> &'static [Requirement] {
     &[]
 }
 
-const fn same_variant(a: Pragma, b: Pragma) -> bool {
+const fn same_variant(a: Pragma, b: Pragma) -> bool { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal discriminant-equality helper; tracked: #72
     use Pragma::*;
     matches!(
         (a, b),

@@ -8,7 +8,7 @@ use hilavitkutin_api::{
 };
 use notko::Outcome;
 
-/// Bounded byte buffer — implements `Push<u8>` + `BulkPush<u8>` so it
+/// Bounded byte buffer: implements `Push<u8>` + `BulkPush<u8>` so it
 /// satisfies `ByteEmitter`.
 struct ByteBuf<const N: usize> {
     bytes: [u8; N],
@@ -138,7 +138,7 @@ fn decode_all_overlength_on_trailing_byte() {
 
 #[test]
 fn decode_all_overlength_on_partial_frame() {
-    // 2 bytes — no full u32 yet. U32Le returns Ok with 2 leftover,
+    // 2 bytes: no full u32 yet. U32Le returns Ok with 2 leftover,
     // decode_all then reports OverLength.
     let bytes = [1u8, 2];
     let mut out = ItemSink::<u32, 4>::new();

@@ -2,10 +2,15 @@
 
 use std::cell::RefCell;
 
+use arvo::USize;
+use arvo_bits::Bits;
+use arvo_hash::ContentHash;
 use hilavitkutin_persistence::{
-    evict_str, inject_str, PersistenceError, StringTable, StringTableEntry,
+    evict_str, inject_str, BufferLen, BufferOffset, PersistenceError, StringTable,
+    StringTableEntry,
 };
 use hilavitkutin_str::{const_fnv1a, ArenaInterner, Str, StringInterner};
+use notko::{Maybe, Outcome};
 
 struct VecInterner {
     strings: RefCell<Vec<String>>,
@@ -41,17 +46,17 @@ impl ArenaInterner for VecInterner {
     }
 }
 
-fn content_hash(s: &str) -> u32 {
-    (const_fnv1a(s) & Str::ID_MASK as u64) as u32
+fn content_hash(s: &str) -> ContentHash {
+    ContentHash::from_raw(const_fnv1a(s) & (Str::ID_MASK.to_raw() as u64)) // lint:allow(no-bare-numeric) reason: u32 ID_MASK widened to u64 to AND with u64 hash; arvo lacks a Widen counterpart to Narrow; tracked: #290
 }
 
 #[test]
 fn evict_const_is_identity() {
     let interner = StringInterner::new(VecInterner::new());
-    let h = Str::__make(0x0012_3456);
+    let h = Str::__make(Bits::<28>::from_raw(0x0012_3456));
     assert!(h.is_const());
     let evicted = evict_str(h, &interner);
-    assert_eq!(evicted, 0x0012_3456);
+    assert_eq!(evicted, ContentHash::from_raw(0x0012_3456));
 }
 
 #[test]
@@ -67,8 +72,11 @@ fn evict_runtime_hashes_bytes() {
 fn inject_missing_hash_returns_missing() {
     let interner = StringInterner::new(VecInterner::new());
     let table = StringTable::default();
-    let r = inject_str(0x0042_0042, &interner, &table);
-    assert_eq!(r, Err(PersistenceError::Missing));
+    let r = inject_str(ContentHash::from_raw(0x0042_0042), &interner, &table);
+    match r {
+        Outcome::Err(e) => assert_eq!(e, PersistenceError::Missing),
+        Outcome::Ok(_) => panic!("expected missing"),
+    }
 }
 
 #[test]
@@ -82,15 +90,18 @@ fn inject_runtime_via_string_table() {
     let hash = content_hash("table-roundtrip");
     let entries: &'static [StringTableEntry] = Box::leak(Box::new([StringTableEntry {
         content_hash: hash,
-        bytes_offset: 0,
-        bytes_len: payload.len() as u32,
+        bytes_offset: BufferOffset(USize::ZERO),
+        bytes_len: BufferLen(USize(payload.len())),
     }]));
     let table = StringTable {
         entries,
         buffer: payload,
     };
 
-    let injected = inject_str(hash, &interner, &table).expect("inject ok");
+    let injected = match inject_str(hash, &interner, &table) {
+        Outcome::Ok(h) => h,
+        Outcome::Err(_) => panic!("inject ok"),
+    };
     // Runtime handle bit set, id truncated to 28 bits.
     assert!(injected.is_runtime());
     assert_eq!(interner.resolve(injected), Some("table-roundtrip"));
@@ -107,35 +118,41 @@ fn evict_then_inject_runtime_roundtrips() {
     // Build a string-table entry that re-supplies the bytes.
     let entries: &'static [StringTableEntry] = Box::leak(Box::new([StringTableEntry {
         content_hash: evicted,
-        bytes_offset: 0,
-        bytes_len: original_bytes.len() as u32,
+        bytes_offset: BufferOffset(USize::ZERO),
+        bytes_len: BufferLen(USize(original_bytes.len())),
     }]));
     let table = StringTable {
         entries,
         buffer: original_bytes,
     };
 
-    let reinjected = inject_str(evicted, &interner, &table).expect("inject ok");
+    let reinjected = match inject_str(evicted, &interner, &table) {
+        Outcome::Ok(h) => h,
+        Outcome::Err(_) => panic!("inject ok"),
+    };
     assert_eq!(interner.resolve(reinjected), Some("roundtrip-string"));
 }
 
 #[test]
-fn string_table_lookup_misses_are_none() {
+fn string_table_lookup_misses_are_isnt() {
     let table = StringTable::default();
-    assert!(table.lookup(0x1234_5678).is_none());
+    assert!(table.lookup(ContentHash::from_raw(0x1234_5678)).isnt());
 }
 
 #[test]
 fn string_table_lookup_hits_return_bytes() {
     let payload: &'static [u8] = b"lookup-hit";
     let entries: &'static [StringTableEntry] = Box::leak(Box::new([StringTableEntry {
-        content_hash: 0xABCD,
-        bytes_offset: 0,
-        bytes_len: payload.len() as u32,
+        content_hash: ContentHash::from_raw(0xABCD),
+        bytes_offset: BufferOffset(USize::ZERO),
+        bytes_len: BufferLen(USize(payload.len())),
     }]));
     let table = StringTable {
         entries,
         buffer: payload,
     };
-    assert_eq!(table.lookup(0xABCD), Some(&payload[..]));
+    match table.lookup(ContentHash::from_raw(0xABCD)) {
+        Maybe::Is(b) => assert_eq!(b, &payload[..]),
+        Maybe::Isnt => panic!("expected hit"),
+    }
 }

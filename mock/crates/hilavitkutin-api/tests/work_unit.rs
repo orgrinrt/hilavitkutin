@@ -6,12 +6,12 @@
 
 #![no_std]
 
-use arvo::newtype::USize;
+use arvo::USize;
 use hilavitkutin_api::{
     AccessSet, Always, BatchApi, Column, ColumnReaderApi, ColumnValue, ColumnWriterApi,
     Contains, EachApi, HasBatch, HasColumnReader, HasColumnWriter, HasEach, HasReduce,
     HasResourceProvider, HasVirtualFirer, Immediate, Normal, ReduceApi, Resource,
-    ResourceProviderApi, Atomic, Virtual, VirtualFirerApi, WorkUnit,
+    ResourceProviderApi, Atomic, Virtual, VirtualFirerApi, WorkUnit, read, write,
 };
 
 // --- Stub provider (all-in-one) --------------------------------------
@@ -147,13 +147,13 @@ struct GravFired;
 struct Integrate;
 
 impl WorkUnit<Always> for Integrate {
-    type Read = (Column<Pos>, Column<Vel>);
-    type Write = (Column<Pos>, Virtual<GravFired>);
+    type Read = read![Column<Pos>, Column<Vel>];
+    type Write = write![Column<Pos>, Virtual<GravFired>];
     type Hint = (Immediate, Atomic, Normal);
     type Ctx = Ctx;
 
     fn execute(&self, _ctx: &Ctx) {
-        // Body is trivial — the test is that this compiles.
+        // Body is trivial: the test is that this compiles.
     }
 }
 

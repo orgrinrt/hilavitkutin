@@ -2,7 +2,7 @@ project_name = "hilavitkutin"
 crate_prefix = "hilavitkutin"
 abi_version = 1
 
-proc_macro_crates = []
+proc_macro_crates = ["hilavitkutin-extensions-macros"]
 module_crates = []
 
 # Which macro to track per-crate in domain items
@@ -17,6 +17,8 @@ layers = [
     "Ext:ctx",      # hilavitkutin-ctx
     "Ext:persist",  # hilavitkutin-persistence
     "Ext:str",      # hilavitkutin-str
+    "Ext:kit",      # hilavitkutin-kit
+    "Ext:providers", # hilavitkutin-providers
 ]
 
 # Domain kind labels for STRUCTURE.md domain items table
@@ -34,6 +36,8 @@ hilavitkutin-build = "#FDF0E0 | #C05C00"
 hilavitkutin-ctx = "#E6F2E6 | #2D6A2D"
 hilavitkutin-persistence = "#E6F2E6 | #2D6A2D"
 hilavitkutin-str = "#E6F2E6 | #2D6A2D"
+hilavitkutin-kit = "#E6F2E6 | #2D6A2D"
+hilavitkutin-providers = "#E6F2E6 | #2D6A2D"
 
 # ---------------------------------------------------------------------------
 # Lint configuration
@@ -42,23 +46,23 @@ hilavitkutin-str = "#E6F2E6 | #2D6A2D"
 # --- Built-in quality lints ------------------------------------------------
 
 [lints.no-empty-crate]
-commit = "off"
+commit = "warn"
 build = "warn"
 push = "warn"
 
 [lints.no-todo]
-commit = "off"
+commit = "warn"
 build = "warn"
 push = "error"
 
 [lints.no-fixme]
-commit = "off"
+commit = "warn"
 build = "warn"
 push = "error"
 
 [lints.file-size]
-commit = "warn"
-build = "warn"
+commit = "error"
+build = "error"
 push = "error"
 max_lines = "500"
 
@@ -102,7 +106,7 @@ push = "warn"
 # Enforces module-path boundaries the token-level lints cannot express.
 
 [lints.forbidden-imports]
-commit = "warn"
+commit = "error"
 build = "error"
 push = "error"
 rules = [
@@ -116,10 +120,17 @@ rules = [
     # Build-time crate has zero runtime linkage.
     { scope = "hilavitkutin-build", forbidden = "hilavitkutin::*, hilavitkutin_api::*", reason = "hilavitkutin-build is build-dep-only and must not link into the runtime binary" },
 
-    # Extensions are standalone sub-libraries — no cross-deps, no engine dep.
-    { scope = "hilavitkutin-ctx", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_persistence::*, hilavitkutin_str::*", reason = "hilavitkutin-ctx is a standalone extension; keep it independently usable" },
-    { scope = "hilavitkutin-persistence", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_str::*", reason = "hilavitkutin-persistence is a standalone extension; keep it independently usable" },
-    { scope = "hilavitkutin-str", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*", reason = "hilavitkutin-str is a standalone extension; keep it independently usable" },
+    # Ecosystem crates are standalone sub-libraries; no cross-deps, no engine dep.
+    { scope = "hilavitkutin-ctx", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_persistence::*, hilavitkutin_str::*", reason = "hilavitkutin-ctx is a standalone ecosystem crate; keep it independently usable" },
+    { scope = "hilavitkutin-persistence", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_str::*", reason = "hilavitkutin-persistence is a standalone ecosystem crate; keep it independently usable" },
+    { scope = "hilavitkutin-str", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*", reason = "hilavitkutin-str is a standalone ecosystem crate; keep it independently usable" },
+    { scope = "hilavitkutin-kit", forbidden = "hilavitkutin::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*, hilavitkutin_str::*, arvo::*, arvo_bits::*, arvo_bitmask::*, arvo_graph::*, arvo_sparse::*, arvo_spectral::*, arvo_comb::*, arvo_hash::*, notko::*", reason = "hilavitkutin-kit defines the Kit preset trait. Round 4 declarative shape (`type Units: WorkUnitBundle; type Owned: StoreBundle`) requires hilavitkutin-api substrate primitives in its bounds, so the api dep is allowed. Engine still depends on kit, not the reverse" },
+    { scope = "hilavitkutin-providers", forbidden = "hilavitkutin::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*, hilavitkutin_build::*, hilavitkutin_linking::*, hilavitkutin_extensions::*", reason = "hilavitkutin-providers ships default Kit impls; depends on api + str + kit + substrate. Must not depend on engine, build-time, ctx/persistence siblings, or plugin-host layer" },
+
+    # Plugin-host layer: three crates, strict layering.
+    { scope = "hilavitkutin-linking", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*, hilavitkutin_str::*, hilavitkutin_extensions::*", reason = "hilavitkutin-linking is the dlopen primitive; it must stay domain-agnostic and depend only on substrate (notko, arvo, arvo-bits) and platform FFI" },
+    { scope = "hilavitkutin-extensions", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*, hilavitkutin_str::*, hilavitkutin_build::*", reason = "hilavitkutin-extensions is the contract-bound host layer; depends only on hilavitkutin-linking plus substrate. Must not depend on engine, api, ecosystem, or build-time" },
+    { scope = "hilavitkutin-extensions-macros", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*, hilavitkutin_str::*, hilavitkutin_build::*, hilavitkutin_linking::*", reason = "proc-macro crate; emitted output references ::hilavitkutin_extensions::* paths only. No other hilavitkutin-crate references at proc-macro runtime or in emission" },
 
     # Engine consumes arvo bit contracts via the L2 `arvo-bitmask` surface,
     # never directly from L1 `arvo-bits`. Direct L1 coupling would bypass the
@@ -159,29 +170,66 @@ push = "off"
 # across the engine.
 
 [lints.no-bare-result]
-commit = "off"
-build = "warn"
-push = "warn"
+commit = "error"
+build = "error"
+push = "error"
 
 [lints.no-bare-string]
 commit = "off"
 build = "warn"
 push = "warn"
 
-[lints.no-bare-vec]
+# New scope post-enforcement-tightening (2026-04-20): lints now scan every
+# src/*.rs via LintContext.all_sources (hiisi-digital/mockspace#4) AND skip
+# per-primitive per-crate via LintContext.introduces()
+# (mockspace-hilavitkutin-stack-lints#3). 559 pre-existing drift sites in
+# hilavitkutin source surface after the tightening — each is a sweep
+# target under in-flight #72 sub-sweeps (str / ctx / engine). Ramp to warn
+# at every gate; FLIP BACK TO `error` once #72 completes.
+
+[lints.no-bare-numeric]
 commit = "off"
 build = "warn"
 push = "warn"
+
+[lints.no-bare-option]
+commit = "off"
+build = "warn"
+push = "warn"
+
+[lints.arvo-types-only]
+commit = "off"
+build = "warn"
+push = "warn"
+
+[lints.no-public-raw-field]
+commit = "off"
+build = "warn"
+push = "warn"
+
+[lints.no-bare-vec]
+commit = "error"
+build = "error"
+push = "error"
+
+# Pre-hilavitkutin-str crates must gate any `const NAME: &str` / `static
+# NAME: &str` behind `#[cfg(debug_assertions)]`; hilavitkutin-str itself
+# declares the `static-string` category in [primitive-introductions]
+# below and is exempt (task #125).
+[lints.no-bare-static-str]
+commit = "error"
+build = "error"
+push = "error"
 
 [lints.no-box]
-commit = "off"
-build = "warn"
-push = "warn"
+commit = "error"
+build = "error"
+push = "error"
 
 [lints.no-float]
-commit = "off"
-build = "warn"
-push = "warn"
+commit = "error"
+build = "error"
+push = "error"
 
 [lints.no-manual-id]
 commit = "off"
@@ -243,3 +291,22 @@ mockspace-hilavitkutin-stack-lints = { git = "ssh://git@github.com/orgrinrt/mock
 # Writing-style gate — pre-existing docs trip this until sweeps tidy them.
 [lints.writing-style]
 severity = "advisory"
+
+# ---------------------------------------------------------------------------
+# Primitive-substrate introducers (task #125)
+# ---------------------------------------------------------------------------
+#
+# Categories (not specific type names) a crate legitimately defines.
+# When a bare-primitive lint's category is in this list, the lint
+# self-exempts for the crate — the crate IS the source-of-truth for
+# that substrate. Categories stay stable as the stack evolves; adding
+# a new designed type means tagging its introducer with the right
+# category, no lint-pack change.
+#
+# hilavitkutin-str introduces the `static-string` substrate: it is
+# the interning home that replaces bare `const NAME: &str` / `static
+# NAME: &str` across the stack. Its own internals are the legitimate
+# site for static string tables.
+
+[primitive-introductions]
+hilavitkutin-str = ["static-string"]

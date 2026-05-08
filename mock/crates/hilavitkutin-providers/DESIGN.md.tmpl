@@ -1,0 +1,166 @@
+# hilavitkutin-providers
+
+Default Resource-backed providers for the hilavitkutin scheduler.
+Standalone ecosystem crate: consumed by the engine via Kit
+installation or via direct `builder.resource(...)` wiring, no
+reverse dep.
+
+Ships the interner surface today: an `InternerApi` provider trait,
+`MemoryArena<BYTES, ENTRIES>` inline-storage backing, and the
+`InternerKit` preset. Future rounds add ColumnStorage default,
+Clock default, and MemoryProvider default for libc/Unix per
+consumer demand.
+
+## Surface
+
+| Type | Purpose |
+|------|---------|
+| `InternerApi` | Provider-shape trait paralleling `MemoryProviderApi` / `ClockApi`. Methods `intern(&str) -> Str`, `resolve(Str) -> Maybe<&str>`. |
+| `HasInterner` | Accessor trait for the Context-provider tuple. Mirrors `HasMemoryProvider` / `HasClock`. |
+| `MemoryArena<BYTES, ENTRIES>` | Inline-storage `ArenaInterner` impl. Const-generic byte-cap and entry-cap. Backs the default `StringInterner`. |
+| `default_interner<BYTES, ENTRIES>()` | Free fn building `StringInterner<MemoryArena<BYTES, ENTRIES>>`. The wiring building block; consumers call it via `builder.resource(...)` directly or implicitly through `InternerKit`. |
+| `InternerKit<BYTES, ENTRIES>` | Kit impl that declares `Resource<StringInterner<MemoryArena<BYTES, ENTRIES>>>` as `Owned`. Pure declaration; no install method. Engine reads `K::Units` and `K::Owned` at compile time on `.add_kit::<InternerKit>()`. |
+
+### `InternerApi`
+
+The provider shape. WorkUnits that handle `Str` (lexers, file
+walkers, diagnostic emitters, etc.) declare `HasInterner` in their
+`Ctx` tuple bound and call `ctx.interner().intern(s)` /
+`ctx.interner().resolve(handle)` from within `execute()`.
+
+The trait carries `'static` so the value can live in a
+`Resource<T>`. v0 does not require `Send + Sync` on the provider
+because the engine's resource access pattern is sequential during
+single-thread morsel dispatch. The Sync arena variant in BACKLOG
+tracks the future generalisation.
+
+### `HasInterner`
+
+```rust
+pub trait HasInterner {
+    type Provider: InternerApi;
+    fn interner(&self) -> &Self::Provider;
+}
+```
+
+The accessor lives in providers, not in api. The platform
+contracts in api (memory / threadpool / clock) are the
+engine-required surfaces; the interner is an opt-in provider, not
+an engine prerequisite.
+
+### `MemoryArena<BYTES, ENTRIES>`
+
+Inline-storage `ArenaInterner` impl. Holds `[u8; BYTES]` bytes plus
+an `[Entry; ENTRIES]` table where each entry records `(offset,
+len)` for a previously-interned string. Interior mutability via
+`Cell` for the cursor and entry count, `UnsafeCell` for the
+buffer and table.
+
+Each runtime-interned string gets a sequential 28-bit id (the
+entry index). `arena_resolve(id)` looks up the entry and slices
+`[offset..offset+len]` from the byte buffer.
+
+Capacity overflow (out of bytes or out of entry slots) returns
+sentinel id `u32::MAX` from `arena_intern`. Consumers tune
+`BYTES` and `ENTRIES` to their workload.
+
+`MemoryArena` is `!Sync` by default. The eventual
+`Resource<StringInterner<MemoryArena<...>>>` will need either a
+consumer-supplied Mutex shim or a future SyncArena variant for
+multi-thread access. Tracked in BACKLOG.
+
+### `default_interner()` constructor
+
+```rust
+pub const fn default_interner<const BYTES: usize, const ENTRIES: usize>()
+    -> StringInterner<MemoryArena<BYTES, ENTRIES>>
+{
+    StringInterner::new(MemoryArena::new())
+}
+```
+
+Consumers wire it onto the scheduler with
+`builder.resource(default_interner::<BYTES, ENTRIES>())`. Two
+const generics because byte capacity and entry-count are
+independent dimensions a consumer tunes.
+
+### `InternerKit<BYTES, ENTRIES>`
+
+```rust
+pub struct InternerKit<const BYTES: usize, const ENTRIES: usize>;
+
+impl<const BYTES: usize, const ENTRIES: usize> Kit
+    for InternerKit<BYTES, ENTRIES>
+{
+    type Units = read![];
+    type Owned = read![Resource<StringInterner<MemoryArena<BYTES, ENTRIES>>>];
+}
+```
+
+The Kit impl is purely declarative per the round-4 Kit shape
+(`pub trait Kit { type Units: WorkUnitBundle; type Owned: StoreBundle }`).
+It declares no WorkUnits (`type Units = read![]`); it owns one
+Resource. The Kit impl never names `SchedulerBuilder`. The v0.1
+`BuilderResource<T>` bridge is gone (deleted entirely per
+`no-legacy-shims-pre-1.0.md`); the new shape needs no bridge
+because Kits no longer call methods on builders.
+
+Usage on the scheduler:
+
+```rust
+let scheduler = Scheduler::builder()
+    .resource(default_interner::<4096, 256>())
+    .add_kit::<InternerKit<4096, 256>>()
+    .build();
+```
+
+The Kit declares the type-level commitment that
+`Resource<StringInterner<MemoryArena<4096, 256>>>` exists in
+`Stores`. The actual instance is supplied by the app via
+`builder.resource(...)`; the api has no
+`Kit::default_resources()` association. See BACKLOG for the
+auto-wiring follow-up.
+
+Equivalent to the direct form
+`Scheduler::builder().resource(default_interner::<4096, 256>()).build()`
+when there's only this one kit. The Kit form becomes valuable
+once a consumer bundles several Resources / Columns under one
+named preset; for the single-resource interner case the gain is
+consistency more than ergonomic savings.
+
+### Replaceable opt-in for the Interner Resource
+
+The `Resource<StringInterner<MemoryArena<...>>>` does not impl
+`Replaceable` by default. Apps that need test-fixture replacement
+(for example, a deterministic interner for unit tests) impl
+`Replaceable` themselves on the relevant alias type. This matches
+the workspace's "tools, not policies" rule: the crate ships
+the Resource without forcing override semantics on consumers that
+do not want them.
+
+## What this crate deliberately does not ship
+
+- **`M: HasMemoryProvider` parameter on `MemoryArena`.** The
+  original 2026-05-01 task description named `MemoryArena<M, BYTES>`
+  parameterised over a runtime memory provider. The crate uses
+  inline storage at the type level instead. Reintroducing the M
+  parameter needs allocate-at-builder-time plumbing the engine
+  does not yet have. Tracked in BACKLOG.
+- **ColumnStorage / Clock / MemoryProvider defaults.** Per crate
+  scope: interner-only at this stage. Each future provider module
+  lands in its own round when consumer demand surfaces.
+
+## Cross-references
+
+- `hilavitkutin-kit::Kit` for the declarative trait `InternerKit`
+  implements. New round-4 shape: `type Units` plus `type Owned`,
+  no install method.
+- `hilavitkutin-api::WorkUnitBundle` and
+  `hilavitkutin-api::StoreBundle` for the api primitives the
+  Kit's associated types target. The engine reads them at compile
+  time on `.add_kit::<K>()`; providers never imports the engine.
+- `hilavitkutin-str::{Str, StringInterner, ArenaInterner}` for the
+  interner contract this crate's `MemoryArena` implements.
+- `hilavitkutin-api::HasMemoryProvider` / `MemoryProviderApi` for
+  the provider-pattern this crate's `HasInterner` / `InternerApi`
+  parallels.

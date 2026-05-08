@@ -1,6 +1,6 @@
 //! PersistenceContext accessor roundtrip via test-local stubs.
 
-use arvo::newtype::{Bool, USize};
+use arvo::{Bool, USize};
 use hilavitkutin_api::MemoryProviderApi;
 use hilavitkutin_persistence::PersistenceContext;
 use hilavitkutin_str::{ArenaInterner, StringInterner};
@@ -32,7 +32,7 @@ fn context_exposes_memory_and_interner() {
     let interner = StringInterner::new(StubArena);
     let ctx = PersistenceContext::new(&memory, &interner);
 
-    // Exercise the accessors — they must return references to the
+    // Exercise the accessors: they must return references to the
     // same objects we constructed with.
     let _m: &StubMemory = ctx.memory();
     let _i: &StringInterner<StubArena> = ctx.interner();

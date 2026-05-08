@@ -38,9 +38,9 @@ pub trait Decoder<T> {
     /// unconsumed bytes.
     fn feed<'a, S: Push<T>>(
         &mut self,
-        chunk: &'a [u8],
+        chunk: &'a [u8], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: chunked-codec byte stream; bytes are the 8-bit I/O unit of the contract; tracked: #72
         out: &mut S,
-    ) -> Outcome<&'a [u8], DecodeError>;
+    ) -> Outcome<&'a [u8], DecodeError>; // lint:allow(arvo-types-only) reason: chunked-codec byte stream; tracked: #72
 
     /// Finalise the decoder. Errors if an in-progress frame remains.
     fn finish(self) -> Outcome<(), DecodeError>;
@@ -83,7 +83,7 @@ pub trait DecoderExt<T>: Decoder<T> + Sized {
     /// then finish.
     fn decode_all<S: Push<T>>(
         self,
-        bytes: &[u8],
+        bytes: &[u8], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: chunked-codec byte stream; bytes are the 8-bit I/O unit of the contract; tracked: #72
         out: &mut S,
     ) -> Outcome<(), DecodeError> {
         let mut d = self;

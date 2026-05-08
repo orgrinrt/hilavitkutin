@@ -6,20 +6,28 @@
 //! weighted-SIEVE scan that lands with the weighted-eviction tuning
 //! BACKLOG item.
 
-/// A single cache slot. Occupied when `key` is `Some`.
+use core::mem;
+
+use arvo::{Bool, Cap, USize};
+use arvo::strategy::Identity;
+use notko::Maybe;
+
+use crate::primitives::EvictionWeight;
+
+/// A single cache slot. Occupied when `key` is `Maybe::Is`.
 struct Slot<K, V> {
-    key: Option<K>,
-    value: Option<V>,
-    weight: u64,
-    visited: bool,
+    key: Maybe<K>,
+    value: Maybe<V>,
+    weight: EvictionWeight,
+    visited: Bool,
 }
 
 impl<K, V> Slot<K, V> {
     const EMPTY: Self = Self {
-        key: None,
-        value: None,
-        weight: 0,
-        visited: false,
+        key: Maybe::Isnt,
+        value: Maybe::Isnt,
+        weight: EvictionWeight::new(0),
+        visited: Bool::FALSE,
     };
 }
 
@@ -30,35 +38,35 @@ impl<K, V> Default for Slot<K, V> {
 }
 
 /// Fixed-capacity cache. `CAP` is the total number of slots.
-pub struct SieveCache<K, V, const CAP: usize> {
+pub struct SieveCache<K, V, const CAP: usize> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     slots: [Slot<K, V>; CAP],
-    head: usize,
-    count: usize,
+    head: USize,
+    count: USize,
 }
 
-impl<K: Copy + Eq, V, const CAP: usize> SieveCache<K, V, CAP> {
+impl<K: Copy + Eq, V, const CAP: usize> SieveCache<K, V, CAP> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     /// Construct an empty cache.
     pub fn new() -> Self {
         Self {
             slots: [const { Slot::<K, V>::EMPTY }; CAP],
-            head: 0,
-            count: 0,
+            head: USize::ZERO,
+            count: USize::ZERO,
         }
     }
 
     /// Current number of occupied slots.
-    pub fn len(&self) -> usize {
+    pub fn len(&self) -> USize {
         self.count
     }
 
-    /// `true` when no slots are occupied.
-    pub fn is_empty(&self) -> bool {
-        self.count == 0
+    /// True when no slots are occupied.
+    pub fn is_empty(&self) -> Bool {
+        Bool(self.count.0 == 0)
     }
 
     /// Total slot capacity.
-    pub const fn capacity(&self) -> usize {
-        CAP
+    pub const fn capacity(&self) -> Cap {
+        Cap(USize(CAP))
     }
 
     /// Insert (or replace) an entry.
@@ -67,16 +75,16 @@ impl<K: Copy + Eq, V, const CAP: usize> SieveCache<K, V, CAP> {
     /// weight is updated in place. If the cache is full, the
     /// head-most slot is evicted first (FIFO fallback); the evicted
     /// value is discarded.
-    pub fn insert(&mut self, key: K, value: V, weight: u64) -> Option<V> {
+    pub fn insert(&mut self, key: K, value: V, weight: EvictionWeight) -> Maybe<V> {
         // Replace path: key already present.
         let mut i = 0;
         while i < CAP {
-            if let Some(k) = self.slots[i].key {
+            if let Maybe::Is(k) = self.slots[i].key {
                 if k == key {
-                    let old = self.slots[i].value.take();
-                    self.slots[i].value = Some(value);
+                    let old = mem::replace(&mut self.slots[i].value, Maybe::Isnt);
+                    self.slots[i].value = Maybe::Is(value);
                     self.slots[i].weight = weight;
-                    self.slots[i].visited = false;
+                    self.slots[i].visited = Bool::FALSE;
                     return old;
                 }
             }
@@ -84,18 +92,18 @@ impl<K: Copy + Eq, V, const CAP: usize> SieveCache<K, V, CAP> {
         }
 
         // Room? Fill first empty slot.
-        if self.count < CAP {
+        if self.count.0 < CAP {
             let mut j = 0;
             while j < CAP {
-                if self.slots[j].key.is_none() {
+                if self.slots[j].key.isnt() {
                     self.slots[j] = Slot {
-                        key: Some(key),
-                        value: Some(value),
+                        key: Maybe::Is(key),
+                        value: Maybe::Is(value),
                         weight,
-                        visited: false,
+                        visited: Bool::FALSE,
                     };
-                    self.count += 1;
-                    return None;
+                    self.count = USize(self.count.0 + 1);
+                    return Maybe::Isnt;
                 }
                 j += 1;
             }
@@ -106,34 +114,37 @@ impl<K: Copy + Eq, V, const CAP: usize> SieveCache<K, V, CAP> {
         let _ = self.evict();
         let mut j = 0;
         while j < CAP {
-            if self.slots[j].key.is_none() {
+            if self.slots[j].key.isnt() {
                 self.slots[j] = Slot {
-                    key: Some(key),
-                    value: Some(value),
+                    key: Maybe::Is(key),
+                    value: Maybe::Is(value),
                     weight,
-                    visited: false,
+                    visited: Bool::FALSE,
                 };
-                self.count += 1;
-                return None;
+                self.count = USize(self.count.0 + 1);
+                return Maybe::Isnt;
             }
             j += 1;
         }
-        None
+        Maybe::Isnt
     }
 
     /// Look up an entry. Sets the visited bit on hit.
-    pub fn get(&mut self, key: &K) -> Option<&V> {
+    pub fn get(&mut self, key: &K) -> Maybe<&V> {
         let mut i = 0;
         while i < CAP {
-            if let Some(k) = self.slots[i].key {
+            if let Maybe::Is(k) = self.slots[i].key {
                 if k == *key {
-                    self.slots[i].visited = true;
-                    return self.slots[i].value.as_ref();
+                    self.slots[i].visited = Bool::TRUE;
+                    return match &self.slots[i].value {
+                        Maybe::Is(v) => Maybe::Is(v),
+                        Maybe::Isnt => Maybe::Isnt,
+                    };
                 }
             }
             i += 1;
         }
-        None
+        Maybe::Isnt
     }
 
     /// Evict the head-most occupied slot.
@@ -142,37 +153,37 @@ impl<K: Copy + Eq, V, const CAP: usize> SieveCache<K, V, CAP> {
     /// pops the first occupied slot it meets. The visited bit is
     /// cleared as slots are skipped so that the surface behaves like
     /// the weighted-SIEVE scan will once the BACKLOG item lands.
-    pub fn evict(&mut self) -> Option<(K, V)> {
-        if self.count == 0 {
-            return None;
+    pub fn evict(&mut self) -> Maybe<(K, V)> {
+        if self.count.0 == 0 {
+            return Maybe::Isnt;
         }
         let mut scanned = 0;
         while scanned < CAP {
-            let idx = self.head;
-            self.head = (self.head + 1) % CAP;
+            let idx = self.head.0;
+            self.head = USize((self.head.0 + 1) % CAP);
             scanned += 1;
             let slot = &mut self.slots[idx];
-            if slot.key.is_none() {
+            if slot.key.isnt() {
                 continue;
             }
-            if slot.visited {
-                slot.visited = false;
+            if slot.visited.0 {
+                slot.visited = Bool::FALSE;
                 continue;
             }
-            let key = slot.key.take();
-            let value = slot.value.take();
-            slot.weight = 0;
-            self.count -= 1;
-            if let (Some(k), Some(v)) = (key, value) {
-                return Some((k, v));
+            let key = mem::replace(&mut slot.key, Maybe::Isnt);
+            let value = mem::replace(&mut slot.value, Maybe::Isnt);
+            slot.weight = EvictionWeight::new(0);
+            self.count = USize(self.count.0 - 1);
+            if let (Maybe::Is(k), Maybe::Is(v)) = (key, value) {
+                return Maybe::Is((k, v));
             }
-            return None;
+            return Maybe::Isnt;
         }
-        None
+        Maybe::Isnt
     }
 }
 
-impl<K: Copy + Eq, V, const CAP: usize> Default for SieveCache<K, V, CAP> {
+impl<K: Copy + Eq, V, const CAP: usize> Default for SieveCache<K, V, CAP> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     fn default() -> Self {
         Self::new()
     }

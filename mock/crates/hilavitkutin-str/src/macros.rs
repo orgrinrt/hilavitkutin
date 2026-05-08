@@ -1,4 +1,4 @@
-//! `str_const!()` — compile-time string registration + handle derivation.
+//! `str_const!()`: compile-time string registration + handle derivation.
 
 /// Register a string literal in the `.hilavitkutin_strings` linker section
 /// and return its const-origin `Str` handle.
@@ -9,6 +9,7 @@
 #[macro_export]
 macro_rules! str_const {
     ($s:literal) => {{
+        use ::arvo_bits::BitsRefitCtor as _;
         #[used]
         #[cfg_attr(
             any(target_os = "linux", target_os = "android"),
@@ -19,11 +20,13 @@ macro_rules! str_const {
             unsafe(link_section = "__DATA,__hvkstr")
         )]
         static __ENTRY: $crate::StaticStrEntry = $crate::StaticStrEntry {
-            hash: $crate::Str::__make(
-                ($crate::const_fnv1a($s) & 0x0FFF_FFFF) as u32,
-            ),
+            hash: $crate::Str::__make(::arvo_bits::Bits::<28>::from_narrowed(
+                $crate::const_fnv1a($s),
+            )),
             value: $s,
         };
-        $crate::Str::__make(($crate::const_fnv1a($s) & 0x0FFF_FFFF) as u32)
+        $crate::Str::__make(::arvo_bits::Bits::<28>::from_narrowed(
+            $crate::const_fnv1a($s),
+        ))
     }};
 }

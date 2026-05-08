@@ -2,6 +2,8 @@
 //!
 //! Plan-time selection based on record count + pipeline shape.
 
+use arvo::USize;
+
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Strategy {
     Sequential,
@@ -19,24 +21,24 @@ pub enum PhaseStrategy {
 
 /// Plan-time strategy selector.
 pub trait StrategySelector {
-    fn select(&self, record_count: u64, depth: u32, fibers: u32, roots: u32) -> Strategy;
+    fn select(&self, record_count: USize, depth: USize, fibers: USize, roots: USize) -> Strategy;
 }
 
 /// Default selector per DESIGN thresholds.
 pub struct DefaultSelector;
 
 impl StrategySelector for DefaultSelector {
-    fn select(&self, record_count: u64, depth: u32, fibers: u32, roots: u32) -> Strategy {
+    fn select(&self, record_count: USize, depth: USize, fibers: USize, roots: USize) -> Strategy {
         // <10K records → Sequential.
-        if record_count < 10_000 {
+        if *record_count < 10_000 {
             return Strategy::Sequential;
         }
         // Deep (depth > fibers/2, roots ≤ 2) → Sequential.
-        if depth > fibers / 2 && roots <= 2 {
+        if *depth > *fibers / 2 && *roots <= 2 {
             return Strategy::Sequential;
         }
         // Wide (roots > depth/2) → Adaptive / PipeChase.
-        if roots > depth / 2 {
+        if *roots > *depth / 2 {
             return Strategy::Adaptive;
         }
         // Mixed → Phased.

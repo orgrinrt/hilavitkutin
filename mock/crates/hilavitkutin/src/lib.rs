@@ -1,4 +1,4 @@
-//! hilavitkutin — pipeline execution engine.
+//! hilavitkutin: pipeline execution engine.
 //!
 //! Morsel-driven pipeline engine. Consumes WorkUnit declarations
 //! from `hilavitkutin-api`, analyses them into phases/trunks/fibers,
@@ -10,6 +10,7 @@
 //! (`platform-os`, `platform-std`, `platform-no-os`).
 
 #![no_std]
+#![recursion_limit = "512"]
 #![deny(unsafe_op_in_unsafe_fn)]
 
 // Platform tier exclusivity. Exactly one of the three platform

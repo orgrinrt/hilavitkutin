@@ -1,3 +1,4 @@
+#![feature(const_trait_impl)]
 //! `str_const!()` smoke + determinism.
 
 use hilavitkutin_str::{str_const, Str};
@@ -19,12 +20,12 @@ fn different_inputs_different_handles() {
 #[test]
 fn handle_is_const_origin() {
     let h = str_const!("gamma");
-    assert!(h.is_const());
-    assert!(!h.is_runtime());
+    assert!(h.is_const().0);
+    assert!(!h.is_runtime().0);
 }
 
 #[test]
 fn handle_id_fits_28_bits() {
     let h = str_const!("delta");
-    assert_eq!(h.0 & !Str::ID_MASK, 0);
+    assert_eq!(h.to_bits().to_raw() & !Str::ID_MASK.to_raw(), 0);
 }

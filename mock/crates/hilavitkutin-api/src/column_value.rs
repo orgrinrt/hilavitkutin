@@ -5,9 +5,9 @@
 //! type auto-qualifies with `BIT_WIDTH = size_of * 8`. Sub-byte arvo
 //! types specialise to their true bit width.
 
-use arvo::newtype::{FBits, IBits};
 use arvo::strategy::Hot;
 use arvo::ufixed::UFixed;
+use arvo::{fbits, ibits, USize};
 
 /// Types that can be stored in a `Column<T>`.
 ///
@@ -16,11 +16,11 @@ use arvo::ufixed::UFixed;
 /// specialise.
 pub trait ColumnValue: Copy + 'static {
     /// Number of storage bits the engine reserves per record.
-    const BIT_WIDTH: usize;
+    const BIT_WIDTH: USize;
 }
 
 impl<T: Copy + 'static> ColumnValue for T {
-    default const BIT_WIDTH: usize = core::mem::size_of::<Self>() * 8;
+    default const BIT_WIDTH: USize = USize(core::mem::size_of::<Self>() * 8);
 }
 
 // Sub-byte specialisations for arvo `UFixed<I, F, Hot>` at 1, 2,
@@ -28,14 +28,14 @@ impl<T: Copy + 'static> ColumnValue for T {
 // narrows to byte-aligned widths; these are the packed column
 // types the engine bitpacks.
 
-impl ColumnValue for UFixed<{ IBits(1) }, { FBits::ZERO }, Hot> {
-    const BIT_WIDTH: usize = 1;
+impl ColumnValue for UFixed<{ ibits(1) }, { fbits(0) }, Hot> {
+    const BIT_WIDTH: USize = USize(1);
 }
 
-impl ColumnValue for UFixed<{ IBits(2) }, { FBits::ZERO }, Hot> {
-    const BIT_WIDTH: usize = 2;
+impl ColumnValue for UFixed<{ ibits(2) }, { fbits(0) }, Hot> {
+    const BIT_WIDTH: USize = USize(2);
 }
 
-impl ColumnValue for UFixed<{ IBits(4) }, { FBits::ZERO }, Hot> {
-    const BIT_WIDTH: usize = 4;
+impl ColumnValue for UFixed<{ ibits(4) }, { fbits(0) }, Hot> {
+    const BIT_WIDTH: USize = USize(4);
 }

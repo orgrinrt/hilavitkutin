@@ -1,4 +1,4 @@
-//! `hilavitkutin-persistence` — `#![no_std]`, no alloc cold-store
+//! `hilavitkutin-persistence`: `#![no_std]`, no alloc cold-store
 //! bridge for the hilavitkutin ecosystem.
 //!
 //! Skeleton round: wires the type surface described in DESIGN.md
@@ -17,6 +17,7 @@ pub mod cold_store;
 pub mod context;
 pub mod error;
 pub mod manifest;
+pub mod primitives;
 pub mod sieve;
 pub mod string_table;
 
@@ -25,5 +26,9 @@ pub use cold_store::ColdStore;
 pub use context::PersistenceContext;
 pub use error::PersistenceError;
 pub use manifest::{ColumnMeta, Manifest, TableMeta, MAX_COLUMNS_PER_TABLE, MAX_TABLES};
+pub use primitives::{
+    BitWidth, BufferLen, BufferOffset, Cardinality, ColumnCount, EvictionWeight, RowCount,
+    SchemaVersion,
+};
 pub use sieve::SieveCache;
-pub use string_table::{StringTable, StringTableEntry}; // lint:allow(no-alloc) -- `StringTable` / `StringTableEntry` are the persistence string header types, not std `String`.
+pub use string_table::{StringTable, StringTableEntry}; // lint:allow(no-alloc) reason: `StringTable` / `StringTableEntry` are persistence string header types, not std `String`; tracked: #72
