@@ -138,6 +138,10 @@ impl<K, V, const N: Cap> Default for Map<K, V, N> {
 use crate::access::{Cons, Empty};
 
 /// Marker for a Cons-list of stores.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` is not a StoreBundle",
+    note = "StoreBundle is auto-implemented for `Empty` and `Cons<H, T>` where `T: StoreBundle`. Build the bundle through the scheduler builder's `.resource::<T>(initial)`, `.column::<T>()`, and `.add_virtual::<T>()` calls, or install a Kit whose `Owned` declares it."
+)]
 pub trait StoreBundle {}
 
 impl StoreBundle for Empty {}
@@ -145,5 +149,9 @@ impl<H, T: StoreBundle> StoreBundle for Cons<H, T> {}
 
 /// Opt-in marker for store types whose Resource value can be
 /// replaced via Scheduler::replace_resource.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` is not opt-in for Scheduler::replace_resource",
+    note = "Mark the type with `impl Replaceable for {Self} {{}}` to opt in. Replaceable is intentionally explicit: stores omitted from the replacement set are stable for plan-time analysis."
+)]
 pub trait Replaceable {}
 

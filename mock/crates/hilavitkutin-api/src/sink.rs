@@ -21,6 +21,10 @@ use crate::capability::{BulkPush, Len, Push};
 /// Any `Push<T>` implementor is a `Collector<T>` via the blanket
 /// below. Prefer this trait in call-site bounds when the semantics
 /// are "accepts items" rather than "overflow-aware push" etc.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` is not a Collector for `{T}`",
+    note = "Collector is `Push<T>` plus the contract that pushes always succeed. Implement `Push<T>` first; consumers that can refuse on full implement `BoundedPush<T>` instead."
+)]
 pub trait Collector<T>: Push<T> {}
 impl<T, S: Push<T> + ?Sized> Collector<T> for S {}
 
@@ -28,12 +32,20 @@ impl<T, S: Push<T> + ?Sized> Collector<T> for S {}
 ///
 /// Suitable for diagnostic streams where the caller wants to branch
 /// on "were any errors emitted".
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` is not a DiagnosticSink for `{E}`",
+    note = "DiagnosticSink is `Push<E> + Len`. Implement both to expose the sink to WorkUnit diagnostics."
+)]
 pub trait DiagnosticSink<E>: Push<E> + Len {}
 impl<E, S: Push<E> + Len + ?Sized> DiagnosticSink<E> for S {}
 
 /// Byte-stream: per-byte push + bulk-write capability.
 ///
 /// Codec `Encoder<T>` and `Decoder<T>` write through this trait.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` is not a ByteEmitter",
+    note = "ByteEmitter is `Push<u8> + BulkPush<u8>`. Implement both to expose the byte-stream contract; codecs `Encoder<T>` and `Decoder<T>` write through this trait."
+)]
 pub trait ByteEmitter: Push<u8> + BulkPush<u8> {} // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: byte-stream trait bound; bytes are the 8-bit I/O unit of the contract; tracked: #72
 impl<S: Push<u8> + BulkPush<u8> + ?Sized> ByteEmitter for S {} // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: matches ByteEmitter bound above; tracked: #72
 

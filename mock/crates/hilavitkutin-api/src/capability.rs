@@ -12,6 +12,10 @@ use notko::Outcome;
 ///
 /// Infallible; overflow is the implementor's problem. Sinks that
 /// refuse on full conditions additionally implement `BoundedPush<T>`.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` cannot accept items of type `{T}` via Push",
+    note = "Implement `Push<T>` to declare item-acceptance. The substrate ships impls for the standard sink types in `hilavitkutin_api::sink`; consumer-side push targets implement `Push` directly."
+)]
 pub trait Push<T> {
     /// Accept `item` for storage / forwarding / counting / discard
     /// at the implementor's discretion.
@@ -24,6 +28,10 @@ pub trait Push<T> {
 /// with a bulk-optimised path (byte emitters with memcpy, SIMD
 /// writes) should override. Requires `Push<T>` because bulk push is
 /// meaningless without per-item semantics.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` does not implement BulkPush for `{T}`",
+    note = "BulkPush extends `Push<T>` with slice-form acceptance. Implement when the target supports vectorised pushes; otherwise stick to `Push`."
+)]
 pub trait BulkPush<T>: Push<T> {
     /// Accept `items` as a contiguous slice.
     fn push_bulk(&mut self, items: &[T])
@@ -39,6 +47,10 @@ pub trait BulkPush<T>: Push<T> {
 /// Report item count.
 ///
 /// Consumers branch on "did we emit anything" via `is_empty`.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` does not expose Len",
+    note = "Implement `Len` to expose `len()` and `is_empty()` so consumers can branch on emit-count without consuming the sink."
+)]
 pub trait Len {
     /// Current item count.
     fn len(&self) -> USize;
@@ -54,6 +66,10 @@ pub trait Len {
 /// Separated from `Len` so a sink may expose one without the other
 /// (a counting sink has length but no capacity; a bounded ring
 /// buffer has both).
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` does not expose Capacity",
+    note = "Implement `Capacity` to expose `capacity()` and `remaining()` so consumers introspect headroom before pushing."
+)]
 pub trait Capacity {
     /// Total capacity in items.
     fn capacity(&self) -> USize;
@@ -67,6 +83,10 @@ pub trait Capacity {
 /// Implementors MUST NOT silently drop items on refusal; `try_push`
 /// returns `Outcome::Err(Full)` instead. `Capacity` supertrait lets
 /// callers introspect headroom before pushing.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` does not implement BoundedPush for `{T}`",
+    note = "BoundedPush is `Push<T> + Capacity` where pushes can refuse on full. Implement when the target distinguishes refusal from acceptance."
+)]
 pub trait BoundedPush<T>: Push<T> + Capacity {
     /// Attempt a push; `Outcome::Err(Full)` on refusal.
     fn try_push(&mut self, item: T) -> Outcome<(), Full>;

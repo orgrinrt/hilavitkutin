@@ -21,6 +21,10 @@ pub type Nanos = UFixed<{ ibits(64) }, { fbits(0) }, Hot>;
 /// track raw pointers sized by `USize`. `protect` toggles page-level
 /// read/write permissions; consumers use it for sealed resource
 /// pages.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` does not implement Memory provider contract",
+    note = "Provide a platform-specific impl. The engine builds against `MemoryProviderApi` via const generics; supply your own `MemoryProvider` to the scheduler at construction time."
+)]
 pub trait MemoryProviderApi: Send + Sync + 'static {
     /// Allocate `len` bytes at `align` alignment.
     ///
@@ -53,6 +57,10 @@ pub trait MemoryProviderApi: Send + Sync + 'static {
 /// Threads are spawned once at pipeline construction. `spawn` is
 /// generic over the closure type so the pool can monomorphise per
 /// call site. No `dyn`.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` does not implement ThreadPool provider contract",
+    note = "Provide a platform-specific impl. The engine builds against `ThreadPoolApi` via const generics; supply your own `ThreadPool` to the scheduler at construction time."
+)]
 pub trait ThreadPoolApi: Send + Sync + 'static {
     /// Submit `f` for execution on a pool worker.
     ///
@@ -67,6 +75,10 @@ pub trait ThreadPoolApi: Send + Sync + 'static {
 }
 
 /// Monotonic clock.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` does not implement Clock provider contract",
+    note = "Provide a platform-specific impl. The engine builds against `ClockApi` via const generics; supply your own `Clock` to the scheduler at construction time."
+)]
 pub trait ClockApi: Send + Sync + 'static {
     /// Current time in nanoseconds since a platform-defined epoch.
     fn now_ns(&self) -> Nanos;
@@ -79,6 +91,10 @@ pub trait ClockApi: Send + Sync + 'static {
 // method(&self) -> &Self::Provider; }`.
 
 /// Provider-tuple entry point for the memory provider.
+#[diagnostic::on_unimplemented(
+    message = "provider tuple `{Self}` does not expose a Memory provider",
+    note = "Compose the provider tuple with the `provider_generic!` accessor. The substrate's `Context<P>` framework wires this from the scheduler builder."
+)]
 pub trait HasMemoryProvider {
     /// Concrete provider type the tuple exposes.
     type Provider: MemoryProviderApi;
@@ -87,6 +103,10 @@ pub trait HasMemoryProvider {
 }
 
 /// Provider-tuple entry point for the thread pool.
+#[diagnostic::on_unimplemented(
+    message = "provider tuple `{Self}` does not expose a ThreadPool provider",
+    note = "Compose the provider tuple with the `provider_generic!` accessor. The substrate's `Context<P>` framework wires this from the scheduler builder."
+)]
 pub trait HasThreadPool {
     /// Concrete pool type the tuple exposes.
     type Provider: ThreadPoolApi;
@@ -95,6 +115,10 @@ pub trait HasThreadPool {
 }
 
 /// Provider-tuple entry point for the clock.
+#[diagnostic::on_unimplemented(
+    message = "provider tuple `{Self}` does not expose a Clock provider",
+    note = "Compose the provider tuple with the `provider_generic!` accessor. The substrate's `Context<P>` framework wires this from the scheduler builder."
+)]
 pub trait HasClock {
     /// Concrete clock type the tuple exposes.
     type Provider: ClockApi;

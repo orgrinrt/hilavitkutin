@@ -34,7 +34,7 @@ pub trait AccessSet: sealed::Sealed + 'static {
 #[marker]
 #[diagnostic::on_unimplemented(
     message = "store `{Self}` does not contain `{S}`",
-    note = "Register it with `.resource::<T>(initial)`, `.column::<T>()`, `.add_virtual::<T>()`, or install a Kit that registers it."
+    note = "Register it with `.resource::<T>(initial)`, `.column::<T>()`, `.add_virtual::<T>()`, or install a Kit that registers it. If `.build()` reports `overflow evaluating the requirement`, declare `#![recursion_limit = \"1024\"]` at your crate root."
 )]
 pub trait Contains<S>: AccessSet {}
 
@@ -74,6 +74,10 @@ impl<H: 'static, T: 'static + AccessSet, M: 'static> Contains<M> for Cons<H, T> 
 /// `<Self as Concat<L>>::Out` produces a cons list with every
 /// element of Self followed by every element of L. Used by Kit
 /// composition to grow `Wus` and `Stores` bundles.
+#[diagnostic::on_unimplemented(
+    message = "cannot concatenate `{L}` onto `{Self}`",
+    note = "Concat is implemented for `Empty` and `Cons<H, T>` where `T: Concat<L>`. Make sure both sides are cons-lists built from `Empty` and `Cons<H, T>` (the `read!` / `write!` macros emit this shape)."
+)]
 pub trait Concat<L> {
     type Out;
 }
@@ -100,7 +104,7 @@ where
 #[marker]
 #[diagnostic::on_unimplemented(
     message = "store bundle `{Self}` does not contain every element of `{L}`",
-    note = "Register the missing store with `.resource::<T>(initial)`, `.column::<T>()`, `.add_virtual::<T>()`, or install a Kit that registers it."
+    note = "Register the missing store with `.resource::<T>(initial)`, `.column::<T>()`, `.add_virtual::<T>()`, or install a Kit that registers it. If `.build()` reports `overflow evaluating the requirement`, declare `#![recursion_limit = \"1024\"]` at your crate root."
 )]
 pub trait ContainsAll<L>: AccessSet {}
 

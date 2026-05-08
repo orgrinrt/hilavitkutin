@@ -32,6 +32,10 @@ pub struct On<V>(PhantomData<V>);
 ///
 /// `Schedule` picks the firing condition: `Always` runs every pass,
 /// `On<V>` runs when virtual `V` fires.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` is not a WorkUnit (or its `Schedule` does not match `{Schedule}`)",
+    note = "Implement `WorkUnit` on `{Self}`. Declare `type Read`, `type Write`, `type Hint`, `type Ctx`, and `fn execute(&self, ctx: &Self::Ctx)`. The default `Schedule` is `Always`; override with `On<V>` for virtual-fired WUs."
+)]
 pub trait WorkUnit<Schedule = Always>: Send + Sync + 'static {
     /// Columns / resources this WU reads.
     type Read: AccessSet;
@@ -76,6 +80,10 @@ use crate::access::{Concat, Cons, Empty};
 
 /// Cons-list bundle of WorkUnit types with accumulated Read / Write
 /// access sets.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` is not a WorkUnitBundle",
+    note = "WorkUnitBundle is auto-implemented for `Empty` and for `Cons<W, T>` where `W: WorkUnit` and `T: WorkUnitBundle`. Build the bundle through the scheduler builder's `.add::<W>()` calls."
+)]
 pub trait WorkUnitBundle {
     type AccumRead: AccessSet;
     type AccumWrite: AccessSet;
