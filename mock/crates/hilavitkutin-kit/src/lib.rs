@@ -23,6 +23,10 @@ use hilavitkutin_api::{StoreBundle, WorkUnitBundle};
 /// compile time and accumulates them into the SchedulerBuilder
 /// typestate. App-side wiring (default values for Resources,
 /// Replaceable opt-in) lives at the call site.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` is not a Kit",
+    note = "Implement `Kit` by declaring `type Units: WorkUnitBundle` (the WorkUnit cons-list, often built with `read!` / `write!`) and `type Owned: StoreBundle` (the Resource / Column / Virtual cons-list). The engine reads these at compile time on `.add_kit::<K>()`. If `.build()` reports `overflow evaluating the requirement` after composing many Kits, declare `#![recursion_limit = \"1024\"]` at your crate root."
+)]
 pub trait Kit {
     /// Cons-list of WorkUnit types the kit contributes. Use the
     /// `read!` / `write!` macros from `hilavitkutin-api` to construct

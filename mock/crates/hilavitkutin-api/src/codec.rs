@@ -19,6 +19,10 @@ use crate::sink::ByteEmitter;
 /// `feed` consumes one value and writes its encoded bytes through
 /// the byte emitter. `finish` consumes the encoder and may flush a
 /// trailing framing sequence.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` does not encode `{T}`",
+    note = "Implement `Encoder<T>` for the wire format you control. The `hilavitkutin_api::codec` module ships defaults for common cases."
+)]
 pub trait Encoder<T> {
     /// Encode one value; write bytes through `out`.
     fn feed<B: ByteEmitter>(&mut self, v: &T, out: &mut B);
@@ -33,6 +37,10 @@ pub trait Encoder<T> {
 /// returns the unconsumed tail (which the caller either retains for
 /// the next `feed` call or treats as an error via `DecoderExt`).
 /// `finish` errors if the decoder carries an unfinished frame.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` does not decode `{T}`",
+    note = "Implement `Decoder<T>` for the wire format you control. The `hilavitkutin_api::codec` module ships defaults for common cases."
+)]
 pub trait Decoder<T> {
     /// Feed a byte chunk. Decoded values arrive via `out`; returns
     /// unconsumed bytes.

@@ -14,6 +14,10 @@ use arvo::{fbits, ibits, USize};
 /// `BIT_WIDTH` informs the storage engine for bitpacking. The
 /// blanket default is `size_of::<Self>() * 8`; sub-byte types
 /// specialise.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` cannot be stored in a `Column`",
+    note = "ColumnValue requires `Copy + 'static`. Reduce or transform the value to a fixed-size `Copy` type. arvo's `UFixed`, `IFixed`, `Bits<N, S>`, `Bool`, and `USize` are valid; `String`, `Vec<T>`, and `Box<T>` are not."
+)]
 pub trait ColumnValue: Copy + 'static {
     /// Number of storage bits the engine reserves per record.
     const BIT_WIDTH: USize;
