@@ -18,7 +18,7 @@ provides the ColumnStorage interface.
 
 Bridge between hilavitkutin's in-memory columnar hot store and
 on-disk rkyv-archived cold store. Consumer-agnostic, knows
-nothing about metadata tables, entities, or domain schemas.
+nothing about metadata tables, records, or domain schemas.
 
 ## Serialisation boundary
 
@@ -38,9 +38,9 @@ is a bare u32 to pin the on-disk byte layout.
 
 ```rust
 impl Archive for Str {
-    // Disk-layout ABI: low 28 bits carry the FNV content hash, bit
-    // 31 is the const/runtime flag. Runtime API uses ContentHash.
-    type Archived = u32;
+ // Disk-layout ABI: low 28 bits carry the FNV content hash, bit
+ // 31 is the const/runtime flag. Runtime API uses ContentHash.
+ type Archived = u32;
 }
 ```
 
@@ -61,7 +61,7 @@ runtime type names the in-memory form.
 Current disk-layout types, pinned:
 
 - Str Archived to u32. Low 28 bits carry the FNV content hash; bit
-  31 is the const/runtime flag.
+ 31 is the const/runtime flag.
 - Integer primitive columns archive to themselves (identity).
 
 The runtime API carries the hash value as arvo_hash ContentHash,
@@ -84,11 +84,11 @@ impl Archive directly. Same mechanism, no new traits.
 
 ```
 data_dir/
-  manifest.rkyv        , table directory, metadata
-  tables/
-    <name>.rkyv        , archived column data per table
-  strings/
-    runtime.rkyv       , runtime string table: content_hash → bytes
+ manifest.rkyv, table directory, metadata
+ tables/
+ <name>.rkyv, archived column data per table
+ strings/
+ runtime.rkyv, runtime string table: content_hash → bytes
 ```
 
 Consumer extends with domain-specific files (locale overlays,
@@ -99,19 +99,19 @@ search indices, warmup manifests, etc.).
 **Evict (hot → cold):**
 ```
 column data (raw typed arrays)
-  → rkyv serialize (with PersistenceContext carrying interner)
-    → Str values: handle → content_hash
-    → all else: identity
-  → write to .rkyv file via MemoryProvider
+ → rkyv serialize (with PersistenceContext carrying interner)
+ → Str values: handle → content_hash
+ → all else: identity
+ → write to.rkyv file via MemoryProvider
 ```
 
 **Inject (cold → hot):**
 ```
-mmap .rkyv file (via MemoryProvider)
-  → rkyv archived data directly accessible (zero-copy)
-  → Str columns: content_hash → intern → runtime handle
-  → all else: pointer handoff
-  → inject into ColumnStorage
+mmap.rkyv file (via MemoryProvider)
+ → rkyv archived data directly accessible (zero-copy)
+ → Str columns: content_hash → intern → runtime handle
+ → all else: pointer handoff
+ → inject into ColumnStorage
 ```
 
 ### Flush coordination
@@ -124,7 +124,7 @@ when to flush:
 
 ## SIEVE eviction
 
-`WeightedSieveCache` wrapping ColumnStorage. Keyed by
+`SieveCache` wrapping ColumnStorage. Keyed by
 `(TableId, SegmentRange)`, weighted by byte size.
 
 Key invariant: dirty data is flushed before eviction. The
@@ -150,26 +150,26 @@ Sequential ID = ephemeral session-level identity.
 
 ```rust
 struct Manifest {
-    tables: /* map of table_id → TableMeta */,
-    count: ColumnCount,
+ tables: /* map of table_id → TableMeta */,
+ count: ColumnCount,
 }
 
 struct TableMeta {
-    name_hash: ContentHash,
-    version: SchemaVersion,
-    row_count: RowCount,
-    column_count: ColumnCount,
-    columns: /* column metadata */,
+ name_hash: ContentHash,
+ version: SchemaVersion,
+ row_count: record_count,
+ column_count: ColumnCount,
+ columns: /* column metadata */,
 }
 ```
 
 Domain aliases:
 
 - ContentHash comes from arvo_hash (alias for arvo_bits Bits<28>).
-- SchemaVersion, RowCount, ColumnCount, Cardinality,
-  BufferOffset, BufferLen, BitWidth, EvictionWeight are
-  persistence-local newtypes over USize or raw integer (when the bit
-  width is load-bearing, as with SchemaVersion's u32 ordinal).
+- SchemaVersion, record_count, ColumnCount, Cardinality,
+ BufferOffset, BufferLen, BitWidth, EvictionWeight are
+ persistence-local newtypes over USize or raw integer (when the bit
+ width is load-bearing, as with SchemaVersion's u32 ordinal).
 
 All rkyv-archived. Consumer extends with domain-specific metadata
 (schema versions, migration state, etc).
@@ -186,13 +186,13 @@ container, etc.).
 | Type | Purpose |
 |------|---------|
 | `ColdStore` | File-backed rkyv cold store |
-| `SieveCache` | WeightedSieveCache for eviction |
+| `SieveCache` | `SieveCache` for eviction |
 | `StringTable` | Runtime string persistence |
 | `Manifest` | Table directory and metadata |
 | `PersistenceContext` | Interner + MemoryProvider access |
 | ContentHash (from arvo_hash) | 28-bit FNV content-hash identity |
 | BufferOffset / BufferLen | Byte-offset and byte-length domain aliases over USize |
-| RowCount / ColumnCount / Cardinality | Count domain aliases over USize |
+| record_count / ColumnCount / Cardinality | Count domain aliases over USize |
 | SchemaVersion | Ordinal table-schema version (u32 backing) |
 | EvictionWeight | SieveCache weight (u64 backing) |
 | BitWidth | Column bit-width declaration (u32 backing) |

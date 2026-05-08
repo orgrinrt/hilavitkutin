@@ -10,7 +10,7 @@ is `#![no_std]`, no `alloc`, no runtime spawn, no dynamic dispatch.
 
 The canonical spec is
 `design_rounds/202603181200_topic.hilavitkutin-design-consolidation.md`
-(22 domains, 9 cross-domain resolutions). `mock/DESIGN.md.tmpl` and
+(22 domains, 9 cross-domain resolutions). `mock/DESIGN.md` and
 `mock/PRINCIPLES.md.tmpl` are the map into that spec.
 
 ## Identity
@@ -34,46 +34,46 @@ The canonical spec is
 ## Architecture rules
 
 - `#![no_std]` in every crate. No `alloc`, no `Vec`, no `String`,
-  no `Box`.
+ no `Box`.
 - Monomorphisation is the dispatch. No `dyn`, no `TypeId`, no
-  `std::any`. WorkUnits are generic over their `AccessSet`; the
-  monomorphised function IS the type identity.
+ `std::any`. WorkUnits are generic over their `AccessSet`; the
+ monomorphised function IS the type identity.
 - Static composition only inside the engine. All hilavitkutin
-  WorkUnits are registered at compile time via the scheduler
-  builder. Plan parameters adapt; engine composition does not.
-  Linker-magic registration (`inventory::`, `#[ctor]`,
-  `#[distributed_slice]`, `.init_array`) is banned on every
-  hilavitkutin crate, both inside the engine and inside the
-  plugin-host layer.
+ WorkUnits are registered at compile time via the scheduler
+ builder. Plan parameters adapt; engine composition does not.
+ Linker-magic registration (`inventory::`, `#[ctor]`,
+ `#[distributed_slice]`, `.init_array`) is banned on every
+ hilavitkutin crate, both inside the engine and inside the
+ plugin-host layer.
 - The plugin-host layer (`hilavitkutin-linking`,
-  `hilavitkutin-extensions`, `hilavitkutin-extensions-macros`)
-  provides pull-based explicit-symbol dynamic loading and contract-
-  bound orchestration for downstream consumer hosts. This is
-  distinct from runtime WU discovery: the engine never loads WUs at
-  runtime, and the plugin-host crates use pull-based discovery
-  only, never linker-magic. `hilavitkutin-extensions-macros` is the
-  sole proc-macro crate in the stack; its emitted output is
-  `no_std`-compatible.
+ `hilavitkutin-extensions`, `hilavitkutin-extensions-macros`)
+ provides pull-based explicit-symbol dynamic loading and contract-
+ bound orchestration for downstream consumer hosts. This is
+ distinct from runtime WU discovery: the engine never loads WUs at
+ runtime, and the plugin-host crates use pull-based discovery
+ only, never linker-magic. `hilavitkutin-extensions-macros` is the
+ sole proc-macro crate in the stack; its emitted output is
+ `no_std`-compatible.
 - Pre-allocated thread pool. No `thread::spawn`, `tokio::spawn`,
-  `async_std::spawn` at runtime. Threads are spawned once at
-  pipeline construction; they park between frames.
+ `async_std::spawn` at runtime. Threads are spawned once at
+ pipeline construction; they park between frames.
 - Schedule once, reuse across frames. Plan recompute is rare
-  (triggered by structure change). Runtime cost is amortised over
-  many frames of reused execution.
+ (triggered by structure change). Runtime cost is amortised over
+ many frames of reused execution.
 - Deterministic morsel assignment. Not work-stealing by default;
-  consumers may implement the `Executor` trait for stealing.
+ consumers may implement the `Executor` trait for stealing.
 - Self-hosting meta pipeline. The scheduler schedules itself via
-  meta WUs (`PlanStage → ScheduleReady → PassStart → ScheduleEnd`).
+ meta WUs (`PlanStage → ScheduleReady → PassStart → ScheduleEnd`).
 - `hilavitkutin-build` is a build-dep only. It has no runtime deps.
-  Its code never links into the consumer's binary.
+ Its code never links into the consumer's binary.
 - `hilavitkutin-api` forbids depending on `hilavitkutin` internals.
-  The engine depends on the api, not the other way round.
+ The engine depends on the api, not the other way round.
 - `hilavitkutin-ctx`, `-persistence`, `-str` are reusable extensions.
-  They do not depend on each other and do not depend on the engine.
+ They do not depend on each other and do not depend on the engine.
 - Substrate dependency: the engine consumes `arvo` for numeric and
-  analysis primitives (`arvo-graph`, `arvo-bitmask`, `arvo-sparse`,
-  `arvo-spectral`, `arvo-comb`). Keep the boundary clean; no
-  re-export of arvo types through `hilavitkutin-api`.
+ analysis primitives (`arvo-graph`, `arvo-bitmask`, `arvo-sparse`,
+ `arvo-spectral`, `arvo-comb`). Keep the boundary clean; no
+ re-export of arvo types through `hilavitkutin-api`.
 
 ## Vocabulary
 
@@ -81,7 +81,7 @@ Authoritative hierarchy (coarsest → finest):
 
 ```
 pipeline → core → phase ↔ waist → trunk → fiber ↔ branch ↔ bridge
-  → morsel → micro-morsel → entry
+ → morsel → micro-morsel → entry
 ```
 
 `record` is one data point in a column — never `row`, never
@@ -107,55 +107,55 @@ commit time.
 
 - `docs/DESIGN.md` — generated, canonical architecture.
 - `docs/STRUCTURE.md` + graph — generated, crate and item index.
-- `mock/DESIGN.md.tmpl`, `mock/PRINCIPLES.md.tmpl`,
-  `mock/WORKFLOW.md.tmpl` — authored sources.
-- `mock/crates/*/DESIGN.md.tmpl` — per-crate deep dives.
+- `mock/DESIGN.md`, `mock/PRINCIPLES.md.tmpl`,
+ `mock/WORKFLOW.md.tmpl` — authored sources.
+- `mock/crates/*/DESIGN.md` — per-crate deep dives.
 - `mock/design_rounds/` — design round state machine. Do not
-  rename files by hand; use `cargo mock lock` / `unlock` /
-  `deprecate` / `close`.
+ rename files by hand; use `cargo mock lock` / `unlock` /
+ `deprecate` / `close`.
 - `mock/agent/` — these instructions. Edit templates here, not the
-  generated files under `.claude/` or `.github/`.
+ generated files under `.claude/` or `.github/`.
 - `mock/lints/` — repo-specific Rust lints compiled into `cargo
-  mock`.
+ mock`.
 
 ## What not to do
 
 - Do not add `alloc`, `std`, `Vec`, `String`, `Box`, `dyn`, or
-  `TypeId` to any `hilavitkutin*` crate.
+ `TypeId` to any `hilavitkutin*` crate.
 - Do not introduce runtime spawn (`thread::spawn`, `tokio::spawn`,
-  `async_std::spawn`). The pool is pre-allocated at plan time.
+ `async_std::spawn`). The pool is pre-allocated at plan time.
 - Do not introduce linker-magic registration (`inventory::submit!`,
-  `#[ctor]`, `#[distributed_slice]`, `.init_array`-based registries)
-  in any hilavitkutin crate. Engine WU composition is static.
-  Plugin-host discovery is pull-based explicit symbols only.
+ `#[ctor]`, `#[distributed_slice]`, `.init_array`-based registries)
+ in any hilavitkutin crate. Engine WU composition is static.
+ Plugin-host discovery is pull-based explicit symbols only.
 - Do not confuse engine-scope rules with plugin-host-scope rules.
-  Runtime dlopen of downstream consumer extensions routed through
-  `hilavitkutin-linking` / `hilavitkutin-extensions` is the
-  permitted mechanism and is not the same as the banned
-  linker-magic registration pattern.
+ Runtime dlopen of downstream consumer extensions routed through
+ `hilavitkutin-linking` / `hilavitkutin-extensions` is the
+ permitted mechanism and is not the same as the banned
+ linker-magic registration pattern.
 - Do not build runtime extension discovery into the plugin-host
-  layer. Downstream consumer ecosystems (loimu's runtime expansion,
-  viola's grammar set, and so on) build that abstraction on top.
-  `hilavitkutin-linking`, `hilavitkutin-extensions`, and
-  `hilavitkutin-extensions-macros` support arbitrary-time loading of
-  individual extensions and no more.
+ layer. Downstream consumer ecosystems (loimu's runtime expansion,
+ viola's grammar set, and so on) build that abstraction on top.
+ `hilavitkutin-linking`, `hilavitkutin-extensions`, and
+ `hilavitkutin-extensions-macros` support arbitrary-time loading of
+ individual extensions and no more.
 - Do not design ABI surfaces that assume "all plugins loaded before
-  any invoked" or any similar ecosystem-wide gate. The framework's
-  assumption is that any extension loads, runs, and drops at
-  arbitrary points independent of siblings. Consumer code MUST
-  tolerate this; framework code MUST enforce it.
+ any invoked" or any similar ecosystem-wide gate. The framework's
+ assumption is that any extension loads, runs, and drops at
+ arbitrary points independent of siblings. Consumer code MUST
+ tolerate this; framework code MUST enforce it.
 - Do not use the dead vocabulary terms (`chain`, `chain_group`,
-  `partition`, `archetype`, `entity`, `row`, `order`) for any
-  engine-domain concept.
+ `partition`, `archetype`, `entity`, `row`, `order`) for any
+ engine-domain concept.
 - Do not let `hilavitkutin-api` depend on `hilavitkutin`. The
-  api is the contract; the engine is one implementation of it.
+ api is the contract; the engine is one implementation of it.
 - Do not re-export arvo types through `hilavitkutin-api`. Consumers
-  depend on arvo directly if they need it.
+ depend on arvo directly if they need it.
 - Do not add concrete heap-backed collections to any crate. Plan
-  structures are const-generic; runtime structures come from
-  consumer-provided `MemoryProvider`.
+ structures are const-generic; runtime structures come from
+ consumer-provided `MemoryProvider`.
 - Do not edit files under `.claude/`, `.github/copilot-instructions.md`,
-  `.github/instructions/`, `.github/skills/`, or `.github/hooks/`.
-  They regenerate from `mock/agent/` on every `cargo mock`.
+ `.github/instructions/`, `.github/skills/`, or `.github/hooks/`.
+ They regenerate from `mock/agent/` on every `cargo mock`.
 - Do not hand-rename `design_rounds/*.md` suffixes. Use the
-  subcommands.
+ subcommands.
