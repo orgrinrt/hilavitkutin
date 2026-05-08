@@ -201,7 +201,7 @@ impl<const BYTES: usize, const ENTRIES: usize> ArenaInterner for MemoryArena<BYT
 
 /// Build a default interner (StringInterner wrapping a fresh
 /// MemoryArena). Consumers wire it onto the scheduler with
-/// `builder.resource(default_interner::<BYTES, ENTRIES>())`.
+/// `builder.add_resource(default_interner::<BYTES, ENTRIES>())`.
 ///
 /// Two const generics because the byte buffer's capacity (BYTES)
 /// and the maximum number of distinct runtime-interned strings
@@ -218,7 +218,7 @@ pub const fn default_interner<const BYTES: usize, const ENTRIES: usize>() // lin
 ///
 /// Round 4 declarative shape: declares the type-level commitment
 /// only. The default value is supplied by the app at the call site
-/// via `builder.resource(default_interner::<BYTES, ENTRIES>())`.
+/// via `builder.add_resource(default_interner::<BYTES, ENTRIES>())`.
 pub struct InternerKit<const BYTES: usize, const ENTRIES: usize>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array sizes; tracked: #121
 
 impl<const BYTES: usize, const ENTRIES: usize> Kit for InternerKit<BYTES, ENTRIES> // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array sizes; tracked: #121
