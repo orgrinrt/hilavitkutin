@@ -1,6 +1,6 @@
 //! SieveCache insert / get / evict ordering (FIFO fallback).
 
-use arvo::{Bool, Cap, USize};
+use arvo::{Bool, Cap, Identity, USize};
 use hilavitkutin_persistence::{EvictionWeight, SieveCache};
 use notko::Maybe;
 
