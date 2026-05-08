@@ -24,6 +24,10 @@ use crate::store::{Column, Resource, Virtual};
 /// from re-emitting noalias metadata that would reorder writes
 /// across fused WUs. `unsafe` pinky-swears the engine proved
 /// ownership at plan time.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` does not provide column-read API for set `{R}`",
+    note = "Implemented by the scheduler-generated context. If your WorkUnit Ctx hits this bound, ensure the provider tuple satisfies `HasColumnReader<R>` for the read set the WU declares."
+)]
 pub trait ColumnReaderApi<R: AccessSet> {
     /// Read the record at index `i` from a column `T`.
     ///
@@ -37,6 +41,10 @@ pub trait ColumnReaderApi<R: AccessSet> {
 }
 
 /// Write access to columns declared in `W`.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` does not provide column-write API for set `{W}`",
+    note = "Implemented by the scheduler-generated context. If your WorkUnit Ctx hits this bound, ensure the provider tuple satisfies `HasColumnWriter<W>` for the write set the WU declares."
+)]
 pub trait ColumnWriterApi<W: AccessSet> {
     /// Write `v` to the record at index `i` of column `T`.
     ///
@@ -49,6 +57,10 @@ pub trait ColumnWriterApi<W: AccessSet> {
 }
 
 /// Shared-resource fetch for resources declared in `R`.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` does not provide resource API for set `{R}`",
+    note = "Implemented by the scheduler-generated context. If your WorkUnit Ctx hits this bound, ensure the provider tuple satisfies `HasResourceProvider<R>` for the read set the WU declares."
+)]
 pub trait ResourceProviderApi<R: AccessSet> {
     /// Borrow the resource value of type `T`.
     fn resource<T: 'static>(&self) -> &T
@@ -57,6 +69,10 @@ pub trait ResourceProviderApi<R: AccessSet> {
 }
 
 /// Fire a virtual flag declared in `W`.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` does not provide virtual-fire API for set `{W}`",
+    note = "Implemented by the scheduler-generated context. If your WorkUnit Ctx hits this bound, ensure the provider tuple satisfies `HasVirtualFirer<W>` for the write set the WU declares."
+)]
 pub trait VirtualFirerApi<W: AccessSet> {
     /// Fire the virtual `V`. Consumers bound to `On<V>` run next pass.
     fn fire<V: 'static>(&self)
@@ -68,6 +84,10 @@ pub trait VirtualFirerApi<W: AccessSet> {
 ///
 /// Fusible: consecutive `each` calls coalesce into one loop at
 /// compile time when morsel boundaries align.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` does not provide Each API for sets `{R}` / `{W}`",
+    note = "Implemented by the scheduler-generated context. If your WorkUnit Ctx hits this bound, ensure the provider tuple satisfies `HasEach<R, W>` for the read and write sets the WU declares."
+)]
 pub trait EachApi<R: AccessSet, W: AccessSet> {
     /// Run `f` once per element. Implementors may fuse consecutive
     /// each-calls when the scheduler proves alignment.
@@ -80,6 +100,10 @@ pub trait EachApi<R: AccessSet, W: AccessSet> {
 ///
 /// Hands the full slice to `f` in one call. Use when the body
 /// processes records in bulk (SIMD, BLAS-style kernels).
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` does not provide Batch API for sets `{R}` / `{W}`",
+    note = "Implemented by the scheduler-generated context. If your WorkUnit Ctx hits this bound, ensure the provider tuple satisfies `HasBatch<R, W>` for the read and write sets the WU declares."
+)]
 pub trait BatchApi<R: AccessSet, W: AccessSet> {
     /// Run `f` once with the morsel index range.
     fn run<F>(&self, f: F)
@@ -88,6 +112,10 @@ pub trait BatchApi<R: AccessSet, W: AccessSet> {
 }
 
 /// Reduce over morsel slice with an accumulator.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` does not provide Reduce API for sets `{R}` / `{W}`",
+    note = "Implemented by the scheduler-generated context. If your WorkUnit Ctx hits this bound, ensure the provider tuple satisfies `HasReduce<R, W>` for the read and write sets the WU declares."
+)]
 pub trait ReduceApi<R: AccessSet, W: AccessSet> {
     /// Fold `init` with `f` over each index in the morsel slice.
     fn run<A, F>(&self, init: A, f: F) -> A

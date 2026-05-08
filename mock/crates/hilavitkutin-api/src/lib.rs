@@ -34,6 +34,7 @@ pub mod hint;
 pub mod id;
 pub mod macros;
 pub mod platform;
+pub mod prelude;
 pub mod sink;
 pub mod store;
 pub mod work_unit;
