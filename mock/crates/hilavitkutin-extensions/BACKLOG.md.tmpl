@@ -2,33 +2,33 @@
 
 Type-surface reminder: every pub signature in this crate uses notko's fallibility ladder (Just / Maybe / Outcome), arvo primitives for numeric and boolean values, and fixed-capacity structured errors with no heap payloads. Collections do not cross the public API. The crate returns single `Extension` handles and small static-reference accessors, not container types.
 
-Host-layer source was brought into conformance with this DESIGN (post-landing conformance sweep). Prior source drift on `ExtensionError`, `ExtensionAbiStatus`, `ExtensionVersion`, `CapabilityId`, `CapabilityExport`, `ExtensionMeta::NAME`, `InitHandler::init`, `ExtensionHost::new`, `ExtensionHost::load`, and `Extension::capability` is now resolved.
+Host-layer source was brought into conformance with this DESIGN (post-landing conformance sweep). Prior source drift on `ExtensionError`, `ExtensionAbiStatus`, `ExtensionVersion`, `ProviderId`, `ProviderExport`, `ExtensionMeta::NAME`, `InitHandler::init`, `ExtensionHost::new`, `ExtensionHost::load`, and `Extension::provider` is now resolved.
 
 ## Designed, deferred
 
 ### Flip bare-primitive FFI-wire sites to UWire<N> once arvo ships it
 
-This decided the FFI-wire primitive policy: arvo transparent newtypes (USize / Bool) at wire-identical sites, bare primitives at sites where no wire-stable arvo newtype exists yet. The bare-`u32` sites in `ExtensionDescriptor` are now `tag`, `descriptor_size`, the inner `u32` of `AbiVersion` (the field type is the newtype but its inner is bare; AbiVersion remains repr-transparent), and the three length fields `name_len`, `capabilities_len`, `required_host_caps_len`. The four `u16` fields inside `ExtensionVersion` and the inner `u64` of `CapabilityId` are also bare. The `MAX_DESCRIPTOR_LIST_LEN` constant is bare `u32`. All are marked with trailing `lint:allow(...) tracked: #206` annotations. When arvo ships a `UWire<N>` primitive (fixed backing per N wire bits, no Strategy axis), flip those sites to `UWire<32>` / `UWire<16>` / `UWire<64>` and drop the lint:allow annotations. Cross-referenced to the counterpart arvo BACKLOG entry.
+This decided the FFI-wire primitive policy: arvo transparent newtypes (USize / Bool) at wire-identical sites, bare primitives at sites where no wire-stable arvo newtype exists yet. The bare-`u32` sites in `ExtensionDescriptor` are now `tag`, `descriptor_size`, the inner `u32` of `AbiVersion` (the field type is the newtype but its inner is bare; AbiVersion remains repr-transparent), and the three length fields `name_len`, `providers_len`, `required_host_providers_len`. The four `u16` fields inside `ExtensionVersion` and the inner `u64` of `ProviderId` are also bare. The `MAX_DESCRIPTOR_LIST_LEN` constant is bare `u32`. All are marked with trailing `lint:allow(...) tracked: #206` annotations. When arvo ships a `UWire<N>` primitive (fixed backing per N wire bits, no Strategy axis), flip those sites to `UWire<32>` / `UWire<16>` / `UWire<64>` and drop the lint:allow annotations. Cross-referenced to the counterpart arvo BACKLOG entry.
 
 ### Hot-reload orchestration with ref-counted unload
 
 V1 is load-once, drop-once. Some downstream consumers will want hot-reload: atomically replace an extension at a path while outstanding `Extension` handles are still live. That requires ref-counting at the host layer and a versioned handle-token contract with the linking layer. Out of v1 scope because it changes the `Extension`-to-`Library` lifetime story.
 
-### Type-level capability identifiers
+### Type-level provider identifiers
 
-V1 uses `CapabilityId` (a plain u64 newtype) for lookups. A richer design would introduce a `Capability` marker trait with associated `ID: CapabilityId` and `Interface` type, letting the host return a typed `&Interface` directly from capability lookup. Ergonomic improvement for consumers; requires macro-side cooperation and affects the export macro shape. Deferred to a future round.
+V1 uses `ProviderId` (a plain u64 newtype) for lookups. A richer design would introduce a `Provider` marker trait with associated `ID: ProviderId` and `Interface` type, letting the host return a typed `&Interface` directly from provider lookup. Ergonomic improvement for consumers; requires macro-side cooperation and affects the export macro shape. Deferred to a future round.
 
 ### Lifecycle observability hooks
 
-Hooks for load, init, capability invocation, and shutdown transitions. Today consumers instrument around `ExtensionHost::load` and each `Extension::capability` call in their own code. In-crate hooks would standardise this and enable out-of-band telemetry without consumer cooperation. Adds either `dyn` or an additional fn-pointer slot on `ExtensionHost`; deferred pending a concrete consumer pain-point.
+Hooks for load, init, provider invocation, and shutdown transitions. Today consumers instrument around `ExtensionHost::load` and each `Extension::provider` call in their own code. In-crate hooks would standardise this and enable out-of-band telemetry without consumer cooperation. Adds either `dyn` or an additional fn-pointer slot on `ExtensionHost`; deferred pending a concrete consumer pain-point.
 
 ### Wasm-backend extensions
 
 A wasm transport (via wasmtime or a similar engine) alongside the cdylib transport, with a matching wasm descriptor convention. Out of v1 scope; the architectural question of whether to unify the two transports under one host or ship separate hosts is a whole design round.
 
-### Capability-level compatibility negotiation
+### Provider-level compatibility negotiation
 
-V1 exposes `required_host_caps` as presence-or-absence. Richer negotiation (minimum capability versions, feature-flag matching, optional sub-capabilities) would require extending `CapabilityEntry` with more fields and defining a negotiation protocol between host and extension at load time.
+V1 exposes `required_host_providers` as presence-or-absence. Richer negotiation (minimum provider versions, feature-flag matching, optional sub-providers) would require extending `ProviderEntry` with more fields and defining a negotiation protocol between host and extension at load time.
 
 ### Stateful consumer-supplied policy functions
 
@@ -36,7 +36,7 @@ V1 exposes `required_host_caps` as presence-or-absence. Richer negotiation (mini
 
 ### Extension telemetry surfaces
 
-Per-load timing, per-invocation timing, capability-lookup counters. Part of the lifecycle hooks story above but decoupled: telemetry could ship first as a separate crate-level feature even before general hooks land.
+Per-load timing, per-invocation timing, provider-lookup counters. Part of the lifecycle hooks story above but decoupled: telemetry could ship first as a separate crate-level feature even before general hooks land.
 
 ### Probe without init
 

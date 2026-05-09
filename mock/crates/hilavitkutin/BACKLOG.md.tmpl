@@ -257,3 +257,17 @@ fixture that asserts the marker name is in the inline text.
 
 Round-5+ scope. The audit C3 / M3 decision criterion (marker name
 in inline text) is met at depth 5 without this work.
+
+## Consumer migration to unified `.with(value)` builder
+
+Round 202605091700 retires the nine per-kind `.add_*` and
+`.with_*` builder methods in favour of a single
+`.with<P: Provider>(p: P)` entry point with typestate routing
+through `Provider::Dispatch`. Consumer crates (viola, vehje,
+future apps) need a mechanical sweep replacing every
+`.add_unit::<W>()` / `.add_resource(value)` /
+`.add_resource_default::<R>()` / `.add_column::<T>()` /
+`.add_virtual::<V>()` / `.add_kit::<K>()` / `.with_memory(m)` /
+`.with_threads(t)` / `.with_clock(c)` call site with the
+unified `.with(value)` shape. One PR per consumer repo. Tracked
+here so the post-merge follow-up is not lost.

@@ -5,7 +5,7 @@ use hilavitkutin_linking::Library;
 use notko::{Maybe, Outcome};
 
 use crate::descriptor::{
-    CapabilityId, DESCRIPTOR_SYMBOL, EXTENSION_DESCRIPTOR_TAG,
+    ProviderId, DESCRIPTOR_SYMBOL, EXTENSION_DESCRIPTOR_TAG,
     ExtensionAbiStatus, ExtensionDescriptor, HOST_ABI_VERSION,
     MAX_DESCRIPTOR_LIST_LEN,
 };
@@ -60,21 +60,21 @@ pub fn default_policy(
 
 /// Host state that drives extension load and lifecycle.
 ///
-/// Carries the host's advertised capability set and the failure
+/// Carries the host's advertised provider set and the failure
 /// policy. The opaque `host_ctx` pointer is per-load, not per-host,
 /// so two simultaneously-loaded extensions never share state through
 /// this channel.
 pub struct ExtensionHost {
-    host_capabilities: &'static [CapabilityId],
+    host_providers: &'static [ProviderId],
     policy: FailurePolicyFn,
     observer: Maybe<ShutdownObserverFn>,
 }
 
 impl ExtensionHost {
-    /// Construct a host advertising `host_capabilities`.
-    pub fn new(host_capabilities: &'static [CapabilityId]) -> Self {
+    /// Construct a host advertising `host_providers`.
+    pub fn new(host_providers: &'static [ProviderId]) -> Self {
         Self {
-            host_capabilities,
+            host_providers,
             policy: default_policy,
             observer: Maybe::Isnt,
         }
@@ -97,10 +97,10 @@ impl ExtensionHost {
     }
 
     /// Return true if `id` appears in the host's advertised set.
-    pub fn has_capability(&self, id: CapabilityId) -> bool {
+    pub fn has_provider(&self, id: ProviderId) -> bool {
         let mut i = 0;
-        while i < self.host_capabilities.len() {
-            if self.host_capabilities[i] == id {
+        while i < self.host_providers.len() {
+            if self.host_providers[i] == id {
                 return true;
             }
             i += 1;
@@ -158,18 +158,18 @@ impl ExtensionHost {
         }
 
         // Verify every required-host-cap is in our advertised set.
-        let req_len = descriptor.required_host_caps_len as usize;
-        if !descriptor.required_host_caps_ptr.is_null() && req_len > 0 {
+        let req_len = descriptor.required_host_providers_len as usize;
+        if !descriptor.required_host_providers_ptr.is_null() && req_len > 0 {
             let mut i = 0;
             while i < req_len {
-                // SAFETY: required_host_caps_ptr + _len valid static slice.
+                // SAFETY: required_host_providers_ptr + _len valid static slice.
                 let required =
-                    unsafe { *descriptor.required_host_caps_ptr.add(i) };
-                if !self.has_capability(required) {
+                    unsafe { *descriptor.required_host_providers_ptr.add(i) };
+                if !self.has_provider(required) {
                     return policy_translate(
                         self.policy,
                         requirement,
-                        ExtensionError::RequiredHostCapabilityMissing {
+                        ExtensionError::RequiredHostProviderMissing {
                             cap: required,
                         },
                     );
@@ -213,9 +213,9 @@ fn policy_translate(
 
 /// Validate descriptor structural invariants in the order required for
 /// safe field access: tag, descriptor_size, abi_version, length
-/// bounds. The required-host-capability check happens at the call
+/// bounds. The required-host-provider check happens at the call
 /// site after this returns, because it depends on the host's
-/// advertised capability set.
+/// advertised provider set.
 ///
 /// Returns `Outcome::Ok(())` on success. The first failed check
 /// surfaces; subsequent fields are not read. Public so consumers can
@@ -254,17 +254,17 @@ pub fn validate_descriptor(
         });
     }
 
-    if descriptor.capabilities_len > MAX_DESCRIPTOR_LIST_LEN {
+    if descriptor.providers_len > MAX_DESCRIPTOR_LIST_LEN {
         return Outcome::Err(ExtensionError::DescriptorBoundsExceeded {
-            field: "capabilities",
-            len: descriptor.capabilities_len,
+            field: "providers",
+            len: descriptor.providers_len,
         });
     }
 
-    if descriptor.required_host_caps_len > MAX_DESCRIPTOR_LIST_LEN {
+    if descriptor.required_host_providers_len > MAX_DESCRIPTOR_LIST_LEN {
         return Outcome::Err(ExtensionError::DescriptorBoundsExceeded {
-            field: "required_host_caps",
-            len: descriptor.required_host_caps_len,
+            field: "required_host_providers",
+            len: descriptor.required_host_providers_len,
         });
     }
 

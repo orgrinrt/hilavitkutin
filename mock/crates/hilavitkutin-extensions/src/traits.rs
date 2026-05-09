@@ -6,7 +6,7 @@
 
 use core::ffi::c_void;
 
-use crate::descriptor::{CapabilityId, ExtensionAbiStatus, ExtensionVersion};
+use crate::descriptor::{ProviderId, ExtensionAbiStatus, ExtensionVersion};
 
 /// Author-side metadata contract.
 ///
@@ -21,12 +21,12 @@ pub trait ExtensionMeta {
     /// from `CARGO_PKG_VERSION`; explicit impls pin it manually.
     const VERSION: ExtensionVersion;
 
-    /// Host capability ids the extension requires at load.
+    /// Host provider ids the extension requires at load.
     ///
     /// Empty by default. The host enforces this list before calling
     /// `init_fn`; any missing id produces
-    /// `ExtensionError::RequiredHostCapabilityMissing`.
-    const REQUIRED_HOST_CAPS: &'static [CapabilityId] = &[];
+    /// `ExtensionError::RequiredHostProviderMissing`.
+    const REQUIRED_HOST_CAPS: &'static [ProviderId] = &[];
 }
 
 /// Optional init handler. Implemented on the extension struct.
@@ -63,17 +63,17 @@ pub trait ShutdownHandler {
     unsafe fn shutdown(host_ctx: *mut c_void) -> ExtensionAbiStatus;
 }
 
-/// Per-capability export contract.
+/// Per-provider export contract.
 ///
-/// An extension implements this trait once per capability it exports.
-/// The macro reads each impl to emit one `CapabilityEntry` whose
-/// `vtable_ptr` field carries `<T as CapabilityExport>::VTABLE_PTR`.
-pub trait CapabilityExport {
-    /// Compile-time capability id. Typically
-    /// `CapabilityId::from_name("...")`.
-    const ID: CapabilityId;
+/// An extension implements this trait once per provider it exports.
+/// The macro reads each impl to emit one `ProviderEntry` whose
+/// `vtable_ptr` field carries `<T as ProviderExport>::VTABLE_PTR`.
+pub trait ProviderExport {
+    /// Compile-time provider id. Typically
+    /// `ProviderId::from_name("...")`.
+    const ID: ProviderId;
 
-    /// Raw pointer to the extension's vtable for this capability.
+    /// Raw pointer to the extension's vtable for this provider.
     /// Layout is consumer-domain-specific; the host treats it as
     /// opaque and hands it through to the consumer trampoline.
     const VTABLE_PTR: *const c_void;
