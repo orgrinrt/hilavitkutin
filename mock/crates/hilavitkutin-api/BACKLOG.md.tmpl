@@ -185,3 +185,20 @@ types as a usability nicety so consumers can reach for
 `.with(MyMarker::new())` consistently. Not load-bearing; the
 `.with(value)` shape works through `Provider::Init` regardless.
 Cross-repo opportunity tracked here.
+
+## Wire Resource::new to the scheduler-owned resource registry
+
+`Resource::new(value: T)` currently consumes the value but drops
+it at construction. The function is a stub-time placeholder until
+HILA-RUNTIME-C6 ships the persistence spine. The drop matches the
+prior `add_resource(_init: T)` semantics on `SchedulerBuilder`;
+the type-level role of `Resource<T>` as a registration marker is
+unchanged. Decision rationale captured in
+`mock/research/notes/202605091700_src_apply_decisions.md` (D1).
+
+When C6 lands, the constructor will route the value into
+scheduler-owned storage via the persistence layer. Revisit
+`hilavitkutin-api/src/store.rs` `Resource::new` and update the
+doc comment when the data plane is the actual home. Consumers
+reading the current doc-comment about the drop should not see
+behaviour change post-C6 except that the value is now retained.
