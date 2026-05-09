@@ -3,12 +3,12 @@
 //! Disjoint from `hilavitkutin_linking::LinkError`. The linking layer
 //! surfaces load / resolve / close failures; this crate surfaces
 //! contract-level failures (descriptor missing or malformed, abi skew,
-//! init handler non-`Ok`, required host capability unavailable, and so
+//! init handler non-`Ok`, required host provider unavailable, and so
 //! on).
 
 use hilavitkutin_linking::LinkError;
 
-use crate::descriptor::{AbiVersion, CapabilityId, ExtensionAbiStatus};
+use crate::descriptor::{AbiVersion, ProviderId, ExtensionAbiStatus};
 
 /// Host-side extension error.
 #[non_exhaustive]
@@ -30,14 +30,14 @@ pub enum ExtensionError {
     /// Descriptor `abi_version` does not match host.
     AbiVersionMismatch { expected: AbiVersion, got: AbiVersion },
     /// A descriptor length field exceeded `MAX_DESCRIPTOR_LIST_LEN`.
-    /// `field` is one of `"name"`, `"capabilities"`, or
-    /// `"required_host_caps"`.
+    /// `field` is one of `"name"`, `"providers"`, or
+    /// `"required_host_providers"`.
     DescriptorBoundsExceeded { field: &'static str, len: u32 }, // lint:allow(arvo-types-only, no-bare-numeric, no-public-raw-field) tracked: #206
     /// Host declines to accept the extension's semantic version (reserved
     /// for consumer-layer policies; the base host does not apply any).
     ExtensionVersionUnsupported,
-    /// A capability the extension requires is not in the host's advertised set.
-    RequiredHostCapabilityMissing { cap: CapabilityId },
+    /// A provider the extension requires is not in the host's advertised set.
+    RequiredHostProviderMissing { cap: ProviderId },
     /// Extension's `init_fn` returned a non-`Ok` status.
     InitFailed { status: ExtensionAbiStatus },
     /// Extension's `shutdown_fn` returned a non-`Ok` status.

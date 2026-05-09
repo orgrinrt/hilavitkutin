@@ -8,10 +8,10 @@
 
 use arvo::USize;
 use hilavitkutin_api::{
-    AccessSet, Always, BatchApi, Column, ColumnReaderApi, ColumnValue, ColumnWriterApi,
+    AccessSet, Always, Atomic, BatchApi, Column, ColumnReaderApi, ColumnValue, ColumnWriterApi,
     Contains, EachApi, HasBatch, HasColumnReader, HasColumnWriter, HasEach, HasReduce,
-    HasResourceProvider, HasVirtualFirer, Immediate, Normal, ReduceApi, Resource,
-    ResourceProviderApi, Atomic, Virtual, VirtualFirerApi, WorkUnit, read, write,
+    HasResourceProvider, HasVirtualFirer, Immediate, Normal, Provider, ProviderKind, ReduceApi,
+    Resource, ResourceProviderApi, UnitDispatch, Virtual, VirtualFirerApi, WorkUnit, read, write,
 };
 
 // --- Stub provider (all-in-one) --------------------------------------
@@ -145,6 +145,12 @@ struct Vel;
 struct GravFired;
 
 struct Integrate;
+
+impl Provider for Integrate {
+    type Init = Self;
+    const KIND: ProviderKind = ProviderKind::WorkUnit;
+    type Dispatch = UnitDispatch<Self>;
+}
 
 impl WorkUnit<Always> for Integrate {
     type Read = read![Column<Pos>, Column<Vel>];

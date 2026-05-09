@@ -1,0 +1,50 @@
+e87df50 chore: lock src changelist for 202605101200_changelist.src.lock.md
+b814108 docs(round-202605101200): empty src CL (doc-only round)
+438625a chore: lock doc changelist for 202605101200_changelist.doc.lock.md
+07e4fa9 docs(hilavitkutin-api): SHAME entry for KitDispatch (round-202605101200)
+1d4f7bb docs(round-202605101200): doc CL adds KitDispatch SHAME
+f8802d6 docs(round-202605101200): open round for KitDispatch SHAME entry
+e774312 chore: close design round 202605091700
+e963dcb chore: lock src changelist for 202605091700_changelist.src.lock.md
+56df7c9 feat!(round-202605091700): rename Capability* to Provider* in extensions
+1e085ab feat(round-202605091700): land Provider/Dispatch substrate + unified .with builder
+2e843e0 docs(round-202605091700): write src CL with structured CHANGE blocks
+06c4b11 chore: lock doc changelist for 202605091700_changelist.doc.lock.md
+961d2a4 docs(round-202605091700): apply doc CL across api/engine/extensions/providers
+b852cdc fix(round-202605091700): move round files to design_rounds/ root
+d02fe90 docs: round 202605091700 doc CL + bump notko dep for HasTrivialCtor
+20aa331 docs: round 202605091700 topic 2 settles unified builder shape
+7774ff0 docs: sketch builder + provider shape under round 202605091700
+ce6c6c9 docs: open round 202605091700 with provider-unification topic
+5339d4c Merge pull request #72 from orgrinrt/feat/hilavitkutin-str-linker-rationale
+0d64ae6 chore: close round 202605090144
+6c27fad chore: lock src cl for 202605090144
+11316e8 docs: empty src cl for round 202605090144
+66d4e63 chore: lock doc cl for 202605090144
+0546ea8 docs: add linker-section exemption rationale to hilavitkutin-str
+12d22d0 docs: open round 202605090144 — str linker-section rationale
+1cc6ed4 Merge pull request #71 from orgrinrt/feat/hilavitkutin-test-rehab-291
+79709e0 chore: close round 202605090047
+bed2427 chore: lock src cl for 202605090047
+e0176a5 fix: hilavitkutin test rehab #291 phase 1 (api + persistence + plan_types)
+422c1c1 docs: src cl for round 202605090047
+183d82c chore: lock doc cl for 202605090047
+0a481a7 docs: open round 202605090047 — hilavitkutin test rehab #291
+45fe65d Merge pull request #70 from orgrinrt/feat/extensions-descriptor-v1-1-abi-hardening
+0bab76b chore: close round 202605090033
+3e52169 chore: lock src cl for 202605090033
+a6f17aa fix: descriptor v1.1 review-fix (test header + cast safety comment)
+8e599bd docs: src cl for review-fix round 202605090033
+4c0c7ed chore: lock doc cl for 202605090033
+48b4f0b docs: doc cl for review-fix round 202605090033
+ed613f2 docs: open review-fix round 202605090033 for descriptor v1.1
+348865c chore: close round 202605090011
+e4cd37e chore: lock src changelist for 202605090011
+c3a93d4 feat!: descriptor v1.1 abi hardening (tag, descriptor_size, u32 lengths, bounds, abi v2)
+ccb0a18 docs: write src CL for round 202605090011
+f78cbb7 chore: lock doc changelist for 202605090011
+0e1b804 docs: descriptor v1.1 abi hardening (doc cl applied)
+0ea385e docs: write doc CL for round 202605090011
+01060f6 docs: open round 202605090011 — descriptor v1.1 abi hardening
+2f7d036 feat!(hilavitkutin): rename SchedulerBuilder methods for naming consistency (HILA-AUDIT-A5) (#69)
+824ca46 feat(hilavitkutin-api,kit): add prelude module + on_unimplemented coverage (HILA-AUDIT-A3) (#68)
