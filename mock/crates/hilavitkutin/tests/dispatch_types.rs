@@ -1,5 +1,6 @@
 //! Dispatch-stage type surface tests (5a3 skeleton).
 
+use arvo::{Bool, Identity, USize};
 use hilavitkutin::dispatch::{
     CoreDispatch, DispatchApproach, FiberDispatch, MorselRange, ProgressCounter, SyncPoint,
 };
@@ -10,47 +11,47 @@ struct StubCtx;
 
 #[test]
 fn progress_counter_store_load_round_trip() {
-    let c = ProgressCounter::new(0);
-    assert_eq!(c.load(), 0);
-    c.store(42);
-    assert_eq!(c.load(), 42);
-    c.store(99);
-    assert_eq!(c.load(), 99);
+    let c = ProgressCounter::new(USize::ZERO);
+    assert_eq!(c.load(), USize::ZERO);
+    c.store(USize(42)); // lint:allow(no-bare-numeric) reason: progress counter literal; tracked: #399
+    assert_eq!(c.load(), USize(42)); // lint:allow(no-bare-numeric) reason: roundtrip check; tracked: #399
+    c.store(USize(99)); // lint:allow(no-bare-numeric) reason: progress counter literal; tracked: #399
+    assert_eq!(c.load(), USize(99)); // lint:allow(no-bare-numeric) reason: roundtrip check; tracked: #399
 }
 
 #[test]
 fn progress_counter_default_is_zero() {
     let c = ProgressCounter::default();
-    assert_eq!(c.load(), 0);
+    assert_eq!(c.load(), USize::ZERO);
 }
 
 #[test]
 fn morsel_range_new_end_is_empty() {
-    let r = MorselRange::new(100, 16);
-    assert_eq!(r.start, 100);
-    assert_eq!(r.len, 16);
-    assert_eq!(r.end(), 116);
-    assert!(!r.is_empty());
+    let r = MorselRange::new(USize(100), USize(16)); // lint:allow(no-bare-numeric) reason: morsel range literals; tracked: #399
+    assert_eq!(r.start, USize(100)); // lint:allow(no-bare-numeric) reason: roundtrip check; tracked: #399
+    assert_eq!(r.len, USize(16)); // lint:allow(no-bare-numeric) reason: roundtrip check; tracked: #399
+    assert_eq!(r.end(), USize(116)); // lint:allow(no-bare-numeric) reason: end-offset check; tracked: #399
+    assert_eq!(r.is_empty(), Bool::FALSE);
 
-    let empty = MorselRange::new(0, 0);
-    assert!(empty.is_empty());
-    assert_eq!(empty.end(), 0);
+    let empty = MorselRange::new(USize::ZERO, USize::ZERO);
+    assert_eq!(empty.is_empty(), Bool::TRUE);
+    assert_eq!(empty.end(), USize::ZERO);
 }
 
 #[test]
 fn morsel_range_default_is_empty() {
     let r = MorselRange::default();
-    assert!(r.is_empty());
-    assert_eq!(r.start, 0);
-    assert_eq!(r.len, 0);
+    assert_eq!(r.is_empty(), Bool::TRUE);
+    assert_eq!(r.start, USize::ZERO);
+    assert_eq!(r.len, USize::ZERO);
 }
 
 #[test]
 fn sync_point_new_equality() {
-    let a = SyncPoint::new(FiberId(3), 128);
-    let b = SyncPoint::new(FiberId(3), 128);
-    let c = SyncPoint::new(FiberId(4), 128);
-    let d = SyncPoint::new(FiberId(3), 256);
+    let a = SyncPoint::new(FiberId(3), USize(128)); // lint:allow(no-bare-numeric) reason: sync point literals; tracked: #399
+    let b = SyncPoint::new(FiberId(3), USize(128)); // lint:allow(no-bare-numeric) reason: sync point literals; tracked: #399
+    let c = SyncPoint::new(FiberId(4), USize(128)); // lint:allow(no-bare-numeric) reason: sync point literals; tracked: #399
+    let d = SyncPoint::new(FiberId(3), USize(256)); // lint:allow(no-bare-numeric) reason: sync point literals; tracked: #399
     assert_eq!(a, b);
     assert_ne!(a, c);
     assert_ne!(a, d);
@@ -66,17 +67,17 @@ fn dispatch_approach_variants_distinct() {
 #[test]
 fn fiber_dispatch_default_constructs() {
     let f: FiberDispatch<StubCtx, 4> = FiberDispatch::default();
-    assert!(f.body.is_none());
-    assert_eq!(f.fiber_id, FiberId(0));
-    assert_eq!(f.sync_point_count, 0);
-    assert!(f.morsel_range.is_empty());
+    assert!(f.body.isnt());
+    assert_eq!(f.fiber_id, FiberId(0)); // lint:allow(no-bare-numeric) reason: default fiber id; tracked: #399
+    assert_eq!(f.sync_point_count, USize::ZERO);
+    assert_eq!(f.morsel_range.is_empty(), Bool::TRUE);
 }
 
 #[test]
 fn core_dispatch_default_constructs() {
     let c: CoreDispatch<StubCtx, 4> = CoreDispatch::default();
-    assert_eq!(c.fiber_count, 0);
-    assert_eq!(c.phase_count, 0);
-    assert_eq!(c.boundary_count, 0);
-    assert_eq!(c.sync_point_count, 0);
+    assert_eq!(c.fiber_count, USize::ZERO);
+    assert_eq!(c.phase_count, USize::ZERO);
+    assert_eq!(c.boundary_count, USize::ZERO);
+    assert_eq!(c.sync_point_count, USize::ZERO);
 }

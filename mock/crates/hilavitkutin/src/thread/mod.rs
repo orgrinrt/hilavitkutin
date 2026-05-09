@@ -19,7 +19,7 @@ pub mod wake;
 
 use arvo::USize;
 
-pub use assignment::CoreAssignment;
+pub use assignment::{CoreAssignment, NO_TRUNK};
 pub use class::CoreClass;
 pub use convergence::Convergence;
 pub use handle::ThreadHandle;
