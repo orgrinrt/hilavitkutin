@@ -1,0 +1,50 @@
+3e0dd81 chore: lock src cl for 202605110000
+3f85f94 test: rehab engine test fixtures past USize/Bool/Bits API drift
+01f9c39 chore: lock doc cl for 202605110000 + add src cl
+acaa609 docs: open round 202605110000 — engine test rehab
+0263d8f feat!: unified Provider trait + .with builder + Capability→Provider rename (#73)
+5339d4c Merge pull request #72 from orgrinrt/feat/hilavitkutin-str-linker-rationale
+0d64ae6 chore: close round 202605090144
+6c27fad chore: lock src cl for 202605090144
+11316e8 docs: empty src cl for round 202605090144
+66d4e63 chore: lock doc cl for 202605090144
+0546ea8 docs: add linker-section exemption rationale to hilavitkutin-str
+12d22d0 docs: open round 202605090144 — str linker-section rationale
+1cc6ed4 Merge pull request #71 from orgrinrt/feat/hilavitkutin-test-rehab-291
+79709e0 chore: close round 202605090047
+bed2427 chore: lock src cl for 202605090047
+e0176a5 fix: hilavitkutin test rehab #291 phase 1 (api + persistence + plan_types)
+422c1c1 docs: src cl for round 202605090047
+183d82c chore: lock doc cl for 202605090047
+0a481a7 docs: open round 202605090047 — hilavitkutin test rehab #291
+45fe65d Merge pull request #70 from orgrinrt/feat/extensions-descriptor-v1-1-abi-hardening
+0bab76b chore: close round 202605090033
+3e52169 chore: lock src cl for 202605090033
+a6f17aa fix: descriptor v1.1 review-fix (test header + cast safety comment)
+8e599bd docs: src cl for review-fix round 202605090033
+4c0c7ed chore: lock doc cl for 202605090033
+48b4f0b docs: doc cl for review-fix round 202605090033
+ed613f2 docs: open review-fix round 202605090033 for descriptor v1.1
+348865c chore: close round 202605090011
+e4cd37e chore: lock src changelist for 202605090011
+c3a93d4 feat!: descriptor v1.1 abi hardening (tag, descriptor_size, u32 lengths, bounds, abi v2)
+ccb0a18 docs: write src CL for round 202605090011
+f78cbb7 chore: lock doc changelist for 202605090011
+0e1b804 docs: descriptor v1.1 abi hardening (doc cl applied)
+0ea385e docs: write doc CL for round 202605090011
+01060f6 docs: open round 202605090011 — descriptor v1.1 abi hardening
+2f7d036 feat!(hilavitkutin): rename SchedulerBuilder methods for naming consistency (HILA-AUDIT-A5) (#69)
+824ca46 feat(hilavitkutin-api,kit): add prelude module + on_unimplemented coverage (HILA-AUDIT-A3) (#68)
+f4a0ab7 feat!(hilavitkutin-api): delete legacy flat-tuple AccessSet impls (HILA-AUDIT-A4) (#67)
+f104e41 docs: hilavitkutin doc audit round (Tier 1 leakage + drift sweep) (#66)
+604fafe chore: bump mockspace pin + regen docs (#65)
+e34cd5c docs: rewrite readme (#63)
+9371149 feat!: round 4 — kit trait split (Units + Owned: StoreBundle), drop Required (#61)
+044c10a docs: vocab + leakage + em-dash sweep across templates (#62)
+ddf55bf docs: scrub local-dev-routine leakage from crate templates
+bdac549 chore: record next-solver verification finding for hilavitkutin-api
+274356e fix: rehab hilavitkutin-str tests post arvo Round D (#291 partial) (#58)
+81d315f chore: sweep em-dashes from hilavitkutin source comments (#352) (#57)
+5bcf521 refactor: sweep USize(0) to USize::ZERO across engine, persistence, providers (#351) (#56)
+2eba5c0 refactor: migrate USize(0) to USize::ZERO in hilavitkutin-api (#328) (#55)
+de484d7 fix: harden trampoline emission with no_mangle + inline(never), add LTO smoke (#349) (#54)

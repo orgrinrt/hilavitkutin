@@ -57,5 +57,7 @@ fn os_clock_is_monotonic() {
         core::hint::spin_loop();
     }
     let b = clock.now_ns();
-    assert!(b >= a, "clock went backwards: {} -> {}", a, b);
+    let a_raw = a.to_raw();
+    let b_raw = b.to_raw();
+    assert!(b_raw >= a_raw, "clock went backwards: {} -> {}", a_raw, b_raw);
 }
