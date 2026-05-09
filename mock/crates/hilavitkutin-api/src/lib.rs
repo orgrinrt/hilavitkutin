@@ -35,6 +35,7 @@ pub mod id;
 pub mod macros;
 pub mod platform;
 pub mod prelude;
+pub mod provider;
 pub mod sink;
 pub mod store;
 pub mod work_unit;
@@ -57,6 +58,9 @@ pub use hint::{
 pub use id::StoreId;
 pub use platform::{
     ClockApi, HasClock, HasMemoryProvider, HasThreadPool, MemoryProviderApi, Nanos, ThreadPoolApi,
+};
+pub use provider::{
+    Dispatch, LinkedBin, PlatformDispatch, Provider, ProviderKind, StoreDispatch, UnitDispatch,
 };
 pub use sink::{ByteEmitter, Collector, CountingSink, DiagnosticSink, NullSink, TeeSink};
 pub use store::{Column, Field, Map, Replaceable, Resource, Seq, StoreBundle, Virtual};

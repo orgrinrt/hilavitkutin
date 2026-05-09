@@ -11,6 +11,7 @@ use core::marker::PhantomData;
 use arvo::Cap;
 
 use crate::column_value::ColumnValue;
+use crate::provider::{Provider, ProviderKind, StoreDispatch};
 
 /// Singleton store: one value shared across the pipeline.
 #[repr(transparent)]
@@ -28,6 +29,33 @@ impl<T> Default for Resource<T> {
     fn default() -> Self {
         Resource(PhantomData)
     }
+}
+
+impl<T> Resource<T> {
+    /// Construct a `Resource<T>` carrying the given value.
+    ///
+    /// The `_value: T` is consumed by ownership. At this round the
+    /// scheduler data plane is not yet built (HILA-RUNTIME-C6 lands
+    /// resource resolution + persistence wiring), so the value drops
+    /// here. The semantic is preserved at the type level via
+    /// `Provider::Init = T`: when the data plane lands, the
+    /// constructor will route the value into the scheduler-owned
+    /// resource registry.
+    ///
+    /// Not `const fn` because dropping a `T` with a destructor at
+    /// compile-time is forbidden. Consumers that need a const-callable
+    /// constructor for stateless markers use `Column<T>` or
+    /// `Virtual<T>` (both impl `notko::HasTrivialCtor`).
+    #[inline]
+    pub fn new(_value: T) -> Self {
+        Resource(PhantomData)
+    }
+}
+
+impl<T: 'static> Provider for Resource<T> {
+    type Init = T;
+    const KIND: ProviderKind = ProviderKind::Resource;
+    type Dispatch = StoreDispatch<Self>;
 }
 
 /// Collection store: N records per column, morsel-chunked.
@@ -48,6 +76,25 @@ impl<T> Default for Column<T> {
     }
 }
 
+impl<T> Column<T> {
+    /// Construct a `Column<T>` marker.
+    pub const fn new() -> Self {
+        Column(PhantomData)
+    }
+}
+
+impl<T: 'static> Provider for Column<T> {
+    type Init = ();
+    const KIND: ProviderKind = ProviderKind::Column;
+    type Dispatch = StoreDispatch<Self>;
+}
+
+impl<T> notko::HasTrivialCtor for Column<T> {
+    fn new() -> Self {
+        Column(PhantomData)
+    }
+}
+
 /// Zero-data store: DAG edge only. Used for fire flags.
 #[repr(transparent)]
 pub struct Virtual<T>(PhantomData<T>);
@@ -62,6 +109,25 @@ impl<T> Clone for Virtual<T> {
 impl<T> Default for Virtual<T> {
     #[inline(always)]
     fn default() -> Self {
+        Virtual(PhantomData)
+    }
+}
+
+impl<T> Virtual<T> {
+    /// Construct a `Virtual<T>` marker.
+    pub const fn new() -> Self {
+        Virtual(PhantomData)
+    }
+}
+
+impl<T: 'static> Provider for Virtual<T> {
+    type Init = ();
+    const KIND: ProviderKind = ProviderKind::Virtual;
+    type Dispatch = StoreDispatch<Self>;
+}
+
+impl<T> notko::HasTrivialCtor for Virtual<T> {
+    fn new() -> Self {
         Virtual(PhantomData)
     }
 }

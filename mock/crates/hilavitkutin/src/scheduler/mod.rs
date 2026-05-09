@@ -6,24 +6,32 @@
 //! `SchedulerBuilder<Wus, Stores>` carries a phantom-tuple
 //! type-state. `Wus` accumulates registered WU types (Cons-list).
 //! `Stores` accumulates registered `Resource<T>` / `Column<T>` /
-//! `Virtual<T>` markers (Cons-list). `.build()` carries
-//! `Stores: ContainsAll<Wus::AccumRead> +
+//! `Virtual<T>` / `LinkedBin<T>` markers (Cons-list). `.build()`
+//! carries `Stores: ContainsAll<Wus::AccumRead> +
 //! ContainsAll<Wus::AccumWrite>`, which proves at compile time that
 //! every registered WU's `Read` and `Write` membership is satisfied
 //! by the registered stores.
 //!
 //! Round 4 reshape: dropped `MAX_UNITS` / `MAX_STORES` /
-//! `MAX_LANES` const generics. `.add_kit::<K: Kit>()` is type-level
-//! only; no `install` body. `Scheduler::replace_resource::<T>` lands
-//! with a `T: Replaceable` bound.
+//! `MAX_LANES` const generics. `Scheduler::replace_resource::<T>`
+//! lands with a `T: Replaceable` bound.
+//!
+//! Round 202605091700 reshape: the nine `.add_*` and `.with_*`
+//! methods retire in favour of one unified verb, `.with(value)`.
+//! Every value passed to `.with` impls the sealed `Provider` trait
+//! from `hilavitkutin-api`; the per-kind typestate update flows
+//! through `Provider::Dispatch`. WorkUnit unit-structs, Kits,
+//! `Resource::new(value)`, `Column::<T>::new()`,
+//! `Virtual::<T>::new()`, `LinkedBin::<dyn TraitFamily>::new()`, and
+//! platform impls (memory / threads / clock) all share the one
+//! signature.
 
 use core::marker::PhantomData;
 
-use hilavitkutin_api::access::{Concat, Cons, ContainsAll, Empty};
-use hilavitkutin_api::platform::{ClockApi, MemoryProviderApi, ThreadPoolApi};
-use hilavitkutin_api::store::{Column, Replaceable, Resource, Virtual};
-use hilavitkutin_api::work_unit::{WorkUnit, WorkUnitBundle};
-use hilavitkutin_kit::Kit;
+use hilavitkutin_api::access::{ContainsAll, Empty};
+use hilavitkutin_api::provider::{Dispatch, Provider};
+use hilavitkutin_api::store::Replaceable;
+use hilavitkutin_api::work_unit::WorkUnitBundle;
 
 pub mod metrics;
 pub mod plan;
@@ -75,69 +83,31 @@ pub struct SchedulerBuilder<Wus, Stores> {
 }
 
 impl<Wus, Stores> SchedulerBuilder<Wus, Stores> {
-    /// Register a WU type. Prepends `W` onto `Wus`.
-    pub fn add_unit<W: WorkUnit>(self) -> SchedulerBuilder<Cons<W, Wus>, Stores> {
-        SchedulerBuilder { _phantom: PhantomData }
-    }
-
-    /// Register a `Resource<T>` with an initial value. Prepends
-    /// `Resource<T>` onto `Stores`.
-    pub fn add_resource<T: 'static>(
-        self,
-        _init: T,
-    ) -> SchedulerBuilder<Wus, Cons<Resource<T>, Stores>> {
-        SchedulerBuilder { _phantom: PhantomData }
-    }
-
-    /// Register a `Resource<T>` constructed via `Default`.
-    pub fn add_resource_default<T: Default + 'static>(
-        self,
-    ) -> SchedulerBuilder<Wus, Cons<Resource<T>, Stores>> {
-        SchedulerBuilder { _phantom: PhantomData }
-    }
-
-    /// Register a `Column<T>`. Prepends `Column<T>` onto `Stores`.
-    pub fn add_column<T: 'static>(self) -> SchedulerBuilder<Wus, Cons<Column<T>, Stores>> {
-        SchedulerBuilder { _phantom: PhantomData }
-    }
-
-    /// Register a `Virtual<T>`. Prepends `Virtual<T>` onto `Stores`.
-    pub fn add_virtual<T: 'static>(
-        self,
-    ) -> SchedulerBuilder<Wus, Cons<Virtual<T>, Stores>> {
-        SchedulerBuilder { _phantom: PhantomData }
-    }
-
-    /// Install a Kit, accumulating its declared `Units` and `Owned`
-    /// type-level lists onto the builder's typestate.
+    /// Register one provider on the scheduler.
     ///
-    /// Type-level only: no value-level `install` body. The kit's
-    /// declared `Units` (a `WorkUnitBundle`) and `Owned` (a
-    /// `StoreBundle`) are concatenated onto the builder's accumulators.
-    pub fn add_kit<K: Kit>(self) -> SchedulerBuilder<
-        <K::Units as Concat<Wus>>::Out,
-        <K::Owned as Concat<Stores>>::Out,
+    /// Accepts any `P: Provider`: WorkUnit unit-structs, Kits,
+    /// `Resource::new(value)`, `Column::<T>::new()`,
+    /// `Virtual::<T>::new()`, `LinkedBin::<dyn TraitFamily>::new()`,
+    /// and platform impls (memory provider, thread pool, clock). The
+    /// per-kind typestate update flows through `P::Dispatch` and
+    /// lands on the appropriate accumulator.
+    ///
+    /// Non-`Provider` values fail the trait solver here, surfacing
+    /// the `Provider` `#[diagnostic::on_unimplemented]` message which
+    /// names the constructors a consumer reaches for.
+    ///
+    /// The platform-tuple accumulator `Empty` is the placeholder
+    /// until the data plane (HILA-RUNTIME-C4) introduces a third
+    /// builder type parameter.
+    pub fn with<P>(self, _provider: P) -> SchedulerBuilder<
+        <P::Dispatch as Dispatch<Wus, Stores, Empty>>::NextWus,
+        <P::Dispatch as Dispatch<Wus, Stores, Empty>>::NextStores,
     >
     where
-        K::Units: Concat<Wus>,
-        K::Owned: Concat<Stores>,
+        P: Provider,
+        P::Dispatch: Dispatch<Wus, Stores, Empty>,
     {
         SchedulerBuilder { _phantom: PhantomData }
-    }
-
-    /// Bind a `MemoryProviderApi` impl as the memory provider.
-    pub fn with_memory<M: MemoryProviderApi + 'static>(self, _provider: M) -> Self {
-        self
-    }
-
-    /// Bind a `ThreadPoolApi` impl as the thread pool.
-    pub fn with_threads<P: ThreadPoolApi + 'static>(self, _pool: P) -> Self {
-        self
-    }
-
-    /// Bind a `ClockApi` impl as the clock.
-    pub fn with_clock<C: ClockApi + 'static>(self, _clock: C) -> Self {
-        self
     }
 }
 

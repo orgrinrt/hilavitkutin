@@ -5,7 +5,7 @@ use hilavitkutin_linking::Library;
 use notko::{Maybe, Outcome};
 
 use crate::descriptor::{
-    CapabilityEntry, CapabilityId, ExtensionAbiStatus, ExtensionDescriptor,
+    ProviderEntry, ProviderId, ExtensionAbiStatus, ExtensionDescriptor,
     ExtensionVersion,
 };
 use crate::error::ExtensionError;
@@ -30,22 +30,22 @@ impl Extension {
         self.descriptor
     }
 
-    /// Resolve a single capability's raw vtable pointer.
-    pub fn capability(&self, id: CapabilityId) -> Maybe<*const c_void> {
-        if self.descriptor.capabilities_ptr.is_null() {
+    /// Resolve a single provider's raw vtable pointer.
+    pub fn provider(&self, id: ProviderId) -> Maybe<*const c_void> {
+        if self.descriptor.providers_ptr.is_null() {
             return Maybe::Isnt;
         }
         // The u32 to usize cast cannot truncate: descriptor went
         // through validate_descriptor at load time, which bounds the
         // length at MAX_DESCRIPTOR_LIST_LEN (1 << 20) and every
         // supported target has usize >= 32 bits.
-        let len = self.descriptor.capabilities_len as usize;
+        let len = self.descriptor.providers_len as usize;
         let mut i = 0;
         while i < len {
-            // SAFETY: capabilities_ptr + capabilities_len form a valid
+            // SAFETY: providers_ptr + providers_len form a valid
             // slice in the extension's static memory for the loaded
             // library lifetime.
-            let entry = unsafe { &*self.descriptor.capabilities_ptr.add(i) };
+            let entry = unsafe { &*self.descriptor.providers_ptr.add(i) };
             if entry.id == id {
                 return Maybe::Is(entry.vtable_ptr);
             }
@@ -54,10 +54,10 @@ impl Extension {
         Maybe::Isnt
     }
 
-    /// Slice view of the extension's full capability table.
-    pub fn capabilities(&self) -> &[CapabilityEntry] {
-        if self.descriptor.capabilities_ptr.is_null()
-            || self.descriptor.capabilities_len == 0
+    /// Slice view of the extension's full provider table.
+    pub fn providers(&self) -> &[ProviderEntry] {
+        if self.descriptor.providers_ptr.is_null()
+            || self.descriptor.providers_len == 0
         {
             return &[];
         }
@@ -65,8 +65,8 @@ impl Extension {
         // extension's static memory for the loaded lifetime.
         unsafe {
             core::slice::from_raw_parts(
-                self.descriptor.capabilities_ptr,
-                self.descriptor.capabilities_len as usize,
+                self.descriptor.providers_ptr,
+                self.descriptor.providers_len as usize,
             )
         }
     }

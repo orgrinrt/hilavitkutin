@@ -18,13 +18,13 @@
 use arvo::USize;
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::{
-    AccessSet, Always, BatchApi, Column, ColumnReaderApi, ColumnValue,
+    AccessSet, Always, Atomic, BatchApi, Column, ColumnReaderApi, ColumnValue,
     ColumnWriterApi, Cons, Contains, Depth, EachApi, Empty, HasBatch, HasColumnReader,
-    HasColumnWriter, HasEach, HasReduce, HasResourceProvider, HasVirtualFirer, Atomic,
-    Immediate, Normal, ReduceApi, Resource, ResourceProviderApi, Virtual,
-    VirtualFirerApi, WorkUnit, read, write,
+    HasColumnWriter, HasEach, HasReduce, HasResourceProvider, HasVirtualFirer,
+    Immediate, Normal, Provider, ProviderKind, ReduceApi, Resource, ResourceProviderApi,
+    UnitDispatch, Virtual, VirtualFirerApi, WorkUnit, read, write,
 };
-use hilavitkutin_kit::Kit;
+use hilavitkutin_kit::{Kit, KitDispatch};
 
 // ---------------------------------------------------------------------
 // Fake stores.
@@ -40,12 +40,24 @@ pub struct FileInfo;
 
 pub struct InternerKit;
 
+impl Provider for InternerKit {
+    type Init = Self;
+    const KIND: ProviderKind = ProviderKind::Kit;
+    type Dispatch = KitDispatch<Self>;
+}
+
 impl Kit for InternerKit {
     type Units = Empty;
     type Owned = Cons<Resource<Interner>, Empty>;
 }
 
 pub struct WorkspaceKit;
+
+impl Provider for WorkspaceKit {
+    type Init = Self;
+    const KIND: ProviderKind = ProviderKind::Kit;
+    type Dispatch = KitDispatch<Self>;
+}
 
 impl Kit for WorkspaceKit {
     type Units = Empty;
@@ -64,34 +76,34 @@ fn empty_build() {
 #[test]
 fn raw_resource_registration_builds() {
     let _ = Scheduler::builder()
-        .add_resource(Interner)
+        .with(Resource::new(Interner))
         .build();
 }
 
 #[test]
 fn raw_column_registration_builds() {
-    let _ = Scheduler::builder().add_column::<FileInfo>().build();
+    let _ = Scheduler::builder().with(Column::<FileInfo>::new()).build();
 }
 
 #[test]
 fn kit_only_builds() {
-    let _ = Scheduler::builder().add_kit::<InternerKit>().build();
+    let _ = Scheduler::builder().with(InternerKit).build();
 }
 
 #[test]
 fn two_kits_chained_build() {
     let _ = Scheduler::builder()
-        .add_kit::<InternerKit>()
-        .add_kit::<WorkspaceKit>()
+        .with(InternerKit)
+        .with(WorkspaceKit)
         .build();
 }
 
 #[test]
 fn mixed_kit_and_raw_build() {
     let _ = Scheduler::builder()
-        .add_kit::<WorkspaceKit>()
-        .add_resource(Interner)
-        .add_column::<FileInfo>()
+        .with(WorkspaceKit)
+        .with(Resource::new(Interner))
+        .with(Column::<FileInfo>::new())
         .build();
 }
 
@@ -222,6 +234,12 @@ impl<R: AccessSet, W: AccessSet> HasReduce<R, W> for TestCtx {
 // A WU that reads the Interner resource.
 struct ReadInterner;
 
+impl Provider for ReadInterner {
+    type Init = Self;
+    const KIND: ProviderKind = ProviderKind::WorkUnit;
+    type Dispatch = UnitDispatch<Self>;
+}
+
 impl WorkUnit<Always> for ReadInterner {
     type Read = read![Resource<Interner>];
     type Write = read![];
@@ -232,6 +250,12 @@ impl WorkUnit<Always> for ReadInterner {
 
 // A WU with write set: writes Column<FileInfo>.
 struct DiscoverFiles;
+
+impl Provider for DiscoverFiles {
+    type Init = Self;
+    const KIND: ProviderKind = ProviderKind::WorkUnit;
+    type Dispatch = UnitDispatch<Self>;
+}
 
 impl WorkUnit<Always> for DiscoverFiles {
     type Read = read![Resource<Workspace>];
@@ -244,26 +268,26 @@ impl WorkUnit<Always> for DiscoverFiles {
 #[test]
 fn wu_with_raw_resource_builds() {
     let _ = Scheduler::builder()
-        .add_resource(Interner)
-        .add_unit::<ReadInterner>()
+        .with(Resource::new(Interner))
+        .with(ReadInterner)
         .build();
 }
 
 #[test]
 fn wu_with_kit_builds() {
     let _ = Scheduler::builder()
-        .add_kit::<InternerKit>()
-        .add_unit::<ReadInterner>()
+        .with(InternerKit)
+        .with(ReadInterner)
         .build();
 }
 
 #[test]
 fn two_wus_with_two_kits_build() {
     let _ = Scheduler::builder()
-        .add_kit::<InternerKit>()
-        .add_kit::<WorkspaceKit>()
-        .add_unit::<ReadInterner>()
-        .add_unit::<DiscoverFiles>()
+        .with(InternerKit)
+        .with(WorkspaceKit)
+        .with(ReadInterner)
+        .with(DiscoverFiles)
         .build();
 }
 
@@ -283,7 +307,15 @@ fn kit_declarative_shape_typechecks() {
 // HList accumulator handles realistic depth.
 // ---------------------------------------------------------------------
 
+#[derive(Copy, Clone)]
 struct NoStores;
+
+impl Provider for NoStores {
+    type Init = Self;
+    const KIND: ProviderKind = ProviderKind::WorkUnit;
+    type Dispatch = UnitDispatch<Self>;
+}
+
 impl WorkUnit<Always> for NoStores {
     type Read = read![];
     type Write = write![];
@@ -295,16 +327,16 @@ impl WorkUnit<Always> for NoStores {
 #[test]
 fn smoke_fifty_wus() {
     let _ = Scheduler::builder()
-        .add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>()
-        .add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>()
-        .add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>()
-        .add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>()
-        .add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>()
-        .add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>()
-        .add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>()
-        .add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>()
-        .add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>()
-        .add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>().add_unit::<NoStores>()
+        .with(NoStores).with(NoStores).with(NoStores).with(NoStores).with(NoStores)
+        .with(NoStores).with(NoStores).with(NoStores).with(NoStores).with(NoStores)
+        .with(NoStores).with(NoStores).with(NoStores).with(NoStores).with(NoStores)
+        .with(NoStores).with(NoStores).with(NoStores).with(NoStores).with(NoStores)
+        .with(NoStores).with(NoStores).with(NoStores).with(NoStores).with(NoStores)
+        .with(NoStores).with(NoStores).with(NoStores).with(NoStores).with(NoStores)
+        .with(NoStores).with(NoStores).with(NoStores).with(NoStores).with(NoStores)
+        .with(NoStores).with(NoStores).with(NoStores).with(NoStores).with(NoStores)
+        .with(NoStores).with(NoStores).with(NoStores).with(NoStores).with(NoStores)
+        .with(NoStores).with(NoStores).with(NoStores).with(NoStores).with(NoStores)
         .build();
 }
 
@@ -332,6 +364,13 @@ struct S14;
 struct S15;
 
 struct SixteenStores;
+
+impl Provider for SixteenStores {
+    type Init = Self;
+    const KIND: ProviderKind = ProviderKind::WorkUnit;
+    type Dispatch = UnitDispatch<Self>;
+}
+
 impl WorkUnit<Always> for SixteenStores {
     type Read = read![
         Resource<S0>, Resource<S1>, Resource<S2>, Resource<S3>,
@@ -348,11 +387,11 @@ impl WorkUnit<Always> for SixteenStores {
 #[test]
 fn smoke_wu_with_sixteen_stores() {
     let _ = Scheduler::builder()
-        .add_resource(S0).add_resource(S1).add_resource(S2).add_resource(S3)
-        .add_resource(S4).add_resource(S5).add_resource(S6).add_resource(S7)
-        .add_resource(S8).add_resource(S9).add_resource(S10).add_resource(S11)
-        .add_resource(S12).add_resource(S13).add_resource(S14).add_resource(S15)
-        .add_unit::<SixteenStores>()
+        .with(Resource::new(S0)).with(Resource::new(S1)).with(Resource::new(S2)).with(Resource::new(S3))
+        .with(Resource::new(S4)).with(Resource::new(S5)).with(Resource::new(S6)).with(Resource::new(S7))
+        .with(Resource::new(S8)).with(Resource::new(S9)).with(Resource::new(S10)).with(Resource::new(S11))
+        .with(Resource::new(S12)).with(Resource::new(S13)).with(Resource::new(S14)).with(Resource::new(S15))
+        .with(SixteenStores)
         .build();
 }
 

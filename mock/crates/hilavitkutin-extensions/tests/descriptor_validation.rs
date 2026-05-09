@@ -10,7 +10,7 @@
 use core::ffi::c_void;
 
 use hilavitkutin_extensions::{
-    AbiVersion, CapabilityEntry, CapabilityId, EXTENSION_DESCRIPTOR_TAG,
+    AbiVersion, ProviderEntry, ProviderId, EXTENSION_DESCRIPTOR_TAG,
     ExtensionAbiStatus, ExtensionDescriptor, ExtensionError, ExtensionVersion,
     HOST_ABI_VERSION, MAX_DESCRIPTOR_LIST_LEN, validate_descriptor,
 };
@@ -29,10 +29,10 @@ fn good_descriptor() -> ExtensionDescriptor {
             patch: 0,
             _reserved: 0,
         },
-        capabilities_ptr: core::ptr::null(),
-        capabilities_len: 0,
-        required_host_caps_ptr: core::ptr::null(),
-        required_host_caps_len: 0,
+        providers_ptr: core::ptr::null(),
+        providers_len: 0,
+        required_host_providers_ptr: core::ptr::null(),
+        required_host_providers_len: 0,
         init_fn: None,
         shutdown_fn: None,
     }
@@ -100,28 +100,28 @@ fn bounds_exceeded_name_surfaces_descriptor_bounds_exceeded() {
 }
 
 #[test]
-fn bounds_exceeded_capabilities_surfaces_descriptor_bounds_exceeded() {
+fn bounds_exceeded_providers_surfaces_descriptor_bounds_exceeded() {
     let mut descriptor = good_descriptor();
-    descriptor.capabilities_len = MAX_DESCRIPTOR_LIST_LEN + 1;
+    descriptor.providers_len = MAX_DESCRIPTOR_LIST_LEN + 1;
     match validate_descriptor(&descriptor) {
         Outcome::Err(ExtensionError::DescriptorBoundsExceeded { field, len }) => {
-            assert_eq!(field, "capabilities");
+            assert_eq!(field, "providers");
             assert_eq!(len, MAX_DESCRIPTOR_LIST_LEN + 1);
         }
-        other => panic!("expected DescriptorBoundsExceeded(capabilities), got {:?}", error_label_outcome(&other)),
+        other => panic!("expected DescriptorBoundsExceeded(providers), got {:?}", error_label_outcome(&other)),
     }
 }
 
 #[test]
-fn bounds_exceeded_required_host_caps_surfaces_descriptor_bounds_exceeded() {
+fn bounds_exceeded_required_host_providers_surfaces_descriptor_bounds_exceeded() {
     let mut descriptor = good_descriptor();
-    descriptor.required_host_caps_len = MAX_DESCRIPTOR_LIST_LEN + 1;
+    descriptor.required_host_providers_len = MAX_DESCRIPTOR_LIST_LEN + 1;
     match validate_descriptor(&descriptor) {
         Outcome::Err(ExtensionError::DescriptorBoundsExceeded { field, len }) => {
-            assert_eq!(field, "required_host_caps");
+            assert_eq!(field, "required_host_providers");
             assert_eq!(len, MAX_DESCRIPTOR_LIST_LEN + 1);
         }
-        other => panic!("expected DescriptorBoundsExceeded(required_host_caps), got {:?}", error_label_outcome(&other)),
+        other => panic!("expected DescriptorBoundsExceeded(required_host_providers), got {:?}", error_label_outcome(&other)),
     }
 }
 
@@ -183,7 +183,7 @@ fn error_label(e: &ExtensionError) -> &'static str {
         ExtensionError::AbiVersionMismatch { .. } => "AbiVersionMismatch",
         ExtensionError::DescriptorBoundsExceeded { .. } => "DescriptorBoundsExceeded",
         ExtensionError::ExtensionVersionUnsupported => "ExtensionVersionUnsupported",
-        ExtensionError::RequiredHostCapabilityMissing { .. } => "RequiredHostCapabilityMissing",
+        ExtensionError::RequiredHostProviderMissing { .. } => "RequiredHostProviderMissing",
         ExtensionError::InitFailed { .. } => "InitFailed",
         ExtensionError::ShutdownFailed { .. } => "ShutdownFailed",
         // ExtensionError is #[non_exhaustive]; wildcard satisfies the
@@ -204,13 +204,13 @@ fn error_label_outcome(o: &Outcome<(), ExtensionError>) -> &'static str {
 // internally. Keeping them in the import list documents the contract
 // the test exercises.
 #[allow(dead_code)]
-fn _signature_witness() -> (CapabilityEntry, CapabilityId, ExtensionAbiStatus, *mut c_void) {
+fn _signature_witness() -> (ProviderEntry, ProviderId, ExtensionAbiStatus, *mut c_void) {
     (
-        CapabilityEntry {
-            id: CapabilityId(0),
+        ProviderEntry {
+            id: ProviderId(0),
             vtable_ptr: core::ptr::null(),
         },
-        CapabilityId(0),
+        ProviderId(0),
         ExtensionAbiStatus::Ok,
         core::ptr::null_mut(),
     )

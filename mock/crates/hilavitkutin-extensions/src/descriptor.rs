@@ -1,8 +1,8 @@
-//! `#[repr(C)]` descriptor shape and compile-time capability id.
+//! `#[repr(C)]` descriptor shape and compile-time provider id.
 //!
 //! The descriptor is the sole contract between extension and host.
 //! Extensions expose one symbol; the host reads a pointer to this
-//! struct; lifecycle, capability dispatch, and version gating all
+//! struct; lifecycle, provider dispatch, and version gating all
 //! derive from the descriptor's fields.
 
 use core::ffi::{CStr, c_void};
@@ -36,11 +36,11 @@ pub const HOST_ABI_VERSION: AbiVersion = AbiVersion(2);
 pub const EXTENSION_DESCRIPTOR_TAG: u32 = 0x454C4948; // lint:allow(arvo-types-only, no-bare-numeric) tracked: #206
 
 /// Hard ceiling on per-descriptor list lengths (`name_len`,
-/// `capabilities_len`, `required_host_caps_len`). Validated at
+/// `providers_len`, `required_host_providers_len`). Validated at
 /// descriptor-read time; a value above the ceiling surfaces
 /// `ExtensionError::DescriptorBoundsExceeded`. The one-million-entry
 /// bound is well above any plausible extension's surface area; combined
-/// with the largest entry size (`CapabilityEntry` at 16 bytes on
+/// with the largest entry size (`ProviderEntry` at 16 bytes on
 /// 64-bit) the worst-case slice byte size bounds at roughly 16 MiB.
 pub const MAX_DESCRIPTOR_LIST_LEN: u32 = 1 << 20; // lint:allow(arvo-types-only, no-bare-numeric) tracked: #206
 
@@ -57,16 +57,16 @@ pub const DESCRIPTOR_SYMBOL: &CStr = unsafe {
     CStr::from_bytes_with_nul_unchecked(b"__hilavitkutin_extension_descriptor\0")
 };
 
-/// Stable capability identifier. Compile-time hash of an ASCII name.
+/// Stable provider identifier. Compile-time hash of an ASCII name.
 ///
 /// FNV-1a 64-bit. Layout is `#[repr(transparent)]` over `u64` so wire
 /// representation matches a plain u64 across platforms.
 #[repr(transparent)]
 #[derive(Copy, Clone, PartialEq, Eq)]
-pub struct CapabilityId(pub u64); // lint:allow(no-public-raw-field) tracked: #206
+pub struct ProviderId(pub u64); // lint:allow(no-public-raw-field) tracked: #206
 
-impl CapabilityId {
-    /// Compute the capability id from an ASCII name at compile time.
+impl ProviderId {
+    /// Compute the provider id from an ASCII name at compile time.
     ///
     /// FNV-1a over the raw byte contents. Constant-folded at the call
     /// site; no runtime cost.
@@ -116,23 +116,23 @@ pub enum ExtensionAbiStatus {
     Internal = 4,
 }
 
-/// Single capability entry in the descriptor's capability table.
+/// Single provider entry in the descriptor's provider table.
 ///
 /// `vtable_ptr` points to a thin extension-owned vtable. The layout
-/// behind the pointer is specific to the capability's contract crate;
+/// behind the pointer is specific to the provider's contract crate;
 /// `hilavitkutin-extensions` treats it as opaque.
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct CapabilityEntry {
-    pub id: CapabilityId,
+pub struct ProviderEntry {
+    pub id: ProviderId,
     pub vtable_ptr: *const c_void,
 }
 
-// SAFETY: CapabilityEntry carries a raw pointer that is extension-
+// SAFETY: ProviderEntry carries a raw pointer that is extension-
 // owned and stable for the lifetime of the loaded library. Send +
 // Sync are sound because the host never mutates through the pointer.
-unsafe impl Send for CapabilityEntry {}
-unsafe impl Sync for CapabilityEntry {}
+unsafe impl Send for ProviderEntry {}
+unsafe impl Sync for ProviderEntry {}
 
 /// Top-level `#[repr(C)]` descriptor the host reads from each
 /// loaded extension.
@@ -152,10 +152,10 @@ pub struct ExtensionDescriptor {
     pub name_ptr: *const u8,
     pub name_len: u32, // lint:allow(arvo-types-only, no-bare-numeric, no-public-raw-field) tracked: #206
     pub version: ExtensionVersion,
-    pub capabilities_ptr: *const CapabilityEntry,
-    pub capabilities_len: u32, // lint:allow(arvo-types-only, no-bare-numeric, no-public-raw-field) tracked: #206
-    pub required_host_caps_ptr: *const CapabilityId,
-    pub required_host_caps_len: u32, // lint:allow(arvo-types-only, no-bare-numeric, no-public-raw-field) tracked: #206
+    pub providers_ptr: *const ProviderEntry,
+    pub providers_len: u32, // lint:allow(arvo-types-only, no-bare-numeric, no-public-raw-field) tracked: #206
+    pub required_host_providers_ptr: *const ProviderId,
+    pub required_host_providers_len: u32, // lint:allow(arvo-types-only, no-bare-numeric, no-public-raw-field) tracked: #206
     pub init_fn: Option<
         unsafe extern "C" fn(host_ctx: *mut c_void) -> ExtensionAbiStatus,
     >,
