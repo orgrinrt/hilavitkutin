@@ -1,25 +1,26 @@
 //! AdaptConfig + AdaptMetrics + AdaptMode tests (5a4 skeleton).
 
+use arvo::{Identity, USize};
 use hilavitkutin::adapt::{AdaptConfig, AdaptMetrics, AdaptMode};
 use hilavitkutin::plan::PhaseId;
 use hilavitkutin::strategy::PhaseStrategy;
 
 #[test]
 fn adapt_config_new_records_all_fields() {
-    let c = AdaptConfig::new(PhaseId(3), 1024, 150, 8192);
-    assert_eq!(c.phase_id, PhaseId(3));
-    assert_eq!(c.max_fuse_threshold, 1024);
-    assert_eq!(c.morsel_size_multiplier, 150);
-    assert_eq!(c.split_threshold, 8192);
+    let c = AdaptConfig::new(PhaseId(3), USize(1024), USize(150), USize(8192)); // lint:allow(no-bare-numeric) reason: tuning literals; tracked: #399
+    assert_eq!(c.phase_id, PhaseId(3)); // lint:allow(no-bare-numeric) reason: phase id literal; tracked: #399
+    assert_eq!(c.max_fuse_threshold, USize(1024)); // lint:allow(no-bare-numeric) reason: roundtrip check; tracked: #399
+    assert_eq!(c.morsel_size_multiplier, USize(150)); // lint:allow(no-bare-numeric) reason: roundtrip check; tracked: #399
+    assert_eq!(c.split_threshold, USize(8192)); // lint:allow(no-bare-numeric) reason: roundtrip check; tracked: #399
 }
 
 #[test]
 fn adapt_config_default_is_zero() {
-    let c = AdaptConfig::default();
-    assert_eq!(c.phase_id, PhaseId(0));
-    assert_eq!(c.max_fuse_threshold, 0);
-    assert_eq!(c.morsel_size_multiplier, 0);
-    assert_eq!(c.split_threshold, 0);
+    let c = AdaptConfig::new(PhaseId(0), USize::ZERO, USize::ZERO, USize::ZERO); // lint:allow(no-bare-numeric) reason: default constructor; tracked: #399
+    assert_eq!(c.phase_id, PhaseId(0)); // lint:allow(no-bare-numeric) reason: phase id literal; tracked: #399
+    assert_eq!(c.max_fuse_threshold, USize::ZERO);
+    assert_eq!(c.morsel_size_multiplier, USize::ZERO);
+    assert_eq!(c.split_threshold, USize::ZERO);
 }
 
 #[test]
@@ -46,18 +47,18 @@ fn adapt_mode_is_phase_strategy_alias() {
 
 #[test]
 fn adapt_metrics_default_is_zero() {
-    let m = AdaptMetrics::default();
-    assert_eq!(m.cache_miss_rate, 0);
-    assert_eq!(m.branch_miss_rate, 0);
-    assert_eq!(m.phase_completion_time_ns, 0);
+    let m = AdaptMetrics::new();
+    assert_eq!(m.cache_miss_rate, USize::ZERO);
+    assert_eq!(m.branch_miss_rate, USize::ZERO);
+    assert_eq!(m.phase_completion_time_ns.to_raw(), 0); // lint:allow(no-bare-numeric) reason: nanos zero raw literal; tracked: #399
 }
 
 #[test]
 fn adapt_metrics_new_is_zero() {
     let m = AdaptMetrics::new();
-    assert_eq!(m.cache_miss_rate, 0);
-    assert_eq!(m.branch_miss_rate, 0);
-    assert_eq!(m.phase_completion_time_ns, 0);
+    assert_eq!(m.cache_miss_rate, USize::ZERO);
+    assert_eq!(m.branch_miss_rate, USize::ZERO);
+    assert_eq!(m.phase_completion_time_ns.to_raw(), 0); // lint:allow(no-bare-numeric) reason: nanos zero raw literal; tracked: #399
 }
 
 // update_adapt is `todo!()` this round: don't call it, just
