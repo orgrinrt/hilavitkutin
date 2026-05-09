@@ -1,0 +1,30 @@
+# hilavitkutin-api shame
+
+Known gaps with explanations. Each `## <key>` header silences the
+matching lint violation keyed by `<key>`.
+
+## KitDispatch
+
+`KitDispatch<K>` is named in `DESIGN.md.tmpl` as one of the four
+`Dispatch` routers exported by the `Provider` substrate, but the
+struct itself lives in `hilavitkutin-kit` next to the `Kit` trait.
+The api crate cannot depend on the kit crate (the layering is
+api → kit, not kit → api), and `KitDispatch`'s `Dispatch` impl
+needs to read `K::Units` and `K::Owned` to compute the next
+typestate accumulator. Both associated types come from the `Kit`
+trait, which only exists in the kit crate. Moving `Kit` into api
+would invert the layering for one trait that is already kept
+deliberately separate (it depends on api primitives plus a small
+declarative shape; consumers reach for kit when they want the
+preset bundle, not when they want the api). The cleaner answer is
+to keep `Kit` and `KitDispatch` co-located in the kit crate and
+let the api `Dispatch` trait declaration name the four router
+shapes by convention. Decision recorded in
+`mock/research/notes/202605091700_src_apply_decisions.md` (D7).
+
+Consumers reach `KitDispatch` via `hilavitkutin_kit::KitDispatch`.
+The api-side `DESIGN.md.tmpl` mention is a forward reference to
+the kit crate's surface, equivalent to how the api `WorkUnit`
+trait references `Always` / `On<V>` schedule markers from the
+work_unit module without the markers needing to live in a separate
+location.
