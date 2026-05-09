@@ -4,7 +4,7 @@
 //! Contract-bound host orchestration over `hilavitkutin-linking`.
 //!
 //! This crate layers the pull-based discovery contract, lifecycle
-//! management, capability dispatch, and failure policy on top of the
+//! management, provider dispatch, and failure policy on top of the
 //! cross-platform dynamic library loader in `hilavitkutin-linking`.
 //! Extensions are `cdylib` artefacts that export a single well-known
 //! symbol `__hilavitkutin_extension_descriptor` returning a pointer
@@ -25,7 +25,7 @@ mod host;
 mod traits;
 
 pub use descriptor::{
-    AbiVersion, CapabilityEntry, CapabilityId, DESCRIPTOR_SYMBOL,
+    AbiVersion, ProviderEntry, ProviderId, DESCRIPTOR_SYMBOL,
     EXTENSION_DESCRIPTOR_TAG, ExtensionAbiStatus, ExtensionDescriptor,
     ExtensionVersion, HOST_ABI_VERSION, MAX_DESCRIPTOR_LIST_LEN,
 };
@@ -35,16 +35,16 @@ pub use host::{
     ExtensionHost, ExtensionRequirement, FailurePolicyFn, PolicyVerdict,
     default_policy, validate_descriptor,
 };
-pub use traits::{CapabilityExport, ExtensionMeta, InitHandler, ShutdownHandler};
+pub use traits::{ProviderExport, ExtensionMeta, InitHandler, ShutdownHandler};
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn capability_id_from_name_is_const_fnv_1a() {
+    fn provider_id_from_name_is_const_fnv_1a() {
         // FNV-1a over "cap.a": stable bit-equality across platforms.
-        const CAP: CapabilityId = CapabilityId::from_name("cap.a");
+        const CAP: ProviderId = ProviderId::from_name("cap.a");
         // Recompute with an independent FNV-1a run to cross-check.
         const FNV_OFFSET_BASIS: u64 = 0xcbf29ce484222325;
         const FNV_PRIME: u64 = 0x100000001b3;
@@ -57,10 +57,10 @@ mod tests {
     }
 
     #[test]
-    fn capability_id_distinct_names_differ() {
+    fn provider_id_distinct_names_differ() {
         assert_ne!(
-            CapabilityId::from_name("cap.a").0,
-            CapabilityId::from_name("cap.b").0,
+            ProviderId::from_name("cap.a").0,
+            ProviderId::from_name("cap.b").0,
         );
     }
 
@@ -88,15 +88,15 @@ mod tests {
     }
 
     #[test]
-    fn host_advertises_declared_capabilities() {
-        const CAP_X: CapabilityId = CapabilityId::from_name("cap.x");
-        const CAP_Y: CapabilityId = CapabilityId::from_name("cap.y");
-        const CAP_Z: CapabilityId = CapabilityId::from_name("cap.z");
-        static CAPS: &[CapabilityId] = &[CAP_X, CAP_Y];
+    fn host_advertises_declared_providers() {
+        const PROVIDER_X: ProviderId = ProviderId::from_name("cap.x");
+        const PROVIDER_Y: ProviderId = ProviderId::from_name("cap.y");
+        const PROVIDER_Z: ProviderId = ProviderId::from_name("cap.z");
+        static CAPS: &[ProviderId] = &[PROVIDER_X, PROVIDER_Y];
         let host = ExtensionHost::new(CAPS);
-        assert!(host.has_capability(CAP_X));
-        assert!(host.has_capability(CAP_Y));
-        assert!(!host.has_capability(CAP_Z));
+        assert!(host.has_provider(PROVIDER_X));
+        assert!(host.has_provider(PROVIDER_Y));
+        assert!(!host.has_provider(PROVIDER_Z));
     }
 
     #[test]
@@ -121,13 +121,13 @@ mod tests {
     }
 
     #[test]
-    fn capability_id_is_transparent_u64() {
+    fn provider_id_is_transparent_u64() {
         assert_eq!(
-            core::mem::size_of::<CapabilityId>(),
+            core::mem::size_of::<ProviderId>(),
             core::mem::size_of::<u64>(),
         );
         assert_eq!(
-            core::mem::align_of::<CapabilityId>(),
+            core::mem::align_of::<ProviderId>(),
             core::mem::align_of::<u64>(),
         );
     }

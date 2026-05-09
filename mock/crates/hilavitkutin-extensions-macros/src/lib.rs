@@ -2,7 +2,7 @@
 //!
 //! Ships `#[export_extension]`, the attribute macro that emits the
 //! `#[repr(C)] ExtensionDescriptor` static, the
-//! `__hilavitkutin_extension_descriptor` exported fn, the capability
+//! `__hilavitkutin_extension_descriptor` exported fn, the provider
 //! table, and optional init / shutdown trampolines on behalf of an
 //! extension author.
 //!
@@ -27,7 +27,7 @@ use syn::{
 /// `#[export_extension]` attribute macro.
 ///
 /// Attach to an extension's top-level struct. Emits the descriptor,
-/// exported-fn, and capability table required by the host's pull-based
+/// exported-fn, and provider table required by the host's pull-based
 /// discovery contract.
 ///
 /// # Attribute parameters
@@ -36,13 +36,13 @@ use syn::{
 ///   kebab-case.
 /// - `version = "MAJOR.MINOR.PATCH"`: explicit version triple.
 ///   Defaults to `env!("CARGO_PKG_VERSION")` parsed at emission time.
-/// - `required_host_caps = [PATH, PATH, ...]`: const `CapabilityId`
+/// - `required_host_providers = [PATH, PATH, ...]`: const `ProviderId`
 ///   expressions the extension requires from the host. Defaults to
 ///   empty.
-/// - `capabilities = [TypePath, TypePath, ...]`: type paths that each
-///   implement `CapabilityExport`. Emission reads
-///   `<T as CapabilityExport>::ID` and `::VTABLE_PTR` into the
-///   capability table. Defaults to empty.
+/// - `providers = [TypePath, TypePath, ...]`: type paths that each
+///   implement `ProviderExport`. Emission reads
+///   `<T as ProviderExport>::ID` and `::VTABLE_PTR` into the
+///   provider table. Defaults to empty.
 /// - `init = TypePath`: type implementing `InitHandler`. When present,
 ///   the descriptor's `init_fn` slot is populated with a trampoline.
 /// - `shutdown = TypePath`: type implementing `ShutdownHandler`. Same
@@ -130,32 +130,32 @@ pub fn export_extension(attr: TokenStream, item: TokenStream) -> TokenStream {
         },
     };
 
-    // required_host_caps const slice.
-    let required_caps_init = if attrs.required_host_caps.is_empty() {
-        quote! { const __EXT_REQUIRED_CAPS: &[::hilavitkutin_extensions::CapabilityId] = &[]; }
+    // required_host_providers const slice.
+    let required_caps_init = if attrs.required_host_providers.is_empty() {
+        quote! { const __EXT_REQUIRED_CAPS: &[::hilavitkutin_extensions::ProviderId] = &[]; }
     } else {
-        let caps = &attrs.required_host_caps;
+        let caps = &attrs.required_host_providers;
         quote! {
-            const __EXT_REQUIRED_CAPS: &[::hilavitkutin_extensions::CapabilityId] = &[
+            const __EXT_REQUIRED_CAPS: &[::hilavitkutin_extensions::ProviderId] = &[
                 #( #caps ),*
             ];
         }
     };
 
-    // capabilities const slice.
-    let capabilities_init = if attrs.capabilities.is_empty() {
-        quote! { const __EXT_CAPABILITIES: &[::hilavitkutin_extensions::CapabilityEntry] = &[]; }
+    // providers const slice.
+    let providers_init = if attrs.providers.is_empty() {
+        quote! { const __EXT_CAPABILITIES: &[::hilavitkutin_extensions::ProviderEntry] = &[]; }
     } else {
-        let caps = attrs.capabilities.iter().map(|ty| {
+        let caps = attrs.providers.iter().map(|ty| {
             quote! {
-                ::hilavitkutin_extensions::CapabilityEntry {
-                    id: <#ty as ::hilavitkutin_extensions::CapabilityExport>::ID,
-                    vtable_ptr: <#ty as ::hilavitkutin_extensions::CapabilityExport>::VTABLE_PTR,
+                ::hilavitkutin_extensions::ProviderEntry {
+                    id: <#ty as ::hilavitkutin_extensions::ProviderExport>::ID,
+                    vtable_ptr: <#ty as ::hilavitkutin_extensions::ProviderExport>::VTABLE_PTR,
                 }
             }
         });
         quote! {
-            const __EXT_CAPABILITIES: &[::hilavitkutin_extensions::CapabilityEntry] = &[
+            const __EXT_CAPABILITIES: &[::hilavitkutin_extensions::ProviderEntry] = &[
                 #( #caps ),*
             ];
         }
@@ -236,7 +236,7 @@ pub fn export_extension(attr: TokenStream, item: TokenStream) -> TokenStream {
 
         #required_caps_init
 
-        #capabilities_init
+        #providers_init
 
         #init_trampoline
         #shutdown_trampoline
@@ -254,10 +254,10 @@ pub fn export_extension(attr: TokenStream, item: TokenStream) -> TokenStream {
             name_ptr: __EXT_NAME.as_ptr(),
             name_len: __EXT_NAME.len() as u32,
             version: __EXT_VERSION,
-            capabilities_ptr: __EXT_CAPABILITIES.as_ptr(),
-            capabilities_len: __EXT_CAPABILITIES.len() as u32,
-            required_host_caps_ptr: __EXT_REQUIRED_CAPS.as_ptr(),
-            required_host_caps_len: __EXT_REQUIRED_CAPS.len() as u32,
+            providers_ptr: __EXT_CAPABILITIES.as_ptr(),
+            providers_len: __EXT_CAPABILITIES.len() as u32,
+            required_host_providers_ptr: __EXT_REQUIRED_CAPS.as_ptr(),
+            required_host_providers_len: __EXT_REQUIRED_CAPS.len() as u32,
             init_fn: #init_slot,
             shutdown_fn: #shutdown_slot,
         };
@@ -277,8 +277,8 @@ pub fn export_extension(attr: TokenStream, item: TokenStream) -> TokenStream {
 struct ExtAttrs {
     name: Option<LitStr>,
     version: Option<LitStr>,
-    required_host_caps: Vec<Expr>, // lint:allow(no-alloc) reason: proc-macro host-context std; tracked: #205
-    capabilities: Vec<Path>, // lint:allow(no-alloc) reason: proc-macro host-context std; tracked: #205
+    required_host_providers: Vec<Expr>, // lint:allow(no-alloc) reason: proc-macro host-context std; tracked: #205
+    providers: Vec<Path>, // lint:allow(no-alloc) reason: proc-macro host-context std; tracked: #205
     init: Option<Path>,
     shutdown: Option<Path>,
 }
@@ -288,8 +288,8 @@ impl ExtAttrs {
         let mut out = Self {
             name: None,
             version: None,
-            required_host_caps: Vec::new(),
-            capabilities: Vec::new(),
+            required_host_providers: Vec::new(),
+            providers: Vec::new(),
             init: None,
             shutdown: None,
         };
@@ -311,11 +311,11 @@ impl ExtAttrs {
                 "version" => {
                     out.version = Some(entry.expect_lit_str()?);
                 }
-                "required_host_caps" => {
-                    out.required_host_caps = entry.expect_expr_array()?;
+                "required_host_providers" => {
+                    out.required_host_providers = entry.expect_expr_array()?;
                 }
-                "capabilities" => {
-                    out.capabilities = entry.expect_path_array()?;
+                "providers" => {
+                    out.providers = entry.expect_path_array()?;
                 }
                 "init" => {
                     out.init = Some(entry.expect_path()?);
@@ -327,7 +327,7 @@ impl ExtAttrs {
                     return Err(syn::Error::new(
                         entry.key.span(),
                         format!(
-                            "unknown #[export_extension] parameter `{}`. Supported keys: name, version, required_host_caps, capabilities, init, shutdown.",
+                            "unknown #[export_extension] parameter `{}`. Supported keys: name, version, required_host_providers, providers, init, shutdown.",
                             key_str
                         ),
                     ));
@@ -399,7 +399,7 @@ impl AttrEntry {
                         other => {
                             return Err(syn::Error::new_spanned(
                                 other,
-                                "expected a type path inside `capabilities = [...]`",
+                                "expected a type path inside `providers = [...]`",
                             ));
                         }
                     }

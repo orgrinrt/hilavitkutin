@@ -81,10 +81,11 @@ fn internerkit_declarative_shape_compiles() {
     _type_check_only::<InternerKit<128, 8>>();
 }
 
-/// `Scheduler::builder().add_kit::<InternerKit<...>>()` is the
-/// round-4 idiomatic surface. Type-level only, no value parameter.
+/// `Scheduler::builder().with(InternerKit::<...>)` is the
+/// round-202605091700 idiomatic surface. Type-level only, no value
+/// parameter. The InternerKit unit struct is constructed bare.
 #[test]
-fn internerkit_installs_via_add_kit() {
+fn internerkit_installs_via_with() {
     let _builder =
-        Scheduler::builder().add_kit::<InternerKit<128, 8>>();
+        Scheduler::builder().with(InternerKit::<128, 8>);
 }
