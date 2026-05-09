@@ -132,11 +132,11 @@ pub fn export_extension(attr: TokenStream, item: TokenStream) -> TokenStream {
 
     // required_host_providers const slice.
     let required_caps_init = if attrs.required_host_providers.is_empty() {
-        quote! { const __EXT_REQUIRED_CAPS: &[::hilavitkutin_extensions::ProviderId] = &[]; }
+        quote! { const __EXT_REQUIRED_PROVIDERS: &[::hilavitkutin_extensions::ProviderId] = &[]; }
     } else {
         let caps = &attrs.required_host_providers;
         quote! {
-            const __EXT_REQUIRED_CAPS: &[::hilavitkutin_extensions::ProviderId] = &[
+            const __EXT_REQUIRED_PROVIDERS: &[::hilavitkutin_extensions::ProviderId] = &[
                 #( #caps ),*
             ];
         }
@@ -144,7 +144,7 @@ pub fn export_extension(attr: TokenStream, item: TokenStream) -> TokenStream {
 
     // providers const slice.
     let providers_init = if attrs.providers.is_empty() {
-        quote! { const __EXT_CAPABILITIES: &[::hilavitkutin_extensions::ProviderEntry] = &[]; }
+        quote! { const __EXT_PROVIDERS: &[::hilavitkutin_extensions::ProviderEntry] = &[]; }
     } else {
         let caps = attrs.providers.iter().map(|ty| {
             quote! {
@@ -155,7 +155,7 @@ pub fn export_extension(attr: TokenStream, item: TokenStream) -> TokenStream {
             }
         });
         quote! {
-            const __EXT_CAPABILITIES: &[::hilavitkutin_extensions::ProviderEntry] = &[
+            const __EXT_PROVIDERS: &[::hilavitkutin_extensions::ProviderEntry] = &[
                 #( #caps ),*
             ];
         }
@@ -254,10 +254,10 @@ pub fn export_extension(attr: TokenStream, item: TokenStream) -> TokenStream {
             name_ptr: __EXT_NAME.as_ptr(),
             name_len: __EXT_NAME.len() as u32,
             version: __EXT_VERSION,
-            providers_ptr: __EXT_CAPABILITIES.as_ptr(),
-            providers_len: __EXT_CAPABILITIES.len() as u32,
-            required_host_providers_ptr: __EXT_REQUIRED_CAPS.as_ptr(),
-            required_host_providers_len: __EXT_REQUIRED_CAPS.len() as u32,
+            providers_ptr: __EXT_PROVIDERS.as_ptr(),
+            providers_len: __EXT_PROVIDERS.len() as u32,
+            required_host_providers_ptr: __EXT_REQUIRED_PROVIDERS.as_ptr(),
+            required_host_providers_len: __EXT_REQUIRED_PROVIDERS.len() as u32,
             init_fn: #init_slot,
             shutdown_fn: #shutdown_slot,
         };

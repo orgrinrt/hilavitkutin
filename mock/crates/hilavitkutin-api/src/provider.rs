@@ -1,4 +1,4 @@
-//! `Provider` — the unified registration contract for the
+//! `Provider`: the unified registration contract for the
 //! `SchedulerBuilder`.
 //!
 //! Every value passed to `SchedulerBuilder::with(value)` impls
@@ -81,10 +81,10 @@ pub trait Provider: Sized {
 /// Three associated types, one per accumulator the
 /// `SchedulerBuilder` typestate carries:
 ///
-/// - `NextWus` — the next value of the WorkUnit accumulator after
+/// - `NextWus`: the next value of the WorkUnit accumulator after
 ///   registering this provider.
-/// - `NextStores` — the next value of the store accumulator.
-/// - `NextPlatform` — the next value of the platform-tuple
+/// - `NextStores`: the next value of the store accumulator.
+/// - `NextPlatform`: the next value of the platform-tuple
 ///   accumulator. The current `SchedulerBuilder` is two-parameter
 ///   (`SchedulerBuilder<Wus, Stores>`); the `NextPlatform` slot is
 ///   forward-compatible with a future `SchedulerBuilder<Wus, Stores,
