@@ -173,3 +173,15 @@ bitset over a per-app StoreIndex ConstParamTy. Shape sketched in
 in round-4; documented as the planned response. Triggered by a
 concrete signal that the keystone is breaking; otherwise stays in
 research.
+
+## HasTrivialCtor consumer-side adoption
+
+The Provider unification round (202605091700) introduced
+`HasTrivialCtor` on notko and impls it on the four scheduler
+wrappers (`Resource<T>`, `Column<T>`, `Virtual<T>`,
+`LinkedBin<T: ?Sized>`). Downstream substrate crates (arvo,
+vehje, viola) may impl `HasTrivialCtor` on their own marker
+types as a usability nicety so consumers can reach for
+`.with(MyMarker::new())` consistently. Not load-bearing; the
+`.with(value)` shape works through `Provider::Init` regardless.
+Cross-repo opportunity tracked here.
