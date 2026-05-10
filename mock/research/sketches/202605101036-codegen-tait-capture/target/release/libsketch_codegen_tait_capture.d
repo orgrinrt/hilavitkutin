@@ -1,1 +1,0 @@
-/Users/orgrinrt/Dev/clause-dev/hilavitkutin/mock/research/sketches/202605101036-codegen-tait-capture/target/release/libsketch_codegen_tait_capture.rlib: /Users/orgrinrt/Dev/clause-dev/hilavitkutin/mock/research/sketches/202605101036-codegen-tait-capture/src/lib.rs
