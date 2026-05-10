@@ -33,3 +33,19 @@ single-thread path through morsel dispatch may not need it.
 ColumnStorage default, Clock default, MemoryProvider default for
 libc/Unix targets. Each lands in its own round when consumer
 demand surfaces. Per task #253 v0 scope: interner-only.
+
+## Round 202605101036 follow-ups
+
+### Example app skeletons
+
+Topic 11 axis B user-attention. Three example apps autonomous-picked
+this round (subject to user swap): `examples/word_count.rs` (canonical
+map-reduce with intern + accumulator), `examples/particle_step.rs`
+(N-body integrator demonstrating head+tail convergence + arvo
+fixed-point math), `examples/audio_mix.rs` (real-time audio mixer
+offline-render variant demonstrating predictive parking).
+
+Each example doubles as an integration test: CI runs `cargo run
+--example <name>` with assertions on output shape + timing budgets.
+The example bodies land in follow-up rounds dedicated to each app;
+this BACKLOG entry tracks the v1 commitment.

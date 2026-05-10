@@ -202,3 +202,50 @@ scheduler-owned storage via the persistence layer. Revisit
 doc comment when the data plane is the actual home. Consumers
 reading the current doc-comment about the drop should not see
 behaviour change post-C6 except that the value is now retained.
+
+## Round 202605101036 follow-ups
+
+These are flagged user-attention items and bench-driven follow-ups
+from the runtime megaround. None block the v1 src CL apply; they
+schedule into follow-up bench-validation rounds.
+
+### M6 calibration micro-bench at `ThreadPool::build()`
+
+Topic 6 axis F BACKLOG. v1 ships `WakeStrategy { p_spin_iters: 128,
+e_spin_iters: 32 }` as autonomous-pick defaults. Follow-up round
+adds a build-time micro-bench measuring (a) cost per `spin_loop`
+iter and (b) park-then-wake roundtrip latency on the current
+platform, then computes per-CoreClass break-even spin counts.
+
+### `Executor::try_steal_from(other_core)` (work-stealing)
+
+Topic 6 axis D BACKLOG. v1 ships deterministic morsel assignment
+from plan-stage; work-stealing is deferred to v2 behind a
+`work-stealing` cargo feature flag. Adds the trait method to the
+sealed `Executor` trait. Default `HybridExecutor` impl returns
+`Maybe::Isnt` (no stealing); consumers with stealing executors
+override.
+
+### Per-CoreClass spin ratio bench validation
+
+Topic 6 axis K user-attention. The P=128 / E=32 defaults shipped
+in v1 are autonomous picks awaiting bench evidence. Follow-up
+adds `mock/benches/spin_p_vs_e_6k` measuring optimal spin iters
+on each core class under realistic phase-barrier wait
+distributions.
+
+### `MICRO_MORSEL_INTERVAL` + `MAX_DRIFT_RECORDS` empirical validation
+
+Topic 7 axis C user-attention. Defaults `MICRO_MORSEL_INTERVAL =
+64` and `MAX_DRIFT_RECORDS = 32` ship in v1 as autonomous picks
+with natural cache-line / half-morsel rationale. Follow-up bench
+`mock/benches/morsel_size_7` sweeps both constants across
+realistic workloads.
+
+### `MAX_PLAN_AFFECTING_RESOURCES` cap revisit
+
+Topic 8 axis B user-attention. v1 default is 16, overridable via
+the Scheduler const generic. Revisit if consumer registers more
+than 16 `PlanAffecting`-bound BuilderInput types per pipeline.
+Compile-time error via `#[diagnostic::on_unimplemented]` points
+the consumer at the const-generic override.
