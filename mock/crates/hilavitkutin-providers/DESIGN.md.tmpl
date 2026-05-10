@@ -20,6 +20,9 @@ consumer demand.
 | `MemoryArena<BYTES, ENTRIES>` | Inline-storage `ArenaInterner` impl. Const-generic byte-cap and entry-cap. Backs the default `StringInterner`. |
 | `default_interner<BYTES, ENTRIES>()` | Free fn building `StringInterner<MemoryArena<BYTES, ENTRIES>>`. The wiring building block; consumers call it via `builder.with(Resource::new(...))` directly or implicitly through `InternerKit`. |
 | `InternerKit<BYTES, ENTRIES>` | Kit impl that declares `Resource<StringInterner<MemoryArena<BYTES, ENTRIES>>>` as `Owned`. Pure declaration; no install method. Engine reads `K::Units` and `K::Owned` at compile time on `.with(InternerKit::<BYTES, ENTRIES>)`. |
+| `AdaptWu` | Default substrate AdaptWu observing `ScheduleEnd` per Topic 1 axis 5 / Topic 5. Consumes `ResourceSnapshot<AdaptMetrics>` at phase boundary and writes `predicted_wait_ns[]` for the next frame. Consumers register via `.with(AdaptWu::default())` for substrate adapt behaviour; consumers ship their own AdaptWu for custom adaptation. |
+| `PassDurationMetrics`, `PhaseEMAMetrics`, `FiberEMAMetrics`, `ChangeClassMetrics`, `CacheResidencyMetrics`, `ThroughputTrendingMetrics`, `PredictiveParkingMetrics`, `MemoryWatermarkMetrics`, `CoreIdleTimeMetrics` | Per-axis AdaptMetrics sub-resources (Topic 5 axis F). Each ships individually under `pub mod metrics::*`. Per-axis `pub const DEFAULT_*` named constants per Topic 5 axis C. |
+| `StandardAdaptKit`, `OffAdaptKit` | Convenience Kit recipes bundling the nine axes (Topic 5 axis A). Standard ships all axes with bench-validated defaults; Off ships none (adapt observer disabled). Custom mixes via consumer-authored Kits per the themed-resource-sets-individuals-primary workspace convention. |
 
 ### `InternerApi`
 
