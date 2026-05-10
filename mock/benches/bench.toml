@@ -157,6 +157,59 @@ variants = [
     "variants/dispatch_runtime/target/release/dispatch_runtime",
 ]
 
+[bench.dep_graph_csr_9]
+title = "DependencyGraph backing: dense vs CSR vs hybrid (Topic 9 axis B gate)"
+workload = "realistic"
+master_seed = 0x1357_9bdf_2468_ace0
+
+[[bench.dep_graph_csr_9.sizes]]
+n = 8
+variants = [
+    "variants/dep_graph_dense/target/release/dep_graph_dense",
+    "variants/dep_graph_csr/target/release/dep_graph_csr",
+    "variants/dep_graph_hybrid/target/release/dep_graph_hybrid",
+]
+
+[[bench.dep_graph_csr_9.sizes]]
+n = 16
+variants = [
+    "variants/dep_graph_dense/target/release/dep_graph_dense",
+    "variants/dep_graph_csr/target/release/dep_graph_csr",
+    "variants/dep_graph_hybrid/target/release/dep_graph_hybrid",
+]
+
+[[bench.dep_graph_csr_9.sizes]]
+n = 32
+variants = [
+    "variants/dep_graph_dense/target/release/dep_graph_dense",
+    "variants/dep_graph_csr/target/release/dep_graph_csr",
+    "variants/dep_graph_hybrid/target/release/dep_graph_hybrid",
+]
+
+[[bench.dep_graph_csr_9.sizes]]
+n = 64
+variants = [
+    "variants/dep_graph_dense/target/release/dep_graph_dense",
+    "variants/dep_graph_csr/target/release/dep_graph_csr",
+    "variants/dep_graph_hybrid/target/release/dep_graph_hybrid",
+]
+
+[[bench.dep_graph_csr_9.sizes]]
+n = 128
+variants = [
+    "variants/dep_graph_dense/target/release/dep_graph_dense",
+    "variants/dep_graph_csr/target/release/dep_graph_csr",
+    "variants/dep_graph_hybrid/target/release/dep_graph_hybrid",
+]
+
+[[bench.dep_graph_csr_9.sizes]]
+n = 256
+variants = [
+    "variants/dep_graph_dense/target/release/dep_graph_dense",
+    "variants/dep_graph_csr/target/release/dep_graph_csr",
+    "variants/dep_graph_hybrid/target/release/dep_graph_hybrid",
+]
+
 [timing]
 passes = 8
 runs_per_pass = 2000
