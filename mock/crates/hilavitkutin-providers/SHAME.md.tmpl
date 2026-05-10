@@ -1,0 +1,37 @@
+# Known gaps in hilavitkutin-providers
+
+## AdaptWu
+
+Documented in DESIGN.md.tmpl as the default substrate AdaptWu observing
+`ScheduleEnd` per Topic 1 axis 5 / Topic 5 of design round 202605101036.
+Lands in source via the round's src CL (drafted but not yet applied; src
+CL waits on user-attention items per the round's `## User-attention call`
+sections in topic files). The doc is forward-looking by intent: the
+DESIGN template freezes the locked design state so consumers and future
+agents can reference the surface contract; source catches up in the src
+CL apply phase. Tracked under task #415 (hilavitkutin runtime megaround
+202605101036). No ETA pressure; round closes after user clears five
+user-attention items flagged across Topics 6/7/8/11.
+
+## PassDurationMetrics
+
+Documented in DESIGN.md.tmpl as one of the nine per-axis AdaptMetrics
+sub-resources from Topic 5 axis F. The remaining eight (PhaseEMAMetrics,
+FiberEMAMetrics, ChangeClassMetrics, CacheResidencyMetrics,
+ThroughputTrendingMetrics, PredictiveParkingMetrics, MemoryWatermarkMetrics,
+CoreIdleTimeMetrics) ship as a set under `pub mod metrics::*` once the
+src CL of round 202605101036 lands. Each carries `pub const DEFAULT_*`
+named constants per Topic 5 axis C. Same audit-trail / src-CL-pending
+status as AdaptWu above. Forward-documented per the mockspace docs=design
+contract; src catches up at src CL apply time.
+
+## StandardAdaptKit
+
+Documented in DESIGN.md.tmpl as one of two convenience Kit recipes
+bundling the nine adapt axes per Topic 5 axis A. `OffAdaptKit` is the
+sibling shipping the no-axes preset. Recipes follow the workspace
+themed-resource-sets-individuals-primary convention: per-axis
+sub-resources are the primary surface; Kits are optional bundles.
+Lands in source alongside AdaptWu and the per-axis sub-resources via
+the round 202605101036 src CL. Same forward-documented / src-pending
+status as the other two SHAME entries in this file.
