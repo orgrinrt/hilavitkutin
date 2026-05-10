@@ -1,0 +1,14 @@
+[workspace]
+
+[package]
+name = "sketch-poolframe-lifetime"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+name = "sketch_poolframe_lifetime"
+path = "src/lib.rs"
+
+[profile.release]
+opt-level = 3
