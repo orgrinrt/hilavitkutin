@@ -1,0 +1,165 @@
+# Bench harness configuration for the hilavitkutin runtime megaround
+# (202605101036). Three benches:
+#
+# 1. ema_axis_h — Topic 5 Axis H: EMA streaming pass under realistic
+#    workload context. NEON intrinsics vs scalar reference vs autovec.
+#    Multi-N sweep: 64 / 256 / 1024 / 4096 / 16384 bytes per call.
+#    8-byte FNV1a hash of final EMA state for cross-variant validation
+#    (MAY_DIFFER=false).
+#
+# 2. dispatch_static — Topic 4 Axis A: dispatch shapes where LLVM CAN
+#    devirt. Direct call vs sealed-trait static method vs const fn
+#    pointer. All three compute identical FNV1a math; only the call
+#    site differs. Same N sweep. MAY_DIFFER=false (byte-exact).
+#
+# 3. dispatch_dynamic — Topic 4 Axis A: dispatch shapes where LLVM
+#    CANNOT devirt. Direct (baseline) vs opaque-fn-pointer (volatile
+#    load defeats LLVM) vs data-dependent table indexed at runtime.
+#    Same N sweep. MAY_DIFFER=true (runtime table picks one of four
+#    different mixers per chunk).
+#
+# Variants in `variants/<name>/` each compile to one cdylib using
+# `#[bench_variant("name", sizes = [...])]` for N-dispatch. The bench
+# binary builds a ByteRoutine<IN, 8, MAY_DIFFER> bridge per N.
+
+[bench.ema_axis_h]
+title = "EMA streaming pass: NEON vs scalar vs autovec under realistic workload"
+workload = "realistic"
+master_seed = 0x1234_5678_9ABC_DEF0
+
+[[bench.ema_axis_h.sizes]]
+n = 64
+variants = [
+    "variants/ema_neon/target/release/ema_neon",
+    "variants/ema_scalar/target/release/ema_scalar",
+    "variants/ema_autovec/target/release/ema_autovec",
+]
+
+[[bench.ema_axis_h.sizes]]
+n = 256
+variants = [
+    "variants/ema_neon/target/release/ema_neon",
+    "variants/ema_scalar/target/release/ema_scalar",
+    "variants/ema_autovec/target/release/ema_autovec",
+]
+
+[[bench.ema_axis_h.sizes]]
+n = 1024
+variants = [
+    "variants/ema_neon/target/release/ema_neon",
+    "variants/ema_scalar/target/release/ema_scalar",
+    "variants/ema_autovec/target/release/ema_autovec",
+]
+
+[[bench.ema_axis_h.sizes]]
+n = 4096
+variants = [
+    "variants/ema_neon/target/release/ema_neon",
+    "variants/ema_scalar/target/release/ema_scalar",
+    "variants/ema_autovec/target/release/ema_autovec",
+]
+
+[[bench.ema_axis_h.sizes]]
+n = 16384
+variants = [
+    "variants/ema_neon/target/release/ema_neon",
+    "variants/ema_scalar/target/release/ema_scalar",
+    "variants/ema_autovec/target/release/ema_autovec",
+]
+
+[bench.dispatch_static]
+title = "Static dispatch shapes: direct vs sealed-trait vs const fn pointer"
+workload = "realistic"
+master_seed = 0x7eed_face_dead_beef
+
+[[bench.dispatch_static.sizes]]
+n = 64
+variants = [
+    "variants/dispatch_direct/target/release/dispatch_direct",
+    "variants/dispatch_trait/target/release/dispatch_trait",
+    "variants/dispatch_const_ptr/target/release/dispatch_const_ptr",
+]
+
+[[bench.dispatch_static.sizes]]
+n = 256
+variants = [
+    "variants/dispatch_direct/target/release/dispatch_direct",
+    "variants/dispatch_trait/target/release/dispatch_trait",
+    "variants/dispatch_const_ptr/target/release/dispatch_const_ptr",
+]
+
+[[bench.dispatch_static.sizes]]
+n = 1024
+variants = [
+    "variants/dispatch_direct/target/release/dispatch_direct",
+    "variants/dispatch_trait/target/release/dispatch_trait",
+    "variants/dispatch_const_ptr/target/release/dispatch_const_ptr",
+]
+
+[[bench.dispatch_static.sizes]]
+n = 4096
+variants = [
+    "variants/dispatch_direct/target/release/dispatch_direct",
+    "variants/dispatch_trait/target/release/dispatch_trait",
+    "variants/dispatch_const_ptr/target/release/dispatch_const_ptr",
+]
+
+[[bench.dispatch_static.sizes]]
+n = 16384
+variants = [
+    "variants/dispatch_direct/target/release/dispatch_direct",
+    "variants/dispatch_trait/target/release/dispatch_trait",
+    "variants/dispatch_const_ptr/target/release/dispatch_const_ptr",
+]
+
+[bench.dispatch_dynamic]
+title = "Dynamic dispatch shapes: direct vs opaque fn pointer vs runtime table"
+workload = "realistic"
+master_seed = 0x40ff_ee15_d34d_b33f
+
+[[bench.dispatch_dynamic.sizes]]
+n = 64
+variants = [
+    "variants/dispatch_direct/target/release/dispatch_direct",
+    "variants/dispatch_volatile/target/release/dispatch_volatile",
+    "variants/dispatch_runtime/target/release/dispatch_runtime",
+]
+
+[[bench.dispatch_dynamic.sizes]]
+n = 256
+variants = [
+    "variants/dispatch_direct/target/release/dispatch_direct",
+    "variants/dispatch_volatile/target/release/dispatch_volatile",
+    "variants/dispatch_runtime/target/release/dispatch_runtime",
+]
+
+[[bench.dispatch_dynamic.sizes]]
+n = 1024
+variants = [
+    "variants/dispatch_direct/target/release/dispatch_direct",
+    "variants/dispatch_volatile/target/release/dispatch_volatile",
+    "variants/dispatch_runtime/target/release/dispatch_runtime",
+]
+
+[[bench.dispatch_dynamic.sizes]]
+n = 4096
+variants = [
+    "variants/dispatch_direct/target/release/dispatch_direct",
+    "variants/dispatch_volatile/target/release/dispatch_volatile",
+    "variants/dispatch_runtime/target/release/dispatch_runtime",
+]
+
+[[bench.dispatch_dynamic.sizes]]
+n = 16384
+variants = [
+    "variants/dispatch_direct/target/release/dispatch_direct",
+    "variants/dispatch_volatile/target/release/dispatch_volatile",
+    "variants/dispatch_runtime/target/release/dispatch_runtime",
+]
+
+[timing]
+passes = 8
+runs_per_pass = 2000
+batch_size = 100
+harness_runs = 1
+cooldowns_ms = [0]
