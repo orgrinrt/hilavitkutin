@@ -191,6 +191,14 @@ devirtualises the fused pipeline into straight-line code.
 ExpandedLto pragma (domain 03, hilavitkutin-build) is REQUIRED for
 devirtualisation.
 
+`WorkUnit::Ctx` is a Generic Associated Type (`type Ctx<'frame>`)
+over a frame lifetime owned by the scheduler. The engine instantiates
+it at dispatch time with the live `'frame`, so the WU can read borrows
+into `PoolFrame`-derived state (progress slots, predicted-wait readers)
+without forcing the consumer's `impl WorkUnit` to carry an explicit
+`<'frame>` parameter. Dispatch sites use HRTB. Validated by the lifetime
+sketch shipped alongside round 202605101036.
+
 ## Pre-allocated thread pool
 
 Threads = `min(physical_cores, parallelisable_width + 1)`. Pool
