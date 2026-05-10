@@ -1,0 +1,17 @@
+[workspace]
+
+[package]
+name = "sketch-fibershape-typing"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["lib"]
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+debug = false
