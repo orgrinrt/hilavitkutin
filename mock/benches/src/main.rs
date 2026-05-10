@@ -163,7 +163,11 @@ fn routine_for_bench(bench_name: &str, workload: &str, n: usize) -> Option<Routi
     let may_differ = bench_name == "dispatch_dynamic";
     let bridge = if may_differ {
         match n {
+            8 => routine_bridge!(ByteRoutine<8, 8, true>),
+            16 => routine_bridge!(ByteRoutine<16, 8, true>),
+            32 => routine_bridge!(ByteRoutine<32, 8, true>),
             64 => routine_bridge!(ByteRoutine<64, 8, true>),
+            128 => routine_bridge!(ByteRoutine<128, 8, true>),
             256 => routine_bridge!(ByteRoutine<256, 8, true>),
             1024 => routine_bridge!(ByteRoutine<1024, 8, true>),
             4096 => routine_bridge!(ByteRoutine<4096, 8, true>),
@@ -172,7 +176,11 @@ fn routine_for_bench(bench_name: &str, workload: &str, n: usize) -> Option<Routi
         }
     } else {
         match n {
+            8 => routine_bridge!(ByteRoutine<8, 8, false>),
+            16 => routine_bridge!(ByteRoutine<16, 8, false>),
+            32 => routine_bridge!(ByteRoutine<32, 8, false>),
             64 => routine_bridge!(ByteRoutine<64, 8, false>),
+            128 => routine_bridge!(ByteRoutine<128, 8, false>),
             256 => routine_bridge!(ByteRoutine<256, 8, false>),
             1024 => routine_bridge!(ByteRoutine<1024, 8, false>),
             4096 => routine_bridge!(ByteRoutine<4096, 8, false>),
