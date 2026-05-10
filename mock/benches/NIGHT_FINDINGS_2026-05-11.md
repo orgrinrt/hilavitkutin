@@ -309,6 +309,35 @@ Caveats:
   that needs the full 8-bit sample range would face a sharper precision
   cliff. Treat the int-shift numbers as the optimistic floor.
 
+## Modulo strategy (`modulo_strategy`) — power-of-2 cap convention validation
+
+Three modulo strategies over an FNV1a-shaped inner loop (N samples each):
+
+- `mod_pow2_const`: `acc % 64` with `64` const. LLVM lowers to `AND #63`.
+- `mod_npow2_const`: `acc % 60` with `60` const. LLVM lowers to magic-number multiply (libgcc reciprocal trick).
+- `mod_var`: `acc % opaque_divisor()` where the divisor is loaded from a `#[inline(never)]` getter. Lowers to `udiv` + `msub`.
+
+Algo-only medians (95% CI, all YES significant):
+
+| N      | npow2 const (base) | pow2 const         | opaque divisor     |
+|--------|--------------------|--------------------|--------------------|
+| 256    | 841 ns             | 364 ns (-55.8%)    | 1070 ns (+27.6%)   |
+| 1024   | 3715 ns            | 1660 ns (-55.2%)   | 4675 ns (+26.5%)   |
+| 4096   | 14305 ns           | 6724 ns (-53.8%)   | 18127 ns (+26.5%)  |
+| 16384  | 57257 ns           | 25944 ns (-54.7%)  | 73016 ns (+27.3%)  |
+
+Findings:
+
+- **Power-of-2 const modulo is 2.2x faster than non-power-of-2 const**, and 2.9x faster than a runtime-opaque divisor. The discount holds at every N from 256 to 16384.
+- The win is the AND-mask lowering: aarch64's `AND xN, xN, #63` is one cycle vs the magic-mul + sub sequence (~3 cycles uop + dependency chain) and vs `udiv` + `msub` (~15 cycles for udiv on Apple Silicon).
+- **Validates the workspace convention** of making every cap a power of 2: `MAX_FIBERS`, `MAX_CORES`, `MAX_UNITS`, `MICRO_MORSEL_INTERVAL = 64`, `MAX_PHASES`, `MAX_DRIFT_RECORDS = 32`, `MAX_PLAN_AFFECTING_RESOURCES = 16`. Each modulo or wrap operation against one of these caps is one AND instruction at runtime; making them non-pow2 would cost a 2x slowdown on every inner-loop wrap.
+- The opaque-divisor variant models what happens if a cap were read from a `Resource` field at runtime instead of being a const generic on `PoolFrame`. The 27% slowdown vs even the non-pow2 const is the price of losing compile-time knowledge of the divisor.
+
+Caveats:
+
+- aarch64 only. x86_64 udiv on modern Intel is faster (~10 cycles), so the var-vs-npow2 gap could narrow. The pow2-vs-anything-else gap is a fundamental ISA property: AND is always one cycle.
+- The pow2 const lowering also benefits from `acc &= 63` being free-of-flags-clobber and pipelining; a complex modulo expression involving multiple wrapped indices would compound the win further.
+
 ## Cross-references
 
 - `mock/benches/dep_graph_csr_9_n*_findings.md`
