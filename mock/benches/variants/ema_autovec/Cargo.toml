@@ -1,0 +1,16 @@
+[workspace]
+
+[package]
+name = "ema_autovec"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+name = "ema_autovec"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev", features = ["std"] }
+mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev" }
