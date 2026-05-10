@@ -387,6 +387,27 @@ variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "varian
 n = 16384
 variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "variants/memcpy_unrolled/target/release/memcpy_unrolled", "variants/memcpy_naive/target/release/memcpy_naive"]
 
+[bench.iter_patterns]
+title = "Column iteration patterns: sequential vs strided vs data-dependent gather"
+workload = "realistic"
+master_seed = 0x3a5c_8e91_b2d4_f607
+
+[[bench.iter_patterns.sizes]]
+n = 256
+variants = ["variants/iter_seq/target/release/iter_seq", "variants/iter_strided/target/release/iter_strided", "variants/iter_gather/target/release/iter_gather"]
+
+[[bench.iter_patterns.sizes]]
+n = 1024
+variants = ["variants/iter_seq/target/release/iter_seq", "variants/iter_strided/target/release/iter_strided", "variants/iter_gather/target/release/iter_gather"]
+
+[[bench.iter_patterns.sizes]]
+n = 4096
+variants = ["variants/iter_seq/target/release/iter_seq", "variants/iter_strided/target/release/iter_strided", "variants/iter_gather/target/release/iter_gather"]
+
+[[bench.iter_patterns.sizes]]
+n = 16384
+variants = ["variants/iter_seq/target/release/iter_seq", "variants/iter_strided/target/release/iter_strided", "variants/iter_gather/target/release/iter_gather"]
+
 [timing]
 passes = 8
 runs_per_pass = 2000

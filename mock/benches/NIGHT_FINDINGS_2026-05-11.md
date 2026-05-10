@@ -198,6 +198,46 @@ worry about hand-tuning the copy path. The intrinsic call is the right
 default; LLVM optimises naive byte loops to the same thing anyway. The
 trait's value is type-level intent, not codegen win.
 
+## Column iteration patterns (`iter_patterns`) — Column<T> design validation
+
+**Question:** how much does access pattern matter for Column<T>-shaped iteration
+under the realistic workload envelope?
+
+**Answer:** sequential beats data-dependent gather by ~2x at every N ≥ 256.
+The hardware prefetcher cannot predict data-dependent indices, and each load
+becomes a potential cache miss.
+
+| N bytes | seq ns/op | gather ns/op | gather penalty |
+|---|---|---|---|
+| 256 | 18 | 46 | +156% (2.5x) |
+| 1024 | 127 | 303 | +138% (2.4x) |
+| 4096 | 634 | 1168 | +85% (1.8x) |
+| 16384 | 2694 | 4789 | +78% (1.8x) |
+
+The strided variant in this bench (stride-8 cache-line skip) clocks 5-300x
+faster than seq, but that's a measurement artifact: the strided loop runs
+N/64 iterations vs seq's N/8, doing 1/8 the total work. The comparison
+strided vs seq is not throughput-equivalent. Treat the strided column as
+information about the prefetcher's stride-detection behaviour (still good
+on constant stride), NOT as a "stride wins" result.
+
+The seq vs gather comparison IS throughput-equivalent (both do N/8 ops).
+That 1.8-2.5x gather penalty is the load-bearing finding:
+
+- Validates arvo Column<T>'s "contiguous SoA layout" design principle.
+  Sequential morsel-loop access patterns are cheap; data-dependent
+  indirection (linked lists, hash-table probing, interior-pointer chains)
+  costs measurable cache pressure.
+- Justifies the no-ref-into-storage rule for hilavitkutin consumers
+  (workspace rule `hilavitkutin-workunit-mental-model.md`): refs that
+  let arbitrary code reach into scheduler-owned data turn the morsel
+  loop's sequential access into gather-shaped access at consumer call
+  sites. Even small amounts of indirection in the hot path compound.
+
+Implication for arvo Column<T> docs: the "cache prefetcher loves us"
+framing is empirically supported. Worth referencing this bench in the
+Column<T> design rationale.
+
 ## Outstanding bench candidates (deferred)
 
 - **barrier_scaling_6i** (Topic 6 axis I): requires multi-thread spawn from a
