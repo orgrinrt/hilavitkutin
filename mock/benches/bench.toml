@@ -210,6 +210,108 @@ variants = [
     "variants/dep_graph_hybrid/target/release/dep_graph_hybrid",
 ]
 
+# --- prior-design benches (option-3 fallback per overnight protocol) ---
+
+[bench.popcount_strategy]
+title = "Popcount lowering: std count_ones vs Kernighan loop vs SWAR"
+workload = "realistic"
+master_seed = 0x2468_0123_4567_89ab
+
+[[bench.popcount_strategy.sizes]]
+n = 64
+variants = ["variants/popcount_std/target/release/popcount_std", "variants/popcount_handrolled/target/release/popcount_handrolled", "variants/popcount_swar/target/release/popcount_swar"]
+
+[[bench.popcount_strategy.sizes]]
+n = 256
+variants = ["variants/popcount_std/target/release/popcount_std", "variants/popcount_handrolled/target/release/popcount_handrolled", "variants/popcount_swar/target/release/popcount_swar"]
+
+[[bench.popcount_strategy.sizes]]
+n = 1024
+variants = ["variants/popcount_std/target/release/popcount_std", "variants/popcount_handrolled/target/release/popcount_handrolled", "variants/popcount_swar/target/release/popcount_swar"]
+
+[[bench.popcount_strategy.sizes]]
+n = 4096
+variants = ["variants/popcount_std/target/release/popcount_std", "variants/popcount_handrolled/target/release/popcount_handrolled", "variants/popcount_swar/target/release/popcount_swar"]
+
+[[bench.popcount_strategy.sizes]]
+n = 16384
+variants = ["variants/popcount_std/target/release/popcount_std", "variants/popcount_handrolled/target/release/popcount_handrolled", "variants/popcount_swar/target/release/popcount_swar"]
+
+[bench.hash_algos]
+title = "Hash mixer: FNV-1a vs xxh-style block vs SipHash-style ARX"
+workload = "realistic"
+master_seed = 0x1111_2222_3333_4444
+
+[[bench.hash_algos.sizes]]
+n = 64
+variants = ["variants/hash_fnv1a/target/release/hash_fnv1a", "variants/hash_xxh/target/release/hash_xxh", "variants/hash_sip/target/release/hash_sip"]
+
+[[bench.hash_algos.sizes]]
+n = 256
+variants = ["variants/hash_fnv1a/target/release/hash_fnv1a", "variants/hash_xxh/target/release/hash_xxh", "variants/hash_sip/target/release/hash_sip"]
+
+[[bench.hash_algos.sizes]]
+n = 1024
+variants = ["variants/hash_fnv1a/target/release/hash_fnv1a", "variants/hash_xxh/target/release/hash_xxh", "variants/hash_sip/target/release/hash_sip"]
+
+[[bench.hash_algos.sizes]]
+n = 4096
+variants = ["variants/hash_fnv1a/target/release/hash_fnv1a", "variants/hash_xxh/target/release/hash_xxh", "variants/hash_sip/target/release/hash_sip"]
+
+[[bench.hash_algos.sizes]]
+n = 16384
+variants = ["variants/hash_fnv1a/target/release/hash_fnv1a", "variants/hash_xxh/target/release/hash_xxh", "variants/hash_sip/target/release/hash_sip"]
+
+[bench.fxpmul_strategy]
+title = "Fixed-point mul: Precise (i128 intermediate) vs Hot (i64 truncate)"
+workload = "realistic"
+master_seed = 0x5555_6666_7777_0007
+
+[[bench.fxpmul_strategy.sizes]]
+n = 64
+variants = ["variants/fxpmul_precise/target/release/fxpmul_precise", "variants/fxpmul_hot/target/release/fxpmul_hot"]
+
+[[bench.fxpmul_strategy.sizes]]
+n = 256
+variants = ["variants/fxpmul_precise/target/release/fxpmul_precise", "variants/fxpmul_hot/target/release/fxpmul_hot"]
+
+[[bench.fxpmul_strategy.sizes]]
+n = 1024
+variants = ["variants/fxpmul_precise/target/release/fxpmul_precise", "variants/fxpmul_hot/target/release/fxpmul_hot"]
+
+[[bench.fxpmul_strategy.sizes]]
+n = 4096
+variants = ["variants/fxpmul_precise/target/release/fxpmul_precise", "variants/fxpmul_hot/target/release/fxpmul_hot"]
+
+[[bench.fxpmul_strategy.sizes]]
+n = 16384
+variants = ["variants/fxpmul_precise/target/release/fxpmul_precise", "variants/fxpmul_hot/target/release/fxpmul_hot"]
+
+[bench.branch_pattern]
+title = "Branchful if/else vs branchless cmov/csel under data-dependent input"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+
+[[bench.branch_pattern.sizes]]
+n = 64
+variants = ["variants/branch_if/target/release/branch_if", "variants/branch_cmov/target/release/branch_cmov"]
+
+[[bench.branch_pattern.sizes]]
+n = 256
+variants = ["variants/branch_if/target/release/branch_if", "variants/branch_cmov/target/release/branch_cmov"]
+
+[[bench.branch_pattern.sizes]]
+n = 1024
+variants = ["variants/branch_if/target/release/branch_if", "variants/branch_cmov/target/release/branch_cmov"]
+
+[[bench.branch_pattern.sizes]]
+n = 4096
+variants = ["variants/branch_if/target/release/branch_if", "variants/branch_cmov/target/release/branch_cmov"]
+
+[[bench.branch_pattern.sizes]]
+n = 16384
+variants = ["variants/branch_if/target/release/branch_if", "variants/branch_cmov/target/release/branch_cmov"]
+
 [timing]
 passes = 8
 runs_per_pass = 2000

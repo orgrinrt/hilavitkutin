@@ -160,7 +160,10 @@ fn build_workload() -> Workload {
 /// picks one of four different mixers per chunk; every other bench enforces
 /// byte-exact cross-variant validation.
 fn routine_for_bench(bench_name: &str, workload: &str, n: usize) -> Option<RoutineSpec> {
-    let may_differ = bench_name == "dispatch_dynamic";
+    let may_differ = matches!(
+        bench_name,
+        "dispatch_dynamic" | "hash_algos" | "fxpmul_strategy"
+    );
     let bridge = if may_differ {
         match n {
             8 => routine_bridge!(ByteRoutine<8, 8, true>),
