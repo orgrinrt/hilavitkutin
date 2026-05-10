@@ -312,6 +312,56 @@ variants = ["variants/branch_if/target/release/branch_if", "variants/branch_cmov
 n = 16384
 variants = ["variants/branch_if/target/release/branch_if", "variants/branch_cmov/target/release/branch_cmov"]
 
+[bench.atomic_ordering_cost]
+title = "Atomic ordering cost: Relaxed vs Acquire/Release vs SeqCst"
+workload = "realistic"
+master_seed = 0x0ddc_0ffe_e055_b011
+
+[[bench.atomic_ordering_cost.sizes]]
+n = 64
+variants = ["variants/atomic_relaxed/target/release/atomic_relaxed", "variants/atomic_acquire/target/release/atomic_acquire", "variants/atomic_seqcst/target/release/atomic_seqcst"]
+
+[[bench.atomic_ordering_cost.sizes]]
+n = 256
+variants = ["variants/atomic_relaxed/target/release/atomic_relaxed", "variants/atomic_acquire/target/release/atomic_acquire", "variants/atomic_seqcst/target/release/atomic_seqcst"]
+
+[[bench.atomic_ordering_cost.sizes]]
+n = 1024
+variants = ["variants/atomic_relaxed/target/release/atomic_relaxed", "variants/atomic_acquire/target/release/atomic_acquire", "variants/atomic_seqcst/target/release/atomic_seqcst"]
+
+[[bench.atomic_ordering_cost.sizes]]
+n = 4096
+variants = ["variants/atomic_relaxed/target/release/atomic_relaxed", "variants/atomic_acquire/target/release/atomic_acquire", "variants/atomic_seqcst/target/release/atomic_seqcst"]
+
+[[bench.atomic_ordering_cost.sizes]]
+n = 16384
+variants = ["variants/atomic_relaxed/target/release/atomic_relaxed", "variants/atomic_acquire/target/release/atomic_acquire", "variants/atomic_seqcst/target/release/atomic_seqcst"]
+
+[bench.cache_layout]
+title = "AoS vs SoA (column-store) layout under partial-field iteration"
+workload = "realistic"
+master_seed = 0x5ead_beef_0123_4567
+
+[[bench.cache_layout.sizes]]
+n = 64
+variants = ["variants/layout_aos/target/release/layout_aos", "variants/layout_soa/target/release/layout_soa"]
+
+[[bench.cache_layout.sizes]]
+n = 256
+variants = ["variants/layout_aos/target/release/layout_aos", "variants/layout_soa/target/release/layout_soa"]
+
+[[bench.cache_layout.sizes]]
+n = 1024
+variants = ["variants/layout_aos/target/release/layout_aos", "variants/layout_soa/target/release/layout_soa"]
+
+[[bench.cache_layout.sizes]]
+n = 4096
+variants = ["variants/layout_aos/target/release/layout_aos", "variants/layout_soa/target/release/layout_soa"]
+
+[[bench.cache_layout.sizes]]
+n = 16384
+variants = ["variants/layout_aos/target/release/layout_aos", "variants/layout_soa/target/release/layout_soa"]
+
 [timing]
 passes = 8
 runs_per_pass = 2000
