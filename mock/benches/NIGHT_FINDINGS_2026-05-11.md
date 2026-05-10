@@ -106,6 +106,76 @@ For arvo specifically: the `Predicate` trait's `cond_select` methods don't
 buy a perf win over a plain `if`. Their value is **type-level** (sealed
 trait + clear intent), not codegen-level.
 
+## Atomic ordering cost (`atomic_ordering_cost`) — Topic 3 S7
+
+**Question:** how much does memory ordering choice cost on a hot-path atomic
+increment, single-threaded?
+
+**Answer:** Relaxed beats Acquire/Release pair by 3-4x; SeqCst is within ~3%
+of Acquire/Release. Topic 3 S7's atomic-ordering protocol table is empirically
+validated: picking Relaxed where the contract permits is a real perf win.
+
+| N | Relaxed ns | Acquire/Release ns | SeqCst ns | Acquire vs Relaxed |
+|---|---|---|---|---|
+| 64 | 8 | 13 | ~14 | +63% slower |
+| 1024 | 374 | 1341 | 1380 | +259% slower |
+| 16384 | 6924 | 23355 | ~24000 | +237% slower |
+
+On aarch64, Acquire and SeqCst land in the same neighbourhood because both
+emit `dmb ish`-style fences. On x86_64 the SeqCst vs Acquire gap would be
+sharper (mfence vs no fence on loads), but the bench was run on aarch64
+(Apple Silicon).
+
+Implication for Topic 3 S7's table: every cross-thread atomic should pick
+the minimum ordering its contract requires. The progress counter (Release
+on increment, Acquire on read by peer worker) is correct. The `predicted_wait_ns`
+slot (Relaxed both sides, written before phase barrier's Release-Acquire pair)
+is correct. The `shutdown` flag (Relaxed read, Release set in Drop, Acquire
+read of related state) is correct. The bench data shows these choices matter
+to per-morsel ~ns/op throughput.
+
+## Cache layout (`cache_layout`) — column-store design validation
+
+**Question:** does AoS (interleaved struct fields) vs SoA (parallel column
+arrays) make a measurable difference under partial-field iteration?
+
+**Answer:** Surprisingly little, in this micro-benchmark. AoS and SoA are
+within noise (1-4% spread) across all sizes.
+
+| N | AoS ns | SoA ns | Δ |
+|---|---|---|---|
+| 64 | 1 | 1 | +1% |
+| 1024 | 21 | 20 | -4% |
+| 16384 | 558 | 561 | +1% |
+
+The expected SoA win (skip unused field bytes) doesn't materialise because:
+- LLVM at -O3 + LTO recognises the unused `vel` field in the AoS struct
+  pattern and may dead-store-eliminate or skip its load.
+- Sequential iteration triggers hardware prefetch; the wasted bytes don't
+  cost cache pressure on a single-pass workload.
+- Both layouts vectorise similarly at -O3 (NEON loads at 16-byte boundaries
+  capture multiple fields at once).
+
+Implications for arvo's Column<T> design:
+- The micro-benchmark CASE for SoA is weak. The Column<T> design's win
+  comes from SYSTEMIC properties:
+  1. Multiple passes over different field subsets (SoA loads only the
+     subset; AoS pays full struct cost each pass).
+  2. SIMD lane-parallel processing (SoA enables `vld4` deinterleaving
+     vs AoS's lane-by-lane access).
+  3. Cache pressure from competing workloads (multi-WU phase processing
+     where each WU touches a different field subset).
+
+The bench validates that **single-pass partial-field iteration alone** is
+NOT a strong argument for SoA. The arvo Column<T> design's justification
+needs to lean on systemic properties (multi-pass, SIMD, multi-WU contention)
+rather than this benchmark shape.
+
+Action item: when implementing arvo Column<T> documentation, frame the SoA
+win in terms of those three systemic properties, not single-pass cache
+efficiency. The polka-dots SpMV bench heritage probably has the right
+framing already; reference it.
+
 ## Outstanding bench candidates (deferred)
 
 - **barrier_scaling_6i** (Topic 6 axis I): requires multi-thread spawn from a
