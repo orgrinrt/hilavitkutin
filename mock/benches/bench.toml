@@ -362,6 +362,31 @@ variants = ["variants/layout_aos/target/release/layout_aos", "variants/layout_so
 n = 16384
 variants = ["variants/layout_aos/target/release/layout_aos", "variants/layout_soa/target/release/layout_soa"]
 
+[bench.memcpy_patterns]
+title = "Memory copy patterns: intrinsic vs unrolled u64 vs naive byte loop"
+workload = "realistic"
+master_seed = 0x4646_4646_5050_4040
+
+[[bench.memcpy_patterns.sizes]]
+n = 64
+variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "variants/memcpy_unrolled/target/release/memcpy_unrolled", "variants/memcpy_naive/target/release/memcpy_naive"]
+
+[[bench.memcpy_patterns.sizes]]
+n = 256
+variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "variants/memcpy_unrolled/target/release/memcpy_unrolled", "variants/memcpy_naive/target/release/memcpy_naive"]
+
+[[bench.memcpy_patterns.sizes]]
+n = 1024
+variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "variants/memcpy_unrolled/target/release/memcpy_unrolled", "variants/memcpy_naive/target/release/memcpy_naive"]
+
+[[bench.memcpy_patterns.sizes]]
+n = 4096
+variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "variants/memcpy_unrolled/target/release/memcpy_unrolled", "variants/memcpy_naive/target/release/memcpy_naive"]
+
+[[bench.memcpy_patterns.sizes]]
+n = 16384
+variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "variants/memcpy_unrolled/target/release/memcpy_unrolled", "variants/memcpy_naive/target/release/memcpy_naive"]
+
 [timing]
 passes = 8
 runs_per_pass = 2000
