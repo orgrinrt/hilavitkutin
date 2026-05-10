@@ -263,6 +263,52 @@ Column<T> design rationale.
   Requires real FiberShape trait infrastructure to bench against; defer to
   post-impl bench validation.
 
+## EMA formulation (`ema_formulation`) — audit-2 M4 saturating-Norm validation
+
+Three EMA arithmetic formulations over N u8 samples, alpha = 1/8.
+
+- `ema_form_float`: `acc = 0.875_f32 * acc + 0.125_f32 * sample` (FMA + mul).
+- `ema_form_q32`: Q0.32 saturating fixed-point. `acc = (acc * 7/8_q32 + sample_q32 * 1/8_q32) >> 32`. Two 64-bit muls + add + shift.
+- `ema_form_intshift`: `acc = acc - (acc >> 3) + (sample >> 3)`. Two shifts + sub + add. No mul.
+
+Algo-only medians (function-under-test, 95% bootstrap CI all YES-significant except n=256 q32):
+
+| N      | float    | q32              | intshift         |
+|--------|----------|------------------|------------------|
+| 256    | 436 ns   | 425 ns (+1.3%)   | 264 ns (-38.5%)  |
+| 1024   | 2113 ns  | 1895 ns (-11.1%) | 1268 ns (-41.0%) |
+| 4096   | 9045 ns  | 7695 ns (-14.1%) | 5144 ns (-42.5%) |
+| 16384  | 35999 ns | 31198 ns (-13.7%)| 20739 ns (-42.3%)|
+
+Findings:
+
+- **Q0.32 fixed-point is faster than f32 EMA at N≥1024**, by 11-14%. The
+  Apple Silicon (aarch64) FMA throughput is shared with int multiply, and
+  the two-mul Q0.32 formulation lowers more cleanly than the FMA+mul float
+  shape. At N=256 the per-call setup dominates and q32 ties float (within
+  noise).
+- **Integer shift wins by ~40% at every N**. Two shifts + add + sub beats
+  even one FMA on this hardware. Cost: each step loses 3 bits of acc
+  precision and the input quantises to 5 bits.
+- **The audit-2 M4 call (saturating Q0.32 Norm for arvo EMA) is empirically
+  correct**: Q0.32 is faster than float AND offers more precision (32-bit
+  mantissa equivalent vs f32's 23). The only path that beats q32 is
+  integer-shift, which trades precision the design doesn't want to trade.
+- Validates the broader strategy-marker principle: when the precision /
+  throughput trade is real (it is), the Hot strategy (truncating arithmetic)
+  can lower to int-shift-style ops; Precise (saturating) lowers to Q0.32.
+  The bench confirms both ends of the trade buy real performance.
+
+Caveats:
+
+- Aarch64 only. On x86_64 (Intel/AMD), FMA throughput is higher and the
+  float / q32 ranking could flip. Re-run on x86_64 before generalising the
+  "Q0.32 beats float" claim across the substrate.
+- The integer-shift variant intentionally pre-quantises the input via
+  `>> 3` so the >> 3 step on acc doesn't drop too many bits. A consumer
+  that needs the full 8-bit sample range would face a sharper precision
+  cliff. Treat the int-shift numbers as the optimistic floor.
+
 ## Cross-references
 
 - `mock/benches/dep_graph_csr_9_n*_findings.md`

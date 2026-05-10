@@ -387,6 +387,27 @@ variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "varian
 n = 16384
 variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "variants/memcpy_unrolled/target/release/memcpy_unrolled", "variants/memcpy_naive/target/release/memcpy_naive"]
 
+[bench.ema_formulation]
+title = "EMA formulation: Q0.32 saturating fixed-point vs float vs integer-shift"
+workload = "realistic"
+master_seed = 0x6c97_b3e2_5a1d_8f04
+
+[[bench.ema_formulation.sizes]]
+n = 256
+variants = ["variants/ema_form_q32/target/release/ema_form_q32", "variants/ema_form_float/target/release/ema_form_float", "variants/ema_form_intshift/target/release/ema_form_intshift"]
+
+[[bench.ema_formulation.sizes]]
+n = 1024
+variants = ["variants/ema_form_q32/target/release/ema_form_q32", "variants/ema_form_float/target/release/ema_form_float", "variants/ema_form_intshift/target/release/ema_form_intshift"]
+
+[[bench.ema_formulation.sizes]]
+n = 4096
+variants = ["variants/ema_form_q32/target/release/ema_form_q32", "variants/ema_form_float/target/release/ema_form_float", "variants/ema_form_intshift/target/release/ema_form_intshift"]
+
+[[bench.ema_formulation.sizes]]
+n = 16384
+variants = ["variants/ema_form_q32/target/release/ema_form_q32", "variants/ema_form_float/target/release/ema_form_float", "variants/ema_form_intshift/target/release/ema_form_intshift"]
+
 [bench.iter_patterns]
 title = "Column iteration patterns: sequential vs strided vs data-dependent gather"
 workload = "realistic"
