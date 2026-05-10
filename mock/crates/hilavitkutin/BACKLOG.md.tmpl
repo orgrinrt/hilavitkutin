@@ -271,3 +271,31 @@ future apps) need a mechanical sweep replacing every
 `.with_threads(t)` / `.with_clock(c)` call site with the
 unified `.with(value)` shape. One PR per consumer repo. Tracked
 here so the post-merge follow-up is not lost.
+
+## Round 202605101036 follow-ups
+
+### Heterogeneous-core P/E detection per-OS implementation
+
+Topic 6 axis E ships in v1; the detection code lands in this crate
+as a follow-up. The detection surface is per-OS: on x86_64 it reads
+CPUID leaf 0x1A via an inline-asm intrinsic, returning a CoreClass
+per logical core. On Linux it walks
+`/sys/devices/system/cpu/cpuN/topology/cluster_id`, falling back to
+cpufreq `scaling_max_freq` thresholding when the cluster_id surface
+is absent on pre-6.0 kernels. On macOS it calls
+`sysctlbyname("hw.perflevel0.physicalcpu")` for the P-core count and
+treats the remaining cores as E-cores, with an IOKit fallback if
+sysctl is absent. On Windows it calls `GetSystemCpuSetInformation`,
+which returns per-CPU efficiency class directly.
+
+The stub-fallback path returns all-P when detection fails. Tracked
+as its own follow-up round so the per-OS work doesn't bloat the
+runtime megaround's src CL.
+
+### Tree-barrier follow-up
+
+Topic 6 axis I ships v1 with the centralised atomic counter +
+futex-wake-all phase barrier. Tree-barrier (log2(N) fan-in) is a
+follow-up if bench evidence at 32+ cores shows measurable cacheline
+ping-pong on the centralised counter. Adds `PoolFrame.phase_arrived`
+as a flat `[AtomicU32; LOG2_MAX_CORES]` array indexed by tree level.
