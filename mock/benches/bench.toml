@@ -387,6 +387,27 @@ variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "varian
 n = 16384
 variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "variants/memcpy_unrolled/target/release/memcpy_unrolled", "variants/memcpy_naive/target/release/memcpy_naive"]
 
+[bench.modulo_strategy]
+title = "Modulo strategy: const pow2 (AND mask) vs const non-pow2 (magic mul) vs opaque divisor (full udiv)"
+workload = "realistic"
+master_seed = 0x4dd5_82c1_e7fa_3b96
+
+[[bench.modulo_strategy.sizes]]
+n = 256
+variants = ["variants/mod_pow2_const/target/release/mod_pow2_const", "variants/mod_npow2_const/target/release/mod_npow2_const", "variants/mod_var/target/release/mod_var"]
+
+[[bench.modulo_strategy.sizes]]
+n = 1024
+variants = ["variants/mod_pow2_const/target/release/mod_pow2_const", "variants/mod_npow2_const/target/release/mod_npow2_const", "variants/mod_var/target/release/mod_var"]
+
+[[bench.modulo_strategy.sizes]]
+n = 4096
+variants = ["variants/mod_pow2_const/target/release/mod_pow2_const", "variants/mod_npow2_const/target/release/mod_npow2_const", "variants/mod_var/target/release/mod_var"]
+
+[[bench.modulo_strategy.sizes]]
+n = 16384
+variants = ["variants/mod_pow2_const/target/release/mod_pow2_const", "variants/mod_npow2_const/target/release/mod_npow2_const", "variants/mod_var/target/release/mod_var"]
+
 [bench.ema_formulation]
 title = "EMA formulation: Q0.32 saturating fixed-point vs float vs integer-shift"
 workload = "realistic"
