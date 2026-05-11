@@ -47,9 +47,15 @@ pub trait WorkUnit<Schedule = Always>: BuilderInput<Init = Self> + Send + Sync +
     type Hint: SchedulingHint;
     /// Provider-tuple shape this WU's body consumes.
     ///
+    /// GAT-shaped per Topic 1 axis 4 + Topic 6 axis C: the `'frame`
+    /// lifetime threads through from `Scheduler<'frame, ...>` so
+    /// the Ctx can carry `Pin<&'frame PoolFrame>` and per-phase
+    /// `ResourceSnapshot<'frame, R>` views without forcing every
+    /// consumer WU declaration to also thread a lifetime.
     /// Monomorphisation resolves `HasX<...>` bounds to the concrete
-    /// provider the engine wires up at plan time.
-    type Ctx: HasColumnReader<Self::Read>
+    /// provider the engine wires up at plan time. Sketch:
+    /// `mock/research/sketches/202605101036-poolframe-lifetime/`.
+    type Ctx<'frame>: HasColumnReader<Self::Read>
         + HasColumnWriter<Self::Write>
         + HasResourceProvider<Self::Read>
         + HasVirtualFirer<Self::Write>
@@ -64,7 +70,7 @@ pub trait WorkUnit<Schedule = Always>: BuilderInput<Init = Self> + Send + Sync +
     const COMMUTATIVE: Bool = Bool::FALSE;
 
     /// Run one pass of this WU against the provided context.
-    fn execute(&self, ctx: &Self::Ctx);
+    fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>);
 }
 
 // ---------------------------------------------------------------------
