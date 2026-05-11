@@ -26,7 +26,9 @@ impl<const MAX_STORES: usize> DirtyMask<MAX_STORES> { // lint:allow(no-bare-nume
     // any `MAX_STORES > 64` would silently drop dirty bits past
     // index 63. The arvo-bitmask multi-container swap (BACKLOG)
     // lifts this; until then, fail at compile time rather than
-    // running with partial coverage.
+    // running with partial coverage. Associated consts only evaluate
+    // on monomorphisation when referenced, so every constructor
+    // discharges the assert with `let _ = Self::_ASSERT_FITS_IN_USIZE`.
     const _ASSERT_FITS_IN_USIZE: () = assert!( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-context size assertion; tracked: #429
         MAX_STORES <= 64,
         "DirtyMask: MAX_STORES > 64 is not supported by the skeleton USize backing. Once arvo-bitmask ships multi-container Mask<W>, this assert lifts and DirtyMask widens.",
@@ -34,6 +36,7 @@ impl<const MAX_STORES: usize> DirtyMask<MAX_STORES> { // lint:allow(no-bare-nume
 
     /// Empty mask: nothing dirty.
     pub const fn empty() -> Self {
+        let _ = Self::_ASSERT_FITS_IN_USIZE;
         Self { bits: USize::ZERO }
     }
 
