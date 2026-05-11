@@ -387,6 +387,27 @@ variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "varian
 n = 16384
 variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "variants/memcpy_unrolled/target/release/memcpy_unrolled", "variants/memcpy_naive/target/release/memcpy_naive"]
 
+[bench.minmax_strategy]
+title = "Min/max: u64::min intrinsic vs if/else branch vs branchless bit trick"
+workload = "realistic"
+master_seed = 0x5d49_a3f1_b7c0_6e82
+
+[[bench.minmax_strategy.sizes]]
+n = 256
+variants = ["variants/minmax_intrinsic/target/release/minmax_intrinsic", "variants/minmax_branch/target/release/minmax_branch", "variants/minmax_branchless/target/release/minmax_branchless"]
+
+[[bench.minmax_strategy.sizes]]
+n = 1024
+variants = ["variants/minmax_intrinsic/target/release/minmax_intrinsic", "variants/minmax_branch/target/release/minmax_branch", "variants/minmax_branchless/target/release/minmax_branchless"]
+
+[[bench.minmax_strategy.sizes]]
+n = 4096
+variants = ["variants/minmax_intrinsic/target/release/minmax_intrinsic", "variants/minmax_branch/target/release/minmax_branch", "variants/minmax_branchless/target/release/minmax_branchless"]
+
+[[bench.minmax_strategy.sizes]]
+n = 16384
+variants = ["variants/minmax_intrinsic/target/release/minmax_intrinsic", "variants/minmax_branch/target/release/minmax_branch", "variants/minmax_branchless/target/release/minmax_branchless"]
+
 [bench.float_width]
 title = "Float width strategy: f32 (FastFloat) vs f64 (StrictFloat) vs i64-fixed-point (UFixed Hot)"
 workload = "realistic"
