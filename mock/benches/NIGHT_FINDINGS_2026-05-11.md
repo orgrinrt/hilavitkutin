@@ -697,6 +697,42 @@ Caveats:
 - The bench uses uniform-random input. Pathological patterns where the per-iteration shift amount is e.g. monotonically increasing might surface different LLVM autovec heuristics.
 - LLVM's autovec recognises this specific loop shape. More complex inner-loop bodies may not autovec even with const shifts; the autovec discount is conditional on the body's other operations being vectorizable.
 
+## Float width (`float_width`) — FastFloat vs StrictFloat vs UFixed Hot
+
+Three numeric-width strategies on a 4-way ILP-broken FMA reduction over N byte samples:
+
+- `float_f32`: f32 accumulator + 4-way interleaved FMA. Models FastFloat.
+- `float_f64`: f64 accumulator + 4-way interleaved FMA. Models StrictFloat.
+- `float_i64_scaled`: Q32.32 fixed-point integer mul-shift-add. Models UFixed Hot.
+
+Algo-only medians:
+
+| N      | f32 (base) | f64                | i64_scaled         |
+|--------|------------|--------------------|--------------------|
+| 256    | 76 ns      | 78 ns (+2.1%)      | 123 ns (+61.8%)    |
+| 1024   | 320 ns     | 313 ns (-0.8%)     | 428 ns (+34.7%)    |
+| 4096   | 1361 ns    | 1290 ns (-3.4%)    | 1663 ns (+25.7%)   |
+| 16384  | 5500 ns    | 5360 ns (-1.3%)    | 6899 ns (+25.3%)   |
+
+Findings:
+
+- **f32 and f64 are essentially identical** at every N (within ~3%, with f64 actually slightly faster at N≥1024). On Apple Silicon FMA throughput is the same per-lane for both widths; the NEON-lane-width advantage of f32 (4 lanes per 128-bit vs 2 for f64) doesn't materialise in this benchmark because the byte-input promotion path (`u8 as f32/f64`) isn't a clean autovec target.
+- **i64-fixed-point is 25-62% slower than float** at every N. Contradicts the design assumption that arvo's UFixed Hot strategy automatically wins on throughput. The reason: u64*u64 + shift-back-add is more arithmetic ops than a single VFMA, and the byte→u64 widening blocks autovec more thoroughly than the float path.
+- **The strategy-marker design's claim about Hot-strategy throughput needs nuance**: arvo's fixed-point story wins on PRECISION (custom widths, exact-bit semantics, deterministic-round arithmetic) and on AVOIDING the FPU (consumers with no FPU, regulatory constraints, or float-banned environments). It does NOT auto-win on raw throughput vs an equivalent float pipeline on aarch64 with FPU available.
+
+Implications for design:
+
+- **arvo strategy marker docs should clarify the Hot strategy's value prop**: precision-with-determinism, not raw speed. The substrate isn't inherently faster than float on aarch64; it's faster when (1) the float pipeline isn't available, (2) deterministic-bit semantics are required, or (3) the integer pipeline can be vectorized via NEON SIMD intrinsics (which this bench doesn't explicitly test).
+- **For arvo consumers where float is acceptable** (Norm-shaped EMA, smoothing operations on bounded signals), **FastFloat is empirically competitive with UFixed**. The previously-completed `ema_formulation` bench (q32 beats f32 by 11-14% at N≥1024) showed Q0.32 fixed-point beating f32 on a different specific algorithm shape; the gap there came from f32 IIR's FMA+mul pattern not folding to Q0.32's pure two-muls shape. Different algorithms favor different widths.
+- **The float strategy markers in arvo (FastFloat vs StrictFloat) don't have to defend a throughput axis** at least on aarch64. Their value is the precision claim. The bench-validated design rationale should not over-claim Hot-strategy throughput.
+- **Topic 7 morsel-loop with f32 vs f64 columns**: if a consumer stores Column<FastFloat> vs Column<StrictFloat> for the same algorithm, the per-record cost will be roughly identical. Cache density matters at the storage layer (f32 columns pack 2x as dense), but per-op throughput doesn't differ. SoA + cache-density argues for f32 where precision permits.
+
+Caveats:
+
+- The i64-fixed-point variant does mul+shr+add per step; an autovec-friendly NEON intrinsic version (with explicit vmlaq_s32 etc.) would likely outperform the float variants. The bench measures naive LLVM autovec, not hand-tuned SIMD.
+- aarch64 specific. x86_64 AVX2/AVX-512 may show clearer f32 > f64 SIMD-width advantage; older x86 with weaker f64 FPU could also flip the gap.
+- Workload is mul-add-heavy. Pure-add reductions or div-heavy workloads might shift the picture.
+
 ## Match arm count (`match_arm_count`) — enum dispatch scaling
 
 Three `match` arm counts on a u64-discriminant inner loop, each arm body distinct (to defeat LLVM arm-folding):

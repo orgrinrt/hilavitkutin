@@ -387,6 +387,27 @@ variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "varian
 n = 16384
 variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "variants/memcpy_unrolled/target/release/memcpy_unrolled", "variants/memcpy_naive/target/release/memcpy_naive"]
 
+[bench.float_width]
+title = "Float width strategy: f32 (FastFloat) vs f64 (StrictFloat) vs i64-fixed-point (UFixed Hot)"
+workload = "realistic"
+master_seed = 0x2e51_9d3b_c768_a4f0
+
+[[bench.float_width.sizes]]
+n = 256
+variants = ["variants/float_f32/target/release/float_f32", "variants/float_f64/target/release/float_f64", "variants/float_i64_scaled/target/release/float_i64_scaled"]
+
+[[bench.float_width.sizes]]
+n = 1024
+variants = ["variants/float_f32/target/release/float_f32", "variants/float_f64/target/release/float_f64", "variants/float_i64_scaled/target/release/float_i64_scaled"]
+
+[[bench.float_width.sizes]]
+n = 4096
+variants = ["variants/float_f32/target/release/float_f32", "variants/float_f64/target/release/float_f64", "variants/float_i64_scaled/target/release/float_i64_scaled"]
+
+[[bench.float_width.sizes]]
+n = 16384
+variants = ["variants/float_f32/target/release/float_f32", "variants/float_f64/target/release/float_f64", "variants/float_i64_scaled/target/release/float_i64_scaled"]
+
 [bench.match_arm_count]
 title = "Match arm count: 2 vs 8 vs 64 — jump-table dispatch scaling"
 workload = "realistic"
