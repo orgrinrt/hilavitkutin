@@ -76,6 +76,12 @@ pub struct ExecutionPlan<
     pub column_class: ColumnClassMap<MAX_FIBERS, MAX_COLUMNS_PER_FIBER>,
     /// Per-fiber dirty masks (incremental-skip propagation).
     pub dirty: DirtyMasks<MAX_FIBERS, MAX_COLUMNS>,
+    /// Per-fiber morsel sizes. `morsel_sizes[f]` is the number of
+    /// records assigned to fiber `f`. Sum-preserving across the full
+    /// record set (remainder distributed across the first
+    /// `record_count % fiber_count` fibers). Read by dispatch codegen
+    /// to emit per-fiber `RecordRange` slices.
+    pub morsel_sizes: [USize; MAX_FIBERS],
 }
 
 impl<
@@ -114,6 +120,7 @@ impl<
             unit_count: USize::ZERO,
             column_class: ColumnClassMap::new(),
             dirty: DirtyMasks::new(),
+            morsel_sizes: [USize::ZERO; MAX_FIBERS],
         }
     }
 }
@@ -246,7 +253,7 @@ pub fn compute_execution_plan<
     }
 
     // Step 8 (fused): upward rank + per-fiber dirty propagation.
-    let (_ranks, dirty) = steps::compute_upward_rank_and_dirty::<
+    let (ranks, dirty) = steps::compute_upward_rank_and_dirty::<
         MAX_UNITS,
         MAX_EDGES,
         MAX_FIBERS,
@@ -272,10 +279,10 @@ pub fn compute_execution_plan<
         f += 1;
     }
 
-    // Step 9: morsel sizing per fiber. The plan stores phase configs
-    // and column classification; per-fiber morsel size lives on the
-    // dispatch stage (Pass 3). Compute here for completeness.
-    let _morsels = steps::size_morsels::<MAX_FIBERS>(inputs.record_count, fibers.fiber_count);
+    // Step 9: morsel sizing per fiber. Stored on the plan so Pass 3
+    // dispatch codegen can emit per-fiber `RecordRange` slices without
+    // recomputing.
+    plan.morsel_sizes = steps::size_morsels::<MAX_FIBERS>(inputs.record_count, fibers.fiber_count);
 
     // Step 10: phase configs. Store onto plan.phases[i].config. Pass
     // the unit count so the last phase's width is computed against
@@ -296,12 +303,20 @@ pub fn compute_execution_plan<
         MAX_STORES,
     >(&fibers, inputs);
 
-    // Populate the unit meta array with the topo order (rank lands
-    // later when the fused step's output threads through).
+    // Populate the unit meta array with the topo order. `unit_meta` is
+    // indexed by topo-position (matching the dispatch order), so each
+    // slot's `id` is `topo[u]` and the per-unit fields are looked up
+    // by the raw unit-id index that `topo[u]` projects to. `ranks` is
+    // also unit-id-indexed; project once and read both.
     let mut u = 0;
     while u < n && u < MAX_UNITS {
         plan.unit_meta[u].id = topo[u];
-        plan.unit_meta[u].commutative = inputs.commutative[u];
+        let raw: u32 = unsafe { core::mem::transmute_copy(&topo[u]) }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: repr(transparent) projection through guaranteed-layout UnitId chain; tracked: #428
+        let unit_id_idx = raw as usize; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: bridging projection to usize index; tracked: #428
+        if unit_id_idx < MAX_UNITS {
+            plan.unit_meta[u].commutative = inputs.commutative[unit_id_idx];
+            plan.unit_meta[u].upward_rank = ranks[unit_id_idx];
+        }
         u += 1;
     }
 

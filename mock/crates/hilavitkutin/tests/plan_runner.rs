@@ -74,6 +74,20 @@ fn topo_sort_detects_two_node_cycle() {
 }
 
 #[test]
+fn size_morsels_distributes_remainder_across_first_fibers() {
+    // 10 records across 3 fibers => [4, 3, 3]. Verifies the sum
+    // invariant: every record is assigned somewhere. The prior
+    // integer-divide-only shape returned [3, 3, 3] and silently
+    // dropped record index 9.
+    let sizes = steps::size_morsels::<MF>(USize(10), USize(3)); // lint:allow(no-bare-numeric) reason: smoke fixture; tracked: #427
+    assert_eq!(sizes[0], USize(4)); // lint:allow(no-bare-numeric) reason: expected first fiber; tracked: #427
+    assert_eq!(sizes[1], USize(3)); // lint:allow(no-bare-numeric) reason: expected second fiber; tracked: #427
+    assert_eq!(sizes[2], USize(3)); // lint:allow(no-bare-numeric) reason: expected third fiber; tracked: #427
+    let total = sizes[0].0 + sizes[1].0 + sizes[2].0;
+    assert_eq!(total, 10, "sum invariant: every record must be assigned"); // lint:allow(no-bare-numeric) reason: invariant check; tracked: #427
+}
+
+#[test]
 fn topo_sort_places_all_for_linear_chain() {
     // Linear A -> B chain. Verifies the cycle-detection signal is not
     // a false positive for valid DAGs.
