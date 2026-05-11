@@ -40,7 +40,7 @@ pub struct FileInfo;
 
 pub struct InternerKit;
 
-impl Provider for InternerKit {
+impl BuilderInput for InternerKit {
     type Init = Self;
     const KIND: ProviderKind = ProviderKind::Kit;
     type Dispatch = KitDispatch<Self>;
@@ -53,7 +53,7 @@ impl Kit for InternerKit {
 
 pub struct WorkspaceKit;
 
-impl Provider for WorkspaceKit {
+impl BuilderInput for WorkspaceKit {
     type Init = Self;
     const KIND: ProviderKind = ProviderKind::Kit;
     type Dispatch = KitDispatch<Self>;
@@ -234,7 +234,7 @@ impl<R: AccessSet, W: AccessSet> HasReduce<R, W> for TestCtx {
 // A WU that reads the Interner resource.
 struct ReadInterner;
 
-impl Provider for ReadInterner {
+impl BuilderInput for ReadInterner {
     type Init = Self;
     const KIND: ProviderKind = ProviderKind::WorkUnit;
     type Dispatch = UnitDispatch<Self>;
@@ -251,7 +251,7 @@ impl WorkUnit<Always> for ReadInterner {
 // A WU with write set: writes Column<FileInfo>.
 struct DiscoverFiles;
 
-impl Provider for DiscoverFiles {
+impl BuilderInput for DiscoverFiles {
     type Init = Self;
     const KIND: ProviderKind = ProviderKind::WorkUnit;
     type Dispatch = UnitDispatch<Self>;
@@ -310,7 +310,7 @@ fn kit_declarative_shape_typechecks() {
 #[derive(Copy, Clone)]
 struct NoStores;
 
-impl Provider for NoStores {
+impl BuilderInput for NoStores {
     type Init = Self;
     const KIND: ProviderKind = ProviderKind::WorkUnit;
     type Dispatch = UnitDispatch<Self>;
@@ -365,7 +365,7 @@ struct S15;
 
 struct SixteenStores;
 
-impl Provider for SixteenStores {
+impl BuilderInput for SixteenStores {
     type Init = Self;
     const KIND: ProviderKind = ProviderKind::WorkUnit;
     type Dispatch = UnitDispatch<Self>;
