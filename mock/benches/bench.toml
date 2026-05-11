@@ -387,6 +387,27 @@ variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "varian
 n = 16384
 variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "variants/memcpy_unrolled/target/release/memcpy_unrolled", "variants/memcpy_naive/target/release/memcpy_naive"]
 
+[bench.atomic_vs_plain]
+title = "Accumulator typing cost: plain u64 vs AtomicU64 Relaxed vs AtomicU64 SeqCst"
+workload = "realistic"
+master_seed = 0x4823_d765_19be_f0a3
+
+[[bench.atomic_vs_plain.sizes]]
+n = 256
+variants = ["variants/acc_plain/target/release/acc_plain", "variants/acc_atomic_relaxed/target/release/acc_atomic_relaxed", "variants/acc_atomic_seqcst/target/release/acc_atomic_seqcst"]
+
+[[bench.atomic_vs_plain.sizes]]
+n = 1024
+variants = ["variants/acc_plain/target/release/acc_plain", "variants/acc_atomic_relaxed/target/release/acc_atomic_relaxed", "variants/acc_atomic_seqcst/target/release/acc_atomic_seqcst"]
+
+[[bench.atomic_vs_plain.sizes]]
+n = 4096
+variants = ["variants/acc_plain/target/release/acc_plain", "variants/acc_atomic_relaxed/target/release/acc_atomic_relaxed", "variants/acc_atomic_seqcst/target/release/acc_atomic_seqcst"]
+
+[[bench.atomic_vs_plain.sizes]]
+n = 16384
+variants = ["variants/acc_plain/target/release/acc_plain", "variants/acc_atomic_relaxed/target/release/acc_atomic_relaxed", "variants/acc_atomic_seqcst/target/release/acc_atomic_seqcst"]
+
 [bench.branch_predictability]
 title = "Branch predictability: skewed-rare vs balanced 50/50 vs skewed-common"
 workload = "realistic"
