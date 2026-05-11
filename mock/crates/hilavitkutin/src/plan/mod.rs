@@ -152,7 +152,8 @@ impl<
 ///
 /// Walks the algorithm chain in order:
 /// `build_dag` to `topo_sort` to `compute_waists` to (`rcm_reorder`,
-/// `block_diagonalise`, `spectral_partition` — substrate-heavy stubs)
+/// `block_diagonalise`, `spectral_partition`. These depend on arvo-graph
+/// and arvo-spectral primitives not yet shipped; their bodies are stubs)
 /// to `group_fibers` to `compute_upward_rank_and_dirty` to
 /// `size_morsels` to `select_phase_configs` to `classify_columns`.
 /// Steps 12 (`assign_cores`) and 13 (`synthesise_core_programs`) run
@@ -214,26 +215,23 @@ pub fn compute_execution_plan<
     // Step 1: build the DAG.
     let dag = steps::build_dag::<MAX_UNITS, MAX_STORES, MAX_EDGES>(inputs);
 
-    // Step 2: topo sort. Cycle check by re-counting populated slots.
-    let topo = steps::topo_sort::<MAX_UNITS, MAX_EDGES>(&dag);
-    // Cycle detection: topo_sort writes a UnitId for each placed
-    // unit. A populated slot may legitimately equal UnitId::ZERO for
-    // unit 0; instead count non-default slots beyond index 0. The
-    // simpler invariant: if `dag.unit_count` < `inputs.unit_count`,
-    // some units never got a row (no append happened for them in
-    // build_dag, which only adds rows for units with at least one
-    // outgoing edge). For now we trust topo_sort to handle the no-
-    // edge case correctly; the cycle detector tightens once `topo_sort`
-    // returns its placed-count explicitly (HILA-RUNTIME-C1 follow-up).
-    let _ = &topo;
+    // Step 2: topo sort with explicit placed-count for cycle detection.
+    let (topo, topo_placed) = steps::topo_sort::<MAX_UNITS, MAX_EDGES>(&dag);
+    // Cycle detection: when Kahn's iteration runs out of zero-in-degree
+    // units before placing every unit, the remainder is a cycle. The
+    // placed count is the canonical signal; UnitId::ZERO is a valid
+    // index value and so an array-walk-for-defaults check is unsound.
+    if topo_placed.0 < n {
+        return notko::Outcome::Err(PlanError::Cycle);
+    }
 
     // Step 3: phase boundaries from waist detection.
     let waists = steps::compute_waists::<MAX_UNITS, MAX_EDGES, MAX_PHASES>(&dag, &topo);
     plan.phase_count = waists.phase_count;
 
-    // Step 4 to 6 are stubs (substrate-heavy). Run them so the chain
-    // remains structurally complete; their outputs aren't yet
-    // consumed.
+    // Step 4 to 6 are stubs awaiting arvo-graph + arvo-spectral
+    // primitives (tracked HILA-RUNTIME-C1). They run for chain
+    // structural completeness; their outputs are not yet consumed.
     let _reordered = steps::rcm_reorder::<MAX_UNITS, MAX_EDGES>(&dag, &topo);
     let feasible = steps::block_diagonalise::<MAX_UNITS, MAX_EDGES, MAX_PHASES>(&dag, &waists);
     if !feasible.0 {
@@ -279,8 +277,11 @@ pub fn compute_execution_plan<
     // dispatch stage (Pass 3). Compute here for completeness.
     let _morsels = steps::size_morsels::<MAX_FIBERS>(inputs.record_count, fibers.fiber_count);
 
-    // Step 10: phase configs. Store onto plan.phases[i].config.
-    let configs = steps::select_phase_configs::<MAX_PHASES>(&waists, inputs.record_count);
+    // Step 10: phase configs. Store onto plan.phases[i].config. Pass
+    // the unit count so the last phase's width is computed against
+    // the real range, not the prior `start + 1` lower-bound.
+    let configs =
+        steps::select_phase_configs::<MAX_PHASES>(&waists, inputs.record_count, inputs.unit_count);
     let mut i = 0;
     while i < plan.phase_count.0 && i < MAX_PHASES {
         plan.phases[i].config = configs[i];

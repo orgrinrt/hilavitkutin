@@ -36,6 +36,36 @@ mod sealed {
     pub trait Sealed {}
 }
 
+// Engine-id layout assertions.
+//
+// Every Debug impl below uses `transmute_copy` over the repr(transparent)
+// chain `<Id> -> Uint<N> -> Bits<N, Warm, Unsigned> -> <container>`.
+// `transmute_copy::<Src, Dst>` requires `size_of::<Dst>() <= size_of::<Src>()`,
+// so the Debug impls MUST read at the container's full byte width. Asserting
+// the actual sizes here makes the invariant self-enforcing: if arvo's Warm
+// container dispatch table ever moves these widths, the next compile fails
+// here with a load-bearing diagnostic instead of producing a silently lossy
+// Debug projection (or, worse, an off-by-N byte read).
+//
+// Probed sizes (2026-05-11): UnitId = 4, FiberId = 2, PhaseId = 2, TrunkId = 2.
+// Each Debug impl below reads at exactly the asserted size.
+const _: () = assert!( // lint:allow(no-bare-numeric) reason: const-context layout assertion; rust grammar requires raw usize literals here; tracked: #428
+    core::mem::size_of::<PhaseId>() == 2,
+    "PhaseId layout drift: Debug impl in this file reads 2 bytes; update both if arvo changes the Warm container for Uint<5>.",
+);
+const _: () = assert!( // lint:allow(no-bare-numeric) reason: const-context layout assertion; rust grammar requires raw usize literals here; tracked: #428
+    core::mem::size_of::<TrunkId>() == 2,
+    "TrunkId layout drift: Debug impl in this file reads 2 bytes; update both if arvo changes the Warm container for Uint<6>.",
+);
+const _: () = assert!( // lint:allow(no-bare-numeric) reason: const-context layout assertion; rust grammar requires raw usize literals here; tracked: #428
+    core::mem::size_of::<FiberId>() == 2,
+    "FiberId layout drift: Debug impl in this file reads 2 bytes; update both if arvo changes the Warm container for Uint<7>.",
+);
+const _: () = assert!( // lint:allow(no-bare-numeric) reason: const-context layout assertion; rust grammar requires raw usize literals here; tracked: #428
+    core::mem::size_of::<UnitId>() == 4,
+    "UnitId layout drift: Debug impl in this file reads 4 bytes; update both if arvo changes the Warm container for Uint<16>.",
+);
+
 /// `PhaseId` newtype carrying the plan-stage-assigned phase index.
 /// Topic 3 axis B.
 ///
@@ -47,12 +77,13 @@ pub struct PhaseId(pub Uint<5>);
 
 impl core::fmt::Debug for PhaseId {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        // The transparent chain PhaseId -> Uint<5> -> Bits<5, Warm, Unsigned> -> u8
-        // is layout-equivalent end to end (every layer is repr(transparent)).
-        // Pending the arvo Debug substrate addition (workspace follow-up), this is
-        // the dogfooded projection door. lint:allow(no-bare-numeric) reason: rare
-        // legitimate boundary per no-bare-primitives rule; tracked: arvo Debug round.
-        let raw: u8 = unsafe { core::mem::transmute_copy(self) }; // lint:allow(no-bare-numeric) reason: arvo Debug substrate gap; tracked: #428
+        // PhaseId is repr(transparent) over Uint<5> over Bits<5, Warm, Unsigned).
+        // Warm's container dispatch for 5-bit widths picks u16 (verified via size
+        // probe; the size_of assert above is the durable check). Read at the
+        // container's full width to satisfy `transmute_copy::<Src, Dst>`'s
+        // `size_of::<Dst>() <= size_of::<Src>()` precondition. Pending the arvo
+        // Debug substrate addition, this is the dogfooded projection door.
+        let raw: u16 = unsafe { core::mem::transmute_copy(self) }; // lint:allow(no-bare-numeric) reason: arvo Debug substrate gap; tracked: #428
         write!(f, "PhaseId({})", raw)
     }
 }
@@ -84,8 +115,9 @@ pub struct TrunkId(pub Uint<6>);
 
 impl core::fmt::Debug for TrunkId {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        // Transparent chain TrunkId -> Uint<6> -> Bits<6, Warm, Unsigned> -> u8.
-        let raw: u8 = unsafe { core::mem::transmute_copy(self) }; // lint:allow(no-bare-numeric) reason: arvo Debug substrate gap; tracked: #428
+        // TrunkId -> Uint<6> -> Bits<6, Warm, Unsigned) -> u16 container.
+        // See PhaseId Debug for the full reasoning + the size_of assert above.
+        let raw: u16 = unsafe { core::mem::transmute_copy(self) }; // lint:allow(no-bare-numeric) reason: arvo Debug substrate gap; tracked: #428
         write!(f, "TrunkId({})", raw)
     }
 }
@@ -117,8 +149,9 @@ pub struct FiberId(pub Uint<7>);
 
 impl core::fmt::Debug for FiberId {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        // Transparent chain FiberId -> Uint<7> -> Bits<7, Warm, Unsigned> -> u8.
-        let raw: u8 = unsafe { core::mem::transmute_copy(self) }; // lint:allow(no-bare-numeric) reason: arvo Debug substrate gap; tracked: #428
+        // FiberId -> Uint<7> -> Bits<7, Warm, Unsigned) -> u16 container.
+        // See PhaseId Debug for the full reasoning + the size_of assert above.
+        let raw: u16 = unsafe { core::mem::transmute_copy(self) }; // lint:allow(no-bare-numeric) reason: arvo Debug substrate gap; tracked: #428
         write!(f, "FiberId({})", raw)
     }
 }
@@ -152,8 +185,10 @@ pub struct UnitId(pub Uint<16>);
 
 impl core::fmt::Debug for UnitId {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        // Transparent chain UnitId -> Uint<16> -> Bits<16, Warm, Unsigned> -> u16.
-        let raw: u16 = unsafe { core::mem::transmute_copy(self) }; // lint:allow(no-bare-numeric) reason: arvo Debug substrate gap; tracked: #428
+        // UnitId -> Uint<16> -> Bits<16, Warm, Unsigned) -> u32 container
+        // (Warm picks a 32-bit container for 16-bit widths; size probe-verified).
+        // See PhaseId Debug for the full reasoning + the size_of assert above.
+        let raw: u32 = unsafe { core::mem::transmute_copy(self) }; // lint:allow(no-bare-numeric) reason: arvo Debug substrate gap; tracked: #428
         write!(f, "UnitId({})", raw)
     }
 }

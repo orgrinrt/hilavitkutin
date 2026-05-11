@@ -21,7 +21,8 @@
 //! 12. `assign_cores`: map trunks onto concrete cores by `CoreClass`.
 //! 13. `synthesise_core_programs`: per-core projection from plan.
 //!
-//! Steps 4 to 6 are substrate-heavy: their bodies depend on
+//! Steps 4 to 6 are stubs awaiting arvo-graph and arvo-spectral primitives:
+//! their bodies depend on
 //! arvo-graph / arvo-spectral primitives that have not yet shipped
 //! the analytical helpers this engine needs. They stub `todo!()` with
 //! BACKLOG entries (HILA-RUNTIME-C1 follow-up rounds).
@@ -83,22 +84,32 @@ pub fn build_dag<
     g
 }
 
+/// Sentinel value marking an already-placed unit in the in-degree
+/// counter array used by `topo_sort`. Distinguished from a real
+/// in-degree count (which is bounded by `MAX_EDGES`) by being set
+/// to `usize::MAX`, which no valid in-degree can ever reach.
+const CONSUMED: USize = USize(usize::MAX); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: sentinel definition; rust grammar requires raw usize literal here; tracked: #72
+
 /// Step 2: topological sort via Kahn's algorithm.
 ///
-/// Returns the units in topo order. Cycles produce a partial order
-/// with the cycle members at the end; cycle detection happens in the
-/// runner (`compute_execution_plan`) when the count of placed units
-/// differs from the input unit count.
+/// Returns the units in topo order and the count of units that were
+/// placed. The placed-count is the cycle-detection signal: when
+/// `placed < graph.unit_count`, the input contains a cycle. The
+/// runner (`compute_execution_plan`) is responsible for translating
+/// that into `PlanError::Cycle`. Trailing entries in the returned
+/// array (indices `placed..MAX_UNITS`) are left as `UnitId::ZERO`
+/// (the array's initial fill); they are NOT the cycle members. The
+/// caller must use the placed count to slice the valid prefix.
 pub fn topo_sort<
     const MAX_UNITS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     const MAX_EDGES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
 >(
     graph: &DependencyGraph<MAX_UNITS, MAX_EDGES>,
-) -> [UnitId; MAX_UNITS] {
+) -> ([UnitId; MAX_UNITS], USize) {
     let mut out: [UnitId; MAX_UNITS] = [UnitId::ZERO; MAX_UNITS];
     let n = graph.unit_count.0;
     if n == 0 {
-        return out;
+        return (out, USize::ZERO);
     }
     // In-degree counter.
     let mut in_degree: [USize; MAX_UNITS] = [USize::ZERO; MAX_UNITS];
@@ -112,36 +123,32 @@ pub fn topo_sort<
         e += 1;
     }
     // Simple queue replacement: a placement cursor over a fixed array.
-    let mut placed = 0;
-    // Iteratively pluck zero-in-degree units. The outer loop bounds
-    // at `n + 1` to handle progress under cycles (loop exits when no
-    // unit was placed in an iteration).
+    // The outer loop is a fixed-point iteration over zero-in-degree
+    // units. Cycles cause an iteration with no progress, at which
+    // point the loop exits with `placed < n`; the runner reads the
+    // count and produces `PlanError::Cycle`.
+    let mut placed: usize = 0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal placement cursor; rust grammar requires usize; tracked: #72
     let mut progress = true;
     while progress && placed < n {
         progress = false;
         let mut i = 0;
         while i < n {
-            // Skip already-placed units (in_degree set to sentinel
-            // `n` to mark consumed).
+            // Skip already-placed units (in_degree set to CONSUMED).
             if in_degree[i].0 == 0 {
                 let id_raw = i as u32; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: bridging usize to u32 for repr(transparent) projection; tracked: #428
                 let id: UnitId = unsafe { core::mem::transmute_copy(&id_raw) }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: repr(transparent) projection through guaranteed-layout UnitId chain; tracked: #428
                 out[placed] = id;
-                placed += 1;
-                in_degree[i] = USize(usize::MAX); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: sentinel marking unit consumed; tracked: #72
+                placed += 1; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal cursor increment; tracked: #72
+                in_degree[i] = CONSUMED;
                 progress = true;
                 // Decrement successors of unit `i`.
                 let start = graph.row_offsets[i].0;
-                let end_excl = if i + 1 < graph.unit_count.0 {
-                    graph.row_offsets[i + 1].0
-                } else {
-                    graph.edge_count.0
-                };
+                let end_excl = graph.end_for(i);
                 let mut k = start;
                 while k < end_excl {
                     let dest_raw: u32 = unsafe { core::mem::transmute_copy(&graph.col_indices[k]) }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: repr(transparent) projection through guaranteed-layout UnitId chain; tracked: #428
                     let d = dest_raw as usize; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: bridging projection to usize index; tracked: #428
-                    if d < MAX_UNITS && in_degree[d].0 != usize::MAX && in_degree[d].0 > 0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: sentinel + bound checks on USize internal field; tracked: #72
+                    if d < MAX_UNITS && in_degree[d].0 != CONSUMED.0 && in_degree[d].0 > 0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: sentinel + bound check on USize internal field; tracked: #72
                         in_degree[d] = USize(in_degree[d].0 - 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
                     }
                     k += 1;
@@ -150,7 +157,7 @@ pub fn topo_sort<
             i += 1;
         }
     }
-    out
+    (out, USize(placed)) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-wrap internal cursor; tracked: #72
 }
 
 /// Step 3: waist detection. Produces phase boundaries.
@@ -268,6 +275,14 @@ pub fn group_fibers<
         return g;
     }
     let mut current_fiber: usize = 0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal counter; tracked: #72
+    // Track which fiber actually received the last assignment so the
+    // final count reflects fibers used, not fibers reached. The prior
+    // shape used `current_fiber + 1` directly, which over-counted by
+    // one whenever the last unit's out-degree triggered a roll-over
+    // (e.g. a single-unit pipeline with no successor still tripped
+    // the `out_deg != 1` branch).
+    let mut max_used_fiber: usize = 0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal counter; tracked: #72
+    let mut any_assigned = false;
     let mut i = 0;
     while i < n {
         let raw: u32 = unsafe { core::mem::transmute_copy(&topo[i]) }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: repr(transparent) projection through guaranteed-layout UnitId chain; tracked: #428
@@ -276,6 +291,8 @@ pub fn group_fibers<
             let fid_raw = current_fiber as u16; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: bridging usize to u16 for repr(transparent) projection; tracked: #428
             let fid: FiberId = unsafe { core::mem::transmute_copy(&fid_raw) }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: repr(transparent) projection through guaranteed-layout FiberId chain; tracked: #428
             g.assignment[idx] = fid;
+            max_used_fiber = current_fiber;
+            any_assigned = true;
             // Roll over to a new fiber whenever the unit's out-degree
             // is more than 1 (branching) or zero (leaf); single
             // chains pack into one fiber.
@@ -286,7 +303,11 @@ pub fn group_fibers<
         }
         i += 1;
     }
-    g.fiber_count = USize(current_fiber + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
+    g.fiber_count = if any_assigned {
+        USize(max_used_fiber + 1) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
+    } else {
+        USize::ZERO
+    };
     g
 }
 
@@ -372,7 +393,11 @@ pub fn size_morsels<const MAX_FIBERS: usize>( // lint:allow(no-bare-numeric) lin
     fiber_count: USize,
 ) -> [USize; MAX_FIBERS] {
     let mut sizes: [USize; MAX_FIBERS] = [USize::ZERO; MAX_FIBERS];
-    let n = if fiber_count.0 == 0 { 1 } else { fiber_count.0 };
+    // Divide-by-zero guard: fiber_count of zero falls back to 1 so
+    // the division below is defined. The plan-stage runner only calls
+    // this when fiber_count >= 1, but the guard makes the function
+    // self-contained.
+    let n = if fiber_count.0 == 0 { 1 } else { fiber_count.0 }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: divide-by-zero guard literal; tracked: #72
     let per_fiber = record_count.0 / n;
     let mut i = 0;
     while i < n && i < MAX_FIBERS {
@@ -382,15 +407,30 @@ pub fn size_morsels<const MAX_FIBERS: usize>( // lint:allow(no-bare-numeric) lin
     sizes
 }
 
+/// Heuristic threshold below which a phase is treated as "small" and
+/// picks `MaxFuse`. Substrate-default; consumers will be able to tune
+/// this once `RunCfg`-level phase-policy lands in Pass 3 / Pass 6.
+/// Tracked as a follow-up under task #429 (review-driven).
+const SMALL_RECORD_COUNT_THRESHOLD: usize = 10_000; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: substrate-default policy threshold; rust grammar requires usize; tracked: #429
+
+/// Heuristic phase-width threshold above which a phase picks
+/// `MaxSplit`. Substrate-default; same tuning story as
+/// `SMALL_RECORD_COUNT_THRESHOLD`. Tracked under #429.
+const WIDE_PHASE_WIDTH_THRESHOLD: usize = 8; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: substrate-default policy threshold; rust grammar requires usize; tracked: #429
+
 /// Step 10: per-phase config selection (MaxFuse / Balanced / MaxSplit).
 ///
 /// Picks based on phase width (number of fibers in the phase) and
-/// record count: small phases pick MaxFuse to minimise dispatch
-/// overhead; wide phases pick MaxSplit to maximise parallelism;
-/// everything in between picks Balanced.
+/// record count: small phases pick `MaxFuse` to minimise dispatch
+/// overhead; wide phases pick `MaxSplit` to maximise parallelism;
+/// everything in between picks `Balanced`. Threshold values live as
+/// substrate-default constants near this fn; consumer-tunable
+/// policy lands when `RunCfg` ships its phase-policy axis (Pass 3 /
+/// Pass 6 follow-up).
 pub fn select_phase_configs<const MAX_PHASES: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     phases: &PhaseBoundaries<MAX_PHASES>,
     record_count: USize,
+    unit_count: USize,
 ) -> [PhaseConfig; MAX_PHASES] {
     let mut configs: [PhaseConfig; MAX_PHASES] = [PhaseConfig::Balanced; MAX_PHASES];
     let n = phases.phase_count.0;
@@ -401,17 +441,22 @@ pub fn select_phase_configs<const MAX_PHASES: usize>( // lint:allow(no-bare-nume
         let end_excl = if i + 1 < n {
             phases.boundaries[i + 1].0
         } else {
-            // The actual unit count would be sourced from the
-            // surrounding plan; without that here, use start + 1 as a
-            // conservative lower bound.
-            start + 1
+            // Last phase spans from its start through the total unit
+            // count. Threading `unit_count` in from the runner avoids
+            // the prior `start + 1` lower-bound that misclassified a
+            // wide last phase as a singleton.
+            unit_count.0
         };
-        let width = if end_excl > start { end_excl - start } else { 1 };
-        // Heuristic: <10k records or width 1 picks MaxFuse; width >8
-        // picks MaxSplit; otherwise Balanced.
-        configs[i] = if record_count.0 < 10_000 || width == 1 {
+        let width = if end_excl > start {
+            end_excl - start
+        } else {
+            1 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: degenerate-width floor for malformed boundaries; tracked: #72
+        };
+        configs[i] = if record_count.0 < SMALL_RECORD_COUNT_THRESHOLD
+            || width == 1 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: explicit-singleton case bound; tracked: #72
+        {
             PhaseConfig::MaxFuse
-        } else if width > 8 {
+        } else if width > WIDE_PHASE_WIDTH_THRESHOLD {
             PhaseConfig::MaxSplit
         } else {
             PhaseConfig::Balanced
@@ -519,28 +564,3 @@ pub enum PlanError {
     CoreCountExceeded,
 }
 
-/// Backward-compat alias so existing callers keep working. The
-/// `DirtyMask` single-store skeleton remains in the surface for now.
-pub fn propagate_dirty<
-    const MAX_UNITS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_STORES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
->(
-    inputs: &PlanInputs<MAX_UNITS, MAX_STORES>,
-) -> DirtyMask<MAX_STORES> {
-    // Union all unit writes into a single mask. The richer per-fiber
-    // form lives in `compute_upward_rank_and_dirty`; this is the
-    // pipeline-wide rollup.
-    let mut mask = DirtyMask::empty();
-    let mut u = 0;
-    while u < inputs.unit_count.0 {
-        let mut store = 0;
-        while store < MAX_STORES && store < 64 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: AccessMask 64-bit window per skeleton; tracked: #72
-            if inputs.writes[u].contains(USize(store)).0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
-                mask = mask.set(USize(store)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
-            }
-            store += 1;
-        }
-        u += 1;
-    }
-    mask
-}
