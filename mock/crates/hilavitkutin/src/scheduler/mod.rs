@@ -34,11 +34,9 @@ use hilavitkutin_api::store::Replaceable;
 use hilavitkutin_api::work_unit::WorkUnitBundle;
 
 pub mod metrics;
-pub mod plan;
 pub mod result;
 
 pub use metrics::SchedulerMetrics;
-pub use plan::{ExecutionPlan, LaneAssignment};
 pub use result::PipelineResult;
 
 /// Top-level scheduler.

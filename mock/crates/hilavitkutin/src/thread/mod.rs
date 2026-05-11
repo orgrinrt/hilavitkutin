@@ -26,17 +26,40 @@ pub use handle::ThreadHandle;
 pub use pool::ThreadPool;
 pub use wake::WakeStrategy;
 
-/// Map plan lane assignments onto concrete cores.
+/// Map plan trunks onto concrete cores.
 ///
-/// Skeleton: `todo!()`. Real body walks the plan's lane set +
-/// groups them into trunks + pins trunks to P-cores: see
-/// BACKLOG.
-pub fn assign_cores<const MAX_CORES: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+/// Skeleton: `todo!()`. Real body walks the plan's trunk set,
+/// groups trunks per phase, and pins them to P-cores per
+/// `CoreClass`. Lands in Session 2B (HILA-RUNTIME-C4) of the
+/// runtime megaround.
+pub fn assign_cores<
+    const MAX_UNITS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_PHASES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_TRUNKS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_FIBERS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_LANES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_COLUMNS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_COMPONENTS_PER_TRUNK: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_UNITS_PER_FIBER: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_COLUMNS_PER_FIBER: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_TRUNKS_PER_PHASE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+>(
     core_count: USize,
-    plan: &crate::scheduler::ExecutionPlan<MAX_CORES>,
-) -> CoreAssignment<MAX_CORES> {
+    plan: &crate::plan::ExecutionPlan<
+        MAX_UNITS,
+        MAX_PHASES,
+        MAX_TRUNKS,
+        MAX_FIBERS,
+        MAX_LANES,
+        MAX_COLUMNS,
+        MAX_COMPONENTS_PER_TRUNK,
+        MAX_UNITS_PER_FIBER,
+        MAX_COLUMNS_PER_FIBER,
+        MAX_TRUNKS_PER_PHASE,
+    >,
+) -> CoreAssignment<MAX_LANES> {
     let _ = (core_count, plan);
-    todo!("5a4: map plan lane assignments onto concrete cores")
+    todo!("session 2B (HILA-RUNTIME-C4): map plan trunks onto concrete cores")
 }
 
 /// Classify cores by performance/efficiency class.
