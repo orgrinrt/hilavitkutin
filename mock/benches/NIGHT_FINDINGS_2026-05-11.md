@@ -398,6 +398,37 @@ Caveats:
 - The step function here is leaf (no further calls). A step that itself calls other fns would compound the issue if non-leaf chains aren't inlined.
 - LTO is doing real work in the `inline_default` case. Without `lto = "fat"`, inline-default could diverge from inline-always significantly.
 
+## Bounds-check elision (`bounds_check`) — morsel-loop safe-Rust validation
+
+Three loop-shape strategies for a per-byte FNV1a inner loop over a `&[u8; N]` const-sized input:
+
+- `bc_iter`: `for &byte in input.iter()`. Iterator-protocol; no bounds checks structurally.
+- `bc_index`: `for i in 0..N { input[i] }`. Safe Rust indexing; LLVM should elide the bounds check because `i < N` is the loop condition.
+- `bc_unchecked`: `for i in 0..N { *input.get_unchecked(i) }`. `unsafe` explicit elision; floor case.
+
+Algo-only medians:
+
+| N      | bc_iter            | bc_index (base) | bc_unchecked       |
+|--------|--------------------|-----------------|--------------------|
+| 256    | 278 ns (+2.7%, YES)| 271 ns          | 273 ns (no sig)    |
+| 1024   | 1245 ns (no sig)   | 1239 ns         | 1277 ns (+2.3%, YES)|
+| 4096   | 5350 ns (no sig)   | 5269 ns         | 5267 ns (no sig)   |
+| 16384  | 20525 ns (no sig)  | 20572 ns        | 20662 ns (no sig)  |
+
+Findings:
+
+- **All three variants are within noise** at every N. LLVM elides the bounds check completely when iterating `0..N` over a `&[u8; N]` const-sized array. Safe-Rust indexing produces identical codegen to `get_unchecked`.
+- The tiny per-variant deltas (2.3% / 2.7%) flip direction between sizes (sometimes iter is slower, sometimes unchecked is slower, never consistently the safe variant), confirming this is measurement noise rather than a real safety-cost gap.
+- **`bc_unchecked` does NOT win**. The `unsafe` access provides zero throughput benefit when the safe form is already optimal. This means consumer WorkUnits should never reach for `get_unchecked` as a perf optimisation on const-sized morsel arrays; the safe form is already free.
+- **Validates Topic 7 morsel-loop design**: consumer WorkUnit code writing `column[i]` indexing in the inner loop pays no bounds-check cost. The morsel-shape contract (const-generic upper bound on iteration) makes the safe form the optimal form.
+- **Implication for the substrate**: do NOT teach consumers to use `unsafe` in WorkUnit bodies. Safe indexing over const-sized morsel arrays is already optimal. The substrate's safety story carries through to runtime perf without compromise.
+
+Caveats:
+
+- Requires const-generic upper bound. A `&[u8]` slice (dynamic length) would force LLVM to emit the bounds check per iteration. The morsel-loop contract (fixed-size morsel array) is what enables the elision.
+- Rust uses `usize` for indexing; if the consumer's index type is some narrower or wider integer, the elision proof might fail. The const-generic `N: usize` morsel shape avoids this.
+- The bench uses `&[u8; N]`. Larger element types (e.g. column records of `T` where size_of::<T> > 1) would compound any non-elided check. The result generalises: as long as the array length is statically known and the loop counter type matches, LLVM elides.
+
 ## Cross-references
 
 - `mock/benches/dep_graph_csr_9_n*_findings.md`

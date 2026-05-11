@@ -387,6 +387,27 @@ variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "varian
 n = 16384
 variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "variants/memcpy_unrolled/target/release/memcpy_unrolled", "variants/memcpy_naive/target/release/memcpy_naive"]
 
+[bench.bounds_check]
+title = "Bounds-check elision: iter() vs explicit index vs get_unchecked"
+workload = "realistic"
+master_seed = 0x5a3e_c074_91bf_2d68
+
+[[bench.bounds_check.sizes]]
+n = 256
+variants = ["variants/bc_iter/target/release/bc_iter", "variants/bc_index/target/release/bc_index", "variants/bc_unchecked/target/release/bc_unchecked"]
+
+[[bench.bounds_check.sizes]]
+n = 1024
+variants = ["variants/bc_iter/target/release/bc_iter", "variants/bc_index/target/release/bc_index", "variants/bc_unchecked/target/release/bc_unchecked"]
+
+[[bench.bounds_check.sizes]]
+n = 4096
+variants = ["variants/bc_iter/target/release/bc_iter", "variants/bc_index/target/release/bc_index", "variants/bc_unchecked/target/release/bc_unchecked"]
+
+[[bench.bounds_check.sizes]]
+n = 16384
+variants = ["variants/bc_iter/target/release/bc_iter", "variants/bc_index/target/release/bc_index", "variants/bc_unchecked/target/release/bc_unchecked"]
+
 [bench.inline_strategy]
 title = "Inline strategy: #[inline(always)] vs default vs #[inline(never)] per-record step"
 workload = "realistic"
