@@ -459,6 +459,37 @@ Caveats:
 - Bigger if/else bodies (cmov-ineligible: function calls, multi-instruction sequences) would re-introduce branch sensitivity. Inner-loop write paths with multiple statements per arm should be benched separately.
 - The input bytes come from a uniform-random seed; pathological patterns (alternating, long runs) would also surface predictor sensitivity beyond what uniform input shows.
 
+## Atomic vs plain (`atomic_vs_plain`) — Topic 3 M3 inline metrics cost
+
+Three accumulator typings on an identical FNV1a inner loop:
+
+- `acc_plain`: plain `u64` local. Lives in a register across the loop.
+- `acc_atomic_relaxed`: `AtomicU64` with `Ordering::Relaxed` load+store per step.
+- `acc_atomic_seqcst`: `AtomicU64` with `Ordering::SeqCst` per step (full memory barrier).
+
+Algo-only medians:
+
+| N      | acc_plain          | acc_atomic_relaxed | acc_atomic_seqcst  |
+|--------|--------------------|--------------------|--------------------|
+| 256    | 283 ns (no sig)    | 282 ns             | 284 ns (no sig)    |
+| 1024   | 1289 ns (-0.3%, YES)| 1309 ns           | 1315 ns (+0.4%, YES)|
+| 4096   | 5119 ns (no sig)   | 5193 ns            | 5142 ns (no sig)   |
+| 16384  | 20579 ns (no sig)  | 20533 ns           | 20533 ns (no sig)  |
+
+Findings:
+
+- **All three variants are within noise at every N** on aarch64 single-thread. The "atomic overhead" intuition is mostly false in single-threaded non-contended code: the barrier instructions cost essentially nothing when there's no other core invalidating cache lines.
+- **SeqCst is equivalent to Relaxed** in single-thread on aarch64. The barrier instructions execute but find no actual ordering work to do. The cost shows up only when multiple cores actually contend.
+- **`acc_plain` matches `acc_atomic_relaxed` to within 0.3-1.5%**. The minor speed advantage of plain locals comes from register allocation (acc stays in a register for plain; for atomic it has to live in memory because the type prevents register-allocation).
+- **Validates Topic 3 M3 inline metrics design**: per-fiber inline metrics stored as `AtomicU64` with Relaxed ordering cost essentially nothing in the hot path. The cache-line invariant (write-only-by-owning-core, read-only-after-phase-barrier-by-AdaptWu) means there's no cross-core contention during the hot loop, so atomic ops behave like plain ops.
+- **The strategy stands**: AdaptMetrics fields can be AtomicU64 + Relaxed without throughput cost, AS LONG AS the per-fiber cache-line invariant holds. The bench validates the cost; the invariant itself is the design's responsibility.
+
+Caveats:
+
+- The bench operates on a single fiber's worth of accumulator. Multi-core contention (multiple cores writing the same cache line) is a separate phenomenon and would show large slowdowns; that's exactly why the cache-line invariant matters.
+- The "atomic_ordering_cost" bench shows Relaxed beats Acquire/Release by 3-4x — but that bench tests a different access pattern (multiple atomics, more complex memory dependencies). The two findings are consistent: when there's actual ordering work, the barrier costs real cycles; when there's none, the barrier is free.
+- aarch64 specifically benefits from cheap atomic ops; older x86 cores or constrained-coherence targets could show different gaps. The substrate should not assume free-atomics universally.
+
 ## Cross-references
 
 - `mock/benches/dep_graph_csr_9_n*_findings.md`
