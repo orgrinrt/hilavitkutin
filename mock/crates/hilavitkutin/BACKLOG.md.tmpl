@@ -299,3 +299,59 @@ futex-wake-all phase barrier. Tree-barrier (log2(N) fan-in) is a
 follow-up if bench evidence at 32+ cores shows measurable cacheline
 ping-pong on the centralised counter. Adds `PoolFrame.phase_arrived`
 as a flat `[AtomicU32; LOG2_MAX_CORES]` array indexed by tree level.
+
+### Bench-driven follow-ups (round 202605101036 overnight benches)
+
+Twenty-nine benches landed in `mock/benches/` during the 2026-05-11
+overnight autonomous run. Findings index lives at
+`mock/benches/NIGHT_FINDINGS_2026-05-11.md`. Several findings revise
+or refine engine design decisions:
+
+**Plan-stage enum dispatch rule (revised).** The `match_arm_count`
+bench surfaced a sharp icache cliff at 64 match arms at N=16384
+(+628%). The `fnptr_table_dispatch` follow-up FALSIFIED the proposed
+fix of refactoring to fn-pointer table: at 16 variants, fnptr-table
+is +56% slower than match at N=1024-4096 due to indirect-call BTB
+mispredictions. **Revised rule:** keep hot-loop enum dispatch ≤8
+variants in plan-stage code; for larger discriminant spaces, batch
+by variant (process all variant-0 records first, then variant-1,
+etc.) so one handler stays hot in icache. Stage / Phase /
+WorkUnitKind enums currently fit ≤8; design should preserve.
+
+**fold_strategy implications for morsel-loop reductions.** Quad-way
+interleaved-accumulator reduction is ~3.8x faster than single-acc
+sequential at N=16384 (and LLVM does NOT auto-extract this ILP).
+Topic 7 morsel-loop consumers writing `let mut acc` over a column
+pay a 2-4x latency tax on mul-heavy reductions. Substrate should
+ship an interleaved-accumulator reduction primitive, tracked
+upstream as the `arvo::Fold` trait family design round.
+
+**Atomic increment shape validated.** `atomic_inc_strategy` confirms
+Topic 6 axis I: `fetch_add(1, Relaxed)` beats CAS-loop by 11-19%
+via LSE LDADD on aarch64. The centralised-counter phase-barrier
+design over a CAS-loop trait abstraction is empirically correct.
+Bench file: `mock/benches/atomic_inc_strategy_n*_findings.md`.
+
+**Per-fiber atomic-metrics cost validated.** `atomic_vs_plain`
+confirms Topic 3 M3: `AtomicU64+Relaxed` is free in single-thread
+non-contended code on aarch64. AdaptMetrics fields can be
+AtomicU64+Relaxed without throughput cost AS LONG AS the per-fiber
+cache-line invariant holds (no cross-core contention during hot
+loop). Cache-line invariant is the design responsibility; the bench
+validates the cost claim.
+
+**Pow2 cap convention validated.** `modulo_strategy` shows pow2 const
+modulo is 2.2x faster than non-pow2 and 2.9x faster than runtime-
+opaque divisor. Validates every cap-as-const-generic choice in
+PoolFrame: MAX_FIBERS, MAX_CORES, MAX_UNITS, MICRO_MORSEL_INTERVAL,
+MAX_DRIFT_RECORDS, MAX_PLAN_AFFECTING_RESOURCES.
+
+**Inline strategy.** `inline_strategy` shows LLVM auto-inlines
+small leaf fns into hot loops reliably under release+fat-LTO.
+Defensive `#[inline]` on per-record morsel step fns is cheap
+insurance, not load-bearing.
+
+**Cross-references.** Each bench finding above carries the full
+table and design implications in `mock/benches/NIGHT_FINDINGS_2026-05-11.md`.
+The synthesis section at the top of that file groups all 29 benches
+by design impact category.
