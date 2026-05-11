@@ -162,7 +162,7 @@ fn build_workload() -> Workload {
 fn routine_for_bench(bench_name: &str, workload: &str, n: usize) -> Option<RoutineSpec> {
     let may_differ = matches!(
         bench_name,
-        "dispatch_dynamic" | "hash_algos" | "fxpmul_strategy" | "cache_layout" | "iter_patterns" | "ema_formulation" | "modulo_strategy" | "branch_predictability"
+        "dispatch_dynamic" | "hash_algos" | "fxpmul_strategy" | "cache_layout" | "iter_patterns" | "ema_formulation" | "modulo_strategy" | "branch_predictability" | "fold_strategy"
     );
     let bridge = if may_differ {
         match n {
