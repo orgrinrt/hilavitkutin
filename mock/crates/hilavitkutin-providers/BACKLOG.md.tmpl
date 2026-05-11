@@ -49,3 +49,51 @@ Each example doubles as an integration test: CI runs `cargo run
 --example <name>` with assertions on output shape + timing budgets.
 The example bodies land in follow-up rounds dedicated to each app;
 this BACKLOG entry tracks the v1 commitment.
+
+### Bench-driven follow-ups (round 202605101036 overnight benches)
+
+Twenty-nine benches landed in `mock/benches/` overnight. Several
+findings touch this crate's providers (AdaptWu, EMA, default Kits).
+Index: `mock/benches/NIGHT_FINDINGS_2026-05-11.md`.
+
+**AdaptWu EMA formulation validated.** The `ema_formulation` bench
+confirms audit-2 M4: Q0.32 saturating fixed-point EMA via
+`NORM_7_OVER_8` + `NORM_1_OVER_8` is the empirically correct shape.
+It beats f32 IIR by 11-14% at N≥1024 on aarch64 (Q0.32: 2113→1895
+at N=1024; 35999→31198 at N=16384; -14% gap stable). The marked-as-
+correct design call in `mock/design_rounds/202605101036_topic.thread-pool.md`
+S7 (audit-2 amendment) is bench-validated.
+
+**AdaptWu reduction shape.** The `fold_strategy` bench (largest
+finding of the night) shows quad-way interleaved-accumulator reduction
+is ~3.8x faster than single-acc sequential on mul-heavy reductions
+at N=16384. LLVM does NOT auto-extract this ILP. If AdaptWu's
+multi-fiber metric aggregation is implemented as a single-accumulator
+sweep over PassDurationMetrics or similar, it pays a 2-4x latency
+tax. Follow-up: AdaptWu's metric aggregation should use the
+interleaved-accumulator shape (parked upstream as `arvo::Fold`
+trait family).
+
+**fetch_add counter shape validated.** The `atomic_inc_strategy`
+bench confirms `fetch_add(1, Relaxed)` beats CAS-loop by 11-19% via
+LSE LDADD on aarch64. AdaptWu's call-count increment counters and
+the phase-barrier centralised-counter in Topic 6 axis I should use
+`fetch_add` directly (no CAS-loop trait abstraction). Bench file:
+`mock/benches/atomic_inc_strategy_n*_findings.md`.
+
+**Per-fiber inline metrics atomic envelope.** The `atomic_vs_plain`
+bench confirms `AtomicU64+Relaxed` is free in single-thread
+non-contended code on aarch64. AdaptMetrics fields exposed as
+`AtomicU64` cost nothing in the hot path AS LONG AS the per-fiber
+cache-line invariant holds (Topic 3 M3). Cache-line invariant is
+the design's responsibility; the bench validates the cost claim.
+
+**Norm-as-FastFloat caveat.** Surprising `float_width` finding: on
+aarch64, f32 and f64 are essentially identical (~3% delta);
+i64-fixed-point is 25-62% SLOWER on FMA-shape reductions. The
+StandardAdaptKit's pick of `arvo::Norm<S=Warm>` (Q0.32-shaped) for
+EMA-driven decisions wins on the IIR shape (per `ema_formulation`)
+but does NOT auto-win on the FMA-shape per-fiber aggregation
+(per `float_width`). Different inner-loop shapes favor different
+strategies. The arvo strategy-marker docs follow-up tracks this
+nuance.
