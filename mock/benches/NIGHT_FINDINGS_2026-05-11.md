@@ -17,7 +17,7 @@ grouped by what they tell the design:
 - **Topic 3 M3 / Topic 6 atomic discipline**: `atomic_vs_plain` shows `AtomicU64+Relaxed` is free in single-thread non-contended code; cost only materialises under cross-core contention. Per-fiber inline-metrics design (cache-line-owned writes) costs nothing on the hot path.
 - **arvo Norm saturating EMA (audit-2 M4)**: `ema_formulation` confirms Q0.32 fixed-point beats f32 IIR by 11-14% at N≥1024 on aarch64. Audit-2 M4 design call empirically correct on the specific IIR shape.
 - **Topic 6 / engine pow2 caps**: `modulo_strategy` shows pow2-const modulo is 2.2x faster than const non-pow2 and 2.9x faster than runtime-opaque divisor. Locks the pow2-cap convention across MAX_FIBERS / MAX_CORES / MAX_UNITS / MICRO_MORSEL_INTERVAL / MAX_DRIFT_RECORDS / MAX_PLAN_AFFECTING_RESOURCES.
-- **Plan-stage enum dispatch ≤ 8 variants**: `match_arm_count` shows a sharp icache cliff at 64 arms (+628% at N=16384). Design rule: hot-loop enum dispatch stays small; for larger variant spaces refactor to fn-pointer table.
+- **Plan-stage enum dispatch ≤ 8 variants**: `match_arm_count` shows a sharp icache cliff at 64 arms (+628% at N=16384); `fnptr_table_dispatch` REVISES the proposed fix — fn-pointer tables are NOT a free escape (+56% slower than 16-arm match at N=1024-4096 due to indirect-call mispredictions). Design rule: keep hot-loop enum dispatch ≤8 variants; for larger discriminant spaces, **batch by variant** (process all of variant-0 first, then variant-1, etc.) to keep one handler hot in icache, instead of dispatching per-record.
 
 ### Findings that surfaced new design implications
 
@@ -800,6 +800,41 @@ Caveats:
 - The i64-fixed-point variant does mul+shr+add per step; an autovec-friendly NEON intrinsic version (with explicit vmlaq_s32 etc.) would likely outperform the float variants. The bench measures naive LLVM autovec, not hand-tuned SIMD.
 - aarch64 specific. x86_64 AVX2/AVX-512 may show clearer f32 > f64 SIMD-width advantage; older x86 with weaker f64 FPU could also flip the gap.
 - Workload is mul-add-heavy. Pure-add reductions or div-heavy workloads might shift the picture.
+
+## Fn-pointer table vs match (`fnptr_table_dispatch`) — REVISES match_arm_count guidance
+
+Two dispatch shapes for a 16-variant inner loop, each with the same per-variant body:
+
+- `fpt_match_16`: 16-arm match. Jump-table lowering (ADR + LDR + BR + arm body).
+- `fpt_table_16`: 16-entry `static [fn; 16]` indexed by discriminant; indirect call via table.
+
+Algo-only medians:
+
+| N      | match_16 (base) | fnptr_table_16     |
+|--------|-----------------|--------------------|
+| 256    | 69 ns           | 48 ns (-33%)       |
+| 1024   | 214 ns          | 341 ns (+57%)      |
+| 4096   | 815 ns          | 1264 ns (+56%)     |
+| 16384  | 10419 ns        | 10720 ns (no sig)  |
+
+Findings:
+
+- **Fn-pointer table is FASTER than match only at N=256** (-33%), where the per-call setup cost dominates. At N=1024 and N=4096 the table is **57% SLOWER** than match. At N=16384 they tie (both hit the icache regime).
+- **The slowdown for fnptr-table at mid-N comes from indirect-call mispredictions**. aarch64 jump-table predictor handles `match` well (computed next-PC, deterministic from arm index). Indirect calls through function pointers have a separate, less predictable BTB entry per call site, and the 16-target random selection saturates that predictor capacity.
+- **REVISES the match_arm_count finding's design rule**. The recommendation to "refactor to fn-pointer table for >12 hot-dispatch variants" was wrong as stated. The fnptr table is NOT a free escape from the icache cliff — at modest N the indirect-call cost dominates, and at very large N the dispatch shape ceases to matter.
+
+Implications for design:
+
+- **Stick with the ≤8-variant rule for hot dispatch** in plan-stage enums. There is no easy escape via fn-pointer table at modest N. The icache cliff at 64 arms is real but the fn-pointer table doesn't escape it; it just shifts the cost to indirect-call misprediction.
+- **For larger discriminant spaces in hot dispatch, the best path is batching by variant** (process all of variant-0 first, then variant-1, etc.) so that one handler stays hot in icache and the branch predictor sees a uniform target.
+- **For cold-path dispatch** (plan construction, one-shot setup), variant count and dispatch shape don't matter; either form is fine.
+- The original match_arm_count caveat about not generalising the icache cliff still holds — but the suggested fix needs revision: **batch-by-variant**, not fn-pointer table.
+
+Caveats:
+
+- N=16384 tie is interesting: both dispatch shapes converge at the icache regime. The match path's icache cliff at 64 arms doesn't reproduce at 16 arms in the match_16 variant, so the comparison is in the "match is fine" regime; a 64-variant fnptr-table comparison would be more informative for the original match_arm_count rule. Park as follow-up.
+- aarch64 BTB sizing (Apple Silicon ~256 entries) determines the indirect-call cliff. Older / smaller-BTB cores would hit the cliff at fewer fn-ptr targets; newer ones with bigger BTBs may extend it.
+- The fn-pointer call is through an aligned static table; alignment to BTB-cacheline-shape might help further, but the bench measures the default Rust codegen.
 
 ## Match arm count (`match_arm_count`) — enum dispatch scaling
 
