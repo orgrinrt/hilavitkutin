@@ -31,14 +31,14 @@ impl<Ctx: 'static, const MAX_CORES: usize> FiberDispatch<Ctx, MAX_CORES> { // li
     pub const fn new() -> Self {
         Self {
             body: Maybe::Isnt,
-            fiber_id: FiberId(0),
-            phase: PhaseId(0),
+            fiber_id: FiberId::ZERO,
+            phase: PhaseId::ZERO,
             morsel_range: MorselRange {
                 start: USize::ZERO,
                 len: USize::ZERO,
             },
             sync_points: [SyncPoint {
-                fiber_id: FiberId(0),
+                fiber_id: FiberId::ZERO,
                 min_records: USize::ZERO,
             }; MAX_CORES],
             sync_point_count: USize::ZERO,

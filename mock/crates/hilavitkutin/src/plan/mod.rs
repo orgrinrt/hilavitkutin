@@ -29,10 +29,12 @@ pub mod steps;
 pub use access::AccessMask;
 pub use column::ColumnClassification;
 pub use dirty::DirtyMask;
-pub use fiber::{FiberGrouping, FiberId};
+pub use fiber::FiberGrouping;
 pub use graph::DependencyGraph;
-pub use inputs::{PlanInputs, UnitId};
-pub use phase::{PhaseBoundaries, PhaseId};
+pub use inputs::PlanInputs;
+pub use phase::PhaseBoundaries;
+
+pub use hilavitkutin_api::{FiberId, PhaseId, TrunkId, UnitId};
 
 /// Build an `ExecutionPlan` from `PlanInputs`.
 ///

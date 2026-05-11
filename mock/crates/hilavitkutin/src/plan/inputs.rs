@@ -3,20 +3,14 @@
 //! Skeleton: const arrays of AccessMask per unit + record count
 //! estimate + commutativity flags. Populated by the scheduler
 //! builder during WU registration (domain 11).
+//!
+//! `UnitId` re-exported via `crate::plan` from `hilavitkutin_api`
+//! (USize-shaped, canonical engine id type).
 
-use arvo::{Bool, USize};
 use arvo::strategy::Identity;
+use arvo::{Bool, USize};
 
 use super::access::AccessMask;
-
-/// Newtype wrapping a unit (WorkUnit) index. `#[repr(transparent)]`
-/// so it round-trips through FFI cleanly.
-///
-/// Named `UnitId` (not `NodeId`) to avoid a name collision with
-/// `arvo_bitmask::NodeId` at plan-stage integration sites.
-#[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash, Ord, PartialOrd)]
-#[repr(transparent)]
-pub struct UnitId(pub u32); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-public-raw-field) reason: domain id newtype; bit-width fixed at 32; exact-width refinement tracked: #72
 
 /// Descriptor bundle for `build_plan`. `MAX_UNITS` bounds the
 /// number of WUs; `MAX_STORES` bounds the number of distinct
