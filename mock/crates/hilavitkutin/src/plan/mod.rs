@@ -155,6 +155,22 @@ impl<
     }
 }
 
+// Static `Send + Sync` assertion for `ExecutionPlan`. The plan crosses
+// thread boundaries when Pass 3 hands `&ExecutionPlan` slices to per-core
+// dispatch closures. Today every field auto-derives `Send + Sync` from
+// its arvo-newtype leaves (USize, Bool, UnitId, FiberId, TrunkId, PhaseId)
+// plus the nested plan types. The auto-impl is silent: a future field
+// that introduces a raw pointer, interior mutability, or PhantomData of
+// a non-Send/Sync type would break the bound without a load-bearing
+// diagnostic. This monomorphised assertion forces a compile-time check
+// against a representative instantiation.
+const _: fn() = || {
+    fn assert_send_sync<T: Send + Sync>() {}
+    // Smallest meaningful instantiation; the bound is structural and
+    // independent of the const-generic values.
+    assert_send_sync::<ExecutionPlan<1, 1, 1, 1, 1, 1, 1, 1, 1, 1>>(); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic instantiation literal for Send+Sync assertion; tracked: #429
+};
+
 /// Chain the 13 plan-stage steps and assemble an `ExecutionPlan`.
 ///
 /// Walks the algorithm chain in order:
