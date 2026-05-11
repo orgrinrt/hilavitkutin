@@ -146,7 +146,7 @@ struct GravFired;
 
 struct Integrate;
 
-impl Provider for Integrate {
+impl BuilderInput for Integrate {
     type Init = Self;
     const KIND: ProviderKind = ProviderKind::WorkUnit;
     type Dispatch = UnitDispatch<Self>;

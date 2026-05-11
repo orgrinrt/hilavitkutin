@@ -14,7 +14,7 @@ use crate::context::{
     HasVirtualFirer,
 };
 use crate::hint::SchedulingHint;
-use crate::provider::Provider;
+use crate::builder_input::BuilderInput;
 
 /// Schedule marker: the WU runs every pass.
 #[derive(Copy, Clone, Default, Debug)]
@@ -35,9 +35,9 @@ pub struct On<V>(PhantomData<V>);
 /// `On<V>` runs when virtual `V` fires.
 #[diagnostic::on_unimplemented(
     message = "`{Self}` is not a WorkUnit (or its `Schedule` does not match `{Schedule}`)",
-    note = "Implement `WorkUnit` on `{Self}`. Declare `type Read`, `type Write`, `type Hint`, `type Ctx`, and `fn execute(&self, ctx: &Self::Ctx)`. The default `Schedule` is `Always`; override with `On<V>` for virtual-fired WUs. Pair the impl with `impl Provider for {Self} {{ type Init = Self; const KIND: ProviderKind = ProviderKind::WorkUnit; type Dispatch = UnitDispatch<Self>; }}` so the type is accepted by `SchedulerBuilder::with(...)`."
+    note = "Implement `WorkUnit` on `{Self}`. Declare `type Read`, `type Write`, `type Hint`, `type Ctx`, and `fn execute(&self, ctx: &Self::Ctx)`. The default `Schedule` is `Always`; override with `On<V>` for virtual-fired WUs. Pair the impl with `impl BuilderInput for {Self} {{ type Init = Self; type Dispatch = UnitDispatch<Self>; }}` so the type is accepted by `SchedulerBuilder::with(...)`."
 )]
-pub trait WorkUnit<Schedule = Always>: Provider<Init = Self> + Send + Sync + 'static {
+pub trait WorkUnit<Schedule = Always>: BuilderInput<Init = Self> + Send + Sync + 'static {
     /// Columns / resources this WU reads.
     type Read: AccessSet;
     /// Columns / virtuals this WU writes.

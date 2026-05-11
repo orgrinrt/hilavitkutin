@@ -29,7 +29,7 @@
 use core::marker::PhantomData;
 
 use hilavitkutin_api::access::{ContainsAll, Empty};
-use hilavitkutin_api::provider::{Dispatch, Provider};
+use hilavitkutin_api::builder_input::{BuilderInput, Dispatch};
 use hilavitkutin_api::store::Replaceable;
 use hilavitkutin_api::work_unit::WorkUnitBundle;
 
@@ -85,7 +85,7 @@ pub struct SchedulerBuilder<Wus, Stores> {
 impl<Wus, Stores> SchedulerBuilder<Wus, Stores> {
     /// Register one provider on the scheduler.
     ///
-    /// Accepts any `P: Provider`: WorkUnit unit-structs, Kits,
+    /// Accepts any `P: BuilderInput`: WorkUnit unit-structs, Kits,
     /// `Resource::new(value)`, `Column::<T>::new()`,
     /// `Virtual::<T>::new()`, `LinkedBin::<dyn TraitFamily>::new()`,
     /// and platform impls (memory provider, thread pool, clock). The
@@ -104,7 +104,7 @@ impl<Wus, Stores> SchedulerBuilder<Wus, Stores> {
         <P::Dispatch as Dispatch<Wus, Stores, Empty>>::NextStores,
     >
     where
-        P: Provider,
+        P: BuilderInput,
         P::Dispatch: Dispatch<Wus, Stores, Empty>,
     {
         SchedulerBuilder { _phantom: PhantomData }

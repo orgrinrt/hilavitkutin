@@ -5,13 +5,13 @@
 
 #![no_std]
 
-use hilavitkutin_api::provider::{Provider, ProviderKind};
+use hilavitkutin_api::builder_input::{Provider, ProviderKind};
 use hilavitkutin_api::Empty;
 use hilavitkutin_kit::{Kit, KitDispatch};
 
 struct DummyKit;
 
-impl Provider for DummyKit {
+impl BuilderInput for DummyKit {
     type Init = Self;
     const KIND: ProviderKind = ProviderKind::Kit;
     type Dispatch = KitDispatch<Self>;

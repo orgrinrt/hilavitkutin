@@ -11,7 +11,7 @@ use core::cell::{Cell, UnsafeCell};
 
 use arvo::USize;
 use arvo::strategy::Identity;
-use hilavitkutin_api::provider::{Provider, ProviderKind};
+use hilavitkutin_api::builder_input::BuilderInput;
 use hilavitkutin_api::{Cons, Empty, Resource};
 use hilavitkutin_kit::{Kit, KitDispatch};
 use hilavitkutin_str::{ArenaInterner, Str, StringInterner};
@@ -222,10 +222,9 @@ pub const fn default_interner<const BYTES: usize, const ENTRIES: usize>() // lin
 /// via `builder.add_resource(default_interner::<BYTES, ENTRIES>())`.
 pub struct InternerKit<const BYTES: usize, const ENTRIES: usize>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array sizes; tracked: #121
 
-impl<const BYTES: usize, const ENTRIES: usize> Provider for InternerKit<BYTES, ENTRIES> // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array sizes; tracked: #121
+impl<const BYTES: usize, const ENTRIES: usize> BuilderInput for InternerKit<BYTES, ENTRIES> // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array sizes; tracked: #121
 {
     type Init = Self;
-    const KIND: ProviderKind = ProviderKind::Kit;
     type Dispatch = KitDispatch<Self>;
 }
 
