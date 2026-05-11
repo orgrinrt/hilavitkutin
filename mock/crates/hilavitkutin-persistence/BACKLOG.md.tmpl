@@ -50,3 +50,39 @@ strategy (what happens when a loaded table has a version the
 running code doesn't know about) is consumer-defined; persistence
 just carries the field. A migration-trait API could land here if a
 consumer surfaces a clean shape.
+
+## Bench-driven follow-ups (round 202605101036 overnight benches)
+
+Twenty-nine benches landed overnight in `mock/benches/`. Index:
+`mock/benches/NIGHT_FINDINGS_2026-05-11.md`. Two findings touch
+this crate's hot/cold-store contracts:
+
+**iter_patterns validates contiguous-store contract.** The bench
+showed gather-shape access (data-dependent indexing) is 1.8-2.5x
+slower than sequential at N≥256, with the prefetcher losing on
+non-predictable address streams. This empirically validates the
+substrate's commitment to contiguous column storage: any persistence
+backend that exposes records as a `&[T]`-shaped contiguous slice
+buys the prefetcher win for free. Conversely, a persistence shape
+that returns refs/handles which downstream consumers turn into
+gather-access (e.g., random-position reads into a hash-indexed
+table) loses the win. The current `MemoryProvider` + columnar
+arena design is correct; resist any future change toward
+ref-into-storage / handle-table patterns. Workspace rule
+`hilavitkutin-workunit-mental-model.md` enforces this at the
+agent-rule level; the bench provides the empirical floor.
+
+**load_alignment shows alignment is free for reads.** The bench
+showed aligned ptr-cast, `read_unaligned`, and `u64::from_le_bytes`
+are within noise on aarch64 for sequential u64 loads. The cold-store
+deserialisation path doesn't have to defend strict alignment for
+performance; correctness rules still apply (alignment-sensitive
+types must match their layout), but the throughput-driven argument
+for "must be 8-aligned" doesn't carry on aarch64. Use whichever
+alignment shape is most ergonomic at the persistence API boundary.
+
+Caveat: both findings are aarch64-specific (Apple Silicon). The
+gather penalty (iter_patterns) is ISA-fundamental and should hold
+across platforms; the read-alignment freedom (load_alignment) is
+aarch64-specific and may not generalise to x86 unaligned-load
+paths or NEON 128-bit loads.

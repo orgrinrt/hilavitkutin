@@ -59,3 +59,46 @@ layout ever shifts the ID width (see the 28-bit exhaustion entry
 above), the macro silently desyncs from the `Str` constants.
 Replace both occurrences with `$crate::Str::ID_MASK` so the
 layout stays authoritative in one place.
+
+## Bench-driven follow-ups (round 202605101036 overnight benches)
+
+Findings index: `mock/benches/NIGHT_FINDINGS_2026-05-11.md`. Several
+overnight benches touch the str interner's hot path:
+
+**Bounds-check elision validates safe indexing in interner lookups.**
+The `bounds_check` bench shows LLVM elides safe `[u8; N]` indexing
+completely under const-sized arrays. The interner's lookup-table
+indexing (HashEntry array, slot probing) can use safe `table[idx]`
+without performance penalty as long as the table size is const-
+generic. Do NOT teach interner code to reach for `get_unchecked`
+or `unsafe { *ptr.add(i) }` for performance reasons; the safe form
+is empirically optimal.
+
+**Branch predictability is not a load-bearing concern in equality
+checks.** The `branch_predictability` and `minmax_strategy` benches
+show that branchful vs branchless code converges on aarch64 because
+CSEL is the natural lowering for "select one of two values".
+Str equality checks that use `if a.len() != b.len() { return false }`
+guards land at the same throughput as branchless equivalents. Write
+the form that reads clearest.
+
+**load_alignment OK for inline-Str hash check.** The bench shows
+aligned ptr-cast, `read_unaligned`, and `u64::from_le_bytes` all
+converge on aarch64. The interner can read inline-Str payloads
+via whichever shape is most ergonomic at the const-callable
+boundary; no need to enforce 8-alignment on small Str payloads
+for performance.
+
+**Hash mixer choice empirically grounded.** The existing
+`hash_algos` bench plus the new `rotate_strategy` finding show that
+xxhash3-style fixed-rotation mixers beat SipHash-style data-
+dependent-rotation mixers by ~3x on aarch64 (the data-dependent
+rotation creates a dep chain across hash steps AND blocks autovec).
+The str interner's hash choice should default to xxhash3-shape on
+aarch64 unless SipHash's keyed-hash property is specifically
+required (e.g., to defend against hash-flooding attacks from
+untrusted input). For compile-time string interning where input
+is trusted, xxhash3-shape wins.
+
+Caveat: aarch64-specific. The hash mixer finding may not generalise
+to x86_64; re-run before changing defaults on cross-platform builds.
