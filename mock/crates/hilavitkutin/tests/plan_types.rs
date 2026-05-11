@@ -54,19 +54,22 @@ fn access_mask_empty_set_contains_overlaps() {
 
 #[test]
 fn dependency_graph_default_and_edges() {
-    let mut g: DependencyGraph<8> = DependencyGraph::new();
-    assert!(!g.has_edge(USize::ZERO, USize(1)).0); // lint:allow(no-bare-numeric) reason: node index; tracked: #426
-    assert!(!g.has_edge(USize(3), USize(5)).0); // lint:allow(no-bare-numeric) reason: node index; tracked: #426
+    // CSR graph: MAX_UNITS=8, MAX_EDGES=16.
+    let mut g: DependencyGraph<8, 16> = DependencyGraph::new();
+    assert!(!g.has_edge(USize::ZERO, USize(1)).0); // lint:allow(no-bare-numeric) reason: node index; tracked: #427
+    assert!(!g.has_edge(USize(3), USize(5)).0); // lint:allow(no-bare-numeric) reason: node index; tracked: #427
 
-    g.add_edge(USize::ZERO, USize(1)); // lint:allow(no-bare-numeric) reason: node index; tracked: #426
-    g.add_edge(USize(3), USize(5)); // lint:allow(no-bare-numeric) reason: node index; tracked: #426
-    assert!(g.has_edge(USize::ZERO, USize(1)).0); // lint:allow(no-bare-numeric) reason: node index; tracked: #426
-    assert!(g.has_edge(USize(3), USize(5)).0); // lint:allow(no-bare-numeric) reason: node index; tracked: #426
-    assert!(!g.has_edge(USize(1), USize::ZERO).0); // lint:allow(no-bare-numeric) reason: node index; tracked: #426
+    // Append in ascending-from order (CSR invariant): 0 -> 1, then
+    // 3 -> 5. Units 1 and 2 land as zero-out-degree implicitly.
+    g.add_edge(USize::ZERO, USize(1)); // lint:allow(no-bare-numeric) reason: node index; tracked: #427
+    g.add_edge(USize(3), USize(5)); // lint:allow(no-bare-numeric) reason: node index; tracked: #427
+    assert!(g.has_edge(USize::ZERO, USize(1)).0); // lint:allow(no-bare-numeric) reason: node index; tracked: #427
+    assert!(g.has_edge(USize(3), USize(5)).0); // lint:allow(no-bare-numeric) reason: node index; tracked: #427
+    assert!(!g.has_edge(USize(1), USize::ZERO).0); // lint:allow(no-bare-numeric) reason: node index; tracked: #427
 
     // Out-of-range no-ops.
-    g.add_edge(USize(100), USize(200)); // lint:allow(no-bare-numeric) reason: out-of-range probe; tracked: #426
-    assert!(!g.has_edge(USize(100), USize(200)).0); // lint:allow(no-bare-numeric) reason: out-of-range probe; tracked: #426
+    g.add_edge(USize(100), USize(200)); // lint:allow(no-bare-numeric) reason: out-of-range probe; tracked: #427
+    assert!(!g.has_edge(USize(100), USize(200)).0); // lint:allow(no-bare-numeric) reason: out-of-range probe; tracked: #427
 }
 
 #[test]
