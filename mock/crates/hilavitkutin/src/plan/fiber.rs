@@ -3,16 +3,14 @@
 //! A fiber is a holistically-feasible contiguous run of WUs
 //! sharing a morsel arena. Fiber formation is the output of
 //! steps 5-8 in the plan-stage algorithm.
+//!
+//! `FiberId` re-exported via `crate::plan` from `hilavitkutin_api`
+//! (USize-shaped, canonical engine id type).
 
-use arvo::USize;
 use arvo::strategy::Identity;
+use arvo::USize;
 
-/// Newtype wrapping a fiber index. `#[repr(transparent)]` for
-/// stable FFI. u16 is plenty: even a 64-core plan rarely exceeds
-/// 100 fibers.
-#[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash, Ord, PartialOrd)]
-#[repr(transparent)]
-pub struct FiberId(pub u16); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-public-raw-field) reason: domain id newtype; bit-width fixed at 16; exact-width refinement tracked: #72
+use hilavitkutin_api::FiberId;
 
 /// Per-node fiber assignment.
 #[derive(Copy, Clone, Debug)]
@@ -27,7 +25,7 @@ impl<const MAX_UNITS: usize, const MAX_FIBERS: usize> FiberGrouping<MAX_UNITS, M
     /// All nodes assigned to fiber 0, fiber_count = 0.
     pub const fn new() -> Self {
         Self {
-            assignment: [FiberId(0); MAX_UNITS],
+            assignment: [FiberId::ZERO; MAX_UNITS],
             fiber_count: USize::ZERO,
         }
     }

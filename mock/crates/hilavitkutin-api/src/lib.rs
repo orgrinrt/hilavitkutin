@@ -72,7 +72,7 @@ pub use builder_input::{
 pub use ceiling_div::CeilingDiv;
 pub use dispatch_codegen::{
     CoreProgram, DispatchCodegen, FiberId, FiberShape, LockFreeDispatch, PhaseEntry, PhaseId,
-    RecordRange, Scheduled, SyncRole, TrunkId,
+    RecordRange, Scheduled, SyncRole, TrunkId, UnitId,
 };
 pub use run_cfg::{
     AnomalyFired, DefaultRunCfg, HasRecordCount, PlanAffecting, RunCfg, RunCfgDispatch,

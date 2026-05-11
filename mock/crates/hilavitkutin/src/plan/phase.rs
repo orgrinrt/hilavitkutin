@@ -2,15 +2,12 @@
 //!
 //! A phase is a segment of the execution plan delimited by waists
 //! (narrow cut points in the DAG). Produced by step 4.
+//!
+//! `PhaseId` re-exported via `crate::plan` from `hilavitkutin_api`
+//! (USize-shaped, canonical engine id type).
 
-use arvo::USize;
 use arvo::strategy::Identity;
-
-/// Newtype wrapping a phase index. `#[repr(transparent)]`. u8 is
-/// plenty: phases rarely exceed 20.
-#[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash, Ord, PartialOrd)]
-#[repr(transparent)]
-pub struct PhaseId(pub u8); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-public-raw-field) reason: domain id newtype; bit-width fixed at 8; exact-width refinement tracked: #72
+use arvo::USize;
 
 /// Phase split points: `boundaries[i]` is the first node index of
 /// phase `i`. Phase 0 always starts at node 0.

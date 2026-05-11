@@ -13,7 +13,8 @@ use super::column::ColumnClassification;
 use super::dirty::DirtyMask;
 use super::fiber::FiberGrouping;
 use super::graph::DependencyGraph;
-use super::inputs::{PlanInputs, UnitId};
+use super::inputs::PlanInputs;
+use super::UnitId;
 use super::phase::PhaseBoundaries;
 
 /// Step 1: DAG construction from AccessMask overlap (domain 11).

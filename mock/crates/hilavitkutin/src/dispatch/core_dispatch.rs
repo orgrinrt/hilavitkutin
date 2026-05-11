@@ -35,7 +35,7 @@ impl<Ctx: 'static, const MAX_FIBERS: usize> CoreDispatch<Ctx, MAX_FIBERS> { // l
         Self {
             fibers: core::array::from_fn(|_| FiberDispatch::new()),
             fiber_count: USize::ZERO,
-            phases: [PhaseId(0); MAX_FIBERS],
+            phases: [PhaseId::ZERO; MAX_FIBERS],
             phase_count: USize::ZERO,
             morsel_boundaries: [MorselRange {
                 start: USize::ZERO,
@@ -43,7 +43,7 @@ impl<Ctx: 'static, const MAX_FIBERS: usize> CoreDispatch<Ctx, MAX_FIBERS> { // l
             }; MAX_FIBERS],
             boundary_count: USize::ZERO,
             sync_points: [SyncPoint {
-                fiber_id: FiberId(0),
+                fiber_id: FiberId::ZERO,
                 min_records: USize::ZERO,
             }; MAX_FIBERS],
             sync_point_count: USize::ZERO,

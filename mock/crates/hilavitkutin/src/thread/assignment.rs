@@ -41,7 +41,7 @@ impl<const MAX_CORES: usize> CoreAssignment<MAX_CORES> { // lint:allow(no-bare-n
     pub const fn new() -> Self {
         Self {
             trunk_index: [NO_TRUNK; MAX_CORES],
-            fiber_assignments: [FiberId(0); MAX_CORES],
+            fiber_assignments: [FiberId::ZERO; MAX_CORES],
             morsel_size_multiplier: [USize(100); MAX_CORES],
             assigned_count: USize::ZERO,
         }

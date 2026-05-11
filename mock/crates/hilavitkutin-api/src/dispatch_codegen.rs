@@ -26,7 +26,9 @@
 
 use core::marker::PhantomData;
 
-use arvo::USize;
+use arvo::strategy::Identity;
+use arvo::traits::FromConstant;
+use arvo::{Uint, USize};
 
 use crate::id::StoreId;
 
@@ -34,21 +36,143 @@ mod sealed {
     pub trait Sealed {}
 }
 
-/// `FiberId` newtype carrying the plan-stage-assigned fiber index.
-/// Distinct from `StoreId` / `UnitId` for type-safety at access
-/// sites. Topic 3 axis B.
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
-pub struct FiberId(pub USize);
+/// `PhaseId` newtype carrying the plan-stage-assigned phase index.
+/// Topic 3 axis B.
+///
+/// Bit budget 5: phases rarely exceed 20 in any plan. arvo picks
+/// the underlying container per strategy.
+#[derive(Copy, Clone, PartialEq, Eq)]
+#[repr(transparent)]
+pub struct PhaseId(pub Uint<5>);
+
+impl core::fmt::Debug for PhaseId {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        // The transparent chain PhaseId -> Uint<5> -> Bits<5, Warm, Unsigned> -> u8
+        // is layout-equivalent end to end (every layer is repr(transparent)).
+        // Pending the arvo Debug substrate addition (workspace follow-up), this is
+        // the dogfooded projection door. lint:allow(no-bare-numeric) reason: rare
+        // legitimate boundary per no-bare-primitives rule; tracked: arvo Debug round.
+        let raw: u8 = unsafe { core::mem::transmute_copy(self) }; // lint:allow(no-bare-numeric) reason: arvo Debug substrate gap; tracked: #428
+        write!(f, "PhaseId({})", raw)
+    }
+}
+
+impl PhaseId {
+    /// Zero-valued default.
+    pub const ZERO: Self = Self(<Uint<5> as Identity>::ZERO);
+
+    /// Typed-const constructor for non-zero indices.
+    pub const fn from_constant<const C: USize>() -> Self {
+        Self(<Uint<5> as FromConstant>::from_constant::<C>())
+    }
+}
+
+impl Default for PhaseId {
+    fn default() -> Self {
+        Self::ZERO
+    }
+}
 
 /// `TrunkId` newtype carrying the plan-stage-assigned trunk index.
 /// Topic 3 axis B.
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
-pub struct TrunkId(pub USize);
+///
+/// Bit budget 6: trunks per phase are fewer than fibers; 64 is
+/// generous for any realistic plan.
+#[derive(Copy, Clone, PartialEq, Eq)]
+#[repr(transparent)]
+pub struct TrunkId(pub Uint<6>);
 
-/// `PhaseId` newtype carrying the plan-stage-assigned phase index.
-/// Topic 3 axis B.
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
-pub struct PhaseId(pub USize);
+impl core::fmt::Debug for TrunkId {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        // Transparent chain TrunkId -> Uint<6> -> Bits<6, Warm, Unsigned> -> u8.
+        let raw: u8 = unsafe { core::mem::transmute_copy(self) }; // lint:allow(no-bare-numeric) reason: arvo Debug substrate gap; tracked: #428
+        write!(f, "TrunkId({})", raw)
+    }
+}
+
+impl TrunkId {
+    /// Zero-valued default.
+    pub const ZERO: Self = Self(<Uint<6> as Identity>::ZERO);
+
+    /// Typed-const constructor for non-zero indices.
+    pub const fn from_constant<const C: USize>() -> Self {
+        Self(<Uint<6> as FromConstant>::from_constant::<C>())
+    }
+}
+
+impl Default for TrunkId {
+    fn default() -> Self {
+        Self::ZERO
+    }
+}
+
+/// `FiberId` newtype carrying the plan-stage-assigned fiber index.
+/// Distinct from `StoreId` / `UnitId` for type-safety at access
+/// sites. Topic 3 axis B.
+///
+/// Bit budget 7: even a 64-core plan rarely exceeds 100 fibers.
+#[derive(Copy, Clone, PartialEq, Eq)]
+#[repr(transparent)]
+pub struct FiberId(pub Uint<7>);
+
+impl core::fmt::Debug for FiberId {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        // Transparent chain FiberId -> Uint<7> -> Bits<7, Warm, Unsigned> -> u8.
+        let raw: u8 = unsafe { core::mem::transmute_copy(self) }; // lint:allow(no-bare-numeric) reason: arvo Debug substrate gap; tracked: #428
+        write!(f, "FiberId({})", raw)
+    }
+}
+
+impl FiberId {
+    /// Zero-valued default.
+    pub const ZERO: Self = Self(<Uint<7> as Identity>::ZERO);
+
+    /// Typed-const constructor for non-zero indices.
+    pub const fn from_constant<const C: USize>() -> Self {
+        Self(<Uint<7> as FromConstant>::from_constant::<C>())
+    }
+}
+
+impl Default for FiberId {
+    fn default() -> Self {
+        Self::ZERO
+    }
+}
+
+/// `UnitId` newtype carrying the plan-stage-assigned WorkUnit index.
+///
+/// Named `UnitId` (not `NodeId`) to keep engine vocabulary distinct
+/// from arvo graph-substrate vocabulary. Topic 3 axis B.
+///
+/// Bit budget 16: WU count grows into the thousands across larger
+/// consumers (viola plugin sets, loimu pipelines); 65K is the cap.
+#[derive(Copy, Clone, PartialEq, Eq)]
+#[repr(transparent)]
+pub struct UnitId(pub Uint<16>);
+
+impl core::fmt::Debug for UnitId {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        // Transparent chain UnitId -> Uint<16> -> Bits<16, Warm, Unsigned> -> u16.
+        let raw: u16 = unsafe { core::mem::transmute_copy(self) }; // lint:allow(no-bare-numeric) reason: arvo Debug substrate gap; tracked: #428
+        write!(f, "UnitId({})", raw)
+    }
+}
+
+impl UnitId {
+    /// Zero-valued default.
+    pub const ZERO: Self = Self(<Uint<16> as Identity>::ZERO);
+
+    /// Typed-const constructor for non-zero indices.
+    pub const fn from_constant<const C: USize>() -> Self {
+        Self(<Uint<16> as FromConstant>::from_constant::<C>())
+    }
+}
+
+impl Default for UnitId {
+    fn default() -> Self {
+        Self::ZERO
+    }
+}
 
 /// Per-core projection of `ExecutionPlan`. Topic 3 axis F +
 /// Topic 10 consolidation. Each core's worker walks this at
