@@ -1,4 +1,4 @@
-//! Fibers: holistically-feasible contiguous WU runs.
+//! Fibers: contiguous WU runs that fit within fiber-budget constraints.
 //!
 //! A fiber is the smallest unit of dispatch the engine schedules. It
 //! shares a morsel arena across its WUs and projects into one

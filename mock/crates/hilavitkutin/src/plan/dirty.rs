@@ -22,6 +22,16 @@ pub struct DirtyMask<const MAX_STORES: usize> { // lint:allow(no-bare-numeric) l
 }
 
 impl<const MAX_STORES: usize> DirtyMask<MAX_STORES> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    // Skeleton ceiling: the `USize` backing is one 64-bit word, so
+    // any `MAX_STORES > 64` would silently drop dirty bits past
+    // index 63. The arvo-bitmask multi-container swap (BACKLOG)
+    // lifts this; until then, fail at compile time rather than
+    // running with partial coverage.
+    const _ASSERT_FITS_IN_USIZE: () = assert!( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-context size assertion; tracked: #429
+        MAX_STORES <= 64,
+        "DirtyMask: MAX_STORES > 64 is not supported by the skeleton USize backing. Once arvo-bitmask ships multi-container Mask<W>, this assert lifts and DirtyMask widens.",
+    );
+
     /// Empty mask: nothing dirty.
     pub const fn empty() -> Self {
         Self { bits: USize::ZERO }

@@ -83,8 +83,10 @@ impl<const MAX_UNITS: usize, const MAX_EDGES: usize> DependencyGraph<MAX_UNITS, 
 
     /// End-of-row index for unit `i` (exclusive). For unit `i` not
     /// the last, this is `row_offsets[i + 1]`; for the last unit
-    /// it's `edge_count`.
-    const fn end_for(&self, i: usize) -> usize { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal indexing; rust grammar requires usize; tracked: #72
+    /// it's `edge_count`. Visible to sibling plan modules so the
+    /// 13-step chain can scan a single row without reimplementing
+    /// the boundary logic at every call site.
+    pub(super) const fn end_for(&self, i: usize) -> usize { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal indexing; rust grammar requires usize; tracked: #72
         let next = i + 1;
         let count = self.unit_count.0;
         if next < count {
