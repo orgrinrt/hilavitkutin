@@ -387,6 +387,27 @@ variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "varian
 n = 16384
 variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "variants/memcpy_unrolled/target/release/memcpy_unrolled", "variants/memcpy_naive/target/release/memcpy_naive"]
 
+[bench.fnptr_table_dispatch]
+title = "Fn-pointer table vs match dispatch for 16-variant hot loop"
+workload = "realistic"
+master_seed = 0x478a_b261_e0d9_f352
+
+[[bench.fnptr_table_dispatch.sizes]]
+n = 256
+variants = ["variants/fpt_match_16/target/release/fpt_match_16", "variants/fpt_table_16/target/release/fpt_table_16"]
+
+[[bench.fnptr_table_dispatch.sizes]]
+n = 1024
+variants = ["variants/fpt_match_16/target/release/fpt_match_16", "variants/fpt_table_16/target/release/fpt_table_16"]
+
+[[bench.fnptr_table_dispatch.sizes]]
+n = 4096
+variants = ["variants/fpt_match_16/target/release/fpt_match_16", "variants/fpt_table_16/target/release/fpt_table_16"]
+
+[[bench.fnptr_table_dispatch.sizes]]
+n = 16384
+variants = ["variants/fpt_match_16/target/release/fpt_match_16", "variants/fpt_table_16/target/release/fpt_table_16"]
+
 [bench.minmax_strategy]
 title = "Min/max: u64::min intrinsic vs if/else branch vs branchless bit trick"
 workload = "realistic"
