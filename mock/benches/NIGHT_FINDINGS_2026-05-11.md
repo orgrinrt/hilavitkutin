@@ -660,6 +660,43 @@ Caveats:
 - aarch64 specific. x86_64 ROR has similar const/variable shape; the dep-chain story would carry over.
 - The bench's `k = ((acc >> 56) & 0x3F).max(1)` ensures k is in [1, 63]; rotate_left(0) is a no-op LLVM might elide.
 
+## Shift amount origin (`shift_amount_origin`) — autovectorization threshold
+
+Three shift-amount provenance strategies for a per-word XOR-shift reduction:
+
+- `shr_const`: `v >> 13` with 13 const. Lowers to immediate-form LSR.
+- `shr_loop_invariant`: shift amount loaded once via `#[inline(never)]` opaque getter, reused across all iterations. Lowers to register-form LSR with the amount in a register held across the loop.
+- `shr_per_iter`: shift amount derived from THIS iteration's input byte (no dep on previous iteration). Per-iteration independent variable amount.
+
+Algo-only medians:
+
+| N      | shr_const | shr_loop_invariant   | shr_per_iter        |
+|--------|-----------|----------------------|---------------------|
+| 256    | 1 ns      | 2 ns (+100%)         | 7 ns (+517%)        |
+| 1024   | 5 ns      | 6 ns (+16%)          | 62 ns (+1150%)      |
+| 4096   | 67 ns     | 70 ns (+4.3%)        | 195 ns (+193%)      |
+| 16384  | 196 ns    | 210 ns (+3.4%)       | 680 ns (+247%)      |
+
+Findings:
+
+- **The const-shift variant is MUCH faster than instruction-count analysis would predict**: 196ns for 2048 shifts at N=16384 = 0.1 ns/word. At ~3 GHz that's <1 cycle per word, which only NEON SIMD lanes can deliver. **LLVM auto-vectorized the const-shift loop into NEON** (vld1q + ushr + veor + vst1q chain), processing 2 u64 lanes per cycle.
+- **`shr_loop_invariant` matches `shr_const` at large N** (only 3-4% slower). LLVM kept the loop-invariant shift amount in a register and STILL vectorized the loop, because a single shift amount across all lanes is what NEON USHR-by-register expects. Loop-invariant runtime shifts get autovec.
+- **`shr_per_iter` is 2-12x slower** than const at every N. Per-iteration variable amounts block autovec because NEON can't accept a different shift amount per lane in the same vector instruction. The variant falls back to scalar code.
+- The dep-chain hypothesis from rotate_strategy is **partially refuted**: even WITHOUT a dep chain (this bench's shift amount comes from the same iteration's input, not the previous step's), per-iteration variable amounts still cost ~3x. The cause is loss of autovec, not dep chain length.
+
+Implications for design:
+
+- **arvo bit ops with const shifts get NEON autovec for free**. Consumer code calling `bits.shr::<13>()` (const-generic shift) gets the same lowering as raw `v >> 13` — fully vectorized at no cost.
+- **Loop-invariant Strategy-derived shifts also vectorize**. If the arvo strategy markers expose a shift amount that's known at builder time (Strategy-tag picks a config-time constant), the runtime loop pays only a 3-4% tax over const for the register-load. This is essentially free.
+- **Per-record-derived shifts (e.g., SipHash data-dependent rotation amount, or `arvo-bitmask` Mask iteration with the position read from the bitmap) lose autovec**. The previously-observed 3x rotate cost is partly dep-chain (rotate_strategy variant) and partly loss-of-autovec (this bench's per-iter variant). Both cases lose to the const path.
+- **Topic 7 morsel-loop**: if a consumer WorkUnit wants the inner loop to autovec, the morsel-step operations should use const-amount shifts where possible. Strategy-derived runtime constants (loop-invariant) are also fine. Per-record-derived amounts block vectorization.
+
+Caveats:
+
+- aarch64 NEON. x86_64 AVX/SSE has similar vectorization constraints; loop-invariant variable shift is fine, per-lane variable shift requires VPSRLVQ (AVX2+) which not all targets have.
+- The bench uses uniform-random input. Pathological patterns where the per-iteration shift amount is e.g. monotonically increasing might surface different LLVM autovec heuristics.
+- LLVM's autovec recognises this specific loop shape. More complex inner-loop bodies may not autovec even with const shifts; the autovec discount is conditional on the body's other operations being vectorizable.
+
 ## Cross-references
 
 - `mock/benches/dep_graph_csr_9_n*_findings.md`
