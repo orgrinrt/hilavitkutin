@@ -338,6 +338,35 @@ Caveats:
 - aarch64 only. x86_64 udiv on modern Intel is faster (~10 cycles), so the var-vs-npow2 gap could narrow. The pow2-vs-anything-else gap is a fundamental ISA property: AND is always one cycle.
 - The pow2 const lowering also benefits from `acc &= 63` being free-of-flags-clobber and pipelining; a complex modulo expression involving multiple wrapped indices would compound the win further.
 
+## Load alignment (`load_alignment`) — read-path alignment cost on aarch64
+
+Three load strategies over an FNV1a hash loop reading N bytes as N/8 u64 words:
+
+- `load_aligned`: `*const u64` cast from `*const u8`, deref directly. Assumes alignment (UB in Rust if violated; aarch64 ISA tolerates it).
+- `load_unaligned`: `core::ptr::read_unaligned::<u64>(p)`. LLVM emits the unaligned-load codegen path explicitly.
+- `load_byte_pack`: read eight u8s then `u64::from_le_bytes`. LLVM may recognise this and reduce back to a single u64 load.
+
+Algo-only medians:
+
+| N      | aligned    | unaligned          | byte_pack          |
+|--------|------------|--------------------|--------------------|
+| 256    | 16 ns      | 17 ns (no sig)     | 17 ns (no sig)     |
+| 1024   | 110 ns     | 116 ns (+6.4%, YES)| 114 ns (+2.3%, YES)|
+| 4096   | 606 ns     | 603 ns (no sig)    | 609 ns (no sig)    |
+| 16384  | 2596 ns    | 2592 ns (no sig)   | 2580 ns (no sig)   |
+
+Findings:
+
+- **aarch64 makes alignment strategy effectively free for sequential u64 reads** at every cache-residency level tested. The N=1024 signal (6.4% / 2.3% slowdowns) is small enough to be cache / pipeline noise rather than a fundamental load-instruction cost difference; at N=4096 and N=16384 the gap collapses to no-significant-difference.
+- **`u64::from_le_bytes([b0..b7])` is recognised by LLVM** as a u64 load on aarch64 and produces equivalent codegen to the direct ptr cast at non-tiny sizes. This is the safe-Rust path consumer code can use without `unsafe`, and there is no measurable cost.
+- **Validates that the per-fiber cache-line invariant** (Topic 3 M3 inline metrics, write-only-by-owning-core-then-read-after-phase-barrier) is **about write coherence and false-sharing avoidance**, NOT about read-path throughput. Per-record reads in the morsel loop can use whichever alignment shape is most ergonomic.
+- The implication for design: no need to force `#[repr(align(8))]` on column-record types just to make reads faster. Alignment in the design matters for atomic operations and for cache-line ownership boundaries; the bench confirms it doesn't matter for read throughput.
+
+Caveats:
+
+- aarch64 only. x86_64 has even better tolerance for unaligned loads (cross-cache-line splits aside). The result generalises, but the size of the gap may differ by ISA.
+- The bench reads u64 words. Larger NEON loads (`vld1q_u64`, `LDR Q`) have stricter alignment requirements at the hardware level (some only documented to work aligned). A SIMD-load-alignment bench is a separate investigation.
+
 ## Cross-references
 
 - `mock/benches/dep_graph_csr_9_n*_findings.md`

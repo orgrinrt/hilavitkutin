@@ -387,6 +387,27 @@ variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "varian
 n = 16384
 variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "variants/memcpy_unrolled/target/release/memcpy_unrolled", "variants/memcpy_naive/target/release/memcpy_naive"]
 
+[bench.load_alignment]
+title = "Load alignment strategy: aligned ptr cast vs read_unaligned vs from_le_bytes pack"
+workload = "realistic"
+master_seed = 0x2c8a_f491_06b7_ed53
+
+[[bench.load_alignment.sizes]]
+n = 256
+variants = ["variants/load_aligned/target/release/load_aligned", "variants/load_unaligned/target/release/load_unaligned", "variants/load_byte_pack/target/release/load_byte_pack"]
+
+[[bench.load_alignment.sizes]]
+n = 1024
+variants = ["variants/load_aligned/target/release/load_aligned", "variants/load_unaligned/target/release/load_unaligned", "variants/load_byte_pack/target/release/load_byte_pack"]
+
+[[bench.load_alignment.sizes]]
+n = 4096
+variants = ["variants/load_aligned/target/release/load_aligned", "variants/load_unaligned/target/release/load_unaligned", "variants/load_byte_pack/target/release/load_byte_pack"]
+
+[[bench.load_alignment.sizes]]
+n = 16384
+variants = ["variants/load_aligned/target/release/load_aligned", "variants/load_unaligned/target/release/load_unaligned", "variants/load_byte_pack/target/release/load_byte_pack"]
+
 [bench.modulo_strategy]
 title = "Modulo strategy: const pow2 (AND mask) vs const non-pow2 (magic mul) vs opaque divisor (full udiv)"
 workload = "realistic"
