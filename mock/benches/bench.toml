@@ -387,6 +387,27 @@ variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "varian
 n = 16384
 variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "variants/memcpy_unrolled/target/release/memcpy_unrolled", "variants/memcpy_naive/target/release/memcpy_naive"]
 
+[bench.branch_predictability]
+title = "Branch predictability: skewed-rare vs balanced 50/50 vs skewed-common"
+workload = "realistic"
+master_seed = 0x1b41_e7c3_5fa2_8d06
+
+[[bench.branch_predictability.sizes]]
+n = 256
+variants = ["variants/bp_skew_high/target/release/bp_skew_high", "variants/bp_balanced/target/release/bp_balanced", "variants/bp_skew_low/target/release/bp_skew_low"]
+
+[[bench.branch_predictability.sizes]]
+n = 1024
+variants = ["variants/bp_skew_high/target/release/bp_skew_high", "variants/bp_balanced/target/release/bp_balanced", "variants/bp_skew_low/target/release/bp_skew_low"]
+
+[[bench.branch_predictability.sizes]]
+n = 4096
+variants = ["variants/bp_skew_high/target/release/bp_skew_high", "variants/bp_balanced/target/release/bp_balanced", "variants/bp_skew_low/target/release/bp_skew_low"]
+
+[[bench.branch_predictability.sizes]]
+n = 16384
+variants = ["variants/bp_skew_high/target/release/bp_skew_high", "variants/bp_balanced/target/release/bp_balanced", "variants/bp_skew_low/target/release/bp_skew_low"]
+
 [bench.bounds_check]
 title = "Bounds-check elision: iter() vs explicit index vs get_unchecked"
 workload = "realistic"
