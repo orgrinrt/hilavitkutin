@@ -131,6 +131,7 @@ pub trait HasClock {
 // Topic 6 axes A / G / I / J / K + Topic 3 amendment M11.
 // ---------------------------------------------------------------------
 
+use core::marker::PhantomData;
 use core::ptr::NonNull;
 use core::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicUsize};
 
@@ -166,10 +167,14 @@ use core::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicUsize};
 /// `progress_slots` (Topic 4 axis E): non-owning pointer into the
 /// plan-stage scratch arena's `[AtomicUsize; MAX_FIBERS]` region.
 /// Codegen emits Release stores against `progress_slots.add(slot_idx)`.
-/// Lifetime tied to the `Scheduler::run()` frame; the pointer is valid
-/// as long as the arena exists.
+/// The `'arena` lifetime parameter ties the borrow to the scratch
+/// arena that owns the `[AtomicUsize; MAX_FIBERS]` storage. Any
+/// `&'_ PoolFrame<'arena, ...>` borrow is constrained by `'arena`;
+/// dropping the arena before workers stop is a borrow-checker error
+/// rather than a use-after-free at runtime. The `PhantomData` field
+/// expresses the relationship without changing the runtime layout.
 #[repr(C, align(64))]
-pub struct PoolFrame<const MAX_CORES: usize, const MAX_PHASES: usize> {
+pub struct PoolFrame<'arena, const MAX_CORES: usize, const MAX_PHASES: usize> {
     /// Shutdown signal. Set by `Scheduler::Drop`. Workers Relaxed-load.
     pub shutdown: AtomicBool,
 
@@ -193,19 +198,30 @@ pub struct PoolFrame<const MAX_CORES: usize, const MAX_PHASES: usize> {
 
     /// Base pointer to `[AtomicUsize; MAX_FIBERS]` in plan-stage
     /// scratch arena. Codegen emits Release stores against
-    /// `progress_slots.add(slot_idx)`. Non-owning; arena lifetime is
-    /// tied to `Scheduler::run()` frame.
+    /// `progress_slots.add(slot_idx)`. Non-owning; the `'arena`
+    /// lifetime on the enclosing struct ties this borrow to the
+    /// arena's allocation.
     pub progress_slots: NonNull<AtomicUsize>,
 
     /// Number of valid progress slots starting at `progress_slots`.
     pub progress_slot_count: USize,
+
+    /// Borrow tracker tying the `progress_slots` pointer to the arena
+    /// it indexes into. Zero-sized at runtime; load-bearing at the
+    /// type level so dropping the arena while a worker holds a
+    /// `&PoolFrame<'arena>` is a compile-time error.
+    pub _arena: PhantomData<&'arena [AtomicUsize]>,
 }
 
-// SAFETY: `NonNull<AtomicUsize>` is Send/Sync-safe under the lifetime
-// contract: workers receive `Pin<&'frame PoolFrame>` where the 'frame
-// outlives every worker's mainloop call.
-unsafe impl<const C: usize, const P: usize> Send for PoolFrame<C, P> {}
-unsafe impl<const C: usize, const P: usize> Sync for PoolFrame<C, P> {}
+// SAFETY: `NonNull<AtomicUsize>` carries no Send/Sync auto-impl on its
+// own. The `'arena` lifetime on `PoolFrame` ties the borrow to the
+// scratch arena's allocation; workers receive `Pin<&'frame PoolFrame<'arena, ...>>`
+// borrows that the borrow-checker constrains to `'arena: 'frame`.
+// Under those bounds the `AtomicUsize` slice is shared-safe (its own
+// methods carry the synchronisation) and the pointer is valid for as
+// long as any worker holds the borrow.
+unsafe impl<'arena, const C: usize, const P: usize> Send for PoolFrame<'arena, C, P> {}
+unsafe impl<'arena, const C: usize, const P: usize> Sync for PoolFrame<'arena, C, P> {}
 
 /// Per-CoreClass wake strategy. Topic 6 axis K.
 ///
@@ -274,9 +290,14 @@ impl Default for WakeStrategy {
 pub trait Executor: crate::sealed::Sealed {
     /// Per-worker mainloop. Spawned once per core at
     /// `ThreadPool::build()` time; runs until `pool.shutdown` is set.
-    fn run<'frame, const C: usize, const P: usize>(
+    ///
+    /// `'arena` is the scratch arena's lifetime (where the
+    /// `progress_slots` storage lives); `'frame` is the borrow's
+    /// lifetime within this `run` call. The borrow checker enforces
+    /// `'arena: 'frame` from the `PoolFrame<'arena, ...>` instantiation.
+    fn run<'frame, 'arena, const C: usize, const P: usize>(
         &self,
-        pool: core::pin::Pin<&'frame PoolFrame<C, P>>,
+        pool: core::pin::Pin<&'frame PoolFrame<'arena, C, P>>,
         core_id: USize,
         wake_strategy: &WakeStrategy,
     ) -> notko::Outcome<(), ExecutorError>;
