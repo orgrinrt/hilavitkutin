@@ -387,6 +387,27 @@ variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "varian
 n = 16384
 variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "variants/memcpy_unrolled/target/release/memcpy_unrolled", "variants/memcpy_naive/target/release/memcpy_naive"]
 
+[bench.shift_amount_origin]
+title = "Shift amount: const vs loop-invariant runtime vs per-iter independent"
+workload = "realistic"
+master_seed = 0x6a92_bf08_e314_750d
+
+[[bench.shift_amount_origin.sizes]]
+n = 256
+variants = ["variants/shr_const/target/release/shr_const", "variants/shr_loop_invariant/target/release/shr_loop_invariant", "variants/shr_per_iter/target/release/shr_per_iter"]
+
+[[bench.shift_amount_origin.sizes]]
+n = 1024
+variants = ["variants/shr_const/target/release/shr_const", "variants/shr_loop_invariant/target/release/shr_loop_invariant", "variants/shr_per_iter/target/release/shr_per_iter"]
+
+[[bench.shift_amount_origin.sizes]]
+n = 4096
+variants = ["variants/shr_const/target/release/shr_const", "variants/shr_loop_invariant/target/release/shr_loop_invariant", "variants/shr_per_iter/target/release/shr_per_iter"]
+
+[[bench.shift_amount_origin.sizes]]
+n = 16384
+variants = ["variants/shr_const/target/release/shr_const", "variants/shr_loop_invariant/target/release/shr_loop_invariant", "variants/shr_per_iter/target/release/shr_per_iter"]
+
 [bench.rotate_strategy]
 title = "Rotate strategy: intrinsic const vs manual shifts vs variable amount"
 workload = "realistic"
