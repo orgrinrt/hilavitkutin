@@ -19,6 +19,7 @@ use arvo::USize;
 
 pub mod access;
 pub mod column;
+pub mod core_program;
 pub mod dirty;
 pub mod fiber;
 pub mod graph;

@@ -217,6 +217,7 @@ impl Default for UnitId {
 /// out in the plan-stage scratch arena). Codegen (`Pass 3`) emits
 /// a per-core closure parameterised by const-known fields of this
 /// program.
+#[derive(Copy, Clone, Debug)]
 pub struct CoreProgram<
     const MAX_PHASES_PER_CORE: usize,
     const MAX_TRUNKS_PER_CORE: usize,
@@ -249,7 +250,42 @@ pub struct CoreProgram<
     pub phase_arrived_offset: USize,
 }
 
+impl<
+        const MAX_PHASES_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+        const MAX_TRUNKS_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+        const MAX_FIBERS_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    > CoreProgram<MAX_PHASES_PER_CORE, MAX_TRUNKS_PER_CORE, MAX_FIBERS_PER_CORE>
+{
+    /// All-zero program. Used as the array-init default before
+    /// `synthesise_core_programs` populates real values.
+    pub const fn new() -> Self {
+        Self {
+            phases: [PhaseEntry::new(); MAX_PHASES_PER_CORE],
+            phase_count: USize::ZERO,
+            trunks: [TrunkId::ZERO; MAX_TRUNKS_PER_CORE],
+            trunk_count: USize::ZERO,
+            fiber_ranges: [(FiberId::ZERO, RecordRange::Full); MAX_FIBERS_PER_CORE],
+            range_count: USize::ZERO,
+            estimated_icache_bytes: USize::ZERO,
+            progress_slot_idx: USize::ZERO,
+            phase_arrived_offset: USize::ZERO,
+        }
+    }
+}
+
+impl<
+        const MAX_PHASES_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+        const MAX_TRUNKS_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+        const MAX_FIBERS_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    > Default for CoreProgram<MAX_PHASES_PER_CORE, MAX_TRUNKS_PER_CORE, MAX_FIBERS_PER_CORE>
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Per-phase entry on a `CoreProgram`. Topic 3 axis F.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct PhaseEntry {
     pub phase: PhaseId,
     /// What this core does at the phase barrier: wait, signal, or
@@ -257,7 +293,21 @@ pub struct PhaseEntry {
     pub sync_role: SyncRole,
 }
 
+impl PhaseEntry {
+    /// Default-initialised entry; phase = ZERO, role = `WaitAndSignal`.
+    pub const fn new() -> Self {
+        Self { phase: PhaseId::ZERO, sync_role: SyncRole::WaitAndSignal }
+    }
+}
+
+impl Default for PhaseEntry {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Phase-sync role for a core at a given phase. Topic 3 axis F.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[non_exhaustive]
 pub enum SyncRole {
     /// This core waits for the producer counter.
@@ -272,6 +322,7 @@ pub enum SyncRole {
 /// convergence. Exactly three variants; no `Custom` fallback per the
 /// Topic 3 axis F lock (consumer needing a different range shape
 /// triggers a deprecation-replacement round on this enum).
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[non_exhaustive]
 pub enum RecordRange {
     /// Full range `0..record_count`.
