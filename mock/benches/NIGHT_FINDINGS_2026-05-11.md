@@ -551,6 +551,42 @@ Caveats:
 - A larger workload (e.g., N=65536+ words or a bench shape that exposes the ctz work more directly without surrounding-workload masking) might separate the variants. Park as follow-up bench-infrastructure task.
 - The bench framework's `algo` window is too short to time ctz when the input bytes are uniformly random (most words have a low trailing-zero count, so the work-per-word is minimal). A pathological input distribution (mostly-zero words) would give the loop variant more work to do and surface its O(tz) shape.
 
+## Fold strategy (`fold_strategy`) — ILP cost in reduction-shaped WorkUnits
+
+Three fold-shape strategies for an FNV1a-style reduction over N/8 u64 words:
+
+- `fold_sequential`: single accumulator, long dep chain. Each multiply waits for the previous.
+- `fold_paired`: two interleaved accumulators (even/odd words), final XOR combine.
+- `fold_quad`: four interleaved accumulators (mod-4 words), final XOR combine.
+
+Algo-only medians:
+
+| N      | sequential        | paired (base) | quad              |
+|--------|-------------------|---------------|-------------------|
+| 256    | 16 ns (no sig)    | 16 ns         | 17 ns (no sig)    |
+| 1024   | 110 ns (+58.5%)   | 70 ns         | 55 ns (-23.2%)    |
+| 4096   | 611 ns (+88.6%)   | 318 ns        | 186 ns (-41.7%)   |
+| 16384  | 2690 ns (+91.1%)  | 1364 ns       | 708 ns (-48.0%)   |
+
+Findings:
+
+- **Quad-way ILP delivers ~3.8x speedup over sequential** at N=16384, ~3.3x at N=4096. The paired variant sits at 2x speedup over sequential. The throughput ratio matches what aarch64's MUL throughput (1/cycle) vs latency (~3 cycles) would predict for breaking the dep chain.
+- **LLVM does NOT auto-extract ILP from the sequential pattern**. If it did, sequential would match paired or quad. The sequential single-accumulator fold stays latency-bound; LLVM treats the dep chain as semantically required and respects it.
+- At N=256 the work is too small to expose pipeline filling; all three variants land at noise. The signal kicks in at N=1024 and grows with N as the loop body dominates.
+- **The largest design-relevant finding of this overnight bench session**. Has direct implications for arvo reduction kernels and Topic 7 morsel-loop shape.
+
+Implications for design:
+
+- **Reduction-shaped arvo kernels MUST break dep chains explicitly** if they want throughput. A naive `acc.fma(x[i], y[i])` loop over a column pays a 2-4x latency tax. The arvo strategy markers should expose this: `Hot` strategy reduction kernels should default to 4-way interleaved accumulators where the math permits; `Precise` strategy can keep the single-chain shape when the math requires associativity-strict order.
+- **Topic 7 morsel-loop design implication**: when a consumer WorkUnit's `execute` body reduces over the morsel records (sum, product, max, etc.), the substrate should provide a reduction primitive that breaks the chain. Hand-rolled WorkUnit reductions that use a single `let mut acc` will pay the latency tax.
+- **arvo Round 7+ follow-up**: investigate whether `arvo::traits::Fold` or similar reduction-trait should mandate (or at least suggest) interleaved-accumulator shape. Could be a deepdive or new trait family for reduction-friendly types.
+
+Caveats:
+
+- The bench uses FNV1a-shape multiply-XOR. Other reduction kernels (saturating add, max, AND, OR) have different latency/throughput shapes; pure-add reductions on aarch64 have latency ~1 cycle and the gap would be smaller. The mul-heavy case is the worst case for ILP-blind sequential folds.
+- The N=256 case shows the threshold below which loop-body work is dominated by call setup; for any morsel size in this range, ILP doesn't matter. Above ~1KB the gap grows fast.
+- Final XOR-combine of accumulators is associativity-permissive; for non-associative reductions (e.g., subtraction, division, float arithmetic without `fma_relaxed`), the interleaved shape would change semantics. Strategy markers should encode the associativity assumption.
+
 ## Cross-references
 
 - `mock/benches/dep_graph_csr_9_n*_findings.md`

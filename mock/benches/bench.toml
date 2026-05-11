@@ -387,6 +387,27 @@ variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "varian
 n = 16384
 variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "variants/memcpy_unrolled/target/release/memcpy_unrolled", "variants/memcpy_naive/target/release/memcpy_naive"]
 
+[bench.fold_strategy]
+title = "Fold ILP: sequential single-acc vs paired 2-way vs quad 4-way"
+workload = "realistic"
+master_seed = 0x239f_b805_47ae_61c2
+
+[[bench.fold_strategy.sizes]]
+n = 256
+variants = ["variants/fold_sequential/target/release/fold_sequential", "variants/fold_paired/target/release/fold_paired", "variants/fold_quad/target/release/fold_quad"]
+
+[[bench.fold_strategy.sizes]]
+n = 1024
+variants = ["variants/fold_sequential/target/release/fold_sequential", "variants/fold_paired/target/release/fold_paired", "variants/fold_quad/target/release/fold_quad"]
+
+[[bench.fold_strategy.sizes]]
+n = 4096
+variants = ["variants/fold_sequential/target/release/fold_sequential", "variants/fold_paired/target/release/fold_paired", "variants/fold_quad/target/release/fold_quad"]
+
+[[bench.fold_strategy.sizes]]
+n = 16384
+variants = ["variants/fold_sequential/target/release/fold_sequential", "variants/fold_paired/target/release/fold_paired", "variants/fold_quad/target/release/fold_quad"]
+
 [bench.bit_count_ops]
 title = "Trailing-zero count: std intrinsic vs De Bruijn lookup vs shift-loop"
 workload = "realistic"
