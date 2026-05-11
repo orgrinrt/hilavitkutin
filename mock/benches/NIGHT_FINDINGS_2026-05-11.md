@@ -490,6 +490,36 @@ Caveats:
 - The "atomic_ordering_cost" bench shows Relaxed beats Acquire/Release by 3-4x — but that bench tests a different access pattern (multiple atomics, more complex memory dependencies). The two findings are consistent: when there's actual ordering work, the barrier costs real cycles; when there's none, the barrier is free.
 - aarch64 specifically benefits from cheap atomic ops; older x86 cores or constrained-coherence targets could show different gaps. The substrate should not assume free-atomics universally.
 
+## Atomic increment strategy (`atomic_inc_strategy`) — Topic 6 axis I phase-barrier counter
+
+Three increment strategies on a single shared `AtomicU64` counter, N iterations each:
+
+- `inc_fetch_add`: `counter.fetch_add(1, Relaxed)`. Single LDADD instruction on aarch64 with FEAT_LSE.
+- `inc_cas_loop`: read + `compare_exchange_weak` loop. The "naive" shape before LSE intrinsics.
+- `inc_load_store`: separate `load(Relaxed)` + `store(v+1, Relaxed)`. Not atomic across the RMW window; in single-thread the final value is correct.
+
+Algo-only medians:
+
+| N      | inc_fetch_add     | inc_cas_loop (base) | inc_load_store     |
+|--------|-------------------|---------------------|--------------------|
+| 256    | 492 ns (-18.9%)   | 647 ns              | 0 ns (elided)      |
+| 1024   | 2088 ns (-13.2%)  | 2395 ns             | 0 ns (elided)      |
+| 4096   | 8721 ns (-11.8%)  | 9735 ns             | 0 ns (elided)      |
+| 16384  | 34314 ns (-11.3%) | 38707 ns            | 0 ns (elided)      |
+
+Findings:
+
+- **`fetch_add` beats CAS-loop by 11-19%** at every N, with the largest gap at small N (where loop overhead dominates). The aarch64 LSE `LDADD` instruction (which `fetch_add` lowers to) is meaningfully faster than the load + compare_exchange_weak pair even in single-thread non-contended code. The CAS-loop pays one extra load + one branch per increment.
+- **`inc_load_store` got optimized away by LLVM** (median 0 ns, CI [0, 0]). The separate `load + store` sequence on a non-shared atomic is statically equivalent to `store(N, Relaxed)`, and LLVM emits exactly that single store at loop exit. This is itself an informative finding: a "non-atomic-equivalent" shape lets LLVM fold the entire loop away because there's no observability constraint between iterations.
+- **Validates Topic 6 axis I** (centralised atomic counter phase barrier using fetch_add): the design's choice of `fetch_add` over a CAS-loop trait abstraction buys a real 11-19% throughput win on aarch64. Under contention this gap widens further (CAS-loop retries pile up under contention; LDADD has hardware-assisted forward progress).
+- The load_store elision result also bears on Topic 3 M3 inline metrics: the substrate cannot rely on a "naive load+store" shape if it wants the writes to actually happen. AtomicU64 with `fetch_add` or `fetch_or` etc. provides the observability the design wants; plain load+store on an atomic can be elided.
+
+Caveats:
+
+- aarch64 with FEAT_LSE (Apple Silicon, modern Cortex). Older aarch64 without LSE would lower `fetch_add` to LL/SC loop, narrowing the gap vs explicit CAS-loop (both become LL/SC). x86_64 has LOCK XADD instruction which is comparable to LSE LDADD.
+- Single-thread bench. Under multi-core contention both `fetch_add` and CAS-loop would slow down, but CAS-loop slows down more because retries pile up exponentially.
+- The load_store elision is by-design LLVM behavior under Rust's single-thread observability rules. Multi-thread access to the same atomic with these orderings would not be elided.
+
 ## Cross-references
 
 - `mock/benches/dep_graph_csr_9_n*_findings.md`

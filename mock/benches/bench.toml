@@ -387,6 +387,27 @@ variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "varian
 n = 16384
 variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "variants/memcpy_unrolled/target/release/memcpy_unrolled", "variants/memcpy_naive/target/release/memcpy_naive"]
 
+[bench.atomic_inc_strategy]
+title = "Atomic increment strategy: fetch_add vs CAS-loop vs load+store"
+workload = "realistic"
+master_seed = 0x18c4_92ea_6f3b_a570
+
+[[bench.atomic_inc_strategy.sizes]]
+n = 256
+variants = ["variants/inc_fetch_add/target/release/inc_fetch_add", "variants/inc_cas_loop/target/release/inc_cas_loop", "variants/inc_load_store/target/release/inc_load_store"]
+
+[[bench.atomic_inc_strategy.sizes]]
+n = 1024
+variants = ["variants/inc_fetch_add/target/release/inc_fetch_add", "variants/inc_cas_loop/target/release/inc_cas_loop", "variants/inc_load_store/target/release/inc_load_store"]
+
+[[bench.atomic_inc_strategy.sizes]]
+n = 4096
+variants = ["variants/inc_fetch_add/target/release/inc_fetch_add", "variants/inc_cas_loop/target/release/inc_cas_loop", "variants/inc_load_store/target/release/inc_load_store"]
+
+[[bench.atomic_inc_strategy.sizes]]
+n = 16384
+variants = ["variants/inc_fetch_add/target/release/inc_fetch_add", "variants/inc_cas_loop/target/release/inc_cas_loop", "variants/inc_load_store/target/release/inc_load_store"]
+
 [bench.atomic_vs_plain]
 title = "Accumulator typing cost: plain u64 vs AtomicU64 Relaxed vs AtomicU64 SeqCst"
 workload = "realistic"
