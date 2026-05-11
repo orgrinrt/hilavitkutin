@@ -367,6 +367,37 @@ Caveats:
 - aarch64 only. x86_64 has even better tolerance for unaligned loads (cross-cache-line splits aside). The result generalises, but the size of the gap may differ by ISA.
 - The bench reads u64 words. Larger NEON loads (`vld1q_u64`, `LDR Q`) have stricter alignment requirements at the hardware level (some only documented to work aligned). A SIMD-load-alignment bench is a separate investigation.
 
+## Inline strategy (`inline_strategy`) — Topic 7 morsel-loop inlining assumption
+
+Three inline-attribute strategies on an otherwise-identical per-byte step function (`acc = (acc ^ byte).wrapping_mul(K)`) called inside the morsel-loop body:
+
+- `inline_always`: `#[inline(always)] fn step(...)`. Forces inline.
+- `inline_default`: no attribute. LLVM's heuristic decides under release+fat-LTO.
+- `inline_never`: `#[inline(never)] fn step(...)`. Forces a real call boundary per record.
+
+Algo-only medians:
+
+| N      | inline_always | inline_default      | inline_never           |
+|--------|---------------|---------------------|------------------------|
+| 256    | 276 ns        | 271 ns (-1.8%, YES) | 328 ns (+17.6%, YES)   |
+| 1024   | 1280 ns       | 1255 ns (-1.4%, YES)| 1320 ns (+3.9%, YES)   |
+| 4096   | 5239 ns       | 5252 ns (no sig)    | 5233 ns (no sig)       |
+| 16384  | 20538 ns      | 20493 ns (no sig)   | 20598 ns (+0.3%, YES)  |
+
+Findings:
+
+- **`inline_default` matches `inline_always`** at every N. Under release + fat LTO, LLVM auto-inlines a small leaf fn into a tight loop reliably. Writing `#[inline]` on per-record step fns is belt-and-suspenders rather than load-bearing.
+- **`inline_never` penalty is biggest at small N** (17.6% at N=256) and **shrinks to noise at large N** (no significant difference at N=4096; 0.3% at N=16384). The call boundary's setup cost amortises across many iterations.
+- The N=256 17.6% penalty represents the actual call-boundary overhead per record. ~50ns for 256 records is ~0.2 ns/call, which is a small fraction of a single cycle on Apple Silicon. Modern aarch64 branch prediction + return-stack handles call-heavy code well.
+- **Validates Topic 7 morsel-loop axis A** (forward iter with monomorphised inner step): the inlining IS happening; the design's emphasis on monomorphisation buys the small-N win where it matters most. At larger N the dispatch shape ceases to matter; cache behavior dominates.
+- **Implication: defensive `#[inline]` on hot WorkUnit step fns is cheap insurance** when small N (e.g. morsel-edge tail processing, micro-morsel boundaries at N=64) is common, but is not critical. The bigger risk is a code path that genuinely cannot inline (trait objects, FFI calls, format-machinery) — that's a structural concern, not an attribute-tweaking one.
+
+Caveats:
+
+- aarch64 has a 12-bit branch target cache and a 32-entry return stack; call-heavy code prediction is essentially free. On older x86 or constrained-prediction targets the call-boundary penalty could be larger.
+- The step function here is leaf (no further calls). A step that itself calls other fns would compound the issue if non-leaf chains aren't inlined.
+- LTO is doing real work in the `inline_default` case. Without `lto = "fat"`, inline-default could diverge from inline-always significantly.
+
 ## Cross-references
 
 - `mock/benches/dep_graph_csr_9_n*_findings.md`

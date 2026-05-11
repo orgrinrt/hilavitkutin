@@ -387,6 +387,27 @@ variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "varian
 n = 16384
 variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "variants/memcpy_unrolled/target/release/memcpy_unrolled", "variants/memcpy_naive/target/release/memcpy_naive"]
 
+[bench.inline_strategy]
+title = "Inline strategy: #[inline(always)] vs default vs #[inline(never)] per-record step"
+workload = "realistic"
+master_seed = 0x39f8_47b2_c651_de80
+
+[[bench.inline_strategy.sizes]]
+n = 256
+variants = ["variants/inline_always/target/release/inline_always", "variants/inline_default/target/release/inline_default", "variants/inline_never/target/release/inline_never"]
+
+[[bench.inline_strategy.sizes]]
+n = 1024
+variants = ["variants/inline_always/target/release/inline_always", "variants/inline_default/target/release/inline_default", "variants/inline_never/target/release/inline_never"]
+
+[[bench.inline_strategy.sizes]]
+n = 4096
+variants = ["variants/inline_always/target/release/inline_always", "variants/inline_default/target/release/inline_default", "variants/inline_never/target/release/inline_never"]
+
+[[bench.inline_strategy.sizes]]
+n = 16384
+variants = ["variants/inline_always/target/release/inline_always", "variants/inline_default/target/release/inline_default", "variants/inline_never/target/release/inline_never"]
+
 [bench.load_alignment]
 title = "Load alignment strategy: aligned ptr cast vs read_unaligned vs from_le_bytes pack"
 workload = "realistic"
