@@ -387,6 +387,27 @@ variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "varian
 n = 16384
 variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "variants/memcpy_unrolled/target/release/memcpy_unrolled", "variants/memcpy_naive/target/release/memcpy_naive"]
 
+[bench.match_arm_count]
+title = "Match arm count: 2 vs 8 vs 64 — jump-table dispatch scaling"
+workload = "realistic"
+master_seed = 0x3c87_15d9_a4b6_82f1
+
+[[bench.match_arm_count.sizes]]
+n = 256
+variants = ["variants/match_2_arms/target/release/match_2_arms", "variants/match_8_arms/target/release/match_8_arms", "variants/match_64_arms/target/release/match_64_arms"]
+
+[[bench.match_arm_count.sizes]]
+n = 1024
+variants = ["variants/match_2_arms/target/release/match_2_arms", "variants/match_8_arms/target/release/match_8_arms", "variants/match_64_arms/target/release/match_64_arms"]
+
+[[bench.match_arm_count.sizes]]
+n = 4096
+variants = ["variants/match_2_arms/target/release/match_2_arms", "variants/match_8_arms/target/release/match_8_arms", "variants/match_64_arms/target/release/match_64_arms"]
+
+[[bench.match_arm_count.sizes]]
+n = 16384
+variants = ["variants/match_2_arms/target/release/match_2_arms", "variants/match_8_arms/target/release/match_8_arms", "variants/match_64_arms/target/release/match_64_arms"]
+
 [bench.shift_amount_origin]
 title = "Shift amount: const vs loop-invariant runtime vs per-iter independent"
 workload = "realistic"

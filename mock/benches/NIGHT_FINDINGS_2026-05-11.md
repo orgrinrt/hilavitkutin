@@ -697,6 +697,43 @@ Caveats:
 - The bench uses uniform-random input. Pathological patterns where the per-iteration shift amount is e.g. monotonically increasing might surface different LLVM autovec heuristics.
 - LLVM's autovec recognises this specific loop shape. More complex inner-loop bodies may not autovec even with const shifts; the autovec discount is conditional on the body's other operations being vectorizable.
 
+## Match arm count (`match_arm_count`) — enum dispatch scaling
+
+Three `match` arm counts on a u64-discriminant inner loop, each arm body distinct (to defeat LLVM arm-folding):
+
+- `match_2_arms`: `match v & 1 { 0 => ..., _ => ... }`. Simple if/else lowering.
+- `match_8_arms`: 8 arms on `v & 7`. Jump-table lowering (ADR + LDR + BR).
+- `match_64_arms`: 64 arms on `v & 63`. Larger jump table; ~512 byte table + 64 distinct arm bodies.
+
+Algo-only medians:
+
+| N      | match_2_arms (base) | match_8_arms        | match_64_arms        |
+|--------|---------------------|---------------------|----------------------|
+| 256    | 28 ns               | 97 ns (+254%)       | 73 ns (+164%)        |
+| 1024   | 98 ns               | 167 ns (+67%)       | 236 ns (+139%)       |
+| 4096   | 382 ns              | 675 ns (+78%)       | 937 ns (+150%)       |
+| 16384  | 1394 ns             | 2558 ns (+84%)      | 10150 ns (+628%)     |
+
+Findings:
+
+- **2-arm match is consistently cheapest** at every N. Lowers to a single conditional branch.
+- **8-arm match is ~70-80% slower at N≥1024**. Jump-table dispatch adds roughly one cycle plus per-arm body work; the relative slowdown is stable as N grows.
+- **64-arm match shows a sharp icache cliff at N=16384** (+628% vs base, where at N=4096 it was +150%). The 64 distinct arm bodies plus the 512-byte jump table no longer fit cleanly in L1i at high call density, and the loop suffers from icache eviction between iterations.
+- **The icache cliff is not visible from the instruction-count analysis** — the jump-table dispatch itself is constant-time regardless of arm count. The cliff comes from the combined code-size pressure of the many distinct arm bodies.
+
+Implications for design:
+
+- **Plan-stage enum dispatch should stay small (≤ 8 variants)** to avoid the icache cliff. The Stage / Phase / WorkUnitKind enums in the scheduler currently fit this constraint; the design should preserve it.
+- **For larger discriminant spaces, prefer table-of-fn-pointers dispatch** over giant matches. A fn-pointer table keeps each handler in its own function (icache locality), invoked via a single indirect branch through the table.
+- **If a future arvo / hilavitkutin enum has to grow past ~12 variants in hot dispatch**, refactor the dispatch site from `match { ... }` to a fn-pointer table or to a polymorphic trait-object dispatch. The dispatch_static / dispatch_dynamic benches show trait dispatch is competitive with direct calls under fat LTO.
+- **Match-shape design rule**: for tight inner loops over a discriminant, keep variants ≤ 8 or refactor to table dispatch. Cold-path / one-shot dispatch (plan construction time, not steady-state) is unaffected.
+
+Caveats:
+
+- The 64-arm bodies are intentionally varied to defeat LLVM's arm-folding. A real 64-variant enum with mostly-similar arms would compress better in icache.
+- aarch64-specific L1i sizing (Apple Silicon ~192KB L1i per P-core). Smaller-L1i x86 cores would hit the cliff at smaller arm counts.
+- The bench workload is uniform-random; predictable patterns would change predictor behaviour at the jump table.
+
 ## Cross-references
 
 - `mock/benches/dep_graph_csr_9_n*_findings.md`
