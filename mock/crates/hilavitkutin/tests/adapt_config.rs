@@ -7,17 +7,22 @@ use hilavitkutin::strategy::PhaseStrategy;
 
 #[test]
 fn adapt_config_new_records_all_fields() {
-    let c = AdaptConfig::new(PhaseId(3), USize(1024), USize(150), USize(8192)); // lint:allow(no-bare-numeric) reason: tuning literals; tracked: #399
-    assert_eq!(c.phase_id, PhaseId(3)); // lint:allow(no-bare-numeric) reason: phase id literal; tracked: #399
-    assert_eq!(c.max_fuse_threshold, USize(1024)); // lint:allow(no-bare-numeric) reason: roundtrip check; tracked: #399
-    assert_eq!(c.morsel_size_multiplier, USize(150)); // lint:allow(no-bare-numeric) reason: roundtrip check; tracked: #399
-    assert_eq!(c.split_threshold, USize(8192)); // lint:allow(no-bare-numeric) reason: roundtrip check; tracked: #399
+    let c = AdaptConfig::new(
+        PhaseId::from_constant::<{ USize(3) }>(), // lint:allow(no-bare-numeric) reason: phase id literal; tracked: #426
+        USize(1024),                              // lint:allow(no-bare-numeric) reason: tuning literal; tracked: #426
+        USize(150),                               // lint:allow(no-bare-numeric) reason: tuning literal; tracked: #426
+        USize(8192),                              // lint:allow(no-bare-numeric) reason: tuning literal; tracked: #426
+    );
+    assert_eq!(c.phase_id, PhaseId::from_constant::<{ USize(3) }>()); // lint:allow(no-bare-numeric) reason: roundtrip check; tracked: #426
+    assert_eq!(c.max_fuse_threshold, USize(1024)); // lint:allow(no-bare-numeric) reason: roundtrip check; tracked: #426
+    assert_eq!(c.morsel_size_multiplier, USize(150)); // lint:allow(no-bare-numeric) reason: roundtrip check; tracked: #426
+    assert_eq!(c.split_threshold, USize(8192)); // lint:allow(no-bare-numeric) reason: roundtrip check; tracked: #426
 }
 
 #[test]
 fn adapt_config_default_is_zero() {
-    let c = AdaptConfig::new(PhaseId(0), USize::ZERO, USize::ZERO, USize::ZERO); // lint:allow(no-bare-numeric) reason: default constructor; tracked: #399
-    assert_eq!(c.phase_id, PhaseId(0)); // lint:allow(no-bare-numeric) reason: phase id literal; tracked: #399
+    let c = AdaptConfig::new(PhaseId::ZERO, USize::ZERO, USize::ZERO, USize::ZERO);
+    assert_eq!(c.phase_id, PhaseId::ZERO);
     assert_eq!(c.max_fuse_threshold, USize::ZERO);
     assert_eq!(c.morsel_size_multiplier, USize::ZERO);
     assert_eq!(c.split_threshold, USize::ZERO);
@@ -25,9 +30,6 @@ fn adapt_config_default_is_zero() {
 
 #[test]
 fn adapt_mode_is_phase_strategy_alias() {
-    // AdaptMode is a type alias for PhaseStrategy: the two
-    // should be interchangeable. Spell each variant through
-    // both paths and compare.
     let a: AdaptMode = AdaptMode::MaxFuse;
     let b: PhaseStrategy = PhaseStrategy::MaxFuse;
     assert_eq!(a, b);
@@ -50,7 +52,7 @@ fn adapt_metrics_default_is_zero() {
     let m = AdaptMetrics::new();
     assert_eq!(m.cache_miss_rate, USize::ZERO);
     assert_eq!(m.branch_miss_rate, USize::ZERO);
-    assert_eq!(m.phase_completion_time_ns.to_raw(), 0); // lint:allow(no-bare-numeric) reason: nanos zero raw literal; tracked: #399
+    assert_eq!(m.phase_completion_time_ns.to_raw(), 0); // lint:allow(no-bare-numeric) reason: nanos zero raw literal; tracked: #426
 }
 
 #[test]
@@ -58,12 +60,9 @@ fn adapt_metrics_new_is_zero() {
     let m = AdaptMetrics::new();
     assert_eq!(m.cache_miss_rate, USize::ZERO);
     assert_eq!(m.branch_miss_rate, USize::ZERO);
-    assert_eq!(m.phase_completion_time_ns.to_raw(), 0); // lint:allow(no-bare-numeric) reason: nanos zero raw literal; tracked: #399
+    assert_eq!(m.phase_completion_time_ns.to_raw(), 0); // lint:allow(no-bare-numeric) reason: nanos zero raw literal; tracked: #426
 }
 
-// update_adapt is `todo!()` this round: don't call it, just
-// verify the signature compiles by taking a function pointer to
-// it with an explicit const param.
 #[test]
 fn update_adapt_signature_compiles() {
     let _f: fn(&mut [AdaptConfig; 4], &AdaptMetrics) = hilavitkutin::adapt::update_adapt::<4>;

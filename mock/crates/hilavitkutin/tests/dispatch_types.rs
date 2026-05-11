@@ -48,10 +48,10 @@ fn morsel_range_default_is_empty() {
 
 #[test]
 fn sync_point_new_equality() {
-    let a = SyncPoint::new(FiberId(3), USize(128)); // lint:allow(no-bare-numeric) reason: sync point literals; tracked: #399
-    let b = SyncPoint::new(FiberId(3), USize(128)); // lint:allow(no-bare-numeric) reason: sync point literals; tracked: #399
-    let c = SyncPoint::new(FiberId(4), USize(128)); // lint:allow(no-bare-numeric) reason: sync point literals; tracked: #399
-    let d = SyncPoint::new(FiberId(3), USize(256)); // lint:allow(no-bare-numeric) reason: sync point literals; tracked: #399
+    let a = SyncPoint::new(FiberId::from_constant::<{ USize(3) }>(), USize(128)); // lint:allow(no-bare-numeric) reason: sync point literals; tracked: #426
+    let b = SyncPoint::new(FiberId::from_constant::<{ USize(3) }>(), USize(128)); // lint:allow(no-bare-numeric) reason: sync point literals; tracked: #426
+    let c = SyncPoint::new(FiberId::from_constant::<{ USize(4) }>(), USize(128)); // lint:allow(no-bare-numeric) reason: sync point literals; tracked: #426
+    let d = SyncPoint::new(FiberId::from_constant::<{ USize(3) }>(), USize(256)); // lint:allow(no-bare-numeric) reason: sync point literals; tracked: #426
     assert_eq!(a, b);
     assert_ne!(a, c);
     assert_ne!(a, d);
@@ -68,7 +68,7 @@ fn dispatch_approach_variants_distinct() {
 fn fiber_dispatch_default_constructs() {
     let f: FiberDispatch<StubCtx, 4> = FiberDispatch::default();
     assert!(f.body.isnt());
-    assert_eq!(f.fiber_id, FiberId(0)); // lint:allow(no-bare-numeric) reason: default fiber id; tracked: #399
+    assert_eq!(f.fiber_id, FiberId::ZERO);
     assert_eq!(f.sync_point_count, USize::ZERO);
     assert_eq!(f.morsel_range.is_empty(), Bool::TRUE);
 }
