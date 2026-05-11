@@ -387,6 +387,27 @@ variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "varian
 n = 16384
 variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "variants/memcpy_unrolled/target/release/memcpy_unrolled", "variants/memcpy_naive/target/release/memcpy_naive"]
 
+[bench.rotate_strategy]
+title = "Rotate strategy: intrinsic const vs manual shifts vs variable amount"
+workload = "realistic"
+master_seed = 0x71f6_92ab_4e08_d325
+
+[[bench.rotate_strategy.sizes]]
+n = 256
+variants = ["variants/rot_intrinsic_const/target/release/rot_intrinsic_const", "variants/rot_manual_shifts/target/release/rot_manual_shifts", "variants/rot_variable_amount/target/release/rot_variable_amount"]
+
+[[bench.rotate_strategy.sizes]]
+n = 1024
+variants = ["variants/rot_intrinsic_const/target/release/rot_intrinsic_const", "variants/rot_manual_shifts/target/release/rot_manual_shifts", "variants/rot_variable_amount/target/release/rot_variable_amount"]
+
+[[bench.rotate_strategy.sizes]]
+n = 4096
+variants = ["variants/rot_intrinsic_const/target/release/rot_intrinsic_const", "variants/rot_manual_shifts/target/release/rot_manual_shifts", "variants/rot_variable_amount/target/release/rot_variable_amount"]
+
+[[bench.rotate_strategy.sizes]]
+n = 16384
+variants = ["variants/rot_intrinsic_const/target/release/rot_intrinsic_const", "variants/rot_manual_shifts/target/release/rot_manual_shifts", "variants/rot_variable_amount/target/release/rot_variable_amount"]
+
 [bench.sat_arithmetic]
 title = "Overflow strategy: wrapping_add vs saturating_add vs checked_add"
 workload = "realistic"
