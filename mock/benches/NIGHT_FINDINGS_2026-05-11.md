@@ -5,6 +5,51 @@ overnight session of 2026-05-11. Each section names a design question, the
 bench that addresses it, the result, and the implication for arvo /
 hilavitkutin design.
 
+## Synthesis (added end of run)
+
+Twenty-eight bench groups landed across the night. Headline findings,
+grouped by what they tell the design:
+
+### Findings that locked or refined a design call
+
+- **Topic 9 axis B `dep_graph_csr_9`**: CSR is canonical at every N (5x to 59x faster than dense across 8-256 nodes). No threshold dispatch needed. Topic 9 locked.
+- **Topic 6 axis I `atomic_inc_strategy`**: `fetch_add` beats CAS-loop by 11-19% via LSE LDADD on aarch64. Validates the centralised-atomic-counter phase-barrier design over a CAS-loop trait abstraction.
+- **Topic 3 M3 / Topic 6 atomic discipline**: `atomic_vs_plain` shows `AtomicU64+Relaxed` is free in single-thread non-contended code; cost only materialises under cross-core contention. Per-fiber inline-metrics design (cache-line-owned writes) costs nothing on the hot path.
+- **arvo Norm saturating EMA (audit-2 M4)**: `ema_formulation` confirms Q0.32 fixed-point beats f32 IIR by 11-14% at N≥1024 on aarch64. Audit-2 M4 design call empirically correct on the specific IIR shape.
+- **Topic 6 / engine pow2 caps**: `modulo_strategy` shows pow2-const modulo is 2.2x faster than const non-pow2 and 2.9x faster than runtime-opaque divisor. Locks the pow2-cap convention across MAX_FIBERS / MAX_CORES / MAX_UNITS / MICRO_MORSEL_INTERVAL / MAX_DRIFT_RECORDS / MAX_PLAN_AFFECTING_RESOURCES.
+- **Plan-stage enum dispatch ≤ 8 variants**: `match_arm_count` shows a sharp icache cliff at 64 arms (+628% at N=16384). Design rule: hot-loop enum dispatch stays small; for larger variant spaces refactor to fn-pointer table.
+
+### Findings that surfaced new design implications
+
+- **`fold_strategy` — LARGEST FINDING**: quad-way ILP delivers 3.3-3.8x speedup over sequential single-accumulator at N≥4096. LLVM does NOT auto-extract ILP from latency-bound dep chains. Implication: arvo reduction kernels MUST break dep chains explicitly. Follow-up: `arvo::Fold` trait family with interleaved-accumulator shape, parked as a design round.
+- **`sat_arithmetic`** + **`fxpmul_strategy`** + **`fold_strategy`**: validate the Hot vs Precise strategy markers on three independent axes — overflow handling (~2x), mul-precision (8-20%), chain breaking (3.8x). The marker design is empirically load-bearing.
+- **`shift_amount_origin`**: NEW INSIGHT — LLVM autovectorizes const-shift loops into NEON; loop-invariant runtime shifts also autovec; per-iter variable amounts block autovec entirely (~3x slower). The previously-attributed dep-chain penalty for variable rotation/shift turns out to be partly autovec loss. Implication: arvo `bits.shr::<13>()` const-generic shifts are free; Strategy-derived loop-invariant shifts are free; per-record-derived shifts (SipHash-style hash mixers, Mask iteration with bitmap-read position) lose autovec.
+- **`float_width` — SURPRISING**: on aarch64 (Apple Silicon), f32 and f64 are essentially identical (~3%); i64 fixed-point is 25-62% SLOWER than both. Contradicts the implicit assumption that arvo UFixed Hot auto-wins on throughput. The strategy-marker design should defend PRECISION + determinism + FPU-avoidance, NOT raw speed on aarch64 with FPU available. Different algorithms favor different widths (q32 wins IIR per `ema_formulation`; float wins FMA reduction per this bench).
+- **`rotate_strategy`** + **`shift_amount_origin`**: LLVM correctly recognises manual `(v << K) | (v >> (64-K))` idiom as ROR. arvo's const-callable manual rotate forms are usable without performance regression.
+
+### Findings that confirmed no consumer punishment
+
+- **`inline_strategy`**: under release+fat-LTO, LLVM auto-inlines small leaf fns into hot loops reliably. Defensive `#[inline]` is cheap insurance not load-bearing. `inline_never` penalty is 17.6% at N=256, shrinks to noise at N≥4096.
+- **`bounds_check`**: LLVM elides safe indexing over const-sized `[u8; N]` arrays completely. Substrate guidance: do NOT teach consumers to reach for `unsafe` in WorkUnit bodies; `column[i]` is the empirically optimal shape.
+- **`branch_predictability`** + **`minmax_strategy`** + **`branch_pattern`**: branchful and branchless inner-loop code converge on aarch64 because CSEL is the natural lowering for "select one of two values based on comparison". Predicate / TotalOrd / branch shape choices are type-level intent, not codegen win.
+- **`load_alignment`**: aligned ptr-cast, `read_unaligned`, and `u64::from_le_bytes` all converge on aarch64. Per-fiber cache-line invariant matters for write coherence and false-sharing avoidance, NOT for read-path throughput.
+- **`atomic_vs_plain`**: SeqCst is free in single-thread non-contended code. Topic 3 M3 per-fiber AdaptMetrics as `AtomicU64+Relaxed` costs essentially zero in the hot path under the cache-line invariant.
+- **`iter_patterns`**: gather access is 1.8-2.5x slower than sequential, validating Column<T> contiguous-access design and the workspace no-ref-into-storage rule. The cost of holding refs into scheduler storage across morsel boundaries is real — refs degrade into gather access.
+- **`bit_count_ops`**: ctz on aarch64 (RBIT+CLZ) is below timer resolution at all N; arvo BitAccess::trailing_zeros canonical-intrinsic lowering is empirically optimal.
+
+### Bench-level decisions parked for follow-up
+
+- **arvo::Fold trait family**: open a design round to standardise interleaved-accumulator reduction (3-4 way) for reduction-shaped consumers. Currently consumer code with `let mut acc` over a column pays 2-4x latency tax.
+- **arvo strategy-marker docs nuance**: docs should clarify Hot vs Precise's value prop as precision + determinism + FPU-avoidance, not raw speed on aarch64 with FPU. (Float-width bench's surprise.)
+- **arvo-hash family choice**: xxhash3-style fixed-rotation mixers beat SipHash-style data-dependent mixers by ~3x on aarch64 due to autovec loss; existing `hash_algos` bench corroborates this.
+- **NEON intrinsic version of UFixed Hot**: hand-tuned NEON for the i64-scaled path would likely beat float; current bench measures naive LLVM autovec. Park as a follow-up bench-driven SIMD-expansion round.
+
+### Aarch64 caveats applicable to most findings
+
+These benches all run on Apple Silicon. Several findings depend on aarch64-specific instruction-set details (RBIT+CLZ, LSE LDADD, NEON 2-lane f64 vs 4-lane f32, CSEL pervasiveness) and may not generalise to x86_64 without re-running. Re-run on x86_64 before generalising any platform claim. The strategy-marker findings (Hot vs Precise on overflow / chain breaking) are ISA-fundamental and should hold across platforms.
+
+
+
 ## Topic 9 axis B — DependencyGraph backing (`dep_graph_csr_9`)
 
 **CSR is canonical at every N.** No threshold dispatch needed.
