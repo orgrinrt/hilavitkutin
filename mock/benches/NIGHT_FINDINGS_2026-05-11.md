@@ -697,6 +697,29 @@ Caveats:
 - The bench uses uniform-random input. Pathological patterns where the per-iteration shift amount is e.g. monotonically increasing might surface different LLVM autovec heuristics.
 - LLVM's autovec recognises this specific loop shape. More complex inner-loop bodies may not autovec even with const shifts; the autovec discount is conditional on the body's other operations being vectorizable.
 
+## Min/max strategy (`minmax_strategy`) — CSEL convergence
+
+Three syntaxes for tracking running min and max of N u64 samples:
+
+- `minmax_intrinsic`: `mn.min(v)` / `mx.max(v)` per step.
+- `minmax_branch`: `if v < mn { v } else { mn }` (explicit if/else).
+- `minmax_branchless`: signed-diff sign-bit mask blend.
+
+Algo-only medians (all variants within 5%):
+
+| N      | intrinsic       | branch (base) | branchless          |
+|--------|-----------------|---------------|---------------------|
+| 256    | 23 ns (-3%)     | 24 ns         | 25 ns (no sig)      |
+| 1024   | 42 ns (no sig)  | 41 ns         | 43 ns (+5.0%)       |
+| 4096   | 112 ns (-4%)    | 120 ns        | 114 ns (-2.5%)      |
+| 16384  | 393 ns (no sig) | 383 ns        | 399 ns (no sig)     |
+
+Findings:
+
+- **All three forms converge on the same CSEL codegen on aarch64**. The intrinsic wins by tiny margins at small/medium N (3-4%); the explicit if/else is one cycle of CSEL; the manual branchless trick doesn't win because its extra ALU ops don't pay off when CSEL is the natural lowering.
+- **Validates arvo TotalOrd::min/max design**: the intrinsic form is the right canonical syntax. Consumer code that writes explicit if/else isn't punished, and there's no need for hand-rolled branchless tricks on aarch64.
+- Pairs with `branch_pattern` and `branch_predictability` findings — branchful and branchless inner-loop code converge on aarch64 because CSEL is the natural lowering for "select one of two values based on comparison". The Predicate / TotalOrd trait families' value is type-level intent, not codegen win.
+
 ## Float width (`float_width`) — FastFloat vs StrictFloat vs UFixed Hot
 
 Three numeric-width strategies on a 4-way ILP-broken FMA reduction over N byte samples:
