@@ -249,3 +249,47 @@ the Scheduler const generic. Revisit if consumer registers more
 than 16 `PlanAffecting`-bound BuilderInput types per pipeline.
 Compile-time error via `#[diagnostic::on_unimplemented]` points
 the consumer at the const-generic override.
+
+### Bench-driven contract-design follow-ups (round 202605101036)
+
+Findings index: `mock/benches/NIGHT_FINDINGS_2026-05-11.md`.
+Twenty-nine overnight benches surfaced several design constraints
+that touch the public WorkUnit / Ctx contract surface:
+
+**WorkUnit reduction trait family (new).** The `fold_strategy` bench
+shows quad-way interleaved-accumulator reduction is ~3.8x faster
+than sequential single-acc on mul-heavy reductions, and LLVM does
+NOT auto-extract this ILP. A consumer WorkUnit reducing over a
+column with `let mut acc = ...` pays a 2-4x latency tax. The
+api crate should ship a reduction trait family (likely upstream
+in arvo as `arvo::Fold`) that exposes the interleaved-accumulator
+shape as the canonical primitive. Follow-up design round once the
+arvo-side design lands.
+
+**Morsel-loop step inlining.** The `inline_strategy` bench confirms
+LLVM auto-inlines small leaf fns into hot loops under release+
+fat-LTO; `inline_default` matches `inline_always` at every N.
+The WorkUnit `execute(&self, ctx: &Self::Ctx)` contract does not
+require consumers to write `#[inline]` on their step functions
+for performance reasons. Defensive `#[inline]` is acceptable but
+not load-bearing.
+
+**Bounds-check elision.** `bounds_check` confirms LLVM elides
+safe indexing over const-sized `[u8; N]` arrays completely. The
+contract should NOT teach consumers to reach for `unsafe` or
+`get_unchecked` in WorkUnit bodies. Safe `column[i]` indexing in
+the morsel loop is the empirically optimal shape.
+
+**ResourceSnapshot atomicity envelope.** `atomic_vs_plain` shows
+`AtomicU64+Relaxed` is free in single-thread non-contended code on
+aarch64. The ResourceSnapshot contract (Topic 8 C6) can expose
+atomic-typed fields without consumers paying a hot-path cost as
+long as the per-fiber cache-line invariant holds.
+
+**Float vs UFixed in WorkUnit Ctx.** Surprising `float_width` bench
+finding: on aarch64, f32 and f64 are essentially identical (~3%);
+i64 fixed-point is 25-62% SLOWER than both on FMA-shape reductions.
+The api crate's documentation should clarify that picking
+`Column<FastFloat>` vs `Column<UFixed<I, F, Hot>>` is a
+PRECISION/determinism/FPU-availability choice, not a raw-speed
+choice. The arvo strategy-marker docs follow-up.
