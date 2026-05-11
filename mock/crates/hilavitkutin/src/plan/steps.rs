@@ -36,7 +36,7 @@ use arvo::{Bool, USize};
 use hilavitkutin_api::UnitId;
 
 use super::column::{ColumnClassMap, ColumnClassification};
-use super::dirty::{DirtyMask, DirtyMasks};
+use super::dirty::DirtyMasks;
 use super::fiber::FiberGrouping;
 use super::graph::{DependencyGraph, EdgeKind};
 use super::inputs::PlanInputs;
@@ -385,9 +385,11 @@ pub fn compute_upward_rank_and_dirty<
 /// Step 9: per-fiber morsel sizing.
 ///
 /// Splits the record count across fibers. The skeleton evenly
-/// distributes records, falling back to the record count itself when
-/// only one fiber is active. Bench-driven SIMD-width-aware sizing
-/// lands in HILA-RUNTIME-C1.
+/// distributes records and spreads the integer-divide remainder
+/// across the first `remainder` fibers (sum-preserving: every record
+/// is assigned somewhere). Falls back to the record count itself
+/// when only one fiber is active. Bench-driven SIMD-width-aware
+/// sizing lands in HILA-RUNTIME-C1.
 pub fn size_morsels<const MAX_FIBERS: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     record_count: USize,
     fiber_count: USize,
@@ -399,9 +401,15 @@ pub fn size_morsels<const MAX_FIBERS: usize>( // lint:allow(no-bare-numeric) lin
     // self-contained.
     let n = if fiber_count.0 == 0 { 1 } else { fiber_count.0 }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: divide-by-zero guard literal; tracked: #72
     let per_fiber = record_count.0 / n;
+    let remainder = record_count.0 % n;
+    // Distribute the remainder across the first `remainder` fibers.
+    // Sum invariant: sum(sizes[0..n]) == record_count. Without this
+    // every record past `per_fiber * n` was silently dropped, which
+    // would propagate as a missing morsel range at dispatch time.
     let mut i = 0;
     while i < n && i < MAX_FIBERS {
-        sizes[i] = USize(per_fiber); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal compute; tracked: #72
+        let extra = if i < remainder { 1 } else { 0 }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: remainder-distribution literal; tracked: #72
+        sizes[i] = USize(per_fiber + extra); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal compute; tracked: #72
         i += 1;
     }
     sizes
