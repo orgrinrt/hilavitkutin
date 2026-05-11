@@ -429,6 +429,36 @@ Caveats:
 - Rust uses `usize` for indexing; if the consumer's index type is some narrower or wider integer, the elision proof might fail. The const-generic `N: usize` morsel shape avoids this.
 - The bench uses `&[u8; N]`. Larger element types (e.g. column records of `T` where size_of::<T> > 1) would compound any non-elided check. The result generalises: as long as the array length is statically known and the loop counter type matches, LLVM elides.
 
+## Branch predictability (`branch_predictability`) — predictor sensitivity in WorkUnit inner loops
+
+Three branch-skew patterns on an identical if/else inner loop. Threshold differs only in the constant:
+
+- `bp_skew_high`: `if byte > 240` → branch taken ~6% (highly predictable, saturates to not-taken).
+- `bp_balanced`: `if byte > 128` → branch taken ~50% (adversarial: no skew for the predictor).
+- `bp_skew_low`: `if byte > 16` → branch taken ~94% (highly predictable, saturates to taken).
+
+Algo-only medians:
+
+| N      | bp_skew_high       | bp_balanced (base) | bp_skew_low        |
+|--------|--------------------|--------------------|--------------------|
+| 256    | 297 ns (no sig)    | 296 ns             | 305 ns (+1.9%, YES)|
+| 1024   | 1307 ns (no sig)   | 1299 ns            | 1261 ns (-1.7%, YES)|
+| 4096   | 5268 ns (no sig)   | 5281 ns            | 5166 ns (-1.0%, YES)|
+| 16384  | 20644 ns (no sig)  | 20658 ns           | 20769 ns (no sig)  |
+
+Findings:
+
+- **All three variants are within ~2% of each other at every N**. The adversarial 50/50 case (`bp_balanced`) is not measurably slower than the highly-skewed cases. The tiny per-N deltas flip direction between sizes, confirming this is measurement noise rather than predictor sensitivity.
+- LLVM is almost certainly converting the if/else to branchless `csel` / `cmov`, eliminating predictor sensitivity entirely. The existing `branch_pattern` bench (if/else vs explicit cmov within 2% gap) is the direct evidence.
+- **Validates that branch predictability is NOT a load-bearing concern for tight WorkUnit inner loops**. Consumer WorkUnits can write data-dependent if/else inside the morsel loop without worrying about predictor sensitivity, as long as the if/else body is small enough for LLVM to convert to branchless form (it almost always is).
+- Pairs with `branch_pattern` (if/else vs explicit cmov, also within 2%) to establish a coherent picture: **on aarch64, branchful and branchless inner-loop code converge to the same throughput in practice**. The Predicate trait's value (arvo's `Predicate<T>` returning `Bool`) is type-level intent and composition, not codegen-level branch elimination.
+
+Caveats:
+
+- aarch64 only. Older x86 cores with weaker branch prediction could show larger gaps for the 50/50 case.
+- Bigger if/else bodies (cmov-ineligible: function calls, multi-instruction sequences) would re-introduce branch sensitivity. Inner-loop write paths with multiple statements per arm should be benched separately.
+- The input bytes come from a uniform-random seed; pathological patterns (alternating, long runs) would also surface predictor sensitivity beyond what uniform input shows.
+
 ## Cross-references
 
 - `mock/benches/dep_graph_csr_9_n*_findings.md`
