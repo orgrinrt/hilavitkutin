@@ -624,6 +624,42 @@ Caveats:
 - Bench uses sum (commutative+associative), so the saturating semantics are well-defined. Non-commutative reductions might compose differently with strategy markers.
 - Sum stays well below u64::MAX in this workload; the checked path's branch is always "not taken". A workload that actually overflows would force the fallback path, widening the gap further.
 
+## Rotate strategy (`rotate_strategy`) — fixed vs variable rotation cost
+
+Three rotation strategies on an FNV-style mixer reduction:
+
+- `rot_intrinsic_const`: `acc.rotate_left(13)` with const amount. Lowers to single ROR on aarch64.
+- `rot_manual_shifts`: hand-rolled `(acc << 13) | (acc >> 51)`. Tests whether LLVM recognises the idiom and folds to ROR.
+- `rot_variable_amount`: `acc.rotate_left(k)` where `k` derives from previous acc bits. Lowers to RORV; the amount depends on the prior step's result.
+
+Algo-only medians:
+
+| N      | rot_intrinsic_const | rot_manual_shifts | rot_variable_amount |
+|--------|---------------------|-------------------|---------------------|
+| 256    | 8 ns                | 8 ns (no sig)     | 52 ns (+558%)       |
+| 1024   | 73 ns               | 74 ns (no sig)    | 237 ns (+226%)      |
+| 4096   | 304 ns              | 301 ns (no sig)   | 978 ns (+221%)      |
+| 16384  | 1346 ns             | 1340 ns (no sig)  | 3967 ns (+196%)     |
+
+Findings:
+
+- **LLVM correctly recognises the manual rotate idiom** (`(v << K) | (v >> (64-K))`) and lowers it to the same ROR instruction as the intrinsic. Consumer code can write either form without performance penalty on aarch64. The minor flicker at N=16384 (-2.1% adj-p just barely YES then flipped to no) is noise.
+- **Data-dependent rotation amounts cost ~3x** vs const-amount. The N=256 case shows ~6.5x (small-N pipeline noise dominates), but the steady-state at N≥1024 is consistently ~3x slower.
+- **The 3x gap is NOT primarily the rotate instruction cost**. RORV (register-amount rotate) is only ~1.5x slower than ROR. The dominant cost is **dep chain length**: each rotate has to wait for the previous step to complete before its amount is known, lengthening the latency-bound loop. This is the same pattern surfaced in fold_strategy — long dep chains lose to interleaved/independent operations.
+- Pairs with the existing `hash_algos` bench (xxhash with fixed-rotation mixers winning at small/medium N over SipHash with data-dependent rotations).
+
+Implications for design:
+
+- **arvo-hash family choice**: hash mixers with data-dependent rotations (SipHash-style) pay a fundamental 3x cost vs fixed-rotation mixers (xxhash3-style) on the latency axis. The current hash_algos finding (xxh winning small/medium) extends here: the cause is not the algorithm's mixing math but its rotation-amount strategy.
+- **arvo BitSequence ops**: where const rotation is sufficient, the manual `(v << K) | (v >> (64-K))` form is just as fast as `rotate_left`. The const-callable trait surface can use the manual form when needed for const-context evaluation without performance regression.
+- **Topic 7 morsel-loop**: any per-record op whose argument depends on the prior step's result joins the long-dep-chain regime. Variable-amount shifts/rotates / data-derived offsets / index-from-previous-value patterns all pay the 2-4x latency tax. Substrate guidance: prefer fixed shift amounts and independent-per-step indexing where the algorithm permits.
+
+Caveats:
+
+- The variable-amount path's 3x gap is partly the dep chain (separable from RORV cost). A non-dep-chain variable-amount bench (where `k` comes from input data) would isolate just the instruction cost; expect ~1.5x there. This bench measures the realistic combined cost.
+- aarch64 specific. x86_64 ROR has similar const/variable shape; the dep-chain story would carry over.
+- The bench's `k = ((acc >> 56) & 0x3F).max(1)` ensures k is in [1, 63]; rotate_left(0) is a no-op LLVM might elide.
+
 ## Cross-references
 
 - `mock/benches/dep_graph_csr_9_n*_findings.md`
