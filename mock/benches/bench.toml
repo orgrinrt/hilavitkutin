@@ -387,6 +387,27 @@ variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "varian
 n = 16384
 variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "variants/memcpy_unrolled/target/release/memcpy_unrolled", "variants/memcpy_naive/target/release/memcpy_naive"]
 
+[bench.bit_count_ops]
+title = "Trailing-zero count: std intrinsic vs De Bruijn lookup vs shift-loop"
+workload = "realistic"
+master_seed = 0x6f10_38d4_92c5_ab07
+
+[[bench.bit_count_ops.sizes]]
+n = 256
+variants = ["variants/ctz_intrinsic/target/release/ctz_intrinsic", "variants/ctz_debruijn/target/release/ctz_debruijn", "variants/ctz_loop/target/release/ctz_loop"]
+
+[[bench.bit_count_ops.sizes]]
+n = 1024
+variants = ["variants/ctz_intrinsic/target/release/ctz_intrinsic", "variants/ctz_debruijn/target/release/ctz_debruijn", "variants/ctz_loop/target/release/ctz_loop"]
+
+[[bench.bit_count_ops.sizes]]
+n = 4096
+variants = ["variants/ctz_intrinsic/target/release/ctz_intrinsic", "variants/ctz_debruijn/target/release/ctz_debruijn", "variants/ctz_loop/target/release/ctz_loop"]
+
+[[bench.bit_count_ops.sizes]]
+n = 16384
+variants = ["variants/ctz_intrinsic/target/release/ctz_intrinsic", "variants/ctz_debruijn/target/release/ctz_debruijn", "variants/ctz_loop/target/release/ctz_loop"]
+
 [bench.atomic_inc_strategy]
 title = "Atomic increment strategy: fetch_add vs CAS-loop vs load+store"
 workload = "realistic"
