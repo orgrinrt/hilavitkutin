@@ -913,9 +913,23 @@ without it are cheap value-swaps. Default is NOT plan-affecting.
 pub trait PlanAffecting: BuilderInput + private::Sealed {}
 ```
 
-The dirty bit array is `[AtomicBool; MAX_PLAN_AFFECTING_RESOURCES]`
-keyed by `PlanAffectingId`. Default cap `MAX_PLAN_AFFECTING_RESOURCES = 16`;
-consumers override via the Scheduler const generic.
+The dirty bit array is `[AtomicBool; Cfg::MAX_PLAN_AFFECTING_RESOURCES]`
+keyed by `PlanAffectingId`, where `Cfg: RunCfg` is the consumer's run
+config. Default `RunCfg::MAX_PLAN_AFFECTING_RESOURCES = USize(256)`
+(32-byte bitmask, fits one cache line). Consumers override per-app by
+writing the const explicitly in their `impl RunCfg` block:
+
+```rust
+impl RunCfg for MyApp {
+    type Out = ...;
+    type Err = ...;
+    const MAX_PLAN_AFFECTING_RESOURCES: USize = USize(8);  // tight envelope
+}
+```
+
+The substrate documents the tradeoff (cache-line footprint, dirty-check
+scan cost); the consumer picks per-app. Per `arvo-toolbox-not-policer.md`,
+the substrate ships sharp tools with sensible defaults, never policy.
 
 ### Lifetime contract
 
