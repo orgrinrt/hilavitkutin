@@ -67,3 +67,28 @@ impl<const MAX_STORES: usize> Default for DirtyMask<MAX_STORES> { // lint:allow(
         Self::empty()
     }
 }
+
+/// Per-fiber dirty masks: which stores changed since last frame, per
+/// fiber. Drives incremental-skip propagation: a fiber whose inputs
+/// are entirely clean (its access set disjoint from the running
+/// dirty mask) can skip dispatch this frame.
+///
+/// Plan-stage output of the fused upward-rank + dirty step (step 8).
+#[derive(Copy, Clone, Debug)]
+pub struct DirtyMasks<const MAX_FIBERS: usize, const MAX_STORES: usize> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    pub per_fiber: [DirtyMask<MAX_STORES>; MAX_FIBERS],
+}
+
+impl<const MAX_FIBERS: usize, const MAX_STORES: usize> DirtyMasks<MAX_FIBERS, MAX_STORES> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    pub const fn new() -> Self {
+        Self { per_fiber: [DirtyMask::empty(); MAX_FIBERS] }
+    }
+}
+
+impl<const MAX_FIBERS: usize, const MAX_STORES: usize> Default // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    for DirtyMasks<MAX_FIBERS, MAX_STORES>
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
