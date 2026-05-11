@@ -587,6 +587,43 @@ Caveats:
 - The N=256 case shows the threshold below which loop-body work is dominated by call setup; for any morsel size in this range, ILP doesn't matter. Above ~1KB the gap grows fast.
 - Final XOR-combine of accumulators is associativity-permissive; for non-associative reductions (e.g., subtraction, division, float arithmetic without `fma_relaxed`), the interleaved shape would change semantics. Strategy markers should encode the associativity assumption.
 
+## Overflow strategy (`sat_arithmetic`) — Hot vs Precise strategy-marker cost
+
+Three overflow-handling strategies for a u64 sum-of-mul reduction over N bytes:
+
+- `sat_wrap`: `wrapping_add` — modulo-2^64 semantics. Lowers to ADD on aarch64. Models Hot strategy.
+- `sat_saturate`: `saturating_add` — clamp at u64::MAX. Lowers to ADDS + CSEL on aarch64. Models Precise strategy.
+- `sat_checked`: `checked_add().unwrap_or(MAX)` — explicit branch. Lowers to ADDS + B.CS + fallback. Branch is never taken in this workload (sum stays well below u64::MAX).
+
+Algo-only medians:
+
+| N      | sat_wrap          | sat_saturate     | sat_checked (base) |
+|--------|-------------------|------------------|--------------------|
+| 256    | 107 ns (-42.4%)   | 175 ns (-4.1%)   | 191 ns             |
+| 1024   | 355 ns (-47.8%)   | 698 ns (no sig)  | 678 ns             |
+| 4096   | 1398 ns (-47.8%)  | 2671 ns (+1.4%)  | 2642 ns            |
+| 16384  | 5362 ns (-49.0%)  | 10812 ns (+2.9%) | 10426 ns           |
+
+Findings:
+
+- **Wrapping (Hot) is ~2x faster than saturating (Precise) or checked at every N≥1024**. The Hot vs Precise strategy gap is real, measurable, and roughly 2x throughput. Wrapping is a single ADD; saturating is ADDS + CSEL; checked is ADDS + B.CS + select fallback. Each conditional adds ~1 cycle to the per-step latency in a latency-bound reduction loop.
+- **Saturating and checked are within ~3% of each other** at every N. The branch predictor saturates to "never taken" on the checked path because the workload's sum stays below u64::MAX, so the conditional branch is essentially free. CSEL on the saturating path is also one cycle. The two paths are mechanically distinct but cost similar.
+- **The 2x gap is fundamental at the ISA level**: aarch64 cannot do "add with saturate-on-overflow" in a single instruction. The path has to go ADDS + condition-check + select. Any overflow-aware arithmetic pays this cost; only wrapping arithmetic skips it.
+
+Strategy-marker implications (LOAD-BEARING for arvo design):
+
+- **`Hot` strategy buys 2x throughput over `Precise` on integer reductions**. The strategy marker is not theoretical: the design's claim that Hot consumers should accept wrapping semantics for the speed win is empirically grounded.
+- **`Precise` strategy users pay a 2x latency tax** on every accumulating op. The use case for Precise must be load-bearing enough to justify this. Plan-stage analysis algorithms (graph processing, exact bit-vector ops) qualify; throughput-loop reductions (Column EMA, lossy aggregations) should default to Hot.
+- The Hot/Precise framing in arvo's strategy markers is correct. The bench validates the marker's design weight — this is what the markers were designed to express.
+
+Pairs with the previously-completed `fxpmul_strategy` bench (which showed 8-20% gap on mul) and the `fold_strategy` bench (3.8x gap on chained mul). Together: **overflow handling costs ~2x; chain breaking gains ~3.8x.** Both axes matter, and both are encoded in the strategy markers.
+
+Caveats:
+
+- aarch64 specific. x86_64 has similar ADD vs ADC+CMOVC shapes; gap probably similar.
+- Bench uses sum (commutative+associative), so the saturating semantics are well-defined. Non-commutative reductions might compose differently with strategy markers.
+- Sum stays well below u64::MAX in this workload; the checked path's branch is always "not taken". A workload that actually overflows would force the fallback path, widening the gap further.
+
 ## Cross-references
 
 - `mock/benches/dep_graph_csr_9_n*_findings.md`

@@ -387,6 +387,27 @@ variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "varian
 n = 16384
 variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "variants/memcpy_unrolled/target/release/memcpy_unrolled", "variants/memcpy_naive/target/release/memcpy_naive"]
 
+[bench.sat_arithmetic]
+title = "Overflow strategy: wrapping_add vs saturating_add vs checked_add"
+workload = "realistic"
+master_seed = 0x52b9_de7c_318f_a064
+
+[[bench.sat_arithmetic.sizes]]
+n = 256
+variants = ["variants/sat_wrap/target/release/sat_wrap", "variants/sat_saturate/target/release/sat_saturate", "variants/sat_checked/target/release/sat_checked"]
+
+[[bench.sat_arithmetic.sizes]]
+n = 1024
+variants = ["variants/sat_wrap/target/release/sat_wrap", "variants/sat_saturate/target/release/sat_saturate", "variants/sat_checked/target/release/sat_checked"]
+
+[[bench.sat_arithmetic.sizes]]
+n = 4096
+variants = ["variants/sat_wrap/target/release/sat_wrap", "variants/sat_saturate/target/release/sat_saturate", "variants/sat_checked/target/release/sat_checked"]
+
+[[bench.sat_arithmetic.sizes]]
+n = 16384
+variants = ["variants/sat_wrap/target/release/sat_wrap", "variants/sat_saturate/target/release/sat_saturate", "variants/sat_checked/target/release/sat_checked"]
+
 [bench.fold_strategy]
 title = "Fold ILP: sequential single-acc vs paired 2-way vs quad 4-way"
 workload = "realistic"
