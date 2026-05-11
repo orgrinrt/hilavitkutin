@@ -63,7 +63,8 @@ pub use hint::{
 };
 pub use id::StoreId;
 pub use platform::{
-    ClockApi, HasClock, HasMemoryProvider, HasThreadPool, MemoryProviderApi, Nanos, ThreadPoolApi,
+    ClockApi, Executor, ExecutorError, HasClock, HasMemoryProvider, HasThreadPool,
+    MemoryProviderApi, Nanos, PoolFrame, ThreadPoolApi, WakeStrategy,
 };
 pub use builder_input::{
     BuilderInput, Dispatch, ExtensionSurface, PlatformDispatch, StoreDispatch, UnitDispatch,
