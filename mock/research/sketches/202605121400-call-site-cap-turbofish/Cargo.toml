@@ -1,0 +1,24 @@
+[workspace]
+
+[package]
+name = "sketch-call-site-cap-turbofish"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+name = "sketch_call_site_cap_turbofish"
+path = "src/lib.rs"
+
+[dependencies]
+arvo            = { path = "../../../../../arvo/mock/crates/arvo" }
+arvo-sparse     = { path = "../../../../../arvo/mock/crates/arvo-sparse" }
+arvo-spectral   = { path = "../../../../../arvo/mock/crates/arvo-spectral" }
+arvo-bitmask    = { path = "../../../../../arvo/mock/crates/arvo-bitmask" }
+arvo-bits-contracts = { path = "../../../../../arvo/mock/crates/arvo-bits-contracts" }
+arvo-storage    = { path = "../../../../../arvo/mock/crates/arvo-storage" }
+arvo-numeric-contracts = { path = "../../../../../arvo/mock/crates/arvo-numeric-contracts" }
+arvo-bits       = { path = "../../../../../arvo/mock/crates/arvo-bits" }
+
+[profile.release]
+opt-level = 3

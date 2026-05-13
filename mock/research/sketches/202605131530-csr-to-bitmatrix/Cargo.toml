@@ -1,0 +1,23 @@
+[workspace]
+
+[package]
+name = "sketch-csr-to-bitmatrix"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+name = "sketch_csr_to_bitmatrix"
+path = "src/lib.rs"
+
+[dependencies]
+arvo            = { path = "../../../../../arvo/mock/crates/arvo" }
+arvo-sparse     = { path = "../../../../../arvo/mock/crates/arvo-sparse" }
+arvo-bitmask    = { path = "../../../../../arvo/mock/crates/arvo-bitmask" }
+arvo-bits-contracts = { path = "../../../../../arvo/mock/crates/arvo-bits-contracts" }
+arvo-storage    = { path = "../../../../../arvo/mock/crates/arvo-storage" }
+arvo-bits       = { path = "../../../../../arvo/mock/crates/arvo-bits" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+
+[profile.release]
+opt-level = 3
