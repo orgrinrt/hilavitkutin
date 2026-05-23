@@ -11,18 +11,25 @@
 //! 5a4 follow-ups.
 
 pub mod assignment;
+pub mod barrier;
 pub mod class;
 pub mod convergence;
 pub mod handle;
+pub mod parking;
 pub mod pool;
 pub mod wake;
 
 use arvo::USize;
 
 pub use assignment::{CoreAssignment, NO_TRUNK};
-pub use class::CoreClass;
+pub use barrier::{phase_barrier_arrive, phase_barrier_observe, phase_barrier_reset, BarrierArrival};
+pub use class::{classify_cores, CoreClass, MAX_CORES};
 pub use convergence::Convergence;
 pub use handle::ThreadHandle;
+pub use parking::{
+    atomic_wait, atomic_wake_all, pick_tier, predicted_wait_ns_load, predicted_wait_ns_store, spin,
+    spin_budget_for, ParkTier,
+};
 pub use pool::ThreadPool;
 pub use wake::WakeStrategy;
 
@@ -60,18 +67,6 @@ pub fn assign_cores<
 ) -> CoreAssignment<MAX_LANES> {
     let _ = (core_count, plan);
     todo!("session 2B (HILA-RUNTIME-C4): map plan trunks onto concrete cores")
-}
-
-/// Classify cores by performance/efficiency class.
-///
-/// Skeleton: `todo!()`. Real body runs heterogeneous-core
-/// detection (CPUID leaf 0x1A on x86, sysfs on Linux, IOKit on
-/// macOS): see BACKLOG. Returns a fixed-size array of 256
-/// classes (documented upper bound); the const-generic
-/// generalisation is a follow-up.
-pub fn classify_cores(total_cores: USize, p_cores: USize) -> [CoreClass; 256] {
-    let _ = (total_cores, p_cores);
-    todo!("5a4: heterogeneous-core detection + classification")
 }
 
 /// Work-stealing fallback against a consumer-provided Executor.
