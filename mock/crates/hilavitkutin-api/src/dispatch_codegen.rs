@@ -351,6 +351,38 @@ pub trait DispatchCodegen<Cfg>: sealed::Sealed {
     type CoreDispatch;
 }
 
+/// The single shipped `DispatchCodegen` implementer. Topic 4 axis A
+/// lock: "single shipped impl". Both the marker type AND its trait
+/// impls (`DispatchCodegen<Cfg>`, `LockFreeDispatch`, `Scheduled`)
+/// live in the api crate because the seal is api-internal and
+/// because trait impls follow the orphan rule (trait OR impl-target
+/// must be local). Engine-side emit code consumes the marker via
+/// `hilavitkutin::dispatch::standard`.
+///
+/// Zero-sized. Constructible by anyone; no instances escape the
+/// engine because the public traits all carry sealed bounds.
+#[derive(Copy, Clone, Debug, Default)]
+pub struct StandardCodegen;
+
+impl sealed::Sealed for StandardCodegen {}
+
+/// `CoreDispatch` is a `()` placeholder. The TAIT lowering
+/// `type CoreDispatch = impl Fn(&PoolFrame<...>) -> Outcome<(), Cfg::Err>;`
+/// lands once the defining-use closure body emits in the engine's
+/// `dispatch::standard` Pass 3 follow-ups (run_fiber, wu_fn,
+/// morsel, sync). Topic 4 axis A locks to TAIT; this placeholder
+/// reserves the type-slot until the closure body resolves it.
+impl<Cfg> DispatchCodegen<Cfg> for StandardCodegen
+where
+    Cfg: crate::run_cfg::RunCfg,
+{
+    type CoreDispatch = ();
+}
+
+impl LockFreeDispatch for StandardCodegen {}
+
+impl Scheduled for StandardCodegen {}
+
 /// Sealed marker: codegen output uses zero CAS / zero RMW in the
 /// inner loop. Topic 4 axis G + Topic 5 audit-2 m4. Blanket-impl on
 /// the engine's `StandardCodegen` output type.
