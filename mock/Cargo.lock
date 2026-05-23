@@ -261,6 +261,7 @@ dependencies = [
  "hilavitkutin-ctx",
  "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
+ "trybuild",
 ]
 
 [[package]]
