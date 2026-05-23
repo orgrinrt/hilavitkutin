@@ -14,9 +14,11 @@
 #![no_std]
 #![deny(unsafe_op_in_unsafe_fn)]
 
+pub mod adapt_kits;
 pub mod interner;
 pub mod metrics;
 
+pub use crate::adapt_kits::{OffAdaptKit, StandardAdaptKit};
 pub use crate::interner::{
     HasInterner, InternerApi, InternerKit, MemoryArena, default_interner,
 };
