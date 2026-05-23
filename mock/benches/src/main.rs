@@ -29,6 +29,8 @@ use std::process::ExitCode;
 use mockspace_bench_core::{routine_bridge, ByteRoutine};
 use mockspace_bench_harness::{self as harness, BenchManifest, RoutineSpec, Workload};
 
+mod disasm_5check;
+
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().collect();
 
@@ -53,6 +55,13 @@ fn main() -> ExitCode {
         .expect("could not canonicalize cwd for variant path resolution");
 
     let workload = build_workload();
+
+    // 5-check axis-A invariant: any FAIL on a dispatch_static_n*
+    // bench drives the bench binary's exit code so `cargo mock bench`
+    // surfaces the regression. dispatch_dynamic_n* FAILs are
+    // expected (counter-example) and recorded without poisoning the
+    // exit code.
+    let mut axis_a_static_fail = false;
 
     for (bench_name, section) in &manifest.bench {
         for (size_idx, _size) in section.sizes.iter().enumerate() {
@@ -128,9 +137,50 @@ fn main() -> ExitCode {
                 }
                 eprintln!("  wrote {csv_path} + {report_path}");
             }
+
+            // 5-check axis-A pass: only applies to dispatch_* benches
+            // (the Topic 4 axis A shapes). Other benches measure
+            // orthogonal axes (EMA, hash, modulo, etc.) where the 5
+            // checks are not the relevant invariant.
+            if bench_name.starts_with("dispatch_") {
+                let morsel_immediates = [config.n as u64];
+                let report_dir = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+                match disasm_5check::run_and_write(
+                    bench_name,
+                    config.n,
+                    &config.variant_paths,
+                    &morsel_immediates,
+                    &report_dir,
+                ) {
+                    Ok(br) => {
+                        let path = report_dir.join(format!("{}_n{}_5check.md", bench_name, config.n));
+                        if br.any_fail() && bench_name.starts_with("dispatch_static") {
+                            eprintln!(
+                                "  5-check FAIL (axis-A regression on dispatch_static): {}",
+                                path.display()
+                            );
+                            axis_a_static_fail = true;
+                        } else if br.any_fail() {
+                            eprintln!(
+                                "  5-check report (counter-example FAILs expected): {}",
+                                path.display()
+                            );
+                        } else {
+                            eprintln!("  5-check PASS: {}", path.display());
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("  5-check skipped: {e}");
+                    }
+                }
+            }
         }
     }
 
+    if axis_a_static_fail {
+        eprintln!("error: at least one dispatch_static 5-check failed; the axis-A LLVM-transparency invariant regressed");
+        return ExitCode::FAILURE;
+    }
     ExitCode::SUCCESS
 }
 
