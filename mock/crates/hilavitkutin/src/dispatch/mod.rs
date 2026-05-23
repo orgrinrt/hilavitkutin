@@ -15,10 +15,12 @@ pub mod core_dispatch;
 pub mod fiber_dispatch;
 pub mod morsel;
 pub mod progress;
+pub mod standard;
 pub mod sync;
 pub mod wu_fn;
 
 use arvo::USize;
+pub use hilavitkutin_api::dispatch_codegen::StandardCodegen;
 
 pub use approach::DispatchApproach;
 pub use core_dispatch::CoreDispatch;

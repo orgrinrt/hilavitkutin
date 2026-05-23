@@ -21,7 +21,7 @@ use hilavitkutin_api::{
     AccessSet, Always, Atomic, BatchApi, Column, ColumnReaderApi, ColumnValue,
     ColumnWriterApi, Cons, Contains, Depth, EachApi, Empty, HasBatch, HasColumnReader,
     HasColumnWriter, HasEach, HasReduce, HasResourceProvider, HasVirtualFirer,
-    Immediate, Normal, Provider, ProviderKind, ReduceApi, Resource, ResourceProviderApi,
+    Immediate, Normal, BuilderInput, ReduceApi, Resource, ResourceProviderApi,
     UnitDispatch, Virtual, VirtualFirerApi, WorkUnit, read, write,
 };
 use hilavitkutin_kit::{Kit, KitDispatch};
@@ -40,9 +40,8 @@ pub struct FileInfo;
 
 pub struct InternerKit;
 
-impl Provider for InternerKit {
+impl BuilderInput for InternerKit {
     type Init = Self;
-    const KIND: ProviderKind = ProviderKind::Kit;
     type Dispatch = KitDispatch<Self>;
 }
 
@@ -53,9 +52,8 @@ impl Kit for InternerKit {
 
 pub struct WorkspaceKit;
 
-impl Provider for WorkspaceKit {
+impl BuilderInput for WorkspaceKit {
     type Init = Self;
-    const KIND: ProviderKind = ProviderKind::Kit;
     type Dispatch = KitDispatch<Self>;
 }
 
@@ -234,9 +232,8 @@ impl<R: AccessSet, W: AccessSet> HasReduce<R, W> for TestCtx {
 // A WU that reads the Interner resource.
 struct ReadInterner;
 
-impl Provider for ReadInterner {
+impl BuilderInput for ReadInterner {
     type Init = Self;
-    const KIND: ProviderKind = ProviderKind::WorkUnit;
     type Dispatch = UnitDispatch<Self>;
 }
 
@@ -244,16 +241,15 @@ impl WorkUnit<Always> for ReadInterner {
     type Read = read![Resource<Interner>];
     type Write = read![];
     type Hint = (Immediate, Atomic, Normal);
-    type Ctx = TestCtx;
-    fn execute(&self, _ctx: &TestCtx) {}
+    type Ctx<'frame> = TestCtx;
+    fn execute<'frame>(&self, _ctx: &TestCtx) {}
 }
 
 // A WU with write set: writes Column<FileInfo>.
 struct DiscoverFiles;
 
-impl Provider for DiscoverFiles {
+impl BuilderInput for DiscoverFiles {
     type Init = Self;
-    const KIND: ProviderKind = ProviderKind::WorkUnit;
     type Dispatch = UnitDispatch<Self>;
 }
 
@@ -261,8 +257,8 @@ impl WorkUnit<Always> for DiscoverFiles {
     type Read = read![Resource<Workspace>];
     type Write = write![Column<FileInfo>];
     type Hint = (Immediate, Atomic, Normal);
-    type Ctx = TestCtx;
-    fn execute(&self, _ctx: &TestCtx) {}
+    type Ctx<'frame> = TestCtx;
+    fn execute<'frame>(&self, _ctx: &TestCtx) {}
 }
 
 #[test]
@@ -310,9 +306,8 @@ fn kit_declarative_shape_typechecks() {
 #[derive(Copy, Clone)]
 struct NoStores;
 
-impl Provider for NoStores {
+impl BuilderInput for NoStores {
     type Init = Self;
-    const KIND: ProviderKind = ProviderKind::WorkUnit;
     type Dispatch = UnitDispatch<Self>;
 }
 
@@ -320,8 +315,8 @@ impl WorkUnit<Always> for NoStores {
     type Read = read![];
     type Write = write![];
     type Hint = (Immediate, Atomic, Normal);
-    type Ctx = TestCtx;
-    fn execute(&self, _ctx: &TestCtx) {}
+    type Ctx<'frame> = TestCtx;
+    fn execute<'frame>(&self, _ctx: &TestCtx) {}
 }
 
 #[test]
@@ -365,9 +360,8 @@ struct S15;
 
 struct SixteenStores;
 
-impl Provider for SixteenStores {
+impl BuilderInput for SixteenStores {
     type Init = Self;
-    const KIND: ProviderKind = ProviderKind::WorkUnit;
     type Dispatch = UnitDispatch<Self>;
 }
 
@@ -380,8 +374,8 @@ impl WorkUnit<Always> for SixteenStores {
     ];
     type Write = write![];
     type Hint = (Immediate, Atomic, Normal);
-    type Ctx = TestCtx;
-    fn execute(&self, _ctx: &TestCtx) {}
+    type Ctx<'frame> = TestCtx;
+    fn execute<'frame>(&self, _ctx: &TestCtx) {}
 }
 
 #[test]

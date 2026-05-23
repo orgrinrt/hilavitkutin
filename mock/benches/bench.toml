@@ -1,0 +1,773 @@
+# Bench harness configuration for the hilavitkutin runtime megaround
+# (202605101036). Three benches:
+#
+# 1. ema_axis_h — Topic 5 Axis H: EMA streaming pass under realistic
+#    workload context. NEON intrinsics vs scalar reference vs autovec.
+#    Multi-N sweep: 64 / 256 / 1024 / 4096 / 16384 bytes per call.
+#    8-byte FNV1a hash of final EMA state for cross-variant validation
+#    (MAY_DIFFER=false).
+#
+# 2. dispatch_static — Topic 4 Axis A: dispatch shapes where LLVM CAN
+#    devirt. Direct call vs sealed-trait static method vs const fn
+#    pointer. All three compute identical FNV1a math; only the call
+#    site differs. Same N sweep. MAY_DIFFER=false (byte-exact).
+#
+# 3. dispatch_dynamic — Topic 4 Axis A: dispatch shapes where LLVM
+#    CANNOT devirt. Direct (baseline) vs opaque-fn-pointer (volatile
+#    load defeats LLVM) vs data-dependent table indexed at runtime.
+#    Same N sweep. MAY_DIFFER=true (runtime table picks one of four
+#    different mixers per chunk).
+#
+# Variants in `variants/<name>/` each compile to one cdylib using
+# `#[bench_variant("name", sizes = [...])]` for N-dispatch. The bench
+# binary builds a ByteRoutine<IN, 8, MAY_DIFFER> bridge per N.
+
+[bench.ema_axis_h]
+title = "EMA streaming pass: NEON vs scalar vs autovec under realistic workload"
+workload = "realistic"
+master_seed = 0x1234_5678_9ABC_DEF0
+
+[[bench.ema_axis_h.sizes]]
+n = 64
+variants = [
+    "variants/ema_neon/target/release/ema_neon",
+    "variants/ema_scalar/target/release/ema_scalar",
+    "variants/ema_autovec/target/release/ema_autovec",
+]
+
+[[bench.ema_axis_h.sizes]]
+n = 256
+variants = [
+    "variants/ema_neon/target/release/ema_neon",
+    "variants/ema_scalar/target/release/ema_scalar",
+    "variants/ema_autovec/target/release/ema_autovec",
+]
+
+[[bench.ema_axis_h.sizes]]
+n = 1024
+variants = [
+    "variants/ema_neon/target/release/ema_neon",
+    "variants/ema_scalar/target/release/ema_scalar",
+    "variants/ema_autovec/target/release/ema_autovec",
+]
+
+[[bench.ema_axis_h.sizes]]
+n = 4096
+variants = [
+    "variants/ema_neon/target/release/ema_neon",
+    "variants/ema_scalar/target/release/ema_scalar",
+    "variants/ema_autovec/target/release/ema_autovec",
+]
+
+[[bench.ema_axis_h.sizes]]
+n = 16384
+variants = [
+    "variants/ema_neon/target/release/ema_neon",
+    "variants/ema_scalar/target/release/ema_scalar",
+    "variants/ema_autovec/target/release/ema_autovec",
+]
+
+[bench.dispatch_static]
+title = "Static dispatch shapes: direct vs sealed-trait vs const fn pointer"
+workload = "realistic"
+master_seed = 0x7eed_face_dead_beef
+
+[[bench.dispatch_static.sizes]]
+n = 64
+variants = [
+    "variants/dispatch_direct/target/release/dispatch_direct",
+    "variants/dispatch_trait/target/release/dispatch_trait",
+    "variants/dispatch_const_ptr/target/release/dispatch_const_ptr",
+]
+
+[[bench.dispatch_static.sizes]]
+n = 256
+variants = [
+    "variants/dispatch_direct/target/release/dispatch_direct",
+    "variants/dispatch_trait/target/release/dispatch_trait",
+    "variants/dispatch_const_ptr/target/release/dispatch_const_ptr",
+]
+
+[[bench.dispatch_static.sizes]]
+n = 1024
+variants = [
+    "variants/dispatch_direct/target/release/dispatch_direct",
+    "variants/dispatch_trait/target/release/dispatch_trait",
+    "variants/dispatch_const_ptr/target/release/dispatch_const_ptr",
+]
+
+[[bench.dispatch_static.sizes]]
+n = 4096
+variants = [
+    "variants/dispatch_direct/target/release/dispatch_direct",
+    "variants/dispatch_trait/target/release/dispatch_trait",
+    "variants/dispatch_const_ptr/target/release/dispatch_const_ptr",
+]
+
+[[bench.dispatch_static.sizes]]
+n = 16384
+variants = [
+    "variants/dispatch_direct/target/release/dispatch_direct",
+    "variants/dispatch_trait/target/release/dispatch_trait",
+    "variants/dispatch_const_ptr/target/release/dispatch_const_ptr",
+]
+
+[bench.dispatch_dynamic]
+title = "Dynamic dispatch shapes: direct vs opaque fn pointer vs runtime table"
+workload = "realistic"
+master_seed = 0x40ff_ee15_d34d_b33f
+
+[[bench.dispatch_dynamic.sizes]]
+n = 64
+variants = [
+    "variants/dispatch_direct/target/release/dispatch_direct",
+    "variants/dispatch_volatile/target/release/dispatch_volatile",
+    "variants/dispatch_runtime/target/release/dispatch_runtime",
+]
+
+[[bench.dispatch_dynamic.sizes]]
+n = 256
+variants = [
+    "variants/dispatch_direct/target/release/dispatch_direct",
+    "variants/dispatch_volatile/target/release/dispatch_volatile",
+    "variants/dispatch_runtime/target/release/dispatch_runtime",
+]
+
+[[bench.dispatch_dynamic.sizes]]
+n = 1024
+variants = [
+    "variants/dispatch_direct/target/release/dispatch_direct",
+    "variants/dispatch_volatile/target/release/dispatch_volatile",
+    "variants/dispatch_runtime/target/release/dispatch_runtime",
+]
+
+[[bench.dispatch_dynamic.sizes]]
+n = 4096
+variants = [
+    "variants/dispatch_direct/target/release/dispatch_direct",
+    "variants/dispatch_volatile/target/release/dispatch_volatile",
+    "variants/dispatch_runtime/target/release/dispatch_runtime",
+]
+
+[[bench.dispatch_dynamic.sizes]]
+n = 16384
+variants = [
+    "variants/dispatch_direct/target/release/dispatch_direct",
+    "variants/dispatch_volatile/target/release/dispatch_volatile",
+    "variants/dispatch_runtime/target/release/dispatch_runtime",
+]
+
+[bench.dep_graph_csr_9]
+title = "DependencyGraph backing: dense vs CSR vs hybrid (Topic 9 axis B gate)"
+workload = "realistic"
+master_seed = 0x1357_9bdf_2468_ace0
+
+[[bench.dep_graph_csr_9.sizes]]
+n = 8
+variants = [
+    "variants/dep_graph_dense/target/release/dep_graph_dense",
+    "variants/dep_graph_csr/target/release/dep_graph_csr",
+    "variants/dep_graph_hybrid/target/release/dep_graph_hybrid",
+]
+
+[[bench.dep_graph_csr_9.sizes]]
+n = 16
+variants = [
+    "variants/dep_graph_dense/target/release/dep_graph_dense",
+    "variants/dep_graph_csr/target/release/dep_graph_csr",
+    "variants/dep_graph_hybrid/target/release/dep_graph_hybrid",
+]
+
+[[bench.dep_graph_csr_9.sizes]]
+n = 32
+variants = [
+    "variants/dep_graph_dense/target/release/dep_graph_dense",
+    "variants/dep_graph_csr/target/release/dep_graph_csr",
+    "variants/dep_graph_hybrid/target/release/dep_graph_hybrid",
+]
+
+[[bench.dep_graph_csr_9.sizes]]
+n = 64
+variants = [
+    "variants/dep_graph_dense/target/release/dep_graph_dense",
+    "variants/dep_graph_csr/target/release/dep_graph_csr",
+    "variants/dep_graph_hybrid/target/release/dep_graph_hybrid",
+]
+
+[[bench.dep_graph_csr_9.sizes]]
+n = 128
+variants = [
+    "variants/dep_graph_dense/target/release/dep_graph_dense",
+    "variants/dep_graph_csr/target/release/dep_graph_csr",
+    "variants/dep_graph_hybrid/target/release/dep_graph_hybrid",
+]
+
+[[bench.dep_graph_csr_9.sizes]]
+n = 256
+variants = [
+    "variants/dep_graph_dense/target/release/dep_graph_dense",
+    "variants/dep_graph_csr/target/release/dep_graph_csr",
+    "variants/dep_graph_hybrid/target/release/dep_graph_hybrid",
+]
+
+# --- prior-design benches (option-3 fallback per overnight protocol) ---
+
+[bench.popcount_strategy]
+title = "Popcount lowering: std count_ones vs Kernighan loop vs SWAR"
+workload = "realistic"
+master_seed = 0x2468_0123_4567_89ab
+
+[[bench.popcount_strategy.sizes]]
+n = 64
+variants = ["variants/popcount_std/target/release/popcount_std", "variants/popcount_handrolled/target/release/popcount_handrolled", "variants/popcount_swar/target/release/popcount_swar"]
+
+[[bench.popcount_strategy.sizes]]
+n = 256
+variants = ["variants/popcount_std/target/release/popcount_std", "variants/popcount_handrolled/target/release/popcount_handrolled", "variants/popcount_swar/target/release/popcount_swar"]
+
+[[bench.popcount_strategy.sizes]]
+n = 1024
+variants = ["variants/popcount_std/target/release/popcount_std", "variants/popcount_handrolled/target/release/popcount_handrolled", "variants/popcount_swar/target/release/popcount_swar"]
+
+[[bench.popcount_strategy.sizes]]
+n = 4096
+variants = ["variants/popcount_std/target/release/popcount_std", "variants/popcount_handrolled/target/release/popcount_handrolled", "variants/popcount_swar/target/release/popcount_swar"]
+
+[[bench.popcount_strategy.sizes]]
+n = 16384
+variants = ["variants/popcount_std/target/release/popcount_std", "variants/popcount_handrolled/target/release/popcount_handrolled", "variants/popcount_swar/target/release/popcount_swar"]
+
+[bench.hash_algos]
+title = "Hash mixer: FNV-1a vs xxh-style block vs SipHash-style ARX"
+workload = "realistic"
+master_seed = 0x1111_2222_3333_4444
+
+[[bench.hash_algos.sizes]]
+n = 64
+variants = ["variants/hash_fnv1a/target/release/hash_fnv1a", "variants/hash_xxh/target/release/hash_xxh", "variants/hash_sip/target/release/hash_sip"]
+
+[[bench.hash_algos.sizes]]
+n = 256
+variants = ["variants/hash_fnv1a/target/release/hash_fnv1a", "variants/hash_xxh/target/release/hash_xxh", "variants/hash_sip/target/release/hash_sip"]
+
+[[bench.hash_algos.sizes]]
+n = 1024
+variants = ["variants/hash_fnv1a/target/release/hash_fnv1a", "variants/hash_xxh/target/release/hash_xxh", "variants/hash_sip/target/release/hash_sip"]
+
+[[bench.hash_algos.sizes]]
+n = 4096
+variants = ["variants/hash_fnv1a/target/release/hash_fnv1a", "variants/hash_xxh/target/release/hash_xxh", "variants/hash_sip/target/release/hash_sip"]
+
+[[bench.hash_algos.sizes]]
+n = 16384
+variants = ["variants/hash_fnv1a/target/release/hash_fnv1a", "variants/hash_xxh/target/release/hash_xxh", "variants/hash_sip/target/release/hash_sip"]
+
+[bench.fxpmul_strategy]
+title = "Fixed-point mul: Precise (i128 intermediate) vs Hot (i64 truncate)"
+workload = "realistic"
+master_seed = 0x5555_6666_7777_0007
+
+[[bench.fxpmul_strategy.sizes]]
+n = 64
+variants = ["variants/fxpmul_precise/target/release/fxpmul_precise", "variants/fxpmul_hot/target/release/fxpmul_hot"]
+
+[[bench.fxpmul_strategy.sizes]]
+n = 256
+variants = ["variants/fxpmul_precise/target/release/fxpmul_precise", "variants/fxpmul_hot/target/release/fxpmul_hot"]
+
+[[bench.fxpmul_strategy.sizes]]
+n = 1024
+variants = ["variants/fxpmul_precise/target/release/fxpmul_precise", "variants/fxpmul_hot/target/release/fxpmul_hot"]
+
+[[bench.fxpmul_strategy.sizes]]
+n = 4096
+variants = ["variants/fxpmul_precise/target/release/fxpmul_precise", "variants/fxpmul_hot/target/release/fxpmul_hot"]
+
+[[bench.fxpmul_strategy.sizes]]
+n = 16384
+variants = ["variants/fxpmul_precise/target/release/fxpmul_precise", "variants/fxpmul_hot/target/release/fxpmul_hot"]
+
+[bench.branch_pattern]
+title = "Branchful if/else vs branchless cmov/csel under data-dependent input"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+
+[[bench.branch_pattern.sizes]]
+n = 64
+variants = ["variants/branch_if/target/release/branch_if", "variants/branch_cmov/target/release/branch_cmov"]
+
+[[bench.branch_pattern.sizes]]
+n = 256
+variants = ["variants/branch_if/target/release/branch_if", "variants/branch_cmov/target/release/branch_cmov"]
+
+[[bench.branch_pattern.sizes]]
+n = 1024
+variants = ["variants/branch_if/target/release/branch_if", "variants/branch_cmov/target/release/branch_cmov"]
+
+[[bench.branch_pattern.sizes]]
+n = 4096
+variants = ["variants/branch_if/target/release/branch_if", "variants/branch_cmov/target/release/branch_cmov"]
+
+[[bench.branch_pattern.sizes]]
+n = 16384
+variants = ["variants/branch_if/target/release/branch_if", "variants/branch_cmov/target/release/branch_cmov"]
+
+[bench.atomic_ordering_cost]
+title = "Atomic ordering cost: Relaxed vs Acquire/Release vs SeqCst"
+workload = "realistic"
+master_seed = 0x0ddc_0ffe_e055_b011
+
+[[bench.atomic_ordering_cost.sizes]]
+n = 64
+variants = ["variants/atomic_relaxed/target/release/atomic_relaxed", "variants/atomic_acquire/target/release/atomic_acquire", "variants/atomic_seqcst/target/release/atomic_seqcst"]
+
+[[bench.atomic_ordering_cost.sizes]]
+n = 256
+variants = ["variants/atomic_relaxed/target/release/atomic_relaxed", "variants/atomic_acquire/target/release/atomic_acquire", "variants/atomic_seqcst/target/release/atomic_seqcst"]
+
+[[bench.atomic_ordering_cost.sizes]]
+n = 1024
+variants = ["variants/atomic_relaxed/target/release/atomic_relaxed", "variants/atomic_acquire/target/release/atomic_acquire", "variants/atomic_seqcst/target/release/atomic_seqcst"]
+
+[[bench.atomic_ordering_cost.sizes]]
+n = 4096
+variants = ["variants/atomic_relaxed/target/release/atomic_relaxed", "variants/atomic_acquire/target/release/atomic_acquire", "variants/atomic_seqcst/target/release/atomic_seqcst"]
+
+[[bench.atomic_ordering_cost.sizes]]
+n = 16384
+variants = ["variants/atomic_relaxed/target/release/atomic_relaxed", "variants/atomic_acquire/target/release/atomic_acquire", "variants/atomic_seqcst/target/release/atomic_seqcst"]
+
+[bench.cache_layout]
+title = "AoS vs SoA (column-store) layout under partial-field iteration"
+workload = "realistic"
+master_seed = 0x5ead_beef_0123_4567
+
+[[bench.cache_layout.sizes]]
+n = 64
+variants = ["variants/layout_aos/target/release/layout_aos", "variants/layout_soa/target/release/layout_soa"]
+
+[[bench.cache_layout.sizes]]
+n = 256
+variants = ["variants/layout_aos/target/release/layout_aos", "variants/layout_soa/target/release/layout_soa"]
+
+[[bench.cache_layout.sizes]]
+n = 1024
+variants = ["variants/layout_aos/target/release/layout_aos", "variants/layout_soa/target/release/layout_soa"]
+
+[[bench.cache_layout.sizes]]
+n = 4096
+variants = ["variants/layout_aos/target/release/layout_aos", "variants/layout_soa/target/release/layout_soa"]
+
+[[bench.cache_layout.sizes]]
+n = 16384
+variants = ["variants/layout_aos/target/release/layout_aos", "variants/layout_soa/target/release/layout_soa"]
+
+[bench.memcpy_patterns]
+title = "Memory copy patterns: intrinsic vs unrolled u64 vs naive byte loop"
+workload = "realistic"
+master_seed = 0x4646_4646_5050_4040
+
+[[bench.memcpy_patterns.sizes]]
+n = 64
+variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "variants/memcpy_unrolled/target/release/memcpy_unrolled", "variants/memcpy_naive/target/release/memcpy_naive"]
+
+[[bench.memcpy_patterns.sizes]]
+n = 256
+variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "variants/memcpy_unrolled/target/release/memcpy_unrolled", "variants/memcpy_naive/target/release/memcpy_naive"]
+
+[[bench.memcpy_patterns.sizes]]
+n = 1024
+variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "variants/memcpy_unrolled/target/release/memcpy_unrolled", "variants/memcpy_naive/target/release/memcpy_naive"]
+
+[[bench.memcpy_patterns.sizes]]
+n = 4096
+variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "variants/memcpy_unrolled/target/release/memcpy_unrolled", "variants/memcpy_naive/target/release/memcpy_naive"]
+
+[[bench.memcpy_patterns.sizes]]
+n = 16384
+variants = ["variants/memcpy_intrinsic/target/release/memcpy_intrinsic", "variants/memcpy_unrolled/target/release/memcpy_unrolled", "variants/memcpy_naive/target/release/memcpy_naive"]
+
+[bench.fnptr_table_dispatch]
+title = "Fn-pointer table vs match dispatch for 16-variant hot loop"
+workload = "realistic"
+master_seed = 0x478a_b261_e0d9_f352
+
+[[bench.fnptr_table_dispatch.sizes]]
+n = 256
+variants = ["variants/fpt_match_16/target/release/fpt_match_16", "variants/fpt_table_16/target/release/fpt_table_16"]
+
+[[bench.fnptr_table_dispatch.sizes]]
+n = 1024
+variants = ["variants/fpt_match_16/target/release/fpt_match_16", "variants/fpt_table_16/target/release/fpt_table_16"]
+
+[[bench.fnptr_table_dispatch.sizes]]
+n = 4096
+variants = ["variants/fpt_match_16/target/release/fpt_match_16", "variants/fpt_table_16/target/release/fpt_table_16"]
+
+[[bench.fnptr_table_dispatch.sizes]]
+n = 16384
+variants = ["variants/fpt_match_16/target/release/fpt_match_16", "variants/fpt_table_16/target/release/fpt_table_16"]
+
+[bench.minmax_strategy]
+title = "Min/max: u64::min intrinsic vs if/else branch vs branchless bit trick"
+workload = "realistic"
+master_seed = 0x5d49_a3f1_b7c0_6e82
+
+[[bench.minmax_strategy.sizes]]
+n = 256
+variants = ["variants/minmax_intrinsic/target/release/minmax_intrinsic", "variants/minmax_branch/target/release/minmax_branch", "variants/minmax_branchless/target/release/minmax_branchless"]
+
+[[bench.minmax_strategy.sizes]]
+n = 1024
+variants = ["variants/minmax_intrinsic/target/release/minmax_intrinsic", "variants/minmax_branch/target/release/minmax_branch", "variants/minmax_branchless/target/release/minmax_branchless"]
+
+[[bench.minmax_strategy.sizes]]
+n = 4096
+variants = ["variants/minmax_intrinsic/target/release/minmax_intrinsic", "variants/minmax_branch/target/release/minmax_branch", "variants/minmax_branchless/target/release/minmax_branchless"]
+
+[[bench.minmax_strategy.sizes]]
+n = 16384
+variants = ["variants/minmax_intrinsic/target/release/minmax_intrinsic", "variants/minmax_branch/target/release/minmax_branch", "variants/minmax_branchless/target/release/minmax_branchless"]
+
+[bench.float_width]
+title = "Float width strategy: f32 (FastFloat) vs f64 (StrictFloat) vs i64-fixed-point (UFixed Hot)"
+workload = "realistic"
+master_seed = 0x2e51_9d3b_c768_a4f0
+
+[[bench.float_width.sizes]]
+n = 256
+variants = ["variants/float_f32/target/release/float_f32", "variants/float_f64/target/release/float_f64", "variants/float_i64_scaled/target/release/float_i64_scaled"]
+
+[[bench.float_width.sizes]]
+n = 1024
+variants = ["variants/float_f32/target/release/float_f32", "variants/float_f64/target/release/float_f64", "variants/float_i64_scaled/target/release/float_i64_scaled"]
+
+[[bench.float_width.sizes]]
+n = 4096
+variants = ["variants/float_f32/target/release/float_f32", "variants/float_f64/target/release/float_f64", "variants/float_i64_scaled/target/release/float_i64_scaled"]
+
+[[bench.float_width.sizes]]
+n = 16384
+variants = ["variants/float_f32/target/release/float_f32", "variants/float_f64/target/release/float_f64", "variants/float_i64_scaled/target/release/float_i64_scaled"]
+
+[bench.match_arm_count]
+title = "Match arm count: 2 vs 8 vs 64 — jump-table dispatch scaling"
+workload = "realistic"
+master_seed = 0x3c87_15d9_a4b6_82f1
+
+[[bench.match_arm_count.sizes]]
+n = 256
+variants = ["variants/match_2_arms/target/release/match_2_arms", "variants/match_8_arms/target/release/match_8_arms", "variants/match_64_arms/target/release/match_64_arms"]
+
+[[bench.match_arm_count.sizes]]
+n = 1024
+variants = ["variants/match_2_arms/target/release/match_2_arms", "variants/match_8_arms/target/release/match_8_arms", "variants/match_64_arms/target/release/match_64_arms"]
+
+[[bench.match_arm_count.sizes]]
+n = 4096
+variants = ["variants/match_2_arms/target/release/match_2_arms", "variants/match_8_arms/target/release/match_8_arms", "variants/match_64_arms/target/release/match_64_arms"]
+
+[[bench.match_arm_count.sizes]]
+n = 16384
+variants = ["variants/match_2_arms/target/release/match_2_arms", "variants/match_8_arms/target/release/match_8_arms", "variants/match_64_arms/target/release/match_64_arms"]
+
+[bench.shift_amount_origin]
+title = "Shift amount: const vs loop-invariant runtime vs per-iter independent"
+workload = "realistic"
+master_seed = 0x6a92_bf08_e314_750d
+
+[[bench.shift_amount_origin.sizes]]
+n = 256
+variants = ["variants/shr_const/target/release/shr_const", "variants/shr_loop_invariant/target/release/shr_loop_invariant", "variants/shr_per_iter/target/release/shr_per_iter"]
+
+[[bench.shift_amount_origin.sizes]]
+n = 1024
+variants = ["variants/shr_const/target/release/shr_const", "variants/shr_loop_invariant/target/release/shr_loop_invariant", "variants/shr_per_iter/target/release/shr_per_iter"]
+
+[[bench.shift_amount_origin.sizes]]
+n = 4096
+variants = ["variants/shr_const/target/release/shr_const", "variants/shr_loop_invariant/target/release/shr_loop_invariant", "variants/shr_per_iter/target/release/shr_per_iter"]
+
+[[bench.shift_amount_origin.sizes]]
+n = 16384
+variants = ["variants/shr_const/target/release/shr_const", "variants/shr_loop_invariant/target/release/shr_loop_invariant", "variants/shr_per_iter/target/release/shr_per_iter"]
+
+[bench.rotate_strategy]
+title = "Rotate strategy: intrinsic const vs manual shifts vs variable amount"
+workload = "realistic"
+master_seed = 0x71f6_92ab_4e08_d325
+
+[[bench.rotate_strategy.sizes]]
+n = 256
+variants = ["variants/rot_intrinsic_const/target/release/rot_intrinsic_const", "variants/rot_manual_shifts/target/release/rot_manual_shifts", "variants/rot_variable_amount/target/release/rot_variable_amount"]
+
+[[bench.rotate_strategy.sizes]]
+n = 1024
+variants = ["variants/rot_intrinsic_const/target/release/rot_intrinsic_const", "variants/rot_manual_shifts/target/release/rot_manual_shifts", "variants/rot_variable_amount/target/release/rot_variable_amount"]
+
+[[bench.rotate_strategy.sizes]]
+n = 4096
+variants = ["variants/rot_intrinsic_const/target/release/rot_intrinsic_const", "variants/rot_manual_shifts/target/release/rot_manual_shifts", "variants/rot_variable_amount/target/release/rot_variable_amount"]
+
+[[bench.rotate_strategy.sizes]]
+n = 16384
+variants = ["variants/rot_intrinsic_const/target/release/rot_intrinsic_const", "variants/rot_manual_shifts/target/release/rot_manual_shifts", "variants/rot_variable_amount/target/release/rot_variable_amount"]
+
+[bench.sat_arithmetic]
+title = "Overflow strategy: wrapping_add vs saturating_add vs checked_add"
+workload = "realistic"
+master_seed = 0x52b9_de7c_318f_a064
+
+[[bench.sat_arithmetic.sizes]]
+n = 256
+variants = ["variants/sat_wrap/target/release/sat_wrap", "variants/sat_saturate/target/release/sat_saturate", "variants/sat_checked/target/release/sat_checked"]
+
+[[bench.sat_arithmetic.sizes]]
+n = 1024
+variants = ["variants/sat_wrap/target/release/sat_wrap", "variants/sat_saturate/target/release/sat_saturate", "variants/sat_checked/target/release/sat_checked"]
+
+[[bench.sat_arithmetic.sizes]]
+n = 4096
+variants = ["variants/sat_wrap/target/release/sat_wrap", "variants/sat_saturate/target/release/sat_saturate", "variants/sat_checked/target/release/sat_checked"]
+
+[[bench.sat_arithmetic.sizes]]
+n = 16384
+variants = ["variants/sat_wrap/target/release/sat_wrap", "variants/sat_saturate/target/release/sat_saturate", "variants/sat_checked/target/release/sat_checked"]
+
+[bench.fold_strategy]
+title = "Fold ILP: sequential single-acc vs paired 2-way vs quad 4-way"
+workload = "realistic"
+master_seed = 0x239f_b805_47ae_61c2
+
+[[bench.fold_strategy.sizes]]
+n = 256
+variants = ["variants/fold_sequential/target/release/fold_sequential", "variants/fold_paired/target/release/fold_paired", "variants/fold_quad/target/release/fold_quad"]
+
+[[bench.fold_strategy.sizes]]
+n = 1024
+variants = ["variants/fold_sequential/target/release/fold_sequential", "variants/fold_paired/target/release/fold_paired", "variants/fold_quad/target/release/fold_quad"]
+
+[[bench.fold_strategy.sizes]]
+n = 4096
+variants = ["variants/fold_sequential/target/release/fold_sequential", "variants/fold_paired/target/release/fold_paired", "variants/fold_quad/target/release/fold_quad"]
+
+[[bench.fold_strategy.sizes]]
+n = 16384
+variants = ["variants/fold_sequential/target/release/fold_sequential", "variants/fold_paired/target/release/fold_paired", "variants/fold_quad/target/release/fold_quad"]
+
+[bench.bit_count_ops]
+title = "Trailing-zero count: std intrinsic vs De Bruijn lookup vs shift-loop"
+workload = "realistic"
+master_seed = 0x6f10_38d4_92c5_ab07
+
+[[bench.bit_count_ops.sizes]]
+n = 256
+variants = ["variants/ctz_intrinsic/target/release/ctz_intrinsic", "variants/ctz_debruijn/target/release/ctz_debruijn", "variants/ctz_loop/target/release/ctz_loop"]
+
+[[bench.bit_count_ops.sizes]]
+n = 1024
+variants = ["variants/ctz_intrinsic/target/release/ctz_intrinsic", "variants/ctz_debruijn/target/release/ctz_debruijn", "variants/ctz_loop/target/release/ctz_loop"]
+
+[[bench.bit_count_ops.sizes]]
+n = 4096
+variants = ["variants/ctz_intrinsic/target/release/ctz_intrinsic", "variants/ctz_debruijn/target/release/ctz_debruijn", "variants/ctz_loop/target/release/ctz_loop"]
+
+[[bench.bit_count_ops.sizes]]
+n = 16384
+variants = ["variants/ctz_intrinsic/target/release/ctz_intrinsic", "variants/ctz_debruijn/target/release/ctz_debruijn", "variants/ctz_loop/target/release/ctz_loop"]
+
+[bench.atomic_inc_strategy]
+title = "Atomic increment strategy: fetch_add vs CAS-loop vs load+store"
+workload = "realistic"
+master_seed = 0x18c4_92ea_6f3b_a570
+
+[[bench.atomic_inc_strategy.sizes]]
+n = 256
+variants = ["variants/inc_fetch_add/target/release/inc_fetch_add", "variants/inc_cas_loop/target/release/inc_cas_loop", "variants/inc_load_store/target/release/inc_load_store"]
+
+[[bench.atomic_inc_strategy.sizes]]
+n = 1024
+variants = ["variants/inc_fetch_add/target/release/inc_fetch_add", "variants/inc_cas_loop/target/release/inc_cas_loop", "variants/inc_load_store/target/release/inc_load_store"]
+
+[[bench.atomic_inc_strategy.sizes]]
+n = 4096
+variants = ["variants/inc_fetch_add/target/release/inc_fetch_add", "variants/inc_cas_loop/target/release/inc_cas_loop", "variants/inc_load_store/target/release/inc_load_store"]
+
+[[bench.atomic_inc_strategy.sizes]]
+n = 16384
+variants = ["variants/inc_fetch_add/target/release/inc_fetch_add", "variants/inc_cas_loop/target/release/inc_cas_loop", "variants/inc_load_store/target/release/inc_load_store"]
+
+[bench.atomic_vs_plain]
+title = "Accumulator typing cost: plain u64 vs AtomicU64 Relaxed vs AtomicU64 SeqCst"
+workload = "realistic"
+master_seed = 0x4823_d765_19be_f0a3
+
+[[bench.atomic_vs_plain.sizes]]
+n = 256
+variants = ["variants/acc_plain/target/release/acc_plain", "variants/acc_atomic_relaxed/target/release/acc_atomic_relaxed", "variants/acc_atomic_seqcst/target/release/acc_atomic_seqcst"]
+
+[[bench.atomic_vs_plain.sizes]]
+n = 1024
+variants = ["variants/acc_plain/target/release/acc_plain", "variants/acc_atomic_relaxed/target/release/acc_atomic_relaxed", "variants/acc_atomic_seqcst/target/release/acc_atomic_seqcst"]
+
+[[bench.atomic_vs_plain.sizes]]
+n = 4096
+variants = ["variants/acc_plain/target/release/acc_plain", "variants/acc_atomic_relaxed/target/release/acc_atomic_relaxed", "variants/acc_atomic_seqcst/target/release/acc_atomic_seqcst"]
+
+[[bench.atomic_vs_plain.sizes]]
+n = 16384
+variants = ["variants/acc_plain/target/release/acc_plain", "variants/acc_atomic_relaxed/target/release/acc_atomic_relaxed", "variants/acc_atomic_seqcst/target/release/acc_atomic_seqcst"]
+
+[bench.branch_predictability]
+title = "Branch predictability: skewed-rare vs balanced 50/50 vs skewed-common"
+workload = "realistic"
+master_seed = 0x1b41_e7c3_5fa2_8d06
+
+[[bench.branch_predictability.sizes]]
+n = 256
+variants = ["variants/bp_skew_high/target/release/bp_skew_high", "variants/bp_balanced/target/release/bp_balanced", "variants/bp_skew_low/target/release/bp_skew_low"]
+
+[[bench.branch_predictability.sizes]]
+n = 1024
+variants = ["variants/bp_skew_high/target/release/bp_skew_high", "variants/bp_balanced/target/release/bp_balanced", "variants/bp_skew_low/target/release/bp_skew_low"]
+
+[[bench.branch_predictability.sizes]]
+n = 4096
+variants = ["variants/bp_skew_high/target/release/bp_skew_high", "variants/bp_balanced/target/release/bp_balanced", "variants/bp_skew_low/target/release/bp_skew_low"]
+
+[[bench.branch_predictability.sizes]]
+n = 16384
+variants = ["variants/bp_skew_high/target/release/bp_skew_high", "variants/bp_balanced/target/release/bp_balanced", "variants/bp_skew_low/target/release/bp_skew_low"]
+
+[bench.bounds_check]
+title = "Bounds-check elision: iter() vs explicit index vs get_unchecked"
+workload = "realistic"
+master_seed = 0x5a3e_c074_91bf_2d68
+
+[[bench.bounds_check.sizes]]
+n = 256
+variants = ["variants/bc_iter/target/release/bc_iter", "variants/bc_index/target/release/bc_index", "variants/bc_unchecked/target/release/bc_unchecked"]
+
+[[bench.bounds_check.sizes]]
+n = 1024
+variants = ["variants/bc_iter/target/release/bc_iter", "variants/bc_index/target/release/bc_index", "variants/bc_unchecked/target/release/bc_unchecked"]
+
+[[bench.bounds_check.sizes]]
+n = 4096
+variants = ["variants/bc_iter/target/release/bc_iter", "variants/bc_index/target/release/bc_index", "variants/bc_unchecked/target/release/bc_unchecked"]
+
+[[bench.bounds_check.sizes]]
+n = 16384
+variants = ["variants/bc_iter/target/release/bc_iter", "variants/bc_index/target/release/bc_index", "variants/bc_unchecked/target/release/bc_unchecked"]
+
+[bench.inline_strategy]
+title = "Inline strategy: #[inline(always)] vs default vs #[inline(never)] per-record step"
+workload = "realistic"
+master_seed = 0x39f8_47b2_c651_de80
+
+[[bench.inline_strategy.sizes]]
+n = 256
+variants = ["variants/inline_always/target/release/inline_always", "variants/inline_default/target/release/inline_default", "variants/inline_never/target/release/inline_never"]
+
+[[bench.inline_strategy.sizes]]
+n = 1024
+variants = ["variants/inline_always/target/release/inline_always", "variants/inline_default/target/release/inline_default", "variants/inline_never/target/release/inline_never"]
+
+[[bench.inline_strategy.sizes]]
+n = 4096
+variants = ["variants/inline_always/target/release/inline_always", "variants/inline_default/target/release/inline_default", "variants/inline_never/target/release/inline_never"]
+
+[[bench.inline_strategy.sizes]]
+n = 16384
+variants = ["variants/inline_always/target/release/inline_always", "variants/inline_default/target/release/inline_default", "variants/inline_never/target/release/inline_never"]
+
+[bench.load_alignment]
+title = "Load alignment strategy: aligned ptr cast vs read_unaligned vs from_le_bytes pack"
+workload = "realistic"
+master_seed = 0x2c8a_f491_06b7_ed53
+
+[[bench.load_alignment.sizes]]
+n = 256
+variants = ["variants/load_aligned/target/release/load_aligned", "variants/load_unaligned/target/release/load_unaligned", "variants/load_byte_pack/target/release/load_byte_pack"]
+
+[[bench.load_alignment.sizes]]
+n = 1024
+variants = ["variants/load_aligned/target/release/load_aligned", "variants/load_unaligned/target/release/load_unaligned", "variants/load_byte_pack/target/release/load_byte_pack"]
+
+[[bench.load_alignment.sizes]]
+n = 4096
+variants = ["variants/load_aligned/target/release/load_aligned", "variants/load_unaligned/target/release/load_unaligned", "variants/load_byte_pack/target/release/load_byte_pack"]
+
+[[bench.load_alignment.sizes]]
+n = 16384
+variants = ["variants/load_aligned/target/release/load_aligned", "variants/load_unaligned/target/release/load_unaligned", "variants/load_byte_pack/target/release/load_byte_pack"]
+
+[bench.modulo_strategy]
+title = "Modulo strategy: const pow2 (AND mask) vs const non-pow2 (magic mul) vs opaque divisor (full udiv)"
+workload = "realistic"
+master_seed = 0x4dd5_82c1_e7fa_3b96
+
+[[bench.modulo_strategy.sizes]]
+n = 256
+variants = ["variants/mod_pow2_const/target/release/mod_pow2_const", "variants/mod_npow2_const/target/release/mod_npow2_const", "variants/mod_var/target/release/mod_var"]
+
+[[bench.modulo_strategy.sizes]]
+n = 1024
+variants = ["variants/mod_pow2_const/target/release/mod_pow2_const", "variants/mod_npow2_const/target/release/mod_npow2_const", "variants/mod_var/target/release/mod_var"]
+
+[[bench.modulo_strategy.sizes]]
+n = 4096
+variants = ["variants/mod_pow2_const/target/release/mod_pow2_const", "variants/mod_npow2_const/target/release/mod_npow2_const", "variants/mod_var/target/release/mod_var"]
+
+[[bench.modulo_strategy.sizes]]
+n = 16384
+variants = ["variants/mod_pow2_const/target/release/mod_pow2_const", "variants/mod_npow2_const/target/release/mod_npow2_const", "variants/mod_var/target/release/mod_var"]
+
+[bench.ema_formulation]
+title = "EMA formulation: Q0.32 saturating fixed-point vs float vs integer-shift"
+workload = "realistic"
+master_seed = 0x6c97_b3e2_5a1d_8f04
+
+[[bench.ema_formulation.sizes]]
+n = 256
+variants = ["variants/ema_form_q32/target/release/ema_form_q32", "variants/ema_form_float/target/release/ema_form_float", "variants/ema_form_intshift/target/release/ema_form_intshift"]
+
+[[bench.ema_formulation.sizes]]
+n = 1024
+variants = ["variants/ema_form_q32/target/release/ema_form_q32", "variants/ema_form_float/target/release/ema_form_float", "variants/ema_form_intshift/target/release/ema_form_intshift"]
+
+[[bench.ema_formulation.sizes]]
+n = 4096
+variants = ["variants/ema_form_q32/target/release/ema_form_q32", "variants/ema_form_float/target/release/ema_form_float", "variants/ema_form_intshift/target/release/ema_form_intshift"]
+
+[[bench.ema_formulation.sizes]]
+n = 16384
+variants = ["variants/ema_form_q32/target/release/ema_form_q32", "variants/ema_form_float/target/release/ema_form_float", "variants/ema_form_intshift/target/release/ema_form_intshift"]
+
+[bench.iter_patterns]
+title = "Column iteration patterns: sequential vs strided vs data-dependent gather"
+workload = "realistic"
+master_seed = 0x3a5c_8e91_b2d4_f607
+
+[[bench.iter_patterns.sizes]]
+n = 256
+variants = ["variants/iter_seq/target/release/iter_seq", "variants/iter_strided/target/release/iter_strided", "variants/iter_gather/target/release/iter_gather"]
+
+[[bench.iter_patterns.sizes]]
+n = 1024
+variants = ["variants/iter_seq/target/release/iter_seq", "variants/iter_strided/target/release/iter_strided", "variants/iter_gather/target/release/iter_gather"]
+
+[[bench.iter_patterns.sizes]]
+n = 4096
+variants = ["variants/iter_seq/target/release/iter_seq", "variants/iter_strided/target/release/iter_strided", "variants/iter_gather/target/release/iter_gather"]
+
+[[bench.iter_patterns.sizes]]
+n = 16384
+variants = ["variants/iter_seq/target/release/iter_seq", "variants/iter_strided/target/release/iter_strided", "variants/iter_gather/target/release/iter_gather"]
+
+[timing]
+passes = 8
+runs_per_pass = 2000
+batch_size = 100
+harness_runs = 1
+cooldowns_ms = [0]

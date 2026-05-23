@@ -11,7 +11,7 @@ use core::marker::PhantomData;
 use arvo::Cap;
 
 use crate::column_value::ColumnValue;
-use crate::provider::{Provider, ProviderKind, StoreDispatch};
+use crate::builder_input::{BuilderInput, StoreDispatch};
 
 /// Singleton store: one value shared across the pipeline.
 #[repr(transparent)]
@@ -38,7 +38,7 @@ impl<T> Resource<T> {
     /// scheduler data plane is not yet built (HILA-RUNTIME-C6 lands
     /// resource resolution + persistence wiring), so the value drops
     /// here. The semantic is preserved at the type level via
-    /// `Provider::Init = T`: when the data plane lands, the
+    /// `BuilderInput::Init = T`: when the data plane lands, the
     /// constructor will route the value into the scheduler-owned
     /// resource registry.
     ///
@@ -52,9 +52,8 @@ impl<T> Resource<T> {
     }
 }
 
-impl<T: 'static> Provider for Resource<T> {
+impl<T: 'static> BuilderInput for Resource<T> {
     type Init = T;
-    const KIND: ProviderKind = ProviderKind::Resource;
     type Dispatch = StoreDispatch<Self>;
 }
 
@@ -83,9 +82,8 @@ impl<T> Column<T> {
     }
 }
 
-impl<T: 'static> Provider for Column<T> {
+impl<T: 'static> BuilderInput for Column<T> {
     type Init = ();
-    const KIND: ProviderKind = ProviderKind::Column;
     type Dispatch = StoreDispatch<Self>;
 }
 
@@ -120,9 +118,8 @@ impl<T> Virtual<T> {
     }
 }
 
-impl<T: 'static> Provider for Virtual<T> {
+impl<T: 'static> BuilderInput for Virtual<T> {
     type Init = ();
-    const KIND: ProviderKind = ProviderKind::Virtual;
     type Dispatch = StoreDispatch<Self>;
 }
 

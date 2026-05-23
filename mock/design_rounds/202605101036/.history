@@ -1,0 +1,50 @@
+e1aee5e chore: lock src changelist for 202605101036_changelist.src.lock.md
+d445a62 docs: regenerate from cargo mock after test-utils revert
+c53f9f8 Revert "feat: hilavitkutin-test-utils crate scaffold"
+ce8c54a docs: drop `Wu` suffix from example workunit names
+668c5c0 feat: pass 7 example apps + integration test scaffolds
+7a7bc53 feat: hilavitkutin-test-utils crate scaffold
+5a6c248 feat: scheduler<cfg> typestate + run signature + dirty bits + plan cache
+9bdc158 feat: adapt-wu + ema scaffold + meta-virtual markers
+07dddc5 feat: standard + off adapt kit recipes
+a3da129 docs: regenerate from cargo mock
+b045185 feat: nine adapt metrics resources + metricskit
+0d0156d feat: nine adapt axes + sealed adaptaxis trait
+2962b36 docs: update src cl pass 4 to reflect landed shape
+ee0231f feat: hybrid executor + thread pool builder
+607e4ec feat: thread barrier + parking + per-os classify
+7006e77 feat: ship 5-check disasm assertion module + bench wiring
+d33c5db docs: ship 5-check disasm assertion document for axis a
+e19eb4e feat: morsel iter shape + micro-morsel sync constants
+de8828d feat: arena progress indirection + s3 fence emission
+fbc439a feat: skeleton run_fiber<S: FiberShape> + wu_fn shim helper
+1d8d4a4 feat: stake standardcodegen marker + sealed trait impls
+5335eb5 docs: prove arvo wire-up viable via four sketches
+e70bbf4 docs: correct Pass 2.5 src CL section to reflect real attempt history
+b92e78a chore: bump arvo deps + record Pass 2.5 cap-typing attempt as reverted
+8960b95 docs: capture 2026-05-11 concurrency+cache+soundness audit findings
+43fbca3 feat: ship plan/core_program.rs with synthesise_core_programs
+b269156 refactor!: PoolFrame gains 'arena lifetime + static Send+Sync gate on ExecutionPlan
+4bb4104 fix: distribute size_morsels remainder + persist morsel_sizes + thread upward_rank
+3302f1c fix: force DirtyMask MAX_STORES assertion to evaluate
+1b15094 fix: address pass-2 review findings
+e1142c5 feat: CSR DependencyGraph + 13-step plan chain + compute_execution_plan
+9a8e47e feat!: ship ExecutionPlan with 10 const generics + nested types
+55c1518 test: rehab engine tests for exact-width transparent ids
+b334ec6 refactor!: unify engine ids in hilavitkutin-api as exact-width transparent newtypes
+99b32f2 feat: re-export FiberId / PhaseId / TrunkId from hilavitkutin-api root
+3bd3e70 feat: complete Pass 1 api shapes — WorkUnit::Ctx GAT lift + PoolFrame + WakeStrategy + Executor
+ada9768 refactor!: rename Provider trait to BuilderInput; add Pass 1 api shapes
+b9e827c docs: draft src changelist for round 202605101036
+f0dcf45 chore: lock doc changelist for round 202605101036
+8675b15 docs: reframe MAX_PLAN_AFFECTING_RESOURCES as RunCfg assoc const with 256 default
+fa91374 docs: resolve five user-attention items as consumer-tunable surfaces with defaults
+99c8b0d docs: append bench-driven follow-ups to persistence + str BACKLOG
+3004d52 docs: append bench-driven follow-ups to providers BACKLOG
+4c68dd8 docs: append bench-driven follow-ups to engine + api BACKLOG.md.tmpl
+2510eef feat: bench fnptr_table_dispatch (REVISES match_arm_count guidance)
+9b76747 docs: add synthesis section to NIGHT_FINDINGS
+fc69ae9 feat: bench minmax_strategy (intrinsic vs branch vs branchless)
+da11af0 feat: bench float_width (f32 vs f64 vs i64-fixed-point)
+e203deb feat: bench match_arm_count (2 vs 8 vs 64 arms)
+4802e6f feat: bench shift_amount_origin (const vs loop-invariant vs per-iter)

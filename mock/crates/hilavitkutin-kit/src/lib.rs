@@ -19,7 +19,7 @@
 
 use core::marker::PhantomData;
 
-use hilavitkutin_api::provider::{Dispatch, Provider};
+use hilavitkutin_api::builder_input::{BuilderInput, Dispatch};
 use hilavitkutin_api::access::Concat;
 use hilavitkutin_api::{StoreBundle, WorkUnitBundle};
 
@@ -39,9 +39,9 @@ use hilavitkutin_api::{StoreBundle, WorkUnitBundle};
 /// values for Resources, Replaceable opt-in) lives at the call site.
 #[diagnostic::on_unimplemented(
     message = "`{Self}` is not a Kit",
-    note = "Implement `Kit` by declaring `type Units: WorkUnitBundle` (the WorkUnit cons-list, often built with `read!` / `write!`) and `type Owned: StoreBundle` (the Resource / Column / Virtual cons-list). Pair the impl with `impl Provider for {Self} {{ type Init = Self; const KIND: ProviderKind = ProviderKind::Kit; type Dispatch = KitDispatch<Self>; }}`. The engine reads these at compile time on `.with(my_kit)`. If `.build()` reports `overflow evaluating the requirement` after composing many Kits, declare `#![recursion_limit = \"1024\"]` at your crate root."
+    note = "Implement `Kit` by declaring `type Units: WorkUnitBundle` (the WorkUnit cons-list, often built with `read!` / `write!`) and `type Owned: StoreBundle` (the Resource / Column / Virtual cons-list). Pair the impl with `impl BuilderInput for {Self} {{ type Init = Self; const KIND: ProviderKind = ProviderKind::Kit; type Dispatch = KitDispatch<Self>; }}`. The engine reads these at compile time on `.with(my_kit)`. If `.build()` reports `overflow evaluating the requirement` after composing many Kits, declare `#![recursion_limit = \"1024\"]` at your crate root."
 )]
-pub trait Kit: Provider<Init = Self> {
+pub trait Kit: BuilderInput<Init = Self> {
     /// Cons-list of WorkUnit types the kit contributes. Use the
     /// `read!` / `write!` macros from `hilavitkutin-api` to construct
     /// the shape, or `hilavitkutin_api::Empty` for none.
