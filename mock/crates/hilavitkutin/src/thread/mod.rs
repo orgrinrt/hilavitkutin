@@ -15,9 +15,9 @@ pub mod barrier;
 pub mod class;
 pub mod convergence;
 pub mod handle;
+pub mod hybrid;
 pub mod parking;
 pub mod pool;
-pub mod wake;
 
 use arvo::USize;
 
@@ -26,12 +26,13 @@ pub use barrier::{phase_barrier_arrive, phase_barrier_observe, phase_barrier_res
 pub use class::{classify_cores, CoreClass, MAX_CORES};
 pub use convergence::Convergence;
 pub use handle::ThreadHandle;
+pub use hybrid::HybridExecutor;
 pub use parking::{
     atomic_wait, atomic_wake_all, pick_tier, predicted_wait_ns_load, predicted_wait_ns_store, spin,
     spin_budget_for, ParkTier,
 };
-pub use pool::ThreadPool;
-pub use wake::WakeStrategy;
+pub use hilavitkutin_api::platform::WakeStrategy;
+pub use pool::{ThreadPool, ThreadPoolBuilder};
 
 /// Map plan trunks onto concrete cores.
 ///

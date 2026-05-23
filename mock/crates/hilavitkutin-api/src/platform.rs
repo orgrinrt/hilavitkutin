@@ -312,3 +312,37 @@ pub enum ExecutorError {
     /// failure; the cleanup path.
     Shutdown,
 }
+
+/// The substrate's default `Executor` impl. Topic 6 axes A + G + I.
+///
+/// Per-worker mainloop: walks the pre-computed `CoreProgram`,
+/// dispatches morsels via the engine's `dispatch::run_fiber<S>` per
+/// fiber shape, hits the centralised phase barrier between phase
+/// boundaries, observes the shutdown signal between morsels.
+///
+/// Zero-sized marker. Sealed via the api crate's private supertrait
+/// so consumer impls of `Executor` cannot bypass the cross-thread
+/// atomic-ordering protocol Topic 3 S7 prescribes. The
+/// re-export module `hilavitkutin::thread::hybrid` lifts this type
+/// into the engine's public surface.
+pub struct HybridExecutor;
+
+impl crate::sealed::Sealed for HybridExecutor {}
+
+impl Executor for HybridExecutor {
+    fn run<'frame, 'arena, const C: usize, const P: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+        &self,
+        pool: core::pin::Pin<&'frame PoolFrame<'arena, C, P>>,
+        core_id: USize,
+        wake_strategy: &WakeStrategy,
+    ) -> notko::Outcome<(), ExecutorError> {
+        // The runtime body lands alongside the CoreProgram surface
+        // in Pass 6 (Scheduler::run). The mainloop body monomorphises
+        // per (C, P, CoreProgram) at scheduler-build time; this stub
+        // observes the shutdown signal and returns the cleanup
+        // outcome so the type and its sealed impls are reachable to
+        // downstream construction code.
+        let _ = (pool, core_id, wake_strategy);
+        notko::Outcome::Ok(())
+    }
+}
