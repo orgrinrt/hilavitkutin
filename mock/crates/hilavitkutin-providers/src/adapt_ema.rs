@@ -72,6 +72,12 @@ pub const NORM_1_OVER_8: BlendFactor = BlendFactor::from_raw(0x2000);
 /// multiplies use the Hot UFixed container; final adds saturate at
 /// the upper bound.
 ///
+/// **STUB**: body lands in Pass-7-or-later wiring of runtime
+/// megaround `202605101036`. The current scalar / NEON / SSE2
+/// arms all delegate to a no-op fallback. Consumers integrating
+/// against this function today get the structural shape; the
+/// bench-validated kernel arrives with the executor wiring.
+///
 /// Cfg-gated SIMD paths short-circuit when the right ISA extension
 /// is available; the scalar fallback always typechecks and runs.
 /// The aarch64-NEON kernel is bench-validated (7-instruction body
@@ -79,6 +85,12 @@ pub const NORM_1_OVER_8: BlendFactor = BlendFactor::from_raw(0x2000);
 /// pending bench rounds in Pass 7.
 #[inline]
 pub fn ema_update(dst: &mut [Sample], src: &[Sample]) {
+    debug_assert_eq!(
+        dst.len(),
+        src.len(),
+        "ema_update: dst and src slices must have equal length"
+    );
+
     #[cfg(target_feature = "neon")]
     {
         ema_update_neon(dst, src);
