@@ -2,8 +2,8 @@
 //! engine.
 //!
 //! Topic 11 axis B of runtime megaround `202605101036`. `Column<Sample>`
-//! over fixed-point audio frames. Multiple `MixerWu` instances
-//! composing in parallel (per-channel processing), one `MasterBusWu`
+//! over fixed-point audio frames. Multiple `Mixer` instances
+//! composing in parallel (per-channel processing), one `MasterBus`
 //! collapsing into the final mix bus. Predictive parking under
 //! known phase wait times. Bit-exact reproducibility against the
 //! Topic 3 S3 stnp+fence ordering protocol.
@@ -20,16 +20,16 @@ fn main() {
     //
     //   let mut sched = Scheduler::builder()
     //       .with(Column::<Sample>::new())
-    //       .with(MixerWu::channel(0))
-    //       .with(MixerWu::channel(1))
-    //       .with(MixerWu::channel(2))
-    //       .with(MixerWu::channel(3))
-    //       .with(MasterBusWu)
+    //       .with(Mixer::channel(0))
+    //       .with(Mixer::channel(1))
+    //       .with(Mixer::channel(2))
+    //       .with(Mixer::channel(3))
+    //       .with(MasterBus)
     //       .build();
     //   let _: Outcome<(), ()> = sched.run();
     //
-    // is the Pass-8-wiring target. The MixerWu bodies use
+    // is the Pass-8-wiring target. The Mixer bodies use
     // ctx.batch() over Column<Sample> with arvo `IFixed` fixed-
-    // point gain math; MasterBusWu's commutative-write reduce
+    // point gain math; MasterBus's commutative-write reduce
     // collapses the per-channel buses into the final mix.
 }

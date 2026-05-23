@@ -3,7 +3,7 @@
 //!
 //! Topic 11 axis B of runtime megaround `202605101036`. Tokenises a
 //! corpus into a `Column<Word>` via the substrate interner, runs a
-//! `MapWu` to count per-document occurrences, and a `ReduceWu` to
+//! `Map` to count per-document occurrences, and a `Reduce` to
 //! aggregate across all documents. Exercises:
 //!
 //! - morsel parallelism over the `Column<Word>`
@@ -28,14 +28,14 @@ fn main() {
     //   let mut sched = Scheduler::builder()
     //       .with(InternerKit)
     //       .with(AdaptWu::default())
-    //       .with(MapWu)
-    //       .with(ReduceWu)
+    //       .with(Map)
+    //       .with(Reduce)
     //       .build();
     //   let _: Outcome<(), ()> = sched.run();
     //
     // is the Pass-8-wiring target. The Map and Reduce WorkUnit
     // declarations live in the example app's own scope; here they
-    // would be `impl WorkUnit<Always> for MapWu { type Read = ...;
+    // would be `impl WorkUnit<Always> for Map { type Read = ...;
     // type Write = ...; type Hint = ...; type Ctx<'frame> = ...;
     // fn execute(&self, ctx: &Ctx) { ctx.each().run(|i| ...); } }`.
 }
