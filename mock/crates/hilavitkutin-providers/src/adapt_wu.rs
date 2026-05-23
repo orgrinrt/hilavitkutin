@@ -85,7 +85,7 @@ impl WorkUnit<On<ScheduleEnd>> for AdaptWu {
         Virtual<AnomalyFired>,
     ];
     type Hint = (Steady, Adaptive, Important);
-    type Ctx<'frame> = AdaptCtxPlaceholder<'frame>;
+    type Ctx<'frame> = AdaptCtxUnimplementedStub<'frame>;
 
     fn execute<'frame>(&self, _ctx: &Self::Ctx<'frame>) {
         // Body lands at Pass 6 wiring (Scheduler::run): walk the nine
@@ -110,12 +110,12 @@ impl WorkUnit<On<ScheduleEnd>> for AdaptWu {
 // ---------------------------------------------------------------------
 
 /// Placeholder Ctx for `AdaptWu`. Pre-Pass 6 stub.
-pub struct AdaptCtxPlaceholder<'frame> {
+pub struct AdaptCtxUnimplementedStub<'frame> {
     _phantom: PhantomData<&'frame ()>,
     stub: Stub,
 }
 
-impl Default for AdaptCtxPlaceholder<'_> {
+impl Default for AdaptCtxUnimplementedStub<'_> {
     fn default() -> Self {
         Self {
             _phantom: PhantomData,
@@ -132,7 +132,7 @@ impl<R: AccessSet> ColumnReaderApi<R> for Stub {
     where
         R: Contains<Column<T>>,
     {
-        unimplemented!("AdaptCtxPlaceholder is pre-Pass-6 stub; engine Ctx supersedes it")
+        unimplemented!("AdaptCtxUnimplementedStub is pre-Pass-6 stub; engine Ctx supersedes it")
     }
 }
 
@@ -141,7 +141,7 @@ impl<W: AccessSet> ColumnWriterApi<W> for Stub {
     where
         W: Contains<Column<T>>,
     {
-        unimplemented!("AdaptCtxPlaceholder is pre-Pass-6 stub; engine Ctx supersedes it")
+        unimplemented!("AdaptCtxUnimplementedStub is pre-Pass-6 stub; engine Ctx supersedes it")
     }
 }
 
@@ -150,7 +150,7 @@ impl<R: AccessSet> ResourceProviderApi<R> for Stub {
     where
         R: Contains<Resource<T>>,
     {
-        unimplemented!("AdaptCtxPlaceholder is pre-Pass-6 stub; engine Ctx supersedes it")
+        unimplemented!("AdaptCtxUnimplementedStub is pre-Pass-6 stub; engine Ctx supersedes it")
     }
 }
 
@@ -159,7 +159,7 @@ impl<W: AccessSet> VirtualFirerApi<W> for Stub {
     where
         W: Contains<Virtual<V>>,
     {
-        unimplemented!("AdaptCtxPlaceholder is pre-Pass-6 stub; engine Ctx supersedes it")
+        unimplemented!("AdaptCtxUnimplementedStub is pre-Pass-6 stub; engine Ctx supersedes it")
     }
 }
 
@@ -168,7 +168,7 @@ impl<R: AccessSet, W: AccessSet> EachApi<R, W> for Stub {
     where
         F: FnMut(USize),
     {
-        unimplemented!("AdaptCtxPlaceholder is pre-Pass-6 stub; engine Ctx supersedes it")
+        unimplemented!("AdaptCtxUnimplementedStub is pre-Pass-6 stub; engine Ctx supersedes it")
     }
 }
 
@@ -177,7 +177,7 @@ impl<R: AccessSet, W: AccessSet> BatchApi<R, W> for Stub {
     where
         F: FnMut(USize, USize),
     {
-        unimplemented!("AdaptCtxPlaceholder is pre-Pass-6 stub; engine Ctx supersedes it")
+        unimplemented!("AdaptCtxUnimplementedStub is pre-Pass-6 stub; engine Ctx supersedes it")
     }
 }
 
@@ -188,53 +188,53 @@ impl<R: AccessSet, W: AccessSet> ReduceApi<R, W> for Stub {
         F: FnMut(A, USize) -> A,
     {
         let _ = init;
-        unimplemented!("AdaptCtxPlaceholder is pre-Pass-6 stub; engine Ctx supersedes it")
+        unimplemented!("AdaptCtxUnimplementedStub is pre-Pass-6 stub; engine Ctx supersedes it")
     }
 }
 
-impl<'frame, R: AccessSet> HasColumnReader<R> for AdaptCtxPlaceholder<'frame> {
+impl<'frame, R: AccessSet> HasColumnReader<R> for AdaptCtxUnimplementedStub<'frame> {
     type Provider = Stub;
     fn reader(&self) -> &Stub {
         &self.stub
     }
 }
 
-impl<'frame, W: AccessSet> HasColumnWriter<W> for AdaptCtxPlaceholder<'frame> {
+impl<'frame, W: AccessSet> HasColumnWriter<W> for AdaptCtxUnimplementedStub<'frame> {
     type Provider = Stub;
     fn writer(&self) -> &Stub {
         &self.stub
     }
 }
 
-impl<'frame, R: AccessSet> HasResourceProvider<R> for AdaptCtxPlaceholder<'frame> {
+impl<'frame, R: AccessSet> HasResourceProvider<R> for AdaptCtxUnimplementedStub<'frame> {
     type Provider = Stub;
     fn resources(&self) -> &Stub {
         &self.stub
     }
 }
 
-impl<'frame, W: AccessSet> HasVirtualFirer<W> for AdaptCtxPlaceholder<'frame> {
+impl<'frame, W: AccessSet> HasVirtualFirer<W> for AdaptCtxUnimplementedStub<'frame> {
     type Provider = Stub;
     fn virtuals(&self) -> &Stub {
         &self.stub
     }
 }
 
-impl<'frame, R: AccessSet, W: AccessSet> HasEach<R, W> for AdaptCtxPlaceholder<'frame> {
+impl<'frame, R: AccessSet, W: AccessSet> HasEach<R, W> for AdaptCtxUnimplementedStub<'frame> {
     type Provider = Stub;
     fn each(&self) -> &Stub {
         &self.stub
     }
 }
 
-impl<'frame, R: AccessSet, W: AccessSet> HasBatch<R, W> for AdaptCtxPlaceholder<'frame> {
+impl<'frame, R: AccessSet, W: AccessSet> HasBatch<R, W> for AdaptCtxUnimplementedStub<'frame> {
     type Provider = Stub;
     fn batch(&self) -> &Stub {
         &self.stub
     }
 }
 
-impl<'frame, R: AccessSet, W: AccessSet> HasReduce<R, W> for AdaptCtxPlaceholder<'frame> {
+impl<'frame, R: AccessSet, W: AccessSet> HasReduce<R, W> for AdaptCtxUnimplementedStub<'frame> {
     type Provider = Stub;
     fn reduce(&self) -> &Stub {
         &self.stub

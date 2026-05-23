@@ -54,14 +54,21 @@ pub use plan::PlanCache;
 ///
 /// Generic over the consumer's `RunCfg`. The `Cfg::Out` associated
 /// type parameterises `run()`'s return shape; `Cfg::Err` flows
-/// through `Cfg::Out::Err`. The dirty bitmap width matches
-/// `DefaultRunCfg::MAX_PLAN_AFFECTING_RESOURCES = 256` per Topic 8
-/// axis B and Topic 9 axis C; consumers running with a larger cap
-/// pick the const-generic shape when `generic_const_exprs`
-/// stabilises (BACKLOG).
+/// through `Cfg::Out::Err`. The dirty bitmap width is driven by
+/// `Cfg::MAX_PLAN_AFFECTING_RESOURCES` per Topic 8 axis B and
+/// Topic 9 axis C: each consumer's RunCfg picks the cap that fits
+/// its plan-affecting resource population, and the type system
+/// verifies the per-RunCfg slot count via `generic_const_exprs`.
 pub struct Scheduler<Cfg: RunCfg = DefaultRunCfg> {
     _cfg: PhantomData<Cfg>,
-    // lint:allow(no-bare-numeric) reason: const-generic array dimension at the L0 storage root; matches DefaultRunCfg::MAX_PLAN_AFFECTING_RESOURCES = USize(256); tracked: #345
+    // The dirty bitmap width matches DefaultRunCfg::MAX_PLAN_AFFECTING_RESOURCES = USize(256).
+    // The intended lift is `[AtomicBool; Cfg::MAX_PLAN_AFFECTING_RESOURCES.0]` under
+    // `feature(generic_const_exprs)`, but current rustc rejects field access on generic
+    // constants ("overly complex generic constant: field access is not supported in
+    // generic constants"). The lift waits on rustc gaining that capability; until then
+    // the hardcoded 256 matches the documented default and lint:allow(no-bare-numeric)
+    // covers the const-generic-array-dimension root.
+    // lint:allow(no-bare-numeric) reason: const-generic array dimension at the L0 storage root; matches DefaultRunCfg::MAX_PLAN_AFFECTING_RESOURCES = USize(256); tracked: #345 (per-Cfg lift awaits rustc generic_const_exprs gaining field-access support)
     plan_dirty: [AtomicBool; 256],
     plan_cache: PlanCache,
 }
