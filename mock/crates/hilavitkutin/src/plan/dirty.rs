@@ -22,8 +22,21 @@ pub struct DirtyMask<const MAX_STORES: usize> { // lint:allow(no-bare-numeric) l
 }
 
 impl<const MAX_STORES: usize> DirtyMask<MAX_STORES> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    // Skeleton ceiling: the `USize` backing is one 64-bit word, so
+    // any `MAX_STORES > 64` would silently drop dirty bits past
+    // index 63. The arvo-bitmask multi-container swap (BACKLOG)
+    // lifts this; until then, fail at compile time rather than
+    // running with partial coverage. Associated consts only evaluate
+    // on monomorphisation when referenced, so every constructor
+    // discharges the assert with `let _ = Self::_ASSERT_FITS_IN_USIZE`.
+    const _ASSERT_FITS_IN_USIZE: () = assert!( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-context size assertion; tracked: #429
+        MAX_STORES <= 64,
+        "DirtyMask: MAX_STORES > 64 is not supported by the skeleton USize backing. Once arvo-bitmask ships multi-container Mask<W>, this assert lifts and DirtyMask widens.",
+    );
+
     /// Empty mask: nothing dirty.
     pub const fn empty() -> Self {
+        let _ = Self::_ASSERT_FITS_IN_USIZE;
         Self { bits: USize::ZERO }
     }
 
@@ -65,5 +78,30 @@ impl<const MAX_STORES: usize> DirtyMask<MAX_STORES> { // lint:allow(no-bare-nume
 impl<const MAX_STORES: usize> Default for DirtyMask<MAX_STORES> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     fn default() -> Self {
         Self::empty()
+    }
+}
+
+/// Per-fiber dirty masks: which stores changed since last frame, per
+/// fiber. Drives incremental-skip propagation: a fiber whose inputs
+/// are entirely clean (its access set disjoint from the running
+/// dirty mask) can skip dispatch this frame.
+///
+/// Plan-stage output of the fused upward-rank + dirty step (step 8).
+#[derive(Copy, Clone, Debug)]
+pub struct DirtyMasks<const MAX_FIBERS: usize, const MAX_STORES: usize> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    pub per_fiber: [DirtyMask<MAX_STORES>; MAX_FIBERS],
+}
+
+impl<const MAX_FIBERS: usize, const MAX_STORES: usize> DirtyMasks<MAX_FIBERS, MAX_STORES> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    pub const fn new() -> Self {
+        Self { per_fiber: [DirtyMask::empty(); MAX_FIBERS] }
+    }
+}
+
+impl<const MAX_FIBERS: usize, const MAX_STORES: usize> Default // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    for DirtyMasks<MAX_FIBERS, MAX_STORES>
+{
+    fn default() -> Self {
+        Self::new()
     }
 }

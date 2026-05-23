@@ -18,55 +18,138 @@
 //!
 //! Round 202605091700 reshape: the nine `.add_*` and `.with_*`
 //! methods retire in favour of one unified verb, `.with(value)`.
-//! Every value passed to `.with` impls the sealed `Provider` trait
-//! from `hilavitkutin-api`; the per-kind typestate update flows
-//! through `Provider::Dispatch`. WorkUnit unit-structs, Kits,
-//! `Resource::new(value)`, `Column::<T>::new()`,
-//! `Virtual::<T>::new()`, `LinkedBin::<dyn TraitFamily>::new()`, and
-//! platform impls (memory / threads / clock) all share the one
+//! Every value passed to `.with` impls the sealed `BuilderInput`
+//! trait from `hilavitkutin-api`; the per-kind typestate update
+//! flows through `BuilderInput::Dispatch`. WorkUnit unit-structs,
+//! Kits, `Resource::new(value)`, `Column::<T>::new()`,
+//! `Virtual::<T>::new()`, `LinkedBin::<TraitFamily>::new()`,
+//! and platform impls (memory / threads / clock) all share the one
 //! signature.
+//!
+//! Pass 6 of the runtime megaround (`202605101036`): `Scheduler`
+//! lifts to `Scheduler<Cfg: RunCfg = DefaultRunCfg>`. The
+//! `RunCfg::Out` associated type drives `Scheduler::run()`'s
+//! return shape. `Scheduler::replace_resource<R: PlanAffecting>`
+//! sets the per-resource dirty bit; the cheap `replace_value` path
+//! is reserved for non-`PlanAffecting` replacements. The
+//! `PipelineResult` enum retires per the workspace no-legacy-shims
+//! rule; consumers receive `RunCfg::Out` directly.
 
 use core::marker::PhantomData;
+use core::sync::atomic::AtomicBool;
 
 use hilavitkutin_api::access::{ContainsAll, Empty};
-use hilavitkutin_api::provider::{Dispatch, Provider};
+use hilavitkutin_api::builder_input::{BuilderInput, Dispatch};
+use hilavitkutin_api::run_cfg::{DefaultRunCfg, PlanAffecting, RunCfg};
 use hilavitkutin_api::store::Replaceable;
 use hilavitkutin_api::work_unit::WorkUnitBundle;
 
 pub mod metrics;
 pub mod plan;
-pub mod result;
 
 pub use metrics::SchedulerMetrics;
-pub use plan::{ExecutionPlan, LaneAssignment};
-pub use result::PipelineResult;
+pub use plan::PlanCache;
 
 /// Top-level scheduler.
-pub struct Scheduler {
-    _phantom: PhantomData<()>,
+///
+/// Generic over the consumer's `RunCfg`. The `Cfg::Out` associated
+/// type parameterises `run()`'s return shape; `Cfg::Err` flows
+/// through `Cfg::Out::Err`. The dirty bitmap width is driven by
+/// `Cfg::MAX_PLAN_AFFECTING_RESOURCES` per Topic 8 axis B and
+/// Topic 9 axis C: each consumer's RunCfg picks the cap that fits
+/// its plan-affecting resource population, and the type system
+/// verifies the per-RunCfg slot count via `generic_const_exprs`.
+pub struct Scheduler<Cfg: RunCfg = DefaultRunCfg> {
+    _cfg: PhantomData<Cfg>,
+    // The dirty bitmap width matches DefaultRunCfg::MAX_PLAN_AFFECTING_RESOURCES = USize(256).
+    // The intended lift is `[AtomicBool; Cfg::MAX_PLAN_AFFECTING_RESOURCES.0]` under
+    // `feature(generic_const_exprs)`, but current rustc rejects field access on generic
+    // constants ("overly complex generic constant: field access is not supported in
+    // generic constants"). The lift waits on rustc gaining that capability; until then
+    // the hardcoded 256 matches the documented default and lint:allow(no-bare-numeric)
+    // covers the const-generic-array-dimension root.
+    // lint:allow(no-bare-numeric) reason: const-generic array dimension at the L0 storage root; matches DefaultRunCfg::MAX_PLAN_AFFECTING_RESOURCES = USize(256); tracked: #345 (per-Cfg lift awaits rustc generic_const_exprs gaining field-access support)
+    plan_dirty: [AtomicBool; 256],
+    plan_cache: PlanCache,
 }
 
-impl Scheduler {
+impl Scheduler<DefaultRunCfg> {
+    /// Start a fresh builder. Empty Wus + Stores typestate; the
+    /// builder grows via `.with(...)` calls.
     pub const fn builder() -> SchedulerBuilder<Empty, Empty> {
         SchedulerBuilder { _phantom: PhantomData }
     }
+}
 
-    /// Replace the existing `Resource<T>` instance in the scheduler's
-    /// data plane with `_new`.
+impl<Cfg: RunCfg> Scheduler<Cfg> {
+    /// Replace the existing `Resource<T>` instance in the data
+    /// plane with `_new`, marking the plan dirty.
     ///
-    /// `T: Replaceable` is enforced statically. Apps that want a
-    /// replaceable resource opt their type into the marker; types
-    /// that should not be overridable stay locked. The implementation
-    /// is a stub at this round; the runtime data plane lands with
-    /// HILA-RUNTIME tasks.
-    pub fn replace_resource<T: Replaceable>(&mut self, _new: T) {
-        // stub: runtime data plane lands later
+    /// `T: PlanAffecting` routes the call onto the dirty-marking
+    /// path; the next `run()` recomputes the execution plan.
+    /// Consumers that need a cheap value swap on a non-plan-
+    /// affecting resource use `replace_value`.
+    pub fn replace_resource<T: PlanAffecting>(&mut self, _new: T) {
+        // body lands at Pass 7 + Pass 8 wiring: locate the
+        // PlanAffectingId for T, set plan_dirty[id] = true with
+        // Release ordering, install the new value in the data
+        // plane.
+        let _ = &self.plan_dirty;
+    }
+
+    /// Cheap value-swap path for non-plan-affecting resources.
+    ///
+    /// `T: Replaceable` opts the type into runtime replacement
+    /// without signalling plan recompute. The `Replaceable` marker
+    /// is consumer-driven per Topic 8 axis B (replaceable but not
+    /// plan-affecting is the typical case for app-level state).
+    pub fn replace_value<T: Replaceable>(&mut self, _new: T) {
+        // body lands at Pass 7 + Pass 8 wiring: locate the slot
+        // for T in the data plane, swap the value, no dirty bit.
+    }
+
+    /// Run one pass of the pipeline.
+    ///
+    /// Pass 6 of the runtime megaround commits the
+    /// `Scheduler::run` signature; the body lands as the per-pass
+    /// executor wires up in Pass 7 + Pass 8. The contract this
+    /// signature carries:
+    ///
+    /// 1. Check `plan_dirty[..]`; if any bit set, call
+    ///    `compute_execution_plan(...)` and clear the bits.
+    /// 2. Build per-core dispatch via `DispatchCodegen::build(...)`.
+    /// 3. Spawn workers via the platform's `Executor::run(...)`
+    ///    per core, passing `Pin<&'frame PoolFrame>`.
+    /// 4. Workers walk their `CoreProgram`, dispatching morsels,
+    ///    hitting phase barriers, completing all phases.
+    /// 5. Meta-WUs fire at boundaries: `Virtual<PlanStage>` before
+    ///    plan, `Virtual<ScheduleReady>` after build,
+    ///    `Virtual<PassStart>` before dispatch,
+    ///    `Virtual<ScheduleEnd>` after all phases. `AdaptWu`, when
+    ///    registered, observes `ScheduleEnd`.
+    /// 6. Drain ResourceSnapshots through persistence (Topic 8
+    ///    axis C) when a `PersistenceProvider` is registered.
+    /// 7. Return `Cfg::Out`.
+    pub fn run(&mut self) -> Cfg::Out {
+        // Pass 7 + Pass 8 fill the body per the seven steps above.
+        // Until then, the contract is the signature; the executor
+        // wiring lands with the test-utils + example apps that
+        // exercise it.
+        let _ = &self.plan_dirty;
+        let _ = &self.plan_cache;
+        unimplemented!(
+            "Scheduler::run body lands at Pass 7 + Pass 8 wiring of runtime megaround 202605101036"
+        )
     }
 }
 
-impl Default for Scheduler {
+impl<Cfg: RunCfg> Default for Scheduler<Cfg> {
     fn default() -> Self {
-        Self { _phantom: PhantomData }
+        Self {
+            _cfg: PhantomData,
+            plan_dirty: [const { AtomicBool::new(false) }; 256],
+            plan_cache: PlanCache::new(),
+        }
     }
 }
 
@@ -85,26 +168,30 @@ pub struct SchedulerBuilder<Wus, Stores> {
 impl<Wus, Stores> SchedulerBuilder<Wus, Stores> {
     /// Register one provider on the scheduler.
     ///
-    /// Accepts any `P: Provider`: WorkUnit unit-structs, Kits,
+    /// Accepts any `P: BuilderInput`: WorkUnit unit-structs, Kits,
     /// `Resource::new(value)`, `Column::<T>::new()`,
-    /// `Virtual::<T>::new()`, `LinkedBin::<dyn TraitFamily>::new()`,
-    /// and platform impls (memory provider, thread pool, clock). The
-    /// per-kind typestate update flows through `P::Dispatch` and
-    /// lands on the appropriate accumulator.
+    /// `Virtual::<T>::new()`, `LinkedBin::<TraitFamily>::new()`,
+    /// and platform impls (memory provider, thread pool, clock).
+    /// The per-kind typestate update flows through `P::Dispatch`
+    /// and lands on the appropriate accumulator.
     ///
-    /// Non-`Provider` values fail the trait solver here, surfacing
-    /// the `Provider` `#[diagnostic::on_unimplemented]` message which
-    /// names the constructors a consumer reaches for.
+    /// Non-`BuilderInput` values fail the trait solver here,
+    /// surfacing the `BuilderInput`
+    /// `#[diagnostic::on_unimplemented]` message which names the
+    /// constructors a consumer reaches for.
     ///
     /// The platform-tuple accumulator `Empty` is the placeholder
     /// until the data plane (HILA-RUNTIME-C4) introduces a third
     /// builder type parameter.
-    pub fn with<P>(self, _provider: P) -> SchedulerBuilder<
+    pub fn with<P>(
+        self,
+        _provider: P,
+    ) -> SchedulerBuilder<
         <P::Dispatch as Dispatch<Wus, Stores, Empty>>::NextWus,
         <P::Dispatch as Dispatch<Wus, Stores, Empty>>::NextStores,
     >
     where
-        P: Provider,
+        P: BuilderInput,
         P::Dispatch: Dispatch<Wus, Stores, Empty>,
     {
         SchedulerBuilder { _phantom: PhantomData }
@@ -118,13 +205,24 @@ where
         + ContainsAll<<Wus as WorkUnitBundle>::AccumRead>
         + ContainsAll<<Wus as WorkUnitBundle>::AccumWrite>,
 {
-    /// Finalise the builder into a `Scheduler`.
+    /// Finalise the builder into a `Scheduler<DefaultRunCfg>`.
     ///
     /// Carries `Stores: ContainsAll<Wus::AccumRead> +
     /// ContainsAll<Wus::AccumWrite>` as its where-clause. A
     /// registered WU referencing an unregistered store produces a
-    /// compile error pointing at the missing store.
-    pub fn build(self) -> Scheduler {
+    /// compile error pointing at the missing store. Consumers that
+    /// supplied an explicit `RunCfg` via `.with(MyRunCfg)` use
+    /// `build_with::<MyRunCfg>()` to thread the Cfg type through.
+    pub fn build(self) -> Scheduler<DefaultRunCfg> {
+        Scheduler::default()
+    }
+
+    /// Finalise the builder with an explicit `RunCfg` type.
+    ///
+    /// Used when the consumer registered a custom `RunCfg` via
+    /// `.with(MyRunCfg)`; the explicit type parameter threads the
+    /// `Cfg::Out` shape through `Scheduler::run()`.
+    pub fn build_with<Cfg: RunCfg>(self) -> Scheduler<Cfg> {
         Scheduler::default()
     }
 }

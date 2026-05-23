@@ -31,6 +31,76 @@ hilavitkutin-ctx, -persistence, -str, -kit, -providers are standalone ecosystem 
 
 hilavitkutin-linking, hilavitkutin-extensions, hilavitkutin-extensions-macros make up the plugin-host layer. Downstream consumer ecosystems build domain-specific contract crates on top.
 
+## Runtime
+
+The runtime layer (Scheduler + Executor + ExecutionPlan + dispatch + morsel loop + adapt + persistence wiring) crystallised in design round 202605101036. The locked shape:
+
+### `Scheduler::run()` signature
+
+Parameterless `run(&mut self) -> notko::Outcome<Cfg::Ok, Cfg::Err>`. `RunCfg` is consumer-supplied via `.with(my_cfg)` builder method; defaults provided via `HasTrivialCtor`. Dispatch routing happens at the type level via `RunCfgDispatch<Self>` slot. `Scheduler<'frame, Cfg, E>` propagates a frame lifetime through `ExecutionPlan<'frame, ...>` to the per-worker entry, validated by the PoolFrame lifetime sketch under nightly Rust.
+
+Plan recompute fires on entry to `run()` when the dirty bit is set; otherwise the cached plan dispatches directly. The dirty bit is keyed per `PlanAffecting`-bound Resource.
+
+### Plan algorithm chain (12 steps + step 13 FiberShape classification)
+
+Free-function composition over the 12-step canonical chain inherited from the polka-dots prior art: `build_dag → topo_sort → upward_rank → waist → RCM → block-diag → spectral → fiber group → morsel size → phase config → column classify → dirty masks`. Round 202605101036 adds step 13 `shape_classification` producing the typed `FiberShape` projection consumed by dispatch codegen. The final `ExecutionPlan` carries ten const generics covering MAX_UNITS / MAX_FIBERS / MAX_TRUNKS / MAX_PHASES / MAX_CORES / MAX_BRANCHES / MAX_BRIDGES / MAX_RECORDS / MAX_UNITS_PER_FIBER / MAX_COLUMNS_PER_FIBER.
+
+Each step names its foundations crate dependency: `arvo-bitmask` for set ops, `arvo-graph` for DAG / RCM, `arvo-sparse` for CSR DependencyGraph (bench-locked canonical at all N), `arvo-spectral` for the Fiedler partition step, `arvo-comb` for the cost DP.
+
+### Dispatch codegen
+
+Sealed `trait DispatchCodegen<Cfg: RunCfg>` with TAIT `type CoreDispatch = impl Fn(...)`. Single shipped impl `StandardCodegen` lowers to closed-form arithmetic, zero `blr`. Three `DispatchApproach` variants ship in v1: ScheduleMega, TrunkMega, IndirectPerFiber.
+
+Per-fiber-shape generic monomorphisation: `fn run_fiber<S: FiberShape>(...)` over sealed `FiberShape: Sealed` marker carrying `type WuTuple` + `const SHAPE_ID`. Combinatorics K (unique shapes), not 2^N. Sealed-trait dispatch is empirically free vs hand-written direct calls per the `dispatch_static` bench at every N.
+
+### Adapt subsystem
+
+Nine-axis `AdaptConfig` (not opaque modes): `pass_duration`, `phase_ema`, `fiber_ema`, `change_class`, `cache_residency`, `throughput_trending`, `predictive_parking`, `memory_watermark`, `core_idle_time`. Cadence-interleave via per-axis `sample_skip`. Convenience presets `off()/fast()/standard()/aggressive()` as const fn over the multi-axis space.
+
+`AdaptMetrics` hot-cold split: scratch-arena hot path + `Resource<AdaptMetrics>` snapshot at ScheduleEnd. Per-fiber 64B-aligned hot lines (progress + inline metrics, AoS-packed within line); per-core 64B-aligned park slots; cold SoA arena for end-of-pass derived metrics. Per-axis sub-resources shipped individually (`PassDurationMetrics`, `PhaseEMAMetrics`, etc.); optional `MetricsKit` recipe bundles them.
+
+Per-anomaly `Virtual` marker types (`BalanceAnomaly`, `MemoryPressure`, `ThroughputAnomaly`, `FiberEMADrift`, `PhaseEMADrift`) for observer composition via AccessSet union.
+
+EMA vectorisation is cfg-gated `core::arch::*` SIMD from day one (NEON aarch64 + SSE2 x86_64 baseline + scalar fallback; AVX2/AVX-512/SVE expand bench-driven). NEON wins 4-9x over autovec at N≥1024 per the `ema_axis_h` bench.
+
+### Thread pool + Executor
+
+Open `trait Executor: Sealed` monomorphised. Default `HybridExecutor` impl. `Scheduler<'frame, Cfg, E = HybridExecutor>` propagation.
+
+Three-tier parking via per-OS atomic-wait primitives: Linux `futex(2)`, macOS `__ulock_*`, Windows `WaitOnAddress`. Tier selection driven by per-phase `predicted_wait_ns` atomic slot in `PoolFrame`: <2µs spin-only, 2-50µs spin+futex, >50µs skip spin and park immediately.
+
+`PoolFrame<MAX_CORES, MAX_PHASES>` engine-internal data plane on per-pool cache lines: `shutdown: AtomicBool`, `phase_arrived: AtomicU32`, `predicted_wait_ns: [AtomicU32; MAX_PHASES]`, `progress_slots: [AtomicUsize; MAX_CORES]`. Phase barrier = centralised atomic counter + futex-wake-all by last arriver.
+
+Per-OS P/E core classification ships in v1: CPUID 0x1A (x86_64), `/sys/.../cluster_id` + cpufreq (Linux), `sysctl hw.perflevel0` (macOS), `GetSystemCpuSetInformation` (Windows). `WakeStrategy { p_spin_iters, e_spin_iters, futex_threshold_ns, park_threshold_ns }` per-CoreClass. Defaults P=128, E=32.
+
+Work-stealing BACKLOG. Spin-budget calibration micro-bench at `ThreadPool::build()` BACKLOG; fixed 128 in v1. `Scheduler::Drop` sets `shutdown` flag, futex-wakes all parked, joins handles.
+
+### Morsel loop
+
+Forward iter by default; Topic 3 axis E adds head+tail convergence variant for commutative single-trunk-phase fibers. Morsel size baked into ExecutionPlan at plan-stage step 9 from SIMD-width + L1 write budget. Micro-morsel boundary every 64 records; sync via `core::hint::spin_loop` budget + 32-record drift tolerance (no futex inside morsel loop; phase barrier handles cross-phase parking).
+
+Codegen emits `dmb st` (aarch64) / `sfence` (x86_64) between final FiberOutput non-temporal `stnp` writes and progress-counter Release store, per Topic 3 invariant S3.
+
+Per-morsel vs per-record WU dispatch inferred from AccessSet shape: column-shaped WUs receive a `Morsel<T>` window; resource-only WUs dispatch per-record.
+
+### Resource resolution
+
+`ResourceSnapshot<'phase, R: BuilderInput<Dispatch = ResourceDispatch>>` read-only typed view captured at phase boundary; lifetime bounded to current phase (no lift-out).
+
+`PlanAffecting: BuilderInput + Sealed` marker trait. Default NOT plan-affecting. Consumers opt in for resources whose value shape changes the plan (e.g., `RunCfg` itself). `MAX_PLAN_AFFECTING_RESOURCES = 16` default cap; consumers override the const generic on Scheduler.
+
+Persistence integration is consumer-supplied via `PersistenceProvider` trait + Provider tuple. The engine never depends on `hilavitkutin-persistence` types directly. PassEnd WU drains accumulator columns into persistence via `PersistenceProvider::commit`.
+
+### Plan caching
+
+`DependencyGraph` CSR-backed (bench-locked canonical at every N; the predicted N=16 crossover was wrong per the `dep_graph_csr_9` bench). Three columnar arrays at the engine level: `row_offsets: [USize; MAX_UNITS + 1]`, `col_indices: [UnitId; MAX_EDGES]`, `edge_kinds: [EdgeKind; MAX_EDGES]`.
+
+Per-`PlanAffecting`-resource dirty bit array. Plan cache lives with Scheduler for the pipeline's lifetime. Sequential single-threaded recompute in v1 (parallelisation deferred until consumers ship 256+ WU pipelines).
+
+### `WorkUnit::Ctx` GAT
+
+`trait WorkUnit { type Ctx<'frame>; fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>); ... }`. The GAT pattern keeps consumer `impl WorkUnit` blocks `<>`-clean (no `'frame` lifetime parameter required) while allowing the engine to thread `Pin<&'frame PoolFrame>` and related borrows through Ctx at dispatch time. Validated by the lifetime sketch under `mock/research/sketches/202605101036-poolframe-lifetime/`.
+
 ## Vocabulary
 
 Authoritative hierarchy (coarsest → finest):
@@ -71,14 +141,17 @@ Per-module design lives in `crates/hilavitkutin/DESIGN.md`.
 
 ## Status
 
-**Design mature, zero implementation.** Consolidation topic is complete as of 2026-03-18; latest changelist (03-24) added arvo-bits insertion + strategy markers. Ready to implement bottom-up: hilavitkutin-api first (contracts), then core engine modules.
+**Pre-implementation; runtime megaround design locked.** Design round 202605101036 (closed-pending-sketches 2026-05-11) crystallised the runtime layer across 11 topics (Scheduler::run signature, BuilderInput reshape, plan algorithm chain, dispatch codegen, adapt subsystem, thread pool, morsel loop, resource resolution, plan caching, per-core dispatch, test+example bar). Implementation lands bottom-up via the round's src CL.
 
-Design gaps expected during src work:
-- Concrete ABI shape of `ExecutionPlan` between phase planner and dispatch emitter.
-- Final arvo newtype names for platform trait parameters (ByteCount, Alignment, CoreCount, Nanoseconds).
-- Edge cases in strategy selection for unusual DAG shapes.
+Five user-attention items flagged from the autonomous topic locks:
+- `WakeStrategy { p_spin_iters: 128, e_spin_iters: 32 }` default ratio.
+- `MICRO_MORSEL_INTERVAL = 64`, `MAX_DRIFT_RECORDS = 32`.
+- `MAX_PLAN_AFFECTING_RESOURCES = 16` cap.
+- Three example apps: `word_count`, `particle_step`, `audio_mix`.
 
-These land as documented design decisions when they surface.
+Each is a low-impact-revisitable constant or naming choice. None block downstream implementation.
+
+Bench evidence aggregated in `mock/benches/NIGHT_FINDINGS_2026-05-11.md`. Audit trail for every locked decision.
 
 ## Consumers
 

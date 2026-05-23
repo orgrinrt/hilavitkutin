@@ -15,7 +15,7 @@ fn core_assignment_new_is_empty() {
         assert_eq!(*m, USize(100)); // lint:allow(no-bare-numeric) reason: default morsel-size-multiplier value; tracked: #399
     }
     for f in a.fiber_assignments.iter() {
-        assert_eq!(*f, FiberId(0)); // lint:allow(no-bare-numeric) reason: default fiber id; tracked: #399
+        assert_eq!(*f, FiberId::ZERO);
     }
 }
 
@@ -33,11 +33,11 @@ fn core_assignment_default_matches_new() {
 fn core_assignment_per_core_slot_mutation_roundtrips() {
     let mut a: CoreAssignment<4> = CoreAssignment::new();
     a.trunk_index[0] = USize(2); // lint:allow(no-bare-numeric) reason: trunk index value; tracked: #399
-    a.fiber_assignments[0] = FiberId(5); // lint:allow(no-bare-numeric) reason: fiber id value; tracked: #399
+    a.fiber_assignments[0] = FiberId::from_constant::<{ USize(5) }>(); // lint:allow(no-bare-numeric) reason: fiber id value; tracked: #426
     a.morsel_size_multiplier[0] = USize(200); // lint:allow(no-bare-numeric) reason: multiplier value; tracked: #399
     a.assigned_count = USize(1); // lint:allow(no-bare-numeric) reason: assigned count value; tracked: #399
     assert_eq!(a.trunk_index[0], USize(2)); // lint:allow(no-bare-numeric) reason: roundtrip check; tracked: #399
-    assert_eq!(a.fiber_assignments[0], FiberId(5)); // lint:allow(no-bare-numeric) reason: roundtrip check; tracked: #399
+    assert_eq!(a.fiber_assignments[0], FiberId::from_constant::<{ USize(5) }>()); // lint:allow(no-bare-numeric) reason: roundtrip check; tracked: #426
     assert_eq!(a.morsel_size_multiplier[0], USize(200)); // lint:allow(no-bare-numeric) reason: roundtrip check; tracked: #399
     assert_eq!(a.assigned_count, USize(1)); // lint:allow(no-bare-numeric) reason: roundtrip check; tracked: #399
     // Untouched slots still defaulted.
