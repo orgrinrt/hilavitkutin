@@ -1,0 +1,11 @@
+[package]
+name = "hilavitkutin-test-utils"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Test-only mock implementations of hilavitkutin platform providers (ThreadPool, Clock, MemoryProvider)"
+repository.workspace = true
+
+[dependencies]
+arvo.workspace = true
+hilavitkutin-api.workspace = true
