@@ -30,7 +30,19 @@
 //! NEON arm with a parity test against scalar; the structural shape
 //! (cfg gates, signature, BlendFactor-typed constants) freezes here.
 
-use arvo::{Hot, UFixed, USize, fbits, ibits};
+use arvo::{Hot, UFixed, fbits, ibits};
+
+/// Per-axis EMA sample width. Topic 5 audit-2 + Pass 7 follow-up.
+///
+/// 64-bit unsigned integer fixed-point: large enough for nanosecond
+/// timing samples (the typical AdaptAxis sample carrier), for record
+/// counts up to 2^64, and for bytes-allocated metrics on host
+/// platforms with 64-bit address spaces. `USize` was rejected at
+/// post-megaround review: USize is platform-pointer-width and an EMA
+/// sample is not pointer-shaped (a 32-bit consumer would silently
+/// halve the sample width with no signal). `Sample` pins the width
+/// explicitly.
+pub type Sample = UFixed<{ ibits(64) }, { fbits(0) }, Hot>;
 
 /// Sixteen-bit fractional blend factor in `[0, 1]`.
 ///
@@ -53,7 +65,7 @@ pub const NORM_7_OVER_8: BlendFactor = BlendFactor::from_raw(0xE000);
 /// 16-bit fractional repr).
 pub const NORM_1_OVER_8: BlendFactor = BlendFactor::from_raw(0x2000);
 
-/// EMA batch update over `USize` sample slices.
+/// EMA batch update over `Sample` slices.
 ///
 /// `dst[i] = dst[i] * NORM_7_OVER_8 + src[i] * NORM_1_OVER_8`
 /// applied across the slice. Lanes are independent; intermediate
@@ -66,7 +78,7 @@ pub const NORM_1_OVER_8: BlendFactor = BlendFactor::from_raw(0x2000);
 /// in the round's sketch); the x86_64-SSE2 kernel is structural
 /// pending bench rounds in Pass 7.
 #[inline]
-pub fn ema_update(dst: &mut [USize], src: &[USize]) {
+pub fn ema_update(dst: &mut [Sample], src: &[Sample]) {
     #[cfg(target_feature = "neon")]
     {
         ema_update_neon(dst, src);
@@ -92,7 +104,7 @@ pub fn ema_update(dst: &mut [USize], src: &[USize]) {
 /// `NORM_7_OVER_8 + NORM_1_OVER_8` constants) is the contract Pass
 /// 7 fills with the lane-wise mul-add body.
 #[inline]
-fn ema_update_scalar(_dst: &mut [USize], _src: &[USize]) {
+fn ema_update_scalar(_dst: &mut [Sample], _src: &[Sample]) {
     // Pass 7 wires the bench-validated body. Until then, the EMA
     // batch update is a no-op; the surrounding adapt subsystem
     // tolerates a flat metrics stream because `AdaptWu`'s anomaly
@@ -106,7 +118,7 @@ fn ema_update_scalar(_dst: &mut [USize], _src: &[USize]) {
 /// freezes without a half-shipped intrinsics body.
 #[cfg(target_feature = "neon")]
 #[inline]
-fn ema_update_neon(dst: &mut [USize], src: &[USize]) {
+fn ema_update_neon(dst: &mut [Sample], src: &[Sample]) {
     ema_update_scalar(dst, src);
 }
 
@@ -114,6 +126,6 @@ fn ema_update_neon(dst: &mut [USize], src: &[USize]) {
 /// body; falls back to scalar until then.
 #[cfg(target_feature = "sse2")]
 #[inline]
-fn ema_update_sse2(dst: &mut [USize], src: &[USize]) {
+fn ema_update_sse2(dst: &mut [Sample], src: &[Sample]) {
     ema_update_scalar(dst, src);
 }

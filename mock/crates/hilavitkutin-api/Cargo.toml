@@ -15,5 +15,8 @@ notko.workspace = true
 [build-dependencies]
 mockspace.workspace = true
 
+[dev-dependencies]
+trybuild = "1"
+
 [features]
 default = []
