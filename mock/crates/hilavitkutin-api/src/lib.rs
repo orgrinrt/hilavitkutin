@@ -81,7 +81,8 @@ pub use dispatch_codegen::{
     RecordRange, Scheduled, SyncRole, TrunkId, UnitId,
 };
 pub use run_cfg::{
-    AnomalyFired, DefaultRunCfg, HasRecordCount, PlanAffecting, RunCfg, RunCfgDispatch,
+    AnomalyFired, DefaultRunCfg, HasRecordCount, PassStart, PlanAffecting, PlanStage, RunCfg,
+    RunCfgDispatch, ScheduleEnd, ScheduleReady,
 };
 pub use sink::{ByteEmitter, Collector, CountingSink, DiagnosticSink, NullSink, TeeSink};
 pub use store::{Column, Field, Map, Replaceable, Resource, Seq, StoreBundle, Virtual};

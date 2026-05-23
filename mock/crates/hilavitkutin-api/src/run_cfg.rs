@@ -155,3 +155,29 @@ where
 /// Observer WUs check `Virtual<AnomalyFired>` then query the
 /// relevant `metrics::*` Resource for which anomaly fired.
 pub struct AnomalyFired;
+
+/// Meta-Virtual marker: plan-stage phase entry.
+///
+/// Fired by the engine at the start of plan computation. WUs bound
+/// to `On<PlanStage>` observe DAG state before any execution.
+pub struct PlanStage;
+
+/// Meta-Virtual marker: per-core dispatch programs ready.
+///
+/// Fired after `DispatchCodegen::build` completes. WUs bound to
+/// `On<ScheduleReady>` may inspect the assembled per-core programs.
+pub struct ScheduleReady;
+
+/// Meta-Virtual marker: pass start.
+///
+/// Fired immediately before per-core dispatch begins each pass. WUs
+/// bound to `On<PassStart>` see the pre-execution snapshot.
+pub struct PassStart;
+
+/// Meta-Virtual marker: pass end (post all phases).
+///
+/// Fired after every phase barrier closes. Topic 5 axis A: this is
+/// the canonical observation point for `AdaptWu`, which reads per-
+/// axis metrics, sets anomaly bools, and fires `Virtual<AnomalyFired>`
+/// when any axis threshold trips.
+pub struct ScheduleEnd;

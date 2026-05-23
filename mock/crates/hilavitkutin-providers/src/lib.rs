@@ -14,11 +14,15 @@
 #![no_std]
 #![deny(unsafe_op_in_unsafe_fn)]
 
+pub mod adapt_ema;
 pub mod adapt_kits;
+pub mod adapt_wu;
 pub mod interner;
 pub mod metrics;
 
+pub use crate::adapt_ema::{BlendFactor, NORM_1_OVER_8, NORM_7_OVER_8, ema_update};
 pub use crate::adapt_kits::{OffAdaptKit, StandardAdaptKit};
+pub use crate::adapt_wu::AdaptWu;
 pub use crate::interner::{
     HasInterner, InternerApi, InternerKit, MemoryArena, default_interner,
 };
