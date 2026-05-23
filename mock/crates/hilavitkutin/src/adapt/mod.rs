@@ -1,53 +1,50 @@
 //! Runtime adaptation (domain 22).
 //!
-//! Per-phase tuning parameters + runtime metrics + mode
-//! selection. The executor-reorganisation triggers live here;
-//! per DESIGN they fire between frames (not during execution,
-//! which would invalidate monomorphised dispatch).
+//! Per-axis sampling + tuning fires between frames. Topic 5 axis A
+//! splits the legacy `AdaptConfig` into nine independent
+//! `BuilderInput` configs that the consumer registers individually
+//! via `.with(...)`; `StandardAdaptKit` (in hilavitkutin-providers)
+//! bundles the default-on combination.
 //!
-//! This module is the *skeleton* for 5a4: public surface is
-//! complete; `select_adapt_config` + `update_adapt` stub to
-//! `todo!()`. Real EMA heuristics + metric sampling are
-//! follow-up rounds (see BACKLOG → Engine 5a4 follow-ups).
+//! The nine axes (each re-exported from `hilavitkutin_api::adapt`):
+//!
+//! - `pass_duration`: end-to-end pass timing.
+//! - `phase_ema`: per-phase EMA of latency.
+//! - `fiber_ema`: per-fiber EMA of morsel-completion latency.
+//! - `change_class`: input drift classification.
+//! - `cache_residency`: per-column hit / miss ratio.
+//! - `throughput`: per-phase records-per-nanosecond.
+//! - `predictive_parking`: per-phase predicted wait window.
+//! - `memory_watermark`: high-water arena allocation per pass.
+//! - `core_idle_time`: per-core park-time accumulator.
+//!
+//! The `arena` module holds the runtime sidecar storage for axis
+//! measurements (hot lines per fiber, cold SoA per pass).
 
-pub mod config;
-pub mod metrics;
+pub mod arena;
+pub mod cache_residency;
+pub mod change_class;
+pub mod core_idle_time;
+pub mod fiber_ema;
+pub mod memory_watermark;
+pub mod pass_duration;
+pub mod phase_ema;
+pub mod predictive_parking;
+pub mod throughput;
 
-pub use config::AdaptConfig;
-pub use metrics::AdaptMetrics;
+pub use cache_residency::CacheResidencyAxis;
+pub use change_class::ChangeClassAxis;
+pub use core_idle_time::CoreIdleTimeAxis;
+pub use fiber_ema::FiberEmaAxis;
+pub use hilavitkutin_api::adapt::{AdaptAxis, AdaptAxisDispatch};
+pub use memory_watermark::MemoryWatermarkAxis;
+pub use pass_duration::PassDurationAxis;
+pub use phase_ema::PhaseEmaAxis;
+pub use predictive_parking::PredictiveParkingAxis;
+pub use throughput::ThroughputAxis;
 
-/// Per-phase adaptation mode. Alias for
-/// [`crate::strategy::PhaseStrategy`]: the two concepts are the
-/// same enum referenced by different DESIGN sections. Strategy
-/// remains the canonical home; adapt re-exports as `AdaptMode`
-/// for caller ergonomics (the term "adapt mode" reads naturally
-/// inside the adapt module's docs; "phase strategy" reads
-/// naturally from the strategy selector's perspective).
+/// Legacy `AdaptMode` alias kept for the strategy module's existing
+/// `PhaseStrategy` use site. New code uses per-axis configs directly;
+/// this alias retires when the strategy module's adapt-feedback loop
+/// migrates to per-axis reads (Pass 7 follow-up).
 pub type AdaptMode = crate::strategy::PhaseStrategy;
-
-use crate::plan::PhaseId;
-
-/// Select an `AdaptConfig` for `phase` given current `metrics`.
-///
-/// Skeleton: `todo!()`. Real heuristic (EMA latency vs
-/// throughput, 1/8 decay per DESIGN) lands as a follow-up
-/// round: see BACKLOG.
-pub fn select_adapt_config(phase: PhaseId, metrics: &AdaptMetrics) -> AdaptConfig {
-    let _ = (phase, metrics);
-    todo!("5a4: adaptive mode selection heuristic")
-}
-
-/// Update per-phase adaptive configs in place from current
-/// `metrics`. Executor-reorganisation trigger between frames
-/// only (not during execution, per DESIGN).
-///
-/// Skeleton: `todo!()`. Real implementation walks phases +
-/// updates `max_fuse_threshold`, `morsel_size_multiplier`,
-/// `split_threshold` per EMA decay: see BACKLOG.
-pub fn update_adapt<const MAX_PHASES: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    configs: &mut [AdaptConfig; MAX_PHASES],
-    metrics: &AdaptMetrics,
-) {
-    let _ = (configs, metrics);
-    todo!("5a4: per-phase adaptive config update")
-}

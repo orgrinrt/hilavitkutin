@@ -28,6 +28,7 @@ mod sealed {
 }
 
 pub mod access;
+pub mod adapt;
 pub mod builder;
 pub mod builder_input;
 pub mod capability;
@@ -47,6 +48,11 @@ pub mod store;
 pub mod work_unit;
 
 pub use access::{AccessSet, Concat, Cons, Contains, ContainsAll, Empty};
+pub use adapt::{
+    AdaptAxis, AdaptAxisDispatch, CacheResidencyAxis, ChangeClassAxis, CoreIdleTimeAxis,
+    FiberEmaAxis, MemoryWatermarkAxis, PassDurationAxis, PhaseEmaAxis, PredictiveParkingAxis,
+    ThroughputAxis,
+};
 pub use builder::Depth;
 pub use capability::{BoundedPush, BulkPush, Capacity, Full, Len, Push};
 pub use codec::{DecodeError, Decoder, DecoderExt, Encoder, EncoderExt};
