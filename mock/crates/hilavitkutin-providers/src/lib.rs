@@ -15,7 +15,13 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 
 pub mod interner;
+pub mod metrics;
 
 pub use crate::interner::{
     HasInterner, InternerApi, InternerKit, MemoryArena, default_interner,
+};
+pub use crate::metrics::{
+    CacheResidencyMetrics, ChangeClassMetrics, CoreIdleTimeMetrics, FiberEmaMetrics, MetricsKit,
+    MemoryWatermarkMetrics, PassDurationMetrics, PhaseEmaMetrics, PredictiveParkingMetrics,
+    ThroughputMetrics,
 };
