@@ -181,6 +181,14 @@ fn warm(data_dir: PathBytes) -> Outcome<(), Oops> {
 }
 ```
 
+## Testing
+
+`cargo +nightly test --workspace` runs the test suites across every
+crate. Verification of the engine's atomic-ordering guarantees uses
+MIRI under strict-provenance and tree-borrows; see [`MIRI.md`](./MIRI.md)
+at the repo root for the canonical flag invocation and the test
+files that exercise the atomic-ordering paths.
+
 ## Status
 
 Design is mature across the engine, the plugin-host layer, and the standalone ecosystem crates; implementation status varies per crate. The plugin-host layer (linking + extensions + extensions-macros) is implemented. The api crate and the standalone ecosystem extensions (ctx, str, persistence, providers) are partially implemented. The engine's runtime modules (the plan analysis chain, dispatch codegen, adapt subsystem, thread pool, morsel loop, resource resolution, plan caching) are designed and not yet shipped. hilavitkutin-build runs as a build-dependency stub today; full wrapper script generation and config schema are deferred to follow-up rounds.

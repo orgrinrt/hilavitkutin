@@ -1,0 +1,8 @@
+error[E0119]: conflicting implementations of trait `BuilderInput` for type `DoubleRole`
+  --> tests/trybuild/double_derive_runcfg.rs:28:1
+   |
+23 | impl BuilderInput for DoubleRole {
+   | -------------------------------- first implementation here
+...
+28 | impl BuilderInput for DoubleRole {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ conflicting implementation for `DoubleRole`
