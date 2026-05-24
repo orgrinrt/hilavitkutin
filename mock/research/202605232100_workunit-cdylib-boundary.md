@@ -112,7 +112,19 @@ Two claims this memo asserts whose verification belongs in subsequent rounds. Bo
 
 **Writer-handle protocol across FFI.** Step 5 of `RunLint<L>::execute()` marshals a `Column<Diagnostic>` writer handle into a `*mut DiagnosticBatch` for the FFI call. The current `DiagnosticBatch` wire shape (`viola-plugin-abi/src/diagnostic.rs`) assumes a plugin-owned output buffer that the host copies after the call. That assumption settles the writer-handle protocol as "copy-buffer" and keeps the direct-args ABI sound: the writer never crosses FFI as a host-owned object the plugin calls into. If viola task #254 later changes the protocol to host-owned write dispatch (the plugin invokes a host-provided writer through a vtable handle), a host-side marshalling helper appears in `viola-core` at that point; it does not retroactively change the landed `LintEvaluateVtable` direct-args signature, and it does not require resurrecting a `LintCallCtx` wrapper at the ABI layer. The protocol choice is the load-bearing question for #254; the ABI direct-args shape is correct under either resolution.
 
-**Meta-virtual registration contract (the second open #254 design Q).** How viola registers its lint-batch lifecycle markers (`PassStart` / `ScheduleEnd`) with the hilavitkutin scheduler so the per-batch sort + emit phases run at the right boundaries is not settled here. The host-side `RunLint<L>` WorkUnits are clear; the meta-virtual coordination around them is a viola-core design call that lands when #254 implementation begins.
+**Meta-virtual registration contract.** CLOSED 2026-05-24 via Option C, already landed. Three parallel specialists (architect / code-explorer / code-reviewer) converged unanimously on Option C, which the runtime megaround already landed via `AdaptWu`. The mechanism: `WorkUnit` carries a `Schedule` generic parameter defaulting to `Always`; lifecycle-bound WUs implement `WorkUnit<On<Marker>>` where `Marker` is one of `PlanStage` / `ScheduleReady` / `PassStart` / `ScheduleEnd`. The scheduler reads the `Schedule` type at plan-build time to route the WU to the corresponding boundary fire point.
+
+Landed precedent: `impl WorkUnit<On<ScheduleEnd>> for AdaptWu` at `hilavitkutin-providers/src/adapt_wu.rs:63`. The `WorkUnit<Schedule = Always>` trait sits at `hilavitkutin-api/src/work_unit.rs:40`. `On<V>` and `Always` are the two shipped schedule markers. Registration follows the same `.with(WuStruct::default())` path as any other WU; no separate `.on_pass_start::<WU>()` builder surface exists or needs to exist.
+
+For viola's lint-batch lifecycle, this means:
+
+- `LoadPlugins` implements `WorkUnit<On<PlanStage>>` to populate `Resource<ExtensionHost>` once during scheduler build.
+- A `SortAndEmitDiagnostics` WU implements `WorkUnit<On<ScheduleEnd>>` to read `Column<Diagnostic>`, sort, and emit at pass end.
+- The `RunLint<L>` host WUs themselves stay on the default `Always` schedule (per-record / per-pass dispatch), as today.
+
+**Optional follow-up flagged by the reviewer**: seal `On<V>` to require `V: ScheduleMarker` (a new sealed trait covering the four marker structs), so accidentally writing `On<ArbitraryType>` does not compile. Additive constraint, not a redesign; lands as a focused PR in `hilavitkutin-api` before viola starts registering its meta-virtual WUs.
+
+With this resolution, **both** original "deferred but load-bearing" #254 design questions are now closed (the LintCallCtx question was closed 2026-05-23 via the same 3-specialist pattern). The two genuine load-bearing deferrals remaining in this memo are now: (1) cross-WU commutative writes verification against landed dispatch codegen, and (2) writer-handle protocol across FFI (`DiagnosticBatch` copy-buffer model assumption).
 
 ## What this memo does not cover
 
