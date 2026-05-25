@@ -355,3 +355,23 @@ insurance, not load-bearing.
 table and design implications in `mock/benches/NIGHT_FINDINGS_2026-05-11.md`.
 The synthesis section at the top of that file groups all 29 benches
 by design impact category.
+
+## CoreClass-aware assign_cores follow-up
+
+`assign_cores` ships in HILA-RUNTIME-C4 as a round-robin assignment
+without CoreClass awareness: `trunk_index[i] = USize(i)`,
+`fiber_assignments` and `morsel_size_multiplier` stay at defaults.
+The follow-up extends the body to consume `classify_cores()` output:
+
+- Prefer P-cores for the first `width` trunks so critical-path
+  slots land on performance cores.
+- Set `morsel_size_multiplier[i] = USize(200)` for P-core slots
+  and `USize(100)` for E-core slots, matching the Topic 6 axis E
+  design contract.
+
+Sequencing: lands after `classify_cores` returns non-stub data on
+at least one platform. Today every `detect_into` stubs out
+(Linux sysfs probe + macOS sysctlbyname + Windows
+GetSystemCpuSetInformation all marked deferred); the heterogeneous
+follow-up is a no-op until at least one platform path lands real
+detection.
