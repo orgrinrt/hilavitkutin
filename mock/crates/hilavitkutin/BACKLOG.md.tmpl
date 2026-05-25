@@ -416,3 +416,20 @@ chain (scheduler builder + plan stage + dispatch codegen + run
 loop) compiles end-to-end with these stubs; consumer crates can
 register WorkUnits and call `Scheduler::run` without panic. The
 runtime executes a no-op morsel loop until the real bodies land.
+
+## Scheduler::run real morsel loop body
+
+`Scheduler::run` ships in this round as a no-op transitional body
+that returns `Cfg::Out::default()`. The real body walks the per-
+core dispatch programs from `codegen_core`, iterates the morsel
+loop with per-fiber dispatch records, handles adapt subsystem
+metrics, fires the meta-virtual `PlanStage / ScheduleReady /
+PassStart / ScheduleEnd` boundaries at the right phase + waist
+transitions, and drains `ResourceSnapshots` through persistence.
+
+Sequencing: depends on `codegen_fiber + codegen_core LLVM-driven
+monomorphisation` (the C2 follow-up entry) landing first. Without
+monomorphised dispatch bodies, the morsel loop has nothing to
+dispatch. After that lands, the real run loop wires the per-core
+program walker + adapt metric flow + meta-virtual event firing +
+persistence snapshot drain into the body.
