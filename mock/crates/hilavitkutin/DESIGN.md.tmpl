@@ -224,6 +224,31 @@ NOT in v1 (Topic 6 axis D). Deterministic morsel assignment (pre-
 partitioned at plan time) covers v1's workloads. `Executor::try_steal`
 deferred to v2 behind a `work-stealing` feature flag.
 
+## assign_cores base implementation
+
+`assign_cores` maps plan trunks to concrete cores once per pipeline,
+returning a `CoreAssignment<MAX_LANES>`. The assignment is reused
+across phases: each phase reuses the same per-core trunk mapping,
+so the parallel-dispatch width is bounded by the phase with the
+most trunks.
+
+The base body lands in HILA-RUNTIME-C4 as a round-robin assignment.
+`width = min(max_trunks_per_phase, core_count, MAX_LANES)`. Then
+`trunk_index[i] = USize(i)` for `i in 0..width` and `NO_TRUNK` for
+the rest. `assigned_count = width`. `fiber_assignments` stays
+`FiberId::ZERO` and `morsel_size_multiplier` stays `USize(100)`
+(1.0x). Both wait for follow-up slices that populate fiber-to-trunk
+maps and heterogeneous-core-aware weighting.
+
+### Heterogeneous-core follow-up
+
+CoreClass-aware assignment lands in a follow-up once `classify_cores`
+returns non-stub data on at least one platform. The follow-up
+prefers P-cores for the first `width` slots and sets
+`morsel_size_multiplier[i] = USize(200)` for P-core slots,
+`USize(100)` for E-core slots. Today every `detect_into` stubs out,
+so the heterogeneous path is a no-op against the base assignment.
+
 ## Strategy selection (domain 21)
 
 Plan-time selection based on record count + pipeline shape:
