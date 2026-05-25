@@ -115,6 +115,35 @@ non-temporal `stnp` writes and progress-counter Release store
 ExpandedLto pragma (domain 03, hilavitkutin-build) REQUIRED for
 devirtualisation.
 
+## select_approach base heuristic
+
+`select_approach(record_count, fiber_count) -> DispatchApproach`
+returns one of `IndirectPerFiber`, `TrunkMega`, `ScheduleMega` per
+the three-variant codegen contract. Base body ships a three-branch
+heuristic over `(record_count, fiber_count)` using typed `USize`
+thresholds. The two cutovers live as named constants:
+`SCHEDULE_MEGA_THRESHOLD: USize = USize(10_000)` and
+`SINGLE_FIBER_CUTOVER: USize = USize(1)`. The function body
+compares `record_count` and `fiber_count` against the typed
+constants directly (`PartialOrd` on `USize`), so the bare-primitive
+literal lives at one declaration site instead of every call site.
+
+- `record_count >= SCHEDULE_MEGA_THRESHOLD` returns `ScheduleMega`.
+  At high record counts LLVM's whole-pipeline optimisation window
+  outweighs the indirect-call overhead.
+- Otherwise, if `fiber_count <= SINGLE_FIBER_CUTOVER` returns
+  `TrunkMega`. Single fiber means the mega function fits the
+  working set without the per-fiber dispatch split.
+- Otherwise returns `IndirectPerFiber`. Per-fiber indirect call is
+  the lowest-overhead split at small record counts with many
+  fibers.
+
+The `10_000` threshold matches the `<10K target` named in the type
+doc comments on `DispatchApproach` and `select_approach`. The
+tiebreaker between `TrunkMega` and `IndirectPerFiber` uses a coarse
+single-fiber cut. Benchmark-tuned thresholds (both the size cutover
+AND the fiber-count cutover) land in the follow-up; see BACKLOG.
+
 ## Resource handling (domain 19)
 
 Stack-local resource caching: snapshot accessed resources to stack

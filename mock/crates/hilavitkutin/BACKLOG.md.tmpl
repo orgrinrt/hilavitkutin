@@ -375,3 +375,22 @@ at least one platform. Today every `detect_into` stubs out
 GetSystemCpuSetInformation all marked deferred); the heterogeneous
 follow-up is a no-op until at least one platform path lands real
 detection.
+
+## select_approach benchmark-tuned thresholds
+
+`select_approach` ships in HILA-RUNTIME-C2 with a coarse heuristic:
+`record_count >= 10_000` picks `ScheduleMega`, otherwise
+`fiber_count <= 1` picks `TrunkMega` else `IndirectPerFiber`. Both
+cutovers are placeholders pending the bench harness.
+
+Follow-up: sweep `(record_count, fiber_count)` against the bench
+harness, measure dispatch overhead per approach. Refine both the
+`10_000` size threshold (likely platform-dependent; aarch64 +
+x86_64 may diverge) and the `fiber_count <= 1` tiebreaker. Update
+the body to read from a const-evaluated bench output (per the
+existing pattern in `bench-validated` arvo work) so the threshold
+revisits stay typed.
+
+Sequencing: ships after the bench harness gains a dispatch-
+overhead bench fixture that compares the three approaches against
+a representative pipeline shape.
