@@ -337,6 +337,45 @@ re-select per-phase configs, or full plan recompute.
 Predictive parking at sync points: <100ns spin, 100ns-10µs
 spin_loop, >10µs park.
 
+## Scheduler::run no-op transitional body
+
+`Scheduler::run` returns `Cfg::Out` after walking the per-core
+dispatch programs, firing meta-virtual phase boundaries, and
+draining ResourceSnapshots through persistence. The runtime
+megaround punted the body to a follow-up because the real loop
+depends on `codegen_fiber` and `codegen_core` producing
+monomorphised bodies (which themselves wait on
+`hilavitkutin-build` LLVM-pass machinery).
+
+To unblock viola-cli runtime testing and mockspace v2 release
+shippability, this slice ships a no-op transitional body:
+`Cfg::Out::default()`. The `where Cfg::Out: Default` bound on the
+`Scheduler<Cfg>` impl block constrains downstream RunCfg impls
+to have a defaultable Out, which `DefaultRunCfg` (the only real
+source-level consumer) already satisfies via notko's `Default for
+Outcome<T, E>` impl (notko PR #21).
+
+What the no-op body does NOT do:
+
+- No morsel loop walk.
+- No per-core dispatch program invocation.
+- No adapt subsystem metric flow.
+- No meta-virtual `PlanStage / ScheduleReady / PassStart /
+  ScheduleEnd` event firing.
+- No `ResourceSnapshot` persistence drain.
+
+All of the above land in the follow-up entry
+`Scheduler::run real morsel loop body` in `BACKLOG.md.tmpl`. The
+sequencing constraint is `codegen_fiber + codegen_core LLVM-driven
+monomorphisation` (its own BACKLOG entry) landing first; the real
+body has nothing to dispatch until monomorphised bodies exist.
+
+The transitional body is honest about its state: consumer crates
+can call `Scheduler::run` without panic, but the runtime executes
+no work. viola-cli's `scheduler.run()` returns `Ok(())` cleanly,
+which is the right behaviour for the post-Slice 8b.2 typed-but-
+no-op runtime state.
+
 ## Scheduler builder + meta (domain 23)
 
 `Scheduler<Wus, Stores>` is the engine's runtime handle. The two

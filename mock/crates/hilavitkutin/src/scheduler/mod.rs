@@ -130,16 +130,23 @@ impl<Cfg: RunCfg> Scheduler<Cfg> {
     /// 6. Drain ResourceSnapshots through persistence (Topic 8
     ///    axis C) when a `PersistenceProvider` is registered.
     /// 7. Return `Cfg::Out`.
-    pub fn run(&mut self) -> Cfg::Out {
-        // Pass 7 + Pass 8 fill the body per the seven steps above.
-        // Until then, the contract is the signature; the executor
-        // wiring lands with the test-utils + example apps that
-        // exercise it.
+    ///
+    /// Transitional no-op body: returns `Cfg::Out::default()`. The
+    /// real morsel loop (steps 1 through 7 above) waits on
+    /// `codegen_fiber` and `codegen_core` producing monomorphised
+    /// bodies, which themselves wait on `hilavitkutin-build` LLVM
+    /// plugin hooks. See `Scheduler::run real morsel loop body` in
+    /// `BACKLOG.md.tmpl`. The `where Cfg::Out: Default` bound
+    /// constrains this method (not the whole impl block) to RunCfg
+    /// impls whose Out is `Default`-constructible. `DefaultRunCfg`
+    /// satisfies the bound via notko's `Default for Outcome<T, E>`.
+    pub fn run(&mut self) -> Cfg::Out
+    where
+        Cfg::Out: Default,
+    {
         let _ = &self.plan_dirty;
         let _ = &self.plan_cache;
-        unimplemented!(
-            "Scheduler::run body lands at Pass 7 + Pass 8 wiring of runtime megaround 202605101036"
-        )
+        Cfg::Out::default()
     }
 }
 
