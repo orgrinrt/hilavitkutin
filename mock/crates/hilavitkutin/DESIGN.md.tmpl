@@ -144,6 +144,36 @@ tiebreaker between `TrunkMega` and `IndirectPerFiber` uses a coarse
 single-fiber cut. Benchmark-tuned thresholds (both the size cutover
 AND the fiber-count cutover) land in the follow-up; see BACKLOG.
 
+## codegen_fiber + codegen_core skeleton stubs
+
+`codegen_fiber<Ctx, MAX_CORES>() -> FiberDispatch<Ctx, MAX_CORES>`
+and `codegen_core<Ctx, MAX_FIBERS>() -> CoreDispatch<Ctx, MAX_FIBERS>`
+ship as skeleton-return stubs in the runtime megaround follow-up.
+Both delegate to the sibling constructor: `codegen_fiber` returns
+`FiberDispatch::new()` (empty record with `body: Maybe::Isnt`,
+zero-init metadata); `codegen_core` returns `CoreDispatch::new()`
+(array of empty `FiberDispatch` records plus zero-init phases and
+boundaries).
+
+The skeleton shape exists today because the runtime megaround
+shipped both sibling constructors. This step promotes the
+constructors from "exists, unused" to "exists, called by the
+codegen entry points", which removes the last two `todo!()` calls
+from `dispatch/mod.rs`. `Scheduler::run` remains the only engine
+surface that panics after this lands.
+
+### LLVM-driven monomorphisation follow-up
+
+Real per-fiber `run_fiber<S>` monomorphisation per Topic 4 axis D
++ the WORKS sketch at
+`mock/research/sketches/202605101036-fibershape-typing/` requires
+`hilavitkutin-build` plugin hooks. Per-core compiled pipelines
+fuse the morsel loop + arena progress + S3 fence + micro-morsel
+sync per Topic 6 axis E. Sequencing: depends on the
+`hilavitkutin-build` LLVM-pass plugin interface shipping. Until
+then the skeleton return shapes the rest of the engine consumes
+are typed-correct but body-empty.
+
 ## Resource handling (domain 19)
 
 Stack-local resource caching: snapshot accessed resources to stack
