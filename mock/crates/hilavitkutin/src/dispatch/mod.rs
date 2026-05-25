@@ -102,9 +102,13 @@ mod codegen_stub_tests {
 
     #[test]
     fn codegen_fiber_returns_empty_skeleton() {
+        use crate::plan::PhaseId;
         let result: FiberDispatch<(), 4> = codegen_fiber::<(), 4>(); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test fixture const-generic; tracked: #121
         assert!(matches!(result.body, Maybe::Isnt));
         assert_eq!(result.fiber_id, FiberId::ZERO);
+        assert_eq!(result.phase, PhaseId::ZERO);
+        assert_eq!(result.morsel_range.start, USize::ZERO);
+        assert_eq!(result.morsel_range.len, USize::ZERO);
         assert_eq!(result.sync_point_count, USize::ZERO);
     }
 
@@ -113,6 +117,11 @@ mod codegen_stub_tests {
         let result: CoreDispatch<(), 4> = codegen_core::<(), 4>(); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test fixture const-generic; tracked: #121
         assert_eq!(result.fiber_count, USize::ZERO);
         assert_eq!(result.phase_count, USize::ZERO);
+        assert_eq!(result.boundary_count, USize::ZERO);
+        assert_eq!(result.sync_point_count, USize::ZERO);
+        // Element check: every fiber slot is itself an empty skeleton.
+        assert!(matches!(result.fibers[0].body, Maybe::Isnt)); // lint:allow(no-bare-numeric) reason: element-zero check; tracked: #72
+        assert_eq!(result.fibers[0].sync_point_count, USize::ZERO); // lint:allow(no-bare-numeric) reason: element-zero check; tracked: #72
     }
 }
 

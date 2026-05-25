@@ -108,38 +108,22 @@ impl<Cfg: RunCfg> Scheduler<Cfg> {
         // for T in the data plane, swap the value, no dirty bit.
     }
 
-    /// Run one pass of the pipeline.
+    /// Transitional no-op body: returns `Cfg::Out::default()`.
     ///
-    /// Pass 6 of the runtime megaround commits the
-    /// `Scheduler::run` signature; the body lands as the per-pass
-    /// executor wires up in Pass 7 + Pass 8. The contract this
-    /// signature carries:
+    /// The real morsel loop (plan-dirty check, per-core dispatch
+    /// build, executor spawn, morsel walk, phase barriers, meta-WU
+    /// firing, persistence drain) waits on `codegen_fiber` and
+    /// `codegen_core` producing monomorphised bodies, which
+    /// themselves wait on `hilavitkutin-build` LLVM plugin hooks.
+    /// The full real-body contract lives in `Scheduler::run real
+    /// morsel loop body` in `BACKLOG.md.tmpl`.
     ///
-    /// 1. Check `plan_dirty[..]`; if any bit set, call
-    ///    `compute_execution_plan(...)` and clear the bits.
-    /// 2. Build per-core dispatch via `DispatchCodegen::build(...)`.
-    /// 3. Spawn workers via the platform's `Executor::run(...)`
-    ///    per core, passing `Pin<&'frame PoolFrame>`.
-    /// 4. Workers walk their `CoreProgram`, dispatching morsels,
-    ///    hitting phase barriers, completing all phases.
-    /// 5. Meta-WUs fire at boundaries: `Virtual<PlanStage>` before
-    ///    plan, `Virtual<ScheduleReady>` after build,
-    ///    `Virtual<PassStart>` before dispatch,
-    ///    `Virtual<ScheduleEnd>` after all phases. `AdaptWu`, when
-    ///    registered, observes `ScheduleEnd`.
-    /// 6. Drain ResourceSnapshots through persistence (Topic 8
-    ///    axis C) when a `PersistenceProvider` is registered.
-    /// 7. Return `Cfg::Out`.
-    ///
-    /// Transitional no-op body: returns `Cfg::Out::default()`. The
-    /// real morsel loop (steps 1 through 7 above) waits on
-    /// `codegen_fiber` and `codegen_core` producing monomorphised
-    /// bodies, which themselves wait on `hilavitkutin-build` LLVM
-    /// plugin hooks. See `Scheduler::run real morsel loop body` in
-    /// `BACKLOG.md.tmpl`. The `where Cfg::Out: Default` bound
-    /// constrains this method (not the whole impl block) to RunCfg
-    /// impls whose Out is `Default`-constructible. `DefaultRunCfg`
-    /// satisfies the bound via notko's `Default for Outcome<T, E>`.
+    /// The `where Cfg::Out: Default` clause is method-level (not
+    /// on the impl block), so `Scheduler::builder`,
+    /// `replace_resource`, `replace_value`, and `Default for
+    /// Scheduler<Cfg>` stay unaffected for consumers whose
+    /// `Cfg::Out` is not `Default`. `DefaultRunCfg` satisfies the
+    /// bound via notko's `Default for Outcome<T, E>` impl.
     pub fn run(&mut self) -> Cfg::Out
     where
         Cfg::Out: Default,

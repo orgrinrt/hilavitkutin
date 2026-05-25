@@ -308,6 +308,20 @@ prefers P-cores for the first `width` slots and sets
 `USize(100)` for E-core slots. Today every `detect_into` stubs out,
 so the heterogeneous path is a no-op against the base assignment.
 
+### Per-phase trunk-index alignment assumption
+
+The pipeline-wide round-robin assignment assumes phase-local trunk
+indices align: trunk `i` in phase A is logically the same trunk as
+trunk `i` in phase B. The dispatch stage that consumes
+`CoreAssignment` drives the same core through different phases by
+reading `trunk_index[core_idx]` once and feeding it into each
+phase's local trunk slot. If a future plan stage reorders trunks
+per-phase (so phase A's trunk 2 is logically distinct from phase
+B's trunk 2), this assumption breaks and assign_cores would need
+the heterogeneous-core follow-up to gain per-phase awareness.
+Today the plan stage produces aligned trunk indices; the
+assumption holds.
+
 ## Strategy selection (domain 21)
 
 Plan-time selection based on record count + pipeline shape:
@@ -349,11 +363,14 @@ monomorphised bodies (which themselves wait on
 
 To unblock viola-cli runtime testing and mockspace v2 release
 shippability, this slice ships a no-op transitional body:
-`Cfg::Out::default()`. The `where Cfg::Out: Default` bound on the
-`Scheduler<Cfg>` impl block constrains downstream RunCfg impls
-to have a defaultable Out, which `DefaultRunCfg` (the only real
-source-level consumer) already satisfies via notko's `Default for
-Outcome<T, E>` impl (notko PR #21).
+`Cfg::Out::default()`. A method-level `where Cfg::Out: Default`
+clause on the `.run()` method (not the impl block) constrains
+this method only to RunCfg impls with a defaultable Out, so
+`Scheduler::builder`, `replace_resource`, `replace_value`, and
+`Default for Scheduler<Cfg>` stay unaffected for any consumer
+whose `Cfg::Out` is not `Default`. `DefaultRunCfg` (the only real
+source-level consumer) satisfies the bound via notko's `Default
+for Outcome<T, E>` impl (notko PR #21).
 
 What the no-op body does NOT do:
 
