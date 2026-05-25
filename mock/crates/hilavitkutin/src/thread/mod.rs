@@ -189,6 +189,20 @@ mod assign_cores_tests {
     }
 
     #[test]
+    fn core_count_zero_returns_empty_assignment() {
+        // Boundary case: zero cores with a non-empty plan produces
+        // an empty assignment via the core_count clamp.
+        let plan = plan_with_phase_trunks(&[3]); // lint:allow(no-bare-numeric) reason: fixture trunk count; tracked: #72
+        let result = assign_cores(USize(0), &plan); // lint:allow(no-bare-numeric) reason: zero-core fixture; tracked: #72
+        assert_eq!(result.assigned_count, USize::ZERO);
+        let mut i: usize = 0; // lint:allow(no-bare-numeric) reason: loop index; tracked: #72
+        while i < MAX_LANES {
+            assert_eq!(result.trunk_index[i], NO_TRUNK);
+            i += 1; // lint:allow(no-bare-numeric) reason: loop increment; tracked: #72
+        }
+    }
+
+    #[test]
     fn three_phases_max_3_trunks_4_cores() {
         let plan = plan_with_phase_trunks(&[2, 3, 1]); // lint:allow(no-bare-numeric) reason: fixture trunk counts; tracked: #72
         let result = assign_cores(USize(4), &plan); // lint:allow(no-bare-numeric) reason: test core count; tracked: #72
