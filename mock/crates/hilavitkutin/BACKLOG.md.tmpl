@@ -394,3 +394,25 @@ revisits stay typed.
 Sequencing: ships after the bench harness gains a dispatch-
 overhead bench fixture that compares the three approaches against
 a representative pipeline shape.
+
+## codegen_fiber + codegen_core LLVM-driven monomorphisation
+
+`codegen_fiber` and `codegen_core` ship as skeleton-return stubs
+that delegate to `FiberDispatch::new()` and `CoreDispatch::new()`
+respectively. The real work emits per-fiber `run_fiber<S>`
+monomorphised bodies per Topic 4 axis D + the WORKS sketch at
+`mock/research/sketches/202605101036-fibershape-typing/`. Per-core
+compiled pipelines fuse the morsel loop + arena progress + S3
+fence + micro-morsel sync per Topic 6 axis E.
+
+Real bodies need `hilavitkutin-build` plugin hooks (LLVM-pass
+machinery; build-time only, no runtime linkage). The interface
+ships separately; this follow-up consumes it. Sequencing: depends
+on the `hilavitkutin-build` LLVM-pass plugin interface landing.
+
+Until then the skeleton return shapes the rest of the engine
+consumes are typed-correct but body-empty. The full engine call
+chain (scheduler builder + plan stage + dispatch codegen + run
+loop) compiles end-to-end with these stubs; consumer crates can
+register WorkUnits and call `Scheduler::run` without panic. The
+runtime executes a no-op morsel loop until the real bodies land.

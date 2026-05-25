@@ -70,18 +70,50 @@ pub fn select_approach(record_count: USize, fiber_count: USize) -> DispatchAppro
 
 /// Emit the monomorphised per-fiber dispatch function.
 ///
-/// Skeleton: `todo!()`. Needs LLVM hooks or a build-time plugin
-/// from hilavitkutin-build: see BACKLOG.
-pub fn codegen_fiber<Ctx: 'static, const MAX_CORES: usize>() -> FiberDispatch<Ctx, MAX_CORES> {
-    todo!("5a3: emit monomorphised per-fiber dispatch function")
+/// Skeleton-return stub: delegates to `FiberDispatch::new()`,
+/// which builds the empty record with `body: Maybe::Isnt` and
+/// zero-init metadata. The full LLVM-driven monomorphisation
+/// lands per `codegen_fiber + codegen_core LLVM-driven
+/// monomorphisation` in `BACKLOG.md.tmpl`; until then this stub
+/// allows the engine call chain to compile and execute (returning
+/// a typed-correct, body-empty record) without panic.
+pub fn codegen_fiber<Ctx: 'static, const MAX_CORES: usize>() -> FiberDispatch<Ctx, MAX_CORES> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    FiberDispatch::new()
 }
 
 /// Emit the per-core compiled pipeline.
 ///
-/// Skeleton: `todo!()`. Encodes phases + morsel boundaries + sync
-/// points + per-fiber dispatch records. Depends on `codegen_fiber`.
+/// Skeleton-return stub: delegates to `CoreDispatch::new()`, which
+/// builds an array of `FiberDispatch::new()` records plus zero-init
+/// phases and morsel boundaries. The full per-core compilation
+/// (fusing the morsel loop + arena progress + S3 fence + micro-morsel
+/// sync per Topic 6 axis E) lands per the same BACKLOG entry as
+/// `codegen_fiber`.
 pub fn codegen_core<Ctx: 'static, const MAX_FIBERS: usize>() -> CoreDispatch<Ctx, MAX_FIBERS> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    todo!("5a3: emit per-core compiled pipeline")
+    CoreDispatch::new()
+}
+
+#[cfg(test)]
+mod codegen_stub_tests {
+    use super::*;
+    use notko::Maybe;
+    use crate::plan::FiberId;
+    use arvo::strategy::Identity;
+
+    #[test]
+    fn codegen_fiber_returns_empty_skeleton() {
+        let result: FiberDispatch<(), 4> = codegen_fiber::<(), 4>(); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test fixture const-generic; tracked: #121
+        assert!(matches!(result.body, Maybe::Isnt));
+        assert_eq!(result.fiber_id, FiberId::ZERO);
+        assert_eq!(result.sync_point_count, USize::ZERO);
+    }
+
+    #[test]
+    fn codegen_core_returns_empty_skeleton() {
+        let result: CoreDispatch<(), 4> = codegen_core::<(), 4>(); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test fixture const-generic; tracked: #121
+        assert_eq!(result.fiber_count, USize::ZERO);
+        assert_eq!(result.phase_count, USize::ZERO);
+    }
 }
 
 #[cfg(test)]
