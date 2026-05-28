@@ -45,6 +45,7 @@ pub mod prelude;
 pub mod run_cfg;
 pub mod sink;
 pub mod store;
+pub mod store_values;
 pub mod work_unit;
 
 pub use access::{AccessSet, Concat, Cons, Contains, ContainsAll, Empty};
@@ -87,5 +88,8 @@ pub use run_cfg::{
 pub use sink::{ByteEmitter, Collector, CountingSink, DiagnosticSink, NullSink, TeeSink};
 pub use store::{
     Column, Field, Map, Replaceable, Resource, Seq, StagedResource, StoreBundle, Virtual,
+};
+pub use store_values::{
+    Place, PlatformKind, RouterKind, StoreKind, StoreValues, Sv, SvEmpty, UnitKind,
 };
 pub use work_unit::{Always, On, WorkUnit, WorkUnitBundle};

@@ -405,16 +405,28 @@ are dropped in round-4; the typestate alone carries the shape, and
 runtime sizes are derived from the typestate's `Depth::D`
 projections rather than from explicit caps.
 
-`SchedulerBuilder<Wus, Stores, Platform, Staged>` accumulates
+`SchedulerBuilder<Wus, Stores, Platform, StoreValues>` accumulates
 typestate across each registration call. Initial state on
-`Scheduler::builder()` is `SchedulerBuilder<Empty, Empty, Empty, StageEmpty>`.
+`Scheduler::builder()` is `SchedulerBuilder<Empty, Empty, Empty, SvEmpty>`.
 The first three parameters are type-level accumulators (the WorkUnit
 bundle, the store access set, the platform tuple). The fourth,
-`Staged`, is a value-carrying cons-list: `.with` moves each
-registered value (its `BuilderInput::Init`) onto `Staged`, so the
-value is retained rather than dropped. The move into the
-`MemoryProvider`-allocated arena happens at `build()` in the
-following data-plane round.
+`StoreValues`, is a value-carrying cons-list aligned with `Stores`:
+`.with` routes each registered value through a `RouterKind` tag on its
+dispatch router and a `Place` view, so store carriers (a
+`StagedResource<T>`, a `Column<T>`, a `Virtual<T>`) are retained on
+`StoreValues` in registration order while workunit and platform values
+are dropped (their type stays tracked in `Wus` / `Platform`). The
+single `.with` verb is unchanged.
+
+`build(memory_provider)` walks `Stores` and `StoreValues` in lockstep,
+allocates one block per `Resource<T>` through the supplied
+`MemoryProvider`, moves the staged value in, and records a
+`ResourcePtr<T>`. It returns an `Outcome` because allocation can fail.
+`Scheduler` gains `Stores` and `M: MemoryProviderApi` parameters, owns
+the resulting arena plus the provider, and deallocates every block on
+`Drop` after running each value's destructor. Column buffers (which
+need the plan-phase record count) and the per-WorkUnit Context are
+later rounds.
 
 The builder takes one verb: `.with(value)`. Every type accepted by
 `.with` impls the sealed `Provider` trait declared in

@@ -21,6 +21,7 @@ use core::marker::PhantomData;
 
 use hilavitkutin_api::builder_input::{BuilderInput, Dispatch};
 use hilavitkutin_api::access::Concat;
+use hilavitkutin_api::store_values::{RouterKind, UnitKind};
 use hilavitkutin_api::{StoreBundle, WorkUnitBundle};
 
 /// A declarative bundle of WorkUnits and Owned stores.
@@ -79,4 +80,12 @@ where
     type NextWus = <<K as Kit>::Units as Concat<Wus>>::Out;
     type NextStores = <<K as Kit>::Owned as Concat<Stores>>::Out;
     type NextPlatform = Platform;
+}
+
+// Kit registration routes to `UnitKind`: the kit's owned store values
+// come from `HasTrivialCtor`, not a value carrier, so no `.with(kit)`
+// value rides the store-value list. The kit's store TYPES still land
+// in `Stores` via the `Dispatch` impl above.
+impl<K> RouterKind for KitDispatch<K> {
+    type Kind = UnitKind;
 }
