@@ -89,6 +89,17 @@ The fused-pipeline pattern within a fiber:
 4. Fiber-internal columns → register-to-register (DSE)
 5. All output stores grouped at end (store-buffer friendly)
 
+The concrete Context a WorkUnit's `execute` receives is a per-WU
+`EngineCtx<'frame, R, W>` the engine constructs at the monomorphised
+dispatch call site, scoped to that WU's declared `Read` / `Write`. It
+holds only the projected pointers for those stores (a WU cannot reach
+an undeclared store, since its Context does not carry that pointer),
+implements the seven `HasX` accessor traits with `Provider = Self`,
+resolves resources from the arena, reads and writes columns over the
+per-frame column buffers, and iterates the morsel. The WorkUnit's
+`Ctx<'frame>` stays a `HasX`-bounds declaration; only the engine names
+`EngineCtx<'frame, W::Read, W::Write>`.
+
 Per-core compiled dispatch: each physical core gets a monomorphised
 `CoreProgram<...>` encoding its phases, record ranges, morsel
 boundaries, and sync points. Worker entry receives

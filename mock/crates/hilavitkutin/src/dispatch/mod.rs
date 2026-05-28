@@ -12,6 +12,7 @@
 
 pub mod approach;
 pub mod core_dispatch;
+pub mod engine_ctx;
 pub mod fiber_dispatch;
 pub mod morsel;
 pub mod progress;
@@ -24,6 +25,7 @@ pub use hilavitkutin_api::dispatch_codegen::StandardCodegen;
 
 pub use approach::DispatchApproach;
 pub use core_dispatch::CoreDispatch;
+pub use engine_ctx::EngineCtx;
 pub use fiber_dispatch::FiberDispatch;
 pub use morsel::MorselRange;
 pub use progress::ProgressCounter;
