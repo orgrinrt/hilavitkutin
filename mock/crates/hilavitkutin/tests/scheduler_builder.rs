@@ -15,8 +15,9 @@
 //! matching resource) is verified manually as a compile-fail; a
 //! trybuild fixture is tracked in #296.
 
-use arvo::USize;
+use arvo::{Bool, USize};
 use hilavitkutin::scheduler::Scheduler;
+use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::{
     AccessSet, Always, Atomic, BatchApi, Column, ColumnReaderApi, ColumnValue,
     ColumnWriterApi, Cons, Contains, Depth, EachApi, Empty, HasBatch, HasColumnReader,
@@ -25,6 +26,48 @@ use hilavitkutin_api::{
     UnitDispatch, Virtual, VirtualFirerApi, WorkUnit, read, write,
 };
 use hilavitkutin_kit::{Kit, KitDispatch};
+
+// ---------------------------------------------------------------------
+// Stack-backed test memory provider (a fixed bump allocator).
+// ---------------------------------------------------------------------
+
+struct TestProvider<const N: usize> {
+    buf: core::cell::UnsafeCell<[core::mem::MaybeUninit<u8>; N]>,
+    used: core::cell::Cell<usize>,
+}
+
+impl<const N: usize> TestProvider<N> {
+    fn new() -> Self {
+        Self {
+            buf: core::cell::UnsafeCell::new([const { core::mem::MaybeUninit::uninit() }; N]),
+            used: core::cell::Cell::new(0),
+        }
+    }
+}
+
+unsafe impl<const N: usize> Send for TestProvider<N> {}
+unsafe impl<const N: usize> Sync for TestProvider<N> {}
+
+impl<const N: usize> MemoryProviderApi for TestProvider<N> {
+    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
+        let base = self.buf.get() as *mut u8;
+        let used = self.used.get();
+        let align = align.0.max(1);
+        let aligned = (used + align - 1) / align * align;
+        if aligned + len.0 > N {
+            return core::ptr::null_mut();
+        }
+        self.used.set(aligned + len.0);
+        // SAFETY: in bounds of the owned buffer.
+        unsafe { base.add(aligned) }
+    }
+    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+    unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
+}
+
+fn provider() -> TestProvider<4096> {
+    TestProvider::<4096>::new()
+}
 
 // ---------------------------------------------------------------------
 // Fake stores.
@@ -68,24 +111,28 @@ impl Kit for WorkspaceKit {
 
 #[test]
 fn empty_build() {
-    let _ = Scheduler::builder().build();
+    let _ = Scheduler::builder().build(provider()).ok();
 }
 
 #[test]
 fn raw_resource_registration_builds() {
     let _ = Scheduler::builder()
         .with(Resource::new(Interner))
-        .build();
+        .build(provider())
+        .ok();
 }
 
 #[test]
 fn raw_column_registration_builds() {
-    let _ = Scheduler::builder().with(Column::<FileInfo>::new()).build();
+    let _ = Scheduler::builder()
+        .with(Column::<FileInfo>::new())
+        .build(provider())
+        .ok();
 }
 
 #[test]
 fn kit_only_builds() {
-    let _ = Scheduler::builder().with(InternerKit).build();
+    let _ = Scheduler::builder().with(InternerKit).build(provider()).ok();
 }
 
 #[test]
@@ -93,7 +140,8 @@ fn two_kits_chained_build() {
     let _ = Scheduler::builder()
         .with(InternerKit)
         .with(WorkspaceKit)
-        .build();
+        .build(provider())
+        .ok();
 }
 
 #[test]
@@ -102,12 +150,15 @@ fn mixed_kit_and_raw_build() {
         .with(WorkspaceKit)
         .with(Resource::new(Interner))
         .with(Column::<FileInfo>::new())
-        .build();
+        .build(provider())
+        .ok();
 }
 
 #[test]
-fn default_scheduler_constructs() {
-    let _: Scheduler = Scheduler::default();
+fn scheduler_constructs_via_build() {
+    // A scheduler now requires a memory provider; constructing through
+    // an empty builder with a provider is the no-store base case.
+    let _ = Scheduler::builder().build(provider()).ok();
 }
 
 // ---------------------------------------------------------------------
@@ -266,7 +317,8 @@ fn wu_with_raw_resource_builds() {
     let _ = Scheduler::builder()
         .with(Resource::new(Interner))
         .with(ReadInterner)
-        .build();
+        .build(provider())
+        .ok();
 }
 
 #[test]
@@ -274,7 +326,8 @@ fn wu_with_kit_builds() {
     let _ = Scheduler::builder()
         .with(InternerKit)
         .with(ReadInterner)
-        .build();
+        .build(provider())
+        .ok();
 }
 
 #[test]
@@ -284,7 +337,8 @@ fn two_wus_with_two_kits_build() {
         .with(WorkspaceKit)
         .with(ReadInterner)
         .with(DiscoverFiles)
-        .build();
+        .build(provider())
+        .ok();
 }
 
 // ---------------------------------------------------------------------
@@ -332,7 +386,8 @@ fn smoke_fifty_wus() {
         .with(NoStores).with(NoStores).with(NoStores).with(NoStores).with(NoStores)
         .with(NoStores).with(NoStores).with(NoStores).with(NoStores).with(NoStores)
         .with(NoStores).with(NoStores).with(NoStores).with(NoStores).with(NoStores)
-        .build();
+        .build(provider())
+        .ok();
 }
 
 // ---------------------------------------------------------------------
@@ -386,7 +441,8 @@ fn smoke_wu_with_sixteen_stores() {
         .with(Resource::new(S8)).with(Resource::new(S9)).with(Resource::new(S10)).with(Resource::new(S11))
         .with(Resource::new(S12)).with(Resource::new(S13)).with(Resource::new(S14)).with(Resource::new(S15))
         .with(SixteenStores)
-        .build();
+        .build(provider())
+        .ok();
 }
 
 // ---------------------------------------------------------------------
