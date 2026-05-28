@@ -328,8 +328,7 @@ pub fn compute_execution_plan<
     let mut u = 0;
     while u < n && u < MAX_UNITS {
         plan.unit_meta[u].id = topo[u];
-        let raw: u32 = unsafe { core::mem::transmute_copy(&topo[u]) }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: repr(transparent) projection through guaranteed-layout UnitId chain; tracked: #428
-        let unit_id_idx = raw as usize; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: bridging projection to usize index; tracked: #428
+        let unit_id_idx = topo[u].index().0;
         if unit_id_idx < MAX_UNITS {
             plan.unit_meta[u].commutative = inputs.commutative[unit_id_idx];
             plan.unit_meta[u].upward_rank = ranks[unit_id_idx];

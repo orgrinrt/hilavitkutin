@@ -36,36 +36,6 @@ mod sealed {
     pub trait Sealed {}
 }
 
-// Engine-id layout assertions.
-//
-// Every Debug impl below uses `transmute_copy` over the repr(transparent)
-// chain `<Id> -> Uint<N> -> Bits<N, Warm, Unsigned> -> <container>`.
-// `transmute_copy::<Src, Dst>` requires `size_of::<Dst>() <= size_of::<Src>()`,
-// so the Debug impls MUST read at the container's full byte width. Asserting
-// the actual sizes here makes the invariant self-enforcing: if arvo's Warm
-// container dispatch table ever moves these widths, the next compile fails
-// here with a load-bearing diagnostic instead of producing a silently lossy
-// Debug projection (or, worse, an off-by-N byte read).
-//
-// Probed sizes (2026-05-11): UnitId = 4, FiberId = 2, PhaseId = 2, TrunkId = 2.
-// Each Debug impl below reads at exactly the asserted size.
-const _: () = assert!( // lint:allow(no-bare-numeric) reason: const-context layout assertion; rust grammar requires raw usize literals here; tracked: #428
-    core::mem::size_of::<PhaseId>() == 2,
-    "PhaseId layout drift: Debug impl in this file reads 2 bytes; update both if arvo changes the Warm container for Uint<5>.",
-);
-const _: () = assert!( // lint:allow(no-bare-numeric) reason: const-context layout assertion; rust grammar requires raw usize literals here; tracked: #428
-    core::mem::size_of::<TrunkId>() == 2,
-    "TrunkId layout drift: Debug impl in this file reads 2 bytes; update both if arvo changes the Warm container for Uint<6>.",
-);
-const _: () = assert!( // lint:allow(no-bare-numeric) reason: const-context layout assertion; rust grammar requires raw usize literals here; tracked: #428
-    core::mem::size_of::<FiberId>() == 2,
-    "FiberId layout drift: Debug impl in this file reads 2 bytes; update both if arvo changes the Warm container for Uint<7>.",
-);
-const _: () = assert!( // lint:allow(no-bare-numeric) reason: const-context layout assertion; rust grammar requires raw usize literals here; tracked: #428
-    core::mem::size_of::<UnitId>() == 4,
-    "UnitId layout drift: Debug impl in this file reads 4 bytes; update both if arvo changes the Warm container for Uint<16>.",
-);
-
 /// `PhaseId` newtype carrying the plan-stage-assigned phase index.
 /// Topic 3 axis B.
 ///
@@ -77,14 +47,7 @@ pub struct PhaseId(pub Uint<5>);
 
 impl core::fmt::Debug for PhaseId {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        // PhaseId is repr(transparent) over Uint<5> over Bits<5, Warm, Unsigned).
-        // Warm's container dispatch for 5-bit widths picks u16 (verified via size
-        // probe; the size_of assert above is the durable check). Read at the
-        // container's full width to satisfy `transmute_copy::<Src, Dst>`'s
-        // `size_of::<Dst>() <= size_of::<Src>()` precondition. Pending the arvo
-        // Debug substrate addition, this is the dogfooded projection door.
-        let raw: u16 = unsafe { core::mem::transmute_copy(self) }; // lint:allow(no-bare-numeric) reason: arvo Debug substrate gap; tracked: #428
-        write!(f, "PhaseId({})", raw)
+        write!(f, "PhaseId({})", (*self).index().0) // lint:allow(no-bare-numeric) reason: Display of the raw index value; tracked: #339
     }
 }
 
@@ -95,6 +58,16 @@ impl PhaseId {
     /// Typed-const constructor for non-zero indices.
     pub const fn from_constant<const C: USize>() -> Self {
         Self(<Uint<5> as FromConstant>::from_constant::<C>())
+    }
+
+    /// Project to the array-index value.
+    pub const fn index(self) -> USize {
+        USize(self.0.to_raw() as usize) // lint:allow(no-bare-numeric) reason: typed-id to array-index boundary; to_raw is arvo's strategy-aware container projection (replaces transmute_copy); tracked: #339
+    }
+
+    /// Reconstruct from an array-index value.
+    pub const fn from_index(i: USize) -> Self {
+        Self(Uint::<5>::from_raw(i.0 as _)) // lint:allow(no-bare-numeric) reason: array-index to typed-id boundary; from_raw is arvo's strategy-aware container projection (replaces transmute_copy); tracked: #339
     }
 }
 
@@ -115,10 +88,7 @@ pub struct TrunkId(pub Uint<6>);
 
 impl core::fmt::Debug for TrunkId {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        // TrunkId -> Uint<6> -> Bits<6, Warm, Unsigned) -> u16 container.
-        // See PhaseId Debug for the full reasoning + the size_of assert above.
-        let raw: u16 = unsafe { core::mem::transmute_copy(self) }; // lint:allow(no-bare-numeric) reason: arvo Debug substrate gap; tracked: #428
-        write!(f, "TrunkId({})", raw)
+        write!(f, "TrunkId({})", (*self).index().0) // lint:allow(no-bare-numeric) reason: Display of the raw index value; tracked: #339
     }
 }
 
@@ -129,6 +99,16 @@ impl TrunkId {
     /// Typed-const constructor for non-zero indices.
     pub const fn from_constant<const C: USize>() -> Self {
         Self(<Uint<6> as FromConstant>::from_constant::<C>())
+    }
+
+    /// Project to the array-index value.
+    pub const fn index(self) -> USize {
+        USize(self.0.to_raw() as usize) // lint:allow(no-bare-numeric) reason: typed-id to array-index boundary; to_raw is arvo's strategy-aware container projection (replaces transmute_copy); tracked: #339
+    }
+
+    /// Reconstruct from an array-index value.
+    pub const fn from_index(i: USize) -> Self {
+        Self(Uint::<6>::from_raw(i.0 as _)) // lint:allow(no-bare-numeric) reason: array-index to typed-id boundary; from_raw is arvo's strategy-aware container projection (replaces transmute_copy); tracked: #339
     }
 }
 
@@ -149,10 +129,7 @@ pub struct FiberId(pub Uint<7>);
 
 impl core::fmt::Debug for FiberId {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        // FiberId -> Uint<7> -> Bits<7, Warm, Unsigned) -> u16 container.
-        // See PhaseId Debug for the full reasoning + the size_of assert above.
-        let raw: u16 = unsafe { core::mem::transmute_copy(self) }; // lint:allow(no-bare-numeric) reason: arvo Debug substrate gap; tracked: #428
-        write!(f, "FiberId({})", raw)
+        write!(f, "FiberId({})", (*self).index().0) // lint:allow(no-bare-numeric) reason: Display of the raw index value; tracked: #339
     }
 }
 
@@ -163,6 +140,16 @@ impl FiberId {
     /// Typed-const constructor for non-zero indices.
     pub const fn from_constant<const C: USize>() -> Self {
         Self(<Uint<7> as FromConstant>::from_constant::<C>())
+    }
+
+    /// Project to the array-index value.
+    pub const fn index(self) -> USize {
+        USize(self.0.to_raw() as usize) // lint:allow(no-bare-numeric) reason: typed-id to array-index boundary; to_raw is arvo's strategy-aware container projection (replaces transmute_copy); tracked: #339
+    }
+
+    /// Reconstruct from an array-index value.
+    pub const fn from_index(i: USize) -> Self {
+        Self(Uint::<7>::from_raw(i.0 as _)) // lint:allow(no-bare-numeric) reason: array-index to typed-id boundary; from_raw is arvo's strategy-aware container projection (replaces transmute_copy); tracked: #339
     }
 }
 
@@ -185,11 +172,7 @@ pub struct UnitId(pub Uint<16>);
 
 impl core::fmt::Debug for UnitId {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        // UnitId -> Uint<16> -> Bits<16, Warm, Unsigned) -> u32 container
-        // (Warm picks a 32-bit container for 16-bit widths; size probe-verified).
-        // See PhaseId Debug for the full reasoning + the size_of assert above.
-        let raw: u32 = unsafe { core::mem::transmute_copy(self) }; // lint:allow(no-bare-numeric) reason: arvo Debug substrate gap; tracked: #428
-        write!(f, "UnitId({})", raw)
+        write!(f, "UnitId({})", (*self).index().0) // lint:allow(no-bare-numeric) reason: Display of the raw index value; tracked: #339
     }
 }
 
@@ -200,6 +183,16 @@ impl UnitId {
     /// Typed-const constructor for non-zero indices.
     pub const fn from_constant<const C: USize>() -> Self {
         Self(<Uint<16> as FromConstant>::from_constant::<C>())
+    }
+
+    /// Project to the array-index value.
+    pub const fn index(self) -> USize {
+        USize(self.0.to_raw() as usize) // lint:allow(no-bare-numeric) reason: typed-id to array-index boundary; to_raw is arvo's strategy-aware container projection (replaces transmute_copy); tracked: #339
+    }
+
+    /// Reconstruct from an array-index value.
+    pub const fn from_index(i: USize) -> Self {
+        Self(Uint::<16>::from_raw(i.0 as _)) // lint:allow(no-bare-numeric) reason: array-index to typed-id boundary; from_raw is arvo's strategy-aware container projection (replaces transmute_copy); tracked: #339
     }
 }
 

@@ -112,13 +112,9 @@ impl<const MAX_UNITS: usize, const MAX_EDGES: usize> DependencyGraph<MAX_UNITS, 
         let end = self.end_for(f);
         let mut k = start;
         while k < end {
-            // Compare via raw projection; UnitId is repr(transparent)
-            // over Uint<16> over Bits<16,Warm,Unsigned>, ultimately a
-            // u16. Equality here is value equality on the index.
-            // UnitId is repr(transparent) over Uint<16> over Bits<16,Warm,Unsigned>;
-            // Warm at 16 bits picks a u32 container (verified via size probe).
-            let dest_raw: u32 = unsafe { core::mem::transmute_copy(&self.col_indices[k]) }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: repr(transparent) projection through guaranteed-layout UnitId chain; tracked: #428
-            if dest_raw as usize == t { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: bridging projection to usize compare; tracked: #428
+            // Compare via the typed index accessor. Equality here is
+            // value equality on the array index.
+            if self.col_indices[k].index().0 == t {
                 return Bool::TRUE;
             }
             k += 1;
@@ -157,13 +153,11 @@ impl<const MAX_UNITS: usize, const MAX_EDGES: usize> DependencyGraph<MAX_UNITS, 
             self.row_offsets[self.unit_count.0] = self.edge_count;
             self.unit_count = USize(self.unit_count.0 + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
         }
-        // Append the edge to the columnar arrays. UnitId is
-        // repr(transparent) over Uint<16> over Bits<16,Warm,Unsigned>;
-        // Warm at 16 bits picks a u32 container. Build a u32 holding
-        // the index value, then transmute_copy with Src=u32 = Dst=4.
+        // Append the edge to the columnar arrays. Reconstruct the
+        // destination UnitId from the array-index value via the typed
+        // accessor.
         let k = self.edge_count.0;
-        let dest_u32 = t as u32; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: bridging usize to u32 for repr(transparent) projection; tracked: #428
-        let dest: UnitId = unsafe { core::mem::transmute_copy(&dest_u32) }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: repr(transparent) projection through guaranteed-layout UnitId chain; tracked: #428
+        let dest = UnitId::from_index(USize(t));
         self.col_indices[k] = dest;
         self.edge_kinds[k] = kind;
         self.edge_count = USize(self.edge_count.0 + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
