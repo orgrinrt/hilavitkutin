@@ -889,19 +889,25 @@ contract.
 
 ### `ResourceSnapshot<'phase, R>`
 
-Read-only typed view captured at a phase boundary (Topic 8 axis A).
-Lifetime bounded to the current phase; cannot escape across phase
-barriers.
+Read-only typed view of a scheduler-owned store, captured at a phase
+boundary (Topic 8 axis A). Immutable for the snapshot's lifetime,
+which is bounded to the current phase: the view cannot escape across
+a phase barrier (lifetime invariance prevents lift-out). A worker
+holding one is guaranteed the underlying storage is not written for
+the snapshot's lifetime and that its content matches what the store
+held at the captured phase.
 
-```rust
-pub struct ResourceSnapshot<'phase, R: BuilderInput<Dispatch = ResourceDispatch>> {
-    inner: Pin<&'phase R::Owned>,
-    captured_at: PhaseId,
-}
-```
+Use case: `AdaptWu` at `ScheduleEnd` observes the snapshot of
+`AdaptMetrics` to derive `predicted_wait_ns[]` writes for the next
+frame. Pure read.
 
-Use case: `AdaptWu` at `ScheduleEnd` observes `ResourceSnapshot<AdaptMetrics>` to derive `predicted_wait_ns[]` writes for the next frame. Pure
-read; immutable for the snapshot's lifetime.
+Status: the concrete signature lands with the data plane
+(HILA-RUNTIME-C6). The earlier `Dispatch = ResourceDispatch` /
+`R::Owned` form predates the round 202605101036 topic 2 builder
+reshape, which replaced per-kind dispatch routers with `StoreDispatch`
+and left `BuilderInput` carrying only `Init` and `Dispatch`. The
+shipped signature is re-derived against the current `BuilderInput`
+contract and the store storage the resource arena exposes.
 
 ### `PlanAffecting: BuilderInput + Sealed`
 

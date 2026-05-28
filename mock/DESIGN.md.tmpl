@@ -85,7 +85,7 @@ Per-morsel vs per-record WU dispatch inferred from AccessSet shape: column-shape
 
 ### Resource resolution
 
-`ResourceSnapshot<'phase, R: BuilderInput<Dispatch = ResourceDispatch>>` read-only typed view captured at phase boundary; lifetime bounded to current phase (no lift-out).
+`ResourceSnapshot<'phase, R>` read-only typed view captured at a phase boundary; lifetime bounded to the current phase (no lift-out). Concrete signature lands with the data plane (HILA-RUNTIME-C6), reconciled against the current `BuilderInput` contract.
 
 `PlanAffecting: BuilderInput + Sealed` marker trait. Default NOT plan-affecting. Consumers opt in for resources whose value shape changes the plan (e.g., `RunCfg` itself). `MAX_PLAN_AFFECTING_RESOURCES = 16` default cap; consumers override the const generic on Scheduler.
 
