@@ -50,6 +50,13 @@ zero-data wrappers (`Column<T>`, `Virtual<T>`, `LinkedBin<dyn Trait>`)
 it is `()`. For unit-struct WorkUnits, Kits, and platform-impl types
 it is `Self` (the registration value IS the construction value).
 
+`Resource::new(value)` returns a value-carrying carrier rather than
+dropping `value`. The builder moves each registered input onto a
+staged value list at `.with`, so a registered store value is retained
+until `build()` moves it into the `MemoryProvider`-allocated arena.
+The zero-data wrappers (`Column<T>`, `Virtual<T>`) carry no value;
+their `Init` is `()`.
+
 `Dispatch` is the per-kind typestate router (next subsection). The
 constant `KIND: ProviderKind` is a documentation and debugging aid;
 load-bearing dispatch is via `Provider::Dispatch`, not the constant.

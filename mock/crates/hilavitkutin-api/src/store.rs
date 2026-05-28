@@ -32,29 +32,43 @@ impl<T> Default for Resource<T> {
 }
 
 impl<T> Resource<T> {
-    /// Construct a `Resource<T>` carrying the given value.
+    /// Register a `Resource<T>` carrying the given value.
     ///
-    /// The `_value: T` is consumed by ownership. At this round the
-    /// scheduler data plane is not yet built (HILA-RUNTIME-C6 lands
-    /// resource resolution + persistence wiring), so the value drops
-    /// here. The semantic is preserved at the type level via
-    /// `BuilderInput::Init = T`: when the data plane lands, the
-    /// constructor will route the value into the scheduler-owned
-    /// resource registry.
+    /// Returns a `StagedResource<T>` that owns `value` until the
+    /// builder moves it into scheduler-owned storage at `build()`.
+    /// The `.with(Resource::new(value))` spelling is unchanged; the
+    /// value is retained, not dropped.
     ///
-    /// Not `const fn` because dropping a `T` with a destructor at
-    /// compile-time is forbidden. Consumers that need a const-callable
-    /// constructor for stateless markers use `Column<T>` or
-    /// `Virtual<T>` (both impl `notko::HasTrivialCtor`).
+    /// Not `const fn`: the carrier owns a `T` that may have a
+    /// destructor. Stateless markers (`Column<T>`, `Virtual<T>`) keep
+    /// their const constructors.
     #[inline]
-    pub fn new(_value: T) -> Self {
-        Resource(PhantomData)
+    pub fn new(value: T) -> StagedResource<T> {
+        StagedResource(value)
     }
 }
 
-impl<T: 'static> BuilderInput for Resource<T> {
+/// Value carrier for a registered `Resource<T>`.
+///
+/// `Resource::new(value)` returns this. The builder retains it on its
+/// staged value list, and the arena drain moves the inner `T` into
+/// scheduler-owned storage. The `Resource<T>` marker, not this
+/// carrier, is what lands in the store access set, routed via
+/// `StoreDispatch<Resource<T>>`.
+#[repr(transparent)]
+pub struct StagedResource<T>(T);
+
+impl<T> StagedResource<T> {
+    /// Take the owned value out of the carrier.
+    #[inline]
+    pub fn into_inner(self) -> T {
+        self.0
+    }
+}
+
+impl<T: 'static> BuilderInput for StagedResource<T> {
     type Init = T;
-    type Dispatch = StoreDispatch<Self>;
+    type Dispatch = StoreDispatch<Resource<T>>;
 }
 
 /// Collection store: N records per column, morsel-chunked.

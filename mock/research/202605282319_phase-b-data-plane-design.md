@@ -1,0 +1,79 @@
+# Phase B concrete design: data plane and per-WorkUnit Context
+
+This note is the implementation guide for Phase B of the engine-dispatch arc. It builds on the spine in `202605282100_engine-dispatch-build-plan.md` (read that first for the whole-arc map) and pins the concrete shapes for the data plane plus the per-WorkUnit Context. It is written to survive a context compaction: an implementer should be able to land rounds B1 through B5 from this note plus the cited source.
+
+Phase A (the `ResourceSnapshot` disambiguation, #335) is already merged (PR #90). The placeholder `ResourceSnapshot<const N>` and `ResourceCache` are gone; the typed `ResourceSnapshot<'phase, R>` is the surviving concept and ships here in round B4.
+
+## The single binding decision (op directive, 2026-05-28)
+
+The per-WorkUnit Context is scoped to that WU's declared Read/Write, and the scoping is enforced PHYSICALLY, not only by type-gated where-clauses. A WU's Context holds only the projected pointers for the stores in `Read` union `Write`. A WU cannot reach an undeclared store because its Context does not physically carry that pointer, not merely because a `Contains<...>` bound would reject the call. The engine Context is its own distinct per-WU type; it is not a shared or ambient object and does not reuse `hilavitkutin-ctx::Context<P>`. The term `Ctx` means exactly "this WU's declared access surface" and is not overloaded for any other purpose.
+
+This overrides the earlier whole-arena draft where a single `EngineCtx` held `&'frame WholeArena` and relied on `Contains` bounds alone. The cost of the physical projection is a cheap per-WU pointer copy at dispatch; that is principled, not a shortcut.
+
+## Current contracts (verified 2026-05-28; build against these)
+
+- Store markers (`hilavitkutin-api/src/store.rs`), all `#[repr(transparent)] PhantomData<T>`: `Resource<T>` (`impl BuilderInput { type Init = T; type Dispatch = StoreDispatch<Self>; }`, `Resource::new(_value: T)` currently DROPS); `Column<T>` and `Virtual<T>` (`Init = ()`, `StoreDispatch<Self>`, `HasTrivialCtor`). Also `Field<T: ColumnValue>`, `Seq<T, const N: Cap>`, `Map<K,V,const N: Cap>`, `StoreBundle`, `Replaceable`.
+- Access machinery (`hilavitkutin-api/src/access.rs`): `Empty`, `Cons<H,T>`; `AccessSet: Sealed + 'static { const LEN: USize; }`; `#[marker] Contains<S>`; `#[marker] ContainsAll<L>`; `Concat<L> { type Out; }`.
+- Accessor contract (`hilavitkutin-api/src/context.rs`, `work_unit.rs`): raw API traits `ColumnReaderApi<R> { unsafe fn read<T: ColumnValue>(&self, i: USize) -> T where R: Contains<Column<T>>; }`, `ColumnWriterApi<W> { unsafe fn write<T: ColumnValue>(&self, i, v) where W: Contains<Column<T>>; }`, `ResourceProviderApi<R> { fn resource<T: 'static>(&self) -> &T where R: Contains<Resource<T>>; }`, `VirtualFirerApi<W> { fn fire<V>(&self) where W: Contains<Virtual<V>>; }`, `EachApi<R,W> { fn run<F: FnMut(USize)>(&self, f: F); }`, `BatchApi<R,W> { fn run<F: FnMut(USize,USize)>(&self,f); }`, `ReduceApi<R,W> { fn run<A,F: FnMut(A,USize)->A>(&self, init: A, f: F) -> A; }`. The seven `HasX` accessor traits (`HasColumnReader<R> { type Provider: ColumnReaderApi<R>; fn reader(&self) -> &Self::Provider; }` etc.) come from `provider_generic!`/`provider_generic2!` and emit no `Context<P>` delegation. `WorkUnit { type Read/Write: AccessSet; type Hint; type Ctx<'frame>: <the seven HasX over Read/Write>; fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>); }`.
+- Platform (`hilavitkutin-api/src/platform.rs`): `MemoryProviderApi: Send+Sync+'static { unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8; unsafe fn deallocate(&self, ptr: *mut u8, len: USize); unsafe fn protect(...); }`. Plus `ThreadPoolApi`, `ClockApi`, and `HasMemoryProvider/HasThreadPool/HasClock`.
+- Builder (`hilavitkutin/src/scheduler/mod.rs`): `SchedulerBuilder<Wus, Stores>(PhantomData)`; `.with<P: BuilderInput>(self, _provider: P)` DISCARDS the value; `build()` requires `Stores: ContainsAll<Wus::AccumRead> + ContainsAll<Wus::AccumWrite>` and returns `Scheduler::default()`. `BuilderInput { type Init = Self; type Dispatch; }`, `Dispatch<Wus,Stores,Platform> { type NextWus/NextStores/NextPlatform; }`, routers `UnitDispatch`/`StoreDispatch`/`PlatformDispatch` (NextPlatform currently UNUSED by the 2-param builder)/`RunCfgDispatch`.
+- Provenance (`hilavitkutin/src/resource/provenance.rs`): `#[repr(transparent)] ResourcePtr<T>(NonNull<T>)`, `ColumnPtr<T>(NonNull<T>)`, both Copy, `unsafe fn new_unchecked(*mut T)`, `const fn as_ptr(self)`, Send/Sync when T is. Distinct newtypes per store kind give LLVM distinct provenance classes.
+- Morsel (`hilavitkutin/src/dispatch/morsel.rs`): `MorselRange { start: USize, len: USize }` with `new/end/is_empty`; `iter_morsel<F,S>(range, body, sync_probe)`. `PlanInputs { ..., record_count: USize }` (`plan/inputs.rs`).
+- ColumnValue (`hilavitkutin-api/src/column_value.rs`): `BIT_WIDTH` specialisation, sub-byte UFixed widths. `ceiling_div.rs` exists for byte sizing.
+
+## Round sequence (dependency-ordered; each lands real unit tests)
+
+The whole of Phase B lands on branch `feat/engine-data-plane`, multiple sequential mockspace v1 rounds, one PR when a coherent slice is reviewable (likely split B1+B2 in one PR, B3 in another, B4+B5 in a third; judge by reviewability).
+
+### B1: StageList + builder value retention (stops the drop)
+
+Smallest coherent slice that makes `Resource::new` stop dropping its value.
+
+- Add a sealed value-carrying cons-list distinct from the typestate `AccessSet`: `StageEmpty` (leaf) and `Stage<H, T: StageList>` carrying one real `H` value at the head. Lives in `hilavitkutin/src/scheduler/stage.rs`.
+- `Resource::new(value: T)` changes from dropping to returning a value-carrying carrier `StagedResource<T>(T)` that impls `BuilderInput<Init = T, Dispatch = StoreDispatch<Resource<T>>>`. The ZST marker `Resource<T>` lands in the `Stores` typestate via `StoreDispatch<Resource<T>>`; the value `T` rides in the carrier. (`Column<T>`/`Virtual<T>` keep `Init = ()`, no value to carry; WUs carry their `Init = Self` instance.)
+- No method is added to `BuilderInput` (it stays `Init` + `Dispatch`): adding a required value-extraction method would break all 24 existing `impl BuilderInput` sites and force boilerplate on every consumer WorkUnit. Instead `.with` retains the whole registered value (the carrier) on the staged list, and `StagedResource<T>` exposes `into_inner(self) -> T`. Value-extraction from the carrier into the arena is a sealed trait introduced in B2, keyed on the carrier types, not a `BuilderInput` method. AS SHIPPED in B1 (PR #91).
+- Reshape `SchedulerBuilder<Wus, Stores>` to `SchedulerBuilder<Wus, Stores, Platform, Staged: StageList>` (thread the currently-unused `Platform` accumulator; `Staged` holds the values). `.with<P>(self, provider: P)` advances all four typestates and moves the whole `provider` onto the front of `Staged` (the inner value is extracted later, at the B2 arena drain). `builder()` returns `SchedulerBuilder<Empty, Empty, Empty, StageEmpty>`. Pre-1.0 clean delete-replace: consumers using `let b = Scheduler::builder()` + inference still compile; any explicit `SchedulerBuilder<Wus, Stores>` namer updates (the builder is ephemeral, so this is rare).
+- The MemoryProvider is registered via `.with(provider)` like everything else (`PlatformDispatch` routes it to the `Platform` accumulator); extracted at `build()` via a sealed accessor on the `Platform` cons-list (`HasMemoryProvider`-shaped over the tuple).
+
+Tests: `stage_list_carries_value` (a `Stage<u32, StageEmpty>` holds and yields its value); `builder_with_retains_resource_value` (`.with(Resource::new(42u32))`, extract the staged value from the builder, assert 42, proving the drop is gone).
+
+### B2: ArenaFor + ResourceArena allocation
+
+- `resource/arena.rs`: a parallel cons-list mirroring `Stores` but carrying live pointers. `ArenaTail` (leaf), `ArenaNode<Ptr, Tail>`. A sealed `ArenaFor<S: AccessSet> { type Arena; }` maps `Empty -> ArenaTail`, `Cons<Resource<T>, R> -> ArenaNode<ResourcePtr<T>, ArenaFor<R>::Arena>`, `Cons<Column<T>, R> -> ArenaNode<(ColumnPtr<T>, USize), ...>`, `Cons<Virtual<T>, R> -> ArenaNode<(), ...>`.
+- `DrainIntoArena`: a sealed recursive trait walking `Stores` and `Staged` in lockstep, allocating each `Resource<T>` (one `T` via `MemoryProviderApi::allocate(size_of::<T>, align_of::<T>)`, move the staged `T` in, record `ResourcePtr<T>`), each `Column<T>` (`record_count * column_byte_stride::<T>()` bytes via `ceiling_div` over `ColumnValue::BIT_WIDTH`, record `ColumnPtr<T>` + count), `Virtual<T>` (nothing to allocate). `record_count` is a runtime `USize` arg (from `PlanInputs`/`RunCfg`), so no `generic_const_exprs` wall here.
+- `Scheduler` gains a `Stores` type param plus `arena: <Stores as ArenaFor>::Arena` and `memory_provider: M` fields, and a `Drop` impl walking the arena to `deallocate` each block. Adding `Stores` is a pre-1.0 clean change; inference carries it from `build()`. Provide a `type BuiltScheduler<Cfg, Stores> = Scheduler<Cfg, Stores>` alias for explicit namers.
+
+Tests: `arena_resource_round_trip` (register `Resource<u32>=99`, build with a stack-backed test `MemoryProvider`, deref the recorded `ResourcePtr<u32>` to 99); `arena_column_allocation` (register `Column<u8>` with 16 records, `ColumnPtr` non-null, slab length correct); `arena_drop_deallocates` (counting provider, drop scheduler, every allocate paired with a deallocate).
+
+### B3: per-WU projected Context (the op-directive round)
+
+- `dispatch/engine_ctx.rs`: `EngineCtx<'frame, R: AccessSet, W: AccessSet>` carrying a per-WU PROJECTED pointer bundle, not the whole arena. Shape: a read bundle (the `ResourcePtr`/`ColumnPtr` for stores in `R`) and a write bundle (for stores in `W`), plus `morsel: MorselRange`. The projection is built per-WU at the monomorphised `invoke_wu_in_fiber::<W>` call site by walking `R` and `W` and pulling the matching pointers out of the scheduler arena into the bundle. A WU physically cannot reach an undeclared store: its `EngineCtx` does not hold that pointer.
+- Implement the seven `*Api` traits on `EngineCtx` over the projected bundle: `resource<T>()` finds the `ResourcePtr<T>` in the read bundle (sealed `FindResourcePtr<T>` navigation over the projected list); `read<T>(i)`/`write<T>(i,v)` find the `ColumnPtr<T>` and do bit-offset math at `(morsel.start + i) * BIT_WIDTH`; `each/batch/reduce` iterate the morsel. All accessors take `&self` (interior mutability in the pointer math, never `&mut self`) so LLVM does not reorder writes across fused WUs. The unsafe read/write aliasing obligation is the scheduler's (plan-time DAG analysis proves no concurrent write-overlap); WU bodies do not re-check.
+- Implement the seven `HasX` traits on `EngineCtx` with `type Provider = Self` (the Context is its own provider for every accessor). A WU's `type Ctx<'frame>` is not named as `EngineCtx` in any public position; the WU declares the `HasX` bounds (already its shape), and the engine instantiates `EngineCtx<'frame, W::Read, W::Write>` at the private monomorphised call site, which satisfies the bounds.
+
+Tests: `context_resolves_resource` (hand-built projected bundle, `ctx.resources().resource::<u32>()` returns the value); `context_column_read_after_write` (write then read back via the ctx); `context_each_covers_morsel` (morsel start 5 len 3 yields indices 5,6,7); `context_batch_full_range` (start 5, len 3). Negative coverage: a trybuild fixture proving a WU whose `Read` lacks `Resource<T>` cannot call `resource::<T>()` (the `Contains` bound rejects) and, by construction, the projected bundle would not carry it either.
+
+### B4: typed ResourceSnapshot<'phase, R>
+
+Ship the real `ResourceSnapshot<'phase, R: AccessSet>` (the Phase A placeholder is already deleted; the api DESIGN carries the contract-in-prose with a "lands with C6" note to promote back now). It is a read-only view holding the resource pointers for `R`, captured at a phase barrier, lifetime-invariant on `'phase` so it cannot escape across a barrier. Constructed from `&'phase Arena`. Used by `AdaptWu` at `ScheduleEnd`. Promote the contract from prose back to a concrete signature in `hilavitkutin-api/DESIGN.md.tmpl` reconciled against the real `BuilderInput` (no `ResourceDispatch`/`Owned`).
+
+Tests: `snapshot_read_matches_arena`; a trybuild negative proving `'phase` invariance prevents lift-out past the source lifetime.
+
+### B5: persistence drain WU plumbing
+
+A `PassEnd`-fired WU drains accumulator columns into `hilavitkutin-persistence` via a `Resource<P: PersistenceProvider>` (the engine never depends on persistence types directly; the consumer wires the provider). Establishes the plumbing contract; full `PersistenceContext` usage is driven by example apps later.
+
+Tests: `pass_end_wu_fires_at_frame_end` (minimal scheduler + a PassEnd WU, run one frame, assert the WU's execute ran via an atomic flag).
+
+## Files
+
+Create: `scheduler/stage.rs`, `resource/arena.rs`, `resource/snapshot.rs`, `dispatch/engine_ctx.rs`.
+Modify: `scheduler/mod.rs` (builder reshape, `Scheduler<Cfg, Stores>`, arena/provider fields, Drop), `hilavitkutin-api/src/store.rs` (`Resource::new` returns `StagedResource<T>` carrier with `into_inner`; the carrier and its `BuilderInput` impl live here, NOT in `builder_input.rs`; no `BuilderInput` method added), `dispatch/wu_fn.rs` (construct + pass the per-WU Ctx), `resource/mod.rs` + `dispatch/mod.rs` (exports).
+
+## rustc-limit notes
+
+`generic_const_exprs` field-access on const-generic params is rejected (why `Scheduler.plan_dirty` and `MAX_PLAN_AFFECTING_RESOURCES` are hardcoded 256, #345). The cons-list arena sidesteps it: one concrete pointer per node, node types known from the `Stores` cons-list at compile time. Column sizing is runtime (`record_count` is runtime), so no const wall there. Keep the 256 hardcode + lint-allow at the L0 root (risk R7).
+
+## Test infrastructure
+
+Arena/ctx tests use a test `MemoryProvider` backed by a fixed `[MaybeUninit<u8>; N]` buffer passed by reference, defined in the test module, counting allocate/deallocate pairs. No `std::alloc`; stays `#![no_std]`.

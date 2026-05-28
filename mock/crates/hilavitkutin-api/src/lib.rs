@@ -85,5 +85,7 @@ pub use run_cfg::{
     RunCfgDispatch, ScheduleEnd, ScheduleReady,
 };
 pub use sink::{ByteEmitter, Collector, CountingSink, DiagnosticSink, NullSink, TeeSink};
-pub use store::{Column, Field, Map, Replaceable, Resource, Seq, StoreBundle, Virtual};
+pub use store::{
+    Column, Field, Map, Replaceable, Resource, Seq, StagedResource, StoreBundle, Virtual,
+};
 pub use work_unit::{Always, On, WorkUnit, WorkUnitBundle};
