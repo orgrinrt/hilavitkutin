@@ -115,8 +115,7 @@ pub fn topo_sort<
     let mut in_degree: [USize; MAX_UNITS] = [USize::ZERO; MAX_UNITS];
     let mut e = 0;
     while e < graph.edge_count.0 {
-        let dest_raw: u32 = unsafe { core::mem::transmute_copy(&graph.col_indices[e]) }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: repr(transparent) projection through guaranteed-layout UnitId chain; tracked: #428
-        let d = dest_raw as usize; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: bridging projection to usize index; tracked: #428
+        let d = graph.col_indices[e].index().0;
         if d < MAX_UNITS {
             in_degree[d] = USize(in_degree[d].0 + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
         }
@@ -135,8 +134,7 @@ pub fn topo_sort<
         while i < n {
             // Skip already-placed units (in_degree set to CONSUMED).
             if in_degree[i].0 == 0 {
-                let id_raw = i as u32; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: bridging usize to u32 for repr(transparent) projection; tracked: #428
-                let id: UnitId = unsafe { core::mem::transmute_copy(&id_raw) }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: repr(transparent) projection through guaranteed-layout UnitId chain; tracked: #428
+                let id = UnitId::from_index(USize(i));
                 out[placed] = id;
                 placed += 1; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal cursor increment; tracked: #72
                 in_degree[i] = CONSUMED;
@@ -146,8 +144,7 @@ pub fn topo_sort<
                 let end_excl = graph.end_for(i);
                 let mut k = start;
                 while k < end_excl {
-                    let dest_raw: u32 = unsafe { core::mem::transmute_copy(&graph.col_indices[k]) }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: repr(transparent) projection through guaranteed-layout UnitId chain; tracked: #428
-                    let d = dest_raw as usize; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: bridging projection to usize index; tracked: #428
+                    let d = graph.col_indices[k].index().0;
                     if d < MAX_UNITS && in_degree[d].0 != CONSUMED.0 && in_degree[d].0 > 0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: sentinel + bound check on USize internal field; tracked: #72
                         in_degree[d] = USize(in_degree[d].0 - 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
                     }
@@ -187,8 +184,7 @@ pub fn compute_waists<
     boundaries.phase_count = USize(1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: at least one phase always; tracked: #72
     let mut i = 0;
     while i + 1 < n && boundaries.phase_count.0 < MAX_PHASES {
-        let raw: u32 = unsafe { core::mem::transmute_copy(&topo[i]) }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: repr(transparent) projection through guaranteed-layout UnitId chain; tracked: #428
-        let idx = raw as usize; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: bridging projection to usize index; tracked: #428
+        let idx = topo[i].index().0;
         // Out-degree zero in topo order means this unit's output
         // funnels through nothing else; treat as a waist.
         if idx < MAX_UNITS && graph.out_degree(USize(idx)).0 == 0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
@@ -285,11 +281,9 @@ pub fn group_fibers<
     let mut any_assigned = false;
     let mut i = 0;
     while i < n {
-        let raw: u32 = unsafe { core::mem::transmute_copy(&topo[i]) }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: repr(transparent) projection through guaranteed-layout UnitId chain; tracked: #428
-        let idx = raw as usize; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: bridging projection to usize index; tracked: #428
+        let idx = topo[i].index().0;
         if idx < MAX_UNITS {
-            let fid_raw = current_fiber as u16; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: bridging usize to u16 for repr(transparent) projection; tracked: #428
-            let fid: FiberId = unsafe { core::mem::transmute_copy(&fid_raw) }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: repr(transparent) projection through guaranteed-layout FiberId chain; tracked: #428
+            let fid = FiberId::from_index(USize(current_fiber));
             g.assignment[idx] = fid;
             max_used_fiber = current_fiber;
             any_assigned = true;
@@ -340,8 +334,7 @@ pub fn compute_upward_rank_and_dirty<
     let mut i = n;
     while i > 0 {
         i -= 1;
-        let raw: u32 = unsafe { core::mem::transmute_copy(&topo[i]) }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: repr(transparent) projection through guaranteed-layout UnitId chain; tracked: #428
-        let u = raw as usize; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: bridging projection to usize index; tracked: #428
+        let u = topo[i].index().0;
         if u >= MAX_UNITS || u >= graph.unit_count.0 {
             continue;
         }
@@ -355,8 +348,7 @@ pub fn compute_upward_rank_and_dirty<
         let mut max_rank = USize::ZERO;
         let mut k = start;
         while k < end_excl {
-            let dest_raw: u32 = unsafe { core::mem::transmute_copy(&graph.col_indices[k]) }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: repr(transparent) projection through guaranteed-layout UnitId chain; tracked: #428
-            let d = dest_raw as usize; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: bridging projection to usize index; tracked: #428
+            let d = graph.col_indices[k].index().0;
             if d < MAX_UNITS && ranks[d].0 + 1 > max_rank.0 {
                 max_rank = USize(ranks[d].0 + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
             }
@@ -366,8 +358,7 @@ pub fn compute_upward_rank_and_dirty<
         // Dirty propagation: union unit's writes into its fiber's
         // dirty mask. Fiber-level dirty drives incremental-skip.
         if u < inputs.unit_count.0 {
-            let fid_raw: u16 = unsafe { core::mem::transmute_copy(&fibers.assignment[u]) }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: repr(transparent) projection through guaranteed-layout FiberId chain; tracked: #428
-            let f = fid_raw as usize; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: bridging projection to usize index; tracked: #428
+            let f = fibers.assignment[u].index().0;
             if f < MAX_FIBERS {
                 let mut store = 0;
                 while store < MAX_STORES && store < 64 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: AccessMask uses USize backing with 64-bit window per skeleton; tracked: #72
@@ -502,8 +493,7 @@ pub fn classify_columns<
     // elimination opportunities.
     let mut u = 0;
     while u < n_units {
-        let fid_raw: u16 = unsafe { core::mem::transmute_copy(&fibers.assignment[u]) }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: repr(transparent) projection through guaranteed-layout FiberId chain; tracked: #428
-        let f = fid_raw as usize; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: bridging projection to usize index; tracked: #428
+        let f = fibers.assignment[u].index().0;
         if f < MAX_FIBERS && f < n_fibers {
             // Walk this unit's access mask, register touched stores
             // as columns for fiber f.

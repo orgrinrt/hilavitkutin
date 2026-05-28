@@ -112,12 +112,9 @@ pub fn synthesise_core_programs<
         let mut r = 0;
         while r < range_count {
             let fid_idx = fiber_cursor + r;
-            // Build a FiberId for this slot. UnitId/FiberId are
-            // repr(transparent) over Uint<N> over Bits<N, Warm, Unsigned>.
-            // FiberId is 2 bytes (Warm-7 picks u16 container per the
-            // size assertion in dispatch_codegen.rs).
-            let fid_u16 = fid_idx as u16; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: bridging usize to u16 for repr(transparent) projection; tracked: #428
-            let fid: FiberId = unsafe { core::mem::transmute_copy(&fid_u16) }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: repr(transparent) projection through guaranteed-layout FiberId chain; tracked: #428
+            // Build a FiberId for this slot from the array-index value
+            // via the typed accessor.
+            let fid = FiberId::from_index(USize(fid_idx));
             // Conservative initial range: Full. Head/Tail convergence
             // lands when Topic 4 axis D dispatch wires through.
             programs[c].fiber_ranges[r] = (fid, RecordRange::Full);
@@ -132,8 +129,7 @@ pub fn synthesise_core_programs<
         let phase_n = plan.phase_count.0.min(MAX_PHASES_PER_CORE);
         let mut p = 0;
         while p < phase_n {
-            let phase_u16 = p as u16; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: bridging usize to u16 for repr(transparent) projection; tracked: #428
-            let phase: PhaseId = unsafe { core::mem::transmute_copy(&phase_u16) }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: repr(transparent) projection through guaranteed-layout PhaseId chain; tracked: #428
+            let phase = PhaseId::from_index(USize(p));
             let sync_role = if phase_n == 1 {
                 SyncRole::WaitAndSignal
             } else if p == 0 {
