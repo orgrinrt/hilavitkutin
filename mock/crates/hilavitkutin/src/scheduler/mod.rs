@@ -46,9 +46,12 @@ use hilavitkutin_api::work_unit::WorkUnitBundle;
 
 pub mod metrics;
 pub mod plan;
+pub mod stage;
 
 pub use metrics::SchedulerMetrics;
 pub use plan::PlanCache;
+
+use stage::{Stage, StageEmpty, StageList};
 
 /// Top-level scheduler.
 ///
@@ -76,8 +79,11 @@ pub struct Scheduler<Cfg: RunCfg = DefaultRunCfg> {
 impl Scheduler<DefaultRunCfg> {
     /// Start a fresh builder. Empty Wus + Stores typestate; the
     /// builder grows via `.with(...)` calls.
-    pub const fn builder() -> SchedulerBuilder<Empty, Empty> {
-        SchedulerBuilder { _phantom: PhantomData }
+    pub const fn builder() -> SchedulerBuilder<Empty, Empty, Empty, StageEmpty> {
+        SchedulerBuilder {
+            staged: StageEmpty,
+            _phantom: PhantomData,
+        }
     }
 }
 
@@ -152,49 +158,61 @@ impl<Cfg: RunCfg> Default for Scheduler<Cfg> {
 /// markers (`Resource<T>` / `Column<T>` / `Virtual<T>` mixed). Both
 /// start at `Empty` from `Scheduler::builder()` and grow via the
 /// registration methods.
-pub struct SchedulerBuilder<Wus, Stores> {
-    _phantom: PhantomData<(Wus, Stores)>,
+pub struct SchedulerBuilder<Wus, Stores, Platform, Staged: StageList> {
+    staged: Staged,
+    _phantom: PhantomData<(Wus, Stores, Platform)>,
 }
 
-impl<Wus, Stores> SchedulerBuilder<Wus, Stores> {
+impl<Wus, Stores, Platform, Staged: StageList> SchedulerBuilder<Wus, Stores, Platform, Staged> {
     /// Register one provider on the scheduler.
     ///
     /// Accepts any `P: BuilderInput`: WorkUnit unit-structs, Kits,
     /// `Resource::new(value)`, `Column::<T>::new()`,
-    /// `Virtual::<T>::new()`, `LinkedBin::<TraitFamily>::new()`,
+    /// `Virtual::<T>::new()`, `ExtensionSurface::<TraitFamily>::new()`,
     /// and platform impls (memory provider, thread pool, clock).
     /// The per-kind typestate update flows through `P::Dispatch`
-    /// and lands on the appropriate accumulator.
+    /// and lands on the appropriate accumulator (`Wus`, `Stores`, or
+    /// `Platform`).
+    ///
+    /// The registered value `provider` is moved onto the `Staged`
+    /// value list so it is retained until `build()`, rather than
+    /// dropped at the call site. The arena drain (HILA-RUNTIME-C6)
+    /// moves each staged value into scheduler-owned storage.
     ///
     /// Non-`BuilderInput` values fail the trait solver here,
     /// surfacing the `BuilderInput`
     /// `#[diagnostic::on_unimplemented]` message which names the
     /// constructors a consumer reaches for.
-    ///
-    /// The platform-tuple accumulator `Empty` is the placeholder
-    /// until the data plane (HILA-RUNTIME-C4) introduces a third
-    /// builder type parameter.
     pub fn with<P>(
         self,
-        _provider: P,
+        provider: P,
     ) -> SchedulerBuilder<
-        <P::Dispatch as Dispatch<Wus, Stores, Empty>>::NextWus,
-        <P::Dispatch as Dispatch<Wus, Stores, Empty>>::NextStores,
+        <P::Dispatch as Dispatch<Wus, Stores, Platform>>::NextWus,
+        <P::Dispatch as Dispatch<Wus, Stores, Platform>>::NextStores,
+        <P::Dispatch as Dispatch<Wus, Stores, Platform>>::NextPlatform,
+        Stage<P, Staged>,
     >
     where
         P: BuilderInput,
-        P::Dispatch: Dispatch<Wus, Stores, Empty>,
+        P::Dispatch: Dispatch<Wus, Stores, Platform>,
     {
-        SchedulerBuilder { _phantom: PhantomData }
+        SchedulerBuilder {
+            staged: Stage {
+                head: provider,
+                tail: self.staged,
+            },
+            _phantom: PhantomData,
+        }
     }
 }
 
-impl<Wus, Stores> SchedulerBuilder<Wus, Stores>
+impl<Wus, Stores, Platform, Staged> SchedulerBuilder<Wus, Stores, Platform, Staged>
 where
     Wus: WorkUnitBundle,
     Stores: hilavitkutin_api::AccessSet
         + ContainsAll<<Wus as WorkUnitBundle>::AccumRead>
         + ContainsAll<<Wus as WorkUnitBundle>::AccumWrite>,
+    Staged: StageList,
 {
     /// Finalise the builder into a `Scheduler<DefaultRunCfg>`.
     ///
@@ -204,6 +222,10 @@ where
     /// compile error pointing at the missing store. Consumers that
     /// supplied an explicit `RunCfg` via `.with(MyRunCfg)` use
     /// `build_with::<MyRunCfg>()` to thread the Cfg type through.
+    ///
+    /// The staged value list is dropped here at this round; the arena
+    /// drain (HILA-RUNTIME-C6) moves each retained value into
+    /// scheduler-owned storage instead.
     pub fn build(self) -> Scheduler<DefaultRunCfg> {
         Scheduler::default()
     }
@@ -215,5 +237,20 @@ where
     /// `Cfg::Out` shape through `Scheduler::run()`.
     pub fn build_with<Cfg: RunCfg>(self) -> Scheduler<Cfg> {
         Scheduler::default()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Scheduler;
+    use hilavitkutin_api::Resource;
+
+    #[test]
+    fn builder_retains_registered_value() {
+        // `.with(Resource::new(v))` moves the value onto the staged
+        // list rather than dropping it; the value is reachable on the
+        // builder afterward.
+        let builder = Scheduler::builder().with(Resource::new(42u32));
+        assert_eq!(builder.staged.head.into_inner(), 42u32);
     }
 }
