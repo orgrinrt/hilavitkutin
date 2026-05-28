@@ -433,3 +433,16 @@ monomorphised dispatch bodies, the morsel loop has nothing to
 dispatch. After that lands, the real run loop wires the per-core
 program walker + adapt metric flow + meta-virtual event firing +
 persistence snapshot drain into the body.
+
+## Dispatch-time stack-caching of accessed resources
+
+The dispatch codegen caches the resources a fiber accesses into a
+stack-local array before entering the morsel loop, then runs the loop
+reading from the stack copies. LLVM proves the stack array does not
+alias the column buffers and promotes the cached resources to
+registers, so the hot loop does zero resource memory loads. This is a
+property of the emitted per-fiber dispatch function (HILA-RUNTIME-C2,
+the dispatch-codegen rust-pipe pattern), not a standalone type. An
+earlier placeholder conflated this optimization with the phase-boundary
+ResourceSnapshot view; the two are unrelated, and the stack-caching
+belongs to codegen.
