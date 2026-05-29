@@ -11,7 +11,7 @@
 //! 3. `compute_waists`: narrow cut detection to delimit phases.
 //! 4. `rcm_reorder`: Reverse Cuthill-McKee bandwidth-reduction reordering.
 //! 5. `block_diagonalise`: connected-component block detection to trunk skeletons.
-//! 6. `spectral_partition`: spectral clustering for wide pipelines. *Stub*.
+//! 6. `spectral_partition`: spectral clustering via a symmetric Laplacian.
 //! 7. `group_fibers`: greedy fiber assignment with bounded slack.
 //! 8. `compute_upward_rank_and_dirty` (fused per Topic 3 S5):
 //!    reverse-topo critical-path rank + per-fiber dirty propagation.
@@ -21,19 +21,20 @@
 //! 12. `assign_cores`: map trunks onto concrete cores by `CoreClass`.
 //! 13. `synthesise_core_programs`: per-core projection from plan.
 //!
-//! Steps 4 and 5 (`rcm_reorder`, `block_diagonalise`) are wired to
-//! arvo-sparse (`rcm_reorder_via`, `block_diagonal_via`) through the
-//! `DependencyGraph::to_csr_bidirectional` adapter. Step 6
-//! (`spectral_partition`) remains a stub awaiting its arvo-spectral
-//! wiring (HILA-RUNTIME-C1 follow-up rounds).
+//! Steps 4 to 6 (`rcm_reorder`, `block_diagonalise`, `spectral_partition`)
+//! are wired to arvo-sparse / arvo-spectral through the
+//! `DependencyGraph::to_csr_bidirectional` adapter. The runner consumes
+//! the rcm renumber (step 4) and the block-detection trunk skeletons
+//! (step 5); step 6's spectral grouping awaits the C1d bench and the
+//! fiber projection (HILA-RUNTIME-C1 follow-up slices).
 //!
 //! Steps 13 ships its body in a follow-up commit alongside
 //! `plan/core_program.rs` (Pass 3 codegen feeds it).
 
 use arvo::strategy::Identity;
-use arvo::{Bool, Cap, USize};
-use arvo_bitmask::NodeId;
+use arvo::{Bool, Cap, FastFloat, USize};
 use arvo_sparse::{block_diagonal_via, rcm_reorder_via};
+use arvo_spectral::k_way_partition;
 use arvo_tensor::cap_size;
 
 use hilavitkutin_api::UnitId;
@@ -43,8 +44,13 @@ use super::dirty::DirtyMasks;
 use super::fiber::FiberGrouping;
 use super::graph::{DependencyGraph, EdgeKind};
 use super::inputs::PlanInputs;
+use super::laplacian::SymmetricLaplacian;
 use super::phase::{PhaseBoundaries, PhaseConfig};
 use super::trunk::BlockPartition;
+
+/// Eigenvector float for the spectral partition step. `f32` is the IEEE
+/// width tag of arvo's `FastFloat`, not a bare numeric value.
+type SpectralFloat = FastFloat<f32>; // lint:allow(no-bare-numeric) reason: f32 is the IEEE width tag of arvo FastFloat; tracked: #72
 
 /// Step 1: build the CSR `DependencyGraph` from `AccessMask` overlap.
 ///
@@ -308,21 +314,43 @@ where
     counts
 }
 
-/// Step 6: spectral partitioning for wide pipelines.
+/// Step 6: spectral partitioning.
 ///
-/// Substrate-heavy stub: real body requires arvo-spectral's
-/// eigenvalue solver for the Laplacian + Fiedler-vector clustering.
-/// Tracked as HILA-RUNTIME-C1 follow-up. For now defers to
-/// `group_fibers` (step 7) for the actual grouping; this step does
-/// not contribute a useful intermediate.
+/// Builds the symmetric graph Laplacian over the bidirectional CSR
+/// (`SymmetricLaplacian`) and runs arvo-spectral's `k_way_partition`
+/// to assign each unit a fiber by spectral cut, with `K = MAX_FIBERS`.
+/// Returns a `FiberGrouping` mapping each unit to its spectral
+/// partition id.
+///
+/// The spectral-versus-greedy `group_fibers` (step 7) choice and the
+/// projection onto trunk components land in later C1d slices; the
+/// runner does not consume this output yet. `k_way_partition` operates
+/// over the full `cap_size(MAX_UNITS)`; on a loose CSR the slack rows
+/// are isolated and a live-node-count-aware spectral path is a
+/// follow-up gated on the bench adopting spectral.
 pub fn spectral_partition<const MAX_UNITS: Cap, const MAX_EDGES: Cap, const MAX_FIBERS: Cap>(
-    _graph: &DependencyGraph<MAX_UNITS, MAX_EDGES>,
+    graph: &DependencyGraph<MAX_UNITS, MAX_EDGES>,
 ) -> FiberGrouping<MAX_UNITS, MAX_FIBERS>
 where
     [(); cap_size(MAX_UNITS)]:,
     [(); cap_size(MAX_EDGES)]:,
+    [(); cap_size(MAX_FIBERS)]:,
 {
-    FiberGrouping::new()
+    use hilavitkutin_api::FiberId;
+    let csr = graph.to_csr_bidirectional();
+    let lap: SymmetricLaplacian<MAX_UNITS, MAX_EDGES, SpectralFloat> =
+        SymmetricLaplacian::new(&csr);
+    let sigma = lap.lambda_max_bound();
+    let iterations = USize(100); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: spectral power-iteration count; tracked: #72
+    let (count, partition) =
+        k_way_partition::<_, MAX_UNITS, MAX_FIBERS, SpectralFloat>(&lap, sigma, iterations);
+    let mut grouping: FiberGrouping<MAX_UNITS, MAX_FIBERS> = FiberGrouping::new();
+    grouping.fiber_count = count;
+    // Map each unit's spectral partition id to its fiber.
+    for (slot, part) in grouping.assignment.iter_mut().zip(partition.iter()) {
+        *slot = FiberId::from_index(*part);
+    }
+    grouping
 }
 
 /// Step 7: greedy fiber grouping.
