@@ -93,6 +93,12 @@ where
     /// `record_count % fiber_count` fibers). Read by dispatch codegen
     /// to emit per-fiber `RecordRange` slices.
     pub morsel_sizes: [USize; cap_size(MAX_FIBERS)],
+    /// RCM renumber permutation: `rcm_order[new_pos]` is the `UnitId`
+    /// placed at that position by the step-4 bandwidth-reduction pass.
+    /// A locality renumber consumed by dispatch codegen for arena
+    /// layout, not the dispatch order (dispatch stays topological via
+    /// `unit_meta`). Zero-filled before the chain populates it.
+    pub rcm_order: [UnitId; cap_size(MAX_UNITS)],
 }
 
 impl<
@@ -140,6 +146,7 @@ where
             column_class: ColumnClassMap::new(),
             dirty: DirtyMasks::new(),
             morsel_sizes: [USize::ZERO; cap_size(MAX_FIBERS)],
+            rcm_order: [UnitId::ZERO; cap_size(MAX_UNITS)],
         }
     }
 }
@@ -338,10 +345,12 @@ where
     let waists = steps::compute_waists::<MAX_UNITS, MAX_EDGES, MAX_PHASES>(&dag, &topo);
     plan.phase_count = waists.phase_count;
 
-    // Step 4 to 6 are stubs awaiting arvo-graph + arvo-spectral
-    // primitives (tracked HILA-RUNTIME-C1). They run for chain
-    // structural completeness; their outputs are not yet consumed.
-    let _reordered = steps::rcm_reorder::<MAX_UNITS, MAX_EDGES>(&dag, &topo);
+    // Step 4: RCM bandwidth-reduction reordering. Persisted on the
+    // plan as the arena-layout renumber permutation (consumed by
+    // dispatch codegen), distinct from the topological dispatch order
+    // in `unit_meta`. Steps 5 to 6 (block-diagonal, spectral) remain
+    // stubs tracked under HILA-RUNTIME-C1.
+    plan.rcm_order = steps::rcm_reorder::<MAX_UNITS, MAX_EDGES>(&dag);
     let feasible = steps::block_diagonalise::<MAX_UNITS, MAX_EDGES, MAX_PHASES>(&dag, &waists);
     if !feasible.0 {
         return notko::Outcome::Err(PlanError::PhaseAlignmentMismatch);
