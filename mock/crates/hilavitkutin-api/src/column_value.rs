@@ -1,9 +1,11 @@
 //! Column-storable value contract.
 //!
 //! `ColumnValue` certifies a type as storable in a column. The
-//! blanket impl uses `min_specialization` so any `Copy + 'static`
-//! type auto-qualifies with `BIT_WIDTH = size_of * 8`. Sub-byte arvo
-//! types specialise to their true bit width.
+//! blanket impl uses full `specialization` (its `default const`
+//! overridden by concrete impls is the shape `min_specialization`
+//! rejects) so any `Copy + 'static` type auto-qualifies with
+//! `BIT_WIDTH = size_of * 8`. Sub-byte arvo types override to their
+//! true bit width.
 
 use arvo::strategy::Hot;
 use arvo::ufixed::UFixed;
@@ -23,6 +25,9 @@ pub trait ColumnValue: Copy + 'static {
     const BIT_WIDTH: USize;
 }
 
+// The `default const` overridden by the sub-byte impls below needs full
+// `specialization`; min_specialization rejects this shape. Making it spec-free,
+// to drop the forbidden gate, is tracked as task #631.
 impl<T: Copy + 'static> ColumnValue for T {
     default const BIT_WIDTH: USize = USize(core::mem::size_of::<Self>() * 8);
 }
