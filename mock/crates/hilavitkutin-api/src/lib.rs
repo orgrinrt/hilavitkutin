@@ -13,7 +13,6 @@
 #![feature(adt_const_params)]
 #![feature(const_ops)]
 #![feature(const_trait_impl)]
-#![feature(generic_const_exprs)]
 #![feature(impl_trait_in_assoc_type)]
 #![feature(marker_trait_attr)]
 #![feature(min_specialization)]
