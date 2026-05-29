@@ -6,7 +6,8 @@
 //! store-buffer-friendly tail of the dispatch function.
 
 use arvo::strategy::Identity;
-use arvo::USize;
+use arvo::{Cap, USize};
+use arvo_tensor::cap_size;
 
 /// How a column is used by a given fiber.
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
@@ -33,24 +34,35 @@ impl Default for ColumnClassification {
 ///
 /// Plan-stage output of step 11 (`classify_columns`).
 #[derive(Copy, Clone, Debug)]
-pub struct ColumnClassMap<const MAX_FIBERS: usize, const MAX_COLUMNS_PER_FIBER: usize> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    pub class: [[ColumnClassification; MAX_COLUMNS_PER_FIBER]; MAX_FIBERS],
-    pub column_count: [USize; MAX_FIBERS],
+pub struct ColumnClassMap<const MAX_FIBERS: Cap, const MAX_COLUMNS_PER_FIBER: Cap>
+where
+    [(); cap_size(MAX_FIBERS)]:,
+    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
+{
+    pub class: [[ColumnClassification; cap_size(MAX_COLUMNS_PER_FIBER)]; cap_size(MAX_FIBERS)],
+    pub column_count: [USize; cap_size(MAX_FIBERS)],
 }
 
-impl<const MAX_FIBERS: usize, const MAX_COLUMNS_PER_FIBER: usize> // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+impl<const MAX_FIBERS: Cap, const MAX_COLUMNS_PER_FIBER: Cap>
     ColumnClassMap<MAX_FIBERS, MAX_COLUMNS_PER_FIBER>
+where
+    [(); cap_size(MAX_FIBERS)]:,
+    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
 {
     pub const fn new() -> Self {
         Self {
-            class: [[ColumnClassification::Internal; MAX_COLUMNS_PER_FIBER]; MAX_FIBERS],
-            column_count: [USize::ZERO; MAX_FIBERS],
+            class: [[ColumnClassification::Internal; cap_size(MAX_COLUMNS_PER_FIBER)];
+                cap_size(MAX_FIBERS)],
+            column_count: [USize::ZERO; cap_size(MAX_FIBERS)],
         }
     }
 }
 
-impl<const MAX_FIBERS: usize, const MAX_COLUMNS_PER_FIBER: usize> Default // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+impl<const MAX_FIBERS: Cap, const MAX_COLUMNS_PER_FIBER: Cap> Default
     for ColumnClassMap<MAX_FIBERS, MAX_COLUMNS_PER_FIBER>
+where
+    [(); cap_size(MAX_FIBERS)]:,
+    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
 {
     fn default() -> Self {
         Self::new()

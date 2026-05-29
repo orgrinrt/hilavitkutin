@@ -4,24 +4,34 @@
 //! the surface holds together and basic invariants (empty input,
 //! linear chain, multi-fiber split) produce sane plans.
 
-use arvo::{Identity, USize};
+// The lifted Cap-dimension types carry `[(); cap_size(N)]:` bounds. A
+// downstream crate that instantiates them must itself enable generic_const_exprs
+// so its own trait solver can normalise the bounds, mirroring arvo's cross-crate
+// tests. adt_const_params is needed only where a Cap const-generic param is
+// declared (the engine crate root), not where a lifted type is named. WATCH-tier
+// per the unstable-feature soundness sweep (#626).
+#![feature(generic_const_exprs)]
+#![allow(incomplete_features)]
+
+use arvo::{Cap, Identity, USize};
+use arvo_tensor::cap;
 use hilavitkutin::plan::{
     compute_execution_plan, steps, DependencyGraph, EdgeKind, PhaseConfig, PlanInputs,
 };
 use notko::Outcome;
 
-const MU: usize = 8; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-const MS: usize = 4; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-const ME: usize = 16; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-const MP: usize = 4; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-const MT: usize = 4; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-const MF: usize = 4; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-const ML: usize = 4; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-const MC: usize = 8; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-const MCT: usize = 4; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-const MUF: usize = 4; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-const MCF: usize = 4; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-const MTP: usize = 4; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+const MU: Cap = cap(8);
+const MS: Cap = cap(4);
+const ME: Cap = cap(16);
+const MP: Cap = cap(4);
+const MT: Cap = cap(4);
+const MF: Cap = cap(4);
+const ML: Cap = cap(4);
+const MC: Cap = cap(8);
+const MCT: Cap = cap(4);
+const MUF: Cap = cap(4);
+const MCF: Cap = cap(4);
+const MTP: Cap = cap(4);
 
 #[test]
 fn empty_input_yields_empty_plan() {

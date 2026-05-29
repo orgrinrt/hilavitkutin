@@ -1,10 +1,22 @@
 //! Dispatch-stage type surface tests (5a3 skeleton).
 
-use arvo::{Bool, Identity, USize};
+// The lifted Cap-dimension dispatch types carry `[(); cap_size(N)]:` bounds. A
+// downstream crate that instantiates them must itself enable generic_const_exprs
+// so its own trait solver can normalise the bounds, mirroring arvo's cross-crate
+// tests. adt_const_params is needed only where a Cap const-generic param is
+// declared (the engine crate root), not where a lifted type is named. WATCH-tier
+// per the unstable-feature soundness sweep (#626).
+#![feature(generic_const_exprs)]
+#![allow(incomplete_features)]
+
+use arvo::{Bool, Cap, Identity, USize};
+use arvo_tensor::cap;
 use hilavitkutin::dispatch::{
     CoreDispatch, DispatchApproach, FiberDispatch, MorselRange, ProgressCounter, SyncPoint,
 };
 use hilavitkutin::plan::FiberId;
+
+const C4: Cap = cap(4);
 
 #[derive(Default)]
 struct StubCtx;
@@ -66,7 +78,7 @@ fn dispatch_approach_variants_distinct() {
 
 #[test]
 fn fiber_dispatch_default_constructs() {
-    let f: FiberDispatch<StubCtx, 4> = FiberDispatch::default();
+    let f: FiberDispatch<StubCtx, C4> = FiberDispatch::default();
     assert!(f.body.isnt());
     assert_eq!(f.fiber_id, FiberId::ZERO);
     assert_eq!(f.sync_point_count, USize::ZERO);
@@ -75,7 +87,7 @@ fn fiber_dispatch_default_constructs() {
 
 #[test]
 fn core_dispatch_default_constructs() {
-    let c: CoreDispatch<StubCtx, 4> = CoreDispatch::default();
+    let c: CoreDispatch<StubCtx, C4> = CoreDispatch::default();
     assert_eq!(c.fiber_count, USize::ZERO);
     assert_eq!(c.phase_count, USize::ZERO);
     assert_eq!(c.boundary_count, USize::ZERO);

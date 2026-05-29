@@ -4,8 +4,10 @@
 //! engine needs to drive one fiber through its morsel range under
 //! the right sync conditions.
 
+use arvo::Cap;
 use arvo::USize;
 use arvo::strategy::Identity;
+use arvo_tensor::cap_size;
 use hilavitkutin_api::FiberShape;
 use notko::Maybe;
 
@@ -17,17 +19,23 @@ use crate::plan::{FiberId, PhaseId};
 /// `MAX_CORES` bounds the sync-point array length: each fiber has
 /// at most one SyncPoint per core that could run the producer
 /// phase before it.
-pub struct FiberDispatch<Ctx: 'static, const MAX_CORES: usize> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+pub struct FiberDispatch<Ctx: 'static, const MAX_CORES: Cap>
+where
+    [(); cap_size(MAX_CORES)]:,
+{
     /// Monomorphised body. `Maybe::None` in skeleton state.
     pub body: Maybe<WuFn<Ctx>>,
     pub fiber_id: FiberId,
     pub phase: PhaseId,
     pub morsel_range: MorselRange,
-    pub sync_points: [SyncPoint; MAX_CORES],
+    pub sync_points: [SyncPoint; cap_size(MAX_CORES)],
     pub sync_point_count: USize,
 }
 
-impl<Ctx: 'static, const MAX_CORES: usize> FiberDispatch<Ctx, MAX_CORES> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+impl<Ctx: 'static, const MAX_CORES: Cap> FiberDispatch<Ctx, MAX_CORES>
+where
+    [(); cap_size(MAX_CORES)]:,
+{
     /// Empty skeleton record with no body and zero metadata.
     pub const fn new() -> Self {
         Self {
@@ -41,13 +49,16 @@ impl<Ctx: 'static, const MAX_CORES: usize> FiberDispatch<Ctx, MAX_CORES> { // li
             sync_points: [SyncPoint {
                 fiber_id: FiberId::ZERO,
                 min_records: USize::ZERO,
-            }; MAX_CORES],
+            }; cap_size(MAX_CORES)],
             sync_point_count: USize::ZERO,
         }
     }
 }
 
-impl<Ctx: 'static, const MAX_CORES: usize> Default for FiberDispatch<Ctx, MAX_CORES> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+impl<Ctx: 'static, const MAX_CORES: Cap> Default for FiberDispatch<Ctx, MAX_CORES>
+where
+    [(); cap_size(MAX_CORES)]:,
+{
     fn default() -> Self {
         Self::new()
     }

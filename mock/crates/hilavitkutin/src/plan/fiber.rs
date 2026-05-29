@@ -9,7 +9,8 @@
 //! that the dispatch stage walks.
 
 use arvo::strategy::Identity;
-use arvo::USize;
+use arvo::{Cap, USize};
+use arvo_tensor::cap_size;
 
 use hilavitkutin_api::{FiberId, StoreId, UnitId};
 use notko::Maybe;
@@ -19,24 +20,32 @@ use crate::dispatch::approach::DispatchApproach;
 /// Per-unit fiber assignment (intermediate; analysis output of steps
 /// 5 to 8).
 #[derive(Copy, Clone, Debug)]
-pub struct FiberGrouping<const MAX_UNITS: usize, const MAX_FIBERS: usize> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+pub struct FiberGrouping<const MAX_UNITS: Cap, const MAX_FIBERS: Cap>
+where
+    [(); cap_size(MAX_UNITS)]:,
+{
     /// `assignment[i]` is the FiberId that unit `i` belongs to.
-    pub assignment: [FiberId; MAX_UNITS],
+    pub assignment: [FiberId; cap_size(MAX_UNITS)],
     /// Number of fibers actually used (0..=MAX_FIBERS).
     pub fiber_count: USize,
 }
 
-impl<const MAX_UNITS: usize, const MAX_FIBERS: usize> FiberGrouping<MAX_UNITS, MAX_FIBERS> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+impl<const MAX_UNITS: Cap, const MAX_FIBERS: Cap> FiberGrouping<MAX_UNITS, MAX_FIBERS>
+where
+    [(); cap_size(MAX_UNITS)]:,
+{
     pub const fn new() -> Self {
         Self {
-            assignment: [FiberId::ZERO; MAX_UNITS],
+            assignment: [FiberId::ZERO; cap_size(MAX_UNITS)],
             fiber_count: USize::ZERO,
         }
     }
 }
 
-impl<const MAX_UNITS: usize, const MAX_FIBERS: usize> Default // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+impl<const MAX_UNITS: Cap, const MAX_FIBERS: Cap> Default
     for FiberGrouping<MAX_UNITS, MAX_FIBERS>
+where
+    [(); cap_size(MAX_UNITS)]:,
 {
     fn default() -> Self {
         Self::new()
@@ -170,16 +179,20 @@ impl Default for HeadTailConvergence {
 /// than `MAX_UNITS` / `MAX_COLUMNS` to keep the per-fiber footprint
 /// independent of pipeline-wide caps (Topic 3 audit-2 m3).
 #[derive(Copy, Clone, Debug)]
-pub struct Fiber<const MAX_UNITS_PER_FIBER: usize, const MAX_COLUMNS_PER_FIBER: usize> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+pub struct Fiber<const MAX_UNITS_PER_FIBER: Cap, const MAX_COLUMNS_PER_FIBER: Cap>
+where
+    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
+    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
+{
     /// Stable id within the enclosing plan.
     pub id: FiberId,
     /// Units in the fiber (in dispatch order). `unit_count` records
     /// how many of the `MAX_UNITS_PER_FIBER` slots are populated.
-    pub units: [UnitId; MAX_UNITS_PER_FIBER],
+    pub units: [UnitId; cap_size(MAX_UNITS_PER_FIBER)],
     pub unit_count: USize,
     /// Stores the fiber touches (read or write). `column_count`
     /// records the populated count.
-    pub columns: [StoreId; MAX_COLUMNS_PER_FIBER],
+    pub columns: [StoreId; cap_size(MAX_COLUMNS_PER_FIBER)],
     pub column_count: USize,
     /// Head+tail convergence if the fiber qualifies; absent otherwise.
     pub head_tail: Maybe<HeadTailConvergence>,
@@ -187,15 +200,18 @@ pub struct Fiber<const MAX_UNITS_PER_FIBER: usize, const MAX_COLUMNS_PER_FIBER: 
     pub dispatch_approach: DispatchApproach,
 }
 
-impl<const MAX_UNITS_PER_FIBER: usize, const MAX_COLUMNS_PER_FIBER: usize> // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+impl<const MAX_UNITS_PER_FIBER: Cap, const MAX_COLUMNS_PER_FIBER: Cap>
     Fiber<MAX_UNITS_PER_FIBER, MAX_COLUMNS_PER_FIBER>
+where
+    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
+    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
 {
     pub const fn new() -> Self {
         Self {
             id: FiberId::ZERO,
-            units: [UnitId::ZERO; MAX_UNITS_PER_FIBER],
+            units: [UnitId::ZERO; cap_size(MAX_UNITS_PER_FIBER)],
             unit_count: USize::ZERO,
-            columns: [StoreId(USize::ZERO); MAX_COLUMNS_PER_FIBER],
+            columns: [StoreId(USize::ZERO); cap_size(MAX_COLUMNS_PER_FIBER)],
             column_count: USize::ZERO,
             head_tail: Maybe::Isnt,
             dispatch_approach: DispatchApproach::IndirectPerFiber,
@@ -203,8 +219,11 @@ impl<const MAX_UNITS_PER_FIBER: usize, const MAX_COLUMNS_PER_FIBER: usize> // li
     }
 }
 
-impl<const MAX_UNITS_PER_FIBER: usize, const MAX_COLUMNS_PER_FIBER: usize> Default // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+impl<const MAX_UNITS_PER_FIBER: Cap, const MAX_COLUMNS_PER_FIBER: Cap> Default
     for Fiber<MAX_UNITS_PER_FIBER, MAX_COLUMNS_PER_FIBER>
+where
+    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
+    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
 {
     fn default() -> Self {
         Self::new()

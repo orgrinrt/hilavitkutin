@@ -19,7 +19,8 @@ pub mod hybrid;
 pub mod parking;
 pub mod pool;
 
-use arvo::USize;
+use arvo::{Cap, USize};
+use arvo_tensor::cap_size;
 
 pub use assignment::{CoreAssignment, NO_TRUNK};
 pub use barrier::{phase_barrier_arrive, phase_barrier_observe, phase_barrier_reset, BarrierArrival};
@@ -48,16 +49,16 @@ pub use pool::{ThreadPool, ThreadPoolBuilder};
 /// `CoreClass`-aware weighting. See `CoreClass-aware assign_cores
 /// follow-up` in `BACKLOG.md.tmpl` for the heterogeneous-core path.
 pub fn assign_cores<
-    const MAX_UNITS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_PHASES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_TRUNKS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_FIBERS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_LANES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_COLUMNS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_COMPONENTS_PER_TRUNK: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_UNITS_PER_FIBER: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_COLUMNS_PER_FIBER: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_TRUNKS_PER_PHASE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_UNITS: Cap,
+    const MAX_PHASES: Cap,
+    const MAX_TRUNKS: Cap,
+    const MAX_FIBERS: Cap,
+    const MAX_LANES: Cap,
+    const MAX_COLUMNS: Cap,
+    const MAX_COMPONENTS_PER_TRUNK: Cap,
+    const MAX_UNITS_PER_FIBER: Cap,
+    const MAX_COLUMNS_PER_FIBER: Cap,
+    const MAX_TRUNKS_PER_PHASE: Cap,
 >(
     core_count: USize,
     plan: &crate::plan::ExecutionPlan<
@@ -72,7 +73,17 @@ pub fn assign_cores<
         MAX_COLUMNS_PER_FIBER,
         MAX_TRUNKS_PER_PHASE,
     >,
-) -> CoreAssignment<MAX_LANES> {
+) -> CoreAssignment<MAX_LANES>
+where
+    [(); cap_size(MAX_UNITS)]:,
+    [(); cap_size(MAX_PHASES)]:,
+    [(); cap_size(MAX_FIBERS)]:,
+    [(); cap_size(MAX_TRUNKS_PER_PHASE)]:,
+    [(); cap_size(MAX_COMPONENTS_PER_TRUNK)]:,
+    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
+    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
+    [(); cap_size(MAX_LANES)]:,
+{
     let mut assignment: CoreAssignment<MAX_LANES> = CoreAssignment::new();
 
     // Find the phase with the most trunks; that bounds the
@@ -93,8 +104,8 @@ pub fn assign_cores<
     if core_count.0 < width {
         width = core_count.0;
     }
-    if MAX_LANES < width {
-        width = MAX_LANES;
+    if cap_size(MAX_LANES) < width {
+        width = cap_size(MAX_LANES);
     }
 
     // Populate the round-robin slots; the rest stay NO_TRUNK from
@@ -124,20 +135,21 @@ mod assign_cores_tests {
     use super::*;
     use crate::plan::ExecutionPlan;
     use arvo::strategy::Identity;
+    use arvo_tensor::{cap, cap_size};
 
     // Per-pipeline caps sized small for the tests. The body's logic
     // does not depend on the cap values, only on the runtime
     // phase_count / trunk_count fields.
-    const MAX_UNITS: usize = 8; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test fixture cap; rust grammar requires usize; tracked: #72
-    const MAX_PHASES: usize = 8; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test fixture cap; rust grammar requires usize; tracked: #72
-    const MAX_TRUNKS: usize = 8; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test fixture cap; rust grammar requires usize; tracked: #72
-    const MAX_FIBERS: usize = 8; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test fixture cap; rust grammar requires usize; tracked: #72
-    const MAX_LANES: usize = 8; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test fixture cap; rust grammar requires usize; tracked: #72
-    const MAX_COLUMNS: usize = 8; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test fixture cap; rust grammar requires usize; tracked: #72
-    const MAX_COMPONENTS_PER_TRUNK: usize = 4; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test fixture cap; rust grammar requires usize; tracked: #72
-    const MAX_UNITS_PER_FIBER: usize = 4; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test fixture cap; rust grammar requires usize; tracked: #72
-    const MAX_COLUMNS_PER_FIBER: usize = 4; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test fixture cap; rust grammar requires usize; tracked: #72
-    const MAX_TRUNKS_PER_PHASE: usize = 4; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test fixture cap; rust grammar requires usize; tracked: #72
+    const MAX_UNITS: Cap = cap(8);
+    const MAX_PHASES: Cap = cap(8);
+    const MAX_TRUNKS: Cap = cap(8);
+    const MAX_FIBERS: Cap = cap(8);
+    const MAX_LANES: Cap = cap(8);
+    const MAX_COLUMNS: Cap = cap(8);
+    const MAX_COMPONENTS_PER_TRUNK: Cap = cap(4);
+    const MAX_UNITS_PER_FIBER: Cap = cap(4);
+    const MAX_COLUMNS_PER_FIBER: Cap = cap(4);
+    const MAX_TRUNKS_PER_PHASE: Cap = cap(4);
 
     type TestPlan = ExecutionPlan<
         MAX_UNITS,
@@ -169,7 +181,7 @@ mod assign_cores_tests {
         let result = assign_cores(USize(4), &plan); // lint:allow(no-bare-numeric) reason: test core count; tracked: #72
         assert_eq!(result.assigned_count, USize::ZERO);
         let mut i: usize = 0; // lint:allow(no-bare-numeric) reason: loop index; tracked: #72
-        while i < MAX_LANES {
+        while i < cap_size(MAX_LANES) {
             assert_eq!(result.trunk_index[i], NO_TRUNK);
             i += 1; // lint:allow(no-bare-numeric) reason: loop increment; tracked: #72
         }
@@ -182,7 +194,7 @@ mod assign_cores_tests {
         assert_eq!(result.assigned_count, USize(1)); // lint:allow(no-bare-numeric) reason: width=1 expected; tracked: #72
         assert_eq!(result.trunk_index[0], USize(0)); // lint:allow(no-bare-numeric) reason: slot 0 trunk 0; tracked: #72
         let mut i: usize = 1; // lint:allow(no-bare-numeric) reason: loop start; tracked: #72
-        while i < MAX_LANES {
+        while i < cap_size(MAX_LANES) {
             assert_eq!(result.trunk_index[i], NO_TRUNK);
             i += 1; // lint:allow(no-bare-numeric) reason: loop increment; tracked: #72
         }
@@ -196,7 +208,7 @@ mod assign_cores_tests {
         let result = assign_cores(USize(0), &plan); // lint:allow(no-bare-numeric) reason: zero-core fixture; tracked: #72
         assert_eq!(result.assigned_count, USize::ZERO);
         let mut i: usize = 0; // lint:allow(no-bare-numeric) reason: loop index; tracked: #72
-        while i < MAX_LANES {
+        while i < cap_size(MAX_LANES) {
             assert_eq!(result.trunk_index[i], NO_TRUNK);
             i += 1; // lint:allow(no-bare-numeric) reason: loop increment; tracked: #72
         }
@@ -213,7 +225,7 @@ mod assign_cores_tests {
         assert_eq!(result.trunk_index[1], USize(1)); // lint:allow(no-bare-numeric) reason: slot 1 trunk 1; tracked: #72
         assert_eq!(result.trunk_index[2], USize(2)); // lint:allow(no-bare-numeric) reason: slot 2 trunk 2; tracked: #72
         let mut i: usize = 3; // lint:allow(no-bare-numeric) reason: loop start; tracked: #72
-        while i < MAX_LANES {
+        while i < cap_size(MAX_LANES) {
             assert_eq!(result.trunk_index[i], NO_TRUNK);
             i += 1; // lint:allow(no-bare-numeric) reason: loop increment; tracked: #72
         }

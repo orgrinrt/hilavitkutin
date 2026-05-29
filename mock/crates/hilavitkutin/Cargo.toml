@@ -14,6 +14,7 @@ notko.workspace = true
 arvo-bitmask.workspace = true
 arvo-graph.workspace = true
 arvo-sparse.workspace = true
+arvo-tensor.workspace = true
 arvo-spectral.workspace = true
 arvo-comb.workspace = true
 libc = { workspace = true, optional = true }

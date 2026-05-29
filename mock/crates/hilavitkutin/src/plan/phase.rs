@@ -6,7 +6,8 @@
 //! trunks; trunks own components.
 
 use arvo::strategy::Identity;
-use arvo::USize;
+use arvo::{Cap, USize};
+use arvo_tensor::cap_size;
 
 use hilavitkutin_api::PhaseId;
 
@@ -18,18 +19,27 @@ use crate::strategy::PhaseStrategy;
 ///
 /// Analysis intermediate produced by step 3 (waist detection).
 #[derive(Copy, Clone, Debug)]
-pub struct PhaseBoundaries<const MAX_PHASES: usize> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    pub boundaries: [USize; MAX_PHASES],
+pub struct PhaseBoundaries<const MAX_PHASES: Cap>
+where
+    [(); cap_size(MAX_PHASES)]:,
+{
+    pub boundaries: [USize; cap_size(MAX_PHASES)],
     pub phase_count: USize,
 }
 
-impl<const MAX_PHASES: usize> PhaseBoundaries<MAX_PHASES> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+impl<const MAX_PHASES: Cap> PhaseBoundaries<MAX_PHASES>
+where
+    [(); cap_size(MAX_PHASES)]:,
+{
     pub const fn new() -> Self {
-        Self { boundaries: [USize::ZERO; MAX_PHASES], phase_count: USize::ZERO }
+        Self { boundaries: [USize::ZERO; cap_size(MAX_PHASES)], phase_count: USize::ZERO }
     }
 }
 
-impl<const MAX_PHASES: usize> Default for PhaseBoundaries<MAX_PHASES> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+impl<const MAX_PHASES: Cap> Default for PhaseBoundaries<MAX_PHASES>
+where
+    [(); cap_size(MAX_PHASES)]:,
+{
     fn default() -> Self {
         Self::new()
     }
@@ -61,15 +71,20 @@ impl Default for PhaseConfig {
 /// segment.
 #[derive(Copy, Clone, Debug)]
 pub struct Phase<
-    const MAX_TRUNKS_PER_PHASE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_COMPONENTS_PER_TRUNK: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_UNITS_PER_FIBER: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_COLUMNS_PER_FIBER: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-> {
+    const MAX_TRUNKS_PER_PHASE: Cap,
+    const MAX_COMPONENTS_PER_TRUNK: Cap,
+    const MAX_UNITS_PER_FIBER: Cap,
+    const MAX_COLUMNS_PER_FIBER: Cap,
+>
+where
+    [(); cap_size(MAX_TRUNKS_PER_PHASE)]:,
+    [(); cap_size(MAX_COMPONENTS_PER_TRUNK)]:,
+    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
+    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
+{
     pub id: PhaseId,
-    pub trunks:
-        [Trunk<MAX_COMPONENTS_PER_TRUNK, MAX_UNITS_PER_FIBER, MAX_COLUMNS_PER_FIBER>;
-            MAX_TRUNKS_PER_PHASE],
+    pub trunks: [Trunk<MAX_COMPONENTS_PER_TRUNK, MAX_UNITS_PER_FIBER, MAX_COLUMNS_PER_FIBER>;
+        cap_size(MAX_TRUNKS_PER_PHASE)],
     pub trunk_count: USize,
     /// Plan-time strategy classification.
     pub strategy: PhaseStrategy,
@@ -78,10 +93,10 @@ pub struct Phase<
 }
 
 impl<
-        const MAX_TRUNKS_PER_PHASE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_COMPONENTS_PER_TRUNK: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_UNITS_PER_FIBER: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_COLUMNS_PER_FIBER: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+        const MAX_TRUNKS_PER_PHASE: Cap,
+        const MAX_COMPONENTS_PER_TRUNK: Cap,
+        const MAX_UNITS_PER_FIBER: Cap,
+        const MAX_COLUMNS_PER_FIBER: Cap,
     >
     Phase<
         MAX_TRUNKS_PER_PHASE,
@@ -89,11 +104,16 @@ impl<
         MAX_UNITS_PER_FIBER,
         MAX_COLUMNS_PER_FIBER,
     >
+where
+    [(); cap_size(MAX_TRUNKS_PER_PHASE)]:,
+    [(); cap_size(MAX_COMPONENTS_PER_TRUNK)]:,
+    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
+    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
 {
     pub const fn new() -> Self {
         Self {
             id: PhaseId::ZERO,
-            trunks: [Trunk::new(); MAX_TRUNKS_PER_PHASE],
+            trunks: [Trunk::new(); cap_size(MAX_TRUNKS_PER_PHASE)],
             trunk_count: USize::ZERO,
             strategy: PhaseStrategy::Balanced,
             config: PhaseConfig::Balanced,
@@ -102,10 +122,10 @@ impl<
 }
 
 impl<
-        const MAX_TRUNKS_PER_PHASE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_COMPONENTS_PER_TRUNK: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_UNITS_PER_FIBER: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_COLUMNS_PER_FIBER: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+        const MAX_TRUNKS_PER_PHASE: Cap,
+        const MAX_COMPONENTS_PER_TRUNK: Cap,
+        const MAX_UNITS_PER_FIBER: Cap,
+        const MAX_COLUMNS_PER_FIBER: Cap,
     > Default
     for Phase<
         MAX_TRUNKS_PER_PHASE,
@@ -113,6 +133,11 @@ impl<
         MAX_UNITS_PER_FIBER,
         MAX_COLUMNS_PER_FIBER,
     >
+where
+    [(); cap_size(MAX_TRUNKS_PER_PHASE)]:,
+    [(); cap_size(MAX_COMPONENTS_PER_TRUNK)]:,
+    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
+    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
 {
     fn default() -> Self {
         Self::new()

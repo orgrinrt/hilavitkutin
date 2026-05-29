@@ -17,6 +17,7 @@
 //! arena pointer surface here is enough for the scheduler typestate
 //! to thread.
 
+use arvo::Cap;
 use core::marker::PhantomData;
 
 /// Per-pass adapt-metrics arena. Const-generic over the
@@ -26,11 +27,16 @@ use core::marker::PhantomData;
 /// `'arena` ties the storage borrow to the plan-stage scratch buffer
 /// the scheduler owns; dropping the scheduler ahead of any reader
 /// becomes a borrow-check error rather than a use-after-free.
-pub(crate) struct AdaptArena<'arena, const MAX_FIBERS: usize, const MAX_CORES: usize, const MAX_PHASES: usize> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array sizes; rust grammar requires usize; tracked: #121
+pub(crate) struct AdaptArena<
+    'arena,
+    const MAX_FIBERS: Cap,
+    const MAX_CORES: Cap,
+    const MAX_PHASES: Cap,
+> {
     _arena: PhantomData<&'arena ()>,
 }
 
-impl<'arena, const F: usize, const C: usize, const P: usize> AdaptArena<'arena, F, C, P> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array sizes; rust grammar requires usize; tracked: #121
+impl<'arena, const F: Cap, const C: Cap, const P: Cap> AdaptArena<'arena, F, C, P> {
     /// Allocate a fresh arena. Implementation lands in Pass 6 alongside
     /// the scheduler's plan-stage scratch buffer.
     pub(crate) const fn new() -> Self {

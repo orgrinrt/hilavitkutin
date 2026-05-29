@@ -21,7 +21,8 @@
 //! guarantees that ordering.
 
 use arvo::strategy::Identity;
-use arvo::{Bool, USize};
+use arvo::{Bool, Cap, USize};
+use arvo_tensor::cap_size;
 use core::fmt;
 
 use hilavitkutin_api::UnitId;
@@ -56,26 +57,34 @@ impl Default for EdgeKind {
 /// `MAX_EDGES` (edge cap). The current populated counts live in
 /// `unit_count` and `edge_count`.
 #[derive(Copy, Clone)]
-pub struct DependencyGraph<const MAX_UNITS: usize, const MAX_EDGES: usize> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+pub struct DependencyGraph<const MAX_UNITS: Cap, const MAX_EDGES: Cap>
+where
+    [(); cap_size(MAX_UNITS)]:,
+    [(); cap_size(MAX_EDGES)]:,
+{
     /// `row_offsets[i]` = first edge index for unit `i`.
-    pub row_offsets: [USize; MAX_UNITS],
+    pub row_offsets: [USize; cap_size(MAX_UNITS)],
     /// Destination unit per edge.
-    pub col_indices: [UnitId; MAX_EDGES],
+    pub col_indices: [UnitId; cap_size(MAX_EDGES)],
     /// Kind per edge.
-    pub edge_kinds: [EdgeKind; MAX_EDGES],
+    pub edge_kinds: [EdgeKind; cap_size(MAX_EDGES)],
     /// Number of units actually populated.
     pub unit_count: USize,
     /// Number of edges actually populated.
     pub edge_count: USize,
 }
 
-impl<const MAX_UNITS: usize, const MAX_EDGES: usize> DependencyGraph<MAX_UNITS, MAX_EDGES> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+impl<const MAX_UNITS: Cap, const MAX_EDGES: Cap> DependencyGraph<MAX_UNITS, MAX_EDGES>
+where
+    [(); cap_size(MAX_UNITS)]:,
+    [(); cap_size(MAX_EDGES)]:,
+{
     /// Empty graph (no units, no edges).
     pub const fn new() -> Self {
         Self {
-            row_offsets: [USize::ZERO; MAX_UNITS],
-            col_indices: [UnitId::ZERO; MAX_EDGES],
-            edge_kinds: [EdgeKind::Read; MAX_EDGES],
+            row_offsets: [USize::ZERO; cap_size(MAX_UNITS)],
+            col_indices: [UnitId::ZERO; cap_size(MAX_EDGES)],
+            edge_kinds: [EdgeKind::Read; cap_size(MAX_EDGES)],
             unit_count: USize::ZERO,
             edge_count: USize::ZERO,
         }
@@ -102,7 +111,7 @@ impl<const MAX_UNITS: usize, const MAX_EDGES: usize> DependencyGraph<MAX_UNITS, 
     pub fn has_edge(&self, from: USize, to: USize) -> Bool {
         let f = from.0;
         let t = to.0;
-        if f >= MAX_UNITS || t >= MAX_UNITS {
+        if f >= cap_size(MAX_UNITS) || t >= cap_size(MAX_UNITS) {
             return Bool::FALSE;
         }
         if f >= self.unit_count.0 {
@@ -129,10 +138,10 @@ impl<const MAX_UNITS: usize, const MAX_EDGES: usize> DependencyGraph<MAX_UNITS, 
     pub fn add_edge_kind(&mut self, from: USize, to: USize, kind: EdgeKind) {
         let f = from.0;
         let t = to.0;
-        if f >= MAX_UNITS || t >= MAX_UNITS {
+        if f >= cap_size(MAX_UNITS) || t >= cap_size(MAX_UNITS) {
             return;
         }
-        if self.edge_count.0 >= MAX_EDGES {
+        if self.edge_count.0 >= cap_size(MAX_EDGES) {
             return;
         }
         // CSR append-order: `from` may not be smaller than the
@@ -181,21 +190,25 @@ impl<const MAX_UNITS: usize, const MAX_EDGES: usize> DependencyGraph<MAX_UNITS, 
     }
 }
 
-impl<const MAX_UNITS: usize, const MAX_EDGES: usize> Default // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    for DependencyGraph<MAX_UNITS, MAX_EDGES>
+impl<const MAX_UNITS: Cap, const MAX_EDGES: Cap> Default for DependencyGraph<MAX_UNITS, MAX_EDGES>
+where
+    [(); cap_size(MAX_UNITS)]:,
+    [(); cap_size(MAX_EDGES)]:,
 {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<const MAX_UNITS: usize, const MAX_EDGES: usize> fmt::Debug // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    for DependencyGraph<MAX_UNITS, MAX_EDGES>
+impl<const MAX_UNITS: Cap, const MAX_EDGES: Cap> fmt::Debug for DependencyGraph<MAX_UNITS, MAX_EDGES>
+where
+    [(); cap_size(MAX_UNITS)]:,
+    [(); cap_size(MAX_EDGES)]:,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("DependencyGraph")
-            .field("unit_cap", &MAX_UNITS)
-            .field("edge_cap", &MAX_EDGES)
+            .field("unit_cap", &cap_size(MAX_UNITS))
+            .field("edge_cap", &cap_size(MAX_EDGES))
             .field("units", &self.unit_count.0)
             .field("edges", &self.edge_count.0)
             .finish()

@@ -8,8 +8,9 @@
 //! adapt subsystem refreshes between frames. Kept separate from `UnitMeta`
 //! so the immutable plan structure can stay `&` while costs mutate.
 
-use arvo::USize;
+use arvo::{Cap, USize};
 use arvo::strategy::Identity;
+use arvo_tensor::cap_size;
 
 use hilavitkutin_api::UnitId;
 
@@ -55,19 +56,28 @@ impl Default for UnitMeta {
 /// `MAX_UNITS` so it travels alongside the immutable plan without
 /// dictating array-size relationships at the call sites.
 #[derive(Copy, Clone, Debug)]
-pub struct CostTable<const MAX_UNITS: usize> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+pub struct CostTable<const MAX_UNITS: Cap>
+where
+    [(); cap_size(MAX_UNITS)]:,
+{
     /// Estimated single-record cost in nanoseconds, per unit.
-    pub estimated_cost_ns: [USize; MAX_UNITS],
+    pub estimated_cost_ns: [USize; cap_size(MAX_UNITS)],
 }
 
-impl<const MAX_UNITS: usize> CostTable<MAX_UNITS> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+impl<const MAX_UNITS: Cap> CostTable<MAX_UNITS>
+where
+    [(); cap_size(MAX_UNITS)]:,
+{
     /// All-zero cost table.
     pub const fn new() -> Self {
-        Self { estimated_cost_ns: [USize::ZERO; MAX_UNITS] }
+        Self { estimated_cost_ns: [USize::ZERO; cap_size(MAX_UNITS)] }
     }
 }
 
-impl<const MAX_UNITS: usize> Default for CostTable<MAX_UNITS> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+impl<const MAX_UNITS: Cap> Default for CostTable<MAX_UNITS>
+where
+    [(); cap_size(MAX_UNITS)]:,
+{
     fn default() -> Self {
         Self::new()
     }

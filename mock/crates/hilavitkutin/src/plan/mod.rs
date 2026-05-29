@@ -15,7 +15,8 @@
 //! decouples per-fiber footprint from pipeline-wide caps.
 
 use arvo::strategy::Identity;
-use arvo::USize;
+use arvo::{Cap, USize};
+use arvo_tensor::{cap, cap_size};
 
 pub mod access;
 pub mod column;
@@ -51,27 +52,36 @@ pub use hilavitkutin_api::{FiberId, PhaseId, TrunkId, UnitId};
 /// alongside and refreshes between frames.
 #[derive(Copy, Clone, Debug)]
 pub struct ExecutionPlan<
-    const MAX_UNITS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_PHASES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_TRUNKS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_FIBERS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_LANES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_COLUMNS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_COMPONENTS_PER_TRUNK: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_UNITS_PER_FIBER: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_COLUMNS_PER_FIBER: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_TRUNKS_PER_PHASE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-> {
+    const MAX_UNITS: Cap,
+    const MAX_PHASES: Cap,
+    const MAX_TRUNKS: Cap,
+    const MAX_FIBERS: Cap,
+    const MAX_LANES: Cap,
+    const MAX_COLUMNS: Cap,
+    const MAX_COMPONENTS_PER_TRUNK: Cap,
+    const MAX_UNITS_PER_FIBER: Cap,
+    const MAX_COLUMNS_PER_FIBER: Cap,
+    const MAX_TRUNKS_PER_PHASE: Cap,
+>
+where
+    [(); cap_size(MAX_UNITS)]:,
+    [(); cap_size(MAX_PHASES)]:,
+    [(); cap_size(MAX_FIBERS)]:,
+    [(); cap_size(MAX_TRUNKS_PER_PHASE)]:,
+    [(); cap_size(MAX_COMPONENTS_PER_TRUNK)]:,
+    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
+    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
+{
     /// Waist-delimited phases (in dispatch order).
     pub phases: [Phase<
         MAX_TRUNKS_PER_PHASE,
         MAX_COMPONENTS_PER_TRUNK,
         MAX_UNITS_PER_FIBER,
         MAX_COLUMNS_PER_FIBER,
-    >; MAX_PHASES],
+    >; cap_size(MAX_PHASES)],
     pub phase_count: USize,
     /// Per-unit metadata array, addressed by `UnitId`.
-    pub unit_meta: [UnitMeta; MAX_UNITS],
+    pub unit_meta: [UnitMeta; cap_size(MAX_UNITS)],
     pub unit_count: USize,
     /// Per-fiber column classification.
     pub column_class: ColumnClassMap<MAX_FIBERS, MAX_COLUMNS_PER_FIBER>,
@@ -82,20 +92,20 @@ pub struct ExecutionPlan<
     /// record set (remainder distributed across the first
     /// `record_count % fiber_count` fibers). Read by dispatch codegen
     /// to emit per-fiber `RecordRange` slices.
-    pub morsel_sizes: [USize; MAX_FIBERS],
+    pub morsel_sizes: [USize; cap_size(MAX_FIBERS)],
 }
 
 impl<
-        const MAX_UNITS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_PHASES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_TRUNKS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_FIBERS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_LANES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_COLUMNS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_COMPONENTS_PER_TRUNK: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_UNITS_PER_FIBER: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_COLUMNS_PER_FIBER: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_TRUNKS_PER_PHASE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+        const MAX_UNITS: Cap,
+        const MAX_PHASES: Cap,
+        const MAX_TRUNKS: Cap,
+        const MAX_FIBERS: Cap,
+        const MAX_LANES: Cap,
+        const MAX_COLUMNS: Cap,
+        const MAX_COMPONENTS_PER_TRUNK: Cap,
+        const MAX_UNITS_PER_FIBER: Cap,
+        const MAX_COLUMNS_PER_FIBER: Cap,
+        const MAX_TRUNKS_PER_PHASE: Cap,
     >
     ExecutionPlan<
         MAX_UNITS,
@@ -109,34 +119,42 @@ impl<
         MAX_COLUMNS_PER_FIBER,
         MAX_TRUNKS_PER_PHASE,
     >
+where
+    [(); cap_size(MAX_UNITS)]:,
+    [(); cap_size(MAX_PHASES)]:,
+    [(); cap_size(MAX_FIBERS)]:,
+    [(); cap_size(MAX_TRUNKS_PER_PHASE)]:,
+    [(); cap_size(MAX_COMPONENTS_PER_TRUNK)]:,
+    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
+    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
 {
     /// All-zero plan. Used as the default before the plan-stage
     /// chain populates real values, and as the constructor for
     /// `Default`.
     pub const fn new() -> Self {
         Self {
-            phases: [Phase::new(); MAX_PHASES],
+            phases: [Phase::new(); cap_size(MAX_PHASES)],
             phase_count: USize::ZERO,
-            unit_meta: [UnitMeta::new(); MAX_UNITS],
+            unit_meta: [UnitMeta::new(); cap_size(MAX_UNITS)],
             unit_count: USize::ZERO,
             column_class: ColumnClassMap::new(),
             dirty: DirtyMasks::new(),
-            morsel_sizes: [USize::ZERO; MAX_FIBERS],
+            morsel_sizes: [USize::ZERO; cap_size(MAX_FIBERS)],
         }
     }
 }
 
 impl<
-        const MAX_UNITS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_PHASES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_TRUNKS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_FIBERS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_LANES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_COLUMNS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_COMPONENTS_PER_TRUNK: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_UNITS_PER_FIBER: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_COLUMNS_PER_FIBER: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_TRUNKS_PER_PHASE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+        const MAX_UNITS: Cap,
+        const MAX_PHASES: Cap,
+        const MAX_TRUNKS: Cap,
+        const MAX_FIBERS: Cap,
+        const MAX_LANES: Cap,
+        const MAX_COLUMNS: Cap,
+        const MAX_COMPONENTS_PER_TRUNK: Cap,
+        const MAX_UNITS_PER_FIBER: Cap,
+        const MAX_COLUMNS_PER_FIBER: Cap,
+        const MAX_TRUNKS_PER_PHASE: Cap,
     > Default
     for ExecutionPlan<
         MAX_UNITS,
@@ -150,6 +168,14 @@ impl<
         MAX_COLUMNS_PER_FIBER,
         MAX_TRUNKS_PER_PHASE,
     >
+where
+    [(); cap_size(MAX_UNITS)]:,
+    [(); cap_size(MAX_PHASES)]:,
+    [(); cap_size(MAX_FIBERS)]:,
+    [(); cap_size(MAX_TRUNKS_PER_PHASE)]:,
+    [(); cap_size(MAX_COMPONENTS_PER_TRUNK)]:,
+    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
+    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
 {
     fn default() -> Self {
         Self::new()
@@ -166,10 +192,57 @@ impl<
 // diagnostic. This monomorphised assertion forces a compile-time check
 // against a representative instantiation.
 const _: fn() = || {
+    // The assertion is generic over the same const-dimension params as
+    // `ExecutionPlan` and carries its array-length where-bounds, so the
+    // `Send + Sync` check holds for any well-formed instantiation rather
+    // than one concrete shape. The const params never bind to values
+    // here; naming the function below forces the bound check.
     fn assert_send_sync<T: Send + Sync>() {}
+    fn check<
+        const MAX_UNITS: Cap,
+        const MAX_PHASES: Cap,
+        const MAX_TRUNKS: Cap,
+        const MAX_FIBERS: Cap,
+        const MAX_LANES: Cap,
+        const MAX_COLUMNS: Cap,
+        const MAX_COMPONENTS_PER_TRUNK: Cap,
+        const MAX_UNITS_PER_FIBER: Cap,
+        const MAX_COLUMNS_PER_FIBER: Cap,
+        const MAX_TRUNKS_PER_PHASE: Cap,
+    >()
+    where
+        [(); cap_size(MAX_UNITS)]:,
+        [(); cap_size(MAX_PHASES)]:,
+        [(); cap_size(MAX_FIBERS)]:,
+        [(); cap_size(MAX_TRUNKS_PER_PHASE)]:,
+        [(); cap_size(MAX_COMPONENTS_PER_TRUNK)]:,
+        [(); cap_size(MAX_UNITS_PER_FIBER)]:,
+        [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
+    {
+        // The const-eval array-length bounds are in scope here, so
+        // naming the type to check `Send + Sync` is well-formed.
+        assert_send_sync::<
+            ExecutionPlan<
+                MAX_UNITS,
+                MAX_PHASES,
+                MAX_TRUNKS,
+                MAX_FIBERS,
+                MAX_LANES,
+                MAX_COLUMNS,
+                MAX_COMPONENTS_PER_TRUNK,
+                MAX_UNITS_PER_FIBER,
+                MAX_COLUMNS_PER_FIBER,
+                MAX_TRUNKS_PER_PHASE,
+            >,
+        >();
+    }
     // Smallest meaningful instantiation; the bound is structural and
-    // independent of the const-generic values.
-    assert_send_sync::<ExecutionPlan<1, 1, 1, 1, 1, 1, 1, 1, 1, 1>>(); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic instantiation literal for Send+Sync assertion; tracked: #429
+    // independent of the const-generic values. A named const is used
+    // rather than inline `{ cap(1) }` because the const-eval normaliser
+    // discharges the array-length bounds against a named `Cap` const but
+    // not an inline construction in turbofish position.
+    const ONE: Cap = cap(1);
+    let _ = check::<ONE, ONE, ONE, ONE, ONE, ONE, ONE, ONE, ONE, ONE>;
 };
 
 /// Chain the 13 plan-stage steps and assemble an `ExecutionPlan`.
@@ -188,18 +261,18 @@ const _: fn() = || {
 /// place every input unit (cycle in the dependency graph), or other
 /// `PlanError` variants for feasibility / size / core-count issues.
 pub fn compute_execution_plan<
-    const MAX_UNITS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_STORES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_EDGES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_PHASES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_TRUNKS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_FIBERS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_LANES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_COLUMNS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_COMPONENTS_PER_TRUNK: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_UNITS_PER_FIBER: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_COLUMNS_PER_FIBER: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_TRUNKS_PER_PHASE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_UNITS: Cap,
+    const MAX_STORES: Cap,
+    const MAX_EDGES: Cap,
+    const MAX_PHASES: Cap,
+    const MAX_TRUNKS: Cap,
+    const MAX_FIBERS: Cap,
+    const MAX_LANES: Cap,
+    const MAX_COLUMNS: Cap,
+    const MAX_COMPONENTS_PER_TRUNK: Cap,
+    const MAX_UNITS_PER_FIBER: Cap,
+    const MAX_COLUMNS_PER_FIBER: Cap,
+    const MAX_TRUNKS_PER_PHASE: Cap,
 >(
     inputs: &PlanInputs<MAX_UNITS, MAX_STORES>,
 ) -> notko::Outcome<
@@ -216,7 +289,19 @@ pub fn compute_execution_plan<
         MAX_TRUNKS_PER_PHASE,
     >,
     PlanError,
-> {
+>
+where
+    [(); cap_size(MAX_UNITS)]:,
+    [(); cap_size(MAX_STORES)]:,
+    [(); cap_size(MAX_EDGES)]:,
+    [(); cap_size(MAX_PHASES)]:,
+    [(); cap_size(MAX_FIBERS)]:,
+    [(); cap_size(MAX_TRUNKS_PER_PHASE)]:,
+    [(); cap_size(MAX_COMPONENTS_PER_TRUNK)]:,
+    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
+    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
+    [(); cap_size(MAX_COLUMNS)]:,
+{
     // Empty input → empty plan (valid).
     let n = inputs.unit_count.0;
     let mut plan: ExecutionPlan<
@@ -281,12 +366,12 @@ pub fn compute_execution_plan<
     // MAX_STORES <= MAX_COLUMNS (typical); larger MAX_STORES would
     // need explicit truncation handled in a follow-up round.
     let mut f = 0;
-    while f < MAX_FIBERS {
+    while f < cap_size(MAX_FIBERS) {
         // Reuse the same bit layout: DirtyMask::raw + manual restore.
         let raw = dirty.per_fiber[f].raw();
         // Move bits into the MAX_COLUMNS-shaped mask one by one.
         let mut store = 0;
-        while store < MAX_STORES && store < 64 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: AccessMask 64-bit window per skeleton; tracked: #72
+        while store < cap_size(MAX_STORES) && store < 64 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: AccessMask 64-bit window per skeleton; tracked: #72
             let bit = (raw.0 >> store) & 1; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: bit extraction internal; tracked: #72
             if bit == 1 {
                 plan.dirty.per_fiber[f] = plan.dirty.per_fiber[f].set(USize(store)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
@@ -307,7 +392,7 @@ pub fn compute_execution_plan<
     let configs =
         steps::select_phase_configs::<MAX_PHASES>(&waists, inputs.record_count, inputs.unit_count);
     let mut i = 0;
-    while i < plan.phase_count.0 && i < MAX_PHASES {
+    while i < plan.phase_count.0 && i < cap_size(MAX_PHASES) {
         plan.phases[i].config = configs[i];
         i += 1;
     }
@@ -326,10 +411,10 @@ pub fn compute_execution_plan<
     // by the raw unit-id index that `topo[u]` projects to. `ranks` is
     // also unit-id-indexed; project once and read both.
     let mut u = 0;
-    while u < n && u < MAX_UNITS {
+    while u < n && u < cap_size(MAX_UNITS) {
         plan.unit_meta[u].id = topo[u];
         let unit_id_idx = topo[u].index().0;
-        if unit_id_idx < MAX_UNITS {
+        if unit_id_idx < cap_size(MAX_UNITS) {
             plan.unit_meta[u].commutative = inputs.commutative[unit_id_idx];
             plan.unit_meta[u].upward_rank = ranks[unit_id_idx];
         }

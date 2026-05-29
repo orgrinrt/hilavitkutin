@@ -31,7 +31,8 @@
 //! `plan/core_program.rs` (Pass 3 codegen feeds it).
 
 use arvo::strategy::Identity;
-use arvo::{Bool, USize};
+use arvo::{Bool, Cap, USize};
+use arvo_tensor::cap_size;
 
 use hilavitkutin_api::UnitId;
 
@@ -49,13 +50,13 @@ use super::phase::{PhaseBoundaries, PhaseConfig};
 /// `i j`; if `j`'s writes overlap `i`'s writes (WAW), append a
 /// `Write` edge. The CSR append-order invariant is preserved because
 /// the outer loop walks `i` in ascending order.
-pub fn build_dag<
-    const MAX_UNITS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_STORES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_EDGES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
->(
+pub fn build_dag<const MAX_UNITS: Cap, const MAX_STORES: Cap, const MAX_EDGES: Cap>(
     inputs: &PlanInputs<MAX_UNITS, MAX_STORES>,
-) -> DependencyGraph<MAX_UNITS, MAX_EDGES> {
+) -> DependencyGraph<MAX_UNITS, MAX_EDGES>
+where
+    [(); cap_size(MAX_UNITS)]:,
+    [(); cap_size(MAX_EDGES)]:,
+{
     let mut g: DependencyGraph<MAX_UNITS, MAX_EDGES> = DependencyGraph::new();
     let n = inputs.unit_count.0;
     let mut i = 0;
@@ -77,7 +78,7 @@ pub fn build_dag<
     // Ensure every input unit has a row entry, even units with zero
     // out-degree. row_offsets for empty rows equals edge_count
     // (consistent with the CSR invariant: empty row = start == end).
-    while g.unit_count.0 < n && g.unit_count.0 < MAX_UNITS {
+    while g.unit_count.0 < n && g.unit_count.0 < cap_size(MAX_UNITS) {
         g.row_offsets[g.unit_count.0] = g.edge_count;
         g.unit_count = USize(g.unit_count.0 + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
     }
@@ -100,23 +101,24 @@ const CONSUMED: USize = USize(usize::MAX); // lint:allow(no-bare-numeric) lint:a
 /// array (indices `placed..MAX_UNITS`) are left as `UnitId::ZERO`
 /// (the array's initial fill); they are NOT the cycle members. The
 /// caller must use the placed count to slice the valid prefix.
-pub fn topo_sort<
-    const MAX_UNITS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_EDGES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
->(
+pub fn topo_sort<const MAX_UNITS: Cap, const MAX_EDGES: Cap>(
     graph: &DependencyGraph<MAX_UNITS, MAX_EDGES>,
-) -> ([UnitId; MAX_UNITS], USize) {
-    let mut out: [UnitId; MAX_UNITS] = [UnitId::ZERO; MAX_UNITS];
+) -> ([UnitId; cap_size(MAX_UNITS)], USize)
+where
+    [(); cap_size(MAX_UNITS)]:,
+    [(); cap_size(MAX_EDGES)]:,
+{
+    let mut out: [UnitId; cap_size(MAX_UNITS)] = [UnitId::ZERO; cap_size(MAX_UNITS)];
     let n = graph.unit_count.0;
     if n == 0 {
         return (out, USize::ZERO);
     }
     // In-degree counter.
-    let mut in_degree: [USize; MAX_UNITS] = [USize::ZERO; MAX_UNITS];
+    let mut in_degree: [USize; cap_size(MAX_UNITS)] = [USize::ZERO; cap_size(MAX_UNITS)];
     let mut e = 0;
     while e < graph.edge_count.0 {
         let d = graph.col_indices[e].index().0;
-        if d < MAX_UNITS {
+        if d < cap_size(MAX_UNITS) {
             in_degree[d] = USize(in_degree[d].0 + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
         }
         e += 1;
@@ -145,7 +147,7 @@ pub fn topo_sort<
                 let mut k = start;
                 while k < end_excl {
                     let d = graph.col_indices[k].index().0;
-                    if d < MAX_UNITS && in_degree[d].0 != CONSUMED.0 && in_degree[d].0 > 0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: sentinel + bound check on USize internal field; tracked: #72
+                    if d < cap_size(MAX_UNITS) && in_degree[d].0 != CONSUMED.0 && in_degree[d].0 > 0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: sentinel + bound check on USize internal field; tracked: #72
                         in_degree[d] = USize(in_degree[d].0 - 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
                     }
                     k += 1;
@@ -166,14 +168,15 @@ pub fn topo_sort<
 /// land in a HILA-RUNTIME-C1 follow-up; this body produces a sane
 /// default phase layout (one phase for simple pipelines, splits at
 /// natural narrowing points).
-pub fn compute_waists<
-    const MAX_UNITS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_EDGES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_PHASES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
->(
+pub fn compute_waists<const MAX_UNITS: Cap, const MAX_EDGES: Cap, const MAX_PHASES: Cap>(
     graph: &DependencyGraph<MAX_UNITS, MAX_EDGES>,
-    topo: &[UnitId; MAX_UNITS],
-) -> PhaseBoundaries<MAX_PHASES> {
+    topo: &[UnitId; cap_size(MAX_UNITS)],
+) -> PhaseBoundaries<MAX_PHASES>
+where
+    [(); cap_size(MAX_UNITS)]:,
+    [(); cap_size(MAX_EDGES)]:,
+    [(); cap_size(MAX_PHASES)]:,
+{
     let mut boundaries = PhaseBoundaries::<MAX_PHASES>::new();
     let n = graph.unit_count.0;
     if n == 0 {
@@ -183,11 +186,11 @@ pub fn compute_waists<
     boundaries.boundaries[0] = USize::ZERO;
     boundaries.phase_count = USize(1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: at least one phase always; tracked: #72
     let mut i = 0;
-    while i + 1 < n && boundaries.phase_count.0 < MAX_PHASES {
+    while i + 1 < n && boundaries.phase_count.0 < cap_size(MAX_PHASES) {
         let idx = topo[i].index().0;
         // Out-degree zero in topo order means this unit's output
         // funnels through nothing else; treat as a waist.
-        if idx < MAX_UNITS && graph.out_degree(USize(idx)).0 == 0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
+        if idx < cap_size(MAX_UNITS) && graph.out_degree(USize(idx)).0 == 0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
             let next_phase = boundaries.phase_count.0;
             boundaries.boundaries[next_phase] = USize(i + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
             boundaries.phase_count = USize(next_phase + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
@@ -203,13 +206,14 @@ pub fn compute_waists<
 /// matrix utilities + the Cuthill-McKee BFS variant. Tracked as
 /// HILA-RUNTIME-C1 follow-up. Returns the topo order unchanged for
 /// pipelines that don't need the reorder.
-pub fn rcm_reorder<
-    const MAX_UNITS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_EDGES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
->(
+pub fn rcm_reorder<const MAX_UNITS: Cap, const MAX_EDGES: Cap>(
     _graph: &DependencyGraph<MAX_UNITS, MAX_EDGES>,
-    topo: &[UnitId; MAX_UNITS],
-) -> [UnitId; MAX_UNITS] {
+    topo: &[UnitId; cap_size(MAX_UNITS)],
+) -> [UnitId; cap_size(MAX_UNITS)]
+where
+    [(); cap_size(MAX_UNITS)]:,
+    [(); cap_size(MAX_EDGES)]:,
+{
     // Pass-through stub: ship topo unchanged. Real reordering lands
     // when arvo-graph provides the banded-matrix support.
     *topo
@@ -220,14 +224,15 @@ pub fn rcm_reorder<
 /// Substrate-heavy stub: block-detection + cross-phase validation.
 /// Tracked as HILA-RUNTIME-C1 follow-up. Returns `Bool::TRUE` to
 /// signal "shape accepted as-is" so the chain proceeds.
-pub fn block_diagonalise<
-    const MAX_UNITS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_EDGES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_PHASES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
->(
+pub fn block_diagonalise<const MAX_UNITS: Cap, const MAX_EDGES: Cap, const MAX_PHASES: Cap>(
     _graph: &DependencyGraph<MAX_UNITS, MAX_EDGES>,
     _phases: &PhaseBoundaries<MAX_PHASES>,
-) -> Bool {
+) -> Bool
+where
+    [(); cap_size(MAX_UNITS)]:,
+    [(); cap_size(MAX_EDGES)]:,
+    [(); cap_size(MAX_PHASES)]:,
+{
     Bool::TRUE
 }
 
@@ -238,13 +243,13 @@ pub fn block_diagonalise<
 /// Tracked as HILA-RUNTIME-C1 follow-up. For now defers to
 /// `group_fibers` (step 7) for the actual grouping; this step does
 /// not contribute a useful intermediate.
-pub fn spectral_partition<
-    const MAX_UNITS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_EDGES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_FIBERS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
->(
+pub fn spectral_partition<const MAX_UNITS: Cap, const MAX_EDGES: Cap, const MAX_FIBERS: Cap>(
     _graph: &DependencyGraph<MAX_UNITS, MAX_EDGES>,
-) -> FiberGrouping<MAX_UNITS, MAX_FIBERS> {
+) -> FiberGrouping<MAX_UNITS, MAX_FIBERS>
+where
+    [(); cap_size(MAX_UNITS)]:,
+    [(); cap_size(MAX_EDGES)]:,
+{
     FiberGrouping::new()
 }
 
@@ -256,14 +261,14 @@ pub fn spectral_partition<
 /// chain of units where each has exactly one in-degree and one out-
 /// degree). Real heuristics (matrix-chain DP for non-trivial branch
 /// merging) land in HILA-RUNTIME-C1.
-pub fn group_fibers<
-    const MAX_UNITS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_EDGES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_FIBERS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
->(
+pub fn group_fibers<const MAX_UNITS: Cap, const MAX_EDGES: Cap, const MAX_FIBERS: Cap>(
     graph: &DependencyGraph<MAX_UNITS, MAX_EDGES>,
-    topo: &[UnitId; MAX_UNITS],
-) -> FiberGrouping<MAX_UNITS, MAX_FIBERS> {
+    topo: &[UnitId; cap_size(MAX_UNITS)],
+) -> FiberGrouping<MAX_UNITS, MAX_FIBERS>
+where
+    [(); cap_size(MAX_UNITS)]:,
+    [(); cap_size(MAX_EDGES)]:,
+{
     use hilavitkutin_api::FiberId;
     let mut g: FiberGrouping<MAX_UNITS, MAX_FIBERS> = FiberGrouping::new();
     let n = graph.unit_count.0;
@@ -282,7 +287,7 @@ pub fn group_fibers<
     let mut i = 0;
     while i < n {
         let idx = topo[i].index().0;
-        if idx < MAX_UNITS {
+        if idx < cap_size(MAX_UNITS) {
             let fid = FiberId::from_index(USize(current_fiber));
             g.assignment[idx] = fid;
             max_used_fiber = current_fiber;
@@ -291,7 +296,7 @@ pub fn group_fibers<
             // is more than 1 (branching) or zero (leaf); single
             // chains pack into one fiber.
             let out_deg = graph.out_degree(USize(idx)).0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
-            if out_deg != 1 && current_fiber + 1 < MAX_FIBERS {
+            if out_deg != 1 && current_fiber + 1 < cap_size(MAX_FIBERS) {
                 current_fiber += 1;
             }
         }
@@ -313,17 +318,22 @@ pub fn group_fibers<
 /// fiber basis. Both walk the same data in reverse-topo order; fusion
 /// avoids two passes over the unit set.
 pub fn compute_upward_rank_and_dirty<
-    const MAX_UNITS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_EDGES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_FIBERS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_STORES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_UNITS: Cap,
+    const MAX_EDGES: Cap,
+    const MAX_FIBERS: Cap,
+    const MAX_STORES: Cap,
 >(
     graph: &DependencyGraph<MAX_UNITS, MAX_EDGES>,
-    topo: &[UnitId; MAX_UNITS],
+    topo: &[UnitId; cap_size(MAX_UNITS)],
     inputs: &PlanInputs<MAX_UNITS, MAX_STORES>,
     fibers: &FiberGrouping<MAX_UNITS, MAX_FIBERS>,
-) -> ([USize; MAX_UNITS], DirtyMasks<MAX_FIBERS, MAX_STORES>) {
-    let mut ranks: [USize; MAX_UNITS] = [USize::ZERO; MAX_UNITS];
+) -> ([USize; cap_size(MAX_UNITS)], DirtyMasks<MAX_FIBERS, MAX_STORES>)
+where
+    [(); cap_size(MAX_UNITS)]:,
+    [(); cap_size(MAX_EDGES)]:,
+    [(); cap_size(MAX_FIBERS)]:,
+{
+    let mut ranks: [USize; cap_size(MAX_UNITS)] = [USize::ZERO; cap_size(MAX_UNITS)];
     let mut dirty: DirtyMasks<MAX_FIBERS, MAX_STORES> = DirtyMasks::new();
     let n = graph.unit_count.0;
     if n == 0 {
@@ -335,7 +345,7 @@ pub fn compute_upward_rank_and_dirty<
     while i > 0 {
         i -= 1;
         let u = topo[i].index().0;
-        if u >= MAX_UNITS || u >= graph.unit_count.0 {
+        if u >= cap_size(MAX_UNITS) || u >= graph.unit_count.0 {
             continue;
         }
         // Scan successors for max rank.
@@ -349,7 +359,7 @@ pub fn compute_upward_rank_and_dirty<
         let mut k = start;
         while k < end_excl {
             let d = graph.col_indices[k].index().0;
-            if d < MAX_UNITS && ranks[d].0 + 1 > max_rank.0 {
+            if d < cap_size(MAX_UNITS) && ranks[d].0 + 1 > max_rank.0 {
                 max_rank = USize(ranks[d].0 + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
             }
             k += 1;
@@ -359,9 +369,9 @@ pub fn compute_upward_rank_and_dirty<
         // dirty mask. Fiber-level dirty drives incremental-skip.
         if u < inputs.unit_count.0 {
             let f = fibers.assignment[u].index().0;
-            if f < MAX_FIBERS {
+            if f < cap_size(MAX_FIBERS) {
                 let mut store = 0;
-                while store < MAX_STORES && store < 64 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: AccessMask uses USize backing with 64-bit window per skeleton; tracked: #72
+                while store < cap_size(MAX_STORES) && store < 64 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: AccessMask uses USize backing with 64-bit window per skeleton; tracked: #72
                     if inputs.writes[u].contains(USize(store)).0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
                         dirty.per_fiber[f] = dirty.per_fiber[f].set(USize(store)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
                     }
@@ -381,11 +391,14 @@ pub fn compute_upward_rank_and_dirty<
 /// is assigned somewhere). Falls back to the record count itself
 /// when only one fiber is active. Bench-driven SIMD-width-aware
 /// sizing lands in HILA-RUNTIME-C1.
-pub fn size_morsels<const MAX_FIBERS: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+pub fn size_morsels<const MAX_FIBERS: Cap>(
     record_count: USize,
     fiber_count: USize,
-) -> [USize; MAX_FIBERS] {
-    let mut sizes: [USize; MAX_FIBERS] = [USize::ZERO; MAX_FIBERS];
+) -> [USize; cap_size(MAX_FIBERS)]
+where
+    [(); cap_size(MAX_FIBERS)]:,
+{
+    let mut sizes: [USize; cap_size(MAX_FIBERS)] = [USize::ZERO; cap_size(MAX_FIBERS)];
     // Divide-by-zero guard: fiber_count of zero falls back to 1 so
     // the division below is defined. The plan-stage runner only calls
     // this when fiber_count >= 1, but the guard makes the function
@@ -398,7 +411,7 @@ pub fn size_morsels<const MAX_FIBERS: usize>( // lint:allow(no-bare-numeric) lin
     // every record past `per_fiber * n` was silently dropped, which
     // would propagate as a missing morsel range at dispatch time.
     let mut i = 0;
-    while i < n && i < MAX_FIBERS {
+    while i < n && i < cap_size(MAX_FIBERS) {
         let extra = if i < remainder { 1 } else { 0 }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: remainder-distribution literal; tracked: #72
         sizes[i] = USize(per_fiber + extra); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal compute; tracked: #72
         i += 1;
@@ -426,15 +439,19 @@ const WIDE_PHASE_WIDTH_THRESHOLD: usize = 8; // lint:allow(no-bare-numeric) lint
 /// substrate-default constants near this fn; consumer-tunable
 /// policy lands when `RunCfg` ships its phase-policy axis (Pass 3 /
 /// Pass 6 follow-up).
-pub fn select_phase_configs<const MAX_PHASES: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+pub fn select_phase_configs<const MAX_PHASES: Cap>(
     phases: &PhaseBoundaries<MAX_PHASES>,
     record_count: USize,
     unit_count: USize,
-) -> [PhaseConfig; MAX_PHASES] {
-    let mut configs: [PhaseConfig; MAX_PHASES] = [PhaseConfig::Balanced; MAX_PHASES];
+) -> [PhaseConfig; cap_size(MAX_PHASES)]
+where
+    [(); cap_size(MAX_PHASES)]:,
+{
+    let mut configs: [PhaseConfig; cap_size(MAX_PHASES)] =
+        [PhaseConfig::Balanced; cap_size(MAX_PHASES)];
     let n = phases.phase_count.0;
     let mut i = 0;
-    while i < n && i < MAX_PHASES {
+    while i < n && i < cap_size(MAX_PHASES) {
         // Compute the width of this phase (units it spans).
         let start = phases.boundaries[i].0;
         let end_excl = if i + 1 < n {
@@ -474,14 +491,19 @@ pub fn select_phase_configs<const MAX_PHASES: usize>( // lint:allow(no-bare-nume
 /// downstream fiber). The skeleton classifies conservatively as
 /// `Internal`; refinement lands in HILA-RUNTIME-C1.
 pub fn classify_columns<
-    const MAX_UNITS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_FIBERS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_COLUMNS_PER_FIBER: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_STORES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_UNITS: Cap,
+    const MAX_FIBERS: Cap,
+    const MAX_COLUMNS_PER_FIBER: Cap,
+    const MAX_STORES: Cap,
 >(
     fibers: &FiberGrouping<MAX_UNITS, MAX_FIBERS>,
     inputs: &PlanInputs<MAX_UNITS, MAX_STORES>,
-) -> ColumnClassMap<MAX_FIBERS, MAX_COLUMNS_PER_FIBER> {
+) -> ColumnClassMap<MAX_FIBERS, MAX_COLUMNS_PER_FIBER>
+where
+    [(); cap_size(MAX_UNITS)]:,
+    [(); cap_size(MAX_FIBERS)]:,
+    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
+{
     let mut map: ColumnClassMap<MAX_FIBERS, MAX_COLUMNS_PER_FIBER> = ColumnClassMap::new();
     let n_fibers = fibers.fiber_count.0;
     let n_units = inputs.unit_count.0;
@@ -494,14 +516,14 @@ pub fn classify_columns<
     let mut u = 0;
     while u < n_units {
         let f = fibers.assignment[u].index().0;
-        if f < MAX_FIBERS && f < n_fibers {
+        if f < cap_size(MAX_FIBERS) && f < n_fibers {
             // Walk this unit's access mask, register touched stores
             // as columns for fiber f.
             let mut store = 0;
-            while store < MAX_STORES && store < 64 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: AccessMask 64-bit window per skeleton; tracked: #72
+            while store < cap_size(MAX_STORES) && store < 64 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: AccessMask 64-bit window per skeleton; tracked: #72
                 if inputs.access[u].contains(USize(store)).0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
                     let slot = map.column_count[f].0;
-                    if slot < MAX_COLUMNS_PER_FIBER {
+                    if slot < cap_size(MAX_COLUMNS_PER_FIBER) {
                         map.class[f][slot] = ColumnClassification::Internal;
                         map.column_count[f] = USize(slot + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
                     }
