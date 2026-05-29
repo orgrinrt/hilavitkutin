@@ -11,7 +11,6 @@
 #![recursion_limit = "512"]
 #![deny(unsafe_op_in_unsafe_fn)]
 #![feature(adt_const_params)]
-#![feature(associated_type_defaults)]
 #![feature(const_ops)]
 #![feature(const_trait_impl)]
 #![feature(generic_const_exprs)]

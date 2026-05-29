@@ -7,9 +7,8 @@
 //! - `Init` names the construction-time value type. For stateful
 //!   wrappers (legacy `Resource<T>` shape; bare types under the
 //!   Topic 2 reshape) it is `Self`. For zero-data markers
-//!   (`ExtensionSurface<dyn TraitFamily>`) it is `()`. The default
-//!   `type Init = Self` covers the common case via
-//!   `feature(associated_type_defaults)`.
+//!   (`ExtensionSurface<dyn TraitFamily>`) it is `()`. Each impl
+//!   declares `Init` explicitly; the trait carries no default.
 //! - `Dispatch` is the per-kind typestate router. The four shipped
 //!   routers (`UnitDispatch`, `StoreDispatch`, `KitDispatch`,
 //!   `PlatformDispatch`) compute the next typestate accumulator
@@ -47,18 +46,18 @@ use crate::access::Cons;
 /// the trait solver at the `.with` call site, surfacing the
 /// `#[diagnostic::on_unimplemented]` message.
 ///
-/// `Init` is the construction-time value type. The associated type
-/// defaults to `Self` via `feature(associated_type_defaults)`;
-/// zero-data marker types override to `Init = ()`.
+/// `Init` is the construction-time value type. Each impl declares it
+/// explicitly: data-carrying inputs use `Self`, zero-data marker
+/// types use `()`.
 #[diagnostic::on_unimplemented(
     message = "`{Self}` is not a BuilderInput; pass a registered input value to `SchedulerBuilder::with(...)`",
     label = "not a BuilderInput",
     note = "Impl one of the dispatch-determining sub-traits on `{Self}`: `Resource` / `Column` / `Virtual` / `WorkUnit` / `Kit` / `MemoryProvider` / `ThreadPool` / `Clock` / `RunCfg`. Pair the sub-trait impl with `impl BuilderInput for {Self} {{ type Dispatch = <the matching dispatch slot>; }}`. Sealed via `mod sealed`; consumers cannot impl `BuilderInput` for types that do not also impl exactly one dispatch-determining sub-trait."
 )]
 pub trait BuilderInput: Sized {
-    /// Construction-time value type. Defaults to `Self`; zero-data
-    /// markers override to `()`.
-    type Init = Self;
+    /// Construction-time value type. Each impl declares it: `Self` for
+    /// data-carrying inputs, `()` for zero-data markers.
+    type Init;
 
     /// Per-kind typestate routing.
     ///
