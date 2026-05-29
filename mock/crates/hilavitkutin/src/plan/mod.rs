@@ -40,7 +40,7 @@ pub use graph::{DependencyGraph, EdgeKind};
 pub use inputs::PlanInputs;
 pub use steps::PlanError;
 pub use phase::{Phase, PhaseBoundaries, PhaseConfig};
-pub use trunk::{Branch, Bridge, Trunk, TrunkComponent};
+pub use trunk::{BlockPartition, Branch, Bridge, Trunk, TrunkComponent};
 pub use unit::{CostTable, UnitMeta};
 
 pub use hilavitkutin_api::{FiberId, PhaseId, TrunkId, UnitId};
@@ -351,9 +351,43 @@ where
     // in `unit_meta`. Steps 5 to 6 (block-diagonal, spectral) remain
     // stubs tracked under HILA-RUNTIME-C1.
     plan.rcm_order = steps::rcm_reorder::<MAX_UNITS, MAX_EDGES>(&dag);
-    let feasible = steps::block_diagonalise::<MAX_UNITS, MAX_EDGES, MAX_PHASES>(&dag, &waists);
-    if !feasible.0 {
-        return notko::Outcome::Err(PlanError::PhaseAlignmentMismatch);
+    // Step 5: connected-component block detection, projected to
+    // per-phase trunk skeletons. Each block is a column-disjoint
+    // independent sub-graph; within a phase, distinct blocks become
+    // trunks (zero sync between trunks per Domain 11). Populates
+    // `Phase.id`, `trunk_count`, and `Trunk.id`; `Trunk.components` are
+    // fibers and land in the fiber-formation round. No alignment check
+    // fires yet: distinct blocks are column-disjoint by construction, so
+    // PhaseAlignmentMismatch has no concrete condition before column
+    // classification.
+    let partition = steps::block_diagonalise::<MAX_UNITS, MAX_EDGES>(&dag);
+    let trunk_counts = steps::phase_trunk_counts::<MAX_UNITS, MAX_PHASES>(
+        &partition,
+        &waists,
+        &topo,
+        inputs.unit_count,
+    );
+    // `PhaseId` is `Uint<5>` (up to 32 phases) and `TrunkId` is
+    // `Uint<6>` (up to 64 trunks plan-wide): the deliberate engine width
+    // cap on phase and trunk counts. The const-generic caps plus these
+    // id widths are the consumer's budget; a plan exceeding them is a
+    // misconfiguration. `next_trunk` is a plan-wide running id. A hard
+    // bound-check that errors past the cap is a follow-up (it is a
+    // broader engine id-width-policy concern, not specific to this
+    // projection).
+    let mut next_trunk = 0;
+    let mut p = 0;
+    while p < waists.phase_count.0 && p < cap_size(MAX_PHASES) {
+        plan.phases[p].id = PhaseId::from_index(USize(p)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
+        plan.phases[p].trunk_count = trunk_counts[p];
+        let tc = trunk_counts[p].0;
+        let mut t = 0;
+        while t < tc && t < cap_size(MAX_TRUNKS_PER_PHASE) {
+            plan.phases[p].trunks[t].id = TrunkId::from_index(USize(next_trunk)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
+            next_trunk += 1;
+            t += 1;
+        }
+        p += 1;
     }
     let _clusters = steps::spectral_partition::<MAX_UNITS, MAX_EDGES, MAX_FIBERS>(&dag);
 

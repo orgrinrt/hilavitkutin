@@ -13,6 +13,44 @@ use hilavitkutin_api::TrunkId;
 
 use crate::plan::fiber::Fiber;
 
+/// Connected-component (block) partition of the dependency graph.
+///
+/// Produced by step 5 (`block_diagonalise`) via arvo-sparse
+/// `block_diagonal_via`. `block_count` is the number of distinct
+/// blocks; `block_of_unit[i]` is the block id of the unit at index
+/// `i`. Each block is an independent sub-graph sharing no edges with
+/// the others, hence column-disjoint: blocks map to the trunks that
+/// run with zero sync within a phase.
+#[derive(Copy, Clone, Debug)]
+pub struct BlockPartition<const MAX_UNITS: Cap>
+where
+    [(); cap_size(MAX_UNITS)]:,
+{
+    /// Number of distinct blocks (connected components).
+    pub block_count: USize,
+    /// Block id per unit, indexed by unit index.
+    pub block_of_unit: [USize; cap_size(MAX_UNITS)],
+}
+
+impl<const MAX_UNITS: Cap> BlockPartition<MAX_UNITS>
+where
+    [(); cap_size(MAX_UNITS)]:,
+{
+    /// Empty partition (zero blocks). The default before step 5 runs.
+    pub const fn new() -> Self {
+        Self { block_count: USize::ZERO, block_of_unit: [USize::ZERO; cap_size(MAX_UNITS)] }
+    }
+}
+
+impl<const MAX_UNITS: Cap> Default for BlockPartition<MAX_UNITS>
+where
+    [(); cap_size(MAX_UNITS)]:,
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Lateral fan-out node: splits a single upstream path into multiple
 /// parallel branches.
 ///
