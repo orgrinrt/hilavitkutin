@@ -18,6 +18,13 @@
 #![feature(impl_trait_in_assoc_type)]
 #![feature(marker_trait_attr)]
 #![feature(min_specialization)]
+// FORBIDDEN-feature exception, tracked: full `specialization` is retained
+// ONLY for `column_value.rs`'s `ColumnValue::BIT_WIDTH` blanket default
+// (a `default const` overridden by sub-byte impls, which `min_specialization`
+// rejects). The 2026-05-29 audit mislabeled this as min-compatible. Removing
+// it needs a spec-free redesign (trait-body default + explicit per-type impls,
+// dropping the blanket), a substrate-contract change tracked separately. The
+// engine accessor full-spec use was removed in #623.
 #![feature(specialization)]
 #![allow(incomplete_features)]
 
@@ -61,7 +68,7 @@ pub use column_value::ColumnValue;
 pub use context::{
     BatchApi, ColumnReaderApi, ColumnWriterApi, EachApi, HasBatch, HasColumnReader,
     HasColumnWriter, HasEach, HasReduce, HasResourceProvider, HasVirtualFirer, ReduceApi,
-    ResourceProviderApi, VirtualFirerApi,
+    ResolveColumnRead, ResolveColumnWrite, ResolveResource, ResourceProviderApi, VirtualFirerApi,
 };
 pub use hint::{
     Adaptive, Atomic, Critical, Deferred, Divisibility, DivisibilityValue, Immediate, Important,

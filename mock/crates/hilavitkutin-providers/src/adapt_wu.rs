@@ -27,7 +27,7 @@ use hilavitkutin_api::column_value::ColumnValue;
 use hilavitkutin_api::context::{
     BatchApi, ColumnReaderApi, ColumnWriterApi, EachApi, HasBatch, HasColumnReader,
     HasColumnWriter, HasEach, HasReduce, HasResourceProvider, HasVirtualFirer, ReduceApi,
-    ResourceProviderApi, VirtualFirerApi,
+    ResolveColumnRead, ResolveColumnWrite, ResolveResource, ResourceProviderApi, VirtualFirerApi,
 };
 use hilavitkutin_api::hint::{Adaptive, Important, Steady};
 use hilavitkutin_api::store::{Column, Resource, Virtual};
@@ -128,28 +128,52 @@ impl Default for AdaptCtxUnimplementedStub<'_> {
 pub struct Stub;
 
 impl<R: AccessSet> ColumnReaderApi<R> for Stub {
-    unsafe fn read<T: ColumnValue>(&self, _i: USize) -> T
+    unsafe fn read<T: ColumnValue, I>(&self, _i: USize) -> T
     where
         R: Contains<Column<T>>,
+        Self: ResolveColumnRead<T, I>,
     {
         unimplemented!("AdaptCtxUnimplementedStub is pre-Pass-6 stub; engine Ctx supersedes it")
     }
 }
 
 impl<W: AccessSet> ColumnWriterApi<W> for Stub {
-    unsafe fn write<T: ColumnValue>(&self, _i: USize, _v: T)
+    unsafe fn write<T: ColumnValue, I>(&self, _i: USize, _v: T)
     where
         W: Contains<Column<T>>,
+        Self: ResolveColumnWrite<T, I>,
     {
         unimplemented!("AdaptCtxUnimplementedStub is pre-Pass-6 stub; engine Ctx supersedes it")
     }
 }
 
 impl<R: AccessSet> ResourceProviderApi<R> for Stub {
-    fn resource<T: 'static>(&self) -> &T
+    fn resource<T: 'static, I>(&self) -> &T
     where
         R: Contains<Resource<T>>,
+        Self: ResolveResource<T, I>,
     {
+        unimplemented!("AdaptCtxUnimplementedStub is pre-Pass-6 stub; engine Ctx supersedes it")
+    }
+}
+
+// Bridge impls: the stub never resolves (pre-Pass-6 placeholder), so the
+// keyed lookups are blanket-unimplemented. They exist only to satisfy the
+// `Self: Resolve*<T, I>` accessor bounds.
+impl<T: 'static, I> ResolveResource<T, I> for Stub {
+    fn resolve_resource(&self) -> &T {
+        unimplemented!("AdaptCtxUnimplementedStub is pre-Pass-6 stub; engine Ctx supersedes it")
+    }
+}
+
+impl<T: ColumnValue, I> ResolveColumnRead<T, I> for Stub {
+    unsafe fn resolve_read(&self, _i: USize) -> T {
+        unimplemented!("AdaptCtxUnimplementedStub is pre-Pass-6 stub; engine Ctx supersedes it")
+    }
+}
+
+impl<T: ColumnValue, I> ResolveColumnWrite<T, I> for Stub {
+    unsafe fn resolve_write(&self, _i: USize, _v: T) {
         unimplemented!("AdaptCtxUnimplementedStub is pre-Pass-6 stub; engine Ctx supersedes it")
     }
 }

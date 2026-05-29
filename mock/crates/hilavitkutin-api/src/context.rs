@@ -17,6 +17,51 @@ use crate::access::{AccessSet, Contains};
 use crate::column_value::ColumnValue;
 use crate::store::{Column, Resource, Virtual};
 
+// ---------------------------------------------------------------------
+// Keyed-resolution bridge traits.
+//
+// The keyed accessors (`read` / `write` / `resource`) look the store
+// type `T` up over the scheduler-generated context's per-WU projected
+// pointer bundle. The bundle is a heterogeneous cons-list, so the
+// lookup needs a per-element index witness; a lookup keyed on `T` alone
+// over a generic cons-list would otherwise require `specialization`.
+//
+// Instead the accessor carries an inferred index generic `I` and bounds
+// `Self` on the matching bridge trait. The context implements each
+// bridge by delegating to its bundle's index witness, where `I` selects
+// the matching node. At a concrete call site the bundle is concrete, so
+// exactly one `I` applies and inference resolves it; `I` never appears
+// at the call site. These bridges name no engine types, so the contract
+// stays in the api crate.
+// ---------------------------------------------------------------------
+
+/// Resolve a borrow of resource `T` at the inferred bundle index `I`.
+pub trait ResolveResource<T: 'static, I> {
+    /// Borrow the projected resource value of type `T`.
+    fn resolve_resource(&self) -> &T;
+}
+
+/// Resolve a column read of `T` at the inferred bundle index `I`.
+pub trait ResolveColumnRead<T: ColumnValue, I> {
+    /// Read the record at index `i` from the projected column `T`.
+    ///
+    /// # Safety
+    ///
+    /// Caller must hold the column slot for `T` at `i`. Plan-time DAG
+    /// analysis proves this; WU bodies should not re-check.
+    unsafe fn resolve_read(&self, i: USize) -> T;
+}
+
+/// Resolve a column write of `T` at the inferred bundle index `I`.
+pub trait ResolveColumnWrite<T: ColumnValue, I> {
+    /// Write `v` to the record at index `i` of the projected column `T`.
+    ///
+    /// # Safety
+    ///
+    /// Caller must hold the exclusive writer slot for `T` at `i`.
+    unsafe fn resolve_write(&self, i: USize, v: T);
+}
+
 /// Read access to columns declared in `R`.
 ///
 /// The `read` method's where-clause enforces that the column type
@@ -35,9 +80,10 @@ pub trait ColumnReaderApi<R: AccessSet> {
     ///
     /// Caller must hold the column slot for `T` at `i`. Plan-time
     /// DAG analysis proves this; WU bodies should not re-check.
-    unsafe fn read<T: ColumnValue>(&self, i: USize) -> T
+    unsafe fn read<T: ColumnValue, I>(&self, i: USize) -> T
     where
-        R: Contains<Column<T>>;
+        R: Contains<Column<T>>,
+        Self: ResolveColumnRead<T, I>;
 }
 
 /// Write access to columns declared in `W`.
@@ -51,9 +97,10 @@ pub trait ColumnWriterApi<W: AccessSet> {
     /// # Safety
     ///
     /// Caller must hold the exclusive writer slot for `T` at `i`.
-    unsafe fn write<T: ColumnValue>(&self, i: USize, v: T)
+    unsafe fn write<T: ColumnValue, I>(&self, i: USize, v: T)
     where
-        W: Contains<Column<T>>;
+        W: Contains<Column<T>>,
+        Self: ResolveColumnWrite<T, I>;
 }
 
 /// Shared-resource fetch for resources declared in `R`.
@@ -63,9 +110,10 @@ pub trait ColumnWriterApi<W: AccessSet> {
 )]
 pub trait ResourceProviderApi<R: AccessSet> {
     /// Borrow the resource value of type `T`.
-    fn resource<T: 'static>(&self) -> &T
+    fn resource<T: 'static, I>(&self) -> &T
     where
-        R: Contains<Resource<T>>;
+        R: Contains<Resource<T>>,
+        Self: ResolveResource<T, I>;
 }
 
 /// Fire a virtual flag declared in `W`.

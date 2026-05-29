@@ -293,16 +293,16 @@ Provider API traits (access-set-aware via ctx parameterised macros):
 
 ```rust
 trait ColumnReaderApi<R: AccessSet> {
- unsafe fn read<T: ColumnValue>(&self, i: USize) -> T
- where R: Contains<Column<T>>;
+ unsafe fn read<T: ColumnValue, I>(&self, i: USize) -> T
+ where R: Contains<Column<T>>, Self: ResolveColumnRead<T, I>;
 }
 trait ColumnWriterApi<W: AccessSet> {
- unsafe fn write<T: ColumnValue>(&self, i: USize, v: T)
- where W: Contains<Column<T>>;
+ unsafe fn write<T: ColumnValue, I>(&self, i: USize, v: T)
+ where W: Contains<Column<T>>, Self: ResolveColumnWrite<T, I>;
 }
 trait ResourceProviderApi<R: AccessSet> {
- fn resource<T: 'static>(&self) -> &T
- where R: Contains<Resource<T>>;
+ fn resource<T: 'static, I>(&self) -> &T
+ where R: Contains<Resource<T>>, Self: ResolveResource<T, I>;
 }
 trait VirtualFirerApi<W: AccessSet> {
  fn fire<V: 'static>(&self)
@@ -316,6 +316,28 @@ trait BatchApi<R: AccessSet, W: AccessSet> {
 }
 trait ReduceApi<R: AccessSet, W: AccessSet> {
  fn run<A, F>(&self, init: A, f: F) -> A;
+}
+```
+
+The keyed accessors (`read` / `write` / `resource`) resolve the requested
+store type `T` over the per-WU projected pointer bundle without
+`feature(specialization)`. Each carries an inferred index generic `I` plus a
+`Resolve*<T, I>` bridge bound; the scheduler-generated context implements the
+bridge by delegating to the bundle index witness (`Selector<T, I>` /
+`ColSelector<T, I>`). At a concrete call site the bundle is a concrete
+cons-list, so exactly one index applies and `I` infers. The index is never
+named at a call site: `T` is pinned by context (`let v: &T = ctx.resource()`)
+or by turbofish with the index left to inference (`ctx.resource::<T, _>()`).
+
+```rust
+trait ResolveResource<T: 'static, I> {
+ fn resolve_resource(&self) -> &T;
+}
+trait ResolveColumnRead<T: ColumnValue, I> {
+ unsafe fn resolve_read(&self, i: USize) -> T; // morsel-offset read
+}
+trait ResolveColumnWrite<T: ColumnValue, I> {
+ unsafe fn resolve_write(&self, i: USize, v: T); // morsel-offset write
 }
 ```
 

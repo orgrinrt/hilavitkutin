@@ -73,6 +73,11 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
 // Access-set aliases used across the tests.
 type ReadU32 = Cons<Resource<u32>, Empty>;
 type ColU32 = Cons<Column<u32>, Empty>;
+// Distinct read/write column sets: `u16` is read AND written; `u8` is
+// read-only, `u32` write-only. Exercises `ColSelector` index resolution
+// to both `Here` and `There<Here>` on each side of the bundle split.
+type ReadU8U16 = Cons<Column<u8>, Cons<Column<u16>, Empty>>;
+type WriteU16U32 = Cons<Column<u16>, Cons<Column<u32>, Empty>>;
 
 #[test]
 fn context_resolves_resource() {
@@ -85,10 +90,12 @@ fn context_resolves_resource() {
         .unwrap_or_else(|_| panic!("build should succeed"));
     let arena = scheduler.__arena();
 
-    let ctx: EngineCtx<'_, ReadU32, Empty, _, _> =
+    let ctx: EngineCtx<'_, ReadU32, Empty, _, _, _> =
         EngineCtx::project(arena, &ColPtrNil, MorselRange::new(USize::ZERO, USize::ZERO));
 
-    let value: &u32 = ctx.resources().resource::<u32>();
+    // The binding annotation pins `T = u32`; the index `I` infers from the
+    // concrete bundle, so no turbofish is needed.
+    let value: &u32 = ctx.resources().resource();
     assert_eq!(*value, 99);
 }
 
@@ -104,13 +111,13 @@ fn context_column_read_after_write() {
 
     // The column is both read and written, so it appears in `R` and `W`.
     // No resources are declared, so the resource source is empty.
-    let ctx: EngineCtx<'_, ColU32, ColU32, _, _> =
+    let ctx: EngineCtx<'_, ColU32, ColU32, _, _, _> =
         EngineCtx::project(&PtrNil, &col_source, MorselRange::new(USize::ZERO, USize(8)));
 
     // SAFETY: the morsel covers records 0..8; the buffer is 8 long.
     unsafe {
-        ctx.write::<u32>(USize(3), 4242u32);
-        let got = ctx.read::<u32>(USize(3));
+        ctx.write(USize(3), 4242u32);
+        let got: u32 = ctx.read(USize(3));
         assert_eq!(got, 4242);
     }
     // The raw buffer reflects the write at the morsel-offset index.
@@ -118,8 +125,47 @@ fn context_column_read_after_write() {
 }
 
 #[test]
+fn context_multi_column_distinct_read_write() {
+    // R reads u8 + u16; W writes u16 + u32. `u16` is both read and written
+    // (one buffer). The single column source carries all three columns;
+    // `project` builds read_cols over R (u8, u16) and write_cols over W
+    // (u16, u32). Resolution must infer `Here` and `There<Here>` on each
+    // side, the deeper path the single-element read-after-write test omits.
+    let mut buf_a = [0u8; 8];
+    let mut buf_b = [0u16; 8];
+    let mut buf_c = [0u32; 8];
+    buf_a[3] = 7; // pre-fill the read-only column
+    // SAFETY: each buffer outlives `ctx`; pointers are non-null and aligned.
+    let pa = unsafe { ColumnPtr::new_unchecked(buf_a.as_mut_ptr()) };
+    let pb = unsafe { ColumnPtr::new_unchecked(buf_b.as_mut_ptr()) };
+    let pc = unsafe { ColumnPtr::new_unchecked(buf_c.as_mut_ptr()) };
+    // The source holds every column the access sets project over, in the
+    // order [u8, u16, u32]; per-side projection pulls the relevant subset.
+    let col_source =
+        ColPtrCons::__new(pa, ColPtrCons::__new(pb, ColPtrCons::__new(pc, ColPtrNil)));
+
+    let ctx: EngineCtx<'_, ReadU8U16, WriteU16U32, _, _, _> =
+        EngineCtx::project(&PtrNil, &col_source, MorselRange::new(USize::ZERO, USize(8)));
+
+    // SAFETY: the morsel covers records 0..8; each buffer is 8 long.
+    unsafe {
+        // write side: u16 resolves at index `Here`, u32 at `There<Here>`.
+        ctx.write(USize(3), 99u16);
+        ctx.write(USize(3), 123u32);
+        // read side: u8 resolves at `Here`, u16 at `There<Here>`.
+        let a: u8 = ctx.read(USize(3));
+        let b: u16 = ctx.read(USize(3));
+        assert_eq!(a, 7); // read-only column, untouched by the writes
+        assert_eq!(b, 99); // read-write column resolves to the written buffer
+    }
+    // Each column wrote its own buffer at the morsel offset.
+    assert_eq!(buf_b[3], 99);
+    assert_eq!(buf_c[3], 123);
+}
+
+#[test]
 fn context_each_covers_morsel() {
-    let ctx: EngineCtx<'_, Empty, Empty, _, _> =
+    let ctx: EngineCtx<'_, Empty, Empty, _, _, _> =
         EngineCtx::project(&PtrNil, &ColPtrNil, MorselRange::new(USize(5), USize(3)));
 
     let mut visited: [usize; 3] = [0; 3];
@@ -137,7 +183,7 @@ fn context_each_covers_morsel() {
 
 #[test]
 fn context_batch_full_range() {
-    let ctx: EngineCtx<'_, Empty, Empty, _, _> =
+    let ctx: EngineCtx<'_, Empty, Empty, _, _, _> =
         EngineCtx::project(&PtrNil, &ColPtrNil, MorselRange::new(USize(5), USize(3)));
 
     let seen = Cell::new((0usize, 0usize));
@@ -165,13 +211,13 @@ impl WorkUnit<Always> for ReadResourceWu {
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, ReadU32, Empty, PtrCons<u32, PtrNil>, ColPtrNil>;
+    type Ctx<'frame> = EngineCtx<'frame, ReadU32, Empty, PtrCons<u32, PtrNil>, ColPtrNil, ColPtrNil>;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         // Resolve the resource through the projected Context. Writing the
         // observed value into a process-static cell lets the test confirm
         // the body ran and saw the registered value.
-        let v: &u32 = ctx.resources().resource::<u32>();
+        let v: &u32 = ctx.resources().resource();
         OBSERVED.with(|c| c.set(*v));
     }
 }
