@@ -10,17 +10,17 @@
 //! Callers see a stable surface (`empty` / `set` / `contains` /
 //! `overlaps` / `union_with`) across that swap.
 
-use arvo::{Bool, USize};
+use arvo::{Bool, Cap, USize};
 use arvo::strategy::Identity;
 
 /// Bit pattern identifying which stores (indexed 0..MAX_STORES) a
 /// WU reads or writes. Skeleton supports MAX_STORES ≤ 64.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub struct AccessMask<const MAX_STORES: usize> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+pub struct AccessMask<const MAX_STORES: Cap> {
     bits: USize,
 }
 
-impl<const MAX_STORES: usize> AccessMask<MAX_STORES> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+impl<const MAX_STORES: Cap> AccessMask<MAX_STORES> {
     /// Empty mask: touches no stores.
     pub const fn empty() -> Self {
         Self { bits: USize::ZERO }
@@ -66,7 +66,7 @@ impl<const MAX_STORES: usize> AccessMask<MAX_STORES> { // lint:allow(no-bare-num
     }
 }
 
-impl<const MAX_STORES: usize> Default for AccessMask<MAX_STORES> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+impl<const MAX_STORES: Cap> Default for AccessMask<MAX_STORES> {
     fn default() -> Self {
         Self::empty()
     }

@@ -45,6 +45,7 @@ arvo-spectral = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev"
 arvo-comb = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
 arvo-hash = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
 arvo-refit = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+arvo-tensor = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
 
 # Persistence dep for hilavitkutin-persistence (zero-copy serde, no_std + no alloc).
 # Version aligned with saalis's mockspace for consistency.

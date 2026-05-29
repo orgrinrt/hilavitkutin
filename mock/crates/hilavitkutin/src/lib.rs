@@ -11,6 +11,11 @@
 
 #![no_std]
 #![allow(incomplete_features)]
+// generic_const_exprs is WATCH-tier per the unstable-feature soundness sweep
+// (task #626) and sound for this array-length usage. The engine becomes a GCE
+// user via the cap-bridge that lifts plan dimensions to arvo::Cap.
+#![feature(adt_const_params)]
+#![feature(generic_const_exprs)]
 #![recursion_limit = "512"]
 #![deny(unsafe_op_in_unsafe_fn)]
 

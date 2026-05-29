@@ -20,7 +20,9 @@ pub mod standard;
 pub mod sync;
 pub mod wu_fn;
 
+use arvo::Cap;
 use arvo::USize;
+use arvo_tensor::cap_size;
 pub use hilavitkutin_api::dispatch_codegen::StandardCodegen;
 
 pub use approach::DispatchApproach;
@@ -79,7 +81,10 @@ pub fn select_approach(record_count: USize, fiber_count: USize) -> DispatchAppro
 /// monomorphisation` in `BACKLOG.md.tmpl`; until then this stub
 /// allows the engine call chain to compile and execute (returning
 /// a typed-correct, body-empty record) without panic.
-pub fn codegen_fiber<Ctx: 'static, const MAX_CORES: usize>() -> FiberDispatch<Ctx, MAX_CORES> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+pub fn codegen_fiber<Ctx: 'static, const MAX_CORES: Cap>() -> FiberDispatch<Ctx, MAX_CORES>
+where
+    [(); cap_size(MAX_CORES)]:,
+{
     FiberDispatch::new()
 }
 
@@ -91,7 +96,10 @@ pub fn codegen_fiber<Ctx: 'static, const MAX_CORES: usize>() -> FiberDispatch<Ct
 /// (fusing the morsel loop + arena progress + S3 fence + micro-morsel
 /// sync per Topic 6 axis E) lands per the same BACKLOG entry as
 /// `codegen_fiber`.
-pub fn codegen_core<Ctx: 'static, const MAX_FIBERS: usize>() -> CoreDispatch<Ctx, MAX_FIBERS> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+pub fn codegen_core<Ctx: 'static, const MAX_FIBERS: Cap>() -> CoreDispatch<Ctx, MAX_FIBERS>
+where
+    [(); cap_size(MAX_FIBERS)]:,
+{
     CoreDispatch::new()
 }
 
@@ -101,11 +109,14 @@ mod codegen_stub_tests {
     use notko::Maybe;
     use crate::plan::FiberId;
     use arvo::strategy::Identity;
+    use arvo_tensor::cap;
+
+    const C4: Cap = cap(4);
 
     #[test]
     fn codegen_fiber_returns_empty_skeleton() {
         use crate::plan::PhaseId;
-        let result: FiberDispatch<(), 4> = codegen_fiber::<(), 4>(); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test fixture const-generic; tracked: #121
+        let result: FiberDispatch<(), C4> = codegen_fiber::<(), C4>();
         assert!(matches!(result.body, Maybe::Isnt));
         assert_eq!(result.fiber_id, FiberId::ZERO);
         assert_eq!(result.phase, PhaseId::ZERO);
@@ -116,7 +127,7 @@ mod codegen_stub_tests {
 
     #[test]
     fn codegen_core_returns_empty_skeleton() {
-        let result: CoreDispatch<(), 4> = codegen_core::<(), 4>(); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test fixture const-generic; tracked: #121
+        let result: CoreDispatch<(), C4> = codegen_core::<(), C4>();
         assert_eq!(result.fiber_count, USize::ZERO);
         assert_eq!(result.phase_count, USize::ZERO);
         assert_eq!(result.boundary_count, USize::ZERO);

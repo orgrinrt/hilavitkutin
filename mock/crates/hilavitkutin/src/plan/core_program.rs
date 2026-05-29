@@ -17,7 +17,8 @@
 //! shape is committed; the body refines.
 
 use arvo::strategy::Identity;
-use arvo::USize;
+use arvo::{Cap, USize};
+use arvo_tensor::cap_size;
 
 use hilavitkutin_api::{CoreProgram, FiberId, PhaseEntry, PhaseId, RecordRange, SyncRole, TrunkId};
 
@@ -36,20 +37,20 @@ use super::ExecutionPlan;
 /// fiber count exceeded its cap would trip it.
 #[allow(clippy::too_many_arguments)]
 pub fn synthesise_core_programs<
-    const MAX_UNITS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_PHASES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_TRUNKS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_FIBERS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_LANES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_COLUMNS: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_COMPONENTS_PER_TRUNK: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_UNITS_PER_FIBER: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_COLUMNS_PER_FIBER: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_TRUNKS_PER_PHASE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_CORES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_PHASES_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_TRUNKS_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_FIBERS_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_UNITS: Cap,
+    const MAX_PHASES: Cap,
+    const MAX_TRUNKS: Cap,
+    const MAX_FIBERS: Cap,
+    const MAX_LANES: Cap,
+    const MAX_COLUMNS: Cap,
+    const MAX_COMPONENTS_PER_TRUNK: Cap,
+    const MAX_UNITS_PER_FIBER: Cap,
+    const MAX_COLUMNS_PER_FIBER: Cap,
+    const MAX_TRUNKS_PER_PHASE: Cap,
+    const MAX_CORES: Cap,
+    const MAX_PHASES_PER_CORE: Cap,
+    const MAX_TRUNKS_PER_CORE: Cap,
+    const MAX_FIBERS_PER_CORE: Cap,
 >(
     plan: &ExecutionPlan<
         MAX_UNITS,
@@ -64,14 +65,31 @@ pub fn synthesise_core_programs<
         MAX_TRUNKS_PER_PHASE,
     >,
     core_count: USize,
-) -> [CoreProgram<MAX_PHASES_PER_CORE, MAX_TRUNKS_PER_CORE, MAX_FIBERS_PER_CORE>; MAX_CORES] {
+) -> [CoreProgram<
+    { cap_size(MAX_PHASES_PER_CORE) },
+    { cap_size(MAX_TRUNKS_PER_CORE) },
+    { cap_size(MAX_FIBERS_PER_CORE) },
+>; cap_size(MAX_CORES)]
+where
+    [(); cap_size(MAX_UNITS)]:,
+    [(); cap_size(MAX_PHASES)]:,
+    [(); cap_size(MAX_FIBERS)]:,
+    [(); cap_size(MAX_TRUNKS_PER_PHASE)]:,
+    [(); cap_size(MAX_COMPONENTS_PER_TRUNK)]:,
+    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
+    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
+    [(); cap_size(MAX_CORES)]:,
+    [(); cap_size(MAX_PHASES_PER_CORE)]:,
+    [(); cap_size(MAX_TRUNKS_PER_CORE)]:,
+    [(); cap_size(MAX_FIBERS_PER_CORE)]:,
+{
     let mut programs: [CoreProgram<
-        MAX_PHASES_PER_CORE,
-        MAX_TRUNKS_PER_CORE,
-        MAX_FIBERS_PER_CORE,
-    >; MAX_CORES] = [CoreProgram::new(); MAX_CORES];
+        { cap_size(MAX_PHASES_PER_CORE) },
+        { cap_size(MAX_TRUNKS_PER_CORE) },
+        { cap_size(MAX_FIBERS_PER_CORE) },
+    >; cap_size(MAX_CORES)] = [CoreProgram::new(); cap_size(MAX_CORES)];
 
-    let cores = core_count.0.min(MAX_CORES);
+    let cores = core_count.0.min(cap_size(MAX_CORES));
     if cores == 0 {
         return programs;
     }
@@ -98,14 +116,14 @@ pub fn synthesise_core_programs<
 
         // Per-core: range_count is bounded by both `my_fibers` and
         // the core's cap MAX_FIBERS_PER_CORE.
-        let range_count = my_fibers.min(MAX_FIBERS_PER_CORE);
+        let range_count = my_fibers.min(cap_size(MAX_FIBERS_PER_CORE));
 
         // Assign each owned fiber a slot. The progress_slots base for
         // this core is its first fiber's index; subsequent fibers on
         // the core read offsets relative to the base.
         let progress_slot_base = fiber_cursor;
         debug_assert!(
-            progress_slot_base + range_count <= MAX_FIBERS,
+            progress_slot_base + range_count <= cap_size(MAX_FIBERS),
             "progress_slot_idx + range exceeds MAX_FIBERS cap",
         );
 
@@ -126,7 +144,7 @@ pub fn synthesise_core_programs<
         // sync role pattern: SignalOnly for the first phase (producer
         // only), WaitOnly for the last phase (consumer only),
         // WaitAndSignal for everything in between.
-        let phase_n = plan.phase_count.0.min(MAX_PHASES_PER_CORE);
+        let phase_n = plan.phase_count.0.min(cap_size(MAX_PHASES_PER_CORE));
         let mut p = 0;
         while p < phase_n {
             let phase = PhaseId::from_index(USize(p));

@@ -10,18 +10,19 @@
 //! on `MAX_STORES`: Mask64 for ≤ 64, Mask256 for ≤ 256, const-
 //! generic `Mask<N>` for larger (tracked as arvo BACKLOG).
 
-use arvo::{Bool, USize};
+use arvo::{Bool, Cap, USize};
 use arvo::strategy::Identity;
+use arvo_tensor::cap_size;
 
 /// Per-store dirty bit. Same shape as `AccessMask`: kept distinct
 /// so `overlaps`-vs-access checks and `union_with`-vs-dirty checks
 /// don't silently interchange.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub struct DirtyMask<const MAX_STORES: usize> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+pub struct DirtyMask<const MAX_STORES: Cap> {
     bits: USize,
 }
 
-impl<const MAX_STORES: usize> DirtyMask<MAX_STORES> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+impl<const MAX_STORES: Cap> DirtyMask<MAX_STORES> {
     // Skeleton ceiling: the `USize` backing is one 64-bit word, so
     // any `MAX_STORES > 64` would silently drop dirty bits past
     // index 63. The arvo-bitmask multi-container swap (BACKLOG)
@@ -30,7 +31,7 @@ impl<const MAX_STORES: usize> DirtyMask<MAX_STORES> { // lint:allow(no-bare-nume
     // on monomorphisation when referenced, so every constructor
     // discharges the assert with `let _ = Self::_ASSERT_FITS_IN_USIZE`.
     const _ASSERT_FITS_IN_USIZE: () = assert!( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-context size assertion; tracked: #429
-        MAX_STORES <= 64,
+        cap_size(MAX_STORES) <= 64,
         "DirtyMask: MAX_STORES > 64 is not supported by the skeleton USize backing. Once arvo-bitmask ships multi-container Mask<W>, this assert lifts and DirtyMask widens.",
     );
 
@@ -75,7 +76,7 @@ impl<const MAX_STORES: usize> DirtyMask<MAX_STORES> { // lint:allow(no-bare-nume
     }
 }
 
-impl<const MAX_STORES: usize> Default for DirtyMask<MAX_STORES> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+impl<const MAX_STORES: Cap> Default for DirtyMask<MAX_STORES> {
     fn default() -> Self {
         Self::empty()
     }
@@ -88,18 +89,25 @@ impl<const MAX_STORES: usize> Default for DirtyMask<MAX_STORES> { // lint:allow(
 ///
 /// Plan-stage output of the fused upward-rank + dirty step (step 8).
 #[derive(Copy, Clone, Debug)]
-pub struct DirtyMasks<const MAX_FIBERS: usize, const MAX_STORES: usize> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    pub per_fiber: [DirtyMask<MAX_STORES>; MAX_FIBERS],
+pub struct DirtyMasks<const MAX_FIBERS: Cap, const MAX_STORES: Cap>
+where
+    [(); cap_size(MAX_FIBERS)]:,
+{
+    pub per_fiber: [DirtyMask<MAX_STORES>; cap_size(MAX_FIBERS)],
 }
 
-impl<const MAX_FIBERS: usize, const MAX_STORES: usize> DirtyMasks<MAX_FIBERS, MAX_STORES> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+impl<const MAX_FIBERS: Cap, const MAX_STORES: Cap> DirtyMasks<MAX_FIBERS, MAX_STORES>
+where
+    [(); cap_size(MAX_FIBERS)]:,
+{
     pub const fn new() -> Self {
-        Self { per_fiber: [DirtyMask::empty(); MAX_FIBERS] }
+        Self { per_fiber: [DirtyMask::empty(); cap_size(MAX_FIBERS)] }
     }
 }
 
-impl<const MAX_FIBERS: usize, const MAX_STORES: usize> Default // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    for DirtyMasks<MAX_FIBERS, MAX_STORES>
+impl<const MAX_FIBERS: Cap, const MAX_STORES: Cap> Default for DirtyMasks<MAX_FIBERS, MAX_STORES>
+where
+    [(); cap_size(MAX_FIBERS)]:,
 {
     fn default() -> Self {
         Self::new()

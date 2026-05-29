@@ -6,7 +6,8 @@
 //! (lateral fan-in from parallel fibers).
 
 use arvo::strategy::Identity;
-use arvo::USize;
+use arvo::{Cap, USize};
+use arvo_tensor::cap_size;
 
 use hilavitkutin_api::TrunkId;
 
@@ -63,17 +64,21 @@ impl Default for Bridge {
 /// component sequence. Each component carries the full information
 /// needed for codegen without further analysis.
 #[derive(Copy, Clone, Debug)]
-pub enum TrunkComponent<
-    const MAX_UNITS_PER_FIBER: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_COLUMNS_PER_FIBER: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-> {
+pub enum TrunkComponent<const MAX_UNITS_PER_FIBER: Cap, const MAX_COLUMNS_PER_FIBER: Cap>
+where
+    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
+    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
+{
     Fiber(Fiber<MAX_UNITS_PER_FIBER, MAX_COLUMNS_PER_FIBER>),
     Branch(Branch),
     Bridge(Bridge),
 }
 
-impl<const MAX_UNITS_PER_FIBER: usize, const MAX_COLUMNS_PER_FIBER: usize> // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+impl<const MAX_UNITS_PER_FIBER: Cap, const MAX_COLUMNS_PER_FIBER: Cap>
     TrunkComponent<MAX_UNITS_PER_FIBER, MAX_COLUMNS_PER_FIBER>
+where
+    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
+    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
 {
     /// Default value for array initialisation: a zero-shaped fiber.
     /// Real values land via the plan-stage block-diagonalisation pass.
@@ -82,8 +87,11 @@ impl<const MAX_UNITS_PER_FIBER: usize, const MAX_COLUMNS_PER_FIBER: usize> // li
     }
 }
 
-impl<const MAX_UNITS_PER_FIBER: usize, const MAX_COLUMNS_PER_FIBER: usize> Default // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+impl<const MAX_UNITS_PER_FIBER: Cap, const MAX_COLUMNS_PER_FIBER: Cap> Default
     for TrunkComponent<MAX_UNITS_PER_FIBER, MAX_COLUMNS_PER_FIBER>
+where
+    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
+    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
 {
     fn default() -> Self {
         Self::empty_fiber()
@@ -93,36 +101,49 @@ impl<const MAX_UNITS_PER_FIBER: usize, const MAX_COLUMNS_PER_FIBER: usize> Defau
 /// A trunk: components running together within a phase.
 #[derive(Copy, Clone, Debug)]
 pub struct Trunk<
-    const MAX_COMPONENTS_PER_TRUNK: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_UNITS_PER_FIBER: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    const MAX_COLUMNS_PER_FIBER: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-> {
+    const MAX_COMPONENTS_PER_TRUNK: Cap,
+    const MAX_UNITS_PER_FIBER: Cap,
+    const MAX_COLUMNS_PER_FIBER: Cap,
+>
+where
+    [(); cap_size(MAX_COMPONENTS_PER_TRUNK)]:,
+    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
+    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
+{
     pub id: TrunkId,
-    pub components:
-        [TrunkComponent<MAX_UNITS_PER_FIBER, MAX_COLUMNS_PER_FIBER>; MAX_COMPONENTS_PER_TRUNK],
+    pub components: [TrunkComponent<MAX_UNITS_PER_FIBER, MAX_COLUMNS_PER_FIBER>;
+        cap_size(MAX_COMPONENTS_PER_TRUNK)],
     pub component_count: USize,
 }
 
 impl<
-        const MAX_COMPONENTS_PER_TRUNK: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_UNITS_PER_FIBER: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_COLUMNS_PER_FIBER: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+        const MAX_COMPONENTS_PER_TRUNK: Cap,
+        const MAX_UNITS_PER_FIBER: Cap,
+        const MAX_COLUMNS_PER_FIBER: Cap,
     > Trunk<MAX_COMPONENTS_PER_TRUNK, MAX_UNITS_PER_FIBER, MAX_COLUMNS_PER_FIBER>
+where
+    [(); cap_size(MAX_COMPONENTS_PER_TRUNK)]:,
+    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
+    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
 {
     pub const fn new() -> Self {
         Self {
             id: TrunkId::ZERO,
-            components: [TrunkComponent::empty_fiber(); MAX_COMPONENTS_PER_TRUNK],
+            components: [TrunkComponent::empty_fiber(); cap_size(MAX_COMPONENTS_PER_TRUNK)],
             component_count: USize::ZERO,
         }
     }
 }
 
 impl<
-        const MAX_COMPONENTS_PER_TRUNK: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_UNITS_PER_FIBER: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_COLUMNS_PER_FIBER: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+        const MAX_COMPONENTS_PER_TRUNK: Cap,
+        const MAX_UNITS_PER_FIBER: Cap,
+        const MAX_COLUMNS_PER_FIBER: Cap,
     > Default for Trunk<MAX_COMPONENTS_PER_TRUNK, MAX_UNITS_PER_FIBER, MAX_COLUMNS_PER_FIBER>
+where
+    [(); cap_size(MAX_COMPONENTS_PER_TRUNK)]:,
+    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
+    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
 {
     fn default() -> Self {
         Self::new()

@@ -1,9 +1,22 @@
 //! Plan-stage type surface tests (5a2 skeleton).
 
-use arvo::{Identity, USize};
+// The lifted Cap-dimension types carry `[(); cap_size(N)]:` bounds. A
+// downstream crate that instantiates them must itself enable generic_const_exprs
+// so its own trait solver can normalise the bounds, mirroring arvo's cross-crate
+// tests. adt_const_params is needed only where a Cap const-generic param is
+// declared (the engine crate root), not where a lifted type is named. WATCH-tier
+// per the unstable-feature soundness sweep (#626).
+#![feature(generic_const_exprs)]
+#![allow(incomplete_features)]
+
+use arvo::{Cap, Identity, USize};
+use arvo_tensor::cap;
 use hilavitkutin::plan::{
     AccessMask, ColumnClassification, DependencyGraph, FiberId, PhaseId, UnitId,
 };
+
+const C8: Cap = cap(8);
+const C16: Cap = cap(16);
 
 #[test]
 fn unit_id_copy_eq_default() {
@@ -31,7 +44,7 @@ fn phase_id_copy_eq_default() {
 
 #[test]
 fn access_mask_empty_set_contains_overlaps() {
-    let empty: AccessMask<16> = AccessMask::empty();
+    let empty: AccessMask<C16> = AccessMask::empty();
     assert!(empty.is_empty().0);
     assert!(!empty.contains(USize::ZERO).0);
 
@@ -43,10 +56,10 @@ fn access_mask_empty_set_contains_overlaps() {
     assert!(m.contains(USize(7)).0); // lint:allow(no-bare-numeric) reason: slot index; tracked: #426
     assert!(!m.contains(USize(4)).0); // lint:allow(no-bare-numeric) reason: slot index; tracked: #426
 
-    let other: AccessMask<16> = AccessMask::empty().set(USize(7)); // lint:allow(no-bare-numeric) reason: slot index; tracked: #426
+    let other: AccessMask<C16> = AccessMask::empty().set(USize(7)); // lint:allow(no-bare-numeric) reason: slot index; tracked: #426
     assert!(m.overlaps(&other).0);
 
-    let disjoint: AccessMask<16> = AccessMask::empty()
+    let disjoint: AccessMask<C16> = AccessMask::empty()
         .set(USize(1)) // lint:allow(no-bare-numeric) reason: slot index; tracked: #426
         .set(USize(2)); // lint:allow(no-bare-numeric) reason: slot index; tracked: #426
     assert!(!m.overlaps(&disjoint).0);
@@ -55,7 +68,7 @@ fn access_mask_empty_set_contains_overlaps() {
 #[test]
 fn dependency_graph_default_and_edges() {
     // CSR graph: MAX_UNITS=8, MAX_EDGES=16.
-    let mut g: DependencyGraph<8, 16> = DependencyGraph::new();
+    let mut g: DependencyGraph<C8, C16> = DependencyGraph::new();
     assert!(!g.has_edge(USize::ZERO, USize(1)).0); // lint:allow(no-bare-numeric) reason: node index; tracked: #427
     assert!(!g.has_edge(USize(3), USize(5)).0); // lint:allow(no-bare-numeric) reason: node index; tracked: #427
 
