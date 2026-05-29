@@ -10,7 +10,7 @@
 //! 2. `topo_sort`: Kahn's algorithm to produce a topological order.
 //! 3. `compute_waists`: narrow cut detection to delimit phases.
 //! 4. `rcm_reorder`: Reverse Cuthill-McKee bandwidth-reduction reordering.
-//! 5. `block_diagonalise`: Dulmage-Mendelsohn block detection. *Stub*.
+//! 5. `block_diagonalise`: connected-component block detection to trunk skeletons.
 //! 6. `spectral_partition`: spectral clustering for wide pipelines. *Stub*.
 //! 7. `group_fibers`: greedy fiber assignment with bounded slack.
 //! 8. `compute_upward_rank_and_dirty` (fused per Topic 3 S5):
@@ -21,10 +21,10 @@
 //! 12. `assign_cores`: map trunks onto concrete cores by `CoreClass`.
 //! 13. `synthesise_core_programs`: per-core projection from plan.
 //!
-//! Step 4 (`rcm_reorder`) is wired to arvo-sparse `rcm_reorder_via`
-//! through the `DependencyGraph::to_csr_bidirectional` adapter. Steps
-//! 5 to 6 (`block_diagonalise`, `spectral_partition`) remain stubs
-//! awaiting their arvo-sparse (Dulmage-Mendelsohn) and arvo-spectral
+//! Steps 4 and 5 (`rcm_reorder`, `block_diagonalise`) are wired to
+//! arvo-sparse (`rcm_reorder_via`, `block_diagonal_via`) through the
+//! `DependencyGraph::to_csr_bidirectional` adapter. Step 6
+//! (`spectral_partition`) remains a stub awaiting its arvo-spectral
 //! wiring (HILA-RUNTIME-C1 follow-up rounds).
 //!
 //! Steps 13 ships its body in a follow-up commit alongside
@@ -33,7 +33,7 @@
 use arvo::strategy::Identity;
 use arvo::{Bool, Cap, USize};
 use arvo_bitmask::NodeId;
-use arvo_sparse::rcm_reorder_via;
+use arvo_sparse::{block_diagonal_via, rcm_reorder_via};
 use arvo_tensor::cap_size;
 
 use hilavitkutin_api::UnitId;
@@ -44,6 +44,7 @@ use super::fiber::FiberGrouping;
 use super::graph::{DependencyGraph, EdgeKind};
 use super::inputs::PlanInputs;
 use super::phase::{PhaseBoundaries, PhaseConfig};
+use super::trunk::BlockPartition;
 
 /// Step 1: build the CSR `DependencyGraph` from `AccessMask` overlap.
 ///
@@ -232,21 +233,79 @@ where
     out
 }
 
-/// Step 5: Dulmage-Mendelsohn block diagonalisation.
+/// Step 5: connected-component block detection.
 ///
-/// Substrate-heavy stub: block-detection + cross-phase validation.
-/// Tracked as HILA-RUNTIME-C1 follow-up. Returns `Bool::TRUE` to
-/// signal "shape accepted as-is" so the chain proceeds.
-pub fn block_diagonalise<const MAX_UNITS: Cap, const MAX_EDGES: Cap, const MAX_PHASES: Cap>(
-    _graph: &DependencyGraph<MAX_UNITS, MAX_EDGES>,
-    _phases: &PhaseBoundaries<MAX_PHASES>,
-) -> Bool
+/// Detects the block partition of the dependency graph via arvo-sparse
+/// `block_diagonal_via` over the `to_csr_bidirectional` adapter. Each
+/// block is a weakly-connected component: an independent sub-graph
+/// sharing no edges with the others, hence column-disjoint. Blocks map
+/// to the column-disjoint trunks that run with zero sync within a
+/// phase; `phase_trunk_counts` projects them per phase.
+///
+/// `block_diagonal_via` seeds over the live `node_count()`, so the
+/// slack tail past `unit_count` stays block 0. The Dulmage-Mendelsohn
+/// fine decomposition and dead-column elimination layer onto this in a
+/// later round.
+pub fn block_diagonalise<const MAX_UNITS: Cap, const MAX_EDGES: Cap>(
+    graph: &DependencyGraph<MAX_UNITS, MAX_EDGES>,
+) -> BlockPartition<MAX_UNITS>
 where
     [(); cap_size(MAX_UNITS)]:,
     [(); cap_size(MAX_EDGES)]:,
+{
+    let csr = graph.to_csr_bidirectional();
+    let (block_count, block_of_unit) = block_diagonal_via::<_, MAX_UNITS>(&csr);
+    BlockPartition { block_count, block_of_unit }
+}
+
+/// Step 5 projection: trunk count per phase.
+///
+/// Within each phase (the topo-position range delimited by
+/// `waists.boundaries`, ending at `unit_count` for the last phase),
+/// the units partition by block id; each distinct block in a phase is
+/// one trunk, since trunks within a phase are column-disjoint and run
+/// with zero sync. Returns the trunk count per phase; the runner
+/// assigns the `Phase` and `Trunk` ids from these counts. A block that
+/// straddles a waist contributes a trunk to each phase it touches.
+pub fn phase_trunk_counts<const MAX_UNITS: Cap, const MAX_PHASES: Cap>(
+    partition: &BlockPartition<MAX_UNITS>,
+    waists: &PhaseBoundaries<MAX_PHASES>,
+    topo: &[UnitId; cap_size(MAX_UNITS)],
+    unit_count: USize,
+) -> [USize; cap_size(MAX_PHASES)]
+where
+    [(); cap_size(MAX_UNITS)]:,
     [(); cap_size(MAX_PHASES)]:,
 {
-    Bool::TRUE
+    let mut counts: [USize; cap_size(MAX_PHASES)] = [USize::ZERO; cap_size(MAX_PHASES)];
+    let pc = waists.phase_count.0;
+    let n = unit_count.0;
+    let mut p = 0;
+    while p < pc && p < cap_size(MAX_PHASES) {
+        let start = waists.boundaries[p].0;
+        // Phase p ends where phase p+1 starts, or at unit_count for the
+        // last phase.
+        let end = if p + 1 < pc { waists.boundaries[p + 1].0 } else { n };
+        // Count distinct block ids in this phase, deduped through a
+        // per-phase seen-flag array indexed by block id.
+        let mut seen: [Bool; cap_size(MAX_UNITS)] = [Bool::FALSE; cap_size(MAX_UNITS)];
+        let mut distinct = 0;
+        let mut i = start;
+        while i < end && i < cap_size(MAX_UNITS) {
+            let unit_idx = topo[i].index().0;
+            if unit_idx < cap_size(MAX_UNITS) {
+                let block = partition.block_of_unit[unit_idx].0;
+                if block < cap_size(MAX_UNITS) && !seen[block].0 {
+                    seen[block] = Bool::TRUE;
+                    distinct += 1;
+                }
+            }
+            i += 1;
+        }
+        counts[p] = USize(distinct); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal count; tracked: #72
+        p += 1;
+    }
+    counts
 }
 
 /// Step 6: spectral partitioning for wide pipelines.
@@ -580,11 +639,17 @@ pub enum PlanError {
     /// `topo_sort` did not place every unit: the input DAG contains
     /// a cycle.
     Cycle,
-    /// `block_diagonalise` returned `Bool::FALSE`: phase boundaries
-    /// don't align with the unit shape.
+    /// Reserved: a trunk shares a write column with another trunk in
+    /// the same phase, breaking the zero-sync invariant. Not raised
+    /// yet. `block_diagonalise` detects the block partition, but column
+    /// disjointness is only decidable after column classification
+    /// (step 11), so this fires from that later check. Distinct blocks
+    /// are column-disjoint by construction today, so block detection
+    /// alone surfaces no alignment fault.
     PhaseAlignmentMismatch,
-    /// `block_diagonalise` returned `Bool::FALSE` for a deeper
-    /// feasibility reason (matrix-chain DP found no valid grouping).
+    /// Reserved: a deeper feasibility reason (matrix-chain DP found no
+    /// valid grouping). Not raised yet; layered on with the
+    /// Dulmage-Mendelsohn fine decomposition in a later round.
     FeasibilityCheckFailed,
     /// `group_fibers` produced more fibers than `MAX_FIBERS`
     /// accommodates, or zero fibers for a non-empty unit set.

@@ -43,9 +43,12 @@ complete execution plan:
 3. Upward rank → critical path (arvo-graph)
 4. Waist detection → phase boundaries (arvo-graph)
 5. RCM reordering → renumber permutation on `ExecutionPlan`, feeding arena layout now and fiber grouping order later (arvo-sparse)
-6. Block diagonal + D-M → phase validation + dead column elimination
- (arvo-sparse). Consumes `core_class: [CoreClass; MAX_CORES]` from
- heterogeneous-core detection per Topic 6 axis E.
+6. Block diagonal → connected-component partition projected to per-phase
+ trunk skeletons (one trunk per block; sets `Phase` id, `Trunk` id, trunk
+ count). Dulmage-Mendelsohn fine decomposition, dead column elimination,
+ and the phase-alignment check layer on in later rounds (arvo-sparse).
+ Consumes `core_class: [CoreClass; MAX_CORES]` from heterogeneous-core
+ detection per Topic 6 axis E.
 7. Spectral partitioning → trunk formation when >5 fibers
  (arvo-spectral)
 8. Fiber grouping: greedy (arvo-comb) or matrix chain DP for >10 ops
