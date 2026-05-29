@@ -49,8 +49,10 @@ complete execution plan:
  and the phase-alignment check layer on in later rounds (arvo-sparse).
  Consumes `core_class: [CoreClass; MAX_CORES]` from heterogeneous-core
  detection per Topic 6 axis E.
-7. Spectral partitioning → trunk formation when >5 fibers
- (arvo-spectral)
+7. Spectral partitioning → spectral `FiberGrouping` via an engine-local
+ symmetric Laplacian over arvo-spectral's k-way partitioning. The
+ spectral-versus-greedy choice (bench) and projecting the chosen grouping
+ onto trunk components land in later slices (arvo-spectral).
 8. Fiber grouping: greedy (arvo-comb) or matrix chain DP for >10 ops
  (arvo-comb)
 9. Per-fiber morsel sizing (write-only formula, domain 12). Output

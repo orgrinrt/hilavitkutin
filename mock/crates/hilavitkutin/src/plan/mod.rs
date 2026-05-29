@@ -25,6 +25,7 @@ pub mod dirty;
 pub mod fiber;
 pub mod graph;
 pub mod inputs;
+pub mod laplacian;
 pub mod phase;
 pub mod steps;
 pub mod trunk;
