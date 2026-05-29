@@ -22,6 +22,8 @@
 
 use arvo::strategy::Identity;
 use arvo::{Bool, Cap, USize};
+use arvo_bitmask::NodeId;
+use arvo_sparse::{Csr, CsrBidirectional};
 use arvo_tensor::cap_size;
 use core::fmt;
 
@@ -187,6 +189,33 @@ where
         let start = self.row_offsets[idx].0;
         let end = self.end_for(idx);
         USize(end - start) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
+    }
+
+    /// Convert to a bidirectional CSR for the arvo-sparse structural
+    /// algorithms.
+    ///
+    /// The forward adjacency is this graph's own CSR arrays copied
+    /// within the live `unit_count` / `edge_count`; `with_transpose`
+    /// then builds the predecessor index that rcm, block-diagonal, and
+    /// spectral all consume. The two `Cap` params pass straight through
+    /// to arvo's `ROWS` / `NNZ` positions, so the backing arrays are the
+    /// same length and the copy is element-for-element within the live
+    /// range. Live counts are set via `with_live_counts` so the slack
+    /// tail past `unit_count` / `edge_count` is never iterated and never
+    /// contributes a phantom edge into the default `NodeId(0)` slot.
+    pub fn to_csr_bidirectional(&self) -> CsrBidirectional<MAX_UNITS, MAX_EDGES, EdgeKind> {
+        let uc = self.unit_count.0;
+        let ec = self.edge_count.0;
+        let mut csr: Csr<MAX_UNITS, MAX_EDGES, EdgeKind> =
+            Csr::with_live_counts(self.unit_count, self.edge_count);
+        // forward row offsets and edge kinds carry over verbatim.
+        csr.row_ptr[..uc].copy_from_slice(&self.row_offsets[..uc]);
+        csr.values[..ec].copy_from_slice(&self.edge_kinds[..ec]);
+        // destinations convert from the typed UnitId to the arvo NodeId.
+        for (dst, src) in csr.col_idx[..ec].iter_mut().zip(self.col_indices[..ec].iter()) {
+            *dst = NodeId::new(src.index());
+        }
+        csr.with_transpose()
     }
 }
 
