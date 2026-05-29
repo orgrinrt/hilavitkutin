@@ -22,7 +22,8 @@ use hilavitkutin_api::{
     AccessSet, Always, Atomic, BatchApi, Column, ColumnReaderApi, ColumnValue,
     ColumnWriterApi, Cons, Contains, Depth, EachApi, Empty, HasBatch, HasColumnReader,
     HasColumnWriter, HasEach, HasReduce, HasResourceProvider, HasVirtualFirer,
-    Immediate, Normal, BuilderInput, ReduceApi, Resource, ResourceProviderApi,
+    Immediate, Normal, BuilderInput, ReduceApi, ResolveColumnRead, ResolveColumnWrite,
+    ResolveResource, Resource, ResourceProviderApi,
     UnitDispatch, Virtual, VirtualFirerApi, WorkUnit, read, write,
 };
 use hilavitkutin_kit::{Kit, KitDispatch};
@@ -168,27 +169,46 @@ fn scheduler_constructs_via_build() {
 struct Stub;
 
 impl<R: AccessSet> ColumnReaderApi<R> for Stub {
-    unsafe fn read<T: ColumnValue>(&self, _i: USize) -> T
+    unsafe fn read<T: ColumnValue, I>(&self, _i: USize) -> T
     where
         R: Contains<Column<T>>,
+        Self: ResolveColumnRead<T, I>,
     {
         unimplemented!()
     }
 }
 
+impl<T: ColumnValue, I> ResolveColumnRead<T, I> for Stub {
+    unsafe fn resolve_read(&self, _i: USize) -> T {
+        unimplemented!()
+    }
+}
+
 impl<W: AccessSet> ColumnWriterApi<W> for Stub {
-    unsafe fn write<T: ColumnValue>(&self, _i: USize, _v: T)
+    unsafe fn write<T: ColumnValue, I>(&self, _i: USize, _v: T)
     where
         W: Contains<Column<T>>,
+        Self: ResolveColumnWrite<T, I>,
     {
     }
 }
 
+impl<T: ColumnValue, I> ResolveColumnWrite<T, I> for Stub {
+    unsafe fn resolve_write(&self, _i: USize, _v: T) {}
+}
+
 impl<R: AccessSet> ResourceProviderApi<R> for Stub {
-    fn resource<T: 'static>(&self) -> &T
+    fn resource<T: 'static, I>(&self) -> &T
     where
         R: Contains<Resource<T>>,
+        Self: ResolveResource<T, I>,
     {
+        unimplemented!()
+    }
+}
+
+impl<T: 'static, I> ResolveResource<T, I> for Stub {
+    fn resolve_resource(&self) -> &T {
         unimplemented!()
     }
 }

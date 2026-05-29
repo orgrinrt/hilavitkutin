@@ -11,7 +11,8 @@ use hilavitkutin_api::{
     AccessSet, Always, Atomic, BatchApi, Column, ColumnReaderApi, ColumnValue, ColumnWriterApi,
     Contains, EachApi, HasBatch, HasColumnReader, HasColumnWriter, HasEach, HasReduce,
     HasResourceProvider, HasVirtualFirer, Immediate, Normal, BuilderInput, ReduceApi,
-    Resource, ResourceProviderApi, UnitDispatch, Virtual, VirtualFirerApi, WorkUnit, read, write,
+    ResolveColumnRead, ResolveColumnWrite, ResolveResource, Resource, ResourceProviderApi,
+    UnitDispatch, Virtual, VirtualFirerApi, WorkUnit, read, write,
 };
 
 // --- Stub provider (all-in-one) --------------------------------------
@@ -19,9 +20,10 @@ use hilavitkutin_api::{
 struct Stub;
 
 impl<R: AccessSet> ColumnReaderApi<R> for Stub {
-    unsafe fn read<T: ColumnValue>(&self, _i: USize) -> T
+    unsafe fn read<T: ColumnValue, I>(&self, _i: USize) -> T
     where
         R: Contains<Column<T>>,
+        Self: ResolveColumnRead<T, I>,
     {
         // Not actually called in this compile-only test; return a
         // zeroed value via Default-free route by transmuting from
@@ -32,21 +34,42 @@ impl<R: AccessSet> ColumnReaderApi<R> for Stub {
 }
 
 impl<W: AccessSet> ColumnWriterApi<W> for Stub {
-    unsafe fn write<T: ColumnValue>(&self, _i: USize, _v: T)
+    unsafe fn write<T: ColumnValue, I>(&self, _i: USize, _v: T)
     where
         W: Contains<Column<T>>,
+        Self: ResolveColumnWrite<T, I>,
     {
     }
 }
 
 impl<R: AccessSet> ResourceProviderApi<R> for Stub {
-    fn resource<T: 'static>(&self) -> &T
+    fn resource<T: 'static, I>(&self) -> &T
     where
         R: Contains<Resource<T>>,
+        Self: ResolveResource<T, I>,
     {
         // SAFETY: compile-only test body does not invoke this path.
         unsafe { &*(self as *const _ as *const T) }
     }
+}
+
+// Bridge impls satisfying the accessor `Self: Resolve*<T, I>` bounds.
+// Compile-only test stub; bodies mirror the dummy accessor bodies above.
+impl<T: 'static, I> ResolveResource<T, I> for Stub {
+    fn resolve_resource(&self) -> &T {
+        // SAFETY: compile-only test body does not invoke this path.
+        unsafe { &*(self as *const _ as *const T) }
+    }
+}
+
+impl<T: ColumnValue, I> ResolveColumnRead<T, I> for Stub {
+    unsafe fn resolve_read(&self, _i: USize) -> T {
+        unsafe { core::mem::zeroed() }
+    }
+}
+
+impl<T: ColumnValue, I> ResolveColumnWrite<T, I> for Stub {
+    unsafe fn resolve_write(&self, _i: USize, _v: T) {}
 }
 
 impl<W: AccessSet> VirtualFirerApi<W> for Stub {

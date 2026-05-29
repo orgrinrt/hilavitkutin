@@ -12,8 +12,8 @@ use hilavitkutin_api::access::Empty;
 use hilavitkutin_api::{
     AccessSet, BatchApi, Column, ColumnReaderApi, ColumnValue, ColumnWriterApi, Contains,
     EachApi, HasBatch, HasColumnReader, HasColumnWriter, HasEach, HasReduce,
-    HasResourceProvider, HasVirtualFirer, ReduceApi, Resource, ResourceProviderApi, Virtual,
-    VirtualFirerApi,
+    HasResourceProvider, HasVirtualFirer, ReduceApi, ResolveColumnRead, ResolveColumnWrite,
+    ResolveResource, Resource, ResourceProviderApi, Virtual, VirtualFirerApi,
 };
 
 // Each provider is a distinct type to make the trait resolution
@@ -28,27 +28,46 @@ struct BatchP;
 struct ReduceP;
 
 impl<R: AccessSet> ColumnReaderApi<R> for ReaderP {
-    unsafe fn read<T: ColumnValue>(&self, _i: USize) -> T
+    unsafe fn read<T: ColumnValue, I>(&self, _i: USize) -> T
     where
         R: Contains<Column<T>>,
+        Self: ResolveColumnRead<T, I>,
     {
         unsafe { core::mem::zeroed() }
     }
 }
 
+impl<T: ColumnValue, I> ResolveColumnRead<T, I> for ReaderP {
+    unsafe fn resolve_read(&self, _i: USize) -> T {
+        unsafe { core::mem::zeroed() }
+    }
+}
+
 impl<W: AccessSet> ColumnWriterApi<W> for WriterP {
-    unsafe fn write<T: ColumnValue>(&self, _i: USize, _v: T)
+    unsafe fn write<T: ColumnValue, I>(&self, _i: USize, _v: T)
     where
         W: Contains<Column<T>>,
+        Self: ResolveColumnWrite<T, I>,
     {
     }
 }
 
+impl<T: ColumnValue, I> ResolveColumnWrite<T, I> for WriterP {
+    unsafe fn resolve_write(&self, _i: USize, _v: T) {}
+}
+
 impl<R: AccessSet> ResourceProviderApi<R> for ResourceP {
-    fn resource<T: 'static>(&self) -> &T
+    fn resource<T: 'static, I>(&self) -> &T
     where
         R: Contains<Resource<T>>,
+        Self: ResolveResource<T, I>,
     {
+        unsafe { &*(self as *const _ as *const T) }
+    }
+}
+
+impl<T: 'static, I> ResolveResource<T, I> for ResourceP {
+    fn resolve_resource(&self) -> &T {
         unsafe { &*(self as *const _ as *const T) }
     }
 }

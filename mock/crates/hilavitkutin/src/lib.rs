@@ -10,7 +10,6 @@
 //! (`platform-os`, `platform-std`, `platform-no-os`).
 
 #![no_std]
-#![feature(specialization)]
 #![allow(incomplete_features)]
 #![recursion_limit = "512"]
 #![deny(unsafe_op_in_unsafe_fn)]
