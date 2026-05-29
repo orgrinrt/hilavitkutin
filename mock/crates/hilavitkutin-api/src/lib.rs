@@ -15,14 +15,14 @@
 #![feature(const_trait_impl)]
 #![feature(impl_trait_in_assoc_type)]
 #![feature(marker_trait_attr)]
-#![feature(min_specialization)]
 // FORBIDDEN-feature exception, tracked: full `specialization` is retained
 // ONLY for `column_value.rs`'s `ColumnValue::BIT_WIDTH` blanket default
 // (a `default const` overridden by sub-byte impls, which `min_specialization`
 // rejects). The 2026-05-29 audit mislabeled this as min-compatible. Removing
 // it needs a spec-free redesign (trait-body default + explicit per-type impls,
-// dropping the blanket), a substrate-contract change tracked separately. The
-// engine accessor full-spec use was removed in #623.
+// dropping the blanket), a substrate-contract change tracked as #631. The
+// engine accessor full-spec use was removed in #623. The redundant
+// min_specialization gate was dropped in #625 (full spec subsumes it).
 #![feature(specialization)]
 #![allow(incomplete_features)]
 
