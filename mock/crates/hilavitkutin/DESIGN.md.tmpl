@@ -36,6 +36,9 @@ complete execution plan:
 1. Build DAG from AccessMask overlap (arvo-bitmask). DependencyGraph
    uses CSR backing (`row_offsets` + `col_indices` + `edge_kinds`)
    per Topic 9 axis B, bench-locked canonical at every N (no threshold).
+   It converts to a bidirectional CSR (forward adjacency plus a
+   pre-computed transpose) to feed the arvo-sparse structural steps
+   (5-6).
 2. Topological sort + node renumbering (arvo-graph)
 3. Upward rank → critical path (arvo-graph)
 4. Waist detection → phase boundaries (arvo-graph)
