@@ -9,7 +9,7 @@
 //! 1. `build_dag`: AccessMask overlap to CSR `DependencyGraph`.
 //! 2. `topo_sort`: Kahn's algorithm to produce a topological order.
 //! 3. `compute_waists`: narrow cut detection to delimit phases.
-//! 4. `rcm_reorder`: Reverse Cuthill-McKee bandwidth-reduction. *Stub*.
+//! 4. `rcm_reorder`: Reverse Cuthill-McKee bandwidth-reduction reordering.
 //! 5. `block_diagonalise`: Dulmage-Mendelsohn block detection. *Stub*.
 //! 6. `spectral_partition`: spectral clustering for wide pipelines. *Stub*.
 //! 7. `group_fibers`: greedy fiber assignment with bounded slack.
@@ -21,17 +21,19 @@
 //! 12. `assign_cores`: map trunks onto concrete cores by `CoreClass`.
 //! 13. `synthesise_core_programs`: per-core projection from plan.
 //!
-//! Steps 4 to 6 are stubs awaiting arvo-graph and arvo-spectral primitives:
-//! their bodies depend on
-//! arvo-graph / arvo-spectral primitives that have not yet shipped
-//! the analytical helpers this engine needs. They stub `todo!()` with
-//! BACKLOG entries (HILA-RUNTIME-C1 follow-up rounds).
+//! Step 4 (`rcm_reorder`) is wired to arvo-sparse `rcm_reorder_via`
+//! through the `DependencyGraph::to_csr_bidirectional` adapter. Steps
+//! 5 to 6 (`block_diagonalise`, `spectral_partition`) remain stubs
+//! awaiting their arvo-sparse (Dulmage-Mendelsohn) and arvo-spectral
+//! wiring (HILA-RUNTIME-C1 follow-up rounds).
 //!
 //! Steps 13 ships its body in a follow-up commit alongside
 //! `plan/core_program.rs` (Pass 3 codegen feeds it).
 
 use arvo::strategy::Identity;
 use arvo::{Bool, Cap, USize};
+use arvo_bitmask::NodeId;
+use arvo_sparse::rcm_reorder_via;
 use arvo_tensor::cap_size;
 
 use hilavitkutin_api::UnitId;
@@ -202,21 +204,32 @@ where
 
 /// Step 4: Reverse Cuthill-McKee bandwidth-reduction reordering.
 ///
-/// Substrate-heavy stub: real body requires arvo-graph's banded-
-/// matrix utilities + the Cuthill-McKee BFS variant. Tracked as
-/// HILA-RUNTIME-C1 follow-up. Returns the topo order unchanged for
-/// pipelines that don't need the reorder.
+/// Builds the bidirectional CSR via the `to_csr_bidirectional`
+/// adapter and runs arvo-sparse `rcm_reorder_via` over it, returning
+/// a renumber permutation where `result[new_pos]` is the `UnitId`
+/// placed at that position. This is a locality renumber for arena
+/// layout, not the dispatch order: dispatch stays topological (the
+/// runner keeps populating `unit_meta` from the topo order). The
+/// permutation is computed once at plan time at zero runtime cost.
+///
+/// `rcm_reorder_via` seeds over the CSR's live `node_count()`, so the
+/// slack tail past `unit_count` never enters the permutation; the
+/// trailing slots stay `UnitId::ZERO`.
 pub fn rcm_reorder<const MAX_UNITS: Cap, const MAX_EDGES: Cap>(
-    _graph: &DependencyGraph<MAX_UNITS, MAX_EDGES>,
-    topo: &[UnitId; cap_size(MAX_UNITS)],
+    graph: &DependencyGraph<MAX_UNITS, MAX_EDGES>,
 ) -> [UnitId; cap_size(MAX_UNITS)]
 where
     [(); cap_size(MAX_UNITS)]:,
     [(); cap_size(MAX_EDGES)]:,
 {
-    // Pass-through stub: ship topo unchanged. Real reordering lands
-    // when arvo-graph provides the banded-matrix support.
-    *topo
+    let csr = graph.to_csr_bidirectional();
+    let order = rcm_reorder_via::<_, MAX_UNITS>(&csr);
+    // Convert the arvo NodeId permutation back to the engine UnitId.
+    let mut out: [UnitId; cap_size(MAX_UNITS)] = [UnitId::ZERO; cap_size(MAX_UNITS)];
+    for (dst, src) in out.iter_mut().zip(order.iter()) {
+        *dst = UnitId::from_index(src.0);
+    }
+    out
 }
 
 /// Step 5: Dulmage-Mendelsohn block diagonalisation.

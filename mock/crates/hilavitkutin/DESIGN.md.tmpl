@@ -42,7 +42,7 @@ complete execution plan:
 2. Topological sort + node renumbering (arvo-graph)
 3. Upward rank → critical path (arvo-graph)
 4. Waist detection → phase boundaries (arvo-graph)
-5. RCM reordering → fiber grouping order + arena layout (arvo-sparse)
+5. RCM reordering → renumber permutation on `ExecutionPlan`, feeding arena layout now and fiber grouping order later (arvo-sparse)
 6. Block diagonal + D-M → phase validation + dead column elimination
  (arvo-sparse). Consumes `core_class: [CoreClass; MAX_CORES]` from
  heterogeneous-core detection per Topic 6 axis E.
