@@ -1,19 +1,23 @@
 //! Store-value routing for the scheduler builder.
 //!
-//! The builder keeps a single unified `.with(value)` verb, yet only
-//! store-registration values (the `Resource<T>` carrier) need to ride
-//! a value list until `build()`. WorkUnit and platform values are
-//! dropped at the call site (their TYPE is still tracked in the `Wus`
-//! and `Platform` typestate accumulators).
+//! The builder keeps a single unified `.with(value)` verb, yet routes
+//! the registered value to one of two retained lists, or drops it.
+//! Store-registration values (the `Resource<T>` carrier) ride a
+//! `StoreValues` list until `build()` moves them into the arena.
+//! WorkUnit instances ride a `WuCons` value list the run walk consumes.
+//! Platform and run-config values are dropped at the call site (their
+//! TYPE is still tracked in the typestate accumulators).
 //!
-//! Routing store-vs-nonstore at the type level without an overlapping
-//! impl uses a `RouterKind` tag on each dispatch router plus a
-//! `Place<P>` view keyed on the tag-as-`Self`. The three tags
-//! (`StoreKind` / `UnitKind` / `PlatformKind`) are disjoint `Self`
-//! types, so the trait solver sees no overlap and no specialization is
-//! needed. `StoreKind` prepends the registered value onto a
-//! `Stores`-aligned `StoreValues` cons-list; `UnitKind` and
-//! `PlatformKind` are identity and drop the value.
+//! Routing at the type level without an overlapping impl uses a
+//! `RouterKind` tag on each dispatch router plus a `Place<P>` view keyed
+//! on the tag-as-`Self`. The tags (`StoreKind` / `WorkUnitKind` /
+//! `UnitKind` / `PlatformKind`) are disjoint `Self` types, so the trait
+//! solver sees no overlap and no specialization is needed. One `Place`
+//! call routes the single registered value onto both lists at once:
+//! `StoreKind` prepends the store list, `WorkUnitKind` prepends the WU
+//! list, `UnitKind` (run-config, kit) and `PlatformKind` pass both
+//! through (drop). The value is consumed once and lands on exactly one
+//! list.
 //!
 //! Mechanism validated by the standalone sketch
 //! `mock/research/sketches/202605290002_builder-kind-dispatch.md`
@@ -21,6 +25,7 @@
 
 use crate::builder_input::{PlatformDispatch, StoreDispatch, UnitDispatch};
 use crate::run_cfg::RunCfgDispatch;
+use crate::work_unit_values::WuCons;
 
 mod sealed {
     pub trait Sealed {}
@@ -88,13 +93,21 @@ pub struct UnitKind;
 /// Disjoint kind tag for platform-registration inputs.
 pub struct PlatformKind;
 
+/// Disjoint kind tag for WorkUnit-registration inputs.
+///
+/// Routes a registered WorkUnit instance onto the WorkUnit-value list
+/// (prepend), passing the store-value list through. The engine's run
+/// walk consumes the WorkUnit-value list.
+pub struct WorkUnitKind;
+
 /// The kind tag a dispatch router carries.
 ///
-/// Reads as "which store-value placement does this router's input
-/// take". `StoreDispatch` routes to `StoreKind` (the value is
-/// retained); `UnitDispatch` / `PlatformDispatch` / `RunCfgDispatch`
-/// route to `UnitKind` / `PlatformKind` (the value is dropped, the
-/// type is tracked elsewhere).
+/// Reads as "which placement does this router's input take".
+/// `StoreDispatch` routes to `StoreKind` (the value rides the store
+/// list); `UnitDispatch` routes to `WorkUnitKind` (the instance rides
+/// the WorkUnit-value list); `PlatformDispatch` routes to
+/// `PlatformKind` and `RunCfgDispatch` to `UnitKind` (the value is
+/// dropped, its type tracked elsewhere).
 pub trait RouterKind {
     /// The disjoint placement tag.
     type Kind;
@@ -105,7 +118,7 @@ impl<S> RouterKind for StoreDispatch<S> {
 }
 
 impl<W> RouterKind for UnitDispatch<W> {
-    type Kind = UnitKind;
+    type Kind = WorkUnitKind;
 }
 
 impl<P> RouterKind for PlatformDispatch<P> {
@@ -120,48 +133,84 @@ impl<C> RouterKind for RunCfgDispatch<C> {
     type Kind = UnitKind;
 }
 
-/// Kind-conditional store-value placement, keyed on the tag as `Self`.
+/// Kind-conditional value placement, keyed on the tag as `Self`.
 ///
-/// Three non-overlapping impls (`StoreKind` / `UnitKind` /
-/// `PlatformKind`). `Next<L>` names the store-value list shape after
-/// placing one input of this kind onto the current list `L`.
+/// Four non-overlapping impls (`StoreKind` / `WorkUnitKind` /
+/// `UnitKind` / `PlatformKind`). A registered value is consumed once and
+/// lands on exactly one of two lists: the store-value list (the arena
+/// drain reads it) or the WorkUnit-value list (the run walk reads it).
+/// `place` routes onto both at once, so the single move is unambiguous.
+/// `StoreKind` prepends the store list and passes the WU list through;
+/// `WorkUnitKind` prepends the WU list and passes the store list
+/// through; `UnitKind` and `PlatformKind` pass both through (drop the
+/// value, its type stays tracked in the builder typestate).
 ///
-/// The GAT parameter is named `L` rather than `Sv`: `Sv` is the
-/// cons-cell struct, and a parameter named `Sv` would shadow it.
+/// The store-list GAT parameter is named `S` rather than `Sv`: `Sv` is
+/// the cons-cell struct, and a parameter named `Sv` would shadow it.
 pub trait Place<P> {
-    /// The store-value list after placing `P` onto a list `L`.
-    type Next<L: StoreValues>: StoreValues;
+    /// The store-value list after placing `P` onto store list `S`.
+    type NextStores<S: StoreValues>: StoreValues;
 
-    /// Place `provider` onto `sv`, producing the next list.
-    fn place<L: StoreValues>(provider: P, sv: L) -> Self::Next<L>;
+    /// The WorkUnit-value list after placing `P` onto WU list `W`.
+    type NextWus<W>;
+
+    /// Route `provider` onto the store list `sv` and the WU list `wv`,
+    /// producing the next pair.
+    fn place<S: StoreValues, W>(
+        provider: P,
+        sv: S,
+        wv: W,
+    ) -> (Self::NextStores<S>, Self::NextWus<W>);
 }
 
 impl<P> Place<P> for StoreKind {
-    type Next<L: StoreValues> = Sv<P, L>;
+    type NextStores<S: StoreValues> = Sv<P, S>;
+    type NextWus<W> = W;
 
     #[inline]
-    fn place<L: StoreValues>(provider: P, sv: L) -> Self::Next<L> {
-        Sv {
-            head: provider,
-            tail: sv,
-        }
+    fn place<S: StoreValues, W>(provider: P, sv: S, wv: W) -> (Sv<P, S>, W) {
+        (
+            Sv {
+                head: provider,
+                tail: sv,
+            },
+            wv,
+        )
+    }
+}
+
+impl<P> Place<P> for WorkUnitKind {
+    type NextStores<S: StoreValues> = S;
+    type NextWus<W> = WuCons<P, W>;
+
+    #[inline]
+    fn place<S: StoreValues, W>(provider: P, sv: S, wv: W) -> (S, WuCons<P, W>) {
+        (
+            sv,
+            WuCons {
+                head: provider,
+                tail: wv,
+            },
+        )
     }
 }
 
 impl<P> Place<P> for UnitKind {
-    type Next<L: StoreValues> = L;
+    type NextStores<S: StoreValues> = S;
+    type NextWus<W> = W;
 
     #[inline]
-    fn place<L: StoreValues>(_provider: P, sv: L) -> Self::Next<L> {
-        sv
+    fn place<S: StoreValues, W>(_provider: P, sv: S, wv: W) -> (S, W) {
+        (sv, wv)
     }
 }
 
 impl<P> Place<P> for PlatformKind {
-    type Next<L: StoreValues> = L;
+    type NextStores<S: StoreValues> = S;
+    type NextWus<W> = W;
 
     #[inline]
-    fn place<L: StoreValues>(_provider: P, sv: L) -> Self::Next<L> {
-        sv
+    fn place<S: StoreValues, W>(_provider: P, sv: S, wv: W) -> (S, W) {
+        (sv, wv)
     }
 }

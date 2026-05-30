@@ -3,15 +3,17 @@
 //! Static composition (R6): all WUs registered at compile time.
 //! No runtime registration.
 //!
-//! `SchedulerBuilder<Wus, Stores, Platform, StoreValues>` carries a
-//! phantom-tuple type-state plus one real field: the `store_values`
-//! list. `Wus` accumulates registered WU types (cons-list). `Stores`
-//! accumulates registered `Resource<T>` / `Column<T>` / `Virtual<T>`
-//! markers (cons-list). `Platform` accumulates platform-provider
-//! types. `StoreValues` retains the registered store VALUES (the
-//! `Resource<T>` carrier, the `Column<T>` / `Virtual<T>` markers) in
-//! `Stores`-aligned order so the arena drain can move them into
-//! scheduler-owned storage at `build()`.
+//! `SchedulerBuilder<Wus, Stores, Platform, Vals, WuVals>` carries a
+//! phantom-tuple type-state plus two real value fields: the
+//! `store_values` list and the `wu_values` list. `Wus` accumulates
+//! registered WU types (cons-list). `Stores` accumulates registered
+//! `Resource<T>` / `Column<T>` / `Virtual<T>` markers (cons-list).
+//! `Platform` accumulates platform-provider types. `Vals` retains the
+//! registered store VALUES (the `Resource<T>` carrier, the `Column<T>`
+//! / `Virtual<T>` markers) in `Stores`-aligned order so the arena drain
+//! can move them into scheduler-owned storage at `build()`. `WuVals`
+//! retains the registered WorkUnit instances so `build()` can carry
+//! them into the `Scheduler`, where `run()` walks them.
 //!
 //! `.build(memory_provider)` carries `Stores: ContainsAll<Wus::AccumRead>
 //! + ContainsAll<Wus::AccumWrite>`, which proves at compile time that
@@ -40,6 +42,8 @@
 use core::marker::PhantomData;
 use core::sync::atomic::AtomicBool;
 
+use arvo::strategy::Identity;
+use arvo::USize;
 use hilavitkutin_api::access::{AccessSet, ContainsAll, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, Dispatch};
 use hilavitkutin_api::platform::MemoryProviderApi;
@@ -47,6 +51,10 @@ use hilavitkutin_api::run_cfg::{DefaultRunCfg, PlanAffecting, RunCfg};
 use hilavitkutin_api::store::Replaceable;
 use hilavitkutin_api::store_values::{Place, RouterKind, StoreValues, SvEmpty};
 use hilavitkutin_api::work_unit::WorkUnitBundle;
+use hilavitkutin_api::work_unit_values::WuNil;
+
+use crate::dispatch::fiber_walk::{run_fiber_walk, RunFiber};
+use crate::dispatch::morsel::MorselRange;
 
 pub mod metrics;
 pub mod plan;
@@ -74,18 +82,21 @@ pub enum BuildError {
 }
 
 /// Convenience alias for a built scheduler over the default run-config.
-pub type BuiltScheduler<Vals, M> = Scheduler<DefaultRunCfg, Vals, M>;
+pub type BuiltScheduler<WuVals, Vals, M> = Scheduler<DefaultRunCfg, WuVals, Vals, M>;
 
 /// Top-level scheduler.
 ///
-/// Generic over the consumer's `RunCfg`, the registered store-value
-/// list `Vals`, and the host `MemoryProvider` `M`. `Cfg::Out`
-/// parameterises `run()`'s return shape. The scheduler owns the
-/// resource arena (`<Vals as ArenaFor>::Arena`) and the memory provider
-/// that backs it; `Drop` runs the arena's destructors and deallocates
-/// each block.
+/// Generic over the consumer's `RunCfg`, the retained WorkUnit-value
+/// list `WuVals`, the registered store-value list `Vals`, and the host
+/// `MemoryProvider` `M`. `Cfg::Out` parameterises `run()`'s return
+/// shape. The scheduler owns the resource arena
+/// (`<Vals as ArenaFor>::Arena`) and the memory provider that backs it;
+/// `Drop` runs the arena's destructors and deallocates each block. It
+/// also holds the registered WorkUnit instances on `WuVals`, the
+/// value-carrying unit list `run()` walks.
 pub struct Scheduler<
     Cfg: RunCfg = DefaultRunCfg,
+    WuVals = WuNil,
     Vals: StoreValues + ArenaFor = SvEmpty,
     M: MemoryProviderApi = NullMemoryProvider,
 > {
@@ -107,6 +118,9 @@ pub struct Scheduler<
     /// The host memory provider that backs the arena. Retained so
     /// `Drop` can deallocate every block the arena holds.
     memory_provider: M,
+    /// Registered WorkUnit instances, retained from the builder in
+    /// registration order. `run()` walks this value-carrying unit list.
+    wu_values: WuVals,
 }
 
 /// Null memory provider: the default `M` for a bare `Scheduler` type.
@@ -144,18 +158,22 @@ impl MemoryProviderApi for NullMemoryProvider {
     }
 }
 
-impl Scheduler<DefaultRunCfg, SvEmpty, NullMemoryProvider> {
+impl Scheduler<DefaultRunCfg, WuNil, SvEmpty, NullMemoryProvider> {
     /// Start a fresh builder. Empty Wus + Stores + Platform typestate,
-    /// empty store-value list; the builder grows via `.with(...)`.
-    pub const fn builder() -> SchedulerBuilder<Empty, Empty, Empty, SvEmpty> {
+    /// empty store-value and WorkUnit-value lists; the builder grows via
+    /// `.with(...)`.
+    pub const fn builder() -> SchedulerBuilder<Empty, Empty, Empty, SvEmpty, WuNil> {
         SchedulerBuilder {
             store_values: SvEmpty,
+            wu_values: WuNil,
             _phantom: PhantomData,
         }
     }
 }
 
-impl<Cfg: RunCfg, Vals: StoreValues + ArenaFor, M: MemoryProviderApi> Scheduler<Cfg, Vals, M> {
+impl<Cfg: RunCfg, WuVals, Vals: StoreValues + ArenaFor, M: MemoryProviderApi>
+    Scheduler<Cfg, WuVals, Vals, M>
+{
     /// Replace the existing `Resource<T>` instance in the data
     /// plane with `_new`, marking the plan dirty.
     ///
@@ -182,21 +200,34 @@ impl<Cfg: RunCfg, Vals: StoreValues + ArenaFor, M: MemoryProviderApi> Scheduler<
         // for T in the data plane, swap the value, no dirty bit.
     }
 
-    /// Transitional no-op body: returns `Cfg::Out::default()`.
+    /// Walk the retained WorkUnit instances over a single full-range
+    /// morsel, then return `Cfg::Out::default()`.
     ///
-    /// The real morsel loop (plan-dirty check, per-core dispatch
-    /// build, executor spawn, morsel walk, phase barriers, meta-WU
-    /// firing, persistence drain) waits on `codegen_fiber` and
-    /// `codegen_core` producing monomorphised bodies, which
-    /// themselves wait on `hilavitkutin-build` LLVM plugin hooks.
-    /// The full real-body contract lives in `Scheduler::run real
-    /// morsel loop body` in `BACKLOG.md.tmpl`.
-    pub fn run(&mut self) -> Cfg::Out
+    /// Resource-only this slice: each retained unit constructs its own
+    /// `EngineCtx` from the arena and calls `execute`, in
+    /// registration-list order (the builder prepends, so the
+    /// last-registered unit runs first). The `Witnesses` parameter is
+    /// the per-unit projection-index list, inferred at the call site, so
+    /// `scheduler.run()` needs no turbofish.
+    ///
+    /// The real morsel loop (plan-dirty check, per-core dispatch build,
+    /// executor spawn, morsel walk, phase barriers, meta-WU firing,
+    /// persistence drain) and dependency-topological dispatch order wait
+    /// on the plan-driven slice and the `codegen_fiber` / `codegen_core`
+    /// LLVM tier. The full real-body contract lives in `Scheduler::run
+    /// real morsel loop body` in `BACKLOG.md.tmpl`.
+    pub fn run<Witnesses>(&mut self) -> Cfg::Out
     where
         Cfg::Out: Default,
+        WuVals: RunFiber<<Vals as ArenaFor>::Arena, Witnesses>,
     {
         let _ = &self.plan_dirty;
         let _ = &self.plan_cache;
+        run_fiber_walk(
+            &self.wu_values,
+            &self.arena,
+            MorselRange::new(USize::ZERO, USize::ZERO),
+        );
         Cfg::Out::default()
     }
 
@@ -221,8 +252,8 @@ impl<Cfg: RunCfg, Vals: StoreValues + ArenaFor, M: MemoryProviderApi> Scheduler<
 /// destructor in place, then deallocate its block via the retained
 /// provider. The arena is owned by value and dropped once, so no
 /// double free.
-impl<Cfg: RunCfg, Vals: StoreValues + ArenaFor, M: MemoryProviderApi> Drop
-    for Scheduler<Cfg, Vals, M>
+impl<Cfg: RunCfg, WuVals, Vals: StoreValues + ArenaFor, M: MemoryProviderApi> Drop
+    for Scheduler<Cfg, WuVals, Vals, M>
 {
     fn drop(&mut self) {
         self.arena.drop_arena(&self.memory_provider);
@@ -235,7 +266,7 @@ impl<Cfg: RunCfg, Vals: StoreValues + ArenaFor, M: MemoryProviderApi> Drop
 /// `NullMemoryProvider`: the empty arena (`ArenaTail`) owns nothing, so
 /// `Drop` is a no-op and no real provider is needed. A scheduler that
 /// owns resources is built via `build(memory_provider)`.
-impl<Cfg: RunCfg> Default for Scheduler<Cfg, SvEmpty, NullMemoryProvider> {
+impl<Cfg: RunCfg> Default for Scheduler<Cfg, WuNil, SvEmpty, NullMemoryProvider> {
     fn default() -> Self {
         Self {
             _cfg: PhantomData,
@@ -243,6 +274,7 @@ impl<Cfg: RunCfg> Default for Scheduler<Cfg, SvEmpty, NullMemoryProvider> {
             plan_cache: PlanCache::new(),
             arena: crate::resource::arena::ArenaTail,
             memory_provider: NullMemoryProvider,
+            wu_values: WuNil,
         }
     }
 }
@@ -256,12 +288,15 @@ impl<Cfg: RunCfg> Default for Scheduler<Cfg, SvEmpty, NullMemoryProvider> {
 /// of registered platform-provider types. `StoreValues` carries the
 /// store VALUES aligned with `Stores`. All start empty from
 /// `Scheduler::builder()` and grow via `.with(...)`.
-pub struct SchedulerBuilder<Wus, Stores, Platform, Vals: StoreValues> {
+pub struct SchedulerBuilder<Wus, Stores, Platform, Vals: StoreValues, WuVals> {
     store_values: Vals,
+    wu_values: WuVals,
     _phantom: PhantomData<(Wus, Stores, Platform)>,
 }
 
-impl<Wus, Stores, Platform, Vals: StoreValues> SchedulerBuilder<Wus, Stores, Platform, Vals> {
+impl<Wus, Stores, Platform, Vals: StoreValues, WuVals>
+    SchedulerBuilder<Wus, Stores, Platform, Vals, WuVals>
+{
     /// Register one provider on the scheduler.
     ///
     /// Accepts any `P: BuilderInput`: WorkUnit unit-structs, Kits,
@@ -270,10 +305,11 @@ impl<Wus, Stores, Platform, Vals: StoreValues> SchedulerBuilder<Wus, Stores, Pla
     /// and platform impls. The per-kind typestate update flows through
     /// `P::Dispatch` and lands on the appropriate accumulator. The
     /// registered value routes through the `RouterKind` tag plus the
-    /// `Place<P>` view: store inputs prepend their value onto
-    /// `store_values` (retained for the arena drain); WorkUnit and
-    /// platform inputs drop their value (their TYPE is tracked in the
-    /// `Wus` / `Platform` typestate).
+    /// `Place<P>` view, which routes onto both retained lists at once:
+    /// store inputs prepend their value onto `store_values` (for the
+    /// arena drain); WorkUnit inputs prepend their instance onto
+    /// `wu_values` (for the run walk); platform and run-config inputs
+    /// drop their value (their TYPE is tracked in the typestate).
     ///
     /// Non-`BuilderInput` values fail the trait solver here, surfacing
     /// the `BuilderInput` `#[diagnostic::on_unimplemented]` message.
@@ -284,18 +320,23 @@ impl<Wus, Stores, Platform, Vals: StoreValues> SchedulerBuilder<Wus, Stores, Pla
         <P::Dispatch as Dispatch<Wus, Stores, Platform>>::NextWus,
         <P::Dispatch as Dispatch<Wus, Stores, Platform>>::NextStores,
         <P::Dispatch as Dispatch<Wus, Stores, Platform>>::NextPlatform,
-        <<P::Dispatch as RouterKind>::Kind as Place<P>>::Next<Vals>,
+        <<P::Dispatch as RouterKind>::Kind as Place<P>>::NextStores<Vals>,
+        <<P::Dispatch as RouterKind>::Kind as Place<P>>::NextWus<WuVals>,
     >
     where
         P: BuilderInput,
         P::Dispatch: Dispatch<Wus, Stores, Platform> + RouterKind,
         <P::Dispatch as RouterKind>::Kind: Place<P>,
     {
-        SchedulerBuilder {
-            store_values: <<P::Dispatch as RouterKind>::Kind as Place<P>>::place(
+        let (store_values, wu_values) =
+            <<P::Dispatch as RouterKind>::Kind as Place<P>>::place(
                 provider,
                 self.store_values,
-            ),
+                self.wu_values,
+            );
+        SchedulerBuilder {
+            store_values,
+            wu_values,
             _phantom: PhantomData,
         }
     }
@@ -309,7 +350,7 @@ impl<Wus, Stores, Platform, Vals: StoreValues> SchedulerBuilder<Wus, Stores, Pla
     }
 }
 
-impl<Wus, Stores, Platform, Vals> SchedulerBuilder<Wus, Stores, Platform, Vals>
+impl<Wus, Stores, Platform, Vals, WuVals> SchedulerBuilder<Wus, Stores, Platform, Vals, WuVals>
 where
     Wus: WorkUnitBundle,
     Stores: AccessSet
@@ -332,7 +373,8 @@ where
     pub fn build<M: MemoryProviderApi>(
         self,
         memory_provider: M,
-    ) -> notko::Outcome<Scheduler<DefaultRunCfg, Vals, M>, BuildError> {
+    ) -> notko::Outcome<Scheduler<DefaultRunCfg, WuVals, Vals, M>, BuildError> {
+        let wu_values = self.wu_values;
         match <Vals as DrainStores>::drain(self.store_values, &memory_provider) {
             notko::Outcome::Ok(arena) => notko::Outcome::Ok(Scheduler {
                 _cfg: PhantomData,
@@ -340,6 +382,7 @@ where
                 plan_cache: PlanCache::new(),
                 arena,
                 memory_provider,
+                wu_values,
             }),
             notko::Outcome::Err(e) => notko::Outcome::Err(e),
         }
@@ -353,7 +396,8 @@ where
     pub fn build_with<Cfg: RunCfg, M: MemoryProviderApi>(
         self,
         memory_provider: M,
-    ) -> notko::Outcome<Scheduler<Cfg, Vals, M>, BuildError> {
+    ) -> notko::Outcome<Scheduler<Cfg, WuVals, Vals, M>, BuildError> {
+        let wu_values = self.wu_values;
         match <Vals as DrainStores>::drain(self.store_values, &memory_provider) {
             notko::Outcome::Ok(arena) => notko::Outcome::Ok(Scheduler {
                 _cfg: PhantomData,
@@ -361,6 +405,7 @@ where
                 plan_cache: PlanCache::new(),
                 arena,
                 memory_provider,
+                wu_values,
             }),
             notko::Outcome::Err(e) => notko::Outcome::Err(e),
         }
