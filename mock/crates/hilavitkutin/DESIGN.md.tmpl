@@ -113,6 +113,23 @@ per-frame column buffers, and iterates the morsel. The WorkUnit's
 `Ctx<'frame>` stays a `HasX`-bounds declaration; only the engine names
 `EngineCtx<'frame, W::Read, W::Write>`.
 
+The sequential walk that constructs each unit's `EngineCtx` and runs
+`execute` over a fiber's WorkUnit sequence is `RunFiber`, a monomorphic
+trait over a value-carrying unit list: `WuCons` cells carry a unit
+instance plus the tail, `WuNil` terminates, following the `PtrCons` /
+`PtrNil` cell convention. The free `run_fiber_walk` entry drives it. Per
+unit it projects that unit's `EngineCtx` from the shared arena through
+`EngineCtx::project`, runs `execute` via the `invoke_wu_in_fiber` shim,
+and recurses on the tail; the per-unit projection index is carried as a
+parallel witness list and inferred at the call site, no caller turbofish.
+This is the pre-codegen dispatch core, pure Rust generics with no LLVM,
+and is distinct from the per-fiber-shape `run_fiber<S: FiberShape>`
+monomorphisation above (the codegen-emitted path). The first slice walks
+resource-only units: a unit that reads or writes a column has a non-empty
+column projection in its `Ctx`, so it does not satisfy the walk's bound
+and cannot be placed in the sequence. Columns are a type-level extension
+point for the slice that wires per-frame column buffers in.
+
 Per-core compiled dispatch: each physical core gets a monomorphised
 `CoreProgram<...>` encoding its phases, record ranges, morsel
 boundaries, and sync points. Worker entry receives
