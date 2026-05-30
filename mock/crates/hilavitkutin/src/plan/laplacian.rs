@@ -13,9 +13,9 @@
 //! The dependency graph is a DAG by the time step 6 runs (topo sort and
 //! the cycle check pass first), so `successors` and `predecessors` are
 //! disjoint per node and the matvec walks both halves without
-//! deduplication. A future loose-CSR-aware path (live `node_count`)
-//! lands if the C1d bench adopts spectral; on a full graph there is no
-//! slack to exclude.
+//! deduplication. `live_dim` reports the graph's live node count
+//! (`node_count()`), so the spectral iteration excludes a loose CSR's
+//! empty slack rows; on a full graph the live count equals the cap.
 
 use core::marker::PhantomData;
 use core::ops::{Add, Mul, Sub};
@@ -120,5 +120,12 @@ where
             y[i] = acc;
             i += 1;
         }
+    }
+
+    #[inline]
+    fn live_dim(&self) -> USize {
+        // The live node count of the bidirectional CSR: loose-CSR slack
+        // rows are not real nodes, so spectral iteration excludes them.
+        self.adjacency.node_count()
     }
 }

@@ -138,3 +138,67 @@ fn per_block_projection_keeps_each_chain_one_fiber() {
     assert!(a_seen[0] && a_seen[1] && a_seen[2], "chain A fiber is exactly {{0,1,2}}");
     assert!(b_seen[3] && b_seen[4] && b_seen[5], "chain B fiber is exactly {{3,4,5}}");
 }
+
+/// Two directed triangles {0,1,2} and {3,4,5} joined by one bridge edge
+/// 2->3: a single connected block of six units. Edges appended in
+/// non-decreasing `from` order; unit 5 is the trailing sink. The
+/// undirected Laplacian's min cut is the bridge.
+fn two_triangles_bridged() -> DependencyGraph<UNITS, EDGES> {
+    let mut g: DependencyGraph<UNITS, EDGES> = DependencyGraph::new();
+    g.add_edge(U0, U1);
+    g.add_edge(U0, U2);
+    g.add_edge(U1, U2);
+    g.add_edge(U2, U3); // the weak bridge between the triangles
+    g.add_edge(U3, U4);
+    g.add_edge(U3, U5);
+    g.add_edge(U4, U5);
+    g.row_offsets[g.unit_count.0] = g.edge_count;
+    g.unit_count = U6;
+    g
+}
+
+#[test]
+fn wide_block_routes_to_spectral_cut() {
+    let g = two_triangles_bridged();
+    // One connected block (the bridge links the triangles); BlockPartition
+    // defaults every unit to block 0, so block_count = 1 suffices.
+    let mut part: BlockPartition<UNITS> = BlockPartition::new();
+    part.block_count = USize(1); // lint:allow(no-bare-numeric) reason: single connected block; tracked: #427
+    let waists = one_phase();
+    // Identity topo [0,1,2,3,4,5], a valid order for this DAG.
+    let mut topo = [UnitId::ZERO; cap_size(UNITS)];
+    let mut i = 0;
+    while i < 6 {
+        topo[i] = UnitId::from_index(USize(i)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
+        i += 1;
+    }
+    let trunks = steps::project_fiber_components::<
+        UNITS, EDGES, FIBERS, PHASES, TRUNKS, COMPS, UPF, CPF,
+    >(&g, &part, &waists, &topo, U6);
+
+    // Six units exceed the >5 gate, so the single block forms fibers
+    // spectrally. The Fiedler cut separates the triangles, and every
+    // k-way sub-split stays within a triangle, so no fiber straddles the
+    // bridge. The greedy former (walking topo, rolling on out-degree)
+    // would instead produce a {1,2,3} fiber spanning the bridge; that
+    // straddle is the discriminator a width-gate-off flip would fail.
+    let trunk = &trunks[0][0];
+    assert!(trunk.component_count.0 >= 2, "the wide block is partitioned into multiple fibers");
+    let mut c = 0;
+    while c < trunk.component_count.0 {
+        if let TrunkComponent::Fiber(f) = &trunk.components[c] {
+            let uc = f.unit_count.0;
+            assert!(uc > 0, "every emitted fiber is non-empty");
+            let lo = f.units[0].index().0 < 3;
+            let mut u = 0;
+            while u < uc {
+                let ui = f.units[u].index().0;
+                assert_eq!(ui < 3, lo, "a spectral fiber must not straddle the bridge");
+                u += 1;
+            }
+        } else {
+            panic!("component should be a Fiber");
+        }
+        c += 1;
+    }
+}
