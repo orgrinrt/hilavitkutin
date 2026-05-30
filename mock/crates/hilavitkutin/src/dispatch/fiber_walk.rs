@@ -27,24 +27,13 @@
 
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::WorkUnit;
+// The value-carrying WorkUnit list lives in the api crate so the builder
+// can construct it; re-export it here next to the walk that consumes it.
+pub use hilavitkutin_api::work_unit_values::{WuCons, WuNil};
 
 use crate::dispatch::engine_ctx::{ColProject, ColPtrNil, EngineCtx, Project};
 use crate::dispatch::morsel::MorselRange;
 use crate::dispatch::wu_fn::invoke_wu_in_fiber;
-
-/// Terminator for a fiber's value-carrying WorkUnit sequence.
-pub struct WuNil;
-
-/// Cons cell: a WorkUnit instance at this position plus the tail.
-///
-/// Value-carrying analogue of the type-level access-set cons, following
-/// the `PtrCons` / `PtrNil` cell convention in `engine_ctx`.
-pub struct WuCons<W, Tail> {
-    /// The unit at this position in the sequence.
-    pub head: W,
-    /// The remaining units.
-    pub tail: Tail,
-}
 
 /// Drive a fiber's WorkUnit sequence over a shared arena.
 ///

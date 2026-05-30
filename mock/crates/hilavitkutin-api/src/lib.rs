@@ -52,6 +52,7 @@ pub mod sink;
 pub mod store;
 pub mod store_values;
 pub mod work_unit;
+pub mod work_unit_values;
 
 pub use access::{AccessSet, Concat, Cons, Contains, ContainsAll, Empty};
 pub use adapt::{
@@ -95,6 +96,7 @@ pub use store::{
     Column, Field, Map, Replaceable, Resource, Seq, StagedResource, StoreBundle, Virtual,
 };
 pub use store_values::{
-    Place, PlatformKind, RouterKind, StoreKind, StoreValues, Sv, SvEmpty, UnitKind,
+    Place, PlatformKind, RouterKind, StoreKind, StoreValues, Sv, SvEmpty, UnitKind, WorkUnitKind,
 };
 pub use work_unit::{Always, On, WorkUnit, WorkUnitBundle};
+pub use work_unit_values::{WuCons, WuNil};
