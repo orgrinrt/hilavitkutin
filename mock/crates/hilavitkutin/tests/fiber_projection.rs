@@ -8,8 +8,7 @@
 use arvo::USize;
 use arvo_tensor::{cap_size, Capacity, Dim};
 use hilavitkutin::plan::{
-    steps, BlockPartition, DependencyGraph, PhaseBoundaries, PlanDims, Trunk, TrunkComponent,
-    UnitId,
+    steps, BlockPartition, DependencyGraph, FiberLayout, PhaseBoundaries, PlanDims, UnitId,
 };
 
 /// Test dimensions: eight units / sixteen edges with the per-aggregate
@@ -99,23 +98,21 @@ fn interleaved_topo() -> <UnitDim as Capacity>::Array<UnitId> {
     topo
 }
 
-/// Collect a trunk's single Fiber component's units into a fixed buffer.
-/// Asserts the trunk holds exactly one Fiber, returns (count, units).
-fn single_fiber_units(trunk: &Trunk<TestDims>) -> (usize, [usize; UPF_CAP]) { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test buffer of raw indices sized by the units-per-fiber cap; tracked: #72
-    assert_eq!(trunk.component_count, USize(1), "trunk should hold exactly one fiber"); // lint:allow(no-bare-numeric) reason: expected component count; tracked: #427
+/// Collect a flat trunk's single fiber's units into a fixed buffer.
+/// Asserts the trunk holds exactly one fiber, returns (count, units).
+fn single_fiber_units(layout: &FiberLayout<TestDims>, trunk_idx: usize) -> (usize, [usize; UPF_CAP]) { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test buffers of raw indices sized by the units-per-fiber cap; tracked: #72
+    let trunk = &layout.trunks.as_ref()[trunk_idx];
+    assert_eq!(trunk.fiber_count, USize(1), "trunk should hold exactly one fiber"); // lint:allow(no-bare-numeric) reason: expected fiber count; tracked: #427
     let mut out = [0usize; UPF_CAP]; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test buffer of raw indices; tracked: #72
     let mut count = 0;
-    if let TrunkComponent::Fiber(f) = &trunk.components.as_ref()[0] {
-        let uc = f.unit_count.0;
-        let units = f.units.as_ref();
-        let mut u = 0;
-        while u < uc {
-            out[count] = units[u].index().0;
-            count += 1;
-            u += 1;
-        }
-    } else {
-        panic!("component 0 should be a Fiber");
+    let f = &layout.fibers.as_ref()[trunk.fiber_offset.0];
+    let uc = f.unit_count.0;
+    let units = f.units.as_ref();
+    let mut u = 0;
+    while u < uc {
+        out[count] = units[u].index().0;
+        count += 1;
+        u += 1;
     }
     (count, out)
 }
@@ -126,12 +123,12 @@ fn per_block_projection_keeps_each_chain_one_fiber() {
     let part = two_block_partition();
     let waists = one_phase();
     let topo = interleaved_topo();
-    let trunks = steps::project_fiber_components::<TestDims>(&g, &part, &waists, &topo, U6);
+    let layout = steps::project_fiber_components::<TestDims>(&g, &part, &waists, &topo, U6);
 
-    // Block A (first-seen in topo) is trunk 0, block B is trunk 1.
-    let phase0 = trunks.as_ref()[0].as_ref();
-    let (a_count, a_units) = single_fiber_units(&phase0[0]);
-    let (b_count, b_units) = single_fiber_units(&phase0[1]);
+    // Block A (first-seen in topo) is trunk 0, block B is trunk 1; phase 0
+    // starts at trunk_offset 0, so they sit at flat trunk indices 0 and 1.
+    let (a_count, a_units) = single_fiber_units(&layout, 0);
+    let (b_count, b_units) = single_fiber_units(&layout, 1);
 
     // Chain A: one fiber holding exactly {0, 1, 2}; chain B: one fiber
     // holding exactly {3, 4, 5}. Under a global former on the interleaved
@@ -190,7 +187,7 @@ fn wide_block_routes_to_spectral_cut() {
             i += 1;
         }
     }
-    let trunks = steps::project_fiber_components::<TestDims>(&g, &part, &waists, &topo, U6);
+    let layout = steps::project_fiber_components::<TestDims>(&g, &part, &waists, &topo, U6);
 
     // Six units exceed the >5 gate, so the single block forms fibers
     // spectrally. The Fiedler cut separates the triangles, and every
@@ -198,24 +195,22 @@ fn wide_block_routes_to_spectral_cut() {
     // bridge. The greedy former (walking topo, rolling on out-degree)
     // would instead produce a {1,2,3} fiber spanning the bridge; that
     // straddle is the discriminator a width-gate-off flip would fail.
-    let trunk = &trunks.as_ref()[0].as_ref()[0];
-    assert!(trunk.component_count.0 >= 2, "the wide block is partitioned into multiple fibers");
-    let comps = trunk.components.as_ref();
+    let trunk = &layout.trunks.as_ref()[0];
+    assert!(trunk.fiber_count.0 >= 2, "the wide block is partitioned into multiple fibers");
+    let fibers = layout.fibers.as_ref();
+    let base = trunk.fiber_offset.0;
     let mut c = 0;
-    while c < trunk.component_count.0 {
-        if let TrunkComponent::Fiber(f) = &comps[c] {
-            let uc = f.unit_count.0;
-            assert!(uc > 0, "every emitted fiber is non-empty");
-            let units = f.units.as_ref();
-            let lo = units[0].index().0 < 3;
-            let mut u = 0;
-            while u < uc {
-                let ui = units[u].index().0;
-                assert_eq!(ui < 3, lo, "a spectral fiber must not straddle the bridge");
-                u += 1;
-            }
-        } else {
-            panic!("component should be a Fiber");
+    while c < trunk.fiber_count.0 {
+        let f = &fibers[base + c];
+        let uc = f.unit_count.0;
+        assert!(uc > 0, "every emitted fiber is non-empty");
+        let units = f.units.as_ref();
+        let lo = units[0].index().0 < 3;
+        let mut u = 0;
+        while u < uc {
+            let ui = units[u].index().0;
+            assert_eq!(ui < 3, lo, "a spectral fiber must not straddle the bridge");
+            u += 1;
         }
         c += 1;
     }

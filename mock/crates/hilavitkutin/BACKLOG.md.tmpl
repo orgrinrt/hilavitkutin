@@ -458,12 +458,15 @@ target state while the current code still carries the shipped arenas.
 The resource data plane (the resource arena, ArenaFor / DrainStores)
 collapses onto ColumnStorage: a resource is a decomposed set of scalar
 columns, so it stops being a separate mechanism. The execution plan
-becomes a store-backed meta-resource sized by the live count of phases,
-trunks, and fibers, rather than the dense nested const-array tree. That
-dissolves the multi-megabyte ExecutionPlan value structurally and makes
-compute_execution_plan usable at the real default budget (the value no
-longer overflows the stack). The adapt metrics arena and the dispatch
-slot buffers route through the store the same way.
+already flattened the dense nested const-array tree into CSR-style flat
+pools (a phases array, a flat trunks pool, a flat fibers pool sized by
+the plan-wide caps), which dissolved the multi-megabyte ExecutionPlan
+value structurally and made compute_execution_plan usable at the real
+default budget (the value no longer overflows the stack). The
+store-backing step moves those flat columns onto ColumnStorage, each
+reserved by live count, turning ExecutionPlan into a handle over the
+columns: a store-backed meta-resource. The adapt metrics arena and the
+dispatch slot buffers route through the store the same way.
 
 The naive arena-backed ColumnStorage placeholder impl ships in
 hilavitkutin-providers (the crate already reserved for future

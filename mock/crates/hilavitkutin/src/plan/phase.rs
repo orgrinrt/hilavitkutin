@@ -12,7 +12,6 @@ use arvo_tensor::Capacity;
 use hilavitkutin_api::PhaseId;
 
 use crate::plan::dims::PlanDims;
-use crate::plan::trunk::Trunk;
 use crate::strategy::PhaseStrategy;
 
 /// Phase split points: `boundaries[i]` is the first unit index of
@@ -81,13 +80,18 @@ impl Default for PhaseConfig {
     }
 }
 
-/// One phase: trunks running together within a waist-delimited
-/// segment. Sized by the trunk-per-phase, component-per-trunk,
-/// unit-per-fiber, and column-per-fiber capacities, all projected
-/// from one `D: PlanDims`.
-pub struct Phase<D: PlanDims> {
+/// One phase: a contiguous range of trunks in the plan-level flat
+/// `trunks` pool, delimited by waists.
+///
+/// `trunk_offset` is the index of the phase's first trunk; `trunk_count`
+/// is how many trunks belong to the phase. All work in one phase
+/// finishes before the next phase starts. The CSR flatten lifts the
+/// trunks out of the phase and into the plan-level pool, so the phase is
+/// a plain index record with no `D` projection.
+#[derive(Copy, Clone, Debug)]
+pub struct Phase {
     pub id: PhaseId,
-    pub trunks: <D::TrunksPerPhase as Capacity>::Array<Trunk<D>>,
+    pub trunk_offset: USize,
     pub trunk_count: USize,
     /// Plan-time strategy classification.
     pub strategy: PhaseStrategy,
@@ -95,15 +99,11 @@ pub struct Phase<D: PlanDims> {
     pub config: PhaseConfig,
 }
 
-impl<D: PlanDims> Phase<D>
-where
-    crate::plan::fiber::Fiber<D>: Copy,
-    <D::ComponentsPerTrunk as Capacity>::Array<crate::plan::trunk::TrunkComponent<D>>: Copy,
-{
+impl Phase {
     pub fn new() -> Self {
         Self {
             id: PhaseId::ZERO,
-            trunks: <D::TrunksPerPhase as Capacity>::filled(Trunk::new()),
+            trunk_offset: USize::ZERO,
             trunk_count: USize::ZERO,
             strategy: PhaseStrategy::Balanced,
             config: PhaseConfig::Balanced,
@@ -111,34 +111,8 @@ where
     }
 }
 
-impl<D: PlanDims> Copy for Phase<D> where <D::TrunksPerPhase as Capacity>::Array<Trunk<D>>: Copy {}
-
-impl<D: PlanDims> Clone for Phase<D>
-where
-    <D::TrunksPerPhase as Capacity>::Array<Trunk<D>>: Copy,
-{
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-impl<D: PlanDims> Default for Phase<D>
-where
-    crate::plan::fiber::Fiber<D>: Copy,
-    <D::ComponentsPerTrunk as Capacity>::Array<crate::plan::trunk::TrunkComponent<D>>: Copy,
-{
+impl Default for Phase {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-impl<D: PlanDims> core::fmt::Debug for Phase<D> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.debug_struct("Phase")
-            .field("id", &self.id)
-            .field("trunk_count", &self.trunk_count.0)
-            .field("strategy", &self.strategy)
-            .field("config", &self.config)
-            .finish_non_exhaustive()
     }
 }

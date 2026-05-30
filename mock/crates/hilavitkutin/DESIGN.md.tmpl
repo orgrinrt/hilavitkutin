@@ -501,6 +501,52 @@ unrelated `Capacity` introspection trait, so the bundle and its arvo
 `D: PlanDims = DefaultPlanDims` to thread the budget into plan
 computation.
 
+The `PlanDims` dimensions size the plan's flat columns: `D::Phases` the
+phase array, `D::Trunks` the flat trunk pool, `D::Fibers` the flat fiber
+pool, `D::Units` the unit arrays. The live count (how many phases,
+trunks, or fibers a plan actually forms) is a runtime `USize` bounded by
+each dimension's `CAP`; the dimension is the ceiling, not a worst-case
+nested allocation.
+
+## Flat execution plan
+
+The plan-stage output is flat, not a nested tree. A nested const-array
+`ExecutionPlan` over `DefaultPlanDims` measured 11 MB, dominated by the
+`phases` field: `[Phase; 32]` embedding `[Trunk; 32]` embedding
+`[TrunkComponent; 32]` of ~256-byte fibers, the worst-case `32 x 32 x 32`
+nesting reserved regardless of how many fibers a real plan forms. Every
+leaf of the tree is already a `ColumnValue` arvo scalar (`FiberId`,
+`UnitId`, `TrunkId`, `PhaseId`, `USize`, `StoreId`, `Bool`, small repr
+enums), so the bulk was array nesting, not non-scalar data.
+
+The phase / trunk / fiber structure flattens CSR-style. `ExecutionPlan`
+holds three flat arrays sized by the plan-wide dimensions: `phases`
+(`D::Phases`), a flat `trunks` pool (`D::Trunks`), and a flat `fibers`
+pool (`D::Fibers`). Each `Phase` carries a `(trunk_offset, trunk_count)`
+range into the flat `trunks` pool; each `Trunk` carries a
+`(fiber_offset, fiber_count)` range into the flat `fibers` pool; each
+`Fiber` carries its units inline. The dense `Phases` x `TrunksPerPhase`
+x `ComponentsPerTrunk` nesting (32768 reserved fiber slots at the default
+budget) collapses to the `D::Fibers` flat pool (64 slots), so the plan
+measures kilobytes, not megabytes, and its footprint tracks the
+plan-wide caps rather than the product of the per-aggregate caps.
+
+`compute_execution_plan` runs the step chain into the flat arrays. The
+fiber-formation step (`project_fiber_components`) writes the flat
+`trunks` and `fibers` pools with running plan-wide ids, and the runner
+assigns the per-phase CSR ranges. The step functions keep their analysis
+logic; only the assembly target changes, from nested arrays to the flat
+pools.
+
+Unifying the plan onto the scheduler's columnar store is the next step
+in the unified-storage arc. A follow-on round moves the flat plan
+columns into a scheduler-owned columnar store (each column reserved by
+live count), turning `ExecutionPlan` into a small handle over those
+columns and realizing the heritage design (domain 09: the plan as a
+data-plane meta-Resource, not a const-array field). That migration
+carries the cross-crate wiring (the scheduler's store parameter, the
+Send/Sync lifecycle, the provider-backed arena); see `BACKLOG.md`.
+
 `SchedulerBuilder<Wus, Stores, Platform, StoreValues>` accumulates
 typestate across each registration call. Initial state on
 `Scheduler::builder()` is `SchedulerBuilder<Empty, Empty, Empty, SvEmpty>`.

@@ -156,55 +156,35 @@ impl<D: PlanDims> core::fmt::Debug for TrunkComponent<D> {
     }
 }
 
-/// A trunk: components running together within a phase. Sized by the
-/// component-per-trunk capacity projected from `D: PlanDims`.
-pub struct Trunk<D: PlanDims> {
+/// A trunk: a contiguous range of fibers in the plan-level flat `fibers`
+/// pool.
+///
+/// `fiber_offset` is the index of the trunk's first fiber; `fiber_count`
+/// is how many fibers belong to the trunk. Trunks within a phase are
+/// column-disjoint and run with zero sync. The CSR flatten lifts the
+/// fibers out of the trunk and into the plan-level pool, so the trunk is
+/// a plain index record with no `D` projection.
+#[derive(Copy, Clone, Debug)]
+pub struct Trunk {
     pub id: TrunkId,
-    pub components: <D::ComponentsPerTrunk as Capacity>::Array<TrunkComponent<D>>,
-    pub component_count: USize,
+    pub fiber_offset: USize,
+    pub fiber_count: USize,
 }
 
-impl<D: PlanDims> Trunk<D>
-where
-    Fiber<D>: Copy,
-{
+impl Trunk {
+    /// Empty trunk (zero fibers). The default before the projection
+    /// writes the flat pools.
     pub fn new() -> Self {
         Self {
             id: TrunkId::ZERO,
-            components: <D::ComponentsPerTrunk as Capacity>::filled(TrunkComponent::empty_fiber()),
-            component_count: USize::ZERO,
+            fiber_offset: USize::ZERO,
+            fiber_count: USize::ZERO,
         }
     }
 }
 
-impl<D: PlanDims> Copy for Trunk<D> where
-    <D::ComponentsPerTrunk as Capacity>::Array<TrunkComponent<D>>: Copy
-{
-}
-
-impl<D: PlanDims> Clone for Trunk<D>
-where
-    <D::ComponentsPerTrunk as Capacity>::Array<TrunkComponent<D>>: Copy,
-{
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-impl<D: PlanDims> Default for Trunk<D>
-where
-    Fiber<D>: Copy,
-{
+impl Default for Trunk {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-impl<D: PlanDims> core::fmt::Debug for Trunk<D> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.debug_struct("Trunk")
-            .field("id", &self.id)
-            .field("component_count", &self.component_count.0)
-            .finish_non_exhaustive()
     }
 }
