@@ -457,6 +457,48 @@ where
     g
 }
 
+/// Filter the global spectral grouping to one block and remap.
+///
+/// Takes the whole-graph spectral `FiberGrouping` and a block's units,
+/// keeps only those units' assignments, and remaps the block's distinct
+/// spectral ids to contiguous block-local FiberIds, returning the same
+/// block-local shape `group_fibers_in_block` returns. Spectral respects
+/// block boundaries (disconnected blocks have independent Fiedler
+/// vectors), so a block's units carry a self-contained id set.
+fn spectral_grouping_in_block<const MAX_UNITS: Cap, const MAX_FIBERS: Cap>(
+    global: &FiberGrouping<MAX_UNITS, MAX_FIBERS>,
+    block_units: &[UnitId],
+) -> FiberGrouping<MAX_UNITS, MAX_FIBERS>
+where
+    [(); cap_size(MAX_UNITS)]:,
+    [(); cap_size(MAX_FIBERS)]:,
+{
+    use hilavitkutin_api::FiberId;
+    let mut g: FiberGrouping<MAX_UNITS, MAX_FIBERS> = FiberGrouping::new();
+    // Remap global spectral id -> block-local id in first-seen order.
+    let mut remap: [USize; cap_size(MAX_FIBERS)] = [USize::ZERO; cap_size(MAX_FIBERS)];
+    let mut seen: [Bool; cap_size(MAX_FIBERS)] = [Bool::FALSE; cap_size(MAX_FIBERS)];
+    let mut local_count = 0;
+    let mut i = 0;
+    while i < block_units.len() {
+        let uidx = block_units[i].index().0;
+        if uidx < cap_size(MAX_UNITS) {
+            let gid = global.assignment[uidx].index().0;
+            if gid < cap_size(MAX_FIBERS) {
+                if !seen[gid].0 {
+                    seen[gid] = Bool::TRUE;
+                    remap[gid] = USize(local_count); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
+                    local_count += 1;
+                }
+                g.assignment[uidx] = FiberId::from_index(remap[gid]);
+            }
+        }
+        i += 1;
+    }
+    g.fiber_count = USize(local_count); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal count; tracked: #72
+    g
+}
+
 /// Project the per-block fiber grouping onto per-phase trunk components.
 ///
 /// For each phase, blocks (connected components) map to trunks in
@@ -506,6 +548,12 @@ where
     let n = unit_count.0;
     let mut next_trunk_id = 0;
     let mut next_fiber_id = 0;
+    // Global spectral grouping, computed once and filtered per wide block
+    // by the width-gate below. It respects block boundaries, so a wide
+    // block's units carry a self-contained partition. Computed
+    // unconditionally for now; skipping it when no block is wide is a
+    // follow-up optimisation.
+    let spectral = spectral_partition::<MAX_UNITS, MAX_EDGES, MAX_FIBERS>(graph);
     let mut p = 0;
     while p < pc && p < cap_size(MAX_PHASES) {
         let start = waists.boundaries[p].0;
@@ -553,13 +601,24 @@ where
                 }
                 j += 1;
             }
-            // C1d-3b width-gate selection point: a wide block (bu_count
-            // above the threshold) picks the spectral former here; this
-            // slice forms every block greedily.
-            let grouping = group_fibers_in_block::<MAX_UNITS, MAX_EDGES, MAX_FIBERS>(
-                graph,
-                &block_units[0..bu_count],
-            );
+            // Width-gate: a wide block (more units than the threshold)
+            // forms fibers spectrally (filtered from the global
+            // grouping); a narrow block keeps the greedy former. The
+            // threshold is DESIGN.md.tmpl's ">5 fibers" applied to block
+            // unit count for now (tunable). Spectral and greedy agree for
+            // narrow chains, so the gate only diverges where it matters.
+            let grouping = if bu_count > 5 {
+                // lint:allow(no-bare-numeric) reason: width-gate threshold (>5), tunable; tracked: #644
+                spectral_grouping_in_block::<MAX_UNITS, MAX_FIBERS>(
+                    &spectral,
+                    &block_units[0..bu_count],
+                )
+            } else {
+                group_fibers_in_block::<MAX_UNITS, MAX_EDGES, MAX_FIBERS>(
+                    graph,
+                    &block_units[0..bu_count],
+                )
+            };
             out[p][t].id = TrunkId::from_index(USize(next_trunk_id)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from plan-wide id; tracked: #72
             next_trunk_id += 1;
             // Emit one Fiber component per block-local fiber.
