@@ -97,3 +97,15 @@ but does NOT auto-win on the FMA-shape per-fiber aggregation
 (per `float_width`). Different inner-loop shapes favor different
 strategies. The arvo strategy-marker docs follow-up tracks this
 nuance.
+
+## ArenaColumnStorage Send / Sync for the multi-core scheduler
+
+ArenaColumnStorage records a raw `*mut u8` base per column, so the
+struct is `!Send` and `!Sync`. MemoryProviderApi is `Send + Sync` and
+the engine schedules across cores, so wiring this store into the
+multi-core scheduler needs an `unsafe impl Send`/`Sync` carrying a
+provenance justification (the column bases are owned by the store, not
+shared mutable state). It is not a bug today: nothing threads the store
+yet. The `unsafe impl` lands with the migration round that threads
+ArenaColumnStorage into the scheduler, where the cross-core access
+pattern is concrete and the safety argument can be stated against it.

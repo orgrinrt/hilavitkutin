@@ -137,7 +137,9 @@ participate in dispatch.
 
 ## Store types (domain 06)
 
-Three store types, one scheduling mechanism:
+Three store types, one scheduling mechanism. All of them are views over
+one `ColumnStorage` (see "Unified columnar storage" below); they differ
+in intent and access, not in backing.
 
 ```rust
 pub struct Resource<T>(PhantomData<T>); // singleton, one value
@@ -228,6 +230,80 @@ Any `Copy + 'static` type ≤16 bytes is column-storable. Zero friction
 for consumers. BIT_WIDTH informs the storage engine for bitpacking.
 Sub-byte arvo types specialise (e.g. `UFixed<1,0>` → BIT_WIDTH=1).
 No pack/unpack: type IS the storage (R3, R4).
+
+## Unified columnar storage (domain 07)
+
+All engine runtime state reaches one storage floor: a column of
+column-sized scalars. `ColumnValue` is the scalar unit; `ColumnStorage`
+owns columns of those scalars, allocated through `MemoryProviderApi`.
+`Resource`, `Column`, `Virtual`, `Field`, `Seq`, and `Map` are
+access-and-intent views over that one store, not independent or
+arena-backed mechanisms. There is no separate storage for WorkUnit
+state versus engine-internal state; the execution plan, the resources,
+and the columns all back onto the same `ColumnStorage`.
+
+`ColumnStorage` sits between `MemoryProviderApi` (the raw allocator the
+consumer supplies) below and the per-morsel Context accessors
+(`ColumnReaderApi` / `ColumnWriterApi`) above. It owns columns and hands
+out base pointers the dispatch codegen turns into per-morsel raw reads.
+
+```rust
+pub trait ColumnStorage {
+    type Error;
+
+    // Reserve column `id` for `len` records of scalar `T`, 64-byte
+    // aligned, stride size_of::<T>(). Allocates through the bound
+    // MemoryProvider. Re-reserving an existing id resizes it.
+    fn reserve<T: ColumnValue>(&mut self, id: StoreId, len: USize)
+        -> Outcome<(), Self::Error>;
+
+    // Base pointer of column `id`. Raw, not a slice: a slice borrow
+    // alongside a resource pointer from the same context defeats LLVM
+    // noalias and forces a per-iteration reload (R6, the T6 bench).
+    // Safety: `id` names a column reserved for `T`; the caller proves
+    // the record index stays below count(id).
+    unsafe fn column_ptr<T: ColumnValue>(&self, id: StoreId) -> *const T;
+    unsafe fn column_ptr_mut<T: ColumnValue>(&self, id: StoreId) -> *mut T;
+
+    fn count(&self, id: StoreId) -> USize;        // record count
+    fn release(&mut self, id: StoreId);           // advisory, reader-count model
+}
+```
+
+`Decompose` maps an aggregate type to its scalar column leaves: the
+struct-of-arrays expansion. A multi-field struct yields one leaf per
+field, recursing through nested structs until every leaf is a
+`ColumnValue` scalar. `Field<S>` is the base case the recursion stops
+at, so scalar promotion is preserved as the fundamental, not dropped.
+`Seq` / `Map` elements expand the same way when the element is not
+itself a scalar.
+
+```rust
+pub trait Decompose {
+    // Cons-list of this aggregate's scalar column leaves (Field<S> per
+    // scalar leaf, in field order). Empty for a unit aggregate.
+    type Leaves: StoreBundle;
+}
+```
+
+`Resource` and `Column` differ in intent and access pattern, not
+mechanism. `Resource` holds persistent, infrequently-written state
+(config, providers, the plan), cardinality one or more; a `Field<T>`
+resource decomposes to a length-1 column and is staged stack-local
+before the morsel loop with separate pointer provenance from the bulk
+columns (domain 19), so it promotes to a register rather than paying a
+per-record load. `Column` holds hot per-morsel records accessed via the
+raw morsel-offset read / write. Both back onto the same store.
+`Virtual` carries no backing (DAG edge only).
+
+The cardinality-1 path is the fast path: the unified floor does not cost
+a scalar resource its register. A default arena-backed `ColumnStorage`
+impl ships in `hilavitkutin-providers` as the placeholder. Bespoke
+per-subsystem arenas are forbidden; see the unified-storage principle.
+
+The persistence boundary (`evict` / `inject`, R2) folds onto
+`ColumnStorage` with the resource-resolution / persistence migration; it
+is not part of the core contract here.
 
 ## WorkUnit trait (domain 09)
 

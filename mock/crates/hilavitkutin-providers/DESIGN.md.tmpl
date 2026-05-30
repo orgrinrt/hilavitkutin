@@ -5,11 +5,13 @@ Standalone ecosystem crate: consumed by the engine via Kit
 installation or via direct `builder.with(Resource::new(...))`
 wiring, no reverse dep.
 
-Ships the interner surface today: an `InternerApi` provider trait,
-`MemoryArena<BYTES, ENTRIES>` inline-storage backing, and the
-`InternerKit` preset. Future rounds add ColumnStorage default,
-Clock default, and MemoryProvider default for libc/Unix per
-consumer demand.
+Ships the interner surface and the default `ColumnStorage` backing
+(`ArenaColumnStorage`) today: an `InternerApi` provider trait,
+`MemoryArena<BYTES, ENTRIES>` inline-storage backing, the
+`InternerKit` preset, and `ArenaColumnStorage<M, D>` (the naive
+arena-backed store the engine wires in via `CS: ColumnStorage`).
+Future rounds add the Clock default and a MemoryProvider default for
+libc/Unix per consumer demand.
 
 ## Surface
 
@@ -23,6 +25,7 @@ consumer demand.
 | `AdaptWu` | Default substrate AdaptWu observing `ScheduleEnd` per Topic 1 axis 5 / Topic 5. Consumes `ResourceSnapshot<AdaptMetrics>` at phase boundary and writes `predicted_wait_ns[]` for the next frame. Consumers register via `.with(AdaptWu::default())` for substrate adapt behaviour; consumers ship their own AdaptWu for custom adaptation. |
 | `PassDurationMetrics`, `PhaseEMAMetrics`, `FiberEMAMetrics`, `ChangeClassMetrics`, `CacheResidencyMetrics`, `ThroughputTrendingMetrics`, `PredictiveParkingMetrics`, `MemoryWatermarkMetrics`, `CoreIdleTimeMetrics` | Per-axis AdaptMetrics sub-resources (Topic 5 axis F). Each ships individually under `pub mod metrics::*`. Per-axis `pub const DEFAULT_*` named constants per Topic 5 axis C. |
 | `StandardAdaptKit`, `OffAdaptKit` | Convenience Kit recipes bundling the nine axes (Topic 5 axis A). Standard ships all axes with bench-validated defaults; Off ships none (adapt observer disabled). Custom mixes via consumer-authored Kits per the themed-resource-sets-individuals-primary workspace convention. |
+| `ArenaColumnStorage<M, D>` | Naive arena-backed `ColumnStorage` impl: the default backing for the unified columnar store. `M: MemoryProviderApi` is the allocator; `D: Capacity = Dim<256>` caps the distinct-column count. Placeholder shape; the columnar engine replaces it later without touching any `CS: ColumnStorage` consumer. |
 
 ### `InternerApi`
 
@@ -141,6 +144,36 @@ the workspace's "tools, not policies" rule: the crate ships
 the Resource without forcing override semantics on consumers that
 do not want them.
 
+### `ArenaColumnStorage<M, D>`
+
+The default backing for the unified columnar store
+(`hilavitkutin_api::ColumnStorage`). A naive arena placeholder: the
+engine stays generic over `CS: ColumnStorage`, and consumers (and the
+engine's own tests) wire this in as the concrete store. The columnar
+engine replaces it later without touching any `CS: ColumnStorage`
+consumer.
+
+```rust
+pub struct ArenaColumnStorage<M: MemoryProviderApi, D: Capacity = Dim<256>> {
+    // M: the allocator. D: caps the distinct-column count (Dim<256>
+    // matches the engine's Mask256 store ceiling). A fixed slot table
+    // D::Array<Maybe<ColumnSlot>> records each column's base / bytes /
+    // record count, indexed by StoreId.
+}
+```
+
+`reserve<T>` allocates `count * size_of::<T>()` bytes 64-byte aligned
+through the bound `MemoryProvider`, recording the slot; a resizing
+re-reserve frees the prior block first. `column_ptr` / `column_ptr_mut`
+return the recorded base cast to the scalar type (raw, not a slice, per
+R6). `count` reads the slot. `release` is a no-op (the reader-count
+reclamation is a columnar-engine concern). `Drop` deallocates every
+live slot through the provider.
+
+Correctness, not performance: the slot table is a flat scan and each
+column is a separate provider allocation. The point is a working
+`ColumnStorage` behind the contract while the columnar engine matures.
+
 ## What this crate deliberately does not ship
 
 - **`M: HasMemoryProvider` parameter on `MemoryArena`.** The
@@ -149,9 +182,10 @@ do not want them.
  inline storage at the type level instead. Reintroducing the M
  parameter needs allocate-at-builder-time plumbing the engine
  does not yet have. Tracked in BACKLOG.
-- **ColumnStorage / Clock / MemoryProvider defaults.** Per crate
- scope: interner-only at this stage. Each future provider module
- lands in its own round when consumer demand surfaces.
+- **Clock / MemoryProvider defaults.** Per crate scope: interner and
+ the `ArenaColumnStorage` backing at this stage. The Clock and
+ libc/Unix MemoryProvider defaults each land in their own round when
+ consumer demand surfaces.
 
 ## Cross-references
 

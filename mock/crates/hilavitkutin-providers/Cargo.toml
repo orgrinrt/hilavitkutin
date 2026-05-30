@@ -10,6 +10,7 @@ repository.workspace = true
 notko.workspace = true
 arvo.workspace = true
 arvo-bits.workspace = true
+arvo-tensor.workspace = true
 hilavitkutin-api.workspace = true
 hilavitkutin-kit.workspace = true
 hilavitkutin-str.workspace = true

@@ -1,0 +1,50 @@
+8ed1da9 chore: lock src changelist for columnstorage-overflow-fix
+7f68818 fix: guard ArenaColumnStorage reserve against byte-length overflow
+63638bc docs: open columnstorage-overflow-fix src changelist
+9e3b134 chore: lock doc changelist for columnstorage-overflow-fix
+c28c980 docs: note ArenaColumnStorage Send/Sync caveat for scheduler migration
+12b8a21 docs: open columnstorage-overflow-fix doc changelist
+99ad9a3 docs: open columnstorage-overflow-fix round topic
+fc3f94b chore: update Cargo.lock for arvo-tensor providers dep
+e5ab341 chore: close naive-arena-columnstorage round
+0425102 chore: lock src changelist for naive-arena-columnstorage
+38378b9 feat: add ArenaColumnStorage naive ColumnStorage backing
+f4cd817 docs: open naive-arena-columnstorage src changelist
+e022cc4 chore: lock doc changelist for naive-arena-columnstorage
+b7c3f3b docs: name ArenaColumnStorage as the default ColumnStorage backing
+846f230 docs: open naive-arena-columnstorage doc changelist
+5b156bc docs: open naive-arena-columnstorage round topic
+66502eb chore: close unified-columnar-storage contract round
+a512398 chore: lock src changelist for unified-columnar-storage
+f365253 feat: add ColumnStorage and Decompose unified-storage contract traits
+d9f0382 docs: open unified-columnar-storage src changelist
+601d253 chore: lock doc changelist for unified-columnar-storage
+a444685 docs: specify ColumnStorage and Decompose contract for unified storage
+b281a5e docs: open unified-columnar-storage doc changelist
+fe8510d docs: open unified-columnar-storage round topic
+dfa06fb research: catalogue and synthesise unified-storage design heritage
+0d3078c refactor!: adopt PlanDims capacity bundle across hilavitkutin engine
+ef7dd15 feat: retain registered workunits and walk them in scheduler run
+395ddc6 feat: add resource-only run-fiber-walk dispatch core
+742c4dd feat: project workunit bundle into plan inputs
+a5cfb48 feat: width-gate wide blocks to the spectral fiber former
+a9141d0 feat: project per-block fibers onto trunk components
+1864284 feat: wire spectral partitioning into plan step 6
+00487c9 feat: wire block-diagonal detection into plan step 5
+12ef597 feat: wire rcm bandwidth reorder into plan step 4
+76a0942 feat: add DependencyGraph to_csr_bidirectional adapter
+b278890 refactor: lift engine const-generic dimensions from usize to cap
+36e2cca fix: regenerate extensions-macros trybuild goldens after provider rename
+02957c7 refactor: drop redundant min_specialization gate in hilavitkutin-api
+74d4702 refactor: drop unused generic_const_exprs gates in hilavitkutin
+e3ba798 refactor: remove associated_type_defaults from hilavitkutin-api
+1a1b854 refactor: remove full specialization from engine ctx accessor
+3997cb6 chore: enable notko try_trait_v2 and pin nightly
+c859461 refactor: replace transmute_copy id projection with typed index accessors
+8cb9ef7 feat: per-workunit projected context over the resource arena
+0dc3ec5 feat: build a resource arena from registered store values
+f3f7099 feat: retain registered store values on the scheduler builder
+aacf33d refactor: disambiguate resourcesnapshot semantics
+163d00b docs: engine dispatch build plan and design synthesis
+803f877 research: cl drift closure clarification for task 398
+3b68a11 research: sketch v2 phase machine field notes
