@@ -51,10 +51,14 @@ complete execution plan:
  detection per Topic 6 axis E.
 7. Spectral partitioning → spectral `FiberGrouping` via an engine-local
  symmetric Laplacian over arvo-spectral's k-way partitioning. The
- spectral-versus-greedy choice (bench) and projecting the chosen grouping
- onto trunk components land in later slices (arvo-spectral).
-8. Fiber grouping: greedy (arvo-comb) or matrix chain DP for >10 ops
- (arvo-comb)
+ width-gated spectral former (for wide blocks) lands as a follow-on
+ slice; step 8 does the projection onto trunk components (arvo-spectral).
+8. Fiber grouping → per-block fiber formation projected onto
+ `Trunk.components`. Each block (trunk) forms its fibers within the
+ block's units in topo order, so fibers nest within trunks. The greedy
+ former lands now; the width-gated spectral former for wide blocks
+ follows. `TrunkComponent::Fiber` entries carry id and units; columns,
+ head+tail, and dispatch shape fill in at later steps (arvo-comb).
 9. Per-fiber morsel sizing (write-only formula, domain 12). Output
    includes `micro_morsel_interval: USize` alongside `morsel_size: USize`
    per Topic 7 amendment. Default `MICRO_MORSEL_INTERVAL = 64` records.
