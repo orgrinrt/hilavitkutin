@@ -21,9 +21,8 @@ pub mod standard;
 pub mod sync;
 pub mod wu_fn;
 
-use arvo::Cap;
 use arvo::USize;
-use arvo_tensor::cap_size;
+use arvo_tensor::Capacity;
 pub use hilavitkutin_api::dispatch_codegen::StandardCodegen;
 
 pub use approach::DispatchApproach;
@@ -83,10 +82,7 @@ pub fn select_approach(record_count: USize, fiber_count: USize) -> DispatchAppro
 /// monomorphisation` in `BACKLOG.md.tmpl`; until then this stub
 /// allows the engine call chain to compile and execute (returning
 /// a typed-correct, body-empty record) without panic.
-pub fn codegen_fiber<Ctx: 'static, const MAX_CORES: Cap>() -> FiberDispatch<Ctx, MAX_CORES>
-where
-    [(); cap_size(MAX_CORES)]:,
-{
+pub fn codegen_fiber<Ctx: 'static, C: Capacity>() -> FiberDispatch<Ctx, C> {
     FiberDispatch::new()
 }
 
@@ -98,10 +94,7 @@ where
 /// (fusing the morsel loop + arena progress + S3 fence + micro-morsel
 /// sync per Topic 6 axis E) lands per the same BACKLOG entry as
 /// `codegen_fiber`.
-pub fn codegen_core<Ctx: 'static, const MAX_FIBERS: Cap>() -> CoreDispatch<Ctx, MAX_FIBERS>
-where
-    [(); cap_size(MAX_FIBERS)]:,
-{
+pub fn codegen_core<Ctx: 'static, C: Capacity>() -> CoreDispatch<Ctx, C> {
     CoreDispatch::new()
 }
 
@@ -111,9 +104,10 @@ mod codegen_stub_tests {
     use notko::Maybe;
     use crate::plan::FiberId;
     use arvo::strategy::Identity;
-    use arvo_tensor::cap;
+    use arvo_tensor::Dim;
 
-    const C4: Cap = cap(4);
+    // A fixed capacity of four for the codegen stub records.
+    type C4 = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity literal; Dim<N> array-length root; tracked: #649
 
     #[test]
     fn codegen_fiber_returns_empty_skeleton() {
@@ -135,8 +129,8 @@ mod codegen_stub_tests {
         assert_eq!(result.boundary_count, USize::ZERO);
         assert_eq!(result.sync_point_count, USize::ZERO);
         // Element check: every fiber slot is itself an empty skeleton.
-        assert!(matches!(result.fibers[0].body, Maybe::Isnt)); // lint:allow(no-bare-numeric) reason: element-zero check; tracked: #72
-        assert_eq!(result.fibers[0].sync_point_count, USize::ZERO); // lint:allow(no-bare-numeric) reason: element-zero check; tracked: #72
+        assert!(matches!(result.fibers.as_ref()[0].body, Maybe::Isnt)); // lint:allow(no-bare-numeric) reason: element-zero check; tracked: #72
+        assert_eq!(result.fibers.as_ref()[0].sync_point_count, USize::ZERO); // lint:allow(no-bare-numeric) reason: element-zero check; tracked: #72
     }
 }
 

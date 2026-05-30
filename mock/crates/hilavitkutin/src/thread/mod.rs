@@ -19,8 +19,10 @@ pub mod hybrid;
 pub mod parking;
 pub mod pool;
 
-use arvo::{Cap, USize};
-use arvo_tensor::cap_size;
+use arvo::USize;
+use arvo_tensor::{cap_size, Capacity};
+
+use crate::plan::PlanDims;
 
 pub use assignment::{CoreAssignment, NO_TRUNK};
 pub use barrier::{phase_barrier_arrive, phase_barrier_observe, phase_barrier_reset, BarrierArrival};
@@ -48,71 +50,40 @@ pub use pool::{ThreadPool, ThreadPoolBuilder};
 /// for follow-up slices that populate fiber-to-trunk maps and
 /// `CoreClass`-aware weighting. See `CoreClass-aware assign_cores
 /// follow-up` in `BACKLOG.md.tmpl` for the heterogeneous-core path.
-pub fn assign_cores<
-    const MAX_UNITS: Cap,
-    const MAX_PHASES: Cap,
-    const MAX_TRUNKS: Cap,
-    const MAX_FIBERS: Cap,
-    const MAX_LANES: Cap,
-    const MAX_COLUMNS: Cap,
-    const MAX_COMPONENTS_PER_TRUNK: Cap,
-    const MAX_UNITS_PER_FIBER: Cap,
-    const MAX_COLUMNS_PER_FIBER: Cap,
-    const MAX_TRUNKS_PER_PHASE: Cap,
->(
+pub fn assign_cores<D: PlanDims>(
     core_count: USize,
-    plan: &crate::plan::ExecutionPlan<
-        MAX_UNITS,
-        MAX_PHASES,
-        MAX_TRUNKS,
-        MAX_FIBERS,
-        MAX_LANES,
-        MAX_COLUMNS,
-        MAX_COMPONENTS_PER_TRUNK,
-        MAX_UNITS_PER_FIBER,
-        MAX_COLUMNS_PER_FIBER,
-        MAX_TRUNKS_PER_PHASE,
-    >,
-) -> CoreAssignment<MAX_LANES>
-where
-    [(); cap_size(MAX_UNITS)]:,
-    [(); cap_size(MAX_PHASES)]:,
-    [(); cap_size(MAX_FIBERS)]:,
-    [(); cap_size(MAX_TRUNKS_PER_PHASE)]:,
-    [(); cap_size(MAX_COMPONENTS_PER_TRUNK)]:,
-    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
-    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
-    [(); cap_size(MAX_LANES)]:,
-{
-    let mut assignment: CoreAssignment<MAX_LANES> = CoreAssignment::new();
+    plan: &crate::plan::ExecutionPlan<D>,
+) -> CoreAssignment<D::Lanes> {
+    let mut assignment: CoreAssignment<D::Lanes> = CoreAssignment::new();
 
     // Find the phase with the most trunks; that bounds the
     // parallel-dispatch width.
     let mut max_trunks_needed: usize = 0; // lint:allow(no-bare-numeric) reason: loop accumulator; tracked: #72
     let phase_count = plan.phase_count.0;
+    let phases = plan.phases.as_ref();
     let mut p: usize = 0; // lint:allow(no-bare-numeric) reason: loop index; tracked: #72
     while p < phase_count {
-        let tc = plan.phases[p].trunk_count.0;
+        let tc = phases[p].trunk_count.0;
         if tc > max_trunks_needed {
             max_trunks_needed = tc;
         }
         p += 1; // lint:allow(no-bare-numeric) reason: loop increment; tracked: #72
     }
 
-    // Clamp width against core count and the per-pipeline MAX_LANES.
+    // Clamp width against core count and the per-pipeline lane capacity.
     let mut width = max_trunks_needed;
     if core_count.0 < width {
         width = core_count.0;
     }
-    if cap_size(MAX_LANES) < width {
-        width = cap_size(MAX_LANES);
+    if cap_size(<D::Lanes as Capacity>::CAP) < width {
+        width = cap_size(<D::Lanes as Capacity>::CAP);
     }
 
     // Populate the round-robin slots; the rest stay NO_TRUNK from
     // CoreAssignment::new().
     let mut i: usize = 0; // lint:allow(no-bare-numeric) reason: loop index; tracked: #72
     while i < width {
-        assignment.trunk_index[i] = USize(i);
+        assignment.trunk_index.as_mut()[i] = USize(i);
         i += 1; // lint:allow(no-bare-numeric) reason: loop increment; tracked: #72
     }
     assignment.assigned_count = USize(width);
@@ -135,40 +106,39 @@ mod assign_cores_tests {
     use super::*;
     use crate::plan::ExecutionPlan;
     use arvo::strategy::Identity;
-    use arvo_tensor::{cap, cap_size};
+    use arvo_tensor::{cap_size, Capacity, Dim};
 
-    // Per-pipeline caps sized small for the tests. The body's logic
-    // does not depend on the cap values, only on the runtime
-    // phase_count / trunk_count fields.
-    const MAX_UNITS: Cap = cap(8);
-    const MAX_PHASES: Cap = cap(8);
-    const MAX_TRUNKS: Cap = cap(8);
-    const MAX_FIBERS: Cap = cap(8);
-    const MAX_LANES: Cap = cap(8);
-    const MAX_COLUMNS: Cap = cap(8);
-    const MAX_COMPONENTS_PER_TRUNK: Cap = cap(4);
-    const MAX_UNITS_PER_FIBER: Cap = cap(4);
-    const MAX_COLUMNS_PER_FIBER: Cap = cap(4);
-    const MAX_TRUNKS_PER_PHASE: Cap = cap(4);
+    // Per-pipeline capacities sized small for the tests. The body's
+    // logic does not depend on the capacity values, only on the
+    // runtime phase_count / trunk_count fields. The lane capacity
+    // (`D::Lanes`) bounds the assignment array.
+    struct TestDims;
 
-    type TestPlan = ExecutionPlan<
-        MAX_UNITS,
-        MAX_PHASES,
-        MAX_TRUNKS,
-        MAX_FIBERS,
-        MAX_LANES,
-        MAX_COLUMNS,
-        MAX_COMPONENTS_PER_TRUNK,
-        MAX_UNITS_PER_FIBER,
-        MAX_COLUMNS_PER_FIBER,
-        MAX_TRUNKS_PER_PHASE,
-    >;
+    impl PlanDims for TestDims {
+        type Units = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity budget literal; Dim<N> array-length root; tracked: #649
+        type Stores = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity budget literal; Dim<N> array-length root; tracked: #649
+        type Edges = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity budget literal; Dim<N> array-length root; tracked: #649
+        type Phases = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity budget literal; Dim<N> array-length root; tracked: #649
+        type Trunks = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity budget literal; Dim<N> array-length root; tracked: #649
+        type TrunksPerPhase = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity budget literal; Dim<N> array-length root; tracked: #649
+        type Fibers = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity budget literal; Dim<N> array-length root; tracked: #649
+        type Lanes = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity budget literal; Dim<N> array-length root; tracked: #649
+        type Columns = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity budget literal; Dim<N> array-length root; tracked: #649
+        type ComponentsPerTrunk = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity budget literal; Dim<N> array-length root; tracked: #649
+        type UnitsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity budget literal; Dim<N> array-length root; tracked: #649
+        type ColumnsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity budget literal; Dim<N> array-length root; tracked: #649
+        type Cores = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity budget literal; Dim<N> array-length root; tracked: #649
+    }
+
+    const LANES: usize = cap_size(<<TestDims as PlanDims>::Lanes as Capacity>::CAP); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: value-position cap projection for test loop bounds; tracked: #72
+
+    type TestPlan = ExecutionPlan<TestDims>;
 
     fn plan_with_phase_trunks(per_phase: &[usize]) -> TestPlan { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test helper takes raw usize counts to mirror runtime field shape; tracked: #72
         let mut plan = TestPlan::new();
         let mut i: usize = 0; // lint:allow(no-bare-numeric) reason: loop index; tracked: #72
         while i < per_phase.len() {
-            plan.phases[i].trunk_count = USize(per_phase[i]);
+            plan.phases.as_mut()[i].trunk_count = USize(per_phase[i]);
             i += 1; // lint:allow(no-bare-numeric) reason: loop increment; tracked: #72
         }
         plan.phase_count = USize(per_phase.len());
@@ -180,9 +150,10 @@ mod assign_cores_tests {
         let plan = TestPlan::new();
         let result = assign_cores(USize(4), &plan); // lint:allow(no-bare-numeric) reason: test core count; tracked: #72
         assert_eq!(result.assigned_count, USize::ZERO);
+        let trunk_index = result.trunk_index.as_ref();
         let mut i: usize = 0; // lint:allow(no-bare-numeric) reason: loop index; tracked: #72
-        while i < cap_size(MAX_LANES) {
-            assert_eq!(result.trunk_index[i], NO_TRUNK);
+        while i < LANES {
+            assert_eq!(trunk_index[i], NO_TRUNK);
             i += 1; // lint:allow(no-bare-numeric) reason: loop increment; tracked: #72
         }
     }
@@ -192,10 +163,11 @@ mod assign_cores_tests {
         let plan = plan_with_phase_trunks(&[1]);
         let result = assign_cores(USize(4), &plan); // lint:allow(no-bare-numeric) reason: test core count; tracked: #72
         assert_eq!(result.assigned_count, USize(1)); // lint:allow(no-bare-numeric) reason: width=1 expected; tracked: #72
-        assert_eq!(result.trunk_index[0], USize(0)); // lint:allow(no-bare-numeric) reason: slot 0 trunk 0; tracked: #72
+        let trunk_index = result.trunk_index.as_ref();
+        assert_eq!(trunk_index[0], USize(0)); // lint:allow(no-bare-numeric) reason: slot 0 trunk 0; tracked: #72
         let mut i: usize = 1; // lint:allow(no-bare-numeric) reason: loop start; tracked: #72
-        while i < cap_size(MAX_LANES) {
-            assert_eq!(result.trunk_index[i], NO_TRUNK);
+        while i < LANES {
+            assert_eq!(trunk_index[i], NO_TRUNK);
             i += 1; // lint:allow(no-bare-numeric) reason: loop increment; tracked: #72
         }
     }
@@ -207,9 +179,10 @@ mod assign_cores_tests {
         let plan = plan_with_phase_trunks(&[3]); // lint:allow(no-bare-numeric) reason: fixture trunk count; tracked: #72
         let result = assign_cores(USize(0), &plan); // lint:allow(no-bare-numeric) reason: zero-core fixture; tracked: #72
         assert_eq!(result.assigned_count, USize::ZERO);
+        let trunk_index = result.trunk_index.as_ref();
         let mut i: usize = 0; // lint:allow(no-bare-numeric) reason: loop index; tracked: #72
-        while i < cap_size(MAX_LANES) {
-            assert_eq!(result.trunk_index[i], NO_TRUNK);
+        while i < LANES {
+            assert_eq!(trunk_index[i], NO_TRUNK);
             i += 1; // lint:allow(no-bare-numeric) reason: loop increment; tracked: #72
         }
     }
@@ -219,14 +192,15 @@ mod assign_cores_tests {
         let plan = plan_with_phase_trunks(&[2, 3, 1]); // lint:allow(no-bare-numeric) reason: fixture trunk counts; tracked: #72
         let result = assign_cores(USize(4), &plan); // lint:allow(no-bare-numeric) reason: test core count; tracked: #72
         // max_trunks_needed = 3 (middle phase), bounded by 4 cores
-        // and 8 MAX_LANES, so width = 3.
+        // and 8 lanes, so width = 3.
         assert_eq!(result.assigned_count, USize(3)); // lint:allow(no-bare-numeric) reason: width=3 expected; tracked: #72
-        assert_eq!(result.trunk_index[0], USize(0)); // lint:allow(no-bare-numeric) reason: slot 0 trunk 0; tracked: #72
-        assert_eq!(result.trunk_index[1], USize(1)); // lint:allow(no-bare-numeric) reason: slot 1 trunk 1; tracked: #72
-        assert_eq!(result.trunk_index[2], USize(2)); // lint:allow(no-bare-numeric) reason: slot 2 trunk 2; tracked: #72
+        let trunk_index = result.trunk_index.as_ref();
+        assert_eq!(trunk_index[0], USize(0)); // lint:allow(no-bare-numeric) reason: slot 0 trunk 0; tracked: #72
+        assert_eq!(trunk_index[1], USize(1)); // lint:allow(no-bare-numeric) reason: slot 1 trunk 1; tracked: #72
+        assert_eq!(trunk_index[2], USize(2)); // lint:allow(no-bare-numeric) reason: slot 2 trunk 2; tracked: #72
         let mut i: usize = 3; // lint:allow(no-bare-numeric) reason: loop start; tracked: #72
-        while i < cap_size(MAX_LANES) {
-            assert_eq!(result.trunk_index[i], NO_TRUNK);
+        while i < LANES {
+            assert_eq!(trunk_index[i], NO_TRUNK);
             i += 1; // lint:allow(no-bare-numeric) reason: loop increment; tracked: #72
         }
     }

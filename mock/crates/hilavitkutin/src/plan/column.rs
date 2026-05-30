@@ -6,8 +6,10 @@
 //! store-buffer-friendly tail of the dispatch function.
 
 use arvo::strategy::Identity;
-use arvo::{Cap, USize};
-use arvo_tensor::cap_size;
+use arvo::USize;
+use arvo_tensor::Capacity;
+
+use crate::plan::dims::PlanDims;
 
 /// How a column is used by a given fiber.
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
@@ -30,41 +32,61 @@ impl Default for ColumnClassification {
 ///
 /// `class[f][c]` is the classification of column `c` within fiber `f`.
 /// `column_count[f]` records how many of fiber `f`'s slots are
-/// populated; columns past that index are ignored.
+/// populated; columns past that index are ignored. Sized by the fiber
+/// and column-per-fiber capacities projected from one `D: PlanDims`.
 ///
 /// Plan-stage output of step 11 (`classify_columns`).
-#[derive(Copy, Clone, Debug)]
-pub struct ColumnClassMap<const MAX_FIBERS: Cap, const MAX_COLUMNS_PER_FIBER: Cap>
-where
-    [(); cap_size(MAX_FIBERS)]:,
-    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
-{
-    pub class: [[ColumnClassification; cap_size(MAX_COLUMNS_PER_FIBER)]; cap_size(MAX_FIBERS)],
-    pub column_count: [USize; cap_size(MAX_FIBERS)],
+pub struct ColumnClassMap<D: PlanDims> {
+    pub class: <D::Fibers as Capacity>::Array<
+        <D::ColumnsPerFiber as Capacity>::Array<ColumnClassification>,
+    >,
+    pub column_count: <D::Fibers as Capacity>::Array<USize>,
 }
 
-impl<const MAX_FIBERS: Cap, const MAX_COLUMNS_PER_FIBER: Cap>
-    ColumnClassMap<MAX_FIBERS, MAX_COLUMNS_PER_FIBER>
+impl<D: PlanDims> ColumnClassMap<D>
 where
-    [(); cap_size(MAX_FIBERS)]:,
-    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
+    <D::ColumnsPerFiber as Capacity>::Array<ColumnClassification>: Copy,
 {
-    pub const fn new() -> Self {
+    pub fn new() -> Self {
         Self {
-            class: [[ColumnClassification::Internal; cap_size(MAX_COLUMNS_PER_FIBER)];
-                cap_size(MAX_FIBERS)],
-            column_count: [USize::ZERO; cap_size(MAX_FIBERS)],
+            class: <D::Fibers as Capacity>::filled(
+                <D::ColumnsPerFiber as Capacity>::filled(ColumnClassification::Internal),
+            ),
+            column_count: <D::Fibers as Capacity>::filled(USize::ZERO),
         }
     }
 }
 
-impl<const MAX_FIBERS: Cap, const MAX_COLUMNS_PER_FIBER: Cap> Default
-    for ColumnClassMap<MAX_FIBERS, MAX_COLUMNS_PER_FIBER>
+impl<D: PlanDims> Copy for ColumnClassMap<D>
 where
-    [(); cap_size(MAX_FIBERS)]:,
-    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
+    <D::Fibers as Capacity>::Array<<D::ColumnsPerFiber as Capacity>::Array<ColumnClassification>>:
+        Copy,
+    <D::Fibers as Capacity>::Array<USize>: Copy,
+{
+}
+
+impl<D: PlanDims> Clone for ColumnClassMap<D>
+where
+    <D::Fibers as Capacity>::Array<<D::ColumnsPerFiber as Capacity>::Array<ColumnClassification>>:
+        Copy,
+    <D::Fibers as Capacity>::Array<USize>: Copy,
+{
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<D: PlanDims> Default for ColumnClassMap<D>
+where
+    <D::ColumnsPerFiber as Capacity>::Array<ColumnClassification>: Copy,
 {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl<D: PlanDims> core::fmt::Debug for ColumnClassMap<D> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("ColumnClassMap").finish_non_exhaustive()
     }
 }

@@ -1,22 +1,36 @@
 //! Plan-stage type surface tests (5a2 skeleton).
+//!
+//! The plan-stage types are now sized by the `Capacity` TYPE (`Dim<N>`),
+//! so no `generic_const_exprs` gate is needed: the capacities are types,
+//! not `Cap` const generics, and the backing arrays are plain `[T; N]`.
 
-// The lifted Cap-dimension types carry `[(); cap_size(N)]:` bounds. A
-// downstream crate that instantiates them must itself enable generic_const_exprs
-// so its own trait solver can normalise the bounds, mirroring arvo's cross-crate
-// tests. adt_const_params is needed only where a Cap const-generic param is
-// declared (the engine crate root), not where a lifted type is named. WATCH-tier
-// per the unstable-feature soundness sweep (#626).
-#![feature(generic_const_exprs)]
-#![allow(incomplete_features)]
-
-use arvo::{Cap, Identity, USize};
-use arvo_tensor::cap;
+use arvo::{Identity, USize};
+use arvo_tensor::Dim;
 use hilavitkutin::plan::{
-    AccessMask, ColumnClassification, DependencyGraph, FiberId, PhaseId, UnitId,
+    AccessMask, ColumnClassification, DependencyGraph, FiberId, PhaseId, PlanDims, UnitId,
 };
 
-const C8: Cap = cap(8);
-const C16: Cap = cap(16);
+/// A store capacity of sixteen for the access-mask fixtures.
+type C16 = Dim<16>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test store capacity; Dim<N> array-length root; tracked: #649
+
+/// Eight units, sixteen edges for the dependency-graph fixture.
+struct TestDims;
+
+impl PlanDims for TestDims {
+    type Units = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Stores = Dim<16>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Edges = Dim<16>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Phases = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Trunks = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type TrunksPerPhase = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Fibers = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Lanes = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Columns = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type ComponentsPerTrunk = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type UnitsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type ColumnsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Cores = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+}
 
 #[test]
 fn unit_id_copy_eq_default() {
@@ -67,8 +81,8 @@ fn access_mask_empty_set_contains_overlaps() {
 
 #[test]
 fn dependency_graph_default_and_edges() {
-    // CSR graph: MAX_UNITS=8, MAX_EDGES=16.
-    let mut g: DependencyGraph<C8, C16> = DependencyGraph::new();
+    // CSR graph sized by TestDims: Units=8, Edges=16.
+    let mut g: DependencyGraph<TestDims> = DependencyGraph::new();
     assert!(!g.has_edge(USize::ZERO, USize(1)).0); // lint:allow(no-bare-numeric) reason: node index; tracked: #427
     assert!(!g.has_edge(USize(3), USize(5)).0); // lint:allow(no-bare-numeric) reason: node index; tracked: #427
 

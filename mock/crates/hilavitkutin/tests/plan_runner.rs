@@ -3,42 +3,43 @@
 //! Exercises the chain end-to-end on tiny synthetic inputs to confirm
 //! the surface holds together and basic invariants (empty input,
 //! linear chain, multi-fiber split) produce sane plans.
+//!
+//! The plan dimensions arrive bundled as one `TestDims: PlanDims`, sized
+//! by `Capacity` TYPES, so no `generic_const_exprs` gate is needed: the
+//! dimensions are types, not `Cap` const generics.
 
-// The lifted Cap-dimension types carry `[(); cap_size(N)]:` bounds. A
-// downstream crate that instantiates them must itself enable generic_const_exprs
-// so its own trait solver can normalise the bounds, mirroring arvo's cross-crate
-// tests. adt_const_params is needed only where a Cap const-generic param is
-// declared (the engine crate root), not where a lifted type is named. WATCH-tier
-// per the unstable-feature soundness sweep (#626).
-#![feature(generic_const_exprs)]
-#![allow(incomplete_features)]
-
-use arvo::{Cap, Identity, USize};
-use arvo_tensor::cap;
+use arvo::{Identity, USize};
+use arvo_tensor::Dim;
 use hilavitkutin::plan::{
-    compute_execution_plan, steps, DependencyGraph, EdgeKind, PhaseConfig, PlanInputs,
+    compute_execution_plan, steps, DependencyGraph, EdgeKind, PhaseConfig, PlanDims, PlanInputs,
 };
 use notko::Outcome;
 
-const MU: Cap = cap(8);
-const MS: Cap = cap(4);
-const ME: Cap = cap(16);
-const MP: Cap = cap(4);
-const MT: Cap = cap(4);
-const MF: Cap = cap(4);
-const ML: Cap = cap(4);
-const MC: Cap = cap(8);
-const MCT: Cap = cap(4);
-const MUF: Cap = cap(4);
-const MCF: Cap = cap(4);
-const MTP: Cap = cap(4);
+/// Plan dimensions for the smoke tests.
+struct TestDims;
+
+impl PlanDims for TestDims {
+    type Units = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Stores = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Edges = Dim<16>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Phases = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Trunks = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type TrunksPerPhase = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Fibers = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Lanes = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Columns = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type ComponentsPerTrunk = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type UnitsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type ColumnsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Cores = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+}
+
+type Inputs = PlanInputs<<TestDims as PlanDims>::Units, <TestDims as PlanDims>::Stores>;
 
 #[test]
 fn empty_input_yields_empty_plan() {
-    let inputs: PlanInputs<MU, MS> = PlanInputs::new();
-    let result = compute_execution_plan::<
-        MU, MS, ME, MP, MT, MF, ML, MC, MCT, MUF, MCF, MTP,
-    >(&inputs);
+    let inputs: Inputs = PlanInputs::new();
+    let result = compute_execution_plan::<TestDims>(&inputs);
     match result {
         Outcome::Ok(plan) => {
             assert_eq!(plan.unit_count, USize::ZERO);
@@ -50,12 +51,10 @@ fn empty_input_yields_empty_plan() {
 
 #[test]
 fn single_unit_yields_one_phase_one_fiber() {
-    let mut inputs: PlanInputs<MU, MS> = PlanInputs::new();
+    let mut inputs: Inputs = PlanInputs::new();
     inputs.unit_count = USize(1); // lint:allow(no-bare-numeric) reason: single-unit smoke; tracked: #427
     inputs.record_count = USize(1024); // lint:allow(no-bare-numeric) reason: smoke record count; tracked: #427
-    let result = compute_execution_plan::<
-        MU, MS, ME, MP, MT, MF, ML, MC, MCT, MUF, MCF, MTP,
-    >(&inputs);
+    let result = compute_execution_plan::<TestDims>(&inputs);
     match result {
         Outcome::Ok(plan) => {
             assert_eq!(plan.unit_count, USize(1)); // lint:allow(no-bare-numeric) reason: roundtrip; tracked: #427
@@ -72,13 +71,13 @@ fn topo_sort_detects_two_node_cycle() {
     // `build_dag` walks `i < j` strictly so it can never produce a
     // cycle from inputs; this test exercises the defensive path that
     // the runner uses to translate a cyclic graph into PlanError::Cycle.
-    let mut g: DependencyGraph<MU, ME> = DependencyGraph::new();
+    let mut g: DependencyGraph<TestDims> = DependencyGraph::new();
     g.add_edge_kind(USize(0), USize(1), EdgeKind::Read); // lint:allow(no-bare-numeric) reason: hand-crafted cycle smoke; tracked: #427
     g.add_edge_kind(USize(1), USize(0), EdgeKind::Read); // lint:allow(no-bare-numeric) reason: hand-crafted cycle smoke; tracked: #427
     // Both units have edges; unit_count advanced to 2.
     assert_eq!(g.unit_count, USize(2)); // lint:allow(no-bare-numeric) reason: invariant check; tracked: #427
 
-    let (_topo, placed) = steps::topo_sort::<MU, ME>(&g);
+    let (_topo, placed) = steps::topo_sort::<TestDims>(&g);
     // Cycle means Kahn's iteration cannot place every unit.
     assert!(placed.0 < g.unit_count.0, "expected partial placement under cycle; got placed={}", placed.0);
 }
@@ -89,7 +88,8 @@ fn size_morsels_distributes_remainder_across_first_fibers() {
     // invariant: every record is assigned somewhere. The prior
     // integer-divide-only shape returned [3, 3, 3] and silently
     // dropped record index 9.
-    let sizes = steps::size_morsels::<MF>(USize(10), USize(3)); // lint:allow(no-bare-numeric) reason: smoke fixture; tracked: #427
+    let sizes = steps::size_morsels::<TestDims>(USize(10), USize(3)); // lint:allow(no-bare-numeric) reason: smoke fixture; tracked: #427
+    let sizes = sizes.as_ref();
     assert_eq!(sizes[0], USize(4)); // lint:allow(no-bare-numeric) reason: expected first fiber; tracked: #427
     assert_eq!(sizes[1], USize(3)); // lint:allow(no-bare-numeric) reason: expected second fiber; tracked: #427
     assert_eq!(sizes[2], USize(3)); // lint:allow(no-bare-numeric) reason: expected third fiber; tracked: #427
@@ -101,28 +101,26 @@ fn size_morsels_distributes_remainder_across_first_fibers() {
 fn topo_sort_places_all_for_linear_chain() {
     // Linear A -> B chain. Verifies the cycle-detection signal is not
     // a false positive for valid DAGs.
-    let mut g: DependencyGraph<MU, ME> = DependencyGraph::new();
+    let mut g: DependencyGraph<TestDims> = DependencyGraph::new();
     g.add_edge_kind(USize(0), USize(1), EdgeKind::Read); // lint:allow(no-bare-numeric) reason: linear-chain smoke; tracked: #427
     // Pad the row entry for unit 1 so unit_count reaches 2.
-    g.row_offsets[1] = g.edge_count; // lint:allow(no-bare-numeric) reason: CSR padding for trailing empty row; tracked: #427
+    g.row_offsets.as_mut()[1] = g.edge_count; // lint:allow(no-bare-numeric) reason: CSR padding for trailing empty row; tracked: #427
     g.unit_count = USize(2); // lint:allow(no-bare-numeric) reason: invariant set; tracked: #427
 
-    let (_topo, placed) = steps::topo_sort::<MU, ME>(&g);
+    let (_topo, placed) = steps::topo_sort::<TestDims>(&g);
     assert_eq!(placed, USize(2)); // lint:allow(no-bare-numeric) reason: full placement expected; tracked: #427
 }
 
 #[test]
 fn phase_config_heuristics_apply_low_record_count() {
-    let mut inputs: PlanInputs<MU, MS> = PlanInputs::new();
+    let mut inputs: Inputs = PlanInputs::new();
     inputs.unit_count = USize(3); // lint:allow(no-bare-numeric) reason: three-unit smoke; tracked: #427
     inputs.record_count = USize(100); // lint:allow(no-bare-numeric) reason: small record count picks MaxFuse; tracked: #427
-    let result = compute_execution_plan::<
-        MU, MS, ME, MP, MT, MF, ML, MC, MCT, MUF, MCF, MTP,
-    >(&inputs);
+    let result = compute_execution_plan::<TestDims>(&inputs);
     match result {
         Outcome::Ok(plan) => {
             // First phase config should be MaxFuse for low record counts.
-            assert_eq!(plan.phases[0].config, PhaseConfig::MaxFuse);
+            assert_eq!(plan.phases.as_ref()[0].config, PhaseConfig::MaxFuse);
         }
         Outcome::Err(_) => panic!("three-unit plan should succeed"),
     }

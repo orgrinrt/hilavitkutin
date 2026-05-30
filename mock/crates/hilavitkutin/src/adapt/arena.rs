@@ -13,33 +13,29 @@
 //!
 //! This module ships the type carrier today; the field layout +
 //! runtime population land alongside `Scheduler::run()` (Pass 6) and
-//! the bench-validated EMA path (Pass 7). The const-generic shape +
+//! the bench-validated EMA path (Pass 7). The capacity-typed shape +
 //! arena pointer surface here is enough for the scheduler typestate
 //! to thread.
 
-use arvo::Cap;
+use arvo_tensor::Capacity;
 use core::marker::PhantomData;
 
-/// Per-pass adapt-metrics arena. Const-generic over the
-/// configuration's worst-case widths. The fields land alongside the
-/// `Scheduler::run` body in Pass 6.
+/// Per-pass adapt-metrics arena. Generic over the configuration's
+/// worst-case capacities (fibers, cores, phases). The fields land
+/// alongside the `Scheduler::run` body in Pass 6.
 ///
 /// `'arena` ties the storage borrow to the plan-stage scratch buffer
 /// the scheduler owns; dropping the scheduler ahead of any reader
 /// becomes a borrow-check error rather than a use-after-free.
-pub(crate) struct AdaptArena<
-    'arena,
-    const MAX_FIBERS: Cap,
-    const MAX_CORES: Cap,
-    const MAX_PHASES: Cap,
-> {
+pub(crate) struct AdaptArena<'arena, CF: Capacity, CC: Capacity, CP: Capacity> {
     _arena: PhantomData<&'arena ()>,
+    _dims: PhantomData<(CF, CC, CP)>,
 }
 
-impl<'arena, const F: Cap, const C: Cap, const P: Cap> AdaptArena<'arena, F, C, P> {
+impl<'arena, CF: Capacity, CC: Capacity, CP: Capacity> AdaptArena<'arena, CF, CC, CP> {
     /// Allocate a fresh arena. Implementation lands in Pass 6 alongside
     /// the scheduler's plan-stage scratch buffer.
     pub(crate) const fn new() -> Self {
-        Self { _arena: PhantomData }
+        Self { _arena: PhantomData, _dims: PhantomData }
     }
 }

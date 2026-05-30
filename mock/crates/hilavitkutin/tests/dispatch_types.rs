@@ -1,22 +1,19 @@
 //! Dispatch-stage type surface tests (5a3 skeleton).
+//!
+//! The dispatch types are now sized by the `Capacity` TYPE (`Dim<N>`), so
+//! no `generic_const_exprs` gate is needed: the capacity is a type, not a
+//! `Cap` const generic, and the backing arrays are plain min-const-generic
+//! `[T; N]`.
 
-// The lifted Cap-dimension dispatch types carry `[(); cap_size(N)]:` bounds. A
-// downstream crate that instantiates them must itself enable generic_const_exprs
-// so its own trait solver can normalise the bounds, mirroring arvo's cross-crate
-// tests. adt_const_params is needed only where a Cap const-generic param is
-// declared (the engine crate root), not where a lifted type is named. WATCH-tier
-// per the unstable-feature soundness sweep (#626).
-#![feature(generic_const_exprs)]
-#![allow(incomplete_features)]
-
-use arvo::{Bool, Cap, Identity, USize};
-use arvo_tensor::cap;
+use arvo::{Bool, Identity, USize};
+use arvo_tensor::Dim;
 use hilavitkutin::dispatch::{
     CoreDispatch, DispatchApproach, FiberDispatch, MorselRange, ProgressCounter, SyncPoint,
 };
 use hilavitkutin::plan::FiberId;
 
-const C4: Cap = cap(4);
+/// A fixed capacity of four for the dispatch records under test.
+type C4 = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity literal; Dim<N> array-length root; tracked: #649
 
 #[derive(Default)]
 struct StubCtx;

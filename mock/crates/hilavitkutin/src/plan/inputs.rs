@@ -8,56 +8,72 @@
 //! (USize-shaped, canonical engine id type).
 
 use arvo::strategy::Identity;
-use arvo::{Bool, Cap, USize};
-use arvo_tensor::cap_size;
+use arvo::{Bool, USize};
+use arvo_tensor::Capacity;
 
 use super::access::AccessMask;
 
-/// Descriptor bundle for `build_plan`. `MAX_UNITS` bounds the
-/// number of WUs; `MAX_STORES` bounds the number of distinct
-/// stores accessible to any unit.
-#[derive(Copy, Clone, Debug)]
-pub struct PlanInputs<const MAX_UNITS: Cap, const MAX_STORES: Cap>
-where
-    [(); cap_size(MAX_UNITS)]:,
-{
+/// Descriptor bundle for `build_plan`. `CU` is the unit capacity
+/// (number of WUs); `CS` is the store capacity (number of distinct
+/// stores accessible to any unit).
+pub struct PlanInputs<CU: Capacity, CS: Capacity> {
     /// Union of read + write stores per unit.
-    pub access: [AccessMask<MAX_STORES>; cap_size(MAX_UNITS)],
+    pub access: <CU as Capacity>::Array<AccessMask<CS>>,
     /// Write-only mask per unit.
-    pub writes: [AccessMask<MAX_STORES>; cap_size(MAX_UNITS)],
+    pub writes: <CU as Capacity>::Array<AccessMask<CS>>,
     /// Read-only mask per unit.
-    pub reads: [AccessMask<MAX_STORES>; cap_size(MAX_UNITS)],
+    pub reads: <CU as Capacity>::Array<AccessMask<CS>>,
     /// Commutativity flag per unit (COMMUTATIVE scheduling hint).
-    pub commutative: [Bool; cap_size(MAX_UNITS)],
-    /// Number of units actually populated (0..=MAX_UNITS).
+    pub commutative: <CU as Capacity>::Array<Bool>,
+    /// Number of units actually populated (0..=unit capacity).
     pub unit_count: USize,
     /// Estimated record count per frame. Drives strategy
     /// selection (domain 21) and morsel sizing (domain 12).
     pub record_count: USize,
 }
 
-impl<const MAX_UNITS: Cap, const MAX_STORES: Cap> PlanInputs<MAX_UNITS, MAX_STORES>
-where
-    [(); cap_size(MAX_UNITS)]:,
-{
+impl<CU: Capacity, CS: Capacity> PlanInputs<CU, CS> {
     /// Zero-filled default: no units registered, no records.
-    pub const fn new() -> Self {
+    pub fn new() -> Self {
         Self {
-            access: [AccessMask::empty(); cap_size(MAX_UNITS)],
-            writes: [AccessMask::empty(); cap_size(MAX_UNITS)],
-            reads: [AccessMask::empty(); cap_size(MAX_UNITS)],
-            commutative: [Bool::FALSE; cap_size(MAX_UNITS)],
+            access: <CU as Capacity>::filled(AccessMask::empty()),
+            writes: <CU as Capacity>::filled(AccessMask::empty()),
+            reads: <CU as Capacity>::filled(AccessMask::empty()),
+            commutative: <CU as Capacity>::filled(Bool::FALSE),
             unit_count: USize::ZERO,
             record_count: USize::ZERO,
         }
     }
 }
 
-impl<const MAX_UNITS: Cap, const MAX_STORES: Cap> Default for PlanInputs<MAX_UNITS, MAX_STORES>
+impl<CU: Capacity, CS: Capacity> Copy for PlanInputs<CU, CS>
 where
-    [(); cap_size(MAX_UNITS)]:,
+    <CU as Capacity>::Array<AccessMask<CS>>: Copy,
+    <CU as Capacity>::Array<Bool>: Copy,
 {
+}
+
+impl<CU: Capacity, CS: Capacity> Clone for PlanInputs<CU, CS>
+where
+    <CU as Capacity>::Array<AccessMask<CS>>: Copy,
+    <CU as Capacity>::Array<Bool>: Copy,
+{
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<CU: Capacity, CS: Capacity> Default for PlanInputs<CU, CS> {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl<CU: Capacity, CS: Capacity> core::fmt::Debug for PlanInputs<CU, CS> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("PlanInputs")
+            .field("unit_count", &self.unit_count.0)
+            .field("record_count", &self.record_count.0)
+            .finish_non_exhaustive()
     }
 }

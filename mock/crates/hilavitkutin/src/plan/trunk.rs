@@ -6,11 +6,12 @@
 //! (lateral fan-in from parallel fibers).
 
 use arvo::strategy::Identity;
-use arvo::{Cap, USize};
-use arvo_tensor::cap_size;
+use arvo::USize;
+use arvo_tensor::Capacity;
 
 use hilavitkutin_api::TrunkId;
 
+use crate::plan::dims::PlanDims;
 use crate::plan::fiber::Fiber;
 
 /// Connected-component (block) partition of the dependency graph.
@@ -20,34 +21,46 @@ use crate::plan::fiber::Fiber;
 /// blocks; `block_of_unit[i]` is the block id of the unit at index
 /// `i`. Each block is an independent sub-graph sharing no edges with
 /// the others, hence column-disjoint: blocks map to the trunks that
-/// run with zero sync within a phase.
-#[derive(Copy, Clone, Debug)]
-pub struct BlockPartition<const MAX_UNITS: Cap>
-where
-    [(); cap_size(MAX_UNITS)]:,
-{
+/// run with zero sync within a phase. Sized by the unit capacity `C`.
+pub struct BlockPartition<C: Capacity> {
     /// Number of distinct blocks (connected components).
     pub block_count: USize,
     /// Block id per unit, indexed by unit index.
-    pub block_of_unit: [USize; cap_size(MAX_UNITS)],
+    pub block_of_unit: <C as Capacity>::Array<USize>,
 }
 
-impl<const MAX_UNITS: Cap> BlockPartition<MAX_UNITS>
-where
-    [(); cap_size(MAX_UNITS)]:,
-{
+impl<C: Capacity> BlockPartition<C> {
     /// Empty partition (zero blocks). The default before step 5 runs.
-    pub const fn new() -> Self {
-        Self { block_count: USize::ZERO, block_of_unit: [USize::ZERO; cap_size(MAX_UNITS)] }
+    pub fn new() -> Self {
+        Self {
+            block_count: USize::ZERO,
+            block_of_unit: <C as Capacity>::filled(USize::ZERO),
+        }
     }
 }
 
-impl<const MAX_UNITS: Cap> Default for BlockPartition<MAX_UNITS>
+impl<C: Capacity> Copy for BlockPartition<C> where <C as Capacity>::Array<USize>: Copy {}
+
+impl<C: Capacity> Clone for BlockPartition<C>
 where
-    [(); cap_size(MAX_UNITS)]:,
+    <C as Capacity>::Array<USize>: Copy,
 {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<C: Capacity> Default for BlockPartition<C> {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl<C: Capacity> core::fmt::Debug for BlockPartition<C> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("BlockPartition")
+            .field("block_count", &self.block_count.0)
+            .finish_non_exhaustive()
     }
 }
 
@@ -100,90 +113,98 @@ impl Default for Bridge {
 ///
 /// The plan stage's block-diagonalisation pass (step 6) emits the
 /// component sequence. Each component carries the full information
-/// needed for codegen without further analysis.
-#[derive(Copy, Clone, Debug)]
-pub enum TrunkComponent<const MAX_UNITS_PER_FIBER: Cap, const MAX_COLUMNS_PER_FIBER: Cap>
-where
-    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
-    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
-{
-    Fiber(Fiber<MAX_UNITS_PER_FIBER, MAX_COLUMNS_PER_FIBER>),
+/// needed for codegen without further analysis. Sized via the fiber's
+/// own `D: PlanDims` projections.
+pub enum TrunkComponent<D: PlanDims> {
+    Fiber(Fiber<D>),
     Branch(Branch),
     Bridge(Bridge),
 }
 
-impl<const MAX_UNITS_PER_FIBER: Cap, const MAX_COLUMNS_PER_FIBER: Cap>
-    TrunkComponent<MAX_UNITS_PER_FIBER, MAX_COLUMNS_PER_FIBER>
-where
-    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
-    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
-{
+impl<D: PlanDims> TrunkComponent<D> {
     /// Default value for array initialisation: a zero-shaped fiber.
     /// Real values land via the plan-stage block-diagonalisation pass.
-    pub const fn empty_fiber() -> Self {
+    pub fn empty_fiber() -> Self {
         Self::Fiber(Fiber::new())
     }
 }
 
-impl<const MAX_UNITS_PER_FIBER: Cap, const MAX_COLUMNS_PER_FIBER: Cap> Default
-    for TrunkComponent<MAX_UNITS_PER_FIBER, MAX_COLUMNS_PER_FIBER>
+impl<D: PlanDims> Copy for TrunkComponent<D> where Fiber<D>: Copy {}
+
+impl<D: PlanDims> Clone for TrunkComponent<D>
 where
-    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
-    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
+    Fiber<D>: Copy,
 {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<D: PlanDims> Default for TrunkComponent<D> {
     fn default() -> Self {
         Self::empty_fiber()
     }
 }
 
-/// A trunk: components running together within a phase.
-#[derive(Copy, Clone, Debug)]
-pub struct Trunk<
-    const MAX_COMPONENTS_PER_TRUNK: Cap,
-    const MAX_UNITS_PER_FIBER: Cap,
-    const MAX_COLUMNS_PER_FIBER: Cap,
->
-where
-    [(); cap_size(MAX_COMPONENTS_PER_TRUNK)]:,
-    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
-    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
-{
+impl<D: PlanDims> core::fmt::Debug for TrunkComponent<D> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::Fiber(fib) => f.debug_tuple("Fiber").field(fib).finish(),
+            Self::Branch(b) => f.debug_tuple("Branch").field(b).finish(),
+            Self::Bridge(b) => f.debug_tuple("Bridge").field(b).finish(),
+        }
+    }
+}
+
+/// A trunk: components running together within a phase. Sized by the
+/// component-per-trunk capacity projected from `D: PlanDims`.
+pub struct Trunk<D: PlanDims> {
     pub id: TrunkId,
-    pub components: [TrunkComponent<MAX_UNITS_PER_FIBER, MAX_COLUMNS_PER_FIBER>;
-        cap_size(MAX_COMPONENTS_PER_TRUNK)],
+    pub components: <D::ComponentsPerTrunk as Capacity>::Array<TrunkComponent<D>>,
     pub component_count: USize,
 }
 
-impl<
-        const MAX_COMPONENTS_PER_TRUNK: Cap,
-        const MAX_UNITS_PER_FIBER: Cap,
-        const MAX_COLUMNS_PER_FIBER: Cap,
-    > Trunk<MAX_COMPONENTS_PER_TRUNK, MAX_UNITS_PER_FIBER, MAX_COLUMNS_PER_FIBER>
+impl<D: PlanDims> Trunk<D>
 where
-    [(); cap_size(MAX_COMPONENTS_PER_TRUNK)]:,
-    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
-    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
+    Fiber<D>: Copy,
 {
-    pub const fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             id: TrunkId::ZERO,
-            components: [TrunkComponent::empty_fiber(); cap_size(MAX_COMPONENTS_PER_TRUNK)],
+            components: <D::ComponentsPerTrunk as Capacity>::filled(TrunkComponent::empty_fiber()),
             component_count: USize::ZERO,
         }
     }
 }
 
-impl<
-        const MAX_COMPONENTS_PER_TRUNK: Cap,
-        const MAX_UNITS_PER_FIBER: Cap,
-        const MAX_COLUMNS_PER_FIBER: Cap,
-    > Default for Trunk<MAX_COMPONENTS_PER_TRUNK, MAX_UNITS_PER_FIBER, MAX_COLUMNS_PER_FIBER>
+impl<D: PlanDims> Copy for Trunk<D> where
+    <D::ComponentsPerTrunk as Capacity>::Array<TrunkComponent<D>>: Copy
+{
+}
+
+impl<D: PlanDims> Clone for Trunk<D>
 where
-    [(); cap_size(MAX_COMPONENTS_PER_TRUNK)]:,
-    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
-    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
+    <D::ComponentsPerTrunk as Capacity>::Array<TrunkComponent<D>>: Copy,
+{
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<D: PlanDims> Default for Trunk<D>
+where
+    Fiber<D>: Copy,
 {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl<D: PlanDims> core::fmt::Debug for Trunk<D> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("Trunk")
+            .field("id", &self.id)
+            .field("component_count", &self.component_count.0)
+            .finish_non_exhaustive()
     }
 }

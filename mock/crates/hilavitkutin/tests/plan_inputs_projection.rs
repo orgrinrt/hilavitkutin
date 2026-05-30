@@ -11,19 +11,17 @@
 //! fixtures (the `Ctx` GAT contract makes ad-hoc test units heavy); that
 //! is tracked as a follow-up under the test-helper work (#81).
 
-// `AccessMask<MAX_STORES>` and the projection carry `Cap` const generics;
-// a downstream crate naming them enables generic_const_exprs so its own
-// solver normalises the bounds, mirroring the sibling plan tests.
-#![feature(generic_const_exprs)]
-#![allow(incomplete_features)]
+// `AccessMask<CS>` and the projection are now sized by the `Capacity` TYPE
+// (`Dim<N>`), so no `generic_const_exprs` gate is needed: the store
+// capacity is a type, not a `Cap` const generic.
 
-use arvo::{Bool, Cap, USize};
-use arvo_tensor::cap;
+use arvo::{Bool, USize};
+use arvo_tensor::Dim;
 use hilavitkutin::plan::project::project_access_set;
 use hilavitkutin::plan::AccessMask;
 use hilavitkutin_api::access::{Cons, Empty};
 
-const STORES: Cap = cap(8); // lint:allow(no-bare-numeric) reason: test mask width; tracked: #121
+type Stores8 = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test store capacity; Dim<N> array-length root; tracked: #649
 
 // Store marker types. Their position in `Stores` is their bit index.
 struct SA;
@@ -43,7 +41,7 @@ const B3: USize = USize(3); // lint:allow(no-bare-numeric) reason: store bit ind
 fn projects_members_to_their_store_positions() {
     // Access set {SA, SC} -> bits 0 and 2; nothing else.
     type Set = Cons<SA, Cons<SC, Empty>>;
-    let m: AccessMask<STORES> = project_access_set::<Set, Stores, _, STORES>();
+    let m: AccessMask<Stores8> = project_access_set::<Set, Stores, _, Stores8>();
     assert_eq!(m.contains(B0), Bool::TRUE, "SA at bit 0");
     assert_eq!(m.contains(B2), Bool::TRUE, "SC at bit 2");
     assert_eq!(m.contains(B1), Bool::FALSE, "SB not in the set");
@@ -52,7 +50,7 @@ fn projects_members_to_their_store_positions() {
 
 #[test]
 fn empty_access_set_projects_to_empty_mask() {
-    let m: AccessMask<STORES> = project_access_set::<Empty, Stores, _, STORES>();
+    let m: AccessMask<Stores8> = project_access_set::<Empty, Stores, _, Stores8>();
     assert_eq!(m.is_empty(), Bool::TRUE);
 }
 
@@ -62,8 +60,8 @@ fn same_store_lands_on_same_bit_across_sets() {
     // plan stage sees the write/read overlap as a dependency edge.
     type WriteSet = Cons<SB, Empty>;
     type ReadSet = Cons<SB, Empty>;
-    let w: AccessMask<STORES> = project_access_set::<WriteSet, Stores, _, STORES>();
-    let r: AccessMask<STORES> = project_access_set::<ReadSet, Stores, _, STORES>();
+    let w: AccessMask<Stores8> = project_access_set::<WriteSet, Stores, _, Stores8>();
+    let r: AccessMask<Stores8> = project_access_set::<ReadSet, Stores, _, Stores8>();
     assert_eq!(w.contains(B1), Bool::TRUE);
     assert_eq!(r.contains(B1), Bool::TRUE);
     assert_eq!(w.overlaps(&r), Bool::TRUE, "shared store SB => overlap (dep edge)");
@@ -75,8 +73,8 @@ fn distinct_sets_project_to_distinct_masks() {
     // only bit 3; {SA} sets only bit 0; they do not overlap.
     type SetD = Cons<SD, Empty>;
     type SetA = Cons<SA, Empty>;
-    let d: AccessMask<STORES> = project_access_set::<SetD, Stores, _, STORES>();
-    let a: AccessMask<STORES> = project_access_set::<SetA, Stores, _, STORES>();
+    let d: AccessMask<Stores8> = project_access_set::<SetD, Stores, _, Stores8>();
+    let a: AccessMask<Stores8> = project_access_set::<SetA, Stores, _, Stores8>();
     assert_eq!(d.contains(B3), Bool::TRUE);
     assert_eq!(d.contains(B0), Bool::FALSE);
     assert_eq!(a.contains(B0), Bool::TRUE);

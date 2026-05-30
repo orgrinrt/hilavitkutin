@@ -12,9 +12,15 @@
 #![no_std]
 #![allow(incomplete_features)]
 // generic_const_exprs is WATCH-tier per the unstable-feature soundness sweep
-// (task #626) and sound for this array-length usage. The engine becomes a GCE
-// user via the cap-bridge that lifts plan dimensions to arvo::Cap.
-#![feature(adt_const_params)]
+// (task #626). Post the capacity-as-type migration (#652) the engine's own
+// plan/thread/dispatch arrays are sized by the arvo `Capacity` TYPE, so no
+// `cap_size` sits in an array-length position internally. The one residual GCE
+// use is `core_program::synthesise_core_programs`, which projects per-core
+// capacities into the unmigrated hilavitkutin-api `CoreProgram`'s `usize`
+// min-const-generic positions via `CoreProgram<{ cap_size(C::CAP) }, ...>`;
+// that const-argument expression keeps the gate live. `adt_const_params` is no
+// longer needed (no `Cap` const-generic params survive in the engine; the
+// remaining const generics are plain `usize` on the api `CoreProgram`).
 #![feature(generic_const_exprs)]
 #![recursion_limit = "512"]
 #![deny(unsafe_op_in_unsafe_fn)]
@@ -53,6 +59,8 @@ pub mod resource;
 pub mod scheduler;
 pub mod strategy;
 pub mod thread;
+
+pub use plan::{DefaultPlanDims, PlanDims};
 
 #[cfg(feature = "platform-os")]
 pub use platform::{OsClock, OsMemoryProvider, OsThreadPool};

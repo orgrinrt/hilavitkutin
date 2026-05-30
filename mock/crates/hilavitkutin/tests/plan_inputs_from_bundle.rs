@@ -8,15 +8,12 @@
 //! dependency edge (W0 writes a store W1 reads) is asserted via the
 //! shared bit position.
 
-// `PlanInputs<MAX_UNITS, MAX_STORES>` and the projection carry `Cap`
-// const generics; a downstream crate naming them enables
-// generic_const_exprs so its own solver normalises the bounds, mirroring
-// the sibling plan tests.
-#![feature(generic_const_exprs)]
-#![allow(incomplete_features)]
+// `PlanInputs<CU, CS>` and the projection are now sized by the `Capacity`
+// TYPE (`Dim<N>`), so no `generic_const_exprs` gate is needed: the unit and
+// store capacities are types, not `Cap` const generics.
 
-use arvo::{Bool, Cap, USize};
-use arvo_tensor::cap;
+use arvo::{Bool, USize};
+use arvo_tensor::Dim;
 use hilavitkutin::plan::{plan_inputs_from_bundle, AccessMask, PlanInputs};
 use hilavitkutin_api::{
     AccessSet, Always, Atomic, BatchApi, Column, ColumnReaderApi, ColumnValue, ColumnWriterApi,
@@ -26,8 +23,8 @@ use hilavitkutin_api::{
     UnitDispatch, Virtual, VirtualFirerApi, WorkUnit, read, write,
 };
 
-const MAX_UNITS: Cap = cap(4); // lint:allow(no-bare-numeric) reason: test plan dimension; tracked: #121
-const MAX_STORES: Cap = cap(8); // lint:allow(no-bare-numeric) reason: test mask width; tracked: #121
+type MaxUnits = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test unit capacity; Dim<N> array-length root; tracked: #649
+type MaxStores = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test store capacity; Dim<N> array-length root; tracked: #649
 
 // ---------------------------------------------------------------------
 // Permissive Ctx + provider shim (same shape as scheduler_builder.rs):
@@ -203,32 +200,37 @@ const RECORDS: USize = USize(1000); // lint:allow(no-bare-numeric) reason: test 
 
 #[test]
 fn projects_two_unit_bundle_to_plan_inputs() {
-    let inputs: PlanInputs<MAX_UNITS, MAX_STORES> =
-        plan_inputs_from_bundle::<Wus, Stores, _, MAX_UNITS, MAX_STORES>(RECORDS);
+    let inputs: PlanInputs<MaxUnits, MaxStores> =
+        plan_inputs_from_bundle::<Wus, Stores, _, MaxUnits, MaxStores>(RECORDS);
 
     assert_eq!(inputs.unit_count, USize(2), "two units populated"); // lint:allow(no-bare-numeric) reason: expected count; tracked: #121
     assert_eq!(inputs.record_count, RECORDS, "record_count threaded through");
 
+    let reads = inputs.reads.as_ref();
+    let writes = inputs.writes.as_ref();
+    let access = inputs.access.as_ref();
+    let commutative = inputs.commutative.as_ref();
+
     // W0 at index 0: reads {RA}, writes {CX}, access {RA, CX}, not commutative.
-    let r0 = &inputs.reads[0];
-    let w0 = &inputs.writes[0];
-    let a0 = &inputs.access[0];
+    let r0 = &reads[0];
+    let w0 = &writes[0];
+    let a0 = &access[0];
     assert_eq!(r0.contains(RA_BIT), Bool::TRUE, "W0 reads RA");
     assert_eq!(r0.contains(CX_BIT), Bool::FALSE, "W0 does not read CX");
     assert_eq!(w0.contains(CX_BIT), Bool::TRUE, "W0 writes CX");
     assert_eq!(a0.contains(RA_BIT), Bool::TRUE, "W0 access union has RA");
     assert_eq!(a0.contains(CX_BIT), Bool::TRUE, "W0 access union has CX");
-    assert_eq!(inputs.commutative[0], Bool::FALSE, "W0 not commutative");
+    assert_eq!(commutative[0], Bool::FALSE, "W0 not commutative");
 
     // W1 at index 1: reads {CX}, writes {CY}, commutative.
-    let r1 = &inputs.reads[1];
-    let w1 = &inputs.writes[1];
-    let a1 = &inputs.access[1];
+    let r1 = &reads[1];
+    let w1 = &writes[1];
+    let a1 = &access[1];
     assert_eq!(r1.contains(CX_BIT), Bool::TRUE, "W1 reads CX");
     assert_eq!(w1.contains(CY_BIT), Bool::TRUE, "W1 writes CY");
     assert_eq!(a1.contains(CX_BIT), Bool::TRUE, "W1 access union has CX");
     assert_eq!(a1.contains(CY_BIT), Bool::TRUE, "W1 access union has CY");
-    assert_eq!(inputs.commutative[1], Bool::TRUE, "W1 commutative override applied");
+    assert_eq!(commutative[1], Bool::TRUE, "W1 commutative override applied");
 
     // Dependency edge: W0 writes CX (bit 1), W1 reads CX (bit 1) => same bit.
     assert_eq!(

@@ -1,0 +1,11 @@
+[package]
+name = "plandims-bundle-sketch"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "plandims-bundle-sketch"
+path = "src/main.rs"
+
+[workspace]
