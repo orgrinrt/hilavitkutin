@@ -27,6 +27,7 @@ pub mod graph;
 pub mod inputs;
 pub mod laplacian;
 pub mod phase;
+pub mod project;
 pub mod steps;
 pub mod trunk;
 pub mod unit;
@@ -39,6 +40,7 @@ pub use fiber::{
 };
 pub use graph::{DependencyGraph, EdgeKind};
 pub use inputs::PlanInputs;
+pub use project::plan_inputs_from_bundle;
 pub use steps::PlanError;
 pub use phase::{Phase, PhaseBoundaries, PhaseConfig};
 pub use trunk::{BlockPartition, Branch, Bridge, Trunk, TrunkComponent};
