@@ -37,16 +37,16 @@ use arvo_sparse::{block_diagonal_via, rcm_reorder_via};
 use arvo_spectral::k_way_partition;
 use arvo_tensor::cap_size;
 
-use hilavitkutin_api::UnitId;
+use hilavitkutin_api::{TrunkId, UnitId};
 
 use super::column::{ColumnClassMap, ColumnClassification};
 use super::dirty::DirtyMasks;
-use super::fiber::FiberGrouping;
+use super::fiber::{Fiber, FiberGrouping};
 use super::graph::{DependencyGraph, EdgeKind};
 use super::inputs::PlanInputs;
 use super::laplacian::SymmetricLaplacian;
 use super::phase::{PhaseBoundaries, PhaseConfig};
-use super::trunk::BlockPartition;
+use super::trunk::{BlockPartition, Trunk, TrunkComponent};
 
 /// Eigenvector float for the spectral partition step. `f32` is the IEEE
 /// width tag of arvo's `FastFloat`, not a bare numeric value.
@@ -404,6 +404,263 @@ where
     }
     g.fiber_count = if any_assigned {
         USize(max_used_fiber + 1) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
+    } else {
+        USize::ZERO
+    };
+    g
+}
+
+/// Greedy fiber former restricted to one block's units.
+///
+/// Walks `block_units` (the block's units in topo order) and assigns
+/// block-local FiberIds via the same out-degree roll-over the global
+/// `group_fibers` uses, writing into `assignment[global_unit_index]`.
+/// Forming fibers per-block keeps every fiber inside one block so
+/// fibers nest within their trunk: a global walk can roll a fiber
+/// across a block boundary when topo order interleaves blocks.
+fn group_fibers_in_block<const MAX_UNITS: Cap, const MAX_EDGES: Cap, const MAX_FIBERS: Cap>(
+    graph: &DependencyGraph<MAX_UNITS, MAX_EDGES>,
+    block_units: &[UnitId],
+) -> FiberGrouping<MAX_UNITS, MAX_FIBERS>
+where
+    [(); cap_size(MAX_UNITS)]:,
+    [(); cap_size(MAX_EDGES)]:,
+{
+    use hilavitkutin_api::FiberId;
+    let mut g: FiberGrouping<MAX_UNITS, MAX_FIBERS> = FiberGrouping::new();
+    let n = block_units.len();
+    if n == 0 {
+        return g;
+    }
+    let mut current_fiber = 0;
+    let mut max_used_fiber = 0;
+    let mut any_assigned = false;
+    let mut i = 0;
+    while i < n {
+        let idx = block_units[i].index().0;
+        if idx < cap_size(MAX_UNITS) {
+            g.assignment[idx] = FiberId::from_index(USize(current_fiber)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
+            max_used_fiber = current_fiber;
+            any_assigned = true;
+            let out_deg = graph.out_degree(USize(idx)).0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
+            if out_deg != 1 && current_fiber + 1 < cap_size(MAX_FIBERS) {
+                current_fiber += 1;
+            }
+        }
+        i += 1;
+    }
+    g.fiber_count = if any_assigned {
+        USize(max_used_fiber + 1) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
+    } else {
+        USize::ZERO
+    };
+    g
+}
+
+/// Project the per-block fiber grouping onto per-phase trunk components.
+///
+/// For each phase, blocks (connected components) map to trunks in
+/// first-seen topo order (the same dedup `phase_trunk_counts` does).
+/// Within each trunk, fibers form over that block's units in topo order
+/// via the greedy former, so every fiber nests in its trunk. Each
+/// block-local fiber becomes a `TrunkComponent::Fiber` carrying a
+/// plan-wide `FiberId`, the fiber's units, and the unit count; the
+/// remaining `Fiber` fields (columns, head+tail, dispatch shape) fill
+/// in at later steps. `TrunkId`s are plan-wide running ids.
+///
+/// The former is greedy for every block in this slice; the width-gated
+/// spectral former for wide blocks lands in a follow-on slice at the
+/// marked selection point.
+pub fn project_fiber_components<
+    const MAX_UNITS: Cap,
+    const MAX_EDGES: Cap,
+    const MAX_FIBERS: Cap,
+    const MAX_PHASES: Cap,
+    const MAX_TRUNKS_PER_PHASE: Cap,
+    const MAX_COMPONENTS_PER_TRUNK: Cap,
+    const MAX_UNITS_PER_FIBER: Cap,
+    const MAX_COLUMNS_PER_FIBER: Cap,
+>(
+    graph: &DependencyGraph<MAX_UNITS, MAX_EDGES>,
+    partition: &BlockPartition<MAX_UNITS>,
+    waists: &PhaseBoundaries<MAX_PHASES>,
+    topo: &[UnitId; cap_size(MAX_UNITS)],
+    unit_count: USize,
+) -> [[Trunk<MAX_COMPONENTS_PER_TRUNK, MAX_UNITS_PER_FIBER, MAX_COLUMNS_PER_FIBER>;
+        cap_size(MAX_TRUNKS_PER_PHASE)]; cap_size(MAX_PHASES)]
+where
+    [(); cap_size(MAX_UNITS)]:,
+    [(); cap_size(MAX_EDGES)]:,
+    [(); cap_size(MAX_FIBERS)]:,
+    [(); cap_size(MAX_PHASES)]:,
+    [(); cap_size(MAX_TRUNKS_PER_PHASE)]:,
+    [(); cap_size(MAX_COMPONENTS_PER_TRUNK)]:,
+    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
+    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
+{
+    use hilavitkutin_api::FiberId;
+    let mut out: [[Trunk<MAX_COMPONENTS_PER_TRUNK, MAX_UNITS_PER_FIBER, MAX_COLUMNS_PER_FIBER>;
+        cap_size(MAX_TRUNKS_PER_PHASE)]; cap_size(MAX_PHASES)] =
+        [[Trunk::new(); cap_size(MAX_TRUNKS_PER_PHASE)]; cap_size(MAX_PHASES)];
+    let pc = waists.phase_count.0;
+    let n = unit_count.0;
+    let mut next_trunk_id = 0;
+    let mut next_fiber_id = 0;
+    let mut p = 0;
+    while p < pc && p < cap_size(MAX_PHASES) {
+        let start = waists.boundaries[p].0;
+        let end = if p + 1 < pc { waists.boundaries[p + 1].0 } else { n };
+        // Map block id -> trunk index within the phase, first-seen order.
+        let mut block_to_trunk: [USize; cap_size(MAX_UNITS)] =
+            [USize::ZERO; cap_size(MAX_UNITS)];
+        let mut block_seen: [Bool; cap_size(MAX_UNITS)] = [Bool::FALSE; cap_size(MAX_UNITS)];
+        let mut trunk_count = 0;
+        let mut i = start;
+        while i < end && i < cap_size(MAX_UNITS) {
+            let unit_idx = topo[i].index().0;
+            if unit_idx < cap_size(MAX_UNITS) {
+                let block = partition.block_of_unit[unit_idx].0;
+                if block < cap_size(MAX_UNITS) && !block_seen[block].0 {
+                    block_seen[block] = Bool::TRUE;
+                    if trunk_count < cap_size(MAX_TRUNKS_PER_PHASE) {
+                        block_to_trunk[block] = USize(trunk_count); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
+                        trunk_count += 1;
+                    }
+                }
+            }
+            i += 1;
+        }
+        // For each trunk in the phase, form fibers within its block.
+        let mut t = 0;
+        while t < trunk_count && t < cap_size(MAX_TRUNKS_PER_PHASE) {
+            // Gather this trunk's block units in topo order.
+            let mut block_units: [UnitId; cap_size(MAX_UNITS)] =
+                [UnitId::ZERO; cap_size(MAX_UNITS)];
+            let mut bu_count = 0;
+            let mut j = start;
+            while j < end && j < cap_size(MAX_UNITS) {
+                let unit_idx = topo[j].index().0;
+                if unit_idx < cap_size(MAX_UNITS) {
+                    let block = partition.block_of_unit[unit_idx].0;
+                    if block < cap_size(MAX_UNITS)
+                        && block_seen[block].0
+                        && block_to_trunk[block].0 == t
+                        && bu_count < cap_size(MAX_UNITS)
+                    {
+                        block_units[bu_count] = topo[j];
+                        bu_count += 1;
+                    }
+                }
+                j += 1;
+            }
+            // C1d-3b width-gate selection point: a wide block (bu_count
+            // above the threshold) picks the spectral former here; this
+            // slice forms every block greedily.
+            let grouping = group_fibers_in_block::<MAX_UNITS, MAX_EDGES, MAX_FIBERS>(
+                graph,
+                &block_units[0..bu_count],
+            );
+            out[p][t].id = TrunkId::from_index(USize(next_trunk_id)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from plan-wide id; tracked: #72
+            next_trunk_id += 1;
+            // Emit one Fiber component per block-local fiber.
+            let fc = grouping.fiber_count.0;
+            let mut local_fid = 0;
+            let mut comp_count = 0;
+            while local_fid < fc && comp_count < cap_size(MAX_COMPONENTS_PER_TRUNK) {
+                let mut fib: Fiber<MAX_UNITS_PER_FIBER, MAX_COLUMNS_PER_FIBER> = Fiber::new();
+                let mut fu = 0;
+                let mut k = 0;
+                while k < bu_count {
+                    let uidx = block_units[k].index().0;
+                    if uidx < cap_size(MAX_UNITS)
+                        && grouping.assignment[uidx].index().0 == local_fid
+                        && fu < cap_size(MAX_UNITS_PER_FIBER)
+                    {
+                        fib.units[fu] = block_units[k];
+                        fu += 1;
+                    }
+                    k += 1;
+                }
+                if fu > 0 {
+                    fib.id = FiberId::from_index(USize(next_fiber_id)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from plan-wide id; tracked: #72
+                    next_fiber_id += 1;
+                    fib.unit_count = USize(fu); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal count; tracked: #72
+                    out[p][t].components[comp_count] = TrunkComponent::Fiber(fib);
+                    comp_count += 1;
+                }
+                local_fid += 1;
+            }
+            out[p][t].component_count = USize(comp_count); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal count; tracked: #72
+            t += 1;
+        }
+        p += 1;
+    }
+    out
+}
+
+/// Reconstruct a global per-unit `FiberGrouping` from populated trunks.
+///
+/// Walks every trunk's `TrunkComponent::Fiber` and records each unit's
+/// plan-wide `FiberId`, so steps 8 to 11 keep consuming a
+/// `FiberGrouping` unchanged after the per-block projection.
+pub fn fiber_grouping_from_trunks<
+    const MAX_UNITS: Cap,
+    const MAX_FIBERS: Cap,
+    const MAX_PHASES: Cap,
+    const MAX_TRUNKS_PER_PHASE: Cap,
+    const MAX_COMPONENTS_PER_TRUNK: Cap,
+    const MAX_UNITS_PER_FIBER: Cap,
+    const MAX_COLUMNS_PER_FIBER: Cap,
+>(
+    trunks: &[[Trunk<MAX_COMPONENTS_PER_TRUNK, MAX_UNITS_PER_FIBER, MAX_COLUMNS_PER_FIBER>;
+        cap_size(MAX_TRUNKS_PER_PHASE)]; cap_size(MAX_PHASES)],
+    trunk_counts: &[USize; cap_size(MAX_PHASES)],
+    phase_count: USize,
+) -> FiberGrouping<MAX_UNITS, MAX_FIBERS>
+where
+    [(); cap_size(MAX_UNITS)]:,
+    [(); cap_size(MAX_PHASES)]:,
+    [(); cap_size(MAX_TRUNKS_PER_PHASE)]:,
+    [(); cap_size(MAX_COMPONENTS_PER_TRUNK)]:,
+    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
+    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
+{
+    let mut g: FiberGrouping<MAX_UNITS, MAX_FIBERS> = FiberGrouping::new();
+    let pc = phase_count.0;
+    let mut max_fid = 0;
+    let mut any = false;
+    let mut p = 0;
+    while p < pc && p < cap_size(MAX_PHASES) {
+        let tc = trunk_counts[p].0;
+        let mut t = 0;
+        while t < tc && t < cap_size(MAX_TRUNKS_PER_PHASE) {
+            let cc = trunks[p][t].component_count.0;
+            let mut c = 0;
+            while c < cc && c < cap_size(MAX_COMPONENTS_PER_TRUNK) {
+                if let TrunkComponent::Fiber(fib) = &trunks[p][t].components[c] {
+                    let fid = fib.id.index().0;
+                    let uc = fib.unit_count.0;
+                    let mut u = 0;
+                    while u < uc && u < cap_size(MAX_UNITS_PER_FIBER) {
+                        let uidx = fib.units[u].index().0;
+                        if uidx < cap_size(MAX_UNITS) {
+                            g.assignment[uidx] = fib.id;
+                            if fid > max_fid {
+                                max_fid = fid;
+                            }
+                            any = true;
+                        }
+                        u += 1;
+                    }
+                }
+                c += 1;
+            }
+            t += 1;
+        }
+        p += 1;
+    }
+    g.fiber_count = if any {
+        USize(max_fid + 1) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
     } else {
         USize::ZERO
     };

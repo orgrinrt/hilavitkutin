@@ -376,24 +376,44 @@ where
     // bound-check that errors past the cap is a follow-up (it is a
     // broader engine id-width-policy concern, not specific to this
     // projection).
-    let mut next_trunk = 0;
     let mut p = 0;
     while p < waists.phase_count.0 && p < cap_size(MAX_PHASES) {
         plan.phases[p].id = PhaseId::from_index(USize(p)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
         plan.phases[p].trunk_count = trunk_counts[p];
-        let tc = trunk_counts[p].0;
-        let mut t = 0;
-        while t < tc && t < cap_size(MAX_TRUNKS_PER_PHASE) {
-            plan.phases[p].trunks[t].id = TrunkId::from_index(USize(next_trunk)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
-            next_trunk += 1;
-            t += 1;
-        }
         p += 1;
     }
-    let _clusters = steps::spectral_partition::<MAX_UNITS, MAX_EDGES, MAX_FIBERS>(&dag);
 
-    // Step 7: fiber grouping.
-    let fibers = steps::group_fibers::<MAX_UNITS, MAX_EDGES, MAX_FIBERS>(&dag, &topo);
+    // Steps 6 + 7 (per C1d): per-block fiber formation projected onto the
+    // per-phase trunk components. `project_fiber_components` owns the
+    // plan-wide `Trunk.id`s and the `Fiber` components (each block forms
+    // its fibers internally, so fibers nest in their trunk); the runner
+    // assigns the per-phase trunk arrays, then reconstructs a global
+    // `FiberGrouping` so step 8 keeps its interface. The width-gated
+    // spectral former for wide blocks lands in a follow-on slice.
+    let fiber_trunks = steps::project_fiber_components::<
+        MAX_UNITS,
+        MAX_EDGES,
+        MAX_FIBERS,
+        MAX_PHASES,
+        MAX_TRUNKS_PER_PHASE,
+        MAX_COMPONENTS_PER_TRUNK,
+        MAX_UNITS_PER_FIBER,
+        MAX_COLUMNS_PER_FIBER,
+    >(&dag, &partition, &waists, &topo, inputs.unit_count);
+    let mut p = 0;
+    while p < waists.phase_count.0 && p < cap_size(MAX_PHASES) {
+        plan.phases[p].trunks = fiber_trunks[p];
+        p += 1;
+    }
+    let fibers = steps::fiber_grouping_from_trunks::<
+        MAX_UNITS,
+        MAX_FIBERS,
+        MAX_PHASES,
+        MAX_TRUNKS_PER_PHASE,
+        MAX_COMPONENTS_PER_TRUNK,
+        MAX_UNITS_PER_FIBER,
+        MAX_COLUMNS_PER_FIBER,
+    >(&fiber_trunks, &trunk_counts, waists.phase_count);
     if fibers.fiber_count.0 == 0 && n > 0 {
         return notko::Outcome::Err(PlanError::NoTrunkAssignment);
     }
