@@ -44,7 +44,7 @@ pub use fiber::{
 pub use graph::{DependencyGraph, EdgeKind};
 pub use inputs::PlanInputs;
 pub use project::plan_inputs_from_bundle;
-pub use steps::PlanError;
+pub use steps::{FiberLayout, PlanError};
 pub use phase::{Phase, PhaseBoundaries, PhaseConfig};
 pub use trunk::{BlockPartition, Branch, Bridge, Trunk, TrunkComponent};
 pub use unit::{CostTable, UnitMeta};
@@ -57,9 +57,19 @@ pub use hilavitkutin_api::{FiberId, PhaseId, TrunkId, UnitId};
 /// mutation. The mutable sibling `CostTable<D::Units>` lives
 /// alongside and refreshes between frames.
 pub struct ExecutionPlan<D: PlanDims> {
-    /// Waist-delimited phases (in dispatch order).
-    pub phases: <D::Phases as Capacity>::Array<Phase<D>>,
+    /// Waist-delimited phases (in dispatch order). Each `Phase` carries a
+    /// `(trunk_offset, trunk_count)` range into the flat `trunks` pool.
+    pub phases: <D::Phases as Capacity>::Array<Phase>,
     pub phase_count: USize,
+    /// Flat plan-wide trunk pool. Each `Trunk` carries a `(fiber_offset,
+    /// fiber_count)` range into the flat `fibers` pool.
+    pub trunks: <D::Trunks as Capacity>::Array<Trunk>,
+    pub trunk_count: USize,
+    /// Flat plan-wide fiber pool. The CSR flatten collapses the dense
+    /// per-phase, per-trunk fiber nesting onto this single pool, sized by
+    /// the plan-wide `D::Fibers` cap.
+    pub fibers: <D::Fibers as Capacity>::Array<Fiber<D>>,
+    pub fiber_count: USize,
     /// Per-unit metadata array, addressed by `UnitId`.
     pub unit_meta: <D::Units as Capacity>::Array<UnitMeta>,
     pub unit_count: USize,
@@ -84,8 +94,6 @@ pub struct ExecutionPlan<D: PlanDims> {
 impl<D: PlanDims> ExecutionPlan<D>
 where
     Fiber<D>: Copy,
-    <D::TrunksPerPhase as Capacity>::Array<Trunk<D>>: Copy,
-    <D::ComponentsPerTrunk as Capacity>::Array<TrunkComponent<D>>: Copy,
     <D::ColumnsPerFiber as Capacity>::Array<ColumnClassification>: Copy,
 {
     /// All-zero plan. Used as the default before the plan-stage
@@ -95,6 +103,10 @@ where
         Self {
             phases: <D::Phases as Capacity>::filled(Phase::new()),
             phase_count: USize::ZERO,
+            trunks: <D::Trunks as Capacity>::filled(Trunk::new()),
+            trunk_count: USize::ZERO,
+            fibers: <D::Fibers as Capacity>::filled(Fiber::new()),
+            fiber_count: USize::ZERO,
             unit_meta: <D::Units as Capacity>::filled(UnitMeta::new()),
             unit_count: USize::ZERO,
             column_class: ColumnClassMap::new(),
@@ -107,7 +119,9 @@ where
 
 impl<D: PlanDims> Copy for ExecutionPlan<D>
 where
-    <D::Phases as Capacity>::Array<Phase<D>>: Copy,
+    <D::Phases as Capacity>::Array<Phase>: Copy,
+    <D::Trunks as Capacity>::Array<Trunk>: Copy,
+    <D::Fibers as Capacity>::Array<Fiber<D>>: Copy,
     <D::Units as Capacity>::Array<UnitMeta>: Copy,
     ColumnClassMap<D>: Copy,
     DirtyMasks<D::Fibers, D::Columns>: Copy,
@@ -118,7 +132,9 @@ where
 
 impl<D: PlanDims> Clone for ExecutionPlan<D>
 where
-    <D::Phases as Capacity>::Array<Phase<D>>: Copy,
+    <D::Phases as Capacity>::Array<Phase>: Copy,
+    <D::Trunks as Capacity>::Array<Trunk>: Copy,
+    <D::Fibers as Capacity>::Array<Fiber<D>>: Copy,
     <D::Units as Capacity>::Array<UnitMeta>: Copy,
     ColumnClassMap<D>: Copy,
     DirtyMasks<D::Fibers, D::Columns>: Copy,
@@ -142,8 +158,6 @@ impl<D: PlanDims> core::fmt::Debug for ExecutionPlan<D> {
 impl<D: PlanDims> Default for ExecutionPlan<D>
 where
     Fiber<D>: Copy,
-    <D::TrunksPerPhase as Capacity>::Array<Trunk<D>>: Copy,
-    <D::ComponentsPerTrunk as Capacity>::Array<TrunkComponent<D>>: Copy,
     <D::ColumnsPerFiber as Capacity>::Array<ColumnClassification>: Copy,
 {
     fn default() -> Self {
@@ -185,8 +199,8 @@ pub fn compute_execution_plan<D: PlanDims>(
     inputs: &PlanInputs<D::Units, D::Stores>,
 ) -> notko::Outcome<ExecutionPlan<D>, PlanError>
 where
-    <D::TrunksPerPhase as Capacity>::Array<Trunk<D>>: Copy,
-    <D::ComponentsPerTrunk as Capacity>::Array<TrunkComponent<D>>: Copy,
+    <D::Trunks as Capacity>::Array<Trunk>: Copy,
+    <D::Fibers as Capacity>::Array<Fiber<D>>: Copy,
     <D::ColumnsPerFiber as Capacity>::Array<ColumnClassification>: Copy,
     Fiber<D>: Copy,
     <D::Units as Capacity>::Array<SpectralFloatVec>: Copy,
@@ -227,54 +241,54 @@ where
     // Step 5: connected-component block detection, projected to
     // per-phase trunk skeletons. Each block is a column-disjoint
     // independent sub-graph; within a phase, distinct blocks become
-    // trunks (zero sync between trunks per Domain 11). Populates
-    // `Phase.id`, `trunk_count`, and `Trunk.id`; `Trunk.components` are
-    // fibers and land in the fiber-formation round. No alignment check
+    // trunks (zero sync between trunks per Domain 11). The runner then
+    // sets `Phase.id` / `trunk_count` / `trunk_offset` and the flat
+    // `trunks` / `fibers` pools land in the fiber-formation projection
+    // (steps 6 + 7). No alignment check
     // fires yet: distinct blocks are column-disjoint by construction, so
     // PhaseAlignmentMismatch has no concrete condition before column
     // classification.
     let partition = steps::block_diagonalise::<D>(&dag);
-    let trunk_counts = steps::phase_trunk_counts::<D>(
-        &partition,
-        &waists,
-        &topo,
-        inputs.unit_count,
-    );
-    // `PhaseId` is `Uint<5>` (up to 32 phases) and `TrunkId` is
-    // `Uint<6>` (up to 64 trunks plan-wide): the deliberate engine width
-    // cap on phase and trunk counts. The capacity dimensions plus these
-    // id widths are the consumer's budget; a plan exceeding them is a
-    // misconfiguration. `next_trunk` is a plan-wide running id. A hard
-    // bound-check that errors past the cap is a follow-up (it is a
-    // broader engine id-width-policy concern, not specific to this
-    // projection).
-    let mut p = 0;
-    while p < waists.phase_count.0 && p < cap_size_phases::<D>() {
-        plan.phases.as_mut()[p].id = PhaseId::from_index(USize(p)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
-        plan.phases.as_mut()[p].trunk_count = trunk_counts.as_ref()[p];
-        p += 1;
-    }
 
-    // Steps 6 + 7 (per C1d): per-block fiber formation projected onto the
-    // per-phase trunk components. `project_fiber_components` owns the
-    // plan-wide `Trunk.id`s and the `Fiber` components (each block forms
-    // its fibers internally, so fibers nest in their trunk); the runner
-    // assigns the per-phase trunk arrays, then reconstructs a global
-    // `FiberGrouping` so step 8 keeps its interface. The width-gated
-    // spectral former for wide blocks lands in a follow-on slice.
-    let fiber_trunks = steps::project_fiber_components::<D>(
+    // Steps 6 + 7 (per C1d): per-block fiber formation written into the
+    // flat `trunks` / `fibers` pools. `project_fiber_components` owns the
+    // plan-wide `Trunk` / `Fiber` ids and the CSR layout; the runner
+    // copies the pools onto the plan, sets each phase's `(trunk_offset,
+    // trunk_count)` range from the layout's per-phase emitted counts, and
+    // reconstructs a global `FiberGrouping` so step 8 keeps its interface.
+    // The width-gated spectral former for wide blocks lands in a follow-on
+    // slice.
+    //
+    // `PhaseId` is `Uint<5>` (up to 32 phases) and `TrunkId` is `Uint<6>`
+    // (up to 64 trunks plan-wide): the deliberate engine width cap. The
+    // layout's per-phase trunk count is the authority for the CSR range
+    // (the projection caps emission at the plan-wide `D::Trunks` budget),
+    // so the running prefix sum always brackets the flat pool exactly. A
+    // hard bound-check that errors past the id-width cap is a follow-up
+    // (#641).
+    let layout = steps::project_fiber_components::<D>(
         &dag,
         &partition,
         &waists,
         &topo,
         inputs.unit_count,
     );
+    plan.trunk_count = layout.trunk_count;
+    plan.fiber_count = layout.fiber_count;
+    plan.trunks = layout.trunks;
+    plan.fibers = layout.fibers;
+    let phase_trunks = layout.phase_trunks.as_ref();
     let mut p = 0;
+    let mut running_trunk = 0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal CSR prefix-sum cursor; tracked: #72
     while p < waists.phase_count.0 && p < cap_size_phases::<D>() {
-        plan.phases.as_mut()[p].trunks = fiber_trunks.as_ref()[p];
+        plan.phases.as_mut()[p].id = PhaseId::from_index(USize(p)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
+        let tc = phase_trunks[p];
+        plan.phases.as_mut()[p].trunk_count = tc;
+        plan.phases.as_mut()[p].trunk_offset = USize(running_trunk); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from CSR offset; tracked: #72
+        running_trunk += tc.0;
         p += 1;
     }
-    let fibers = steps::fiber_grouping_from_trunks::<D>(&fiber_trunks, &trunk_counts, waists.phase_count);
+    let fibers = steps::fiber_grouping_from_trunks::<D>(&plan.fibers, plan.fiber_count);
     if fibers.fiber_count.0 == 0 && n > 0 {
         return notko::Outcome::Err(PlanError::NoTrunkAssignment);
     }
