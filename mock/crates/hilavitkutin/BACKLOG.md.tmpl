@@ -446,3 +446,30 @@ the dispatch-codegen rust-pipe pattern), not a standalone type. An
 earlier placeholder conflated this optimization with the phase-boundary
 ResourceSnapshot view; the two are unrelated, and the stack-caching
 belongs to codegen.
+
+## Unified columnar storage migration
+
+The api ships the ColumnStorage contract and the Decompose mechanism
+(the unified-storage contract round); the engine then unwinds its
+disjoint bespoke stores onto that one contract. These are deferred
+follow-on shapes, recorded here so the framing is honest about the
+target state while the current code still carries the shipped arenas.
+
+The resource data plane (the resource arena, ArenaFor / DrainStores)
+collapses onto ColumnStorage: a resource is a decomposed set of scalar
+columns, so it stops being a separate mechanism. The execution plan
+becomes a store-backed meta-resource sized by the live count of phases,
+trunks, and fibers, rather than the dense nested const-array tree. That
+dissolves the multi-megabyte ExecutionPlan value structurally and makes
+compute_execution_plan usable at the real default budget (the value no
+longer overflows the stack). The adapt metrics arena and the dispatch
+slot buffers route through the store the same way.
+
+The naive arena-backed ColumnStorage placeholder impl ships in
+hilavitkutin-providers (the crate already reserved for future
+ColumnStorage / Clock / Memory defaults). A storage lint forbids any
+runtime-data storage outside the contract (no hand-rolled arena, no
+MaybeUninit pool, no raw fixed buffer); the thread-pool PoolFrame is
+the one sanctioned fixed-array exception. Each store migration is its
+own round on the unified-storage arc; the topological-dispatch slice
+reworks on top (its topo order becomes a store-backed meta-resource).

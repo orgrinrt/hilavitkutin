@@ -25,11 +25,18 @@ is a non-urgent widening. Promote when a concrete consumer exceeds 64.
 
 ## Arena runtime layout for Seq / Map
 
-Seq<T, N> and Map<K, V, N> ship here as type-surface only. Arena
-placement (stack vs co-located store arena), element layout, and
-iteration contract belong to the engine round (Task #35, domain 07).
-Consumers still get the const-generic type today; their runtime
-location is an engine concern.
+Seq<T, N> and Map<K, V, N> ship here as type-surface only. Element
+layout and iteration contract belong to the engine round (Task #35,
+domain 07). Consumers still get the const-generic type today; their
+runtime location is an engine concern.
+
+The unified-storage round resolves the "arena placement" question: Seq
+and Map (and Resource, Column, Field) route through ColumnStorage, not
+independent per-marker arenas. The Decompose mechanism expands a Seq or
+Map into scalar columns the same way it expands a struct. The ergonomic
+end state is a derive(Decompose); the contract round ships the trait
+with hand-written impls only, and the derive is the deferred shape here
+(write it once the trait has proven against the migrated engine types).
 
 ## Virtual flag bit-assignment algorithm
 

@@ -19,6 +19,7 @@ pub mod adapt_kits;
 pub mod adapt_wu;
 pub mod interner;
 pub mod metrics;
+pub mod storage;
 
 pub use crate::adapt_ema::{BlendFactor, NORM_1_OVER_8, NORM_7_OVER_8, ema_update};
 pub use crate::adapt_kits::{OffAdaptKit, StandardAdaptKit};
@@ -31,3 +32,4 @@ pub use crate::metrics::{
     MemoryWatermarkMetrics, PassDurationMetrics, PhaseEmaMetrics, PredictiveParkingMetrics,
     ThroughputMetrics,
 };
+pub use crate::storage::{ArenaColumnStorage, StorageError};

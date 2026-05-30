@@ -49,6 +49,7 @@ pub mod platform;
 pub mod prelude;
 pub mod run_cfg;
 pub mod sink;
+pub mod storage;
 pub mod store;
 pub mod store_values;
 pub mod work_unit;
@@ -92,6 +93,7 @@ pub use run_cfg::{
     RunCfgDispatch, ScheduleEnd, ScheduleReady,
 };
 pub use sink::{ByteEmitter, Collector, CountingSink, DiagnosticSink, NullSink, TeeSink};
+pub use storage::{ColumnStorage, Decompose};
 pub use store::{
     Column, Field, Map, Replaceable, Resource, Seq, StagedResource, StoreBundle, Virtual,
 };
