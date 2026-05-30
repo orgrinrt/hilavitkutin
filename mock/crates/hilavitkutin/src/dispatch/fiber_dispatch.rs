@@ -4,10 +4,9 @@
 //! engine needs to drive one fiber through its morsel range under
 //! the right sync conditions.
 
-use arvo::Cap;
 use arvo::USize;
 use arvo::strategy::Identity;
-use arvo_tensor::cap_size;
+use arvo_tensor::Capacity;
 use hilavitkutin_api::FiberShape;
 use notko::Maybe;
 
@@ -16,28 +15,22 @@ use crate::plan::{FiberId, PhaseId};
 
 /// Per-fiber dispatch record.
 ///
-/// `MAX_CORES` bounds the sync-point array length: each fiber has
-/// at most one SyncPoint per core that could run the producer
-/// phase before it.
-pub struct FiberDispatch<Ctx: 'static, const MAX_CORES: Cap>
-where
-    [(); cap_size(MAX_CORES)]:,
-{
+/// `C` is the core capacity, bounding the sync-point array length:
+/// each fiber has at most one SyncPoint per core that could run the
+/// producer phase before it.
+pub struct FiberDispatch<Ctx: 'static, C: Capacity> {
     /// Monomorphised body. `Maybe::None` in skeleton state.
     pub body: Maybe<WuFn<Ctx>>,
     pub fiber_id: FiberId,
     pub phase: PhaseId,
     pub morsel_range: MorselRange,
-    pub sync_points: [SyncPoint; cap_size(MAX_CORES)],
+    pub sync_points: <C as Capacity>::Array<SyncPoint>,
     pub sync_point_count: USize,
 }
 
-impl<Ctx: 'static, const MAX_CORES: Cap> FiberDispatch<Ctx, MAX_CORES>
-where
-    [(); cap_size(MAX_CORES)]:,
-{
+impl<Ctx: 'static, C: Capacity> FiberDispatch<Ctx, C> {
     /// Empty skeleton record with no body and zero metadata.
-    pub const fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             body: Maybe::Isnt,
             fiber_id: FiberId::ZERO,
@@ -46,19 +39,16 @@ where
                 start: USize::ZERO,
                 len: USize::ZERO,
             },
-            sync_points: [SyncPoint {
+            sync_points: <C as Capacity>::filled(SyncPoint {
                 fiber_id: FiberId::ZERO,
                 min_records: USize::ZERO,
-            }; cap_size(MAX_CORES)],
+            }),
             sync_point_count: USize::ZERO,
         }
     }
 }
 
-impl<Ctx: 'static, const MAX_CORES: Cap> Default for FiberDispatch<Ctx, MAX_CORES>
-where
-    [(); cap_size(MAX_CORES)]:,
-{
+impl<Ctx: 'static, C: Capacity> Default for FiberDispatch<Ctx, C> {
     fn default() -> Self {
         Self::new()
     }

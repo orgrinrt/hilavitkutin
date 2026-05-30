@@ -6,11 +6,12 @@
 //! trunks; trunks own components.
 
 use arvo::strategy::Identity;
-use arvo::{Cap, USize};
-use arvo_tensor::cap_size;
+use arvo::USize;
+use arvo_tensor::Capacity;
 
 use hilavitkutin_api::PhaseId;
 
+use crate::plan::dims::PlanDims;
 use crate::plan::trunk::Trunk;
 use crate::strategy::PhaseStrategy;
 
@@ -18,30 +19,43 @@ use crate::strategy::PhaseStrategy;
 /// phase `i`. Phase 0 always starts at unit 0.
 ///
 /// Analysis intermediate produced by step 3 (waist detection).
-#[derive(Copy, Clone, Debug)]
-pub struct PhaseBoundaries<const MAX_PHASES: Cap>
-where
-    [(); cap_size(MAX_PHASES)]:,
-{
-    pub boundaries: [USize; cap_size(MAX_PHASES)],
+/// Sized by the phase capacity `D::Phases`.
+pub struct PhaseBoundaries<D: PlanDims> {
+    pub boundaries: <D::Phases as Capacity>::Array<USize>,
     pub phase_count: USize,
 }
 
-impl<const MAX_PHASES: Cap> PhaseBoundaries<MAX_PHASES>
-where
-    [(); cap_size(MAX_PHASES)]:,
-{
-    pub const fn new() -> Self {
-        Self { boundaries: [USize::ZERO; cap_size(MAX_PHASES)], phase_count: USize::ZERO }
+impl<D: PlanDims> PhaseBoundaries<D> {
+    pub fn new() -> Self {
+        Self {
+            boundaries: <D::Phases as Capacity>::filled(USize::ZERO),
+            phase_count: USize::ZERO,
+        }
     }
 }
 
-impl<const MAX_PHASES: Cap> Default for PhaseBoundaries<MAX_PHASES>
+impl<D: PlanDims> Copy for PhaseBoundaries<D> where <D::Phases as Capacity>::Array<USize>: Copy {}
+
+impl<D: PlanDims> Clone for PhaseBoundaries<D>
 where
-    [(); cap_size(MAX_PHASES)]:,
+    <D::Phases as Capacity>::Array<USize>: Copy,
 {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<D: PlanDims> Default for PhaseBoundaries<D> {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl<D: PlanDims> core::fmt::Debug for PhaseBoundaries<D> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("PhaseBoundaries")
+            .field("phase_count", &self.phase_count.0)
+            .finish_non_exhaustive()
     }
 }
 
@@ -68,23 +82,12 @@ impl Default for PhaseConfig {
 }
 
 /// One phase: trunks running together within a waist-delimited
-/// segment.
-#[derive(Copy, Clone, Debug)]
-pub struct Phase<
-    const MAX_TRUNKS_PER_PHASE: Cap,
-    const MAX_COMPONENTS_PER_TRUNK: Cap,
-    const MAX_UNITS_PER_FIBER: Cap,
-    const MAX_COLUMNS_PER_FIBER: Cap,
->
-where
-    [(); cap_size(MAX_TRUNKS_PER_PHASE)]:,
-    [(); cap_size(MAX_COMPONENTS_PER_TRUNK)]:,
-    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
-    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
-{
+/// segment. Sized by the trunk-per-phase, component-per-trunk,
+/// unit-per-fiber, and column-per-fiber capacities, all projected
+/// from one `D: PlanDims`.
+pub struct Phase<D: PlanDims> {
     pub id: PhaseId,
-    pub trunks: [Trunk<MAX_COMPONENTS_PER_TRUNK, MAX_UNITS_PER_FIBER, MAX_COLUMNS_PER_FIBER>;
-        cap_size(MAX_TRUNKS_PER_PHASE)],
+    pub trunks: <D::TrunksPerPhase as Capacity>::Array<Trunk<D>>,
     pub trunk_count: USize,
     /// Plan-time strategy classification.
     pub strategy: PhaseStrategy,
@@ -92,28 +95,15 @@ where
     pub config: PhaseConfig,
 }
 
-impl<
-        const MAX_TRUNKS_PER_PHASE: Cap,
-        const MAX_COMPONENTS_PER_TRUNK: Cap,
-        const MAX_UNITS_PER_FIBER: Cap,
-        const MAX_COLUMNS_PER_FIBER: Cap,
-    >
-    Phase<
-        MAX_TRUNKS_PER_PHASE,
-        MAX_COMPONENTS_PER_TRUNK,
-        MAX_UNITS_PER_FIBER,
-        MAX_COLUMNS_PER_FIBER,
-    >
+impl<D: PlanDims> Phase<D>
 where
-    [(); cap_size(MAX_TRUNKS_PER_PHASE)]:,
-    [(); cap_size(MAX_COMPONENTS_PER_TRUNK)]:,
-    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
-    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
+    crate::plan::fiber::Fiber<D>: Copy,
+    <D::ComponentsPerTrunk as Capacity>::Array<crate::plan::trunk::TrunkComponent<D>>: Copy,
 {
-    pub const fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             id: PhaseId::ZERO,
-            trunks: [Trunk::new(); cap_size(MAX_TRUNKS_PER_PHASE)],
+            trunks: <D::TrunksPerPhase as Capacity>::filled(Trunk::new()),
             trunk_count: USize::ZERO,
             strategy: PhaseStrategy::Balanced,
             config: PhaseConfig::Balanced,
@@ -121,25 +111,34 @@ where
     }
 }
 
-impl<
-        const MAX_TRUNKS_PER_PHASE: Cap,
-        const MAX_COMPONENTS_PER_TRUNK: Cap,
-        const MAX_UNITS_PER_FIBER: Cap,
-        const MAX_COLUMNS_PER_FIBER: Cap,
-    > Default
-    for Phase<
-        MAX_TRUNKS_PER_PHASE,
-        MAX_COMPONENTS_PER_TRUNK,
-        MAX_UNITS_PER_FIBER,
-        MAX_COLUMNS_PER_FIBER,
-    >
+impl<D: PlanDims> Copy for Phase<D> where <D::TrunksPerPhase as Capacity>::Array<Trunk<D>>: Copy {}
+
+impl<D: PlanDims> Clone for Phase<D>
 where
-    [(); cap_size(MAX_TRUNKS_PER_PHASE)]:,
-    [(); cap_size(MAX_COMPONENTS_PER_TRUNK)]:,
-    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
-    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
+    <D::TrunksPerPhase as Capacity>::Array<Trunk<D>>: Copy,
+{
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<D: PlanDims> Default for Phase<D>
+where
+    crate::plan::fiber::Fiber<D>: Copy,
+    <D::ComponentsPerTrunk as Capacity>::Array<crate::plan::trunk::TrunkComponent<D>>: Copy,
 {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl<D: PlanDims> core::fmt::Debug for Phase<D> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("Phase")
+            .field("id", &self.id)
+            .field("trunk_count", &self.trunk_count.0)
+            .field("strategy", &self.strategy)
+            .field("config", &self.config)
+            .finish_non_exhaustive()
     }
 }

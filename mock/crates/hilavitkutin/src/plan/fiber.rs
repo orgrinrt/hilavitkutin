@@ -9,46 +9,55 @@
 //! that the dispatch stage walks.
 
 use arvo::strategy::Identity;
-use arvo::{Cap, USize};
-use arvo_tensor::cap_size;
+use arvo::USize;
+use arvo_tensor::Capacity;
 
 use hilavitkutin_api::{FiberId, StoreId, UnitId};
 use notko::Maybe;
 
 use crate::dispatch::approach::DispatchApproach;
+use crate::plan::dims::PlanDims;
 
 /// Per-unit fiber assignment (intermediate; analysis output of steps
-/// 5 to 8).
-#[derive(Copy, Clone, Debug)]
-pub struct FiberGrouping<const MAX_UNITS: Cap, const MAX_FIBERS: Cap>
-where
-    [(); cap_size(MAX_UNITS)]:,
-{
+/// 5 to 8). Sized by the unit capacity `D::Units`.
+pub struct FiberGrouping<D: PlanDims> {
     /// `assignment[i]` is the FiberId that unit `i` belongs to.
-    pub assignment: [FiberId; cap_size(MAX_UNITS)],
-    /// Number of fibers actually used (0..=MAX_FIBERS).
+    pub assignment: <D::Units as Capacity>::Array<FiberId>,
+    /// Number of fibers actually used.
     pub fiber_count: USize,
 }
 
-impl<const MAX_UNITS: Cap, const MAX_FIBERS: Cap> FiberGrouping<MAX_UNITS, MAX_FIBERS>
-where
-    [(); cap_size(MAX_UNITS)]:,
-{
-    pub const fn new() -> Self {
+impl<D: PlanDims> FiberGrouping<D> {
+    pub fn new() -> Self {
         Self {
-            assignment: [FiberId::ZERO; cap_size(MAX_UNITS)],
+            assignment: <D::Units as Capacity>::filled(FiberId::ZERO),
             fiber_count: USize::ZERO,
         }
     }
 }
 
-impl<const MAX_UNITS: Cap, const MAX_FIBERS: Cap> Default
-    for FiberGrouping<MAX_UNITS, MAX_FIBERS>
+impl<D: PlanDims> Copy for FiberGrouping<D> where <D::Units as Capacity>::Array<FiberId>: Copy {}
+
+impl<D: PlanDims> Clone for FiberGrouping<D>
 where
-    [(); cap_size(MAX_UNITS)]:,
+    <D::Units as Capacity>::Array<FiberId>: Copy,
 {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<D: PlanDims> Default for FiberGrouping<D> {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl<D: PlanDims> core::fmt::Debug for FiberGrouping<D> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("FiberGrouping")
+            .field("fiber_count", &self.fiber_count.0)
+            .finish_non_exhaustive()
     }
 }
 
@@ -174,25 +183,21 @@ impl Default for HeadTailConvergence {
 
 /// Shipped plan-stage fiber record.
 ///
-/// Each fiber owns up to `MAX_UNITS_PER_FIBER` units and references
-/// up to `MAX_COLUMNS_PER_FIBER` stores. Sizing is per-fiber rather
-/// than `MAX_UNITS` / `MAX_COLUMNS` to keep the per-fiber footprint
-/// independent of pipeline-wide caps (Topic 3 audit-2 m3).
-#[derive(Copy, Clone, Debug)]
-pub struct Fiber<const MAX_UNITS_PER_FIBER: Cap, const MAX_COLUMNS_PER_FIBER: Cap>
-where
-    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
-    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
-{
+/// Each fiber owns up to the unit-per-fiber capacity's units and
+/// references up to the column-per-fiber capacity's stores. Sizing is
+/// per-fiber rather than the pipeline-wide unit / column capacities to
+/// keep the per-fiber footprint independent of pipeline-wide caps
+/// (Topic 3 audit-2 m3). Both projected from one `D: PlanDims`.
+pub struct Fiber<D: PlanDims> {
     /// Stable id within the enclosing plan.
     pub id: FiberId,
     /// Units in the fiber (in dispatch order). `unit_count` records
-    /// how many of the `MAX_UNITS_PER_FIBER` slots are populated.
-    pub units: [UnitId; cap_size(MAX_UNITS_PER_FIBER)],
+    /// how many of the unit-per-fiber slots are populated.
+    pub units: <D::UnitsPerFiber as Capacity>::Array<UnitId>,
     pub unit_count: USize,
     /// Stores the fiber touches (read or write). `column_count`
     /// records the populated count.
-    pub columns: [StoreId; cap_size(MAX_COLUMNS_PER_FIBER)],
+    pub columns: <D::ColumnsPerFiber as Capacity>::Array<StoreId>,
     pub column_count: USize,
     /// Head+tail convergence if the fiber qualifies; absent otherwise.
     pub head_tail: Maybe<HeadTailConvergence>,
@@ -200,18 +205,13 @@ where
     pub dispatch_approach: DispatchApproach,
 }
 
-impl<const MAX_UNITS_PER_FIBER: Cap, const MAX_COLUMNS_PER_FIBER: Cap>
-    Fiber<MAX_UNITS_PER_FIBER, MAX_COLUMNS_PER_FIBER>
-where
-    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
-    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
-{
-    pub const fn new() -> Self {
+impl<D: PlanDims> Fiber<D> {
+    pub fn new() -> Self {
         Self {
             id: FiberId::ZERO,
-            units: [UnitId::ZERO; cap_size(MAX_UNITS_PER_FIBER)],
+            units: <D::UnitsPerFiber as Capacity>::filled(UnitId::ZERO),
             unit_count: USize::ZERO,
-            columns: [StoreId(USize::ZERO); cap_size(MAX_COLUMNS_PER_FIBER)],
+            columns: <D::ColumnsPerFiber as Capacity>::filled(StoreId(USize::ZERO)),
             column_count: USize::ZERO,
             head_tail: Maybe::Isnt,
             dispatch_approach: DispatchApproach::IndirectPerFiber,
@@ -219,13 +219,35 @@ where
     }
 }
 
-impl<const MAX_UNITS_PER_FIBER: Cap, const MAX_COLUMNS_PER_FIBER: Cap> Default
-    for Fiber<MAX_UNITS_PER_FIBER, MAX_COLUMNS_PER_FIBER>
+impl<D: PlanDims> Copy for Fiber<D>
 where
-    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
-    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
+    <D::UnitsPerFiber as Capacity>::Array<UnitId>: Copy,
+    <D::ColumnsPerFiber as Capacity>::Array<StoreId>: Copy,
 {
+}
+
+impl<D: PlanDims> Clone for Fiber<D>
+where
+    <D::UnitsPerFiber as Capacity>::Array<UnitId>: Copy,
+    <D::ColumnsPerFiber as Capacity>::Array<StoreId>: Copy,
+{
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<D: PlanDims> Default for Fiber<D> {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl<D: PlanDims> core::fmt::Debug for Fiber<D> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("Fiber")
+            .field("id", &self.id)
+            .field("unit_count", &self.unit_count.0)
+            .field("column_count", &self.column_count.0)
+            .finish_non_exhaustive()
     }
 }

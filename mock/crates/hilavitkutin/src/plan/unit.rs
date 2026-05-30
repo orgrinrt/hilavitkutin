@@ -8,9 +8,9 @@
 //! adapt subsystem refreshes between frames. Kept separate from `UnitMeta`
 //! so the immutable plan structure can stay `&` while costs mutate.
 
-use arvo::{Cap, USize};
+use arvo::USize;
 use arvo::strategy::Identity;
-use arvo_tensor::cap_size;
+use arvo_tensor::Capacity;
 
 use hilavitkutin_api::UnitId;
 
@@ -52,33 +52,40 @@ impl Default for UnitMeta {
 
 /// Per-unit mutable cost estimates.
 ///
-/// Refreshed between frames by the adapt subsystem. Sized to
-/// `MAX_UNITS` so it travels alongside the immutable plan without
+/// Refreshed between frames by the adapt subsystem. Sized to the unit
+/// capacity `C` so it travels alongside the immutable plan without
 /// dictating array-size relationships at the call sites.
-#[derive(Copy, Clone, Debug)]
-pub struct CostTable<const MAX_UNITS: Cap>
-where
-    [(); cap_size(MAX_UNITS)]:,
-{
+pub struct CostTable<C: Capacity> {
     /// Estimated single-record cost in nanoseconds, per unit.
-    pub estimated_cost_ns: [USize; cap_size(MAX_UNITS)],
+    pub estimated_cost_ns: <C as Capacity>::Array<USize>,
 }
 
-impl<const MAX_UNITS: Cap> CostTable<MAX_UNITS>
-where
-    [(); cap_size(MAX_UNITS)]:,
-{
+impl<C: Capacity> CostTable<C> {
     /// All-zero cost table.
-    pub const fn new() -> Self {
-        Self { estimated_cost_ns: [USize::ZERO; cap_size(MAX_UNITS)] }
+    pub fn new() -> Self {
+        Self { estimated_cost_ns: <C as Capacity>::filled(USize::ZERO) }
     }
 }
 
-impl<const MAX_UNITS: Cap> Default for CostTable<MAX_UNITS>
+impl<C: Capacity> Copy for CostTable<C> where <C as Capacity>::Array<USize>: Copy {}
+
+impl<C: Capacity> Clone for CostTable<C>
 where
-    [(); cap_size(MAX_UNITS)]:,
+    <C as Capacity>::Array<USize>: Copy,
 {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<C: Capacity> Default for CostTable<C> {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl<C: Capacity> core::fmt::Debug for CostTable<C> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("CostTable").finish_non_exhaustive()
     }
 }

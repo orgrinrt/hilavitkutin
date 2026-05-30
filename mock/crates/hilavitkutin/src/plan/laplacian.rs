@@ -21,11 +21,11 @@ use core::marker::PhantomData;
 use core::ops::{Add, Mul, Sub};
 
 use arvo::traits::{FromConstant, TotalOrd};
-use arvo::{Cap, USize};
+use arvo::USize;
 use arvo_bitmask::NodeId;
 use arvo_sparse::{BidirectionalSparseAdjacency, CsrBidirectional, SparseAdjacency};
 use arvo_spectral::LinearOperator;
-use arvo_tensor::cap_size;
+use arvo_tensor::{cap_size, Capacity};
 
 use crate::plan::graph::EdgeKind;
 
@@ -34,25 +34,20 @@ use crate::plan::graph::EdgeKind;
 ///
 /// `F` is the spectral eigenvector float (`FastFloat<f32>` in the
 /// engine). The operator borrows the adjacency; no copy, no rebuild
-/// per iteration.
-pub struct SymmetricLaplacian<'data, const N: Cap, const E: Cap, F>
-where
-    [(); cap_size(N)]:,
-    [(); cap_size(E)]:,
-{
-    adjacency: &'data CsrBidirectional<N, E, EdgeKind>,
+/// per iteration. `U` is the node (unit) capacity, `E` the edge
+/// capacity.
+pub struct SymmetricLaplacian<'data, U: Capacity, E: Capacity, F> {
+    adjacency: &'data CsrBidirectional<U, E, EdgeKind>,
     _f: PhantomData<F>,
 }
 
-impl<'data, const N: Cap, const E: Cap, F> SymmetricLaplacian<'data, N, E, F>
+impl<'data, U: Capacity, E: Capacity, F> SymmetricLaplacian<'data, U, E, F>
 where
-    [(); cap_size(N)]:,
-    [(); cap_size(E)]:,
     F: Add<Output = F> + Mul<Output = F> + TotalOrd + Copy + FromConstant,
 {
     /// Wrap a bidirectional CSR as a symmetric Laplacian operator.
     #[inline]
-    pub fn new(adjacency: &'data CsrBidirectional<N, E, EdgeKind>) -> Self {
+    pub fn new(adjacency: &'data CsrBidirectional<U, E, EdgeKind>) -> Self {
         Self { adjacency, _f: PhantomData }
     }
 
@@ -62,7 +57,7 @@ where
     /// iteration, which needs `sigma >= lambda_max` so `sigma*I - L`
     /// stays positive semidefinite.
     pub fn lambda_max_bound(&self) -> F {
-        let n = cap_size(N);
+        let n = cap_size(<U as Capacity>::CAP);
         let zero = F::from_constant::<{ USize(0) }>();
         let one = F::from_constant::<{ USize(1) }>();
         let two = F::from_constant::<{ USize(2) }>();
@@ -87,37 +82,37 @@ where
     }
 }
 
-impl<'data, const N: Cap, const E: Cap, F> LinearOperator<F, N>
-    for SymmetricLaplacian<'data, N, E, F>
+impl<'data, U: Capacity, E: Capacity, F> LinearOperator<F, U>
+    for SymmetricLaplacian<'data, U, E, F>
 where
-    [(); cap_size(N)]:,
-    [(); cap_size(E)]:,
     F: Add<Output = F> + Sub<Output = F> + Copy + FromConstant,
 {
     #[inline]
-    fn apply(&self, x: &[F; cap_size(N)], y: &mut [F; cap_size(N)]) {
-        let n = cap_size(N);
+    fn apply(&self, x: &<U as Capacity>::Array<F>, y: &mut <U as Capacity>::Array<F>) {
+        let n = cap_size(<U as Capacity>::CAP);
         let zero = F::from_constant::<{ USize(0) }>();
+        let xs = x.as_ref();
+        let ys = y.as_mut();
         let mut i = 0usize;
         while i < n {
             let node = NodeId::new(USize(i));
-            let xi = x[i];
+            let xi = xs[i];
             // (L x)[i] = sum over undirected neighbours of (x[i] - x[j]),
             // unit weights. DAG so successors and predecessors disjoint.
             let mut acc = zero;
             for nb in self.adjacency.successors(node) {
                 let j = (nb.0).0;
                 if j < n {
-                    acc = acc + (xi - x[j]);
+                    acc = acc + (xi - xs[j]);
                 }
             }
             for nb in self.adjacency.predecessors(node) {
                 let j = (nb.0).0;
                 if j < n {
-                    acc = acc + (xi - x[j]);
+                    acc = acc + (xi - xs[j]);
                 }
             }
-            y[i] = acc;
+            ys[i] = acc;
             i += 1;
         }
     }

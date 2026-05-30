@@ -5,22 +5,24 @@
 //! Recomputes on any pipeline structure change (new WUs, record-count
 //! change, DAG modification).
 //!
-//! `ExecutionPlan` carries ten const generics. The plan-wide caps
-//! (MAX_UNITS / MAX_PHASES / MAX_TRUNKS / MAX_FIBERS / MAX_LANES /
-//! MAX_COLUMNS) size the top-level arrays. The four per-aggregate
-//! caps (MAX_COMPONENTS_PER_TRUNK / MAX_UNITS_PER_FIBER /
-//! MAX_COLUMNS_PER_FIBER / MAX_TRUNKS_PER_PHASE) size the nested
-//! structures. Per Topic 3 audit-2 m3, the per-aggregate caps are
-//! their own const generics rather than CeilingDiv-derived: this
-//! decouples per-fiber footprint from pipeline-wide caps.
+//! `ExecutionPlan` is generic over one `D: PlanDims` bundling the
+//! plan capacity dimensions. The plan-wide dimensions (units / phases /
+//! trunks / fibers / lanes / columns) size the top-level arrays; the
+//! per-aggregate dimensions (components-per-trunk / units-per-fiber /
+//! columns-per-fiber / trunks-per-phase) size the nested structures.
+//! Per Topic 3 audit-2 m3, the per-aggregate dimensions are their own
+//! capacity types rather than CeilingDiv-derived: this decouples
+//! per-fiber footprint from pipeline-wide caps.
 
 use arvo::strategy::Identity;
-use arvo::{Cap, USize};
-use arvo_tensor::{cap, cap_size};
+use arvo::USize;
+use arvo_bitmask::NodeId;
+use arvo_tensor::Capacity;
 
 pub mod access;
 pub mod column;
 pub mod core_program;
+pub mod dims;
 pub mod dirty;
 pub mod fiber;
 pub mod graph;
@@ -34,6 +36,7 @@ pub mod unit;
 
 pub use access::AccessMask;
 pub use column::{ColumnClassMap, ColumnClassification};
+pub use dims::{DefaultPlanDims, PlanDims};
 pub use dirty::{DirtyMask, DirtyMasks};
 pub use fiber::{
     AccumSlot, AccumType, Fiber, FiberGrouping, HeadTailConvergence, MergeOp,
@@ -51,208 +54,116 @@ pub use hilavitkutin_api::{FiberId, PhaseId, TrunkId, UnitId};
 /// Complete plan-stage output.
 ///
 /// Frozen once computed; the dispatch stage walks it without
-/// mutation. The mutable sibling `CostTable<MAX_UNITS>` lives
+/// mutation. The mutable sibling `CostTable<D::Units>` lives
 /// alongside and refreshes between frames.
-#[derive(Copy, Clone, Debug)]
-pub struct ExecutionPlan<
-    const MAX_UNITS: Cap,
-    const MAX_PHASES: Cap,
-    const MAX_TRUNKS: Cap,
-    const MAX_FIBERS: Cap,
-    const MAX_LANES: Cap,
-    const MAX_COLUMNS: Cap,
-    const MAX_COMPONENTS_PER_TRUNK: Cap,
-    const MAX_UNITS_PER_FIBER: Cap,
-    const MAX_COLUMNS_PER_FIBER: Cap,
-    const MAX_TRUNKS_PER_PHASE: Cap,
->
-where
-    [(); cap_size(MAX_UNITS)]:,
-    [(); cap_size(MAX_PHASES)]:,
-    [(); cap_size(MAX_FIBERS)]:,
-    [(); cap_size(MAX_TRUNKS_PER_PHASE)]:,
-    [(); cap_size(MAX_COMPONENTS_PER_TRUNK)]:,
-    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
-    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
-{
+pub struct ExecutionPlan<D: PlanDims> {
     /// Waist-delimited phases (in dispatch order).
-    pub phases: [Phase<
-        MAX_TRUNKS_PER_PHASE,
-        MAX_COMPONENTS_PER_TRUNK,
-        MAX_UNITS_PER_FIBER,
-        MAX_COLUMNS_PER_FIBER,
-    >; cap_size(MAX_PHASES)],
+    pub phases: <D::Phases as Capacity>::Array<Phase<D>>,
     pub phase_count: USize,
     /// Per-unit metadata array, addressed by `UnitId`.
-    pub unit_meta: [UnitMeta; cap_size(MAX_UNITS)],
+    pub unit_meta: <D::Units as Capacity>::Array<UnitMeta>,
     pub unit_count: USize,
     /// Per-fiber column classification.
-    pub column_class: ColumnClassMap<MAX_FIBERS, MAX_COLUMNS_PER_FIBER>,
+    pub column_class: ColumnClassMap<D>,
     /// Per-fiber dirty masks (incremental-skip propagation).
-    pub dirty: DirtyMasks<MAX_FIBERS, MAX_COLUMNS>,
+    pub dirty: DirtyMasks<D::Fibers, D::Columns>,
     /// Per-fiber morsel sizes. `morsel_sizes[f]` is the number of
     /// records assigned to fiber `f`. Sum-preserving across the full
     /// record set (remainder distributed across the first
     /// `record_count % fiber_count` fibers). Read by dispatch codegen
     /// to emit per-fiber `RecordRange` slices.
-    pub morsel_sizes: [USize; cap_size(MAX_FIBERS)],
+    pub morsel_sizes: <D::Fibers as Capacity>::Array<USize>,
     /// RCM renumber permutation: `rcm_order[new_pos]` is the `UnitId`
     /// placed at that position by the step-4 bandwidth-reduction pass.
     /// A locality renumber consumed by dispatch codegen for arena
     /// layout, not the dispatch order (dispatch stays topological via
     /// `unit_meta`). Zero-filled before the chain populates it.
-    pub rcm_order: [UnitId; cap_size(MAX_UNITS)],
+    pub rcm_order: <D::Units as Capacity>::Array<UnitId>,
 }
 
-impl<
-        const MAX_UNITS: Cap,
-        const MAX_PHASES: Cap,
-        const MAX_TRUNKS: Cap,
-        const MAX_FIBERS: Cap,
-        const MAX_LANES: Cap,
-        const MAX_COLUMNS: Cap,
-        const MAX_COMPONENTS_PER_TRUNK: Cap,
-        const MAX_UNITS_PER_FIBER: Cap,
-        const MAX_COLUMNS_PER_FIBER: Cap,
-        const MAX_TRUNKS_PER_PHASE: Cap,
-    >
-    ExecutionPlan<
-        MAX_UNITS,
-        MAX_PHASES,
-        MAX_TRUNKS,
-        MAX_FIBERS,
-        MAX_LANES,
-        MAX_COLUMNS,
-        MAX_COMPONENTS_PER_TRUNK,
-        MAX_UNITS_PER_FIBER,
-        MAX_COLUMNS_PER_FIBER,
-        MAX_TRUNKS_PER_PHASE,
-    >
+impl<D: PlanDims> ExecutionPlan<D>
 where
-    [(); cap_size(MAX_UNITS)]:,
-    [(); cap_size(MAX_PHASES)]:,
-    [(); cap_size(MAX_FIBERS)]:,
-    [(); cap_size(MAX_TRUNKS_PER_PHASE)]:,
-    [(); cap_size(MAX_COMPONENTS_PER_TRUNK)]:,
-    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
-    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
+    Fiber<D>: Copy,
+    <D::TrunksPerPhase as Capacity>::Array<Trunk<D>>: Copy,
+    <D::ComponentsPerTrunk as Capacity>::Array<TrunkComponent<D>>: Copy,
+    <D::ColumnsPerFiber as Capacity>::Array<ColumnClassification>: Copy,
 {
     /// All-zero plan. Used as the default before the plan-stage
     /// chain populates real values, and as the constructor for
     /// `Default`.
-    pub const fn new() -> Self {
+    pub fn new() -> Self {
         Self {
-            phases: [Phase::new(); cap_size(MAX_PHASES)],
+            phases: <D::Phases as Capacity>::filled(Phase::new()),
             phase_count: USize::ZERO,
-            unit_meta: [UnitMeta::new(); cap_size(MAX_UNITS)],
+            unit_meta: <D::Units as Capacity>::filled(UnitMeta::new()),
             unit_count: USize::ZERO,
             column_class: ColumnClassMap::new(),
             dirty: DirtyMasks::new(),
-            morsel_sizes: [USize::ZERO; cap_size(MAX_FIBERS)],
-            rcm_order: [UnitId::ZERO; cap_size(MAX_UNITS)],
+            morsel_sizes: <D::Fibers as Capacity>::filled(USize::ZERO),
+            rcm_order: <D::Units as Capacity>::filled(UnitId::ZERO),
         }
     }
 }
 
-impl<
-        const MAX_UNITS: Cap,
-        const MAX_PHASES: Cap,
-        const MAX_TRUNKS: Cap,
-        const MAX_FIBERS: Cap,
-        const MAX_LANES: Cap,
-        const MAX_COLUMNS: Cap,
-        const MAX_COMPONENTS_PER_TRUNK: Cap,
-        const MAX_UNITS_PER_FIBER: Cap,
-        const MAX_COLUMNS_PER_FIBER: Cap,
-        const MAX_TRUNKS_PER_PHASE: Cap,
-    > Default
-    for ExecutionPlan<
-        MAX_UNITS,
-        MAX_PHASES,
-        MAX_TRUNKS,
-        MAX_FIBERS,
-        MAX_LANES,
-        MAX_COLUMNS,
-        MAX_COMPONENTS_PER_TRUNK,
-        MAX_UNITS_PER_FIBER,
-        MAX_COLUMNS_PER_FIBER,
-        MAX_TRUNKS_PER_PHASE,
-    >
+impl<D: PlanDims> Copy for ExecutionPlan<D>
 where
-    [(); cap_size(MAX_UNITS)]:,
-    [(); cap_size(MAX_PHASES)]:,
-    [(); cap_size(MAX_FIBERS)]:,
-    [(); cap_size(MAX_TRUNKS_PER_PHASE)]:,
-    [(); cap_size(MAX_COMPONENTS_PER_TRUNK)]:,
-    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
-    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
+    <D::Phases as Capacity>::Array<Phase<D>>: Copy,
+    <D::Units as Capacity>::Array<UnitMeta>: Copy,
+    ColumnClassMap<D>: Copy,
+    DirtyMasks<D::Fibers, D::Columns>: Copy,
+    <D::Fibers as Capacity>::Array<USize>: Copy,
+    <D::Units as Capacity>::Array<UnitId>: Copy,
+{
+}
+
+impl<D: PlanDims> Clone for ExecutionPlan<D>
+where
+    <D::Phases as Capacity>::Array<Phase<D>>: Copy,
+    <D::Units as Capacity>::Array<UnitMeta>: Copy,
+    ColumnClassMap<D>: Copy,
+    DirtyMasks<D::Fibers, D::Columns>: Copy,
+    <D::Fibers as Capacity>::Array<USize>: Copy,
+    <D::Units as Capacity>::Array<UnitId>: Copy,
+{
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<D: PlanDims> core::fmt::Debug for ExecutionPlan<D> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("ExecutionPlan")
+            .field("phase_count", &self.phase_count.0)
+            .field("unit_count", &self.unit_count.0)
+            .finish_non_exhaustive()
+    }
+}
+
+impl<D: PlanDims> Default for ExecutionPlan<D>
+where
+    Fiber<D>: Copy,
+    <D::TrunksPerPhase as Capacity>::Array<Trunk<D>>: Copy,
+    <D::ComponentsPerTrunk as Capacity>::Array<TrunkComponent<D>>: Copy,
+    <D::ColumnsPerFiber as Capacity>::Array<ColumnClassification>: Copy,
 {
     fn default() -> Self {
         Self::new()
     }
 }
 
-// Static `Send + Sync` assertion for `ExecutionPlan`. The plan crosses
-// thread boundaries when Pass 3 hands `&ExecutionPlan` slices to per-core
-// dispatch closures. Today every field auto-derives `Send + Sync` from
-// its arvo-newtype leaves (USize, Bool, UnitId, FiberId, TrunkId, PhaseId)
-// plus the nested plan types. The auto-impl is silent: a future field
-// that introduces a raw pointer, interior mutability, or PhantomData of
-// a non-Send/Sync type would break the bound without a load-bearing
-// diagnostic. This monomorphised assertion forces a compile-time check
-// against a representative instantiation.
+// Static `Send + Sync` assertion for `ExecutionPlan` over the default
+// dimensions. The plan crosses thread boundaries when Pass 3 hands
+// `&ExecutionPlan` slices to per-core dispatch closures. Today every
+// field auto-derives `Send + Sync` from its arvo-newtype leaves (USize,
+// Bool, UnitId, FiberId, TrunkId, PhaseId) plus the nested plan types.
+// The auto-impl is silent: a future field that introduces a raw
+// pointer, interior mutability, or PhantomData of a non-Send/Sync type
+// would break the bound without a load-bearing diagnostic. This
+// monomorphised assertion forces a compile-time check against the
+// default dimension instantiation.
 const _: fn() = || {
-    // The assertion is generic over the same const-dimension params as
-    // `ExecutionPlan` and carries its array-length where-bounds, so the
-    // `Send + Sync` check holds for any well-formed instantiation rather
-    // than one concrete shape. The const params never bind to values
-    // here; naming the function below forces the bound check.
     fn assert_send_sync<T: Send + Sync>() {}
-    fn check<
-        const MAX_UNITS: Cap,
-        const MAX_PHASES: Cap,
-        const MAX_TRUNKS: Cap,
-        const MAX_FIBERS: Cap,
-        const MAX_LANES: Cap,
-        const MAX_COLUMNS: Cap,
-        const MAX_COMPONENTS_PER_TRUNK: Cap,
-        const MAX_UNITS_PER_FIBER: Cap,
-        const MAX_COLUMNS_PER_FIBER: Cap,
-        const MAX_TRUNKS_PER_PHASE: Cap,
-    >()
-    where
-        [(); cap_size(MAX_UNITS)]:,
-        [(); cap_size(MAX_PHASES)]:,
-        [(); cap_size(MAX_FIBERS)]:,
-        [(); cap_size(MAX_TRUNKS_PER_PHASE)]:,
-        [(); cap_size(MAX_COMPONENTS_PER_TRUNK)]:,
-        [(); cap_size(MAX_UNITS_PER_FIBER)]:,
-        [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
-    {
-        // The const-eval array-length bounds are in scope here, so
-        // naming the type to check `Send + Sync` is well-formed.
-        assert_send_sync::<
-            ExecutionPlan<
-                MAX_UNITS,
-                MAX_PHASES,
-                MAX_TRUNKS,
-                MAX_FIBERS,
-                MAX_LANES,
-                MAX_COLUMNS,
-                MAX_COMPONENTS_PER_TRUNK,
-                MAX_UNITS_PER_FIBER,
-                MAX_COLUMNS_PER_FIBER,
-                MAX_TRUNKS_PER_PHASE,
-            >,
-        >();
-    }
-    // Smallest meaningful instantiation; the bound is structural and
-    // independent of the const-generic values. A named const is used
-    // rather than inline `{ cap(1) }` because the const-eval normaliser
-    // discharges the array-length bounds against a named `Cap` const but
-    // not an inline construction in turbofish position.
-    const ONE: Cap = cap(1);
-    let _ = check::<ONE, ONE, ONE, ONE, ONE, ONE, ONE, ONE, ONE, ONE>;
+    let _ = assert_send_sync::<ExecutionPlan<DefaultPlanDims>>;
 };
 
 /// Chain the 13 plan-stage steps and assemble an `ExecutionPlan`.
@@ -270,72 +181,31 @@ const _: fn() = || {
 /// Returns `Outcome::Err(PlanError::Cycle)` when `topo_sort` fails to
 /// place every input unit (cycle in the dependency graph), or other
 /// `PlanError` variants for feasibility / size / core-count issues.
-pub fn compute_execution_plan<
-    const MAX_UNITS: Cap,
-    const MAX_STORES: Cap,
-    const MAX_EDGES: Cap,
-    const MAX_PHASES: Cap,
-    const MAX_TRUNKS: Cap,
-    const MAX_FIBERS: Cap,
-    const MAX_LANES: Cap,
-    const MAX_COLUMNS: Cap,
-    const MAX_COMPONENTS_PER_TRUNK: Cap,
-    const MAX_UNITS_PER_FIBER: Cap,
-    const MAX_COLUMNS_PER_FIBER: Cap,
-    const MAX_TRUNKS_PER_PHASE: Cap,
->(
-    inputs: &PlanInputs<MAX_UNITS, MAX_STORES>,
-) -> notko::Outcome<
-    ExecutionPlan<
-        MAX_UNITS,
-        MAX_PHASES,
-        MAX_TRUNKS,
-        MAX_FIBERS,
-        MAX_LANES,
-        MAX_COLUMNS,
-        MAX_COMPONENTS_PER_TRUNK,
-        MAX_UNITS_PER_FIBER,
-        MAX_COLUMNS_PER_FIBER,
-        MAX_TRUNKS_PER_PHASE,
-    >,
-    PlanError,
->
+pub fn compute_execution_plan<D: PlanDims>(
+    inputs: &PlanInputs<D::Units, D::Stores>,
+) -> notko::Outcome<ExecutionPlan<D>, PlanError>
 where
-    [(); cap_size(MAX_UNITS)]:,
-    [(); cap_size(MAX_STORES)]:,
-    [(); cap_size(MAX_EDGES)]:,
-    [(); cap_size(MAX_PHASES)]:,
-    [(); cap_size(MAX_FIBERS)]:,
-    [(); cap_size(MAX_TRUNKS_PER_PHASE)]:,
-    [(); cap_size(MAX_COMPONENTS_PER_TRUNK)]:,
-    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
-    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
-    [(); cap_size(MAX_COLUMNS)]:,
+    <D::TrunksPerPhase as Capacity>::Array<Trunk<D>>: Copy,
+    <D::ComponentsPerTrunk as Capacity>::Array<TrunkComponent<D>>: Copy,
+    <D::ColumnsPerFiber as Capacity>::Array<ColumnClassification>: Copy,
+    Fiber<D>: Copy,
+    <D::Units as Capacity>::Array<SpectralFloatVec>: Copy,
+    <D::Units as Capacity>::Array<USize>: Copy,
+    <D::Edges as Capacity>::Array<NodeId>: Copy,
 {
     // Empty input → empty plan (valid).
     let n = inputs.unit_count.0;
-    let mut plan: ExecutionPlan<
-        MAX_UNITS,
-        MAX_PHASES,
-        MAX_TRUNKS,
-        MAX_FIBERS,
-        MAX_LANES,
-        MAX_COLUMNS,
-        MAX_COMPONENTS_PER_TRUNK,
-        MAX_UNITS_PER_FIBER,
-        MAX_COLUMNS_PER_FIBER,
-        MAX_TRUNKS_PER_PHASE,
-    > = ExecutionPlan::new();
+    let mut plan: ExecutionPlan<D> = ExecutionPlan::new();
     plan.unit_count = inputs.unit_count;
     if n == 0 {
         return notko::Outcome::Ok(plan);
     }
 
     // Step 1: build the DAG.
-    let dag = steps::build_dag::<MAX_UNITS, MAX_STORES, MAX_EDGES>(inputs);
+    let dag = steps::build_dag::<D>(inputs);
 
     // Step 2: topo sort with explicit placed-count for cycle detection.
-    let (topo, topo_placed) = steps::topo_sort::<MAX_UNITS, MAX_EDGES>(&dag);
+    let (topo, topo_placed) = steps::topo_sort::<D>(&dag);
     // Cycle detection: when Kahn's iteration runs out of zero-in-degree
     // units before placing every unit, the remainder is a cycle. The
     // placed count is the canonical signal; UnitId::ZERO is a valid
@@ -345,7 +215,7 @@ where
     }
 
     // Step 3: phase boundaries from waist detection.
-    let waists = steps::compute_waists::<MAX_UNITS, MAX_EDGES, MAX_PHASES>(&dag, &topo);
+    let waists = steps::compute_waists::<D>(&dag, &topo);
     plan.phase_count = waists.phase_count;
 
     // Step 4: RCM bandwidth-reduction reordering. Persisted on the
@@ -353,7 +223,7 @@ where
     // dispatch codegen), distinct from the topological dispatch order
     // in `unit_meta`. Steps 5 to 6 (block-diagonal, spectral) remain
     // stubs tracked under HILA-RUNTIME-C1.
-    plan.rcm_order = steps::rcm_reorder::<MAX_UNITS, MAX_EDGES>(&dag);
+    plan.rcm_order = steps::rcm_reorder::<D>(&dag);
     // Step 5: connected-component block detection, projected to
     // per-phase trunk skeletons. Each block is a column-disjoint
     // independent sub-graph; within a phase, distinct blocks become
@@ -363,8 +233,8 @@ where
     // fires yet: distinct blocks are column-disjoint by construction, so
     // PhaseAlignmentMismatch has no concrete condition before column
     // classification.
-    let partition = steps::block_diagonalise::<MAX_UNITS, MAX_EDGES>(&dag);
-    let trunk_counts = steps::phase_trunk_counts::<MAX_UNITS, MAX_PHASES>(
+    let partition = steps::block_diagonalise::<D>(&dag);
+    let trunk_counts = steps::phase_trunk_counts::<D>(
         &partition,
         &waists,
         &topo,
@@ -372,16 +242,16 @@ where
     );
     // `PhaseId` is `Uint<5>` (up to 32 phases) and `TrunkId` is
     // `Uint<6>` (up to 64 trunks plan-wide): the deliberate engine width
-    // cap on phase and trunk counts. The const-generic caps plus these
+    // cap on phase and trunk counts. The capacity dimensions plus these
     // id widths are the consumer's budget; a plan exceeding them is a
     // misconfiguration. `next_trunk` is a plan-wide running id. A hard
     // bound-check that errors past the cap is a follow-up (it is a
     // broader engine id-width-policy concern, not specific to this
     // projection).
     let mut p = 0;
-    while p < waists.phase_count.0 && p < cap_size(MAX_PHASES) {
-        plan.phases[p].id = PhaseId::from_index(USize(p)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
-        plan.phases[p].trunk_count = trunk_counts[p];
+    while p < waists.phase_count.0 && p < cap_size_phases::<D>() {
+        plan.phases.as_mut()[p].id = PhaseId::from_index(USize(p)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
+        plan.phases.as_mut()[p].trunk_count = trunk_counts.as_ref()[p];
         p += 1;
     }
 
@@ -392,55 +262,41 @@ where
     // assigns the per-phase trunk arrays, then reconstructs a global
     // `FiberGrouping` so step 8 keeps its interface. The width-gated
     // spectral former for wide blocks lands in a follow-on slice.
-    let fiber_trunks = steps::project_fiber_components::<
-        MAX_UNITS,
-        MAX_EDGES,
-        MAX_FIBERS,
-        MAX_PHASES,
-        MAX_TRUNKS_PER_PHASE,
-        MAX_COMPONENTS_PER_TRUNK,
-        MAX_UNITS_PER_FIBER,
-        MAX_COLUMNS_PER_FIBER,
-    >(&dag, &partition, &waists, &topo, inputs.unit_count);
+    let fiber_trunks = steps::project_fiber_components::<D>(
+        &dag,
+        &partition,
+        &waists,
+        &topo,
+        inputs.unit_count,
+    );
     let mut p = 0;
-    while p < waists.phase_count.0 && p < cap_size(MAX_PHASES) {
-        plan.phases[p].trunks = fiber_trunks[p];
+    while p < waists.phase_count.0 && p < cap_size_phases::<D>() {
+        plan.phases.as_mut()[p].trunks = fiber_trunks.as_ref()[p];
         p += 1;
     }
-    let fibers = steps::fiber_grouping_from_trunks::<
-        MAX_UNITS,
-        MAX_FIBERS,
-        MAX_PHASES,
-        MAX_TRUNKS_PER_PHASE,
-        MAX_COMPONENTS_PER_TRUNK,
-        MAX_UNITS_PER_FIBER,
-        MAX_COLUMNS_PER_FIBER,
-    >(&fiber_trunks, &trunk_counts, waists.phase_count);
+    let fibers = steps::fiber_grouping_from_trunks::<D>(&fiber_trunks, &trunk_counts, waists.phase_count);
     if fibers.fiber_count.0 == 0 && n > 0 {
         return notko::Outcome::Err(PlanError::NoTrunkAssignment);
     }
 
     // Step 8 (fused): upward rank + per-fiber dirty propagation.
-    let (ranks, dirty) = steps::compute_upward_rank_and_dirty::<
-        MAX_UNITS,
-        MAX_EDGES,
-        MAX_FIBERS,
-        MAX_STORES,
-    >(&dag, &topo, inputs, &fibers);
+    let (ranks, dirty) = steps::compute_upward_rank_and_dirty::<D>(&dag, &topo, inputs, &fibers);
     // Stash a subset of the per-fiber dirty info onto the plan's
-    // MAX_COLUMNS-shaped DirtyMasks. The compatibility cast assumes
-    // MAX_STORES <= MAX_COLUMNS (typical); larger MAX_STORES would
-    // need explicit truncation handled in a follow-up round.
+    // columns-shaped DirtyMasks. The compatibility cast assumes the
+    // store capacity <= the column capacity (typical); a larger store
+    // capacity would need explicit truncation handled in a follow-up
+    // round.
     let mut f = 0;
-    while f < cap_size(MAX_FIBERS) {
+    while f < cap_size(<D::Fibers as Capacity>::CAP) {
         // Reuse the same bit layout: DirtyMask::raw + manual restore.
-        let raw = dirty.per_fiber[f].raw();
-        // Move bits into the MAX_COLUMNS-shaped mask one by one.
+        let raw = dirty.per_fiber.as_ref()[f].raw();
+        // Move bits into the columns-shaped mask one by one.
         let mut store = 0;
-        while store < cap_size(MAX_STORES) && store < 64 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: AccessMask 64-bit window per skeleton; tracked: #72
+        while store < cap_size(<D::Stores as Capacity>::CAP) && store < 64 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: AccessMask 64-bit window per skeleton; tracked: #72
             let bit = (raw.0 >> store) & 1; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: bit extraction internal; tracked: #72
             if bit == 1 {
-                plan.dirty.per_fiber[f] = plan.dirty.per_fiber[f].set(USize(store)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
+                let pf = plan.dirty.per_fiber.as_ref()[f];
+                plan.dirty.per_fiber.as_mut()[f] = pf.set(USize(store)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
             }
             store += 1;
         }
@@ -450,39 +306,35 @@ where
     // Step 9: morsel sizing per fiber. Stored on the plan so Pass 3
     // dispatch codegen can emit per-fiber `RecordRange` slices without
     // recomputing.
-    plan.morsel_sizes = steps::size_morsels::<MAX_FIBERS>(inputs.record_count, fibers.fiber_count);
+    plan.morsel_sizes = steps::size_morsels::<D>(inputs.record_count, fibers.fiber_count);
 
     // Step 10: phase configs. Store onto plan.phases[i].config. Pass
     // the unit count so the last phase's width is computed against
     // the real range, not the prior `start + 1` lower-bound.
     let configs =
-        steps::select_phase_configs::<MAX_PHASES>(&waists, inputs.record_count, inputs.unit_count);
+        steps::select_phase_configs::<D>(&waists, inputs.record_count, inputs.unit_count);
     let mut i = 0;
-    while i < plan.phase_count.0 && i < cap_size(MAX_PHASES) {
-        plan.phases[i].config = configs[i];
+    while i < plan.phase_count.0 && i < cap_size_phases::<D>() {
+        plan.phases.as_mut()[i].config = configs.as_ref()[i];
         i += 1;
     }
 
     // Step 11: per-fiber column classification.
-    plan.column_class = steps::classify_columns::<
-        MAX_UNITS,
-        MAX_FIBERS,
-        MAX_COLUMNS_PER_FIBER,
-        MAX_STORES,
-    >(&fibers, inputs);
+    plan.column_class = steps::classify_columns::<D>(&fibers, inputs);
 
     // Populate the unit meta array with the topo order. `unit_meta` is
     // indexed by topo-position (matching the dispatch order), so each
     // slot's `id` is `topo[u]` and the per-unit fields are looked up
     // by the raw unit-id index that `topo[u]` projects to. `ranks` is
     // also unit-id-indexed; project once and read both.
+    let topo_s = topo.as_ref();
     let mut u = 0;
-    while u < n && u < cap_size(MAX_UNITS) {
-        plan.unit_meta[u].id = topo[u];
-        let unit_id_idx = topo[u].index().0;
-        if unit_id_idx < cap_size(MAX_UNITS) {
-            plan.unit_meta[u].commutative = inputs.commutative[unit_id_idx];
-            plan.unit_meta[u].upward_rank = ranks[unit_id_idx];
+    while u < n && u < cap_size(<D::Units as Capacity>::CAP) {
+        plan.unit_meta.as_mut()[u].id = topo_s[u];
+        let unit_id_idx = topo_s[u].index().0;
+        if unit_id_idx < cap_size(<D::Units as Capacity>::CAP) {
+            plan.unit_meta.as_mut()[u].commutative = inputs.commutative.as_ref()[unit_id_idx];
+            plan.unit_meta.as_mut()[u].upward_rank = ranks.as_ref()[unit_id_idx];
         }
         u += 1;
     }
@@ -490,4 +342,19 @@ where
     // Steps 12 + 13 (core assignment + per-core program synthesis)
     // happen on the dispatch stage entry; not part of this runner.
     notko::Outcome::Ok(plan)
+}
+
+use arvo_tensor::cap_size;
+
+/// The spectral eigenvector float, named here so the runner's `Copy`
+/// where-bound on `<D::Units as Capacity>::Array<_>` matches the one
+/// `project_fiber_components` and `spectral_partition` carry.
+type SpectralFloatVec = arvo::FastFloat<f32>; // lint:allow(no-bare-numeric) reason: f32 is the IEEE width tag of arvo FastFloat; tracked: #72
+
+/// Phase-capacity cap as a `usize`, factored so the runner reads
+/// cleanly. The dimension is a type; this is the value-position
+/// projection of its `CAP`.
+#[inline]
+fn cap_size_phases<D: PlanDims>() -> usize { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: value-position cap projection; rust grammar requires usize loop bound; tracked: #72
+    cap_size(<D::Phases as Capacity>::CAP)
 }

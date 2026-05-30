@@ -30,16 +30,22 @@
 //!
 //! Steps 13 ships its body in a follow-up commit alongside
 //! `plan/core_program.rs` (Pass 3 codegen feeds it).
+//!
+//! Every step is generic over one `D: PlanDims` that bundles the
+//! capacity dimensions it sizes by; the dimensions are types, so no
+//! `cap_size` sits in an array-length position.
 
 use arvo::strategy::Identity;
-use arvo::{Bool, Cap, FastFloat, USize};
+use arvo::{Bool, FastFloat, USize};
+use arvo_bitmask::NodeId;
 use arvo_sparse::{block_diagonal_via, rcm_reorder_via};
 use arvo_spectral::k_way_partition;
-use arvo_tensor::cap_size;
+use arvo_tensor::{cap_size, Capacity};
 
 use hilavitkutin_api::{TrunkId, UnitId};
 
 use super::column::{ColumnClassMap, ColumnClassification};
+use super::dims::PlanDims;
 use super::dirty::DirtyMasks;
 use super::fiber::{Fiber, FiberGrouping};
 use super::graph::{DependencyGraph, EdgeKind};
@@ -59,25 +65,23 @@ type SpectralFloat = FastFloat<f32>; // lint:allow(no-bare-numeric) reason: f32 
 /// `i j`; if `j`'s writes overlap `i`'s writes (WAW), append a
 /// `Write` edge. The CSR append-order invariant is preserved because
 /// the outer loop walks `i` in ascending order.
-pub fn build_dag<const MAX_UNITS: Cap, const MAX_STORES: Cap, const MAX_EDGES: Cap>(
-    inputs: &PlanInputs<MAX_UNITS, MAX_STORES>,
-) -> DependencyGraph<MAX_UNITS, MAX_EDGES>
-where
-    [(); cap_size(MAX_UNITS)]:,
-    [(); cap_size(MAX_EDGES)]:,
-{
-    let mut g: DependencyGraph<MAX_UNITS, MAX_EDGES> = DependencyGraph::new();
+pub fn build_dag<D: PlanDims>(
+    inputs: &PlanInputs<D::Units, D::Stores>,
+) -> DependencyGraph<D> {
+    let mut g: DependencyGraph<D> = DependencyGraph::new();
     let n = inputs.unit_count.0;
+    let reads = inputs.reads.as_ref();
+    let writes = inputs.writes.as_ref();
     let mut i = 0;
     while i < n {
         let mut j = i + 1;
         while j < n {
             // RAW: j reads what i wrote.
-            if inputs.reads[j].overlaps(&inputs.writes[i]).0 {
+            if reads[j].overlaps(&writes[i]).0 {
                 g.add_edge_kind(USize(i), USize(j), EdgeKind::Read); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal loop counter; tracked: #72
             }
             // WAW: j writes what i wrote. Order-only dependency.
-            if inputs.writes[j].overlaps(&inputs.writes[i]).0 {
+            if writes[j].overlaps(&writes[i]).0 {
                 g.add_edge_kind(USize(i), USize(j), EdgeKind::Write); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal loop counter; tracked: #72
             }
             j += 1;
@@ -87,8 +91,9 @@ where
     // Ensure every input unit has a row entry, even units with zero
     // out-degree. row_offsets for empty rows equals edge_count
     // (consistent with the CSR invariant: empty row = start == end).
-    while g.unit_count.0 < n && g.unit_count.0 < cap_size(MAX_UNITS) {
-        g.row_offsets[g.unit_count.0] = g.edge_count;
+    while g.unit_count.0 < n && g.unit_count.0 < cap_size(<D::Units as Capacity>::CAP) {
+        let uc = g.unit_count.0;
+        g.row_offsets.as_mut()[uc] = g.edge_count;
         g.unit_count = USize(g.unit_count.0 + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
     }
     g
@@ -96,8 +101,8 @@ where
 
 /// Sentinel value marking an already-placed unit in the in-degree
 /// counter array used by `topo_sort`. Distinguished from a real
-/// in-degree count (which is bounded by `MAX_EDGES`) by being set
-/// to `usize::MAX`, which no valid in-degree can ever reach.
+/// in-degree count (which is bounded by the edge capacity) by being
+/// set to `usize::MAX`, which no valid in-degree can ever reach.
 const CONSUMED: USize = USize(usize::MAX); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: sentinel definition; rust grammar requires raw usize literal here; tracked: #72
 
 /// Step 2: topological sort via Kahn's algorithm.
@@ -107,28 +112,29 @@ const CONSUMED: USize = USize(usize::MAX); // lint:allow(no-bare-numeric) lint:a
 /// `placed < graph.unit_count`, the input contains a cycle. The
 /// runner (`compute_execution_plan`) is responsible for translating
 /// that into `PlanError::Cycle`. Trailing entries in the returned
-/// array (indices `placed..MAX_UNITS`) are left as `UnitId::ZERO`
+/// array (indices `placed..unit capacity`) are left as `UnitId::ZERO`
 /// (the array's initial fill); they are NOT the cycle members. The
 /// caller must use the placed count to slice the valid prefix.
-pub fn topo_sort<const MAX_UNITS: Cap, const MAX_EDGES: Cap>(
-    graph: &DependencyGraph<MAX_UNITS, MAX_EDGES>,
-) -> ([UnitId; cap_size(MAX_UNITS)], USize)
-where
-    [(); cap_size(MAX_UNITS)]:,
-    [(); cap_size(MAX_EDGES)]:,
-{
-    let mut out: [UnitId; cap_size(MAX_UNITS)] = [UnitId::ZERO; cap_size(MAX_UNITS)];
+pub fn topo_sort<D: PlanDims>(
+    graph: &DependencyGraph<D>,
+) -> (<D::Units as Capacity>::Array<UnitId>, USize) {
+    let mut out: <D::Units as Capacity>::Array<UnitId> =
+        <D::Units as Capacity>::filled(UnitId::ZERO);
     let n = graph.unit_count.0;
     if n == 0 {
         return (out, USize::ZERO);
     }
     // In-degree counter.
-    let mut in_degree: [USize; cap_size(MAX_UNITS)] = [USize::ZERO; cap_size(MAX_UNITS)];
+    let mut in_degree: <D::Units as Capacity>::Array<USize> =
+        <D::Units as Capacity>::filled(USize::ZERO);
+    let cols = graph.col_indices.as_ref();
+    let row_offsets = graph.row_offsets.as_ref();
     let mut e = 0;
     while e < graph.edge_count.0 {
-        let d = graph.col_indices[e].index().0;
-        if d < cap_size(MAX_UNITS) {
-            in_degree[d] = USize(in_degree[d].0 + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
+        let d = cols[e].index().0;
+        if d < cap_size(<D::Units as Capacity>::CAP) {
+            let id = in_degree.as_mut();
+            id[d] = USize(id[d].0 + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
         }
         e += 1;
     }
@@ -144,20 +150,21 @@ where
         let mut i = 0;
         while i < n {
             // Skip already-placed units (in_degree set to CONSUMED).
-            if in_degree[i].0 == 0 {
+            if in_degree.as_ref()[i].0 == 0 {
                 let id = UnitId::from_index(USize(i));
-                out[placed] = id;
+                out.as_mut()[placed] = id;
                 placed += 1; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal cursor increment; tracked: #72
-                in_degree[i] = CONSUMED;
+                in_degree.as_mut()[i] = CONSUMED;
                 progress = true;
                 // Decrement successors of unit `i`.
-                let start = graph.row_offsets[i].0;
+                let start = row_offsets[i].0;
                 let end_excl = graph.end_for(i);
                 let mut k = start;
                 while k < end_excl {
-                    let d = graph.col_indices[k].index().0;
-                    if d < cap_size(MAX_UNITS) && in_degree[d].0 != CONSUMED.0 && in_degree[d].0 > 0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: sentinel + bound check on USize internal field; tracked: #72
-                        in_degree[d] = USize(in_degree[d].0 - 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
+                    let d = cols[k].index().0;
+                    let deg = in_degree.as_ref()[d];
+                    if d < cap_size(<D::Units as Capacity>::CAP) && deg.0 != CONSUMED.0 && deg.0 > 0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: sentinel + bound check on USize internal field; tracked: #72
+                        in_degree.as_mut()[d] = USize(deg.0 - 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
                     }
                     k += 1;
                 }
@@ -177,31 +184,27 @@ where
 /// land in a HILA-RUNTIME-C1 follow-up; this body produces a sane
 /// default phase layout (one phase for simple pipelines, splits at
 /// natural narrowing points).
-pub fn compute_waists<const MAX_UNITS: Cap, const MAX_EDGES: Cap, const MAX_PHASES: Cap>(
-    graph: &DependencyGraph<MAX_UNITS, MAX_EDGES>,
-    topo: &[UnitId; cap_size(MAX_UNITS)],
-) -> PhaseBoundaries<MAX_PHASES>
-where
-    [(); cap_size(MAX_UNITS)]:,
-    [(); cap_size(MAX_EDGES)]:,
-    [(); cap_size(MAX_PHASES)]:,
-{
-    let mut boundaries = PhaseBoundaries::<MAX_PHASES>::new();
+pub fn compute_waists<D: PlanDims>(
+    graph: &DependencyGraph<D>,
+    topo: &<D::Units as Capacity>::Array<UnitId>,
+) -> PhaseBoundaries<D> {
+    let mut boundaries = PhaseBoundaries::<D>::new();
     let n = graph.unit_count.0;
     if n == 0 {
         return boundaries;
     }
+    let topo = topo.as_ref();
     // Phase 0 starts at unit 0 always.
-    boundaries.boundaries[0] = USize::ZERO;
+    boundaries.boundaries.as_mut()[0] = USize::ZERO;
     boundaries.phase_count = USize(1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: at least one phase always; tracked: #72
     let mut i = 0;
-    while i + 1 < n && boundaries.phase_count.0 < cap_size(MAX_PHASES) {
+    while i + 1 < n && boundaries.phase_count.0 < cap_size(<D::Phases as Capacity>::CAP) {
         let idx = topo[i].index().0;
         // Out-degree zero in topo order means this unit's output
         // funnels through nothing else; treat as a waist.
-        if idx < cap_size(MAX_UNITS) && graph.out_degree(USize(idx)).0 == 0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
+        if idx < cap_size(<D::Units as Capacity>::CAP) && graph.out_degree(USize(idx)).0 == 0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
             let next_phase = boundaries.phase_count.0;
-            boundaries.boundaries[next_phase] = USize(i + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
+            boundaries.boundaries.as_mut()[next_phase] = USize(i + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
             boundaries.phase_count = USize(next_phase + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
         }
         i += 1;
@@ -222,18 +225,19 @@ where
 /// `rcm_reorder_via` seeds over the CSR's live `node_count()`, so the
 /// slack tail past `unit_count` never enters the permutation; the
 /// trailing slots stay `UnitId::ZERO`.
-pub fn rcm_reorder<const MAX_UNITS: Cap, const MAX_EDGES: Cap>(
-    graph: &DependencyGraph<MAX_UNITS, MAX_EDGES>,
-) -> [UnitId; cap_size(MAX_UNITS)]
+pub fn rcm_reorder<D: PlanDims>(
+    graph: &DependencyGraph<D>,
+) -> <D::Units as Capacity>::Array<UnitId>
 where
-    [(); cap_size(MAX_UNITS)]:,
-    [(); cap_size(MAX_EDGES)]:,
+    <D::Units as Capacity>::Array<USize>: Copy,
+    <D::Edges as Capacity>::Array<NodeId>: Copy,
 {
     let csr = graph.to_csr_bidirectional();
-    let order = rcm_reorder_via::<_, MAX_UNITS>(&csr);
+    let order = rcm_reorder_via::<_, D::Units>(&csr);
     // Convert the arvo NodeId permutation back to the engine UnitId.
-    let mut out: [UnitId; cap_size(MAX_UNITS)] = [UnitId::ZERO; cap_size(MAX_UNITS)];
-    for (dst, src) in out.iter_mut().zip(order.iter()) {
+    let mut out: <D::Units as Capacity>::Array<UnitId> =
+        <D::Units as Capacity>::filled(UnitId::ZERO);
+    for (dst, src) in out.as_mut().iter_mut().zip(order.as_ref().iter()) {
         *dst = UnitId::from_index(src.0);
     }
     out
@@ -252,15 +256,15 @@ where
 /// slack tail past `unit_count` stays block 0. The Dulmage-Mendelsohn
 /// fine decomposition and dead-column elimination layer onto this in a
 /// later round.
-pub fn block_diagonalise<const MAX_UNITS: Cap, const MAX_EDGES: Cap>(
-    graph: &DependencyGraph<MAX_UNITS, MAX_EDGES>,
-) -> BlockPartition<MAX_UNITS>
+pub fn block_diagonalise<D: PlanDims>(
+    graph: &DependencyGraph<D>,
+) -> BlockPartition<D::Units>
 where
-    [(); cap_size(MAX_UNITS)]:,
-    [(); cap_size(MAX_EDGES)]:,
+    <D::Units as Capacity>::Array<USize>: Copy,
+    <D::Edges as Capacity>::Array<NodeId>: Copy,
 {
     let csr = graph.to_csr_bidirectional();
-    let (block_count, block_of_unit) = block_diagonal_via::<_, MAX_UNITS>(&csr);
+    let (block_count, block_of_unit) = block_diagonal_via::<_, D::Units>(&csr);
     BlockPartition { block_count, block_of_unit }
 }
 
@@ -273,42 +277,43 @@ where
 /// with zero sync. Returns the trunk count per phase; the runner
 /// assigns the `Phase` and `Trunk` ids from these counts. A block that
 /// straddles a waist contributes a trunk to each phase it touches.
-pub fn phase_trunk_counts<const MAX_UNITS: Cap, const MAX_PHASES: Cap>(
-    partition: &BlockPartition<MAX_UNITS>,
-    waists: &PhaseBoundaries<MAX_PHASES>,
-    topo: &[UnitId; cap_size(MAX_UNITS)],
+pub fn phase_trunk_counts<D: PlanDims>(
+    partition: &BlockPartition<D::Units>,
+    waists: &PhaseBoundaries<D>,
+    topo: &<D::Units as Capacity>::Array<UnitId>,
     unit_count: USize,
-) -> [USize; cap_size(MAX_PHASES)]
-where
-    [(); cap_size(MAX_UNITS)]:,
-    [(); cap_size(MAX_PHASES)]:,
-{
-    let mut counts: [USize; cap_size(MAX_PHASES)] = [USize::ZERO; cap_size(MAX_PHASES)];
+) -> <D::Phases as Capacity>::Array<USize> {
+    let mut counts: <D::Phases as Capacity>::Array<USize> =
+        <D::Phases as Capacity>::filled(USize::ZERO);
     let pc = waists.phase_count.0;
     let n = unit_count.0;
+    let topo = topo.as_ref();
+    let boundaries = waists.boundaries.as_ref();
+    let block_of_unit = partition.block_of_unit.as_ref();
     let mut p = 0;
-    while p < pc && p < cap_size(MAX_PHASES) {
-        let start = waists.boundaries[p].0;
+    while p < pc && p < cap_size(<D::Phases as Capacity>::CAP) {
+        let start = boundaries[p].0;
         // Phase p ends where phase p+1 starts, or at unit_count for the
         // last phase.
-        let end = if p + 1 < pc { waists.boundaries[p + 1].0 } else { n };
+        let end = if p + 1 < pc { boundaries[p + 1].0 } else { n };
         // Count distinct block ids in this phase, deduped through a
         // per-phase seen-flag array indexed by block id.
-        let mut seen: [Bool; cap_size(MAX_UNITS)] = [Bool::FALSE; cap_size(MAX_UNITS)];
+        let mut seen: <D::Units as Capacity>::Array<Bool> =
+            <D::Units as Capacity>::filled(Bool::FALSE);
         let mut distinct = 0;
         let mut i = start;
-        while i < end && i < cap_size(MAX_UNITS) {
+        while i < end && i < cap_size(<D::Units as Capacity>::CAP) {
             let unit_idx = topo[i].index().0;
-            if unit_idx < cap_size(MAX_UNITS) {
-                let block = partition.block_of_unit[unit_idx].0;
-                if block < cap_size(MAX_UNITS) && !seen[block].0 {
-                    seen[block] = Bool::TRUE;
+            if unit_idx < cap_size(<D::Units as Capacity>::CAP) {
+                let block = block_of_unit[unit_idx].0;
+                if block < cap_size(<D::Units as Capacity>::CAP) && !seen.as_ref()[block].0 {
+                    seen.as_mut()[block] = Bool::TRUE;
                     distinct += 1;
                 }
             }
             i += 1;
         }
-        counts[p] = USize(distinct); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal count; tracked: #72
+        counts.as_mut()[p] = USize(distinct); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal count; tracked: #72
         p += 1;
     }
     counts
@@ -318,36 +323,36 @@ where
 ///
 /// Builds the symmetric graph Laplacian over the bidirectional CSR
 /// (`SymmetricLaplacian`) and runs arvo-spectral's `k_way_partition`
-/// to assign each unit a fiber by spectral cut, with `K = MAX_FIBERS`.
-/// Returns a `FiberGrouping` mapping each unit to its spectral
-/// partition id.
+/// to assign each unit a fiber by spectral cut, with the fiber
+/// capacity as `K`. Returns a `FiberGrouping` mapping each unit to its
+/// spectral partition id.
 ///
 /// The spectral-versus-greedy `group_fibers` (step 7) choice and the
 /// projection onto trunk components land in later C1d slices; the
 /// runner does not consume this output yet. `k_way_partition` operates
-/// over the full `cap_size(MAX_UNITS)`; on a loose CSR the slack rows
-/// are isolated and a live-node-count-aware spectral path is a
-/// follow-up gated on the bench adopting spectral.
-pub fn spectral_partition<const MAX_UNITS: Cap, const MAX_EDGES: Cap, const MAX_FIBERS: Cap>(
-    graph: &DependencyGraph<MAX_UNITS, MAX_EDGES>,
-) -> FiberGrouping<MAX_UNITS, MAX_FIBERS>
+/// over the full unit capacity; on a loose CSR the slack rows are
+/// isolated and a live-node-count-aware spectral path is a follow-up
+/// gated on the bench adopting spectral.
+pub fn spectral_partition<D: PlanDims>(
+    graph: &DependencyGraph<D>,
+) -> FiberGrouping<D>
 where
-    [(); cap_size(MAX_UNITS)]:,
-    [(); cap_size(MAX_EDGES)]:,
-    [(); cap_size(MAX_FIBERS)]:,
+    <D::Units as Capacity>::Array<SpectralFloat>: Copy,
+    <D::Units as Capacity>::Array<USize>: Copy,
+    <D::Edges as Capacity>::Array<NodeId>: Copy,
 {
     use hilavitkutin_api::FiberId;
     let csr = graph.to_csr_bidirectional();
-    let lap: SymmetricLaplacian<MAX_UNITS, MAX_EDGES, SpectralFloat> =
+    let lap: SymmetricLaplacian<D::Units, D::Edges, SpectralFloat> =
         SymmetricLaplacian::new(&csr);
     let sigma = lap.lambda_max_bound();
     let iterations = USize(100); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: spectral power-iteration count; tracked: #72
     let (count, partition) =
-        k_way_partition::<_, MAX_UNITS, MAX_FIBERS, SpectralFloat>(&lap, sigma, iterations);
-    let mut grouping: FiberGrouping<MAX_UNITS, MAX_FIBERS> = FiberGrouping::new();
+        k_way_partition::<_, D::Units, D::Fibers, SpectralFloat>(&lap, sigma, iterations);
+    let mut grouping: FiberGrouping<D> = FiberGrouping::new();
     grouping.fiber_count = count;
     // Map each unit's spectral partition id to its fiber.
-    for (slot, part) in grouping.assignment.iter_mut().zip(partition.iter()) {
+    for (slot, part) in grouping.assignment.as_mut().iter_mut().zip(partition.as_ref().iter()) {
         *slot = FiberId::from_index(*part);
     }
     grouping
@@ -356,47 +361,40 @@ where
 /// Step 7: greedy fiber grouping.
 ///
 /// Assigns each unit to a fiber such that fibers respect topo order
-/// and stay within the consumer's MAX_FIBERS cap. The skeleton walks
+/// and stay within the consumer's fiber capacity. The skeleton walks
 /// the topo order and emits one fiber per leaf chain (a maximal
 /// chain of units where each has exactly one in-degree and one out-
 /// degree). Real heuristics (matrix-chain DP for non-trivial branch
 /// merging) land in HILA-RUNTIME-C1.
-pub fn group_fibers<const MAX_UNITS: Cap, const MAX_EDGES: Cap, const MAX_FIBERS: Cap>(
-    graph: &DependencyGraph<MAX_UNITS, MAX_EDGES>,
-    topo: &[UnitId; cap_size(MAX_UNITS)],
-) -> FiberGrouping<MAX_UNITS, MAX_FIBERS>
-where
-    [(); cap_size(MAX_UNITS)]:,
-    [(); cap_size(MAX_EDGES)]:,
-{
+pub fn group_fibers<D: PlanDims>(
+    graph: &DependencyGraph<D>,
+    topo: &<D::Units as Capacity>::Array<UnitId>,
+) -> FiberGrouping<D> {
     use hilavitkutin_api::FiberId;
-    let mut g: FiberGrouping<MAX_UNITS, MAX_FIBERS> = FiberGrouping::new();
+    let mut g: FiberGrouping<D> = FiberGrouping::new();
     let n = graph.unit_count.0;
     if n == 0 {
         return g;
     }
+    let topo = topo.as_ref();
     let mut current_fiber: usize = 0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal counter; tracked: #72
     // Track which fiber actually received the last assignment so the
-    // final count reflects fibers used, not fibers reached. The prior
-    // shape used `current_fiber + 1` directly, which over-counted by
-    // one whenever the last unit's out-degree triggered a roll-over
-    // (e.g. a single-unit pipeline with no successor still tripped
-    // the `out_deg != 1` branch).
+    // final count reflects fibers used, not fibers reached.
     let mut max_used_fiber: usize = 0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal counter; tracked: #72
     let mut any_assigned = false;
     let mut i = 0;
     while i < n {
         let idx = topo[i].index().0;
-        if idx < cap_size(MAX_UNITS) {
+        if idx < cap_size(<D::Units as Capacity>::CAP) {
             let fid = FiberId::from_index(USize(current_fiber));
-            g.assignment[idx] = fid;
+            g.assignment.as_mut()[idx] = fid;
             max_used_fiber = current_fiber;
             any_assigned = true;
             // Roll over to a new fiber whenever the unit's out-degree
             // is more than 1 (branching) or zero (leaf); single
             // chains pack into one fiber.
             let out_deg = graph.out_degree(USize(idx)).0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
-            if out_deg != 1 && current_fiber + 1 < cap_size(MAX_FIBERS) {
+            if out_deg != 1 && current_fiber + 1 < cap_size(<D::Fibers as Capacity>::CAP) {
                 current_fiber += 1;
             }
         }
@@ -418,16 +416,12 @@ where
 /// Forming fibers per-block keeps every fiber inside one block so
 /// fibers nest within their trunk: a global walk can roll a fiber
 /// across a block boundary when topo order interleaves blocks.
-fn group_fibers_in_block<const MAX_UNITS: Cap, const MAX_EDGES: Cap, const MAX_FIBERS: Cap>(
-    graph: &DependencyGraph<MAX_UNITS, MAX_EDGES>,
+fn group_fibers_in_block<D: PlanDims>(
+    graph: &DependencyGraph<D>,
     block_units: &[UnitId],
-) -> FiberGrouping<MAX_UNITS, MAX_FIBERS>
-where
-    [(); cap_size(MAX_UNITS)]:,
-    [(); cap_size(MAX_EDGES)]:,
-{
+) -> FiberGrouping<D> {
     use hilavitkutin_api::FiberId;
-    let mut g: FiberGrouping<MAX_UNITS, MAX_FIBERS> = FiberGrouping::new();
+    let mut g: FiberGrouping<D> = FiberGrouping::new();
     let n = block_units.len();
     if n == 0 {
         return g;
@@ -438,12 +432,12 @@ where
     let mut i = 0;
     while i < n {
         let idx = block_units[i].index().0;
-        if idx < cap_size(MAX_UNITS) {
-            g.assignment[idx] = FiberId::from_index(USize(current_fiber)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
+        if idx < cap_size(<D::Units as Capacity>::CAP) {
+            g.assignment.as_mut()[idx] = FiberId::from_index(USize(current_fiber)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
             max_used_fiber = current_fiber;
             any_assigned = true;
             let out_deg = graph.out_degree(USize(idx)).0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
-            if out_deg != 1 && current_fiber + 1 < cap_size(MAX_FIBERS) {
+            if out_deg != 1 && current_fiber + 1 < cap_size(<D::Fibers as Capacity>::CAP) {
                 current_fiber += 1;
             }
         }
@@ -465,32 +459,32 @@ where
 /// block-local shape `group_fibers_in_block` returns. Spectral respects
 /// block boundaries (disconnected blocks have independent Fiedler
 /// vectors), so a block's units carry a self-contained id set.
-fn spectral_grouping_in_block<const MAX_UNITS: Cap, const MAX_FIBERS: Cap>(
-    global: &FiberGrouping<MAX_UNITS, MAX_FIBERS>,
+fn spectral_grouping_in_block<D: PlanDims>(
+    global: &FiberGrouping<D>,
     block_units: &[UnitId],
-) -> FiberGrouping<MAX_UNITS, MAX_FIBERS>
-where
-    [(); cap_size(MAX_UNITS)]:,
-    [(); cap_size(MAX_FIBERS)]:,
-{
+) -> FiberGrouping<D> {
     use hilavitkutin_api::FiberId;
-    let mut g: FiberGrouping<MAX_UNITS, MAX_FIBERS> = FiberGrouping::new();
+    let mut g: FiberGrouping<D> = FiberGrouping::new();
     // Remap global spectral id -> block-local id in first-seen order.
-    let mut remap: [USize; cap_size(MAX_FIBERS)] = [USize::ZERO; cap_size(MAX_FIBERS)];
-    let mut seen: [Bool; cap_size(MAX_FIBERS)] = [Bool::FALSE; cap_size(MAX_FIBERS)];
+    let mut remap: <D::Fibers as Capacity>::Array<USize> =
+        <D::Fibers as Capacity>::filled(USize::ZERO);
+    let mut seen: <D::Fibers as Capacity>::Array<Bool> =
+        <D::Fibers as Capacity>::filled(Bool::FALSE);
+    let global_assign = global.assignment.as_ref();
     let mut local_count = 0;
     let mut i = 0;
     while i < block_units.len() {
         let uidx = block_units[i].index().0;
-        if uidx < cap_size(MAX_UNITS) {
-            let gid = global.assignment[uidx].index().0;
-            if gid < cap_size(MAX_FIBERS) {
-                if !seen[gid].0 {
-                    seen[gid] = Bool::TRUE;
-                    remap[gid] = USize(local_count); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
+        if uidx < cap_size(<D::Units as Capacity>::CAP) {
+            let gid = global_assign[uidx].index().0;
+            if gid < cap_size(<D::Fibers as Capacity>::CAP) {
+                if !seen.as_ref()[gid].0 {
+                    seen.as_mut()[gid] = Bool::TRUE;
+                    remap.as_mut()[gid] = USize(local_count); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
                     local_count += 1;
                 }
-                g.assignment[uidx] = FiberId::from_index(remap[gid]);
+                let remapped = remap.as_ref()[gid];
+                g.assignment.as_mut()[uidx] = FiberId::from_index(remapped);
             }
         }
         i += 1;
@@ -513,39 +507,30 @@ where
 /// The former is greedy for every block in this slice; the width-gated
 /// spectral former for wide blocks lands in a follow-on slice at the
 /// marked selection point.
-pub fn project_fiber_components<
-    const MAX_UNITS: Cap,
-    const MAX_EDGES: Cap,
-    const MAX_FIBERS: Cap,
-    const MAX_PHASES: Cap,
-    const MAX_TRUNKS_PER_PHASE: Cap,
-    const MAX_COMPONENTS_PER_TRUNK: Cap,
-    const MAX_UNITS_PER_FIBER: Cap,
-    const MAX_COLUMNS_PER_FIBER: Cap,
->(
-    graph: &DependencyGraph<MAX_UNITS, MAX_EDGES>,
-    partition: &BlockPartition<MAX_UNITS>,
-    waists: &PhaseBoundaries<MAX_PHASES>,
-    topo: &[UnitId; cap_size(MAX_UNITS)],
+pub fn project_fiber_components<D: PlanDims>(
+    graph: &DependencyGraph<D>,
+    partition: &BlockPartition<D::Units>,
+    waists: &PhaseBoundaries<D>,
+    topo: &<D::Units as Capacity>::Array<UnitId>,
     unit_count: USize,
-) -> [[Trunk<MAX_COMPONENTS_PER_TRUNK, MAX_UNITS_PER_FIBER, MAX_COLUMNS_PER_FIBER>;
-        cap_size(MAX_TRUNKS_PER_PHASE)]; cap_size(MAX_PHASES)]
+) -> <D::Phases as Capacity>::Array<<D::TrunksPerPhase as Capacity>::Array<Trunk<D>>>
 where
-    [(); cap_size(MAX_UNITS)]:,
-    [(); cap_size(MAX_EDGES)]:,
-    [(); cap_size(MAX_FIBERS)]:,
-    [(); cap_size(MAX_PHASES)]:,
-    [(); cap_size(MAX_TRUNKS_PER_PHASE)]:,
-    [(); cap_size(MAX_COMPONENTS_PER_TRUNK)]:,
-    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
-    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
+    Fiber<D>: Copy,
+    <D::ComponentsPerTrunk as Capacity>::Array<TrunkComponent<D>>: Copy,
+    <D::TrunksPerPhase as Capacity>::Array<Trunk<D>>: Copy,
+    <D::Units as Capacity>::Array<SpectralFloat>: Copy,
+    <D::Units as Capacity>::Array<USize>: Copy,
+    <D::Edges as Capacity>::Array<NodeId>: Copy,
 {
     use hilavitkutin_api::FiberId;
-    let mut out: [[Trunk<MAX_COMPONENTS_PER_TRUNK, MAX_UNITS_PER_FIBER, MAX_COLUMNS_PER_FIBER>;
-        cap_size(MAX_TRUNKS_PER_PHASE)]; cap_size(MAX_PHASES)] =
-        [[Trunk::new(); cap_size(MAX_TRUNKS_PER_PHASE)]; cap_size(MAX_PHASES)];
+    let mut out: <D::Phases as Capacity>::Array<
+        <D::TrunksPerPhase as Capacity>::Array<Trunk<D>>,
+    > = <D::Phases as Capacity>::filled(<D::TrunksPerPhase as Capacity>::filled(Trunk::new()));
     let pc = waists.phase_count.0;
     let n = unit_count.0;
+    let topo_s = topo.as_ref();
+    let boundaries = waists.boundaries.as_ref();
+    let block_of_unit = partition.block_of_unit.as_ref();
     let mut next_trunk_id = 0;
     let mut next_fiber_id = 0;
     // Global spectral grouping, computed once and filtered per wide block
@@ -553,25 +538,26 @@ where
     // block's units carry a self-contained partition. Computed
     // unconditionally for now; skipping it when no block is wide is a
     // follow-up optimisation.
-    let spectral = spectral_partition::<MAX_UNITS, MAX_EDGES, MAX_FIBERS>(graph);
+    let spectral = spectral_partition::<D>(graph);
     let mut p = 0;
-    while p < pc && p < cap_size(MAX_PHASES) {
-        let start = waists.boundaries[p].0;
-        let end = if p + 1 < pc { waists.boundaries[p + 1].0 } else { n };
+    while p < pc && p < cap_size(<D::Phases as Capacity>::CAP) {
+        let start = boundaries[p].0;
+        let end = if p + 1 < pc { boundaries[p + 1].0 } else { n };
         // Map block id -> trunk index within the phase, first-seen order.
-        let mut block_to_trunk: [USize; cap_size(MAX_UNITS)] =
-            [USize::ZERO; cap_size(MAX_UNITS)];
-        let mut block_seen: [Bool; cap_size(MAX_UNITS)] = [Bool::FALSE; cap_size(MAX_UNITS)];
+        let mut block_to_trunk: <D::Units as Capacity>::Array<USize> =
+            <D::Units as Capacity>::filled(USize::ZERO);
+        let mut block_seen: <D::Units as Capacity>::Array<Bool> =
+            <D::Units as Capacity>::filled(Bool::FALSE);
         let mut trunk_count = 0;
         let mut i = start;
-        while i < end && i < cap_size(MAX_UNITS) {
-            let unit_idx = topo[i].index().0;
-            if unit_idx < cap_size(MAX_UNITS) {
-                let block = partition.block_of_unit[unit_idx].0;
-                if block < cap_size(MAX_UNITS) && !block_seen[block].0 {
-                    block_seen[block] = Bool::TRUE;
-                    if trunk_count < cap_size(MAX_TRUNKS_PER_PHASE) {
-                        block_to_trunk[block] = USize(trunk_count); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
+        while i < end && i < cap_size(<D::Units as Capacity>::CAP) {
+            let unit_idx = topo_s[i].index().0;
+            if unit_idx < cap_size(<D::Units as Capacity>::CAP) {
+                let block = block_of_unit[unit_idx].0;
+                if block < cap_size(<D::Units as Capacity>::CAP) && !block_seen.as_ref()[block].0 {
+                    block_seen.as_mut()[block] = Bool::TRUE;
+                    if trunk_count < cap_size(<D::TrunksPerPhase as Capacity>::CAP) {
+                        block_to_trunk.as_mut()[block] = USize(trunk_count); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
                         trunk_count += 1;
                     }
                 }
@@ -580,22 +566,22 @@ where
         }
         // For each trunk in the phase, form fibers within its block.
         let mut t = 0;
-        while t < trunk_count && t < cap_size(MAX_TRUNKS_PER_PHASE) {
+        while t < trunk_count && t < cap_size(<D::TrunksPerPhase as Capacity>::CAP) {
             // Gather this trunk's block units in topo order.
-            let mut block_units: [UnitId; cap_size(MAX_UNITS)] =
-                [UnitId::ZERO; cap_size(MAX_UNITS)];
+            let mut block_units: <D::Units as Capacity>::Array<UnitId> =
+                <D::Units as Capacity>::filled(UnitId::ZERO);
             let mut bu_count = 0;
             let mut j = start;
-            while j < end && j < cap_size(MAX_UNITS) {
-                let unit_idx = topo[j].index().0;
-                if unit_idx < cap_size(MAX_UNITS) {
-                    let block = partition.block_of_unit[unit_idx].0;
-                    if block < cap_size(MAX_UNITS)
-                        && block_seen[block].0
-                        && block_to_trunk[block].0 == t
-                        && bu_count < cap_size(MAX_UNITS)
+            while j < end && j < cap_size(<D::Units as Capacity>::CAP) {
+                let unit_idx = topo_s[j].index().0;
+                if unit_idx < cap_size(<D::Units as Capacity>::CAP) {
+                    let block = block_of_unit[unit_idx].0;
+                    if block < cap_size(<D::Units as Capacity>::CAP)
+                        && block_seen.as_ref()[block].0
+                        && block_to_trunk.as_ref()[block].0 == t
+                        && bu_count < cap_size(<D::Units as Capacity>::CAP)
                     {
-                        block_units[bu_count] = topo[j];
+                        block_units.as_mut()[bu_count] = topo_s[j];
                         bu_count += 1;
                     }
                 }
@@ -609,33 +595,31 @@ where
             // narrow chains, so the gate only diverges where it matters.
             let grouping = if bu_count > 5 {
                 // lint:allow(no-bare-numeric) reason: width-gate threshold (>5), tunable; tracked: #644
-                spectral_grouping_in_block::<MAX_UNITS, MAX_FIBERS>(
+                spectral_grouping_in_block::<D>(
                     &spectral,
-                    &block_units[0..bu_count],
+                    &block_units.as_ref()[0..bu_count],
                 )
             } else {
-                group_fibers_in_block::<MAX_UNITS, MAX_EDGES, MAX_FIBERS>(
-                    graph,
-                    &block_units[0..bu_count],
-                )
+                group_fibers_in_block::<D>(graph, &block_units.as_ref()[0..bu_count])
             };
-            out[p][t].id = TrunkId::from_index(USize(next_trunk_id)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from plan-wide id; tracked: #72
+            out.as_mut()[p].as_mut()[t].id = TrunkId::from_index(USize(next_trunk_id)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from plan-wide id; tracked: #72
             next_trunk_id += 1;
             // Emit one Fiber component per block-local fiber.
             let fc = grouping.fiber_count.0;
+            let grouping_assign = grouping.assignment.as_ref();
             let mut local_fid = 0;
             let mut comp_count = 0;
-            while local_fid < fc && comp_count < cap_size(MAX_COMPONENTS_PER_TRUNK) {
-                let mut fib: Fiber<MAX_UNITS_PER_FIBER, MAX_COLUMNS_PER_FIBER> = Fiber::new();
+            while local_fid < fc && comp_count < cap_size(<D::ComponentsPerTrunk as Capacity>::CAP) {
+                let mut fib: Fiber<D> = Fiber::new();
                 let mut fu = 0;
                 let mut k = 0;
                 while k < bu_count {
-                    let uidx = block_units[k].index().0;
-                    if uidx < cap_size(MAX_UNITS)
-                        && grouping.assignment[uidx].index().0 == local_fid
-                        && fu < cap_size(MAX_UNITS_PER_FIBER)
+                    let uidx = block_units.as_ref()[k].index().0;
+                    if uidx < cap_size(<D::Units as Capacity>::CAP)
+                        && grouping_assign[uidx].index().0 == local_fid
+                        && fu < cap_size(<D::UnitsPerFiber as Capacity>::CAP)
                     {
-                        fib.units[fu] = block_units[k];
+                        fib.units.as_mut()[fu] = block_units.as_ref()[k];
                         fu += 1;
                     }
                     k += 1;
@@ -644,12 +628,13 @@ where
                     fib.id = FiberId::from_index(USize(next_fiber_id)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from plan-wide id; tracked: #72
                     next_fiber_id += 1;
                     fib.unit_count = USize(fu); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal count; tracked: #72
-                    out[p][t].components[comp_count] = TrunkComponent::Fiber(fib);
+                    out.as_mut()[p].as_mut()[t].components.as_mut()[comp_count] =
+                        TrunkComponent::Fiber(fib);
                     comp_count += 1;
                 }
                 local_fid += 1;
             }
-            out[p][t].component_count = USize(comp_count); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal count; tracked: #72
+            out.as_mut()[p].as_mut()[t].component_count = USize(comp_count); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal count; tracked: #72
             t += 1;
         }
         p += 1;
@@ -662,48 +647,36 @@ where
 /// Walks every trunk's `TrunkComponent::Fiber` and records each unit's
 /// plan-wide `FiberId`, so steps 8 to 11 keep consuming a
 /// `FiberGrouping` unchanged after the per-block projection.
-pub fn fiber_grouping_from_trunks<
-    const MAX_UNITS: Cap,
-    const MAX_FIBERS: Cap,
-    const MAX_PHASES: Cap,
-    const MAX_TRUNKS_PER_PHASE: Cap,
-    const MAX_COMPONENTS_PER_TRUNK: Cap,
-    const MAX_UNITS_PER_FIBER: Cap,
-    const MAX_COLUMNS_PER_FIBER: Cap,
->(
-    trunks: &[[Trunk<MAX_COMPONENTS_PER_TRUNK, MAX_UNITS_PER_FIBER, MAX_COLUMNS_PER_FIBER>;
-        cap_size(MAX_TRUNKS_PER_PHASE)]; cap_size(MAX_PHASES)],
-    trunk_counts: &[USize; cap_size(MAX_PHASES)],
+pub fn fiber_grouping_from_trunks<D: PlanDims>(
+    trunks: &<D::Phases as Capacity>::Array<<D::TrunksPerPhase as Capacity>::Array<Trunk<D>>>,
+    trunk_counts: &<D::Phases as Capacity>::Array<USize>,
     phase_count: USize,
-) -> FiberGrouping<MAX_UNITS, MAX_FIBERS>
-where
-    [(); cap_size(MAX_UNITS)]:,
-    [(); cap_size(MAX_PHASES)]:,
-    [(); cap_size(MAX_TRUNKS_PER_PHASE)]:,
-    [(); cap_size(MAX_COMPONENTS_PER_TRUNK)]:,
-    [(); cap_size(MAX_UNITS_PER_FIBER)]:,
-    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
-{
-    let mut g: FiberGrouping<MAX_UNITS, MAX_FIBERS> = FiberGrouping::new();
+) -> FiberGrouping<D> {
+    let mut g: FiberGrouping<D> = FiberGrouping::new();
     let pc = phase_count.0;
+    let trunks = trunks.as_ref();
+    let trunk_counts = trunk_counts.as_ref();
     let mut max_fid = 0;
     let mut any = false;
     let mut p = 0;
-    while p < pc && p < cap_size(MAX_PHASES) {
+    while p < pc && p < cap_size(<D::Phases as Capacity>::CAP) {
         let tc = trunk_counts[p].0;
+        let phase_trunks = trunks[p].as_ref();
         let mut t = 0;
-        while t < tc && t < cap_size(MAX_TRUNKS_PER_PHASE) {
-            let cc = trunks[p][t].component_count.0;
+        while t < tc && t < cap_size(<D::TrunksPerPhase as Capacity>::CAP) {
+            let cc = phase_trunks[t].component_count.0;
+            let comps = phase_trunks[t].components.as_ref();
             let mut c = 0;
-            while c < cc && c < cap_size(MAX_COMPONENTS_PER_TRUNK) {
-                if let TrunkComponent::Fiber(fib) = &trunks[p][t].components[c] {
+            while c < cc && c < cap_size(<D::ComponentsPerTrunk as Capacity>::CAP) {
+                if let TrunkComponent::Fiber(fib) = &comps[c] {
                     let fid = fib.id.index().0;
                     let uc = fib.unit_count.0;
+                    let fib_units = fib.units.as_ref();
                     let mut u = 0;
-                    while u < uc && u < cap_size(MAX_UNITS_PER_FIBER) {
-                        let uidx = fib.units[u].index().0;
-                        if uidx < cap_size(MAX_UNITS) {
-                            g.assignment[uidx] = fib.id;
+                    while u < uc && u < cap_size(<D::UnitsPerFiber as Capacity>::CAP) {
+                        let uidx = fib_units[u].index().0;
+                        if uidx < cap_size(<D::Units as Capacity>::CAP) {
+                            g.assignment.as_mut()[uidx] = fib.id;
                             if fid > max_fid {
                                 max_fid = fid;
                             }
@@ -733,63 +706,63 @@ where
 /// masks track which stores changed since the last frame on a per-
 /// fiber basis. Both walk the same data in reverse-topo order; fusion
 /// avoids two passes over the unit set.
-pub fn compute_upward_rank_and_dirty<
-    const MAX_UNITS: Cap,
-    const MAX_EDGES: Cap,
-    const MAX_FIBERS: Cap,
-    const MAX_STORES: Cap,
->(
-    graph: &DependencyGraph<MAX_UNITS, MAX_EDGES>,
-    topo: &[UnitId; cap_size(MAX_UNITS)],
-    inputs: &PlanInputs<MAX_UNITS, MAX_STORES>,
-    fibers: &FiberGrouping<MAX_UNITS, MAX_FIBERS>,
-) -> ([USize; cap_size(MAX_UNITS)], DirtyMasks<MAX_FIBERS, MAX_STORES>)
-where
-    [(); cap_size(MAX_UNITS)]:,
-    [(); cap_size(MAX_EDGES)]:,
-    [(); cap_size(MAX_FIBERS)]:,
-{
-    let mut ranks: [USize; cap_size(MAX_UNITS)] = [USize::ZERO; cap_size(MAX_UNITS)];
-    let mut dirty: DirtyMasks<MAX_FIBERS, MAX_STORES> = DirtyMasks::new();
+pub fn compute_upward_rank_and_dirty<D: PlanDims>(
+    graph: &DependencyGraph<D>,
+    topo: &<D::Units as Capacity>::Array<UnitId>,
+    inputs: &PlanInputs<D::Units, D::Stores>,
+    fibers: &FiberGrouping<D>,
+) -> (
+    <D::Units as Capacity>::Array<USize>,
+    DirtyMasks<D::Fibers, D::Stores>,
+) {
+    let mut ranks: <D::Units as Capacity>::Array<USize> =
+        <D::Units as Capacity>::filled(USize::ZERO);
+    let mut dirty: DirtyMasks<D::Fibers, D::Stores> = DirtyMasks::new();
     let n = graph.unit_count.0;
     if n == 0 {
         return (ranks, dirty);
     }
+    let topo = topo.as_ref();
+    let cols = graph.col_indices.as_ref();
+    let row_offsets = graph.row_offsets.as_ref();
+    let assignment = fibers.assignment.as_ref();
+    let writes = inputs.writes.as_ref();
     // Reverse-topo walk: leaves get rank 0; predecessors take max
     // successor rank + 1.
     let mut i = n;
     while i > 0 {
         i -= 1;
         let u = topo[i].index().0;
-        if u >= cap_size(MAX_UNITS) || u >= graph.unit_count.0 {
+        if u >= cap_size(<D::Units as Capacity>::CAP) || u >= graph.unit_count.0 {
             continue;
         }
         // Scan successors for max rank.
-        let start = graph.row_offsets[u].0;
+        let start = row_offsets[u].0;
         let end_excl = if u + 1 < graph.unit_count.0 {
-            graph.row_offsets[u + 1].0
+            row_offsets[u + 1].0
         } else {
             graph.edge_count.0
         };
         let mut max_rank = USize::ZERO;
         let mut k = start;
         while k < end_excl {
-            let d = graph.col_indices[k].index().0;
-            if d < cap_size(MAX_UNITS) && ranks[d].0 + 1 > max_rank.0 {
-                max_rank = USize(ranks[d].0 + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
+            let d = cols[k].index().0;
+            if d < cap_size(<D::Units as Capacity>::CAP) && ranks.as_ref()[d].0 + 1 > max_rank.0 {
+                max_rank = USize(ranks.as_ref()[d].0 + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
             }
             k += 1;
         }
-        ranks[u] = max_rank;
+        ranks.as_mut()[u] = max_rank;
         // Dirty propagation: union unit's writes into its fiber's
         // dirty mask. Fiber-level dirty drives incremental-skip.
         if u < inputs.unit_count.0 {
-            let f = fibers.assignment[u].index().0;
-            if f < cap_size(MAX_FIBERS) {
+            let f = assignment[u].index().0;
+            if f < cap_size(<D::Fibers as Capacity>::CAP) {
                 let mut store = 0;
-                while store < cap_size(MAX_STORES) && store < 64 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: AccessMask uses USize backing with 64-bit window per skeleton; tracked: #72
-                    if inputs.writes[u].contains(USize(store)).0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
-                        dirty.per_fiber[f] = dirty.per_fiber[f].set(USize(store)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
+                while store < cap_size(<D::Stores as Capacity>::CAP) && store < 64 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: AccessMask uses USize backing with 64-bit window per skeleton; tracked: #72
+                    if writes[u].contains(USize(store)).0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
+                        let pf = dirty.per_fiber.as_ref()[f];
+                        dirty.per_fiber.as_mut()[f] = pf.set(USize(store)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
                     }
                     store += 1;
                 }
@@ -807,14 +780,12 @@ where
 /// is assigned somewhere). Falls back to the record count itself
 /// when only one fiber is active. Bench-driven SIMD-width-aware
 /// sizing lands in HILA-RUNTIME-C1.
-pub fn size_morsels<const MAX_FIBERS: Cap>(
+pub fn size_morsels<D: PlanDims>(
     record_count: USize,
     fiber_count: USize,
-) -> [USize; cap_size(MAX_FIBERS)]
-where
-    [(); cap_size(MAX_FIBERS)]:,
-{
-    let mut sizes: [USize; cap_size(MAX_FIBERS)] = [USize::ZERO; cap_size(MAX_FIBERS)];
+) -> <D::Fibers as Capacity>::Array<USize> {
+    let mut sizes: <D::Fibers as Capacity>::Array<USize> =
+        <D::Fibers as Capacity>::filled(USize::ZERO);
     // Divide-by-zero guard: fiber_count of zero falls back to 1 so
     // the division below is defined. The plan-stage runner only calls
     // this when fiber_count >= 1, but the guard makes the function
@@ -823,13 +794,11 @@ where
     let per_fiber = record_count.0 / n;
     let remainder = record_count.0 % n;
     // Distribute the remainder across the first `remainder` fibers.
-    // Sum invariant: sum(sizes[0..n]) == record_count. Without this
-    // every record past `per_fiber * n` was silently dropped, which
-    // would propagate as a missing morsel range at dispatch time.
+    // Sum invariant: sum(sizes[0..n]) == record_count.
     let mut i = 0;
-    while i < n && i < cap_size(MAX_FIBERS) {
+    while i < n && i < cap_size(<D::Fibers as Capacity>::CAP) {
         let extra = if i < remainder { 1 } else { 0 }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: remainder-distribution literal; tracked: #72
-        sizes[i] = USize(per_fiber + extra); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal compute; tracked: #72
+        sizes.as_mut()[i] = USize(per_fiber + extra); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal compute; tracked: #72
         i += 1;
     }
     sizes
@@ -855,23 +824,21 @@ const WIDE_PHASE_WIDTH_THRESHOLD: usize = 8; // lint:allow(no-bare-numeric) lint
 /// substrate-default constants near this fn; consumer-tunable
 /// policy lands when `RunCfg` ships its phase-policy axis (Pass 3 /
 /// Pass 6 follow-up).
-pub fn select_phase_configs<const MAX_PHASES: Cap>(
-    phases: &PhaseBoundaries<MAX_PHASES>,
+pub fn select_phase_configs<D: PlanDims>(
+    phases: &PhaseBoundaries<D>,
     record_count: USize,
     unit_count: USize,
-) -> [PhaseConfig; cap_size(MAX_PHASES)]
-where
-    [(); cap_size(MAX_PHASES)]:,
-{
-    let mut configs: [PhaseConfig; cap_size(MAX_PHASES)] =
-        [PhaseConfig::Balanced; cap_size(MAX_PHASES)];
+) -> <D::Phases as Capacity>::Array<PhaseConfig> {
+    let mut configs: <D::Phases as Capacity>::Array<PhaseConfig> =
+        <D::Phases as Capacity>::filled(PhaseConfig::Balanced);
     let n = phases.phase_count.0;
+    let boundaries = phases.boundaries.as_ref();
     let mut i = 0;
-    while i < n && i < cap_size(MAX_PHASES) {
+    while i < n && i < cap_size(<D::Phases as Capacity>::CAP) {
         // Compute the width of this phase (units it spans).
-        let start = phases.boundaries[i].0;
+        let start = boundaries[i].0;
         let end_excl = if i + 1 < n {
-            phases.boundaries[i + 1].0
+            boundaries[i + 1].0
         } else {
             // Last phase spans from its start through the total unit
             // count. Threading `unit_count` in from the runner avoids
@@ -884,7 +851,7 @@ where
         } else {
             1 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: degenerate-width floor for malformed boundaries; tracked: #72
         };
-        configs[i] = if record_count.0 < SMALL_RECORD_COUNT_THRESHOLD
+        configs.as_mut()[i] = if record_count.0 < SMALL_RECORD_COUNT_THRESHOLD
             || width == 1 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: explicit-singleton case bound; tracked: #72
         {
             PhaseConfig::MaxFuse
@@ -906,23 +873,18 @@ where
 /// by this fiber), or `Output` (written by this fiber and read by a
 /// downstream fiber). The skeleton classifies conservatively as
 /// `Internal`; refinement lands in HILA-RUNTIME-C1.
-pub fn classify_columns<
-    const MAX_UNITS: Cap,
-    const MAX_FIBERS: Cap,
-    const MAX_COLUMNS_PER_FIBER: Cap,
-    const MAX_STORES: Cap,
->(
-    fibers: &FiberGrouping<MAX_UNITS, MAX_FIBERS>,
-    inputs: &PlanInputs<MAX_UNITS, MAX_STORES>,
-) -> ColumnClassMap<MAX_FIBERS, MAX_COLUMNS_PER_FIBER>
+pub fn classify_columns<D: PlanDims>(
+    fibers: &FiberGrouping<D>,
+    inputs: &PlanInputs<D::Units, D::Stores>,
+) -> ColumnClassMap<D>
 where
-    [(); cap_size(MAX_UNITS)]:,
-    [(); cap_size(MAX_FIBERS)]:,
-    [(); cap_size(MAX_COLUMNS_PER_FIBER)]:,
+    <D::ColumnsPerFiber as Capacity>::Array<ColumnClassification>: Copy,
 {
-    let mut map: ColumnClassMap<MAX_FIBERS, MAX_COLUMNS_PER_FIBER> = ColumnClassMap::new();
+    let mut map: ColumnClassMap<D> = ColumnClassMap::new();
     let n_fibers = fibers.fiber_count.0;
     let n_units = inputs.unit_count.0;
+    let assignment = fibers.assignment.as_ref();
+    let access = inputs.access.as_ref();
     // First pass: collect each fiber's touched stores into its
     // column slot list. We treat each touched store as `Internal`
     // initially; the upgrade-to-Input/Output pass would compare
@@ -931,17 +893,17 @@ where
     // elimination opportunities.
     let mut u = 0;
     while u < n_units {
-        let f = fibers.assignment[u].index().0;
-        if f < cap_size(MAX_FIBERS) && f < n_fibers {
+        let f = assignment[u].index().0;
+        if f < cap_size(<D::Fibers as Capacity>::CAP) && f < n_fibers {
             // Walk this unit's access mask, register touched stores
             // as columns for fiber f.
             let mut store = 0;
-            while store < cap_size(MAX_STORES) && store < 64 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: AccessMask 64-bit window per skeleton; tracked: #72
-                if inputs.access[u].contains(USize(store)).0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
-                    let slot = map.column_count[f].0;
-                    if slot < cap_size(MAX_COLUMNS_PER_FIBER) {
-                        map.class[f][slot] = ColumnClassification::Internal;
-                        map.column_count[f] = USize(slot + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
+            while store < cap_size(<D::Stores as Capacity>::CAP) && store < 64 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: AccessMask 64-bit window per skeleton; tracked: #72
+                if access[u].contains(USize(store)).0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
+                    let slot = map.column_count.as_ref()[f].0;
+                    if slot < cap_size(<D::ColumnsPerFiber as Capacity>::CAP) {
+                        map.class.as_mut()[f].as_mut()[slot] = ColumnClassification::Internal;
+                        map.column_count.as_mut()[f] = USize(slot + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
                     }
                 }
                 store += 1;
@@ -954,8 +916,8 @@ where
 
 /// Step 12: map plan trunks onto concrete cores. The body lives in
 /// `crate::thread::assign_cores`; this is a re-export for chain
-/// consistency. Actual signature parameterised on the 10-const-
-/// generic ExecutionPlan there.
+/// consistency. Actual signature parameterised on the `D: PlanDims`
+/// ExecutionPlan there.
 ///
 /// The chain treats `assign_cores` as a step but its implementation
 /// lives elsewhere; this stub names the step explicitly so the chain
@@ -995,7 +957,7 @@ pub enum PlanError {
     /// valid grouping). Not raised yet; layered on with the
     /// Dulmage-Mendelsohn fine decomposition in a later round.
     FeasibilityCheckFailed,
-    /// `group_fibers` produced more fibers than `MAX_FIBERS`
+    /// `group_fibers` produced more fibers than the fiber capacity
     /// accommodates, or zero fibers for a non-empty unit set.
     NoTrunkAssignment,
     /// `size_morsels` produced a morsel size below the engine's
@@ -1005,4 +967,3 @@ pub enum PlanError {
     /// has cores available.
     CoreCountExceeded,
 }
-

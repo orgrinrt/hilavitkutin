@@ -1,22 +1,33 @@
 //! Adapter test: DependencyGraph to CsrBidirectional (Phase C C1a).
+//!
+//! `to_csr_bidirectional` is sized by the `Capacity` TYPES projected from
+//! `TestDims`, so no `generic_const_exprs` gate is needed: the unit and edge
+//! capacities are types, not `Cap` const generics.
 
-// The adapter returns a Cap-parameterised arvo type carrying
-// `[(); cap_size(N)]:` bounds. A downstream crate that names that type
-// must enable generic_const_exprs so its own trait solver normalises the
-// bounds, mirroring arvo's cross-crate tests. adt_const_params is not
-// needed: the test only names Cap values via `cap(N)`, it does not
-// declare a Cap const param. WATCH-tier per the soundness sweep (#626).
-#![feature(generic_const_exprs)]
-#![allow(incomplete_features)]
-
-use arvo::{Cap, USize};
+use arvo::USize;
 use arvo_bitmask::NodeId;
 use arvo_sparse::{BidirectionalSparseAdjacency, SparseAdjacency};
-use arvo_tensor::cap;
-use hilavitkutin::plan::DependencyGraph;
+use arvo_tensor::Dim;
+use hilavitkutin::plan::{DependencyGraph, PlanDims};
 
-const UNITS: Cap = cap(8); // lint:allow(no-bare-numeric) reason: test fixture dimension; tracked: #121
-const EDGES: Cap = cap(16); // lint:allow(no-bare-numeric) reason: test fixture dimension; tracked: #121
+/// Eight units, sixteen edges for the diamond fixture.
+struct TestDims;
+
+impl PlanDims for TestDims {
+    type Units = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Stores = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Edges = Dim<16>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Phases = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Trunks = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type TrunksPerPhase = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Fibers = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Lanes = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Columns = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type ComponentsPerTrunk = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type UnitsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type ColumnsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Cores = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+}
 
 // The diamond's nodes, named once so the per-literal lint:allow lives in
 // one place and the assertions read as graph structure, not integers.
@@ -34,13 +45,14 @@ const N4: NodeId = NodeId::new(USize(4)); // lint:allow(no-bare-numeric) reason:
 /// `unit_count` to the true node count and giving each trailing node an
 /// empty row (`start == end == edge_count`); this mirrors that step so
 /// node 3 is a live, zero-out-degree row rather than slack.
-fn diamond() -> DependencyGraph<UNITS, EDGES> {
-    let mut g: DependencyGraph<UNITS, EDGES> = DependencyGraph::new();
+fn diamond() -> DependencyGraph<TestDims> {
+    let mut g: DependencyGraph<TestDims> = DependencyGraph::new();
     g.add_edge(N0.0, N1.0);
     g.add_edge(N0.0, N2.0);
     g.add_edge(N1.0, N3.0);
     g.add_edge(N2.0, N3.0);
-    g.row_offsets[g.unit_count.0] = g.edge_count;
+    let uc = g.unit_count.0;
+    g.row_offsets.as_mut()[uc] = g.edge_count;
     g.unit_count = N4.0;
     g
 }

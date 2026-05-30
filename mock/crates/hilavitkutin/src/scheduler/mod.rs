@@ -44,6 +44,7 @@ use core::sync::atomic::AtomicBool;
 
 use arvo::strategy::Identity;
 use arvo::USize;
+use crate::plan::{DefaultPlanDims, PlanDims};
 use hilavitkutin_api::access::{AccessSet, ContainsAll, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, Dispatch};
 use hilavitkutin_api::platform::MemoryProviderApi;
@@ -99,8 +100,15 @@ pub struct Scheduler<
     WuVals = WuNil,
     Vals: StoreValues + ArenaFor = SvEmpty,
     M: MemoryProviderApi = NullMemoryProvider,
+    D: PlanDims = DefaultPlanDims,
 > {
     _cfg: PhantomData<Cfg>,
+    // The plan capacity dimensions this scheduler sizes its plan-stage
+    // structures by. Defaulted to `DefaultPlanDims` so existing call
+    // sites are unaffected; the field is `PhantomData` because the plan
+    // is computed lazily (the `compute_execution_plan` wiring lands in a
+    // later runtime slice) and `D` only names the dimension types.
+    _dims: PhantomData<D>,
     // The dirty bitmap width matches DefaultRunCfg::MAX_PLAN_AFFECTING_RESOURCES = USize(256).
     // The intended lift is `[AtomicBool; Cfg::MAX_PLAN_AFFECTING_RESOURCES.0]` under
     // `feature(generic_const_exprs)`, but current rustc rejects field access on generic
@@ -171,8 +179,8 @@ impl Scheduler<DefaultRunCfg, WuNil, SvEmpty, NullMemoryProvider> {
     }
 }
 
-impl<Cfg: RunCfg, WuVals, Vals: StoreValues + ArenaFor, M: MemoryProviderApi>
-    Scheduler<Cfg, WuVals, Vals, M>
+impl<Cfg: RunCfg, WuVals, Vals: StoreValues + ArenaFor, M: MemoryProviderApi, D: PlanDims>
+    Scheduler<Cfg, WuVals, Vals, M, D>
 {
     /// Replace the existing `Resource<T>` instance in the data
     /// plane with `_new`, marking the plan dirty.
@@ -252,8 +260,8 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + ArenaFor, M: MemoryProviderApi>
 /// destructor in place, then deallocate its block via the retained
 /// provider. The arena is owned by value and dropped once, so no
 /// double free.
-impl<Cfg: RunCfg, WuVals, Vals: StoreValues + ArenaFor, M: MemoryProviderApi> Drop
-    for Scheduler<Cfg, WuVals, Vals, M>
+impl<Cfg: RunCfg, WuVals, Vals: StoreValues + ArenaFor, M: MemoryProviderApi, D: PlanDims> Drop
+    for Scheduler<Cfg, WuVals, Vals, M, D>
 {
     fn drop(&mut self) {
         self.arena.drop_arena(&self.memory_provider);
@@ -270,6 +278,7 @@ impl<Cfg: RunCfg> Default for Scheduler<Cfg, WuNil, SvEmpty, NullMemoryProvider>
     fn default() -> Self {
         Self {
             _cfg: PhantomData,
+            _dims: PhantomData,
             plan_dirty: [const { AtomicBool::new(false) }; 256],
             plan_cache: PlanCache::new(),
             arena: crate::resource::arena::ArenaTail,
@@ -378,6 +387,7 @@ where
         match <Vals as DrainStores>::drain(self.store_values, &memory_provider) {
             notko::Outcome::Ok(arena) => notko::Outcome::Ok(Scheduler {
                 _cfg: PhantomData,
+                _dims: PhantomData,
                 plan_dirty: [const { AtomicBool::new(false) }; 256],
                 plan_cache: PlanCache::new(),
                 arena,
@@ -401,6 +411,7 @@ where
         match <Vals as DrainStores>::drain(self.store_values, &memory_provider) {
             notko::Outcome::Ok(arena) => notko::Outcome::Ok(Scheduler {
                 _cfg: PhantomData,
+                _dims: PhantomData,
                 plan_dirty: [const { AtomicBool::new(false) }; 256],
                 plan_cache: PlanCache::new(),
                 arena,

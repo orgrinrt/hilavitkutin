@@ -1,57 +1,67 @@
 //! Smoke tests for `synthesise_core_programs`: the per-core projection
 //! step that Pass 3 dispatch codegen consumes.
-
-// The lifted Cap-dimension types carry `[(); cap_size(N)]:` bounds. A
-// downstream crate that instantiates them must itself enable generic_const_exprs
-// so its own trait solver can normalise the bounds, mirroring arvo's cross-crate
-// tests. adt_const_params is needed only where a Cap const-generic param is
-// declared (the engine crate root), not where a lifted type is named. WATCH-tier
-// per the unstable-feature soundness sweep (#626).
+//!
+//! The plan dimensions arrive bundled as one `TestDims: PlanDims`; the
+//! per-core sub-capacities (phases / trunks / fibers per core) are their
+//! own `Capacity` types because they size the hilavitkutin-api
+//! `CoreProgram`'s min-const-generic arrays via `cap_size`. The engine's
+//! own array sizing is GCE-free; the `{ cap_size(C::CAP) }` projection
+//! into the unmigrated api type is the one residual `generic_const_exprs`
+//! use, so this downstream crate still enables the gate to name those
+//! const-generic arguments.
 #![feature(generic_const_exprs)]
 #![allow(incomplete_features)]
 
-use arvo::{Cap, Identity, USize};
-use arvo_tensor::cap;
+use arvo::{Identity, USize};
+use arvo_tensor::Dim;
 use hilavitkutin::plan::{
-    compute_execution_plan, core_program::synthesise_core_programs, PlanInputs,
+    compute_execution_plan, core_program::synthesise_core_programs, PlanDims, PlanInputs,
 };
 use hilavitkutin_api::{RecordRange, SyncRole};
 use notko::Outcome;
 
-const MU: Cap = cap(8);
-const MS: Cap = cap(4);
-const ME: Cap = cap(16);
-const MP: Cap = cap(4);
-const MT: Cap = cap(4);
-const MF: Cap = cap(4);
-const ML: Cap = cap(4);
-const MC: Cap = cap(8);
-const MCT: Cap = cap(4);
-const MUF: Cap = cap(4);
-const MCF: Cap = cap(4);
-const MTP: Cap = cap(4);
+/// Plan dimensions for the smoke tests.
+struct TestDims;
 
-// Per-core caps.
-const MAX_CORES: Cap = cap(4);
-const MAX_PHASES_PER_CORE: Cap = cap(4);
-const MAX_TRUNKS_PER_CORE: Cap = cap(4);
-const MAX_FIBERS_PER_CORE: Cap = cap(4);
+impl PlanDims for TestDims {
+    type Units = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Stores = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Edges = Dim<16>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Phases = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Trunks = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type TrunksPerPhase = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Fibers = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Lanes = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Columns = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type ComponentsPerTrunk = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type UnitsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type ColumnsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Cores = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+}
+
+// Per-core sub-capacities (not plan dimensions): they size the api
+// `CoreProgram`'s arrays.
+type PhasesPerCore = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-core sub-capacity; Dim<N> array-length root; tracked: #649
+type TrunksPerCore = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-core sub-capacity; Dim<N> array-length root; tracked: #649
+type FibersPerCore = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-core sub-capacity; Dim<N> array-length root; tracked: #649
+
+type Inputs = PlanInputs<<TestDims as PlanDims>::Units, <TestDims as PlanDims>::Stores>;
 
 #[test]
 fn empty_plan_yields_empty_per_core_programs() {
-    let inputs: PlanInputs<MU, MS> = PlanInputs::new();
-    let plan = match compute_execution_plan::<MU, MS, ME, MP, MT, MF, ML, MC, MCT, MUF, MCF, MTP>(
-        &inputs,
-    ) {
+    let inputs: Inputs = PlanInputs::new();
+    let plan = match compute_execution_plan::<TestDims>(&inputs) {
         Outcome::Ok(p) => p,
         Outcome::Err(_) => panic!("empty plan must succeed"),
     };
     let programs = synthesise_core_programs::<
-        MU, MP, MT, MF, ML, MC, MCT, MUF, MCF, MTP,
-        MAX_CORES, MAX_PHASES_PER_CORE, MAX_TRUNKS_PER_CORE, MAX_FIBERS_PER_CORE,
+        TestDims,
+        PhasesPerCore,
+        TrunksPerCore,
+        FibersPerCore,
     >(&plan, USize::ZERO);
     // Every slot stays at the default (range_count = 0, phase_count = 0).
-    for p in programs.iter() {
+    for p in programs.as_ref().iter() {
         assert_eq!(p.phase_count, USize::ZERO);
         assert_eq!(p.range_count, USize::ZERO);
     }
@@ -59,23 +69,23 @@ fn empty_plan_yields_empty_per_core_programs() {
 
 #[test]
 fn single_unit_plan_assigns_one_core_one_fiber() {
-    let mut inputs: PlanInputs<MU, MS> = PlanInputs::new();
+    let mut inputs: Inputs = PlanInputs::new();
     inputs.unit_count = USize(1); // lint:allow(no-bare-numeric) reason: single-unit smoke; tracked: #427
     inputs.record_count = USize(1024); // lint:allow(no-bare-numeric) reason: smoke record count; tracked: #427
-    let plan = match compute_execution_plan::<MU, MS, ME, MP, MT, MF, ML, MC, MCT, MUF, MCF, MTP>(
-        &inputs,
-    ) {
+    let plan = match compute_execution_plan::<TestDims>(&inputs) {
         Outcome::Ok(p) => p,
         Outcome::Err(_) => panic!("single-unit plan must succeed"),
     };
     let programs = synthesise_core_programs::<
-        MU, MP, MT, MF, ML, MC, MCT, MUF, MCF, MTP,
-        MAX_CORES, MAX_PHASES_PER_CORE, MAX_TRUNKS_PER_CORE, MAX_FIBERS_PER_CORE,
+        TestDims,
+        PhasesPerCore,
+        TrunksPerCore,
+        FibersPerCore,
     >(&plan, USize(1)); // lint:allow(no-bare-numeric) reason: single-core smoke; tracked: #427
 
     // Core 0 owns the single fiber (which exists per the plan's
     // morsel_sizes); subsequent cores are empty.
-    let c0 = &programs[0];
+    let c0 = &programs.as_ref()[0];
     assert_eq!(c0.range_count, USize(1)); // lint:allow(no-bare-numeric) reason: one fiber assigned; tracked: #427
     assert!(matches!(c0.fiber_ranges[0].1, RecordRange::Full));
     assert_eq!(c0.progress_slot_idx, USize::ZERO);
@@ -88,12 +98,10 @@ fn single_unit_plan_assigns_one_core_one_fiber() {
 
 #[test]
 fn multi_fiber_plan_distributes_across_cores() {
-    let mut inputs: PlanInputs<MU, MS> = PlanInputs::new();
+    let mut inputs: Inputs = PlanInputs::new();
     inputs.unit_count = USize(3); // lint:allow(no-bare-numeric) reason: three-unit smoke; tracked: #427
     inputs.record_count = USize(100); // lint:allow(no-bare-numeric) reason: smoke record count; tracked: #427
-    let plan = match compute_execution_plan::<MU, MS, ME, MP, MT, MF, ML, MC, MCT, MUF, MCF, MTP>(
-        &inputs,
-    ) {
+    let plan = match compute_execution_plan::<TestDims>(&inputs) {
         Outcome::Ok(p) => p,
         Outcome::Err(_) => panic!("three-unit plan must succeed"),
     };
@@ -101,19 +109,22 @@ fn multi_fiber_plan_distributes_across_cores() {
     // the test asserts round-robin distribution AND that the progress
     // slot indices are sequential without overlap.
     let programs = synthesise_core_programs::<
-        MU, MP, MT, MF, ML, MC, MCT, MUF, MCF, MTP,
-        MAX_CORES, MAX_PHASES_PER_CORE, MAX_TRUNKS_PER_CORE, MAX_FIBERS_PER_CORE,
+        TestDims,
+        PhasesPerCore,
+        TrunksPerCore,
+        FibersPerCore,
     >(&plan, USize(2)); // lint:allow(no-bare-numeric) reason: two-core smoke; tracked: #427
 
     // Progress slot indices must be monotonically non-decreasing
     // across cores (the slot range of core c starts where core c-1's
     // range ended).
-    let c0_base = programs[0].progress_slot_idx.0;
-    let c0_count = programs[0].range_count.0;
-    let c1_base = programs[1].progress_slot_idx.0;
+    let progs = programs.as_ref();
+    let c0_base = progs[0].progress_slot_idx.0;
+    let c0_count = progs[0].range_count.0;
+    let c1_base = progs[1].progress_slot_idx.0;
     assert!(c1_base >= c0_base + c0_count, "progress slot ranges must not overlap"); // lint:allow(no-bare-numeric) reason: invariant; tracked: #427
 
     // phase_arrived_offset is sequential per core (0, 1).
-    assert_eq!(programs[0].phase_arrived_offset, USize::ZERO);
-    assert_eq!(programs[1].phase_arrived_offset, USize(1)); // lint:allow(no-bare-numeric) reason: invariant; tracked: #427
+    assert_eq!(progs[0].phase_arrived_offset, USize::ZERO);
+    assert_eq!(progs[1].phase_arrived_offset, USize(1)); // lint:allow(no-bare-numeric) reason: invariant; tracked: #427
 }

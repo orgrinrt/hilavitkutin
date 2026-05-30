@@ -453,6 +453,54 @@ are dropped in round-4; the typestate alone carries the shape, and
 runtime sizes are derived from the typestate's `Depth::D`
 projections rather than from explicit caps.
 
+## Plan dimensions: `PlanDims`
+
+The plan, thread, and dispatch structures size their fixed arrays by
+thirteen capacity dimensions: units, stores, edges, phases, trunks,
+trunks-per-phase, fibers, lanes, columns, components-per-trunk,
+units-per-fiber, columns-per-fiber, and cores. Earlier these were
+individual `Cap` const generics threaded through every plan signature
+(`ExecutionPlan` carried ten, `compute_execution_plan` twelve). A `Cap`
+const generic feeds `[T; cap_size(N)]`, and that `cap_size` in array-
+length position leans on `generic_const_exprs`, which overflows the
+moment the dimension is threaded from generic scheduler code (the
+`cap_size(cap(K))` round-trip). The engine bundles the dimensions into
+one trait whose associated types are each an arvo `Capacity`:
+
+```rust
+pub trait PlanDims {
+    type Units: Capacity;
+    type Stores: Capacity;
+    type Edges: Capacity;
+    type Phases: Capacity;
+    type Trunks: Capacity;
+    type TrunksPerPhase: Capacity;
+    type Fibers: Capacity;
+    type Lanes: Capacity;
+    type Columns: Capacity;
+    type ComponentsPerTrunk: Capacity;
+    type UnitsPerFiber: Capacity;
+    type ColumnsPerFiber: Capacity;
+    type Cores: Capacity;
+}
+```
+
+`DefaultPlanDims` is the engine's default budget (each dimension a
+`Dim<N>` at the current default size). Plan, thread, and dispatch
+structures take one `D: PlanDims` parameter and project
+`<D::Units as Capacity>::Array<UnitMeta>` and the like. Because the
+dimension is a TYPE and the array length is a literal inside `Dim<N>`,
+no `cap_size` expression sits in type position, so `generic_const_exprs`
+never runs over capacity arithmetic and the scheduler can thread `D`
+through generic code with no overflow. The dimension is the budget; the
+live count (how many units exist now) stays a runtime `USize` bounded by
+the dimension's `CAP`. `PlanDims` and `DefaultPlanDims` live in the
+engine: the api carries no plan dimension and already declares an
+unrelated `Capacity` introspection trait, so the bundle and its arvo
+`Capacity` bound sit cleanly in the engine. The `Scheduler` gains
+`D: PlanDims = DefaultPlanDims` to thread the budget into plan
+computation.
+
 `SchedulerBuilder<Wus, Stores, Platform, StoreValues>` accumulates
 typestate across each registration call. Initial state on
 `Scheduler::builder()` is `SchedulerBuilder<Empty, Empty, Empty, SvEmpty>`.
