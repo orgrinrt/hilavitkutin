@@ -137,12 +137,17 @@ column projection in its `Ctx`, so it does not satisfy the walk's bound
 and cannot be placed in the sequence. Columns are a type-level extension
 point for the slice that wires per-frame column buffers in.
 
-`Scheduler::run` drives this walk over the WorkUnit instances the builder
-retained at registration (see the scheduler builder section), over a
-single full-range morsel. The walk order is registration-list order this
-slice: the builder prepends, so the last-registered unit runs first.
-Dependency-topological order from the execution plan is the plan-driven
-slice; the morsel loop and per-frame column buffers are later still.
+`Scheduler::run` dispatches the WorkUnit instances the builder retained at
+registration (see the scheduler builder section) in the plan's topological
+order, over a single full-range morsel. It materialises one type-erased
+dispatch slot per retained unit through `CollectFiber`, the resource-only
+sibling of `RunFiber` that records a `FiberSlot` (an erased instance pointer
+plus a per-unit shim) instead of running the unit inline, then walks the
+topological permutation `build` computed and dispatches each step's slot. The
+shim casts the erased pointer back to its concrete WorkUnit, projects the
+unit's `EngineCtx` exactly as `RunFiber` does, and runs `execute`. A reader
+registered ahead of its writer runs after it, because the plan reorders them.
+The morsel loop and per-frame column buffers are later still.
 
 Per-core compiled dispatch: each physical core gets a monomorphised
 `CoreProgram<...>` encoding its phases, record ranges, morsel
@@ -585,11 +590,14 @@ destructor and needs no `Drop` of its own. The engine ships a
 so a no-store scheduler needs no concrete store wired. `build` also carries the
 retained WorkUnit-value list into the `Scheduler`, which gains a
 WorkUnit-value-list parameter alongside its store and provider
-parameters; `run` walks that list (resource-only, registration-list
-order) by constructing each retained unit's `EngineCtx` from the arena
-and calling `execute`. Column buffers (which need the plan-phase record
-count), dependency-topological dispatch order, and Kit-contributed units
-(a Kit hands the builder unit types, not instances) are later rounds.
+parameters. Before draining the store arena, `build` computes the execution
+plan from the registered bundle and stores its topological permutation on the
+scheduler; a dependency cycle returns `BuildError::PlanFailed` without
+allocating. `run` then dispatches the retained units (resource-only) in that
+topological order, constructing each unit's `EngineCtx` from the arena and
+calling `execute`. Column buffers (which need the plan-phase record count) and
+Kit-contributed units (a Kit hands the builder unit types, not instances) are
+later rounds.
 
 The builder takes one verb: `.with(value)`. Every type accepted by
 `.with` impls the sealed `Provider` trait declared in

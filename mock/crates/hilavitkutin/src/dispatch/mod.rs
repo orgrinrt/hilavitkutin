@@ -13,6 +13,7 @@
 pub mod approach;
 pub mod core_dispatch;
 pub mod engine_ctx;
+pub mod fiber_codegen;
 pub mod fiber_dispatch;
 pub mod fiber_walk;
 pub mod morsel;
