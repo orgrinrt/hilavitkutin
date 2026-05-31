@@ -22,6 +22,12 @@ libc = { workspace = true, optional = true }
 [build-dependencies]
 mockspace.workspace = true
 
+[dev-dependencies]
+# Tests wire the arena-backed `ColumnStorage` default. Dev-dep only: the
+# engine lib depends on the storage trait (hilavitkutin-api), never on
+# the default impl. providers forbids depending on the engine, so no cycle.
+hilavitkutin-providers.workspace = true
+
 [features]
 default = ["platform-os"]
 platform-os = ["dep:libc"]

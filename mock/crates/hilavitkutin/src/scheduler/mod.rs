@@ -53,6 +53,7 @@ use hilavitkutin_api::store::Replaceable;
 use hilavitkutin_api::store_values::{Place, RouterKind, StoreValues, SvEmpty};
 use hilavitkutin_api::work_unit::WorkUnitBundle;
 use hilavitkutin_api::work_unit_values::WuNil;
+use hilavitkutin_api::{ColumnStorage, ColumnValue, StoreId};
 
 use crate::dispatch::fiber_walk::{run_fiber_walk, RunFiber};
 use crate::dispatch::morsel::MorselRange;
@@ -63,7 +64,7 @@ pub mod plan;
 pub use metrics::SchedulerMetrics;
 pub use plan::PlanCache;
 
-use crate::resource::arena::{ArenaFor, DrainStores, DropArena};
+use crate::resource::arena::{ArenaFor, DrainStores};
 
 /// The default empty store-value list, used as the `Vals` default for a
 /// bare `Scheduler` type.
@@ -83,23 +84,24 @@ pub enum BuildError {
 }
 
 /// Convenience alias for a built scheduler over the default run-config.
-pub type BuiltScheduler<WuVals, Vals, M> = Scheduler<DefaultRunCfg, WuVals, Vals, M>;
+pub type BuiltScheduler<WuVals, Vals, CS> = Scheduler<DefaultRunCfg, WuVals, Vals, CS>;
 
 /// Top-level scheduler.
 ///
 /// Generic over the consumer's `RunCfg`, the retained WorkUnit-value
-/// list `WuVals`, the registered store-value list `Vals`, and the host
-/// `MemoryProvider` `M`. `Cfg::Out` parameterises `run()`'s return
-/// shape. The scheduler owns the resource arena
-/// (`<Vals as ArenaFor>::Arena`) and the memory provider that backs it;
-/// `Drop` runs the arena's destructors and deallocates each block. It
-/// also holds the registered WorkUnit instances on `WuVals`, the
-/// value-carrying unit list `run()` walks.
+/// list `WuVals`, the registered store-value list `Vals`, and the
+/// `ColumnStorage` `CS` that backs the resource data plane. `Cfg::Out`
+/// parameterises `run()`'s return shape. The scheduler owns the resource
+/// arena (`<Vals as ArenaFor>::Arena`, raw pointers into store columns)
+/// and the store itself; the store frees every resource block on its own
+/// `Drop`, so the scheduler needs no `Drop` of its own. It also holds the
+/// registered WorkUnit instances on `WuVals`, the value-carrying unit
+/// list `run()` walks.
 pub struct Scheduler<
     Cfg: RunCfg = DefaultRunCfg,
     WuVals = WuNil,
     Vals: StoreValues + ArenaFor = SvEmpty,
-    M: MemoryProviderApi = NullMemoryProvider,
+    CS: ColumnStorage = NullColumnStorage,
     D: PlanDims = DefaultPlanDims,
 > {
     _cfg: PhantomData<Cfg>,
@@ -120,12 +122,12 @@ pub struct Scheduler<
     plan_dirty: [AtomicBool; 256],
     plan_cache: PlanCache,
     /// Scheduler-owned resource arena, built from the registered store
-    /// values at `build()`. Held by value so `Drop` can run each
-    /// resource's destructor and free its block.
+    /// values at `build()`. Holds only `Copy` pointers into the store's
+    /// reserved columns; no destructor walk on drop.
     arena: <Vals as ArenaFor>::Arena,
-    /// The host memory provider that backs the arena. Retained so
-    /// `Drop` can deallocate every block the arena holds.
-    memory_provider: M,
+    /// The `ColumnStorage` that backs the resource arena. Owns the
+    /// reserved column memory and frees it on its own `Drop`.
+    storage: CS,
     /// Registered WorkUnit instances, retained from the builder in
     /// registration order. `run()` walks this value-carrying unit list.
     wu_values: WuVals,
@@ -166,7 +168,49 @@ impl MemoryProviderApi for NullMemoryProvider {
     }
 }
 
-impl Scheduler<DefaultRunCfg, WuNil, SvEmpty, NullMemoryProvider> {
+/// Null column storage: the default `CS` for a bare `Scheduler` type.
+///
+/// Reserves nothing and hands back null pointers. It exists so the
+/// `Scheduler` type has a default `CS` parameter for type-level uses
+/// (alias defaults, turbofish-free naming). A scheduler that actually
+/// owns resources is always built with a real store via
+/// `build(storage)`. Reserving on it fails, which is correct: a no-store
+/// scheduler registers no resources, so the drain never reserves.
+pub struct NullColumnStorage;
+
+impl Default for NullColumnStorage {
+    fn default() -> Self {
+        NullColumnStorage
+    }
+}
+
+impl ColumnStorage for NullColumnStorage {
+    type Error = ();
+
+    fn reserve<T: ColumnValue>(
+        &mut self,
+        _id: StoreId,
+        _len: USize,
+    ) -> notko::Outcome<(), ()> {
+        notko::Outcome::Err(())
+    }
+
+    unsafe fn column_ptr<T: ColumnValue>(&self, _id: StoreId) -> *const T {
+        core::ptr::null()
+    }
+
+    unsafe fn column_ptr_mut<T: ColumnValue>(&self, _id: StoreId) -> *mut T {
+        core::ptr::null_mut()
+    }
+
+    fn count(&self, _id: StoreId) -> USize {
+        USize::ZERO
+    }
+
+    fn release(&mut self, _id: StoreId) {}
+}
+
+impl Scheduler<DefaultRunCfg, WuNil, SvEmpty, NullColumnStorage> {
     /// Start a fresh builder. Empty Wus + Stores + Platform typestate,
     /// empty store-value and WorkUnit-value lists; the builder grows via
     /// `.with(...)`.
@@ -179,8 +223,8 @@ impl Scheduler<DefaultRunCfg, WuNil, SvEmpty, NullMemoryProvider> {
     }
 }
 
-impl<Cfg: RunCfg, WuVals, Vals: StoreValues + ArenaFor, M: MemoryProviderApi, D: PlanDims>
-    Scheduler<Cfg, WuVals, Vals, M, D>
+impl<Cfg: RunCfg, WuVals, Vals: StoreValues + ArenaFor, CS: ColumnStorage, D: PlanDims>
+    Scheduler<Cfg, WuVals, Vals, CS, D>
 {
     /// Replace the existing `Resource<T>` instance in the data
     /// plane with `_new`, marking the plan dirty.
@@ -247,34 +291,23 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + ArenaFor, M: MemoryProviderApi, D:
         &self.arena
     }
 
-    /// Borrow the retained memory provider. Hidden test accessor: lets
-    /// tests read the provider's allocation counters. Not part of the
-    /// supported surface.
+    /// Borrow the backing store. Hidden test accessor mirroring
+    /// `__arena`: lets tests inspect reserved columns. The field is also
+    /// held for its `Drop`, which frees every reserved resource column.
+    /// Not part of the supported surface.
     #[doc(hidden)]
-    pub fn __memory_provider(&self) -> &M {
-        &self.memory_provider
+    pub fn __storage(&self) -> &CS {
+        &self.storage
     }
 }
 
-/// Drop the resource arena: run each moved-in resource value's
-/// destructor in place, then deallocate its block via the retained
-/// provider. The arena is owned by value and dropped once, so no
-/// double free.
-impl<Cfg: RunCfg, WuVals, Vals: StoreValues + ArenaFor, M: MemoryProviderApi, D: PlanDims> Drop
-    for Scheduler<Cfg, WuVals, Vals, M, D>
-{
-    fn drop(&mut self) {
-        self.arena.drop_arena(&self.memory_provider);
-    }
-}
-
-/// Default-construct an empty scheduler over the null provider.
+/// Default-construct an empty scheduler over the null store.
 ///
 /// Only available for the no-store (`SvEmpty`) shape with the
-/// `NullMemoryProvider`: the empty arena (`ArenaTail`) owns nothing, so
-/// `Drop` is a no-op and no real provider is needed. A scheduler that
-/// owns resources is built via `build(memory_provider)`.
-impl<Cfg: RunCfg> Default for Scheduler<Cfg, WuNil, SvEmpty, NullMemoryProvider> {
+/// `NullColumnStorage`: the empty arena (`ArenaTail`) owns nothing and
+/// the null store reserves nothing, so no real store is needed. A
+/// scheduler that owns resources is built via `build(storage)`.
+impl<Cfg: RunCfg> Default for Scheduler<Cfg, WuNil, SvEmpty, NullColumnStorage> {
     fn default() -> Self {
         Self {
             _cfg: PhantomData,
@@ -282,7 +315,7 @@ impl<Cfg: RunCfg> Default for Scheduler<Cfg, WuNil, SvEmpty, NullMemoryProvider>
             plan_dirty: [const { AtomicBool::new(false) }; 256],
             plan_cache: PlanCache::new(),
             arena: crate::resource::arena::ArenaTail,
-            memory_provider: NullMemoryProvider,
+            storage: NullColumnStorage,
             wu_values: WuNil,
         }
     }
@@ -374,24 +407,26 @@ where
     /// WU referencing an unregistered store produces a compile error
     /// pointing at the missing store.
     ///
-    /// Walks `Stores` and `store_values` in lockstep, allocating each
-    /// `Resource<T>`'s block via `memory_provider` and recording its
+    /// Walks `Stores` and `store_values` in lockstep, reserving each
+    /// `Resource<T>`'s one-record column via `storage` and recording its
     /// pointer in the arena. Returns `Err(BuildError::AllocationFailed)`
-    /// (after freeing the prefix already built) if any allocation
-    /// returns null.
-    pub fn build<M: MemoryProviderApi>(
+    /// if any reservation fails; the store frees every column reserved
+    /// before the failure when it drops at the end of this call.
+    pub fn build<CS: ColumnStorage>(
         self,
-        memory_provider: M,
-    ) -> notko::Outcome<Scheduler<DefaultRunCfg, WuVals, Vals, M>, BuildError> {
+        storage: CS,
+    ) -> notko::Outcome<Scheduler<DefaultRunCfg, WuVals, Vals, CS>, BuildError> {
         let wu_values = self.wu_values;
-        match <Vals as DrainStores>::drain(self.store_values, &memory_provider) {
+        let mut storage = storage;
+        let mut next_id = USize::ZERO;
+        match <Vals as DrainStores>::drain(self.store_values, &mut storage, &mut next_id) {
             notko::Outcome::Ok(arena) => notko::Outcome::Ok(Scheduler {
                 _cfg: PhantomData,
                 _dims: PhantomData,
                 plan_dirty: [const { AtomicBool::new(false) }; 256],
                 plan_cache: PlanCache::new(),
                 arena,
-                memory_provider,
+                storage,
                 wu_values,
             }),
             notko::Outcome::Err(e) => notko::Outcome::Err(e),
@@ -403,19 +438,21 @@ where
     /// Used when the consumer registered a custom `RunCfg` via
     /// `.with(MyRunCfg)`; the explicit type parameter threads the
     /// `Cfg::Out` shape through `Scheduler::run()`.
-    pub fn build_with<Cfg: RunCfg, M: MemoryProviderApi>(
+    pub fn build_with<Cfg: RunCfg, CS: ColumnStorage>(
         self,
-        memory_provider: M,
-    ) -> notko::Outcome<Scheduler<Cfg, WuVals, Vals, M>, BuildError> {
+        storage: CS,
+    ) -> notko::Outcome<Scheduler<Cfg, WuVals, Vals, CS>, BuildError> {
         let wu_values = self.wu_values;
-        match <Vals as DrainStores>::drain(self.store_values, &memory_provider) {
+        let mut storage = storage;
+        let mut next_id = USize::ZERO;
+        match <Vals as DrainStores>::drain(self.store_values, &mut storage, &mut next_id) {
             notko::Outcome::Ok(arena) => notko::Outcome::Ok(Scheduler {
                 _cfg: PhantomData,
                 _dims: PhantomData,
                 plan_dirty: [const { AtomicBool::new(false) }; 256],
                 plan_cache: PlanCache::new(),
                 arena,
-                memory_provider,
+                storage,
                 wu_values,
             }),
             notko::Outcome::Err(e) => notko::Outcome::Err(e),

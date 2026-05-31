@@ -564,13 +564,18 @@ configuration it holds in its fields) survives into the built scheduler.
 Platform and run-config values are still dropped (their type stays
 tracked in the typestate). The single `.with` verb is unchanged.
 
-`build(memory_provider)` walks `Stores` and `StoreValues` in lockstep,
-allocates one block per `Resource<T>` through the supplied
-`MemoryProvider`, moves the staged value in, and records a
-`ResourcePtr<T>`. It returns an `Outcome` because allocation can fail.
-`Scheduler` gains `Stores` and `M: MemoryProviderApi` parameters, owns
-the resulting arena plus the provider, and deallocates every block on
-`Drop` after running each value's destructor. `build` also carries the
+`build(storage)` walks `Stores` and `StoreValues` in lockstep, reserves
+a one-record column per `Resource<T>` through the supplied
+`ColumnStorage`, writes the staged value into the column, and records a
+`ResourcePtr<T>` derived from the column base pointer. It returns an
+`Outcome` because reservation can fail. Resource values are
+`ColumnValue` (`Copy + 'static`); a zero-sized resource records a
+dangling pointer and reserves no column. `Scheduler` gains `Stores` and
+`CS: ColumnStorage` parameters and owns the store; the store frees every
+resource block on its own `Drop`, so the scheduler runs no resource
+destructor and needs no `Drop` of its own. The engine ships a
+`NullColumnStorage` as the default `CS` for the bare `Scheduler` type,
+so a no-store scheduler needs no concrete store wired. `build` also carries the
 retained WorkUnit-value list into the `Scheduler`, which gains a
 WorkUnit-value-list parameter alongside its store and provider
 parameters; `run` walks that list (resource-only, registration-list

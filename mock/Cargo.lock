@@ -250,6 +250,7 @@ dependencies = [
  "arvo-tensor",
  "hilavitkutin-api",
  "hilavitkutin-kit",
+ "hilavitkutin-providers",
  "libc",
  "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",

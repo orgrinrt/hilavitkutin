@@ -29,6 +29,12 @@ use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::store::{Column, Resource};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
+use hilavitkutin_providers::ArenaColumnStorage;
+
+/// Wrap a provider in the default-capacity arena store (`D = Dim<256>`).
+fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
+    ArenaColumnStorage::new(provider)
+}
 
 // ---------------------------------------------------------------------
 // Stack-backed test memory provider (mirrors resource_arena.rs).
@@ -86,7 +92,7 @@ fn context_resolves_resource() {
     let provider = BumpProvider::<256>::new();
     let scheduler = Scheduler::builder()
         .with(Resource::new(99u32))
-        .build(provider)
+        .build(store(provider))
         .unwrap_or_else(|_| panic!("build should succeed"));
     let arena = scheduler.__arena();
 
@@ -231,7 +237,7 @@ fn context_drives_wu_execute() {
     let provider = BumpProvider::<256>::new();
     let scheduler = Scheduler::builder()
         .with(Resource::new(7u32))
-        .build(provider)
+        .build(store(provider))
         .unwrap_or_else(|_| panic!("build should succeed"));
     let arena = scheduler.__arena();
 

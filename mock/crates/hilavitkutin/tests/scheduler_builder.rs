@@ -27,6 +27,7 @@ use hilavitkutin_api::{
     UnitDispatch, Virtual, VirtualFirerApi, WorkUnit, read, write,
 };
 use hilavitkutin_kit::{Kit, KitDispatch};
+use hilavitkutin_providers::ArenaColumnStorage;
 
 // ---------------------------------------------------------------------
 // Stack-backed test memory provider (a fixed bump allocator).
@@ -70,10 +71,22 @@ fn provider() -> TestProvider<4096> {
     TestProvider::<4096>::new()
 }
 
+/// The default-capacity arena store over the test provider. The return
+/// type omits `D`, applying the `Dim<256>` default so inference is
+/// anchored at the `build` call sites.
+fn store() -> ArenaColumnStorage<TestProvider<4096>> {
+    ArenaColumnStorage::new(provider())
+}
+
 // ---------------------------------------------------------------------
 // Fake stores.
 // ---------------------------------------------------------------------
 
+// `Interner` is registered as a `Resource` value (`.with(Resource::new(
+// Interner))`), so it must be `ColumnValue` (`Copy + 'static`).
+// `Workspace` and `FileInfo` are only Kit-owned / column markers (never
+// drained as resource values), so they need no derive.
+#[derive(Copy, Clone)]
 pub struct Interner;
 pub struct Workspace;
 pub struct FileInfo;
@@ -112,14 +125,14 @@ impl Kit for WorkspaceKit {
 
 #[test]
 fn empty_build() {
-    let _ = Scheduler::builder().build(provider()).ok();
+    let _ = Scheduler::builder().build(store()).ok();
 }
 
 #[test]
 fn raw_resource_registration_builds() {
     let _ = Scheduler::builder()
         .with(Resource::new(Interner))
-        .build(provider())
+        .build(store())
         .ok();
 }
 
@@ -127,13 +140,13 @@ fn raw_resource_registration_builds() {
 fn raw_column_registration_builds() {
     let _ = Scheduler::builder()
         .with(Column::<FileInfo>::new())
-        .build(provider())
+        .build(store())
         .ok();
 }
 
 #[test]
 fn kit_only_builds() {
-    let _ = Scheduler::builder().with(InternerKit).build(provider()).ok();
+    let _ = Scheduler::builder().with(InternerKit).build(store()).ok();
 }
 
 #[test]
@@ -141,7 +154,7 @@ fn two_kits_chained_build() {
     let _ = Scheduler::builder()
         .with(InternerKit)
         .with(WorkspaceKit)
-        .build(provider())
+        .build(store())
         .ok();
 }
 
@@ -151,7 +164,7 @@ fn mixed_kit_and_raw_build() {
         .with(WorkspaceKit)
         .with(Resource::new(Interner))
         .with(Column::<FileInfo>::new())
-        .build(provider())
+        .build(store())
         .ok();
 }
 
@@ -159,7 +172,7 @@ fn mixed_kit_and_raw_build() {
 fn scheduler_constructs_via_build() {
     // A scheduler now requires a memory provider; constructing through
     // an empty builder with a provider is the no-store base case.
-    let _ = Scheduler::builder().build(provider()).ok();
+    let _ = Scheduler::builder().build(store()).ok();
 }
 
 // ---------------------------------------------------------------------
@@ -337,7 +350,7 @@ fn wu_with_raw_resource_builds() {
     let _ = Scheduler::builder()
         .with(Resource::new(Interner))
         .with(ReadInterner)
-        .build(provider())
+        .build(store())
         .ok();
 }
 
@@ -346,7 +359,7 @@ fn wu_with_kit_builds() {
     let _ = Scheduler::builder()
         .with(InternerKit)
         .with(ReadInterner)
-        .build(provider())
+        .build(store())
         .ok();
 }
 
@@ -357,7 +370,7 @@ fn two_wus_with_two_kits_build() {
         .with(WorkspaceKit)
         .with(ReadInterner)
         .with(DiscoverFiles)
-        .build(provider())
+        .build(store())
         .ok();
 }
 
@@ -406,7 +419,7 @@ fn smoke_fifty_wus() {
         .with(NoStores).with(NoStores).with(NoStores).with(NoStores).with(NoStores)
         .with(NoStores).with(NoStores).with(NoStores).with(NoStores).with(NoStores)
         .with(NoStores).with(NoStores).with(NoStores).with(NoStores).with(NoStores)
-        .build(provider())
+        .build(store())
         .ok();
 }
 
@@ -416,21 +429,39 @@ fn smoke_fifty_wus() {
 // store-count depth via the read! macro emitting Cons cells.
 // ---------------------------------------------------------------------
 
+// Each `Sn` is registered as a `Resource` value below, so each must be
+// `ColumnValue` (`Copy + 'static`).
+#[derive(Copy, Clone)]
 struct S0;
+#[derive(Copy, Clone)]
 struct S1;
+#[derive(Copy, Clone)]
 struct S2;
+#[derive(Copy, Clone)]
 struct S3;
+#[derive(Copy, Clone)]
 struct S4;
+#[derive(Copy, Clone)]
 struct S5;
+#[derive(Copy, Clone)]
 struct S6;
+#[derive(Copy, Clone)]
 struct S7;
+#[derive(Copy, Clone)]
 struct S8;
+#[derive(Copy, Clone)]
 struct S9;
+#[derive(Copy, Clone)]
 struct S10;
+#[derive(Copy, Clone)]
 struct S11;
+#[derive(Copy, Clone)]
 struct S12;
+#[derive(Copy, Clone)]
 struct S13;
+#[derive(Copy, Clone)]
 struct S14;
+#[derive(Copy, Clone)]
 struct S15;
 
 struct SixteenStores;
@@ -461,7 +492,7 @@ fn smoke_wu_with_sixteen_stores() {
         .with(Resource::new(S8)).with(Resource::new(S9)).with(Resource::new(S10)).with(Resource::new(S11))
         .with(Resource::new(S12)).with(Resource::new(S13)).with(Resource::new(S14)).with(Resource::new(S15))
         .with(SixteenStores)
-        .build(provider())
+        .build(store())
         .ok();
 }
 
