@@ -29,7 +29,13 @@ use hilavitkutin_api::context::{HasResourceProvider, ResourceProviderApi};
 use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::store::Resource;
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
+use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
+
+/// Wrap a provider in the default-capacity arena store (`D = Dim<256>`).
+fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
+    ArenaColumnStorage::new(provider)
+}
 
 // Stack-backed test memory provider (mirrors tests/fiber_walk.rs).
 struct BumpProvider<const N: usize> {
@@ -69,8 +75,11 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
 }
 
 // Two distinct resource types: the arena holds both, each unit reads its
-// own. Newtypes keep the recorder a single value stream.
+// own. Newtypes keep the recorder a single value stream. Resources are
+// `ColumnValue` now, so each derives `Copy`.
+#[derive(Copy, Clone)]
 struct Ra(u32);
+#[derive(Copy, Clone)]
 struct Rb(u32);
 
 type ReadA = Cons<Resource<Ra>, Empty>;
@@ -140,7 +149,7 @@ fn run_walks_two_registered_units() {
         .with(Resource::new(Rb(20)))
         .with(ReadAWu)
         .with(ReadBWu)
-        .build(provider)
+        .build(store(provider))
         .unwrap_or_else(|_| panic!("build should succeed"));
 
     let result = scheduler.run();
@@ -163,7 +172,7 @@ fn run_walks_single_registered_unit() {
     let mut scheduler = Scheduler::builder()
         .with(Resource::new(Ra(42)))
         .with(ReadAWu)
-        .build(provider)
+        .build(store(provider))
         .unwrap_or_else(|_| panic!("build should succeed"));
 
     let result = scheduler.run();

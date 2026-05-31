@@ -1,14 +1,17 @@
-//! Resource-arena tests for the B2a data plane.
+//! Resource-arena tests for the data plane over `ColumnStorage`.
 //!
 //! A stack-backed counting `MemoryProvider` (fixed `[MaybeUninit<u8>;
-//! N]` bump allocator with allocate/deallocate counters) drives the
-//! arena round-trip, destructor, and deallocation-pairing checks. No
-//! `std::alloc`; stays `#![no_std]`-compatible (the test harness itself
-//! is std, but the provider allocates from a fixed stack buffer).
+//! N]` bump allocator with allocate/deallocate counters) backs an
+//! `ArenaColumnStorage`, which drives the arena round-trip and the
+//! allocation-pairing checks. No `std::alloc`; stays
+//! `#![no_std]`-compatible (the test harness itself is std, but the
+//! provider allocates from a fixed stack buffer).
 //!
-//! Arena internals are reached through the engine's hidden `__`
-//! accessors (`Scheduler::__arena` / `__memory_provider`,
-//! `ArenaResourceNode::__ptr` / `__tail`).
+//! Resources are `ColumnValue` (`Copy + 'static`): the store reserves a
+//! one-record column per resource, the arena records the column base
+//! pointer, and the store frees the bytes on its own `Drop`. Arena
+//! internals are reached through the engine's hidden `__` accessors
+//! (`Scheduler::__arena`, `ArenaResourceNode::__ptr` / `__tail`).
 
 use core::cell::{Cell, UnsafeCell};
 use core::mem::MaybeUninit;
@@ -18,6 +21,14 @@ use arvo::{Bool, USize};
 use hilavitkutin::scheduler::{BuildError, NullMemoryProvider, Scheduler};
 use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::Resource;
+use hilavitkutin_providers::ArenaColumnStorage;
+
+/// Wrap a provider in the default-capacity arena store. The return type
+/// omits `D`, which applies the `Dim<256>` default and anchors inference
+/// (a bare `ArenaColumnStorage::new(p)` call site leaves `D` ambiguous).
+fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
+    ArenaColumnStorage::new(provider)
+}
 
 // ---------------------------------------------------------------------
 // Stack-backed counting test memory provider.
@@ -43,14 +54,6 @@ impl<const N: usize> BumpProvider<N> {
             allocs: Cell::new(0),
             deallocs: Cell::new(0),
         }
-    }
-
-    fn alloc_count(&self) -> usize {
-        self.allocs.get()
-    }
-
-    fn dealloc_count(&self) -> usize {
-        self.deallocs.get()
     }
 }
 
@@ -84,7 +87,7 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
 
 // A provider that delegates to a bump allocator but counts through
 // process-static atomics, so the counts survive the provider being
-// moved into (and dropped with) the scheduler.
+// moved into (and dropped with) the store / scheduler.
 struct CountingProvider<const N: usize> {
     inner: BumpProvider<N>,
 }
@@ -109,12 +112,13 @@ impl<const N: usize> MemoryProviderApi for CountingProvider<N> {
 }
 
 // Distinct resource value types so `multiple_resources` exercises a
-// three-node arena chain with three different `T` identities.
-#[derive(PartialEq, Eq, Debug)]
+// three-node arena chain with three different `T` identities. Resources
+// are `ColumnValue` now, so each derives `Copy`.
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 struct Ra(u32);
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 struct Rb(u16);
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 struct Rc(u8);
 
 #[test]
@@ -122,30 +126,33 @@ fn resource_arena_round_trip() {
     let provider = BumpProvider::<256>::new();
     let scheduler = Scheduler::builder()
         .with(Resource::new(Ra(99)))
-        .build(provider)
+        .build(store(provider))
         .unwrap_or_else(|_| panic!("build should succeed"));
     // The arena holds one ArenaResourceNode<Ra, ArenaTail>; deref its
-    // recorded pointer and confirm the moved-in value.
+    // recorded pointer, which now points into the store-reserved column,
+    // and confirm the moved-in value.
     // SAFETY: the pointer was written with Ra(99) at build time and the
-    // scheduler (hence arena) is still alive.
+    // scheduler (hence the store backing the column) is still alive.
     let value = unsafe { &*scheduler.__arena().__ptr().as_ptr() };
     assert_eq!(*value, Ra(99));
 }
 
 #[test]
 fn resource_arena_multiple_resources() {
-    // Three distinct types, all reachable through the arena chain.
+    // Three distinct types, all reachable through the arena chain, each
+    // backed by its own reserved column in the store.
     let provider = BumpProvider::<256>::new();
     let scheduler = Scheduler::builder()
         .with(Resource::new(Ra(1)))
         .with(Resource::new(Rb(2)))
         .with(Resource::new(Rc(3)))
-        .build(provider)
+        .build(store(provider))
         .unwrap_or_else(|_| panic!("build should succeed"));
     // `.with` prepends, so registration order (Ra, Rb, Rc) reverses on
     // the cons-list: head is the last registered (Rc), then Rb, then Ra.
     let arena = scheduler.__arena();
-    // SAFETY: all three pointers were written at build time; alive.
+    // SAFETY: all three pointers were written at build time into their
+    // own columns; the store is alive.
     let head = unsafe { &*arena.__ptr().as_ptr() };
     assert_eq!(*head, Rc(3));
     let mid = unsafe { &*arena.__tail().__ptr().as_ptr() };
@@ -165,61 +172,57 @@ fn resource_arena_drop_deallocates() {
         let scheduler = Scheduler::builder()
             .with(Resource::new(Ra(1)))
             .with(Resource::new(2u64))
-            .build(provider)
+            .build(store(provider))
             .unwrap_or_else(|_| panic!("build should succeed"));
-        // two resources allocated, none freed yet.
+        // two resources reserved one column each, none freed yet.
         assert_eq!(ALLOCS.load(Ordering::SeqCst), 2);
         assert_eq!(DEALLOCS.load(Ordering::SeqCst), 0);
         drop(scheduler);
     }
-    // every allocate paired with a deallocate after the scheduler drops.
+    // every reserve paired with a free after the store (held by the
+    // scheduler) drops.
     assert_eq!(ALLOCS.load(Ordering::SeqCst), DEALLOCS.load(Ordering::SeqCst));
     assert_eq!(DEALLOCS.load(Ordering::SeqCst), 2);
 }
 
 #[test]
-fn resource_arena_drop_runs_destructor() {
-    static DROPS: AtomicUsize = AtomicUsize::new(0);
+fn zst_resource_round_trips_without_reserving() {
+    // A zero-sized resource records a dangling pointer and reserves no
+    // column: the store allocates nothing for it, yet the value still
+    // round-trips through the recorded pointer (a ZST read touches no
+    // memory). This is the #622 ZST-resource guard.
+    #[derive(Copy, Clone, PartialEq, Eq, Debug)]
+    struct Marker;
 
-    struct DropCounter;
-    impl Drop for DropCounter {
-        fn drop(&mut self) {
-            DROPS.fetch_add(1, Ordering::SeqCst);
-        }
-    }
-
-    DROPS.store(0, Ordering::SeqCst);
+    ALLOCS.store(0, Ordering::SeqCst);
+    DEALLOCS.store(0, Ordering::SeqCst);
     {
-        let provider = BumpProvider::<256>::new();
-        let _scheduler = Scheduler::builder()
-            .with(Resource::new(DropCounter))
-            .build(provider)
+        let provider = CountingProvider::<256> {
+            inner: BumpProvider::<256>::new(),
+        };
+        let scheduler = Scheduler::builder()
+            .with(Resource::new(Marker))
+            .build(store(provider))
             .unwrap_or_else(|_| panic!("build should succeed"));
-        // not yet dropped.
-        assert_eq!(DROPS.load(Ordering::SeqCst), 0);
+        // No allocation for a ZST resource: the drain skips the reserve.
+        assert_eq!(ALLOCS.load(Ordering::SeqCst), 0);
+        // SAFETY: the ZST value was written to a dangling, aligned pointer
+        // at build time; reading a ZST back touches no memory.
+        let value = unsafe { &*scheduler.__arena().__ptr().as_ptr() };
+        assert_eq!(*value, Marker);
+        drop(scheduler);
     }
-    // scheduler dropped at end of block; DropCounter::drop fired via the
-    // arena DropArena walk.
-    assert_eq!(DROPS.load(Ordering::SeqCst), 1);
-}
-
-#[test]
-fn build_records_one_allocation_per_resource() {
-    let provider = BumpProvider::<256>::new();
-    let scheduler = Scheduler::builder()
-        .with(Resource::new(Ra(5)))
-        .build(provider)
-        .unwrap_or_else(|_| panic!("build should succeed"));
-    assert_eq!(scheduler.__memory_provider().alloc_count(), 1);
-    assert_eq!(scheduler.__memory_provider().dealloc_count(), 0);
+    // Nothing was reserved, so nothing is freed.
+    assert_eq!(DEALLOCS.load(Ordering::SeqCst), 0);
 }
 
 #[test]
 fn allocation_failure_returns_err() {
-    // NullMemoryProvider always returns null; building a scheduler that
-    // needs a resource block fails with AllocationFailed.
+    // A store backed by `NullMemoryProvider` (always returns null) fails
+    // to reserve a column for a non-ZST resource; the build reports
+    // AllocationFailed.
     let result = Scheduler::builder()
         .with(Resource::new(Ra(5)))
-        .build(NullMemoryProvider);
+        .build(store(NullMemoryProvider));
     assert_eq!(result.err(), notko::Maybe::Is(BuildError::AllocationFailed));
 }
