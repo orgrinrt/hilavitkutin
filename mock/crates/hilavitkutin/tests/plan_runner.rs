@@ -11,7 +11,8 @@
 use arvo::{Identity, USize};
 use arvo_tensor::Dim;
 use hilavitkutin::plan::{
-    compute_execution_plan, steps, DependencyGraph, EdgeKind, PhaseConfig, PlanDims, PlanInputs,
+    compute_execution_plan, steps, AccessMask, DependencyGraph, EdgeKind, PhaseConfig, PlanDims,
+    PlanError, PlanInputs,
 };
 use notko::Outcome;
 
@@ -67,10 +68,10 @@ fn single_unit_yields_one_phase_one_fiber() {
 
 #[test]
 fn topo_sort_detects_two_node_cycle() {
-    // Hand-construct a 2-node cycle via the low-level CSR graph.
-    // `build_dag` walks `i < j` strictly so it can never produce a
-    // cycle from inputs; this test exercises the defensive path that
-    // the runner uses to translate a cyclic graph into PlanError::Cycle.
+    // Hand-construct a 2-node cycle via the low-level CSR graph. This
+    // exercises the `topo_sort` cycle path directly, independent of how
+    // the graph was produced. The end-to-end `build_dag`-driven cycle
+    // path is covered by `build_dag_detects_mutual_dependency_cycle`.
     let mut g: DependencyGraph<TestDims> = DependencyGraph::new();
     g.add_edge_kind(USize(0), USize(1), EdgeKind::Read); // lint:allow(no-bare-numeric) reason: hand-crafted cycle smoke; tracked: #427
     g.add_edge_kind(USize(1), USize(0), EdgeKind::Read); // lint:allow(no-bare-numeric) reason: hand-crafted cycle smoke; tracked: #427
@@ -124,4 +125,64 @@ fn phase_config_heuristics_apply_low_record_count() {
         }
         Outcome::Err(_) => panic!("three-unit plan should succeed"),
     }
+}
+
+#[test]
+fn build_dag_orders_writer_before_reader_regardless_of_registration() {
+    // Unit 0 reads store 0; unit 1 writes store 0. The reader sits at the
+    // lower input index, the writer at the higher: a genuine RAW
+    // dependency that forward-only edge detection (i < j) drops entirely.
+    // Order-independent RAW places the writer (unit 1) before the reader
+    // (unit 0) in the topological dispatch order recorded on unit_meta.
+    let mut inputs: Inputs = PlanInputs::new();
+    inputs.unit_count = USize(2); // lint:allow(no-bare-numeric) reason: two-unit fixture; tracked: #339
+    inputs.record_count = USize(64); // lint:allow(no-bare-numeric) reason: smoke record count; tracked: #339
+    // unit 0 reads store 0.
+    inputs.reads.as_mut()[0] = AccessMask::empty().set(USize(0)); // lint:allow(no-bare-numeric) reason: store/unit index fixture; tracked: #339
+    inputs.access.as_mut()[0] = AccessMask::empty().set(USize(0)); // lint:allow(no-bare-numeric) reason: store/unit index fixture; tracked: #339
+    // unit 1 writes store 0.
+    inputs.writes.as_mut()[1] = AccessMask::empty().set(USize(0)); // lint:allow(no-bare-numeric) reason: store/unit index fixture; tracked: #339
+    inputs.access.as_mut()[1] = AccessMask::empty().set(USize(0)); // lint:allow(no-bare-numeric) reason: store/unit index fixture; tracked: #339
+    let result = compute_execution_plan::<TestDims>(&inputs);
+    match result {
+        Outcome::Ok(plan) => {
+            assert_eq!(plan.unit_count, USize(2)); // lint:allow(no-bare-numeric) reason: roundtrip; tracked: #339
+            assert_eq!(
+                plan.unit_meta.as_ref()[0].id.index(),
+                USize(1), // lint:allow(no-bare-numeric) reason: expected writer unit-id; tracked: #339
+                "writer (unit 1) dispatches first under order-independent RAW"
+            );
+            assert_eq!(
+                plan.unit_meta.as_ref()[1].id.index(),
+                USize(0), // lint:allow(no-bare-numeric) reason: expected reader unit-id; tracked: #339
+                "reader (unit 0) dispatches after its writer"
+            );
+        }
+        Outcome::Err(_) => panic!("two-unit RAW chain should plan successfully"),
+    }
+}
+
+#[test]
+fn build_dag_detects_mutual_dependency_cycle() {
+    // Unit 0 reads store 0 and writes store 1; unit 1 reads store 1 and
+    // writes store 0. Each reads what the other writes: a cyclic data
+    // dependency. Order-independent RAW produces edges in both directions
+    // (writer-before-reader each way), which topo_sort cannot linearise;
+    // the runner reports PlanError::Cycle. The forward-only graph produced
+    // only one forward edge and reported success.
+    let mut inputs: Inputs = PlanInputs::new();
+    inputs.unit_count = USize(2); // lint:allow(no-bare-numeric) reason: two-unit fixture; tracked: #339
+    inputs.record_count = USize(64); // lint:allow(no-bare-numeric) reason: smoke record count; tracked: #339
+    inputs.reads.as_mut()[0] = AccessMask::empty().set(USize(0)); // lint:allow(no-bare-numeric) reason: store/unit index fixture; tracked: #339
+    inputs.writes.as_mut()[0] = AccessMask::empty().set(USize(1)); // lint:allow(no-bare-numeric) reason: store/unit index fixture; tracked: #339
+    inputs.reads.as_mut()[1] = AccessMask::empty().set(USize(1)); // lint:allow(no-bare-numeric) reason: store/unit index fixture; tracked: #339
+    inputs.writes.as_mut()[1] = AccessMask::empty().set(USize(0)); // lint:allow(no-bare-numeric) reason: store/unit index fixture; tracked: #339
+    // `access` is left zero: the runner short-circuits at topo_sort
+    // (cycle) before any access-consuming step runs, and build_dag reads
+    // `reads`/`writes` directly.
+    let result = compute_execution_plan::<TestDims>(&inputs);
+    assert!(
+        matches!(result, Outcome::Err(PlanError::Cycle)),
+        "mutual read/write dependency must be rejected as a cycle"
+    );
 }

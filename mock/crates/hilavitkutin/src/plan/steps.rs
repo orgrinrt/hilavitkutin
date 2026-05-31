@@ -76,11 +76,17 @@ pub struct FiberLayout<D: PlanDims> {
 
 /// Step 1: build the CSR `DependencyGraph` from `AccessMask` overlap.
 ///
-/// For each pair of units `(i, j)` with `i < j` in input order: if
-/// `j`'s reads overlap `i`'s writes (RAW), append a `Read` edge
-/// `i j`; if `j`'s writes overlap `i`'s writes (WAW), append a
-/// `Write` edge. The CSR append-order invariant is preserved because
-/// the outer loop walks `i` in ascending order.
+/// RAW edges are order-independent: for every ordered pair `(s, t)`
+/// with `s != t`, if the reader `t` reads what the writer `s` wrote,
+/// append a `Read` edge `s to t` (the writer sorts before the reader,
+/// regardless of input order, so a reader registered before its writer
+/// still gets the dependency). WAW conflicts serialise
+/// deterministically: a `Write` edge `s to t` only when `s < t` (the
+/// lower input index first), so two writers of one store never produce
+/// a back-edge and a spurious cycle. The CSR append-order invariant is
+/// preserved because the outer loop walks the source `s` in ascending
+/// order. WAR anti-dependencies are out of scope (a tracked plan-chain
+/// follow-up).
 pub fn build_dag<D: PlanDims>(
     inputs: &PlanInputs<D::Units, D::Stores>,
 ) -> DependencyGraph<D> {
@@ -88,21 +94,32 @@ pub fn build_dag<D: PlanDims>(
     let n = inputs.unit_count.0;
     let reads = inputs.reads.as_ref();
     let writes = inputs.writes.as_ref();
-    let mut i = 0;
-    while i < n {
-        let mut j = i + 1;
-        while j < n {
-            // RAW: j reads what i wrote.
-            if reads[j].overlaps(&writes[i]).0 {
-                g.add_edge_kind(USize(i), USize(j), EdgeKind::Read); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal loop counter; tracked: #72
+    // Outer loop walks the source `s` in ascending order, so every
+    // appended edge has a source no smaller than the previous one,
+    // satisfying `add_edge_kind`'s CSR append-order invariant.
+    let mut s = 0;
+    while s < n {
+        let mut t = 0;
+        while t < n {
+            if t != s {
+                // RAW: `t` reads what `s` wrote, so the writer `s` runs
+                // before the reader `t`. Checked for every ordered pair
+                // (not only `s < t`), so a reader registered ahead of its
+                // writer still gets the dependency.
+                if reads[t].overlaps(&writes[s]).0 {
+                    g.add_edge_kind(USize(s), USize(t), EdgeKind::Read); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal loop counter; tracked: #72
+                }
+                // WAW: both write the same store. Serialise
+                // deterministically, the lower input index first, so the
+                // back-direction is never added (two writers cannot form a
+                // spurious cycle).
+                if s < t && writes[t].overlaps(&writes[s]).0 {
+                    g.add_edge_kind(USize(s), USize(t), EdgeKind::Write); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal loop counter; tracked: #72
+                }
             }
-            // WAW: j writes what i wrote. Order-only dependency.
-            if writes[j].overlaps(&writes[i]).0 {
-                g.add_edge_kind(USize(i), USize(j), EdgeKind::Write); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal loop counter; tracked: #72
-            }
-            j += 1;
+            t += 1;
         }
-        i += 1;
+        s += 1;
     }
     // Ensure every input unit has a row entry, even units with zero
     // out-degree. row_offsets for empty rows equals edge_count
