@@ -44,7 +44,9 @@ use core::sync::atomic::AtomicBool;
 
 use arvo::strategy::Identity;
 use arvo::USize;
-use crate::plan::{DefaultPlanDims, PlanDims};
+use arvo_tensor::Capacity;
+use crate::plan::project::BundleProject;
+use crate::plan::{compute_execution_plan, plan_inputs_from_bundle, DefaultPlanDims, PlanDims};
 use hilavitkutin_api::access::{AccessSet, ContainsAll, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, Dispatch};
 use hilavitkutin_api::platform::MemoryProviderApi;
@@ -55,7 +57,7 @@ use hilavitkutin_api::work_unit::WorkUnitBundle;
 use hilavitkutin_api::work_unit_values::WuNil;
 use hilavitkutin_api::{ColumnStorage, ColumnValue, StoreId};
 
-use crate::dispatch::fiber_walk::{run_fiber_walk, RunFiber};
+use crate::dispatch::fiber_codegen::{noop_fiber_shim, CollectFiber, FiberSlot};
 use crate::dispatch::morsel::MorselRange;
 
 pub mod metrics;
@@ -81,10 +83,64 @@ pub enum BuildError {
     /// Every block allocated before the failure is freed before the
     /// error returns, so no block leaks.
     AllocationFailed,
+    /// The plan stage could not produce a valid execution plan from the
+    /// registered bundle (a dependency cycle, surfaced by
+    /// `compute_execution_plan` as `PlanError::Cycle`, or another
+    /// feasibility failure). The plan is computed before any allocation,
+    /// so no block is allocated on this path.
+    PlanFailed,
 }
 
 /// Convenience alias for a built scheduler over the default run-config.
 pub type BuiltScheduler<WuVals, Vals, CS> = Scheduler<DefaultRunCfg, WuVals, Vals, CS>;
+
+/// Compute the topological dispatch permutation for a registered bundle.
+///
+/// Projects the `Wus` bundle into `PlanInputs` over the `Stores` access set
+/// (resource-only this slice, so the record count is zero), runs
+/// `compute_execution_plan` over `DefaultPlanDims`, and reads the topological
+/// permutation off `unit_meta`: `topo_order[step]` is the registration-list
+/// position of the unit dispatched at topological step `step`. Returns the
+/// permutation plus the live unit count, or `BuildError::PlanFailed` on a
+/// plan-stage failure (a dependency cycle). Computed before any allocation,
+/// so a plan failure allocates nothing.
+fn compute_topo_order<Wus, Stores, BWit>() -> notko::Outcome<
+    (
+        <<DefaultPlanDims as PlanDims>::Units as Capacity>::Array<USize>,
+        USize,
+    ),
+    BuildError,
+>
+where
+    Wus: BundleProject<
+        Stores,
+        BWit,
+        <DefaultPlanDims as PlanDims>::Units,
+        <DefaultPlanDims as PlanDims>::Stores,
+    >,
+{
+    let inputs = plan_inputs_from_bundle::<
+        Wus,
+        Stores,
+        BWit,
+        <DefaultPlanDims as PlanDims>::Units,
+        <DefaultPlanDims as PlanDims>::Stores,
+    >(USize::ZERO);
+    match compute_execution_plan::<DefaultPlanDims>(&inputs) {
+        notko::Outcome::Ok(plan) => {
+            let mut order =
+                <<DefaultPlanDims as PlanDims>::Units as Capacity>::filled(USize::ZERO);
+            let meta = plan.unit_meta.as_ref();
+            let mut u = 0;
+            while u < plan.unit_count.0 {
+                order.as_mut()[u] = meta[u].id.index();
+                u += 1;
+            }
+            notko::Outcome::Ok((order, plan.unit_count))
+        }
+        notko::Outcome::Err(_) => notko::Outcome::Err(BuildError::PlanFailed),
+    }
+}
 
 /// Top-level scheduler.
 ///
@@ -105,12 +161,16 @@ pub struct Scheduler<
     D: PlanDims = DefaultPlanDims,
 > {
     _cfg: PhantomData<Cfg>,
-    // The plan capacity dimensions this scheduler sizes its plan-stage
-    // structures by. Defaulted to `DefaultPlanDims` so existing call
-    // sites are unaffected; the field is `PhantomData` because the plan
-    // is computed lazily (the `compute_execution_plan` wiring lands in a
-    // later runtime slice) and `D` only names the dimension types.
-    _dims: PhantomData<D>,
+    /// The plan's topological dispatch permutation, computed at `build`.
+    /// `topo_order[step]` is the registration-list position of the unit
+    /// dispatched at topological step `step`; `run` walks the live prefix
+    /// `topo_order[0 .. topo_count]`. Sized by the unit-capacity dimension,
+    /// so `D` is named by a real field and the scheduler needs no
+    /// `PhantomData<D>`.
+    topo_order: <D::Units as Capacity>::Array<USize>,
+    /// How many of `topo_order`'s entries are live (the registered unit
+    /// count). The tail past it is the zero-fill the array carries.
+    topo_count: USize,
     // The dirty bitmap width matches DefaultRunCfg::MAX_PLAN_AFFECTING_RESOURCES = USize(256).
     // The intended lift is `[AtomicBool; Cfg::MAX_PLAN_AFFECTING_RESOURCES.0]` under
     // `feature(generic_const_exprs)`, but current rustc rejects field access on generic
@@ -252,34 +312,58 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + ArenaFor, CS: ColumnStorage, D: Pl
         // for T in the data plane, swap the value, no dirty bit.
     }
 
-    /// Walk the retained WorkUnit instances over a single full-range
-    /// morsel, then return `Cfg::Out::default()`.
+    /// Dispatch the retained WorkUnit instances in the plan's topological
+    /// order over a single full-range morsel, then return
+    /// `Cfg::Out::default()`.
     ///
-    /// Resource-only this slice: each retained unit constructs its own
-    /// `EngineCtx` from the arena and calls `execute`, in
-    /// registration-list order (the builder prepends, so the
-    /// last-registered unit runs first). The `Witnesses` parameter is
-    /// the per-unit projection-index list, inferred at the call site, so
+    /// `build` stored the topological permutation on the scheduler. This
+    /// method materialises the type-erased slot array from the retained
+    /// units via `CollectFiber` (one `FiberSlot` per unit, the unused tail
+    /// filled with `noop_fiber_shim` placeholders), then walks
+    /// `topo_order[0 .. topo_count]`, dispatching each step's slot. Each
+    /// slot's shim projects that unit's `EngineCtx` from the arena and runs
+    /// `execute`. Resource-only this slice. The `Witnesses` parameter is the
+    /// per-unit projection-index list, inferred at the call site, so
     /// `scheduler.run()` needs no turbofish.
     ///
-    /// The real morsel loop (plan-dirty check, per-core dispatch build,
-    /// executor spawn, morsel walk, phase barriers, meta-WU firing,
-    /// persistence drain) and dependency-topological dispatch order wait
-    /// on the plan-driven slice and the `codegen_fiber` / `codegen_core`
-    /// LLVM tier. The full real-body contract lives in `Scheduler::run
-    /// real morsel loop body` in `BACKLOG.md.tmpl`.
+    /// The slot array is rebuilt each call because a stored instance pointer
+    /// would make the scheduler self-referential. The real morsel loop
+    /// (plan-dirty check, per-core dispatch build, executor spawn, morsel
+    /// walk, phase barriers, meta-WU firing, persistence drain) waits on the
+    /// `codegen_fiber` / `codegen_core` LLVM tier. The full real-body
+    /// contract lives in `Scheduler::run real morsel loop body` in
+    /// `BACKLOG.md.tmpl`.
     pub fn run<Witnesses>(&mut self) -> Cfg::Out
     where
         Cfg::Out: Default,
-        WuVals: RunFiber<<Vals as ArenaFor>::Arena, Witnesses>,
+        WuVals: CollectFiber<<Vals as ArenaFor>::Arena, Witnesses>,
     {
         let _ = &self.plan_dirty;
         let _ = &self.plan_cache;
-        run_fiber_walk(
-            &self.wu_values,
-            &self.arena,
-            MorselRange::new(USize::ZERO, USize::ZERO),
-        );
+        // Materialise the erased dispatch slots from the retained units. The
+        // tail past the live unit count keeps its `noop_fiber_shim`
+        // placeholder and is never dispatched (the walk reads only the
+        // `topo_count` live prefix).
+        let placeholder: FiberSlot<<Vals as ArenaFor>::Arena> =
+            (core::ptr::null(), noop_fiber_shim::<<Vals as ArenaFor>::Arena>);
+        let mut slots = <D::Units as Capacity>::filled(placeholder);
+        self.wu_values.collect(slots.as_mut());
+        let morsel = MorselRange::new(USize::ZERO, USize::ZERO);
+        let order = self.topo_order.as_ref();
+        let live = slots.as_ref();
+        let count = self.topo_count.0;
+        let mut step = 0;
+        while step < count {
+            // `topo_order[step]` is the registration-list position of the
+            // unit to dispatch at this step, which equals its slot index:
+            // the builder prepends the unit bundle and the value list in
+            // lockstep. The slot's shim performs the back-cast under its own
+            // `// SAFETY:` note.
+            let pos = order[step].0;
+            let (ptr, shim) = live[pos];
+            shim(ptr, &self.arena, morsel);
+            step += 1;
+        }
         Cfg::Out::default()
     }
 
@@ -311,7 +395,8 @@ impl<Cfg: RunCfg> Default for Scheduler<Cfg, WuNil, SvEmpty, NullColumnStorage> 
     fn default() -> Self {
         Self {
             _cfg: PhantomData,
-            _dims: PhantomData,
+            topo_order: <<DefaultPlanDims as PlanDims>::Units as Capacity>::filled(USize::ZERO),
+            topo_count: USize::ZERO,
             plan_dirty: [const { AtomicBool::new(false) }; 256],
             plan_cache: PlanCache::new(),
             arena: crate::resource::arena::ArenaTail,
@@ -412,17 +497,32 @@ where
     /// pointer in the arena. Returns `Err(BuildError::AllocationFailed)`
     /// if any reservation fails; the store frees every column reserved
     /// before the failure when it drops at the end of this call.
-    pub fn build<CS: ColumnStorage>(
+    pub fn build<BWit, CS: ColumnStorage>(
         self,
         storage: CS,
-    ) -> notko::Outcome<Scheduler<DefaultRunCfg, WuVals, Vals, CS>, BuildError> {
+    ) -> notko::Outcome<Scheduler<DefaultRunCfg, WuVals, Vals, CS>, BuildError>
+    where
+        Wus: BundleProject<
+            Stores,
+            BWit,
+            <DefaultPlanDims as PlanDims>::Units,
+            <DefaultPlanDims as PlanDims>::Stores,
+        >,
+    {
         let wu_values = self.wu_values;
+        // Compute the plan from the registered bundle before draining the
+        // store arena, so a dependency cycle returns without allocating.
+        let (topo_order, topo_count) = match compute_topo_order::<Wus, Stores, BWit>() {
+            notko::Outcome::Ok(pair) => pair,
+            notko::Outcome::Err(e) => return notko::Outcome::Err(e),
+        };
         let mut storage = storage;
         let mut next_id = USize::ZERO;
         match <Vals as DrainStores>::drain(self.store_values, &mut storage, &mut next_id) {
             notko::Outcome::Ok(arena) => notko::Outcome::Ok(Scheduler {
                 _cfg: PhantomData,
-                _dims: PhantomData,
+                topo_order,
+                topo_count,
                 plan_dirty: [const { AtomicBool::new(false) }; 256],
                 plan_cache: PlanCache::new(),
                 arena,
@@ -438,17 +538,32 @@ where
     /// Used when the consumer registered a custom `RunCfg` via
     /// `.with(MyRunCfg)`; the explicit type parameter threads the
     /// `Cfg::Out` shape through `Scheduler::run()`.
-    pub fn build_with<Cfg: RunCfg, CS: ColumnStorage>(
+    pub fn build_with<Cfg: RunCfg, BWit, CS: ColumnStorage>(
         self,
         storage: CS,
-    ) -> notko::Outcome<Scheduler<Cfg, WuVals, Vals, CS>, BuildError> {
+    ) -> notko::Outcome<Scheduler<Cfg, WuVals, Vals, CS>, BuildError>
+    where
+        Wus: BundleProject<
+            Stores,
+            BWit,
+            <DefaultPlanDims as PlanDims>::Units,
+            <DefaultPlanDims as PlanDims>::Stores,
+        >,
+    {
         let wu_values = self.wu_values;
+        // Compute the plan from the registered bundle before draining the
+        // store arena, so a dependency cycle returns without allocating.
+        let (topo_order, topo_count) = match compute_topo_order::<Wus, Stores, BWit>() {
+            notko::Outcome::Ok(pair) => pair,
+            notko::Outcome::Err(e) => return notko::Outcome::Err(e),
+        };
         let mut storage = storage;
         let mut next_id = USize::ZERO;
         match <Vals as DrainStores>::drain(self.store_values, &mut storage, &mut next_id) {
             notko::Outcome::Ok(arena) => notko::Outcome::Ok(Scheduler {
                 _cfg: PhantomData,
-                _dims: PhantomData,
+                topo_order,
+                topo_count,
                 plan_dirty: [const { AtomicBool::new(false) }; 256],
                 plan_cache: PlanCache::new(),
                 arena,

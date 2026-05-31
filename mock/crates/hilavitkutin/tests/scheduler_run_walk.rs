@@ -8,10 +8,14 @@
 //! executes them, distinct from slice 1 (which hand-built the unit list
 //! and drove the walk directly).
 //!
-//! The walk order is registration-list order: the builder prepends each
-//! `.with(unit)`, so the last-registered unit runs first. The test
-//! asserts and documents that honestly. Dependency-topological order
-//! from the execution plan is a later slice.
+//! Slice 3 wires dependency-topological dispatch: `build()` computes the
+//! execution plan from the registered bundle and `run()` dispatches in the
+//! plan's topological order. Two independent readers carry no dependency
+//! edge, so their topological order coincides with the registration walk
+//! (the no-edge fallback the two-reader test documents); the reorder is
+//! observable only when an edge exists, which the writer-before-reader test
+//! pins. A cyclic registration is rejected at `build()` as
+//! `BuildError::PlanFailed`.
 //!
 //! Lives under `tests/` so the bare byte buffer backing the test memory
 //! provider does not trip the src-tree primitive lints.
@@ -22,7 +26,7 @@ use std::cell::RefCell;
 
 use arvo::{Bool, USize};
 use hilavitkutin::dispatch::engine_ctx::{ColPtrNil, EngineCtx, PtrCons, PtrNil};
-use hilavitkutin::scheduler::Scheduler;
+use hilavitkutin::scheduler::{BuildError, Scheduler};
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{HasResourceProvider, ResourceProviderApi};
@@ -139,11 +143,13 @@ impl WorkUnit<Always> for ReadBWu {
 fn run_walks_two_registered_units() {
     OBSERVED.with(|o| o.borrow_mut().clear());
     let provider = BumpProvider::<512>::new();
-    // Register the resources both units read, then the two units. The
-    // builder prepends each WorkUnit value, so the retained list runs
-    // last-registered first: ReadBWu (reads Rb = 20), then ReadAWu
-    // (reads Ra = 10). The order is registration-list order, documented
-    // here; dependency-topological order is a later slice.
+    // Register the resources both units read, then the two units. The two
+    // readers touch disjoint resources (Ra, Rb) and neither writes, so the
+    // plan's dependency graph has no edge between them. With no edge, the
+    // topological order coincides with the registration walk: the builder
+    // prepends, so the retained list is [ReadBWu, ReadAWu] and dispatch runs
+    // ReadBWu (Rb = 20) then ReadAWu (Ra = 10). The reorder is observable
+    // only when an edge exists, which the writer-before-reader test covers.
     let mut scheduler = Scheduler::builder()
         .with(Resource::new(Ra(10)))
         .with(Resource::new(Rb(20)))
@@ -179,4 +185,131 @@ fn run_walks_single_registered_unit() {
 
     assert!(matches!(result, Outcome::Ok(())));
     OBSERVED.with(|o| assert_eq!(o.borrow().as_slice(), &[42u32]));
+}
+
+// Writer over Ra: declares `Write = {Resource<Ra>}` so the plan adds a RAW
+// edge to any later reader of Ra. Read is empty, so its read bundle is
+// `PtrNil`; its execute records a sentinel marker. Resource-write-pointer
+// projection is a later slice, so the write declaration exists only for the
+// dependency edge, not to actually write Ra.
+type WriteA = Cons<Resource<Ra>, Empty>;
+
+// Sentinel the writer records, distinct from any resource value, so the
+// observed sequence names which unit ran when.
+const WRITER_MARKER: u32 = 99;
+
+struct WriteAWu;
+
+impl BuilderInput for WriteAWu {
+    type Init = Self;
+    type Dispatch = UnitDispatch<Self>;
+}
+
+impl WorkUnit<Always> for WriteAWu {
+    type Read = Empty;
+    type Write = WriteA;
+    type Hint = (
+        hilavitkutin_api::hint::Immediate,
+        hilavitkutin_api::hint::Atomic,
+        hilavitkutin_api::hint::Normal,
+    );
+    type Ctx<'frame> = EngineCtx<'frame, Empty, WriteA, PtrNil, ColPtrNil, ColPtrNil>;
+
+    fn execute<'frame>(&self, _ctx: &Self::Ctx<'frame>) {
+        OBSERVED.with(|o| o.borrow_mut().push(WRITER_MARKER));
+    }
+}
+
+#[test]
+fn run_dispatches_in_topological_order_not_registration() {
+    OBSERVED.with(|o| o.borrow_mut().clear());
+    let provider = BumpProvider::<512>::new();
+    // Register the writer of Ra FIRST, then the reader of Ra LAST. The builder
+    // prepends, so the retained value list is [reader, writer] and a plain
+    // registration walk would run the reader first. The plan adds a RAW edge
+    // writer to reader (the writer writes what the reader reads), so the
+    // topological dispatch order is [writer, reader]: the writer runs first
+    // even though it sits last in the prepended list. This is the slice-3
+    // contract: dispatch follows the plan, not the registration order.
+    let mut scheduler = Scheduler::builder()
+        .with(Resource::new(Ra(10)))
+        .with(WriteAWu)
+        .with(ReadAWu)
+        .build(store(provider))
+        .unwrap_or_else(|_| panic!("build should succeed"));
+
+    let result = scheduler.run();
+
+    assert!(matches!(result, Outcome::Ok(())));
+    OBSERVED.with(|o| {
+        assert_eq!(
+            o.borrow().as_slice(),
+            &[WRITER_MARKER, 10u32],
+            "dispatch follows the plan's topological order (writer before its \
+             reader), not the registration walk (which would run the \
+             last-registered reader first)"
+        );
+    });
+}
+
+// Two units that form a mutual data dependency: CycleAWu reads Ra and writes
+// Rb; CycleBWu reads Rb and writes Ra. The plan adds RAW edges in both
+// directions (each writes what the other reads), so `topo_sort` cannot place
+// every unit. These never run; only the build-time plan rejection is
+// exercised, so their execute bodies are empty.
+struct CycleAWu;
+
+impl BuilderInput for CycleAWu {
+    type Init = Self;
+    type Dispatch = UnitDispatch<Self>;
+}
+
+impl WorkUnit<Always> for CycleAWu {
+    type Read = ReadA;
+    type Write = ReadB;
+    type Hint = (
+        hilavitkutin_api::hint::Immediate,
+        hilavitkutin_api::hint::Atomic,
+        hilavitkutin_api::hint::Normal,
+    );
+    type Ctx<'frame> = EngineCtx<'frame, ReadA, ReadB, PtrCons<Ra, PtrNil>, ColPtrNil, ColPtrNil>;
+
+    fn execute<'frame>(&self, _ctx: &Self::Ctx<'frame>) {}
+}
+
+struct CycleBWu;
+
+impl BuilderInput for CycleBWu {
+    type Init = Self;
+    type Dispatch = UnitDispatch<Self>;
+}
+
+impl WorkUnit<Always> for CycleBWu {
+    type Read = ReadB;
+    type Write = ReadA;
+    type Hint = (
+        hilavitkutin_api::hint::Immediate,
+        hilavitkutin_api::hint::Atomic,
+        hilavitkutin_api::hint::Normal,
+    );
+    type Ctx<'frame> = EngineCtx<'frame, ReadB, ReadA, PtrCons<Rb, PtrNil>, ColPtrNil, ColPtrNil>;
+
+    fn execute<'frame>(&self, _ctx: &Self::Ctx<'frame>) {}
+}
+
+#[test]
+fn build_rejects_a_cyclic_registration() {
+    let provider = BumpProvider::<512>::new();
+    // CycleAWu (reads Ra, writes Rb) and CycleBWu (reads Rb, writes Ra) form a
+    // dependency cycle. `build` computes the plan before draining the store
+    // arena; `compute_execution_plan` returns `PlanError::Cycle`, so `build`
+    // returns `BuildError::PlanFailed` and allocates nothing.
+    let result = Scheduler::builder()
+        .with(Resource::new(Ra(1)))
+        .with(Resource::new(Rb(2)))
+        .with(CycleAWu)
+        .with(CycleBWu)
+        .build(store(provider));
+
+    assert!(matches!(result, Outcome::Err(BuildError::PlanFailed)));
 }
