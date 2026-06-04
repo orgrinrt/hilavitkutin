@@ -220,25 +220,56 @@ where
     }
 }
 
-/// Read the topological dispatch permutation off a computed plan.
+/// Derive the phase-sequential dispatch order off a computed plan.
 ///
-/// `topo_order[step]` is the registration-list position of the unit dispatched
-/// at topological step `step` (the `unit_meta` id index). Returns the
-/// permutation array plus the live unit count.
-fn extract_topo_order(
+/// Flattens the plan's phase structure into the per-step dispatch order:
+/// `plan.phases[0..phase_count]`, each phase's trunks
+/// (`trunks[trunk_offset .. +trunk_count]`), each trunk's fibers
+/// (`fibers[fiber_offset .. +fiber_count]`), each fiber's units
+/// (`fiber.units[0..unit_count]`). The collected value is each unit's slot
+/// index (`UnitId::index`), so `topo_order[step]` remains the registration-list
+/// position of the unit dispatched at `step`, now ordered by the plan's
+/// phase/trunk/fiber grouping rather than the flat `unit_meta` permutation. The
+/// grouping is a topological order (phase boundaries sit where a dependency
+/// crosses them; a fiber's units are gathered in topological order), so the
+/// dispatch stays dependency-respecting. Returns the order array plus the count
+/// of units emitted (the flattened total, which equals the live unit count when
+/// the fiber partition is complete).
+fn derive_phase_dispatch_order(
     plan: &ExecutionPlan<DefaultPlanDims>,
 ) -> (
     <<DefaultPlanDims as PlanDims>::Units as Capacity>::Array<USize>,
     USize,
 ) {
     let mut order = <<DefaultPlanDims as PlanDims>::Units as Capacity>::filled(USize::ZERO);
-    let meta = plan.unit_meta.as_ref();
-    let mut u = 0;
-    while u < plan.unit_count.0 {
-        order.as_mut()[u] = meta[u].id.index();
-        u += 1;
+    let cap = order.as_ref().len();
+    let phases = plan.phases.as_ref();
+    let trunks = plan.trunks.as_ref();
+    let fibers = plan.fibers.as_ref();
+    let mut next = 0;
+    let mut p = 0;
+    while p < plan.phase_count.0 && p < phases.len() {
+        let t_end = phases[p].trunk_offset.0 + phases[p].trunk_count.0;
+        let mut t = phases[p].trunk_offset.0;
+        while t < t_end && t < trunks.len() {
+            let f_end = trunks[t].fiber_offset.0 + trunks[t].fiber_count.0;
+            let mut f = trunks[t].fiber_offset.0;
+            while f < f_end && f < fibers.len() {
+                let units = fibers[f].units.as_ref();
+                let uc = fibers[f].unit_count.0;
+                let mut u = 0;
+                while u < uc && u < units.len() && next < cap {
+                    order.as_mut()[next] = units[u].index();
+                    next += 1;
+                    u += 1;
+                }
+                f += 1;
+            }
+            t += 1;
+        }
+        p += 1;
     }
-    (order, plan.unit_count)
+    (order, USize(next))
 }
 
 /// Reserve one plan column and copy its live prefix in.
@@ -739,7 +770,7 @@ where
             notko::Outcome::Ok(p) => p,
             notko::Outcome::Err(e) => return notko::Outcome::Err(e),
         };
-        let (topo_order, topo_count) = extract_topo_order(&plan);
+        let (topo_order, topo_count) = derive_phase_dispatch_order(&plan);
         let mut storage = storage;
         let mut next_id = USize::ZERO;
         match <Vals as DrainStores>::drain(self.store_values, &mut storage, &mut next_id, record_count) {
@@ -792,7 +823,7 @@ where
             notko::Outcome::Ok(p) => p,
             notko::Outcome::Err(e) => return notko::Outcome::Err(e),
         };
-        let (topo_order, topo_count) = extract_topo_order(&plan);
+        let (topo_order, topo_count) = derive_phase_dispatch_order(&plan);
         let mut storage = storage;
         let mut next_id = USize::ZERO;
         match <Vals as DrainStores>::drain(self.store_values, &mut storage, &mut next_id, record_count) {
