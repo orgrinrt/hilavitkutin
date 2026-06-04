@@ -126,6 +126,17 @@ enum PlanColumn {
     RcmOrder,
 }
 
+impl PlanColumn {
+    /// Number of plan columns: the count of `StoreId`s `store_plan` reserves
+    /// past the resource base. Must equal the variant count above (a new
+    /// variant breaks the `column_id` match, which is the compile-time guard;
+    /// this const is the named source for the reservation-span prose). Its
+    /// consumers are the `store_plan` doc and the offset-pinning unit test, so
+    /// the non-test build sees no use site: that is expected, not drift.
+    #[cfg_attr(not(test), allow(dead_code))]
+    const COUNT: usize = 6; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: closed-set cardinality used as a reservation span; tracked: #72
+}
+
 impl PlanHandle {
     /// The empty handle: no plan store-backed (the bare and `Default`
     /// scheduler, whose store reserves nothing).
@@ -141,8 +152,18 @@ impl PlanHandle {
 
     /// `StoreId` of plan column `c`, a fixed offset off the base.
     fn column_id(&self, c: PlanColumn) -> StoreId {
-        // The variant's position within the closed set is its column offset.
-        StoreId(USize(self.base.0 + c as usize)) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: StoreId-construct from base + closed-set column offset; tracked: #72
+        // Explicit per-variant offset, not `c as usize`: reordering the enum
+        // does not shift the stored offsets, and adding a variant is a
+        // compile-forced change here (the match goes non-exhaustive).
+        let offset = match c {
+            PlanColumn::Phases => 0,
+            PlanColumn::Trunks => 1,
+            PlanColumn::Fibers => 2,
+            PlanColumn::UnitMeta => 3,
+            PlanColumn::MorselSizes => 4,
+            PlanColumn::RcmOrder => 5,
+        }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: closed-set column offsets; tracked: #72
+        StoreId(USize(self.base.0 + offset)) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: StoreId-construct from base + closed-set column offset; tracked: #72
     }
 
     /// `StoreId` of the phases column.
@@ -269,6 +290,16 @@ fn derive_phase_dispatch_order(
         }
         p += 1;
     }
+    // A complete fiber partition places every registered unit in exactly one
+    // fiber, so the flattened total equals the unit count. A mismatch means the
+    // plan dropped or duplicated a unit (a silent dispatch error); surface it in
+    // debug and test builds rather than dispatching a truncated order.
+    debug_assert_eq!(
+        next, plan.unit_count.0,
+        "phase flatten emitted a different unit count than the plan registered: \
+         the fiber partition is incomplete (a unit landed in no fiber, or a \
+         capacity guard tripped)"
+    );
     (order, USize(next))
 }
 
@@ -301,13 +332,14 @@ fn store_column<T: ColumnValue, CS: ColumnStorage>(
     notko::Outcome::Ok(())
 }
 
-/// Store-back the plan's six flat CSR pools as columns at `base .. base + 6`.
+/// Store-back the plan's flat CSR pools as columns at `base .. base +
+/// PlanColumn::COUNT`.
 ///
 /// Reserves and copies the phases, trunks, fibers, per-unit metadata,
-/// per-fiber morsel sizes, and RCM renumber pools, then returns the
-/// `PlanHandle` locating them. Per-fiber column classification and the dirty
-/// masks stay off the store this round (their columnar form and consumers are
-/// later rounds).
+/// per-fiber morsel sizes, and RCM renumber pools (one column per `PlanColumn`
+/// variant), then returns the `PlanHandle` locating them. Per-fiber column
+/// classification and the dirty masks stay off the store this round (their
+/// columnar form and consumers are later rounds).
 fn store_plan<CS: ColumnStorage>(
     plan: &ExecutionPlan<DefaultPlanDims>,
     storage: &mut CS,
@@ -373,8 +405,10 @@ pub struct Scheduler<
     /// so `D` is named by a real field and the scheduler needs no
     /// `PhantomData<D>`.
     topo_order: <D::Units as Capacity>::Array<USize>,
-    /// How many of `topo_order`'s entries are live (the registered unit
-    /// count). The tail past it is the zero-fill the array carries.
+    /// How many of `topo_order`'s entries are live: the flattened dispatch
+    /// total (equals the registered unit count when the fiber partition is
+    /// complete, which `derive_phase_dispatch_order` debug-asserts). The tail
+    /// past it is the zero-fill the array carries.
     topo_count: USize,
     /// Locator for the plan's store-backed flat CSR columns (phases, trunks,
     /// fibers, per-unit metadata, per-fiber morsel sizes, the RCM renumber),
@@ -849,5 +883,51 @@ where
             }
             notko::Outcome::Err(e) => notko::Outcome::Err(e),
         }
+    }
+}
+
+#[cfg(test)]
+mod plan_column_offset_tests {
+    use super::*;
+
+    // A handle at a nonzero base, so the assertions discriminate "offset off
+    // base" from "absolute StoreId".
+    fn handle_at(base: USize) -> PlanHandle {
+        PlanHandle {
+            base,
+            phase_count: USize::ZERO,
+            trunk_count: USize::ZERO,
+            fiber_count: USize::ZERO,
+            unit_count: USize::ZERO,
+        }
+    }
+
+    // Pin every plan column's StoreId offset off a nonzero base, and bind the
+    // accessor count to `PlanColumn::COUNT`. Store and read both route through
+    // `column_id`, so the offsets are a stored contract, not free to drift: a
+    // wrong match arm shifts an `assert_eq!`, an absolute-vs-off-base confusion
+    // drops the base, and a `COUNT` that disagrees with the column set fails the
+    // length check (the span `store_plan`'s doc cites). The nonzero base is what
+    // discriminates "offset off base" from "absolute StoreId".
+    #[test]
+    fn column_ids_are_pinned_offsets_off_base() {
+        let base = USize(7); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test base literal; tracked: #72
+        let h = handle_at(base);
+        let at = |off: usize| StoreId(USize(base.0 + off)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: expected offset off base; tracked: #72
+        let ids = [
+            h.phases_id(),
+            h.trunks_id(),
+            h.fibers_id(),
+            h.unit_meta_id(),
+            h.morsel_sizes_id(),
+            h.rcm_order_id(),
+        ];
+        assert_eq!(ids[0], at(0));
+        assert_eq!(ids[1], at(1));
+        assert_eq!(ids[2], at(2));
+        assert_eq!(ids[3], at(3));
+        assert_eq!(ids[4], at(4));
+        assert_eq!(ids[5], at(5));
+        assert_eq!(ids.len(), PlanColumn::COUNT);
     }
 }
