@@ -1008,4 +1008,14 @@ pub enum PlanError {
     /// `assign_cores` was asked to map more lanes than the runtime
     /// has cores available.
     CoreCountExceeded,
+    /// The `PlanDims` declares a phase capacity larger than the
+    /// fixed-width `PhaseId` can name (`PhaseId::ADDRESSABLE`). The high
+    /// phase slots would be unaddressable, so the plan stage rejects the
+    /// misconfigured dims up front rather than wrapping ids.
+    PhaseCapacityExceedsIdWidth,
+    /// The `PlanDims` declares a trunk capacity larger than the
+    /// fixed-width `TrunkId` can name (`TrunkId::ADDRESSABLE`). The high
+    /// trunk slots would be unaddressable, so the plan stage rejects the
+    /// misconfigured dims up front rather than wrapping ids.
+    TrunkCapacityExceedsIdWidth,
 }
