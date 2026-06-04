@@ -108,9 +108,16 @@ static COUNTING_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 impl<const N: usize> MemoryProviderApi for CountingProvider<N> {
     unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
-        ALLOCS.fetch_add(1, Ordering::SeqCst);
         // SAFETY: delegates to the inner bump allocator.
-        unsafe { self.inner.allocate(len, align) }
+        let ptr = unsafe { self.inner.allocate(len, align) };
+        // Count successful allocations only. A null return reserves no
+        // column, so it must not count toward the live-column total that
+        // DEALLOCS is balanced against (matches BumpProvider's own
+        // success-only count).
+        if !ptr.is_null() {
+            ALLOCS.fetch_add(1, Ordering::SeqCst);
+        }
+        ptr
     }
     unsafe fn deallocate(&self, ptr: *mut u8, len: USize) {
         DEALLOCS.fetch_add(1, Ordering::SeqCst);
@@ -236,4 +243,35 @@ fn allocation_failure_returns_err() {
         .with(Resource::new(Ra(5)))
         .build(store(NullMemoryProvider), USize(0));
     assert_eq!(result.err(), notko::Maybe::Is(BuildError::AllocationFailed));
+}
+
+#[test]
+fn partial_failure_frees_the_reserved_columns() {
+    // The conjunction the two tests above only prove in halves: when one
+    // resource reserves and the next fails, the build must report
+    // AllocationFailed AND the store, dropped on the Err arm, must free the
+    // one column it did reserve. A leak on the partial-failure path (store
+    // not dropped, or Drop not freeing the reserved-so-far columns) would
+    // pass both halves yet leak in production.
+    //
+    // The store reserves each column with CACHE_LINE_ALIGN (64), so a
+    // 64-byte buffer holds exactly one column: the first resource reserves
+    // at offset 0, the second rounds up to offset 64 and overflows.
+    let _serial = COUNTING_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    ALLOCS.store(0, Ordering::SeqCst);
+    DEALLOCS.store(0, Ordering::SeqCst);
+    {
+        let provider = CountingProvider::<64> {
+            inner: BumpProvider::<64>::new(),
+        };
+        let result = Scheduler::builder()
+            .with(Resource::new(Ra(1)))
+            .with(Resource::new(Rb(2)))
+            .build(store(provider), USize(0));
+        assert_eq!(result.err(), notko::Maybe::Is(BuildError::AllocationFailed));
+    }
+    // One column reserved before the failure, one freed on the Err arm: the
+    // live-column count balances, so the partial-failure path leaks nothing.
+    assert_eq!(ALLOCS.load(Ordering::SeqCst), 1);
+    assert_eq!(DEALLOCS.load(Ordering::SeqCst), 1);
 }
