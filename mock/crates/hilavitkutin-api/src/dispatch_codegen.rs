@@ -52,6 +52,14 @@ impl core::fmt::Debug for PhaseId {
 }
 
 impl PhaseId {
+    /// Number of distinct phase ids this fixed-width type can name.
+    ///
+    /// `PhaseId` wraps `Uint<5>`, so it addresses indices `0 .. 2^5`. A
+    /// `PlanDims` whose phase capacity exceeds this cannot name its high
+    /// slots; the plan stage rejects such a dims rather than wrapping ids.
+    /// Keep in sync with the `Uint<5>` width above.
+    pub const ADDRESSABLE: usize = 1 << 5; // lint:allow(no-bare-numeric) reason: 2^(Uint<5> width): the addressable-id-count bound; tracked: #641
+
     /// Zero-valued default.
     pub const ZERO: Self = Self(<Uint<5> as Identity>::ZERO);
 
@@ -93,6 +101,14 @@ impl core::fmt::Debug for TrunkId {
 }
 
 impl TrunkId {
+    /// Number of distinct trunk ids this fixed-width type can name.
+    ///
+    /// `TrunkId` wraps `Uint<6>`, so it addresses indices `0 .. 2^6`. A
+    /// `PlanDims` whose trunk capacity exceeds this cannot name its high
+    /// slots; the plan stage rejects such a dims rather than wrapping ids.
+    /// Keep in sync with the `Uint<6>` width above.
+    pub const ADDRESSABLE: usize = 1 << 6; // lint:allow(no-bare-numeric) reason: 2^(Uint<6> width): the addressable-id-count bound; tracked: #641
+
     /// Zero-valued default.
     pub const ZERO: Self = Self(<Uint<6> as Identity>::ZERO);
 

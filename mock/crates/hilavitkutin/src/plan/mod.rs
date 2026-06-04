@@ -207,6 +207,20 @@ where
     <D::Units as Capacity>::Array<USize>: Copy,
     <D::Edges as Capacity>::Array<NodeId>: Copy,
 {
+    // #641: a `PlanDims` whose phase or trunk capacity exceeds the fixed-width
+    // id types' addressable range (`PhaseId` names 32, `TrunkId` names 64)
+    // cannot name its high slots; reject the misconfigured dims loudly rather
+    // than letting id construction wrap past the addressable range. The check
+    // is a property of `D`, independent of the input, so it guards the empty
+    // plan too. `DefaultPlanDims` aligns its capacities to the id widths, so
+    // the guard never fires for it.
+    if cap_size_phases::<D>() > PhaseId::ADDRESSABLE {
+        return notko::Outcome::Err(PlanError::PhaseCapacityExceedsIdWidth);
+    }
+    if cap_size(<D::Trunks as Capacity>::CAP) > TrunkId::ADDRESSABLE {
+        return notko::Outcome::Err(PlanError::TrunkCapacityExceedsIdWidth);
+    }
+
     // Empty input → empty plan (valid).
     let n = inputs.unit_count.0;
     let mut plan: ExecutionPlan<D> = ExecutionPlan::new();
