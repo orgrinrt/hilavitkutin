@@ -29,11 +29,12 @@
 //! occupies no bytes, so it reserves nothing and records a dangling,
 //! well-aligned pointer.
 
+use core::cell::Cell;
 use core::marker::PhantomData;
 use core::mem::size_of;
 
 use arvo::USize;
-use hilavitkutin_api::store::{Column, StagedResource, Virtual};
+use hilavitkutin_api::store::{Accum, Column, StagedResource, Virtual};
 use hilavitkutin_api::store_values::{StoreValues, Sv, SvEmpty};
 use hilavitkutin_api::{ColumnStorage, ColumnValue, StoreId};
 
@@ -107,6 +108,53 @@ impl<T, Tail> ColumnBinding<T, Tail> {
     }
 }
 
+/// Bindings cons-cell for one registered `Accum<T>`.
+///
+/// Holds the reserved `ColumnPtr<T>` (base of the capacity buffer, sized by
+/// the build-time record count this round) and a `Cell<USize>` live-length
+/// that the `&self` append accessor advances through interior mutability. The
+/// `Cell` is non-atomic: correct single-core, swapped for an atomic when
+/// multi-core lands. A zero-record (or zero-sized) accumulator records a
+/// dangling, well-aligned pointer (never dereferenced, the morsel is empty).
+pub struct AccumBinding<T, Tail> {
+    pub(crate) ptr: ColumnPtr<T>,
+    pub(crate) len: Cell<USize>,
+    pub(crate) cap: USize,
+    pub(crate) tail: Tail,
+}
+
+impl<T, Tail> AccumBinding<T, Tail> {
+    /// The reserved capacity-buffer base pointer. Hidden accessor used by the
+    /// `AccumSelector` and by tests. Not part of the supported surface.
+    #[doc(hidden)]
+    pub fn __ptr(&self) -> ColumnPtr<T> {
+        self.ptr
+    }
+
+    /// The reserved record capacity. Hidden accessor used by the
+    /// `AccumSelector` (the append saturates at this bound) and by tests. Not
+    /// part of the supported surface.
+    #[doc(hidden)]
+    pub fn __cap(&self) -> USize {
+        self.cap
+    }
+
+    /// The live-length cell. Hidden accessor used by the `AccumSelector` (the
+    /// projection borrows it for `'frame`) and by tests. The append accessor
+    /// reads, writes, and advances it under `&self`. Not supported surface.
+    #[doc(hidden)]
+    pub fn __len_cell(&self) -> &Cell<USize> {
+        &self.len
+    }
+
+    /// The tail node. Hidden accessor used by the pass-through selectors and by
+    /// tests. Not part of the supported surface.
+    #[doc(hidden)]
+    pub fn __tail(&self) -> &Tail {
+        &self.tail
+    }
+}
+
 /// Bindings cons-cell for one registered `Virtual<T>`.
 ///
 /// Carries no pointer: a `Virtual<T>` store is a DAG-edge marker with
@@ -159,6 +207,11 @@ impl<T: 'static, L: StoreValues + BindingsFor> BindingsFor for Sv<Column<T>, L> 
 impl<T: 'static, L: StoreValues + BindingsFor> sealed::Sealed for Sv<Virtual<T>, L> {}
 impl<T: 'static, L: StoreValues + BindingsFor> BindingsFor for Sv<Virtual<T>, L> {
     type Bindings = VirtualBinding<T, <L as BindingsFor>::Bindings>;
+}
+
+impl<T: 'static, L: StoreValues + BindingsFor> sealed::Sealed for Sv<Accum<T>, L> {}
+impl<T: 'static, L: StoreValues + BindingsFor> BindingsFor for Sv<Accum<T>, L> {
+    type Bindings = AccumBinding<T, <L as BindingsFor>::Bindings>;
 }
 
 /// Reserves and populates the bindings by consuming a `StoreValues` list.
@@ -324,6 +377,61 @@ where
         match <L as DrainStores>::drain(rest, cs, next_id, record_count) {
             notko::Outcome::Ok(tail) => notko::Outcome::Ok(VirtualBinding {
                 _marker: PhantomData,
+                tail,
+            }),
+            notko::Outcome::Err(e) => notko::Outcome::Err(e),
+        }
+    }
+}
+
+impl<T: ColumnValue, L> DrainStores for Sv<Accum<T>, L>
+where
+    L: StoreValues + BindingsFor + DrainStores,
+{
+    fn drain<CS: ColumnStorage>(
+        self,
+        cs: &mut CS,
+        next_id: &mut USize,
+        record_count: USize,
+    ) -> notko::Outcome<Self::Bindings, BuildError> {
+        // Accumulator: reserve a capacity buffer at a `StoreId` continued past
+        // the prior columns (capacity equals the record count this round) and
+        // record its base pointer plus a zero live-length. Records are appended
+        // by WorkUnits during the frame; the drain reserves and zeroes the live
+        // count, it does not initialise records. Appending past `record_count`
+        // is out of contract this round (the plan does not yet bound it).
+        let (_marker, rest) = self.into_parts();
+        let id = StoreId(*next_id);
+        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal drain-order counter; tracked: #72
+        *next_id = USize((*next_id).0 + 1);
+        match cs.reserve::<T>(id, record_count) {
+            notko::Outcome::Ok(()) => {}
+            notko::Outcome::Err(_) => return notko::Outcome::Err(BuildError::AllocationFailed),
+        }
+        // SAFETY: `id` names a column just reserved for `record_count` records
+        // of `T`; the store returns its 64-byte-aligned base pointer.
+        let typed = unsafe { cs.column_ptr_mut::<T>(id) };
+        let ptr = if typed.is_null() {
+            // A zero-record (or zero-sized `T`) accumulator reserves no bytes and
+            // hands back a null base. Nothing is ever appended (an empty frame),
+            // so record a dangling, well-aligned, non-null pointer to satisfy
+            // `ColumnPtr`'s invariant.
+            // SAFETY: `NonNull::dangling` is non-null and `T`-aligned; never
+            // dereferenced (no append touches an empty buffer).
+            unsafe { ColumnPtr::new_unchecked(core::ptr::NonNull::<T>::dangling().as_ptr()) }
+        } else {
+            // SAFETY: `typed` is non-null (checked), 64-byte aligned, and sized
+            // for `record_count` records (just reserved).
+            unsafe { ColumnPtr::new_unchecked(typed) }
+        };
+        match <L as DrainStores>::drain(rest, cs, next_id, record_count) {
+            notko::Outcome::Ok(tail) => notko::Outcome::Ok(AccumBinding {
+                ptr,
+                // lint:allow(no-bare-numeric) reason: zero live-length init on a fresh accumulator; tracked: #345
+                len: Cell::new(USize(0)),
+                // Capacity equals the reserved record count this round; the
+                // append accessor saturates at it.
+                cap: record_count,
                 tail,
             }),
             notko::Outcome::Err(e) => notko::Outcome::Err(e),

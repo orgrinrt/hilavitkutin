@@ -15,7 +15,7 @@ use hilavitkutin_ctx::{provider_generic, provider_generic2};
 
 use crate::access::{AccessSet, Contains};
 use crate::column_value::ColumnValue;
-use crate::store::{Column, Resource, Virtual};
+use crate::store::{Accum, Column, Resource, Virtual};
 
 // ---------------------------------------------------------------------
 // Keyed-resolution bridge traits.
@@ -62,6 +62,25 @@ pub trait ResolveColumnWrite<T: ColumnValue, I> {
     unsafe fn resolve_write(&self, i: USize, v: T);
 }
 
+/// Resolve an accumulator append of `T` at the inferred bundle index `I`.
+pub trait ResolveAccumAppend<T: ColumnValue, I> {
+    /// Append `v` at the accumulator's live offset and advance the live length.
+    ///
+    /// The append saturates at the reserved capacity: once the live length
+    /// reaches the capacity the append is dropped, so it never writes past the
+    /// reserved buffer.
+    ///
+    /// # Safety
+    ///
+    /// Caller must hold the exclusive appender slot for `T`. Plan-time DAG
+    /// analysis proves it; the capacity bound is checked here, not a caller
+    /// obligation.
+    unsafe fn resolve_append(&self, v: T);
+
+    /// The current live length of the projected accumulator `T`.
+    fn resolve_len(&self) -> USize;
+}
+
 /// Read access to columns declared in `R`.
 ///
 /// The `read` method's where-clause enforces that the column type
@@ -101,6 +120,37 @@ pub trait ColumnWriterApi<W: AccessSet> {
     where
         W: Contains<Column<T>>,
         Self: ResolveColumnWrite<T, I>;
+}
+
+/// Append access to accumulators declared in `W`.
+///
+/// The `append` method's where-clause enforces that the accumulator type
+/// appears in the WU's `Write` set. The `&self` receiver advances the live
+/// length through interior mutability, so appends never need `&mut`; this
+/// keeps LLVM from reordering the write across fused WUs. `len` reads the
+/// current live length without mutating.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` does not provide accumulator-append API for set `{W}`",
+    note = "Implemented by the scheduler-generated context. If your WorkUnit Ctx hits this bound, ensure the provider tuple satisfies `HasAccumWriter<W>` for the write set the WU declares."
+)]
+pub trait AccumWriterApi<W: AccessSet> {
+    /// Append `v` to accumulator `T`, advancing its live length. The append
+    /// saturates at the reserved capacity (dropped once the live length reaches
+    /// it), so it never writes past the buffer.
+    ///
+    /// # Safety
+    ///
+    /// Caller must hold the exclusive appender slot for `T`.
+    unsafe fn append<T: ColumnValue, I>(&self, v: T)
+    where
+        W: Contains<Accum<T>>,
+        Self: ResolveAccumAppend<T, I>;
+
+    /// The current live length of accumulator `T`.
+    fn len<T: ColumnValue, I>(&self) -> USize
+    where
+        W: Contains<Accum<T>>,
+        Self: ResolveAccumAppend<T, I>;
 }
 
 /// Shared-resource fetch for resources declared in `R`.
@@ -178,6 +228,7 @@ pub trait ReduceApi<R: AccessSet, W: AccessSet> {
 
 provider_generic!(<R: AccessSet> ColumnReaderApi as HasColumnReader => reader);
 provider_generic!(<W: AccessSet> ColumnWriterApi as HasColumnWriter => writer);
+provider_generic!(<W: AccessSet> AccumWriterApi as HasAccumWriter => accums);
 provider_generic!(<R: AccessSet> ResourceProviderApi as HasResourceProvider => resources);
 provider_generic!(<W: AccessSet> VirtualFirerApi as HasVirtualFirer => virtuals);
 provider_generic2!(<R: AccessSet, W: AccessSet> EachApi as HasEach => each);

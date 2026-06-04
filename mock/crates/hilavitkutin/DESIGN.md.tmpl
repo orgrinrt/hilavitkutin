@@ -114,9 +114,10 @@ The concrete Context a WorkUnit's `execute` receives is a per-WU
 dispatch call site, scoped to that WU's declared `Read` / `Write`. It
 holds only the projected pointers for those stores (a WU cannot reach
 an undeclared store, since its Context does not carry that pointer),
-implements the seven `HasX` accessor traits with `Provider = Self`,
-resolves resources from the arena, reads and writes columns over the
-per-frame column buffers, and iterates the morsel. The WorkUnit's
+implements the eight `HasX` accessor traits with `Provider = Self`,
+resolves resources from the arena, reads and writes input columns over
+the per-frame column buffers, appends to accumulator columns, and
+iterates the morsel. The WorkUnit's
 `Ctx<'frame>` stays a `HasX`-bounds declaration; only the engine names
 `EngineCtx<'frame, W::Read, W::Write>`.
 
@@ -609,7 +610,14 @@ it to the plan computation in place of the zero placeholder, and the
 `Column<T>` drain arm reserves a real column sized by the record count at a
 `StoreId` continued past the resource columns, recording the real
 `ColumnPtr<T>` and count in the `ColumnBinding` (no longer a dangling
-placeholder). `run` then dispatches the retained units in that topological
+placeholder). The `Accum<T>` drain arm reserves a column the same way
+(capacity sized to the record count this round) and records the
+`ColumnPtr<T>` plus a `Cell` live-length in the `AccumBinding`; the
+live-length starts at zero and a WorkUnit advances it by appending during
+the frame, with a later PassEnd drain reading the populated prefix. An
+append saturates at the reserved capacity: once the live-length reaches the
+capacity the append is dropped, so it never runs past the reserved buffer. `run`
+then dispatches the retained units in that topological
 order, projecting each unit's `EngineCtx` (resources and columns) from the
 bindings and calling `execute` over a morsel covering the record count.
 Per-fiber column classification and the dirty masks stay off the store for

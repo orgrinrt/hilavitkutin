@@ -31,7 +31,7 @@ use hilavitkutin_api::WorkUnit;
 // can construct it; re-export it here next to the walk that consumes it.
 pub use hilavitkutin_api::work_unit_values::{WuCons, WuNil};
 
-use crate::dispatch::engine_ctx::{ColProject, ColPtrNil, EngineCtx, Project};
+use crate::dispatch::engine_ctx::{AccPtrNil, AccumProject, ColProject, ColPtrNil, EngineCtx, Project};
 use crate::dispatch::morsel::MorselRange;
 use crate::dispatch::wu_fn::invoke_wu_in_fiber;
 
@@ -60,13 +60,15 @@ where
     A: Project<<W as WorkUnit>::Read, RIdx>,
     ColPtrNil: ColProject<<W as WorkUnit>::Read, Empty, Out = ColPtrNil>,
     ColPtrNil: ColProject<<W as WorkUnit>::Write, Empty, Out = ColPtrNil>,
+    for<'f> A: AccumProject<'f, <W as WorkUnit>::Write, Empty, Out = AccPtrNil>,
     // Tie each unit's Ctx GAT to the projection of its Read set over the
     // shared bindings, for all frame lifetimes. The right side is a projected
     // associated type, lifetime-independent, so the equality resolves
     // against the unit's own `type Ctx<'frame> = EngineCtx<'frame, ...>`.
-    // The `ColPtrNil` column projections express the resource-only
-    // boundary: a unit reading or writing a column has a non-empty column
-    // projection and does not satisfy this bound.
+    // The `ColPtrNil` column projections and the `AccPtrNil` accumulator
+    // projection express the resource-only boundary: a unit reading or writing
+    // a column, or appending to an accumulator, has a non-empty bundle and does
+    // not satisfy this bound.
     for<'f> W: WorkUnit<
         Ctx<'f> = EngineCtx<
             'f,
@@ -75,6 +77,7 @@ where
             <A as Project<<W as WorkUnit>::Read, RIdx>>::Out,
             ColPtrNil,
             ColPtrNil,
+            AccPtrNil,
         >,
     >,
     Tail: RunFiber<A, WTail>,
@@ -82,11 +85,12 @@ where
     #[inline]
     fn run(&self, bindings: &A, morsel: MorselRange) {
         // Project this unit's own Context from the shared bindings. The
-        // turbofish pins the per-unit resource index (`RIdx`) and the empty
-        // column witnesses; `EngineCtx::project` takes `bindings: &'frame A`,
-        // so the projected pointers stay tied to the bindings borrow.
+        // turbofish pins the per-unit resource index (`RIdx`), the empty column
+        // witnesses, and the empty accumulator witness; `EngineCtx::project`
+        // takes `bindings: &'frame A`, so the projected pointers stay tied to
+        // the bindings borrow.
         let ctx: <W as WorkUnit>::Ctx<'_> =
-            EngineCtx::project::<A, ColPtrNil, RIdx, Empty, Empty>(bindings, &ColPtrNil, morsel);
+            EngineCtx::project::<A, ColPtrNil, RIdx, Empty, Empty, Empty>(bindings, &ColPtrNil, morsel);
         invoke_wu_in_fiber(&self.head, &ctx);
         self.tail.run(bindings, morsel);
     }

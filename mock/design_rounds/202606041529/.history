@@ -1,0 +1,50 @@
+c2ed651 chore: lock accumulator-saturate src changelist
+4b2ac04 fix: saturate accumulator append at the reserved capacity
+4683674 docs: open accumulator-saturate src changelist
+fe9bee7 chore: lock accumulator-saturate doc changelist
+562e4f4 docs: name accumulator append saturate contract in DESIGN
+0c58e16 docs: open accumulator-saturate doc changelist
+d3bf919 docs: open accumulator-saturate round topic
+64e9d6f docs: regenerate rendered docs for accumulator columns
+5339a1e chore: close accumulator-columns round
+557504b chore: lock accumulator-columns src changelist
+96bab31 feat: dispatch accumulator columns through the append surface
+d3672ed docs: open accumulator-columns src changelist
+ce4b123 chore: lock accumulator-columns doc changelist
+cad76c6 docs: add accumulator kind to DESIGN context and build prose
+2a9ba76 docs: open accumulator-columns doc changelist
+5b1dab3 docs: open accumulator-columns round topic
+db1fec4 feat: dispatch input columns through the data plane
+23f2567 chore: regenerate rendered docs
+0dbc914 feat: store-back the execution plan on ColumnStorage
+5ad8687 feat: dispatch work units in plan topological order
+27b9c1a feat: make build_dag raw hazard detection order-independent
+4b480ad refactor!: route resource arena through ColumnStorage
+db09ce4 refactor: flatten ExecutionPlan into CSR trunk and fiber pools
+baf4a03 feat: ship ColumnStorage contract and ArenaColumnStorage backing
+0d3078c refactor!: adopt PlanDims capacity bundle across hilavitkutin engine
+ef7dd15 feat: retain registered workunits and walk them in scheduler run
+395ddc6 feat: add resource-only run-fiber-walk dispatch core
+742c4dd feat: project workunit bundle into plan inputs
+a5cfb48 feat: width-gate wide blocks to the spectral fiber former
+a9141d0 feat: project per-block fibers onto trunk components
+1864284 feat: wire spectral partitioning into plan step 6
+00487c9 feat: wire block-diagonal detection into plan step 5
+12ef597 feat: wire rcm bandwidth reorder into plan step 4
+76a0942 feat: add DependencyGraph to_csr_bidirectional adapter
+b278890 refactor: lift engine const-generic dimensions from usize to cap
+36e2cca fix: regenerate extensions-macros trybuild goldens after provider rename
+02957c7 refactor: drop redundant min_specialization gate in hilavitkutin-api
+74d4702 refactor: drop unused generic_const_exprs gates in hilavitkutin
+e3ba798 refactor: remove associated_type_defaults from hilavitkutin-api
+1a1b854 refactor: remove full specialization from engine ctx accessor
+3997cb6 chore: enable notko try_trait_v2 and pin nightly
+c859461 refactor: replace transmute_copy id projection with typed index accessors
+8cb9ef7 feat: per-workunit projected context over the resource arena
+0dc3ec5 feat: build a resource arena from registered store values
+f3f7099 feat: retain registered store values on the scheduler builder
+aacf33d refactor: disambiguate resourcesnapshot semantics
+163d00b docs: engine dispatch build plan and design synthesis
+803f877 research: cl drift closure clarification for task 398
+3b68a11 research: sketch v2 phase machine field notes
+fc9d16e chore: add restrict-main-merges workflow
