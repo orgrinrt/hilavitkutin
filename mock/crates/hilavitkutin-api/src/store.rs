@@ -107,6 +107,49 @@ impl<T> notko::HasTrivialCtor for Column<T> {
     }
 }
 
+/// Accumulator store: records appended during the frame, grown from zero.
+///
+/// Sibling of `Column<T>`. Where a `Column<T>` is sized to the build-time
+/// record count and written by index, an `Accum<T>` reserves a capacity at
+/// build and grows from zero as WorkUnits append. The live length advances
+/// through interior mutability (a `Cell` in the binding), so the `&self`
+/// append accessor never needs `&mut`. A later PassEnd drain reads the
+/// populated prefix `[0, live_length)`.
+#[repr(transparent)]
+pub struct Accum<T>(PhantomData<T>);
+
+impl<T> Copy for Accum<T> {}
+impl<T> Clone for Accum<T> {
+    #[inline(always)]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<T> Default for Accum<T> {
+    #[inline(always)]
+    fn default() -> Self {
+        Accum(PhantomData)
+    }
+}
+
+impl<T> Accum<T> {
+    /// Construct an `Accum<T>` marker.
+    pub const fn new() -> Self {
+        Accum(PhantomData)
+    }
+}
+
+impl<T: 'static> BuilderInput for Accum<T> {
+    type Init = ();
+    type Dispatch = StoreDispatch<Self>;
+}
+
+impl<T> notko::HasTrivialCtor for Accum<T> {
+    fn new() -> Self {
+        Accum(PhantomData)
+    }
+}
+
 /// Zero-data store: DAG edge only. Used for fire flags.
 #[repr(transparent)]
 pub struct Virtual<T>(PhantomData<T>);

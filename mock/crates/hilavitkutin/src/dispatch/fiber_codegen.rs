@@ -20,7 +20,7 @@ use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::work_unit_values::{WuCons, WuNil};
 use hilavitkutin_api::WorkUnit;
 
-use crate::dispatch::engine_ctx::{ColProject, EngineCtx, Project};
+use crate::dispatch::engine_ctx::{AccumProject, ColProject, EngineCtx, Project};
 use crate::dispatch::morsel::MorselRange;
 use crate::dispatch::wu_fn::invoke_wu_in_fiber;
 
@@ -48,12 +48,13 @@ pub fn noop_fiber_shim<A>(_ptr: *const (), _bindings: &A, _morsel: MorselRange) 
 /// bindings serve as both sources, Shape A), and runs `execute` through the
 /// `invoke_wu_in_fiber` shim.
 #[inline]
-fn fiber_shim<W, A, RIdx, RCIdx, WCIdx>(ptr: *const (), bindings: &A, morsel: MorselRange)
+fn fiber_shim<W, A, RIdx, RCIdx, WCIdx, WAIdx>(ptr: *const (), bindings: &A, morsel: MorselRange)
 where
     W: WorkUnit,
     A: Project<<W as WorkUnit>::Read, RIdx>,
     A: ColProject<<W as WorkUnit>::Read, RCIdx>,
     A: ColProject<<W as WorkUnit>::Write, WCIdx>,
+    for<'f> A: AccumProject<'f, <W as WorkUnit>::Write, WAIdx>,
     for<'f> W: WorkUnit<
         Ctx<'f> = EngineCtx<
             'f,
@@ -62,6 +63,7 @@ where
             <A as Project<<W as WorkUnit>::Read, RIdx>>::Out,
             <A as ColProject<<W as WorkUnit>::Read, RCIdx>>::Out,
             <A as ColProject<<W as WorkUnit>::Write, WCIdx>>::Out,
+            <A as AccumProject<'f, <W as WorkUnit>::Write, WAIdx>>::Out,
         >,
     >,
 {
@@ -71,20 +73,23 @@ where
     // moves it across a `run` call, so the instance lives for the duration of
     // this dispatch and the cast-and-borrow is valid.
     let unit: &W = unsafe { &*(ptr as *const W) };
-    // The bindings are both the resource source and the column source; the
-    // column pointers are read out (Copy) at projection time, so the second
-    // borrow needs only to outlive this call.
+    // The bindings are the resource source, the column source, and the
+    // accumulator source. The resource and column pointers are read out (Copy)
+    // at projection time; the accumulator bundle retains a borrow of the
+    // bindings' live-length cells for the projection lifetime, which is the
+    // dispatch frame.
     let ctx: <W as WorkUnit>::Ctx<'_> =
-        EngineCtx::project::<A, A, RIdx, RCIdx, WCIdx>(bindings, bindings, morsel);
+        EngineCtx::project::<A, A, RIdx, RCIdx, WCIdx, WAIdx>(bindings, bindings, morsel);
     invoke_wu_in_fiber(unit, &ctx);
 }
 
 /// Record one `FiberSlot` per retained unit, at its registration index.
 ///
 /// `Witnesses` is the parallel per-unit projection-index list: each element is
-/// the triple `(RIdx, RCIdx, WCIdx)` (the resource-projection index for the
-/// Read set, the column-projection index for the Read set, and for the Write
-/// set), all inferred at the call site, no caller turbofish. The walk
+/// the quad `(RIdx, RCIdx, WCIdx, WAIdx)` (the resource-projection index for
+/// the Read set, the column-projection indices for the Read set and the Write
+/// set, and the accumulator-projection index for the Write set), all inferred
+/// at the call site, no caller turbofish. The walk
 /// writes the head unit's slot into the first element of `slots` and recurses
 /// on the tail, so a unit's slot index equals its cons-list position. That
 /// position equals the unit's `unit_meta` id index, because the builder
@@ -100,19 +105,22 @@ impl<A> CollectFiber<A, Empty> for WuNil {
     fn collect(&self, _slots: &mut [FiberSlot<A>]) {}
 }
 
-impl<A, W, Tail, RIdx, RCIdx, WCIdx, WTail>
-    CollectFiber<A, Cons<(RIdx, RCIdx, WCIdx), WTail>> for WuCons<W, Tail>
+impl<A, W, Tail, RIdx, RCIdx, WCIdx, WAIdx, WTail>
+    CollectFiber<A, Cons<(RIdx, RCIdx, WCIdx, WAIdx), WTail>> for WuCons<W, Tail>
 where
     W: WorkUnit,
     A: Project<<W as WorkUnit>::Read, RIdx>,
     A: ColProject<<W as WorkUnit>::Read, RCIdx>,
     A: ColProject<<W as WorkUnit>::Write, WCIdx>,
-    // Tie each unit's Ctx GAT to the projection of its Read set (resources)
-    // and its Read / Write sets (columns) over the shared bindings, for all
-    // frame lifetimes. A resource-only unit projects empty column bundles
-    // (`ColProject` over a column-free set is `ColPtrNil`), so it dispatches
-    // exactly as before; a column-bearing unit projects its real column
-    // pointers.
+    for<'f> A: AccumProject<'f, <W as WorkUnit>::Write, WAIdx>,
+    // Tie each unit's Ctx GAT to the projection of its Read set (resources),
+    // its Read / Write sets (columns), and its Write set (accumulators) over
+    // the shared bindings, for all frame lifetimes. A resource-only unit
+    // projects empty column and accumulator bundles (`ColProject` /
+    // `AccumProject` over a member-free set are `ColPtrNil` / `AccPtrNil`), so
+    // it dispatches exactly as before; a column- or accumulator-bearing unit
+    // projects its real pointers. The accumulator bundle is lifetime-tied, so
+    // the 7th Ctx param varies with `'f`.
     for<'f> W: WorkUnit<
         Ctx<'f> = EngineCtx<
             'f,
@@ -121,6 +129,7 @@ where
             <A as Project<<W as WorkUnit>::Read, RIdx>>::Out,
             <A as ColProject<<W as WorkUnit>::Read, RCIdx>>::Out,
             <A as ColProject<<W as WorkUnit>::Write, WCIdx>>::Out,
+            <A as AccumProject<'f, <W as WorkUnit>::Write, WAIdx>>::Out,
         >,
     >,
     Tail: CollectFiber<A, WTail>,
@@ -134,7 +143,7 @@ where
         if let Some((first, rest)) = slots.split_first_mut() {
             *first = (
                 &self.head as *const W as *const (),
-                fiber_shim::<W, A, RIdx, RCIdx, WCIdx>,
+                fiber_shim::<W, A, RIdx, RCIdx, WCIdx, WAIdx>,
             );
             self.tail.collect(rest);
         }
