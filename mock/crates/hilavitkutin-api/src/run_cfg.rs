@@ -72,6 +72,15 @@ pub trait RunCfg:
     /// writing the const explicitly.
     const MAX_PLAN_AFFECTING_RESOURCES: USize = USize(256);
 
+    /// Records per morsel window the single-core run-loop windows the record
+    /// range into. Coarser than `MICRO_MORSEL_INTERVAL` (a morsel contains
+    /// several micro-morsels). Default 256 (a multiple of the 64-record
+    /// micro-morsel interval). Consumer-tunable per `arvo-toolbox-not-policer`;
+    /// override by writing the const explicitly. The plan's per-fiber morsel
+    /// formula (`L1_usable / sum(write_sizes)`) supersedes this default when the
+    /// phase/fiber dispatch tier lands; until then it is the run-loop's window.
+    const MORSEL_SIZE: USize = USize(256);
+
     /// Records between micro-morsel inner-loop sync points. Pow2 cap.
     /// Default 64 (one cache line of f32-shaped data). Topic 7 axis C.
     const MICRO_MORSEL_INTERVAL: USize = USize(64);

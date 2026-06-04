@@ -138,6 +138,11 @@ pub trait AccumWriterApi<W: AccessSet> {
     /// saturates at the reserved capacity (dropped once the live length reaches
     /// it), so it never writes past the buffer.
     ///
+    /// Drive appends from the per-record loop (`each` / `reduce` / `batch`) so
+    /// the total across the frame equals the record count: `execute` runs once
+    /// per morsel, so a fixed number of appends issued directly in `execute`
+    /// repeats per morsel when the record range spans more than one.
+    ///
     /// # Safety
     ///
     /// Caller must hold the exclusive appender slot for `T`.

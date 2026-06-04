@@ -69,7 +69,16 @@ pub trait WorkUnit<Schedule = Always>: BuilderInput<Init = Self> + Send + Sync +
     /// of serialising. Default `Bool::FALSE`: consumer opts in.
     const COMMUTATIVE: Bool = Bool::FALSE;
 
-    /// Run one pass of this WU against the provided context.
+    /// Run this WU against the provided context for one morsel.
+    ///
+    /// The engine windows the record range into morsels and invokes
+    /// `execute` once per morsel, so all per-record and accumulating work
+    /// must flow through the morsel-aware Context accessors (`each` /
+    /// `reduce` / `batch` for the per-record loop, `read` / `write` for
+    /// columns, `append` for accumulators); those resolve record indices
+    /// relative to the current morsel. A side effect placed in `execute`
+    /// outside those accessors runs once per morsel, so it repeats when the
+    /// record range spans more than one morsel.
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>);
 }
 
