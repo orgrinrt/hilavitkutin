@@ -1,0 +1,50 @@
+0e0dca0 chore: lock src changelist for store-backing the plan
+f79046c feat: store-back the execution plan on ColumnStorage
+d962f8e docs: open src changelist for store-backing the plan
+4cf8cd6 chore: lock doc changelist for store-backing the plan
+61dbc3f docs: describe store-backed plan in scheduler design
+c0e7397 docs: open doc changelist for store-backing the plan
+f5f87c5 docs: open topic for store-backing the execution plan
+5ad8687 feat: dispatch work units in plan topological order
+27b9c1a feat: make build_dag raw hazard detection order-independent
+4b480ad refactor!: route resource arena through ColumnStorage
+db09ce4 refactor: flatten ExecutionPlan into CSR trunk and fiber pools
+baf4a03 feat: ship ColumnStorage contract and ArenaColumnStorage backing
+0d3078c refactor!: adopt PlanDims capacity bundle across hilavitkutin engine
+ef7dd15 feat: retain registered workunits and walk them in scheduler run
+395ddc6 feat: add resource-only run-fiber-walk dispatch core
+742c4dd feat: project workunit bundle into plan inputs
+a5cfb48 feat: width-gate wide blocks to the spectral fiber former
+a9141d0 feat: project per-block fibers onto trunk components
+1864284 feat: wire spectral partitioning into plan step 6
+00487c9 feat: wire block-diagonal detection into plan step 5
+12ef597 feat: wire rcm bandwidth reorder into plan step 4
+76a0942 feat: add DependencyGraph to_csr_bidirectional adapter
+b278890 refactor: lift engine const-generic dimensions from usize to cap
+36e2cca fix: regenerate extensions-macros trybuild goldens after provider rename
+02957c7 refactor: drop redundant min_specialization gate in hilavitkutin-api
+74d4702 refactor: drop unused generic_const_exprs gates in hilavitkutin
+e3ba798 refactor: remove associated_type_defaults from hilavitkutin-api
+1a1b854 refactor: remove full specialization from engine ctx accessor
+3997cb6 chore: enable notko try_trait_v2 and pin nightly
+c859461 refactor: replace transmute_copy id projection with typed index accessors
+8cb9ef7 feat: per-workunit projected context over the resource arena
+0dc3ec5 feat: build a resource arena from registered store values
+f3f7099 feat: retain registered store values on the scheduler builder
+aacf33d refactor: disambiguate resourcesnapshot semantics
+163d00b docs: engine dispatch build plan and design synthesis
+803f877 research: cl drift closure clarification for task 398
+3b68a11 research: sketch v2 phase machine field notes
+fc9d16e chore: add restrict-main-merges workflow
+0e7d083 research: document validate_descriptor cl-vs-source drift
+55eea3a chore: engine pr follow-ups consolidated polish
+c040b4d feat: scheduler run no-op body via cfg out default
+6d84a9e feat: hila c2 codegen fiber + core skeleton stubs
+2cee75a feat: hila c2 select approach base three-branch heuristic
+1b51813 feat: hila c4 assign cores base round-robin body
+c35e396 docs: close meta-virtual #254 design Q via option C
+50627df docs: align cdylib boundary memo with landed viola-plugin-abi
+41fd52f docs: design memo for workunit-cdylib boundary
+23cbdf1 feat: runtime megaround deferrals (trybuild + MIRI doc + ema sample-type)
+6cb0996 feat: hilavitkutin runtime megaround (B1+C1-C7+tests+examples)
+3c0d0d5 test: rehab engine tests past USize/Bool/Bits API drift (#74)

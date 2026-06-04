@@ -10,7 +10,7 @@
 //! `Resource<T>` / `Column<T>` / `Virtual<T>` markers (cons-list).
 //! `Platform` accumulates platform-provider types. `Vals` retains the
 //! registered store VALUES (the `Resource<T>` carrier, the `Column<T>`
-//! / `Virtual<T>` markers) in `Stores`-aligned order so the arena drain
+//! / `Virtual<T>` markers) in `Stores`-aligned order so the bindings drain
 //! can move them into scheduler-owned storage at `build()`. `WuVals`
 //! retains the registered WorkUnit instances so `build()` can carry
 //! them into the `Scheduler`, where `run()` walks them.
@@ -20,7 +20,7 @@
 //! every registered WU's `Read` and `Write` membership is satisfied by
 //! the registered stores. It walks `Stores` and `store_values` in
 //! lockstep, allocating each `Resource<T>`'s block via the supplied
-//! `MemoryProviderApi` and recording its `ResourcePtr<T>` in the arena.
+//! `MemoryProviderApi` and recording its `ResourcePtr<T>` in the bindings.
 //!
 //! Round 4 reshape: dropped `MAX_UNITS` / `MAX_STORES` / `MAX_LANES`
 //! const generics. `Scheduler::replace_resource::<T>` lands with a
@@ -35,7 +35,7 @@
 //! Round 202605290018 (B2a): store values route onto a
 //! `Stores`-aligned `StoreValues` list under the single `.with` verb
 //! via the `RouterKind` tag plus the `Place<P>` view. `Scheduler`
-//! gains `<Stores, M>` parameters, an owned resource arena, and a
+//! gains `<Stores, M>` parameters, an owned resource bindings, and a
 //! `Drop` that deallocates it. `build` takes the `MemoryProvider` as
 //! an argument and returns `Outcome<_, BuildError>`.
 
@@ -46,7 +46,9 @@ use arvo::strategy::Identity;
 use arvo::USize;
 use arvo_tensor::Capacity;
 use crate::plan::project::BundleProject;
-use crate::plan::{compute_execution_plan, plan_inputs_from_bundle, DefaultPlanDims, PlanDims};
+use crate::plan::{
+    compute_execution_plan, plan_inputs_from_bundle, DefaultPlanDims, ExecutionPlan, PlanDims,
+};
 use hilavitkutin_api::access::{AccessSet, ContainsAll, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, Dispatch};
 use hilavitkutin_api::platform::MemoryProviderApi;
@@ -66,7 +68,7 @@ pub mod plan;
 pub use metrics::SchedulerMetrics;
 pub use plan::PlanCache;
 
-use crate::resource::arena::{ArenaFor, DrainStores};
+use crate::resource::bindings::{BindingsFor, DrainStores};
 
 /// The default empty store-value list, used as the `Vals` default for a
 /// bare `Scheduler` type.
@@ -94,23 +96,107 @@ pub enum BuildError {
 /// Convenience alias for a built scheduler over the default run-config.
 pub type BuiltScheduler<WuVals, Vals, CS> = Scheduler<DefaultRunCfg, WuVals, Vals, CS>;
 
-/// Compute the topological dispatch permutation for a registered bundle.
+/// Locator for the store-backed execution plan columns.
+///
+/// The plan's flat CSR pools live as columns in the scheduler's
+/// `ColumnStorage`, reserved at a contiguous `StoreId` range continued past
+/// the resource columns. `PlanHandle` is the `Copy` record of where: the base
+/// column index plus the live phase / trunk / fiber / unit counts. The plan
+/// columns are a closed set, so each column's `StoreId` is a fixed offset off
+/// the base, named by `PlanColumn`. The dispatch consumer reads the plan back
+/// through these ids and counts.
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub struct PlanHandle {
+    base: USize,
+    phase_count: USize,
+    trunk_count: USize,
+    fiber_count: USize,
+    unit_count: USize,
+}
+
+/// The closed set of store-backed plan columns. The variant's position is the
+/// `StoreId` offset off a `PlanHandle`'s base.
+#[derive(Copy, Clone)]
+enum PlanColumn {
+    Phases,
+    Trunks,
+    Fibers,
+    UnitMeta,
+    MorselSizes,
+    RcmOrder,
+}
+
+impl PlanHandle {
+    /// The empty handle: no plan store-backed (the bare and `Default`
+    /// scheduler, whose store reserves nothing).
+    pub const fn empty() -> Self {
+        Self {
+            base: USize::ZERO,
+            phase_count: USize::ZERO,
+            trunk_count: USize::ZERO,
+            fiber_count: USize::ZERO,
+            unit_count: USize::ZERO,
+        }
+    }
+
+    /// `StoreId` of plan column `c`, a fixed offset off the base.
+    fn column_id(&self, c: PlanColumn) -> StoreId {
+        // The variant's position within the closed set is its column offset.
+        StoreId(USize(self.base.0 + c as usize)) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: StoreId-construct from base + closed-set column offset; tracked: #72
+    }
+
+    /// `StoreId` of the phases column.
+    pub fn phases_id(&self) -> StoreId {
+        self.column_id(PlanColumn::Phases)
+    }
+    /// `StoreId` of the trunks column.
+    pub fn trunks_id(&self) -> StoreId {
+        self.column_id(PlanColumn::Trunks)
+    }
+    /// `StoreId` of the fibers column.
+    pub fn fibers_id(&self) -> StoreId {
+        self.column_id(PlanColumn::Fibers)
+    }
+    /// `StoreId` of the per-unit metadata column.
+    pub fn unit_meta_id(&self) -> StoreId {
+        self.column_id(PlanColumn::UnitMeta)
+    }
+    /// `StoreId` of the per-fiber morsel-sizes column.
+    pub fn morsel_sizes_id(&self) -> StoreId {
+        self.column_id(PlanColumn::MorselSizes)
+    }
+    /// `StoreId` of the RCM renumber column.
+    pub fn rcm_order_id(&self) -> StoreId {
+        self.column_id(PlanColumn::RcmOrder)
+    }
+
+    /// Live phase count (records in the phases column).
+    pub fn phase_count(&self) -> USize {
+        self.phase_count
+    }
+    /// Live trunk count (records in the trunks column).
+    pub fn trunk_count(&self) -> USize {
+        self.trunk_count
+    }
+    /// Live fiber count (records in the fibers and morsel-sizes columns).
+    pub fn fiber_count(&self) -> USize {
+        self.fiber_count
+    }
+    /// Live unit count (records in the unit-meta and rcm-order columns).
+    pub fn unit_count(&self) -> USize {
+        self.unit_count
+    }
+}
+
+/// Compute the execution plan for a registered bundle.
 ///
 /// Projects the `Wus` bundle into `PlanInputs` over the `Stores` access set
-/// (resource-only this slice, so the record count is zero), runs
-/// `compute_execution_plan` over `DefaultPlanDims`, and reads the topological
-/// permutation off `unit_meta`: `topo_order[step]` is the registration-list
-/// position of the unit dispatched at topological step `step`. Returns the
-/// permutation plus the live unit count, or `BuildError::PlanFailed` on a
-/// plan-stage failure (a dependency cycle). Computed before any allocation,
-/// so a plan failure allocates nothing.
-fn compute_topo_order<Wus, Stores, BWit>() -> notko::Outcome<
-    (
-        <<DefaultPlanDims as PlanDims>::Units as Capacity>::Array<USize>,
-        USize,
-    ),
-    BuildError,
->
+/// (resource-only this slice, so the record count is zero) and runs
+/// `compute_execution_plan` over `DefaultPlanDims`. Returns the plan or
+/// `BuildError::PlanFailed` on a plan-stage failure (a dependency cycle).
+/// Computed before any allocation, so a plan failure allocates nothing.
+fn compute_plan<Wus, Stores, BWit>(
+) -> notko::Outcome<ExecutionPlan<DefaultPlanDims>, BuildError>
 where
     Wus: BundleProject<
         Stores,
@@ -127,19 +213,105 @@ where
         <DefaultPlanDims as PlanDims>::Stores,
     >(USize::ZERO);
     match compute_execution_plan::<DefaultPlanDims>(&inputs) {
-        notko::Outcome::Ok(plan) => {
-            let mut order =
-                <<DefaultPlanDims as PlanDims>::Units as Capacity>::filled(USize::ZERO);
-            let meta = plan.unit_meta.as_ref();
-            let mut u = 0;
-            while u < plan.unit_count.0 {
-                order.as_mut()[u] = meta[u].id.index();
-                u += 1;
-            }
-            notko::Outcome::Ok((order, plan.unit_count))
-        }
+        notko::Outcome::Ok(plan) => notko::Outcome::Ok(plan),
         notko::Outcome::Err(_) => notko::Outcome::Err(BuildError::PlanFailed),
     }
+}
+
+/// Read the topological dispatch permutation off a computed plan.
+///
+/// `topo_order[step]` is the registration-list position of the unit dispatched
+/// at topological step `step` (the `unit_meta` id index). Returns the
+/// permutation array plus the live unit count.
+fn extract_topo_order(
+    plan: &ExecutionPlan<DefaultPlanDims>,
+) -> (
+    <<DefaultPlanDims as PlanDims>::Units as Capacity>::Array<USize>,
+    USize,
+) {
+    let mut order = <<DefaultPlanDims as PlanDims>::Units as Capacity>::filled(USize::ZERO);
+    let meta = plan.unit_meta.as_ref();
+    let mut u = 0;
+    while u < plan.unit_count.0 {
+        order.as_mut()[u] = meta[u].id.index();
+        u += 1;
+    }
+    (order, plan.unit_count)
+}
+
+/// Reserve one plan column and copy its live prefix in.
+///
+/// Reserves `id` for `count` records of `T`, then copies the first `count`
+/// elements of `src` into the reserved column. Maps any reservation failure to
+/// `BuildError::AllocationFailed`.
+fn store_column<T: ColumnValue, CS: ColumnStorage>(
+    storage: &mut CS,
+    id: StoreId,
+    src: &[T],
+    count: USize,
+) -> notko::Outcome<(), BuildError> {
+    match storage.reserve::<T>(id, count) {
+        notko::Outcome::Ok(()) => {}
+        notko::Outcome::Err(_) => return notko::Outcome::Err(BuildError::AllocationFailed),
+    }
+    if count.0 > 0 {
+        // SAFETY: `id` was just reserved for `count` records of `T`, so
+        // `column_ptr_mut` returns a valid base for `count` writes; `src` is
+        // the plan's flat pool, with at least `count` initialised elements
+        // (the pool is `Capacity`-sized and `count` is the live prefix). No
+        // aliasing read pointer to this freshly reserved column is live.
+        unsafe {
+            let dst = storage.column_ptr_mut::<T>(id);
+            core::ptr::copy_nonoverlapping(src.as_ptr(), dst, count.0);
+        }
+    }
+    notko::Outcome::Ok(())
+}
+
+/// Store-back the plan's six flat CSR pools as columns at `base .. base + 6`.
+///
+/// Reserves and copies the phases, trunks, fibers, per-unit metadata,
+/// per-fiber morsel sizes, and RCM renumber pools, then returns the
+/// `PlanHandle` locating them. Per-fiber column classification and the dirty
+/// masks stay off the store this round (their columnar form and consumers are
+/// later rounds).
+fn store_plan<CS: ColumnStorage>(
+    plan: &ExecutionPlan<DefaultPlanDims>,
+    storage: &mut CS,
+    base: USize,
+) -> notko::Outcome<PlanHandle, BuildError> {
+    let handle = PlanHandle {
+        base,
+        phase_count: plan.phase_count,
+        trunk_count: plan.trunk_count,
+        fiber_count: plan.fiber_count,
+        unit_count: plan.unit_count,
+    };
+    match store_column(storage, handle.phases_id(), plan.phases.as_ref(), plan.phase_count) {
+        notko::Outcome::Ok(()) => {}
+        notko::Outcome::Err(e) => return notko::Outcome::Err(e),
+    }
+    match store_column(storage, handle.trunks_id(), plan.trunks.as_ref(), plan.trunk_count) {
+        notko::Outcome::Ok(()) => {}
+        notko::Outcome::Err(e) => return notko::Outcome::Err(e),
+    }
+    match store_column(storage, handle.fibers_id(), plan.fibers.as_ref(), plan.fiber_count) {
+        notko::Outcome::Ok(()) => {}
+        notko::Outcome::Err(e) => return notko::Outcome::Err(e),
+    }
+    match store_column(storage, handle.unit_meta_id(), plan.unit_meta.as_ref(), plan.unit_count) {
+        notko::Outcome::Ok(()) => {}
+        notko::Outcome::Err(e) => return notko::Outcome::Err(e),
+    }
+    match store_column(storage, handle.morsel_sizes_id(), plan.morsel_sizes.as_ref(), plan.fiber_count) {
+        notko::Outcome::Ok(()) => {}
+        notko::Outcome::Err(e) => return notko::Outcome::Err(e),
+    }
+    match store_column(storage, handle.rcm_order_id(), plan.rcm_order.as_ref(), plan.unit_count) {
+        notko::Outcome::Ok(()) => {}
+        notko::Outcome::Err(e) => return notko::Outcome::Err(e),
+    }
+    notko::Outcome::Ok(handle)
 }
 
 /// Top-level scheduler.
@@ -148,7 +320,7 @@ where
 /// list `WuVals`, the registered store-value list `Vals`, and the
 /// `ColumnStorage` `CS` that backs the resource data plane. `Cfg::Out`
 /// parameterises `run()`'s return shape. The scheduler owns the resource
-/// arena (`<Vals as ArenaFor>::Arena`, raw pointers into store columns)
+/// bindings (`<Vals as BindingsFor>::Bindings`, raw pointers into store columns)
 /// and the store itself; the store frees every resource block on its own
 /// `Drop`, so the scheduler needs no `Drop` of its own. It also holds the
 /// registered WorkUnit instances on `WuVals`, the value-carrying unit
@@ -156,7 +328,7 @@ where
 pub struct Scheduler<
     Cfg: RunCfg = DefaultRunCfg,
     WuVals = WuNil,
-    Vals: StoreValues + ArenaFor = SvEmpty,
+    Vals: StoreValues + BindingsFor = SvEmpty,
     CS: ColumnStorage = NullColumnStorage,
     D: PlanDims = DefaultPlanDims,
 > {
@@ -171,6 +343,12 @@ pub struct Scheduler<
     /// How many of `topo_order`'s entries are live (the registered unit
     /// count). The tail past it is the zero-fill the array carries.
     topo_count: USize,
+    /// Locator for the plan's store-backed flat CSR columns (phases, trunks,
+    /// fibers, per-unit metadata, per-fiber morsel sizes, the RCM renumber),
+    /// reserved in `storage` at a `StoreId` range continued past the resource
+    /// columns. `PlanHandle::empty()` when no plan is store-backed (the bare
+    /// scheduler). The dispatch consumer reads the plan back through it.
+    plan_handle: PlanHandle,
     // The dirty bitmap width matches DefaultRunCfg::MAX_PLAN_AFFECTING_RESOURCES = USize(256).
     // The intended lift is `[AtomicBool; Cfg::MAX_PLAN_AFFECTING_RESOURCES.0]` under
     // `feature(generic_const_exprs)`, but current rustc rejects field access on generic
@@ -181,11 +359,11 @@ pub struct Scheduler<
     // lint:allow(no-bare-numeric) reason: const-generic array dimension at the L0 storage root; matches DefaultRunCfg::MAX_PLAN_AFFECTING_RESOURCES = USize(256); tracked: #345 (per-Cfg lift awaits rustc generic_const_exprs gaining field-access support)
     plan_dirty: [AtomicBool; 256],
     plan_cache: PlanCache,
-    /// Scheduler-owned resource arena, built from the registered store
+    /// Scheduler-owned resource bindings, built from the registered store
     /// values at `build()`. Holds only `Copy` pointers into the store's
     /// reserved columns; no destructor walk on drop.
-    arena: <Vals as ArenaFor>::Arena,
-    /// The `ColumnStorage` that backs the resource arena. Owns the
+    bindings: <Vals as BindingsFor>::Bindings,
+    /// The `ColumnStorage` that backs the resource bindings. Owns the
     /// reserved column memory and frees it on its own `Drop`.
     storage: CS,
     /// Registered WorkUnit instances, retained from the builder in
@@ -283,7 +461,7 @@ impl Scheduler<DefaultRunCfg, WuNil, SvEmpty, NullColumnStorage> {
     }
 }
 
-impl<Cfg: RunCfg, WuVals, Vals: StoreValues + ArenaFor, CS: ColumnStorage, D: PlanDims>
+impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D: PlanDims>
     Scheduler<Cfg, WuVals, Vals, CS, D>
 {
     /// Replace the existing `Resource<T>` instance in the data
@@ -321,7 +499,7 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + ArenaFor, CS: ColumnStorage, D: Pl
     /// units via `CollectFiber` (one `FiberSlot` per unit, the unused tail
     /// filled with `noop_fiber_shim` placeholders), then walks
     /// `topo_order[0 .. topo_count]`, dispatching each step's slot. Each
-    /// slot's shim projects that unit's `EngineCtx` from the arena and runs
+    /// slot's shim projects that unit's `EngineCtx` from the bindings and runs
     /// `execute`. Resource-only this slice. The `Witnesses` parameter is the
     /// per-unit projection-index list, inferred at the call site, so
     /// `scheduler.run()` needs no turbofish.
@@ -336,7 +514,7 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + ArenaFor, CS: ColumnStorage, D: Pl
     pub fn run<Witnesses>(&mut self) -> Cfg::Out
     where
         Cfg::Out: Default,
-        WuVals: CollectFiber<<Vals as ArenaFor>::Arena, Witnesses>,
+        WuVals: CollectFiber<<Vals as BindingsFor>::Bindings, Witnesses>,
     {
         let _ = &self.plan_dirty;
         let _ = &self.plan_cache;
@@ -344,8 +522,8 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + ArenaFor, CS: ColumnStorage, D: Pl
         // tail past the live unit count keeps its `noop_fiber_shim`
         // placeholder and is never dispatched (the walk reads only the
         // `topo_count` live prefix).
-        let placeholder: FiberSlot<<Vals as ArenaFor>::Arena> =
-            (core::ptr::null(), noop_fiber_shim::<<Vals as ArenaFor>::Arena>);
+        let placeholder: FiberSlot<<Vals as BindingsFor>::Bindings> =
+            (core::ptr::null(), noop_fiber_shim::<<Vals as BindingsFor>::Bindings>);
         let mut slots = <D::Units as Capacity>::filled(placeholder);
         self.wu_values.collect(slots.as_mut());
         let morsel = MorselRange::new(USize::ZERO, USize::ZERO);
@@ -361,34 +539,42 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + ArenaFor, CS: ColumnStorage, D: Pl
             // `// SAFETY:` note.
             let pos = order[step].0;
             let (ptr, shim) = live[pos];
-            shim(ptr, &self.arena, morsel);
+            shim(ptr, &self.bindings, morsel);
             step += 1;
         }
         Cfg::Out::default()
     }
 
-    /// Borrow the resource arena. Hidden test accessor: lets in-crate
-    /// and integration tests walk the arena nodes to confirm the
+    /// Borrow the resource bindings. Hidden test accessor: lets in-crate
+    /// and integration tests walk the bindings nodes to confirm the
     /// moved-in resource values. Not part of the supported surface.
     #[doc(hidden)]
-    pub fn __arena(&self) -> &<Vals as ArenaFor>::Arena {
-        &self.arena
+    pub fn __bindings(&self) -> &<Vals as BindingsFor>::Bindings {
+        &self.bindings
     }
 
     /// Borrow the backing store. Hidden test accessor mirroring
-    /// `__arena`: lets tests inspect reserved columns. The field is also
+    /// `__bindings`: lets tests inspect reserved columns. The field is also
     /// held for its `Drop`, which frees every reserved resource column.
     /// Not part of the supported surface.
     #[doc(hidden)]
     pub fn __storage(&self) -> &CS {
         &self.storage
     }
+
+    /// The store-backed plan locator. Hidden accessor: the dispatch consumer
+    /// (and tests) read the plan columns out of `storage` through this handle.
+    /// Not part of the supported surface until the dispatch reader lands.
+    #[doc(hidden)]
+    pub fn __plan_handle(&self) -> PlanHandle {
+        self.plan_handle
+    }
 }
 
 /// Default-construct an empty scheduler over the null store.
 ///
 /// Only available for the no-store (`SvEmpty`) shape with the
-/// `NullColumnStorage`: the empty arena (`ArenaTail`) owns nothing and
+/// `NullColumnStorage`: the empty bindings (`BindingNil`) owns nothing and
 /// the null store reserves nothing, so no real store is needed. A
 /// scheduler that owns resources is built via `build(storage)`.
 impl<Cfg: RunCfg> Default for Scheduler<Cfg, WuNil, SvEmpty, NullColumnStorage> {
@@ -397,9 +583,10 @@ impl<Cfg: RunCfg> Default for Scheduler<Cfg, WuNil, SvEmpty, NullColumnStorage> 
             _cfg: PhantomData,
             topo_order: <<DefaultPlanDims as PlanDims>::Units as Capacity>::filled(USize::ZERO),
             topo_count: USize::ZERO,
+            plan_handle: PlanHandle::empty(),
             plan_dirty: [const { AtomicBool::new(false) }; 256],
             plan_cache: PlanCache::new(),
-            arena: crate::resource::arena::ArenaTail,
+            bindings: crate::resource::bindings::BindingNil,
             storage: NullColumnStorage,
             wu_values: WuNil,
         }
@@ -434,7 +621,7 @@ impl<Wus, Stores, Platform, Vals: StoreValues, WuVals>
     /// registered value routes through the `RouterKind` tag plus the
     /// `Place<P>` view, which routes onto both retained lists at once:
     /// store inputs prepend their value onto `store_values` (for the
-    /// arena drain); WorkUnit inputs prepend their instance onto
+    /// bindings drain); WorkUnit inputs prepend their instance onto
     /// `wu_values` (for the run walk); platform and run-config inputs
     /// drop their value (their TYPE is tracked in the typestate).
     ///
@@ -483,7 +670,7 @@ where
     Stores: AccessSet
         + ContainsAll<<Wus as WorkUnitBundle>::AccumRead>
         + ContainsAll<<Wus as WorkUnitBundle>::AccumWrite>,
-    Vals: StoreValues + ArenaFor + DrainStores,
+    Vals: StoreValues + BindingsFor + DrainStores,
 {
     /// Finalise the builder into a `Scheduler<DefaultRunCfg, Stores, M>`.
     ///
@@ -494,7 +681,7 @@ where
     ///
     /// Walks `Stores` and `store_values` in lockstep, reserving each
     /// `Resource<T>`'s one-record column via `storage` and recording its
-    /// pointer in the arena. Returns `Err(BuildError::AllocationFailed)`
+    /// pointer in the bindings. Returns `Err(BuildError::AllocationFailed)`
     /// if any reservation fails; the store frees every column reserved
     /// before the failure when it drops at the end of this call.
     pub fn build<BWit, CS: ColumnStorage>(
@@ -511,24 +698,34 @@ where
     {
         let wu_values = self.wu_values;
         // Compute the plan from the registered bundle before draining the
-        // store arena, so a dependency cycle returns without allocating.
-        let (topo_order, topo_count) = match compute_topo_order::<Wus, Stores, BWit>() {
-            notko::Outcome::Ok(pair) => pair,
+        // store bindings, so a dependency cycle returns without allocating.
+        let plan = match compute_plan::<Wus, Stores, BWit>() {
+            notko::Outcome::Ok(p) => p,
             notko::Outcome::Err(e) => return notko::Outcome::Err(e),
         };
+        let (topo_order, topo_count) = extract_topo_order(&plan);
         let mut storage = storage;
         let mut next_id = USize::ZERO;
         match <Vals as DrainStores>::drain(self.store_values, &mut storage, &mut next_id) {
-            notko::Outcome::Ok(arena) => notko::Outcome::Ok(Scheduler {
-                _cfg: PhantomData,
-                topo_order,
-                topo_count,
-                plan_dirty: [const { AtomicBool::new(false) }; 256],
-                plan_cache: PlanCache::new(),
-                arena,
-                storage,
-                wu_values,
-            }),
+            notko::Outcome::Ok(bindings) => {
+                // Store-back the plan's flat pools at the `StoreId` namespace
+                // continued past the resource columns the drain reserved.
+                let plan_handle = match store_plan(&plan, &mut storage, next_id) {
+                    notko::Outcome::Ok(h) => h,
+                    notko::Outcome::Err(e) => return notko::Outcome::Err(e),
+                };
+                notko::Outcome::Ok(Scheduler {
+                    _cfg: PhantomData,
+                    topo_order,
+                    topo_count,
+                    plan_handle,
+                    plan_dirty: [const { AtomicBool::new(false) }; 256],
+                    plan_cache: PlanCache::new(),
+                    bindings,
+                    storage,
+                    wu_values,
+                })
+            }
             notko::Outcome::Err(e) => notko::Outcome::Err(e),
         }
     }
@@ -552,24 +749,34 @@ where
     {
         let wu_values = self.wu_values;
         // Compute the plan from the registered bundle before draining the
-        // store arena, so a dependency cycle returns without allocating.
-        let (topo_order, topo_count) = match compute_topo_order::<Wus, Stores, BWit>() {
-            notko::Outcome::Ok(pair) => pair,
+        // store bindings, so a dependency cycle returns without allocating.
+        let plan = match compute_plan::<Wus, Stores, BWit>() {
+            notko::Outcome::Ok(p) => p,
             notko::Outcome::Err(e) => return notko::Outcome::Err(e),
         };
+        let (topo_order, topo_count) = extract_topo_order(&plan);
         let mut storage = storage;
         let mut next_id = USize::ZERO;
         match <Vals as DrainStores>::drain(self.store_values, &mut storage, &mut next_id) {
-            notko::Outcome::Ok(arena) => notko::Outcome::Ok(Scheduler {
-                _cfg: PhantomData,
-                topo_order,
-                topo_count,
-                plan_dirty: [const { AtomicBool::new(false) }; 256],
-                plan_cache: PlanCache::new(),
-                arena,
-                storage,
-                wu_values,
-            }),
+            notko::Outcome::Ok(bindings) => {
+                // Store-back the plan's flat pools at the `StoreId` namespace
+                // continued past the resource columns the drain reserved.
+                let plan_handle = match store_plan(&plan, &mut storage, next_id) {
+                    notko::Outcome::Ok(h) => h,
+                    notko::Outcome::Err(e) => return notko::Outcome::Err(e),
+                };
+                notko::Outcome::Ok(Scheduler {
+                    _cfg: PhantomData,
+                    topo_order,
+                    topo_count,
+                    plan_handle,
+                    plan_dirty: [const { AtomicBool::new(false) }; 256],
+                    plan_cache: PlanCache::new(),
+                    bindings,
+                    storage,
+                    wu_values,
+                })
+            }
             notko::Outcome::Err(e) => notko::Outcome::Err(e),
         }
     }

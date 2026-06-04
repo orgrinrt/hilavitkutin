@@ -21,7 +21,7 @@
 //! for both column sides, so a unit that reads or writes a column does not
 //! satisfy the walk's bound and cannot enter the sequence. Per-frame
 //! column buffers depend on real column-buffer allocation from the
-//! `MemoryProvider` (a later slice); resource pointers in the arena are
+//! `MemoryProvider` (a later slice); resource pointers in the bindings are
 //! real and stable today. Feasibility was validated by the sketch at
 //! `mock/research/sketches/202605300823_run-fiber-wutuple-walk`.
 
@@ -35,7 +35,7 @@ use crate::dispatch::engine_ctx::{ColProject, ColPtrNil, EngineCtx, Project};
 use crate::dispatch::morsel::MorselRange;
 use crate::dispatch::wu_fn::invoke_wu_in_fiber;
 
-/// Drive a fiber's WorkUnit sequence over a shared arena.
+/// Drive a fiber's WorkUnit sequence over a shared bindings.
 ///
 /// `Witnesses` is the parallel per-unit resource-projection index list
 /// (one index list per unit), inferred at the entry call exactly as
@@ -44,14 +44,14 @@ use crate::dispatch::wu_fn::invoke_wu_in_fiber;
 /// unconstrained-parameter error, the same way `plan::project::BundleProject`
 /// carries its parallel witness list.
 pub trait RunFiber<A, Witnesses> {
-    /// Construct each unit's `EngineCtx` from the arena and run `execute`,
+    /// Construct each unit's `EngineCtx` from the bindings and run `execute`,
     /// in sequence order.
-    fn run(&self, arena: &A, morsel: MorselRange);
+    fn run(&self, bindings: &A, morsel: MorselRange);
 }
 
 impl<A> RunFiber<A, Empty> for WuNil {
     #[inline]
-    fn run(&self, _arena: &A, _morsel: MorselRange) {}
+    fn run(&self, _bindings: &A, _morsel: MorselRange) {}
 }
 
 impl<A, W, Tail, RIdx, WTail> RunFiber<A, Cons<RIdx, WTail>> for WuCons<W, Tail>
@@ -61,7 +61,7 @@ where
     ColPtrNil: ColProject<<W as WorkUnit>::Read, Empty, Out = ColPtrNil>,
     ColPtrNil: ColProject<<W as WorkUnit>::Write, Empty, Out = ColPtrNil>,
     // Tie each unit's Ctx GAT to the projection of its Read set over the
-    // shared arena, for all frame lifetimes. The right side is a projected
+    // shared bindings, for all frame lifetimes. The right side is a projected
     // associated type, lifetime-independent, so the equality resolves
     // against the unit's own `type Ctx<'frame> = EngineCtx<'frame, ...>`.
     // The `ColPtrNil` column projections express the resource-only
@@ -80,19 +80,19 @@ where
     Tail: RunFiber<A, WTail>,
 {
     #[inline]
-    fn run(&self, arena: &A, morsel: MorselRange) {
-        // Project this unit's own Context from the shared arena. The
+    fn run(&self, bindings: &A, morsel: MorselRange) {
+        // Project this unit's own Context from the shared bindings. The
         // turbofish pins the per-unit resource index (`RIdx`) and the empty
-        // column witnesses; `EngineCtx::project` takes `arena: &'frame A`,
-        // so the projected pointers stay tied to the arena borrow.
+        // column witnesses; `EngineCtx::project` takes `bindings: &'frame A`,
+        // so the projected pointers stay tied to the bindings borrow.
         let ctx: <W as WorkUnit>::Ctx<'_> =
-            EngineCtx::project::<A, ColPtrNil, RIdx, Empty, Empty>(arena, &ColPtrNil, morsel);
+            EngineCtx::project::<A, ColPtrNil, RIdx, Empty, Empty>(bindings, &ColPtrNil, morsel);
         invoke_wu_in_fiber(&self.head, &ctx);
-        self.tail.run(arena, morsel);
+        self.tail.run(bindings, morsel);
     }
 }
 
-/// Drive a fiber's WorkUnit sequence over a shared arena and morsel.
+/// Drive a fiber's WorkUnit sequence over a shared bindings and morsel.
 ///
 /// The per-unit witness list infers at the call site, so the caller writes
 /// no turbofish.
@@ -136,9 +136,9 @@ where
 /// run_fiber_walk(&fiber, &PtrNil, MorselRange::new(USize::ZERO, USize::ZERO));
 /// ```
 #[inline]
-pub fn run_fiber_walk<F, A, Witnesses>(fiber: &F, arena: &A, morsel: MorselRange)
+pub fn run_fiber_walk<F, A, Witnesses>(fiber: &F, bindings: &A, morsel: MorselRange)
 where
     F: RunFiber<A, Witnesses>,
 {
-    fiber.run(arena, morsel);
+    fiber.run(bindings, morsel);
 }

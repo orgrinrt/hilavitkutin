@@ -1,17 +1,17 @@
-//! Resource-arena tests for the data plane over `ColumnStorage`.
+//! Resource-bindings tests for the data plane over `ColumnStorage`.
 //!
 //! A stack-backed counting `MemoryProvider` (fixed `[MaybeUninit<u8>;
 //! N]` bump allocator with allocate/deallocate counters) backs an
-//! `ArenaColumnStorage`, which drives the arena round-trip and the
+//! `ArenaColumnStorage`, which drives the bindings round-trip and the
 //! allocation-pairing checks. No `std::alloc`; stays
 //! `#![no_std]`-compatible (the test harness itself is std, but the
 //! provider allocates from a fixed stack buffer).
 //!
 //! Resources are `ColumnValue` (`Copy + 'static`): the store reserves a
-//! one-record column per resource, the arena records the column base
+//! one-record column per resource, the bindings records the column base
 //! pointer, and the store frees the bytes on its own `Drop`. Arena
 //! internals are reached through the engine's hidden `__` accessors
-//! (`Scheduler::__arena`, `ArenaResourceNode::__ptr` / `__tail`).
+//! (`Scheduler::__bindings`, `ResourceBinding::__ptr` / `__tail`).
 
 use core::cell::{Cell, UnsafeCell};
 use core::mem::MaybeUninit;
@@ -23,7 +23,7 @@ use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::Resource;
 use hilavitkutin_providers::ArenaColumnStorage;
 
-/// Wrap a provider in the default-capacity arena store. The return type
+/// Wrap a provider in the default-capacity bindings store. The return type
 /// omits `D`, which applies the `Dim<256>` default and anchors inference
 /// (a bare `ArenaColumnStorage::new(p)` call site leaves `D` ambiguous).
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
@@ -97,6 +97,15 @@ unsafe impl<const N: usize> Sync for CountingProvider<N> {}
 static ALLOCS: AtomicUsize = AtomicUsize::new(0);
 static DEALLOCS: AtomicUsize = AtomicUsize::new(0);
 
+// The two `CountingProvider` tests share the global `ALLOCS` / `DEALLOCS`
+// counters, each resetting them at its start and asserting an exact total.
+// Cargo runs tests in parallel, so without serialisation one test's
+// reset-then-assert window can observe another's increments. This lock
+// serialises the counter-sharing tests against each other (other tests still
+// run in parallel). Poison is recovered: a panic in one test must not cascade
+// into a spurious poison-panic in the next.
+static COUNTING_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 impl<const N: usize> MemoryProviderApi for CountingProvider<N> {
     unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
         ALLOCS.fetch_add(1, Ordering::SeqCst);
@@ -112,7 +121,7 @@ impl<const N: usize> MemoryProviderApi for CountingProvider<N> {
 }
 
 // Distinct resource value types so `multiple_resources` exercises a
-// three-node arena chain with three different `T` identities. Resources
+// three-node bindings chain with three different `T` identities. Resources
 // are `ColumnValue` now, so each derives `Copy`.
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 struct Ra(u32);
@@ -122,24 +131,24 @@ struct Rb(u16);
 struct Rc(u8);
 
 #[test]
-fn resource_arena_round_trip() {
+fn resource_bindings_round_trip() {
     let provider = BumpProvider::<256>::new();
     let scheduler = Scheduler::builder()
         .with(Resource::new(Ra(99)))
         .build(store(provider))
         .unwrap_or_else(|_| panic!("build should succeed"));
-    // The arena holds one ArenaResourceNode<Ra, ArenaTail>; deref its
+    // The bindings holds one ResourceBinding<Ra, BindingNil>; deref its
     // recorded pointer, which now points into the store-reserved column,
     // and confirm the moved-in value.
     // SAFETY: the pointer was written with Ra(99) at build time and the
     // scheduler (hence the store backing the column) is still alive.
-    let value = unsafe { &*scheduler.__arena().__ptr().as_ptr() };
+    let value = unsafe { &*scheduler.__bindings().__ptr().as_ptr() };
     assert_eq!(*value, Ra(99));
 }
 
 #[test]
-fn resource_arena_multiple_resources() {
-    // Three distinct types, all reachable through the arena chain, each
+fn resource_bindings_multiple_resources() {
+    // Three distinct types, all reachable through the bindings chain, each
     // backed by its own reserved column in the store.
     let provider = BumpProvider::<256>::new();
     let scheduler = Scheduler::builder()
@@ -150,19 +159,20 @@ fn resource_arena_multiple_resources() {
         .unwrap_or_else(|_| panic!("build should succeed"));
     // `.with` prepends, so registration order (Ra, Rb, Rc) reverses on
     // the cons-list: head is the last registered (Rc), then Rb, then Ra.
-    let arena = scheduler.__arena();
+    let bindings = scheduler.__bindings();
     // SAFETY: all three pointers were written at build time into their
     // own columns; the store is alive.
-    let head = unsafe { &*arena.__ptr().as_ptr() };
+    let head = unsafe { &*bindings.__ptr().as_ptr() };
     assert_eq!(*head, Rc(3));
-    let mid = unsafe { &*arena.__tail().__ptr().as_ptr() };
+    let mid = unsafe { &*bindings.__tail().__ptr().as_ptr() };
     assert_eq!(*mid, Rb(2));
-    let last = unsafe { &*arena.__tail().__tail().__ptr().as_ptr() };
+    let last = unsafe { &*bindings.__tail().__tail().__ptr().as_ptr() };
     assert_eq!(*last, Ra(1));
 }
 
 #[test]
-fn resource_arena_drop_deallocates() {
+fn resource_bindings_drop_deallocates() {
+    let _serial = COUNTING_LOCK.lock().unwrap_or_else(|e| e.into_inner());
     ALLOCS.store(0, Ordering::SeqCst);
     DEALLOCS.store(0, Ordering::SeqCst);
     {
@@ -194,6 +204,7 @@ fn zst_resource_round_trips_without_reserving() {
     #[derive(Copy, Clone, PartialEq, Eq, Debug)]
     struct Marker;
 
+    let _serial = COUNTING_LOCK.lock().unwrap_or_else(|e| e.into_inner());
     ALLOCS.store(0, Ordering::SeqCst);
     DEALLOCS.store(0, Ordering::SeqCst);
     {
@@ -208,7 +219,7 @@ fn zst_resource_round_trips_without_reserving() {
         assert_eq!(ALLOCS.load(Ordering::SeqCst), 0);
         // SAFETY: the ZST value was written to a dangling, aligned pointer
         // at build time; reading a ZST back touches no memory.
-        let value = unsafe { &*scheduler.__arena().__ptr().as_ptr() };
+        let value = unsafe { &*scheduler.__bindings().__ptr().as_ptr() };
         assert_eq!(*value, Marker);
         drop(scheduler);
     }

@@ -1,8 +1,8 @@
 //! Per-WU projected Context tests (B3).
 //!
-//! Resources project out of a hand-built B2a arena (via the engine
+//! Resources project out of a hand-built B2a bindings (via the engine
 //! scheduler's stack-backed `MemoryProvider`); columns project out of a
-//! hand-provided column buffer, since the B2a arena column nodes are
+//! hand-provided column buffer, since the B2a bindings column nodes are
 //! dangling placeholders and per-frame column buffers belong to the
 //! run-loop. These integration tests live under `tests/` so the bare
 //! byte buffers backing the column store do not trip the src-tree
@@ -31,13 +31,13 @@ use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_providers::ArenaColumnStorage;
 
-/// Wrap a provider in the default-capacity arena store (`D = Dim<256>`).
+/// Wrap a provider in the default-capacity bindings store (`D = Dim<256>`).
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
 }
 
 // ---------------------------------------------------------------------
-// Stack-backed test memory provider (mirrors resource_arena.rs).
+// Stack-backed test memory provider (mirrors resource_bindings.rs).
 // ---------------------------------------------------------------------
 
 struct BumpProvider<const N: usize> {
@@ -87,17 +87,17 @@ type WriteU16U32 = Cons<Column<u16>, Cons<Column<u32>, Empty>>;
 
 #[test]
 fn context_resolves_resource() {
-    // Build a one-resource arena, project the Context off it through the
+    // Build a one-resource bindings, project the Context off it through the
     // public projecting constructor, resolve the value.
     let provider = BumpProvider::<256>::new();
     let scheduler = Scheduler::builder()
         .with(Resource::new(99u32))
         .build(store(provider))
         .unwrap_or_else(|_| panic!("build should succeed"));
-    let arena = scheduler.__arena();
+    let bindings = scheduler.__bindings();
 
     let ctx: EngineCtx<'_, ReadU32, Empty, _, _, _> =
-        EngineCtx::project(arena, &ColPtrNil, MorselRange::new(USize::ZERO, USize::ZERO));
+        EngineCtx::project(bindings, &ColPtrNil, MorselRange::new(USize::ZERO, USize::ZERO));
 
     // The binding annotation pins `T = u32`; the index `I` infers from the
     // concrete bundle, so no turbofish is needed.
@@ -239,10 +239,10 @@ fn context_drives_wu_execute() {
         .with(Resource::new(7u32))
         .build(store(provider))
         .unwrap_or_else(|_| panic!("build should succeed"));
-    let arena = scheduler.__arena();
+    let bindings = scheduler.__bindings();
 
     let ctx: <ReadResourceWu as WorkUnit>::Ctx<'_> =
-        EngineCtx::project(arena, &ColPtrNil, MorselRange::new(USize::ZERO, USize::ZERO));
+        EngineCtx::project(bindings, &ColPtrNil, MorselRange::new(USize::ZERO, USize::ZERO));
 
     let wu = ReadResourceWu;
     wu.execute(&ctx);

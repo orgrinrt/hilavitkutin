@@ -16,9 +16,9 @@
 //! implemented"), dodging E0207; the free `project_reads::<R, _, _>`
 //! helper pins `R` by turbofish while inference fills the index list.
 //!
-//! Resources project out of the scheduler arena (`ArenaResourceNode`,
+//! Resources project out of the scheduler bindings (`ResourceBinding`,
 //! real storage from B2a). Columns project out of a per-frame column
-//! pointer bundle passed in at construction, because the B2a arena
+//! pointer bundle passed in at construction, because the B2a bindings
 //! column nodes are dangling placeholders (column buffers are sized by
 //! the per-run record count and belong to the run-loop / plan phase).
 //!
@@ -39,7 +39,7 @@ use hilavitkutin_api::context::{
 use hilavitkutin_api::store::{Column, Resource, Virtual};
 
 use crate::dispatch::morsel::MorselRange;
-use crate::resource::arena::ArenaResourceNode;
+use crate::resource::bindings::ResourceBinding;
 use crate::resource::provenance::{ColumnPtr, ResourcePtr};
 
 // ---------------------------------------------------------------------
@@ -110,7 +110,7 @@ impl<H, Tail> ColPtrCons<H, Tail> {
 }
 
 // ---------------------------------------------------------------------
-// Resource selector: type-keyed lookup over arena nodes and over the
+// Resource selector: type-keyed lookup over bindings nodes and over the
 // projected resource bundle.
 // ---------------------------------------------------------------------
 
@@ -124,16 +124,16 @@ pub trait Selector<T, Index> {
     fn get(&self) -> ResourcePtr<T>;
 }
 
-// Over the arena nodes (resources project from the real B2a arena).
+// Over the bindings nodes (resources project from the real B2a bindings).
 
-impl<T, Tail> Selector<T, Here> for ArenaResourceNode<T, Tail> {
+impl<T, Tail> Selector<T, Here> for ResourceBinding<T, Tail> {
     #[inline(always)]
     fn get(&self) -> ResourcePtr<T> {
         self.__ptr()
     }
 }
 
-impl<T, U, Tail, I> Selector<T, There<I>> for ArenaResourceNode<U, Tail>
+impl<T, U, Tail, I> Selector<T, There<I>> for ResourceBinding<U, Tail>
 where
     Tail: Selector<T, I>,
 {
@@ -190,17 +190,17 @@ where
 }
 
 // ---------------------------------------------------------------------
-// Project: build the projected resource bundle from the arena.
+// Project: build the projected resource bundle from the bindings.
 //
 // `Project<R, Indices>` recurses on the `Resource<T>` members of the
 // access set `R`, pulling each matching `ResourcePtr<T>` out of the
-// arena via `Selector`. `Indices` is a parallel cons-list whose
+// bindings via `Selector`. `Indices` is a parallel cons-list whose
 // elements are the per-member selector indices; carrying it as a trait
 // type parameter constrains each index (dodging E0207).
 //
 // `Column<T>` and `Virtual<T>` members of `R` produce no resource-
 // bundle node here: only the resource members contribute. The free
-// `project_reads::<R, _, _>(arena)` helper pins `R` by turbofish.
+// `project_reads::<R, _, _>(bindings)` helper pins `R` by turbofish.
 // ---------------------------------------------------------------------
 
 /// Project the `Resource<T>` members of `R` out of a source `A` into a
@@ -266,16 +266,16 @@ where
     }
 }
 
-/// Project the resource members of `R` out of `arena` into a bundle.
+/// Project the resource members of `R` out of `bindings` into a bundle.
 ///
 /// Pins `R` by turbofish at the call site; inference fills the parallel
 /// `Indices` list and the source type `A`.
 #[inline(always)]
-pub fn project_reads<R, A, Indices>(arena: &A) -> <A as Project<R, Indices>>::Out
+pub fn project_reads<R, A, Indices>(bindings: &A) -> <A as Project<R, Indices>>::Out
 where
     A: Project<R, Indices>,
 {
-    arena.project()
+    bindings.project()
 }
 
 // ---------------------------------------------------------------------
@@ -415,12 +415,12 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols>
 impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols>
     EngineCtx<'frame, R, W, RBundle, RCols, WCols>
 {
-    /// Project a Context from the scheduler arena and a per-frame column
+    /// Project a Context from the scheduler bindings and a per-frame column
     /// source.
     ///
     /// This is the public constructor. The projected bundles are not
     /// caller-chosen: `RBundle` is forced to be the resource projection of
-    /// `R` over the `arena`; `RCols` is the column projection of `R` and
+    /// `R` over the `bindings`; `RCols` is the column projection of `R` and
     /// `WCols` the column projection of `W`, both over the `cols` source. A
     /// caller therefore cannot pair a non-empty access set with an empty or
     /// mismatched source; the `Project` / `ColProject` bounds are
@@ -461,7 +461,7 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols>
     /// ```
     #[inline]
     pub fn project<A, C, RIdx, RCIdx, WCIdx>(
-        arena: &'frame A,
+        bindings: &'frame A,
         cols: &C,
         morsel: MorselRange,
     ) -> EngineCtx<'frame, R, W, RBundle, RCols, WCols>
@@ -470,7 +470,7 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols>
         C: ColProject<R, RCIdx, Out = RCols>,
         C: ColProject<W, WCIdx, Out = WCols>,
     {
-        let reads = <A as Project<R, RIdx>>::project(arena);
+        let reads = <A as Project<R, RIdx>>::project(bindings);
         let read_cols = <C as ColProject<R, RCIdx>>::col_project(cols);
         let write_cols = <C as ColProject<W, WCIdx>>::col_project(cols);
         EngineCtx::from_projected(reads, read_cols, write_cols, morsel)
