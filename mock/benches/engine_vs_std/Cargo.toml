@@ -1,0 +1,28 @@
+[workspace]
+
+[package]
+name = "engine_vs_std"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "engine_vs_std"
+path = "src/main.rs"
+
+# Macro bench (#660): the single-core hilavitkutin engine running a heavy
+# multi-stage columnar workload vs the same workload hand-written as an
+# optimal fused std loop. Links the real engine (path deps) plus arvo for
+# the primitives the engine API exposes. std is allowed here: this is a
+# standalone bench workspace, outside the no_std/no_alloc mock/ members.
+[dependencies]
+hilavitkutin = { path = "../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../crates/hilavitkutin-providers" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
