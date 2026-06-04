@@ -498,7 +498,7 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
     }
 
     /// Dispatch the retained WorkUnit instances in the plan's topological
-    /// order over a single full-range morsel, then return
+    /// order, windowing the record range into morsels, then return
     /// `Cfg::Out::default()`.
     ///
     /// `build` stored the topological permutation on the scheduler. This
@@ -507,10 +507,14 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
     /// filled with `noop_fiber_shim` placeholders), then walks
     /// `topo_order[0 .. topo_count]`, dispatching each step's slot. Each
     /// slot's shim projects that unit's `EngineCtx` from the bindings
-    /// (resources and columns alike) and runs `execute` over a single morsel
-    /// covering the record count. The `Witnesses` parameter is the per-unit
-    /// projection-index list, inferred at the call site, so `scheduler.run()`
-    /// needs no turbofish.
+    /// (resources and columns alike) and runs `execute`. The record range
+    /// `[0, record_count)` is windowed into morsels of `RunCfg::MORSEL_SIZE`
+    /// (at least one record) and each unit is dispatched once per morsel,
+    /// unit-outer (a unit completes its record range before the next unit
+    /// runs); a record-less frame dispatches each unit once over an empty
+    /// morsel. The `Witnesses` parameter is the per-unit projection-index
+    /// list, inferred at the call site, so `scheduler.run()` needs no
+    /// turbofish.
     ///
     /// The slot array is rebuilt each call because a stored instance pointer
     /// would make the scheduler self-referential. The real morsel loop
@@ -534,10 +538,17 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
             (core::ptr::null(), noop_fiber_shim::<<Vals as BindingsFor>::Bindings>);
         let mut slots = <D::Units as Capacity>::filled(placeholder);
         self.wu_values.collect(slots.as_mut());
-        // Single morsel covering every record. The morsel-loop split that
-        // windows the record range into multiple morsels with micro-morsel
-        // sync points is a later round (#343).
-        let morsel = MorselRange::new(USize::ZERO, self.record_count);
+        // Window the record range `[0, record_count)` into morsels of
+        // `Cfg::MORSEL_SIZE`, guarded to at least one record so a zero-config
+        // never produces zero-length morsels that silently skip all work.
+        // Unit-outer: each topological step dispatches its unit once per morsel,
+        // completing its record range before the next step runs, which
+        // preserves the topological-order invariant for every plan (a downstream
+        // unit sees the full output of an upstream unit). The per-fiber,
+        // phase-sequential morsel loop with micro-morsel sync points is a later
+        // arc (#342 / Phase C+D); single-core needs no sync.
+        let msize = Cfg::MORSEL_SIZE.0.max(1);
+        let total = self.record_count.0;
         let order = self.topo_order.as_ref();
         let live = slots.as_ref();
         let count = self.topo_count.0;
@@ -550,7 +561,19 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
             // `// SAFETY:` note.
             let pos = order[step].0;
             let (ptr, shim) = live[pos];
-            shim(ptr, &self.bindings, morsel);
+            if total == 0 {
+                // A record-less frame still dispatches each unit once over an
+                // empty morsel, so a resource-only unit (no per-record work)
+                // runs exactly once, matching the pre-windowing behaviour.
+                shim(ptr, &self.bindings, MorselRange::new(USize::ZERO, USize::ZERO));
+            } else {
+                let mut start = 0;
+                while start < total {
+                    let len = msize.min(total - start);
+                    shim(ptr, &self.bindings, MorselRange::new(USize(start), USize(len)));
+                    start += len;
+                }
+            }
             step += 1;
         }
         Cfg::Out::default()
