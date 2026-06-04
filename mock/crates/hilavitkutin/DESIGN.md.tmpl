@@ -148,8 +148,9 @@ The per-fiber, phase-sequential morsel loop is a later arc. It
 materialises one type-erased dispatch slot per retained unit through
 `CollectFiber`, the sibling of `RunFiber` that records a `FiberSlot` (an
 erased instance pointer plus a per-unit shim) instead of running the unit
-inline, then walks the topological permutation `build` computed and
-dispatches each step's slot. The shim casts the erased pointer back to its
+inline, then walks the phase-sequential dispatch order `build` derived (the
+plan flattened `phases -> trunks -> fibers -> units`, a topological order
+grouped by the plan's locality structure) and dispatches each unit's slot. The shim casts the erased pointer back to its
 concrete WorkUnit, projects the unit's `EngineCtx` from the bindings
 (resources via `Project`, columns via `ColProject` over the Read and Write
 sets, fully-qualified as `EngineCtx::project` does it), and runs `execute`. A
@@ -600,9 +601,10 @@ so a no-store scheduler needs no concrete store wired. `build` also carries the
 retained WorkUnit-value list into the `Scheduler`, which gains a
 WorkUnit-value-list parameter alongside its store and provider
 parameters. Before draining the store arena, `build` computes the execution
-plan from the registered bundle and stores its topological permutation on the
-scheduler; a dependency cycle returns `BuildError::PlanFailed` without
-allocating. After draining the resource columns, `build` reserves the plan's
+plan from the registered bundle and derives the phase-sequential dispatch
+order on the scheduler by flattening the plan's phase structure
+(`phases -> trunks -> fibers -> units`); a dependency cycle returns
+`BuildError::PlanFailed` without allocating. After draining the resource columns, `build` reserves the plan's
 flat CSR pools (phases, trunks, fibers, per-unit metadata, per-fiber morsel
 sizes, the RCM renumber) as columns in the same `ColumnStorage`, at a `StoreId`
 namespace continued past the resource columns, and keeps a `Copy` `PlanHandle`
