@@ -26,7 +26,9 @@ use std::cell::RefCell;
 
 use arvo::{Bool, USize};
 use hilavitkutin::dispatch::engine_ctx::{ColPtrNil, EngineCtx, PtrCons, PtrNil};
+use hilavitkutin::plan::UnitMeta;
 use hilavitkutin::scheduler::{BuildError, Scheduler};
+use hilavitkutin_api::ColumnStorage;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{HasResourceProvider, ResourceProviderApi};
@@ -142,7 +144,7 @@ impl WorkUnit<Always> for ReadBWu {
 #[test]
 fn run_walks_two_registered_units() {
     OBSERVED.with(|o| o.borrow_mut().clear());
-    let provider = BumpProvider::<512>::new();
+    let provider = BumpProvider::<8192>::new();
     // Register the resources both units read, then the two units. The two
     // readers touch disjoint resources (Ra, Rb) and neither writes, so the
     // plan's dependency graph has no edge between them. With no edge, the
@@ -174,7 +176,7 @@ fn run_walks_two_registered_units() {
 #[test]
 fn run_walks_single_registered_unit() {
     OBSERVED.with(|o| o.borrow_mut().clear());
-    let provider = BumpProvider::<512>::new();
+    let provider = BumpProvider::<8192>::new();
     let mut scheduler = Scheduler::builder()
         .with(Resource::new(Ra(42)))
         .with(ReadAWu)
@@ -223,7 +225,7 @@ impl WorkUnit<Always> for WriteAWu {
 #[test]
 fn run_dispatches_in_topological_order_not_registration() {
     OBSERVED.with(|o| o.borrow_mut().clear());
-    let provider = BumpProvider::<512>::new();
+    let provider = BumpProvider::<8192>::new();
     // Register the writer of Ra FIRST, then the reader of Ra LAST. The builder
     // prepends, so the retained value list is [reader, writer] and a plain
     // registration walk would run the reader first. The plan adds a RAW edge
@@ -299,7 +301,7 @@ impl WorkUnit<Always> for CycleBWu {
 
 #[test]
 fn build_rejects_a_cyclic_registration() {
-    let provider = BumpProvider::<512>::new();
+    let provider = BumpProvider::<8192>::new();
     // CycleAWu (reads Ra, writes Rb) and CycleBWu (reads Rb, writes Ra) form a
     // dependency cycle. `build` computes the plan before draining the store
     // arena; `compute_execution_plan` returns `PlanError::Cycle`, so `build`
@@ -312,4 +314,50 @@ fn build_rejects_a_cyclic_registration() {
         .build(store(provider));
 
     assert!(matches!(result, Outcome::Err(BuildError::PlanFailed)));
+}
+
+#[test]
+fn build_store_backs_the_plan_unit_meta() {
+    // Writer-of-Ra registered before reader-of-Ra: the plan's topological
+    // order is [writer, reader] (the same order the dispatch reorder test
+    // pins). `build` store-backs the plan; read the `unit_meta` column back
+    // out of the scheduler's storage through the `PlanHandle` and confirm it
+    // carries that order. Before store-backing, the column is unreserved
+    // (count zero), so the round-trip assertions fail.
+    let provider = BumpProvider::<8192>::new();
+    let scheduler = Scheduler::builder()
+        .with(Resource::new(Ra(10)))
+        .with(WriteAWu)
+        .with(ReadAWu)
+        .build(store(provider))
+        .unwrap_or_else(|_| panic!("build should succeed"));
+
+    let handle = scheduler.__plan_handle();
+    let storage = scheduler.__storage();
+    let id = handle.unit_meta_id();
+
+    // Two units registered, so the unit-meta column holds two records.
+    assert_eq!(handle.unit_count(), USize(2));
+    assert_eq!(storage.count(id), USize(2));
+
+    // Read the store-backed unit-meta column. Topo step 0 is the writer
+    // (registration index 1, since the builder prepends), step 1 is the
+    // reader (registration index 0): the dependency-topological dispatch
+    // order, round-tripped through the store.
+    // SAFETY: `build` reserved this column for `unit_count` `UnitMeta` records
+    // and copied the plan's unit-meta prefix in; the scheduler (and its
+    // storage) is alive for this read, and no writer aliases the frozen plan
+    // columns.
+    let meta0 = unsafe { *storage.column_ptr::<UnitMeta>(id) };
+    let meta1 = unsafe { *storage.column_ptr::<UnitMeta>(id).add(1) };
+    assert_eq!(
+        meta0.id.index(),
+        USize(1),
+        "topo step 0 is the writer (registration index 1)"
+    );
+    assert_eq!(
+        meta1.id.index(),
+        USize(0),
+        "topo step 1 is the reader (registration index 0)"
+    );
 }

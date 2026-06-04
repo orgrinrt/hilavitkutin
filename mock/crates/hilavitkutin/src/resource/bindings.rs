@@ -1,27 +1,27 @@
-//! Resource arena: the data-plane storage built from registered store
-//! values, reserved through the unified `ColumnStorage`.
+//! Resource bindings: the type-keyed pointer index over the registered
+//! store values, resolved against the unified `ColumnStorage`.
 //!
-//! The arena is keyed on the builder's `StoreValues` list, not on the
-//! `Stores` access set. Each `.with`-registered store value contributes
-//! one arena node: a `Resource<T>` carrier (`StagedResource<T>`)
-//! contributes an `ArenaResourceNode<T, _>` holding the moved-in value's
-//! `ResourcePtr<T>`; a `Column<T>` marker contributes an
-//! `ArenaColumnNode` (a no-alloc placeholder, since column buffers need
-//! the plan-phase record count); a `Virtual<T>` marker contributes an
-//! `ArenaVirtualNode` (no backing storage).
+//! The bindings are a cons-list keyed on the builder's `StoreValues`
+//! list, not on the `Stores` access set. Each `.with`-registered store
+//! value contributes one binding cons-cell: a `Resource<T>` carrier
+//! (`StagedResource<T>`) contributes a `ResourceBinding<T, _>` holding
+//! the moved-in value's `ResourcePtr<T>`; a `Column<T>` marker
+//! contributes a `ColumnBinding` (a no-alloc placeholder, since column
+//! buffers need the plan-phase record count); a `Virtual<T>` marker
+//! contributes a `VirtualBinding` (no backing storage).
 //!
 //! Keying on `StoreValues` (rather than `Stores`) keeps the drain a
 //! trivial single-list walk and sidesteps the Kit case: a Kit's owned
 //! stores enter the `Stores` access set via `Concat` with NO
 //! `.with`-value (their values come from `HasTrivialCtor`, a later
-//! round), so they contribute no `StoreValues` node and no arena node
+//! round), so they contribute no `StoreValues` node and no binding
 //! here. That is the correct behaviour: the drain handles the explicitly
 //! registered store values only.
 //!
 //! `DrainStores` walks the value list, reserving a one-record column per
 //! `Resource<T>` through the supplied `ColumnStorage` and recording the
 //! column base pointer. Resources are `ColumnValue` (`Copy + 'static`),
-//! so the arena holds only raw pointers: the store owns the bytes and
+//! so the bindings hold only raw pointers: the store owns the bytes and
 //! frees them on its own `Drop`, and there is no per-resource destructor
 //! to run. A zero-sized resource occupies no bytes, so it reserves no
 //! column and records a dangling, well-aligned pointer.
@@ -42,20 +42,20 @@ mod sealed {
     pub trait Sealed {}
 }
 
-/// Arena tail: the empty arena (matches the empty value list).
-pub struct ArenaTail;
+/// The empty bindings list (matches the empty value list).
+pub struct BindingNil;
 
-/// Arena node for one registered `Resource<T>`.
+/// Bindings cons-cell for one registered `Resource<T>`.
 ///
 /// Holds the `ResourcePtr<T>` for the moved-in value (pointing into the
 /// store-reserved column, or a dangling pointer for a ZST) and the tail
 /// node for the remaining store values.
-pub struct ArenaResourceNode<T, Tail> {
+pub struct ResourceBinding<T, Tail> {
     pub(crate) ptr: ResourcePtr<T>,
     pub(crate) tail: Tail,
 }
 
-impl<T, Tail> ArenaResourceNode<T, Tail> {
+impl<T, Tail> ResourceBinding<T, Tail> {
     /// The recorded resource pointer. Hidden test accessor: lets tests
     /// deref the moved-in value. Not part of the supported surface.
     #[doc(hidden)]
@@ -70,26 +70,26 @@ impl<T, Tail> ArenaResourceNode<T, Tail> {
     }
 }
 
-/// Arena node for one registered `Column<T>`.
+/// Bindings cons-cell for one registered `Column<T>`.
 ///
 /// Placeholder: holds a null `ColumnPtr<T>` and a zero record count.
 /// Column buffer reservation needs the plan-phase record count, a later
 /// round.
-pub struct ArenaColumnNode<T, Tail> {
+pub struct ColumnBinding<T, Tail> {
     pub(crate) _ptr: ColumnPtr<T>,
     pub(crate) _count: USize,
     // Structural cons-list link. The resource `Selector` only traverses
     // resource nodes, so nothing reads this tail until column-node access
-    // lands; the `ArenaFor` mapping requires it to chain the list.
+    // lands; the `BindingsFor` mapping requires it to chain the list.
     #[allow(dead_code)]
     pub(crate) tail: Tail,
 }
 
-/// Arena node for one registered `Virtual<T>`.
+/// Bindings cons-cell for one registered `Virtual<T>`.
 ///
 /// Carries no pointer: a `Virtual<T>` store is a DAG-edge marker with
 /// no backing storage.
-pub struct ArenaVirtualNode<T, Tail> {
+pub struct VirtualBinding<T, Tail> {
     pub(crate) _marker: PhantomData<T>,
     // Structural cons-list link, unread until virtual-node access lands
     // (the resource `Selector` only traverses resource nodes).
@@ -97,43 +97,43 @@ pub struct ArenaVirtualNode<T, Tail> {
     pub(crate) tail: Tail,
 }
 
-/// Maps a `StoreValues` list to its concrete arena shape.
+/// Maps a `StoreValues` list to its concrete bindings shape.
 ///
 /// Sealed: the four arms (`SvEmpty`, and `Sv` headed by
 /// `StagedResource<T>` / `Column<T>` / `Virtual<T>`) are the only
 /// store-value shapes the builder places on the list. The heads are
 /// distinct concrete types, so the arms are non-overlapping.
 #[allow(private_bounds)]
-pub trait ArenaFor: sealed::Sealed {
-    /// The concrete arena cons-list for this value list.
+pub trait BindingsFor: sealed::Sealed {
+    /// The concrete bindings cons-list for this value list.
     ///
-    /// The arena holds only `Copy` pointers; the store frees resource
-    /// memory on its own `Drop`, so the scheduler runs no arena walk on
-    /// drop and `Arena` carries no destructor bound.
-    type Arena;
+    /// The bindings hold only `Copy` pointers; the store frees resource
+    /// memory on its own `Drop`, so the scheduler runs no bindings walk
+    /// on drop and `Bindings` carries no destructor bound.
+    type Bindings;
 }
 
 impl sealed::Sealed for SvEmpty {}
-impl ArenaFor for SvEmpty {
-    type Arena = ArenaTail;
+impl BindingsFor for SvEmpty {
+    type Bindings = BindingNil;
 }
 
-impl<T: 'static, L: StoreValues + ArenaFor> sealed::Sealed for Sv<StagedResource<T>, L> {}
-impl<T: 'static, L: StoreValues + ArenaFor> ArenaFor for Sv<StagedResource<T>, L> {
-    type Arena = ArenaResourceNode<T, <L as ArenaFor>::Arena>;
+impl<T: 'static, L: StoreValues + BindingsFor> sealed::Sealed for Sv<StagedResource<T>, L> {}
+impl<T: 'static, L: StoreValues + BindingsFor> BindingsFor for Sv<StagedResource<T>, L> {
+    type Bindings = ResourceBinding<T, <L as BindingsFor>::Bindings>;
 }
 
-impl<T: 'static, L: StoreValues + ArenaFor> sealed::Sealed for Sv<Column<T>, L> {}
-impl<T: 'static, L: StoreValues + ArenaFor> ArenaFor for Sv<Column<T>, L> {
-    type Arena = ArenaColumnNode<T, <L as ArenaFor>::Arena>;
+impl<T: 'static, L: StoreValues + BindingsFor> sealed::Sealed for Sv<Column<T>, L> {}
+impl<T: 'static, L: StoreValues + BindingsFor> BindingsFor for Sv<Column<T>, L> {
+    type Bindings = ColumnBinding<T, <L as BindingsFor>::Bindings>;
 }
 
-impl<T: 'static, L: StoreValues + ArenaFor> sealed::Sealed for Sv<Virtual<T>, L> {}
-impl<T: 'static, L: StoreValues + ArenaFor> ArenaFor for Sv<Virtual<T>, L> {
-    type Arena = ArenaVirtualNode<T, <L as ArenaFor>::Arena>;
+impl<T: 'static, L: StoreValues + BindingsFor> sealed::Sealed for Sv<Virtual<T>, L> {}
+impl<T: 'static, L: StoreValues + BindingsFor> BindingsFor for Sv<Virtual<T>, L> {
+    type Bindings = VirtualBinding<T, <L as BindingsFor>::Bindings>;
 }
 
-/// Reserves and populates the arena by consuming a `StoreValues` list.
+/// Reserves and populates the bindings by consuming a `StoreValues` list.
 ///
 /// Implemented on the value list. Per `Resource<T>` value: reserve a
 /// one-record column through the store, write the carrier's value in,
@@ -144,8 +144,8 @@ impl<T: 'static, L: StoreValues + ArenaFor> ArenaFor for Sv<Virtual<T>, L> {
 ///
 /// Sealed: only the arms below inhabit it.
 #[allow(private_bounds)]
-pub trait DrainStores: ArenaFor + sealed::Sealed {
-    /// Reserve and populate the arena, consuming the value list.
+pub trait DrainStores: BindingsFor + sealed::Sealed {
+    /// Reserve and populate the bindings, consuming the value list.
     ///
     /// `next_id` is the running drain-order column id, advanced once per
     /// non-zero-sized resource. On reservation failure the store frees
@@ -156,7 +156,7 @@ pub trait DrainStores: ArenaFor + sealed::Sealed {
         self,
         cs: &mut CS,
         next_id: &mut USize,
-    ) -> notko::Outcome<Self::Arena, BuildError>;
+    ) -> notko::Outcome<Self::Bindings, BuildError>;
 }
 
 impl DrainStores for SvEmpty {
@@ -165,20 +165,20 @@ impl DrainStores for SvEmpty {
         self,
         _cs: &mut CS,
         _next_id: &mut USize,
-    ) -> notko::Outcome<Self::Arena, BuildError> {
-        notko::Outcome::Ok(ArenaTail)
+    ) -> notko::Outcome<Self::Bindings, BuildError> {
+        notko::Outcome::Ok(BindingNil)
     }
 }
 
 impl<T: ColumnValue, L> DrainStores for Sv<StagedResource<T>, L>
 where
-    L: StoreValues + ArenaFor + DrainStores,
+    L: StoreValues + BindingsFor + DrainStores,
 {
     fn drain<CS: ColumnStorage>(
         self,
         cs: &mut CS,
         next_id: &mut USize,
-    ) -> notko::Outcome<Self::Arena, BuildError> {
+    ) -> notko::Outcome<Self::Bindings, BuildError> {
         let (carrier, rest) = self.into_parts();
         let value = carrier.into_inner();
         // lint:allow(no-bare-numeric) reason: size_of returns usize by contract; tracked: #345
@@ -222,7 +222,7 @@ where
             unsafe { ResourcePtr::new_unchecked(typed) }
         };
         match <L as DrainStores>::drain(rest, cs, next_id) {
-            notko::Outcome::Ok(tail) => notko::Outcome::Ok(ArenaResourceNode { ptr, tail }),
+            notko::Outcome::Ok(tail) => notko::Outcome::Ok(ResourceBinding { ptr, tail }),
             notko::Outcome::Err(e) => notko::Outcome::Err(e),
         }
     }
@@ -230,13 +230,13 @@ where
 
 impl<T: 'static, L> DrainStores for Sv<Column<T>, L>
 where
-    L: StoreValues + ArenaFor + DrainStores,
+    L: StoreValues + BindingsFor + DrainStores,
 {
     fn drain<CS: ColumnStorage>(
         self,
         cs: &mut CS,
         next_id: &mut USize,
-    ) -> notko::Outcome<Self::Arena, BuildError> {
+    ) -> notko::Outcome<Self::Bindings, BuildError> {
         // Column buffers need the plan-phase record count, a later round.
         // The column node is a placeholder: a dangling (well-aligned)
         // pointer and a zero record count.
@@ -247,7 +247,7 @@ where
         let placeholder =
             unsafe { ColumnPtr::new_unchecked(core::ptr::NonNull::<T>::dangling().as_ptr()) };
         match <L as DrainStores>::drain(rest, cs, next_id) {
-            notko::Outcome::Ok(tail) => notko::Outcome::Ok(ArenaColumnNode {
+            notko::Outcome::Ok(tail) => notko::Outcome::Ok(ColumnBinding {
                 _ptr: placeholder,
                 _count: USize::ZERO,
                 tail,
@@ -259,16 +259,16 @@ where
 
 impl<T: 'static, L> DrainStores for Sv<Virtual<T>, L>
 where
-    L: StoreValues + ArenaFor + DrainStores,
+    L: StoreValues + BindingsFor + DrainStores,
 {
     fn drain<CS: ColumnStorage>(
         self,
         cs: &mut CS,
         next_id: &mut USize,
-    ) -> notko::Outcome<Self::Arena, BuildError> {
+    ) -> notko::Outcome<Self::Bindings, BuildError> {
         let (_marker, rest) = self.into_parts();
         match <L as DrainStores>::drain(rest, cs, next_id) {
-            notko::Outcome::Ok(tail) => notko::Outcome::Ok(ArenaVirtualNode {
+            notko::Outcome::Ok(tail) => notko::Outcome::Ok(VirtualBinding {
                 _marker: PhantomData,
                 tail,
             }),

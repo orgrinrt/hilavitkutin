@@ -593,11 +593,18 @@ WorkUnit-value-list parameter alongside its store and provider
 parameters. Before draining the store arena, `build` computes the execution
 plan from the registered bundle and stores its topological permutation on the
 scheduler; a dependency cycle returns `BuildError::PlanFailed` without
-allocating. `run` then dispatches the retained units (resource-only) in that
-topological order, constructing each unit's `EngineCtx` from the arena and
-calling `execute`. Column buffers (which need the plan-phase record count) and
-Kit-contributed units (a Kit hands the builder unit types, not instances) are
-later rounds.
+allocating. After draining the resource columns, `build` reserves the plan's
+flat CSR pools (phases, trunks, fibers, per-unit metadata, per-fiber morsel
+sizes, the RCM renumber) as columns in the same `ColumnStorage`, at a `StoreId`
+namespace continued past the resource columns, and keeps a `Copy` `PlanHandle`
+(base id plus live counts) so the plan persists in the store for the dispatch
+consumer instead of being dropped after `build`. `run` then dispatches the
+retained units (resource-only) in that topological order, constructing each
+unit's `EngineCtx` from the arena and calling `execute`. Per-fiber column
+classification and the dirty masks stay off the store for now (their columnar
+form and their consumers are later rounds), as do column buffers (which need
+the plan-phase record count) and Kit-contributed units (a Kit hands the builder
+unit types, not instances).
 
 The builder takes one verb: `.with(value)`. Every type accepted by
 `.with` impls the sealed `Provider` trait declared in

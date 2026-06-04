@@ -455,7 +455,7 @@ disjoint bespoke stores onto that one contract. These are deferred
 follow-on shapes, recorded here so the framing is honest about the
 target state while the current code still carries the shipped arenas.
 
-The resource data plane (the resource arena, ArenaFor / DrainStores)
+The resource data plane (the resource bindings, BindingsFor / DrainStores)
 collapses onto ColumnStorage: a resource is a decomposed set of scalar
 columns, so it stops being a separate mechanism. The execution plan
 already flattened the dense nested const-array tree into CSR-style flat

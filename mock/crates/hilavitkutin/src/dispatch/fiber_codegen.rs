@@ -28,7 +28,7 @@ use crate::dispatch::wu_fn::invoke_wu_in_fiber;
 /// The first element is the erased instance pointer (`*const W` of a retained
 /// unit, cast to `*const ()`); the second is the per-unit shim that casts it
 /// back, projects the unit's `EngineCtx`, and runs `execute`. `Copy`, so the
-/// slot array materialises trivially. `A` is the arena the shim projects from.
+/// slot array materialises trivially. `A` is the bindings the shim projects from.
 pub type FiberSlot<A> = (*const (), fn(*const (), &A, MorselRange));
 
 /// Placeholder shim for slots past the live unit count.
@@ -37,15 +37,15 @@ pub type FiberSlot<A> = (*const (), fn(*const (), &A, MorselRange));
 /// permutation. Exists so the slot array can be filled before `CollectFiber`
 /// overwrites the live entries.
 #[inline]
-pub fn noop_fiber_shim<A>(_ptr: *const (), _arena: &A, _morsel: MorselRange) {}
+pub fn noop_fiber_shim<A>(_ptr: *const (), _bindings: &A, _morsel: MorselRange) {}
 
 /// Per-unit dispatch shim, monomorphised per `(W, A, RIdx)`.
 ///
 /// Casts the erased pointer back to `&W`, projects the unit's `EngineCtx` from
-/// the arena (resource-only, identical to `RunFiber::run`), and runs `execute`
+/// the bindings (resource-only, identical to `RunFiber::run`), and runs `execute`
 /// through the `invoke_wu_in_fiber` shim.
 #[inline]
-fn fiber_shim<W, A, RIdx>(ptr: *const (), arena: &A, morsel: MorselRange)
+fn fiber_shim<W, A, RIdx>(ptr: *const (), bindings: &A, morsel: MorselRange)
 where
     W: WorkUnit,
     A: Project<<W as WorkUnit>::Read, RIdx>,
@@ -69,7 +69,7 @@ where
     // this dispatch and the cast-and-borrow is valid.
     let unit: &W = unsafe { &*(ptr as *const W) };
     let ctx: <W as WorkUnit>::Ctx<'_> =
-        EngineCtx::project::<A, ColPtrNil, RIdx, Empty, Empty>(arena, &ColPtrNil, morsel);
+        EngineCtx::project::<A, ColPtrNil, RIdx, Empty, Empty>(bindings, &ColPtrNil, morsel);
     invoke_wu_in_fiber(unit, &ctx);
 }
 
@@ -99,7 +99,7 @@ where
     ColPtrNil: ColProject<<W as WorkUnit>::Read, Empty, Out = ColPtrNil>,
     ColPtrNil: ColProject<<W as WorkUnit>::Write, Empty, Out = ColPtrNil>,
     // Tie each unit's Ctx GAT to the projection of its Read set over the
-    // shared arena, with empty column projections, for all frame lifetimes:
+    // shared bindings, with empty column projections, for all frame lifetimes:
     // the same resource-only boundary `RunFiber` enforces. A unit reading or
     // writing a column has a non-empty column projection and fails this bound.
     for<'f> W: WorkUnit<

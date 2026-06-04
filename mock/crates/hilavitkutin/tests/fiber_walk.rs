@@ -1,7 +1,7 @@
 //! RunFiber walk integration test (C2 slice 1).
 //!
 //! Two resource-only WorkUnits read distinct resource types from a real
-//! scheduler arena; `run_fiber_walk` drives the two-unit sequence and the
+//! scheduler bindings; `run_fiber_walk` drives the two-unit sequence and the
 //! test confirms both ran, in declaration order, each resolving its own
 //! registered resource. The single-unit and empty-fiber cases pin the
 //! recursion entry and the `WuNil` terminator. These live under `tests/`
@@ -26,7 +26,7 @@ use hilavitkutin_api::store::Resource;
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 
-/// Wrap a provider in the default-capacity arena store (`D = Dim<256>`).
+/// Wrap a provider in the default-capacity bindings store (`D = Dim<256>`).
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
 }
@@ -68,7 +68,7 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
-// Two distinct resource types: the arena holds both, each unit reads its
+// Two distinct resource types: the bindings holds both, each unit reads its
 // own. Newtypes keep the recorder a single value stream. Resources are
 // `ColumnValue` now, so each derives `Copy`.
 #[derive(Copy, Clone)]
@@ -138,7 +138,7 @@ fn walk_drives_two_resource_units_in_order() {
         .with(Resource::new(Rb(20)))
         .build(store(provider))
         .unwrap_or_else(|_| panic!("build should succeed"));
-    let arena = scheduler.__arena();
+    let bindings = scheduler.__bindings();
 
     // Fiber unit sequence [ReadAWu, ReadBWu]: distinct Read sets, so distinct
     // per-unit Ctx GAT instantiations, the heterogeneity the walk resolves.
@@ -149,7 +149,7 @@ fn walk_drives_two_resource_units_in_order() {
             tail: WuNil,
         },
     };
-    run_fiber_walk(&fiber, arena, MorselRange::new(USize::ZERO, USize::ZERO));
+    run_fiber_walk(&fiber, bindings, MorselRange::new(USize::ZERO, USize::ZERO));
 
     OBSERVED.with(|o| {
         assert_eq!(
@@ -168,13 +168,13 @@ fn walk_single_unit() {
         .with(Resource::new(Ra(42)))
         .build(store(provider))
         .unwrap_or_else(|_| panic!("build should succeed"));
-    let arena = scheduler.__arena();
+    let bindings = scheduler.__bindings();
 
     let fiber = WuCons {
         head: ReadAWu,
         tail: WuNil,
     };
-    run_fiber_walk(&fiber, arena, MorselRange::new(USize::ZERO, USize::ZERO));
+    run_fiber_walk(&fiber, bindings, MorselRange::new(USize::ZERO, USize::ZERO));
 
     OBSERVED.with(|o| assert_eq!(o.borrow().as_slice(), &[42u32]));
 }
@@ -187,9 +187,9 @@ fn walk_empty_fiber_is_noop() {
         .with(Resource::new(Ra(7)))
         .build(store(provider))
         .unwrap_or_else(|_| panic!("build should succeed"));
-    let arena = scheduler.__arena();
+    let bindings = scheduler.__bindings();
 
     // The `WuNil` terminator runs nothing.
-    run_fiber_walk(&WuNil, arena, MorselRange::new(USize::ZERO, USize::ZERO));
+    run_fiber_walk(&WuNil, bindings, MorselRange::new(USize::ZERO, USize::ZERO));
     OBSERVED.with(|o| assert!(o.borrow().is_empty()));
 }
