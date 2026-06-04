@@ -92,7 +92,7 @@ fn context_resolves_resource() {
     let provider = BumpProvider::<256>::new();
     let scheduler = Scheduler::builder()
         .with(Resource::new(99u32))
-        .build(store(provider))
+        .build(store(provider), USize(0))
         .unwrap_or_else(|_| panic!("build should succeed"));
     let bindings = scheduler.__bindings();
 
@@ -184,7 +184,10 @@ fn context_each_covers_morsel() {
         n += 1;
     });
     assert_eq!(n, 3);
-    assert_eq!(visited, [5, 6, 7]);
+    // `each` yields a morsel-relative index `[0, len)`; `read` / `write` add
+    // `morsel.start`. With start = 5 the relative range [0, 3) differs from the
+    // absolute range [5, 8), so this pins relative semantics, not absolute.
+    assert_eq!(visited, [0, 1, 2]);
 }
 
 #[test]
@@ -196,8 +199,11 @@ fn context_batch_full_range() {
     BatchApi::run(ctx.batch(), |start, end| {
         seen.set((start.0, end.0));
     });
-    // Batch hands the full half-open range [start, start + len) in one call.
-    assert_eq!(seen.get(), (5, 8));
+    // Batch hands the morsel-relative half-open range [0, len) in one call; a
+    // body looping it and calling `write(i)` lands at `morsel.start + i`. With
+    // morsel start = 5 the relative range [0, 3) differs from the absolute
+    // [5, 8), so this pins relative semantics.
+    assert_eq!(seen.get(), (0, 3));
 }
 
 // A sample WorkUnit whose execute reads a resource through the Context,
@@ -237,7 +243,7 @@ fn context_drives_wu_execute() {
     let provider = BumpProvider::<256>::new();
     let scheduler = Scheduler::builder()
         .with(Resource::new(7u32))
-        .build(store(provider))
+        .build(store(provider), USize(0))
         .unwrap_or_else(|_| panic!("build should succeed"));
     let bindings = scheduler.__bindings();
 

@@ -6,9 +6,10 @@
 //! value contributes one binding cons-cell: a `Resource<T>` carrier
 //! (`StagedResource<T>`) contributes a `ResourceBinding<T, _>` holding
 //! the moved-in value's `ResourcePtr<T>`; a `Column<T>` marker
-//! contributes a `ColumnBinding` (a no-alloc placeholder, since column
-//! buffers need the plan-phase record count); a `Virtual<T>` marker
-//! contributes a `VirtualBinding` (no backing storage).
+//! contributes a `ColumnBinding` holding the reserved column buffer base
+//! (`ColumnPtr<T>`, sized to the build-time record count) and the count;
+//! a `Virtual<T>` marker contributes a `VirtualBinding` (no backing
+//! storage).
 //!
 //! Keying on `StoreValues` (rather than `Stores`) keeps the drain a
 //! trivial single-list walk and sidesteps the Kit case: a Kit's owned
@@ -19,17 +20,18 @@
 //! registered store values only.
 //!
 //! `DrainStores` walks the value list, reserving a one-record column per
-//! `Resource<T>` through the supplied `ColumnStorage` and recording the
-//! column base pointer. Resources are `ColumnValue` (`Copy + 'static`),
-//! so the bindings hold only raw pointers: the store owns the bytes and
-//! frees them on its own `Drop`, and there is no per-resource destructor
-//! to run. A zero-sized resource occupies no bytes, so it reserves no
-//! column and records a dangling, well-aligned pointer.
+//! `Resource<T>` and a `record_count`-record column per `Column<T>`
+//! through the supplied `ColumnStorage`, and recording each column base
+//! pointer. Resources and column values are `ColumnValue` (`Copy +
+//! 'static`), so the bindings hold only raw pointers: the store owns the
+//! bytes and frees them on its own `Drop`, and there is no per-binding
+//! destructor to run. A zero-sized resource (or zero-record column)
+//! occupies no bytes, so it reserves nothing and records a dangling,
+//! well-aligned pointer.
 
 use core::marker::PhantomData;
 use core::mem::size_of;
 
-use arvo::strategy::Identity;
 use arvo::USize;
 use hilavitkutin_api::store::{Column, StagedResource, Virtual};
 use hilavitkutin_api::store_values::{StoreValues, Sv, SvEmpty};
@@ -72,17 +74,37 @@ impl<T, Tail> ResourceBinding<T, Tail> {
 
 /// Bindings cons-cell for one registered `Column<T>`.
 ///
-/// Placeholder: holds a null `ColumnPtr<T>` and a zero record count.
-/// Column buffer reservation needs the plan-phase record count, a later
-/// round.
+/// Holds the reserved `ColumnPtr<T>` (base of the column buffer sized by
+/// the build-time record count) and the record count, read through
+/// hidden accessors mirroring `ResourceBinding`. A zero-record (or
+/// zero-sized) column records a dangling, well-aligned pointer (never
+/// dereferenced, the morsel is empty).
 pub struct ColumnBinding<T, Tail> {
-    pub(crate) _ptr: ColumnPtr<T>,
-    pub(crate) _count: USize,
-    // Structural cons-list link. The resource `Selector` only traverses
-    // resource nodes, so nothing reads this tail until column-node access
-    // lands; the `BindingsFor` mapping requires it to chain the list.
-    #[allow(dead_code)]
+    pub(crate) ptr: ColumnPtr<T>,
+    pub(crate) count: USize,
     pub(crate) tail: Tail,
+}
+
+impl<T, Tail> ColumnBinding<T, Tail> {
+    /// The recorded column base pointer. Hidden accessor used by the
+    /// column `ColSelector` and by tests. Not part of the supported surface.
+    #[doc(hidden)]
+    pub fn __ptr(&self) -> ColumnPtr<T> {
+        self.ptr
+    }
+
+    /// The reserved record count. Hidden test accessor; not supported surface.
+    #[doc(hidden)]
+    pub fn __count(&self) -> USize {
+        self.count
+    }
+
+    /// The tail node. Hidden accessor used by the pass-through selectors
+    /// and by tests. Not part of the supported surface.
+    #[doc(hidden)]
+    pub fn __tail(&self) -> &Tail {
+        &self.tail
+    }
 }
 
 /// Bindings cons-cell for one registered `Virtual<T>`.
@@ -91,10 +113,16 @@ pub struct ColumnBinding<T, Tail> {
 /// no backing storage.
 pub struct VirtualBinding<T, Tail> {
     pub(crate) _marker: PhantomData<T>,
-    // Structural cons-list link, unread until virtual-node access lands
-    // (the resource `Selector` only traverses resource nodes).
-    #[allow(dead_code)]
     pub(crate) tail: Tail,
+}
+
+impl<T, Tail> VirtualBinding<T, Tail> {
+    /// The tail node. Hidden accessor used by the pass-through selectors
+    /// (a resource or column behind a virtual node). Not supported surface.
+    #[doc(hidden)]
+    pub fn __tail(&self) -> &Tail {
+        &self.tail
+    }
 }
 
 /// Maps a `StoreValues` list to its concrete bindings shape.
@@ -148,14 +176,16 @@ pub trait DrainStores: BindingsFor + sealed::Sealed {
     /// Reserve and populate the bindings, consuming the value list.
     ///
     /// `next_id` is the running drain-order column id, advanced once per
-    /// non-zero-sized resource. On reservation failure the store frees
-    /// every column reserved so far when it is dropped (the resources are
-    /// `Copy`, so no destructor is skipped), and
-    /// `Err(BuildError::AllocationFailed)` returns.
+    /// non-zero-sized resource and once per column. `record_count` is the
+    /// per-frame record count every input column is reserved to. On
+    /// reservation failure the store frees every column reserved so far
+    /// when it is dropped (the resources are `Copy`, so no destructor is
+    /// skipped), and `Err(BuildError::AllocationFailed)` returns.
     fn drain<CS: ColumnStorage>(
         self,
         cs: &mut CS,
         next_id: &mut USize,
+        record_count: USize,
     ) -> notko::Outcome<Self::Bindings, BuildError>;
 }
 
@@ -165,6 +195,7 @@ impl DrainStores for SvEmpty {
         self,
         _cs: &mut CS,
         _next_id: &mut USize,
+        _record_count: USize,
     ) -> notko::Outcome<Self::Bindings, BuildError> {
         notko::Outcome::Ok(BindingNil)
     }
@@ -178,6 +209,7 @@ where
         self,
         cs: &mut CS,
         next_id: &mut USize,
+        record_count: USize,
     ) -> notko::Outcome<Self::Bindings, BuildError> {
         let (carrier, rest) = self.into_parts();
         let value = carrier.into_inner();
@@ -221,14 +253,14 @@ where
             // SAFETY: non-null checked above.
             unsafe { ResourcePtr::new_unchecked(typed) }
         };
-        match <L as DrainStores>::drain(rest, cs, next_id) {
+        match <L as DrainStores>::drain(rest, cs, next_id, record_count) {
             notko::Outcome::Ok(tail) => notko::Outcome::Ok(ResourceBinding { ptr, tail }),
             notko::Outcome::Err(e) => notko::Outcome::Err(e),
         }
     }
 }
 
-impl<T: 'static, L> DrainStores for Sv<Column<T>, L>
+impl<T: ColumnValue, L> DrainStores for Sv<Column<T>, L>
 where
     L: StoreValues + BindingsFor + DrainStores,
 {
@@ -236,20 +268,41 @@ where
         self,
         cs: &mut CS,
         next_id: &mut USize,
+        record_count: USize,
     ) -> notko::Outcome<Self::Bindings, BuildError> {
-        // Column buffers need the plan-phase record count, a later round.
-        // The column node is a placeholder: a dangling (well-aligned)
-        // pointer and a zero record count.
+        // Input column: reserve a buffer sized by the record count at a
+        // `StoreId` continued past the resource columns, and record the real
+        // base pointer plus the count. Records are written by producer
+        // WorkUnits during the frame; the drain reserves, it does not
+        // initialise.
         let (_marker, rest) = self.into_parts();
-        // SAFETY: `NonNull::dangling`-shaped pointer; never dereferenced.
-        // `ColumnPtr::new_unchecked` only requires non-null, and
-        // `NonNull::dangling` is non-null.
-        let placeholder =
-            unsafe { ColumnPtr::new_unchecked(core::ptr::NonNull::<T>::dangling().as_ptr()) };
-        match <L as DrainStores>::drain(rest, cs, next_id) {
+        let id = StoreId(*next_id);
+        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal drain-order counter; tracked: #72
+        *next_id = USize((*next_id).0 + 1);
+        match cs.reserve::<T>(id, record_count) {
+            notko::Outcome::Ok(()) => {}
+            notko::Outcome::Err(_) => return notko::Outcome::Err(BuildError::AllocationFailed),
+        }
+        // SAFETY: `id` names a column just reserved for `record_count`
+        // records of `T`; the store returns its 64-byte-aligned base pointer.
+        let typed = unsafe { cs.column_ptr_mut::<T>(id) };
+        let ptr = if typed.is_null() {
+            // A zero-record (or zero-sized `T`) column reserves no bytes and
+            // hands back a null base. The morsel is then empty, so the column
+            // is never read or written; record a dangling, well-aligned,
+            // non-null pointer to satisfy `ColumnPtr`'s invariant.
+            // SAFETY: `NonNull::dangling` is non-null and `T`-aligned; never
+            // dereferenced (the empty morsel skips every access).
+            unsafe { ColumnPtr::new_unchecked(core::ptr::NonNull::<T>::dangling().as_ptr()) }
+        } else {
+            // SAFETY: `typed` is non-null (checked), 64-byte aligned, and sized
+            // for `record_count` records (just reserved).
+            unsafe { ColumnPtr::new_unchecked(typed) }
+        };
+        match <L as DrainStores>::drain(rest, cs, next_id, record_count) {
             notko::Outcome::Ok(tail) => notko::Outcome::Ok(ColumnBinding {
-                _ptr: placeholder,
-                _count: USize::ZERO,
+                ptr,
+                count: record_count,
                 tail,
             }),
             notko::Outcome::Err(e) => notko::Outcome::Err(e),
@@ -265,9 +318,10 @@ where
         self,
         cs: &mut CS,
         next_id: &mut USize,
+        record_count: USize,
     ) -> notko::Outcome<Self::Bindings, BuildError> {
         let (_marker, rest) = self.into_parts();
-        match <L as DrainStores>::drain(rest, cs, next_id) {
+        match <L as DrainStores>::drain(rest, cs, next_id, record_count) {
             notko::Outcome::Ok(tail) => notko::Outcome::Ok(VirtualBinding {
                 _marker: PhantomData,
                 tail,

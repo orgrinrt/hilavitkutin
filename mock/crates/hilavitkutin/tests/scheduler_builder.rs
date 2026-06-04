@@ -89,6 +89,7 @@ fn store() -> ArenaColumnStorage<TestProvider<4096>> {
 #[derive(Copy, Clone)]
 pub struct Interner;
 pub struct Workspace;
+#[derive(Copy, Clone)]
 pub struct FileInfo;
 
 // ---------------------------------------------------------------------
@@ -125,14 +126,14 @@ impl Kit for WorkspaceKit {
 
 #[test]
 fn empty_build() {
-    let _ = Scheduler::builder().build(store()).ok();
+    let _ = Scheduler::builder().build(store(), USize(0)).ok();
 }
 
 #[test]
 fn raw_resource_registration_builds() {
     let _ = Scheduler::builder()
         .with(Resource::new(Interner))
-        .build(store())
+        .build(store(), USize(0))
         .ok();
 }
 
@@ -140,13 +141,13 @@ fn raw_resource_registration_builds() {
 fn raw_column_registration_builds() {
     let _ = Scheduler::builder()
         .with(Column::<FileInfo>::new())
-        .build(store())
+        .build(store(), USize(0))
         .ok();
 }
 
 #[test]
 fn kit_only_builds() {
-    let _ = Scheduler::builder().with(InternerKit).build(store()).ok();
+    let _ = Scheduler::builder().with(InternerKit).build(store(), USize(0)).ok();
 }
 
 #[test]
@@ -154,7 +155,7 @@ fn two_kits_chained_build() {
     let _ = Scheduler::builder()
         .with(InternerKit)
         .with(WorkspaceKit)
-        .build(store())
+        .build(store(), USize(0))
         .ok();
 }
 
@@ -164,7 +165,7 @@ fn mixed_kit_and_raw_build() {
         .with(WorkspaceKit)
         .with(Resource::new(Interner))
         .with(Column::<FileInfo>::new())
-        .build(store())
+        .build(store(), USize(0))
         .ok();
 }
 
@@ -172,7 +173,7 @@ fn mixed_kit_and_raw_build() {
 fn scheduler_constructs_via_build() {
     // A scheduler now requires a memory provider; constructing through
     // an empty builder with a provider is the no-store base case.
-    let _ = Scheduler::builder().build(store()).ok();
+    let _ = Scheduler::builder().build(store(), USize(0)).ok();
 }
 
 // ---------------------------------------------------------------------
@@ -350,7 +351,7 @@ fn wu_with_raw_resource_builds() {
     let _ = Scheduler::builder()
         .with(Resource::new(Interner))
         .with(ReadInterner)
-        .build(store())
+        .build(store(), USize(0))
         .ok();
 }
 
@@ -359,7 +360,7 @@ fn wu_with_kit_builds() {
     let _ = Scheduler::builder()
         .with(InternerKit)
         .with(ReadInterner)
-        .build(store())
+        .build(store(), USize(0))
         .ok();
 }
 
@@ -370,7 +371,7 @@ fn two_wus_with_two_kits_build() {
         .with(WorkspaceKit)
         .with(ReadInterner)
         .with(DiscoverFiles)
-        .build(store())
+        .build(store(), USize(0))
         .ok();
 }
 
@@ -419,7 +420,7 @@ fn smoke_fifty_wus() {
         .with(NoStores).with(NoStores).with(NoStores).with(NoStores).with(NoStores)
         .with(NoStores).with(NoStores).with(NoStores).with(NoStores).with(NoStores)
         .with(NoStores).with(NoStores).with(NoStores).with(NoStores).with(NoStores)
-        .build(store())
+        .build(store(), USize(0))
         .ok();
 }
 
@@ -492,7 +493,7 @@ fn smoke_wu_with_sixteen_stores() {
         .with(Resource::new(S8)).with(Resource::new(S9)).with(Resource::new(S10)).with(Resource::new(S11))
         .with(Resource::new(S12)).with(Resource::new(S13)).with(Resource::new(S14)).with(Resource::new(S15))
         .with(SixteenStores)
-        .build(store())
+        .build(store(), USize(0))
         .ok();
 }
 

@@ -191,11 +191,13 @@ impl PlanHandle {
 /// Compute the execution plan for a registered bundle.
 ///
 /// Projects the `Wus` bundle into `PlanInputs` over the `Stores` access set
-/// (resource-only this slice, so the record count is zero) and runs
-/// `compute_execution_plan` over `DefaultPlanDims`. Returns the plan or
-/// `BuildError::PlanFailed` on a plan-stage failure (a dependency cycle).
-/// Computed before any allocation, so a plan failure allocates nothing.
+/// with the frame `record_count` (the dimension that sizes the per-fiber
+/// morsels and selects the phase configs) and runs `compute_execution_plan`
+/// over `DefaultPlanDims`. Returns the plan or `BuildError::PlanFailed` on a
+/// plan-stage failure (a dependency cycle). Computed before any allocation, so
+/// a plan failure allocates nothing.
 fn compute_plan<Wus, Stores, BWit>(
+    record_count: USize,
 ) -> notko::Outcome<ExecutionPlan<DefaultPlanDims>, BuildError>
 where
     Wus: BundleProject<
@@ -211,7 +213,7 @@ where
         BWit,
         <DefaultPlanDims as PlanDims>::Units,
         <DefaultPlanDims as PlanDims>::Stores,
-    >(USize::ZERO);
+    >(record_count);
     match compute_execution_plan::<DefaultPlanDims>(&inputs) {
         notko::Outcome::Ok(plan) => notko::Outcome::Ok(plan),
         notko::Outcome::Err(_) => notko::Outcome::Err(BuildError::PlanFailed),
@@ -349,6 +351,11 @@ pub struct Scheduler<
     /// columns. `PlanHandle::empty()` when no plan is store-backed (the bare
     /// scheduler). The dispatch consumer reads the plan back through it.
     plan_handle: PlanHandle,
+    /// The frame record count fixed at `build`. Input columns are reserved
+    /// to it, and `run` dispatches over a single morsel covering it. The
+    /// morsel-loop split that windows this into multiple morsels is a later
+    /// round (#343).
+    record_count: USize,
     // The dirty bitmap width matches DefaultRunCfg::MAX_PLAN_AFFECTING_RESOURCES = USize(256).
     // The intended lift is `[AtomicBool; Cfg::MAX_PLAN_AFFECTING_RESOURCES.0]` under
     // `feature(generic_const_exprs)`, but current rustc rejects field access on generic
@@ -499,10 +506,11 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
     /// units via `CollectFiber` (one `FiberSlot` per unit, the unused tail
     /// filled with `noop_fiber_shim` placeholders), then walks
     /// `topo_order[0 .. topo_count]`, dispatching each step's slot. Each
-    /// slot's shim projects that unit's `EngineCtx` from the bindings and runs
-    /// `execute`. Resource-only this slice. The `Witnesses` parameter is the
-    /// per-unit projection-index list, inferred at the call site, so
-    /// `scheduler.run()` needs no turbofish.
+    /// slot's shim projects that unit's `EngineCtx` from the bindings
+    /// (resources and columns alike) and runs `execute` over a single morsel
+    /// covering the record count. The `Witnesses` parameter is the per-unit
+    /// projection-index list, inferred at the call site, so `scheduler.run()`
+    /// needs no turbofish.
     ///
     /// The slot array is rebuilt each call because a stored instance pointer
     /// would make the scheduler self-referential. The real morsel loop
@@ -526,7 +534,10 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
             (core::ptr::null(), noop_fiber_shim::<<Vals as BindingsFor>::Bindings>);
         let mut slots = <D::Units as Capacity>::filled(placeholder);
         self.wu_values.collect(slots.as_mut());
-        let morsel = MorselRange::new(USize::ZERO, USize::ZERO);
+        // Single morsel covering every record. The morsel-loop split that
+        // windows the record range into multiple morsels with micro-morsel
+        // sync points is a later round (#343).
+        let morsel = MorselRange::new(USize::ZERO, self.record_count);
         let order = self.topo_order.as_ref();
         let live = slots.as_ref();
         let count = self.topo_count.0;
@@ -584,6 +595,7 @@ impl<Cfg: RunCfg> Default for Scheduler<Cfg, WuNil, SvEmpty, NullColumnStorage> 
             topo_order: <<DefaultPlanDims as PlanDims>::Units as Capacity>::filled(USize::ZERO),
             topo_count: USize::ZERO,
             plan_handle: PlanHandle::empty(),
+            record_count: USize::ZERO,
             plan_dirty: [const { AtomicBool::new(false) }; 256],
             plan_cache: PlanCache::new(),
             bindings: crate::resource::bindings::BindingNil,
@@ -687,6 +699,7 @@ where
     pub fn build<BWit, CS: ColumnStorage>(
         self,
         storage: CS,
+        record_count: USize,
     ) -> notko::Outcome<Scheduler<DefaultRunCfg, WuVals, Vals, CS>, BuildError>
     where
         Wus: BundleProject<
@@ -699,14 +712,14 @@ where
         let wu_values = self.wu_values;
         // Compute the plan from the registered bundle before draining the
         // store bindings, so a dependency cycle returns without allocating.
-        let plan = match compute_plan::<Wus, Stores, BWit>() {
+        let plan = match compute_plan::<Wus, Stores, BWit>(record_count) {
             notko::Outcome::Ok(p) => p,
             notko::Outcome::Err(e) => return notko::Outcome::Err(e),
         };
         let (topo_order, topo_count) = extract_topo_order(&plan);
         let mut storage = storage;
         let mut next_id = USize::ZERO;
-        match <Vals as DrainStores>::drain(self.store_values, &mut storage, &mut next_id) {
+        match <Vals as DrainStores>::drain(self.store_values, &mut storage, &mut next_id, record_count) {
             notko::Outcome::Ok(bindings) => {
                 // Store-back the plan's flat pools at the `StoreId` namespace
                 // continued past the resource columns the drain reserved.
@@ -719,6 +732,7 @@ where
                     topo_order,
                     topo_count,
                     plan_handle,
+                    record_count,
                     plan_dirty: [const { AtomicBool::new(false) }; 256],
                     plan_cache: PlanCache::new(),
                     bindings,
@@ -738,6 +752,7 @@ where
     pub fn build_with<Cfg: RunCfg, BWit, CS: ColumnStorage>(
         self,
         storage: CS,
+        record_count: USize,
     ) -> notko::Outcome<Scheduler<Cfg, WuVals, Vals, CS>, BuildError>
     where
         Wus: BundleProject<
@@ -750,14 +765,14 @@ where
         let wu_values = self.wu_values;
         // Compute the plan from the registered bundle before draining the
         // store bindings, so a dependency cycle returns without allocating.
-        let plan = match compute_plan::<Wus, Stores, BWit>() {
+        let plan = match compute_plan::<Wus, Stores, BWit>(record_count) {
             notko::Outcome::Ok(p) => p,
             notko::Outcome::Err(e) => return notko::Outcome::Err(e),
         };
         let (topo_order, topo_count) = extract_topo_order(&plan);
         let mut storage = storage;
         let mut next_id = USize::ZERO;
-        match <Vals as DrainStores>::drain(self.store_values, &mut storage, &mut next_id) {
+        match <Vals as DrainStores>::drain(self.store_values, &mut storage, &mut next_id, record_count) {
             notko::Outcome::Ok(bindings) => {
                 // Store-back the plan's flat pools at the `StoreId` namespace
                 // continued past the resource columns the drain reserved.
@@ -770,6 +785,7 @@ where
                     topo_order,
                     topo_count,
                     plan_handle,
+                    record_count,
                     plan_dirty: [const { AtomicBool::new(false) }; 256],
                     plan_cache: PlanCache::new(),
                     bindings,

@@ -135,7 +135,7 @@ fn resource_bindings_round_trip() {
     let provider = BumpProvider::<256>::new();
     let scheduler = Scheduler::builder()
         .with(Resource::new(Ra(99)))
-        .build(store(provider))
+        .build(store(provider), USize(0))
         .unwrap_or_else(|_| panic!("build should succeed"));
     // The bindings holds one ResourceBinding<Ra, BindingNil>; deref its
     // recorded pointer, which now points into the store-reserved column,
@@ -155,7 +155,7 @@ fn resource_bindings_multiple_resources() {
         .with(Resource::new(Ra(1)))
         .with(Resource::new(Rb(2)))
         .with(Resource::new(Rc(3)))
-        .build(store(provider))
+        .build(store(provider), USize(0))
         .unwrap_or_else(|_| panic!("build should succeed"));
     // `.with` prepends, so registration order (Ra, Rb, Rc) reverses on
     // the cons-list: head is the last registered (Rc), then Rb, then Ra.
@@ -182,7 +182,7 @@ fn resource_bindings_drop_deallocates() {
         let scheduler = Scheduler::builder()
             .with(Resource::new(Ra(1)))
             .with(Resource::new(2u64))
-            .build(store(provider))
+            .build(store(provider), USize(0))
             .unwrap_or_else(|_| panic!("build should succeed"));
         // two resources reserved one column each, none freed yet.
         assert_eq!(ALLOCS.load(Ordering::SeqCst), 2);
@@ -213,7 +213,7 @@ fn zst_resource_round_trips_without_reserving() {
         };
         let scheduler = Scheduler::builder()
             .with(Resource::new(Marker))
-            .build(store(provider))
+            .build(store(provider), USize(0))
             .unwrap_or_else(|_| panic!("build should succeed"));
         // No allocation for a ZST resource: the drain skips the reserve.
         assert_eq!(ALLOCS.load(Ordering::SeqCst), 0);
@@ -234,6 +234,6 @@ fn allocation_failure_returns_err() {
     // AllocationFailed.
     let result = Scheduler::builder()
         .with(Resource::new(Ra(5)))
-        .build(store(NullMemoryProvider));
+        .build(store(NullMemoryProvider), USize(0));
     assert_eq!(result.err(), notko::Maybe::Is(BuildError::AllocationFailed));
 }

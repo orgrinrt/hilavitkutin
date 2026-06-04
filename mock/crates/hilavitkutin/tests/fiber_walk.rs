@@ -136,7 +136,7 @@ fn walk_drives_two_resource_units_in_order() {
     let scheduler = Scheduler::builder()
         .with(Resource::new(Ra(10)))
         .with(Resource::new(Rb(20)))
-        .build(store(provider))
+        .build(store(provider), USize(0))
         .unwrap_or_else(|_| panic!("build should succeed"));
     let bindings = scheduler.__bindings();
 
@@ -166,7 +166,7 @@ fn walk_single_unit() {
     let provider = BumpProvider::<512>::new();
     let scheduler = Scheduler::builder()
         .with(Resource::new(Ra(42)))
-        .build(store(provider))
+        .build(store(provider), USize(0))
         .unwrap_or_else(|_| panic!("build should succeed"));
     let bindings = scheduler.__bindings();
 
@@ -185,7 +185,7 @@ fn walk_empty_fiber_is_noop() {
     let provider = BumpProvider::<512>::new();
     let scheduler = Scheduler::builder()
         .with(Resource::new(Ra(7)))
-        .build(store(provider))
+        .build(store(provider), USize(0))
         .unwrap_or_else(|_| panic!("build should succeed"));
     let bindings = scheduler.__bindings();
 

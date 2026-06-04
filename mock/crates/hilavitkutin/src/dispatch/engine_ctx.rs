@@ -29,6 +29,7 @@
 
 use core::marker::PhantomData;
 
+use arvo::strategy::Identity;
 use arvo::USize;
 use hilavitkutin_api::access::{AccessSet, Cons, Contains, Empty};
 use hilavitkutin_api::column_value::ColumnValue;
@@ -39,7 +40,7 @@ use hilavitkutin_api::context::{
 use hilavitkutin_api::store::{Column, Resource, Virtual};
 
 use crate::dispatch::morsel::MorselRange;
-use crate::resource::bindings::ResourceBinding;
+use crate::resource::bindings::{ColumnBinding, ResourceBinding, VirtualBinding};
 use crate::resource::provenance::{ColumnPtr, ResourcePtr};
 
 // ---------------------------------------------------------------------
@@ -143,6 +144,31 @@ where
     }
 }
 
+// Pass-through over column and virtual nodes: a resource declared after a
+// column (or virtual) in the registration order is reachable by recursing
+// the tail. Without these, `Selector` traversed only resource nodes, so a
+// resource behind a column was unreachable (the resource-after-column gap).
+
+impl<T, U, Tail, I> Selector<T, There<I>> for ColumnBinding<U, Tail>
+where
+    Tail: Selector<T, I>,
+{
+    #[inline(always)]
+    fn get(&self) -> ResourcePtr<T> {
+        self.__tail().get()
+    }
+}
+
+impl<T, U, Tail, I> Selector<T, There<I>> for VirtualBinding<U, Tail>
+where
+    Tail: Selector<T, I>,
+{
+    #[inline(always)]
+    fn get(&self) -> ResourcePtr<T> {
+        self.__tail().get()
+    }
+}
+
 // Over the projected resource bundle (`PtrCons` / `PtrNil`).
 
 impl<T, Tail> Selector<T, Here> for PtrCons<T, Tail> {
@@ -186,6 +212,49 @@ where
     #[inline(always)]
     fn get(&self) -> ColumnPtr<T> {
         self.tail.get()
+    }
+}
+
+// Over the scheduler bindings nodes (Shape A): the same bindings cons-list
+// that resolves resources via `Selector` resolves columns via `ColSelector`,
+// so one witness list into the one `ColumnStorage` serves both. `Here`
+// matches a `ColumnBinding<T, _>`; `There<I>` recurses the tail over any node
+// kind (a column behind a resource, column, or virtual node).
+
+impl<T, Tail> ColSelector<T, Here> for ColumnBinding<T, Tail> {
+    #[inline(always)]
+    fn get(&self) -> ColumnPtr<T> {
+        self.__ptr()
+    }
+}
+
+impl<T, U, Tail, I> ColSelector<T, There<I>> for ColumnBinding<U, Tail>
+where
+    Tail: ColSelector<T, I>,
+{
+    #[inline(always)]
+    fn get(&self) -> ColumnPtr<T> {
+        self.__tail().get()
+    }
+}
+
+impl<T, U, Tail, I> ColSelector<T, There<I>> for ResourceBinding<U, Tail>
+where
+    Tail: ColSelector<T, I>,
+{
+    #[inline(always)]
+    fn get(&self) -> ColumnPtr<T> {
+        self.__tail().get()
+    }
+}
+
+impl<T, U, Tail, I> ColSelector<T, There<I>> for VirtualBinding<U, Tail>
+where
+    Tail: ColSelector<T, I>,
+{
+    #[inline(always)]
+    fn get(&self) -> ColumnPtr<T> {
+        self.__tail().get()
     }
 }
 
@@ -620,7 +689,9 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols> VirtualFirerApi<
     }
 }
 
-// EachApi: per-record loop over the morsel.
+// EachApi: per-record loop yielding a morsel-relative index `[0, len)`.
+// `read` / `write` add `morsel.start` to recover the absolute column index,
+// so the body works for any morsel start.
 
 impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols> EachApi<R, W>
     for EngineCtx<'frame, R, W, RBundle, RCols, WCols>
@@ -630,16 +701,17 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols> EachApi<R, W>
     where
         F: FnMut(USize),
     {
-        let mut i = self.morsel.start;
-        let end = self.morsel.end();
-        while i.0 < end.0 {
+        let mut i = USize::ZERO;
+        let len = self.morsel.len;
+        while i.0 < len.0 {
             f(i);
             i = USize(i.0 + 1);
         }
     }
 }
 
-// BatchApi: one call with the full morsel range.
+// BatchApi: one call with the morsel-relative half-open range `[0, len)`.
+// A body looping that range and calling `write(i)` lands at `morsel.start + i`.
 
 impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols> BatchApi<R, W>
     for EngineCtx<'frame, R, W, RBundle, RCols, WCols>
@@ -649,11 +721,12 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols> BatchApi<R, W>
     where
         F: FnMut(USize, USize),
     {
-        f(self.morsel.start, self.morsel.end());
+        f(USize::ZERO, self.morsel.len);
     }
 }
 
-// ReduceApi: fold over the morsel range.
+// ReduceApi: fold yielding a morsel-relative index `[0, len)`, matching
+// `EachApi`. `read` / `write` add `morsel.start` for the absolute index.
 
 impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols> ReduceApi<R, W>
     for EngineCtx<'frame, R, W, RBundle, RCols, WCols>
@@ -665,9 +738,9 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols> ReduceApi<R, W>
         F: FnMut(A, USize) -> A,
     {
         let mut acc = init;
-        let mut i = self.morsel.start;
-        let end = self.morsel.end();
-        while i.0 < end.0 {
+        let mut i = USize::ZERO;
+        let len = self.morsel.len;
+        while i.0 < len.0 {
             acc = f(acc, i);
             i = USize(i.0 + 1);
         }
