@@ -10,16 +10,17 @@
 //!
 //! A slot is an erased instance pointer plus a per-unit shim function. The
 //! shim casts the pointer back to the unit's concrete type, projects its
-//! `EngineCtx` exactly as `RunFiber::run` does, and runs `execute` via the
-//! `invoke_wu_in_fiber` shim. The walk stays resource-only: the projection
-//! bounds mirror `RunFiber`, so a unit that reads or writes a column has a
-//! non-empty column projection and cannot enter the collection.
+//! `EngineCtx` from the scheduler bindings (resources via `Project`, columns
+//! via `ColProject` over the Read and Write sets, Shape A), and runs `execute`
+//! via the `invoke_wu_in_fiber` shim. A column-bearing unit projects its real
+//! column pointers; a resource-only unit projects empty column bundles and
+//! dispatches exactly as before.
 
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::work_unit_values::{WuCons, WuNil};
 use hilavitkutin_api::WorkUnit;
 
-use crate::dispatch::engine_ctx::{ColProject, ColPtrNil, EngineCtx, Project};
+use crate::dispatch::engine_ctx::{ColProject, EngineCtx, Project};
 use crate::dispatch::morsel::MorselRange;
 use crate::dispatch::wu_fn::invoke_wu_in_fiber;
 
@@ -39,26 +40,28 @@ pub type FiberSlot<A> = (*const (), fn(*const (), &A, MorselRange));
 #[inline]
 pub fn noop_fiber_shim<A>(_ptr: *const (), _bindings: &A, _morsel: MorselRange) {}
 
-/// Per-unit dispatch shim, monomorphised per `(W, A, RIdx)`.
+/// Per-unit dispatch shim, monomorphised per `(W, A, RIdx, RCIdx, WCIdx)`.
 ///
 /// Casts the erased pointer back to `&W`, projects the unit's `EngineCtx` from
-/// the bindings (resource-only, identical to `RunFiber::run`), and runs `execute`
-/// through the `invoke_wu_in_fiber` shim.
+/// the bindings (resources via `Project`, columns via `ColProject` over the
+/// Read and Write sets, fully-qualified as `EngineCtx::project` does it; the
+/// bindings serve as both sources, Shape A), and runs `execute` through the
+/// `invoke_wu_in_fiber` shim.
 #[inline]
-fn fiber_shim<W, A, RIdx>(ptr: *const (), bindings: &A, morsel: MorselRange)
+fn fiber_shim<W, A, RIdx, RCIdx, WCIdx>(ptr: *const (), bindings: &A, morsel: MorselRange)
 where
     W: WorkUnit,
     A: Project<<W as WorkUnit>::Read, RIdx>,
-    ColPtrNil: ColProject<<W as WorkUnit>::Read, Empty, Out = ColPtrNil>,
-    ColPtrNil: ColProject<<W as WorkUnit>::Write, Empty, Out = ColPtrNil>,
+    A: ColProject<<W as WorkUnit>::Read, RCIdx>,
+    A: ColProject<<W as WorkUnit>::Write, WCIdx>,
     for<'f> W: WorkUnit<
         Ctx<'f> = EngineCtx<
             'f,
             <W as WorkUnit>::Read,
             <W as WorkUnit>::Write,
             <A as Project<<W as WorkUnit>::Read, RIdx>>::Out,
-            ColPtrNil,
-            ColPtrNil,
+            <A as ColProject<<W as WorkUnit>::Read, RCIdx>>::Out,
+            <A as ColProject<<W as WorkUnit>::Write, WCIdx>>::Out,
         >,
     >,
 {
@@ -68,15 +71,20 @@ where
     // moves it across a `run` call, so the instance lives for the duration of
     // this dispatch and the cast-and-borrow is valid.
     let unit: &W = unsafe { &*(ptr as *const W) };
+    // The bindings are both the resource source and the column source; the
+    // column pointers are read out (Copy) at projection time, so the second
+    // borrow needs only to outlive this call.
     let ctx: <W as WorkUnit>::Ctx<'_> =
-        EngineCtx::project::<A, ColPtrNil, RIdx, Empty, Empty>(bindings, &ColPtrNil, morsel);
+        EngineCtx::project::<A, A, RIdx, RCIdx, WCIdx>(bindings, bindings, morsel);
     invoke_wu_in_fiber(unit, &ctx);
 }
 
 /// Record one `FiberSlot` per retained unit, at its registration index.
 ///
-/// `Witnesses` is the parallel per-unit resource-projection index list,
-/// inferred at the call site exactly as `RunFiber`'s `Witnesses`. The walk
+/// `Witnesses` is the parallel per-unit projection-index list: each element is
+/// the triple `(RIdx, RCIdx, WCIdx)` (the resource-projection index for the
+/// Read set, the column-projection index for the Read set, and for the Write
+/// set), all inferred at the call site, no caller turbofish. The walk
 /// writes the head unit's slot into the first element of `slots` and recurses
 /// on the tail, so a unit's slot index equals its cons-list position. That
 /// position equals the unit's `unit_meta` id index, because the builder
@@ -92,24 +100,27 @@ impl<A> CollectFiber<A, Empty> for WuNil {
     fn collect(&self, _slots: &mut [FiberSlot<A>]) {}
 }
 
-impl<A, W, Tail, RIdx, WTail> CollectFiber<A, Cons<RIdx, WTail>> for WuCons<W, Tail>
+impl<A, W, Tail, RIdx, RCIdx, WCIdx, WTail>
+    CollectFiber<A, Cons<(RIdx, RCIdx, WCIdx), WTail>> for WuCons<W, Tail>
 where
     W: WorkUnit,
     A: Project<<W as WorkUnit>::Read, RIdx>,
-    ColPtrNil: ColProject<<W as WorkUnit>::Read, Empty, Out = ColPtrNil>,
-    ColPtrNil: ColProject<<W as WorkUnit>::Write, Empty, Out = ColPtrNil>,
-    // Tie each unit's Ctx GAT to the projection of its Read set over the
-    // shared bindings, with empty column projections, for all frame lifetimes:
-    // the same resource-only boundary `RunFiber` enforces. A unit reading or
-    // writing a column has a non-empty column projection and fails this bound.
+    A: ColProject<<W as WorkUnit>::Read, RCIdx>,
+    A: ColProject<<W as WorkUnit>::Write, WCIdx>,
+    // Tie each unit's Ctx GAT to the projection of its Read set (resources)
+    // and its Read / Write sets (columns) over the shared bindings, for all
+    // frame lifetimes. A resource-only unit projects empty column bundles
+    // (`ColProject` over a column-free set is `ColPtrNil`), so it dispatches
+    // exactly as before; a column-bearing unit projects its real column
+    // pointers.
     for<'f> W: WorkUnit<
         Ctx<'f> = EngineCtx<
             'f,
             <W as WorkUnit>::Read,
             <W as WorkUnit>::Write,
             <A as Project<<W as WorkUnit>::Read, RIdx>>::Out,
-            ColPtrNil,
-            ColPtrNil,
+            <A as ColProject<<W as WorkUnit>::Read, RCIdx>>::Out,
+            <A as ColProject<<W as WorkUnit>::Write, WCIdx>>::Out,
         >,
     >,
     Tail: CollectFiber<A, WTail>,
@@ -123,7 +134,7 @@ where
         if let Some((first, rest)) = slots.split_first_mut() {
             *first = (
                 &self.head as *const W as *const (),
-                fiber_shim::<W, A, RIdx>,
+                fiber_shim::<W, A, RIdx, RCIdx, WCIdx>,
             );
             self.tail.collect(rest);
         }

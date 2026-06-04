@@ -157,7 +157,7 @@ fn run_walks_two_registered_units() {
         .with(Resource::new(Rb(20)))
         .with(ReadAWu)
         .with(ReadBWu)
-        .build(store(provider))
+        .build(store(provider), USize(0))
         .unwrap_or_else(|_| panic!("build should succeed"));
 
     let result = scheduler.run();
@@ -180,7 +180,7 @@ fn run_walks_single_registered_unit() {
     let mut scheduler = Scheduler::builder()
         .with(Resource::new(Ra(42)))
         .with(ReadAWu)
-        .build(store(provider))
+        .build(store(provider), USize(0))
         .unwrap_or_else(|_| panic!("build should succeed"));
 
     let result = scheduler.run();
@@ -237,7 +237,7 @@ fn run_dispatches_in_topological_order_not_registration() {
         .with(Resource::new(Ra(10)))
         .with(WriteAWu)
         .with(ReadAWu)
-        .build(store(provider))
+        .build(store(provider), USize(0))
         .unwrap_or_else(|_| panic!("build should succeed"));
 
     let result = scheduler.run();
@@ -311,7 +311,7 @@ fn build_rejects_a_cyclic_registration() {
         .with(Resource::new(Rb(2)))
         .with(CycleAWu)
         .with(CycleBWu)
-        .build(store(provider));
+        .build(store(provider), USize(0));
 
     assert!(matches!(result, Outcome::Err(BuildError::PlanFailed)));
 }
@@ -329,7 +329,7 @@ fn build_store_backs_the_plan_unit_meta() {
         .with(Resource::new(Ra(10)))
         .with(WriteAWu)
         .with(ReadAWu)
-        .build(store(provider))
+        .build(store(provider), USize(0))
         .unwrap_or_else(|_| panic!("build should succeed"));
 
     let handle = scheduler.__plan_handle();
