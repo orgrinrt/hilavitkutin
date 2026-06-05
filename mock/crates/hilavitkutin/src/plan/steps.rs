@@ -269,7 +269,8 @@ where
         k += 1;
     }
 
-    let waists: Mask<Bits<64, Hot, Unsigned>> = waist_detect::<D::Units>(&adj, &topo_nodes);
+    let waists: Mask<Bits<64, Hot, Unsigned>> =
+        waist_detect::<D::Units, Bits<64, Hot, Unsigned>>(&adj, &topo_nodes);
 
     // Phase 0 starts at position 0; each waist position (with a successor)
     // opens a new phase at the next position.
