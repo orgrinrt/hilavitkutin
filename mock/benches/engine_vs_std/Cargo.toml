@@ -6,6 +6,10 @@ version = "0.0.0"
 edition = "2021"
 publish = false
 
+[lib]
+name = "engine_vs_std"
+path = "src/lib.rs"
+
 [[bin]]
 name = "engine_vs_std"
 path = "src/main.rs"

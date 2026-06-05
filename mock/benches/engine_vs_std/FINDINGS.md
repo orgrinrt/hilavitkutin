@@ -1,4 +1,4 @@
-# engine_vs_std (#660): single-core engine vs optimal fused std
+# engine_vs_std (#660 / #664): single-core engine vs optimal fused std
 
 Op asked, before any multi-threaded work, whether the hilavitkutin engine
 running single-core beats the same workload written on a std base as optimally
@@ -95,3 +95,82 @@ body. Both are codegen work well beyond this bench.
   it in full. The std startup measures allocation of its two buffers only, not
   seeding them; the input fill is untimed, the analogue of the engine's untimed
   In-column population (both arms time pure compute over already-seeded input).
+
+## Perf gate (#664): the standing red oracle
+
+The #660 finding above is prose; the gate turns it into an executable
+definition of "the single-core engine is complete". It lives as `#[ignore]`
+tests in `tests/perf_gate.rs` over the same harness (`src/lib.rs`), asserting
+the engine is no worse than the optimal fused std arm. It is RED until Phase D
+(#340) lands the two load-bearing mechanisms (dispatch devirtualisation and
+within-fiber stage fusion) and the engine reaches the designed 0.95x to 1.02x
+parity, at which point it goes GREEN and signals Gate-1 (#661) perf-done. Run
+it deliberately:
+
+```text
+caffeinate -dimsu cargo test --release -- --ignored --test-threads=1
+```
+
+The tests are ignored by default because they are timing assertions that are
+expected red and need the release profile to be meaningful; auto-running them
+would fail every unrelated `cargo test` and report noise in debug. Every test
+asserts checksum equality first, so a failure is unambiguously "engine slower"
+(the gate working) and never "the two arms diverged" (a broken bench).
+
+### Workload matrix
+
+Three shapes form a gradient rather than a single cliff, so the gates show
+progress mechanism by mechanism as Phase D lands:
+
+1. `element_wise`: the original #660 four-stage RAW chain. Pure fusion territory.
+2. `branching`: two independent transforms over the same input joined by a
+   third. A multi-fiber DAG exercising dispatch across fibers.
+3. `accumulator`: one transform feeding the append surface, dispatched
+   unit-outer, against an optimal std buffer fill.
+
+Representative runtime ratios (engine / std, median, release, single-thread
+pinned, 2026-06-05):
+
+| workload | N=4096 | N=65536 | N=1048576 |
+|---|---|---|---|
+| element_wise | 2.2x | 3.4x | 5.0x to 5.7x |
+| branching | 1.75x | 2.45x | 2.6x to 3.1x |
+| accumulator | 6.3x | 3.9x to 6.4x | 6.5x |
+
+The runtime axis is asserted at every size (the headline drive-toward-parity
+gate). The startup axis is asserted only at the largest size, where the
+schedule-once design makes startup parity reachable (the engine's fixed plan
+build beats std re-allocating two N-sized buffers; at N=1M the engine startup
+is 0.07x to 0.48x of std). At small N the engine's plan build cannot match two
+`vec!` calls, and that gap amortises across reused frames by design, so raw
+startup is reported by the bench at every size but not asserted as a forever-red
+gate Phase D cannot close.
+
+### Finding: the accumulator workload is the widest gap, and frames do not reset accumulators
+
+The `accumulator` shape has the widest measured ratio at every size (roughly
+6.3x to 6.5x, near-flat with N), while `element_wise` is the canonical fusion
+case whose ratio grows monotonically with N (2.2x to 5.7x, the
+memory-bandwidth-bound signature the audit memo names). These are not in
+tension: the two reds come from different costs. The append surface advances a
+live-length cell per record and dispatches unit-outer (no morsel-local fusion),
+so the accumulator pays per-record append accounting on top of the
+materialisation and dispatch costs the other workloads pay, which is why its
+magnitude is largest and roughly N-independent. The element-wise chain pays the
+pure intermediate-materialisation traffic that fusion removes, which is why its
+gap is the cleanest demonstration of the missing fusion mechanism and why the
+memo treats it as the headline fusion workload. Fusion plus the per-fiber
+morsel-outer path close both, the accumulator gated additionally on the append
+surface dispatching morsel-local where its records are not externally observed.
+
+Building the accumulator workload surfaced a Gate-1 gap unrelated to throughput:
+the accumulator's live-length is zeroed by the store drain at BUILD time
+(`scheduler::build`), not at the start of each `run`. The schedule-once-reuse
+model reuses one built scheduler across many frames, so without a per-frame
+reset the second frame starts at the reserved capacity and every append
+saturates (drops). A per-frame accumulator reset is not yet implemented in
+`run`. The bench works around it by zeroing the live-length cell before each
+timed `run` (an O(1) `Cell` write, negligible against N appends), which stands
+in for the reset a completed frame lifecycle must perform. Tracked as a Gate-1
+follow-up; it belongs with the frame lifecycle / resource resolution work
+(#344), not with this gate.
