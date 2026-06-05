@@ -154,12 +154,16 @@ unit sequence before the next, so intermediate columns stay cache-resident
 across the units. This is sound because the per-record `read` / `write`
 accessors are morsel-relative and the only cross-record surface is the
 accumulator append path, so an accumulator-free pipeline has every cross-unit
-dependency morsel-local. A pipeline that writes accumulators stays unit-outer
+dependency morsel-local. A fiber that writes an accumulator stays unit-outer
 (a unit completes its record range before the next unit runs), the
-cross-record-safe form. The accumulator-free decision is whole-pipeline this
-round, read from the bundle's `AccumWrite` projection; per-fiber
-accumulator-granular windowing, where an accumulator-bearing pipeline still
-dispatches its accumulator-free fibers morsel-outer, is a later arc. It
+cross-record-safe form. The decision is per-fiber: `run` walks the plan's
+`phases -> trunks -> fibers` structure and dispatches each fiber on its own
+`morsel_local` bit, so an accumulator-bearing pipeline still runs its
+accumulator-free fibers morsel-outer while its accumulator fibers stay
+unit-outer. The bit is computed once at fiber formation, the fiber's touched
+stores intersected against the accumulator-store set the store drain records
+(the drain is where an `Accum` store is distinguishable from a plain column),
+so no accumulator-store membership is recomputed at dispatch. It
 materialises one type-erased dispatch slot per retained unit through
 `CollectFiber`, the sibling of `RunFiber` that records a `FiberSlot` (an
 erased instance pointer plus a per-unit shim) instead of running the unit

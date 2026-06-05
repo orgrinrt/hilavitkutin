@@ -294,6 +294,38 @@ where
     plan.fiber_count = layout.fiber_count;
     plan.trunks = layout.trunks;
     plan.fibers = layout.fibers;
+
+    // Per-fiber morsel-locality. A fiber dispatches morsel-outer only when
+    // no unit in it writes an accumulator, so every cross-unit dependency
+    // stays within the morsel window (the per-record accessors are
+    // morsel-relative; the accumulator append is the only cross-record
+    // surface). The per-unit write masks and the accumulator-store mask
+    // share the global Stores-list-position bit space, so
+    // `writes[u].overlaps(&accum_stores)` is the per-unit accumulator-write
+    // test. Computed once here; the dispatch reads `Fiber.morsel_local`.
+    let accum = inputs.accum_stores;
+    let mut fi = 0;
+    while fi < plan.fiber_count.0 && fi < cap_size(<D::Fibers as Capacity>::CAP) {
+        let mut local = arvo::Bool::TRUE;
+        {
+            let fib = &plan.fibers.as_ref()[fi];
+            let uc = fib.unit_count.0;
+            let units = fib.units.as_ref();
+            let mut u = 0;
+            while u < uc && u < units.len() {
+                let ui = units[u].index().0;
+                let writes = inputs.writes.as_ref();
+                if ui < writes.len() && writes[ui].overlaps(&accum).0 {
+                    local = arvo::Bool::FALSE;
+                    break;
+                }
+                u += 1;
+            }
+        }
+        plan.fibers.as_mut()[fi].morsel_local = local;
+        fi += 1;
+    }
+
     let phase_trunks = layout.phase_trunks.as_ref();
     let mut p = 0;
     let mut running_trunk = 0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal CSR prefix-sum cursor; tracked: #72

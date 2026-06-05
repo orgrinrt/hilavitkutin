@@ -46,7 +46,7 @@ use arvo::strategy::Identity;
 use arvo::Bool;
 use arvo::USize;
 use arvo_tensor::Capacity;
-use crate::plan::project::BundleProject;
+use crate::plan::project::{AccumStoresMask, BundleProject};
 use crate::plan::{
     compute_execution_plan, plan_inputs_from_bundle, DefaultPlanDims, ExecutionPlan, PlanDims,
 };
@@ -69,7 +69,7 @@ pub mod plan;
 pub use metrics::SchedulerMetrics;
 pub use plan::PlanCache;
 
-use crate::resource::bindings::{AccumFreeBindings, BindingsFor, DrainStores};
+use crate::resource::bindings::{BindingsFor, DrainStores};
 
 /// The default empty store-value list, used as the `Vals` default for a
 /// bare `Scheduler` type.
@@ -228,6 +228,7 @@ where
         <DefaultPlanDims as PlanDims>::Units,
         <DefaultPlanDims as PlanDims>::Stores,
     >,
+    Stores: AccumStoresMask<<DefaultPlanDims as PlanDims>::Stores>,
 {
     let inputs = plan_inputs_from_bundle::<
         Wus,
@@ -262,9 +263,15 @@ fn derive_phase_dispatch_order(
 ) -> (
     <<DefaultPlanDims as PlanDims>::Units as Capacity>::Array<USize>,
     USize,
+    <<DefaultPlanDims as PlanDims>::Fibers as Capacity>::Array<FiberDispatch>,
+    USize,
 ) {
     let mut order = <<DefaultPlanDims as PlanDims>::Units as Capacity>::filled(USize::ZERO);
     let cap = order.as_ref().len();
+    let mut descriptors =
+        <<DefaultPlanDims as PlanDims>::Fibers as Capacity>::filled(FiberDispatch::default());
+    let fd_cap = descriptors.as_ref().len();
+    let mut fd = 0;
     let phases = plan.phases.as_ref();
     let trunks = plan.trunks.as_ref();
     let fibers = plan.fibers.as_ref();
@@ -279,11 +286,21 @@ fn derive_phase_dispatch_order(
             while f < f_end && f < fibers.len() {
                 let units = fibers[f].units.as_ref();
                 let uc = fibers[f].unit_count.0;
+                let fib_start = next;
                 let mut u = 0;
                 while u < uc && u < units.len() && next < cap {
                     order.as_mut()[next] = units[u].index();
                     next += 1;
                     u += 1;
+                }
+                if fd < fd_cap {
+                    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal dispatch-order cursors; tracked: #72
+                    descriptors.as_mut()[fd] = FiberDispatch {
+                        start: USize(fib_start),
+                        len: USize(next - fib_start),
+                        morsel_local: fibers[f].morsel_local,
+                    };
+                    fd += 1;
                 }
                 f += 1;
             }
@@ -301,7 +318,47 @@ fn derive_phase_dispatch_order(
          the fiber partition is incomplete (a unit landed in no fiber, or a \
          capacity guard tripped)"
     );
-    (order, USize(next))
+    // Every fiber must get a descriptor; otherwise `run` would skip the units
+    // of a fiber that landed in `order` but past the descriptor capacity. The
+    // fiber count is bounded by the same `D::Fibers` budget the descriptor
+    // array is sized to, so this holds for any valid plan.
+    debug_assert_eq!(
+        fd, plan.fiber_count.0,
+        "phase flatten emitted a different fiber-descriptor count than the plan \
+         registered: a fiber exceeded the descriptor capacity, so its units \
+         would dispatch with no descriptor"
+    );
+    (order, USize(next), descriptors, USize(fd))
+}
+
+/// One fiber's slice of the flat dispatch order plus its morsel-locality
+/// bit: the compact per-fiber dispatch program `run` walks.
+///
+/// `run` dispatches a `morsel_local` fiber morsel-outer (one morsel runs the
+/// fiber's whole unit sequence before the next, keeping its intermediate
+/// columns cache-resident) and an accumulator-bearing fiber unit-outer (a
+/// unit completes its record range before the next, the cross-record-safe
+/// form).
+#[derive(Copy, Clone)]
+pub struct FiberDispatch {
+    /// Start index of this fiber's units in `topo_order`.
+    pub start: USize,
+    /// Number of this fiber's units (its slice length in `topo_order`).
+    pub len: USize,
+    /// True when the fiber writes no accumulator, so it dispatches
+    /// morsel-outer.
+    pub morsel_local: Bool,
+}
+
+impl Default for FiberDispatch {
+    #[inline]
+    fn default() -> Self {
+        Self {
+            start: USize::ZERO,
+            len: USize::ZERO,
+            morsel_local: Bool::TRUE,
+        }
+    }
 }
 
 /// Reserve one plan column and copy its live prefix in.
@@ -422,16 +479,16 @@ pub struct Scheduler<
     /// morsel-loop split that windows this into multiple morsels is a later
     /// round (#343).
     record_count: USize,
-    /// Whether the registered bundle writes no accumulator. An
-    /// accumulator-free pipeline has every cross-unit dependency morsel-local
-    /// (the per-record accessors are morsel-relative; the only cross-record
-    /// surface is the accumulator append path), so `run` dispatches it
-    /// morsel-outer (one morsel runs the whole unit sequence before the next).
-    /// A pipeline that writes accumulators stays unit-outer, the
-    /// cross-record-safe form. Computed once at `build` from
-    /// `<Wus as WorkUnitBundle>::AccumWrite`; whole-pipeline this round (the
-    /// per-fiber refinement is a later slice).
-    accum_free: Bool,
+    /// Per-fiber dispatch descriptor, computed at `build` alongside
+    /// `topo_order`. Each live entry slices `topo_order` for one fiber (in
+    /// plan dispatch order) and carries that fiber's `morsel_local` bit, so
+    /// `run` dispatches a morsel-local fiber morsel-outer (its intermediate
+    /// columns stay cache-resident across the morsel) and an
+    /// accumulator-bearing fiber unit-outer (the cross-record-safe form). The
+    /// per-fiber bit replaces the whole-pipeline accumulator-free guard.
+    fiber_dispatch: <D::Fibers as Capacity>::Array<FiberDispatch>,
+    /// How many of `fiber_dispatch`'s entries are live.
+    fiber_dispatch_count: USize,
     // The dirty bitmap width matches DefaultRunCfg::MAX_PLAN_AFFECTING_RESOURCES = USize(256).
     // The intended lift is `[AtomicBool; Cfg::MAX_PLAN_AFFECTING_RESOURCES.0]` under
     // `feature(generic_const_exprs)`, but current rustc rejects field access on generic
@@ -614,76 +671,71 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
             (core::ptr::null(), noop_fiber_shim::<<Vals as BindingsFor>::Bindings>);
         let mut slots = <D::Units as Capacity>::filled(placeholder);
         self.wu_values.collect(slots.as_mut());
-        // Window the record range `[0, record_count)` into morsels of
-        // `Cfg::MORSEL_SIZE`, guarded to at least one record so a zero-config
-        // never produces zero-length morsels that silently skip all work.
-        // Unit-outer: each topological step dispatches its unit once per morsel,
-        // completing its record range before the next step runs, which
-        // preserves the topological-order invariant for every plan (a downstream
-        // unit sees the full output of an upstream unit). The per-fiber,
-        // phase-sequential morsel loop with micro-morsel sync points is a later
-        // arc (#342 / Phase C+D); single-core needs no sync.
+        // Dispatch per fiber, walking the plan's `phases -> trunks -> fibers`
+        // structure flattened into `topo_order` with one `fiber_dispatch` entry
+        // per fiber (its slice `[start .. start + len]` of `topo_order` plus its
+        // `morsel_local` bit). The record range `[0, total)` windows into
+        // morsels of `Cfg::MORSEL_SIZE`, guarded to at least one record so a
+        // zero-config never produces zero-length morsels that skip all work.
+        //
+        // A morsel-local fiber (writes no accumulator) dispatches morsel-outer:
+        // one morsel runs the fiber's whole unit sequence before the next, so
+        // its intermediate columns stay cache-resident across the morsel. This
+        // is sound because the per-record accessors are morsel-relative and the
+        // only cross-record surface is the accumulator append path, which a
+        // morsel-local fiber does not touch. An accumulator-bearing fiber stays
+        // unit-outer (a unit completes its record range before the next), the
+        // cross-record-safe form, which is also the path a record-less frame
+        // takes (each unit dispatched once over an empty morsel so a
+        // resource-only unit runs exactly once). Fibers run sequentially, so a
+        // cross-fiber dependency always sees the upstream fiber's full output;
+        // single-core needs no thread barrier for the phase ordering.
         let msize = Cfg::MORSEL_SIZE.0.max(1);
         let total = self.record_count.0;
         let order = self.topo_order.as_ref();
-        let live = slots.as_ref();
         let count = self.topo_count.0;
-        // `topo_order[step]` is the registration-list position of the unit to
-        // dispatch at this step, which equals its slot index: the builder
-        // prepends the unit bundle and the value list in lockstep. The slot's
-        // shim performs the back-cast under its own `// SAFETY:` note.
-        if self.accum_free.0 && total != 0 {
-            // Morsel-outer: one morsel runs the whole unit sequence before the
-            // next. Sound for an accumulator-free pipeline, where every
-            // cross-unit dependency is morsel-local (the per-record accessors
-            // are morsel-relative; the only cross-record surface is the
-            // accumulator append path), so a downstream unit dispatched within
-            // a morsel sees the upstream unit's just-written records for that
-            // morsel. Keeps each morsel's columns cache-resident across the
-            // units instead of materialising every intermediate at full count.
-            // This rests on `append` being the single Context surface whose
-            // effect crosses a morsel boundary today (`each` / `reduce` /
-            // `batch` are morsel-confined and `fire` is a no-op at this stage):
-            // if `fire` gains real cross-record edge semantics, or any future
-            // accessor reaches outside the morsel window, the `accum_free` guard
-            // stops being the complete morsel-locality signal and must be
-            // revisited.
-            let mut start = 0;
-            while start < total {
-                let len = msize.min(total - start);
-                let morsel = MorselRange::new(USize(start), USize(len));
-                let mut step = 0;
-                while step < count {
-                    let pos = order[step].0;
-                    let (ptr, shim) = live[pos];
-                    shim(ptr, &self.bindings, morsel);
-                    step += 1;
-                }
-                start += len;
-            }
-        } else {
-            // Unit-outer: a unit completes its whole record range before the
-            // next unit runs. The cross-record-safe form for an
-            // accumulator-bearing pipeline (a downstream unit always sees the
-            // upstream unit's full output), and the path a record-less frame
-            // takes (each unit dispatched once over an empty morsel, so a
-            // resource-only unit runs exactly once).
-            let mut step = 0;
-            while step < count {
-                let pos = order[step].0;
-                let (ptr, shim) = live[pos];
-                if total == 0 {
-                    shim(ptr, &self.bindings, MorselRange::new(USize::ZERO, USize::ZERO));
-                } else {
-                    let mut start = 0;
-                    while start < total {
-                        let len = msize.min(total - start);
-                        shim(ptr, &self.bindings, MorselRange::new(USize(start), USize(len)));
-                        start += len;
+        let live = slots.as_ref();
+        let descriptors = self.fiber_dispatch.as_ref();
+        let fcount = self.fiber_dispatch_count.0;
+        // `order[k].0` is the registration-list slot index of the unit at flat
+        // dispatch position `k`; the slot's shim performs the back-cast under
+        // its own `// SAFETY:` note.
+        let mut fi = 0;
+        while fi < fcount && fi < descriptors.len() {
+            let fd = descriptors[fi];
+            let fstart = fd.start.0;
+            let fend = (fstart + fd.len.0).min(count);
+            if fd.morsel_local.0 && total != 0 {
+                let mut start = 0;
+                while start < total {
+                    let len = msize.min(total - start);
+                    let morsel = MorselRange::new(USize(start), USize(len));
+                    let mut k = fstart;
+                    while k < fend {
+                        let (ptr, shim) = live[order[k].0];
+                        shim(ptr, &self.bindings, morsel);
+                        k += 1;
                     }
+                    start += len;
                 }
-                step += 1;
+            } else {
+                let mut k = fstart;
+                while k < fend {
+                    let (ptr, shim) = live[order[k].0];
+                    if total == 0 {
+                        shim(ptr, &self.bindings, MorselRange::new(USize::ZERO, USize::ZERO));
+                    } else {
+                        let mut start = 0;
+                        while start < total {
+                            let len = msize.min(total - start);
+                            shim(ptr, &self.bindings, MorselRange::new(USize(start), USize(len)));
+                            start += len;
+                        }
+                    }
+                    k += 1;
+                }
             }
+            fi += 1;
         }
         Cfg::Out::default()
     }
@@ -729,7 +781,10 @@ impl<Cfg: RunCfg> Default for Scheduler<Cfg, WuNil, SvEmpty, NullColumnStorage> 
             plan_handle: PlanHandle::empty(),
             record_count: USize::ZERO,
             // The empty bundle (`WuNil`) writes no accumulator.
-            accum_free: Bool::TRUE,
+            fiber_dispatch: <<DefaultPlanDims as PlanDims>::Fibers as Capacity>::filled(
+                FiberDispatch::default(),
+            ),
+            fiber_dispatch_count: USize::ZERO,
             plan_dirty: [const { AtomicBool::new(false) }; 256],
             plan_cache: PlanCache::new(),
             bindings: crate::resource::bindings::BindingNil,
@@ -815,7 +870,8 @@ where
     Wus: WorkUnitBundle,
     Stores: AccessSet
         + ContainsAll<<Wus as WorkUnitBundle>::AccumRead>
-        + ContainsAll<<Wus as WorkUnitBundle>::AccumWrite>,
+        + ContainsAll<<Wus as WorkUnitBundle>::AccumWrite>
+        + AccumStoresMask<<DefaultPlanDims as PlanDims>::Stores>,
     Vals: StoreValues + BindingsFor + DrainStores,
 {
     /// Finalise the builder into a `Scheduler<DefaultRunCfg, Stores, M>`.
@@ -842,23 +898,16 @@ where
             <DefaultPlanDims as PlanDims>::Units,
             <DefaultPlanDims as PlanDims>::Stores,
         >,
-        <Vals as BindingsFor>::Bindings: AccumFreeBindings,
     {
         let wu_values = self.wu_values;
-        // No `AccumBinding` in the bindings chain means no accumulator store is
-        // registered, so no unit can write an accumulator: the whole pipeline is
-        // morsel-local and `run` dispatches it morsel-outer (one morsel runs the
-        // whole unit sequence before the next). An accumulator store keeps the
-        // unit-outer form. The bit is a compile-time const folded over the
-        // bindings node types.
-        let accum_free = <<Vals as BindingsFor>::Bindings as AccumFreeBindings>::ACCUM_FREE;
         // Compute the plan from the registered bundle before draining the
         // store bindings, so a dependency cycle returns without allocating.
         let plan = match compute_plan::<Wus, Stores, BWit>(record_count) {
             notko::Outcome::Ok(p) => p,
             notko::Outcome::Err(e) => return notko::Outcome::Err(e),
         };
-        let (topo_order, topo_count) = derive_phase_dispatch_order(&plan);
+        let (topo_order, topo_count, fiber_dispatch, fiber_dispatch_count) =
+            derive_phase_dispatch_order(&plan);
         let mut storage = storage;
         let mut next_id = USize::ZERO;
         match <Vals as DrainStores>::drain(self.store_values, &mut storage, &mut next_id, record_count) {
@@ -875,7 +924,8 @@ where
                     topo_count,
                     plan_handle,
                     record_count,
-                    accum_free,
+                    fiber_dispatch,
+                    fiber_dispatch_count,
                     plan_dirty: [const { AtomicBool::new(false) }; 256],
                     plan_cache: PlanCache::new(),
                     bindings,
@@ -904,23 +954,16 @@ where
             <DefaultPlanDims as PlanDims>::Units,
             <DefaultPlanDims as PlanDims>::Stores,
         >,
-        <Vals as BindingsFor>::Bindings: AccumFreeBindings,
     {
         let wu_values = self.wu_values;
-        // No `AccumBinding` in the bindings chain means no accumulator store is
-        // registered, so no unit can write an accumulator: the whole pipeline is
-        // morsel-local and `run` dispatches it morsel-outer (one morsel runs the
-        // whole unit sequence before the next). An accumulator store keeps the
-        // unit-outer form. The bit is a compile-time const folded over the
-        // bindings node types.
-        let accum_free = <<Vals as BindingsFor>::Bindings as AccumFreeBindings>::ACCUM_FREE;
         // Compute the plan from the registered bundle before draining the
         // store bindings, so a dependency cycle returns without allocating.
         let plan = match compute_plan::<Wus, Stores, BWit>(record_count) {
             notko::Outcome::Ok(p) => p,
             notko::Outcome::Err(e) => return notko::Outcome::Err(e),
         };
-        let (topo_order, topo_count) = derive_phase_dispatch_order(&plan);
+        let (topo_order, topo_count, fiber_dispatch, fiber_dispatch_count) =
+            derive_phase_dispatch_order(&plan);
         let mut storage = storage;
         let mut next_id = USize::ZERO;
         match <Vals as DrainStores>::drain(self.store_values, &mut storage, &mut next_id, record_count) {
@@ -937,7 +980,8 @@ where
                     topo_count,
                     plan_handle,
                     record_count,
-                    accum_free,
+                    fiber_dispatch,
+                    fiber_dispatch_count,
                     plan_dirty: [const { AtomicBool::new(false) }; 256],
                     plan_cache: PlanCache::new(),
                     bindings,
