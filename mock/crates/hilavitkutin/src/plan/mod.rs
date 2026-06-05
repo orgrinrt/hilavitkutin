@@ -205,6 +205,9 @@ where
     Fiber<D>: Copy,
     <D::Units as Capacity>::Array<SpectralFloatVec>: Copy,
     <D::Units as Capacity>::Array<USize>: Copy,
+    // `compute_waists` runs `arvo_graph::waist_detect`, which needs the
+    // per-node depth (`USize`) and waist-flag (`Bool`) scratch arrays `Copy`.
+    <D::Units as Capacity>::Array<arvo::Bool>: Copy,
     <D::Edges as Capacity>::Array<NodeId>: Copy,
 {
     // #641: a `PlanDims` whose phase or trunk capacity exceeds the fixed-width

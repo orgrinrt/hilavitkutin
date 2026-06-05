@@ -36,8 +36,9 @@
 //! `cap_size` sits in an array-length position.
 
 use arvo::strategy::Identity;
-use arvo::{Bool, FastFloat, USize};
-use arvo_bitmask::NodeId;
+use arvo::{Bits, Bool, FastFloat, Hot, Unsigned, USize};
+use arvo_bitmask::{BitMatrix, Mask, NodeId};
+use arvo_graph::waist_detect;
 use arvo_sparse::{block_diagonal_via, rcm_reorder_via};
 use arvo_spectral::k_way_partition;
 use arvo_tensor::{cap_size, Capacity};
@@ -210,37 +211,78 @@ pub fn topo_sort<D: PlanDims>(
 
 /// Step 3: waist detection. Produces phase boundaries.
 ///
-/// A waist is a unit whose dispatch reduces the active set to a
-/// narrow width; phases delimit at waists. The skeleton walks the
-/// topo order and treats any unit with no fan-out edges as a waist,
-/// emitting a phase boundary after it. Real bench-driven heuristics
-/// land in a HILA-RUNTIME-C1 follow-up; this body produces a sane
-/// default phase layout (one phase for simple pipelines, splits at
-/// natural narrowing points).
+/// A waist is a depth in the dependency DAG whose level width is a
+/// strict local minimum, the natural narrowing point where a phase
+/// barrier belongs. Detection runs through `arvo_graph::waist_detect`
+/// over a bit-matrix adjacency built from the `DependencyGraph`: it
+/// returns the topo-order positions whose depth is a width-local-minimum,
+/// and each such position opens a phase boundary at its successor (the
+/// waist unit is the last of its phase). A pipeline with no interior
+/// narrowing is one phase.
+///
+/// The bit-matrix is `Bits<64>`-wide, an exact fit for the engine's
+/// default unit capacity (`Dim<64>`); arbitrary node counts above 64
+/// are a separate arc (the dense / CSR-sparse / spectral node-count
+/// branch).
 pub fn compute_waists<D: PlanDims>(
     graph: &DependencyGraph<D>,
     topo: &<D::Units as Capacity>::Array<UnitId>,
-) -> PhaseBoundaries<D> {
+) -> PhaseBoundaries<D>
+where
+    <D::Units as Capacity>::Array<USize>: Copy,
+    <D::Units as Capacity>::Array<Bool>: Copy,
+{
     let mut boundaries = PhaseBoundaries::<D>::new();
     let n = graph.unit_count.0;
     if n == 0 {
         return boundaries;
     }
-    let topo = topo.as_ref();
-    // Phase 0 starts at unit 0 always.
+    let cap = cap_size(<D::Units as Capacity>::CAP);
+
+    // Build the bit-matrix adjacency `waist_detect` consumes: one edge bit per
+    // directed dependency edge `from -> to`, over the unit capacity.
+    let mut adj: BitMatrix<Bits<64, Hot, Unsigned>, D::Units> = BitMatrix::empty();
+    let mut from = 0;
+    while from < n {
+        let mut to = 0;
+        while to < n {
+            if graph.has_edge(USize(from), USize(to)).0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
+                adj.set_edge(NodeId(USize(from)), NodeId(USize(to))); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
+            }
+            to += 1;
+        }
+        from += 1;
+    }
+
+    // Project the topo `UnitId` order into the `NodeId` order `waist_detect`
+    // walks. `waist_detect` walks the full capacity, so the slack tail past the
+    // live count is filled with an out-of-range node id (>= cap) it skips.
+    // Unused node slots have no edges, so they sit at depth 0 and only inflate
+    // the depth-0 width, which is the first occupied depth and never an interior
+    // local-minimum candidate, so they do not affect the detected waists.
+    let topo_s = topo.as_ref();
+    let mut topo_nodes: <D::Units as Capacity>::Array<NodeId> =
+        <D::Units as Capacity>::filled(NodeId(USize(cap))); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct out-of-range sentinel; tracked: #72
+    let mut k = 0;
+    while k < n && k < cap {
+        topo_nodes.as_mut()[k] = NodeId(topo_s[k].index());
+        k += 1;
+    }
+
+    let waists: Mask<Bits<64, Hot, Unsigned>> = waist_detect::<D::Units>(&adj, &topo_nodes);
+
+    // Phase 0 starts at position 0; each waist position (with a successor)
+    // opens a new phase at the next position.
     boundaries.boundaries.as_mut()[0] = USize::ZERO;
     boundaries.phase_count = USize(1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: at least one phase always; tracked: #72
-    let mut i = 0;
-    while i + 1 < n && boundaries.phase_count.0 < cap_size(<D::Phases as Capacity>::CAP) {
-        let idx = topo[i].index().0;
-        // Out-degree zero in topo order means this unit's output
-        // funnels through nothing else; treat as a waist.
-        if idx < cap_size(<D::Units as Capacity>::CAP) && graph.out_degree(USize(idx)).0 == 0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
+    let mut p = 0;
+    while p + 1 < n && boundaries.phase_count.0 < cap_size(<D::Phases as Capacity>::CAP) {
+        if waists.contains(USize(p)).0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal position; tracked: #72
             let next_phase = boundaries.phase_count.0;
-            boundaries.boundaries.as_mut()[next_phase] = USize(i + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
+            boundaries.boundaries.as_mut()[next_phase] = USize(p + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
             boundaries.phase_count = USize(next_phase + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
         }
-        i += 1;
+        p += 1;
     }
     boundaries
 }
