@@ -43,6 +43,7 @@ use core::marker::PhantomData;
 use core::sync::atomic::AtomicBool;
 
 use arvo::strategy::Identity;
+use arvo::Bool;
 use arvo::USize;
 use arvo_tensor::Capacity;
 use crate::plan::project::BundleProject;
@@ -68,7 +69,7 @@ pub mod plan;
 pub use metrics::SchedulerMetrics;
 pub use plan::PlanCache;
 
-use crate::resource::bindings::{BindingsFor, DrainStores};
+use crate::resource::bindings::{AccumFreeBindings, BindingsFor, DrainStores};
 
 /// The default empty store-value list, used as the `Vals` default for a
 /// bare `Scheduler` type.
@@ -421,6 +422,16 @@ pub struct Scheduler<
     /// morsel-loop split that windows this into multiple morsels is a later
     /// round (#343).
     record_count: USize,
+    /// Whether the registered bundle writes no accumulator. An
+    /// accumulator-free pipeline has every cross-unit dependency morsel-local
+    /// (the per-record accessors are morsel-relative; the only cross-record
+    /// surface is the accumulator append path), so `run` dispatches it
+    /// morsel-outer (one morsel runs the whole unit sequence before the next).
+    /// A pipeline that writes accumulators stays unit-outer, the
+    /// cross-record-safe form. Computed once at `build` from
+    /// `<Wus as WorkUnitBundle>::AccumWrite`; whole-pipeline this round (the
+    /// per-fiber refinement is a later slice).
+    accum_free: Bool,
     // The dirty bitmap width matches DefaultRunCfg::MAX_PLAN_AFFECTING_RESOURCES = USize(256).
     // The intended lift is `[AtomicBool; Cfg::MAX_PLAN_AFFECTING_RESOURCES.0]` under
     // `feature(generic_const_exprs)`, but current rustc rejects field access on generic
@@ -617,29 +628,62 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         let order = self.topo_order.as_ref();
         let live = slots.as_ref();
         let count = self.topo_count.0;
-        let mut step = 0;
-        while step < count {
-            // `topo_order[step]` is the registration-list position of the
-            // unit to dispatch at this step, which equals its slot index:
-            // the builder prepends the unit bundle and the value list in
-            // lockstep. The slot's shim performs the back-cast under its own
-            // `// SAFETY:` note.
-            let pos = order[step].0;
-            let (ptr, shim) = live[pos];
-            if total == 0 {
-                // A record-less frame still dispatches each unit once over an
-                // empty morsel, so a resource-only unit (no per-record work)
-                // runs exactly once, matching the pre-windowing behaviour.
-                shim(ptr, &self.bindings, MorselRange::new(USize::ZERO, USize::ZERO));
-            } else {
-                let mut start = 0;
-                while start < total {
-                    let len = msize.min(total - start);
-                    shim(ptr, &self.bindings, MorselRange::new(USize(start), USize(len)));
-                    start += len;
+        // `topo_order[step]` is the registration-list position of the unit to
+        // dispatch at this step, which equals its slot index: the builder
+        // prepends the unit bundle and the value list in lockstep. The slot's
+        // shim performs the back-cast under its own `// SAFETY:` note.
+        if self.accum_free.0 && total != 0 {
+            // Morsel-outer: one morsel runs the whole unit sequence before the
+            // next. Sound for an accumulator-free pipeline, where every
+            // cross-unit dependency is morsel-local (the per-record accessors
+            // are morsel-relative; the only cross-record surface is the
+            // accumulator append path), so a downstream unit dispatched within
+            // a morsel sees the upstream unit's just-written records for that
+            // morsel. Keeps each morsel's columns cache-resident across the
+            // units instead of materialising every intermediate at full count.
+            // This rests on `append` being the single Context surface whose
+            // effect crosses a morsel boundary today (`each` / `reduce` /
+            // `batch` are morsel-confined and `fire` is a no-op at this stage):
+            // if `fire` gains real cross-record edge semantics, or any future
+            // accessor reaches outside the morsel window, the `accum_free` guard
+            // stops being the complete morsel-locality signal and must be
+            // revisited.
+            let mut start = 0;
+            while start < total {
+                let len = msize.min(total - start);
+                let morsel = MorselRange::new(USize(start), USize(len));
+                let mut step = 0;
+                while step < count {
+                    let pos = order[step].0;
+                    let (ptr, shim) = live[pos];
+                    shim(ptr, &self.bindings, morsel);
+                    step += 1;
                 }
+                start += len;
             }
-            step += 1;
+        } else {
+            // Unit-outer: a unit completes its whole record range before the
+            // next unit runs. The cross-record-safe form for an
+            // accumulator-bearing pipeline (a downstream unit always sees the
+            // upstream unit's full output), and the path a record-less frame
+            // takes (each unit dispatched once over an empty morsel, so a
+            // resource-only unit runs exactly once).
+            let mut step = 0;
+            while step < count {
+                let pos = order[step].0;
+                let (ptr, shim) = live[pos];
+                if total == 0 {
+                    shim(ptr, &self.bindings, MorselRange::new(USize::ZERO, USize::ZERO));
+                } else {
+                    let mut start = 0;
+                    while start < total {
+                        let len = msize.min(total - start);
+                        shim(ptr, &self.bindings, MorselRange::new(USize(start), USize(len)));
+                        start += len;
+                    }
+                }
+                step += 1;
+            }
         }
         Cfg::Out::default()
     }
@@ -684,6 +728,8 @@ impl<Cfg: RunCfg> Default for Scheduler<Cfg, WuNil, SvEmpty, NullColumnStorage> 
             topo_count: USize::ZERO,
             plan_handle: PlanHandle::empty(),
             record_count: USize::ZERO,
+            // The empty bundle (`WuNil`) writes no accumulator.
+            accum_free: Bool::TRUE,
             plan_dirty: [const { AtomicBool::new(false) }; 256],
             plan_cache: PlanCache::new(),
             bindings: crate::resource::bindings::BindingNil,
@@ -796,8 +842,16 @@ where
             <DefaultPlanDims as PlanDims>::Units,
             <DefaultPlanDims as PlanDims>::Stores,
         >,
+        <Vals as BindingsFor>::Bindings: AccumFreeBindings,
     {
         let wu_values = self.wu_values;
+        // No `AccumBinding` in the bindings chain means no accumulator store is
+        // registered, so no unit can write an accumulator: the whole pipeline is
+        // morsel-local and `run` dispatches it morsel-outer (one morsel runs the
+        // whole unit sequence before the next). An accumulator store keeps the
+        // unit-outer form. The bit is a compile-time const folded over the
+        // bindings node types.
+        let accum_free = <<Vals as BindingsFor>::Bindings as AccumFreeBindings>::ACCUM_FREE;
         // Compute the plan from the registered bundle before draining the
         // store bindings, so a dependency cycle returns without allocating.
         let plan = match compute_plan::<Wus, Stores, BWit>(record_count) {
@@ -821,6 +875,7 @@ where
                     topo_count,
                     plan_handle,
                     record_count,
+                    accum_free,
                     plan_dirty: [const { AtomicBool::new(false) }; 256],
                     plan_cache: PlanCache::new(),
                     bindings,
@@ -849,8 +904,16 @@ where
             <DefaultPlanDims as PlanDims>::Units,
             <DefaultPlanDims as PlanDims>::Stores,
         >,
+        <Vals as BindingsFor>::Bindings: AccumFreeBindings,
     {
         let wu_values = self.wu_values;
+        // No `AccumBinding` in the bindings chain means no accumulator store is
+        // registered, so no unit can write an accumulator: the whole pipeline is
+        // morsel-local and `run` dispatches it morsel-outer (one morsel runs the
+        // whole unit sequence before the next). An accumulator store keeps the
+        // unit-outer form. The bit is a compile-time const folded over the
+        // bindings node types.
+        let accum_free = <<Vals as BindingsFor>::Bindings as AccumFreeBindings>::ACCUM_FREE;
         // Compute the plan from the registered bundle before draining the
         // store bindings, so a dependency cycle returns without allocating.
         let plan = match compute_plan::<Wus, Stores, BWit>(record_count) {
@@ -874,6 +937,7 @@ where
                     topo_count,
                     plan_handle,
                     record_count,
+                    accum_free,
                     plan_dirty: [const { AtomicBool::new(false) }; 256],
                     plan_cache: PlanCache::new(),
                     bindings,

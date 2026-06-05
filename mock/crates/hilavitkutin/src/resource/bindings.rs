@@ -33,6 +33,7 @@ use core::cell::Cell;
 use core::marker::PhantomData;
 use core::mem::size_of;
 
+use arvo::Bool;
 use arvo::USize;
 use hilavitkutin_api::store::{Accum, Column, StagedResource, Virtual};
 use hilavitkutin_api::store_values::{StoreValues, Sv, SvEmpty};
@@ -187,6 +188,43 @@ pub trait BindingsFor: sealed::Sealed {
     /// memory on its own `Drop`, so the scheduler runs no bindings walk
     /// on drop and `Bindings` carries no destructor bound.
     type Bindings;
+}
+
+/// Whether a bindings chain holds no accumulator node.
+///
+/// An accumulator-free pipeline (no `AccumBinding` anywhere in the chain) has
+/// every cross-unit dependency morsel-local, since the per-record column
+/// accessors are morsel-relative and the only cross-record surface is the
+/// accumulator append path. The scheduler reads `ACCUM_FREE` once at `build`
+/// to choose the dispatch nesting (morsel-outer when free, unit-outer
+/// otherwise). The fold is compile-time: each node contributes its tail's
+/// value, an `AccumBinding` short-circuits to `Bool::FALSE`, so the const
+/// collapses to a single value with no runtime walk.
+pub trait AccumFreeBindings {
+    /// `Bool::TRUE` when the chain holds no `AccumBinding`.
+    const ACCUM_FREE: Bool;
+}
+
+impl AccumFreeBindings for BindingNil {
+    const ACCUM_FREE: Bool = Bool::TRUE;
+}
+
+impl<T, Tail: AccumFreeBindings> AccumFreeBindings for ResourceBinding<T, Tail> {
+    const ACCUM_FREE: Bool = Tail::ACCUM_FREE;
+}
+
+impl<T, Tail: AccumFreeBindings> AccumFreeBindings for ColumnBinding<T, Tail> {
+    const ACCUM_FREE: Bool = Tail::ACCUM_FREE;
+}
+
+impl<T, Tail: AccumFreeBindings> AccumFreeBindings for VirtualBinding<T, Tail> {
+    const ACCUM_FREE: Bool = Tail::ACCUM_FREE;
+}
+
+impl<T, Tail> AccumFreeBindings for AccumBinding<T, Tail> {
+    // Any accumulator node makes the whole chain not accumulator-free,
+    // regardless of the tail.
+    const ACCUM_FREE: Bool = Bool::FALSE;
 }
 
 impl sealed::Sealed for SvEmpty {}
