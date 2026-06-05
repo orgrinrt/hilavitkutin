@@ -30,6 +30,11 @@ pub struct PlanInputs<CU: Capacity, CS: Capacity> {
     /// Estimated record count per frame. Drives strategy
     /// selection (domain 21) and morsel sizing (domain 12).
     pub record_count: USize,
+    /// Accumulator-store positions in the global `Stores` list, in the
+    /// same bit space as `writes`. `writes[u].overlaps(&accum_stores)`
+    /// is true iff unit `u` writes an accumulator, the per-fiber
+    /// morsel-locality signal.
+    pub accum_stores: AccessMask<CS>,
 }
 
 impl<CU: Capacity, CS: Capacity> PlanInputs<CU, CS> {
@@ -42,6 +47,7 @@ impl<CU: Capacity, CS: Capacity> PlanInputs<CU, CS> {
             commutative: <CU as Capacity>::filled(Bool::FALSE),
             unit_count: USize::ZERO,
             record_count: USize::ZERO,
+            accum_stores: AccessMask::empty(),
         }
     }
 }

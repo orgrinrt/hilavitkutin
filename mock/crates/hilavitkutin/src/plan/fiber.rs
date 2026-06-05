@@ -9,7 +9,7 @@
 //! that the dispatch stage walks.
 
 use arvo::strategy::Identity;
-use arvo::USize;
+use arvo::{Bool, USize};
 use arvo_tensor::Capacity;
 
 use hilavitkutin_api::{FiberId, StoreId, UnitId};
@@ -203,6 +203,11 @@ pub struct Fiber<D: PlanDims> {
     pub head_tail: Maybe<HeadTailConvergence>,
     /// Codegen shape chosen for the fiber.
     pub dispatch_approach: DispatchApproach,
+    /// True when no unit in the fiber writes an accumulator, so the fiber
+    /// can dispatch morsel-outer (every cross-unit dependency is
+    /// morsel-local). Computed at fiber formation from the units' write
+    /// masks against the accumulator-store set.
+    pub morsel_local: Bool,
 }
 
 impl<D: PlanDims> Fiber<D> {
@@ -215,6 +220,7 @@ impl<D: PlanDims> Fiber<D> {
             column_count: USize::ZERO,
             head_tail: Maybe::Isnt,
             dispatch_approach: DispatchApproach::IndirectPerFiber,
+            morsel_local: Bool::TRUE,
         }
     }
 }

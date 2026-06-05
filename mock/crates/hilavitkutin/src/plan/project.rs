@@ -19,9 +19,10 @@
 //! `WitnessIndex` const here.
 
 use arvo::strategy::Identity;
-use arvo::USize;
+use arvo::{Bool, USize};
 use arvo_tensor::{cap_size, Capacity};
 use hilavitkutin_api::access::{Cons, Empty};
+use hilavitkutin_api::store::{Accum, Column, Resource, StagedResource, Virtual};
 use hilavitkutin_api::WorkUnit;
 
 use crate::dispatch::engine_ctx::{Here, There};
@@ -167,6 +168,81 @@ where
     <Set as MaskProject<Stores, Indices, CS>>::project_mask(AccessMask::empty())
 }
 
+/// Per-store-marker classification: is this store an accumulator?
+///
+/// Disjoint concrete impls (no blanket) keep the fold clear of the
+/// marker-trait coherence wall the module already documents: a blanket
+/// `false` plus a specific `Accum` `true` would overlap and demand
+/// specialization. Each store marker states its own kind.
+pub trait StoreAccumKind {
+    /// `Bool::TRUE` only for `Accum<T>`; every other store marker is `FALSE`.
+    const IS_ACCUM: Bool;
+}
+
+impl<T> StoreAccumKind for Accum<T> {
+    const IS_ACCUM: Bool = Bool::TRUE;
+}
+
+impl<T> StoreAccumKind for Column<T> {
+    const IS_ACCUM: Bool = Bool::FALSE;
+}
+
+impl<T> StoreAccumKind for Resource<T> {
+    const IS_ACCUM: Bool = Bool::FALSE;
+}
+
+impl<T> StoreAccumKind for StagedResource<T> {
+    const IS_ACCUM: Bool = Bool::FALSE;
+}
+
+impl<T> StoreAccumKind for Virtual<T> {
+    const IS_ACCUM: Bool = Bool::FALSE;
+}
+
+/// Fold the global `Stores` cons-list into an `AccessMask` marking the
+/// position of every accumulator store.
+///
+/// The bit positions are the store's index in the global `Stores` list,
+/// the same Stores-list-position space `MaskProject` uses for the
+/// per-unit access masks, so `writes[u].overlaps(&accum_mask)` is a
+/// sound test for "unit `u` writes an accumulator." This is why the mask
+/// is folded over `Stores` here and not recorded at the store drain,
+/// whose `StoreId` space skips zero-sized resources and so does not match
+/// the access-mask space.
+pub trait AccumStoresMask<CS: Capacity> {
+    /// Set the accumulator-position bits into `mask`, walking from store
+    /// position `idx`.
+    fn accum_mask(mask: AccessMask<CS>, idx: USize) -> AccessMask<CS>;
+}
+
+impl<CS: Capacity> AccumStoresMask<CS> for Empty {
+    #[inline]
+    fn accum_mask(mask: AccessMask<CS>, _idx: USize) -> AccessMask<CS> {
+        mask
+    }
+}
+
+impl<H: StoreAccumKind, T: AccumStoresMask<CS>, CS: Capacity> AccumStoresMask<CS> for Cons<H, T> {
+    #[inline]
+    fn accum_mask(mask: AccessMask<CS>, idx: USize) -> AccessMask<CS> {
+        let mask = if H::IS_ACCUM.0 { mask.set(idx) } else { mask };
+        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: store-position successor on the fold index; tracked: #121
+        <T as AccumStoresMask<CS>>::accum_mask(mask, USize(idx.0 + 1))
+    }
+}
+
+/// Build the accumulator-store mask for a global `Stores` list.
+///
+/// `Stores` is the same global store `AccessSet` whose positions the
+/// per-unit access masks index. `CS` is the store capacity.
+pub fn accum_stores_mask<Stores, CS: Capacity>() -> AccessMask<CS>
+where
+    Stores: AccumStoresMask<CS>,
+{
+    let _ = StoreCeiling::<CS>::ASSERT_FITS;
+    <Stores as AccumStoresMask<CS>>::accum_mask(AccessMask::empty(), USize::ZERO)
+}
+
 /// Project a registered work-unit bundle into runtime `PlanInputs`.
 ///
 /// `Wus` is the type-level `WorkUnitBundle`; `Stores` is the global
@@ -181,10 +257,12 @@ pub fn plan_inputs_from_bundle<Wus, Stores, Witnesses, CU: Capacity, CS: Capacit
 ) -> PlanInputs<CU, CS>
 where
     Wus: BundleProject<Stores, Witnesses, CU, CS>,
+    Stores: AccumStoresMask<CS>,
 {
     let _ = StoreCeiling::<CS>::ASSERT_FITS;
     let mut inputs = PlanInputs::new();
     inputs.record_count = record_count;
+    inputs.accum_stores = accum_stores_mask::<Stores, CS>();
     <Wus as BundleProject<Stores, Witnesses, CU, CS>>::project_bundle(&mut inputs, USize::ZERO);
     inputs
 }
