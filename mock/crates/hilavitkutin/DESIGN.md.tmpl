@@ -147,9 +147,19 @@ bindings alongside resources.
 `Scheduler::run` dispatches the WorkUnit instances the builder retained at
 registration (see the scheduler builder section) in the plan's topological
 order, windowing the record range into morsels of `RunCfg::MORSEL_SIZE`
-(guarded to at least one record) and dispatching each unit once per morsel
-(unit-outer: a unit completes its record range before the next unit runs).
-The per-fiber, phase-sequential morsel loop is a later arc. It
+(guarded to at least one record) and dispatching each unit once per morsel.
+The nesting is chosen by whether the pipeline writes any accumulator. An
+accumulator-free pipeline dispatches morsel-outer: one morsel runs the whole
+unit sequence before the next, so intermediate columns stay cache-resident
+across the units. This is sound because the per-record `read` / `write`
+accessors are morsel-relative and the only cross-record surface is the
+accumulator append path, so an accumulator-free pipeline has every cross-unit
+dependency morsel-local. A pipeline that writes accumulators stays unit-outer
+(a unit completes its record range before the next unit runs), the
+cross-record-safe form. The accumulator-free decision is whole-pipeline this
+round, read from the bundle's `AccumWrite` projection; per-fiber
+accumulator-granular windowing, where an accumulator-bearing pipeline still
+dispatches its accumulator-free fibers morsel-outer, is a later arc. It
 materialises one type-erased dispatch slot per retained unit through
 `CollectFiber`, the sibling of `RunFiber` that records a `FiberSlot` (an
 erased instance pointer plus a per-unit shim) instead of running the unit
