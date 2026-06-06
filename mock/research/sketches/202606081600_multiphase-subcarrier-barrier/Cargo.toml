@@ -1,0 +1,32 @@
+[package]
+name = "sketch-multiphase-subcarrier-barrier"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# #669 keystone: does the TYPE-LEVEL cons-list walk devirtualise UNDER A REAL
+# RUNTIME MORSEL LOOP? Every prior devirt proof (D1a 202606061500, D1b
+# 202606061400, runtime-order 202606071400) dispatched once / unrolled, with no
+# runtime morsel loop. The one sketch that DID wrap a runtime morsel loop
+# (202606080300) used a fn-POINTER ARRAY and got 2 blr (the spec FAIL mode). This
+# isolates the remaining question: the type-level walk (head.execute(); tail.run()
+# over concrete WU types, the spec Approach A/E per-fiber-type trait) driven inside
+# a black_box'd runtime morsel loop, with the locked 202606051500
+# morsel-outer-vs-unit-outer split. Real engine crates.
+[dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

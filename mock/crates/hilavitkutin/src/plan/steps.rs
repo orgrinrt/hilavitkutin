@@ -36,14 +36,15 @@
 //! `cap_size` sits in an array-length position.
 
 use arvo::strategy::Identity;
-use arvo::{Bits, Bool, FastFloat, Hot, Unsigned, USize};
-use arvo_bitmask::{BitMatrix, Mask, NodeId};
+use arvo::{Bool, FastFloat, USize};
+use arvo_bitmask::{BitAccess, BitMatrix, Mask, NodeId};
 use arvo_graph::waist_detect;
 use arvo_sparse::{block_diagonal_via, rcm_reorder_via};
 use arvo_spectral::k_way_partition;
 use arvo_tensor::{cap_size, Capacity};
 
 use hilavitkutin_api::{TrunkId, UnitId};
+use notko::Maybe;
 
 use super::column::{ColumnClassMap, ColumnClassification};
 use super::dims::PlanDims;
@@ -133,6 +134,45 @@ pub fn build_dag<D: PlanDims>(
     g
 }
 
+/// First carrier-space back-edge in the registration order, if any.
+///
+/// The dispatch walk follows the carrier order (registration order) directly:
+/// it visits slot 0, 1, 2, ... so the carrier order must already be a
+/// topological order of the dependency DAG, or the walk runs a reader before
+/// its writer. This builds the canonical dag via `build_dag` (one definition of
+/// "what is a dependency edge") and returns the first edge whose source slot
+/// index is not strictly less than its destination slot index, as
+/// `Maybe::Is((source, destination))` in carrier-slot space; `Maybe::Isnt` when
+/// the registration order is topological. WAW edges are appended only for
+/// `source < destination`, so they never back-edge; only a RAW edge (a reader
+/// registered before its writer) can.
+pub fn first_back_edge<D: PlanDims>(
+    inputs: &PlanInputs<D::Units, D::Stores>,
+) -> Maybe<(USize, USize)> {
+    let g = build_dag::<D>(inputs);
+    let cols = g.col_indices.as_ref();
+    let row_offsets = g.row_offsets.as_ref();
+    let mut from = 0;
+    let n = g.unit_count.0;
+    while from < n && from < cap_size(<D::Units as Capacity>::CAP) {
+        let start = row_offsets[from].0;
+        let end_excl = g.end_for(from);
+        let mut k = start;
+        while k < end_excl && k < g.edge_count.0 {
+            let to = cols[k].index().0;
+            // A back-edge: the source slot is not strictly before the
+            // destination slot, so the carrier order would dispatch the
+            // destination (reader) before the source (writer).
+            if from >= to {
+                return Maybe::Is((USize(from), USize(to))); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-wrap internal slot indices; tracked: #72
+            }
+            k += 1;
+        }
+        from += 1;
+    }
+    Maybe::Isnt
+}
+
 /// Sentinel value marking an already-placed unit in the in-degree
 /// counter array used by `topo_sort`. Distinguished from a real
 /// in-degree count (which is bounded by the edge capacity) by being
@@ -220,10 +260,10 @@ pub fn topo_sort<D: PlanDims>(
 /// waist unit is the last of its phase). A pipeline with no interior
 /// narrowing is one phase.
 ///
-/// The bit-matrix is `Bits<64>`-wide, an exact fit for the engine's
-/// default unit capacity (`Dim<64>`); arbitrary node counts above 64
-/// are a separate arc (the dense / CSR-sparse / spectral node-count
-/// branch).
+/// The bit-matrix row word is `D::AdjRow`, the concrete row type the
+/// `PlanDims` impl pins to cover its `D::Units` node count.
+/// `DefaultPlanDims` uses a 64-wide row; a consumer with a larger unit
+/// budget pins a wider one, lifting the former 64-node cap.
 pub fn compute_waists<D: PlanDims>(
     graph: &DependencyGraph<D>,
     topo: &<D::Units as Capacity>::Array<UnitId>,
@@ -241,7 +281,7 @@ where
 
     // Build the bit-matrix adjacency `waist_detect` consumes: one edge bit per
     // directed dependency edge `from -> to`, over the unit capacity.
-    let mut adj: BitMatrix<Bits<64, Hot, Unsigned>, D::Units> = BitMatrix::empty();
+    let mut adj: BitMatrix<D::AdjRow, D::Units> = BitMatrix::empty();
     let mut from = 0;
     while from < n {
         let mut to = 0;
@@ -269,8 +309,7 @@ where
         k += 1;
     }
 
-    let waists: Mask<Bits<64, Hot, Unsigned>> =
-        waist_detect::<D::Units, Bits<64, Hot, Unsigned>>(&adj, &topo_nodes);
+    let waists: Mask<D::AdjRow> = waist_detect::<D::Units, D::AdjRow>(&adj, &topo_nodes);
 
     // Phase 0 starts at position 0; each waist position (with a successor)
     // opens a new phase at the next position.
@@ -857,6 +896,47 @@ pub fn compute_upward_rank_and_dirty<D: PlanDims>(
     (ranks, dirty)
 }
 
+/// Per-unit predecessor masks for runtime incremental skip (domain 16,
+/// canonical Step 9).
+///
+/// `masks[v]` has bit `u` set for every direct dependency edge `u -> v`,
+/// so the bit names unit `u` as a direct predecessor of unit `v`. The bit
+/// index is the `UnitId::index` carrier position, the same space the
+/// dispatch walk threads, so the runtime dirty propagation can gate each
+/// unit by its position: a unit is dirty when any predecessor bit
+/// intersects the running dirty mask. Built from the CSR successor
+/// adjacency by recording, for each row `from`, its source position into
+/// every successor's mask. Sinks contribute nothing (empty rows), and the
+/// reverse direction is exactly the predecessor relation the propagation
+/// reads.
+pub fn compute_predecessor_masks<D: PlanDims>(
+    graph: &DependencyGraph<D>,
+) -> <D::Units as Capacity>::Array<D::AdjRow> {
+    let mut masks: <D::Units as Capacity>::Array<D::AdjRow> =
+        <D::Units as Capacity>::filled(D::AdjRow::default());
+    let cap = cap_size(<D::Units as Capacity>::CAP);
+    let cols = graph.col_indices.as_ref();
+    let row_offsets = graph.row_offsets.as_ref();
+    let n = graph.unit_count.0;
+    let mut from = 0;
+    while from < n && from < cap {
+        let start = row_offsets[from].0;
+        let end_excl = graph.end_for(from);
+        let mut k = start;
+        while k < end_excl && k < graph.edge_count.0 {
+            let to = cols[k].index().0;
+            if to < cap {
+                let m = masks.as_ref()[to];
+                // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal carrier position; tracked: #72
+                masks.as_mut()[to] = m.with_bit_set(USize(from));
+            }
+            k += 1;
+        }
+        from += 1;
+    }
+    masks
+}
+
 /// Step 9: per-fiber morsel sizing.
 ///
 /// Splits the record count across fibers. The skeleton evenly
@@ -1061,4 +1141,62 @@ pub enum PlanError {
     /// trunk slots would be unaddressable, so the plan stage rejects the
     /// misconfigured dims up front rather than wrapping ids.
     TrunkCapacityExceedsIdWidth,
+}
+
+#[cfg(test)]
+mod predecessor_mask_tests {
+    use super::compute_predecessor_masks;
+    use super::DependencyGraph;
+    use crate::plan::DefaultPlanDims;
+    use arvo::USize;
+    use arvo_bitmask::BitAccess;
+
+    // Diamond DAG: 0 -> {1, 2} -> 3. Predecessors: unit 0 has none, units 1
+    // and 2 each have {0}, unit 3 has {1, 2}. Edges are added in
+    // ascending-source order to satisfy the CSR append-order invariant; the
+    // sink (unit 3) gets an explicit empty row, mirroring `build_dag`'s
+    // row-fill tail.
+    #[test]
+    fn diamond_predecessor_masks() {
+        let mut g: DependencyGraph<DefaultPlanDims> = DependencyGraph::new();
+        g.add_edge(USize(0), USize(1)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test DAG literal indices; tracked: #72
+        g.add_edge(USize(0), USize(2)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test DAG literal indices; tracked: #72
+        g.add_edge(USize(1), USize(3)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test DAG literal indices; tracked: #72
+        g.add_edge(USize(2), USize(3)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test DAG literal indices; tracked: #72
+        // Sink row for unit 3 (no out-edges), as `build_dag` would fill.
+        while g.unit_count.0 < 4 {
+            let uc = g.unit_count.0;
+            g.row_offsets.as_mut()[uc] = g.edge_count;
+            g.unit_count = USize(g.unit_count.0 + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test count advance; tracked: #72
+        }
+        let masks = compute_predecessor_masks::<DefaultPlanDims>(&g);
+        let m = masks.as_ref();
+        // unit 0: root, no predecessors.
+        assert!(
+            !m[0].bit(USize(0)).0 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test index; tracked: #72
+                && !m[0].bit(USize(1)).0 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test index; tracked: #72
+                && !m[0].bit(USize(2)).0 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test index; tracked: #72
+                && !m[0].bit(USize(3)).0 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test index; tracked: #72
+        );
+        // unit 1: predecessor {0}.
+        assert!(m[1].bit(USize(0)).0); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test index; tracked: #72
+        assert!(
+            !m[1].bit(USize(1)).0 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test index; tracked: #72
+                && !m[1].bit(USize(2)).0 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test index; tracked: #72
+                && !m[1].bit(USize(3)).0 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test index; tracked: #72
+        );
+        // unit 2: predecessor {0}.
+        assert!(m[2].bit(USize(0)).0); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test index; tracked: #72
+        assert!(
+            !m[2].bit(USize(1)).0 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test index; tracked: #72
+                && !m[2].bit(USize(2)).0 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test index; tracked: #72
+                && !m[2].bit(USize(3)).0 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test index; tracked: #72
+        );
+        // unit 3: predecessors {1, 2}, not {0, 3}.
+        assert!(m[3].bit(USize(1)).0 && m[3].bit(USize(2)).0); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test indices; tracked: #72
+        assert!(
+            !m[3].bit(USize(0)).0 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test index; tracked: #72
+                && !m[3].bit(USize(3)).0 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test index; tracked: #72
+        );
+    }
 }

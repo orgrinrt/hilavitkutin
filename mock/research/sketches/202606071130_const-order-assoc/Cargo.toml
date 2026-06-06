@@ -1,0 +1,25 @@
+[package]
+name = "sketch-const-order-assoc"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# Const-order assoc-const fold (keystone wiring, roadmap Phase D / codegen_fiber).
+# Sketch 202606071000 proved const topo + const-order local fn-ptr dispatch
+# devirtualises. This proves the ENGINE wiring of the order: an associated-const
+# fold over the heterogeneous WU carrier, reading each member's Peano position
+# const (the shipped WitnessIndex::INDEX pattern in plan/project.rs), produces
+# the per-WU `const [u64; N]` read/write masks; a const fn topo over them yields
+# a `const ORDER` associated const on the carrier. Self-contained, replicating
+# the shipped WitnessIndex/Locate pattern so it transfers directly.
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

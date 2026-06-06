@@ -13,10 +13,11 @@
 pub mod approach;
 pub mod core_dispatch;
 pub mod engine_ctx;
-pub mod fiber_codegen;
 pub mod fiber_dispatch;
-pub mod fiber_walk;
+pub mod fiber_run;
+pub mod fusion;
 pub mod morsel;
+pub mod order;
 pub mod progress;
 pub mod standard;
 pub mod sync;
@@ -30,7 +31,10 @@ pub use approach::DispatchApproach;
 pub use core_dispatch::CoreDispatch;
 pub use engine_ctx::EngineCtx;
 pub use fiber_dispatch::FiberDispatch;
-pub use fiber_walk::{run_fiber_walk, RunFiber, WuCons, WuNil};
+pub use fiber_run::RunFiber;
+// The value-carrying WorkUnit list lives in the api crate so the builder can
+// construct it; re-export it here next to the dispatch machinery that consumes it.
+pub use hilavitkutin_api::work_unit_values::{WuCons, WuNil};
 pub use morsel::MorselRange;
 pub use progress::ProgressCounter;
 pub use sync::SyncPoint;

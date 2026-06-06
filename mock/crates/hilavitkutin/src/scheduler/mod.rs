@@ -39,16 +39,19 @@
 //! `Drop` that deallocates it. `build` takes the `MemoryProvider` as
 //! an argument and returns `Outcome<_, BuildError>`.
 
+use core::fmt;
 use core::marker::PhantomData;
 use core::sync::atomic::AtomicBool;
 
 use arvo::strategy::Identity;
 use arvo::Bool;
 use arvo::USize;
+use arvo_bitmask::{BitAccess, BitLogic, BitSequence};
 use arvo_tensor::Capacity;
-use crate::plan::project::{AccumStoresMask, BundleProject};
+use crate::plan::project::{AccumStoresMask, BundleProject, Locate, WitnessIndex};
 use crate::plan::{
-    compute_execution_plan, plan_inputs_from_bundle, DefaultPlanDims, ExecutionPlan, PlanDims,
+    compute_execution_plan, plan_inputs_from_bundle, AccessMask, DefaultPlanDims, ExecutionPlan,
+    PlanDims,
 };
 use hilavitkutin_api::access::{AccessSet, ContainsAll, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, Dispatch};
@@ -57,10 +60,11 @@ use hilavitkutin_api::run_cfg::{DefaultRunCfg, PlanAffecting, RunCfg};
 use hilavitkutin_api::store::Replaceable;
 use hilavitkutin_api::store_values::{Place, RouterKind, StoreValues, SvEmpty};
 use hilavitkutin_api::work_unit::WorkUnitBundle;
-use hilavitkutin_api::work_unit_values::WuNil;
-use hilavitkutin_api::{ColumnStorage, ColumnValue, StoreId};
+use hilavitkutin_api::work_unit_values::{WuAppend, WuCons, WuNil};
+use hilavitkutin_api::{ColumnStorage, ColumnValue, StoreId, UnitId};
 
-use crate::dispatch::fiber_codegen::{noop_fiber_shim, CollectFiber, FiberSlot};
+use crate::dispatch::fiber_run::RunFiber;
+use crate::dispatch::fusion::{ChainWu, FuseCarrier};
 use crate::dispatch::morsel::MorselRange;
 
 pub mod metrics;
@@ -69,7 +73,7 @@ pub mod plan;
 pub use metrics::SchedulerMetrics;
 pub use plan::PlanCache;
 
-use crate::resource::bindings::{BindingsFor, DrainStores};
+use crate::resource::bindings::{BindingsFor, DrainStores, ResetAccumulators};
 
 /// The default empty store-value list, used as the `Vals` default for a
 /// bare `Scheduler` type.
@@ -92,6 +96,76 @@ pub enum BuildError {
     /// feasibility failure). The plan is computed before any allocation,
     /// so no block is allocated on this path.
     PlanFailed,
+    /// The registration order is acyclic but not a topological order of the
+    /// dependency DAG: a `producer` slot writes a store that a `consumer` slot
+    /// reads, yet `producer` is registered after `consumer` (carrier slot index
+    /// `producer >= consumer`). Distinct from `PlanFailed` (a cycle): there is
+    /// a valid topological order, the registration just is not one. The static
+    /// dispatch walk follows carrier order directly, so an anti-topological
+    /// carrier would dispatch a reader before its writer. The fields name the
+    /// offending carrier slots. This is the provisional producer-before-consumer
+    /// constraint (engine roadmap r2 §8, op call b): it relaxes when the engine
+    /// auto-applies the cache-optimal (RCM / topological) order. The check runs
+    /// before any allocation, so a rejected registration allocates nothing.
+    NonTopologicalRegistration {
+        /// Carrier slot index of the writer registered after its reader.
+        producer: USize,
+        /// Carrier slot index of the reader registered before its writer.
+        consumer: USize,
+        /// A registration order that satisfies the gate: the RCM-reordered
+        /// topological order (canonical Step 5, the cache-optimal order among
+        /// valid topological orders), the same order the auto-ordering
+        /// relaxation applies. Each entry is a carrier slot index; registering
+        /// in this order makes the carrier topological.
+        recommended: RecommendedOrder,
+    },
+}
+
+/// A recommended registration order: a carrier-slot sequence the consumer can
+/// register in to satisfy the topological-registration gate.
+///
+/// Built from the plan's `rcm_order` (the RCM-reordered topological order, the
+/// cache-optimal order among valid topological orders per canonical Step 5).
+/// Fixed-capacity, no allocation: the slot sequence lives inline, sized by the
+/// engine's default unit capacity, with `count` naming the live prefix.
+#[derive(Copy, Clone, PartialEq, Eq)]
+pub struct RecommendedOrder {
+    /// Carrier slot indices in recommended order; only `[0 .. count]` is live.
+    order: <<DefaultPlanDims as PlanDims>::Units as Capacity>::Array<USize>,
+    /// Number of live entries in `order`.
+    count: USize,
+}
+
+impl RecommendedOrder {
+    /// Build the recommended order from the plan's `rcm_order` permutation.
+    ///
+    /// `rcm_order[new_pos]` is the original `UnitId` placed at `new_pos`; its
+    /// carrier slot index is `.index()`. The live prefix is `[0 .. count]`.
+    fn from_rcm_order(rcm: &[UnitId], count: USize) -> Self {
+        let mut order = <<DefaultPlanDims as PlanDims>::Units as Capacity>::filled(USize::ZERO);
+        let n = count.0.min(rcm.len()).min(order.as_ref().len());
+        let slots = order.as_mut();
+        let mut i = 0;
+        while i < n {
+            slots[i] = rcm[i].index();
+            i += 1;
+        }
+        Self {
+            order,
+            count: USize(n), // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-wrap clamped live count; tracked: #72
+        }
+    }
+
+    /// The recommended carrier-slot sequence, live prefix only.
+    pub fn as_slice(&self) -> &[USize] {
+        &self.order.as_ref()[..self.count.0]
+    }
+}
+
+impl fmt::Debug for RecommendedOrder {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.as_slice().iter().map(|s| s.0)).finish()
+    }
 }
 
 /// Convenience alias for a built scheduler over the default run-config.
@@ -237,8 +311,36 @@ where
         <DefaultPlanDims as PlanDims>::Units,
         <DefaultPlanDims as PlanDims>::Stores,
     >(record_count);
+    // Cycle detection runs first: a dependency cycle has no topological order at
+    // all, so it cannot be fixed by reordering registration and stays
+    // `PlanFailed`. `compute_execution_plan` succeeding proves the graph acyclic.
     match compute_execution_plan::<DefaultPlanDims>(&inputs) {
-        notko::Outcome::Ok(plan) => notko::Outcome::Ok(plan),
+        notko::Outcome::Ok(plan) => {
+            // Provisional registration constraint (op call b): the static
+            // dispatch walk follows the carrier (registration) order directly,
+            // so the carrier must already be a topological order. The graph is
+            // acyclic here, so any back-edge in registration order is a genuine
+            // anti-topological registration (a valid topological order exists,
+            // this just is not one). Reject it, naming the offending carrier
+            // slots. The plan layer stays order-independent; this is a
+            // scheduler-build precondition that relaxes when the engine
+            // auto-applies the cache-optimal order. No allocation has happened
+            // yet, so a rejected registration allocates nothing.
+            if let notko::Maybe::Is((producer, consumer)) =
+                crate::plan::steps::first_back_edge::<DefaultPlanDims>(&inputs)
+            {
+                // The plan is in hand, so name the recommended registration order
+                // (the RCM-reordered topological order) without recomputing it.
+                let recommended =
+                    RecommendedOrder::from_rcm_order(plan.rcm_order.as_ref(), plan.unit_count);
+                return notko::Outcome::Err(BuildError::NonTopologicalRegistration {
+                    producer,
+                    consumer,
+                    recommended,
+                });
+            }
+            notko::Outcome::Ok(plan)
+        }
         notko::Outcome::Err(_) => notko::Outcome::Err(BuildError::PlanFailed),
     }
 }
@@ -454,8 +556,15 @@ pub struct Scheduler<
     Vals: StoreValues + BindingsFor = SvEmpty,
     CS: ColumnStorage = NullColumnStorage,
     D: PlanDims = DefaultPlanDims,
+    Stores = Empty,
 > {
     _cfg: PhantomData<Cfg>,
+    /// The registered store access set, retained so `mark_dirty` /
+    /// `replace_resource` / `replace_value` can resolve a store type to its
+    /// Stores-list bit position (the space `read_masks` / `store_dirty`
+    /// index) via the `Locate` witness. Carried as `PhantomData` because the
+    /// access set is purely type-level; no runtime value.
+    _stores: PhantomData<Stores>,
     /// The plan's topological dispatch permutation, computed at `build`.
     /// `topo_order[step]` is the registration-list position of the unit
     /// dispatched at topological step `step`; `run` walks the live prefix
@@ -475,9 +584,9 @@ pub struct Scheduler<
     /// scheduler). The dispatch consumer reads the plan back through it.
     plan_handle: PlanHandle,
     /// The frame record count fixed at `build`. Input columns are reserved
-    /// to it, and `run` dispatches over a single morsel covering it. The
-    /// morsel-loop split that windows this into multiple morsels is a later
-    /// round (#343).
+    /// to it, and `run` windows it into morsels of `RunCfg::MORSEL_SIZE`
+    /// (one full-range walk for an accumulator-bearing or record-less
+    /// frame).
     record_count: USize,
     /// Per-fiber dispatch descriptor, computed at `build` alongside
     /// `topo_order`. Each live entry slices `topo_order` for one fiber (in
@@ -499,6 +608,21 @@ pub struct Scheduler<
     // lint:allow(no-bare-numeric) reason: const-generic array dimension at the L0 storage root; matches DefaultRunCfg::MAX_PLAN_AFFECTING_RESOURCES = USize(256); tracked: #345 (per-Cfg lift awaits rustc generic_const_exprs gaining field-access support)
     plan_dirty: [AtomicBool; 256],
     plan_cache: PlanCache,
+    /// Per-unit predecessor masks (carrier-position space), copied off the
+    /// plan at build. The runtime propagates the dirty seed forward over
+    /// these and gates each unit by its position.
+    predecessor_masks: <D::Units as Capacity>::Array<D::AdjRow>,
+    /// Per-unit read access masks, copied off the plan. A unit is seeded
+    /// dirty when its reads intersect the changed-store mask.
+    read_masks: <D::Units as Capacity>::Array<AccessMask<D::Stores>>,
+    /// Per-store change seed (Stores-list-position space). `mark_dirty`,
+    /// `replace_resource`, and `replace_value` set bits here; `run` /
+    /// `run_fused` consume and clear it each frame.
+    store_dirty: AccessMask<D::Stores>,
+    /// Cold-start flag. Every unit is dirty on the first frame after build,
+    /// so the first `run` / `run_fused` executes the whole carrier; set
+    /// false afterward.
+    first_frame: Bool,
     /// Scheduler-owned resource bindings, built from the registered store
     /// values at `build()`. Holds only `Copy` pointers into the store's
     /// reserved columns; no destructor walk on drop.
@@ -601,8 +725,8 @@ impl Scheduler<DefaultRunCfg, WuNil, SvEmpty, NullColumnStorage> {
     }
 }
 
-impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D: PlanDims>
-    Scheduler<Cfg, WuVals, Vals, CS, D>
+impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D: PlanDims, Stores>
+    Scheduler<Cfg, WuVals, Vals, CS, D, Stores>
 {
     /// Replace the existing `Resource<T>` instance in the data
     /// plane with `_new`, marking the plan dirty.
@@ -611,11 +735,17 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
     /// path; the next `run()` recomputes the execution plan.
     /// Consumers that need a cheap value swap on a non-plan-
     /// affecting resource use `replace_value`.
-    pub fn replace_resource<T: PlanAffecting>(&mut self, _new: T) {
-        // body lands at Pass 7 + Pass 8 wiring: locate the
-        // PlanAffectingId for T, set plan_dirty[id] = true with
-        // Release ordering, install the new value in the data
-        // plane.
+    pub fn replace_resource<T: PlanAffecting, Index>(&mut self, _new: T)
+    where
+        Stores: Locate<T, Index>,
+        Index: WitnessIndex,
+    {
+        // A swapped resource is a changed input, so mark its store dirty for
+        // the next frame (domain-16 incremental skip seed).
+        self.mark_dirty::<T, Index>();
+        // The domain-22 plan-recompute seed (`plan_dirty` by PlanAffectingId)
+        // and the data-plane value install are sequenced with the adapt
+        // subsystem (runtime plan recompute on resource swap).
         let _ = &self.plan_dirty;
     }
 
@@ -625,118 +755,246 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
     /// without signalling plan recompute. The `Replaceable` marker
     /// is consumer-driven per Topic 8 axis B (replaceable but not
     /// plan-affecting is the typical case for app-level state).
-    pub fn replace_value<T: Replaceable>(&mut self, _new: T) {
-        // body lands at Pass 7 + Pass 8 wiring: locate the slot
-        // for T in the data plane, swap the value, no dirty bit.
+    pub fn replace_value<T: Replaceable, Index>(&mut self, _new: T)
+    where
+        Stores: Locate<T, Index>,
+        Index: WitnessIndex,
+    {
+        // A swapped value is a changed input: mark its store dirty for the
+        // next frame so dependents re-run (domain-16 incremental skip). No
+        // plan-recompute dirty, since the value swap is not structural. The
+        // data-plane value install is sequenced with the adapt subsystem.
+        self.mark_dirty::<T, Index>();
     }
 
-    /// Dispatch the retained WorkUnit instances in the plan's topological
-    /// order, windowing the record range into morsels, then return
-    /// `Cfg::Out::default()`.
+    /// Mark the store named by type `T` changed for the next frame.
     ///
-    /// `build` stored the topological permutation on the scheduler. This
-    /// method materialises the type-erased slot array from the retained
-    /// units via `CollectFiber` (one `FiberSlot` per unit, the unused tail
-    /// filled with `noop_fiber_shim` placeholders), then walks
-    /// `topo_order[0 .. topo_count]`, dispatching each step's slot. Each
-    /// slot's shim projects that unit's `EngineCtx` from the bindings
-    /// (resources and columns alike) and runs `execute`. The record range
-    /// `[0, record_count)` is windowed into morsels of `RunCfg::MORSEL_SIZE`
-    /// (at least one record) and each unit is dispatched once per morsel,
-    /// unit-outer (a unit completes its record range before the next unit
-    /// runs); a record-less frame dispatches each unit once over an empty
-    /// morsel. The `Witnesses` parameter is the per-unit projection-index
-    /// list, inferred at the call site, so `scheduler.run()` needs no
-    /// turbofish.
+    /// `T` is resolved to its position in the registered `Stores` access
+    /// set via the same `Locate` witness the plan projection uses, so its
+    /// bit lands in the Stores-list-position space the per-unit read masks
+    /// index. The next `run` / `run_fused` seeds every unit reading `T` as
+    /// dirty and propagates forward, so only `T`'s transitive cone runs.
+    /// `Index` infers at the call site, so `scheduler.mark_dirty::<T>()`
+    /// needs no turbofish on the index. The consumer calls this for an
+    /// input it mutated directly (a host-populated column or a swapped
+    /// resource value tracked elsewhere); `replace_resource` and
+    /// `replace_value` call it internally.
+    pub fn mark_dirty<T, Index>(&mut self)
+    where
+        Stores: Locate<T, Index>,
+        Index: WitnessIndex,
+    {
+        self.store_dirty = self.store_dirty.set(Index::INDEX);
+    }
+
+    /// This frame's dirty-unit mask for incremental skip (domain 16,
+    /// canonical Step 9).
     ///
-    /// The slot array is rebuilt each call because a stored instance pointer
-    /// would make the scheduler self-referential. The real morsel loop
-    /// (plan-dirty check, per-core dispatch build, executor spawn, morsel
-    /// walk, phase barriers, meta-WU firing, persistence drain) waits on the
-    /// `codegen_fiber` / `codegen_core` LLVM tier. The full real-body
-    /// contract lives in `Scheduler::run real morsel loop body` in
-    /// `BACKLOG.md.tmpl`.
+    /// Seeds every unit whose read set intersects the per-store change
+    /// seed (or every unit, on the cold first frame), then propagates the
+    /// seed forward over the predecessor masks in carrier (topological)
+    /// order: a unit is dirty when directly seeded or any predecessor is
+    /// dirty. Positions past the live unit count carry empty masks and stay
+    /// clean. The walk over the array length runs the predecessors-before-
+    /// dependents single pass because carrier position equals topological
+    /// order (`build` validated it).
+    fn dirty_units(&self) -> D::AdjRow {
+        if self.first_frame.0 {
+            // Cold frame: every unit dirty, so the first frame after build
+            // executes the whole carrier.
+            return D::AdjRow::default().bitnot();
+        }
+        let reads = self.read_masks.as_ref();
+        let preds = self.predecessor_masks.as_ref();
+        // Bound the seed and propagate passes to the live unit count, not the
+        // full unit-capacity array length: positions past `topo_count` carry
+        // empty masks and stay clean, so iterating them is pure per-frame
+        // overhead on the hot path. The mask arrays are indexed by carrier
+        // position (0..unit_count), and `topo_count` is that live count.
+        let n = self.topo_count.0.min(reads.len()).min(preds.len());
+        let mut dirty = D::AdjRow::default();
+        let mut p = 0;
+        while p < n {
+            if reads[p].overlaps(&self.store_dirty).0 {
+                // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct carrier position; tracked: #72
+                dirty = dirty.with_bit_set(USize(p));
+            }
+            p += 1;
+        }
+        let mut p = 0;
+        while p < n {
+            if !preds[p].bitand(dirty).is_zero().0 {
+                // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct carrier position; tracked: #72
+                dirty = dirty.with_bit_set(USize(p));
+            }
+            p += 1;
+        }
+        dirty
+    }
+
+    /// Dispatch the retained WorkUnit carrier in carrier order, windowing the
+    /// record range into morsels, then return `Cfg::Out::default()`.
+    ///
+    /// The retained `wu_values` carrier is walked as one type-level `RunFiber`
+    /// recursion in carrier (registration) order, which `build()` validated is a
+    /// topological order: a consumer registers producer-before-consumer, and an
+    /// anti-topological carrier is rejected at `build()`
+    /// (`BuildError::NonTopologicalRegistration`). Each `RunFiber` step projects
+    /// that unit's `EngineCtx` from the bindings (resources, columns, and
+    /// accumulators alike) and runs `execute`; no unit dispatches through a
+    /// stored function pointer, so the whole walk monomorphises into one
+    /// straight-line body that devirtualises under fat LTO. This is the flat
+    /// schedule-mega dispatch (spec Approach E); the per-fiber and per-phase
+    /// sub-carrier nesting is a later refinement.
+    ///
+    /// Drive shape: a carrier that writes no accumulator runs morsel-outer (the
+    /// runtime morsel loop of `RunCfg::MORSEL_SIZE`, guarded to at least one
+    /// record, wraps the whole-carrier walk so intermediate columns stay
+    /// cache-resident per morsel); a carrier bearing an accumulator runs
+    /// unit-outer (one full-range walk, the cross-record-safe append path),
+    /// which is also the record-less-frame path (the carrier runs once over an
+    /// empty morsel so a resource-only unit runs exactly once). The decision
+    /// reads the per-fiber `morsel_local` bits the plan computed. The
+    /// `Witnesses` parameter is the per-unit projection-index list, inferred at
+    /// the call site, so `scheduler.run()` needs no turbofish.
     pub fn run<Witnesses>(&mut self) -> Cfg::Out
     where
         Cfg::Out: Default,
-        WuVals: CollectFiber<<Vals as BindingsFor>::Bindings, Witnesses>,
+        WuVals: RunFiber<<Vals as BindingsFor>::Bindings, Witnesses>,
+        <Vals as BindingsFor>::Bindings: ResetAccumulators,
     {
-        let _ = &self.plan_dirty;
-        let _ = &self.plan_cache;
-        // Materialise the erased dispatch slots from the retained units. The
-        // tail past the live unit count keeps its `noop_fiber_shim`
-        // placeholder and is never dispatched (the walk reads only the
-        // `topo_count` live prefix).
-        let placeholder: FiberSlot<<Vals as BindingsFor>::Bindings> =
-            (core::ptr::null(), noop_fiber_shim::<<Vals as BindingsFor>::Bindings>);
-        let mut slots = <D::Units as Capacity>::filled(placeholder);
-        self.wu_values.collect(slots.as_mut());
-        // Dispatch per fiber, walking the plan's `phases -> trunks -> fibers`
-        // structure flattened into `topo_order` with one `fiber_dispatch` entry
-        // per fiber (its slice `[start .. start + len]` of `topo_order` plus its
-        // `morsel_local` bit). The record range `[0, total)` windows into
-        // morsels of `Cfg::MORSEL_SIZE`, guarded to at least one record so a
-        // zero-config never produces zero-length morsels that skip all work.
-        //
-        // A morsel-local fiber (writes no accumulator) dispatches morsel-outer:
-        // one morsel runs the fiber's whole unit sequence before the next, so
-        // its intermediate columns stay cache-resident across the morsel. This
-        // is sound because the per-record accessors are morsel-relative and the
-        // only cross-record surface is the accumulator append path, which a
-        // morsel-local fiber does not touch. An accumulator-bearing fiber stays
-        // unit-outer (a unit completes its record range before the next), the
-        // cross-record-safe form, which is also the path a record-less frame
-        // takes (each unit dispatched once over an empty morsel so a
-        // resource-only unit runs exactly once). Fibers run sequentially, so a
-        // cross-fiber dependency always sees the upstream fiber's full output;
-        // single-core needs no thread barrier for the phase ordering.
+        // Schedule-once-reuse: zero every accumulator live-length at frame
+        // start so this frame appends into a fresh buffer rather than
+        // continuing from the prior frame's live offset. No-op for an
+        // accumulator-free carrier.
+        self.bindings.reset_accumulators();
+        // `plan_dirty` / `plan_cache` are the domain-22 plan-recompute seed
+        // and cache (set by `replace_resource`); rebuilding the plan from
+        // them is the adapt subsystem's job, sequenced later. The domain-16
+        // incremental-skip seed is `store_dirty`, consumed here.
+        let _ = (&self.plan_dirty, &self.plan_cache);
+        // `topo_order` / `topo_count` are retained plan state; the carrier
+        // walk dispatches in carrier order directly, so `run` does not index
+        // them.
+        let _ = (&self.topo_order, &self.topo_count);
+        // Per-frame incremental skip: the dirty-unit mask names which units
+        // this frame must run (their input cone changed); the rest are
+        // skipped, producing identical output to running them.
+        let dirty = self.dirty_units();
         let msize = Cfg::MORSEL_SIZE.0.max(1);
         let total = self.record_count.0;
-        let order = self.topo_order.as_ref();
-        let count = self.topo_count.0;
-        let live = slots.as_ref();
+        // One whole-carrier drive decision for the flat Approach E body: any
+        // accumulator-bearing fiber (a non-morsel-local plan descriptor) selects
+        // unit-outer; otherwise morsel-outer. A record-less frame also takes the
+        // single-walk path so a resource-only carrier runs exactly once.
         let descriptors = self.fiber_dispatch.as_ref();
-        let fcount = self.fiber_dispatch_count.0;
-        // `order[k].0` is the registration-list slot index of the unit at flat
-        // dispatch position `k`; the slot's shim performs the back-cast under
-        // its own `// SAFETY:` note.
+        let fcount = self.fiber_dispatch_count.0.min(descriptors.len());
+        let mut unit_outer = false;
         let mut fi = 0;
-        while fi < fcount && fi < descriptors.len() {
-            let fd = descriptors[fi];
-            let fstart = fd.start.0;
-            let fend = (fstart + fd.len.0).min(count);
-            if fd.morsel_local.0 && total != 0 {
-                let mut start = 0;
-                while start < total {
-                    let len = msize.min(total - start);
-                    let morsel = MorselRange::new(USize(start), USize(len));
-                    let mut k = fstart;
-                    while k < fend {
-                        let (ptr, shim) = live[order[k].0];
-                        shim(ptr, &self.bindings, morsel);
-                        k += 1;
-                    }
-                    start += len;
-                }
-            } else {
-                let mut k = fstart;
-                while k < fend {
-                    let (ptr, shim) = live[order[k].0];
-                    if total == 0 {
-                        shim(ptr, &self.bindings, MorselRange::new(USize::ZERO, USize::ZERO));
-                    } else {
-                        let mut start = 0;
-                        while start < total {
-                            let len = msize.min(total - start);
-                            shim(ptr, &self.bindings, MorselRange::new(USize(start), USize(len)));
-                            start += len;
-                        }
-                    }
-                    k += 1;
-                }
+        while fi < fcount {
+            if !descriptors[fi].morsel_local.0 {
+                unit_outer = true;
             }
             fi += 1;
         }
+        if unit_outer || total == 0 {
+            // The accumulator-bearing (and record-less) path always runs every
+            // unit: an accumulator is reset and re-appended each frame, so
+            // skipping it would leave it reset-but-empty, which is not the same
+            // output as running it. Incremental skip applies to the pure RAW
+            // recompute path (morsel-outer below), not to per-frame append.
+            let _ = dirty;
+            self.wu_values
+                .run(&self.bindings, MorselRange::new(USize::ZERO, USize(total)));
+        } else {
+            let mut start = 0;
+            while start < total {
+                let len = msize.min(total - start);
+                self.wu_values.run_gated(
+                    &self.bindings,
+                    MorselRange::new(USize(start), USize(len)),
+                    dirty,
+                    USize::ZERO,
+                );
+                start += len;
+            }
+        }
+        // The frame consumed the change seed; clear it and leave cold-start.
+        self.store_dirty = AccessMask::empty();
+        self.first_frame = Bool::FALSE;
+        Cfg::Out::default()
+    }
+
+    /// Dispatch the retained carrier fused: fold its `RecordOp` work units into
+    /// one `ChainWu` and walk that, keeping the chain's intermediate columns
+    /// register-resident.
+    ///
+    /// This is the within-fiber linear fusion entry (the canonical spec's
+    /// deep-single-fiber rust-pipe). It applies when the retained carrier is a
+    /// linear read-after-write chain of opt-in `RecordOp` maps: `FuseCarrier`
+    /// folds the carrier into the matching `OpChain` at the type level, and the
+    /// fused `ChainWu` reads the chain's input column, runs the maps with every
+    /// intermediate in a register, and writes only the chain's output column.
+    /// Dead-store elimination under fat LTO removes the intermediate-column
+    /// traffic, matching a hand-fused loop.
+    ///
+    /// The engine performs the fold: a consumer registers natural separate
+    /// `RecordOp` work units plus their columns and calls `run_fused`; it never
+    /// hand-authors the chain. The choice between this and the general per-WU
+    /// `run` is an explicit entry rather than a transparent `run` auto-detection,
+    /// which is not expressible on the toolchain (the fused projection witness
+    /// would be an unconstrained specializing-impl parameter, and
+    /// `min_specialization` does not permit specializing on the `FuseCarrier`
+    /// bound). `W2` is the fused carrier's projection-witness list, inferred at
+    /// the call site exactly as `run`'s `Witnesses` is, so `scheduler.run_fused()`
+    /// needs no turbofish.
+    ///
+    /// A fusible chain writes no accumulator, so it dispatches morsel-outer (the
+    /// runtime morsel loop wraps the whole-chain walk so the intermediates stay
+    /// register-resident per morsel); a record-less frame runs the chain once
+    /// over an empty morsel.
+    pub fn run_fused<W2>(&mut self) -> Cfg::Out
+    where
+        Cfg::Out: Default,
+        WuVals: FuseCarrier,
+        WuCons<ChainWu<<WuVals as FuseCarrier>::Chain>, WuNil>:
+            RunFiber<<Vals as BindingsFor>::Bindings, W2>,
+    {
+        let _ = (&self.plan_dirty, &self.plan_cache, &self.topo_order, &self.topo_count);
+        let fused = WuCons {
+            head: ChainWu::new(self.wu_values.fuse()),
+            tail: WuNil,
+        };
+        // Incremental skip for the fused chain: the chain is one unit at
+        // carrier position 0, and a linear chain's only external input is
+        // its root, so the chain runs iff dirty bit 0 is set (its input
+        // changed, or the cold frame). A clean frame skips the whole chain,
+        // leaving its output column untouched.
+        let dirty = self.dirty_units();
+        let msize = Cfg::MORSEL_SIZE.0.max(1);
+        let total = self.record_count.0;
+        if total == 0 {
+            fused.run_gated(
+                &self.bindings,
+                MorselRange::new(USize::ZERO, USize::ZERO),
+                dirty,
+                USize::ZERO,
+            );
+        } else {
+            let mut start = 0;
+            while start < total {
+                let len = msize.min(total - start);
+                fused.run_gated(
+                    &self.bindings,
+                    MorselRange::new(USize(start), USize(len)),
+                    dirty,
+                    USize::ZERO,
+                );
+                start += len;
+            }
+        }
+        self.store_dirty = AccessMask::empty();
+        self.first_frame = Bool::FALSE;
         Cfg::Out::default()
     }
 
@@ -776,6 +1034,7 @@ impl<Cfg: RunCfg> Default for Scheduler<Cfg, WuNil, SvEmpty, NullColumnStorage> 
     fn default() -> Self {
         Self {
             _cfg: PhantomData,
+            _stores: PhantomData,
             topo_order: <<DefaultPlanDims as PlanDims>::Units as Capacity>::filled(USize::ZERO),
             topo_count: USize::ZERO,
             plan_handle: PlanHandle::empty(),
@@ -787,6 +1046,15 @@ impl<Cfg: RunCfg> Default for Scheduler<Cfg, WuNil, SvEmpty, NullColumnStorage> 
             fiber_dispatch_count: USize::ZERO,
             plan_dirty: [const { AtomicBool::new(false) }; 256],
             plan_cache: PlanCache::new(),
+            predecessor_masks:
+                <<DefaultPlanDims as PlanDims>::Units as Capacity>::filled(
+                    <DefaultPlanDims as PlanDims>::AdjRow::default(),
+                ),
+            read_masks: <<DefaultPlanDims as PlanDims>::Units as Capacity>::filled(
+                AccessMask::empty(),
+            ),
+            store_dirty: AccessMask::empty(),
+            first_frame: Bool::TRUE,
             bindings: crate::resource::bindings::BindingNil,
             storage: NullColumnStorage,
             wu_values: WuNil,
@@ -842,6 +1110,7 @@ impl<Wus, Stores, Platform, Vals: StoreValues, WuVals>
         P: BuilderInput,
         P::Dispatch: Dispatch<Wus, Stores, Platform> + RouterKind,
         <P::Dispatch as RouterKind>::Kind: Place<P>,
+        WuVals: WuAppend<P>,
     {
         let (store_values, wu_values) =
             <<P::Dispatch as RouterKind>::Kind as Place<P>>::place(
@@ -890,7 +1159,7 @@ where
         self,
         storage: CS,
         record_count: USize,
-    ) -> notko::Outcome<Scheduler<DefaultRunCfg, WuVals, Vals, CS>, BuildError>
+    ) -> notko::Outcome<Scheduler<DefaultRunCfg, WuVals, Vals, CS, DefaultPlanDims, Stores>, BuildError>
     where
         Wus: BundleProject<
             Stores,
@@ -920,6 +1189,7 @@ where
                 };
                 notko::Outcome::Ok(Scheduler {
                     _cfg: PhantomData,
+                    _stores: PhantomData,
                     topo_order,
                     topo_count,
                     plan_handle,
@@ -928,6 +1198,10 @@ where
                     fiber_dispatch_count,
                     plan_dirty: [const { AtomicBool::new(false) }; 256],
                     plan_cache: PlanCache::new(),
+                    predecessor_masks: plan.predecessor_masks,
+                    read_masks: plan.read_masks,
+                    store_dirty: AccessMask::empty(),
+                    first_frame: Bool::TRUE,
                     bindings,
                     storage,
                     wu_values,
@@ -946,7 +1220,7 @@ where
         self,
         storage: CS,
         record_count: USize,
-    ) -> notko::Outcome<Scheduler<Cfg, WuVals, Vals, CS>, BuildError>
+    ) -> notko::Outcome<Scheduler<Cfg, WuVals, Vals, CS, DefaultPlanDims, Stores>, BuildError>
     where
         Wus: BundleProject<
             Stores,
@@ -976,6 +1250,7 @@ where
                 };
                 notko::Outcome::Ok(Scheduler {
                     _cfg: PhantomData,
+                    _stores: PhantomData,
                     topo_order,
                     topo_count,
                     plan_handle,
@@ -984,6 +1259,10 @@ where
                     fiber_dispatch_count,
                     plan_dirty: [const { AtomicBool::new(false) }; 256],
                     plan_cache: PlanCache::new(),
+                    predecessor_masks: plan.predecessor_masks,
+                    read_masks: plan.read_masks,
+                    store_dirty: AccessMask::empty(),
+                    first_frame: Bool::TRUE,
                     bindings,
                     storage,
                     wu_values,

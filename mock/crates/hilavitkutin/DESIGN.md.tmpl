@@ -54,7 +54,7 @@ complete execution plan:
    loudly instead of silently wrapping ids past the addressable range.
 3. Upward rank → critical path (arvo-graph)
 4. Waist detection → phase boundaries (arvo-graph)
-5. RCM reordering → renumber permutation on `ExecutionPlan`, feeding arena layout now and fiber grouping order later (arvo-sparse)
+5. RCM reordering → renumber permutation on `ExecutionPlan`: row order is the WU execution order (feeds fiber grouping, step 8), column order is the arena layout (arvo-sparse)
 6. Block diagonal → connected-component partition projected to per-phase
  trunk skeletons (one trunk per block; sets `Phase` id, `Trunk` id, trunk
  count). Dulmage-Mendelsohn fine decomposition, dead column elimination,
@@ -90,6 +90,26 @@ Plan recomputes on `Scheduler::run()` entry when the dirty bit is set
 
 Plan recompute is single-threaded in v1 (sequential through steps 1-13).
 Parallelisation deferred until consumer pipelines push beyond ~256 WUs.
+
+Incremental skip (domain 16) is distinct from that plan-recompute dirty bit.
+Step 12 produces a per-unit predecessor mask keyed by carrier position (the
+position the dispatch walk threads). At `Scheduler::run()` entry the engine
+seeds a dirty set from per-root change signals: a `PlanAffecting` resource
+swapped via `replace_resource`, a non-plan-affecting value swapped via
+`replace_value`, an input the consumer marked changed, or the cold first frame
+after build where every root is dirty. It propagates the seed forward over the
+predecessor masks in carrier order (`dirty[j] |= dirty[i]` for every edge
+`i to j`) and skips any unit whose entire predecessor set is clean: a unit whose
+input cone did not change produces identical output whether it runs or not, so
+skipping is correctness-preserving. This domain-16 dirty (which units to skip)
+is separate from the domain-22 `PlanAffecting` dirty above (whether to rebuild
+the plan); the latter's recompute-the-plan consumption is sequenced later with
+the adapt subsystem.
+
+The self-hosting meta-WU frame loop (`PlanStage`, `ScheduleReady`, `PassStart`,
+`ScheduleEnd`) is the N-core self-hosting form. At one core the run path is the
+static carrier walked over runtime record ranges plus this dirty gate, not a
+meta-WU loop.
 
 ## Dispatch codegen (domain 17)
 
@@ -130,53 +150,112 @@ The sequential walk that constructs each unit's `EngineCtx` and runs
 `execute` over a fiber's WorkUnit sequence is `RunFiber`, a monomorphic
 trait over a value-carrying unit list: `WuCons` cells carry a unit
 instance plus the tail, `WuNil` terminates, following the `PtrCons` /
-`PtrNil` cell convention. The free `run_fiber_walk` entry drives it. Per
-unit it projects that unit's `EngineCtx` from the shared arena through
-`EngineCtx::project`, runs `execute` via the `invoke_wu_in_fiber` shim,
-and recurses on the tail; the per-unit projection index is carried as a
-parallel witness list and inferred at the call site, no caller turbofish.
-This is the pre-codegen dispatch core, pure Rust generics with no LLVM,
-and is distinct from the per-fiber-shape `run_fiber<S: FiberShape>`
-monomorphisation above (the codegen-emitted path). `RunFiber` itself
-stays resource-only: it is the slice-1 sequential primitive, retained
-with its test, and it does not carry the column projection a column-
-bearing unit needs. Column-bearing units dispatch through `Scheduler::run`
-(the `CollectFiber` path described next), which projects columns from the
-bindings alongside resources.
+`PtrNil` cell convention. Per unit it projects that unit's `EngineCtx`
+from the bindings through `EngineCtx::project` (resources via `Project`,
+read and write columns via `ColProject`, accumulators via `AccumProject`),
+runs `execute`, and recurses on the tail; the per-unit projection indices
+are carried as parallel witness lists and inferred at the call site, no
+caller turbofish. No unit dispatches through a stored function pointer, so
+a fiber's unit sequence monomorphises into one straight-line body that
+devirtualizes under fat LTO. A column-reading or column-writing unit
+dispatches through this walk directly, projecting its columns alongside its
+resources; there is no separate erased-slot dispatch path. This is the
+single-core dispatch core, pure Rust generics, distinct from the
+per-fiber-shape `run_fiber<S: FiberShape>` monomorphisation above (the
+codegen-emitted parallel-path shape). The walk is driven from
+`Scheduler::run`, where the bindings type is fixed by the scheduler so the
+column projection's associated-type ties resolve.
 
 `Scheduler::run` dispatches the WorkUnit instances the builder retained at
-registration (see the scheduler builder section) in the plan's topological
-order, windowing the record range into morsels of `RunCfg::MORSEL_SIZE`
-(guarded to at least one record) and dispatching each unit once per morsel.
-The nesting is chosen by whether the pipeline writes any accumulator. An
-accumulator-free pipeline dispatches morsel-outer: one morsel runs the whole
-unit sequence before the next, so intermediate columns stay cache-resident
-across the units. This is sound because the per-record `read` / `write`
-accessors are morsel-relative and the only cross-record surface is the
-accumulator append path, so an accumulator-free pipeline has every cross-unit
-dependency morsel-local. A fiber that writes an accumulator stays unit-outer
-(a unit completes its record range before the next unit runs), the
-cross-record-safe form. The decision is per-fiber: `run` walks the plan's
-`phases -> trunks -> fibers` structure and dispatches each fiber on its own
-`morsel_local` bit, so an accumulator-bearing pipeline still runs its
-accumulator-free fibers morsel-outer while its accumulator fibers stay
-unit-outer. The bit is computed once at fiber formation, the fiber's touched
-stores intersected against the accumulator-store set the store drain records
-(the drain is where an `Accum` store is distinguishable from a plain column),
-so no accumulator-store membership is recomputed at dispatch. It
-materialises one type-erased dispatch slot per retained unit through
-`CollectFiber`, the sibling of `RunFiber` that records a `FiberSlot` (an
-erased instance pointer plus a per-unit shim) instead of running the unit
-inline, then walks the phase-sequential dispatch order `build` derived (the
-plan flattened `phases -> trunks -> fibers -> units`, a topological order
-grouped by the plan's locality structure) and dispatches each unit's slot. The shim casts the erased pointer back to its
-concrete WorkUnit, projects the unit's `EngineCtx` from the bindings
-(resources via `Project`, columns via `ColProject` over the Read and Write
-sets, fully-qualified as `EngineCtx::project` does it), and runs `execute`. A
-column-reading unit registered ahead of its writer runs after it, because the
-plan reorders them so the writer's column write lands first. Windowing the
-record range into multiple morsels with micro-morsel sync points (the
-morsel-loop split) is a later round; `run` covers all records in one morsel.
+registration (see the scheduler builder section), windowing the record range
+into morsels of `RunCfg::MORSEL_SIZE` (guarded to at least one record). It
+walks the plan's `phases -> trunks -> fibers` structure and dispatches each
+fiber by running `RunFiber` over that fiber's unit sequence, which
+`group_fibers` built in RCM-reordered topological order, projecting each
+unit's columns and resources inline. There is no
+type-erased per-unit dispatch slot: the column-capable walk is the only
+dispatch path.
+
+Single-core dispatch runs each fiber's units in the plan's RCM-reordered
+topological order. RCM (step 5 of the plan chain) produces two orderings from
+the access matrix: a row reordering that is the WU execution order, and a
+column reordering that is the arena memory layout. The row reordering stays
+topological (every unit runs after its dependencies), but among units at the
+same topological depth, which a naive topological sort would order
+arbitrarily, RCM picks the order that maximises column reuse between adjacent
+units. `group_fibers` (step 8) processes units in this RCM-reordered topo
+order, so each fiber's unit sequence is already in it. The dispatch walk runs
+that sequence as a compile-time-known local cons-list, which is what
+devirtualizes: a monomorphised body over a local sequence of known unit
+identities inlines under fat LTO, whereas a runtime-indexed call through a
+stored order array does not (the indirect-dispatch anti-pattern). The column
+reordering sets `rcm_order` for arena layout, co-locating co-accessed columns
+so a morsel's reads land in adjacent cache lines.
+
+The phase and trunk grouping is parallel-scheduling structure: a phase is a
+cross-core sync barrier, a trunk is a core assignment. On a single core the
+barrier and the core assignment collapse to program order, but the phase
+sequence and the within-fiber RCM order are preserved, because both encode
+dependency and cache-locality structure that holds on one core too. Realizing
+the RCM order as the compile-time order of the dispatch body is the codegen
+flattener's job (the per-core compiled dispatch below): the per-fiber, or
+single-core whole-schedule, monomorphised body is emitted with its units in
+the plan's RCM-reordered order. A unit whose dependencies admit no topological
+order is a build-time `BuildError`, the right place for a malformed dependency
+graph.
+
+The nesting is per-fiber, chosen by the fiber's `morsel_local` bit. An
+accumulator-free fiber dispatches morsel-outer: one morsel runs the fiber's
+whole unit sequence before the next, so its intermediate columns stay
+cache-resident across the units. This is sound because the per-record `read`
+/ `write` accessors are morsel-relative and the only cross-record surface is
+the accumulator append path, so an accumulator-free fiber has every cross-unit
+dependency morsel-local. An accumulator-bearing fiber stays unit-outer (a unit
+completes its record range before the next runs), the cross-record-safe form.
+An accumulator-bearing pipeline still runs its accumulator-free fibers
+morsel-outer while its accumulator fibers stay unit-outer.
+
+A fiber-internal column, written and read entirely inside one fiber per the
+`classify_columns` Input / Output / Internal split, is backed by morsel-sized
+stack scratch rather than an arena column, so dead-store elimination collapses
+the intermediate traffic under fat LTO and only a fiber's true output columns
+reach arena memory. This within-fiber fusion plus the devirtualized walk are
+the two mechanisms that bring single-core dispatch to parity with a hand-fused
+loop. Windowing the record range into multiple morsels with micro-morsel sync
+points (the morsel-loop split) is a later round; `run` covers all records in
+one morsel.
+
+The emitted single-core dispatch monos are guarded by a standing ASM checklist,
+the mechanical complement to the engine-vs-std perf oracle. Where the perf oracle
+measures the outcome (throughput against an optimal hand-written loop), the ASM
+checklist measures the mechanism directly: it disassembles each representative
+dispatch shape (the column-chain `run`, the fused `run_fused`, the accumulator
+carrier, the dirty-gated frame) and asserts the absence of an indirect call in
+the inner body as a hard invariant, plus indexed column addressing, a stack-free
+inner loop, and a baked immediate morsel where the plan fixes it as a quality
+report. A surviving indirect call means dispatch is no longer devirtualized, and
+the checklist names the regressing symbol regardless of whether the slowdown
+surfaced in a particular bench size.
+
+The realized within-fiber fusion for a linear chain is a type-level fold. A
+fiber whose units are each a pure per-record map (the opt-in fusion contract in
+the api crate: read one column, write one column, value to value) and which
+link as a read-after-write chain folds into a single fused unit whose body runs
+the maps as composed monomorphised calls, every intermediate a register local,
+only the chain's final output column stored. The fold is the canonical spec's
+deep-single-fiber rust-pipe: it matches a hand-fused loop (3 loads / 3 stores
+for a four-stage chain, the internal columns eliminated, zero indirect calls),
+proven by the fusion sketches. The scheduler exposes a fused dispatch entry that
+folds the registered carrier and walks the fused unit through the same
+`RunFiber` path; the per-WU walk stays the entry for non-fusible carriers
+(accumulators). The dispatch choice is an explicit entry, not a transparent
+auto-detection: a default-plus-specializing dispatch is not expressible on the
+toolchain (the fused projection witness is an unconstrained specializing-impl
+parameter, and `min_specialization` does not permit specializing on the
+fusion-contract bound), so a fusible fiber opts in by calling the fused entry
+while the engine still performs the fold. This linear fold is the deep
+single-fiber case; a multi-fiber DAG reaches parity through the per-fiber
+compiled dispatch above, not through linear folding.
 
 Per-core compiled dispatch: each physical core gets a monomorphised
 `CoreProgram<...>` encoding its phases, record ranges, morsel
@@ -523,8 +602,25 @@ pub trait PlanDims {
     type UnitsPerFiber: Capacity;
     type ColumnsPerFiber: Capacity;
     type Cores: Capacity;
+    type AdjRow: BitSequence + BitAccess + BitLogic + Copy + Default + Identity;
 }
 ```
+
+The fourteenth associated type, `AdjRow`, is the bit-matrix row word the
+dependency analysis steps use for adjacency and waist detection
+(`compute_waists` builds a `BitMatrix<D::AdjRow, D::Units>` and runs
+`arvo_graph::waist_detect` over it). It is a concrete type pinned at each impl,
+sized to cover `Units` node indices: `DefaultPlanDims` uses a 64-wide
+`Bits<64, Hot, Unsigned>` row, a consumer with a larger `Units` budget pins a
+wider row. It is not derived inline as `Bits<{ cap_size(Units::CAP) }>` because
+arvo's `Bits` resolves its storage container by per-concrete-N projection: a
+symbolic capacity expression never reduces to a literal during bound-checking,
+so a row word sized from a generic capacity is not even `Sized`. Carrying the
+row word as a concrete associated type sidesteps that wall, and it is what lifts
+the engine's former 64-node waist cap (the row word was hardcoded 64-wide before
+this dimension existed). The `AdjRow`-covers-`Units` relation is a documented
+contract, not type-enforced, matching how arvo's own wide-width waist tests pin
+concrete row widths.
 
 `DefaultPlanDims` is the engine's default budget (each dimension a
 `Dim<N>` at the current default size). Plan, thread, and dispatch
@@ -599,9 +695,14 @@ dispatch router and a `Place` view, so store carriers (a
 `StagedResource<T>`, a `Column<T>`, a `Virtual<T>`) are retained on
 `StoreValues` in registration order. WorkUnit values are retained too,
 on a parallel WorkUnit-value list (the value-carrying unit cons-list the
-run walk consumes): the WorkUnit placement kind prepends each registered
-unit instance, so the unit's runtime value (including any `.with`-time
-configuration it holds in its fields) survives into the built scheduler.
+run walk consumes): the WorkUnit placement kind appends each registered
+unit instance, so the carrier type order equals registration order and
+the unit's runtime value (including any `.with`-time configuration it
+holds in its fields) survives into the built scheduler. `build()`
+requires the registration order be a valid topological order of the
+dependency DAG, returning a `BuildError` that names the recommended
+order otherwise; this producer-before-consumer constraint is provisional
+(a later step lets the engine auto-apply the cache-optimal order).
 Platform and run-config values are still dropped (their type stays
 tracked in the typestate). The single `.with` verb is unchanged.
 
@@ -623,7 +724,19 @@ parameters. Before draining the store arena, `build` computes the execution
 plan from the registered bundle and derives the phase-sequential dispatch
 order on the scheduler by flattening the plan's phase structure
 (`phases -> trunks -> fibers -> units`); a dependency cycle returns
-`BuildError::PlanFailed` without allocating. After draining the resource columns, `build` reserves the plan's
+`BuildError::PlanFailed` without allocating. An acyclic registration whose
+carrier order still runs a reader before its writer (a valid DAG that is not a
+topological order of itself) returns `BuildError::NonTopologicalRegistration`,
+distinct from the cycle path: the static dispatch walk follows carrier order
+directly (no runtime permutation once the walk rewrite lands), so an
+anti-topological carrier would dispatch a reader before its writer. This is the
+provisional producer-before-consumer constraint stated at the error-path level;
+it relaxes when the engine auto-applies the cache-optimal order. The error carries
+the recommended registration order: the RCM-reordered topological order (canonical
+Step 5, where the RCM row reordering is the WU execution order, cache-optimal among
+the valid topological orders), the same order the auto-ordering relaxation applies,
+so the consumer sees both the first offending carrier-slot pair and the full order
+that satisfies the gate. After draining the resource columns, `build` reserves the plan's
 flat CSR pools (phases, trunks, fibers, per-unit metadata, per-fiber morsel
 sizes, the RCM renumber) as columns in the same `ColumnStorage`, at a `StoreId`
 namespace continued past the resource columns, and keeps a `Copy` `PlanHandle`
@@ -640,7 +753,12 @@ placeholder). The `Accum<T>` drain arm reserves a column the same way
 live-length starts at zero and a WorkUnit advances it by appending during
 the frame, with a later PassEnd drain reading the populated prefix. An
 append saturates at the reserved capacity: once the live-length reaches the
-capacity the append is dropped, so it never runs past the reserved buffer. `run`
+capacity the append is dropped, so it never runs past the reserved buffer. Under
+the schedule-once-reuse model one built scheduler runs many frames, so `run`
+resets every accumulator live-length to zero at frame start, via a type-level
+`ResetAccumulators` walk over the bindings (a no-op at every non-accumulator
+node, one `Cell` write per `AccumBinding`); each frame appends into a fresh
+buffer rather than continuing from the prior frame's live offset. `run`
 then dispatches the retained units in that topological
 order, projecting each unit's `EngineCtx` (resources and columns) from the
 bindings and calling `execute` once per morsel as it windows the record
@@ -700,8 +818,9 @@ where
 
 The single `.with` method routes each registration through
 `P::Dispatch`. A `WorkUnit` provider (kind `WorkUnit`) carries
-`Dispatch = UnitDispatch<Self>`, which prepends `Self` onto the
-`Wus` accumulator. A store provider (`Resource<T>`, `Column<T>`,
+`Dispatch = UnitDispatch<Self>`, which appends `Self` onto the
+`Wus` accumulator (registration order becomes the carrier type order).
+A store provider (`Resource<T>`, `Column<T>`,
 `Virtual<T>`, `LinkedBin<T>`) carries `Dispatch = StoreDispatch<Self>`,
 which prepends onto `Stores`. A `Kit` provider carries `Dispatch
 = KitDispatch<Self>`, which concats `K::Units` into `Wus` and

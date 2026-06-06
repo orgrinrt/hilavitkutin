@@ -722,7 +722,7 @@ where
 /// `AccPtrNil`, the empty accumulator bundle. Accumulators are an opt-in, so
 /// the default keeps an accum-free WU's `Ctx` declaration at the six prior
 /// bundle params; an accum-bearing WU spells the seventh explicitly. The
-/// default never masks a mismatch: `project` and `CollectFiber` force `WAccum`
+/// default never masks a mismatch: `project` and `RunFiber` force `WAccum`
 /// to the real projection of `W`, so a WU that declares an accumulator but
 /// omits the bundle fails to compile at the projection tie.
 pub struct EngineCtx<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum = AccPtrNil> {

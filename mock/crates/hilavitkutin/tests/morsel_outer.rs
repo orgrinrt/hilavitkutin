@@ -286,13 +286,18 @@ impl WorkUnit<Always> for AppenderB {
 
 #[test]
 fn accumulator_pipeline_dispatches_unit_outer() {
-    let msize = <DefaultRunCfg as RunCfg>::MORSEL_SIZE.0;
-    // Same multi-morsel record count as the morsel-outer test, so the two
-    // nestings are distinguishable (a single morsel would make them identical).
-    assert!(RECORDS > msize, "test record count must exceed the morsel size");
-    let morsels = RECORDS.div_ceil(msize);
-    assert_eq!(morsels, 3, "the fixture assumes three morsels");
-
+    // A carrier bearing an accumulator selects the unit-outer drive: the flat
+    // GATE-1 walk (spec Approach E) runs the whole carrier once over the full
+    // record range, so each unit executes once (its own `each()` loops the
+    // records internally), in carrier (registration) order. This is the
+    // cross-record-safe shape (a downstream reader sees the upstream
+    // accumulator's complete output), distinct from the morsel-outer
+    // interleave `[a, b, a, b, a, b]` an accumulator-free carrier takes.
+    //
+    // Per-morsel-granular unit-outer (each unit dispatched once per morsel, all
+    // morsels for a unit before the next: `[A, A, A, B, B, B]`) is the
+    // post-GATE-1 Approach-A `FiberCons` nesting (#670); the flat walk cannot
+    // slice the carrier per unit at a runtime morsel index.
     DISPATCH_ORDER.with(|o| o.borrow_mut().clear());
     let provider = BumpProvider::<32768>::new();
     let mut scheduler = Scheduler::builder()
@@ -308,28 +313,15 @@ fn accumulator_pipeline_dispatches_unit_outer() {
 
     DISPATCH_ORDER.with(|o| {
         let observed = o.borrow();
-        // Six dispatch calls: two units over three morsels. The accumulator
-        // store makes the pipeline not accumulator-free, so dispatch is
-        // unit-outer: each unit completes all three morsels before the next.
-        // The recorded sequence is therefore contiguous per unit (three of one
-        // tag then three of the other), never interleaved like the morsel-outer
-        // `[a, b, a, b, a, b]`. The check is order-agnostic on which unit runs
-        // first (both are independent appenders), pinning only the unit-outer
-        // shape: a wrong guard routing this pipeline to morsel-outer would
-        // interleave the tags and fail here.
-        assert_eq!(observed.len(), 6, "two units dispatched over three morsels");
-        let first = observed[0];
-        let second = observed[3];
-        assert_ne!(
-            first, second,
-            "the two units carry distinct tags, so the two contiguous runs differ"
-        );
+        // Two dispatch calls: each appender executes once over the full range,
+        // in carrier order. A wrong morsel-outer routing would interleave the
+        // tags `[A, B, A, B, ...]`; the full-range unit-outer drive runs each
+        // appender exactly once.
         assert_eq!(
             observed.as_slice(),
-            &[first, first, first, second, second, second],
-            "an accumulator pipeline dispatches unit-outer (each unit completes \
-             all morsels before the next); a morsel-outer routing would interleave \
-             the tags"
+            &[APPENDER_A_TAG, APPENDER_B_TAG],
+            "an accumulator carrier dispatches unit-outer as one full-range walk \
+             in carrier order; a morsel-outer routing would interleave the tags"
         );
     });
 }

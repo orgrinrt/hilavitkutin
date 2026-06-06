@@ -87,24 +87,24 @@ impl<Target, Head, Tail, I> Locate<Target, There<I>> for Cons<Head, Tail> where
 /// `Indices` is the parallel witness cons-list (one position per
 /// member); it infers at the call site exactly as `Project<R, Indices>`
 /// infers its selector indices. `CS` is the store capacity.
-pub trait MaskProject<Stores, Indices, CS: Capacity> {
+pub const trait MaskProject<Stores, Indices, CS: Capacity> {
     /// Set this access set's bits into `mask`, returning the result.
     fn project_mask(mask: AccessMask<CS>) -> AccessMask<CS>;
 }
 
-impl<Stores, CS: Capacity> MaskProject<Stores, Empty, CS> for Empty {
+impl<Stores, CS: Capacity> const MaskProject<Stores, Empty, CS> for Empty {
     #[inline]
     fn project_mask(mask: AccessMask<CS>) -> AccessMask<CS> {
         mask
     }
 }
 
-impl<Stores, M, Tail, I, ITail, CS: Capacity> MaskProject<Stores, Cons<I, ITail>, CS>
+impl<Stores, M, Tail, I, ITail, CS: Capacity> const MaskProject<Stores, Cons<I, ITail>, CS>
     for Cons<M, Tail>
 where
     Stores: Locate<M, I>,
     I: WitnessIndex,
-    Tail: MaskProject<Stores, ITail, CS>,
+    Tail: [const] MaskProject<Stores, ITail, CS>,
 {
     #[inline]
     fn project_mask(mask: AccessMask<CS>) -> AccessMask<CS> {

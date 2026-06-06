@@ -1,0 +1,50 @@
+6dbf228 chore: lock src changelist for dispatch-order keystone round 202606062330
+0cee9f2 feat: dispatch-order keystone machinery + delete superseded RunFiber walk
+b2f5a20 feat: carrier_order_dyn — GCE-safe dispatch order over Capacity::Array for the run rewire
+5288fd1 research: runtime-order-devirt sketch — runtime-computed order devirtualises (zero blr), GCE wall sidestepped
+56aa5be feat: BindingsFor::Markers — recover Stores AccessSet from Vals for the const dispatch order
+c8a1ae8 feat: impl CarrierMasks over WuCons value list (const ORDER from the scheduler's WuVals)
+d8b0a64 feat: const carrier mask fold + carrier_order (const dispatch ORDER from the bundle type)
+8897f2b feat: const topological dispatch order (dispatch::order) + restore fiber_codegen
+4ecc45d research: const-order-assoc sketch — engine wiring of const ORDER proven (const-trait fill + const fn topo over carrier type)
+c1ed1b2 research: const-driven carrier sketch — keystone dispatch mechanism proven (const topo + const-order local fn-ptr devirtualises)
+8140442 research: dual-agent consensus on dispatch keystone — flattener emits topo-ordered carrier, const-driven mechanism to sketch next
+137365a research: resolve dispatch-order keystone — compile-time carrier, flat single-core schedule-mega
+73eac18 feat: make RunFiber column-capable (lift resource-only boundary, proven 7-param GAT walk)
+871da97 src CL: column-capable dispatch walk (increment 1, resume dispatch-codegen-fusion round)
+c5c509f research: truth-of-impl audit at implementation entry — Phase C shipped, Phase D dispatch is the GATE-1 gap
+ff8e7fd research: F2 LLVM-pass-degrade sketch — cfg-gate + runtime probe degrade to stock, no build break (Step 10 complete)
+c93bbb9 research: E8 adapt-hysteresis sketch — EMA + dead-band/K/cooldown cuts oscillation 5x
+50aaa0c research: E7 dirty-skip sketch — predecessors&dirty propagation runs only the changed cone
+e91f641 research: E6 N-vs-1 oracle sketch — bit-identical Cfg::Out at 1/2/7 cores for a commutative pipeline
+ff03ad6 research: E5b asym-morsel bench — proportional-to-speed split 1.81x lower makespan under heterogeneity
+dde685f research: E5a P/E core-detect sketch — sysctl perflevel probe (4P+4E) + homogeneous degrade
+199c3b2 research: E4b head+tail convergence sketch — 2-core opposite-end cursors, every record once, race-free
+a5e37c5 research: E4 meta-WU + pipelining sketch — canonical meta firing order + progress-counter gate integrate
+af73524 research: D1c phase-barrier sketch — generation-counter AtomicUsize bakes to ldaddal+stlr, no fence/CAS
+8135ffc research: C6 spectral-trunk sketch — deterministic k-way split at pinned iterations + threshold
+8615a4a research: C5a block-diagonal sketch — non-trivial component detection on real shapes
+3e9bb0b research: C5b D-M sketch — non-trivial decomposition on real workloads, fusion precondition unblocked
+f52e8d9 research: D4 fusion sketch — internal column DSEs to register when fiber-fused, 2.09x (the #664 enabler)
+11934de research: D1a keystone-bridge sketch — plan-fed schedule-mega devirtualises with runtime morsel
+f927d99 research: D1b keystone sketch — type-level fiber partition resolved (carrier proven, grouping plan-computed)
+ffae288 docs: finalise roadmap per granularity review + sketch plan (chart-the-path steps 8-9)
+b66f892 docs: update roadmap per canonical-mirror review (chart-the-path step 7)
+a5aeaee docs: engine completion roadmap draft (chart-the-path step 5)
+07163b5 docs: canon amendment - unified engine, core count is config not a code fork
+bb38051 docs: strategic synthesis for engine completion roadmap
+2a77e15 chore: sketch inline runfibercol with non-empty accumulator
+44a6866 chore: re-lock #340 doc cl on canonical rcm-as-execution-order
+f165563 docs: correct #340 dispatch to canonical rcm-as-execution-order
+29f5e64 chore: unlock #340 doc cl to correct rcm-as-execution-order stray
+d6dc5be chore: lock doc changelist for 202606051659_changelist.doc.lock.md
+249cd18 docs: cite approach-e sketch in #340 doc cl basis
+b4e8738 chore: sketch approach-e schedule-mega single-core dispatch body
+e984844 docs: refine #340 sketch findings to approach-e single-core direction
+ba804d2 chore: sketch rcm-order-into-static-body dispatch body probe
+dfcf46f chore: deprecate shape-q src cl and unlock doc cl for design-oracle correction
+0af323b chore: open phase d src changelist for dispatch devirt
+b958298 chore: lock doc changelist for single-core dispatch round
+66035ec docs: rewrite single-core dispatch to column-capable inline walk
+9340b6b docs: open phase d single-core dispatch doc cl
+392b069 docs: record devirtualization confirmation in walk sketch findings

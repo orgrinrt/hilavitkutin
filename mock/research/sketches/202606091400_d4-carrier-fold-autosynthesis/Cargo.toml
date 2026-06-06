@@ -1,0 +1,34 @@
+[package]
+name = "sketch-d4-carrier-fold-autosynthesis"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# D4 auto-synthesis feasibility (GATE-1-critical). 202606091200 proved a
+# HAND-built RecordOp chain fuses internal columns to registers. The #664 gate
+# registers separate WUs (S1/S2/S3) and calls run(); for it to green TRANSPARENTLY
+# the engine must FOLD the registered `WuCons<S1, S2, S3>` carrier into the
+# OpChain itself, not require the consumer to hand-author the chain. This is the
+# same family as the type-level fiber-grouping that hit the E0119 coherence wall
+# (roadmap r2 D1b) -- but FOLDING a single chain (no partitioning) should be two
+# non-overlapping structural impls. The question: does the type-level carrier ->
+# OpChain fold (with heterogeneous In=Head::Out link threading) COMPILE, and does
+# the folded chain fuse to registers identically to the hand-built one? Real
+# engine crates, arvo dev HEAD ff514a7.
+[dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

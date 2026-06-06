@@ -24,8 +24,8 @@
 //! Lives under `tests/` so the bare numeric node indices do not trip the
 //! src-tree primitive lints.
 
-use arvo::USize;
-use arvo_tensor::{Capacity, Dim};
+use arvo::{Bits, Hot, USize, Unsigned};
+use arvo_tensor::Dim;
 use hilavitkutin::plan::{steps, DependencyGraph, PlanDims};
 
 // Eight-unit / sixteen-edge capacity; the bowtie uses five units and four
@@ -46,6 +46,7 @@ impl PlanDims for TestDims {
     type UnitsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
     type ColumnsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
     type Cores = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type AdjRow = Bits<64, Hot, Unsigned>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: 64-wide row covers the small test units; Bits width literal; tracked: #649
 }
 
 // Bowtie node indices, named once so the per-literal lint:allow lives in one
@@ -97,5 +98,83 @@ fn waist_at_bowtie_middle_not_at_sinks() {
         "the waist is the bowtie middle (topo position 2), so phase 1 opens at \
          position 3; the crude out-degree heuristic instead splits at a sink \
          position (4), which is the over-segmentation this replaces"
+    );
+}
+
+// A 128-unit capacity with a 128-wide adjacency row, proving the waist cap is
+// lifted past the former hardcoded 64. Every dimension is small except Units
+// (128) and Edges (256); AdjRow is the 128-wide row that covers the 69-node
+// fixture below.
+struct WideDims;
+
+impl PlanDims for WideDims {
+    type Units = Dim<128>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: >64 capacity proving the cap lift; Dim<N> array-length root; tracked: #649
+    type Stores = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Edges = Dim<256>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: 68 edges live; Dim<N> array-length root; tracked: #649
+    type Phases = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Trunks = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type TrunksPerPhase = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Fibers = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Lanes = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Columns = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type ComponentsPerTrunk = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type UnitsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type ColumnsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Cores = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type AdjRow = Bits<128, Hot, Unsigned>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: 128-wide row lifts the 64-node cap; Bits width literal; tracked: #649
+}
+
+// Two parallel length-33 chains feeding one merge node, which fans out to two
+// sinks: 69 nodes. Node indices interleave the chains (a_i = 2i, b_i = 2i+1)
+// so edges append in ascending `from` order (the CSR invariant). The chains'
+// tails (a_32 = 64, b_32 = 65) both point at the merge node m = 66; m fans to
+// the two sinks c0 = 67, c1 = 68. All 66 chain nodes precede m topologically,
+// so m sits at topo position 66, past the former 64-wide cap. The merge depth
+// is the sole strict local-minimum level (width 1 between two width-2 chain
+// levels), so m is the only waist and one interior boundary opens at position
+// 67. Under the former hardcoded `Bits<64>` row word the column bits for nodes
+// >= 64 overflow the 64-bit word and the high-index edges are dropped, so the
+// waist would be misdetected; the 128-wide `AdjRow` carries them.
+fn twin_chain_merge() -> DependencyGraph<WideDims> {
+    let mut g: DependencyGraph<WideDims> = DependencyGraph::new();
+    let mut from = 0usize;
+    while from < 64 {
+        // chain links: a_i -> a_{i+1} (even from) and b_i -> b_{i+1} (odd from)
+        g.add_edge(USize(from), USize(from + 2));
+        from += 1;
+    }
+    // chain tails a_32 (64) and b_32 (65) both feed the merge node m = 66
+    g.add_edge(USize(64), USize(66));
+    g.add_edge(USize(65), USize(66));
+    // m fans out to the two sinks
+    g.add_edge(USize(66), USize(67));
+    g.add_edge(USize(66), USize(68));
+    // finalise the two trailing sinks (67, 68): empty rows, node count 69
+    g.row_offsets.as_mut()[67] = g.edge_count;
+    g.row_offsets.as_mut()[68] = g.edge_count;
+    g.unit_count = USize(69);
+    g
+}
+
+#[test]
+fn waist_detected_past_the_former_64_cap() {
+    let g = twin_chain_merge();
+    let (topo, placed) = steps::topo_sort::<WideDims>(&g);
+    assert_eq!(placed.0, 69, "the twin-chain graph has no cycle; all 69 units place");
+
+    let pb = steps::compute_waists::<WideDims>(&g, &topo);
+
+    // The merge node is the sole waist, at topo position 66 (after all 66 chain
+    // nodes), so one interior boundary opens at position 67. This position lies
+    // past the former 64-wide row cap, so it can only be detected with the
+    // widened `WideDims::AdjRow` (`Bits<128>`).
+    assert_eq!(pb.phase_count.0, 2, "one interior waist (the merge node), so two phases");
+    assert_eq!(pb.boundaries.as_ref()[0].0, 0, "phase 0 always starts at position 0");
+    assert_eq!(
+        pb.boundaries.as_ref()[1].0,
+        67,
+        "the merge node is at topo position 66 (past the old 64 cap), so phase 1 \
+         opens at position 67; with a 64-wide row the high-index edges drop and \
+         this boundary cannot be detected"
     );
 }

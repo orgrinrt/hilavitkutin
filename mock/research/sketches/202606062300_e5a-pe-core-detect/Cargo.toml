@@ -1,0 +1,29 @@
+[package]
+name = "sketch-e5a-pe-core-detect"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# E5a (roadmap 202606061100 section 4 + section 9): heterogeneous core detection
+# (domain 20 :1810-1822). Detect P-cores vs E-cores at startup so the plan can
+# route critical-path trunks to P-cores and leaf/branch fibers to E-cores, and
+# size morsels asymmetrically (E5b). This sketch proves the no_std-compatible
+# detection probe on the test target (Apple Silicon, macOS aarch64) via the
+# `hw.perflevelN.logicalcpu` / `hw.nperflevels` sysctls, with graceful degrade to
+# a single homogeneous tier when only one perf level exists. arvo for USize; libc
+# for the raw sysctl FFI (the real engine path is a platform/ hook behind cfg).
+[dependencies]
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+libc = "0.2"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

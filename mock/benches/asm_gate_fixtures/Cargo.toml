@@ -1,0 +1,31 @@
+[workspace]
+
+[package]
+name = "asm_gate_fixtures"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# The D6 ASM-dispatch-gate fixtures. Each export wraps one representative GATE-1
+# dispatch shape in an `#[inline(never)] #[no_mangle]` entry so the gate binary
+# has a stable, objdump-addressable symbol while the dispatch body below it fully
+# inlines. Built in release (fat LTO, codegen-units = 1) so the emitted asm
+# matches the shipping engine profile. cdylib so the exports survive as kept,
+# objdumpable symbols.
+[lib]
+name = "asm_gate_fixtures"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+hilavitkutin = { path = "../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../crates/hilavitkutin-providers" }
+engine_vs_std = { path = "../engine_vs_std" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

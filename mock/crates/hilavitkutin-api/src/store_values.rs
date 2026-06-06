@@ -25,7 +25,7 @@
 
 use crate::builder_input::{PlatformDispatch, StoreDispatch, UnitDispatch};
 use crate::run_cfg::RunCfgDispatch;
-use crate::work_unit_values::WuCons;
+use crate::work_unit_values::WuAppend;
 
 mod sealed {
     pub trait Sealed {}
@@ -141,18 +141,27 @@ impl<C> RouterKind for RunCfgDispatch<C> {
 /// drain reads it) or the WorkUnit-value list (the run walk reads it).
 /// `place` routes onto both at once, so the single move is unambiguous.
 /// `StoreKind` prepends the store list and passes the WU list through;
-/// `WorkUnitKind` prepends the WU list and passes the store list
-/// through; `UnitKind` and `PlatformKind` pass both through (drop the
-/// value, its type stays tracked in the builder typestate).
+/// `WorkUnitKind` appends the WU list (registration order becomes the
+/// carrier order) and passes the store list through; `UnitKind` and
+/// `PlatformKind` pass both through (drop the value, its type stays
+/// tracked in the builder typestate).
 ///
 /// The store-list GAT parameter is named `S` rather than `Sv`: `Sv` is
 /// the cons-cell struct, and a parameter named `Sv` would shadow it.
+///
+/// The WU-list parameter `W` carries a `WuAppend<P>` bound so the
+/// `WorkUnitKind` impl can name the appended carrier type. Every WU
+/// carrier (`WuNil` / `WuCons`) implements `WuAppend<P>` for any `P`, so
+/// the bound is universally satisfied at the builder call sites; the
+/// pass-through kinds keep `NextWus<W> = W` and ignore the append.
 pub trait Place<P> {
     /// The store-value list after placing `P` onto store list `S`.
     type NextStores<S: StoreValues>: StoreValues;
 
     /// The WorkUnit-value list after placing `P` onto WU list `W`.
-    type NextWus<W>;
+    type NextWus<W>
+    where
+        W: WuAppend<P>;
 
     /// Route `provider` onto the store list `sv` and the WU list `wv`,
     /// producing the next pair.
@@ -160,15 +169,23 @@ pub trait Place<P> {
         provider: P,
         sv: S,
         wv: W,
-    ) -> (Self::NextStores<S>, Self::NextWus<W>);
+    ) -> (Self::NextStores<S>, Self::NextWus<W>)
+    where
+        W: WuAppend<P>;
 }
 
 impl<P> Place<P> for StoreKind {
     type NextStores<S: StoreValues> = Sv<P, S>;
-    type NextWus<W> = W;
+    type NextWus<W>
+        = W
+    where
+        W: WuAppend<P>;
 
     #[inline]
-    fn place<S: StoreValues, W>(provider: P, sv: S, wv: W) -> (Sv<P, S>, W) {
+    fn place<S: StoreValues, W>(provider: P, sv: S, wv: W) -> (Sv<P, S>, W)
+    where
+        W: WuAppend<P>,
+    {
         (
             Sv {
                 head: provider,
@@ -181,36 +198,48 @@ impl<P> Place<P> for StoreKind {
 
 impl<P> Place<P> for WorkUnitKind {
     type NextStores<S: StoreValues> = S;
-    type NextWus<W> = WuCons<P, W>;
+    type NextWus<W>
+        = <W as WuAppend<P>>::Out
+    where
+        W: WuAppend<P>;
 
     #[inline]
-    fn place<S: StoreValues, W>(provider: P, sv: S, wv: W) -> (S, WuCons<P, W>) {
-        (
-            sv,
-            WuCons {
-                head: provider,
-                tail: wv,
-            },
-        )
+    fn place<S: StoreValues, W>(provider: P, sv: S, wv: W) -> (S, <W as WuAppend<P>>::Out)
+    where
+        W: WuAppend<P>,
+    {
+        (sv, wv.append(provider))
     }
 }
 
 impl<P> Place<P> for UnitKind {
     type NextStores<S: StoreValues> = S;
-    type NextWus<W> = W;
+    type NextWus<W>
+        = W
+    where
+        W: WuAppend<P>;
 
     #[inline]
-    fn place<S: StoreValues, W>(_provider: P, sv: S, wv: W) -> (S, W) {
+    fn place<S: StoreValues, W>(_provider: P, sv: S, wv: W) -> (S, W)
+    where
+        W: WuAppend<P>,
+    {
         (sv, wv)
     }
 }
 
 impl<P> Place<P> for PlatformKind {
     type NextStores<S: StoreValues> = S;
-    type NextWus<W> = W;
+    type NextWus<W>
+        = W
+    where
+        W: WuAppend<P>;
 
     #[inline]
-    fn place<S: StoreValues, W>(_provider: P, sv: S, wv: W) -> (S, W) {
+    fn place<S: StoreValues, W>(_provider: P, sv: S, wv: W) -> (S, W)
+    where
+        W: WuAppend<P>,
+    {
         (sv, wv)
     }
 }

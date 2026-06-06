@@ -1,0 +1,28 @@
+[package]
+name = "sketch-c6-spectral-trunk"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# C6 (roadmap 202606061100 section 4 + section 9): trunk formation. Per
+# consolidation Step 7 the split is BINARY: >5 fibers -> spectral bisection /
+# k_way_partition on the column-sharing Laplacian (Fiedler power iteration pinned
+# to 30 for determinism); <=5 fibers -> a single trunk. Prove the spectral split
+# wires and is deterministic at a pinned iteration count, and the threshold policy.
+# arvo dev HEAD (ff514a7); mirrors arvo-spectral/tests/partition.rs.
+[dependencies]
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+arvo-spectral = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+arvo-tensor = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

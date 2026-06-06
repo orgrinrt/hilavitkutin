@@ -1,0 +1,31 @@
+[package]
+name = "sketch-f2-llvm-pass-degrade"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# F2 (roadmap 202606061100 section 6 + section 9, OPTIONAL/non-blocking): the
+# hilavitkutin-build custom LLVM passes are cfg-gated so a missing or incompatible
+# LLVM degrades to stock. Premise: cfg-gate + degrade works (the custom pass is an
+# optimisation over an already-correct + devirtualised path, so absence only loses
+# the extra speedup, never correctness). Two-layer degrade: a compile-time
+# feature flag (is the custom-pass path even compiled?) and a runtime availability
+# probe (is the LLVM .so present + compatible?). arvo for USize.
+[dependencies]
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[features]
+# Off by default: the custom LLVM pass is opt-in. Default builds take stock.
+custom_pass = []
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

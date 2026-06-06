@@ -34,7 +34,8 @@ use core::marker::PhantomData;
 use core::mem::size_of;
 
 use arvo::USize;
-use hilavitkutin_api::store::{Accum, Column, StagedResource, Virtual};
+use hilavitkutin_api::access::{AccessSet, Cons, Empty};
+use hilavitkutin_api::store::{Accum, Column, Resource, StagedResource, Virtual};
 use hilavitkutin_api::store_values::{StoreValues, Sv, SvEmpty};
 use hilavitkutin_api::{ColumnStorage, ColumnValue, StoreId};
 
@@ -187,31 +188,51 @@ pub trait BindingsFor: sealed::Sealed {
     /// memory on its own `Drop`, so the scheduler runs no bindings walk
     /// on drop and `Bindings` carries no destructor bound.
     type Bindings;
+
+    /// The store-marker `AccessSet` this value list registers, in the same
+    /// types and order as the builder's `Stores` param. `StoreDispatch<S>`
+    /// prepends `Cons<S, Stores>` to the marker list while `Sv<S, _>` carries
+    /// the same `S` on the value list, so `Markers` reconstructs exactly the
+    /// `Stores` the builder used: the dispatch-order machinery (`MaskProject` /
+    /// `Locate` in `dispatch::order`) Locates over `Markers` and gets the same
+    /// bit positions `build` used, without retaining `Stores` as a `Scheduler`
+    /// type param.
+    type Markers: AccessSet;
 }
 
 impl sealed::Sealed for SvEmpty {}
 impl BindingsFor for SvEmpty {
     type Bindings = BindingNil;
+    type Markers = Empty;
 }
 
 impl<T: 'static, L: StoreValues + BindingsFor> sealed::Sealed for Sv<StagedResource<T>, L> {}
 impl<T: 'static, L: StoreValues + BindingsFor> BindingsFor for Sv<StagedResource<T>, L> {
     type Bindings = ResourceBinding<T, <L as BindingsFor>::Bindings>;
+    // The value list carries the `StagedResource<T>` carrier, but the builder's
+    // `Stores` access set lists `Resource<T>` (`StagedResource<T>` dispatches as
+    // `StoreDispatch<Resource<T>>`). Recover the access marker, not the carrier,
+    // so `MaskProject`/`Locate` over `Markers` find the same bit positions the
+    // WU access sets (which reference `Resource<T>`) use.
+    type Markers = Cons<Resource<T>, <L as BindingsFor>::Markers>;
 }
 
 impl<T: 'static, L: StoreValues + BindingsFor> sealed::Sealed for Sv<Column<T>, L> {}
 impl<T: 'static, L: StoreValues + BindingsFor> BindingsFor for Sv<Column<T>, L> {
     type Bindings = ColumnBinding<T, <L as BindingsFor>::Bindings>;
+    type Markers = Cons<Column<T>, <L as BindingsFor>::Markers>;
 }
 
 impl<T: 'static, L: StoreValues + BindingsFor> sealed::Sealed for Sv<Virtual<T>, L> {}
 impl<T: 'static, L: StoreValues + BindingsFor> BindingsFor for Sv<Virtual<T>, L> {
     type Bindings = VirtualBinding<T, <L as BindingsFor>::Bindings>;
+    type Markers = Cons<Virtual<T>, <L as BindingsFor>::Markers>;
 }
 
 impl<T: 'static, L: StoreValues + BindingsFor> sealed::Sealed for Sv<Accum<T>, L> {}
 impl<T: 'static, L: StoreValues + BindingsFor> BindingsFor for Sv<Accum<T>, L> {
     type Bindings = AccumBinding<T, <L as BindingsFor>::Bindings>;
+    type Markers = Cons<Accum<T>, <L as BindingsFor>::Markers>;
 }
 
 /// Reserves and populates the bindings by consuming a `StoreValues` list.
@@ -381,6 +402,60 @@ where
             }),
             notko::Outcome::Err(e) => notko::Outcome::Err(e),
         }
+    }
+}
+
+/// Zeroes every accumulator live-length in a bindings list at frame start.
+///
+/// The schedule-once-reuse model runs one built scheduler across many frames.
+/// An `AccumBinding` holds a `Cell<USize>` live-length the append accessor
+/// advances during a frame; without a per-frame reset the next frame would
+/// append from the prior frame's offset (and saturate once it reaches the
+/// reserved capacity). `Scheduler::run` calls this at frame start so each frame
+/// appends into a fresh buffer.
+///
+/// The walk is the bindings-cons-list mirror of `DrainStores`: a no-op at every
+/// non-accumulator node and one `Cell` write per `AccumBinding`, recursing into
+/// the tail. The reset is `&self`: the live-length is interior-mutable
+/// (`Cell`), so no `&mut` is needed. For an accumulator-free carrier the walk
+/// visits no `AccumBinding` and compiles to nothing.
+pub trait ResetAccumulators {
+    /// Zero every accumulator live-length cell in this bindings list.
+    fn reset_accumulators(&self);
+}
+
+impl ResetAccumulators for BindingNil {
+    #[inline]
+    fn reset_accumulators(&self) {}
+}
+
+impl<T, Tail: ResetAccumulators> ResetAccumulators for ResourceBinding<T, Tail> {
+    #[inline]
+    fn reset_accumulators(&self) {
+        self.tail.reset_accumulators();
+    }
+}
+
+impl<T, Tail: ResetAccumulators> ResetAccumulators for ColumnBinding<T, Tail> {
+    #[inline]
+    fn reset_accumulators(&self) {
+        self.tail.reset_accumulators();
+    }
+}
+
+impl<T, Tail: ResetAccumulators> ResetAccumulators for VirtualBinding<T, Tail> {
+    #[inline]
+    fn reset_accumulators(&self) {
+        self.tail.reset_accumulators();
+    }
+}
+
+impl<T, Tail: ResetAccumulators> ResetAccumulators for AccumBinding<T, Tail> {
+    #[inline]
+    fn reset_accumulators(&self) {
+        // lint:allow(no-bare-numeric) reason: zero live-length reset at frame start; tracked: #345
+        self.len.set(USize(0));
+        self.tail.reset_accumulators();
     }
 }
 

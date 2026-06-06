@@ -72,14 +72,28 @@ pub fn run_checks(
     morsel_immediates: &[u64],
 ) -> Result<CheckReport, String> {
     let disasm = read_disasm(dylib_path, symbol)?;
+    Ok(run_checks_on_disasm(&disasm, dylib_path, symbol, morsel_immediates))
+}
+
+/// Run the five checks against already-read disassembly text.
+///
+/// The gate uses this directly: it objdumps the dispatch monos by their exact
+/// (nm-discovered) mangled symbol names, so it owns the read and reuses only the
+/// platform-aware check logic rather than `read_disasm`'s symbol-name guessing.
+pub fn run_checks_on_disasm(
+    disasm: &str,
+    dylib_path: &Path,
+    symbol: &str,
+    morsel_immediates: &[u64],
+) -> CheckReport {
     let outcomes = vec![
-        check_no_indirect_call(&disasm),
-        check_indexed_addressing(&disasm),
-        check_no_stack_in_inner_loop(&disasm),
-        check_immediate_morsel_size(&disasm, morsel_immediates),
-        check_no_bl_to_helpers(&disasm),
+        check_no_indirect_call(disasm),
+        check_indexed_addressing(disasm),
+        check_no_stack_in_inner_loop(disasm),
+        check_immediate_morsel_size(disasm, morsel_immediates),
+        check_no_bl_to_helpers(disasm),
     ];
-    Ok(CheckReport {
+    CheckReport {
         variant: dylib_path
             .file_stem()
             .and_then(|s| s.to_str())
@@ -88,23 +102,28 @@ pub fn run_checks(
         dylib: dylib_path.to_path_buf(),
         symbol: symbol.to_string(),
         outcomes,
-    })
+    }
 }
 
 fn read_disasm(dylib: &Path, symbol: &str) -> Result<String, String> {
-    // Try objdump first. macOS prepends an underscore to symbol
-    // names; Linux does not. Try both.
-    for prefix in ["", "_"] {
-        let target = format!("{}{}", prefix, symbol);
+    // Try objdump first, isolating one symbol via the `=` form
+    // (`--disassemble-symbols=NAME`; the space-separated form is parsed as a
+    // second input file and fails). macOS prepends an underscore to symbol
+    // names; Linux does not. Accept the result only when a real per-symbol
+    // instruction block came back: objdump exits 0 with just the file-format
+    // header when the symbol is absent, which is not a usable disassembly.
+    for name in [symbol.to_string(), format!("_{symbol}")] {
         let out = Command::new("objdump")
             .arg("-d")
-            .arg("--disassemble-symbols")
-            .arg(&target)
+            .arg(format!("--disassemble-symbols={name}"))
             .arg(dylib)
             .output();
         if let Ok(o) = out {
-            if o.status.success() && !o.stdout.is_empty() {
-                return Ok(String::from_utf8_lossy(&o.stdout).into_owned());
+            if o.status.success() {
+                let s = String::from_utf8_lossy(&o.stdout);
+                if s.contains(&format!("<{name}>:")) {
+                    return Ok(s.into_owned());
+                }
             }
         }
     }

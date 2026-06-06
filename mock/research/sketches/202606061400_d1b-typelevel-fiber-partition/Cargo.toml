@@ -1,0 +1,56 @@
+[package]
+name = "sketch-d1b-typelevel-fiber-partition"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+# Tier 3 attempt: the full type-level fiber-GROUPING fold (deriving the partition
+# itself from AccessSet relations). Kept a separate target so the Tier 1+2 PASS
+# binary stays green regardless of Tier 3's outcome. Build with
+# `cargo build --bin tier3` to reproduce the recorded wall.
+[[bin]]
+name = "tier3"
+path = "src/tier3.rs"
+
+# Vetted-feature retries of Tier 3 (op note 2026-06-06): does any explicitly
+# allowed/watch feature rescue the full type-level grouping derivation?
+[[bin]]
+name = "tier3_minspec"
+path = "src/tier3_minspec.rs"
+
+[[bin]]
+name = "tier3_negimpl"
+path = "src/tier3_negimpl.rs"
+
+[workspace]
+
+# D1b (roadmap 202606061100 section 4 + section 9, KEYSTONE write-first). The
+# question: can the per-core program's per-fiber partition be expressed as a
+# type-level structure over AccessSet cons-lists, walked and devirtualised,
+# WITHOUT generic_const_exprs-extreme machinery on nightly-2026-05-28? Tiered:
+# Tier 1 proves the multi-fiber CARRIER (a cons-list of fibers, each a cons-list
+# of WUs) devirtualises end to end; Tier 2 proves the data-dependency PREDICATE
+# between two WUs is type-expressible from their AccessSets alone; Tier 3 attempts
+# the full type-level fiber-GROUPING fold and records the exact wall. Real engine
+# crates, real EngineCtx/AccessSet/WorkUnit; only the trunk/fiber carrier traits
+# and the predicate are new (the shipping D1 slice adds them to dispatch/). arvo
+# dev HEAD, matching the engine's current build.
+[dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+
+[[bin]]
+name = "tier4_positive"
+path = "src/tier4_positive.rs"

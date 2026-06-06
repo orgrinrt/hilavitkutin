@@ -1,0 +1,31 @@
+[package]
+name = "sketch-rcm-row-recovery-guarded-walk"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# §7-6 (roadmap r2, op call a): can the engine auto-apply the RCM-optimal dispatch
+# order WITHOUT the consumer manually registering in that order, devirt-free? The
+# untested candidate: a type-level walk that visits the cons-list once per output
+# slot with a CONST position-guard (execute WU iff its const RCM position == the
+# current slot), reordering execution without const-INDEXING the list (Nth<K>, which
+# hit E0119 in 202606071000) and without reordering the carrier TYPE. If LLVM folds
+# the const-false guards, the result is the RCM-ordered execute sequence, inlined =
+# devirt + auto-reorder. Tests whether this walls or works. Real engine crates.
+[dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

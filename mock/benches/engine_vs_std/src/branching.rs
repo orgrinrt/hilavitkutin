@@ -183,9 +183,15 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
         unsafe { *in_base.add(i) = Inv(i as u32) };
     }
     let eng_runtime = bench(warmup, iters, || {
+        // Mark the root input dirty each iteration so the incremental skip
+        // (domain 16) re-runs the whole carrier every frame: the bench measures
+        // real recompute, not a clean-frame skip. A consumer that mutates In
+        // between frames makes exactly this call.
+        sched.mark_dirty::<Column<Inv>, _>();
         let r = sched.run();
         black_box(&r);
     });
+    sched.mark_dirty::<Column<Inv>, _>();
     let _ = sched.run();
     let zv_base = sched.__bindings().__ptr().as_ptr();
     let eng_hash = {

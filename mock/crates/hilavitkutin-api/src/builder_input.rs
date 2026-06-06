@@ -35,7 +35,7 @@
 
 use core::marker::PhantomData;
 
-use crate::access::Cons;
+use crate::access::{Concat, Cons, Empty};
 
 /// The unified registration contract.
 ///
@@ -108,12 +108,16 @@ pub trait Dispatch<Wus, Stores, Platform> {
     type NextPlatform;
 }
 
-/// Router for WorkUnit-kind inputs. Prepends `W` onto the WU
-/// accumulator; passes stores and platform through.
+/// Router for WorkUnit-kind inputs. Appends `W` onto the WU
+/// accumulator (registration order becomes the carrier type order);
+/// passes stores and platform through.
 pub struct UnitDispatch<W>(PhantomData<W>);
 
-impl<W, Wus, Stores, Platform> Dispatch<Wus, Stores, Platform> for UnitDispatch<W> {
-    type NextWus = Cons<W, Wus>;
+impl<W, Wus, Stores, Platform> Dispatch<Wus, Stores, Platform> for UnitDispatch<W>
+where
+    Wus: Concat<Cons<W, Empty>>,
+{
+    type NextWus = <Wus as Concat<Cons<W, Empty>>>::Out;
     type NextStores = Stores;
     type NextPlatform = Platform;
 }

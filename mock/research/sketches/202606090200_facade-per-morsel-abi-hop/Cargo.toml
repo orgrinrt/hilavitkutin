@@ -1,0 +1,30 @@
+[package]
+name = "sketch-facade-per-morsel-abi-hop"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# §7-4b (roadmap r2): the facade plugin hop is amortised per MORSEL, never per
+# record. Premise: a real host fiber (producer -> consumer, the type-level walk)
+# objdumps zero blr even with a facade present, and the facade's ONLY indirect call
+# is the per-morsel capability hop (the cdylib ABI seam), proven by both objdump
+# (the blr sits in the morsel loop, not an inner record loop) and a runtime call
+# count equal to the number of morsels, not the number of records. Leeway: prove
+# ONE shape (sub-engine vs per-morsel-capability). Real engine crates.
+[dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

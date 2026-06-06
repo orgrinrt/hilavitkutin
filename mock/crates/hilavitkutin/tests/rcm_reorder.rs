@@ -6,7 +6,7 @@
 //! type, not a `Cap` const generic. The chain DAG, the renumber, and the
 //! per-slot assertions read against the `Dim<8>` unit capacity.
 
-use arvo::USize;
+use arvo::{Bits, Hot, USize, Unsigned};
 use arvo_tensor::{Capacity, Dim};
 use hilavitkutin::plan::{steps, DependencyGraph, PlanDims};
 
@@ -28,6 +28,7 @@ impl PlanDims for TestDims {
     type UnitsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
     type ColumnsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
     type Cores = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type AdjRow = Bits<64, Hot, Unsigned>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: 64-wide row covers the small test units; Bits width literal; tracked: #649
 }
 
 // The chain's unit indices, named once so the per-literal lint:allow

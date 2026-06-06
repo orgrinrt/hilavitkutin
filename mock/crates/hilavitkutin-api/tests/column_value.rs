@@ -1,4 +1,11 @@
-//! ColumnValue::BIT_WIDTH defaults and arvo specialisations.
+//! ColumnValue::BIT_WIDTH: the spec-free trait-body default.
+//!
+//! `ColumnValue` is spec-free (no `specialization`): every `Copy + 'static`
+//! type inherits `BIT_WIDTH = size_of * 8` through the empty blanket impl. arvo
+//! sub-byte types are no exception, so they report their `#[repr(transparent)]`
+//! container width here, not their logical bit width. The logical sub-byte
+//! width is reconstructed from the arvo type's own const-generic width by the
+//! future bitpacking storage layer, not reported by `ColumnValue`. See `#631`.
 
 #![no_std]
 #![feature(adt_const_params)]
@@ -30,26 +37,27 @@ fn blanket_u64() {
     assert_eq!(<u64 as ColumnValue>::BIT_WIDTH, USize(64));
 }
 
+// Sub-byte arvo types fall through the blanket to their container width: the
+// trait reports `size_of * 8`, not the logical bit count. These pin the
+// spec-free contract (no per-type override remains) and that the logical width
+// is a future bitpacking-layer concern, not a `ColumnValue` const. The
+// container width is asserted via `size_of` so the test states the contract
+// (blanket applies) rather than a hardcoded container choice.
+
 #[test]
-fn specialised_one_bit() {
-    assert_eq!(
-        <UFixed<{ ibits(1) }, { fbits(0) }, Hot> as ColumnValue>::BIT_WIDTH,
-        USize(1)
-    );
+fn sub_byte_one_bit_reports_container_width() {
+    type T = UFixed<{ ibits(1) }, { fbits(0) }, Hot>;
+    assert_eq!(<T as ColumnValue>::BIT_WIDTH, USize(core::mem::size_of::<T>() * 8));
 }
 
 #[test]
-fn specialised_two_bit() {
-    assert_eq!(
-        <UFixed<{ ibits(2) }, { fbits(0) }, Hot> as ColumnValue>::BIT_WIDTH,
-        USize(2)
-    );
+fn sub_byte_two_bit_reports_container_width() {
+    type T = UFixed<{ ibits(2) }, { fbits(0) }, Hot>;
+    assert_eq!(<T as ColumnValue>::BIT_WIDTH, USize(core::mem::size_of::<T>() * 8));
 }
 
 #[test]
-fn specialised_four_bit() {
-    assert_eq!(
-        <UFixed<{ ibits(4) }, { fbits(0) }, Hot> as ColumnValue>::BIT_WIDTH,
-        USize(4)
-    );
+fn sub_byte_four_bit_reports_container_width() {
+    type T = UFixed<{ ibits(4) }, { fbits(0) }, Hot>;
+    assert_eq!(<T as ColumnValue>::BIT_WIDTH, USize(core::mem::size_of::<T>() * 8));
 }

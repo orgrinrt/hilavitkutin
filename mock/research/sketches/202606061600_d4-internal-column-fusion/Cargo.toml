@@ -1,0 +1,31 @@
+[package]
+name = "sketch-d4-internal-column-fusion"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# D4 (roadmap 202606061100 section 4 + section 9): the fusion half, the #664
+# perf-gate enabler. With C7's Input/Output/Internal classification, an INTERNAL
+# column (written by one WU, read by the next within a fiber, read nowhere else)
+# should be kept in registers across the fiber chain rather than round-tripping
+# the arena. The question: does the engine's current WU-outer per-`each` walk DSE
+# the internal column to registers under fat LTO cgu=1, or does it round-trip the
+# arena? And what dispatch shape achieves register residency? Real engine crates,
+# arvo dev HEAD. The bar (section 9 D4): EXACT, register residency.
+[dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

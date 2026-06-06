@@ -1,0 +1,34 @@
+[package]
+name = "sketch-e1-e7-dirty-gated-walk"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# E1/E7 integration (roadmap r2 section 7, written after the E4 meta-loop sketch
+# 202606062100 and the E7 propagation sketch 202606062600). Those two proved their
+# pieces in isolation: E4 the self-hosting frame loop + progress-gate, E7 the
+# per-WU dirty propagation (predecessors[N] & dirty_mask, spec Step 9 :1418-1429)
+# + the skip decision, modeled with u64 bitsets over a plain index loop. Neither
+# touched the REAL type-level RunFiber cons-walk (dispatch/fiber_run.rs). The open
+# delta this sketch closes: gate the real RunFiber walk's per-WU project+invoke by
+# a runtime per-WU dirty bit threaded by carrier position, and confirm (a) it
+# compiles against the real engine types, (b) it still devirtualises (zero `blr`
+# in the gated walk's objdump, the load-bearing GATE-1 property), (c) it correctly
+# skips clean WUs and runs dirty ones. Real engine crates, arvo dev HEAD.
+[dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

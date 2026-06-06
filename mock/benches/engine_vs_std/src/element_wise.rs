@@ -21,6 +21,7 @@ use hilavitkutin_api::context::{
 use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
 use hilavitkutin_api::store::Column;
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
+use hilavitkutin_api::RecordOp;
 
 use crate::{
     HeapBump, WorkloadMeasure, arena_bytes, bench, fnv1a_u32_slice, stage1, stage2, stage3, stage4,
@@ -46,6 +47,7 @@ struct Dv(u32);
 
 type One<T> = Cons<Column<T>, Empty>;
 
+#[derive(Copy, Clone)]
 struct S1;
 impl BuilderInput for S1 {
     type Init = Self;
@@ -68,6 +70,7 @@ impl WorkUnit<Always> for S1 {
     }
 }
 
+#[derive(Copy, Clone)]
 struct S2;
 impl BuilderInput for S2 {
     type Init = Self;
@@ -89,6 +92,7 @@ impl WorkUnit<Always> for S2 {
     }
 }
 
+#[derive(Copy, Clone)]
 struct S3;
 impl BuilderInput for S3 {
     type Init = Self;
@@ -108,6 +112,7 @@ impl WorkUnit<Always> for S3 {
     }
 }
 
+#[derive(Copy, Clone)]
 struct S4;
 impl BuilderInput for S4 {
     type Init = Self;
@@ -124,6 +129,39 @@ impl WorkUnit<Always> for S4 {
             let c = unsafe { ctx.reader().read::<Cv, _>(i) };
             unsafe { ctx.writer().write::<Dv, _>(i, Dv(stage4(c.0))) };
         });
+    }
+}
+
+// The opt-in per-record maps: each stage's pure value-to-value transform,
+// mirroring its `execute` body. Implementing `RecordOp` lets the engine fold the
+// four-stage chain into one fused unit (`run_fused`) that keeps Av/Bv/Cv in
+// registers and writes only Dv, the deep-single-fiber rust-pipe.
+impl RecordOp for S1 {
+    type In = Inv;
+    type Out = Av;
+    fn apply(&self, x: Inv) -> Av {
+        Av(stage1(x.0))
+    }
+}
+impl RecordOp for S2 {
+    type In = Av;
+    type Out = Bv;
+    fn apply(&self, x: Av) -> Bv {
+        Bv(stage2(x.0))
+    }
+}
+impl RecordOp for S3 {
+    type In = Bv;
+    type Out = Cv;
+    fn apply(&self, x: Bv) -> Cv {
+        Cv(stage3(x.0))
+    }
+}
+impl RecordOp for S4 {
+    type In = Cv;
+    type Out = Dv;
+    fn apply(&self, x: Cv) -> Dv {
+        Dv(stage4(x.0))
     }
 }
 
@@ -176,10 +214,19 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
         unsafe { *in_base.add(i) = Inv(i as u32) };
     }
     let eng_runtime = bench(warmup, iters, || {
-        let r = sched.run();
+        // Mark the chain's root input dirty each iteration so the incremental
+        // skip (domain 16) re-runs the fused chain every frame: the bench
+        // measures real recompute work, not a clean-frame skip. A consumer that
+        // mutates In between frames makes exactly this call; here the input is
+        // unchanged but the bench must still time the full chain.
+        sched.mark_dirty::<Column<Inv>, _>();
+        // Fused dispatch: the engine folds [S1, S2, S3, S4] into one ChainWu and
+        // walks it, keeping Av/Bv/Cv register-resident and writing only Dv.
+        let r = sched.run_fused();
         black_box(&r);
     });
-    let _ = sched.run();
+    sched.mark_dirty::<Column<Inv>, _>();
+    let _ = sched.run_fused();
     // Dv is the deepest registered column (In -> Av -> Bv -> Cv -> Dv).
     let dv_base = sched
         .__bindings()

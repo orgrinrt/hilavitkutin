@@ -1,0 +1,36 @@
+[package]
+name = "sketch-d4-recordop-chain-fusion"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# D4 fusion MECHANISM (dual-agent reconciliation, 2026-06-09). Sketch 202606061600
+# proved a HAND-fused single WU (intermediate a local) is 2.09x faster than two
+# unfused WUs (intermediate a real arena column) and that LLVM will not auto-fuse
+# the unfused pair. The open question: can the engine AUTO-fuse a fiber's WUs into
+# that register-passing body WITHOUT changing the core `WorkUnit::execute` contract
+# (op's constraint) and WITHOUT runtime/fn-pointer indirection (the proven devirt
+# failure mode)? This sketch tests one mechanism: an OPT-IN per-record-op trait
+# (`RecordOp`) that fusible WUs implement, composed by a type-level fold
+# (`OpChain`) into a single `ChainWu` whose `execute` runs the pipeline with
+# intermediates as registers. The bar: the composed chain objdumps like the
+# hand-fused S12 (1 load + 1 store, internal columns ELIMINATED, zero blr) over a
+# real runtime morsel loop, for a 3-stage chain with HETEROGENEOUS intermediate
+# types. Real engine crates, arvo dev HEAD ff514a7.
+[dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

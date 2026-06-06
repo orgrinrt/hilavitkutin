@@ -49,7 +49,6 @@ use hilavitkutin_api::context::{
     HasColumnWriter, HasEach,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::run_cfg::{DefaultRunCfg, RunCfg};
 use hilavitkutin_api::store::{Accum, Column};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
@@ -214,11 +213,20 @@ impl WorkUnit<Always> for AppenderWu {
 }
 
 #[test]
-fn mixed_plan_dispatches_each_fiber_on_its_own_locality() {
-    let msize = <DefaultRunCfg as RunCfg>::MORSEL_SIZE.0;
-    assert!(RECORDS > msize, "test record count must exceed the morsel size");
-    assert_eq!(RECORDS.div_ceil(msize), 3, "the fixture assumes three morsels");
-
+fn mixed_plan_dispatches_whole_carrier_flat() {
+    // GATE-1 flat dispatch (spec Approach E): the whole `WuVals` carrier is one
+    // type-level `RunFiber` walk in carrier order. A carrier bearing an
+    // accumulator (the appender) selects the unit-outer drive, so every unit
+    // executes once over the full record range, in carrier order: the producer,
+    // then its consumer, then the independent appender.
+    //
+    // Per-fiber morsel locality (the accumulator-free column chain morsel-outer
+    // while the accumulator stays unit-outer, as separate contiguous blocks) is
+    // the post-GATE-1 Approach-A `FiberCons` nesting (#670). A cons-list carrier
+    // type cannot be sliced at a runtime fiber index, so per-fiber sub-walks
+    // need per-fiber sub-carrier types, which the flat GATE-1 walk does not yet
+    // build. The original per-fiber-block assertion is the contract #670
+    // re-enables.
     DISPATCH_ORDER.with(|o| o.borrow_mut().clear());
     let provider = BumpProvider::<32768>::new();
     let mut scheduler = Scheduler::builder()
@@ -235,24 +243,14 @@ fn mixed_plan_dispatches_each_fiber_on_its_own_locality() {
 
     DISPATCH_ORDER.with(|o| {
         let observed = o.borrow();
-        // Nine dispatch calls: the column chain (two units) morsel-outer over
-        // three morsels is the contiguous interleaved run `[P, C, P, C, P, C]`;
-        // the appender (one unit) unit-outer over three morsels is `[A, A, A]`.
-        // Fibers run sequentially, so one ordering or the other appears.
-        let chain_then_accum = [
-            PRODUCER_TAG, CONSUMER_TAG, PRODUCER_TAG, CONSUMER_TAG, PRODUCER_TAG, CONSUMER_TAG,
-            APPENDER_TAG, APPENDER_TAG, APPENDER_TAG,
-        ];
-        let accum_then_chain = [
-            APPENDER_TAG, APPENDER_TAG, APPENDER_TAG,
-            PRODUCER_TAG, CONSUMER_TAG, PRODUCER_TAG, CONSUMER_TAG, PRODUCER_TAG, CONSUMER_TAG,
-        ];
-        assert!(
-            observed.as_slice() == &chain_then_accum || observed.as_slice() == &accum_then_chain,
-            "the accumulator-free column-chain fiber dispatches morsel-outer (its \
-             units interleave per morsel) while the accumulator fiber stays \
-             unit-outer, even though an accumulator is registered; the prior \
-             whole-pipeline guard would force the chain unit-outer. observed: {:?}",
+        // Whole-carrier unit-outer walk: each unit executes once, in carrier
+        // (registration) order. The producer writes the column its consumer
+        // reads (a RAW edge `build` validated topological), then the appender.
+        assert_eq!(
+            observed.as_slice(),
+            &[PRODUCER_TAG, CONSUMER_TAG, APPENDER_TAG],
+            "the flat Approach-E walk runs the whole carrier once in carrier \
+             order under the unit-outer drive an accumulator selects. observed: {:?}",
             observed.as_slice()
         );
     });

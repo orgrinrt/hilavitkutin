@@ -1,0 +1,50 @@
+984c8c3 chore: lock src changelist for d6 asm-dispatch-gate
+855d191 test: add d6 asm-dispatch gate over emitted dispatch monos
+0c4271b docs: open d6 src changelist
+83b9d27 chore: lock doc changelist for d6 asm-dispatch-gate
+e8990aa docs: record the standing asm-checklist dispatch gate in DESIGN
+75ed545 docs: open d6 doc changelist
+cd0397c docs: open d6 asm-dispatch-gate topic
+1fe5bbe chore: close design round 202606111200
+695d667 chore: lock src changelist for e7 incremental skip
+8b0eda5 docs: record e1/e7 dirty-gated-walk sketch findings
+7236ba7 test: mark bench input dirty per iter so perf gate measures real work
+d0dea8b perf: bound incremental-skip seed/propagate to live unit count
+d82f979 test: pin incremental-skip cone via execution counts
+39644c4 feat: wire incremental-skip seed, propagate, and gate into run
+237230e feat: add dirty-gated walk to RunFiber
+d521287 feat: carry predecessor and read masks on the execution plan
+22794a1 feat: add per-unit predecessor masks for incremental skip
+d5dbfe5 docs: open e7 src changelist
+a4e4d83 chore: lock e7 doc changelist
+d4ae700 docs: clarify e7 incremental-skip vs plan-recompute dirty
+985800a docs: open e7 doc changelist
+1bdbfed docs: open e7 incremental-skip round topic
+367fb70 chore: sketch E1/E7 dirty-gated RunFiber walk (WORKS, 0 blr)
+ea3c928 chore: close d668 engine adjrow cap lift round
+44e7918 chore: lock src changelist for d668 cap lift
+3d05055 feat: lift engine waist cap via PlanDims::AdjRow row word
+28b6d4b chore: open src CL for d668 cap lift
+b646c3c chore: lock doc changelist for d668 cap lift
+76f5dc0 docs: add PlanDims::AdjRow row word + cap-lift rationale
+ad50fd8 docs: open doc CL for d668 cap lift
+e076f43 topic: d668 engine adjrow cap lift
+57aa65a research: prove d668 resolution (PlanDims::AdjRow associated-type carrier WORKS)
+f82b304 research: sketch d668 cap-width row word (FAILS, symbolic-N container projection wall)
+634445c chore: close accum per-frame reset round
+97a1c79 chore: lock src changelist for accum per-frame reset
+70f71d8 feat: reset accumulator live-length per frame in run
+84ea6e2 src: open changelist for accum per-frame reset
+a03d828 chore: lock doc changelist for accum per-frame reset
+9431573 docs: document per-frame accumulator reset in run contract
+b6d1015 docs: open accum per-frame reset round (topic + doc cl)
+554b4cf chore: close d4 within-fiber linear fusion round
+42f96d4 chore: lock src changelist for d4 within-fiber linear fusion
+5d643a1 feat: within-fiber linear fusion + run_fused dispatch entry
+f7086fd src: open changelist for d4 within-fiber linear fusion
+c138589 chore: lock doc changelist for d4 within-fiber linear fusion
+8566b43 docs: within-fiber linear fusion mechanism + run_fused entry
+bdde0a8 doc: open changelist for d4 within-fiber linear fusion
+a376675 topic: d4 within-fiber linear fusion
+f560fd4 chore: add d4 min-spec transparent-dispatch sketch (walls; run_fused is the shape)
+7323639 chore: close spec-free columnvalue round

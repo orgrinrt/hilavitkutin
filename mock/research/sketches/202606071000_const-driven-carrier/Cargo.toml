@@ -1,0 +1,30 @@
+[package]
+name = "sketch-const-driven-carrier"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# Const-driven carrier (keystone, roadmap 202606061100 Phase D / codegen_fiber;
+# dual-agent consensus 202606070030). The dispatch keystone wall: the builder
+# PREPENDS, so the WU cons-list carrier is anti-topological; the dispatch order
+# must be a COMPILE-TIME fact in topological order, but the type-level grouping
+# fold needs forbidden `specialization`, a proc-macro cannot see AccessSet types,
+# and a runtime-permuted local slice does not devirtualise. This sketch proves
+# the proposed mechanism for `codegen_fiber`: (Tier 0) a `const fn` computes the
+# topological order from const access masks; (Tier A) a local fn-pointer array
+# dispatched via the CONST order with a const-unrolled loop devirtualises;
+# (Tier B) a type-level `Nth<const K>` accessor + const recursion dispatches the
+# heterogeneous cons-list in topo order and fully inlines. Self-contained (no
+# engine deps) to isolate the rustc/const-eval/const-generic capabilities; the
+# proven shape transfers to the real AccessSet/WuCons.
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

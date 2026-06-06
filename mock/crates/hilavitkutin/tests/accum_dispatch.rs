@@ -12,7 +12,7 @@
 //!
 //! Red first: before the `Accum<T>` marker, the `AccumBinding` drain arm, the
 //! `AccumSelector` / `AccumProject` projection, the `AccumWriterApi` accessor,
-//! and the lifted `CollectFiber` bound exist, an appending WorkUnit cannot
+//! and the lifted `RunFiber` bound exist, an appending WorkUnit cannot
 //! satisfy the dispatch bound and the file does not compile; once the bundle is
 //! projected but before the drain reserves a real buffer, the append writes
 //! through a dangling placeholder. Both precede the green round-trip.
