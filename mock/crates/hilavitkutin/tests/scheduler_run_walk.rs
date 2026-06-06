@@ -149,8 +149,8 @@ fn run_walks_two_registered_units() {
     // readers touch disjoint resources (Ra, Rb) and neither writes, so the
     // plan's dependency graph has no edge between them. With no edge, the
     // topological order coincides with the registration walk: the builder
-    // prepends, so the retained list is [ReadBWu, ReadAWu] and dispatch runs
-    // ReadBWu (Rb = 20) then ReadAWu (Ra = 10). The reorder is observable
+    // appends, so the retained list is [ReadAWu, ReadBWu] and dispatch runs
+    // ReadAWu (Ra = 10) then ReadBWu (Rb = 20). The reorder is observable
     // only when an edge exists, which the writer-before-reader test covers.
     let mut scheduler = Scheduler::builder()
         .with(Resource::new(Ra(10)))
@@ -166,8 +166,8 @@ fn run_walks_two_registered_units() {
     OBSERVED.with(|o| {
         assert_eq!(
             o.borrow().as_slice(),
-            &[20u32, 10u32],
-            "both registered units ran in registration-list order (last-registered first), \
+            &[10u32, 20u32],
+            "both registered units ran in registration-list order (first-registered first), \
              each resolving its own registered resource"
         );
     });
@@ -227,12 +227,13 @@ fn run_dispatches_in_topological_order_not_registration() {
     OBSERVED.with(|o| o.borrow_mut().clear());
     let provider = BumpProvider::<8192>::new();
     // Register the writer of Ra FIRST, then the reader of Ra LAST. The builder
-    // prepends, so the retained value list is [reader, writer] and a plain
-    // registration walk would run the reader first. The plan adds a RAW edge
-    // writer to reader (the writer writes what the reader reads), so the
-    // topological dispatch order is [writer, reader]: the writer runs first
-    // even though it sits last in the prepended list. This is the slice-3
-    // contract: dispatch follows the plan, not the registration order.
+    // appends, so the retained value list is [writer, reader] in registration
+    // order. The plan adds a RAW edge writer to reader (the writer writes what
+    // the reader reads), so the topological dispatch order is [writer, reader]:
+    // the writer runs before its reader. With the producer-before-consumer
+    // registration here the topological order coincides with registration; the
+    // reorder away from an anti-topological registration is exercised by the
+    // phase-sequential dispatch test (consumer registered first).
     let mut scheduler = Scheduler::builder()
         .with(Resource::new(Ra(10)))
         .with(WriteAWu)
@@ -317,6 +318,66 @@ fn build_rejects_a_cyclic_registration() {
 }
 
 #[test]
+fn build_rejects_anti_topological_registration() {
+    let provider = BumpProvider::<8192>::new();
+    // Register the reader of Ra FIRST, then the writer of Ra LAST. The builder
+    // appends, so the retained carrier order is [reader, writer]: slot 0 reads
+    // Ra, slot 1 writes Ra. The plan adds a RAW edge writer to reader (the
+    // writer writes what the reader reads), which is a back-edge in carrier
+    // space (source slot 1 >= destination slot 0). The static dispatch walk
+    // follows carrier order directly, so this carrier would run the reader
+    // before its writer. `build` rejects it at the precondition,
+    // before any allocation, naming the offending slots: producer (writer) at
+    // slot 1, consumer (reader) at slot 0.
+    let result = Scheduler::builder()
+        .with(Resource::new(Ra(10)))
+        .with(ReadAWu)
+        .with(WriteAWu)
+        .build(store(provider), USize(0));
+
+    match result {
+        Outcome::Err(BuildError::NonTopologicalRegistration {
+            producer,
+            consumer,
+            recommended,
+        }) => {
+            assert_eq!(
+                (producer, consumer),
+                (USize(1), USize(0)),
+                "the gate names producer slot 1 (writer) registered after consumer \
+                 slot 0 (reader)"
+            );
+            // The recommended order is a valid topological order: the writer
+            // (slot 1) precedes the reader (slot 0) in the named sequence.
+            let order = recommended.as_slice();
+            let pos_writer = order.iter().position(|s| *s == USize(1));
+            let pos_reader = order.iter().position(|s| *s == USize(0));
+            assert!(
+                pos_writer.is_some() && pos_reader.is_some(),
+                "recommended order names both carrier slots, got {:?}",
+                recommended
+            );
+            assert!(
+                pos_writer < pos_reader,
+                "recommended order places the writer (slot 1) before the reader \
+                 (slot 0), got {:?}",
+                recommended
+            );
+        }
+        Outcome::Err(other) => panic!(
+            "an acyclic registration whose carrier order runs a reader before its \
+             writer is rejected with NonTopologicalRegistration (not another \
+             BuildError), got {:?}",
+            other
+        ),
+        Outcome::Ok(_) => panic!(
+            "an acyclic registration whose carrier order runs a reader before its \
+             writer must be rejected, not build successfully"
+        ),
+    }
+}
+
+#[test]
 fn build_store_backs_the_plan_unit_meta() {
     // Writer-of-Ra registered before reader-of-Ra: the plan's topological
     // order is [writer, reader] (the same order the dispatch reorder test
@@ -341,8 +402,8 @@ fn build_store_backs_the_plan_unit_meta() {
     assert_eq!(storage.count(id), USize(2));
 
     // Read the store-backed unit-meta column. Topo step 0 is the writer
-    // (registration index 1, since the builder prepends), step 1 is the
-    // reader (registration index 0): the dependency-topological dispatch
+    // (registration index 0, since the builder appends), step 1 is the
+    // reader (registration index 1): the dependency-topological dispatch
     // order, round-tripped through the store.
     // SAFETY: `build` reserved this column for `unit_count` `UnitMeta` records
     // and copied the plan's unit-meta prefix in; the scheduler (and its
@@ -352,12 +413,12 @@ fn build_store_backs_the_plan_unit_meta() {
     let meta1 = unsafe { *storage.column_ptr::<UnitMeta>(id).add(1) };
     assert_eq!(
         meta0.id.index(),
-        USize(1),
-        "topo step 0 is the writer (registration index 1)"
+        USize(0),
+        "topo step 0 is the writer (registration index 0)"
     );
     assert_eq!(
         meta1.id.index(),
-        USize(0),
-        "topo step 1 is the reader (registration index 0)"
+        USize(1),
+        "topo step 1 is the reader (registration index 1)"
     );
 }

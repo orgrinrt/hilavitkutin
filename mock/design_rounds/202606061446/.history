@@ -1,0 +1,50 @@
+37049a6 chore: lock d1d-a src changelist
+c9a54a0 refactor: builder appends WorkUnit carrier so registration order is carrier order
+dd40de9 docs: d1d-a src CL — builder appends WU carrier in lockstep
+e9ab9a3 chore: lock d1d doc changelist
+d9e23c1 docs: builder appends WorkUnit carrier, build validates topo registration
+d72e824 docs: d1d doc CL — builder append + topo-registration precondition
+4883edf docs: open d1d round — builder appends, build validates topo registration
+5c5a13e research: record §7-6 RCM-recovery WORKS in roadmap r2 (auto-RCM achievable, relaxes op call b)
+3eff637 research: §7-6 RCM-row recovery via const-position-guarded walk (WORKS, zero blr, no wall)
+12c9cbc research: §7-4b facade per-morsel ABI hop sketch (host zero blr, facade 1 blr/morsel)
+7c11181 research: §7-4a facade accessset/containsall sketch (WORKS, no wall)
+dbf9e8d research: record op decisions (RCM-recovery prioritized, reg-constraint provisional, plugin-sketches-first) + §7-6
+1028b9e research: r2 gate-1 sketch coverage complete (§7-3 by-composition, §7-2 done); plugin sketches remain
+d2c538e research: multi-phase sub-carrier + barrier sketch (§7-2, zero blr, resolves phase segmentation)
+62533de research: r2 step-9 granularity finalisation (D1d/D1e splits, refined 5-sketch plan, §7-1 proven-by-composition)
+2871a4b research: r2 step-7 updates from canonical-mirror verdict (pivot confirmed, two PlanStage cases, Approach-2 spec-grounding)
+aa72feb research: engine roadmap r2 draft (dispatch-pivot + adaptability/plugin reconciliation)
+6a60dd7 research: full-engine overview + reconciliation, runtime-selectable-variants sketch (Approach 2 devirts)
+51cc57c research: type-level walk devirtualises under runtime morsel loop (zero blr)
+1e1eaa6 research: per-fiber-segmented dispatch sketch — FAILS (2 blr), rules out fn-ptr-array bridge
+ca7ede5 chore: close design round 202606051659 (dispatch-order keystone)
+6dbf228 chore: lock src changelist for dispatch-order keystone round 202606062330
+0cee9f2 feat: dispatch-order keystone machinery + delete superseded RunFiber walk
+b2f5a20 feat: carrier_order_dyn — GCE-safe dispatch order over Capacity::Array for the run rewire
+5288fd1 research: runtime-order-devirt sketch — runtime-computed order devirtualises (zero blr), GCE wall sidestepped
+56aa5be feat: BindingsFor::Markers — recover Stores AccessSet from Vals for the const dispatch order
+c8a1ae8 feat: impl CarrierMasks over WuCons value list (const ORDER from the scheduler's WuVals)
+d8b0a64 feat: const carrier mask fold + carrier_order (const dispatch ORDER from the bundle type)
+8897f2b feat: const topological dispatch order (dispatch::order) + restore fiber_codegen
+4ecc45d research: const-order-assoc sketch — engine wiring of const ORDER proven (const-trait fill + const fn topo over carrier type)
+c1ed1b2 research: const-driven carrier sketch — keystone dispatch mechanism proven (const topo + const-order local fn-ptr devirtualises)
+8140442 research: dual-agent consensus on dispatch keystone — flattener emits topo-ordered carrier, const-driven mechanism to sketch next
+137365a research: resolve dispatch-order keystone — compile-time carrier, flat single-core schedule-mega
+73eac18 feat: make RunFiber column-capable (lift resource-only boundary, proven 7-param GAT walk)
+871da97 src CL: column-capable dispatch walk (increment 1, resume dispatch-codegen-fusion round)
+c5c509f research: truth-of-impl audit at implementation entry — Phase C shipped, Phase D dispatch is the GATE-1 gap
+ff8e7fd research: F2 LLVM-pass-degrade sketch — cfg-gate + runtime probe degrade to stock, no build break (Step 10 complete)
+c93bbb9 research: E8 adapt-hysteresis sketch — EMA + dead-band/K/cooldown cuts oscillation 5x
+50aaa0c research: E7 dirty-skip sketch — predecessors&dirty propagation runs only the changed cone
+e91f641 research: E6 N-vs-1 oracle sketch — bit-identical Cfg::Out at 1/2/7 cores for a commutative pipeline
+ff03ad6 research: E5b asym-morsel bench — proportional-to-speed split 1.81x lower makespan under heterogeneity
+dde685f research: E5a P/E core-detect sketch — sysctl perflevel probe (4P+4E) + homogeneous degrade
+199c3b2 research: E4b head+tail convergence sketch — 2-core opposite-end cursors, every record once, race-free
+a5e37c5 research: E4 meta-WU + pipelining sketch — canonical meta firing order + progress-counter gate integrate
+af73524 research: D1c phase-barrier sketch — generation-counter AtomicUsize bakes to ldaddal+stlr, no fence/CAS
+8135ffc research: C6 spectral-trunk sketch — deterministic k-way split at pinned iterations + threshold
+8615a4a research: C5a block-diagonal sketch — non-trivial component detection on real shapes
+3e9bb0b research: C5b D-M sketch — non-trivial decomposition on real workloads, fusion precondition unblocked
+f52e8d9 research: D4 fusion sketch — internal column DSEs to register when fiber-fused, 2.09x (the #664 enabler)
+11934de research: D1a keystone-bridge sketch — plan-fed schedule-mega devirtualises with runtime morsel

@@ -1,0 +1,32 @@
+[package]
+name = "sketch-runfibercol-accumulator-inline"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# Depends on the real engine crates. The crux it probes is the inline-recursive
+# RunFiberCol walk resolving a NON-EMPTY accumulator bundle inline (the 7th
+# EngineCtx GAT param restated as `<A as AccumProject<'f, Write, WAIdx>>::Out`,
+# the lifetime-dependent projection), driven from an `A`-pinned context that
+# mirrors `Scheduler::run<Witnesses>`. Sketch 202606051601 settled the column
+# dimension with the accumulator pinned to `AccPtrNil`; this settles the
+# remaining delta (the non-empty accumulator restated inline). No copied lock:
+# resolves against arvo `dev` HEAD, which the engine now builds against after the
+# #663 transitive bump (#666), so the result transfers to the current tree.
+[dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

@@ -29,7 +29,7 @@ use std::process::ExitCode;
 use mockspace_bench_core::{routine_bridge, ByteRoutine};
 use mockspace_bench_harness::{self as harness, BenchManifest, RoutineSpec, Workload};
 
-mod disasm_5check;
+use benches::disasm_5check;
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().collect();

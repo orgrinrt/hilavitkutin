@@ -106,6 +106,7 @@ mod assign_cores_tests {
     use super::*;
     use crate::plan::ExecutionPlan;
     use arvo::strategy::Identity;
+    use arvo::{Bits, Hot, Unsigned};
     use arvo_tensor::{cap_size, Capacity, Dim};
 
     // Per-pipeline capacities sized small for the tests. The body's
@@ -128,6 +129,7 @@ mod assign_cores_tests {
         type UnitsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity budget literal; Dim<N> array-length root; tracked: #649
         type ColumnsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity budget literal; Dim<N> array-length root; tracked: #649
         type Cores = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity budget literal; Dim<N> array-length root; tracked: #649
+        type AdjRow = Bits<64, Hot, Unsigned>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: 64-wide row covers Dim<8> units; Bits width literal; tracked: #649
     }
 
     const LANES: usize = cap_size(<<TestDims as PlanDims>::Lanes as Capacity>::CAP); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: value-position cap projection for test loop bounds; tracked: #72

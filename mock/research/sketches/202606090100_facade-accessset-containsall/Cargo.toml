@@ -1,0 +1,31 @@
+[package]
+name = "sketch-facade-accessset-containsall"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# §7-4a (roadmap r2): the ONE genuine remaining plugin-phase feasibility unknown.
+# Can a FACADE WorkUnit (standing in for a runtime-loaded cdylib extension, whose
+# real data access is unknown at host compile time) register on the real builder
+# and pass build()'s `Stores: ContainsAll<Wus::AccumRead> + ContainsAll<AccumWrite>`
+# bound, WITHOUT polluting the host's type-level access analysis or requiring every
+# plugin-accessible store pre-registered? The roadmap flags the feared wall: "if
+# the facade must carry an over-approximating concrete AccessSet, ContainsAll may
+# reject it." This sketch tests whether that wall materialises. Real engine crates.
+[dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

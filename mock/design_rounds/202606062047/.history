@@ -1,0 +1,50 @@
+44e7918 chore: lock src changelist for d668 cap lift
+3d05055 feat: lift engine waist cap via PlanDims::AdjRow row word
+28b6d4b chore: open src CL for d668 cap lift
+b646c3c chore: lock doc changelist for d668 cap lift
+76f5dc0 docs: add PlanDims::AdjRow row word + cap-lift rationale
+ad50fd8 docs: open doc CL for d668 cap lift
+e076f43 topic: d668 engine adjrow cap lift
+57aa65a research: prove d668 resolution (PlanDims::AdjRow associated-type carrier WORKS)
+f82b304 research: sketch d668 cap-width row word (FAILS, symbolic-N container projection wall)
+634445c chore: close accum per-frame reset round
+97a1c79 chore: lock src changelist for accum per-frame reset
+70f71d8 feat: reset accumulator live-length per frame in run
+84ea6e2 src: open changelist for accum per-frame reset
+a03d828 chore: lock doc changelist for accum per-frame reset
+9431573 docs: document per-frame accumulator reset in run contract
+b6d1015 docs: open accum per-frame reset round (topic + doc cl)
+554b4cf chore: close d4 within-fiber linear fusion round
+42f96d4 chore: lock src changelist for d4 within-fiber linear fusion
+5d643a1 feat: within-fiber linear fusion + run_fused dispatch entry
+f7086fd src: open changelist for d4 within-fiber linear fusion
+c138589 chore: lock doc changelist for d4 within-fiber linear fusion
+8566b43 docs: within-fiber linear fusion mechanism + run_fused entry
+bdde0a8 doc: open changelist for d4 within-fiber linear fusion
+a376675 topic: d4 within-fiber linear fusion
+f560fd4 chore: add d4 min-spec transparent-dispatch sketch (walls; run_fused is the shape)
+7323639 chore: close spec-free columnvalue round
+48d4bb3 chore: lock src changelist for spec-free columnvalue
+9eb351e refactor: spec-free columnvalue, drop full specialization feature
+74907fe src: open changelist for spec-free columnvalue
+3e2577e chore: lock doc changelist for spec-free columnvalue
+f0f9873 docs: spec-free columnvalue shape in api design + backlog
+a55e775 doc: open changelist for spec-free columnvalue
+8a00572 topic: spec-free columnvalue, drop full specialization gate
+82a3a35 chore: add d4 carrier-fold auto-synthesis sketch (engine folds registered chain)
+b182094 chore: add d4 recordop-chain fusion sketch (register residency proven)
+abccf6c chore: close d1e runfiber-dispatch round
+cd69c7e chore: lock d1e src changelist
+ac60a03 refactor: delete the erased FiberSlot dispatch shim
+151a742 feat: wire run dispatch through the type-level RunFiber walk
+05b7fe4 docs: open d1e src changelist
+34eb8ff chore: lock d1e doc changelist
+3a9b27b docs: open d1e doc changelist
+10ff4f4 docs: open d1e runfiber-dispatch round topic
+e81ae20 chore: close d1d-c design round 202606061830 + regenerate docs
+dcb704e chore: lock d1d-c src changelist
+05d0e79 feat: name the recommended registration order in the build error
+edb30a9 docs: open d1d-c src changelist
+945c7ba chore: lock d1d-c doc changelist
+ae9c46b docs: state recommended-order (RCM-reordered topo) in build error
+fca511b docs: open d1d-c doc changelist

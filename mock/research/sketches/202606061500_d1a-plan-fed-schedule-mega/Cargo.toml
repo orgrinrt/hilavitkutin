@@ -1,0 +1,34 @@
+[package]
+name = "sketch-d1a-plan-fed-schedule-mega"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# D1a (roadmap 202606061100 section 4 + section 9, write-first after D1b). D1b
+# proved the dispatch-structure carrier is type-level and devirtualises, and that
+# the fiber/phase grouping is a runtime plan computation the codegen flattener
+# emits the carrier from. The schedule-mega sketch (202606060500) proved a
+# hand-written carrier with a CONST morsel devirtualises. D1a's open delta: the
+# plan supplies RUNTIME params (morsel size is an R6 adaptive runtime param from
+# hardware detection; record count is runtime), while devirt needs a compile-time
+# dispatch order. Does the schedule-mega body still objdump zero `blr` when morsel
+# size + record count come from a runtime plan-output struct instead of a const,
+# over compile-time-ordered phase cons-lists (the flattener output, D1b)? Real
+# engine crates, arvo dev HEAD.
+[dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

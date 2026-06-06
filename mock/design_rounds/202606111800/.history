@@ -1,0 +1,50 @@
+8418874 chore: lock src changelist for readmask invariant guard
+4c8008e docs: clarify read-mask copy is registration-slot keyed
+370dbb4 docs: open src changelist for readmask invariant guard
+446b1b4 chore: lock doc changelist for readmask invariant guard
+06f629c docs: open readmask invariant guard round
+ab1031b chore: close design round 202606111700
+09e4b63 chore: lock src changelist for gate1 test-audit remediation
+246e743 test: remediate gate1 all-green audit findings
+7228c94 docs: open src changelist for gate1 test-audit remediation
+85de82f chore: lock doc changelist for gate1 test-audit remediation
+bbad9c5 docs: open gate1 test-audit remediation round
+3714a13 chore: close design round 202606111600
+984c8c3 chore: lock src changelist for d6 asm-dispatch-gate
+855d191 test: add d6 asm-dispatch gate over emitted dispatch monos
+0c4271b docs: open d6 src changelist
+83b9d27 chore: lock doc changelist for d6 asm-dispatch-gate
+e8990aa docs: record the standing asm-checklist dispatch gate in DESIGN
+75ed545 docs: open d6 doc changelist
+cd0397c docs: open d6 asm-dispatch-gate topic
+1fe5bbe chore: close design round 202606111200
+695d667 chore: lock src changelist for e7 incremental skip
+8b0eda5 docs: record e1/e7 dirty-gated-walk sketch findings
+7236ba7 test: mark bench input dirty per iter so perf gate measures real work
+d0dea8b perf: bound incremental-skip seed/propagate to live unit count
+d82f979 test: pin incremental-skip cone via execution counts
+39644c4 feat: wire incremental-skip seed, propagate, and gate into run
+237230e feat: add dirty-gated walk to RunFiber
+d521287 feat: carry predecessor and read masks on the execution plan
+22794a1 feat: add per-unit predecessor masks for incremental skip
+d5dbfe5 docs: open e7 src changelist
+a4e4d83 chore: lock e7 doc changelist
+d4ae700 docs: clarify e7 incremental-skip vs plan-recompute dirty
+985800a docs: open e7 doc changelist
+1bdbfed docs: open e7 incremental-skip round topic
+367fb70 chore: sketch E1/E7 dirty-gated RunFiber walk (WORKS, 0 blr)
+ea3c928 chore: close d668 engine adjrow cap lift round
+44e7918 chore: lock src changelist for d668 cap lift
+3d05055 feat: lift engine waist cap via PlanDims::AdjRow row word
+28b6d4b chore: open src CL for d668 cap lift
+b646c3c chore: lock doc changelist for d668 cap lift
+76f5dc0 docs: add PlanDims::AdjRow row word + cap-lift rationale
+ad50fd8 docs: open doc CL for d668 cap lift
+e076f43 topic: d668 engine adjrow cap lift
+57aa65a research: prove d668 resolution (PlanDims::AdjRow associated-type carrier WORKS)
+f82b304 research: sketch d668 cap-width row word (FAILS, symbolic-N container projection wall)
+634445c chore: close accum per-frame reset round
+97a1c79 chore: lock src changelist for accum per-frame reset
+70f71d8 feat: reset accumulator live-length per frame in run
+84ea6e2 src: open changelist for accum per-frame reset
+a03d828 chore: lock doc changelist for accum per-frame reset

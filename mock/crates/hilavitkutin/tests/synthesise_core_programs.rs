@@ -12,7 +12,7 @@
 #![feature(generic_const_exprs)]
 #![allow(incomplete_features)]
 
-use arvo::{Identity, USize};
+use arvo::{Bits, Hot, Identity, USize, Unsigned};
 use arvo_tensor::Dim;
 use hilavitkutin::plan::{
     compute_execution_plan, core_program::synthesise_core_programs, PlanDims, PlanInputs,
@@ -37,6 +37,7 @@ impl PlanDims for TestDims {
     type UnitsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
     type ColumnsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
     type Cores = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type AdjRow = Bits<64, Hot, Unsigned>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: 64-wide row covers the small test units; Bits width literal; tracked: #649
 }
 
 // Per-core sub-capacities (not plan dimensions): they size the api

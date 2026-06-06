@@ -1,0 +1,27 @@
+[package]
+name = "sketch-e5b-asym-morsel-bench"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# E5b (roadmap 202606061100 section 4 + section 9): asymmetric morsel sizing.
+# Given known P/E core types (E5a), assign larger record shares to P-cores and
+# proportionally smaller to E-cores; bench whether throughput (makespan) improves
+# over equal distribution. BENCH-decided (Kind 2). macOS cannot pin threads to
+# P/E cores, so the heterogeneity is modeled with a per-record work multiplier on
+# the "E" threads (a faithful proxy for the load-balancing claim, independent of
+# real pinning); the real perf number belongs on pinned hardware / the #664 suite.
+[dependencies]
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

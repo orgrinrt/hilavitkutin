@@ -6,7 +6,7 @@
 //! gate is needed (the capacity dimensions are types, not `Cap` const
 //! generics).
 
-use arvo::USize;
+use arvo::{Bits, Hot, USize, Unsigned};
 use arvo_tensor::{Capacity, Dim};
 use hilavitkutin::plan::{steps, BlockPartition, DependencyGraph, PhaseBoundaries, PlanDims, UnitId};
 
@@ -27,6 +27,7 @@ impl PlanDims for TestDims {
     type UnitsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
     type ColumnsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
     type Cores = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type AdjRow = Bits<64, Hot, Unsigned>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: 64-wide row covers the small test units; Bits width literal; tracked: #649
 }
 
 /// The unit capacity, the dimension the per-unit fixtures are sized by.

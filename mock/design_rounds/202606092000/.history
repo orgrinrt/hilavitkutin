@@ -1,0 +1,50 @@
+42f96d4 chore: lock src changelist for d4 within-fiber linear fusion
+5d643a1 feat: within-fiber linear fusion + run_fused dispatch entry
+f7086fd src: open changelist for d4 within-fiber linear fusion
+c138589 chore: lock doc changelist for d4 within-fiber linear fusion
+8566b43 docs: within-fiber linear fusion mechanism + run_fused entry
+bdde0a8 doc: open changelist for d4 within-fiber linear fusion
+a376675 topic: d4 within-fiber linear fusion
+f560fd4 chore: add d4 min-spec transparent-dispatch sketch (walls; run_fused is the shape)
+7323639 chore: close spec-free columnvalue round
+48d4bb3 chore: lock src changelist for spec-free columnvalue
+9eb351e refactor: spec-free columnvalue, drop full specialization feature
+74907fe src: open changelist for spec-free columnvalue
+3e2577e chore: lock doc changelist for spec-free columnvalue
+f0f9873 docs: spec-free columnvalue shape in api design + backlog
+a55e775 doc: open changelist for spec-free columnvalue
+8a00572 topic: spec-free columnvalue, drop full specialization gate
+82a3a35 chore: add d4 carrier-fold auto-synthesis sketch (engine folds registered chain)
+b182094 chore: add d4 recordop-chain fusion sketch (register residency proven)
+abccf6c chore: close d1e runfiber-dispatch round
+cd69c7e chore: lock d1e src changelist
+ac60a03 refactor: delete the erased FiberSlot dispatch shim
+151a742 feat: wire run dispatch through the type-level RunFiber walk
+05b7fe4 docs: open d1e src changelist
+34eb8ff chore: lock d1e doc changelist
+3a9b27b docs: open d1e doc changelist
+10ff4f4 docs: open d1e runfiber-dispatch round topic
+e81ae20 chore: close d1d-c design round 202606061830 + regenerate docs
+dcb704e chore: lock d1d-c src changelist
+05d0e79 feat: name the recommended registration order in the build error
+edb30a9 docs: open d1d-c src changelist
+945c7ba chore: lock d1d-c doc changelist
+ae9c46b docs: state recommended-order (RCM-reordered topo) in build error
+fca511b docs: open d1d-c doc changelist
+5e08def docs: open d1d-c topic for recommended-order in build error
+0d34b18 docs: regenerate from templates after d1d-a/d1d-b
+d3f8a8d chore: close d1d-b design round 202606061730
+74205c7 chore: lock d1d-b src changelist
+c721783 feat: gate build on topological registration order
+57b4b86 docs: open d1d-b src changelist
+0c9a710 chore: lock d1d-b doc changelist
+999c4d1 docs: distinguish NonTopologicalRegistration from cycle path in build narrative
+c6927c3 docs: open d1d-b doc changelist
+836777a docs: open d1d-b topic for topo-registration build gate
+48dcc5a chore: close d1d-a design round 202606061446
+37049a6 chore: lock d1d-a src changelist
+c9a54a0 refactor: builder appends WorkUnit carrier so registration order is carrier order
+dd40de9 docs: d1d-a src CL — builder appends WU carrier in lockstep
+e9ab9a3 chore: lock d1d doc changelist
+d9e23c1 docs: builder appends WorkUnit carrier, build validates topo registration
+d72e824 docs: d1d doc CL — builder append + topo-registration precondition

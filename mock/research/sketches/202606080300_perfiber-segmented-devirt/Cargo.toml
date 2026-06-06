@@ -1,0 +1,13 @@
+[package]
+name = "sketch-perfiber-segmented-devirt"
+version = "0.0.0"
+edition = "2021"
+publish = false
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+[workspace]
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

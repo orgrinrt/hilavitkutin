@@ -89,6 +89,15 @@ pub struct ExecutionPlan<D: PlanDims> {
     /// layout, not the dispatch order (dispatch stays topological via
     /// `unit_meta`). Zero-filled before the chain populates it.
     pub rcm_order: <D::Units as Capacity>::Array<UnitId>,
+    /// Per-unit predecessor masks (carrier-position space) for runtime
+    /// incremental skip (domain 16). `predecessor_masks[v]` has bit `u`
+    /// set for every direct dependency edge `u -> v`, so the runtime can
+    /// propagate a dirty seed forward and gate each unit by its position.
+    pub predecessor_masks: <D::Units as Capacity>::Array<D::AdjRow>,
+    /// Per-unit read access masks, retained from `PlanInputs`. The runtime
+    /// seeds the dirty set by intersecting the changed-store mask against
+    /// each unit's reads.
+    pub read_masks: <D::Units as Capacity>::Array<AccessMask<D::Stores>>,
 }
 
 impl<D: PlanDims> ExecutionPlan<D>
@@ -113,6 +122,8 @@ where
             dirty: DirtyMasks::new(),
             morsel_sizes: <D::Fibers as Capacity>::filled(USize::ZERO),
             rcm_order: <D::Units as Capacity>::filled(UnitId::ZERO),
+            predecessor_masks: <D::Units as Capacity>::filled(D::AdjRow::default()),
+            read_masks: <D::Units as Capacity>::filled(AccessMask::empty()),
         }
     }
 }
@@ -127,6 +138,8 @@ where
     DirtyMasks<D::Fibers, D::Columns>: Copy,
     <D::Fibers as Capacity>::Array<USize>: Copy,
     <D::Units as Capacity>::Array<UnitId>: Copy,
+    <D::Units as Capacity>::Array<D::AdjRow>: Copy,
+    <D::Units as Capacity>::Array<AccessMask<D::Stores>>: Copy,
 {
 }
 
@@ -140,6 +153,8 @@ where
     DirtyMasks<D::Fibers, D::Columns>: Copy,
     <D::Fibers as Capacity>::Array<USize>: Copy,
     <D::Units as Capacity>::Array<UnitId>: Copy,
+    <D::Units as Capacity>::Array<D::AdjRow>: Copy,
+    <D::Units as Capacity>::Array<AccessMask<D::Stores>>: Copy,
 {
     fn clone(&self) -> Self {
         *self
@@ -400,6 +415,35 @@ where
             plan.unit_meta.as_mut()[u].upward_rank = ranks.as_ref()[unit_id_idx];
         }
         u += 1;
+    }
+
+    // Per-unit predecessor masks + retained read masks for runtime
+    // incremental skip (domain 16). The masks are carrier-position keyed
+    // (same space the dispatch walk threads); the read masks let the
+    // runtime seed dirty units by intersecting a changed-store mask.
+    plan.predecessor_masks = steps::compute_predecessor_masks::<D>(&dag);
+    {
+        // `read_masks` is copied slot-for-slot, deliberately NOT reindexed
+        // through `topo_s` the way `unit_meta` above is. The two arrays live in
+        // different spaces for different consumers. `unit_meta` is topo-position
+        // keyed for the codegen / schedule tier. `read_masks` and
+        // `predecessor_masks` (built from the same DAG node indices) are
+        // registration-slot keyed, which is exactly the space the runtime
+        // `dirty_units` propagation and the `RunFiber` dispatch walk thread as
+        // carrier position. `Scheduler::build` rejects anti-topological
+        // registration (`BuildError::NonTopologicalRegistration` via
+        // `first_back_edge`), so at dispatch registration slot == carrier
+        // position == topological order, and all three runtime arrays agree.
+        // Reindexing this copy through `topo_s` would misalign `read_masks`
+        // against `predecessor_masks` and break the propagation; keep it
+        // slot-for-slot.
+        let src = inputs.reads.as_ref();
+        let dst = plan.read_masks.as_mut();
+        let mut u = 0;
+        while u < src.len() && u < dst.len() {
+            dst[u] = src[u];
+            u += 1;
+        }
     }
 
     // Steps 12 + 13 (core assignment + per-core program synthesis)

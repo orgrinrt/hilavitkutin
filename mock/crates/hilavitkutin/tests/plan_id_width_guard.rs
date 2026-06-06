@@ -8,7 +8,7 @@
 //! ids on the high slots. The guard is a property of the dims type, so it
 //! fires even for an empty plan, which is what these tests drive.
 
-use arvo::{Identity, USize};
+use arvo::{Bits, Hot, Identity, USize, Unsigned};
 use arvo_tensor::Dim;
 use hilavitkutin::plan::{compute_execution_plan, DefaultPlanDims, PlanDims, PlanError, PlanInputs};
 use notko::Outcome;
@@ -31,6 +31,7 @@ impl PlanDims for OverWidePhasesDims {
     type UnitsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
     type ColumnsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
     type Cores = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type AdjRow = Bits<64, Hot, Unsigned>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: 64-wide row covers the small test units; Bits width literal; tracked: #649
 }
 
 /// Dims whose trunk capacity (65) is one past what `TrunkId` can name (64),
@@ -52,6 +53,7 @@ impl PlanDims for OverWideTrunksDims {
     type UnitsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
     type ColumnsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
     type Cores = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type AdjRow = Bits<64, Hot, Unsigned>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: 64-wide row covers the small test units; Bits width literal; tracked: #649
 }
 
 #[test]

@@ -1,0 +1,27 @@
+[package]
+name = "sketch-e7-dirty-skip"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# E7 (roadmap 202606061100 section 4 + section 9): dirty propagation -> incremental
+# skip (consolidation Step 9 :1418-1429). A runtime dirty-bit propagation pass
+# (predecessors[N] & dirty_mask, arvo-bitmask) skips clean WUs, turning the
+# pipeline from a batch processor into an incremental processor. The plan computes
+# dirty masks at plan time (compute_upward_rank_and_dirty); this is the per-frame
+# runtime consumption. Modeled with u64 bitsets (the engine uses arvo_bitmask::Mask64
+# wrapping exactly this; the SKIP LOGIC is the point, SOME-SHAPE leeway).
+[dependencies]
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

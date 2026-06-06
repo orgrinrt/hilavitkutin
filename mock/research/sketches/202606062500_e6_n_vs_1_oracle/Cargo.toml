@@ -1,0 +1,27 @@
+[package]
+name = "sketch-e6-n-vs-1-oracle"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# E6 (roadmap 202606061100 section 4 + section 9): N-core output == 1-core output.
+# The canon makes the 1-core configuration the correctness oracle the N-core
+# configuration validates against: same engine, same plan algorithms, same
+# Cfg::Out for any core count. This sketch runs the same commutative pipeline
+# (per-record column + a commutative reduction) at 1/2/7 cores via record-range
+# partitioning and asserts bit-identical output. arvo USize; std threads for the
+# core models (research binary).
+[dependencies]
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

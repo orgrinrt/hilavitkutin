@@ -1,0 +1,27 @@
+[package]
+name = "sketch-e8-adapt-hysteresis"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# E8 (roadmap 202606061100 section 4 + section 9): adapt observe/tune with
+# hysteresis (R5). Each AdaptAxis folds (ema*7 + measured) >> 3 gated by
+# sample_skip, compares thresholds to trigger morsel re-size / per-phase config
+# re-select / full re-plan, all at ScheduleEnd between frames. Hysteresis
+# (K-consecutive crossing, dead-band, per-trigger cooldown) prevents oscillation.
+# This sketch proves the EMA fold + hysteresis kill the oscillation a naive
+# crossing comparator suffers near a threshold. arvo for USize.
+[dependencies]
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

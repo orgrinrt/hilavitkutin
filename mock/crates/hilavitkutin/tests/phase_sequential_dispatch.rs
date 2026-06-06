@@ -8,20 +8,19 @@
 //! A producer writes `Column<Av>`; a transform reads `Av` and writes
 //! `Column<Bv>`; a consumer reads `Bv`. The two RAW edges (`Av`:
 //! producer->transform, `Bv`: transform->consumer) force the dependency order.
-//! The columns are registered first, then the consumer, then the transform,
-//! then the producer, so the builder's prepend puts the consumer ahead in the
-//! retained list; a plain registration walk would run the consumer before the
-//! transform before the producer, reading uninitialised records. The plan's
-//! phase structure must dispatch producer -> transform -> consumer, and the
-//! phase flatten must visit all three units, for the consumer to read back the
-//! full chain.
+//! The columns are registered first, then the producer, then the transform,
+//! then the consumer, so the builder's append keeps that topological
+//! registration order in the carrier. The build-time topological-registration
+//! gate requires this order; an anti-topological registration (consumer first)
+//! is rejected at build with `BuildError::NonTopologicalRegistration`. The
+//! plan's phase structure dispatches producer -> transform -> consumer, and the
+//! phase flatten visits all three units, so the consumer reads back the full
+//! chain.
 //!
 //! This validates the phase flatten: a dropped unit (an incomplete partition)
 //! leaves the consumer reading uninitialised records, and a mis-ordered phase
-//! walk runs a reader before its writer. The behaviour is equivalent to the
-//! prior flat topo walk for a correct plan, so the test passes before and after
-//! the flatten lands; it guards that the flatten preserves dependency order and
-//! visits every unit.
+//! walk runs a reader before its writer. It guards that the flatten preserves
+//! dependency order and visits every unit.
 //!
 //! Lives under `tests/` so the bare numeric record values do not trip the
 //! src-tree primitive lints.
@@ -177,18 +176,20 @@ impl WorkUnit<Always> for ConsumerWu {
 fn phase_sequential_dispatch_runs_the_chain_in_order() {
     OBSERVED.with(|o| o.borrow_mut().clear());
     let provider = BumpProvider::<16384>::new();
-    // Register the two columns, then consumer, transform, producer. The builder
-    // prepends, so the retained list is [producer, transform, consumer] only if
-    // the plan reorders; a plain registration walk runs them reversed. The plan
-    // adds RAW edges Av (producer->transform) and Bv (transform->consumer), so
-    // the phase-sequential dispatch must run producer, then transform, then
-    // consumer.
+    // Register the two columns, then producer, transform, consumer. The builder
+    // appends, so the retained carrier is [producer, transform, consumer] in
+    // registration order: a valid topological order of the chain's RAW edges Av
+    // (producer->transform) and Bv (transform->consumer). The build-time
+    // topological-registration gate requires this; an anti-topological
+    // registration (consumer first) is rejected with
+    // BuildError::NonTopologicalRegistration. The phase flatten dispatches the
+    // chain in dependency order and visits every unit.
     let mut scheduler = Scheduler::builder()
         .with(Column::<Av>::new())
         .with(Column::<Bv>::new())
-        .with(ConsumerWu)
-        .with(TransformWu)
         .with(ProducerWu)
+        .with(TransformWu)
+        .with(ConsumerWu)
         .build(store(provider), USize(N))
         .unwrap_or_else(|_| panic!("build should succeed"));
 

@@ -1,0 +1,30 @@
+[package]
+name = "sketch-c5a-block-diagonal"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# C5b (roadmap 202606061100 section 4 + section 9): run arvo's Dulmage-Mendelsohn
+# decomposition on a real plan WU-DAG and confirm it produces a NON-TRIVIAL
+# decomposition (not all-square), so the C7 Input/Output/Internal column split is
+# real and D4's fusion (proven 202606061600) has internal columns to fuse. The
+# load-bearing question for the whole fusion path: if every gate workload yields
+# only the square (core) component, C7 is a no-op and D4 never materialises.
+# arvo dev HEAD (ff514a7), mirrors arvo-sparse/tests/dm.rs construction.
+[dependencies]
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+arvo-bitmask = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+arvo-sparse = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+arvo-tensor = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

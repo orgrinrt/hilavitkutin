@@ -1,0 +1,30 @@
+[package]
+name = "sketch-d668-cap-width-row-word"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# D668 feasibility (GATE-1). compute_waists hardcodes the bit-matrix row word as
+# `Bits<64, Hot, Unsigned>`, capping the DAG at 64 nodes regardless of D::Units.
+# arvo #663 generalised arvo-graph over the row word `B` and its own tests prove
+# concrete wide rows (`BitMatrix<Bits<256, Hot, Unsigned>, Dim<129>>` through
+# waist_detect). The OPEN question this sketch answers: does the GENERIC width
+# expression `Bits<{ cap_size(<C as Capacity>::CAP) as u16 }, Hot, Unsigned>`
+# (a generic_const_exprs const expr with a usize->u16 cast, symbolic over C)
+# satisfy waist_detect's `B: BitSequence + BitAccess + BitLogic + Copy + Default
+# + Identity` bound and compile in BitMatrix<B, C> / Mask<B> positions for an
+# arbitrary `C: Capacity`? arvo's concrete-width tests never exercise the
+# symbolic-N + cast expression. Real arvo crates, arvo dev HEAD.
+[dependencies]
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+arvo-bits-contracts = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+arvo-bitmask = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+arvo-graph = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+arvo-tensor = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }

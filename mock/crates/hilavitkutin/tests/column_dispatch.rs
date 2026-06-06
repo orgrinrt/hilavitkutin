@@ -12,7 +12,7 @@
 //! build-time record count), and that the bindings serve as the column source.
 //!
 //! Red first: before the dispatch bound is lifted, a column-bearing unit cannot
-//! satisfy the resource-only `CollectFiber` bound and the file does not compile;
+//! satisfy the resource-only `RunFiber` bound and the file does not compile;
 //! once lifted but before the drain reserves a real buffer, the readback reads a
 //! dangling placeholder. Both precede the green round-trip.
 //!
@@ -154,11 +154,11 @@ fn column_round_trips_producer_to_consumer_through_run() {
     OBSERVED.with(|o| o.borrow_mut().clear());
     let provider = BumpProvider::<8192>::new();
     // Register the column, then the producer, then the consumer. The builder
-    // prepends, so the retained value list is [consumer, producer]: a plain
-    // registration walk runs the consumer first (reading uninitialised
-    // records). The plan adds a RAW edge producer to consumer, so topological
-    // dispatch runs the producer first. The consumer then reads back what the
-    // producer wrote.
+    // appends the WorkUnit carrier, so the retained value list is [producer,
+    // consumer] in registration order: a plain walk already runs the producer
+    // first. The plan adds a RAW edge producer to consumer; the topological
+    // dispatch order matches the registration order here. The consumer reads
+    // back what the producer wrote.
     let mut scheduler = Scheduler::builder()
         .with(Column::<Cv>::new())
         .with(ProducerWu)

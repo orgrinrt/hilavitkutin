@@ -1,0 +1,24 @@
+[package]
+name = "sketch-d4-min-spec-transparent-dispatch"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "min-model"
+path = "src/min_model.rs"
+
+[workspace]
+
+# D4 dispatch-shape feasibility. The breadcrumb framed D4's `run()` as "fold the
+# carrier if fusible, else fall back to the per-WU RunFiber walk", which reads as
+# a transparent single `run()` that auto-detects fusibility. This sketch asks
+# whether that transparent auto-detection is expressible via the ALLOWED
+# `min_specialization` feature (a default dispatch impl + a specializing impl for
+# FuseCarrier carriers). It is a standalone no-deps model: the question is purely
+# about coherence + witness threading, which the minimal `Walk`/`Fuse`/`Program`
+# shapes capture faithfully (`Walk<W>` models `RunFiber<A, W>` with its per-call
+# witness). Build: `rustc +nightly-2026-05-28 --edition 2021 src/min_model.rs`.
+# Outcome (FAILS, two independent reasons: E0207 unconstrained fused witness +
+# min_spec cannot specialize on a FuseCarrier-style bound) recorded inline; the
+# resolution is the explicit `Scheduler::run_fused<W2>()` inherent method.

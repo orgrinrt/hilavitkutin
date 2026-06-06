@@ -1,0 +1,50 @@
+dcb704e chore: lock d1d-c src changelist
+05d0e79 feat: name the recommended registration order in the build error
+edb30a9 docs: open d1d-c src changelist
+945c7ba chore: lock d1d-c doc changelist
+ae9c46b docs: state recommended-order (RCM-reordered topo) in build error
+fca511b docs: open d1d-c doc changelist
+5e08def docs: open d1d-c topic for recommended-order in build error
+0d34b18 docs: regenerate from templates after d1d-a/d1d-b
+d3f8a8d chore: close d1d-b design round 202606061730
+74205c7 chore: lock d1d-b src changelist
+c721783 feat: gate build on topological registration order
+57b4b86 docs: open d1d-b src changelist
+0c9a710 chore: lock d1d-b doc changelist
+999c4d1 docs: distinguish NonTopologicalRegistration from cycle path in build narrative
+c6927c3 docs: open d1d-b doc changelist
+836777a docs: open d1d-b topic for topo-registration build gate
+48dcc5a chore: close d1d-a design round 202606061446
+37049a6 chore: lock d1d-a src changelist
+c9a54a0 refactor: builder appends WorkUnit carrier so registration order is carrier order
+dd40de9 docs: d1d-a src CL — builder appends WU carrier in lockstep
+e9ab9a3 chore: lock d1d doc changelist
+d9e23c1 docs: builder appends WorkUnit carrier, build validates topo registration
+d72e824 docs: d1d doc CL — builder append + topo-registration precondition
+4883edf docs: open d1d round — builder appends, build validates topo registration
+5c5a13e research: record §7-6 RCM-recovery WORKS in roadmap r2 (auto-RCM achievable, relaxes op call b)
+3eff637 research: §7-6 RCM-row recovery via const-position-guarded walk (WORKS, zero blr, no wall)
+12c9cbc research: §7-4b facade per-morsel ABI hop sketch (host zero blr, facade 1 blr/morsel)
+7c11181 research: §7-4a facade accessset/containsall sketch (WORKS, no wall)
+dbf9e8d research: record op decisions (RCM-recovery prioritized, reg-constraint provisional, plugin-sketches-first) + §7-6
+1028b9e research: r2 gate-1 sketch coverage complete (§7-3 by-composition, §7-2 done); plugin sketches remain
+d2c538e research: multi-phase sub-carrier + barrier sketch (§7-2, zero blr, resolves phase segmentation)
+62533de research: r2 step-9 granularity finalisation (D1d/D1e splits, refined 5-sketch plan, §7-1 proven-by-composition)
+2871a4b research: r2 step-7 updates from canonical-mirror verdict (pivot confirmed, two PlanStage cases, Approach-2 spec-grounding)
+aa72feb research: engine roadmap r2 draft (dispatch-pivot + adaptability/plugin reconciliation)
+6a60dd7 research: full-engine overview + reconciliation, runtime-selectable-variants sketch (Approach 2 devirts)
+51cc57c research: type-level walk devirtualises under runtime morsel loop (zero blr)
+1e1eaa6 research: per-fiber-segmented dispatch sketch — FAILS (2 blr), rules out fn-ptr-array bridge
+ca7ede5 chore: close design round 202606051659 (dispatch-order keystone)
+6dbf228 chore: lock src changelist for dispatch-order keystone round 202606062330
+0cee9f2 feat: dispatch-order keystone machinery + delete superseded RunFiber walk
+b2f5a20 feat: carrier_order_dyn — GCE-safe dispatch order over Capacity::Array for the run rewire
+5288fd1 research: runtime-order-devirt sketch — runtime-computed order devirtualises (zero blr), GCE wall sidestepped
+56aa5be feat: BindingsFor::Markers — recover Stores AccessSet from Vals for the const dispatch order
+c8a1ae8 feat: impl CarrierMasks over WuCons value list (const ORDER from the scheduler's WuVals)
+d8b0a64 feat: const carrier mask fold + carrier_order (const dispatch ORDER from the bundle type)
+8897f2b feat: const topological dispatch order (dispatch::order) + restore fiber_codegen
+4ecc45d research: const-order-assoc sketch — engine wiring of const ORDER proven (const-trait fill + const fn topo over carrier type)
+c1ed1b2 research: const-driven carrier sketch — keystone dispatch mechanism proven (const topo + const-order local fn-ptr devirtualises)
+8140442 research: dual-agent consensus on dispatch keystone — flattener emits topo-ordered carrier, const-driven mechanism to sketch next
+137365a research: resolve dispatch-order keystone — compile-time carrier, flat single-core schedule-mega

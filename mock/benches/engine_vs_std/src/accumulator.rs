@@ -8,17 +8,10 @@
 //! accumulator dispatch path and the per-record append accounting from the
 //! fused-loop baseline.
 //!
-//! Per-frame reset accommodation: the accumulator's live-length is zeroed by
-//! the store drain at BUILD time (`scheduler::build`), not at the start of each
-//! `run`. The schedule-once-reuse model reuses one built scheduler across many
-//! frames, so without a per-frame reset the second frame starts at the
-//! capacity and every append saturates (drops). A per-frame accumulator reset
-//! is not yet implemented in `run` (a Gate-1 gap, noted in the PR and
-//! FINDINGS). To measure real per-frame append work rather than the saturated
-//! drop path, the timed closure resets the live-length cell to zero before each
-//! `run`. The reset is one `Cell` write, negligible against N appends, so it
-//! does not bias the measured append cost; it stands in for the reset a
-//! completed frame lifecycle will perform.
+//! `run` resets every accumulator's live-length to zero at frame start (the
+//! schedule-once-reuse frame lifecycle, task #665), so each timed iteration
+//! appends N real records into a fresh buffer rather than saturating on a full
+//! one. The bench does no hand reset.
 
 use core::hint::black_box;
 
@@ -116,14 +109,12 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
         unsafe { *in_base.add(i) = Inv(i as u32) };
     }
     let eng_runtime = bench(warmup, iters, || {
-        // Per-frame reset (see module doc): zero the append offset so each frame
-        // appends n real records rather than saturating on a full buffer.
-        sched.__bindings().__len_cell().set(USize(0));
+        // `run` resets the accumulator live-length at frame start (#665), so
+        // each iteration appends n real records into a fresh buffer.
         let r = sched.run();
         black_box(&r);
     });
-    // One more reset + run so the read-back sees a full, correct frame.
-    sched.__bindings().__len_cell().set(USize(0));
+    // One more run so the read-back sees a full, correct frame.
     let _ = sched.run();
     let len = sched.__bindings().__len_cell().get().0;
     assert_eq!(

@@ -1,0 +1,30 @@
+[package]
+name = "sketch-approach-e-schedule-mega"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# Unlike the resource-only run-fiber sketch (which vendored a minimal repro),
+# this sketch depends on the real engine crates. The crux it probes is the
+# inline-recursive column + accumulator walk resolving the real 7-param
+# EngineCtx GAT (including the lifetime-dependent accumulator bundle) at each
+# recursion depth. A vendored repro could drift from the real lifetime
+# structure that is the crux, so the real EngineCtx / ColProject / AccumProject
+# are used directly and a WORKS result transfers with no faithfulness gap.
+[dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

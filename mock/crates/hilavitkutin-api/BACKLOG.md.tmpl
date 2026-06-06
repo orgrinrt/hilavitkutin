@@ -86,14 +86,20 @@ trait on tuples. A future change could expose a builder-style API
 as a friction point. Today's tuple form matches the rest of the
 compile-time composition model (AccessSet, WorkUnit generics).
 
-## ColumnValue specialisation coverage
+## ColumnValue sub-byte width for bitpacking
 
-The blanket `min_specialization` default covers every `Copy + 'static`
-type via `size_of::<Self>() * 8`. arvo sub-byte types (UFixed<1, 0>,
-UFixed<2, 0>, etc.) need explicit specialisation to report their
-non-byte BIT_WIDTH. This crate ships with a handful of specialisations
-matching arvo's concrete aliases; additional arvo widths (if arvo
-ever adds them) need follow-up specialisations here.
+`ColumnValue` is spec-free: the trait-body default reports
+`size_of::<Self>() * 8` for every `Copy + 'static` type, and the
+blanket impl is empty. It carries no per-width specialisation (the full
+`specialization` feature is forbidden, and the overridden-`default const`
+shape it needed is what `min_specialization` rejects).
+
+`BIT_WIDTH` is unread today. When sub-byte bitpacking lands as a
+storage-layer feature, the packed width of an arvo sub-byte type
+(`UFixed<1, 0>`, `UFixed<2, 0>`, etc.) is read from arvo's own
+width-reporting traits at the point of consumption, not re-encoded as a
+`ColumnValue` specialisation here. So no per-arvo-width impls accumulate
+on this trait; the width lives where storage uses it.
 
 ## Non-engine post-review notes
 

@@ -1,15 +1,17 @@
 //! Column-storable value contract.
 //!
-//! `ColumnValue` certifies a type as storable in a column. The
-//! blanket impl uses full `specialization` (its `default const`
-//! overridden by concrete impls is the shape `min_specialization`
-//! rejects) so any `Copy + 'static` type auto-qualifies with
-//! `BIT_WIDTH = size_of * 8`. Sub-byte arvo types override to their
-//! true bit width.
+//! `ColumnValue` certifies a type as storable in a column. The shape is
+//! spec-free: a trait-body default const supplies `BIT_WIDTH = size_of * 8`,
+//! and an empty blanket impl lets any `Copy + 'static` type inherit it. No
+//! `specialization` (the full feature is forbidden) is involved.
+//!
+//! `BIT_WIDTH` is a future hook for sub-byte bitpacking; nothing reads it today
+//! (column reservation sizes by `size_of`). When bitpacking lands, an arvo
+//! sub-byte type's packed width is read from arvo's own width-reporting traits
+//! at the storage layer that consumes it, not re-encoded as a `ColumnValue`
+//! specialisation here. See `#631`.
 
-use arvo::strategy::Hot;
-use arvo::ufixed::UFixed;
-use arvo::{fbits, ibits, USize};
+use arvo::USize;
 
 /// Types that can be stored in a `Column<T>`.
 ///
@@ -21,30 +23,12 @@ use arvo::{fbits, ibits, USize};
     note = "ColumnValue requires `Copy + 'static`. Reduce or transform the value to a fixed-size `Copy` type. arvo's `UFixed`, `IFixed`, `Bits<N, S>`, `Bool`, and `USize` are valid; `String`, `Vec<T>`, and `Box<T>` are not."
 )]
 pub trait ColumnValue: Copy + 'static {
-    /// Number of storage bits the engine reserves per record.
-    const BIT_WIDTH: USize;
+    /// Number of storage bits the engine reserves per record. Trait-body
+    /// default `size_of::<Self>() * 8`; a future bitpacking layer sources
+    /// sub-byte widths from arvo width traits rather than overriding here.
+    const BIT_WIDTH: USize = USize(core::mem::size_of::<Self>() * 8);
 }
 
-// The `default const` overridden by the sub-byte impls below needs full
-// `specialization`; min_specialization rejects this shape. Making it spec-free,
-// to drop the forbidden gate, is tracked as task #631.
-impl<T: Copy + 'static> ColumnValue for T {
-    default const BIT_WIDTH: USize = USize(core::mem::size_of::<Self>() * 8);
-}
-
-// Sub-byte specialisations for arvo `UFixed<I, F, Hot>` at 1, 2,
-// and 4-bit widths. The `Hot` strategy is the one whose container
-// narrows to byte-aligned widths; these are the packed column
-// types the engine bitpacks.
-
-impl ColumnValue for UFixed<{ ibits(1) }, { fbits(0) }, Hot> {
-    const BIT_WIDTH: USize = USize(1);
-}
-
-impl ColumnValue for UFixed<{ ibits(2) }, { fbits(0) }, Hot> {
-    const BIT_WIDTH: USize = USize(2);
-}
-
-impl ColumnValue for UFixed<{ ibits(4) }, { fbits(0) }, Hot> {
-    const BIT_WIDTH: USize = USize(4);
-}
+// Empty blanket impl: any `Copy + 'static` type is a column value, inheriting
+// the trait-body `BIT_WIDTH` default. No `default const`, no `specialization`.
+impl<T: Copy + 'static> ColumnValue for T {}

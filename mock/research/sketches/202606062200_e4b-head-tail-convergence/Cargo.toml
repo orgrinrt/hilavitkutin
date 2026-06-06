@@ -1,0 +1,27 @@
+[package]
+name = "sketch-e4b-head-tail-convergence"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# E4b (roadmap 202606061100 section 4 + section 9): head+tail convergence
+# (domain 20 :1838-1844). Within a commutative fiber, two cores process records
+# from opposite ends and converge. The per-core compiled program bakes each
+# core's record range as the head half or the tail half (domain 17 item 2). This
+# sketch models the 2-core convergence with two std threads (research binary;
+# the engine pool itself is no_std) + atomic opposite-end cursors, and verifies
+# every record is processed exactly once. arvo for USize.
+[dependencies]
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

@@ -4,7 +4,7 @@
 //! `Capacity` TYPES projected from `TestDims`, so no `generic_const_exprs`
 //! gate is needed. `Fibers = Dim<2>` sets the K=2 split target.
 
-use arvo::USize;
+use arvo::{Bits, Hot, USize, Unsigned};
 use arvo_tensor::Dim;
 use hilavitkutin::plan::{steps, DependencyGraph, PlanDims};
 
@@ -25,6 +25,7 @@ impl PlanDims for TestDims {
     type UnitsPerFiber = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
     type ColumnsPerFiber = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
     type Cores = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type AdjRow = Bits<64, Hot, Unsigned>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: 64-wide row covers the small test units; Bits width literal; tracked: #649
 }
 
 // Unit indices, named once so the per-literal lint:allow lives in one place.

@@ -22,6 +22,11 @@
 // longer needed (no `Cap` const-generic params survive in the engine; the
 // remaining const generics are plain `usize` on the api `CoreProgram`).
 #![feature(generic_const_exprs)]
+// const_trait_impl (vetted WATCH, unstable-features.md): the dispatch-order
+// machinery (`plan::project::MaskProject`, `dispatch::order`) computes the
+// per-unit access masks and the topological dispatch order in a const context,
+// so the order is a compile-time fact (the devirtualisation precondition).
+#![feature(const_trait_impl)]
 #![recursion_limit = "512"]
 #![deny(unsafe_op_in_unsafe_fn)]
 
