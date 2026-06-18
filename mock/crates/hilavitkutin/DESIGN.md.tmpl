@@ -146,6 +146,21 @@ iterates the morsel. The WorkUnit's
 `Ctx<'frame>` stays a `HasX`-bounds declaration; only the engine names
 `EngineCtx<'frame, W::Read, W::Write>`.
 
+A consumer assigns its `Ctx<'frame>` GAT the engine-side computed alias
+`CtxFor<'frame, R, W, S = Always>` instead of hand-spelling the nine
+`EngineCtx` parameters. The six projected-bundle parameters are pure type
+functions of the access sets: four fold traits, `ResourceBundleOf`,
+`ColBundleOf`, `AccumBundleOf`, and `VirtBundleOf`, each fold the Read or
+Write set into its projected pointer chain by per-store-kind dispatch (the
+contributing kind conses its node, the other three pass the tail), the same
+disjoint kind dispatch the `Project` / `ColProject` / `AccumProject` /
+`VirtualProject` value projections use, with no specialization, so the
+computed type and the projected runtime value agree node for node. The meta
+pointer keys off the schedule through the shipped `MetaPtrFor`. `CtxFor` is
+additive: the api is unchanged (the `Ctx` GAT is unconstrained), the dispatch
+is unchanged (the `RunFiber` projection-equality bounds already normalize
+against the computed form), and hand-spelling `EngineCtx` stays valid.
+
 The sequential walk that constructs each unit's `EngineCtx` and runs
 `execute` over a fiber's WorkUnit sequence is `RunFiber`, a monomorphic
 trait over a value-carrying unit list: `WuCons` cells carry a unit

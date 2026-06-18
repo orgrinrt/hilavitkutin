@@ -35,6 +35,7 @@ pub use hilavitkutin_api::dispatch_codegen::StandardCodegen;
 pub use approach::DispatchApproach;
 pub use core_dispatch::CoreDispatch;
 pub use engine_ctx::EngineCtx;
+pub use engine_ctx::{AccumBundleOf, ColBundleOf, CtxFor, ResourceBundleOf, VirtBundleOf};
 pub use fiber_dispatch::FiberDispatch;
 pub use fiber_run::RunFiber;
 pub use phase_run::{RunPhase, RunPipeline};
