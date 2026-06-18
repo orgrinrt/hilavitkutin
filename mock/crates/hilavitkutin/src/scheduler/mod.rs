@@ -618,15 +618,13 @@ pub struct Scheduler<
     fiber_dispatch: <D::Fibers as Capacity>::Array<FiberDispatch>,
     /// How many of `fiber_dispatch`'s entries are live.
     fiber_dispatch_count: USize,
-    // The dirty bitmap width matches DefaultRunCfg::MAX_PLAN_AFFECTING_RESOURCES = USize(256).
-    // The intended lift is `[AtomicBool; Cfg::MAX_PLAN_AFFECTING_RESOURCES.0]` under
-    // `feature(generic_const_exprs)`, but current rustc rejects field access on generic
-    // constants ("overly complex generic constant: field access is not supported in
-    // generic constants"). The lift waits on rustc gaining that capability; until then
-    // the hardcoded 256 matches the documented default and lint:allow(no-bare-numeric)
-    // covers the const-generic-array-dimension root.
-    // lint:allow(no-bare-numeric) reason: const-generic array dimension at the L0 storage root; matches DefaultRunCfg::MAX_PLAN_AFFECTING_RESOURCES = USize(256); tracked: #345 (per-Cfg lift awaits rustc generic_const_exprs gaining field-access support)
-    plan_dirty: [AtomicBool; 256],
+    // The plan-affecting dirty bitset, sized by the `PlanDims::PlanAffecting`
+    // capacity type (the GCE-free lift of the former hardcoded `[AtomicBool;
+    // 256]`). `DefaultPlanDims::PlanAffecting = Dim<256>` keeps the default
+    // width; a consumer tunes it via its `PlanDims` impl. The capacity is a
+    // type, so no `cap_size` expression sits in array-length position and
+    // `generic_const_exprs` never runs over it.
+    plan_dirty: <D::PlanAffecting as Capacity>::Array<AtomicBool>,
     plan_cache: PlanCache,
     /// Per-unit predecessor masks (carrier-position space), copied off the
     /// plan at build. The runtime propagates the dirty seed forward over
@@ -2046,7 +2044,7 @@ impl<Cfg: RunCfg> Default for Scheduler<Cfg, WuNil, SvEmpty, NullColumnStorage> 
                 FiberDispatch::default(),
             ),
             fiber_dispatch_count: USize::ZERO,
-            plan_dirty: [const { AtomicBool::new(false) }; 256],
+            plan_dirty: <<DefaultPlanDims as PlanDims>::PlanAffecting as Capacity>::from_fn(|_| AtomicBool::new(false)),
             plan_cache: PlanCache::new(),
             predecessor_masks:
                 <<DefaultPlanDims as PlanDims>::Units as Capacity>::filled(
@@ -2236,7 +2234,7 @@ where
                     record_count,
                     fiber_dispatch,
                     fiber_dispatch_count,
-                    plan_dirty: [const { AtomicBool::new(false) }; 256],
+                    plan_dirty: <<DefaultPlanDims as PlanDims>::PlanAffecting as Capacity>::from_fn(|_| AtomicBool::new(false)),
                     plan_cache: PlanCache::new(),
                     predecessor_masks: plan.predecessor_masks,
                     read_masks: plan.read_masks,
@@ -2310,7 +2308,7 @@ where
                     record_count,
                     fiber_dispatch,
                     fiber_dispatch_count,
-                    plan_dirty: [const { AtomicBool::new(false) }; 256],
+                    plan_dirty: <<DefaultPlanDims as PlanDims>::PlanAffecting as Capacity>::from_fn(|_| AtomicBool::new(false)),
                     plan_cache: PlanCache::new(),
                     predecessor_masks: plan.predecessor_masks,
                     read_masks: plan.read_masks,

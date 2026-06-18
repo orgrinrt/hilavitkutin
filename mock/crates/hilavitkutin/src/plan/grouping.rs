@@ -354,22 +354,28 @@ const fn compute_trunks<CS: Capacity>(
 /// Fold the per-unit read/write masks and lifecycle ranks for a registered
 /// bundle into `CU`-capacity locals, returning `(reads, writes, ranks,
 /// unit_count)`.
-const fn masks_of<Wus, Stores, Witnesses, CU: Capacity, CS: Capacity>() -> (
-    [AccessMask<CS>; GATE2_MAX_UNITS],
-    [AccessMask<CS>; GATE2_MAX_UNITS],
-    [USize; GATE2_MAX_UNITS],
+const fn masks_of<Wus, Stores, Witnesses, CU: Capacity + [const] ConstCapacity, CS: Capacity>() -> (
+    <CU as ConstCapacity>::Array<AccessMask<CS>>,
+    <CU as ConstCapacity>::Array<AccessMask<CS>>,
+    <CU as ConstCapacity>::Array<USize>,
     USize,
 )
 where
     Wus: [const] BundleMasks<Stores, Witnesses, CS>,
 {
-    let mut reads = [AccessMask::empty(); GATE2_MAX_UNITS];
-    let mut writes = [AccessMask::empty(); GATE2_MAX_UNITS];
-    let mut ranks = [USize::ZERO; GATE2_MAX_UNITS];
+    // The grouping scratch is a `CU`-capacity GAT array, sliced into the
+    // slice-based `BundleMasks::fill` via the `ConstCapacity` slice bridge.
+    // `fill` is slice-based, so the per-cons-cell `MaskProject` recursion is
+    // capacity-blind (CU appears only here, never in the recursive
+    // obligation); the P0.1b probe confirmed no trait-solver overflow. Consumers
+    // index the returned arrays through `<CU as ConstCapacity>::get`.
+    let mut reads = <CU as ConstCapacity>::filled(AccessMask::<CS>::empty());
+    let mut writes = <CU as ConstCapacity>::filled(AccessMask::<CS>::empty());
+    let mut ranks = <CU as ConstCapacity>::filled(USize::ZERO);
     let n = <Wus as BundleMasks<Stores, Witnesses, CS>>::fill(
-        &mut reads,
-        &mut writes,
-        &mut ranks,
+        <CU as ConstCapacity>::slice_mut(&mut reads),
+        <CU as ConstCapacity>::slice_mut(&mut writes),
+        <CU as ConstCapacity>::slice_mut(&mut ranks),
         USize::ZERO,
     );
     (reads, writes, ranks, n)
@@ -383,7 +389,7 @@ where
 /// `(phases, unit_count)`. When all units are consumer-rank the renumber is the
 /// identity, so the waist phases are unchanged.
 const fn final_phases_of<Wus, Stores, Witnesses, CU: Capacity + [const] ConstCapacity, CS: Capacity, Adj>() -> (
-    [USize; GATE2_MAX_UNITS],
+    <CU as ConstCapacity>::Array<USize>,
     USize,
 )
 where
@@ -391,15 +397,25 @@ where
     Adj: [const] BitAccess + Identity,
 {
     let (reads, writes, ranks, n) = masks_of::<Wus, Stores, Witnesses, CU, CS>();
-    let mut waist = [USize::ZERO; GATE2_MAX_UNITS];
-    compute_phases_waist::<CU, CS, Adj>(&reads, &writes, n, &mut waist);
-    let mut phase = [USize::ZERO; GATE2_MAX_UNITS];
-    compute_rank_renumber(&ranks, &waist, n, &mut phase);
+    let mut waist = <CU as ConstCapacity>::filled(USize::ZERO);
+    compute_phases_waist::<CU, CS, Adj>(
+        <CU as ConstCapacity>::slice(&reads),
+        <CU as ConstCapacity>::slice(&writes),
+        n,
+        <CU as ConstCapacity>::slice_mut(&mut waist),
+    );
+    let mut phase = <CU as ConstCapacity>::filled(USize::ZERO);
+    compute_rank_renumber(
+        <CU as ConstCapacity>::slice(&ranks),
+        <CU as ConstCapacity>::slice(&waist),
+        n,
+        <CU as ConstCapacity>::slice_mut(&mut phase),
+    );
     (phase, n)
 }
 
 /// Number of units registered in the bundle.
-pub const fn group_n<Wus, Stores, Witnesses, CU: Capacity, CS: Capacity>() -> USize
+pub const fn group_n<Wus, Stores, Witnesses, CU: Capacity + [const] ConstCapacity, CS: Capacity>() -> USize
 where
     Wus: [const] BundleMasks<Stores, Witnesses, CS>,
 {
@@ -416,7 +432,7 @@ where
     Adj: [const] BitAccess + Identity,
 {
     let (phase, _n) = final_phases_of::<Wus, Stores, Witnesses, CU, CS, Adj>();
-    phase[pos.0] // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: array index; tracked: #121
+    <CU as ConstCapacity>::get(&phase, pos)
 }
 
 /// Trunk (within-phase column-conflict component id) of the unit at `pos`,
@@ -428,9 +444,15 @@ where
 {
     let (reads, writes, _ranks, n) = masks_of::<Wus, Stores, Witnesses, CU, CS>();
     let (phase, _n) = final_phases_of::<Wus, Stores, Witnesses, CU, CS, Adj>();
-    let mut trunk = [USize::ZERO; GATE2_MAX_UNITS];
-    compute_trunks::<CS>(&reads, &writes, &phase, n, &mut trunk);
-    trunk[pos.0] // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: array index; tracked: #121
+    let mut trunk = <CU as ConstCapacity>::filled(USize::ZERO);
+    compute_trunks::<CS>(
+        <CU as ConstCapacity>::slice(&reads),
+        <CU as ConstCapacity>::slice(&writes),
+        <CU as ConstCapacity>::slice(&phase),
+        n,
+        <CU as ConstCapacity>::slice_mut(&mut trunk),
+    );
+    <CU as ConstCapacity>::get(&trunk, pos)
 }
 
 /// Whether the unit at carrier position `Pos` belongs to phase `PHASE`, trunk
@@ -467,8 +489,9 @@ where
     let mut maxp = 0; // lint:allow(no-bare-numeric) reason: running max phase; tracked: #121
     let mut i = 0; // lint:allow(no-bare-numeric) reason: unit index; tracked: #121
     while i < count {
-        if phase[i].0 > maxp {
-            maxp = phase[i].0;
+        let pi = <CU as ConstCapacity>::get(&phase, USize(i)).0; // lint:allow(no-bare-numeric) reason: phase value read; tracked: #121
+        if pi > maxp {
+            maxp = pi;
         }
         i += 1; // lint:allow(no-bare-numeric) reason: index step; tracked: #121
     }
@@ -492,8 +515,8 @@ where
     let mut maxp1 = 0; // lint:allow(no-bare-numeric) reason: plan-band phase count (max plan phase + 1); tracked: #121
     let mut i = 0; // lint:allow(no-bare-numeric) reason: unit index; tracked: #121
     while i < count {
-        if ranks[i].0 == RANK_PLAN_STAGE.0 && phase[i].0 + 1 > maxp1 {
-            maxp1 = phase[i].0 + 1; // lint:allow(no-bare-numeric) reason: plan-band phase successor; tracked: #121
+        if <CU as ConstCapacity>::get(&ranks, USize(i)).0 == RANK_PLAN_STAGE.0 && <CU as ConstCapacity>::get(&phase, USize(i)).0 + 1 > maxp1 {
+            maxp1 = <CU as ConstCapacity>::get(&phase, USize(i)).0 + 1; // lint:allow(no-bare-numeric) reason: plan-band phase successor; tracked: #121
         }
         i += 1; // lint:allow(no-bare-numeric) reason: index step; tracked: #121
     }
@@ -517,8 +540,8 @@ where
     let mut maxp1 = 0; // lint:allow(no-bare-numeric) reason: leading-band phase count (max pre-consumer phase + 1); tracked: #121
     let mut i = 0; // lint:allow(no-bare-numeric) reason: unit index; tracked: #121
     while i < count {
-        if ranks[i].0 < RANK_CONSUMER.0 && phase[i].0 + 1 > maxp1 {
-            maxp1 = phase[i].0 + 1; // lint:allow(no-bare-numeric) reason: leading-band phase successor; tracked: #121
+        if <CU as ConstCapacity>::get(&ranks, USize(i)).0 < RANK_CONSUMER.0 && <CU as ConstCapacity>::get(&phase, USize(i)).0 + 1 > maxp1 {
+            maxp1 = <CU as ConstCapacity>::get(&phase, USize(i)).0 + 1; // lint:allow(no-bare-numeric) reason: leading-band phase successor; tracked: #121
         }
         i += 1; // lint:allow(no-bare-numeric) reason: index step; tracked: #121
     }
@@ -542,8 +565,8 @@ where
     let mut maxp1 = 0; // lint:allow(no-bare-numeric) reason: consumer-band end (max phase at-or-below consumer rank + 1); tracked: #121
     let mut i = 0; // lint:allow(no-bare-numeric) reason: unit index; tracked: #121
     while i < count {
-        if ranks[i].0 <= RANK_CONSUMER.0 && phase[i].0 + 1 > maxp1 {
-            maxp1 = phase[i].0 + 1; // lint:allow(no-bare-numeric) reason: consumer-band phase successor; tracked: #121
+        if <CU as ConstCapacity>::get(&ranks, USize(i)).0 <= RANK_CONSUMER.0 && <CU as ConstCapacity>::get(&phase, USize(i)).0 + 1 > maxp1 {
+            maxp1 = <CU as ConstCapacity>::get(&phase, USize(i)).0 + 1; // lint:allow(no-bare-numeric) reason: consumer-band phase successor; tracked: #121
         }
         i += 1; // lint:allow(no-bare-numeric) reason: index step; tracked: #121
     }
@@ -566,7 +589,7 @@ where
     let mut m = <Adj as Identity>::ZERO;
     let mut i = 0; // lint:allow(no-bare-numeric) reason: unit index; tracked: #121
     while i < count {
-        if ranks[i].0 == RANK_CONSUMER.0 {
+        if <CU as ConstCapacity>::get(&ranks, USize(i)).0 == RANK_CONSUMER.0 {
             m = m.with_bit_set(USize(i));
         }
         i += 1; // lint:allow(no-bare-numeric) reason: index step; tracked: #121
