@@ -1,0 +1,50 @@
+ab54033 chore: lock e4 slice-3 bridge src changelist
+797252c feat: bridge engine-owned meta state to onmeta work units
+646e415 docs: extend e4 slice-3 src cl with api test rehab claim
+a95c3cf chore: open src CL for E4 slice-3 engine-to-meta bridge
+2d880ab chore: lock doc changelist for E4 slice-3 bridge (with comparison)
+cfbf38a docs: add comparison-to-deprecated section to E4 slice-3 bridge doc CL
+9cc799e chore: deprecate src CL 202606090400 to re-open doc CL for the required comparison section
+2cba481 docs: open E4 slice-3 bridge src CL — EngineCtx meta-param + MetaBlock + dispatch threading
+f0e3135 chore: lock doc changelist for E4 slice-3 bridge
+739cf04 docs: describe the engine-to-meta bridge in engine DESIGN
+8684a34 docs: open E4 slice-3 bridge doc CL — engine-owned MetaBlock + OnMeta Ctx accessor
+d8c8fbe docs: sketch E4 slice-3 meta-bridge accessor — candidate 1 (engine-owned block + OnMeta-gated Ctx accessor) WORKS
+53d11f3 docs: slice-3 resolution — resource Copy wall proves the meta-state bridge is irreducible
+af09da4 chore: deprecate doc CL 202606090200 — re-approach slice-3 as the meta-state bridge
+50b385a docs: revert provided-WU paragraph — slice-3 needs the meta-state bridge, not a resource
+fc4f3e7 chore: deprecate src CL 202606090200 — thin slice-3a hit the resource Copy wall
+4df051f docs: open E4 slice-3a src CL — SchedulerMetrics + metrics WU + hook test
+7a4f150 chore: lock doc changelist for E4 slice-3a consumer meta hooks
+2813b2e docs: describe consumer meta hooks + SchedulerMetricsWu in engine DESIGN
+b104e40 docs: open E4 slice-3a doc CL — SchedulerMetrics + provided metrics WU + consumer hook
+741a454 docs: refine E4 slice-3 — kernel-write walls, provided MetricsWu escape (pass_count now, bridge later)
+59bdb67 docs: resolve E4 slice-3 — adaptation hook is OnMeta band-dispatched, Q1/Q2 dissolve
+ef6e402 docs: open E4 slice-3 topic — consumer meta hooks (real firing + MetaAccess + metrics)
+1ec8a63 docs: run_parallel meta-parity findings + sequencing (slice-3 first, then one parallel pass)
+c9e6cc2 chore: close design round 202606082100 E4 slice-2 self-hosting meta pipeline
+a7ff232 chore: lock src changelist for E4 slice-2 self-hosting meta pipeline
+a4ab458 docs: reconcile E4 slice-2 src CL claims to shipped mechanism
+aa5e2d2 feat: E4 slice-2 kernel — meta lifecycle band dispatch + plan-dirty skip
+907c518 feat: E4 slice-2 api meta surface + grouping rank-outer phase renumber
+2c0ccf6 docs: open E4 slice-2 src CL — meta module + rank-outer grouping + kernel
+75a3bb9 docs: sketch E4 slice-2 rank-outer phase renumber — five lifecycle bands, contiguous, waist-order preserved
+cf5986e chore: lock doc changelist for E4 slice-2 self-hosting meta pipeline
+7408264 docs: describe self-hosting meta pipeline (T5 §Q9) in engine DESIGN
+ff722f4 docs: open E4 slice-2 doc CL — self-hosting meta pipeline
+bab5019 docs: sketch E4 slice-2 lifecycle classify — OnMeta<V> escapes the same-On specialization wall
+de11a74 docs: resolve E4 slice-2 meta-kernel shape (Shape A, architect-confirmed)
+0a35169 docs: open E4 slice-2 topic — self-hosting meta pipeline
+30d1477 chore: close design round 202606081300 E4 slice-1 virtual firing
+07655a6 chore: lock src CL for E4 slice-1 virtual firing round
+b6b8e47 test: E4 slice-1 gate2_virtual_firing + generalise builder/plan bounds for On<V>
+b85b09f feat: E4 slice-1 virtual firing + On-gating mechanism (CHANGE 4-6)
+60dfadf chore: refine E4 src CL gate to proven GateWith/SchedW shape
+3a08159 docs: sketch E4 gate+firer trait shapes — GateWith + VirtualStampSelector + VirtualProject all infer
+085fd83 feat: add VirtualBinding fired-stamp + epoch accessors (E4 slice-1)
+a31c991 feat: add HasSchedule/ScheduleGate schedule-recovery traits (E4 slice-1 api)
+f2ac257 chore: open src CL for gate2 E4 slice-1 virtual firing + On-gating
+f0599a9 docs: sketch E4 blanket-Scheduled coherence — zero-churn Always, real walk bound
+434af52 docs: engine state map + roadmap r5; correct stale deviation ledger
+296e21f docs: sketch E4 schedule-gated walk — On<V> dispatch mechanism proven
+b3e7c5b chore: lock doc CL for gate2 E4 virtual flag system

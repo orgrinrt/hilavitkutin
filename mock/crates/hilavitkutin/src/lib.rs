@@ -58,6 +58,7 @@ compile_error!(
 pub mod adapt;
 pub mod dispatch;
 pub mod intrinsics;
+pub mod meta;
 pub mod platform;
 pub mod plan;
 pub mod resource;

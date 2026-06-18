@@ -182,6 +182,15 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
     for i in 0..n {
         unsafe { *in_base.add(i) = Inv(i as u32) };
     }
+    // Single-core dispatch: it remains the engine's better branching dispatch.
+    // The threaded run_parallel was measured here (R4d, finding
+    // 202606072130) and regressed branching (30.75x/4.12x/2.75x vs single-core
+    // 1.54x/2.21x/2.69x): the main-orchestrated per-phase barrier dominates small
+    // frames, and trunk parallelism does not remove the engine's per-element
+    // diamond-materialisation gap vs std's register fusion. branching parity is a
+    // later gate (compile-time per-fiber diamond fusion + worker-side barrier),
+    // not GATE-2 trunk parallelism, so the gate keeps the honest single-core
+    // baseline and stays RED-by-design.
     let eng_runtime = bench(warmup, iters, || {
         // Mark the root input dirty each iteration so the incremental skip
         // (domain 16) re-runs the whole carrier every frame: the bench measures
@@ -221,6 +230,8 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
         std_startup,
         eng_runtime,
         std_runtime,
+        eng_runtime_par: None,
+        std_runtime_par: None,
         checksum_ok: eng_hash == std_hash,
         eng_hash,
         std_hash,

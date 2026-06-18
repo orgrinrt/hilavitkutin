@@ -22,7 +22,7 @@ use core::marker::PhantomData;
 use arvo::{Identity, USize};
 
 use crate::access::Cons;
-use crate::builder_input::{BuilderInput, Dispatch, StoreDispatch};
+use crate::builder_input::{BuilderInput, Dispatch};
 
 mod sealed {
     pub trait Sealed {}
@@ -168,19 +168,19 @@ pub struct AnomalyFired;
 /// Meta-Virtual marker: plan-stage phase entry.
 ///
 /// Fired by the engine at the start of plan computation. WUs bound
-/// to `On<PlanStage>` observe DAG state before any execution.
+/// to `OnMeta<PlanStage>` observe DAG state before any execution.
 pub struct PlanStage;
 
 /// Meta-Virtual marker: per-core dispatch programs ready.
 ///
 /// Fired after `DispatchCodegen::build` completes. WUs bound to
-/// `On<ScheduleReady>` may inspect the assembled per-core programs.
+/// `OnMeta<ScheduleReady>` may inspect the assembled per-core programs.
 pub struct ScheduleReady;
 
 /// Meta-Virtual marker: pass start.
 ///
 /// Fired immediately before per-core dispatch begins each pass. WUs
-/// bound to `On<PassStart>` see the pre-execution snapshot.
+/// bound to `OnMeta<PassStart>` see the pre-execution snapshot.
 pub struct PassStart;
 
 /// Meta-Virtual marker: pass end (post all phases).

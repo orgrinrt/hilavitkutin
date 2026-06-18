@@ -1,0 +1,35 @@
+[package]
+name = "sketch-gate2-a-phase-trunk-fiber-nest"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# GATE-2 Sketch A (roadmap r3 202606070200, rechart 202606070100). The G2-0
+# question: does the full phase/trunk/fiber NEST devirtualise and run
+# output-equivalent to the flat whole-program walk, built as a type-level
+# PhaseCons<TrunkCons<FiberCons<WuCons>>>? 061400 proved the trunk level
+# (RunTrunk over FiberCons), 081600 proved phase sub-carriers + a waist barrier,
+# each in isolation; neither proved the full three-level nest, nor that its
+# 3-deep witness cons-list infers with no turbofish, nor that it wraps the
+# SHIPPED RunFiber. This sketch composes all three levels over the real engine
+# RunFiber and asserts (a) correct output equal to the topological computation
+# the flat walk produces, (b) zero blr in the isolated nested-dispatch symbol.
+# Single-core: the waist barrier is a degenerate one-arriver; trunks within a
+# phase run sequentially (at N cores they would be core-pinned, Sketch B).
+[dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

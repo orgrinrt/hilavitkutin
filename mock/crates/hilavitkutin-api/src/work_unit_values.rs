@@ -30,6 +30,66 @@ pub struct WuCons<W, Tail> {
     pub tail: Tail,
 }
 
+/// Terminator for a trunk's value-carrying fiber sequence.
+///
+/// A trunk is the dispatch level directly above a fiber in the canonical
+/// hierarchy (`trunk -> fiber`). The trunk carrier mirrors the fiber's unit
+/// carrier (`WuCons` / `WuNil`): `FiberNil` terminates, `FiberCons` carries
+/// one fiber plus the tail of remaining fibers. The engine walks it with
+/// `RunTrunk`, delegating each fiber to `RunFiber`.
+pub struct FiberNil;
+
+/// Cons cell: one fiber at this position plus the tail of remaining fibers.
+///
+/// `F` is a fiber's own value-carrying unit list (a `WuCons` / `WuNil`
+/// chain); `Rest` is the tail of remaining fibers (`FiberCons` / `FiberNil`).
+/// The cell convention follows `WuCons` (head plus tail), one level up.
+pub struct FiberCons<F, Rest> {
+    /// The fiber at this position: its own `WuCons` / `WuNil` unit list.
+    pub fiber: F,
+    /// The remaining fibers in the trunk.
+    pub rest: Rest,
+}
+
+/// Terminator for a phase's value-carrying trunk sequence.
+///
+/// A phase is the dispatch level above a trunk (`phase -> trunk`): a set of
+/// trunks. The phase carrier mirrors `FiberCons` / `FiberNil`: `TrunkNil`
+/// terminates, `TrunkCons` carries one trunk plus the tail. The engine walks
+/// it with `RunPhase`, delegating each trunk to `RunTrunk`.
+pub struct TrunkNil;
+
+/// Cons cell: one trunk at this position plus the tail of remaining trunks.
+///
+/// `T` is a trunk's own value-carrying fiber list (a `FiberCons` / `FiberNil`
+/// chain); `Rest` is the tail of remaining trunks.
+pub struct TrunkCons<T, Rest> {
+    /// The trunk at this position: its own `FiberCons` / `FiberNil` fiber list.
+    pub trunk: T,
+    /// The remaining trunks in the phase.
+    pub rest: Rest,
+}
+
+/// Terminator for the pipeline's value-carrying phase sequence.
+///
+/// The pipeline is the outermost dispatch level (`pipeline -> ... -> phase`):
+/// the sequence of phases separated by waists. `PhaseNil` terminates,
+/// `PhaseCons` carries one phase plus the tail. The engine walks it with
+/// `RunPipeline`, delegating each phase to `RunPhase` and arriving at a waist
+/// barrier between phases.
+pub struct PhaseNil;
+
+/// Cons cell: one phase at this position plus the tail of remaining phases.
+///
+/// `P` is a phase's own value-carrying trunk list (a `TrunkCons` / `TrunkNil`
+/// chain); `Rest` is the tail of remaining phases.
+pub struct PhaseCons<P, Rest> {
+    /// The phase at this position: its own `TrunkCons` / `TrunkNil` trunk list.
+    pub phase: P,
+    /// The remaining phases in the pipeline.
+    pub rest: Rest,
+}
+
 /// Append a unit value onto the end of the carrier.
 ///
 /// The builder routes each registered WorkUnit through this so the carrier

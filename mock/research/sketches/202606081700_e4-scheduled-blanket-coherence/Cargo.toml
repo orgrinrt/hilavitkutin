@@ -1,0 +1,23 @@
+[package]
+name = "sketch-e4-scheduled-blanket-coherence"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# GATE-2 E4 slice 1 (round 202606081200). The 202606081400 sketch proved the
+# Scheduled { type Sched: ScheduleGate } companion-trait gate dispatch with
+# EXPLICIT per-WU Scheduled impls. This sketch tests the one remaining api-
+# integration question before the src CL: can a BLANKET
+# `impl<W: WorkUnit<Always>> Scheduled for W { type Sched = Always; }` (so the
+# hundreds of existing Always WUs + tests need ZERO new boilerplate) coexist
+# COHERENTLY with an EXPLICIT `impl Scheduled for an On<V> WU { type Sched =
+# On<V>; }`, given that an On<V> WU impls `WorkUnit<On<V>>` and NOT
+# `WorkUnit<Always>`? And does the carrier walk still recover each element's
+# Sched unambiguously under the mix? Models the real `WorkUnit<Schedule =
+# Always>` shape (default param, per-Schedule associated types) faithfully.

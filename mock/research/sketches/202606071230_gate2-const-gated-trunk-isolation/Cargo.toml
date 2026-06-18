@@ -1,0 +1,40 @@
+[package]
+name = "sketch-gate2-const-gated-trunk-isolation"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# GATE-2 carrier-mechanism research (op mandate 2026-06-07, memory
+# gate2-carrier-mechanism-mandate; fork doc 202606071200). The type-level nest
+# derivation in build() walls (forbidden specialization; the grouping is global
+# graph connectivity, not a local type fold). op chose Option 1 (codegen
+# flattener) but wants the mechanism to stay in rustc/Rust if possible. This
+# sketch tests the most promising in-Rust mechanism: express the partition as
+# CONST DATA (a grouping array, in the real engine computed by a const fn over
+# collected access masks) and gate each carrier position by
+# `const { GROUPING[POS] == THIS_TRUNK }`. Because the gate is const, DCE should
+# remove every non-member position's dispatch, so each per-TRUNK monomorphisation
+# contains ONLY its own WUs' machine code (true isolation, not a runtime branch).
+# This realises op's "express partitions in the types without the typestate, but
+# enough that the codegen detects them" hint via const-eval + DCE, in pure Rust,
+# no proc-macro / build.rs / LLVM pass. The sketch hardcodes the GROUPING array
+# (the const-fn grouping computation is a separate, feasible step); it tests the
+# load-bearing unknown: does the const-gated flat walk DCE to member-only per
+# trunk, devirt-clean, output-equivalent to the flat walk?
+[dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

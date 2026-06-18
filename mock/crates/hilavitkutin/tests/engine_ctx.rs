@@ -96,8 +96,9 @@ fn context_resolves_resource() {
         .unwrap_or_else(|_| panic!("build should succeed"));
     let bindings = scheduler.__bindings();
 
+    let meta = hilavitkutin::meta::MetaBlock::default();
     let ctx: EngineCtx<'_, ReadU32, Empty, _, _, _> =
-        EngineCtx::project(bindings, &ColPtrNil, MorselRange::new(USize::ZERO, USize::ZERO));
+        EngineCtx::project(bindings, &ColPtrNil, &meta, USize::ZERO, MorselRange::new(USize::ZERO, USize::ZERO));
 
     // The binding annotation pins `T = u32`; the index `I` infers from the
     // concrete bundle, so no turbofish is needed.
@@ -117,8 +118,9 @@ fn context_column_read_after_write() {
 
     // The column is both read and written, so it appears in `R` and `W`.
     // No resources are declared, so the resource source is empty.
+    let meta = hilavitkutin::meta::MetaBlock::default();
     let ctx: EngineCtx<'_, ColU32, ColU32, _, _, _> =
-        EngineCtx::project(&PtrNil, &col_source, MorselRange::new(USize::ZERO, USize(8)));
+        EngineCtx::project(&PtrNil, &col_source, &meta, USize::ZERO, MorselRange::new(USize::ZERO, USize(8)));
 
     // SAFETY: the morsel covers records 0..8; the buffer is 8 long.
     unsafe {
@@ -150,8 +152,9 @@ fn context_multi_column_distinct_read_write() {
     let col_source =
         ColPtrCons::__new(pa, ColPtrCons::__new(pb, ColPtrCons::__new(pc, ColPtrNil)));
 
+    let meta = hilavitkutin::meta::MetaBlock::default();
     let ctx: EngineCtx<'_, ReadU8U16, WriteU16U32, _, _, _> =
-        EngineCtx::project(&PtrNil, &col_source, MorselRange::new(USize::ZERO, USize(8)));
+        EngineCtx::project(&PtrNil, &col_source, &meta, USize::ZERO, MorselRange::new(USize::ZERO, USize(8)));
 
     // SAFETY: the morsel covers records 0..8; each buffer is 8 long.
     unsafe {
@@ -171,8 +174,9 @@ fn context_multi_column_distinct_read_write() {
 
 #[test]
 fn context_each_covers_morsel() {
+    let meta = hilavitkutin::meta::MetaBlock::default();
     let ctx: EngineCtx<'_, Empty, Empty, _, _, _> =
-        EngineCtx::project(&PtrNil, &ColPtrNil, MorselRange::new(USize(5), USize(3)));
+        EngineCtx::project(&PtrNil, &ColPtrNil, &meta, USize::ZERO, MorselRange::new(USize(5), USize(3)));
 
     let mut visited: [usize; 3] = [0; 3];
     let mut n = 0usize;
@@ -192,8 +196,9 @@ fn context_each_covers_morsel() {
 
 #[test]
 fn context_batch_full_range() {
+    let meta = hilavitkutin::meta::MetaBlock::default();
     let ctx: EngineCtx<'_, Empty, Empty, _, _, _> =
-        EngineCtx::project(&PtrNil, &ColPtrNil, MorselRange::new(USize(5), USize(3)));
+        EngineCtx::project(&PtrNil, &ColPtrNil, &meta, USize::ZERO, MorselRange::new(USize(5), USize(3)));
 
     let seen = Cell::new((0usize, 0usize));
     BatchApi::run(ctx.batch(), |start, end| {
@@ -247,8 +252,9 @@ fn context_drives_wu_execute() {
         .unwrap_or_else(|_| panic!("build should succeed"));
     let bindings = scheduler.__bindings();
 
+    let meta = hilavitkutin::meta::MetaBlock::default();
     let ctx: <ReadResourceWu as WorkUnit>::Ctx<'_> =
-        EngineCtx::project(bindings, &ColPtrNil, MorselRange::new(USize::ZERO, USize::ZERO));
+        EngineCtx::project(bindings, &ColPtrNil, &meta, USize::ZERO, MorselRange::new(USize::ZERO, USize::ZERO));
 
     let wu = ReadResourceWu;
     wu.execute(&ctx);

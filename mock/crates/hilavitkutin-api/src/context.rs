@@ -81,6 +81,15 @@ pub trait ResolveAccumAppend<T: ColumnValue, I> {
     fn resolve_len(&self) -> USize;
 }
 
+/// Resolve the fire for virtual `V` through the projected write-virtual bundle
+/// at index witness `I`. The virtual-fire analogue of `ResolveAccumAppend`: the
+/// engine impl resolves the `V` stamp cell via a type-keyed selector over the
+/// bundle (so `I` infers, dodging E0207) and stamps it with the current epoch.
+pub trait ResolveVirtualFire<V, I> {
+    /// Stamp the projected `Virtual<V>` cell with the current pass epoch.
+    fn resolve_fire(&self);
+}
+
 /// Read access to columns declared in `R`.
 ///
 /// The `read` method's where-clause enforces that the column type
@@ -177,10 +186,15 @@ pub trait ResourceProviderApi<R: AccessSet> {
     note = "Implemented by the scheduler-generated context. If your WorkUnit Ctx hits this bound, ensure the provider tuple satisfies `HasVirtualFirer<W>` for the write set the WU declares."
 )]
 pub trait VirtualFirerApi<W: AccessSet> {
-    /// Fire the virtual `V`. Consumers bound to `On<V>` run next pass.
-    fn fire<V: 'static>(&self)
+    /// Fire the virtual `V`. Consumers bound to `On<V>` run this pass (once the
+    /// firing producer is ordered before them) or next pass.
+    ///
+    /// `I` is the index witness for `V` in the projected write-virtual bundle,
+    /// inferred at the call site (`ctx.fire::<V>()` needs no second turbofish).
+    fn fire<V: 'static, I>(&self)
     where
-        W: Contains<Virtual<V>>;
+        W: Contains<Virtual<V>>,
+        Self: ResolveVirtualFire<V, I>;
 }
 
 /// Per-element loop over the WU's morsel slice.

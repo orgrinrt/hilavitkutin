@@ -23,7 +23,7 @@ use arvo::{Bool, USize};
 use arvo_tensor::{cap_size, Capacity};
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::store::{Accum, Column, Resource, StagedResource, Virtual};
-use hilavitkutin_api::WorkUnit;
+use hilavitkutin_api::{HasSchedule, WorkUnit};
 
 use crate::dispatch::engine_ctx::{Here, There};
 
@@ -132,24 +132,25 @@ impl<Stores, CU: Capacity, CS: Capacity> BundleProject<Stores, Empty, CU, CS> fo
     fn project_bundle(_inputs: &mut PlanInputs<CU, CS>, _idx: USize) {}
 }
 
+// E4 slice 1: schedule-recovered so an `On<V>` unit projects its masks too.
 impl<Stores, W, T, RI, WI, WT, CU: Capacity, CS: Capacity>
     BundleProject<Stores, Cons<(RI, WI), WT>, CU, CS> for Cons<W, T>
 where
-    W: WorkUnit,
-    W::Read: MaskProject<Stores, RI, CS>,
-    W::Write: MaskProject<Stores, WI, CS>,
+    W: HasSchedule + WorkUnit<<W as HasSchedule>::Sched>,
+    <W as WorkUnit<<W as HasSchedule>::Sched>>::Read: MaskProject<Stores, RI, CS>,
+    <W as WorkUnit<<W as HasSchedule>::Sched>>::Write: MaskProject<Stores, WI, CS>,
     T: BundleProject<Stores, WT, CU, CS>,
 {
     fn project_bundle(inputs: &mut PlanInputs<CU, CS>, idx: USize) {
         let i = idx.0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal array index; tracked: #121
-        let reads = <W::Read as MaskProject<Stores, RI, CS>>::project_mask(AccessMask::empty());
-        let writes = <W::Write as MaskProject<Stores, WI, CS>>::project_mask(AccessMask::empty());
+        let reads = <<W as WorkUnit<<W as HasSchedule>::Sched>>::Read as MaskProject<Stores, RI, CS>>::project_mask(AccessMask::empty());
+        let writes = <<W as WorkUnit<<W as HasSchedule>::Sched>>::Write as MaskProject<Stores, WI, CS>>::project_mask(AccessMask::empty());
         let mut access = reads;
         access.union_with(&writes);
         inputs.reads.as_mut()[i] = reads;
         inputs.writes.as_mut()[i] = writes;
         inputs.access.as_mut()[i] = access;
-        inputs.commutative.as_mut()[i] = W::COMMUTATIVE;
+        inputs.commutative.as_mut()[i] = <W as WorkUnit<<W as HasSchedule>::Sched>>::COMMUTATIVE;
         // lint:allow(no-bare-numeric) reason: unit-count successor; tracked: #121
         let next = USize(i + 1);
         inputs.unit_count = next;

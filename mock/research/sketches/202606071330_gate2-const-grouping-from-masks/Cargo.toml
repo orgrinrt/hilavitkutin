@@ -1,0 +1,39 @@
+[package]
+name = "sketch-gate2-const-grouping-from-masks"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# GATE-2 carrier-mechanism research, second sketch (op mandate 2026-06-07; memory
+# gate2-carrier-mechanism-mandate; fork doc 202606071200). The first sketch
+# (202606071230) proved the keystone: a flat-carrier walk gated by
+# `const { trunk_of(POS) == TRUNK }` DCEs each per-TRUNK mono to member-only code
+# (isolated per-trunk programs, zero blr), in pure Rust. It hardcoded `trunk_of`.
+# This sketch proves the REMAINING half: compute the grouping at COMPILE TIME from
+# the registered WUs' access sets, so `trunk_of` is real. It tests:
+#   (U1) AccessSet TYPE -> const bitmask: a `ConstMask` trait folds a WU's
+#        Read/Write cons-list into a const u64 over a global column numbering.
+#   (U2) const fn graph grouping: dependency edges (read-after-write) -> phase
+#        depth -> within-phase column-disjoint trunks, all in a const fn, producing
+#        a const grouping array.
+#   (U3) the computed const grouping drives the same const-gated walk and still
+#        DCEs to member-only per-trunk monos.
+# If all three hold, the in-Rust mechanism is fully de-risked and the roadmap (r4)
+# + engine build can proceed.
+[dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

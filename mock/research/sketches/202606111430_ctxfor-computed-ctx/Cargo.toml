@@ -1,0 +1,29 @@
+[package]
+name = "sketch-ctxfor-computed-ctx"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# CtxFor feasibility (consumer-ergonomics question over the GATE-2 branch).
+# The nine-parameter `EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum,
+# WVirt, MP>` alias that every consumer WU hand-spells today (see
+# tests/gate2_meta_metrics.rs ConsumerCtx / EndCtx) is, by the projection
+# traits' own definitions, fully determined by (R, W, Sched): each derived
+# bundle parameter is a pure type-level fold over the access set's store-kind
+# heads, and MP is `MetaPtrFor` applied to the schedule. This sketch probes
+# whether an engine-side type function (`CtxFor<'frame, R, W, S>`) can compute
+# the whole type, and whether the dispatch-side `RunFiber` projection-equality
+# bound still unifies with the computed form through a real `Scheduler::run`.
+# Real engine crates, arvo dev HEAD.
+[dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }

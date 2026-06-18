@@ -1,0 +1,50 @@
+0ad0e01 chore: lock src changelist for gate2 head+tail convergence
+f78e711 feat: head+tail convergence for single-trunk phases
+073c7ab docs: src changelist for gate2 head+tail convergence
+efea62d chore: lock doc changelist for gate2 head+tail convergence
+214bebb docs: doc changelist for gate2 head+tail convergence
+cb8d685 docs: topic for gate2 head+tail convergence (deviation 8 slice 1)
+0362196 chore: close design round gate2 worker-side waist barrier
+ca82f27 chore: lock src changelist for gate2 worker-side waist barrier
+7a26a5f feat: worker-side sense-reversing waist barrier in run_parallel
+2bdaa6c docs: src changelist for gate2 worker-side waist barrier
+c969ce5 chore: lock doc changelist for gate2 worker-side waist barrier
+71fcc1b docs: doc changelist for gate2 worker-side waist barrier
+d319aa1 docs: topic for gate2 worker-side waist barrier
+ac1b305 bench: expand engine_vs_std with win/loss spectrum, parallel arm, per-workload gates
+9f73b1c research: correct branching-gate note per op (waist vs fiber-break, red is fine)
+141f773 research: branching gate vs canonical fiber-boundary materialisation
+ed0b5d0 research: r4d fork resolved — diamond fusion is the branching gap (probe: 2.94x to 1.33x fused)
+ca3169b research: r4d finding — gate2 trunk parallelism does not reach branching parity
+911cb27 research: gate2 canonical-deviation ledger
+5b08a83 chore: close design round gate2-r4c-threaded-run-parallel
+9b60a55 chore: lock src changelist for gate2-r4c-threaded-run-parallel
+ce31671 feat: threaded run_parallel persistent pool (gate2 r4c b2)
+ac92d1c docs: gate2-r4c-threaded-run-parallel src changelist
+f33028b chore: lock doc changelist for gate2-r4c-threaded-run-parallel
+7cc8ce6 docs: gate2-r4c-threaded-run-parallel doc changelist (no tmpl edits)
+1968dd5 docs: gate2-r4c-threaded-run-parallel topic
+09b3848 chore: close design round gate2-r4c-run-core-phase
+35aa288 chore: lock src changelist for gate2-r4c-run-core-phase
+01d3166 refactor: extract run_core_phase per-(core,phase) dispatch primitive (gate2 r4c b1)
+bafe39b docs: gate2-r4c-run-core-phase src changelist
+b90da34 chore: lock doc changelist for gate2-r4c-run-core-phase
+e61a182 docs: gate2-r4c-run-core-phase doc changelist (no tmpl edits)
+629a766 docs: gate2-r4c-run-core-phase topic
+92592a3 research: gate2 r4c pin-scheduler integration sketch (WORKS)
+7f044c1 chore: close design round gate2-r4c-frame-protocol
+6eb28ed chore: lock src changelist for gate2-r4c-frame-protocol
+bc32526 feat: per-frame wake-word protocol (gate2 r4c round a)
+ef56fa2 docs: gate2-r4c-frame-protocol src changelist
+43dd667 chore: lock doc changelist for gate2-r4c-frame-protocol
+0646678 docs: gate2-r4c-frame-protocol doc changelist (no tmpl edits)
+5f0e87e docs: gate2-r4c-frame-protocol topic
+8df9d3b chore: close design round gate2-r4c-osthreadpool-spawn
+429a642 chore: lock src changelist for gate2-r4c-osthreadpool-spawn
+294fc95 feat: real os threadpool spawn + worker_count (gate2 r4c slice 1)
+c902ca5 docs: gate2-r4c-osthreadpool-spawn src changelist
+e939945 chore: lock doc changelist for gate2-r4c-osthreadpool-spawn
+4a9fe70 docs: gate2-r4c-osthreadpool-spawn doc changelist (no tmpl edits)
+5b524cb docs: gate2-r4c-osthreadpool-spawn topic
+4dea287 research: gate2 r4c threadpoolapi contract-mapping sketch (WORKS)
+3fd9bd0 research: gate2 r4c persistent-pthread-pool de-risk sketch (real parking, WORKS)

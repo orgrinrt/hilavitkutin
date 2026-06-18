@@ -6,6 +6,8 @@
 //! sizing via sysconf land in follow-up sub-round 5a4.
 
 use core::ffi::c_void;
+use core::marker::PhantomData;
+use core::mem::{align_of, size_of, transmute_copy, ManuallyDrop};
 use core::ptr;
 
 use arvo::{Bool, USize};
@@ -135,6 +137,37 @@ extern "C" fn trampoline(arg: *mut c_void) -> *mut c_void {
     ptr::null_mut()
 }
 
+/// Monomorphic per-F pthread entry-point for the generic `spawn`. The `arg`
+/// pointer value carries the pointer-sized `F` by value (its bytes were copied
+/// into the slot by `spawn`). Reconstruct `F` and call it once.
+/// Compile-time guard that `F` fits the pthread argument slot, so `spawn`'s
+/// `transmute_copy` into a `*mut c_void` reads no out-of-bounds bytes. Bad `F` is
+/// a monomorphisation-time error via the associated const.
+struct PtrSizedClosure<F>(PhantomData<F>);
+
+impl<F> PtrSizedClosure<F> {
+    const CHECK: () = {
+        assert!(
+            size_of::<F>() <= size_of::<*mut c_void>(),
+            "OsThreadPool::spawn: closure must be pointer-sized (no alloc to box a fatter closure)"
+        );
+        assert!(
+            align_of::<F>() <= align_of::<*mut c_void>(),
+            "OsThreadPool::spawn: closure over-aligned for the pthread argument slot"
+        );
+    };
+}
+
+extern "C" fn tramp<F: FnOnce()>(arg: *mut c_void) -> *mut c_void {
+    // SAFETY: `arg`'s bit pattern is exactly the bytes of `F` (spawn checked
+    // size_of::<F>() <= size_of::<*mut c_void>()). `transmute_copy` reads
+    // size_of::<F>() bytes from `&arg`, reconstructing the closure by value; the
+    // original was held in `ManuallyDrop` so this is the sole owning copy.
+    let f: F = unsafe { transmute_copy::<*mut c_void, F>(&arg) };
+    f();
+    ptr::null_mut()
+}
+
 impl Default for OsThreadPool {
     #[inline]
     fn default() -> Self {
@@ -143,23 +176,55 @@ impl Default for OsThreadPool {
 }
 
 impl ThreadPoolApi for OsThreadPool {
-    fn spawn<F>(&self, _f: F)
+    fn spawn<F>(&self, f: F)
     where
         F: FnOnce() + Send + 'static,
     {
-        // Generic-closure dispatch without `dyn` requires either
-        // per-consumer monomorphisation (pool carries a type
-        // parameter) or a work-queue whose slots own F. Both land
-        // in sub-round 5a4. Until then, the generic entry point
-        // is a no-op to keep the trait satisfied.
-        //
-        // Consumers that need the skeleton right now call
-        // `OsThreadPool::spawn_fn` directly with a `fn()`.
-        let _ = _f;
+        // No-alloc generic-closure handoff: the closure is copied by value into
+        // the pthread `*mut c_void` argument, so F must be pointer-sized. The
+        // engine's worker closure captures exactly one pointer (a Send-wrapped
+        // `*const WorkerCtx`), so it fits. A fatter closure is a compile error
+        // here, never a heap allocation (no `Box`, no alloc on the engine path).
+        // Force the compile-time size/align check (an inline `const {}` block
+        // referencing a generic is rejected under `generic_const_exprs`, so the
+        // assert lives in an associated const evaluated here at monomorphisation).
+        let () = PtrSizedClosure::<F>::CHECK;
+        // Hold F so its destructor does not run at the call site; the trampoline
+        // (on a successful spawn) owns the copy and drops it after calling.
+        let held = ManuallyDrop::new(f);
+        // SAFETY: F is pointer-sized (checked above); copy its bytes into the
+        // argument value. `held` keeps a bit-identical copy that is only dropped
+        // on the spawn-failure path below (so F is dropped exactly once).
+        let arg: *mut c_void = unsafe { transmute_copy::<F, *mut c_void>(&held) };
+
+        // SAFETY: the attr lifecycle is local; the thread is detached, so no join
+        // handle is retained. The persistent pool's shutdown ordering comes from a
+        // Scheduler-owned worker-exit-counter barrier, not from joining here.
+        let rc = unsafe {
+            let mut attr: libc::pthread_attr_t = core::mem::zeroed();
+            libc::pthread_attr_init(&mut attr);
+            libc::pthread_attr_setdetachstate(&mut attr, libc::PTHREAD_CREATE_DETACHED);
+            let mut tid: libc::pthread_t = core::mem::zeroed();
+            let rc = libc::pthread_create(&mut tid, &attr, tramp::<F>, arg);
+            libc::pthread_attr_destroy(&mut attr);
+            rc
+        };
+
+        if rc != 0 {
+            // Spawn failed (the trampoline will never run). Reclaim F so its
+            // destructor runs exactly once. The contract is best-effort: a failed
+            // spawn is silent, per the `ThreadPoolApi` doc.
+            // SAFETY: no thread received the copy, so dropping `held`'s F is the
+            // sole owner drop.
+            let _ = ManuallyDrop::into_inner(held);
+        }
     }
 
     fn worker_count(&self) -> USize {
-        USize(1)
+        // SAFETY: `sysconf` is a pure query; `_SC_NPROCESSORS_ONLN` is a stable
+        // selector returning the count of online processors (or -1 on error).
+        let n = unsafe { libc::sysconf(libc::_SC_NPROCESSORS_ONLN) };
+        USize(if n < 1 { 1 } else { n as usize }) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: sysconf returns c_long; floor at one core; tracked: #121
     }
 }
 

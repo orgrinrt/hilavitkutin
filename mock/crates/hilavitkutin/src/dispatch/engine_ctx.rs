@@ -31,17 +31,20 @@ use core::cell::Cell;
 use core::marker::PhantomData;
 
 use arvo::strategy::Identity;
-use arvo::USize;
+use arvo::{Bool, USize};
+use hilavitkutin_api::{Always, On, OnMeta};
 use hilavitkutin_api::access::{AccessSet, Cons, Contains, Empty};
 use hilavitkutin_api::column_value::ColumnValue;
 use hilavitkutin_api::context::{
     AccumWriterApi, BatchApi, ColumnReaderApi, ColumnWriterApi, EachApi, ReduceApi,
-    ResolveAccumAppend, ResolveColumnRead, ResolveColumnWrite, ResolveResource, ResourceProviderApi,
-    VirtualFirerApi,
+    ResolveAccumAppend, ResolveColumnRead, ResolveColumnWrite, ResolveResource, ResolveVirtualFire,
+    ResourceProviderApi, VirtualFirerApi,
 };
+use hilavitkutin_api::meta::MetaAccess;
 use hilavitkutin_api::store::{Accum, Column, Resource, Virtual};
 
 use crate::dispatch::morsel::MorselRange;
+use crate::meta::{MetaBlock, MetaField};
 use crate::resource::bindings::{AccumBinding, ColumnBinding, ResourceBinding, VirtualBinding};
 use crate::resource::provenance::{ColumnPtr, ResourcePtr};
 
@@ -152,6 +155,246 @@ pub struct AccPtrNil;
 pub struct AccPtrCons<'frame, H, Tail> {
     pub(crate) head: AccumColPtr<'frame, H>,
     pub(crate) tail: Tail,
+}
+
+// ---------------------------------------------------------------------
+// E4 slice 1: virtual firing.
+//
+// `VirtNil` / `VirtCons` carry the projected `&'frame Cell<USize>` stamp ref for
+// each `Virtual<T>` member of the WU's write set `W`, the firing analogue of the
+// accumulator bundle (`AccPtrCons`). `fire<V>` sets the resolved cell to the
+// current pass epoch; the `On<V>` consumer's trunk-gate reads the SAME cell from
+// the full bindings and gate-opens when `stamp == epoch`. The two reach the cell
+// by identity (both resolve through the same `VirtualBinding<T>` nodes), so no
+// global virtual index is needed. Proven by sketch
+// `202606081800_e4-gate-firer-trait-shapes`.
+// ---------------------------------------------------------------------
+
+/// Empty write-virtual bundle (tail leaf).
+pub struct VirtNil;
+
+/// One projected stamp-cell ref `head` for `Virtual<H>`, followed by `tail`.
+pub struct VirtCons<'frame, H, Tail> {
+    pub(crate) head: &'frame Cell<USize>,
+    pub(crate) tail: Tail,
+    pub(crate) _h: PhantomData<H>,
+}
+
+/// Type-keyed lookup yielding the `&Cell<USize>` stamp for `Virtual<V>` in the
+/// bindings list. The shared keying primitive: both the firer (via the projected
+/// `VirtCons` bundle) and the trunk-gate (via the full bindings) resolve the same
+/// cell through this. Mirrors `AccumSelector<T, Index>`: `Here` matches a
+/// `VirtualBinding<V, _>` head, `There<I>` recurses any node kind, index infers.
+pub trait VirtualStampSelector<V, Index> {
+    /// The stamp cell for `Virtual<V>`, borrowing `self`.
+    fn vstamp(&self) -> &Cell<USize>;
+}
+
+impl<V, Tail> VirtualStampSelector<V, Here> for VirtualBinding<V, Tail> {
+    #[inline(always)]
+    fn vstamp(&self) -> &Cell<USize> {
+        self.__stamp_cell()
+    }
+}
+
+impl<V, U, Tail, I> VirtualStampSelector<V, There<I>> for VirtualBinding<U, Tail>
+where
+    Tail: VirtualStampSelector<V, I>,
+{
+    #[inline(always)]
+    fn vstamp(&self) -> &Cell<USize> {
+        self.__tail().vstamp()
+    }
+}
+
+impl<V, U, Tail, I> VirtualStampSelector<V, There<I>> for ResourceBinding<U, Tail>
+where
+    Tail: VirtualStampSelector<V, I>,
+{
+    #[inline(always)]
+    fn vstamp(&self) -> &Cell<USize> {
+        self.__tail().vstamp()
+    }
+}
+
+impl<V, U, Tail, I> VirtualStampSelector<V, There<I>> for ColumnBinding<U, Tail>
+where
+    Tail: VirtualStampSelector<V, I>,
+{
+    #[inline(always)]
+    fn vstamp(&self) -> &Cell<USize> {
+        self.__tail().vstamp()
+    }
+}
+
+impl<V, U, Tail, I> VirtualStampSelector<V, There<I>> for AccumBinding<U, Tail>
+where
+    Tail: VirtualStampSelector<V, I>,
+{
+    #[inline(always)]
+    fn vstamp(&self) -> &Cell<USize> {
+        self.__tail().vstamp()
+    }
+}
+
+/// Per-member schedule gate (E4 slice 1): does this unit's schedule open this
+/// pass, given the full bindings and the current epoch?
+///
+/// Dispatched on the unit's `<W as HasSchedule>::Sched`. `Always` pins `GI =
+/// Here` and returns `true` (const-foldable, so the gate DCE's away for every
+/// existing Always WU, preserving the devirt / ASM properties). `On<V>` resolves
+/// the `Virtual<V>` stamp cell from the FULL carrier bindings `A` via the shared
+/// `VirtualStampSelector` (the same cell the firer stamps through its projected
+/// bundle, so a fire is observed here) and opens when `stamp == epoch`.
+///
+/// `GI` is the bindings-side selector index for `V`, carried in the per-unit
+/// `RunFiber` witness tuple (a constrained position alongside the projection
+/// indices), so neither impl trips E0207 and `GI` infers with them. Proven by
+/// sketch `202606081800_e4-gate-firer-trait-shapes`.
+pub trait GateWith<A, GI> {
+    /// True if this schedule opens this pass.
+    fn open(bindings: &A, epoch: USize) -> Bool;
+}
+
+impl<A> GateWith<A, Here> for Always {
+    #[inline(always)]
+    fn open(_bindings: &A, _epoch: USize) -> Bool {
+        Bool::TRUE
+    }
+}
+
+impl<A, V, GI> GateWith<A, GI> for On<V>
+where
+    A: VirtualStampSelector<V, GI>,
+{
+    #[inline(always)]
+    fn open(bindings: &A, epoch: USize) -> Bool {
+        // lint:allow(no-bare-numeric) reason: epoch-stamp equality compare; tracked: #121
+        Bool(<A as VirtualStampSelector<V, GI>>::vstamp(bindings).get().0 == epoch.0)
+    }
+}
+
+// E4 slice 2: a meta work unit's `OnMeta<V>` gate is const-open, like `Always`.
+// The lifecycle conditional (PlanStage runs only on a plan-dirty frame) is not a
+// per-unit stamp gate; it is the kernel's phase-band skip in `dispatch_trunks`,
+// which simply does not dispatch the plan band's phases on a clean frame. So when
+// an `OnMeta<V>` unit's phase IS dispatched, it always runs. GI is `Here` (no
+// bindings read), so it infers exactly as `Always` does in the witness tuple.
+impl<A, V> GateWith<A, Here> for OnMeta<V> {
+    #[inline(always)]
+    fn open(_bindings: &A, _epoch: USize) -> Bool {
+        Bool::TRUE
+    }
+}
+
+/// Type-keyed fire over the projected write-virtual bundle: set the stamp cell
+/// for `Virtual<T>` to `epoch`. Mirrors `AccumSelector` over the projected
+/// accumulator bundle; index infers at the `fire<V>` call site.
+pub trait VirtualFire<T, Index> {
+    /// Set the stamp for `Virtual<T>` to `epoch`.
+    fn fire(&self, epoch: USize);
+}
+
+impl<'f, T, Tail> VirtualFire<T, Here> for VirtCons<'f, T, Tail> {
+    #[inline(always)]
+    fn fire(&self, epoch: USize) {
+        self.head.set(epoch);
+    }
+}
+
+impl<'f, T, U, Tail, I> VirtualFire<T, There<I>> for VirtCons<'f, U, Tail>
+where
+    Tail: VirtualFire<T, I>,
+{
+    #[inline(always)]
+    fn fire(&self, epoch: USize) {
+        self.tail.fire(epoch);
+    }
+}
+
+// ---------------------------------------------------------------------
+// VirtualProject: build the projected write-virtual bundle from the bindings.
+//
+// The virtual analogue of `AccumProject`: recurse on the `Virtual<T>` members of
+// the write set `W`, pulling each matching stamp cell ref out of the bindings via
+// `VirtualStampSelector`. `Resource<T>` / `Column<T>` / `Accum<T>` members
+// contribute no virtual-bundle node. `Indices` is the parallel selector-index
+// list, inferred at the call site (dodging E0207). The projected bundle borrows
+// `&'s`, so it ties to the `'frame`-lived bindings, like the accumulator bundle.
+// ---------------------------------------------------------------------
+
+/// Project the `Virtual<T>` members of `W` out of a source `A` into a stamp-cell
+/// bundle.
+pub trait VirtualProject<'s, Set, Indices> {
+    /// The projected write-virtual bundle.
+    type Out;
+
+    /// Build the projected bundle by pulling each stamp cell ref.
+    fn virt_project(&'s self) -> Self::Out;
+}
+
+impl<'s, C> VirtualProject<'s, Empty, Empty> for C {
+    type Out = VirtNil;
+
+    #[inline]
+    fn virt_project(&'s self) -> VirtNil {
+        VirtNil
+    }
+}
+
+impl<'s, C, T, I, STail, ITail> VirtualProject<'s, Cons<Virtual<T>, STail>, Cons<I, ITail>> for C
+where
+    C: VirtualStampSelector<T, I>,
+    C: VirtualProject<'s, STail, ITail>,
+{
+    type Out = VirtCons<'s, T, <C as VirtualProject<'s, STail, ITail>>::Out>;
+
+    #[inline]
+    fn virt_project(&'s self) -> Self::Out {
+        VirtCons {
+            head: <C as VirtualStampSelector<T, I>>::vstamp(self),
+            tail: <C as VirtualProject<'s, STail, ITail>>::virt_project(self),
+            _h: PhantomData,
+        }
+    }
+}
+
+// Skip non-virtual members of the write set (resource / column / accumulator).
+
+impl<'s, C, T, STail, Indices> VirtualProject<'s, Cons<Resource<T>, STail>, Indices> for C
+where
+    C: VirtualProject<'s, STail, Indices>,
+{
+    type Out = <C as VirtualProject<'s, STail, Indices>>::Out;
+
+    #[inline]
+    fn virt_project(&'s self) -> Self::Out {
+        <C as VirtualProject<'s, STail, Indices>>::virt_project(self)
+    }
+}
+
+impl<'s, C, T, STail, Indices> VirtualProject<'s, Cons<Column<T>, STail>, Indices> for C
+where
+    C: VirtualProject<'s, STail, Indices>,
+{
+    type Out = <C as VirtualProject<'s, STail, Indices>>::Out;
+
+    #[inline]
+    fn virt_project(&'s self) -> Self::Out {
+        <C as VirtualProject<'s, STail, Indices>>::virt_project(self)
+    }
+}
+
+impl<'s, C, T, STail, Indices> VirtualProject<'s, Cons<Accum<T>, STail>, Indices> for C
+where
+    C: VirtualProject<'s, STail, Indices>,
+{
+    type Out = <C as VirtualProject<'s, STail, Indices>>::Out;
+
+    #[inline]
+    fn virt_project(&'s self) -> Self::Out {
+        <C as VirtualProject<'s, STail, Indices>>::virt_project(self)
+    }
 }
 
 // ---------------------------------------------------------------------
@@ -705,6 +948,75 @@ where
 }
 
 // ---------------------------------------------------------------------
+// E4 slice 3: the engine-to-meta bridge.
+//
+// Mutable meta state is engine-owned (a `MetaBlock` on the scheduler), not a
+// consumer `Resource` (consumer resources are `Copy` read-only). An `OnMeta`
+// work unit reads it through a `meta::<T>()` accessor present ONLY on a Ctx
+// carrying a `MetaRef`. The meta pointer is the 9th `EngineCtx` parameter,
+// defaulted `MetaNil` so consumer Ctx aliases are unchanged (mirrors the slice-1
+// `WVirt = VirtNil` default); the dispatch walk wires a real `MetaRef` only for
+// `OnMeta` units, via `MetaPtrFor` (keyed on the schedule) and `BuildMetaPtr`.
+// Proven by sketch `202606090300_e4-slice3-meta-bridge-accessor`.
+// ---------------------------------------------------------------------
+
+/// Consumer Ctx meta pointer: no meta reference. The default 9th `EngineCtx`
+/// parameter, so consumer Ctx aliases need no change.
+#[derive(Clone, Copy)]
+pub struct MetaNil;
+
+/// `OnMeta` Ctx meta pointer: a borrow of the engine-owned meta block for the
+/// dispatch frame. The `meta::<T>()` accessor exists only on a Ctx carrying it.
+#[derive(Clone, Copy)]
+pub struct MetaRef<'frame>(&'frame MetaBlock);
+
+/// Build the per-unit meta pointer from the engine-owned block.
+///
+/// `MetaNil` ignores the block (consumer units); `MetaRef` captures it (`OnMeta`
+/// units). The dispatch walk calls this once per unit at Ctx construction.
+pub trait BuildMetaPtr<'frame> {
+    /// Produce the meta pointer for this unit from the engine-owned block.
+    fn build(block: &'frame MetaBlock) -> Self;
+}
+
+impl<'frame> BuildMetaPtr<'frame> for MetaNil {
+    #[inline(always)]
+    fn build(_block: &'frame MetaBlock) -> Self {
+        MetaNil
+    }
+}
+
+impl<'frame> BuildMetaPtr<'frame> for MetaRef<'frame> {
+    #[inline(always)]
+    fn build(block: &'frame MetaBlock) -> Self {
+        MetaRef(block)
+    }
+}
+
+/// The meta pointer a schedule's Ctx carries.
+///
+/// `MetaNil` for consumer schedules (`Always`, `On<V>`), `MetaRef<'frame>` for
+/// meta schedules (`OnMeta<V>`). The dispatch walk computes the 9th `EngineCtx`
+/// parameter from each unit's schedule through this, so consumer Ctx aliases
+/// default to `MetaNil` and only `OnMeta` units gain a meta reference.
+pub trait MetaPtrFor<'frame> {
+    /// The meta pointer type for this schedule.
+    type Ptr: BuildMetaPtr<'frame>;
+}
+
+impl<'frame> MetaPtrFor<'frame> for Always {
+    type Ptr = MetaNil;
+}
+
+impl<'frame, V> MetaPtrFor<'frame> for On<V> {
+    type Ptr = MetaNil;
+}
+
+impl<'frame, V> MetaPtrFor<'frame> for OnMeta<V> {
+    type Ptr = MetaRef<'frame>;
+}
+
+// ---------------------------------------------------------------------
 // EngineCtx: the per-WU projected Context.
 // ---------------------------------------------------------------------
 
@@ -725,18 +1037,30 @@ where
 /// default never masks a mismatch: `project` and `RunFiber` force `WAccum`
 /// to the real projection of `W`, so a WU that declares an accumulator but
 /// omits the bundle fails to compile at the projection tie.
-pub struct EngineCtx<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum = AccPtrNil> {
+pub struct EngineCtx<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum = AccPtrNil, WVirt = VirtNil, MP = MetaNil> {
     reads: RBundle,
     read_cols: RCols,
     write_cols: WCols,
     write_accums: WAccum,
+    // E4 slice 1: the projected write-virtual bundle (one `&'frame Cell<USize>`
+    // stamp ref per `Virtual<T>` in `W`), and the current pass epoch. `fire<V>`
+    // sets the resolved stamp to `epoch`; an `On<V>` consumer's gate (trunk_gate)
+    // reads the SAME cell from the full bindings and compares to its epoch.
+    // Defaults `WVirt = VirtNil`: a WU writing no virtual carries an empty bundle.
+    write_virtuals: WVirt,
+    // E4 slice 3: the per-unit meta pointer. `MetaNil` for consumer units (no
+    // meta reference); `MetaRef<'frame>` for `OnMeta` units (a borrow of the
+    // engine-owned `MetaBlock`). The `meta::<T>()` accessor exists only on a Ctx
+    // whose `MP = MetaRef<'frame>`. Defaults `MP = MetaNil`.
+    meta_ptr: MP,
+    epoch: USize,
     morsel: MorselRange,
     _frame: PhantomData<&'frame ()>,
     _sets: PhantomData<(R, W)>,
 }
 
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum>
-    EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP>
+    EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 {
     /// Construct a Context from pre-built projected bundles.
     ///
@@ -756,6 +1080,9 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum>
         read_cols: RCols,
         write_cols: WCols,
         write_accums: WAccum,
+        write_virtuals: WVirt,
+        meta_ptr: MP,
+        epoch: USize,
         morsel: MorselRange,
     ) -> Self {
         Self {
@@ -763,6 +1090,9 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum>
             read_cols,
             write_cols,
             write_accums,
+            write_virtuals,
+            meta_ptr,
+            epoch,
             morsel,
             _frame: PhantomData,
             _sets: PhantomData,
@@ -770,8 +1100,8 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum>
     }
 }
 
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum>
-    EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP>
+    EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 {
     /// Project a Context from the scheduler bindings and a per-frame column
     /// source.
@@ -811,6 +1141,7 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum>
     ///
     /// ```compile_fail
     /// use hilavitkutin::dispatch::engine_ctx::{EngineCtx, PtrNil, ColPtrNil};
+    /// use hilavitkutin::meta::MetaBlock;
     /// use hilavitkutin::dispatch::morsel::MorselRange;
     /// use hilavitkutin_api::access::{Cons, Empty};
     /// use hilavitkutin_api::store::Resource;
@@ -823,19 +1154,23 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum>
     /// // hold (no `Selector<u32, _>` on `PtrNil`), so this does not
     /// // compile.
     /// let _ctx: EngineCtx<'_, ReadU32, Empty, _, _, _> =
-    ///     EngineCtx::project(&PtrNil, &ColPtrNil, MorselRange::new(USize::ZERO, USize::ZERO));
+    ///     EngineCtx::project(&PtrNil, &ColPtrNil, &MetaBlock::default(), USize::ZERO, MorselRange::new(USize::ZERO, USize::ZERO));
     /// ```
     #[inline]
-    pub fn project<A, C, RIdx, RCIdx, WCIdx, WAIdx>(
+    pub fn project<A, C, RIdx, RCIdx, WCIdx, WAIdx, WVIdx>(
         bindings: &'frame A,
         cols: &C,
+        meta_block: &'frame MetaBlock,
+        epoch: USize,
         morsel: MorselRange,
-    ) -> EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum>
+    ) -> EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
     where
         A: Project<R, RIdx, Out = RBundle>,
         C: ColProject<R, RCIdx, Out = RCols>,
         C: ColProject<W, WCIdx, Out = WCols>,
         A: AccumProject<'frame, W, WAIdx, Out = WAccum>,
+        A: VirtualProject<'frame, W, WVIdx, Out = WVirt>,
+        MP: BuildMetaPtr<'frame>,
     {
         let reads = <A as Project<R, RIdx>>::project(bindings);
         let read_cols = <C as ColProject<R, RCIdx>>::col_project(cols);
@@ -843,14 +1178,60 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum>
         // The accumulator bundle projects from the `'frame` bindings (it
         // retains a borrow of each live-length cell), not the column source.
         let write_accums = <A as AccumProject<'frame, W, WAIdx>>::acc_project(bindings);
-        EngineCtx::from_projected(reads, read_cols, write_cols, write_accums, morsel)
+        // The write-virtual bundle also projects from the `'frame` bindings: each
+        // entry is a borrow of a `VirtualBinding<T>` stamp cell. The same cells
+        // the trunk-gate reads, so a fire here is observed by an `On<T>` gate.
+        let write_virtuals = <A as VirtualProject<'frame, W, WVIdx>>::virt_project(bindings);
+        // E4 slice 3: build the per-unit meta pointer from the engine-owned
+        // block. `MetaNil` ignores it (consumer units); `MetaRef` captures it
+        // (`OnMeta` units), gaining the gated `meta::<T>()` accessor.
+        let meta_ptr = <MP as BuildMetaPtr<'frame>>::build(meta_block);
+        EngineCtx::from_projected(
+            reads, read_cols, write_cols, write_accums, write_virtuals, meta_ptr, epoch, morsel,
+        )
+    }
+}
+
+// E4 slice 3: the meta accessor, present ONLY on a Ctx carrying a `MetaRef`
+// (an `OnMeta` work unit's Ctx). A consumer Ctx (`MP = MetaNil`) has no `meta`
+// method, so a consumer cannot reach meta state at compile time. The
+// `MetaAccess` enforcement falls out of the gating for free: no negative bound,
+// no specialization. Proven by sketch `202606090300`.
+
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt>
+    EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MetaRef<'frame>>
+{
+    /// Read an engine-owned meta resource through the bridge.
+    ///
+    /// `T` is a meta resource (`MetaAccess`) with a `MetaField` projection out of
+    /// the engine-owned `MetaBlock`. Available only on an `OnMeta` work unit's
+    /// Ctx; a consumer Ctx does not have this method (compile-time `MetaAccess`
+    /// enforcement).
+    ///
+    /// ```compile_fail
+    /// use hilavitkutin::dispatch::engine_ctx::{EngineCtx, PtrNil, ColPtrNil, MetaNil};
+    /// use hilavitkutin_api::access::Empty;
+    /// use hilavitkutin_api::meta::SchedulerMetrics;
+    ///
+    /// // A consumer Ctx (the default `MetaNil` meta pointer) has no `meta`
+    /// // accessor: the impl is only on a Ctx carrying `MetaRef`. So a consumer
+    /// // cannot reach meta state. This does not compile.
+    /// fn consumer_reaches_meta(
+    ///     ctx: &EngineCtx<'_, Empty, Empty, PtrNil, ColPtrNil, ColPtrNil>,
+    /// ) {
+    ///     let _ = ctx.meta::<SchedulerMetrics>();
+    /// }
+    /// ```
+    #[inline]
+    pub fn meta<T: MetaAccess + MetaField>(&self) -> &T {
+        T::project(self.meta_ptr.0)
     }
 }
 
 // ResourceProviderApi: resolve `&T` via the resource bundle Selector.
 
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum> ResourceProviderApi<R>
-    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP> ResourceProviderApi<R>
+    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 {
     #[inline]
     fn resource<T: 'static, I>(&self) -> &T
@@ -867,8 +1248,8 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum> Resource
 // per-`T` bundle index, inferred at the concrete WU call site (the bundle
 // is a concrete cons-list there, so exactly one index applies). This is
 // the spec-free replacement for the old type-equality `fetch<T>`.
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, T: 'static, I> ResolveResource<T, I>
-    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP, T: 'static, I> ResolveResource<T, I>
+    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 where
     RBundle: Selector<T, I>,
 {
@@ -890,8 +1271,8 @@ where
 // offset. B3 treats the column buffer as `[T]`-shaped at stride
 // `size_of::<T>()`; sub-byte bitpacking is a later round.
 
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum> ColumnReaderApi<R>
-    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP> ColumnReaderApi<R>
+    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 {
     #[inline]
     unsafe fn read<T: ColumnValue, I>(&self, i: USize) -> T
@@ -907,8 +1288,8 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum> ColumnRe
 
 // ResolveColumnRead: resolve the `ColumnPtr<T>` through the projected
 // column bundle's `ColSelector<T, I>` witness, read at the morsel offset.
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, T: ColumnValue, I> ResolveColumnRead<T, I>
-    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP, T: ColumnValue, I> ResolveColumnRead<T, I>
+    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 where
     RCols: ColSelector<T, I>,
 {
@@ -932,8 +1313,8 @@ where
 // ColumnWriterApi: resolve the column pointer, write at the morsel
 // offset. Same stride simplification as the reader.
 
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum> ColumnWriterApi<W>
-    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP> ColumnWriterApi<W>
+    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 {
     #[inline]
     unsafe fn write<T: ColumnValue, I>(&self, i: USize, v: T)
@@ -950,8 +1331,8 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum> ColumnWr
 
 // ResolveColumnWrite: resolve the `ColumnPtr<T>` through the projected
 // column bundle's `ColSelector<T, I>` witness, write at the morsel offset.
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, T: ColumnValue, I> ResolveColumnWrite<T, I>
-    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP, T: ColumnValue, I> ResolveColumnWrite<T, I>
+    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 where
     WCols: ColSelector<T, I>,
 {
@@ -978,8 +1359,8 @@ where
 // morsel-indexed write: the offset is the accumulator's own live count, not
 // `morsel.start + i`.
 
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum> AccumWriterApi<W>
-    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP> AccumWriterApi<W>
+    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 {
     #[inline]
     unsafe fn append<T: ColumnValue, I>(&self, v: T)
@@ -1006,8 +1387,8 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum> AccumWri
 // ResolveAccumAppend: resolve the `AccumColPtr<T>` through the projected
 // accumulator bundle's `AccumSelector<T, I>` witness, write at the live offset,
 // advance the live length through the borrowed `Cell`.
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, T: ColumnValue, I>
-    ResolveAccumAppend<T, I> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP, T: ColumnValue, I>
+    ResolveAccumAppend<T, I> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 where
     WAccum: AccumSelector<T, I>,
 {
@@ -1044,20 +1425,34 @@ where
     }
 }
 
-// VirtualFirerApi: B3 no-op. DAG-edge firing semantics land with the
-// run-loop.
+// VirtualFirerApi: stamp the projected `Virtual<V>` cell with the current epoch.
+// The `On<V>` consumer's trunk-gate reads the same cell from the bindings and
+// runs when `stamp == epoch`. Internal fire is non-atomic (spec :716-717).
 
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum> VirtualFirerApi<W>
-    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP> VirtualFirerApi<W>
+    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 {
     #[inline]
-    fn fire<V: 'static>(&self)
+    fn fire<V: 'static, I>(&self)
     where
         W: Contains<Virtual<V>>,
+        Self: ResolveVirtualFire<V, I>,
     {
-        // B3 no-op: the virtual is declared in `W` (the where-clause
-        // proves it), but the DAG-edge firing that schedules `On<V>`
-        // consumers next pass lands with the run-loop.
+        <Self as ResolveVirtualFire<V, I>>::resolve_fire(self);
+    }
+}
+
+// ResolveVirtualFire: resolve the `Virtual<V>` stamp cell through the projected
+// write-virtual bundle's `VirtualFire<V, I>` witness and set it to the live
+// epoch. Mirrors `ResolveAccumAppend` over the accumulator bundle.
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP, V: 'static, I>
+    ResolveVirtualFire<V, I> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
+where
+    WVirt: VirtualFire<V, I>,
+{
+    #[inline]
+    fn resolve_fire(&self) {
+        <WVirt as VirtualFire<V, I>>::fire(&self.write_virtuals, self.epoch);
     }
 }
 
@@ -1065,8 +1460,8 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum> VirtualF
 // `read` / `write` add `morsel.start` to recover the absolute column index,
 // so the body works for any morsel start.
 
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum> EachApi<R, W>
-    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP> EachApi<R, W>
+    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 {
     #[inline]
     fn run<F>(&self, mut f: F)
@@ -1085,8 +1480,8 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum> EachApi<
 // BatchApi: one call with the morsel-relative half-open range `[0, len)`.
 // A body looping that range and calling `write(i)` lands at `morsel.start + i`.
 
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum> BatchApi<R, W>
-    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP> BatchApi<R, W>
+    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 {
     #[inline]
     fn run<F>(&self, mut f: F)
@@ -1100,8 +1495,8 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum> BatchApi
 // ReduceApi: fold yielding a morsel-relative index `[0, len)`, matching
 // `EachApi`. `read` / `write` add `morsel.start` for the absolute index.
 
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum> ReduceApi<R, W>
-    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP> ReduceApi<R, W>
+    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 {
     #[inline]
     fn run<A, F>(&self, init: A, mut f: F) -> A
@@ -1132,8 +1527,8 @@ use hilavitkutin_api::context::{
     HasResourceProvider, HasVirtualFirer,
 };
 
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum>
-    HasColumnReader<R> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP>
+    HasColumnReader<R> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 {
     type Provider = Self;
     #[inline(always)]
@@ -1142,8 +1537,8 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum>
     }
 }
 
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum>
-    HasColumnWriter<W> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP>
+    HasColumnWriter<W> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 {
     type Provider = Self;
     #[inline(always)]
@@ -1152,8 +1547,8 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum>
     }
 }
 
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum>
-    HasResourceProvider<R> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP>
+    HasResourceProvider<R> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 {
     type Provider = Self;
     #[inline(always)]
@@ -1162,8 +1557,8 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum>
     }
 }
 
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum>
-    HasVirtualFirer<W> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP>
+    HasVirtualFirer<W> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 {
     type Provider = Self;
     #[inline(always)]
@@ -1172,8 +1567,8 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum>
     }
 }
 
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum>
-    HasEach<R, W> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP>
+    HasEach<R, W> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 {
     type Provider = Self;
     #[inline(always)]
@@ -1182,8 +1577,8 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum>
     }
 }
 
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum>
-    HasBatch<R, W> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP>
+    HasBatch<R, W> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 {
     type Provider = Self;
     #[inline(always)]
@@ -1192,8 +1587,8 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum>
     }
 }
 
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum>
-    HasReduce<R, W> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP>
+    HasReduce<R, W> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 {
     type Provider = Self;
     #[inline(always)]
@@ -1202,8 +1597,8 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum>
     }
 }
 
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum>
-    HasAccumWriter<W> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP>
+    HasAccumWriter<W> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 {
     type Provider = Self;
     #[inline(always)]

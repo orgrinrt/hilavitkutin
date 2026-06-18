@@ -1,0 +1,46 @@
+[package]
+name = "sketch-gate2-persistent-pthread-pool"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# GATE-2 R4c de-risk (the threaded-executor keystone). Sketch B (202606070400)
+# proved column-disjoint trunks run concurrently with zero sync, joined only by
+# the shipped waist barrier, output bit-identical to single-core. But Sketch B
+# used std::thread::scope (per-frame spawn, auto-join) and ran ONE frame, so it
+# sidestepped the real pool's hard part: persistent workers spawned ONCE, parked
+# between frames, fed each frame's carrier through a shared slot, reused across
+# many frames. The ThreadPoolApi contract forces this: spawn<F: FnOnce()+Send+
+# 'static> means the worker is 'static, so the per-frame (non-'static) carrier
+# cannot be captured; it crosses via a Scheduler-owned shared slot the worker
+# reads each frame through a raw pointer, with join-at-shutdown keeping the deref
+# sound. This sketch proves THAT mechanism on the os target (raw pthread, no
+# alloc / no Box / no dyn): N persistent pthreads spawned once, PARKED off-CPU
+# between frames via the shipped `hilavitkutin::thread::atomic_wait` /
+# `atomic_wake_all` (the real futex / __ulock / WaitOnAddress primitive, NOT a
+# spin loop, which would sidestep the park/unpark handoff where lost-wakeup races
+# live), woken per frame, dispatch a monomorphic per-core kernel over a carrier
+# pointer published into their slot, then park the main thread on a done word
+# until all workers signal. Multi-frame x stress, N-core==1-core output,
+# race-and-deadlock-clean (a lost wakeup hangs, so the stress loop is a deadlock
+# probe run under a timeout). The workload is a trivial disjoint-slice write (the
+# real RunFiber walk on a worker thread is already proven by Sketch B); what this
+# proves is the pool lifecycle + real parking handoff + per-frame carrier handoff
+# + multi-frame soundness, not the dispatch codegen.
+
+[dependencies]
+libc = "0.2"
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

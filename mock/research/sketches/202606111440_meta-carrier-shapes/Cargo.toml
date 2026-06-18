@@ -1,0 +1,49 @@
+# Comparative feasibility sketch: where do meta WorkUnits (OnMeta<V> lifecycle
+# schedules) live?
+#
+# Shape A: shared consumer carrier (the shipped state: rank-renumbered phase
+# bands in ONE WuCons list; the fix direction is hoisting the meta bands out of
+# the morsel loop on record-bearing paths so meta units run once per frame
+# everywhere). Probe: a hoisted-band dispatch driver over the real
+# RunTrunkDispatch + grouping const fns, next to a replica of the shipped
+# bands-inside-the-morsel-loop shape, plus the shipped Scheduler::run as the
+# wart baseline.
+#
+# Shape B: dedicated meta carrier (a second cons-list registered separately,
+# walked once per frame before/after consumer dispatch). Probe: type-level
+# registration routing by lifecycle rank (the builder typestate cost) + a
+# two-carrier dispatch driver instantiating the same RunTrunkDispatch/grouping
+# machinery once per carrier.
+#
+# Real engine crates by path, arvo dev HEAD by git (same pins as the
+# 202606111000 e1-e7 sketch).
+
+[package]
+name = "sketch-meta-carrier-shapes"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "shape_a"
+path = "src/shape_a.rs"
+
+[[bin]]
+name = "shape_b"
+path = "src/shape_b.rs"
+
+[workspace]
+
+[dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+arvo-bitmask = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+arvo-tensor = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

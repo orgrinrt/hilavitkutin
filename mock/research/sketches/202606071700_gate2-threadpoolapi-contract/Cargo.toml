@@ -1,0 +1,41 @@
+[package]
+name = "sketch-gate2-threadpoolapi-contract"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# GATE-2 R4c contract-mapping de-risk. Sketch 202606071600 proved the persistent
+# pool + real parking + per-frame carrier handoff, but it used raw pthread_create
+# + pthread_join directly, bypassing the ThreadPoolApi contract. This proves the
+# proven mechanism maps onto the ACTUAL `hilavitkutin_api::ThreadPoolApi` trait,
+# resolving its two contract unknowns:
+#   1. No-alloc generic-closure spawn. spawn<F: FnOnce()+Send+'static> cannot Box
+#      F (no alloc). The engine's worker closure captures exactly one pointer
+#      (*const WorkerCtx), so F is pointer-sized and smuggles through the pthread
+#      arg via transmute, guarded by const{assert!(size/align fit)}. A fatter F
+#      is a compile error, not UB.
+#   2. Join with no join method. The contract is fire-and-forget spawn; there is
+#      no join. Workers are spawned DETACHED; soundness (carrier outlives every
+#      reader) comes from a worker-exit counter the driver waits on at shutdown
+#      via the shipped atomic_wait barrier (the same primitive sketch ...1600
+#      proved), not pthread_join.
+# Plus worker_count via sysconf(_SC_NPROCESSORS_ONLN). Real ThreadPoolApi impl,
+# real parking, detached threads, multi-frame, ncores in {1,2,3}, deadlock-clean.
+
+[dependencies]
+libc = "0.2"
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

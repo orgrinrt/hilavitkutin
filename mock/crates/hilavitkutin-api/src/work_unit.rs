@@ -6,9 +6,10 @@
 
 use core::marker::PhantomData;
 
-use arvo::Bool;
+use arvo::{Bool, USize};
 
 use crate::access::AccessSet;
+use crate::meta::{MetaVirtual, RANK_CONSUMER};
 use crate::context::{
     HasBatch, HasColumnReader, HasColumnWriter, HasEach, HasReduce, HasResourceProvider,
     HasVirtualFirer,
@@ -23,6 +24,19 @@ pub struct Always;
 /// Schedule marker: the WU runs when virtual `V` fires.
 #[derive(Copy, Clone, Default, Debug)]
 pub struct On<V>(PhantomData<V>);
+
+/// Schedule marker: the WU runs when META lifecycle virtual `V` fires.
+///
+/// Distinct from `On<V>` so the const lifecycle classification stays disjoint:
+/// a blanket `impl<V> Lifecycle for On<V>` (consumer rank) and a meta impl over
+/// the same `On<meta::V>` would conflict (E0119), and the negative bound that
+/// would separate them is not expressible (full specialization is forbidden).
+/// `OnMeta<V>` is the toolchain-forced surface form of the canonical
+/// `On<meta::V>`; behaviour is unchanged. See the self-hosting meta pipeline in
+/// the engine DESIGN and sketch
+/// `mock/research/sketches/202606082000_e4-slice2-lifecycle-classify`.
+#[derive(Copy, Clone, Default, Debug)]
+pub struct OnMeta<V>(PhantomData<V>);
 
 /// A unit of work.
 ///
@@ -83,6 +97,73 @@ pub trait WorkUnit<Schedule = Always>: BuilderInput<Init = Self> + Send + Sync +
 }
 
 // ---------------------------------------------------------------------
+// E4 slice 1: schedule recovery for the dispatch carrier.
+//
+// A heterogeneous WU carrier (mixing `Always` and `On<V>` units) cannot
+// recover a member's schedule from a free `WorkUnit<S>` bound (S is
+// unconstrained, E0207). `Scheduled` names the schedule as an associated
+// type so the engine's dispatch walk can branch on it at compile time;
+// `ScheduleGate` is the marker the engine gates on (the runtime fired-flag
+// read lives engine-side, since the contract crate cannot see the engine's
+// bindings). Sketch: 202606081700_e4-scheduled-blanket-coherence.
+// ---------------------------------------------------------------------
+
+/// Per-schedule lifecycle rank, the const the grouping reads to make the
+/// lifecycle ordinal the outer phase key.
+///
+/// Three disjoint impls, no overlap and no specialization: `Always` and `On<V>`
+/// are consumer-rank; `OnMeta<V>` takes its meta virtual's rank. The grouping
+/// folds `<<W as HasSchedule>::Sched as Lifecycle>::RANK` per unit and renumbers
+/// `(rank, waist_phase)` into contiguous phase bands, so plan-stage meta units
+/// land before consumers and the schedule-end epilogue lands after. See sketch
+/// `mock/research/sketches/202606082200_e4-slice2-rank-phase-renumber`.
+pub trait Lifecycle {
+    /// The lifecycle ordinal (`meta::RANK_*`).
+    const RANK: USize;
+}
+impl Lifecycle for Always {
+    const RANK: USize = RANK_CONSUMER;
+}
+impl<V> Lifecycle for On<V> {
+    const RANK: USize = RANK_CONSUMER;
+}
+impl<V: MetaVirtual> Lifecycle for OnMeta<V> {
+    const RANK: USize = <V as MetaVirtual>::RANK;
+}
+
+/// Marker for the schedule kinds the engine gates dispatch on.
+///
+/// Pure type-level. `Always`, `On<V>`, and `OnMeta<V>` are the kinds; the
+/// runtime "has `V` fired this pass" read is the engine's job (it resolves the
+/// virtual's fired flag from the scheduler's own state). The `Lifecycle`
+/// supertrait gives the grouping each schedule's lifecycle rank.
+pub trait ScheduleGate: Lifecycle {}
+impl ScheduleGate for Always {}
+impl<V> ScheduleGate for On<V> {}
+impl<V: MetaVirtual> ScheduleGate for OnMeta<V> {}
+
+/// Recovers a WorkUnit's schedule as an associated type.
+///
+/// Blanket-impl'd for every `WorkUnit<Always>` (the default schedule), so
+/// existing Always WUs gain `HasSchedule` with no extra impl. An `On<V>` WU
+/// (which impls `WorkUnit<On<V>>`, not `WorkUnit<Always>`) adds an explicit
+/// `impl HasSchedule for ThatWu { type Sched = On<V>; }`. The two do not
+/// overlap, so the blanket and the explicit impl cohere (proven by the
+/// 202606081700 sketch). The dispatch carrier bounds members
+/// `W: HasSchedule + WorkUnit<<W as HasSchedule>::Sched>`.
+///
+/// Named `HasSchedule` (not `Scheduled`) because `dispatch_codegen` already
+/// ships an unrelated `Scheduled` trait-alias for `LockFreeDispatch`.
+pub trait HasSchedule {
+    /// This WU's schedule: `Always` or `On<V>`.
+    type Sched: ScheduleGate;
+}
+
+impl<W: WorkUnit<Always>> HasSchedule for W {
+    type Sched = Always;
+}
+
+// ---------------------------------------------------------------------
 // Round 4 substrate: WorkUnitBundle.
 //
 // Cons-list bundle of WorkUnit types with accumulated Read / Write
@@ -110,16 +191,21 @@ impl WorkUnitBundle for Empty {
     type AccumWrite = Empty;
 }
 
+// E4 slice 1: recover each unit's schedule so a mixed `Always` / `On<V>` carrier
+// accumulates. `<W as WorkUnit<<W as HasSchedule>::Sched>>::{Read,Write}` reads
+// the right impl for either kind; the blanket gives every Always WU `HasSchedule`
+// with zero churn.
 impl<W, T> WorkUnitBundle for Cons<W, T>
 where
-    W: WorkUnit,
+    W: HasSchedule + WorkUnit<<W as HasSchedule>::Sched>,
     T: WorkUnitBundle,
-    W::Read: Concat<T::AccumRead>,
-    W::Write: Concat<T::AccumWrite>,
-    <W::Read as Concat<T::AccumRead>>::Out: AccessSet,
-    <W::Write as Concat<T::AccumWrite>>::Out: AccessSet,
+    <W as WorkUnit<<W as HasSchedule>::Sched>>::Read: Concat<T::AccumRead>,
+    <W as WorkUnit<<W as HasSchedule>::Sched>>::Write: Concat<T::AccumWrite>,
+    <<W as WorkUnit<<W as HasSchedule>::Sched>>::Read as Concat<T::AccumRead>>::Out: AccessSet,
+    <<W as WorkUnit<<W as HasSchedule>::Sched>>::Write as Concat<T::AccumWrite>>::Out: AccessSet,
 {
-    type AccumRead = <W::Read as Concat<T::AccumRead>>::Out;
-    type AccumWrite = <W::Write as Concat<T::AccumWrite>>::Out;
+    type AccumRead = <<W as WorkUnit<<W as HasSchedule>::Sched>>::Read as Concat<T::AccumRead>>::Out;
+    type AccumWrite =
+        <<W as WorkUnit<<W as HasSchedule>::Sched>>::Write as Concat<T::AccumWrite>>::Out;
 }
 

@@ -1,0 +1,30 @@
+[package]
+name = "sketch-gate2-const-array-fold"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# GATE-2 carrier-mechanism research, third sketch (op mandate 2026-06-07; memory
+# gate2-carrier-mechanism-mandate; roadmap r4 202606070700). The first two sketches
+# (202606071230 const-gated DCE isolation; 202606071330 compile-time grouping from
+# masks) proved the mechanism with an EXPLICIT N-entry array literal
+# (`const READ_MASKS: [u64; 3] = [..., ..., ...]`) and a hardcoded per-column id.
+# The real engine writes the fold ONCE, generically over the registered bundle, so
+# the masks array must be `const [u64; N]` built by TYPE-LEVEL RECURSION over the
+# cons-list, not an explicit literal. That generic const-array fold is gap (b), the
+# only un-proven-as-a-whole step in r4's G-a/G-b. This sketch isolates it:
+#   (Q1) can a `const [u64; N]` be built by recursing a cons-list of mask-carrying
+#        types, N = the cons-list length, via generic_const_exprs?
+#   (Q2) does indexing that const array through a const fn `trunk_of(pos)` work in a
+#        `const { }` gate over a generic walk (the DCE gate from sketch 071230)?
+# If both hold, gap (b) is closed and the real-types fold (gap (a): swap the
+# per-type mask for the engine's MaskProject/Locate/WitnessIndex const masks) is
+# mechanical. If Q1 walls, that is a roadmap finding (the grouping array needs a
+# different shape, e.g. generic_const_args or a runtime-consumed grouping).
+[dependencies]

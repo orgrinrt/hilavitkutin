@@ -1,0 +1,33 @@
+[package]
+name = "sketch-gate2-maskproject-const-fold"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# GATE-2 build round 1 de-risk (gap a). Sketch 070800 proved a const-trait fold
+# produces a const-evaluable grouping that DCEs the gate, but with a HARDCODED
+# per-unit mask. This sketch swaps that for the engine's real const MaskProject
+# fold (plan::project, reused) over real access-set types and the global Stores
+# numbering (Locate + WitnessIndex), with the witness-index list threaded as a
+# type parameter exactly as the engine's compute_plan threads BWit and run threads
+# Witnesses. The one residual question: does a NEW const-trait fold calling
+# MaskProject's const trait METHOD (project_mask, vs reading an assoc const) stay
+# const-evaluable for a `const { trunk_of(POS) == TRUNK }` gate. If yes, gap a is
+# closed and the src CL for round 202606070900 is written on proven ground.
+[dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+arvo-tensor = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

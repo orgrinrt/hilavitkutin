@@ -476,3 +476,51 @@ MaybeUninit pool, no raw fixed buffer); the thread-pool PoolFrame is
 the one sanctioned fixed-array exception. Each store migration is its
 own round on the unified-storage arc; the topological-dispatch slice
 reworks on top (its topo order becomes a store-backed meta-resource).
+
+## GATE-2 const grouping and per-trunk dispatch
+
+The GATE-2 parallel engine assigns each work unit to a phase and a
+trunk, computed at compile time from the registered bundle. Each unit's
+read and write access sets fold to store-bit masks over the global store
+numbering (the existing const MaskProject fold); read-after-write edges
+between masks form the unit dependency DAG, whose waist-delimited sections
+(concurrency minima, via arvo's const waist detection) are the phases, so a
+producer to consumer chain with no interior narrowing is one phase. Within a
+phase the column-disjoint components are the trunks. A trunk's units share no write column with
+another trunk in the same phase, so trunks run on separate cores with no
+cross-trunk synchronisation, joined only by the waist barrier between
+phases.
+
+The grouping drives a const-gated dispatch walk: a flat walk over the
+work-unit carrier where each position is gated by a compile-time check of
+its phase and trunk, so dead-code elimination collapses the walk into one
+member-only program per phase and trunk. Run one such program per core.
+This is the codegen flattener of the canonical design realised in pure
+Rust through const evaluation and dead-code elimination, with no
+proc-macro, build script, or compiler pass. It supersedes the earlier
+value-carrying nested carrier walk for trunk isolation; the per-fiber
+RunFiber walk is reused unchanged as the innermost member execution.
+
+This lands across the GATE-2 build rounds: the const grouping
+computation first, then the const-gated single-core dispatch that
+re-points the scheduler run path, then core-pinning the trunks onto the
+thread pool. The shipped DESIGN gains the trunk, phase, and waist model
+as the actual run path when the dispatch re-point lands and the behavior
+becomes observable.
+
+Round 2a lands the const-gated walk machinery: a fold of the value
+carrier into per-unit masks, a per-unit run-head step on the fiber
+walk, a gated trait that runs only the members of one phase and trunk
+(every other position folds away), and a phase-count helper. This is
+the machinery that turns the compile-time grouping into one member-only
+program per phase and trunk. The const-generic phase and trunk
+dispatcher, and re-pointing the scheduler run path through it, follow
+in round 2b.
+
+Round 2b re-points the scheduler run path to dispatch phase by phase:
+each phase's units run fully before the next, the waist sectioning, with
+the phase membership taken from the round-1 grouping and the existing
+gated walk running each phase's units. Single-core this is sequential
+with degenerate (no-op) barriers between phases, output identical to the
+flat walk; G2-N replaces the degenerate barrier with the real phase
+barrier and pins each phase's trunks to cores.

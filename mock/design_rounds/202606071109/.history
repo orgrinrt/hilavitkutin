@@ -1,0 +1,50 @@
+779cbc9 chore: lock src changelist for gate2-r4a
+7a79c92 feat: gate-2 r4a per-core phase masks (core_mask)
+4a06bca src: open r4a core-phase-masks src changelist
+3bbbddd chore: lock doc changelist for gate2-r4a
+f8e76fe doc: open r4a doc changelist (no doc changes)
+acbd17b topic: gate-2 r4a per-core phase masks
+68c0988 research: gate-2 dispatch mechanism options (post S3-wall web research)
+1c49eb2 research: gate-2 S3 sketch — pairs-enumeration dispatch WALLS (FAILS)
+37dd326 chore: close round gate2-waist-bounded-phase (r2)
+294f30e chore: lock src changelist for gate2-waist-bounded-phase
+c1c9679 feat: gate-2 waist-bounded phase axis via const waist_detect (r2)
+98cd16c src: open gate-2 waist-bounded phase src changelist (r2)
+b56161b chore: lock doc changelist for gate2-waist-bounded-phase
+150fab7 docs: reword gate-2 grouping phase to waist-bounded (r2)
+7700f00 doc: open gate-2 waist-bounded phase doc changelist (r2)
+41ac7c3 topic: gate-2 waist-bounded phase axis (r2)
+c559e2b research: gate-2 S2 sketch — waist-bounded phase from masks (WORKS)
+29a02a1 chore: bump arvo pin for ConstCapacity + waist_detect_const (gate-2 r1)
+b7921a7 research: gate-2 chart R0 probe result (WORKS) — R1a/R1b unblocked
+1c2187c research: finalize gate-2 dispatch roadmap (granularity splits + sketch plan, step 8-9)
+1be0227 research: gate-2 chart mirror-pass findings + expanded roadmap (step 6-7)
+6af8ebb research: revise gate-2 chart to Capacity-contract const waist (not native arrays)
+f23ef7a research: gate-2 corrected dispatch chart (waist-bounded phases, const waist in arvo)
+dbb61d3 chore: archive design round 202606071300-abandoned (round 2b drift, superseded by canonical redo)
+7e310b7 research: gate-2 phase-axis course-correction (depth != waist-bounded phase)
+65b670f src: open gate-2 round-2b phase-sectioned run changelist
+c061f48 chore: lock doc changelist for gate-2 round-2b
+4236bf6 docs: backlog note for gate-2 phase-sectioned run
+1fbbbfb doc: open gate-2 round-2b phase-sectioned run changelist
+151ddc3 topic: gate-2 phase-sectioned single-core run re-point
+e65f8e6 chore: close design round 202606071100
+b8be97e chore: lock src changelist for gate-2 round-2a
+7025b98 feat: gate-2 round-2a const-gated walk via peano position + fixed grouping cap
+d3a3330 feat: gate-2 const-gated per-trunk walk mechanism + run_one_trunk entry
+cb96540 src: open gate-2 round-2a const-gated walk changelist
+ae376e0 chore: lock doc changelist for gate-2 round-2a
+bae655c docs: backlog note for gate-2 round-2a const-gated walk
+ece6f7c doc: open gate-2 round-2a const-gated walk changelist
+f1c8f00 topic: gate-2 const-gated trunk dispatch + scheduler run re-point
+b14855e chore: close design round 202606070900
+3f97e0b chore: lock src changelist for gate-2 const grouping
+c07c87d feat: gate-2 const grouping (phase + trunk from registered bundle)
+ba1f0b0 test: gate-2 const grouping diamond-dag fail-first
+f87223e src: open gate-2 const grouping changelist
+eb9ce87 research: prove real MaskProject const fold closes gate-2 gap a
+f090f64 chore: lock doc changelist for gate-2 const grouping
+d7d8ff3 docs: backlog note for gate-2 const grouping and per-trunk dispatch
+f220329 doc: open gate-2 const grouping changelist
+518b9db topic: gate-2 const grouping from the registered bundle
+152e762 research: record gate-2 const-fold sketch outcome

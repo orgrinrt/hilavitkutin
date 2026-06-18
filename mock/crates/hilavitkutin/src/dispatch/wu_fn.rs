@@ -22,7 +22,7 @@
 //! lands in `fiber_dispatch::run_fiber` (CHANGE 3) and the morsel
 //! / sync CHANGE blocks below.
 
-use hilavitkutin_api::WorkUnit;
+use hilavitkutin_api::{HasSchedule, WorkUnit};
 
 /// Function-pointer shape used by dispatch records.
 pub type WuFn<Ctx> = fn(&Ctx);
@@ -30,10 +30,15 @@ pub type WuFn<Ctx> = fn(&Ctx);
 /// Per-WU shim. Codegen emits one specialised copy per fiber
 /// occurrence; LLVM elides each shim so consumer `WorkUnit::execute`
 /// impls do not need their own `#[inline]` discipline.
+///
+/// Generic over the WU's recovered schedule (`Always` or `On<V>`), so a mixed
+/// carrier invokes either kind through the same shim (E4 slice 1).
 #[inline(always)]
-pub fn invoke_wu_in_fiber<'frame, W>(wu: &W, ctx: &W::Ctx<'frame>)
-where
-    W: WorkUnit,
+pub fn invoke_wu_in_fiber<'frame, W>(
+    wu: &W,
+    ctx: &<W as WorkUnit<<W as HasSchedule>::Sched>>::Ctx<'frame>,
+) where
+    W: HasSchedule + WorkUnit<<W as HasSchedule>::Sched>,
 {
     wu.execute(ctx);
 }

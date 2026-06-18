@@ -1,0 +1,50 @@
+07655a6 chore: lock src CL for E4 slice-1 virtual firing round
+b6b8e47 test: E4 slice-1 gate2_virtual_firing + generalise builder/plan bounds for On<V>
+b85b09f feat: E4 slice-1 virtual firing + On-gating mechanism (CHANGE 4-6)
+60dfadf chore: refine E4 src CL gate to proven GateWith/SchedW shape
+3a08159 docs: sketch E4 gate+firer trait shapes — GateWith + VirtualStampSelector + VirtualProject all infer
+085fd83 feat: add VirtualBinding fired-stamp + epoch accessors (E4 slice-1)
+a31c991 feat: add HasSchedule/ScheduleGate schedule-recovery traits (E4 slice-1 api)
+f2ac257 chore: open src CL for gate2 E4 slice-1 virtual firing + On-gating
+f0599a9 docs: sketch E4 blanket-Scheduled coherence — zero-churn Always, real walk bound
+434af52 docs: engine state map + roadmap r5; correct stale deviation ledger
+296e21f docs: sketch E4 schedule-gated walk — On<V> dispatch mechanism proven
+b3e7c5b chore: lock doc CL for gate2 E4 virtual flag system
+1726644 docs: describe virtual flag system (domain 10) in engine DESIGN
+63255d0 docs: open doc CL for gate2 E4 virtual flag system
+d72d1b0 docs: topic for gate2 E4 foundation — virtual firing + On gating
+c5c3472 test: fair parallel perf bar — engine vs optimal multi-threaded std
+f4a08c2 chore: close design round 202606080600 gate2 G2-N
+936d9e8 chore: lock src CL for gate2 G2-N core-pinned trunk dispatch
+3561a54 docs: gate2 G2-N perf finding and src CL test plan
+c13c16a test: gate2 3-trunk 2-core run_parallel rank-wrap parity
+73c2d2b feat: gate2 G2-N core-aware per-trunk dispatch onto compiled monos
+e5c7ae3 docs: open src CL for gate2 G2-N core-pinned trunk dispatch
+e23732a chore: lock doc CL for gate2 G2-N core-pinned trunk dispatch
+1085423 docs: describe gate2 G2-N core-aware per-trunk dispatch
+4dcd47e docs: open doc CL for gate2 G2-N core-pinned trunk dispatch
+884e586 docs: topic for gate2 G2-N core-pinned per-trunk dispatch
+bb49816 chore: close design round 202606080400
+8974bca chore: lock src CL for gate2 G-e per-trunk dispatch
+7d54af4 test: gate2 multi-phase chain dispatch through re-pointed run
+564abc5 feat: re-point Scheduler::run single-core to per-trunk dispatch
+c4841e7 feat: gate2 run_all_trunks outer dispatch entry, instantiation verified
+8b2ba44 feat: gate2 trunk_dispatch outer walk + dirty-gated RunGatedTrunk
+d6d34e8 refactor: gate2 RunGatedTrunk + run_one_trunk to trunk-only keying
+3892b73 docs: open src CL for gate2 G-e per-trunk dispatch
+f4d8a56 chore: lock doc CL for gate2 G-e per-trunk dispatch
+8b31a20 docs: describe gate2 G-e const-gated per-trunk dispatch in engine DESIGN
+1ca64ca docs: open doc CL for gate2 G-e per-trunk dispatch re-point
+88f56a8 docs: corrected gate2 G-e topic — drive shipped RunGatedTrunk trunk-only
+402ce05 docs: sketch gate2 G-e outer dispatcher driving shipped RunGatedTrunk
+f6ed511 docs: sketch gate2 G-e const-range trunk-root dispatcher
+acc9c86 docs: topic for gate2 G-e const-gated per-trunk dispatch
+e1263ce chore: close design round 202606072000-2
+be9bab1 test: measure + gate the threaded accumulator perf arm
+c542893 chore: lock src changelist for gate2 accumulator threaded path
+b384770 feat: threaded unit-outer accumulator path via per-core regions
+7e9f7f0 feat: per-core bindings rebase, accum-live collect, and merge walks
+06bbb88 docs: revise gate2 accumulator src changelist to bindings-rebase design
+222ccf0 docs: src changelist for gate2 accumulator threaded path
+2022d03 docs: sketch dispatch-seam rebase for gate2 accumulator path
+9abf752 chore: lock doc changelist for gate2 accumulator threaded path

@@ -19,8 +19,8 @@ use hilavitkutin_api::{
     AccessSet, Always, Atomic, BatchApi, Column, ColumnReaderApi, ColumnValue, ColumnWriterApi,
     Cons, Contains, EachApi, Empty, HasBatch, HasColumnReader, HasColumnWriter, HasEach, HasReduce,
     HasResourceProvider, HasVirtualFirer, Immediate, Normal, BuilderInput, ReduceApi,
-    ResolveColumnRead, ResolveColumnWrite, ResolveResource, Resource, ResourceProviderApi,
-    UnitDispatch, Virtual, VirtualFirerApi, WorkUnit, read, write,
+    ResolveColumnRead, ResolveColumnWrite, ResolveResource, ResolveVirtualFire, Resource,
+    ResourceProviderApi, UnitDispatch, Virtual, VirtualFirerApi, WorkUnit, read, write,
 };
 
 type MaxUnits = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test unit capacity; Dim<N> array-length root; tracked: #649
@@ -75,11 +75,15 @@ impl<T: 'static, I> ResolveResource<T, I> for Stub {
     }
 }
 impl<W: AccessSet> VirtualFirerApi<W> for Stub {
-    fn fire<V: 'static>(&self)
+    fn fire<V: 'static, I>(&self)
     where
         W: Contains<Virtual<V>>,
+        Self: ResolveVirtualFire<V, I>,
     {
     }
+}
+impl<V, I> ResolveVirtualFire<V, I> for Stub {
+    fn resolve_fire(&self) {}
 }
 impl<R: AccessSet, W: AccessSet> EachApi<R, W> for Stub {
     fn run<F>(&self, _f: F)

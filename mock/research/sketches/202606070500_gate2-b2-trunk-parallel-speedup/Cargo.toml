@@ -1,0 +1,31 @@
+[package]
+name = "sketch-gate2-b2-trunk-parallel-speedup"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# GATE-2 Sketch B2 (roadmap r3 202606070200, completes step G2-Nb). Sketch B
+# proved column-disjoint trunks run concurrently with correct output + zero blr,
+# but proved nothing about the SPEEDUP. Parallelism that compiles and runs correct
+# but does not get faster is broken parallelism (false sharing, barrier
+# serialisation, E-core scheduling). This sketch measures it: three column-disjoint
+# COMPUTE-BOUND trunks, timed running in sequence on one thread vs concurrently on
+# three threads, asserting the parallel run is meaningfully faster and reporting the
+# ratio against the ~3x ideal. The measured number is the finding (bench-decided).
+[dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

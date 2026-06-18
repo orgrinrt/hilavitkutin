@@ -1,0 +1,33 @@
+[package]
+name = "sketch-gate2-c-bridge-fanin"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# GATE-2 Sketch C (roadmap r3 202606070200 step G2-Nc). A bridge is the only
+# cross-trunk data path: a fan-in fiber reading from MULTIPLE parent trunks'
+# write columns, running after those parents reach the required record range
+# (spec :745-746, :85). Sketches A/B had single-column reads within a trunk; this
+# proves a bridge WU whose Read AccessSet spans two parent trunks' columns (AX
+# from trunk X, AY from trunk Y) projects + dispatches correctly through the
+# shipped RunFiber, produces the correct fan-in combination, and devirts (zero
+# blr). At full range after the waist the "required record range" is the whole
+# column; the head/tail progress-gated partial-range bridge is the N-core
+# refinement (rides on E4 progress counters), not this feasibility question.
+[dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

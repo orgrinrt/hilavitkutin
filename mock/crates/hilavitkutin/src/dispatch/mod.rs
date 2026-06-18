@@ -12,15 +12,20 @@
 
 pub mod approach;
 pub mod core_dispatch;
+pub mod core_mask;
 pub mod engine_ctx;
 pub mod fiber_dispatch;
 pub mod fiber_run;
 pub mod fusion;
 pub mod morsel;
 pub mod order;
+pub mod phase_run;
 pub mod progress;
 pub mod standard;
 pub mod sync;
+pub mod trunk_dispatch;
+pub mod trunk_gate;
+pub mod trunk_run;
 pub mod wu_fn;
 
 use arvo::USize;
@@ -32,9 +37,16 @@ pub use core_dispatch::CoreDispatch;
 pub use engine_ctx::EngineCtx;
 pub use fiber_dispatch::FiberDispatch;
 pub use fiber_run::RunFiber;
-// The value-carrying WorkUnit list lives in the api crate so the builder can
-// construct it; re-export it here next to the dispatch machinery that consumes it.
-pub use hilavitkutin_api::work_unit_values::{WuCons, WuNil};
+pub use phase_run::{RunPhase, RunPipeline};
+pub use trunk_dispatch::RunTrunkDispatch;
+pub use trunk_gate::RunGatedTrunk;
+pub use trunk_run::RunTrunk;
+// The value-carrying WorkUnit, fiber, trunk, and phase lists live in the api
+// crate so the builder can construct them; re-export them here next to the
+// dispatch machinery that consumes them.
+pub use hilavitkutin_api::work_unit_values::{
+    FiberCons, FiberNil, PhaseCons, PhaseNil, TrunkCons, TrunkNil, WuCons, WuNil,
+};
 pub use morsel::MorselRange;
 pub use progress::ProgressCounter;
 pub use sync::SyncPoint;
