@@ -50,7 +50,7 @@ use arvo::strategy::Identity;
 use arvo::Bool;
 use arvo::USize;
 use arvo_bitmask::{BitAccess, BitLogic, BitSequence};
-use arvo_tensor::{Capacity, ConstCapacity};
+use arvo_tensor::{cap_size, Capacity, ConstCapacity};
 use crate::plan::project::{AccumStoresMask, BundleProject, Locate, WitnessIndex};
 use crate::plan::{
     compute_execution_plan, plan_inputs_from_bundle, AccessMask, DefaultPlanDims, ExecutionPlan,
@@ -97,6 +97,24 @@ use crate::resource::bindings::{
 /// The default empty store-value list, used as the `Vals` default for a
 /// bare `Scheduler` type.
 pub use hilavitkutin_api::store_values::SvEmpty as DefaultStoreValues;
+
+/// Compile-time guard that a `PlanDims`'s `Units` capacity fits the
+/// `GATE2_MAX_UNITS` ceiling that still sizes `run_parallel`'s
+/// `gate2_phase` / `gate2_trunk` scratch (#690 lifts those onto `Units`).
+/// Forcing `<D as UnitsFitGate2>::ASSERT_UNITS_FIT` evaluates the assertion at
+/// monomorphisation, failing the build with a clear message rather than letting
+/// an over-wide `Units` index past the fixed arrays at runtime. A named assoc
+/// const is used rather than an inline `const {}` because the latter is an
+/// anonymous generic constant the `generic_const_exprs` grammar rejects.
+trait UnitsFitGate2 {
+    const ASSERT_UNITS_FIT: ();
+}
+impl<D: PlanDims> UnitsFitGate2 for D {
+    const ASSERT_UNITS_FIT: () = assert!(
+        cap_size(<<D as PlanDims>::Units as Capacity>::CAP) <= GATE2_MAX_UNITS,
+        "PlanDims::Units capacity exceeds GATE2_MAX_UNITS: run_parallel's gate2_phase/gate2_trunk scratch is sized by GATE2_MAX_UNITS; reduce Units or wait for the #690 lift onto Units",
+    );
+}
 
 /// Failure modes for `SchedulerBuilder::build`.
 ///
@@ -1531,6 +1549,15 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
             ResetAccumulators + RebaseBindings + CollectAccumLive + MergeAccums,
         P: ThreadPoolApi,
     {
+        // Cross-cap guard (#690): the grouping producer is sized by `D::Units`,
+        // but the gate2_phase / gate2_trunk scratch is still sized by
+        // GATE2_MAX_UNITS. A `D` whose `Units` capacity exceeds that ceiling
+        // would index past those arrays. Forcing this trait's assoc const fails
+        // the build per monomorphisation with a clear message rather than an
+        // out-of-bounds panic. Removed when #690 lifts the parallel scratch onto
+        // `Units`. (A named assoc const, not an inline `const {}`, because the
+        // latter is an anon generic constant the GCE grammar rejects.)
+        let () = <D as UnitsFitGate2>::ASSERT_UNITS_FIT;
         // SAFETY: the scheduler is pinned (the receiver is `Pin<&mut Self>`), so
         // its address is fixed for the workers' raw pointers. Take a raw pointer
         // so no live `&mut` aliases the workers' `*const Self`; the `&mut`

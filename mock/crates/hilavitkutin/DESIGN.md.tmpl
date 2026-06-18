@@ -849,6 +849,14 @@ capacity-blind, so the projection adds no per-step bound and the const-gated
 walk does not overflow the trait solver. Defaults stay 256 / 16 / etc, so an
 existing pipeline reserves byte-identical arrays.
 
+The grouping producer is sized by `Units`, but the parallel dispatch path's
+`gate2_phase` / `gate2_trunk` scratch is still sized by the `GATE2_MAX_UNITS`
+constant, so a `PlanDims` whose `Units` capacity exceeds that ceiling would
+index past those arrays. A compile-time assertion in `run_parallel` enforces
+`Units::CAP <= GATE2_MAX_UNITS` per monomorphisation, failing the build with a
+clear message rather than an out-of-bounds panic; a follow-up lifts the
+parallel scratch onto `Units` to remove the ceiling.
+
 The final associated type, `AdjRow`, is the bit-matrix row word the
 dependency analysis steps use for adjacency and waist detection
 (`compute_waists` builds a `BitMatrix<D::AdjRow, D::Units>` and runs
