@@ -11,8 +11,8 @@ use hilavitkutin_api::{
     AccessSet, Always, Atomic, BatchApi, Column, ColumnReaderApi, ColumnValue, ColumnWriterApi,
     Contains, EachApi, HasBatch, HasColumnReader, HasColumnWriter, HasEach, HasReduce,
     HasResourceProvider, HasVirtualFirer, Immediate, Normal, BuilderInput, ReduceApi,
-    ResolveColumnRead, ResolveColumnWrite, ResolveResource, Resource, ResourceProviderApi,
-    UnitDispatch, Virtual, VirtualFirerApi, WorkUnit, read, write,
+    ResolveColumnRead, ResolveColumnWrite, ResolveResource, ResolveVirtualFire, Resource,
+    ResourceProviderApi, UnitDispatch, Virtual, VirtualFirerApi, WorkUnit, read, write,
 };
 
 // --- Stub provider (all-in-one) --------------------------------------
@@ -73,11 +73,16 @@ impl<T: ColumnValue, I> ResolveColumnWrite<T, I> for Stub {
 }
 
 impl<W: AccessSet> VirtualFirerApi<W> for Stub {
-    fn fire<V: 'static>(&self)
+    fn fire<V: 'static, I>(&self)
     where
         W: Contains<Virtual<V>>,
+        Self: ResolveVirtualFire<V, I>,
     {
     }
+}
+
+impl<V: 'static, I> ResolveVirtualFire<V, I> for Stub {
+    fn resolve_fire(&self) {}
 }
 
 impl<R: AccessSet, W: AccessSet> EachApi<R, W> for Stub {

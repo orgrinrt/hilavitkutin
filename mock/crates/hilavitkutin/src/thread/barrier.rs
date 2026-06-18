@@ -17,6 +17,8 @@ use arvo::USize;
 use hilavitkutin_api::platform::PoolFrame;
 use notko::Maybe;
 
+use super::parking::{atomic_wait, atomic_wake_all};
+
 /// Outcome of a single worker's barrier arrival.
 ///
 /// `Last` means the caller observed the counter crossing the
@@ -72,4 +74,42 @@ pub fn phase_barrier_observe<'arena, const C: usize, const P: usize>( // lint:al
 ) -> Maybe<USize> {
     let v = pool.phase_arrived.load(Ordering::Acquire);
     Maybe::Is(USize(v as usize)) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic u32 to USize widening; tracked: #121
+}
+
+/// Worker-side sense-reversing waist barrier. Blocks until all `expected`
+/// workers have arrived, then releases all; reusable across the many waists of
+/// one frame with no reset race.
+///
+/// The reversing design (spec Topic 6 axis I, the deferred-E3 fix): a worker
+/// snapshots `barrier_sense` on entry, then `fetch_add`s `phase_arrived`. The
+/// last arriver (`prior + 1 == expected`) resets `phase_arrived` to zero and
+/// bumps `barrier_sense` (Release), then futex-wakes everyone; followers park on
+/// `barrier_sense` and wake once it differs from their snapshot. A fast worker
+/// that loops straight into the next episode waits for the NEXT flip, never a
+/// stale count, so the naive arrive+reset race cannot occur. Single-core
+/// (`expected == 1`) takes the last-arriver path immediately with no parking.
+///
+/// `Release` on the sense bump publishes every prior write by every worker to
+/// the followers it wakes; the `Acquire` snapshot + reload pair with it.
+pub fn waist_barrier<'arena, const C: usize, const P: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    pool: &PoolFrame<'arena, C, P>,
+    expected: USize,
+) {
+    let sense = pool.barrier_sense.load(Ordering::Acquire);
+    let prior = pool.phase_arrived.fetch_add(1, Ordering::AcqRel); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic increment; tracked: #121
+    if (prior as usize) + 1 == expected.0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: counter classified against USize threshold; tracked: #121
+        // Last arriver: open the next episode. Reset the count first (Relaxed;
+        // the sense Release publishes it), then flip the sense and wake all.
+        pool.phase_arrived.store(0, Ordering::Relaxed); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic reset constant; tracked: #121
+        pool.barrier_sense.store(sense.wrapping_add(1), Ordering::Release); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: generation bump; tracked: #121
+        atomic_wake_all(&pool.barrier_sense);
+    } else {
+        // Follower: park until the sense flips (lost-wakeup-safe load-check-wait).
+        loop {
+            if pool.barrier_sense.load(Ordering::Acquire) != sense {
+                break;
+            }
+            atomic_wait(&pool.barrier_sense, sense);
+        }
+    }
 }

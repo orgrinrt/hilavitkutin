@@ -13,7 +13,8 @@ use hilavitkutin_api::{
     AccessSet, BatchApi, Column, ColumnReaderApi, ColumnValue, ColumnWriterApi, Contains,
     EachApi, HasBatch, HasColumnReader, HasColumnWriter, HasEach, HasReduce,
     HasResourceProvider, HasVirtualFirer, ReduceApi, ResolveColumnRead, ResolveColumnWrite,
-    ResolveResource, Resource, ResourceProviderApi, Virtual, VirtualFirerApi,
+    ResolveResource, ResolveVirtualFire, Resource, ResourceProviderApi, Virtual,
+    VirtualFirerApi,
 };
 
 // Each provider is a distinct type to make the trait resolution
@@ -73,11 +74,16 @@ impl<T: 'static, I> ResolveResource<T, I> for ResourceP {
 }
 
 impl<W: AccessSet> VirtualFirerApi<W> for FirerP {
-    fn fire<V: 'static>(&self)
+    fn fire<V: 'static, I>(&self)
     where
         W: Contains<Virtual<V>>,
+        Self: ResolveVirtualFire<V, I>,
     {
     }
+}
+
+impl<V: 'static, I> ResolveVirtualFire<V, I> for FirerP {
+    fn resolve_fire(&self) {}
 }
 
 impl<R: AccessSet, W: AccessSet> EachApi<R, W> for EachP {

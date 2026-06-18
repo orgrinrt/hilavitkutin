@@ -1,0 +1,11 @@
+[package]
+name = "sketch-gate2-pairs-enumeration-dispatch"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]

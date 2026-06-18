@@ -1,0 +1,39 @@
+[package]
+name = "sketch-gate2-b-concurrent-trunks"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# GATE-2 Sketch B (roadmap r3 202606070200 step G2-Nb, THE keystone). The
+# canonical parallelism is isolated column-disjoint trunks, one per core, ZERO
+# sync between trunks (spec :742, :769); the only cross-trunk join is the waist
+# barrier between phases. This sketch proves that integration: two column-disjoint
+# trunks (writing disjoint columns AX / AY) run concurrently on two real threads
+# with NO synchronisation between them during the phase, synchronise only at the
+# waist via the SHIPPED phase_barrier_arrive / phase_barrier_observe, and produce
+# output bit-identical to the single-core run (Sketch A / the E6 oracle, here
+# partitioned by TRUNK not by record range). Each trunk's dispatch walk objdumps
+# to zero blr. Real engine types + real PoolFrame; std threads stand in for the
+# pre-allocated pool's workers (the shipped pool spawns once and parks; the
+# concurrency shape is what this proves). 081600 + 062000 proved the barrier in
+# isolation single-core; E6/062500 proved the N==1 invariant with a record-range
+# partition and a plain index loop. Neither proved real concurrent column-disjoint
+# trunks over the real RunFiber walk joined by the shipped barrier. Multi-episode
+# barrier reset / generation bit is E3 (deferred); this is one waist episode.
+[dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

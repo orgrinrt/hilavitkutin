@@ -1,0 +1,58 @@
+[package]
+name = "sketch-cap-lifting-shapes"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# Cap-lifting shapes (#121 / #345 / #649). The engine carries three hardcoded
+# caps with documented blockers: GATE2_MAX_UNITS=256 + GATE2_MAX_ACCUMS=16
+# (plan/grouping.rs; a cap_size(CU::CAP) array-length bound re-proven through
+# the const-gated walk's type-level recursion overflows the trait solver),
+# plan_dirty: [AtomicBool; 256] (scheduler/mod.rs; GCE rejects FIELD ACCESS on
+# generic constants, so [AtomicBool; Cfg::MAX_PLAN_AFFECTING_RESOURCES.0]
+# fails), and MAX_CORES=256 (thread/class.rs; sizes worker_ctxs and the flat
+# MAX_CORES*GATE2_MAX_ACCUMS publish array). PlanDims-sized arrays
+# (<D::Units as Capacity>::Array<T>) WORK today. This sketch probes, with real
+# compile attempts against the real crates on the pinned nightly-2026-05-28,
+# which shapes can lift those caps to consumer-tunable values. One feature per
+# shape so a failing shape does not block the others:
+#   s0  baseline: the documented field-access wall, verbatim
+#   s1  Capacity associated types (the PlanDims pattern) for every cap
+#   s2  bare usize const generics threaded via free const fns
+#   s2b cap_size(CU::CAP) scratch in const-fn LOCALS through a 3-layer call
+#       chain with [const] recursion bounds (the masks_of shape)
+#   s2c cap_size(CU::CAP) arrays in the recursive TRAIT signature (the
+#       shape the grouping comment names as the solver overflow)
+#   s3  macro-generated per-cap instantiations at blessed sizes
+#   s4  associated-const indirection through a helper trait whose const is
+#       already a bare usize (no field access in the generic constant)
+#   s4b the s2c recursion with a bare-usize associated const (CU::W) in the
+#       trait-signature array length instead of the cap_size call form
+[features]
+default = []
+s0 = []
+s1 = []
+s2 = []
+s2b = []
+s2c = []
+s3 = []
+s4 = []
+s4b = []
+
+[dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+arvo-tensor = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

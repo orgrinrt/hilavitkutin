@@ -23,7 +23,7 @@ use hilavitkutin_api::{
     ColumnWriterApi, Cons, Contains, Depth, EachApi, Empty, HasBatch, HasColumnReader,
     HasColumnWriter, HasEach, HasReduce, HasResourceProvider, HasVirtualFirer,
     Immediate, Normal, BuilderInput, ReduceApi, ResolveColumnRead, ResolveColumnWrite,
-    ResolveResource, Resource, ResourceProviderApi,
+    ResolveResource, ResolveVirtualFire, Resource, ResourceProviderApi,
     UnitDispatch, Virtual, VirtualFirerApi, WorkUnit, read, write,
 };
 use hilavitkutin_kit::{Kit, KitDispatch};
@@ -228,11 +228,16 @@ impl<T: 'static, I> ResolveResource<T, I> for Stub {
 }
 
 impl<W: AccessSet> VirtualFirerApi<W> for Stub {
-    fn fire<V: 'static>(&self)
+    fn fire<V: 'static, I>(&self)
     where
         W: Contains<Virtual<V>>,
+        Self: ResolveVirtualFire<V, I>,
     {
     }
+}
+
+impl<V, I> ResolveVirtualFire<V, I> for Stub {
+    fn resolve_fire(&self) {}
 }
 
 impl<R: AccessSet, W: AccessSet> EachApi<R, W> for Stub {

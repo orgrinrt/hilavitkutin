@@ -1,0 +1,40 @@
+[package]
+name = "sketch-gate2-r4c-pin-scheduler-integration"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# GATE-2 R4c round B type-composition de-risk. Sketches 202606071600/...1700
+# proved the persistent-pool mechanism + the ThreadPoolApi contract with the
+# shared state as STACK locals in a driver fn (no move, no Pin, no self-ref). The
+# real engine integration is different: the PoolFrame + worker contexts must be
+# INLINE fields of the (generic) Scheduler at a STABLE address (the runtime
+# Scheduler retains no provider and PoolFrame is not a ColumnValue, so it cannot
+# live in the arena), which means the workers' raw pointers depend on Pin. This
+# proves that exact shape compiles + runs before the Scheduler surgery:
+#   - inline `PoolFrame<'static, C, P>` field (dangling progress_slots; the frame
+#     protocol never reads them),
+#   - self-referential `[WorkerCtx; C]` where each ctx holds `*const MiniSched`,
+#     set up at first run_parallel under Pin,
+#   - `run_parallel(self: Pin<&mut Self>, pool: &OsThreadPool, ncores)` spawning
+#     workers ONCE via the real (slice-1) OsThreadPool::spawn smuggle, parking
+#     them across frames via the shipped (round-A) frame helpers,
+#   - `Drop` shutdown-join via request_shutdown + await_exit (no thread join).
+# A trivial disjoint-slice carrier stands in for run_gated (proven elsewhere).
+
+[dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

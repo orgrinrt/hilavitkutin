@@ -13,31 +13,35 @@
 //! Run: `caffeinate -dimsu cargo run --release` (darwin pinning; release is
 //! opt3 / lto-fat / cgu1 per Cargo.toml).
 
-use engine_vs_std::{SIZES, WORKLOADS, measure};
+use engine_vs_std::{Mode, SIZES, WORKLOADS, expected_ratio, measure};
 
 fn main() {
-    println!("# engine_vs_std (#660/#664): single-core engine vs optimal fused std");
+    println!("# engine_vs_std (#660/#664): engine vs optimal std across the full spectrum");
     println!(
-        "# workload, N, engine_startup_ns(med/min), std_startup_ns(med/min), \
-         engine_runtime_ns(med/min), std_runtime_ns(med/min), startup_ratio, runtime_ratio, \
-         checksum_ok"
+        "# workload, N, eng_runtime_ns, std_runtime_ns, runtime_ratio, runtime_expect, \
+         eng_par_ns, par_ratio, par_expect, startup_ratio, checksum_ok"
     );
     for &name in &WORKLOADS {
         for &n in &SIZES {
             let m = measure(name, n);
+            let par_ns = m.eng_runtime_par.map(|p| p.median_ns.to_string()).unwrap_or_else(|| "-".into());
+            let par_ratio = m.par_ratio().map(|r| format!("{r:.3}")).unwrap_or_else(|| "-".into());
+            let par_expect = if m.eng_runtime_par.is_some() {
+                format!("{:.2}", expected_ratio(name, n, Mode::Parallel))
+            } else {
+                "-".into()
+            };
             println!(
-                "{}, {n}, {}/{}, {}/{}, {}/{}, {}/{}, {:.3}, {:.3}, {}",
+                "{}, {n}, {}, {}, {:.3}, {:.2}, {}, {}, {}, {:.3}, {}",
                 m.name,
-                m.eng_startup.median_ns,
-                m.eng_startup.min_ns,
-                m.std_startup.median_ns,
-                m.std_startup.min_ns,
                 m.eng_runtime.median_ns,
-                m.eng_runtime.min_ns,
                 m.std_runtime.median_ns,
-                m.std_runtime.min_ns,
-                m.startup_ratio(),
                 m.runtime_ratio(),
+                expected_ratio(name, n, Mode::SingleCore),
+                par_ns,
+                par_ratio,
+                par_expect,
+                m.startup_ratio(),
                 m.checksum_ok,
             );
             if !m.checksum_ok {

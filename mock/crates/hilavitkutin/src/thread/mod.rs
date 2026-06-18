@@ -14,6 +14,7 @@ pub mod assignment;
 pub mod barrier;
 pub mod class;
 pub mod convergence;
+pub mod frame;
 pub mod handle;
 pub mod hybrid;
 pub mod parking;
@@ -26,6 +27,10 @@ use crate::plan::PlanDims;
 
 pub use assignment::{CoreAssignment, NO_TRUNK};
 pub use barrier::{phase_barrier_arrive, phase_barrier_observe, phase_barrier_reset, BarrierArrival};
+pub use frame::{
+    await_exit, frame_await, frame_await_done, frame_done_arrive, frame_exit_arrive, frame_publish,
+    request_shutdown,
+};
 pub use class::{classify_cores, CoreClass, MAX_CORES};
 pub use convergence::Convergence;
 pub use handle::ThreadHandle;

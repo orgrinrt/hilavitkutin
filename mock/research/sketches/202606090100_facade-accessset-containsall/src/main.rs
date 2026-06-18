@@ -1,7 +1,9 @@
 //! Sketch §7-4a (roadmap r2): the one genuine remaining plugin-phase feasibility
-//! unknown. Does a FACADE WorkUnit register on the real builder and pass build()'s
-//! `Stores: ContainsAll<Wus::AccumRead> + ContainsAll<Wus::AccumWrite>` bound
-//! WITHOUT polluting the host's type-level access analysis or requiring every
+//! unknown. Does a FACADE WorkUnit register on the real builder, pass build()'s
+//! `Stores: ContainsAll<Wus::AccumRead> + ContainsAll<Wus::AccumWrite>` bound,
+//! AND group correctly under the const grouping (the BundleMasks fold behind
+//! `phase_of` / `trunk_of`), producing a correct conservative plan, WITHOUT
+//! polluting the host's type-level access analysis or requiring every
 //! plugin-accessible store pre-registered?
 //!
 //! Background. A runtime-loaded cdylib extension's transform never enters the
@@ -26,7 +28,9 @@
 //! ContainsAll accepts" to "show the bridge-store facade is the sound shape and the
 //! feared over-approximation is never needed."
 //!
-//! Two facade shapes, both run through the REAL build():
+//! Two facade shapes, both run through the REAL build() AND the real engine
+//! dispatch (`Scheduler::run`, so the const grouping plus plan ordering execute,
+//! not a bespoke local walk):
 //!   A. Bridge facade (the canonical sound shape): Read=Column<In>, Write=Column<Out>,
 //!      execute() reads each record, calls an OPAQUE plugin symbol (a black_box'd
 //!      fn pointer = the real cdylib indirect-call ABI boundary), writes the result.
@@ -39,10 +43,23 @@
 //!      private memory). Tests whether a no-host-access facade registers + builds +
 //!      floats in the DAG with no edges.
 //!
-//! If A builds + runs correctly, the leeway ("find ONE sound facade AccessSet
-//! shape, or record the wall") is satisfied and §7-4a is WORKS. B maps how far the
-//! opacity can go. Outcome recorded at the bottom.
+//! Three probes:
+//!   1. build() + run(): the bundle with both facades compiles (= the ContainsAll
+//!      where-clause passed) and the real dispatch produces correct data.
+//!   2. const grouping introspection: `group_n` / `phase_of` / `trunk_of` on the
+//!      same unit list (the blanket `UnitAccess` covers real WUs) record exactly
+//!      what the BundleMasks fold computes for a facade-bearing bundle.
+//!   3. anti-topo counter-probe: registering Consumer BEFORE FacadeBridge must
+//!      fail build() with `NonTopologicalRegistration`, proving the facade's
+//!      bridge AccessSet genuinely enters the dependency analysis (the RAW edge
+//!      is seen, not silently dropped).
+//!
+//! If all three hold, the leeway ("find ONE sound facade AccessSet shape, or
+//! record the wall") is satisfied and §7-4a is WORKS. Outcome at the bottom and
+//! in FINDINGS.md.
 
+#![feature(generic_const_exprs)]
+#![allow(incomplete_features)]
 #![allow(dead_code)]
 
 use core::cell::{Cell, UnsafeCell};
@@ -52,12 +69,11 @@ use core::sync::atomic::{AtomicU32, Ordering};
 
 use arvo::{Bool, USize};
 use hilavitkutin::dispatch::engine_ctx::{
-    AccPtrCons, AccPtrNil, AccumProject, ColPtrCons, ColPtrNil, ColProject, EngineCtx, Project,
-    PtrNil,
+    AccPtrCons, AccPtrNil, ColPtrCons, ColPtrNil, EngineCtx, Here, PtrNil, There,
 };
-use hilavitkutin::dispatch::morsel::MorselRange;
-use hilavitkutin::dispatch::{WuCons, WuNil};
-use hilavitkutin::scheduler::Scheduler;
+use hilavitkutin::plan::grouping::{group_n, phase_of, trunk_of};
+use hilavitkutin::plan::{DefaultPlanDims, PlanDims};
+use hilavitkutin::scheduler::{BuildError, Scheduler};
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{
@@ -69,76 +85,7 @@ use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::store::{Accum, Column};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
-
-// =====================================================================
-// The proven type-level fiber walk (RunFiberCol, sketch 202606081200). Reused
-// verbatim so the facade runs through the real per-fiber devirt shape, not a
-// bespoke driver. Only build()/ContainsAll/DAG is the §7-4a question; correctness
-// via this walk is the supporting check. (§7-4b objdumps the host walk + the ABI
-// hop; here we only assert correctness.)
-// =====================================================================
-trait RunFiberCol<A, Witnesses> {
-    fn run(&self, bindings: &A, morsel: MorselRange);
-}
-
-impl<A> RunFiberCol<A, Empty> for WuNil {
-    #[inline]
-    fn run(&self, _bindings: &A, _morsel: MorselRange) {}
-}
-
-impl<A, W, Tail, RIdx, RCIdx, WCIdx, WAIdx, WTail>
-    RunFiberCol<A, Cons<(RIdx, RCIdx, WCIdx, WAIdx), WTail>> for WuCons<W, Tail>
-where
-    W: WorkUnit,
-    A: Project<<W as WorkUnit>::Read, RIdx>,
-    A: ColProject<<W as WorkUnit>::Read, RCIdx>,
-    A: ColProject<<W as WorkUnit>::Write, WCIdx>,
-    for<'f> A: AccumProject<'f, <W as WorkUnit>::Write, WAIdx>,
-    for<'f> W: WorkUnit<
-        Ctx<'f> = EngineCtx<
-            'f,
-            <W as WorkUnit>::Read,
-            <W as WorkUnit>::Write,
-            <A as Project<<W as WorkUnit>::Read, RIdx>>::Out,
-            <A as ColProject<<W as WorkUnit>::Read, RCIdx>>::Out,
-            <A as ColProject<<W as WorkUnit>::Write, WCIdx>>::Out,
-            <A as AccumProject<'f, <W as WorkUnit>::Write, WAIdx>>::Out,
-        >,
-    >,
-    Tail: RunFiberCol<A, WTail>,
-{
-    #[inline]
-    fn run(&self, bindings: &A, morsel: MorselRange) {
-        let ctx: <W as WorkUnit>::Ctx<'_> =
-            EngineCtx::project::<A, A, RIdx, RCIdx, WCIdx, WAIdx>(bindings, bindings, morsel);
-        self.head.execute(&ctx);
-        self.tail.run(bindings, morsel);
-    }
-}
-
-#[inline(never)]
-fn dispatch_morsel_outer<A, F, WL>(bindings: &A, fiber: &F, total: USize, morsel_size: USize)
-where
-    F: RunFiberCol<A, WL>,
-{
-    let total = black_box(total).0;
-    let step = black_box(morsel_size).0.max(1);
-    let mut start = 0usize;
-    while start < total {
-        let len = step.min(total - start);
-        fiber.run(bindings, MorselRange::new(USize(start), USize(len)));
-        start += len;
-    }
-}
-
-#[inline(never)]
-fn dispatch_unit_outer<A, F, WL>(bindings: &A, fiber: &F, total: USize)
-where
-    F: RunFiberCol<A, WL>,
-{
-    let total = black_box(total);
-    fiber.run(bindings, MorselRange::new(USize(0), total));
-}
+use notko::Outcome;
 
 // =====================================================================
 // The "plugin": a resolved cdylib capability symbol. In production this is a
@@ -310,13 +257,53 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 
 const N: usize = 256;
 
+// =====================================================================
+// Probe 2 fixture: the const grouping over the SAME unit types (the blanket
+// `UnitAccess` covers real WorkUnits). Stores named in a fixed order so the
+// witness positions are explicit: In@0, Out@1, Accum<Sum>@2.
+// =====================================================================
+type GStores = Cons<Column<In>, Cons<Column<Out>, Cons<Accum<Sum>, Empty>>>;
+type GUnits = Cons<FacadeBridge, Cons<Consumer, Cons<FacadeOpaque, Empty>>>;
+type CS = <DefaultPlanDims as PlanDims>::Stores;
+type CU = <DefaultPlanDims as PlanDims>::Units;
+type Adj = <DefaultPlanDims as PlanDims>::AdjRow;
+type P0 = Here;
+type P1 = There<Here>;
+type P2 = There<There<Here>>;
+// Per-unit (ReadIdx, WriteIdx) witness lists, parallel to each unit's sets.
+type WFacade = (Cons<P0, Empty>, Cons<P1, Empty>); // R{In@0} W{Out@1}
+type WConsumer = (Cons<P1, Empty>, Cons<P2, Empty>); // R{Out@1} W{Sum@2}
+type WOpaque = (Empty, Empty); // R{} W{}
+type GWit = Cons<WFacade, Cons<WConsumer, Cons<WOpaque, Empty>>>;
+
 fn main() {
-    let provider = BumpProvider::<262144>::new();
-    // Stores: Accum<Sum>, Column<Out>, Column<In>. NO plugin store. Then the three
-    // WUs, INCLUDING both facade shapes, in one bundle. If build() compiles, the
+    // ---- Probe 3: anti-topo counter-probe. Consumer registered BEFORE the
+    // facade that produces its input must be REJECTED, because the facade's
+    // bridge AccessSet contributes a real RAW edge the analysis sees. If this
+    // build succeeded, the facade's access would be invisible to the plan
+    // (an over-approximation in the other direction: under-approximation).
+    let provider_bad = BumpProvider::<262144>::new();
+    let bad = Scheduler::builder()
+        .with(Accum::<Sum>::new())
+        .with(Column::<Out>::new())
+        .with(Column::<In>::new())
+        .with(Consumer)
+        .with(FacadeBridge)
+        .with(FacadeOpaque)
+        .build(store(provider_bad), USize(N));
+    assert!(
+        matches!(bad, Outcome::Err(BuildError::NonTopologicalRegistration { .. })),
+        "anti-topo registration (Consumer before FacadeBridge) must be rejected: \
+         the facade's bridge AccessSet contributes the RAW edge the analysis checks"
+    );
+
+    // ---- Probe 1: the real build() + run(). Stores: Accum<Sum>, Column<Out>,
+    // Column<In>. NO plugin store. Then the three WUs, INCLUDING both facade
+    // shapes, in one bundle, in topo-valid order. If build() compiles, the
     // `Stores: ContainsAll<Wus::AccumRead> + ContainsAll<Wus::AccumWrite>` bound
-    // PASSED with two facades present: that is the §7-4a proof.
-    let sched = Scheduler::builder()
+    // PASSED with two facades present: that is the §7-4a build proof.
+    let provider = BumpProvider::<262144>::new();
+    let mut sched = Scheduler::builder()
         .with(Accum::<Sum>::new())
         .with(Column::<Out>::new())
         .with(Column::<In>::new())
@@ -333,18 +320,11 @@ fn main() {
         unsafe { *in_base.add(i) = In(i as u32) };
     }
 
-    // Fiber 1 (bridge facade, accumulator-free): FacadeBridge, morsel-outer.
-    let fiber1 = WuCons { head: FacadeBridge, tail: WuNil };
-    dispatch_morsel_outer(sched.__bindings(), &fiber1, USize(N), USize(32));
-
-    // Fiber 2 (opaque facade, no host access): FacadeOpaque, morsel-outer. It reads
-    // and writes nothing in the data plane; it only fires the side-effect cap.
-    let fiber_b = WuCons { head: FacadeOpaque, tail: WuNil };
-    dispatch_morsel_outer(sched.__bindings(), &fiber_b, USize(N), USize(32));
-
-    // Fiber 3 (downstream consumer, accumulator): Consumer, unit-outer.
-    let fiber2 = WuCons { head: Consumer, tail: WuNil };
-    dispatch_unit_outer(sched.__bindings(), &fiber2, USize(N));
+    // The REAL engine dispatch: const grouping -> phases/trunks -> per-trunk
+    // monos -> morsel walk. The plan (not this sketch) orders FacadeBridge
+    // before Consumer via the RAW edge on Column<Out>.
+    let result = sched.run();
+    assert!(matches!(result, Outcome::Ok(())), "scheduler.run() should succeed");
 
     // Verify the bridge facade transformed In -> Out via the opaque plugin symbol.
     let out_base = sched.__bindings().__tail().__ptr().as_ptr() as *const u32;
@@ -354,7 +334,8 @@ fn main() {
         assert_eq!(out[i], expected_transform(i as u32), "Out[{i}] (FacadeBridge via opaque plugin)");
     }
 
-    // Verify the consumer accumulated Sum from Out (the facade's output).
+    // Verify the consumer accumulated Sum from Out (the facade's output),
+    // proving the plan ran the facade FIRST (a correct conservative ordering).
     let sum_binding = sched.__bindings().__tail().__tail();
     let sum_len = sum_binding.__len_cell().get().0;
     assert_eq!(sum_len, N, "accum live length should be N (Consumer over facade Out)");
@@ -371,76 +352,79 @@ fn main() {
     assert_eq!(transform_calls, N as u32, "plugin transform cap called once per record");
     assert_eq!(side_effects, N as u32, "plugin side-effect cap called once per record (opaque facade)");
 
+    // ---- Probe 2: what the const grouping (BundleMasks fold) computes for the
+    // facade-bearing bundle. Recorded, then the load-bearing properties asserted.
+    let n_units = group_n::<GUnits, GStores, GWit, CU, CS>().0;
+    let ph = [
+        phase_of::<GUnits, GStores, GWit, CU, CS, Adj>(USize(0)).0,
+        phase_of::<GUnits, GStores, GWit, CU, CS, Adj>(USize(1)).0,
+        phase_of::<GUnits, GStores, GWit, CU, CS, Adj>(USize(2)).0,
+    ];
+    let tr = [
+        trunk_of::<GUnits, GStores, GWit, CU, CS, Adj>(USize(0)).0,
+        trunk_of::<GUnits, GStores, GWit, CU, CS, Adj>(USize(1)).0,
+        trunk_of::<GUnits, GStores, GWit, CU, CS, Adj>(USize(2)).0,
+    ];
+    println!(
+        "grouping over [FacadeBridge, Consumer, FacadeOpaque]: n={n_units} \
+         phase={ph:?} trunk={tr:?}"
+    );
+    assert_eq!(n_units, 3, "all three units grouped, facades included");
+    // The facade must never be ordered after its consumer.
+    assert!(
+        ph[0] <= ph[1],
+        "FacadeBridge phase must not exceed Consumer phase (RAW edge respected)"
+    );
+    // Within a shared phase the RAW conflict joins facade + consumer into one
+    // trunk; the no-access opaque facade must never be pulled into that trunk
+    // (it would mean the empty AccessSet over-approximated into a serialiser).
+    if ph[0] == ph[1] {
+        assert_eq!(tr[0], tr[1], "facade + consumer share a trunk via the Out conflict");
+    }
+    if ph[2] == ph[0] {
+        assert_ne!(
+            tr[2], tr[0],
+            "the opaque Empty/Empty facade floats in its own trunk, no synthetic edges"
+        );
+    }
+
     println!(
         "build() succeeded with TWO facade WUs in the bundle (bridge + opaque): the \
-         ContainsAll<AccumRead/AccumWrite> bound passed. FacadeBridge transformed {N} records via \
-         an opaque plugin symbol (In -> Out), Consumer accumulated Sum from Out, FacadeOpaque fired \
-         {side_effects} side-effects on plugin-private memory. No plugin store was registered; the \
-         facades carry only their bridge AccessSets ({} transform calls).",
+         ContainsAll<AccumRead/AccumWrite> bound passed. Real scheduler.run(): FacadeBridge \
+         transformed {N} records via an opaque plugin symbol (In -> Out), Consumer accumulated \
+         Sum from Out, FacadeOpaque fired {side_effects} side-effects on plugin-private memory. \
+         Anti-topo registration correctly rejected. No plugin store was registered; the facades \
+         carry only their bridge AccessSets ({} transform calls).",
         transform_calls
     );
 }
 
 // ---------------------------------------------------------------------
-// OUTCOME: WORKS, on nightly-2026-05-28 (release, fat LTO, cgu=1). The feared
-// wall DISSOLVED rather than materialised.
+// OUTCOME: WORKS, on nightly-2026-05-28 (release, fat LTO, cgu=1), re-validated
+// 2026-06-11 against the post-E4 engine (MetaBlock / WVirt / MP EngineCtx shape)
+// through the REAL `Scheduler::run` dispatch and the REAL const grouping, not a
+// local walk. The feared wall DISSOLVED rather than materialised. Full findings
+// in FINDINGS.md alongside this file; the short form:
 //
-// build() compiled and succeeded with TWO facade WUs in the bundle (the bridge
-// facade Read=Column<In>/Write=Column<Out>, and the opaque facade Read=Empty/
-// Write=Empty), alongside a real accumulator Consumer (Read=Column<Out>/
-// Write=Accum<Sum>). Because build()'s `Stores: ContainsAll<Wus::AccumRead> +
-// ContainsAll<Wus::AccumWrite>` is a where-clause, the fact that the bundle
-// COMPILES is the proof that the bound passed with facades present. Ran 256
-// records: Out[i] = plugin_transform(In[i]) via the opaque indirect-call symbol,
-// Sum accumulated from Out, and the opaque facade fired 256 side-effects on
-// plugin-private memory. The plugin's private invocation counters advanced,
-// confirming opaque work happened on NON-host memory.
+//   1. build() compiled and succeeded with TWO facade WUs in the bundle (the
+//      bridge facade Read=Column<In>/Write=Column<Out>, and the opaque facade
+//      Read=Empty/Write=Empty), alongside a real accumulator Consumer. The
+//      ContainsAll bound is a where-clause: compiling IS the proof it passed.
+//   2. The const grouping (BundleMasks fold) groups the facade by exactly its
+//      bridge edges: facade + consumer joined by the RAW conflict on Out, the
+//      opaque facade floating with no synthetic edges. `scheduler.run()`
+//      dispatched the plan and produced correct data end to end.
+//   3. The anti-topo counter-probe (Consumer registered before FacadeBridge)
+//      fails build() with NonTopologicalRegistration: the facade's AccessSet
+//      genuinely participates in the dependency analysis.
 //
-// The decisive finding: §7-4a's feared wall ("if the facade must carry an
-// over-approximating concrete AccessSet, ContainsAll may reject it") does NOT
-// arise, because the SOUND facade never needs an over-approximating or synthetic
-// AccessSet. It declares only its BRIDGE stores (the host I/O it marshals across
-// the ABI). Reasons, each confirmed by the sketch:
-//
-//   1. ContainsAll is a registration check, not a coverage check. It requires only
-//      that the named stores in AccumRead/AccumWrite be registered (access.rs:111
-//      `ContainsAll<Empty>` is blanket-true; the recursive arm needs each member
-//      `Contains`-present). A facade naming registered bridge stores satisfies it;
-//      it has no notion of "the plugin's full access" to over-approximate against.
-//      It NEVER rejects for under-/over-approximation; it rejects only for an
-//      unregistered named store, which a bridge facade does not have.
-//
-//   2. The plugin's "unknown access" is NON-HOST data. The plugin operates on the
-//      value(s) the facade hands it across the ABI plus its own private memory
-//      (the static counters here). None of that is a scheduler store, so it is
-//      correctly absent from every AccessSet. A plugin reaching host data it was
-//      not handed is the global-reach-in anti-pattern
-//      (hilavitkutin-workunit-mental-model), not a facade requirement. NO synthetic
-//      "plugin region" store was registered, and none was needed.
-//
-//   3. No host access-analysis pollution. The bridge facade contributes exactly
-//      its declared edges (RAW: Consumer depends on FacadeBridge via Column<Out>).
-//      The opaque Empty/Empty facade contributes NO edges and floats in the DAG,
-//      which is the correct model for "does opaque work touching nothing the host
-//      owns." Neither over-approximates into a depends-on-everything serialiser.
-//
-// So the §7-4a leeway ("find ONE sound facade AccessSet shape, or record the
-// wall") is satisfied by BOTH shapes, and the framing is corrected: the sound
-// plugin-integration shape is a bridge WU declaring its concrete host I/O, with
-// the plugin's internal access living entirely behind the ABI as non-host data.
-// The opaque Empty/Empty facade also builds and runs, so the maximally-opaque
-// extreme (a pure side-effect capability) is supported too. NOT a wall; no
-// Step-11 op-decision triggered. §7-4a clears.
-//
-// What §7-4a does NOT prove (deferred to §7-4b, the next sketch): that the host's
-// per-record dispatch stays zero-blr while the ONLY indirect hop is the per-morsel
-// ABI call (this sketch calls the opaque symbol per RECORD via black_box, which is
-// faithful for the build/ContainsAll/DAG question but not the hot-path-cost
-// question). §7-4b refines the facade to a per-morsel ABI hop and objdumps the
-// host walk. The production capability shape (a fn-ptr vtable held in a
-// Resource<CapabilityVtable> singleton per the hilavitkutin-extensions
-// ProviderId/CapabilityId ABI) is the same AccessSet story: the Resource is a
-// registered host store the facade reads; the plugin's work behind the vtable is
-// non-host. That Resource-read variant is a mechanical extension, not a new
-// feasibility question.
+// The decisive finding: the SOUND facade never needs an over-approximating or
+// synthetic AccessSet. It declares only its BRIDGE stores; the plugin's
+// "unknown access" is non-host data (the values handed across the ABI plus
+// plugin-private memory), correctly absent from every host AccessSet.
+// ContainsAll is a registration check, not a coverage check; it never rejects
+// for under-/over-approximation, only for an unregistered named store, which a
+// bridge facade does not have. NOT a wall; no Step-11 op-decision triggered.
+// §7-4a clears. The per-morsel ABI-hop cost question is §7-4b (sibling sketch
+// 202606090200).
 // ---------------------------------------------------------------------

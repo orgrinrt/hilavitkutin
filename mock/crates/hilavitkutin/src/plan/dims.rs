@@ -13,12 +13,13 @@
 
 use arvo::{Bits, Hot, Identity, Unsigned};
 use arvo_bitmask::{BitAccess, BitLogic, BitSequence};
-use arvo_tensor::{Capacity, Dim};
+use arvo_tensor::{Capacity, ConstCapacity, Dim};
 
 /// The engine's plan capacity dimensions, each a `Capacity` type.
 pub trait PlanDims {
-    /// WorkUnits in the pipeline.
-    type Units: Capacity;
+    /// WorkUnits in the pipeline. Also `ConstCapacity` so the const grouping can
+    /// run the compile-time waist analysis over the unit space.
+    type Units: Capacity + ConstCapacity;
     /// Distinct stores (access-mask width).
     type Stores: Capacity;
     /// Dependency-graph edges.

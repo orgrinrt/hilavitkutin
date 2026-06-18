@@ -182,6 +182,38 @@ pub struct PoolFrame<'arena, const MAX_CORES: usize, const MAX_PHASES: usize> {
     /// (Release); last arriver futex-wakes all and resets.
     pub phase_arrived: AtomicU32,
 
+    /// Waist-barrier sense / generation word. Paired with
+    /// `phase_arrived` for the worker-side sense-reversing barrier:
+    /// the last arriver of an episode resets `phase_arrived` and bumps
+    /// this (Release), then futex-wakes all; followers park on it and
+    /// wake when it changes from the value they snapshotted on entry.
+    /// The flip makes the barrier reusable across the many waists of a
+    /// frame with no reset race (a fast worker that loops to the next
+    /// episode waits for the next flip, never a stale count).
+    pub barrier_sense: AtomicU32,
+
+    /// Frame sequence / worker wake word. The scheduler bumps it
+    /// (Release) and futex-wakes to publish a new frame; parked
+    /// workers wait on it. Distinct from `phase_arrived` (the
+    /// within-frame waist barrier): `seq` marks frame START. Drives
+    /// the per-frame protocol in `thread::frame`.
+    pub seq: AtomicU32,
+
+    /// Frame-completion counter / scheduler wake word. Each worker
+    /// fetch_add(1)s (Release) on finishing a frame; the last arriver
+    /// futex-wakes the scheduler, which is parked on it. Reset to zero
+    /// by the scheduler before each `frame_publish`.
+    pub done: AtomicU32,
+
+    /// Worker-exit counter. Each worker fetch_add(1)s (Release) on
+    /// observing `shutdown`, then futex-wakes the scheduler. The
+    /// scheduler waits for this to reach the worker count before the
+    /// `PoolFrame` (and the carrier its workers read) can drop. This
+    /// is the join with no join method: the `ThreadPoolApi` contract
+    /// is fire-and-forget and workers are detached, so the exit
+    /// counter, not a thread join, provides the shutdown ordering.
+    pub exited: AtomicU32,
+
     /// Per-phase predicted wait time in nanoseconds, written by
     /// AdaptWu at `ScheduleEnd`, read by workers at phase entry.
     /// Drives WakeStrategy tier selection.

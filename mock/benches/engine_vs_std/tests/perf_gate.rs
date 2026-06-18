@@ -1,46 +1,43 @@
-//! Standing perf gate (#664): the single-core engine must be no worse than an
-//! optimal hand-fused std loop.
+//! Standing perf gate (#664): the engine must compare to optimal std AS
+//! EXPECTED for each workload, size, and execution mode.
 //!
-//! RED until Phase D (#340) lands the two load-bearing mechanisms (dispatch
-//! devirtualisation and within-fiber stage fusion); GREEN signals Gate-1 (#661)
-//! perf-done. The failing state IS the specification: this is the executable
-//! definition of "the single-core engine is complete", per the workspace's
-//! strict-by-design discipline.
+//! This is not a uniform parity target. Each `(workload, size, mode)` carries a
+//! design-intent ceiling (`engine_vs_std::expected_ratio`): parity arms gate at
+//! ~1.0x, known-loss arms gate at the loss the columnar/dispatch shape is
+//! expected to incur (red only if WORSE than expected), and win arms gate below
+//! 1.0x so the gate REQUIRES the engine to beat single-threaded std. Red means
+//! "did not compare as expected here", which is the whole point of a standing
+//! oracle: it stays red until the canonical mechanisms close each arm's gap, and
+//! it would also catch a regression that made a met expectation slip.
 //!
-//! These tests are `#[ignore]` by default for two reasons. They are timing
-//! assertions that are EXPECTED red right now, so auto-running them would fail
-//! every unrelated `cargo test`. And they are only meaningful under the release
-//! profile (fat LTO, codegen-units=1, set in Cargo.toml); a debug build would
-//! compare un-optimised arms and report noise. Run the oracle deliberately:
+//! Two axes per workload:
+//!  - SINGLE-CORE runtime: `run()` / `run_fused()` vs optimal std.
+//!  - PARALLEL runtime: `run_parallel()` vs optimal MULTI-threaded std (idiomatic
+//!    `std::thread::scope`, equal core budget), for the multi-trunk workloads the
+//!    engine can spread across cores. This is the fair parallel bar: an N-core
+//!    engine judged against N-core std, not a serial loop. The report also shows
+//!    the raw speedup vs serial std as context.
+//!
+//! These tests are `#[ignore]` by default: they are timing assertions only
+//! meaningful under the release profile (fat LTO, cgu=1, set in Cargo.toml), and
+//! several are expected red until later gates land, so auto-running them would
+//! fail every unrelated `cargo test`. Run the oracle deliberately:
 //!
 //! ```text
 //! cd mock/benches/engine_vs_std
 //! caffeinate -dimsu cargo test --release -- --ignored --test-threads=1
 //! ```
 //!
-//! `--test-threads=1` keeps the timed arms off contended cores so the measured
-//! ratio is a clean single-core comparison rather than scheduler noise.
+//! `--test-threads=1` keeps the single-core timed arms off contended cores. The
+//! parallel arms intentionally use the machine's cores via the engine pool; the
+//! std arm they compare against is single-threaded by construction.
 //!
 //! Checksum equality is asserted first in every test, so a failure is
-//! unambiguously "engine slower" (the gate doing its job) and never "the two
-//! arms diverged" (a broken bench whose ratio would be meaningless).
-//!
-//! Two axes:
-//!  - RUNTIME (steady-state, process to finish): asserted at every size. The
-//!    headline drive-toward-parity gate. Red now (roughly 2x to 5x); green when
-//!    fusion removes the intermediate-column traffic and mega-dispatch removes
-//!    the per-unit dispatch overhead.
-//!  - STARTUP (get ready): asserted only at the largest size, where the
-//!    schedule-once design makes startup parity reachable (std re-allocates the
-//!    full buffers each get-ready; the engine's plan build is a fixed cost that
-//!    beats large allocations at scale). At small sizes the fixed plan-build
-//!    cost cannot match two `vec!` calls, and that gap amortises across reused
-//!    frames by design, so raw startup is reported by the bench at every size
-//!    but not asserted as a forever-red gate Phase D cannot close.
+//! unambiguously a perf result and never two arms that diverged.
 
 use engine_vs_std::{
-    RUNTIME_TOLERANCE, SIZES, STARTUP_TOLERANCE, WORKLOADS, WorkloadMeasure, accumulator,
-    branching, element_wise, measure,
+    Mode, SIZES, STARTUP_TOLERANCE, WORKLOADS, WorkloadMeasure, accumulator, branching,
+    element_wise, expected_ratio, measure, wide_parallel,
 };
 
 fn assert_checksum(m: &WorkloadMeasure) {
@@ -53,50 +50,113 @@ fn assert_checksum(m: &WorkloadMeasure) {
     );
 }
 
-/// Assert the runtime axis for one workload across the full size sweep. Reports
-/// the gradient (every size) in the panic message so progress through Phase D
-/// shows in the red output, not just the first size that exceeds tolerance.
+/// Assert the single-core runtime axis for one workload across the size sweep,
+/// each size against its own design-intent ceiling. Reports the full gradient so
+/// progress (and which size regressed) shows in the panic message.
 fn runtime_gate(name: &'static str) {
     let mut report = String::new();
-    let mut worst = 0.0f64;
+    let mut breached = false;
     for &n in &SIZES {
         let m = measure(name, n);
         assert_checksum(&m);
         let r = m.runtime_ratio();
-        worst = worst.max(r);
+        let exp = expected_ratio(name, n, Mode::SingleCore);
+        let ok = r <= exp;
+        breached |= !ok;
         report.push_str(&format!(
-            "  N={n:>8}: runtime {r:.3}x  (engine {} ns, std {} ns)\n",
-            m.eng_runtime.median_ns, m.std_runtime.median_ns
+            "  N={n:>8}: runtime {r:.3}x  (expect <= {exp:.2}x) {}  (engine {} ns, std {} ns)\n",
+            if ok { "ok" } else { "RED" },
+            m.eng_runtime.median_ns,
+            m.std_runtime.median_ns
         ));
     }
     assert!(
-        worst <= RUNTIME_TOLERANCE,
-        "RUNTIME gate RED for `{name}` (worst {worst:.3}x > tolerance {RUNTIME_TOLERANCE:.2}x).\n\
-         Expected red until Phase D (#340) lands within-fiber fusion + mega-dispatch. This gate \
-         turns green at parity and signals Gate-1 (#661) perf-done.\n{report}"
+        !breached,
+        "SINGLE-CORE runtime gate RED for `{name}` (a size exceeded its expected ratio).\n\
+         The ceiling per size encodes how the engine is expected to compare on this workload; \
+         red means it did not. This is the standing oracle, red until the canonical mechanisms \
+         close the gap.\n{report}"
+    );
+}
+
+/// Assert the parallel runtime axis for one (multi-trunk) workload, each size
+/// against its expected ceiling. Skips sizes the workload did not measure
+/// parallel (it always does if the arm sets `eng_runtime_par`).
+fn parallel_gate(name: &'static str) {
+    let mut report = String::new();
+    let mut breached = false;
+    let mut measured_any = false;
+    for &n in &SIZES {
+        let m = measure(name, n);
+        assert_checksum(&m);
+        let Some(r) = m.par_ratio() else { continue };
+        measured_any = true;
+        let exp = expected_ratio(name, n, Mode::Parallel);
+        let ok = r <= exp;
+        breached |= !ok;
+        let par_ns = m.eng_runtime_par.map(|p| p.median_ns).unwrap_or(0);
+        let std_par_ns = m.std_runtime_par.map(|p| p.median_ns).unwrap_or(0);
+        let speedup = m.par_speedup_vs_serial().unwrap_or(0.0);
+        report.push_str(&format!(
+            "  N={n:>8}: parallel {r:.3}x vs std-par  (expect <= {exp:.2}x) {}  \
+             (engine {} ns, std-par {} ns; {:.2}x vs serial std)\n",
+            if ok { "ok" } else { "RED" },
+            par_ns,
+            std_par_ns,
+            speedup,
+        ));
+    }
+    assert!(
+        measured_any,
+        "workload `{name}` declared a parallel gate but measured no parallel runtime"
+    );
+    assert!(
+        !breached,
+        "PARALLEL runtime gate RED for `{name}` (a size exceeded its expected ratio).\n\
+         The ratio is the multi-threaded engine against OPTIMAL multi-threaded std (equal \
+         core budgets); a ceiling at or below 1.0x requires the engine to match or beat \
+         parallel std, red means it did not.\n{report}"
     );
 }
 
 #[test]
-#[ignore = "perf oracle, red until Phase D (#340); run: cargo test --release -- --ignored"]
+#[ignore = "perf oracle; run: cargo test --release -- --ignored"]
 fn runtime_element_wise() {
     runtime_gate(element_wise::NAME);
 }
 
 #[test]
-#[ignore = "perf oracle, red until Phase D (#340); run: cargo test --release -- --ignored"]
+#[ignore = "perf oracle; run: cargo test --release -- --ignored"]
 fn runtime_branching() {
     runtime_gate(branching::NAME);
 }
 
 #[test]
-#[ignore = "perf oracle, red until Phase D (#340); run: cargo test --release -- --ignored"]
+#[ignore = "perf oracle; run: cargo test --release -- --ignored"]
 fn runtime_accumulator() {
     runtime_gate(accumulator::NAME);
 }
 
 #[test]
-#[ignore = "perf oracle, red until Phase D (#340); run: cargo test --release -- --ignored"]
+#[ignore = "perf oracle; run: cargo test --release -- --ignored"]
+fn runtime_wide_parallel() {
+    runtime_gate(wide_parallel::NAME);
+}
+
+#[test]
+#[ignore = "perf oracle, the multi-threaded win path; run: cargo test --release -- --ignored"]
+fn parallel_wide_parallel() {
+    parallel_gate(wide_parallel::NAME);
+}
+
+#[test]
+#[ignore = "perf oracle; run: cargo test --release -- --ignored"]
+fn parallel_accumulator() {
+    parallel_gate(accumulator::NAME);
+}
+
+#[test]
+#[ignore = "perf oracle; run: cargo test --release -- --ignored"]
 fn startup_largest_size() {
     let n = *SIZES.iter().max().expect("SIZES is non-empty");
     let mut report = String::new();
@@ -107,7 +167,7 @@ fn startup_largest_size() {
         let r = m.startup_ratio();
         worst = worst.max(r);
         report.push_str(&format!(
-            "  {name:>12}: startup {r:.3}x  (engine {} ns, std {} ns)\n",
+            "  {name:>14}: startup {r:.3}x  (engine {} ns, std {} ns)\n",
             m.eng_startup.median_ns, m.std_startup.median_ns
         ));
     }

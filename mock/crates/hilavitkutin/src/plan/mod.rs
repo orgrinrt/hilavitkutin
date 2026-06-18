@@ -26,6 +26,7 @@ pub mod dims;
 pub mod dirty;
 pub mod fiber;
 pub mod graph;
+pub mod grouping;
 pub mod inputs;
 pub mod laplacian;
 pub mod phase;
@@ -42,6 +43,9 @@ pub use fiber::{
     AccumSlot, AccumType, Fiber, FiberGrouping, HeadTailConvergence, MergeOp,
 };
 pub use graph::{DependencyGraph, EdgeKind};
+pub use grouping::{
+    group_n, phase_count, phase_of, plan_phase_count, trunk_of, BundleMasks, UnitAccess,
+};
 pub use inputs::PlanInputs;
 pub use project::plan_inputs_from_bundle;
 pub use steps::{FiberLayout, PlanError};

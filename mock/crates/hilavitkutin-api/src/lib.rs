@@ -37,6 +37,7 @@ pub mod hint;
 pub mod id;
 pub mod macros;
 pub mod platform;
+pub mod meta;
 pub mod prelude;
 pub mod record_op;
 pub mod run_cfg;
@@ -61,7 +62,8 @@ pub use record_op::RecordOp;
 pub use context::{
     BatchApi, ColumnReaderApi, ColumnWriterApi, EachApi, HasBatch, HasColumnReader,
     HasColumnWriter, HasEach, HasReduce, HasResourceProvider, HasVirtualFirer, ReduceApi,
-    ResolveColumnRead, ResolveColumnWrite, ResolveResource, ResourceProviderApi, VirtualFirerApi,
+    ResolveColumnRead, ResolveColumnWrite, ResolveResource, ResolveVirtualFire, ResourceProviderApi,
+    VirtualFirerApi,
 };
 pub use hint::{
     Adaptive, Atomic, Critical, Deferred, Divisibility, DivisibilityValue, Immediate, Important,
@@ -93,5 +95,9 @@ pub use store::{
 pub use store_values::{
     Place, PlatformKind, RouterKind, StoreKind, StoreValues, Sv, SvEmpty, UnitKind, WorkUnitKind,
 };
-pub use work_unit::{Always, On, WorkUnit, WorkUnitBundle};
+pub use meta::{
+    Dag, ExecutionPlan as MetaExecutionPlan, LaneAssignment, MetaAccess, MetaVirtual,
+    SchedulerMetrics,
+};
+pub use work_unit::{Always, HasSchedule, Lifecycle, On, OnMeta, ScheduleGate, WorkUnit, WorkUnitBundle};
 pub use work_unit_values::{WuCons, WuNil};

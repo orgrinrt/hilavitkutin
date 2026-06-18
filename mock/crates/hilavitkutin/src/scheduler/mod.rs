@@ -40,14 +40,17 @@
 //! an argument and returns `Outcome<_, BuildError>`.
 
 use core::fmt;
-use core::marker::PhantomData;
-use core::sync::atomic::AtomicBool;
+use core::marker::{PhantomData, PhantomPinned};
+use core::cell::Cell;
+use core::pin::Pin;
+use core::ptr::NonNull;
+use core::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicUsize, Ordering};
 
 use arvo::strategy::Identity;
 use arvo::Bool;
 use arvo::USize;
 use arvo_bitmask::{BitAccess, BitLogic, BitSequence};
-use arvo_tensor::Capacity;
+use arvo_tensor::{Capacity, ConstCapacity};
 use crate::plan::project::{AccumStoresMask, BundleProject, Locate, WitnessIndex};
 use crate::plan::{
     compute_execution_plan, plan_inputs_from_bundle, AccessMask, DefaultPlanDims, ExecutionPlan,
@@ -55,7 +58,7 @@ use crate::plan::{
 };
 use hilavitkutin_api::access::{AccessSet, ContainsAll, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, Dispatch};
-use hilavitkutin_api::platform::MemoryProviderApi;
+use hilavitkutin_api::platform::{ClockApi, MemoryProviderApi, Nanos};
 use hilavitkutin_api::run_cfg::{DefaultRunCfg, PlanAffecting, RunCfg};
 use hilavitkutin_api::store::Replaceable;
 use hilavitkutin_api::store_values::{Place, RouterKind, StoreValues, SvEmpty};
@@ -63,17 +66,33 @@ use hilavitkutin_api::work_unit::WorkUnitBundle;
 use hilavitkutin_api::work_unit_values::{WuAppend, WuCons, WuNil};
 use hilavitkutin_api::{ColumnStorage, ColumnValue, StoreId, UnitId};
 
+use crate::dispatch::core_mask::{grouping_arrays, phase_mask, phase_trunk_count};
+use crate::thread::barrier::waist_barrier;
+use crate::thread::class::MAX_CORES;
+use crate::thread::frame::{
+    await_exit, frame_await, frame_await_done, frame_done_arrive, frame_exit_arrive, frame_publish,
+    request_shutdown,
+};
+use hilavitkutin_api::platform::{PoolFrame, ThreadPoolApi};
 use crate::dispatch::fiber_run::RunFiber;
 use crate::dispatch::fusion::{ChainWu, FuseCarrier};
 use crate::dispatch::morsel::MorselRange;
+use crate::dispatch::engine_ctx::Here;
+use crate::dispatch::trunk_dispatch::RunTrunkDispatch;
+use crate::dispatch::trunk_gate::RunGatedTrunk;
+use crate::meta::{fold_ema, MetaBlock};
+use crate::plan::grouping::{
+    consumer_mask, consumer_phase_end, phase_count, plan_phase_count, pre_consumer_phase_count,
+    BundleMasks, GATE2_MAX_ACCUMS, GATE2_MAX_UNITS,
+};
 
-pub mod metrics;
 pub mod plan;
 
-pub use metrics::SchedulerMetrics;
 pub use plan::PlanCache;
 
-use crate::resource::bindings::{BindingsFor, DrainStores, ResetAccumulators};
+use crate::resource::bindings::{
+    BindingsFor, CollectAccumLive, DrainStores, MergeAccums, RebaseBindings, ResetAccumulators,
+};
 
 /// The default empty store-value list, used as the `Vals` default for a
 /// bare `Scheduler` type.
@@ -557,6 +576,7 @@ pub struct Scheduler<
     CS: ColumnStorage = NullColumnStorage,
     D: PlanDims = DefaultPlanDims,
     Stores = Empty,
+    Clk = DefaultClock,
 > {
     _cfg: PhantomData<Cfg>,
     /// The registered store access set, retained so `mark_dirty` /
@@ -618,11 +638,33 @@ pub struct Scheduler<
     /// Per-store change seed (Stores-list-position space). `mark_dirty`,
     /// `replace_resource`, and `replace_value` set bits here; `run` /
     /// `run_fused` consume and clear it each frame.
-    store_dirty: AccessMask<D::Stores>,
+    /// `Cell` for interior mutability: `run_parallel` rewrites the seed between
+    /// frames while parked workers hold a live shared reference to the
+    /// scheduler, so the write must not go through a plain field.
+    store_dirty: Cell<AccessMask<D::Stores>>,
     /// Cold-start flag. Every unit is dirty on the first frame after build,
     /// so the first `run` / `run_fused` executes the whole carrier; set
-    /// false afterward.
-    first_frame: Bool,
+    /// false afterward. `AtomicBool` (Relaxed, ordered by the frame barriers)
+    /// so the between-frame write goes through a shared reference.
+    first_frame: AtomicBool,
+    /// E4 slice 1: the virtual-fire epoch. Incremented once per pass before
+    /// dispatch; a producer's `fire<V>` stamps its `Virtual<V>` cell with the
+    /// current value, and an `On<V>` consumer's gate opens when the cell equals
+    /// it. Per-pass increment is the domain-10 epoch-reset (spec :709-713): last
+    /// pass's stamp no longer equals this pass's epoch, so a stale fire gates
+    /// shut without an explicit clear. `AtomicUsize` (Relaxed, ordered by the
+    /// frame barriers) wraps effectively-never.
+    virtual_epoch: AtomicUsize,
+    /// E4 slice 3: engine-owned meta state (the self-hosting meta pipeline's
+    /// mutable resources). Not a `Store` (consumer stores are `Copy` read-only),
+    /// written directly by the engine each pass; an `OnMeta` work unit reads it
+    /// through the `MetaAccess`-gated Ctx accessor. `SchedulerMetrics::pass_count`
+    /// advances once per pass.
+    meta_block: MetaBlock,
+    /// E8 adapt: the clock provider sampled at frame start and end for the
+    /// pass-duration EMA. Carried from the builder's clock slot;
+    /// `DefaultClock` unless overridden via `SchedulerBuilder::clock`.
+    clock: Clk,
     /// Scheduler-owned resource bindings, built from the registered store
     /// values at `build()`. Holds only `Copy` pointers into the store's
     /// reserved columns; no destructor walk on drop.
@@ -633,6 +675,309 @@ pub struct Scheduler<
     /// Registered WorkUnit instances, retained from the builder in
     /// registration order. `run()` walks this value-carrying unit list.
     wu_values: WuVals,
+    /// GATE-2 persistent-pool sync words (frame seq/done/exited + shutdown +
+    /// phase barrier). `'static` with dangling progress_slots and `<1, 1>` arrays
+    /// (the C/P-sized adapt arrays are unused until the adapt subsystem ships;
+    /// the sync words are scalars). Pinned (see `_pin`), so the spawned workers'
+    /// raw pointers into it stay valid for the scheduler's life.
+    pool: PoolFrame<'static, 1, 1>,
+    /// Per-worker contexts the spawned-once workers read through a raw pointer.
+    /// Populated at the first `run_parallel`; stable because the scheduler is
+    /// pinned once threaded.
+    worker_ctxs: [WorkerCtx; MAX_CORES],
+    /// Whether the persistent pool has been spawned (first `run_parallel`).
+    spawned: Bool,
+    /// Const-grouping result, computed once at the first `run_parallel` and read
+    /// by every worker: per-unit waist-bounded phase and within-phase trunk, the
+    /// live unit count, the phase count, and the active core count.
+    gate2_phase: [USize; GATE2_MAX_UNITS],
+    gate2_trunk: [USize; GATE2_MAX_UNITS],
+    gate2_n: USize,
+    gate2_nphases: USize,
+    gate2_ncores: USize,
+    /// Per-core accumulator live counts published by workers on the threaded
+    /// unit-outer accumulator path (GATE-2 deviation 9). Flat `[core *
+    /// GATE2_MAX_ACCUMS + accum]`; worker `c` stores its per-accumulator live
+    /// length (Relaxed) before `frame_done_arrive`, the main thread loads them
+    /// after `frame_await_done` (acquire via the done counter) and feeds the
+    /// `merge_accums` compaction. Sized by `MAX_CORES * GATE2_MAX_ACCUMS`.
+    gate2_accum_live: [AtomicUsize; MAX_CORES * GATE2_MAX_ACCUMS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-(core,accum) atomic publish array; tracked: #121
+    /// Marks the scheduler `!Unpin`: once a worker holds a raw pointer into it,
+    /// moving it would dangle that pointer, so `run_parallel` takes `Pin`.
+    _pin: PhantomPinned,
+}
+
+/// Per-worker context for the GATE-2 persistent pool. Holds a type-erased
+/// back-pointer to the owning `Scheduler` (the monomorphic `worker_main` casts it
+/// back to the concrete type) plus the worker's core id. Stored inline in the
+/// scheduler at a pinned, stable address; the spawned worker closure captures one
+/// `*const WorkerCtx` (pointer-sized, so the `OsThreadPool::spawn` smuggle fits).
+struct WorkerCtx {
+    sched: *const (),
+    core_id: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: core index, smuggled through the pthread arg; tracked: #121
+}
+
+/// Send wrapper so the one-pointer worker closure satisfies `F: Send`. SAFETY:
+/// the pointee is pinned scheduler-owned storage that outlives every worker (Drop
+/// joins via `await_exit` before teardown); workers touch disjoint write columns.
+#[derive(Copy, Clone)]
+struct SendCtxPtr(*const WorkerCtx);
+// SAFETY: see above.
+unsafe impl Send for SendCtxPtr {}
+
+/// Build an empty `PoolFrame<'static, 1, 1>` for the scheduler's inline pool: all
+/// sync words zero, dangling progress_slots (the frame protocol never reads
+/// them), `<1, 1>` adapt arrays (unused pre-adapt).
+fn empty_pool_frame() -> PoolFrame<'static, 1, 1> {
+    PoolFrame {
+        shutdown: AtomicBool::new(false),
+        phase_arrived: AtomicU32::new(0), // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic init constant; tracked: #121
+        barrier_sense: AtomicU32::new(0), // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic init constant; tracked: #121
+        seq: AtomicU32::new(0),           // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic init constant; tracked: #121
+        done: AtomicU32::new(0),          // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic init constant; tracked: #121
+        exited: AtomicU32::new(0),        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic init constant; tracked: #121
+        predicted_wait_ns: [AtomicU32::new(0)], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic init constant; tracked: #121
+        idle_accumulator: [AtomicU64::new(0)], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic init constant; tracked: #121
+        park_count: [AtomicU64::new(0)],  // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic init constant; tracked: #121
+        progress_slots: NonNull::dangling(),
+        progress_slot_count: USize::ZERO,
+        _arena: PhantomData,
+    }
+}
+
+/// Persistent-pool worker mainloop (GATE-2 R4c). Spawned once per core at the
+/// first `run_parallel`; parks on the frame `seq` between phases, runs its core's
+/// dispatch for the published phase, and arrives at the frame done-barrier. The
+/// `ctx` back-pointer is cast to the concrete `Scheduler` here (the monomorphic
+/// turbofish at the spawn site supplies the types). Phase is derived from the seq
+/// value: the main thread publishes one phase per `seq` bump, so
+/// `phase = (seq - 1) % nphases`.
+fn worker_main<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>(ctx: *const WorkerCtx)
+where
+    Cfg: RunCfg,
+    Vals: StoreValues + BindingsFor,
+    CS: ColumnStorage,
+    D: PlanDims,
+    Clk: ClockApi,
+    WuVals: RunFiber<<Vals as BindingsFor>::Bindings, Witnesses>,
+    WuVals: RunTrunkDispatch<
+        WuVals,
+        <Vals as BindingsFor>::Bindings,
+        Witnesses,
+        GW,
+        Stores,
+        <D as PlanDims>::Units,
+        <D as PlanDims>::Stores,
+        <D as PlanDims>::AdjRow,
+        0, // lint:allow(no-bare-numeric) reason: const-generic entry position; tracked: #121
+    >,
+    WuVals: BundleMasks<Stores, GW, <D as PlanDims>::Stores>,
+    <D as PlanDims>::Units: ConstCapacity,
+    <D as PlanDims>::AdjRow: BitAccess + Identity,
+    <Vals as BindingsFor>::Bindings: RebaseBindings + CollectAccumLive,
+{
+    // SAFETY: `ctx` points into the pinned scheduler's `worker_ctxs`, valid until
+    // `await_exit` runs at Drop (which joins before teardown).
+    let core_id = unsafe { (*ctx).core_id };
+    let sched = unsafe { (*ctx).sched } as *const Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>;
+    // SAFETY: the pinned scheduler outlives every worker. This shared
+    // reference is held live across every park, so the main thread must never
+    // write any scheduler field through a plain `*mut` while it is alive: the
+    // between-frame mutated, worker-visible fields (`first_frame`,
+    // `virtual_epoch`, `store_dirty`, the `meta_block` cells) all carry
+    // interior mutability, so the main thread writes through a shared
+    // reference and never invalidates this borrow under the aliasing model.
+    let s = unsafe { &*sched };
+    let ncores = s.gate2_ncores;
+    let nphases = s.gate2_nphases.0.max(1); // lint:allow(no-bare-numeric) reason: avoid modulo by zero; tracked: #121
+    // E4 parity: leading plan-band phase count, skipped on a clean frame
+    // (mirrors single-core dispatch_trunks).
+    let plan_phases = plan_phase_count::<
+        WuVals,
+        Stores,
+        GW,
+        <D as PlanDims>::Units,
+        <D as PlanDims>::Stores,
+        <D as PlanDims>::AdjRow,
+    >()
+    .0; // lint:allow(no-bare-numeric) reason: phase loop offset; tracked: #121
+    let total = s.record_count;
+    let msize = USize(Cfg::MORSEL_SIZE.0.max(1)); // lint:allow(no-bare-numeric) reason: morsel length guard; tracked: #121
+    let mut last = USize::ZERO;
+    loop {
+        last = frame_await(&s.pool, last);
+        if s.pool.shutdown.load(Ordering::Relaxed) {
+            frame_exit_arrive(&s.pool, ncores);
+            return;
+        }
+        if s.carrier_unit_outer().0 {
+            // Deviation 9 threaded accumulator path: an accumulator-bearing
+            // carrier runs unit-outer (each unit completes its full record
+            // range). Each core takes its head+tail record slice `[lo, hi)`,
+            // dispatches the whole carrier ONCE over a per-core bindings copy
+            // whose accumulators are offset into the core's region with fresh
+            // cells, then publishes its per-accumulator live counts for the
+            // main-thread merge. No phase loop or waist barrier: cores are
+            // independent over disjoint record ranges, joined only by the merge.
+            worker_accum_unit_outer::<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>(
+                s,
+                USize(core_id),
+                ncores,
+                total,
+            );
+            frame_done_arrive(&s.pool, ncores);
+            continue;
+        }
+        // One wake per frame: the worker runs ALL waist-bounded phases hot,
+        // crossing each interior waist via the worker-side sense-reversing
+        // barrier (the canonical worker-side sync; the main thread no longer
+        // round-trips per phase). Phase order is the array order 0..nphases.
+        // On a clean (not plan-dirty) frame the loop starts past the leading
+        // plan band; `first_frame` is written between frames while every
+        // worker is parked, so the read is stable under the publish/await
+        // happens-before. All workers compute the same start, so the interior
+        // waist-barrier counts stay matched.
+        let mut p = if s.first_frame.load(Ordering::Relaxed) { 0 } else { plan_phases }; // lint:allow(no-bare-numeric) reason: phase loop start; tracked: #121
+        while p < nphases {
+            s.run_core_phase::<Witnesses, GW>(
+                &s.gate2_phase,
+                &s.gate2_trunk,
+                s.gate2_n,
+                USize(core_id),
+                USize(p),
+                ncores,
+                total,
+                msize,
+            );
+            if p + 1 < nphases {
+                // every worker participates in each waist, even one that owned
+                // no trunk this phase, so `expected` is the full core count.
+                waist_barrier(&s.pool, ncores);
+            }
+            p += 1; // lint:allow(no-bare-numeric) reason: phase loop step; tracked: #121
+        }
+        frame_done_arrive(&s.pool, ncores);
+    }
+}
+
+/// One core's unit-outer accumulator dispatch over its head+tail record slice
+/// (GATE-2 deviation 9). Builds a per-core bindings copy with every accumulator
+/// offset to the slice start (fresh live cells, slice-sized cap), dispatches the
+/// whole carrier once over `[lo, hi)`, and publishes the per-accumulator live
+/// counts into the scheduler's `gate2_accum_live` row for this core (Relaxed; the
+/// `frame_done_arrive` Release that follows publishes them to the merge). The
+/// core's row is zeroed first so a non-participating core (surplus, or a
+/// record-less frame's non-zero cores) contributes zeros to the merge.
+fn worker_accum_unit_outer<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>(
+    s: &Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>,
+    core: USize,
+    ncores: USize,
+    total: USize,
+) where
+    Cfg: RunCfg,
+    Vals: StoreValues + BindingsFor,
+    CS: ColumnStorage,
+    D: PlanDims,
+    Clk: ClockApi,
+    WuVals: RunFiber<<Vals as BindingsFor>::Bindings, Witnesses>,
+    WuVals: BundleMasks<Stores, GW, <D as PlanDims>::Stores>,
+    <D as PlanDims>::Units: ConstCapacity,
+    <D as PlanDims>::AdjRow: BitAccess + Identity,
+    <Vals as BindingsFor>::Bindings: RebaseBindings + CollectAccumLive,
+{
+    let total0 = total.0; // lint:allow(no-bare-numeric) reason: frame record count; tracked: #121
+    let ncores0 = ncores.0.max(1); // lint:allow(no-bare-numeric) reason: avoid div by zero; tracked: #121
+    // Zero this core's publish row up front (every slot, so the merge reads clean
+    // values regardless of this frame's accumulator count).
+    let mut z = 0; // lint:allow(no-bare-numeric) reason: publish-row index; tracked: #121
+    while z < GATE2_MAX_ACCUMS {
+        s.gate2_accum_live[core.0 * GATE2_MAX_ACCUMS + z].store(0, Ordering::Relaxed); // lint:allow(no-bare-numeric) reason: per-(core,accum) publish slot reset; tracked: #121
+        z += 1; // lint:allow(no-bare-numeric) reason: index step; tracked: #121
+    }
+    // Head+tail record slice for this core (mirrors run_core_phase's split).
+    let per = (total0 + ncores0 - 1) / ncores0; // lint:allow(no-bare-numeric) reason: ceil record slice; tracked: #121
+    let lo = (core.0 * per).min(total0); // lint:allow(no-bare-numeric) reason: slice start; tracked: #121
+    let hi = (lo + per).min(total0); // lint:allow(no-bare-numeric) reason: slice end; tracked: #121
+    // A record-less frame runs the carrier once on core 0 only (a resource-only
+    // unit must run exactly once, not once per core). With records, a surplus
+    // core (`lo == hi`) appends nothing and is skipped.
+    let run_this = if total0 == 0 { core.0 == 0 } else { lo < hi }; // lint:allow(no-bare-numeric) reason: participation guard; tracked: #121
+    if !run_this {
+        return;
+    }
+    let region = hi - lo; // lint:allow(no-bare-numeric) reason: slice length; tracked: #121
+    let per_core = s.bindings.rebase_accums(USize(lo), USize(region));
+    // E4 parity: meta units do not ride the per-core slice walk (the designated
+    // thread dispatches them once per frame around the publish/await window).
+    // A no-meta carrier keeps the ungated whole-carrier walk; the band counts
+    // are const, so this branch folds at compile time.
+    let pre = pre_consumer_phase_count::<
+        WuVals,
+        Stores,
+        GW,
+        <D as PlanDims>::Units,
+        <D as PlanDims>::Stores,
+        <D as PlanDims>::AdjRow,
+    >();
+    let cend = consumer_phase_end::<
+        WuVals,
+        Stores,
+        GW,
+        <D as PlanDims>::Units,
+        <D as PlanDims>::Stores,
+        <D as PlanDims>::AdjRow,
+    >();
+    let nphases = phase_count::<
+        WuVals,
+        Stores,
+        GW,
+        <D as PlanDims>::Units,
+        <D as PlanDims>::Stores,
+        <D as PlanDims>::AdjRow,
+    >();
+    if pre.0 == 0 && cend.0 == nphases.0 {
+        s.wu_values.run(&per_core, &s.meta_block, MorselRange::new(USize(lo), USize(region)), USize(s.virtual_epoch.load(Ordering::Relaxed)));
+    } else {
+        let cmask = consumer_mask::<
+            WuVals,
+            Stores,
+            GW,
+            <D as PlanDims>::Units,
+            <D as PlanDims>::Stores,
+            <D as PlanDims>::AdjRow,
+        >();
+        s.wu_values.run_gated(
+            &per_core,
+            &s.meta_block,
+            MorselRange::new(USize(lo), USize(region)),
+            cmask,
+            USize::ZERO,
+            USize(s.virtual_epoch.load(Ordering::Relaxed)),
+        );
+    }
+    // Publish this core's per-accumulator live counts.
+    let mut live = [USize::ZERO; GATE2_MAX_ACCUMS];
+    let mut idx = USize::ZERO;
+    per_core.collect_accum_live(&mut live, &mut idx);
+    let mut a = 0; // lint:allow(no-bare-numeric) reason: accum index; tracked: #121
+    while a < idx.0 {
+        s.gate2_accum_live[core.0 * GATE2_MAX_ACCUMS + a].store(live[a].0, Ordering::Relaxed); // lint:allow(no-bare-numeric) reason: publish per-(core,accum) live count; tracked: #121
+        a += 1; // lint:allow(no-bare-numeric) reason: index step; tracked: #121
+    }
+}
+
+impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D: PlanDims, Stores, Clk>
+    Drop for Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>
+{
+    fn drop(&mut self) {
+        if self.spawned.0 {
+            // Signal shutdown and wait every spawned worker to leave its mainloop
+            // before the inline pool (which the workers read) tears down. This is
+            // the join with no thread-join: the exit-counter barrier.
+            request_shutdown(&self.pool);
+            await_exit(&self.pool, self.gate2_ncores);
+        }
+    }
 }
 
 /// Null memory provider: the default `M` for a bare `Scheduler` type.
@@ -669,6 +1014,47 @@ impl MemoryProviderApi for NullMemoryProvider {
     ) {
     }
 }
+
+/// Null clock: `now_ns` always returns zero.
+///
+/// The unconditional fallback `Clk` for builds without the os tier: the
+/// pass-duration EMA stays zero until a real clock is supplied via the
+/// builder's `clock(...)` slot (the no_os DI path). With the default
+/// `platform-os` feature the builder starts on `OsClock` instead, so this
+/// type is only ever the live clock when a no_os consumer leaves the slot
+/// untouched.
+pub struct NullClock;
+
+impl NullClock {
+    /// Construct the null clock.
+    #[inline]
+    pub const fn new() -> Self {
+        Self
+    }
+}
+
+impl Default for NullClock {
+    #[inline]
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ClockApi for NullClock {
+    #[inline]
+    fn now_ns(&self) -> Nanos {
+        Nanos::from_raw(0) // lint:allow(no-bare-numeric) reason: null clock zero reading; tracked: #121
+    }
+}
+
+/// The builder's starting clock: the os-tier monotonic clock when the
+/// default `platform-os` feature is on, the null clock otherwise (no_os
+/// consumers supply their own via the builder's `clock(...)` slot).
+#[cfg(feature = "platform-os")]
+pub type DefaultClock = crate::platform::OsClock;
+/// The builder's starting clock (no_os fallback; see the platform-os arm).
+#[cfg(not(feature = "platform-os"))]
+pub type DefaultClock = NullClock;
 
 /// Null column storage: the default `CS` for a bare `Scheduler` type.
 ///
@@ -716,17 +1102,18 @@ impl Scheduler<DefaultRunCfg, WuNil, SvEmpty, NullColumnStorage> {
     /// Start a fresh builder. Empty Wus + Stores + Platform typestate,
     /// empty store-value and WorkUnit-value lists; the builder grows via
     /// `.with(...)`.
-    pub const fn builder() -> SchedulerBuilder<Empty, Empty, Empty, SvEmpty, WuNil> {
+    pub const fn builder() -> SchedulerBuilder<Empty, Empty, Empty, SvEmpty, WuNil, DefaultClock> {
         SchedulerBuilder {
             store_values: SvEmpty,
             wu_values: WuNil,
+            clock: DefaultClock::new(),
             _phantom: PhantomData,
         }
     }
 }
 
-impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D: PlanDims, Stores>
-    Scheduler<Cfg, WuVals, Vals, CS, D, Stores>
+impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D: PlanDims, Stores, Clk: ClockApi>
+    Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>
 {
     /// Replace the existing `Resource<T>` instance in the data
     /// plane with `_new`, marking the plan dirty.
@@ -784,7 +1171,7 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         Stores: Locate<T, Index>,
         Index: WitnessIndex,
     {
-        self.store_dirty = self.store_dirty.set(Index::INDEX);
+        self.store_dirty.set(self.store_dirty.get().set(Index::INDEX));
     }
 
     /// This frame's dirty-unit mask for incremental skip (domain 16,
@@ -799,7 +1186,7 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
     /// dependents single pass because carrier position equals topological
     /// order (`build` validated it).
     fn dirty_units(&self) -> D::AdjRow {
-        if self.first_frame.0 {
+        if self.first_frame.load(Ordering::Relaxed) {
             // Cold frame: every unit dirty, so the first frame after build
             // executes the whole carrier.
             return D::AdjRow::default().bitnot();
@@ -815,7 +1202,7 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         let mut dirty = D::AdjRow::default();
         let mut p = 0;
         while p < n {
-            if reads[p].overlaps(&self.store_dirty).0 {
+            if reads[p].overlaps(&self.store_dirty.get()).0 {
                 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct carrier position; tracked: #72
                 dirty = dirty.with_bit_set(USize(p));
             }
@@ -857,21 +1244,52 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
     /// reads the per-fiber `morsel_local` bits the plan computed. The
     /// `Witnesses` parameter is the per-unit projection-index list, inferred at
     /// the call site, so `scheduler.run()` needs no turbofish.
-    pub fn run<Witnesses>(&mut self) -> Cfg::Out
+    pub fn run<Witnesses, GW>(&mut self) -> Cfg::Out // lint:allow(no-bare-numeric) reason: const-generic dispatch entry position; tracked: #121
     where
         Cfg::Out: Default,
-        WuVals: RunFiber<<Vals as BindingsFor>::Bindings, Witnesses>,
+        WuVals: RunTrunkDispatch<
+            WuVals,
+            <Vals as BindingsFor>::Bindings,
+            Witnesses,
+            GW,
+            Stores,
+            <D as PlanDims>::Units,
+            <D as PlanDims>::Stores,
+            <D as PlanDims>::AdjRow,
+            0, // lint:allow(no-bare-numeric) reason: const-generic entry position; tracked: #121
+        >,
+        WuVals: BundleMasks<Stores, GW, <D as PlanDims>::Stores>,
+        <D as PlanDims>::Units: ConstCapacity,
+        <D as PlanDims>::AdjRow: BitAccess + Identity,
         <Vals as BindingsFor>::Bindings: ResetAccumulators,
     {
+        // E8 adapt: sample the frame start; the cold-start state is the EMA
+        // seed flag (the first frame stores its raw duration).
+        let frame_start = self.clock.now_ns();
+        let ema_seed = Bool(self.first_frame.load(Ordering::Relaxed));
         // Schedule-once-reuse: zero every accumulator live-length at frame
         // start so this frame appends into a fresh buffer rather than
         // continuing from the prior frame's live offset. No-op for an
         // accumulator-free carrier.
         self.bindings.reset_accumulators();
-        // `plan_dirty` / `plan_cache` are the domain-22 plan-recompute seed
-        // and cache (set by `replace_resource`); rebuilding the plan from
-        // them is the adapt subsystem's job, sequenced later. The domain-16
-        // incremental-skip seed is `store_dirty`, consumed here.
+        // E4 slice 1: advance the virtual epoch once per pass. A fire this pass
+        // stamps cells with the new value; last pass's stamps no longer match, so
+        // a stale fire gates its `On<V>` consumer shut (epoch-based reset).
+        self.virtual_epoch.fetch_add(1, Ordering::Relaxed); // lint:allow(no-bare-numeric) reason: per-pass epoch successor; tracked: #121
+        self.meta_block.metrics.pass_count.set(USize(self.meta_block.metrics.pass_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: per-pass meta pass_count; tracked: #121
+        let epoch = USize(self.virtual_epoch.load(Ordering::Relaxed));
+        // E4 slice 2 (self-hosting meta pipeline): a plan-dirty frame runs the
+        // leading plan band (`OnMeta<PlanStage>` units recompute the plan); a clean
+        // frame skips it. The first frame is always plan-dirty (the plan is computed
+        // once); the `replace_resource`-driven `plan_dirty` bit-array re-dirty is
+        // the domain-22 recompute, sequenced with the adapt subsystem (slice 3). For
+        // a carrier with no plan-stage meta unit, `plan_phase_count` is zero, so this
+        // is a no-op and dispatch is byte-identical to before.
+        let plan_dirty = Bool(self.first_frame.load(Ordering::Relaxed));
+        // `plan_dirty` array / `plan_cache` are the domain-22 plan-recompute seed
+        // and cache (set by `replace_resource`); rebuilding the plan from them is the
+        // adapt subsystem's job, sequenced later. The domain-16 incremental-skip seed
+        // is `store_dirty`, consumed here.
         let _ = (&self.plan_dirty, &self.plan_cache);
         // `topo_order` / `topo_count` are retained plan state; the carrier
         // walk dispatches in carrier order directly, so `run` does not index
@@ -904,25 +1322,593 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
             // output as running it. Incremental skip applies to the pure RAW
             // recompute path (morsel-outer below), not to per-frame append.
             let _ = dirty;
-            self.wu_values
-                .run(&self.bindings, MorselRange::new(USize::ZERO, USize(total)));
+            // Per-trunk dispatch over the whole range, all members (all-ones
+            // dirty): output-equivalent to the flat unit-outer walk, every trunk
+            // an independently monomorphised program.
+            let all = <D as PlanDims>::AdjRow::default().bitnot();
+            self.dispatch_trunks::<Witnesses, GW, _>(
+                MorselRange::new(USize::ZERO, USize(total)),
+                all,
+                epoch,
+                plan_dirty,
+            );
         } else {
             let mut start = 0;
             while start < total {
                 let len = msize.min(total - start);
-                self.wu_values.run_gated(
-                    &self.bindings,
+                // Per-trunk dispatch over this morsel, skipping clean members
+                // (incremental skip preserved): same output as the flat gated
+                // morsel walk, in phase / trunk order.
+                self.dispatch_trunks::<Witnesses, GW, _>(
                     MorselRange::new(USize(start), USize(len)),
                     dirty,
-                    USize::ZERO,
+                    epoch,
+                    plan_dirty,
                 );
                 start += len;
             }
         }
         // The frame consumed the change seed; clear it and leave cold-start.
-        self.store_dirty = AccessMask::empty();
-        self.first_frame = Bool::FALSE;
+        self.store_dirty.set(AccessMask::empty());
+        self.first_frame.store(false, Ordering::Relaxed);
+        // E8 adapt: fold this frame's duration into the pass-duration EMA.
+        // Between frames, so the write needs no synchronisation.
+        let m = &self.meta_block.metrics;
+        m.ema_pass_duration_ns
+            .set(fold_ema(m.ema_pass_duration_ns.get(), self.clock.now_ns() - frame_start, ema_seed));
         Cfg::Out::default()
+    }
+
+    /// Dispatch only the units of one phase and trunk (GATE-2, round 2a).
+    ///
+    /// Walks the carrier through `RunGatedTrunk`, running just the members of
+    /// `(PHASE, TRUNK)` over the whole record range; every other carrier
+    /// position folds away, so this monomorphisation is that trunk's member-only
+    /// program. The per-trunk entry the round-2b dispatcher loops across every
+    /// `(phase, trunk)` in phase order, and the unit each core runs at G2-N.
+    /// `Witnesses` is the per-unit projection list and `GW` the grouping witness
+    /// list, both inferred at the call site.
+    pub fn run_one_trunk<Witnesses, GW, const TRUNK: usize>(&mut self) // lint:allow(no-bare-numeric) reason: const-generic trunk selector; tracked: #121
+    where
+        WuVals: RunGatedTrunk<
+            WuVals,
+            <Vals as BindingsFor>::Bindings,
+            Witnesses,
+            GW,
+            Stores,
+            <D as PlanDims>::Units,
+            <D as PlanDims>::Stores,
+            <D as PlanDims>::AdjRow,
+            TRUNK,
+            Here, // the walk starts at carrier position zero (Peano Here)
+        >,
+    {
+        let total = self.record_count.0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: morsel length; tracked: #121
+        self.virtual_epoch.fetch_add(1, Ordering::Relaxed); // lint:allow(no-bare-numeric) reason: per-pass epoch successor; tracked: #121
+        self.meta_block.metrics.pass_count.set(USize(self.meta_block.metrics.pass_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: per-pass meta pass_count; tracked: #121
+        let epoch = USize(self.virtual_epoch.load(Ordering::Relaxed));
+        // No-skip entry: every member of the trunk runs (all-ones dirty mask).
+        let all = <D as PlanDims>::AdjRow::default().bitnot();
+        self.wu_values
+            .run_trunk(&self.bindings, &self.meta_block, MorselRange::new(USize::ZERO, USize(total)), all, epoch);
+    }
+
+    /// Dispatch every trunk in phase order over `morsel`, single-core (round 2b).
+    ///
+    /// The outer driver: for each phase pass `0..phase_count` it walks the
+    /// carrier through `trunk_dispatch::RunTrunkDispatch`, dispatching each
+    /// trunk-root's per-trunk mono whose compile-time phase equals the pass. Each
+    /// trunk's members run in carrier (RCM-reordered topological) order; phases
+    /// run in waist order; so the result is output-equivalent to the flat
+    /// `RunFiber` walk, while every trunk is an independently monomorphised
+    /// program (the unit a core runs at G2-N). Whole-range, no-skip entry (every
+    /// member runs); the morsel-windowed, dirty-skipping form drives the
+    /// incremental `run` path. `Witnesses` (per-unit projection list) and `GW`
+    /// (grouping witness list) infer at the call site.
+    pub fn run_all_trunks<Witnesses, GW>(&mut self)
+    where
+        WuVals: RunTrunkDispatch<
+            WuVals,
+            <Vals as BindingsFor>::Bindings,
+            Witnesses,
+            GW,
+            Stores,
+            <D as PlanDims>::Units,
+            <D as PlanDims>::Stores,
+            <D as PlanDims>::AdjRow,
+            0, // the walk starts at carrier position zero // lint:allow(no-bare-numeric) reason: const-generic entry position; tracked: #121
+        >,
+        WuVals: BundleMasks<Stores, GW, <D as PlanDims>::Stores>,
+        <D as PlanDims>::Units: ConstCapacity,
+        <D as PlanDims>::AdjRow: BitAccess + Identity,
+    {
+        let total = self.record_count.0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: morsel length; tracked: #121
+        self.virtual_epoch.fetch_add(1, Ordering::Relaxed); // lint:allow(no-bare-numeric) reason: per-pass epoch successor; tracked: #121
+        self.meta_block.metrics.pass_count.set(USize(self.meta_block.metrics.pass_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: per-pass meta pass_count; tracked: #121
+        let epoch = USize(self.virtual_epoch.load(Ordering::Relaxed));
+        // No-skip: every member runs (all-ones dirty mask).
+        let all = <D as PlanDims>::AdjRow::default().bitnot();
+        // No-skip entry: run every band including the plan band (plan_dirty=true).
+        self.dispatch_trunks::<Witnesses, GW, _>(MorselRange::new(USize::ZERO, USize(total)), all, epoch, Bool::TRUE);
+    }
+
+    /// Phase-loop core of the per-trunk dispatch: for each phase pass walk the
+    /// carrier through `RunTrunkDispatch` over `morsel`, skipping members clear in
+    /// `dirty`. `run_all_trunks` (whole-range, all-ones) and the incremental
+    /// `run` path (per-morsel, real dirty) both delegate here.
+    fn dispatch_trunks<Witnesses, GW, M: BitAccess>(
+        &self,
+        morsel: MorselRange,
+        dirty: M,
+        epoch: USize,
+        plan_dirty: Bool,
+    ) where
+        WuVals: RunTrunkDispatch<
+            WuVals,
+            <Vals as BindingsFor>::Bindings,
+            Witnesses,
+            GW,
+            Stores,
+            <D as PlanDims>::Units,
+            <D as PlanDims>::Stores,
+            <D as PlanDims>::AdjRow,
+            0, // lint:allow(no-bare-numeric) reason: const-generic entry position; tracked: #121
+        >,
+        WuVals: BundleMasks<Stores, GW, <D as PlanDims>::Stores>,
+        <D as PlanDims>::Units: ConstCapacity,
+        <D as PlanDims>::AdjRow: BitAccess + Identity,
+    {
+        // Phase-loop bound = the const grouping's phase count, the same axis the
+        // dispatcher's per-trunk phase gate reads, so every trunk-root fires in
+        // exactly one pass.
+        let nphases = phase_count::<WuVals, Stores, GW, <D as PlanDims>::Units, <D as PlanDims>::Stores, <D as PlanDims>::AdjRow>().0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: phase-loop bound; tracked: #121
+        // E4 slice 2 (self-hosting meta pipeline): the rank-outer grouping places
+        // `OnMeta<PlanStage>` units in the leading plan band (phases
+        // `0..plan_phase_count`). On a clean frame (not plan-dirty) the kernel skips
+        // that band, so plan-stage meta units run only when the plan is recomputed;
+        // the schedule-ready / pass-start / consumer / schedule-end bands always
+        // dispatch. This is the kernel's lifecycle sequencing: the band order is the
+        // canonical PlanStage < ScheduleReady < PassStart < consumer < ScheduleEnd.
+        let start = if plan_dirty.0 {
+            0 // lint:allow(no-bare-numeric) reason: plan-dirty frame runs the plan band; tracked: #121
+        } else {
+            plan_phase_count::<WuVals, Stores, GW, <D as PlanDims>::Units, <D as PlanDims>::Stores, <D as PlanDims>::AdjRow>().0 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: skip the leading plan band on a clean frame; tracked: #121
+        };
+        let mut p = start; // lint:allow(no-bare-numeric) reason: phase-pass index; tracked: #121
+        while p < nphases {
+            self.wu_values
+                .dispatch(&self.wu_values, USize(p), &self.meta_block, &self.bindings, morsel, dirty, epoch);
+            p += 1; // lint:allow(no-bare-numeric) reason: phase-pass step; tracked: #121
+        }
+    }
+
+    /// Dispatch the carrier as per-core trunk programs joined by waist barriers
+    /// (GATE-2 N-core dispatch, inline single-threaded form).
+    ///
+    /// op's runtime-mask mechanism: the canonical waist-bounded phase axis (R2)
+    /// and per-phase round-robin trunk-to-core ownership (R4a `core_mask`)
+    /// select, for each `(core, phase)`, the carrier positions that core owns in
+    /// that phase. Each selection is a `run_gated` walk over the flat carrier, so
+    /// unit bodies devirtualise exactly as the single-core walk does; only the
+    /// per-unit ownership test is a runtime branch. This inline form runs the
+    /// per-core programs sequentially (one thread sweeps every core's program per
+    /// phase), with the waist barrier between phases collapsing to the phase loop
+    /// boundary. It is output-equivalent to `run` for a pure read-after-write
+    /// carrier: phases run in waist order, so a phase-`p+1` reader sees every
+    /// record a phase-`p` writer produced; trunks within a phase touch disjoint
+    /// columns, so their order is immaterial; each trunk's units run in carrier
+    /// (topological) order. Single-core (`ncores == 1`) is the degenerate case
+    /// with one core owning every trunk per phase, not a separate path.
+    ///
+    /// Scope (R4b-inline): the accumulator (unit-outer, cross-record) carrier
+    /// that `run` routes specially is out of scope here; it lands with the
+    /// threaded executor step, which replaces the sequential core sweep with the
+    /// spawned-once pool plus the column-disjoint borrow split, leaving the
+    /// partition this method proves unchanged. The `phase` / `trunk` arrays are
+    /// recomputed per call in this form; the threaded form lifts them to a
+    /// build-time precompute (schedule-once-reuse).
+    ///
+    /// `Witnesses` is the per-unit projection list (for the carrier walk) and
+    /// `GW` the grouping witness list (for the const grouping that fills the
+    /// `phase` / `trunk` arrays), both inferred at the call site.
+    pub fn run_parallel<Witnesses, GW, P>(self: Pin<&mut Self>, pool: &P) -> Cfg::Out
+    where
+        Cfg::Out: Default,
+        WuVals: RunFiber<<Vals as BindingsFor>::Bindings, Witnesses>,
+        WuVals: RunTrunkDispatch<
+            WuVals,
+            <Vals as BindingsFor>::Bindings,
+            Witnesses,
+            GW,
+            Stores,
+            <D as PlanDims>::Units,
+            <D as PlanDims>::Stores,
+            <D as PlanDims>::AdjRow,
+            0, // lint:allow(no-bare-numeric) reason: const-generic entry position; tracked: #121
+        >,
+        WuVals: BundleMasks<Stores, GW, <D as PlanDims>::Stores>,
+        <D as PlanDims>::Units: ConstCapacity,
+        <D as PlanDims>::AdjRow: BitAccess + Identity,
+        <Vals as BindingsFor>::Bindings:
+            ResetAccumulators + RebaseBindings + CollectAccumLive + MergeAccums,
+        P: ThreadPoolApi,
+    {
+        // SAFETY: the scheduler is pinned (the receiver is `Pin<&mut Self>`), so
+        // its address is fixed for the workers' raw pointers. Take a raw pointer
+        // so no live `&mut` aliases the workers' `*const Self`; the `&mut`
+        // reborrows below are confined to moments when every worker is parked
+        // (before the first publish and between frames), matching the proven
+        // sketch discipline (202606071930).
+        let me: *mut Self = unsafe { self.get_unchecked_mut() };
+
+        // First call: compute the const grouping into the gate2_* fields and spawn
+        // the persistent pool once. Workers park immediately on `seq == 0`.
+        let already = unsafe { (*me).spawned.0 };
+        if !already {
+            let mut phase = [USize::ZERO; GATE2_MAX_UNITS];
+            let mut trunk = [USize::ZERO; GATE2_MAX_UNITS];
+            let n = grouping_arrays::<
+                WuVals,
+                Stores,
+                GW,
+                <D as PlanDims>::Units,
+                <D as PlanDims>::Stores,
+                <D as PlanDims>::AdjRow,
+            >(&mut phase, &mut trunk);
+            let count = n.0; // lint:allow(no-bare-numeric) reason: live unit count; tracked: #121
+            let mut nphases = 0; // lint:allow(no-bare-numeric) reason: phase count accumulator; tracked: #121
+            let mut u = 0; // lint:allow(no-bare-numeric) reason: unit index; tracked: #121
+            while u < count {
+                if phase[u].0 + 1 > nphases {
+                    nphases = phase[u].0 + 1; // lint:allow(no-bare-numeric) reason: phase successor; tracked: #121
+                }
+                u += 1; // lint:allow(no-bare-numeric) reason: index step; tracked: #121
+            }
+            let ncores = pool.worker_count();
+            // SAFETY: no workers running yet; exclusive setup of pinned fields.
+            unsafe {
+                (*me).gate2_phase = phase;
+                (*me).gate2_trunk = trunk;
+                (*me).gate2_n = n;
+                (*me).gate2_nphases = USize(nphases);
+                (*me).gate2_ncores = ncores;
+            }
+            let mut c = 0; // lint:allow(no-bare-numeric) reason: core index; tracked: #121
+            while c < ncores.0 {
+                // SAFETY: pinned, stable address; the ctx outlives every worker
+                // (Drop joins via await_exit before teardown).
+                unsafe {
+                    (*me).worker_ctxs[c] = WorkerCtx { sched: me as *const (), core_id: c };
+                }
+                let cp = SendCtxPtr(unsafe { &(*me).worker_ctxs[c] as *const WorkerCtx });
+                pool.spawn(move || {
+                    let cp = cp; // capture the Send wrapper whole, not the raw field
+                    worker_main::<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>(cp.0);
+                });
+                c += 1; // lint:allow(no-bare-numeric) reason: index step; tracked: #121
+            }
+            // SAFETY: setup complete; mark spawned.
+            unsafe {
+                (*me).spawned = Bool::TRUE;
+            }
+        }
+
+        // E8 adapt: sample the frame start on the main thread; the cold-start
+        // state is the EMA seed flag. SAFETY: every worker is parked between
+        // frames; exclusive field reads.
+        let frame_start = unsafe { (*me).clock.now_ns() };
+        let ema_seed = Bool(unsafe { (*me).first_frame.load(Ordering::Relaxed) });
+        // Frame start: zero accumulators (every worker is parked).
+        // SAFETY: between frames, no worker is dereferencing the bindings.
+        unsafe {
+            (*me).bindings.reset_accumulators();
+        }
+        // E4 slice 1: advance the virtual epoch once per frame, before the
+        // publish, while every worker is parked. Workers read it after the
+        // publish under the frame happens-before; a stale fire from last frame no
+        // longer matches this frame's epoch (epoch-based reset).
+        // SAFETY: every worker is parked between frames; exclusive field write.
+        unsafe {
+            (*me).virtual_epoch.fetch_add(1, Ordering::Relaxed); // lint:allow(no-bare-numeric) reason: per-frame epoch successor; tracked: #121
+            (*me).meta_block.metrics.pass_count.set(USize((*me).meta_block.metrics.pass_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: per-frame meta pass_count; tracked: #121
+        }
+        // E4 parity, unit-outer path: the main thread is the designated core for
+        // the meta bands, with the frame publish/await pair as the two ordering
+        // barriers. The leading bands (plan, skipped on a clean frame, then the
+        // remaining pre-consumer bands) dispatch here, before the publish, so
+        // every worker's consumer slice work happens-after them; the trailing
+        // bands dispatch after the await plus merge below. `core = 0, ncores =
+        // 1` makes this thread own every trunk in the dispatched phases. The
+        // band ranges are const and empty for a no-meta carrier.
+        let unit_outer = unsafe { (*me).carrier_unit_outer() }.0;
+        let pre_phases = pre_consumer_phase_count::<
+            WuVals,
+            Stores,
+            GW,
+            <D as PlanDims>::Units,
+            <D as PlanDims>::Stores,
+            <D as PlanDims>::AdjRow,
+        >()
+        .0; // lint:allow(no-bare-numeric) reason: leading-band loop bound; tracked: #121
+        if unit_outer && pre_phases > 0 {
+            let start = if unsafe { (*me).first_frame.load(Ordering::Relaxed) } {
+                0 // lint:allow(no-bare-numeric) reason: plan-dirty frame runs the plan band; tracked: #121
+            } else {
+                plan_phase_count::<
+                    WuVals,
+                    Stores,
+                    GW,
+                    <D as PlanDims>::Units,
+                    <D as PlanDims>::Stores,
+                    <D as PlanDims>::AdjRow,
+                >()
+                .0 // lint:allow(no-bare-numeric) reason: clean frame skips the plan band; tracked: #121
+            };
+            let all = <<D as PlanDims>::AdjRow as Identity>::ZERO.bitnot();
+            let epoch = USize(unsafe { (*me).virtual_epoch.load(Ordering::Relaxed) });
+            let mut p = start;
+            while p < pre_phases {
+                let mut rank = USize::ZERO;
+                // SAFETY: every worker is parked (pre-publish); exclusive frame
+                // access to the bindings and the meta block.
+                unsafe {
+                    (*me).wu_values.dispatch_core(
+                        &(*me).wu_values,
+                        USize(p),
+                        USize::ZERO,
+                        USize(1), // lint:allow(no-bare-numeric) reason: designated thread owns every trunk; tracked: #121
+                        &mut rank,
+                        &(*me).bindings,
+                        &(*me).meta_block,
+                        MorselRange::new(USize::ZERO, USize::ZERO),
+                        all,
+                        epoch,
+                    );
+                }
+                p += 1; // lint:allow(no-bare-numeric) reason: phase step; tracked: #121
+            }
+        }
+        let ncores = unsafe { (*me).gate2_ncores };
+        // One publish/await per frame. Workers run every waist-bounded phase hot
+        // and cross each interior waist via the worker-side sense-reversing
+        // `waist_barrier`; the main thread no longer round-trips per phase. It
+        // publishes the frame once and waits for every worker to finish all
+        // phases (the per-frame waist barrier is now worker-side, not here).
+        // SAFETY: `pool` is a pinned field at a stable address; the frame
+        // helpers only touch its atomics.
+        let pool_frame = unsafe { &(*me).pool };
+        frame_publish(pool_frame);
+        frame_await_done(pool_frame, ncores);
+        // Deviation 9: for the unit-outer accumulator carrier, each worker
+        // appended into its own per-core region of the reserved buffer and
+        // published its per-accumulator live counts. Forward-compact those
+        // regions into each accumulator's `[0, sum)` prefix and set the binding
+        // live length, so downstream readers see the same contiguous prefix
+        // single-core `run()` would produce. The `frame_await_done` Acquire
+        // paired with the workers' `frame_done_arrive` Release publishes the live
+        // counts; load them Relaxed under that happens-before.
+        // SAFETY: all workers re-parked; exclusive access to the bindings + array.
+        if unsafe { (*me).carrier_unit_outer() }.0 {
+            let total0 = unsafe { (*me).record_count.0 }; // lint:allow(no-bare-numeric) reason: frame record count; tracked: #121
+            let ncores0 = ncores.0.max(1); // lint:allow(no-bare-numeric) reason: avoid div by zero; tracked: #121
+            let per = (total0 + ncores0 - 1) / ncores0; // lint:allow(no-bare-numeric) reason: ceil record slice; tracked: #121
+            let mut live = [USize::ZERO; MAX_CORES * GATE2_MAX_ACCUMS];
+            let mut c = 0; // lint:allow(no-bare-numeric) reason: core index; tracked: #121
+            while c < ncores0 {
+                let mut a = 0; // lint:allow(no-bare-numeric) reason: accum index; tracked: #121
+                while a < GATE2_MAX_ACCUMS {
+                    let slot = c * GATE2_MAX_ACCUMS + a; // lint:allow(no-bare-numeric) reason: flat (core,accum) index; tracked: #121
+                    live[slot] = USize(unsafe { (*me).gate2_accum_live[slot].load(Ordering::Relaxed) }); // lint:allow(no-bare-numeric) reason: load published live count; tracked: #121
+                    a += 1; // lint:allow(no-bare-numeric) reason: index step; tracked: #121
+                }
+                c += 1; // lint:allow(no-bare-numeric) reason: index step; tracked: #121
+            }
+            let mut accum_idx = USize::ZERO;
+            unsafe {
+                (*me).bindings.merge_accums(
+                    USize(per),
+                    ncores,
+                    USize(total0),
+                    &live,
+                    USize(GATE2_MAX_ACCUMS),
+                    &mut accum_idx,
+                );
+            }
+        }
+        // E4 parity, unit-outer path: the trailing meta bands (the schedule-end
+        // epilogue) dispatch on the main thread after the await plus merge, so
+        // they happen-after all consumer work and an epilogue hook's appends
+        // land after the merged consumer data (single-core buffer order).
+        if unit_outer {
+            let cend = consumer_phase_end::<
+                WuVals,
+                Stores,
+                GW,
+                <D as PlanDims>::Units,
+                <D as PlanDims>::Stores,
+                <D as PlanDims>::AdjRow,
+            >()
+            .0; // lint:allow(no-bare-numeric) reason: trailing-band loop start; tracked: #121
+            let nphases = unsafe { (*me).gate2_nphases.0 }; // lint:allow(no-bare-numeric) reason: trailing-band loop bound; tracked: #121
+            let all = <<D as PlanDims>::AdjRow as Identity>::ZERO.bitnot();
+            let epoch = USize(unsafe { (*me).virtual_epoch.load(Ordering::Relaxed) });
+            let mut p = cend;
+            while p < nphases {
+                let mut rank = USize::ZERO;
+                // SAFETY: every worker re-parked (post-await); exclusive frame
+                // access to the bindings and the meta block.
+                unsafe {
+                    (*me).wu_values.dispatch_core(
+                        &(*me).wu_values,
+                        USize(p),
+                        USize::ZERO,
+                        USize(1), // lint:allow(no-bare-numeric) reason: designated thread owns every trunk; tracked: #121
+                        &mut rank,
+                        &(*me).bindings,
+                        &(*me).meta_block,
+                        MorselRange::new(USize::ZERO, USize::ZERO),
+                        all,
+                        epoch,
+                    );
+                }
+                p += 1; // lint:allow(no-bare-numeric) reason: phase step; tracked: #121
+            }
+        }
+        // The frame consumed the change seed; clear it and leave cold-start.
+        // SAFETY: all phases done, every worker re-parked.
+        unsafe {
+            (*me).store_dirty.set(AccessMask::empty());
+            (*me).first_frame.store(false, Ordering::Relaxed);
+        }
+        // E8 adapt: fold this frame's duration into the pass-duration EMA on
+        // the main thread, after the await plus merge plus trailing bands.
+        // SAFETY: every worker re-parked; between-frames write, same
+        // discipline as virtual_epoch and pass_count.
+        unsafe {
+            let m = &(*me).meta_block.metrics;
+            m.ema_pass_duration_ns.set(fold_ema(
+                m.ema_pass_duration_ns.get(),
+                (*me).clock.now_ns() - frame_start,
+                ema_seed,
+            ));
+        }
+        Cfg::Out::default()
+    }
+
+    /// One core's dispatch for one waist-bounded phase: compute that core's
+    /// per-phase unit mask (the trunks it owns this phase, by round-robin) and
+    /// walk the carrier gated by it, morsel-outer (or a single empty-morsel walk
+    /// for a record-less frame so a resource-only unit runs once).
+    ///
+    /// The shared per-(core,phase) primitive: the single-threaded `run_parallel`
+    /// sweep calls it phase-outer / core-inner, and the threaded worker mainloop
+    /// (round B2) calls it per phase for its own core with `phase_barrier_arrive`
+    /// between phases. Reads only `wu_values` + `bindings`; the trunks a core
+    /// owns this phase are column-disjoint from sibling cores' trunks, so
+    /// concurrent calls for distinct cores in the same phase touch no shared
+    /// column.
+    ///
+    /// Whether the carrier is unit-outer (accumulator-bearing): any fiber whose
+    /// `morsel_local` bit is false. Mirrors the decision `run` makes. An
+    /// accumulator fiber stays unit-outer (each unit completes its full record
+    /// range), so the threaded path routes the whole carrier through the per-core
+    /// bindings rebase (deviation 9) rather than the morsel-local phase walk.
+    fn carrier_unit_outer(&self) -> Bool {
+        let descriptors = self.fiber_dispatch.as_ref();
+        let fcount = self.fiber_dispatch_count.0.min(descriptors.len()); // lint:allow(no-bare-numeric) reason: fiber descriptor count; tracked: #121
+        let mut unit_outer = false; // lint:allow(no-bare-numeric) reason: local accumulator flag; tracked: #121
+        let mut fi = 0; // lint:allow(no-bare-numeric) reason: fiber index; tracked: #121
+        while fi < fcount {
+            if !descriptors[fi].morsel_local.0 {
+                unit_outer = true; // lint:allow(no-bare-numeric) reason: local flag set; tracked: #121
+            }
+            fi += 1; // lint:allow(no-bare-numeric) reason: index step; tracked: #121
+        }
+        Bool(unit_outer)
+    }
+
+    fn run_core_phase<Witnesses, GW>(
+        &self,
+        phase: &[USize],
+        trunk: &[USize],
+        n: USize,
+        core: USize,
+        p: USize,
+        ncores: USize,
+        total: USize,
+        msize: USize,
+    ) where
+        WuVals: RunFiber<<Vals as BindingsFor>::Bindings, Witnesses>,
+        WuVals: RunTrunkDispatch<
+            WuVals,
+            <Vals as BindingsFor>::Bindings,
+            Witnesses,
+            GW,
+            Stores,
+            <D as PlanDims>::Units,
+            <D as PlanDims>::Stores,
+            <D as PlanDims>::AdjRow,
+            0, // lint:allow(no-bare-numeric) reason: const-generic entry position; tracked: #121
+        >,
+        WuVals: BundleMasks<Stores, GW, <D as PlanDims>::Stores>,
+        <D as PlanDims>::Units: ConstCapacity,
+        <D as PlanDims>::AdjRow: BitAccess + Identity,
+    {
+        // E4 slice 1: the worker reads the per-frame epoch set by `run_parallel`
+        // before the publish (stable for the frame under the publish/await
+        // happens-before).
+        let epoch = USize(self.virtual_epoch.load(Ordering::Relaxed));
+        let total = total.0; // lint:allow(no-bare-numeric) reason: frame record count; tracked: #121
+        let tphase = phase_trunk_count(phase, trunk, n, p);
+        // All-ones dirty: run_parallel dispatches the pure-RAW path (no
+        // incremental skip), so every owned member runs.
+        let all = <<D as PlanDims>::AdjRow as Identity>::ZERO.bitnot();
+        if tphase.0 == 1 && ncores.0 > 1 && total > 0 {
+            // Head+tail convergence (spec :770): a single-trunk waist-bounded
+            // phase is the serial bottleneck. Ownership there is by record slice,
+            // not by trunk, so all cores walk the same one trunk (the whole-phase
+            // mask) over a disjoint ceil-sized record slice, the union covering
+            // [0, total) with no gap or overlap (surplus cores get lo == hi and
+            // do nothing). Stays on the runtime-mask run_gated path; the per-trunk
+            // dispatch_core walk cannot express a record-range split.
+            let per = (total + ncores.0 - 1) / ncores.0; // lint:allow(no-bare-numeric) reason: ceil record slice; tracked: #121
+            let lo = (core.0 * per).min(total); // lint:allow(no-bare-numeric) reason: slice start; tracked: #121
+            let hi = (lo + per).min(total); // lint:allow(no-bare-numeric) reason: slice end; tracked: #121
+            let mask = phase_mask::<<D as PlanDims>::AdjRow>(phase, n, p);
+            let msize = msize.0; // lint:allow(no-bare-numeric) reason: morsel length; tracked: #121
+            let mut start = lo; // lint:allow(no-bare-numeric) reason: morsel start; tracked: #121
+            while start < hi {
+                let len = msize.min(hi - start);
+                self.wu_values.run_gated(
+                    &self.bindings,
+                    &self.meta_block,
+                    MorselRange::new(USize(start), USize(len)),
+                    mask,
+                    USize::ZERO,
+                    epoch,
+                );
+                start += len; // lint:allow(no-bare-numeric) reason: morsel step; tracked: #121
+            }
+        } else if total == 0 {
+            // Record-less frame: one empty-morsel dispatch_core so a resource-only
+            // trunk this core owns runs exactly once.
+            let mut rank = USize::ZERO;
+            self.wu_values.dispatch_core(
+                &self.wu_values,
+                p,
+                core,
+                ncores,
+                &mut rank,
+                &self.bindings,
+                &self.meta_block,
+                MorselRange::new(USize::ZERO, USize::ZERO),
+                all,
+                epoch,
+            );
+        } else {
+            // Ordinary trunk-rank ownership over the full range: per morsel,
+            // dispatch_core fires the trunks this core owns as compiled per-trunk
+            // monos (one runtime ownership branch per trunk-root, not per unit).
+            let msize = msize.0; // lint:allow(no-bare-numeric) reason: morsel length; tracked: #121
+            let mut start = 0; // lint:allow(no-bare-numeric) reason: morsel start; tracked: #121
+            while start < total {
+                let len = msize.min(total - start);
+                let mut rank = USize::ZERO;
+                self.wu_values.dispatch_core(
+                    &self.wu_values,
+                    p,
+                    core,
+                    ncores,
+                    &mut rank,
+                    &self.bindings,
+                    &self.meta_block,
+                    MorselRange::new(USize(start), USize(len)),
+                    all,
+                    epoch,
+                );
+                start += len; // lint:allow(no-bare-numeric) reason: morsel step; tracked: #121
+            }
+        }
     }
 
     /// Dispatch the retained carrier fused: fold its `RecordOp` work units into
@@ -961,6 +1947,10 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
             RunFiber<<Vals as BindingsFor>::Bindings, W2>,
     {
         let _ = (&self.plan_dirty, &self.plan_cache, &self.topo_order, &self.topo_count);
+        // E8 adapt: sample the frame start; the cold-start state is the EMA
+        // seed flag (the first frame stores its raw duration).
+        let frame_start = self.clock.now_ns();
+        let ema_seed = Bool(self.first_frame.load(Ordering::Relaxed));
         let fused = WuCons {
             head: ChainWu::new(self.wu_values.fuse()),
             tail: WuNil,
@@ -971,14 +1961,19 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         // changed, or the cold frame). A clean frame skips the whole chain,
         // leaving its output column untouched.
         let dirty = self.dirty_units();
+        self.virtual_epoch.fetch_add(1, Ordering::Relaxed); // lint:allow(no-bare-numeric) reason: per-pass epoch successor; tracked: #121
+        self.meta_block.metrics.pass_count.set(USize(self.meta_block.metrics.pass_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: per-pass meta pass_count; tracked: #121
+        let epoch = USize(self.virtual_epoch.load(Ordering::Relaxed));
         let msize = Cfg::MORSEL_SIZE.0.max(1);
         let total = self.record_count.0;
         if total == 0 {
             fused.run_gated(
                 &self.bindings,
+                &self.meta_block,
                 MorselRange::new(USize::ZERO, USize::ZERO),
                 dirty,
                 USize::ZERO,
+                epoch,
             );
         } else {
             let mut start = 0;
@@ -986,15 +1981,22 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
                 let len = msize.min(total - start);
                 fused.run_gated(
                     &self.bindings,
+                    &self.meta_block,
                     MorselRange::new(USize(start), USize(len)),
                     dirty,
                     USize::ZERO,
+                    epoch,
                 );
                 start += len;
             }
         }
-        self.store_dirty = AccessMask::empty();
-        self.first_frame = Bool::FALSE;
+        self.store_dirty.set(AccessMask::empty());
+        self.first_frame.store(false, Ordering::Relaxed);
+        // E8 adapt: fold this frame's duration into the pass-duration EMA.
+        // Between frames, so the write needs no synchronisation.
+        let m = &self.meta_block.metrics;
+        m.ema_pass_duration_ns
+            .set(fold_ema(m.ema_pass_duration_ns.get(), self.clock.now_ns() - frame_start, ema_seed));
         Cfg::Out::default()
     }
 
@@ -1053,11 +2055,24 @@ impl<Cfg: RunCfg> Default for Scheduler<Cfg, WuNil, SvEmpty, NullColumnStorage> 
             read_masks: <<DefaultPlanDims as PlanDims>::Units as Capacity>::filled(
                 AccessMask::empty(),
             ),
-            store_dirty: AccessMask::empty(),
-            first_frame: Bool::TRUE,
+            store_dirty: Cell::new(AccessMask::empty()),
+            first_frame: AtomicBool::new(true),
+            virtual_epoch: AtomicUsize::new(0),
+            meta_block: MetaBlock::default(),
+            clock: DefaultClock::new(),
             bindings: crate::resource::bindings::BindingNil,
             storage: NullColumnStorage,
             wu_values: WuNil,
+            pool: empty_pool_frame(),
+            worker_ctxs: [const { WorkerCtx { sched: core::ptr::null(), core_id: 0 } }; MAX_CORES], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: worker ctx init, core index; tracked: #121
+            spawned: Bool::FALSE,
+            gate2_phase: [USize::ZERO; GATE2_MAX_UNITS],
+            gate2_trunk: [USize::ZERO; GATE2_MAX_UNITS],
+            gate2_n: USize::ZERO,
+            gate2_nphases: USize::ZERO,
+            gate2_ncores: USize::ZERO,
+            gate2_accum_live: [const { core::sync::atomic::AtomicUsize::new(0) }; MAX_CORES * GATE2_MAX_ACCUMS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic publish array init; tracked: #121
+            _pin: PhantomPinned,
         }
     }
 }
@@ -1071,14 +2086,15 @@ impl<Cfg: RunCfg> Default for Scheduler<Cfg, WuNil, SvEmpty, NullColumnStorage> 
 /// of registered platform-provider types. `StoreValues` carries the
 /// store VALUES aligned with `Stores`. All start empty from
 /// `Scheduler::builder()` and grow via `.with(...)`.
-pub struct SchedulerBuilder<Wus, Stores, Platform, Vals: StoreValues, WuVals> {
+pub struct SchedulerBuilder<Wus, Stores, Platform, Vals: StoreValues, WuVals, Clk = DefaultClock> {
     store_values: Vals,
     wu_values: WuVals,
+    clock: Clk,
     _phantom: PhantomData<(Wus, Stores, Platform)>,
 }
 
-impl<Wus, Stores, Platform, Vals: StoreValues, WuVals>
-    SchedulerBuilder<Wus, Stores, Platform, Vals, WuVals>
+impl<Wus, Stores, Platform, Vals: StoreValues, WuVals, Clk>
+    SchedulerBuilder<Wus, Stores, Platform, Vals, WuVals, Clk>
 {
     /// Register one provider on the scheduler.
     ///
@@ -1105,6 +2121,7 @@ impl<Wus, Stores, Platform, Vals: StoreValues, WuVals>
         <P::Dispatch as Dispatch<Wus, Stores, Platform>>::NextPlatform,
         <<P::Dispatch as RouterKind>::Kind as Place<P>>::NextStores<Vals>,
         <<P::Dispatch as RouterKind>::Kind as Place<P>>::NextWus<WuVals>,
+        Clk,
     >
     where
         P: BuilderInput,
@@ -1121,6 +2138,29 @@ impl<Wus, Stores, Platform, Vals: StoreValues, WuVals>
         SchedulerBuilder {
             store_values,
             wu_values,
+            clock: self.clock,
+            _phantom: PhantomData,
+        }
+    }
+
+    /// Replace the clock provider the built scheduler samples for the
+    /// pass-duration EMA (E8 adapt).
+    ///
+    /// The slot starts on `DefaultClock` (`OsClock` under the default
+    /// `platform-os` feature, the null clock otherwise); a no_os consumer
+    /// supplies its own here (the DI path), and a test supplies a scripted
+    /// clock for deterministic assertions. A dedicated method rather than a
+    /// `with(...)` routing case because the clock VALUE must be retained
+    /// (platform inputs through `with` drop their value and track only the
+    /// type).
+    pub fn clock<C2: ClockApi>(
+        self,
+        clock: C2,
+    ) -> SchedulerBuilder<Wus, Stores, Platform, Vals, WuVals, C2> {
+        SchedulerBuilder {
+            store_values: self.store_values,
+            wu_values: self.wu_values,
+            clock,
             _phantom: PhantomData,
         }
     }
@@ -1134,7 +2174,7 @@ impl<Wus, Stores, Platform, Vals: StoreValues, WuVals>
     }
 }
 
-impl<Wus, Stores, Platform, Vals, WuVals> SchedulerBuilder<Wus, Stores, Platform, Vals, WuVals>
+impl<Wus, Stores, Platform, Vals, WuVals, Clk> SchedulerBuilder<Wus, Stores, Platform, Vals, WuVals, Clk>
 where
     Wus: WorkUnitBundle,
     Stores: AccessSet
@@ -1159,7 +2199,7 @@ where
         self,
         storage: CS,
         record_count: USize,
-    ) -> notko::Outcome<Scheduler<DefaultRunCfg, WuVals, Vals, CS, DefaultPlanDims, Stores>, BuildError>
+    ) -> notko::Outcome<Scheduler<DefaultRunCfg, WuVals, Vals, CS, DefaultPlanDims, Stores, Clk>, BuildError>
     where
         Wus: BundleProject<
             Stores,
@@ -1200,11 +2240,24 @@ where
                     plan_cache: PlanCache::new(),
                     predecessor_masks: plan.predecessor_masks,
                     read_masks: plan.read_masks,
-                    store_dirty: AccessMask::empty(),
-                    first_frame: Bool::TRUE,
+                    store_dirty: Cell::new(AccessMask::empty()),
+                    first_frame: AtomicBool::new(true),
+                    virtual_epoch: AtomicUsize::new(0),
+                    meta_block: MetaBlock::default(),
+                    clock: self.clock,
                     bindings,
                     storage,
                     wu_values,
+                    pool: empty_pool_frame(),
+                    worker_ctxs: [const { WorkerCtx { sched: core::ptr::null(), core_id: 0 } }; MAX_CORES], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: worker ctx init, core index; tracked: #121
+                    spawned: Bool::FALSE,
+                    gate2_phase: [USize::ZERO; GATE2_MAX_UNITS],
+                    gate2_trunk: [USize::ZERO; GATE2_MAX_UNITS],
+                    gate2_n: USize::ZERO,
+                    gate2_nphases: USize::ZERO,
+                    gate2_ncores: USize::ZERO,
+            gate2_accum_live: [const { core::sync::atomic::AtomicUsize::new(0) }; MAX_CORES * GATE2_MAX_ACCUMS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic publish array init; tracked: #121
+                    _pin: PhantomPinned,
                 })
             }
             notko::Outcome::Err(e) => notko::Outcome::Err(e),
@@ -1220,7 +2273,7 @@ where
         self,
         storage: CS,
         record_count: USize,
-    ) -> notko::Outcome<Scheduler<Cfg, WuVals, Vals, CS, DefaultPlanDims, Stores>, BuildError>
+    ) -> notko::Outcome<Scheduler<Cfg, WuVals, Vals, CS, DefaultPlanDims, Stores, Clk>, BuildError>
     where
         Wus: BundleProject<
             Stores,
@@ -1261,11 +2314,24 @@ where
                     plan_cache: PlanCache::new(),
                     predecessor_masks: plan.predecessor_masks,
                     read_masks: plan.read_masks,
-                    store_dirty: AccessMask::empty(),
-                    first_frame: Bool::TRUE,
+                    store_dirty: Cell::new(AccessMask::empty()),
+                    first_frame: AtomicBool::new(true),
+                    virtual_epoch: AtomicUsize::new(0),
+                    meta_block: MetaBlock::default(),
+                    clock: self.clock,
                     bindings,
                     storage,
                     wu_values,
+                    pool: empty_pool_frame(),
+                    worker_ctxs: [const { WorkerCtx { sched: core::ptr::null(), core_id: 0 } }; MAX_CORES], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: worker ctx init, core index; tracked: #121
+                    spawned: Bool::FALSE,
+                    gate2_phase: [USize::ZERO; GATE2_MAX_UNITS],
+                    gate2_trunk: [USize::ZERO; GATE2_MAX_UNITS],
+                    gate2_n: USize::ZERO,
+                    gate2_nphases: USize::ZERO,
+                    gate2_ncores: USize::ZERO,
+            gate2_accum_live: [const { core::sync::atomic::AtomicUsize::new(0) }; MAX_CORES * GATE2_MAX_ACCUMS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic publish array init; tracked: #121
+                    _pin: PhantomPinned,
                 })
             }
             notko::Outcome::Err(e) => notko::Outcome::Err(e),

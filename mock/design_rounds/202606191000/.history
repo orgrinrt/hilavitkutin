@@ -1,0 +1,50 @@
+0808524 chore: lock src changelist for parallel aliasing soundness
+c9ab2b8 fix: interior-mutable between-frame scheduler fields for parallel aliasing soundness
+7b9c7a7 chore: open src CL for parallel aliasing soundness
+8f0425f chore: lock doc changelist for parallel aliasing soundness
+c72c91c docs: note between-frame interior-mutability aliasing discipline
+cedbc44 docs: open doc CL for parallel aliasing soundness
+bde55ee chore: open gate2 parallel aliasing-soundness topic
+8f55c42 docs: standalone canonical engine spec with notko/arvo appendices
+ec58905 docs: finalise completion-arc roadmap with expert-pass corrections
+029631e docs: pre-chart feasibility sketches + completion-arc synthesis
+59fdfa7 docs: record canonical design addendum a1 rulings
+0e4369d chore: close round 202606110948 e8 pass-duration ema
+ae9dce2 chore: lock src changelist for e8 pass-duration ema
+9cc7d40 feat: clock-sourced pass-duration ema through the meta bridge
+5a35e5d chore: open src cl for e8 pass-duration ema slice
+c06f254 chore: lock doc changelist for e8 pass-duration ema
+ef6617d docs: document pass-duration ema spine and bridge cadence read
+3e25950 docs: open doc cl for e8 pass-duration ema slice
+c9c79a6 docs: open topic for e8 adapt pass-duration ema slice
+cb75393 chore: close round 202606110855 run_parallel meta parity
+216c494 chore: lock src changelist for run_parallel meta parity
+b1c11b3 feat: bring meta pipeline to run_parallel on both worker paths
+c36c30b docs: refine parity src cl to as-landed branch condition and tests
+f0b7aa2 test: add red-first run_parallel meta parity tests
+c59b081 chore: open src cl for run_parallel meta parity
+0f60008 chore: lock doc changelist for run_parallel meta parity
+96b27d5 docs: document run_parallel meta parity, drop stale run no-op section
+9a28ae3 docs: open doc cl for run_parallel meta parity
+146be36 docs: open topic for run_parallel meta parity round
+cba715a chore: close round 202606090000 e4 slice-3 bridge
+ab54033 chore: lock e4 slice-3 bridge src changelist
+797252c feat: bridge engine-owned meta state to onmeta work units
+646e415 docs: extend e4 slice-3 src cl with api test rehab claim
+a95c3cf chore: open src CL for E4 slice-3 engine-to-meta bridge
+2d880ab chore: lock doc changelist for E4 slice-3 bridge (with comparison)
+cfbf38a docs: add comparison-to-deprecated section to E4 slice-3 bridge doc CL
+9cc799e chore: deprecate src CL 202606090400 to re-open doc CL for the required comparison section
+2cba481 docs: open E4 slice-3 bridge src CL — EngineCtx meta-param + MetaBlock + dispatch threading
+f0e3135 chore: lock doc changelist for E4 slice-3 bridge
+739cf04 docs: describe the engine-to-meta bridge in engine DESIGN
+8684a34 docs: open E4 slice-3 bridge doc CL — engine-owned MetaBlock + OnMeta Ctx accessor
+d8c8fbe docs: sketch E4 slice-3 meta-bridge accessor — candidate 1 (engine-owned block + OnMeta-gated Ctx accessor) WORKS
+53d11f3 docs: slice-3 resolution — resource Copy wall proves the meta-state bridge is irreducible
+af09da4 chore: deprecate doc CL 202606090200 — re-approach slice-3 as the meta-state bridge
+50b385a docs: revert provided-WU paragraph — slice-3 needs the meta-state bridge, not a resource
+fc4f3e7 chore: deprecate src CL 202606090200 — thin slice-3a hit the resource Copy wall
+4df051f docs: open E4 slice-3a src CL — SchedulerMetrics + metrics WU + hook test
+7a4f150 chore: lock doc changelist for E4 slice-3a consumer meta hooks
+2813b2e docs: describe consumer meta hooks + SchedulerMetricsWu in engine DESIGN
+b104e40 docs: open E4 slice-3a doc CL — SchedulerMetrics + provided metrics WU + consumer hook

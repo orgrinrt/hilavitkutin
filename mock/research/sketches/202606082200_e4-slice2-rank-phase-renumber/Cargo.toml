@@ -1,0 +1,11 @@
+[package]
+name = "e4-slice2-rank-phase-renumber"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "e4-slice2-rank-phase-renumber"
+path = "src/main.rs"
+
+[workspace]

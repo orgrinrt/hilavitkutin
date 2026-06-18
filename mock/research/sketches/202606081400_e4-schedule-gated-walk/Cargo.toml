@@ -1,0 +1,20 @@
+[package]
+name = "sketch-e4-schedule-gated-walk"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "sketch"
+path = "src/main.rs"
+
+[workspace]
+
+# GATE-2 E4 slice 1 (round 202606081200). Feasibility of the schedule-gated
+# dispatch walk: the engine's `RunFiber for WuCons<W, Tail>` bounds `W: WorkUnit`
+# (= WorkUnit<Always>), so On<V> WUs are currently undispatchable. This proves a
+# cons walk can recover each element's Schedule (Always vs On<V>) and branch the
+# gate at COMPILE TIME (Always -> always run; On<V> -> run iff V's fired flag is
+# set), over a carrier mixing both schedules, with no runtime type dispatch. The
+# crux trait-solver question: how the walk recovers a unique Schedule per element
+# (associated type on a companion trait vs a free trait param), unambiguously.

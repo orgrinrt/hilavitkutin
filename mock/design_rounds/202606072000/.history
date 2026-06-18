@@ -1,0 +1,50 @@
+35aa288 chore: lock src changelist for gate2-r4c-run-core-phase
+01d3166 refactor: extract run_core_phase per-(core,phase) dispatch primitive (gate2 r4c b1)
+bafe39b docs: gate2-r4c-run-core-phase src changelist
+b90da34 chore: lock doc changelist for gate2-r4c-run-core-phase
+e61a182 docs: gate2-r4c-run-core-phase doc changelist (no tmpl edits)
+629a766 docs: gate2-r4c-run-core-phase topic
+92592a3 research: gate2 r4c pin-scheduler integration sketch (WORKS)
+7f044c1 chore: close design round gate2-r4c-frame-protocol
+6eb28ed chore: lock src changelist for gate2-r4c-frame-protocol
+bc32526 feat: per-frame wake-word protocol (gate2 r4c round a)
+ef56fa2 docs: gate2-r4c-frame-protocol src changelist
+43dd667 chore: lock doc changelist for gate2-r4c-frame-protocol
+0646678 docs: gate2-r4c-frame-protocol doc changelist (no tmpl edits)
+5f0e87e docs: gate2-r4c-frame-protocol topic
+8df9d3b chore: close design round gate2-r4c-osthreadpool-spawn
+429a642 chore: lock src changelist for gate2-r4c-osthreadpool-spawn
+294fc95 feat: real os threadpool spawn + worker_count (gate2 r4c slice 1)
+c902ca5 docs: gate2-r4c-osthreadpool-spawn src changelist
+e939945 chore: lock doc changelist for gate2-r4c-osthreadpool-spawn
+4a9fe70 docs: gate2-r4c-osthreadpool-spawn doc changelist (no tmpl edits)
+5b524cb docs: gate2-r4c-osthreadpool-spawn topic
+4dea287 research: gate2 r4c threadpoolapi contract-mapping sketch (WORKS)
+3fd9bd0 research: gate2 r4c persistent-pthread-pool de-risk sketch (real parking, WORKS)
+7454578 chore: close round gate2-r4b-run-parallel-inline
+dcaad6d chore: lock src changelist for gate2-r4b
+a1ad835 feat: gate-2 r4b inline n-core dispatch (run_parallel)
+de4c2e5 docs: gate2-r4b src changelist
+28a4c1f chore: lock doc changelist for gate2-r4b
+9de992a docs: gate2-r4b doc changelist (no tmpl edits)
+278d258 docs: open gate2-r4b run_parallel inline topic
+306a6ba chore: close round gate2-r4a-core-phase-masks
+779cbc9 chore: lock src changelist for gate2-r4a
+7a79c92 feat: gate-2 r4a per-core phase masks (core_mask)
+4a06bca src: open r4a core-phase-masks src changelist
+3bbbddd chore: lock doc changelist for gate2-r4a
+f8e76fe doc: open r4a doc changelist (no doc changes)
+acbd17b topic: gate-2 r4a per-core phase masks
+68c0988 research: gate-2 dispatch mechanism options (post S3-wall web research)
+1c49eb2 research: gate-2 S3 sketch — pairs-enumeration dispatch WALLS (FAILS)
+37dd326 chore: close round gate2-waist-bounded-phase (r2)
+294f30e chore: lock src changelist for gate2-waist-bounded-phase
+c1c9679 feat: gate-2 waist-bounded phase axis via const waist_detect (r2)
+98cd16c src: open gate-2 waist-bounded phase src changelist (r2)
+b56161b chore: lock doc changelist for gate2-waist-bounded-phase
+150fab7 docs: reword gate-2 grouping phase to waist-bounded (r2)
+7700f00 doc: open gate-2 waist-bounded phase doc changelist (r2)
+41ac7c3 topic: gate-2 waist-bounded phase axis (r2)
+c559e2b research: gate-2 S2 sketch — waist-bounded phase from masks (WORKS)
+29a02a1 chore: bump arvo pin for ConstCapacity + waist_detect_const (gate-2 r1)
+b7921a7 research: gate-2 chart R0 probe result (WORKS) — R1a/R1b unblocked

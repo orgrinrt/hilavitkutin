@@ -266,6 +266,8 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
         std_startup,
         eng_runtime,
         std_runtime,
+        eng_runtime_par: None,
+        std_runtime_par: None,
         checksum_ok: eng_hash == std_hash,
         eng_hash,
         std_hash,

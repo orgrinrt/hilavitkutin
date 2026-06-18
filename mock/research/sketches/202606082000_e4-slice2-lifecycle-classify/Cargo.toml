@@ -1,0 +1,11 @@
+[package]
+name = "e4-slice2-lifecycle-classify"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "e4-slice2-lifecycle-classify"
+path = "src/main.rs"
+
+[workspace]

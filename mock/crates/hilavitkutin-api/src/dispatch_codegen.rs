@@ -30,8 +30,6 @@ use arvo::strategy::Identity;
 use arvo::traits::FromConstant;
 use arvo::{Uint, USize};
 
-use crate::id::StoreId;
-
 mod sealed {
     pub trait Sealed {}
 }

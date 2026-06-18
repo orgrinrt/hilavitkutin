@@ -27,7 +27,8 @@ use hilavitkutin_api::column_value::ColumnValue;
 use hilavitkutin_api::context::{
     BatchApi, ColumnReaderApi, ColumnWriterApi, EachApi, HasBatch, HasColumnReader,
     HasColumnWriter, HasEach, HasReduce, HasResourceProvider, HasVirtualFirer, ReduceApi,
-    ResolveColumnRead, ResolveColumnWrite, ResolveResource, ResourceProviderApi, VirtualFirerApi,
+    ResolveColumnRead, ResolveColumnWrite, ResolveResource, ResolveVirtualFire, ResourceProviderApi,
+    VirtualFirerApi,
 };
 use hilavitkutin_api::hint::{Adaptive, Important, Steady};
 use hilavitkutin_api::store::{Column, Resource, Virtual};
@@ -179,10 +180,17 @@ impl<T: ColumnValue, I> ResolveColumnWrite<T, I> for Stub {
 }
 
 impl<W: AccessSet> VirtualFirerApi<W> for Stub {
-    fn fire<V: 'static>(&self)
+    fn fire<V: 'static, I>(&self)
     where
         W: Contains<Virtual<V>>,
+        Self: ResolveVirtualFire<V, I>,
     {
+        unimplemented!("AdaptCtxUnimplementedStub is pre-Pass-6 stub; engine Ctx supersedes it")
+    }
+}
+
+impl<V, I> ResolveVirtualFire<V, I> for Stub {
+    fn resolve_fire(&self) {
         unimplemented!("AdaptCtxUnimplementedStub is pre-Pass-6 stub; engine Ctx supersedes it")
     }
 }

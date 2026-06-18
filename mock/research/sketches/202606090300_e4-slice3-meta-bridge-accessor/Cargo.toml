@@ -1,0 +1,11 @@
+[package]
+name = "e4-slice3-meta-bridge-accessor"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "e4-slice3-meta-bridge-accessor"
+path = "src/main.rs"
+
+[workspace]

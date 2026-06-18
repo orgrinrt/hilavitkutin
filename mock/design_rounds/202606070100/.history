@@ -1,0 +1,50 @@
+cf8aba8 chore: lock src changelist for G2-0b
+70f29fe feat: add RunPhase/RunPipeline + waist barrier nesting levels
+0e07a78 docs: open G2-0b src CL
+82dadd5 chore: lock doc changelist for G2-0b
+f725be4 docs: describe RunPhase/RunPipeline + waist barrier nesting
+9a4cf83 docs: open G2-0b doc CL
+154900c docs: open G2-0b topic — RunPhase/RunPipeline + waist barrier
+75f2808 chore: close round 202606070048 (G2-0a RunTrunk)
+72d54ab chore: lock src changelist for G2-0a
+a423630 feat: add RunTrunk over FiberCons trunk-nesting dispatch level
+bc1faac docs: open G2-0a src CL
+66db5da chore: lock doc changelist for G2-0a
+6c50f90 docs: describe RunTrunk/FiberCons trunk nesting in engine DESIGN
+e6511b8 docs: open G2-0a doc CL
+29ca6da docs: open G2-0a topic — RunTrunk over FiberCons trunk nesting
+25c86ac docs: identify sketches by dir + accurate per-sketch commit hashes
+36c2cc3 docs: record GATE-2 sketch results in roadmap r3 (all proven)
+d262986 test: GATE-2 sketch C, bridge fan-in of two parent trunks devirts
+c7a3893 docs: record B2 objdump, trunk dispatch fully fused zero blr/bl on hot path
+9bf41f8 test: GATE-2 sketch B2, parallel trunks deliver 2.84x speedup (ideal 3x)
+b629fb4 test: GATE-2 sketch B keystone, concurrent zero-sync column-disjoint trunks
+30b9c8c test: GATE-2 sketch A, phase/trunk/fiber nest devirts + output-equivalent
+aa4cf50 docs: add GATE-2 roadmap r3, trunk-sectioning step sequence
+936897f docs: re-chart GATE-2 around trunk-sectioning, not fiber/record partition
+e4479c8 feat: complete GATE-1 single-core dispatch engine
+09c3e6b fix: bump arvo dev head, fix waist_detect 2-arg call
+d57d71d test: add engine-vs-std perf gate, red until single-core parity
+ab2f316 feat: dispatch each fiber on its own morsel-locality bit
+0f0caaa feat: detect waists via arvo_graph::waist_detect
+d65456e feat: dispatch accumulator-free pipelines morsel-outer
+04f7c1b bench: single-core engine vs optimal-std macro bench
+a46b675 test: assert resource-arena partial-failure cleanup directly
+c959e79 fix: reject a PlanDims that exceeds the phase/trunk id width
+e14d3de chore: harden plan projection column-id coupling and partition guard
+b9fc360 feat: dispatch in the plan's phase-sequential order
+7f35f83 feat: window the run-loop dispatch into morsels
+f774b89 feat: dispatch accumulator columns through the append surface
+db1fec4 feat: dispatch input columns through the data plane
+23f2567 chore: regenerate rendered docs
+0dbc914 feat: store-back the execution plan on ColumnStorage
+5ad8687 feat: dispatch work units in plan topological order
+27b9c1a feat: make build_dag raw hazard detection order-independent
+4b480ad refactor!: route resource arena through ColumnStorage
+db09ce4 refactor: flatten ExecutionPlan into CSR trunk and fiber pools
+baf4a03 feat: ship ColumnStorage contract and ArenaColumnStorage backing
+0d3078c refactor!: adopt PlanDims capacity bundle across hilavitkutin engine
+ef7dd15 feat: retain registered workunits and walk them in scheduler run
+395ddc6 feat: add resource-only run-fiber-walk dispatch core
+742c4dd feat: project workunit bundle into plan inputs
+a5cfb48 feat: width-gate wide blocks to the spectral fiber former

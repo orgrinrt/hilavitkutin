@@ -1,0 +1,11 @@
+[package]
+name = "e4-gate-firer-trait-shapes"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "e4-gate-firer-trait-shapes"
+path = "src/main.rs"
+
+[workspace]

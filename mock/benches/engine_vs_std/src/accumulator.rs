@@ -16,6 +16,7 @@
 use core::hint::black_box;
 
 use arvo::USize;
+use hilavitkutin::OsThreadPool;
 use hilavitkutin::dispatch::engine_ctx::{
     AccPtrCons, AccPtrNil, ColPtrCons, ColPtrNil, EngineCtx, PtrNil,
 };
@@ -131,6 +132,42 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
         fnv1a_u32_slice(slice)
     };
 
+    // ----- runtime engine, multi-threaded (deviation 9 threaded accumulator) -----
+    // A fresh scheduler so the pinned threaded run does not alias the single-core
+    // one. The accumulator carrier is one unit-outer trunk; run_parallel splits
+    // its record range head+tail across cores, each appending into its own region
+    // of the reserved buffer, merged after the frame (byte-identical to run()).
+    let provider_par = HeapBump::new(arena_bytes(2, n));
+    let sched_par = Scheduler::builder()
+        .with(Column::<Inv>::new())
+        .with(Accum::<Av>::new())
+        .with(AppendChain)
+        .build(store(provider_par), USize(n))
+        .unwrap_or_else(|_| panic!("engine build should succeed"));
+    // SAFETY: In's buffer (one tail down from the Av head) reserves N records of
+    // Inv (repr u32); the scheduler is alive; each slot written once.
+    let pin_base = sched_par.__bindings().__tail().__ptr().as_ptr() as *mut Inv;
+    for i in 0..n {
+        unsafe { *pin_base.add(i) = Inv(i as u32) };
+    }
+    let pool = OsThreadPool::new();
+    let mut sched_par = core::pin::pin!(sched_par);
+    let eng_runtime_par = bench(warmup, iters, || {
+        let r = sched_par.as_mut().run_parallel(&pool);
+        black_box(&r);
+    });
+    // One more threaded run so the read-back sees a full, correct frame.
+    let _ = sched_par.as_mut().run_parallel(&pool);
+    let eng_par_hash = {
+        let sref = sched_par.as_ref();
+        let b = sref.__bindings();
+        let plen = b.__len_cell().get().0;
+        let pav = b.__ptr().as_ptr() as *const u32;
+        // SAFETY: the merge wrote `plen` records at [0, plen); scheduler alive.
+        let slice = unsafe { core::slice::from_raw_parts(pav, plen) };
+        fnv1a_u32_slice(slice)
+    };
+
     // ----- runtime std: optimal append-in-order fill of a pre-sized buffer -----
     let in_buf: Vec<u32> = (0..n as u32).collect();
     let mut out: Vec<u32> = vec![0u32; n];
@@ -142,6 +179,31 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
     });
     let std_hash = fnv1a_u32_slice(&out);
 
+    // ----- runtime std: optimal multi-threaded fill (the FAIR parallel bar) -----
+    // The append is a full in-order map (every record appends, asserted above), so
+    // optimal std parallelism splits the record range across `std_threads()`
+    // threads, each filling its disjoint output chunk. This is byte-identical to
+    // the serial fill and mirrors the engine's deviation-9 per-core record-range
+    // split, so the parallel accumulator arm is judged engine-N-core vs std-N-core.
+    let nthreads = crate::std_threads();
+    let chunk = ((n + nthreads - 1) / nthreads).max(1);
+    let mut out_par: Vec<u32> = vec![0u32; n];
+    let std_runtime_par = bench(warmup, iters, || {
+        std::thread::scope(|sc| {
+            for (t, oc) in out_par.chunks_mut(chunk).enumerate() {
+                let base = t * chunk;
+                let ib = &in_buf;
+                sc.spawn(move || {
+                    for (j, o) in oc.iter_mut().enumerate() {
+                        *o = chain(ib[base + j]);
+                    }
+                });
+            }
+        });
+        black_box(&out_par);
+    });
+    let std_par_hash = fnv1a_u32_slice(&out_par);
+
     WorkloadMeasure {
         name: NAME,
         n,
@@ -149,7 +211,11 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
         std_startup,
         eng_runtime,
         std_runtime,
-        checksum_ok: eng_hash == std_hash,
+        eng_runtime_par: Some(eng_runtime_par),
+        std_runtime_par: Some(std_runtime_par),
+        checksum_ok: eng_hash == std_hash
+            && eng_par_hash == std_hash
+            && std_par_hash == std_hash,
         eng_hash,
         std_hash,
     }
