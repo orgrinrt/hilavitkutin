@@ -44,6 +44,10 @@ pub trait PlanDims {
     type ColumnsPerFiber: Capacity;
     /// Hardware cores driving dispatch.
     type Cores: Capacity;
+    /// Accumulator slots per core (the per-core append regions a frame merges).
+    type AccumsPerCore: Capacity;
+    /// Plan-affecting stores tracked by the dirty bitset between frames.
+    type PlanAffecting: Capacity;
     /// Bit-matrix row word for adjacency and waist analysis. Concrete per impl,
     /// sized to cover `Units` node indices. It is not derived inline from the
     /// capacity (`Bits<{ cap_size(Units::CAP) }>`) because arvo's `Bits`
@@ -74,5 +78,7 @@ impl PlanDims for DefaultPlanDims {
     type UnitsPerFiber = Dim<32>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal; Dim<N> array-length-grammar root, the permitted bare primitive in the capacity-as-type convention; tracked: #649
     type ColumnsPerFiber = Dim<16>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal; Dim<N> array-length-grammar root, the permitted bare primitive in the capacity-as-type convention; tracked: #649
     type Cores = Dim<256>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal, matches thread/class.rs MAX_CORES; Dim<N> array-length-grammar root, the permitted bare primitive in the capacity-as-type convention; tracked: #649
+    type AccumsPerCore = Dim<16>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal, the former GATE2_MAX_ACCUMS; Dim<N> array-length-grammar root; tracked: #649
+    type PlanAffecting = Dim<256>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal, the former plan_dirty[256]; Dim<N> array-length-grammar root; tracked: #649
     type AdjRow = Bits<64, Hot, Unsigned>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: row word covering the 64-unit default budget; Bits width literal; tracked: #649
 }

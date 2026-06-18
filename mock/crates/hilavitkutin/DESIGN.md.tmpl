@@ -785,9 +785,10 @@ projections rather than from explicit caps.
 ## Plan dimensions: `PlanDims`
 
 The plan, thread, and dispatch structures size their fixed arrays by
-thirteen capacity dimensions: units, stores, edges, phases, trunks,
+fifteen capacity dimensions: units, stores, edges, phases, trunks,
 trunks-per-phase, fibers, lanes, columns, components-per-trunk,
-units-per-fiber, columns-per-fiber, and cores. Earlier these were
+units-per-fiber, columns-per-fiber, cores, accums-per-core, and
+plan-affecting. Earlier these were
 individual `Cap` const generics threaded through every plan signature
 (`ExecutionPlan` carried ten, `compute_execution_plan` twelve). A `Cap`
 const generic feeds `[T; cap_size(N)]`, and that `cap_size` in array-
@@ -811,11 +812,29 @@ pub trait PlanDims {
     type UnitsPerFiber: Capacity;
     type ColumnsPerFiber: Capacity;
     type Cores: Capacity;
+    type AccumsPerCore: Capacity;
+    type PlanAffecting: Capacity;
     type AdjRow: BitSequence + BitAccess + BitLogic + Copy + Default + Identity;
 }
 ```
 
-The fourteenth associated type, `AdjRow`, is the bit-matrix row word the
+`AccumsPerCore` and `PlanAffecting` are the consumer-tunable replacements
+for two formerly-hardcoded engine caps. `AccumsPerCore` sizes the accumulator
+slots per core (the former `GATE2_MAX_ACCUMS = 16`); the per-(core,accum)
+publish array is the nested `<Cores as Capacity>::Array<<AccumsPerCore as
+Capacity>::Array<_>>` composition rather than a flat `cores * accums` product
+(a product would need a `generic_const_exprs` expression; the nested
+projection needs none). `PlanAffecting` sizes the dirty-tracking bitset (the
+former `plan_dirty: [_; 256]`). The grouping unit cap (the former
+`GATE2_MAX_UNITS = 256`) folds onto the existing `Units` dimension: its const
+scratch becomes a `<Units as ConstCapacity>::Array<_>` projection, sliced into
+the slice-based `BundleMasks::fill` via the `ConstCapacity` slice bridge.
+Because `fill` is slice-based, the per-cons-cell `MaskProject` recursion is
+capacity-blind, so the projection adds no per-step bound and the const-gated
+walk does not overflow the trait solver. Defaults stay 256 / 16 / etc, so an
+existing pipeline reserves byte-identical arrays.
+
+The final associated type, `AdjRow`, is the bit-matrix row word the
 dependency analysis steps use for adjacency and waist detection
 (`compute_waists` builds a `BitMatrix<D::AdjRow, D::Units>` and runs
 `arvo_graph::waist_detect` over it). It is a concrete type pinned at each impl,

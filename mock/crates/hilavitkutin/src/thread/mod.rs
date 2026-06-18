@@ -134,6 +134,8 @@ mod assign_cores_tests {
         type UnitsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity budget literal; Dim<N> array-length root; tracked: #649
         type ColumnsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity budget literal; Dim<N> array-length root; tracked: #649
         type Cores = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity budget literal; Dim<N> array-length root; tracked: #649
+        type AccumsPerCore = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity budget literal; Dim<N> array-length root; tracked: #649
+        type PlanAffecting = Dim<16>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity budget literal; Dim<N> array-length root; tracked: #649
         type AdjRow = Bits<64, Hot, Unsigned>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: 64-wide row covers Dim<8> units; Bits width literal; tracked: #649
     }
 
