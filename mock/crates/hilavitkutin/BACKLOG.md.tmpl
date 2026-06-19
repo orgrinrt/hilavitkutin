@@ -524,3 +524,11 @@ gated walk running each phase's units. Single-core this is sequential
 with degenerate (no-op) barriers between phases, output identical to the
 flat walk; G2-N replaces the degenerate barrier with the real phase
 barrier and pins each phase's trunks to cores.
+
+The change_seen_count metric (the change_class adapt-axis numerator) is
+maintained in the single-core run fold only. The run_parallel and
+run_fused folds reset store_dirty without counting it, so a ScheduleEnd
+hook reading change_seen_count under those paths reads stuck-at-zero
+beside the live pass_count, last_record_count, and pass-duration EMA.
+Mirroring the single-core capture-and-increment into both folds, plus a
+parallel/fused test, is the follow-up.

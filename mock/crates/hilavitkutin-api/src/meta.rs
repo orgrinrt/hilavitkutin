@@ -98,6 +98,11 @@ pub struct SchedulerMetrics {
     /// fold. An `OnMeta` hook derives the throughput trend (this divided by
     /// `ema_pass_duration_ns`) with no new instrumentation.
     pub last_record_count: Cell<USize>,
+    /// Count of `run` frames whose `store_dirty` was non-empty (an input change
+    /// was seen). An `OnMeta` hook derives the input-change rate (this divided
+    /// by `pass_count`) for the change_class axis, from existing dirty state
+    /// with no new instrumentation.
+    pub change_seen_count: Cell<USize>,
 }
 
 impl Default for SchedulerMetrics {
@@ -107,6 +112,7 @@ impl Default for SchedulerMetrics {
             pass_count: Cell::new(USize(0)), // lint:allow(no-bare-numeric) reason: zero pass count; tracked: #121
             ema_pass_duration_ns: Cell::new(Nanos::from_raw(0)), // lint:allow(no-bare-numeric) reason: zero-duration seed; tracked: #121
             last_record_count: Cell::new(USize(0)), // lint:allow(no-bare-numeric) reason: zero record count seed; tracked: #121
+            change_seen_count: Cell::new(USize(0)), // lint:allow(no-bare-numeric) reason: zero change count seed; tracked: #121
         }
     }
 }
