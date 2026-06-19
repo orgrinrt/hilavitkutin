@@ -696,7 +696,7 @@ pub struct Scheduler<
     /// (the C/P-sized adapt arrays are unused until the adapt subsystem ships;
     /// the sync words are scalars). Pinned (see `_pin`), so the spawned workers'
     /// raw pointers into it stay valid for the scheduler's life.
-    pool: PoolFrame<'static, 1, 1>,
+    pool: PoolFrame<'static, MAX_CORES, 1>,
     /// Per-worker contexts the spawned-once workers read through a raw pointer.
     /// Populated at the first `run_parallel`; stable because the scheduler is
     /// pinned once threaded.
@@ -741,10 +741,14 @@ struct SendCtxPtr(*const WorkerCtx);
 // SAFETY: see above.
 unsafe impl Send for SendCtxPtr {}
 
-/// Build an empty `PoolFrame<'static, 1, 1>` for the scheduler's inline pool: all
-/// sync words zero, dangling progress_slots (the frame protocol never reads
-/// them), `<1, 1>` adapt arrays (unused pre-adapt).
-fn empty_pool_frame() -> PoolFrame<'static, 1, 1> {
+/// Build an empty `PoolFrame<'static, MAX_CORES, 1>` for the scheduler's pool:
+/// all sync words zero, dangling progress_slots (the frame protocol never reads
+/// them). The core dimension is `MAX_CORES` so the per-core `idle_accumulator` /
+/// `park_count` arrays are genuinely per-core (the waist barrier fills
+/// `idle_accumulator[core]` for the core-idle adapt axis). The phase dimension
+/// stays 1: `predicted_wait_ns` is per-phase and not yet driven, so it needs no
+/// real phase cap here.
+fn empty_pool_frame() -> PoolFrame<'static, MAX_CORES, 1> {
     PoolFrame {
         shutdown: AtomicBool::new(false),
         phase_arrived: AtomicU32::new(0), // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic init constant; tracked: #121
@@ -753,8 +757,8 @@ fn empty_pool_frame() -> PoolFrame<'static, 1, 1> {
         done: AtomicU32::new(0),          // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic init constant; tracked: #121
         exited: AtomicU32::new(0),        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic init constant; tracked: #121
         predicted_wait_ns: [AtomicU32::new(0)], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic init constant; tracked: #121
-        idle_accumulator: [AtomicU64::new(0)], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic init constant; tracked: #121
-        park_count: [AtomicU64::new(0)],  // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic init constant; tracked: #121
+        idle_accumulator: [const { AtomicU64::new(0) }; MAX_CORES], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-core atomic init; tracked: #121
+        park_count: [const { AtomicU64::new(0) }; MAX_CORES], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-core atomic init; tracked: #121
         progress_slots: NonNull::dangling(),
         progress_slot_count: USize::ZERO,
         _arena: PhantomData,
@@ -867,8 +871,10 @@ where
             );
             if p + 1 < nphases {
                 // every worker participates in each waist, even one that owned
-                // no trunk this phase, so `expected` is the full core count.
-                waist_barrier(&s.pool, ncores);
+                // no trunk this phase, so `expected` is the full core count. The
+                // barrier times this core's follower park into the idle
+                // accumulator using the scheduler's clock.
+                waist_barrier(&s.pool, USize(core_id), ncores, || s.clock.now_ns());
             }
             p += 1; // lint:allow(no-bare-numeric) reason: phase loop step; tracked: #121
         }
@@ -1817,6 +1823,23 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
             if stores_changed {
                 m.change_seen_count.set(USize(m.change_seen_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: increment by one frame; tracked: #121
             }
+            // E8 adapt, core-idle axis: reduce this frame's per-core barrier
+            // idle (filled by the waist barrier follower parks) to the worst
+            // core, then zero the accumulators for the next frame. Worst-core,
+            // not sum, because the adapt trigger is "is some core starved".
+            // Bounded by the slot count, never the worker count (which can
+            // exceed MAX_CORES).
+            let acc = &(*me).pool.idle_accumulator;
+            let mut worst = 0u64; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: raw nanos max reduction; tracked: #121
+            let mut c = 0; // lint:allow(no-bare-numeric) reason: slot index; tracked: #121
+            while c < acc.len() {
+                let v = acc[c].swap(0, Ordering::AcqRel); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: read-and-reset accumulator; tracked: #121
+                if v > worst {
+                    worst = v;
+                }
+                c += 1; // lint:allow(no-bare-numeric) reason: slot index step; tracked: #121
+            }
+            m.idle_ns.set(Nanos::from_raw(worst));
         }
         Cfg::Out::default()
     }
@@ -2067,6 +2090,16 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
     #[doc(hidden)]
     pub fn __mark_store_dirty(&self) {
         self.store_dirty.set(AccessMask::empty().set(USize(0))); // lint:allow(no-bare-numeric) reason: store index zero; tracked: #121
+    }
+
+    /// Read the core-idle adapt metric (`SchedulerMetrics::idle_ns`) after a
+    /// frame. Hidden test accessor: an accumulator-bearing carrier takes the
+    /// unit-outer no-barrier path (zero idle by design), so a barrier-driven
+    /// signal cannot be read back through an accumulator append. Not part of the
+    /// supported surface; consumers read it through an `OnMeta<ScheduleEnd>` hook.
+    #[doc(hidden)]
+    pub fn __idle_ns(&self) -> Nanos {
+        self.meta_block.metrics.idle_ns.get()
     }
 
     /// Borrow the backing store. Hidden test accessor mirroring

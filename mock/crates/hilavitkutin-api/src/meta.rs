@@ -103,6 +103,13 @@ pub struct SchedulerMetrics {
     /// by `pass_count`) for the change_class axis, from existing dirty state
     /// with no new instrumentation.
     pub change_seen_count: Cell<USize>,
+    /// Worst-core idle time of the current frame in nanoseconds: the maximum
+    /// across the per-core `PoolFrame::idle_accumulator` slots the waist barrier
+    /// fills. An `OnMeta` hook reads it as the phase-imbalance signal (the adapt
+    /// trigger to re-select per-phase configs). The single-core and fused paths
+    /// never cross a waist barrier, so they leave it zero: no inter-core wait
+    /// means no idle.
+    pub idle_ns: Cell<Nanos>,
 }
 
 impl Default for SchedulerMetrics {
@@ -113,6 +120,7 @@ impl Default for SchedulerMetrics {
             ema_pass_duration_ns: Cell::new(Nanos::from_raw(0)), // lint:allow(no-bare-numeric) reason: zero-duration seed; tracked: #121
             last_record_count: Cell::new(USize(0)), // lint:allow(no-bare-numeric) reason: zero record count seed; tracked: #121
             change_seen_count: Cell::new(USize(0)), // lint:allow(no-bare-numeric) reason: zero change count seed; tracked: #121
+            idle_ns: Cell::new(Nanos::from_raw(0)), // lint:allow(no-bare-numeric) reason: zero-idle seed; tracked: #121
         }
     }
 }
