@@ -771,6 +771,26 @@ barrier, so they leave `idle_ns` zero, the correct reading when there is no
 inter-core wait. An `OnMeta<ScheduleEnd>` hook reads it as the phase-imbalance
 signal, the adapt trigger to re-select per-phase configs.
 
+The per-phase duration EMA is engine-internal: a `phase_ema` store on the
+scheduler, not a `SchedulerMetrics` field. Per-unit and per-phase EMA detail
+feeds the tuning logic (the eventual `select_adapt_config`) rather than being
+named by a consumer through the meta bridge, and `SchedulerMetrics` stays
+non-generic so `ctx.meta::<SchedulerMetrics>()` is nameable consumer-side
+without a capacity parameter. The single-core dispatch path samples it: the
+per-phase dispatch loop reads the clock before and after each phase and folds
+the delta with the same 1/8 EMA the pass-duration fold uses, seeded on the first
+frame. The parallel-path per-phase timing and the `select_adapt_config`
+consumption are follow-ups.
+
+Adaptation carries a non-degradation invariant: it exists to improve
+performance and must never degrade it. An adaptive run is no slower than the
+non-adaptive baseline on any workload, and strictly faster on an imbalanced one.
+This is the make-or-break property of the subsystem; an adaptive scheduler that
+loses to its own baseline is worse than no adaptation, because the sampling and
+re-selection cost buys nothing. The invariant is formalised as a catalogued
+behavioural-contract test suite, defined ahead of the heuristics so each is
+built against the contract rather than retrofitted to whatever it happens to do.
+
 The meta pipeline holds under `run_parallel` on both worker paths. On the
 phase-loop path (record-bearing carriers), lifecycle bands are phases under the
 rank-outer grouping, so the worker phase loop plus the worker-side waist

@@ -160,7 +160,18 @@ impl WorkUnit<OnMeta<ScheduleEnd>> for EmaWu {
 
 #[test]
 fn single_core_scripted_ema_fold() {
-    static SCRIPT: [u64; 6] = [1000, 1300, 2000, 2700, 3000, 3700];
+    // Six clock reads per frame: frame_start + 2 x nphases (the per-phase EMA
+    // sampling in dispatch_trunks, nphases == 2 for this carrier) + frame_end.
+    // Only frame_start (first of the frame) and frame_end (last) set the
+    // pass-duration; the four in-between reads are the phase timing. Per-frame
+    // durations are 300 / 700 / 700, so the EMA is 300 (seed), 350 after one
+    // 1/8 fold toward 700: the hook observes [0, 300, 350] across the frames,
+    // unchanged from before per-phase timing existed.
+    static SCRIPT: [u64; 18] = [
+        1000, 1050, 1100, 1150, 1200, 1300, // frame 1: end - start = 300
+        2000, 2100, 2200, 2300, 2400, 2700, // frame 2: 700
+        3000, 3100, 3200, 3300, 3400, 3700, // frame 3: 700
+    ];
     let provider = BumpProvider::<16384>::new();
     let mut scheduler = Scheduler::builder()
         .clock(ScriptClock::new(&SCRIPT))

@@ -718,6 +718,19 @@ pub struct Scheduler<
     /// after `frame_await_done` (acquire via the done counter) and feeds the
     /// `merge_accums` compaction. Sized by `MAX_CORES * GATE2_MAX_ACCUMS`.
     gate2_accum_live: [AtomicUsize; MAX_CORES * GATE2_MAX_ACCUMS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-(core,accum) atomic publish array; tracked: #121
+    /// Engine-internal per-phase duration EMA (domain-22 adapt). The single-core
+    /// `dispatch_trunks` loop folds each phase's wall-clock duration here with the
+    /// 1/8 EMA. `Cell` interior mutability is sound because only the main thread
+    /// writes it (workers never call `dispatch_trunks`), the same discipline as
+    /// `store_dirty`. Phases are bounded by units, so `GATE2_MAX_UNITS` bounds it.
+    /// Feeds the eventual `select_adapt_config`; not consumer-exposed.
+    phase_ema: [Cell<Nanos>; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-phase EMA store sized by the unit cap; tracked: #121
+    /// Per-frame per-phase duration accumulator (raw nanos). `dispatch_trunks`
+    /// runs once per morsel, so it SUMS each morsel's phase-slice duration here;
+    /// `run` folds the per-frame total into `phase_ema` once at frame end (so the
+    /// EMA is per-frame, not per-morsel) and zeroes it. Same single-writer
+    /// discipline as `phase_ema` / `store_dirty`.
+    phase_accum: [Cell<Nanos>; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-frame per-phase duration accumulator; tracked: #121
     /// Marks the scheduler `!Unpin`: once a worker holds a raw pointer into it,
     /// moving it would dangle that pointer, so `run_parallel` takes `Pin`.
     _pin: PhantomPinned,
@@ -1385,6 +1398,18 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         if stores_changed {
             m.change_seen_count.set(USize(m.change_seen_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: increment by one frame; tracked: #121
         }
+        // E8 adapt, per-phase EMA: fold each phase's per-frame total (summed
+        // across this frame's morsels by `dispatch_trunks`) into its EMA with the
+        // same seed, then zero the accumulator for the next frame. Per-frame, so
+        // a multi-morsel frame folds once, not once per morsel.
+        let nph = phase_count::<WuVals, Stores, GW, <D as PlanDims>::Units, <D as PlanDims>::Stores, <D as PlanDims>::AdjRow>().0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: phase-fold bound; tracked: #121
+        let mut pe = 0; // lint:allow(no-bare-numeric) reason: phase-fold index; tracked: #121
+        while pe < nph && pe < self.phase_ema.len() {
+            let acc = self.phase_accum[pe].get();
+            self.phase_ema[pe].set(fold_ema(self.phase_ema[pe].get(), acc, ema_seed));
+            self.phase_accum[pe].set(Nanos::from_raw(0)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-frame accumulator reset; tracked: #121
+            pe += 1; // lint:allow(no-bare-numeric) reason: phase-fold step; tracked: #121
+        }
         Cfg::Out::default()
     }
 
@@ -1503,10 +1528,21 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         } else {
             plan_phase_count::<WuVals, Stores, GW, <D as PlanDims>::Units, <D as PlanDims>::Stores, <D as PlanDims>::AdjRow>().0 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: skip the leading plan band on a clean frame; tracked: #121
         };
+        // E8 adapt, per-phase timing: `dispatch_trunks` runs once per morsel, so
+        // ADD each phase's per-morsel duration into the per-frame accumulator;
+        // `run` folds the per-frame total into `phase_ema` once at frame end (so
+        // the EMA is per-frame, not per-morsel). Engine-internal; feeds the
+        // eventual `select_adapt_config`.
         let mut p = start; // lint:allow(no-bare-numeric) reason: phase-pass index; tracked: #121
         while p < nphases {
+            let t0 = self.clock.now_ns().to_raw(); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: raw nanos for the duration delta; tracked: #121
             self.wu_values
                 .dispatch(&self.wu_values, USize(p), &self.meta_block, &self.bindings, morsel, dirty, epoch);
+            let dur = self.clock.now_ns().to_raw().saturating_sub(t0); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: monotonic phase-slice delta; tracked: #121
+            if p < self.phase_accum.len() {
+                let slot = &self.phase_accum[p];
+                slot.set(Nanos::from_raw(slot.get().to_raw().saturating_add(dur))); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-frame phase-duration sum; tracked: #121
+            }
             p += 1; // lint:allow(no-bare-numeric) reason: phase-pass step; tracked: #121
         }
     }
@@ -2102,6 +2138,15 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         self.meta_block.metrics.idle_ns.get()
     }
 
+    /// Read the engine-internal per-phase duration EMA for phase `p`. Hidden
+    /// test accessor: per-phase EMA is engine-internal (it feeds the eventual
+    /// `select_adapt_config`), with no `OnMeta` consumer read, so a white-box
+    /// test asserts the recorded per-phase durations directly.
+    #[doc(hidden)]
+    pub fn __phase_ema(&self, p: USize) -> Nanos {
+        self.phase_ema[p.0].get()
+    }
+
     /// Borrow the backing store. Hidden test accessor mirroring
     /// `__bindings`: lets tests inspect reserved columns. The field is also
     /// held for its `Drop`, which frees every reserved resource column.
@@ -2166,6 +2211,8 @@ impl<Cfg: RunCfg> Default for Scheduler<Cfg, WuNil, SvEmpty, NullColumnStorage> 
             gate2_nphases: USize::ZERO,
             gate2_ncores: USize::ZERO,
             gate2_accum_live: [const { core::sync::atomic::AtomicUsize::new(0) }; MAX_CORES * GATE2_MAX_ACCUMS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic publish array init; tracked: #121
+            phase_ema: [const { Cell::new(Nanos::from_raw(0)) }; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-phase EMA zero-init; tracked: #121
+            phase_accum: [const { Cell::new(Nanos::from_raw(0)) }; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-phase accumulator zero-init; tracked: #121
             _pin: PhantomPinned,
         }
     }
@@ -2351,6 +2398,8 @@ where
                     gate2_nphases: USize::ZERO,
                     gate2_ncores: USize::ZERO,
             gate2_accum_live: [const { core::sync::atomic::AtomicUsize::new(0) }; MAX_CORES * GATE2_MAX_ACCUMS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic publish array init; tracked: #121
+            phase_ema: [const { Cell::new(Nanos::from_raw(0)) }; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-phase EMA zero-init; tracked: #121
+            phase_accum: [const { Cell::new(Nanos::from_raw(0)) }; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-phase accumulator zero-init; tracked: #121
                     _pin: PhantomPinned,
                 })
             }
@@ -2425,6 +2474,8 @@ where
                     gate2_nphases: USize::ZERO,
                     gate2_ncores: USize::ZERO,
             gate2_accum_live: [const { core::sync::atomic::AtomicUsize::new(0) }; MAX_CORES * GATE2_MAX_ACCUMS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic publish array init; tracked: #121
+            phase_ema: [const { Cell::new(Nanos::from_raw(0)) }; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-phase EMA zero-init; tracked: #121
+            phase_accum: [const { Cell::new(Nanos::from_raw(0)) }; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-phase accumulator zero-init; tracked: #121
                     _pin: PhantomPinned,
                 })
             }
