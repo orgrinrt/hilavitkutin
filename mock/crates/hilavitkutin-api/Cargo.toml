@@ -9,6 +9,7 @@ repository.workspace = true
 [dependencies]
 arvo.workspace = true
 arvo-bitmask.workspace = true
+arvo-tensor.workspace = true
 hilavitkutin-ctx.workspace = true
 notko.workspace = true
 
