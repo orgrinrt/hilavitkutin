@@ -32,6 +32,7 @@ pub mod codec;
 pub mod column_value;
 pub mod context;
 pub mod dispatch_codegen;
+pub mod footprint;
 pub mod hint;
 pub mod id;
 pub mod macros;
