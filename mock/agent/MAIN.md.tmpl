@@ -17,7 +17,7 @@ The canonical spec is
 
 {{crate_count}} crates, flat structure, five logical groupings:
 
-**API (consumer-facing contracts).** `hilavitkutin-api` ships `WorkUnit`, `AccessSet`, `Column<T>`, `Resource<T>`, `Virtual<T>`, `Context`, `Contains`, and the platform contracts (`Clock`, `MemoryProvider`, `ThreadPool`).
+**API (consumer-facing contracts).** `hilavitkutin-api` ships `WorkUnit`, `AccessSet`, `Column<T>`, `Resource<T>`, `Virtual<T>`, `Context`, `Contains`, and the platform contracts (`Clock`, `MemoryProvider`, `ThreadPool`). `hilavitkutin-api-macros` is its proc-macro companion, emitting `#[derive(ResourceFootprint)]` so a resource value type reports its L1-morsel write-collection footprint (canonical R5).
 
 **Engine (the scheduler and runtime).** `hilavitkutin` houses `plan` (phase, fiber, analysis, morsel, loading), `dispatch`, `resource`, `thread`, `strategy`, `adapt`, `scheduler`, `intrinsics`, and `platform`.
 
@@ -51,9 +51,10 @@ The canonical spec is
  bound orchestration for downstream consumer hosts. This is
  distinct from runtime WU discovery: the engine never loads WUs at
  runtime, and the plugin-host crates use pull-based discovery
- only, never linker-magic. `hilavitkutin-extensions-macros` is the
- sole proc-macro crate in the stack; its emitted output is
- `no_std`-compatible.
+ only, never linker-magic. `hilavitkutin-extensions-macros` is one
+ of the two proc-macro crates in the stack (the other is
+ `hilavitkutin-api-macros`, companion to the api crate); its emitted
+ output is `no_std`-compatible.
 - Pre-allocated thread pool. No `thread::spawn`, `tokio::spawn`,
  `async_std::spawn` at runtime. Threads are spawned once at
  pipeline construction; they park between frames.

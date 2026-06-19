@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     # Core triad (from polka-dots consolidation)
     "crates/hilavitkutin-api",
+    "crates/hilavitkutin-api-macros",
     "crates/hilavitkutin",
     "crates/hilavitkutin-build",
     # Ecosystem crates (from saalis)
@@ -52,6 +53,7 @@ arvo-tensor = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", 
 rkyv = { version = "0.8", default-features = false }
 
 hilavitkutin-api = { path = "crates/hilavitkutin-api" }
+hilavitkutin-api-macros = { path = "crates/hilavitkutin-api-macros" }
 hilavitkutin = { path = "crates/hilavitkutin" }
 hilavitkutin-build = { path = "crates/hilavitkutin-build" }
 

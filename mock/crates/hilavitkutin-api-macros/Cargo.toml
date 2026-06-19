@@ -1,0 +1,26 @@
+[package]
+name = "hilavitkutin-api-macros"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Proc-macro companion to hilavitkutin-api (#[derive(ResourceFootprint)])"
+repository.workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1"
+quote = "1"
+syn = { version = "2", features = ["full"] }
+
+[build-dependencies]
+mockspace.workspace = true
+
+[dev-dependencies]
+hilavitkutin-api.workspace = true
+arvo.workspace = true
+arvo-tensor.workspace = true
+
+[features]
+default = []

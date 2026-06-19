@@ -263,10 +263,24 @@ version = "0.1.0"
 dependencies = [
  "arvo",
  "arvo-bitmask",
+ "arvo-tensor",
  "hilavitkutin-ctx",
  "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
  "trybuild",
+]
+
+[[package]]
+name = "hilavitkutin-api-macros"
+version = "0.1.0"
+dependencies = [
+ "arvo",
+ "arvo-tensor",
+ "hilavitkutin-api",
+ "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
