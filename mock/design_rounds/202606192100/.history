@@ -1,0 +1,50 @@
+e906185 chore: lock src CL for api unused-feature-gate
+e7680a3 chore: remove unused impl_trait_in_assoc_type gate from hilavitkutin-api
+80eed4b chore: open src CL for api unused-feature-gate
+38c3b9e docs: open doc CL for api unused-feature-gate
+3b84643 chore: open api unused-feature-gate topic
+1718920 feat: sample throughput record count into SchedulerMetrics
+03ef6c8 test: P1 R2a keystone nine-resource CtxFor Ctx through OnMeta
+e1e15a3 docs: chart-the-path P1 adapt granularity + sketch plan
+643dffb docs: chart-the-path P1 adapt roadmap draft + canonical mirror
+dee64fc docs: chart-the-path P1 adapt+E8 comprehension map
+f486274 fix: compile-time Units-cap guard for run_parallel
+5a364ba feat: CtxFor computed per-WorkUnit Context type
+715e27e feat: lift engine plan_dirty + grouping caps onto PlanDims capacity types
+ff147c1 feat: GATE-2 parallel engine, self-hosting meta pipeline, EMA adapt
+e4479c8 feat: complete GATE-1 single-core dispatch engine
+09c3e6b fix: bump arvo dev head, fix waist_detect 2-arg call
+d57d71d test: add engine-vs-std perf gate, red until single-core parity
+ab2f316 feat: dispatch each fiber on its own morsel-locality bit
+0f0caaa feat: detect waists via arvo_graph::waist_detect
+d65456e feat: dispatch accumulator-free pipelines morsel-outer
+04f7c1b bench: single-core engine vs optimal-std macro bench
+a46b675 test: assert resource-arena partial-failure cleanup directly
+c959e79 fix: reject a PlanDims that exceeds the phase/trunk id width
+e14d3de chore: harden plan projection column-id coupling and partition guard
+b9fc360 feat: dispatch in the plan's phase-sequential order
+7f35f83 feat: window the run-loop dispatch into morsels
+f774b89 feat: dispatch accumulator columns through the append surface
+db1fec4 feat: dispatch input columns through the data plane
+23f2567 chore: regenerate rendered docs
+0dbc914 feat: store-back the execution plan on ColumnStorage
+5ad8687 feat: dispatch work units in plan topological order
+27b9c1a feat: make build_dag raw hazard detection order-independent
+4b480ad refactor!: route resource arena through ColumnStorage
+db09ce4 refactor: flatten ExecutionPlan into CSR trunk and fiber pools
+baf4a03 feat: ship ColumnStorage contract and ArenaColumnStorage backing
+0d3078c refactor!: adopt PlanDims capacity bundle across hilavitkutin engine
+ef7dd15 feat: retain registered workunits and walk them in scheduler run
+395ddc6 feat: add resource-only run-fiber-walk dispatch core
+742c4dd feat: project workunit bundle into plan inputs
+a5cfb48 feat: width-gate wide blocks to the spectral fiber former
+a9141d0 feat: project per-block fibers onto trunk components
+1864284 feat: wire spectral partitioning into plan step 6
+00487c9 feat: wire block-diagonal detection into plan step 5
+12ef597 feat: wire rcm bandwidth reorder into plan step 4
+76a0942 feat: add DependencyGraph to_csr_bidirectional adapter
+b278890 refactor: lift engine const-generic dimensions from usize to cap
+36e2cca fix: regenerate extensions-macros trybuild goldens after provider rename
+02957c7 refactor: drop redundant min_specialization gate in hilavitkutin-api
+74d4702 refactor: drop unused generic_const_exprs gates in hilavitkutin
+e3ba798 refactor: remove associated_type_defaults from hilavitkutin-api
