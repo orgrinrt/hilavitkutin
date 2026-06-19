@@ -344,6 +344,13 @@ while the engine still performs the fold. This linear fold is the deep
 single-fiber case; a multi-fiber DAG reaches parity through the per-fiber
 compiled dispatch above, not through linear folding.
 
+Appending past an accumulator's reserved capacity is a contract violation, not a
+silent saturating drop. The append path asserts the live length is below the
+reserved capacity and panics before the write when it is not, so the assert fires
+ahead of any out-of-bounds access (the soundness floor holds) and a misconfigured
+capacity fails loudly instead of losing records. A consumer sizes the accumulator
+for the maximum number of appends a single frame can make.
+
 Per-core compiled dispatch: each physical core gets a monomorphised
 `CoreProgram<...>` encoding its phases, record ranges, morsel
 boundaries, and sync points. Worker entry receives
@@ -747,11 +754,10 @@ unit that reads `SchedulerMetrics::pass_count`, which the engine maintains once
 per pass. `SchedulerMetrics` also carries a `last_record_count` cell, set beside
 the pass-duration EMA fold each frame, so an `OnMeta` hook derives the throughput
 trend (records divided by the EMA duration) with no new instrumentation. It
-further carries a `change_seen_count` cell, incremented in the single-core `run`
-path each frame whose `store_dirty` was non-empty, so an `OnMeta` hook derives the
-input-change rate (the change_class axis) from existing dirty state. The
-`run_parallel` and `run_fused` folds do not yet maintain it; that extension is
-tracked as a follow-up.
+further carries a `change_seen_count` cell, incremented each frame whose
+`store_dirty` was non-empty, so an `OnMeta` hook derives the input-change rate
+(the change_class axis) from existing dirty state. All three run paths (`run`,
+`run_parallel`, `run_fused`) maintain it in their per-frame fold.
 
 The meta pipeline holds under `run_parallel` on both worker paths. On the
 phase-loop path (record-bearing carriers), lifecycle bands are phases under the

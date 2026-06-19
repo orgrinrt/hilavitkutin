@@ -1,0 +1,50 @@
+27becd8 chore: lock src CL for PR 145 review fixes
+dec9661 docs: correct stale saturation comments and note parallel panic mode
+c317a04 chore: open src CL for PR 145 review fixes
+afbb515 chore: lock doc CL for PR 145 review fixes
+f2b83a2 docs: open doc CL for PR 145 review fixes
+1e6570d chore: open PR 145 review-fixes topic
+5be3623 chore: close accum over-capacity round
+6a76f5d chore: lock src CL for accum over-capacity
+4515461 feat: accumulator over-capacity append is a hard error, not silent drop
+a5efba0 chore: open src CL for accum over-capacity
+af30395 chore: lock doc CL for accum over-capacity
+2d9cf8a docs: accumulator over-capacity is a hard error
+6b350c9 docs: open doc CL for accum over-capacity hard error
+f5e8c9e chore: open accum over-capacity hard-error topic
+08c245b chore: close R3b parallel/fused round
+4b831d8 chore: lock src CL for R3b parallel/fused
+ca14b6d feat: maintain change_seen_count in run_parallel and run_fused folds
+11502b5 chore: open src CL for R3b parallel/fused
+679965e chore: lock doc CL for R3b parallel/fused
+3ce1c71 docs: change_seen_count now holds on all three run paths
+19a6ec2 docs: open doc CL for R3b parallel/fused
+52812ad chore: open R3b parallel/fused topic
+cc89cde feat: count change_class frames via store_dirty into SchedulerMetrics
+b3ce8a5 chore: allow private_bounds on sealed Executor trait
+c3b6bd8 chore: remove unused impl_trait_in_assoc_type gate from hilavitkutin-api
+1718920 feat: sample throughput record count into SchedulerMetrics
+03ef6c8 test: P1 R2a keystone nine-resource CtxFor Ctx through OnMeta
+e1e15a3 docs: chart-the-path P1 adapt granularity + sketch plan
+643dffb docs: chart-the-path P1 adapt roadmap draft + canonical mirror
+dee64fc docs: chart-the-path P1 adapt+E8 comprehension map
+f486274 fix: compile-time Units-cap guard for run_parallel
+5a364ba feat: CtxFor computed per-WorkUnit Context type
+715e27e feat: lift engine plan_dirty + grouping caps onto PlanDims capacity types
+ff147c1 feat: GATE-2 parallel engine, self-hosting meta pipeline, EMA adapt
+e4479c8 feat: complete GATE-1 single-core dispatch engine
+09c3e6b fix: bump arvo dev head, fix waist_detect 2-arg call
+d57d71d test: add engine-vs-std perf gate, red until single-core parity
+ab2f316 feat: dispatch each fiber on its own morsel-locality bit
+0f0caaa feat: detect waists via arvo_graph::waist_detect
+d65456e feat: dispatch accumulator-free pipelines morsel-outer
+04f7c1b bench: single-core engine vs optimal-std macro bench
+a46b675 test: assert resource-arena partial-failure cleanup directly
+c959e79 fix: reject a PlanDims that exceeds the phase/trunk id width
+e14d3de chore: harden plan projection column-id coupling and partition guard
+b9fc360 feat: dispatch in the plan's phase-sequential order
+7f35f83 feat: window the run-loop dispatch into morsels
+f774b89 feat: dispatch accumulator columns through the append surface
+db1fec4 feat: dispatch input columns through the data plane
+23f2567 chore: regenerate rendered docs
+0dbc914 feat: store-back the execution plan on ColumnStorage
