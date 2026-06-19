@@ -744,7 +744,9 @@ the `MetaRef`-bearing context, so a consumer work unit's context cannot name it:
 `MetaAccess` restriction is enforced at compile time by the gating, not by a
 separate bound. So a consumer adapts by registering an `OnMeta<ScheduleEnd>` work
 unit that reads `SchedulerMetrics::pass_count`, which the engine maintains once
-per pass.
+per pass. `SchedulerMetrics` also carries a `last_record_count` cell, set beside
+the pass-duration EMA fold each frame, so an `OnMeta` hook derives the throughput
+trend (records divided by the EMA duration) with no new instrumentation.
 
 The meta pipeline holds under `run_parallel` on both worker paths. On the
 phase-loop path (record-bearing carriers), lifecycle bands are phases under the
