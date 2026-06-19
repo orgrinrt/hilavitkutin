@@ -319,6 +319,11 @@ impl Default for WakeStrategy {
 /// phase barriers, and observing the shutdown signal between morsels.
 /// Returns `Outcome<(), ExecutorError>`; cleanly-shut workers return
 /// `Outcome::Ok(())`.
+// Sealed trait: `Sealed` is deliberately `pub(crate)` so only this crate's own
+// types implement `Executor`. The `private_bounds` lint flags the private
+// supertrait on a public trait; that visibility gap is the seal working as
+// designed, not a leak (external crates cannot name or implement `Sealed`).
+#[allow(private_bounds)]
 pub trait Executor: crate::sealed::Sealed {
     /// Per-worker mainloop. Spawned once per core at
     /// `ThreadPool::build()` time; runs until `pool.shutdown` is set.
