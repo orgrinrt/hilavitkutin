@@ -759,6 +759,18 @@ further carries a `change_seen_count` cell, incremented each frame whose
 (the change_class axis) from existing dirty state. All three run paths (`run`,
 `run_parallel`, `run_fused`) maintain it in their per-frame fold.
 
+`SchedulerMetrics` also carries an `idle_ns` cell: the current frame's
+worst-core idle, the maximum across the per-core `idle_accumulator` slots that
+the waist barrier fills. The barrier times its own follower park (a worker that
+finishes a phase early and waits at the waist for the slower cores), so per-core
+idle is measured inside the primitive every waist crosses, not wrapped at a
+caller that may not lie on the taken path. The last arriver never parks, so a
+bottleneck core records no idle, which is correct: idle names starvation, not
+the cause of it. Single-core `run` and the fused path never cross a waist
+barrier, so they leave `idle_ns` zero, the correct reading when there is no
+inter-core wait. An `OnMeta<ScheduleEnd>` hook reads it as the phase-imbalance
+signal, the adapt trigger to re-select per-phase configs.
+
 The meta pipeline holds under `run_parallel` on both worker paths. On the
 phase-loop path (record-bearing carriers), lifecycle bands are phases under the
 rank-outer grouping, so the worker phase loop plus the worker-side waist
