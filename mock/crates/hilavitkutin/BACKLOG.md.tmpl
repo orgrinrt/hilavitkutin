@@ -532,3 +532,23 @@ hook reading change_seen_count under those paths reads stuck-at-zero
 beside the live pass_count, last_record_count, and pass-duration EMA.
 Mirroring the single-core capture-and-increment into both folds, plus a
 parallel/fused test, is the follow-up.
+
+## ASM-emission contract tests (generalized typestate codegen assertions)
+
+The `asm_gate` binary (`mock/benches/asm_gate_fixtures/` plus `cargo run --bin
+asm_gate`) disassembles four `#[no_mangle]` fixtures and asserts zero indirect
+calls. That catches devirtualisation regression but only that single property on
+four fixed fixtures. The generalization: a standing per-typestate ASM-emission
+contract harness. For each codegen-load-bearing typestate shape, a fixture exports
+a stable named symbol; the harness disassembles it through the existing
+nm/objdump/otool fallback chain, scopes to that symbol's region in the (large)
+dump, and asserts the instructions expected are present and the ones not wanted are
+absent. Assertions are properties, not fragile exact-instruction matches: no
+indirect call, no call to a named runtime helper, a specific inlined op present, a
+fused store present. A typestate change that regresses codegen then fails the test
+with the reason, where the perf bench would only surface the symptom. Each new
+typestate-bearing slice (per-fiber morsel windowing, RCM-row dispatch, head+tail
+convergence, phase-overlap progress counters) adds its fixture and its
+present/absent assertions. Rides alongside the perf gate; both are standing red
+oracles until the codegen matches. Discipline detail in roadmap research
+202606201900.
