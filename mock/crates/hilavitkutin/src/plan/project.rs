@@ -22,6 +22,7 @@ use arvo::strategy::Identity;
 use arvo::{Bool, USize};
 use arvo_tensor::{cap_size, Capacity};
 use hilavitkutin_api::access::{Cons, Empty};
+use hilavitkutin_api::column_value::ColumnValue;
 use hilavitkutin_api::store::{Accum, Column, Resource, StagedResource, Virtual};
 use hilavitkutin_api::{HasSchedule, WorkUnit};
 
@@ -242,6 +243,84 @@ where
 {
     let _ = StoreCeiling::<CS>::ASSERT_FITS;
     <Stores as AccumStoresMask<CS>>::accum_mask(AccessMask::empty(), USize::ZERO)
+}
+
+/// Element byte size of a store marker's value type, `ceil(BIT_WIDTH / 8)`.
+///
+/// Disjoint concrete impls per store-marker shape (no blanket), mirroring
+/// `StoreAccumKind`, so the `StoreSizes` fold stays clear of the marker-trait
+/// coherence wall a blanket-plus-specific pair would hit. Each data-bearing
+/// marker pulls its inner `T` and reads `ColumnValue::BIT_WIDTH` (the spec hook,
+/// not raw `size_of`, so this stays correct once sub-byte bitpacking makes them
+/// diverge). `Virtual<T>` is a fired marker carrying no record bytes, so zero.
+pub trait StoreElemBytes {
+    /// `ceil(<T as ColumnValue>::BIT_WIDTH / 8)` for this store's element type.
+    const BYTES: USize;
+}
+
+/// Round a bit count up to whole bytes.
+const fn bytes_of_bits(bits: USize) -> USize {
+    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: byte-ceil arithmetic on the const bit width; tracked: #121
+    USize((bits.0 + 7) / 8)
+}
+
+impl<T: ColumnValue> StoreElemBytes for Column<T> {
+    const BYTES: USize = bytes_of_bits(<T as ColumnValue>::BIT_WIDTH);
+}
+impl<T: ColumnValue> StoreElemBytes for Resource<T> {
+    const BYTES: USize = bytes_of_bits(<T as ColumnValue>::BIT_WIDTH);
+}
+impl<T: ColumnValue> StoreElemBytes for Accum<T> {
+    const BYTES: USize = bytes_of_bits(<T as ColumnValue>::BIT_WIDTH);
+}
+impl<T: ColumnValue> StoreElemBytes for StagedResource<T> {
+    const BYTES: USize = bytes_of_bits(<T as ColumnValue>::BIT_WIDTH);
+}
+impl<T> StoreElemBytes for Virtual<T> {
+    const BYTES: USize = USize::ZERO;
+}
+
+/// Fold the global `Stores` cons-list into a `CS`-capacity byte-size array:
+/// `out[i]` = element byte size of store `i`. Mirrors `AccumStoresMask`'s
+/// per-store walk, writing a size into a slot instead of setting a mask bit.
+/// The bit/slot positions are the store's index in the global `Stores` list,
+/// the same position space the per-unit write masks index, so a fiber's write
+/// mask selects the right size slots.
+pub trait StoreSizes<CS: Capacity> {
+    /// Write each store's byte size into `out`, walking from store position `idx`.
+    fn fill_sizes(out: &mut [USize], idx: USize);
+}
+
+impl<CS: Capacity> StoreSizes<CS> for Empty {
+    #[inline]
+    fn fill_sizes(_out: &mut [USize], _idx: USize) {}
+}
+
+impl<H: StoreElemBytes, T: StoreSizes<CS>, CS: Capacity> StoreSizes<CS> for Cons<H, T> {
+    #[inline]
+    fn fill_sizes(out: &mut [USize], idx: USize) {
+        if idx.0 < out.len() {
+            out[idx.0] = <H as StoreElemBytes>::BYTES;
+        }
+        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: store-position successor on the fold index; tracked: #121
+        <T as StoreSizes<CS>>::fill_sizes(out, USize(idx.0 + 1));
+    }
+}
+
+/// Build the per-store element-byte-size array for a global `Stores` list.
+///
+/// `Stores` is the same global store `AccessSet` whose positions the per-unit
+/// access masks index; `CS` is the store capacity. The per-fiber write-byte sum
+/// (A3b) walks a fiber's write `AccessMask<CS>` against this array.
+pub fn store_sizes<Stores, CS: Capacity>() -> <CS as Capacity>::Array<USize>
+where
+    Stores: StoreSizes<CS>,
+    <CS as Capacity>::Array<USize>: Copy,
+{
+    let _ = StoreCeiling::<CS>::ASSERT_FITS;
+    let mut arr = <CS as Capacity>::filled(USize::ZERO);
+    <Stores as StoreSizes<CS>>::fill_sizes(arr.as_mut(), USize::ZERO);
+    arr
 }
 
 /// Project a registered work-unit bundle into runtime `PlanInputs`.
