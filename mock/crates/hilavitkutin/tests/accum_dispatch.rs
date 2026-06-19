@@ -125,14 +125,15 @@ impl WorkUnit<Always> for AppendWu {
     }
 }
 
-// The small capacity the saturation test reserves. The appending unit issues
-// more appends than this, so the overflow appends must be dropped.
+// The small capacity the over-capacity test reserves. The appending unit issues
+// more appends than this, so the append at index `CAP_SMALL` violates the
+// reserved-capacity contract.
 const CAP_SMALL: usize = 2;
 
-// Saturating appender: appends five values to an `Accum<Av>` reserved to
-// `CAP_SMALL`. The appends past the capacity are dropped (saturated), so the
-// live length stops at the capacity and the buffer never overruns its
-// reservation.
+// Over-capacity appender: appends five values to an `Accum<Av>` reserved to
+// `CAP_SMALL`. Appending past the reserved capacity is a contract violation; the
+// append path asserts the bound before writing, so the append at index
+// `CAP_SMALL` panics ahead of any out-of-bounds write.
 struct SaturateWu;
 
 impl BuilderInput for SaturateWu {
@@ -153,8 +154,9 @@ impl WorkUnit<Always> for SaturateWu {
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         // SAFETY: `build` reserved `CAP_SMALL` records; the appender holds the
-        // exclusive slot. The appends past the capacity saturate (drop), so
-        // none write past the reserved buffer.
+        // exclusive slot. Appending past the reserved capacity is a contract
+        // violation: the append path asserts the bound before writing, so the
+        // append at index `CAP_SMALL` panics ahead of any out-of-bounds write.
         unsafe {
             ctx.accums().append::<Av, _>(Av(200));
             ctx.accums().append::<Av, _>(Av(201));
@@ -162,16 +164,17 @@ impl WorkUnit<Always> for SaturateWu {
             ctx.accums().append::<Av, _>(Av(203));
             ctx.accums().append::<Av, _>(Av(204));
         }
-        assert_eq!(
-            ctx.accums().len::<Av, _>().0,
-            CAP_SMALL,
-            "live length saturates at the reserved capacity"
-        );
     }
 }
 
+// Appending past the reserved capacity is a contract violation, not a silent
+// saturating drop: the append path asserts the live length is below the reserved
+// capacity and panics before the write, so a misconfigured capacity fails loudly
+// instead of losing records. `SaturateWu` appends `CAP_SMALL + 3` times into a
+// `CAP_SMALL` accumulator; the append at index `CAP_SMALL` panics.
 #[test]
-fn accum_append_saturates_at_reserved_capacity() {
+#[should_panic(expected = "reserved capacity")]
+fn accum_append_panics_past_reserved_capacity() {
     let provider = BumpProvider::<8192>::new();
     let mut scheduler = Scheduler::builder()
         .with(Accum::<Av>::new())
@@ -179,26 +182,7 @@ fn accum_append_saturates_at_reserved_capacity() {
         .build(store(provider), USize(CAP_SMALL))
         .unwrap_or_else(|_| panic!("build should succeed"));
 
-    let result = scheduler.run();
-    assert!(matches!(result, Outcome::Ok(())));
-
-    let bindings = scheduler.__bindings();
-    assert_eq!(
-        bindings.__len_cell().get(),
-        USize(CAP_SMALL),
-        "the live length stopped at the reserved capacity"
-    );
-
-    let base = bindings.__ptr().as_ptr();
-    // SAFETY: the drain reserved `CAP_SMALL` records and the saturating append
-    // wrote exactly that many; records `[0, CAP_SMALL)` are initialised.
-    let v0 = unsafe { core::ptr::read(base.add(0)) };
-    let v1 = unsafe { core::ptr::read(base.add(1)) };
-    assert_eq!(
-        [v0.0, v1.0],
-        [200u32, 201u32],
-        "only the first capacity appends landed, in order; the overflow was dropped"
-    );
+    let _ = scheduler.run();
 }
 
 #[test]

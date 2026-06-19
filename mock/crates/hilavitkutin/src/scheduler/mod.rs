@@ -1786,6 +1786,16 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
                 p += 1; // lint:allow(no-bare-numeric) reason: phase step; tracked: #121
             }
         }
+        // Capture the change_class signal before the seed is consumed: a
+        // non-empty store_dirty means an input change was seen this frame. The
+        // increment runs here on the main thread after every worker re-parks, so
+        // it shares the single-core fold's discipline. A consumer's own append on
+        // a worker thread that over-runs an accumulator panics there (the append
+        // path's capacity assert); a worker panic can stall the join rather than
+        // abort cleanly, which is the accepted failure mode for that contract
+        // violation (the over-capacity should_panic test runs single-core).
+        // SAFETY: all phases done, every worker re-parked.
+        let stores_changed = unsafe { !(*me).store_dirty.get().is_empty().0 };
         // The frame consumed the change seed; clear it and leave cold-start.
         // SAFETY: all phases done, every worker re-parked.
         unsafe {
@@ -1804,6 +1814,9 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
                 ema_seed,
             ));
             m.last_record_count.set((*me).record_count);
+            if stores_changed {
+                m.change_seen_count.set(USize(m.change_seen_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: increment by one frame; tracked: #121
+            }
         }
         Cfg::Out::default()
     }
@@ -2023,6 +2036,8 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
                 start += len;
             }
         }
+        // Capture the change_class signal before the seed is consumed.
+        let stores_changed = !self.store_dirty.get().is_empty().0;
         self.store_dirty.set(AccessMask::empty());
         self.first_frame.store(false, Ordering::Relaxed);
         // E8 adapt: fold this frame's duration into the pass-duration EMA.
@@ -2031,6 +2046,9 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         m.ema_pass_duration_ns
             .set(fold_ema(m.ema_pass_duration_ns.get(), self.clock.now_ns() - frame_start, ema_seed));
         m.last_record_count.set(self.record_count);
+        if stores_changed {
+            m.change_seen_count.set(USize(m.change_seen_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: increment by one frame; tracked: #121
+        }
         Cfg::Out::default()
     }
 

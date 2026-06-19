@@ -132,7 +132,8 @@ impl<H, Tail> ColPtrCons<H, Tail> {
 // ---------------------------------------------------------------------
 
 /// Projected accumulator handle: capacity base, borrowed live-length cell, and
-/// the reserved capacity the append saturates at.
+/// the reserved capacity the append asserts the live length against (a
+/// contract-violating over-append panics before the write).
 pub struct AccumColPtr<'frame, T> {
     base: ColumnPtr<T>,
     len: &'frame Cell<USize>,
@@ -1396,14 +1397,18 @@ where
     unsafe fn resolve_append(&self, v: T) {
         let acc = <WAccum as AccumSelector<T, I>>::get(&self.write_accums);
         let live = acc.len.get();
-        // Saturate at the reserved capacity: once the live length reaches the
-        // capacity the append is dropped, so the write and the advance never
-        // run past the reserved buffer. A WorkUnit's appends are not bounded by
-        // the plan the way a column write's morsel index is, so this checked
-        // bound is the soundness guard.
-        if live.0 >= acc.cap.0 {
-            return;
-        }
+        // Over-appending a fixed-capacity accumulator is a contract violation,
+        // not a recoverable condition. Assert the live length is below the
+        // reserved capacity and panic before the write: the assert fires ahead of
+        // any out-of-bounds access (the soundness floor holds) and a misconfigured
+        // capacity fails loudly instead of silently dropping the record. A
+        // WorkUnit's appends are not bounded by the plan the way a column write's
+        // morsel index is, so the consumer sizes the accumulator for the maximum
+        // number of appends a single frame can make.
+        assert!(
+            live.0 < acc.cap.0,
+            "accumulator append exceeded its reserved capacity; size the accumulator for the maximum per-frame appends",
+        );
         // B3 treats the capacity buffer as `[T]`-shaped at stride
         // `size_of::<T>()`; sub-byte bitpacking is a later round.
         // SAFETY: the accumulator bundle holds an `AccumColPtr<T>` at the

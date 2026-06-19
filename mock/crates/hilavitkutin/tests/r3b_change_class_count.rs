@@ -65,7 +65,7 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
-const RECORDS: usize = 4;
+const RECORDS: usize = 64;
 
 #[derive(Copy, Clone)]
 struct Mark(u32);
@@ -177,4 +177,51 @@ fn end_hook_reads_change_seen_count_through_the_bridge() {
     // SAFETY: two records appended this frame into a reset buffer.
     let buf3 = unsafe { [core::ptr::read(base3.add(0)).0, core::ptr::read(base3.add(1)).0] };
     assert_eq!(buf3, [9, 1], "frame 3: count unchanged, no dirty frame since");
+}
+
+#[test]
+fn parallel_end_hook_reads_change_seen_count() {
+    use hilavitkutin::OsThreadPool;
+    use hilavitkutin_api::platform::ThreadPoolApi;
+
+    let provider = BumpProvider::<16384>::new();
+    let scheduler = Scheduler::builder()
+        .with(Accum::<Mark>::new())
+        .with(ConsumerWu)
+        .with(EndWu)
+        .build(store(provider), USize(RECORDS))
+        .unwrap_or_else(|_| panic!("build should succeed"));
+
+    let pool = OsThreadPool::new();
+    let ncores = pool.worker_count().0.max(1);
+    let per = (RECORDS + ncores - 1) / ncores;
+    let participating = (0..ncores).filter(|c| c * per < RECORDS).count();
+    assert!(participating + 1 <= RECORDS, "fixture headroom over per-frame appends");
+
+    // Mark the store dirty once before the first parallel frame. The fold runs
+    // on the main thread after every worker re-parks, so the same capture and
+    // increment as the single-core path applies. The end hook (epilogue, last
+    // record) reads frame N-1's count.
+    scheduler.__mark_store_dirty();
+    let mut scheduler = core::pin::pin!(scheduler);
+
+    // Frame 1: store was dirty. The hook reads the seed (0); the fold increments.
+    let r1 = scheduler.as_mut().run_parallel(&pool);
+    assert!(matches!(r1, Outcome::Ok(())));
+    let len1 = scheduler.__bindings().__len_cell().get().0;
+    let base1 = scheduler.__bindings().__ptr().as_ptr();
+    assert_eq!(len1, participating + 1, "frame 1: per-core consumer marks plus the epilogue");
+    // SAFETY: len1 records appended this frame; the epilogue append is last.
+    let c1 = unsafe { core::ptr::read(base1.add(len1 - 1)).0 };
+    assert_eq!(c1, 0, "frame 1: end hook reads the seed change count (0)");
+
+    // Frame 2: store_dirty was reset after frame 1, so this frame is clean. The
+    // hook reads frame 1's count (1) through the bridge on the parallel path.
+    let r2 = scheduler.as_mut().run_parallel(&pool);
+    assert!(matches!(r2, Outcome::Ok(())));
+    let len2 = scheduler.__bindings().__len_cell().get().0;
+    let base2 = scheduler.__bindings().__ptr().as_ptr();
+    // SAFETY: len2 records appended this frame; the epilogue append is last.
+    let c2 = unsafe { core::ptr::read(base2.add(len2 - 1)).0 };
+    assert_eq!(c2, 1, "frame 2: run_parallel counted frame 1's change through the bridge");
 }
