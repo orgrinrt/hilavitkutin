@@ -791,6 +791,16 @@ re-selection cost buys nothing. The invariant is formalised as a catalogued
 behavioural-contract test suite, defined ahead of the heuristics so each is
 built against the contract rather than retrofitted to whatever it happens to do.
 
+`select_adapt_config` is the tuning decision the contracts pin. It reads the
+engine-internal EMAs (`phase_ema`, `idle_ns`) once per frame and sets a
+reconfigure trigger when it detects phase imbalance: one active phase's EMA
+dominating the least active phase's by more than a tunable balance factor (a
+substrate default the consumer tunes). The first trigger is `adapt_reconfigure`
+(phase imbalance); the actuation that acts on it (re-selecting per-phase configs,
+re-chunking morsels) is the follow-up. An adaptive run improves only if this
+decision fires on the right frames, which is why the decision is unit-tested in
+isolation and the end-to-end improvement is a catalogued contract.
+
 The meta pipeline holds under `run_parallel` on both worker paths. On the
 phase-loop path (record-bearing carriers), lifecycle bands are phases under the
 rank-outer grouping, so the worker phase loop plus the worker-side waist

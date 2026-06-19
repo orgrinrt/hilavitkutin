@@ -731,6 +731,11 @@ pub struct Scheduler<
     /// EMA is per-frame, not per-morsel) and zeroes it. Same single-writer
     /// discipline as `phase_ema` / `store_dirty`.
     phase_accum: [Cell<Nanos>; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-frame per-phase duration accumulator; tracked: #121
+    /// Phase-imbalance reconfigure trigger (domain-22 adapt). `select_adapt_config`
+    /// sets it each frame when one active phase's EMA dominates the least active
+    /// phase's by more than `BALANCE_FACTOR`. The actuation that acts on it is a
+    /// follow-up; this is the decision half. Single-writer (main thread in `run`).
+    adapt_reconfigure: Cell<Bool>,
     /// Marks the scheduler `!Unpin`: once a worker holds a raw pointer into it,
     /// moving it would dangle that pointer, so `run_parallel` takes `Pin`.
     _pin: PhantomPinned,
@@ -1410,6 +1415,9 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
             self.phase_accum[pe].set(Nanos::from_raw(0)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-frame accumulator reset; tracked: #121
             pe += 1; // lint:allow(no-bare-numeric) reason: phase-fold step; tracked: #121
         }
+        // E8 adapt tuning: read the just-folded per-phase EMA and set the
+        // reconfigure trigger when the frame's phases are imbalanced.
+        self.select_adapt_config();
         Cfg::Out::default()
     }
 
@@ -2147,6 +2155,57 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         self.phase_ema[p.0].get()
     }
 
+    /// E8 adapt tuning decision (domain-22, R5): scan the per-phase EMA and set
+    /// the phase-imbalance reconfigure trigger when one active phase dominates the
+    /// least active phase. Active phases are the slots with a nonzero EMA; the
+    /// trigger fires only with at least two active phases and `max > FACTOR * min`.
+    /// Pure read of engine-internal state; the actuation that acts on the trigger
+    /// is a follow-up. `BALANCE_FACTOR` is a tunable default (consumer-tunable per
+    /// the caps-are-defaults discipline).
+    fn select_adapt_config(&self) {
+        const BALANCE_FACTOR: u64 = 2; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: imbalance ratio default; tracked: #121
+        let mut active = 0usize; // lint:allow(no-bare-numeric) reason: active-phase counter; tracked: #121
+        let mut max = 0u64; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: raw-nanos max over active phases; tracked: #121
+        let mut min = u64::MAX; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: raw-nanos min over active phases; tracked: #121
+        let mut p = 0usize; // lint:allow(no-bare-numeric) reason: phase-scan index; tracked: #121
+        while p < self.phase_ema.len() {
+            let e = self.phase_ema[p].get().to_raw();
+            if e > 0 {
+                active += 1; // lint:allow(no-bare-numeric) reason: count active phases; tracked: #121
+                if e > max {
+                    max = e;
+                }
+                if e < min {
+                    min = e;
+                }
+            }
+            p += 1; // lint:allow(no-bare-numeric) reason: phase-scan step; tracked: #121
+        }
+        let imbalanced = active >= 2 && max > min.saturating_mul(BALANCE_FACTOR); // lint:allow(no-bare-numeric) reason: imbalance predicate; tracked: #121
+        self.adapt_reconfigure.set(Bool(imbalanced));
+    }
+
+    /// Read the phase-imbalance reconfigure trigger. Hidden test accessor:
+    /// engine-internal, no consumer read yet (actuation is a follow-up).
+    #[doc(hidden)]
+    pub fn __adapt_reconfigure(&self) -> Bool {
+        self.adapt_reconfigure.get()
+    }
+
+    /// Set a per-phase EMA slot directly. Hidden test accessor: lets a test drive
+    /// `select_adapt_config` with a chosen balance state without depending on
+    /// wall-clock timing.
+    #[doc(hidden)]
+    pub fn __set_phase_ema(&self, p: USize, ns: Nanos) {
+        self.phase_ema[p.0].set(ns);
+    }
+
+    /// Run the adapt tuning decision. Hidden test accessor for the decision logic.
+    #[doc(hidden)]
+    pub fn __select_adapt_config(&self) {
+        self.select_adapt_config();
+    }
+
     /// Borrow the backing store. Hidden test accessor mirroring
     /// `__bindings`: lets tests inspect reserved columns. The field is also
     /// held for its `Drop`, which frees every reserved resource column.
@@ -2213,6 +2272,7 @@ impl<Cfg: RunCfg> Default for Scheduler<Cfg, WuNil, SvEmpty, NullColumnStorage> 
             gate2_accum_live: [const { core::sync::atomic::AtomicUsize::new(0) }; MAX_CORES * GATE2_MAX_ACCUMS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic publish array init; tracked: #121
             phase_ema: [const { Cell::new(Nanos::from_raw(0)) }; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-phase EMA zero-init; tracked: #121
             phase_accum: [const { Cell::new(Nanos::from_raw(0)) }; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-phase accumulator zero-init; tracked: #121
+            adapt_reconfigure: Cell::new(Bool::FALSE),
             _pin: PhantomPinned,
         }
     }
@@ -2400,6 +2460,7 @@ where
             gate2_accum_live: [const { core::sync::atomic::AtomicUsize::new(0) }; MAX_CORES * GATE2_MAX_ACCUMS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic publish array init; tracked: #121
             phase_ema: [const { Cell::new(Nanos::from_raw(0)) }; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-phase EMA zero-init; tracked: #121
             phase_accum: [const { Cell::new(Nanos::from_raw(0)) }; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-phase accumulator zero-init; tracked: #121
+            adapt_reconfigure: Cell::new(Bool::FALSE),
                     _pin: PhantomPinned,
                 })
             }
@@ -2476,6 +2537,7 @@ where
             gate2_accum_live: [const { core::sync::atomic::AtomicUsize::new(0) }; MAX_CORES * GATE2_MAX_ACCUMS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic publish array init; tracked: #121
             phase_ema: [const { Cell::new(Nanos::from_raw(0)) }; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-phase EMA zero-init; tracked: #121
             phase_accum: [const { Cell::new(Nanos::from_raw(0)) }; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-phase accumulator zero-init; tracked: #121
+            adapt_reconfigure: Cell::new(Bool::FALSE),
                     _pin: PhantomPinned,
                 })
             }
