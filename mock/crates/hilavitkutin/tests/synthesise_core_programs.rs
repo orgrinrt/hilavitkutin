@@ -87,7 +87,7 @@ fn single_unit_plan_assigns_one_core_one_fiber() {
     >(&plan, USize(1)); // lint:allow(no-bare-numeric) reason: single-core smoke; tracked: #427
 
     // Core 0 owns the single fiber (which exists per the plan's
-    // morsel_sizes); subsequent cores are empty.
+    // morsel_windows); subsequent cores are empty.
     let c0 = &programs.as_ref()[0];
     assert_eq!(c0.range_count, USize(1)); // lint:allow(no-bare-numeric) reason: one fiber assigned; tracked: #427
     assert!(matches!(c0.fiber_ranges[0].1, RecordRange::Full));

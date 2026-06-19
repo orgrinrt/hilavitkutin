@@ -234,7 +234,7 @@ enum PlanColumn {
     Trunks,
     Fibers,
     UnitMeta,
-    MorselSizes,
+    MorselWindows,
     RcmOrder,
 }
 
@@ -272,7 +272,7 @@ impl PlanHandle {
             PlanColumn::Trunks => 1,
             PlanColumn::Fibers => 2,
             PlanColumn::UnitMeta => 3,
-            PlanColumn::MorselSizes => 4,
+            PlanColumn::MorselWindows => 4,
             PlanColumn::RcmOrder => 5,
         }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: closed-set column offsets; tracked: #72
         StoreId(USize(self.base.0 + offset)) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: StoreId-construct from base + closed-set column offset; tracked: #72
@@ -294,9 +294,9 @@ impl PlanHandle {
     pub fn unit_meta_id(&self) -> StoreId {
         self.column_id(PlanColumn::UnitMeta)
     }
-    /// `StoreId` of the per-fiber morsel-sizes column.
-    pub fn morsel_sizes_id(&self) -> StoreId {
-        self.column_id(PlanColumn::MorselSizes)
+    /// `StoreId` of the per-fiber morsel-windows column.
+    pub fn morsel_windows_id(&self) -> StoreId {
+        self.column_id(PlanColumn::MorselWindows)
     }
     /// `StoreId` of the RCM renumber column.
     pub fn rcm_order_id(&self) -> StoreId {
@@ -311,7 +311,7 @@ impl PlanHandle {
     pub fn trunk_count(&self) -> USize {
         self.trunk_count
     }
-    /// Live fiber count (records in the fibers and morsel-sizes columns).
+    /// Live fiber count (records in the fibers and morsel-windows columns).
     pub fn fiber_count(&self) -> USize {
         self.fiber_count
     }
@@ -533,7 +533,7 @@ fn store_column<T: ColumnValue, CS: ColumnStorage>(
 /// PlanColumn::COUNT`.
 ///
 /// Reserves and copies the phases, trunks, fibers, per-unit metadata,
-/// per-fiber morsel sizes, and RCM renumber pools (one column per `PlanColumn`
+/// per-fiber morsel windows, and RCM renumber pools (one column per `PlanColumn`
 /// variant), then returns the `PlanHandle` locating them. Per-fiber column
 /// classification and the dirty masks stay off the store this round (their
 /// columnar form and consumers are later rounds).
@@ -565,7 +565,7 @@ fn store_plan<CS: ColumnStorage>(
         notko::Outcome::Ok(()) => {}
         notko::Outcome::Err(e) => return notko::Outcome::Err(e),
     }
-    match store_column(storage, handle.morsel_sizes_id(), plan.morsel_sizes.as_ref(), plan.fiber_count) {
+    match store_column(storage, handle.morsel_windows_id(), plan.morsel_windows.as_ref(), plan.fiber_count) {
         notko::Outcome::Ok(()) => {}
         notko::Outcome::Err(e) => return notko::Outcome::Err(e),
     }
@@ -616,7 +616,7 @@ pub struct Scheduler<
     /// past it is the zero-fill the array carries.
     topo_count: USize,
     /// Locator for the plan's store-backed flat CSR columns (phases, trunks,
-    /// fibers, per-unit metadata, per-fiber morsel sizes, the RCM renumber),
+    /// fibers, per-unit metadata, per-fiber morsel windows, the RCM renumber),
     /// reserved in `storage` at a `StoreId` range continued past the resource
     /// columns. `PlanHandle::empty()` when no plan is store-backed (the bare
     /// scheduler). The dispatch consumer reads the plan back through it.
@@ -2579,7 +2579,7 @@ mod plan_column_offset_tests {
             h.trunks_id(),
             h.fibers_id(),
             h.unit_meta_id(),
-            h.morsel_sizes_id(),
+            h.morsel_windows_id(),
             h.rcm_order_id(),
         ];
         assert_eq!(ids[0], at(0));

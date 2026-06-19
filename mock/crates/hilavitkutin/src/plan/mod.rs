@@ -81,12 +81,16 @@ pub struct ExecutionPlan<D: PlanDims> {
     pub column_class: ColumnClassMap<D>,
     /// Per-fiber dirty masks (incremental-skip propagation).
     pub dirty: DirtyMasks<D::Fibers, D::Columns>,
-    /// Per-fiber morsel sizes. `morsel_sizes[f]` is the number of
-    /// records assigned to fiber `f`. Sum-preserving across the full
-    /// record set (remainder distributed across the first
-    /// `record_count % fiber_count` fibers). Read by dispatch codegen
-    /// to emit per-fiber `RecordRange` slices.
-    pub morsel_sizes: <D::Fibers as Capacity>::Array<USize>,
+    /// Per-fiber morsel WINDOW size. `morsel_windows[f]` is the canonical
+    /// per-morsel chunk size for fiber `f` (spec domain 12:
+    /// `(L1_usable / Σ write_bytes).clamp(MIN, MAX) & !3`); each fiber covers
+    /// `[0, record_count)` in `ceil(record_count / morsel_windows[f])` morsels.
+    /// PLACEHOLDER until slice 4: `compute_fiber_morsel_windows` currently fills
+    /// this with the old record-count partition (`Σ == record_count`), and the
+    /// dispatch still windows uniformly by `Cfg::MORSEL_SIZE`, so this value is
+    /// computed-but-unconsumed. The L1 window formula + dispatch consumption land
+    /// in the per-fiber morsel slices (blueprint 202606201400; tracked #341).
+    pub morsel_windows: <D::Fibers as Capacity>::Array<USize>,
     /// RCM renumber permutation: `rcm_order[new_pos]` is the `UnitId`
     /// placed at that position by the step-4 bandwidth-reduction pass.
     /// A locality renumber consumed by dispatch codegen for arena
@@ -124,7 +128,7 @@ where
             unit_count: USize::ZERO,
             column_class: ColumnClassMap::new(),
             dirty: DirtyMasks::new(),
-            morsel_sizes: <D::Fibers as Capacity>::filled(USize::ZERO),
+            morsel_windows: <D::Fibers as Capacity>::filled(USize::ZERO),
             rcm_order: <D::Units as Capacity>::filled(UnitId::ZERO),
             predecessor_masks: <D::Units as Capacity>::filled(D::AdjRow::default()),
             read_masks: <D::Units as Capacity>::filled(AccessMask::empty()),
@@ -206,7 +210,7 @@ const _: fn() = || {
 /// `block_diagonalise`, `spectral_partition`. These depend on arvo-graph
 /// and arvo-spectral primitives not yet shipped; their bodies are stubs)
 /// to `group_fibers` to `compute_upward_rank_and_dirty` to
-/// `size_morsels` to `select_phase_configs` to `classify_columns`.
+/// `compute_fiber_morsel_windows` to `select_phase_configs` to `classify_columns`.
 /// Steps 12 (`assign_cores`) and 13 (`synthesise_core_programs`) run
 /// in `crate::thread::assign_cores` and `plan/core_program.rs`
 /// respectively; this runner produces the input they consume.
@@ -388,7 +392,7 @@ where
     // Step 9: morsel sizing per fiber. Stored on the plan so Pass 3
     // dispatch codegen can emit per-fiber `RecordRange` slices without
     // recomputing.
-    plan.morsel_sizes = steps::size_morsels::<D>(inputs.record_count, fibers.fiber_count);
+    plan.morsel_windows = steps::compute_fiber_morsel_windows::<D>(inputs.record_count, fibers.fiber_count);
 
     // Step 10: phase configs. Store onto plan.phases[i].config. Pass
     // the unit count so the last phase's width is computed against

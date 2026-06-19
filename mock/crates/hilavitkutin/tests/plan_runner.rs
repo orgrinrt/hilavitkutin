@@ -92,7 +92,7 @@ fn size_morsels_distributes_remainder_across_first_fibers() {
     // invariant: every record is assigned somewhere. The prior
     // integer-divide-only shape returned [3, 3, 3] and silently
     // dropped record index 9.
-    let sizes = steps::size_morsels::<TestDims>(USize(10), USize(3)); // lint:allow(no-bare-numeric) reason: smoke fixture; tracked: #427
+    let sizes = steps::compute_fiber_morsel_windows::<TestDims>(USize(10), USize(3)); // lint:allow(no-bare-numeric) reason: smoke fixture; tracked: #427
     let sizes = sizes.as_ref();
     assert_eq!(sizes[0], USize(4)); // lint:allow(no-bare-numeric) reason: expected first fiber; tracked: #427
     assert_eq!(sizes[1], USize(3)); // lint:allow(no-bare-numeric) reason: expected second fiber; tracked: #427
