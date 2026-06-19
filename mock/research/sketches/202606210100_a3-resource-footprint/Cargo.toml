@@ -1,0 +1,22 @@
+# Detach from the parent mock/ workspace (sketch is a standalone throwaway crate).
+[workspace]
+
+[package]
+name = "a3-resource-footprint"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+# Standalone throwaway sketch. NOT a workspace member (lives outside
+# mock/crates/). Path-deps the hilavitkutin crates; git-deps arvo on the
+# same dev branch the workspace pins so cargo dedupes the rev.
+
+[dependencies]
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+arvo-tensor = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+[[bin]]
+name = "a3_resource_footprint"
+path = "src/main.rs"
