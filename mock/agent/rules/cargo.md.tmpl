@@ -14,11 +14,17 @@ apply_to: ["**/Cargo.toml"]
 
 ### Crate structure
 
-Nine crates total: eight plain `rlib` crates plus one proc-macro
-crate. Flat structure.
+Twelve crates total: ten plain `rlib` crates plus two proc-macro
+crates. Flat structure.
 
 - `hilavitkutin-api` is the consumer-facing contract crate. Traits
  and data shapes only; no concrete engine logic.
+- `hilavitkutin-api-macros` is the proc-macro companion to
+ `hilavitkutin-api`. It ships `#[derive(ResourceFootprint)]`, which
+ sums a resource value type's `Field`/`Seq`/`Map` field footprints
+ so the engine reads its L1-morsel write-collection budget. Its
+ emitted output references `::hilavitkutin_api::*` paths only and is
+ `no_std`-compatible.
 - `hilavitkutin` is the engine. Depends on `hilavitkutin-api` and
  on arvo crates.
 - `hilavitkutin-build` is build-dep only. Declared under
@@ -46,8 +52,9 @@ crate. Flat structure.
  `hilavitkutin-extensions`. It ships `#[export_extension]` which
  emits the repr-C descriptor, exported-symbol fn, capability
  table, and per-capability trampolines on behalf of an extension
- author. The only proc-macro crate in the stack. Its emitted
- output is `no_std`-compatible.
+ author. One of two proc-macro crates in the stack (with
+ `hilavitkutin-api-macros`). Its emitted output is
+ `no_std`-compatible.
 
 ### Plugin host crates (layer, not loophole)
 
@@ -104,6 +111,12 @@ reinventing descriptor formats.
  must add `hilavitkutin-extensions` as a regular dependency
  alongside the macro crate. Must never be depended on at runtime
  by engine, api, build-time, or ecosystem crates.
+- `hilavitkutin-api-macros`: depends on proc-macro2 + syn + quote at
+ macro-execution time. Its emitted output references
+ `::hilavitkutin_api::*` paths only, so consumers add
+ `hilavitkutin-api` as a regular dependency alongside the macro
+ crate. Must never reference any other hilavitkutin crate at
+ proc-macro runtime or in emission.
 
 ### `no_std` + `no_alloc` enforcement
 
@@ -118,10 +131,11 @@ Every rlib crate's `lib.rs` starts with:
 `Cargo.toml` must not pull `std`-feature variants of any dependency.
 If an arvo crate exposes a `std` feature, it stays off.
 
-`hilavitkutin-extensions-macros` is the sole exception to the
-`no_std` rule at the crate level: proc-macro crates run in the
-compiler host context and necessarily use `std`. The code the
-macro emits must still be `no_std`-compatible.
+The two proc-macro crates (`hilavitkutin-extensions-macros`,
+`hilavitkutin-api-macros`) are the exceptions to the `no_std` rule at
+the crate level: proc-macro crates run in the compiler host context
+and necessarily use `std`. The code they emit must still be
+`no_std`-compatible.
 
 ### ExpandedLto pragma
 
@@ -165,7 +179,7 @@ The invariant propagates forward into `hilavitkutin-extensions` and into any dow
 
 ### Forbidden crate types
 
-- No `[lib] proc-macro = true` on any hilavitkutin crate EXCEPT `hilavitkutin-extensions-macros`. Exactly one proc-macro crate in the stack; adding a second requires a design round.
+- No `[lib] proc-macro = true` on any hilavitkutin crate EXCEPT `hilavitkutin-extensions-macros` and `hilavitkutin-api-macros`. Two proc-macro crates in the stack; adding a third requires a design round.
 - No `crate-type = ["cdylib"]` on any hilavitkutin crate. The engine composes statically; the plugin-host layer (`hilavitkutin-linking`, `hilavitkutin-extensions`) LOADS cdylibs but is not itself a cdylib target.
 - No linker-magic discovery in any hilavitkutin crate. `inventory`, `ctor`, `#[distributed_slice]`, `.init_array`-based registration are banned on both the producer and consumer sides of the loader boundary. `hilavitkutin-linking` and `hilavitkutin-extensions` enforce pull-based explicit-symbol resolution only.
 - No runtime WU discovery in the engine. The engine's WorkUnit composition is strictly static. This constraint does not extend to consumer hosts' extension ecosystems, which route through the plugin-host layer.

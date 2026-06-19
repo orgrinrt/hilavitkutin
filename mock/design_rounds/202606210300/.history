@@ -1,0 +1,50 @@
+abc4f4d chore: lock src CL for hilavitkutin-api-macros
+3345882 feat: add hilavitkutin-api-macros crate with ResourceFootprint derive
+9460c68 docs: open src CL for hilavitkutin-api-macros
+7194bf7 chore: lock doc CL for hilavitkutin-api-macros
+37526ba docs: update crate-count + proc-macro claims for hilavitkutin-api-macros
+db1a193 docs: open doc CL for hilavitkutin-api-macros
+843e074 docs: topic for hilavitkutin-api-macros + ResourceFootprint derive
+009f76f feat: add CollectionBytes + ResourceFootprint footprint traits
+2b65194 docs: sketch A3-2 resource-collection footprint surface
+272dee9 docs: re-chart A3 morsel formula on the canonical R5 resource model
+9e80d83 feat: add per-store element-byte-size collection for L1 morsel formula
+2e79905 docs: sketch A3 per-store size collection for L1 morsel formula
+aaa6097 feat: add run_one_trunk_windowed for fiber-outer morsel dispatch
+906949f docs: sketch A2a per-fiber morsel loop drives per-trunk dispatch
+90c7529 docs: backlog note for generalized asm-emission contract tests
+06e6871 docs: granular roadmap, sketch plan, asm-contract-test discipline
+abe3a4e feat: thread per-fiber morsel size onto FiberDispatch
+7fe3f20 docs: resolve arc-audit roadmap (head+tail/overlap in scope, internals-first)
+9901b87 docs: critical arc audit and updated canonical roadmap
+1796fe3 refactor: rename morsel_sizes to morsel_windows for per-fiber morsel slice 1
+e1b243a docs: per-fiber morsel-loop wiring blueprint
+5dfcc4f docs: chart adapt actuation arc (dead consumption surfaces)
+6d034da feat: select_adapt_config phase-imbalance reconfigure trigger
+de04dc4 feat: per-phase duration EMA + catalogue adapt performance contracts
+86e2406 feat: core-idle adapt axis via waist-barrier follower timing
+2553d4d feat: change_seen_count on all run paths, accumulator over-capacity is a hard error
+cc89cde feat: count change_class frames via store_dirty into SchedulerMetrics
+b3ce8a5 chore: allow private_bounds on sealed Executor trait
+c3b6bd8 chore: remove unused impl_trait_in_assoc_type gate from hilavitkutin-api
+1718920 feat: sample throughput record count into SchedulerMetrics
+03ef6c8 test: P1 R2a keystone nine-resource CtxFor Ctx through OnMeta
+e1e15a3 docs: chart-the-path P1 adapt granularity + sketch plan
+643dffb docs: chart-the-path P1 adapt roadmap draft + canonical mirror
+dee64fc docs: chart-the-path P1 adapt+E8 comprehension map
+f486274 fix: compile-time Units-cap guard for run_parallel
+5a364ba feat: CtxFor computed per-WorkUnit Context type
+715e27e feat: lift engine plan_dirty + grouping caps onto PlanDims capacity types
+ff147c1 feat: GATE-2 parallel engine, self-hosting meta pipeline, EMA adapt
+e4479c8 feat: complete GATE-1 single-core dispatch engine
+09c3e6b fix: bump arvo dev head, fix waist_detect 2-arg call
+d57d71d test: add engine-vs-std perf gate, red until single-core parity
+ab2f316 feat: dispatch each fiber on its own morsel-locality bit
+0f0caaa feat: detect waists via arvo_graph::waist_detect
+d65456e feat: dispatch accumulator-free pipelines morsel-outer
+04f7c1b bench: single-core engine vs optimal-std macro bench
+a46b675 test: assert resource-arena partial-failure cleanup directly
+c959e79 fix: reject a PlanDims that exceeds the phase/trunk id width
+e14d3de chore: harden plan projection column-id coupling and partition guard
+b9fc360 feat: dispatch in the plan's phase-sequential order
+7f35f83 feat: window the run-loop dispatch into morsels
