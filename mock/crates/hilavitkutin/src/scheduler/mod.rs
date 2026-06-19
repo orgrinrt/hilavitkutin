@@ -1476,6 +1476,51 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
             .run_trunk(&self.bindings, &self.meta_block, MorselRange::new(USize::ZERO, USize(total)), all, epoch);
     }
 
+    /// Dispatch one trunk's monomorphised program fiber-outer/morsel-inner: walk
+    /// `[0, record_count)` in windows of `window` records, one whole-fiber
+    /// `run_trunk` call per window (all-ones dirty, no-skip). For a single-fiber
+    /// trunk this is per-fiber morsel windowing (spec domain 12, "multiple morsels
+    /// per fiber"): the fiber's whole unit sequence runs over one morsel before the
+    /// next, keeping its co-located columns L1-hot for the window's duration.
+    ///
+    /// The per-record body is the same `run_trunk` projection `run_one_trunk`
+    /// dispatches whole-range, so the const-DCE and devirtualisation are
+    /// unchanged: `MorselRange` is a runtime argument that no compile-time DCE site
+    /// (`IsRoot`/`PhaseAt`/`Member`/`GateWith`) reads, so distinct per-window ranges
+    /// cannot perturb the monomorphised dispatch. A zero `window` floors to 1.
+    /// At `record_count == 0` the loop runs zero windows (vs `run_one_trunk`'s one
+    /// call over `[0, 0)`); both are no-ops because the per-record body never fires
+    /// at zero records, so the behaviours coincide.
+    pub fn run_one_trunk_windowed<Witnesses, GW, const TRUNK: usize>(&mut self, window: USize) // lint:allow(no-bare-numeric) reason: const-generic trunk selector; tracked: #121
+    where
+        WuVals: RunGatedTrunk<
+            WuVals,
+            <Vals as BindingsFor>::Bindings,
+            Witnesses,
+            GW,
+            Stores,
+            <D as PlanDims>::Units,
+            <D as PlanDims>::Stores,
+            <D as PlanDims>::AdjRow,
+            TRUNK,
+            Here,
+        >,
+    {
+        let total = self.record_count.0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: morsel length; tracked: #121
+        self.virtual_epoch.fetch_add(1, Ordering::Relaxed); // lint:allow(no-bare-numeric) reason: per-pass epoch successor; tracked: #121
+        self.meta_block.metrics.pass_count.set(USize(self.meta_block.metrics.pass_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: per-pass meta pass_count; tracked: #121
+        let epoch = USize(self.virtual_epoch.load(Ordering::Relaxed));
+        let all = <D as PlanDims>::AdjRow::default().bitnot();
+        let w = window.0.max(1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: window floor; tracked: #121
+        let mut start = 0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: morsel cursor; tracked: #121
+        while start < total {
+            let len = w.min(total - start); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: clamped window length; tracked: #121
+            self.wu_values
+                .run_trunk(&self.bindings, &self.meta_block, MorselRange::new(USize(start), USize(len)), all, epoch);
+            start += len; // lint:allow(no-bare-numeric) reason: advance cursor; tracked: #121
+        }
+    }
+
     /// Dispatch every trunk in phase order over `morsel`, single-core (round 2b).
     ///
     /// The outer driver: for each phase pass `0..phase_count` it walks the
