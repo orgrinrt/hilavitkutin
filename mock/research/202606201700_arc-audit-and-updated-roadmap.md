@@ -121,3 +121,53 @@ head+tail + phase-overlap (a) back in scope as a Phase (canonical), or (b)
 consciously dropped/deferred by the rechart? If (a), they slot as a Phase between
 C and E (intra-trunk + cross-phase parallelism, the spec's full model). The
 benches must then be re-read against the full model, not the narrowed subset.
+
+## RESOLUTION (op decision, 2026-06-19)
+
+**Head+tail + phase-overlap stay FULLY in scope.** Checked the recharts for a
+named drop-reason (op's condition): there is none. Both are explicitly KEPT in
+the r3 GATE-2 roadmap as PROVEN-but-UNBUILT, not dropped:
+- head+tail convergence = G2-Nd (= E4b), sketch `202606062200` PROVEN, UNBUILT
+  (`202606070200_engine-roadmap-r3-gate2.md:38-39`; rechart `202606070100:20,54`).
+  Spec `:770`, `:1838-1844`. The only place a single fiber's records split across
+  cores (2-way, head + tail, never N-way).
+- phase-overlap via `AtomicUsize` progress counters = the E4 "overlaps phases"
+  item (r3 `:45`, rechart `:21,56`). Spec `:772-774`, `:1847-1854`. NOTE: what
+  shipped as "E4" was the meta-WU LIFECYCLE pipeline (PlanStage/ScheduleEnd
+  virtuals); the progress-counter phase OVERLAP (phase N+1 starts when N produces
+  one morsel) is the still-UNBUILT part. So the audit's "absent" stands.
+
+They fell out of the later completion-arc roadmap (`202606111700`) P0-P4 in the
+r3->completion-arc transition, unflagged. Per the canonical-design-outranks rule
+and op: no named/justified reason exists, so they are canonical and return to the
+active roadmap in full. The consolidation spec already mandates them (domains
+11/20), so no canonical-doc change is needed; only this roadmap revision restores
+them.
+
+**Sequencing: internals first.** Op: consumer paths are mostly sugar/wiring atop
+working internals and can only be built once the internals exist. So the corrected
+order is internals (Phases A-D + the restored parallel mechanisms) BEFORE the
+consumer surfaces (Phase E), which move to the end just before bench/ecosystem.
+
+### Re-sequenced phases (authoritative)
+
+1. **Phase A** per-fiber morsel model (slices A1-A4; A-S1 rename shipped PR #151).
+   Prerequisite for micro-morsels + adapt morsel actuation + per-fiber locality.
+2. **Phase G2C** complete the REAL GATE-2 (the rechart's term): G2-Nd head+tail
+   convergence (single-trunk-phase 2-way split, sketch 202606062200) + the
+   phase-overlap progress-counter mechanism (phase N+1 starts on N's first
+   morsel). These finish the canonical parallel-execution model the trunk rechart
+   established; the fair-bench parity must be re-read against this full model.
+3. **Phase B** plan-analysis chain (DP fiber grouping, consume spectral,
+   Dulmage-Mendelsohn + dead-column).
+4. **Phase C** RCM-row dispatch order (correct D-3, retire the 070100 arena-only
+   framing; dissolves D-4 NonTopologicalRegistration).
+5. **Phase D** adapt completion (morsel re-chunk actuation rides Phase A;
+   fiber_ema, active_units, parallel phase_ema, AdaptArena, per-morsel gen
+   counters S-6, strategy reselect).
+6. **Phase E** consumer-readiness surfaces (morsel-absolute accessor,
+   PipelineResult, persistence bridge, plugin facade, viola #254) — LAST among
+   feature work, built on the now-complete internals.
+7. **Phase F/G/H** P/E + version stamps; full bench + microkernels; ecosystem.
+
+Decision recorded; no further op input needed to proceed internals-first.
