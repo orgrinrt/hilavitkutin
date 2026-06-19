@@ -69,12 +69,12 @@ where
     // holds components (Fiber / Branch / Bridge). The conservative
     // skeleton sums fiber components; honest accounting that walks
     // FiberGrouping lands when assign_cores threads through (Pass 3).
-    let total_fibers = plan.morsel_sizes.as_ref().iter().filter(|m| m.0 > 0).count(); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: count internal; tracked: #72
+    let total_fibers = plan.morsel_windows.as_ref().iter().filter(|m| m.0 > 0).count(); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: count internal; tracked: #72
 
     // Round-robin: distribute `total_fibers` across `cores`. Core c
     // gets fibers [start_c .. end_c) where the remainder is spread
     // across the first `(total_fibers % cores)` cores (same shape
-    // as size_morsels remainder distribution).
+    // as compute_fiber_morsel_windows remainder distribution).
     let per_core = total_fibers / cores;
     let remainder = total_fibers % cores;
 

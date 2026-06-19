@@ -9,7 +9,7 @@
 1. **`plan.morsel_sizes` is a record-count PARTITION, not a window size.** `size_morsels`
    (`plan/steps.rs`) computes a sum-preserving split (`Σ morsel_sizes[f] == record_count`,
    per the `plan/mod.rs:84-89` doc). The spec (domain 12, :832-843) defines
-   `morsel_size = (L1_usable / Σ write_sizes).clamp(MIN,MAX) & !3` — a window CHUNK
+   `morsel_size = (L1_usable / Σ write_sizes).clamp(MIN,MAX) & !3` . a window CHUNK
    size, with each fiber covering `[0, total)` in `ceil(total/window)` morsels. These are
    categorically different. Wiring the current field value as a window would give one
    morsel per fiber, contradicting spec line 82 ("multiple morsels per fiber"). The field

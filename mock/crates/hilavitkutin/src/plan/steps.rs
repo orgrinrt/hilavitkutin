@@ -15,7 +15,7 @@
 //! 7. `group_fibers`: greedy fiber assignment with bounded slack.
 //! 8. `compute_upward_rank_and_dirty` (fused per Topic 3 S5):
 //!    reverse-topo critical-path rank + per-fiber dirty propagation.
-//! 9. `size_morsels`: per-fiber morsel sizing based on record count.
+//! 9. `compute_fiber_morsel_windows`: per-fiber morsel sizing based on record count.
 //! 10. `select_phase_configs`: pick MaxFuse/Balanced/MaxSplit per phase.
 //! 11. `classify_columns`: per-fiber column role (Internal/Input/Output).
 //! 12. `assign_cores`: map trunks onto concrete cores by `CoreClass`.
@@ -945,7 +945,7 @@ pub fn compute_predecessor_masks<D: PlanDims>(
 /// is assigned somewhere). Falls back to the record count itself
 /// when only one fiber is active. Bench-driven SIMD-width-aware
 /// sizing lands in HILA-RUNTIME-C1.
-pub fn size_morsels<D: PlanDims>(
+pub fn compute_fiber_morsel_windows<D: PlanDims>(
     record_count: USize,
     fiber_count: USize,
 ) -> <D::Fibers as Capacity>::Array<USize> {
@@ -1125,7 +1125,7 @@ pub enum PlanError {
     /// `group_fibers` produced more fibers than the fiber capacity
     /// accommodates, or zero fibers for a non-empty unit set.
     NoTrunkAssignment,
-    /// `size_morsels` produced a morsel size below the engine's
+    /// `compute_fiber_morsel_windows` produced a morsel size below the engine's
     /// hardcoded minimum (1 record).
     MorselSizeBelowMin,
     /// `assign_cores` was asked to map more lanes than the runtime
