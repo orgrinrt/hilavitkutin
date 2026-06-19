@@ -746,7 +746,12 @@ separate bound. So a consumer adapts by registering an `OnMeta<ScheduleEnd>` wor
 unit that reads `SchedulerMetrics::pass_count`, which the engine maintains once
 per pass. `SchedulerMetrics` also carries a `last_record_count` cell, set beside
 the pass-duration EMA fold each frame, so an `OnMeta` hook derives the throughput
-trend (records divided by the EMA duration) with no new instrumentation.
+trend (records divided by the EMA duration) with no new instrumentation. It
+further carries a `change_seen_count` cell, incremented in the single-core `run`
+path each frame whose `store_dirty` was non-empty, so an `OnMeta` hook derives the
+input-change rate (the change_class axis) from existing dirty state. The
+`run_parallel` and `run_fused` folds do not yet maintain it; that extension is
+tracked as a follow-up.
 
 The meta pipeline holds under `run_parallel` on both worker paths. On the
 phase-loop path (record-bearing carriers), lifecycle bands are phases under the

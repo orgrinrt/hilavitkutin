@@ -1364,6 +1364,9 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
                 start += len;
             }
         }
+        // Capture the change_class signal before the seed is consumed: a
+        // non-empty store_dirty means an input change was seen this frame.
+        let stores_changed = !self.store_dirty.get().is_empty().0;
         // The frame consumed the change seed; clear it and leave cold-start.
         self.store_dirty.set(AccessMask::empty());
         self.first_frame.store(false, Ordering::Relaxed);
@@ -1373,6 +1376,9 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         m.ema_pass_duration_ns
             .set(fold_ema(m.ema_pass_duration_ns.get(), self.clock.now_ns() - frame_start, ema_seed));
         m.last_record_count.set(self.record_count);
+        if stores_changed {
+            m.change_seen_count.set(USize(m.change_seen_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: increment by one frame; tracked: #121
+        }
         Cfg::Out::default()
     }
 
@@ -2034,6 +2040,15 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
     #[doc(hidden)]
     pub fn __bindings(&self) -> &<Vals as BindingsFor>::Bindings {
         &self.bindings
+    }
+
+    /// Set `store_dirty` to a non-empty mask. Hidden test accessor: the only
+    /// public trigger for `store_dirty` is `replace_resource<T: PlanAffecting>`,
+    /// and `PlanAffecting` is sealed, so a white-box test for the change_class
+    /// signal sets the dirty mask directly. Not part of the supported surface.
+    #[doc(hidden)]
+    pub fn __mark_store_dirty(&self) {
+        self.store_dirty.set(AccessMask::empty().set(USize(0))); // lint:allow(no-bare-numeric) reason: store index zero; tracked: #121
     }
 
     /// Borrow the backing store. Hidden test accessor mirroring
