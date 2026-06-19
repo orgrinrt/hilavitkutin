@@ -414,6 +414,7 @@ fn derive_phase_dispatch_order(
     let phases = plan.phases.as_ref();
     let trunks = plan.trunks.as_ref();
     let fibers = plan.fibers.as_ref();
+    let morsel_windows = plan.morsel_windows.as_ref();
     let mut next = 0;
     let mut p = 0;
     while p < plan.phase_count.0 && p < phases.len() {
@@ -438,6 +439,12 @@ fn derive_phase_dispatch_order(
                         start: USize(fib_start),
                         len: USize(next - fib_start),
                         morsel_local: fibers[f].morsel_local,
+                        morsel_size: if f < morsel_windows.len() {
+                            morsel_windows[f]
+                        } else {
+                            USize::ZERO
+                        },
+                        fiber_plan_idx: USize(f),
                     };
                     fd += 1;
                 }
@@ -487,6 +494,18 @@ pub struct FiberDispatch {
     /// True when the fiber writes no accumulator, so it dispatches
     /// morsel-outer.
     pub morsel_local: Bool,
+    /// This fiber's per-fiber morsel window size (records per morsel chunk),
+    /// copied from `plan.morsel_windows[fiber_plan_idx]` at dispatch-order
+    /// derivation. Populated but not yet consumed by the dispatch loop (slice
+    /// A2 inverts the loop to window each fiber by this); until then the loop
+    /// uses the uniform `Cfg::MORSEL_SIZE` and this carries the placeholder
+    /// value. A zero value means fall back to `Cfg::MORSEL_SIZE`.
+    pub morsel_size: USize,
+    /// The plan CSR fiber index this descriptor came from. The `fiber_dispatch`
+    /// array is in phase-sequential dispatch order, a different index space from
+    /// `plan.morsel_windows` (CSR fiber order); this records the mapping so the
+    /// per-fiber size is read from the right CSR slot.
+    pub fiber_plan_idx: USize,
 }
 
 impl Default for FiberDispatch {
@@ -496,6 +515,8 @@ impl Default for FiberDispatch {
             start: USize::ZERO,
             len: USize::ZERO,
             morsel_local: Bool::TRUE,
+            morsel_size: USize::ZERO,
+            fiber_plan_idx: USize::ZERO,
         }
     }
 }
@@ -2144,6 +2165,16 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
     #[doc(hidden)]
     pub fn __idle_ns(&self) -> Nanos {
         self.meta_block.metrics.idle_ns.get()
+    }
+
+    /// Read the per-fiber morsel window size on the dispatch descriptor at
+    /// dispatch-order index `i`. Hidden test accessor for slice A1: the
+    /// descriptor's `morsel_size` is populated from `plan.morsel_windows` but not
+    /// yet consumed by the dispatch loop (slice A2), so a white-box test asserts
+    /// the field carries the plan's per-fiber value.
+    #[doc(hidden)]
+    pub fn __fiber_morsel_size(&self, i: USize) -> USize {
+        self.fiber_dispatch.as_ref()[i.0].morsel_size
     }
 
     /// Read the engine-internal per-phase duration EMA for phase `p`. Hidden
