@@ -1,0 +1,50 @@
+d9e4152 chore: lock src CL for fiber_plan_idx catalogue test
+4272613 test: catalogue fiber_plan_idx CSR-vs-dispatch mapping
+6e9f787 docs: open src CL for fiber_plan_idx catalogue test
+96963ea chore: lock doc CL for fiber_plan_idx catalogue test
+5201f5d docs: open doc CL for fiber_plan_idx catalogue test
+887cca8 docs: topic for fiber_plan_idx mapping catalogue test
+47402c2 chore: close per-fiber morsel slice A1 round
+36000b9 chore: lock src CL for per-fiber morsel slice A1
+a2e78fe feat: thread per-fiber morsel size onto FiberDispatch (per-fiber morsel slice A1)
+295a7b6 docs: open src CL for per-fiber morsel slice A1
+803cb3f chore: lock doc CL for per-fiber morsel slice A1
+4e98802 docs: open doc CL for per-fiber morsel slice A1
+80b2c2a docs: topic for per-fiber morsel slice A1
+7fe3f20 docs: resolve arc-audit roadmap (head+tail/overlap in scope, internals-first)
+9901b87 docs: critical arc audit and updated canonical roadmap
+1796fe3 refactor: rename morsel_sizes to morsel_windows for per-fiber morsel slice 1
+e1b243a docs: per-fiber morsel-loop wiring blueprint
+5dfcc4f docs: chart adapt actuation arc (dead consumption surfaces)
+6d034da feat: select_adapt_config phase-imbalance reconfigure trigger
+de04dc4 feat: per-phase duration EMA + catalogue adapt performance contracts
+86e2406 feat: core-idle adapt axis via waist-barrier follower timing
+2553d4d feat: change_seen_count on all run paths, accumulator over-capacity is a hard error
+cc89cde feat: count change_class frames via store_dirty into SchedulerMetrics
+b3ce8a5 chore: allow private_bounds on sealed Executor trait
+c3b6bd8 chore: remove unused impl_trait_in_assoc_type gate from hilavitkutin-api
+1718920 feat: sample throughput record count into SchedulerMetrics
+03ef6c8 test: P1 R2a keystone nine-resource CtxFor Ctx through OnMeta
+e1e15a3 docs: chart-the-path P1 adapt granularity + sketch plan
+643dffb docs: chart-the-path P1 adapt roadmap draft + canonical mirror
+dee64fc docs: chart-the-path P1 adapt+E8 comprehension map
+f486274 fix: compile-time Units-cap guard for run_parallel
+5a364ba feat: CtxFor computed per-WorkUnit Context type
+715e27e feat: lift engine plan_dirty + grouping caps onto PlanDims capacity types
+ff147c1 feat: GATE-2 parallel engine, self-hosting meta pipeline, EMA adapt
+e4479c8 feat: complete GATE-1 single-core dispatch engine
+09c3e6b fix: bump arvo dev head, fix waist_detect 2-arg call
+d57d71d test: add engine-vs-std perf gate, red until single-core parity
+ab2f316 feat: dispatch each fiber on its own morsel-locality bit
+0f0caaa feat: detect waists via arvo_graph::waist_detect
+d65456e feat: dispatch accumulator-free pipelines morsel-outer
+04f7c1b bench: single-core engine vs optimal-std macro bench
+a46b675 test: assert resource-arena partial-failure cleanup directly
+c959e79 fix: reject a PlanDims that exceeds the phase/trunk id width
+e14d3de chore: harden plan projection column-id coupling and partition guard
+b9fc360 feat: dispatch in the plan's phase-sequential order
+7f35f83 feat: window the run-loop dispatch into morsels
+f774b89 feat: dispatch accumulator columns through the append surface
+db1fec4 feat: dispatch input columns through the data plane
+23f2567 chore: regenerate rendered docs
+0dbc914 feat: store-back the execution plan on ColumnStorage
