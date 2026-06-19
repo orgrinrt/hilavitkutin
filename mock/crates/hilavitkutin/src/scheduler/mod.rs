@@ -1372,6 +1372,7 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         let m = &self.meta_block.metrics;
         m.ema_pass_duration_ns
             .set(fold_ema(m.ema_pass_duration_ns.get(), self.clock.now_ns() - frame_start, ema_seed));
+        m.last_record_count.set(self.record_count);
         Cfg::Out::default()
     }
 
@@ -1796,6 +1797,7 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
                 (*me).clock.now_ns() - frame_start,
                 ema_seed,
             ));
+            m.last_record_count.set((*me).record_count);
         }
         Cfg::Out::default()
     }
@@ -2022,6 +2024,7 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         let m = &self.meta_block.metrics;
         m.ema_pass_duration_ns
             .set(fold_ema(m.ema_pass_duration_ns.get(), self.clock.now_ns() - frame_start, ema_seed));
+        m.last_record_count.set(self.record_count);
         Cfg::Out::default()
     }
 
