@@ -1,23 +1,24 @@
 //! Morsel-loop windowing integration test (HILA-RUNTIME-C5, #343).
 //!
-//! `Scheduler::run` windows the record range `[0, record_count)` into morsels
-//! of `RunCfg::MORSEL_SIZE` and dispatches each unit once per morsel
-//! (unit-outer). This test discriminates that the windowing happens with the
-//! right boundaries and morsel-relative indexing.
+//! `Scheduler::run` windows each fiber's record range `[0, record_count)`
+//! into morsels of the fiber's plan-baked L1 window (`FiberDispatch::
+//! morsel_size`, A2b) and dispatches each unit once per morsel. This test
+//! discriminates that the windowing happens with the right boundaries and
+//! morsel-relative indexing.
 //!
 //! A self-transform (read + increment) would not discriminate windowing: it
 //! yields the same per-record result whether the range is one morsel or many.
 //! The discriminating probe writes the morsel-RELATIVE index it receives from
 //! `each`. `write(i)` lands at the absolute index `morsel.start + i`, so under
-//! windowing `col[k] == k % MORSEL_SIZE` (each morsel restarts the relative
+//! windowing `col[k] == k % window` (each morsel restarts the relative
 //! index at zero); the pre-windowing single full-range morsel instead writes
-//! `col[k] == k`. The record count (600) spans three morsels under the 256
-//! default: `[0, 256)`, `[256, 512)`, `[512, 600)`.
+//! `col[k] == k`. The record count (7000) spans two morsels under the fiber's
+//! 6144-record window: `[0, 6144)`, `[6144, 7000)`.
 //!
-//! Red first: against the single full-range morsel, `col[256]` is 256, not 0.
-//! The sentinel pre-fill also catches a skipped morsel (the sentinel survives a
-//! morsel that never ran), and the `% MORSEL_SIZE` assertion catches a wrong
-//! morsel boundary or a miscomputed `start`.
+//! Red first: against the single full-range morsel, `col[6144]` is 6144, not
+//! 0. The sentinel pre-fill also catches a skipped morsel (the sentinel
+//! survives a morsel that never ran), and the `% window` assertion catches a
+//! wrong morsel boundary or a miscomputed `start`.
 //!
 //! Lives under `tests/` so the bare numeric record values do not trip the
 //! src-tree primitive lints.
@@ -32,7 +33,6 @@ use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{ColumnWriterApi, EachApi, HasColumnWriter, HasEach};
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::run_cfg::{DefaultRunCfg, RunCfg};
 use hilavitkutin_api::store::Column;
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
@@ -80,12 +80,13 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
-// Three morsels under the 256-record default `MORSEL_SIZE`: [0,256), [256,512),
-// [512,600).
-const RECORDS: usize = 600;
+// Two morsels under the fiber's plan-baked L1 window (a single 4-byte write
+// column under the default budget windows at 24576 / 4 = 6144): [0,6144),
+// [6144,7000).
+const RECORDS: usize = 7000;
 
-// A pre-fill sentinel distinct from every `k % MORSEL_SIZE` (which is < 256), so
-// a record a skipped morsel never wrote keeps the sentinel and fails the check.
+// A pre-fill sentinel distinct from every morsel-relative index, so a record a
+// skipped morsel never wrote keeps the sentinel and fails the check.
 const SENTINEL: u32 = u32::MAX;
 
 // Column value: a Copy newtype over u32, so the blanket `ColumnValue` applies.
@@ -96,7 +97,7 @@ type Col = Cons<Column<Tv>, Empty>;
 
 // Probe: writes the morsel-relative index it receives from `each` into the
 // column. Under windowing the relative index restarts at zero per morsel, so
-// the absolute record `k` holds `k % MORSEL_SIZE`.
+// the absolute record `k` holds `k % window`.
 struct RelIndexWu;
 
 impl BuilderInput for RelIndexWu {
@@ -127,16 +128,20 @@ impl WorkUnit<Always> for RelIndexWu {
 
 #[test]
 fn morsel_windowing_writes_relative_index_per_morsel() {
-    let msize = <DefaultRunCfg as RunCfg>::MORSEL_SIZE.0;
-    // The record count must exceed the morsel size for the windowing to split.
-    assert!(RECORDS > msize, "test record count must exceed the morsel size");
-
-    let provider = BumpProvider::<32768>::new();
+    let provider = BumpProvider::<65536>::new();
     let mut scheduler = Scheduler::builder()
         .with(Column::<Tv>::new())
         .with(RelIndexWu)
         .build(store(provider), USize(RECORDS))
         .unwrap_or_else(|_| panic!("build should succeed"));
+
+    // The dispatch loop windows this fiber by its plan-baked L1 morsel window
+    // (A2b); read it off the descriptor so the assertion tracks the plan value
+    // (r6_morsel_window_formula pins the formula itself).
+    let msize = scheduler.__fiber_morsel_size(USize(0)).0;
+    assert!(msize > 0, "fiber 0 carries a plan-baked window");
+    // The record count must exceed the window for the windowing to split.
+    assert!(RECORDS > msize, "test record count must exceed the morsel window");
 
     // Pre-fill every record with the sentinel through the binding pointer, so a
     // morsel that never runs leaves its records detectably untouched.
@@ -157,7 +162,7 @@ fn morsel_windowing_writes_relative_index_per_morsel() {
         assert_eq!(
             v.0,
             (k % msize) as u32,
-            "record {k} holds the morsel-relative index (windowed into MORSEL_SIZE morsels)"
+            "record {k} holds the morsel-relative index (windowed into per-fiber morsels)"
         );
     }
 }

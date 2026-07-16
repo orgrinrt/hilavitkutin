@@ -152,15 +152,17 @@ struct Target {
     is_fixture: bool,
 }
 
-/// The four fixture-wrapper shape names (without platform symbol prefix).
-const FIXTURE_NAMES: [&str; 4] = [
+/// The six fixture-wrapper shape names (without platform symbol prefix).
+const FIXTURE_NAMES: [&str; 6] = [
     "asm_gate_column_chain",
     "asm_gate_fused_chain",
     "asm_gate_accumulator",
     "asm_gate_dirty_gated",
+    "asm_gate_windowed_fibers",
+    "asm_gate_resource_snapshot",
 ];
 
-/// Collect the gate targets from `nm`: the four `#[no_mangle]` fixture wrappers
+/// Collect the gate targets from `nm`: the six `#[no_mangle]` fixture wrappers
 /// (which carry inlined dispatch for the single-caller shapes) plus any
 /// out-of-line `Scheduler::run` / `run_fused` monos (the multi-caller shapes the
 /// wrappers reach by direct `bl`). The union covers every emitted dispatch body

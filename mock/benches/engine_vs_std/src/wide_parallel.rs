@@ -25,7 +25,7 @@ use core::hint::black_box;
 
 use arvo::USize;
 use hilavitkutin::OsThreadPool;
-use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, PtrNil};
+use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
@@ -72,7 +72,7 @@ macro_rules! def_chain {
                 'frame,
                 One<$inv>,
                 One<$outv>,
-                PtrNil,
+                SnapNil,
                 ColPtrCons<$inv, ColPtrNil>,
                 ColPtrCons<$outv, ColPtrNil>,
             >;

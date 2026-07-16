@@ -17,7 +17,7 @@
 use core::hint::black_box;
 
 use arvo::USize;
-use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, PtrNil};
+use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
@@ -72,7 +72,7 @@ impl WorkUnit<Always> for BranchX {
     type Write = One<Xv>;
     type Hint = (Immediate, Atomic, Normal);
     type Ctx<'frame> =
-        EngineCtx<'frame, One<Inv>, One<Xv>, PtrNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<Xv, ColPtrNil>>;
+        EngineCtx<'frame, One<Inv>, One<Xv>, SnapNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<Xv, ColPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: In host-populated for the record count; Xv reserved and
@@ -94,7 +94,7 @@ impl WorkUnit<Always> for BranchY {
     type Write = One<Yv>;
     type Hint = (Immediate, Atomic, Normal);
     type Ctx<'frame> =
-        EngineCtx<'frame, One<Inv>, One<Yv>, PtrNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<Yv, ColPtrNil>>;
+        EngineCtx<'frame, One<Inv>, One<Yv>, SnapNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<Yv, ColPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: as BranchX, for Yv.
@@ -119,7 +119,7 @@ impl WorkUnit<Always> for JoinZ {
         'frame,
         Two<Xv, Yv>,
         One<Zv>,
-        PtrNil,
+        SnapNil,
         ColPtrCons<Xv, ColPtrCons<Yv, ColPtrNil>>,
         ColPtrCons<Zv, ColPtrNil>,
     >;

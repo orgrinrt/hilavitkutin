@@ -1,0 +1,50 @@
+099e0852 chore: lock src changelist for 202607161920
+bb5145da docs: count six fixture wrappers in asm gate comments
+a230106d docs: a2b post-review src changelist
+bac42e66 chore: lock doc changelist for 202607161910
+172c6180 docs: attach the phase-outer adverbial cleanly in run paragraph
+2b1fc712 docs: a2b post-review-fixes topic
+1fa2179f chore: close round 202607161800
+f3a27859 chore: lock src changelist for 202607161820
+df4ee654 docs: regenerate design docs and agent rules
+38183a26 feat: invert run dispatch to fiber-outer morsel-inner per plan window
+8d6c6701 docs: a2b src changelist
+a9430e87 chore: lock doc changelist for 202607161810
+a5ffe8f7 docs: a2b doc cl + fiber-outer run drive shape in design
+765f2fc7 docs: a2b loop-inversion topic
+6a9983ee feat: per-fiber l1 morsel-window formula from runcfg budget
+8a30758e feat: erased resource addressing and ctx snapshot per storage bench
+82673e9e feat: add hilavitkutin-api-macros crate with ResourceFootprint derive
+009f76fc feat: add CollectionBytes + ResourceFootprint footprint traits
+2b65194c docs: sketch A3-2 resource-collection footprint surface
+272dee96 docs: re-chart A3 morsel formula on the canonical R5 resource model
+9e80d835 feat: add per-store element-byte-size collection for L1 morsel formula
+2e799053 docs: sketch A3 per-store size collection for L1 morsel formula
+aaa6097a feat: add run_one_trunk_windowed for fiber-outer morsel dispatch
+906949f1 docs: sketch A2a per-fiber morsel loop drives per-trunk dispatch
+90c7529c docs: backlog note for generalized asm-emission contract tests
+06e68715 docs: granular roadmap, sketch plan, asm-contract-test discipline
+abe3a4e6 feat: thread per-fiber morsel size onto FiberDispatch
+7fe3f203 docs: resolve arc-audit roadmap (head+tail/overlap in scope, internals-first)
+9901b875 docs: critical arc audit and updated canonical roadmap
+1796fe39 refactor: rename morsel_sizes to morsel_windows for per-fiber morsel slice 1
+e1b243aa docs: per-fiber morsel-loop wiring blueprint
+5dfcc4fb docs: chart adapt actuation arc (dead consumption surfaces)
+6d034dae feat: select_adapt_config phase-imbalance reconfigure trigger
+de04dc48 feat: per-phase duration EMA + catalogue adapt performance contracts
+86e24062 feat: core-idle adapt axis via waist-barrier follower timing
+2553d4df feat: change_seen_count on all run paths, accumulator over-capacity is a hard error
+cc89cdee feat: count change_class frames via store_dirty into SchedulerMetrics
+b3ce8a5a chore: allow private_bounds on sealed Executor trait
+c3b6bd8b chore: remove unused impl_trait_in_assoc_type gate from hilavitkutin-api
+17189200 feat: sample throughput record count into SchedulerMetrics
+03ef6c8a test: P1 R2a keystone nine-resource CtxFor Ctx through OnMeta
+e1e15a30 docs: chart-the-path P1 adapt granularity + sketch plan
+643dffb1 docs: chart-the-path P1 adapt roadmap draft + canonical mirror
+dee64fc1 docs: chart-the-path P1 adapt+E8 comprehension map
+f4862740 fix: compile-time Units-cap guard for run_parallel
+5a364ba4 feat: CtxFor computed per-WorkUnit Context type
+715e27e5 feat: lift engine plan_dirty + grouping caps onto PlanDims capacity types
+ff147c1a feat: GATE-2 parallel engine, self-hosting meta pipeline, EMA adapt
+e4479c8a feat: complete GATE-1 single-core dispatch engine
+09c3e6b9 fix: bump arvo dev head, fix waist_detect 2-arg call
