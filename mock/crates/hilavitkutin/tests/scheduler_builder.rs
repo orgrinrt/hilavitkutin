@@ -512,3 +512,60 @@ type Cons10<T> = Cons5<Cons5<T> >;
 type Cons50 = Cons10<Cons10<Cons10<Cons10<Cons10<Empty> > > > >;
 
 const _: () = assert!(<Cons50 as Depth>::D.0 == 50);
+
+// A3b: test-local resource values are bare scalars/markers with no Seq/Map
+// collection members, so their L1 morsel footprint is zero.
+impl hilavitkutin_api::footprint::ResourceFootprint for Interner {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+impl hilavitkutin_api::footprint::ResourceFootprint for S0 {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+impl hilavitkutin_api::footprint::ResourceFootprint for S1 {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+impl hilavitkutin_api::footprint::ResourceFootprint for S10 {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+impl hilavitkutin_api::footprint::ResourceFootprint for S11 {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+impl hilavitkutin_api::footprint::ResourceFootprint for S12 {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+impl hilavitkutin_api::footprint::ResourceFootprint for S13 {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+impl hilavitkutin_api::footprint::ResourceFootprint for S14 {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+impl hilavitkutin_api::footprint::ResourceFootprint for S15 {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+impl hilavitkutin_api::footprint::ResourceFootprint for S2 {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+impl hilavitkutin_api::footprint::ResourceFootprint for S3 {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+impl hilavitkutin_api::footprint::ResourceFootprint for S4 {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+impl hilavitkutin_api::footprint::ResourceFootprint for S5 {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+impl hilavitkutin_api::footprint::ResourceFootprint for S6 {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+impl hilavitkutin_api::footprint::ResourceFootprint for S7 {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+impl hilavitkutin_api::footprint::ResourceFootprint for S8 {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+impl hilavitkutin_api::footprint::ResourceFootprint for S9 {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+impl hilavitkutin_api::footprint::ResourceFootprint for Workspace {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}

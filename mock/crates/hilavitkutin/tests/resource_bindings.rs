@@ -210,6 +210,9 @@ fn zst_resource_round_trips_without_reserving() {
     // memory). This is the #622 ZST-resource guard.
     #[derive(Copy, Clone, PartialEq, Eq, Debug)]
     struct Marker;
+    impl hilavitkutin_api::footprint::ResourceFootprint for Marker {
+        const L1_BYTES: arvo::USize = arvo::USize(0);
+    }
 
     let _serial = COUNTING_LOCK.lock().unwrap_or_else(|e| e.into_inner());
     ALLOCS.store(0, Ordering::SeqCst);
@@ -274,4 +277,16 @@ fn partial_failure_frees_the_reserved_columns() {
     // live-column count balances, so the partial-failure path leaks nothing.
     assert_eq!(ALLOCS.load(Ordering::SeqCst), 1);
     assert_eq!(DEALLOCS.load(Ordering::SeqCst), 1);
+}
+
+// A3b: test-local resource values are bare scalars/markers with no Seq/Map
+// collection members, so their L1 morsel footprint is zero.
+impl hilavitkutin_api::footprint::ResourceFootprint for Ra {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+impl hilavitkutin_api::footprint::ResourceFootprint for Rb {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+impl hilavitkutin_api::footprint::ResourceFootprint for Rc {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
 }

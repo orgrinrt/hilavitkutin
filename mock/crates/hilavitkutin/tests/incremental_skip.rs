@@ -387,3 +387,11 @@ fn incremental_skip_propagates_two_hops() {
          consumer all re-run; the unrelated InC chain stays clean and skipped"
     );
 }
+
+// A3b: test-local resource values carry no Seq/Map members; zero footprint.
+impl hilavitkutin_api::footprint::ResourceFootprint for InA {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+impl hilavitkutin_api::footprint::ResourceFootprint for InC {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}

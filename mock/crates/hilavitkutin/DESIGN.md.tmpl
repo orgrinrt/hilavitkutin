@@ -72,8 +72,18 @@ complete execution plan:
  threshold) use the spectral former, narrow blocks the greedy one.
  `TrunkComponent::Fiber` entries carry id and units; columns, head+tail,
  and dispatch shape fill in at later steps (arvo-comb).
-9. Per-fiber morsel sizing (write-only formula, domain 12). Output
-   includes `micro_morsel_interval: USize` alongside `morsel_size: USize`
+9. Per-fiber morsel sizing (write-only formula, domain 12):
+   `window = (L1_usable / Σ write_sizes).clamp(MIN_MORSEL, MAX_MORSEL) & !3`.
+   The budget knobs are consumer-tunable `RunCfg` consts (`L1_USABLE`
+   defaulting to the 32 KB detection-fallback times 0.75, `MIN_MORSEL`
+   one micro-morsel interval, `MAX_MORSEL` 8192); hardware detection
+   later overrides the default source, not the knob. The per-fiber sum
+   walks the union of the fiber's units' write masks against the
+   per-store size fold: columns at type-native stride, resource values
+   at their `Seq`/`Map` collection footprint (`Field` scalars ride the
+   register budget), accumulators and virtuals zero. A fiber with no
+   write bytes takes the `MAX_MORSEL` window. Output
+   includes `micro_morsel_interval: USize` alongside the window
    per Topic 7 amendment. Default `MICRO_MORSEL_INTERVAL = 64` records.
    Adapt sidecar cache footprint subtracted from `l1_write_budget`
    per Topic 5 M10 amendment.

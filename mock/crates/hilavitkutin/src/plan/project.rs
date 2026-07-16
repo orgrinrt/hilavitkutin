@@ -23,11 +23,13 @@ use arvo::{Bool, USize};
 use arvo_tensor::{cap_size, Capacity};
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::column_value::ColumnValue;
+use hilavitkutin_api::footprint::ResourceFootprint;
 use hilavitkutin_api::store::{Accum, Column, Resource, StagedResource, Virtual};
 use hilavitkutin_api::{HasSchedule, WorkUnit};
 
 use crate::dispatch::engine_ctx::{Here, There};
 
+use super::inputs::MorselBudget;
 use super::{AccessMask, PlanInputs};
 
 /// Compile-time ceiling: the skeleton `AccessMask` backs its bits in a
@@ -267,14 +269,19 @@ const fn bytes_of_bits(bits: USize) -> USize {
 impl<T: ColumnValue> StoreElemBytes for Column<T> {
     const BYTES: USize = bytes_of_bits(<T as ColumnValue>::BIT_WIDTH);
 }
-impl<T: ColumnValue> StoreElemBytes for Resource<T> {
-    const BYTES: USize = bytes_of_bits(<T as ColumnValue>::BIT_WIDTH);
+// A resource value's L1-morsel contribution is its Seq/Map collection
+// footprint (canonical R5 via `ResourceFootprint`); Field scalars ride
+// the register budget, so a bare-scalar resource reports 0.
+impl<T: ResourceFootprint> StoreElemBytes for Resource<T> {
+    const BYTES: USize = <T as ResourceFootprint>::L1_BYTES;
 }
-impl<T: ColumnValue> StoreElemBytes for Accum<T> {
-    const BYTES: USize = bytes_of_bits(<T as ColumnValue>::BIT_WIDTH);
+// Accumulator-bearing fibers dispatch unit-outer, off the morsel-window
+// L1 budget entirely.
+impl<T> StoreElemBytes for Accum<T> {
+    const BYTES: USize = USize::ZERO;
 }
-impl<T: ColumnValue> StoreElemBytes for StagedResource<T> {
-    const BYTES: USize = bytes_of_bits(<T as ColumnValue>::BIT_WIDTH);
+impl<T: ResourceFootprint> StoreElemBytes for StagedResource<T> {
+    const BYTES: USize = <T as ResourceFootprint>::L1_BYTES;
 }
 impl<T> StoreElemBytes for Virtual<T> {
     const BYTES: USize = USize::ZERO;
@@ -328,21 +335,26 @@ where
 /// `Wus` is the type-level `WorkUnitBundle`; `Stores` is the global
 /// store `AccessSet` whose member positions are the mask bit indices;
 /// `Witnesses` (inferred) is the parallel per-unit index list.
-/// `record_count` is a runtime input, not a property of the bundle.
-/// `CU` is the unit capacity, `CS` the store capacity.
+/// `record_count` and the morsel `budget` are runtime inputs, not
+/// properties of the bundle. `CU` is the unit capacity, `CS` the store
+/// capacity.
 ///
 /// The plan stage's `compute_execution_plan` consumes the result.
 pub fn plan_inputs_from_bundle<Wus, Stores, Witnesses, CU: Capacity, CS: Capacity>(
     record_count: USize,
+    budget: MorselBudget,
 ) -> PlanInputs<CU, CS>
 where
     Wus: BundleProject<Stores, Witnesses, CU, CS>,
     Stores: AccumStoresMask<CS>,
+    Stores: StoreSizes<CS>,
 {
     let _ = StoreCeiling::<CS>::ASSERT_FITS;
     let mut inputs = PlanInputs::new();
     inputs.record_count = record_count;
     inputs.accum_stores = accum_stores_mask::<Stores, CS>();
+    inputs.morsel_budget = budget;
+    <Stores as StoreSizes<CS>>::fill_sizes(inputs.store_sizes.as_mut(), USize::ZERO);
     <Wus as BundleProject<Stores, Witnesses, CU, CS>>::project_bundle(&mut inputs, USize::ZERO);
     inputs
 }

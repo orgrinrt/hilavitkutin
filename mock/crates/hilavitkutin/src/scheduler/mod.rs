@@ -51,9 +51,9 @@ use arvo::Bool;
 use arvo::USize;
 use arvo_bitmask::{BitAccess, BitLogic, BitSequence};
 use arvo_tensor::{cap_size, Capacity, ConstCapacity};
-use crate::plan::project::{AccumStoresMask, BundleProject, Locate, WitnessIndex};
+use crate::plan::project::{AccumStoresMask, BundleProject, Locate, StoreSizes, WitnessIndex};
 use crate::plan::{
-    compute_execution_plan, plan_inputs_from_bundle, AccessMask, DefaultPlanDims, ExecutionPlan,
+    compute_execution_plan, plan_inputs_from_bundle, AccessMask, DefaultPlanDims, ExecutionPlan, MorselBudget,
     PlanDims,
 };
 use hilavitkutin_api::access::{AccessSet, ContainsAll, Empty};
@@ -331,6 +331,7 @@ impl PlanHandle {
 /// a plan failure allocates nothing.
 fn compute_plan<Wus, Stores, BWit>(
     record_count: USize,
+    budget: MorselBudget,
 ) -> notko::Outcome<ExecutionPlan<DefaultPlanDims>, BuildError>
 where
     Wus: BundleProject<
@@ -340,6 +341,7 @@ where
         <DefaultPlanDims as PlanDims>::Stores,
     >,
     Stores: AccumStoresMask<<DefaultPlanDims as PlanDims>::Stores>,
+    Stores: StoreSizes<<DefaultPlanDims as PlanDims>::Stores>,
 {
     let inputs = plan_inputs_from_bundle::<
         Wus,
@@ -347,7 +349,7 @@ where
         BWit,
         <DefaultPlanDims as PlanDims>::Units,
         <DefaultPlanDims as PlanDims>::Stores,
-    >(record_count);
+    >(record_count, budget);
     // Cycle detection runs first: a dependency cycle has no topological order at
     // all, so it cannot be fixed by reordering registration and stays
     // `PlanFailed`. `compute_execution_plan` succeeding proves the graph acyclic.
@@ -2457,7 +2459,8 @@ where
     Stores: AccessSet
         + ContainsAll<<Wus as WorkUnitBundle>::AccumRead>
         + ContainsAll<<Wus as WorkUnitBundle>::AccumWrite>
-        + AccumStoresMask<<DefaultPlanDims as PlanDims>::Stores>,
+        + AccumStoresMask<<DefaultPlanDims as PlanDims>::Stores>
+        + StoreSizes<<DefaultPlanDims as PlanDims>::Stores>,
     Vals: StoreValues + BindingsFor + DrainStores,
 {
     /// Finalise the builder into a `Scheduler<DefaultRunCfg, Stores, M>`.
@@ -2488,7 +2491,13 @@ where
         let wu_values = self.wu_values;
         // Compute the plan from the registered bundle before draining the
         // store bindings, so a dependency cycle returns without allocating.
-        let plan = match compute_plan::<Wus, Stores, BWit>(record_count) {
+        // The morsel budget comes from the run-config consts (domain 12).
+        let budget = MorselBudget {
+            l1_usable: DefaultRunCfg::L1_USABLE,
+            min_morsel: DefaultRunCfg::MIN_MORSEL,
+            max_morsel: DefaultRunCfg::MAX_MORSEL,
+        };
+        let plan = match compute_plan::<Wus, Stores, BWit>(record_count, budget) {
             notko::Outcome::Ok(p) => p,
             notko::Outcome::Err(e) => return notko::Outcome::Err(e),
         };
@@ -2565,7 +2574,13 @@ where
         let wu_values = self.wu_values;
         // Compute the plan from the registered bundle before draining the
         // store bindings, so a dependency cycle returns without allocating.
-        let plan = match compute_plan::<Wus, Stores, BWit>(record_count) {
+        // The morsel budget comes from the consumer's run-config consts.
+        let budget = MorselBudget {
+            l1_usable: Cfg::L1_USABLE,
+            min_morsel: Cfg::MIN_MORSEL,
+            max_morsel: Cfg::MAX_MORSEL,
+        };
+        let plan = match compute_plan::<Wus, Stores, BWit>(record_count, budget) {
             notko::Outcome::Ok(p) => p,
             notko::Outcome::Err(e) => return notko::Outcome::Err(e),
         };

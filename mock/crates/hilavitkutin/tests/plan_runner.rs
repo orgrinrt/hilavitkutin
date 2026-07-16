@@ -11,8 +11,8 @@
 use arvo::{Bits, Hot, Identity, USize, Unsigned};
 use arvo_tensor::Dim;
 use hilavitkutin::plan::{
-    compute_execution_plan, steps, AccessMask, DependencyGraph, EdgeKind, PhaseConfig, PlanDims,
-    PlanError, PlanInputs,
+    compute_execution_plan, steps, AccessMask, DependencyGraph, EdgeKind, FiberGrouping,
+    PhaseConfig, PlanDims, PlanError, PlanInputs,
 };
 use notko::Outcome;
 
@@ -87,18 +87,39 @@ fn topo_sort_detects_two_node_cycle() {
 }
 
 #[test]
-fn size_morsels_distributes_remainder_across_first_fibers() {
-    // 10 records across 3 fibers => [4, 3, 3]. Verifies the sum
-    // invariant: every record is assigned somewhere. The prior
-    // integer-divide-only shape returned [3, 3, 3] and silently
-    // dropped record index 9.
-    let sizes = steps::compute_fiber_morsel_windows::<TestDims>(USize(10), USize(3)); // lint:allow(no-bare-numeric) reason: smoke fixture; tracked: #427
-    let sizes = sizes.as_ref();
-    assert_eq!(sizes[0], USize(4)); // lint:allow(no-bare-numeric) reason: expected first fiber; tracked: #427
-    assert_eq!(sizes[1], USize(3)); // lint:allow(no-bare-numeric) reason: expected second fiber; tracked: #427
-    assert_eq!(sizes[2], USize(3)); // lint:allow(no-bare-numeric) reason: expected third fiber; tracked: #427
-    let total = sizes[0].0 + sizes[1].0 + sizes[2].0;
-    assert_eq!(total, 10, "sum invariant: every record must be assigned"); // lint:allow(no-bare-numeric) reason: invariant check; tracked: #427
+fn morsel_windows_follow_the_l1_budget_per_fiber() {
+    // A3b: `compute_fiber_morsel_windows` computes the domain-12 window per
+    // fiber from the write-mask union against the per-store sizes, not a
+    // record-count partition. Two fibers: fiber 0's unit writes store 0
+    // (8 bytes), fiber 1's unit writes store 1 (2 bytes). Budget 1024/4/512:
+    // fiber 0 window = (1024 / 8) = 128; fiber 1 = (1024 / 2) = 512 (upper
+    // clamp), both already 4-aligned.
+    use hilavitkutin::plan::MorselBudget;
+    use hilavitkutin_api::FiberId;
+
+    let mut inputs: Inputs = PlanInputs::new();
+    inputs.unit_count = USize(2); // lint:allow(no-bare-numeric) reason: smoke fixture; tracked: #427
+    inputs.record_count = USize(10_000); // lint:allow(no-bare-numeric) reason: smoke fixture; tracked: #427
+    inputs.writes.as_mut()[0] = AccessMask::empty().set(USize(0)); // lint:allow(no-bare-numeric) reason: store bit; tracked: #427
+    inputs.writes.as_mut()[1] = AccessMask::empty().set(USize(1)); // lint:allow(no-bare-numeric) reason: store bit; tracked: #427
+    inputs.store_sizes.as_mut()[0] = USize(8); // lint:allow(no-bare-numeric) reason: fixture store size; tracked: #427
+    inputs.store_sizes.as_mut()[1] = USize(2); // lint:allow(no-bare-numeric) reason: fixture store size; tracked: #427
+    inputs.morsel_budget = MorselBudget {
+        l1_usable: USize(1024), // lint:allow(no-bare-numeric) reason: fixture budget; tracked: #427
+        min_morsel: USize(4),   // lint:allow(no-bare-numeric) reason: fixture budget; tracked: #427
+        max_morsel: USize(512), // lint:allow(no-bare-numeric) reason: fixture budget; tracked: #427
+    };
+    let mut fibers: FiberGrouping<TestDims> = FiberGrouping::new();
+    fibers.fiber_count = USize(2); // lint:allow(no-bare-numeric) reason: smoke fixture; tracked: #427
+    fibers.assignment.as_mut()[0] = FiberId::from_index(USize(0)); // lint:allow(no-bare-numeric) reason: fixture assignment; tracked: #427
+    fibers.assignment.as_mut()[1] = FiberId::from_index(USize(1)); // lint:allow(no-bare-numeric) reason: fixture assignment; tracked: #427
+
+    let windows = steps::compute_fiber_morsel_windows::<TestDims>(&inputs, &fibers);
+    let windows = windows.as_ref();
+    assert_eq!(windows[0], USize(128), "1024 / 8 = 128, inside the clamps"); // lint:allow(no-bare-numeric) reason: expected window; tracked: #427
+    assert_eq!(windows[1], USize(512), "1024 / 2 clamps to max_morsel 512"); // lint:allow(no-bare-numeric) reason: expected window; tracked: #427
+    // Windows are budget-derived: the record count does not shape them.
+    assert!(windows[0].0 < inputs.record_count.0); // lint:allow(no-bare-numeric) reason: window vs records; tracked: #427
 }
 
 #[test]
