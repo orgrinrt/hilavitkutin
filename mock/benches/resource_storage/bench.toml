@@ -1,0 +1,118 @@
+# Six-variant resource-storage-model comparison (round 202606210600).
+#
+# Three bench sections form the mix-in-intensity axis (one single-program
+# workload per section so the harness does not rotate intensities across samples
+# and confound the comparison):
+#
+#   rsb_clean        algo only (no surrounding work)
+#   rsb_light_thrash a little surrounding scalar/branch work
+#   rsb_heavy_thrash L1-evicting heavy-memory passes between morsel-loop calls,
+#                    the regime that turns V0's L1-hot member reload into a real
+#                    cache miss so the snapshot/live difference can surface.
+#
+# Each section sweeps the payload size (bytes = column-record data) across all
+# six variants. Output is the 8-byte FNV-1a checksum, validated byte-exact
+# across variants (MAY_DIFFER=false). Variant dylib paths are bare stems; the
+# orchestrator appends the platform DLL prefix/suffix.
+#
+# Lighter-than-default timing so the full matrix runs in minutes, not hours,
+# while keeping enough samples for tight CIs and the sign test. The harness
+# default is 10 passes x 50000 runs x 3 harness_runs x 3 cooldowns; this trims to
+# a single 0-cooldown cohort with fewer passes/runs (still thousands of timed
+# batches per variant).
+[timing]
+# Per-call work scales with N (the morsel loop is N records), so a few thousand
+# runs already give a tight CI; the default 50000-run budget just re-measures the
+# same parity at great cost. This is a moderate budget (a few minutes for the
+# full matrix) with enough samples for the sign test and a narrow bootstrap CI.
+# The harness dylib-hash cache (.bench_cache/, keyed on cdylib hash + these
+# timing knobs + workload hash) reuses any unchanged variant on re-run, so this
+# budget is paid once; a later unchanged re-run is free, and the baseline (V0)
+# still re-runs each time as the drift anchor.
+passes = 5
+runs_per_pass = 2000
+batch_size = 250
+harness_runs = 3
+cooldowns_ms = [0]
+
+[bench.rsb_clean]
+title = "Resource storage layouts under clean morsel loop (algo only)"
+workload = "rsb_clean"
+master_seed = 0x1234_5678_9ABC_DEF0
+
+[[bench.rsb_clean.sizes]]
+n = 1024
+variants = ["variants/v0_blob/target/release/v0_blob", "variants/v1_snapshot/target/release/v1_snapshot", "variants/v2_decomposed/target/release/v2_decomposed", "variants/v3_shapebound/target/release/v3_shapebound", "variants/v4_erased/target/release/v4_erased", "variants/v5_handletable/target/release/v5_handletable"]
+[[bench.rsb_clean.sizes]]
+n = 16384
+variants = ["variants/v0_blob/target/release/v0_blob", "variants/v1_snapshot/target/release/v1_snapshot", "variants/v2_decomposed/target/release/v2_decomposed", "variants/v3_shapebound/target/release/v3_shapebound", "variants/v4_erased/target/release/v4_erased", "variants/v5_handletable/target/release/v5_handletable"]
+[[bench.rsb_clean.sizes]]
+n = 262144
+variants = ["variants/v0_blob/target/release/v0_blob", "variants/v1_snapshot/target/release/v1_snapshot", "variants/v2_decomposed/target/release/v2_decomposed", "variants/v3_shapebound/target/release/v3_shapebound", "variants/v4_erased/target/release/v4_erased", "variants/v5_handletable/target/release/v5_handletable"]
+
+[bench.rsb_light_thrash]
+title = "Resource storage layouts under light surrounding work"
+workload = "rsb_light_thrash"
+master_seed = 0x1234_5678_9ABC_DEF0
+
+[[bench.rsb_light_thrash.sizes]]
+n = 1024
+variants = ["variants/v0_blob/target/release/v0_blob", "variants/v1_snapshot/target/release/v1_snapshot", "variants/v2_decomposed/target/release/v2_decomposed", "variants/v3_shapebound/target/release/v3_shapebound", "variants/v4_erased/target/release/v4_erased", "variants/v5_handletable/target/release/v5_handletable"]
+[[bench.rsb_light_thrash.sizes]]
+n = 16384
+variants = ["variants/v0_blob/target/release/v0_blob", "variants/v1_snapshot/target/release/v1_snapshot", "variants/v2_decomposed/target/release/v2_decomposed", "variants/v3_shapebound/target/release/v3_shapebound", "variants/v4_erased/target/release/v4_erased", "variants/v5_handletable/target/release/v5_handletable"]
+[[bench.rsb_light_thrash.sizes]]
+n = 262144
+variants = ["variants/v0_blob/target/release/v0_blob", "variants/v1_snapshot/target/release/v1_snapshot", "variants/v2_decomposed/target/release/v2_decomposed", "variants/v3_shapebound/target/release/v3_shapebound", "variants/v4_erased/target/release/v4_erased", "variants/v5_handletable/target/release/v5_handletable"]
+
+[bench.rsb_heavy_thrash]
+title = "Resource storage layouts under L1-evicting heavy-memory mix-in"
+workload = "rsb_heavy_thrash"
+master_seed = 0x1234_5678_9ABC_DEF0
+
+[[bench.rsb_heavy_thrash.sizes]]
+n = 1024
+variants = ["variants/v0_blob/target/release/v0_blob", "variants/v1_snapshot/target/release/v1_snapshot", "variants/v2_decomposed/target/release/v2_decomposed", "variants/v3_shapebound/target/release/v3_shapebound", "variants/v4_erased/target/release/v4_erased", "variants/v5_handletable/target/release/v5_handletable"]
+[[bench.rsb_heavy_thrash.sizes]]
+n = 16384
+variants = ["variants/v0_blob/target/release/v0_blob", "variants/v1_snapshot/target/release/v1_snapshot", "variants/v2_decomposed/target/release/v2_decomposed", "variants/v3_shapebound/target/release/v3_shapebound", "variants/v4_erased/target/release/v4_erased", "variants/v5_handletable/target/release/v5_handletable"]
+[[bench.rsb_heavy_thrash.sizes]]
+n = 262144
+variants = ["variants/v0_blob/target/release/v0_blob", "variants/v1_snapshot/target/release/v1_snapshot", "variants/v2_decomposed/target/release/v2_decomposed", "variants/v3_shapebound/target/release/v3_shapebound", "variants/v4_erased/target/release/v4_erased", "variants/v5_handletable/target/release/v5_handletable"]
+
+# Axis D: Seq collection-member payload. Two variants: live-stream (V0 shape) vs
+# snapshot-copy (V1 shape). N = Seq bytes, swept from L1-resident to 256 MiB.
+# Clean workload (the fold IS the work). live wins decisively once the Seq
+# exceeds cache (the copy becomes pure overhead).
+[bench.rsb_seqd]
+title = "Seq collection member: live-stream vs snapshot-copy across payload size"
+workload = "rsb_seqd"
+master_seed = 0x1234_5678_9ABC_DEF0
+
+[[bench.rsb_seqd.sizes]]
+n = 65536
+variants = ["variants/seq_live/target/release/seq_live", "variants/seq_snapshot/target/release/seq_snapshot"]
+[[bench.rsb_seqd.sizes]]
+n = 1048576
+variants = ["variants/seq_live/target/release/seq_live", "variants/seq_snapshot/target/release/seq_snapshot"]
+[[bench.rsb_seqd.sizes]]
+n = 4194304
+variants = ["variants/seq_live/target/release/seq_live", "variants/seq_snapshot/target/release/seq_snapshot"]
+[[bench.rsb_seqd.sizes]]
+n = 16777216
+variants = ["variants/seq_live/target/release/seq_live", "variants/seq_snapshot/target/release/seq_snapshot"]
+
+[bench.rsb_bwide]
+title = "Intra-resource member gather at M=64: contiguous blob vs scattered columns"
+workload = "rsb_bwide"
+master_seed = 0x1234_5678_9ABC_DEF0
+
+[[bench.rsb_bwide.sizes]]
+n = 256
+variants = ["variants/wide_blob/target/release/wide_blob", "variants/wide_decomposed/target/release/wide_decomposed"]
+[[bench.rsb_bwide.sizes]]
+n = 16384
+variants = ["variants/wide_blob/target/release/wide_blob", "variants/wide_decomposed/target/release/wide_decomposed"]
+[[bench.rsb_bwide.sizes]]
+n = 4194304
+variants = ["variants/wide_blob/target/release/wide_blob", "variants/wide_decomposed/target/release/wide_decomposed"]

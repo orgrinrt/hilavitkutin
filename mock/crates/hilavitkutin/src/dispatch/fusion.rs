@@ -41,7 +41,7 @@ use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_api::work_unit_values::{WuCons, WuNil};
 use hilavitkutin_api::RecordOp;
 
-use crate::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, PtrNil};
+use crate::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 
 /// A single-column read / single-column write access set.
 type One<T> = Cons<Column<T>, Empty>;
@@ -187,7 +187,7 @@ where
         'frame,
         One<<C as OpChain>::In>,
         One<<C as OpChain>::Out>,
-        PtrNil,
+        SnapNil,
         ColPtrCons<<C as OpChain>::In, ColPtrNil>,
         ColPtrCons<<C as OpChain>::Out, ColPtrNil>,
     >;

@@ -24,7 +24,7 @@ use core::mem::MaybeUninit;
 
 use arvo::{Bool, USize};
 use hilavitkutin::dispatch::engine_ctx::{
-    ColPtrCons, ColPtrNil, EngineCtx, PtrNil, VirtCons, VirtNil,
+    ColPtrCons, ColPtrNil, EngineCtx, SnapNil, VirtCons, VirtNil,
 };
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
@@ -112,7 +112,7 @@ impl WorkUnit<Always> for Producer {
         'frame,
         Empty,
         WTick,
-        PtrNil,
+        SnapNil,
         ColPtrNil,
         ColPtrCons<Gate, ColPtrNil>,
         hilavitkutin::dispatch::engine_ctx::AccPtrNil,
@@ -152,7 +152,7 @@ macro_rules! consumer {
                 'frame,
                 ColGate,
                 Cons<Column<$ran>, Empty>,
-                PtrNil,
+                SnapNil,
                 ColPtrCons<Gate, ColPtrNil>,
                 ColPtrCons<$ran, ColPtrNil>,
             >;

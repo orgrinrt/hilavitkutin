@@ -27,7 +27,7 @@ use hilavitkutin::OsThreadPool;
 use hilavitkutin_api::platform::ThreadPoolApi;
 
 use arvo::{Bool, USize};
-use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, PtrNil};
+use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
@@ -117,7 +117,7 @@ impl WorkUnit<Always> for ProducerA {
         hilavitkutin_api::hint::Normal,
     );
     type Ctx<'frame> =
-        EngineCtx<'frame, OneIn, ColA, PtrNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<Av, ColPtrNil>>;
+        EngineCtx<'frame, OneIn, ColA, SnapNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<Av, ColPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: In host-populated for N records; Av reserved + exclusive;
@@ -143,7 +143,7 @@ impl WorkUnit<Always> for ProducerB {
         hilavitkutin_api::hint::Normal,
     );
     type Ctx<'frame> =
-        EngineCtx<'frame, OneIn, ColB, PtrNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<Bv, ColPtrNil>>;
+        EngineCtx<'frame, OneIn, ColB, SnapNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<Bv, ColPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: as ProducerA, for Bv.
@@ -171,7 +171,7 @@ impl WorkUnit<Always> for Combiner {
         'frame,
         ReadAB,
         ColZ,
-        PtrNil,
+        SnapNil,
         ColPtrCons<Av, ColPtrCons<Bv, ColPtrNil>>,
         ColPtrCons<Zv, ColPtrNil>,
     >;
@@ -350,7 +350,7 @@ impl WorkUnit<Always> for P1 {
         'frame,
         OneIn,
         ColP1,
-        PtrNil,
+        SnapNil,
         ColPtrCons<Inv, ColPtrNil>,
         ColPtrCons<P1v, ColPtrNil>,
     >;
@@ -376,7 +376,7 @@ impl WorkUnit<Always> for P2 {
         'frame,
         OneIn,
         ColP2,
-        PtrNil,
+        SnapNil,
         ColPtrCons<Inv, ColPtrNil>,
         ColPtrCons<P2v, ColPtrNil>,
     >;
@@ -402,7 +402,7 @@ impl WorkUnit<Always> for Mid {
         'frame,
         ReadP,
         ColMw,
-        PtrNil,
+        SnapNil,
         ColPtrCons<P1v, ColPtrCons<P2v, ColPtrNil>>,
         ColPtrCons<Mv, ColPtrNil>,
     >;
@@ -430,7 +430,7 @@ impl WorkUnit<Always> for Q1 {
         'frame,
         ColMr,
         ColQ1,
-        PtrNil,
+        SnapNil,
         ColPtrCons<Mv, ColPtrNil>,
         ColPtrCons<Q1v, ColPtrNil>,
     >;
@@ -456,7 +456,7 @@ impl WorkUnit<Always> for Q2 {
         'frame,
         ColMr,
         ColQ2,
-        PtrNil,
+        SnapNil,
         ColPtrCons<Mv, ColPtrNil>,
         ColPtrCons<Q2v, ColPtrNil>,
     >;
@@ -482,7 +482,7 @@ impl WorkUnit<Always> for Sink {
         'frame,
         ReadQ,
         ColS,
-        PtrNil,
+        SnapNil,
         ColPtrCons<Q1v, ColPtrCons<Q2v, ColPtrNil>>,
         ColPtrCons<Sv, ColPtrNil>,
     >;
@@ -527,7 +527,7 @@ impl WorkUnit<Always> for ProducerC {
     type Write = ColC;
     type Hint = HintT;
     type Ctx<'frame> =
-        EngineCtx<'frame, OneIn, ColC, PtrNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<Cv, ColPtrNil>>;
+        EngineCtx<'frame, OneIn, ColC, SnapNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<Cv, ColPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: In host-populated; Cv reserved + exclusive; windowed.
@@ -551,7 +551,7 @@ impl WorkUnit<Always> for Combiner3 {
         'frame,
         ReadABC,
         ColW,
-        PtrNil,
+        SnapNil,
         ColPtrCons<Av, ColPtrCons<Bv, ColPtrCons<Cv, ColPtrNil>>>,
         ColPtrCons<Wv, ColPtrNil>,
     >;

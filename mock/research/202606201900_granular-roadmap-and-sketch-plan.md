@@ -107,3 +107,115 @@ A1 (done) -> A2a sketch -> A2b -> A3 -> A4 -> G2C-1 sketch -> G2C-2 -> G2C-3 ske
 -> G2C-4 -> B1a -> B1b -> B2 sketch -> B3a -> B3b -> C1 sketch -> C2 -> C3 ->
 D-act-1 -> D-act-2 -> remaining D axes -> E consumer surfaces -> F/G/H. The
 ASM-emission contract fixtures land with each typestate slice throughout.
+
+## Status and resolutions (2026-07-02 canon-alignment pass)
+
+Read-only mirror of this roadmap against the consolidation spec plus the source
+state landed since 2026-06-20. No canon conflict found in the sequence or the
+phase framings. Statuses, solved questions, and detail fill-ins below; the
+sequence above stands.
+
+### Landed since this roadmap was written
+
+- **A2a DONE.** Sketch shipped (PR #157, WORKS-by-derivation) and the proven
+  shape landed as source: `Scheduler::run_one_trunk_windowed`
+  (`scheduler/mod.rs:1494`, commit `aaa6097a`), with the two sketch refinements
+  (direct per-fiber entry; `fiber_mask` composed with dirty-skip). **A2b remains**:
+  no caller inside `run` yet; the loop inversion (fiber-outer/morsel-inner keyed
+  by `FiberDispatch.morsel_size`), the `fiber_mask` wiring, and the first
+  per-fiber ASM fixture are the open slice.
+- **A3 substrate DONE, formula wiring unblocked.** A3 sketch (PR #159 WORKS), A3a
+  `StoreElemBytes`/`StoreSizes`/`store_sizes` (commit `9e80d835`), the A3
+  re-chart onto the canonical R5 resource model (commit `272dee96`), and the
+  collection-footprint substrate `CollectionBytes`/`ResourceFootprint` +
+  `#[derive(ResourceFootprint)]` (#163/#164, merged) are all in. **A3b (the L1
+  formula + the step reorder) is now unblocked**: the storage bench (both runs)
+  decided the layout is a one-record blob, so the Resource contribution to
+  per-fiber write bytes is the blob stride plus the `CollectionBytes` term for
+  collection members, over blob strides (NOT a decomposed per-member column set).
+  This is unaffected by the hybrid addressing choice, since the erased static-shape
+  descriptor changes value addressing, not the per-store size fold.
+- **Inserted arc: resource-storage drift-fix (round 202606210600), layout DECIDED.**
+  Not in this roadmap's original scope (the round opened after it). The
+  pressure-test + six-variant bench (both runs, 2026-07-02) decided the
+  `Resource<T>` value layout: a one-record blob with a scalar stack-snapshot
+  before the morsel loop and live-streamed (never snapshot-copied) `Seq`/`Map`
+  members, plus the noalias provenance invariant. Decomposed (V2) and shape-bound
+  (V3) layouts are rejected (lose axes B/C/E). The drift-fix is additive on the
+  shipped `DrainStores` blob (add the snapshot + live-stream + erased static-shape
+  addressing), not a rewrite, and lands before or with A3b. **The fork is CLOSED:
+  op picked the hybrid (global-capable) on 2026-07-02**, so value access routes
+  through an erased static-shape descriptor (parity in-process per the bench, buys
+  plugin/wasm resource crossing) uniformly for every resource. See
+  `mock/research/202606210600_storage-bench-findings.md` (run-2 confirmation
+  section) and `mock/design_rounds/202606210600_topic.hybrid-decision.md`.
+
+### Open questions solved (no sketch needed, resolved from canon + source)
+
+- **B1a SOLVED.** The DP cost is neither the step-6 Laplacian nor a per-fiber
+  weight. Spec Step 8 states it outright:
+  `cost(i,j) = record_count x sum of size_of::<T_k>() over the union columns of
+  ops i..j`, using type-native strides (R3) and the co-located arena model; the
+  cost IS the memory bandwidth of one data walk through the candidate fiber's
+  arena. Feasibility = the full domain-14 holistic check (register file, L1
+  write budget, L1+L2 total, no fan-in, no pipeline breaker). Greedy mode for
+  <=10 ops, DP for >10. The Laplacian edge weight (sum of shared-column bytes
+  between two FIBERS) belongs to step-7 spectral trunk formation, whose nodes
+  are fibers, and which runs AFTER fiber grouping. Canon subtlety worth pinning:
+  the spec says step 8 runs before step 7 despite the numbering ("After fiber
+  grouping (step 8, which runs first...)"); a number-order reading inverts it.
+- **B3a SOLVED.** `arvo-sparse` already ships the Dulmage-Mendelsohn surface:
+  `DulmageMendelsohn<C: Capacity>`, `dulmage_mendelsohn`,
+  `dulmage_mendelsohn_via`, `classification_to_mask` (`arvo-sparse/src/dm.rs`),
+  Capacity-parameterized to match the post-#652 PlanDims shape. No cross-repo PR.
+  B3b reduces to pure integration + dead-column elimination.
+- **B1b substrate confirmed.** `arvo-comb` ships
+  `matrix_chain_dp<N: Capacity, W>(cost: impl Fn(USize, USize) -> W, feasible:
+  impl Pred2<USize, USize>) -> (W, Array<USize, N>)` plus `greedy_group`.
+  Integration = supply the spec cost closure from A3a's `store_sizes` + the
+  access masks; both DP and greedy modes have their substrate.
+
+### Detail fill-ins for the pending sketches (narrowing scope, from canon + source)
+
+- **G2C-1 (head+tail const-selection).** The selector input already exists as a
+  compile-time constant: `COMMUTATIVE: Bool` on the WU contract
+  (`hilavitkutin-api/src/work_unit.rs:84`), threaded into `PlanInputs`
+  (`plan/project.rs:154`), and `plan/fiber.rs:150` already computes head+tail
+  ELIGIBILITY (commutative + single-trunk + spec conditions). So the sketch
+  narrows to: prove the third dispatch mode folds through the const-grouping
+  carrier walk with no per-record runtime branch. The commutative resource
+  accumulation merge can reuse the shipped unit-outer per-core accum region +
+  merge path (#683); canon (domain-08) skips head+tail for non-commutative
+  accumulation, which the eligibility already encodes.
+- **G2C-3 (phase-overlap ordering).** The substrate is fully shipped:
+  `ProgressCounter` (Release/Acquire, `#[repr(transparent)]` over `AtomicUsize`,
+  `dispatch/progress.rs`), the arena-indirection codegen shape proven WORKS
+  (sketch `202605101036-progress-counter-arena`), the S3 store-store fence
+  invariant (`dispatch/sync.rs::emit_progress_release_fence`), and
+  `PoolFrame.progress_slots` (`hilavitkutin-api/src/platform.rs:236`) with the
+  codegen slot index (`dispatch_codegen.rs:251`). Canon protocol (spec ~772,
+  1326, 1478): phase N+1 starts when N publishes one morsel; counters provide
+  implicit flow control (N+1 cannot outrun N); total ~= max(phases) + fill
+  latency. The sketch narrows to the one unproven composition: a downstream
+  Acquire on an upstream-published counter combined with the `waist_barrier`
+  Release fence, without a per-morsel full barrier.
+- **B2 (spectral labels -> FiberGrouping).** The hazard is now named precisely.
+  `Trunk` is `{id, fiber_offset, fiber_count}` (`plan/trunk.rs:168`): a
+  CONTIGUOUS range over the fiber pool. `arvo-spectral::k_way_partition`
+  produces arbitrary per-fiber cluster labels, not contiguous ranges. So the
+  projection must renumber fibers so each trunk's fibers are contiguous, AND
+  apply the same permutation to `FiberGrouping.assignment` (`plan/fiber.rs:23`,
+  the per-unit FiberId array); missing the second half is exactly the "silently
+  changes grouping semantics" failure. The B2 sketch proves the
+  label-to-contiguous-renumber projection keeps both views consistent.
+- **C phase (RCM-row dispatch).** Aligned with canon by prior resolution (the
+  RCM Step 5/Step 8 reading is canonicalized workspace-wide in
+  `canonical-design-outranks-intermediate-rounds.md`). C1 sketch still required
+  as specced (exact leeway).
+
+### Sketch queue unchanged
+
+A2b is implementation (its sketch was A2a). Remaining compile-bearing sketches
+in order: G2C-1, G2C-3, C1, B2, plus the A3 reorder proof folded into A3b once
+the storage decision lands. Each lands with its ASM-emission fixture per the
+cross-cutting discipline above.

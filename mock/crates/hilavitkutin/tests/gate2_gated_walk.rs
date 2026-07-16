@@ -22,7 +22,7 @@ use core::mem::MaybeUninit;
 use std::cell::RefCell;
 
 use arvo::{Bool, USize};
-use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, PtrNil};
+use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
@@ -98,7 +98,7 @@ impl WorkUnit<Always> for WuA {
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, Empty, ColA, PtrNil, ColPtrNil, ColPtrCons<Av, ColPtrNil>>;
+    type Ctx<'frame> = EngineCtx<'frame, Empty, ColA, SnapNil, ColPtrNil, ColPtrCons<Av, ColPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             unsafe { ctx.writer().write::<Av, _>(i, Av(i.0 as u32 * 10)) };
@@ -121,7 +121,7 @@ impl WorkUnit<Always> for WuB {
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, Empty, ColB, PtrNil, ColPtrNil, ColPtrCons<Bv, ColPtrNil>>;
+    type Ctx<'frame> = EngineCtx<'frame, Empty, ColB, SnapNil, ColPtrNil, ColPtrCons<Bv, ColPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             unsafe { ctx.writer().write::<Bv, _>(i, Bv(i.0 as u32 * 100)) };

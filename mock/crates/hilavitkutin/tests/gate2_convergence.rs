@@ -15,7 +15,7 @@ use core::mem::MaybeUninit;
 
 use arvo::{Bool, USize};
 use hilavitkutin::OsThreadPool;
-use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, PtrNil};
+use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
@@ -91,7 +91,7 @@ impl WorkUnit<Always> for Filler {
         'frame,
         ColIn,
         ColF,
-        PtrNil,
+        SnapNil,
         ColPtrCons<Inv, ColPtrNil>,
         ColPtrCons<Fv, ColPtrNil>,
     >;

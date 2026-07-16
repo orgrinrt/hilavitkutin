@@ -25,7 +25,7 @@ use core::mem::MaybeUninit;
 use std::cell::RefCell;
 
 use arvo::{Bool, USize};
-use hilavitkutin::dispatch::engine_ctx::{ColPtrNil, EngineCtx, PtrCons, PtrNil};
+use hilavitkutin::dispatch::engine_ctx::{ColPtrNil, EngineCtx, SnapCons, SnapNil};
 use hilavitkutin::plan::UnitMeta;
 use hilavitkutin::scheduler::{BuildError, Scheduler};
 use hilavitkutin_api::ColumnStorage;
@@ -110,7 +110,7 @@ impl WorkUnit<Always> for ReadAWu {
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, ReadA, Empty, PtrCons<Ra, PtrNil>, ColPtrNil, ColPtrNil>;
+    type Ctx<'frame> = EngineCtx<'frame, ReadA, Empty, SnapCons<Ra, SnapNil>, ColPtrNil, ColPtrNil>;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         let v: &Ra = ctx.resources().resource();
@@ -133,7 +133,7 @@ impl WorkUnit<Always> for ReadBWu {
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, ReadB, Empty, PtrCons<Rb, PtrNil>, ColPtrNil, ColPtrNil>;
+    type Ctx<'frame> = EngineCtx<'frame, ReadB, Empty, SnapCons<Rb, SnapNil>, ColPtrNil, ColPtrNil>;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         let v: &Rb = ctx.resources().resource();
@@ -191,7 +191,7 @@ fn run_walks_single_registered_unit() {
 
 // Writer over Ra: declares `Write = {Resource<Ra>}` so the plan adds a RAW
 // edge to any later reader of Ra. Read is empty, so its read bundle is
-// `PtrNil`; its execute records a sentinel marker. Resource-write-pointer
+// `SnapNil`; its execute records a sentinel marker. Resource-write-pointer
 // projection is a later slice, so the write declaration exists only for the
 // dependency edge, not to actually write Ra.
 type WriteA = Cons<Resource<Ra>, Empty>;
@@ -215,7 +215,7 @@ impl WorkUnit<Always> for WriteAWu {
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, Empty, WriteA, PtrNil, ColPtrNil, ColPtrNil>;
+    type Ctx<'frame> = EngineCtx<'frame, Empty, WriteA, SnapNil, ColPtrNil, ColPtrNil>;
 
     fn execute<'frame>(&self, _ctx: &Self::Ctx<'frame>) {
         OBSERVED.with(|o| o.borrow_mut().push(WRITER_MARKER));
@@ -275,7 +275,7 @@ impl WorkUnit<Always> for CycleAWu {
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, ReadA, ReadB, PtrCons<Ra, PtrNil>, ColPtrNil, ColPtrNil>;
+    type Ctx<'frame> = EngineCtx<'frame, ReadA, ReadB, SnapCons<Ra, SnapNil>, ColPtrNil, ColPtrNil>;
 
     fn execute<'frame>(&self, _ctx: &Self::Ctx<'frame>) {}
 }
@@ -295,7 +295,7 @@ impl WorkUnit<Always> for CycleBWu {
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, ReadB, ReadA, PtrCons<Rb, PtrNil>, ColPtrNil, ColPtrNil>;
+    type Ctx<'frame> = EngineCtx<'frame, ReadB, ReadA, SnapCons<Rb, SnapNil>, ColPtrNil, ColPtrNil>;
 
     fn execute<'frame>(&self, _ctx: &Self::Ctx<'frame>) {}
 }

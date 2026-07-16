@@ -28,7 +28,7 @@ use core::sync::atomic::{AtomicU64, Ordering};
 
 use arvo::{Bool, USize};
 use hilavitkutin::dispatch::engine_ctx::{
-    AccPtrCons, AccPtrNil, ColPtrCons, ColPtrNil, EngineCtx, PtrNil,
+    AccPtrCons, AccPtrNil, ColPtrCons, ColPtrNil, EngineCtx, SnapNil,
 };
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin::OsThreadPool;
@@ -136,7 +136,7 @@ impl WorkUnit<Always> for ProducerA {
     type Write = ColA;
     type Hint = HintT;
     type Ctx<'frame> =
-        EngineCtx<'frame, OneIn, ColA, PtrNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<Av, ColPtrNil>>;
+        EngineCtx<'frame, OneIn, ColA, SnapNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<Av, ColPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: In host-populated for N records; Av reserved + exclusive; windowed.
@@ -156,7 +156,7 @@ impl WorkUnit<Always> for ProducerB {
     type Write = ColB;
     type Hint = HintT;
     type Ctx<'frame> =
-        EngineCtx<'frame, OneIn, ColB, PtrNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<Bv, ColPtrNil>>;
+        EngineCtx<'frame, OneIn, ColB, SnapNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<Bv, ColPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: as ProducerA, for Bv.
@@ -179,7 +179,7 @@ impl WorkUnit<Always> for Combiner {
         'frame,
         ReadAB,
         ColZ,
-        PtrNil,
+        SnapNil,
         ColPtrCons<Av, ColPtrCons<Bv, ColPtrNil>>,
         ColPtrCons<Zv, ColPtrNil>,
     >;
@@ -233,7 +233,7 @@ impl WorkUnit<Always> for P1 {
     type Write = ColP1;
     type Hint = HintT;
     type Ctx<'frame> =
-        EngineCtx<'frame, OneIn, ColP1, PtrNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<P1v, ColPtrNil>>;
+        EngineCtx<'frame, OneIn, ColP1, SnapNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<P1v, ColPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: In host-populated; P1v reserved + exclusive; windowed.
@@ -253,7 +253,7 @@ impl WorkUnit<Always> for P2 {
     type Write = ColP2;
     type Hint = HintT;
     type Ctx<'frame> =
-        EngineCtx<'frame, OneIn, ColP2, PtrNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<P2v, ColPtrNil>>;
+        EngineCtx<'frame, OneIn, ColP2, SnapNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<P2v, ColPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: as P1, for P2v.
@@ -276,7 +276,7 @@ impl WorkUnit<Always> for Mid {
         'frame,
         ReadP,
         ColMr,
-        PtrNil,
+        SnapNil,
         ColPtrCons<P1v, ColPtrCons<P2v, ColPtrNil>>,
         ColPtrCons<Mv, ColPtrNil>,
     >;
@@ -300,7 +300,7 @@ impl WorkUnit<Always> for Q1 {
     type Write = ColQ1;
     type Hint = HintT;
     type Ctx<'frame> =
-        EngineCtx<'frame, ColMr, ColQ1, PtrNil, ColPtrCons<Mv, ColPtrNil>, ColPtrCons<Q1v, ColPtrNil>>;
+        EngineCtx<'frame, ColMr, ColQ1, SnapNil, ColPtrCons<Mv, ColPtrNil>, ColPtrCons<Q1v, ColPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: Mid ran in the prior phase (RAW on Mv); Q1v reserved + exclusive.
@@ -320,7 +320,7 @@ impl WorkUnit<Always> for Q2 {
     type Write = ColQ2;
     type Hint = HintT;
     type Ctx<'frame> =
-        EngineCtx<'frame, ColMr, ColQ2, PtrNil, ColPtrCons<Mv, ColPtrNil>, ColPtrCons<Q2v, ColPtrNil>>;
+        EngineCtx<'frame, ColMr, ColQ2, SnapNil, ColPtrCons<Mv, ColPtrNil>, ColPtrCons<Q2v, ColPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: as Q1, doubling Mv into the disjoint Q2v column.
@@ -343,7 +343,7 @@ impl WorkUnit<Always> for Sink {
         'frame,
         ReadQ,
         ColS,
-        PtrNil,
+        SnapNil,
         ColPtrCons<Q1v, ColPtrCons<Q2v, ColPtrNil>>,
         ColPtrCons<Sv, ColPtrNil>,
     >;
@@ -453,7 +453,7 @@ impl WorkUnit<Always> for AccumWu {
     type Write = AccW;
     type Hint = HintT;
     type Ctx<'frame> =
-        EngineCtx<'frame, Empty, AccW, PtrNil, ColPtrNil, ColPtrNil, AccPtrCons<'frame, Mark, AccPtrNil>>;
+        EngineCtx<'frame, Empty, AccW, SnapNil, ColPtrNil, ColPtrNil, AccPtrCons<'frame, Mark, AccPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         // SAFETY: Mark reserved (RECORDS) with headroom over this frame's appends.
         unsafe { ctx.accums().append::<Mark, _>(Mark(7)) };

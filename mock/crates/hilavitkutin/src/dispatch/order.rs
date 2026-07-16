@@ -291,7 +291,7 @@ where
 mod tests {
     use super::*;
     use arvo_tensor::Dim;
-    use crate::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, PtrNil};
+    use crate::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
     use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
     use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
     use hilavitkutin_api::store::Column;
@@ -401,7 +401,7 @@ mod tests {
             'frame,
             One<Inv>,
             One<Av>,
-            PtrNil,
+            SnapNil,
             ColPtrCons<Inv, ColPtrNil>,
             ColPtrCons<Av, ColPtrNil>,
         >;
@@ -421,7 +421,7 @@ mod tests {
             'frame,
             One<Av>,
             One<Bv>,
-            PtrNil,
+            SnapNil,
             ColPtrCons<Av, ColPtrNil>,
             ColPtrCons<Bv, ColPtrNil>,
         >;

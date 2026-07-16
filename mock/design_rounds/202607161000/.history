@@ -1,0 +1,50 @@
+eb1b2ce2 chore: lock src changelist for storage-model round
+68e4194e feat: erased static-shape resource addressing + by-value ctx snapshot
+69aadc89 docs: open src changelist for erased addressing + resource snapshot
+32863ddf chore: lock doc changelist for storage-model round
+82cd8a0d docs: fold bench-settled storage model + hybrid addressing into design
+3f173515 docs: op picks the hybrid, global-capable erased addressing; storage layout settled
+b9ee83be docs: run-2 confirms storage bench, resolve layout to blob+snapshot+live-collections
+a2410c71 docs: roadmap canon-alignment pass, solve B1a and B3a, archive run-1
+677b60f8 docs: V1-vs-V4 tiebreak rule for run-2 judgment
+eb8ae5d9 bench: per-arm harness stats (meta.json + findings) for run-1
+ef599ed0 docs: V4 erased-shape plugin/dynamic-loadability axis the bench omitted
+b0573616 docs: persist run-1 bench decision (round topic + research findings)
+59f36f5a bench: full run-1 CSVs for six-variant resource-storage comparison
+9d530d12 docs: mark storage-bench findings provisional pending full harness runs
+a97c9bed docs: six-variant resource-storage bench + findings (V1 blob+snapshot wins)
+f8cdcf05 docs: record op decisions on the storage-model bench (all six, hold impl, engine benches)
+57d23abe docs: synthesis of resource storage-model pressure-test + bench plan
+4b6d0e05 docs: loimu storage-engine heritage deliverable for the pressure-test
+308039cc docs: architect expert deliverable for resource storage-model pressure-test
+f635a769 docs: expert deliverables (perf, alternatives) for resource storage-model pressure-test
+17235774 docs: main-agent analysis for resource storage-model pressure-test
+55282670 docs: round 202606210600 topics + resource storage-model canonical addendum
+82673e9e feat: add hilavitkutin-api-macros crate with ResourceFootprint derive
+009f76fc feat: add CollectionBytes + ResourceFootprint footprint traits
+2b65194c docs: sketch A3-2 resource-collection footprint surface
+272dee96 docs: re-chart A3 morsel formula on the canonical R5 resource model
+9e80d835 feat: add per-store element-byte-size collection for L1 morsel formula
+2e799053 docs: sketch A3 per-store size collection for L1 morsel formula
+aaa6097a feat: add run_one_trunk_windowed for fiber-outer morsel dispatch
+906949f1 docs: sketch A2a per-fiber morsel loop drives per-trunk dispatch
+90c7529c docs: backlog note for generalized asm-emission contract tests
+06e68715 docs: granular roadmap, sketch plan, asm-contract-test discipline
+abe3a4e6 feat: thread per-fiber morsel size onto FiberDispatch
+7fe3f203 docs: resolve arc-audit roadmap (head+tail/overlap in scope, internals-first)
+9901b875 docs: critical arc audit and updated canonical roadmap
+1796fe39 refactor: rename morsel_sizes to morsel_windows for per-fiber morsel slice 1
+e1b243aa docs: per-fiber morsel-loop wiring blueprint
+5dfcc4fb docs: chart adapt actuation arc (dead consumption surfaces)
+6d034dae feat: select_adapt_config phase-imbalance reconfigure trigger
+de04dc48 feat: per-phase duration EMA + catalogue adapt performance contracts
+86e24062 feat: core-idle adapt axis via waist-barrier follower timing
+2553d4df feat: change_seen_count on all run paths, accumulator over-capacity is a hard error
+cc89cdee feat: count change_class frames via store_dirty into SchedulerMetrics
+b3ce8a5a chore: allow private_bounds on sealed Executor trait
+c3b6bd8b chore: remove unused impl_trait_in_assoc_type gate from hilavitkutin-api
+17189200 feat: sample throughput record count into SchedulerMetrics
+03ef6c8a test: P1 R2a keystone nine-resource CtxFor Ctx through OnMeta
+e1e15a30 docs: chart-the-path P1 adapt granularity + sketch plan
+643dffb1 docs: chart-the-path P1 adapt roadmap draft + canonical mirror
+dee64fc1 docs: chart-the-path P1 adapt+E8 comprehension map

@@ -64,32 +64,37 @@ pub struct Here;
 pub struct There<I>(PhantomData<I>);
 
 // ---------------------------------------------------------------------
-// Projected pointer bundles.
+// Projected bundles.
 //
-// `PtrCons` / `PtrNil` carry the projected `ResourcePtr<T>` for the
-// resource members of `R`. `ColPtrCons` / `ColPtrNil` carry the
-// projected `ColumnPtr<T>` for the column members of `R` union `W`.
-// Two distinct cons-list shapes keep resource and column provenance
+// `SnapCons` / `SnapNil` carry the projected resource VALUES for the
+// resource members of `R`: the projection copies each value out of the
+// canonical blob (through the binding's backcast pointer) into the
+// Context itself. The Context lives on the dispatch stack frame, so
+// the value bundle IS the domain-19 stack-local snapshot; `resource()`
+// borrows it at stack provenance and the morsel hot loop touches no
+// resource memory. `ColPtrCons` / `ColPtrNil` carry the projected
+// `ColumnPtr<T>` for the column members of `R` union `W`. The distinct
+// shapes keep the snapshot (stack) and column (heap) provenance
 // classes separate.
 // ---------------------------------------------------------------------
 
-/// Empty resource pointer bundle (tail leaf).
-pub struct PtrNil;
+/// Empty resource snapshot bundle (tail leaf).
+pub struct SnapNil;
 
-/// One projected resource pointer `head` of type `ResourcePtr<H>`,
-/// followed by the rest, `tail`.
-pub struct PtrCons<H, Tail> {
-    pub(crate) head: ResourcePtr<H>,
+/// One snapshot resource value `head` of type `H`, followed by the
+/// rest, `tail`.
+pub struct SnapCons<H, Tail> {
+    pub(crate) head: H,
     pub(crate) tail: Tail,
 }
 
-impl<H, Tail> PtrCons<H, Tail> {
-    /// Construct a resource bundle node. Hidden test accessor: the
-    /// run-loop builds the resource bundle via `project_reads`; tests may
+impl<H, Tail> SnapCons<H, Tail> {
+    /// Construct a snapshot bundle node. Hidden test accessor: the
+    /// run-loop builds the resource bundle via the projection; tests may
     /// build it by hand. Not part of the supported surface.
     #[doc(hidden)]
     #[inline]
-    pub fn __new(head: ResourcePtr<H>, tail: Tail) -> Self {
+    pub fn __new(head: H, tail: Tail) -> Self {
         Self { head, tail }
     }
 }
@@ -128,7 +133,7 @@ impl<H, Tail> ColPtrCons<H, Tail> {
 //
 // `AccPtrNil` / `AccPtrCons` carry the projected `AccumColPtr<'frame, T>` for
 // the accumulator members of `W`, a distinct cons-list shape from the resource
-// (`PtrCons`) and column (`ColPtrCons`) bundles.
+// (`SnapCons`) and column (`ColPtrCons`) bundles.
 // ---------------------------------------------------------------------
 
 /// Projected accumulator handle: capacity base, borrowed live-length cell, and
@@ -467,21 +472,33 @@ where
     }
 }
 
-// Over the projected resource bundle (`PtrCons` / `PtrNil`).
+// ---------------------------------------------------------------------
+// Snapshot selector: type-keyed lookup over the projected value bundle
+// (`SnapCons` / `SnapNil`). Distinct from `Selector` (which yields the
+// canonical `ResourcePtr<T>` off the bindings and feeds the projection):
+// this one borrows the snapshot value the projection copied into the
+// Context, so `resource()` reads at stack provenance with no unsafe.
+// ---------------------------------------------------------------------
 
-impl<T, Tail> Selector<T, Here> for PtrCons<T, Tail> {
+/// Type-keyed lookup yielding `&T` from the snapshot bundle.
+pub trait SnapSelector<T, Index> {
+    /// The snapshot value for `T`.
+    fn get(&self) -> &T;
+}
+
+impl<T, Tail> SnapSelector<T, Here> for SnapCons<T, Tail> {
     #[inline(always)]
-    fn get(&self) -> ResourcePtr<T> {
-        self.head
+    fn get(&self) -> &T {
+        &self.head
     }
 }
 
-impl<T, U, Tail, I> Selector<T, There<I>> for PtrCons<U, Tail>
+impl<T, U, Tail, I> SnapSelector<T, There<I>> for SnapCons<U, Tail>
 where
-    Tail: Selector<T, I>,
+    Tail: SnapSelector<T, I>,
 {
     #[inline(always)]
-    fn get(&self) -> ResourcePtr<T> {
+    fn get(&self) -> &T {
         self.tail.get()
     }
 }
@@ -673,36 +690,52 @@ where
 // ---------------------------------------------------------------------
 
 /// Project the `Resource<T>` members of `R` out of a source `A` into a
-/// resource pointer bundle.
+/// by-value snapshot bundle.
 pub trait Project<R, Indices> {
-    /// The projected resource bundle.
+    /// The projected snapshot bundle.
     type Out;
 
-    /// Build the projected bundle by pulling each resource pointer.
+    /// Build the snapshot bundle by copying each resource value out of
+    /// the canonical blob (the domain-19 stack-local caching: the bundle
+    /// lands inside the Context, on the dispatch stack frame).
     fn project(&self) -> Self::Out;
 }
 
 impl<A> Project<Empty, Empty> for A {
-    type Out = PtrNil;
+    type Out = SnapNil;
 
     #[inline(always)]
-    fn project(&self) -> PtrNil {
-        PtrNil
+    fn project(&self) -> SnapNil {
+        SnapNil
     }
 }
 
-// Resource head: pull the pointer, recurse on the tail.
-impl<A, T, I, RTail, ITail> Project<Cons<Resource<T>, RTail>, Cons<I, ITail>> for A
+// Resource head: snapshot the value through the binding's backcast
+// pointer, recurse on the tail. `T: ColumnValue` (`Copy`), so the copy
+// duplicates a plain value; for a collection-bearing value the copy
+// carries the member's pointer-plus-length view only, elements stay in
+// their own column (live-streamed).
+// FIXME: Seq/Map collection members are not yet wired into resource values; the
+//        live-stream accessor over the snapshot's ptr+len view lands with that
+//        wiring (tracked #344; catalogued test in tests/resource_snapshot.rs).
+// FIXME: resources are read-only through the Context; when a mutable resource
+//        surface ships, the dispatcher writes mutated snapshots back to
+//        canonical storage after the morsel loop (domain 19 write-back half).
+impl<A, T: ColumnValue, I, RTail, ITail> Project<Cons<Resource<T>, RTail>, Cons<I, ITail>> for A
 where
     A: Selector<T, I>,
     A: Project<RTail, ITail>,
 {
-    type Out = PtrCons<T, <A as Project<RTail, ITail>>::Out>;
+    type Out = SnapCons<T, <A as Project<RTail, ITail>>::Out>;
 
     #[inline(always)]
     fn project(&self) -> Self::Out {
-        PtrCons {
-            head: <A as Selector<T, I>>::get(self),
+        let ptr = <A as Selector<T, I>>::get(self);
+        SnapCons {
+            // SAFETY: the selector yielded the binding's backcast pointer
+            // for `T`: non-null, aligned, initialised at drain, valid for
+            // the bindings' lifetime, which contains this projection.
+            head: unsafe { core::ptr::read(ptr.as_ptr()) },
             tail: <A as Project<RTail, ITail>>::project(self),
         }
     }
@@ -1141,7 +1174,7 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, M
     /// cannot be mismatched.
     ///
     /// ```compile_fail
-    /// use hilavitkutin::dispatch::engine_ctx::{EngineCtx, PtrNil, ColPtrNil};
+    /// use hilavitkutin::dispatch::engine_ctx::{EngineCtx, SnapNil, ColPtrNil};
     /// use hilavitkutin::meta::MetaBlock;
     /// use hilavitkutin::dispatch::morsel::MorselRange;
     /// use hilavitkutin_api::access::{Cons, Empty};
@@ -1151,11 +1184,11 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, M
     /// type ReadU32 = Cons<Resource<u32>, Empty>;
     ///
     /// // The Read set declares `Resource<u32>`, but the resource source
-    /// // is empty (`PtrNil`). `PtrNil: Project<ReadU32, _>` does not
-    /// // hold (no `Selector<u32, _>` on `PtrNil`), so this does not
+    /// // is empty (`SnapNil`). `SnapNil: Project<ReadU32, _>` does not
+    /// // hold (no `Selector<u32, _>` on `SnapNil`), so this does not
     /// // compile.
     /// let _ctx: EngineCtx<'_, ReadU32, Empty, _, _, _> =
-    ///     EngineCtx::project(&PtrNil, &ColPtrNil, &MetaBlock::default(), USize::ZERO, MorselRange::new(USize::ZERO, USize::ZERO));
+    ///     EngineCtx::project(&SnapNil, &ColPtrNil, &MetaBlock::default(), USize::ZERO, MorselRange::new(USize::ZERO, USize::ZERO));
     /// ```
     #[inline]
     pub fn project<A, C, RIdx, RCIdx, WCIdx, WAIdx, WVIdx>(
@@ -1210,7 +1243,7 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt>
     /// enforcement).
     ///
     /// ```compile_fail
-    /// use hilavitkutin::dispatch::engine_ctx::{EngineCtx, PtrNil, ColPtrNil, MetaNil};
+    /// use hilavitkutin::dispatch::engine_ctx::{EngineCtx, SnapNil, ColPtrNil, MetaNil};
     /// use hilavitkutin_api::access::Empty;
     /// use hilavitkutin_api::meta::SchedulerMetrics;
     ///
@@ -1218,7 +1251,7 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt>
     /// // accessor: the impl is only on a Ctx carrying `MetaRef`. So a consumer
     /// // cannot reach meta state. This does not compile.
     /// fn consumer_reaches_meta(
-    ///     ctx: &EngineCtx<'_, Empty, Empty, PtrNil, ColPtrNil, ColPtrNil>,
+    ///     ctx: &EngineCtx<'_, Empty, Empty, SnapNil, ColPtrNil, ColPtrNil>,
     /// ) {
     ///     let _ = ctx.meta::<SchedulerMetrics>();
     /// }
@@ -1244,27 +1277,19 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, M
     }
 }
 
-// ResolveResource: resolve the `ResourcePtr<T>` through the projected
-// resource bundle's `Selector<T, I>` witness, then borrow. `I` is the
-// per-`T` bundle index, inferred at the concrete WU call site (the bundle
-// is a concrete cons-list there, so exactly one index applies). This is
-// the spec-free replacement for the old type-equality `fetch<T>`.
+// ResolveResource: borrow the snapshot value through the bundle's
+// `SnapSelector<T, I>` witness. `I` is the per-`T` bundle index, inferred
+// at the concrete WU call site (the bundle is a concrete cons-list there,
+// so exactly one index applies). No unsafe: the bundle holds the value
+// itself (the projection-time snapshot), and the borrow ties to `&self`.
 impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP, T: 'static, I> ResolveResource<T, I>
     for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 where
-    RBundle: Selector<T, I>,
+    RBundle: SnapSelector<T, I>,
 {
     #[inline]
     fn resolve_resource(&self) -> &T {
-        let ptr = <RBundle as Selector<T, I>>::get(&self.reads);
-        // SAFETY: the projected bundle holds a `ResourcePtr<T>` at the
-        // witnessed index `I` only because `R: Contains<Resource<T>>`
-        // placed it there at projection time. The pointer was written to
-        // scheduler-owned storage that lives for `'frame`; the returned
-        // `&T` is tied to `&self`, which cannot outlive `'frame`.
-        // Read-only access; the scheduler's plan-time analysis proves no
-        // concurrent write.
-        unsafe { &*ptr.as_ptr() }
+        <RBundle as SnapSelector<T, I>>::get(&self.reads)
     }
 }
 
@@ -1629,16 +1654,16 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, M
 // instead of hand-spelling the nine `EngineCtx` parameters. Proven by sketch
 // 202606111430 (WORKS, identity-asserted, run-proven over the dispatch).
 
-/// Folds a Read access set into its `PtrCons` resource bundle (`PtrNil` leaf).
+/// Folds a Read access set into its `SnapCons` snapshot bundle (`SnapNil` leaf).
 pub trait ResourceBundleOf {
     /// The projected resource pointer bundle for this access set.
     type Out;
 }
 impl ResourceBundleOf for Empty {
-    type Out = PtrNil;
+    type Out = SnapNil;
 }
 impl<T, Tail: ResourceBundleOf> ResourceBundleOf for Cons<Resource<T>, Tail> {
-    type Out = PtrCons<T, Tail::Out>;
+    type Out = SnapCons<T, Tail::Out>;
 }
 impl<T, Tail: ResourceBundleOf> ResourceBundleOf for Cons<Column<T>, Tail> {
     type Out = Tail::Out;

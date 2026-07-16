@@ -20,7 +20,7 @@ use core::mem::MaybeUninit;
 use arvo::{Bool, USize};
 use hilavitkutin::OsThreadPool;
 use hilavitkutin::dispatch::engine_ctx::{
-    AccPtrCons, AccPtrNil, ColPtrCons, ColPtrNil, EngineCtx, PtrNil,
+    AccPtrCons, AccPtrNil, ColPtrCons, ColPtrNil, EngineCtx, SnapNil,
 };
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
@@ -95,7 +95,7 @@ impl WorkUnit<Always> for KeepWu {
         'frame,
         ColIn,
         AccW,
-        PtrNil,
+        SnapNil,
         ColPtrCons<Inv, ColPtrNil>,
         ColPtrNil,
         AccPtrCons<'frame, Av, AccPtrNil>,

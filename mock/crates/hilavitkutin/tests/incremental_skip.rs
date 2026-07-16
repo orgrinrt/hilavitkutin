@@ -37,7 +37,7 @@ use core::mem::MaybeUninit;
 use std::cell::RefCell;
 
 use arvo::{Bool, USize};
-use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, PtrCons, PtrNil};
+use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapCons, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
@@ -159,7 +159,7 @@ impl WorkUnit<Always> for ProducerWu {
         hilavitkutin_api::hint::Normal,
     );
     type Ctx<'frame> =
-        EngineCtx<'frame, ReadA, WriteCa, PtrCons<InA, PtrNil>, ColPtrNil, ColPtrCons<Ca, ColPtrNil>>;
+        EngineCtx<'frame, ReadA, WriteCa, SnapCons<InA, SnapNil>, ColPtrNil, ColPtrCons<Ca, ColPtrNil>>;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         EXEC.with(|e| e.borrow_mut()[PRODUCER] += 1);
@@ -194,7 +194,7 @@ impl WorkUnit<Always> for ConsumerWu {
         'frame,
         ReadCa,
         WriteCb,
-        PtrNil,
+        SnapNil,
         ColPtrCons<Ca, ColPtrNil>,
         ColPtrCons<Cb, ColPtrNil>,
     >;
@@ -229,7 +229,7 @@ impl WorkUnit<Always> for UnrelatedWu {
         hilavitkutin_api::hint::Normal,
     );
     type Ctx<'frame> =
-        EngineCtx<'frame, ReadC, WriteCc, PtrCons<InC, PtrNil>, ColPtrNil, ColPtrCons<Cc, ColPtrNil>>;
+        EngineCtx<'frame, ReadC, WriteCc, SnapCons<InC, SnapNil>, ColPtrNil, ColPtrCons<Cc, ColPtrNil>>;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         EXEC.with(|e| e.borrow_mut()[UNRELATED] += 1);
@@ -265,7 +265,7 @@ impl WorkUnit<Always> for SecondConsumerWu {
         'frame,
         ReadCb,
         WriteCd,
-        PtrNil,
+        SnapNil,
         ColPtrCons<Cb, ColPtrNil>,
         ColPtrCons<Cd, ColPtrNil>,
     >;

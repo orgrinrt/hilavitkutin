@@ -11,8 +11,8 @@
 
 use arvo::{Bool, USize};
 use hilavitkutin::dispatch::engine_ctx::{
-    AccPtrCons, AccPtrNil, ColPtrCons, ColPtrNil, CtxFor, EngineCtx, MetaNil, MetaRef, PtrCons,
-    PtrNil, VirtCons, VirtNil,
+    AccPtrCons, AccPtrNil, ColPtrCons, ColPtrNil, CtxFor, EngineCtx, MetaNil, MetaRef, SnapCons,
+    SnapNil, VirtCons, VirtNil,
 };
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::store::{Accum, Column, Resource, Virtual};
@@ -32,7 +32,7 @@ type Hand1<'f> = EngineCtx<
     'f,
     R1,
     W1,
-    PtrNil,
+    SnapNil,
     ColPtrCons<USize, ColPtrNil>,
     ColPtrCons<Bool, ColPtrNil>,
     AccPtrNil,
@@ -47,7 +47,7 @@ type Hand2<'f> = EngineCtx<
     'f,
     R2,
     W2,
-    PtrCons<USize, PtrNil>,
+    SnapCons<USize, SnapNil>,
     ColPtrCons<Bool, ColPtrNil>,
     ColPtrNil,
     AccPtrCons<'f, USize, AccPtrNil>,
@@ -62,7 +62,7 @@ type Hand3<'f> = EngineCtx<
     'f,
     R3,
     W3,
-    PtrNil,
+    SnapNil,
     ColPtrNil,
     ColPtrNil,
     AccPtrNil,
@@ -75,7 +75,7 @@ type Hand4<'f> = EngineCtx<
     'f,
     Empty,
     Empty,
-    PtrNil,
+    SnapNil,
     ColPtrNil,
     ColPtrNil,
     AccPtrNil,

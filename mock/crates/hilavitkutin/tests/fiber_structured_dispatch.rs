@@ -39,7 +39,7 @@ use std::cell::RefCell;
 
 use arvo::{Bool, USize};
 use hilavitkutin::dispatch::engine_ctx::{
-    AccPtrCons, AccPtrNil, ColPtrCons, ColPtrNil, EngineCtx, PtrNil,
+    AccPtrCons, AccPtrNil, ColPtrCons, ColPtrNil, EngineCtx, SnapNil,
 };
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
@@ -135,7 +135,7 @@ impl WorkUnit<Always> for ProducerWu {
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, Empty, Col, PtrNil, ColPtrNil, ColPtrCons<Cv, ColPtrNil>>;
+    type Ctx<'frame> = EngineCtx<'frame, Empty, Col, SnapNil, ColPtrNil, ColPtrCons<Cv, ColPtrNil>>;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         DISPATCH_ORDER.with(|o| o.borrow_mut().push(PRODUCER_TAG));
@@ -164,7 +164,7 @@ impl WorkUnit<Always> for ConsumerWu {
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, Col, Empty, PtrNil, ColPtrCons<Cv, ColPtrNil>, ColPtrNil>;
+    type Ctx<'frame> = EngineCtx<'frame, Col, Empty, SnapNil, ColPtrCons<Cv, ColPtrNil>, ColPtrNil>;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         DISPATCH_ORDER.with(|o| o.borrow_mut().push(CONSUMER_TAG));
@@ -197,7 +197,7 @@ impl WorkUnit<Always> for AppenderWu {
         'frame,
         Empty,
         AccW,
-        PtrNil,
+        SnapNil,
         ColPtrNil,
         ColPtrNil,
         AccPtrCons<'frame, Av, AccPtrNil>,

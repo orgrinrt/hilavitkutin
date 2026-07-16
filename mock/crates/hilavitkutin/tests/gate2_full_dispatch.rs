@@ -16,7 +16,7 @@ use core::cell::{Cell, UnsafeCell};
 use core::mem::MaybeUninit;
 
 use arvo::{Bool, USize};
-use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, PtrNil};
+use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
@@ -88,7 +88,7 @@ impl WorkUnit<Always> for Producer {
         hilavitkutin_api::hint::Normal,
     );
     type Ctx<'frame> =
-        EngineCtx<'frame, ColIn, ColMid, PtrNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<Mid, ColPtrNil>>;
+        EngineCtx<'frame, ColIn, ColMid, SnapNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<Mid, ColPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: In host-populated; Mid reserved + exclusive; morsel covers
@@ -114,7 +114,7 @@ impl WorkUnit<Always> for Consumer {
         hilavitkutin_api::hint::Normal,
     );
     type Ctx<'frame> =
-        EngineCtx<'frame, ColMid, ColOut, PtrNil, ColPtrCons<Mid, ColPtrNil>, ColPtrCons<Out, ColPtrNil>>;
+        EngineCtx<'frame, ColMid, ColOut, SnapNil, ColPtrCons<Mid, ColPtrNil>, ColPtrCons<Out, ColPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: Mid produced this frame by the producer phase; Out reserved

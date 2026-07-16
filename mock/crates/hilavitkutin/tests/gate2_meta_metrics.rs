@@ -31,7 +31,7 @@ use core::mem::MaybeUninit;
 
 use arvo::{Bool, USize};
 use hilavitkutin::dispatch::engine_ctx::{
-    AccPtrCons, AccPtrNil, ColPtrNil, EngineCtx, MetaRef, PtrNil, VirtNil,
+    AccPtrCons, AccPtrNil, ColPtrNil, EngineCtx, MetaRef, SnapNil, VirtNil,
 };
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
@@ -88,7 +88,7 @@ type AccW = Cons<Accum<Mark>, Empty>;
 // Consumer Ctx: default `MetaNil` meta pointer (the 9th param defaults), so it
 // has no `meta` accessor. Aliases unchanged from pre-bridge code.
 type ConsumerCtx<'frame> =
-    EngineCtx<'frame, Empty, AccW, PtrNil, ColPtrNil, ColPtrNil, AccPtrCons<'frame, Mark, AccPtrNil>>;
+    EngineCtx<'frame, Empty, AccW, SnapNil, ColPtrNil, ColPtrNil, AccPtrCons<'frame, Mark, AccPtrNil>>;
 
 // End-hook Ctx: spells `MetaRef<'frame>` as the 9th param, so it carries a meta
 // reference and gains the `meta` accessor.
@@ -96,7 +96,7 @@ type EndCtx<'frame> = EngineCtx<
     'frame,
     Empty,
     AccW,
-    PtrNil,
+    SnapNil,
     ColPtrNil,
     ColPtrNil,
     AccPtrCons<'frame, Mark, AccPtrNil>,

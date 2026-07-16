@@ -32,7 +32,7 @@ use core::cell::{Cell, UnsafeCell};
 use core::mem::MaybeUninit;
 
 use arvo::{Bool, USize};
-use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, PtrNil};
+use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::dispatch::morsel::MorselRange;
 use hilavitkutin::dispatch::trunk_run::RunTrunk;
 use hilavitkutin::dispatch::{FiberCons, FiberNil, WuCons, WuNil};
@@ -121,7 +121,7 @@ impl WorkUnit<Always> for SX {
         hilavitkutin_api::hint::Normal,
     );
     type Ctx<'f> =
-        EngineCtx<'f, One<InX>, One<AX>, PtrNil, ColPtrCons<InX, ColPtrNil>, ColPtrCons<AX, ColPtrNil>>;
+        EngineCtx<'f, One<InX>, One<AX>, SnapNil, ColPtrCons<InX, ColPtrNil>, ColPtrCons<AX, ColPtrNil>>;
     fn execute<'f>(&self, ctx: &Self::Ctx<'f>) {
         ctx.each().run(|i| {
             // SAFETY: InX host-populated for N records; AX reserved + exclusively
@@ -148,7 +148,7 @@ impl WorkUnit<Always> for SZ {
         hilavitkutin_api::hint::Normal,
     );
     type Ctx<'f> =
-        EngineCtx<'f, One<AX>, One<CZ>, PtrNil, ColPtrCons<AX, ColPtrNil>, ColPtrCons<CZ, ColPtrNil>>;
+        EngineCtx<'f, One<AX>, One<CZ>, SnapNil, ColPtrCons<AX, ColPtrNil>, ColPtrCons<CZ, ColPtrNil>>;
     fn execute<'f>(&self, ctx: &Self::Ctx<'f>) {
         ctx.each().run(|i| {
             // SAFETY: SX (ordered before SZ by the RAW edge) wrote every AX the

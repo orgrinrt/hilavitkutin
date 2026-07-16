@@ -30,7 +30,7 @@ use core::mem::MaybeUninit;
 use std::cell::RefCell;
 
 use arvo::{Bool, USize};
-use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, PtrNil};
+use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
@@ -111,7 +111,7 @@ impl WorkUnit<Always> for ProducerWu {
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, Empty, ColA, PtrNil, ColPtrNil, ColPtrCons<Av, ColPtrNil>>;
+    type Ctx<'frame> = EngineCtx<'frame, Empty, ColA, SnapNil, ColPtrNil, ColPtrCons<Av, ColPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: build reserved the column; the plan proved this the
@@ -136,7 +136,7 @@ impl WorkUnit<Always> for TransformWu {
         hilavitkutin_api::hint::Normal,
     );
     type Ctx<'frame> =
-        EngineCtx<'frame, ColA, ColB, PtrNil, ColPtrCons<Av, ColPtrNil>, ColPtrCons<Bv, ColPtrNil>>;
+        EngineCtx<'frame, ColA, ColB, SnapNil, ColPtrCons<Av, ColPtrNil>, ColPtrCons<Bv, ColPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: the producer (ordered before this unit by the plan's RAW
@@ -161,7 +161,7 @@ impl WorkUnit<Always> for ConsumerWu {
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, ColB, Empty, PtrNil, ColPtrCons<Bv, ColPtrNil>, ColPtrNil>;
+    type Ctx<'frame> = EngineCtx<'frame, ColB, Empty, SnapNil, ColPtrCons<Bv, ColPtrNil>, ColPtrNil>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: the transform (ordered before this unit by the plan's RAW

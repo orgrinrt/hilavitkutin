@@ -39,7 +39,8 @@ use hilavitkutin_api::store::{Accum, Column, Resource, StagedResource, Virtual};
 use hilavitkutin_api::store_values::{StoreValues, Sv, SvEmpty};
 use hilavitkutin_api::{ColumnStorage, ColumnValue, StoreId};
 
-use crate::resource::provenance::{ColumnPtr, ResourcePtr};
+use crate::resource::provenance::{ColumnPtr, ErasedResourcePtr, ResourcePtr};
+use crate::resource::shape::ValueShape;
 use crate::scheduler::BuildError;
 
 mod sealed {
@@ -51,20 +52,41 @@ pub struct BindingNil;
 
 /// Bindings cons-cell for one registered `Resource<T>`.
 ///
-/// Holds the `ResourcePtr<T>` for the moved-in value (pointing into the
-/// store-reserved column, or a dangling pointer for a ZST) and the tail
-/// node for the remaining store values.
+/// Records the moved-in value's one-record blob base in erased form
+/// (`ErasedResourcePtr`, pointing into the store-reserved column, or a
+/// dangling base for a ZST) plus the value's static shape, and the tail
+/// node for the remaining store values. The typed `ResourcePtr<T>` is
+/// recovered by backcast at projection time; the binding's type
+/// parameter is the backcast witness and carries the value type's
+/// Send/Sync gating through `PhantomData<T>`.
 pub struct ResourceBinding<T, Tail> {
-    pub(crate) ptr: ResourcePtr<T>,
+    pub(crate) erased: ErasedResourcePtr,
+    pub(crate) shape: ValueShape,
+    pub(crate) _ty: PhantomData<T>,
     pub(crate) tail: Tail,
 }
 
 impl<T, Tail> ResourceBinding<T, Tail> {
-    /// The recorded resource pointer. Hidden test accessor: lets tests
-    /// deref the moved-in value. Not part of the supported surface.
+    /// The typed resource pointer, backcast from the erased base. Hidden
+    /// accessor used by the projection and by tests. Not part of the
+    /// supported surface.
     #[doc(hidden)]
     pub fn __ptr(&self) -> ResourcePtr<T> {
-        self.ptr
+        // Forward-looking guard: tautological in-process (this binding's
+        // own `T` recorded the shape), a real check only at a future
+        // extension boundary where a foreign shape is supplied.
+        debug_assert_eq!(self.shape, ValueShape::of::<T>());
+        // SAFETY: the binding's type parameter witnesses that the erased
+        // base was recorded for a `T` at drain (the drain writes the
+        // staged `T` and erases the same pointer).
+        unsafe { self.erased.typed::<T>() }
+    }
+
+    /// The recorded static shape. Hidden test accessor; not supported
+    /// surface.
+    #[doc(hidden)]
+    pub fn __shape(&self) -> ValueShape {
+        self.shape
     }
 
     /// The tail node. Hidden test accessor; not supported surface.
@@ -319,10 +341,10 @@ where
         let (carrier, rest) = self.into_parts();
         let value = carrier.into_inner();
         // lint:allow(no-bare-numeric) reason: size_of returns usize by contract; tracked: #345
-        let ptr = if size_of::<T>() == 0 {
+        let typed_base = if size_of::<T>() == 0 {
             // Zero-sized resource: no bytes to store. A column reserve
             // would hand back a null base pointer (nothing allocated),
-            // and `ResourcePtr` is non-null by construction. Record a
+            // and the recorded base is non-null by construction. Record a
             // dangling, well-aligned pointer; writing and reading a ZST
             // through any aligned non-null pointer touches no memory.
             let dangling = core::ptr::NonNull::<T>::dangling().as_ptr();
@@ -331,8 +353,7 @@ where
             unsafe {
                 core::ptr::write(dangling, value);
             }
-            // SAFETY: `NonNull::dangling` is non-null.
-            unsafe { ResourcePtr::new_unchecked(dangling) }
+            dangling
         } else {
             let id = StoreId(*next_id);
             // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal drain-order counter; tracked: #72
@@ -355,11 +376,21 @@ where
             unsafe {
                 core::ptr::write(typed, value);
             }
-            // SAFETY: non-null checked above.
-            unsafe { ResourcePtr::new_unchecked(typed) }
+            typed
         };
+        // Record the base in erased form plus the value's static shape;
+        // the typed view is backcast at projection time (hybrid
+        // addressing, round 202606210600).
+        // SAFETY: `typed_base` is non-null on both arms (dangling for a
+        // ZST, checked for a reserved column).
+        let erased = unsafe { ErasedResourcePtr::new_unchecked(typed_base as *mut u8) }; // lint:allow(no-bare-numeric) reason: erased byte base is the addressing contract; tracked: #654
         match <L as DrainStores>::drain(rest, cs, next_id, record_count) {
-            notko::Outcome::Ok(tail) => notko::Outcome::Ok(ResourceBinding { ptr, tail }),
+            notko::Outcome::Ok(tail) => notko::Outcome::Ok(ResourceBinding {
+                erased,
+                shape: ValueShape::of::<T>(),
+                _ty: PhantomData,
+                tail,
+            }),
             notko::Outcome::Err(e) => notko::Outcome::Err(e),
         }
     }
@@ -522,7 +553,12 @@ impl RebaseBindings for BindingNil {
 impl<T, Tail: RebaseBindings> RebaseBindings for ResourceBinding<T, Tail> {
     #[inline]
     fn rebase_accums(&self, lo: USize, region_cap: USize) -> Self {
-        ResourceBinding { ptr: self.ptr, tail: self.tail.rebase_accums(lo, region_cap) }
+        ResourceBinding {
+            erased: self.erased,
+            shape: self.shape,
+            _ty: PhantomData,
+            tail: self.tail.rebase_accums(lo, region_cap),
+        }
     }
 }
 

@@ -26,7 +26,7 @@ use core::cell::{Cell, UnsafeCell};
 use core::mem::MaybeUninit;
 
 use arvo::{Bool, USize};
-use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, PtrNil};
+use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
@@ -112,7 +112,7 @@ impl WorkUnit<Always> for RelIndexWu {
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, Empty, Col, PtrNil, ColPtrNil, ColPtrCons<Tv, ColPtrNil>>;
+    type Ctx<'frame> = EngineCtx<'frame, Empty, Col, SnapNil, ColPtrNil, ColPtrCons<Tv, ColPtrNil>>;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {

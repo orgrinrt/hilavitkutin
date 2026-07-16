@@ -14,7 +14,7 @@ use core::mem::MaybeUninit;
 
 use arvo::{Bool, USize};
 use hilavitkutin::dispatch::engine_ctx::{
-    AccPtrCons, AccPtrNil, ColPtrNil, EngineCtx, MetaRef, PtrNil, VirtNil,
+    AccPtrCons, AccPtrNil, ColPtrNil, EngineCtx, MetaRef, SnapNil, VirtNil,
 };
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
@@ -69,13 +69,13 @@ struct Mark(u32);
 type AccW = Cons<Accum<Mark>, Empty>;
 
 type ConsumerCtx<'frame> =
-    EngineCtx<'frame, Empty, AccW, PtrNil, ColPtrNil, ColPtrNil, AccPtrCons<'frame, Mark, AccPtrNil>>;
+    EngineCtx<'frame, Empty, AccW, SnapNil, ColPtrNil, ColPtrNil, AccPtrCons<'frame, Mark, AccPtrNil>>;
 
 type EndCtx<'frame> = EngineCtx<
     'frame,
     Empty,
     AccW,
-    PtrNil,
+    SnapNil,
     ColPtrNil,
     ColPtrNil,
     AccPtrCons<'frame, Mark, AccPtrNil>,
