@@ -8,15 +8,15 @@
 //! Two units form an accumulator-free column chain: a producer writes a
 //! `Column<Cv>`, a consumer reads it (a RAW edge, so the plan dispatches the
 //! producer before the consumer). Each unit records its tag once per `execute`
-//! call, and `execute` is called once per (unit, morsel). The record count (600)
-//! spans three morsels under the 256 default `MORSEL_SIZE`. The recorded
-//! sequence is therefore the dispatch order across the six (unit, morsel) calls:
-//! morsel-outer is `[P, C, P, C, P, C]` (one morsel runs both units before the
-//! next), unit-outer is `[P, P, P, C, C, C]` (a unit completes all morsels
-//! before the next unit).
+//! call, and `execute` is called once per (unit, morsel). The record count
+//! (7000) spans two morsels under the fiber's plan-baked 6144-record L1
+//! window (A2b). The recorded sequence is therefore the dispatch order across
+//! the (unit, morsel) calls: morsel-outer is `[P, C, P, C]` (one morsel runs
+//! both units before the next), unit-outer is `[P, P, C, C]` (a unit
+//! completes all morsels before the next unit).
 //!
 //! Red first: against the unit-outer dispatch the recorded order is
-//! `[P, P, P, C, C, C]`, so the morsel-outer assertion fails; once the nesting
+//! `[P, P, C, C]`, so the morsel-outer assertion fails; once the nesting
 //! flips for accumulator-free pipelines it passes. A per-record result check
 //! cannot discriminate the nesting (each record is independent, so both
 //! nestings compute the same column), which is why the test observes dispatch
@@ -41,7 +41,6 @@ use hilavitkutin_api::context::{
     HasColumnWriter, HasEach,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::run_cfg::{DefaultRunCfg, RunCfg};
 use hilavitkutin_api::store::{Accum, Column};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
@@ -89,9 +88,9 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
-// Three morsels under the 256-record default `MORSEL_SIZE`: [0,256), [256,512),
-// [512,600).
-const RECORDS: usize = 600;
+// Two morsels under the fiber's plan-baked L1 window (one 4-byte write column
+// under the default budget windows at 24576 / 4 = 6144): [0,6144), [6144,7000).
+const RECORDS: usize = 7000;
 
 // Tag pushed once per `execute` call: producer is 0, consumer is 1.
 const PRODUCER_TAG: u8 = 0;
@@ -173,16 +172,8 @@ impl WorkUnit<Always> for ConsumerWu {
 
 #[test]
 fn accumulator_free_pipeline_dispatches_morsel_outer() {
-    let msize = <DefaultRunCfg as RunCfg>::MORSEL_SIZE.0;
-    // The record count must exceed the morsel size so the windowing splits into
-    // more than one morsel, which is what makes the two nestings distinguishable.
-    assert!(RECORDS > msize, "test record count must exceed the morsel size");
-    // The record count spans exactly three morsels under the default size.
-    let morsels = RECORDS.div_ceil(msize);
-    assert_eq!(morsels, 3, "the fixture assumes three morsels");
-
     DISPATCH_ORDER.with(|o| o.borrow_mut().clear());
-    let provider = BumpProvider::<32768>::new();
+    let provider = BumpProvider::<65536>::new();
     let mut scheduler = Scheduler::builder()
         .with(Column::<Cv>::new())
         .with(ProducerWu)
@@ -190,24 +181,34 @@ fn accumulator_free_pipeline_dispatches_morsel_outer() {
         .build(store(provider), USize(RECORDS))
         .unwrap_or_else(|_| panic!("build should succeed"));
 
+    // The dispatch loop windows the fiber by its plan-baked L1 morsel window
+    // (A2b); read it off the descriptor so the expectation tracks the plan
+    // value (r6_morsel_window_formula pins the formula itself). The record
+    // count must exceed the window so the windowing splits into more than one
+    // morsel, which is what makes the two nestings distinguishable.
+    let window = scheduler.__fiber_morsel_size(USize(0)).0;
+    assert!(window > 0, "fiber 0 carries a plan-baked window");
+    let morsels = RECORDS.div_ceil(window);
+    assert!(morsels >= 2, "test record count must exceed the morsel window");
+
     let result = scheduler.run();
     assert!(matches!(result, Outcome::Ok(())));
 
     DISPATCH_ORDER.with(|o| {
         let observed = o.borrow();
-        // Six dispatch calls: two units over three morsels. Morsel-outer runs
-        // both units within each morsel before advancing.
-        let expected = [
-            PRODUCER_TAG, CONSUMER_TAG, // morsel [0, 256)
-            PRODUCER_TAG, CONSUMER_TAG, // morsel [256, 512)
-            PRODUCER_TAG, CONSUMER_TAG, // morsel [512, 600)
-        ];
+        // Two dispatch calls per morsel: morsel-outer runs both units within
+        // each morsel before advancing.
+        let mut expected = std::vec::Vec::new();
+        for _ in 0..morsels {
+            expected.push(PRODUCER_TAG);
+            expected.push(CONSUMER_TAG);
+        }
         assert_eq!(
             observed.as_slice(),
-            &expected,
+            expected.as_slice(),
             "an accumulator-free pipeline dispatches morsel-outer (one morsel \
              runs the whole unit sequence before the next); the unit-outer order \
-             would be [P, P, P, C, C, C]"
+             would be [P, .., P, C, .., C]"
         );
     });
 }
@@ -299,7 +300,7 @@ fn accumulator_pipeline_dispatches_unit_outer() {
     // post-GATE-1 Approach-A `FiberCons` nesting (#670); the flat walk cannot
     // slice the carrier per unit at a runtime morsel index.
     DISPATCH_ORDER.with(|o| o.borrow_mut().clear());
-    let provider = BumpProvider::<32768>::new();
+    let provider = BumpProvider::<131072>::new();
     let mut scheduler = Scheduler::builder()
         .with(Accum::<Av>::new())
         .with(Accum::<Bv>::new())

@@ -18,7 +18,7 @@ use core::hint::black_box;
 use arvo::USize;
 use hilavitkutin::OsThreadPool;
 use hilavitkutin::dispatch::engine_ctx::{
-    AccPtrCons, AccPtrNil, ColPtrCons, ColPtrNil, EngineCtx, PtrNil,
+    AccPtrCons, AccPtrNil, ColPtrCons, ColPtrNil, EngineCtx, SnapNil,
 };
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
@@ -58,7 +58,7 @@ impl WorkUnit<Always> for AppendChain {
         'frame,
         One<Inv>,
         AccW,
-        PtrNil,
+        SnapNil,
         ColPtrCons<Inv, ColPtrNil>,
         ColPtrNil,
         AccPtrCons<'frame, Av, AccPtrNil>,

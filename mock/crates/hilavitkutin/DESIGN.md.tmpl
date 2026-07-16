@@ -259,13 +259,30 @@ while every trunk becomes an independently monomorphised program ready for the
 core-pinning of a following round.
 
 `Scheduler::run` dispatches the WorkUnit instances the builder retained at
-registration (see the scheduler builder section), windowing the record range
-into morsels of `RunCfg::MORSEL_SIZE` (guarded to at least one record). It
-walks the plan's `phases -> trunks -> fibers` structure. For single-core
-execution it drives the const-gated per-trunk dispatch above: each trunk's
-member-only mono in turn, in phase order, over the units `group_fibers` placed in
-RCM-reordered topological order, projecting each unit's columns and resources
-inline through the same `RunFiber` per-unit step. The parallel `run_parallel`
+registration (see the scheduler builder section). The loop is phase-outer
+over the const grouping's phase axis, with the consumer passes
+fiber-outer/morsel-inner. The
+meta lifecycle bands (PlanStage before, ScheduleEnd after, with the plan band
+skipped on clean frames) dispatch once per frame over the whole range, the
+same designated-thread band shape `run_parallel` uses. Within a consumer
+phase pass, the per-fiber dispatch descriptors are walked in plan order: a
+`morsel_local` fiber windows `[0, record_count)` by its own plan-baked
+`FiberDispatch.morsel_size` (the domain-12 L1 window computed at plan step 9;
+`RunCfg::MORSEL_SIZE` is only the fallback for a degenerate zero window), one
+member-gated dispatch per window, so the fiber's whole unit sequence runs
+over one morsel before the next and its co-located columns stay L1-hot for
+the window run. An accumulator fiber dispatches once over the whole range
+(the cross-record-safe unit-outer form, never dirty-gated because the
+per-frame append path must always re-run). The member selector composes two
+orthogonal carrier-position masks, the fiber's member mask and the
+incremental-skip dirty mask (plus the consumer mask that keeps meta units in
+their bands); a fiber whose units sit in a different phase contributes
+nothing in the pass because the const phase gate on trunk roots filters it,
+so no runtime fiber-to-phase map exists. Each pass drives the const-gated
+per-trunk dispatch above: each trunk's member-only mono in turn, in phase
+order, over the units `group_fibers` placed in RCM-reordered topological
+order, projecting each unit's columns and resources inline through the same
+`RunFiber` per-unit step. The parallel `run_parallel`
 path drives the same const-gated per-trunk monos through a core-aware walk: each
 worker walks the carrier and, at each in-phase trunk-root, fires that trunk's
 `RunGatedTrunk` mono only when the within-phase trunk rank modulo core count
@@ -313,7 +330,11 @@ the accumulator append path, so an accumulator-free fiber has every cross-unit
 dependency morsel-local. An accumulator-bearing fiber stays unit-outer (a unit
 completes its record range before the next runs), the cross-record-safe form.
 An accumulator-bearing pipeline still runs its accumulator-free fibers
-morsel-outer while its accumulator fibers stay unit-outer.
+morsel-outer while its accumulator fibers stay unit-outer. The loop is
+fiber-outer: a fiber completes its own full window sequence over the record
+range before the next fiber starts, which is stronger than a per-window
+interleave (a producer fiber's whole range lands before its consumer fiber's
+first read) and is what lets each fiber carry its own window size.
 
 A fiber-internal column, written and read entirely inside one fiber per the
 `classify_columns` Input / Output / Internal split, is backed by morsel-sized
@@ -321,9 +342,9 @@ stack scratch rather than an arena column, so dead-store elimination collapses
 the intermediate traffic under fat LTO and only a fiber's true output columns
 reach arena memory. This within-fiber fusion plus the devirtualized walk are
 the two mechanisms that bring single-core dispatch to parity with a hand-fused
-loop. Windowing the record range into multiple morsels with micro-morsel sync
-points (the morsel-loop split) is a later round; `run` covers all records in
-one morsel.
+loop. The record range is windowed into per-fiber morsels (each fiber's own
+L1 window from plan step 9); micro-morsel sync points within a morsel remain
+a later round.
 
 The emitted single-core dispatch monos are guarded by a standing ASM checklist,
 the mechanical complement to the engine-vs-std perf oracle. Where the perf oracle
@@ -1119,8 +1140,9 @@ node, one `Cell` write per `AccumBinding`); each frame appends into a fresh
 buffer rather than continuing from the prior frame's live offset. `run`
 then dispatches the retained units in that topological
 order, projecting each unit's `EngineCtx` (resources and columns) from the
-bindings and calling `execute` once per morsel as it windows the record
-range into morsels of `RunCfg::MORSEL_SIZE`.
+bindings and calling `execute` once per morsel as each fiber windows the
+record range by its own plan-baked morsel window (`RunCfg::MORSEL_SIZE` is
+the fallback for a degenerate zero window).
 Per-fiber column classification and the dirty masks stay off the store for
 now (their columnar form and their consumers are later rounds), as do
 accumulator columns (records appended during the frame, drained at PassEnd

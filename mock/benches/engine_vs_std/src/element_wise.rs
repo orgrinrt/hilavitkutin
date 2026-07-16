@@ -11,7 +11,7 @@
 use core::hint::black_box;
 
 use arvo::USize;
-use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, PtrNil};
+use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
@@ -58,7 +58,7 @@ impl WorkUnit<Always> for S1 {
     type Write = One<Av>;
     type Hint = (Immediate, Atomic, Normal);
     type Ctx<'frame> =
-        EngineCtx<'frame, One<Inv>, One<Av>, PtrNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<Av, ColPtrNil>>;
+        EngineCtx<'frame, One<Inv>, One<Av>, SnapNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<Av, ColPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: In was host-populated for the record count; read adds the
@@ -81,7 +81,7 @@ impl WorkUnit<Always> for S2 {
     type Write = One<Bv>;
     type Hint = (Immediate, Atomic, Normal);
     type Ctx<'frame> =
-        EngineCtx<'frame, One<Av>, One<Bv>, PtrNil, ColPtrCons<Av, ColPtrNil>, ColPtrCons<Bv, ColPtrNil>>;
+        EngineCtx<'frame, One<Av>, One<Bv>, SnapNil, ColPtrCons<Av, ColPtrNil>, ColPtrCons<Bv, ColPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: S1 (ordered before by the RAW edge) wrote every record;
@@ -103,7 +103,7 @@ impl WorkUnit<Always> for S3 {
     type Write = One<Cv>;
     type Hint = (Immediate, Atomic, Normal);
     type Ctx<'frame> =
-        EngineCtx<'frame, One<Bv>, One<Cv>, PtrNil, ColPtrCons<Bv, ColPtrNil>, ColPtrCons<Cv, ColPtrNil>>;
+        EngineCtx<'frame, One<Bv>, One<Cv>, SnapNil, ColPtrCons<Bv, ColPtrNil>, ColPtrCons<Cv, ColPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             let b = unsafe { ctx.reader().read::<Bv, _>(i) };
@@ -123,7 +123,7 @@ impl WorkUnit<Always> for S4 {
     type Write = One<Dv>;
     type Hint = (Immediate, Atomic, Normal);
     type Ctx<'frame> =
-        EngineCtx<'frame, One<Cv>, One<Dv>, PtrNil, ColPtrCons<Cv, ColPtrNil>, ColPtrCons<Dv, ColPtrNil>>;
+        EngineCtx<'frame, One<Cv>, One<Dv>, SnapNil, ColPtrCons<Cv, ColPtrNil>, ColPtrCons<Dv, ColPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             let c = unsafe { ctx.reader().read::<Cv, _>(i) };

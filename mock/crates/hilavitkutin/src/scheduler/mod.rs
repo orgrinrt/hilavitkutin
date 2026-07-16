@@ -498,10 +498,9 @@ pub struct FiberDispatch {
     pub morsel_local: Bool,
     /// This fiber's per-fiber morsel window size (records per morsel chunk),
     /// copied from `plan.morsel_windows[fiber_plan_idx]` at dispatch-order
-    /// derivation. Populated but not yet consumed by the dispatch loop (slice
-    /// A2 inverts the loop to window each fiber by this); until then the loop
-    /// uses the uniform `Cfg::MORSEL_SIZE` and this carries the placeholder
-    /// value. A zero value means fall back to `Cfg::MORSEL_SIZE`.
+    /// derivation. `run` windows a `morsel_local` fiber's record range by
+    /// this (fiber-outer/morsel-inner, A2b). A zero value means fall back to
+    /// `Cfg::MORSEL_SIZE`.
     pub morsel_size: USize,
     /// The plan CSR fiber index this descriptor came from. The `fiber_dispatch`
     /// array is in phase-sequential dispatch order, a different index space from
@@ -1297,16 +1296,21 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
     /// schedule-mega dispatch (spec Approach E); the per-fiber and per-phase
     /// sub-carrier nesting is a later refinement.
     ///
-    /// Drive shape: a carrier that writes no accumulator runs morsel-outer (the
-    /// runtime morsel loop of `RunCfg::MORSEL_SIZE`, guarded to at least one
-    /// record, wraps the whole-carrier walk so intermediate columns stay
-    /// cache-resident per morsel); a carrier bearing an accumulator runs
-    /// unit-outer (one full-range walk, the cross-record-safe append path),
-    /// which is also the record-less-frame path (the carrier runs once over an
-    /// empty morsel so a resource-only unit runs exactly once). The decision
-    /// reads the per-fiber `morsel_local` bits the plan computed. The
-    /// `Witnesses` parameter is the per-unit projection-index list, inferred at
-    /// the call site, so `scheduler.run()` needs no turbofish.
+    /// Drive shape (A2b): phase-outer over the const grouping's phase axis,
+    /// with the consumer passes fiber-outer/morsel-inner. The meta lifecycle
+    /// bands dispatch once per frame over the whole range (the plan band
+    /// skipped on clean frames). Within a consumer pass the per-fiber dispatch
+    /// descriptors are walked in plan order: a `morsel_local` fiber windows
+    /// the record range by its own plan-baked `FiberDispatch::morsel_size`
+    /// (the domain-12 L1 window; `RunCfg::MORSEL_SIZE` is the fallback for a
+    /// degenerate zero window), members selected by the fiber's carrier-
+    /// position mask composed with the consumer mask and the incremental-skip
+    /// dirty mask; an accumulator fiber dispatches once over the whole range
+    /// ungated (the per-frame append path must always re-run), which is also
+    /// the record-less-frame form (each fiber runs once over an empty morsel
+    /// so a resource-only unit runs exactly once). The `Witnesses` parameter
+    /// is the per-unit projection-index list, inferred at the call site, so
+    /// `scheduler.run()` needs no turbofish.
     pub fn run<Witnesses, GW>(&mut self) -> Cfg::Out // lint:allow(no-bare-numeric) reason: const-generic dispatch entry position; tracked: #121
     where
         Cfg::Out: Default,
@@ -1354,62 +1358,137 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         // adapt subsystem's job, sequenced later. The domain-16 incremental-skip seed
         // is `store_dirty`, consumed here.
         let _ = (&self.plan_dirty, &self.plan_cache);
-        // `topo_order` / `topo_count` are retained plan state; the carrier
-        // walk dispatches in carrier order directly, so `run` does not index
-        // them.
-        let _ = (&self.topo_order, &self.topo_count);
         // Per-frame incremental skip: the dirty-unit mask names which units
         // this frame must run (their input cone changed); the rest are
         // skipped, producing identical output to running them.
         let dirty = self.dirty_units();
         let msize = Cfg::MORSEL_SIZE.0.max(1);
         let total = self.record_count.0;
-        // One whole-carrier drive decision for the flat Approach E body: any
-        // accumulator-bearing fiber (a non-morsel-local plan descriptor) selects
-        // unit-outer; otherwise morsel-outer. A record-less frame also takes the
-        // single-walk path so a resource-only carrier runs exactly once.
+        // A2b fiber-outer dispatch. Phase passes run in const-grouping order
+        // (barrier semantics unchanged); the meta lifecycle bands dispatch once
+        // per frame around the consumer work (run_parallel's designated-thread
+        // band shape); within a consumer pass the fiber descriptors are walked
+        // in plan order, each morsel_local fiber windowing the record range by
+        // its own plan-baked L1 window. A fiber whose units sit in another
+        // phase contributes nothing in this pass (the const phase gate on trunk
+        // roots filters it), so no runtime fiber-to-phase map is needed.
+        let nphases = phase_count::<WuVals, Stores, GW, <D as PlanDims>::Units, <D as PlanDims>::Stores, <D as PlanDims>::AdjRow>().0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: phase-loop bound; tracked: #121
+        let pre = pre_consumer_phase_count::<WuVals, Stores, GW, <D as PlanDims>::Units, <D as PlanDims>::Stores, <D as PlanDims>::AdjRow>().0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: leading-band bound; tracked: #121
+        let cend = consumer_phase_end::<WuVals, Stores, GW, <D as PlanDims>::Units, <D as PlanDims>::Stores, <D as PlanDims>::AdjRow>().0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: trailing-band start; tracked: #121
+        let cmask = consumer_mask::<WuVals, Stores, GW, <D as PlanDims>::Units, <D as PlanDims>::Stores, <D as PlanDims>::AdjRow>();
+        let all = <D as PlanDims>::AdjRow::default().bitnot();
+        // A plan-dirty frame runs the leading plan band; a clean frame skips it
+        // (E4 kernel band skipping, unchanged from dispatch_trunks).
+        let band_start = if plan_dirty.0 {
+            0 // lint:allow(no-bare-numeric) reason: plan-dirty frame runs the plan band; tracked: #121
+        } else {
+            plan_phase_count::<WuVals, Stores, GW, <D as PlanDims>::Units, <D as PlanDims>::Stores, <D as PlanDims>::AdjRow>().0 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: clean frame skips the plan band; tracked: #121
+        };
         let descriptors = self.fiber_dispatch.as_ref();
         let fcount = self.fiber_dispatch_count.0.min(descriptors.len());
-        let mut unit_outer = false;
-        let mut fi = 0;
-        while fi < fcount {
-            if !descriptors[fi].morsel_local.0 {
-                unit_outer = true;
-            }
-            fi += 1;
-        }
-        if unit_outer || total == 0 {
-            // The accumulator-bearing (and record-less) path always runs every
-            // unit: an accumulator is reset and re-appended each frame, so
-            // skipping it would leave it reset-but-empty, which is not the same
-            // output as running it. Incremental skip applies to the pure RAW
-            // recompute path (morsel-outer below), not to per-frame append.
-            let _ = dirty;
-            // Per-trunk dispatch over the whole range, all members (all-ones
-            // dirty): output-equivalent to the flat unit-outer walk, every trunk
-            // an independently monomorphised program.
-            let all = <D as PlanDims>::AdjRow::default().bitnot();
-            self.dispatch_trunks::<Witnesses, GW, _>(
-                MorselRange::new(USize::ZERO, USize(total)),
-                all,
-                epoch,
-                plan_dirty,
-            );
-        } else {
-            let mut start = 0;
-            while start < total {
-                let len = msize.min(total - start);
-                // Per-trunk dispatch over this morsel, skipping clean members
-                // (incremental skip preserved): same output as the flat gated
-                // morsel walk, in phase / trunk order.
-                self.dispatch_trunks::<Witnesses, GW, _>(
-                    MorselRange::new(USize(start), USize(len)),
-                    dirty,
+        let order = self.topo_order.as_ref();
+        // A built carrier with live units always has fiber descriptors (the
+        // dispatch-order derivation asserts every unit lands in exactly one);
+        // a zero fiber count with live units would silently dispatch nothing.
+        debug_assert!(
+            self.topo_count.0 == 0 || fcount > 0, // lint:allow(no-bare-numeric) reason: emptiness guard; tracked: #121
+            "run: live units but no fiber descriptors; the plan's fiber partition never reached the scheduler"
+        );
+        let mut p = band_start; // lint:allow(no-bare-numeric) reason: phase-pass index; tracked: #121
+        while p < nphases {
+            let t0 = self.clock.now_ns().to_raw(); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: raw nanos for the duration delta; tracked: #121
+            if p < pre || p >= cend {
+                // Meta lifecycle band pass: whole range, every member, once per
+                // frame. Band members are the meta units of this pass's rank;
+                // the all-ones mask never skips them (lifecycle hooks are not
+                // input-cone-gated).
+                self.wu_values.dispatch(
+                    &self.wu_values,
+                    USize(p),
+                    &self.meta_block,
+                    &self.bindings,
+                    MorselRange::new(USize::ZERO, USize(total)),
+                    all,
                     epoch,
-                    plan_dirty,
                 );
-                start += len;
+            } else {
+                // Consumer pass: fiber-outer/morsel-inner. Each descriptor
+                // completes its full window sequence before the next fiber, so
+                // a producer fiber's whole range lands before its consumer
+                // fiber's first read.
+                let mut fi = 0; // lint:allow(no-bare-numeric) reason: descriptor cursor; tracked: #121
+                while fi < fcount {
+                    let desc = descriptors[fi];
+                    // The fiber's member mask over carrier positions: build
+                    // validated registration order is topological, so
+                    // topo_order values are carrier positions and the mask
+                    // composes directly with the dirty mask.
+                    // FIXME: rebuilt per (phase, fiber); plan-bake the member
+                    // masks (and a fiber-to-const-phase map to skip out-of-phase
+                    // fibers' window walks) at build() per schedule-once-reuse;
+                    // tracked #340.
+                    let mut fmask = <D as PlanDims>::AdjRow::default();
+                    let kend = (desc.start.0 + desc.len.0).min(order.len());
+                    let mut k = desc.start.0;
+                    while k < kend {
+                        fmask = fmask.with_bit_set(order[k]);
+                        k += 1; // lint:allow(no-bare-numeric) reason: unit-slice cursor; tracked: #121
+                    }
+                    // Meta units never ride the fiber walk (their runtime-plan
+                    // phase is unconstrained; the bands above own them), and
+                    // incremental skip applies only to the windowed RAW path:
+                    // an accumulator fiber is reset and re-appended each frame,
+                    // so skipping it would leave it reset-but-empty. A
+                    // record-less frame runs each fiber once over the empty
+                    // range so resource-only units run exactly once.
+                    let windowed = desc.morsel_local.0 && total != 0; // lint:allow(no-bare-numeric) reason: record-less frame test; tracked: #121
+                    let mut members = fmask.bitand(cmask);
+                    if windowed {
+                        members = members.bitand(dirty);
+                    }
+                    if !members.is_zero().0 {
+                        if windowed {
+                            // The per-fiber L1 window (plan step 9, baked into
+                            // the descriptor at build); zero falls back to the
+                            // uniform Cfg default.
+                            let w = if desc.morsel_size.0 != 0 { desc.morsel_size.0 } else { msize }; // lint:allow(no-bare-numeric) reason: window fallback test; tracked: #121
+                            let mut s = 0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: morsel cursor; tracked: #121
+                            while s < total {
+                                let len = w.min(total - s); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: clamped window length; tracked: #121
+                                self.wu_values.dispatch(
+                                    &self.wu_values,
+                                    USize(p),
+                                    &self.meta_block,
+                                    &self.bindings,
+                                    MorselRange::new(USize(s), USize(len)),
+                                    members,
+                                    epoch,
+                                );
+                                s += len; // lint:allow(no-bare-numeric) reason: advance cursor; tracked: #121
+                            }
+                        } else {
+                            self.wu_values.dispatch(
+                                &self.wu_values,
+                                USize(p),
+                                &self.meta_block,
+                                &self.bindings,
+                                MorselRange::new(USize::ZERO, USize(total)),
+                                members,
+                                epoch,
+                            );
+                        }
+                    }
+                    fi += 1; // lint:allow(no-bare-numeric) reason: descriptor step; tracked: #121
+                }
             }
+            // E8 adapt, per-phase timing: one start/stop pair per phase pass
+            // per frame; `run` folds the per-frame total into `phase_ema` below.
+            let dur = self.clock.now_ns().to_raw().saturating_sub(t0); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: monotonic phase-slice delta; tracked: #121
+            if p < self.phase_accum.len() {
+                let slot = &self.phase_accum[p];
+                slot.set(Nanos::from_raw(slot.get().to_raw().saturating_add(dur))); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-frame phase-duration sum; tracked: #121
+            }
+            p += 1; // lint:allow(no-bare-numeric) reason: phase-pass step; tracked: #121
         }
         // Capture the change_class signal before the seed is consumed: a
         // non-empty store_dirty means an input change was seen this frame.
@@ -2215,10 +2294,10 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
     }
 
     /// Read the per-fiber morsel window size on the dispatch descriptor at
-    /// dispatch-order index `i`. Hidden test accessor for slice A1: the
-    /// descriptor's `morsel_size` is populated from `plan.morsel_windows` but not
-    /// yet consumed by the dispatch loop (slice A2), so a white-box test asserts
-    /// the field carries the plan's per-fiber value.
+    /// dispatch-order index `i`. Hidden test accessor: the descriptor's
+    /// `morsel_size` is populated from `plan.morsel_windows` and consumed by
+    /// the fiber-outer dispatch loop (A2b); a white-box test asserts the field
+    /// carries the plan's per-fiber value.
     #[doc(hidden)]
     pub fn __fiber_morsel_size(&self, i: USize) -> USize {
         self.fiber_dispatch.as_ref()[i.0].morsel_size
