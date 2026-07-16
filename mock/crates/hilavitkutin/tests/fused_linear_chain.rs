@@ -21,7 +21,7 @@ use core::cell::{Cell, UnsafeCell};
 use core::mem::MaybeUninit;
 
 use arvo::{Bool, USize};
-use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, PtrNil};
+use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::resource::ColumnPtr;
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
@@ -112,7 +112,7 @@ impl WorkUnit<Always> for S1 {
         hilavitkutin_api::hint::Normal,
     );
     type Ctx<'frame> =
-        EngineCtx<'frame, One<InV>, One<Av>, PtrNil, ColPtrCons<InV, ColPtrNil>, ColPtrCons<Av, ColPtrNil>>;
+        EngineCtx<'frame, One<InV>, One<Av>, SnapNil, ColPtrCons<InV, ColPtrNil>, ColPtrCons<Av, ColPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: In reserved + host-populated; Av reserved + exclusively
@@ -145,7 +145,7 @@ impl WorkUnit<Always> for S2 {
         hilavitkutin_api::hint::Normal,
     );
     type Ctx<'frame> =
-        EngineCtx<'frame, One<Av>, One<Bv>, PtrNil, ColPtrCons<Av, ColPtrNil>, ColPtrCons<Bv, ColPtrNil>>;
+        EngineCtx<'frame, One<Av>, One<Bv>, SnapNil, ColPtrCons<Av, ColPtrNil>, ColPtrCons<Bv, ColPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             let a = unsafe { ctx.reader().read::<Av, _>(i) };
@@ -176,7 +176,7 @@ impl WorkUnit<Always> for S3 {
         hilavitkutin_api::hint::Normal,
     );
     type Ctx<'frame> =
-        EngineCtx<'frame, One<Bv>, One<Cv>, PtrNil, ColPtrCons<Bv, ColPtrNil>, ColPtrCons<Cv, ColPtrNil>>;
+        EngineCtx<'frame, One<Bv>, One<Cv>, SnapNil, ColPtrCons<Bv, ColPtrNil>, ColPtrCons<Cv, ColPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             let b = unsafe { ctx.reader().read::<Bv, _>(i) };

@@ -22,7 +22,7 @@ use core::mem::MaybeUninit;
 use core::sync::atomic::{AtomicU64, Ordering};
 
 use arvo::{Bool, USize};
-use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, PtrNil};
+use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin::OsThreadPool;
 use hilavitkutin_api::access::{Cons, Empty};
@@ -128,7 +128,7 @@ impl WorkUnit<Always> for P1 {
     type Write = ColP1;
     type Hint = HintT;
     type Ctx<'frame> =
-        EngineCtx<'frame, OneIn, ColP1, PtrNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<P1v, ColPtrNil>>;
+        EngineCtx<'frame, OneIn, ColP1, SnapNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<P1v, ColPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: In host-populated; P1v reserved + exclusive; windowed.
@@ -148,7 +148,7 @@ impl WorkUnit<Always> for P2 {
     type Write = ColP2;
     type Hint = HintT;
     type Ctx<'frame> =
-        EngineCtx<'frame, OneIn, ColP2, PtrNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<P2v, ColPtrNil>>;
+        EngineCtx<'frame, OneIn, ColP2, SnapNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<P2v, ColPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: as P1, for P2v.
@@ -171,7 +171,7 @@ impl WorkUnit<Always> for Mid {
         'frame,
         ReadP,
         ColMr,
-        PtrNil,
+        SnapNil,
         ColPtrCons<P1v, ColPtrCons<P2v, ColPtrNil>>,
         ColPtrCons<Mv, ColPtrNil>,
     >;
@@ -195,7 +195,7 @@ impl WorkUnit<Always> for Q1 {
     type Write = ColQ1;
     type Hint = HintT;
     type Ctx<'frame> =
-        EngineCtx<'frame, ColMr, ColQ1, PtrNil, ColPtrCons<Mv, ColPtrNil>, ColPtrCons<Q1v, ColPtrNil>>;
+        EngineCtx<'frame, ColMr, ColQ1, SnapNil, ColPtrCons<Mv, ColPtrNil>, ColPtrCons<Q1v, ColPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: Mid ran in the prior phase (RAW on Mv); Q1v reserved + exclusive.
@@ -215,7 +215,7 @@ impl WorkUnit<Always> for Q2 {
     type Write = ColQ2;
     type Hint = HintT;
     type Ctx<'frame> =
-        EngineCtx<'frame, ColMr, ColQ2, PtrNil, ColPtrCons<Mv, ColPtrNil>, ColPtrCons<Q2v, ColPtrNil>>;
+        EngineCtx<'frame, ColMr, ColQ2, SnapNil, ColPtrCons<Mv, ColPtrNil>, ColPtrCons<Q2v, ColPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: as Q1, doubling Mv into the disjoint Q2v column.
@@ -238,7 +238,7 @@ impl WorkUnit<Always> for Sink {
         'frame,
         ReadQ,
         ColS,
-        PtrNil,
+        SnapNil,
         ColPtrCons<Q1v, ColPtrCons<Q2v, ColPtrNil>>,
         ColPtrCons<Sv, ColPtrNil>,
     >;

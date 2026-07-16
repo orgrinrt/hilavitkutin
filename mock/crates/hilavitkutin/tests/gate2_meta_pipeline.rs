@@ -30,7 +30,7 @@ use core::mem::MaybeUninit;
 
 use arvo::{Bool, USize};
 use hilavitkutin::dispatch::engine_ctx::{
-    AccPtrCons, AccPtrNil, ColPtrNil, EngineCtx, MetaRef, PtrNil, VirtNil,
+    AccPtrCons, AccPtrNil, ColPtrNil, EngineCtx, MetaRef, SnapNil, VirtNil,
 };
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
@@ -84,7 +84,7 @@ struct Mark(u32);
 type AccW = Cons<Accum<Mark>, Empty>;
 // Consumer (`Always`) Ctx: default `MetaNil` meta pointer (no meta access).
 type AccCtx<'frame> =
-    EngineCtx<'frame, Empty, AccW, PtrNil, ColPtrNil, ColPtrNil, AccPtrCons<'frame, Mark, AccPtrNil>>;
+    EngineCtx<'frame, Empty, AccW, SnapNil, ColPtrNil, ColPtrNil, AccPtrCons<'frame, Mark, AccPtrNil>>;
 // Meta (`OnMeta<V>`) Ctx: carries a `MetaRef`, since `OnMeta` units are meta
 // work units (the `MetaPtrFor` mapping makes their Ctx's 9th param `MetaRef`).
 // These units do not read meta state here; the meta pointer rides unused.
@@ -92,7 +92,7 @@ type MetaAccCtx<'frame> = EngineCtx<
     'frame,
     Empty,
     AccW,
-    PtrNil,
+    SnapNil,
     ColPtrNil,
     ColPtrNil,
     AccPtrCons<'frame, Mark, AccPtrNil>,

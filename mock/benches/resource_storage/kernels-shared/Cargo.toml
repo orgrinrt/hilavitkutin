@@ -1,0 +1,18 @@
+[package]
+name = "rsb-kernels"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# Shared storage-layout kernels for the six resource-storage variants. Each
+# variant cdylib path-depends on this so the layout build, the per-record
+# `combine`, and the shared transform stages live in one place; only the
+# member-fetch shape differs per variant. std/alloc allowed (bench workspace).
+[lib]
+name = "rsb_kernels"
+path = "src/lib.rs"
+
+[dependencies]
+# For the SeqAlgo Routine impl (axis D, seed-driven heap payload). Both the
+# orchestrator and the seqd variants reference SeqAlgo, so it lives here.
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev", features = ["std"] }

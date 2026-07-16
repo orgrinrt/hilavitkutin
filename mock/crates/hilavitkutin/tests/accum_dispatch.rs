@@ -24,7 +24,7 @@ use core::cell::{Cell, UnsafeCell};
 use core::mem::MaybeUninit;
 
 use arvo::{Bool, USize};
-use hilavitkutin::dispatch::engine_ctx::{AccPtrCons, AccPtrNil, ColPtrNil, EngineCtx, PtrNil};
+use hilavitkutin::dispatch::engine_ctx::{AccPtrCons, AccPtrNil, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
@@ -108,7 +108,7 @@ impl WorkUnit<Always> for AppendWu {
         hilavitkutin_api::hint::Normal,
     );
     type Ctx<'frame> =
-        EngineCtx<'frame, Empty, AccW, PtrNil, ColPtrNil, ColPtrNil, AccPtrCons<'frame, Av, AccPtrNil>>;
+        EngineCtx<'frame, Empty, AccW, SnapNil, ColPtrNil, ColPtrNil, AccPtrCons<'frame, Av, AccPtrNil>>;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         // The drain initialised the live length to zero before the frame.
@@ -150,7 +150,7 @@ impl WorkUnit<Always> for SaturateWu {
         hilavitkutin_api::hint::Normal,
     );
     type Ctx<'frame> =
-        EngineCtx<'frame, Empty, AccW, PtrNil, ColPtrNil, ColPtrNil, AccPtrCons<'frame, Av, AccPtrNil>>;
+        EngineCtx<'frame, Empty, AccW, SnapNil, ColPtrNil, ColPtrNil, AccPtrCons<'frame, Av, AccPtrNil>>;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         // SAFETY: `build` reserved `CAP_SMALL` records; the appender holds the

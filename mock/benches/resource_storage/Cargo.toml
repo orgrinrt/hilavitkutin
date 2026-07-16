@@ -1,0 +1,30 @@
+[workspace]
+
+[package]
+name = "resource_storage"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# Orchestrator for the six-variant resource-storage-model comparison
+# (round 202606210600). Loads the six variant cdylibs under variants/ and runs
+# them through the mockspace bench harness: subprocess-isolated, hardware-counter
+# timed, with the realistic workload mix-in (scalar dep chains, pointer-chase
+# graph work, L1-evicting heavy-memory passes, branch pressure) surrounding the
+# measured morsel loop, so the comparison reflects a real fiber's morsel loop and
+# reveals which layouts thrash under cache pressure. Cross-variant output is
+# validated byte-exact (MAY_DIFFER=false). std/alloc allowed (bench workspace).
+[[bin]]
+name = "resource_storage"
+path = "src/main.rs"
+
+[dependencies]
+rsb-kernels = { path = "kernels-shared" }
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev", features = ["std"] }
+mockspace-bench-harness = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev" }
+mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev" }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

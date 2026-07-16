@@ -1,0 +1,31 @@
+[workspace]
+
+[package]
+name = "rsb-axis-ce"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# Axis C (column-count capacity) and axis E (cross-core false-sharing) for the
+# resource-storage-model round. These are NOT latency benches (which all run
+# through the mockspace bench harness in ../); they are a capacity ASSERTION and
+# a contention measurement, expressed as tests. C reserves into the real
+# `ArenaColumnStorage<_, Dim<256>>` to show the per-member-column layouts (V2/V5)
+# cross the 256-store cap while the per-resource layouts (V0/V1/V3/V4) do not. E
+# uses real threads to measure the V3 shared-column false-sharing penalty.
+[lib]
+name = "rsb_axis_ce"
+path = "src/lib.rs"
+
+[dependencies]
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+arvo-bits = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+arvo-tensor = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

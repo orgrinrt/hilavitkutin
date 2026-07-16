@@ -23,7 +23,7 @@ use core::sync::atomic::{AtomicUsize, Ordering};
 
 use arvo::{Bool, USize};
 use hilavitkutin::dispatch::engine_ctx::{
-    AccPtrCons, AccPtrNil, ColPtrNil, EngineCtx, MetaRef, PtrNil, VirtNil,
+    AccPtrCons, AccPtrNil, ColPtrNil, EngineCtx, MetaRef, SnapNil, VirtNil,
 };
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin::OsThreadPool;
@@ -91,14 +91,14 @@ type Hints = (
 
 // Consumer Ctx: default MetaNil meta pointer.
 type ConsumerCtx<'frame> =
-    EngineCtx<'frame, Empty, AccW, PtrNil, ColPtrNil, ColPtrNil, AccPtrCons<'frame, Mark, AccPtrNil>>;
+    EngineCtx<'frame, Empty, AccW, SnapNil, ColPtrNil, ColPtrNil, AccPtrCons<'frame, Mark, AccPtrNil>>;
 
 // Meta Ctx: MetaRef as the 9th param (forced for OnMeta schedules).
 type MetaCtx<'frame> = EngineCtx<
     'frame,
     Empty,
     AccW,
-    PtrNil,
+    SnapNil,
     ColPtrNil,
     ColPtrNil,
     AccPtrCons<'frame, Mark, AccPtrNil>,

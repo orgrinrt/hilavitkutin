@@ -23,7 +23,7 @@ use core::sync::atomic::{AtomicUsize, Ordering};
 
 use arvo::{Bool, USize};
 use hilavitkutin::dispatch::engine_ctx::{
-    AccPtrNil, ColPtrCons, ColPtrNil, EngineCtx, MetaRef, PtrNil, VirtNil,
+    AccPtrNil, ColPtrCons, ColPtrNil, EngineCtx, MetaRef, SnapNil, VirtNil,
 };
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin::OsThreadPool;
@@ -106,7 +106,7 @@ impl WorkUnit<OnMeta<PlanStage>> for PlanWu {
         'frame,
         Empty,
         ColP,
-        PtrNil,
+        SnapNil,
         ColPtrNil,
         ColPtrCons<Pv, ColPtrNil>,
         AccPtrNil,
@@ -129,7 +129,7 @@ impl WorkUnit<Always> for ConsumerWu {
     type Read = Empty;
     type Write = ColA;
     type Hint = Hints;
-    type Ctx<'frame> = EngineCtx<'frame, Empty, ColA, PtrNil, ColPtrNil, ColPtrCons<Av, ColPtrNil>>;
+    type Ctx<'frame> = EngineCtx<'frame, Empty, ColA, SnapNil, ColPtrNil, ColPtrCons<Av, ColPtrNil>>;
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: Av reserved + exclusive; the morsel covers reserved records.

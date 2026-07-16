@@ -16,7 +16,7 @@ use core::mem::MaybeUninit;
 
 use arvo::strategy::Identity;
 use arvo::{Bool, USize};
-use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, PtrCons, PtrNil};
+use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapCons, SnapNil};
 use hilavitkutin::dispatch::morsel::MorselRange;
 use hilavitkutin::resource::provenance::ColumnPtr;
 use hilavitkutin::scheduler::Scheduler;
@@ -120,7 +120,7 @@ fn context_column_read_after_write() {
     // No resources are declared, so the resource source is empty.
     let meta = hilavitkutin::meta::MetaBlock::default();
     let ctx: EngineCtx<'_, ColU32, ColU32, _, _, _> =
-        EngineCtx::project(&PtrNil, &col_source, &meta, USize::ZERO, MorselRange::new(USize::ZERO, USize(8)));
+        EngineCtx::project(&SnapNil, &col_source, &meta, USize::ZERO, MorselRange::new(USize::ZERO, USize(8)));
 
     // SAFETY: the morsel covers records 0..8; the buffer is 8 long.
     unsafe {
@@ -154,7 +154,7 @@ fn context_multi_column_distinct_read_write() {
 
     let meta = hilavitkutin::meta::MetaBlock::default();
     let ctx: EngineCtx<'_, ReadU8U16, WriteU16U32, _, _, _> =
-        EngineCtx::project(&PtrNil, &col_source, &meta, USize::ZERO, MorselRange::new(USize::ZERO, USize(8)));
+        EngineCtx::project(&SnapNil, &col_source, &meta, USize::ZERO, MorselRange::new(USize::ZERO, USize(8)));
 
     // SAFETY: the morsel covers records 0..8; each buffer is 8 long.
     unsafe {
@@ -176,7 +176,7 @@ fn context_multi_column_distinct_read_write() {
 fn context_each_covers_morsel() {
     let meta = hilavitkutin::meta::MetaBlock::default();
     let ctx: EngineCtx<'_, Empty, Empty, _, _, _> =
-        EngineCtx::project(&PtrNil, &ColPtrNil, &meta, USize::ZERO, MorselRange::new(USize(5), USize(3)));
+        EngineCtx::project(&SnapNil, &ColPtrNil, &meta, USize::ZERO, MorselRange::new(USize(5), USize(3)));
 
     let mut visited: [usize; 3] = [0; 3];
     let mut n = 0usize;
@@ -198,7 +198,7 @@ fn context_each_covers_morsel() {
 fn context_batch_full_range() {
     let meta = hilavitkutin::meta::MetaBlock::default();
     let ctx: EngineCtx<'_, Empty, Empty, _, _, _> =
-        EngineCtx::project(&PtrNil, &ColPtrNil, &meta, USize::ZERO, MorselRange::new(USize(5), USize(3)));
+        EngineCtx::project(&SnapNil, &ColPtrNil, &meta, USize::ZERO, MorselRange::new(USize(5), USize(3)));
 
     let seen = Cell::new((0usize, 0usize));
     BatchApi::run(ctx.batch(), |start, end| {
@@ -228,7 +228,7 @@ impl WorkUnit<Always> for ReadResourceWu {
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, ReadU32, Empty, PtrCons<u32, PtrNil>, ColPtrNil, ColPtrNil>;
+    type Ctx<'frame> = EngineCtx<'frame, ReadU32, Empty, SnapCons<u32, SnapNil>, ColPtrNil, ColPtrNil>;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         // Resolve the resource through the projected Context. Writing the

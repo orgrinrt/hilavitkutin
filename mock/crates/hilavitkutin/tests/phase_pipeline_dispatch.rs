@@ -29,7 +29,7 @@ use core::mem::MaybeUninit;
 use core::sync::atomic::AtomicUsize;
 
 use arvo::{Bool, USize};
-use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, PtrNil};
+use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::dispatch::morsel::MorselRange;
 use hilavitkutin::dispatch::phase_run::RunPipeline;
 use hilavitkutin::dispatch::{FiberCons, FiberNil, PhaseCons, PhaseNil, TrunkCons, TrunkNil, WuCons, WuNil};
@@ -126,7 +126,7 @@ impl WorkUnit<Always> for SX {
         hilavitkutin_api::hint::Normal,
     );
     type Ctx<'f> =
-        EngineCtx<'f, One<InX>, One<AX>, PtrNil, ColPtrCons<InX, ColPtrNil>, ColPtrCons<AX, ColPtrNil>>;
+        EngineCtx<'f, One<InX>, One<AX>, SnapNil, ColPtrCons<InX, ColPtrNil>, ColPtrCons<AX, ColPtrNil>>;
     fn execute<'f>(&self, ctx: &Self::Ctx<'f>) {
         ctx.each().run(|i| {
             // SAFETY: InX host-populated; AX reserved + exclusively written; morsel-bounded.
@@ -152,7 +152,7 @@ impl WorkUnit<Always> for SY {
         hilavitkutin_api::hint::Normal,
     );
     type Ctx<'f> =
-        EngineCtx<'f, One<InY>, One<AY>, PtrNil, ColPtrCons<InY, ColPtrNil>, ColPtrCons<AY, ColPtrNil>>;
+        EngineCtx<'f, One<InY>, One<AY>, SnapNil, ColPtrCons<InY, ColPtrNil>, ColPtrCons<AY, ColPtrNil>>;
     fn execute<'f>(&self, ctx: &Self::Ctx<'f>) {
         ctx.each().run(|i| {
             // SAFETY: InY host-populated; AY reserved + exclusively written; morsel-bounded.
@@ -178,7 +178,7 @@ impl WorkUnit<Always> for SZ {
         hilavitkutin_api::hint::Normal,
     );
     type Ctx<'f> =
-        EngineCtx<'f, One<AX>, One<CZ>, PtrNil, ColPtrCons<AX, ColPtrNil>, ColPtrCons<CZ, ColPtrNil>>;
+        EngineCtx<'f, One<AX>, One<CZ>, SnapNil, ColPtrCons<AX, ColPtrNil>, ColPtrCons<CZ, ColPtrNil>>;
     fn execute<'f>(&self, ctx: &Self::Ctx<'f>) {
         ctx.each().run(|i| {
             // SAFETY: SX (phase 0, before the waist) wrote every AX; CZ reserved + exclusive.
