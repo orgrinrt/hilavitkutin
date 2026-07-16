@@ -4,11 +4,11 @@
 //! Slice A1 threads `plan.morsel_windows[f]` onto the dispatch descriptor (with
 //! the plan CSR index recorded in `fiber_plan_idx`). The dispatch loop does not
 //! yet consume it (slice A2 inverts the loop). This test asserts the field
-//! carries the plan's per-fiber value. For a single-fiber carrier with N records,
-//! `morsel_windows[0]` is the placeholder partition value N (the whole record set
-//! assigned to the one fiber), so `__fiber_morsel_size(0) == N`. When slice A3
-//! lands the L1 window formula, this value becomes the clamped window instead;
-//! the catalogue contract `r6_morsel_window_formula` tracks that.
+//! carries the plan's per-fiber value. Since A3b, `morsel_windows[f]` is the
+//! L1 window formula value `(L1_USABLE / sum of write sizes).clamp & !3`; the
+//! single-fiber carrier here writes one 4-byte column, so the window is
+//! `24_576 / 4 = 6144`. The formula itself is pinned by
+//! `r6_morsel_window_formula`; this test pins the descriptor threading.
 //!
 //! Lives under `tests/` so the bare-numeric record count does not trip the
 //! src-tree primitive lints.
@@ -100,14 +100,13 @@ fn single_fiber_morsel_size_is_plan_per_fiber_value() {
         .with(Copyer)
         .build(store(provider), USize(4))
         .unwrap_or_else(|_| panic!("build should succeed"));
-    // One fiber, 4 records: the placeholder partition assigns all 4 records to
-    // fiber 0, so its descriptor morsel_size is 4 (the per-fiber value from
-    // plan.morsel_windows[0]). A2 will consume this; A3 will change the value to
-    // the L1 window formula.
+    // One fiber writing one 4-byte column: the A3b window formula gives
+    // 24_576 / 4 = 6144 (inside the clamps, 4-aligned). The descriptor must
+    // carry exactly plan.morsel_windows[0].
     assert_eq!(
         s.__fiber_morsel_size(USize(0)).0,
-        4,
-        "FiberDispatch.morsel_size carries plan.morsel_windows[0] (placeholder partition = record count for the single fiber)"
+        6144,
+        "FiberDispatch.morsel_size carries plan.morsel_windows[0] (the A3b L1 window)"
     );
 }
 

@@ -46,7 +46,7 @@ pub use graph::{DependencyGraph, EdgeKind};
 pub use grouping::{
     group_n, phase_count, phase_of, plan_phase_count, trunk_of, BundleMasks, UnitAccess,
 };
-pub use inputs::PlanInputs;
+pub use inputs::{MorselBudget, PlanInputs};
 pub use project::plan_inputs_from_bundle;
 pub use steps::{FiberLayout, PlanError};
 pub use phase::{Phase, PhaseBoundaries, PhaseConfig};
@@ -392,7 +392,7 @@ where
     // Step 9: morsel sizing per fiber. Stored on the plan so Pass 3
     // dispatch codegen can emit per-fiber `RecordRange` slices without
     // recomputing.
-    plan.morsel_windows = steps::compute_fiber_morsel_windows::<D>(inputs.record_count, fibers.fiber_count);
+    plan.morsel_windows = steps::compute_fiber_morsel_windows::<D>(inputs, &fibers);
 
     // Step 10: phase configs. Store onto plan.phases[i].config. Pass
     // the unit count so the last phase's width is computed against

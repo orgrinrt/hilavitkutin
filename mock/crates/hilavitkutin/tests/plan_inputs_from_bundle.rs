@@ -14,6 +14,7 @@
 
 use arvo::{Bool, USize};
 use arvo_tensor::Dim;
+use hilavitkutin::plan::MorselBudget;
 use hilavitkutin::plan::{plan_inputs_from_bundle, AccessMask, PlanInputs};
 use hilavitkutin_api::{
     AccessSet, Always, Atomic, BatchApi, Column, ColumnReaderApi, ColumnValue, ColumnWriterApi,
@@ -160,8 +161,11 @@ impl<R: AccessSet, W: AccessSet> HasReduce<R, W> for TestCtx {
 // index: Resource<RA>=0, Column<CX>=1, Column<CY>=2.
 // ---------------------------------------------------------------------
 
+#[derive(Copy, Clone)]
 struct RA;
+#[derive(Copy, Clone)]
 struct CX;
+#[derive(Copy, Clone)]
 struct CY;
 
 type Stores = Cons<Resource<RA>, Cons<Column<CX>, Cons<Column<CY>, Empty>>>;
@@ -205,7 +209,7 @@ const RECORDS: USize = USize(1000); // lint:allow(no-bare-numeric) reason: test 
 #[test]
 fn projects_two_unit_bundle_to_plan_inputs() {
     let inputs: PlanInputs<MaxUnits, MaxStores> =
-        plan_inputs_from_bundle::<Wus, Stores, _, MaxUnits, MaxStores>(RECORDS);
+        plan_inputs_from_bundle::<Wus, Stores, _, MaxUnits, MaxStores>(RECORDS, MorselBudget::ZERO);
 
     assert_eq!(inputs.unit_count, USize(2), "two units populated"); // lint:allow(no-bare-numeric) reason: expected count; tracked: #121
     assert_eq!(inputs.record_count, RECORDS, "record_count threaded through");
@@ -242,4 +246,10 @@ fn projects_two_unit_bundle_to_plan_inputs() {
         Bool::TRUE,
         "W0 write overlaps W1 read on shared store CX (dep edge)"
     );
+}
+
+// A3b: test-local resource values are bare scalars/markers with no Seq/Map
+// collection members, so their L1 morsel footprint is zero.
+impl hilavitkutin_api::footprint::ResourceFootprint for RA {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
 }

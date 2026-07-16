@@ -422,3 +422,12 @@ fn build_store_backs_the_plan_unit_meta() {
         "topo step 1 is the reader (registration index 1)"
     );
 }
+
+// A3b: test-local resource values are bare scalars/markers with no Seq/Map
+// collection members, so their L1 morsel footprint is zero.
+impl hilavitkutin_api::footprint::ResourceFootprint for Ra {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+impl hilavitkutin_api::footprint::ResourceFootprint for Rb {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}

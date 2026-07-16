@@ -213,3 +213,33 @@ fn nine_resource_ctxfor_dispatches_through_onmeta() {
         "consumer(9) -> keystone reads all nine resources through the CtxFor Ctx (sum 78)",
     );
 }
+
+// A3b: test-local resource values are bare scalars/markers with no Seq/Map
+// collection members, so their L1 morsel footprint is zero.
+impl hilavitkutin_api::footprint::ResourceFootprint for R0 {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+impl hilavitkutin_api::footprint::ResourceFootprint for R1 {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+impl hilavitkutin_api::footprint::ResourceFootprint for R2 {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+impl hilavitkutin_api::footprint::ResourceFootprint for R3 {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+impl hilavitkutin_api::footprint::ResourceFootprint for R4 {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+impl hilavitkutin_api::footprint::ResourceFootprint for R5 {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+impl hilavitkutin_api::footprint::ResourceFootprint for R6 {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+impl hilavitkutin_api::footprint::ResourceFootprint for R7 {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+impl hilavitkutin_api::footprint::ResourceFootprint for R8 {
+    const L1_BYTES: arvo::USize = arvo::USize(0);
+}

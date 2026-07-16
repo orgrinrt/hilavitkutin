@@ -81,6 +81,24 @@ pub trait RunCfg:
     /// phase/fiber dispatch tier lands; until then it is the run-loop's window.
     const MORSEL_SIZE: USize = USize(256);
 
+    /// Usable L1 write budget in bytes for the per-fiber morsel-window
+    /// formula (domain 12): `window = (L1_USABLE / sum of write sizes)
+    /// .clamp(MIN_MORSEL, MAX_MORSEL) & !3`. Default `24_576` (the 32 KB
+    /// detection-fallback L1 times 0.75). Hardware detection, when the
+    /// platform tier ships it, overrides the default SOURCE, not this
+    /// knob. Consumer-tunable per `arvo-toolbox-not-policer`; override by
+    /// writing the const explicitly.
+    const L1_USABLE: USize = USize(24_576);
+
+    /// Lower clamp of the per-fiber morsel window in records. The spec
+    /// marks the floor configurable (not a design decision); default 64,
+    /// one micro-morsel interval. Consumer-tunable.
+    const MIN_MORSEL: USize = USize(64);
+
+    /// Upper clamp of the per-fiber morsel window in records. Spec
+    /// default 8192. Consumer-tunable.
+    const MAX_MORSEL: USize = USize(8192);
+
     /// Records between micro-morsel inner-loop sync points. Pow2 cap.
     /// Default 64 (one cache line of f32-shaped data). Topic 7 axis C.
     const MICRO_MORSEL_INTERVAL: USize = USize(64);

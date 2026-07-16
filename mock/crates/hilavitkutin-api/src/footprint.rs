@@ -18,7 +18,7 @@
 //! derive is the ergonomic path); the engine's per-store fold reads `L1_BYTES` for
 //! `Resource<T>` stores.
 
-use arvo::{Cap, USize};
+use arvo::{Cap, Identity, USize};
 use arvo_tensor::cap_size;
 
 use crate::column_value::ColumnValue;
@@ -72,4 +72,30 @@ impl<T: ColumnValue> CollectionBytes for Field<T> {
 pub trait ResourceFootprint {
     /// `Σ` of this resource value type's field-kind footprints.
     const L1_BYTES: USize;
+}
+
+// Bare scalar primitives as resource values: the degenerate single-Field
+// case. A scalar resource has no Seq/Map collection members, so it
+// contributes nothing to the L1 morsel write budget (its cost is register
+// pressure, like any Field). Explicit impls, NOT a blanket over
+// `ColumnValue`: a blanket would cover every consumer struct and turn the
+// `#[derive(ResourceFootprint)]` impl into a coherence conflict.
+macro_rules! impl_scalar_footprint {
+    ($($t:ty),* $(,)?) => {
+        $(
+            impl ResourceFootprint for $t {
+                const L1_BYTES: USize = USize::ZERO;
+            }
+        )*
+    };
+}
+
+impl_scalar_footprint!(u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize, bool, char, ()); // lint:allow(no-bare-numeric) reason: definition-site scalar list for the zero-footprint impls; tracked: #121
+
+impl ResourceFootprint for USize {
+    const L1_BYTES: USize = USize::ZERO;
+}
+
+impl ResourceFootprint for arvo::Bool {
+    const L1_BYTES: USize = USize::ZERO;
 }
