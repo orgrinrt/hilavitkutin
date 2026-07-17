@@ -96,6 +96,52 @@ pub trait WorkUnit<Schedule = Always>: BuilderInput<Init = Self> + Send + Sync +
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>);
 }
 
+/// The runner-agnostic declaration half of a unit of work.
+///
+/// A `WorkUnit` bundles a declaration (its read set, write set, and
+/// scheduling hint) with a fiber execution model (`Ctx` bound on the
+/// column accessors, plus `execute`). `Plannable` is the declaration
+/// half alone. It names no runner, so a consumer whose runner is not
+/// the fiber engine can declare and plan work through this trait
+/// without implementing a `Ctx` it cannot honour.
+///
+/// Every `WorkUnit<S>` is `Plannable<S>` via the blanket impl below,
+/// for every schedule `S`, so no existing implementor changes. A type
+/// that is not a `WorkUnit` (a runner that records a dispatch rather
+/// than executing per record) implements `Plannable` by hand.
+///
+/// The plan stage reads this trait, never `WorkUnit::execute`, so
+/// planning is generic over `Plannable<S>`. Coherence and the E0207
+/// constraint on the blanket impl are proven by sketch
+/// `mock/research/sketches/202607171733_plannable-declaration-split/`.
+pub trait Plannable<Schedule = Always> {
+    /// Columns / resources this unit reads.
+    type Read: AccessSet;
+    /// Columns / virtuals this unit writes.
+    type Write: AccessSet;
+    /// Scheduling hint the planner prices this unit by.
+    type Hint: SchedulingHint;
+}
+
+/// Every `WorkUnit<S>` is `Plannable<S>`, for any schedule `S`.
+///
+/// `Schedule` is a parameter of `Plannable`, not only of this impl's
+/// bound, so `S` appears in the trait reference and is constrained. A
+/// schedule-free `impl<W: WorkUnit<S>, S> Plannable for W` fails E0207.
+/// A non-`WorkUnit` local type hand-implementing `Plannable` coheres
+/// with this blanket by the orphan rule: only its owning crate could
+/// make it a `WorkUnit`, and it does not.
+///
+/// A type must not be both a `WorkUnit` and hand-implement `Plannable`:
+/// the hand impl then conflicts with this blanket (E0119). A type with a
+/// fiber execution model takes the blanket and writes no `Plannable`
+/// impl of its own; only a non-`WorkUnit` runner hand-implements it.
+impl<W: WorkUnit<S>, S> Plannable<S> for W {
+    type Read = <W as WorkUnit<S>>::Read;
+    type Write = <W as WorkUnit<S>>::Write;
+    type Hint = <W as WorkUnit<S>>::Hint;
+}
+
 // ---------------------------------------------------------------------
 // E4 slice 1: schedule recovery for the dispatch carrier.
 //

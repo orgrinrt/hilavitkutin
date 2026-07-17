@@ -1,0 +1,50 @@
+3f675652 chore: lock src changelist for the post-review fixes
+899b2e42 test: exercise the Plannable blanket; note the E0119 both-impl conflict
+27818dc7 docs: open src changelist for the post-review fixes
+900caba2 chore: lock doc changelist for the post-review softening
+b2b42a02 docs: soften the engine-reads-fourth-axis claim to intent
+950d08e6 docs: open doc changelist for the post-review softening
+21098b0b docs: open post-review fixes round for the plannable split
+342a2d05 chore: close design round 202607171807
+c71e5a12 chore: lock src changelist for the plannable split
+a60389a4 feat: add Plannable declaration trait and the HintExt hint slot
+750db092 docs: open src changelist for the plannable split
+486876d4 chore: lock doc changelist for the plannable split
+31a55de3 docs: document Plannable and the HintExt slot in api design
+c78cd08a docs: open doc changelist for the plannable split
+1ea4bda2 docs: open the plannable declaration split round with its sketch
+32161ce6 feat: invert run dispatch to fiber-outer morsel-inner per plan window
+6a9983ee feat: per-fiber l1 morsel-window formula from runcfg budget
+8a30758e feat: erased resource addressing and ctx snapshot per storage bench
+82673e9e feat: add hilavitkutin-api-macros crate with ResourceFootprint derive
+009f76fc feat: add CollectionBytes + ResourceFootprint footprint traits
+2b65194c docs: sketch A3-2 resource-collection footprint surface
+272dee96 docs: re-chart A3 morsel formula on the canonical R5 resource model
+9e80d835 feat: add per-store element-byte-size collection for L1 morsel formula
+2e799053 docs: sketch A3 per-store size collection for L1 morsel formula
+aaa6097a feat: add run_one_trunk_windowed for fiber-outer morsel dispatch
+906949f1 docs: sketch A2a per-fiber morsel loop drives per-trunk dispatch
+90c7529c docs: backlog note for generalized asm-emission contract tests
+06e68715 docs: granular roadmap, sketch plan, asm-contract-test discipline
+abe3a4e6 feat: thread per-fiber morsel size onto FiberDispatch
+7fe3f203 docs: resolve arc-audit roadmap (head+tail/overlap in scope, internals-first)
+9901b875 docs: critical arc audit and updated canonical roadmap
+1796fe39 refactor: rename morsel_sizes to morsel_windows for per-fiber morsel slice 1
+e1b243aa docs: per-fiber morsel-loop wiring blueprint
+5dfcc4fb docs: chart adapt actuation arc (dead consumption surfaces)
+6d034dae feat: select_adapt_config phase-imbalance reconfigure trigger
+de04dc48 feat: per-phase duration EMA + catalogue adapt performance contracts
+86e24062 feat: core-idle adapt axis via waist-barrier follower timing
+2553d4df feat: change_seen_count on all run paths, accumulator over-capacity is a hard error
+cc89cdee feat: count change_class frames via store_dirty into SchedulerMetrics
+b3ce8a5a chore: allow private_bounds on sealed Executor trait
+c3b6bd8b chore: remove unused impl_trait_in_assoc_type gate from hilavitkutin-api
+17189200 feat: sample throughput record count into SchedulerMetrics
+03ef6c8a test: P1 R2a keystone nine-resource CtxFor Ctx through OnMeta
+e1e15a30 docs: chart-the-path P1 adapt granularity + sketch plan
+643dffb1 docs: chart-the-path P1 adapt roadmap draft + canonical mirror
+dee64fc1 docs: chart-the-path P1 adapt+E8 comprehension map
+f4862740 fix: compile-time Units-cap guard for run_parallel
+5a364ba4 feat: CtxFor computed per-WorkUnit Context type
+715e27e5 feat: lift engine plan_dirty + grouping caps onto PlanDims capacity types
+ff147c1a feat: GATE-2 parallel engine, self-hosting meta pipeline, EMA adapt

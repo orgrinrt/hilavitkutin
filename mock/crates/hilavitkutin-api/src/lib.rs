@@ -66,9 +66,9 @@ pub use context::{
     VirtualFirerApi,
 };
 pub use hint::{
-    Adaptive, Atomic, Critical, Deferred, Divisibility, DivisibilityValue, Immediate, Important,
-    Interruptible, Normal, Opportunistic, Optional, Relaxed, SchedulingHint, Significance,
-    SignificanceValue, Steady, Urgency, UrgencyValue,
+    Adaptive, Atomic, Critical, Deferred, Divisibility, DivisibilityValue, HintExt, Immediate,
+    Important, Interruptible, Normal, Opportunistic, Optional, Relaxed, SchedulingHint,
+    Significance, SignificanceValue, Steady, Urgency, UrgencyValue,
 };
 pub use id::StoreId;
 pub use platform::{
@@ -99,5 +99,7 @@ pub use meta::{
     Dag, ExecutionPlan as MetaExecutionPlan, LaneAssignment, MetaAccess, MetaVirtual,
     SchedulerMetrics,
 };
-pub use work_unit::{Always, HasSchedule, Lifecycle, On, OnMeta, ScheduleGate, WorkUnit, WorkUnitBundle};
+pub use work_unit::{
+    Always, HasSchedule, Lifecycle, On, OnMeta, Plannable, ScheduleGate, WorkUnit, WorkUnitBundle,
+};
 pub use work_unit_values::{WuCons, WuNil};

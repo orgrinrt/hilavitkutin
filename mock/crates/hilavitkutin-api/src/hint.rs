@@ -73,6 +73,33 @@ impl<U: UrgencyValue, D: DivisibilityValue, S: SignificanceValue> hint_sealed::S
 }
 impl<U: UrgencyValue, D: DivisibilityValue, S: SignificanceValue> SchedulingHint for (U, D, S) {}
 
+/// A fourth, runner-specific hint dimension.
+///
+/// The three built-in axes (urgency, divisibility, significance) are
+/// what the fiber engine prices by. A downstream runner with a
+/// dimension the triple does not express implements `HintExt` on its
+/// own marker and declares a 4-tuple hint `(U, D, S, X)`. No `HintExt`
+/// markers ship here: the slot exists so a genuinely new dimension can
+/// land additively rather than by unsealing `SchedulingHint`.
+///
+/// The fiber engine's scheduling is defined over the three built-in
+/// positions, so a 4-tuple hint schedules as its `(U, D, S)` prefix
+/// would. Reading the fourth position is a later gate for whichever
+/// runner defines a dimension, not a mechanism this crate ships.
+pub trait HintExt: 'static {}
+
+// The 4-tuple arm. A 3-tuple and a 4-tuple are different types, so this
+// cannot overlap the arm above, and the seal still admits only tuple
+// shapes this crate names.
+impl<U: UrgencyValue, D: DivisibilityValue, S: SignificanceValue, X: HintExt> hint_sealed::Sealed
+    for (U, D, S, X)
+{
+}
+impl<U: UrgencyValue, D: DivisibilityValue, S: SignificanceValue, X: HintExt> SchedulingHint
+    for (U, D, S, X)
+{
+}
+
 // ---- Urgency markers -------------------------------------------------
 
 /// Run before any scheduled work.
