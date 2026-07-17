@@ -10,7 +10,7 @@ use arvo::USize;
 use hilavitkutin_api::{
     AccessSet, Always, Atomic, BatchApi, Column, ColumnReaderApi, ColumnValue, ColumnWriterApi,
     Contains, EachApi, HasBatch, HasColumnReader, HasColumnWriter, HasEach, HasReduce,
-    HasResourceProvider, HasVirtualFirer, Immediate, Normal, BuilderInput, ReduceApi,
+    HasResourceProvider, HasVirtualFirer, Immediate, Normal, BuilderInput, Plannable, ReduceApi,
     ResolveColumnRead, ResolveColumnWrite, ResolveResource, ResolveVirtualFire, Resource,
     ResourceProviderApi, UnitDispatch, Virtual, VirtualFirerApi, WorkUnit, read, write,
 };
@@ -196,3 +196,36 @@ fn wu_compiles_and_executes() {
     let ctx = Ctx { p: Stub };
     wu.execute(&ctx);
 }
+
+// The blanket `impl<W: WorkUnit<S>, S> Plannable<S> for W` gives every
+// WorkUnit the declaration trait. Monomorphise it for a real WorkUnit and
+// assert the associated types forward. `type_eq` fails to compile unless
+// `Integrate as Plannable<Always>` recovers exactly its WorkUnit sets, so a
+// forwarding bug is a build error, not a silent pass.
+#[test]
+fn workunit_is_plannable_via_blanket() {
+    fn assert_plannable<T: Plannable<Always>>() {}
+    assert_plannable::<Integrate>();
+
+    fn type_eq<A: 'static, B: 'static>()
+    where
+        A: SameAs<B>,
+    {
+    }
+    type_eq::<
+        <Integrate as Plannable<Always>>::Read,
+        <Integrate as WorkUnit<Always>>::Read,
+    >();
+    type_eq::<
+        <Integrate as Plannable<Always>>::Write,
+        <Integrate as WorkUnit<Always>>::Write,
+    >();
+    type_eq::<
+        <Integrate as Plannable<Always>>::Hint,
+        <Integrate as WorkUnit<Always>>::Hint,
+    >();
+}
+
+// Minimal reflexive same-type witness: `A: SameAs<B>` holds only when A == B.
+trait SameAs<B> {}
+impl<T> SameAs<T> for T {}
