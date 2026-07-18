@@ -41,11 +41,15 @@ A4 carries an ordering hazard against G2C-0, surfaced by the canonical-mirror pa
 takes a single scalar `msize` (`scheduler/mod.rs:2070-2079`), and the head+tail branch consumes that
 same scalar while dispatching over a whole-phase mask rather than a single fiber
 (`scheduler/mod.rs:2106-2131`). A per-fiber window does not map onto that branch, because the branch
-is not walking one fiber. Since A4 lands before G2C-0 decides what that branch should be, A4 must
-explicitly leave the head+tail branch on the scalar and say so in the source, rather than silently
-changing the windowing of a path whose shape is still under review. The alternative is to move
-G2C-0 ahead of A4; that is the cleaner order if G2C-0's answer turns out to replace the branch
-outright.
+is not walking one fiber. A4 must therefore explicitly leave the head+tail branch on the scalar and
+say so in the source, rather than silently changing the windowing of a path whose shape is still
+under review.
+
+**A4 keeps its place ahead of G2C-0**, settled here rather than left open. An earlier draft offered
+moving G2C-0 first as an alternative, which was a fork with no criterion attached. The criterion is
+that G2C-0 is bookkeeping (a ledger entry, deletions, a doc fix, renames) and changes no dispatch
+shape at all. The shape change is G2C-1, which sits much later. So reordering buys A4 nothing, and
+the ordinary phase sequence stands.
 
 **A5, the fused path (new).** `run_fused` (`scheduler/mod.rs:2227`) is the third record-dispatch
 path and still windows by `Cfg::MORSEL_SIZE`. A fused linear chain is one fiber, so it should take
@@ -53,9 +57,25 @@ that fiber's plan-baked window. Small, mechanical, and it closes Phase A's cover
 paths rather than leaving one silently on the old model.
 
 **A6, the accumulator unit-outer window decision (new).** `worker_accum_unit_outer` walks each unit
-over the whole per-core region as a single `MorselRange` and never windows. Decide explicitly
-whether the domain-12 L1 window applies inside that walk, and record the answer. The current silence
-is a default being taken without a decision.
+over the whole per-core region as a single `MorselRange` and never windows. Whether the domain-12 L1
+window should apply inside that walk has two defensible answers, so it is not a decision to take by
+default at implementation time. Windowing preserves the L1 residency the formula exists to buy;
+not windowing keeps the accumulator append sequential over one contiguous region, which is what the
+per-core region was carved out to be.
+
+**Resolution: bench, folded into G2C-M**, which already measures `worker_accum_unit_outer`'s scaling
+curve. Add a windowed-versus-unwindowed arm at the same record counts and fiber shapes. If windowing
+wins on the bandwidth-heavy fiber it applies; if it is inside noise, the simpler unwindowed walk
+stays and the answer is recorded rather than left silent. A6 is therefore a decision leaf whose
+evidence is produced by a bench that has to run anyway, not a separate measurement.
+
+**A6 is the one leaf that cannot close inside its own phase**, and that is deliberate rather than an
+oversight. Its evidence comes from G2C-M, which sits in the next phase, so under the A-then-G2C
+order A6 stays open across the boundary. The consequence to hold: the accumulator walk keeps its
+current unwindowed shape through Phase A, recorded as provisional in the source rather than as a
+settled default, and the decision lands when G2C-M runs. Pulling G2C-M forward into Phase A is the
+alternative and is rejected, because the bench needs the parallel work G2C-1 has not done yet to be
+measuring the shape the engine will actually ship.
 
 Scope note from the granularity pass: that function also contains a core-participation ceil-slice
 (`scheduler/mod.rs:959-966`, commented in-source as "mirrors `run_core_phase`'s split"). That split
@@ -64,8 +84,14 @@ than A6's. A6 is only the windowing question inside the walk.
 
 A4 note, same pass: `gate2_phase` and `gate2_trunk` are flagged in-source as awaiting a capacity
 lift onto `Units` (`scheduler/mod.rs:103`, tracked at #690). A4's `gate2_fiber` array either adds a
-third fixed `[USize; GATE2_MAX_UNITS]` to the pre-lift shape or lands mid-lift. Decide which before
-starting; it does not warrant a split, but discovering it mid-slice would stall one.
+third fixed `[USize; GATE2_MAX_UNITS]` to the pre-lift shape or lands mid-lift.
+
+**Settled here rather than left to implementation time: add the third fixed array to the pre-lift
+shape.** #690 is an independent capacity refactor with its own blast radius, and coupling A4 to it
+would block a small slice on unrelated work while enlarging both. The third array is mechanically
+identical to the two beside it, so it moves with them when #690 lands, and the cost of having
+guessed wrong is one line in that later refactor. If #690 happens to land first, A4 simply follows
+the lifted shape instead; the decision only binds while both are pending.
 
 ## Phase G2C: reconcile and complete the parallel model
 
@@ -224,6 +250,16 @@ spectral label to contiguous `Trunk` renumber keeps `FiberGrouping.assignment` c
 resolved (arvo-sparse ships the Dulmage-Mendelsohn surface), leaving B3b as integration plus
 dead-column elimination.
 
+Two deferred benches become runnable inside this phase and are named here so they are not
+rediscovered as surprises. **#644, the definitive spectral-versus-real-greedy fiber bench**, was
+parked gated on a real greedy implementation plus a runtime to measure against; B1b supplies the
+real greedy, so #644 runs at
+the end of B1b and its result informs whether B2's spectral consumption is worth its complexity.
+**#635, arvo's deferred cross-variant decisions** (RCM bitmask versus CSR, spectral dense versus
+`SparseLaplacian`), sit upstream in arvo and bear on B2 and C1. Check #635's state before starting
+B2; if it is still open, it is a cross-repo prerequisite rather than a hilavitkutin leaf, and the
+fix-the-stack-upstream rule applies.
+
 ## Phase C: RCM-row dispatch order
 
 Unchanged. C1 sketch at exact leeway, then C2 relaxes `NonTopologicalRegistration`, then C3 retires
@@ -231,11 +267,57 @@ the arena-only framing.
 
 ## Phase D: adapt completion
 
-Unchanged, and its blocker is now clear. The tier-1 morsel re-chunk actuation needs the descriptor
-refresh path identified by the granularity pass (D-act-1), which is a `FiberDispatch` refresh rather
-than a `plan.morsel_windows` field write, since `morsel_windows` is read only at build. A2b gave
-that actuation its live runtime surface. Remaining axes are fiber_ema, active_units, parallel-path
-phase_ema, AdaptArena, per-morsel generation counters, and strategy reselect.
+Every prior revision carried Phase D's tail as a single sentence naming six axes. That is under
+decomposed to the point of being unschedulable, and three of the six hide an open question with no
+assigned answer. Decomposed here.
+
+**D-act-1, the descriptor refresh path.** Confirmed real by inspection: `morsel_windows` is read
+only at build, so the actuation refreshes the `FiberDispatch` descriptors rather than writing the
+plan field. Mechanical, no open question.
+
+**D-act-2, the re-chunk rule.** This is where the flat listing hid a fork. "Wire the re-chunk on
+`adapt_reconfigure`" says when to re-chunk and says nothing about *by what rule*, and that rule has
+many defensible answers: halve the window of the phase whose EMA is the bottleneck, rebalance all
+windows in proportion to their phase EMAs, step toward the L1 formula's value from the measured
+side, or re-derive the formula against a corrected effective-bandwidth estimate. Picking one at
+implementation time is exactly the on-the-fly course change this roadmap exists to prevent.
+
+Resolution: bench, not argument. The catalogued contract `morsel_rechunk_reduces_idle_ns` is the accept
+gate (it asserts idle time falls without total time rising), and `ema_adaptation_improves_imbalanced_workload`
+is the corroborating arm. Implement two or three candidate rules behind the same actuation seam,
+measure them on a deliberately imbalanced fixture, and keep the one that turns the contracts green
+with the best margin. Record the losing rules as the audit trail. This is the same bench-decides
+discipline as G2C-M; the rules are cheap to write because they share the descriptor-refresh path
+D-act-1 provides.
+
+**D-ema, the remaining EMA taps.** `fiber_ema`, `active_units`, and the parallel-path `phase_ema`
+are mechanical: each mirrors a shipped single-core EMA pattern into a new tap point. No open
+question, no sketch needed. Three small slices.
+
+**D-arena, AdaptArena.** Recorded since the original audit as "option-B perf storage, bench-gated",
+with the bench never named. Name it: the question is whether moving the adapt metrics off the
+engine-internal fixed-cap fields into a dedicated arena costs or saves anything at the frame
+boundary where they are folded. Measure the fold cost both ways across the record-count range the
+other benches use. If the difference is inside noise, keep the shipped fixed-cap fields and close
+the item; option B is only worth its complexity if it measurably wins.
+
+**D-gen, per-morsel generation counters (S-6).** Domain 12 (`:861`) specifies a per-morsel
+generation counter bumped on write, propagating through the DAG so an unchanged root skips its
+transitive dependents. The engine currently has coarse per-store dirty only. This needs a **design
+sketch before implementation**, at some-shape leeway: the open question is where the counters live
+given no-alloc and a per-fiber morsel count that varies with the window, and how they compose with
+the existing `store_dirty` mask rather than duplicating it. Do not start this one by writing code.
+
+**D-str, strategy reselect, is blocked on work that is in no phase.** The audit recorded it as
+"domain 14, after strategy plan-shaping is wired", and strategy plan-shaping appears in no phase of
+any roadmap revision. So the dependency is real and dangling. Two sub-leaves:
+
+**D-str-0, strategy plan-shaping**, the missing prerequisite. Domain 14's strategy axis must actually
+shape the plan before anything can reselect it. Scope it and place it here rather than leaving it
+implied by a subordinate clause. Needs its own comprehension pass against domain 14 before it can be
+decomposed; it is the least-charted work remaining in the internals.
+
+**D-str-1, reselect**, which only becomes meaningful once D-str-0 exists.
 
 One housekeeping item: `a1_fiber_morsel_size.rs:121` is catalogued red with the reason "lands with
 A2", and A2 has landed. Re-check whether the case now passes and either un-ignore it or restate the
@@ -275,13 +357,15 @@ specifically by the tier-1 re-chunk actuation. The fiber-plan-index case
 (`a1_fiber_morsel_size.rs:121`) is owned by Phase A and is now unblocked, since its stated blocker
 was A2 and A2 has landed.
 
-Two had no phase home before this revision, which is why they are called out rather than listed. The
-morsel window floor case (`r6_morsel_window_formula.rs:178`) turns on whether a non-4-aligned
-`MIN_MORSEL` may be clamped below its own floor by the post-clamp `& !3`; that is a Phase A decision
-about the domain-12 formula, so it goes to A3's owner even though the formula has shipped. The
-collection-member case (`resource_snapshot.rs:130`) needs Seq and Map members wired into resource
-values, which is domain-19 resource-collection work; it belongs in Phase E alongside the other
-consumer-facing data-plane surfaces, and nothing earlier depends on it.
+Two had no phase home before this revision, and both now have one as a named leaf. The morsel window
+floor case (`r6_morsel_window_formula.rs:178`) becomes **A7**, and it is **not an open question**:
+its own catalogue entry states the intended resolution, which is to align the floor before clamping
+so the post-clamp `& !3` can never land the window below `MIN_MORSEL`. A mechanical fix to the
+domain-12 formula, homed in Phase A next to A3's other formula work, where the implementer follows
+the catalogue entry rather than deciding anything. The collection-member case
+(`resource_snapshot.rs:130`) becomes **E6**: it needs Seq and Map members wired into resource
+values, which is domain-19 resource-collection work, so it sits in Phase E alongside the other
+consumer-facing data-plane surfaces. Nothing earlier depends on it.
 
 The perf gate's branching and accumulator arms stay red by design until the phases that own them
 land. They are not gaps to fill with a single-stage special case.
@@ -301,12 +385,70 @@ matrix-chain DP cost function lives and which Phase B cites by number; source St
 and dirty. Canon Step 9 is dirty propagation, which G2C-5 cites; source Step 9 is morsel windows.
 Given that a prior round already went wrong by misreading which RCM ordering the spec's Step 5 and
 Step 8 referred to, an off-by-one between the two numbering schemes is worth closing before Phase B
-and C reason by step number. Renumber the source doc comments to canonical numbering, or add an
-explicit mapping table at the module head.
+and C reason by step number. Renumber the source doc comments to canonical numbering. A mapping table was the
+alternative and is rejected: it is a second artefact to keep in sync, where renumbering removes the
+discrepancy at its source.
+
+## Evidence ledger: every leaf has an assigned resolution
+
+The point of this roadmap is that implementation never stops to discover that a step has several
+possible answers and no evidence for choosing between them. That guarantee is only real if it is
+checkable, so every leaf is classified below by how its open questions get answered. **No leaf may
+be started while it sits in an unassigned state.** If a future reader finds one, that is a defect in
+this document, not a decision for them to make at the keyboard.
+
+| Leaf | Resolution | State |
+|---|---|---|
+| A1, A2a, A2b, A3, A3b | shipped | done |
+| A4 parallel per-fiber sizing | mechanical; all three forks settled in-line (A4 keeps its place ahead of G2C-0, the head+tail branch stays on the scalar, `gate2_fiber` adds a third pre-lift array) | ready |
+| A5 fused path window | mechanical | ready |
+| A6 accumulator-walk windowing | bench, folded into G2C-M as an extra arm; resolves in G2C, not in Phase A | assigned, cross-phase |
+| A7 morsel window floor | mechanical; the catalogue entry states the fix (align the floor before clamping) | ready |
+| G2C-0 supersession bookkeeping | mechanical, plus a named reference audit before each deletion | ready |
+| G2C-1 const-path record ownership | sketch, some-shape leeway, plus asm-gate fixture | specced |
+| G2C-1a morsel-align the slice | mechanical, at all three call sites | ready |
+| G2C-1b minimum records per core | the floor's value comes from G2C-M | assigned |
+| G2C-2 wire the result | mechanical after G2C-1 | ready |
+| G2C-3 phase-overlap ordering | sketch, exact leeway | specced |
+| G2C-4 wire phase-overlap | mechanical after G2C-3 | ready |
+| G2C-5 parallel incremental skip | mechanical once G2C-3's happens-before proof exists | assigned |
+| G2C-6a re-plan trigger conditions | inspection | ready |
+| G2C-6b re-plan against live state | sketch, exact leeway | specced |
+| G2C-M scaling measurement | bench, with the decision rule stated in advance | specced |
+| B1a DP cost function | resolved from canon (spec Step 8) | done |
+| B1b DP fiber grouping | mechanical on confirmed substrate; #644 runs at its end | ready |
+| B2 spectral into fiber grouping | sketch, some-shape leeway; check #635 upstream first | specced |
+| B3a Dulmage-Mendelsohn substrate | resolved (arvo-sparse ships it) | done |
+| B3b DM integration + dead columns | mechanical on confirmed substrate | ready |
+| C1 RCM-ordered dispatch | sketch, exact leeway | specced |
+| C2, C3 | mechanical after C1 | ready |
+| D-act-1 descriptor refresh | mechanical, path confirmed by inspection | ready |
+| D-act-2 re-chunk rule | bench between candidate rules, catalogued contracts as the accept gate | assigned |
+| D-ema remaining taps | mechanical, three slices mirroring shipped patterns | ready |
+| D-arena AdaptArena | bench, now named: fold cost both ways, keep shipped shape if inside noise | assigned |
+| D-gen per-morsel generation counters | design sketch, some-shape leeway, before any code | specced |
+| D-str-0 strategy plan-shaping | needs its own comprehension pass against domain 14 | not decomposed |
+| D-str-1 strategy reselect | blocked on D-str-0 | blocked |
+| E0 consumer-pull lane | standing policy, not a step | n/a |
+| E1 to E5 consumer surfaces | per-symbol decomposition due when Phase D closes | not decomposed |
+| E6 Seq and Map collection members | domain-19 wiring; nothing earlier depends on it | not decomposed |
+| F, G, H | phase summaries, decomposition not yet due | not decomposed |
+| step renumbering | mechanical; renumber to canon, mapping-table alternative rejected in-line | ready |
+
+Three entries are honestly incomplete, and naming them is the point. **D-str-0 is the least-charted
+work remaining in the internals**: strategy plan-shaping was carried for months inside a subordinate
+clause ("after strategy plan-shaping is wired") attached to a different leaf, which is how a
+prerequisite goes missing. It needs a comprehension pass against domain 14 before it can be
+decomposed, and that pass should happen during Phase C rather than when Phase D reaches it. **E1 to
+E5** are deliberately left at phase granularity until Phase D closes, because their shape depends on
+what the internals settle into. **F, G, H** are not due.
+
+Everything else is either done, ready to implement with no open question, or specced with a named
+sketch or bench that must land before its slice starts.
 
 ## Sketch plan: what is unproven, and what each sketch must pin
 
-Most leaves in this revision are mechanical and need no sketch: A4, A5, A6, G2C-0, G2C-1a, G2C-1b,
+Most leaves in this revision are mechanical and need no sketch: A4, A5, A7, G2C-0, G2C-1a, G2C-1b,
 G2C-5, G2C-6a, the step renumbering, and the B and C leaves the 2026-07-02 pass already resolved
 from canon and source (B1a, B1b's substrate, B3a). What follows is the set whose premise is genuinely
 unproven, each with the hypothesis it must establish and the leeway accepted in the shape it proves.
@@ -346,10 +488,17 @@ per-unit assignment changes grouping semantics with nothing failing loudly.
 const-dispatch correctly, since the carrier walks by carrier position rather than by `topo_order`
 index. Leeway: exact. The ordering contract is precise and a near-miss is a wrong-answer bug.
 
-**G2C-M is a bench, not a sketch.** It measures rather than proves a shape, and its result gates
-whether G2C-1's engineering cost is justified rather than whether G2C-1 is possible. Run it before
-committing to G2C-1, and let a bandwidth ceiling at four cores be an acceptable answer that closes
-the item.
+**D-gen, per-morsel generation counters.** Prove where a per-morsel generation counter can live
+under no-alloc when the morsel count per fiber varies with the window, and how it composes with the
+existing `store_dirty` mask instead of duplicating it. Leeway: some-shape. This is the one Phase D
+leaf that must not be started by writing code; the storage question decides the design.
+
+**Benches, not sketches.** G2C-M measures rather than proves a shape: its result gates whether
+G2C-1's engineering cost is justified, not whether G2C-1 is possible, and a bandwidth ceiling at
+four cores is an acceptable answer that closes the item. It also carries A6's windowed-versus-
+unwindowed arm and sets G2C-1b's floor. D-act-2 benches candidate re-chunk rules against the
+catalogued adapt contracts. D-arena benches the metrics fold both ways. Each states its decision
+rule before it runs, so the measurement settles the question rather than starting an argument.
 
 ## How the head+tail question was settled, and a recorded disagreement
 
