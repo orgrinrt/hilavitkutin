@@ -96,3 +96,28 @@ fn resolve_runtime_delegates_to_arena() {
     assert!(h.is_runtime().0);
     assert_eq!(interner.resolve(h), Maybe::Is("arena-delegate"));
 }
+
+#[test]
+fn interner_trait_roundtrips_and_rejects_foreign_kind() {
+    use arvo_bits::{Bits, Hot};
+    use hilavitkutin_str::StrDomain;
+    use hilavitkutin_sym::{Interner, Sym, SymKind};
+
+    let interner = StringInterner::new(VecInterner::new());
+
+    // The generic Interner trait view roundtrips the same as the string-typed
+    // methods: intern to a Sym, resolve back to the str.
+    let s: Sym = Interner::<StrDomain>::intern(&interner, "trait-view");
+    match Interner::<StrDomain>::resolve(&interner, s) {
+        Maybe::Is(v) => assert_eq!(v, "trait-view"),
+        Maybe::Isnt => panic!("expected the string interner to resolve its own handle"),
+    }
+
+    // A handle from a foreign (non-string) domain is not this interner's to
+    // resolve, so resolve returns Isnt rather than a garbage string.
+    let foreign = Sym::new(SymKind::from_raw(0b010), Bits::<28, Hot>::from_raw(0));
+    assert!(matches!(
+        Interner::<StrDomain>::resolve(&interner, foreign),
+        Maybe::Isnt
+    ));
+}

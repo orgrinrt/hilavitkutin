@@ -1,0 +1,9 @@
+### hilavitkutin-sym
+
+Generic interned-identity core for the hilavitkutin ecosystem. `no_std`,
+no alloc, no ecosystem dependencies. Provides `Sym`, a 4-byte
+integer-equality handle tagged by a 4-bit domain `kind`, the `Domain`
+trait ladder that distinguishes deduplicated-value domains from
+minted-fresh domains, the `Interner` producer trait, and the `Generator`
+mint-only producer. String interning is one domain of this core, supplied
+by `hilavitkutin-str`.

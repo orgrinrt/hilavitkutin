@@ -373,6 +373,16 @@ dependencies = [
  "arvo",
  "arvo-bits",
  "arvo-refit",
+ "hilavitkutin-sym",
+ "notko",
+]
+
+[[package]]
+name = "hilavitkutin-sym"
+version = "0.1.0"
+dependencies = [
+ "arvo",
+ "arvo-bits",
  "notko",
 ]
 

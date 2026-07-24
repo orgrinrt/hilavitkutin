@@ -9,6 +9,7 @@ members = [
     # Ecosystem crates (from saalis)
     "crates/hilavitkutin-ctx",
     "crates/hilavitkutin-persistence",
+    "crates/hilavitkutin-sym",
     "crates/hilavitkutin-str",
     "crates/hilavitkutin-kit",
     "crates/hilavitkutin-providers",
@@ -56,6 +57,7 @@ hilavitkutin-api = { path = "crates/hilavitkutin-api" }
 hilavitkutin-api-macros = { path = "crates/hilavitkutin-api-macros" }
 hilavitkutin = { path = "crates/hilavitkutin" }
 hilavitkutin-build = { path = "crates/hilavitkutin-build" }
+hilavitkutin-sym = { path = "crates/hilavitkutin-sym" }
 
 # Platform dep for hilavitkutin engine os-tier syscalls.
 libc = { version = "0.2", default-features = false }

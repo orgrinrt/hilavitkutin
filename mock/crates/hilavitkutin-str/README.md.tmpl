@@ -1,6 +1,8 @@
 ### hilavitkutin-str
 
 Interned string primitives for the hilavitkutin ecosystem. `no_std`,
-zero external dependencies. Provides `Str(u32)` handle type, `str_const!`
-macro for compile-time registration via linker sections, `ArenaInterner`
-trait for host-provided backends, and `StringInterner` wrapper.
+built on `hilavitkutin-sym` for the identity handle. The string handle
+`Str` is one domain of that generic core. Provides the `Str` handle, the
+`str_const!` macro for compile-time registration via linker sections, the
+`ArenaInterner` trait for host-provided backends, and the `StringInterner`
+wrapper (which is the first implementer of the sym-core `Interner` trait).
