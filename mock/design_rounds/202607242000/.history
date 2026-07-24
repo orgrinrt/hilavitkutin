@@ -1,0 +1,50 @@
+35ffce7d docs: regenerate design overview with hilavitkutin-sym row
+89028899 chore: lock src changelist for design-overview round
+1ae00fe3 docs: no-source src changelist for design-overview round
+b905d69a docs: list hilavitkutin-sym in the design overview crate table
+578a0bc0 docs: doc changelist for sym-in-design-overview round
+bf015dd4 docs: open round to list hilavitkutin-sym in design overview
+7de9b74a chore: close hilavitkutin-sym interning round
+21156e4e chore: lock src changelist for sym-interning round
+f05a7ac6 docs: regenerate docs for hilavitkutin-sym crate
+0cf8a5fb feat: factor hilavitkutin-sym generic interned-identity core
+b702a984 docs: src changelist for hilavitkutin-sym round
+ecae91a3 chore: lock doc changelist for sym-interning round
+8c97f5a2 docs: add hilavitkutin-sym to the ecosystem crate roster
+349bfbcf docs: convert sym/str layout lists to tables and prose
+a7760785 docs: refactor hilavitkutin-str design to consume sym core
+060e5ab5 docs: add hilavitkutin-sym crate design + readme
+4d631eee docs: doc changelist for hilavitkutin-sym round
+ab57efe4 docs: open round to factor generic interned-identity core
+4a7515dc docs: give every r6 leaf an assigned resolution
+6c4e7006 docs: re-chart engine roadmap against canon as r6
+bad6ee64 feat: add Plannable declaration trait and the HintExt hint slot
+32161ce6 feat: invert run dispatch to fiber-outer morsel-inner per plan window
+6a9983ee feat: per-fiber l1 morsel-window formula from runcfg budget
+8a30758e feat: erased resource addressing and ctx snapshot per storage bench
+82673e9e feat: add hilavitkutin-api-macros crate with ResourceFootprint derive
+009f76fc feat: add CollectionBytes + ResourceFootprint footprint traits
+2b65194c docs: sketch A3-2 resource-collection footprint surface
+272dee96 docs: re-chart A3 morsel formula on the canonical R5 resource model
+9e80d835 feat: add per-store element-byte-size collection for L1 morsel formula
+2e799053 docs: sketch A3 per-store size collection for L1 morsel formula
+aaa6097a feat: add run_one_trunk_windowed for fiber-outer morsel dispatch
+906949f1 docs: sketch A2a per-fiber morsel loop drives per-trunk dispatch
+90c7529c docs: backlog note for generalized asm-emission contract tests
+06e68715 docs: granular roadmap, sketch plan, asm-contract-test discipline
+abe3a4e6 feat: thread per-fiber morsel size onto FiberDispatch
+7fe3f203 docs: resolve arc-audit roadmap (head+tail/overlap in scope, internals-first)
+9901b875 docs: critical arc audit and updated canonical roadmap
+1796fe39 refactor: rename morsel_sizes to morsel_windows for per-fiber morsel slice 1
+e1b243aa docs: per-fiber morsel-loop wiring blueprint
+5dfcc4fb docs: chart adapt actuation arc (dead consumption surfaces)
+6d034dae feat: select_adapt_config phase-imbalance reconfigure trigger
+de04dc48 feat: per-phase duration EMA + catalogue adapt performance contracts
+86e24062 feat: core-idle adapt axis via waist-barrier follower timing
+2553d4df feat: change_seen_count on all run paths, accumulator over-capacity is a hard error
+cc89cdee feat: count change_class frames via store_dirty into SchedulerMetrics
+b3ce8a5a chore: allow private_bounds on sealed Executor trait
+c3b6bd8b chore: remove unused impl_trait_in_assoc_type gate from hilavitkutin-api
+17189200 feat: sample throughput record count into SchedulerMetrics
+03ef6c8a test: P1 R2a keystone nine-resource CtxFor Ctx through OnMeta
+e1e15a30 docs: chart-the-path P1 adapt granularity + sketch plan

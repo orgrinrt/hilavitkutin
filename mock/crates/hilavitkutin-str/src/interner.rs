@@ -3,11 +3,43 @@
 
 use arvo_bits::{Bits, Hot};
 use arvo_refit::Narrow;
+use hilavitkutin_sym::{Domain, InterningDomain, Interner, Sym, SymKind};
 use notko::Maybe;
 
 use crate::handle::Str;
 use crate::hash::const_fnv1a;
 use crate::section::static_entries;
+
+/// The string domain marker for the sym-core interning traits.
+///
+/// Strings are an interning domain: `intern` deduplicates a `&str` into a
+/// stable handle, `resolve` recovers the string. `StringInterner` is the
+/// implementer; the const linker section plus the host arena is the backing.
+pub struct StrDomain;
+
+impl Domain for StrDomain {
+    const KIND: SymKind = Str::STR_DOMAIN;
+}
+
+impl InterningDomain for StrDomain {
+    type Value = str;
+}
+
+impl<A: ArenaInterner> Interner<StrDomain> for StringInterner<A> {
+    fn intern(&self, value: &str) -> Sym { // lint:allow(no-bare-string) reason: the string-domain Value is str; this is the interning boundary; tracked: #72
+        // Inherent `intern` (returns Str) shadows this trait method, so this is
+        // not a recursive call.
+        self.intern(value).as_sym()
+    }
+
+    fn resolve(&self, sym: Sym) -> Maybe<&str> { // lint:allow(no-bare-string) reason: the string-domain Value is str; this is the resolve boundary; tracked: #72
+        // A handle from another domain is not ours to resolve.
+        if sym.kind() != Str::STR_DOMAIN {
+            return Maybe::Isnt;
+        }
+        self.resolve(Str::from_sym(sym))
+    }
+}
 
 /// Host-implemented arena contract. Only handles runtime strings;
 /// const strings are short-circuited by `StringInterner`.

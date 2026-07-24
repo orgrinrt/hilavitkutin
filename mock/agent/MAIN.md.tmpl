@@ -23,7 +23,7 @@ The canonical spec is
 
 **Build-time (build-dep only, no runtime linkage).** `hilavitkutin-build` holds LLVM passes, MIR manipulation, cfg emission, PGO / BOLT workflows, and ExpandedLto pragma support. Consumer's `build.rs` uses this; the runtime crate never links to it.
 
-**Ecosystem (standalone opt-in sub-libraries).** `hilavitkutin-ctx` is the provider-gated context framework, `hilavitkutin-persistence` is the generic hot/cold storage bridge, and `hilavitkutin-str` is the interned string system.
+**Ecosystem (standalone opt-in sub-libraries).** `hilavitkutin-sym` is the generic interned-identity core (the `Sym` handle, domain traits, `Interner`, `Generator`), `hilavitkutin-str` is the interned string system built on it (one string domain), `hilavitkutin-ctx` is the provider-gated context framework, and `hilavitkutin-persistence` is the generic hot/cold storage bridge.
 
 **Plugin host infrastructure (reusable downstream loader layer).** Three crates make up the layer. `hilavitkutin-linking` is the cross-platform dynamic library loader primitive: pull-based explicit-symbol resolution over dlopen / LoadLibrary, `no_std`, no allocator. `hilavitkutin-extensions` is the contract-bound host orchestration layered above it: `ExtensionDescriptor` shape, lifecycle with per-extension host-opaque context pointer, capability dispatch via stable `CapabilityId`, required-versus-optional failure policy. `hilavitkutin-extensions-macros` is the proc-macro companion that emits the `#[repr(C)]` descriptor, the `__hilavitkutin_extension_descriptor` exported fn, and the capability trampolines via `#[export_extension]`. All three remain domain-agnostic; downstream consumers (viola, etc.) layer their own contract crates on top.
 

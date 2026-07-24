@@ -16,6 +16,7 @@ layers = [
     "Build",        # hilavitkutin-build (LLVM/MIR)
     "Ext:ctx",      # hilavitkutin-ctx
     "Ext:persist",  # hilavitkutin-persistence
+    "Ext:sym",      # hilavitkutin-sym
     "Ext:str",      # hilavitkutin-str
     "Ext:kit",      # hilavitkutin-kit
     "Ext:providers", # hilavitkutin-providers
@@ -35,6 +36,7 @@ hilavitkutin = "#EDE6F3 | #5C2D82"
 hilavitkutin-build = "#FDF0E0 | #C05C00"
 hilavitkutin-ctx = "#E6F2E6 | #2D6A2D"
 hilavitkutin-persistence = "#E6F2E6 | #2D6A2D"
+hilavitkutin-sym = "#E6F2E6 | #2D6A2D"
 hilavitkutin-str = "#E6F2E6 | #2D6A2D"
 hilavitkutin-kit = "#E6F2E6 | #2D6A2D"
 hilavitkutin-providers = "#E6F2E6 | #2D6A2D"
@@ -124,6 +126,7 @@ rules = [
     { scope = "hilavitkutin-ctx", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_persistence::*, hilavitkutin_str::*", reason = "hilavitkutin-ctx is a standalone ecosystem crate; keep it independently usable" },
     { scope = "hilavitkutin-persistence", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_str::*", reason = "hilavitkutin-persistence is a standalone ecosystem crate; keep it independently usable" },
     { scope = "hilavitkutin-str", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*", reason = "hilavitkutin-str is a standalone ecosystem crate; keep it independently usable" },
+    { scope = "hilavitkutin-sym", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*, hilavitkutin_str::*", reason = "hilavitkutin-sym is the standalone interned-identity core; it sits below the ecosystem crates and depends only on arvo and notko" },
     { scope = "hilavitkutin-kit", forbidden = "hilavitkutin::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*, hilavitkutin_str::*, arvo::*, arvo_bits::*, arvo_bitmask::*, arvo_graph::*, arvo_sparse::*, arvo_spectral::*, arvo_comb::*, arvo_hash::*, notko::*", reason = "hilavitkutin-kit defines the Kit preset trait. Round 4 declarative shape (`type Units: WorkUnitBundle; type Owned: StoreBundle`) requires hilavitkutin-api substrate primitives in its bounds, so the api dep is allowed. Engine still depends on kit, not the reverse" },
     { scope = "hilavitkutin-providers", forbidden = "hilavitkutin::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*, hilavitkutin_build::*, hilavitkutin_linking::*, hilavitkutin_extensions::*", reason = "hilavitkutin-providers ships default Kit impls; depends on api + str + kit + substrate. Must not depend on engine, build-time, ctx/persistence siblings, or plugin-host layer" },
 

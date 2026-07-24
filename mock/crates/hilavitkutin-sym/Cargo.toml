@@ -1,14 +1,12 @@
 [package]
-name = "hilavitkutin-str"
+name = "hilavitkutin-sym"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Interned string handle + arena + linker-section const table"
+description = "Generic interned-identity core: Sym handle, domain traits, Interner, Generator"
 repository.workspace = true
 
 [dependencies]
 arvo.workspace = true
 arvo-bits.workspace = true
-arvo-refit.workspace = true
-hilavitkutin-sym.workspace = true
 notko.workspace = true
