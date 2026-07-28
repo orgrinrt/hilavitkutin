@@ -6,7 +6,7 @@ apply_to: ["crates/**/*.rs", "src/**/*.rs"]
 
 No ad-hoc allocations. Allocation is scheduler-managed, declared at
 compile time, never runtime-fabricated. `#![no_std]` + `#![no_alloc]`
-aren't crate attributes first — they're the universe. `Vec`, `Box`,
+aren't crate attributes first, they're the universe. `Vec`, `Box`,
 `Rc`, `Arc`, `HashMap`, `String`, `format!` don't exist in this code.
 
 Every lint that forbids `alloc::*` / `Vec` / `Box` / `String` / `HashMap`
@@ -47,4 +47,4 @@ signatures are fixed by the language:
 
 Anywhere else in public API, use the notko/arvo/hilavitkutin-api
 vocabulary. `lint:allow(...)` is for tracked debt with a linked task id
-only — never skeleton convenience.
+only, never skeleton convenience.

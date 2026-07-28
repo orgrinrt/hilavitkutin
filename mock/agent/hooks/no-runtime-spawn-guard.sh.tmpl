@@ -24,11 +24,11 @@ if ! echo "$TARGET" | grep -qE 'hilavitkutin[^/]*/src/.*\.rs$'; then
 fi
 
 if echo "$CONTENT" | grep -qE 'thread::spawn|std::thread::spawn|std::thread::Builder'; then
-    deny "BLOCKED: \`thread::spawn\` — hilavitkutin uses a pre-allocated thread pool. Spawn only through the consumer-provided \`ThreadPool\` trait; between frames, pool threads park."
+    deny "BLOCKED: \`thread::spawn\`: hilavitkutin uses a pre-allocated thread pool. Spawn only through the consumer-provided \`ThreadPool\` trait; between frames, pool threads park."
 fi
 
 if echo "$CONTENT" | grep -qE 'tokio::spawn|tokio::task::spawn|async_std::task::spawn|smol::spawn|rayon::spawn'; then
-    deny "BLOCKED: async runtime / rayon spawn — the engine is sync and owns its own pool. Route work through WorkUnits and the scheduler, not an external runtime."
+    deny "BLOCKED: async runtime / rayon spawn, the engine is sync and owns its own pool. Route work through WorkUnits and the scheduler, not an external runtime."
 fi
 
 allow

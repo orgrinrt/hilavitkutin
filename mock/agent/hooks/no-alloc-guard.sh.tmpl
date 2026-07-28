@@ -25,11 +25,11 @@ if ! echo "$TARGET" | grep -qE 'hilavitkutin[^/]*/src/.*\.rs$'; then
 fi
 
 if echo "$CONTENT" | grep -qE '^\s*(pub\s+)?use\s+alloc::'; then
-    deny "BLOCKED: \`use alloc::\` — hilavitkutin is no-alloc. Use arvo const-generic structures or a MemoryProvider-backed buffer."
+    deny "BLOCKED: \`use alloc::\`: hilavitkutin is no-alloc. Use arvo const-generic structures or a MemoryProvider-backed buffer."
 fi
 
 if echo "$CONTENT" | grep -qE '^\s*extern\s+crate\s+alloc'; then
-    deny "BLOCKED: \`extern crate alloc;\` — hilavitkutin is no-alloc. Remove it."
+    deny "BLOCKED: \`extern crate alloc;\`: hilavitkutin is no-alloc. Remove it."
 fi
 
 if echo "$CONTENT" | grep -qE '(^|[^a-zA-Z_])Vec<'; then
@@ -41,7 +41,7 @@ if echo "$CONTENT" | grep -qE '(^|[^a-zA-Z_])String([^a-zA-Z_]|$)'; then
 fi
 
 if echo "$CONTENT" | grep -qE '(^|[^a-zA-Z_])Box<'; then
-    deny "BLOCKED: \`Box<T>\` in source. Monomorphised types only — no heap boxing. If you need indirection, make the type generic."
+    deny "BLOCKED: \`Box<T>\` in source. Monomorphised types only, no heap boxing. If you need indirection, make the type generic."
 fi
 
 if echo "$CONTENT" | grep -qE '(^|[^a-zA-Z_])(Rc|Arc)<'; then

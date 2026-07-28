@@ -19,7 +19,7 @@ Three sources contribute lints:
    (cross-crate). Files ending in `_cross.rs` are treated as
    cross-crate.
 3. **Config-driven** via `mockspace.toml` under
-   `[lints.forbidden-imports]` — a table-based lint that enforces
+   `[lints.forbidden-imports]`: a table-based lint that enforces
    scope → forbidden pairs.
 
 ## Severity system
@@ -36,9 +36,9 @@ when a gate is unset.
 | `off` | Skipped entirely |
 
 Run modes:
-- `cargo mock --commit` — commit gate (pre-commit hook uses this)
-- `cargo mock` — build gate (default; CI uses this)
-- `cargo mock --strict` — push gate (pre-push hook uses this)
+- `cargo mock --commit`: commit gate (pre-commit hook uses this)
+- `cargo mock`: build gate (default; CI uses this)
+- `cargo mock --strict`: push gate (pre-push hook uses this)
 
 ## Hilavitkutin custom lints
 
@@ -56,7 +56,7 @@ tuned in `mockspace.toml` under `[lints.<name>]`.
 
 ## Config-driven: `forbidden-imports`
 
-Enforced via `mockspace.toml` — cheaper to add rules here than to
+Enforced via `mockspace.toml`: cheaper to add rules here than to
 write Rust. The hilavitkutin layer rules:
 
 - All `hilavitkutin*` crates forbid `std::*, alloc::*` (covered by
@@ -76,12 +76,12 @@ and (where possible) a pre-tool-use hook. "Documented" is not
 "enforced".
 
 1. Add `mock/lints/<name>.rs` implementing `mockspace::Lint`.
-2. Declare `default_severity()` — typically `HARD_ERROR` for
+2. Declare `default_severity()`: typically `HARD_ERROR` for
    structural invariants, `PUSH_GATE` for best-practice, `ADVISORY`
    for nudges.
 3. Register per-gate severity in `mockspace.toml`.
 4. Exclude proc-macro crates explicitly (`if
-   ctx.is_proc_macro_crate() { return Vec::new(); }`) — not
+   ctx.is_proc_macro_crate() { return Vec::new(); }`), not
    applicable to hilavitkutin right now (no proc-macro crates), but
    keep the habit.
 5. Write tests if the lint logic is non-trivial.

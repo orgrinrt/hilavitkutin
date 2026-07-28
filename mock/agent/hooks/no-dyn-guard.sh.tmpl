@@ -4,7 +4,7 @@
 # Agent hook: block dynamic-dispatch tokens in hilavitkutin* sources.
 #
 # Mirrors `mock/lints/no_dynamic_dispatch.rs`. Monomorphisation is
-# the dispatch — the fused pipeline must devirtualise to straight-
+# the dispatch, the fused pipeline must devirtualise to straight-
 # line code. Trait objects, TypeId, and std::any break that.
 
 set -uo pipefail
@@ -30,7 +30,7 @@ if echo "$CONTENT" | grep -qE '( dyn |<dyn |&dyn |&mut dyn )'; then
 fi
 
 if echo "$CONTENT" | grep -qE 'TypeId|std::any::|core::any::'; then
-    deny "BLOCKED: \`TypeId\` / \`std::any\` — the monomorphised function IS the type identity. No runtime type erasure."
+    deny "BLOCKED: \`TypeId\` / \`std::any\`: the monomorphised function IS the type identity. No runtime type erasure."
 fi
 
 allow
