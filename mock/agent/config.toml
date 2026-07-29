@@ -1,4 +1,7 @@
 # Agent integration config. See mockspace README for details.
+# Opt in to the interactive design-talk skill and the script it ships.
+agent_accelerated_interactive_design_talks = true
+
 
 [attribution]
 # Byline policy when HILAVITKUTIN_AGENT_MODE is unset or "assistant".
