@@ -13,8 +13,6 @@ arvo-tensor.workspace = true
 hilavitkutin-ctx.workspace = true
 notko.workspace = true
 
-[build-dependencies]
-mockspace.workspace = true
 
 [dev-dependencies]
 trybuild = "1"

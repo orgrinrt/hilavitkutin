@@ -1,3 +1,8 @@
+# The engine pin. `mockspace_version` is the released form, and mockspace has
+# cut no release yet, so this tracks the working trunk instead. The launcher
+# re-resolves the branch head periodically.
+mockspace_branch = "dev"
+
 project_name = "hilavitkutin"
 crate_prefix = "hilavitkutin"
 abi_version = 1
@@ -211,26 +216,11 @@ commit = "off"
 build = "warn"
 push = "warn"
 
-[lints.no-bare-vec]
-commit = "error"
-build = "error"
-push = "error"
-
 # Pre-hilavitkutin-str crates must gate any `const NAME: &str` / `static
 # NAME: &str` behind `#[cfg(debug_assertions)]`; hilavitkutin-str itself
 # declares the `static-string` category in [primitive-introductions]
 # below and is exempt (task #125).
 [lints.no-bare-static-str]
-commit = "error"
-build = "error"
-push = "error"
-
-[lints.no-box]
-commit = "error"
-build = "error"
-push = "error"
-
-[lints.no-float]
 commit = "error"
 build = "error"
 push = "error"
@@ -290,7 +280,7 @@ severity = "advisory"
 # Git-based dep spec only — committed config must be portable.
 
 [lint-crates]
-mockspace-hilavitkutin-stack-lints = { git = "ssh://git@github.com/orgrinrt/mockspace-hilavitkutin-stack-lints.git", branch = "main" }
+mockspace-extra-lints = { git = "ssh://git@github.com/orgrinrt/mockspace-hilavitkutin-stack-lints.git", branch = "dev" }
 
 # Writing-style gate — pre-existing docs trip this until sweeps tidy them.
 [lints.writing-style]

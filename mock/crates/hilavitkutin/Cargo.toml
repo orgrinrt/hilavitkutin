@@ -19,8 +19,6 @@ arvo-spectral.workspace = true
 arvo-comb.workspace = true
 libc = { workspace = true, optional = true }
 
-[build-dependencies]
-mockspace.workspace = true
 
 [dev-dependencies]
 # Tests wire the arena-backed `ColumnStorage` default. Dev-dep only: the
