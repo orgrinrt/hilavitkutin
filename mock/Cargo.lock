@@ -253,7 +253,6 @@ dependencies = [
  "hilavitkutin-kit",
  "hilavitkutin-providers",
  "libc",
- "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
 ]
 
@@ -265,7 +264,6 @@ dependencies = [
  "arvo-bitmask",
  "arvo-tensor",
  "hilavitkutin-ctx",
- "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
  "trybuild",
 ]
@@ -277,7 +275,6 @@ dependencies = [
  "arvo",
  "arvo-tensor",
  "hilavitkutin-api",
- "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "proc-macro2",
  "quote",
  "syn",
@@ -288,7 +285,6 @@ name = "hilavitkutin-build"
 version = "0.1.0"
 dependencies = [
  "arvo",
- "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
 ]
 
@@ -302,7 +298,6 @@ version = "0.1.0"
 dependencies = [
  "arvo",
  "hilavitkutin-linking",
- "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
 ]
 
@@ -312,7 +307,6 @@ version = "0.1.0"
 dependencies = [
  "hilavitkutin-extensions",
  "libloading",
- "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "proc-macro2",
  "quote",
  "syn",
@@ -333,7 +327,6 @@ dependencies = [
  "arvo",
  "arvo-bits",
  "libc",
- "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
  "windows-sys",
 ]

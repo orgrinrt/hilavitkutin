@@ -11,8 +11,6 @@ hilavitkutin-linking.workspace = true
 notko.workspace = true
 arvo.workspace = true
 
-[build-dependencies]
-mockspace.workspace = true
 
 [features]
 default = []
