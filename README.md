@@ -191,7 +191,7 @@ files that exercise the atomic-ordering paths.
 
 ## Status
 
-Design is mature across the engine, the plugin-host layer, and the standalone ecosystem crates; implementation status varies per crate. The plugin-host layer (linking + extensions + extensions-macros) is implemented. The api crate and the standalone ecosystem extensions (ctx, str, persistence, providers) are partially implemented. The engine's runtime modules (the plan analysis chain, dispatch codegen, adapt subsystem, thread pool, morsel loop, resource resolution, plan caching) are designed and not yet shipped. hilavitkutin-build runs as a build-dependency stub today; full wrapper script generation and config schema are deferred to follow-up rounds.
+Design is mature across the engine, the plugin-host layer, and the standalone ecosystem crates; implementation status varies per crate. The plugin-host layer (linking + extensions + extensions-macros) is implemented. The api crate and the standalone ecosystem extensions (ctx, str, persistence, providers) are partially implemented. The engine's runtime modules (the plan analysis chain, dispatch codegen, adapt subsystem, thread pool, morsel loop, resource resolution, plan caching) are designed and not yet shipped. hilavitkutin-build is a host-side tool rather than a build dependency; the workspace carries no build script; full wrapper script generation and config schema are deferred to follow-up rounds.
 
 Public names may change; renames ship cleanly without deprecation aliases. Several pieces gate on unstable rustc features: `const_trait_impl`, `adt_const_params`, `generic_const_exprs`, `marker_trait_attr` for the trait solver work, plus `-Z config-include` for the build crate.
 

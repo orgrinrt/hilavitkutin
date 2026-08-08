@@ -88,9 +88,11 @@ That is what lets the kind width vary: a shape declaring a wider tag declares a
 bitfield with a wider tag, and the positions stay literals inside the impl that
 writes them.
 
-A width the trait declares is a width something consumes. A constant no code
-reads and no check constrains is a comment with a type, and this document does
-not present one as a contract.
+A width the trait declares is a width something **constrains**. A layout reports
+the widths its bitfield actually has, and a law ties each shape's declaration to
+its layout's fact, so a shape claiming a three-bit field is nine bits wide fails
+its own law rather than compiling clean. Without that tie a declared width is a
+comment with a type, and this document does not present one as a contract.
 
 `SymShape` is a const trait, so a handle builds in a const context under any
 shape. A domain declares which shape it belongs to, which is what stops a domain
@@ -144,7 +146,9 @@ domains cannot claim one tag. The current assignments:
 
 ```rust
 pub trait Domain {
-    const KIND: SymKind;
+    type Shape: SymShape;
+
+    const KIND: SymKind<Self::Shape>;
 }
 
 pub trait InterningDomain: Domain {
@@ -165,7 +169,7 @@ a type-level fact and the wrong producer for a domain is a type error.
 ```rust
 pub trait Interner<D: InterningDomain> {
     fn intern(&self, value: &D::Value) -> Sym;
-    fn resolve(&self, sym: Sym) -> Maybe<&D::Value>;
+    fn resolve(&self, sym: Sym<D::Shape>) -> Maybe<&D::Value>;
 }
 ```
 
@@ -192,7 +196,8 @@ The concrete producer for a generative domain. It holds a monotonic counter and
 mints a fresh handle on demand:
 
 ```rust
-// mint returns a fresh Sym tagged D::KIND, or Isnt at this origin's ceiling.
+// mint returns a fresh Sym<D::Shape> tagged D::KIND, or Isnt at this
+// origin's ceiling.
 pub fn mint(&mut self) -> Maybe<Sym>;
 ```
 
