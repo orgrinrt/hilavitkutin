@@ -78,7 +78,14 @@ choice wearing a substrate constant.
 
 A shape names four widths: how many bits tag the domain, how many name the
 minter, how many count within a minter, and the one flag bit. The last three
-partition what the `Standard` table calls `id`.
+divide what the `Standard` table calls `id`. It also supplies the origin type,
+where a minter's counter starts and stops, and how a counter projects into the
+id field, so the one low-level numeric edge of a producer sits with the shape
+that decides how wide the field is.
+
+`SymShape` is a const trait, so a handle builds in a const context under any
+shape. A domain declares which shape it belongs to, which is what stops a domain
+of one shape handing its tag to a producer of another.
 
 The widths are related by arithmetic, since they must total 32. **That
 arithmetic lives in each impl rather than in a bound.** Writing the derivation
@@ -89,6 +96,10 @@ expressions are legal and leaves every bound naming a contract.
 `Standard` is the default and is byte-identical to the layout above: kind 3,
 one minter, counter 28. **The string domain's fixed `0b000` tag and every baked
 string handle survive it unchanged**, because nothing about the default moves.
+
+`SixteenMinters` is the second shape and exists so the trait has a real
+implementation rather than a single one: same kind width, four bits naming which
+of sixteen minters produced a handle, twenty-four counting within it.
 
 ## `SymKind`, the domain tag
 
@@ -192,17 +203,21 @@ broken.
 
 ### Origins make disjointness constructible
 
-So a generator is built **for an origin**, and origins partition the counter
-space by construction rather than by convention.
+So a generator is built **for an origin**, and origins divide the counter space
+by construction rather than by convention. Each origin starts at its own base and
+stops at its own ceiling, so two minters at two origins cannot produce the same
+id however far either counts, and a minter that exhausts its range refuses rather
+than walking into its neighbour's.
 
 Under `Standard` there is one origin and zero bits naming it, so the counter
-takes the full 28 bits and the single-minter behaviour is exactly what the
-default gives. Nothing changes for a consumer with one minter.
+takes the full 28 bits and `Generator::single` needs no argument. Nothing changes
+for a consumer with one minter, and there is no second origin for it to name.
 
-A consumer with several independent minters picks a shape with origin bits.
-Under such a shape a generator cannot be constructed without naming its origin,
-so two peers colliding requires both to claim the same origin, which is a
-declared conflict rather than a silent default.
+A consumer with several independent minters declares a domain on a shape with
+origin bits, and then `Generator::at` is the only way in: a generator cannot be
+constructed without saying which minter it is. Two peers colliding would require
+both to claim the same origin, which is a declared conflict rather than a silent
+default.
 
 This is the same principle the exhaustion contract already states. The crate
 refuses to reissue a live id; two peers reissuing each other's ids is that
