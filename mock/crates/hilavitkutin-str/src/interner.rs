@@ -28,15 +28,15 @@ impl InterningDomain for StrDomain {
 }
 
 impl<A: ArenaInterner> Interner<StrDomain> for StringInterner<A> {
-    fn intern(&self, value: &str) -> Sym {
-        // lint:allow(no-bare-string) reason: the string-domain Value is str; this is the interning boundary; tracked: #72
+    #[rustfmt::skip]
+    fn intern(&self, value: &str) -> Sym<Standard> { // lint:allow(no-bare-string) reason: the string-domain Value is str; this is the interning boundary; tracked: #72
         // Inherent `intern` (returns Str) shadows this trait method, so this is
         // not a recursive call.
         self.intern(value).as_sym()
     }
 
-    fn resolve(&self, sym: Sym) -> Maybe<&str> {
-        // lint:allow(no-bare-string) reason: the string-domain Value is str; this is the resolve boundary; tracked: #72
+    #[rustfmt::skip]
+    fn resolve(&self, sym: Sym<Standard>) -> Maybe<&str> { // lint:allow(no-bare-string) reason: the string-domain Value is str; this is the resolve boundary; tracked: #72
         // A handle from another domain is not ours to resolve.
         if sym.kind() != Str::STR_DOMAIN {
             return Maybe::Isnt;
@@ -56,13 +56,13 @@ pub trait ArenaInterner {
 
 /// Wraps an [`ArenaInterner`] with const-table handling. The const
 /// table (linker section) is always consulted first.
-pub struct StringInterner<A: ArenaInterner> {
-    // lint:allow(no-alloc) reason: interner wrapper name, not std `String`; tracked: #72
+#[rustfmt::skip]
+pub struct StringInterner<A: ArenaInterner> { // lint:allow(no-alloc) reason: interner wrapper name, not std `String`; tracked: #72
     arena: A,
 }
 
-impl<A: ArenaInterner> StringInterner<A> {
-    // lint:allow(no-alloc) reason: interner wrapper name, not std `String`; tracked: #72
+#[rustfmt::skip]
+impl<A: ArenaInterner> StringInterner<A> { // lint:allow(no-alloc) reason: interner wrapper name, not std `String`; tracked: #72
     /// Construct a new interner wrapping `arena`.
     pub const fn new(arena: A) -> Self {
         Self { arena }
@@ -75,8 +75,8 @@ impl<A: ArenaInterner> StringInterner<A> {
 
     /// Intern a string. Checks the const linker section first; on miss,
     /// falls back to the arena and tags the result as runtime.
-    pub fn intern(&self, s: &str) -> Str {
-        // lint:allow(no-bare-string) reason: interner boundary: incoming &str; tracked: #72
+    #[rustfmt::skip]
+    pub fn intern(&self, s: &str) -> Str { // lint:allow(no-bare-string) reason: interner boundary: incoming &str; tracked: #72
         if let Maybe::Is(h) = lookup_const_by_value(s) {
             return h;
         }
@@ -106,8 +106,8 @@ impl<A: ArenaInterner> StringInterner<A> {
     /// is outside the `ArenaInterner` contract (the interner hands
     /// out ids it can resolve), so the runtime branch returns
     /// `Maybe::Is(...)` unconditionally.
-    pub fn resolve(&self, s: Str) -> Maybe<&str> {
-        // lint:allow(no-bare-string) reason: interner boundary: resolved &str; tracked: #72
+    #[rustfmt::skip]
+    pub fn resolve(&self, s: Str) -> Maybe<&str> { // lint:allow(no-bare-string) reason: interner boundary: resolved &str; tracked: #72
         if s.is_const().0 {
             lookup_const_by_handle(s)
         } else {
@@ -118,8 +118,8 @@ impl<A: ArenaInterner> StringInterner<A> {
 
 /// Linear scan for a const-section entry matching `s` (by hash, then
 /// by content to rule out 28-bit truncation collisions).
-fn lookup_const_by_value(s: &str) -> Maybe<Str> {
-    // lint:allow(no-bare-string) reason: interner-internal &str math; mirrors boundary width; tracked: #72
+#[rustfmt::skip]
+fn lookup_const_by_value(s: &str) -> Maybe<Str> { // lint:allow(no-bare-string) reason: interner-internal &str math; mirrors boundary width; tracked: #72
     let want = Str::__make(Bits::<64, Hot>::from_raw(const_fnv1a(s)).narrow_to::<28>());
     for entry in static_entries() {
         if entry.hash == want && str_eq(entry.value, s) {
@@ -140,8 +140,8 @@ fn lookup_const_by_handle(h: Str) -> Maybe<&'static str> {
 }
 
 /// `no_std`-safe string equality.
-fn str_eq(a: &str, b: &str) -> bool {
-    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-string) reason: interner-internal &str equality helper; returns bare bool because it is below the API boundary; tracked: #72
+#[rustfmt::skip]
+fn str_eq(a: &str, b: &str) -> bool { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-string) reason: interner-internal &str equality helper; returns bare bool because it is below the API boundary; tracked: #72
     let a = a.as_bytes();
     let b = b.as_bytes();
     if a.len() != b.len() {

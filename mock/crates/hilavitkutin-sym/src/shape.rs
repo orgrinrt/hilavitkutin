@@ -77,16 +77,17 @@ pub const trait SymShape: Copy + 'static {
 /// impl, so each shape writes a short forwarding impl. The forwarding is
 /// mechanical; the positions it forwards to are the shape's own.
 pub const trait SymLayoutOps: Copy + Eq + core::fmt::Debug {
-    /// How many bits this layout's bitfield actually gives the tag.
+    /// This layout's own tag mask, as its bitfield generated it.
     ///
-    /// A layout is the only thing that knows, so it is the only thing that
-    /// says. A shape declaring a different `KIND_BITS` fails the law tying the
-    /// two, which is what makes the declaration a constraint rather than a
-    /// description.
-    const KIND_WIDTH: USize;
+    /// **The mask rather than a width**, because a width is a number an impl
+    /// writes and can therefore write wrongly. A mask is the field definition
+    /// itself: the accessors read through it, so a layout lying about its mask
+    /// breaks its own `get_kind` rather than merely misreporting. The width is
+    /// then counted from it by [`width_of`], which no impl can override.
+    const KIND_MASK: Bits<32, Hot>;
 
-    /// How many bits this layout's bitfield actually gives the id.
-    const ID_WIDTH: USize;
+    /// This layout's own id mask, as its bitfield generated it.
+    const ID_MASK: Bits<32, Hot>;
 
     /// The domain tag at this layout's kind width.
     type Kind: Copy + Eq + core::fmt::Debug;
@@ -109,6 +110,17 @@ pub const trait SymLayoutOps: Copy + Eq + core::fmt::Debug {
     fn get_flag(self) -> Bit<Hot>;
     /// The whole 32 bits, which is what comparison and persistence see.
     fn raw_bits(self) -> Bits<32, Hot>;
+}
+
+/// How many bits a mask covers.
+///
+/// A free function rather than a trait item, so no implementation can supply a
+/// different answer. This is what closes the restatement class: the previous
+/// three attempts each moved the hand-written number down a rung, and a number
+/// nobody writes cannot disagree with anything.
+#[rustfmt::skip]
+pub const fn width_of(mask: Bits<32, Hot>) -> USize {
+    USize(mask.to_raw().count_ones() as usize) // lint:allow(no-bare-numeric) reason: counting set bits of a generated mask to derive a field width; tracked: #34
 }
 
 /// The default shape, and byte-identical to the layout every current consumer
@@ -140,12 +152,13 @@ const impl SymShape for Standard {
         <Uint<28, Hot> as Identity>::ZERO
     }
 
+    #[rustfmt::skip]
     fn origin_ceiling(_: Self::Origin) -> Uint<28, Hot> {
         // The whole id space, because there is nobody to share it with.
-        <Uint<28, Hot> as FromConstant>::from_constant::<{ USize((1 << 28) - 1) }>()
-        // lint:allow(no-bare-numeric) reason: the 28-bit id-space ceiling as a typed constant (definition-site literal); tracked: #34
+        <Uint<28, Hot> as FromConstant>::from_constant::<{ USize((1 << 28) - 1) }>() // lint:allow(no-bare-numeric) reason: the 28-bit id-space ceiling as a typed constant (definition-site literal); tracked: #34
     }
 
+    #[rustfmt::skip]
     fn id_from_counter(counter: Uint<28, Hot>) -> <Self::Layout as SymLayoutOps>::Id {
         Bits::<28, Hot>::from_raw(counter.to_raw()) // lint:allow(no-bare-numeric) reason: Uint-to-Bits id projection at the id-allocator boundary; to_raw/from_raw are arvo's container projections; tracked: #34
     }
@@ -176,6 +189,7 @@ const impl SymShape for SixteenMinters {
     const KIND_BITS: USize = USize(3);
     const ORIGIN_BITS: USize = USize(4);
 
+    #[rustfmt::skip]
     fn origin_base(origin: Self::Origin) -> Uint<28, Hot> {
         // The minter's index shifted above its counter, so each origin owns a
         // contiguous run of ids and no two runs overlap. Done at the raw level
@@ -184,12 +198,13 @@ const impl SymShape for SixteenMinters {
         Uint::<28, Hot>::from_raw((origin.0.to_raw() as u32) << 24) // lint:allow(no-bare-numeric) reason: placing a 4-bit origin index above the 24-bit counter, at the id-allocator boundary; tracked: #34
     }
 
+    #[rustfmt::skip]
     fn origin_ceiling(origin: Self::Origin) -> Uint<28, Hot> {
         // The last id this minter owns: its base plus a full counter span.
-        Uint::<28, Hot>::from_raw(((origin.0.to_raw() as u32) << 24) | 0x00FF_FFFF)
-        // lint:allow(no-bare-numeric) reason: the per-origin counter ceiling at the id-allocator boundary; tracked: #34
+        Uint::<28, Hot>::from_raw(((origin.0.to_raw() as u32) << 24) | 0x00FF_FFFF) // lint:allow(no-bare-numeric) reason: the per-origin counter ceiling at the id-allocator boundary; tracked: #34
     }
 
+    #[rustfmt::skip]
     fn id_from_counter(counter: Uint<28, Hot>) -> <Self::Layout as SymLayoutOps>::Id {
         Bits::<28, Hot>::from_raw(counter.to_raw()) // lint:allow(no-bare-numeric) reason: Uint-to-Bits id projection at the id-allocator boundary; to_raw/from_raw are arvo's container projections; tracked: #34
     }
@@ -219,11 +234,12 @@ const impl SymShape for WideKind {
         <Uint<28, Hot> as Identity>::ZERO
     }
 
+    #[rustfmt::skip]
     fn origin_ceiling(_: Self::Origin) -> Uint<28, Hot> {
-        <Uint<28, Hot> as FromConstant>::from_constant::<{ USize((1 << 26) - 1) }>()
-        // lint:allow(no-bare-numeric) reason: the 26-bit id-space ceiling as a typed constant (definition-site literal); tracked: #34
+        <Uint<28, Hot> as FromConstant>::from_constant::<{ USize((1 << 26) - 1) }>() // lint:allow(no-bare-numeric) reason: the 26-bit id-space ceiling as a typed constant (definition-site literal); tracked: #34
     }
 
+    #[rustfmt::skip]
     fn id_from_counter(counter: Uint<28, Hot>) -> <Self::Layout as SymLayoutOps>::Id {
         Bits::<26, Hot>::from_raw(counter.to_raw()) // lint:allow(no-bare-numeric) reason: Uint-to-Bits id projection at the id-allocator boundary; to_raw/from_raw are arvo's container projections; tracked: #34
     }
@@ -240,7 +256,7 @@ mod tests {
     /// choosing which instantiations to check is choosing what not to find out.
     #[test]
     fn every_shape_accounts_for_all_thirty_two_bits() {
-        fn check<S: SymShape>(name: &str) {
+        fn check<S: SymShape>(name: &'static str) {
             let total = S::KIND_BITS.0 + S::ORIGIN_BITS.0 + S::COUNTER_BITS.0 + 1;
             assert_eq!(total, 32, "{name} does not account for the whole handle");
         }
@@ -253,7 +269,7 @@ mod tests {
     /// that says otherwise mints into bits its id accessor cannot read.
     #[test]
     fn every_shape_id_is_origin_plus_counter() {
-        fn check<S: SymShape>(name: &str) {
+        fn check<S: SymShape>(name: &'static str) {
             assert_eq!(
                 S::ID_BITS.0,
                 S::ORIGIN_BITS.0 + S::COUNTER_BITS.0,
@@ -287,15 +303,15 @@ mod tests {
     /// law, which made the declarations descriptions rather than constraints.
     #[test]
     fn every_shape_declares_the_widths_its_layout_actually_has() {
-        fn check<S: SymShape>(name: &str) {
+        fn check<S: SymShape>(name: &'static str) {
             assert_eq!(
                 S::KIND_BITS.0,
-                <S::Layout as SymLayoutOps>::KIND_WIDTH.0,
+                width_of(<S::Layout as SymLayoutOps>::KIND_MASK).0,
                 "{name} declares a kind width its layout does not have"
             );
             assert_eq!(
                 S::ID_BITS.0,
-                <S::Layout as SymLayoutOps>::ID_WIDTH.0,
+                width_of(<S::Layout as SymLayoutOps>::ID_MASK).0,
                 "{name} declares an id width its layout does not have"
             );
         }
