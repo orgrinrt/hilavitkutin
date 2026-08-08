@@ -83,6 +83,15 @@ where a minter's counter starts and stops, and how a counter projects into the
 id field, so the one low-level numeric edge of a producer sits with the shape
 that decides how wide the field is.
 
+**A shape brings its own layout**, not merely its own division of a shared one.
+That is what lets the kind width vary: a shape declaring a wider tag declares a
+bitfield with a wider tag, and the positions stay literals inside the impl that
+writes them.
+
+A width the trait declares is a width something consumes. A constant no code
+reads and no check constrains is a comment with a type, and this document does
+not present one as a contract.
+
 `SymShape` is a const trait, so a handle builds in a const context under any
 shape. A domain declares which shape it belongs to, which is what stops a domain
 of one shape handing its tag to a producer of another.
@@ -97,16 +106,22 @@ expressions are legal and leaves every bound naming a contract.
 one minter, counter 28. **The string domain's fixed `0b000` tag and every baked
 string handle survive it unchanged**, because nothing about the default moves.
 
-`SixteenMinters` is the second shape and exists so the trait has a real
-implementation rather than a single one: same kind width, four bits naming which
-of sixteen minters produced a handle, twenty-four counting within it.
+`SixteenMinters` is the second shape: same kind width, four bits naming which of
+sixteen minters produced a handle, twenty-four counting within it. It varies how
+the id divides.
+
+`WideKind` is the third and varies the tag itself: **five bits of kind**, thirty
+two domains, twenty-six of id. It exists because a trait whose every
+implementation shares one layout has not demonstrated the thing it was lifted
+for, and until one shape's tag is a different width the kind width is a
+parameter over a single value.
 
 ## `SymKind`, the domain tag
 
 ```rust
 #[repr(transparent)]
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
-pub struct SymKind<S: SymShape>(S::Kind);
+pub struct SymKind<S: SymShape = Standard>(<S::Layout as SymLayoutOps>::Kind);
 ```
 
 The tag naming which domain a handle belongs to, at whatever width its shape
@@ -167,9 +182,9 @@ side resolves a handle.
 ## `Generator`, the mint-only producer
 
 ```rust
-pub struct Generator<D: GenerativeDomain, S: SymShape> {
-    // monotonic counter over the shape's counter width, an origin, and a
-    // domain marker
+pub struct Generator<D: GenerativeDomain> {
+    // a counter and a ceiling within one origin's range, plus a domain marker.
+    // The shape comes from the domain rather than a second parameter.
 }
 ```
 
@@ -177,7 +192,7 @@ The concrete producer for a generative domain. It holds a monotonic counter and
 mints a fresh handle on demand:
 
 ```rust
-// mint returns a fresh Sym tagged D::KIND, or Isnt at the counter ceiling.
+// mint returns a fresh Sym tagged D::KIND, or Isnt at this origin's ceiling.
 pub fn mint(&mut self) -> Maybe<Sym>;
 ```
 
