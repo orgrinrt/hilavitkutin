@@ -21,7 +21,7 @@ use arvo_bits::{Bit, Bits, Hot};
 
 /// How a `Sym`'s 32 bits divide, and how many independent minters it admits.
 ///
-/// The four widths partition the handle: one flag bit, `KIND_BITS` of domain
+/// The four widths divide the handle: one flag bit, `KIND_BITS` of domain
 /// tag, and the rest split between an origin naming the minter and a counter
 /// running within it. `ORIGIN_BITS` of zero means one minter, which is the
 /// single-producer case and what [`Standard`] gives.
@@ -57,7 +57,7 @@ pub const trait SymShape: Copy + 'static {
 
     /// Where in the id space a minter's counter starts.
     ///
-    /// Origins partition the counter space, so two minters at two origins
+    /// Origins divide the counter space, so two minters at two origins
     /// cannot produce the same id however far either counts.
     fn origin_base(origin: Self::Origin) -> Uint<28, Hot>;
 
@@ -77,6 +77,17 @@ pub const trait SymShape: Copy + 'static {
 /// impl, so each shape writes a short forwarding impl. The forwarding is
 /// mechanical; the positions it forwards to are the shape's own.
 pub const trait SymLayoutOps: Copy + Eq + core::fmt::Debug {
+    /// How many bits this layout's bitfield actually gives the tag.
+    ///
+    /// A layout is the only thing that knows, so it is the only thing that
+    /// says. A shape declaring a different `KIND_BITS` fails the law tying the
+    /// two, which is what makes the declaration a constraint rather than a
+    /// description.
+    const KIND_WIDTH: USize;
+
+    /// How many bits this layout's bitfield actually gives the id.
+    const ID_WIDTH: USize;
+
     /// The domain tag at this layout's kind width.
     type Kind: Copy + Eq + core::fmt::Debug;
     /// The id at this layout's id width.
@@ -231,7 +242,7 @@ mod tests {
     fn every_shape_accounts_for_all_thirty_two_bits() {
         fn check<S: SymShape>(name: &str) {
             let total = S::KIND_BITS.0 + S::ORIGIN_BITS.0 + S::COUNTER_BITS.0 + 1;
-            assert_eq!(total, 32, "{name} does not partition the handle");
+            assert_eq!(total, 32, "{name} does not account for the whole handle");
         }
         check::<Standard>("Standard");
         check::<SixteenMinters>("SixteenMinters");
@@ -255,16 +266,41 @@ mod tests {
     }
 
     /// The kind width genuinely varies across shipped shapes. Without this the
-    /// trait is a parameter over one value and the branch's second purpose is
-    /// undelivered.
+    /// trait is a parameter over one value.
+    ///
+    /// Stated as a difference between two shapes rather than as either one's
+    /// value, because asserting a constant equals the literal its own impl
+    /// declares cannot fail.
     #[test]
     fn the_kind_width_varies_across_shapes() {
-        assert_eq!(Standard::KIND_BITS.0, 3);
-        assert_eq!(WideKind::KIND_BITS.0, 5);
         assert_ne!(
             Standard::KIND_BITS.0,
             WideKind::KIND_BITS.0,
             "two shapes must differ in tag width or the trait varies nothing"
         );
+    }
+
+    /// **The law that makes every other width mean something.**
+    ///
+    /// A shape declares widths; its layout has them. Nothing tied the two, so a
+    /// shape could declare a three-bit field is nine bits wide and pass every
+    /// law, which made the declarations descriptions rather than constraints.
+    #[test]
+    fn every_shape_declares_the_widths_its_layout_actually_has() {
+        fn check<S: SymShape>(name: &str) {
+            assert_eq!(
+                S::KIND_BITS.0,
+                <S::Layout as SymLayoutOps>::KIND_WIDTH.0,
+                "{name} declares a kind width its layout does not have"
+            );
+            assert_eq!(
+                S::ID_BITS.0,
+                <S::Layout as SymLayoutOps>::ID_WIDTH.0,
+                "{name} declares an id width its layout does not have"
+            );
+        }
+        check::<Standard>("Standard");
+        check::<SixteenMinters>("SixteenMinters");
+        check::<WideKind>("WideKind");
     }
 }

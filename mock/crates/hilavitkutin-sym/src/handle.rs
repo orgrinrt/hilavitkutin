@@ -29,6 +29,9 @@ bitfield! {
 }
 
 const impl crate::shape::SymLayoutOps for SymLayout {
+    const ID_WIDTH: arvo::USize = arvo::USize(28);
+    const KIND_WIDTH: arvo::USize = arvo::USize(3);
+
     type Id = Bits<28, Hot>;
     type Kind = Bits<3, Hot>;
 
@@ -81,6 +84,9 @@ bitfield! {
 }
 
 const impl crate::shape::SymLayoutOps for WideKindLayout {
+    const ID_WIDTH: arvo::USize = arvo::USize(26);
+    const KIND_WIDTH: arvo::USize = arvo::USize(5);
+
     type Id = Bits<26, Hot>;
     type Kind = Bits<5, Hot>;
 

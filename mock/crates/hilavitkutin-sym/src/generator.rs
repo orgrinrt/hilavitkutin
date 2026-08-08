@@ -42,7 +42,7 @@ pub struct Generator<D: GenerativeDomain> {
 impl<D: GenerativeDomain> Generator<D> {
     /// A fresh generator for `origin`.
     ///
-    /// **Origins partition the id space by construction.** Two generators at
+    /// **Origins divide the id space by construction.** Two generators at
     /// two origins cannot produce the same handle however far either counts,
     /// because each starts at its own base and stops at its own ceiling.
     ///

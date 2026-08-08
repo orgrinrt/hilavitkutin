@@ -180,8 +180,4 @@ fn a_wide_shape_carries_a_tag_no_narrow_shape_could_hold() {
         0b10000,
         "the tag must survive a round trip at five bits wide"
     );
-    assert!(
-        0b10000 > 0b111,
-        "the whole point: this tag does not fit the default shape's three bits"
-    );
 }
