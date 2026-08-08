@@ -2,7 +2,6 @@
 
 use core::marker::PhantomData;
 
-use arvo::strategy::Identity;
 use arvo::traits::FromConstant;
 use arvo::{Bool, USize, Uint};
 use arvo_bits::Hot;
@@ -11,10 +10,6 @@ use notko::Maybe;
 use crate::domain::GenerativeDomain;
 use crate::handle::Sym;
 use crate::shape::{OneOrigin, Standard, SymShape};
-
-/// The largest 28-bit id. After minting this id the generator is exhausted.
-const MAX_ID: Uint<28, Hot> =
-    <Uint<28, Hot> as FromConstant>::from_constant::<{ USize((1 << 28) - 1) }>(); // lint:allow(no-bare-numeric) reason: the 28-bit id-space ceiling as a typed constant (definition-site literal); tracked: #34
 
 /// One, the mint step.
 const ONE: Uint<28, Hot> = <Uint<28, Hot> as FromConstant>::from_constant::<{ USize(1) }>(); // lint:allow(no-bare-numeric) reason: the increment step as a typed constant (definition-site literal); tracked: #34
@@ -65,8 +60,9 @@ impl<D: GenerativeDomain> Generator<D> {
         }
     }
 
-    /// Mint a fresh handle. Returns `Maybe::Isnt` once the 28-bit id space is
-    /// exhausted, rather than wrapping the counter and reissuing a live id.
+    /// Mint a fresh handle. Returns `Maybe::Isnt` once **this origin's** range
+    /// is exhausted, rather than wrapping the counter, reissuing a live id, or
+    /// walking into the next origin's range.
     pub fn mint(&mut self) -> Maybe<Sym<D::Shape>> {
         if self.exhausted.0 {
             return Maybe::Isnt;
@@ -114,14 +110,17 @@ mod tests {
     }
     impl GenerativeDomain for TestGen {}
 
+    const CEIL: Uint<28, Hot> =
+        <Uint<28, Hot> as FromConstant>::from_constant::<{ USize((1 << 28) - 1) }>(); // lint:allow(no-bare-numeric) reason: the 28-bit ceiling as a typed constant in a test; tracked: #34
+
     #[test]
     fn exhausts_at_ceiling_without_wrapping() {
         // Seed the counter at the 28-bit ceiling. One more mint issues that
         // last id, after which the generator is exhausted and returns Isnt
         // rather than wrapping the counter back to a live id.
         let mut g: Generator<TestGen> = Generator {
-            next: MAX_ID,
-            ceiling: MAX_ID,
+            next: CEIL,
+            ceiling: CEIL,
             exhausted: Bool(false),
             _domain: PhantomData,
         };

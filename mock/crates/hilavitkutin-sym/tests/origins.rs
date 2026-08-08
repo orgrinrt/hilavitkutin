@@ -13,7 +13,7 @@
 //! can detect is one it can handle. Falsely equal is silent.
 
 use hilavitkutin_sym::{
-    Domain, GenerativeDomain, Generator, MinterId, SixteenMinters, Standard, Sym, SymKind, SymShape,
+    Domain, GenerativeDomain, Generator, MinterId, SixteenMinters, Standard, Sym, SymKind, WideKind,
 };
 
 /// A generative domain under the default shape, minted in one place.
@@ -141,17 +141,6 @@ fn a_minter_is_exhausted_at_its_own_ceiling_not_the_whole_space() {
     );
 }
 
-/// The default shape has one minter and one origin, so `single` needs no
-/// argument and there is no second origin to name. This is what makes the
-/// single-producer case safe by construction rather than by convention.
-#[test]
-fn the_default_shape_has_one_origin_and_the_generic_one_has_sixteen() {
-    assert_eq!(Standard::ORIGINS.0, 1);
-    assert_eq!(Standard::ORIGIN_BITS.0, 0);
-    assert_eq!(SixteenMinters::ORIGINS.0, 16);
-    assert_eq!(SixteenMinters::ORIGIN_BITS.0, 4);
-}
-
 /// Every mint carries its domain's tag, which is what keeps domains disjoint
 /// under integer equality regardless of shape or origin.
 #[test]
@@ -160,4 +149,39 @@ fn every_mint_carries_the_domain_tag() {
     for s in mint_n(&mut g, 16) {
         assert_eq!(s.kind(), Binder::KIND);
     }
+}
+
+/// **The kind width varies, demonstrated rather than declared.**
+///
+/// A domain on the wide-tag shape carries `0b10000`, a value no three-bit tag
+/// can hold. If every shape shared one layout this could not be written, which
+/// is why it is the test that proves the trait varies anything at all.
+#[test]
+fn a_wide_shape_carries_a_tag_no_narrow_shape_could_hold() {
+    #[derive(Copy, Clone)]
+    struct WideDomain;
+
+    impl Domain for WideDomain {
+        type Shape = WideKind;
+
+        const KIND: SymKind<WideKind> = SymKind::new(arvo_bits::Bits::from_raw(0b10000));
+    }
+
+    impl GenerativeDomain for WideDomain {}
+
+    let mut g = Generator::<WideDomain>::at(hilavitkutin_sym::OneOrigin);
+    let s = match g.mint() {
+        notko::Maybe::Is(s) => s,
+        notko::Maybe::Isnt => panic!("fresh generator refused its first mint"),
+    };
+
+    assert_eq!(
+        s.kind().to_bits().to_raw(),
+        0b10000,
+        "the tag must survive a round trip at five bits wide"
+    );
+    assert!(
+        0b10000 > 0b111,
+        "the whole point: this tag does not fit the default shape's three bits"
+    );
 }

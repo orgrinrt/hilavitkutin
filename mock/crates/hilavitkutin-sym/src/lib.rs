@@ -24,7 +24,9 @@ pub mod shape;
 
 pub use crate::domain::{Domain, GenerativeDomain, InterningDomain};
 pub use crate::generator::Generator;
-pub use crate::handle::{Sym, SymLayout};
+pub use crate::handle::{Sym, SymLayout, WideKindLayout};
 pub use crate::interner::Interner;
 pub use crate::kind::SymKind;
-pub use crate::shape::{MinterId, OneOrigin, SixteenMinters, Standard, SymLayoutOps, SymShape};
+pub use crate::shape::{
+    MinterId, OneOrigin, SixteenMinters, Standard, SymLayoutOps, SymShape, WideKind,
+};

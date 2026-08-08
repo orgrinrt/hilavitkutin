@@ -65,6 +65,51 @@ const impl crate::shape::SymLayoutOps for SymLayout {
     }
 }
 
+bitfield! {
+    /// Layout carrier for the wide-tag shape: five bits of kind over a
+    /// twenty-six bit id. Declared here beside `SymLayout` because a shape
+    /// brings its own layout, and the positions are literals written where an
+    /// impl may write them.
+    pub struct WideKindLayout: 32 {
+        /// Domain-private flag.
+        flag: 1 at 31,
+        /// 5-bit domain tag, thirty-two domains.
+        kind: 5 at 26,
+        /// 26-bit interned identity.
+        id: 26 at 0,
+    }
+}
+
+const impl crate::shape::SymLayoutOps for WideKindLayout {
+    type Id = Bits<26, Hot>;
+    type Kind = Bits<5, Hot>;
+
+    fn get_flag(self) -> Bit<Hot> {
+        self.flag()
+    }
+    fn get_id(self) -> Self::Id {
+        self.id()
+    }
+    fn get_kind(self) -> Self::Kind {
+        self.kind()
+    }
+    fn raw_bits(self) -> Bits<32, Hot> {
+        self.to_bits()
+    }
+    fn set_flag(self, flag: Bit<Hot>) -> Self {
+        self.with_flag(flag)
+    }
+    fn set_id(self, id: Self::Id) -> Self {
+        self.with_id(id)
+    }
+    fn set_kind(self, kind: Self::Kind) -> Self {
+        self.with_kind(kind)
+    }
+    fn zeroed() -> Self {
+        Self::new()
+    }
+}
+
 /// Generic interned-identity handle. 4 bytes everywhere. Comparison is integer
 /// equality across the whole layout, so two `Sym`s of different `kind` are
 /// never equal whatever their ids or flags.

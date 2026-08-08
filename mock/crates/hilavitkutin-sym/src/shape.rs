@@ -69,9 +69,6 @@ pub const trait SymShape: Copy + 'static {
     /// The one low-level numeric edge of a producer, and it lives here rather
     /// than in the generator because each shape decides how wide its id is.
     fn id_from_counter(counter: Uint<28, Hot>) -> <Self::Layout as SymLayoutOps>::Id;
-
-    /// How many minters this shape admits.
-    const ORIGINS: USize;
 }
 
 /// What a shape's layout carrier must offer.
@@ -126,7 +123,6 @@ const impl SymShape for Standard {
     const COUNTER_BITS: USize = USize(28);
     const ID_BITS: USize = USize(28);
     const KIND_BITS: USize = USize(3);
-    const ORIGINS: USize = USize(1);
     const ORIGIN_BITS: USize = USize(0);
 
     fn origin_base(_: Self::Origin) -> Uint<28, Hot> {
@@ -167,7 +163,6 @@ const impl SymShape for SixteenMinters {
     const COUNTER_BITS: USize = USize(24);
     const ID_BITS: USize = USize(28);
     const KIND_BITS: USize = USize(3);
-    const ORIGINS: USize = USize(16);
     const ORIGIN_BITS: USize = USize(4);
 
     fn origin_base(origin: Self::Origin) -> Uint<28, Hot> {
@@ -189,32 +184,87 @@ const impl SymShape for SixteenMinters {
     }
 }
 
+/// A shape whose **tag** is wider, not merely whose id divides differently.
+///
+/// Five bits of kind, thirty-two domains, twenty-six of id, one minter. It
+/// exists because a trait whose every implementation shares one layout has not
+/// demonstrated the thing it was lifted for: until one shape's tag is a
+/// different width, the kind width is a parameter over a single value.
+///
+/// Not interoperable with [`Standard`], like any other shape.
+#[derive(Copy, Clone, Default, Eq, Hash, PartialEq, Debug)]
+pub struct WideKind;
+
+const impl SymShape for WideKind {
+    type Layout = crate::handle::WideKindLayout;
+    type Origin = OneOrigin;
+
+    const COUNTER_BITS: USize = USize(26);
+    const ID_BITS: USize = USize(26);
+    const KIND_BITS: USize = USize(5);
+    const ORIGIN_BITS: USize = USize(0);
+
+    fn origin_base(_: Self::Origin) -> Uint<28, Hot> {
+        <Uint<28, Hot> as Identity>::ZERO
+    }
+
+    fn origin_ceiling(_: Self::Origin) -> Uint<28, Hot> {
+        <Uint<28, Hot> as FromConstant>::from_constant::<{ USize((1 << 26) - 1) }>()
+        // lint:allow(no-bare-numeric) reason: the 26-bit id-space ceiling as a typed constant (definition-site literal); tracked: #34
+    }
+
+    fn id_from_counter(counter: Uint<28, Hot>) -> <Self::Layout as SymLayoutOps>::Id {
+        Bits::<26, Hot>::from_raw(counter.to_raw()) // lint:allow(no-bare-numeric) reason: Uint-to-Bits id projection at the id-allocator boundary; to_raw/from_raw are arvo's container projections; tracked: #34
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    /// The widths must total the handle, or the layout has a hole or an
-    /// overlap and every accessor is wrong.
+    /// Every width a shape declares, summed, must be the whole handle. A shape
+    /// with a hole or an overlap has every accessor wrong.
+    ///
+    /// Asserted for **every** shape rather than for the default alone:
+    /// choosing which instantiations to check is choosing what not to find out.
     #[test]
-    fn standard_widths_account_for_every_bit() {
-        let total = Standard::KIND_BITS.0 + Standard::ORIGIN_BITS.0 + Standard::COUNTER_BITS.0 + 1; // the flag
-        assert_eq!(total, 32, "shape must partition the 32-bit handle");
+    fn every_shape_accounts_for_all_thirty_two_bits() {
+        fn check<S: SymShape>(name: &str) {
+            let total = S::KIND_BITS.0 + S::ORIGIN_BITS.0 + S::COUNTER_BITS.0 + 1;
+            assert_eq!(total, 32, "{name} does not partition the handle");
+        }
+        check::<Standard>("Standard");
+        check::<SixteenMinters>("SixteenMinters");
+        check::<WideKind>("WideKind");
     }
 
-    /// `ID_BITS` is the origin and counter together, and a shape that says
-    /// otherwise would mint into bits the id accessor cannot read.
+    /// The id is the origin and the counter together, for every shape. A shape
+    /// that says otherwise mints into bits its id accessor cannot read.
     #[test]
-    fn standard_id_is_origin_plus_counter() {
-        assert_eq!(
-            Standard::ID_BITS.0,
-            Standard::ORIGIN_BITS.0 + Standard::COUNTER_BITS.0
+    fn every_shape_id_is_origin_plus_counter() {
+        fn check<S: SymShape>(name: &str) {
+            assert_eq!(
+                S::ID_BITS.0,
+                S::ORIGIN_BITS.0 + S::COUNTER_BITS.0,
+                "{name} id width disagrees with its parts"
+            );
+        }
+        check::<Standard>("Standard");
+        check::<SixteenMinters>("SixteenMinters");
+        check::<WideKind>("WideKind");
+    }
+
+    /// The kind width genuinely varies across shipped shapes. Without this the
+    /// trait is a parameter over one value and the branch's second purpose is
+    /// undelivered.
+    #[test]
+    fn the_kind_width_varies_across_shapes() {
+        assert_eq!(Standard::KIND_BITS.0, 3);
+        assert_eq!(WideKind::KIND_BITS.0, 5);
+        assert_ne!(
+            Standard::KIND_BITS.0,
+            WideKind::KIND_BITS.0,
+            "two shapes must differ in tag width or the trait varies nothing"
         );
-    }
-
-    /// Zero origin bits is one minter, not zero minters.
-    #[test]
-    fn standard_admits_exactly_one_minter() {
-        assert_eq!(Standard::ORIGINS.0, 1);
-        assert_eq!(Standard::ORIGIN_BITS.0, 0);
     }
 }
