@@ -39,14 +39,21 @@ pub struct Sym(SymLayout);
 ```
 
 A 4-byte handle, integer equality across the whole 32-bit layout, `Copy`,
-`repr(transparent)`, ABI-stable. The layout is declared on `SymLayout`
-via `arvo_bits::bitfield!`:
+`repr(transparent)`, ABI-stable. How the 32 bits divide is a **shape**, not a
+constant of this crate: see `SymShape` below. The default shape, `Standard`, is
+what every current consumer uses and what `SymLayout` declares via
+`arvo_bits::bitfield!`:
 
 | Bits | Field | Meaning |
 |---|---|---|
-| 0 to 27 | `id` (28-bit) | 268M identities per domain |
+| 0 to 27 | `id` (28-bit) | 268M identities per domain, of which the low bits are a counter and the high bits an origin when the shape has more than one minter |
 | 28 to 30 | `kind` (3-bit) | the domain tag, eight domains |
 | 31 | `flag` (1-bit) | a domain-private flag; the string domain uses it for the const-versus-runtime origin, a domain that does not need it leaves it zero |
+
+**A shape is a wire format.** Two `Sym`s built under different shapes divide
+the same 32 bits differently, so they are not comparable and must not meet in
+one store. A consumer choosing a shape other than `Standard` is choosing not to
+interoperate with handles baked under `Standard`.
 
 `SymLayout` generates per-field accessors (`kind()`, `id()`, `flag()`),
 setters, and per-field mask constants. `Sym` exposes `Sym::new(kind, id)`
@@ -56,17 +63,47 @@ for tests and persistence). Two `Sym`s with different `kind` values are
 never equal, whatever their ids or flags, because `kind` is part of the
 compared layout, and that is what keeps domains disjoint.
 
+## `SymShape`, how the 32 bits divide
+
+```rust
+pub trait SymShape {
+    // widths, and the Bits types at those widths
+}
+```
+
+The layout policy, lifted out of the substrate. Three bits of kind and
+twenty-eight of id suits one consumer; a consumer with four domains pays for
+four it cannot use, and one with sixteen cannot have them. That is a consumer's
+choice wearing a substrate constant.
+
+A shape names four widths: how many bits tag the domain, how many name the
+minter, how many count within a minter, and the one flag bit. The last three
+partition what the `Standard` table calls `id`.
+
+The widths are related by arithmetic, since they must total 32. **That
+arithmetic lives in each impl rather than in a bound.** Writing the derivation
+inline would put an expression in type position, which this stack's toolchain
+policy forbids; carrying it as an associated type on a trait puts it where
+expressions are legal and leaves every bound naming a contract.
+
+`Standard` is the default and is byte-identical to the layout above: kind 3,
+one minter, counter 28. **The string domain's fixed `0b000` tag and every baked
+string handle survive it unchanged**, because nothing about the default moves.
+
 ## `SymKind`, the domain tag
 
 ```rust
 #[repr(transparent)]
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
-pub struct SymKind(Bits<3, Hot>);
+pub struct SymKind<S: SymShape>(S::Kind);
 ```
 
-The 3-bit tag naming which domain a handle belongs to. `SymKind::new`
-builds one from a raw value. Eight domains are available; the flag bit is
-a per-domain extra orthogonal to the tag.
+The tag naming which domain a handle belongs to, at whatever width its shape
+gives it. `SymKind::new` builds one from a raw value. Under `Standard` that is
+three bits and eight domains; the flag bit is a per-domain extra orthogonal to
+the tag under every shape.
+
+The kind-assignment table below is per-shape. It is `Standard`'s.
 
 The kind-assignment table is a documented convention owned here so two
 domains cannot claim one tag. The current assignments:
@@ -119,24 +156,57 @@ side resolves a handle.
 ## `Generator`, the mint-only producer
 
 ```rust
-pub struct Generator<D: GenerativeDomain> {
-    // monotonic counter over the 28-bit id width, plus a domain marker
+pub struct Generator<D: GenerativeDomain, S: SymShape> {
+    // monotonic counter over the shape's counter width, an origin, and a
+    // domain marker
 }
 ```
 
-The concrete producer for a generative domain. It holds a monotonic
-counter over the 28-bit id width and mints a fresh handle on demand:
+The concrete producer for a generative domain. It holds a monotonic counter and
+mints a fresh handle on demand:
 
 ```rust
-// mint returns a fresh Sym tagged D::KIND, or Isnt at the 28-bit ceiling.
+// mint returns a fresh Sym tagged D::KIND, or Isnt at the counter ceiling.
 pub fn mint(&mut self) -> Maybe<Sym>;
 ```
 
-Each `mint` yields a `Sym` distinct from every prior mint of the same
-generator, tagged `D::KIND`. At the 28-bit boundary it returns
-`Maybe::Isnt` rather than wrapping the counter and reissuing a live id,
-so freshness is never silently violated. No allocation, no arena: a
-generative domain needs only the counter and the kind.
+At the counter ceiling it returns `Maybe::Isnt` rather than wrapping and
+reissuing a live id, so freshness is never silently violated. No allocation, no
+arena.
+
+### What freshness means here, exactly
+
+**A minted `Sym` is distinct from every prior mint of the same generator at the
+same origin. It is not globally unique, and the difference has bitten.**
+
+Two generators for one domain, each starting its counter at zero, emit
+bit-identical handles. `Sym` compares by integer equality over the whole
+layout, which is this crate's central promise, so those handles do not merely
+fail to match: they compare **equal**. A consumer designing on top of this crate
+measured 132 of 144 peer scenarios false-identifying, including 24 in which the
+two peers shared no value at all.
+
+Incomparable would have been safe, because a wrong answer a consumer can detect
+is a wrong answer it can handle. Falsely equal is silent, and nothing looks
+broken.
+
+### Origins make disjointness constructible
+
+So a generator is built **for an origin**, and origins partition the counter
+space by construction rather than by convention.
+
+Under `Standard` there is one origin and zero bits naming it, so the counter
+takes the full 28 bits and the single-minter behaviour is exactly what the
+default gives. Nothing changes for a consumer with one minter.
+
+A consumer with several independent minters picks a shape with origin bits.
+Under such a shape a generator cannot be constructed without naming its origin,
+so two peers colliding requires both to claim the same origin, which is a
+declared conflict rather than a silent default.
+
+This is the same principle the exhaustion contract already states. The crate
+refuses to reissue a live id; two peers reissuing each other's ids is that
+fault arriving from the one direction a single counter cannot see.
 
 ## Why a monomorphic handle plus typed producers
 
@@ -148,6 +218,12 @@ so the phantom buys type-checking only at a few edges the runtime `kind`
 and the typed producers already cover, at the cost of an erasure
 boundary. The handle stays monomorphic for storage; `Interner` and
 `Generator` carry the domain type for the safety that matters.
+
+The shape parameter is a different thing and does not reintroduce that
+argument. A shape is a storage format rather than a domain, and a store holds
+one format, so parameterising by shape creates no erasure boundary: the
+heterogeneous case the phantom domain would have forced does not arise, because
+two shapes were never comparable in the first place.
 
 ## Design rule
 
