@@ -88,11 +88,18 @@ That is what lets the kind width vary: a shape declaring a wider tag declares a
 bitfield with a wider tag, and the positions stay literals inside the impl that
 writes them.
 
-A width the trait declares is a width something **constrains**. A layout reports
-the widths its bitfield actually has, and a law ties each shape's declaration to
-its layout's fact, so a shape claiming a three-bit field is nine bits wide fails
-its own law rather than compiling clean. Without that tie a declared width is a
-comment with a type, and this document does not present one as a contract.
+A width the trait declares is a width something **constrains**, and the
+constraint has to be derived rather than written beside the thing it checks.
+
+A layout carries its own generated mask. The width is **counted from that mask**
+by a function no implementation can override, and a law ties each shape's
+declared width to that count. Nobody writes the number, so nobody can write it
+wrong: a layout that lied would have to lie about its mask, which its own
+accessors read through.
+
+Tying a declaration to a second hand-written number is not enough, because two
+statements of one fact can agree with each other and both be wrong about the
+field.
 
 `SymShape` is a const trait, so a handle builds in a const context under any
 shape. A domain declares which shape it belongs to, which is what stops a domain
@@ -168,7 +175,7 @@ a type-level fact and the wrong producer for a domain is a type error.
 
 ```rust
 pub trait Interner<D: InterningDomain> {
-    fn intern(&self, value: &D::Value) -> Sym;
+    fn intern(&self, value: &D::Value) -> Sym<D::Shape>;
     fn resolve(&self, sym: Sym<D::Shape>) -> Maybe<&D::Value>;
 }
 ```

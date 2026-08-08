@@ -139,14 +139,12 @@ impl Compressor for Gzip {
 
 ## Build tooling and hooks
 
-`hilavitkutin-build` runs at build time only; its code never links into the produced runtime binary. Integration is one `configure().run()` call from a `build.rs`. The bootstrap writes a generated `target/hilavitkutin-build/hilavitkutin-config.toml` (containing the rustc-workspace-wrapper path, Cargo profile settings such as `lto = "fat"`, `codegen-units = 1`, `profile-use`, plus any flags the active pragmas require) and ensures the matching `include = "..."` line exists in `.cargo/config.toml` so Cargo picks the generated TOML up. Everything mutable lives in the generated file; `cargo clean` wipes all generated state and the next build regenerates it. The committed `.cargo/config.toml` keeps just the include directive; the bootstrap manages it on first run.
 
 Typed pragmas drive the artefact. Each pragma names what it is and what it needs. `LoopOptimization` activates the LLVM pass plugin that runs IRCE, LoopPredication, LoopInterchange, LoopDistribute, and LoopDataPrefetch. `FastMath` flips `-C llvm-args=-enable-unsafe-fp-math` and emits the `arvo_fast_math` cfg. `MathPeephole` (which requires `FastMath`) loads the math-peephole pass plugin. `ExpandedLto` writes `lto = "fat"` + `codegen-units = 1` (required for devirtualisation of the monomorphised dispatch). Combinators (`All<(A, B)>`, `Any<(A, B)>`) declare requirements; conflicts surface at `configure().run()` time, not at build time.
 
 `Pgo` and `Bolt` integrate as post-build hooks. The first release build runs PGO-instrumented benchmarks in the background to generate `merged.profdata`; subsequent builds pick up the profile and recompile with profile-guided inlining, followed by BOLT post-link rewriting on Linux targets. Profiles are gitignored, expire on `cargo clean`, and warn when HEAD has diverged more than 50 commits since generation.
 
 ```rust
-// build.rs
 use hilavitkutin_build::{configure, pragmas::*};
 
 fn main() {
