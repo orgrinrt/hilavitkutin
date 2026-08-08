@@ -1,5 +1,8 @@
 //! `Sym`: the 4-byte generic interned-identity handle.
 //!
+//! The layout below is [`Standard`](crate::Standard)'s. Another shape divides
+//! the same 32 bits differently, and two shapes are not comparable.
+//!
 //! Bit layout (declared on `SymLayout` via `arvo::bitfield!`):
 //! - bits 27 to 0: 28-bit `id` (268M identities per domain)
 //! - bits 30 to 28: 3-bit `kind` (the domain tag, eight domains)
@@ -25,7 +28,7 @@ bitfield! {
     }
 }
 
-impl crate::shape::SymLayoutOps for SymLayout {
+const impl crate::shape::SymLayoutOps for SymLayout {
     type Id = Bits<28, Hot>;
     type Kind = Bits<3, Hot>;
 
@@ -71,71 +74,51 @@ pub struct Sym<S: SymShape = Standard>(S::Layout);
 
 impl<S: SymShape> Sym<S> {
     /// Build a handle for `kind` with `id`, flag zero.
-    pub fn new(kind: SymKind<S>, id: <S::Layout as SymLayoutOps>::Id) -> Self {
+    pub const fn new(kind: SymKind<S>, id: <S::Layout as SymLayoutOps>::Id) -> Self
+    where
+        S: [const] SymShape,
+    {
         Self(S::Layout::zeroed().set_kind(kind.to_bits()).set_id(id))
     }
 
     /// Return a copy of this handle with its domain-private flag set to `bit`.
-    pub fn with_flag(self, bit: Bit<Hot>) -> Self {
+    pub const fn with_flag(self, bit: Bit<Hot>) -> Self
+    where
+        S: [const] SymShape,
+    {
         Self(self.0.set_flag(bit))
     }
 
     /// The domain tag.
-    pub fn kind(self) -> SymKind<S> {
+    pub const fn kind(self) -> SymKind<S>
+    where
+        S: [const] SymShape,
+    {
         SymKind::new(self.0.get_kind())
     }
 
     /// The 28-bit id portion.
-    pub fn id(self) -> <S::Layout as SymLayoutOps>::Id {
+    pub const fn id(self) -> <S::Layout as SymLayoutOps>::Id
+    where
+        S: [const] SymShape,
+    {
         self.0.get_id()
     }
 
     /// The domain-private flag bit.
-    pub fn flag(self) -> Bit<Hot> {
+    pub const fn flag(self) -> Bit<Hot>
+    where
+        S: [const] SymShape,
+    {
         self.0.get_flag()
     }
 
     /// The raw 32-bit handle. Substrate-typed view for tests, structural
     /// assertions, and persistence.
-    pub fn to_bits(self) -> Bits<32, Hot> {
+    pub const fn to_bits(self) -> Bits<32, Hot>
+    where
+        S: [const] SymShape,
+    {
         self.0.raw_bits()
-    }
-}
-
-impl Sym<Standard> {
-    /// Build a default-shape handle in a const context.
-    ///
-    /// The generic methods above go through [`SymLayoutOps`], and a bound of
-    /// the form `Layout: [const] SymLayoutOps` is not accepted on the pinned
-    /// nightly, so const construction is offered for the default shape rather
-    /// than reaching for a feature the workspace forbids. Every consumer that
-    /// bakes a handle at compile time uses this shape.
-    pub const fn new_const(kind: SymKind<Standard>, id: Bits<28, Hot>) -> Self {
-        Self(SymLayout::new().with_kind(kind.to_bits()).with_id(id))
-    }
-
-    /// The default-shape handle's raw 32 bits, in a const context.
-    pub const fn to_bits_const(self) -> Bits<32, Hot> {
-        self.0.to_bits()
-    }
-
-    /// Replace the domain-private flag, in a const context.
-    pub const fn with_flag_const(self, bit: Bit<Hot>) -> Self {
-        Self(self.0.with_flag(bit))
-    }
-
-    /// The id portion, in a const context.
-    pub const fn id_const(self) -> Bits<28, Hot> {
-        self.0.id()
-    }
-
-    /// The domain tag, in a const context.
-    pub const fn kind_const(self) -> SymKind<Standard> {
-        SymKind::new(self.0.kind())
-    }
-
-    /// The domain-private flag, in a const context.
-    pub const fn flag_const(self) -> Bit<Hot> {
-        self.0.flag()
     }
 }

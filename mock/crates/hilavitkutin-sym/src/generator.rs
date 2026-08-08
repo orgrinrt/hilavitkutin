@@ -5,11 +5,12 @@ use core::marker::PhantomData;
 use arvo::strategy::Identity;
 use arvo::traits::FromConstant;
 use arvo::{Bool, USize, Uint};
-use arvo_bits::{Bits, Hot};
+use arvo_bits::Hot;
 use notko::Maybe;
 
 use crate::domain::GenerativeDomain;
 use crate::handle::Sym;
+use crate::shape::{OneOrigin, Standard, SymShape};
 
 /// The largest 28-bit id. After minting this id the generator is exhausted.
 const MAX_ID: Uint<28, Hot> =
@@ -25,7 +26,7 @@ const ONE: Uint<28, Hot> = <Uint<28, Hot> as FromConstant>::from_constant::<{ US
 /// an interning-only domain is a type error:
 ///
 /// ```compile_fail
-/// use hilavitkutin_sym::{Domain, Generator, InterningDomain, SymKind};
+/// use hilavitkutin_sym::{Domain, Generator, InterningDomain, Standard, SymKind};
 /// struct InterningOnly;
 /// impl Domain for InterningOnly {
 ///     const KIND: SymKind = SymKind::from_raw(0b100);
@@ -38,27 +39,27 @@ const ONE: Uint<28, Hot> = <Uint<28, Hot> as FromConstant>::from_constant::<{ US
 /// ```
 pub struct Generator<D: GenerativeDomain> {
     next: Uint<28, Hot>,
+    ceiling: Uint<28, Hot>,
     exhausted: Bool,
     _domain: PhantomData<D>,
 }
 
 impl<D: GenerativeDomain> Generator<D> {
-    /// A fresh generator for a domain minted in exactly one place.
+    /// A fresh generator for `origin`.
     ///
-    /// **Freshness is a property of this generator, not of the crate.** Two
-    /// generators built here start at the same id and emit bit-identical
-    /// handles, and because `Sym` compares by integer equality those handles
-    /// compare *equal* rather than merely failing to match. That is silent, and
-    /// silence is why this constructor names the case it serves.
+    /// **Origins partition the id space by construction.** Two generators at
+    /// two origins cannot produce the same handle however far either counts,
+    /// because each starts at its own base and stops at its own ceiling.
     ///
-    /// A consumer with more than one independent minter for one domain cannot
-    /// get disjointness from this constructor and must not try: it chooses a
-    /// shape with origin bits, under which a generator can only be built by
-    /// naming which origin it is, so a collision requires two peers to claim
-    /// the same origin explicitly rather than to share a default.
-    pub const fn single() -> Self {
+    /// A shape with one minter has one origin and its constructor is
+    /// [`Generator::single`], which needs no argument because there is nothing
+    /// to choose. Under such a shape two generators do agree, and they agree
+    /// because the shape says there is one minter, not because a default was
+    /// applied where a choice belonged.
+    pub fn at(origin: <D::Shape as SymShape>::Origin) -> Self {
         Self {
-            next: <Uint<28, Hot> as Identity>::ZERO,
+            next: <D::Shape as SymShape>::origin_base(origin),
+            ceiling: <D::Shape as SymShape>::origin_ceiling(origin),
             exhausted: Bool(false),
             _domain: PhantomData,
         }
@@ -66,16 +67,14 @@ impl<D: GenerativeDomain> Generator<D> {
 
     /// Mint a fresh handle. Returns `Maybe::Isnt` once the 28-bit id space is
     /// exhausted, rather than wrapping the counter and reissuing a live id.
-    pub fn mint(&mut self) -> Maybe<Sym> {
+    pub fn mint(&mut self) -> Maybe<Sym<D::Shape>> {
         if self.exhausted.0 {
             return Maybe::Isnt;
         }
-        // id-allocator boundary: project the typed counter to the handle's
-        // 28-bit id field. The one low-level numeric edge of this producer,
-        // mirroring the arena id boundary in hilavitkutin-str.
-        let id = Bits::<28, Hot>::from_raw(self.next.to_raw()); // lint:allow(no-bare-numeric) reason: Uint-to-Bits id projection at the id-allocator boundary; to_raw/from_raw are arvo's container projections; tracked: #34
-        let sym = Sym::new(D::KIND, id);
-        if self.next == MAX_ID {
+        // The shape owns the projection, because it owns how wide the id is.
+        let id = <D::Shape as SymShape>::id_from_counter(self.next);
+        let sym = Sym::<D::Shape>::new(D::KIND, id);
+        if self.next == self.ceiling {
             self.exhausted = Bool(true);
         } else {
             self.next = self.next + ONE;
@@ -84,7 +83,18 @@ impl<D: GenerativeDomain> Generator<D> {
     }
 }
 
-impl<D: GenerativeDomain> Default for Generator<D> {
+impl<D: GenerativeDomain<Shape = Standard>> Generator<D> {
+    /// A fresh generator for a domain minted in exactly one place.
+    ///
+    /// The default shape has one origin, so there is nothing to name. A
+    /// consumer with several independent minters picks a shape with origin
+    /// bits, and then [`Generator::at`] is the only way in.
+    pub fn single() -> Self {
+        Self::at(OneOrigin)
+    }
+}
+
+impl<D: GenerativeDomain<Shape = Standard>> Default for Generator<D> {
     fn default() -> Self {
         Self::single()
     }
@@ -98,6 +108,8 @@ mod tests {
 
     struct TestGen;
     impl Domain for TestGen {
+        type Shape = Standard;
+
         const KIND: SymKind = SymKind::from_raw(0b010);
     }
     impl GenerativeDomain for TestGen {}
@@ -109,6 +121,7 @@ mod tests {
         // rather than wrapping the counter back to a live id.
         let mut g: Generator<TestGen> = Generator {
             next: MAX_ID,
+            ceiling: MAX_ID,
             exhausted: Bool(false),
             _domain: PhantomData,
         };

@@ -30,19 +30,19 @@ impl Str {
     /// use: `str_const!()` is the only intended caller.
     #[doc(hidden)]
     pub const fn __make(id: Bits<28, Hot>) -> Self {
-        Self(Sym::new_const(Self::STR_DOMAIN, id))
+        Self(Sym::new(Self::STR_DOMAIN, id))
     }
 
     /// Construct a runtime-origin `Str` from a 28-bit ID. Not for direct
     /// use: `StringInterner` is the only intended caller.
     #[doc(hidden)]
     pub const fn __runtime(id: Bits<28, Hot>) -> Self {
-        Self(Sym::new_const(Self::STR_DOMAIN, id).with_flag_const(Bit::<Hot>::from_raw(1)))
+        Self(Sym::new(Self::STR_DOMAIN, id).with_flag(Bit::<Hot>::from_raw(1)))
     }
 
     /// `true` if this handle was produced by `str_const!()`.
     pub const fn is_const(self) -> Bool {
-        Bool(self.0.kind_const().to_bits().to_raw() == 0 && self.0.flag_const().to_raw() == 0)
+        Bool(self.0.kind().to_bits().to_raw() == 0 && self.0.flag().to_raw() == 0)
     }
 
     /// `true` if this handle was produced by the runtime interner.
@@ -52,7 +52,7 @@ impl Str {
 
     /// The 28-bit ID portion of this handle.
     pub const fn id(self) -> Bits<28, Hot> {
-        self.0.id_const()
+        self.0.id()
     }
 
     /// The underlying `Sym`. The sym-core view of this string handle.
@@ -69,12 +69,12 @@ impl Str {
 
     /// The domain tag of the underlying `Sym`.
     pub const fn kind(self) -> SymKind {
-        self.0.kind_const()
+        self.0.kind()
     }
 
     /// The raw 32-bit handle as a `Bits<32, Hot>`. Substrate-typed
     /// view for tests, structural assertions, and persistence.
     pub const fn to_bits(self) -> Bits<32, Hot> {
-        self.0.to_bits_const()
+        self.0.to_bits()
     }
 }

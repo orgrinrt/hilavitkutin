@@ -2,13 +2,15 @@
 //! disjoint from other domains.
 
 use arvo_bits::{Bits, Hot};
-use hilavitkutin_sym::{Domain, GenerativeDomain, Generator, Sym, SymKind};
+use hilavitkutin_sym::{Domain, GenerativeDomain, Generator, Standard, Sym, SymKind};
 use notko::Maybe;
 
 /// A generative test domain at kind `0b010` (outside the reserved string and
 /// binder tags).
 struct TestGen;
 impl Domain for TestGen {
+    type Shape = Standard;
+
     const KIND: SymKind = SymKind::from_raw(0b010);
 }
 impl GenerativeDomain for TestGen {}
@@ -16,6 +18,8 @@ impl GenerativeDomain for TestGen {}
 /// A second generative domain at a different kind, for disjointness.
 struct OtherGen;
 impl Domain for OtherGen {
+    type Shape = Standard;
+
     const KIND: SymKind = SymKind::from_raw(0b011);
 }
 impl GenerativeDomain for OtherGen {}

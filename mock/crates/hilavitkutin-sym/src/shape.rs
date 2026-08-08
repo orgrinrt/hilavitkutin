@@ -14,7 +14,9 @@
 //! same 32 bits differently, so they are not comparable and must not meet in one
 //! store.
 
-use arvo::USize;
+use arvo::strategy::Identity;
+use arvo::traits::FromConstant;
+use arvo::{USize, Uint};
 use arvo_bits::{Bit, Bits, Hot};
 
 /// How a `Sym`'s 32 bits divide, and how many independent minters it admits.
@@ -23,14 +25,14 @@ use arvo_bits::{Bit, Bits, Hot};
 /// tag, and the rest split between an origin naming the minter and a counter
 /// running within it. `ORIGIN_BITS` of zero means one minter, which is the
 /// single-producer case and what [`Standard`] gives.
-pub trait SymShape: Copy + 'static {
+pub const trait SymShape: Copy + 'static {
     /// The 32-bit layout carrier for this shape.
     ///
     /// Each shape declares its own via `arvo::bitfield!`, so the field
     /// positions are literals written where an impl may write them. That is
     /// what keeps the derivation out of type position, where it would need an
     /// inline const expression and therefore a forbidden feature.
-    type Layout: SymLayoutOps;
+    type Layout: [const] SymLayoutOps;
 
     /// Bits naming the domain. `1 << KIND_BITS` domains are available.
     const KIND_BITS: USize;
@@ -45,6 +47,29 @@ pub trait SymShape: Copy + 'static {
     /// The id field's width, origin and counter together.
     const ID_BITS: USize;
 
+    /// Names which minter produced a handle.
+    ///
+    /// A shape with one minter sets this to [`OneOrigin`], whose only value is
+    /// the single origin, so a generator for it needs no argument and cannot
+    /// name a second. A shape with several sets it to a type with one value per
+    /// minter, and then a generator cannot be built without saying which it is.
+    type Origin: Copy + Eq + core::fmt::Debug;
+
+    /// Where in the id space a minter's counter starts.
+    ///
+    /// Origins partition the counter space, so two minters at two origins
+    /// cannot produce the same id however far either counts.
+    fn origin_base(origin: Self::Origin) -> Uint<28, Hot>;
+
+    /// The largest id a minter at `origin` may reach before it is exhausted.
+    fn origin_ceiling(origin: Self::Origin) -> Uint<28, Hot>;
+
+    /// Project a counter value into this shape's id field.
+    ///
+    /// The one low-level numeric edge of a producer, and it lives here rather
+    /// than in the generator because each shape decides how wide its id is.
+    fn id_from_counter(counter: Uint<28, Hot>) -> <Self::Layout as SymLayoutOps>::Id;
+
     /// How many minters this shape admits.
     const ORIGINS: USize;
 }
@@ -54,7 +79,7 @@ pub trait SymShape: Copy + 'static {
 /// `arvo::bitfield!` generates these as inherent methods rather than a trait
 /// impl, so each shape writes a short forwarding impl. The forwarding is
 /// mechanical; the positions it forwards to are the shape's own.
-pub trait SymLayoutOps: Copy + Eq + core::fmt::Debug {
+pub const trait SymLayoutOps: Copy + Eq + core::fmt::Debug {
     /// The domain tag at this layout's kind width.
     type Kind: Copy + Eq + core::fmt::Debug;
     /// The id at this layout's id width.
@@ -86,14 +111,82 @@ pub trait SymLayoutOps: Copy + Eq + core::fmt::Debug {
 #[derive(Copy, Clone, Default, Eq, Hash, PartialEq, Debug)]
 pub struct Standard;
 
-impl SymShape for Standard {
+/// The only origin a single-minter shape has.
+///
+/// A unit rather than a number, because a shape with one minter has nothing to
+/// choose and a constructor taking it would invite a consumer to believe there
+/// was a second.
+#[derive(Copy, Clone, Default, Eq, Hash, PartialEq, Debug)]
+pub struct OneOrigin;
+
+const impl SymShape for Standard {
     type Layout = crate::handle::SymLayout;
+    type Origin = OneOrigin;
 
     const COUNTER_BITS: USize = USize(28);
     const ID_BITS: USize = USize(28);
     const KIND_BITS: USize = USize(3);
     const ORIGINS: USize = USize(1);
     const ORIGIN_BITS: USize = USize(0);
+
+    fn origin_base(_: Self::Origin) -> Uint<28, Hot> {
+        <Uint<28, Hot> as Identity>::ZERO
+    }
+
+    fn origin_ceiling(_: Self::Origin) -> Uint<28, Hot> {
+        // The whole id space, because there is nobody to share it with.
+        <Uint<28, Hot> as FromConstant>::from_constant::<{ USize((1 << 28) - 1) }>()
+        // lint:allow(no-bare-numeric) reason: the 28-bit id-space ceiling as a typed constant (definition-site literal); tracked: #34
+    }
+
+    fn id_from_counter(counter: Uint<28, Hot>) -> <Self::Layout as SymLayoutOps>::Id {
+        Bits::<28, Hot>::from_raw(counter.to_raw()) // lint:allow(no-bare-numeric) reason: Uint-to-Bits id projection at the id-allocator boundary; to_raw/from_raw are arvo's container projections; tracked: #34
+    }
+}
+
+/// A shape for a domain minted in up to sixteen independent places.
+///
+/// Four bits of the id name the minter and the remaining twenty-four count
+/// within it, so two peers at different origins cannot collide however far
+/// either counts. The kind width is unchanged, so this shape admits the same
+/// eight domains as [`Standard`] and differs from it only in splitting the id.
+///
+/// It is **not** interoperable with `Standard`: a handle minted here divides
+/// the same 32 bits differently, so the two must not meet in one store.
+#[derive(Copy, Clone, Default, Eq, Hash, PartialEq, Debug)]
+pub struct SixteenMinters;
+
+/// Which of sixteen minters produced a handle.
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub struct MinterId(pub Uint<4, Hot>);
+
+const impl SymShape for SixteenMinters {
+    type Layout = crate::handle::SymLayout;
+    type Origin = MinterId;
+
+    const COUNTER_BITS: USize = USize(24);
+    const ID_BITS: USize = USize(28);
+    const KIND_BITS: USize = USize(3);
+    const ORIGINS: USize = USize(16);
+    const ORIGIN_BITS: USize = USize(4);
+
+    fn origin_base(origin: Self::Origin) -> Uint<28, Hot> {
+        // The minter's index shifted above its counter, so each origin owns a
+        // contiguous run of ids and no two runs overlap. Done at the raw level
+        // because `Mul` and `Shl` are not yet const-stable, at the same
+        // id-allocator boundary the mint step already crosses.
+        Uint::<28, Hot>::from_raw((origin.0.to_raw() as u32) << 24) // lint:allow(no-bare-numeric) reason: placing a 4-bit origin index above the 24-bit counter, at the id-allocator boundary; tracked: #34
+    }
+
+    fn origin_ceiling(origin: Self::Origin) -> Uint<28, Hot> {
+        // The last id this minter owns: its base plus a full counter span.
+        Uint::<28, Hot>::from_raw(((origin.0.to_raw() as u32) << 24) | 0x00FF_FFFF)
+        // lint:allow(no-bare-numeric) reason: the per-origin counter ceiling at the id-allocator boundary; tracked: #34
+    }
+
+    fn id_from_counter(counter: Uint<28, Hot>) -> <Self::Layout as SymLayoutOps>::Id {
+        Bits::<28, Hot>::from_raw(counter.to_raw()) // lint:allow(no-bare-numeric) reason: Uint-to-Bits id projection at the id-allocator boundary; to_raw/from_raw are arvo's container projections; tracked: #34
+    }
 }
 
 #[cfg(test)]
