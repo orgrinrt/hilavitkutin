@@ -1,0 +1,50 @@
+c45b088 chore: lock the src changelist for the origin round
+8824e26 fix!: give a generator an origin, so two peers cannot mint the same handle
+6ba9912 chore: open the src changelist for the origin round
+179b8a8 chore: lock the doc changelist for the origin round
+b380510 docs: describe the origin mechanism as built
+01cbebf docs: open the round for the origin mechanism
+9a8d68c chore: close the sym round
+c6e942c chore: lock the src changelist for the sym round
+645fb72 feat!: lift the sym layout into a shape and name what freshness covers
+0b8a7d2 chore: open the src changelist for the sym round
+81a6652 chore: lock the doc changelist for the sym round
+d92f9b6 docs: state the sym shape and what generator freshness covers
+63eca74 docs: open the doc changelist for the sym round
+dd2529d chore: drop the dead mockspace build-dependency and open the sym round
+eb90a48 chore: move the two local lints to the split lint traits
+603e663 chore: migrate to the mockspace launcher
+3c5fb09 feat: factor hilavitkutin-sym generic interned-identity core
+fa0cf62 docs: give every r6 leaf an assigned resolution
+c729cb4 docs: re-chart engine roadmap against canon as r6
+fb4c6da feat: add Plannable declaration trait and the HintExt hint slot
+7865e97 feat: invert run dispatch to fiber-outer morsel-inner per plan window
+78d38d6 feat: per-fiber l1 morsel-window formula from runcfg budget
+b0e863d feat: erased resource addressing and ctx snapshot per storage bench
+0725c4e feat: add hilavitkutin-api-macros crate with ResourceFootprint derive
+09ade36 feat: add CollectionBytes + ResourceFootprint footprint traits
+e8dd5d7 docs: sketch A3-2 resource-collection footprint surface
+378fef9 docs: re-chart A3 morsel formula on the canonical R5 resource model
+8198fdc feat: add per-store element-byte-size collection for L1 morsel formula
+bd0ccc0 docs: sketch A3 per-store size collection for L1 morsel formula
+f54ac23 feat: add run_one_trunk_windowed for fiber-outer morsel dispatch
+91530de docs: sketch A2a per-fiber morsel loop drives per-trunk dispatch
+f10a385 docs: backlog note for generalized asm-emission contract tests
+dc9e754 docs: granular roadmap, sketch plan, asm-contract-test discipline
+488ce26 feat: thread per-fiber morsel size onto FiberDispatch
+826494b docs: resolve arc-audit roadmap (head+tail/overlap in scope, internals-first)
+631a0ba docs: critical arc audit and updated canonical roadmap
+fe09f5c refactor: rename morsel_sizes to morsel_windows for per-fiber morsel slice 1
+556ca6f docs: per-fiber morsel-loop wiring blueprint
+e42d979 docs: chart adapt actuation arc (dead consumption surfaces)
+2038eb2 feat: select_adapt_config phase-imbalance reconfigure trigger
+c905fba feat: per-phase duration EMA + catalogue adapt performance contracts
+74e3d3e feat: core-idle adapt axis via waist-barrier follower timing
+9f281af feat: change_seen_count on all run paths, accumulator over-capacity is a hard error
+cd4e6d8 feat: count change_class frames via store_dirty into SchedulerMetrics
+002c580 chore: allow private_bounds on sealed Executor trait
+4b7de99 chore: remove unused impl_trait_in_assoc_type gate from hilavitkutin-api
+f66d980 feat: sample throughput record count into SchedulerMetrics
+1c496ef test: P1 R2a keystone nine-resource CtxFor Ctx through OnMeta
+9382174 docs: chart-the-path P1 adapt granularity + sketch plan
+b12b248 docs: chart-the-path P1 adapt roadmap draft + canonical mirror
