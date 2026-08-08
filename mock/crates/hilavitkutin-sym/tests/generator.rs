@@ -29,14 +29,14 @@ fn expect(m: Maybe<Sym>) -> Sym {
 
 #[test]
 fn mint_carries_domain_kind() {
-    let mut g = Generator::<TestGen>::new();
+    let mut g = Generator::<TestGen>::single();
     let s = expect(g.mint());
     assert_eq!(s.kind(), TestGen::KIND);
 }
 
 #[test]
 fn mints_are_distinct() {
-    let mut g = Generator::<TestGen>::new();
+    let mut g = Generator::<TestGen>::single();
     let a = expect(g.mint());
     let b = expect(g.mint());
     let c = expect(g.mint());
@@ -62,7 +62,7 @@ fn minted_handle_is_disjoint_from_string_kind() {
     // handle (kind 0b000), whatever the id.
     let string_kind = SymKind::from_raw(0b000);
     let id = Bits::<28, Hot>::from_raw(0);
-    let mut g = Generator::<TestGen>::new();
+    let mut g = Generator::<TestGen>::single();
     let minted = expect(g.mint());
     let string_like = Sym::new(string_kind, id);
     assert_ne!(minted, string_like);

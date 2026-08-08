@@ -4,7 +4,7 @@ use core::marker::PhantomData;
 
 use arvo::strategy::Identity;
 use arvo::traits::FromConstant;
-use arvo::{Bool, Uint, USize};
+use arvo::{Bool, USize, Uint};
 use arvo_bits::{Bits, Hot};
 use notko::Maybe;
 
@@ -34,7 +34,7 @@ const ONE: Uint<28, Hot> = <Uint<28, Hot> as FromConstant>::from_constant::<{ US
 ///     type Value = str;
 /// }
 /// // InterningOnly is not a GenerativeDomain, so this does not compile.
-/// let _g = Generator::<InterningOnly>::new();
+/// let _g = Generator::<InterningOnly>::single();
 /// ```
 pub struct Generator<D: GenerativeDomain> {
     next: Uint<28, Hot>,
@@ -43,8 +43,20 @@ pub struct Generator<D: GenerativeDomain> {
 }
 
 impl<D: GenerativeDomain> Generator<D> {
-    /// A fresh generator, starting from id zero.
-    pub const fn new() -> Self {
+    /// A fresh generator for a domain minted in exactly one place.
+    ///
+    /// **Freshness is a property of this generator, not of the crate.** Two
+    /// generators built here start at the same id and emit bit-identical
+    /// handles, and because `Sym` compares by integer equality those handles
+    /// compare *equal* rather than merely failing to match. That is silent, and
+    /// silence is why this constructor names the case it serves.
+    ///
+    /// A consumer with more than one independent minter for one domain cannot
+    /// get disjointness from this constructor and must not try: it chooses a
+    /// shape with origin bits, under which a generator can only be built by
+    /// naming which origin it is, so a collision requires two peers to claim
+    /// the same origin explicitly rather than to share a default.
+    pub const fn single() -> Self {
         Self {
             next: <Uint<28, Hot> as Identity>::ZERO,
             exhausted: Bool(false),
@@ -74,7 +86,7 @@ impl<D: GenerativeDomain> Generator<D> {
 
 impl<D: GenerativeDomain> Default for Generator<D> {
     fn default() -> Self {
-        Self::new()
+        Self::single()
     }
 }
 

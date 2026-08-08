@@ -18,9 +18,11 @@ mod generator;
 mod handle;
 mod interner;
 mod kind;
+mod shape;
 
 pub use crate::domain::{Domain, GenerativeDomain, InterningDomain};
 pub use crate::generator::Generator;
 pub use crate::handle::{Sym, SymLayout};
 pub use crate::interner::Interner;
 pub use crate::kind::SymKind;
+pub use crate::shape::{Standard, SymShape};
