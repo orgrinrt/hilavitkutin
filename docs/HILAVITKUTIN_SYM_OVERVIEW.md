@@ -1,7 +1,15 @@
 <!--
-  Hand-written. There is no template behind this file, so nothing regenerates it
-  and an edit here is the only way it changes. It carried a generated-file banner
-  until it was found describing a surface two design rounds had already replaced.
+  A STALE RENDERING. Do not edit, and prefer the source over reading this.
+
+  This file was generated from mock/crates/hilavitkutin-sym/DESIGN.md.tmpl under
+  a filename the current generator no longer emits, so a generator run deletes
+  this path rather than updating it, and no template of this name exists to find.
+  It is superseded by that template and waits on the rename migration that owns
+  every overview in this directory.
+
+  An earlier header claimed the opposite, that no template sat behind the file
+  and nothing regenerated it. That was inferred from the absence of a same-named
+  template rather than checked, and both halves of it were false.
 -->
 
 # hilavitkutin-sym, Design Overview
