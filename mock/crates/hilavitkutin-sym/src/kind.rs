@@ -20,9 +20,32 @@ use crate::shape::{Standard, SymLayoutOps, SymShape};
 ///
 /// The tag is part of a `Sym`'s compared bits, so
 /// two `Sym`s with different tags are never equal.
+/// Hand-written impls for the same reason as [`Sym`]: a derive would bound them
+/// on `S` rather than on the tag type the code actually compares.
 #[repr(transparent)]
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct SymKind<S: SymShape = Standard>(<S::Layout as SymLayoutOps>::Kind);
+
+impl<S: SymShape> Clone for SymKind<S> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<S: SymShape> Copy for SymKind<S> {}
+
+impl<S: SymShape> PartialEq for SymKind<S> {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
+
+impl<S: SymShape> Eq for SymKind<S> {}
+
+impl<S: SymShape> core::fmt::Debug for SymKind<S> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_tuple("SymKind").field(&self.0).finish()
+    }
+}
 
 impl<S: SymShape> SymKind<S> {
     /// Build a tag from a value at this shape's kind width.

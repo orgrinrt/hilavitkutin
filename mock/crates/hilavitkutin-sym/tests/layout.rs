@@ -200,3 +200,51 @@ macro_rules! layout_suite {
 
 layout_suite!(sym_layout, SymLayout, u8, u32);
 layout_suite!(wide_kind_layout, WideKindLayout, u8, u32);
+
+/// **A shape need not derive anything for its handles to compare.**
+///
+/// `SymShape` requires `Copy + 'static`. A derive on `Sym<S>` would additionally
+/// demand `PartialEq + Eq + Hash + Default + Debug` of `S`, so a legal shape
+/// deriving less would produce a handle with no equality: this crate's central
+/// promise absent by construction, hidden by every shipped shape deriving
+/// everything.
+///
+/// The shape below derives the minimum its own bound requires and nothing else.
+/// If the impls regress to a derive, this stops compiling.
+#[test]
+fn a_shape_deriving_the_minimum_still_yields_a_comparable_handle() {
+    use hilavitkutin_sym::{Standard, Sym, SymShape};
+
+    #[derive(Copy, Clone)]
+    struct Spartan;
+
+    const impl SymShape for Spartan {
+        type Layout = <Standard as SymShape>::Layout;
+        type Origin = <Standard as SymShape>::Origin;
+
+        const COUNTER_BITS: arvo::USize = <Standard as SymShape>::COUNTER_BITS;
+        const ID_BITS: arvo::USize = <Standard as SymShape>::ID_BITS;
+        const KIND_BITS: arvo::USize = <Standard as SymShape>::KIND_BITS;
+        const ORIGIN_BITS: arvo::USize = <Standard as SymShape>::ORIGIN_BITS;
+
+        fn origin_base(o: Self::Origin) -> arvo::Uint<28, Hot> {
+            <Standard as SymShape>::origin_base(o)
+        }
+        fn origin_ceiling(o: Self::Origin) -> arvo::Uint<28, Hot> {
+            <Standard as SymShape>::origin_ceiling(o)
+        }
+        fn id_from_counter(c: arvo::Uint<28, Hot>) -> <Self::Layout as SymLayoutOps>::Id {
+            <Standard as SymShape>::id_from_counter(c)
+        }
+    }
+
+    let a: Sym<Spartan> = Sym::default();
+    let b: Sym<Spartan> = Sym::default();
+    assert_eq!(
+        a, b,
+        "two default handles of a minimal shape must compare equal"
+    );
+
+    let c = a.with_flag(Bit::<Hot>::from_raw(1u8));
+    assert_ne!(a, c, "handles differing in the flag must not compare equal");
+}

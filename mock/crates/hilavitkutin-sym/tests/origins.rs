@@ -237,3 +237,65 @@ fn every_origin_owns_its_first_and_last_id() {
         );
     }
 }
+
+/// **The crate's own promise, minted rather than reasoned about.**
+///
+/// Two origins of one domain never produce one handle. Nine rounds of width
+/// laws related declarations to each other and to layout types, and none of
+/// them ever minted anything, so a shape could place its origins outside its own
+/// id field and two minters would collide while every law passed.
+///
+/// Asserted per shape rather than for `SixteenMinters` alone, because the shape
+/// that broke it was the one no disjointness test covered.
+#[test]
+fn two_origins_never_collide_under_any_shape() {
+    // Sixteen origins, eight mints each: enough that an overlapping run shows,
+    // small enough to stay a unit test.
+    let minted: Vec<Vec<Sym<SixteenMinters>>> = (0u8..16)
+        .map(|o| {
+            let mut g = Generator::<PeerBinder>::at(origin(o));
+            mint_n(&mut g, 8)
+        })
+        .collect();
+
+    for (oa, a) in minted.iter().enumerate() {
+        for (ob, b) in minted.iter().enumerate() {
+            if oa == ob {
+                continue;
+            }
+            for x in a {
+                for y in b {
+                    assert_ne!(
+                        x, y,
+                        "origins {oa} and {ob} minted the same handle, so two peers \
+                         holding them compare equal rather than failing to match"
+                    );
+                }
+            }
+        }
+    }
+
+    // A single-origin shape has nothing to collide with, and saying so keeps the
+    // law honest about what it covers rather than silently skipping the case.
+    let mut only = Generator::<WideDomainSingle>::at(hilavitkutin_sym::OneOrigin);
+    let a = mint_n(&mut only, 8);
+    for (i, x) in a.iter().enumerate() {
+        for (j, y) in a.iter().enumerate() {
+            if i != j {
+                assert_ne!(x, y, "a single minter repeated itself at {i} and {j}");
+            }
+        }
+    }
+}
+
+/// A domain on the wide shape, for the single-origin half of the law above.
+#[derive(Copy, Clone)]
+struct WideDomainSingle;
+
+impl Domain for WideDomainSingle {
+    type Shape = WideKind;
+
+    const KIND: SymKind<WideKind> = SymKind::new(arvo_bits::Bits::from_raw(0b00010));
+}
+
+impl GenerativeDomain for WideDomainSingle {}

@@ -368,4 +368,44 @@ mod tests {
         let all: [MinterId; 16] = core::array::from_fn(|i| MinterId(Uint::<4, Hot>::from_raw(i as u8))); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: enumerating the sixteen origins for the span law; the index crosses arvo's own from_raw boundary; tracked: #34
         check::<SixteenMinters>("SixteenMinters", &all);
     }
+
+    /// **Every origin fits the id field it is placed in.**
+    ///
+    /// `origin_base` and `origin_ceiling` return `Uint<28, Hot>` whatever the
+    /// shape's own `ID_BITS`, and `from_raw` does not truncate, so a shape may
+    /// place origins beyond its id field. The excess then wraps into another
+    /// origin's run and two minters collide.
+    ///
+    /// This names the mechanism. `two_origins_never_collide_under_any_shape` in
+    /// `tests/origins.rs` names the property it breaks, and both exist because a
+    /// law over the property alone leaves the next reader to rediscover why.
+    #[test]
+    fn every_origin_fits_the_id_field() {
+        fn check<S: SymShape>(name: &'static str, origins: &[S::Origin]) {
+            let span = if S::ID_BITS.0 >= 32 {
+                u32::MAX
+            } else {
+                (1u32 << S::ID_BITS.0) - 1
+            };
+            for o in origins {
+                let base = S::origin_base(*o).to_raw();
+                let ceiling = S::origin_ceiling(*o).to_raw();
+                assert!(
+                    base <= span,
+                    "{name} places an origin base at {base}, past its own {} id bits",
+                    S::ID_BITS.0
+                );
+                assert!(
+                    ceiling <= span,
+                    "{name} places an origin ceiling at {ceiling}, past its own {} id bits",
+                    S::ID_BITS.0
+                );
+            }
+        }
+        check::<Standard>("Standard", &[OneOrigin]);
+        check::<WideKind>("WideKind", &[OneOrigin]);
+        let all: [MinterId; 16] =
+            core::array::from_fn(|i| MinterId(Uint::<4, Hot>::from_raw(i as u8)));
+        check::<SixteenMinters>("SixteenMinters", &all);
+    }
 }

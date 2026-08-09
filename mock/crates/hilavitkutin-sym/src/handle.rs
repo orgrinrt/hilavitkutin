@@ -113,9 +113,51 @@ const impl crate::shape::SymLayoutOps for WideKindLayout {
 /// Generic interned-identity handle. 4 bytes everywhere. Comparison is integer
 /// equality across the whole layout, so two `Sym`s of different `kind` are
 /// never equal whatever their ids or flags.
+/// The impls below are hand-written rather than derived, and that is
+/// load-bearing. A derive bounds them on `S`, and `SymShape` requires only
+/// `Copy + 'static`, so a legal shape deriving less would yield a handle with no
+/// equality at all: this type's central promise absent by construction. Every
+/// shipped shape derives everything, which is exactly why nothing noticed.
+/// Bounding on the layout instead asks for what the code actually uses.
 #[repr(transparent)]
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
 pub struct Sym<S: SymShape = Standard>(S::Layout);
+
+impl<S: SymShape> Clone for Sym<S> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<S: SymShape> Copy for Sym<S> {}
+
+impl<S: SymShape> PartialEq for Sym<S> {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
+
+impl<S: SymShape> Eq for Sym<S> {}
+
+impl<S: SymShape> core::fmt::Debug for Sym<S> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_tuple("Sym").field(&self.0).finish()
+    }
+}
+
+impl<S: SymShape> core::hash::Hash for Sym<S>
+where
+    S::Layout: core::hash::Hash,
+{
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        self.0.hash(state);
+    }
+}
+
+impl<S: SymShape> Default for Sym<S> {
+    fn default() -> Self {
+        Self(<S::Layout as SymLayoutOps>::zeroed())
+    }
+}
 
 impl<S: SymShape> Sym<S> {
     /// Build a handle for `kind` with `id`, flag zero.
