@@ -186,6 +186,22 @@ base wraps to another origin's. That is the collision above with a specific
 cause, and the two laws are separate because one names the property and the other
 names the mechanism.
 
+**Every refusal this document claims is a compile-fail test.** The argument for
+this crate rests more on what it refuses than on what it computes, and a refusal
+nothing guards can be deleted by accident: loosen a bound and every remaining
+test still passes, because none of them names the case that stopped being
+refused. Two shapes' handles not comparing, a domain's tag not reaching another
+shape's producer, the three-bit literal constructor not existing off the default
+shape, and a non-generative domain not receiving a generator are each pinned that
+way rather than asserted in prose.
+
+**A construction that compiles and is wrong is a negative test**, declared inside
+the test module rather than verified by hand and discarded. Expressing a law as
+something that returns a verdict, instead of something that asserts, is what
+lets the wrong construction live permanently on the right side of the suite. The
+alternative, which this crate practised for nine rounds, is that each defect is
+demonstrated once by an edit that is then reverted, and rediscovered later.
+
 The general form, met six times in this crate: **a law over declarations is not a
 law over behaviour.** A width law cannot see a collision; only minting can. Every
 time this defect moved, the fix related one declaration to another, and the sixth
