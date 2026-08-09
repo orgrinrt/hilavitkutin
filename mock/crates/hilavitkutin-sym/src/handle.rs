@@ -131,7 +131,8 @@ impl<S: SymShape> Clone for Sym<S> {
 impl<S: SymShape> Copy for Sym<S> {}
 
 impl<S: SymShape> PartialEq for Sym<S> {
-    fn eq(&self, other: &Self) -> bool {
+    #[rustfmt::skip]
+    fn eq(&self, other: &Self) -> bool { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: `PartialEq::eq` declares its own return type; an impl cannot change it (std trait method exception); tracked: #34
         self.0 == other.0
     }
 }

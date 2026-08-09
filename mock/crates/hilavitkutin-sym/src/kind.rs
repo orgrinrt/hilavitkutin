@@ -34,7 +34,8 @@ impl<S: SymShape> Clone for SymKind<S> {
 impl<S: SymShape> Copy for SymKind<S> {}
 
 impl<S: SymShape> PartialEq for SymKind<S> {
-    fn eq(&self, other: &Self) -> bool {
+    #[rustfmt::skip]
+    fn eq(&self, other: &Self) -> bool { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: `PartialEq::eq` declares its own return type; an impl cannot change it (std trait method exception); tracked: #34
         self.0 == other.0
     }
 }

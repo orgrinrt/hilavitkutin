@@ -404,8 +404,8 @@ mod tests {
         }
         check::<Standard>("Standard", &[OneOrigin]);
         check::<WideKind>("WideKind", &[OneOrigin]);
-        let all: [MinterId; 16] =
-            core::array::from_fn(|i| MinterId(Uint::<4, Hot>::from_raw(i as u8)));
+        #[rustfmt::skip]
+        let all: [MinterId; 16] = core::array::from_fn(|i| MinterId(Uint::<4, Hot>::from_raw(i as u8))); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: enumerating the sixteen origins for the fit law; the index crosses arvo's own from_raw boundary; tracked: #34
         check::<SixteenMinters>("SixteenMinters", &all);
     }
 }
