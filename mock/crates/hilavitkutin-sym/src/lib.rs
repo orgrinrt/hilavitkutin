@@ -33,61 +33,61 @@ pub use crate::shape::{
 
 /// The states this crate refuses, pinned so they stay refused.
 ///
-/// Every claim here is one the design document makes in prose. A refusal that
-/// nothing guards can be removed by loosening a bound, and every other test in
+/// Every claim here is one the design document makes in prose. **A refusal that
+/// nothing guards can be removed by loosening a bound**, and every other test in
 /// the suite still passes, because none of them names the case that stopped
 /// being refused.
 ///
-/// **Each refusal is paired with the nearest thing that must still compile.**
-/// A `compile_fail` block passes when the code fails for any reason at all,
-/// a typo included, so the error code is pinned and the positive twin shows the
+/// **Each refusal is paired with the nearest thing that must still compile.** A
+/// `compile_fail` block passes when its contents fail for any reason at all, a
+/// typo included, so the error code is pinned and a positive twin shows the
 /// surrounding construction is sound.
-pub mod refusals {
-    /// Two shapes' handles do not compare. `Sym<Standard>` and `Sym<WideKind>`
-    /// divide the same 32 bits differently, so an equality between them is
-    /// meaningless rather than merely unwise.
-    ///
-    /// ```compile_fail,E0308
-    /// use hilavitkutin_sym::{Standard, Sym, WideKind};
-    /// let a: Sym<Standard> = Sym::default();
-    /// let b: Sym<WideKind> = Sym::default();
-    /// let _ = a == b;
-    /// ```
-    ///
-    /// Two handles of the **same** shape compare, which is what makes the
-    /// refusal above about the shapes rather than about `Sym`:
-    ///
-    /// ```
-    /// use hilavitkutin_sym::{Sym, WideKind};
-    /// let a: Sym<WideKind> = Sym::default();
-    /// let b: Sym<WideKind> = Sym::default();
-    /// assert_eq!(a, b);
-    /// ```
-    pub struct TwoShapesDoNotCompare;
-
-    /// The literal tag constructor exists on `Standard` alone. It takes a
-    /// three-bit value, and a shape with a wider tag would truncate the literal
-    /// silently, so the method is scoped rather than generic.
-    ///
-    /// ```compile_fail,E0599
-    /// use hilavitkutin_sym::{SymKind, WideKind};
-    /// let _ = SymKind::<WideKind>::from_raw(0b10000);
-    /// ```
-    ///
-    /// The same shape builds its tag through `new`, at its own width, which is
-    /// the route a non-default shape is meant to take:
-    ///
-    /// ```
-    /// use hilavitkutin_sym::{SymKind, WideKind};
-    /// let _ = SymKind::<WideKind>::new(arvo_bits::Bits::from_raw(0b10000));
-    /// ```
-    ///
-    /// And it exists on the default shape, so the refusal above is about the
-    /// scoping rather than about the method:
-    ///
-    /// ```
-    /// use hilavitkutin_sym::SymKind;
-    /// let _ = SymKind::from_raw(0b001);
-    /// ```
-    pub struct ALiteralTagIsStandardOnly;
-}
+///
+/// # Two shapes' handles do not compare
+///
+/// `Sym<Standard>` and `Sym<WideKind>` divide the same 32 bits differently, so
+/// an equality between them is meaningless rather than merely unwise.
+///
+/// ```compile_fail,E0308
+/// use hilavitkutin_sym::{Standard, Sym, WideKind};
+/// let a: Sym<Standard> = Sym::default();
+/// let b: Sym<WideKind> = Sym::default();
+/// let _ = a == b;
+/// ```
+///
+/// Two handles of the same shape do compare, which is what makes the refusal
+/// above about the shapes rather than about `Sym`:
+///
+/// ```
+/// use hilavitkutin_sym::{Sym, WideKind};
+/// let a: Sym<WideKind> = Sym::default();
+/// let b: Sym<WideKind> = Sym::default();
+/// assert_eq!(a, b);
+/// ```
+///
+/// # The literal tag constructor exists on `Standard` alone
+///
+/// It takes a three-bit value, and a shape with a wider tag would truncate the
+/// literal silently, so the method is scoped rather than generic.
+///
+/// ```compile_fail,E0599
+/// use hilavitkutin_sym::{SymKind, WideKind};
+/// let _ = SymKind::<WideKind>::from_raw(0b10000);
+/// ```
+///
+/// The same shape builds its tag through `new`, at its own width, which is the
+/// route a non-default shape is meant to take:
+///
+/// ```
+/// use hilavitkutin_sym::{SymKind, WideKind};
+/// let _ = SymKind::<WideKind>::new(arvo_bits::Bits::from_raw(0b10000));
+/// ```
+///
+/// And it exists on the default shape, so the refusal is about the scoping
+/// rather than about the method:
+///
+/// ```
+/// use hilavitkutin_sym::SymKind;
+/// let _ = SymKind::from_raw(0b001);
+/// ```
+pub mod refusals {}
