@@ -48,13 +48,20 @@ pub struct Sym(SymLayout);
 ```
 
 A 4-byte handle, integer equality across the whole 32-bit layout, `Copy`,
-`repr(transparent)`, ABI-stable. The layout is declared on `SymLayout`
-via `arvo_bits::bitfield!`:
+`repr(transparent)`, ABI-stable.
+
+**How the 32 bits divide is a shape, not a constant of this crate.** `Sym` is
+`Sym<S: SymShape = Standard>`, and `Standard` is what every existing consumer
+uses, byte for byte what the crate shipped before shapes existed. A shape is a
+wire format: two handles built under different shapes divide the same 32 bits
+differently, so they must not meet in one store.
+
+`Standard`'s layout is declared on `SymLayout` via `arvo_bits::bitfield!`:
 
 | Bits | Field | Meaning |
 |---|---|---|
-| 0 to 27 | `id` (28-bit) | 268M identities per domain |
-| 28 to 30 | `kind` (3-bit) | the domain tag, eight domains |
+| 0 to 27 | `id` (28-bit) | 268M identities per domain, split between an origin naming the minter and a counter running within it when the shape has more than one minter |
+| 28 to 30 | `kind` (3-bit) | the domain tag, eight domains under this shape |
 | 31 | `flag` (1-bit) | a domain-private flag; the string domain uses it for the const-versus-runtime origin, a domain that does not need it leaves it zero |
 
 `SymLayout` generates per-field accessors (`kind()`, `id()`, `flag()`),
@@ -69,13 +76,19 @@ compared layout, and that is what keeps domains disjoint.
 
 ```rust
 #[repr(transparent)]
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
-pub struct SymKind(Bits<3, Hot>);
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub struct SymKind<S: SymShape = Standard>(<S::Layout as SymLayoutOps>::Kind);
 ```
 
-The 3-bit tag naming which domain a handle belongs to. `SymKind::new`
-builds one from a raw value. Eight domains are available; the flag bit is
-a per-domain extra orthogonal to the tag.
+The tag naming which domain a handle belongs to, at whatever width its shape
+gives it. `SymKind::new` builds one from a value of that width;
+`SymKind::from_raw` is the literal convenience and exists on `Standard` alone,
+because a literal is three bits wide and a shape choosing a different tag width
+would truncate one silently.
+
+`Standard` admits eight domains. `WideKind`, a shape shipped to demonstrate that
+the width genuinely varies, admits thirty-two. The flag bit is a per-domain extra
+orthogonal to the tag under every shape.
 
 The kind-assignment table is a documented convention owned here so two
 domains cannot claim one tag. The current assignments:
@@ -129,23 +142,37 @@ side resolves a handle.
 
 ```rust
 pub struct Generator<D: GenerativeDomain> {
-    // monotonic counter over the 28-bit id width, plus a domain marker
+    // a counter within one origin's run of the id space, plus a domain marker
 }
 ```
 
-The concrete producer for a generative domain. It holds a monotonic
-counter over the 28-bit id width and mints a fresh handle on demand:
+The concrete producer for a generative domain, built against an **origin**:
 
 ```rust
-// mint returns a fresh Sym tagged D::KIND, or Isnt at the 28-bit ceiling.
-pub fn mint(&mut self) -> Maybe<Sym>;
+// the shape's origin type says which minter this is
+pub fn at(origin: <D::Shape as SymShape>::Origin) -> Self;
+
+// shorthand for a shape with exactly one minter, which takes no argument
+pub fn single() -> Self;
+
+// a fresh Sym tagged D::KIND, or Isnt at this minter's own ceiling
+pub fn mint(&mut self) -> Maybe<Sym<D::Shape>>;
 ```
 
-Each `mint` yields a `Sym` distinct from every prior mint of the same
-generator, tagged `D::KIND`. At the 28-bit boundary it returns
-`Maybe::Isnt` rather than wrapping the counter and reissuing a live id,
-so freshness is never silently violated. No allocation, no arena: a
-generative domain needs only the counter and the kind.
+**Two generators for one domain must not be built at the same origin.** Each
+origin owns a disjoint run of the id space, and a minter seeds at its origin's
+base and refuses at that origin's ceiling rather than at the whole space's, so
+two minters cannot reach each other's ids however far either counts.
+
+That refusal is the point. Earlier every generator seeded at zero, so two
+producers for one domain emitted bit-identical handles. Because a `Sym` compares
+by integer equality over the whole layout, those handles did not fail to match:
+they compared **equal**, which is the silent kind of wrong. A shape with one
+minter has one origin whose type has one value, so `single` takes no argument and
+there is no second to name by mistake.
+
+No allocation, no arena: a generative domain needs the counter, the origin and
+the kind.
 
 ## Why a monomorphic handle plus typed producers
 

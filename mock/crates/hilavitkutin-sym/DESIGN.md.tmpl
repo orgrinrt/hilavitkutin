@@ -35,7 +35,7 @@ ids, but because the two live in different domains of one core.
 ```rust
 #[repr(transparent)]
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
-pub struct Sym(SymLayout);
+pub struct Sym<S: SymShape = Standard>(S::Layout);
 ```
 
 A 4-byte handle, integer equality across the whole 32-bit layout, `Copy`,
@@ -97,21 +97,32 @@ whose blanket impl over `Bits` yields the width parameter, and a law ties each
 shape's declared width to it. No layout can supply a different answer, because
 the impl is blanket and specialisation is forbidden here.
 
-The associated type is the rung that ends this, and it ends it because
-`get_kind` returns `Self::Kind` while its body returns what the bitfield hands
-it. A layout naming a width its field does not have is a type error, not a
-disagreement nobody notices.
+**That is half the guarantee, and stating it as the whole was the last mistake
+this class produced.** The type pins what the accessors are compiled against. It
+does not pin the field behind them, because an accessor may convert: a layout
+declaring a nine-bit `Kind` over a genuine five-bit field, widening on the way
+out and truncating on the way in, satisfies every signature and passes every law
+that reads a declared width against a declared type.
 
-**Tying a declaration to another declaration constrains neither**, and this
-crate learned it five times. A law over two hand-written numbers passes when
-both are wrong together. A law over a mask constant passes when the mask is
-wrong, because no accessor reads that constant: the generated accessor uses the
-macro's own mask and never consults the forwarded copy. Each of those looked
+What pins the field is the **round trip**. Writing a field's maximum and reading
+it back unchanged fails the moment the field behind the accessor is narrower
+than the type in front of it, and the whole-handle law fails alongside it,
+because the bits the shrunken field vacates then belong to nothing.
+
+So the chain runs declaration, to type, to round trip, to bits that land, and
+each link carries part of it. Neither end alone is enough, and the previous four
+attempts each named one link and called the question closed.
+
+**Tying a declaration to another declaration constrains neither**, which is the
+general form and what this crate learned five times over. A law over two
+hand-written numbers passes when both are wrong together. A law over a mask
+constant passes when the mask is wrong, because no accessor reads that constant.
+A law over an associated type passes when the accessor converts. Each looked
 like a derivation and was a second statement of one unchecked fact.
 
 The test a width must pass is whether the chain from its declaration reaches a
-value the code **uses**. A mask nothing reads is not one. A type an accessor is
-compiled against is.
+value the code **uses**, and the cheapest way to find out is to write the layout
+that lies and watch what fails. Nothing here was established by reading.
 
 `SymShape` is a const trait, so a handle builds in a const context under any
 shape. A domain declares which shape it belongs to, which is what stops a domain
@@ -172,9 +183,15 @@ parameter over a single value.
 
 ```rust
 #[repr(transparent)]
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct SymKind<S: SymShape = Standard>(<S::Layout as SymLayoutOps>::Kind);
 ```
+
+No `Hash`, and that is a consequence rather than an omission. The inner type is
+`SymLayoutOps::Kind`, which is bounded `Copy + Eq + Debug`, so deriving `Hash`
+here would mean requiring it of every layout's tag type to serve one consumer
+that has not asked. `Sym` itself derives `Hash`, and a handle is what goes in a
+map.
 
 The tag naming which domain a handle belongs to, at whatever width its shape
 gives it. `SymKind::new` builds one from a raw value. Under `Standard` that is
