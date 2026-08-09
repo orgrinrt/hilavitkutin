@@ -129,8 +129,9 @@ pub const trait FieldWidth {
     const WIDTH: USize;
 }
 
-const impl<const N: u16, S: BitsContainerFor<N, Unsigned>> FieldWidth for Bits<N, S> {
-    const WIDTH: USize = USize(N as usize);
+#[rustfmt::skip]
+const impl<const N: u16, S: BitsContainerFor<N, Unsigned>> FieldWidth for Bits<N, S> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: `Bits`'s own width parameter is declared `u16` by arvo; naming it is the definition-site of this blanket impl; tracked: #34
+    const WIDTH: USize = USize(N as usize); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: projecting arvo's own `u16` width parameter into `USize`, the arvo type this returns; tracked: #34
 }
 
 /// The default shape, and byte-identical to the layout every current consumer
@@ -205,13 +206,13 @@ const impl SymShape for SixteenMinters {
         // contiguous run of ids and no two runs overlap. Done at the raw level
         // because `Mul` and `Shl` are not yet const-stable, at the same
         // id-allocator boundary the mint step already crosses.
-        Uint::<28, Hot>::from_raw((origin.0.to_raw() as u32) << 24) // lint:allow(no-bare-numeric) reason: placing a 4-bit origin index above the 24-bit counter, at the id-allocator boundary; tracked: #34
+        Uint::<28, Hot>::from_raw((origin.0.to_raw() as u32) << 24) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: placing a 4-bit origin index above the 24-bit counter, at the id-allocator boundary; tracked: #34
     }
 
     #[rustfmt::skip]
     fn origin_ceiling(origin: Self::Origin) -> Uint<28, Hot> {
         // The last id this minter owns: its base plus a full counter span.
-        Uint::<28, Hot>::from_raw(((origin.0.to_raw() as u32) << 24) | 0x00FF_FFFF) // lint:allow(no-bare-numeric) reason: the per-origin counter ceiling at the id-allocator boundary; tracked: #34
+        Uint::<28, Hot>::from_raw(((origin.0.to_raw() as u32) << 24) | 0x00FF_FFFF) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the per-origin counter ceiling at the id-allocator boundary; tracked: #34
     }
 
     #[rustfmt::skip]
@@ -358,8 +359,8 @@ mod tests {
         }
         check::<Standard>("Standard", &[OneOrigin]);
         check::<WideKind>("WideKind", &[OneOrigin]);
-        let all: [MinterId; 16] =
-            core::array::from_fn(|i| MinterId(Uint::<4, Hot>::from_raw(i as u8)));
+        #[rustfmt::skip]
+        let all: [MinterId; 16] = core::array::from_fn(|i| MinterId(Uint::<4, Hot>::from_raw(i as u8))); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: enumerating the sixteen origins for the span law; the index crosses arvo's own from_raw boundary; tracked: #34
         check::<SixteenMinters>("SixteenMinters", &all);
     }
 }

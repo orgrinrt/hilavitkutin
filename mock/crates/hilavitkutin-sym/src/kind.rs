@@ -49,8 +49,8 @@ impl SymKind<Standard> {
     /// Only the default shape gets it, because the literal is three bits wide
     /// and a shape that chose a different kind width would silently truncate.
     /// A domain under another shape builds its tag with [`SymKind::new`].
-    pub const fn from_raw(raw: u8) -> Self {
-        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: ergonomic kind-literal constructor (definition-site helper-fn exception); the tag is a 3-bit value named by a literal; tracked: #34
+    #[rustfmt::skip]
+    pub const fn from_raw(raw: u8) -> Self { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: ergonomic kind-literal constructor (definition-site helper-fn exception); the tag is a 3-bit value named by a literal; tracked: #34
         Self(Bits::<3, Hot>::from_raw(raw))
     }
 }

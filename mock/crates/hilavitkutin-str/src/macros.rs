@@ -9,7 +9,7 @@
 #[macro_export]
 macro_rules! str_const {
     ($s:literal) => {{
-        use ::arvo_bits::BitsRefitCtor as _;
+        use arvo_bits::BitsRefitCtor as _;
         #[used]
         #[cfg_attr(
             any(target_os = "linux", target_os = "android"),
@@ -20,13 +20,13 @@ macro_rules! str_const {
             unsafe(link_section = "__DATA,__hvkstr")
         )]
         static __ENTRY: $crate::StaticStrEntry = $crate::StaticStrEntry {
-            hash: $crate::Str::__make(::arvo_bits::Bits::<28>::from_narrowed(
-                $crate::const_fnv1a($s),
-            )),
+            hash: $crate::Str::__make(::arvo_bits::Bits::<28>::from_narrowed($crate::const_fnv1a(
+                $s,
+            ))),
             value: $s,
         };
-        $crate::Str::__make(::arvo_bits::Bits::<28>::from_narrowed(
-            $crate::const_fnv1a($s),
-        ))
+        $crate::Str::__make(::arvo_bits::Bits::<28>::from_narrowed($crate::const_fnv1a(
+            $s,
+        )))
     }};
 }

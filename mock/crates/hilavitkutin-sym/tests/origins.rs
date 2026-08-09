@@ -181,3 +181,59 @@ fn a_wide_shape_carries_a_tag_no_narrow_shape_could_hold() {
         "the tag must survive a round trip at five bits wide"
     );
 }
+
+/// **A generator that refuses once must keep refusing.**
+///
+/// The exhaustion test above stops at the first refusal. A generator that
+/// refuses once and then yields again is the same defect wearing one passing
+/// assertion, and nothing distinguished the two.
+#[test]
+fn a_minter_keeps_refusing_once_exhausted() {
+    let mut g = Generator::<PeerBinder>::at(origin(0));
+    let span = 1_usize << 24;
+    for _ in 0..span {
+        assert!(matches!(g.mint(), notko::Maybe::Is(_)));
+    }
+    for i in 0..8 {
+        assert!(
+            matches!(g.mint(), notko::Maybe::Isnt),
+            "an exhausted minter yielded again on refusal {i}"
+        );
+    }
+}
+
+/// Each origin owns its span at **both** ends.
+///
+/// The disjointness tests above sample the first few ids of each origin, which
+/// is the interior of every span. A boundary checked from one side is half
+/// checked: an off-by-one in `origin_base` shows at the first id and an
+/// off-by-one in `origin_ceiling` shows only at the last.
+#[test]
+fn every_origin_owns_its_first_and_last_id() {
+    let span = 1_u32 << 24;
+    for o in 0u8..16 {
+        let mut g = Generator::<PeerBinder>::at(origin(o));
+
+        let first = match g.mint() {
+            notko::Maybe::Is(s) => s,
+            notko::Maybe::Isnt => panic!("origin {o} refused its first mint"),
+        };
+        let expected_first = u32::from(o) * span;
+        assert_eq!(
+            first.id().to_raw(),
+            expected_first,
+            "origin {o} did not start at its own base"
+        );
+
+        for _ in 1..span {
+            assert!(
+                matches!(g.mint(), notko::Maybe::Is(_)),
+                "origin {o} refused inside its own span"
+            );
+        }
+        assert!(
+            matches!(g.mint(), notko::Maybe::Isnt),
+            "origin {o} minted past its own ceiling"
+        );
+    }
+}
