@@ -121,7 +121,7 @@ pub const trait SymLayoutOps: Copy + Eq + core::fmt::Debug {
 /// functions are the same instrument `width_of` used, and for the same reason.
 #[rustfmt::skip]
 pub const fn origin_base<S: [const] SymShape>(origin: S::Origin) -> u32 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the raw id-space coordinate at the one id-allocator boundary; tracked: #34
-    (S::origin_index(origin).0 as u32) << S::COUNTER_BITS.0
+    (S::origin_index(origin).0 as u32) << S::COUNTER_BITS.0 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the index projected to the raw id-space coordinate, at arvo's own to_raw boundary; tracked: #34
 }
 
 /// The largest id a minter may reach before it is exhausted.
@@ -363,7 +363,8 @@ mod tests {
     /// This is all that remains testable about origins. Where a run *begins* is
     /// derived from the index, so overlapping runs are unwritable; what a shape
     /// can still get wrong is its own mapping.
-    fn origins_map_to_distinct_indices<S: SymShape>(origins: &[S::Origin]) -> bool {
+    #[rustfmt::skip]
+    fn origins_map_to_distinct_indices<S: SymShape>(origins: &[S::Origin]) -> bool { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a test-local verdict function; `bool` is the predicate's own return and never crosses a public surface; tracked: #34
         origins.iter().enumerate().all(|(i, a)| {
             origins
                 .iter()
@@ -373,7 +374,8 @@ mod tests {
     }
 
     /// And that every index fits the width the shape reserved for it.
-    fn origin_indices_fit_origin_bits<S: SymShape>(origins: &[S::Origin]) -> bool {
+    #[rustfmt::skip]
+    fn origin_indices_fit_origin_bits<S: SymShape>(origins: &[S::Origin]) -> bool { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a test-local verdict function; `bool` is the predicate's own return and never crosses a public surface; tracked: #34
         let count = 1usize << S::ORIGIN_BITS.0;
         origins.iter().all(|o| S::origin_index(*o).0 < count)
     }
