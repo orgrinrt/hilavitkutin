@@ -139,6 +139,9 @@ impl Compressor for Gzip {
 
 ## Build tooling and hooks
 
+`hilavitkutin-build` configures the compiled artefact from the crate's own build
+script, so the optimisation decisions a workload needs are declared where the
+workload is rather than spread across profile tables.
 
 Typed pragmas drive the artefact. Each pragma names what it is and what it needs. `LoopOptimization` activates the LLVM pass plugin that runs IRCE, LoopPredication, LoopInterchange, LoopDistribute, and LoopDataPrefetch. `FastMath` flips `-C llvm-args=-enable-unsafe-fp-math` and emits the `arvo_fast_math` cfg. `MathPeephole` (which requires `FastMath`) loads the math-peephole pass plugin. `ExpandedLto` writes `lto = "fat"` + `codegen-units = 1` (required for devirtualisation of the monomorphised dispatch). Combinators (`All<(A, B)>`, `Any<(A, B)>`) declare requirements; conflicts surface at `configure().run()` time, not at build time.
 
@@ -161,9 +164,18 @@ fn main() {
 
 ## Ecosystem extensions
 
-Three standalone crates round out the ecosystem. `hilavitkutin-persistence` is the generic hot/cold storage bridge: rkyv-archived cold store on disk, SIEVE eviction over the hot store, content-hash translation for `Str` values across the persistence boundary so handles stay session-specific while disk identity stays stable. `hilavitkutin-str` is the interned string system: `Str` is `#[repr(transparent)]` over a 32-bit packed bitfield (one bit distinguishes const from runtime origin, 28 bits hold the id), const handles content-hash via FNV-1a at compile time and register through linker sections, runtime handles get sequential ids from a host-supplied `ArenaInterner` impl.
+Four standalone crates round out the ecosystem. `hilavitkutin-sym` is the
+interned-identity core the others build on: a `Sym` is a 4-byte handle carrying a
+domain tag and an id, compared by integer equality, and a domain acquires one
+either by interning a value or by minting a fresh one. How the 32 bits divide is
+a **shape** rather than a constant, so a consumer with more domains than the
+default eight declares a wider tag, and a domain minted in several places gives
+each minter a disjoint run of the id space so two peers cannot produce the same
+handle.
 
-`hilavitkutin-providers` ships default Kit implementations on top of the api primitives. v0 is the `InternerKit<BYTES, ENTRIES>` plus a `default_interner()` constructor backed by an inline `MemoryArena<BYTES, ENTRIES>`; future modules add default ColumnStorage, Clock, and MemoryProvider as consumer demand surfaces. Each of the three crates is independently usable and none depend on the engine; the engine reaches for them only when registered via `.add_kit::<K>()` or direct `.add_resource(_)` / `.add_column()` calls on the scheduler builder.
+`hilavitkutin-persistence` is the generic hot/cold storage bridge: rkyv-archived cold store on disk, SIEVE eviction over the hot store, content-hash translation for `Str` values across the persistence boundary so handles stay session-specific while disk identity stays stable. `hilavitkutin-str` is the interned string system: `Str` is `#[repr(transparent)]` over a `Sym` under the default shape (three bits of domain tag, one bit distinguishing const from runtime origin, twenty-eight holding the id), const handles content-hash via FNV-1a at compile time and register through linker sections, runtime handles get sequential ids from a host-supplied `ArenaInterner` impl.
+
+`hilavitkutin-providers` ships default Kit implementations on top of the api primitives. v0 is the `InternerKit<BYTES, ENTRIES>` plus a `default_interner()` constructor backed by an inline `MemoryArena<BYTES, ENTRIES>`; future modules add default ColumnStorage, Clock, and MemoryProvider as consumer demand surfaces. Each of the four crates is independently usable and none depend on the engine; the engine reaches for them only when registered via `.add_kit::<K>()` or direct `.add_resource(_)` / `.add_column()` calls on the scheduler builder.
 
 ```rust
 use hilavitkutin_persistence::ColdStore;

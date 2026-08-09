@@ -39,8 +39,15 @@ pub struct Sym<S: SymShape = Standard>(S::Layout);
 ```
 
 A 4-byte handle, integer equality across the whole 32-bit layout, `Copy`,
-`repr(transparent)`, ABI-stable. How the 32 bits divide is a **shape**, not a
-constant of this crate: see `SymShape` below. The default shape, `Standard`, is
+`repr(transparent)`, ABI-stable.
+
+The equality, ordering and hashing impls are bound on the **layout**, not on the
+shape. A derive would bound them on `S`, and `SymShape` requires only
+`Copy + 'static`, so a legal shape that derives less would yield a handle with no
+equality at all: the central promise absent by construction, in a way every
+shipped shape hides by deriving everything.
+
+How the 32 bits divide is a **shape**, not a constant of this crate: see `SymShape` below. The default shape, `Standard`, is
 what every current consumer uses and what `SymLayout` declares via
 `arvo_bits::bitfield!`:
 
@@ -109,7 +116,7 @@ it back unchanged fails the moment the field behind the accessor is narrower
 than the type in front of it, and the whole-handle law fails alongside it,
 because the bits the shrunken field vacates then belong to nothing.
 
-So the chain runs declaration, to type, to round trip, to bits that land, and
+So the route runs declaration, to type, to round trip, to bits that land, and
 each link carries part of it. Neither end alone is enough, and the previous four
 attempts each named one link and called the question closed.
 
@@ -120,9 +127,17 @@ constant passes when the mask is wrong, because no accessor reads that constant.
 A law over an associated type passes when the accessor converts. Each looked
 like a derivation and was a second statement of one unchecked fact.
 
-The test a width must pass is whether the chain from its declaration reaches a
+The test a width must pass is whether the route from its declaration reaches a
 value the code **uses**, and the cheapest way to find out is to write the layout
 that lies and watch what fails. Nothing here was established by reading.
+
+**A known limit, stated rather than left in a signature.** `origin_base`,
+`origin_ceiling` and `id_from_counter` are typed `Uint<28, Hot>` in the trait.
+Twenty-eight is `Standard`'s id width, sitting at the one place a shape cannot
+override, which is the same substance as the constant this design lifted, one
+level down and not yet lifted. The two laws above contain it: a shape whose
+origins do not fit its own `ID_BITS` fails them. Making the type follow the shape
+is open.
 
 `SymShape` is a const trait, so a handle builds in a const context under any
 shape. A domain declares which shape it belongs to, which is what stops a domain
@@ -158,6 +173,23 @@ boundary tested from one side is half tested.
 
 Every id belongs to exactly one origin, checked at the first and last id of each
 origin's span rather than at an arbitrary interior point.
+
+**Two origins never produce one handle**, minted rather than reasoned about, for
+every origin of every shape. This is the crate's own promise and it went unstated
+as a law for nine rounds. Six laws related declarations to each other and to
+layout types, and a shape could still mint colliding handles, because none of
+them minted anything.
+
+**Every origin's base and ceiling fit that shape's `ID_BITS`.** Without it a
+shape may lay origins out for a wider id space than it has, and the overflowing
+base wraps to another origin's. That is the collision above with a specific
+cause, and the two laws are separate because one names the property and the other
+names the mechanism.
+
+The general form, met six times in this crate: **a law over declarations is not a
+law over behaviour.** A width law cannot see a collision; only minting can. Every
+time this defect moved, the fix related one declaration to another, and the sixth
+time it moved past declarations entirely and into an origin's arithmetic.
 
 The widths are related by arithmetic, since they must total 32. **That
 arithmetic lives in each impl rather than in a bound.** Writing the derivation
