@@ -35,25 +35,30 @@ fn boundary_values(width: usize) -> [u32; 3] {
 }
 
 macro_rules! layout_suite {
-    ($modname:ident, $layout:ty, $kind:ty, $kraw:ty, $id:ty, $iraw:ty) => {
+    ($modname:ident, $layout:ty, $kraw:ty, $iraw:ty) => {
         mod $modname {
             use super::*;
 
             type L = $layout;
+            /// Derived rather than restated. A literal here would be one more
+            /// hand-written number saying what the layout already says, which
+            /// is the defect this file exists to catch.
+            type K = <$layout as SymLayoutOps>::Kind;
+            type I = <$layout as SymLayoutOps>::Id;
 
             fn kind_width() -> usize {
-                <$kind as FieldWidth>::WIDTH.0
+                <K as FieldWidth>::WIDTH.0
             }
 
             fn id_width() -> usize {
-                <$id as FieldWidth>::WIDTH.0
+                <I as FieldWidth>::WIDTH.0
             }
 
             /// Every accessor returns what was written, at each boundary.
             #[test]
             fn every_accessor_round_trips_at_every_boundary() {
                 for v in boundary_values(kind_width()) {
-                    let k = <$kind>::from_raw(v as $kraw);
+                    let k = <K>::from_raw(v as $kraw);
                     assert_eq!(
                         L::zeroed().set_kind(k).get_kind(),
                         k,
@@ -61,7 +66,7 @@ macro_rules! layout_suite {
                     );
                 }
                 for v in boundary_values(id_width()) {
-                    let i = <$id>::from_raw(v as $iraw);
+                    let i = <I>::from_raw(v as $iraw);
                     assert_eq!(
                         L::zeroed().set_id(i).get_id(),
                         i,
@@ -86,14 +91,14 @@ macro_rules! layout_suite {
             /// two are read back.
             #[test]
             fn writing_one_field_disturbs_no_other() {
-                let k = <$kind>::from_raw(field_max(kind_width()) as $kraw);
-                let i = <$id>::from_raw(field_max(id_width()) as $iraw);
+                let k = <K>::from_raw(field_max(kind_width()) as $kraw);
+                let i = <I>::from_raw(field_max(id_width()) as $iraw);
                 let f = Bit::<Hot>::from_raw(1u8);
 
                 let only_kind = L::zeroed().set_kind(k);
                 assert_eq!(
                     only_kind.get_id(),
-                    <$id>::from_raw(0 as $iraw),
+                    <I>::from_raw(0 as $iraw),
                     "setting kind to its maximum spilled into id"
                 );
                 assert_eq!(
@@ -105,7 +110,7 @@ macro_rules! layout_suite {
                 let only_id = L::zeroed().set_id(i);
                 assert_eq!(
                     only_id.get_kind(),
-                    <$kind>::from_raw(0 as $kraw),
+                    <K>::from_raw(0 as $kraw),
                     "setting id to its maximum spilled into kind"
                 );
                 assert_eq!(
@@ -117,12 +122,12 @@ macro_rules! layout_suite {
                 let only_flag = L::zeroed().set_flag(f);
                 assert_eq!(
                     only_flag.get_kind(),
-                    <$kind>::from_raw(0 as $kraw),
+                    <K>::from_raw(0 as $kraw),
                     "setting the flag spilled into kind"
                 );
                 assert_eq!(
                     only_flag.get_id(),
-                    <$id>::from_raw(0 as $iraw),
+                    <I>::from_raw(0 as $iraw),
                     "setting the flag spilled into id"
                 );
             }
@@ -133,8 +138,8 @@ macro_rules! layout_suite {
             #[test]
             fn the_three_fields_together_are_the_whole_handle() {
                 let full = L::zeroed()
-                    .set_kind(<$kind>::from_raw(field_max(kind_width()) as $kraw))
-                    .set_id(<$id>::from_raw(field_max(id_width()) as $iraw))
+                    .set_kind(<K>::from_raw(field_max(kind_width()) as $kraw))
+                    .set_id(<I>::from_raw(field_max(id_width()) as $iraw))
                     .set_flag(Bit::<Hot>::from_raw(1u8));
 
                 assert_eq!(
@@ -155,8 +160,8 @@ macro_rules! layout_suite {
             #[test]
             fn a_zeroed_layout_reads_zero_everywhere() {
                 let z = L::zeroed();
-                assert_eq!(z.get_kind(), <$kind>::from_raw(0 as $kraw));
-                assert_eq!(z.get_id(), <$id>::from_raw(0 as $iraw));
+                assert_eq!(z.get_kind(), <K>::from_raw(0 as $kraw));
+                assert_eq!(z.get_id(), <I>::from_raw(0 as $iraw));
                 assert_eq!(z.get_flag(), Bit::<Hot>::from_raw(0u8));
                 assert_eq!(z.raw_bits(), Bits::<32, Hot>::from_raw(0));
             }
@@ -168,8 +173,8 @@ macro_rules! layout_suite {
             /// differing in any one field must not, for each field in turn.
             #[test]
             fn layout_equality_is_raw_bit_equality() {
-                let k = <$kind>::from_raw(alternating(kind_width()) as $kraw);
-                let i = <$id>::from_raw(alternating(id_width()) as $iraw);
+                let k = <K>::from_raw(alternating(kind_width()) as $kraw);
+                let i = <I>::from_raw(alternating(id_width()) as $iraw);
                 let base = L::zeroed().set_kind(k).set_id(i);
 
                 let same = L::zeroed().set_kind(k).set_id(i);
@@ -180,10 +185,10 @@ macro_rules! layout_suite {
                     "equal fields must give equal raw bits"
                 );
 
-                let other_kind = base.set_kind(<$kind>::from_raw(field_max(kind_width()) as $kraw));
+                let other_kind = base.set_kind(<K>::from_raw(field_max(kind_width()) as $kraw));
                 assert_ne!(base, other_kind, "a differing kind must not compare equal");
 
-                let other_id = base.set_id(<$id>::from_raw(field_max(id_width()) as $iraw));
+                let other_id = base.set_id(<I>::from_raw(field_max(id_width()) as $iraw));
                 assert_ne!(base, other_id, "a differing id must not compare equal");
 
                 let other_flag = base.set_flag(Bit::<Hot>::from_raw(1u8));
@@ -193,5 +198,5 @@ macro_rules! layout_suite {
     };
 }
 
-layout_suite!(sym_layout, SymLayout, Bits<3, Hot>, u8, Bits<28, Hot>, u32);
-layout_suite!(wide_kind_layout, WideKindLayout, Bits<5, Hot>, u8, Bits<26, Hot>, u32);
+layout_suite!(sym_layout, SymLayout, u8, u32);
+layout_suite!(wide_kind_layout, WideKindLayout, u8, u32);

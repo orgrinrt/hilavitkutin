@@ -112,18 +112,23 @@ pub const trait SymLayoutOps: Copy + Eq + core::fmt::Debug {
 /// `specialization` is forbidden here, which makes that a guarantee rather than
 /// a convention.
 ///
-/// **This is the rung that ends the restatement class**, and it took five
-/// attempts to reach it. The previous one counted a width from a mask constant
-/// each layout forwarded by hand. That looked derived and was not: no accessor
-/// reads the forwarded constant, because the generated accessor uses the
-/// macro's own mask. A layout could forward any mask at all and every law still
-/// passed, which was demonstrated with a genuine five-bit field forwarding a
-/// nine-bit mask under a shape declaring nine.
+/// **This is one link of the guarantee, not the whole of it**, and saying
+/// otherwise was the last mistake this class produced. It pins the declared
+/// width to the type the accessors are compiled against. It does not pin the
+/// field behind them, because an accessor may convert: a layout declaring a
+/// nine-bit `Kind` over a genuine five-bit field, widening on the way out and
+/// truncating on the way in, satisfies every signature and passes every law
+/// that reads a declared width against a declared type.
 ///
-/// `Self::Kind` cannot lie the same way. `get_kind` returns it and its body
-/// returns what the bitfield hands back, so a wrong associated type is a type
-/// error rather than a silent disagreement, and a width read off that type
-/// inherits the guarantee.
+/// What pins the field is the round trip in `tests/layout.rs`. A field maximum
+/// written and read back unchanged fails the moment the field is narrower than
+/// the type in front of it, and the whole-handle law fails with it, because the
+/// vacated bits then belong to nothing.
+///
+/// So the chain is declaration, type, round trip, bits that land. Four rounds
+/// each named one link and called the question closed; the previous one counted
+/// widths from mask constants no accessor read, so a layout could forward any
+/// mask at all and everything passed.
 pub const trait FieldWidth {
     /// The field's width, in bits.
     const WIDTH: USize;

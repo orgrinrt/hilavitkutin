@@ -25,7 +25,7 @@ use crate::shape::{Standard, SymLayoutOps, SymShape};
 pub struct SymKind<S: SymShape = Standard>(<S::Layout as SymLayoutOps>::Kind);
 
 impl<S: SymShape> SymKind<S> {
-    /// Build a tag from its 3-bit value.
+    /// Build a tag from a value at this shape's kind width.
     pub const fn new(raw: <S::Layout as SymLayoutOps>::Kind) -> Self
     where
         S: [const] SymShape,
