@@ -91,19 +91,62 @@ writes them.
 A width the trait declares is a width something **constrains**, and the
 constraint has to be derived rather than written beside the thing it checks.
 
-A layout carries its own generated mask. The width is **counted from that mask**
-by a function no implementation can override, and a law ties each shape's
-declared width to that count. Nobody writes the number, so nobody can write it
-wrong: a layout that lied would have to lie about its mask, which its own
-accessors read through.
+A layout names the **types** its accessors carry: `Kind` and `Id`, each a `Bits`
+at that field's real width. The width is read off those types by `FieldWidth`,
+whose blanket impl over `Bits` yields the width parameter, and a law ties each
+shape's declared width to it. No layout can supply a different answer, because
+the impl is blanket and specialisation is forbidden here.
 
-Tying a declaration to a second hand-written number is not enough, because two
-statements of one fact can agree with each other and both be wrong about the
-field.
+The associated type is the rung that ends this, and it ends it because
+`get_kind` returns `Self::Kind` while its body returns what the bitfield hands
+it. A layout naming a width its field does not have is a type error, not a
+disagreement nobody notices.
+
+**Tying a declaration to another declaration constrains neither**, and this
+crate learned it five times. A law over two hand-written numbers passes when
+both are wrong together. A law over a mask constant passes when the mask is
+wrong, because no accessor reads that constant: the generated accessor uses the
+macro's own mask and never consults the forwarded copy. Each of those looked
+like a derivation and was a second statement of one unchecked fact.
+
+The test a width must pass is whether the chain from its declaration reaches a
+value the code **uses**. A mask nothing reads is not one. A type an accessor is
+compiled against is.
 
 `SymShape` is a const trait, so a handle builds in a const context under any
 shape. A domain declares which shape it belongs to, which is what stops a domain
 of one shape handing its tag to a producer of another.
+
+## What the tests must cover
+
+Every effect, boundary and edge case this document describes carries a unit
+test. A documented claim nothing tests is the same defect as a declared width
+nothing constrains: prose asserting a property, with no value that would make it
+fail. The widths reached their fifth fix because the laws around them were read
+for their names rather than for what they could catch.
+
+Each is asserted for **every** shape, never the default alone, since choosing
+which instantiations to check is choosing what not to find out.
+
+Each accessor round-trips at its field's real width, at zero, at the field
+maximum, and at a value with alternating bits. The maximum is the case that
+finds a field one bit too narrow, and the alternating value is the one that
+finds a shift in the wrong direction.
+
+Writing one field disturbs no other. This is the bitfield failure every law here
+was previously blind to, because a law that reads one field at a time cannot see
+an overlap between two.
+
+A zeroed layout reads zero in every field, and the raw bits agree with the
+fields. Handle equality is raw-bit equality, which this document calls the
+crate's central promise and which nothing asserted.
+
+A minter refuses at its own ceiling and keeps refusing. The first mint of the
+last id must succeed and the next must not, at both ends of the span, since a
+boundary tested from one side is half tested.
+
+Every id belongs to exactly one origin, checked at the first and last id of each
+origin's span rather than at an arbitrary interior point.
 
 The widths are related by arithmetic, since they must total 32. **That
 arithmetic lives in each impl rather than in a bound.** Writing the derivation
