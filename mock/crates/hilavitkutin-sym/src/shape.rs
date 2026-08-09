@@ -125,7 +125,7 @@ pub const trait SymLayoutOps: Copy + Eq + core::fmt::Debug {
 /// the type in front of it, and the whole-handle law fails with it, because the
 /// vacated bits then belong to nothing.
 ///
-/// So the chain is declaration, type, round trip, bits that land. Four rounds
+/// So the route runs declaration, type, round trip, bits that land. Four rounds
 /// each named one link and called the question closed; the previous one counted
 /// widths from mask constants no accessor read, so a layout could forward any
 /// mask at all and everything passed.
