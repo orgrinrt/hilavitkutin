@@ -230,9 +230,6 @@ fn a_shape_deriving_the_minimum_still_yields_a_comparable_handle() {
         fn origin_index(o: Self::Origin) -> arvo::USize {
             <Standard as SymShape>::origin_index(o)
         }
-        fn id_from_counter(c: arvo::Uint<28, Hot>) -> <Self::Layout as SymLayoutOps>::Id {
-            <Standard as SymShape>::id_from_counter(c)
-        }
     }
 
     let a: Sym<Spartan> = Sym::default();

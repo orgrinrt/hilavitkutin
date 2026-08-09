@@ -79,8 +79,14 @@ fn one_generator_never_repeats() {
 /// disjoint run of the id space.
 #[test]
 fn two_origins_never_collide() {
-    let mut a = Generator::<PeerBinder>::at(origin(0));
-    let mut b = Generator::<PeerBinder>::at(origin(1));
+    let mut a = match Generator::<PeerBinder>::at(origin(0)) {
+        notko::Maybe::Is(g) => g,
+        notko::Maybe::Isnt => panic!("a shipped shape refused an in-range origin"),
+    };
+    let mut b = match Generator::<PeerBinder>::at(origin(1)) {
+        notko::Maybe::Is(g) => g,
+        notko::Maybe::Isnt => panic!("a shipped shape refused an in-range origin"),
+    };
 
     let from_a = mint_n(&mut a, 64);
     let from_b = mint_n(&mut b, 64);
@@ -101,7 +107,10 @@ fn two_origins_never_collide() {
 fn all_sixteen_origins_are_pairwise_disjoint() {
     let minted: Vec<Vec<Sym<SixteenMinters>>> = (0u8..16)
         .map(|o| {
-            let mut g = Generator::<PeerBinder>::at(origin(o));
+            let mut g = match Generator::<PeerBinder>::at(origin(o)) {
+                notko::Maybe::Is(g) => g,
+                notko::Maybe::Isnt => panic!("a shipped shape refused an in-range origin"),
+            };
             mint_n(&mut g, 8)
         })
         .collect();
@@ -125,7 +134,10 @@ fn all_sixteen_origins_are_pairwise_disjoint() {
 /// far enough, which is the silent kind of wrong.
 #[test]
 fn a_minter_is_exhausted_at_its_own_ceiling_not_the_whole_space() {
-    let mut g = Generator::<PeerBinder>::at(origin(0));
+    let mut g = match Generator::<PeerBinder>::at(origin(0)) {
+        notko::Maybe::Is(g) => g,
+        notko::Maybe::Isnt => panic!("a shipped shape refused an in-range origin"),
+    };
     let span = 1_usize << 24;
 
     // Walking the whole span must succeed, and the next mint must refuse.
@@ -169,7 +181,10 @@ fn a_wide_shape_carries_a_tag_no_narrow_shape_could_hold() {
 
     impl GenerativeDomain for WideDomain {}
 
-    let mut g = Generator::<WideDomain>::at(hilavitkutin_sym::OneOrigin);
+    let mut g = match Generator::<WideDomain>::at(hilavitkutin_sym::OneOrigin) {
+        notko::Maybe::Is(g) => g,
+        notko::Maybe::Isnt => panic!("a shipped shape refused an in-range origin"),
+    };
     let s = match g.mint() {
         notko::Maybe::Is(s) => s,
         notko::Maybe::Isnt => panic!("fresh generator refused its first mint"),
@@ -189,7 +204,10 @@ fn a_wide_shape_carries_a_tag_no_narrow_shape_could_hold() {
 /// assertion, and nothing distinguished the two.
 #[test]
 fn a_minter_keeps_refusing_once_exhausted() {
-    let mut g = Generator::<PeerBinder>::at(origin(0));
+    let mut g = match Generator::<PeerBinder>::at(origin(0)) {
+        notko::Maybe::Is(g) => g,
+        notko::Maybe::Isnt => panic!("a shipped shape refused an in-range origin"),
+    };
     let span = 1_usize << 24;
     for _ in 0..span {
         assert!(matches!(g.mint(), notko::Maybe::Is(_)));
@@ -212,7 +230,10 @@ fn a_minter_keeps_refusing_once_exhausted() {
 fn every_origin_owns_its_first_and_last_id() {
     let span = 1_u32 << 24;
     for o in 0u8..16 {
-        let mut g = Generator::<PeerBinder>::at(origin(o));
+        let mut g = match Generator::<PeerBinder>::at(origin(o)) {
+            notko::Maybe::Is(g) => g,
+            notko::Maybe::Isnt => panic!("a shipped shape refused an in-range origin"),
+        };
 
         let first = match g.mint() {
             notko::Maybe::Is(s) => s,
@@ -253,7 +274,10 @@ fn two_origins_never_collide_under_any_shape() {
     // small enough to stay a unit test.
     let minted: Vec<Vec<Sym<SixteenMinters>>> = (0u8..16)
         .map(|o| {
-            let mut g = Generator::<PeerBinder>::at(origin(o));
+            let mut g = match Generator::<PeerBinder>::at(origin(o)) {
+                notko::Maybe::Is(g) => g,
+                notko::Maybe::Isnt => panic!("a shipped shape refused an in-range origin"),
+            };
             mint_n(&mut g, 8)
         })
         .collect();
@@ -277,7 +301,10 @@ fn two_origins_never_collide_under_any_shape() {
 
     // A single-origin shape has nothing to collide with, and saying so keeps the
     // law honest about what it covers rather than silently skipping the case.
-    let mut only = Generator::<WideDomainSingle>::at(hilavitkutin_sym::OneOrigin);
+    let mut only = match Generator::<WideDomainSingle>::at(hilavitkutin_sym::OneOrigin) {
+        notko::Maybe::Is(g) => g,
+        notko::Maybe::Isnt => panic!("a shipped shape refused an in-range origin"),
+    };
     let a = mint_n(&mut only, 8);
     for (i, x) in a.iter().enumerate() {
         for (j, y) in a.iter().enumerate() {

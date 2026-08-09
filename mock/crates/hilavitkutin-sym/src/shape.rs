@@ -65,12 +65,6 @@ pub const trait SymShape: Copy + 'static {
     ///
     /// A shape with one minter returns zero for its single origin.
     fn origin_index(origin: Self::Origin) -> USize;
-
-    /// Project a counter value into this shape's id field.
-    ///
-    /// The one low-level numeric edge of a producer, and it lives here rather
-    /// than in the generator because each shape decides how wide its id is.
-    fn id_from_counter(counter: Uint<28, Hot>) -> <Self::Layout as SymLayoutOps>::Id;
 }
 
 /// What a shape's layout carrier must offer.
@@ -106,6 +100,19 @@ pub const trait SymLayoutOps: Copy + Eq + core::fmt::Debug {
     fn get_flag(self) -> Bit<Hot>;
     /// The whole 32 bits, which is what comparison and persistence see.
     fn raw_bits(self) -> Bits<32, Hot>;
+
+    /// Build this layout's id from a raw value.
+    ///
+    /// **Here rather than on `SymShape`**, because the layout's bitfield fixes
+    /// the `Id` type and this is forwarding, where on a shape it was arithmetic
+    /// a shape could get wrong. It was the last id-space computation a shape
+    /// controlled, and it minted colliding handles from two distinct minters
+    /// while every width law passed.
+    ///
+    /// This is a reduction and not an elimination: a layout is written by hand
+    /// and can still misproject. What constrains it is the round-trip law over
+    /// `set_id` and `get_id`, which a misprojection fails.
+    fn id_from_raw(raw: u32) -> Self::Id; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the raw id-space value at arvo's own from_raw boundary; tracked: #34
 }
 
 /// Where in the id space a minter's counter starts.
@@ -130,6 +137,22 @@ pub const fn origin_base<S: [const] SymShape>(origin: S::Origin) -> u32 { // lin
 #[rustfmt::skip]
 pub const fn origin_ceiling<S: [const] SymShape>(origin: S::Origin) -> u32 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the raw id-space coordinate, derived from origin_base at the same boundary; tracked: #34
     origin_base::<S>(origin) + ((1u32 << S::COUNTER_BITS.0) - 1)
+}
+
+/// Whether an origin's index is inside the range its shape reserved.
+///
+/// **Public because a shape is an open extension point.** The check lived in
+/// this crate's test module for one round, where nothing a consumer wrote could
+/// reach it, while the tests asserted the case was covered. An index at or above
+/// `2^ORIGIN_BITS` gives a derived run that is disjoint in `u32` and truncates
+/// onto another origin's inside the id field.
+///
+/// [`Generator::at`](crate::Generator::at) applies this and refuses, so a
+/// consumer gets the guarantee without calling it; it is public so a consumer
+/// can check a shape they are designing.
+#[rustfmt::skip]
+pub const fn origin_index_in_range<S: [const] SymShape>(origin: S::Origin) -> bool { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a predicate's own `bool` return; tracked: #34
+    S::origin_index(origin).0 < (1usize << S::ORIGIN_BITS.0) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the origin-count bound as a raw shift over arvo's USize payload; tracked: #34
 }
 
 /// How wide the type carrying a field happens to be.
@@ -194,11 +217,6 @@ const impl SymShape for Standard {
     fn origin_index(_: Self::Origin) -> USize {
         <USize as Identity>::ZERO
     }
-
-    #[rustfmt::skip]
-    fn id_from_counter(counter: Uint<28, Hot>) -> <Self::Layout as SymLayoutOps>::Id {
-        Bits::<28, Hot>::from_raw(counter.to_raw()) // lint:allow(no-bare-numeric) reason: Uint-to-Bits id projection at the id-allocator boundary; to_raw/from_raw are arvo's container projections; tracked: #34
-    }
 }
 
 /// A shape for a domain minted in up to sixteen independent places.
@@ -233,11 +251,6 @@ const impl SymShape for SixteenMinters {
     fn origin_index(origin: Self::Origin) -> USize {
         USize(origin.0.to_raw() as usize) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: reading the origin's own 4-bit value through arvo's to_raw; tracked: #34
     }
-
-    #[rustfmt::skip]
-    fn id_from_counter(counter: Uint<28, Hot>) -> <Self::Layout as SymLayoutOps>::Id {
-        Bits::<28, Hot>::from_raw(counter.to_raw()) // lint:allow(no-bare-numeric) reason: Uint-to-Bits id projection at the id-allocator boundary; to_raw/from_raw are arvo's container projections; tracked: #34
-    }
 }
 
 /// A shape whose **tag** is wider, not merely whose id divides differently.
@@ -263,11 +276,6 @@ const impl SymShape for WideKind {
     /// One minter, so index zero.
     fn origin_index(_: Self::Origin) -> USize {
         <USize as Identity>::ZERO
-    }
-
-    #[rustfmt::skip]
-    fn id_from_counter(counter: Uint<28, Hot>) -> <Self::Layout as SymLayoutOps>::Id {
-        Bits::<26, Hot>::from_raw(counter.to_raw()) // lint:allow(no-bare-numeric) reason: Uint-to-Bits id projection at the id-allocator boundary; to_raw/from_raw are arvo's container projections; tracked: #34
     }
 }
 
@@ -374,10 +382,12 @@ mod tests {
     }
 
     /// And that every index fits the width the shape reserved for it.
+
+    /// Every origin of `S` is in range. Delegates to the public
+    /// [`origin_index_in_range`], which is the one a consumer can reach.
     #[rustfmt::skip]
-    fn origin_indices_fit_origin_bits<S: SymShape>(origins: &[S::Origin]) -> bool { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a test-local verdict function; `bool` is the predicate's own return and never crosses a public surface; tracked: #34
-        let count = 1usize << S::ORIGIN_BITS.0;
-        origins.iter().all(|o| S::origin_index(*o).0 < count)
+    fn origin_indices_fit_origin_bits<S: SymShape>(origins: &[S::Origin]) -> bool { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a test-local verdict function's own `bool` return; tracked: #34
+        origins.iter().all(|o| origin_index_in_range::<S>(*o))
     }
 
     #[rustfmt::skip]
@@ -432,11 +442,6 @@ mod tests {
         fn origin_index(_: Self::Origin) -> USize {
             USize(0) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the deliberate defect this shape carries, mapping every origin onto one index; tracked: #34
         }
-
-        #[rustfmt::skip]
-        fn id_from_counter(counter: Uint<28, Hot>) -> <Self::Layout as SymLayoutOps>::Id {
-            Bits::<28, Hot>::from_raw(counter.to_raw()) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: Uint-to-Bits id projection at the id-allocator boundary; tracked: #34
-        }
     }
 
     #[test]
@@ -484,5 +489,50 @@ mod tests {
                 );
             }
         }
+    }
+
+    /// A shape whose index runs past the width it reserved.
+    ///
+    /// **The second route the ninth review found**, kept rather than reverted.
+    /// The derived runs are disjoint in `u32` and truncate onto each other
+    /// inside the id field, so two origins mint one handle while every width
+    /// law passes. `Generator::at` refuses it, which is where a check binds for
+    /// shapes nobody has written yet.
+    #[derive(Copy, Clone, Default, Eq, Hash, PartialEq, Debug)]
+    struct IndexPastOriginBits;
+
+    const impl SymShape for IndexPastOriginBits {
+        type Layout = crate::handle::SymLayout;
+        type Origin = MinterId;
+
+        const COUNTER_BITS: USize = USize(24);
+        const ID_BITS: USize = USize(28);
+        const KIND_BITS: USize = USize(3);
+        const ORIGIN_BITS: USize = USize(4);
+
+        #[rustfmt::skip]
+        fn origin_index(o: Self::Origin) -> USize {
+            USize(o.0.to_raw() as usize + 16) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the deliberate defect, an index past the reserved four bits; tracked: #34
+        }
+    }
+
+    #[test]
+    fn the_range_check_rejects_an_index_past_its_origin_bits() {
+        assert!(
+            !origin_index_in_range::<IndexPastOriginBits>(all_minter_ids()[0]),
+            "an index at or above 2^ORIGIN_BITS must be rejected"
+        );
+    }
+
+    /// And it passes every width law, which is why a width law was never going
+    /// to be the instrument for this.
+    #[test]
+    fn the_out_of_range_shape_still_satisfies_every_width_law() {
+        type S = IndexPastOriginBits;
+        assert_eq!(
+            S::KIND_BITS.0 + S::ORIGIN_BITS.0 + S::COUNTER_BITS.0 + 1,
+            32
+        );
+        assert_eq!(S::ID_BITS.0, S::ORIGIN_BITS.0 + S::COUNTER_BITS.0);
     }
 }

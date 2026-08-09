@@ -103,9 +103,8 @@ pub use crate::shape::{
 ///
 /// ```compile_fail,E0407
 /// #![feature(const_trait_impl)]
-/// use arvo::{USize, Uint};
-/// use arvo_bits::{Bits, Hot};
-/// use hilavitkutin_sym::{MinterId, SymLayout, SymLayoutOps, SymShape};
+/// use arvo::USize;
+/// use hilavitkutin_sym::{MinterId, SymLayout, SymShape};
 /// #[derive(Copy, Clone)]
 /// struct Overlapping;
 /// const impl SymShape for Overlapping {
@@ -117,9 +116,6 @@ pub use crate::shape::{
 ///     const ORIGIN_BITS: USize = USize(4);
 ///     fn origin_index(o: Self::Origin) -> USize { USize(o.0.to_raw() as usize) }
 ///     fn origin_base(o: Self::Origin) -> u32 { (o.0.to_raw() as u32) << 20 }
-///     fn id_from_counter(c: Uint<28, Hot>) -> <Self::Layout as SymLayoutOps>::Id {
-///         Bits::<28, Hot>::from_raw(c.to_raw())
-///     }
 /// }
 /// ```
 ///
@@ -128,9 +124,8 @@ pub use crate::shape::{
 ///
 /// ```
 /// #![feature(const_trait_impl)]
-/// use arvo::{USize, Uint};
-/// use arvo_bits::{Bits, Hot};
-/// use hilavitkutin_sym::{MinterId, SymLayout, SymLayoutOps, SymShape};
+/// use arvo::USize;
+/// use hilavitkutin_sym::{MinterId, SymLayout, SymShape};
 /// #[derive(Copy, Clone)]
 /// struct Fine;
 /// const impl SymShape for Fine {
@@ -141,9 +136,6 @@ pub use crate::shape::{
 ///     const KIND_BITS: USize = USize(3);
 ///     const ORIGIN_BITS: USize = USize(4);
 ///     fn origin_index(o: Self::Origin) -> USize { USize(o.0.to_raw() as usize) }
-///     fn id_from_counter(c: Uint<28, Hot>) -> <Self::Layout as SymLayoutOps>::Id {
-///         Bits::<28, Hot>::from_raw(c.to_raw())
-///     }
 /// }
 /// ```
 pub mod refusals {}

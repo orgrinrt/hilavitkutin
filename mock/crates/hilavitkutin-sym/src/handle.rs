@@ -48,6 +48,11 @@ const impl crate::shape::SymLayoutOps for SymLayout {
         self.to_bits()
     }
 
+    #[rustfmt::skip]
+    fn id_from_raw(raw: u32) -> Self::Id { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: forwarding a raw id into the bitfield's own id type, at arvo's from_raw boundary; tracked: #34
+        Bits::<28, Hot>::from_raw(raw)
+    }
+
     fn set_flag(self, flag: Bit<Hot>) -> Self {
         self.with_flag(flag)
     }
@@ -95,6 +100,11 @@ const impl crate::shape::SymLayoutOps for WideKindLayout {
     }
     fn raw_bits(self) -> Bits<32, Hot> {
         self.to_bits()
+    }
+
+    #[rustfmt::skip]
+    fn id_from_raw(raw: u32) -> Self::Id { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: forwarding a raw id into the bitfield's own id type, at arvo's from_raw boundary; tracked: #34
+        Bits::<26, Hot>::from_raw(raw)
     }
     fn set_flag(self, flag: Bit<Hot>) -> Self {
         self.with_flag(flag)

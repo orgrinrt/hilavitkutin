@@ -9,6 +9,7 @@ use notko::Maybe;
 
 use crate::domain::GenerativeDomain;
 use crate::handle::Sym;
+use crate::shape::SymLayoutOps;
 use crate::shape::{OneOrigin, Standard, SymShape};
 
 /// One, the mint step.
@@ -69,13 +70,16 @@ impl<D: GenerativeDomain> Generator<D> {
     /// to choose. Under such a shape two generators do agree, and they agree
     /// because the shape says there is one minter, not because a default was
     /// applied where a choice belonged.
-    pub fn at(origin: <D::Shape as SymShape>::Origin) -> Self {
-        Self {
+    pub fn at(origin: <D::Shape as SymShape>::Origin) -> Maybe<Self> {
+        if !crate::shape::origin_index_in_range::<D::Shape>(origin) {
+            return Maybe::Isnt;
+        }
+        Maybe::Is(Self {
             next: Uint::<28, Hot>::from_raw(crate::shape::origin_base::<D::Shape>(origin)),
             ceiling: Uint::<28, Hot>::from_raw(crate::shape::origin_ceiling::<D::Shape>(origin)),
             exhausted: Bool(false),
             _domain: PhantomData,
-        }
+        })
     }
 
     /// Mint a fresh handle. Returns `Maybe::Isnt` once **this origin's** range
@@ -86,7 +90,7 @@ impl<D: GenerativeDomain> Generator<D> {
             return Maybe::Isnt;
         }
         // The shape owns the projection, because it owns how wide the id is.
-        let id = <D::Shape as SymShape>::id_from_counter(self.next);
+        let id = <<D::Shape as SymShape>::Layout as SymLayoutOps>::id_from_raw(self.next.to_raw());
         let sym = Sym::<D::Shape>::new(D::KIND, id);
         if self.next == self.ceiling {
             self.exhausted = Bool(true);
@@ -103,8 +107,18 @@ impl<D: GenerativeDomain<Shape = Standard>> Generator<D> {
     /// The default shape has one origin, so there is nothing to name. A
     /// consumer with several independent minters picks a shape with origin
     /// bits, and then [`Generator::at`] is the only way in.
+    /// Total rather than fallible, and provably so: `Standard` reserves zero
+    /// origin bits, so `1 << 0` is one and its only index, zero, is always in
+    /// range. Going through [`Generator::at`] would force every caller to
+    /// handle a refusal that cannot happen. Pinned by
+    /// `single_is_total_because_standard_has_one_origin`.
     pub fn single() -> Self {
-        Self::at(OneOrigin)
+        Self {
+            next: Uint::<28, Hot>::from_raw(crate::shape::origin_base::<D::Shape>(OneOrigin)),
+            ceiling: Uint::<28, Hot>::from_raw(crate::shape::origin_ceiling::<D::Shape>(OneOrigin)),
+            exhausted: Bool(false),
+            _domain: PhantomData,
+        }
     }
 }
 
