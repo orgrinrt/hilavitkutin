@@ -131,13 +131,30 @@ The test a width must pass is whether the route from its declaration reaches a
 value the code **uses**, and the cheapest way to find out is to write the layout
 that lies and watch what fails. Nothing here was established by reading.
 
-**A known limit, stated rather than left in a signature.** `origin_base`,
-`origin_ceiling` and `id_from_counter` are typed `Uint<28, Hot>` in the trait.
-Twenty-eight is `Standard`'s id width, sitting at the one place a shape cannot
-override, which is the same substance as the constant this design lifted, one
-level down and not yet lifted. The two laws above contain it: a shape whose
-origins do not fit its own `ID_BITS` fails them. Making the type follow the shape
-is open.
+**A shape declares which minter an origin is, not where its run begins.** The run
+is derived: `[index << COUNTER_BITS, ((index + 1) << COUNTER_BITS) - 1]`.
+Distinct indices own disjoint runs by arithmetic, so a shape whose origins
+overlap cannot be written.
+
+That replaces an earlier design in which a shape supplied a base and a ceiling as
+two free numbers, and it replaces it because **the numbers were wrong twice and
+the laws written to catch them each covered one instance.** The first attempt
+placed origins past the id field; a law rejected that. The second placed them
+inside the field but spaced by less than a counter span, which both laws passed
+while two minters collided.
+
+The lesson is about the instrument rather than the arithmetic. A law written to
+reject the construction that was just found describes that construction, not the
+property. **The property is that distinct origins own disjoint runs**, and a
+derivation covers every shape including the ones nobody has written, where a law
+can only sample the ones that exist.
+
+Three things fall out rather than needing separate fixes. The hand-written shift
+in `SixteenMinters`, which restated `COUNTER_BITS` with nothing tying the two,
+is gone. The `Uint<28, Hot>` in the trait signature, which was `Standard`'s id
+width standing where a shape could not override it, is gone with it. And the
+fit law is now a consequence: an index below `2^ORIGIN_BITS`, with
+`ORIGIN_BITS + COUNTER_BITS == ID_BITS`, puts every base inside the field.
 
 `SymShape` is a const trait, so a handle builds in a const context under any
 shape. A domain declares which shape it belongs to, which is what stops a domain
@@ -180,11 +197,11 @@ as a law for nine rounds. Six laws related declarations to each other and to
 layout types, and a shape could still mint colliding handles, because none of
 them minted anything.
 
-**Every origin's base and ceiling fit that shape's `ID_BITS`.** Without it a
-shape may lay origins out for a wider id space than it has, and the overflowing
-base wraps to another origin's. That is the collision above with a specific
-cause, and the two laws are separate because one names the property and the other
-names the mechanism.
+**Distinct origins map to distinct indices, and an index fits `ORIGIN_BITS`.**
+That is all that remains testable about origins, because the run each index owns
+is derived rather than declared. A shape can still map two origins onto one
+index, which is a mistake in its own mapping rather than in the layout, and it is
+the one the law names.
 
 **Every refusal this document claims is a compile-fail test.** The argument for
 this crate rests more on what it refuses than on what it computes, and a refusal
