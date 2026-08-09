@@ -133,8 +133,10 @@ that lies and watch what fails. Nothing here was established by reading.
 
 **A shape declares which minter an origin is, not where its run begins.** The run
 is derived: `[index << COUNTER_BITS, ((index + 1) << COUNTER_BITS) - 1]`.
-Distinct indices own disjoint runs by arithmetic, so a shape whose origins
-overlap cannot be written.
+Distinct indices own disjoint runs by arithmetic, so a shape cannot place two
+minters' runs on top of each other by choosing where they begin. Two indices that
+are **equal**, or one outside `2^ORIGIN_BITS`, are separate matters and are
+handled below rather than by this derivation.
 
 That replaces an earlier design in which a shape supplied a base and a ceiling as
 two free numbers, and it replaces it because **the numbers were wrong twice and
@@ -149,12 +151,26 @@ property. **The property is that distinct origins own disjoint runs**, and a
 derivation covers every shape including the ones nobody has written, where a law
 can only sample the ones that exist.
 
-Three things fall out rather than needing separate fixes. The hand-written shift
-in `SixteenMinters`, which restated `COUNTER_BITS` with nothing tying the two,
-is gone. The `Uint<28, Hot>` in the trait signature, which was `Standard`'s id
-width standing where a shape could not override it, is gone with it. And the
-fit law is now a consequence: an index below `2^ORIGIN_BITS`, with
-`ORIGIN_BITS + COUNTER_BITS == ID_BITS`, puts every base inside the field.
+The hand-written shift in `SixteenMinters`, which restated `COUNTER_BITS` with
+nothing tying the two, is gone.
+
+**What a shape may still decide, stated exactly, because five earlier statements
+of this were wrong.** A shape supplies widths, a layout, an origin type and which
+minter an origin is. It no longer supplies a base, a ceiling, or the projection
+of a counter into the id field: the first two are derived by free functions, and
+the projection belongs to the layout, whose `Id` type its bitfield fixes.
+
+That is a **reduction, not an elimination**. A layout is still written by hand and
+can still misproject, and what constrains it is the round-trip law rather than
+arithmetic. An index outside `2^ORIGIN_BITS` is still expressible, and is refused
+where a generator is built rather than being unwritable, because a shape is an
+open extension point and that is the only place a check binds for shapes nobody
+has written yet.
+
+Each of the five previous designs closed the route its review had just found and
+left the class open, because the class is not a route: it is that a shape is
+trusted with arithmetic in the id space at all. Whether it should be is an open
+question, not a settled one.
 
 `SymShape` is a const trait, so a handle builds in a const context under any
 shape. A domain declares which shape it belongs to, which is what stops a domain
