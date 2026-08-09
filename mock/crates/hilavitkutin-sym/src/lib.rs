@@ -90,4 +90,60 @@ pub use crate::shape::{
 /// use hilavitkutin_sym::SymKind;
 /// let _ = SymKind::from_raw(0b001);
 /// ```
+/// # A shape cannot place its origins where it likes
+///
+/// Where a minter's run begins is derived from its index, and the derivation is
+/// a free function rather than a trait method, so there is nothing for a shape
+/// to override. Two earlier designs let a shape supply the bounds directly and
+/// two different colliding layouts got through.
+///
+/// The construction below is the one that defeated both prior laws: bases
+/// spaced by 2^20 while the counter spans 2^24, so origin zero's 1048576th mint
+/// was origin one's first. It no longer compiles.
+///
+/// ```compile_fail,E0407
+/// #![feature(const_trait_impl)]
+/// use arvo::{USize, Uint};
+/// use arvo_bits::{Bits, Hot};
+/// use hilavitkutin_sym::{MinterId, SymLayout, SymLayoutOps, SymShape};
+/// #[derive(Copy, Clone)]
+/// struct Overlapping;
+/// const impl SymShape for Overlapping {
+///     type Layout = SymLayout;
+///     type Origin = MinterId;
+///     const COUNTER_BITS: USize = USize(24);
+///     const ID_BITS: USize = USize(28);
+///     const KIND_BITS: USize = USize(3);
+///     const ORIGIN_BITS: USize = USize(4);
+///     fn origin_index(o: Self::Origin) -> USize { USize(o.0.to_raw() as usize) }
+///     fn origin_base(o: Self::Origin) -> u32 { (o.0.to_raw() as u32) << 20 }
+///     fn id_from_counter(c: Uint<28, Hot>) -> <Self::Layout as SymLayoutOps>::Id {
+///         Bits::<28, Hot>::from_raw(c.to_raw())
+///     }
+/// }
+/// ```
+///
+/// The same shape without that method compiles, so the refusal is about
+/// supplying the bound and nothing else:
+///
+/// ```
+/// #![feature(const_trait_impl)]
+/// use arvo::{USize, Uint};
+/// use arvo_bits::{Bits, Hot};
+/// use hilavitkutin_sym::{MinterId, SymLayout, SymLayoutOps, SymShape};
+/// #[derive(Copy, Clone)]
+/// struct Fine;
+/// const impl SymShape for Fine {
+///     type Layout = SymLayout;
+///     type Origin = MinterId;
+///     const COUNTER_BITS: USize = USize(24);
+///     const ID_BITS: USize = USize(28);
+///     const KIND_BITS: USize = USize(3);
+///     const ORIGIN_BITS: USize = USize(4);
+///     fn origin_index(o: Self::Origin) -> USize { USize(o.0.to_raw() as usize) }
+///     fn id_from_counter(c: Uint<28, Hot>) -> <Self::Layout as SymLayoutOps>::Id {
+///         Bits::<28, Hot>::from_raw(c.to_raw())
+///     }
+/// }
+/// ```
 pub mod refusals {}

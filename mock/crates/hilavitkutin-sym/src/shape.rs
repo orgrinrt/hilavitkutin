@@ -55,14 +55,16 @@ pub const trait SymShape: Copy + 'static {
     /// minter, and then a generator cannot be built without saying which it is.
     type Origin: Copy + Eq + core::fmt::Debug;
 
-    /// Where in the id space a minter's counter starts.
+    /// **Which minter this origin is**, not where its run begins.
     ///
-    /// Origins divide the counter space, so two minters at two origins
-    /// cannot produce the same id however far either counts.
-    fn origin_base(origin: Self::Origin) -> Uint<28, Hot>;
-
-    /// The largest id a minter at `origin` may reach before it is exhausted.
-    fn origin_ceiling(origin: Self::Origin) -> Uint<28, Hot>;
+    /// The run is derived from it, so a shape has no pair of numbers to get
+    /// wrong. Two earlier designs let a shape supply a base and a ceiling
+    /// directly: the first placed origins past the id field, the second placed
+    /// them inside it but spaced by less than a counter span, and two minters
+    /// collided while every law written for the first case passed.
+    ///
+    /// A shape with one minter returns zero for its single origin.
+    fn origin_index(origin: Self::Origin) -> USize;
 
     /// Project a counter value into this shape's id field.
     ///
@@ -104,6 +106,30 @@ pub const trait SymLayoutOps: Copy + Eq + core::fmt::Debug {
     fn get_flag(self) -> Bit<Hot>;
     /// The whole 32 bits, which is what comparison and persistence see.
     fn raw_bits(self) -> Bits<32, Hot>;
+}
+
+/// Where in the id space a minter's counter starts.
+///
+/// **A free function, so no shape can supply a different answer.** Index `i`
+/// owns `[i << COUNTER_BITS, ((i + 1) << COUNTER_BITS) - 1]`, and distinct
+/// indices own disjoint runs by arithmetic.
+///
+/// This was a provided trait method for exactly one revision, which was wrong
+/// for a reason worth recording: **a provided method is overridable**, so a
+/// shape could still supply a colliding base and the illegal state stayed
+/// representable. Verified by writing that shape and watching it compile. Free
+/// functions are the same instrument `width_of` used, and for the same reason.
+#[rustfmt::skip]
+pub const fn origin_base<S: [const] SymShape>(origin: S::Origin) -> u32 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the raw id-space coordinate at the one id-allocator boundary; tracked: #34
+    (S::origin_index(origin).0 as u32) << S::COUNTER_BITS.0
+}
+
+/// The largest id a minter may reach before it is exhausted.
+///
+/// Free for the same reason as [`origin_base`], and derived from it.
+#[rustfmt::skip]
+pub const fn origin_ceiling<S: [const] SymShape>(origin: S::Origin) -> u32 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the raw id-space coordinate, derived from origin_base at the same boundary; tracked: #34
+    origin_base::<S>(origin) + ((1u32 << S::COUNTER_BITS.0) - 1)
 }
 
 /// How wide the type carrying a field happens to be.
@@ -164,14 +190,9 @@ const impl SymShape for Standard {
     const KIND_BITS: USize = USize(3);
     const ORIGIN_BITS: USize = USize(0);
 
-    fn origin_base(_: Self::Origin) -> Uint<28, Hot> {
-        <Uint<28, Hot> as Identity>::ZERO
-    }
-
-    #[rustfmt::skip]
-    fn origin_ceiling(_: Self::Origin) -> Uint<28, Hot> {
-        // The whole id space, because there is nobody to share it with.
-        <Uint<28, Hot> as FromConstant>::from_constant::<{ USize((1 << 28) - 1) }>() // lint:allow(no-bare-numeric) reason: the 28-bit id-space ceiling as a typed constant (definition-site literal); tracked: #34
+    /// One minter, so index zero, and the derived run is the whole id space.
+    fn origin_index(_: Self::Origin) -> USize {
+        <USize as Identity>::ZERO
     }
 
     #[rustfmt::skip]
@@ -205,19 +226,12 @@ const impl SymShape for SixteenMinters {
     const KIND_BITS: USize = USize(3);
     const ORIGIN_BITS: USize = USize(4);
 
+    /// The minter's own number. Where its run begins is derived from this and
+    /// `COUNTER_BITS`, so the shift that used to be written here, and could
+    /// disagree with `COUNTER_BITS`, no longer exists.
     #[rustfmt::skip]
-    fn origin_base(origin: Self::Origin) -> Uint<28, Hot> {
-        // The minter's index shifted above its counter, so each origin owns a
-        // contiguous run of ids and no two runs overlap. Done at the raw level
-        // because `Mul` and `Shl` are not yet const-stable, at the same
-        // id-allocator boundary the mint step already crosses.
-        Uint::<28, Hot>::from_raw((origin.0.to_raw() as u32) << 24) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: placing a 4-bit origin index above the 24-bit counter, at the id-allocator boundary; tracked: #34
-    }
-
-    #[rustfmt::skip]
-    fn origin_ceiling(origin: Self::Origin) -> Uint<28, Hot> {
-        // The last id this minter owns: its base plus a full counter span.
-        Uint::<28, Hot>::from_raw(((origin.0.to_raw() as u32) << 24) | 0x00FF_FFFF) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the per-origin counter ceiling at the id-allocator boundary; tracked: #34
+    fn origin_index(origin: Self::Origin) -> USize {
+        USize(origin.0.to_raw() as usize) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: reading the origin's own 4-bit value through arvo's to_raw; tracked: #34
     }
 
     #[rustfmt::skip]
@@ -246,13 +260,9 @@ const impl SymShape for WideKind {
     const KIND_BITS: USize = USize(5);
     const ORIGIN_BITS: USize = USize(0);
 
-    fn origin_base(_: Self::Origin) -> Uint<28, Hot> {
-        <Uint<28, Hot> as Identity>::ZERO
-    }
-
-    #[rustfmt::skip]
-    fn origin_ceiling(_: Self::Origin) -> Uint<28, Hot> {
-        <Uint<28, Hot> as FromConstant>::from_constant::<{ USize((1 << 26) - 1) }>() // lint:allow(no-bare-numeric) reason: the 26-bit id-space ceiling as a typed constant (definition-site literal); tracked: #34
+    /// One minter, so index zero.
+    fn origin_index(_: Self::Origin) -> USize {
+        <USize as Identity>::ZERO
     }
 
     #[rustfmt::skip]
@@ -336,52 +346,36 @@ mod tests {
         check::<WideKind>("WideKind");
     }
 
-    /// **The law that pins the split between origin and counter.**
-    ///
-    /// The two laws above pin their *sum*: one to `ID_BITS`, one to the whole
-    /// handle. Neither pinned the split, so one could be raised and the other
-    /// lowered and everything passed. `SixteenMinters` declaring a five-bit
-    /// origin over a twenty-three-bit counter went green across the whole suite
-    /// while its own `origin_base` shifted by twenty-four.
-    ///
-    /// This reads the span off the two functions that define it, so a wrong
-    /// `COUNTER_BITS` fails whatever the other declarations say. `ORIGIN_BITS`
-    /// then follows from the sum law, which becomes load-bearing once its other
-    /// term is tied to something the code does.
-    #[test]
-    fn every_minter_owns_exactly_a_counter_span() {
-        fn check<S: SymShape>(name: &'static str, origins: &[S::Origin]) {
-            let span = (1u32 << S::COUNTER_BITS.0) - 1;
-            for o in origins {
-                let base = S::origin_base(*o).to_raw();
-                let ceiling = S::origin_ceiling(*o).to_raw();
-                assert_eq!(
-                    ceiling - base,
-                    span,
-                    "{name} at origin {o:?} owns a span its COUNTER_BITS does not describe"
-                );
-            }
-        }
-        check::<Standard>("Standard", &[OneOrigin]);
-        check::<WideKind>("WideKind", &[OneOrigin]);
-        #[rustfmt::skip]
-        let all: [MinterId; 16] = core::array::from_fn(|i| MinterId(Uint::<4, Hot>::from_raw(i as u8))); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: enumerating the sixteen origins for the span law; the index crosses arvo's own from_raw boundary; tracked: #34
-        check::<SixteenMinters>("SixteenMinters", &all);
-    }
+    // The span law that stood here is gone, and its removal is a result rather
+    // than a loss. It asserted `origin_ceiling - origin_base == 2^COUNTER_BITS
+    // - 1`, which the derivation now computes: `ceiling` is defined as `base +
+    // (1 << COUNTER_BITS) - 1`. A test asserting what its subject computes is a
+    // tautology and cannot fail, so it is deleted rather than kept for the
+    // count. That the law became tautological is the evidence the derivation
+    // subsumes it.
 
-    /// Whether every origin of `S` lands inside `S`'s own id field.
+    /// Whether `S` maps distinct origins to distinct indices.
     ///
     /// **A verdict rather than an assertion**, so the same law serves the
-    /// positive case over the shipped shapes and the negative case over a shape
-    /// built to break it. A law that can only assert cannot be pointed at a
-    /// liar, which is why every prior demonstration of this defect was a hand
-    /// edit that got reverted.
-    #[rustfmt::skip]
-    fn origins_fit_the_id_field<S: SymShape>(origins: &[S::Origin]) -> bool { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a test-local verdict function; `bool` is the predicate's own return and never crosses a public surface; tracked: #34
-        let span: u32 = u32::MAX >> (32 - S::ID_BITS.0.min(32)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the id field's maximum as a raw value, compared against what origin_base returns through arvo's own to_raw; tracked: #34
-        origins.iter().all(|o| {
-            S::origin_base(*o).to_raw() <= span && S::origin_ceiling(*o).to_raw() <= span
+    /// shipped shapes and a shape built to break it. A law that can only assert
+    /// cannot be pointed at a liar.
+    ///
+    /// This is all that remains testable about origins. Where a run *begins* is
+    /// derived from the index, so overlapping runs are unwritable; what a shape
+    /// can still get wrong is its own mapping.
+    fn origins_map_to_distinct_indices<S: SymShape>(origins: &[S::Origin]) -> bool {
+        origins.iter().enumerate().all(|(i, a)| {
+            origins
+                .iter()
+                .skip(i + 1)
+                .all(|b| S::origin_index(*a).0 != S::origin_index(*b).0)
         })
+    }
+
+    /// And that every index fits the width the shape reserved for it.
+    fn origin_indices_fit_origin_bits<S: SymShape>(origins: &[S::Origin]) -> bool {
+        let count = 1usize << S::ORIGIN_BITS.0;
+        origins.iter().all(|o| S::origin_index(*o).0 < count)
     }
 
     #[rustfmt::skip]
@@ -389,100 +383,104 @@ mod tests {
         core::array::from_fn(|i| MinterId(Uint::<4, Hot>::from_raw(i as u8))) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: enumerating the sixteen origins; the index crosses arvo's own from_raw boundary; tracked: #34
     }
 
-    /// **Every origin fits the id field it is placed in.**
-    ///
-    /// `origin_base` and `origin_ceiling` return `Uint<28, Hot>` whatever the
-    /// shape's own `ID_BITS`, and `from_raw` does not truncate, so a shape may
-    /// place origins beyond its id field. The excess wraps into another origin's
-    /// run and two minters collide.
-    ///
-    /// This names the mechanism; `two_origins_never_collide_under_any_shape` in
-    /// `tests/origins.rs` names the property it breaks.
     #[test]
-    fn every_shipped_shape_fits_its_id_field() {
-        assert!(
-            origins_fit_the_id_field::<Standard>(&[OneOrigin]),
-            "Standard"
-        );
-        assert!(
-            origins_fit_the_id_field::<WideKind>(&[OneOrigin]),
-            "WideKind"
-        );
-        assert!(
-            origins_fit_the_id_field::<SixteenMinters>(&all_minter_ids()),
-            "SixteenMinters"
-        );
+    fn every_shipped_shape_maps_origins_injectively() {
+        assert!(origins_map_to_distinct_indices::<Standard>(&[OneOrigin]));
+        assert!(origins_map_to_distinct_indices::<WideKind>(&[OneOrigin]));
+        assert!(origins_map_to_distinct_indices::<SixteenMinters>(
+            &all_minter_ids()
+        ));
     }
 
-    /// A shape whose origins are laid out for a wider id space than it has.
-    ///
-    /// **This is the construction that minted the collision**, kept rather than
-    /// reverted. Four origin bits over a twenty-six bit id, with origins shifted
-    /// as though the id were twenty-eight wide. Origin four's base is then 2^26,
-    /// one past what the field holds, and it truncates onto origin zero's.
-    ///
-    /// Every width law passes for it. That is the point: six laws relating
-    /// declarations to each other and to layout types could not see two minters
-    /// collide, because none of them minted anything.
-    #[derive(Copy, Clone, Default, Eq, Hash, PartialEq, Debug)]
-    struct OriginsPastTheIdField;
+    #[test]
+    fn every_shipped_index_fits_its_origin_bits() {
+        assert!(origin_indices_fit_origin_bits::<Standard>(&[OneOrigin]));
+        assert!(origin_indices_fit_origin_bits::<WideKind>(&[OneOrigin]));
+        assert!(origin_indices_fit_origin_bits::<SixteenMinters>(
+            &all_minter_ids()
+        ));
+    }
 
-    const impl SymShape for OriginsPastTheIdField {
-        type Layout = crate::handle::WideKindLayout;
+    /// A shape that maps two origins onto one index.
+    ///
+    /// **This is the defect that survives the new mechanism**, and it is a
+    /// smaller one: it is an error in the shape's own mapping rather than in
+    /// the id-space arithmetic, and it cannot make two *distinct* minters
+    /// collide, only make two names for one minter.
+    ///
+    /// Round eleven's liar, which placed origins past the id field, and the
+    /// eighth review's, which placed them inside it but overlapping, are both
+    /// **unwritable now**: there is no base or ceiling for a shape to supply.
+    /// That is the result of this round, and it is recorded here because a
+    /// deleted test otherwise reads as coverage lost rather than as a case that
+    /// stopped existing.
+    #[derive(Copy, Clone, Default, Eq, Hash, PartialEq, Debug)]
+    struct TwoOriginsOneIndex;
+
+    const impl SymShape for TwoOriginsOneIndex {
+        type Layout = crate::handle::SymLayout;
         type Origin = MinterId;
 
-        const COUNTER_BITS: USize = USize(22);
-        const ID_BITS: USize = USize(26);
-        const KIND_BITS: USize = USize(5);
+        const COUNTER_BITS: USize = USize(24);
+        const ID_BITS: USize = USize(28);
+        const KIND_BITS: USize = USize(3);
         const ORIGIN_BITS: USize = USize(4);
 
         #[rustfmt::skip]
-        fn origin_base(origin: Self::Origin) -> Uint<28, Hot> {
-            Uint::<28, Hot>::from_raw((origin.0.to_raw() as u32) << 24) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the deliberate defect this shape exists to carry, at the id-allocator boundary; tracked: #34
-        }
-
-        #[rustfmt::skip]
-        fn origin_ceiling(origin: Self::Origin) -> Uint<28, Hot> {
-            Uint::<28, Hot>::from_raw(((origin.0.to_raw() as u32) << 24) | 0x003F_FFFF) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a full counter span above a base that is itself the defect; tracked: #34
+        fn origin_index(_: Self::Origin) -> USize {
+            USize(0) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the deliberate defect this shape carries, mapping every origin onto one index; tracked: #34
         }
 
         #[rustfmt::skip]
         fn id_from_counter(counter: Uint<28, Hot>) -> <Self::Layout as SymLayoutOps>::Id {
-            Bits::<26, Hot>::from_raw(counter.to_raw()) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: Uint-to-Bits id projection at the id-allocator boundary; tracked: #34
+            Bits::<28, Hot>::from_raw(counter.to_raw()) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: Uint-to-Bits id projection at the id-allocator boundary; tracked: #34
         }
     }
 
-    /// The law rejects the shape that minted the collision.
-    ///
-    /// Without this the law has never been shown to reject anything, which is
-    /// the difference between a test and a description.
     #[test]
-    fn the_fit_law_rejects_origins_past_the_id_field() {
+    fn the_injectivity_law_rejects_a_shape_that_collapses_its_origins() {
         assert!(
-            !origins_fit_the_id_field::<OriginsPastTheIdField>(&all_minter_ids()),
-            "a shape placing origins past its own id field must be rejected; this \
-             is the construction whose origins zero and four minted one handle"
+            !origins_map_to_distinct_indices::<TwoOriginsOneIndex>(&all_minter_ids()),
+            "a shape mapping every origin onto one index must be rejected"
         );
     }
 
-    /// And it passes every width law, which is why nothing caught it for nine
-    /// rounds. Asserted so that a future width law claiming to cover this case
-    /// has to disagree with a test rather than with a comment.
+    /// And it passes every width law, which is why a width law was never going
+    /// to be the instrument for this.
     #[test]
-    fn the_broken_shape_still_satisfies_every_width_law() {
-        type S = OriginsPastTheIdField;
+    fn the_collapsing_shape_still_satisfies_every_width_law() {
+        type S = TwoOriginsOneIndex;
         assert_eq!(
             S::KIND_BITS.0 + S::ORIGIN_BITS.0 + S::COUNTER_BITS.0 + 1,
             32
         );
         assert_eq!(S::ID_BITS.0, S::ORIGIN_BITS.0 + S::COUNTER_BITS.0);
-        assert_eq!(
-            S::KIND_BITS.0,
-            <<S as SymShape>::Layout as SymLayoutOps>::Kind::WIDTH.0
-        );
-        assert_eq!(
-            S::ID_BITS.0,
-            <<S as SymShape>::Layout as SymLayoutOps>::Id::WIDTH.0
-        );
+    }
+
+    /// **Disjointness is arithmetic now, not an assertion.**
+    ///
+    /// Derived runs cannot overlap for distinct indices, checked over every
+    /// pair a four-bit origin admits. This is the property the two previous
+    /// rounds each tried to catch with a law aimed at the construction they had
+    /// just found.
+    #[test]
+    fn derived_runs_never_overlap_for_distinct_indices() {
+        let ids = all_minter_ids();
+        for (i, a) in ids.iter().enumerate() {
+            for b in ids.iter().skip(i + 1) {
+                let (ab, ac) = (
+                    origin_base::<SixteenMinters>(*a),
+                    origin_ceiling::<SixteenMinters>(*a),
+                );
+                let (bb, bc) = (
+                    origin_base::<SixteenMinters>(*b),
+                    origin_ceiling::<SixteenMinters>(*b),
+                );
+                assert!(
+                    ac < bb || bc < ab,
+                    "runs [{ab}, {ac}] and [{bb}, {bc}] overlap"
+                );
+            }
+        }
     }
 }

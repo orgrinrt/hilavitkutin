@@ -71,8 +71,8 @@ impl<D: GenerativeDomain> Generator<D> {
     /// applied where a choice belonged.
     pub fn at(origin: <D::Shape as SymShape>::Origin) -> Self {
         Self {
-            next: <D::Shape as SymShape>::origin_base(origin),
-            ceiling: <D::Shape as SymShape>::origin_ceiling(origin),
+            next: Uint::<28, Hot>::from_raw(crate::shape::origin_base::<D::Shape>(origin)),
+            ceiling: Uint::<28, Hot>::from_raw(crate::shape::origin_ceiling::<D::Shape>(origin)),
             exhausted: Bool(false),
             _domain: PhantomData,
         }
