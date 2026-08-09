@@ -369,43 +369,120 @@ mod tests {
         check::<SixteenMinters>("SixteenMinters", &all);
     }
 
+    /// Whether every origin of `S` lands inside `S`'s own id field.
+    ///
+    /// **A verdict rather than an assertion**, so the same law serves the
+    /// positive case over the shipped shapes and the negative case over a shape
+    /// built to break it. A law that can only assert cannot be pointed at a
+    /// liar, which is why every prior demonstration of this defect was a hand
+    /// edit that got reverted.
+    #[rustfmt::skip]
+    fn origins_fit_the_id_field<S: SymShape>(origins: &[S::Origin]) -> bool { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a test-local verdict function; `bool` is the predicate's own return and never crosses a public surface; tracked: #34
+        let span: u32 = u32::MAX >> (32 - S::ID_BITS.0.min(32)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the id field's maximum as a raw value, compared against what origin_base returns through arvo's own to_raw; tracked: #34
+        origins.iter().all(|o| {
+            S::origin_base(*o).to_raw() <= span && S::origin_ceiling(*o).to_raw() <= span
+        })
+    }
+
+    #[rustfmt::skip]
+    fn all_minter_ids() -> [MinterId; 16] {
+        core::array::from_fn(|i| MinterId(Uint::<4, Hot>::from_raw(i as u8))) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: enumerating the sixteen origins; the index crosses arvo's own from_raw boundary; tracked: #34
+    }
+
     /// **Every origin fits the id field it is placed in.**
     ///
     /// `origin_base` and `origin_ceiling` return `Uint<28, Hot>` whatever the
     /// shape's own `ID_BITS`, and `from_raw` does not truncate, so a shape may
-    /// place origins beyond its id field. The excess then wraps into another
-    /// origin's run and two minters collide.
+    /// place origins beyond its id field. The excess wraps into another origin's
+    /// run and two minters collide.
     ///
-    /// This names the mechanism. `two_origins_never_collide_under_any_shape` in
-    /// `tests/origins.rs` names the property it breaks, and both exist because a
-    /// law over the property alone leaves the next reader to rediscover why.
+    /// This names the mechanism; `two_origins_never_collide_under_any_shape` in
+    /// `tests/origins.rs` names the property it breaks.
     #[test]
-    fn every_origin_fits_the_id_field() {
-        fn check<S: SymShape>(name: &'static str, origins: &[S::Origin]) {
-            let span = if S::ID_BITS.0 >= 32 {
-                u32::MAX
-            } else {
-                (1u32 << S::ID_BITS.0) - 1
-            };
-            for o in origins {
-                let base = S::origin_base(*o).to_raw();
-                let ceiling = S::origin_ceiling(*o).to_raw();
-                assert!(
-                    base <= span,
-                    "{name} places an origin base at {base}, past its own {} id bits",
-                    S::ID_BITS.0
-                );
-                assert!(
-                    ceiling <= span,
-                    "{name} places an origin ceiling at {ceiling}, past its own {} id bits",
-                    S::ID_BITS.0
-                );
-            }
-        }
-        check::<Standard>("Standard", &[OneOrigin]);
-        check::<WideKind>("WideKind", &[OneOrigin]);
+    fn every_shipped_shape_fits_its_id_field() {
+        assert!(
+            origins_fit_the_id_field::<Standard>(&[OneOrigin]),
+            "Standard"
+        );
+        assert!(
+            origins_fit_the_id_field::<WideKind>(&[OneOrigin]),
+            "WideKind"
+        );
+        assert!(
+            origins_fit_the_id_field::<SixteenMinters>(&all_minter_ids()),
+            "SixteenMinters"
+        );
+    }
+
+    /// A shape whose origins are laid out for a wider id space than it has.
+    ///
+    /// **This is the construction that minted the collision**, kept rather than
+    /// reverted. Four origin bits over a twenty-six bit id, with origins shifted
+    /// as though the id were twenty-eight wide. Origin four's base is then 2^26,
+    /// one past what the field holds, and it truncates onto origin zero's.
+    ///
+    /// Every width law passes for it. That is the point: six laws relating
+    /// declarations to each other and to layout types could not see two minters
+    /// collide, because none of them minted anything.
+    #[derive(Copy, Clone, Default, Eq, Hash, PartialEq, Debug)]
+    struct OriginsPastTheIdField;
+
+    const impl SymShape for OriginsPastTheIdField {
+        type Layout = crate::handle::WideKindLayout;
+        type Origin = MinterId;
+
+        const COUNTER_BITS: USize = USize(22);
+        const ID_BITS: USize = USize(26);
+        const KIND_BITS: USize = USize(5);
+        const ORIGIN_BITS: USize = USize(4);
+
         #[rustfmt::skip]
-        let all: [MinterId; 16] = core::array::from_fn(|i| MinterId(Uint::<4, Hot>::from_raw(i as u8))); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: enumerating the sixteen origins for the fit law; the index crosses arvo's own from_raw boundary; tracked: #34
-        check::<SixteenMinters>("SixteenMinters", &all);
+        fn origin_base(origin: Self::Origin) -> Uint<28, Hot> {
+            Uint::<28, Hot>::from_raw((origin.0.to_raw() as u32) << 24) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the deliberate defect this shape exists to carry, at the id-allocator boundary; tracked: #34
+        }
+
+        #[rustfmt::skip]
+        fn origin_ceiling(origin: Self::Origin) -> Uint<28, Hot> {
+            Uint::<28, Hot>::from_raw(((origin.0.to_raw() as u32) << 24) | 0x003F_FFFF) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a full counter span above a base that is itself the defect; tracked: #34
+        }
+
+        #[rustfmt::skip]
+        fn id_from_counter(counter: Uint<28, Hot>) -> <Self::Layout as SymLayoutOps>::Id {
+            Bits::<26, Hot>::from_raw(counter.to_raw()) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: Uint-to-Bits id projection at the id-allocator boundary; tracked: #34
+        }
+    }
+
+    /// The law rejects the shape that minted the collision.
+    ///
+    /// Without this the law has never been shown to reject anything, which is
+    /// the difference between a test and a description.
+    #[test]
+    fn the_fit_law_rejects_origins_past_the_id_field() {
+        assert!(
+            !origins_fit_the_id_field::<OriginsPastTheIdField>(&all_minter_ids()),
+            "a shape placing origins past its own id field must be rejected; this \
+             is the construction whose origins zero and four minted one handle"
+        );
+    }
+
+    /// And it passes every width law, which is why nothing caught it for nine
+    /// rounds. Asserted so that a future width law claiming to cover this case
+    /// has to disagree with a test rather than with a comment.
+    #[test]
+    fn the_broken_shape_still_satisfies_every_width_law() {
+        type S = OriginsPastTheIdField;
+        assert_eq!(
+            S::KIND_BITS.0 + S::ORIGIN_BITS.0 + S::COUNTER_BITS.0 + 1,
+            32
+        );
+        assert_eq!(S::ID_BITS.0, S::ORIGIN_BITS.0 + S::COUNTER_BITS.0);
+        assert_eq!(
+            S::KIND_BITS.0,
+            <<S as SymShape>::Layout as SymLayoutOps>::Kind::WIDTH.0
+        );
+        assert_eq!(
+            S::ID_BITS.0,
+            <<S as SymShape>::Layout as SymLayoutOps>::Id::WIDTH.0
+        );
     }
 }

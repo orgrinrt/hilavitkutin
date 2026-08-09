@@ -20,10 +20,11 @@ const ONE: Uint<28, Hot> = <Uint<28, Hot> as FromConstant>::from_constant::<{ US
 /// A `Generator` can only be built for a [`GenerativeDomain`]. Building one for
 /// an interning-only domain is a type error:
 ///
-/// ```compile_fail
+/// ```compile_fail,E0277
 /// use hilavitkutin_sym::{Domain, Generator, InterningDomain, Standard, SymKind};
 /// struct InterningOnly;
 /// impl Domain for InterningOnly {
+///     type Shape = Standard;
 ///     const KIND: SymKind = SymKind::from_raw(0b100);
 /// }
 /// impl InterningDomain for InterningOnly {
@@ -31,6 +32,23 @@ const ONE: Uint<28, Hot> = <Uint<28, Hot> as FromConstant>::from_constant::<{ US
 /// }
 /// // InterningOnly is not a GenerativeDomain, so this does not compile.
 /// let _g = Generator::<InterningOnly>::single();
+/// ```
+///
+/// The `Domain` impl above is complete and compiles on its own, so the refusal
+/// is about the missing `GenerativeDomain` and nothing else. Previously it
+/// omitted `type Shape`, which made the block fail for two reasons at once and
+/// shipped an uncompilable `Domain` example to anyone reading this page:
+///
+/// ```
+/// use hilavitkutin_sym::{Domain, InterningDomain, Standard, SymKind};
+/// struct InterningOnly;
+/// impl Domain for InterningOnly {
+///     type Shape = Standard;
+///     const KIND: SymKind = SymKind::from_raw(0b100);
+/// }
+/// impl InterningDomain for InterningOnly {
+///     type Value = str;
+/// }
 /// ```
 pub struct Generator<D: GenerativeDomain> {
     next: Uint<28, Hot>,
