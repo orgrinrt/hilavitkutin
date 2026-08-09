@@ -29,9 +29,6 @@ bitfield! {
 }
 
 const impl crate::shape::SymLayoutOps for SymLayout {
-    const ID_MASK: Bits<32, Hot> = Self::id_MASK;
-    const KIND_MASK: Bits<32, Hot> = Self::kind_MASK;
-
     type Id = Bits<28, Hot>;
     type Kind = Bits<3, Hot>;
 
@@ -84,9 +81,6 @@ bitfield! {
 }
 
 const impl crate::shape::SymLayoutOps for WideKindLayout {
-    const ID_MASK: Bits<32, Hot> = Self::id_MASK;
-    const KIND_MASK: Bits<32, Hot> = Self::kind_MASK;
-
     type Id = Bits<26, Hot>;
     type Kind = Bits<5, Hot>;
 

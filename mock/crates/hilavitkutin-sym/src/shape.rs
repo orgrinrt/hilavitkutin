@@ -14,7 +14,7 @@
 //! same 32 bits differently, so they are not comparable and must not meet in one
 //! store.
 
-use arvo::strategy::Identity;
+use arvo::strategy::{BitsContainerFor, Identity, Unsigned};
 use arvo::traits::FromConstant;
 use arvo::{USize, Uint};
 use arvo_bits::{Bit, Bits, Hot};
@@ -77,22 +77,16 @@ pub const trait SymShape: Copy + 'static {
 /// impl, so each shape writes a short forwarding impl. The forwarding is
 /// mechanical; the positions it forwards to are the shape's own.
 pub const trait SymLayoutOps: Copy + Eq + core::fmt::Debug {
-    /// This layout's own tag mask, as its bitfield generated it.
+    /// The domain tag, in a type whose width is the field's real width.
     ///
-    /// **The mask rather than a width**, because a width is a number an impl
-    /// writes and can therefore write wrongly. A mask is the field definition
-    /// itself: the accessors read through it, so a layout lying about its mask
-    /// breaks its own `get_kind` rather than merely misreporting. The width is
-    /// then counted from it by [`width_of`], which no impl can override.
-    const KIND_MASK: Bits<32, Hot>;
-
-    /// This layout's own id mask, as its bitfield generated it.
-    const ID_MASK: Bits<32, Hot>;
-
-    /// The domain tag at this layout's kind width.
-    type Kind: Copy + Eq + core::fmt::Debug;
-    /// The id at this layout's id width.
-    type Id: Copy + Eq + core::fmt::Debug;
+    /// **The type carries the width**, and that is load-bearing rather than
+    /// incidental. `get_kind` returns this and its body returns what the
+    /// bitfield hands back, so naming a width the field does not have is a type
+    /// error. A mask constant forwarded by hand had no such guarantee, because
+    /// nothing read it.
+    type Kind: Copy + Eq + core::fmt::Debug + [const] FieldWidth;
+    /// The id, in a type whose width is the field's real width.
+    type Id: Copy + Eq + core::fmt::Debug + [const] FieldWidth;
 
     /// A layout with every field zero.
     fn zeroed() -> Self;
@@ -112,15 +106,31 @@ pub const trait SymLayoutOps: Copy + Eq + core::fmt::Debug {
     fn raw_bits(self) -> Bits<32, Hot>;
 }
 
-/// How many bits a mask covers.
+/// How wide the type carrying a field happens to be.
 ///
-/// A free function rather than a trait item, so no implementation can supply a
-/// different answer. This is what closes the restatement class: the previous
-/// three attempts each moved the hand-written number down a rung, and a number
-/// nobody writes cannot disagree with anything.
-#[rustfmt::skip]
-pub const fn width_of(mask: Bits<32, Hot>) -> USize {
-    USize(mask.to_raw().count_ones() as usize) // lint:allow(no-bare-numeric) reason: counting set bits of a generated mask to derive a field width; tracked: #34
+/// Blanket over `Bits`, so no layout can supply a different answer, and
+/// `specialization` is forbidden here, which makes that a guarantee rather than
+/// a convention.
+///
+/// **This is the rung that ends the restatement class**, and it took five
+/// attempts to reach it. The previous one counted a width from a mask constant
+/// each layout forwarded by hand. That looked derived and was not: no accessor
+/// reads the forwarded constant, because the generated accessor uses the
+/// macro's own mask. A layout could forward any mask at all and every law still
+/// passed, which was demonstrated with a genuine five-bit field forwarding a
+/// nine-bit mask under a shape declaring nine.
+///
+/// `Self::Kind` cannot lie the same way. `get_kind` returns it and its body
+/// returns what the bitfield hands back, so a wrong associated type is a type
+/// error rather than a silent disagreement, and a width read off that type
+/// inherits the guarantee.
+pub const trait FieldWidth {
+    /// The field's width, in bits.
+    const WIDTH: USize;
+}
+
+const impl<const N: u16, S: BitsContainerFor<N, Unsigned>> FieldWidth for Bits<N, S> {
+    const WIDTH: USize = USize(N as usize);
 }
 
 /// The default shape, and byte-identical to the layout every current consumer
@@ -306,17 +316,50 @@ mod tests {
         fn check<S: SymShape>(name: &'static str) {
             assert_eq!(
                 S::KIND_BITS.0,
-                width_of(<S::Layout as SymLayoutOps>::KIND_MASK).0,
-                "{name} declares a kind width its layout does not have"
+                <<S::Layout as SymLayoutOps>::Kind as FieldWidth>::WIDTH.0,
+                "{name} declares a kind width its layout does not carry"
             );
             assert_eq!(
                 S::ID_BITS.0,
-                width_of(<S::Layout as SymLayoutOps>::ID_MASK).0,
-                "{name} declares an id width its layout does not have"
+                <<S::Layout as SymLayoutOps>::Id as FieldWidth>::WIDTH.0,
+                "{name} declares an id width its layout does not carry"
             );
         }
         check::<Standard>("Standard");
         check::<SixteenMinters>("SixteenMinters");
         check::<WideKind>("WideKind");
+    }
+
+    /// **The law that pins the split between origin and counter.**
+    ///
+    /// The two laws above pin their *sum*: one to `ID_BITS`, one to the whole
+    /// handle. Neither pinned the split, so one could be raised and the other
+    /// lowered and everything passed. `SixteenMinters` declaring a five-bit
+    /// origin over a twenty-three-bit counter went green across the whole suite
+    /// while its own `origin_base` shifted by twenty-four.
+    ///
+    /// This reads the span off the two functions that define it, so a wrong
+    /// `COUNTER_BITS` fails whatever the other declarations say. `ORIGIN_BITS`
+    /// then follows from the sum law, which becomes load-bearing once its other
+    /// term is tied to something the code does.
+    #[test]
+    fn every_minter_owns_exactly_a_counter_span() {
+        fn check<S: SymShape>(name: &'static str, origins: &[S::Origin]) {
+            let span = (1u32 << S::COUNTER_BITS.0) - 1;
+            for o in origins {
+                let base = S::origin_base(*o).to_raw();
+                let ceiling = S::origin_ceiling(*o).to_raw();
+                assert_eq!(
+                    ceiling - base,
+                    span,
+                    "{name} at origin {o:?} owns a span its COUNTER_BITS does not describe"
+                );
+            }
+        }
+        check::<Standard>("Standard", &[OneOrigin]);
+        check::<WideKind>("WideKind", &[OneOrigin]);
+        let all: [MinterId; 16] =
+            core::array::from_fn(|i| MinterId(Uint::<4, Hot>::from_raw(i as u8)));
+        check::<SixteenMinters>("SixteenMinters", &all);
     }
 }
