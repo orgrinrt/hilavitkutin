@@ -23,7 +23,7 @@ members = [
 version = "0.1.0"
 edition = "2024"
 license = "MPL-2.0"
-description = "Pipeline execution engine — provider-driven, const-generic, no_std"
+description = "Static scheduler and runtime that turns read / write access sets into per-core dispatch with cache-aware morsels. no_std, no alloc, no spawn, no dyn."
 repository = "https://github.com/orgrinrt/hilavitkutin"
 
 [workspace.dependencies]
