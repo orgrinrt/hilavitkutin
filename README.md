@@ -3,8 +3,6 @@
 <div align="center" style="text-align: center;">
 
 [![GitHub Stars](https://img.shields.io/github/stars/orgrinrt/hilavitkutin.svg)](https://github.com/orgrinrt/hilavitkutin/stargazers)
-[![Crates.io](https://img.shields.io/crates/v/hilavitkutin)](https://crates.io/crates/hilavitkutin)
-[![docs.rs](https://img.shields.io/docsrs/hilavitkutin)](https://docs.rs/hilavitkutin)
 [![GitHub Issues](https://img.shields.io/github/issues/orgrinrt/hilavitkutin.svg)](https://github.com/orgrinrt/hilavitkutin/issues)
 ![License](https://img.shields.io/github/license/orgrinrt/hilavitkutin?color=%23009689)
 
