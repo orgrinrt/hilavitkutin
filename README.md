@@ -66,7 +66,7 @@ The shape is small. `Context<P>` wraps a provider tuple `P`. Three macros genera
 
 A domain trait declares its `type Ctx: HasFoo + HasBar` and writes the body against `ctx.foo()` / `ctx.bar()`. The same `Self::Ctx` slot resolves per trait, so a single struct can implement two traits with different `Ctx` shapes without ambiguity.
 
-Within hilavitkutin, every WorkUnit's `Self::Ctx` is a provider tuple expressing read / write access plus the engine-required platform contracts (`HasColumnReader<R>`, `HasColumnWriter<W>`, `HasResourceProvider<R>`, `HasVirtualFirer<W>`, `HasEach<R, W>`, `HasBatch<R, W>`, `HasReduce<R, W>`). The `provider_generic!` / `tuple_generic!` variants thread the access-set type parameters through. Outside hilavitkutin, the same machinery works elsewhere: a separate consumer crate can declare its own domain trait with `type Ctx: HasConnector + HasWriter` and stay independent of the engine entirely.
+Within hilavitkutin, every WorkUnit's `Self::Ctx` is a provider tuple expressing read / write access plus the engine-required platform contracts (`HasColumnReader<R>`, `HasColumnWriter<W>`, `HasResourceProvider<R>`, `HasVirtualFirer<W>`, `HasEach<R, W>`, `HasBatch<R, W>`, `HasReduce<R, W>`). The `provider_generic!` / `provider_generic2!` variants thread one or two access-set type parameters through. Outside hilavitkutin, the same machinery works elsewhere: a separate consumer crate can declare its own domain trait with `type Ctx: HasConnector + HasWriter` and stay independent of the engine entirely.
 
 ```rust
 use hilavitkutin_ctx::define_providers;
@@ -120,7 +120,7 @@ use notko::Outcome;
 pub trait Compressor {
     fn compress(&self, input: Bytes) -> Outcome<Bytes, Oops>;
 }
-pub const CAP_COMPRESSOR: CapabilityId = CapabilityId::from_name(b"my_app.compressor.v1");
+pub const CAP_COMPRESSOR: CapabilityId = CapabilityId::from_name("my_app.compressor.v1");
 
 // extension author writes the impl plus one attribute.
 #[export_extension(name = "gzip")]
