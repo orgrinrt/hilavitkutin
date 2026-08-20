@@ -3,8 +3,6 @@
 <div align="center" style="text-align: center;">
 
 [![GitHub Stars](https://img.shields.io/github/stars/orgrinrt/hilavitkutin.svg)](https://github.com/orgrinrt/hilavitkutin/stargazers)
-[![Crates.io](https://img.shields.io/crates/v/hilavitkutin)](https://crates.io/crates/hilavitkutin)
-[![docs.rs](https://img.shields.io/docsrs/hilavitkutin)](https://docs.rs/hilavitkutin)
 [![GitHub Issues](https://img.shields.io/github/issues/orgrinrt/hilavitkutin.svg)](https://github.com/orgrinrt/hilavitkutin/issues)
 ![License](https://img.shields.io/github/license/orgrinrt/hilavitkutin?color=%23009689)
 
@@ -12,7 +10,7 @@
 
 </div>
 
-Typed WorkUnits declare their read / write access sets to the scheduler builder. Each `.add_unit::<W>()` accumulates the WorkUnit type onto the builder's typestate; each `.add_column::<T>()`, `.add_resource::<T>(initial)`, or `.add_virtual::<T>()` registers a store. At `.build()`, every declared access is type-checked against the registered stores. A WorkUnit that names a store the builder does not have fails to compile, with the diagnostic pointing at the missing marker.
+Typed WorkUnits declare their read / write access sets to the scheduler builder. Every registration goes through one method, `.with(input)`, which routes on the input's `BuilderInput` impl: a `WorkUnit` accumulates onto the unit typestate, and a `Column`, `Resource`, `Virtual` or `Kit` registers a store. At `.build()`, every declared access is type-checked against the registered stores. A WorkUnit that names a store the builder does not have fails to compile, with the diagnostic pointing at the missing marker.
 
 `.build()` then runs the plan stage end to end. Access-set overlap builds the dependency graph; topological sort and upward rank find the critical path; waist detection partitions phases; RCM reordering and block-diagonal layout cluster adjacent work for cache locality; spectral partitioning groups trunks; combinatorial DP groups fibers; per-fiber morsels are sized to cache. The output is a per-core dispatch program: a monomorphised function per physical core encoding phases, record ranges, morsel boundaries, and sync points.
 
@@ -22,36 +20,35 @@ At run time, the dispatch programs drive a pre-allocated thread pool. Trunks of 
 
 The scheduler builder is a typestate. Each registration accumulates a type parameter onto the builder; `.build()` reads the accumulated state and type-checks every registered WorkUnit's read / write access against the registered stores.
 
-Three registration shapes cover the surface. `.add_unit::<W>()` adds one `WorkUnit` type to the typestate. `.add_column::<T>()`, `.add_resource::<T>(initial)`, and `.add_virtual::<T>()` each register one store. `.add_kit::<K>()` reads a `Kit` impl's `type Units` and `type Owned` declarations at compile time and prepends them onto the accumulators in one step; Kits are how a crate ships a bundled set of WorkUnits and stores under a single named registration.
+One registration method covers the surface. `.with(input)` accepts anything implementing `BuilderInput`, and that impl's `Dispatch` associated type decides where the input lands: onto the unit typestate for a `WorkUnit`, or onto the store typestate for a `Column`, `Resource`, `Virtual` or `Kit`. A `Kit` carries `type Units` and `type Owned`, so one `.with(kit)` prepends a whole bundle of WorkUnits and stores at once. `.clock(clock)` is the one separate method, because the clock value has to be retained rather than tracked by type alone.
 
 ```rust
-use hilavitkutin::Scheduler;
-use hilavitkutin_providers::{InternerKit, default_interner};
+use hilavitkutin::scheduler::Scheduler;
+use hilavitkutin_api::column::Column;
 
 let scheduler = Scheduler::builder()
-    .add_resource(default_interner::<4096, 256>())
-    .add_kit::<InternerKit<4096, 256>>()
-    .add_kit::<RunnerKit>()
-    .add_kit::<LinterKit>()
-    .add_unit::<MyWU>()
-    .build();
+    .with(Column::<Inv>::new())
+    .with(Column::<Outv>::new())
+    .with(Copyer)
+    .build(store(provider), USize(4))
+    .unwrap_or_else(|_| panic!("build should succeed"));
 ```
 
-`.build()` carries the typestate constraint that every registered WorkUnit's `Read` and `Write` access sets are fully covered by the accumulated stores. A WorkUnit naming a `Resource<T>` that no registration covers fails to compile; the diagnostic names the missing store directly:
+`.build()` takes the column storage and the record count, and carries the typestate constraint that every registered WorkUnit's `Read` and `Write` access sets are fully covered by the accumulated stores. Passing something that is not a registered input fails the trait solver at the `.with(...)` call, and `BuilderInput`'s `#[diagnostic::on_unimplemented]` names the missing impl:
 
 ```text
-note: store `Empty` does not contain `Resource<Interner>`. Register it with
-      `.add_resource::<Interner>(initial)`, `.add_column::<Interner>()`,
-      `.add_virtual::<Interner>()`, or install a Kit that owns it.
+error: `Foo` is not a BuilderInput; pass a registered input value to `SchedulerBuilder::with(...)`
+note: Impl one of the dispatch-determining sub-traits on `Foo`: `Resource` / `Column` /
+      `Virtual` / `WorkUnit` / `Kit` / `MemoryProvider` / `ThreadPool` / `Clock` / `RunCfg`.
 ```
 
-Order of registration matters for the type-level proof. A Kit whose WorkUnits read from another Kit's owned state must come after the owning Kit in the chain (or after the relevant `.add_resource(_)` / `.add_column()` calls). The builder accepts any order that satisfies the proof; the diagnostic above pinpoints what is missing when it does not.
+Order of registration matters for the type-level proof. A Kit whose WorkUnits read from another Kit's owned state must come after the owning Kit in the chain. The builder accepts any order that satisfies the proof; the diagnostic pinpoints what is missing when it does not.
 
-Once `.build()` returns, the resulting `Scheduler<Wus, Stores>` is the runtime handle. The two type parameters are phantom and carry the typestate forward; methods on `Scheduler` consume that typestate to dispatch work and, for stores marked `Replaceable`, to allow targeted resource swaps between runs.
+Once `.build()` returns, the resulting `Scheduler` is the runtime handle. Its type parameters carry the run config, the unit and store values, the column storage, the plan dimensions, the store access set and the clock; most are defaulted, and the ones that matter are inferred from the builder chain. For stores marked `Replaceable`, `Scheduler::replace_resource::<T>` allows targeted resource swaps between runs.
 
 ## Plan and runtime
 
-The plan stage selects a strategy per pipeline shape and a config per phase. Strategy selection happens at plan time based on record count and DAG topology: shallow pipelines run sequential, wide pipelines run adaptive, mixed pipelines run phased with parallel trunks. Per-phase configs (`MAX_FUSE`, `BALANCED`, `MAX_SPLIT`) tune how aggressively the dispatch fuses or splits within the phase. None of this changes during a run; the next plan recompute fires only on structural change to the pipeline (new WorkUnits registered, record-count shift, DAG modification).
+The plan stage selects a strategy per pipeline shape and a config per phase. Strategy selection happens at plan time based on record count and DAG topology: shallow pipelines run sequential, wide pipelines run adaptive, mixed pipelines run phased with parallel trunks. Per-phase `PhaseConfig` values (`MaxFuse`, `Balanced`, `MaxSplit`) tune how aggressively the dispatch fuses or splits within the phase. None of this changes during a run; the next plan recompute fires only on structural change to the pipeline (new WorkUnits registered, record-count shift, DAG modification).
 
 At run time, two extras compound the per-core cache locality. Commutative fibers parallelise from both ends: a head thread iterates forward, a tail thread iterates backward, accumulators merge at convergence; every commutative fiber gets roughly 2x parallelism for free. On targets with heterogeneous cores, critical-path trunks land on performance cores, and branches and leaves land on efficiency cores with proportionally smaller morsels. Sync points use predictive parking, with short waits as spin loops and long waits as parked threads, sized from runtime measurements rather than fixed thresholds.
 
@@ -69,7 +66,7 @@ The shape is small. `Context<P>` wraps a provider tuple `P`. Three macros genera
 
 A domain trait declares its `type Ctx: HasFoo + HasBar` and writes the body against `ctx.foo()` / `ctx.bar()`. The same `Self::Ctx` slot resolves per trait, so a single struct can implement two traits with different `Ctx` shapes without ambiguity.
 
-Within hilavitkutin, every WorkUnit's `Self::Ctx` is a provider tuple expressing read / write access plus the engine-required platform contracts (`HasColumnReader<R>`, `HasColumnWriter<W>`, `HasResourceProvider<R>`, `HasVirtualFirer<W>`, `HasEach<R, W>`, `HasBatch<R, W>`, `HasReduce<R, W>`). The `provider_generic!` / `tuple_generic!` variants thread the access-set type parameters through. Outside hilavitkutin, the same machinery works elsewhere: a separate consumer crate can declare its own domain trait with `type Ctx: HasConnector + HasWriter` and stay independent of the engine entirely.
+Within hilavitkutin, every WorkUnit's `Self::Ctx` is a provider tuple expressing read / write access plus the engine-required platform contracts (`HasColumnReader<R>`, `HasColumnWriter<W>`, `HasResourceProvider<R>`, `HasVirtualFirer<W>`, `HasEach<R, W>`, `HasBatch<R, W>`, `HasReduce<R, W>`). The `provider_generic!` / `provider_generic2!` variants thread one or two access-set type parameters through. Outside hilavitkutin, the same machinery works elsewhere: a separate consumer crate can declare its own domain trait with `type Ctx: HasConnector + HasWriter` and stay independent of the engine entirely.
 
 ```rust
 use hilavitkutin_ctx::define_providers;
@@ -123,7 +120,7 @@ use notko::Outcome;
 pub trait Compressor {
     fn compress(&self, input: Bytes) -> Outcome<Bytes, Oops>;
 }
-pub const CAP_COMPRESSOR: CapabilityId = CapabilityId::from_name(b"my_app.compressor.v1");
+pub const CAP_COMPRESSOR: CapabilityId = CapabilityId::from_name("my_app.compressor.v1");
 
 // extension author writes the impl plus one attribute.
 #[export_extension(name = "gzip")]

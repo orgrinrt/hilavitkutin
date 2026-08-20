@@ -1,8 +1,7 @@
 # Running MIRI against hilavitkutin
 
-The engine's atomic-ordering guarantees (Topic 3 S7 of design round
-`202605101036`) are verified with MIRI under strict-provenance and
-tree-borrows. The canonical invocation:
+The engine's atomic-ordering guarantees are verified with MIRI under
+strict-provenance and tree-borrows. The canonical invocation:
 
 ```bash
 MIRIFLAGS="-Zmiri-strict-provenance -Zmiri-tree-borrows" \
@@ -11,10 +10,10 @@ MIRIFLAGS="-Zmiri-strict-provenance -Zmiri-tree-borrows" \
 
 ## What MIRI exercises
 
-The atomic-ordering pairs from the S7 ordering table are covered by
-`tests/loom_atomics.rs` (loom-gated) and the integration test
-scaffolds (`tests/scheduler_run.rs`, `tests/adapt_subsystem.rs`).
-Each test that touches cross-thread atomics is in scope.
+The atomic-ordering pairs are covered by `tests/loom_atomics.rs`
+(loom-gated) and the integration test scaffolds
+(`tests/scheduler_run_walk.rs`, `tests/adapt_subsystem.rs`). Each test
+that touches cross-thread atomics is in scope.
 
 MIRI's strict-provenance flag catches int-to-pointer casts that
 break provenance. The engine's `Pin<&'arena PoolFrame>` lifetime
@@ -29,10 +28,9 @@ engine's interior-mutability via `AtomicBool` / `AtomicU32` /
 
 ## CI integration
 
-CI wiring is tracked under mockspace task `#203`. The flag
-documentation lands here so a developer with a local nightly
-toolchain can run MIRI manually pre-merge; the CI integration adds
-the per-PR check when mockspace's CI orchestrator surface lands.
+CI wiring is not in place yet. The flag documentation lands here so a
+developer with a local nightly toolchain can run MIRI manually
+pre-merge; a per-PR check follows once the CI surface exists.
 
 ## Limitations
 
