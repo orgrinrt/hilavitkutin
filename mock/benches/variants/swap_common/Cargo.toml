@@ -1,0 +1,22 @@
+[workspace]
+
+[package]
+name = "swap_common"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# Shared workloads for the swap benches (spec S7): the asymmetry
+# carrier and the install-cost preparations all six arms drive.
+[lib]
+name = "swap_common"
+path = "src/lib.rs"
+
+[dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+arvo-tensor = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+rcm_common = { path = "../rcm_common" }

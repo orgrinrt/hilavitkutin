@@ -1,0 +1,50 @@
+2f55a30d chore: lock src changelist for wake spin preroll round
+5c2fc1cd feat: bounded wake spin pre-roll on the frame waits
+da1f7571 chore: lock wake-spin doc changelist
+8de6aebf chore: close follow-ups design round
+2de42da5 docs: open wake-spin-preroll round
+4bcba2df docs: deviation 2 oracle rerun and record, fixture drift fix
+b0ad06d8 docs: deviation 4 memo, light threshold gate record, items advanced
+beee3ee1 docs: record deviation 5 audit outcome in seed governance
+fe1eabd4 chore: lock follow-ups src changelist
+99fb8fbf test: catalogue the parallel-swap aliasing finding
+8e42e43d chore: lock follow-ups doc changelist
+aaa92fe6 chore: close swap-semantics design round
+c3099cae docs: open pre-freeze follow-ups round, deviation 5 audit memo
+bd19ea62 docs: resolve mid_slot as a record boundary, item 7 design call
+b3adfc45 feat: arena-plane sketch proves pin dissolution, deviations 1 and 6 evidenced
+6a71678d docs: record swap evidence delivery in seed governance
+28fc117e feat: fiber grouping theory bench, spectral role evidence delivered
+e4cd1757 feat: swap install and band asymmetry benches, ratification evidence
+8c3a949d chore: lock swap-semantics src changelist
+ba75db40 feat: witnessed blob swap install, plan-dirty band trigger, exclusivity
+0dc7d0dd chore: lock swap-semantics doc changelist
+839da875 docs: encode swap install, plan-dirty trigger, planaffecting unseal
+62bb3e51 feat: rank ordering theories by bench, confirm rcm at scale
+2c337b67 feat: adopt upgraded bench framework, resolve a1-1 rcm order fork by bench
+524a7a82 docs: swap-semantics spec draft and pre-freeze open-question dossier
+c37bfeae docs: seed collection pass, effective canon consolidated into research/seed
+40b208a3 chore: move prior research into pre_seed ahead of seed consolidation
+030e6b25 docs: commit the swap-semantics expert panel as research trail
+616bc457 docs: align the dossier comment with the collapsed provenance field
+6b789b3a docs: retrofit drain sketch to the seed plus git-ref regime
+893f925f docs: open b1 cap-lifting completion round
+3dab5a21 docs: refile drain-sketch tasks into domain dossiers, epochs alone
+586e6335 docs: record the durable-task-reference consequence in the drain findings
+4ae2d888 docs: extend the canon-drain sketch with roadmap-as-data
+b50798c3 docs: sketch the storage canon drained into registry rows
+aceb91b7 docs: derive the canon registry schema from the doc surface
+b6e9a86c docs: sketch negative_impls exclusivity wall for the swap round
+543cdf5b docs: record canon amendment a2 and correct the standalone spec header
+43436c04 chore: close the install-revert round
+6aaa22a1 refactor: revert the blob install from replace_value
+9d33c418 docs: plan the install revert
+716a4b64 chore: lock the doc changelist
+53961000 docs: state the member-by-member swap requirement
+fab21b19 docs: plan the swap-requirement design statement
+cf03d8b8 docs: open the round to revert the blob install
+6dc13c16 chore: close design round 202607192910
+7fae635f chore: lock the supersession deletion changelist
+5123e3c6 refactor: delete the superseded nested-carrier dispatch and second barrier
+cb91a685 docs: plan the superseded dispatch and barrier deletions
+cfd533f0 chore: lock the doc changelist

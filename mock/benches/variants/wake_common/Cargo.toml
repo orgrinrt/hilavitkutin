@@ -1,0 +1,24 @@
+[workspace]
+
+[package]
+name = "wake_common"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# Shared carrier for the wake_policy bench pair: a persistent real-thread
+# pool driven through the shipped frame-protocol helpers, budget-parameterised.
+[lib]
+name = "wake_common"
+path = "src/lib.rs"
+
+[dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+rcm_common = { path = "../rcm_common" }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

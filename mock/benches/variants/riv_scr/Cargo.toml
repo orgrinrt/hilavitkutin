@@ -1,0 +1,22 @@
+[workspace]
+
+[package]
+name = "riv_scr"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "riv_scr"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev", features = ["std"] }
+mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev" }
+grid_common = { path = "../grid_common" }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
