@@ -6,6 +6,22 @@
 > `hilavitkutin_str::Str` instead of `&str` / `String`. See
 > `rules/type-surface.md`.
 
+## Custom diagnostic for satisfaction failures
+
+The type-state accumulator surfaces `.build()` violations as stock
+trait-bound errors against the sealed `SatisfiedBy<Supply>` impl
+on `Demand`. Once `#[diagnostic::on_unimplemented]` (or an
+equivalent stable mechanism) is available, replace the stock
+message with prose naming which WU's bound is missing which
+provider, Resource, or Column.
+
+## Kit composition lints
+
+A mockspace lint (or `cargo mock check` step) that flags Kits whose
+`install` chain produces supply markers no registered WorkUnit
+demands. Catches dead Kit composition before compile-time
+satisfaction noise hides it.
+
 ## Windows os-tier
 
 Current os-tier covers Linux + macOS via mmap + pthread +

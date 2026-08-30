@@ -216,6 +216,29 @@ cores each trunk, not each fiber, becomes the core-pinned unit and a phase's
 trunks run concurrently with zero cross-trunk synchronisation (their write
 columns are disjoint); that core-pinning is a following round.
 
+Two levels sit above the trunk. A phase is a set of trunks; the value-carrying
+phase carrier is `TrunkCons<T, Rest>` / `TrunkNil`, a cons-list of trunks
+mirroring `FiberCons` / `FiberNil`, each cell holding one trunk (itself a
+`FiberCons` fiber list) plus the tail. `RunPhase<A, WL>` walks it, delegating
+each trunk to `RunTrunk` and recursing. The pipeline is the sequence of phases;
+its carrier is `PhaseCons<P, Rest>` / `PhaseNil`, and `RunPipeline<A, WL>` walks
+it, running each phase through `RunPhase` and then arriving at a waist barrier
+before the next phase. The waist is the phase boundary, the point every trunk of
+a phase reaches before the next phase begins. At a single core the barrier is a
+degenerate one-arriver (an `AtomicUsize` counter that never spins when the
+expected arriver count is one), present so the waist composes into the nest
+without breaking devirt; the load-bearing N-core waist is the shipped
+`phase_barrier_arrive`, wired in a following round. The full
+`RunPipeline -> RunPhase -> RunTrunk -> RunFiber` nest is a 3-deep witness
+cons-list inferred at the call site with no turbofish, and the whole nest plus
+the waist barrier folds into one straight-line body that devirtualises under fat
+LTO. On a single core every level runs its children sequentially and the waist
+is a no-op, so a pipeline walk is output-equivalent to the flat `RunFiber` walk
+over the units concatenated in the same order. That nested carrier is one
+exploration of the trunk and phase levels; the canonical single-core mechanism
+is the const-gated per-trunk dispatch below, which partitions over the flat
+carrier rather than building a nested carrier type.
+
 The single-core path `Scheduler::run` drives is a const-gated per-trunk dispatch
 over the flat `WuCons` carrier. The carrier stays flat; the phase and trunk
 partition lives entirely in the compile-time grouping (`plan::grouping`, which
