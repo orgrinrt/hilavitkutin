@@ -15,9 +15,9 @@
 //! string) are possible but rare; suppress with
 //! `// lint:allow(no-dynamic-dispatch) -- <reason>`.
 
-use mockspace::{Lint, LintContext, LintError, Severity};
+use mockspace::{CrateLint, Lint, LintContext, LintError, Severity};
 
-pub fn lint() -> Box<dyn Lint> {
+pub fn lint() -> Box<dyn CrateLint> {
     Box::new(NoDynamicDispatch)
 }
 
@@ -31,7 +31,9 @@ impl Lint for NoDynamicDispatch {
     fn default_severity(&self) -> Severity {
         Severity::HARD_ERROR
     }
+}
 
+impl CrateLint for NoDynamicDispatch {
     fn check(&self, ctx: &LintContext) -> Vec<LintError> {
         if ctx.is_proc_macro_crate() {
             return Vec::new();

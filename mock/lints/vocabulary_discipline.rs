@@ -21,20 +21,35 @@
 //! Rule of thumb: warn, read the warning, decide whether to rename
 //! or suppress with `// lint:allow(vocabulary-discipline) -- <reason>`.
 
-use mockspace::{Lint, LintContext, LintError, Severity};
+use mockspace::{CrateLint, Lint, LintContext, LintError, Severity};
 
-pub fn lint() -> Box<dyn Lint> {
+pub fn lint() -> Box<dyn CrateLint> {
     Box::new(VocabularyDiscipline)
 }
 
 struct VocabularyDiscipline;
 
 const DEAD_TERMS: &[(&str, &str)] = &[
-    ("chain_group", "use `trunk` (the canonical term for a group of fibers)"),
-    ("chain", "use `fiber` (the canonical term for a single ordered sequence of WUs)"),
-    ("partition", "use `phase` (the canonical term for a waist-bounded stage)"),
-    ("archetype", "use `fiber` (records are columnar; fibers are the canonical grouping, not archetypes)"),
-    ("entity", "use `record` (a single point in a column, not an ECS-style entity)"),
+    (
+        "chain_group",
+        "use `trunk` (the canonical term for a group of fibers)",
+    ),
+    (
+        "chain",
+        "use `fiber` (the canonical term for a single ordered sequence of WUs)",
+    ),
+    (
+        "partition",
+        "use `phase` (the canonical term for a waist-bounded stage)",
+    ),
+    (
+        "archetype",
+        "use `fiber` (records are columnar; fibers are the canonical grouping, not archetypes)",
+    ),
+    (
+        "entity",
+        "use `record` (a single point in a column, not an ECS-style entity)",
+    ),
     ("Entity", "use `Record` (a single point in a column)"),
     // `row` and `order` are extremely common; only flag in type/field contexts.
 ];
@@ -47,7 +62,9 @@ impl Lint for VocabularyDiscipline {
     fn default_severity(&self) -> Severity {
         Severity::ADVISORY
     }
+}
 
+impl CrateLint for VocabularyDiscipline {
     fn check(&self, ctx: &LintContext) -> Vec<LintError> {
         if ctx.is_proc_macro_crate() {
             return Vec::new();
