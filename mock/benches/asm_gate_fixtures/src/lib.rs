@@ -417,6 +417,68 @@ pub extern "C" fn asm_gate_windowed_fibers() -> u64 {
     black_box(h1 ^ h2)
 }
 
+// ----- fixture 7: per-fiber windows on the parallel path (A4) -----
+
+// Same two-chain carrier as fixture 5, driven through `run_parallel` instead of
+// `run`, so the A4 per-fiber window loop compiles and runs under the gate build.
+//
+// FIXME: this fixture does NOT yet prove the parallel dispatch body is
+// devirtualised, and the gate's PASS must not be read as if it did. The
+// per-record work runs in `run_core_phase`, which emits no scannable symbol:
+// `nm` finds neither `run_core_phase` nor `worker_main` in the dylib, because
+// both inline into the spawned worker closure. So check 1 covers this wrapper's
+// own body, which is pool setup and the readback hash, and the parallel walk is
+// unscanned. Closing it needs a way to pin the worker-side mono, for example a
+// `#[no_mangle]` shim the worker calls, or teaching the gate to resolve the
+// closure symbol. Until then the single-core `asm_gate_windowed_fibers` fixture
+// is the only real devirtualisation evidence for the per-fiber loop shape, and
+// the two paths share the `dispatch_core` walk that fixture does cover.
+// Tracked: #340.
+#[unsafe(no_mangle)]
+pub extern "C" fn asm_gate_parallel_fiber_windows() -> u64 {
+    let provider = HeapBump::new(arena_bytes(5, N));
+    let sched = Scheduler::builder()
+        .with(Column::<POut>::new())
+        .with(Column::<PMid>::new())
+        .with(Column::<PIn>::new())
+        .with(Column::<QOut>::new())
+        .with(Column::<QIn>::new())
+        .with(P1)
+        .with(P2)
+        .with(Q1)
+        .build(store(provider), USize(N))
+        .unwrap_or_else(|_| panic!("engine build should succeed"));
+    // Bindings head is the last-registered store: QIn(0) <- QOut(1) <- PIn(2)
+    // <- PMid(3) <- POut(4).
+    // SAFETY: inputs reserved for N records of repr-u32 values; scheduler
+    // alive; each reserved slot written once.
+    let qin = sched.__bindings().__ptr().as_ptr() as *mut u32;
+    let pin = sched.__bindings().__tail().__tail().__ptr().as_ptr() as *mut u32;
+    for i in 0..N {
+        unsafe {
+            *qin.add(i) = i as u32;
+            *pin.add(i) = (i as u32).wrapping_mul(3);
+        }
+    }
+    let pool = hilavitkutin::OsThreadPool::new();
+    let mut sched = core::pin::pin!(sched);
+    let _ = sched.as_mut().run_parallel(&pool);
+    let qout = sched.as_ref().__bindings().__tail().__ptr().as_ptr() as *const u32;
+    let pout = sched
+        .as_ref()
+        .__bindings()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__ptr()
+        .as_ptr() as *const u32;
+    // SAFETY: both output columns hold N written records; scheduler alive.
+    let h1 = unsafe { fnv1a_u32_slice(core::slice::from_raw_parts(pout, N)) };
+    let h2 = unsafe { fnv1a_u32_slice(core::slice::from_raw_parts(qout, N)) };
+    black_box(h1 ^ h2)
+}
+
 // ----- fixture 6: resource snapshot in the hot loop (register promotion) -----
 
 // The unit reads a `Resource` scalar per record through the by-value ctx

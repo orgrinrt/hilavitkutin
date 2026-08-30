@@ -3,9 +3,7 @@
 
 use std::cell::RefCell;
 
-use hilavitkutin_str::{
-    str_const, ArenaInterner, AsStr, IntoStr, Str, StringInterner,
-};
+use hilavitkutin_str::{str_const, ArenaInterner, AsStr, IntoStr, Str, StringInterner};
 
 struct NullArena {
     next: RefCell<u32>,

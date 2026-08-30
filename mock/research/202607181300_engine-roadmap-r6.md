@@ -206,7 +206,18 @@ proves.
 **G2C-M, the scaling measurement (new, gates G2C-1's cost justification).** Measure the core-scaling
 curve of both `worker_accum_unit_outer` and the `tphase == 1` branch at 2, 4, and 8 cores across
 1K, 64K, and 1M records, on a bandwidth-heavy fiber (large write-column footprint) and a
-compute-heavy one. If bandwidth saturates by 4 cores on the heavy fiber, that is the ceiling
+compute-heavy one.
+
+**G2C-M also carries the per-fiber walk-overhead arm (added 2026-07-19).** Serving per-fiber L1
+windows on the flat carrier costs re-walks, and the sketch
+`202607191200_a4-fibercons-nest-wireability` established that the cost is inherent to the mandated
+mechanism rather than a shape choice: with F fibers of m morsels each over U trunk units, dispatch
+does F x m x U runtime `dirty.bit` tests where the old shared-window shape did m x U, for identical
+executed work, because `Member::IS` is const per trunk rather than per fiber. Measure per-fiber
+windowed dispatch against the shared-window shape at fiber counts 1, 2, 4 and 8, on both fiber
+kinds. This applies to `run` as much as to `run_core_phase`, since A2b shipped the same shape. If
+the locality win does not cover the walk cost at realistic fiber counts, that is a finding about the
+mechanism to surface to op rather than absorb. If bandwidth saturates by 4 cores on the heavy fiber, that is the ceiling
 regardless of dispatch shape and G2C-1's const-path migration is not worth its engineering cost; if
 it scales near-linearly to 8, it is. This is the bench-decides discipline: the fork is a
 performance question, so it gets measured rather than argued.
