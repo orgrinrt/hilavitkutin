@@ -20,7 +20,7 @@
 
 use arvo::strategy::Identity;
 use arvo::{Bool, USize};
-use arvo_tensor::{cap_size, Capacity};
+use arvo_tensor::{Capacity, cap_size};
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::column_value::ColumnValue;
 use hilavitkutin_api::footprint::ResourceFootprint;
@@ -41,7 +41,8 @@ use super::{AccessMask, PlanInputs};
 struct StoreCeiling<CS: Capacity>(core::marker::PhantomData<CS>);
 
 impl<CS: Capacity> StoreCeiling<CS> {
-    const ASSERT_FITS: () = assert!( // lint:allow(no-bare-numeric) reason: const-context size assertion; tracked: #429
+    const ASSERT_FITS: () = assert!(
+        // lint:allow(no-bare-numeric) reason: const-context size assertion; tracked: #429
         cap_size(CS::CAP) <= 64,
         "projection: store capacity > 64 exceeds the skeleton AccessMask single-word backing (mirrors DirtyMask); widen when arvo-bitmask multi-container ships.",
     );
@@ -95,14 +96,14 @@ pub const trait MaskProject<Stores, Indices, CS: Capacity> {
     fn project_mask(mask: AccessMask<CS>) -> AccessMask<CS>;
 }
 
-impl<Stores, CS: Capacity> const MaskProject<Stores, Empty, CS> for Empty {
+const impl<Stores, CS: Capacity> MaskProject<Stores, Empty, CS> for Empty {
     #[inline]
     fn project_mask(mask: AccessMask<CS>) -> AccessMask<CS> {
         mask
     }
 }
 
-impl<Stores, M, Tail, I, ITail, CS: Capacity> const MaskProject<Stores, Cons<I, ITail>, CS>
+const impl<Stores, M, Tail, I, ITail, CS: Capacity> MaskProject<Stores, Cons<I, ITail>, CS>
     for Cons<M, Tail>
 where
     Stores: Locate<M, I>,
@@ -146,8 +147,16 @@ where
 {
     fn project_bundle(inputs: &mut PlanInputs<CU, CS>, idx: USize) {
         let i = idx.0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal array index; tracked: #121
-        let reads = <<W as WorkUnit<<W as HasSchedule>::Sched>>::Read as MaskProject<Stores, RI, CS>>::project_mask(AccessMask::empty());
-        let writes = <<W as WorkUnit<<W as HasSchedule>::Sched>>::Write as MaskProject<Stores, WI, CS>>::project_mask(AccessMask::empty());
+        let reads = <<W as WorkUnit<<W as HasSchedule>::Sched>>::Read as MaskProject<
+            Stores,
+            RI,
+            CS,
+        >>::project_mask(AccessMask::empty());
+        let writes = <<W as WorkUnit<<W as HasSchedule>::Sched>>::Write as MaskProject<
+            Stores,
+            WI,
+            CS,
+        >>::project_mask(AccessMask::empty());
         let mut access = reads;
         access.union_with(&writes);
         inputs.reads.as_mut()[i] = reads;

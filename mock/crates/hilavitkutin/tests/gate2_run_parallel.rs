@@ -75,7 +75,7 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
         unsafe { base.add(aligned) }
     }
 
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
 
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
@@ -686,4 +686,148 @@ fn run_parallel_threaded_two_waists_reuses_barrier() {
              with the worker-side barrier reused across both waists"
         );
     }
+}
+
+// ---- five-trunk / four-record fixture: exposes the participation guard.
+//
+// `run_parallel`'s worker entry computes a ceil record slice per core and
+// returns early when that slice is empty (`run_this` at scheduler/mod.rs:966).
+// Trunk ownership is by rank, not by record slice, so on a machine with more
+// cores than records a core can own a trunk and still return before dispatching
+// it. Five column-disjoint producers against four records reaches a core in that
+// range; every other parallel fixture here tops out at three trunks and cannot.
+
+#[derive(Copy, Clone)]
+struct Dv(u32);
+#[derive(Copy, Clone)]
+struct Ev(u32);
+
+type ColD = Cons<Column<Dv>, Empty>;
+type ColE = Cons<Column<Ev>, Empty>;
+
+/// ProducerD: reads In, writes Dv = In*7. A fourth trunk in phase 0.
+struct ProducerD;
+impl BuilderInput for ProducerD {
+    type Init = Self;
+    type Dispatch = UnitDispatch<Self>;
+}
+impl WorkUnit<Always> for ProducerD {
+    type Read = OneIn;
+    type Write = ColD;
+    type Hint = HintT;
+    type Ctx<'frame> =
+        EngineCtx<'frame, OneIn, ColD, SnapNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<Dv, ColPtrNil>>;
+    fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
+        ctx.each().run(|i| {
+            // SAFETY: In host-populated; Dv reserved + exclusive; windowed.
+            let inp = unsafe { ctx.reader().read::<Inv, _>(i) };
+            unsafe { ctx.writer().write::<Dv, _>(i, Dv(inp.0 * 7)) };
+        });
+    }
+}
+
+/// ProducerE: reads In, writes Ev = In*9. A fifth trunk in phase 0, and the one
+/// whose rank lands on a core with an empty record slice.
+struct ProducerE;
+impl BuilderInput for ProducerE {
+    type Init = Self;
+    type Dispatch = UnitDispatch<Self>;
+}
+impl WorkUnit<Always> for ProducerE {
+    type Read = OneIn;
+    type Write = ColE;
+    type Hint = HintT;
+    type Ctx<'frame> =
+        EngineCtx<'frame, OneIn, ColE, SnapNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<Ev, ColPtrNil>>;
+    fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
+        ctx.each().run(|i| {
+            // SAFETY: In host-populated; Ev reserved + exclusive; windowed.
+            let inp = unsafe { ctx.reader().read::<Inv, _>(i) };
+            unsafe { ctx.writer().write::<Ev, _>(i, Ev(inp.0 * 9)) };
+        });
+    }
+}
+
+/// Every producer runs when there are more cores than records.
+///
+/// `run_parallel`'s worker entry gates participation on a per-core ceil record
+/// slice (`run_this`, scheduler/mod.rs:966), so with one record and eight cores
+/// only core 0 enters; the rest return before dispatching. Trunk ownership is by
+/// rank, not by record slice, which raises the question of whether a unit whose
+/// rank maps to a core that opted out runs at all.
+///
+/// It does, and this pins that. The case was written expecting a failure: the
+/// two ownership models disagree about which cores are idle, so a rank owner
+/// with an empty slice looked like it would strand its work. Running it showed
+/// otherwise. A single-trunk phase takes the whole-phase-mask branch, where each
+/// participating core dispatches every unit in the phase rather than only the
+/// trunks it owns, so no unit depends on a core that opted out.
+///
+/// Kept as a regression test rather than deleted. The property it pins is not
+/// obvious from either ownership model alone, it holds today for a reason that
+/// changes when the whole-phase-mask branch is removed (roadmap R1), and it is
+/// exactly what would break silently if participation and dispatch ownership
+/// were changed independently.
+#[test]
+fn every_producer_runs_when_cores_outnumber_records() {
+    let provider = BumpProvider::<32768>::new();
+    let scheduler = Scheduler::builder()
+        .with(Column::<Inv>::new())
+        .with(Column::<Av>::new())
+        .with(Column::<Bv>::new())
+        .with(Column::<Cv>::new())
+        .with(Column::<Dv>::new())
+        .with(Column::<Ev>::new())
+        .with(ProducerA)
+        .with(ProducerB)
+        .with(ProducerC)
+        .with(ProducerD)
+        .with(ProducerE)
+        .build(store(provider), USize(1))
+        .unwrap_or_else(|_| panic!("build should succeed"));
+
+    // Columns from head: Ev(0), Dv(1), Cv(2), Bv(3), Av(4), In(5).
+    // SAFETY: all reserved for N records of u32; the scheduler is alive.
+    let ev_base = scheduler.__bindings().__ptr().as_ptr() as *mut u32;
+    let in_base = scheduler
+        .__bindings()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__ptr()
+        .as_ptr() as *mut u32;
+    for i in 0..1 {
+        // SAFETY: both cover the reserved record.
+        unsafe {
+            *in_base.add(i) = (i + 1) as u32;
+            *ev_base.add(i) = u32::MAX;
+        }
+    }
+
+    let pool = OsThreadPool::new();
+    let mut scheduler = core::pin::pin!(scheduler);
+    let result = scheduler.as_mut().run_parallel(&pool);
+    assert!(matches!(result, Outcome::Ok(())));
+
+    // Every producer's column, walked from the head binding: Ev, Dv, Cv, Bv, Av.
+    let sched_ref = scheduler.as_ref();
+    let b = sched_ref.__bindings();
+    // SAFETY: each column holds the reserved record; the scheduler is alive.
+    let ev = unsafe { *(b.__ptr().as_ptr() as *const u32) };
+    let dv = unsafe { *(b.__tail().__ptr().as_ptr() as *const u32) };
+    let cv = unsafe { *(b.__tail().__tail().__ptr().as_ptr() as *const u32) };
+    let bv = unsafe { *(b.__tail().__tail().__tail().__ptr().as_ptr() as *const u32) };
+    let av = unsafe { *(b.__tail().__tail().__tail().__tail().__ptr().as_ptr() as *const u32) };
+    // In[0] = 1, so each producer's multiplier is its expected value.
+    assert_eq!(av, 10, "ProducerA did not run");
+    assert_eq!(bv, 100, "ProducerB did not run");
+    assert_eq!(cv, 1000, "ProducerC did not run");
+    assert_eq!(dv, 7, "ProducerD did not run");
+    assert_eq!(
+        ev, 9,
+        "ProducerE did not run: the poison value means no core dispatched it, \
+         which is what happens if participation and dispatch ownership disagree"
+    );
 }

@@ -53,7 +53,7 @@ struct SendMut(*mut u64);
 unsafe impl Send for SendMut {}
 unsafe impl Sync for SendMut {}
 
-fn run(ncores: usize, frames: u32) {
+fn run(ncores: usize, frames: u32, spin_budget: USize) {
     let pool = make_pool::<8, 2>();
     let mut out = [0u64; NREC];
     let out_ptr = SendMut(out.as_mut_ptr());
@@ -66,7 +66,7 @@ fn run(ncores: usize, frames: u32) {
                 let op = op; // capture the Send wrapper whole, not the raw field
                 let mut last = USize(0);
                 loop {
-                    last = frame_await(pool, last);
+                    last = frame_await(pool, last, spin_budget);
                     if pool.shutdown.load(Ordering::Relaxed) {
                         frame_exit_arrive(pool, USize(ncores));
                         return;
@@ -89,7 +89,7 @@ fn run(ncores: usize, frames: u32) {
         let mut f = 1u32;
         while f <= frames {
             frame_publish(&pool);
-            frame_await_done(&pool, USize(ncores));
+            frame_await_done(&pool, USize(ncores), spin_budget);
             let mut i = 0;
             while i < NREC {
                 assert_eq!(
@@ -113,7 +113,13 @@ fn frame_protocol_drives_workers_across_frames_and_joins() {
     // ncores == 1 is the degenerate (one worker owns every record); 2 and 3 are
     // real parallelism. All must agree, all frames, and shutdown must join every
     // worker via the exit counter (await_exit returns).
-    for ncores in [1usize, 2, 3] {
-        run(ncores, 8);
+    // Budget 0 is the park-immediately baseline; 128 is the canonical bounded
+    // middle-tier spin (deviation-3 round). Both budgets must produce identical
+    // frame results: the spin tier only delays the first park and never changes
+    // what a wait returns.
+    for budget in [USize(0), USize(128)] {
+        for ncores in [1usize, 2, 3] {
+            run(ncores, 8, budget);
+        }
     }
 }

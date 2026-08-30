@@ -14,8 +14,8 @@
 //! capacity types rather than CeilingDiv-derived: this decouples
 //! per-fiber footprint from pipeline-wide caps.
 
-use arvo::strategy::Identity;
 use arvo::USize;
+use arvo::strategy::Identity;
 use arvo_bitmask::NodeId;
 use arvo_tensor::Capacity;
 
@@ -39,17 +39,15 @@ pub use access::AccessMask;
 pub use column::{ColumnClassMap, ColumnClassification};
 pub use dims::{DefaultPlanDims, PlanDims};
 pub use dirty::{DirtyMask, DirtyMasks};
-pub use fiber::{
-    AccumSlot, AccumType, Fiber, FiberGrouping, HeadTailConvergence, MergeOp,
-};
+pub use fiber::{AccumSlot, AccumType, Fiber, FiberGrouping, HeadTailConvergence, MergeOp};
 pub use graph::{DependencyGraph, EdgeKind};
 pub use grouping::{
-    group_n, phase_count, phase_of, plan_phase_count, trunk_of, BundleMasks, UnitAccess,
+    BundleMasks, UnitAccess, group_n, phase_count, phase_of, plan_phase_count, trunk_of,
 };
 pub use inputs::{MorselBudget, PlanInputs};
+pub use phase::{Phase, PhaseBoundaries, PhaseConfig};
 pub use project::plan_inputs_from_bundle;
 pub use steps::{FiberLayout, PlanError};
-pub use phase::{Phase, PhaseBoundaries, PhaseConfig};
 pub use trunk::{BlockPartition, Branch, Bridge, Trunk, TrunkComponent};
 pub use unit::{CostTable, UnitMeta};
 
@@ -306,13 +304,8 @@ where
     // so the running prefix sum always brackets the flat pool exactly. A
     // hard bound-check that errors past the id-width cap is a follow-up
     // (#641).
-    let layout = steps::project_fiber_components::<D>(
-        &dag,
-        &partition,
-        &waists,
-        &topo,
-        inputs.unit_count,
-    );
+    let layout =
+        steps::project_fiber_components::<D>(&dag, &partition, &waists, &topo, inputs.unit_count);
     plan.trunk_count = layout.trunk_count;
     plan.fiber_count = layout.fiber_count;
     plan.trunks = layout.trunks;
@@ -378,7 +371,8 @@ where
         let raw = dirty.per_fiber.as_ref()[f].raw();
         // Move bits into the columns-shaped mask one by one.
         let mut store = 0;
-        while store < cap_size(<D::Stores as Capacity>::CAP) && store < 64 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: AccessMask 64-bit window per skeleton; tracked: #72
+        while store < cap_size(<D::Stores as Capacity>::CAP) && store < 64 {
+            // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: AccessMask 64-bit window per skeleton; tracked: #72
             let bit = (raw.0 >> store) & 1; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: bit extraction internal; tracked: #72
             if bit == 1 {
                 let pf = plan.dirty.per_fiber.as_ref()[f];
@@ -397,8 +391,7 @@ where
     // Step 10: phase configs. Store onto plan.phases[i].config. Pass
     // the unit count so the last phase's width is computed against
     // the real range, not the prior `start + 1` lower-bound.
-    let configs =
-        steps::select_phase_configs::<D>(&waists, inputs.record_count, inputs.unit_count);
+    let configs = steps::select_phase_configs::<D>(&waists, inputs.record_count, inputs.unit_count);
     let mut i = 0;
     while i < plan.phase_count.0 && i < cap_size_phases::<D>() {
         plan.phases.as_mut()[i].config = configs.as_ref()[i];
@@ -470,6 +463,7 @@ type SpectralFloatVec = arvo::FastFloat<f32>; // lint:allow(no-bare-numeric) rea
 /// cleanly. The dimension is a type; this is the value-position
 /// projection of its `CAP`.
 #[inline]
-fn cap_size_phases<D: PlanDims>() -> usize { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: value-position cap projection; rust grammar requires usize loop bound; tracked: #72
+fn cap_size_phases<D: PlanDims>() -> usize {
+    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: value-position cap projection; rust grammar requires usize loop bound; tracked: #72
     cap_size(<D::Phases as Capacity>::CAP)
 }

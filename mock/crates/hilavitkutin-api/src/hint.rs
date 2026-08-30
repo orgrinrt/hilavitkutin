@@ -9,7 +9,7 @@
 //! Higher discriminant = higher priority. Tie-break by most deps
 //! first, then deterministic fallback.
 
-use arvo::{fbits, ibits, strategy::Hot, UFixed};
+use arvo::{UFixed, fbits, ibits, strategy::Hot};
 
 mod hint_sealed {
     /// Hint-subsystem private seal. Separate from the crate-level

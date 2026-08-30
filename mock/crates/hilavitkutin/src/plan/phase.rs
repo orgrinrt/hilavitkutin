@@ -5,8 +5,8 @@
 //! one phase finishes before the next phase starts. Phases own
 //! trunks; trunks own components.
 
-use arvo::strategy::Identity;
 use arvo::USize;
+use arvo::strategy::Identity;
 use arvo_tensor::Capacity;
 
 use hilavitkutin_api::PhaseId;

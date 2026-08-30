@@ -10,9 +10,9 @@ extern crate std;
 use core::ptr;
 
 use arvo::{Bool, USize};
-use hilavitkutin_api::platform::{ClockApi, MemoryProviderApi, ThreadPoolApi};
 use hilavitkutin_api::Nanos;
-use std::alloc::{alloc, dealloc, Layout};
+use hilavitkutin_api::platform::{ClockApi, MemoryProviderApi, ThreadPoolApi};
+use std::alloc::{Layout, alloc, dealloc};
 use std::sync::OnceLock;
 use std::time::Instant;
 
@@ -35,7 +35,11 @@ impl StdMemoryProvider {
     /// Normalise alignment to a non-zero power of two.
     #[inline]
     fn layout_for(len: USize, align: USize) -> Layout {
-        let a = if *align == 0 { core::mem::align_of::<usize>() } else { *align }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: Layout ABI default alignment; tracked: #72
+        let a = if *align == 0 {
+            core::mem::align_of::<usize>()
+        } else {
+            *align
+        }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: Layout ABI default alignment; tracked: #72
         // SAFETY: `len` and `a` satisfy Layout's invariants for
         // any caller honouring the trait contract (power-of-two
         // alignment). Callers that violate this get an Err from
@@ -55,7 +59,8 @@ impl Default for StdMemoryProvider {
 }
 
 impl MemoryProviderApi for StdMemoryProvider {
-    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer; tracked: #72
+    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
+        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer; tracked: #72
         let layout = Self::layout_for(len, align);
         if layout.size() == 0 {
             return ptr::null_mut();
@@ -65,14 +70,17 @@ impl MemoryProviderApi for StdMemoryProvider {
         unsafe { alloc(layout) }
     }
 
-    unsafe fn deallocate(&self, ptr: *mut u8, len: USize) { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer; tracked: #72
+    unsafe fn deallocate(&self, ptr: *mut u8, len: USize, align: USize) {
+        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer; tracked: #72
         if ptr.is_null() || *len == 0 {
             return;
         }
-        // The trait contract requires the caller to pass the same
-        // `len` used for allocate; alignment defaults to word size
-        // for matching.
-        let layout = Self::layout_for(len, USize(core::mem::align_of::<usize>())); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: Layout ABI word alignment default; tracked: #72
+        // The contract requires the caller to pass back the same
+        // `len` and `align` it allocated with, so the freeing layout
+        // is reconstructed exactly. Guessing a word here would be
+        // undefined behaviour for any wider-aligned block, and the
+        // engine reserves its columns at 64 bytes.
+        let layout = Self::layout_for(len, align);
         // SAFETY: contract delegated to the caller per
         // `MemoryProviderApi::deallocate`.
         unsafe { dealloc(ptr, layout) }
@@ -99,13 +107,6 @@ impl StdThreadPool {
     pub const fn new() -> Self {
         Self
     }
-
-    /// Spawn a parameterless entry point on a fresh thread.
-    pub fn spawn_fn(&self, f: fn()) {
-        // `fn()` is Send + 'static; std::thread::spawn consumes
-        // it directly without needing a boxed closure.
-        let _ = std::thread::spawn(move || f());
-    }
 }
 
 impl Default for StdThreadPool {
@@ -116,12 +117,15 @@ impl Default for StdThreadPool {
 }
 
 impl ThreadPoolApi for StdThreadPool {
-    fn spawn<F>(&self, _f: F)
+    fn spawn<F>(&self, f: F)
     where
         F: FnOnce() + Send + 'static,
     {
-        // See os.rs: generic-closure support arrives in 5a4.
-        let _ = _f;
+        // `F` already carries exactly the bound std::thread::spawn
+        // requires, so the closure goes across directly. No boxing,
+        // so no allocator: the no_os tier's constraint does not
+        // apply here.
+        let _ = std::thread::spawn(f);
     }
 
     fn worker_count(&self) -> USize {

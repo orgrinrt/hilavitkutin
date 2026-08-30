@@ -110,8 +110,7 @@ pub trait ContainsAll<L>: AccessSet {}
 
 impl<S: AccessSet> ContainsAll<Empty> for S {}
 
-impl<S, H: 'static, T: 'static> ContainsAll<Cons<H, T>> for S
-where
-    S: AccessSet + Contains<H> + ContainsAll<T>,
+impl<S, H: 'static, T: 'static> ContainsAll<Cons<H, T>> for S where
+    S: AccessSet + Contains<H> + ContainsAll<T>
 {
 }

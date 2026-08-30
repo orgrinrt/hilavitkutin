@@ -97,7 +97,14 @@ impl<A> RunFiber<A, Empty> for WuNil {
     }
 
     #[inline]
-    fn run_head(&self, _bindings: &A, _meta_block: &MetaBlock, _morsel: MorselRange, _epoch: USize) {}
+    fn run_head(
+        &self,
+        _bindings: &A,
+        _meta_block: &MetaBlock,
+        _morsel: MorselRange,
+        _epoch: USize,
+    ) {
+    }
 }
 
 impl<A, W, Tail, RIdx, RCIdx, WCIdx, WAIdx, WVIdx, GI, WTail>

@@ -10,8 +10,8 @@ use core::marker::PhantomData;
 
 use arvo::Cap;
 
-use crate::column_value::ColumnValue;
 use crate::builder_input::{BuilderInput, StoreDispatch};
+use crate::column_value::ColumnValue;
 
 /// Singleton store: one value shared across the pipeline.
 #[repr(transparent)]
@@ -268,10 +268,30 @@ impl StoreBundle for Empty {}
 impl<H, T: StoreBundle> StoreBundle for Cons<H, T> {}
 
 /// Opt-in marker for store types whose Resource value can be
-/// replaced via Scheduler::replace_resource.
+/// replaced via Scheduler::replace_value.
+///
+/// Mutually exclusive with [`PlanAffecting`](crate::run_cfg::PlanAffecting),
+/// which is dominant: a plan-affecting value routes through
+/// `Scheduler::replace_resource`, never `replace_value`, and the
+/// negative impl below turns a double opt-in into E0751 at the
+/// consumer's own impl site:
+///
+/// ```compile_fail,E0751
+/// use hilavitkutin_api::store::Replaceable;
+/// use hilavitkutin_api::run_cfg::PlanAffecting;
+///
+/// struct Both;
+/// impl PlanAffecting for Both {}
+/// impl Replaceable for Both {}
+/// ```
 #[diagnostic::on_unimplemented(
-    message = "`{Self}` is not opt-in for Scheduler::replace_resource",
+    message = "`{Self}` is not opt-in for Scheduler::replace_value",
     note = "Mark the type with `impl Replaceable for {Self} {{}}` to opt in. Replaceable is intentionally explicit: stores omitted from the replacement set are stable for plan-time analysis."
 )]
 pub trait Replaceable {}
 
+// PlanAffecting dominance: one type never carries both replacement
+// semantics. Sound subset of OIBIT per the workspace unstable-features
+// tables (negative_impls, WATCH tier); the exclusivity sketch
+// (mock/research/sketches/202607193310) confirmed both arms.
+impl<T: crate::run_cfg::PlanAffecting> !Replaceable for T {}

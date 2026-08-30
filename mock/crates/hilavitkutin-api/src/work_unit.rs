@@ -9,13 +9,13 @@ use core::marker::PhantomData;
 use arvo::{Bool, USize};
 
 use crate::access::AccessSet;
-use crate::meta::{MetaVirtual, RANK_CONSUMER};
+use crate::builder_input::BuilderInput;
 use crate::context::{
     HasBatch, HasColumnReader, HasColumnWriter, HasEach, HasReduce, HasResourceProvider,
     HasVirtualFirer,
 };
 use crate::hint::SchedulingHint;
-use crate::builder_input::BuilderInput;
+use crate::meta::{MetaVirtual, RANK_CONSUMER};
 
 /// Schedule marker: the WU runs every pass.
 #[derive(Copy, Clone, Default, Debug)]
@@ -250,8 +250,8 @@ where
     <<W as WorkUnit<<W as HasSchedule>::Sched>>::Read as Concat<T::AccumRead>>::Out: AccessSet,
     <<W as WorkUnit<<W as HasSchedule>::Sched>>::Write as Concat<T::AccumWrite>>::Out: AccessSet,
 {
-    type AccumRead = <<W as WorkUnit<<W as HasSchedule>::Sched>>::Read as Concat<T::AccumRead>>::Out;
+    type AccumRead =
+        <<W as WorkUnit<<W as HasSchedule>::Sched>>::Read as Concat<T::AccumRead>>::Out;
     type AccumWrite =
         <<W as WorkUnit<<W as HasSchedule>::Sched>>::Write as Concat<T::AccumWrite>>::Out;
 }
-

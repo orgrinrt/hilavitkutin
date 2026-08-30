@@ -29,8 +29,8 @@
 
 use core::marker::PhantomData;
 
-use arvo::strategy::Identity;
 use arvo::USize;
+use arvo::strategy::Identity;
 use arvo_bitmask::BitAccess;
 use arvo_tensor::{Capacity, ConstCapacity};
 use hilavitkutin_api::work_unit_values::{WuCons, WuNil};
@@ -39,16 +39,27 @@ use crate::dispatch::engine_ctx::Here;
 use crate::dispatch::morsel::MorselRange;
 use crate::dispatch::trunk_gate::RunGatedTrunk;
 use crate::meta::MetaBlock;
-use crate::plan::grouping::{phase_of, trunk_of, BundleMasks};
+use crate::plan::grouping::{BundleMasks, phase_of, trunk_of};
 
 /// Whether carrier position `POS` is a trunk-root (its own component-min id), as
 /// an associated const so the gate reads `IsRoot::<..>::IS` rather than an inline
 /// `const { trunk_of(..) == POS }` block, which the generic-constant complexity
 /// limit rejects when the grouping carries this many parameters (the same reason
 /// `trunk_gate::Member` exists).
-struct IsRoot<Full, Stores, GW, CU, CS, Adj, const POS: usize>(PhantomData<(Full, Stores, GW, CU, CS, Adj)>); // lint:allow(no-bare-numeric) reason: const-generic carrier position; tracked: #121
+struct IsRoot<Full, Stores, GW, CU, CS, Adj, const POS: usize>(
+    PhantomData<(Full, Stores, GW, CU, CS, Adj)>,
+); // lint:allow(no-bare-numeric) reason: const-generic carrier position; tracked: #121
 
-impl<Full, Stores, GW, CU: Capacity + const ConstCapacity, CS: Capacity, Adj: const BitAccess + Identity, const POS: usize> IsRoot<Full, Stores, GW, CU, CS, Adj, POS> // lint:allow(no-bare-numeric) reason: const-generic carrier position; tracked: #121
+impl<
+    Full,
+    Stores,
+    GW,
+    CU: Capacity + const ConstCapacity,
+    CS: Capacity,
+    Adj: const BitAccess + Identity,
+    const POS: usize,
+> IsRoot<Full, Stores, GW, CU, CS, Adj, POS>
+// lint:allow(no-bare-numeric) reason: const-generic carrier position; tracked: #121
 where
     Full: const BundleMasks<Stores, GW, CS>,
 {
@@ -57,9 +68,20 @@ where
 
 /// The waist-bounded phase of carrier position `POS`, as an associated const (the
 /// `const { phase_of(..) }` block hits the same complexity limit as `IsRoot`).
-struct PhaseAt<Full, Stores, GW, CU, CS, Adj, const POS: usize>(PhantomData<(Full, Stores, GW, CU, CS, Adj)>); // lint:allow(no-bare-numeric) reason: const-generic carrier position; tracked: #121
+struct PhaseAt<Full, Stores, GW, CU, CS, Adj, const POS: usize>(
+    PhantomData<(Full, Stores, GW, CU, CS, Adj)>,
+); // lint:allow(no-bare-numeric) reason: const-generic carrier position; tracked: #121
 
-impl<Full, Stores, GW, CU: Capacity + const ConstCapacity, CS: Capacity, Adj: const BitAccess + Identity, const POS: usize> PhaseAt<Full, Stores, GW, CU, CS, Adj, POS> // lint:allow(no-bare-numeric) reason: const-generic carrier position; tracked: #121
+impl<
+    Full,
+    Stores,
+    GW,
+    CU: Capacity + const ConstCapacity,
+    CS: Capacity,
+    Adj: const BitAccess + Identity,
+    const POS: usize,
+> PhaseAt<Full, Stores, GW, CU, CS, Adj, POS>
+// lint:allow(no-bare-numeric) reason: const-generic carrier position; tracked: #121
 where
     Full: const BundleMasks<Stores, GW, CS>,
 {
@@ -73,10 +95,31 @@ where
 /// `GW` the grouping witness list (both for `Full`, fixed); `Stores` the global
 /// store set; `CU` / `CS` the unit / store capacities; `Adj` the adjacency row
 /// word. `POS` is the head's carrier position (a `const`, threaded `{POS+1}`).
-pub trait RunTrunkDispatch<Full, A, Witnesses, GW, Stores, CU: Capacity, CS: Capacity, Adj, const POS: usize> { // lint:allow(no-bare-numeric) reason: const-generic carrier position; tracked: #121
+pub trait RunTrunkDispatch<
+    Full,
+    A,
+    Witnesses,
+    GW,
+    Stores,
+    CU: Capacity,
+    CS: Capacity,
+    Adj,
+    const POS: usize,
+>
+{
+    // lint:allow(no-bare-numeric) reason: const-generic carrier position; tracked: #121
     /// Dispatch every trunk-root from `POS` on whose phase equals `p`, over
     /// `morsel`, skipping members clear in `dirty`. `epoch` gates `On<V>` members.
-    fn dispatch<M: BitAccess>(&self, full: &Full, p: USize, meta_block: &MetaBlock, bindings: &A, morsel: MorselRange, dirty: M, epoch: USize);
+    fn dispatch<M: BitAccess>(
+        &self,
+        full: &Full,
+        p: USize,
+        meta_block: &MetaBlock,
+        bindings: &A,
+        morsel: MorselRange,
+        dirty: M,
+        epoch: USize,
+    );
 
     /// Core-aware variant of `dispatch`: fire only the in-phase-`p` trunk-roots
     /// this `core` owns. Ownership is the within-phase trunk rank modulo
@@ -100,9 +143,22 @@ pub trait RunTrunkDispatch<Full, A, Witnesses, GW, Stores, CU: Capacity, CS: Cap
     );
 }
 
-impl<Full, A, Witnesses, GW, Stores, CU: Capacity, CS: Capacity, Adj, const POS: usize> RunTrunkDispatch<Full, A, Witnesses, GW, Stores, CU, CS, Adj, POS> for WuNil { // lint:allow(no-bare-numeric) reason: const-generic carrier position; tracked: #121
+impl<Full, A, Witnesses, GW, Stores, CU: Capacity, CS: Capacity, Adj, const POS: usize>
+    RunTrunkDispatch<Full, A, Witnesses, GW, Stores, CU, CS, Adj, POS> for WuNil
+{
+    // lint:allow(no-bare-numeric) reason: const-generic carrier position; tracked: #121
     #[inline]
-    fn dispatch<M: BitAccess>(&self, _full: &Full, _p: USize, _meta_block: &MetaBlock, _bindings: &A, _morsel: MorselRange, _dirty: M, _epoch: USize) {}
+    fn dispatch<M: BitAccess>(
+        &self,
+        _full: &Full,
+        _p: USize,
+        _meta_block: &MetaBlock,
+        _bindings: &A,
+        _morsel: MorselRange,
+        _dirty: M,
+        _epoch: USize,
+    ) {
+    }
 
     #[inline]
     fn dispatch_core<M: BitAccess>(
@@ -121,22 +177,46 @@ impl<Full, A, Witnesses, GW, Stores, CU: Capacity, CS: Capacity, Adj, const POS:
     }
 }
 
-impl<Full, A, W, Tail, Witnesses, GW, Stores, CU: Capacity + const ConstCapacity, CS: Capacity, Adj: const BitAccess + Identity, const POS: usize> RunTrunkDispatch<Full, A, Witnesses, GW, Stores, CU, CS, Adj, POS> for WuCons<W, Tail> // lint:allow(no-bare-numeric) reason: const-generic carrier position; tracked: #121
+impl<
+    Full,
+    A,
+    W,
+    Tail,
+    Witnesses,
+    GW,
+    Stores,
+    CU: Capacity + const ConstCapacity,
+    CS: Capacity,
+    Adj: const BitAccess + Identity,
+    const POS: usize,
+> RunTrunkDispatch<Full, A, Witnesses, GW, Stores, CU, CS, Adj, POS> for WuCons<W, Tail>
+// lint:allow(no-bare-numeric) reason: const-generic carrier position; tracked: #121
 where
     Tail: RunTrunkDispatch<Full, A, Witnesses, GW, Stores, CU, CS, Adj, { POS + 1 }>,
     Full: const BundleMasks<Stores, GW, CS>,
     Full: RunGatedTrunk<Full, A, Witnesses, GW, Stores, CU, CS, Adj, POS, Here>,
 {
     #[inline]
-    fn dispatch<M: BitAccess>(&self, full: &Full, p: USize, meta_block: &MetaBlock, bindings: &A, morsel: MorselRange, dirty: M, epoch: USize) {
+    fn dispatch<M: BitAccess>(
+        &self,
+        full: &Full,
+        p: USize,
+        meta_block: &MetaBlock,
+        bindings: &A,
+        morsel: MorselRange,
+        dirty: M,
+        epoch: USize,
+    ) {
         // Is carrier position POS a trunk-root (its own component min)? Compile
         // time; non-roots fold away. If so, run it only in its phase's pass.
         if IsRoot::<Full, Stores, GW, CU, CS, Adj, POS>::IS {
-            if PhaseAt::<Full, Stores, GW, CU, CS, Adj, POS>::VAL == p.0 { // lint:allow(no-bare-numeric) reason: phase-pass match; tracked: #121
+            if PhaseAt::<Full, Stores, GW, CU, CS, Adj, POS>::VAL == p.0 {
+                // lint:allow(no-bare-numeric) reason: phase-pass match; tracked: #121
                 <Full as RunGatedTrunk<Full, A, Witnesses, GW, Stores, CU, CS, Adj, POS, Here>>::run_trunk(full, bindings, meta_block, morsel, dirty, epoch);
             }
         }
-        self.tail.dispatch(full, p, meta_block, bindings, morsel, dirty, epoch);
+        self.tail
+            .dispatch(full, p, meta_block, bindings, morsel, dirty, epoch);
     }
 
     #[inline]
@@ -156,17 +236,34 @@ where
         // Compile-time: is POS a trunk-root, and in phase p this pass? Non-roots
         // and off-phase roots fold away.
         if IsRoot::<Full, Stores, GW, CU, CS, Adj, POS>::IS {
-            if PhaseAt::<Full, Stores, GW, CU, CS, Adj, POS>::VAL == p.0 { // lint:allow(no-bare-numeric) reason: phase-pass match; tracked: #121
+            if PhaseAt::<Full, Stores, GW, CU, CS, Adj, POS>::VAL == p.0 {
+                // lint:allow(no-bare-numeric) reason: phase-pass match; tracked: #121
                 // This core owns the root iff its within-phase rank (in-phase
                 // roots seen so far) modulo core count equals the core id.
-                if ncores.0 != 0 && rank.0 % ncores.0 == core.0 { // lint:allow(no-bare-numeric) reason: round-robin trunk ownership; tracked: #121
-                    <Full as RunGatedTrunk<Full, A, Witnesses, GW, Stores, CU, CS, Adj, POS, Here>>::run_trunk(full, bindings, meta_block, morsel, dirty, epoch);
+                if ncores.0 != 0 && rank.0 % ncores.0 == core.0 {
+                    // lint:allow(no-bare-numeric) reason: round-robin trunk ownership; tracked: #121
+                    <Full as RunGatedTrunk<
+                        Full,
+                        A,
+                        Witnesses,
+                        GW,
+                        Stores,
+                        CU,
+                        CS,
+                        Adj,
+                        POS,
+                        Here,
+                    >>::run_trunk(
+                        full, bindings, meta_block, morsel, dirty, epoch
+                    );
                 }
                 // Advance rank for every in-phase root (owned or not), matching
                 // core_phase_mask's "count of in-phase roots below".
                 rank.0 += 1; // lint:allow(no-bare-numeric) reason: within-phase trunk rank; tracked: #121
             }
         }
-        self.tail.dispatch_core(full, p, core, ncores, rank, bindings, meta_block, morsel, dirty, epoch);
+        self.tail.dispatch_core(
+            full, p, core, ncores, rank, bindings, meta_block, morsel, dirty, epoch,
+        );
     }
 }

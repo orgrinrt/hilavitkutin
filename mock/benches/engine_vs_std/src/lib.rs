@@ -155,7 +155,7 @@ impl MemoryProviderApi for HeapBump {
         self.used.set(aligned + len.0);
         unsafe { self.base.add(aligned) }
     }
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: arvo::Bool, _write: arvo::Bool) {}
 }
 
@@ -288,7 +288,7 @@ pub enum Mode {
 /// at N = 4096 / 65536 / 1048576 / 4194304. The parallel rows are the
 /// multi-threaded engine against optimal multi-threaded std (equal cores), the
 /// fair bar; earlier parallel rows compared against a single-threaded loop.
-pub fn expected_ratio(name: &'static str, n: usize, mode: Mode) -> f64 {
+pub fn expected_ratio(name: &'static str, _n: usize, mode: Mode) -> f64 {
     match (name, mode) {
         // Deep single fiber, within-fiber fusion: spec parity target. Already
         // green and crossing to a win at scale. Single-core only (one trunk).

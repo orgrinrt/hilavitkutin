@@ -3,4 +3,6 @@
 Consumer-facing types, traits, and platform contracts for the
 hilavitkutin pipeline execution engine. Consumers write WorkUnits
 against this crate and pipe diagnostics / byte output through the
-capability / sink / codec contracts. `#![no_std]`, no alloc.
+capability / sink / codec contracts. Defines `ProviderKit`, the
+contract that lets reusable Resource and Column kits self-install
+onto the scheduler builder. `#![no_std]`, no alloc.

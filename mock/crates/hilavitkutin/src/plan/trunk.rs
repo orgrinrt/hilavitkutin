@@ -5,8 +5,8 @@
 //! `Branch` (lateral fan-out into parallel fibers), or a `Bridge`
 //! (lateral fan-in from parallel fibers).
 
-use arvo::strategy::Identity;
 use arvo::USize;
+use arvo::strategy::Identity;
 use arvo_tensor::Capacity;
 
 use hilavitkutin_api::TrunkId;
@@ -79,7 +79,9 @@ pub struct Branch {
 
 impl Branch {
     pub const fn new() -> Self {
-        Self { fan_out_count: USize::ZERO }
+        Self {
+            fan_out_count: USize::ZERO,
+        }
     }
 }
 
@@ -99,7 +101,9 @@ pub struct Bridge {
 
 impl Bridge {
     pub const fn new() -> Self {
-        Self { fan_in_count: USize::ZERO }
+        Self {
+            fan_in_count: USize::ZERO,
+        }
     }
 }
 

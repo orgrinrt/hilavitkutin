@@ -15,12 +15,12 @@
 //! topological sort itself; the carrier fold and the `Scheduler::run` rewire
 //! that dispatches in this order follow in the same round.
 
-use arvo::strategy::Identity;
 use arvo::USize;
+use arvo::strategy::Identity;
 use arvo_tensor::Capacity;
+use hilavitkutin_api::WorkUnit;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::work_unit_values::{WuCons, WuNil};
-use hilavitkutin_api::WorkUnit;
 
 use crate::plan::access::AccessMask;
 use crate::plan::project::MaskProject;
@@ -113,14 +113,14 @@ pub const trait CarrierMasks<Stores, Witnesses, CS: Capacity> {
     fn fill(reads: &mut [AccessMask<CS>], writes: &mut [AccessMask<CS>], pos: USize);
 }
 
-impl<Stores, CS: Capacity> const CarrierMasks<Stores, Empty, CS> for Empty {
+const impl<Stores, CS: Capacity> CarrierMasks<Stores, Empty, CS> for Empty {
     const LEN: usize = 0; // lint:allow(no-bare-numeric) reason: empty-carrier length; tracked: #649
 
     #[inline]
     fn fill(_reads: &mut [AccessMask<CS>], _writes: &mut [AccessMask<CS>], _pos: USize) {}
 }
 
-impl<Stores, W, T, RI, WI, WT, CS: Capacity> const CarrierMasks<Stores, Cons<(RI, WI), WT>, CS>
+const impl<Stores, W, T, RI, WI, WT, CS: Capacity> CarrierMasks<Stores, Cons<(RI, WI), WT>, CS>
     for Cons<W, T>
 where
     W: WorkUnit,
@@ -144,14 +144,14 @@ where
 // same W types as the `Cons<W, T>` bundle in the same order, so `Scheduler::run`
 // can compute the const ORDER from its `WuVals` type without retaining the
 // builder's `Wus` bundle type.
-impl<Stores, CS: Capacity> const CarrierMasks<Stores, Empty, CS> for WuNil {
+const impl<Stores, CS: Capacity> CarrierMasks<Stores, Empty, CS> for WuNil {
     const LEN: usize = 0; // lint:allow(no-bare-numeric) reason: empty-carrier length; tracked: #649
 
     #[inline]
     fn fill(_reads: &mut [AccessMask<CS>], _writes: &mut [AccessMask<CS>], _pos: USize) {}
 }
 
-impl<Stores, W, T, RI, WI, WT, CS: Capacity> const CarrierMasks<Stores, Cons<(RI, WI), WT>, CS>
+const impl<Stores, W, T, RI, WI, WT, CS: Capacity> CarrierMasks<Stores, Cons<(RI, WI), WT>, CS>
     for WuCons<W, T>
 where
     W: WorkUnit,
@@ -290,8 +290,8 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use arvo_tensor::Dim;
     use crate::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
+    use arvo_tensor::Dim;
     use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
     use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
     use hilavitkutin_api::store::Column;

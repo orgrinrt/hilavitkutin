@@ -110,7 +110,10 @@ impl<P> WuAppend<P> for WuNil {
 
     #[inline]
     fn append(self, p: P) -> Self::Out {
-        WuCons { head: p, tail: WuNil }
+        WuCons {
+            head: p,
+            tail: WuNil,
+        }
     }
 }
 
@@ -122,6 +125,9 @@ where
 
     #[inline]
     fn append(self, p: P) -> Self::Out {
-        WuCons { head: self.head, tail: self.tail.append(p) }
+        WuCons {
+            head: self.head,
+            tail: self.tail.append(p),
+        }
     }
 }

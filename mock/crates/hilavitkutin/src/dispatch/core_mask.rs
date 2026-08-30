@@ -17,12 +17,12 @@
 //! (`ncores == 1`): every rank `% 1 == 0`, so core 0 owns every trunk = the full
 //! per-phase walk (the 1-core degenerate, no special path).
 
-use arvo::strategy::Identity;
 use arvo::USize;
+use arvo::strategy::Identity;
 use arvo_bitmask::BitAccess;
 use arvo_tensor::{Capacity, ConstCapacity};
 
-use crate::plan::grouping::{group_n, phase_of, trunk_of, BundleMasks};
+use crate::plan::grouping::{BundleMasks, group_n, phase_of, trunk_of};
 
 /// Fill per-unit phase and trunk arrays from the R2 const grouping, returning
 /// the unit count. Loops the shipped `phase_of` / `trunk_of` over carrier

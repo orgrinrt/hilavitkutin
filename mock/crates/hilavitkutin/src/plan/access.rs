@@ -12,8 +12,8 @@
 
 use core::marker::PhantomData;
 
-use arvo::{Bool, USize};
 use arvo::strategy::Identity;
+use arvo::{Bool, USize};
 use arvo_tensor::Capacity;
 
 /// Bit pattern identifying which stores (indexed within the store
@@ -27,14 +27,19 @@ pub struct AccessMask<C: Capacity> {
 
 impl<C: Capacity> core::fmt::Debug for AccessMask<C> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.debug_struct("AccessMask").field("bits", &self.bits.0).finish()
+        f.debug_struct("AccessMask")
+            .field("bits", &self.bits.0)
+            .finish()
     }
 }
 
 impl<C: Capacity> AccessMask<C> {
     /// Empty mask: touches no stores.
     pub const fn empty() -> Self {
-        Self { bits: USize::ZERO, _cap: PhantomData }
+        Self {
+            bits: USize::ZERO,
+            _cap: PhantomData,
+        }
     }
 
     /// True iff no store is touched.
@@ -91,7 +96,8 @@ impl<C: Capacity> Clone for AccessMask<C> {
 }
 
 impl<C: Capacity> PartialEq for AccessMask<C> {
-    fn eq(&self, other: &Self) -> bool { // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) reason: std-trait method signature; core::cmp::PartialEq::eq is fixed to return bool by the trait (no-bare-primitives.md exception 5); tracked: #207
+    fn eq(&self, other: &Self) -> bool {
+        // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) reason: std-trait method signature; core::cmp::PartialEq::eq is fixed to return bool by the trait (no-bare-primitives.md exception 5); tracked: #207
         self.bits == other.bits
     }
 }

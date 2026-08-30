@@ -27,3 +27,4 @@ mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", br
 opt-level = 3
 lto = "fat"
 codegen-units = 1
+

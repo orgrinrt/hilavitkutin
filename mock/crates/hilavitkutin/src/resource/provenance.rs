@@ -36,12 +36,14 @@ impl ErasedResourcePtr {
     /// The pointer must be non-null and name a resource-value base valid
     /// for the lifetime of the borrows derived from it.
     #[inline(always)]
-    pub unsafe fn new_unchecked(ptr: *mut u8) -> Self { // lint:allow(no-bare-numeric) reason: erased byte base is the addressing contract; tracked: #654
+    pub unsafe fn new_unchecked(ptr: *mut u8) -> Self {
+        // lint:allow(no-bare-numeric) reason: erased byte base is the addressing contract; tracked: #654
         Self(unsafe { NonNull::new_unchecked(ptr) })
     }
 
     #[inline(always)]
-    pub const fn as_ptr(self) -> *mut u8 { // lint:allow(no-bare-numeric) reason: erased byte base is the addressing contract; tracked: #654
+    pub const fn as_ptr(self) -> *mut u8 {
+        // lint:allow(no-bare-numeric) reason: erased byte base is the addressing contract; tracked: #654
         self.0.as_ptr()
     }
 

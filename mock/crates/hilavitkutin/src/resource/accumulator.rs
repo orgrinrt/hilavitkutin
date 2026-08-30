@@ -20,11 +20,13 @@ impl<T: Copy> AccumulatorSlot<T> {
 
 /// Const-sized per-thread accumulator buffer.
 #[derive(Copy, Clone)]
-pub struct ConvergenceBuffer<T: Copy, const N: usize> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+pub struct ConvergenceBuffer<T: Copy, const N: usize> {
+    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     slots: [AccumulatorSlot<T>; N],
 }
 
-impl<T: Copy, const N: usize> ConvergenceBuffer<T, N> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+impl<T: Copy, const N: usize> ConvergenceBuffer<T, N> {
+    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     #[inline(always)]
     pub const fn new(zero: T) -> Self {
         Self {

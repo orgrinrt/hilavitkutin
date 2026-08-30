@@ -39,34 +39,45 @@
 //! `Drop` that deallocates it. `build` takes the `MemoryProvider` as
 //! an argument and returns `Outcome<_, BuildError>`.
 
+use core::cell::Cell;
 use core::fmt;
 use core::marker::{PhantomData, PhantomPinned};
-use core::cell::Cell;
 use core::pin::Pin;
 use core::ptr::NonNull;
 use core::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicUsize, Ordering};
 
-use arvo::strategy::Identity;
-use arvo::Bool;
-use arvo::USize;
-use arvo_bitmask::{BitAccess, BitLogic, BitSequence};
-use arvo_tensor::{cap_size, Capacity, ConstCapacity};
 use crate::plan::project::{AccumStoresMask, BundleProject, Locate, StoreSizes, WitnessIndex};
 use crate::plan::{
-    compute_execution_plan, plan_inputs_from_bundle, AccessMask, DefaultPlanDims, ExecutionPlan, MorselBudget,
-    PlanDims,
+    AccessMask, DefaultPlanDims, ExecutionPlan, MorselBudget, PlanDims, compute_execution_plan,
+    plan_inputs_from_bundle,
 };
+use arvo::Bool;
+use arvo::USize;
+use arvo::strategy::Identity;
+use arvo_bitmask::{BitAccess, BitLogic, BitSequence};
+use arvo_tensor::{Capacity, ConstCapacity, cap_size};
 use hilavitkutin_api::access::{AccessSet, ContainsAll, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, Dispatch};
 use hilavitkutin_api::platform::{ClockApi, MemoryProviderApi, Nanos};
 use hilavitkutin_api::run_cfg::{DefaultRunCfg, PlanAffecting, RunCfg};
-use hilavitkutin_api::store::Replaceable;
+use hilavitkutin_api::store::{Replaceable, Resource};
 use hilavitkutin_api::store_values::{Place, RouterKind, StoreValues, SvEmpty};
 use hilavitkutin_api::work_unit::WorkUnitBundle;
 use hilavitkutin_api::work_unit_values::{WuAppend, WuCons, WuNil};
 use hilavitkutin_api::{ColumnStorage, ColumnValue, StoreId, UnitId};
 
-use crate::dispatch::core_mask::{grouping_arrays, phase_mask, phase_trunk_count};
+use crate::dispatch::core_mask::grouping_arrays;
+use crate::dispatch::engine_ctx::{Here, Selector};
+use crate::dispatch::fiber_run::RunFiber;
+use crate::dispatch::fusion::{ChainWu, FuseCarrier};
+use crate::dispatch::morsel::MorselRange;
+use crate::dispatch::trunk_dispatch::RunTrunkDispatch;
+use crate::dispatch::trunk_gate::RunGatedTrunk;
+use crate::meta::{MetaBlock, fold_ema};
+use crate::plan::grouping::{
+    BundleMasks, GATE2_MAX_ACCUMS, GATE2_MAX_UNITS, consumer_mask, consumer_phase_end, phase_count,
+    plan_phase_count, pre_consumer_phase_count,
+};
 use crate::thread::barrier::waist_barrier;
 use crate::thread::class::MAX_CORES;
 use crate::thread::frame::{
@@ -74,17 +85,6 @@ use crate::thread::frame::{
     request_shutdown,
 };
 use hilavitkutin_api::platform::{PoolFrame, ThreadPoolApi};
-use crate::dispatch::fiber_run::RunFiber;
-use crate::dispatch::fusion::{ChainWu, FuseCarrier};
-use crate::dispatch::morsel::MorselRange;
-use crate::dispatch::engine_ctx::Here;
-use crate::dispatch::trunk_dispatch::RunTrunkDispatch;
-use crate::dispatch::trunk_gate::RunGatedTrunk;
-use crate::meta::{fold_ema, MetaBlock};
-use crate::plan::grouping::{
-    consumer_mask, consumer_phase_end, phase_count, plan_phase_count, pre_consumer_phase_count,
-    BundleMasks, GATE2_MAX_ACCUMS, GATE2_MAX_UNITS,
-};
 
 pub mod plan;
 
@@ -201,7 +201,9 @@ impl RecommendedOrder {
 
 impl fmt::Debug for RecommendedOrder {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_list().entries(self.as_slice().iter().map(|s| s.0)).finish()
+        f.debug_list()
+            .entries(self.as_slice().iter().map(|s| s.0))
+            .finish()
     }
 }
 
@@ -335,11 +337,11 @@ fn compute_plan<Wus, Stores, BWit>(
 ) -> notko::Outcome<ExecutionPlan<DefaultPlanDims>, BuildError>
 where
     Wus: BundleProject<
-        Stores,
-        BWit,
-        <DefaultPlanDims as PlanDims>::Units,
-        <DefaultPlanDims as PlanDims>::Stores,
-    >,
+            Stores,
+            BWit,
+            <DefaultPlanDims as PlanDims>::Units,
+            <DefaultPlanDims as PlanDims>::Stores,
+        >,
     Stores: AccumStoresMask<<DefaultPlanDims as PlanDims>::Stores>,
     Stores: StoreSizes<<DefaultPlanDims as PlanDims>::Stores>,
 {
@@ -571,27 +573,57 @@ fn store_plan<CS: ColumnStorage>(
         fiber_count: plan.fiber_count,
         unit_count: plan.unit_count,
     };
-    match store_column(storage, handle.phases_id(), plan.phases.as_ref(), plan.phase_count) {
+    match store_column(
+        storage,
+        handle.phases_id(),
+        plan.phases.as_ref(),
+        plan.phase_count,
+    ) {
         notko::Outcome::Ok(()) => {}
         notko::Outcome::Err(e) => return notko::Outcome::Err(e),
     }
-    match store_column(storage, handle.trunks_id(), plan.trunks.as_ref(), plan.trunk_count) {
+    match store_column(
+        storage,
+        handle.trunks_id(),
+        plan.trunks.as_ref(),
+        plan.trunk_count,
+    ) {
         notko::Outcome::Ok(()) => {}
         notko::Outcome::Err(e) => return notko::Outcome::Err(e),
     }
-    match store_column(storage, handle.fibers_id(), plan.fibers.as_ref(), plan.fiber_count) {
+    match store_column(
+        storage,
+        handle.fibers_id(),
+        plan.fibers.as_ref(),
+        plan.fiber_count,
+    ) {
         notko::Outcome::Ok(()) => {}
         notko::Outcome::Err(e) => return notko::Outcome::Err(e),
     }
-    match store_column(storage, handle.unit_meta_id(), plan.unit_meta.as_ref(), plan.unit_count) {
+    match store_column(
+        storage,
+        handle.unit_meta_id(),
+        plan.unit_meta.as_ref(),
+        plan.unit_count,
+    ) {
         notko::Outcome::Ok(()) => {}
         notko::Outcome::Err(e) => return notko::Outcome::Err(e),
     }
-    match store_column(storage, handle.morsel_windows_id(), plan.morsel_windows.as_ref(), plan.fiber_count) {
+    match store_column(
+        storage,
+        handle.morsel_windows_id(),
+        plan.morsel_windows.as_ref(),
+        plan.fiber_count,
+    ) {
         notko::Outcome::Ok(()) => {}
         notko::Outcome::Err(e) => return notko::Outcome::Err(e),
     }
-    match store_column(storage, handle.rcm_order_id(), plan.rcm_order.as_ref(), plan.unit_count) {
+    match store_column(
+        storage,
+        handle.rcm_order_id(),
+        plan.rcm_order.as_ref(),
+        plan.unit_count,
+    ) {
         notko::Outcome::Ok(()) => {}
         notko::Outcome::Err(e) => return notko::Outcome::Err(e),
     }
@@ -685,6 +717,11 @@ pub struct Scheduler<
     /// false afterward. `AtomicBool` (Relaxed, ordered by the frame barriers)
     /// so the between-frame write goes through a shared reference.
     first_frame: AtomicBool,
+    /// This frame's plan-band decision, published between frames before the
+    /// workers wake (same write discipline as `first_frame`, so the
+    /// worker-side happens-before argument is unchanged): true when it is
+    /// the first frame or any `plan_dirty` bit was consumed at frame entry.
+    plan_band: AtomicBool,
     /// E4 slice 1: the virtual-fire epoch. Incremented once per pass before
     /// dispatch; a producer's `fire<V>` stamps its `Virtual<V>` cell with the
     /// current value, and an `On<V>` consumer's gate opens when the cell equals
@@ -793,9 +830,9 @@ fn empty_pool_frame() -> PoolFrame<'static, MAX_CORES, 1> {
         shutdown: AtomicBool::new(false),
         phase_arrived: AtomicU32::new(0), // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic init constant; tracked: #121
         barrier_sense: AtomicU32::new(0), // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic init constant; tracked: #121
-        seq: AtomicU32::new(0),           // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic init constant; tracked: #121
-        done: AtomicU32::new(0),          // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic init constant; tracked: #121
-        exited: AtomicU32::new(0),        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic init constant; tracked: #121
+        seq: AtomicU32::new(0), // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic init constant; tracked: #121
+        done: AtomicU32::new(0), // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic init constant; tracked: #121
+        exited: AtomicU32::new(0), // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic init constant; tracked: #121
         predicted_wait_ns: [AtomicU32::new(0)], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic init constant; tracked: #121
         idle_accumulator: [const { AtomicU64::new(0) }; MAX_CORES], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-core atomic init; tracked: #121
         park_count: [const { AtomicU64::new(0) }; MAX_CORES], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-core atomic init; tracked: #121
@@ -821,16 +858,16 @@ where
     Clk: ClockApi,
     WuVals: RunFiber<<Vals as BindingsFor>::Bindings, Witnesses>,
     WuVals: RunTrunkDispatch<
-        WuVals,
-        <Vals as BindingsFor>::Bindings,
-        Witnesses,
-        GW,
-        Stores,
-        <D as PlanDims>::Units,
-        <D as PlanDims>::Stores,
-        <D as PlanDims>::AdjRow,
-        0, // lint:allow(no-bare-numeric) reason: const-generic entry position; tracked: #121
-    >,
+            WuVals,
+            <Vals as BindingsFor>::Bindings,
+            Witnesses,
+            GW,
+            Stores,
+            <D as PlanDims>::Units,
+            <D as PlanDims>::Stores,
+            <D as PlanDims>::AdjRow,
+            0, // lint:allow(no-bare-numeric) reason: const-generic entry position; tracked: #121
+        >,
     WuVals: BundleMasks<Stores, GW, <D as PlanDims>::Stores>,
     <D as PlanDims>::Units: ConstCapacity,
     <D as PlanDims>::AdjRow: BitAccess + Identity,
@@ -865,7 +902,7 @@ where
     let msize = USize(Cfg::MORSEL_SIZE.0.max(1)); // lint:allow(no-bare-numeric) reason: morsel length guard; tracked: #121
     let mut last = USize::ZERO;
     loop {
-        last = frame_await(&s.pool, last);
+        last = frame_await(&s.pool, last, Cfg::WAKE_SPIN_BUDGET);
         if s.pool.shutdown.load(Ordering::Relaxed) {
             frame_exit_arrive(&s.pool, ncores);
             return;
@@ -893,22 +930,18 @@ where
         // barrier (the canonical worker-side sync; the main thread no longer
         // round-trips per phase). Phase order is the array order 0..nphases.
         // On a clean (not plan-dirty) frame the loop starts past the leading
-        // plan band; `first_frame` is written between frames while every
-        // worker is parked, so the read is stable under the publish/await
+        // plan band; `plan_band` is published between frames while every
+        // worker is parked (first frame OR a consumed `replace_resource`
+        // plan-dirty bit), so the read is stable under the publish/await
         // happens-before. All workers compute the same start, so the interior
         // waist-barrier counts stay matched.
-        let mut p = if s.first_frame.load(Ordering::Relaxed) { 0 } else { plan_phases }; // lint:allow(no-bare-numeric) reason: phase loop start; tracked: #121
+        let mut p = if s.plan_band.load(Ordering::Relaxed) {
+            0
+        } else {
+            plan_phases
+        }; // lint:allow(no-bare-numeric) reason: phase loop start; tracked: #121
         while p < nphases {
-            s.run_core_phase::<Witnesses, GW>(
-                &s.gate2_phase,
-                &s.gate2_trunk,
-                s.gate2_n,
-                USize(core_id),
-                USize(p),
-                ncores,
-                total,
-                msize,
-            );
+            s.run_core_phase::<Witnesses, GW>(USize(core_id), USize(p), ncores, total, msize);
             if p + 1 < nphases {
                 // every worker participates in each waist, even one that owned
                 // no trunk this phase, so `expected` is the full core count. The
@@ -920,6 +953,31 @@ where
         }
         frame_done_arrive(&s.pool, ncores);
     }
+}
+/// Stride between per-core accumulator regions: `ceil(total / ncores)`.
+///
+/// The single definition of the accumulator's record partition. The worker
+/// derives its own region from this via `accum_slice`; the main thread passes
+/// it to `merge_accums`, which reads core c's region at `c * per`. Both sides
+/// must agree exactly or the merge reads a region a different core wrote, so
+/// the arithmetic lives here once rather than at each site.
+#[inline]
+fn accum_per(total: USize, ncores: USize) -> USize {
+    let n = ncores.0.max(1); // lint:allow(no-bare-numeric) reason: avoid div by zero; tracked: #121
+    USize((total.0 + n - 1) / n) // lint:allow(no-bare-numeric) reason: ceil record slice; tracked: #121
+}
+
+/// One core's exclusive accumulator region as `(lo, len)`.
+///
+/// Regions tile `[0, total)` in core order, so the merge can concatenate them
+/// in ascending core order without gaps. A surplus core (more cores than
+/// records) gets `len == 0` and appends nothing.
+#[inline]
+fn accum_slice(total: USize, ncores: USize, core: USize) -> (USize, USize) {
+    let per = accum_per(total, ncores).0;
+    let lo = (core.0 * per).min(total.0); // lint:allow(no-bare-numeric) reason: slice start; tracked: #121
+    let hi = (lo + per).min(total.0); // lint:allow(no-bare-numeric) reason: slice end; tracked: #121
+    (USize(lo), USize(hi - lo)) // lint:allow(no-bare-numeric) reason: slice length; tracked: #121
 }
 
 /// One core's unit-outer accumulator dispatch over its head+tail record slice
@@ -956,19 +1014,23 @@ fn worker_accum_unit_outer<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>
         s.gate2_accum_live[core.0 * GATE2_MAX_ACCUMS + z].store(0, Ordering::Relaxed); // lint:allow(no-bare-numeric) reason: per-(core,accum) publish slot reset; tracked: #121
         z += 1; // lint:allow(no-bare-numeric) reason: index step; tracked: #121
     }
-    // Head+tail record slice for this core (mirrors run_core_phase's split).
-    let per = (total0 + ncores0 - 1) / ncores0; // lint:allow(no-bare-numeric) reason: ceil record slice; tracked: #121
-    let lo = (core.0 * per).min(total0); // lint:allow(no-bare-numeric) reason: slice start; tracked: #121
-    let hi = (lo + per).min(total0); // lint:allow(no-bare-numeric) reason: slice end; tracked: #121
+    // This core's exclusive accumulator region (canon 202606111800:452-456: each
+    // core appends into its own region, merged after the workers rejoin in
+    // append order). Derived from the shared `accum_slice` so the boundaries
+    // match the offsets the merge reads.
+    let (lo, region) = accum_slice(USize(total0), USize(ncores0), core);
     // A record-less frame runs the carrier once on core 0 only (a resource-only
     // unit must run exactly once, not once per core). With records, a surplus
-    // core (`lo == hi`) appends nothing and is skipped.
-    let run_this = if total0 == 0 { core.0 == 0 } else { lo < hi }; // lint:allow(no-bare-numeric) reason: participation guard; tracked: #121
+    // core (an empty region) appends nothing and is skipped.
+    let run_this = if total0 == 0 {
+        core.0 == 0
+    } else {
+        region.0 > 0
+    }; // lint:allow(no-bare-numeric) reason: participation guard; tracked: #121
     if !run_this {
         return;
     }
-    let region = hi - lo; // lint:allow(no-bare-numeric) reason: slice length; tracked: #121
-    let per_core = s.bindings.rebase_accums(USize(lo), USize(region));
+    let per_core = s.bindings.rebase_accums(lo, region);
     // E4 parity: meta units do not ride the per-core slice walk (the designated
     // thread dispatches them once per frame around the publish/await window).
     // A no-meta carrier keeps the ungated whole-carrier walk; the band counts
@@ -998,7 +1060,12 @@ fn worker_accum_unit_outer<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>
         <D as PlanDims>::AdjRow,
     >();
     if pre.0 == 0 && cend.0 == nphases.0 {
-        s.wu_values.run(&per_core, &s.meta_block, MorselRange::new(USize(lo), USize(region)), USize(s.virtual_epoch.load(Ordering::Relaxed)));
+        s.wu_values.run(
+            &per_core,
+            &s.meta_block,
+            MorselRange::new(lo, region),
+            USize(s.virtual_epoch.load(Ordering::Relaxed)),
+        );
     } else {
         let cmask = consumer_mask::<
             WuVals,
@@ -1011,7 +1078,7 @@ fn worker_accum_unit_outer<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>
         s.wu_values.run_gated(
             &per_core,
             &s.meta_block,
-            MorselRange::new(USize(lo), USize(region)),
+            MorselRange::new(lo, region),
             cmask,
             USize::ZERO,
             USize(s.virtual_epoch.load(Ordering::Relaxed)),
@@ -1028,8 +1095,15 @@ fn worker_accum_unit_outer<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>
     }
 }
 
-impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D: PlanDims, Stores, Clk>
-    Drop for Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>
+impl<
+    Cfg: RunCfg,
+    WuVals,
+    Vals: StoreValues + BindingsFor,
+    CS: ColumnStorage,
+    D: PlanDims,
+    Stores,
+    Clk,
+> Drop for Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>
 {
     fn drop(&mut self) {
         if self.spawned.0 {
@@ -1061,11 +1135,12 @@ impl Default for NullMemoryProvider {
 }
 
 impl MemoryProviderApi for NullMemoryProvider {
-    unsafe fn allocate(&self, _len: arvo::USize, _align: arvo::USize) -> *mut u8 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI returns raw pointer by contract; tracked: #72
+    unsafe fn allocate(&self, _len: arvo::USize, _align: arvo::USize) -> *mut u8 {
+        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI returns raw pointer by contract; tracked: #72
         core::ptr::null_mut()
     }
 
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: arvo::USize) {} // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer by contract; tracked: #72
+    unsafe fn deallocate(&self, _ptr: *mut u8, _len: arvo::USize, _align: arvo::USize) {} // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer by contract; tracked: #72
 
     unsafe fn protect(
         &self,
@@ -1137,11 +1212,7 @@ impl Default for NullColumnStorage {
 impl ColumnStorage for NullColumnStorage {
     type Error = ();
 
-    fn reserve<T: ColumnValue>(
-        &mut self,
-        _id: StoreId,
-        _len: USize,
-    ) -> notko::Outcome<(), ()> {
+    fn reserve<T: ColumnValue>(&mut self, _id: StoreId, _len: USize) -> notko::Outcome<(), ()> {
         notko::Outcome::Err(())
     }
 
@@ -1174,8 +1245,15 @@ impl Scheduler<DefaultRunCfg, WuNil, SvEmpty, NullColumnStorage> {
     }
 }
 
-impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D: PlanDims, Stores, Clk: ClockApi>
-    Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>
+impl<
+    Cfg: RunCfg,
+    WuVals,
+    Vals: StoreValues + BindingsFor,
+    CS: ColumnStorage,
+    D: PlanDims,
+    Stores,
+    Clk: ClockApi,
+> Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>
 {
     /// Replace the existing `Resource<T>` instance in the data
     /// plane with `_new`, marking the plan dirty.
@@ -1184,18 +1262,36 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
     /// path; the next `run()` recomputes the execution plan.
     /// Consumers that need a cheap value swap on a non-plan-
     /// affecting resource use `replace_value`.
-    pub fn replace_resource<T: PlanAffecting, Index>(&mut self, _new: T)
+    pub fn replace_resource<T: PlanAffecting + ColumnValue, Index, PtrIndex>(&mut self, new: T)
     where
-        Stores: Locate<T, Index>,
+        Stores: Locate<Resource<T>, Index>,
         Index: WitnessIndex,
+        <Vals as BindingsFor>::Bindings: Selector<T, PtrIndex>,
     {
+        // The identical witnessed blob install as `replace_value`: one
+        // whole-value write through the binding pointer the drain wrote
+        // through. Store values are `Copy` (drain contract), so the
+        // overwrite drops nothing.
+        let ptr = Selector::<T, PtrIndex>::get(&self.bindings);
+        // SAFETY: the binding pointer names the one-record column reserved
+        // and initialised for `T` at build; `&mut self` means no frame is in
+        // flight, so no reader aliases the slot during the write.
+        unsafe {
+            core::ptr::write(ptr.as_ptr(), new);
+        }
         // A swapped resource is a changed input, so mark its store dirty for
         // the next frame (domain-16 incremental skip seed).
-        self.mark_dirty::<T, Index>();
-        // The domain-22 plan-recompute seed (`plan_dirty` by PlanAffectingId)
-        // and the data-plane value install are sequenced with the adapt
-        // subsystem (runtime plan recompute on resource swap).
-        let _ = &self.plan_dirty;
+        self.mark_dirty::<Resource<T>, Index>();
+        // Domain-22 plan-recompute seed: set the plan-dirty bit for `T`,
+        // keyed by the same store-position witness. The next frame's band
+        // gate consumes and clears the bits. Positions past the
+        // `D::PlanAffecting` capacity fall back to the always-recompute
+        // first slot rather than dropping the signal.
+        let bits = self.plan_dirty.as_ref();
+        let slot = Index::INDEX.0.min(bits.len().saturating_sub(1)); // lint:allow(no-bare-numeric) reason: bounded slice index from the store-position witness; tracked: #121
+        if let Some(bit) = bits.get(slot) {
+            bit.store(true, Ordering::Relaxed);
+        }
     }
 
     /// Cheap value-swap path for non-plan-affecting resources.
@@ -1204,16 +1300,30 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
     /// without signalling plan recompute. The `Replaceable` marker
     /// is consumer-driven per Topic 8 axis B (replaceable but not
     /// plan-affecting is the typical case for app-level state).
-    pub fn replace_value<T: Replaceable, Index>(&mut self, _new: T)
+    pub fn replace_value<V: Replaceable + ColumnValue, Index, PtrIndex>(&mut self, new: V)
     where
-        Stores: Locate<T, Index>,
+        Stores: Locate<Resource<V>, Index>,
         Index: WitnessIndex,
+        <Vals as BindingsFor>::Bindings: Selector<V, PtrIndex>,
     {
+        // The specified install (swap spec S1, superseding the refuted
+        // member-by-member wording of `202606210600`): one whole-blob write
+        // through the `Selector` witness, the same binding pointer the drain
+        // wrote through and the projection reads through. No other pointer
+        // derivation exists on the swap path. Collection halves gain
+        // per-record element writes with the #344 collection wiring (S3).
+        let ptr = Selector::<V, PtrIndex>::get(&self.bindings);
+        // SAFETY: the binding pointer names the one-record column reserved
+        // and initialised for `V` at build; `&mut self` means no frame is in
+        // flight, so no reader aliases the slot during the write. Store
+        // values are `Copy` (drain contract), so the overwrite drops nothing.
+        unsafe {
+            core::ptr::write(ptr.as_ptr(), new);
+        }
         // A swapped value is a changed input: mark its store dirty for the
         // next frame so dependents re-run (domain-16 incremental skip). No
-        // plan-recompute dirty, since the value swap is not structural. The
-        // data-plane value install is sequenced with the adapt subsystem.
-        self.mark_dirty::<T, Index>();
+        // plan-recompute dirty, since the value swap is not structural.
+        self.mark_dirty::<Resource<V>, Index>();
     }
 
     /// Mark the store named by type `T` changed for the next frame.
@@ -1233,7 +1343,8 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         Stores: Locate<T, Index>,
         Index: WitnessIndex,
     {
-        self.store_dirty.set(self.store_dirty.get().set(Index::INDEX));
+        self.store_dirty
+            .set(self.store_dirty.get().set(Index::INDEX));
     }
 
     /// This frame's dirty-unit mask for incremental skip (domain 16,
@@ -1311,20 +1422,21 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
     /// so a resource-only unit runs exactly once). The `Witnesses` parameter
     /// is the per-unit projection-index list, inferred at the call site, so
     /// `scheduler.run()` needs no turbofish.
-    pub fn run<Witnesses, GW>(&mut self) -> Cfg::Out // lint:allow(no-bare-numeric) reason: const-generic dispatch entry position; tracked: #121
+    pub fn run<Witnesses, GW>(&mut self) -> Cfg::Out
+    // lint:allow(no-bare-numeric) reason: const-generic dispatch entry position; tracked: #121
     where
         Cfg::Out: Default,
         WuVals: RunTrunkDispatch<
-            WuVals,
-            <Vals as BindingsFor>::Bindings,
-            Witnesses,
-            GW,
-            Stores,
-            <D as PlanDims>::Units,
-            <D as PlanDims>::Stores,
-            <D as PlanDims>::AdjRow,
-            0, // lint:allow(no-bare-numeric) reason: const-generic entry position; tracked: #121
-        >,
+                WuVals,
+                <Vals as BindingsFor>::Bindings,
+                Witnesses,
+                GW,
+                Stores,
+                <D as PlanDims>::Units,
+                <D as PlanDims>::Stores,
+                <D as PlanDims>::AdjRow,
+                0, // lint:allow(no-bare-numeric) reason: const-generic entry position; tracked: #121
+            >,
         WuVals: BundleMasks<Stores, GW, <D as PlanDims>::Stores>,
         <D as PlanDims>::Units: ConstCapacity,
         <D as PlanDims>::AdjRow: BitAccess + Identity,
@@ -1343,7 +1455,10 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         // stamps cells with the new value; last pass's stamps no longer match, so
         // a stale fire gates its `On<V>` consumer shut (epoch-based reset).
         self.virtual_epoch.fetch_add(1, Ordering::Relaxed); // lint:allow(no-bare-numeric) reason: per-pass epoch successor; tracked: #121
-        self.meta_block.metrics.pass_count.set(USize(self.meta_block.metrics.pass_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: per-pass meta pass_count; tracked: #121
+        self.meta_block
+            .metrics
+            .pass_count
+            .set(USize(self.meta_block.metrics.pass_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: per-pass meta pass_count; tracked: #121
         let epoch = USize(self.virtual_epoch.load(Ordering::Relaxed));
         // E4 slice 2 (self-hosting meta pipeline): a plan-dirty frame runs the
         // leading plan band (`OnMeta<PlanStage>` units recompute the plan); a clean
@@ -1352,12 +1467,23 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         // the domain-22 recompute, sequenced with the adapt subsystem (slice 3). For
         // a carrier with no plan-stage meta unit, `plan_phase_count` is zero, so this
         // is a no-op and dispatch is byte-identical to before.
-        let plan_dirty = Bool(self.first_frame.load(Ordering::Relaxed));
-        // `plan_dirty` array / `plan_cache` are the domain-22 plan-recompute seed
-        // and cache (set by `replace_resource`); rebuilding the plan from them is the
-        // adapt subsystem's job, sequenced later. The domain-16 incremental-skip seed
-        // is `store_dirty`, consumed here.
-        let _ = (&self.plan_dirty, &self.plan_cache);
+        // Swap spec S2: the band opens on the first frame OR when any
+        // plan-dirty bit was set by `replace_resource` since the last frame.
+        // Consuming clears the bits, so one swap buys one plan band.
+        let mut swapped = false;
+        for bit in self.plan_dirty.as_ref() {
+            if bit.swap(false, Ordering::Relaxed) {
+                swapped = true;
+            }
+        }
+        let plan_dirty = Bool(self.first_frame.load(Ordering::Relaxed) || swapped);
+        // Publish the decision for the worker-side band start (between
+        // frames, before any worker wakes).
+        self.plan_band.store(plan_dirty.0, Ordering::Relaxed);
+        // `plan_cache` is the domain-22 plan cache; rebuilding the plan from
+        // the consumed seed is the adapt subsystem's job, sequenced later.
+        // The domain-16 incremental-skip seed is `store_dirty`, consumed here.
+        let _ = &self.plan_cache;
         // Per-frame incremental skip: the dirty-unit mask names which units
         // this frame must run (their input cone changed); the rest are
         // skipped, producing identical output to running them.
@@ -1372,17 +1498,56 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         // its own plan-baked L1 window. A fiber whose units sit in another
         // phase contributes nothing in this pass (the const phase gate on trunk
         // roots filters it), so no runtime fiber-to-phase map is needed.
-        let nphases = phase_count::<WuVals, Stores, GW, <D as PlanDims>::Units, <D as PlanDims>::Stores, <D as PlanDims>::AdjRow>().0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: phase-loop bound; tracked: #121
-        let pre = pre_consumer_phase_count::<WuVals, Stores, GW, <D as PlanDims>::Units, <D as PlanDims>::Stores, <D as PlanDims>::AdjRow>().0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: leading-band bound; tracked: #121
-        let cend = consumer_phase_end::<WuVals, Stores, GW, <D as PlanDims>::Units, <D as PlanDims>::Stores, <D as PlanDims>::AdjRow>().0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: trailing-band start; tracked: #121
-        let cmask = consumer_mask::<WuVals, Stores, GW, <D as PlanDims>::Units, <D as PlanDims>::Stores, <D as PlanDims>::AdjRow>();
+        let nphases = phase_count::<
+            WuVals,
+            Stores,
+            GW,
+            <D as PlanDims>::Units,
+            <D as PlanDims>::Stores,
+            <D as PlanDims>::AdjRow,
+        >()
+        .0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: phase-loop bound; tracked: #121
+        let pre = pre_consumer_phase_count::<
+            WuVals,
+            Stores,
+            GW,
+            <D as PlanDims>::Units,
+            <D as PlanDims>::Stores,
+            <D as PlanDims>::AdjRow,
+        >()
+        .0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: leading-band bound; tracked: #121
+        let cend = consumer_phase_end::<
+            WuVals,
+            Stores,
+            GW,
+            <D as PlanDims>::Units,
+            <D as PlanDims>::Stores,
+            <D as PlanDims>::AdjRow,
+        >()
+        .0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: trailing-band start; tracked: #121
+        let cmask = consumer_mask::<
+            WuVals,
+            Stores,
+            GW,
+            <D as PlanDims>::Units,
+            <D as PlanDims>::Stores,
+            <D as PlanDims>::AdjRow,
+        >();
         let all = <D as PlanDims>::AdjRow::default().bitnot();
         // A plan-dirty frame runs the leading plan band; a clean frame skips it
         // (E4 kernel band skipping, unchanged from dispatch_trunks).
         let band_start = if plan_dirty.0 {
             0 // lint:allow(no-bare-numeric) reason: plan-dirty frame runs the plan band; tracked: #121
         } else {
-            plan_phase_count::<WuVals, Stores, GW, <D as PlanDims>::Units, <D as PlanDims>::Stores, <D as PlanDims>::AdjRow>().0 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: clean frame skips the plan band; tracked: #121
+            plan_phase_count::<
+                WuVals,
+                Stores,
+                GW,
+                <D as PlanDims>::Units,
+                <D as PlanDims>::Stores,
+                <D as PlanDims>::AdjRow,
+            >()
+            .0 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: clean frame skips the plan band; tracked: #121
         };
         let descriptors = self.fiber_dispatch.as_ref();
         let fcount = self.fiber_dispatch_count.0.min(descriptors.len());
@@ -1451,7 +1616,11 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
                             // The per-fiber L1 window (plan step 9, baked into
                             // the descriptor at build); zero falls back to the
                             // uniform Cfg default.
-                            let w = if desc.morsel_size.0 != 0 { desc.morsel_size.0 } else { msize }; // lint:allow(no-bare-numeric) reason: window fallback test; tracked: #121
+                            let w = if desc.morsel_size.0 != 0 {
+                                desc.morsel_size.0
+                            } else {
+                                msize
+                            }; // lint:allow(no-bare-numeric) reason: window fallback test; tracked: #121
                             let mut s = 0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: morsel cursor; tracked: #121
                             while s < total {
                                 let len = w.min(total - s); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: clamped window length; tracked: #121
@@ -1499,17 +1668,29 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         // E8 adapt: fold this frame's duration into the pass-duration EMA.
         // Between frames, so the write needs no synchronisation.
         let m = &self.meta_block.metrics;
-        m.ema_pass_duration_ns
-            .set(fold_ema(m.ema_pass_duration_ns.get(), self.clock.now_ns() - frame_start, ema_seed));
+        m.ema_pass_duration_ns.set(fold_ema(
+            m.ema_pass_duration_ns.get(),
+            self.clock.now_ns() - frame_start,
+            ema_seed,
+        ));
         m.last_record_count.set(self.record_count);
         if stores_changed {
-            m.change_seen_count.set(USize(m.change_seen_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: increment by one frame; tracked: #121
+            m.change_seen_count
+                .set(USize(m.change_seen_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: increment by one frame; tracked: #121
         }
         // E8 adapt, per-phase EMA: fold each phase's per-frame total (summed
         // across this frame's morsels by `dispatch_trunks`) into its EMA with the
         // same seed, then zero the accumulator for the next frame. Per-frame, so
         // a multi-morsel frame folds once, not once per morsel.
-        let nph = phase_count::<WuVals, Stores, GW, <D as PlanDims>::Units, <D as PlanDims>::Stores, <D as PlanDims>::AdjRow>().0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: phase-fold bound; tracked: #121
+        let nph = phase_count::<
+            WuVals,
+            Stores,
+            GW,
+            <D as PlanDims>::Units,
+            <D as PlanDims>::Stores,
+            <D as PlanDims>::AdjRow,
+        >()
+        .0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: phase-fold bound; tracked: #121
         let mut pe = 0; // lint:allow(no-bare-numeric) reason: phase-fold index; tracked: #121
         while pe < nph && pe < self.phase_ema.len() {
             let acc = self.phase_accum[pe].get();
@@ -1532,29 +1713,38 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
     /// `(phase, trunk)` in phase order, and the unit each core runs at G2-N.
     /// `Witnesses` is the per-unit projection list and `GW` the grouping witness
     /// list, both inferred at the call site.
-    pub fn run_one_trunk<Witnesses, GW, const TRUNK: usize>(&mut self) // lint:allow(no-bare-numeric) reason: const-generic trunk selector; tracked: #121
+    pub fn run_one_trunk<Witnesses, GW, const TRUNK: usize>(&mut self)
+    // lint:allow(no-bare-numeric) reason: const-generic trunk selector; tracked: #121
     where
         WuVals: RunGatedTrunk<
-            WuVals,
-            <Vals as BindingsFor>::Bindings,
-            Witnesses,
-            GW,
-            Stores,
-            <D as PlanDims>::Units,
-            <D as PlanDims>::Stores,
-            <D as PlanDims>::AdjRow,
-            TRUNK,
-            Here, // the walk starts at carrier position zero (Peano Here)
-        >,
+                WuVals,
+                <Vals as BindingsFor>::Bindings,
+                Witnesses,
+                GW,
+                Stores,
+                <D as PlanDims>::Units,
+                <D as PlanDims>::Stores,
+                <D as PlanDims>::AdjRow,
+                TRUNK,
+                Here, // the walk starts at carrier position zero (Peano Here)
+            >,
     {
         let total = self.record_count.0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: morsel length; tracked: #121
         self.virtual_epoch.fetch_add(1, Ordering::Relaxed); // lint:allow(no-bare-numeric) reason: per-pass epoch successor; tracked: #121
-        self.meta_block.metrics.pass_count.set(USize(self.meta_block.metrics.pass_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: per-pass meta pass_count; tracked: #121
+        self.meta_block
+            .metrics
+            .pass_count
+            .set(USize(self.meta_block.metrics.pass_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: per-pass meta pass_count; tracked: #121
         let epoch = USize(self.virtual_epoch.load(Ordering::Relaxed));
         // No-skip entry: every member of the trunk runs (all-ones dirty mask).
         let all = <D as PlanDims>::AdjRow::default().bitnot();
-        self.wu_values
-            .run_trunk(&self.bindings, &self.meta_block, MorselRange::new(USize::ZERO, USize(total)), all, epoch);
+        self.wu_values.run_trunk(
+            &self.bindings,
+            &self.meta_block,
+            MorselRange::new(USize::ZERO, USize(total)),
+            all,
+            epoch,
+        );
     }
 
     /// Dispatch one trunk's monomorphised program fiber-outer/morsel-inner: walk
@@ -1572,32 +1762,41 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
     /// At `record_count == 0` the loop runs zero windows (vs `run_one_trunk`'s one
     /// call over `[0, 0)`); both are no-ops because the per-record body never fires
     /// at zero records, so the behaviours coincide.
-    pub fn run_one_trunk_windowed<Witnesses, GW, const TRUNK: usize>(&mut self, window: USize) // lint:allow(no-bare-numeric) reason: const-generic trunk selector; tracked: #121
+    pub fn run_one_trunk_windowed<Witnesses, GW, const TRUNK: usize>(&mut self, window: USize)
+    // lint:allow(no-bare-numeric) reason: const-generic trunk selector; tracked: #121
     where
         WuVals: RunGatedTrunk<
-            WuVals,
-            <Vals as BindingsFor>::Bindings,
-            Witnesses,
-            GW,
-            Stores,
-            <D as PlanDims>::Units,
-            <D as PlanDims>::Stores,
-            <D as PlanDims>::AdjRow,
-            TRUNK,
-            Here,
-        >,
+                WuVals,
+                <Vals as BindingsFor>::Bindings,
+                Witnesses,
+                GW,
+                Stores,
+                <D as PlanDims>::Units,
+                <D as PlanDims>::Stores,
+                <D as PlanDims>::AdjRow,
+                TRUNK,
+                Here,
+            >,
     {
         let total = self.record_count.0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: morsel length; tracked: #121
         self.virtual_epoch.fetch_add(1, Ordering::Relaxed); // lint:allow(no-bare-numeric) reason: per-pass epoch successor; tracked: #121
-        self.meta_block.metrics.pass_count.set(USize(self.meta_block.metrics.pass_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: per-pass meta pass_count; tracked: #121
+        self.meta_block
+            .metrics
+            .pass_count
+            .set(USize(self.meta_block.metrics.pass_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: per-pass meta pass_count; tracked: #121
         let epoch = USize(self.virtual_epoch.load(Ordering::Relaxed));
         let all = <D as PlanDims>::AdjRow::default().bitnot();
         let w = window.0.max(1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: window floor; tracked: #121
         let mut start = 0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: morsel cursor; tracked: #121
         while start < total {
             let len = w.min(total - start); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: clamped window length; tracked: #121
-            self.wu_values
-                .run_trunk(&self.bindings, &self.meta_block, MorselRange::new(USize(start), USize(len)), all, epoch);
+            self.wu_values.run_trunk(
+                &self.bindings,
+                &self.meta_block,
+                MorselRange::new(USize(start), USize(len)),
+                all,
+                epoch,
+            );
             start += len; // lint:allow(no-bare-numeric) reason: advance cursor; tracked: #121
         }
     }
@@ -1617,28 +1816,36 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
     pub fn run_all_trunks<Witnesses, GW>(&mut self)
     where
         WuVals: RunTrunkDispatch<
-            WuVals,
-            <Vals as BindingsFor>::Bindings,
-            Witnesses,
-            GW,
-            Stores,
-            <D as PlanDims>::Units,
-            <D as PlanDims>::Stores,
-            <D as PlanDims>::AdjRow,
-            0, // the walk starts at carrier position zero // lint:allow(no-bare-numeric) reason: const-generic entry position; tracked: #121
-        >,
+                WuVals,
+                <Vals as BindingsFor>::Bindings,
+                Witnesses,
+                GW,
+                Stores,
+                <D as PlanDims>::Units,
+                <D as PlanDims>::Stores,
+                <D as PlanDims>::AdjRow,
+                0, // the walk starts at carrier position zero // lint:allow(no-bare-numeric) reason: const-generic entry position; tracked: #121
+            >,
         WuVals: BundleMasks<Stores, GW, <D as PlanDims>::Stores>,
         <D as PlanDims>::Units: ConstCapacity,
         <D as PlanDims>::AdjRow: BitAccess + Identity,
     {
         let total = self.record_count.0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: morsel length; tracked: #121
         self.virtual_epoch.fetch_add(1, Ordering::Relaxed); // lint:allow(no-bare-numeric) reason: per-pass epoch successor; tracked: #121
-        self.meta_block.metrics.pass_count.set(USize(self.meta_block.metrics.pass_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: per-pass meta pass_count; tracked: #121
+        self.meta_block
+            .metrics
+            .pass_count
+            .set(USize(self.meta_block.metrics.pass_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: per-pass meta pass_count; tracked: #121
         let epoch = USize(self.virtual_epoch.load(Ordering::Relaxed));
         // No-skip: every member runs (all-ones dirty mask).
         let all = <D as PlanDims>::AdjRow::default().bitnot();
         // No-skip entry: run every band including the plan band (plan_dirty=true).
-        self.dispatch_trunks::<Witnesses, GW, _>(MorselRange::new(USize::ZERO, USize(total)), all, epoch, Bool::TRUE);
+        self.dispatch_trunks::<Witnesses, GW, _>(
+            MorselRange::new(USize::ZERO, USize(total)),
+            all,
+            epoch,
+            Bool::TRUE,
+        );
     }
 
     /// Phase-loop core of the per-trunk dispatch: for each phase pass walk the
@@ -1653,16 +1860,16 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         plan_dirty: Bool,
     ) where
         WuVals: RunTrunkDispatch<
-            WuVals,
-            <Vals as BindingsFor>::Bindings,
-            Witnesses,
-            GW,
-            Stores,
-            <D as PlanDims>::Units,
-            <D as PlanDims>::Stores,
-            <D as PlanDims>::AdjRow,
-            0, // lint:allow(no-bare-numeric) reason: const-generic entry position; tracked: #121
-        >,
+                WuVals,
+                <Vals as BindingsFor>::Bindings,
+                Witnesses,
+                GW,
+                Stores,
+                <D as PlanDims>::Units,
+                <D as PlanDims>::Stores,
+                <D as PlanDims>::AdjRow,
+                0, // lint:allow(no-bare-numeric) reason: const-generic entry position; tracked: #121
+            >,
         WuVals: BundleMasks<Stores, GW, <D as PlanDims>::Stores>,
         <D as PlanDims>::Units: ConstCapacity,
         <D as PlanDims>::AdjRow: BitAccess + Identity,
@@ -1670,7 +1877,15 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         // Phase-loop bound = the const grouping's phase count, the same axis the
         // dispatcher's per-trunk phase gate reads, so every trunk-root fires in
         // exactly one pass.
-        let nphases = phase_count::<WuVals, Stores, GW, <D as PlanDims>::Units, <D as PlanDims>::Stores, <D as PlanDims>::AdjRow>().0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: phase-loop bound; tracked: #121
+        let nphases = phase_count::<
+            WuVals,
+            Stores,
+            GW,
+            <D as PlanDims>::Units,
+            <D as PlanDims>::Stores,
+            <D as PlanDims>::AdjRow,
+        >()
+        .0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: phase-loop bound; tracked: #121
         // E4 slice 2 (self-hosting meta pipeline): the rank-outer grouping places
         // `OnMeta<PlanStage>` units in the leading plan band (phases
         // `0..plan_phase_count`). On a clean frame (not plan-dirty) the kernel skips
@@ -1681,7 +1896,15 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         let start = if plan_dirty.0 {
             0 // lint:allow(no-bare-numeric) reason: plan-dirty frame runs the plan band; tracked: #121
         } else {
-            plan_phase_count::<WuVals, Stores, GW, <D as PlanDims>::Units, <D as PlanDims>::Stores, <D as PlanDims>::AdjRow>().0 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: skip the leading plan band on a clean frame; tracked: #121
+            plan_phase_count::<
+                WuVals,
+                Stores,
+                GW,
+                <D as PlanDims>::Units,
+                <D as PlanDims>::Stores,
+                <D as PlanDims>::AdjRow,
+            >()
+            .0 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: skip the leading plan band on a clean frame; tracked: #121
         };
         // E8 adapt, per-phase timing: `dispatch_trunks` runs once per morsel, so
         // ADD each phase's per-morsel duration into the per-frame accumulator;
@@ -1691,8 +1914,15 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         let mut p = start; // lint:allow(no-bare-numeric) reason: phase-pass index; tracked: #121
         while p < nphases {
             let t0 = self.clock.now_ns().to_raw(); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: raw nanos for the duration delta; tracked: #121
-            self.wu_values
-                .dispatch(&self.wu_values, USize(p), &self.meta_block, &self.bindings, morsel, dirty, epoch);
+            self.wu_values.dispatch(
+                &self.wu_values,
+                USize(p),
+                &self.meta_block,
+                &self.bindings,
+                morsel,
+                dirty,
+                epoch,
+            );
             let dur = self.clock.now_ns().to_raw().saturating_sub(t0); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: monotonic phase-slice delta; tracked: #121
             if p < self.phase_accum.len() {
                 let slot = &self.phase_accum[p];
@@ -1736,16 +1966,16 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         Cfg::Out: Default,
         WuVals: RunFiber<<Vals as BindingsFor>::Bindings, Witnesses>,
         WuVals: RunTrunkDispatch<
-            WuVals,
-            <Vals as BindingsFor>::Bindings,
-            Witnesses,
-            GW,
-            Stores,
-            <D as PlanDims>::Units,
-            <D as PlanDims>::Stores,
-            <D as PlanDims>::AdjRow,
-            0, // lint:allow(no-bare-numeric) reason: const-generic entry position; tracked: #121
-        >,
+                WuVals,
+                <Vals as BindingsFor>::Bindings,
+                Witnesses,
+                GW,
+                Stores,
+                <D as PlanDims>::Units,
+                <D as PlanDims>::Stores,
+                <D as PlanDims>::AdjRow,
+                0, // lint:allow(no-bare-numeric) reason: const-generic entry position; tracked: #121
+            >,
         WuVals: BundleMasks<Stores, GW, <D as PlanDims>::Stores>,
         <D as PlanDims>::Units: ConstCapacity,
         <D as PlanDims>::AdjRow: BitAccess + Identity,
@@ -1807,7 +2037,10 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
                 // SAFETY: pinned, stable address; the ctx outlives every worker
                 // (Drop joins via await_exit before teardown).
                 unsafe {
-                    (*me).worker_ctxs[c] = WorkerCtx { sched: me as *const (), core_id: c };
+                    (*me).worker_ctxs[c] = WorkerCtx {
+                        sched: me as *const (),
+                        core_id: c,
+                    };
                 }
                 let cp = SendCtxPtr(unsafe { &(*me).worker_ctxs[c] as *const WorkerCtx });
                 pool.spawn(move || {
@@ -1839,7 +2072,11 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         // SAFETY: every worker is parked between frames; exclusive field write.
         unsafe {
             (*me).virtual_epoch.fetch_add(1, Ordering::Relaxed); // lint:allow(no-bare-numeric) reason: per-frame epoch successor; tracked: #121
-            (*me).meta_block.metrics.pass_count.set(USize((*me).meta_block.metrics.pass_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: per-frame meta pass_count; tracked: #121
+            (*me)
+                .meta_block
+                .metrics
+                .pass_count
+                .set(USize((*me).meta_block.metrics.pass_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: per-frame meta pass_count; tracked: #121
         }
         // E4 parity, unit-outer path: the main thread is the designated core for
         // the meta bands, with the frame publish/await pair as the two ordering
@@ -1849,6 +2086,21 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         // bands dispatch after the await plus merge below. `core = 0, ncores =
         // 1` makes this thread own every trunk in the dispatched phases. The
         // band ranges are const and empty for a no-meta carrier.
+        // Swap spec S2, parallel path: consume the plan-dirty bits and
+        // publish the band decision while every worker is parked, so the
+        // worker phase loops and the leading-band dispatch below agree.
+        // SAFETY: between frames; exclusive field access.
+        let plan_dirty_frame = unsafe {
+            let mut swapped = false;
+            for bit in (*me).plan_dirty.as_ref() {
+                if bit.swap(false, Ordering::Relaxed) {
+                    swapped = true;
+                }
+            }
+            let dirty = (*me).first_frame.load(Ordering::Relaxed) || swapped;
+            (*me).plan_band.store(dirty, Ordering::Relaxed);
+            dirty
+        };
         let unit_outer = unsafe { (*me).carrier_unit_outer() }.0;
         let pre_phases = pre_consumer_phase_count::<
             WuVals,
@@ -1860,7 +2112,7 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         >()
         .0; // lint:allow(no-bare-numeric) reason: leading-band loop bound; tracked: #121
         if unit_outer && pre_phases > 0 {
-            let start = if unsafe { (*me).first_frame.load(Ordering::Relaxed) } {
+            let start = if plan_dirty_frame {
                 0 // lint:allow(no-bare-numeric) reason: plan-dirty frame runs the plan band; tracked: #121
             } else {
                 plan_phase_count::<
@@ -1907,7 +2159,7 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         // helpers only touch its atomics.
         let pool_frame = unsafe { &(*me).pool };
         frame_publish(pool_frame);
-        frame_await_done(pool_frame, ncores);
+        frame_await_done(pool_frame, ncores, Cfg::WAKE_SPIN_BUDGET);
         // Deviation 9: for the unit-outer accumulator carrier, each worker
         // appended into its own per-core region of the reserved buffer and
         // published its per-accumulator live counts. Forward-compact those
@@ -1920,14 +2172,16 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         if unsafe { (*me).carrier_unit_outer() }.0 {
             let total0 = unsafe { (*me).record_count.0 }; // lint:allow(no-bare-numeric) reason: frame record count; tracked: #121
             let ncores0 = ncores.0.max(1); // lint:allow(no-bare-numeric) reason: avoid div by zero; tracked: #121
-            let per = (total0 + ncores0 - 1) / ncores0; // lint:allow(no-bare-numeric) reason: ceil record slice; tracked: #121
+            // Same definition the workers used for their region boundaries.
+            let per = accum_per(USize(total0), USize(ncores0)).0; // lint:allow(no-bare-numeric) reason: region stride; tracked: #121
             let mut live = [USize::ZERO; MAX_CORES * GATE2_MAX_ACCUMS];
             let mut c = 0; // lint:allow(no-bare-numeric) reason: core index; tracked: #121
             while c < ncores0 {
                 let mut a = 0; // lint:allow(no-bare-numeric) reason: accum index; tracked: #121
                 while a < GATE2_MAX_ACCUMS {
                     let slot = c * GATE2_MAX_ACCUMS + a; // lint:allow(no-bare-numeric) reason: flat (core,accum) index; tracked: #121
-                    live[slot] = USize(unsafe { (*me).gate2_accum_live[slot].load(Ordering::Relaxed) }); // lint:allow(no-bare-numeric) reason: load published live count; tracked: #121
+                    live[slot] =
+                        USize(unsafe { (*me).gate2_accum_live[slot].load(Ordering::Relaxed) }); // lint:allow(no-bare-numeric) reason: load published live count; tracked: #121
                     a += 1; // lint:allow(no-bare-numeric) reason: index step; tracked: #121
                 }
                 c += 1; // lint:allow(no-bare-numeric) reason: index step; tracked: #121
@@ -2012,7 +2266,8 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
             ));
             m.last_record_count.set((*me).record_count);
             if stores_changed {
-                m.change_seen_count.set(USize(m.change_seen_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: increment by one frame; tracked: #121
+                m.change_seen_count
+                    .set(USize(m.change_seen_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: increment by one frame; tracked: #121
             }
             // E8 adapt, core-idle axis: reduce this frame's per-core barrier
             // idle (filled by the waist barrier follower parks) to the worst
@@ -2069,9 +2324,6 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
 
     fn run_core_phase<Witnesses, GW>(
         &self,
-        phase: &[USize],
-        trunk: &[USize],
-        n: USize,
         core: USize,
         p: USize,
         ncores: USize,
@@ -2080,16 +2332,16 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
     ) where
         WuVals: RunFiber<<Vals as BindingsFor>::Bindings, Witnesses>,
         WuVals: RunTrunkDispatch<
-            WuVals,
-            <Vals as BindingsFor>::Bindings,
-            Witnesses,
-            GW,
-            Stores,
-            <D as PlanDims>::Units,
-            <D as PlanDims>::Stores,
-            <D as PlanDims>::AdjRow,
-            0, // lint:allow(no-bare-numeric) reason: const-generic entry position; tracked: #121
-        >,
+                WuVals,
+                <Vals as BindingsFor>::Bindings,
+                Witnesses,
+                GW,
+                Stores,
+                <D as PlanDims>::Units,
+                <D as PlanDims>::Stores,
+                <D as PlanDims>::AdjRow,
+                0, // lint:allow(no-bare-numeric) reason: const-generic entry position; tracked: #121
+            >,
         WuVals: BundleMasks<Stores, GW, <D as PlanDims>::Stores>,
         <D as PlanDims>::Units: ConstCapacity,
         <D as PlanDims>::AdjRow: BitAccess + Identity,
@@ -2099,37 +2351,10 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         // happens-before).
         let epoch = USize(self.virtual_epoch.load(Ordering::Relaxed));
         let total = total.0; // lint:allow(no-bare-numeric) reason: frame record count; tracked: #121
-        let tphase = phase_trunk_count(phase, trunk, n, p);
         // All-ones dirty: run_parallel dispatches the pure-RAW path (no
         // incremental skip), so every owned member runs.
         let all = <<D as PlanDims>::AdjRow as Identity>::ZERO.bitnot();
-        if tphase.0 == 1 && ncores.0 > 1 && total > 0 {
-            // Head+tail convergence (spec :770): a single-trunk waist-bounded
-            // phase is the serial bottleneck. Ownership there is by record slice,
-            // not by trunk, so all cores walk the same one trunk (the whole-phase
-            // mask) over a disjoint ceil-sized record slice, the union covering
-            // [0, total) with no gap or overlap (surplus cores get lo == hi and
-            // do nothing). Stays on the runtime-mask run_gated path; the per-trunk
-            // dispatch_core walk cannot express a record-range split.
-            let per = (total + ncores.0 - 1) / ncores.0; // lint:allow(no-bare-numeric) reason: ceil record slice; tracked: #121
-            let lo = (core.0 * per).min(total); // lint:allow(no-bare-numeric) reason: slice start; tracked: #121
-            let hi = (lo + per).min(total); // lint:allow(no-bare-numeric) reason: slice end; tracked: #121
-            let mask = phase_mask::<<D as PlanDims>::AdjRow>(phase, n, p);
-            let msize = msize.0; // lint:allow(no-bare-numeric) reason: morsel length; tracked: #121
-            let mut start = lo; // lint:allow(no-bare-numeric) reason: morsel start; tracked: #121
-            while start < hi {
-                let len = msize.min(hi - start);
-                self.wu_values.run_gated(
-                    &self.bindings,
-                    &self.meta_block,
-                    MorselRange::new(USize(start), USize(len)),
-                    mask,
-                    USize::ZERO,
-                    epoch,
-                );
-                start += len; // lint:allow(no-bare-numeric) reason: morsel step; tracked: #121
-            }
-        } else if total == 0 {
+        if total == 0 {
             // Record-less frame: one empty-morsel dispatch_core so a resource-only
             // trunk this core owns runs exactly once.
             let mut rank = USize::ZERO;
@@ -2146,27 +2371,64 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
                 epoch,
             );
         } else {
-            // Ordinary trunk-rank ownership over the full range: per morsel,
-            // dispatch_core fires the trunks this core owns as compiled per-trunk
-            // monos (one runtime ownership branch per trunk-root, not per unit).
-            let msize = msize.0; // lint:allow(no-bare-numeric) reason: morsel length; tracked: #121
-            let mut start = 0; // lint:allow(no-bare-numeric) reason: morsel start; tracked: #121
-            while start < total {
-                let len = msize.min(total - start);
-                let mut rank = USize::ZERO;
-                self.wu_values.dispatch_core(
-                    &self.wu_values,
-                    p,
-                    core,
-                    ncores,
-                    &mut rank,
-                    &self.bindings,
-                    &self.meta_block,
-                    MorselRange::new(USize(start), USize(len)),
-                    all,
-                    epoch,
-                );
-                start += len; // lint:allow(no-bare-numeric) reason: morsel step; tracked: #121
+            // fiber-outer / morsel-inner (A4): dispatch_core fires the trunks this
+            // core owns as compiled per-trunk monos, and the walk is driven per
+            // fiber so each one windows the record range by its own plan-baked L1
+            // size rather than by one scalar shared across the phase. The fiber's
+            // member mask rides the `dirty` position, which is the per-unit member
+            // gate `RunGatedTrunk` already consults, so a fiber-restricted mask
+            // runs exactly that fiber's units.
+            // Ownership survives the per-fiber calls because `rank` advances for
+            // every in-phase root independently of the mask and is reset per call,
+            // so each core resolves the same trunk set every time.
+            let descriptors = self.fiber_dispatch.as_ref();
+            let fcount = self.fiber_dispatch_count.0.min(descriptors.len()); // lint:allow(no-bare-numeric) reason: fiber descriptor count; tracked: #121
+            let order = self.topo_order.as_ref();
+            // Same emptiness guard `run` carries: the dispatch mask is the union
+            // of the per-fiber masks, so live units but no fiber descriptors
+            // would silently dispatch nothing rather than run everything.
+            debug_assert!(
+                self.topo_count.0 == 0 || fcount > 0, // lint:allow(no-bare-numeric) reason: emptiness guard; tracked: #121
+                "run_core_phase: live units but no fiber descriptors; the plan's fiber partition never reached the scheduler"
+            );
+            let msize = msize.0; // lint:allow(no-bare-numeric) reason: zero-window fallback length; tracked: #121
+            let mut fi = 0; // lint:allow(no-bare-numeric) reason: fiber index; tracked: #121
+            while fi < fcount {
+                let desc = descriptors[fi];
+                // FIXME: the member mask is rebuilt per (phase, fiber) here and in
+                // `run`; plan-baking the masks plus a fiber-to-phase map would also
+                // skip the walks for fibers outside this phase. Tracked: #340.
+                let mut fmask = <D as PlanDims>::AdjRow::default();
+                let kend = (desc.start.0 + desc.len.0).min(order.len()); // lint:allow(no-bare-numeric) reason: fiber slice end; tracked: #121
+                let mut k = desc.start.0; // lint:allow(no-bare-numeric) reason: fiber slice start; tracked: #121
+                while k < kend {
+                    fmask = fmask.with_bit_set(order[k]);
+                    k += 1; // lint:allow(no-bare-numeric) reason: index step; tracked: #121
+                }
+                let w = if desc.morsel_local.0 && desc.morsel_size.0 != 0 {
+                    desc.morsel_size.0
+                } else {
+                    msize
+                }; // lint:allow(no-bare-numeric) reason: window selection; tracked: #121
+                let mut start = 0; // lint:allow(no-bare-numeric) reason: morsel start; tracked: #121
+                while start < total {
+                    let len = w.min(total - start);
+                    let mut rank = USize::ZERO;
+                    self.wu_values.dispatch_core(
+                        &self.wu_values,
+                        p,
+                        core,
+                        ncores,
+                        &mut rank,
+                        &self.bindings,
+                        &self.meta_block,
+                        MorselRange::new(USize(start), USize(len)),
+                        fmask,
+                        epoch,
+                    );
+                    start += len; // lint:allow(no-bare-numeric) reason: morsel step; tracked: #121
+                }
+                fi += 1; // lint:allow(no-bare-numeric) reason: fiber index step; tracked: #121
             }
         }
     }
@@ -2206,7 +2468,12 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         WuCons<ChainWu<<WuVals as FuseCarrier>::Chain>, WuNil>:
             RunFiber<<Vals as BindingsFor>::Bindings, W2>,
     {
-        let _ = (&self.plan_dirty, &self.plan_cache, &self.topo_order, &self.topo_count);
+        let _ = (
+            &self.plan_dirty,
+            &self.plan_cache,
+            &self.topo_order,
+            &self.topo_count,
+        );
         // E8 adapt: sample the frame start; the cold-start state is the EMA
         // seed flag (the first frame stores its raw duration).
         let frame_start = self.clock.now_ns();
@@ -2222,7 +2489,10 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         // leaving its output column untouched.
         let dirty = self.dirty_units();
         self.virtual_epoch.fetch_add(1, Ordering::Relaxed); // lint:allow(no-bare-numeric) reason: per-pass epoch successor; tracked: #121
-        self.meta_block.metrics.pass_count.set(USize(self.meta_block.metrics.pass_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: per-pass meta pass_count; tracked: #121
+        self.meta_block
+            .metrics
+            .pass_count
+            .set(USize(self.meta_block.metrics.pass_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: per-pass meta pass_count; tracked: #121
         let epoch = USize(self.virtual_epoch.load(Ordering::Relaxed));
         let msize = Cfg::MORSEL_SIZE.0.max(1);
         let total = self.record_count.0;
@@ -2257,11 +2527,15 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
         // E8 adapt: fold this frame's duration into the pass-duration EMA.
         // Between frames, so the write needs no synchronisation.
         let m = &self.meta_block.metrics;
-        m.ema_pass_duration_ns
-            .set(fold_ema(m.ema_pass_duration_ns.get(), self.clock.now_ns() - frame_start, ema_seed));
+        m.ema_pass_duration_ns.set(fold_ema(
+            m.ema_pass_duration_ns.get(),
+            self.clock.now_ns() - frame_start,
+            ema_seed,
+        ));
         m.last_record_count.set(self.record_count);
         if stores_changed {
-            m.change_seen_count.set(USize(m.change_seen_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: increment by one frame; tracked: #121
+            m.change_seen_count
+                .set(USize(m.change_seen_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: increment by one frame; tracked: #121
         }
         Cfg::Out::default()
     }
@@ -2270,6 +2544,15 @@ impl<Cfg: RunCfg, WuVals, Vals: StoreValues + BindingsFor, CS: ColumnStorage, D:
     /// and integration tests walk the bindings nodes to confirm the
     /// moved-in resource values. Not part of the supported surface.
     #[doc(hidden)]
+    /// Test-only observability for the published plan-band decision:
+    /// true when the last frame entered (or the next first frame will
+    /// enter) the leading plan band. Same `__` contract as
+    /// `__bindings`: hidden from docs, not a consumer surface.
+    #[doc(hidden)]
+    pub fn __plan_band(&self) -> arvo::Bool {
+        arvo::Bool(self.plan_band.load(Ordering::Relaxed))
+    }
+
     pub fn __bindings(&self) -> &<Vals as BindingsFor>::Bindings {
         &self.bindings
     }
@@ -2401,17 +2684,19 @@ impl<Cfg: RunCfg> Default for Scheduler<Cfg, WuNil, SvEmpty, NullColumnStorage> 
                 FiberDispatch::default(),
             ),
             fiber_dispatch_count: USize::ZERO,
-            plan_dirty: <<DefaultPlanDims as PlanDims>::PlanAffecting as Capacity>::from_fn(|_| AtomicBool::new(false)),
+            plan_dirty: <<DefaultPlanDims as PlanDims>::PlanAffecting as Capacity>::from_fn(|_| {
+                AtomicBool::new(false)
+            }),
             plan_cache: PlanCache::new(),
-            predecessor_masks:
-                <<DefaultPlanDims as PlanDims>::Units as Capacity>::filled(
-                    <DefaultPlanDims as PlanDims>::AdjRow::default(),
-                ),
+            predecessor_masks: <<DefaultPlanDims as PlanDims>::Units as Capacity>::filled(
+                <DefaultPlanDims as PlanDims>::AdjRow::default(),
+            ),
             read_masks: <<DefaultPlanDims as PlanDims>::Units as Capacity>::filled(
                 AccessMask::empty(),
             ),
             store_dirty: Cell::new(AccessMask::empty()),
             first_frame: AtomicBool::new(true),
+            plan_band: AtomicBool::new(true),
             virtual_epoch: AtomicUsize::new(0),
             meta_block: MetaBlock::default(),
             clock: DefaultClock::new(),
@@ -2419,14 +2704,20 @@ impl<Cfg: RunCfg> Default for Scheduler<Cfg, WuNil, SvEmpty, NullColumnStorage> 
             storage: NullColumnStorage,
             wu_values: WuNil,
             pool: empty_pool_frame(),
-            worker_ctxs: [const { WorkerCtx { sched: core::ptr::null(), core_id: 0 } }; MAX_CORES], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: worker ctx init, core index; tracked: #121
+            worker_ctxs: [const {
+                WorkerCtx {
+                    sched: core::ptr::null(),
+                    core_id: 0,
+                }
+            }; MAX_CORES], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: worker ctx init, core index; tracked: #121
             spawned: Bool::FALSE,
             gate2_phase: [USize::ZERO; GATE2_MAX_UNITS],
             gate2_trunk: [USize::ZERO; GATE2_MAX_UNITS],
             gate2_n: USize::ZERO,
             gate2_nphases: USize::ZERO,
             gate2_ncores: USize::ZERO,
-            gate2_accum_live: [const { core::sync::atomic::AtomicUsize::new(0) }; MAX_CORES * GATE2_MAX_ACCUMS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic publish array init; tracked: #121
+            gate2_accum_live: [const { core::sync::atomic::AtomicUsize::new(0) };
+                MAX_CORES * GATE2_MAX_ACCUMS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic publish array init; tracked: #121
             phase_ema: [const { Cell::new(Nanos::from_raw(0)) }; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-phase EMA zero-init; tracked: #121
             phase_accum: [const { Cell::new(Nanos::from_raw(0)) }; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-phase accumulator zero-init; tracked: #121
             adapt_reconfigure: Cell::new(Bool::FALSE),
@@ -2487,12 +2778,11 @@ impl<Wus, Stores, Platform, Vals: StoreValues, WuVals, Clk>
         <P::Dispatch as RouterKind>::Kind: Place<P>,
         WuVals: WuAppend<P>,
     {
-        let (store_values, wu_values) =
-            <<P::Dispatch as RouterKind>::Kind as Place<P>>::place(
-                provider,
-                self.store_values,
-                self.wu_values,
-            );
+        let (store_values, wu_values) = <<P::Dispatch as RouterKind>::Kind as Place<P>>::place(
+            provider,
+            self.store_values,
+            self.wu_values,
+        );
         SchedulerBuilder {
             store_values,
             wu_values,
@@ -2532,7 +2822,8 @@ impl<Wus, Stores, Platform, Vals: StoreValues, WuVals, Clk>
     }
 }
 
-impl<Wus, Stores, Platform, Vals, WuVals, Clk> SchedulerBuilder<Wus, Stores, Platform, Vals, WuVals, Clk>
+impl<Wus, Stores, Platform, Vals, WuVals, Clk>
+    SchedulerBuilder<Wus, Stores, Platform, Vals, WuVals, Clk>
 where
     Wus: WorkUnitBundle,
     Stores: AccessSet
@@ -2558,14 +2849,17 @@ where
         self,
         storage: CS,
         record_count: USize,
-    ) -> notko::Outcome<Scheduler<DefaultRunCfg, WuVals, Vals, CS, DefaultPlanDims, Stores, Clk>, BuildError>
+    ) -> notko::Outcome<
+        Scheduler<DefaultRunCfg, WuVals, Vals, CS, DefaultPlanDims, Stores, Clk>,
+        BuildError,
+    >
     where
         Wus: BundleProject<
-            Stores,
-            BWit,
-            <DefaultPlanDims as PlanDims>::Units,
-            <DefaultPlanDims as PlanDims>::Stores,
-        >,
+                Stores,
+                BWit,
+                <DefaultPlanDims as PlanDims>::Units,
+                <DefaultPlanDims as PlanDims>::Stores,
+            >,
     {
         let wu_values = self.wu_values;
         // Compute the plan from the registered bundle before draining the
@@ -2584,7 +2878,12 @@ where
             derive_phase_dispatch_order(&plan);
         let mut storage = storage;
         let mut next_id = USize::ZERO;
-        match <Vals as DrainStores>::drain(self.store_values, &mut storage, &mut next_id, record_count) {
+        match <Vals as DrainStores>::drain(
+            self.store_values,
+            &mut storage,
+            &mut next_id,
+            record_count,
+        ) {
             notko::Outcome::Ok(bindings) => {
                 // Store-back the plan's flat pools at the `StoreId` namespace
                 // continued past the resource columns the drain reserved.
@@ -2601,12 +2900,15 @@ where
                     record_count,
                     fiber_dispatch,
                     fiber_dispatch_count,
-                    plan_dirty: <<DefaultPlanDims as PlanDims>::PlanAffecting as Capacity>::from_fn(|_| AtomicBool::new(false)),
+                    plan_dirty: <<DefaultPlanDims as PlanDims>::PlanAffecting as Capacity>::from_fn(
+                        |_| AtomicBool::new(false),
+                    ),
                     plan_cache: PlanCache::new(),
                     predecessor_masks: plan.predecessor_masks,
                     read_masks: plan.read_masks,
                     store_dirty: Cell::new(AccessMask::empty()),
                     first_frame: AtomicBool::new(true),
+                    plan_band: AtomicBool::new(true),
                     virtual_epoch: AtomicUsize::new(0),
                     meta_block: MetaBlock::default(),
                     clock: self.clock,
@@ -2614,17 +2916,23 @@ where
                     storage,
                     wu_values,
                     pool: empty_pool_frame(),
-                    worker_ctxs: [const { WorkerCtx { sched: core::ptr::null(), core_id: 0 } }; MAX_CORES], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: worker ctx init, core index; tracked: #121
+                    worker_ctxs: [const {
+                        WorkerCtx {
+                            sched: core::ptr::null(),
+                            core_id: 0,
+                        }
+                    }; MAX_CORES], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: worker ctx init, core index; tracked: #121
                     spawned: Bool::FALSE,
                     gate2_phase: [USize::ZERO; GATE2_MAX_UNITS],
                     gate2_trunk: [USize::ZERO; GATE2_MAX_UNITS],
                     gate2_n: USize::ZERO,
                     gate2_nphases: USize::ZERO,
                     gate2_ncores: USize::ZERO,
-            gate2_accum_live: [const { core::sync::atomic::AtomicUsize::new(0) }; MAX_CORES * GATE2_MAX_ACCUMS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic publish array init; tracked: #121
-            phase_ema: [const { Cell::new(Nanos::from_raw(0)) }; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-phase EMA zero-init; tracked: #121
-            phase_accum: [const { Cell::new(Nanos::from_raw(0)) }; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-phase accumulator zero-init; tracked: #121
-            adapt_reconfigure: Cell::new(Bool::FALSE),
+                    gate2_accum_live: [const { core::sync::atomic::AtomicUsize::new(0) };
+                        MAX_CORES * GATE2_MAX_ACCUMS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic publish array init; tracked: #121
+                    phase_ema: [const { Cell::new(Nanos::from_raw(0)) }; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-phase EMA zero-init; tracked: #121
+                    phase_accum: [const { Cell::new(Nanos::from_raw(0)) }; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-phase accumulator zero-init; tracked: #121
+                    adapt_reconfigure: Cell::new(Bool::FALSE),
                     _pin: PhantomPinned,
                 })
             }
@@ -2644,11 +2952,11 @@ where
     ) -> notko::Outcome<Scheduler<Cfg, WuVals, Vals, CS, DefaultPlanDims, Stores, Clk>, BuildError>
     where
         Wus: BundleProject<
-            Stores,
-            BWit,
-            <DefaultPlanDims as PlanDims>::Units,
-            <DefaultPlanDims as PlanDims>::Stores,
-        >,
+                Stores,
+                BWit,
+                <DefaultPlanDims as PlanDims>::Units,
+                <DefaultPlanDims as PlanDims>::Stores,
+            >,
     {
         let wu_values = self.wu_values;
         // Compute the plan from the registered bundle before draining the
@@ -2667,7 +2975,12 @@ where
             derive_phase_dispatch_order(&plan);
         let mut storage = storage;
         let mut next_id = USize::ZERO;
-        match <Vals as DrainStores>::drain(self.store_values, &mut storage, &mut next_id, record_count) {
+        match <Vals as DrainStores>::drain(
+            self.store_values,
+            &mut storage,
+            &mut next_id,
+            record_count,
+        ) {
             notko::Outcome::Ok(bindings) => {
                 // Store-back the plan's flat pools at the `StoreId` namespace
                 // continued past the resource columns the drain reserved.
@@ -2684,12 +2997,15 @@ where
                     record_count,
                     fiber_dispatch,
                     fiber_dispatch_count,
-                    plan_dirty: <<DefaultPlanDims as PlanDims>::PlanAffecting as Capacity>::from_fn(|_| AtomicBool::new(false)),
+                    plan_dirty: <<DefaultPlanDims as PlanDims>::PlanAffecting as Capacity>::from_fn(
+                        |_| AtomicBool::new(false),
+                    ),
                     plan_cache: PlanCache::new(),
                     predecessor_masks: plan.predecessor_masks,
                     read_masks: plan.read_masks,
                     store_dirty: Cell::new(AccessMask::empty()),
                     first_frame: AtomicBool::new(true),
+                    plan_band: AtomicBool::new(true),
                     virtual_epoch: AtomicUsize::new(0),
                     meta_block: MetaBlock::default(),
                     clock: self.clock,
@@ -2697,17 +3013,23 @@ where
                     storage,
                     wu_values,
                     pool: empty_pool_frame(),
-                    worker_ctxs: [const { WorkerCtx { sched: core::ptr::null(), core_id: 0 } }; MAX_CORES], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: worker ctx init, core index; tracked: #121
+                    worker_ctxs: [const {
+                        WorkerCtx {
+                            sched: core::ptr::null(),
+                            core_id: 0,
+                        }
+                    }; MAX_CORES], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: worker ctx init, core index; tracked: #121
                     spawned: Bool::FALSE,
                     gate2_phase: [USize::ZERO; GATE2_MAX_UNITS],
                     gate2_trunk: [USize::ZERO; GATE2_MAX_UNITS],
                     gate2_n: USize::ZERO,
                     gate2_nphases: USize::ZERO,
                     gate2_ncores: USize::ZERO,
-            gate2_accum_live: [const { core::sync::atomic::AtomicUsize::new(0) }; MAX_CORES * GATE2_MAX_ACCUMS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic publish array init; tracked: #121
-            phase_ema: [const { Cell::new(Nanos::from_raw(0)) }; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-phase EMA zero-init; tracked: #121
-            phase_accum: [const { Cell::new(Nanos::from_raw(0)) }; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-phase accumulator zero-init; tracked: #121
-            adapt_reconfigure: Cell::new(Bool::FALSE),
+                    gate2_accum_live: [const { core::sync::atomic::AtomicUsize::new(0) };
+                        MAX_CORES * GATE2_MAX_ACCUMS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic publish array init; tracked: #121
+                    phase_ema: [const { Cell::new(Nanos::from_raw(0)) }; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-phase EMA zero-init; tracked: #121
+                    phase_accum: [const { Cell::new(Nanos::from_raw(0)) }; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-phase accumulator zero-init; tracked: #121
+                    adapt_reconfigure: Cell::new(Bool::FALSE),
                     _pin: PhantomPinned,
                 })
             }

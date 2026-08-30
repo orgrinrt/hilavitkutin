@@ -20,12 +20,12 @@
 use core::marker::PhantomData;
 use core::ops::{Add, Mul, Sub};
 
-use arvo::traits::{FromConstant, TotalOrd};
 use arvo::USize;
+use arvo::traits::{FromConstant, TotalOrd};
 use arvo_bitmask::NodeId;
 use arvo_sparse::{BidirectionalSparseAdjacency, CsrBidirectional, SparseAdjacency};
 use arvo_spectral::LinearOperator;
-use arvo_tensor::{cap_size, Capacity};
+use arvo_tensor::{Capacity, cap_size};
 
 use crate::plan::graph::EdgeKind;
 
@@ -48,7 +48,10 @@ where
     /// Wrap a bidirectional CSR as a symmetric Laplacian operator.
     #[inline]
     pub fn new(adjacency: &'data CsrBidirectional<U, E, EdgeKind>) -> Self {
-        Self { adjacency, _f: PhantomData }
+        Self {
+            adjacency,
+            _f: PhantomData,
+        }
     }
 
     /// Gershgorin upper bound on `lambda_max(L)`: `max_i 2 * deg(i)`,
@@ -82,8 +85,7 @@ where
     }
 }
 
-impl<'data, U: Capacity, E: Capacity, F> LinearOperator<F, U>
-    for SymmetricLaplacian<'data, U, E, F>
+impl<'data, U: Capacity, E: Capacity, F> LinearOperator<F, U> for SymmetricLaplacian<'data, U, E, F>
 where
     F: Add<Output = F> + Sub<Output = F> + Copy + FromConstant,
 {

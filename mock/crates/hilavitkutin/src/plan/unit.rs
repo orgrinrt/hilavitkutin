@@ -63,7 +63,9 @@ pub struct CostTable<C: Capacity> {
 impl<C: Capacity> CostTable<C> {
     /// All-zero cost table.
     pub fn new() -> Self {
-        Self { estimated_cost_ns: <C as Capacity>::filled(USize::ZERO) }
+        Self {
+            estimated_cost_ns: <C as Capacity>::filled(USize::ZERO),
+        }
     }
 }
 

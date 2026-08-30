@@ -27,7 +27,7 @@ fn os_memory_allocate_deallocate_roundtrip() {
     }
 
     // SAFETY: ptr came from allocate with the same len.
-    unsafe { provider.deallocate(ptr, len) };
+    unsafe { provider.deallocate(ptr, len, align) };
 }
 
 #[test]
@@ -36,7 +36,8 @@ fn os_memory_protect_is_ok_stub() {
     let len = USize(4096);
 
     // SAFETY: see roundtrip test.
-    let ptr = unsafe { provider.allocate(len, USize(16)) };
+    let align = USize(16);
+    let ptr = unsafe { provider.allocate(len, align) };
     assert!(!ptr.is_null());
 
     // Stub: protect is a no-op this round. Verify it doesn't
@@ -45,7 +46,7 @@ fn os_memory_protect_is_ok_stub() {
     unsafe { provider.protect(ptr, len, Bool::TRUE, Bool::TRUE) };
 
     // SAFETY: ptr is still valid after the stubbed protect.
-    unsafe { provider.deallocate(ptr, len) };
+    unsafe { provider.deallocate(ptr, len, align) };
 }
 
 #[test]

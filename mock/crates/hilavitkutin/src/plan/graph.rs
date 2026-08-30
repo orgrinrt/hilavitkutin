@@ -24,7 +24,7 @@ use arvo::strategy::Identity;
 use arvo::{Bool, USize};
 use arvo_bitmask::NodeId;
 use arvo_sparse::{Csr, CsrBidirectional};
-use arvo_tensor::{cap_size, Capacity};
+use arvo_tensor::{Capacity, cap_size};
 use core::fmt;
 
 use hilavitkutin_api::UnitId;
@@ -91,7 +91,8 @@ impl<D: PlanDims> DependencyGraph<D> {
     /// it's `edge_count`. Visible to sibling plan modules so the
     /// 13-step chain can scan a single row without reimplementing
     /// the boundary logic at every call site.
-    pub(super) fn end_for(&self, i: usize) -> usize { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal indexing; rust grammar requires usize; tracked: #72
+    pub(super) fn end_for(&self, i: usize) -> usize {
+        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal indexing; rust grammar requires usize; tracked: #72
         let next = i + 1;
         let count = self.unit_count.0;
         if next < count {
@@ -107,7 +108,8 @@ impl<D: PlanDims> DependencyGraph<D> {
     pub fn has_edge(&self, from: USize, to: USize) -> Bool {
         let f = from.0;
         let t = to.0;
-        if f >= cap_size(<D::Units as Capacity>::CAP) || t >= cap_size(<D::Units as Capacity>::CAP) {
+        if f >= cap_size(<D::Units as Capacity>::CAP) || t >= cap_size(<D::Units as Capacity>::CAP)
+        {
             return Bool::FALSE;
         }
         if f >= self.unit_count.0 {
@@ -135,7 +137,8 @@ impl<D: PlanDims> DependencyGraph<D> {
     pub fn add_edge_kind(&mut self, from: USize, to: USize, kind: EdgeKind) {
         let f = from.0;
         let t = to.0;
-        if f >= cap_size(<D::Units as Capacity>::CAP) || t >= cap_size(<D::Units as Capacity>::CAP) {
+        if f >= cap_size(<D::Units as Capacity>::CAP) || t >= cap_size(<D::Units as Capacity>::CAP)
+        {
             return;
         }
         if self.edge_count.0 >= cap_size(<D::Edges as Capacity>::CAP) {
@@ -212,8 +215,9 @@ impl<D: PlanDims> DependencyGraph<D> {
         csr.row_ptr.as_mut()[..uc].copy_from_slice(&self.row_offsets.as_ref()[..uc]);
         csr.values.as_mut()[..ec].copy_from_slice(&self.edge_kinds.as_ref()[..ec]);
         // destinations convert from the typed UnitId to the arvo NodeId.
-        for (dst, src) in
-            csr.col_idx.as_mut()[..ec].iter_mut().zip(self.col_indices.as_ref()[..ec].iter())
+        for (dst, src) in csr.col_idx.as_mut()[..ec]
+            .iter_mut()
+            .zip(self.col_indices.as_ref()[..ec].iter())
         {
             *dst = NodeId::new(src.index());
         }

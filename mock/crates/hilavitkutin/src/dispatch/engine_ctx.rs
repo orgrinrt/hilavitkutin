@@ -32,7 +32,6 @@ use core::marker::PhantomData;
 
 use arvo::strategy::Identity;
 use arvo::{Bool, USize};
-use hilavitkutin_api::{Always, On, OnMeta};
 use hilavitkutin_api::access::{AccessSet, Cons, Contains, Empty};
 use hilavitkutin_api::column_value::ColumnValue;
 use hilavitkutin_api::context::{
@@ -42,6 +41,7 @@ use hilavitkutin_api::context::{
 };
 use hilavitkutin_api::meta::MetaAccess;
 use hilavitkutin_api::store::{Accum, Column, Resource, Virtual};
+use hilavitkutin_api::{Always, On, OnMeta};
 
 use crate::dispatch::morsel::MorselRange;
 use crate::meta::{MetaBlock, MetaField};
@@ -1071,7 +1071,17 @@ impl<'frame, V> MetaPtrFor<'frame> for OnMeta<V> {
 /// default never masks a mismatch: `project` and `RunFiber` force `WAccum`
 /// to the real projection of `W`, so a WU that declares an accumulator but
 /// omits the bundle fails to compile at the projection tie.
-pub struct EngineCtx<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum = AccPtrNil, WVirt = VirtNil, MP = MetaNil> {
+pub struct EngineCtx<
+    'frame,
+    R: AccessSet,
+    W: AccessSet,
+    RBundle,
+    RCols,
+    WCols,
+    WAccum = AccPtrNil,
+    WVirt = VirtNil,
+    MP = MetaNil,
+> {
     reads: RBundle,
     read_cols: RCols,
     write_cols: WCols,
@@ -1221,7 +1231,14 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, M
         // (`OnMeta` units), gaining the gated `meta::<T>()` accessor.
         let meta_ptr = <MP as BuildMetaPtr<'frame>>::build(meta_block);
         EngineCtx::from_projected(
-            reads, read_cols, write_cols, write_accums, write_virtuals, meta_ptr, epoch, morsel,
+            reads,
+            read_cols,
+            write_cols,
+            write_accums,
+            write_virtuals,
+            meta_ptr,
+            epoch,
+            morsel,
         )
     }
 }
@@ -1264,8 +1281,8 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt>
 
 // ResourceProviderApi: resolve `&T` via the resource bundle Selector.
 
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP> ResourceProviderApi<R>
-    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP>
+    ResourceProviderApi<R> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 {
     #[inline]
     fn resource<T: 'static, I>(&self) -> &T
@@ -1282,8 +1299,8 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, M
 // at the concrete WU call site (the bundle is a concrete cons-list there,
 // so exactly one index applies). No unsafe: the bundle holds the value
 // itself (the projection-time snapshot), and the borrow ties to `&self`.
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP, T: 'static, I> ResolveResource<T, I>
-    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP, T: 'static, I>
+    ResolveResource<T, I> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 where
     RBundle: SnapSelector<T, I>,
 {
@@ -1297,8 +1314,8 @@ where
 // offset. B3 treats the column buffer as `[T]`-shaped at stride
 // `size_of::<T>()`; sub-byte bitpacking is a later round.
 
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP> ColumnReaderApi<R>
-    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP>
+    ColumnReaderApi<R> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 {
     #[inline]
     unsafe fn read<T: ColumnValue, I>(&self, i: USize) -> T
@@ -1314,8 +1331,19 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, M
 
 // ResolveColumnRead: resolve the `ColumnPtr<T>` through the projected
 // column bundle's `ColSelector<T, I>` witness, read at the morsel offset.
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP, T: ColumnValue, I> ResolveColumnRead<T, I>
-    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
+impl<
+    'frame,
+    R: AccessSet,
+    W: AccessSet,
+    RBundle,
+    RCols,
+    WCols,
+    WAccum,
+    WVirt,
+    MP,
+    T: ColumnValue,
+    I,
+> ResolveColumnRead<T, I> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 where
     RCols: ColSelector<T, I>,
 {
@@ -1339,8 +1367,8 @@ where
 // ColumnWriterApi: resolve the column pointer, write at the morsel
 // offset. Same stride simplification as the reader.
 
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP> ColumnWriterApi<W>
-    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP>
+    ColumnWriterApi<W> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 {
     #[inline]
     unsafe fn write<T: ColumnValue, I>(&self, i: USize, v: T)
@@ -1357,8 +1385,19 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, M
 
 // ResolveColumnWrite: resolve the `ColumnPtr<T>` through the projected
 // column bundle's `ColSelector<T, I>` witness, write at the morsel offset.
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP, T: ColumnValue, I> ResolveColumnWrite<T, I>
-    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
+impl<
+    'frame,
+    R: AccessSet,
+    W: AccessSet,
+    RBundle,
+    RCols,
+    WCols,
+    WAccum,
+    WVirt,
+    MP,
+    T: ColumnValue,
+    I,
+> ResolveColumnWrite<T, I> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 where
     WCols: ColSelector<T, I>,
 {
@@ -1413,8 +1452,19 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, M
 // ResolveAccumAppend: resolve the `AccumColPtr<T>` through the projected
 // accumulator bundle's `AccumSelector<T, I>` witness, write at the live offset,
 // advance the live length through the borrowed `Cell`.
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP, T: ColumnValue, I>
-    ResolveAccumAppend<T, I> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
+impl<
+    'frame,
+    R: AccessSet,
+    W: AccessSet,
+    RBundle,
+    RCols,
+    WCols,
+    WAccum,
+    WVirt,
+    MP,
+    T: ColumnValue,
+    I,
+> ResolveAccumAppend<T, I> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 where
     WAccum: AccumSelector<T, I>,
 {
@@ -1459,8 +1509,8 @@ where
 // The `On<V>` consumer's trunk-gate reads the same cell from the bindings and
 // runs when `stamp == epoch`. Internal fire is non-atomic (spec :716-717).
 
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP> VirtualFirerApi<W>
-    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP>
+    VirtualFirerApi<W> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 {
     #[inline]
     fn fire<V: 'static, I>(&self)
@@ -1597,8 +1647,8 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, M
     }
 }
 
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP>
-    HasEach<R, W> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP> HasEach<R, W>
+    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 {
     type Provider = Self;
     #[inline(always)]
@@ -1607,8 +1657,8 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, M
     }
 }
 
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP>
-    HasBatch<R, W> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP> HasBatch<R, W>
+    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 {
     type Provider = Self;
     #[inline(always)]
@@ -1617,8 +1667,8 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, M
     }
 }
 
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP>
-    HasReduce<R, W> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP> HasReduce<R, W>
+    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 {
     type Provider = Self;
     #[inline(always)]
@@ -1627,8 +1677,8 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, M
     }
 }
 
-impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP>
-    HasAccumWriter<W> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP> HasAccumWriter<W>
+    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 {
     type Provider = Self;
     #[inline(always)]

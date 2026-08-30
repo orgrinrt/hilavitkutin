@@ -25,7 +25,10 @@ impl PlanCache {
     /// Construct an empty cache. The first `Scheduler::run` triggers
     /// recompute and populates the slot.
     pub const fn new() -> Self {
-        Self { _phantom: PhantomData, present: Bool::FALSE }
+        Self {
+            _phantom: PhantomData,
+            present: Bool::FALSE,
+        }
     }
 
     /// Is a cached plan available for reuse?
