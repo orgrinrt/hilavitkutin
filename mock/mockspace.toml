@@ -73,9 +73,16 @@ build = "error"
 push = "error"
 max_lines = "500"
 
-# --- Custom hilavitkutin lints (mock/lints/*.rs) ---------------------------
-# Hard errors: structural invariants. Violations must be fixed, never
-# suppressed except per-line with `// lint:allow(<name>) -- <reason>`.
+# --- The structural invariants ---------------------------------------------
+# Hard errors: violations must be fixed, never suppressed except per-line with
+# `// lint:allow(<name>) -- <reason>`.
+#
+# The five below come from the shared pack rather than from `mock/lints/`. The
+# local copies said the same things and were still on the trait shape the engine
+# carried before it split a lint by what it reads, so they stopped compiling and
+# took the whole gate down with them. What is configured here is the same set at
+# the same severity; only `no-dyn-dispatch` is spelled differently, the pack's
+# name for what was `no-dynamic-dispatch` here.
 
 [lints.no-std]
 commit = "error"
@@ -87,7 +94,7 @@ commit = "error"
 build = "error"
 push = "error"
 
-[lints.no-dynamic-dispatch]
+[lints.no-dyn-dispatch]
 commit = "error"
 build = "error"
 push = "error"
