@@ -27,6 +27,7 @@ mock/research/sketches/*/libsketch.rmeta
 # subprojects; their target/ does not nest under the parent /target rule).
 mock/research/sketches/*/target/
 mock/research/sketches/*/Cargo.lock
+mock/research/pre_seed/sketches/*/Cargo.lock
 mock/research/sketches/*/*/target/
 mock/benches/variants/*/target/
 mock/benches/variants/*/Cargo.lock
