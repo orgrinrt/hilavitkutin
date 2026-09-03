@@ -1,0 +1,50 @@
+6aaa22a1 refactor: revert the blob install from replace_value
+9d33c418 docs: plan the install revert
+716a4b64 chore: lock the doc changelist
+53961000 docs: state the member-by-member swap requirement
+fab21b19 docs: plan the swap-requirement design statement
+cf03d8b8 docs: open the round to revert the blob install
+6dc13c16 chore: close design round 202607192910
+7fae635f chore: lock the supersession deletion changelist
+5123e3c6 refactor: delete the superseded nested-carrier dispatch and second barrier
+cb91a685 docs: plan the superseded dispatch and barrier deletions
+cfd533f0 chore: lock the doc changelist
+a68f0832 docs: remove the superseded nested-carrier account
+e0876521 docs: plan removal of the superseded design paragraphs
+81c84ecf docs: open the round to delete superseded dispatch and barrier
+eff982a1 chore: close design round 202607192810
+37e0b76e chore: lock the spawn_fn deletion changelist
+166da028 docs: reframe r2 around supersession rather than reference count
+f6b8d757 refactor: delete the function-pointer spawn from both platform tiers
+7f337fc3 docs: plan the spawn_fn deletion
+83e92b43 chore: lock the doc changelist
+a9917c46 docs: record how the POSIX cast concern was resolved
+631e7a42 docs: open the round to retire the function-pointer spawn
+91a73498 chore: close design round 202607192710
+0f539a36 chore: lock the install arm changelist
+e4fa0118 feat: replace_value installs the value into the data plane
+414ae3f3 docs: correct the sketch, canon's swap language presupposes an unshipped model
+1b029259 docs: sketch finds the replace_value signature cannot express an install
+9f03a92d docs: plan the install arm probe
+05122870 chore: lock the doc changelist
+81ce05a2 docs: empty doc changelist pending the compile
+2e98f8d1 docs: open the round on the replace_resource install arm
+489e527a chore: close design round 202607192610
+a9c288b3 chore: lock the accumulator slice changelist
+c443cc81 docs: record the post-consolidation suite result
+12add685 refactor: derive the accumulator slice from one definition
+bdd7925c docs: plan the accumulator slice consolidation
+02f3c3e8 chore: lock the doc changelist
+248980a9 docs: state the shared-derivation invariant on the accumulator regions
+325bbe73 docs: open the round to unify the accumulator slice math
+690288f5 chore: close design round 202607192510
+6e32d845 chore: lock the thread pool deletion changelist
+7946543a docs: record the post-deletion suite result
+d0ff4400 docs: correct r2d, both slice sites share a total source
+c6892c26 docs: add r2d, consolidate the duplicated accumulator slice math
+aaaf3e51 refactor: delete the orphaned ThreadPool and ThreadPoolBuilder
+bba7db4e docs: plan the thread pool deletion
+c32ab992 chore: lock the doc changelist
+8e7c78f8 docs: empty doc changelist, no template names these types
+873d26df docs: open the round to delete the orphaned thread pool
+50c9f7d4 chore: close design round 202607192410

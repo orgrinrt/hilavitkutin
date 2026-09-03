@@ -1,0 +1,26 @@
+[workspace]
+
+[package]
+name = "grid_common"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# Shared workload for the rcm_rivals bench: the 3x4 grid sharing topology
+# all five ordering-theory arms drive. The variants (riv_rcm, riv_spec,
+# riv_snake, riv_rowm, riv_scr) differ only in WU registration order,
+# which is the carrier order and hence the dispatch order; everything
+# else lives here so the five cdylibs measure the same machinery.
+# Depends on rcm_common for the shared HeapBump provider and FNV hash.
+[lib]
+name = "grid_common"
+path = "src/lib.rs"
+
+[dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+arvo-tensor = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+rcm_common = { path = "../rcm_common" }

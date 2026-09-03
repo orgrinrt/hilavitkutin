@@ -1,0 +1,50 @@
+6e32d845 chore: lock the thread pool deletion changelist
+7946543a docs: record the post-deletion suite result
+d0ff4400 docs: correct r2d, both slice sites share a total source
+c6892c26 docs: add r2d, consolidate the duplicated accumulator slice math
+aaaf3e51 refactor: delete the orphaned ThreadPool and ThreadPoolBuilder
+bba7db4e docs: plan the thread pool deletion
+c32ab992 chore: lock the doc changelist
+8e7c78f8 docs: empty doc changelist, no template names these types
+873d26df docs: open the round to delete the orphaned thread pool
+50c9f7d4 chore: close design round 202607192410
+75835a12 chore: lock the n-way deletion changelist
+4ac49f22 docs: record the post-deletion suite result
+f43deff9 docs: reclassify r2; most duplicate halves are reserved not dead
+d2e45dec refactor: delete the n-way record split from run_core_phase
+11081e31 docs: plan the n-way branch deletion
+e9be915f chore: lock the doc changelist
+7b01c705 docs: empty doc changelist, prose already corrected
+c0a33db6 docs: open the round to delete the n-way split
+552d2b2b chore: close design round 202607192310
+88539c68 chore: lock the accumulator probe changelist
+be3ba09a test: pin that an accumulator survives a two-trunk parallel phase
+78a43004 docs: withdraw the r1a split; r1 is a deletion
+79cc0521 docs: the r1 sketch was wrong; the record-slice guard is accumulator-only
+b8c95d36 docs: plan the accumulator multi-trunk probe
+5a65fefe chore: lock the doc changelist
+1bb65aa8 docs: empty doc changelist pending the experiment
+16082421 docs: open the round on accumulator region sizing
+656e5b66 docs: extend the r1 sketch with the accumulator sizing fork
+e7a9a159 docs: r2a has no canonical barrier to keep; reorder behind r1a
+9ae63c6d docs: verify r2b thread pool deletion and note the inverse doc gap
+59f405e3 docs: correct r2a to three barriers and a latent hazard
+6de1ccb3 docs: split r1 into an ownership change and a deletion
+ce7ba8c0 chore: close design round 202607192110
+b7de9d9f chore: lock src changelist for the n-way split round
+12228895 test: pin that every producer runs when cores outnumber records
+6f03015b docs: plan the trunk-owner-never-runs case
+91e969a9 docs: record that the participation guard already drops trunks
+de071a33 docs: sketch why r1 is an ownership change, not a deletion
+951e073b docs: separate the accumulator regioning from head+tail convergence
+11359bcb docs: stop describing the n-way split as head+tail convergence
+8b6ada9f docs: open the round on the n-way record split
+451b6488 chore: close design round 202607192010
+e4bc16ba chore: lock src changelist for the defect-band round
+7aa6751f docs: record band 0 outcome and its three findings
+8f13433c fix: make std spawn spawn and deallocate free with its real alignment
+8656e8d9 docs: plan the defect-band source changes
+c96e6c66 docs: deallocate carries the alignment it was allocated with
+6fc10a21 docs: settle the deallocate alignment contract
+eef3b197 docs: open round on reachable bodies contradicting contracts
+07f7202d chore: close design round 202607191110

@@ -6,7 +6,7 @@
 
 use arvo::strategy::Hot;
 use arvo::ufixed::UFixed;
-use arvo::{fbits, ibits, Bool, USize};
+use arvo::{Bool, USize, fbits, ibits};
 
 /// Nanoseconds since a platform-defined epoch.
 ///
@@ -41,7 +41,7 @@ pub trait MemoryProviderApi: Send + Sync + 'static {
     ///
     /// `ptr` must come from a prior `allocate` on the same provider
     /// with the same `len`. Deallocation invalidates the pointer.
-    unsafe fn deallocate(&self, ptr: *mut u8, len: USize); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer; tracked: #72
+    unsafe fn deallocate(&self, ptr: *mut u8, len: USize, align: USize); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer; tracked: #72
 
     /// Change page permissions over a block.
     ///
@@ -367,7 +367,8 @@ pub struct HybridExecutor;
 impl crate::sealed::Sealed for HybridExecutor {}
 
 impl Executor for HybridExecutor {
-    fn run<'frame, 'arena, const C: usize, const P: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    fn run<'frame, 'arena, const C: usize, const P: usize>(
+        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
         &self,
         pool: core::pin::Pin<&'frame PoolFrame<'arena, C, P>>,
         core_id: USize,

@@ -1,0 +1,3 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784487656	e4cd1757	fiber_theory_n32	fib_greedy	32	warm	185.0	185.0	186.9
+1784487656	e4cd1757	fiber_theory_n32	fib_spectral	32	warm	82931.7	82846.0	83553.3

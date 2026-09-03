@@ -23,14 +23,14 @@
 //! stay their own `Capacity` type parameters projected into the api's
 //! `usize` positions via `cap_size`.
 
-use arvo::strategy::Identity;
 use arvo::USize;
-use arvo_tensor::{cap_size, Capacity};
+use arvo::strategy::Identity;
+use arvo_tensor::{Capacity, cap_size};
 
 use hilavitkutin_api::{CoreProgram, FiberId, PhaseEntry, PhaseId, RecordRange, SyncRole, TrunkId};
 
-use super::dims::PlanDims;
 use super::ExecutionPlan;
+use super::dims::PlanDims;
 
 /// Synthesise per-core `CoreProgram`s from the execution plan.
 ///
@@ -69,7 +69,12 @@ where
     // holds components (Fiber / Branch / Bridge). The conservative
     // skeleton sums fiber components; honest accounting that walks
     // FiberGrouping lands when assign_cores threads through (Pass 3).
-    let total_fibers = plan.morsel_windows.as_ref().iter().filter(|m| m.0 > 0).count(); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: count internal; tracked: #72
+    let total_fibers = plan
+        .morsel_windows
+        .as_ref()
+        .iter()
+        .filter(|m| m.0 > 0)
+        .count(); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: count internal; tracked: #72
 
     // Round-robin: distribute `total_fibers` across `cores`. Core c
     // gets fibers [start_c .. end_c) where the remainder is spread

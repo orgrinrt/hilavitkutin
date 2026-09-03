@@ -26,15 +26,15 @@ if ! echo "$TARGET" | grep -qE 'hilavitkutin[^/]*/src/.*\.rs$'; then
 fi
 
 if echo "$CONTENT" | grep -qE 'inventory::(submit|collect)!|use inventory'; then
-    deny "BLOCKED: \`inventory\` crate — hilavitkutin uses static composition via the scheduler builder, not a global runtime registry. Register WorkUnits in the builder tuple at call site."
+    deny "BLOCKED: \`inventory\` crate, hilavitkutin uses static composition via the scheduler builder, not a global runtime registry. Register WorkUnits in the builder tuple at call site."
 fi
 
 if echo "$CONTENT" | grep -qE '#\[ctor(::ctor)?\]|use ctor'; then
-    deny "BLOCKED: \`#[ctor]\` pre-main constructors — composition is static. Initialise in Builder::new."
+    deny "BLOCKED: \`#[ctor]\` pre-main constructors, composition is static. Initialise in Builder::new."
 fi
 
 if echo "$CONTENT" | grep -qE '#\[distributed_slice\]|distributed_slice!|use linkme'; then
-    deny "BLOCKED: \`linkme\` / \`#[distributed_slice]\` — static-link registration breaks dead-code elimination. Register WorkUnits in the scheduler builder."
+    deny "BLOCKED: \`linkme\` / \`#[distributed_slice]\`: static-link registration breaks dead-code elimination. Register WorkUnits in the scheduler builder."
 fi
 
 allow

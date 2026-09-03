@@ -1,0 +1,24 @@
+[workspace]
+
+[package]
+name = "rcm_common"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# Shared workload for the rcm_order bench (A1-1 oracle): the wide fan-out
+# engine pipeline both order variants drive. The variants (rcm_adj, rcm_scr)
+# differ only in WU registration order, which is the carrier order and hence
+# the dispatch order; everything else lives here so the two cdylibs measure
+# the same machinery.
+[lib]
+name = "rcm_common"
+path = "src/lib.rs"
+
+[dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+arvo-tensor = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }

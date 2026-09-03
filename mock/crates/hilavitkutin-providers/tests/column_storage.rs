@@ -6,11 +6,16 @@
 //!
 //! The test provider is a bump arena with a no-op `deallocate`: it
 //! honors 64-byte alignment on `allocate` and never frees per block, so
-//! `ArenaColumnStorage::Drop` (which calls `deallocate`) is sound
-//! regardless of the original alignment. `StdMemoryProvider` is not used
-//! here because its `deallocate` reconstructs the `Layout` with word
-//! alignment, which mismatches a 64-byte-aligned block under
-//! `std::alloc`.
+//! `ArenaColumnStorage::Drop` (which calls `deallocate`) has nothing to
+//! release.
+//!
+//! An earlier version of this note explained that `StdMemoryProvider`
+//! was avoided here because its `deallocate` rebuilt the `Layout` with
+//! word alignment and so mismatched a 64-byte block. That was true, and
+//! it meant the suite stayed green by routing around the failing path
+//! rather than reporting it. `deallocate` now carries the alignment it
+//! was allocated with, so the mismatch is gone and the avoidance no
+//! longer has a reason.
 
 use core::sync::atomic::{AtomicUsize, Ordering};
 
@@ -59,7 +64,7 @@ impl MemoryProviderApi for BumpProvider {
         unsafe { self.base.add(aligned) }
     }
 
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {} // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: bump arena does not free per block; tracked: #72
+    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {} // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: bump arena does not free per block; tracked: #72
 
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {} // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test allocator ABI raw pointer; tracked: #72
 }

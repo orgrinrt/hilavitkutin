@@ -90,7 +90,23 @@ macro_rules! impl_scalar_footprint {
     };
 }
 
-impl_scalar_footprint!(u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize, bool, char, ()); // lint:allow(no-bare-numeric) reason: definition-site scalar list for the zero-footprint impls; tracked: #121
+impl_scalar_footprint!(
+    u8,
+    u16,
+    u32,
+    u64,
+    u128,
+    usize,
+    i8,
+    i16,
+    i32,
+    i64,
+    i128,
+    isize,
+    bool,
+    char,
+    ()
+); // lint:allow(no-bare-numeric) reason: definition-site scalar list for the zero-footprint impls; tracked: #121
 
 impl ResourceFootprint for USize {
     const L1_BYTES: USize = USize::ZERO;

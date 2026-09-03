@@ -19,7 +19,6 @@ pub mod fiber_run;
 pub mod fusion;
 pub mod morsel;
 pub mod order;
-pub mod phase_run;
 pub mod progress;
 pub mod standard;
 pub mod sync;
@@ -38,7 +37,6 @@ pub use engine_ctx::EngineCtx;
 pub use engine_ctx::{AccumBundleOf, ColBundleOf, CtxFor, ResourceBundleOf, VirtBundleOf};
 pub use fiber_dispatch::FiberDispatch;
 pub use fiber_run::RunFiber;
-pub use phase_run::{RunPhase, RunPipeline};
 pub use trunk_dispatch::RunTrunkDispatch;
 pub use trunk_gate::RunGatedTrunk;
 pub use trunk_run::RunTrunk;
@@ -119,10 +117,10 @@ pub fn codegen_core<Ctx: 'static, C: Capacity>() -> CoreDispatch<Ctx, C> {
 #[cfg(test)]
 mod codegen_stub_tests {
     use super::*;
-    use notko::Maybe;
     use crate::plan::FiberId;
     use arvo::strategy::Identity;
     use arvo_tensor::Dim;
+    use notko::Maybe;
 
     // A fixed capacity of four for the codegen stub records.
     type C4 = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity literal; Dim<N> array-length root; tracked: #649

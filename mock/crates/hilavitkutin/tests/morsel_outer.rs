@@ -83,7 +83,7 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
         unsafe { base.add(aligned) }
     }
 
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
 
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }

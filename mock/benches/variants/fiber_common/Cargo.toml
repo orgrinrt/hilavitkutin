@@ -1,0 +1,21 @@
+[workspace]
+
+[package]
+name = "fiber_common"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# Shared workload for the fiber_theory bench: the layered DAG family
+# and the two shipped grouping algorithms both arms time.
+[lib]
+name = "fiber_common"
+path = "src/lib.rs"
+
+[dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+arvo-tensor = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }

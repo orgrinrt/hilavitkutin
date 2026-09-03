@@ -1,5 +1,12 @@
 //! Adapt-metrics arena: hot/cold split sidecar storage.
 //!
+//! Not built yet. The struct below is two `PhantomData` fields; none
+//! of the layout described here exists in it, and nothing populates
+//! it. The design is stated in present tense because it is the target,
+//! and the state of play is stated here first so the description is
+//! not mistaken for a report of what ships. Field layout and runtime
+//! population are roadmap band W4.
+//!
 //! Topic 5 axis D. Per-fiber 64-byte-aligned hot lines co-locate
 //! the progress counter (Topic 4 axis E) with inline metrics; per-
 //! core 64-byte-aligned park slots; cold SoA region for end-of-pass
@@ -36,6 +43,9 @@ impl<'arena, CF: Capacity, CC: Capacity, CP: Capacity> AdaptArena<'arena, CF, CC
     /// Allocate a fresh arena. Implementation lands in Pass 6 alongside
     /// the scheduler's plan-stage scratch buffer.
     pub(crate) const fn new() -> Self {
-        Self { _arena: PhantomData, _dims: PhantomData }
+        Self {
+            _arena: PhantomData,
+            _dims: PhantomData,
+        }
     }
 }

@@ -25,7 +25,7 @@ use hilavitkutin::dispatch::engine_ctx::{
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
-use hilavitkutin_api::context::{AccumWriterApi, ColumnReaderApi, EachApi, HasAccumWriter, HasColumnReader, HasEach};
+use hilavitkutin_api::context::{AccumWriterApi, ColumnReaderApi, ColumnWriterApi, EachApi, HasAccumWriter, HasColumnReader, HasColumnWriter, HasEach};
 use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::store::{Accum, Column};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
@@ -60,7 +60,7 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
         // SAFETY: aligned + len <= N, in bounds of the owned buffer.
         unsafe { base.add(aligned) }
     }
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
@@ -196,5 +196,99 @@ fn run_parallel_accumulator_matches_single_core() {
             v.0, refbuf[k],
             "threaded merged rec {k} is byte-identical to single-core append order"
         );
+    }
+}
+
+// ---- probe: an accumulator in a phase that carries a second trunk.
+//
+// Two column-disjoint units in one phase means two trunks, which takes the phase
+// off the tphase == 1 branch and onto the trunk-rank walk. There the core owning
+// KeepWu's trunk walks every record rather than a per-core slice, while its
+// accumulator region is still sized from that slice. This exists to find out
+// whether that configuration can be built and run, not to assert a conclusion.
+
+#[derive(Copy, Clone)]
+#[allow(dead_code)] // written by SideWu, never read back; presence forces a second trunk
+struct Sv(u32);
+
+type ColSide = Cons<Column<Sv>, Empty>;
+
+/// Writes its own column and nothing else, so it is a second trunk in KeepWu's
+/// phase and touches no accumulator.
+struct SideWu;
+impl BuilderInput for SideWu {
+    type Init = Self;
+    type Dispatch = UnitDispatch<Self>;
+}
+impl WorkUnit<Always> for SideWu {
+    type Read = ColIn;
+    type Write = ColSide;
+    type Hint = (
+        hilavitkutin_api::hint::Immediate,
+        hilavitkutin_api::hint::Atomic,
+        hilavitkutin_api::hint::Normal,
+    );
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        ColIn,
+        ColSide,
+        SnapNil,
+        ColPtrCons<Inv, ColPtrNil>,
+        ColPtrCons<Sv, ColPtrNil>,
+    >;
+    fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
+        ctx.each().run(|i| {
+            // SAFETY: In host-populated for N records; Sv reserved + exclusive.
+            let v = unsafe { ctx.reader().read::<Inv, _>(i) };
+            unsafe { ctx.writer().write::<Sv, _>(i, Sv(v.0 + 1)) };
+        });
+    }
+}
+
+#[test]
+fn accumulator_in_a_two_trunk_phase_matches_single_core() {
+    let (refbuf, reflen) = reference();
+
+    let provider = BumpProvider::<16384>::new();
+    let scheduler = Scheduler::builder()
+        .with(Accum::<Av>::new())
+        .with(Column::<Inv>::new())
+        .with(Column::<Sv>::new())
+        .with(KeepWu)
+        .with(SideWu)
+        .build(store(provider), USize(N))
+        .unwrap_or_else(|_| panic!("build should succeed"));
+    {
+        // Bindings head: Sv, then In, then the AccumBinding<Av>.
+        let b = scheduler.__bindings();
+        let in_base = b.__tail().__ptr().as_ptr() as *mut u32;
+        let acc_base = b.__tail().__tail().__ptr().as_ptr() as *mut u32;
+        for i in 0..N {
+            // SAFETY: both buffers reserve N u32 records; written once here.
+            unsafe {
+                *in_base.add(i) = i as u32;
+                *acc_base.add(i) = u32::MAX;
+            }
+        }
+    }
+
+    let pool = OsThreadPool::new();
+    let mut scheduler = core::pin::pin!(scheduler);
+    let result = scheduler.as_mut().run_parallel(&pool);
+    assert!(matches!(result, Outcome::Ok(())));
+
+    let sched_ref = scheduler.as_ref();
+    let b = sched_ref.__bindings().__tail().__tail();
+    let live = b.__len_cell().get().0;
+    assert_eq!(
+        live, reflen,
+        "two-trunk parallel live length is the kept count; a different count means \
+         the appends landed outside the per-core region arithmetic"
+    );
+    let base = b.__ptr().as_ptr();
+    for k in 0..live {
+        // SAFETY: live records initialised by the appends.
+        let v = unsafe { core::ptr::read(base.add(k)) };
+        assert_eq!(v.0, refbuf[k], "two-trunk parallel rec {k} value/order");
     }
 }

@@ -2,8 +2,16 @@
 //!
 //! P-cores take critical-path trunks with larger morsels; E-cores
 //! handle branches / leaves at proportionally smaller widths. The
-//! engine queries `classify_cores()` once at pool construction
-//! and bakes the result into the per-core dispatch programs.
+//! engine is intended to query `classify_cores()` once at pool
+//! construction and bake the result into the per-core dispatch
+//! programs.
+//!
+//! Not wired yet, and the gap is worth stating plainly rather than
+//! leaving to a reader who trusts the paragraph above: nothing calls
+//! `classify_cores()`, and every `detect_into` arm below discards its
+//! argument instead of probing. Every core is therefore treated as P.
+//! The detection paths listed next describe the intended design, not
+//! behaviour that runs today. Wiring is roadmap band W3.
 //!
 //! Detection paths, in priority order:
 //!

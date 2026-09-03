@@ -23,13 +23,10 @@ mock/research/hilavitkutin_bench
 # === end mockspace-managed ===
 mock/research/sketches/*/libsketch.rmeta
 
-# Per-sketch and per-bench-variant cargo build dirs (these are own-workspace
-# subprojects; their target/ does not nest under the parent /target rule).
-mock/research/sketches/*/target/
-mock/research/sketches/*/Cargo.lock
-mock/research/sketches/*/*/target/
-mock/benches/variants/*/target/
-mock/benches/variants/*/Cargo.lock
+# Per-sketch and per-bench-variant lockfiles. These are own-workspace
+# subprojects; their build dirs fall under the target/ catch-all below.
+mock/research/**/Cargo.lock
+mock/benches/variants/**/Cargo.lock
 
 # Standalone test-fixture target dir (cargo subproject)
 mock/crates/hilavitkutin-extensions-macros/tests/lto_smoke_fixture/target/

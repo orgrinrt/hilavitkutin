@@ -36,21 +36,19 @@
 // alternatives.
 
 #[cfg(all(feature = "platform-os", feature = "platform-std"))]
-compile_error!(
-    "hilavitkutin: features `platform-os` and `platform-std` are mutually exclusive"
-);
+compile_error!("hilavitkutin: features `platform-os` and `platform-std` are mutually exclusive");
 
 #[cfg(all(feature = "platform-os", feature = "platform-no-os"))]
-compile_error!(
-    "hilavitkutin: features `platform-os` and `platform-no-os` are mutually exclusive"
-);
+compile_error!("hilavitkutin: features `platform-os` and `platform-no-os` are mutually exclusive");
 
 #[cfg(all(feature = "platform-std", feature = "platform-no-os"))]
-compile_error!(
-    "hilavitkutin: features `platform-std` and `platform-no-os` are mutually exclusive"
-);
+compile_error!("hilavitkutin: features `platform-std` and `platform-no-os` are mutually exclusive");
 
-#[cfg(not(any(feature = "platform-os", feature = "platform-std", feature = "platform-no-os")))]
+#[cfg(not(any(
+    feature = "platform-os",
+    feature = "platform-std",
+    feature = "platform-no-os"
+)))]
 compile_error!(
     "hilavitkutin: one of `platform-os`, `platform-std`, or `platform-no-os` must be enabled"
 );
@@ -59,8 +57,8 @@ pub mod adapt;
 pub mod dispatch;
 pub mod intrinsics;
 pub mod meta;
-pub mod platform;
 pub mod plan;
+pub mod platform;
 pub mod resource;
 pub mod scheduler;
 pub mod strategy;

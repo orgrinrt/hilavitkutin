@@ -28,7 +28,7 @@ use core::marker::PhantomData;
 
 use arvo::strategy::Identity;
 use arvo::traits::FromConstant;
-use arvo::{Uint, USize};
+use arvo::{USize, Uint};
 
 mod sealed {
     pub trait Sealed {}
@@ -258,10 +258,10 @@ pub struct CoreProgram<
 }
 
 impl<
-        const MAX_PHASES_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_TRUNKS_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_FIBERS_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    > CoreProgram<MAX_PHASES_PER_CORE, MAX_TRUNKS_PER_CORE, MAX_FIBERS_PER_CORE>
+    const MAX_PHASES_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_TRUNKS_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_FIBERS_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+> CoreProgram<MAX_PHASES_PER_CORE, MAX_TRUNKS_PER_CORE, MAX_FIBERS_PER_CORE>
 {
     /// All-zero program. Used as the array-init default before
     /// `synthesise_core_programs` populates real values.
@@ -281,10 +281,10 @@ impl<
 }
 
 impl<
-        const MAX_PHASES_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_TRUNKS_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_FIBERS_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    > Default for CoreProgram<MAX_PHASES_PER_CORE, MAX_TRUNKS_PER_CORE, MAX_FIBERS_PER_CORE>
+    const MAX_PHASES_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_TRUNKS_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_FIBERS_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+> Default for CoreProgram<MAX_PHASES_PER_CORE, MAX_TRUNKS_PER_CORE, MAX_FIBERS_PER_CORE>
 {
     fn default() -> Self {
         Self::new()
@@ -303,7 +303,10 @@ pub struct PhaseEntry {
 impl PhaseEntry {
     /// Default-initialised entry; phase = ZERO, role = `WaitAndSignal`.
     pub const fn new() -> Self {
-        Self { phase: PhaseId::ZERO, sync_role: SyncRole::WaitAndSignal }
+        Self {
+            phase: PhaseId::ZERO,
+            sync_role: SyncRole::WaitAndSignal,
+        }
     }
 }
 

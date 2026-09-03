@@ -9,7 +9,7 @@ Before writing any `pub` signature (`pub fn`, `pub struct` with pub
 fields, `pub trait`), walk this checklist. It's short and
 mechanical; skipping it is how drift re-enters the codebase.
 
-## Step 1 — decision test
+## Step 1, decision test
 
 For every type position (return type, parameter, field), ask:
 
@@ -21,7 +21,7 @@ For every type position (return type, parameter, field), ask:
   / Primitive) in `.claude/rules/type-surface.md` and pick the right
   one.
 
-## Step 2 — primitive-vocabulary scan
+## Step 2, primitive-vocabulary scan
 
 Search the proposed signature for these forbidden shapes:
 
@@ -37,14 +37,14 @@ Search the proposed signature for these forbidden shapes:
 | `f32`, `f64` | `arvo::FastFloat` / `arvo::StrictFloat` |
 | `bool` | `arvo_bits::Bool` |
 
-## Step 3 — heap scan
+## Step 3, heap scan
 
 Any allocation implied by the signature? The no_std universe has no
 heap. Any `Vec`, `String`, `Box`, `Rc`, `Arc` in the proposed surface
 means you've reached for the wrong tool. Reshape to a trait-bound
 emitter or a bounded store.
 
-## Step 4 — red flags (stop and reshape)
+## Step 4, red flags (stop and reshape)
 
 If any of these match your proposed signature, STOP:
 
@@ -56,21 +56,21 @@ If any of these match your proposed signature, STOP:
 - `HashMap::new()` at runtime → declare a `Map<K, V, N: Cap>` type
   and take a trait-bound reference.
 
-## Step 5 — if no existing trait fits
+## Step 5, if no existing trait fits
 
 Don't reach for a std type. The correct answer is "add a trait to
 the ecosystem": `hilavitkutin-api` for platform/context/access
 traits, `arvo-bits` for bit-level contracts, a new sibling crate
 for bespoke surfaces. File a design round describing the contract.
 
-## Step 6 — if none of the above and you still can't express it
+## Step 6, if none of the above and you still can't express it
 
 The API shape is wrong. The no-heap + trait-first universe is strict
 BY DESIGN. If the reshape feels heavier than "just use std", that's
 friction the ecosystem should close (ship a shorthand, add to a
 prelude), NOT a reason to escape to std. Reconsider the intent.
 
-## Step 7 — document the decision
+## Step 7, document the decision
 
 In the signature's doc comment, note which trait bound / type you
 picked and why. Future readers can audit quickly.

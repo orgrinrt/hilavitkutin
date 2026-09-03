@@ -18,29 +18,26 @@ pub mod frame;
 pub mod handle;
 pub mod hybrid;
 pub mod parking;
-pub mod pool;
 
 use arvo::USize;
-use arvo_tensor::{cap_size, Capacity};
+use arvo_tensor::{Capacity, cap_size};
 
 use crate::plan::PlanDims;
 
 pub use assignment::{CoreAssignment, NO_TRUNK};
-pub use barrier::{phase_barrier_arrive, phase_barrier_observe, phase_barrier_reset, BarrierArrival};
+pub use class::{CoreClass, MAX_CORES, classify_cores};
+pub use convergence::Convergence;
 pub use frame::{
     await_exit, frame_await, frame_await_done, frame_done_arrive, frame_exit_arrive, frame_publish,
     request_shutdown,
 };
-pub use class::{classify_cores, CoreClass, MAX_CORES};
-pub use convergence::Convergence;
 pub use handle::ThreadHandle;
+pub use hilavitkutin_api::platform::WakeStrategy;
 pub use hybrid::HybridExecutor;
 pub use parking::{
-    atomic_wait, atomic_wake_all, pick_tier, predicted_wait_ns_load, predicted_wait_ns_store, spin,
-    spin_budget_for, ParkTier,
+    ParkTier, atomic_wait, atomic_wake_all, pick_tier, predicted_wait_ns_load,
+    predicted_wait_ns_store, spin, spin_budget_for,
 };
-pub use hilavitkutin_api::platform::WakeStrategy;
-pub use pool::{ThreadPool, ThreadPoolBuilder};
 
 /// Map plan trunks onto concrete cores.
 ///
@@ -112,7 +109,7 @@ mod assign_cores_tests {
     use crate::plan::ExecutionPlan;
     use arvo::strategy::Identity;
     use arvo::{Bits, Hot, Unsigned};
-    use arvo_tensor::{cap_size, Capacity, Dim};
+    use arvo_tensor::{Capacity, Dim, cap_size};
 
     // Per-pipeline capacities sized small for the tests. The body's
     // logic does not depend on the capacity values, only on the
@@ -143,7 +140,8 @@ mod assign_cores_tests {
 
     type TestPlan = ExecutionPlan<TestDims>;
 
-    fn plan_with_phase_trunks(per_phase: &[usize]) -> TestPlan { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test helper takes raw usize counts to mirror runtime field shape; tracked: #72
+    fn plan_with_phase_trunks(per_phase: &[usize]) -> TestPlan {
+        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test helper takes raw usize counts to mirror runtime field shape; tracked: #72
         let mut plan = TestPlan::new();
         let mut i: usize = 0; // lint:allow(no-bare-numeric) reason: loop index; tracked: #72
         while i < per_phase.len() {

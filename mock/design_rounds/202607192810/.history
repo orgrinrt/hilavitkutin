@@ -1,0 +1,50 @@
+37e0b76e chore: lock the spawn_fn deletion changelist
+166da028 docs: reframe r2 around supersession rather than reference count
+f6b8d757 refactor: delete the function-pointer spawn from both platform tiers
+7f337fc3 docs: plan the spawn_fn deletion
+83e92b43 chore: lock the doc changelist
+a9917c46 docs: record how the POSIX cast concern was resolved
+631e7a42 docs: open the round to retire the function-pointer spawn
+91a73498 chore: close design round 202607192710
+0f539a36 chore: lock the install arm changelist
+e4fa0118 feat: replace_value installs the value into the data plane
+414ae3f3 docs: correct the sketch, canon's swap language presupposes an unshipped model
+1b029259 docs: sketch finds the replace_value signature cannot express an install
+9f03a92d docs: plan the install arm probe
+05122870 chore: lock the doc changelist
+81ce05a2 docs: empty doc changelist pending the compile
+2e98f8d1 docs: open the round on the replace_resource install arm
+489e527a chore: close design round 202607192610
+a9c288b3 chore: lock the accumulator slice changelist
+c443cc81 docs: record the post-consolidation suite result
+12add685 refactor: derive the accumulator slice from one definition
+bdd7925c docs: plan the accumulator slice consolidation
+02f3c3e8 chore: lock the doc changelist
+248980a9 docs: state the shared-derivation invariant on the accumulator regions
+325bbe73 docs: open the round to unify the accumulator slice math
+690288f5 chore: close design round 202607192510
+6e32d845 chore: lock the thread pool deletion changelist
+7946543a docs: record the post-deletion suite result
+d0ff4400 docs: correct r2d, both slice sites share a total source
+c6892c26 docs: add r2d, consolidate the duplicated accumulator slice math
+aaaf3e51 refactor: delete the orphaned ThreadPool and ThreadPoolBuilder
+bba7db4e docs: plan the thread pool deletion
+c32ab992 chore: lock the doc changelist
+8e7c78f8 docs: empty doc changelist, no template names these types
+873d26df docs: open the round to delete the orphaned thread pool
+50c9f7d4 chore: close design round 202607192410
+75835a12 chore: lock the n-way deletion changelist
+4ac49f22 docs: record the post-deletion suite result
+f43deff9 docs: reclassify r2; most duplicate halves are reserved not dead
+d2e45dec refactor: delete the n-way record split from run_core_phase
+11081e31 docs: plan the n-way branch deletion
+e9be915f chore: lock the doc changelist
+7b01c705 docs: empty doc changelist, prose already corrected
+c0a33db6 docs: open the round to delete the n-way split
+552d2b2b chore: close design round 202607192310
+88539c68 chore: lock the accumulator probe changelist
+be3ba09a test: pin that an accumulator survives a two-trunk parallel phase
+78a43004 docs: withdraw the r1a split; r1 is a deletion
+79cc0521 docs: the r1 sketch was wrong; the record-slice guard is accumulator-only
+b8c95d36 docs: plan the accumulator multi-trunk probe
+5a65fefe chore: lock the doc changelist

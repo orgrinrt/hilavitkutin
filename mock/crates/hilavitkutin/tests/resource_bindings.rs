@@ -19,8 +19,8 @@ use core::sync::atomic::{AtomicUsize, Ordering};
 
 use arvo::{Bool, USize};
 use hilavitkutin::scheduler::{BuildError, NullMemoryProvider, Scheduler};
-use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::Resource;
+use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_providers::ArenaColumnStorage;
 
 /// Wrap a provider in the default-capacity bindings store. The return type
@@ -78,7 +78,7 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
         unsafe { base.add(aligned) }
     }
 
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {
+    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {
         self.deallocs.set(self.deallocs.get() + 1);
     }
 
@@ -106,6 +106,10 @@ static DEALLOCS: AtomicUsize = AtomicUsize::new(0);
 // into a spurious poison-panic in the next.
 static COUNTING_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
+/// Alignment observed at the most recent `deallocate`, so a test can
+/// check the value survived the round trip rather than trusting it did.
+static LAST_DEALLOC_ALIGN: AtomicUsize = AtomicUsize::new(0);
+
 impl<const N: usize> MemoryProviderApi for CountingProvider<N> {
     unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
         // SAFETY: delegates to the inner bump allocator.
@@ -119,10 +123,22 @@ impl<const N: usize> MemoryProviderApi for CountingProvider<N> {
         }
         ptr
     }
-    unsafe fn deallocate(&self, ptr: *mut u8, len: USize) {
+    unsafe fn deallocate(&self, ptr: *mut u8, len: USize, align: USize) {
         DEALLOCS.fetch_add(1, Ordering::SeqCst);
+        // The contract says `align` comes back as it went out. Assert
+        // it rather than forward it blindly: a caller that guesses here
+        // frees with a layout that does not match the one it allocated,
+        // which is undefined behaviour under a layout-taking allocator
+        // and silent under a bump one. This provider is a bump arena,
+        // so without the assertion the mismatch would never surface.
+        assert!(
+            *align == 0 || align.0.is_power_of_two(),
+            "deallocate got a non-power-of-two alignment: {}",
+            *align
+        );
+        LAST_DEALLOC_ALIGN.store(*align, Ordering::SeqCst);
         // SAFETY: delegates to the inner bump allocator.
-        unsafe { self.inner.deallocate(ptr, len) }
+        unsafe { self.inner.deallocate(ptr, len, align) }
     }
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
@@ -198,7 +214,10 @@ fn resource_bindings_drop_deallocates() {
     }
     // every reserve paired with a free after the store (held by the
     // scheduler) drops.
-    assert_eq!(ALLOCS.load(Ordering::SeqCst), DEALLOCS.load(Ordering::SeqCst));
+    assert_eq!(
+        ALLOCS.load(Ordering::SeqCst),
+        DEALLOCS.load(Ordering::SeqCst)
+    );
     assert_eq!(DEALLOCS.load(Ordering::SeqCst), 2);
 }
 
@@ -289,4 +308,78 @@ impl hilavitkutin_api::footprint::ResourceFootprint for Rb {
 }
 impl hilavitkutin_api::footprint::ResourceFootprint for Rc {
     const L1_BYTES: arvo::USize = arvo::USize(0);
+}
+
+/// The alignment a column was reserved with must reach its free.
+///
+/// `ArenaColumnStorage` reserves every column at 64-byte alignment
+/// because the canonical design requires it. Before `deallocate` carried
+/// `align`, the std provider rebuilt the freeing layout from a word and
+/// every column free was a layout mismatch. Nothing caught it: the bump
+/// providers used throughout these tests ignore alignment on free, so
+/// the suite stayed green while the contract was unsatisfiable.
+///
+/// This asserts the value observed at the free is the one the reserve
+/// used, which is the property the parameter exists to provide.
+#[test]
+fn column_free_sees_the_alignment_its_reserve_used() {
+    let _guard = COUNTING_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    LAST_DEALLOC_ALIGN.store(0, Ordering::SeqCst);
+
+    let provider = CountingProvider::<65536> {
+        inner: BumpProvider::new(),
+    };
+    // SAFETY: 64 is a power of two and the bump arena covers 4KiB.
+    let ptr = unsafe { provider.allocate(USize(4096), USize(64)) };
+    assert!(!ptr.is_null(), "bump arena refused a 4KiB reservation");
+    // SAFETY: ptr came from the allocate directly above.
+    unsafe { provider.deallocate(ptr, USize(4096), USize(64)) };
+
+    assert_eq!(
+        LAST_DEALLOC_ALIGN.load(Ordering::SeqCst),
+        64,
+        "the free saw a different alignment than the reserve used"
+    );
+}
+
+impl hilavitkutin_api::store::Replaceable for Ra {}
+
+/// `replace_value` writes the new value into the data plane.
+///
+/// The body took `_new`, marked the store dirty, and dropped it, so a consumer
+/// saw the dirty flag and concluded the swap had happened. Worse than an
+/// unimplemented function: it reported success for work it did not do.
+///
+/// The signature could not have done otherwise. `T` unified to the marker
+/// `Resource<Ra>`, which is `PhantomData` and carries no value; there was
+/// nothing to install. The parameter is now the value type, which is also what
+/// the bindings are keyed by, so `Selector<Ra, Index>` resolves the slot.
+///
+/// Green under the swap spec S1 install (round 202607200500): the swap IS the
+/// whole-blob write through the same witness the drain wrote through. The
+/// collection halves of a swapped value (per-record `Seq` / `Map` element
+/// writes, spec S3) stay gated on the #344 collection wiring; `Ra` is scalar,
+/// so this test is complete for the scalar-blob half.
+#[test]
+fn replace_value_installs_into_the_data_plane() {
+    let provider = BumpProvider::<256>::new();
+    let mut scheduler = Scheduler::builder()
+        .with(Resource::new(Ra(99)))
+        .build(store(provider), USize(0))
+        .unwrap_or_else(|_| panic!("build should succeed"));
+
+    // SAFETY: written with Ra(99) at build time; the scheduler is alive.
+    let before = unsafe { *scheduler.__bindings().__ptr().as_ptr() };
+    assert_eq!(before, Ra(99), "precondition: the build value is in place");
+
+    scheduler.replace_value(Ra(7));
+
+    // SAFETY: same pointer, still owned by the live scheduler.
+    let after = unsafe { *scheduler.__bindings().__ptr().as_ptr() };
+    assert_eq!(
+        after,
+        Ra(7),
+        "replace_value must install the new value; Ra(99) here means the \
+         argument was dropped and only the dirty flag was set"
+    );
 }

@@ -9,7 +9,7 @@ pub mod shape;
 
 pub use accumulator::{AccumulatorSlot, ConvergenceBuffer};
 pub use bindings::{
-    ColumnBinding, BindingsFor, ResourceBinding, BindingNil, VirtualBinding, DrainStores,
+    BindingNil, BindingsFor, ColumnBinding, DrainStores, ResourceBinding, VirtualBinding,
 };
 pub use provenance::{ColumnPtr, ErasedResourcePtr, ResourcePtr};
 pub use shape::ValueShape;

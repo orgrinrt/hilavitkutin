@@ -23,8 +23,8 @@
 //! `MAX_DRIFT_RECORDS` is `Cfg::MAX_DRIFT_RECORDS` (32, pow2).
 //! Consumer-overridable per `RunCfg`.
 
-use arvo::{Bool, USize};
 use arvo::strategy::Identity;
+use arvo::{Bool, USize};
 
 /// Half-open `[start, start + len)` record range for one morsel.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]

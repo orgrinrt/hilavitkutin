@@ -29,6 +29,7 @@
 
 use core::marker::PhantomData;
 
+use hilavitkutin_api::RecordOp;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::column_value::ColumnValue;
@@ -39,7 +40,6 @@ use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
 use hilavitkutin_api::store::Column;
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_api::work_unit_values::{WuCons, WuNil};
-use hilavitkutin_api::RecordOp;
 
 use crate::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 
@@ -137,7 +137,10 @@ where
     type Chain = OpCons<H, OpNil<<H as RecordOp>::Out>>;
     #[inline(always)]
     fn fuse(&self) -> Self::Chain {
-        OpCons { head: self.head, tail: OpNil::new() }
+        OpCons {
+            head: self.head,
+            tail: OpNil::new(),
+        }
     }
 }
 
@@ -150,7 +153,10 @@ where
     type Chain = OpCons<H, <WuCons<H2, T> as FuseCarrier>::Chain>;
     #[inline(always)]
     fn fuse(&self) -> Self::Chain {
-        OpCons { head: self.head, tail: self.tail.fuse() }
+        OpCons {
+            head: self.head,
+            tail: self.tail.fuse(),
+        }
     }
 }
 

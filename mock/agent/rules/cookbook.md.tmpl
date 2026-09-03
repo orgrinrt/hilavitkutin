@@ -2,7 +2,7 @@
 apply_to: ["crates/**/*.rs", "src/**/*.rs"]
 ---
 
-# Cookbook — intent → trait / type
+# Cookbook, intent → trait / type
 
 A pattern book for "I need to X" questions. Pick the matching intent,
 use the suggested trait / type. When none fits, the correct answer is
@@ -61,7 +61,7 @@ bit-level contracts, `arvo-bits::BitSequence`.
 ## "I need a type-level storage declaration"
 
 `Seq<T, N: Cap>` for ordered, `Map<K, V, N: Cap>` for keyed. These are
-`hilavitkutin-api::store` ZSTs — declarative, not Vec-like. Allocation
+`hilavitkutin-api::store` ZSTs, declarative, not Vec-like. Allocation
 is scheduler-managed.
 
 ## "I need key→value lookup"
@@ -102,14 +102,14 @@ Take `&impl ClockApi`. Never `std::time::Instant::now()`.
 
 ## "I genuinely need std"
 
-Hilavitkutin is `#![no_std]`, no alloc, no dynamic dispatch — by
+Hilavitkutin is `#![no_std]`, no alloc, no dynamic dispatch, by
 design. If you think you need std, the API shape is wrong. File a
 design round. The 22 traits in `hilavitkutin-api` cover access /
-context / platform / hints — pick one or add one.
+context / platform / hints, pick one or add one.
 
 ## See also
 
-- `.claude/rules/type-surface.md` — the decision test, DO/DON'T table
-- `.claude/rules/no-heap.md` — dedicated no-heap rule
-- `PRINCIPLES.md` — first principles
-- hilavitkutin-api crate docs — the 22-trait surface
+- `.claude/rules/type-surface.md`: the decision test, DO/DON'T table
+- `.claude/rules/no-heap.md`: dedicated no-heap rule
+- `PRINCIPLES.md`: first principles
+- hilavitkutin-api crate docs, the 22-trait surface

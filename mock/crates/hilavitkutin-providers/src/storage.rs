@@ -75,7 +75,7 @@ impl<M: MemoryProviderApi, D: Capacity> ColumnStorage for ArenaColumnStorage<M, 
                 // SAFETY: old.ptr came from a prior allocate on this
                 // provider with old.len_bytes.
                 unsafe {
-                    self.provider.deallocate(old.ptr, old.len_bytes);
+                    self.provider.deallocate(old.ptr, old.len_bytes, CACHE_LINE_ALIGN);
                 }
             }
         }
@@ -156,7 +156,7 @@ impl<M: MemoryProviderApi, D: Capacity> Drop for ArenaColumnStorage<M, D> {
                     // provider with s.len_bytes; the arena is dropped
                     // once, so no double free.
                     unsafe {
-                        self.provider.deallocate(s.ptr, s.len_bytes);
+                        self.provider.deallocate(s.ptr, s.len_bytes, CACHE_LINE_ALIGN);
                     }
                 }
             }

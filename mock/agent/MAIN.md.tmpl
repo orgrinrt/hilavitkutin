@@ -1,4 +1,4 @@
-# hilavitkutin — agent instructions
+# hilavitkutin, agent instructions
 
 ## What hilavitkutin is
 
@@ -85,7 +85,7 @@ pipeline → core → phase ↔ waist → trunk → fiber ↔ branch ↔ bridge
  → morsel → micro-morsel → entry
 ```
 
-`record` is one data point in a column — never `row`, never
+`record` is one data point in a column, never `row`, never
 `entity`. A `morsel` windows into a range of records. A `column`
 is independent; no tabular joins.
 
@@ -106,17 +106,17 @@ commit time.
 
 ## Where things live
 
-- `docs/DESIGN.md` — generated, canonical architecture.
-- `docs/STRUCTURE.md` + graph — generated, crate and item index.
+- `docs/DESIGN.md`: generated, canonical architecture.
+- `docs/STRUCTURE.md` + graph, generated, crate and item index.
 - `mock/DESIGN.md`, `mock/PRINCIPLES.md.tmpl`,
- `mock/WORKFLOW.md.tmpl` — authored sources.
-- `mock/crates/*/DESIGN.md` — per-crate deep dives.
-- `mock/design_rounds/` — design round state machine. Do not
+ `mock/WORKFLOW.md.tmpl`: authored sources.
+- `mock/crates/*/DESIGN.md`: per-crate deep dives.
+- `mock/design_rounds/`: design round state machine. Do not
  rename files by hand; use `cargo mock lock` / `unlock` /
  `deprecate` / `close`.
-- `mock/agent/` — these instructions. Edit templates here, not the
+- `mock/agent/`: these instructions. Edit templates here, not the
  generated files under `.claude/` or `.github/`.
-- `mock/lints/` — repo-specific Rust lints compiled into `cargo
+- `mock/lints/`: repo-specific Rust lints compiled into `cargo
  mock`.
 
 ## What not to do

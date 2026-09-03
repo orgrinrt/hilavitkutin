@@ -62,7 +62,7 @@ Never use the dead terms in source code: `chain`, `chain_group`,
 `partition`, `archetype`, `entity`, `row`, `order`. The vocabulary
 lint and reminder hook will catch them. If you find yourself
 reaching for one of these words, re-read `mock/DESIGN.md`
-"Vocabulary" section — there's a canonical term for the concept.
+"Vocabulary" section, there's a canonical term for the concept.
 
 - `Column<T>` holds N records for one field. Columns are independent.
 - `Resource<T>` is a single-value shared resource.
@@ -86,7 +86,7 @@ reaching for one of these words, re-read `mock/DESIGN.md`
  execution reuses it verbatim.
 - Plan recompute is triggered only by: new WU composition, record
  count crossing a rebalance threshold, DAG structure change.
-- Recompute cost is microseconds on typical DAGs — amortised over
+- Recompute cost is microseconds on typical DAGs, amortised over
  thousands of frames of reuse.
 
 ### Error handling

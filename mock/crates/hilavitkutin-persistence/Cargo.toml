@@ -22,8 +22,5 @@ notko.workspace = true          # Maybe, Outcome
 [dev-dependencies]
 # (arvo already declared above under [dependencies])
 
-[build-dependencies]
-mockspace.workspace = true
-
 [features]
 default = []

@@ -12,9 +12,9 @@
 
 use core::marker::PhantomData;
 
-use arvo::{Bool, USize};
 use arvo::strategy::Identity;
-use arvo_tensor::{cap_size, Capacity};
+use arvo::{Bool, USize};
+use arvo_tensor::{Capacity, cap_size};
 
 /// Per-store dirty bit. Same shape as `AccessMask`: kept distinct
 /// so `overlaps`-vs-access checks and `union_with`-vs-dirty checks
@@ -26,7 +26,9 @@ pub struct DirtyMask<C: Capacity> {
 
 impl<C: Capacity> core::fmt::Debug for DirtyMask<C> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.debug_struct("DirtyMask").field("bits", &self.bits.0).finish()
+        f.debug_struct("DirtyMask")
+            .field("bits", &self.bits.0)
+            .finish()
     }
 }
 
@@ -38,7 +40,8 @@ impl<C: Capacity> DirtyMask<C> {
     // running with partial coverage. Associated consts only evaluate
     // on monomorphisation when referenced, so every constructor
     // discharges the assert with `let _ = Self::_ASSERT_FITS_IN_USIZE`.
-    const _ASSERT_FITS_IN_USIZE: () = assert!( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-context size assertion; tracked: #429
+    const _ASSERT_FITS_IN_USIZE: () = assert!(
+        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-context size assertion; tracked: #429
         cap_size(C::CAP) <= 64,
         "DirtyMask: store capacity > 64 is not supported by the skeleton USize backing. Once arvo-bitmask ships multi-container Mask<W>, this assert lifts and DirtyMask widens.",
     );
@@ -46,7 +49,10 @@ impl<C: Capacity> DirtyMask<C> {
     /// Empty mask: nothing dirty.
     pub const fn empty() -> Self {
         let _ = Self::_ASSERT_FITS_IN_USIZE;
-        Self { bits: USize::ZERO, _cap: PhantomData }
+        Self {
+            bits: USize::ZERO,
+            _cap: PhantomData,
+        }
     }
 
     /// True iff nothing is dirty.
@@ -97,7 +103,8 @@ impl<C: Capacity> Clone for DirtyMask<C> {
 }
 
 impl<C: Capacity> PartialEq for DirtyMask<C> {
-    fn eq(&self, other: &Self) -> bool { // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) reason: std-trait method signature; core::cmp::PartialEq::eq is fixed to return bool by the trait (no-bare-primitives.md exception 5); tracked: #207
+    fn eq(&self, other: &Self) -> bool {
+        // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) reason: std-trait method signature; core::cmp::PartialEq::eq is fixed to return bool by the trait (no-bare-primitives.md exception 5); tracked: #207
         self.bits == other.bits
     }
 }
@@ -124,7 +131,9 @@ pub struct DirtyMasks<CF: Capacity, CS: Capacity> {
 
 impl<CF: Capacity, CS: Capacity> DirtyMasks<CF, CS> {
     pub fn new() -> Self {
-        Self { per_fiber: <CF as Capacity>::filled(DirtyMask::empty()) }
+        Self {
+            per_fiber: <CF as Capacity>::filled(DirtyMask::empty()),
+        }
     }
 }
 

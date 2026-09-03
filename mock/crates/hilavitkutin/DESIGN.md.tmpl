@@ -20,7 +20,7 @@ source. This document maps domains to engine modules.
 | plan::loading | 16 | Loader WU handling, plan recomputation triggers |
 | dispatch | 17 | Monomorphised tuple dispatch, flattener (rust-pipe), compiled per-core programs |
 | resource | 19 | Stack-local caching, pointer separation |
-| thread | 20 | Pre-allocated pool, hybrid wake, core pinning, head+tail convergence |
+| thread | 20 | Pre-allocated pool, hybrid wake, core pinning; head+tail convergence designed, not yet built |
 | strategy | 21 | Plan-time selection, per-phase config, schedule reuse |
 | adapt | 22 | Volumetric analysis, EMA metrics, morsel temperature, predictive parking |
 | scheduler | 23 | Builder API, self-hosting meta pipeline, version stamps, error propagation |
@@ -288,10 +288,36 @@ worker walks the carrier and, at each in-phase trunk-root, fires that trunk's
 `RunGatedTrunk` mono only when the within-phase trunk rank modulo core count
 equals its core (`rank % ncores == core`), so a core runs exactly the trunks it
 owns and a non-owned trunk's body is dead-code-eliminated from the core's
-program. The head+tail convergence branch (a single-trunk waist-bounded phase
-split by record range across cores) keeps its record-slice ownership. Either way
-there is no type-erased per-unit dispatch slot: the column-capable walk is the
-only dispatch path.
+program. That per-phase walk is fiber-outer, matching `run`: for each fiber
+descriptor in plan order the worker restricts the walk to that fiber's members
+and windows `[0, record_count)` by that fiber's plan-baked
+`FiberDispatch.morsel_size`, so a fiber's units run over one morsel before the
+next and its co-located columns stay L1-hot for the window run on every core
+rather than only on the single-core path (`RunCfg::MORSEL_SIZE` remains the
+fallback for a degenerate zero window). Trunk-rank ownership is unaffected,
+because the rank advance is independent of the member restriction, so each core
+owns the same trunks in every per-fiber walk. Single-trunk phases are the
+case trunk parallelism cannot help, since there is one trunk to distribute. Canon
+answers them with head+tail convergence: two threads walking one commutative fiber
+from opposite ends, meeting in the middle, skipped where resource accumulation is
+non-commutative. That mechanism is not built yet, so a single-trunk phase currently
+runs serially. An earlier engine split such phases N ways by record range, one
+slice per core, and this paragraph described that split as head+tail convergence;
+it was neither, and both the branch and the description are gone. Either way there
+is no type-erased per-unit dispatch slot: the column-capable walk is the only
+dispatch path.
+
+Because both paths now dispatch under the union of the per-fiber member masks
+rather than an all-ones mask, the descriptor set must cover every live unit: a
+unit that no descriptor names does not run at all. Coverage is established by
+the flatten in `derive_phase_dispatch_order`, which assigns each live unit to
+exactly one fiber, so the union over descriptors is total. That invariant is
+currently checked by debug assertions only, and the flatten truncates silently
+once the descriptor pool is full, so a plan too large to describe degrades in a
+release build into units that quietly never execute rather than into a build
+failure. Making that truncation visible is tracked as follow-up; until it lands,
+any change to the flatten bounds or to descriptor sizing is changing a
+correctness invariant that both dispatch paths depend on.
 
 Single-core dispatch runs each fiber's units in the plan's RCM-reordered
 topological order. RCM (step 5 of the plan chain) produces two orderings from
@@ -525,10 +551,43 @@ sequential fallback for non-commutative).
 `run_parallel` realizes this on the no-alloc `Accum` surface as per-core
 regions of the single reserved buffer. The accumulator reserves cap =
 build-time record count (the global at-most-one-append-per-record bound),
-and core c appends into the sub-region at element offset `lo_c`, the same
-head+tail record-slice start the morsel-local path uses (`per =
-ceil(total/ncores)`, `lo = (c*per).min(total)`, `hi = (lo+per).min(total)`),
-with cap `hi_c - lo_c` and its own live-length cell. Offset `lo_c` (not a
+and core c appends into the sub-region at element offset `lo_c`, where the
+regions tile `[0, total)` one per core (`per = ceil(total/ncores)`,
+`lo = (c*per).min(total)`, `hi = (lo+per).min(total)`), with cap `hi_c - lo_c`
+and its own live-length cell. This N-way regioning is what the design asks for
+on the accumulator: each core owns an exclusive region and the main thread
+merges them after the workers rejoin, preserving append order. It is a
+different mechanism from head+tail convergence, which splits input records
+between two threads; they share the ceiling formula and nothing else.
+
+A `Replaceable` swap installs the whole value as one blob write through the
+same `Selector` witness the drain and the projection read use, plus a
+store-dirty mark; no other pointer derivation exists on the swap path. Under
+the bench-decided storage layout a resource value is one reserved blob record
+(scalar snapshot plus live-streamed collections), so the whole-blob install is
+the specified mechanism, not an excluded shortcut. The earlier per-leaf-copy
+rule was grounded on the refuted pre-bench layout, and the revert of the
+one-line install that followed it was a mis-citation; the witnessed blob write
+is canonical. Collection-bearing values gain per-record element writes for
+their `Seq` and `Map` halves only when the collection wiring lands (tracked by
+the catalogued swap test); until then the collection halves of a swapped value
+are out of the swap's scope by design, not by omission.
+
+A plan-affecting swap goes through `replace_resource<T: PlanAffecting>`, which
+locates `Resource<T>` through the same witness shape, performs the identical
+install and store-dirty mark, and sets the plan-dirty bit for `T`. `run` and
+`run_parallel` enter the plan band when it is the first frame or any
+plan-dirty bit is set, consuming and clearing the bits on entry; a plain
+`Replaceable` swap never forces the band, which is the intended cost asymmetry
+between a value swap's dirty cone and a plan recompute.
+
+The worker's region boundaries and the merge's read offsets are the same
+function of `(total, ncores, core)`, computed once and shared rather than
+spelled twice. That is the property that makes the merge correct: it reads
+core c's region at exactly the offset core c wrote. Two independent copies of
+the arithmetic would satisfy it only by coincidence, and a divergence between
+them is silent, since the merge would read well-formed memory that simply
+belongs to a different core. Offset `lo_c` (not a
 separate `c*per` buffer) tiles the reserved buffer exactly because the slice
 sizes sum to total. Disjoint byte ranges plus per-core cells mean no shared
 mutable state: the `resolve_append` path is unchanged, only the per-core

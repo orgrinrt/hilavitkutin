@@ -5,8 +5,8 @@
 //! from the preceding fiber's arena, output columns spill to the
 //! store-buffer-friendly tail of the dispatch function.
 
-use arvo::strategy::Identity;
 use arvo::USize;
+use arvo::strategy::Identity;
 use arvo_tensor::Capacity;
 
 use crate::plan::dims::PlanDims;
@@ -49,9 +49,9 @@ where
 {
     pub fn new() -> Self {
         Self {
-            class: <D::Fibers as Capacity>::filled(
-                <D::ColumnsPerFiber as Capacity>::filled(ColumnClassification::Internal),
-            ),
+            class: <D::Fibers as Capacity>::filled(<D::ColumnsPerFiber as Capacity>::filled(
+                ColumnClassification::Internal,
+            )),
             column_count: <D::Fibers as Capacity>::filled(USize::ZERO),
         }
     }

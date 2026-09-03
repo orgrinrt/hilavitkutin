@@ -1,0 +1,50 @@
+5988193 chore: lock src changelist for round sixteen
+816f90f docs: open the src changelist for round sixteen
+c78349d chore: lock doc changelist for round sixteen
+d15a4de docs: retract the elimination claims and state the reduction
+36223b4 docs: open the doc changelist for round sixteen
+a49819f docs: open round sixteen on the sixth collision route
+18b6e1d chore: close round fifteen
+157baf3 chore: lock src changelist for round fifteen
+24a9f04 docs: open the src changelist for round fifteen
+4f77b59 docs: say the overview is a stale rendering, not hand-written
+6e35efc chore: lock doc changelist for round fifteen
+d9a38d5 docs: open round fifteen on a locked claim never executed
+792113e chore: close round fourteen
+bb1bff3 chore: lock src changelist for round fourteen
+b047f30 chore: allow the raw boundary cast and two verdict returns
+1746448 docs: open the src changelist for round fourteen
+407ebab chore: lock doc changelist for round fourteen
+78e8712 docs: open round fourteen on three body-level allows
+c1ab2a6 chore: close round thirteen
+dffa5c4 chore: lock src changelist for round thirteen
+1544523 fix: derive an origin run from its index so overlap is unwritable
+5f6bba7 docs: open the src changelist for round thirteen
+03c631f chore: lock doc changelist for round thirteen
+ded83cb docs: a shape declares which minter an origin is
+b9ccbc3 docs: open the doc changelist for round thirteen
+3eea1da docs: open round thirteen on disjointness by construction
+2245fb2 chore: close round twelve
+b706c4d chore: lock src changelist for round twelve
+762ed7d refactor: hang the refusal doctests on the module, not empty structs
+e16be87 docs: open the src changelist for round twelve
+5929a7d chore: lock doc changelist for round twelve
+7da97a5 docs: open round twelve on two doc-carrier types
+f9a5322 chore: close round eleven
+f4bed74 chore: lock src changelist for round eleven
+6e7ce59 test: pin the refusals and keep the shape that minted the collision
+c551f2e chore: lock doc changelist for round eleven
+ae498cf docs: a claimed refusal is a compile-fail test
+a066a5d docs: open the doc changelist for round eleven
+21f06ac docs: open round eleven on unpinned refusals and discarded checks
+cb06b4f chore: close round ten
+2eb9211 chore: lock src changelist for round ten
+80fe8ed chore: allow the std trait signature and the raw arithmetic in the laws
+b2365ad docs: open the src changelist for round ten
+8748b49 chore: lock doc changelist for round ten
+70442c6 docs: open the doc changelist for round ten
+d1f7eaa docs: open round ten on the eight the last round added
+cf48ef4 chore: close round nine
+b860a2e chore: lock src changelist for round nine
+168708f fix: pin origins to the id field and bound equality on the layout
+c34ec44 docs: open the src changelist for round nine

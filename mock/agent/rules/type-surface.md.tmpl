@@ -79,22 +79,22 @@ There is no fourth "bare primitive" category.
 - Arithmetic generic: `<T: UArith<BITS>>` instead of concrete `u8` /
  `u16`
 - Associated types when the implementor chooses concrete storage
-- Newtypes anywhere — `Cap`, `USize`, `FastFloat`, `ContentHash`
+- Newtypes anywhere, `Cap`, `USize`, `FastFloat`, `ContentHash`
 - Scalar returns: `Outcome<T, E>`, `Maybe<T>`, `Just<T>` (from notko)
 
-## DON'T ✗ (concrete-type leakage — anywhere in source)
+## DON'T ✗ (concrete-type leakage, anywhere in source)
 
-- Bare `Option<T>` or `Result<T, E>` in ANY position — use `Maybe<T>` / `Outcome<T, E>`
+- Bare `Option<T>` or `Result<T, E>` in ANY position, use `Maybe<T>` / `Outcome<T, E>`
 - Concrete collections anywhere: `Vec<T>`, `HashMap`, `Seq<T, N>`,
  `Map<K, V, N>`
 - Raw numerics anywhere (pub fn, private field, local, cast, literal
  suffix, array size expression): `usize`, `f32`, `f64`, `bool`,
- `u32`, `i32`, `u64` — use the arvo newtypes or a trait bound
-- `String` / non-static `&str` in ANY position — use `&'static str` or `hilavitkutin_str::Str`
+ `u32`, `i32`, `u64`: use the arvo newtypes or a trait bound
+- `String` / non-static `&str` in ANY position, use `&'static str` or `hilavitkutin_str::Str`
 - Concrete types when a trait exists: don't write `fn add(a: u32, b:
  u32) -> u32` when `UArith<32>` is available
 
-## Red flags — STOP and reshape
+## Red flags, STOP and reshape
 
 | If your code looks like… | Reshape to… |
 |---|---|
@@ -106,7 +106,7 @@ There is no fourth "bare primitive" category.
 
 ## The canonical example: arvo's arithmetic surface
 
-arvo's numeric ops are traits (`UArith<BITS>`, `IArith<BITS>`) — not
+arvo's numeric ops are traits (`UArith<BITS>`, `IArith<BITS>`), not
 methods on concrete `u8` / `u16`. Any consumer that does arithmetic
 takes a trait bound and works for Hot/Warm/Cold/Precise strategies
 generically. Callers don't need turbofish; Rust infers.
@@ -117,7 +117,7 @@ version.
 
 ## If no existing trait fits
 
-The correct answer is "add a trait" — not "use a std type". File a
+The correct answer is "add a trait", not "use a std type". File a
 design round describing the contract.
 
 ## The escape-hatch rule
@@ -128,6 +128,6 @@ seems not to fit, the design is wrong, not the rule.
 
 ## See also
 
-- `PRINCIPLES.md` — first principles (including "No heap. Ever.")
-- `.claude/rules/cookbook.md` — intent → trait mapping
-- `.claude/rules/no-heap.md` — dedicated no-heap rule
+- `PRINCIPLES.md`: first principles (including "No heap. Ever.")
+- `.claude/rules/cookbook.md`: intent → trait mapping
+- `.claude/rules/no-heap.md`: dedicated no-heap rule

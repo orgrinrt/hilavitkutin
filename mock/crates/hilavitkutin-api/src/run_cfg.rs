@@ -35,12 +35,15 @@ pub trait HasRecordCount: sealed::Sealed {
     fn record_count(&self) -> USize;
 }
 
-/// Sealed marker: indicates that replacing this resource's value
-/// via `Scheduler::replace_resource` must dirty the plan-cache.
-/// Default: NOT plan-affecting. Consumers opt in for resources
-/// whose value shape changes the plan (e.g., the `RunCfg` resource
-/// itself). Topic 8 axis B.
-pub trait PlanAffecting: sealed::Sealed + BuilderInput {}
+/// Open marker on resource value types: replacing this resource's
+/// value via `Scheduler::replace_resource` must dirty the plan
+/// cache. Per-type consumer opt-in mirroring `Replaceable`, with
+/// which it is mutually exclusive (`PlanAffecting` dominant; see the
+/// negative impl at the `Replaceable` declaration). Default: NOT
+/// plan-affecting. Consumers opt in for resources whose value shape
+/// changes the plan (e.g., the `RunCfg` resource itself). Topic 8
+/// axis B; unsealed per the A2-3 ruling.
+pub trait PlanAffecting {}
 
 /// Consumer-supplied run-config trait. Single-slot typestate; one
 /// `RunCfg` impl per Scheduler<Cfg> instantiation. Topic 1 axes
@@ -71,6 +74,22 @@ pub trait RunCfg:
     /// surface; per `arvo-toolbox-not-policer.md`, override by
     /// writing the const explicitly.
     const MAX_PLAN_AFFECTING_RESOURCES: USize = USize(256);
+
+    /// Bounded middle-tier spin budget the frame waits run before
+    /// parking. The spin re-loads the wake word each iteration, so the
+    /// lost-wakeup discipline is untouched; zero is park-immediately
+    /// exactly. Default 0 per the re-examined wake_policy evidence
+    /// (record 202607210100): across seven wait policies, three sizes,
+    /// and three invocations, park is never worse and no spin policy
+    /// is ever better; spin loads contend the wake words against the
+    /// publisher and the done arrivals, and on aarch64 the
+    /// `spin_loop` iteration is ISB at 9 to 20 ns, so a non-zero
+    /// override should drop the hint or budget in wall-time rather
+    /// than iterations. Consumer-tunable per
+    /// `arvo-toolbox-not-policer`; the telemetry-driven `pick_tier`
+    /// selection over `predicted_wait_ns` is the adapt-phase
+    /// follow-up, with park-immediately as its bar.
+    const WAKE_SPIN_BUDGET: USize = USize(0);
 
     /// Records per morsel window the single-core run-loop windows the record
     /// range into. Coarser than `MICRO_MORSEL_INTERVAL` (a morsel contains

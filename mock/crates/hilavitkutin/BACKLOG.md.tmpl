@@ -6,6 +6,22 @@
 > `hilavitkutin_str::Str` instead of `&str` / `String`. See
 > `rules/type-surface.md`.
 
+## Custom diagnostic for satisfaction failures
+
+The type-state accumulator surfaces `.build()` violations as stock
+trait-bound errors against the sealed `SatisfiedBy<Supply>` impl
+on `Demand`. Once `#[diagnostic::on_unimplemented]` (or an
+equivalent stable mechanism) is available, replace the stock
+message with prose naming which WU's bound is missing which
+provider, Resource, or Column.
+
+## Kit composition lints
+
+A mockspace lint (or `cargo mock check` step) that flags Kits whose
+`install` chain produces supply markers no registered WorkUnit
+demands. Catches dead Kit composition before compile-time
+satisfaction noise hides it.
+
 ## Windows os-tier
 
 Current os-tier covers Linux + macOS via mmap + pthread +
@@ -187,13 +203,18 @@ below is a separate downstream round.
 
 ## Engine skeleton post-review notes
 
-- **POSIX fn*/void* cast in `platform/os.rs` `spawn_fn`.** The
- current pattern smuggles `fn()` via `usize` as a
- `pthread_create` argument. POSIX does not guarantee that `fn*`
- and `void*` have matching size; all Rust tier-1 targets happen
- to comply in practice, but the threading-std implementation
- round should switch to `Box<fn()>` or a static work-queue slot
- to be POSIX-clean.
+- **POSIX fn*/void* cast, resolved.** An earlier `spawn_fn` on
+ the os tier smuggled a `fn()` through `usize` as a
+ `pthread_create` argument, and POSIX does not guarantee `fn*`
+ and `void*` share a size. The note proposed `Box<fn()>` or a
+ static work-queue slot; neither is what shipped. The generic
+ `spawn` copies a pointer-sized closure by value into the
+ argument slot under a compile-time size and alignment check,
+ and the closure captures a data pointer, so no function
+ pointer is cast and the parity question does not arise. An
+ over-fat closure is a compile error rather than an allocation,
+ which is what keeps the engine path allocation-free. The
+ `spawn_fn` the note described has been removed.
 - **`OnceLock` MSRV in `platform/std_tier.rs`.** Uses
  `std::sync::OnceLock` which requires Rust 1.70+. The workspace
  does not yet pin a toolchain. When a toolchain policy is

@@ -700,7 +700,8 @@ impl<T, Tail: MergeAccums> MergeAccums for ResourceBinding<T, Tail> {
         stride: USize,
         accum_idx: &mut USize,
     ) {
-        self.tail.merge_accums(per, ncores, total, live, stride, accum_idx);
+        self.tail
+            .merge_accums(per, ncores, total, live, stride, accum_idx);
     }
 }
 
@@ -715,7 +716,8 @@ impl<T, Tail: MergeAccums> MergeAccums for ColumnBinding<T, Tail> {
         stride: USize,
         accum_idx: &mut USize,
     ) {
-        self.tail.merge_accums(per, ncores, total, live, stride, accum_idx);
+        self.tail
+            .merge_accums(per, ncores, total, live, stride, accum_idx);
     }
 }
 
@@ -730,7 +732,8 @@ impl<T, Tail: MergeAccums> MergeAccums for VirtualBinding<T, Tail> {
         stride: USize,
         accum_idx: &mut USize,
     ) {
-        self.tail.merge_accums(per, ncores, total, live, stride, accum_idx);
+        self.tail
+            .merge_accums(per, ncores, total, live, stride, accum_idx);
     }
 }
 
@@ -766,7 +769,8 @@ impl<T, Tail: MergeAccums> MergeAccums for AccumBinding<T, Tail> {
         }
         self.len.set(USize(write_pos));
         accum_idx.0 += 1; // lint:allow(no-bare-numeric) reason: accum position step; tracked: #121
-        self.tail.merge_accums(per, ncores, total, live, stride, accum_idx);
+        self.tail
+            .merge_accums(per, ncores, total, live, stride, accum_idx);
     }
 }
 

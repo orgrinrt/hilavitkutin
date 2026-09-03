@@ -613,6 +613,16 @@ that DO impl `Replaceable`. See sketch S5 at
 `mock/research/sketches/202605050615_kit_taxonomy/` for the
 empirical evidence.
 
+`Replaceable` and `PlanAffecting` are mutually exclusive, with
+`PlanAffecting` dominant: the crate ships
+`impl<T: PlanAffecting> !Replaceable for T` under
+`#![feature(negative_impls)]` (WATCH tier in the workspace
+unstable-features tables), so a consumer writing both impls for one
+type gets E0751 at its own impl site. A plan-affecting value routes
+through `replace_resource`, never `replace_value`. See the
+exclusivity sketch at `mock/research/sketches/202607193310` (both
+arms confirmed).
+
 Replaceability is the only enforced annotation on Owned types.
 Visibility is per-kit-crate (whole-kit pub vs whole-kit pub(crate)
 in its own crate); not a per-Owned-type axis. See
@@ -924,7 +934,8 @@ back at every WU.
 ```rust
 pub trait MemoryProvider: Send + Sync {
  unsafe fn allocate(&self, len: usize, align: usize) -> *mut u8;
- unsafe fn deallocate(&self, ptr: *mut u8, len: usize);
+ unsafe fn deallocate(&self, ptr: *mut u8, len: usize,
+                      align: usize);
  unsafe fn protect(&self, ptr: *mut u8, len: usize,
  read: bool, write: bool);
 }
@@ -938,6 +949,18 @@ pub trait Clock: Send + Sync {
  fn now_ns(&self) -> u64;
 }
 ```
+
+`deallocate` takes the same `align` the matching `allocate` was given,
+alongside the same `ptr` and `len`. All three are part of the safety
+contract, not just the first two. An allocator underneath may require the
+full layout to free correctly (`std::alloc` does), and nothing at the free
+site can recover the alignment on its own: the caller is the only party
+that knows it. A provider whose free path ignores alignment, such as a
+bump arena, may simply not read the parameter.
+
+The hazard is concrete rather than theoretical. Column slabs are reserved
+at 64-byte alignment, so a provider left to guess a word would free every
+column with a mismatched layout.
 
 All consumed via monomorphisation. The Scheduler is generic over the
 platform types. Storing `dyn MemoryProvider` would violate the dyn
@@ -1079,14 +1102,19 @@ and left `BuilderInput` carrying only `Init` and `Dispatch`. The
 shipped signature is re-derived against the current `BuilderInput`
 contract and the store storage the resource arena exposes.
 
-### `PlanAffecting: BuilderInput + Sealed`
+### `PlanAffecting` open marker
 
-Sealed marker trait. Resources implementing `PlanAffecting` dirty the
-plan cache when replaced via `Scheduler::replace_resource`; resources
-without it are cheap value-swaps. Default is NOT plan-affecting.
+Open marker trait on resource value types, per-type consumer opt-in
+mirroring `Replaceable`. Resources implementing `PlanAffecting` dirty
+the plan cache when replaced via `Scheduler::replace_resource`;
+resources without it are cheap value-swaps. Default is NOT
+plan-affecting. `PlanAffecting` and `Replaceable` are mutually
+exclusive with `PlanAffecting` dominant (see the `Replaceable`
+section's negative impl); a plan-affecting swap performs the identical
+witnessed blob install plus the plan-dirty bit.
 
 ```rust
-pub trait PlanAffecting: BuilderInput + private::Sealed {}
+pub trait PlanAffecting {}
 ```
 
 The dirty bit array is `[AtomicBool; Cfg::MAX_PLAN_AFFECTING_RESOURCES]`

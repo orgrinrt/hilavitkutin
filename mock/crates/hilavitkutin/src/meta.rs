@@ -75,7 +75,8 @@ pub(crate) fn fold_ema(prev: Nanos, sample: Nanos, seed: Bool) -> Nanos {
 mod fold_ema_tests {
     use super::*;
 
-    fn ns(v: u64) -> Nanos { // lint:allow(no-bare-numeric) reason: test fixture literal lift; tracked: #121
+    fn ns(v: u64) -> Nanos {
+        // lint:allow(no-bare-numeric) reason: test fixture literal lift; tracked: #121
         Nanos::from_raw(v)
     }
 

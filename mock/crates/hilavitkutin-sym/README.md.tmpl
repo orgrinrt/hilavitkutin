@@ -2,8 +2,11 @@
 
 Generic interned-identity core for the hilavitkutin ecosystem. `no_std`,
 no alloc, no ecosystem dependencies. Provides `Sym`, a 4-byte
-integer-equality handle tagged by a 4-bit domain `kind`, the `Domain`
-trait ladder that distinguishes deduplicated-value domains from
-minted-fresh domains, the `Interner` producer trait, and the `Generator`
-mint-only producer. String interning is one domain of this core, supplied
-by `hilavitkutin-str`.
+integer-equality handle whose 32 bits divide according to a `SymShape`
+(three bits of domain tag by default), the `Domain` trait ladder that
+distinguishes deduplicated-value domains from minted-fresh domains, the
+`Interner` producer trait, and the `Generator` mint-only producer. A
+minted handle is fresh within its generator and origin rather than
+globally, and shapes with several origins make that disjointness
+constructible. String interning is one domain of this core, supplied by
+`hilavitkutin-str`.

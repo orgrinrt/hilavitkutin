@@ -35,19 +35,19 @@
 
 use core::marker::PhantomData;
 
-use arvo::strategy::Identity;
 use arvo::USize;
+use arvo::strategy::Identity;
 use arvo_bitmask::BitAccess;
 use arvo_tensor::{Capacity, ConstCapacity};
+use hilavitkutin_api::HasSchedule;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::work_unit_values::{WuCons, WuNil};
-use hilavitkutin_api::HasSchedule;
 
 use crate::dispatch::engine_ctx::{GateWith, There};
 use crate::dispatch::fiber_run::RunFiber;
 use crate::dispatch::morsel::MorselRange;
 use crate::meta::MetaBlock;
-use crate::plan::grouping::{trunk_of, BundleMasks};
+use crate::plan::grouping::{BundleMasks, trunk_of};
 use crate::plan::project::WitnessIndex;
 
 /// Carries the compile-time membership of carrier position `Pos` in `TRUNK` as
@@ -59,11 +59,22 @@ use crate::plan::project::WitnessIndex;
 /// Trunk-only keyed: a trunk lies wholly within one phase, so the trunk id alone
 /// identifies membership. Phase order is the outer dispatcher's runtime phase
 /// loop, not a second const gate here.
-struct Member<Full, Stores, GW, CU, CS, Adj, Pos, const TRUNK: usize>( // lint:allow(no-bare-numeric) reason: const-generic trunk carrier; tracked: #121
+struct Member<Full, Stores, GW, CU, CS, Adj, Pos, const TRUNK: usize>(
+    // lint:allow(no-bare-numeric) reason: const-generic trunk carrier; tracked: #121
     PhantomData<(Full, Stores, GW, CU, CS, Adj, Pos)>,
 );
 
-impl<Full, Stores, GW, CU: Capacity + const ConstCapacity, CS: Capacity, Adj: const BitAccess + Identity, Pos: WitnessIndex, const TRUNK: usize> Member<Full, Stores, GW, CU, CS, Adj, Pos, TRUNK> // lint:allow(no-bare-numeric) reason: const-generic trunk carrier; tracked: #121
+impl<
+    Full,
+    Stores,
+    GW,
+    CU: Capacity + const ConstCapacity,
+    CS: Capacity,
+    Adj: const BitAccess + Identity,
+    Pos: WitnessIndex,
+    const TRUNK: usize,
+> Member<Full, Stores, GW, CU, CS, Adj, Pos, TRUNK>
+// lint:allow(no-bare-numeric) reason: const-generic trunk carrier; tracked: #121
 where
     Full: const BundleMasks<Stores, GW, CS>,
 {
@@ -76,7 +87,20 @@ where
 /// scheduler bindings; `Witnesses` the per-unit `RunFiber` projection list; `GW`
 /// the grouping witness list; `Stores` the global store set; `CU` / `CS` the
 /// unit / store capacities; `Pos` the head's carrier position (Peano witness).
-pub trait RunGatedTrunk<Full, A, Witnesses, GW, Stores, CU: Capacity, CS: Capacity, Adj, const TRUNK: usize, Pos> { // lint:allow(no-bare-numeric) reason: const-generic trunk carrier; tracked: #121
+pub trait RunGatedTrunk<
+    Full,
+    A,
+    Witnesses,
+    GW,
+    Stores,
+    CU: Capacity,
+    CS: Capacity,
+    Adj,
+    const TRUNK: usize,
+    Pos,
+>
+{
+    // lint:allow(no-bare-numeric) reason: const-generic trunk carrier; tracked: #121
     /// Run this carrier's members of `TRUNK` over `morsel`, head-first.
     ///
     /// `dirty` carries one bit per carrier position (the incremental-skip mask);
@@ -89,15 +113,65 @@ pub trait RunGatedTrunk<Full, A, Witnesses, GW, Stores, CU: Capacity, CS: Capaci
     /// `Virtual<V>` stamp equals `epoch` (the firer set it this pass). The
     /// per-unit gate index (`GI`) is the sixth element of each unit's `RunFiber`
     /// witness tuple; `Always` members const-fold their gate to true.
-    fn run_trunk<M: BitAccess>(&self, bindings: &A, meta_block: &MetaBlock, morsel: MorselRange, dirty: M, epoch: USize);
+    fn run_trunk<M: BitAccess>(
+        &self,
+        bindings: &A,
+        meta_block: &MetaBlock,
+        morsel: MorselRange,
+        dirty: M,
+        epoch: USize,
+    );
 }
 
-impl<Full, A, GW, Stores, CU: Capacity, CS: Capacity, Adj, const TRUNK: usize, Pos> RunGatedTrunk<Full, A, Empty, GW, Stores, CU, CS, Adj, TRUNK, Pos> for WuNil { // lint:allow(no-bare-numeric) reason: const-generic trunk carrier; tracked: #121
+impl<Full, A, GW, Stores, CU: Capacity, CS: Capacity, Adj, const TRUNK: usize, Pos>
+    RunGatedTrunk<Full, A, Empty, GW, Stores, CU, CS, Adj, TRUNK, Pos> for WuNil
+{
+    // lint:allow(no-bare-numeric) reason: const-generic trunk carrier; tracked: #121
     #[inline]
-    fn run_trunk<M: BitAccess>(&self, _bindings: &A, _meta_block: &MetaBlock, _morsel: MorselRange, _dirty: M, _epoch: USize) {}
+    fn run_trunk<M: BitAccess>(
+        &self,
+        _bindings: &A,
+        _meta_block: &MetaBlock,
+        _morsel: MorselRange,
+        _dirty: M,
+        _epoch: USize,
+    ) {
+    }
 }
 
-impl<Full, A, W, Tail, RI, RCI, WCI, WAI, WVI, GI, WTail, GW, Stores, CU: Capacity + const ConstCapacity, CS: Capacity, Adj: const BitAccess + Identity, Pos: WitnessIndex, const TRUNK: usize> RunGatedTrunk<Full, A, Cons<(RI, RCI, WCI, WAI, WVI, GI), WTail>, GW, Stores, CU, CS, Adj, TRUNK, Pos> for WuCons<W, Tail> // lint:allow(no-bare-numeric) reason: const-generic trunk carrier; tracked: #121
+impl<
+    Full,
+    A,
+    W,
+    Tail,
+    RI,
+    RCI,
+    WCI,
+    WAI,
+    WVI,
+    GI,
+    WTail,
+    GW,
+    Stores,
+    CU: Capacity + const ConstCapacity,
+    CS: Capacity,
+    Adj: const BitAccess + Identity,
+    Pos: WitnessIndex,
+    const TRUNK: usize,
+>
+    RunGatedTrunk<
+        Full,
+        A,
+        Cons<(RI, RCI, WCI, WAI, WVI, GI), WTail>,
+        GW,
+        Stores,
+        CU,
+        CS,
+        Adj,
+        TRUNK,
+        Pos,
+    > for WuCons<W, Tail>
+// lint:allow(no-bare-numeric) reason: const-generic trunk carrier; tracked: #121
 where
     WuCons<W, Tail>: RunFiber<A, Cons<(RI, RCI, WCI, WAI, WVI, GI), WTail>>,
     W: HasSchedule,
@@ -106,7 +180,14 @@ where
     Tail: RunGatedTrunk<Full, A, WTail, GW, Stores, CU, CS, Adj, TRUNK, There<Pos>>,
 {
     #[inline]
-    fn run_trunk<M: BitAccess>(&self, bindings: &A, meta_block: &MetaBlock, morsel: MorselRange, dirty: M, epoch: USize) {
+    fn run_trunk<M: BitAccess>(
+        &self,
+        bindings: &A,
+        meta_block: &MetaBlock,
+        morsel: MorselRange,
+        dirty: M,
+        epoch: USize,
+    ) {
         // Member of this trunk (compile-time) AND not skipped this frame
         // (runtime incremental-skip bit) AND its schedule opens this pass (const
         // true for Always, a stamp == epoch test for On<V>). Non-members fold
@@ -117,6 +198,7 @@ where
         {
             self.run_head(bindings, meta_block, morsel, epoch);
         }
-        self.tail.run_trunk(bindings, meta_block, morsel, dirty, epoch);
+        self.tail
+            .run_trunk(bindings, meta_block, morsel, dirty, epoch);
     }
 }

@@ -41,17 +41,17 @@ use arvo_bitmask::{BitAccess, BitMatrix, Mask, NodeId};
 use arvo_graph::waist_detect;
 use arvo_sparse::{block_diagonal_via, rcm_reorder_via};
 use arvo_spectral::k_way_partition;
-use arvo_tensor::{cap_size, Capacity};
+use arvo_tensor::{Capacity, cap_size};
 
 use hilavitkutin_api::{TrunkId, UnitId};
 use notko::Maybe;
 
+use super::access::AccessMask;
 use super::column::{ColumnClassMap, ColumnClassification};
 use super::dims::PlanDims;
 use super::dirty::DirtyMasks;
 use super::fiber::{Fiber, FiberGrouping};
 use super::graph::{DependencyGraph, EdgeKind};
-use super::access::AccessMask;
 use super::inputs::PlanInputs;
 use super::laplacian::SymmetricLaplacian;
 use super::phase::{PhaseBoundaries, PhaseConfig};
@@ -90,9 +90,7 @@ pub struct FiberLayout<D: PlanDims> {
 /// preserved because the outer loop walks the source `s` in ascending
 /// order. WAR anti-dependencies are out of scope (a tracked plan-chain
 /// follow-up).
-pub fn build_dag<D: PlanDims>(
-    inputs: &PlanInputs<D::Units, D::Stores>,
-) -> DependencyGraph<D> {
+pub fn build_dag<D: PlanDims>(inputs: &PlanInputs<D::Units, D::Stores>) -> DependencyGraph<D> {
     let mut g: DependencyGraph<D> = DependencyGraph::new();
     let n = inputs.unit_count.0;
     let reads = inputs.reads.as_ref();
@@ -238,7 +236,9 @@ pub fn topo_sort<D: PlanDims>(
                 while k < end_excl {
                     let d = cols[k].index().0;
                     let deg = in_degree.as_ref()[d];
-                    if d < cap_size(<D::Units as Capacity>::CAP) && deg.0 != CONSUMED.0 && deg.0 > 0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: sentinel + bound check on USize internal field; tracked: #72
+                    if d < cap_size(<D::Units as Capacity>::CAP) && deg.0 != CONSUMED.0 && deg.0 > 0
+                    {
+                        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: sentinel + bound check on USize internal field; tracked: #72
                         in_degree.as_mut()[d] = USize(deg.0 - 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
                     }
                     k += 1;
@@ -287,7 +287,8 @@ where
     while from < n {
         let mut to = 0;
         while to < n {
-            if graph.has_edge(USize(from), USize(to)).0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
+            if graph.has_edge(USize(from), USize(to)).0 {
+                // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
                 adj.set_edge(NodeId(USize(from)), NodeId(USize(to))); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
             }
             to += 1;
@@ -318,7 +319,8 @@ where
     boundaries.phase_count = USize(1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: at least one phase always; tracked: #72
     let mut p = 0;
     while p + 1 < n && boundaries.phase_count.0 < cap_size(<D::Phases as Capacity>::CAP) {
-        if waists.contains(USize(p)).0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal position; tracked: #72
+        if waists.contains(USize(p)).0 {
+            // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal position; tracked: #72
             let next_phase = boundaries.phase_count.0;
             boundaries.boundaries.as_mut()[next_phase] = USize(p + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
             boundaries.phase_count = USize(next_phase + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal; tracked: #72
@@ -341,9 +343,7 @@ where
 /// `rcm_reorder_via` seeds over the CSR's live `node_count()`, so the
 /// slack tail past `unit_count` never enters the permutation; the
 /// trailing slots stay `UnitId::ZERO`.
-pub fn rcm_reorder<D: PlanDims>(
-    graph: &DependencyGraph<D>,
-) -> <D::Units as Capacity>::Array<UnitId>
+pub fn rcm_reorder<D: PlanDims>(graph: &DependencyGraph<D>) -> <D::Units as Capacity>::Array<UnitId>
 where
     <D::Units as Capacity>::Array<USize>: Copy,
     <D::Edges as Capacity>::Array<NodeId>: Copy,
@@ -372,16 +372,17 @@ where
 /// slack tail past `unit_count` stays block 0. The Dulmage-Mendelsohn
 /// fine decomposition and dead-column elimination layer onto this in a
 /// later round.
-pub fn block_diagonalise<D: PlanDims>(
-    graph: &DependencyGraph<D>,
-) -> BlockPartition<D::Units>
+pub fn block_diagonalise<D: PlanDims>(graph: &DependencyGraph<D>) -> BlockPartition<D::Units>
 where
     <D::Units as Capacity>::Array<USize>: Copy,
     <D::Edges as Capacity>::Array<NodeId>: Copy,
 {
     let csr = graph.to_csr_bidirectional();
     let (block_count, block_of_unit) = block_diagonal_via::<_, D::Units>(&csr);
-    BlockPartition { block_count, block_of_unit }
+    BlockPartition {
+        block_count,
+        block_of_unit,
+    }
 }
 
 /// Step 5 projection: trunk count per phase.
@@ -449,9 +450,7 @@ pub fn phase_trunk_counts<D: PlanDims>(
 /// over the full unit capacity; on a loose CSR the slack rows are
 /// isolated and a live-node-count-aware spectral path is a follow-up
 /// gated on the bench adopting spectral.
-pub fn spectral_partition<D: PlanDims>(
-    graph: &DependencyGraph<D>,
-) -> FiberGrouping<D>
+pub fn spectral_partition<D: PlanDims>(graph: &DependencyGraph<D>) -> FiberGrouping<D>
 where
     <D::Units as Capacity>::Array<SpectralFloat>: Copy,
     <D::Units as Capacity>::Array<USize>: Copy,
@@ -459,8 +458,7 @@ where
 {
     use hilavitkutin_api::FiberId;
     let csr = graph.to_csr_bidirectional();
-    let lap: SymmetricLaplacian<D::Units, D::Edges, SpectralFloat> =
-        SymmetricLaplacian::new(&csr);
+    let lap: SymmetricLaplacian<D::Units, D::Edges, SpectralFloat> = SymmetricLaplacian::new(&csr);
     let sigma = lap.lambda_max_bound();
     let iterations = USize(100); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: spectral power-iteration count; tracked: #72
     let (count, partition) =
@@ -468,7 +466,12 @@ where
     let mut grouping: FiberGrouping<D> = FiberGrouping::new();
     grouping.fiber_count = count;
     // Map each unit's spectral partition id to its fiber.
-    for (slot, part) in grouping.assignment.as_mut().iter_mut().zip(partition.as_ref().iter()) {
+    for (slot, part) in grouping
+        .assignment
+        .as_mut()
+        .iter_mut()
+        .zip(partition.as_ref().iter())
+    {
         *slot = FiberId::from_index(*part);
     }
     grouping
@@ -724,10 +727,7 @@ where
             // narrow chains, so the gate only diverges where it matters.
             let grouping = if bu_count > 5 {
                 // lint:allow(no-bare-numeric) reason: width-gate threshold (>5), tunable; tracked: #644
-                spectral_grouping_in_block::<D>(
-                    &spectral,
-                    &block_units.as_ref()[0..bu_count],
-                )
+                spectral_grouping_in_block::<D>(&spectral, &block_units.as_ref()[0..bu_count])
             } else {
                 group_fibers_in_block::<D>(graph, &block_units.as_ref()[0..bu_count])
             };
@@ -884,8 +884,10 @@ pub fn compute_upward_rank_and_dirty<D: PlanDims>(
             let f = assignment[u].index().0;
             if f < cap_size(<D::Fibers as Capacity>::CAP) {
                 let mut store = 0;
-                while store < cap_size(<D::Stores as Capacity>::CAP) && store < 64 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: AccessMask uses USize backing with 64-bit window per skeleton; tracked: #72
-                    if writes[u].contains(USize(store)).0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
+                while store < cap_size(<D::Stores as Capacity>::CAP) && store < 64 {
+                    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: AccessMask uses USize backing with 64-bit window per skeleton; tracked: #72
+                    if writes[u].contains(USize(store)).0 {
+                        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
                         let pf = dirty.per_fiber.as_ref()[f];
                         dirty.per_fiber.as_mut()[f] = pf.set(USize(store)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
                     }
@@ -990,7 +992,8 @@ pub fn compute_fiber_morsel_windows<D: PlanDims>(
         // `compute_execution_plan` call whose inputs carry
         // `MorselBudget::ZERO`; every build path threads real RunCfg
         // consts) falls back to the whole record range in one morsel.
-        if budget.max_morsel.0 == 0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: unbudgeted sentinel test; tracked: #72
+        if budget.max_morsel.0 == 0 {
+            // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: unbudgeted sentinel test; tracked: #72
             windows.as_mut()[f] = inputs.record_count;
         } else {
             // A misconfigured consumer const would panic inside std's
@@ -1000,7 +1003,11 @@ pub fn compute_fiber_morsel_windows<D: PlanDims>(
                 budget.min_morsel.0 <= budget.max_morsel.0,
                 "RunCfg morsel budget misconfigured: MIN_MORSEL must not exceed MAX_MORSEL"
             );
-            let raw = if sum == 0 { budget.max_morsel.0 } else { budget.l1_usable.0 / sum }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: formula arithmetic internal; tracked: #72
+            let raw = if sum == 0 {
+                budget.max_morsel.0
+            } else {
+                budget.l1_usable.0 / sum
+            }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: formula arithmetic internal; tracked: #72
             let clamped = raw.clamp(budget.min_morsel.0, budget.max_morsel.0);
             windows.as_mut()[f] = USize(clamped & !3); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: 4-record cache-line alignment mask per spec; tracked: #72
         }
@@ -1056,8 +1063,8 @@ pub fn select_phase_configs<D: PlanDims>(
         } else {
             1 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: degenerate-width floor for malformed boundaries; tracked: #72
         };
-        configs.as_mut()[i] = if record_count.0 < SMALL_RECORD_COUNT_THRESHOLD
-            || width == 1 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: explicit-singleton case bound; tracked: #72
+        configs.as_mut()[i] = if record_count.0 < SMALL_RECORD_COUNT_THRESHOLD || width == 1
+        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: explicit-singleton case bound; tracked: #72
         {
             PhaseConfig::MaxFuse
         } else if width > WIDE_PHASE_WIDTH_THRESHOLD {
@@ -1103,8 +1110,10 @@ where
             // Walk this unit's access mask, register touched stores
             // as columns for fiber f.
             let mut store = 0;
-            while store < cap_size(<D::Stores as Capacity>::CAP) && store < 64 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: AccessMask 64-bit window per skeleton; tracked: #72
-                if access[u].contains(USize(store)).0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
+            while store < cap_size(<D::Stores as Capacity>::CAP) && store < 64 {
+                // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: AccessMask 64-bit window per skeleton; tracked: #72
+                if access[u].contains(USize(store)).0 {
+                    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72
                     let slot = map.column_count.as_ref()[f].0;
                     if slot < cap_size(<D::ColumnsPerFiber as Capacity>::CAP) {
                         map.class.as_mut()[f].as_mut()[slot] = ColumnClassification::Internal;
@@ -1185,8 +1194,8 @@ pub enum PlanError {
 
 #[cfg(test)]
 mod predecessor_mask_tests {
-    use super::compute_predecessor_masks;
     use super::DependencyGraph;
+    use super::compute_predecessor_masks;
     use crate::plan::DefaultPlanDims;
     use arvo::USize;
     use arvo_bitmask::BitAccess;
