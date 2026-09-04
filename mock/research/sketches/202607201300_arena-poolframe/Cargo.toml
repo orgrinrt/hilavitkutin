@@ -1,0 +1,7 @@
+[workspace]
+
+[package]
+name = "arena_poolframe_sketch"
+version = "0.0.0"
+edition = "2021"
+publish = false
