@@ -5,10 +5,9 @@
 //! `Branch` (lateral fan-out into parallel fibers), or a `Bridge`
 //! (lateral fan-in from parallel fibers).
 
-use arvo::strategy::Identity;
 use arvo::USize;
+use arvo::strategy::{Additive, Identity};
 use arvo_tensor::Capacity;
-
 use hilavitkutin_api::TrunkId;
 
 use crate::plan::dims::PlanDims;
@@ -24,7 +23,7 @@ use crate::plan::fiber::Fiber;
 /// run with zero sync within a phase. Sized by the unit capacity `C`.
 pub struct BlockPartition<C: Capacity> {
     /// Number of distinct blocks (connected components).
-    pub block_count: USize,
+    pub block_count:   USize,
     /// Block id per unit, indexed by unit index.
     pub block_of_unit: <C as Capacity>::Array<USize>,
 }
@@ -33,8 +32,8 @@ impl<C: Capacity> BlockPartition<C> {
     /// Empty partition (zero blocks). The default before step 5 runs.
     pub fn new() -> Self {
         Self {
-            block_count: USize::ZERO,
-            block_of_unit: <C as Capacity>::filled(USize::ZERO),
+            block_count:   <USize as Identity<Additive>>::IDENTITY,
+            block_of_unit: <C as Capacity>::filled(<USize as Identity<Additive>>::IDENTITY),
         }
     }
 }
@@ -79,7 +78,9 @@ pub struct Branch {
 
 impl Branch {
     pub const fn new() -> Self {
-        Self { fan_out_count: USize::ZERO }
+        Self {
+            fan_out_count: <USize as Identity<Additive>>::IDENTITY,
+        }
     }
 }
 
@@ -99,7 +100,9 @@ pub struct Bridge {
 
 impl Bridge {
     pub const fn new() -> Self {
-        Self { fan_in_count: USize::ZERO }
+        Self {
+            fan_in_count: <USize as Identity<Additive>>::IDENTITY,
+        }
     }
 }
 
@@ -166,9 +169,9 @@ impl<D: PlanDims> core::fmt::Debug for TrunkComponent<D> {
 /// a plain index record with no `D` projection.
 #[derive(Copy, Clone, Debug)]
 pub struct Trunk {
-    pub id: TrunkId,
+    pub id:           TrunkId,
     pub fiber_offset: USize,
-    pub fiber_count: USize,
+    pub fiber_count:  USize,
 }
 
 impl Trunk {
@@ -176,9 +179,9 @@ impl Trunk {
     /// writes the flat pools.
     pub fn new() -> Self {
         Self {
-            id: TrunkId::ZERO,
-            fiber_offset: USize::ZERO,
-            fiber_count: USize::ZERO,
+            id:           TrunkId::ZERO,
+            fiber_offset: <USize as Identity<Additive>>::IDENTITY,
+            fiber_count:  <USize as Identity<Additive>>::IDENTITY,
         }
     }
 }

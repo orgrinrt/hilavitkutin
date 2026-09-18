@@ -24,11 +24,17 @@ use core::sync::atomic::{AtomicU64, Ordering};
 use arvo::{Bool, USize};
 use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
-use hilavitkutin::OsThreadPool;
+mod common;
+use common::TestExecutor;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{
-    ColumnReaderApi, ColumnWriterApi, EachApi, HasColumnReader, HasColumnWriter, HasEach,
+    ColumnReaderApi,
+    ColumnWriterApi,
+    EachApi,
+    HasColumnReader,
+    HasColumnWriter,
+    HasEach,
 };
 use hilavitkutin_api::platform::{ClockApi, MemoryProviderApi, Nanos};
 use hilavitkutin_api::store::Column;
@@ -41,12 +47,15 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 }
 
 struct BumpProvider<const N: usize> {
-    buf: UnsafeCell<[MaybeUninit<u8>; N]>,
+    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
     used: Cell<usize>,
 }
 impl<const N: usize> BumpProvider<N> {
     fn new() -> Self {
-        Self { buf: UnsafeCell::new([const { MaybeUninit::uninit() }; N]), used: Cell::new(0) }
+        Self {
+            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
+            used: Cell::new(0),
+        }
     }
 }
 unsafe impl<const N: usize> Send for BumpProvider<N> {}
@@ -64,7 +73,9 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
         // SAFETY: aligned + len <= N, in bounds of the owned buffer.
         unsafe { base.add(aligned) }
     }
+
     unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
@@ -75,7 +86,9 @@ struct CounterClock {
 }
 impl CounterClock {
     fn new() -> Self {
-        Self { c: AtomicU64::new(0) }
+        Self {
+            c: AtomicU64::new(0),
+        }
     }
 }
 impl ClockApi for CounterClock {
@@ -120,15 +133,22 @@ type HintT = (
 
 struct P1;
 impl BuilderInput for P1 {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for P1 {
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        OneIn,
+        ColP1,
+        SnapNil,
+        ColPtrCons<Inv, ColPtrNil>,
+        ColPtrCons<P1v, ColPtrNil>,
+    >;
+    type Hint = HintT;
     type Read = OneIn;
     type Write = ColP1;
-    type Hint = HintT;
-    type Ctx<'frame> =
-        EngineCtx<'frame, OneIn, ColP1, SnapNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<P1v, ColPtrNil>>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: In host-populated; P1v reserved + exclusive; windowed.
@@ -140,15 +160,22 @@ impl WorkUnit<Always> for P1 {
 
 struct P2;
 impl BuilderInput for P2 {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for P2 {
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        OneIn,
+        ColP2,
+        SnapNil,
+        ColPtrCons<Inv, ColPtrNil>,
+        ColPtrCons<P2v, ColPtrNil>,
+    >;
+    type Hint = HintT;
     type Read = OneIn;
     type Write = ColP2;
-    type Hint = HintT;
-    type Ctx<'frame> =
-        EngineCtx<'frame, OneIn, ColP2, SnapNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<P2v, ColPtrNil>>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: as P1, for P2v.
@@ -160,13 +187,10 @@ impl WorkUnit<Always> for P2 {
 
 struct Mid;
 impl BuilderInput for Mid {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for Mid {
-    type Read = ReadP;
-    type Write = ColMr;
-    type Hint = HintT;
     type Ctx<'frame> = EngineCtx<
         'frame,
         ReadP,
@@ -175,6 +199,10 @@ impl WorkUnit<Always> for Mid {
         ColPtrCons<P1v, ColPtrCons<P2v, ColPtrNil>>,
         ColPtrCons<Mv, ColPtrNil>,
     >;
+    type Hint = HintT;
+    type Read = ReadP;
+    type Write = ColMr;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: both producers ran in the prior phase (RAW on P1v/P2v); Mv reserved.
@@ -187,15 +215,22 @@ impl WorkUnit<Always> for Mid {
 
 struct Q1;
 impl BuilderInput for Q1 {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for Q1 {
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        ColMr,
+        ColQ1,
+        SnapNil,
+        ColPtrCons<Mv, ColPtrNil>,
+        ColPtrCons<Q1v, ColPtrNil>,
+    >;
+    type Hint = HintT;
     type Read = ColMr;
     type Write = ColQ1;
-    type Hint = HintT;
-    type Ctx<'frame> =
-        EngineCtx<'frame, ColMr, ColQ1, SnapNil, ColPtrCons<Mv, ColPtrNil>, ColPtrCons<Q1v, ColPtrNil>>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: Mid ran in the prior phase (RAW on Mv); Q1v reserved + exclusive.
@@ -207,15 +242,22 @@ impl WorkUnit<Always> for Q1 {
 
 struct Q2;
 impl BuilderInput for Q2 {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for Q2 {
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        ColMr,
+        ColQ2,
+        SnapNil,
+        ColPtrCons<Mv, ColPtrNil>,
+        ColPtrCons<Q2v, ColPtrNil>,
+    >;
+    type Hint = HintT;
     type Read = ColMr;
     type Write = ColQ2;
-    type Hint = HintT;
-    type Ctx<'frame> =
-        EngineCtx<'frame, ColMr, ColQ2, SnapNil, ColPtrCons<Mv, ColPtrNil>, ColPtrCons<Q2v, ColPtrNil>>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: as Q1, doubling Mv into the disjoint Q2v column.
@@ -227,13 +269,10 @@ impl WorkUnit<Always> for Q2 {
 
 struct Sink;
 impl BuilderInput for Sink {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for Sink {
-    type Read = ReadQ;
-    type Write = ColS;
-    type Hint = HintT;
     type Ctx<'frame> = EngineCtx<
         'frame,
         ReadQ,
@@ -242,6 +281,10 @@ impl WorkUnit<Always> for Sink {
         ColPtrCons<Q1v, ColPtrCons<Q2v, ColPtrNil>>,
         ColPtrCons<Sv, ColPtrNil>,
     >;
+    type Hint = HintT;
+    type Read = ReadQ;
+    type Write = ColS;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: Q1 and Q2 ran in the prior phase (RAW on Q1v/Q2v); Sv reserved.
@@ -284,7 +327,7 @@ macro_rules! two_waist {
             .__tail()
             .__ptr()
             .as_ptr() as *mut u32;
-        for i in 0..$n {
+        for i in 0 .. $n {
             unsafe { *in_base.add(i) = i as u32 };
         }
         scheduler
@@ -304,7 +347,7 @@ macro_rules! single_phase {
         // Columns from head: P1v(0), In(1). Populate In = i.
         // SAFETY: In reserved for N records of u32; the scheduler is alive.
         let in_base = scheduler.__bindings().__tail().__ptr().as_ptr() as *mut u32;
-        for i in 0..N {
+        for i in 0 .. N {
             unsafe { *in_base.add(i) = i as u32 };
         }
         scheduler
@@ -320,8 +363,14 @@ fn multi_phase_records_and_higher_slot_zero() {
     assert!(matches!(r, Outcome::Ok(())));
     // nphases == 2 for this fixture (proven in the prior round); both phases
     // recorded a positive duration under the increasing clock.
-    assert!(scheduler.__phase_ema(USize(0)).to_raw() > 0, "phase 0 recorded a duration");
-    assert!(scheduler.__phase_ema(USize(1)).to_raw() > 0, "phase 1 recorded a duration");
+    assert!(
+        scheduler.__phase_ema(USize(0)).to_raw() > 0,
+        "phase 0 recorded a duration"
+    );
+    assert!(
+        scheduler.__phase_ema(USize(1)).to_raw() > 0,
+        "phase 1 recorded a duration"
+    );
     assert_eq!(
         scheduler.__phase_ema(USize(2)).to_raw(),
         0,
@@ -334,7 +383,7 @@ fn multi_phase_records_and_higher_slot_zero() {
 fn parallel_path_leaves_phase_ema_zero() {
     let provider = BumpProvider::<16384>::new();
     let scheduler = two_waist!(provider, N);
-    let pool = OsThreadPool::new();
+    let pool = TestExecutor::new();
     let mut scheduler = core::pin::pin!(scheduler);
     let r = scheduler.as_mut().run_parallel(&pool);
     assert!(matches!(r, Outcome::Ok(())));
@@ -367,7 +416,11 @@ fn multi_morsel_folds_per_frame_total() {
         scheduler.__phase_ema(USize(1)).to_raw() > 0,
         "phase 1 recorded its per-frame total across morsels"
     );
-    assert_eq!(scheduler.__phase_ema(USize(2)).to_raw(), 0, "slot past nphases stays zero");
+    assert_eq!(
+        scheduler.__phase_ema(USize(2)).to_raw(),
+        0,
+        "slot past nphases stays zero"
+    );
 }
 
 // --- Single-phase carrier touches only slot 0. ---
@@ -377,7 +430,10 @@ fn single_phase_only_slot_zero() {
     let mut scheduler = single_phase!(provider);
     let r = scheduler.run();
     assert!(matches!(r, Outcome::Ok(())));
-    assert!(scheduler.__phase_ema(USize(0)).to_raw() > 0, "the single phase recorded a duration");
+    assert!(
+        scheduler.__phase_ema(USize(0)).to_raw() > 0,
+        "the single phase recorded a duration"
+    );
     assert_eq!(
         scheduler.__phase_ema(USize(1)).to_raw(),
         0,

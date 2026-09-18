@@ -14,21 +14,27 @@
 use core::cell::{Cell, UnsafeCell};
 use core::mem::MaybeUninit;
 
-use arvo::strategy::Identity;
+use arvo::strategy::{Additive, Identity};
 use arvo::{Bool, USize};
 use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapCons, SnapNil};
 use hilavitkutin::dispatch::morsel::MorselRange;
 use hilavitkutin::resource::provenance::ColumnPtr;
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
+use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{
-    BatchApi, ColumnReaderApi, ColumnWriterApi, EachApi, HasBatch, HasEach, HasResourceProvider,
+    BatchApi,
+    ColumnReaderApi,
+    ColumnWriterApi,
+    EachApi,
+    HasBatch,
+    HasEach,
+    HasResourceProvider,
     ResourceProviderApi,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::store::{Column, Resource};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
-use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_providers::ArenaColumnStorage;
 
 /// Wrap a provider in the default-capacity bindings store (`D = Dim<256>`).
@@ -41,14 +47,14 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 // ---------------------------------------------------------------------
 
 struct BumpProvider<const N: usize> {
-    buf: UnsafeCell<[MaybeUninit<u8>; N]>,
+    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
     used: Cell<usize>,
 }
 
 impl<const N: usize> BumpProvider<N> {
     fn new() -> Self {
         Self {
-            buf: UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
+            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
             used: Cell::new(0),
         }
     }
@@ -97,8 +103,16 @@ fn context_resolves_resource() {
     let bindings = scheduler.__bindings();
 
     let meta = hilavitkutin::meta::MetaBlock::default();
-    let ctx: EngineCtx<'_, ReadU32, Empty, _, _, _> =
-        EngineCtx::project(bindings, &ColPtrNil, &meta, USize::ZERO, MorselRange::new(USize::ZERO, USize::ZERO));
+    let ctx: EngineCtx<'_, ReadU32, Empty, _, _, _> = EngineCtx::project(
+        bindings,
+        &ColPtrNil,
+        &meta,
+        <USize as Identity<Additive>>::IDENTITY,
+        MorselRange::new(
+            <USize as Identity<Additive>>::IDENTITY,
+            <USize as Identity<Additive>>::IDENTITY,
+        ),
+    );
 
     // The binding annotation pins `T = u32`; the index `I` infers from the
     // concrete bundle, so no turbofish is needed.
@@ -119,8 +133,13 @@ fn context_column_read_after_write() {
     // The column is both read and written, so it appears in `R` and `W`.
     // No resources are declared, so the resource source is empty.
     let meta = hilavitkutin::meta::MetaBlock::default();
-    let ctx: EngineCtx<'_, ColU32, ColU32, _, _, _> =
-        EngineCtx::project(&SnapNil, &col_source, &meta, USize::ZERO, MorselRange::new(USize::ZERO, USize(8)));
+    let ctx: EngineCtx<'_, ColU32, ColU32, _, _, _> = EngineCtx::project(
+        &SnapNil,
+        &col_source,
+        &meta,
+        <USize as Identity<Additive>>::IDENTITY,
+        MorselRange::new(<USize as Identity<Additive>>::IDENTITY, USize(8)),
+    );
 
     // SAFETY: the morsel covers records 0..8; the buffer is 8 long.
     unsafe {
@@ -149,12 +168,16 @@ fn context_multi_column_distinct_read_write() {
     let pc = unsafe { ColumnPtr::new_unchecked(buf_c.as_mut_ptr()) };
     // The source holds every column the access sets project over, in the
     // order [u8, u16, u32]; per-side projection pulls the relevant subset.
-    let col_source =
-        ColPtrCons::__new(pa, ColPtrCons::__new(pb, ColPtrCons::__new(pc, ColPtrNil)));
+    let col_source = ColPtrCons::__new(pa, ColPtrCons::__new(pb, ColPtrCons::__new(pc, ColPtrNil)));
 
     let meta = hilavitkutin::meta::MetaBlock::default();
-    let ctx: EngineCtx<'_, ReadU8U16, WriteU16U32, _, _, _> =
-        EngineCtx::project(&SnapNil, &col_source, &meta, USize::ZERO, MorselRange::new(USize::ZERO, USize(8)));
+    let ctx: EngineCtx<'_, ReadU8U16, WriteU16U32, _, _, _> = EngineCtx::project(
+        &SnapNil,
+        &col_source,
+        &meta,
+        <USize as Identity<Additive>>::IDENTITY,
+        MorselRange::new(<USize as Identity<Additive>>::IDENTITY, USize(8)),
+    );
 
     // SAFETY: the morsel covers records 0..8; each buffer is 8 long.
     unsafe {
@@ -175,8 +198,13 @@ fn context_multi_column_distinct_read_write() {
 #[test]
 fn context_each_covers_morsel() {
     let meta = hilavitkutin::meta::MetaBlock::default();
-    let ctx: EngineCtx<'_, Empty, Empty, _, _, _> =
-        EngineCtx::project(&SnapNil, &ColPtrNil, &meta, USize::ZERO, MorselRange::new(USize(5), USize(3)));
+    let ctx: EngineCtx<'_, Empty, Empty, _, _, _> = EngineCtx::project(
+        &SnapNil,
+        &ColPtrNil,
+        &meta,
+        <USize as Identity<Additive>>::IDENTITY,
+        MorselRange::new(USize(5), USize(3)),
+    );
 
     let mut visited: [usize; 3] = [0; 3];
     let mut n = 0usize;
@@ -197,8 +225,13 @@ fn context_each_covers_morsel() {
 #[test]
 fn context_batch_full_range() {
     let meta = hilavitkutin::meta::MetaBlock::default();
-    let ctx: EngineCtx<'_, Empty, Empty, _, _, _> =
-        EngineCtx::project(&SnapNil, &ColPtrNil, &meta, USize::ZERO, MorselRange::new(USize(5), USize(3)));
+    let ctx: EngineCtx<'_, Empty, Empty, _, _, _> = EngineCtx::project(
+        &SnapNil,
+        &ColPtrNil,
+        &meta,
+        <USize as Identity<Additive>>::IDENTITY,
+        MorselRange::new(USize(5), USize(3)),
+    );
 
     let seen = Cell::new((0usize, 0usize));
     BatchApi::run(ctx.batch(), |start, end| {
@@ -216,19 +249,20 @@ fn context_batch_full_range() {
 struct ReadResourceWu;
 
 impl BuilderInput for ReadResourceWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 
 impl WorkUnit<Always> for ReadResourceWu {
-    type Read = ReadU32;
-    type Write = Empty;
+    type Ctx<'frame> =
+        EngineCtx<'frame, ReadU32, Empty, SnapCons<u32, SnapNil>, ColPtrNil, ColPtrNil>;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, ReadU32, Empty, SnapCons<u32, SnapNil>, ColPtrNil, ColPtrNil>;
+    type Read = ReadU32;
+    type Write = Empty;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         // Resolve the resource through the projected Context. Writing the
@@ -253,8 +287,16 @@ fn context_drives_wu_execute() {
     let bindings = scheduler.__bindings();
 
     let meta = hilavitkutin::meta::MetaBlock::default();
-    let ctx: <ReadResourceWu as WorkUnit>::Ctx<'_> =
-        EngineCtx::project(bindings, &ColPtrNil, &meta, USize::ZERO, MorselRange::new(USize::ZERO, USize::ZERO));
+    let ctx: <ReadResourceWu as WorkUnit>::Ctx<'_> = EngineCtx::project(
+        bindings,
+        &ColPtrNil,
+        &meta,
+        <USize as Identity<Additive>>::IDENTITY,
+        MorselRange::new(
+            <USize as Identity<Additive>>::IDENTITY,
+            <USize as Identity<Additive>>::IDENTITY,
+        ),
+    );
 
     let wu = ReadResourceWu;
     wu.execute(&ctx);

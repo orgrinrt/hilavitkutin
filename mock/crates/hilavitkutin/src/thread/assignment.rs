@@ -6,7 +6,7 @@
 //! const-construction.
 
 use arvo::USize;
-use arvo::strategy::Identity;
+use arvo::strategy::{Additive, Identity};
 use arvo_tensor::Capacity;
 
 use crate::plan::FiberId;
@@ -29,10 +29,10 @@ pub const NO_TRUNK: USize = USize(u16::MAX as usize); // lint:allow(no-bare-nume
 /// - `assigned_count`: count of populated slots
 ///   (0..=core capacity).
 pub struct CoreAssignment<C: Capacity> {
-    pub trunk_index: <C as Capacity>::Array<USize>,
-    pub fiber_assignments: <C as Capacity>::Array<FiberId>,
+    pub trunk_index:            <C as Capacity>::Array<USize>,
+    pub fiber_assignments:      <C as Capacity>::Array<FiberId>,
     pub morsel_size_multiplier: <C as Capacity>::Array<USize>,
-    pub assigned_count: USize,
+    pub assigned_count:         USize,
 }
 
 impl<C: Capacity> CoreAssignment<C> {
@@ -40,10 +40,10 @@ impl<C: Capacity> CoreAssignment<C> {
     /// sentinel), fiber 0, default multiplier 100 (1.0x).
     pub fn new() -> Self {
         Self {
-            trunk_index: <C as Capacity>::filled(NO_TRUNK),
-            fiber_assignments: <C as Capacity>::filled(FiberId::ZERO),
+            trunk_index:            <C as Capacity>::filled(NO_TRUNK),
+            fiber_assignments:      <C as Capacity>::filled(FiberId::ZERO),
             morsel_size_multiplier: <C as Capacity>::filled(USize(100)), // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: default 1.0x multiplier in basis-points; tracked: #72
-            assigned_count: USize::ZERO,
+            assigned_count:         <USize as Identity<Additive>>::IDENTITY,
         }
     }
 }

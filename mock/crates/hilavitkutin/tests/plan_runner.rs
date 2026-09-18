@@ -8,34 +8,43 @@
 //! by `Capacity` TYPES, so no `generic_const_exprs` gate is needed: the
 //! dimensions are types, not `Cap` const generics.
 
-use arvo::{Bits, Hot, Identity, USize, Unsigned};
+use arvo::{Additive, Bits, Hot, Identity, USize, Unsigned};
 use arvo_tensor::Dim;
 use hilavitkutin::plan::{
-    compute_execution_plan, steps, AccessMask, DependencyGraph, EdgeKind, FiberGrouping,
-    PhaseConfig, PlanDims, PlanError, PlanInputs,
+    AccessMask,
+    DependencyGraph,
+    EdgeKind,
+    FiberGrouping,
+    PhaseConfig,
+    PlanDims,
+    PlanError,
+    PlanInputs,
+    compute_execution_plan,
+    steps,
 };
 use notko::Outcome;
 
 /// Plan dimensions for the smoke tests.
 struct TestDims;
 
+#[rustfmt::skip]
 impl PlanDims for TestDims {
-    type Units = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type Stores = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type AccumsPerCore = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type AdjRow = Bits<64, Hot, Unsigned>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: 64-wide row covers the small test units; Bits width literal; tracked: #649
+    type Columns = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type ColumnsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type ComponentsPerTrunk = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Cores = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
     type Edges = Dim<16>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type Phases = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type Trunks = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type TrunksPerPhase = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
     type Fibers = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
     type Lanes = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type Columns = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type ComponentsPerTrunk = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type UnitsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type ColumnsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type Cores = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type AccumsPerCore = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Phases = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
     type PlanAffecting = Dim<16>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type AdjRow = Bits<64, Hot, Unsigned>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: 64-wide row covers the small test units; Bits width literal; tracked: #649
+    type Stores = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Trunks = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type TrunksPerPhase = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Units = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type UnitsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
 }
 
 type Inputs = PlanInputs<<TestDims as PlanDims>::Units, <TestDims as PlanDims>::Stores>;
@@ -46,9 +55,9 @@ fn empty_input_yields_empty_plan() {
     let result = compute_execution_plan::<TestDims>(&inputs);
     match result {
         Outcome::Ok(plan) => {
-            assert_eq!(plan.unit_count, USize::ZERO);
-            assert_eq!(plan.phase_count, USize::ZERO);
-        }
+            assert_eq!(plan.unit_count, <USize as Identity<Additive>>::IDENTITY);
+            assert_eq!(plan.phase_count, <USize as Identity<Additive>>::IDENTITY);
+        },
         Outcome::Err(_) => panic!("empty plan should succeed"),
     }
 }
@@ -64,7 +73,7 @@ fn single_unit_yields_one_phase_one_fiber() {
             assert_eq!(plan.unit_count, USize(1)); // lint:allow(no-bare-numeric) reason: roundtrip; tracked: #427
             // At least one phase is always present.
             assert!(plan.phase_count.0 >= 1);
-        }
+        },
         Outcome::Err(_) => panic!("trivial single-unit plan should succeed"),
     }
 }
@@ -83,7 +92,11 @@ fn topo_sort_detects_two_node_cycle() {
 
     let (_topo, placed) = steps::topo_sort::<TestDims>(&g);
     // Cycle means Kahn's iteration cannot place every unit.
-    assert!(placed.0 < g.unit_count.0, "expected partial placement under cycle; got placed={}", placed.0);
+    assert!(
+        placed.0 < g.unit_count.0,
+        "expected partial placement under cycle; got placed={}",
+        placed.0
+    );
 }
 
 #[test]
@@ -105,8 +118,8 @@ fn morsel_windows_follow_the_l1_budget_per_fiber() {
     inputs.store_sizes.as_mut()[0] = USize(8); // lint:allow(no-bare-numeric) reason: fixture store size; tracked: #427
     inputs.store_sizes.as_mut()[1] = USize(2); // lint:allow(no-bare-numeric) reason: fixture store size; tracked: #427
     inputs.morsel_budget = MorselBudget {
-        l1_usable: USize(1024), // lint:allow(no-bare-numeric) reason: fixture budget; tracked: #427
-        min_morsel: USize(4),   // lint:allow(no-bare-numeric) reason: fixture budget; tracked: #427
+        l1_usable:  USize(1024), // lint:allow(no-bare-numeric) reason: fixture budget; tracked: #427
+        min_morsel: USize(4), // lint:allow(no-bare-numeric) reason: fixture budget; tracked: #427
         max_morsel: USize(512), // lint:allow(no-bare-numeric) reason: fixture budget; tracked: #427
     };
     let mut fibers: FiberGrouping<TestDims> = FiberGrouping::new();
@@ -146,7 +159,7 @@ fn phase_config_heuristics_apply_low_record_count() {
         Outcome::Ok(plan) => {
             // First phase config should be MaxFuse for low record counts.
             assert_eq!(plan.phases.as_ref()[0].config, PhaseConfig::MaxFuse);
-        }
+        },
         Outcome::Err(_) => panic!("three-unit plan should succeed"),
     }
 }
@@ -181,7 +194,7 @@ fn build_dag_orders_writer_before_reader_regardless_of_registration() {
                 USize(0), // lint:allow(no-bare-numeric) reason: expected reader unit-id; tracked: #339
                 "reader (unit 0) dispatches after its writer"
             );
-        }
+        },
         Outcome::Err(_) => panic!("two-unit RAW chain should plan successfully"),
     }
 }

@@ -24,18 +24,23 @@
 use core::hint::black_box;
 
 use arvo::USize;
-use hilavitkutin::OsThreadPool;
 use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{
-    ColumnReaderApi, ColumnWriterApi, EachApi, HasColumnReader, HasColumnWriter, HasEach,
+    ColumnReaderApi,
+    ColumnWriterApi,
+    EachApi,
+    HasColumnReader,
+    HasColumnWriter,
+    HasEach,
 };
 use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
 use hilavitkutin_api::store::Column;
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 
+use crate::executor::BenchExecutor;
 use crate::{HeapBump, WorkloadMeasure, arena_bytes, bench, fnv1a_u32_slice, heavy, store};
 
 pub const NAME: &str = "wide_parallel";
@@ -61,13 +66,10 @@ macro_rules! def_chain {
 
         struct $wu;
         impl BuilderInput for $wu {
-            type Init = Self;
             type Dispatch = UnitDispatch<Self>;
+            type Init = Self;
         }
         impl WorkUnit<Always> for $wu {
-            type Read = One<$inv>;
-            type Write = One<$outv>;
-            type Hint = (Immediate, Atomic, Normal);
             type Ctx<'frame> = EngineCtx<
                 'frame,
                 One<$inv>,
@@ -76,6 +78,10 @@ macro_rules! def_chain {
                 ColPtrCons<$inv, ColPtrNil>,
                 ColPtrCons<$outv, ColPtrNil>,
             >;
+            type Hint = (Immediate, Atomic, Normal);
+            type Read = One<$inv>;
+            type Write = One<$outv>;
+
             fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
                 ctx.each().run(|i| {
                     // SAFETY: In{k} host-populated for the record count; Out{k}
@@ -126,7 +132,7 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
         black_box(&scheduler);
     });
     let std_startup = bench(warmup, iters, || {
-        let bufs: Vec<Vec<u32>> = (0..2 * K).map(|_| vec![0u32; n]).collect();
+        let bufs: Vec<Vec<u32>> = (0 .. 2 * K).map(|_| vec![0u32; n]).collect();
         black_box(&bufs);
     });
 
@@ -138,12 +144,35 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
     // SAFETY: each In{k} buffer was reserved for N records of u32; the
     // scheduler (hence arena) is alive; each reserved slot is written once.
     let b = sched.__bindings();
-    let in0 = b.__tail().__tail().__tail().__tail().__tail().__tail().__tail().__ptr().as_ptr()
-        as *mut In0;
-    let in1 = b.__tail().__tail().__tail().__tail().__tail().__tail().__ptr().as_ptr() as *mut In1;
-    let in2 = b.__tail().__tail().__tail().__tail().__tail().__ptr().as_ptr() as *mut In2;
+    let in0 = b
+        .__tail()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__ptr()
+        .as_ptr() as *mut In0;
+    let in1 = b
+        .__tail()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__ptr()
+        .as_ptr() as *mut In1;
+    let in2 = b
+        .__tail()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__ptr()
+        .as_ptr() as *mut In2;
     let in3 = b.__tail().__tail().__tail().__tail().__ptr().as_ptr() as *mut In3;
-    for i in 0..n {
+    for i in 0 .. n {
         unsafe {
             *in0.add(i) = In0(i as u32);
             *in1.add(i) = In1(i as u32 ^ 0x1111_1111);
@@ -174,7 +203,7 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
         let out1 = b.__tail().__tail().__ptr().as_ptr() as *const u32;
         let out0 = b.__tail().__tail().__tail().__ptr().as_ptr() as *const u32;
         // SAFETY: each Out{k} holds N reserved records; the scheduler is alive.
-        let mut h = 0xcbf2_9ce4_8422_2325u64;
+        let mut h = 0xCBF2_9CE4_8422_2325u64;
         for &base in &[out0, out1, out2, out3] {
             let slice = unsafe { core::slice::from_raw_parts(base, n) };
             h ^= fnv1a_u32_slice(slice);
@@ -188,12 +217,35 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
     let provider_par = HeapBump::new(arena_bytes(2 * K, n));
     let sched_par = build_sched!(provider_par, n);
     let bp = sched_par.__bindings();
-    let pin0 = bp.__tail().__tail().__tail().__tail().__tail().__tail().__tail().__ptr().as_ptr()
-        as *mut In0;
-    let pin1 = bp.__tail().__tail().__tail().__tail().__tail().__tail().__ptr().as_ptr() as *mut In1;
-    let pin2 = bp.__tail().__tail().__tail().__tail().__tail().__ptr().as_ptr() as *mut In2;
+    let pin0 = bp
+        .__tail()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__ptr()
+        .as_ptr() as *mut In0;
+    let pin1 = bp
+        .__tail()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__ptr()
+        .as_ptr() as *mut In1;
+    let pin2 = bp
+        .__tail()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__ptr()
+        .as_ptr() as *mut In2;
     let pin3 = bp.__tail().__tail().__tail().__tail().__ptr().as_ptr() as *mut In3;
-    for i in 0..n {
+    for i in 0 .. n {
         unsafe {
             *pin0.add(i) = In0(i as u32);
             *pin1.add(i) = In1(i as u32 ^ 0x1111_1111);
@@ -201,7 +253,7 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
             *pin3.add(i) = In3(i as u32 ^ 0x3333_3333);
         }
     }
-    let pool = OsThreadPool::new();
+    let pool = BenchExecutor::new();
     let mut sched_par = core::pin::pin!(sched_par);
     // mark_dirty needs `&mut Self`; the scheduler is `!Unpin`, so reach it via
     // `get_unchecked_mut` (sound: mark_dirty only flips a flag, never moves the
@@ -233,7 +285,7 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
         let out2 = b.__tail().__ptr().as_ptr() as *const u32;
         let out1 = b.__tail().__tail().__ptr().as_ptr() as *const u32;
         let out0 = b.__tail().__tail().__tail().__ptr().as_ptr() as *const u32;
-        let mut h = 0xcbf2_9ce4_8422_2325u64;
+        let mut h = 0xCBF2_9CE4_8422_2325u64;
         for &base in &[out0, out1, out2, out3] {
             let slice = unsafe { core::slice::from_raw_parts(base, n) };
             h ^= fnv1a_u32_slice(slice);
@@ -243,15 +295,14 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
 
     // ----- runtime std: the K chains on one thread (optimal naive) -----
     let in_bufs: [Vec<u32>; K] = [
-        (0..n as u32).collect(),
-        (0..n as u32).map(|i| i ^ 0x1111_1111).collect(),
-        (0..n as u32).map(|i| i ^ 0x2222_2222).collect(),
-        (0..n as u32).map(|i| i ^ 0x3333_3333).collect(),
+        (0 .. n as u32).collect(),
+        (0 .. n as u32).map(|i| i ^ 0x1111_1111).collect(),
+        (0 .. n as u32).map(|i| i ^ 0x2222_2222).collect(),
+        (0 .. n as u32).map(|i| i ^ 0x3333_3333).collect(),
     ];
-    let mut out_bufs: [Vec<u32>; K] =
-        [vec![0u32; n], vec![0u32; n], vec![0u32; n], vec![0u32; n]];
+    let mut out_bufs: [Vec<u32>; K] = [vec![0u32; n], vec![0u32; n], vec![0u32; n], vec![0u32; n]];
     let std_runtime = bench(warmup, iters, || {
-        for k in 0..K {
+        for k in 0 .. K {
             for (o, &iv) in out_bufs[k].iter_mut().zip(in_bufs[k].iter()) {
                 *o = heavy(iv);
             }
@@ -259,8 +310,8 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
         black_box(&out_bufs);
     });
     let std_hash = {
-        let mut h = 0xcbf2_9ce4_8422_2325u64;
-        for k in 0..K {
+        let mut h = 0xCBF2_9CE4_8422_2325u64;
+        for k in 0 .. K {
             h ^= fnv1a_u32_slice(&out_bufs[k]);
         }
         h
@@ -290,8 +341,8 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
         black_box(&out_bufs_par);
     });
     let std_par_hash = {
-        let mut h = 0xcbf2_9ce4_8422_2325u64;
-        for k in 0..K {
+        let mut h = 0xCBF2_9CE4_8422_2325u64;
+        for k in 0 .. K {
             h ^= fnv1a_u32_slice(&out_bufs_par[k]);
         }
         h
@@ -306,9 +357,7 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
         std_runtime,
         eng_runtime_par: Some(eng_runtime_par),
         std_runtime_par: Some(std_runtime_par),
-        checksum_ok: eng_hash == std_hash
-            && eng_par_hash == std_hash
-            && std_par_hash == std_hash,
+        checksum_ok: eng_hash == std_hash && eng_par_hash == std_hash && std_par_hash == std_hash,
         eng_hash,
         std_hash,
     }

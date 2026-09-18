@@ -23,14 +23,13 @@
 //! stay their own `Capacity` type parameters projected into the api's
 //! `usize` positions via `cap_size`.
 
-use arvo::strategy::Identity;
 use arvo::USize;
-use arvo_tensor::{cap_size, Capacity};
-
+use arvo::strategy::{Additive, Identity};
+use arvo_tensor::{Capacity, cap_size};
 use hilavitkutin_api::{CoreProgram, FiberId, PhaseEntry, PhaseId, RecordRange, SyncRole, TrunkId};
 
-use super::dims::PlanDims;
 use super::ExecutionPlan;
+use super::dims::PlanDims;
 
 /// Synthesise per-core `CoreProgram`s from the execution plan.
 ///
@@ -69,7 +68,12 @@ where
     // holds components (Fiber / Branch / Bridge). The conservative
     // skeleton sums fiber components; honest accounting that walks
     // FiberGrouping lands when assign_cores threads through (Pass 3).
-    let total_fibers = plan.morsel_windows.as_ref().iter().filter(|m| m.0 > 0).count(); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: count internal; tracked: #72
+    let total_fibers = plan
+        .morsel_windows
+        .as_ref()
+        .iter()
+        .filter(|m| m.0 > 0)
+        .count(); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: count internal; tracked: #72
 
     // Round-robin: distribute `total_fibers` across `cores`. Core c
     // gets fibers [start_c .. end_c) where the remainder is spread
@@ -128,7 +132,10 @@ where
             } else {
                 SyncRole::WaitAndSignal
             };
-            prog.phases[p] = PhaseEntry { phase, sync_role };
+            prog.phases[p] = PhaseEntry {
+                phase,
+                sync_role,
+            };
             p += 1;
         }
         prog.phase_count = USize(phase_n); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal count; tracked: #72
@@ -137,7 +144,7 @@ where
         // honest trunk-to-core mapping lands when assign_cores produces
         // its CoreAssignment, which Pass 3 will thread through to
         // populate this field.
-        prog.trunk_count = USize::ZERO;
+        prog.trunk_count = <USize as Identity<Additive>>::IDENTITY;
         let _ = TrunkId::ZERO; // keep the type in scope for the trunk-assignment follow-up
 
         prog.progress_slot_idx = USize(progress_slot_base); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal index; tracked: #72

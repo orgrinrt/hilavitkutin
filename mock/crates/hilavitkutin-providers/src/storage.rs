@@ -16,8 +16,7 @@ use hilavitkutin_api::{ColumnStorage, ColumnValue, MemoryProviderApi, StoreId};
 use notko::{Maybe, Outcome};
 
 /// 64-byte cache-line alignment for every column base (R6).
-// lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: cache-line width is a fixed layout constant; tracked: #72
-const CACHE_LINE_ALIGN: USize = USize(64);
+const CACHE_LINE_ALIGN: USize = USize(64); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: cache-line width is a fixed layout constant; tracked: #72
 
 /// One reserved column: its base pointer, allocated byte length (for
 /// `deallocate`), and record count.
@@ -81,9 +80,8 @@ impl<M: MemoryProviderApi, D: Capacity> ColumnStorage for ArenaColumnStorage<M, 
         // Byte length = record count times element size, checked so a
         // large count cannot wrap to a small length and hand back an
         // undersized block (a write of `count` records would overrun).
-        // lint:allow(no-bare-numeric) reason: byte length math; size_of returns usize by contract; tracked: #345
         let bytes = match (*count).checked_mul(size_of::<T>()) {
-            Some(n) => USize(n),
+            Some(n) => USize(n), // lint:allow(no-bare-numeric) reason: byte length math; size_of returns usize by contract; tracked: #345
             None => return Outcome::Err(StorageError::LengthOverflow),
         };
         let slot = if bytes == <USize as Identity<Additive>>::IDENTITY {

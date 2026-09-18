@@ -5,10 +5,9 @@
 //! one phase finishes before the next phase starts. Phases own
 //! trunks; trunks own components.
 
-use arvo::strategy::Identity;
 use arvo::USize;
+use arvo::strategy::{Additive, Identity};
 use arvo_tensor::Capacity;
-
 use hilavitkutin_api::PhaseId;
 
 use crate::plan::dims::PlanDims;
@@ -20,15 +19,15 @@ use crate::strategy::PhaseStrategy;
 /// Analysis intermediate produced by step 3 (waist detection).
 /// Sized by the phase capacity `D::Phases`.
 pub struct PhaseBoundaries<D: PlanDims> {
-    pub boundaries: <D::Phases as Capacity>::Array<USize>,
+    pub boundaries:  <D::Phases as Capacity>::Array<USize>,
     pub phase_count: USize,
 }
 
 impl<D: PlanDims> PhaseBoundaries<D> {
     pub fn new() -> Self {
         Self {
-            boundaries: <D::Phases as Capacity>::filled(USize::ZERO),
-            phase_count: USize::ZERO,
+            boundaries:  <D::Phases as Capacity>::filled(<USize as Identity<Additive>>::IDENTITY),
+            phase_count: <USize as Identity<Additive>>::IDENTITY,
         }
     }
 }
@@ -64,20 +63,15 @@ impl<D: PlanDims> core::fmt::Debug for PhaseBoundaries<D> {
 /// adapt subsystem refreshes the runtime `PhaseStrategy` between
 /// frames; `PhaseConfig` is the static plan-stage choice that shaped
 /// the codegen output.
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Default)]
 pub enum PhaseConfig {
     /// Maximise fusion: pack as many WUs as possible per dispatch.
     MaxFuse,
     /// Balanced split between fusion and parallelism.
+    #[default]
     Balanced,
     /// Maximise split: every WU dispatches independently.
     MaxSplit,
-}
-
-impl Default for PhaseConfig {
-    fn default() -> Self {
-        Self::Balanced
-    }
 }
 
 /// One phase: a contiguous range of trunks in the plan-level flat
@@ -90,23 +84,23 @@ impl Default for PhaseConfig {
 /// a plain index record with no `D` projection.
 #[derive(Copy, Clone, Debug)]
 pub struct Phase {
-    pub id: PhaseId,
+    pub id:           PhaseId,
     pub trunk_offset: USize,
-    pub trunk_count: USize,
+    pub trunk_count:  USize,
     /// Plan-time strategy classification.
-    pub strategy: PhaseStrategy,
+    pub strategy:     PhaseStrategy,
     /// Codegen-time configuration.
-    pub config: PhaseConfig,
+    pub config:       PhaseConfig,
 }
 
 impl Phase {
     pub fn new() -> Self {
         Self {
-            id: PhaseId::ZERO,
-            trunk_offset: USize::ZERO,
-            trunk_count: USize::ZERO,
-            strategy: PhaseStrategy::Balanced,
-            config: PhaseConfig::Balanced,
+            id:           PhaseId::ZERO,
+            trunk_offset: <USize as Identity<Additive>>::IDENTITY,
+            trunk_count:  <USize as Identity<Additive>>::IDENTITY,
+            strategy:     PhaseStrategy::Balanced,
+            config:       PhaseConfig::Balanced,
         }
     }
 }

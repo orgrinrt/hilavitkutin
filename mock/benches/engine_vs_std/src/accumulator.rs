@@ -16,20 +16,30 @@
 use core::hint::black_box;
 
 use arvo::USize;
-use hilavitkutin::OsThreadPool;
 use hilavitkutin::dispatch::engine_ctx::{
-    AccPtrCons, AccPtrNil, ColPtrCons, ColPtrNil, EngineCtx, SnapNil,
+    AccPtrCons,
+    AccPtrNil,
+    ColPtrCons,
+    ColPtrNil,
+    EngineCtx,
+    SnapNil,
 };
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{
-    AccumWriterApi, ColumnReaderApi, EachApi, HasAccumWriter, HasColumnReader, HasEach,
+    AccumWriterApi,
+    ColumnReaderApi,
+    EachApi,
+    HasAccumWriter,
+    HasColumnReader,
+    HasEach,
 };
 use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
 use hilavitkutin_api::store::{Accum, Column};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 
+use crate::executor::BenchExecutor;
 use crate::{HeapBump, WorkloadMeasure, arena_bytes, bench, chain, fnv1a_u32_slice, store};
 
 pub const NAME: &str = "accumulator";
@@ -47,13 +57,10 @@ type AccW = Cons<Accum<Av>, Empty>;
 // an accumulator, so its Ctx carries both a read column-ptr and an accum-ptr.
 struct AppendChain;
 impl BuilderInput for AppendChain {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for AppendChain {
-    type Read = One<Inv>;
-    type Write = AccW;
-    type Hint = (Immediate, Atomic, Normal);
     type Ctx<'frame> = EngineCtx<
         'frame,
         One<Inv>,
@@ -63,6 +70,10 @@ impl WorkUnit<Always> for AppendChain {
         ColPtrNil,
         AccPtrCons<'frame, Av, AccPtrNil>,
     >;
+    type Hint = (Immediate, Atomic, Normal);
+    type Read = One<Inv>;
+    type Write = AccW;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: In host-populated for the record count; read adds the
@@ -106,7 +117,7 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
     // SAFETY: In's buffer was reserved for N records of Inv (repr u32); the
     // scheduler is alive; each reserved slot is written once.
     let in_base = sched.__bindings().__tail().__ptr().as_ptr() as *mut Inv;
-    for i in 0..n {
+    for i in 0 .. n {
         unsafe { *in_base.add(i) = Inv(i as u32) };
     }
     let eng_runtime = bench(warmup, iters, || {
@@ -147,10 +158,10 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
     // SAFETY: In's buffer (one tail down from the Av head) reserves N records of
     // Inv (repr u32); the scheduler is alive; each slot written once.
     let pin_base = sched_par.__bindings().__tail().__ptr().as_ptr() as *mut Inv;
-    for i in 0..n {
+    for i in 0 .. n {
         unsafe { *pin_base.add(i) = Inv(i as u32) };
     }
-    let pool = OsThreadPool::new();
+    let pool = BenchExecutor::new();
     let mut sched_par = core::pin::pin!(sched_par);
     let eng_runtime_par = bench(warmup, iters, || {
         let r = sched_par.as_mut().run_parallel(&pool);
@@ -169,7 +180,7 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
     };
 
     // ----- runtime std: optimal append-in-order fill of a pre-sized buffer -----
-    let in_buf: Vec<u32> = (0..n as u32).collect();
+    let in_buf: Vec<u32> = (0 .. n as u32).collect();
     let mut out: Vec<u32> = vec![0u32; n];
     let std_runtime = bench(warmup, iters, || {
         for (o, &inv) in out.iter_mut().zip(in_buf.iter()) {
@@ -186,7 +197,7 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
     // the serial fill and mirrors the engine's deviation-9 per-core record-range
     // split, so the parallel accumulator arm is judged engine-N-core vs std-N-core.
     let nthreads = crate::std_threads();
-    let chunk = ((n + nthreads - 1) / nthreads).max(1);
+    let chunk = n.div_ceil(nthreads).max(1);
     let mut out_par: Vec<u32> = vec![0u32; n];
     let std_runtime_par = bench(warmup, iters, || {
         std::thread::scope(|sc| {
@@ -213,9 +224,7 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
         std_runtime,
         eng_runtime_par: Some(eng_runtime_par),
         std_runtime_par: Some(std_runtime_par),
-        checksum_ok: eng_hash == std_hash
-            && eng_par_hash == std_hash
-            && std_par_hash == std_hash,
+        checksum_ok: eng_hash == std_hash && eng_par_hash == std_hash && std_par_hash == std_hash,
         eng_hash,
         std_hash,
     }

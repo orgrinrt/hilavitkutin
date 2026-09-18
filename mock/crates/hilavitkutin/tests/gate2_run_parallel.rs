@@ -23,18 +23,22 @@ use core::cell::{Cell, UnsafeCell};
 use core::mem::MaybeUninit;
 use core::sync::atomic::{AtomicUsize, Ordering};
 
-use hilavitkutin::OsThreadPool;
-use hilavitkutin_api::platform::ThreadPoolApi;
-
+mod common;
 use arvo::{Bool, USize};
+use common::TestExecutor;
 use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{
-    ColumnReaderApi, ColumnWriterApi, EachApi, HasColumnReader, HasColumnWriter, HasEach,
+    ColumnReaderApi,
+    ColumnWriterApi,
+    EachApi,
+    HasColumnReader,
+    HasColumnWriter,
+    HasEach,
 };
-use hilavitkutin_api::platform::MemoryProviderApi;
+use hilavitkutin_api::platform::{MemoryProviderApi, ThreadPoolApi};
 use hilavitkutin_api::store::Column;
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
@@ -45,14 +49,14 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 }
 
 struct BumpProvider<const N: usize> {
-    buf: UnsafeCell<[MaybeUninit<u8>; N]>,
+    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
     used: Cell<usize>,
 }
 
 impl<const N: usize> BumpProvider<N> {
     fn new() -> Self {
         Self {
-            buf: UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
+            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
             used: Cell::new(0),
         }
     }
@@ -105,19 +109,26 @@ type ReadAB = Cons<Column<Av>, Cons<Column<Bv>, Empty>>;
 // convergence splits). Phase 0.
 struct ProducerA;
 impl BuilderInput for ProducerA {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for ProducerA {
-    type Read = OneIn;
-    type Write = ColA;
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        OneIn,
+        ColA,
+        SnapNil,
+        ColPtrCons<Inv, ColPtrNil>,
+        ColPtrCons<Av, ColPtrNil>,
+    >;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> =
-        EngineCtx<'frame, OneIn, ColA, SnapNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<Av, ColPtrNil>>;
+    type Read = OneIn;
+    type Write = ColA;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: In host-populated for N records; Av reserved + exclusive;
@@ -131,19 +142,26 @@ impl WorkUnit<Always> for ProducerA {
 // ProducerB: reads In, writes Bv = In*100. Store-disjoint from A.
 struct ProducerB;
 impl BuilderInput for ProducerB {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for ProducerB {
-    type Read = OneIn;
-    type Write = ColB;
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        OneIn,
+        ColB,
+        SnapNil,
+        ColPtrCons<Inv, ColPtrNil>,
+        ColPtrCons<Bv, ColPtrNil>,
+    >;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> =
-        EngineCtx<'frame, OneIn, ColB, SnapNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<Bv, ColPtrNil>>;
+    type Read = OneIn;
+    type Write = ColB;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: as ProducerA, for Bv.
@@ -156,17 +174,10 @@ impl WorkUnit<Always> for ProducerB {
 // Combiner: reads Av + Bv, records their sum -> phase 1 (after the waist).
 struct Combiner;
 impl BuilderInput for Combiner {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for Combiner {
-    type Read = ReadAB;
-    type Write = ColZ;
-    type Hint = (
-        hilavitkutin_api::hint::Immediate,
-        hilavitkutin_api::hint::Atomic,
-        hilavitkutin_api::hint::Normal,
-    );
     type Ctx<'frame> = EngineCtx<
         'frame,
         ReadAB,
@@ -175,6 +186,14 @@ impl WorkUnit<Always> for Combiner {
         ColPtrCons<Av, ColPtrCons<Bv, ColPtrNil>>,
         ColPtrCons<Zv, ColPtrNil>,
     >;
+    type Hint = (
+        hilavitkutin_api::hint::Immediate,
+        hilavitkutin_api::hint::Atomic,
+        hilavitkutin_api::hint::Normal,
+    );
+    type Read = ReadAB;
+    type Write = ColZ;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: both producers (ordered before this unit by the plan's RAW
@@ -190,10 +209,10 @@ impl WorkUnit<Always> for Combiner {
     }
 }
 
-/// A real `ThreadPoolApi` that counts `spawn` calls, delegating to the os pool so
-/// workers actually run. Proves spawn-once across frames.
+/// A real `ThreadPoolApi` that counts `spawn` calls, delegating to the test
+/// executor so workers actually run. Proves spawn-once across frames.
 struct CountingPool {
-    inner: OsThreadPool,
+    inner:  TestExecutor,
     spawns: AtomicUsize,
 }
 
@@ -229,16 +248,21 @@ fn run_parallel_threaded_fan_in_is_correct() {
     // unwritten record is caught. Columns from head: Zv(0), Bv(1), Av(2), In(3).
     // SAFETY: both reserved for N records of u32; the scheduler is alive.
     let zv_base = scheduler.__bindings().__ptr().as_ptr() as *mut u32;
-    let in_base =
-        scheduler.__bindings().__tail().__tail().__tail().__ptr().as_ptr() as *mut u32;
-    for i in 0..N {
+    let in_base = scheduler
+        .__bindings()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__ptr()
+        .as_ptr() as *mut u32;
+    for i in 0 .. N {
         unsafe {
             *in_base.add(i) = i as u32;
             *zv_base.add(i) = u32::MAX;
         }
     }
 
-    let pool = OsThreadPool::new();
+    let pool = TestExecutor::new();
     let mut scheduler = core::pin::pin!(scheduler);
     let result = scheduler.as_mut().run_parallel(&pool);
     assert!(matches!(result, Outcome::Ok(())));
@@ -246,7 +270,7 @@ fn run_parallel_threaded_fan_in_is_correct() {
     // Av(i*10) + Bv(i*100) = i*110, written to Zv by the phase-1 combiner after
     // both phase-0 producer trunks finished (the waist barrier).
     let zv_base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const u32;
-    for i in 0..N {
+    for i in 0 .. N {
         // SAFETY: Zv holds N reserved records; the scheduler is alive.
         let z = unsafe { *zv_base.add(i) };
         assert_eq!(
@@ -274,13 +298,21 @@ fn run_parallel_spawns_the_pool_once_across_frames() {
 
     // Host-populate In[i] = i. Columns from head: Zv(0), Bv(1), Av(2), In(3).
     // SAFETY: In reserved for N records of u32; the scheduler is alive.
-    let in_base =
-        scheduler.__bindings().__tail().__tail().__tail().__ptr().as_ptr() as *mut u32;
-    for i in 0..N {
+    let in_base = scheduler
+        .__bindings()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__ptr()
+        .as_ptr() as *mut u32;
+    for i in 0 .. N {
         unsafe { *in_base.add(i) = i as u32 };
     }
 
-    let pool = CountingPool { inner: OsThreadPool::new(), spawns: AtomicUsize::new(0) };
+    let pool = CountingPool {
+        inner:  TestExecutor::new(),
+        spawns: AtomicUsize::new(0),
+    };
     let mut scheduler = core::pin::pin!(scheduler);
     // Two frames: spawn happens once (first call), workers park and are reused.
     let _ = scheduler.as_mut().run_parallel(&pool);
@@ -292,7 +324,7 @@ fn run_parallel_spawns_the_pool_once_across_frames() {
         "the persistent pool spawns worker_count workers once, not per frame"
     );
     let zv_base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const u32;
-    for i in 0..N {
+    for i in 0 .. N {
         // SAFETY: Zv holds N reserved records; the scheduler is alive.
         let z = unsafe { *zv_base.add(i) };
         assert_eq!(z, (i as u32) * 110, "rec {i} after two frames");
@@ -305,7 +337,6 @@ fn run_parallel_spawns_the_pool_once_across_frames() {
 // fixes). Shape: P1,P2 (phase 0) -> Mid fan-in (waist 1) -> Q1,Q2 fan-out ->
 // Sink fan-in (waist 2). Per record i: P1=2i, P2=3i, Mid=5i, Q1=5i, Q2=10i,
 // Sink=15i.
-
 
 #[derive(Copy, Clone)]
 struct P1v(u32);
@@ -339,13 +370,10 @@ type HintT = (
 
 struct P1;
 impl BuilderInput for P1 {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for P1 {
-    type Read = OneIn;
-    type Write = ColP1;
-    type Hint = HintT;
     type Ctx<'frame> = EngineCtx<
         'frame,
         OneIn,
@@ -354,6 +382,10 @@ impl WorkUnit<Always> for P1 {
         ColPtrCons<Inv, ColPtrNil>,
         ColPtrCons<P1v, ColPtrNil>,
     >;
+    type Hint = HintT;
+    type Read = OneIn;
+    type Write = ColP1;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: In host-populated; P1v reserved + exclusive; windowed.
@@ -365,13 +397,10 @@ impl WorkUnit<Always> for P1 {
 
 struct P2;
 impl BuilderInput for P2 {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for P2 {
-    type Read = OneIn;
-    type Write = ColP2;
-    type Hint = HintT;
     type Ctx<'frame> = EngineCtx<
         'frame,
         OneIn,
@@ -380,6 +409,10 @@ impl WorkUnit<Always> for P2 {
         ColPtrCons<Inv, ColPtrNil>,
         ColPtrCons<P2v, ColPtrNil>,
     >;
+    type Hint = HintT;
+    type Read = OneIn;
+    type Write = ColP2;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: as P1, for P2v.
@@ -391,13 +424,10 @@ impl WorkUnit<Always> for P2 {
 
 struct Mid;
 impl BuilderInput for Mid {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for Mid {
-    type Read = ReadP;
-    type Write = ColMw;
-    type Hint = HintT;
     type Ctx<'frame> = EngineCtx<
         'frame,
         ReadP,
@@ -406,6 +436,10 @@ impl WorkUnit<Always> for Mid {
         ColPtrCons<P1v, ColPtrCons<P2v, ColPtrNil>>,
         ColPtrCons<Mv, ColPtrNil>,
     >;
+    type Hint = HintT;
+    type Read = ReadP;
+    type Write = ColMw;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: both producers ran in the prior phase (RAW edges on P1v/P2v);
@@ -419,13 +453,10 @@ impl WorkUnit<Always> for Mid {
 
 struct Q1;
 impl BuilderInput for Q1 {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for Q1 {
-    type Read = ColMr;
-    type Write = ColQ1;
-    type Hint = HintT;
     type Ctx<'frame> = EngineCtx<
         'frame,
         ColMr,
@@ -434,6 +465,10 @@ impl WorkUnit<Always> for Q1 {
         ColPtrCons<Mv, ColPtrNil>,
         ColPtrCons<Q1v, ColPtrNil>,
     >;
+    type Hint = HintT;
+    type Read = ColMr;
+    type Write = ColQ1;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: Mid ran in the prior phase (RAW on Mv); Q1v reserved + exclusive.
@@ -445,13 +480,10 @@ impl WorkUnit<Always> for Q1 {
 
 struct Q2;
 impl BuilderInput for Q2 {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for Q2 {
-    type Read = ColMr;
-    type Write = ColQ2;
-    type Hint = HintT;
     type Ctx<'frame> = EngineCtx<
         'frame,
         ColMr,
@@ -460,6 +492,10 @@ impl WorkUnit<Always> for Q2 {
         ColPtrCons<Mv, ColPtrNil>,
         ColPtrCons<Q2v, ColPtrNil>,
     >;
+    type Hint = HintT;
+    type Read = ColMr;
+    type Write = ColQ2;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: as Q1, doubling Mv into the disjoint Q2v column.
@@ -471,13 +507,10 @@ impl WorkUnit<Always> for Q2 {
 
 struct Sink;
 impl BuilderInput for Sink {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for Sink {
-    type Read = ReadQ;
-    type Write = ColS;
-    type Hint = HintT;
     type Ctx<'frame> = EngineCtx<
         'frame,
         ReadQ,
@@ -486,6 +519,10 @@ impl WorkUnit<Always> for Sink {
         ColPtrCons<Q1v, ColPtrCons<Q2v, ColPtrNil>>,
         ColPtrCons<Sv, ColPtrNil>,
     >;
+    type Hint = HintT;
+    type Read = ReadQ;
+    type Write = ColS;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: Q1 and Q2 ran in the prior phase (RAW on Q1v/Q2v); Sv
@@ -519,15 +556,22 @@ type ReadABC = Cons<Column<Av>, Cons<Column<Bv>, Cons<Column<Cv>, Empty>>>;
 // trunk in phase 0.
 struct ProducerC;
 impl BuilderInput for ProducerC {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for ProducerC {
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        OneIn,
+        ColC,
+        SnapNil,
+        ColPtrCons<Inv, ColPtrNil>,
+        ColPtrCons<Cv, ColPtrNil>,
+    >;
+    type Hint = HintT;
     type Read = OneIn;
     type Write = ColC;
-    type Hint = HintT;
-    type Ctx<'frame> =
-        EngineCtx<'frame, OneIn, ColC, SnapNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<Cv, ColPtrNil>>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: In host-populated; Cv reserved + exclusive; windowed.
@@ -540,13 +584,10 @@ impl WorkUnit<Always> for ProducerC {
 // Combiner3: reads Av + Bv + Cv, records their sum -> phase 1 (after the waist).
 struct Combiner3;
 impl BuilderInput for Combiner3 {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for Combiner3 {
-    type Read = ReadABC;
-    type Write = ColW;
-    type Hint = HintT;
     type Ctx<'frame> = EngineCtx<
         'frame,
         ReadABC,
@@ -555,6 +596,10 @@ impl WorkUnit<Always> for Combiner3 {
         ColPtrCons<Av, ColPtrCons<Bv, ColPtrCons<Cv, ColPtrNil>>>,
         ColPtrCons<Wv, ColPtrNil>,
     >;
+    type Hint = HintT;
+    type Read = ReadABC;
+    type Write = ColW;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: all three producers ran in phase 0 (RAW edges on Av/Bv/Cv);
@@ -595,7 +640,7 @@ fn run_parallel_three_trunks_two_cores_matches_single_core() {
         .__tail()
         .__ptr()
         .as_ptr() as *mut u32;
-    for i in 0..N {
+    for i in 0 .. N {
         unsafe {
             *in_base.add(i) = i as u32;
             *wv_base.add(i) = u32::MAX;
@@ -605,7 +650,7 @@ fn run_parallel_three_trunks_two_cores_matches_single_core() {
     // Force two cores so phase 0's three trunks distribute round-robin: core 0
     // gets ranks 0 and 2, core 1 gets rank 1. A dropped trunk (a rank-wrap bug
     // where core 0 fails to run its second trunk) corrupts the sum.
-    let pool = OsThreadPool::new();
+    let pool = TestExecutor::new();
     let mut scheduler = core::pin::pin!(scheduler);
     let result = scheduler.as_mut().run_parallel(&pool);
     assert!(matches!(result, Outcome::Ok(())));
@@ -614,7 +659,7 @@ fn run_parallel_three_trunks_two_cores_matches_single_core() {
     // phase-0 trunks were dispatched (including both trunks core 0 owns) and the
     // phase-1 combiner ran after the waist.
     let wv_base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const u32;
-    for i in 0..N {
+    for i in 0 .. N {
         // SAFETY: Wv holds N reserved records; the scheduler is alive.
         let w = unsafe { *wv_base.add(i) };
         assert_eq!(
@@ -660,14 +705,14 @@ fn run_parallel_threaded_two_waists_reuses_barrier() {
         .__tail()
         .__ptr()
         .as_ptr() as *mut u32;
-    for i in 0..N {
+    for i in 0 .. N {
         unsafe {
             *in_base.add(i) = i as u32;
             *sv_base.add(i) = u32::MAX;
         }
     }
 
-    let pool = OsThreadPool::new();
+    let pool = TestExecutor::new();
     let mut scheduler = core::pin::pin!(scheduler);
     let result = scheduler.as_mut().run_parallel(&pool);
     assert!(matches!(result, Outcome::Ok(())));
@@ -676,7 +721,7 @@ fn run_parallel_threaded_two_waists_reuses_barrier() {
     // ordered their phases AND the barrier was reused correctly for the second
     // waist (the sense flip; a stale-count reset would deadlock or corrupt here).
     let sv_base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const u32;
-    for i in 0..N {
+    for i in 0 .. N {
         // SAFETY: Sv holds N reserved records; the scheduler is alive.
         let s = unsafe { *sv_base.add(i) };
         assert_eq!(
