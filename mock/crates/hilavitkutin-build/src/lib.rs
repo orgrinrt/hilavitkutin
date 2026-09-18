@@ -1,31 +1,29 @@
 //! hilavitkutin-build: shared build-dependency crate.
 //!
-//! Every hilavitkutin crate and every consumer's `build.rs` calls
-//! [`bootstrap_from_buildscript`]. The crate optimises HOW code is
-//! compiled (pragmas, profiles, rustc wrapper), not what it does.
-//! Standalone, no runtime deps.
+//! A consumer's `build.rs` resolves a [`BuildConfig`] from cargo's
+//! environment and asks this crate what to print and what to write.
+//! The crate optimises HOW code is compiled (pragmas, profiles, rustc
+//! wrapper), not what it does. Standalone, no runtime deps.
 //!
-//! # `std` stance
+//! # `no_std`
 //!
-//! The src CL's original sketch suggested `#![no_std]` with the
-//! `bootstrap_from_buildscript` body gated behind
-//! `#[cfg(not(target_os = "none"))]`. In practice this crate only
-//! ever runs at build time from `build.rs`, which always links
-//! against `std`. Pragmatic call: drop `#![no_std]`, use `std` in
-//! bootstrap, and treat "expose the type surface in a no_std-compatible
-//! sub-module" as a BACKLOG item. The pragma / profile / axis types
-//! are already `#[no_std]`-safe in practice (no heap, no `std::`
-//! imports) so promoting them later is mechanical.
+//! Like every hilavitkutin crate, this one is `no_std` and does not
+//! allocate. Everything that touches the host stays in the build
+//! script, which owns it: reading `$PROFILE` and
+//! `$CARGO_CFG_TARGET_FEATURE`, printing the `cargo::` directives, and
+//! writing the generated config file. The crate takes the values the
+//! script read, and hands back the text through `core::fmt::Write`.
+//! [`bootstrap`] carries the whole `build.rs`.
 //!
 //! # Layout
 //!
 //! [`pragma`] defines the `Pragma` enum and `PragmaSet` bitmask.
 //! [`profile`] defines `Profile` and its default pragma sets.
 //! [`axis`] holds the three-axis classification (Target / Tier /
-//! Passes). [`config`] exposes `BuildConfig::from_cargo_env()`.
+//! Passes). [`config`] exposes `BuildConfig::from_cargo()`.
 //! [`requirements`] contains the static pragma-to-external-tool
-//! table. [`bootstrap`] is the build-script entry point. [`guards`]
-//! exposes `compile_error!` macro helpers.
+//! table. [`bootstrap`] writes the directives and the config file.
+//! [`guards`] exposes `compile_error!` macro helpers.
 //!
 //! # Pragma roster
 //!
@@ -51,6 +49,7 @@
 //! The generated config file `Cargo.toml`-shaped overrides (Profiles
 //! etc.) are deferred to a follow-up round per `BACKLOG`.
 
+#![no_std]
 #![deny(unsafe_op_in_unsafe_fn)]
 
 pub mod axis;
@@ -62,7 +61,7 @@ pub mod profile;
 pub mod requirements;
 
 pub use axis::{PassesAxis, TargetAxis, TierAxis};
-pub use bootstrap::bootstrap_from_buildscript;
+pub use bootstrap::{write_config_file, write_directives};
 pub use config::BuildConfig;
 pub use pragma::{Pragma, PragmaIter, PragmaSet};
 pub use profile::Profile;
