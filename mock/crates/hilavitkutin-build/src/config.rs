@@ -22,7 +22,7 @@ use crate::profile::Profile;
 pub struct BuildConfig {
     pub profile: Profile,
     pub pragmas: PragmaSet,
-    pub target:  Option<TargetAxis>, // lint:allow(no-bare-option) reason: absent when cargo supplied no target feature list; tracked: #72
+    pub target:  Maybe<TargetAxis>,
     pub tier:    TierAxis,
     pub passes:  PassesAxis,
 }
@@ -34,7 +34,7 @@ impl BuildConfig {
     /// A variable cargo did not set is `Maybe::Isnt`, and degrades
     /// gracefully:
     /// - `profile` absent or unknown → `Profile::Dev`
-    /// - `target_features` absent → `target = None`
+    /// - `target_features` absent → `target = Maybe::Isnt`
     ///
     /// Tier + passes are not yet derivable from these values; the
     /// wrapper-script round wires them up.
@@ -48,8 +48,8 @@ impl BuildConfig {
         };
 
         let target = match target_features {
-            Maybe::Is(features) => Some(resolve_target_axis(features)),
-            Maybe::Isnt => None,
+            Maybe::Is(features) => Maybe::Is(resolve_target_axis(features)),
+            Maybe::Isnt => Maybe::Isnt,
         };
 
         BuildConfig {

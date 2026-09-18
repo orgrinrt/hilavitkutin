@@ -62,7 +62,7 @@ fn an_absent_or_unknown_profile_falls_back_to_dev() {
 fn an_absent_feature_list_leaves_the_target_unset() {
     assert_eq!(
         BuildConfig::from_cargo(Maybe::Is("release"), Maybe::Isnt).target,
-        None
+        Maybe::Isnt
     );
 }
 
@@ -79,7 +79,7 @@ fn the_richest_listed_feature_picks_the_target() {
         ("", TargetAxis::Iss64),
     ] {
         let cfg = BuildConfig::from_cargo(Maybe::Isnt, Maybe::Is(features));
-        assert_eq!(cfg.target, Some(expected), "feature list {features:?}");
+        assert_eq!(cfg.target, Maybe::Is(expected), "feature list {features:?}");
     }
 }
 
@@ -89,7 +89,7 @@ fn a_feature_is_matched_whole_never_as_a_prefix() {
         let cfg = BuildConfig::from_cargo(Maybe::Isnt, Maybe::Is(features));
         assert_eq!(
             cfg.target,
-            Some(TargetAxis::Iss64),
+            Maybe::Is(TargetAxis::Iss64),
             "feature list {features:?}"
         );
     }
