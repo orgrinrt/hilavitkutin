@@ -13,9 +13,10 @@
 //!    so `ext_init_trampoline` and `ext_shutdown_trampoline` are findable
 //!    even though the full mangled symbol differs.
 //!
-//! Skipped on non-Unix targets: `nm` is not the standard tool on Windows;
-//! parity verification via `dumpbin /SYMBOLS` is a separate harness
-//! tracked in the macros crate's BACKLOG.
+//! On non-Unix targets the test is a catalogued contract, ignored: `nm` is
+//! not the standard tool on Windows, and parity verification via
+//! `dumpbin /SYMBOLS` is a separate harness tracked in the macros crate's
+//! BACKLOG.
 
 use std::path::PathBuf;
 use std::process::Command;
@@ -214,8 +215,19 @@ fn target_directory_is_absent_when_the_value_never_closes() {
     );
 }
 
+/// CONTRACT: the trampolines survive fat LTO on a non-unix host too.
+///
+/// The unix test reads the symbol table with `nm`, which a Windows toolchain
+/// does not ship. The same assertion needs `dumpbin /SYMBOLS` or the `object`
+/// crate there.
 #[cfg(not(unix))]
 #[test]
+#[ignore = "catalogue: trampoline survival under fat LTO is unchecked off unix; needs a dumpbin or object-crate symbol reader; tracked: BACKLOG LTO smoke on Windows"]
 fn trampolines_survive_lto() {
-    eprintln!("LTO smoke test is unix-only; tracked in BACKLOG.");
+    unimplemented!(
+        "contract: `__hilavitkutin_extension_descriptor` is exported and \
+         `ext_init_trampoline` / `ext_shutdown_trampoline` appear in the symbol \
+         table of the fat-LTO fixture cdylib. Fill when a symbol reader for \
+         non-unix hosts lands. tracked: BACKLOG LTO smoke on Windows"
+    );
 }
