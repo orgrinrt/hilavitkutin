@@ -26,8 +26,7 @@ use crate::store::{Field, Map, Seq};
 
 /// Round a bit count up to whole bytes.
 const fn bytes_of_bits(bits: USize) -> USize {
-    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: byte-ceil arithmetic on the const bit width; tracked: #121
-    USize(bits.0.div_ceil(8))
+    USize(bits.0.div_ceil(8)) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: byte-ceil arithmetic on the const bit width; tracked: #121
 }
 
 /// The L1-morsel write-budget byte footprint of one resource field kind.
@@ -42,24 +41,21 @@ pub trait CollectionBytes {
 }
 
 impl<U: ColumnValue, const N: Cap> CollectionBytes for Seq<U, N> {
-    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: N*elem const arithmetic; tracked: #121
-    const BYTES: USize = USize(cap_size(N) * bytes_of_bits(<U as ColumnValue>::BIT_WIDTH).0);
+    const BYTES: USize = USize(cap_size(N) * bytes_of_bits(<U as ColumnValue>::BIT_WIDTH).0); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: N*elem const arithmetic; tracked: #121
 }
 
 impl<K: ColumnValue, V: ColumnValue, const N: Cap> CollectionBytes for Map<K, V, N> {
-    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: N*(k+v) const arithmetic; tracked: #121
     const BYTES: USize = USize(
         cap_size(N)
             * (bytes_of_bits(<K as ColumnValue>::BIT_WIDTH).0
                 + bytes_of_bits(<V as ColumnValue>::BIT_WIDTH).0),
-    );
+    ); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: N*(k+v) const arithmetic; tracked: #121
 }
 
 impl<T: ColumnValue> CollectionBytes for Field<T> {
     /// A `Field` scalar is register-cached, so it adds nothing to the L1 morsel
     /// write budget (its cost lands in the register budget, a separate axis).
-    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: zero footprint literal; tracked: #121
-    const BYTES: USize = USize(0);
+    const BYTES: USize = USize(0); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: zero footprint literal; tracked: #121
 }
 
 /// The total L1-morsel write-budget byte footprint of a resource value type.
@@ -90,23 +86,9 @@ macro_rules! impl_scalar_footprint {
     };
 }
 
-impl_scalar_footprint!(
-    u8,
-    u16,
-    u32,
-    u64,
-    u128,
-    usize,
-    i8,
-    i16,
-    i32,
-    i64,
-    i128,
-    isize,
-    bool,
-    char,
-    ()
-); // lint:allow(no-bare-numeric) reason: definition-site scalar list for the zero-footprint impls; tracked: #121
+// One line, so the allow sits on every scalar it covers.
+#[rustfmt::skip]
+impl_scalar_footprint!(u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize, bool, char, ()); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: definition-site scalar list for the zero-footprint impls; tracked: #121
 
 impl ResourceFootprint for USize {
     const L1_BYTES: USize = <USize as Identity<Additive>>::IDENTITY;

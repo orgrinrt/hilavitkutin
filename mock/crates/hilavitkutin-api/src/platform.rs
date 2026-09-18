@@ -367,8 +367,8 @@ pub struct HybridExecutor;
 impl crate::sealed::Sealed for HybridExecutor {}
 
 impl Executor for HybridExecutor {
-    fn run<'frame, 'arena, const C: usize, const P: usize>(
-        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    #[rustfmt::skip] // keeps the allow on the signature it governs
+    fn run<'frame, 'arena, const C: usize, const P: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
         &self,
         pool: core::pin::Pin<&'frame PoolFrame<'arena, C, P>>,
         core_id: USize,

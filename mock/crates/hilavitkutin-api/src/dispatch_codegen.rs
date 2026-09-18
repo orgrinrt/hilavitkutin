@@ -49,6 +49,8 @@ impl core::fmt::Debug for PhaseId {
     }
 }
 
+// A block of its own, so rustfmt's impl-item reordering has no later item to
+// move the `lint:allow` onto.
 impl PhaseId {
     /// Number of distinct phase ids this fixed-width type can name.
     ///
@@ -56,9 +58,10 @@ impl PhaseId {
     /// `PlanDims` whose phase capacity exceeds this cannot name its high
     /// slots; the plan stage rejects such a dims rather than wrapping ids.
     /// Keep in sync with the `Uint<5>` width above.
-    pub const ADDRESSABLE: usize = 1 << 5;
-    // lint:allow(no-bare-numeric) reason: 2^(Uint<5> width): the addressable-id-count bound; tracked: #641
+    pub const ADDRESSABLE: usize = 1 << 5; // lint:allow(no-bare-numeric) reason: 2^(Uint<5> width): the addressable-id-count bound; tracked: #641
+}
 
+impl PhaseId {
     /// Zero-valued default.
     pub const ZERO: Self = Self(<Uint<5> as Identity<Additive>>::IDENTITY);
 
@@ -106,9 +109,10 @@ impl TrunkId {
     /// `PlanDims` whose trunk capacity exceeds this cannot name its high
     /// slots; the plan stage rejects such a dims rather than wrapping ids.
     /// Keep in sync with the `Uint<6>` width above.
-    pub const ADDRESSABLE: usize = 1 << 6;
-    // lint:allow(no-bare-numeric) reason: 2^(Uint<6> width): the addressable-id-count bound; tracked: #641
+    pub const ADDRESSABLE: usize = 1 << 6; // lint:allow(no-bare-numeric) reason: 2^(Uint<6> width): the addressable-id-count bound; tracked: #641
+}
 
+impl TrunkId {
     /// Zero-valued default.
     pub const ZERO: Self = Self(<Uint<6> as Identity<Additive>>::IDENTITY);
 
