@@ -18,19 +18,28 @@ fn main() {
 }
 ```
 
-`configure().run()` reads cargo features and target env vars
+The crate is `no_std` and does not allocate, like every hilavitkutin
+crate, so it touches neither the environment nor the filesystem. The
+build script owns both: it reads cargo's features and target env vars
 (CARGO_CFG_TARGET_ARCH, CARGO_CFG_TARGET_VENDOR,
-CARGO_CFG_TARGET_FEATURE), emits `cargo:rustc-cfg` lines and
-`cargo:rerun-if-changed`, and generates the rustc wrapper and config
-files. Does NOT do live CPUID/sysctl detection, hardware topology
+CARGO_CFG_TARGET_FEATURE, PROFILE) and passes the values in, and the
+crate writes the `cargo:rustc-cfg` and `cargo:rerun-if-changed`
+directives and the text of the rustc wrapper and config files into a
+`core::fmt::Write` the script supplies, which the script prints or
+writes to `OUT_DIR`. `configure().run()` above is that shape once the
+builder lands: `run` takes what the script read and returns through
+the writer rather than reading or printing anything itself. Today the
+entry points are `BuildConfig::from_cargo`, `write_directives` and
+`write_config_file`. Does NOT do live CPUID/sysctl detection, hardware topology
 (L1 sizes, core counts, P/E ratio) is a runtime concern handled by
 LazyLock in hilavitkutin's scheduler.
 
 ## Four-part build configuration model (T4 §Q1)
 
-**1. hilavitkutin-build (this crate):** reads cargo env vars, emits
-cfg flags, generates the rustc wrapper script and config file. Runs
-in every crate's build.rs. Does NOT handle LLVM codegen flags
+**1. hilavitkutin-build (this crate):** takes the cargo env values
+the build script read, and writes the cfg flags, the rustc wrapper
+script and the config file as text for the script to emit. Runs in
+every crate's build.rs. Does NOT handle LLVM codegen flags
 directly, that's the wrapper's job.
 
 **2. No custom cargo features (T4 §Q2):** the compiler already
@@ -207,8 +216,9 @@ remain in the consumer's Cargo.toml. NOT pragma-controlled.
  Generates `.profraw` + `perf.data`. Merges profiles.
 
 **Release build 2+ (profiles exist):**
-1. `configure()` finds `merged.profdata` → adds `-C profile-use=...`
- and PGO-complementary flags to generated config
+1. The build script finds `merged.profdata` and tells `configure()`
+ it is present → `configure()` adds `-C profile-use=...` and
+ PGO-complementary flags to the generated config text
 2. Cargo recompiles with PGO (10-20% branch/inline improvement)
 3. Post-build hook: profile-guided BOLT (additional 5-10%)
 4. Background: re-profiles with optimised binary
@@ -216,8 +226,11 @@ remain in the consumer's Cargo.toml. NOT pragma-controlled.
 **Profile staleness:**
 - Profiles in `target/hilavitkutin-build/pgo/` (gitignored)
 - `cargo clean` deletes them
-- `configure()` records git commit hash when profiles generated
-- If HEAD diverges >50 commits, emits `cargo:warning=stale profiles`
+- The commit hash is recorded when profiles are generated; the build
+ script reads it and HEAD's distance from it and passes the distance
+ to `configure()`
+- If HEAD diverges >50 commits, `configure()` writes
+ `cargo:warning=stale profiles` among its directives
 - Never refuses to build; stale profiles degrade gracefully
 
 **Optimisation tiers (additive, automatic):**

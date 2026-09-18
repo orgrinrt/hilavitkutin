@@ -25,7 +25,7 @@ source. This document maps domains to engine modules.
 | adapt | 22 | Volumetric analysis, EMA metrics, morsel temperature, predictive parking |
 | scheduler | 23 | Builder API, self-hosting meta pipeline, version stamps, error propagation |
 | intrinsics | 13 | Day-one asm microkernels, LLVM auto-vectorisation contract |
-| platform | 02 | os tier (mmap, pthread, clock_gettime), std tier implementations |
+| platform | 02 | os tier (mmap, clock_gettime), no_os tier; the executor is the consumer's |
 
 ## Plan stage (domains 11-16)
 
@@ -1325,14 +1325,20 @@ hilavitkutin owns generation counters; consumer owns storage.
 
 ## Platform implementations (domain 02)
 
-os tier (default): raw mmap/munmap for MemoryProvider, raw
-pthread_create/clone for ThreadPool, clock_gettime for Clock. Direct
-syscalls, no libc where possible.
-
-std tier (fallback): std::alloc, std::thread, std::time::Instant.
-catch_unwind available but abort preferred (R7).
+os tier (default): raw mmap/munmap for MemoryProvider and
+clock_gettime for Clock. Direct syscalls, no libc where possible.
 
 no_os tier: trait contracts only. Consumer provides all impls.
+
+Neither tier spawns threads. hilavitkutin ships the executor contract,
+`ThreadPoolApi`, and nothing that implements it over OS threads: the
+executor lives in the consumer, or in a crate outside the hilavitkutin
+family, gated per target and per feature there. Every crate here is
+`no_std`, and a thread executor needs either std or a platform's thread
+API, which is exactly the part a consumer picks. The engine hands the
+executor one pointer-sized closure per worker, so an executor can carry
+it without allocating. The repository's own tests and benches define
+their executors in test and bench code.
 
 ## Dependencies
 

@@ -95,9 +95,12 @@ reinventing descriptor formats.
 - `hilavitkutin` depends on `hilavitkutin-api` plus arvo.
 - `hilavitkutin-build`: zero hilavitkutin crate deps; may depend on
  LLVM / cargo / rustc toolchain crates. Strictly build-time.
-- `hilavitkutin-ctx`, `-persistence`, `-str`: independent. Each
- may depend on arvo; none depend on the engine or on
- each other.
+- `hilavitkutin-ctx`, `-str`: independent. Each may depend on
+ arvo; neither depends on the engine or on the other.
+- `hilavitkutin-persistence`: builds on `hilavitkutin-str` and
+ `hilavitkutin-api` (its memory comes from the shared
+ `MemoryProvider`), plus arvo. Never depends on the engine or on
+ `hilavitkutin-ctx`.
 - `hilavitkutin-linking`: depends only on notko / arvo / arvo-bits
  and on libc (unix) / windows-sys (windows) for raw FFI.
  Must never depend on `hilavitkutin-api`, `hilavitkutin`, or any
