@@ -100,7 +100,10 @@ mod tests {
             exhausted: Bool(false),
             _domain:   PhantomData,
         };
-        assert!(matches!(g.mint(), Maybe::Is(_)));
+        match g.mint() {
+            Maybe::Is(s) => assert_eq!(s.id().to_raw(), MAX_ID.to_raw()),
+            Maybe::Isnt => panic!("the ceiling id is still issued"),
+        }
         assert!(matches!(g.mint(), Maybe::Isnt));
         assert!(matches!(g.mint(), Maybe::Isnt));
     }
