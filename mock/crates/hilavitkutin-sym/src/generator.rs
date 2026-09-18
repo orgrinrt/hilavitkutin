@@ -2,9 +2,9 @@
 
 use core::marker::PhantomData;
 
-use arvo::strategy::Identity;
+use arvo::strategy::{Additive, Identity};
 use arvo::traits::FromConstant;
-use arvo::{Bool, Uint, USize};
+use arvo::{Bool, USize, Uint};
 use arvo_bits::{Bits, Hot};
 use notko::Maybe;
 
@@ -37,18 +37,18 @@ const ONE: Uint<28, Hot> = <Uint<28, Hot> as FromConstant>::from_constant::<{ US
 /// let _g = Generator::<InterningOnly>::new();
 /// ```
 pub struct Generator<D: GenerativeDomain> {
-    next: Uint<28, Hot>,
+    next:      Uint<28, Hot>,
     exhausted: Bool,
-    _domain: PhantomData<D>,
+    _domain:   PhantomData<D>,
 }
 
 impl<D: GenerativeDomain> Generator<D> {
     /// A fresh generator, starting from id zero.
     pub const fn new() -> Self {
         Self {
-            next: <Uint<28, Hot> as Identity>::ZERO,
+            next:      <Uint<28, Hot> as Identity<Additive>>::IDENTITY,
             exhausted: Bool(false),
-            _domain: PhantomData,
+            _domain:   PhantomData,
         }
     }
 
@@ -96,9 +96,9 @@ mod tests {
         // last id, after which the generator is exhausted and returns Isnt
         // rather than wrapping the counter back to a live id.
         let mut g: Generator<TestGen> = Generator {
-            next: MAX_ID,
+            next:      MAX_ID,
             exhausted: Bool(false),
-            _domain: PhantomData,
+            _domain:   PhantomData,
         };
         assert!(matches!(g.mint(), Maybe::Is(_)));
         assert!(matches!(g.mint(), Maybe::Isnt));
