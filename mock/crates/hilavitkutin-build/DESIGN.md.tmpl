@@ -31,8 +31,9 @@ builder lands: `run` takes what the script read and returns through
 the writer rather than reading or printing anything itself. Today the
 entry points are `BuildConfig::from_cargo`, `write_directives` and
 `write_config_file`. Does NOT do live CPUID/sysctl detection, hardware topology
-(L1 sizes, core counts, P/E ratio) is a runtime concern handled by
-LazyLock in hilavitkutin's scheduler.
+(L1 sizes, core counts, P/E ratio) is a runtime concern of
+hilavitkutin's thread module, whose `classify_cores` reads it through
+the platform's own interfaces without std.
 
 ## Four-part build configuration model (T4 §Q1)
 

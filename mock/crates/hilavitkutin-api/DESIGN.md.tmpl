@@ -947,6 +947,14 @@ ships none. No tier ships a `ThreadPool`: the executor is the
 consumer's, or comes from a crate outside the hilavitkutin family.
 Consumer overrides via scheduler builder.
 
+Every closure the engine hands `spawn` is no wider and no more
+aligned than one pointer, so an executor can move it into a thread's
+argument slot without allocating. `OnePointerClosure<F>` names that:
+its associated const `FITS` fails the build at monomorphisation for a
+wider or over-aligned `F`. The engine forces it at its spawn site, and
+an executor may force it in its own `spawn` to hold every caller to
+the same width.
+
 Note: `len`, `align`, `worker_count`, `now_ns` parameters and return
 types should use arvo newtypes in the final API (e.g. `ByteCount`,
 `Alignment`, `CoreCount`, `Nanoseconds`). Exact arvo type mappings

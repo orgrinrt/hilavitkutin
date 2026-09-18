@@ -134,7 +134,8 @@ rules = [
     # Build-time crate has zero runtime linkage.
     { scope = "hilavitkutin-build", forbidden = "hilavitkutin::*, hilavitkutin_api::*", reason = "hilavitkutin-build is build-dep-only and must not link into the runtime binary" },
 
-    # Ecosystem crates are standalone sub-libraries; no cross-deps, no engine dep.
+    # Ecosystem crates never depend on the engine. ctx and str stand alone;
+    # persistence builds on str and the api (below).
     { scope = "hilavitkutin-ctx", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_persistence::*, hilavitkutin_str::*", reason = "hilavitkutin-ctx is a standalone ecosystem crate; keep it independently usable" },
     # Persistence builds on hilavitkutin-str for its archive strings and on the
     # api for the shared `MemoryProvider`, as its DESIGN says; the engine and

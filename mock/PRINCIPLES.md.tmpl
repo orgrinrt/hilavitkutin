@@ -224,9 +224,12 @@ sketch shipped alongside round 202605101036.
 
 ## Pre-allocated thread pool
 
-Threads = `min(physical_cores, parallelisable_width + 1)`. Pool
-persists for pipeline lifetime. Each pool thread pinned to a
-specific core when possible. No runtime spawn.
+The pool is the consumer's executor behind `ThreadPoolApi`. The
+engine hands it one closure per worker once, on the first parallel
+run, sized by the executor's worker count, and the workers persist
+for the pipeline's lifetime. The engine chooses which core owns
+which trunk; pinning a thread to a core is the executor's. No
+runtime spawn.
 
 Hybrid wake: spin 128 iterations, then park. Predictive parking at
 sync points: <100ns spin, 100ns-10µs spin_loop, >10µs park.
