@@ -12,7 +12,7 @@
 use core::marker::PhantomData;
 
 use arvo::USize;
-use arvo::strategy::Identity;
+use arvo::strategy::{Additive, Identity};
 
 use crate::capability::{BulkPush, Len, Push};
 
@@ -77,15 +77,15 @@ impl<T> BulkPush<T> for NullSink {
 #[derive(Debug, Clone, Copy)]
 pub struct CountingSink<T> {
     count: USize,
-    _m: PhantomData<fn(T)>,
+    _m:    PhantomData<fn(T)>,
 }
 
 impl<T> CountingSink<T> {
     /// Fresh sink starting at count 0.
     pub const fn new() -> Self {
         Self {
-            count: USize::ZERO,
-            _m: PhantomData,
+            count: <USize as Identity<Additive>>::IDENTITY,
+            _m:    PhantomData,
         }
     }
 }

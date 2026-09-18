@@ -18,7 +18,7 @@
 //! derive is the ergonomic path); the engine's per-store fold reads `L1_BYTES` for
 //! `Resource<T>` stores.
 
-use arvo::{Cap, Identity, USize};
+use arvo::{Additive, Cap, Identity, USize};
 use arvo_tensor::cap_size;
 
 use crate::column_value::ColumnValue;
@@ -27,7 +27,7 @@ use crate::store::{Field, Map, Seq};
 /// Round a bit count up to whole bytes.
 const fn bytes_of_bits(bits: USize) -> USize {
     // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: byte-ceil arithmetic on the const bit width; tracked: #121
-    USize((bits.0 + 7) / 8)
+    USize(bits.0.div_ceil(8))
 }
 
 /// The L1-morsel write-budget byte footprint of one resource field kind.
@@ -84,18 +84,34 @@ macro_rules! impl_scalar_footprint {
     ($($t:ty),* $(,)?) => {
         $(
             impl ResourceFootprint for $t {
-                const L1_BYTES: USize = USize::ZERO;
+                const L1_BYTES: USize = <USize as Identity<Additive>>::IDENTITY;
             }
         )*
     };
 }
 
-impl_scalar_footprint!(u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize, bool, char, ()); // lint:allow(no-bare-numeric) reason: definition-site scalar list for the zero-footprint impls; tracked: #121
+impl_scalar_footprint!(
+    u8,
+    u16,
+    u32,
+    u64,
+    u128,
+    usize,
+    i8,
+    i16,
+    i32,
+    i64,
+    i128,
+    isize,
+    bool,
+    char,
+    ()
+); // lint:allow(no-bare-numeric) reason: definition-site scalar list for the zero-footprint impls; tracked: #121
 
 impl ResourceFootprint for USize {
-    const L1_BYTES: USize = USize::ZERO;
+    const L1_BYTES: USize = <USize as Identity<Additive>>::IDENTITY;
 }
 
 impl ResourceFootprint for arvo::Bool {
-    const L1_BYTES: USize = USize::ZERO;
+    const L1_BYTES: USize = <USize as Identity<Additive>>::IDENTITY;
 }

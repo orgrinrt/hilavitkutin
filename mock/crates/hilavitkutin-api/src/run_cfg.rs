@@ -19,7 +19,7 @@
 
 use core::marker::PhantomData;
 
-use arvo::{Identity, USize};
+use arvo::{Additive, Identity, USize};
 
 use crate::access::Cons;
 use crate::builder_input::{BuilderInput, Dispatch};
@@ -124,13 +124,15 @@ pub struct DefaultRunCfg {
 impl DefaultRunCfg {
     /// Construct with the given record count.
     pub const fn new(record_count: USize) -> Self {
-        Self { record_count }
+        Self {
+            record_count,
+        }
     }
 }
 
 impl Default for DefaultRunCfg {
     fn default() -> Self {
-        Self::new(USize::ZERO)
+        Self::new(<USize as Identity<Additive>>::IDENTITY)
     }
 }
 
@@ -143,13 +145,13 @@ impl HasRecordCount for DefaultRunCfg {
 }
 
 impl BuilderInput for DefaultRunCfg {
-    type Init = Self;
     type Dispatch = RunCfgDispatch<Self>;
+    type Init = Self;
 }
 
 impl RunCfg for DefaultRunCfg {
-    type Out = notko::Outcome<(), ()>;
     type Err = ();
+    type Out = notko::Outcome<(), ()>;
 }
 
 impl PlanAffecting for DefaultRunCfg {}
@@ -170,9 +172,9 @@ impl<C, Wus, Stores, Platform> Dispatch<Wus, Stores, Platform> for RunCfgDispatc
 where
     C: 'static,
 {
-    type NextWus = Wus;
-    type NextStores = Cons<C, Stores>;
     type NextPlatform = Platform;
+    type NextStores = Cons<C, Stores>;
+    type NextWus = Wus;
 }
 
 /// Single anomaly Virtual marker. Topic 5 audit-2 M7 lock: replaces

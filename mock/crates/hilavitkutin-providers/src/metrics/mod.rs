@@ -59,15 +59,17 @@ macro_rules! metrics_resource {
             /// `AdaptWu` sets `true` at `ScheduleEnd` when this
             /// axis's threshold trips. Observer WUs read after
             /// checking `Virtual<AnomalyFired>`.
-            pub anomaly: arvo::Bool,
+            pub anomaly:     arvo::Bool,
         }
 
         impl $name {
             /// Zero-initialised snapshot.
             pub const fn new() -> Self {
                 Self {
-                    last_sample: arvo::USize::ZERO,
-                    anomaly: arvo::Bool::FALSE,
+                    last_sample: <arvo::USize as arvo::strategy::Identity<
+                        arvo::strategy::Additive,
+                    >>::IDENTITY,
+                    anomaly:     arvo::Bool::FALSE,
                 }
             }
         }
@@ -79,8 +81,8 @@ macro_rules! metrics_resource {
         }
 
         impl hilavitkutin_api::builder_input::BuilderInput for $name {
-            type Init = Self;
             type Dispatch = hilavitkutin_api::builder_input::StoreDispatch<Self>;
+            type Init = Self;
         }
     };
 }

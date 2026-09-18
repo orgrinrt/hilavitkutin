@@ -26,9 +26,9 @@
 
 use core::marker::PhantomData;
 
-use arvo::strategy::Identity;
+use arvo::strategy::{Additive, Identity};
 use arvo::traits::FromConstant;
-use arvo::{Uint, USize};
+use arvo::{USize, Uint};
 
 mod sealed {
     pub trait Sealed {}
@@ -56,10 +56,11 @@ impl PhaseId {
     /// `PlanDims` whose phase capacity exceeds this cannot name its high
     /// slots; the plan stage rejects such a dims rather than wrapping ids.
     /// Keep in sync with the `Uint<5>` width above.
-    pub const ADDRESSABLE: usize = 1 << 5; // lint:allow(no-bare-numeric) reason: 2^(Uint<5> width): the addressable-id-count bound; tracked: #641
+    pub const ADDRESSABLE: usize = 1 << 5;
+    // lint:allow(no-bare-numeric) reason: 2^(Uint<5> width): the addressable-id-count bound; tracked: #641
 
     /// Zero-valued default.
-    pub const ZERO: Self = Self(<Uint<5> as Identity>::ZERO);
+    pub const ZERO: Self = Self(<Uint<5> as Identity<Additive>>::IDENTITY);
 
     /// Typed-const constructor for non-zero indices.
     pub const fn from_constant<const C: USize>() -> Self {
@@ -105,10 +106,11 @@ impl TrunkId {
     /// `PlanDims` whose trunk capacity exceeds this cannot name its high
     /// slots; the plan stage rejects such a dims rather than wrapping ids.
     /// Keep in sync with the `Uint<6>` width above.
-    pub const ADDRESSABLE: usize = 1 << 6; // lint:allow(no-bare-numeric) reason: 2^(Uint<6> width): the addressable-id-count bound; tracked: #641
+    pub const ADDRESSABLE: usize = 1 << 6;
+    // lint:allow(no-bare-numeric) reason: 2^(Uint<6> width): the addressable-id-count bound; tracked: #641
 
     /// Zero-valued default.
-    pub const ZERO: Self = Self(<Uint<6> as Identity>::ZERO);
+    pub const ZERO: Self = Self(<Uint<6> as Identity<Additive>>::IDENTITY);
 
     /// Typed-const constructor for non-zero indices.
     pub const fn from_constant<const C: USize>() -> Self {
@@ -149,7 +151,7 @@ impl core::fmt::Debug for FiberId {
 
 impl FiberId {
     /// Zero-valued default.
-    pub const ZERO: Self = Self(<Uint<7> as Identity>::ZERO);
+    pub const ZERO: Self = Self(<Uint<7> as Identity<Additive>>::IDENTITY);
 
     /// Typed-const constructor for non-zero indices.
     pub const fn from_constant<const C: USize>() -> Self {
@@ -192,7 +194,7 @@ impl core::fmt::Debug for UnitId {
 
 impl UnitId {
     /// Zero-valued default.
-    pub const ZERO: Self = Self(<Uint<16> as Identity>::ZERO);
+    pub const ZERO: Self = Self(<Uint<16> as Identity<Additive>>::IDENTITY);
 
     /// Typed-const constructor for non-zero indices.
     pub const fn from_constant<const C: USize>() -> Self {
@@ -231,16 +233,16 @@ pub struct CoreProgram<
     const MAX_FIBERS_PER_CORE: usize,
 > {
     /// Phases this core participates in.
-    pub phases: [PhaseEntry; MAX_PHASES_PER_CORE],
+    pub phases:      [PhaseEntry; MAX_PHASES_PER_CORE],
     pub phase_count: USize,
 
     /// Trunks this core owns.
-    pub trunks: [TrunkId; MAX_TRUNKS_PER_CORE],
+    pub trunks:      [TrunkId; MAX_TRUNKS_PER_CORE],
     pub trunk_count: USize,
 
     /// Per-fiber record range for this core. Full / Head / Tail.
     pub fiber_ranges: [(FiberId, RecordRange); MAX_FIBERS_PER_CORE],
-    pub range_count: USize,
+    pub range_count:  USize,
 
     /// Estimated icache footprint of the monomorphised per-core
     /// function in bytes. Topic 3 M2 invariant; plan stage uses
@@ -258,33 +260,33 @@ pub struct CoreProgram<
 }
 
 impl<
-        const MAX_PHASES_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_TRUNKS_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_FIBERS_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    > CoreProgram<MAX_PHASES_PER_CORE, MAX_TRUNKS_PER_CORE, MAX_FIBERS_PER_CORE>
+    const MAX_PHASES_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_TRUNKS_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_FIBERS_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+> CoreProgram<MAX_PHASES_PER_CORE, MAX_TRUNKS_PER_CORE, MAX_FIBERS_PER_CORE>
 {
     /// All-zero program. Used as the array-init default before
     /// `synthesise_core_programs` populates real values.
     pub const fn new() -> Self {
         Self {
-            phases: [PhaseEntry::new(); MAX_PHASES_PER_CORE],
-            phase_count: USize::ZERO,
-            trunks: [TrunkId::ZERO; MAX_TRUNKS_PER_CORE],
-            trunk_count: USize::ZERO,
-            fiber_ranges: [(FiberId::ZERO, RecordRange::Full); MAX_FIBERS_PER_CORE],
-            range_count: USize::ZERO,
-            estimated_icache_bytes: USize::ZERO,
-            progress_slot_idx: USize::ZERO,
-            phase_arrived_offset: USize::ZERO,
+            phases:                 [PhaseEntry::new(); MAX_PHASES_PER_CORE],
+            phase_count:            <USize as Identity<Additive>>::IDENTITY,
+            trunks:                 [TrunkId::ZERO; MAX_TRUNKS_PER_CORE],
+            trunk_count:            <USize as Identity<Additive>>::IDENTITY,
+            fiber_ranges:           [(FiberId::ZERO, RecordRange::Full); MAX_FIBERS_PER_CORE],
+            range_count:            <USize as Identity<Additive>>::IDENTITY,
+            estimated_icache_bytes: <USize as Identity<Additive>>::IDENTITY,
+            progress_slot_idx:      <USize as Identity<Additive>>::IDENTITY,
+            phase_arrived_offset:   <USize as Identity<Additive>>::IDENTITY,
         }
     }
 }
 
 impl<
-        const MAX_PHASES_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_TRUNKS_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-        const MAX_FIBERS_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    > Default for CoreProgram<MAX_PHASES_PER_CORE, MAX_TRUNKS_PER_CORE, MAX_FIBERS_PER_CORE>
+    const MAX_PHASES_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_TRUNKS_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_FIBERS_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+> Default for CoreProgram<MAX_PHASES_PER_CORE, MAX_TRUNKS_PER_CORE, MAX_FIBERS_PER_CORE>
 {
     fn default() -> Self {
         Self::new()
@@ -294,7 +296,7 @@ impl<
 /// Per-phase entry on a `CoreProgram`. Topic 3 axis F.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct PhaseEntry {
-    pub phase: PhaseId,
+    pub phase:     PhaseId,
     /// What this core does at the phase barrier: wait, signal, or
     /// both. Topic 3 line 738.
     pub sync_role: SyncRole,
@@ -303,7 +305,10 @@ pub struct PhaseEntry {
 impl PhaseEntry {
     /// Default-initialised entry; phase = ZERO, role = `WaitAndSignal`.
     pub const fn new() -> Self {
-        Self { phase: PhaseId::ZERO, sync_role: SyncRole::WaitAndSignal }
+        Self {
+            phase:     PhaseId::ZERO,
+            sync_role: SyncRole::WaitAndSignal,
+        }
     }
 }
 
@@ -335,9 +340,13 @@ pub enum RecordRange {
     /// Full range `0..record_count`.
     Full,
     /// Head half: `0..mid` (head+tail convergence, head thread).
-    Head { mid_slot: USize },
+    Head {
+        mid_slot: USize,
+    },
     /// Tail half: `mid..record_count` (head+tail convergence, tail thread).
-    Tail { mid_slot: USize },
+    Tail {
+        mid_slot: USize,
+    },
 }
 
 /// `DispatchCodegen<Cfg>` produces a monomorphised per-core dispatch

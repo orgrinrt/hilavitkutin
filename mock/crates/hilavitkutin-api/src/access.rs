@@ -6,7 +6,7 @@
 //! site fails to compile.
 
 use arvo::USize;
-use arvo::strategy::Identity;
+use arvo::strategy::{Additive, Identity};
 
 use crate::sealed;
 
@@ -54,7 +54,7 @@ pub struct Cons<H, T>(core::marker::PhantomData<(H, T)>);
 
 impl sealed::Sealed for Empty {}
 impl AccessSet for Empty {
-    const LEN: USize = USize::ZERO;
+    const LEN: USize = <USize as Identity<Additive>>::IDENTITY;
 }
 
 impl<H: 'static, T: 'static> sealed::Sealed for Cons<H, T> {}
@@ -110,8 +110,7 @@ pub trait ContainsAll<L>: AccessSet {}
 
 impl<S: AccessSet> ContainsAll<Empty> for S {}
 
-impl<S, H: 'static, T: 'static> ContainsAll<Cons<H, T>> for S
-where
-    S: AccessSet + Contains<H> + ContainsAll<T>,
+impl<S, H: 'static, T: 'static> ContainsAll<Cons<H, T>> for S where
+    S: AccessSet + Contains<H> + ContainsAll<T>
 {
 }

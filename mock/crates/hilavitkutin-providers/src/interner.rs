@@ -10,7 +10,7 @@
 use core::cell::{Cell, UnsafeCell};
 
 use arvo::USize;
-use arvo::strategy::Identity;
+use arvo::strategy::{Additive, Identity};
 use hilavitkutin_api::builder_input::BuilderInput;
 use hilavitkutin_api::{Cons, Empty, Resource};
 use hilavitkutin_kit::{Kit, KitDispatch};
@@ -60,12 +60,14 @@ where
     A: ArenaInterner + 'static,
 {
     #[inline(always)]
-    fn intern(&self, s: &str) -> Str { // lint:allow(no-bare-string) reason: interner boundary mirror of the trait method; tracked: #72
+    fn intern(&self, s: &str) -> Str {
+        // lint:allow(no-bare-string) reason: interner boundary mirror of the trait method; tracked: #72
         StringInterner::intern(self, s)
     }
 
     #[inline(always)]
-    fn resolve(&self, s: Str) -> Maybe<&str> { // lint:allow(no-bare-string) reason: interner boundary mirror of the trait method; tracked: #72
+    fn resolve(&self, s: Str) -> Maybe<&str> {
+        // lint:allow(no-bare-string) reason: interner boundary mirror of the trait method; tracked: #72
         StringInterner::resolve(self, s)
     }
 }
@@ -87,35 +89,41 @@ where
 /// `arena_resolve` returns an empty slice for the sentinel; the
 /// `StringInterner` wrapping this arena observes the empty
 /// resolution as `Maybe::Is(&"")`.
-pub struct MemoryArena<const BYTES: usize, const ENTRIES: usize> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array sizes; rust grammar requires usize; tracked: #121
-    bytes: UnsafeCell<[u8; BYTES]>, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic byte buffer; tracked: #121
+pub struct MemoryArena<const BYTES: usize, const ENTRIES: usize> {
+    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array sizes; rust grammar requires usize; tracked: #121
+    bytes:   UnsafeCell<[u8; BYTES]>, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic byte buffer; tracked: #121
     entries: UnsafeCell<[Entry; ENTRIES]>,
-    cursor: Cell<USize>,
-    count: Cell<USize>,
+    cursor:  Cell<USize>,
+    count:   Cell<USize>,
 }
 
 #[derive(Copy, Clone)]
 struct Entry {
     offset: USize,
-    len: USize,
+    len:    USize,
 }
 
-impl<const BYTES: usize, const ENTRIES: usize> MemoryArena<BYTES, ENTRIES> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; tracked: #121
+impl<const BYTES: usize, const ENTRIES: usize> MemoryArena<BYTES, ENTRIES> {
+    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; tracked: #121
     /// Construct an empty arena. Buffer initialised to zero, entry
     /// table initialised with zero offsets and zero lengths.
     pub const fn new() -> Self {
         Self {
-            bytes: UnsafeCell::new([0u8; BYTES]), // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic byte buffer initialisation; tracked: #121
+            bytes:   UnsafeCell::new([0u8; BYTES]), // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic byte buffer initialisation; tracked: #121
             entries: UnsafeCell::new(
-                [Entry { offset: USize::ZERO, len: USize::ZERO }; ENTRIES],
+                [Entry {
+                    offset: <USize as Identity<Additive>>::IDENTITY,
+                    len:    <USize as Identity<Additive>>::IDENTITY,
+                }; ENTRIES],
             ),
-            cursor: Cell::new(USize::ZERO),
-            count: Cell::new(USize::ZERO),
+            cursor:  Cell::new(<USize as Identity<Additive>>::IDENTITY),
+            count:   Cell::new(<USize as Identity<Additive>>::IDENTITY),
         }
     }
 }
 
-impl<const BYTES: usize, const ENTRIES: usize> Default for MemoryArena<BYTES, ENTRIES> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; tracked: #121
+impl<const BYTES: usize, const ENTRIES: usize> Default for MemoryArena<BYTES, ENTRIES> {
+    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; tracked: #121
     #[inline(always)]
     fn default() -> Self {
         Self::new()
@@ -124,8 +132,10 @@ impl<const BYTES: usize, const ENTRIES: usize> Default for MemoryArena<BYTES, EN
 
 const SENTINEL: u32 = u32::MAX; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: arena id width is the ArenaInterner contract (u32); tracked: #72
 
-impl<const BYTES: usize, const ENTRIES: usize> ArenaInterner for MemoryArena<BYTES, ENTRIES> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; tracked: #121
-    fn arena_intern(&self, s: &str) -> u32 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-string) reason: ArenaInterner trait method signature; tracked: #72
+impl<const BYTES: usize, const ENTRIES: usize> ArenaInterner for MemoryArena<BYTES, ENTRIES> {
+    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; tracked: #121
+    fn arena_intern(&self, s: &str) -> u32 {
+        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-string) reason: ArenaInterner trait method signature; tracked: #72
         let bytes = s.as_bytes();
         let len = bytes.len();
         let cursor = self.cursor.get().0;
@@ -162,7 +172,10 @@ impl<const BYTES: usize, const ENTRIES: usize> ArenaInterner for MemoryArena<BYT
         // remains pointing into `self.entries`.
         unsafe {
             let entries_ptr = self.entries.get() as *mut Entry;
-            entries_ptr.add(count).write(Entry { offset: USize(cursor), len: USize(len) });
+            entries_ptr.add(count).write(Entry {
+                offset: USize(cursor),
+                len:    USize(len),
+            });
         }
 
         let id = count as u32; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: ArenaInterner contract returns u32 ids; tracked: #72
@@ -171,7 +184,8 @@ impl<const BYTES: usize, const ENTRIES: usize> ArenaInterner for MemoryArena<BYT
         id
     }
 
-    fn arena_resolve(&self, id: u32) -> &str { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-string) reason: ArenaInterner trait method signature; tracked: #72
+    fn arena_resolve(&self, id: u32) -> &str {
+        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-string) reason: ArenaInterner trait method signature; tracked: #72
         if id == SENTINEL {
             return "";
         }
@@ -209,8 +223,9 @@ impl<const BYTES: usize, const ENTRIES: usize> ArenaInterner for MemoryArena<BYT
 /// (ENTRIES) are independent dimensions a consumer tunes for
 /// their workload.
 #[inline(always)]
-pub const fn default_interner<const BYTES: usize, const ENTRIES: usize>() // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array sizes; tracked: #121
--> StringInterner<MemoryArena<BYTES, ENTRIES>> { // lint:allow(no-alloc) reason: StringInterner is the no-alloc interner wrapper, not std String; tracked: #72
+pub const fn default_interner<const BYTES: usize, const ENTRIES: usize>()
+-> StringInterner<MemoryArena<BYTES, ENTRIES>> {
+    // lint:allow(no-alloc) reason: StringInterner is the no-alloc interner wrapper, not std String; tracked: #72
     StringInterner::new(MemoryArena::new())
 }
 
@@ -222,14 +237,16 @@ pub const fn default_interner<const BYTES: usize, const ENTRIES: usize>() // lin
 /// via `builder.add_resource(default_interner::<BYTES, ENTRIES>())`.
 pub struct InternerKit<const BYTES: usize, const ENTRIES: usize>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array sizes; tracked: #121
 
-impl<const BYTES: usize, const ENTRIES: usize> BuilderInput for InternerKit<BYTES, ENTRIES> // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array sizes; tracked: #121
+impl<const BYTES: usize, const ENTRIES: usize> BuilderInput for InternerKit<BYTES, ENTRIES>
+// lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array sizes; tracked: #121
 {
-    type Init = Self;
     type Dispatch = KitDispatch<Self>;
+    type Init = Self;
 }
 
-impl<const BYTES: usize, const ENTRIES: usize> Kit for InternerKit<BYTES, ENTRIES> // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array sizes; tracked: #121
+impl<const BYTES: usize, const ENTRIES: usize> Kit for InternerKit<BYTES, ENTRIES>
+// lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array sizes; tracked: #121
 {
-    type Units = Empty;
     type Owned = Cons<Resource<StringInterner<MemoryArena<BYTES, ENTRIES>>>, Empty>;
+    type Units = Empty;
 }

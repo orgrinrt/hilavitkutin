@@ -6,7 +6,7 @@
 
 use arvo::strategy::Hot;
 use arvo::ufixed::UFixed;
-use arvo::{fbits, ibits, Bool, USize};
+use arvo::{Bool, USize, fbits, ibits};
 
 /// Nanoseconds since a platform-defined epoch.
 ///
@@ -269,20 +269,20 @@ unsafe impl<'arena, const C: usize, const P: usize> Sync for PoolFrame<'arena, C
 /// override per-app via struct literal + `..default_hybrid()`. Removes
 /// the PureSpin / PurePark enum variants in favour of expressing both
 /// via the same struct (`p_spin = e_spin = USize::MAX` is pure-spin;
-/// `p_spin = e_spin = USize::ZERO` is pure-park).
+/// `p_spin = e_spin = <USize as Identity<Additive>>::IDENTITY` is pure-park).
 pub struct WakeStrategy {
     /// Spin iterations on P-cores before falling back to the atomic-
     /// wait tier. Default 128.
-    pub p_spin_iters: USize,
+    pub p_spin_iters:       USize,
     /// Spin iterations on E-cores before falling back. Default 32.
-    pub e_spin_iters: USize,
+    pub e_spin_iters:       USize,
     /// Nanosecond threshold below which spin + atomic-wait (futex /
     /// ulock / WaitOnAddress) is cheaper than full park. Default 2µs.
     pub futex_threshold_ns: USize,
     /// Nanosecond threshold above which spin is skipped entirely and
     /// the worker parks immediately via the platform atomic-wait
     /// primitive. Default 50µs.
-    pub park_threshold_ns: USize,
+    pub park_threshold_ns:  USize,
 }
 
 impl WakeStrategy {
@@ -293,10 +293,10 @@ impl WakeStrategy {
     /// immediately.
     pub const fn default_hybrid() -> Self {
         Self {
-            p_spin_iters: USize(128),
-            e_spin_iters: USize(32),
+            p_spin_iters:       USize(128),
+            e_spin_iters:       USize(32),
             futex_threshold_ns: USize(2_000),
-            park_threshold_ns: USize(50_000),
+            park_threshold_ns:  USize(50_000),
         }
     }
 }
@@ -367,7 +367,8 @@ pub struct HybridExecutor;
 impl crate::sealed::Sealed for HybridExecutor {}
 
 impl Executor for HybridExecutor {
-    fn run<'frame, 'arena, const C: usize, const P: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    fn run<'frame, 'arena, const C: usize, const P: usize>(
+        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
         &self,
         pool: core::pin::Pin<&'frame PoolFrame<'arena, C, P>>,
         core_id: USize,
