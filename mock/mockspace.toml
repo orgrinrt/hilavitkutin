@@ -27,6 +27,17 @@ layers = [
     "Ext:providers", # hilavitkutin-providers
 ]
 
+# Frozen, for the same reason arvo's panel root is frozen: a numbered research
+# record is written once and never edited, so a line citation into it is a
+# fact rather than a hazard. Internal, because a reader of a generated
+# document cannot open the research tree, so a provenance column pointing into
+# it says nothing on any row. The path is relative to the repository root, not
+# to this file.
+[ref.roots.research]
+path = "mock/research"
+frozen = true
+internal = true
+
 # Domain kind labels for STRUCTURE.md domain items table
 [domain_kinds]
 wu = "WorkUnit"
