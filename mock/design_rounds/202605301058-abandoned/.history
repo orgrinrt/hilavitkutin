@@ -1,0 +1,50 @@
+3b4c9c7 design: record the audit deletions and stale headers in the src changelist
+0051323 fix: name the additive identity in the sym generator
+6991119 fix: pin the lto fixture's arvo and find its output where cargo put it
+6f47617 fix: name the operation at every arvo identity site in api and providers
+37c8f15 docs: open the src changelist for the arvo dev round
+078c783 docs: pin arvo by revision in the cargo agent rule
+0010c0f docs: open the doc changelist for the arvo dev round
+ad0d030 docs: open the round moving hilavitkutin onto arvo dev
+cf2ea5d chore: archive the superseded app-builder round as abandoned
+fdb6177 fix: pin arvo to a reachable revision in three bench workspaces
+1835cdf fix: mark three research sketch crates unpublishable
+c1c50c1 fix: scope an xxhash-rust license exception to the arvo pin
+9658a50 fix: version workspace path and git deps for cargo-deny
+48e6717 fix: pin arvo and mockspace git deps to a reachable revision
+2f06ffe chore: land the design rounds and research the recovery branch carried
+1fbb2e9 chore: take the shared tool configs, and ignore a stray sketch lockfile
+a677bfd fix: pin the mock toolchain and take the structural lints from the pack
+220edfb chore: take the shared rustfmt and deny configs
+313d427 Merge pull request #3 from orgrinrt/chore/patch-pass-2026-08
+06c7b41 docs: correct the ctx macro names and the CapabilityId constructor
+288660e docs: drop crates.io and docs.rs badges for an unpublished crate
+3de0b5c docs: sync manifest descriptions and drop their em-dash
+ee536c9 docs: remove tier-1 leakage and a dead test path from MIRI.md
+7bcf666 docs: name the phase configs as the enum spells them
+3ef35d2 docs: describe the builder api the scheduler actually ships
+0df662c chore: remove github actions workflows
+603e663 chore: migrate to the mockspace launcher
+3c5fb09 feat: factor hilavitkutin-sym generic interned-identity core
+fa0cf62 docs: give every r6 leaf an assigned resolution
+c729cb4 docs: re-chart engine roadmap against canon as r6
+fb4c6da feat: add Plannable declaration trait and the HintExt hint slot
+7865e97 feat: invert run dispatch to fiber-outer morsel-inner per plan window
+78d38d6 feat: per-fiber l1 morsel-window formula from runcfg budget
+b0e863d feat: erased resource addressing and ctx snapshot per storage bench
+0725c4e feat: add hilavitkutin-api-macros crate with ResourceFootprint derive
+09ade36 feat: add CollectionBytes + ResourceFootprint footprint traits
+e8dd5d7 docs: sketch A3-2 resource-collection footprint surface
+378fef9 docs: re-chart A3 morsel formula on the canonical R5 resource model
+8198fdc feat: add per-store element-byte-size collection for L1 morsel formula
+bd0ccc0 docs: sketch A3 per-store size collection for L1 morsel formula
+f54ac23 feat: add run_one_trunk_windowed for fiber-outer morsel dispatch
+91530de docs: sketch A2a per-fiber morsel loop drives per-trunk dispatch
+f10a385 docs: backlog note for generalized asm-emission contract tests
+dc9e754 docs: granular roadmap, sketch plan, asm-contract-test discipline
+488ce26 feat: thread per-fiber morsel size onto FiberDispatch
+826494b docs: resolve arc-audit roadmap (head+tail/overlap in scope, internals-first)
+631a0ba docs: critical arc audit and updated canonical roadmap
+fe09f5c refactor: rename morsel_sizes to morsel_windows for per-fiber morsel slice 1
+556ca6f docs: per-fiber morsel-loop wiring blueprint
+e42d979 docs: chart adapt actuation arc (dead consumption surfaces)
