@@ -8,6 +8,15 @@ crate_prefix = "hilavitkutin"
 abi_version = 1
 mock_dir = "mock"
 
+# Off, because the pre-commit fixers key off which package a staged file
+# belongs to, and a repo-root file (this one, rust-toolchain.toml) attributes
+# to every crate in the workspace. `cargo clippy --fix` then sweeps the whole
+# tree, and the design-round phase gate refuses the result outright: a TOPIC
+# round permits no source diff, fixer-authored or not. Revisit once a round is
+# not standing open across a staged repo-root file.
+auto_fmt = false
+auto_clippy_fix = false
+
 proc_macro_crates = ["hilavitkutin-extensions-macros", "hilavitkutin-api-macros"]
 module_crates = []
 
@@ -74,9 +83,16 @@ build = "error"
 push = "error"
 max_lines = "500"
 
-# --- Custom hilavitkutin lints (mock/lints/*.rs) ---------------------------
-# Hard errors: structural invariants. Violations must be fixed, never
-# suppressed except per-line with `// lint:allow(<name>) -- <reason>`.
+# --- The structural invariants ---------------------------------------------
+# Hard errors: violations must be fixed, never suppressed except per-line with
+# `// lint:allow(<name>) -- <reason>`.
+#
+# The five below come from the shared pack rather than from `mock/lints/`. The
+# local copies said the same things and were still on the trait shape the engine
+# carried before it split a lint by what it reads, so they stopped compiling and
+# took the whole gate down with them. What is configured here is the same set at
+# the same severity; only `no-dyn-dispatch` is spelled differently, the pack's
+# name for what was `no-dynamic-dispatch` here.
 
 [lints.no-std]
 commit = "error"
@@ -88,7 +104,7 @@ commit = "error"
 build = "error"
 push = "error"
 
-[lints.no-dynamic-dispatch]
+[lints.no-dyn-dispatch]
 commit = "error"
 build = "error"
 push = "error"
