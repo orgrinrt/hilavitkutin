@@ -136,7 +136,10 @@ rules = [
 
     # Ecosystem crates are standalone sub-libraries; no cross-deps, no engine dep.
     { scope = "hilavitkutin-ctx", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_persistence::*, hilavitkutin_str::*", reason = "hilavitkutin-ctx is a standalone ecosystem crate; keep it independently usable" },
-    { scope = "hilavitkutin-persistence", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_str::*", reason = "hilavitkutin-persistence is a standalone ecosystem crate; keep it independently usable" },
+    # Persistence builds on hilavitkutin-str for its archive strings and on the
+    # api for the shared `MemoryProvider`, as its DESIGN says; the engine and
+    # ctx stay forbidden.
+    { scope = "hilavitkutin-persistence", forbidden = "hilavitkutin::*, hilavitkutin_ctx::*", reason = "hilavitkutin-persistence builds on hilavitkutin-str and hilavitkutin-api but never on the engine or ctx" },
     { scope = "hilavitkutin-str", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*", reason = "hilavitkutin-str is a standalone ecosystem crate; keep it independently usable" },
     { scope = "hilavitkutin-sym", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*, hilavitkutin_str::*", reason = "hilavitkutin-sym is the standalone interned-identity core; it sits below the ecosystem crates and depends only on arvo and notko" },
     { scope = "hilavitkutin-kit", forbidden = "hilavitkutin::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*, hilavitkutin_str::*, arvo::*, arvo_bits::*, arvo_bitmask::*, arvo_graph::*, arvo_sparse::*, arvo_spectral::*, arvo_comb::*, arvo_hash::*, notko::*", reason = "hilavitkutin-kit defines the Kit preset trait. Round 4 declarative shape (`type Units: WorkUnitBundle; type Owned: StoreBundle`) requires hilavitkutin-api substrate primitives in its bounds, so the api dep is allowed. Engine still depends on kit, not the reverse" },
