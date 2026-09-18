@@ -22,7 +22,7 @@ hilavitkutin = { path = "../../crates/hilavitkutin" }
 hilavitkutin-api = { path = "../../crates/hilavitkutin-api" }
 hilavitkutin-providers = { path = "../../crates/hilavitkutin-providers" }
 engine_vs_std = { path = "../engine_vs_std" }
-arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
 notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
 
 [profile.release]
