@@ -211,6 +211,17 @@ regardless of dispatch shape and G2C-1's const-path migration is not worth its e
 it scales near-linearly to 8, it is. This is the bench-decides discipline: the fork is a
 performance question, so it gets measured rather than argued.
 
+**G2C-M also carries the per-fiber walk-overhead arm (added 2026-07-19).** Serving per-fiber L1
+windows on the flat carrier costs re-walks, and the sketch
+`202607191200_a4-fibercons-nest-wireability` established that the cost is inherent to the mandated
+mechanism rather than a shape choice: with F fibers of m morsels each over U trunk units, dispatch
+does F x m x U runtime `dirty.bit` tests where the old shared-window shape did m x U, for identical
+executed work, because `Member::IS` is const per trunk rather than per fiber. Measure per-fiber
+windowed dispatch against the shared-window shape at fiber counts 1, 2, 4 and 8, on both fiber
+kinds. This applies to `run` as much as to `run_core_phase`, since A2b shipped the same shape. If
+the locality win does not cover the walk cost at realistic fiber counts, that is a finding about the
+mechanism to surface to op rather than absorb.
+
 **G2C-3 and G2C-4**, the phase-overlap progress-counter mechanism, are unchanged and confirmed
 unbuilt. The sketch scope narrowed by the 2026-07-02 pass stands: prove that a downstream Acquire on
 an upstream-published counter composes with the `waist_barrier` Release fence for happens-before

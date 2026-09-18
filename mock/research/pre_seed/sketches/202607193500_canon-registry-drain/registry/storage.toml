@@ -1,0 +1,287 @@
+# Storage and resource model (domains 07 + 19): the canon dossier.
+# One file per subject, kinds mixed (namespace is the array-of-tables key,
+# never the path): rulings, then the invariants they imply, then the
+# mechanisms realising them with maintained status, then the evidence.
+
+
+[[ruling]]
+id = "resource_model_three_field_types"
+kind = "ruling"
+question = "what may a resource value consist of"
+ruled = "exactly three field types: Field<T> where T: ColumnValue (16 bytes or less, scalar, stack-local cached), Seq<T, const N> (const-sized array, separate arena), Map<K, V, const N> (const-sized map, separate arena). No dynamic collections; allocation size is const generic; Seq/Map ELEMENT values are not constrained to 16 bytes, only Field<T> carries the ColumnValue limit"
+because = "morsel sizing and arena layout are computed at plan time from statically known sizes; a dynamic collection would make the write budget and the arena reservation runtime-variable, which the schedule-once model excludes"
+alternatives = ["dynamic collections with runtime resize", "unconstrained element sizes for Field members"]
+provenance = ["seed::storage::#the-resource-model"]
+
+[[ruling]]
+id = "resource_value_layout_one_record_blob"
+kind = "ruling"
+question = "is a resource value stored as one contiguous blob or decomposed into per-member columns"
+ruled = "one contiguous one-record blob per resource, bumped from the arena. Never decomposed per member, never shape-bound shared"
+because = "bench-decided (six-variant, both runs): the decomposed layout V2 loses intra-resource locality up to 3.1x at M=64 and crosses the Dim<256> column-count cap on realistic resource sets; the shape-bound shared layout V3 carries a 3.4x cross-core false-sharing penalty plus a resize-invalidates-all-sharers hazard; neither buys a hot-loop win. Decompose remains a seam for the size fold and the collection ptr+len only; the value bytes stay contiguous"
+alternatives = ["V2: each member its own column", "V3: shape-bound shared columns across resources of one shape"]
+supersedes = ["ruling::per_member_shape_bound_columns_original_addendum"]
+provenance = ["bench::storage_six_variant", "seed::storage::#the-value-layout", "git::commit::8a30758e"]
+
+[[ruling]]
+id = "per_member_shape_bound_columns_original_addendum"
+kind = "ruling"
+question = "SUPERSEDED. does R5's field-type trio imply per-member shape-bound column decomposition"
+ruled = "the original addendum asserted a per-member decompose-to-shape-bound-columns layout; the six-variant bench refuted it and the addendum was revised 2026-07-02. R5's 'consist of three field types' is value-composition read by the Decompose seam for sizing, not one column per member; shape-bound sharing appears nowhere in R5 because it is not the design"
+because = "kept as a row so the record of having changed course survives; the superseding row carries the bench evidence"
+provenance = ["seed::storage::#the-value-layout", "git::commit::8a30758e"]
+
+[[ruling]]
+id = "resource_is_handle_not_inline"
+kind = "ruling"
+question = "does a resource's value live inline in the context struct or behind indirection"
+ruled = "Resource<T> is a handle. The value lives behind pointer indirection in external slab storage, never inline in the context struct. The handle store holds the pointers to the value blob and to the collection columns, keyed by resource id, with pointer provenance distinct from the value columns"
+because = "writing inline data through &self is UB (LLVM adds noalias to &self and inline writes violate it), and the separate handle-store provenance is what lets LLVM keep snapshotted scalars in registers across the morsel loop"
+alternatives = ["inline values in the context struct"]
+provenance = ["seed::storage::#the-handle-store-and-noalias", "git::commit::8a30758e"]
+
+[[ruling]]
+id = "scalar_members_snapshot_before_morsel_loop"
+kind = "ruling"
+question = "are scalar Field members read live through the handle every iteration or snapshotted"
+ruled = "snapshotted to a stack local before the morsel loop; the snapshot copies the scalars and each collection member's ptr+len view, never collection elements"
+because = "bench-confirmed mechanism (V0 reloads, V1 through V5 hoist, verbatim disassembly in the findings). Wall-clock-neutral on M1 where scalars are L1-resident, free insurance on any microarchitecture where they are not. The spec's 1.28-1.40x figure is a March-2026 distillation the bench did NOT reproduce as a scalar wall-clock effect on M1; the mechanism is kept as an architectural guarantee, not a claimed scalar speedup"
+alternatives = ["live reads through the handle each iteration"]
+provenance = ["bench::storage_six_variant", "seed::storage::#scalar-snapshot-and-live-streamed-collections", "git::commit::8a30758e"]
+
+[[ruling]]
+id = "collections_live_streamed_never_copied"
+kind = "ruling"
+question = "are Seq/Map members copied into the snapshot or streamed from their column"
+ruled = "live-streamed. A Seq/Map value is a pointer-to-first plus a length (count of strides), elements stored consecutively in their column; the snapshot carries only the ptr+len view and the elements are read from the column inside the loop"
+because = "bench-decided (axis D, both runs): live-stream beats snapshot-copy by about 2.5x once the collection exceeds cache at 64 MiB, parity below about 4 MiB, so copying is never a win and is a large loss at scale"
+alternatives = ["snapshot-copy of the elements before the loop"]
+provenance = ["bench::storage_six_variant", "seed::storage::#scalar-snapshot-and-live-streamed-collections", "git::commit::8a30758e"]
+
+[[ruling]]
+id = "erased_static_shape_addressing_global"
+kind = "ruling"
+question = "are resource value bytes addressed through monomorphised concrete-type pointers or an erased static-shape descriptor, and per-resource or globally"
+ruled = "erased static-shape addressing (backcast on access through a shape descriptor), globally: every resource uses it, so any resource can cross a cdylib or wasm plugin boundary and interoperate with builtin resources near-natively without a per-resource design change"
+because = "op picked the hybrid 2026-07-02: the bench measured erased addressing at parity with native monomorphised on every axis (v4 within plus-minus 1.7% of v1 across both runs, ties on B, C, E), so it carries no in-process penalty; the future-proofing upside decides it, and the backcast-complexity concern is a complexity-versus-simplicity axis, which is an anti-axis in this workspace and not counted against a design"
+alternatives = ["native monomorphised addressing (V1)", "per-resource split: erased only for resources that cross a plugin boundary"]
+provenance = ["bench::storage_six_variant", "seed::storage::#erased-static-shape-addressing", "git::commit::8a30758e"]
+
+[[ruling]]
+id = "seq_map_arena_attaches_to_handle_store"
+kind = "ruling"
+question = "what does R5's 'separate arena for Seq/Map' attach to"
+ruled = "the handle store, not a resource-private value arena. The value is a one-record blob; only the handle store is separate-provenance"
+because = "the one genuine R5 clarification that survived the addendum's retraction; everything else the original addendum added was refuted by the bench"
+provenance = ["seed::storage::#the-handle-store-and-noalias", "git::commit::8a30758e"]
+
+[[ruling]]
+id = "collection_write_budget_rule"
+kind = "ruling"
+question = "how do resource collections count toward morsel sizing"
+ruled = "write resource collections count toward the L1 morsel budget; read-only resource collections do not (they ride the L2 prefetcher). Formula: L1_usable / (sum of write_column_sizes + sum of write_resource_collection_sizes), collection sizes known statically from const generic N. If large collections wreck L1 that is the consumer's design problem"
+because = "consistent with the write-only morsel sizing principle from R3; read traffic prefetches, write traffic must fit the residency budget"
+provenance = ["seed::storage::#morsel-budget"]
+
+[[ruling]]
+id = "columnstorage_raw_pointers_not_slices"
+kind = "ruling"
+question = "does ColumnStorage hand out slices or raw pointers"
+ruled = "raw pointers, never slices, with type-native stride (no universal Stride type)"
+because = "slices cause aliasing UB when WorkUnits are fused (T6 CRITICAL finding); two slices over one region assert noalias the fused access pattern violates"
+alternatives = ["slice-based access"]
+provenance = ["seed::storage::#columnstorage-contract"]
+
+[[ruling]]
+id = "library_never_allocates"
+kind = "refusal"
+question = "may the engine call an allocator"
+ruled = "never. The consumer provides backing memory (arena, mmap, or other); the library never calls an allocator directly"
+valve = "the MemoryProvider platform trait: consumers supply any allocation strategy behind it, including a heap if their platform has one"
+instead = "all reservations flow through the consumer-supplied ColumnStorage / MemoryProvider at build time"
+provenance = ["seed::storage::#columnstorage-contract"]
+
+[[ruling]]
+id = "member_by_member_swap_language_is_not_canon"
+kind = "ruling"
+question = "is the expert memo's 'member-by-member copy of each leaf into its column slot' a canonical statement of Replaceable swap semantics"
+ruled = "no. The sentence is from a tier-4 expert INPUT memo which itself states 'swap semantics need explicit spec'; the round's canonical output decided the one-record blob layout and left swap semantics explicitly unspecified. Two rounds (the D1 install and the 2026-07-19 revert) mis-cited it as canon; A2-5 records the correction and commissions the round that writes the missing spec. Until that round lands, replace_value marks dirty without installing and there is NO canonical swap semantics: the absence is the signal"
+because = "guards the exact recurrence: a reader finding the member-by-member language in the drift-era artifacts must find this row before treating it as canon"
+provenance = ["seed::storage::#replacement-remains-unspecified", "git::commit::543cdf5b", "git::commit::8a30758e"]
+
+
+[[invariant]]
+id = "handle_store_never_aliases_value_columns"
+holds = "the resource handle store and the value columns have distinct pointer provenance; no pointer into a value column is ever derived from the handle-store allocation or vice versa"
+upheld_by = "the drain (separate reservations per resource), the projection (backcast through the recorded erased base only), and any future accessor"
+breaks = "LLVM can no longer prove a column store does not clobber a resource read, so snapshotted scalars reload from memory every iteration instead of staying in registers; the mechanism is decisive for large collection members even where scalar wall-clock is L1-neutral"
+enforced = "architecture (separate reservations) plus the bench disassembly record; no single assert can express it"
+provenance = ["ruling::resource_is_handle_not_inline", "seed::storage::#the-handle-store-and-noalias"]
+
+[[invariant]]
+id = "no_inline_writes_through_shared_ref"
+holds = "resource data is never written inline through a &self receiver; all value bytes live behind pointer indirection in external storage"
+upheld_by = "the handle model itself: there are no inline value fields to write"
+breaks = "undefined behaviour: LLVM attaches noalias to &self and an inline write through it violates the attribute"
+enforced = "structural (the layout has no inline path); guarded by the handle-model rulings"
+provenance = ["ruling::resource_is_handle_not_inline", "seed::storage::#the-handle-store-and-noalias"]
+
+[[invariant]]
+id = "columns_reserved_once_never_resized"
+holds = "every column, including each resource's one-record blob and each collection member's element column, is reserved once at build/plan time and never reallocated while the scheduler lives"
+upheld_by = "the drain (single reserve per store) and every future mutation path, which must write within the reserved region"
+breaks = "a reallocation invalidates every recorded pointer into the column: the erased resource bases, the collection ptr+len views, and any worker-held pointer, with no mechanism to re-resolve them mid-life"
+enforced = "the schedule-once-reuse model; ArenaColumnStorage frees only on drop; re-reserve of a live id is the known hazard shape"
+provenance = ["seed::storage::#columnstorage-contract", "git::commit::8a30758e"]
+
+[[invariant]]
+id = "value_writes_go_through_the_recorded_witness"
+holds = "any write of a resource's value bytes goes through the binding's recorded erased base (backcast via the Selector witness), the same pointer path the drain recorded and the projection reads; never through a pointer derived by another route"
+upheld_by = "every mutation surface, present and future; today only the drain writes"
+breaks = "a foreign-derived pointer breaks the provenance argument the noalias invariant rests on, and can silently write a stale or wrong location"
+enforced = "discipline plus review today; the commissioned swap round specifies the mutation surface that makes it structural"
+provenance = ["seed::storage::#replacement-remains-unspecified", "git::commit::543cdf5b"]
+
+#
+# One provenance field carries every edge; the ref's root is its kind:
+# ruling:: and invariant:: rows govern (listed first), seed:: is the
+# consolidated design, git::commit:: is research trail. A mechanism with no
+# ruling:: ref in provenance awaits its governing ruling's extraction.
+
+[[mechanism]]
+id = "resource_drain"
+domain = "resources"
+what = "per registered Resource<T>: reserve a one-record column through the consumer's ColumnStorage, ptr::write the staged value in, record the base erased (ErasedResourcePtr) plus the value's static shape for backcast"
+status = "wired"
+provenance = ["ruling::resource_is_handle_not_inline", "ruling::resource_value_layout_one_record_blob", "seed::storage::#the-value-layout"]
+lives_at = "crates/hilavitkutin/src/resource/bindings.rs"
+
+[[mechanism]]
+id = "erased_backcast_addressing"
+domain = "resources"
+what = "value bytes addressed through the erased static-shape descriptor; the typed pointer is recovered by backcast at projection time, the binding's type parameter is the witness"
+status = "wired"
+provenance = ["ruling::erased_static_shape_addressing_global"]
+lives_at = "crates/hilavitkutin/src/resource/provenance.rs, crates/hilavitkutin/src/dispatch/engine_ctx.rs"
+
+[[mechanism]]
+id = "scalar_snapshot"
+domain = "resources"
+what = "stack-snapshot of scalar Field members (and collection ptr+len views) before the morsel loop, so LLVM keeps them in registers across it"
+status = "absent"
+note = "the shipped drain reads live through the pointer with no snapshot; the addendum names this absence as the drift, and the fix is additive. Part of the drift-fix arc"
+provenance = ["ruling::scalar_members_snapshot_before_morsel_loop", "git::commit::8a30758e"]
+
+[[mechanism]]
+id = "collection_members_in_resource_values"
+domain = "resources"
+what = "Seq/Map members wired into resource values: element columns reserved per member, ptr+len views in the blob, live-stream read access inside the loop"
+status = "absent"
+note = "tracked #344; the engine_ctx Project impl carries the FIXME; the catalogued red in tests/resource_snapshot.rs pins the intended behaviour"
+provenance = ["ruling::resource_model_three_field_types", "ruling::collections_live_streamed_never_copied", "git::commit::a68f0832"]
+
+[[mechanism]]
+id = "replace_value_install"
+domain = "resources"
+what = "the Replaceable value-swap surface installing a staged value into the data plane"
+status = "absent"
+note = "replace_value marks store-dirty without writing; swap semantics are canonically unspecified (the absence of a swap-semantics ruling row is the signal), the specifying round is commissioned by A2-5, and the panel plus sketch material at res::202607193300 and the parked draft spec are its inputs. The catalogued red in tests/resource_bindings.rs pins the install assertion"
+provenance = ["ruling::member_by_member_swap_language_is_not_canon", "git::commit::543cdf5b"]
+
+[[mechanism]]
+id = "replace_resource_plan_dirty"
+domain = "resources"
+what = "the PlanAffecting swap surface: install plus a plan-dirty mark the next run() consumes to enter the plan band on a non-first frame"
+status = "absent"
+note = "unwired end to end: replace_resource sets no plan_dirty bit and run() reads the array only to suppress an unused-field warning; the band gate is first_frame alone. PlanAffecting itself unseals into an open marker per A2-3 (#696), riding the same commissioned round"
+provenance = ["git::commit::543cdf5b", "git::commit::a68f0832"]
+
+[[mechanism]]
+id = "column_release_consumer_count"
+domain = "storage"
+what = "release(column) advisory lifetime: the schedule pre-computes readers, decrements on fiber completion, release fires at zero"
+status = "absent"
+provenance = ["seed::storage::#columnstorage-contract"]
+
+[[bench]]
+id = "storage_six_variant"
+hypothesis = "which resource value layout and addressing mode wins: inline (V0), native blob (V1), per-member decomposed (V2), shape-bound shared (V3), erased blob (V4), plus access-pattern variants"
+arms = ["V0 inline reload", "V1 native monomorphised blob", "V2 per-member decomposed columns", "V3 shape-bound shared columns", "V4 erased static-shape blob", "axis D: live-stream vs snapshot-copy of collections"]
+result = "blob layout wins: V2 loses up to 3.1x intra-resource locality at M=64 and crosses the Dim<256> column cap; V3 carries 3.4x cross-core false sharing plus the resize-invalidates-all-sharers hazard; V4 ties V1 within plus-minus 1.7% on every scalar arm across both runs (ties on B, C, E), so erased addressing is free; axis D: live-stream beats copy about 2.5x past 64 MiB, parity below about 4 MiB. Scalar-snapshot hoist confirmed in codegen (V0 reloads, V1 through V5 hoist) but wall-clock-neutral on M1"
+decided = ["ruling::resource_value_layout_one_record_blob", "ruling::erased_static_shape_addressing_global", "ruling::collections_live_streamed_never_copied", "ruling::scalar_members_snapshot_before_morsel_loop"]
+runs = "two, second run confirming the first"
+provenance = ["git::commit::8a30758e"]
+
+[[constant]]
+id = "column_alignment"
+value = "64 bytes"
+why = "cache-line alignment on column arrays so morsel windows start line-aligned and cross-core writes to adjacent columns cannot false-share a line"
+provenance = ["seed::storage::#columnstorage-contract"]
+
+[[constant]]
+id = "column_value_size_limit"
+value = "16 bytes"
+why = "the ColumnValue bound on Field<T> scalar members: small enough that LLVM promotes snapshotted scalars to registers; Seq/Map ELEMENTS are exempt by design"
+provenance = ["seed::storage::#the-resource-model"]
+
+[[constant]]
+id = "column_slot_cap"
+value = "Dim<256> distinct columns"
+tunable = true
+why = "the ArenaColumnStorage slot-table capacity; a capacity type parameter, so a consumer needing more instantiates wider. The V2 layout refusal cites this cap as one of its grounds"
+provenance = ["seed::storage::#the-value-layout", "git::commit::8a30758e"]
+
+[[sketch]]
+id = "planaffecting_replaceable_exclusivity"
+hypothesis = "a blanket negative impl in the trait-owning crate rejects any type implementing both PlanAffecting and Replaceable, same-crate and cross-crate, on the pinned nightly"
+outcome = "works"
+detail = "E0751 in both arms; the #133556 coherence gap does not bite because the use wants negative impls to forbid; PlanAffecting-dominant is the safe wall direction; costs one WATCH-tier feature gate"
+unblocks = "the commissioned swap-semantics round's trait-relationship clause, if a wall is wanted at all"
+provenance = ["git::commit::b6e9a86c"]
+
+[[sketch]]
+id = "d1_install_arm"
+hypothesis = "the pre-revert exploration of the replace_value install shapes"
+outcome = "superseded"
+detail = "its second-pass reading (member-by-member scoped to an unshipped model) was closer to right than the round that overrode it; both are subsumed by the A2-5 correction and the commissioned round"
+provenance = ["git::commit::1b029259"]
+
+# The domain's tasks: work items whose landing flips mechanism status above.
+
+[[task]]
+id = "swap_semantics_round"
+what = "research and design the explicit Replaceable swap spec under the blob layout; corrects the three mis-grounded artifacts; implements the PlanAffecting unsealing"
+epoch = "epoch::finish_what_is_open"
+status = "in_progress"
+delivers = ["mechanism::replace_value_install", "mechanism::replace_resource_plan_dirty"]
+blocked_by = []
+tracker = "#697, #696"
+provenance = ["git::commit::543cdf5b"]
+
+[[task]]
+id = "unified_columnar_storage_contract"
+what = "the ColumnStorage unification and SoA decomposition gate"
+epoch = "epoch::structural_substrate"
+status = "in_progress"
+delivers = ["mechanism::collection_members_in_resource_values"]
+blocked_by = []
+tracker = "#654, #344"
+provenance = ["git::commit::a68f0832"]
+
+[[task]]
+id = "storage_drift_fix_arc"
+what = "add the scalar stack-snapshot and the live-streamed collection access on the existing one-record blob, per the addendum's drift finding"
+epoch = "epoch::structural_substrate"
+status = "pending"
+delivers = ["mechanism::scalar_snapshot"]
+blocked_by = ["task::unified_columnar_storage_contract"]
+provenance = ["git::commit::8a30758e"]
+
+[[task]]
+id = "column_release_lifetime"
+what = "the release(column) advisory consumer-count lifetime model"
+epoch = "epoch::operations_and_ecosystem"
+status = "pending"
+delivers = ["mechanism::column_release_consumer_count"]
+provenance = ["seed::storage::#columnstorage-contract"]
+
