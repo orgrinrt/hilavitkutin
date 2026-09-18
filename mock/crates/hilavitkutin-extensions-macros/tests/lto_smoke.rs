@@ -52,11 +52,7 @@ fn trampolines_survive_lto() {
         );
     }
 
-    let target_dir = manifest_dir
-        .join("tests")
-        .join("lto_smoke_fixture")
-        .join("target")
-        .join("release");
+    let target_dir = fixture_target_dir(&fixture_manifest).join("release");
     let candidates = [
         target_dir.join(format!("lib{FIXTURE_LIB}.dylib")),
         target_dir.join(format!("lib{FIXTURE_LIB}.so")),
@@ -66,10 +62,7 @@ fn trampolines_survive_lto() {
         .find(|p| p.exists())
         .unwrap_or_else(|| panic!("no cdylib output found among {:?}", candidates));
 
-    let nm = Command::new("nm")
-        .arg(cdylib)
-        .output()
-        .expect("invoke nm");
+    let nm = Command::new("nm").arg(cdylib).output().expect("invoke nm");
     if !nm.status.success() {
         panic!(
             "nm failed on {:?}\n--- stderr ---\n{}",
@@ -104,14 +97,13 @@ fn trampolines_survive_lto() {
     // framework's contract actually requires (and what ICF address aliasing
     // would silently break for non-trivial consumer impls).
     use core::ffi::c_void;
+
     use hilavitkutin_extensions::{ExtensionAbiStatus, ExtensionDescriptor};
 
     type DescriptorFn = unsafe extern "C" fn() -> *const ExtensionDescriptor;
     type LifecycleFn = unsafe extern "C" fn(*mut c_void) -> ExtensionAbiStatus;
 
-    let lib = unsafe {
-        libloading::Library::new(cdylib).expect("dlopen the LTO fixture")
-    };
+    let lib = unsafe { libloading::Library::new(cdylib).expect("dlopen the LTO fixture") };
     let descriptor_fn = unsafe {
         lib.get::<DescriptorFn>(b"__hilavitkutin_extension_descriptor")
             .expect("resolve descriptor symbol")
@@ -144,6 +136,82 @@ fn trampolines_survive_lto() {
     // Suppress the unused-import warning on platforms that compile this
     // module but skip the body via cfg.
     let _ = FIXTURE_PKG;
+}
+
+/// The directory cargo builds the fixture into.
+///
+/// Asked of cargo rather than assumed beside the manifest, because a
+/// `build.target-dir` in any `.cargo/config.toml` above the fixture, or a
+/// `CARGO_TARGET_DIR` in the environment, moves it, and a fixed path then
+/// finds no library and fails for a reason unrelated to LTO.
+#[cfg(unix)]
+fn fixture_target_dir(fixture_manifest: &std::path::Path) -> PathBuf {
+    let metadata = Command::new("cargo")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .arg("--no-deps")
+        .arg("--manifest-path")
+        .arg(fixture_manifest)
+        .output()
+        .expect("invoke cargo metadata");
+    if !metadata.status.success() {
+        panic!(
+            "cargo metadata failed for the LTO fixture\n--- stderr ---\n{}",
+            String::from_utf8_lossy(&metadata.stderr),
+        );
+    }
+    parse_target_directory(&String::from_utf8_lossy(&metadata.stdout))
+        .unwrap_or_else(|| panic!("no target_directory in cargo metadata output"))
+}
+
+/// Pull `target_directory` out of `cargo metadata` JSON.
+///
+/// The value is a path, so the only escapes it can carry are `\\` and
+/// `\"`; the parse handles those and nothing else.
+fn parse_target_directory(json: &str) -> Option<PathBuf> {
+    let key = "\"target_directory\":\"";
+    let start = json.find(key)? + key.len();
+    let mut out = String::new();
+    let mut chars = json[start ..].chars();
+    loop {
+        match chars.next()? {
+            '"' => return Some(PathBuf::from(out)),
+            '\\' => out.push(chars.next()?),
+            c => out.push(c),
+        }
+    }
+}
+
+#[test]
+fn target_directory_is_read_from_metadata() {
+    let json = r#"{"packages":[],"target_directory":"/work/target","version":1}"#;
+    assert_eq!(
+        parse_target_directory(json),
+        Some(PathBuf::from("/work/target"))
+    );
+}
+
+#[test]
+fn target_directory_unescapes_a_quote_and_a_backslash() {
+    let json = r#"{"target_directory":"/a \"b\"\\c","version":1}"#;
+    assert_eq!(
+        parse_target_directory(json),
+        Some(PathBuf::from("/a \"b\"\\c"))
+    );
+}
+
+#[test]
+fn target_directory_is_absent_without_the_key() {
+    assert_eq!(parse_target_directory(r#"{"packages":[]}"#), None);
+}
+
+#[test]
+fn target_directory_is_absent_when_the_value_never_closes() {
+    assert_eq!(
+        parse_target_directory(r#"{"target_directory":"/unterminated"#),
+        None
+    );
 }
 
 #[cfg(not(unix))]
