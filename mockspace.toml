@@ -8,15 +8,6 @@ crate_prefix = "hilavitkutin"
 abi_version = 1
 mock_dir = "mock"
 
-# Off, because the pre-commit fixers key off which package a staged file
-# belongs to, and a repo-root file (this one, rust-toolchain.toml) attributes
-# to every crate in the workspace. `cargo clippy --fix` then sweeps the whole
-# tree, and the design-round phase gate refuses the result outright: a TOPIC
-# round permits no source diff, fixer-authored or not. Revisit once a round is
-# not standing open across a staged repo-root file.
-auto_fmt = false
-auto_clippy_fix = false
-
 proc_macro_crates = ["hilavitkutin-extensions-macros", "hilavitkutin-api-macros"]
 module_crates = []
 
