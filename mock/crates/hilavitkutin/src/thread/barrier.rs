@@ -42,14 +42,13 @@ pub enum BarrierArrival {
 /// reset in `phase_barrier_reset`: every prior write by this worker
 /// becomes visible to the worker that performs the reset, and via
 /// transitivity to every worker the resetter wakes.
-pub fn phase_barrier_arrive<'arena, const C: usize, const P: usize>(
-    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+#[rustfmt::skip] // keeps each allow on the line it governs
+pub fn phase_barrier_arrive<'arena, const C: usize, const P: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     pool: &PoolFrame<'arena, C, P>,
     expected: USize,
 ) -> BarrierArrival {
     let prior = pool.phase_arrived.fetch_add(1, Ordering::Release); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic op takes u32 increment; tracked: #121
-    if (prior as usize) + 1 == expected.0 {
-        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: counter classified against USize threshold; tracked: #121
+    if (prior as usize) + 1 == expected.0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: counter classified against USize threshold; tracked: #121
         BarrierArrival::Last
     } else {
         BarrierArrival::Following
@@ -60,8 +59,8 @@ pub fn phase_barrier_arrive<'arena, const C: usize, const P: usize>(
 /// observed `BarrierArrival::Last`. `Acquire` on the load to publish
 /// every prior worker's writes; the store at zero is Release so the
 /// next phase's arrivers see the fresh count.
-pub fn phase_barrier_reset<'arena, const C: usize, const P: usize>(
-    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+#[rustfmt::skip] // keeps the allow on the signature it governs
+pub fn phase_barrier_reset<'arena, const C: usize, const P: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     pool: &PoolFrame<'arena, C, P>,
 ) {
     pool.phase_arrived.store(0, Ordering::Release); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic reset constant; tracked: #121
@@ -72,8 +71,8 @@ pub fn phase_barrier_reset<'arena, const C: usize, const P: usize>(
 /// reads it at `ScheduleEnd` for per-phase latency attribution.
 /// `Acquire` so the observed count synchronises with the latest
 /// arriver's Release.
-pub fn phase_barrier_observe<'arena, const C: usize, const P: usize>(
-    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+#[rustfmt::skip] // keeps the allow on the signature it governs
+pub fn phase_barrier_observe<'arena, const C: usize, const P: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     pool: &PoolFrame<'arena, C, P>,
 ) -> Maybe<USize> {
     let v = pool.phase_arrived.load(Ordering::Acquire);
@@ -105,8 +104,8 @@ pub fn phase_barrier_observe<'arena, const C: usize, const P: usize>(
 /// independent of which dispatch path the frame took. `now` is the caller's
 /// monotonic clock read (`impl Fn`, monomorphised, no dyn); the caller holds the
 /// concrete clock and the frame does not carry one.
-pub fn waist_barrier<'arena, const C: usize, const P: usize>(
-    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+#[rustfmt::skip] // keeps each allow on the line it governs
+pub fn waist_barrier<'arena, const C: usize, const P: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     pool: &PoolFrame<'arena, C, P>,
     core: USize,
     expected: USize,
@@ -114,13 +113,11 @@ pub fn waist_barrier<'arena, const C: usize, const P: usize>(
 ) {
     let sense = pool.barrier_sense.load(Ordering::Acquire);
     let prior = pool.phase_arrived.fetch_add(1, Ordering::AcqRel); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic increment; tracked: #121
-    if (prior as usize) + 1 == expected.0 {
-        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: counter classified against USize threshold; tracked: #121
+    if (prior as usize) + 1 == expected.0 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: counter classified against USize threshold; tracked: #121
         // Last arriver: open the next episode. Reset the count first (Relaxed;
         // the sense Release publishes it), then flip the sense and wake all.
         pool.phase_arrived.store(0, Ordering::Relaxed); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic reset constant; tracked: #121
-        pool.barrier_sense
-            .store(sense.wrapping_add(1), Ordering::Release); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: generation bump; tracked: #121
+        pool.barrier_sense.store(sense.wrapping_add(1), Ordering::Release); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: generation bump; tracked: #121
         atomic_wake_all(&pool.barrier_sense);
     } else {
         // Follower: park until the sense flips (lost-wakeup-safe load-check-wait),

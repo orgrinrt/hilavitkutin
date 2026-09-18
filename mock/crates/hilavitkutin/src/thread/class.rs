@@ -25,10 +25,10 @@
 //! footing).
 
 use arvo::USize;
+use arvo::strategy::{Additive, Identity, Multiplicative};
 
 /// Heterogeneous-core class.
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
-#[derive(Default)]
+#[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash)]
 pub enum CoreClass {
     /// Performance core: critical-path trunks + larger morsels.
     #[default]
@@ -36,7 +36,6 @@ pub enum CoreClass {
     /// Efficiency core: branches/leaves + smaller morsels.
     E,
 }
-
 
 /// Worst-case logical processor count the engine pre-allocates for.
 /// Heterogeneous detection writes into a fixed array of this size;
@@ -51,9 +50,9 @@ pub const MAX_CORES: usize = 256; // lint:allow(no-bare-numeric) lint:allow(arvo
 /// zero the engine still hands the executor one, because a frame with
 /// no worker would return as though it had run.
 pub const fn runnable_worker_count(reported: USize) -> USize {
-    if reported.0 == 0 {
-        // lint:allow(no-bare-numeric) reason: the empty count an executor may report; tracked: #121
-        USize(1) // lint:allow(no-bare-numeric) reason: at least one worker runs the frame; tracked: #121
+    let none = <USize as Identity<Additive>>::IDENTITY;
+    if reported.0 == none.0 {
+        <USize as Identity<Multiplicative>>::IDENTITY
     } else if reported.0 > MAX_CORES {
         USize(MAX_CORES)
     } else {
