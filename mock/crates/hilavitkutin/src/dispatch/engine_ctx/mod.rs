@@ -34,7 +34,7 @@
 //! visibility widening. Two carrier types defined in `lists` needed
 //! `pub(super)` fields to cross into a different sibling that builds or
 //! reads them (`AccumColPtr`'s `base`/`len`/`cap`, and `MetaRef`'s inner
-//! field) — see each type's doc comment for which sibling needs it.
+//! field). Each type's doc comment says which sibling needs it.
 
 use core::marker::PhantomData;
 
