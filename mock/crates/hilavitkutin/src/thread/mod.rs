@@ -27,7 +27,7 @@ pub use barrier::{
     phase_barrier_observe,
     phase_barrier_reset,
 };
-pub use class::{CoreClass, MAX_CORES, classify_cores};
+pub use class::{CoreClass, MAX_CORES, classify_cores, runnable_worker_count};
 pub use convergence::Convergence;
 pub use frame::{
     await_exit,

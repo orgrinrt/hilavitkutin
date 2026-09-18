@@ -18,7 +18,7 @@ use arvo::{Bool, USize};
 use arvo_bitmask::{BitAccess, BitLogic};
 use arvo_tensor::ConstCapacity;
 use hilavitkutin_api::ColumnStorage;
-use hilavitkutin_api::platform::ThreadPoolApi;
+use hilavitkutin_api::platform::{OnePointerClosure, ThreadPoolApi};
 use hilavitkutin_api::run_cfg::RunCfg;
 use hilavitkutin_api::store_values::StoreValues;
 
@@ -44,7 +44,21 @@ use crate::resource::bindings::{
     RebaseBindings,
     ResetAccumulators,
 };
+use crate::thread::class::runnable_worker_count;
 use crate::thread::frame::{frame_await_done, frame_publish};
+
+/// Hand `f` to the executor after forcing the api's one-pointer gate on
+/// it, so the closure the engine builds for a worker fails the build at
+/// monomorphisation if it ever grows past one pointer, rather than
+/// reaching an executor that cannot carry it without allocating.
+fn spawn_one_pointer<P, F>(pool: &P, f: F)
+where
+    P: ThreadPoolApi,
+    F: FnOnce() + Send + 'static,
+{
+    let () = OnePointerClosure::<F>::FITS;
+    pool.spawn(f);
+}
 
 impl<
     Cfg: RunCfg,
@@ -57,30 +71,28 @@ impl<
 > Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>
 {
     /// Dispatch the carrier as per-core trunk programs joined by waist barriers
-    /// (GATE-2 N-core dispatch, inline single-threaded form).
+    /// (GATE-2 N-core dispatch) on the executor `pool`.
     ///
     /// op's runtime-mask mechanism: the canonical waist-bounded phase axis (R2)
     /// and per-phase round-robin trunk-to-core ownership (R4a `core_mask`)
     /// select, for each `(core, phase)`, the carrier positions that core owns in
     /// that phase. Each selection is a `run_gated` walk over the flat carrier, so
     /// unit bodies devirtualise exactly as the single-core walk does; only the
-    /// per-unit ownership test is a runtime branch. This inline form runs the
-    /// per-core programs sequentially (one thread sweeps every core's program per
-    /// phase), with the waist barrier between phases collapsing to the phase loop
-    /// boundary. It is output-equivalent to `run` for a pure read-after-write
-    /// carrier: phases run in waist order, so a phase-`p+1` reader sees every
-    /// record a phase-`p` writer produced; trunks within a phase touch disjoint
-    /// columns, so their order is immaterial; each trunk's units run in carrier
-    /// (topological) order. Single-core (`ncores == 1`) is the degenerate case
-    /// with one core owning every trunk per phase, not a separate path.
+    /// per-unit ownership test is a runtime branch. It is output-equivalent to
+    /// `run` for a pure read-after-write carrier: phases run in waist order, so a
+    /// phase-`p+1` reader sees every record a phase-`p` writer produced; trunks
+    /// within a phase touch disjoint columns, so their order is immaterial; each
+    /// trunk's units run in carrier (topological) order. Single-core
+    /// (`ncores == 1`) is the degenerate case with one core owning every trunk
+    /// per phase, not a separate path.
     ///
-    /// Scope (R4b-inline): the accumulator (unit-outer, cross-record) carrier
-    /// that `run` routes specially is out of scope here; it lands with the
-    /// threaded executor step, which replaces the sequential core sweep with the
-    /// spawned-once pool plus the column-disjoint borrow split, leaving the
-    /// partition this method proves unchanged. The `phase` / `trunk` arrays are
-    /// recomputed per call in this form; the threaded form lifts them to a
-    /// build-time precompute (schedule-once-reuse).
+    /// The first call computes the `phase` / `trunk` arrays once and hands the
+    /// executor one closure per worker, on the executor's `worker_count`
+    /// clamped into `1..=MAX_CORES` (`runnable_worker_count`). The workers
+    /// persist and park between frames. Each frame the calling thread runs the
+    /// leading meta bands, publishes the frame, waits while the workers run
+    /// every phase and cross each waist on their own barrier, then merges the
+    /// accumulator regions and runs the trailing bands.
     ///
     /// `Witnesses` is the per-unit projection list (for the carrier walk) and
     /// `GW` the grouping witness list (for the const grouping that fills the
@@ -147,7 +159,9 @@ impl<
                 }
                 u += 1; // lint:allow(no-bare-numeric) reason: index step; tracked: #121
             }
-            let ncores = pool.worker_count();
+            // The engine runs on the executor's count clamped into
+            // `1..=MAX_CORES`; every later read takes this stored value.
+            let ncores = runnable_worker_count(pool.worker_count());
             // SAFETY: no workers running yet; exclusive setup of pinned fields.
             unsafe {
                 (*me).gate2_phase = phase;
@@ -167,7 +181,7 @@ impl<
                     };
                 }
                 let cp = SendCtxPtr(unsafe { &(*me).worker_ctxs[c] as *const WorkerCtx });
-                pool.spawn(move || {
+                spawn_one_pointer(pool, move || {
                     let cp = cp; // capture the Send wrapper whole, not the raw field
                     super::worker::worker_main::<
                         Cfg,
@@ -398,8 +412,8 @@ impl<
             // idle (filled by the waist barrier follower parks) to the worst
             // core, then zero the accumulators for the next frame. Worst-core,
             // not sum, because the adapt trigger is "is some core starved".
-            // Bounded by the slot count, never the worker count (which can
-            // exceed MAX_CORES).
+            // Bounded by the slot count, which the clamped worker count
+            // never exceeds.
             let acc = &(*me).pool.idle_accumulator;
             let mut worst = 0u64; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: raw nanos max reduction; tracked: #121
             let mut c = 0; // lint:allow(no-bare-numeric) reason: slot index; tracked: #121

@@ -66,12 +66,99 @@ pub trait ThreadPoolApi: Send + Sync + 'static {
     ///
     /// Implementations may block, queue, or steal; the engine makes
     /// no assumption about scheduling fairness.
+    ///
+    /// Every closure the engine hands here is no wider and no more
+    /// aligned than one pointer, so an implementation can move it into
+    /// a thread's single argument slot without allocating. The engine
+    /// forces [`OnePointerClosure::FITS`] on it at the spawn site, and
+    /// an implementation may force the same gate on its own `F`.
     fn spawn<F>(&self, f: F)
     where
         F: FnOnce() + Send + 'static;
 
     /// Number of worker threads in the pool.
     fn worker_count(&self) -> USize;
+}
+
+/// Compile-time gate that a closure fits one pointer-sized,
+/// pointer-aligned slot.
+///
+/// Forcing `OnePointerClosure::<F>::FITS` fails the build at
+/// monomorphisation when `F` is wider or more aligned than
+/// `*const ()`. The engine forces it on the closure it hands
+/// [`ThreadPoolApi::spawn`]. An associated const rather than an inline
+/// `const {}` block, because the latter is an anonymous generic
+/// constant the `generic_const_exprs` grammar rejects.
+///
+/// The failure is a monomorphisation error, so `cargo check` does not
+/// report it and `cargo build` does. A closure capturing two
+/// pointer-sized values is refused:
+///
+/// ```compile_fail,E0080
+/// use hilavitkutin_api::platform::OnePointerClosure;
+///
+/// fn force<F: FnOnce()>(f: F) {
+///     let () = OnePointerClosure::<F>::FITS;
+///     f();
+/// }
+///
+/// let (a, b) = (1usize, 2usize);
+/// force(move || {
+///     core::hint::black_box((a, b));
+/// });
+/// ```
+///
+/// A zero-sized capture aligned past a pointer is no wider than one
+/// pointer and is refused on alignment alone:
+///
+/// ```compile_fail,E0080
+/// use hilavitkutin_api::platform::OnePointerClosure;
+///
+/// #[derive(Copy, Clone)]
+/// #[repr(align(64))]
+/// struct OverAligned;
+///
+/// fn force<F: FnOnce()>(f: F) {
+///     let () = OnePointerClosure::<F>::FITS;
+///     f();
+/// }
+///
+/// let z = OverAligned;
+/// force(move || {
+///     core::hint::black_box(z);
+/// });
+/// ```
+///
+/// The same shape with one captured value builds:
+///
+/// ```
+/// use hilavitkutin_api::platform::OnePointerClosure;
+///
+/// fn force<F: FnOnce()>(f: F) {
+///     let () = OnePointerClosure::<F>::FITS;
+///     f();
+/// }
+///
+/// let a = 1usize;
+/// force(move || {
+///     core::hint::black_box(a);
+/// });
+/// ```
+pub struct OnePointerClosure<F>(PhantomData<F>);
+
+impl<F> OnePointerClosure<F> {
+    /// Evaluates to `()` when `F` fits one pointer slot; fails the
+    /// build otherwise.
+    pub const FITS: () = {
+        assert!(
+            core::mem::size_of::<F>() <= core::mem::size_of::<*const ()>(),
+            "the closure handed to ThreadPoolApi::spawn is wider than one pointer; an executor cannot carry it without allocating"
+        );
+        assert!(
+            core::mem::align_of::<F>() <= core::mem::align_of::<*const ()>(),
+            "the closure handed to ThreadPoolApi::spawn is more aligned than a pointer slot"
+        );
+    };
 }
 
 /// Monotonic clock.
