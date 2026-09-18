@@ -36,7 +36,14 @@ allow = [
     "Zlib",
 ]
 confidence-threshold = 0.9
-exceptions = []
+# xxhash-rust is pulled in transitively by arvo-hash at the 1b2796e9 pin this
+# workspace carries while arvo's current dev has no arvo-hash crate at all.
+# BSL-1.0 is not on the general allow list above on purpose; this exception is
+# scoped to the one crate that needs it and goes away when hilavitkutin moves
+# onto arvo's current crates.
+[[licenses.exceptions]]
+name = "xxhash-rust"
+allow = ["BSL-1.0"]
 
 [licenses.private]
 # Skip workspace members that cannot be published. A crate carrying
