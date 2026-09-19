@@ -29,7 +29,7 @@ if echo "$CONTENT" | grep -qE '^\s*(pub\s+)?use\s+std::'; then
 fi
 
 if echo "$CONTENT" | grep -qE '^\s*extern\s+crate\s+std'; then
-    deny "BLOCKED: \`extern crate std;\` — hilavitkutin is no_std. Remove and rely on \`core::\`."
+    deny "BLOCKED: \`extern crate std;\`: hilavitkutin is no_std. Remove and rely on \`core::\`."
 fi
 
 allow
