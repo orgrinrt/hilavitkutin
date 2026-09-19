@@ -17,8 +17,8 @@ use crate::string_table::StringTable;
 
 /// File-backed cold store.
 pub struct ColdStore<'a, M: MemoryProviderApi, A: ArenaInterner> {
-    context: PersistenceContext<'a, M, A>,
-    manifest: Manifest,
+    context:      PersistenceContext<'a, M, A>,
+    manifest:     Manifest,
     string_table: StringTable,
 }
 
@@ -29,9 +29,10 @@ impl<'a, M: MemoryProviderApi, A: ArenaInterner> ColdStore<'a, M, A> {
     /// StringTable. Follow-up round mmap-loads `manifest.rkyv` +
     /// `strings/runtime.rkyv` via `ctx.memory()`.
     pub fn open(ctx: PersistenceContext<'a, M, A>) -> Outcome<Self, PersistenceError> {
+        // FIXME: reads no manifest; the file-backed round maps `manifest.rkyv` and `strings/runtime.rkyv` through `ctx.memory()` (BACKLOG, mmap-backed file I/O).
         Outcome::Ok(Self {
-            context: ctx,
-            manifest: Manifest::new(),
+            context:      ctx,
+            manifest:     Manifest::new(),
             string_table: StringTable::empty(),
         })
     }
@@ -56,6 +57,7 @@ impl<'a, M: MemoryProviderApi, A: ArenaInterner> ColdStore<'a, M, A> {
     /// Skeleton: no-op. Follow-up round serialises dirty tables via
     /// rkyv and writes through `MemoryProvider`.
     pub fn flush(&mut self) -> Outcome<(), PersistenceError> {
+        // FIXME: writes nothing and reports success; a flushed store's data is not yet what a later `load` finds (BACKLOG, mmap-backed file I/O).
         Outcome::Ok(())
     }
 
@@ -64,6 +66,7 @@ impl<'a, M: MemoryProviderApi, A: ArenaInterner> ColdStore<'a, M, A> {
     /// Skeleton: returns `Missing`. Follow-up round mmaps the table
     /// file and hands the archived view off to the consumer.
     pub fn load(&mut self) -> Outcome<(), PersistenceError> {
+        // FIXME: reports `Missing` whatever was flushed; the real load maps the table file (BACKLOG, mmap-backed file I/O).
         Outcome::Err(PersistenceError::Missing)
     }
 
@@ -72,6 +75,7 @@ impl<'a, M: MemoryProviderApi, A: ArenaInterner> ColdStore<'a, M, A> {
     /// Skeleton: no-op. Follow-up round enumerates files in the data
     /// directory and atomically copies them to the target path.
     pub fn snapshot(&self) -> Outcome<(), PersistenceError> {
+        // FIXME: copies nothing and reports success (BACKLOG, backup / snapshot mechanism).
         Outcome::Ok(())
     }
 }

@@ -22,12 +22,11 @@
 //! (`generic_const_exprs`), not generic-length const items, so no
 //! `generic_const_items` feature is needed.
 
-use arvo::Bool;
-use arvo::USize;
-use arvo::strategy::Identity;
+use arvo::strategy::{Additive, Identity};
+use arvo::{Bool, USize};
 use arvo_bitmask::{BitAccess, NodeId};
 use arvo_graph::waist_detect_const;
-use arvo_tensor::{cap_size, Capacity, ConstCapacity};
+use arvo_tensor::{Capacity, ConstCapacity, cap_size};
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::meta::{RANK_CONSUMER, RANK_PLAN_STAGE};
 use hilavitkutin_api::work_unit::{HasSchedule, Lifecycle, WorkUnit};
@@ -80,6 +79,7 @@ pub trait UnitAccess {
 impl<W: HasSchedule + WorkUnit<<W as HasSchedule>::Sched>> UnitAccess for W {
     type Read = <W as WorkUnit<<W as HasSchedule>::Sched>>::Read;
     type Write = <W as WorkUnit<<W as HasSchedule>::Sched>>::Write;
+
     const RANK: USize = <<W as HasSchedule>::Sched as Lifecycle>::RANK;
 }
 
@@ -104,7 +104,7 @@ pub const trait BundleMasks<Stores, Witnesses, CS: Capacity> {
     ) -> USize;
 }
 
-impl<Stores, CS: Capacity> const BundleMasks<Stores, Empty, CS> for Empty {
+const impl<Stores, CS: Capacity> BundleMasks<Stores, Empty, CS> for Empty {
     #[inline]
     fn fill(
         _reads: &mut [AccessMask<CS>],
@@ -116,7 +116,7 @@ impl<Stores, CS: Capacity> const BundleMasks<Stores, Empty, CS> for Empty {
     }
 }
 
-impl<Stores, Un, T, RI, WI, WT, CS: Capacity> const BundleMasks<Stores, Cons<(RI, WI), WT>, CS>
+const impl<Stores, Un, T, RI, WI, WT, CS: Capacity> BundleMasks<Stores, Cons<(RI, WI), WT>, CS>
     for Cons<Un, T>
 where
     Un: UnitAccess,
@@ -143,7 +143,7 @@ where
 // holds its units as `WuVals` (a `WuCons` list of values), not the builder-only
 // `Cons`-shaped bundle, so the grouping at dispatch folds this shape. The bodies
 // mirror the `Cons` / `Empty` impls above; only the carrier cell type differs.
-impl<Stores, CS: Capacity> const BundleMasks<Stores, Empty, CS> for WuNil {
+const impl<Stores, CS: Capacity> BundleMasks<Stores, Empty, CS> for WuNil {
     #[inline]
     fn fill(
         _reads: &mut [AccessMask<CS>],
@@ -155,7 +155,7 @@ impl<Stores, CS: Capacity> const BundleMasks<Stores, Empty, CS> for WuNil {
     }
 }
 
-impl<Stores, Un, T, RI, WI, WT, CS: Capacity> const BundleMasks<Stores, Cons<(RI, WI), WT>, CS>
+const impl<Stores, Un, T, RI, WI, WT, CS: Capacity> BundleMasks<Stores, Cons<(RI, WI), WT>, CS>
     for WuCons<Un, T>
 where
     Un: UnitAccess,
@@ -188,12 +188,7 @@ where
 /// equal pairs sharing an id. When all units are consumer-rank (no meta units)
 /// and the waist phases are already contiguous, this is the identity, so the
 /// common case is unchanged. Proven: sketch `202606082200`.
-const fn compute_rank_renumber(
-    ranks: &[USize],
-    waist: &[USize],
-    n: USize,
-    out: &mut [USize],
-) {
+const fn compute_rank_renumber(ranks: &[USize], waist: &[USize], n: USize, out: &mut [USize]) {
     let count = n.0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: loop bound; tracked: #121
     let mut i = 0; // lint:allow(no-bare-numeric) reason: unit index; tracked: #121
     while i < count {
@@ -248,7 +243,7 @@ const fn compute_phases_waist<CU, CS: Capacity, Adj>(
     phase_out: &mut [USize],
 ) where
     CU: [const] ConstCapacity,
-    Adj: [const] BitAccess + Identity,
+    Adj: [const] BitAccess + Identity<Additive>,
 {
     let count = n.0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: loop bound; tracked: #121
     let cap = cap_size(<CU as ConstCapacity>::CAP);
@@ -264,7 +259,7 @@ const fn compute_phases_waist<CU, CS: Capacity, Adj>(
 
     // Unit-by-unit RAW adjacency: row `i` bit `j` set iff `reads[j]` overlaps
     // `writes[i]` (edge `i -> j`).
-    let mut adj = CU::filled(<Adj as Identity>::ZERO);
+    let mut adj = CU::filled(<Adj as Identity<Additive>>::IDENTITY);
     let mut i = 0; // lint:allow(no-bare-numeric) reason: unit index; tracked: #121
     while i < count {
         let mut j = 0; // lint:allow(no-bare-numeric) reason: unit index; tracked: #121
@@ -371,12 +366,12 @@ where
     // index the returned arrays through `<CU as ConstCapacity>::get`.
     let mut reads = <CU as ConstCapacity>::filled(AccessMask::<CS>::empty());
     let mut writes = <CU as ConstCapacity>::filled(AccessMask::<CS>::empty());
-    let mut ranks = <CU as ConstCapacity>::filled(USize::ZERO);
+    let mut ranks = <CU as ConstCapacity>::filled(<USize as Identity<Additive>>::IDENTITY);
     let n = <Wus as BundleMasks<Stores, Witnesses, CS>>::fill(
         <CU as ConstCapacity>::slice_mut(&mut reads),
         <CU as ConstCapacity>::slice_mut(&mut writes),
         <CU as ConstCapacity>::slice_mut(&mut ranks),
-        USize::ZERO,
+        <USize as Identity<Additive>>::IDENTITY,
     );
     (reads, writes, ranks, n)
 }
@@ -388,23 +383,27 @@ where
 /// `compute_rank_renumber` folds them into contiguous bands. Returns
 /// `(phases, unit_count)`. When all units are consumer-rank the renumber is the
 /// identity, so the waist phases are unchanged.
-const fn final_phases_of<Wus, Stores, Witnesses, CU: Capacity + [const] ConstCapacity, CS: Capacity, Adj>() -> (
-    <CU as ConstCapacity>::Array<USize>,
-    USize,
-)
+const fn final_phases_of<
+    Wus,
+    Stores,
+    Witnesses,
+    CU: Capacity + [const] ConstCapacity,
+    CS: Capacity,
+    Adj,
+>() -> (<CU as ConstCapacity>::Array<USize>, USize)
 where
     Wus: [const] BundleMasks<Stores, Witnesses, CS>,
-    Adj: [const] BitAccess + Identity,
+    Adj: [const] BitAccess + Identity<Additive>,
 {
     let (reads, writes, ranks, n) = masks_of::<Wus, Stores, Witnesses, CU, CS>();
-    let mut waist = <CU as ConstCapacity>::filled(USize::ZERO);
+    let mut waist = <CU as ConstCapacity>::filled(<USize as Identity<Additive>>::IDENTITY);
     compute_phases_waist::<CU, CS, Adj>(
         <CU as ConstCapacity>::slice(&reads),
         <CU as ConstCapacity>::slice(&writes),
         n,
         <CU as ConstCapacity>::slice_mut(&mut waist),
     );
-    let mut phase = <CU as ConstCapacity>::filled(USize::ZERO);
+    let mut phase = <CU as ConstCapacity>::filled(<USize as Identity<Additive>>::IDENTITY);
     compute_rank_renumber(
         <CU as ConstCapacity>::slice(&ranks),
         <CU as ConstCapacity>::slice(&waist),
@@ -415,7 +414,8 @@ where
 }
 
 /// Number of units registered in the bundle.
-pub const fn group_n<Wus, Stores, Witnesses, CU: Capacity + [const] ConstCapacity, CS: Capacity>() -> USize
+pub const fn group_n<Wus, Stores, Witnesses, CU: Capacity + [const] ConstCapacity, CS: Capacity>()
+-> USize
 where
     Wus: [const] BundleMasks<Stores, Witnesses, CS>,
 {
@@ -426,10 +426,19 @@ where
 /// Lifecycle-ordered phase of the unit at carrier position `pos` (E4 slice 2:
 /// the rank-outer renumber of the waist-bounded phase). `Adj` is the adjacency
 /// row word (the plan's `D::AdjRow`).
-pub const fn phase_of<Wus, Stores, Witnesses, CU: Capacity + [const] ConstCapacity, CS: Capacity, Adj>(pos: USize) -> USize
+pub const fn phase_of<
+    Wus,
+    Stores,
+    Witnesses,
+    CU: Capacity + [const] ConstCapacity,
+    CS: Capacity,
+    Adj,
+>(
+    pos: USize,
+) -> USize
 where
     Wus: [const] BundleMasks<Stores, Witnesses, CS>,
-    Adj: [const] BitAccess + Identity,
+    Adj: [const] BitAccess + Identity<Additive>,
 {
     let (phase, _n) = final_phases_of::<Wus, Stores, Witnesses, CU, CS, Adj>();
     <CU as ConstCapacity>::get(&phase, pos)
@@ -437,14 +446,23 @@ where
 
 /// Trunk (within-phase column-conflict component id) of the unit at `pos`,
 /// keyed on the lifecycle-ordered phase. `Adj` is the adjacency row word.
-pub const fn trunk_of<Wus, Stores, Witnesses, CU: Capacity + [const] ConstCapacity, CS: Capacity, Adj>(pos: USize) -> USize
+pub const fn trunk_of<
+    Wus,
+    Stores,
+    Witnesses,
+    CU: Capacity + [const] ConstCapacity,
+    CS: Capacity,
+    Adj,
+>(
+    pos: USize,
+) -> USize
 where
     Wus: [const] BundleMasks<Stores, Witnesses, CS>,
-    Adj: [const] BitAccess + Identity,
+    Adj: [const] BitAccess + Identity<Additive>,
 {
     let (reads, writes, _ranks, n) = masks_of::<Wus, Stores, Witnesses, CU, CS>();
     let (phase, _n) = final_phases_of::<Wus, Stores, Witnesses, CU, CS, Adj>();
-    let mut trunk = <CU as ConstCapacity>::filled(USize::ZERO);
+    let mut trunk = <CU as ConstCapacity>::filled(<USize as Identity<Additive>>::IDENTITY);
     compute_trunks::<CS>(
         <CU as ConstCapacity>::slice(&reads),
         <CU as ConstCapacity>::slice(&writes),
@@ -464,10 +482,20 @@ where
 /// arithmetic), which avoids the `{POS + 1}` generic-constant the trait solver
 /// overflows normalising through the recursion. A `const fn` so the gate reads
 /// `Member::<..>::IS`, a simple associated const.
-pub const fn is_member<Wus, Stores, Witnesses, CU: Capacity + [const] ConstCapacity, CS: Capacity, Adj, Pos: WitnessIndex, const PHASE: usize, const TRUNK: usize>() -> Bool // lint:allow(no-bare-numeric) reason: const-generic phase/trunk carriers; tracked: #121
+pub const fn is_member<
+    Wus,
+    Stores,
+    Witnesses,
+    CU: Capacity + [const] ConstCapacity,
+    CS: Capacity,
+    Adj,
+    Pos: WitnessIndex,
+    const PHASE: usize,
+    const TRUNK: usize, // lint:allow(no-bare-numeric) reason: const-generic phase/trunk carriers; tracked: #121
+>() -> Bool
 where
     Wus: [const] BundleMasks<Stores, Witnesses, CS>,
-    Adj: [const] BitAccess + Identity,
+    Adj: [const] BitAccess + Identity<Additive>,
 {
     let p = phase_of::<Wus, Stores, Witnesses, CU, CS, Adj>(Pos::INDEX);
     let t = trunk_of::<Wus, Stores, Witnesses, CU, CS, Adj>(Pos::INDEX);
@@ -476,15 +504,22 @@ where
 
 /// Number of phases in the bundle: max phase depth + 1, or zero for an empty
 /// bundle. The dispatcher's phase-loop bound.
-pub const fn phase_count<Wus, Stores, Witnesses, CU: Capacity + [const] ConstCapacity, CS: Capacity, Adj>() -> USize
+pub const fn phase_count<
+    Wus,
+    Stores,
+    Witnesses,
+    CU: Capacity + [const] ConstCapacity,
+    CS: Capacity,
+    Adj,
+>() -> USize
 where
     Wus: [const] BundleMasks<Stores, Witnesses, CS>,
-    Adj: [const] BitAccess + Identity,
+    Adj: [const] BitAccess + Identity<Additive>,
 {
     let (phase, n) = final_phases_of::<Wus, Stores, Witnesses, CU, CS, Adj>();
     let count = n.0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: loop bound; tracked: #121
     if count == 0 {
-        return USize::ZERO;
+        return <USize as Identity<Additive>>::IDENTITY;
     }
     let mut maxp = 0; // lint:allow(no-bare-numeric) reason: running max phase; tracked: #121
     let mut i = 0; // lint:allow(no-bare-numeric) reason: unit index; tracked: #121
@@ -504,10 +539,17 @@ where
 /// plan band is the contiguous block `0..plan_phase_count`. The kernel skips
 /// these phases on a clean (not plan-dirty) frame, so `OnMeta<PlanStage>` units
 /// run only when the plan is recomputed. Zero when no plan-stage unit exists.
-pub const fn plan_phase_count<Wus, Stores, Witnesses, CU: Capacity + [const] ConstCapacity, CS: Capacity, Adj>() -> USize
+pub const fn plan_phase_count<
+    Wus,
+    Stores,
+    Witnesses,
+    CU: Capacity + [const] ConstCapacity,
+    CS: Capacity,
+    Adj,
+>() -> USize
 where
     Wus: [const] BundleMasks<Stores, Witnesses, CS>,
-    Adj: [const] BitAccess + Identity,
+    Adj: [const] BitAccess + Identity<Additive>,
 {
     let (_reads, _writes, ranks, _n) = masks_of::<Wus, Stores, Witnesses, CU, CS>();
     let (phase, n) = final_phases_of::<Wus, Stores, Witnesses, CU, CS, Adj>();
@@ -515,7 +557,9 @@ where
     let mut maxp1 = 0; // lint:allow(no-bare-numeric) reason: plan-band phase count (max plan phase + 1); tracked: #121
     let mut i = 0; // lint:allow(no-bare-numeric) reason: unit index; tracked: #121
     while i < count {
-        if <CU as ConstCapacity>::get(&ranks, USize(i)).0 == RANK_PLAN_STAGE.0 && <CU as ConstCapacity>::get(&phase, USize(i)).0 + 1 > maxp1 {
+        if <CU as ConstCapacity>::get(&ranks, USize(i)).0 == RANK_PLAN_STAGE.0
+            && <CU as ConstCapacity>::get(&phase, USize(i)).0 + 1 > maxp1
+        {
             maxp1 = <CU as ConstCapacity>::get(&phase, USize(i)).0 + 1; // lint:allow(no-bare-numeric) reason: plan-band phase successor; tracked: #121
         }
         i += 1; // lint:allow(no-bare-numeric) reason: index step; tracked: #121
@@ -529,10 +573,17 @@ where
 /// schedule-ready, pass-start) in the lowest phase ids, so the leading meta
 /// block is the contiguous range `0..pre_consumer_phase_count`. Zero when the
 /// carrier has no pre-consumer meta unit.
-pub const fn pre_consumer_phase_count<Wus, Stores, Witnesses, CU: Capacity + [const] ConstCapacity, CS: Capacity, Adj>() -> USize
+pub const fn pre_consumer_phase_count<
+    Wus,
+    Stores,
+    Witnesses,
+    CU: Capacity + [const] ConstCapacity,
+    CS: Capacity,
+    Adj,
+>() -> USize
 where
     Wus: [const] BundleMasks<Stores, Witnesses, CS>,
-    Adj: [const] BitAccess + Identity,
+    Adj: [const] BitAccess + Identity<Additive>,
 {
     let (_reads, _writes, ranks, _n) = masks_of::<Wus, Stores, Witnesses, CU, CS>();
     let (phase, n) = final_phases_of::<Wus, Stores, Witnesses, CU, CS, Adj>();
@@ -540,7 +591,9 @@ where
     let mut maxp1 = 0; // lint:allow(no-bare-numeric) reason: leading-band phase count (max pre-consumer phase + 1); tracked: #121
     let mut i = 0; // lint:allow(no-bare-numeric) reason: unit index; tracked: #121
     while i < count {
-        if <CU as ConstCapacity>::get(&ranks, USize(i)).0 < RANK_CONSUMER.0 && <CU as ConstCapacity>::get(&phase, USize(i)).0 + 1 > maxp1 {
+        if <CU as ConstCapacity>::get(&ranks, USize(i)).0 < RANK_CONSUMER.0
+            && <CU as ConstCapacity>::get(&phase, USize(i)).0 + 1 > maxp1
+        {
             maxp1 = <CU as ConstCapacity>::get(&phase, USize(i)).0 + 1; // lint:allow(no-bare-numeric) reason: leading-band phase successor; tracked: #121
         }
         i += 1; // lint:allow(no-bare-numeric) reason: index step; tracked: #121
@@ -554,10 +607,17 @@ where
 /// The trailing meta block (schedule-end epilogue) is the contiguous range
 /// `consumer_phase_end..phase_count`. Equals `pre_consumer_phase_count` when no
 /// consumer unit exists.
-pub const fn consumer_phase_end<Wus, Stores, Witnesses, CU: Capacity + [const] ConstCapacity, CS: Capacity, Adj>() -> USize
+pub const fn consumer_phase_end<
+    Wus,
+    Stores,
+    Witnesses,
+    CU: Capacity + [const] ConstCapacity,
+    CS: Capacity,
+    Adj,
+>() -> USize
 where
     Wus: [const] BundleMasks<Stores, Witnesses, CS>,
-    Adj: [const] BitAccess + Identity,
+    Adj: [const] BitAccess + Identity<Additive>,
 {
     let (_reads, _writes, ranks, _n) = masks_of::<Wus, Stores, Witnesses, CU, CS>();
     let (phase, n) = final_phases_of::<Wus, Stores, Witnesses, CU, CS, Adj>();
@@ -565,7 +625,9 @@ where
     let mut maxp1 = 0; // lint:allow(no-bare-numeric) reason: consumer-band end (max phase at-or-below consumer rank + 1); tracked: #121
     let mut i = 0; // lint:allow(no-bare-numeric) reason: unit index; tracked: #121
     while i < count {
-        if <CU as ConstCapacity>::get(&ranks, USize(i)).0 <= RANK_CONSUMER.0 && <CU as ConstCapacity>::get(&phase, USize(i)).0 + 1 > maxp1 {
+        if <CU as ConstCapacity>::get(&ranks, USize(i)).0 <= RANK_CONSUMER.0
+            && <CU as ConstCapacity>::get(&phase, USize(i)).0 + 1 > maxp1
+        {
             maxp1 = <CU as ConstCapacity>::get(&phase, USize(i)).0 + 1; // lint:allow(no-bare-numeric) reason: consumer-band phase successor; tracked: #121
         }
         i += 1; // lint:allow(no-bare-numeric) reason: index step; tracked: #121
@@ -579,14 +641,21 @@ where
 /// The unit-outer per-core slice walk gates on this mask so meta units do not
 /// ride the slice once per core; the designated thread dispatches them once per
 /// frame instead. All live positions are set when the carrier has no meta unit.
-pub const fn consumer_mask<Wus, Stores, Witnesses, CU: Capacity + [const] ConstCapacity, CS: Capacity, Adj>() -> Adj
+pub const fn consumer_mask<
+    Wus,
+    Stores,
+    Witnesses,
+    CU: Capacity + [const] ConstCapacity,
+    CS: Capacity,
+    Adj,
+>() -> Adj
 where
     Wus: [const] BundleMasks<Stores, Witnesses, CS>,
-    Adj: [const] BitAccess + Identity,
+    Adj: [const] BitAccess + Identity<Additive>,
 {
     let (_reads, _writes, ranks, n) = masks_of::<Wus, Stores, Witnesses, CU, CS>();
     let count = n.0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: loop bound; tracked: #121
-    let mut m = <Adj as Identity>::ZERO;
+    let mut m = <Adj as Identity<Additive>>::IDENTITY;
     let mut i = 0; // lint:allow(no-bare-numeric) reason: unit index; tracked: #121
     while i < count {
         if <CU as ConstCapacity>::get(&ranks, USize(i)).0 == RANK_CONSUMER.0 {

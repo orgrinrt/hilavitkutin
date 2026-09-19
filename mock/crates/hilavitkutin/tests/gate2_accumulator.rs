@@ -18,14 +18,27 @@ use core::cell::{Cell, UnsafeCell};
 use core::mem::MaybeUninit;
 
 use arvo::{Bool, USize};
-use hilavitkutin::OsThreadPool;
+mod common;
+use common::TestExecutor;
 use hilavitkutin::dispatch::engine_ctx::{
-    AccPtrCons, AccPtrNil, ColPtrCons, ColPtrNil, EngineCtx, SnapNil,
+    AccPtrCons,
+    AccPtrNil,
+    ColPtrCons,
+    ColPtrNil,
+    EngineCtx,
+    SnapNil,
 };
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
-use hilavitkutin_api::context::{AccumWriterApi, ColumnReaderApi, EachApi, HasAccumWriter, HasColumnReader, HasEach};
+use hilavitkutin_api::context::{
+    AccumWriterApi,
+    ColumnReaderApi,
+    EachApi,
+    HasAccumWriter,
+    HasColumnReader,
+    HasEach,
+};
 use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::store::{Accum, Column};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
@@ -37,12 +50,15 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 }
 
 struct BumpProvider<const N: usize> {
-    buf: UnsafeCell<[MaybeUninit<u8>; N]>,
+    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
     used: Cell<usize>,
 }
 impl<const N: usize> BumpProvider<N> {
     fn new() -> Self {
-        Self { buf: UnsafeCell::new([const { MaybeUninit::uninit() }; N]), used: Cell::new(0) }
+        Self {
+            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
+            used: Cell::new(0),
+        }
     }
 }
 unsafe impl<const N: usize> Send for BumpProvider<N> {}
@@ -60,7 +76,9 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
         // SAFETY: aligned + len <= N, in bounds of the owned buffer.
         unsafe { base.add(aligned) }
     }
+
     unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
@@ -80,17 +98,10 @@ type AccW = Cons<Accum<Av>, Empty>;
 // the absolute record, so the per-core slice [lo, hi) appends the right values.
 struct KeepWu;
 impl BuilderInput for KeepWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for KeepWu {
-    type Read = ColIn;
-    type Write = AccW;
-    type Hint = (
-        hilavitkutin_api::hint::Immediate,
-        hilavitkutin_api::hint::Atomic,
-        hilavitkutin_api::hint::Normal,
-    );
     type Ctx<'frame> = EngineCtx<
         'frame,
         ColIn,
@@ -100,6 +111,14 @@ impl WorkUnit<Always> for KeepWu {
         ColPtrNil,
         AccPtrCons<'frame, Av, AccPtrNil>,
     >;
+    type Hint = (
+        hilavitkutin_api::hint::Immediate,
+        hilavitkutin_api::hint::Atomic,
+        hilavitkutin_api::hint::Normal,
+    );
+    type Read = ColIn;
+    type Write = AccW;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: In is host-populated for N records; the reader maps the
@@ -132,7 +151,7 @@ macro_rules! build_and_seed {
             let bindings = scheduler.__bindings();
             let in_base = bindings.__ptr().as_ptr() as *mut u32;
             let acc_base = bindings.__tail().__ptr().as_ptr() as *mut u32;
-            for i in 0..N {
+            for i in 0 .. N {
                 // SAFETY: both buffers reserve N u32 records; written once here.
                 unsafe {
                     *in_base.add(i) = i as u32;
@@ -148,7 +167,7 @@ macro_rules! build_and_seed {
 fn reference() -> ([u32; N], usize) {
     let mut out = [0u32; N];
     let mut k = 0;
-    for i in 0..N {
+    for i in 0 .. N {
         if (i as u32) % 7 != 0 {
             out[k] = (i as u32) * 10;
             k += 1;
@@ -168,7 +187,7 @@ fn run_parallel_accumulator_matches_single_core() {
     let live = b.__len_cell().get().0;
     assert_eq!(live, reflen, "single-core live length is the kept count");
     let base = b.__ptr().as_ptr();
-    for k in 0..live {
+    for k in 0 .. live {
         // SAFETY: live records initialised by the appends.
         let v = unsafe { core::ptr::read(base.add(k)) };
         assert_eq!(v.0, refbuf[k], "single-core rec {k} value/order");
@@ -176,7 +195,7 @@ fn run_parallel_accumulator_matches_single_core() {
 
     // Threaded path: same setup, dispatched via run_parallel on the pool.
     let parallel = build_and_seed!(BumpProvider::<8192>::new());
-    let pool = OsThreadPool::new();
+    let pool = TestExecutor::new();
     let mut parallel = core::pin::pin!(parallel);
     let result = parallel.as_mut().run_parallel(&pool);
     assert!(matches!(result, Outcome::Ok(())));
@@ -189,7 +208,7 @@ fn run_parallel_accumulator_matches_single_core() {
         "threaded merged live length equals the single-core kept count"
     );
     let pbase = pb.__ptr().as_ptr();
-    for k in 0..plive {
+    for k in 0 .. plive {
         // SAFETY: merged prefix holds `plive` initialised records.
         let v = unsafe { core::ptr::read(pbase.add(k)) };
         assert_eq!(

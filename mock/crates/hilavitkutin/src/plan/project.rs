@@ -18,19 +18,18 @@
 //! pulls pointers by recursion; the mask projection does, hence the
 //! `WitnessIndex` const here.
 
-use arvo::strategy::Identity;
+use arvo::strategy::{Additive, Identity};
 use arvo::{Bool, USize};
-use arvo_tensor::{cap_size, Capacity};
+use arvo_tensor::{Capacity, cap_size};
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::column_value::ColumnValue;
 use hilavitkutin_api::footprint::ResourceFootprint;
 use hilavitkutin_api::store::{Accum, Column, Resource, StagedResource, Virtual};
 use hilavitkutin_api::{HasSchedule, WorkUnit};
 
-use crate::dispatch::engine_ctx::{Here, There};
-
 use super::inputs::MorselBudget;
 use super::{AccessMask, PlanInputs};
+use crate::dispatch::engine_ctx::{Here, There};
 
 /// Compile-time ceiling: the skeleton `AccessMask` backs its bits in a
 /// single `USize` word, so a store list wider than 64 would silently
@@ -41,8 +40,8 @@ use super::{AccessMask, PlanInputs};
 struct StoreCeiling<CS: Capacity>(core::marker::PhantomData<CS>);
 
 impl<CS: Capacity> StoreCeiling<CS> {
-    const ASSERT_FITS: () = assert!( // lint:allow(no-bare-numeric) reason: const-context size assertion; tracked: #429
-        cap_size(CS::CAP) <= 64,
+    const ASSERT_FITS: () = assert!(
+        cap_size(CS::CAP) <= 64, // lint:allow(no-bare-numeric) reason: const-context size assertion; tracked: #429
         "projection: store capacity > 64 exceeds the skeleton AccessMask single-word backing (mirrors DirtyMask); widen when arvo-bitmask multi-container ships.",
     );
 }
@@ -59,12 +58,11 @@ pub trait WitnessIndex {
 }
 
 impl WitnessIndex for Here {
-    const INDEX: USize = USize::ZERO;
+    const INDEX: USize = <USize as Identity<Additive>>::IDENTITY;
 }
 
 impl<I: WitnessIndex> WitnessIndex for There<I> {
-    // lint:allow(no-bare-numeric) reason: peano successor on the inner index; tracked: #121
-    const INDEX: USize = USize(I::INDEX.0 + 1);
+    const INDEX: USize = USize(I::INDEX.0 + 1); // lint:allow(no-bare-numeric) reason: peano successor on the inner index; tracked: #121
 }
 
 /// Pure type-level "the cons-list contains `Target` at position
@@ -95,14 +93,14 @@ pub const trait MaskProject<Stores, Indices, CS: Capacity> {
     fn project_mask(mask: AccessMask<CS>) -> AccessMask<CS>;
 }
 
-impl<Stores, CS: Capacity> const MaskProject<Stores, Empty, CS> for Empty {
+const impl<Stores, CS: Capacity> MaskProject<Stores, Empty, CS> for Empty {
     #[inline]
     fn project_mask(mask: AccessMask<CS>) -> AccessMask<CS> {
         mask
     }
 }
 
-impl<Stores, M, Tail, I, ITail, CS: Capacity> const MaskProject<Stores, Cons<I, ITail>, CS>
+const impl<Stores, M, Tail, I, ITail, CS: Capacity> MaskProject<Stores, Cons<I, ITail>, CS>
     for Cons<M, Tail>
 where
     Stores: Locate<M, I>,
@@ -146,16 +144,23 @@ where
 {
     fn project_bundle(inputs: &mut PlanInputs<CU, CS>, idx: USize) {
         let i = idx.0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal array index; tracked: #121
-        let reads = <<W as WorkUnit<<W as HasSchedule>::Sched>>::Read as MaskProject<Stores, RI, CS>>::project_mask(AccessMask::empty());
-        let writes = <<W as WorkUnit<<W as HasSchedule>::Sched>>::Write as MaskProject<Stores, WI, CS>>::project_mask(AccessMask::empty());
+        let reads = <<W as WorkUnit<<W as HasSchedule>::Sched>>::Read as MaskProject<
+            Stores,
+            RI,
+            CS,
+        >>::project_mask(AccessMask::empty());
+        let writes = <<W as WorkUnit<<W as HasSchedule>::Sched>>::Write as MaskProject<
+            Stores,
+            WI,
+            CS,
+        >>::project_mask(AccessMask::empty());
         let mut access = reads;
         access.union_with(&writes);
         inputs.reads.as_mut()[i] = reads;
         inputs.writes.as_mut()[i] = writes;
         inputs.access.as_mut()[i] = access;
         inputs.commutative.as_mut()[i] = <W as WorkUnit<<W as HasSchedule>::Sched>>::COMMUTATIVE;
-        // lint:allow(no-bare-numeric) reason: unit-count successor; tracked: #121
-        let next = USize(i + 1);
+        let next = USize(i + 1); // lint:allow(no-bare-numeric) reason: unit-count successor; tracked: #121
         inputs.unit_count = next;
         <T as BundleProject<Stores, WT, CU, CS>>::project_bundle(inputs, next);
     }
@@ -168,7 +173,7 @@ pub fn project_access_set<Set, Stores, Indices, CS: Capacity>() -> AccessMask<CS
 where
     Set: MaskProject<Stores, Indices, CS>,
 {
-    let _ = StoreCeiling::<CS>::ASSERT_FITS;
+    StoreCeiling::<CS>::ASSERT_FITS;
     <Set as MaskProject<Stores, Indices, CS>>::project_mask(AccessMask::empty())
 }
 
@@ -230,8 +235,7 @@ impl<H: StoreAccumKind, T: AccumStoresMask<CS>, CS: Capacity> AccumStoresMask<CS
     #[inline]
     fn accum_mask(mask: AccessMask<CS>, idx: USize) -> AccessMask<CS> {
         let mask = if H::IS_ACCUM.0 { mask.set(idx) } else { mask };
-        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: store-position successor on the fold index; tracked: #121
-        <T as AccumStoresMask<CS>>::accum_mask(mask, USize(idx.0 + 1))
+        <T as AccumStoresMask<CS>>::accum_mask(mask, USize(idx.0 + 1)) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: store-position successor on the fold index; tracked: #121
     }
 }
 
@@ -243,8 +247,11 @@ pub fn accum_stores_mask<Stores, CS: Capacity>() -> AccessMask<CS>
 where
     Stores: AccumStoresMask<CS>,
 {
-    let _ = StoreCeiling::<CS>::ASSERT_FITS;
-    <Stores as AccumStoresMask<CS>>::accum_mask(AccessMask::empty(), USize::ZERO)
+    StoreCeiling::<CS>::ASSERT_FITS;
+    <Stores as AccumStoresMask<CS>>::accum_mask(
+        AccessMask::empty(),
+        <USize as Identity<Additive>>::IDENTITY,
+    )
 }
 
 /// Element byte size of a store marker's value type, `ceil(BIT_WIDTH / 8)`.
@@ -262,8 +269,7 @@ pub trait StoreElemBytes {
 
 /// Round a bit count up to whole bytes.
 const fn bytes_of_bits(bits: USize) -> USize {
-    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: byte-ceil arithmetic on the const bit width; tracked: #121
-    USize((bits.0 + 7) / 8)
+    USize(bits.0.div_ceil(8)) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: byte-ceil arithmetic on the const bit width; tracked: #121
 }
 
 impl<T: ColumnValue> StoreElemBytes for Column<T> {
@@ -278,13 +284,13 @@ impl<T: ResourceFootprint> StoreElemBytes for Resource<T> {
 // Accumulator-bearing fibers dispatch unit-outer, off the morsel-window
 // L1 budget entirely.
 impl<T> StoreElemBytes for Accum<T> {
-    const BYTES: USize = USize::ZERO;
+    const BYTES: USize = <USize as Identity<Additive>>::IDENTITY;
 }
 impl<T: ResourceFootprint> StoreElemBytes for StagedResource<T> {
     const BYTES: USize = <T as ResourceFootprint>::L1_BYTES;
 }
 impl<T> StoreElemBytes for Virtual<T> {
-    const BYTES: USize = USize::ZERO;
+    const BYTES: USize = <USize as Identity<Additive>>::IDENTITY;
 }
 
 /// Fold the global `Stores` cons-list into a `CS`-capacity byte-size array:
@@ -309,8 +315,7 @@ impl<H: StoreElemBytes, T: StoreSizes<CS>, CS: Capacity> StoreSizes<CS> for Cons
         if idx.0 < out.len() {
             out[idx.0] = <H as StoreElemBytes>::BYTES;
         }
-        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: store-position successor on the fold index; tracked: #121
-        <T as StoreSizes<CS>>::fill_sizes(out, USize(idx.0 + 1));
+        <T as StoreSizes<CS>>::fill_sizes(out, USize(idx.0 + 1)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: store-position successor on the fold index; tracked: #121
     }
 }
 
@@ -324,9 +329,9 @@ where
     Stores: StoreSizes<CS>,
     <CS as Capacity>::Array<USize>: Copy,
 {
-    let _ = StoreCeiling::<CS>::ASSERT_FITS;
-    let mut arr = <CS as Capacity>::filled(USize::ZERO);
-    <Stores as StoreSizes<CS>>::fill_sizes(arr.as_mut(), USize::ZERO);
+    StoreCeiling::<CS>::ASSERT_FITS;
+    let mut arr = <CS as Capacity>::filled(<USize as Identity<Additive>>::IDENTITY);
+    <Stores as StoreSizes<CS>>::fill_sizes(arr.as_mut(), <USize as Identity<Additive>>::IDENTITY);
     arr
 }
 
@@ -349,12 +354,18 @@ where
     Stores: AccumStoresMask<CS>,
     Stores: StoreSizes<CS>,
 {
-    let _ = StoreCeiling::<CS>::ASSERT_FITS;
+    StoreCeiling::<CS>::ASSERT_FITS;
     let mut inputs = PlanInputs::new();
     inputs.record_count = record_count;
     inputs.accum_stores = accum_stores_mask::<Stores, CS>();
     inputs.morsel_budget = budget;
-    <Stores as StoreSizes<CS>>::fill_sizes(inputs.store_sizes.as_mut(), USize::ZERO);
-    <Wus as BundleProject<Stores, Witnesses, CU, CS>>::project_bundle(&mut inputs, USize::ZERO);
+    <Stores as StoreSizes<CS>>::fill_sizes(
+        inputs.store_sizes.as_mut(),
+        <USize as Identity<Additive>>::IDENTITY,
+    );
+    <Wus as BundleProject<Stores, Witnesses, CU, CS>>::project_bundle(
+        &mut inputs,
+        <USize as Identity<Additive>>::IDENTITY,
+    );
     inputs
 }

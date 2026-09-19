@@ -75,7 +75,9 @@ pub(crate) fn fold_ema(prev: Nanos, sample: Nanos, seed: Bool) -> Nanos {
 mod fold_ema_tests {
     use super::*;
 
-    fn ns(v: u64) -> Nanos { // lint:allow(no-bare-numeric) reason: test fixture literal lift; tracked: #121
+    fn ns(
+        v: u64, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test fixture literal lift; tracked: #121
+    ) -> Nanos {
         Nanos::from_raw(v)
     }
 
@@ -98,6 +100,16 @@ mod fold_ema_tests {
         assert_eq!(fold_ema(ns(700), ns(300), Bool::FALSE).to_raw(), 650);
         // A gap under the weight truncates to a zero step.
         assert_eq!(fold_ema(ns(305), ns(300), Bool::FALSE).to_raw(), 305);
+    }
+
+    #[test]
+    fn full_range_gap_steps_an_eighth_without_overflow() {
+        // The step is taken on the gap, never on a sum, so the widest gap the
+        // type holds folds in both directions without wrapping.
+        let max = u64::MAX; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the type's full range as a fixture; tracked: #121
+        let step = max / 8; // lint:allow(no-bare-numeric) reason: the EMA weight's divisor; tracked: #121
+        assert_eq!(fold_ema(ns(0), ns(max), Bool::FALSE).to_raw(), step);
+        assert_eq!(fold_ema(ns(max), ns(0), Bool::FALSE).to_raw(), max - step);
     }
 
     #[test]

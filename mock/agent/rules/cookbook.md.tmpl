@@ -88,8 +88,9 @@ Runtime-intern via `StringInterner`.
 
 ## "I need threading"
 
-Take `&impl ThreadPoolApi`. Engine provides the implementation; never
-call `thread::spawn`, `tokio::spawn`, `async_std::spawn` yourself.
+Take `&impl ThreadPoolApi`. The consumer's executor provides the
+implementation; no hilavitkutin crate ships one. Never call
+`thread::spawn`, `tokio::spawn`, `async_std::spawn` yourself.
 
 ## "I need memory"
 

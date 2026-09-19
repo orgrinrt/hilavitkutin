@@ -2,14 +2,19 @@
 
 use std::cell::RefCell;
 
-use arvo::{Identity, USize};
+use arvo::{Additive, Identity, USize};
 use arvo_bits::Bits;
 use arvo_hash::ContentHash;
 use hilavitkutin_persistence::{
-    evict_str, inject_str, BufferLen, BufferOffset, PersistenceError, StringTable,
+    BufferLen,
+    BufferOffset,
+    PersistenceError,
+    StringTable,
     StringTableEntry,
+    evict_str,
+    inject_str,
 };
-use hilavitkutin_str::{const_fnv1a, ArenaInterner, Str, StringInterner};
+use hilavitkutin_str::{ArenaInterner, Str, StringInterner, const_fnv1a};
 use notko::{Maybe, Outcome};
 
 struct VecInterner {
@@ -90,8 +95,8 @@ fn inject_runtime_via_string_table() {
     let hash = content_hash("table-roundtrip");
     let entries: &'static [StringTableEntry] = Box::leak(Box::new([StringTableEntry {
         content_hash: hash,
-        bytes_offset: BufferOffset(USize::ZERO),
-        bytes_len: BufferLen(USize(payload.len())),
+        bytes_offset: BufferOffset(<USize as Identity<Additive>>::IDENTITY),
+        bytes_len:    BufferLen(USize(payload.len())),
     }]));
     let table = StringTable {
         entries,
@@ -107,8 +112,6 @@ fn inject_runtime_via_string_table() {
     assert_eq!(interner.resolve(injected), Maybe::Is("table-roundtrip"));
 }
 
-
-
 #[test]
 fn evict_then_inject_runtime_roundtrips() {
     let interner = StringInterner::new(VecInterner::new());
@@ -120,8 +123,8 @@ fn evict_then_inject_runtime_roundtrips() {
     // Build a string-table entry that re-supplies the bytes.
     let entries: &'static [StringTableEntry] = Box::leak(Box::new([StringTableEntry {
         content_hash: evicted,
-        bytes_offset: BufferOffset(USize::ZERO),
-        bytes_len: BufferLen(USize(original_bytes.len())),
+        bytes_offset: BufferOffset(<USize as Identity<Additive>>::IDENTITY),
+        bytes_len:    BufferLen(USize(original_bytes.len())),
     }]));
     let table = StringTable {
         entries,
@@ -146,8 +149,8 @@ fn string_table_lookup_hits_return_bytes() {
     let payload: &'static [u8] = b"lookup-hit";
     let entries: &'static [StringTableEntry] = Box::leak(Box::new([StringTableEntry {
         content_hash: ContentHash::from_raw(0xABCD),
-        bytes_offset: BufferOffset(USize::ZERO),
-        bytes_len: BufferLen(USize(payload.len())),
+        bytes_offset: BufferOffset(<USize as Identity<Additive>>::IDENTITY),
+        bytes_len:    BufferLen(USize(payload.len())),
     }]));
     let table = StringTable {
         entries,

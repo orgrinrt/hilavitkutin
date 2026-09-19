@@ -1,0 +1,50 @@
+88539c68 chore: lock the accumulator probe changelist
+be3ba09a test: pin that an accumulator survives a two-trunk parallel phase
+78a43004 docs: withdraw the r1a split; r1 is a deletion
+79cc0521 docs: the r1 sketch was wrong; the record-slice guard is accumulator-only
+b8c95d36 docs: plan the accumulator multi-trunk probe
+5a65fefe chore: lock the doc changelist
+1bb65aa8 docs: empty doc changelist pending the experiment
+16082421 docs: open the round on accumulator region sizing
+656e5b66 docs: extend the r1 sketch with the accumulator sizing fork
+e7a9a159 docs: r2a has no canonical barrier to keep; reorder behind r1a
+9ae63c6d docs: verify r2b thread pool deletion and note the inverse doc gap
+59f405e3 docs: correct r2a to three barriers and a latent hazard
+6de1ccb3 docs: split r1 into an ownership change and a deletion
+ce7ba8c0 chore: close design round 202607192110
+b7de9d9f chore: lock src changelist for the n-way split round
+12228895 test: pin that every producer runs when cores outnumber records
+6f03015b docs: plan the trunk-owner-never-runs case
+91e969a9 docs: record that the participation guard already drops trunks
+de071a33 docs: sketch why r1 is an ownership change, not a deletion
+951e073b docs: separate the accumulator regioning from head+tail convergence
+11359bcb docs: stop describing the n-way split as head+tail convergence
+8b6ada9f docs: open the round on the n-way record split
+451b6488 chore: close design round 202607192010
+e4bc16ba chore: lock src changelist for the defect-band round
+7aa6751f docs: record band 0 outcome and its three findings
+8f13433c fix: make std spawn spawn and deallocate free with its real alignment
+8656e8d9 docs: plan the defect-band source changes
+c96e6c66 docs: deallocate carries the alignment it was allocated with
+6fc10a21 docs: settle the deallocate alignment contract
+eef3b197 docs: open round on reachable bodies contradicting contracts
+07f7202d chore: close design round 202607191110
+a2ca7bcf docs: fold verification findings into r7, reclassify W5
+c6067304 docs: correct eleven fact-check findings in r7 and the audit
+42c5b15b docs: record op resolution on canon authority and d1 sequencing
+2e726b3e docs: fold the canonical-mirror and granularity passes into r7
+c3f78d44 docs: engine roadmap r7 ordered from the three-way ledger
+daf99698 docs: three-way audit of canon, source, and roadmap claims
+d6e01c39 wip: park a4 post-review round pending re-chart
+d4f6bf3d docs: open src cl for the coverage invariant catalogue
+860c5cac docs: sketch the fibercons nest wireability question
+7c02c605 chore: lock doc changelist for the coverage invariant
+59f2c5d2 docs: state the fiber-descriptor coverage invariant
+9f02eb06 docs: open doc cl for the coverage invariant
+67d4ce16 docs: open round for the fiber-descriptor coverage invariant
+1b3b4fb6 docs: regenerate rendered docs for the parallel windowing statement
+e8487c72 chore: close design round for a4 parallel per-fiber windows
+d8d28ef7 chore: lock src changelist for a4 parallel per-fiber windows
+639b71c5 feat: window each fiber by its own size on the parallel path
+f13421b9 docs: open src cl for a4 parallel per-fiber windows
+b9cc2c86 chore: lock doc changelist for a4 parallel per-fiber windows

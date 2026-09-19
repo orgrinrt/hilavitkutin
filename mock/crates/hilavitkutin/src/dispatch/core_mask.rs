@@ -17,12 +17,12 @@
 //! (`ncores == 1`): every rank `% 1 == 0`, so core 0 owns every trunk = the full
 //! per-phase walk (the 1-core degenerate, no special path).
 
-use arvo::strategy::Identity;
 use arvo::USize;
+use arvo::strategy::{Additive, Identity};
 use arvo_bitmask::BitAccess;
 use arvo_tensor::{Capacity, ConstCapacity};
 
-use crate::plan::grouping::{group_n, phase_of, trunk_of, BundleMasks};
+use crate::plan::grouping::{BundleMasks, group_n, phase_of, trunk_of};
 
 /// Fill per-unit phase and trunk arrays from the R2 const grouping, returning
 /// the unit count. Loops the shipped `phase_of` / `trunk_of` over carrier
@@ -36,7 +36,7 @@ where
     CU: Capacity + ConstCapacity,
     CS: Capacity,
     Wus: BundleMasks<Stores, Witnesses, CS>,
-    Adj: BitAccess + Identity,
+    Adj: BitAccess + Identity<Additive>,
 {
     let n = group_n::<Wus, Stores, Witnesses, CU, CS>();
     let mut u = 0; // lint:allow(no-bare-numeric) reason: carrier-position loop index; tracked: #121
@@ -52,7 +52,7 @@ where
 /// `phase[u] == target_phase` and the within-phase rank of `trunk[u]` modulo
 /// `ncores` equals `core`. `Adj` is the plan's `D::AdjRow` (the `run_gated` mask
 /// word).
-pub fn core_phase_mask<Adj: BitAccess + Identity>(
+pub fn core_phase_mask<Adj: BitAccess + Identity<Additive>>(
     phase: &[USize],
     trunk: &[USize],
     n: USize,
@@ -60,7 +60,7 @@ pub fn core_phase_mask<Adj: BitAccess + Identity>(
     target_phase: USize,
     ncores: USize,
 ) -> Adj {
-    let mut m = <Adj as Identity>::ZERO;
+    let mut m = <Adj as Identity<Additive>>::IDENTITY;
     if ncores.0 == 0 {
         return m;
     }
@@ -112,12 +112,12 @@ pub fn phase_trunk_count(phase: &[USize], trunk: &[USize], n: USize, target_phas
 /// for a single-trunk phase under head+tail convergence: ownership there is by
 /// record range, not by trunk, so every core runs the same (single) trunk's
 /// units over a disjoint record slice.
-pub fn phase_mask<Adj: BitAccess + Identity>(
+pub fn phase_mask<Adj: BitAccess + Identity<Additive>>(
     phase: &[USize],
     n: USize,
     target_phase: USize,
 ) -> Adj {
-    let mut m = <Adj as Identity>::ZERO;
+    let mut m = <Adj as Identity<Additive>>::IDENTITY;
     let count = n.0; // lint:allow(no-bare-numeric) reason: loop bound; tracked: #121
     let mut u = 0; // lint:allow(no-bare-numeric) reason: unit index; tracked: #121
     while u < count {

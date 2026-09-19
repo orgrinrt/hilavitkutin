@@ -4,7 +4,7 @@
 //! shapes used by the engine live at `hilavitkutin::plan::access::AccessMask`.
 
 use arvo::USize;
-use arvo::strategy::Identity;
+use arvo::strategy::{Additive, Identity};
 
 /// Dense store index assigned at plan time.
 ///
@@ -18,7 +18,7 @@ pub struct StoreId(pub USize);
 impl Default for StoreId {
     #[inline(always)]
     fn default() -> Self {
-        StoreId(USize::ZERO)
+        StoreId(<USize as Identity<Additive>>::IDENTITY)
     }
 }
 

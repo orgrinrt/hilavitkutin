@@ -23,7 +23,7 @@
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, Data, DeriveInput, Type};
+use syn::{Data, DeriveInput, Type, parse_macro_input};
 
 /// Derive `ResourceFootprint` for a resource value type.
 ///
@@ -45,17 +45,19 @@ pub fn derive_resource_footprint(input: TokenStream) -> TokenStream {
             )
             .to_compile_error()
             .into();
-        }
+        },
     };
 
     // syn's `Fields::iter` yields `&Field` across named / unnamed / unit, so the
     // field walk needs no manual collection.
-    let terms = data.fields.iter().filter_map(|f| {
-        is_collection_field(&f.ty).then(|| {
+    let terms = data
+        .fields
+        .iter()
+        .filter(|&f| is_collection_field(&f.ty))
+        .map(|f| {
             let ty = &f.ty;
             quote! { + <#ty as ::hilavitkutin_api::footprint::CollectionBytes>::BYTES.0 }
-        })
-    });
+        });
 
     let expanded = quote! {
         impl #impl_generics ::hilavitkutin_api::footprint::ResourceFootprint
@@ -75,7 +77,7 @@ fn is_collection_field(ty: &Type) -> bool {
         Some(seg) => {
             let id = seg.ident.to_string();
             id == "Field" || id == "Seq" || id == "Map"
-        }
+        },
         None => false,
     }
 }

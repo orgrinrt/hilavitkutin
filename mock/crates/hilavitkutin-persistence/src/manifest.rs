@@ -7,7 +7,7 @@
 //! lands with a later round if consumer pressure surfaces it.
 
 use arvo::USize;
-use arvo::strategy::Identity;
+use arvo::strategy::{Additive, Identity};
 use arvo_hash::ContentHash;
 
 use crate::primitives::{BitWidth, Cardinality, ColumnCount, RowCount, SchemaVersion};
@@ -26,9 +26,9 @@ pub const MAX_COLUMNS_PER_TABLE: usize = 64; // lint:allow(no-bare-numeric) lint
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct ColumnMeta {
     /// Content hash of the column name (28-bit FNV).
-    pub name_hash: ContentHash,
+    pub name_hash:   ContentHash,
     /// Bit width reported by the underlying ColumnValue impl.
-    pub bit_width: BitWidth,
+    pub bit_width:   BitWidth,
     /// Observed cardinality (distinct-value count, rough or exact).
     pub cardinality: Cardinality,
 }
@@ -36,9 +36,9 @@ pub struct ColumnMeta {
 impl ColumnMeta {
     /// Default empty-column metadata.
     pub const EMPTY: Self = Self {
-        name_hash: ContentHash::from_raw(0),
-        bit_width: BitWidth::new(0),
-        cardinality: Cardinality(USize::ZERO),
+        name_hash:   ContentHash::from_raw(0),
+        bit_width:   BitWidth::new(0),
+        cardinality: Cardinality(<USize as Identity<Additive>>::IDENTITY),
     };
 }
 
@@ -53,13 +53,13 @@ impl Default for ColumnMeta {
 #[derive(Debug, Clone, Copy)]
 pub struct TableMeta {
     /// Content hash of the table name (28-bit FNV).
-    pub name_hash: ContentHash,
+    pub name_hash:    ContentHash,
     /// Schema version; consumer-defined meaning.
-    pub version: SchemaVersion,
+    pub version:      SchemaVersion,
     /// Total row count at last flush.
-    pub row_count: RowCount,
+    pub row_count:    RowCount,
     /// Column metadata slots; `columns[..column_count]` is live.
-    pub columns: [ColumnMeta; MAX_COLUMNS_PER_TABLE],
+    pub columns:      [ColumnMeta; MAX_COLUMNS_PER_TABLE],
     /// Number of populated column slots.
     pub column_count: ColumnCount,
 }
@@ -67,11 +67,11 @@ pub struct TableMeta {
 impl TableMeta {
     /// Default empty-table metadata.
     pub const EMPTY: Self = Self {
-        name_hash: ContentHash::from_raw(0),
-        version: SchemaVersion::new(0),
-        row_count: RowCount(USize::ZERO),
-        columns: [ColumnMeta::EMPTY; MAX_COLUMNS_PER_TABLE],
-        column_count: ColumnCount(USize::ZERO),
+        name_hash:    ContentHash::from_raw(0),
+        version:      SchemaVersion::new(0),
+        row_count:    RowCount(<USize as Identity<Additive>>::IDENTITY),
+        columns:      [ColumnMeta::EMPTY; MAX_COLUMNS_PER_TABLE],
+        column_count: ColumnCount(<USize as Identity<Additive>>::IDENTITY),
     };
 }
 
@@ -88,14 +88,14 @@ pub struct Manifest {
     /// Table metadata slots; `tables[..count]` is live.
     pub tables: [TableMeta; MAX_TABLES],
     /// Number of populated table slots.
-    pub count: ColumnCount,
+    pub count:  ColumnCount,
 }
 
 impl Manifest {
     /// Default empty manifest.
     pub const EMPTY: Self = Self {
         tables: [TableMeta::EMPTY; MAX_TABLES],
-        count: ColumnCount(USize::ZERO),
+        count:  ColumnCount(<USize as Identity<Additive>>::IDENTITY),
     };
 
     /// Construct an empty manifest.

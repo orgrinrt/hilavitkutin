@@ -1,0 +1,50 @@
+f4bed74 chore: lock src changelist for round eleven
+6e7ce59 test: pin the refusals and keep the shape that minted the collision
+c551f2e chore: lock doc changelist for round eleven
+ae498cf docs: a claimed refusal is a compile-fail test
+a066a5d docs: open the doc changelist for round eleven
+21f06ac docs: open round eleven on unpinned refusals and discarded checks
+cb06b4f chore: close round ten
+2eb9211 chore: lock src changelist for round ten
+80fe8ed chore: allow the std trait signature and the raw arithmetic in the laws
+b2365ad docs: open the src changelist for round ten
+8748b49 chore: lock doc changelist for round ten
+70442c6 docs: open the doc changelist for round ten
+d1f7eaa docs: open round ten on the eight the last round added
+cf48ef4 chore: close round nine
+b860a2e chore: lock src changelist for round nine
+168708f fix: pin origins to the id field and bound equality on the layout
+c34ec44 docs: open the src changelist for round nine
+e65868e chore: lock doc changelist for round nine
+ff1feb1 docs: state the crate promise as a law and drop a false generated banner
+6e164fd docs: open the doc changelist for round nine
+e6b4e97 docs: open round nine on a collision the extension point still admits
+250d8b1 chore: close round eight
+b128bc2 chore: lock src changelist for round eight
+a4fffc2 docs: use route rather than the reserved term chain
+4f6a11d docs: open the src changelist for round eight
+4ac3a5b chore: lock doc changelist for round eight
+c49a271 docs: open the doc changelist for round eight
+28cdd29 docs: open round eight on a dead vocabulary term
+561856f chore: close round seven
+4866f03 chore: lock src changelist for round seven
+8278d8f docs: record the fmt conflict as upstream, not as a green claim
+2322a4e style: normalise import ordering in hilavitkutin-str
+c8864c0 chore: probe whether the hook reverts formatting
+574f1cb test: derive the layout widths instead of restating them
+7584aca docs: open the src changelist for round seven
+cd558f8 chore: lock doc changelist for round seven
+b947f40 docs: credit the round trip, not the type alone
+dee3f33 chore: close round six
+a26080f chore: lock src changelist for round six
+19bc890 docs: the layout suite covers two layouts, not three shapes
+ed73b46 docs: record what round six measured, not what it expected
+b4ddf12 test: cover the eight layout operations and both boundary ends
+b972384 fix: read field widths from the accessor types, and pin the counter span
+8a87924 docs: open the src changelist for round six
+181816c chore: lock doc changelist for round six
+c85a2b4 docs: widths come from the accessor types, and state the coverage contract
+8744200 docs: correct the round six premise, the masks constrain nothing
+49ff1c6 docs: open round six on the free widths and the dead feature gate
+192d349 chore: close the derived-width round
+dc3f4df chore: lock the src changelist for a width nobody writes

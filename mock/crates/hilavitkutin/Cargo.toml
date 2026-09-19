@@ -29,7 +29,6 @@ hilavitkutin-providers.workspace = true
 [features]
 default = ["platform-os"]
 platform-os = ["dep:libc"]
-platform-std = []
 platform-no-os = []
 # Opt-in intrinsics upgrade. Still core-only; enables
 # `core::hint::black_box` for `noinline_barrier`. Nightly

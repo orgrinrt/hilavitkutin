@@ -34,7 +34,7 @@ once the per-crate design stabilises.
  hook block these tokens outright.
 - The `scheduler::Builder` takes a tuple of WU types; composition
  completes at type-level. Plan parameters (fiber width, morsel
- size, core pinning) adapt at plan time; composition does not.
+ size, core assignment) adapt at plan time; composition does not.
 - Consumers extend the engine by adding WUs to their builder tuple,
  not by injecting descriptors into a global registry.
 

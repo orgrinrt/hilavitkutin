@@ -23,10 +23,17 @@ use core::sync::atomic::{AtomicUsize, Ordering};
 
 use arvo::{Bool, USize};
 use hilavitkutin::dispatch::engine_ctx::{
-    AccPtrNil, ColPtrCons, ColPtrNil, EngineCtx, MetaRef, SnapNil, VirtNil,
+    AccPtrNil,
+    ColPtrCons,
+    ColPtrNil,
+    EngineCtx,
+    MetaRef,
+    SnapNil,
+    VirtNil,
 };
 use hilavitkutin::scheduler::Scheduler;
-use hilavitkutin::OsThreadPool;
+mod common;
+use common::TestExecutor;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{ColumnWriterApi, EachApi, HasColumnWriter, HasEach};
@@ -42,12 +49,15 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 }
 
 struct BumpProvider<const N: usize> {
-    buf: UnsafeCell<[MaybeUninit<u8>; N]>,
+    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
     used: Cell<usize>,
 }
 impl<const N: usize> BumpProvider<N> {
     fn new() -> Self {
-        Self { buf: UnsafeCell::new([const { MaybeUninit::uninit() }; N]), used: Cell::new(0) }
+        Self {
+            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
+            used: Cell::new(0),
+        }
     }
 }
 unsafe impl<const N: usize> Send for BumpProvider<N> {}
@@ -65,7 +75,9 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
         // SAFETY: aligned + len <= N, in bounds of the owned buffer.
         unsafe { base.add(aligned) }
     }
+
     unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
@@ -92,16 +104,13 @@ type Hints = (
 // write keeps it store-anchored for the grouping, its body writes nothing.
 struct PlanWu;
 impl BuilderInput for PlanWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl HasSchedule for PlanWu {
     type Sched = OnMeta<PlanStage>;
 }
 impl WorkUnit<OnMeta<PlanStage>> for PlanWu {
-    type Read = Empty;
-    type Write = ColP;
-    type Hint = Hints;
     type Ctx<'frame> = EngineCtx<
         'frame,
         Empty,
@@ -113,6 +122,10 @@ impl WorkUnit<OnMeta<PlanStage>> for PlanWu {
         VirtNil,
         MetaRef<'frame>,
     >;
+    type Hint = Hints;
+    type Read = Empty;
+    type Write = ColP;
+
     fn execute<'frame>(&self, _ctx: &Self::Ctx<'frame>) {
         PLAN_RUNS.fetch_add(1, Ordering::Relaxed);
     }
@@ -122,14 +135,16 @@ impl WorkUnit<OnMeta<PlanStage>> for PlanWu {
 // (morsel-local) and takes the worker phase-loop path.
 struct ConsumerWu;
 impl BuilderInput for ConsumerWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for ConsumerWu {
+    type Ctx<'frame> =
+        EngineCtx<'frame, Empty, ColA, SnapNil, ColPtrNil, ColPtrCons<Av, ColPtrNil>>;
+    type Hint = Hints;
     type Read = Empty;
     type Write = ColA;
-    type Hint = Hints;
-    type Ctx<'frame> = EngineCtx<'frame, Empty, ColA, SnapNil, ColPtrNil, ColPtrCons<Av, ColPtrNil>>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: Av reserved + exclusive; the morsel covers reserved records.
@@ -150,14 +165,17 @@ fn worker_phase_loop_skips_plan_band_on_clean_frame() {
         .build(store(provider), USize(N))
         .unwrap_or_else(|_| panic!("build should succeed"));
 
-    let pool = OsThreadPool::new();
+    let pool = TestExecutor::new();
     let mut scheduler = core::pin::pin!(scheduler);
 
     // Frame 1 (cold start = plan-dirty): the plan band runs.
     let r1 = scheduler.as_mut().run_parallel(&pool);
     assert!(matches!(r1, Outcome::Ok(())));
     let after_frame1 = PLAN_RUNS.load(Ordering::Relaxed);
-    assert!(after_frame1 > 0, "frame 1: the plan band ran on the plan-dirty frame");
+    assert!(
+        after_frame1 > 0,
+        "frame 1: the plan band ran on the plan-dirty frame"
+    );
 
     // Frame 2 (clean): the worker phase loop starts past the plan band.
     let r2 = scheduler.as_mut().run_parallel(&pool);

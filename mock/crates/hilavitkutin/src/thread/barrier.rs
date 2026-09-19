@@ -42,6 +42,7 @@ pub enum BarrierArrival {
 /// reset in `phase_barrier_reset`: every prior write by this worker
 /// becomes visible to the worker that performs the reset, and via
 /// transitivity to every worker the resetter wakes.
+#[rustfmt::skip] // keeps each allow on the line it governs
 pub fn phase_barrier_arrive<'arena, const C: usize, const P: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     pool: &PoolFrame<'arena, C, P>,
     expected: USize,
@@ -58,6 +59,7 @@ pub fn phase_barrier_arrive<'arena, const C: usize, const P: usize>( // lint:all
 /// observed `BarrierArrival::Last`. `Acquire` on the load to publish
 /// every prior worker's writes; the store at zero is Release so the
 /// next phase's arrivers see the fresh count.
+#[rustfmt::skip] // keeps the allow on the signature it governs
 pub fn phase_barrier_reset<'arena, const C: usize, const P: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     pool: &PoolFrame<'arena, C, P>,
 ) {
@@ -69,6 +71,7 @@ pub fn phase_barrier_reset<'arena, const C: usize, const P: usize>( // lint:allo
 /// reads it at `ScheduleEnd` for per-phase latency attribution.
 /// `Acquire` so the observed count synchronises with the latest
 /// arriver's Release.
+#[rustfmt::skip] // keeps the allow on the signature it governs
 pub fn phase_barrier_observe<'arena, const C: usize, const P: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     pool: &PoolFrame<'arena, C, P>,
 ) -> Maybe<USize> {
@@ -101,6 +104,7 @@ pub fn phase_barrier_observe<'arena, const C: usize, const P: usize>( // lint:al
 /// independent of which dispatch path the frame took. `now` is the caller's
 /// monotonic clock read (`impl Fn`, monomorphised, no dyn); the caller holds the
 /// concrete clock and the frame does not carry one.
+#[rustfmt::skip] // keeps each allow on the line it governs
 pub fn waist_barrier<'arena, const C: usize, const P: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     pool: &PoolFrame<'arena, C, P>,
     core: USize,
@@ -127,8 +131,9 @@ pub fn waist_barrier<'arena, const C: usize, const P: usize>( // lint:allow(no-b
         }
         let waited = now().to_raw().saturating_sub(entered); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: monotonic park delta in raw nanos; tracked: #121
         let slot = core.0;
-        // Bounds guard: the worker count can exceed MAX_CORES, so the core id is
-        // not assumed in range. An out-of-range core simply does not record idle.
+        // Bounds guard: `run_parallel` clamps its worker count to MAX_CORES, but
+        // this function takes any core id, so it is not assumed in range. An
+        // out-of-range core simply does not record idle.
         if slot < pool.idle_accumulator.len() {
             pool.idle_accumulator[slot].fetch_add(waited, Ordering::Release);
         }

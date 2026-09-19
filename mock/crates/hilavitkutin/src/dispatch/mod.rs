@@ -4,11 +4,10 @@
 //! executable code: per-fiber monomorphised dispatch functions,
 //! per-core compiled pipelines, progress counters.
 //!
-//! This module is the *skeleton* for 5a3: public surface is
-//! complete; every code-emit function (`select_approach`,
-//! `codegen_fiber`, `codegen_core`) stubs to `todo!()`. The
-//! real LLVM / ExpandedLto wiring + rust-pipe emission pattern
-//! land as follow-ups: see BACKLOG → Engine 5a3 follow-ups.
+//! `select_approach` picks the dispatch shape from record and
+//! fiber counts. `codegen_fiber` and `codegen_core` return empty
+//! records so the engine runs end to end; the LLVM and ExpandedLto
+//! wiring that fills them is a BACKLOG item.
 
 pub mod approach;
 pub mod core_dispatch;
@@ -28,29 +27,41 @@ pub mod trunk_gate;
 pub mod trunk_run;
 pub mod wu_fn;
 
+pub use approach::DispatchApproach;
 use arvo::USize;
 use arvo_tensor::Capacity;
-pub use hilavitkutin_api::dispatch_codegen::StandardCodegen;
-
-pub use approach::DispatchApproach;
 pub use core_dispatch::CoreDispatch;
-pub use engine_ctx::EngineCtx;
-pub use engine_ctx::{AccumBundleOf, ColBundleOf, CtxFor, ResourceBundleOf, VirtBundleOf};
+pub use engine_ctx::{
+    AccumBundleOf,
+    ColBundleOf,
+    CtxFor,
+    EngineCtx,
+    ResourceBundleOf,
+    VirtBundleOf,
+};
 pub use fiber_dispatch::FiberDispatch;
 pub use fiber_run::RunFiber;
-pub use phase_run::{RunPhase, RunPipeline};
-pub use trunk_dispatch::RunTrunkDispatch;
-pub use trunk_gate::RunGatedTrunk;
-pub use trunk_run::RunTrunk;
+pub use hilavitkutin_api::dispatch_codegen::StandardCodegen;
 // The value-carrying WorkUnit, fiber, trunk, and phase lists live in the api
 // crate so the builder can construct them; re-export them here next to the
 // dispatch machinery that consumes them.
 pub use hilavitkutin_api::work_unit_values::{
-    FiberCons, FiberNil, PhaseCons, PhaseNil, TrunkCons, TrunkNil, WuCons, WuNil,
+    FiberCons,
+    FiberNil,
+    PhaseCons,
+    PhaseNil,
+    TrunkCons,
+    TrunkNil,
+    WuCons,
+    WuNil,
 };
 pub use morsel::MorselRange;
+pub use phase_run::{RunPhase, RunPipeline};
 pub use progress::ProgressCounter;
 pub use sync::SyncPoint;
+pub use trunk_dispatch::RunTrunkDispatch;
+pub use trunk_gate::RunGatedTrunk;
+pub use trunk_run::RunTrunk;
 pub use wu_fn::WuFn;
 
 /// Record count at or above which `select_approach` picks
@@ -101,6 +112,7 @@ pub fn select_approach(record_count: USize, fiber_count: USize) -> DispatchAppro
 /// allows the engine call chain to compile and execute (returning
 /// a typed-correct, body-empty record) without panic.
 pub fn codegen_fiber<Ctx: 'static, C: Capacity>() -> FiberDispatch<Ctx, C> {
+    // FIXME: returns an empty record; the monomorphised body needs the LLVM-driven codegen in BACKLOG.
     FiberDispatch::new()
 }
 
@@ -113,43 +125,8 @@ pub fn codegen_fiber<Ctx: 'static, C: Capacity>() -> FiberDispatch<Ctx, C> {
 /// sync per Topic 6 axis E) lands per the same BACKLOG entry as
 /// `codegen_fiber`.
 pub fn codegen_core<Ctx: 'static, C: Capacity>() -> CoreDispatch<Ctx, C> {
+    // FIXME: returns an empty record; the fused per-core pipeline needs the same BACKLOG codegen as `codegen_fiber`.
     CoreDispatch::new()
-}
-
-#[cfg(test)]
-mod codegen_stub_tests {
-    use super::*;
-    use notko::Maybe;
-    use crate::plan::FiberId;
-    use arvo::strategy::Identity;
-    use arvo_tensor::Dim;
-
-    // A fixed capacity of four for the codegen stub records.
-    type C4 = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity literal; Dim<N> array-length root; tracked: #649
-
-    #[test]
-    fn codegen_fiber_returns_empty_skeleton() {
-        use crate::plan::PhaseId;
-        let result: FiberDispatch<(), C4> = codegen_fiber::<(), C4>();
-        assert!(matches!(result.body, Maybe::Isnt));
-        assert_eq!(result.fiber_id, FiberId::ZERO);
-        assert_eq!(result.phase, PhaseId::ZERO);
-        assert_eq!(result.morsel_range.start, USize::ZERO);
-        assert_eq!(result.morsel_range.len, USize::ZERO);
-        assert_eq!(result.sync_point_count, USize::ZERO);
-    }
-
-    #[test]
-    fn codegen_core_returns_empty_skeleton() {
-        let result: CoreDispatch<(), C4> = codegen_core::<(), C4>();
-        assert_eq!(result.fiber_count, USize::ZERO);
-        assert_eq!(result.phase_count, USize::ZERO);
-        assert_eq!(result.boundary_count, USize::ZERO);
-        assert_eq!(result.sync_point_count, USize::ZERO);
-        // Element check: every fiber slot is itself an empty skeleton.
-        assert!(matches!(result.fibers.as_ref()[0].body, Maybe::Isnt)); // lint:allow(no-bare-numeric) reason: element-zero check; tracked: #72
-        assert_eq!(result.fibers.as_ref()[0].sync_point_count, USize::ZERO); // lint:allow(no-bare-numeric) reason: element-zero check; tracked: #72
-    }
 }
 
 #[cfg(test)]
@@ -187,8 +164,39 @@ mod select_approach_tests {
         // One below SCHEDULE_MEGA_THRESHOLD with single-fiber falls
         // through to TrunkMega; pins the boundary from the small-
         // record-count side.
-        let result = select_approach(USize(9_999), USize(1)); // lint:allow(no-bare-numeric) reason: boundary fixture; tracked: #72
+        let below = USize(SCHEDULE_MEGA_THRESHOLD.0 - 1); // lint:allow(no-bare-numeric) reason: one below the threshold; tracked: #72
+        let one = USize(1); // lint:allow(no-bare-numeric) reason: single-fiber fixture; tracked: #72
+        let result = select_approach(below, one);
         assert_eq!(result, DispatchApproach::TrunkMega);
+    }
+
+    #[test]
+    fn threshold_boundary_below_many_fibers_picks_indirect_per_fiber() {
+        // The same boundary from the many-fiber side: below the threshold the
+        // record count stops deciding, and the fiber count picks.
+        let below = USize(SCHEDULE_MEGA_THRESHOLD.0 - 1); // lint:allow(no-bare-numeric) reason: one below the threshold; tracked: #72
+        let many = USize(8); // lint:allow(no-bare-numeric) reason: many-fiber fixture; tracked: #72
+        let result = select_approach(below, many);
+        assert_eq!(result, DispatchApproach::IndirectPerFiber);
+    }
+
+    #[test]
+    fn large_record_count_single_fiber_picks_schedule_mega() {
+        // The record count is checked first: at the threshold one fiber does
+        // not pull the pick down to TrunkMega.
+        let one = USize(1); // lint:allow(no-bare-numeric) reason: single-fiber fixture; tracked: #72
+        let result = select_approach(SCHEDULE_MEGA_THRESHOLD, one);
+        assert_eq!(result, DispatchApproach::ScheduleMega);
+    }
+
+    #[test]
+    fn fiber_cutover_boundary_picks_indirect_per_fiber() {
+        // One fiber past SINGLE_FIBER_CUTOVER is the first count that leaves
+        // TrunkMega.
+        let past = USize(SINGLE_FIBER_CUTOVER.0 + 1); // lint:allow(no-bare-numeric) reason: one past the cutover; tracked: #72
+        let records = USize(1_000); // lint:allow(no-bare-numeric) reason: small-record fixture; tracked: #72
+        let result = select_approach(records, past);
+        assert_eq!(result, DispatchApproach::IndirectPerFiber);
     }
 
     #[test]
