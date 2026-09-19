@@ -10,23 +10,21 @@
 use core::mem::size_of;
 
 use arvo::USize;
-use arvo::strategy::Identity;
+use arvo::strategy::{Additive, Identity};
 use arvo_tensor::{Capacity, Dim};
+use hilavitkutin_api::{ColumnStorage, ColumnValue, MemoryProviderApi, StoreId};
 use notko::{Maybe, Outcome};
 
-use hilavitkutin_api::{ColumnStorage, ColumnValue, MemoryProviderApi, StoreId};
-
 /// 64-byte cache-line alignment for every column base (R6).
-// lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: cache-line width is a fixed layout constant; tracked: #72
-const CACHE_LINE_ALIGN: USize = USize(64);
+const CACHE_LINE_ALIGN: USize = USize(64); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: cache-line width is a fixed layout constant; tracked: #72
 
 /// One reserved column: its base pointer, allocated byte length (for
 /// `deallocate`), and record count.
 #[derive(Copy, Clone)]
 struct ColumnSlot {
-    ptr: *mut u8, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw byte pointer; tracked: #72
+    ptr:       *mut u8, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw byte pointer; tracked: #72
     len_bytes: USize,
-    count: USize,
+    count:     USize,
 }
 
 /// Naive arena-backed `ColumnStorage`.
@@ -36,7 +34,7 @@ struct ColumnSlot {
 /// default `Dim<256>` matches the engine's `Mask256` store ceiling.
 pub struct ArenaColumnStorage<M: MemoryProviderApi, D: Capacity = Dim<256>> {
     provider: M,
-    slots: D::Array<Maybe<ColumnSlot>>,
+    slots:    D::Array<Maybe<ColumnSlot>>,
 }
 
 impl<M: MemoryProviderApi, D: Capacity> ArenaColumnStorage<M, D> {
@@ -70,27 +68,26 @@ impl<M: MemoryProviderApi, D: Capacity> ColumnStorage for ArenaColumnStorage<M, 
         // Free a prior allocation if this id is being re-reserved. Read
         // the slot by value (ColumnSlot is Copy) so no borrow is held
         // across the provider call.
-        if let Maybe::Is(old) = self.slots.as_ref()[*id.0] {
-            if !old.ptr.is_null() {
-                // SAFETY: old.ptr came from a prior allocate on this
-                // provider with old.len_bytes.
-                unsafe {
-                    self.provider.deallocate(old.ptr, old.len_bytes);
-                }
+        if let Maybe::Is(old) = self.slots.as_ref()[*id.0]
+            && !old.ptr.is_null()
+        {
+            // SAFETY: old.ptr came from a prior allocate on this
+            // provider with old.len_bytes.
+            unsafe {
+                self.provider.deallocate(old.ptr, old.len_bytes);
             }
         }
         // Byte length = record count times element size, checked so a
         // large count cannot wrap to a small length and hand back an
         // undersized block (a write of `count` records would overrun).
-        // lint:allow(no-bare-numeric) reason: byte length math; size_of returns usize by contract; tracked: #345
         let bytes = match (*count).checked_mul(size_of::<T>()) {
-            Some(n) => USize(n),
+            Some(n) => USize(n), // lint:allow(no-bare-numeric) reason: byte length math; size_of returns usize by contract; tracked: #345
             None => return Outcome::Err(StorageError::LengthOverflow),
         };
-        let slot = if bytes == USize::ZERO {
+        let slot = if bytes == <USize as Identity<Additive>>::IDENTITY {
             ColumnSlot {
                 ptr: core::ptr::null_mut(),
-                len_bytes: USize::ZERO,
+                len_bytes: <USize as Identity<Additive>>::IDENTITY,
                 count,
             }
         } else {
@@ -133,11 +130,11 @@ impl<M: MemoryProviderApi, D: Capacity> ColumnStorage for ArenaColumnStorage<M, 
 
     fn count(&self, id: StoreId) -> USize {
         if *id.0 >= self.slots.as_ref().len() {
-            return USize::ZERO;
+            return <USize as Identity<Additive>>::IDENTITY;
         }
         match self.slots.as_ref()[*id.0] {
             Maybe::Is(slot) => slot.count,
-            Maybe::Isnt => USize::ZERO,
+            Maybe::Isnt => <USize as Identity<Additive>>::IDENTITY,
         }
     }
 
@@ -150,14 +147,14 @@ impl<M: MemoryProviderApi, D: Capacity> ColumnStorage for ArenaColumnStorage<M, 
 impl<M: MemoryProviderApi, D: Capacity> Drop for ArenaColumnStorage<M, D> {
     fn drop(&mut self) {
         for slot in self.slots.as_ref() {
-            if let Maybe::Is(s) = slot {
-                if !s.ptr.is_null() {
-                    // SAFETY: s.ptr came from a prior allocate on this
-                    // provider with s.len_bytes; the arena is dropped
-                    // once, so no double free.
-                    unsafe {
-                        self.provider.deallocate(s.ptr, s.len_bytes);
-                    }
+            if let Maybe::Is(s) = slot
+                && !s.ptr.is_null()
+            {
+                // SAFETY: s.ptr came from a prior allocate on this
+                // provider with s.len_bytes; the arena is dropped
+                // once, so no double free.
+                unsafe {
+                    self.provider.deallocate(s.ptr, s.len_bytes);
                 }
             }
         }

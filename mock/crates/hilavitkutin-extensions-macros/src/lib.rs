@@ -17,11 +17,19 @@
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::{format_ident, quote};
+use syn::parse::{Parse, ParseStream, Parser};
+use syn::punctuated::Punctuated;
 use syn::{
-    Expr, ExprArray, ExprLit, Ident, ItemStruct, Lit, LitStr, Path, Token,
-    parse::{Parse, ParseStream, Parser},
+    Expr,
+    ExprArray,
+    ExprLit,
+    Ident,
+    ItemStruct,
+    Lit,
+    LitStr,
+    Path,
+    Token,
     parse_macro_input,
-    punctuated::Punctuated,
 };
 
 /// `#[export_extension]` attribute macro.
@@ -81,51 +89,55 @@ pub fn export_extension(attr: TokenStream, item: TokenStream) -> TokenStream {
     };
 
     let version_expr = match attrs.version {
-        Some(v) => match parse_semver(&v.value()) {
-            Ok((maj, min, pat)) => quote! {
-                ::hilavitkutin_extensions::ExtensionVersion {
-                    major: #maj,
-                    minor: #min,
-                    patch: #pat,
-                    _reserved: 0,
-                }
-            },
-            Err(msg) => {
-                return syn::Error::new(v.span(), msg)
-                    .to_compile_error()
-                    .into();
+        Some(v) => {
+            match parse_semver(&v.value()) {
+                Ok((maj, min, pat)) => {
+                    quote! {
+                        ::hilavitkutin_extensions::ExtensionVersion {
+                            major: #maj,
+                            minor: #min,
+                            patch: #pat,
+                            _reserved: 0,
+                        }
+                    }
+                },
+                Err(msg) => {
+                    return syn::Error::new(v.span(), msg).to_compile_error().into();
+                },
             }
         },
-        None => quote! {
-            {
-                const fn __ext_parse_env_semver() -> ::hilavitkutin_extensions::ExtensionVersion {
-                    // `env!("CARGO_PKG_VERSION")` is a compile-time
-                    // &'static str. Walk its bytes to produce the
-                    // four-field version record.
-                    let bytes = env!("CARGO_PKG_VERSION").as_bytes();
-                    let mut i = 0usize;
-                    let mut major: u16 = 0;
-                    while i < bytes.len() && bytes[i] != b'.' {
-                        major = major * 10 + (bytes[i] - b'0') as u16;
+        None => {
+            quote! {
+                {
+                    const fn __ext_parse_env_semver() -> ::hilavitkutin_extensions::ExtensionVersion {
+                        // `env!("CARGO_PKG_VERSION")` is a compile-time
+                        // &'static str. Walk its bytes to produce the
+                        // four-field version record.
+                        let bytes = env!("CARGO_PKG_VERSION").as_bytes();
+                        let mut i = 0usize;
+                        let mut major: u16 = 0;
+                        while i < bytes.len() && bytes[i] != b'.' {
+                            major = major * 10 + (bytes[i] - b'0') as u16;
+                            i += 1;
+                        }
                         i += 1;
-                    }
-                    i += 1;
-                    let mut minor: u16 = 0;
-                    while i < bytes.len() && bytes[i] != b'.' {
-                        minor = minor * 10 + (bytes[i] - b'0') as u16;
+                        let mut minor: u16 = 0;
+                        while i < bytes.len() && bytes[i] != b'.' {
+                            minor = minor * 10 + (bytes[i] - b'0') as u16;
+                            i += 1;
+                        }
                         i += 1;
+                        let mut patch: u16 = 0;
+                        while i < bytes.len() && bytes[i] != b'-' && bytes[i] != b'+' {
+                            patch = patch * 10 + (bytes[i] - b'0') as u16;
+                            i += 1;
+                        }
+                        ::hilavitkutin_extensions::ExtensionVersion {
+                            major, minor, patch, _reserved: 0,
+                        }
                     }
-                    i += 1;
-                    let mut patch: u16 = 0;
-                    while i < bytes.len() && bytes[i] != b'-' && bytes[i] != b'+' {
-                        patch = patch * 10 + (bytes[i] - b'0') as u16;
-                        i += 1;
-                    }
-                    ::hilavitkutin_extensions::ExtensionVersion {
-                        major, minor, patch, _reserved: 0,
-                    }
+                    __ext_parse_env_semver()
                 }
-                __ext_parse_env_semver()
             }
         },
     };
@@ -164,8 +176,7 @@ pub fn export_extension(attr: TokenStream, item: TokenStream) -> TokenStream {
     // init / shutdown trampolines.
     let (init_trampoline, init_slot) = match attrs.init {
         Some(path) => {
-            let fn_ident =
-                format_ident!("__ext_init_trampoline_{}", struct_ident);
+            let fn_ident = format_ident!("__ext_init_trampoline_{}", struct_ident);
             (
                 quote! {
                     // External linkage via `#[unsafe(no_mangle)]` keeps
@@ -198,14 +209,13 @@ pub fn export_extension(attr: TokenStream, item: TokenStream) -> TokenStream {
                 },
                 quote! { Some(#fn_ident) },
             )
-        }
+        },
         None => (quote! {}, quote! { None }),
     };
 
     let (shutdown_trampoline, shutdown_slot) = match attrs.shutdown {
         Some(path) => {
-            let fn_ident =
-                format_ident!("__ext_shutdown_trampoline_{}", struct_ident);
+            let fn_ident = format_ident!("__ext_shutdown_trampoline_{}", struct_ident);
             (
                 quote! {
                     #[unsafe(no_mangle)]
@@ -223,7 +233,7 @@ pub fn export_extension(attr: TokenStream, item: TokenStream) -> TokenStream {
                 },
                 quote! { Some(#fn_ident) },
             )
-        }
+        },
         None => (quote! {}, quote! { None }),
     };
 
@@ -275,23 +285,23 @@ pub fn export_extension(attr: TokenStream, item: TokenStream) -> TokenStream {
 
 /// Attribute parameters to the `#[export_extension]` macro.
 struct ExtAttrs {
-    name: Option<LitStr>,
-    version: Option<LitStr>,
+    name:                    Option<LitStr>,
+    version:                 Option<LitStr>,
     required_host_providers: Vec<Expr>, // lint:allow(no-alloc) reason: proc-macro host-context std; tracked: #205
-    providers: Vec<Path>, // lint:allow(no-alloc) reason: proc-macro host-context std; tracked: #205
-    init: Option<Path>,
-    shutdown: Option<Path>,
+    providers:               Vec<Path>, // lint:allow(no-alloc) reason: proc-macro host-context std; tracked: #205
+    init:                    Option<Path>,
+    shutdown:                Option<Path>,
 }
 
 impl ExtAttrs {
     fn parse_from(tokens: proc_macro2::TokenStream) -> syn::Result<Self> {
         let mut out = Self {
-            name: None,
-            version: None,
+            name:                    None,
+            version:                 None,
             required_host_providers: Vec::new(),
-            providers: Vec::new(),
-            init: None,
-            shutdown: None,
+            providers:               Vec::new(),
+            init:                    None,
+            shutdown:                None,
         };
 
         if tokens.is_empty() {
@@ -299,30 +309,29 @@ impl ExtAttrs {
         }
 
         let entries: Punctuated<AttrEntry, Token![,]> =
-            Punctuated::<AttrEntry, Token![,]>::parse_terminated
-                .parse2(tokens)?;
+            Punctuated::<AttrEntry, Token![,]>::parse_terminated.parse2(tokens)?;
 
         for entry in entries {
             let key_str = entry.key.to_string();
             match key_str.as_str() {
                 "name" => {
                     out.name = Some(entry.expect_lit_str()?);
-                }
+                },
                 "version" => {
                     out.version = Some(entry.expect_lit_str()?);
-                }
+                },
                 "required_host_providers" => {
                     out.required_host_providers = entry.expect_expr_array()?;
-                }
+                },
                 "providers" => {
                     out.providers = entry.expect_path_array()?;
-                }
+                },
                 "init" => {
                     out.init = Some(entry.expect_path()?);
-                }
+                },
                 "shutdown" => {
                     out.shutdown = Some(entry.expect_path()?);
-                }
+                },
                 _ => {
                     return Err(syn::Error::new(
                         entry.key.span(),
@@ -331,7 +340,7 @@ impl ExtAttrs {
                             key_str
                         ),
                     ));
-                }
+                },
             }
         }
         Ok(out)
@@ -339,8 +348,8 @@ impl ExtAttrs {
 }
 
 struct AttrEntry {
-    key: Ident,
-    _eq: Token![=],
+    key:   Ident,
+    _eq:   Token![=],
     value: Expr,
 }
 
@@ -349,34 +358,43 @@ impl Parse for AttrEntry {
         let key: Ident = input.parse()?;
         let _eq: Token![=] = input.parse()?;
         let value: Expr = input.parse()?;
-        Ok(Self { key, _eq, value })
+        Ok(Self {
+            key,
+            _eq,
+            value,
+        })
     }
 }
 
 impl AttrEntry {
     fn expect_lit_str(self) -> syn::Result<LitStr> {
         match self.value {
-            Expr::Lit(ExprLit { lit: Lit::Str(s), .. }) => Ok(s),
-            other => Err(syn::Error::new_spanned(
-                other,
-                format!(
-                    "expected string literal for `{}`",
-                    self.key
-                ),
-            )),
+            Expr::Lit(ExprLit {
+                lit: Lit::Str(s),
+                ..
+            }) => Ok(s),
+            other => {
+                Err(syn::Error::new_spanned(
+                    other,
+                    format!("expected string literal for `{}`", self.key),
+                ))
+            },
         }
     }
 
     fn expect_path(self) -> syn::Result<Path> {
         match self.value {
             Expr::Path(p) => Ok(p.path),
-            other => Err(syn::Error::new_spanned(
-                other,
-                format!("expected a type path for `{}`", self.key),
-            )),
+            other => {
+                Err(syn::Error::new_spanned(
+                    other,
+                    format!("expected a type path for `{}`", self.key),
+                ))
+            },
         }
     }
 
+    #[rustfmt::skip] // keeps the allow on the signature it governs
     fn expect_expr_array(self) -> syn::Result<Vec<Expr>> { // lint:allow(no-alloc) reason: proc-macro host-context std; tracked: #205
         match self.value {
             Expr::Array(ExprArray { elems, .. }) => {
@@ -389,6 +407,7 @@ impl AttrEntry {
         }
     }
 
+    #[rustfmt::skip] // keeps the allow on the signature it governs
     fn expect_path_array(self) -> syn::Result<Vec<Path>> { // lint:allow(no-alloc) reason: proc-macro host-context std; tracked: #205
         match self.value {
             Expr::Array(ExprArray { elems, .. }) => {
@@ -414,6 +433,7 @@ impl AttrEntry {
     }
 }
 
+#[rustfmt::skip] // keeps the allow on the signature it governs
 fn kebab_case(ident: &str) -> String { // lint:allow(no-alloc) reason: proc-macro host-context std; tracked: #205
     let mut out = String::with_capacity(ident.len());
     for (i, c) in ident.chars().enumerate() {
@@ -432,9 +452,7 @@ fn kebab_case(ident: &str) -> String { // lint:allow(no-alloc) reason: proc-macr
 fn parse_semver(s: &str) -> Result<(u16, u16, u16), &'static str> {
     let parts: Vec<&str> = s.split('.').collect(); // lint:allow(no-alloc) reason: proc-macro host-context std; tracked: #205
     if parts.len() != 3 {
-        return Err(
-            "version must be MAJOR.MINOR.PATCH (three dot-separated integers)",
-        );
+        return Err("version must be MAJOR.MINOR.PATCH (three dot-separated integers)");
     }
     let major = parts[0]
         .parse::<u16>()
@@ -444,10 +462,8 @@ fn parse_semver(s: &str) -> Result<(u16, u16, u16), &'static str> {
         .map_err(|_| "minor is not a u16 integer")?;
     // patch may carry a pre-release or build suffix; drop it.
     let patch_raw = parts[2];
-    let patch_num_end = patch_raw
-        .find(|c: char| c == '-' || c == '+')
-        .unwrap_or(patch_raw.len());
-    let patch = patch_raw[..patch_num_end]
+    let patch_num_end = patch_raw.find(['-', '+']).unwrap_or(patch_raw.len());
+    let patch = patch_raw[.. patch_num_end]
         .parse::<u16>()
         .map_err(|_| "patch is not a u16 integer")?;
     Ok((major, minor, patch))

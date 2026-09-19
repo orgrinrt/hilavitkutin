@@ -5,7 +5,7 @@
 //! the right sync conditions.
 
 use arvo::USize;
-use arvo::strategy::Identity;
+use arvo::strategy::{Additive, Identity};
 use arvo_tensor::Capacity;
 use hilavitkutin_api::FiberShape;
 use notko::Maybe;
@@ -20,11 +20,11 @@ use crate::plan::{FiberId, PhaseId};
 /// producer phase before it.
 pub struct FiberDispatch<Ctx: 'static, C: Capacity> {
     /// Monomorphised body. `Maybe::None` in skeleton state.
-    pub body: Maybe<WuFn<Ctx>>,
-    pub fiber_id: FiberId,
-    pub phase: PhaseId,
-    pub morsel_range: MorselRange,
-    pub sync_points: <C as Capacity>::Array<SyncPoint>,
+    pub body:             Maybe<WuFn<Ctx>>,
+    pub fiber_id:         FiberId,
+    pub phase:            PhaseId,
+    pub morsel_range:     MorselRange,
+    pub sync_points:      <C as Capacity>::Array<SyncPoint>,
     pub sync_point_count: USize,
 }
 
@@ -32,18 +32,18 @@ impl<Ctx: 'static, C: Capacity> FiberDispatch<Ctx, C> {
     /// Empty skeleton record with no body and zero metadata.
     pub fn new() -> Self {
         Self {
-            body: Maybe::Isnt,
-            fiber_id: FiberId::ZERO,
-            phase: PhaseId::ZERO,
-            morsel_range: MorselRange {
-                start: USize::ZERO,
-                len: USize::ZERO,
+            body:             Maybe::Isnt,
+            fiber_id:         FiberId::ZERO,
+            phase:            PhaseId::ZERO,
+            morsel_range:     MorselRange {
+                start: <USize as Identity<Additive>>::IDENTITY,
+                len:   <USize as Identity<Additive>>::IDENTITY,
             },
-            sync_points: <C as Capacity>::filled(SyncPoint {
-                fiber_id: FiberId::ZERO,
-                min_records: USize::ZERO,
+            sync_points:      <C as Capacity>::filled(SyncPoint {
+                fiber_id:    FiberId::ZERO,
+                min_records: <USize as Identity<Additive>>::IDENTITY,
             }),
-            sync_point_count: USize::ZERO,
+            sync_point_count: <USize as Identity<Additive>>::IDENTITY,
         }
     }
 }

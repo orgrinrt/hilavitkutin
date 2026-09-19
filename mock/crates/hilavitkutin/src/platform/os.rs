@@ -1,17 +1,17 @@
 //! OS platform tier: raw syscalls via libc.
 //!
-//! Backs `MemoryProviderApi` with mmap/munmap, `ClockApi` with
-//! `clock_gettime(CLOCK_MONOTONIC)`, and `ThreadPoolApi` with a
-//! pthread-based skeleton. Real generic-closure spawn + worker
-//! sizing via sysconf land in follow-up sub-round 5a4.
+//! Backs `MemoryProviderApi` with mmap/munmap and `ClockApi` with
+//! `clock_gettime(CLOCK_MONOTONIC)`. There is no thread pool here:
+//! the engine ships the `ThreadPoolApi` contract and the consumer
+//! supplies the executor that spawns OS threads, from its own code or
+//! from a crate outside the `hilavitkutin*` family, gated per target
+//! and feature.
 
 use core::ffi::c_void;
-use core::marker::PhantomData;
-use core::mem::{align_of, size_of, transmute_copy, ManuallyDrop};
 use core::ptr;
 
 use arvo::{Bool, USize};
-use hilavitkutin_api::platform::{ClockApi, MemoryProviderApi, Nanos, ThreadPoolApi};
+use hilavitkutin_api::platform::{ClockApi, MemoryProviderApi, Nanos};
 
 /// mmap/munmap-backed memory provider.
 ///
@@ -40,6 +40,7 @@ impl Default for OsMemoryProvider {
 }
 
 impl MemoryProviderApi for OsMemoryProvider {
+    #[rustfmt::skip] // keeps the allow on the signature it governs
     unsafe fn allocate(&self, len: USize, _align: USize) -> *mut u8 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer; tracked: #72
         // MAP_ANON | MAP_PRIVATE, PROT_READ | PROT_WRITE.
         // Caller responsibility (per trait contract): null on OOM.
@@ -61,7 +62,11 @@ impl MemoryProviderApi for OsMemoryProvider {
         }
     }
 
-    unsafe fn deallocate(&self, ptr: *mut u8, len: USize) { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer; tracked: #72
+    unsafe fn deallocate(
+        &self,
+        ptr: *mut u8, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer; tracked: #72
+        len: USize,
+    ) {
         // Ignore the return value; a failed munmap on a pointer
         // produced by our allocate would be a consumer bug. The
         // trait contract says the pointer becomes invalid after
@@ -70,161 +75,8 @@ impl MemoryProviderApi for OsMemoryProvider {
     }
 
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer; tracked: #72
-        // Skeleton: real mprotect wiring lands with the persistence
-        // mmap-file round. Tracked in BACKLOG under "Memory
-        // protection (mprotect)".
-    }
-}
-
-/// pthread-backed thread pool.
-///
-/// Skeleton: `spawn` accepts only a parameterless `fn()` via a
-/// trampoline over a thin function pointer. Generic-closure
-/// support with queue integration lands in sub-round 5a4.
-/// `worker_count` returns `USize(1)` until the same round wires
-/// up `sysconf(_SC_NPROCESSORS_ONLN)`.
-#[derive(Copy, Clone, Debug)]
-pub struct OsThreadPool;
-
-impl OsThreadPool {
-    /// Construct a fresh pool handle.
-    ///
-    /// Stateless skeleton; the real implementation in 5a4 will
-    /// carry a pre-allocated worker set.
-    #[inline]
-    pub const fn new() -> Self {
-        Self
-    }
-
-    /// Spawn a parameterless entry point on a fresh pthread.
-    ///
-    /// Skeleton path used by plan-stage wiring until the generic
-    /// pool lands in 5a4. The thread is spawned detached-style
-    /// (never joined) because the skeleton has no handle type;
-    /// callers must not rely on completion.
-    ///
-    /// # Safety
-    ///
-    /// `f` must be safe to call on an independent thread. The
-    /// caller must tolerate the spawn attempt failing silently
-    /// (pthread_create returning non-zero); a real pool in 5a4
-    /// will propagate the error.
-    pub fn spawn_fn(&self, f: fn()) {
-        // Box-free trampoline: smuggle the fn pointer through a
-        // usize cast (same size on every target tier-1).
-        let raw = f as usize; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: pthread_create arg smuggling via usize bit pattern; tracked: #72
-        let mut tid: libc::pthread_t = unsafe { core::mem::zeroed() };
-        let _ = unsafe {
-            libc::pthread_create(
-                &mut tid,
-                ptr::null(),
-                trampoline,
-                raw as *mut c_void,
-            )
-        };
-    }
-}
-
-/// pthread entry-point trampoline. Monomorphic over `fn()`: the
-/// raw pointer argument encodes the consumer-supplied function.
-extern "C" fn trampoline(arg: *mut c_void) -> *mut c_void {
-    let raw = arg as usize; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: trampoline arg smuggled as usize bit pattern; tracked: #72
-    // SAFETY: `raw` was produced from a `fn()` pointer in
-    // `OsThreadPool::spawn_fn`. The cast round-trip preserves the
-    // ABI-compatible bit pattern on all tier-1 targets.
-    let f: fn() = unsafe { core::mem::transmute::<usize, fn()>(raw) }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: recover fn() from smuggled usize; tracked: #72
-    f();
-    ptr::null_mut()
-}
-
-/// Monomorphic per-F pthread entry-point for the generic `spawn`. The `arg`
-/// pointer value carries the pointer-sized `F` by value (its bytes were copied
-/// into the slot by `spawn`). Reconstruct `F` and call it once.
-/// Compile-time guard that `F` fits the pthread argument slot, so `spawn`'s
-/// `transmute_copy` into a `*mut c_void` reads no out-of-bounds bytes. Bad `F` is
-/// a monomorphisation-time error via the associated const.
-struct PtrSizedClosure<F>(PhantomData<F>);
-
-impl<F> PtrSizedClosure<F> {
-    const CHECK: () = {
-        assert!(
-            size_of::<F>() <= size_of::<*mut c_void>(),
-            "OsThreadPool::spawn: closure must be pointer-sized (no alloc to box a fatter closure)"
-        );
-        assert!(
-            align_of::<F>() <= align_of::<*mut c_void>(),
-            "OsThreadPool::spawn: closure over-aligned for the pthread argument slot"
-        );
-    };
-}
-
-extern "C" fn tramp<F: FnOnce()>(arg: *mut c_void) -> *mut c_void {
-    // SAFETY: `arg`'s bit pattern is exactly the bytes of `F` (spawn checked
-    // size_of::<F>() <= size_of::<*mut c_void>()). `transmute_copy` reads
-    // size_of::<F>() bytes from `&arg`, reconstructing the closure by value; the
-    // original was held in `ManuallyDrop` so this is the sole owning copy.
-    let f: F = unsafe { transmute_copy::<*mut c_void, F>(&arg) };
-    f();
-    ptr::null_mut()
-}
-
-impl Default for OsThreadPool {
-    #[inline]
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl ThreadPoolApi for OsThreadPool {
-    fn spawn<F>(&self, f: F)
-    where
-        F: FnOnce() + Send + 'static,
-    {
-        // No-alloc generic-closure handoff: the closure is copied by value into
-        // the pthread `*mut c_void` argument, so F must be pointer-sized. The
-        // engine's worker closure captures exactly one pointer (a Send-wrapped
-        // `*const WorkerCtx`), so it fits. A fatter closure is a compile error
-        // here, never a heap allocation (no `Box`, no alloc on the engine path).
-        // Force the compile-time size/align check (an inline `const {}` block
-        // referencing a generic is rejected under `generic_const_exprs`, so the
-        // assert lives in an associated const evaluated here at monomorphisation).
-        let () = PtrSizedClosure::<F>::CHECK;
-        // Hold F so its destructor does not run at the call site; the trampoline
-        // (on a successful spawn) owns the copy and drops it after calling.
-        let held = ManuallyDrop::new(f);
-        // SAFETY: F is pointer-sized (checked above); copy its bytes into the
-        // argument value. `held` keeps a bit-identical copy that is only dropped
-        // on the spawn-failure path below (so F is dropped exactly once).
-        let arg: *mut c_void = unsafe { transmute_copy::<F, *mut c_void>(&held) };
-
-        // SAFETY: the attr lifecycle is local; the thread is detached, so no join
-        // handle is retained. The persistent pool's shutdown ordering comes from a
-        // Scheduler-owned worker-exit-counter barrier, not from joining here.
-        let rc = unsafe {
-            let mut attr: libc::pthread_attr_t = core::mem::zeroed();
-            libc::pthread_attr_init(&mut attr);
-            libc::pthread_attr_setdetachstate(&mut attr, libc::PTHREAD_CREATE_DETACHED);
-            let mut tid: libc::pthread_t = core::mem::zeroed();
-            let rc = libc::pthread_create(&mut tid, &attr, tramp::<F>, arg);
-            libc::pthread_attr_destroy(&mut attr);
-            rc
-        };
-
-        if rc != 0 {
-            // Spawn failed (the trampoline will never run). Reclaim F so its
-            // destructor runs exactly once. The contract is best-effort: a failed
-            // spawn is silent, per the `ThreadPoolApi` doc.
-            // SAFETY: no thread received the copy, so dropping `held`'s F is the
-            // sole owner drop.
-            let _ = ManuallyDrop::into_inner(held);
-        }
-    }
-
-    fn worker_count(&self) -> USize {
-        // SAFETY: `sysconf` is a pure query; `_SC_NPROCESSORS_ONLN` is a stable
-        // selector returning the count of online processors (or -1 on error).
-        let n = unsafe { libc::sysconf(libc::_SC_NPROCESSORS_ONLN) };
-        USize(if n < 1 { 1 } else { n as usize }) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: sysconf returns c_long; floor at one core; tracked: #121
+        // FIXME: no mprotect call yet; the wiring lands with the persistence
+        // mmap-file round, BACKLOG "Memory protection (mprotect)".
     }
 }
 
@@ -250,7 +102,7 @@ impl Default for OsClock {
 impl ClockApi for OsClock {
     fn now_ns(&self) -> Nanos {
         let mut ts = libc::timespec {
-            tv_sec: 0,
+            tv_sec:  0,
             tv_nsec: 0,
         };
         // SAFETY: `ts` is a stack-owned timespec; libc writes
@@ -258,7 +110,9 @@ impl ClockApi for OsClock {
         // value is ignored; CLOCK_MONOTONIC is available on every
         // tier-1 unix target.
         let _ = unsafe { libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut ts) };
-        let raw = (ts.tv_sec as u64).wrapping_mul(1_000_000_000).wrapping_add(ts.tv_nsec as u64); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: CLOCK_MONOTONIC timespec -> ns bit pattern for Nanos; tracked: #72
+        let sec = ts.tv_sec as u64; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: CLOCK_MONOTONIC timespec -> ns bit pattern for Nanos; tracked: #72
+        let nsec = ts.tv_nsec as u64; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: CLOCK_MONOTONIC timespec -> ns bit pattern for Nanos; tracked: #72
+        let raw = sec.wrapping_mul(1_000_000_000).wrapping_add(nsec);
         Nanos::from_raw(raw)
     }
 }

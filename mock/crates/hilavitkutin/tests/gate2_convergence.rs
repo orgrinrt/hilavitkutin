@@ -14,13 +14,19 @@ use core::cell::{Cell, UnsafeCell};
 use core::mem::MaybeUninit;
 
 use arvo::{Bool, USize};
-use hilavitkutin::OsThreadPool;
+mod common;
+use common::TestExecutor;
 use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{
-    ColumnReaderApi, ColumnWriterApi, EachApi, HasColumnReader, HasColumnWriter, HasEach,
+    ColumnReaderApi,
+    ColumnWriterApi,
+    EachApi,
+    HasColumnReader,
+    HasColumnWriter,
+    HasEach,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::store::Column;
@@ -33,12 +39,15 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 }
 
 struct BumpProvider<const N: usize> {
-    buf: UnsafeCell<[MaybeUninit<u8>; N]>,
+    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
     used: Cell<usize>,
 }
 impl<const N: usize> BumpProvider<N> {
     fn new() -> Self {
-        Self { buf: UnsafeCell::new([const { MaybeUninit::uninit() }; N]), used: Cell::new(0) }
+        Self {
+            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
+            used: Cell::new(0),
+        }
     }
 }
 unsafe impl<const N: usize> Send for BumpProvider<N> {}
@@ -56,7 +65,9 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
         // SAFETY: aligned + len <= N, in bounds of the owned buffer.
         unsafe { base.add(aligned) }
     }
+
     unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
@@ -76,17 +87,10 @@ type ColF = Cons<Column<Fv>, Empty>;
 // reads its inputs through the reader, which maps relative -> absolute.
 struct Filler;
 impl BuilderInput for Filler {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for Filler {
-    type Read = ColIn;
-    type Write = ColF;
-    type Hint = (
-        hilavitkutin_api::hint::Immediate,
-        hilavitkutin_api::hint::Atomic,
-        hilavitkutin_api::hint::Normal,
-    );
     type Ctx<'frame> = EngineCtx<
         'frame,
         ColIn,
@@ -95,6 +99,14 @@ impl WorkUnit<Always> for Filler {
         ColPtrCons<Inv, ColPtrNil>,
         ColPtrCons<Fv, ColPtrNil>,
     >;
+    type Hint = (
+        hilavitkutin_api::hint::Immediate,
+        hilavitkutin_api::hint::Atomic,
+        hilavitkutin_api::hint::Normal,
+    );
+    type Read = ColIn;
+    type Write = ColF;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: In host-populated for N records; Fv reserved + exclusive;
@@ -123,14 +135,14 @@ fn run_parallel_single_trunk_phase_converges() {
     // arena) is alive; each slot is written once here before the run.
     let fv_base = scheduler.__bindings().__ptr().as_ptr() as *mut u32;
     let in_base = scheduler.__bindings().__tail().__ptr().as_ptr() as *mut u32;
-    for i in 0..N {
+    for i in 0 .. N {
         unsafe {
             *in_base.add(i) = i as u32;
             *fv_base.add(i) = u32::MAX;
         }
     }
 
-    let pool = OsThreadPool::new();
+    let pool = TestExecutor::new();
     let mut scheduler = core::pin::pin!(scheduler);
     let result = scheduler.as_mut().run_parallel(&pool);
     assert!(matches!(result, Outcome::Ok(())));
@@ -139,7 +151,7 @@ fn run_parallel_single_trunk_phase_converges() {
     // the single trunk over disjoint slices covering [0,N). A gap leaves the
     // poison value; an overlap or wrong slice writes the wrong i.
     let base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const u32;
-    for i in 0..N {
+    for i in 0 .. N {
         // SAFETY: Fv holds N reserved records; the scheduler is alive.
         let v = unsafe { *base.add(i) };
         assert_eq!(

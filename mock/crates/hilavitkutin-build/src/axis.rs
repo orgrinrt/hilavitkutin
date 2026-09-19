@@ -11,9 +11,10 @@
 ///
 /// `Iss64` stands for the baseline 64-bit instruction set: the
 /// neutral default when no specific feature is detected.
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq)]
 pub enum TargetAxis {
     /// Baseline 64-bit instruction set; no SIMD assumed.
+    #[default]
     Iss64,
     /// x86_64 with AVX2.
     Avx2,
@@ -25,17 +26,12 @@ pub enum TargetAxis {
     Sve,
 }
 
-impl Default for TargetAxis {
-    fn default() -> Self {
-        TargetAxis::Iss64
-    }
-}
-
 /// Optimisation tier. Additive per DESIGN §Optimisation tiers;
 /// `PgoBolt` implies PGO data + BOLT post-link rewriting.
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq)]
 pub enum TierAxis {
     /// Plain rustc output, no post-link rewriting.
+    #[default]
     Static,
     /// Static BOLT (+3-5% via reordered blocks).
     StaticBolt,
@@ -45,18 +41,13 @@ pub enum TierAxis {
     PgoBolt,
 }
 
-impl Default for TierAxis {
-    fn default() -> Self {
-        TierAxis::Static
-    }
-}
-
 /// LLVM pass-pipeline classification. Whether the pass plugin
 /// registers callbacks at `VectorizerStartEP`, `OptimizerLastEP`,
 /// both, or neither.
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq)]
 pub enum PassesAxis {
     /// Default LLVM pipeline; no extra callbacks.
+    #[default]
     Standard,
     /// `VectorizerStartEP` callbacks (IRCE, LoopPredication, etc.).
     Vectorizer,
@@ -64,10 +55,4 @@ pub enum PassesAxis {
     OptimizerLast,
     /// Both `VectorizerStartEP` and `OptimizerLastEP` callbacks.
     Full,
-}
-
-impl Default for PassesAxis {
-    fn default() -> Self {
-        PassesAxis::Standard
-    }
 }

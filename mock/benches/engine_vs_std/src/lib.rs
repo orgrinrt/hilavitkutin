@@ -41,6 +41,7 @@ use hilavitkutin_providers::ArenaColumnStorage;
 pub mod accumulator;
 pub mod branching;
 pub mod element_wise;
+pub mod executor;
 pub mod wide_parallel;
 
 // ----- the design's parity target, expressed as gate tolerances -----
@@ -116,7 +117,7 @@ fn fnv1a(acc: u64, byte: u8) -> u64 {
 }
 
 pub fn fnv1a_u32_slice(vals: &[u32]) -> u64 {
-    let mut h = 0xcbf2_9ce4_8422_2325u64;
+    let mut h = 0xCBF2_9CE4_8422_2325u64;
     for v in vals {
         for b in v.to_le_bytes() {
             h = fnv1a(h, b);
@@ -129,7 +130,7 @@ pub fn fnv1a_u32_slice(vals: &[u32]) -> u64 {
 
 pub struct HeapBump {
     base: *mut u8,
-    cap: usize,
+    cap:  usize,
     used: Cell<usize>,
     // Owns the backing allocation; `base` points into it. The heap block does
     // not move when the Box is moved into the struct, so `base` stays valid.
@@ -139,7 +140,12 @@ impl HeapBump {
     pub fn new(bytes: usize) -> Self {
         let mut buf: Box<[MaybeUninit<u8>]> = vec![MaybeUninit::uninit(); bytes].into_boxed_slice();
         let base = buf.as_mut_ptr() as *mut u8;
-        Self { base, cap: bytes, used: Cell::new(0), _buf: buf }
+        Self {
+            base,
+            cap: bytes,
+            used: Cell::new(0),
+            _buf: buf,
+        }
     }
 }
 unsafe impl Send for HeapBump {}
@@ -148,14 +154,16 @@ impl MemoryProviderApi for HeapBump {
     unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
         let used = self.used.get();
         let align = align.0.max(1);
-        let aligned = (used + align - 1) / align * align;
+        let aligned = used.div_ceil(align) * align;
         if aligned + len.0 > self.cap {
             return core::ptr::null_mut();
         }
         self.used.set(aligned + len.0);
         unsafe { self.base.add(aligned) }
     }
+
     unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: arvo::Bool, _write: arvo::Bool) {}
 }
 
@@ -175,21 +183,24 @@ pub fn arena_bytes(columns: usize, n: usize) -> usize {
 #[derive(Copy, Clone)]
 pub struct Stat {
     pub median_ns: u128,
-    pub min_ns: u128,
+    pub min_ns:    u128,
 }
 
 pub fn bench<F: FnMut()>(warmup: usize, iters: usize, mut f: F) -> Stat {
-    for _ in 0..warmup {
+    for _ in 0 .. warmup {
         f();
     }
     let mut samples = Vec::with_capacity(iters);
-    for _ in 0..iters {
+    for _ in 0 .. iters {
         let t = Instant::now();
         f();
         samples.push(t.elapsed().as_nanos());
     }
     samples.sort_unstable();
-    Stat { median_ns: samples[samples.len() / 2], min_ns: samples[0] }
+    Stat {
+        median_ns: samples[samples.len() / 2],
+        min_ns:    samples[0],
+    }
 }
 
 pub fn iters_for(n: usize) -> usize {
@@ -199,12 +210,12 @@ pub fn iters_for(n: usize) -> usize {
 // ----- one workload's measured result -----
 
 pub struct WorkloadMeasure {
-    pub name: &'static str,
-    pub n: usize,
-    pub eng_startup: Stat,
-    pub std_startup: Stat,
-    pub eng_runtime: Stat,
-    pub std_runtime: Stat,
+    pub name:            &'static str,
+    pub n:               usize,
+    pub eng_startup:     Stat,
+    pub std_startup:     Stat,
+    pub eng_runtime:     Stat,
+    pub std_runtime:     Stat,
     /// Multi-threaded engine runtime (`run_parallel`), `Some` only for
     /// workloads with multiple trunks the engine can spread across cores.
     /// Single-fiber / unit-outer arms leave it `None` (no trunk parallelism to
@@ -215,18 +226,20 @@ pub struct WorkloadMeasure {
     /// identical output. This is the FAIR bar for the parallel engine arm (N-core
     /// engine vs N-core std), `Some` exactly when `eng_runtime_par` is.
     pub std_runtime_par: Option<Stat>,
-    pub checksum_ok: bool,
-    pub eng_hash: u64,
-    pub std_hash: u64,
+    pub checksum_ok:     bool,
+    pub eng_hash:        u64,
+    pub std_hash:        u64,
 }
 
 impl WorkloadMeasure {
     pub fn startup_ratio(&self) -> f64 {
         self.eng_startup.median_ns as f64 / self.std_startup.median_ns.max(1) as f64
     }
+
     pub fn runtime_ratio(&self) -> f64 {
         self.eng_runtime.median_ns as f64 / self.std_runtime.median_ns.max(1) as f64
     }
+
     /// The FAIR parallel ratio: multi-threaded engine vs optimal multi-threaded
     /// std (both across `std_threads()` cores). `None` when the workload was not
     /// measured parallel, or has no std-parallel baseline. This is what the
@@ -250,10 +263,12 @@ impl WorkloadMeasure {
 }
 
 /// Thread count for the optimal multi-threaded std baselines. Matches the
-/// engine's `OsThreadPool` worker count (the machine's available parallelism) so
-/// the parallel arms compare equal core budgets.
+/// worker count `BenchExecutor` gives the engine (the machine's available
+/// parallelism) so the parallel arms compare equal core budgets.
 pub fn std_threads() -> usize {
-    std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1)
+    std::thread::available_parallelism()
+        .map(|n| n.get())
+        .unwrap_or(1)
 }
 
 /// Execution mode a gate expectation applies to.
@@ -288,7 +303,7 @@ pub enum Mode {
 /// at N = 4096 / 65536 / 1048576 / 4194304. The parallel rows are the
 /// multi-threaded engine against optimal multi-threaded std (equal cores), the
 /// fair bar; earlier parallel rows compared against a single-threaded loop.
-pub fn expected_ratio(name: &'static str, n: usize, mode: Mode) -> f64 {
+pub fn expected_ratio(name: &'static str, _n: usize, mode: Mode) -> f64 {
     match (name, mode) {
         // Deep single fiber, within-fiber fusion: spec parity target. Already
         // green and crossing to a win at scale. Single-core only (one trunk).

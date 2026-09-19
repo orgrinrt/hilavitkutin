@@ -1,0 +1,50 @@
+e4bc16ba chore: lock src changelist for the defect-band round
+7aa6751f docs: record band 0 outcome and its three findings
+8f13433c fix: make std spawn spawn and deallocate free with its real alignment
+8656e8d9 docs: plan the defect-band source changes
+c96e6c66 docs: deallocate carries the alignment it was allocated with
+6fc10a21 docs: settle the deallocate alignment contract
+eef3b197 docs: open round on reachable bodies contradicting contracts
+07f7202d chore: close design round 202607191110
+a2ca7bcf docs: fold verification findings into r7, reclassify W5
+c6067304 docs: correct eleven fact-check findings in r7 and the audit
+42c5b15b docs: record op resolution on canon authority and d1 sequencing
+2e726b3e docs: fold the canonical-mirror and granularity passes into r7
+c3f78d44 docs: engine roadmap r7 ordered from the three-way ledger
+daf99698 docs: three-way audit of canon, source, and roadmap claims
+d6e01c39 wip: park a4 post-review round pending re-chart
+d4f6bf3d docs: open src cl for the coverage invariant catalogue
+860c5cac docs: sketch the fibercons nest wireability question
+7c02c605 chore: lock doc changelist for the coverage invariant
+59f2c5d2 docs: state the fiber-descriptor coverage invariant
+9f02eb06 docs: open doc cl for the coverage invariant
+67d4ce16 docs: open round for the fiber-descriptor coverage invariant
+1b3b4fb6 docs: regenerate rendered docs for the parallel windowing statement
+e8487c72 chore: close design round for a4 parallel per-fiber windows
+d8d28ef7 chore: lock src changelist for a4 parallel per-fiber windows
+639b71c5 feat: window each fiber by its own size on the parallel path
+f13421b9 docs: open src cl for a4 parallel per-fiber windows
+b9cc2c86 chore: lock doc changelist for a4 parallel per-fiber windows
+a1820797 docs: state per-fiber windowing on the parallel dispatch path
+bef353c4 docs: open doc cl for a4 parallel per-fiber windows
+c85ac613 docs: sketch a4 parallel per-fiber windows and open its round
+4a7515dc docs: give every r6 leaf an assigned resolution
+6c4e7006 docs: re-chart engine roadmap against canon as r6
+bad6ee64 feat: add Plannable declaration trait and the HintExt hint slot
+32161ce6 feat: invert run dispatch to fiber-outer morsel-inner per plan window
+6a9983ee feat: per-fiber l1 morsel-window formula from runcfg budget
+8a30758e feat: erased resource addressing and ctx snapshot per storage bench
+82673e9e feat: add hilavitkutin-api-macros crate with ResourceFootprint derive
+009f76fc feat: add CollectionBytes + ResourceFootprint footprint traits
+2b65194c docs: sketch A3-2 resource-collection footprint surface
+272dee96 docs: re-chart A3 morsel formula on the canonical R5 resource model
+9e80d835 feat: add per-store element-byte-size collection for L1 morsel formula
+2e799053 docs: sketch A3 per-store size collection for L1 morsel formula
+aaa6097a feat: add run_one_trunk_windowed for fiber-outer morsel dispatch
+906949f1 docs: sketch A2a per-fiber morsel loop drives per-trunk dispatch
+90c7529c docs: backlog note for generalized asm-emission contract tests
+06e68715 docs: granular roadmap, sketch plan, asm-contract-test discipline
+abe3a4e6 feat: thread per-fiber morsel size onto FiberDispatch
+7fe3f203 docs: resolve arc-audit roadmap (head+tail/overlap in scope, internals-first)
+9901b875 docs: critical arc audit and updated canonical roadmap
+1796fe39 refactor: rename morsel_sizes to morsel_windows for per-fiber morsel slice 1

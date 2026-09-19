@@ -14,8 +14,8 @@
 //! capacity types rather than CeilingDiv-derived: this decouples
 //! per-fiber footprint from pipeline-wide caps.
 
-use arvo::strategy::Identity;
 use arvo::USize;
+use arvo::strategy::{Additive, Identity};
 use arvo_bitmask::NodeId;
 use arvo_tensor::Capacity;
 
@@ -39,21 +39,24 @@ pub use access::AccessMask;
 pub use column::{ColumnClassMap, ColumnClassification};
 pub use dims::{DefaultPlanDims, PlanDims};
 pub use dirty::{DirtyMask, DirtyMasks};
-pub use fiber::{
-    AccumSlot, AccumType, Fiber, FiberGrouping, HeadTailConvergence, MergeOp,
-};
+pub use fiber::{AccumSlot, AccumType, Fiber, FiberGrouping, HeadTailConvergence, MergeOp};
 pub use graph::{DependencyGraph, EdgeKind};
 pub use grouping::{
-    group_n, phase_count, phase_of, plan_phase_count, trunk_of, BundleMasks, UnitAccess,
+    BundleMasks,
+    UnitAccess,
+    group_n,
+    phase_count,
+    phase_of,
+    plan_phase_count,
+    trunk_of,
 };
+pub use hilavitkutin_api::{FiberId, PhaseId, TrunkId, UnitId};
 pub use inputs::{MorselBudget, PlanInputs};
+pub use phase::{Phase, PhaseBoundaries, PhaseConfig};
 pub use project::plan_inputs_from_bundle;
 pub use steps::{FiberLayout, PlanError};
-pub use phase::{Phase, PhaseBoundaries, PhaseConfig};
 pub use trunk::{BlockPartition, Branch, Bridge, Trunk, TrunkComponent};
 pub use unit::{CostTable, UnitMeta};
-
-pub use hilavitkutin_api::{FiberId, PhaseId, TrunkId, UnitId};
 
 /// Complete plan-stage output.
 ///
@@ -63,24 +66,24 @@ pub use hilavitkutin_api::{FiberId, PhaseId, TrunkId, UnitId};
 pub struct ExecutionPlan<D: PlanDims> {
     /// Waist-delimited phases (in dispatch order). Each `Phase` carries a
     /// `(trunk_offset, trunk_count)` range into the flat `trunks` pool.
-    pub phases: <D::Phases as Capacity>::Array<Phase>,
-    pub phase_count: USize,
+    pub phases:            <D::Phases as Capacity>::Array<Phase>,
+    pub phase_count:       USize,
     /// Flat plan-wide trunk pool. Each `Trunk` carries a `(fiber_offset,
     /// fiber_count)` range into the flat `fibers` pool.
-    pub trunks: <D::Trunks as Capacity>::Array<Trunk>,
-    pub trunk_count: USize,
+    pub trunks:            <D::Trunks as Capacity>::Array<Trunk>,
+    pub trunk_count:       USize,
     /// Flat plan-wide fiber pool. The CSR flatten collapses the dense
     /// per-phase, per-trunk fiber nesting onto this single pool, sized by
     /// the plan-wide `D::Fibers` cap.
-    pub fibers: <D::Fibers as Capacity>::Array<Fiber<D>>,
-    pub fiber_count: USize,
+    pub fibers:            <D::Fibers as Capacity>::Array<Fiber<D>>,
+    pub fiber_count:       USize,
     /// Per-unit metadata array, addressed by `UnitId`.
-    pub unit_meta: <D::Units as Capacity>::Array<UnitMeta>,
-    pub unit_count: USize,
+    pub unit_meta:         <D::Units as Capacity>::Array<UnitMeta>,
+    pub unit_count:        USize,
     /// Per-fiber column classification.
-    pub column_class: ColumnClassMap<D>,
+    pub column_class:      ColumnClassMap<D>,
     /// Per-fiber dirty masks (incremental-skip propagation).
-    pub dirty: DirtyMasks<D::Fibers, D::Columns>,
+    pub dirty:             DirtyMasks<D::Fibers, D::Columns>,
     /// Per-fiber morsel WINDOW size. `morsel_windows[f]` is the canonical
     /// per-morsel chunk size for fiber `f` (spec domain 12:
     /// `(L1_usable / Σ write_bytes).clamp(MIN, MAX) & !3`); each fiber covers
@@ -90,13 +93,13 @@ pub struct ExecutionPlan<D: PlanDims> {
     /// dispatch still windows uniformly by `Cfg::MORSEL_SIZE`, so this value is
     /// computed-but-unconsumed. The L1 window formula + dispatch consumption land
     /// in the per-fiber morsel slices (blueprint 202606201400; tracked #341).
-    pub morsel_windows: <D::Fibers as Capacity>::Array<USize>,
+    pub morsel_windows:    <D::Fibers as Capacity>::Array<USize>,
     /// RCM renumber permutation: `rcm_order[new_pos]` is the `UnitId`
     /// placed at that position by the step-4 bandwidth-reduction pass.
     /// A locality renumber consumed by dispatch codegen for arena
     /// layout, not the dispatch order (dispatch stays topological via
     /// `unit_meta`). Zero-filled before the chain populates it.
-    pub rcm_order: <D::Units as Capacity>::Array<UnitId>,
+    pub rcm_order:         <D::Units as Capacity>::Array<UnitId>,
     /// Per-unit predecessor masks (carrier-position space) for runtime
     /// incremental skip (domain 16). `predecessor_masks[v]` has bit `u`
     /// set for every direct dependency edge `u -> v`, so the runtime can
@@ -105,7 +108,7 @@ pub struct ExecutionPlan<D: PlanDims> {
     /// Per-unit read access masks, retained from `PlanInputs`. The runtime
     /// seeds the dirty set by intersecting the changed-store mask against
     /// each unit's reads.
-    pub read_masks: <D::Units as Capacity>::Array<AccessMask<D::Stores>>,
+    pub read_masks:        <D::Units as Capacity>::Array<AccessMask<D::Stores>>,
 }
 
 impl<D: PlanDims> ExecutionPlan<D>
@@ -118,20 +121,22 @@ where
     /// `Default`.
     pub fn new() -> Self {
         Self {
-            phases: <D::Phases as Capacity>::filled(Phase::new()),
-            phase_count: USize::ZERO,
-            trunks: <D::Trunks as Capacity>::filled(Trunk::new()),
-            trunk_count: USize::ZERO,
-            fibers: <D::Fibers as Capacity>::filled(Fiber::new()),
-            fiber_count: USize::ZERO,
-            unit_meta: <D::Units as Capacity>::filled(UnitMeta::new()),
-            unit_count: USize::ZERO,
-            column_class: ColumnClassMap::new(),
-            dirty: DirtyMasks::new(),
-            morsel_windows: <D::Fibers as Capacity>::filled(USize::ZERO),
-            rcm_order: <D::Units as Capacity>::filled(UnitId::ZERO),
+            phases:            <D::Phases as Capacity>::filled(Phase::new()),
+            phase_count:       <USize as Identity<Additive>>::IDENTITY,
+            trunks:            <D::Trunks as Capacity>::filled(Trunk::new()),
+            trunk_count:       <USize as Identity<Additive>>::IDENTITY,
+            fibers:            <D::Fibers as Capacity>::filled(Fiber::new()),
+            fiber_count:       <USize as Identity<Additive>>::IDENTITY,
+            unit_meta:         <D::Units as Capacity>::filled(UnitMeta::new()),
+            unit_count:        <USize as Identity<Additive>>::IDENTITY,
+            column_class:      ColumnClassMap::new(),
+            dirty:             DirtyMasks::new(),
+            morsel_windows:    <D::Fibers as Capacity>::filled(
+                <USize as Identity<Additive>>::IDENTITY,
+            ),
+            rcm_order:         <D::Units as Capacity>::filled(UnitId::ZERO),
             predecessor_masks: <D::Units as Capacity>::filled(D::AdjRow::default()),
-            read_masks: <D::Units as Capacity>::filled(AccessMask::empty()),
+            read_masks:        <D::Units as Capacity>::filled(AccessMask::empty()),
         }
     }
 }
@@ -306,13 +311,8 @@ where
     // so the running prefix sum always brackets the flat pool exactly. A
     // hard bound-check that errors past the id-width cap is a follow-up
     // (#641).
-    let layout = steps::project_fiber_components::<D>(
-        &dag,
-        &partition,
-        &waists,
-        &topo,
-        inputs.unit_count,
-    );
+    let layout =
+        steps::project_fiber_components::<D>(&dag, &partition, &waists, &topo, inputs.unit_count);
     plan.trunk_count = layout.trunk_count;
     plan.fiber_count = layout.fiber_count;
     plan.trunks = layout.trunks;
@@ -378,7 +378,9 @@ where
         let raw = dirty.per_fiber.as_ref()[f].raw();
         // Move bits into the columns-shaped mask one by one.
         let mut store = 0;
-        while store < cap_size(<D::Stores as Capacity>::CAP) && store < 64 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: AccessMask 64-bit window per skeleton; tracked: #72
+        while store < cap_size(<D::Stores as Capacity>::CAP) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: AccessMask 64-bit window per skeleton; tracked: #72
+            && store < 64
+        {
             let bit = (raw.0 >> store) & 1; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: bit extraction internal; tracked: #72
             if bit == 1 {
                 let pf = plan.dirty.per_fiber.as_ref()[f];
@@ -397,8 +399,7 @@ where
     // Step 10: phase configs. Store onto plan.phases[i].config. Pass
     // the unit count so the last phase's width is computed against
     // the real range, not the prior `start + 1` lower-bound.
-    let configs =
-        steps::select_phase_configs::<D>(&waists, inputs.record_count, inputs.unit_count);
+    let configs = steps::select_phase_configs::<D>(&waists, inputs.record_count, inputs.unit_count);
     let mut i = 0;
     while i < plan.phase_count.0 && i < cap_size_phases::<D>() {
         plan.phases.as_mut()[i].config = configs.as_ref()[i];
@@ -470,6 +471,7 @@ type SpectralFloatVec = arvo::FastFloat<f32>; // lint:allow(no-bare-numeric) rea
 /// cleanly. The dimension is a type; this is the value-position
 /// projection of its `CAP`.
 #[inline]
+#[rustfmt::skip] // keeps the allow on the signature it governs
 fn cap_size_phases<D: PlanDims>() -> usize { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: value-position cap projection; rust grammar requires usize loop bound; tracked: #72
     cap_size(<D::Phases as Capacity>::CAP)
 }

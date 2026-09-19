@@ -8,10 +8,9 @@
 //! per-unit fiber assignment. `Fiber` is the shipped plan-stage record
 //! that the dispatch stage walks.
 
-use arvo::strategy::Identity;
+use arvo::strategy::{Additive, Identity};
 use arvo::{Bool, USize};
 use arvo_tensor::Capacity;
-
 use hilavitkutin_api::{FiberId, StoreId, UnitId};
 use notko::Maybe;
 
@@ -22,7 +21,7 @@ use crate::plan::dims::PlanDims;
 /// 5 to 8). Sized by the unit capacity `D::Units`.
 pub struct FiberGrouping<D: PlanDims> {
     /// `assignment[i]` is the FiberId that unit `i` belongs to.
-    pub assignment: <D::Units as Capacity>::Array<FiberId>,
+    pub assignment:  <D::Units as Capacity>::Array<FiberId>,
     /// Number of fibers actually used.
     pub fiber_count: USize,
 }
@@ -30,8 +29,8 @@ pub struct FiberGrouping<D: PlanDims> {
 impl<D: PlanDims> FiberGrouping<D> {
     pub fn new() -> Self {
         Self {
-            assignment: <D::Units as Capacity>::filled(FiberId::ZERO),
-            fiber_count: USize::ZERO,
+            assignment:  <D::Units as Capacity>::filled(FiberId::ZERO),
+            fiber_count: <USize as Identity<Additive>>::IDENTITY,
         }
     }
 }
@@ -66,9 +65,10 @@ impl<D: PlanDims> core::fmt::Debug for FiberGrouping<D> {
 /// Marks how head and tail accumulators combine. Pure-additive
 /// arithmetic is the common case; min/max give reductive aggregation
 /// paths; custom punts to a consumer-provided merge fn.
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Default)]
 pub enum AccumType {
     /// `+` (also `-` after negation).
+    #[default]
     Sum,
     /// `min(...)`.
     Min,
@@ -84,16 +84,11 @@ pub enum AccumType {
     Custom,
 }
 
-impl Default for AccumType {
-    fn default() -> Self {
-        Self::Sum
-    }
-}
-
 /// Merge operation between head and tail accumulators.
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Default)]
 pub enum MergeOp {
     /// `head + tail`.
+    #[default]
     Add,
     /// `min(head, tail)`.
     Min,
@@ -109,12 +104,6 @@ pub enum MergeOp {
     Custom,
 }
 
-impl Default for MergeOp {
-    fn default() -> Self {
-        Self::Add
-    }
-}
-
 /// One accumulator slot in a head+tail-eligible fiber.
 ///
 /// The slot references the storage the accumulator lives in (via
@@ -124,7 +113,7 @@ impl Default for MergeOp {
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct AccumSlot {
     /// Store holding the accumulator's working data.
-    pub store_id: StoreId,
+    pub store_id:   StoreId,
     /// How values combine into this slot.
     pub accum_type: AccumType,
 }
@@ -132,7 +121,7 @@ pub struct AccumSlot {
 impl AccumSlot {
     pub const fn new() -> Self {
         Self {
-            store_id: StoreId(USize::ZERO),
+            store_id:   StoreId(<USize as Identity<Additive>>::IDENTITY),
             accum_type: AccumType::Sum,
         }
     }
@@ -155,22 +144,22 @@ impl Default for AccumSlot {
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct HeadTailConvergence {
     /// Accumulator on the head walker (units flowing forward).
-    pub head_accum: AccumSlot,
+    pub head_accum:   AccumSlot,
     /// Accumulator on the tail walker (units flowing backward).
-    pub tail_accum: AccumSlot,
+    pub tail_accum:   AccumSlot,
     /// Where the merged result lands.
     pub merge_target: AccumSlot,
     /// How head and tail combine.
-    pub merge_op: MergeOp,
+    pub merge_op:     MergeOp,
 }
 
 impl HeadTailConvergence {
     pub const fn new() -> Self {
         Self {
-            head_accum: AccumSlot::new(),
-            tail_accum: AccumSlot::new(),
+            head_accum:   AccumSlot::new(),
+            tail_accum:   AccumSlot::new(),
             merge_target: AccumSlot::new(),
-            merge_op: MergeOp::Add,
+            merge_op:     MergeOp::Add,
         }
     }
 }
@@ -190,37 +179,39 @@ impl Default for HeadTailConvergence {
 /// (Topic 3 audit-2 m3). Both projected from one `D: PlanDims`.
 pub struct Fiber<D: PlanDims> {
     /// Stable id within the enclosing plan.
-    pub id: FiberId,
+    pub id:                FiberId,
     /// Units in the fiber (in dispatch order). `unit_count` records
     /// how many of the unit-per-fiber slots are populated.
-    pub units: <D::UnitsPerFiber as Capacity>::Array<UnitId>,
-    pub unit_count: USize,
+    pub units:             <D::UnitsPerFiber as Capacity>::Array<UnitId>,
+    pub unit_count:        USize,
     /// Stores the fiber touches (read or write). `column_count`
     /// records the populated count.
-    pub columns: <D::ColumnsPerFiber as Capacity>::Array<StoreId>,
-    pub column_count: USize,
+    pub columns:           <D::ColumnsPerFiber as Capacity>::Array<StoreId>,
+    pub column_count:      USize,
     /// Head+tail convergence if the fiber qualifies; absent otherwise.
-    pub head_tail: Maybe<HeadTailConvergence>,
+    pub head_tail:         Maybe<HeadTailConvergence>,
     /// Codegen shape chosen for the fiber.
     pub dispatch_approach: DispatchApproach,
     /// True when no unit in the fiber writes an accumulator, so the fiber
     /// can dispatch morsel-outer (every cross-unit dependency is
     /// morsel-local). Computed at fiber formation from the units' write
     /// masks against the accumulator-store set.
-    pub morsel_local: Bool,
+    pub morsel_local:      Bool,
 }
 
 impl<D: PlanDims> Fiber<D> {
     pub fn new() -> Self {
         Self {
-            id: FiberId::ZERO,
-            units: <D::UnitsPerFiber as Capacity>::filled(UnitId::ZERO),
-            unit_count: USize::ZERO,
-            columns: <D::ColumnsPerFiber as Capacity>::filled(StoreId(USize::ZERO)),
-            column_count: USize::ZERO,
-            head_tail: Maybe::Isnt,
+            id:                FiberId::ZERO,
+            units:             <D::UnitsPerFiber as Capacity>::filled(UnitId::ZERO),
+            unit_count:        <USize as Identity<Additive>>::IDENTITY,
+            columns:           <D::ColumnsPerFiber as Capacity>::filled(StoreId(
+                <USize as Identity<Additive>>::IDENTITY,
+            )),
+            column_count:      <USize as Identity<Additive>>::IDENTITY,
+            head_tail:         Maybe::Isnt,
             dispatch_approach: DispatchApproach::IndirectPerFiber,
-            morsel_local: Bool::TRUE,
+            morsel_local:      Bool::TRUE,
         }
     }
 }

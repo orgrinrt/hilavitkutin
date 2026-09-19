@@ -20,13 +20,13 @@
 //! ...). The plan-stage algorithm chain populates the graph in topo
 //! order, which already guarantees that ordering.
 
-use arvo::strategy::Identity;
+use core::fmt;
+
+use arvo::strategy::{Additive, Identity};
 use arvo::{Bool, USize};
 use arvo_bitmask::NodeId;
 use arvo_sparse::{Csr, CsrBidirectional};
-use arvo_tensor::{cap_size, Capacity};
-use core::fmt;
-
+use arvo_tensor::{Capacity, cap_size};
 use hilavitkutin_api::UnitId;
 
 use crate::plan::dims::PlanDims;
@@ -39,20 +39,16 @@ use crate::plan::dims::PlanDims;
 /// data-flow analysis.
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 #[non_exhaustive]
+#[derive(Default)]
 pub enum EdgeKind {
     /// `to` reads what `from` wrote (RAW). Drives data dependency.
+    #[default]
     Read,
     /// `to` writes after `from` wrote (WAW). Drives ordering.
     Write,
     /// Explicit ordering with no data interaction (synchronisation
     /// barrier, side-effect ordering).
     Control,
-}
-
-impl Default for EdgeKind {
-    fn default() -> Self {
-        Self::Read
-    }
 }
 
 /// CSR-backed dependency graph.
@@ -67,22 +63,22 @@ pub struct DependencyGraph<D: PlanDims> {
     /// Destination unit per edge.
     pub col_indices: <D::Edges as Capacity>::Array<UnitId>,
     /// Kind per edge.
-    pub edge_kinds: <D::Edges as Capacity>::Array<EdgeKind>,
+    pub edge_kinds:  <D::Edges as Capacity>::Array<EdgeKind>,
     /// Number of units actually populated.
-    pub unit_count: USize,
+    pub unit_count:  USize,
     /// Number of edges actually populated.
-    pub edge_count: USize,
+    pub edge_count:  USize,
 }
 
 impl<D: PlanDims> DependencyGraph<D> {
     /// Empty graph (no units, no edges).
     pub fn new() -> Self {
         Self {
-            row_offsets: <D::Units as Capacity>::filled(USize::ZERO),
+            row_offsets: <D::Units as Capacity>::filled(<USize as Identity<Additive>>::IDENTITY),
             col_indices: <D::Edges as Capacity>::filled(UnitId::ZERO),
-            edge_kinds: <D::Edges as Capacity>::filled(EdgeKind::Read),
-            unit_count: USize::ZERO,
-            edge_count: USize::ZERO,
+            edge_kinds:  <D::Edges as Capacity>::filled(EdgeKind::Read),
+            unit_count:  <USize as Identity<Additive>>::IDENTITY,
+            edge_count:  <USize as Identity<Additive>>::IDENTITY,
         }
     }
 
@@ -91,14 +87,14 @@ impl<D: PlanDims> DependencyGraph<D> {
     /// it's `edge_count`. Visible to sibling plan modules so the
     /// 13-step chain can scan a single row without reimplementing
     /// the boundary logic at every call site.
-    pub(super) fn end_for(&self, i: usize) -> usize { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal indexing; rust grammar requires usize; tracked: #72
+    #[rustfmt::skip] // keeps the allow on the signature it governs
+    pub(super) fn end_for(
+        &self,
+        i: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal indexing; rust grammar requires usize; tracked: #72
+    ) -> usize { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal indexing; rust grammar requires usize; tracked: #72
         let next = i + 1;
         let count = self.unit_count.0;
-        if next < count {
-            self.row_offsets.as_ref()[next].0
-        } else {
-            self.edge_count.0
-        }
+        if next < count { self.row_offsets.as_ref()[next].0 } else { self.edge_count.0 }
     }
 
     /// True iff an edge `from to` exists. False if either index is
@@ -107,7 +103,8 @@ impl<D: PlanDims> DependencyGraph<D> {
     pub fn has_edge(&self, from: USize, to: USize) -> Bool {
         let f = from.0;
         let t = to.0;
-        if f >= cap_size(<D::Units as Capacity>::CAP) || t >= cap_size(<D::Units as Capacity>::CAP) {
+        if f >= cap_size(<D::Units as Capacity>::CAP) || t >= cap_size(<D::Units as Capacity>::CAP)
+        {
             return Bool::FALSE;
         }
         if f >= self.unit_count.0 {
@@ -135,7 +132,8 @@ impl<D: PlanDims> DependencyGraph<D> {
     pub fn add_edge_kind(&mut self, from: USize, to: USize, kind: EdgeKind) {
         let f = from.0;
         let t = to.0;
-        if f >= cap_size(<D::Units as Capacity>::CAP) || t >= cap_size(<D::Units as Capacity>::CAP) {
+        if f >= cap_size(<D::Units as Capacity>::CAP) || t >= cap_size(<D::Units as Capacity>::CAP)
+        {
             return;
         }
         if self.edge_count.0 >= cap_size(<D::Edges as Capacity>::CAP) {
@@ -144,11 +142,7 @@ impl<D: PlanDims> DependencyGraph<D> {
         // CSR append-order: `from` may not be smaller than the
         // current frontier. The plan-stage chain walks units in
         // topo order, which satisfies this naturally.
-        let frontier = if self.unit_count.0 == 0 {
-            0
-        } else {
-            self.unit_count.0 - 1
-        };
+        let frontier = if self.unit_count.0 == 0 { 0 } else { self.unit_count.0 - 1 };
         if f < frontier {
             return;
         }
@@ -180,7 +174,7 @@ impl<D: PlanDims> DependencyGraph<D> {
     pub fn out_degree(&self, i: USize) -> USize {
         let idx = i.0;
         if idx >= self.unit_count.0 {
-            return USize::ZERO;
+            return <USize as Identity<Additive>>::IDENTITY;
         }
         let start = self.row_offsets.as_ref()[idx].0;
         let end = self.end_for(idx);
@@ -209,11 +203,12 @@ impl<D: PlanDims> DependencyGraph<D> {
         let mut csr: Csr<D::Units, D::Edges, EdgeKind> =
             Csr::with_live_counts(self.unit_count, self.edge_count);
         // forward row offsets and edge kinds carry over verbatim.
-        csr.row_ptr.as_mut()[..uc].copy_from_slice(&self.row_offsets.as_ref()[..uc]);
-        csr.values.as_mut()[..ec].copy_from_slice(&self.edge_kinds.as_ref()[..ec]);
+        csr.row_ptr.as_mut()[.. uc].copy_from_slice(&self.row_offsets.as_ref()[.. uc]);
+        csr.values.as_mut()[.. ec].copy_from_slice(&self.edge_kinds.as_ref()[.. ec]);
         // destinations convert from the typed UnitId to the arvo NodeId.
-        for (dst, src) in
-            csr.col_idx.as_mut()[..ec].iter_mut().zip(self.col_indices.as_ref()[..ec].iter())
+        for (dst, src) in csr.col_idx.as_mut()[.. ec]
+            .iter_mut()
+            .zip(self.col_indices.as_ref()[.. ec].iter())
         {
             *dst = NodeId::new(src.index());
         }

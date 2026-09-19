@@ -1,0 +1,46 @@
+# Epochs: the roadmap's ordered bands. Epochs file alone; tasks file in the
+# domain dossier they belong to (storage tasks in storage.toml) or in their
+# own file when domain-free, so each surface stays reasonable on its own.
+# The roadmap document is a query over epochs, tasks, and mechanism status.
+
+[[epoch]]
+id = "finish_what_is_open"
+goal = "close the open corrections and commissioned rounds before new substance"
+after = []
+provenance = ["git::commit::a68f0832"]
+
+[[epoch]]
+id = "structural_substrate"
+goal = "the canon-ordered cap-lifting and storage-contract substrate, before more code accretes"
+after = ["epoch::finish_what_is_open"]
+provenance = ["git::commit::a68f0832"]
+
+[[epoch]]
+id = "parallel_substance"
+goal = "the largest canon deltas in the run path: intra-phase parallelism, convergence, progress counters, worker-side sync"
+after = ["epoch::structural_substrate"]
+provenance = ["git::commit::a68f0832"]
+
+[[epoch]]
+id = "plan_analysis_completion"
+goal = "the remaining plan-stage algorithm chain to canon"
+after = ["epoch::structural_substrate"]
+provenance = ["git::commit::a68f0832"]
+
+[[epoch]]
+id = "adaptation_completion"
+goal = "the adapt subsystem's nine axes carrying data and actuating"
+after = ["epoch::parallel_substance"]
+provenance = ["git::commit::a68f0832"]
+
+[[epoch]]
+id = "operations_and_ecosystem"
+goal = "operational surfaces and ecosystem wiring"
+after = ["epoch::adaptation_completion"]
+provenance = ["git::commit::a68f0832"]
+
+[[epoch]]
+id = "standing_perf_gate"
+goal = "the engine-vs-std gate green at parity per arm; the standing oracle, not a band that closes"
+after = []
+provenance = ["git::commit::a68f0832"]

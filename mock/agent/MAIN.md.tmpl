@@ -56,8 +56,9 @@ The canonical spec is
  `hilavitkutin-api-macros`, companion to the api crate); its emitted
  output is `no_std`-compatible.
 - Pre-allocated thread pool. No `thread::spawn`, `tokio::spawn`,
- `async_std::spawn` at runtime. Threads are spawned once at
- pipeline construction; they park between frames.
+ `async_std::spawn` at runtime. Threads are the consumer executor's,
+ handed their work once through `ThreadPoolApi`; they park between
+ frames.
 - Schedule once, reuse across frames. Plan recompute is rare
  (triggered by structure change). Runtime cost is amortised over
  many frames of reused execution.

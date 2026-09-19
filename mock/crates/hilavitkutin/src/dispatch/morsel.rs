@@ -23,8 +23,8 @@
 //! `MAX_DRIFT_RECORDS` is `Cfg::MAX_DRIFT_RECORDS` (32, pow2).
 //! Consumer-overridable per `RunCfg`.
 
+use arvo::strategy::{Additive, Identity};
 use arvo::{Bool, USize};
-use arvo::strategy::Identity;
 
 /// Half-open `[start, start + len)` record range for one morsel.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -32,13 +32,16 @@ pub struct MorselRange {
     /// First record index.
     pub start: USize,
     /// Count of records in this morsel.
-    pub len: USize,
+    pub len:   USize,
 }
 
 impl MorselRange {
     /// Construct a morsel range with `start` and `len`.
     pub const fn new(start: USize, len: USize) -> Self {
-        Self { start, len }
+        Self {
+            start,
+            len,
+        }
     }
 
     /// One past the last record index (`start + len`).
@@ -55,8 +58,8 @@ impl MorselRange {
 impl Default for MorselRange {
     fn default() -> Self {
         Self {
-            start: USize::ZERO,
-            len: USize::ZERO,
+            start: <USize as Identity<Additive>>::IDENTITY,
+            len:   <USize as Identity<Additive>>::IDENTITY,
         }
     }
 }
@@ -93,7 +96,7 @@ where
     while i.0 < end.0 {
         body(i);
         i = USize(i.0 + 1);
-        if i.0 % MICRO_MORSEL_INTERVAL.0 == 0 {
+        if i.0.is_multiple_of(MICRO_MORSEL_INTERVAL.0) {
             sync_probe(i);
         }
     }

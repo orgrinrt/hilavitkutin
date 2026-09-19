@@ -21,9 +21,17 @@ use core::cell::{Cell, UnsafeCell};
 use core::mem::MaybeUninit;
 use core::sync::atomic::{AtomicUsize, Ordering};
 
+mod common;
+
 use arvo::{Bool, USize};
 use hilavitkutin::dispatch::engine_ctx::{
-    AccPtrCons, AccPtrNil, ColPtrNil, EngineCtx, MetaRef, SnapNil, VirtNil,
+    AccPtrCons,
+    AccPtrNil,
+    ColPtrNil,
+    EngineCtx,
+    MetaRef,
+    SnapNil,
+    VirtNil,
 };
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
@@ -42,12 +50,15 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 }
 
 struct BumpProvider<const N: usize> {
-    buf: UnsafeCell<[MaybeUninit<u8>; N]>,
+    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
     used: Cell<usize>,
 }
 impl<const N: usize> BumpProvider<N> {
     fn new() -> Self {
-        Self { buf: UnsafeCell::new([const { MaybeUninit::uninit() }; N]), used: Cell::new(0) }
+        Self {
+            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
+            used: Cell::new(0),
+        }
     }
 }
 unsafe impl<const N: usize> Send for BumpProvider<N> {}
@@ -65,7 +76,9 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
         // SAFETY: aligned + len <= N, in bounds of the owned buffer.
         unsafe { base.add(aligned) }
     }
+
     unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
@@ -78,7 +91,10 @@ struct ScriptClock {
 }
 impl ScriptClock {
     const fn new(script: &'static [u64]) -> Self {
-        Self { script, cursor: AtomicUsize::new(0) }
+        Self {
+            script,
+            cursor: AtomicUsize::new(0),
+        }
     }
 }
 impl ClockApi for ScriptClock {
@@ -97,8 +113,15 @@ struct Mark(u64);
 
 type AccW = Cons<Accum<Mark>, Empty>;
 
-type ConsumerCtx<'frame> =
-    EngineCtx<'frame, Empty, AccW, SnapNil, ColPtrNil, ColPtrNil, AccPtrCons<'frame, Mark, AccPtrNil>>;
+type ConsumerCtx<'frame> = EngineCtx<
+    'frame,
+    Empty,
+    AccW,
+    SnapNil,
+    ColPtrNil,
+    ColPtrNil,
+    AccPtrCons<'frame, Mark, AccPtrNil>,
+>;
 
 type EndCtx<'frame> = EngineCtx<
     'frame,
@@ -122,14 +145,15 @@ type Hints = (
 // has real consumer work between the meta bands.
 struct ConsumerWu;
 impl BuilderInput for ConsumerWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for ConsumerWu {
+    type Ctx<'frame> = ConsumerCtx<'frame>;
+    type Hint = Hints;
     type Read = Empty;
     type Write = AccW;
-    type Hint = Hints;
-    type Ctx<'frame> = ConsumerCtx<'frame>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         // SAFETY: Mark reserved (RECORDS) with headroom over this frame's appends.
         unsafe { ctx.accums().append::<Mark, _>(Mark(9)) };
@@ -140,17 +164,18 @@ impl WorkUnit<Always> for ConsumerWu {
 // and appends its raw nanos, after the consumer.
 struct EmaWu;
 impl BuilderInput for EmaWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl HasSchedule for EmaWu {
     type Sched = OnMeta<ScheduleEnd>;
 }
 impl WorkUnit<OnMeta<ScheduleEnd>> for EmaWu {
+    type Ctx<'frame> = EndCtx<'frame>;
+    type Hint = Hints;
     type Read = Empty;
     type Write = AccW;
-    type Hint = Hints;
-    type Ctx<'frame> = EndCtx<'frame>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         let ema = ctx.meta::<SchedulerMetrics>().ema_pass_duration_ns.get();
         // SAFETY: Mark reserved (RECORDS) with headroom over this frame's appends.
@@ -210,8 +235,9 @@ fn single_core_scripted_ema_fold() {
 
 #[test]
 fn parallel_scripted_ema_seed() {
-    use hilavitkutin::OsThreadPool;
     use hilavitkutin_api::platform::ThreadPoolApi;
+
+    use crate::common::TestExecutor;
 
     static SCRIPT: [u64; 4] = [1000, 1300, 2000, 2700];
     let provider = BumpProvider::<16384>::new();
@@ -223,11 +249,14 @@ fn parallel_scripted_ema_seed() {
         .build(store(provider), USize(RECORDS))
         .unwrap_or_else(|_| panic!("build should succeed"));
 
-    let pool = OsThreadPool::new();
+    let pool = TestExecutor::new();
     let ncores = pool.worker_count().0.max(1);
     let per = (RECORDS + ncores - 1) / ncores;
-    let participating = (0..ncores).filter(|c| c * per < RECORDS).count();
-    assert!(participating + 1 <= RECORDS, "fixture headroom over per-frame appends");
+    let participating = (0 .. ncores).filter(|c| c * per < RECORDS).count();
+    assert!(
+        participating + 1 <= RECORDS,
+        "fixture headroom over per-frame appends"
+    );
 
     let mut scheduler = core::pin::pin!(scheduler);
 
@@ -236,7 +265,11 @@ fn parallel_scripted_ema_seed() {
     assert!(matches!(r1, Outcome::Ok(())));
     let len1 = scheduler.__bindings().__len_cell().get().0;
     let base1 = scheduler.__bindings().__ptr().as_ptr();
-    assert_eq!(len1, participating + 1, "frame 1: per-core consumer marks plus the epilogue");
+    assert_eq!(
+        len1,
+        participating + 1,
+        "frame 1: per-core consumer marks plus the epilogue"
+    );
     // SAFETY: len1 records appended this frame; the epilogue append is last.
     let ema1 = unsafe { core::ptr::read(base1.add(len1 - 1)).0 };
     assert_eq!(ema1, 0, "frame 1: no fold has landed yet");
@@ -248,7 +281,10 @@ fn parallel_scripted_ema_seed() {
     let base2 = scheduler.__bindings().__ptr().as_ptr();
     // SAFETY: len2 records appended this frame; the epilogue append is last.
     let ema2 = unsafe { core::ptr::read(base2.add(len2 - 1)).0 };
-    assert_eq!(ema2, 300, "frame 2: the parallel path seeded the raw duration 300");
+    assert_eq!(
+        ema2, 300,
+        "frame 2: the parallel path seeded the raw duration 300"
+    );
 }
 
 #[cfg(feature = "platform-os")]
@@ -270,5 +306,8 @@ fn os_clock_default_nonzero() {
     let base2 = scheduler.__bindings().__ptr().as_ptr();
     // SAFETY: this frame's appends end with the epilogue read.
     let ema2 = unsafe { core::ptr::read(base2.add(len2 - 1)).0 };
-    assert!(ema2 > 0, "default os clock produced a nonzero monotonic duration");
+    assert!(
+        ema2 > 0,
+        "default os clock produced a nonzero monotonic duration"
+    );
 }

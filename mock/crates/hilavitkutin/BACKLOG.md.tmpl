@@ -8,9 +8,10 @@
 
 ## Windows os-tier
 
-Current os-tier covers Linux + macOS via mmap + pthread +
-clock_gettime. Windows needs VirtualAlloc + CreateThread +
-QueryPerformanceCounter wrappers. Defer until a Windows consumer
+Current os-tier covers Linux + macOS via mmap + clock_gettime.
+Windows needs VirtualAlloc + QueryPerformanceCounter wrappers. The
+tier spawns no threads on any platform; the executor is the
+consumer's. Defer until a Windows consumer
 surfaces or the distribution story demands it.
 
 ## no_os tier documentation
@@ -140,9 +141,6 @@ below is a separate downstream round.
 
 ### Threading follow-ups
 
-- Actual pthread / Win32 / OS-thread spawning (gated on a future
- `threading-std` feature; introduces the feature flag + spawn
- method on `ThreadPool` together).
 - Hybrid spin-park wake implementation, 128 spin iters default
  via `core::hint::spin_loop`, then park on a platform primitive
  (futex on Linux, `ulock_wait` on macOS, `WaitOnAddress` on
@@ -150,12 +148,14 @@ below is a separate downstream round.
 - Heterogeneous-core detection, CPUID leaf 0x1A on x86, sysfs
  (`/sys/devices/cpu_core` vs `/sys/devices/cpu_atom`) on Linux,
  IOKit / hwloc on macOS.
-- Core pinning per platform, `pthread_setaffinity_np` on Linux,
- `thread_policy_set` with `THREAD_AFFINITY_POLICY` on macOS,
- `SetThreadAffinityMask` on Windows.
+- Core pinning hints on the executor contract, so a consumer's
+ executor can pin a worker to the core `assign_cores` chose. The
+ pinning itself (`pthread_setaffinity_np`, `thread_policy_set`,
+ `SetThreadAffinityMask`) is the consumer executor's, since
+ hilavitkutin spawns no threads.
 - Work-stealing `Executor` trait, consumer-provided override for
- variable per-record workloads. `steal_fallback` stub gains a
- real `Executor` bound once the trait ships.
+ variable per-record workloads. Lands in v2 as
+ `Executor::try_steal` behind a `work-stealing` feature.
 - Head+tail convergence merge implementations, addition path
  for additive/commutative accumulators; sequential fallback for
  non-commutative fibers. Both need `Convergence::meeting_record`
@@ -184,21 +184,6 @@ below is a separate downstream round.
  invalidate monomorphised dispatch).
 - Telemetry hooks for exporting adapt decisions to the consumer
  (observability / tuning dashboards, hung on a future trait).
-
-## Engine skeleton post-review notes
-
-- **POSIX fn*/void* cast in `platform/os.rs` `spawn_fn`.** The
- current pattern smuggles `fn()` via `usize` as a
- `pthread_create` argument. POSIX does not guarantee that `fn*`
- and `void*` have matching size; all Rust tier-1 targets happen
- to comply in practice, but the threading-std implementation
- round should switch to `Box<fn()>` or a static work-queue slot
- to be POSIX-clean.
-- **`OnceLock` MSRV in `platform/std_tier.rs`.** Uses
- `std::sync::OnceLock` which requires Rust 1.70+. The workspace
- does not yet pin a toolchain. When a toolchain policy is
- decided, either pin 1.70+ in `rust-toolchain.toml` or replace
- with an `AtomicBool` init-once pattern.
 
 ## Cross-repo integration pre-empted issues
 

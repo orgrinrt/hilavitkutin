@@ -11,7 +11,7 @@
 //! `mock/design_rounds/202605042200_changelist.doc.lock.md`.
 
 use arvo::USize;
-use arvo::strategy::Identity;
+use arvo::strategy::{Additive, Identity, Multiplicative};
 
 use crate::access::{Cons, Empty};
 
@@ -21,9 +21,10 @@ mod depth_sealed {
 
 /// Total cons-list element count.
 ///
-/// `<()>::D == USize::ZERO` and `<Empty>::D == USize::ZERO`.
-/// `<(H, R)>::D == R::D + USize::ONE` and
-/// `<Cons<H, R>>::D == R::D + USize::ONE`. Both flat-tuple and
+/// `<()>::D == <USize as Identity<Additive>>::IDENTITY` and `<Empty>::D ==
+/// <USize as Identity<Additive>>::IDENTITY`.
+/// `<(H, R)>::D == R::D + <USize as Identity<Multiplicative>>::IDENTITY` and
+/// `<Cons<H, R>>::D == R::D + <USize as Identity<Multiplicative>>::IDENTITY`. Both flat-tuple and
 /// `Cons<H, R>` shapes impl `Depth`. Flat tuples of arity 3+
 /// deliberately do not impl `Depth`.
 ///
@@ -46,18 +47,18 @@ impl depth_sealed::Sealed for () {}
 impl<H, R: Depth> depth_sealed::Sealed for (H, R) {}
 
 impl Depth for () {
-    const D: USize = USize::ZERO;
+    const D: USize = <USize as Identity<Additive>>::IDENTITY;
 }
 impl<H, R: Depth> Depth for (H, R) {
-    const D: USize = R::D + USize::ONE;
+    const D: USize = R::D + <USize as Identity<Multiplicative>>::IDENTITY;
 }
 
 impl depth_sealed::Sealed for Empty {}
 impl<H, R: Depth> depth_sealed::Sealed for Cons<H, R> {}
 
 impl Depth for Empty {
-    const D: USize = USize::ZERO;
+    const D: USize = <USize as Identity<Additive>>::IDENTITY;
 }
 impl<H, R: Depth> Depth for Cons<H, R> {
-    const D: USize = R::D + USize::ONE;
+    const D: USize = R::D + <USize as Identity<Multiplicative>>::IDENTITY;
 }

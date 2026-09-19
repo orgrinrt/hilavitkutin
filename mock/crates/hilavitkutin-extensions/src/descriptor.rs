@@ -50,12 +50,7 @@ pub const MAX_DESCRIPTOR_LIST_LEN: u32 = 1 << 20; // lint:allow(arvo-types-only,
 /// Typed as `&CStr` so callers see the nul-terminated-C-string
 /// intent. Linking-layer resolve functions that take `&[u8]` receive
 /// `DESCRIPTOR_SYMBOL.to_bytes_with_nul()` at the call site.
-//
-// SAFETY: the byte literal contains a single trailing nul and no
-// interior nul. `from_bytes_with_nul_unchecked` is const since 1.59.
-pub const DESCRIPTOR_SYMBOL: &CStr = unsafe {
-    CStr::from_bytes_with_nul_unchecked(b"__hilavitkutin_extension_descriptor\0")
-};
+pub const DESCRIPTOR_SYMBOL: &CStr = c"__hilavitkutin_extension_descriptor";
 
 /// Stable provider identifier. Compile-time hash of an ASCII name.
 ///
@@ -71,8 +66,8 @@ impl ProviderId {
     /// FNV-1a over the raw byte contents. Constant-folded at the call
     /// site; no runtime cost.
     pub const fn from_name(name: &str) -> Self {
-        const FNV_OFFSET_BASIS: u64 = 0xcbf29ce484222325;
-        const FNV_PRIME: u64 = 0x100000001b3;
+        const FNV_OFFSET_BASIS: u64 = 0xCBF29CE484222325;
+        const FNV_PRIME: u64 = 0x100000001B3;
         let bytes = name.as_bytes();
         let mut hash: u64 = FNV_OFFSET_BASIS;
         let mut i = 0;
@@ -95,9 +90,9 @@ impl ProviderId {
 // choice. arvo has no wire-stable 16-bit newtype yet; see
 // BACKLOG.md.tmpl `Flip bare-primitive FFI-wire sites to UWire<N>`.
 pub struct ExtensionVersion {
-    pub major: u16, // lint:allow(arvo-types-only, no-bare-numeric, no-public-raw-field) tracked: #206
-    pub minor: u16, // lint:allow(arvo-types-only, no-bare-numeric, no-public-raw-field) tracked: #206
-    pub patch: u16, // lint:allow(arvo-types-only, no-bare-numeric, no-public-raw-field) tracked: #206
+    pub major:     u16, // lint:allow(arvo-types-only, no-bare-numeric, no-public-raw-field) tracked: #206
+    pub minor:     u16, // lint:allow(arvo-types-only, no-bare-numeric, no-public-raw-field) tracked: #206
+    pub patch:     u16, // lint:allow(arvo-types-only, no-bare-numeric, no-public-raw-field) tracked: #206
     pub _reserved: u16, // lint:allow(arvo-types-only, no-bare-numeric, no-public-raw-field) tracked: #206
 }
 
@@ -109,11 +104,11 @@ pub struct ExtensionVersion {
 #[repr(u32)]
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum ExtensionAbiStatus {
-    Ok = 0,
-    InitFailed = 1,
-    InvalidArg = 2,
+    Ok           = 0,
+    InitFailed   = 1,
+    InvalidArg   = 2,
     NotSupported = 3,
-    Internal = 4,
+    Internal     = 4,
 }
 
 /// Single provider entry in the descriptor's provider table.
@@ -124,7 +119,7 @@ pub enum ExtensionAbiStatus {
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct ProviderEntry {
-    pub id: ProviderId,
+    pub id:         ProviderId,
     pub vtable_ptr: *const c_void,
 }
 
@@ -156,12 +151,8 @@ pub struct ExtensionDescriptor {
     pub providers_len: u32, // lint:allow(arvo-types-only, no-bare-numeric, no-public-raw-field) tracked: #206
     pub required_host_providers_ptr: *const ProviderId,
     pub required_host_providers_len: u32, // lint:allow(arvo-types-only, no-bare-numeric, no-public-raw-field) tracked: #206
-    pub init_fn: Option<
-        unsafe extern "C" fn(host_ctx: *mut c_void) -> ExtensionAbiStatus,
-    >,
-    pub shutdown_fn: Option<
-        unsafe extern "C" fn(host_ctx: *mut c_void) -> ExtensionAbiStatus,
-    >,
+    pub init_fn: Option<unsafe extern "C" fn(host_ctx: *mut c_void) -> ExtensionAbiStatus>,
+    pub shutdown_fn: Option<unsafe extern "C" fn(host_ctx: *mut c_void) -> ExtensionAbiStatus>,
 }
 
 // SAFETY: ExtensionDescriptor is a POD payload with raw pointers

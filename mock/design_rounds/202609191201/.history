@@ -1,0 +1,50 @@
+474cf26 chore: lock the src cl of the spawn-gate forcing round
+a63e2eb docs: record the forcing check and its controls in the src cl
+f70d399 fix: require the spawn-gate forcing to name the spawned type
+a729cd8 docs: open the src cl for the spawn-gate forcing check
+a1879e3 chore: lock the doc cl of the spawn-gate forcing round
+7816ac3 docs: drop the implementation status from the thread-count principle
+dab1cb9 docs: write the doc cl for the principles status sentence
+2b692fe docs: open a round on the spawn-gate lint forcing check
+d37554f chore: close the second review design round
+116b1f0 chore: lock the src changelist of the second review round
+da6e9f2 docs: record the second review changes and their controls in the src cl
+c5d1fc6 test: cite the persistence backlog on the cold store catalogue tests
+18c92cd test: catalogue the thread-count bound and call zero workers provisional
+7816c44 refactor: move the spawn-gate lint tests beside it, under 500 lines
+c51281a feat: refuse an engine spawn that skips the one-pointer gate
+69d0c92 docs: open the src changelist for the second review
+ca5b1f7 chore: lock the doc changelist of the second review round
+ca35d64 docs: say in the doc changelist who the zero-worker call waits on
+aa3972f docs: regenerate the documents from the edited templates
+f1741ca docs: keep the maintainer out of the published zero-worker paragraph
+2207bb2 docs: restore the thread-count rule and mark zero workers provisional
+910a49b docs: open the doc changelist for the second review
+5360ecd docs: open the round for the second review of the arvo-dev fixes
+e2790a7 chore: close the review-fix design round
+792d7ad chore: lock the src changelist of the review-fix round
+43cc759 docs: name the three open topics the src cl leaves for later rounds
+0623802 docs: record the formatter repair and the identity clamp in the src cl
+b73651f refactor: carry `BuildConfig::target` as a `Maybe`
+8129e53 test: catalogue the unchecked LTO smoke off unix instead of passing it
+923d2ab docs: drop the em-dash from the `engine_ctx` module doc
+cc31d66 test: check `ProgressCounter` publishes what it counts across threads
+175bfed test: pin what `ColdStore` does today and catalogue what it does not
+17a4f2c fix: put the barrier allows back on the lines they govern
+f14b3e3 fix: gate the spawn closure at one pointer and clamp the worker count
+79452e3 docs: open the src changelist for the review findings
+532797f chore: lock the doc changelist of the review-fix round
+ea6380f docs: give the engine no threads and name the one-pointer spawn gate
+1ef00ef docs: open the doc changelist for the review findings
+bcdc8ca docs: open the round fixing the review findings on the arvo-dev round
+d11fca3 chore: close the arvo-dev design round
+e7bf092 chore: lock the src changelist of the arvo-dev round
+3ccc805 docs: regenerate the documents for this round's designs
+103743f design: record the rulings, the arvo map and the source in the round
+6116063 refactor: drop the std tier and bring the engine up on arvo `1b2796e9`
+f07f622 fix: build persistence on arvo `1b2796e9` and let it import str and api
+f3ebc88 style: put each `lint:allow` in `hilavitkutin-api` on its line
+148ea43 refactor: make `hilavitkutin-build` no_std and take cargo's values
+ed55f9a test: check the extension version wire layout, not field reads
+f1f78c4 test: pin the ceiling id `mint` issues before it exhausts
+f55747f chore: lock the doc changelist of the arvo-dev round
