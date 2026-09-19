@@ -233,9 +233,7 @@ executor's. No runtime spawn.
 Closures handed out = `min(worker_count, parallelisable_width + 1)`,
 where `worker_count` is the executor's count after the engine's
 clamp, the parallelisable width is the most trunks any phase
-carries, and the one extra is the convergence worker. The engine does
-not honour this yet: it hands out one closure per worker whatever
-the plan's width.
+carries, and the one extra is the convergence worker.
 
 Hybrid wake: spin 128 iterations, then park. Predictive parking at
 sync points: <100ns spin, 100ns-10µs spin_loop, >10µs park.
