@@ -1,0 +1,50 @@
+0ff7761 chore: lock src changelist for 202609190621_changelist.src.lock.md
+2f3c622 chore: open src changelist noting no source change needed
+48ba32e chore: lock doc changelist for 202609190620_changelist.doc.lock.md
+71dccd7 docs: drop the stale mockspace build-dep claim from three crates
+2bb0c7b Merge remote-tracking branch 'origin/dev' into docs/adopt-the-shared-hlist
+d14bec3 fix: drop the unlocked duplicate of a closed round's doc changelist
+e3fa3f4 feat: bring hilavitkutin up on arvo `1b2796e9` without a std tier
+18e1afe chore: turn the pre-commit autofixers back on
+2f06ffe chore: land the design rounds and research the recovery branch carried
+72f56c3 Merge remote-tracking branch 'origin/dev' into docs/adopt-the-shared-hlist
+1fbb2e9 chore: take the shared tool configs, and ignore a stray sketch lockfile
+a677bfd fix: pin the mock toolchain and take the structural lints from the pack
+220edfb chore: take the shared rustfmt and deny configs
+986d2db chore: move the config to the root and drop the last mockspace dep
+89b4982 chore: track the generated taplo config
+464e039 chore: generalise the sketch lockfile ignore and regenerate docs
+cb1985c chore: split the local lints onto CrateLint and drop the four the pack ships
+27e6e45 chore: opt in to the interactive design-talk skill
+1caeb31 docs: strip em-dashes from the agent templates
+16b2356 docs: open the topic for adopting the shared hlist
+313d427 Merge pull request #3 from orgrinrt/chore/patch-pass-2026-08
+06c7b41 docs: correct the ctx macro names and the CapabilityId constructor
+288660e docs: drop crates.io and docs.rs badges for an unpublished crate
+3de0b5c docs: sync manifest descriptions and drop their em-dash
+ee536c9 docs: remove tier-1 leakage and a dead test path from MIRI.md
+7bcf666 docs: name the phase configs as the enum spells them
+3ef35d2 docs: describe the builder api the scheduler actually ships
+0df662c chore: remove github actions workflows
+603e663 chore: migrate to the mockspace launcher
+3c5fb09 feat: factor hilavitkutin-sym generic interned-identity core
+fa0cf62 docs: give every r6 leaf an assigned resolution
+c729cb4 docs: re-chart engine roadmap against canon as r6
+fb4c6da feat: add Plannable declaration trait and the HintExt hint slot
+7865e97 feat: invert run dispatch to fiber-outer morsel-inner per plan window
+78d38d6 feat: per-fiber l1 morsel-window formula from runcfg budget
+b0e863d feat: erased resource addressing and ctx snapshot per storage bench
+0725c4e feat: add hilavitkutin-api-macros crate with ResourceFootprint derive
+09ade36 feat: add CollectionBytes + ResourceFootprint footprint traits
+e8dd5d7 docs: sketch A3-2 resource-collection footprint surface
+378fef9 docs: re-chart A3 morsel formula on the canonical R5 resource model
+8198fdc feat: add per-store element-byte-size collection for L1 morsel formula
+bd0ccc0 docs: sketch A3 per-store size collection for L1 morsel formula
+f54ac23 feat: add run_one_trunk_windowed for fiber-outer morsel dispatch
+91530de docs: sketch A2a per-fiber morsel loop drives per-trunk dispatch
+f10a385 docs: backlog note for generalized asm-emission contract tests
+dc9e754 docs: granular roadmap, sketch plan, asm-contract-test discipline
+488ce26 feat: thread per-fiber morsel size onto FiberDispatch
+826494b docs: resolve arc-audit roadmap (head+tail/overlap in scope, internals-first)
+631a0ba docs: critical arc audit and updated canonical roadmap
+fe09f5c refactor: rename morsel_sizes to morsel_windows for per-fiber morsel slice 1
