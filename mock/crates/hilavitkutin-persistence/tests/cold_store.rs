@@ -142,7 +142,7 @@ fn a_store_hands_back_the_context_it_was_opened_with() {
 /// context loads. Design, Flush coordination: `flush` serialises dirty data to
 /// disk and `load` maps it back.
 #[test]
-#[ignore = "catalogue: flush writes nothing, so a reopened store finds nothing to load; needs the mmap-backed file I/O; tracked: #35"]
+#[ignore = "catalogue: flush writes nothing, so a reopened store finds nothing to load; needs the mmap-backed file I/O; tracked: BACKLOG mmap-backed file I/O"]
 fn a_flushed_store_is_loaded_by_the_next_open() {
     let memory = Memory::new();
     let interner = StringInterner::new(NoArena);
@@ -161,24 +161,24 @@ fn a_flushed_store_is_loaded_by_the_next_open() {
 /// directory survives a close and reopen. Design, File layout and Manifest:
 /// the data directory holds `manifest.rkyv`, and the store opens from it.
 #[test]
-#[ignore = "catalogue: open reads no manifest; needs the mmap-backed file I/O and a way to register a table; tracked: #35"]
+#[ignore = "catalogue: open reads no manifest; needs the mmap-backed file I/O and a way to register a table; tracked: BACKLOG mmap-backed file I/O"]
 fn open_reads_the_manifest_a_flush_wrote() {
     unimplemented!(
         "contract: register a table, flush, drop the store, reopen over the same \
          context, and the reopened manifest's count and table metadata equal the \
          flushed ones. Fill when the file-backed round lands a table registration \
-         and the manifest read. tracked: #35"
+         and the manifest read. tracked: BACKLOG mmap-backed file I/O"
     );
 }
 
 /// CONTRACT: `snapshot` copies every file of the data directory, so a store
 /// opened over the copy loads what the original held. Design, Backup.
 #[test]
-#[ignore = "catalogue: snapshot copies nothing; needs the backup / snapshot mechanism; tracked: #35"]
+#[ignore = "catalogue: snapshot copies nothing; needs the backup / snapshot mechanism; tracked: BACKLOG Backup / snapshot mechanism"]
 fn a_snapshot_opens_as_the_store_it_copied() {
     unimplemented!(
         "contract: flush a store, snapshot it to a target, open a store over the \
          target, and it loads what the original held. Fill when snapshot takes a \
-         target and copies the data directory. tracked: #35"
+         target and copies the data directory. tracked: BACKLOG Backup / snapshot mechanism"
     );
 }
