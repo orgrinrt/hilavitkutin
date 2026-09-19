@@ -41,7 +41,7 @@ if echo "$CONTENT" | grep -qE '(^|[^a-zA-Z_])String([^a-zA-Z_]|$)'; then
 fi
 
 if echo "$CONTENT" | grep -qE '(^|[^a-zA-Z_])Box<'; then
-    deny "BLOCKED: \`Box<T>\` in source. Monomorphised types only, no heap boxing. If you need indirection, make the type generic."
+    deny "BLOCKED: \`Box<T>\` in source. Monomorphised types only; no heap boxing. If you need indirection, make the type generic."
 fi
 
 if echo "$CONTENT" | grep -qE '(^|[^a-zA-Z_])(Rc|Arc)<'; then

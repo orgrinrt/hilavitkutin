@@ -4,7 +4,7 @@
 # Agent hook: block dynamic-dispatch tokens in hilavitkutin* sources.
 #
 # Mirrors `mock/lints/no_dynamic_dispatch.rs`. Monomorphisation is
-# the dispatch, the fused pipeline must devirtualise to straight-
+# the dispatch. The fused pipeline must devirtualise to straight-
 # line code. Trait objects, TypeId, and std::any break that.
 
 set -uo pipefail

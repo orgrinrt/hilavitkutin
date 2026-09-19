@@ -81,7 +81,7 @@ and (where possible) a pre-tool-use hook. "Documented" is not
    for nudges.
 3. Register per-gate severity in `mockspace.toml`.
 4. Exclude proc-macro crates explicitly (`if
-   ctx.is_proc_macro_crate() { return Vec::new(); }`), not
+   ctx.is_proc_macro_crate() { return Vec::new(); }`): not
    applicable to hilavitkutin right now (no proc-macro crates), but
    keep the habit.
 5. Write tests if the lint logic is non-trivial.
