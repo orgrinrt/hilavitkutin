@@ -6,6 +6,7 @@ mockspace_branch = "dev"
 project_name = "hilavitkutin"
 crate_prefix = "hilavitkutin"
 abi_version = 1
+mock_dir = "mock"
 
 proc_macro_crates = ["hilavitkutin-extensions-macros", "hilavitkutin-api-macros"]
 module_crates = []

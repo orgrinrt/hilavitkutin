@@ -70,10 +70,6 @@ Platform dependencies:
 - libc under `cfg(unix)` for raw FFI bindings to dlopen / dlsym / dlclose.
 - windows-sys under `cfg(windows)` for raw FFI bindings to LoadLibraryW / GetProcAddress / FreeLibrary under the minimal feature set.
 
-Build-time dependency:
-
-- mockspace (workspace convention) bootstraps the mock workflow via build.rs.
-
 No dependency on hilavitkutin, hilavitkutin-api, hilavitkutin-build, hilavitkutin-ctx, hilavitkutin-persistence, hilavitkutin-str, or hilavitkutin-extensions. The linking layer is deliberately isolated.
 
 ## Platform coverage
