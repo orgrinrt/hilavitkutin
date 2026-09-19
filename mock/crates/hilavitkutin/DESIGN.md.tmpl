@@ -1342,11 +1342,23 @@ gate on that closure at its spawn site, so a wider closure fails the
 build rather than reaching an executor. The repository's own tests and
 benches define their executors in test and bench code.
 
-The engine runs on the executor's `worker_count`, clamped into
-`1..=MAX_CORES`. Its per-core state is sized by `MAX_CORES`, so past
-that the extra workers are never handed a closure. At zero the engine
-still hands the executor one closure, because a frame with no worker
-would return as though it had run.
+The engine runs on the executor's `worker_count` clamped by the
+thread module's `runnable_worker_count`, a `pub const fn`. Its
+per-core state is sized by `MAX_CORES`, so the count is capped
+there and the extra workers are never handed a closure.
+
+What the engine does when an executor reports zero workers is
+provisional and waits on op. Three answers exist, and they differ in
+what the frame's done-wait, `frame_await_done`, sees. Refusing returns
+an error from `run_parallel` before a frame is published, so the
+done-wait is never reached. Running inline on the caller has the
+calling thread run the first core's worker body itself, and the
+done-wait counts one arrival, its own. Handing out one closure has the
+done-wait expect one arrival from the executor; if the executor
+reported zero because it has no thread to run anything on, that
+closure never runs and the done-wait never returns. The code does the
+third today, by clamping zero up to one, and that behaviour is
+provisional rather than designed.
 
 ## Dependencies
 
