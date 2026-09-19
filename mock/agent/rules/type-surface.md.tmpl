@@ -79,18 +79,18 @@ There is no fourth "bare primitive" category.
 - Arithmetic generic: `<T: UArith<BITS>>` instead of concrete `u8` /
  `u16`
 - Associated types when the implementor chooses concrete storage
-- Newtypes anywhere, `Cap`, `USize`, `FastFloat`, `ContentHash`
+- Newtypes anywhere: `Cap`, `USize`, `FastFloat`, `ContentHash`
 - Scalar returns: `Outcome<T, E>`, `Maybe<T>`, `Just<T>` (from notko)
 
 ## DON'T ✗ (concrete-type leakage, anywhere in source)
 
-- Bare `Option<T>` or `Result<T, E>` in ANY position, use `Maybe<T>` / `Outcome<T, E>`
+- Bare `Option<T>` or `Result<T, E>` in any position: use `Maybe<T>` / `Outcome<T, E>` instead
 - Concrete collections anywhere: `Vec<T>`, `HashMap`, `Seq<T, N>`,
  `Map<K, V, N>`
 - Raw numerics anywhere (pub fn, private field, local, cast, literal
  suffix, array size expression): `usize`, `f32`, `f64`, `bool`,
  `u32`, `i32`, `u64`: use the arvo newtypes or a trait bound
-- `String` / non-static `&str` in ANY position, use `&'static str` or `hilavitkutin_str::Str`
+- `String` / non-static `&str` in any position: use `&'static str` or `hilavitkutin_str::Str` instead
 - Concrete types when a trait exists: don't write `fn add(a: u32, b:
  u32) -> u32` when `UArith<32>` is available
 
