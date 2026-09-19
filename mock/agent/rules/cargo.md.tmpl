@@ -95,9 +95,12 @@ reinventing descriptor formats.
 - `hilavitkutin` depends on `hilavitkutin-api` plus arvo.
 - `hilavitkutin-build`: zero hilavitkutin crate deps; may depend on
  LLVM / cargo / rustc toolchain crates. Strictly build-time.
-- `hilavitkutin-ctx`, `-persistence`, `-str`: independent. Each
- may depend on arvo; none depend on the engine or on
- each other.
+- `hilavitkutin-ctx`, `-str`: independent. Each may depend on
+ arvo; neither depends on the engine or on the other.
+- `hilavitkutin-persistence`: builds on `hilavitkutin-str` and
+ `hilavitkutin-api` (its memory comes from the shared
+ `MemoryProvider`), plus arvo. Never depends on the engine or on
+ `hilavitkutin-ctx`.
 - `hilavitkutin-linking`: depends only on notko / arvo / arvo-bits
  and on libc (unix) / windows-sys (windows) for raw FFI.
  Must never depend on `hilavitkutin-api`, `hilavitkutin`, or any
@@ -147,19 +150,21 @@ when the pragma's concrete shape lands.
 
 ### Foundations (arvo)
 
-Arvo crates are git dependencies on the workspace dev branch for
-now. When both projects stabilise, they become versioned crates.io
-releases.
+Arvo crates are git dependencies pinned by `rev =` at a commit on
+arvo's `dev`, never by `branch`, and carry a `version` beside the
+git source so `cargo deny` and a registry can read them. When both
+projects stabilise, they become versioned crates.io releases.
+
+The pin is `1b2796e9`, the last arvo `dev` revision that carries the
+crates the design names. arvo's `dev` deleted that tree while its
+canon is rewritten, so a branch pin does not resolve at all. Every
+nested workspace that depends on arvo (the bench workspaces, the
+lto smoke fixture) takes the same revision.
 
 ```toml
 [workspace.dependencies]
-arvo = { git = "https://github.com/orgrinrt/arvo.git", branch = "dev" }
-arvo-bits = { git = "https://github.com/orgrinrt/arvo.git", branch = "dev" }
-arvo-bitmask = { git = "https://github.com/orgrinrt/arvo.git", branch = "dev" }
-arvo-graph = { git = "https://github.com/orgrinrt/arvo.git", branch = "dev" }
-arvo-sparse = { git = "https://github.com/orgrinrt/arvo.git", branch = "dev" }
-arvo-spectral = { git = "https://github.com/orgrinrt/arvo.git", branch = "dev" }
-arvo-comb = { git = "https://github.com/orgrinrt/arvo.git", branch = "dev" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+arvo-bitmask = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
 ```
 
 When iterating on changes crossing the arvo / hilavitkutin boundary, add a local `[patch]` temporarily; remove before pushing.

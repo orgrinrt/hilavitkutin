@@ -10,7 +10,7 @@
 use core::cell::{Cell, UnsafeCell};
 use core::mem::MaybeUninit;
 
-use arvo::strategy::Identity;
+use arvo::strategy::{Additive, Identity};
 use arvo::{Bool, USize};
 use hilavitkutin::dispatch::engine_ctx::{ColPtrNil, EngineCtx};
 use hilavitkutin::dispatch::morsel::MorselRange;
@@ -29,14 +29,14 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 
 // Stack-backed test memory provider (mirrors engine_ctx.rs).
 struct BumpProvider<const N: usize> {
-    buf: UnsafeCell<[MaybeUninit<u8>; N]>,
+    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
     used: Cell<usize>,
 }
 
 impl<const N: usize> BumpProvider<N> {
     fn new() -> Self {
         Self {
-            buf: UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
+            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
             used: Cell::new(0),
         }
     }
@@ -84,8 +84,11 @@ fn resource_read_is_projection_time_snapshot() {
         bindings,
         &ColPtrNil,
         &meta,
-        USize::ZERO,
-        MorselRange::new(USize::ZERO, USize::ZERO),
+        <USize as Identity<Additive>>::IDENTITY,
+        MorselRange::new(
+            <USize as Identity<Additive>>::IDENTITY,
+            <USize as Identity<Additive>>::IDENTITY,
+        ),
     );
 
     // Mutate the canonical blob through the binding's typed base pointer,

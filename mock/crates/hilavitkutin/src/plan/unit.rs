@@ -9,9 +9,8 @@
 //! so the immutable plan structure can stay `&` while costs mutate.
 
 use arvo::USize;
-use arvo::strategy::Identity;
+use arvo::strategy::{Additive, Identity};
 use arvo_tensor::Capacity;
-
 use hilavitkutin_api::UnitId;
 
 /// Plan-stage metadata for a single work unit.
@@ -22,9 +21,9 @@ use hilavitkutin_api::UnitId;
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct UnitMeta {
     /// Stable id within the plan.
-    pub id: UnitId,
+    pub id:          UnitId,
     /// Topological depth from the DAG root (step 2 output).
-    pub topo_depth: USize,
+    pub topo_depth:  USize,
     /// Upward rank: longest path to any sink (fused step 8 output).
     pub upward_rank: USize,
     /// True iff the WU declared `COMMUTATIVE`.
@@ -36,9 +35,9 @@ impl UnitMeta {
     /// plan-stage chain populates real values.
     pub const fn new() -> Self {
         Self {
-            id: UnitId::ZERO,
-            topo_depth: USize::ZERO,
-            upward_rank: USize::ZERO,
+            id:          UnitId::ZERO,
+            topo_depth:  <USize as Identity<Additive>>::IDENTITY,
+            upward_rank: <USize as Identity<Additive>>::IDENTITY,
             commutative: arvo::Bool::FALSE,
         }
     }
@@ -63,7 +62,9 @@ pub struct CostTable<C: Capacity> {
 impl<C: Capacity> CostTable<C> {
     /// All-zero cost table.
     pub fn new() -> Self {
-        Self { estimated_cost_ns: <C as Capacity>::filled(USize::ZERO) }
+        Self {
+            estimated_cost_ns: <C as Capacity>::filled(<USize as Identity<Additive>>::IDENTITY),
+        }
     }
 }
 

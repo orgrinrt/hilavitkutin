@@ -32,15 +32,15 @@ use hilavitkutin_api::platform::WakeStrategy;
 pub struct ThreadPool {
     /// Number of worker threads the scheduler should bring up against
     /// this pool record.
-    pub thread_count: USize,
+    pub thread_count:   USize,
     /// Per-worker spin budget for the SpinThenWait tier. Sentinel
-    /// `USize::MAX` reads as "pure spin"; `USize::ZERO` as
+    /// `USize::MAX` reads as "pure spin"; `<USize as Identity<Additive>>::IDENTITY` as
     /// "immediate park".
-    pub spin_budget: USize,
+    pub spin_budget:    USize,
     /// Wake strategy: per-CoreClass spin budget + futex/park
     /// thresholds. Workers consult this on phase entry to pick
     /// `ParkTier`.
-    pub wake_strategy: WakeStrategy,
+    pub wake_strategy:  WakeStrategy,
     /// Shutdown intent flag. Set by `Drop`; observed by the
     /// scheduler's own drop path which publishes the signal into
     /// every worker's `PoolFrame.shutdown`.
@@ -51,9 +51,9 @@ impl ThreadPool {
     /// Construct a pool with the substrate-default wake strategy.
     pub fn new(core_count: USize) -> Self {
         Self {
-            thread_count: core_count,
-            spin_budget: USize(128), // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: documented spin-budget default; tracked: #121
-            wake_strategy: WakeStrategy::default_hybrid(),
+            thread_count:       core_count,
+            spin_budget:        USize(128), // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: documented spin-budget default; tracked: #121
+            wake_strategy:      WakeStrategy::default_hybrid(),
             shutdown_requested: AtomicBool::new(false),
         }
     }
@@ -66,6 +66,7 @@ impl ThreadPool {
     /// Observe whether shutdown has been requested. The scheduler
     /// calls this in its own `Drop` to decide whether to publish the
     /// signal to every worker's `PoolFrame.shutdown` slot.
+    #[rustfmt::skip] // keeps the allow on the signature it governs
     pub fn shutdown_requested(&self) -> bool { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: simple flag observer; tracked: #121
         self.shutdown_requested.load(Ordering::Acquire)
     }
@@ -91,8 +92,8 @@ impl Drop for ThreadPool {
 /// Builder for `ThreadPool`. Fluent surface for picking the wake
 /// strategy + spin budget at scheduler construction time.
 pub struct ThreadPoolBuilder {
-    thread_count: USize,
-    spin_budget: USize,
+    thread_count:  USize,
+    spin_budget:   USize,
     wake_strategy: WakeStrategy,
 }
 
@@ -100,8 +101,8 @@ impl ThreadPoolBuilder {
     /// Open a builder at substrate defaults.
     pub fn new() -> Self {
         Self {
-            thread_count: USize(1), // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: default thread count; tracked: #121
-            spin_budget: USize(128), // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: documented spin-budget default; tracked: #121
+            thread_count:  USize(1), // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: default thread count; tracked: #121
+            spin_budget:   USize(128), // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: documented spin-budget default; tracked: #121
             wake_strategy: WakeStrategy::default_hybrid(),
         }
     }
@@ -129,9 +130,9 @@ impl ThreadPoolBuilder {
     /// creation through `ThreadPoolApi`.
     pub fn build(self) -> ThreadPool {
         ThreadPool {
-            thread_count: self.thread_count,
-            spin_budget: self.spin_budget,
-            wake_strategy: self.wake_strategy,
+            thread_count:       self.thread_count,
+            spin_budget:        self.spin_budget,
+            wake_strategy:      self.wake_strategy,
             shutdown_requested: AtomicBool::new(false),
         }
     }

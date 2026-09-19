@@ -45,10 +45,12 @@ adds a reader.
 ## Consumer build.rs migration
 
 Every hilavitkutin-* crate's build.rs calls
-`mockspace::bootstrap::bootstrap_from_buildscript()`. Migrating to
-also-call `hilavitkutin_build::bootstrap_from_buildscript()` is a
-separate infra round that lands piecewise as each crate's
-pragmas become observable.
+`mockspace::bootstrap::bootstrap_from_buildscript()`. Adding the
+hilavitkutin-build half (read `PROFILE` and
+`CARGO_CFG_TARGET_FEATURE`, build `BuildConfig::from_cargo`, print
+`write_directives`, write `write_config_file` to `OUT_DIR`, as the
+`bootstrap` module's example shows) is a separate infra round that
+lands piecewise as each crate's pragmas become observable.
 
 ## Windows MSVC toolchain support
 

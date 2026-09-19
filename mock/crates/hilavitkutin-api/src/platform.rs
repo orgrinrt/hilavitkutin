@@ -6,7 +6,7 @@
 
 use arvo::strategy::Hot;
 use arvo::ufixed::UFixed;
-use arvo::{fbits, ibits, Bool, USize};
+use arvo::{Bool, USize, fbits, ibits};
 
 /// Nanoseconds since a platform-defined epoch.
 ///
@@ -66,12 +66,99 @@ pub trait ThreadPoolApi: Send + Sync + 'static {
     ///
     /// Implementations may block, queue, or steal; the engine makes
     /// no assumption about scheduling fairness.
+    ///
+    /// Every closure the engine hands here is no wider and no more
+    /// aligned than one pointer, so an implementation can move it into
+    /// a thread's single argument slot without allocating. The engine
+    /// forces [`OnePointerClosure::FITS`] on it at the spawn site, and
+    /// an implementation may force the same gate on its own `F`.
     fn spawn<F>(&self, f: F)
     where
         F: FnOnce() + Send + 'static;
 
     /// Number of worker threads in the pool.
     fn worker_count(&self) -> USize;
+}
+
+/// Compile-time gate that a closure fits one pointer-sized,
+/// pointer-aligned slot.
+///
+/// Forcing `OnePointerClosure::<F>::FITS` fails the build at
+/// monomorphisation when `F` is wider or more aligned than
+/// `*const ()`. The engine forces it on the closure it hands
+/// [`ThreadPoolApi::spawn`]. An associated const rather than an inline
+/// `const {}` block, because the latter is an anonymous generic
+/// constant the `generic_const_exprs` grammar rejects.
+///
+/// The failure is a monomorphisation error, so `cargo check` does not
+/// report it and `cargo build` does. A closure capturing two
+/// pointer-sized values is refused:
+///
+/// ```compile_fail,E0080
+/// use hilavitkutin_api::platform::OnePointerClosure;
+///
+/// fn force<F: FnOnce()>(f: F) {
+///     let () = OnePointerClosure::<F>::FITS;
+///     f();
+/// }
+///
+/// let (a, b) = (1usize, 2usize);
+/// force(move || {
+///     core::hint::black_box((a, b));
+/// });
+/// ```
+///
+/// A zero-sized capture aligned past a pointer is no wider than one
+/// pointer and is refused on alignment alone:
+///
+/// ```compile_fail,E0080
+/// use hilavitkutin_api::platform::OnePointerClosure;
+///
+/// #[derive(Copy, Clone)]
+/// #[repr(align(64))]
+/// struct OverAligned;
+///
+/// fn force<F: FnOnce()>(f: F) {
+///     let () = OnePointerClosure::<F>::FITS;
+///     f();
+/// }
+///
+/// let z = OverAligned;
+/// force(move || {
+///     core::hint::black_box(z);
+/// });
+/// ```
+///
+/// The same shape with one captured value builds:
+///
+/// ```
+/// use hilavitkutin_api::platform::OnePointerClosure;
+///
+/// fn force<F: FnOnce()>(f: F) {
+///     let () = OnePointerClosure::<F>::FITS;
+///     f();
+/// }
+///
+/// let a = 1usize;
+/// force(move || {
+///     core::hint::black_box(a);
+/// });
+/// ```
+pub struct OnePointerClosure<F>(PhantomData<F>);
+
+impl<F> OnePointerClosure<F> {
+    /// Evaluates to `()` when `F` fits one pointer slot; fails the
+    /// build otherwise.
+    pub const FITS: () = {
+        assert!(
+            core::mem::size_of::<F>() <= core::mem::size_of::<*const ()>(),
+            "the closure handed to ThreadPoolApi::spawn is wider than one pointer; an executor cannot carry it without allocating"
+        );
+        assert!(
+            core::mem::align_of::<F>() <= core::mem::align_of::<*const ()>(),
+            "the closure handed to ThreadPoolApi::spawn is more aligned than a pointer slot"
+        );
+    };
 }
 
 /// Monotonic clock.
@@ -269,20 +356,20 @@ unsafe impl<'arena, const C: usize, const P: usize> Sync for PoolFrame<'arena, C
 /// override per-app via struct literal + `..default_hybrid()`. Removes
 /// the PureSpin / PurePark enum variants in favour of expressing both
 /// via the same struct (`p_spin = e_spin = USize::MAX` is pure-spin;
-/// `p_spin = e_spin = USize::ZERO` is pure-park).
+/// `p_spin = e_spin = <USize as Identity<Additive>>::IDENTITY` is pure-park).
 pub struct WakeStrategy {
     /// Spin iterations on P-cores before falling back to the atomic-
     /// wait tier. Default 128.
-    pub p_spin_iters: USize,
+    pub p_spin_iters:       USize,
     /// Spin iterations on E-cores before falling back. Default 32.
-    pub e_spin_iters: USize,
+    pub e_spin_iters:       USize,
     /// Nanosecond threshold below which spin + atomic-wait (futex /
     /// ulock / WaitOnAddress) is cheaper than full park. Default 2µs.
     pub futex_threshold_ns: USize,
     /// Nanosecond threshold above which spin is skipped entirely and
     /// the worker parks immediately via the platform atomic-wait
     /// primitive. Default 50µs.
-    pub park_threshold_ns: USize,
+    pub park_threshold_ns:  USize,
 }
 
 impl WakeStrategy {
@@ -293,10 +380,10 @@ impl WakeStrategy {
     /// immediately.
     pub const fn default_hybrid() -> Self {
         Self {
-            p_spin_iters: USize(128),
-            e_spin_iters: USize(32),
+            p_spin_iters:       USize(128),
+            e_spin_iters:       USize(32),
             futex_threshold_ns: USize(2_000),
-            park_threshold_ns: USize(50_000),
+            park_threshold_ns:  USize(50_000),
         }
     }
 }
@@ -367,6 +454,7 @@ pub struct HybridExecutor;
 impl crate::sealed::Sealed for HybridExecutor {}
 
 impl Executor for HybridExecutor {
+    #[rustfmt::skip] // keeps the allow on the signature it governs
     fn run<'frame, 'arena, const C: usize, const P: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
         &self,
         pool: core::pin::Pin<&'frame PoolFrame<'arena, C, P>>,

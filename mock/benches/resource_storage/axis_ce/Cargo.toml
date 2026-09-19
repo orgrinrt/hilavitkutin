@@ -19,9 +19,9 @@ path = "src/lib.rs"
 
 [dependencies]
 notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
-arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
-arvo-bits = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
-arvo-tensor = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
+arvo-bits = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
+arvo-tensor = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
 hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
 hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
 

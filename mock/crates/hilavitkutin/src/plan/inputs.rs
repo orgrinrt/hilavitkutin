@@ -7,7 +7,7 @@
 //! `UnitId` re-exported via `crate::plan` from `hilavitkutin_api`
 //! (USize-shaped, canonical engine id type).
 
-use arvo::strategy::Identity;
+use arvo::strategy::{Additive, Identity};
 use arvo::{Bool, USize};
 use arvo_tensor::Capacity;
 
@@ -19,7 +19,7 @@ use super::access::AccessMask;
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct MorselBudget {
     /// Usable L1 write budget in bytes (`RunCfg::L1_USABLE`).
-    pub l1_usable: USize,
+    pub l1_usable:  USize,
     /// Lower window clamp in records (`RunCfg::MIN_MORSEL`).
     pub min_morsel: USize,
     /// Upper window clamp in records (`RunCfg::MAX_MORSEL`).
@@ -32,9 +32,9 @@ impl MorselBudget {
     /// record range in one morsel per fiber; every build path threads real
     /// `RunCfg` consts, so the fallback only reaches direct plan calls.
     pub const ZERO: Self = Self {
-        l1_usable: USize::ZERO,
-        min_morsel: USize::ZERO,
-        max_morsel: USize::ZERO,
+        l1_usable:  <USize as Identity<Additive>>::IDENTITY,
+        min_morsel: <USize as Identity<Additive>>::IDENTITY,
+        max_morsel: <USize as Identity<Additive>>::IDENTITY,
     };
 }
 
@@ -43,29 +43,29 @@ impl MorselBudget {
 /// stores accessible to any unit).
 pub struct PlanInputs<CU: Capacity, CS: Capacity> {
     /// Union of read + write stores per unit.
-    pub access: <CU as Capacity>::Array<AccessMask<CS>>,
+    pub access:        <CU as Capacity>::Array<AccessMask<CS>>,
     /// Write-only mask per unit.
-    pub writes: <CU as Capacity>::Array<AccessMask<CS>>,
+    pub writes:        <CU as Capacity>::Array<AccessMask<CS>>,
     /// Read-only mask per unit.
-    pub reads: <CU as Capacity>::Array<AccessMask<CS>>,
+    pub reads:         <CU as Capacity>::Array<AccessMask<CS>>,
     /// Commutativity flag per unit (COMMUTATIVE scheduling hint).
-    pub commutative: <CU as Capacity>::Array<Bool>,
+    pub commutative:   <CU as Capacity>::Array<Bool>,
     /// Number of units actually populated (0..=unit capacity).
-    pub unit_count: USize,
+    pub unit_count:    USize,
     /// Estimated record count per frame. Drives strategy
     /// selection (domain 21) and morsel sizing (domain 12).
-    pub record_count: USize,
+    pub record_count:  USize,
     /// Accumulator-store positions in the global `Stores` list, in the
     /// same bit space as `writes`. `writes[u].overlaps(&accum_stores)`
     /// is true iff unit `u` writes an accumulator, the per-fiber
     /// morsel-locality signal.
-    pub accum_stores: AccessMask<CS>,
+    pub accum_stores:  AccessMask<CS>,
     /// Per-store L1-morsel byte size, indexed by the store's position in
     /// the global `Stores` list (the same bit space as the masks):
     /// columns at type-native stride, resource values at their `Seq`/`Map`
     /// collection footprint, accumulators and virtuals zero. The step-9
     /// window formula sums this over each fiber's write-mask union.
-    pub store_sizes: <CS as Capacity>::Array<USize>,
+    pub store_sizes:   <CS as Capacity>::Array<USize>,
     /// The window formula's knobs, from the consumer's `RunCfg`.
     pub morsel_budget: MorselBudget,
 }
@@ -74,14 +74,14 @@ impl<CU: Capacity, CS: Capacity> PlanInputs<CU, CS> {
     /// Zero-filled default: no units registered, no records.
     pub fn new() -> Self {
         Self {
-            access: <CU as Capacity>::filled(AccessMask::empty()),
-            writes: <CU as Capacity>::filled(AccessMask::empty()),
-            reads: <CU as Capacity>::filled(AccessMask::empty()),
-            commutative: <CU as Capacity>::filled(Bool::FALSE),
-            unit_count: USize::ZERO,
-            record_count: USize::ZERO,
-            accum_stores: AccessMask::empty(),
-            store_sizes: <CS as Capacity>::filled(USize::ZERO),
+            access:        <CU as Capacity>::filled(AccessMask::empty()),
+            writes:        <CU as Capacity>::filled(AccessMask::empty()),
+            reads:         <CU as Capacity>::filled(AccessMask::empty()),
+            commutative:   <CU as Capacity>::filled(Bool::FALSE),
+            unit_count:    <USize as Identity<Additive>>::IDENTITY,
+            record_count:  <USize as Identity<Additive>>::IDENTITY,
+            accum_stores:  AccessMask::empty(),
+            store_sizes:   <CS as Capacity>::filled(<USize as Identity<Additive>>::IDENTITY),
             morsel_budget: MorselBudget::ZERO,
         }
     }

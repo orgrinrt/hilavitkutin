@@ -8,25 +8,25 @@
 
 use core::mem;
 
+use arvo::strategy::{Additive, Identity};
 use arvo::{Bool, Cap, USize};
-use arvo::strategy::Identity;
 use notko::Maybe;
 
 use crate::primitives::EvictionWeight;
 
 /// A single cache slot. Occupied when `key` is `Maybe::Is`.
 struct Slot<K, V> {
-    key: Maybe<K>,
-    value: Maybe<V>,
-    weight: EvictionWeight,
+    key:     Maybe<K>,
+    value:   Maybe<V>,
+    weight:  EvictionWeight,
     visited: Bool,
 }
 
 impl<K, V> Slot<K, V> {
     const EMPTY: Self = Self {
-        key: Maybe::Isnt,
-        value: Maybe::Isnt,
-        weight: EvictionWeight::new(0),
+        key:     Maybe::Isnt,
+        value:   Maybe::Isnt,
+        weight:  EvictionWeight::new(0),
         visited: Bool::FALSE,
     };
 }
@@ -38,19 +38,28 @@ impl<K, V> Default for Slot<K, V> {
 }
 
 /// Fixed-capacity cache. `CAP` is the total number of slots.
-pub struct SieveCache<K, V, const CAP: usize> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+pub struct SieveCache<
+    K,
+    V,
+    const CAP: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+> {
     slots: [Slot<K, V>; CAP],
-    head: USize,
+    head:  USize,
     count: USize,
 }
 
-impl<K: Copy + Eq, V, const CAP: usize> SieveCache<K, V, CAP> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+impl<
+    K: Copy + Eq,
+    V,
+    const CAP: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+> SieveCache<K, V, CAP>
+{
     /// Construct an empty cache.
     pub fn new() -> Self {
         Self {
             slots: [const { Slot::<K, V>::EMPTY }; CAP],
-            head: USize::ZERO,
-            count: USize::ZERO,
+            head:  <USize as Identity<Additive>>::IDENTITY,
+            count: <USize as Identity<Additive>>::IDENTITY,
         }
     }
 
@@ -79,14 +88,14 @@ impl<K: Copy + Eq, V, const CAP: usize> SieveCache<K, V, CAP> { // lint:allow(no
         // Replace path: key already present.
         let mut i = 0;
         while i < CAP {
-            if let Maybe::Is(k) = self.slots[i].key {
-                if k == key {
-                    let old = mem::replace(&mut self.slots[i].value, Maybe::Isnt);
-                    self.slots[i].value = Maybe::Is(value);
-                    self.slots[i].weight = weight;
-                    self.slots[i].visited = Bool::FALSE;
-                    return old;
-                }
+            if let Maybe::Is(k) = self.slots[i].key
+                && k == key
+            {
+                let old = mem::replace(&mut self.slots[i].value, Maybe::Isnt);
+                self.slots[i].value = Maybe::Is(value);
+                self.slots[i].weight = weight;
+                self.slots[i].visited = Bool::FALSE;
+                return old;
             }
             i += 1;
         }
@@ -133,14 +142,14 @@ impl<K: Copy + Eq, V, const CAP: usize> SieveCache<K, V, CAP> { // lint:allow(no
     pub fn get(&mut self, key: &K) -> Maybe<&V> {
         let mut i = 0;
         while i < CAP {
-            if let Maybe::Is(k) = self.slots[i].key {
-                if k == *key {
-                    self.slots[i].visited = Bool::TRUE;
-                    return match &self.slots[i].value {
-                        Maybe::Is(v) => Maybe::Is(v),
-                        Maybe::Isnt => Maybe::Isnt,
-                    };
-                }
+            if let Maybe::Is(k) = self.slots[i].key
+                && k == *key
+            {
+                self.slots[i].visited = Bool::TRUE;
+                return match &self.slots[i].value {
+                    Maybe::Is(v) => Maybe::Is(v),
+                    Maybe::Isnt => Maybe::Isnt,
+                };
             }
             i += 1;
         }
@@ -183,7 +192,12 @@ impl<K: Copy + Eq, V, const CAP: usize> SieveCache<K, V, CAP> { // lint:allow(no
     }
 }
 
-impl<K: Copy + Eq, V, const CAP: usize> Default for SieveCache<K, V, CAP> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+impl<
+    K: Copy + Eq,
+    V,
+    const CAP: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+> Default for SieveCache<K, V, CAP>
+{
     fn default() -> Self {
         Self::new()
     }

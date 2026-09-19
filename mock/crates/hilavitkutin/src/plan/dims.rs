@@ -11,7 +11,7 @@
 //! generic code with no overflow. The live count stays a runtime `USize`
 //! bounded by the dimension's `CAP`.
 
-use arvo::{Bits, Hot, Identity, Unsigned};
+use arvo::{Additive, Bits, Hot, Identity, Unsigned};
 use arvo_bitmask::{BitAccess, BitLogic, BitSequence};
 use arvo_tensor::{Capacity, ConstCapacity, Dim};
 
@@ -56,7 +56,7 @@ pub trait PlanDims {
     /// a concrete `Bits<..>`; `DefaultPlanDims` uses a 64-wide row, a larger
     /// `Units` budget pins a wider one. The covers-`Units` relation is a
     /// documented contract, not type-enforced.
-    type AdjRow: BitSequence + BitAccess + BitLogic + Copy + Default + Identity;
+    type AdjRow: BitSequence + BitAccess + BitLogic + Copy + Default + Identity<Additive>;
 }
 
 /// The default engine capacity budget. Consumers override `PlanDims` to size
@@ -64,21 +64,24 @@ pub trait PlanDims {
 /// (the live count is a runtime value bounded by each dimension's `CAP`).
 pub struct DefaultPlanDims;
 
+// rustfmt's impl-item reordering moves a trailing comment off every item but
+// the last, which would part each `lint:allow` below from the line it governs.
+#[rustfmt::skip]
 impl PlanDims for DefaultPlanDims {
-    type Units = Dim<64>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal; Dim<N> array-length-grammar root, the permitted bare primitive in the capacity-as-type convention; tracked: #649
-    type Stores = Dim<64>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal; Dim<N> array-length-grammar root, the permitted bare primitive in the capacity-as-type convention; tracked: #649
+    type AccumsPerCore = Dim<16>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal, the former GATE2_MAX_ACCUMS; Dim<N> array-length-grammar root; tracked: #649
+    type AdjRow = Bits<64, Hot, Unsigned>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: row word covering the 64-unit default budget; Bits width literal; tracked: #649
+    type Columns = Dim<64>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal, kept >= Stores; Dim<N> array-length-grammar root, the permitted bare primitive in the capacity-as-type convention; tracked: #649
+    type ColumnsPerFiber = Dim<16>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal; Dim<N> array-length-grammar root, the permitted bare primitive in the capacity-as-type convention; tracked: #649
+    type ComponentsPerTrunk = Dim<32>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal; Dim<N> array-length-grammar root, the permitted bare primitive in the capacity-as-type convention; tracked: #649
+    type Cores = Dim<256>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal, matches thread/class.rs MAX_CORES; Dim<N> array-length-grammar root, the permitted bare primitive in the capacity-as-type convention; tracked: #649
     type Edges = Dim<256>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal; Dim<N> array-length-grammar root, the permitted bare primitive in the capacity-as-type convention; tracked: #649
-    type Phases = Dim<32>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal; Dim<N> array-length-grammar root, the permitted bare primitive in the capacity-as-type convention; tracked: #649
-    type Trunks = Dim<64>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal; Dim<N> array-length-grammar root, the permitted bare primitive in the capacity-as-type convention; tracked: #649
-    type TrunksPerPhase = Dim<32>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal; Dim<N> array-length-grammar root, the permitted bare primitive in the capacity-as-type convention; tracked: #649
     type Fibers = Dim<64>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal; Dim<N> array-length-grammar root, the permitted bare primitive in the capacity-as-type convention; tracked: #649
     type Lanes = Dim<32>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal; Dim<N> array-length-grammar root, the permitted bare primitive in the capacity-as-type convention; tracked: #649
-    type Columns = Dim<64>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal, kept >= Stores; Dim<N> array-length-grammar root, the permitted bare primitive in the capacity-as-type convention; tracked: #649
-    type ComponentsPerTrunk = Dim<32>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal; Dim<N> array-length-grammar root, the permitted bare primitive in the capacity-as-type convention; tracked: #649
-    type UnitsPerFiber = Dim<32>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal; Dim<N> array-length-grammar root, the permitted bare primitive in the capacity-as-type convention; tracked: #649
-    type ColumnsPerFiber = Dim<16>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal; Dim<N> array-length-grammar root, the permitted bare primitive in the capacity-as-type convention; tracked: #649
-    type Cores = Dim<256>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal, matches thread/class.rs MAX_CORES; Dim<N> array-length-grammar root, the permitted bare primitive in the capacity-as-type convention; tracked: #649
-    type AccumsPerCore = Dim<16>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal, the former GATE2_MAX_ACCUMS; Dim<N> array-length-grammar root; tracked: #649
+    type Phases = Dim<32>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal; Dim<N> array-length-grammar root, the permitted bare primitive in the capacity-as-type convention; tracked: #649
     type PlanAffecting = Dim<256>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal, the former plan_dirty[256]; Dim<N> array-length-grammar root; tracked: #649
-    type AdjRow = Bits<64, Hot, Unsigned>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: row word covering the 64-unit default budget; Bits width literal; tracked: #649
+    type Stores = Dim<64>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal; Dim<N> array-length-grammar root, the permitted bare primitive in the capacity-as-type convention; tracked: #649
+    type Trunks = Dim<64>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal; Dim<N> array-length-grammar root, the permitted bare primitive in the capacity-as-type convention; tracked: #649
+    type TrunksPerPhase = Dim<32>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal; Dim<N> array-length-grammar root, the permitted bare primitive in the capacity-as-type convention; tracked: #649
+    type Units = Dim<64>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal; Dim<N> array-length-grammar root, the permitted bare primitive in the capacity-as-type convention; tracked: #649
+    type UnitsPerFiber = Dim<32>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: capacity budget literal; Dim<N> array-length-grammar root, the permitted bare primitive in the capacity-as-type convention; tracked: #649
 }

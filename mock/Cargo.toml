@@ -27,47 +27,47 @@ description = "Static scheduler and runtime that turns read / write access sets 
 repository = "https://github.com/orgrinrt/hilavitkutin"
 
 [workspace.dependencies]
-mockspace = { git = "ssh://git@github.com/hiisi-digital/mockspace.git", branch = "main" }
+mockspace = { git = "ssh://git@github.com/hiisi-digital/mockspace.git", rev = "b44a02027703a8bc0e4cd492f2c3984e861e0226", version = "0.0.2" }
 
 # notko foundation — Just / Maybe / Outcome / Boundable / NonZeroable
 # primitives. Consumed by hilavitkutin-api for its contract traits
 # (BoundedPush, Decoder) and by any downstream crate needing the
 # fallibility ladder.
-notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", version = "0.0.1", default-features = false, features = ["const", "try_trait_v2"] }
 
 # arvo substrate — referenced via path when developing in tandem, via
 # crates.io / git dep once published. For now the mockspace validates
 # shapes against design docs; consumers path-override as needed.
-arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
-arvo-bits = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
-arvo-bitmask = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
-arvo-graph = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
-arvo-sparse = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
-arvo-spectral = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
-arvo-comb = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
-arvo-hash = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
-arvo-refit = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
-arvo-tensor = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+arvo-bits = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+arvo-bitmask = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+arvo-graph = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+arvo-sparse = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+arvo-spectral = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+arvo-comb = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+arvo-hash = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+arvo-refit = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+arvo-tensor = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
 
 # Persistence dep for hilavitkutin-persistence (zero-copy serde, no_std + no alloc).
 # Version aligned with saalis's mockspace for consistency.
 rkyv = { version = "0.8", default-features = false }
 
-hilavitkutin-api = { path = "crates/hilavitkutin-api" }
-hilavitkutin-api-macros = { path = "crates/hilavitkutin-api-macros" }
-hilavitkutin = { path = "crates/hilavitkutin" }
-hilavitkutin-build = { path = "crates/hilavitkutin-build" }
-hilavitkutin-sym = { path = "crates/hilavitkutin-sym" }
+hilavitkutin-api = { path = "crates/hilavitkutin-api", version = "0.1.0" }
+hilavitkutin-api-macros = { path = "crates/hilavitkutin-api-macros", version = "0.1.0" }
+hilavitkutin = { path = "crates/hilavitkutin", version = "0.1.0" }
+hilavitkutin-build = { path = "crates/hilavitkutin-build", version = "0.1.0" }
+hilavitkutin-sym = { path = "crates/hilavitkutin-sym", version = "0.1.0" }
 
 # Platform dep for hilavitkutin engine os-tier syscalls.
 libc = { version = "0.2", default-features = false }
-hilavitkutin-ctx = { path = "crates/hilavitkutin-ctx" }
-hilavitkutin-persistence = { path = "crates/hilavitkutin-persistence" }
-hilavitkutin-str = { path = "crates/hilavitkutin-str" }
-hilavitkutin-kit = { path = "crates/hilavitkutin-kit" }
-hilavitkutin-providers = { path = "crates/hilavitkutin-providers" }
+hilavitkutin-ctx = { path = "crates/hilavitkutin-ctx", version = "0.1.0" }
+hilavitkutin-persistence = { path = "crates/hilavitkutin-persistence", version = "0.1.0" }
+hilavitkutin-str = { path = "crates/hilavitkutin-str", version = "0.1.0" }
+hilavitkutin-kit = { path = "crates/hilavitkutin-kit", version = "0.1.0" }
+hilavitkutin-providers = { path = "crates/hilavitkutin-providers", version = "0.1.0" }
 
 # Plugin host infrastructure
-hilavitkutin-linking = { path = "crates/hilavitkutin-linking" }
-hilavitkutin-extensions = { path = "crates/hilavitkutin-extensions" }
-hilavitkutin-extensions-macros = { path = "crates/hilavitkutin-extensions-macros" }
+hilavitkutin-linking = { path = "crates/hilavitkutin-linking", version = "0.1.0" }
+hilavitkutin-extensions = { path = "crates/hilavitkutin-extensions", version = "0.1.0" }
+hilavitkutin-extensions-macros = { path = "crates/hilavitkutin-extensions-macros", version = "0.1.0" }

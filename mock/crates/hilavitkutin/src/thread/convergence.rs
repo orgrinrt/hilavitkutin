@@ -6,15 +6,15 @@
 //! observes via `meeting_record.load` and stops its half.
 
 use arvo::USize;
-use arvo::strategy::Identity;
+use arvo::strategy::{Additive, Identity};
 
 use super::ThreadHandle;
 use crate::dispatch::ProgressCounter;
 
 /// Head+tail convergence record.
 pub struct Convergence {
-    pub head_thread: ThreadHandle,
-    pub tail_thread: ThreadHandle,
+    pub head_thread:    ThreadHandle,
+    pub tail_thread:    ThreadHandle,
     pub meeting_record: ProgressCounter,
 }
 
@@ -23,9 +23,9 @@ impl Convergence {
     /// at zero.
     pub const fn new(head: ThreadHandle, tail: ThreadHandle) -> Self {
         Self {
-            head_thread: head,
-            tail_thread: tail,
-            meeting_record: ProgressCounter::new(USize::ZERO),
+            head_thread:    head,
+            tail_thread:    tail,
+            meeting_record: ProgressCounter::new(<USize as Identity<Additive>>::IDENTITY),
         }
     }
 }

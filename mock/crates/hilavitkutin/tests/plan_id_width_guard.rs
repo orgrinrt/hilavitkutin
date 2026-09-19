@@ -8,32 +8,39 @@
 //! ids on the high slots. The guard is a property of the dims type, so it
 //! fires even for an empty plan, which is what these tests drive.
 
-use arvo::{Bits, Hot, Identity, USize, Unsigned};
+use arvo::{Additive, Bits, Hot, Identity, USize, Unsigned};
 use arvo_tensor::Dim;
-use hilavitkutin::plan::{compute_execution_plan, DefaultPlanDims, PlanDims, PlanError, PlanInputs};
+use hilavitkutin::plan::{
+    DefaultPlanDims,
+    PlanDims,
+    PlanError,
+    PlanInputs,
+    compute_execution_plan,
+};
 use notko::Outcome;
 
 /// Dims whose phase capacity (33) is one past what `PhaseId` can name (32).
 /// Every other dimension is a sane small size; only `Phases` is over-wide.
 struct OverWidePhasesDims;
 
+#[rustfmt::skip]
 impl PlanDims for OverWidePhasesDims {
-    type Units = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type Stores = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type AccumsPerCore = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type AdjRow = Bits<64, Hot, Unsigned>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: 64-wide row covers the small test units; Bits width literal; tracked: #649
+    type Columns = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type ColumnsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type ComponentsPerTrunk = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Cores = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
     type Edges = Dim<16>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type Phases = Dim<33>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: one past PhaseId::ADDRESSABLE, the case under test; tracked: #641
-    type Trunks = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type TrunksPerPhase = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
     type Fibers = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
     type Lanes = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type Columns = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type ComponentsPerTrunk = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type UnitsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type ColumnsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type Cores = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type AccumsPerCore = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Phases = Dim<33>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: one past PhaseId::ADDRESSABLE, the case under test; tracked: #641
     type PlanAffecting = Dim<16>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type AdjRow = Bits<64, Hot, Unsigned>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: 64-wide row covers the small test units; Bits width literal; tracked: #649
+    type Stores = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Trunks = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type TrunksPerPhase = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Units = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type UnitsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
 }
 
 /// Dims whose trunk capacity (65) is one past what `TrunkId` can name (64),
@@ -41,23 +48,24 @@ impl PlanDims for OverWidePhasesDims {
 /// passes and the trunk guard is the one exercised.
 struct OverWideTrunksDims;
 
+#[rustfmt::skip]
 impl PlanDims for OverWideTrunksDims {
-    type Units = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type Stores = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type AccumsPerCore = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type AdjRow = Bits<64, Hot, Unsigned>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: 64-wide row covers the small test units; Bits width literal; tracked: #649
+    type Columns = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type ColumnsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type ComponentsPerTrunk = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Cores = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
     type Edges = Dim<16>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type Phases = Dim<32>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: aligned phase capacity so the phase guard passes; tracked: #641
-    type Trunks = Dim<65>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: one past TrunkId::ADDRESSABLE, the case under test; tracked: #641
-    type TrunksPerPhase = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
     type Fibers = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
     type Lanes = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type Columns = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type ComponentsPerTrunk = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type UnitsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type ColumnsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type Cores = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type AccumsPerCore = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Phases = Dim<32>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: aligned phase capacity so the phase guard passes; tracked: #641
     type PlanAffecting = Dim<16>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
-    type AdjRow = Bits<64, Hot, Unsigned>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: 64-wide row covers the small test units; Bits width literal; tracked: #649
+    type Stores = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type Trunks = Dim<65>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: one past TrunkId::ADDRESSABLE, the case under test; tracked: #641
+    type TrunksPerPhase = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: one past TrunkId::ADDRESSABLE, the case under test; tracked: #641
+    type Units = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
+    type UnitsPerFiber = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity dimension; Dim<N> array-length root; tracked: #649
 }
 
 #[test]
@@ -68,7 +76,7 @@ fn over_wide_phase_capacity_is_rejected() {
     > = PlanInputs::new();
     // The guard is a property of the dims, so even an empty plan is rejected.
     match compute_execution_plan::<OverWidePhasesDims>(&inputs) {
-        Outcome::Err(PlanError::PhaseCapacityExceedsIdWidth) => {}
+        Outcome::Err(PlanError::PhaseCapacityExceedsIdWidth) => {},
         other => panic!("expected PhaseCapacityExceedsIdWidth, got {:?}", other),
     }
 }
@@ -80,7 +88,7 @@ fn over_wide_trunk_capacity_is_rejected() {
         <OverWideTrunksDims as PlanDims>::Stores,
     > = PlanInputs::new();
     match compute_execution_plan::<OverWideTrunksDims>(&inputs) {
-        Outcome::Err(PlanError::TrunkCapacityExceedsIdWidth) => {}
+        Outcome::Err(PlanError::TrunkCapacityExceedsIdWidth) => {},
         other => panic!("expected TrunkCapacityExceedsIdWidth, got {:?}", other),
     }
 }
@@ -94,7 +102,9 @@ fn aligned_default_dims_is_not_rejected() {
         <DefaultPlanDims as PlanDims>::Stores,
     > = PlanInputs::new();
     match compute_execution_plan::<DefaultPlanDims>(&inputs) {
-        Outcome::Ok(plan) => assert_eq!(plan.unit_count, USize::ZERO),
+        Outcome::Ok(plan) => {
+            assert_eq!(plan.unit_count, <USize as Identity<Additive>>::IDENTITY)
+        },
         Outcome::Err(e) => panic!("aligned default dims should not be rejected, got {:?}", e),
     }
 }

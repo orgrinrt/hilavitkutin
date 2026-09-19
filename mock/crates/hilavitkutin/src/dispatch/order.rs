@@ -15,12 +15,12 @@
 //! topological sort itself; the carrier fold and the `Scheduler::run` rewire
 //! that dispatches in this order follow in the same round.
 
-use arvo::strategy::Identity;
 use arvo::USize;
+use arvo::strategy::{Additive, Identity};
 use arvo_tensor::Capacity;
+use hilavitkutin_api::WorkUnit;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::work_unit_values::{WuCons, WuNil};
-use hilavitkutin_api::WorkUnit;
 
 use crate::plan::access::AccessMask;
 use crate::plan::project::MaskProject;
@@ -61,7 +61,7 @@ pub const fn topo_order<
         }
         i += 1;
     }
-    let mut order = [USize::ZERO; N];
+    let mut order = [<USize as Identity<Additive>>::IDENTITY; N];
     let mut done = [false; N];
     let mut out = 0;
     while out < N {
@@ -113,14 +113,18 @@ pub const trait CarrierMasks<Stores, Witnesses, CS: Capacity> {
     fn fill(reads: &mut [AccessMask<CS>], writes: &mut [AccessMask<CS>], pos: USize);
 }
 
-impl<Stores, CS: Capacity> const CarrierMasks<Stores, Empty, CS> for Empty {
+// rustfmt's impl-item reordering moves a trailing comment off every item but
+// the last, which would part each `lint:allow` below from the line it governs.
+#[rustfmt::skip]
+const impl<Stores, CS: Capacity> CarrierMasks<Stores, Empty, CS> for Empty {
     const LEN: usize = 0; // lint:allow(no-bare-numeric) reason: empty-carrier length; tracked: #649
 
     #[inline]
     fn fill(_reads: &mut [AccessMask<CS>], _writes: &mut [AccessMask<CS>], _pos: USize) {}
 }
 
-impl<Stores, W, T, RI, WI, WT, CS: Capacity> const CarrierMasks<Stores, Cons<(RI, WI), WT>, CS>
+#[rustfmt::skip]
+const impl<Stores, W, T, RI, WI, WT, CS: Capacity> CarrierMasks<Stores, Cons<(RI, WI), WT>, CS>
     for Cons<W, T>
 where
     W: WorkUnit,
@@ -144,14 +148,16 @@ where
 // same W types as the `Cons<W, T>` bundle in the same order, so `Scheduler::run`
 // can compute the const ORDER from its `WuVals` type without retaining the
 // builder's `Wus` bundle type.
-impl<Stores, CS: Capacity> const CarrierMasks<Stores, Empty, CS> for WuNil {
+#[rustfmt::skip]
+const impl<Stores, CS: Capacity> CarrierMasks<Stores, Empty, CS> for WuNil {
     const LEN: usize = 0; // lint:allow(no-bare-numeric) reason: empty-carrier length; tracked: #649
 
     #[inline]
     fn fill(_reads: &mut [AccessMask<CS>], _writes: &mut [AccessMask<CS>], _pos: USize) {}
 }
 
-impl<Stores, W, T, RI, WI, WT, CS: Capacity> const CarrierMasks<Stores, Cons<(RI, WI), WT>, CS>
+#[rustfmt::skip]
+const impl<Stores, W, T, RI, WI, WT, CS: Capacity> CarrierMasks<Stores, Cons<(RI, WI), WT>, CS>
     for WuCons<W, T>
 where
     W: WorkUnit,
@@ -189,7 +195,11 @@ where
 {
     let mut reads = [AccessMask::empty(); N];
     let mut writes = [AccessMask::empty(); N];
-    <Bundle as CarrierMasks<Stores, Witnesses, CS>>::fill(&mut reads, &mut writes, USize::ZERO);
+    <Bundle as CarrierMasks<Stores, Witnesses, CS>>::fill(
+        &mut reads,
+        &mut writes,
+        <USize as Identity<Additive>>::IDENTITY,
+    );
     topo_order::<CS, N>(reads, writes)
 }
 
@@ -217,13 +227,13 @@ where
     <Bundle as CarrierMasks<Stores, Witnesses, CS>>::fill(
         reads_a.as_mut(),
         writes_a.as_mut(),
-        USize::ZERO,
+        <USize as Identity<Additive>>::IDENTITY,
     );
     let reads = reads_a.as_ref();
     let writes = writes_a.as_ref();
     let n = reads.len();
     // In-degree per unit (one edge i -> j iff writes[i] overlaps reads[j]).
-    let mut indeg_a = <U as Capacity>::filled(USize::ZERO);
+    let mut indeg_a = <U as Capacity>::filled(<USize as Identity<Additive>>::IDENTITY);
     {
         let indeg = indeg_a.as_mut();
         let mut i = 0;
@@ -238,8 +248,8 @@ where
             i += 1;
         }
     }
-    let mut done_a = <U as Capacity>::filled(USize::ZERO);
-    let mut order_a = <U as Capacity>::filled(USize::ZERO);
+    let mut done_a = <U as Capacity>::filled(<USize as Identity<Additive>>::IDENTITY);
+    let mut order_a = <U as Capacity>::filled(<USize as Identity<Additive>>::IDENTITY);
     {
         let indeg = indeg_a.as_mut();
         let done = done_a.as_mut();
@@ -289,16 +299,20 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use arvo_tensor::Dim;
-    use crate::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
     use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
     use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
     use hilavitkutin_api::store::Column;
     use hilavitkutin_api::work_unit::{Always, WorkUnit};
 
+    use super::*;
+    use crate::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
+
+    // Carrier index zero, and the value an unplaced order slot keeps.
+    const I0: USize = <USize as Identity<Additive>>::IDENTITY;
+
     // Store-bit indices for the test pipelines.
-    const S0: USize = USize::ZERO;
+    const S0: USize = <USize as Identity<Additive>>::IDENTITY;
     const S1: USize = USize(1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test store-bit index; tracked: #72
     const S2: USize = USize(2); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test store-bit index; tracked: #72
     const S3: USize = USize(3); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test store-bit index; tracked: #72
@@ -331,7 +345,8 @@ mod tests {
         let reads = [mask(S0), mask(S1), mask(S2)]; // A, B, C
         let writes = [mask(S1), mask(S2), mask(S3)]; // A, B, C
         let order = topo_order::<CS, 3>(reads, writes); // lint:allow(no-bare-numeric) reason: test carrier length; tracked: #72
-        assert_eq!(order, [USize::ZERO, USize(1), USize(2)]); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: expected-order literals; tracked: #72
+        let expected = [I0, USize(1), USize(2)]; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: expected-order literals; tracked: #72
+        assert_eq!(order, expected);
     }
 
     // Independent units (no shared stores): no edges, so the order is the
@@ -341,7 +356,7 @@ mod tests {
         let reads = [mask(S0), mask(S1)];
         let writes = [mask(S2), mask(S3)];
         let order = topo_order::<CS, 2>(reads, writes); // lint:allow(no-bare-numeric) reason: test carrier length; tracked: #72
-        assert_eq!(order, [USize::ZERO, USize(1)]); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: expected-order literals; tracked: #72
+        assert_eq!(order, [<USize as Identity<Additive>>::IDENTITY, USize(1)]); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: expected-order literals; tracked: #72
     }
 
     // A diamond: A (S0->S1) feeds both B (S1->S2) and C (S1->S3); D (S2,S3->S4)
@@ -364,7 +379,33 @@ mod tests {
             mask(S1), // A writes S1
         ];
         let order = topo_order::<CS, 4>(reads, writes); // lint:allow(no-bare-numeric) reason: test carrier length; tracked: #72
-        assert_eq!(order, [USize(3), USize(1), USize(2), USize::ZERO]); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: expected-order literals; tracked: #72
+        let expected = [USize(3), USize(1), USize(2), I0]; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: expected-order literals; tracked: #72
+        assert_eq!(order, expected);
+    }
+
+    // Two units feeding each other (A reads S0 writes S1, B reads S1 writes
+    // S0) form a cycle, and C beside them touches neither store. C is the only
+    // unit that ever becomes ready, so it is placed first and the walk stops:
+    // the tail the cycle would have filled stays at zero.
+    #[test]
+    fn cycle_places_only_the_independent_unit() {
+        let reads = [mask(S0), mask(S1), mask(S2)]; // A, B, C
+        let writes = [mask(S1), mask(S0), mask(S3)]; // A, B, C
+        let order = topo_order::<CS, 3>(reads, writes); // lint:allow(no-bare-numeric) reason: test carrier length; tracked: #72
+        let expected = [USize(2), I0, I0]; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: expected-order literals; tracked: #72
+        assert_eq!(order, expected);
+    }
+
+    // A unit that reads the store it writes is not its own predecessor. X
+    // (index 1) reads and writes S0, and Y (index 0) reads S0: the only edge is
+    // X before Y. Were the self-overlap counted, X would never become ready and
+    // nothing would be placed.
+    #[test]
+    fn a_unit_reading_its_own_write_is_not_its_own_predecessor() {
+        let reads = [mask(S0), mask(S0)]; // Y, X
+        let writes = [mask(S2), mask(S0)]; // Y, X
+        let order = topo_order::<CS, 2>(reads, writes); // lint:allow(no-bare-numeric) reason: test carrier length; tracked: #72
+        assert_eq!(order, [USize(1), I0]); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: expected-order literals; tracked: #72
     }
 
     // The order is genuinely a `const fn`: it evaluates in a const context.
@@ -373,7 +414,7 @@ mod tests {
         const READS: [AccessMask<CS>; 2] = [mask(S1), mask(S0)]; // lint:allow(no-bare-numeric) reason: test carrier length; tracked: #72
         const WRITES: [AccessMask<CS>; 2] = [mask(S2), mask(S1)]; // lint:allow(no-bare-numeric) reason: test carrier length; tracked: #72
         const ORDER: [USize; 2] = topo_order::<CS, 2>(READS, WRITES); // lint:allow(no-bare-numeric) reason: test carrier length; tracked: #72
-        assert_eq!(ORDER, [USize(1), USize::ZERO]); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: expected-order literals; tracked: #72
+        assert_eq!(ORDER, [USize(1), <USize as Identity<Additive>>::IDENTITY]); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: expected-order literals; tracked: #72
     }
 
     // Column store markers for the carrier-order integration test. Zero-size
@@ -390,13 +431,10 @@ mod tests {
     // WuA: Inv -> Av. WuB: Av -> Bv. WuB depends on WuA (shares Av).
     struct WuA;
     impl BuilderInput for WuA {
-        type Init = Self;
         type Dispatch = UnitDispatch<Self>;
+        type Init = Self;
     }
     impl WorkUnit<Always> for WuA {
-        type Read = One<Inv>;
-        type Write = One<Av>;
-        type Hint = (Immediate, Atomic, Normal);
         type Ctx<'frame> = EngineCtx<
             'frame,
             One<Inv>,
@@ -405,18 +443,19 @@ mod tests {
             ColPtrCons<Inv, ColPtrNil>,
             ColPtrCons<Av, ColPtrNil>,
         >;
+        type Hint = (Immediate, Atomic, Normal);
+        type Read = One<Inv>;
+        type Write = One<Av>;
+
         fn execute<'frame>(&self, _ctx: &Self::Ctx<'frame>) {}
     }
 
     struct WuB;
     impl BuilderInput for WuB {
-        type Init = Self;
         type Dispatch = UnitDispatch<Self>;
+        type Init = Self;
     }
     impl WorkUnit<Always> for WuB {
-        type Read = One<Av>;
-        type Write = One<Bv>;
-        type Hint = (Immediate, Atomic, Normal);
         type Ctx<'frame> = EngineCtx<
             'frame,
             One<Av>,
@@ -425,6 +464,10 @@ mod tests {
             ColPtrCons<Av, ColPtrNil>,
             ColPtrCons<Bv, ColPtrNil>,
         >;
+        type Hint = (Immediate, Atomic, Normal);
+        type Read = One<Av>;
+        type Write = One<Bv>;
+
         fn execute<'frame>(&self, _ctx: &Self::Ctx<'frame>) {}
     }
 
@@ -439,7 +482,7 @@ mod tests {
         type Stores = Cons<Column<Inv>, Cons<Column<Av>, Cons<Column<Bv>, Empty>>>;
         type Bundle = Cons<WuB, Cons<WuA, Empty>>;
         let order = carrier_order::<Bundle, Stores, _, CS, 2>(); // lint:allow(no-bare-numeric) reason: carrier length; tracked: #72
-        assert_eq!(order, [USize(1), USize::ZERO]); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: expected-order literals; tracked: #72
+        assert_eq!(order, [USize(1), <USize as Identity<Additive>>::IDENTITY]); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: expected-order literals; tracked: #72
     }
 
     // The same over the value-carrying `WuCons` list the scheduler retains as
@@ -451,7 +494,7 @@ mod tests {
         type Stores = Cons<Column<Inv>, Cons<Column<Av>, Cons<Column<Bv>, Empty>>>;
         type Carrier = WuCons<WuB, WuCons<WuA, WuNil>>;
         let order = carrier_order::<Carrier, Stores, _, CS, 2>(); // lint:allow(no-bare-numeric) reason: carrier length; tracked: #72
-        assert_eq!(order, [USize(1), USize::ZERO]); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: expected-order literals; tracked: #72
+        assert_eq!(order, [USize(1), <USize as Identity<Additive>>::IDENTITY]); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: expected-order literals; tracked: #72
     }
 
     // The GCE-safe `carrier_order_dyn` over `<U as Capacity>::Array`: the order
@@ -464,7 +507,7 @@ mod tests {
         type Carrier = WuCons<WuB, WuCons<WuA, WuNil>>;
         type U = Dim<8>; // lint:allow(no-bare-numeric) reason: test unit-capacity Dim literal; tracked: #649
         let order = carrier_order_dyn::<Carrier, Stores, _, U, CS>();
-        let prefix = &order.as_ref()[..2]; // lint:allow(no-bare-numeric) reason: live unit count; tracked: #72
-        assert_eq!(prefix, &[USize(1), USize::ZERO]); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: expected-order literals; tracked: #72
+        let prefix = &order.as_ref()[.. 2]; // lint:allow(no-bare-numeric) reason: live unit count; tracked: #72
+        assert_eq!(prefix, &[USize(1), <USize as Identity<Additive>>::IDENTITY]); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: expected-order literals; tracked: #72
     }
 }

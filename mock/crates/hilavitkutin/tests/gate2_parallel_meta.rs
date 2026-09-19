@@ -23,10 +23,17 @@ use core::sync::atomic::{AtomicUsize, Ordering};
 
 use arvo::{Bool, USize};
 use hilavitkutin::dispatch::engine_ctx::{
-    AccPtrCons, AccPtrNil, ColPtrNil, EngineCtx, MetaRef, SnapNil, VirtNil,
+    AccPtrCons,
+    AccPtrNil,
+    ColPtrNil,
+    EngineCtx,
+    MetaRef,
+    SnapNil,
+    VirtNil,
 };
 use hilavitkutin::scheduler::Scheduler;
-use hilavitkutin::OsThreadPool;
+mod common;
+use common::TestExecutor;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{AccumWriterApi, HasAccumWriter};
@@ -43,12 +50,15 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 }
 
 struct BumpProvider<const N: usize> {
-    buf: UnsafeCell<[MaybeUninit<u8>; N]>,
+    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
     used: Cell<usize>,
 }
 impl<const N: usize> BumpProvider<N> {
     fn new() -> Self {
-        Self { buf: UnsafeCell::new([const { MaybeUninit::uninit() }; N]), used: Cell::new(0) }
+        Self {
+            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
+            used: Cell::new(0),
+        }
     }
 }
 unsafe impl<const N: usize> Send for BumpProvider<N> {}
@@ -66,7 +76,9 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
         // SAFETY: aligned + len <= N, in bounds of the owned buffer.
         unsafe { base.add(aligned) }
     }
+
     unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
@@ -90,8 +102,15 @@ type Hints = (
 );
 
 // Consumer Ctx: default MetaNil meta pointer.
-type ConsumerCtx<'frame> =
-    EngineCtx<'frame, Empty, AccW, SnapNil, ColPtrNil, ColPtrNil, AccPtrCons<'frame, Mark, AccPtrNil>>;
+type ConsumerCtx<'frame> = EngineCtx<
+    'frame,
+    Empty,
+    AccW,
+    SnapNil,
+    ColPtrNil,
+    ColPtrNil,
+    AccPtrCons<'frame, Mark, AccPtrNil>,
+>;
 
 // Meta Ctx: MetaRef as the 9th param (forced for OnMeta schedules).
 type MetaCtx<'frame> = EngineCtx<
@@ -111,17 +130,18 @@ type MetaCtx<'frame> = EngineCtx<
 // path per the round's documented constraint).
 struct StartWu;
 impl BuilderInput for StartWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl HasSchedule for StartWu {
     type Sched = OnMeta<PassStart>;
 }
 impl WorkUnit<OnMeta<PassStart>> for StartWu {
+    type Ctx<'frame> = MetaCtx<'frame>;
+    type Hint = Hints;
     type Read = Empty;
     type Write = AccW;
-    type Hint = Hints;
-    type Ctx<'frame> = MetaCtx<'frame>;
+
     fn execute<'frame>(&self, _ctx: &Self::Ctx<'frame>) {
         PASS_STARTS.fetch_add(1, Ordering::Relaxed);
     }
@@ -131,14 +151,15 @@ impl WorkUnit<OnMeta<PassStart>> for StartWu {
 // its record slice (once per participating core under the unit-outer split).
 struct ConsumerWu;
 impl BuilderInput for ConsumerWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for ConsumerWu {
+    type Ctx<'frame> = ConsumerCtx<'frame>;
+    type Hint = Hints;
     type Read = Empty;
     type Write = AccW;
-    type Hint = Hints;
-    type Ctx<'frame> = ConsumerCtx<'frame>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         // SAFETY: Mark reserved (RECORDS); appends stay within the per-core region.
         unsafe { ctx.accums().append::<Mark, _>(Mark(9)) };
@@ -149,17 +170,18 @@ impl WorkUnit<Always> for ConsumerWu {
 // bridge and appends it after the merged consumer markers.
 struct EndWu;
 impl BuilderInput for EndWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl HasSchedule for EndWu {
     type Sched = OnMeta<ScheduleEnd>;
 }
 impl WorkUnit<OnMeta<ScheduleEnd>> for EndWu {
+    type Ctx<'frame> = MetaCtx<'frame>;
+    type Hint = Hints;
     type Read = Empty;
     type Write = AccW;
-    type Hint = Hints;
-    type Ctx<'frame> = MetaCtx<'frame>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         let pc = ctx.meta::<SchedulerMetrics>().pass_count.get();
         // SAFETY: Mark reserved (RECORDS); the epilogue append lands at the merged
@@ -176,8 +198,12 @@ impl WorkUnit<OnMeta<ScheduleEnd>> for EndWu {
 fn carrier_band_bounds() {
     use hilavitkutin::dispatch::engine_ctx::Here;
     use hilavitkutin::plan::grouping::{
-        consumer_phase_end, phase_count, phase_of, plan_phase_count, pre_consumer_phase_count,
         UnitAccess,
+        consumer_phase_end,
+        phase_count,
+        phase_of,
+        plan_phase_count,
+        pre_consumer_phase_count,
     };
     use hilavitkutin::plan::{DefaultPlanDims, PlanDims};
     type Stores = Cons<Accum<Mark>, Empty>;
@@ -190,13 +216,41 @@ fn carrier_band_bounds() {
     assert_eq!(<StartWu as UnitAccess>::RANK.0, 2, "start rank");
     assert_eq!(<ConsumerWu as UnitAccess>::RANK.0, 3, "consumer rank");
     assert_eq!(<EndWu as UnitAccess>::RANK.0, 4, "end rank");
-    assert_eq!(phase_of::<Units, Stores, Wit, CU, CS, Adj>(USize(0)).0, 0, "start phase");
-    assert_eq!(phase_of::<Units, Stores, Wit, CU, CS, Adj>(USize(1)).0, 1, "consumer phase");
-    assert_eq!(phase_of::<Units, Stores, Wit, CU, CS, Adj>(USize(2)).0, 2, "end phase");
-    assert_eq!(phase_count::<Units, Stores, Wit, CU, CS, Adj>().0, 3, "nphases");
-    assert_eq!(plan_phase_count::<Units, Stores, Wit, CU, CS, Adj>().0, 0, "plan phases");
-    assert_eq!(pre_consumer_phase_count::<Units, Stores, Wit, CU, CS, Adj>().0, 1, "pre");
-    assert_eq!(consumer_phase_end::<Units, Stores, Wit, CU, CS, Adj>().0, 2, "cend");
+    assert_eq!(
+        phase_of::<Units, Stores, Wit, CU, CS, Adj>(USize(0)).0,
+        0,
+        "start phase"
+    );
+    assert_eq!(
+        phase_of::<Units, Stores, Wit, CU, CS, Adj>(USize(1)).0,
+        1,
+        "consumer phase"
+    );
+    assert_eq!(
+        phase_of::<Units, Stores, Wit, CU, CS, Adj>(USize(2)).0,
+        2,
+        "end phase"
+    );
+    assert_eq!(
+        phase_count::<Units, Stores, Wit, CU, CS, Adj>().0,
+        3,
+        "nphases"
+    );
+    assert_eq!(
+        plan_phase_count::<Units, Stores, Wit, CU, CS, Adj>().0,
+        0,
+        "plan phases"
+    );
+    assert_eq!(
+        pre_consumer_phase_count::<Units, Stores, Wit, CU, CS, Adj>().0,
+        1,
+        "pre"
+    );
+    assert_eq!(
+        consumer_phase_end::<Units, Stores, Wit, CU, CS, Adj>().0,
+        2,
+        "cend"
+    );
 }
 
 #[test]
@@ -211,11 +265,11 @@ fn unit_outer_meta_bands_run_once_per_frame_ordered() {
         .build(store(provider), USize(RECORDS))
         .unwrap_or_else(|_| panic!("build should succeed"));
 
-    let pool = OsThreadPool::new();
+    let pool = TestExecutor::new();
     let ncores = pool.worker_count().0.max(1);
     // Participating cores under the ceil record split (mirrors the worker math).
     let per = (RECORDS + ncores - 1) / ncores;
-    let participating = (0..ncores).filter(|c| c * per < RECORDS).count();
+    let participating = (0 .. ncores).filter(|c| c * per < RECORDS).count();
     assert!(participating >= 1);
     assert!(
         participating + 1 <= RECORDS,
@@ -240,14 +294,17 @@ fn unit_outer_meta_bands_run_once_per_frame_ordered() {
         participating + 1,
         "frame 1: merged consumer markers plus one epilogue append",
     );
-    for k in 0..participating {
+    for k in 0 .. participating {
         // SAFETY: len1 records appended into the merged prefix.
         let m = unsafe { core::ptr::read(base1.add(k)).0 };
         assert_eq!(m, 9, "frame 1 slot {k}: merged consumer marker");
     }
     // SAFETY: the epilogue record is the last live one.
     let tail1 = unsafe { core::ptr::read(base1.add(participating)).0 };
-    assert_eq!(tail1, 1, "frame 1: epilogue hook read pass_count = 1 after the merge");
+    assert_eq!(
+        tail1, 1,
+        "frame 1: epilogue hook read pass_count = 1 after the merge"
+    );
 
     // Frame 2.
     let r2 = scheduler.as_mut().run_parallel(&pool);
@@ -260,12 +317,15 @@ fn unit_outer_meta_bands_run_once_per_frame_ordered() {
     let len2 = scheduler.as_ref().__bindings().__len_cell().get().0;
     let base2 = scheduler.as_ref().__bindings().__ptr().as_ptr();
     assert_eq!(len2, participating + 1, "frame 2: reset buffer, same shape");
-    for k in 0..participating {
+    for k in 0 .. participating {
         // SAFETY: len2 records appended into the merged prefix.
         let m = unsafe { core::ptr::read(base2.add(k)).0 };
         assert_eq!(m, 9, "frame 2 slot {k}: merged consumer marker");
     }
     // SAFETY: the epilogue record is the last live one.
     let tail2 = unsafe { core::ptr::read(base2.add(participating)).0 };
-    assert_eq!(tail2, 2, "frame 2: epilogue hook read the advanced pass_count = 2");
+    assert_eq!(
+        tail2, 2,
+        "frame 2: epilogue hook read the advanced pass_count = 2"
+    );
 }

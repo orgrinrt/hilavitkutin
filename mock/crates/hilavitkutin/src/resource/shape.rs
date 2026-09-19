@@ -22,7 +22,7 @@ use arvo::USize;
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct ValueShape {
     /// Blob size in bytes.
-    pub size: USize,
+    pub size:  USize,
     /// Blob alignment in bytes.
     pub align: USize,
 }
@@ -32,10 +32,8 @@ impl ValueShape {
     #[inline(always)]
     pub const fn of<T>() -> Self {
         Self {
-            // lint:allow(no-bare-numeric) reason: size_of/align_of return usize by contract; tracked: #654
-            size: USize(size_of::<T>()),
-            // lint:allow(no-bare-numeric) reason: size_of/align_of return usize by contract; tracked: #654
-            align: USize(align_of::<T>()),
+            size:  USize(size_of::<T>()), // lint:allow(no-bare-numeric) reason: size_of/align_of return usize by contract; tracked: #654
+            align: USize(align_of::<T>()), // lint:allow(no-bare-numeric) reason: size_of/align_of return usize by contract; tracked: #654
         }
     }
 }

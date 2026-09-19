@@ -24,7 +24,13 @@ use hilavitkutin_api::work_unit_values::{WuCons, WuNil};
 use hilavitkutin_api::{HasSchedule, WorkUnit};
 
 use crate::dispatch::engine_ctx::{
-    AccumProject, ColProject, EngineCtx, GateWith, MetaPtrFor, Project, VirtualProject,
+    AccumProject,
+    ColProject,
+    EngineCtx,
+    GateWith,
+    MetaPtrFor,
+    Project,
+    VirtualProject,
 };
 use crate::dispatch::morsel::MorselRange;
 use crate::dispatch::wu_fn::invoke_wu_in_fiber;
@@ -97,7 +103,14 @@ impl<A> RunFiber<A, Empty> for WuNil {
     }
 
     #[inline]
-    fn run_head(&self, _bindings: &A, _meta_block: &MetaBlock, _morsel: MorselRange, _epoch: USize) {}
+    fn run_head(
+        &self,
+        _bindings: &A,
+        _meta_block: &MetaBlock,
+        _morsel: MorselRange,
+        _epoch: USize,
+    ) {
+    }
 }
 
 impl<A, W, Tail, RIdx, RCIdx, WCIdx, WAIdx, WVIdx, GI, WTail>
@@ -175,8 +188,8 @@ where
                 EngineCtx::project::<A, A, RIdx, RCIdx, WCIdx, WAIdx, WVIdx>(bindings, bindings, meta_block, epoch, morsel);
             invoke_wu_in_fiber(&self.head, &ctx);
         }
-        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: carrier-position successor; tracked: #72
-        self.tail.run_gated(bindings, meta_block, morsel, dirty, USize(pos.0 + 1), epoch);
+        let next = USize(pos.0 + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: carrier-position successor; tracked: #72
+        self.tail.run_gated(bindings, meta_block, morsel, dirty, next, epoch);
     }
 
     #[inline]

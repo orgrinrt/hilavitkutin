@@ -25,17 +25,28 @@ mod host;
 mod traits;
 
 pub use descriptor::{
-    AbiVersion, ProviderEntry, ProviderId, DESCRIPTOR_SYMBOL,
-    EXTENSION_DESCRIPTOR_TAG, ExtensionAbiStatus, ExtensionDescriptor,
-    ExtensionVersion, HOST_ABI_VERSION, MAX_DESCRIPTOR_LIST_LEN,
+    AbiVersion,
+    DESCRIPTOR_SYMBOL,
+    EXTENSION_DESCRIPTOR_TAG,
+    ExtensionAbiStatus,
+    ExtensionDescriptor,
+    ExtensionVersion,
+    HOST_ABI_VERSION,
+    MAX_DESCRIPTOR_LIST_LEN,
+    ProviderEntry,
+    ProviderId,
 };
 pub use error::ExtensionError;
 pub use extension::Extension;
 pub use host::{
-    ExtensionHost, ExtensionRequirement, FailurePolicyFn, PolicyVerdict,
-    default_policy, validate_descriptor,
+    ExtensionHost,
+    ExtensionRequirement,
+    FailurePolicyFn,
+    PolicyVerdict,
+    default_policy,
+    validate_descriptor,
 };
-pub use traits::{ProviderExport, ExtensionMeta, InitHandler, ShutdownHandler};
+pub use traits::{ExtensionMeta, InitHandler, ProviderExport, ShutdownHandler};
 
 #[cfg(test)]
 mod tests {
@@ -46,8 +57,8 @@ mod tests {
         // FNV-1a over "cap.a": stable bit-equality across platforms.
         const CAP: ProviderId = ProviderId::from_name("cap.a");
         // Recompute with an independent FNV-1a run to cross-check.
-        const FNV_OFFSET_BASIS: u64 = 0xcbf29ce484222325;
-        const FNV_PRIME: u64 = 0x100000001b3;
+        const FNV_OFFSET_BASIS: u64 = 0xCBF29CE484222325;
+        const FNV_PRIME: u64 = 0x100000001B3;
         let mut h: u64 = FNV_OFFSET_BASIS;
         for &b in b"cap.a" {
             h ^= b as u64;
@@ -104,19 +115,18 @@ mod tests {
         let bytes = DESCRIPTOR_SYMBOL.to_bytes_with_nul();
         assert_eq!(bytes.last(), Some(&0));
         assert_eq!(
-            &bytes[..bytes.len() - 1],
+            &bytes[.. bytes.len() - 1],
             b"__hilavitkutin_extension_descriptor",
         );
     }
 
     #[test]
     fn extension_version_layout_has_reserved_field() {
-        let v = ExtensionVersion { major: 1, minor: 2, patch: 3, _reserved: 0 };
-        assert_eq!(v.major, 1);
-        assert_eq!(v.minor, 2);
-        assert_eq!(v.patch, 3);
-        assert_eq!(v._reserved, 0);
-        // Four u16 fields => 8 bytes.
+        // The wire layout: four u16 fields in declaration order, 8 bytes.
+        assert_eq!(core::mem::offset_of!(ExtensionVersion, major), 0);
+        assert_eq!(core::mem::offset_of!(ExtensionVersion, minor), 2);
+        assert_eq!(core::mem::offset_of!(ExtensionVersion, patch), 4);
+        assert_eq!(core::mem::offset_of!(ExtensionVersion, _reserved), 6);
         assert_eq!(core::mem::size_of::<ExtensionVersion>(), 8);
     }
 

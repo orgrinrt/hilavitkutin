@@ -8,7 +8,7 @@
 //! Detection paths, in priority order:
 //!
 //! - Linux: read `/sys/devices/system/cpu/cpuN/topology/cluster_id`
-//!   plus `cpufreq/cpuinfo_max_freq` to partition by max frequency.
+//!   plus `cpufreq/cpuinfo_max_freq` to group cores by max frequency.
 //!   The highest-frequency cluster is P; the rest E.
 //! - macOS: `sysctlbyname("hw.perflevel0.physicalcpu")` reports the
 //!   count of P-cores (perflevel 0); the remainder are E.
@@ -25,26 +25,40 @@
 //! footing).
 
 use arvo::USize;
+use arvo::strategy::{Additive, Identity, Multiplicative};
 
 /// Heterogeneous-core class.
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash)]
 pub enum CoreClass {
     /// Performance core: critical-path trunks + larger morsels.
+    #[default]
     P,
     /// Efficiency core: branches/leaves + smaller morsels.
     E,
-}
-
-impl Default for CoreClass {
-    fn default() -> Self {
-        Self::P
-    }
 }
 
 /// Worst-case logical processor count the engine pre-allocates for.
 /// Heterogeneous detection writes into a fixed array of this size;
 /// extras stay `CoreClass::P` (the safe default for under-counting).
 pub const MAX_CORES: usize = 256; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+
+/// The worker count the engine runs on, given the count an executor
+/// reports through `ThreadPoolApi::worker_count`.
+///
+/// Clamped into `1..=MAX_CORES`. The engine's per-core state is sized
+/// by `MAX_CORES`, so workers past it are never handed a closure. At
+/// zero the engine still hands the executor one, because a frame with
+/// no worker would return as though it had run.
+pub const fn runnable_worker_count(reported: USize) -> USize {
+    let none = <USize as Identity<Additive>>::IDENTITY;
+    if reported.0 == none.0 {
+        <USize as Identity<Multiplicative>>::IDENTITY
+    } else if reported.0 > MAX_CORES {
+        USize(MAX_CORES)
+    } else {
+        reported
+    }
+}
 
 /// Classify each logical processor by performance/efficiency class.
 ///
@@ -55,7 +69,7 @@ pub const MAX_CORES: usize = 256; // lint:allow(no-bare-numeric) lint:allow(arvo
 pub fn classify_cores(total_cores: USize) -> [CoreClass; MAX_CORES] {
     let mut classes = [CoreClass::P; MAX_CORES];
     let count = core::cmp::min(total_cores.0, MAX_CORES);
-    detect_into(&mut classes[..count]);
+    detect_into(&mut classes[.. count]);
     classes
 }
 

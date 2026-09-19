@@ -1,92 +1,21 @@
-//! Dispatch-stage type surface tests (5a3 skeleton).
+//! Dispatch-stage type tests.
 //!
-//! The dispatch types are now sized by the `Capacity` TYPE (`Dim<N>`), so
-//! no `generic_const_exprs` gate is needed: the capacity is a type, not a
-//! `Cap` const generic, and the backing arrays are plain min-const-generic
-//! `[T; N]`.
+//! Only the behaviour a dispatch type derives from its inputs is pinned
+//! here: a morsel range's end and emptiness are computed, not stored.
 
-use arvo::{Bool, Identity, USize};
-use arvo_tensor::Dim;
-use hilavitkutin::dispatch::{
-    CoreDispatch, DispatchApproach, FiberDispatch, MorselRange, ProgressCounter, SyncPoint,
-};
-use hilavitkutin::plan::FiberId;
-
-/// A fixed capacity of four for the dispatch records under test.
-type C4 = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test capacity literal; Dim<N> array-length root; tracked: #649
-
-#[derive(Default)]
-struct StubCtx;
-
-#[test]
-fn progress_counter_store_load_round_trip() {
-    let c = ProgressCounter::new(USize::ZERO);
-    assert_eq!(c.load(), USize::ZERO);
-    c.store(USize(42)); // lint:allow(no-bare-numeric) reason: progress counter literal; tracked: #399
-    assert_eq!(c.load(), USize(42)); // lint:allow(no-bare-numeric) reason: roundtrip check; tracked: #399
-    c.store(USize(99)); // lint:allow(no-bare-numeric) reason: progress counter literal; tracked: #399
-    assert_eq!(c.load(), USize(99)); // lint:allow(no-bare-numeric) reason: roundtrip check; tracked: #399
-}
-
-#[test]
-fn progress_counter_default_is_zero() {
-    let c = ProgressCounter::default();
-    assert_eq!(c.load(), USize::ZERO);
-}
+use arvo::{Additive, Bool, Identity, USize};
+use hilavitkutin::dispatch::MorselRange;
 
 #[test]
 fn morsel_range_new_end_is_empty() {
     let r = MorselRange::new(USize(100), USize(16)); // lint:allow(no-bare-numeric) reason: morsel range literals; tracked: #399
-    assert_eq!(r.start, USize(100)); // lint:allow(no-bare-numeric) reason: roundtrip check; tracked: #399
-    assert_eq!(r.len, USize(16)); // lint:allow(no-bare-numeric) reason: roundtrip check; tracked: #399
     assert_eq!(r.end(), USize(116)); // lint:allow(no-bare-numeric) reason: end-offset check; tracked: #399
     assert_eq!(r.is_empty(), Bool::FALSE);
 
-    let empty = MorselRange::new(USize::ZERO, USize::ZERO);
+    let empty = MorselRange::new(
+        <USize as Identity<Additive>>::IDENTITY,
+        <USize as Identity<Additive>>::IDENTITY,
+    );
     assert_eq!(empty.is_empty(), Bool::TRUE);
-    assert_eq!(empty.end(), USize::ZERO);
-}
-
-#[test]
-fn morsel_range_default_is_empty() {
-    let r = MorselRange::default();
-    assert_eq!(r.is_empty(), Bool::TRUE);
-    assert_eq!(r.start, USize::ZERO);
-    assert_eq!(r.len, USize::ZERO);
-}
-
-#[test]
-fn sync_point_new_equality() {
-    let a = SyncPoint::new(FiberId::from_constant::<{ USize(3) }>(), USize(128)); // lint:allow(no-bare-numeric) reason: sync point literals; tracked: #426
-    let b = SyncPoint::new(FiberId::from_constant::<{ USize(3) }>(), USize(128)); // lint:allow(no-bare-numeric) reason: sync point literals; tracked: #426
-    let c = SyncPoint::new(FiberId::from_constant::<{ USize(4) }>(), USize(128)); // lint:allow(no-bare-numeric) reason: sync point literals; tracked: #426
-    let d = SyncPoint::new(FiberId::from_constant::<{ USize(3) }>(), USize(256)); // lint:allow(no-bare-numeric) reason: sync point literals; tracked: #426
-    assert_eq!(a, b);
-    assert_ne!(a, c);
-    assert_ne!(a, d);
-}
-
-#[test]
-fn dispatch_approach_variants_distinct() {
-    assert_ne!(DispatchApproach::IndirectPerFiber, DispatchApproach::TrunkMega);
-    assert_ne!(DispatchApproach::IndirectPerFiber, DispatchApproach::ScheduleMega);
-    assert_ne!(DispatchApproach::TrunkMega, DispatchApproach::ScheduleMega);
-}
-
-#[test]
-fn fiber_dispatch_default_constructs() {
-    let f: FiberDispatch<StubCtx, C4> = FiberDispatch::default();
-    assert!(f.body.isnt());
-    assert_eq!(f.fiber_id, FiberId::ZERO);
-    assert_eq!(f.sync_point_count, USize::ZERO);
-    assert_eq!(f.morsel_range.is_empty(), Bool::TRUE);
-}
-
-#[test]
-fn core_dispatch_default_constructs() {
-    let c: CoreDispatch<StubCtx, C4> = CoreDispatch::default();
-    assert_eq!(c.fiber_count, USize::ZERO);
-    assert_eq!(c.phase_count, USize::ZERO);
-    assert_eq!(c.boundary_count, USize::ZERO);
-    assert_eq!(c.sync_point_count, USize::ZERO);
+    assert_eq!(empty.end(), <USize as Identity<Additive>>::IDENTITY);
 }

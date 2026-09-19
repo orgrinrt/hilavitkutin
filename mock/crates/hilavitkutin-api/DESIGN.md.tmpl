@@ -517,7 +517,8 @@ seconds at depth 5 with 25 WorkUnits across 13 stores (S1b
 finding), well within the rustc default recursion limit.
 
 `AccessSet::LEN` reports the cons-list cardinality at compile time.
-`Empty::LEN = USize::ZERO`. `Cons<H, T>::LEN = USize(T::LEN.0 + 1)`.
+`Empty::LEN = <USize as Identity<Additive>>::IDENTITY`.
+`Cons<H, T>::LEN = USize(T::LEN.0 + 1)`.
 The recursive impl computes correctly at any depth and is callable
 in const contexts via the const-arith surface on `arvo::USize`.
 
@@ -712,9 +713,9 @@ pub trait Depth: Sealed {
  const D: USize;
 }
 
-impl Depth for Empty { const D: USize = USize::ZERO; }
+impl Depth for Empty { const D: USize = <USize as Identity<Additive>>::IDENTITY; }
 impl<H, R: Depth> Depth for Cons<H, R> {
- const D: USize = R::D + USize::ONE;
+ const D: USize = R::D + <USize as Identity<Multiplicative>>::IDENTITY;
 }
 ```
 
@@ -941,8 +942,18 @@ pub trait Clock: Send + Sync {
 
 All consumed via monomorphisation. The Scheduler is generic over the
 platform types. Storing `dyn MemoryProvider` would violate the dyn
-ban. Each tier (no_os, os, std) ships defaults. Consumer overrides
-via scheduler builder.
+ban. The os tier ships a `MemoryProvider` and a `Clock`; the no_os tier
+ships none. No tier ships a `ThreadPool`: the executor is the
+consumer's, or comes from a crate outside the hilavitkutin family.
+Consumer overrides via scheduler builder.
+
+Every closure the engine hands `spawn` is no wider and no more
+aligned than one pointer, so an executor can move it into a thread's
+argument slot without allocating. `OnePointerClosure<F>` names that:
+its associated const `FITS` fails the build at monomorphisation for a
+wider or over-aligned `F`. The engine forces it at its spawn site, and
+an executor may force it in its own `spawn` to hold every caller to
+the same width.
 
 Note: `len`, `align`, `worker_count`, `now_ns` parameters and return
 types should use arvo newtypes in the final API (e.g. `ByteCount`,
@@ -1015,7 +1026,8 @@ pub struct WakeStrategy {
 ```
 
 Defaults: P=128, E=32. Pure-spin is expressed via setting both spin
-counts to `USize::MAX`; pure-park via setting both to `USize::ZERO`.
+counts to `USize::MAX`; pure-park via setting both to
+`<USize as Identity<Additive>>::IDENTITY`.
 The legacy `PureSpin` / `PurePark` enum variants are retired.
 
 ### `DispatchApproach`
@@ -1286,7 +1298,8 @@ bounded on-stack arena in production). The parser stays trait-generic.
 ## What this crate does NOT contain
 
 - Engine internals (scheduling, dispatch codegen, phase analysis)
-- Platform implementations (mmap, pthread; those are in hilavitkutin)
+- Platform implementations (mmap and the clock are in hilavitkutin;
+ a thread executor is the consumer's)
 - Build-time optimisations (LLVM passes; those are in hilavitkutin-build)
 - Naming/identity for WUs (consumer concern)
 - Concrete codec format implementations (consumer-owned; this crate

@@ -31,8 +31,8 @@
 
 use core::sync::atomic::{AtomicU32, Ordering};
 
-use arvo::strategy::Identity;
 use arvo::USize;
+use arvo::strategy::{Additive, Identity};
 use hilavitkutin_api::platform::{PoolFrame, WakeStrategy};
 
 use super::class::CoreClass;
@@ -90,12 +90,13 @@ pub fn spin(n: USize) {
 /// Release at ScheduleEnd and the worker's Relaxed-load is
 /// acceptable (the adapt loop ratchets one phase at a time).
 #[inline]
+#[rustfmt::skip] // keeps the allow on the signature it governs
 pub fn predicted_wait_ns_load<'arena, const C: usize, const P: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     pool: &PoolFrame<'arena, C, P>,
     phase: USize,
 ) -> USize {
     if phase.0 >= P {
-        return USize::ZERO;
+        return <USize as Identity<Additive>>::IDENTITY;
     }
     let v = pool.predicted_wait_ns[phase.0].load(Ordering::Relaxed);
     USize(v as usize) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic u32 widened to USize; tracked: #121
@@ -106,6 +107,7 @@ pub fn predicted_wait_ns_load<'arena, const C: usize, const P: usize>( // lint:a
 /// Relaxed-load: prediction freshness is a soft property; the
 /// loop self-corrects via the next phase's measurement.
 #[inline]
+#[rustfmt::skip] // keeps the allow on the signature it governs
 pub fn predicted_wait_ns_store<'arena, const C: usize, const P: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     pool: &PoolFrame<'arena, C, P>,
     phase: USize,
@@ -131,6 +133,7 @@ pub fn predicted_wait_ns_store<'arena, const C: usize, const P: usize>( // lint:
 /// the wrapper degrades to a single `spin_loop` step so callers
 /// re-check immediately.
 #[inline]
+#[rustfmt::skip] // keeps the allow on the signature it governs
 pub fn atomic_wait(addr: &AtomicU32, expected: u32) { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI ABI takes u32 by contract; tracked: #72
     platform::wait_u32(addr, expected);
 }
@@ -152,7 +155,10 @@ mod platform {
     const SYS_FUTEX: libc::c_long = 202; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: kernel ABI constant; tracked: #72
     const WAKE_ALL: i32 = i32::MAX; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: kernel ABI sentinel "wake every waiter"; tracked: #72
 
-    pub fn wait_u32(addr: &AtomicU32, expected: u32) { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI signature; tracked: #72
+    pub fn wait_u32(
+        addr: &AtomicU32,
+        expected: u32, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI signature; tracked: #72
+    ) {
         let ptr = addr as *const AtomicU32 as *const u32; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI cast; tracked: #72
         unsafe {
             libc::syscall(
@@ -205,7 +211,10 @@ mod platform {
         ) -> core::ffi::c_int;
     }
 
-    pub fn wait_u32(addr: &AtomicU32, expected: u32) { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI signature; tracked: #72
+    pub fn wait_u32(
+        addr: &AtomicU32,
+        expected: u32, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI signature; tracked: #72
+    ) {
         let ptr = addr as *const AtomicU32 as *const core::ffi::c_void;
         let val: u64 = expected as u64; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: widening for ABI; tracked: #72
         unsafe {
@@ -254,7 +263,10 @@ mod platform {
     const INFINITE: u32 = 0xFFFF_FFFF; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: kernel ABI constant; tracked: #72
     const SIZEOF_U32: usize = 4; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: sizeof(u32) for ABI arg; tracked: #72
 
-    pub fn wait_u32(addr: &AtomicU32, expected: u32) { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI signature; tracked: #72
+    pub fn wait_u32(
+        addr: &AtomicU32,
+        expected: u32, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI signature; tracked: #72
+    ) {
         let cmp = expected;
         let ptr = addr as *const AtomicU32 as *const core::ffi::c_void;
         let cmp_ptr = &cmp as *const u32 as *const core::ffi::c_void; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI ptr cast; tracked: #72
@@ -279,7 +291,10 @@ mod platform {
 mod platform {
     use core::sync::atomic::AtomicU32;
 
-    pub fn wait_u32(_addr: &AtomicU32, _expected: u32) { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: stub signature matches FFI ABI; tracked: #72
+    pub fn wait_u32(
+        _addr: &AtomicU32,
+        _expected: u32, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: stub signature matches FFI ABI; tracked: #72
+    ) {
         // No supported wait primitive on this target. Degrade to a
         // single spin step so the caller re-checks the condition
         // on the next iteration.

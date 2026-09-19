@@ -5,27 +5,22 @@
 //! from the preceding fiber's arena, output columns spill to the
 //! store-buffer-friendly tail of the dispatch function.
 
-use arvo::strategy::Identity;
 use arvo::USize;
+use arvo::strategy::{Additive, Identity};
 use arvo_tensor::Capacity;
 
 use crate::plan::dims::PlanDims;
 
 /// How a column is used by a given fiber.
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Default)]
 pub enum ColumnClassification {
     /// Fiber-local; register-to-register (dead-store eliminated).
+    #[default]
     Internal,
     /// Loaded from upstream at fiber start.
     Input,
     /// Written at fiber end; flows to downstream fibers.
     Output,
-}
-
-impl Default for ColumnClassification {
-    fn default() -> Self {
-        Self::Internal
-    }
 }
 
 /// Per-fiber column classification map.
@@ -49,10 +44,10 @@ where
 {
     pub fn new() -> Self {
         Self {
-            class: <D::Fibers as Capacity>::filled(
+            class:        <D::Fibers as Capacity>::filled(
                 <D::ColumnsPerFiber as Capacity>::filled(ColumnClassification::Internal),
             ),
-            column_count: <D::Fibers as Capacity>::filled(USize::ZERO),
+            column_count: <D::Fibers as Capacity>::filled(<USize as Identity<Additive>>::IDENTITY),
         }
     }
 }

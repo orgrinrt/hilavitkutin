@@ -31,6 +31,6 @@ panic = "abort"
 strip = false
 
 [dependencies]
-arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
 hilavitkutin-extensions = { path = "../../../hilavitkutin-extensions" }
 hilavitkutin-extensions-macros = { path = "../.." }
