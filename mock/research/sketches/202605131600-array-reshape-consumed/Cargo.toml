@@ -10,15 +10,18 @@ publish = false
 name = "sketch_array_reshape_consumed"
 path = "src/lib.rs"
 
+# Sketch is standalone and outside this repo; arvo is a git dep pinned
+# to the same rev the main workspace carries, rather than a path into
+# a sibling clone that may not be checked out.
 [dependencies]
-arvo            = { path = "../../../../../arvo/mock/crates/arvo" }
-arvo-sparse     = { path = "../../../../../arvo/mock/crates/arvo-sparse" }
-arvo-spectral   = { path = "../../../../../arvo/mock/crates/arvo-spectral" }
-arvo-bitmask    = { path = "../../../../../arvo/mock/crates/arvo-bitmask" }
-arvo-bits-contracts = { path = "../../../../../arvo/mock/crates/arvo-bits-contracts" }
-arvo-numeric-contracts = { path = "../../../../../arvo/mock/crates/arvo-numeric-contracts" }
-arvo-storage    = { path = "../../../../../arvo/mock/crates/arvo-storage" }
-arvo-bits       = { path = "../../../../../arvo/mock/crates/arvo-bits" }
+arvo            = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
+arvo-sparse     = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
+arvo-spectral   = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
+arvo-bitmask    = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
+arvo-bits-contracts = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
+arvo-numeric-contracts = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
+arvo-storage    = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
+arvo-bits       = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
 hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
 
 [profile.release]
