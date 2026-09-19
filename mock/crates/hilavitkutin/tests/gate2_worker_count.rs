@@ -4,9 +4,20 @@
 //! The engine sizes its per-core state by `MAX_CORES`, and runs on the
 //! executor's `worker_count` clamped into `1..=MAX_CORES`. Past the ceiling
 //! the extra workers are never handed a closure; before the clamp, the 257th
-//! worker indexed past `worker_ctxs` and panicked. At zero the engine still
-//! hands one closure; before the clamp it spawned nothing, published a frame
-//! no worker ran, and returned as though the frame had run.
+//! worker indexed past `worker_ctxs` and panicked.
+//!
+//! The zero case is provisional. The engine design leaves undecided whether
+//! a zero count is refused, run inline on the caller, or handed one closure.
+//! The code does the last, and the zero tests below pin that behaviour so a
+//! change to it is seen, not because it is the designed answer. Before the
+//! clamp the engine spawned nothing, published a frame no worker ran, and
+//! returned as though the frame had run, which none of the three answers
+//! allows.
+//!
+//! The principles bound the closures handed out at
+//! `min(worker_count, parallelisable_width + 1)`. The fan-in's widest phase
+//! carries two trunks, so the bound is three; the engine does not honour it
+//! yet, and the test stating it is a catalogue entry.
 //!
 //! The fixture is the fan-in from `gate2_run_parallel.rs`: two column-disjoint
 //! producers in phase 0, a combiner in phase 1 recording `Av + Bv`, so a frame
@@ -38,6 +49,7 @@ use notko::Outcome;
 
 // ---- the clamp itself ------------------------------------------------------
 
+/// Provisional: pins the current answer to an undecided question.
 #[test]
 fn zero_reported_workers_run_on_one() {
     assert_eq!(runnable_worker_count(USize(0)), USize(1));
@@ -109,13 +121,44 @@ fn an_executor_reporting_past_max_cores_runs_the_frame_on_max_cores() {
     );
 }
 
+/// Provisional: the frame runs, which every candidate answer except refusing
+/// requires, and it runs on one handed-out closure, which is the current
+/// answer rather than a designed one.
 #[test]
 fn an_executor_reporting_zero_workers_still_runs_the_frame() {
     let pool = Reports::<0>::new();
     let spawned = run_fan_in_and_check(&pool);
     assert_eq!(
         spawned, 1,
-        "a zero count runs the frame on one handed-out closure"
+        "provisional: a zero count runs the frame on one handed-out closure"
+    );
+}
+
+/// The fan-in's widest phase: `ProducerA` and `ProducerB` write disjoint
+/// columns, so phase 0 carries two trunks (`gate2_run_parallel.rs` relies on
+/// the same split).
+const FAN_IN_WIDTH: usize = 2;
+
+/// Where the executor's count is the smaller term of the bound, the engine
+/// already hands out exactly that many.
+#[test]
+fn an_executor_narrower_than_the_plan_gets_its_own_count() {
+    let pool = Reports::<FAN_IN_WIDTH>::new();
+    let spawned = run_fan_in_and_check(&pool);
+    assert_eq!(spawned, FAN_IN_WIDTH.min(FAN_IN_WIDTH + 1));
+}
+
+#[test]
+#[ignore = "catalogue: run_parallel hands out one closure per clamped worker, not min(worker_count, parallelisable_width + 1) as the principles bound it; tracked: FIXME in scheduler/run_parallel.rs"]
+fn an_executor_wider_than_the_plan_gets_width_plus_one() {
+    const REPORTED: usize = 8;
+    let pool = Reports::<REPORTED>::new();
+    let spawned = run_fan_in_and_check(&pool);
+    assert_eq!(
+        spawned,
+        REPORTED.min(FAN_IN_WIDTH + 1),
+        "the engine hands out one closure per trunk of the widest phase plus the convergence \
+         worker, and no more"
     );
 }
 

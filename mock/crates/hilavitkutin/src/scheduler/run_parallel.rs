@@ -161,6 +161,14 @@ impl<
             }
             // The engine runs on the executor's count clamped into
             // `1..=MAX_CORES`; every later read takes this stored value.
+            // FIXME: the principles bound the closures handed out at
+            // `min(worker_count, parallelisable_width + 1)`, the width being
+            // the most trunks any phase carries; this hands out one per
+            // clamped worker whatever the plan's width. Needs the widest
+            // phase's trunk count read off `phase`/`trunk` above, and every
+            // later reader of `gate2_ncores` (barriers, the accumulator merge,
+            // `Drop`'s exit await) checked against a count below the
+            // executor's. Catalogued in `tests/gate2_worker_count.rs`.
             let ncores = runnable_worker_count(pool.worker_count());
             // SAFETY: no workers running yet; exclusive setup of pinned fields.
             unsafe {
