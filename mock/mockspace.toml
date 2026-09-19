@@ -109,6 +109,15 @@ commit = "error"
 build = "error"
 push = "error"
 
+# The engine hands closures to an executor only through `spawn_one_pointer`,
+# which forces the api's `OnePointerClosure` gate first. The gate is a
+# post-monomorphisation assert, so a spawn that skips it builds and tests
+# green; this blocks at every gate instead. Repo lint, `mock/lints/`.
+[lints.engine-spawn-through-gate]
+commit = "error"
+build = "error"
+push = "error"
+
 # Advisory: vocabulary terms are common English words; warn everywhere,
 # never block. Author suppresses with `// lint:allow(vocabulary-discipline)`.
 [lints.vocabulary-discipline]
