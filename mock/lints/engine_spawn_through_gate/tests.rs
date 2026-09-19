@@ -159,6 +159,111 @@ fn a_forcing_that_does_not_bind_unit_is_refused() {
 }
 
 #[test]
+fn a_forcing_that_names_another_type_than_the_spawned_one_is_refused() {
+    for forcing in [
+        "let () = OnePointerClosure::<()>::FITS;",
+        "let () = OnePointerClosure::<u8>::FITS;",
+        "let () = OnePointerClosure::<P>::FITS;",
+        "let () = OnePointerClosure::<&P>::FITS;",
+        "let () = OnePointerClosure::<Wrapper<F>>::FITS;",
+        "let () = OnePointerClosure::<>::FITS;",
+    ] {
+        let text = SHIPPED.replace("let () = OnePointerClosure::<F>::FITS;", forcing);
+        assert_eq!(
+            lines(&text),
+            vec![line_of(&text, "pool.spawn(f);")],
+            "{forcing}"
+        );
+    }
+}
+
+#[test]
+fn a_forcing_under_cfg_is_refused() {
+    let forcing = "    let () = OnePointerClosure::<F>::FITS;\n";
+    for cfg in [
+        "    #[cfg(any())]\n",
+        "    #[cfg(test)]\n",
+        "    #[cfg_attr(any(), cfg(any()))]\n",
+        "    #[cfg(any())]\n    #[allow(unused)]\n",
+        "    #[allow(unused)]\n    #[cfg(any())]\n",
+        "    #[cfg(any())]\n\n    // why\n",
+    ] {
+        let text = SHIPPED.replace(forcing, &format!("{cfg}{forcing}"));
+        assert_eq!(
+            lines(&text),
+            vec![line_of(&text, "pool.spawn(f);")],
+            "{cfg}"
+        );
+    }
+    let same_line = "    #[cfg(any())] let () = OnePointerClosure::<F>::FITS;\n";
+    let text = SHIPPED.replace(forcing, same_line);
+    assert_eq!(lines(&text), vec![line_of(&text, "pool.spawn(f);")]);
+}
+
+#[test]
+fn a_cfg_on_an_earlier_statement_does_not_unforce() {
+    let forcing = "    let () = OnePointerClosure::<F>::FITS;\n";
+    let text = SHIPPED.replace(
+        forcing,
+        &format!("    #[cfg(test)]\n    let x = 1;\n{forcing}"),
+    );
+    assert_eq!(findings(&text), Vec::new());
+    let text = SHIPPED.replace(
+        forcing,
+        &format!("{forcing}    #[cfg(test)]\n    let x = 1;\n"),
+    );
+    assert_eq!(findings(&text), Vec::new());
+}
+
+#[test]
+fn the_forcing_is_matched_by_type_not_by_name() {
+    let text = SHIPPED
+        .replace("<P, F>(pool: &P, f: F)", "<P, G>(pool: &P, g: G)")
+        .replace("F: FnOnce()", "G: FnOnce()")
+        .replace("OnePointerClosure::<F>", "OnePointerClosure::<G>")
+        .replace("pool.spawn(f);", "pool.spawn(g);");
+    assert_eq!(findings(&text), Vec::new());
+    let wrong = text.replace("OnePointerClosure::<G>", "OnePointerClosure::<F>");
+    assert_eq!(lines(&wrong), vec![line_of(&wrong, "pool.spawn(g);")]);
+}
+
+#[test]
+fn equivalent_spellings_of_the_right_forcing_pass() {
+    for (from, to) in [
+        (
+            "OnePointerClosure::<F>::FITS",
+            "OnePointerClosure::< F >::FITS",
+        ),
+        ("pool.spawn(f);", "pool.spawn::<F>(f);"),
+        ("pool.spawn(f);", "pool.spawn( f );"),
+        (
+            "<P, F>(pool: &P, f: F)",
+            "<P, F: FnOnce() -> ()>(pool: &P, mut f: F)",
+        ),
+        (
+            "<P, F>(pool: &P, f: F)",
+            "<P, F>(\n    pool: &P,\n    f: F,\n)",
+        ),
+    ] {
+        let text = SHIPPED.replace(from, to);
+        assert_eq!(findings(&text), Vec::new(), "{to}");
+    }
+}
+
+#[test]
+fn a_spawn_of_something_other_than_a_parameter_is_refused() {
+    for spawned in ["pool.spawn(h);", "pool.spawn(move || {});", "pool.spawn(pool);"] {
+        let text = SHIPPED.replace("pool.spawn(f);", spawned);
+        let found = findings(&text);
+        assert_eq!(
+            found.iter().map(|f| f.line).collect::<Vec<_>>(),
+            vec![line_of(&text, spawned)],
+            "{spawned}"
+        );
+    }
+}
+
+#[test]
 fn forcing_after_the_spawn_is_refused() {
     let text = SHIPPED.replace(
         "    let () = OnePointerClosure::<F>::FITS;\n    pool.spawn(f);\n",

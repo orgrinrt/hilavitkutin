@@ -14,7 +14,14 @@
 //! 1. a `spawn` method or path call (`.spawn(`, `::spawn(`, with or
 //!    without a turbofish) outside the body of `fn spawn_one_pointer`;
 //! 2. a `spawn` call inside that body that no earlier
-//!    `let () = OnePointerClosure::<..>::FITS;` statement precedes.
+//!    `let () = OnePointerClosure::<T>::FITS;` statement precedes, where
+//!    `T` is the declared type of the parameter the call spawns.
+//!
+//! A forcing naming another type checks a closure that is never spawned,
+//! and one under `#[cfg` may be compiled out, so neither counts: the
+//! attribute is refused on the forcing's line and on the attribute lines
+//! directly above it. A `spawn` whose argument is not one of the gate
+//! fn's parameters cannot be matched to a forcing and is refused.
 //!
 //! Comments, doc comments and string literals are not read. The escape is
 //! `// lint:allow(engine-spawn-through-gate)` on the line, with a reason.
@@ -84,27 +91,40 @@ struct Finding {
 }
 
 /// Where the scan is relative to `fn spawn_one_pointer`.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 enum Region {
     Outside,
     /// The signature has been seen and its body brace has not.
     Signature,
-    /// Inside the body at this brace depth, with whether the gate is forced.
-    Body {
-        depth:  usize,
-        forced: bool,
-    },
+    /// Inside the body, at this brace depth.
+    Body(usize),
+}
+
+/// What the scan knows about the gate fn it is in.
+#[derive(Default)]
+struct Gate {
+    /// The signature text, read up to the body brace.
+    signature: String,
+    /// `(name, type)` for each parameter, types without whitespace.
+    params:    Vec<(String, String)>,
+    /// The types a compiled-in forcing has named so far in the body.
+    forced:    Vec<String>,
 }
 
 fn findings(text: &str) -> Vec<Finding> {
     let mut out = Vec::new();
     let mut region = Region::Outside;
+    let mut gate = Gate::default();
     let mut in_block_comment = false;
+    // Whether the attribute lines directly above this one carry `#[cfg`.
+    let mut cfg_above = false;
 
     for (idx, raw) in text.lines().enumerate() {
         let line_no = idx + 1;
         let code = code_of(raw, &mut in_block_comment);
         let allowed = raw.contains("lint:allow(engine-spawn-through-gate)");
+        // Where on this line the signature text continues from, if it does.
+        let mut sig_from = (region == Region::Signature).then_some(0);
 
         // Everything on the line that moves the region or is judged by it,
         // in the order it appears, so a one-line gate fn reads the same as a
@@ -113,7 +133,10 @@ fn findings(text: &str) -> Vec<Finding> {
         events.extend(
             ident_offsets(&code, &format!("fn {GATE_FN}")).map(|at| (at, Event::Signature)),
         );
-        events.extend(forcing_offsets(&code).map(|at| (at, Event::Force)));
+        events.extend(
+            code.match_indices("let () =")
+                .map(|(at, _)| (at, Event::Force)),
+        );
         events.extend(spawn_calls(&code).into_iter().map(|at| (at, Event::Spawn)));
         for (at, c) in code.char_indices() {
             match c {
@@ -124,78 +147,36 @@ fn findings(text: &str) -> Vec<Finding> {
         }
         events.sort_by_key(|&(at, _)| at);
 
-        for (_, event) in events {
+        for (at, event) in events {
             region = match (region, event) {
-                (Region::Outside, Event::Signature) => Region::Signature,
+                (Region::Outside, Event::Signature) => {
+                    gate = Gate::default();
+                    sig_from = Some(at);
+                    Region::Signature
+                },
                 (Region::Signature, Event::Open) => {
-                    Region::Body {
-                        depth:  1,
-                        forced: false,
-                    }
+                    gate.signature.push_str(&code[sig_from.unwrap_or(0) .. at]);
+                    gate.params = params_of(&gate.signature);
+                    sig_from = None;
+                    Region::Body(1)
                 },
-                (
-                    Region::Body {
-                        depth,
-                        forced,
-                    },
-                    Event::Open,
-                ) => {
-                    Region::Body {
-                        depth: depth + 1,
-                        forced,
+                (Region::Body(d), Event::Open) => Region::Body(d + 1),
+                (Region::Body(1), Event::Close) => Region::Outside,
+                (Region::Body(d), Event::Close) => Region::Body(d - 1),
+                (Region::Body(d), Event::Force) => {
+                    let compiled = !cfg_above && !code[.. at].contains("#[cfg");
+                    if let (Some(ty), true) = (forced_type(&code[at ..]), compiled) {
+                        gate.forced.push(ty);
                     }
-                },
-                (
-                    Region::Body {
-                        depth: 1,
-                        ..
-                    },
-                    Event::Close,
-                ) => Region::Outside,
-                (
-                    Region::Body {
-                        depth,
-                        forced,
-                    },
-                    Event::Close,
-                ) => {
-                    Region::Body {
-                        depth: depth - 1,
-                        forced,
-                    }
-                },
-                (
-                    Region::Body {
-                        depth,
-                        ..
-                    },
-                    Event::Force,
-                ) => {
-                    Region::Body {
-                        depth,
-                        forced: true,
-                    }
+                    Region::Body(d)
                 },
                 (r, Event::Spawn) => {
                     let message = match r {
-                        Region::Body {
-                            forced: true,
-                            ..
-                        } => None,
-                        Region::Body {
-                            forced: false,
-                            ..
-                        } => {
-                            Some(format!(
-                                "`{GATE_FN}` spawns before `let () = OnePointerClosure::<F>::FITS;` forces the \
-                             one-pointer gate; put that statement first, or a wider closure reaches the \
-                             executor unchecked"
-                            ))
-                        },
+                        Region::Body(_) => unforced(&gate, &code[at ..]),
                         _ => {
                             Some(format!(
                                 "a `spawn` call outside `{GATE_FN}`; hand the closure to the executor through \
-                             `{GATE_FN}`, which forces `OnePointerClosure` on it"
+                                 `{GATE_FN}`, which forces `OnePointerClosure` on it"
                             ))
                         },
                     };
@@ -210,6 +191,17 @@ fn findings(text: &str) -> Vec<Finding> {
                 (r, _) => r,
             };
         }
+
+        if let (Region::Signature, Some(from)) = (region, sig_from) {
+            gate.signature.push_str(&code[from ..]);
+            gate.signature.push(' ');
+        }
+        let trimmed = code.trim();
+        if trimmed.starts_with("#[") && trimmed.ends_with(']') {
+            cfg_above |= trimmed.contains("#[cfg");
+        } else if !trimmed.is_empty() {
+            cfg_above = false;
+        }
     }
     out
 }
@@ -223,14 +215,105 @@ enum Event {
     Close,
 }
 
-/// Offsets of every `let () = OnePointerClosure::<..>::FITS` statement.
-fn forcing_offsets(code: &str) -> impl Iterator<Item = usize> + '_ {
-    code.match_indices("let () =").filter_map(move |(at, _)| {
-        let rest = &code[at ..];
-        let stmt = &rest[.. rest.find(';').unwrap_or(rest.len())];
-        let rhs = stmt["let () =".len() ..].trim();
-        (rhs.starts_with("OnePointerClosure") && rhs.ends_with("::FITS")).then_some(at)
-    })
+/// Why a `spawn` inside the gate body is not gated, or `None` when it is.
+fn unforced(gate: &Gate, call: &str) -> Option<String> {
+    let arg = spawn_argument(call);
+    let ty = arg.and_then(|a| gate.params.iter().find(|(name, _)| name == a));
+    match (arg, ty) {
+        (_, Some((_, ty))) if gate.forced.contains(ty) => None,
+        (Some(arg), Some((_, ty))) => {
+            Some(format!(
+                "`{GATE_FN}` spawns `{arg}` before `let () = OnePointerClosure::<{ty}>::FITS;`, compiled \
+                 in with no `#[cfg`, forces the one-pointer gate on its type; put that statement first, or \
+                 a wider closure reaches the executor unchecked"
+            ))
+        },
+        _ => {
+            Some(format!(
+                "`{GATE_FN}` spawns something other than one of its parameters, so no forcing can be \
+                 checked against it; spawn the parameter whose type `OnePointerClosure::<..>::FITS` names"
+            ))
+        },
+    }
+}
+
+/// The argument of a `spawn(x)` call when it is a single identifier.
+fn spawn_argument(call: &str) -> Option<&str> {
+    let mut rest = call["spawn".len() ..].trim_start();
+    if let Some(turbofish) = rest.strip_prefix("::<") {
+        rest = turbofish[turbofish.find('>')? + 1 ..].trim_start();
+    }
+    let inner = rest.strip_prefix('(')?;
+    let arg = inner[.. inner.find(')')?].trim();
+    (!arg.is_empty() && arg.chars().all(is_ident_char)).then_some(arg)
+}
+
+/// The type a `let () = OnePointerClosure::<T>::FITS;` statement names.
+fn forced_type(from_let: &str) -> Option<String> {
+    let stmt = &from_let[.. from_let.find(';').unwrap_or(from_let.len())];
+    let rhs = without_whitespace(&stmt["let () =".len() ..]);
+    let ty = rhs
+        .strip_prefix("OnePointerClosure::<")?
+        .strip_suffix(">::FITS")?;
+    (!ty.is_empty()).then(|| ty.to_string())
+}
+
+fn without_whitespace(text: &str) -> String {
+    text.chars().filter(|c| !c.is_whitespace()).collect()
+}
+
+/// `(name, type)` for each parameter of a signature, types without whitespace.
+fn params_of(signature: &str) -> Vec<(String, String)> {
+    // The parameter list opens at the first `(` outside the generics.
+    let mut angle = 0usize;
+    let mut prev = ' ';
+    let mut open = None;
+    for (i, c) in signature.char_indices() {
+        match c {
+            '<' => angle += 1,
+            '>' if prev != '-' => angle = angle.saturating_sub(1),
+            '(' if angle == 0 => {
+                open = Some(i + 1);
+                break;
+            },
+            _ => {},
+        }
+        prev = c;
+    }
+    let Some(open) = open else {
+        return Vec::new();
+    };
+    let mut params = Vec::new();
+    let (mut depth, mut start, mut prev) = (0usize, open, ' ');
+    for (i, c) in signature[open ..]
+        .char_indices()
+        .map(|(i, c)| (i + open, c))
+    {
+        match c {
+            '>' if prev == '-' => {},
+            '(' | '[' | '<' => depth += 1,
+            ')' if depth == 0 => {
+                params.extend(param(&signature[start .. i]));
+                break;
+            },
+            ')' | ']' | '>' => depth = depth.saturating_sub(1),
+            ',' if depth == 0 => {
+                params.extend(param(&signature[start .. i]));
+                start = i + 1;
+            },
+            _ => {},
+        }
+        prev = c;
+    }
+    params
+}
+
+/// One `name: Type` parameter; `self` forms and patterns give `None`.
+fn param(text: &str) -> Option<(String, String)> {
+    let (name, ty) = text.split_once(':')?;
+    let name = name.trim().trim_start_matches("mut ").trim();
+    let valid = !name.is_empty() && name.chars().all(is_ident_char);
+    valid.then(|| (name.to_string(), without_whitespace(ty)))
 }
 
 /// The line with comments and string contents blanked out.
