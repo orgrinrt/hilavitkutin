@@ -1347,8 +1347,8 @@ thread module's `runnable_worker_count`, a `pub const fn`. Its
 per-core state is sized by `MAX_CORES`, so the count is capped
 there and the extra workers are never handed a closure.
 
-What the engine does when an executor reports zero workers is
-provisional and waits on op. Three answers exist, and they differ in
+What the engine does when an executor reports zero workers is not
+decided yet. Three answers exist, and they differ in
 what the frame's done-wait, `frame_await_done`, sees. Refusing returns
 an error from `run_parallel` before a frame is published, so the
 done-wait is never reached. Running inline on the caller has the
