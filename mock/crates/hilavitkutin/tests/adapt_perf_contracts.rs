@@ -31,12 +31,12 @@
 /// on the easy case is disqualifying: it means the sampling + re-selection
 /// overhead is not amortised.
 #[test]
-#[ignore = "catalogue: adapt non-degradation on balanced workloads; needs the adapt on/off toggle; tracked #341"]
+#[ignore = "catalogue: adapt non-degradation on balanced workloads; needs the adapt on/off toggle; tracked #hilavitkutin_catalogue_adapt_non_degradation_on_balanced_wor"]
 fn ema_adaptation_never_degrades_balanced_workload() {
     unimplemented!(
         "contract: adapted_time <= baseline_time * (1 + EPS) on a phase/core-balanced \
          workload. Fill when StandardAdaptKit vs OffAdaptKit + a measurement harness land. \
-         tracked #341"
+         tracked #hilavitkutin_catalogue_adapt_non_degradation_on_balanced_wor"
     );
 }
 
@@ -47,11 +47,12 @@ fn ema_adaptation_never_degrades_balanced_workload() {
 /// `adapted_steady_time < baseline_time`. If this does not hold the subsystem
 /// fails its entire purpose.
 #[test]
-#[ignore = "catalogue: adapt improves imbalanced workloads (core value prop); needs select_adapt_config; tracked #341"]
+#[ignore = "catalogue: adapt improves imbalanced workloads (core value prop); needs select_adapt_config; tracked #hilavitkutin_catalogue_select_adapt_config_improves_imbalanc"]
 fn ema_adaptation_improves_imbalanced_workload() {
     unimplemented!(
         "contract: adapted steady-state time < baseline time on a load-skewed workload. \
-         Fill when select_adapt_config + actuation land. tracked #341"
+         Fill when select_adapt_config + actuation land. \
+         tracked #hilavitkutin_catalogue_select_adapt_config_improves_imbalanc"
     );
 }
 
@@ -60,11 +61,12 @@ fn ema_adaptation_improves_imbalanced_workload() {
 /// After re-selection, the bottleneck phase's `phase_ema` is lower than before
 /// re-selection: the tuning targets the slow phase, not an arbitrary one.
 #[test]
-#[ignore = "catalogue: select_adapt_config reduces the bottleneck phase_ema; needs select_adapt_config; tracked #341"]
+#[ignore = "catalogue: select_adapt_config reduces the bottleneck phase_ema; needs select_adapt_config; tracked #hilavitkutin_catalogue_select_adapt_config_improves_imbalanc"]
 fn select_adapt_config_reduces_bottleneck_phase_ema() {
     unimplemented!(
         "contract: bottleneck phase_ema after re-selection < before. Fill when \
-         select_adapt_config lands. tracked #341"
+         select_adapt_config lands. \
+         tracked #hilavitkutin_catalogue_select_adapt_config_improves_imbalanc"
     );
 }
 
@@ -73,11 +75,12 @@ fn select_adapt_config_reduces_bottleneck_phase_ema() {
 /// Re-chunking an imbalanced morsel distribution lowers `idle_ns` (the
 /// core-balance signal) without raising total frame time.
 #[test]
-#[ignore = "catalogue: morsel re-chunk lowers idle_ns without raising total time; needs tier-1 re-chunk; tracked #341"]
+#[ignore = "catalogue: morsel re-chunk lowers idle_ns without raising total time; needs tier-1 re-chunk; tracked #hilavitkutin_catalogue_morsel_re_chunk_lowers_idle_ns_and_ne"]
 fn morsel_rechunk_reduces_idle_ns() {
     unimplemented!(
         "contract: idle_ns after re-chunk < before, total_time not raised. Fill when the \
-         tier-1 morsel re-chunk actuation lands. tracked #341"
+         tier-1 morsel re-chunk actuation lands. \
+         tracked #hilavitkutin_catalogue_morsel_re_chunk_lowers_idle_ns_and_ne"
     );
 }
 
@@ -86,11 +89,12 @@ fn morsel_rechunk_reduces_idle_ns() {
 /// Switching a phase's strategy between frames leaves throughput non-decreasing
 /// at steady state (a reselect must not trade a faster phase for a slower whole).
 #[test]
-#[ignore = "catalogue: strategy reselect leaves throughput non-decreasing; needs domain-14 strategy plan-shaping + reselect; tracked #341"]
+#[ignore = "catalogue: strategy reselect leaves throughput non-decreasing; needs domain-14 strategy plan-shaping + reselect; tracked #hilavitkutin_catalogue_strategy_reselect_keeps_throughput_no"]
 fn strategy_reselect_never_regresses_throughput() {
     unimplemented!(
         "contract: steady-state throughput after a strategy reselect >= before. Fill when \
-         strategy plan-shaping + between-frame reselect land. tracked #341"
+         strategy plan-shaping + between-frame reselect land. \
+         tracked #hilavitkutin_catalogue_strategy_reselect_keeps_throughput_no"
     );
 }
 
@@ -99,11 +103,12 @@ fn strategy_reselect_never_regresses_throughput() {
 /// The wait-tier selection (spin / backoff / park by predicted wait) lowers
 /// spin/park waste versus a fixed strategy without raising frame latency.
 #[test]
-#[ignore = "catalogue: predictive parking cuts wait waste without added latency; needs the wait-tier actuation; tracked #341"]
+#[ignore = "catalogue: predictive parking cuts wait waste without added latency; needs the wait-tier actuation; tracked #hilavitkutin_catalogue_predictive_parking_cuts_wait_waste_an"]
 fn predictive_parking_reduces_idle_without_added_latency() {
     unimplemented!(
         "contract: wasted wait after predictive parking < fixed-strategy, frame latency not \
-         raised. Fill when the predicted-wait tier selection lands. tracked #341"
+         raised. Fill when the predicted-wait tier selection lands. \
+         tracked #hilavitkutin_catalogue_predictive_parking_cuts_wait_waste_an"
     );
 }
 
@@ -112,10 +117,11 @@ fn predictive_parking_reduces_idle_without_added_latency() {
 /// Routing hot work to performance cores beats uniform routing on a machine with
 /// a P/E split. Guarded off on uniform-core hosts (no split to exploit).
 #[test]
-#[ignore = "catalogue: P/E-core routing beats uniform routing on a P/E machine; needs morsel-temperature + CoreClass routing; tracked #341"]
+#[ignore = "catalogue: P/E-core routing beats uniform routing on a P/E machine; needs morsel-temperature + CoreClass routing; tracked #hilavitkutin_catalogue_p_e_core_routing_beats_uniform_routin"]
 fn pe_core_routing_improves_throughput_on_hot_work() {
     unimplemented!(
         "contract: throughput with P-core routing > uniform routing on a P/E host; equal on \
-         a uniform-core host. Fill when temperature -> CoreClass routing lands. tracked #341"
+         a uniform-core host. Fill when temperature -> CoreClass routing lands. \
+         tracked #hilavitkutin_catalogue_p_e_core_routing_beats_uniform_routin"
     );
 }

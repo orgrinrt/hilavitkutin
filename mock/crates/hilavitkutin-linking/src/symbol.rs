@@ -23,7 +23,7 @@ use core::mem;
 /// restricted by the sealed `LibrarySymbol` marker to pointer-sized
 /// `extern "C"` function pointer shapes.
 pub struct Symbol<'lib, T: LibrarySymbol> {
-    ptr: *const c_void,
+    ptr:     *const c_void,
     _marker: PhantomData<(&'lib (), T)>,
 }
 
@@ -36,10 +36,7 @@ impl<'lib, T: LibrarySymbol> Symbol<'lib, T> {
     /// pointer is still bound to the `Library` whose lifetime this
     /// `Symbol` borrows.
     pub fn get(&self) -> T {
-        debug_assert_eq!(
-            mem::size_of::<T>(),
-            mem::size_of::<*const c_void>(),
-        );
+        debug_assert_eq!(mem::size_of::<T>(), mem::size_of::<*const c_void>(),);
         // SAFETY: the sealed LibrarySymbol impls restrict T to
         // pointer-sized extern "C" function pointer types.
         // transmute_copy at matching size reinterprets the raw pointer
@@ -54,7 +51,10 @@ impl<'lib, T: LibrarySymbol> Symbol<'lib, T> {
     }
 
     pub(crate) fn from_raw(ptr: *const c_void) -> Self {
-        Self { ptr, _marker: PhantomData }
+        Self {
+            ptr,
+            _marker: PhantomData,
+        }
     }
 }
 
@@ -68,7 +68,7 @@ impl<'lib, T: LibrarySymbol> Symbol<'lib, T> {
 /// `T: 'static` permits arbitrary FFI-safe data types, typically
 /// `#[repr(C)]` structs that an extension exports as a manifest.
 pub struct StaticRef<'lib, T: 'static> {
-    ptr: *const c_void,
+    ptr:     *const c_void,
     _marker: PhantomData<&'lib T>,
 }
 
@@ -93,7 +93,10 @@ impl<'lib, T: 'static> StaticRef<'lib, T> {
     }
 
     pub(crate) fn from_raw(ptr: *const c_void) -> Self {
-        Self { ptr, _marker: PhantomData }
+        Self {
+            ptr,
+            _marker: PhantomData,
+        }
     }
 }
 
@@ -105,6 +108,7 @@ impl<'lib, T: 'static> StaticRef<'lib, T> {
 /// new impls. This arity range covers realistic plugin-ABI shapes;
 /// extending it further in a follow-up round is trivial if a concrete
 /// need surfaces.
+#[allow(private_bounds)]
 pub trait LibrarySymbol: sealed::Sealed + Copy {}
 
 macro_rules! impl_library_symbol_for_fn {
@@ -127,5 +131,5 @@ impl_library_symbol_for_fn!(A, B, C, D, E, F, G);
 impl_library_symbol_for_fn!(A, B, C, D, E, F, G, H);
 
 mod sealed {
-    pub trait Sealed {}
+    pub(crate) trait Sealed {}
 }

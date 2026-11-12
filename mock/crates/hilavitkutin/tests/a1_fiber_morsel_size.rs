@@ -21,7 +21,14 @@ use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapN
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
-use hilavitkutin_api::context::{ColumnReaderApi, ColumnWriterApi, EachApi, HasColumnReader, HasColumnWriter, HasEach};
+use hilavitkutin_api::context::{
+    ColumnReaderApi,
+    ColumnWriterApi,
+    EachApi,
+    HasColumnReader,
+    HasColumnWriter,
+    HasEach,
+};
 use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::store::Column;
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
@@ -32,12 +39,15 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 }
 
 struct BumpProvider<const N: usize> {
-    buf: UnsafeCell<[MaybeUninit<u8>; N]>,
+    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
     used: Cell<usize>,
 }
 impl<const N: usize> BumpProvider<N> {
     fn new() -> Self {
-        Self { buf: UnsafeCell::new([const { MaybeUninit::uninit() }; N]), used: Cell::new(0) }
+        Self {
+            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
+            used: Cell::new(0),
+        }
     }
 }
 unsafe impl<const N: usize> Send for BumpProvider<N> {}
@@ -55,7 +65,9 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
         // SAFETY: aligned + len <= N, in bounds of the owned buffer.
         unsafe { base.add(aligned) }
     }
+
     unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: arvo::Bool, _write: arvo::Bool) {}
 }
 
@@ -69,19 +81,26 @@ type ColOut = Cons<Column<Outv>, Empty>;
 
 struct Copyer;
 impl BuilderInput for Copyer {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for Copyer {
-    type Read = OneIn;
-    type Write = ColOut;
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        OneIn,
+        ColOut,
+        SnapNil,
+        ColPtrCons<Inv, ColPtrNil>,
+        ColPtrCons<Outv, ColPtrNil>,
+    >;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> =
-        EngineCtx<'frame, OneIn, ColOut, SnapNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<Outv, ColPtrNil>>;
+    type Read = OneIn;
+    type Write = ColOut;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: In host-populated; Outv reserved + exclusive; windowed.
@@ -118,13 +137,14 @@ fn single_fiber_morsel_size_is_plan_per_fiber_value() {
 // to build alongside A2's machinery (plus a `__fiber_plan_idx` accessor). The
 // ignored test with the real assertion preserves the case per edge-cases-as-tests.
 #[test]
-#[ignore = "catalogue: fiber_plan_idx records CSR index when dispatch order reorders fibers (fd != f); needs multi-trunk fixture + __fiber_plan_idx accessor, lands with A2; tracked #341"]
+#[ignore = "catalogue: fiber_plan_idx records CSR index when dispatch order reorders fibers (fd != f); needs multi-trunk fixture + __fiber_plan_idx accessor, lands with A2; tracked #hilavitkutin_catalogue_fiber_plan_idx_records_the_csr_index"]
 fn fiber_plan_idx_records_csr_index_under_dispatch_reorder() {
     unimplemented!(
         "contract: for a multi-trunk plan whose phase-dispatch order places a fiber \
          at dispatch index fd != its CSR index f, FiberDispatch.fiber_plan_idx == f, \
          and morsel_size == plan.morsel_windows[f] (read at the CSR index, not fd). \
          Build a 2-trunk disjoint-column carrier forcing fd != f; add __fiber_plan_idx. \
-         Lands with slice A2. tracked #341"
+         Lands with slice A2. \
+         tracked #hilavitkutin_catalogue_fiber_plan_idx_records_the_csr_index"
     );
 }

@@ -36,12 +36,15 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 }
 
 struct BumpProvider<const N: usize> {
-    buf: UnsafeCell<[MaybeUninit<u8>; N]>,
+    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
     used: Cell<usize>,
 }
 impl<const N: usize> BumpProvider<N> {
     fn new() -> Self {
-        Self { buf: UnsafeCell::new([const { MaybeUninit::uninit() }; N]), used: Cell::new(0) }
+        Self {
+            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
+            used: Cell::new(0),
+        }
     }
 }
 unsafe impl<const N: usize> Send for BumpProvider<N> {}
@@ -59,7 +62,9 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
         // SAFETY: aligned + len <= N, in bounds of the owned buffer.
         unsafe { base.add(aligned) }
     }
+
     unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: arvo::Bool, _write: arvo::Bool) {}
 }
 
@@ -83,19 +88,20 @@ type WriteBoth = Cons<Resource<FxRes>, Cons<Column<Outv>, Empty>>;
 // sum = 12 bytes, window = (24_576 / 12).clamp(64, 8192) & !3 = 2048.
 struct Producer;
 impl BuilderInput for Producer {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for Producer {
-    type Read = Empty;
-    type Write = WriteBoth;
+    type Ctx<'frame> =
+        EngineCtx<'frame, Empty, WriteBoth, SnapNil, ColPtrNil, ColPtrCons<Outv, ColPtrNil>>;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> =
-        EngineCtx<'frame, Empty, WriteBoth, SnapNil, ColPtrNil, ColPtrCons<Outv, ColPtrNil>>;
+    type Read = Empty;
+    type Write = WriteBoth;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: Outv reserved + exclusive; windowed by the morsel.
@@ -108,18 +114,19 @@ impl WorkUnit<Always> for Producer {
 // window is the MAX_MORSEL clamp.
 struct Idler;
 impl BuilderInput for Idler {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for Idler {
-    type Read = Empty;
-    type Write = Empty;
+    type Ctx<'frame> = EngineCtx<'frame, Empty, Empty, SnapNil, ColPtrNil, ColPtrNil>;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, Empty, Empty, SnapNil, ColPtrNil, ColPtrNil>;
+    type Read = Empty;
+    type Write = Empty;
+
     fn execute<'frame>(&self, _ctx: &Self::Ctx<'frame>) {}
 }
 
@@ -154,8 +161,14 @@ fn morsel_window_is_not_the_record_count_partition() {
         .build(store(provider), USize(4096))
         .unwrap_or_else(|_| panic!("build should succeed"));
     let window = s.__fiber_morsel_size(USize(0)).0;
-    assert_eq!(window, 2048, "the window is budget-derived, independent of record count");
-    assert!(window < 4096, "a fiber larger than its window runs multiple morsels");
+    assert_eq!(
+        window, 2048,
+        "the window is budget-derived, independent of record count"
+    );
+    assert!(
+        window < 4096,
+        "a fiber larger than its window runs multiple morsels"
+    );
 }
 
 #[test]
@@ -175,11 +188,12 @@ fn no_write_bytes_takes_the_max_window() {
 }
 
 #[test]
-#[ignore = "catalogue: a MIN_MORSEL that is not a multiple of 4 lets the post-clamp `& !3` land the window below the configured floor (or at 0 for MIN < 4); the intended resolution aligns the floor before clamping so the window never undercuts MIN_MORSEL; tracked #341"]
+#[ignore = "catalogue: a MIN_MORSEL that is not a multiple of 4 lets the post-clamp `& !3` land the window below the configured floor (or at 0 for MIN < 4); the intended resolution aligns the floor before clamping so the window never undercuts MIN_MORSEL; tracked #hilavitkutin_catalogue_a_min_morsel_that_is_not_a_multiple_o"]
 fn non_aligned_min_morsel_keeps_the_floor() {
     unreachable!(
         "contract: with MIN_MORSEL = 66 and a write sum driving the raw window to the \
          floor, the emitted window must still be >= 64 (the aligned floor), never 0. \
-         Build a custom RunCfg fixture once the floor-alignment lands. tracked #341"
+         Build a custom RunCfg fixture once the floor-alignment lands. \
+         tracked #hilavitkutin_catalogue_a_min_morsel_that_is_not_a_multiple_o"
     );
 }

@@ -60,7 +60,7 @@ impl MetaVirtual for ScheduleEnd {
 }
 
 mod sealed {
-    pub trait Sealed {}
+    pub(crate) trait Sealed {}
 }
 
 /// Sealed marker on the four meta resource types.
@@ -68,6 +68,7 @@ mod sealed {
 /// Restricts the meta resources to meta work units. The compile-time `Context`
 /// bound that enforces "consumer work units cannot reach the meta resources" is
 /// a follow-up (slice 3); this round lands the marker and the resource types.
+#[allow(private_bounds)]
 pub trait MetaAccess: sealed::Sealed {}
 
 /// Meta resource: the dependency graph the scheduler analyses.
@@ -88,7 +89,7 @@ pub struct LaneAssignment;
 /// with their data sources.
 pub struct SchedulerMetrics {
     /// Passes the scheduler has run, advanced once per pass before dispatch.
-    pub pass_count: Cell<USize>,
+    pub pass_count:           Cell<USize>,
     /// Exponential moving average of the frame duration in nanoseconds,
     /// weight 1/8. The seed frame stores its raw duration; the engine folds
     /// at frame end (workers parked), so a hook reading it during frame N
@@ -97,30 +98,30 @@ pub struct SchedulerMetrics {
     /// Record count of the most recent pass, set beside the pass-duration EMA
     /// fold. An `OnMeta` hook derives the throughput trend (this divided by
     /// `ema_pass_duration_ns`) with no new instrumentation.
-    pub last_record_count: Cell<USize>,
+    pub last_record_count:    Cell<USize>,
     /// Count of `run` frames whose `store_dirty` was non-empty (an input change
     /// was seen). An `OnMeta` hook derives the input-change rate (this divided
     /// by `pass_count`) for the change_class axis, from existing dirty state
     /// with no new instrumentation.
-    pub change_seen_count: Cell<USize>,
+    pub change_seen_count:    Cell<USize>,
     /// Worst-core idle time of the current frame in nanoseconds: the maximum
     /// across the per-core `PoolFrame::idle_accumulator` slots the waist barrier
     /// fills. An `OnMeta` hook reads it as the phase-imbalance signal (the adapt
     /// trigger to re-select per-phase configs). The single-core and fused paths
     /// never cross a waist barrier, so they leave it zero: no inter-core wait
     /// means no idle.
-    pub idle_ns: Cell<Nanos>,
+    pub idle_ns:              Cell<Nanos>,
 }
 
 impl Default for SchedulerMetrics {
     #[inline]
     fn default() -> Self {
         Self {
-            pass_count: Cell::new(USize(0)), // lint:allow(no-bare-numeric) reason: zero pass count; tracked: #121
+            pass_count:           Cell::new(USize(0)), // lint:allow(no-bare-numeric) reason: zero pass count; tracked: #121
             ema_pass_duration_ns: Cell::new(Nanos::from_raw(0)), // lint:allow(no-bare-numeric) reason: zero-duration seed; tracked: #121
-            last_record_count: Cell::new(USize(0)), // lint:allow(no-bare-numeric) reason: zero record count seed; tracked: #121
-            change_seen_count: Cell::new(USize(0)), // lint:allow(no-bare-numeric) reason: zero change count seed; tracked: #121
-            idle_ns: Cell::new(Nanos::from_raw(0)), // lint:allow(no-bare-numeric) reason: zero-idle seed; tracked: #121
+            last_record_count:    Cell::new(USize(0)), // lint:allow(no-bare-numeric) reason: zero record count seed; tracked: #121
+            change_seen_count:    Cell::new(USize(0)), // lint:allow(no-bare-numeric) reason: zero change count seed; tracked: #121
+            idle_ns:              Cell::new(Nanos::from_raw(0)), // lint:allow(no-bare-numeric) reason: zero-idle seed; tracked: #121
         }
     }
 }

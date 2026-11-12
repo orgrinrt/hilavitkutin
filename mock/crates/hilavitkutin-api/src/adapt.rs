@@ -34,7 +34,7 @@ use crate::access::Cons;
 use crate::builder_input::{BuilderInput, Dispatch};
 
 mod sealed {
-    pub trait Sealed {}
+    pub(crate) trait Sealed {}
 }
 
 /// Sealed adapt-axis trait. Topic 5 axis A.
@@ -45,6 +45,7 @@ mod sealed {
 /// two methods are the runtime-observable knobs: `is_enabled()`
 /// gates whether the axis runs at all, `sample_skip()` rate-limits
 /// how often the axis's measurement fires.
+#[allow(private_bounds)]
 pub trait AdaptAxis: sealed::Sealed {
     /// Is this axis enabled? `Bool::TRUE` runs the axis on every
     /// `ScheduleEnd`; `Bool::FALSE` skips the axis entirely.
@@ -63,9 +64,9 @@ impl<A, Wus, Stores, Platform> Dispatch<Wus, Stores, Platform> for AdaptAxisDisp
 where
     A: 'static,
 {
-    type NextWus = Wus;
-    type NextStores = Cons<A, Stores>;
     type NextPlatform = Platform;
+    type NextStores = Cons<A, Stores>;
+    type NextWus = Wus;
 }
 
 macro_rules! axis_config {
@@ -73,7 +74,7 @@ macro_rules! axis_config {
         #[doc = $doc]
         pub struct $name {
             /// Run the axis on `ScheduleEnd`?
-            pub enabled: Bool,
+            pub enabled:     Bool,
             /// Sample every Nth pass.
             pub sample_skip: USize,
         }
@@ -83,7 +84,7 @@ macro_rules! axis_config {
             /// sample rate.
             pub const fn new() -> Self {
                 Self {
-                    enabled: Bool::TRUE,
+                    enabled:     Bool::TRUE,
                     sample_skip: USize($default_skip),
                 }
             }
@@ -95,7 +96,7 @@ macro_rules! axis_config {
             /// bundle.
             pub const fn off() -> Self {
                 Self {
-                    enabled: Bool::FALSE,
+                    enabled:     Bool::FALSE,
                     sample_skip: USize($default_skip),
                 }
             }
@@ -110,14 +111,15 @@ macro_rules! axis_config {
         impl sealed::Sealed for $name {}
 
         impl BuilderInput for $name {
-            type Init = Self;
             type Dispatch = AdaptAxisDispatch<Self>;
+            type Init = Self;
         }
 
         impl AdaptAxis for $name {
             fn is_enabled(&self) -> Bool {
                 self.enabled
             }
+
             fn sample_skip(&self) -> USize {
                 self.sample_skip
             }
