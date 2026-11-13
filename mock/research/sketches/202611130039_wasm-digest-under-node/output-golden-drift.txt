@@ -1,0 +1,7 @@
+SAME: 1701 lines, native and node agree
+DRIFT: the lines differ from the committed digests-native.txt
+5c5
+< c0 s5 61b1b6ed3e5b05eb
+---
+> c0 s5 61b1b6ed3e5b05e0
+exit=1
