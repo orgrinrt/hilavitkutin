@@ -1,6 +1,6 @@
 # The rows the written history does not back, or that stand against it
 
-This file lists the 131 rows of the registry that were left as they were when the rest were ratified by default or put on a stamp. Each of them is here for one of two reasons the record itself gives: the source says in words that the content waits on the maintainer or was an agent's own call, or a passage that is his says otherwise on the same point. None of them is ratified and none carries a stamp.
+This file lists the 132 rows of the registry that were left as they were when the rest were ratified by default or put on a stamp. Each of them is here for one of two reasons the record itself gives: the source says in words that the content waits on the maintainer or was an agent's own call, or a passage that is his says otherwise on the same point. None of them is ratified and none carries a stamp.
 
 It follows from his words of 13 November 2026, kept whole in `OP-ANSWERS-18.md` beside this file:
 
@@ -356,7 +356,7 @@ Passages: `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-desig
 
 ### Entry or record as the innermost unit
 
-The principles list entry among the dead terms and end the vocabulary at record. The founding spec ends its hierarchy at entry. Both documents are his. 2 rows. The options were written for this file:
+The principles list entry among the dead terms and end the vocabulary at record. The founding spec ends its hierarchy at entry. Both documents are his. 3 rows. The options were written for this file:
 
 1. Record is the innermost unit and entry is a dead term, as the principles say.
 2. Entry stays the innermost unit of the hierarchy, as the founding spec says, and record names one data point in a column.
@@ -376,6 +376,14 @@ A tenet. It says: The vocabulary is a hierarchy from the coarsest to the finest 
 Finding: The founding spec ends its hierarchy at entry and calls it the innermost unit; the principles list entry among the dead terms and end the vocabulary at record, as the row entry_is_a_dead_term_and_the_canonical_vocabulary_ends_at_micro_morsel_and_record says. Both documents are his. The reader of its slice classed it a as founding text; it is classed b here so that both sides of this point are treated alike.
 
 Passages: `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:71-80`, `mock/PRINCIPLES.md.tmpl:281-287`.
+
+#### `an_entry_is_one_record_and_one_operation_at_register_level`
+
+A tenet. It says: An entry is one record taken with one operation, at register level, and it is the innermost unit.
+
+Finding: The founding spec's vocabulary table defines entry as the innermost unit, which takes the second option of this group, while the principles list entry among the dead terms; the seed commit `680a672` listed entry among the canonical terms, and the style sweep `59b3c18` of 2026-05-05 moved it to the dead terms. It was ratified as founding text and is listed here with the two rows above, so that every side of this point waits on him alike.
+
+Passages: `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:80-80`, `mock/PRINCIPLES.md.tmpl:283-287`.
 
 
 ### Whether hilavitkutin's own columns are double-buffered

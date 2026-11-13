@@ -114,9 +114,8 @@ versus `Column` is intent (persistent / cold versus hot / per-morsel),
 not a separate mechanism.
 '''
 origin = "stated"
-standing = "ratified"
-ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:119-126", "later: mock/research/202606210600_resource-storage-model-canonical-addendum.md:17-24, a_resource_is_a_handle_and_not_an_inline_value_store_which_is_the_corrected_reading_of_r5"]
+standing = "pending"
+stamp = 'provisional, 2026-11-13: its source mock/PRINCIPLES.md.tmpl:119-126 was written by the round commit 18fcb5d of 2026-05-30, the unified columnar storage round, and not by the seed commit 680a672, so it is the text of that round and not founding, and no passage of his states it; the bench-decided passage mock/research/202606210600_resource-storage-model-canonical-addendum.md:17-24 (row the_value_of_a_resource_is_one_contiguous_record_blob_and_the_per_member_column_decomposition_was_refuted_by_bench) refutes its decomposition of every aggregate into scalar columns for the value of a resource, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["unified columnar storage", "ColumnStorage", "ColumnValue", "MemoryProvider", "resource", "column", "execution plan", "struct-of-arrays"]
 
 [[tenet]]
@@ -136,9 +135,8 @@ not two" applied to the data plane: the engine accreted disjoint arenas
 once, and unwinding them onto the one store is the correction.
 '''
 origin = "stated"
-standing = "ratified"
-ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:128-133"]
+standing = "pending"
+stamp = 'provisional, 2026-11-13: its source mock/PRINCIPLES.md.tmpl:128-133 was written by the round commit 18fcb5d of 2026-05-30, the unified columnar storage round, and not by the seed commit 680a672, so it is the text of that round and not founding, and no passage of his states it, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["no bespoke storage", "arena", "MaybeUninit pool", "column", "ColumnStorage", "store markers", "one mechanism"]
 related = ["tenet::there_is_one_mechanism_per_concern_and_where_two_subsystems_solve_one_problem_differently_one_must_go", "tenet::all_engine_runtime_state_lives_in_one_columnar_store_and_a_resource_versus_a_column_is_intent_and_not_mechanism"]
 
@@ -156,9 +154,8 @@ cache lines), which is pool coordination, not consumer data. A storage
 lint enforces the rule.
 '''
 origin = "stated"
-standing = "ratified"
-ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:135-138"]
+standing = "pending"
+stamp = 'provisional, 2026-11-13: its source mock/PRINCIPLES.md.tmpl:135-138 was written by the round commit 18fcb5d of 2026-05-30, the unified columnar storage round, and not by the seed commit 680a672, so it is the text of that round and not founding, and no passage of his states it, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["PoolFrame", "fixed array exception", "atomic progress slots", "wake slots", "storage lint", "pool coordination"]
 related = ["tenet::no_subsystem_has_bespoke_storage_and_a_subsystem_needing_to_hold_n_things_uses_a_column"]
 

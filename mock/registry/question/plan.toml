@@ -18,7 +18,7 @@ is registered open with a bench oracle.
 '''
 subject = "plan"
 keywords = ["RCM", "waist-phase order", "dispatch order", "bench oracle", "cache locality", "A1-1"]
-related = ["tenet::whether_dispatch_follows_rcm_order_or_waist_phase_order_is_decided_by_a_bench"]
+related = ["tenet::rcm_wins_against_rival_ordering_theories_at_dram_scale_and_order_is_near_neutral_below_it_so_step_5_stands"]
 
 [[question]]
 id = "whether_the_morsel_term_for_write_resource_collections_absorbs_the_swap_traffic_or_a_separate_budget_line_is_owed"
