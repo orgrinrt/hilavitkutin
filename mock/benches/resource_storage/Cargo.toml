@@ -24,6 +24,11 @@ mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", bra
 mockspace-bench-harness = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev" }
 mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev" }
 
+# Tests only: the driver itself never shapes a variant path, and this crate
+# holds both the rule it has to keep and the shaping it must not go back to.
+[dev-dependencies]
+variant-path = { path = "../variant-path" }
+
 [profile.release]
 opt-level = 3
 lto = "fat"

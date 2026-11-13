@@ -1,0 +1,15 @@
+[workspace]
+
+[package]
+name = "variant-path"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# The shape a resolved variant path must have, and the shaping both bench
+# drivers applied on top of the harness until df8a9419. Both drivers test
+# against this rather than carrying a copy of the check each, so the rule
+# and the historical mistake are written down once.
+[lib]
+name = "variant_path"
+path = "src/lib.rs"

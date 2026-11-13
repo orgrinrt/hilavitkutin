@@ -27,8 +27,8 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 use benches::disasm_5check;
-use mockspace_bench_core::{ByteRoutine, routine_bridge};
-use mockspace_bench_harness::{self as harness, BenchManifest, RoutineSpec, Workload};
+use mockspace_bench_core::{ByteDispatch, byte_routine_dispatch};
+use mockspace_bench_harness::{self as harness, BenchConfig, BenchManifest, RoutineSpec, Workload};
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().collect();
@@ -64,19 +64,22 @@ fn main() -> ExitCode {
 
     for (bench_name, section) in &manifest.bench {
         for (size_idx, _size) in section.sizes.iter().enumerate() {
-            let config = match manifest.for_size(bench_name, size_idx, &mock_benches_dir) {
+            let mut config = match manifest.for_size(bench_name, size_idx, &mock_benches_dir) {
                 Ok(c) => c,
                 Err(e) => {
                     eprintln!("error: {e}");
                     return ExitCode::FAILURE;
                 },
             };
+            config.variant_paths = variant_paths_for(&config);
             let routine = match routine_for_bench(bench_name, &section.workload, config.n) {
                 Some(r) => r,
                 None => {
                     eprintln!(
-                        "error: bench `{bench_name}` declares unsupported size n={}",
-                        config.n
+                        "error: bench `{bench_name}` declares unsupported size n={}; this \
+                         driver dispatches {:?}",
+                        config.n,
+                        byte_dispatch().sizes
                     );
                     return ExitCode::FAILURE;
                 },
@@ -202,6 +205,34 @@ fn build_workload() -> Workload {
     workload
 }
 
+/// The variant paths this driver hands the harness for one cell.
+///
+/// `BenchManifest::for_size` has already resolved every bare stem to a
+/// full platform dylib path, so there is nothing left for the driver to
+/// add, and adding nothing is the whole content of this function. It is a
+/// function rather than an absence because the driver used to shape these
+/// paths a second time at this point, turning every entry into
+/// `liblibema_neon.so.so`, and a test cannot catch that coming back
+/// unless there is a seam to call. `variant-path` holds the check and the
+/// old shaping it has to refuse.
+fn variant_paths_for(config: &BenchConfig) -> Vec<PathBuf> {
+    config.variant_paths.clone()
+}
+
+/// The record counts this driver can monomorphise a `ByteRoutine` for.
+///
+/// Declared once through the harness macro rather than as a match arm per
+/// size in each `MAY_DIFFER` branch, which is what this driver carried
+/// before the macro existed. The list is also what the error names when a
+/// manifest asks for a size outside it, so the gap is reported against this
+/// declaration instead of passing as a bare `None`.
+fn byte_dispatch() -> ByteDispatch {
+    byte_routine_dispatch!(
+        out = 8,
+        sizes = [8, 16, 32, 64, 128, 256, 1024, 4096, 16384]
+    )
+}
+
 /// Map (bench, workload, N) -> ByteRoutine bridge. MAY_DIFFER routes by bench
 /// name: `dispatch_dynamic` allows divergent output because its table variant
 /// picks one of four different mixers per chunk; every other bench enforces
@@ -223,33 +254,7 @@ fn routine_for_bench(bench_name: &str, workload: &str, n: usize) -> Option<Routi
             | "match_arm_count"
             | "float_width"
     );
-    let bridge = if may_differ {
-        match n {
-            8 => routine_bridge!(ByteRoutine<8, 8, true>),
-            16 => routine_bridge!(ByteRoutine<16, 8, true>),
-            32 => routine_bridge!(ByteRoutine<32, 8, true>),
-            64 => routine_bridge!(ByteRoutine<64, 8, true>),
-            128 => routine_bridge!(ByteRoutine<128, 8, true>),
-            256 => routine_bridge!(ByteRoutine<256, 8, true>),
-            1024 => routine_bridge!(ByteRoutine<1024, 8, true>),
-            4096 => routine_bridge!(ByteRoutine<4096, 8, true>),
-            16384 => routine_bridge!(ByteRoutine<16384, 8, true>),
-            _ => return None,
-        }
-    } else {
-        match n {
-            8 => routine_bridge!(ByteRoutine<8, 8, false>),
-            16 => routine_bridge!(ByteRoutine<16, 8, false>),
-            32 => routine_bridge!(ByteRoutine<32, 8, false>),
-            64 => routine_bridge!(ByteRoutine<64, 8, false>),
-            128 => routine_bridge!(ByteRoutine<128, 8, false>),
-            256 => routine_bridge!(ByteRoutine<256, 8, false>),
-            1024 => routine_bridge!(ByteRoutine<1024, 8, false>),
-            4096 => routine_bridge!(ByteRoutine<4096, 8, false>),
-            16384 => routine_bridge!(ByteRoutine<16384, 8, false>),
-            _ => return None,
-        }
-    };
+    let bridge = (byte_dispatch().dispatch)(n, may_differ)?;
     Some(RoutineSpec {
         name: workload.to_string(),
         bridge,
@@ -289,7 +294,10 @@ fn run_worker(args: &[String]) -> ExitCode {
     let routine = match routine_for_bench(&bench_name, &bench_name, n) {
         Some(r) => r,
         None => {
-            eprintln!("worker: unsupported n={n} for bench `{bench_name}`");
+            eprintln!(
+                "worker: unsupported n={n} for bench `{bench_name}`; this driver dispatches {:?}",
+                byte_dispatch().sizes
+            );
             return ExitCode::FAILURE;
         },
     };
@@ -315,84 +323,100 @@ fn run_worker(args: &[String]) -> ExitCode {
 
 #[cfg(test)]
 mod tests {
+    use variant_path::{shaped_as_the_drivers_once_did, shaped_once};
+
     use super::*;
 
-    /// Whether a dylib file name carries the platform prefix and the
-    /// platform suffix exactly once each.
-    fn shaped_once(name: &str) -> Result<(), String> {
-        let prefix = std::env::consts::DLL_PREFIX;
-        let suffix = std::env::consts::DLL_SUFFIX;
-        let inner = name
-            .strip_prefix(prefix)
-            .ok_or_else(|| format!("`{name}` lacks the `{prefix}` prefix"))?
-            .strip_suffix(suffix)
-            .ok_or_else(|| format!("`{name}` lacks the `{suffix}` suffix"))?;
-        if inner.contains(suffix) {
-            return Err(format!("`{name}` carries `{suffix}` twice"));
-        }
-        if !prefix.is_empty() && inner.starts_with(prefix) {
-            return Err(format!("`{name}` carries `{prefix}` twice"));
-        }
-        Ok(())
-    }
-
-    /// The check refuses a name shaped twice, and accepts one shaped
-    /// once.
-    ///
-    /// A check that accepted everything would pass the test below
-    /// while saying nothing, so the refusal is asserted before the
-    /// acceptance is worth anything.
-    #[test]
-    fn the_check_refuses_a_doubly_shaped_name() {
-        let prefix = std::env::consts::DLL_PREFIX;
-        let suffix = std::env::consts::DLL_SUFFIX;
-        let once = format!("{prefix}ema_neon{suffix}");
-        let twice = format!("{prefix}{once}{suffix}");
-
-        shaped_once(&once).expect("a name shaped once is accepted");
-        let err = shaped_once(&twice).expect_err("a name shaped twice is refused");
-        assert!(
-            err.contains("twice"),
-            "the refusal should say the name was shaped twice, got `{err}`"
-        );
-    }
-
-    /// Every resolved variant path carries the platform dylib prefix
-    /// and suffix exactly once.
-    ///
-    /// `BenchManifest::for_size` resolves a bare-stem entry to a full
-    /// dylib path already. A driver that shapes the result again asks
-    /// for `liblibname.so.so`, which no build produces, and the bench
-    /// dies at load with a missing file rather than at config time.
-    /// This repo shipped that bug once.
-    #[test]
-    fn resolved_variant_paths_are_shaped_once() {
+    /// Resolve every cell the repo's own manifest declares, and hand back
+    /// what the driver would give the harness for each.
+    fn driver_variant_paths() -> Vec<(String, usize, Vec<PathBuf>)> {
         let dir = std::env::current_dir().expect("readable cwd");
         let manifest = BenchManifest::load(&dir.join("bench.toml")).expect("the repo's bench.toml");
 
-        let mut checked = 0usize;
+        let mut out = Vec::new();
         for (bench_name, section) in &manifest.bench {
             for (size_idx, _) in section.sizes.iter().enumerate() {
                 let config = manifest
                     .for_size(bench_name, size_idx, &dir)
                     .unwrap_or_else(|e| panic!("bench `{bench_name}` size {size_idx}: {e}"));
-                for path in &config.variant_paths {
-                    let name = path
-                        .file_name()
-                        .and_then(|s| s.to_str())
-                        .unwrap_or_else(|| {
-                            panic!("bench `{bench_name}`: variant path has no file name")
-                        });
-                    if let Err(e) = shaped_once(name) {
-                        panic!("bench `{bench_name}` size {size_idx}: {e}");
-                    }
-                    checked += 1;
+                out.push((bench_name.clone(), size_idx, variant_paths_for(&config)));
+            }
+        }
+        out
+    }
+
+    /// Every path the driver hands the harness carries the platform
+    /// dylib prefix and suffix exactly once.
+    ///
+    /// This goes through `variant_paths_for`, which is the point at which
+    /// the driver used to shape an already-resolved path a second time.
+    /// Put that shaping back inside it and this test goes red, which is
+    /// the only reason the function exists.
+    #[test]
+    fn the_paths_the_driver_hands_over_are_shaped_once() {
+        let cells = driver_variant_paths();
+        let mut checked = 0usize;
+        for (bench_name, size_idx, paths) in &cells {
+            for path in paths {
+                let name = path
+                    .file_name()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or_else(|| {
+                        panic!("bench `{bench_name}`: variant path has no file name")
+                    });
+                if let Err(e) = shaped_once(name) {
+                    panic!("bench `{bench_name}` size {size_idx}: {e}");
                 }
+                checked += 1;
             }
         }
         assert!(
             checked > 0,
             "the manifest resolved no variant paths, so this test asserted nothing"
+        );
+    }
+
+    /// Put the old shaping back over the same paths and the check above
+    /// refuses every one of them.
+    ///
+    /// Without this, a check that accepted everything would leave the
+    /// test above green and say nothing. The shaping here is the
+    /// driver's own, as it stood until df8a9419, applied to the real
+    /// resolved paths rather than to a name the test invented.
+    #[test]
+    fn the_shaping_the_driver_once_did_is_refused_on_every_cell() {
+        let cells = driver_variant_paths();
+        let mut refused = 0usize;
+        for (bench_name, size_idx, paths) in &cells {
+            for path in paths {
+                let doubled = shaped_as_the_drivers_once_did(path);
+                let name = doubled
+                    .file_name()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or_else(|| {
+                        panic!("bench `{bench_name}`: doubled path has no file name")
+                    });
+                match shaped_once(name) {
+                    Ok(()) => {
+                        panic!(
+                            "bench `{bench_name}` size {size_idx}: the check accepted `{name}`, so \
+                         the test above proves nothing"
+                        )
+                    },
+                    Err(e) => {
+                        assert!(
+                            e.contains("twice"),
+                            "bench `{bench_name}` size {size_idx}: the refusal should say an affix \
+                         doubled, got `{e}`"
+                        )
+                    },
+                }
+                refused += 1;
+            }
+        }
+        assert!(
+            refused > 0,
+            "no cell was checked, so this control asserted nothing"
         );
     }
 }
