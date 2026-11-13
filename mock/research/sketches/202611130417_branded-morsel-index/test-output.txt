@@ -1,0 +1,82 @@
+    Blocking waiting for file lock on build directory
+   Compiling engine v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611130417_branded-morsel-index/engine)
+   Compiling author v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611130417_branded-morsel-index/author)
+    Finished `test` profile [unoptimized] target(s) in 3m 24s
+     Running unittests src/lib.rs (/home/user/target/debug/deps/author-c4964363907590bc)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/fixtures.rs (/home/user/target/debug/deps/fixtures-f7a93c40ac046314)
+
+running 1 test
+   Compiling engine v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611130417_branded-morsel-index/engine)
+   Compiling author v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611130417_branded-morsel-index/author)
+   Compiling author-tests v0.0.0 (/home/user/target/tests/trybuild/author)
+    Finished `dev` profile [unoptimized] target(s) in 0.13s
+
+
+test tests/ui/fail/01_two_indices_are_compared_for_equality.rs [should fail to compile] ... ok
+test tests/ui/fail/02_two_indices_are_ordered.rs [should fail to compile] ... ok
+test tests/ui/fail/03_an_index_is_cast_to_an_integer.rs [should fail to compile] ... ok
+test tests/ui/fail/04_an_index_is_formatted.rs [should fail to compile] ... ok
+test tests/ui/fail/05_an_index_is_hashed.rs [should fail to compile] ... ok
+test tests/ui/fail/06_an_index_is_converted_by_from.rs [should fail to compile] ... ok
+test tests/ui/fail/07_an_index_is_stepped_by_arithmetic.rs [should fail to compile] ... ok
+test tests/ui/fail/08_an_index_from_one_each_is_used_in_another.rs [should fail to compile] ... ok
+test tests/ui/fail/08b_an_index_from_one_each_is_read_through_another.rs [should fail to compile] ... ok
+test tests/ui/fail/09_an_index_is_kept_past_its_each.rs [should fail to compile] ... ok
+test tests/ui/fail/10_an_index_is_stashed_in_the_kernel_across_morsels.rs [should fail to compile] ... ok
+test tests/ui/fail/11_an_index_is_forged_by_a_struct_literal.rs [should fail to compile] ... ok
+test tests/ui/fail/12_an_index_is_forged_through_a_foreign_trait_impl.rs [should fail to compile] ... ok
+test tests/ui/fail/13_an_index_is_forged_by_unsafe_code.rs [should fail to compile] ... ok
+test tests/ui/pass/01_two_indices_are_compared_for_equality.rs [should pass] ... ok
+test tests/ui/pass/02_two_indices_are_ordered.rs [should pass] ... ok
+test tests/ui/pass/03_an_index_is_cast_to_an_integer.rs [should pass] ... ok
+test tests/ui/pass/04_an_index_is_formatted.rs [should pass] ... ok
+test tests/ui/pass/05_an_index_is_hashed.rs [should pass] ... ok
+test tests/ui/pass/06_an_index_is_converted_by_from.rs [should pass] ... ok
+test tests/ui/pass/07_an_index_is_stepped_by_arithmetic.rs [should pass] ... ok
+test tests/ui/pass/08_an_index_from_one_each_is_used_in_another.rs [should pass] ... ok
+test tests/ui/pass/08b_an_index_from_one_each_is_read_through_another.rs [should pass] ... ok
+test tests/ui/pass/09_an_index_is_kept_past_its_each.rs [should pass] ... ok
+test tests/ui/pass/10_an_index_is_stashed_in_the_kernel_across_morsels.rs [should pass] ... ok
+test tests/ui/pass/11_an_index_is_forged_by_a_struct_literal.rs [should pass] ... ok
+test tests/ui/pass/12_an_index_is_forged_through_a_foreign_trait_impl.rs [should pass] ... ok
+test tests/ui/pass/13_an_index_is_forged_by_unsafe_code.rs [should pass] ... ok
+
+
+test every_refusal_holds_and_every_twin_runs ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.44s
+
+     Running tests/run.rs (/home/user/target/debug/deps/run-da281474ce4ff231)
+
+running 5 tests
+test columns_of_unequal_length_are_refused ... ok
+test counting_along_the_indices_reaches_a_position ... ok
+test below_max_takes_each_morsels_own_largest ... ok
+test double_writes_each_row_doubled ... ok
+test previous_keeps_an_index_across_rows_of_one_morsel ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/home/user/target/debug/deps/engine-8af60c1f8367c3e0)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests author
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests engine
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

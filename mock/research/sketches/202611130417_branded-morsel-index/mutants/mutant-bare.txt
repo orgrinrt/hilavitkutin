@@ -1,0 +1,216 @@
+   Compiling engine v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611130417_branded-morsel-index/engine)
+   Compiling author v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611130417_branded-morsel-index/author)
+    Finished `test` profile [unoptimized] target(s) in 0.22s
+     Running tests/fixtures.rs (/home/user/target/debug/deps/fixtures-8bddc23a3da54484)
+
+running 1 test
+   Compiling engine v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611130417_branded-morsel-index/engine)
+   Compiling author v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611130417_branded-morsel-index/author)
+   Compiling author-tests v0.0.0 (/home/user/target/tests/trybuild/author)
+    Finished `dev` profile [unoptimized] target(s) in 0.14s
+
+
+test tests/ui/fail/01_two_indices_are_compared_for_equality.rs [should fail to compile] ... error
+Expected test case to fail to compile, but it succeeded.
+
+test tests/ui/fail/02_two_indices_are_ordered.rs [should fail to compile] ... error
+Expected test case to fail to compile, but it succeeded.
+
+test tests/ui/fail/03_an_index_is_cast_to_an_integer.rs [should fail to compile] ... error
+Expected test case to fail to compile, but it succeeded.
+
+test tests/ui/fail/04_an_index_is_formatted.rs [should fail to compile] ... error
+Expected test case to fail to compile, but it succeeded.
+
+test tests/ui/fail/05_an_index_is_hashed.rs [should fail to compile] ... error
+Expected test case to fail to compile, but it succeeded.
+
+test tests/ui/fail/06_an_index_is_converted_by_from.rs [should fail to compile] ... mismatch
+
+EXPECTED:
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+error[E0277]: the trait bound `i128: From<engine::Index<'_>>` is not satisfied
+  --> tests/ui/fail/06_an_index_is_converted_by_from.rs:17:27
+   |
+17 |                 let got = i128::from(probe) as i64;
+   |                           ^^^^ the trait `From<engine::Index<'_>>` is not implemented for `i128`
+   |
+   = help: `i128` implements trait `From<T>`:
+             From<bool>
+             From<i16>
+             From<i32>
+             From<i64>
+             From<i8>
+             From<u16>
+             From<u32>
+             From<u64>
+             From<u8>
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
+ACTUAL OUTPUT:
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+error[E0277]: the trait bound `i128: From<usize>` is not satisfied
+  --> tests/ui/fail/06_an_index_is_converted_by_from.rs:17:27
+   |
+17 |                 let got = i128::from(probe) as i64;
+   |                           ^^^^ the trait `From<usize>` is not implemented for `i128`
+   |
+   = help: `i128` implements trait `From<T>`:
+             From<bool>
+             From<i16>
+             From<i32>
+             From<i64>
+             From<i8>
+             From<u16>
+             From<u32>
+             From<u64>
+             From<u8>
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+note: If the actual output is the correct output you can bless it by rerunning
+      your test with the environment variable TRYBUILD=overwrite
+
+test tests/ui/fail/07_an_index_is_stepped_by_arithmetic.rs [should fail to compile] ... mismatch
+
+EXPECTED:
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+error[E0369]: cannot add `engine::Index<'_>` to `engine::Index<'_>`
+  --> tests/ui/fail/07_an_index_is_stepped_by_arithmetic.rs:16:33
+   |
+16 |                 let got = probe + probe;
+   |                           ----- ^ ----- engine::Index<'_>
+   |                           |
+   |                           engine::Index<'_>
+   |
+note: `engine::Index<'_>` does not implement `Add`
+  --> $WORKSPACE/engine/src/index.rs
+   |
+   | pub struct Index<'b> {
+   | ^^^^^^^^^^^^^^^^^^^^ `engine::Index<'_>` is defined in another crate
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
+ACTUAL OUTPUT:
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+error[E0308]: mismatched types
+  --> tests/ui/fail/07_an_index_is_stepped_by_arithmetic.rs:17:36
+   |
+17 |                 block.write(index, got);
+   |                       -----        ^^^ expected `i64`, found `usize`
+   |                       |
+   |                       arguments to this method are incorrect
+   |
+note: method defined here
+  --> $WORKSPACE/engine/src/morsel.rs
+   |
+   |     pub fn write(&mut self, index: Index<'b>, value: W) {
+   |            ^^^^^
+help: you can convert a `usize` to an `i64` and panic if the converted value doesn't fit
+   |
+17 |                 block.write(index, got.try_into().unwrap());
+   |                                       ++++++++++++++++++++
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+note: If the actual output is the correct output you can bless it by rerunning
+      your test with the environment variable TRYBUILD=overwrite
+
+test tests/ui/fail/08_an_index_from_one_each_is_used_in_another.rs [should fail to compile] ... error
+Expected test case to fail to compile, but it succeeded.
+
+test tests/ui/fail/08b_an_index_from_one_each_is_read_through_another.rs [should fail to compile] ... error
+Expected test case to fail to compile, but it succeeded.
+
+test tests/ui/fail/09_an_index_is_kept_past_its_each.rs [should fail to compile] ... error
+Expected test case to fail to compile, but it succeeded.
+
+test tests/ui/fail/10_an_index_is_stashed_in_the_kernel_across_morsels.rs [should fail to compile] ... error
+Expected test case to fail to compile, but it succeeded.
+
+test tests/ui/fail/11_an_index_is_forged_by_a_struct_literal.rs [should fail to compile] ... mismatch
+
+EXPECTED:
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+error[E0451]: fields `at` and `brand` of struct `engine::Index` are private
+  --> tests/ui/fail/11_an_index_is_forged_by_a_struct_literal.rs:17:48
+   |
+17 |                 let probe: Index<'_> = Index { at: 0, brand: PhantomData };
+   |                                                ^^     ^^^^^ private field
+   |                                                |
+   |                                                private field
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
+ACTUAL OUTPUT:
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+error[E0071]: expected struct, variant or union type, found `usize`
+  --> tests/ui/fail/11_an_index_is_forged_by_a_struct_literal.rs:17:40
+   |
+17 |                 let probe: Index<'_> = Index { at: 0, brand: PhantomData };
+   |                                        ^^^^^ not a struct
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+note: If the actual output is the correct output you can bless it by rerunning
+      your test with the environment variable TRYBUILD=overwrite
+
+test tests/ui/fail/12_an_index_is_forged_through_a_foreign_trait_impl.rs [should fail to compile] ... mismatch
+
+EXPECTED:
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+error[E0451]: fields `at` and `brand` of struct `engine::Index` are private
+  --> tests/ui/fail/12_an_index_is_forged_through_a_foreign_trait_impl.rs:17:17
+   |
+17 |         Index { at: 0, brand: PhantomData }
+   |                 ^^     ^^^^^ private field
+   |                 |
+   |                 private field
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
+ACTUAL OUTPUT:
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+error[E0071]: expected struct, variant or union type, found `usize`
+  --> tests/ui/fail/12_an_index_is_forged_through_a_foreign_trait_impl.rs:17:9
+   |
+17 |         Index { at: 0, brand: PhantomData }
+   |         ^^^^^ not a struct
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+note: If the actual output is the correct output you can bless it by rerunning
+      your test with the environment variable TRYBUILD=overwrite
+
+test tests/ui/fail/13_an_index_is_forged_by_unsafe_code.rs [should fail to compile] ... ok
+test tests/ui/pass/01_two_indices_are_compared_for_equality.rs [should pass] ... ok
+test tests/ui/pass/02_two_indices_are_ordered.rs [should pass] ... ok
+test tests/ui/pass/03_an_index_is_cast_to_an_integer.rs [should pass] ... ok
+test tests/ui/pass/04_an_index_is_formatted.rs [should pass] ... ok
+test tests/ui/pass/05_an_index_is_hashed.rs [should pass] ... ok
+test tests/ui/pass/06_an_index_is_converted_by_from.rs [should pass] ... ok
+test tests/ui/pass/07_an_index_is_stepped_by_arithmetic.rs [should pass] ... ok
+test tests/ui/pass/08_an_index_from_one_each_is_used_in_another.rs [should pass] ... ok
+test tests/ui/pass/08b_an_index_from_one_each_is_read_through_another.rs [should pass] ... ok
+test tests/ui/pass/09_an_index_is_kept_past_its_each.rs [should pass] ... ok
+test tests/ui/pass/10_an_index_is_stashed_in_the_kernel_across_morsels.rs [should pass] ... ok
+test tests/ui/pass/11_an_index_is_forged_by_a_struct_literal.rs [should pass] ... ok
+test tests/ui/pass/12_an_index_is_forged_through_a_foreign_trait_impl.rs [should pass] ... ok
+test tests/ui/pass/13_an_index_is_forged_by_unsafe_code.rs [should pass] ... ok
+
+
+test every_refusal_holds_and_every_twin_runs ... FAILED
+
+failures:
+
+---- every_refusal_holds_and_every_twin_runs stdout ----
+
+thread 'every_refusal_holds_and_every_twin_runs' (4808) panicked at /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/trybuild-1.0.122/src/run.rs:103:13:
+13 of 28 tests failed
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: <trybuild::Runner>::run
+   3: <trybuild::TestCases as core::ops::drop::Drop>::drop
+   4: core::ptr::drop_glue::<trybuild::TestCases>
+   5: fixtures::every_refusal_holds_and_every_twin_runs
+   6: fixtures::every_refusal_holds_and_every_twin_runs::{closure#0}
+   7: <fixtures::every_refusal_holds_and_every_twin_runs::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+
+failures:
+    every_refusal_holds_and_every_twin_runs
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.81s
+
+error: test failed, to rerun pass `-p author --test fixtures`

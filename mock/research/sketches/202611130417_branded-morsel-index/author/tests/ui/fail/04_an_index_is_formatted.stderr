@@ -1,0 +1,7 @@
+error[E0277]: `engine::Index<'_>` doesn't implement `Debug`
+  --> tests/ui/fail/04_an_index_is_formatted.rs:16:41
+   |
+16 |                 let got = std::format!("{probe:?}").len() as i64;
+   |                                         ^^^^^^^^^ `engine::Index<'_>` cannot be formatted using `{:?}` because it doesn't implement `Debug`
+   |
+   = help: the trait `Debug` is not implemented for `engine::Index<'_>`

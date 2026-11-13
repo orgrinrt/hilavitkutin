@@ -1,0 +1,7 @@
+error[E0451]: fields `at` and `brand` of struct `engine::Index` are private
+  --> tests/ui/fail/12_an_index_is_forged_through_a_foreign_trait_impl.rs:17:17
+   |
+17 |         Index { at: 0, brand: PhantomData }
+   |                 ^^     ^^^^^ private field
+   |                 |
+   |                 private field
