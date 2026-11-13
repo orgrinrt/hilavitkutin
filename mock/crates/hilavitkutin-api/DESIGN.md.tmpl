@@ -719,7 +719,7 @@ guideline, not engine constraint).
 ## WU Context providers (domains 09, 19)
 
 The WU execution parameter is a ctx-framework provider tuple
-(`Self::Ctx` on the `WorkUnit` trait) bound by seven accessor
+(`Self::Ctx` on the `WorkUnit` trait) bound by eight accessor
 traits declared via `hilavitkutin-ctx`'s `provider_generic!` /
 `provider_generic2!` macros. Each accessor carries the relevant
 access-set type parameter so compile-time `Contains<S>` checks
@@ -737,7 +737,9 @@ trait ColumnWriterApi<W: AccessSet> {
  where W: Holds<C>, Self: ResolveColumnWrite<C, I>;
 }
 trait AccumWriterApi<W: AccessSet> {
- fn append<'b, T: ColumnValue, I>(&self, i: Index<'b>, v: T)
+ fn append<T: ColumnValue, I>(&self, v: T)
+ where W: Holds<Accum<T>>, Self: ResolveAccumAppend<T, I>;
+ fn len<T: ColumnValue, I>(&self) -> USize
  where W: Holds<Accum<T>>, Self: ResolveAccumAppend<T, I>;
 }
 trait ResourceProviderApi<R: AccessSet> {
@@ -747,12 +749,6 @@ trait ResourceProviderApi<R: AccessSet> {
 trait VirtualFirerApi<W: AccessSet> {
  fn fire<V: 'static>(&self)
  where W: Holds<Virtual<V>>;
-}
-trait AccumWriterApi<W: AccessSet> {
- unsafe fn append<T: ColumnValue, I>(&self, v: T)
- where W: Contains<Accum<T>>, Self: ResolveAccumAppend<T, I>;
- fn len<T: ColumnValue, I>(&self) -> USize
- where W: Contains<Accum<T>>, Self: ResolveAccumAppend<T, I>;
 }
 trait EachApi<R: AccessSet, W: AccessSet> {
  fn run<F: for<'b> FnMut(Index<'b>)>(&self, f: F); // per-element, fusible
@@ -783,8 +779,16 @@ therefore always names a record of the unit's domain inside the window
 the plan gave this unit, and the plan has already proven that no other
 unit writes the unit's write set in that window. `Block<'b>` is the
 whole morsel under one brand: it iterates the morsel's indices and
-gives their count. An append takes an index as well, which ties appends
-to the per-record loop.
+gives their count.
+
+An append takes no index, since it names no record: it lands at the
+accumulator's own live length, which the plumbing keeps. A unit appends
+from inside its per-record loop or once a frame from outside it, and
+both are the same call. What makes the call safe is that the unit
+declared the accumulator in its write list, that the plan gives each
+accumulator one appender in a window, and that an append past the
+reserved capacity is refused as a value (below), so no caller
+obligation is left for the body to hold.
 
 The engine mints an index through `Index::mint`, an `unsafe fn` whose
 caller asserts that the position is inside the bound window. That and
@@ -815,12 +819,20 @@ trait ResolveColumnWrite<C: InPlace, I> {
 }
 trait ResolveAccumAppend<T: ColumnValue, I> {
  unsafe fn resolve_append(&self, v: T); // append at the live offset, or refuse
+ fn resolve_len(&self) -> USize; // the live length of this binding
 }
 ```
 
 The bridges are implemented by a runner's context and called by this
-crate's accessors with the position an `Index` carries. They stay
-`unsafe` and take a bare position, since they are the plumbing's half.
+crate's accessors, the read and the write with the position an `Index`
+carries. They stay `unsafe`, since they are the plumbing's half: a read
+or a write takes a bare position, and an append asks that its caller
+holds the accumulator's one appender slot. This crate's `append` calls
+it for a unit that declared the accumulator, and the runner that hands
+a unit its context owes the rest: the context reaches one thread at a
+time, and a runner that splits a unit over threads gives each thread a
+binding of its own.
+
 An accumulator append past the reserved capacity is refused, never asserted
 and never written. The engine counts every append the frame asks of the
 accumulator beside its live length; once one append through a binding is
@@ -875,7 +887,8 @@ contexts via the const-arith surface on `arvo::USize`.
 LLVM noalias metadata that would reorder writes across fused WUs.
 The engine proves the ownership discipline of a write at plan time,
 and the `Index` a write takes carries that proof to the call, which is
-why `read`, `write` and `append` are safe to call.
+why `read` and `write` are safe to call. An append carries no index and
+is safe for the reasons given with it above.
 
 ## Foundational primitives for Kit (domain 23, )
 
@@ -1522,6 +1535,12 @@ refusal as a value and a consumer that wants the assert builds with
 append path is the same under both: it refuses and counts, and no write passes
 the capacity. The assert fires at the close, on the thread that called the run,
 after every worker has re-parked, so it never stalls a `run_parallel` join.
+
+A `Buffered` store is under the same choice and has nothing to refuse
+today: it has no append, and its committed and staged buffers are both
+sized from its domain's record count, so a write to it lands on a record
+that exists. A store kind that can be asked for more than it reserved
+concludes through `RunCfg::Overflow` and adds no second configuration.
 
 ### Lifetime contract
 
