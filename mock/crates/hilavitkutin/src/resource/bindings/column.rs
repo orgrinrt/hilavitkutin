@@ -374,6 +374,13 @@ impl<T, Tail, K: ColKind> ColumnBinding<T, Tail, K> {
         self.mark.ptr()
     }
 
+    /// The store's position in the scheduler's store list. Hidden test
+    /// accessor; not supported surface.
+    #[doc(hidden)]
+    pub fn __pos(&self) -> USize {
+        self.pos
+    }
+
     /// The tail node. Hidden accessor used by the pass-through selectors
     /// and by tests. Not part of the supported surface.
     #[doc(hidden)]

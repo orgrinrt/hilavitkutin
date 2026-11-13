@@ -7,14 +7,17 @@
 //! passes brings the live side in: `Snapshot` copies it over the frozen side,
 //! `Exchange` lets the two reservations trade places. Neither moves a base.
 //!
-//! The column holds 600 records, three morsels under the 256-record default,
-//! so a read with a reach crosses a morsel edge twice.
+//! The column holds 20000 records, more than three windows of a fiber that
+//! writes one four-byte column, so a read with a reach crosses a window edge.
+//! `the_record_range_is_cut_into_several_windows` holds that premise.
 //!
 //! Lives under `tests/` so the bare numeric record values do not trip the
 //! src-tree primitive lints.
 
 mod common;
 mod stable_provider;
+
+use core::sync::atomic::{AtomicUsize, Ordering};
 
 use arvo::{Cap, USize};
 use common::FixedWorkers;
@@ -32,7 +35,7 @@ use notko::{Maybe, Outcome};
 use stable_provider::StableProvider;
 
 const ONE: Cap = arvo_tensor::cap(1);
-const RECORDS: usize = 600;
+const RECORDS: usize = 20_000;
 const SENTINEL: u32 = 0xDEAD;
 
 #[derive(Copy, Clone, PartialEq, Debug)]
@@ -42,7 +45,53 @@ struct Height(u32);
 struct Seen(u32);
 
 fn store() -> ArenaColumnStorage<StableProvider> {
-    ArenaColumnStorage::new(StableProvider::new(1 << 16))
+    ArenaColumnStorage::new(StableProvider::new(1 << 19))
+}
+
+// Count: writes one four-byte column and counts its dispatches, one a window.
+#[derive(Copy, Clone)]
+struct Count(&'static AtomicUsize);
+
+impl BuilderInput for Count {
+    type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
+}
+
+impl WorkUnit<Always> for Count {
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        Empty,
+        Cons<Column<Seen>, Empty>,
+        SnapNil,
+        ColPtrNil,
+        ColPtrCons<Seen, ColPtrNil>,
+        AccPtrNil,
+    >;
+    type Hint = (Immediate, Atomic, Normal);
+    type Read = Empty;
+    type Write = Cons<Column<Seen>, Empty>;
+
+    fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
+        self.0.fetch_add(1, Ordering::Relaxed);
+        ctx.each().map(|_read| rec![Seen(1)]);
+    }
+}
+
+// The premise of every test below that leans on a window edge.
+#[test]
+fn the_record_range_is_cut_into_several_windows() {
+    let windows: &'static AtomicUsize = Box::leak(Box::new(AtomicUsize::new(0)));
+    let mut scheduler = Scheduler::builder()
+        .with(Column::<Seen>::new())
+        .with(Count(windows))
+        .build(store(), USize(RECORDS))
+        .unwrap_or_else(|_| panic!("build should succeed"));
+    assert!(matches!(scheduler.run(), Outcome::Ok(())));
+    assert!(
+        windows.load(Ordering::Relaxed) >= 3,
+        "{} windows over {RECORDS} records",
+        windows.load(Ordering::Relaxed),
+    );
 }
 
 fn part(side: Maybe<Height>) -> u32 {
@@ -90,6 +139,19 @@ unsafe fn all<T: Copy>(base: *const T, raw: impl Fn(T) -> u32) -> Vec<u32> {
     (0 .. RECORDS)
         .map(|i| raw(unsafe { base.add(i).read() }))
         .collect()
+}
+
+/// Hold `got` against `want` and name the first record that differs, where
+/// `assert_eq` would print both columns whole.
+#[track_caller]
+fn same(got: &[u32], want: &[u32], what: &str) {
+    assert_eq!(got.len(), want.len(), "{what}: the record counts");
+    if let Some(i) = (0 .. got.len()).find(|i| got[*i] != want[*i]) {
+        panic!(
+            "{what}: record {i} holds {} where {} is due",
+            got[i], want[i]
+        );
+    }
 }
 
 macro_rules! unit {
@@ -206,7 +268,7 @@ macro_rules! suite {
                     let live = scheduler.__bindings().__live().as_ptr();
                     // SAFETY: between passes.
                     let got = unsafe { all(frozen, |h: Height| h.0) };
-                    assert_eq!(got, want, "pass {pass}: the frozen side holds the pass's result");
+                    same(&got, &want, "the frozen side holds the pass's result");
                     assert!(
                         (frozen == first && live == second) || (frozen == second && live == first),
                         "pass {pass}: the two bases are the two the build reserved",
@@ -235,7 +297,7 @@ macro_rules! suite {
                     let live = scheduler.as_ref().__bindings().__live().as_ptr();
                     // SAFETY: between passes, every worker parked.
                     let got = unsafe { all(frozen, |h: Height| h.0) };
-                    assert_eq!(got, want, "pass {pass}: one result whatever the worker count");
+                    same(&got, &want, "one result whatever the worker count");
                     assert!(
                         (frozen == first && live == second) || (frozen == second && live == first),
                         "pass {pass}: the two bases are the two the build reserved",
@@ -457,6 +519,79 @@ mod plain {
         assert!(
             got.iter().all(|v| *v == 11),
             "the reader sees the same pass's write"
+        );
+    }
+
+    // A read with a reach of a plain column sees its neighbours as the
+    // writer of the same pass left them, past the edge of its own window as
+    // well. The plan opens a phase at such a reader, so the writer has covered
+    // the whole range before the reader starts.
+    type Around = Cons<Reach<Col, ONE>, Empty>;
+    unit!(Spread, read Around as Cols, write Out as OutCols, |read| {
+        let w = read.get(Reach::<Col, ONE>::new());
+        rec![Seen(
+            w.here()
+                .0
+                .wrapping_add(part(w.before::<ONE>()))
+                .wrapping_add(part(w.after::<ONE>()))
+        )]
+    });
+
+    fn raised() -> Vec<u32> {
+        start().iter().map(|v| v + 1).collect()
+    }
+
+    #[test]
+    fn a_reach_reader_of_a_plain_column_follows_its_whole_writer_on_one_core() {
+        let mut scheduler = Scheduler::builder()
+            .with(Col::new())
+            .with(Column::<Seen>::new())
+            .with(Raise)
+            .with(Spread)
+            .build(store(), USize(RECORDS))
+            .unwrap_or_else(|_| panic!("build should succeed"));
+        let col = scheduler.__bindings().__tail().__ptr().as_ptr();
+        let seen = scheduler.__bindings().__ptr().as_ptr();
+        let from = start();
+        // SAFETY: before the first pass.
+        unsafe { fill(col, |i| Height(from[i])) };
+        assert!(matches!(scheduler.run(), Outcome::Ok(())));
+        // SAFETY: between passes.
+        let got = unsafe { all(seen, |s: Seen| s.0) };
+        same(
+            &got,
+            &step(&raised()),
+            "every neighbour read was the writer's value",
+        );
+    }
+
+    #[test]
+    fn a_reach_reader_of_a_plain_column_follows_its_whole_writer_across_workers() {
+        let scheduler = Scheduler::builder()
+            .with(Col::new())
+            .with(Column::<Seen>::new())
+            .with(Raise)
+            .with(Spread)
+            .build(store(), USize(RECORDS))
+            .unwrap_or_else(|_| panic!("build should succeed"));
+        let pool = FixedWorkers::<4>;
+        let mut scheduler = core::pin::pin!(scheduler);
+        let view = scheduler.as_ref();
+        let col = view.__bindings().__tail().__ptr().as_ptr();
+        let seen = view.__bindings().__ptr().as_ptr();
+        let from = start();
+        // SAFETY: before the first pass.
+        unsafe { fill(col, |i| Height(from[i])) };
+        assert!(matches!(
+            scheduler.as_mut().run_parallel(&pool),
+            Outcome::Ok(())
+        ));
+        // SAFETY: between passes, every worker parked.
+        let got = unsafe { all(seen, |s: Seen| s.0) };
+        same(
+            &got,
+            &step(&raised()),
+            "every neighbour read was the writer's value",
         );
     }
 

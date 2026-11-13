@@ -132,6 +132,9 @@ pub struct FileInfo;
 // A column no kit owns, for the raw registration beside a kit.
 #[derive(Copy, Clone)]
 pub struct Notes;
+// A second one, registered after a kit.
+#[derive(Copy, Clone)]
+pub struct Marks;
 
 // ---------------------------------------------------------------------
 // Kits (declarative shape).
@@ -218,6 +221,30 @@ fn mixed_kit_and_raw_build() {
         .with(Column::<Notes>::new())
         .build(store(), USize(0));
     assert!(built.is_ok(), "the builder must accept this registration");
+}
+
+// A kit's stores have a place in the store list and no value of their own,
+// so they have no node along the bindings. A column registered ahead of the
+// kit is the second node and the fourth store, and its position is the
+// store's: the bit the access masks know it by.
+#[test]
+fn a_column_is_placed_by_the_store_list_and_not_by_its_node() {
+    let built = Scheduler::builder()
+        .with(Column::<Notes>::new())
+        .with(WorkspaceKit)
+        .with(Column::<Marks>::new())
+        .build(store(), USize(0));
+    let notko::Outcome::Ok(scheduler) = built else {
+        panic!("the builder must accept this registration");
+    };
+    let marks = scheduler.__bindings();
+    let notes = marks.__tail();
+    assert_eq!(
+        marks.__pos(),
+        USize(0),
+        "the last store registered leads the list"
+    );
+    assert_eq!(notes.__pos(), USize(3), "the kit's two stores sit between");
 }
 
 // ---------------------------------------------------------------------

@@ -223,7 +223,7 @@ pub fn project_access_set<Set, Stores, Indices, CS: Capacity>() -> AccessMask<CS
 where
     Set: MaskProject<Stores, Indices, CS>,
 {
-    StoreCeiling::<CS>::ASSERT_FITS;
+    let () = StoreCeiling::<CS>::ASSERT_FITS;
     <Set as MaskProject<Stores, Indices, CS>>::project_mask(AccessMask::empty())
 }
 
@@ -301,7 +301,7 @@ pub fn accum_stores_mask<Stores, CS: Capacity>() -> AccessMask<CS>
 where
     Stores: AccumStoresMask<CS>,
 {
-    StoreCeiling::<CS>::ASSERT_FITS;
+    let () = StoreCeiling::<CS>::ASSERT_FITS;
     <Stores as AccumStoresMask<CS>>::accum_mask(
         AccessMask::empty(),
         <USize as Identity<Additive>>::IDENTITY,
@@ -388,7 +388,7 @@ where
     Stores: StoreSizes<CS>,
     <CS as Capacity>::Array<USize>: Copy,
 {
-    StoreCeiling::<CS>::ASSERT_FITS;
+    let () = StoreCeiling::<CS>::ASSERT_FITS;
     let mut arr = <CS as Capacity>::filled(<USize as Identity<Additive>>::IDENTITY);
     <Stores as StoreSizes<CS>>::fill_sizes(arr.as_mut(), <USize as Identity<Additive>>::IDENTITY);
     arr
@@ -413,7 +413,7 @@ where
     Stores: AccumStoresMask<CS>,
     Stores: StoreSizes<CS>,
 {
-    StoreCeiling::<CS>::ASSERT_FITS;
+    let () = StoreCeiling::<CS>::ASSERT_FITS;
     let mut inputs = PlanInputs::new();
     inputs.record_count = record_count;
     inputs.accum_stores = accum_stores_mask::<Stores, CS>();

@@ -47,7 +47,7 @@ impl<C: Capacity> DirtyMask<C> {
 
     /// Empty mask: nothing dirty.
     pub const fn empty() -> Self {
-        Self::_ASSERT_FITS_IN_USIZE;
+        let () = Self::_ASSERT_FITS_IN_USIZE;
         Self {
             bits: <USize as Identity<Additive>>::IDENTITY,
             _cap: PhantomData,

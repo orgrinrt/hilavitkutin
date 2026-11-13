@@ -15,11 +15,15 @@
 use arvo::{Bool, USize};
 use arvo_tensor::Dim;
 use hilavitkutin::plan::{AccessMask, MorselBudget, PlanInputs, plan_inputs_from_bundle};
+use hilavitkutin_api::meta::{RANK_CONSUMER, RANK_PASS_START, RANK_SCHEDULE_END};
+use hilavitkutin_api::run_cfg::{PassStart, ScheduleEnd};
+use hilavitkutin_api::work_unit::{HasSchedule, OnMeta};
 use hilavitkutin_api::{
     AccessSet,
     Always,
     Atomic,
     BatchApi,
+    Buffered,
     BuilderInput,
     Column,
     ColumnReaderApi,
@@ -289,6 +293,109 @@ fn projects_two_unit_bundle_to_plan_inputs() {
         Bool::TRUE,
         "W0 write overlaps W1 read on shared store CX (dep edge)"
     );
+}
+
+// ---------------------------------------------------------------------
+// The frozen reads and the ranks. One unit per band: a setup that writes
+// CX, a consumer that reads CX and reads and writes the buffered CZ, and a
+// close that reads CX. Buffered<CZ>=0, Column<CX>=1, Column<CY>=2.
+// ---------------------------------------------------------------------
+
+#[derive(Copy, Clone)]
+struct CZ;
+
+type Banded = Cons<Buffered<CZ>, Cons<Column<CX>, Cons<Column<CY>, Empty>>>;
+
+struct Lead;
+impl BuilderInput for Lead {
+    type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
+}
+impl HasSchedule for Lead {
+    type Sched = OnMeta<PassStart>;
+}
+impl WorkUnit<OnMeta<PassStart>> for Lead {
+    type Ctx<'frame> = TestCtx;
+    type Hint = (Immediate, Atomic, Normal);
+    type Read = Empty;
+    type Write = write![Column<CX>];
+
+    fn execute<'frame>(&self, _ctx: &TestCtx) {}
+}
+
+struct Mid;
+impl BuilderInput for Mid {
+    type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
+}
+impl WorkUnit<Always> for Mid {
+    type Ctx<'frame> = TestCtx;
+    type Hint = (Immediate, Atomic, Normal);
+    type Read = Cons<Buffered<CZ>, Cons<Column<CX>, Empty>>;
+    type Write = Cons<Buffered<CZ>, Empty>;
+
+    fn execute<'frame>(&self, _ctx: &TestCtx) {}
+}
+
+struct Close;
+impl BuilderInput for Close {
+    type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
+}
+impl HasSchedule for Close {
+    type Sched = OnMeta<ScheduleEnd>;
+}
+impl WorkUnit<OnMeta<ScheduleEnd>> for Close {
+    type Ctx<'frame> = TestCtx;
+    type Hint = (Immediate, Atomic, Normal);
+    type Read = read![Column<CX>];
+    type Write = write![Column<CY>];
+
+    fn execute<'frame>(&self, _ctx: &TestCtx) {}
+}
+
+type Bands = Cons<Lead, Cons<Mid, Cons<Close, Empty>>>;
+
+fn banded() -> PlanInputs<MaxUnits, MaxStores> {
+    plan_inputs_from_bundle::<Bands, Banded, _, MaxUnits, MaxStores>(RECORDS, MorselBudget::ZERO)
+}
+
+fn held(mask: &AccessMask<MaxStores>) -> Vec<usize> {
+    (0 .. 3).filter(|p| mask.contains(USize(*p)).0).collect()
+}
+
+#[test]
+fn a_read_of_a_buffered_column_is_projected_as_frozen() {
+    let inputs = banded();
+    let reads = inputs.reads.as_ref();
+    let frozen = inputs.frozen.as_ref();
+    assert_eq!(held(&reads[1]), [0, 1], "the consumer reads both stores");
+    assert_eq!(
+        held(&frozen[1]),
+        [0],
+        "only the buffered one at the frozen side"
+    );
+    assert!(held(&frozen[0]).is_empty(), "the setup reads nothing");
+    assert!(
+        held(&frozen[2]).is_empty(),
+        "the close reads a plain column"
+    );
+    assert_eq!(
+        held(&inputs.writes.as_ref()[1]),
+        [0],
+        "the write of it is still a write"
+    );
+}
+
+#[test]
+fn each_unit_is_projected_with_the_rank_of_its_band() {
+    let inputs = banded();
+    let ranks = inputs.ranks.as_ref();
+    assert_eq!([ranks[0], ranks[1], ranks[2]], [
+        RANK_PASS_START,
+        RANK_CONSUMER,
+        RANK_SCHEDULE_END
+    ]);
 }
 
 // A3b: test-local resource values are bare scalars/markers with no Seq/Map

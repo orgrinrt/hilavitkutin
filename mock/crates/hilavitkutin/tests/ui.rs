@@ -15,6 +15,8 @@ fn compile_fail_fixtures() {
     let t = trybuild::TestCases::new();
     t.pass("tests/ui/unregistered_store_pass.rs");
     t.compile_fail("tests/ui/unregistered_store_fail.rs");
+    t.pass("tests/ui/unregistered_wrapped_store_pass.rs");
+    t.compile_fail("tests/ui/unregistered_wrapped_store_fail.rs");
     t.pass("tests/ui/undeclared_read_pass.rs");
     t.compile_fail("tests/ui/undeclared_read_fail.rs");
     t.pass("tests/ui/unmapped_unit_fused_pass.rs");
