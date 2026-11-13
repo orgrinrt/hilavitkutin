@@ -259,3 +259,21 @@ standing = "provisional"
 subject = "plan"
 keywords = ["units cap", "compile-time guard", "run_parallel", "GATE2_MAX_UNITS", "#690", "Capacity", "const assert"]
 cites = ["a_documented_fixed_cap_is_acceptable_only_as_the_proven_infeasible_fallback_with_a_tracked_lift_condition", "caps_are_defaults_and_never_policy_so_a_sketch_arc_looks_for_cap_lifting_shapes_now"]
+
+[[tenet]]
+id = "when_the_cap_lifting_round_lands_the_worker_count_ceiling_becomes_the_scheduler_s_core_capacity_and_the_thread_count_gap_passes_to_it"
+what = "When the cap-lifting round lands, the ceiling the worker-count clamp takes becomes the scheduler's core capacity, and the runnable worker count takes it as a parameter or an associated constant. That is the cap-lifting round's work, since the capacity does not exist yet, and the clamp meanwhile uses the only ceiling there is. The cap-lifting round also inherits the thread-count marked comment, since both change what the same item holds."
+mechanism = "`202607200100_topic.b1-cap-lifting-completion.md` moves the scheduler's fixed arrays onto `PlanDims` capacities and deletes `MAX_CORES`; `runnable_worker_count`; the thread-count `FIXME:`; `gate2_ncores`."
+source = "mock/design_rounds/202609190201/202609190202_changelist.src.lock.md:84-84, mock/design_rounds/202609191001/202609191002_changelist.src.lock.md:53-53"
+provenance = ["mock::design_rounds::202609190201::202609190202_changelist.src.lock::#the-three-topics-left-open-in-design-rounds"]
+quote = '''
+`202607200100_topic.b1-cap-lifting-completion.md` moves the scheduler's fixed arrays onto `PlanDims` capacities and deletes `MAX_CORES`. It touches what this round touched: the clamp above takes `MAX_CORES` as its ceiling, so when B1 lands the ceiling becomes the scheduler's core capacity and `runnable_worker_count` takes it as a parameter or an associated const. That is B1's work, since the capacity does not exist yet; this round clamps against the only ceiling there is.
+---
+The same three the previous round named (B1 cap-lifting, the shared hlist, the launcher migration) stay flat, for the reasons that round's src changelist gives. B1 now also inherits this round's thread-count `FIXME:`, since both change what `gate2_ncores` holds.
+'''
+origin = "proposed"
+written_by = "source changelists of rounds 202609190201 and 202609191001, 2026-09-19, agent-written"
+standing = "provisional"
+subject = "plan"
+keywords = ["B1 cap-lifting", "MAX_CORES", "PlanDims", "core capacity", "runnable_worker_count", "worker-count clamp", "gate2_ncores"]
+cites = ["the_scheduler_scratch_is_sized_by_the_plan_dimension_capacities_and_the_three_fixed_constants_are_deleted_outright", "the_engine_clamps_the_worker_count_it_runs_on_to_the_ceiling_of_its_per_core_state_and_workers_past_the_ceiling_are_never_handed_a_closure"]

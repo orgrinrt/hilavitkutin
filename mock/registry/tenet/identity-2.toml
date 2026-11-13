@@ -315,3 +315,140 @@ subject = "identity"
 keywords = ["hilavitkutin-api-macros", "proc-macro crate", "ResourceFootprint", "derive", "extensions-macros", "sole proc-macro crate", "forbidden imports"]
 rules_out = ["sole proc-macro crate"]
 cites = ["the_api_macros_crate_is_the_proc_macro_companion_of_the_api_crate_and_derives_a_resource_s_write_collection_footprint", "the_extensions_macros_crate_emits_the_descriptor_the_exported_symbol_and_the_capability_trampolines"]
+
+[[tenet]]
+id = "the_identity_handle_is_four_bytes_with_a_four_bit_kind_over_a_twenty_eight_bit_id_and_handles_of_different_kind_are_never_equal"
+what = "The identity handle of the generic interned-identity core is a four-byte handle with a four-bit kind over a twenty-eight-bit id. This reinterprets the four high bits of the current string handle layout, one origin bit plus three reserved, as one kind field, so every bit pattern a string handle holds today is a valid handle. Equality is integer equality over the whole thirty-two bits, so two handles with different kinds are never equal whatever their ids, and that disjointness by kind is the core property the whole design rests on."
+mechanism = "`hilavitkutin-sym` defines `Sym`, a `#[repr(transparent)]` 4-byte handle over a `SymLayout` bitfield with `kind: 4 at 28` and `id: 28 at 0`; a zero-byte-change reinterpretation of the current `Str` layout."
+source = "mock/design_rounds/202607241915/202607241915_topic.sym-generic-interned-identity.md:22-22"
+provenance = ["mock::design_rounds::202607241915::202607241915_topic.sym-generic-interned-identity::#changes-proposed"]
+quote = '''
+The identity handle. `hilavitkutin-sym` defines `Sym`, a 4-byte `#[repr(transparent)]` handle over a `SymLayout` bitfield with `kind: 4 at 28` and `id: 28 at 0`. This reinterprets the current `Str` layout's four high bits (one origin plus three reserved) as one 4-bit `kind` field over the same 28-bit id. It is a zero-byte-change reinterpretation: every bit pattern a `Str` can hold today is a valid `Sym`, and the fields simply gain a unified meaning. `Sym` carries integer-equality identity on its whole 32-bit layout, so two `Sym`s with different `kind` values are never equal whatever their ids. That disjointness by kind is the core property the whole design rests on.
+'''
+origin = "proposed"
+written_by = "topic of round 202607241915, 2026-07-24, phase TOPIC, agent-written; the text does not say this layout is op's ruling"
+standing = "provisional"
+subject = "identity"
+keywords = ["Sym", "SymLayout", "kind", "id", "four-byte handle", "integer equality", "disjointness by kind", "interned identity"]
+
+[[tenet]]
+id = "the_identity_handle_carries_a_three_bit_domain_tag_and_a_one_bit_domain_private_flag_so_the_string_domain_is_one_kind"
+what = "The identity handle has a three-bit domain tag, a one-bit flag that stays private to the domain and a twenty-eight-bit id, with integer equality across the whole layout, so two handles of differing kind never compare equal. The string domain is then a single kind rather than two, which lets the string interner be a genuine single-kind implementer of the generic interner. Byte-compatibility with the string handle layout is unchanged."
+mechanism = "`Sym`: `#[repr(transparent)]` 4-byte handle over `SymLayout` (an `arvo::bitfield!` over `Bits<32, Hot>`) with `id: 28 at 0`, `kind: 3 at 28`, `flag: 1 at 31`. Accessors `kind()`, `id()`, `flag()`, `to_bits()`; constructors `Sym::new(kind, id)` and `Sym::with_flag(self, bit)`. `StringInterner` is a single-`KIND` `Interner<StrDomain>` implementer. Const is still nibble `0b0000`, runtime `0b1000`, binder `0b0001`."
+source = "mock/design_rounds/202607241915/202607241915_changelist.doc.lock.md:20-20"
+provenance = ["mock::design_rounds::202607241915::202607241915_changelist.doc.lock::#mock-crates-hilavitkutin-sym-design-md-tmpl-create"]
+quote = '''
+- `Sym`: the `#[repr(transparent)]` 4-byte handle over `SymLayout` (an `arvo::bitfield!` over `Bits<32, Hot>`) with `id: 28 at 0`, `kind: 3 at 28`, and `flag: 1 at 31`. Integer-equality identity across the whole layout; two `Sym`s of differing `kind` never compare equal. Accessors `kind()`, `id()`, `flag()`, `to_bits()`; constructors `Sym::new(kind, id)` and `Sym::with_flag(self, bit)`. (Refinement of the topic's "4-bit kind": the domain tag is the 3 reserved bits and the origin stays a 1-bit domain-private flag, so the string domain is a single kind rather than two, which lets `StringInterner` be a genuine single-`KIND` `Interner<StrDomain>` implementer. Byte-compatibility is unchanged: const is still nibble `0b0000`, runtime `0b1000`, binder `0b0001`.)
+'''
+origin = "proposed"
+written_by = "doc changelist of round 202607241915, phase DOC, agent-written"
+standing = "provisional"
+subject = "identity"
+keywords = ["Sym", "SymLayout", "three-bit kind", "flag bit", "string domain", "single kind", "StringInterner", "byte-compatibility"]
+rules_out = ["the topic's \"4-bit kind\""]
+cites = ["the_identity_handle_is_four_bytes_with_a_four_bit_kind_over_a_twenty_eight_bit_id_and_handles_of_different_kind_are_never_equal"]
+
+[[tenet]]
+id = "the_identity_core_owns_the_kind_assignment_so_two_domains_cannot_claim_one_kind_and_the_string_kinds_keep_the_values_the_current_layout_produces"
+what = "The identity core owns the convention that assigns kinds and documents it, so two domains cannot claim one kind. The four-bit field gives sixteen kinds. Two are reserved for the string domains at exactly the values the current string layout already produces, const strings at zero and runtime strings at the high-bit pattern, which is mandatory for byte-compatibility. The rest are assignable to other domains, and the first consumer generative domain is recorded in the table. The string-domain kind constants live in the string crate, since they are string-domain facts, and the identity core documents the reservation."
+mechanism = "Const strings `0b0000`, runtime strings `0b1000` (today's origin-plus-reserved patterns), vehje's minted binder `0b0001`; the constants live in `hilavitkutin-str`, `hilavitkutin-sym` documents the reservation."
+source = "mock/design_rounds/202607241915/202607241915_topic.sym-generic-interned-identity.md:28-28"
+provenance = ["mock::design_rounds::202607241915::202607241915_topic.sym-generic-interned-identity::#changes-proposed"]
+quote = '''
+The kind-assignment discipline. `hilavitkutin-sym` owns the kind-assignment convention and documents it, so two domains cannot claim one kind. The four-bit field gives sixteen kinds. Two are reserved for the string domains at exactly the values the current `Str` layout already produces, which is mandatory for byte-compatibility: const strings at `0b0000` and runtime strings at `0b1000` (today's origin-plus-reserved patterns). The remaining values are assignable to other domains; the first consumer generative domain (vehje's minted binder, landing in its own round) is recorded in the table as `0b0001`. The string-domain kind constants themselves live in `hilavitkutin-str`, since they are string-domain facts; `hilavitkutin-sym` documents the reservation.
+'''
+origin = "proposed"
+written_by = "topic of round 202607241915, 2026-07-24, phase TOPIC, agent-written"
+standing = "provisional"
+subject = "identity"
+keywords = ["kind assignment", "sixteen kinds", "string domain", "STR_CONST", "byte-compatibility", "minted binder", "kind reservation"]
+
+[[tenet]]
+id = "the_kind_assignment_table_is_a_three_bit_tag_with_the_string_domain_told_apart_by_the_flag_bit_and_not_by_tag"
+what = "The kind-assignment table is a documented convention owned by the identity core, so two domains cannot claim one tag, and the tag is three bits. The string domain takes the first value, with const and runtime strings told apart by the flag bit and not by tag, and its constant is defined in the string crate, which is mandatory for byte-compatibility. The second value is recorded as a downstream consumer's minted-binder domain, defined in that consumer's own crate, and the remaining values are free."
+mechanism = "`SymKind`: newtype over `Bits<3, Hot>`; `SymKind::new(raw)`. `0b000` the string domain, `0b001` vehje's minted-binder domain, `0b010` through `0b111` free."
+source = "mock/design_rounds/202607241915/202607241915_changelist.doc.lock.md:21-21"
+provenance = ["mock::design_rounds::202607241915::202607241915_changelist.doc.lock::#mock-crates-hilavitkutin-sym-design-md-tmpl-create"]
+quote = '''
+- `SymKind`: newtype over `Bits<3, Hot>` naming the domain tag. `SymKind::new(raw)`. The kind-assignment table (documented convention, owned here so two domains cannot claim one tag): `0b000` the string domain (const/runtime distinguished by the flag bit, not by tag; the constant defined in `hilavitkutin-str`, mandatory for byte-compatibility), `0b001` recorded as vehje's minted-binder domain (defined in its own crate), `0b010` through `0b111` free.
+'''
+origin = "proposed"
+written_by = "doc changelist of round 202607241915, phase DOC, agent-written"
+standing = "provisional"
+subject = "identity"
+keywords = ["SymKind", "kind assignment table", "three-bit tag", "flag bit", "string domain", "minted binder", "free tags"]
+rules_out = ["the const and runtime strings distinguished by tag"]
+cites = ["the_identity_core_owns_the_kind_assignment_so_two_domains_cannot_claim_one_kind_and_the_string_kinds_keep_the_values_the_current_layout_produces"]
+
+[[tenet]]
+id = "a_domain_declares_the_shape_it_belongs_to_so_a_domain_of_one_shape_cannot_hand_its_tag_to_a_producer_of_another"
+what = "A domain declares the shape it belongs to, so a domain of one shape cannot hand its tag to a producer of another shape, and the compiler says so rather than a store discovering it later. The shape is declared and not defaulted."
+because = "Associated type defaults are forbidden in this stack, and the compiler refused it when reached for."
+mechanism = "`Domain` gains `type Shape`; `associated_type_defaults` is forbidden."
+source = "mock/design_rounds/202608090130/202608090130_topic.the-origin-mechanism-round-one-only-named.md:43-47"
+provenance = ["mock::design_rounds::202608090130::202608090130_topic.the-origin-mechanism-round-one-only-named::#what-the-mechanism-is"]
+quote = '''
+**A domain declares its shape.** `Domain` gains `type Shape`, so a domain of one
+shape cannot hand its tag to a producer of another and the compiler says so
+rather than a store discovering it later. Declared rather than defaulted, because
+`associated_type_defaults` is forbidden in this stack and the compiler refused it
+when reached for.
+'''
+origin = "proposed"
+written_by = "topic of round 202608090130 'the origin mechanism round one described and did not build', phase TOPIC, agent-written"
+standing = "provisional"
+subject = "identity"
+keywords = ["Domain", "Shape", "declared not defaulted", "associated_type_defaults", "producer", "tag"]
+
+[[tenet]]
+id = "a_generator_is_built_for_an_origin_and_a_shape_with_no_origin_bits_has_one_origin_and_a_constructor_with_no_argument"
+what = "A generator is constructed for an origin. Under a shape with no origin bits there is exactly one origin and the constructor takes no argument, so the engine's single-minter use is unchanged. Under a shape with origin bits the only constructor available takes the origin, so a collision requires two peers to claim the same origin explicitly."
+mechanism = "`ORIGIN_BITS = 0` means one origin."
+source = "mock/design_rounds/202608082215/202608082215_changelist.src.lock.md:72-76"
+provenance = ["mock::design_rounds::202608082215::202608082215_changelist.src.lock::#change-generator-new-from-a-zero-seeded-constructor-to-an-origin-taking-one"]
+quote = '''
+A generator is constructed for an origin. Under a shape with `ORIGIN_BITS = 0`
+there is exactly one origin, and the constructor for that case takes no argument,
+so the engine's single-minter use is unchanged. Under a shape with origin bits,
+the only constructor available takes the origin, so a collision requires two
+peers to claim the same origin explicitly.
+'''
+origin = "proposed"
+written_by = "source changelist of round 202608082215 'sym peer collision and a generic kind width', phase IMPL, agent-written"
+standing = "provisional"
+subject = "identity"
+keywords = ["Generator", "origin", "single minter", "peer collision", "ORIGIN_BITS", "constructor", "minter"]
+
+[[tenet]]
+id = "the_shape_trait_is_a_const_trait_so_handle_construction_is_const_and_generic_over_every_shape_and_no_per_name_const_shim_stands"
+what = "Making the shape trait itself a const trait gives a const construction path that is generic over every shape. A refused bound on an associated type was one bound spelling and not a wall. The per-name const shim added on the default shape, on the reading that a generic const path was unavailable, is deleted, and the string crate returns to the plain names."
+mechanism = "`pub const trait SymShape` with `type Layout: [const] SymLayoutOps`; `const_trait_impl` is a vetted allowed feature. `[const]` bounds belong on trait impls and on function `where` clauses, not on inherent impl headers: `pub const fn new(..) -> Self where S: [const] SymShape` is accepted, `impl<S: [const] SymShape>` is not. Deleted: `new_const`, `to_bits_const`, `with_flag_const`, `id_const`, `kind_const`, `flag_const`."
+source = "mock/design_rounds/202608090130/202608090130_topic.the-origin-mechanism-round-one-only-named.md:73-80, mock/design_rounds/202608090130/202608090130_topic.the-origin-mechanism-round-one-only-named.md:82-85, mock/design_rounds/202608090130/202608090130_changelist.src.lock.md:64-68"
+provenance = ["mock::design_rounds::202608090130::202608090130_topic.the-origin-mechanism-round-one-only-named::#the-const-traits-correction-which-is-the-more-useful-lesson"]
+quote = '''
+Round one hit `Layout: [const] SymLayoutOps` being refused on an associated type
+bound, concluded const construction was unavailable generically, and shipped a
+`*_const` shim on the default shape.
+
+That was backwards. `const_trait_impl` is a vetted allowed feature, the crate
+already gates on it, and this stack wants const traits wherever they apply. The
+refusal was one bound spelling, not a wall. **Making `SymShape` itself a const
+trait works**, and the const path is then generic over every shape:
+---
+- `pub const trait SymShape` with `type Layout: [const] SymLayoutOps`.
+- `[const]` bounds belong on trait impls and on function `where` clauses, not on
+  inherent impl headers. `pub const fn new(..) -> Self where S: [const] SymShape`
+  is accepted; `impl<S: [const] SymShape>` is not.
+---
+The previous round added `new_const`, `to_bits_const`, `with_flag_const`,
+`id_const`, `kind_const` and `flag_const` on the default shape, on the reading
+that a generic const path was unavailable. Making `SymShape` const gives the
+generic path, so the shim goes and `hilavitkutin-str` returns to the plain
+names.
+'''
+origin = "proposed"
+written_by = "topic and source changelist of round 202608090130 'the origin mechanism round one described and did not build', agent-written"
+standing = "provisional"
+subject = "identity"
+keywords = ["SymShape", "const trait", "const_trait_impl", "const shim", "new_const", "[const] bound", "generic const path"]
+rules_out = ["a `*_const` shim on the default shape"]

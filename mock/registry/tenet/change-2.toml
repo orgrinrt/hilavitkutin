@@ -434,3 +434,21 @@ standing = "provisional"
 subject = "change"
 keywords = ["triple buffer", "temporal model", "loimu domain", "UI extrapolation", "read affinity", "storage model survey"]
 cites = ["loimu_s_layers_stay_in_loimu_and_hilavitkutin_provides_the_foundation"]
+
+[[tenet]]
+id = "as_of_2026_11_12_replace_resource_and_replace_value_discard_the_value_and_the_suite_round_reports_the_swap_install_as_not_reached"
+what = "As of 2026-11-12, the suite round records that the replace-resource and replace-value methods discard their argument, that the plan-dirty flag has no setter anywhere in the source, and that deleting the two methods would remove a documented API. Installing the value here would redo what an earlier ruling of op's reverted. Neither installing nor deleting is a change a test-suite round can make alone, so the swap install is reported as not reached, with this reason and a ticket."
+mechanism = "`replace_resource`, `replace_value`; `plan_dirty` has no setter in `src` (`grep -n plan_dirty` shows the field, its initialisers and reads only); documented in `docs/HILAVITKUTIN.md`, `docs/KIT.md` and `README.md`; finding H9; round `202607193100`, round `202606210600`, #654."
+source = "mock/design_rounds/202611122301/202611122258_topic.suite-can-fail.md:8-8, mock/design_rounds/202611122301/202611122258_topic.suite-can-fail.md:18-18"
+provenance = ["mock::design_rounds::202611122301::202611122258_topic.suite-can-fail::#suite-can-fail"]
+quote = '''
+The step is about one property of the engine's suite: a test that cannot fail certifies nothing. The faults in scope are the ways this suite cannot fail today. The negative case of the builder is checked by hand and the comment says so (`tests/scheduler_builder.rs:10-16`). Twelve builder tests end on `.ok();`, so they pass whatever `build` returned. The incremental skip is tested by counting how many units ran and never by comparing what the stores hold against a run that skips nothing. Two replacement methods discard their argument. Several stubs sit behind a property marker, so a bound that names the property is satisfied by a body that does nothing.
+---
+Round `202607193100` removed the install from `replace_value` on op's ruling, because an in-place write of the whole value contradicts the member-by-member swap that `202606210600` requires, and left the install to the decomposed drain (#654). Installing here would redo what that ruling reverted. Deleting the two methods removes a documented API (`docs/HILAVITKUTIN.md`, `docs/KIT.md`, `README.md`), and `plan_dirty` has no setter anywhere in `src` today (`grep -n plan_dirty` shows the field, its initialisers and reads only), so what `replace_resource` is meant to feed does not exist yet either. Neither is a change a test-suite round can make alone, so H9 is reported as not reached, with this reason, and a ticket.
+'''
+origin = "proposed"
+written_by = "topic of round 202611122258 'suite-can-fail', 2026-11-12, phase TOPIC, agent-written"
+standing = "provisional"
+subject = "change"
+keywords = ["replace_resource", "replace_value", "plan_dirty", "H9", "swap install", "discarded value", "suite round"]
+cites = ["as_of_2026_06_11_replace_resource_and_replace_value_mark_dirty_without_writing_the_value"]

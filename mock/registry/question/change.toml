@@ -230,3 +230,22 @@ witnessed blob install plus the plan-dirty bit.
 subject = "change"
 keywords = ["PlanAffecting", "sealed", "open marker", "A2-3", "api design template", "recovery branch"]
 related = ["tenet::as_of_round_202605101036_plan_affecting_is_a_sealed_marker_and_a_resource_without_it_is_swapped_cheaply", "tenet::plan_affecting_is_an_open_marker_trait_that_consumers_implement_on_resource_value_types"]
+
+[[question]]
+id = "whether_a_swap_of_a_replaceable_value_installs_the_whole_value_in_one_blob_write_or_is_left_to_a_decomposed_member_by_member_drain"
+asks = "Whether replacing a replaceable value installs the whole value in one blob write, or whether the install was removed on op's ruling and left to a decomposed member-by-member drain."
+options = ["the install was removed from replace_value on op's ruling, because an in-place write of the whole value contradicts the member-by-member swap, and left to the decomposed drain (#654); installing here would redo what that ruling reverted", "replace_value performs the whole-blob write through the same selector witness the drain and the projection read use, plus mark_dirty, with no other pointer derivation; the member-by-member layout is bench-refuted"]
+state = "open"
+source = "mock/design_rounds/202611122301/202611122258_topic.suite-can-fail.md:18-18, mock/design_rounds/202607200900/202607200500_topic.replaceable-swap-semantics.md:10-10, mock/design_rounds/202607200900/202607200500_topic.replaceable-swap-semantics.md:14-16"
+quote = '''
+Round `202607193100` removed the install from `replace_value` on op's ruling, because an in-place write of the whole value contradicts the member-by-member swap that `202606210600` requires, and left the install to the decomposed drain (#654). Installing here would redo what that ruling reverted. Deleting the two methods removes a documented API (`docs/HILAVITKUTIN.md`, `docs/KIT.md`, `README.md`), and `plan_dirty` has no setter anywhere in `src` today (`grep -n plan_dirty` shows the field, its initialisers and reads only), so what `replace_resource` is meant to feed does not exist yet either. Neither is a change a test-suite round can make alone, so H9 is reported as not reached, with this reason, and a ticket.
+---
+Canon has no swap specification. The shipped `replace_value` marks dirty without installing (the D1 install was reverted after the A2-5 mis-citation was found); `replace_resource` is callable only for a type no consumer registers (its `PlanAffecting` bound is sealed with one run-config implementor); the plan-dirty trigger canon promises (a swapped plan-affecting resource forces plan recompute) is unwired end to end (the band gate reads `first_frame` only); and three artifacts (the engine DESIGN template's swap paragraph, the `replace_value` FIXME, the catalogued test's ignore reason) still state the bench-refuted member-by-member layout as if it were canon.
+---
+1. **S1 install.** `replace_value<V: Replaceable>` performs the whole-blob
+   `ptr::write` through the same `Selector<V, Index>` witness the drain and
+   the projection read use, plus `mark_dirty`. No other pointer derivation.
+'''
+subject = "change"
+keywords = ["replace_value", "blob write", "member-by-member", "decomposed drain", "swap semantics", "selector witness", "mark_dirty", "#654"]
+related = ["tenet::as_of_2026_11_12_replace_resource_and_replace_value_discard_the_value_and_the_suite_round_reports_the_swap_install_as_not_reached", "tenet::a_replaceable_swap_installs_the_whole_value_as_one_blob_write_through_the_drain_s_selector_and_the_member_by_member_wording_is_refuted", "tenet::as_of_round_202607193110_a_replaceable_swap_is_a_member_by_member_copy_into_column_slots_and_not_a_blob_write"]

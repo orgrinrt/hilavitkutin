@@ -36,3 +36,129 @@ subject = "execution"
 keywords = ["spawn", "spawn_fn", "PtrSizedClosure", "pthread_create", "closure", "function pointer", "compile-time check", "allocation-free"]
 rules_out = ["Box<fn()> would allocate, which the engine path forbids"]
 cites = ["deviation_four_pointer_size_spawn_is_sound_as_shipped_and_the_proposed_ruling_blesses_it_with_a_compile_time_size_check", "the_engine_never_calls_the_allocator_at_runtime_and_plan_time_allocation_happens_once_per_pipeline_lifetime"]
+
+[[tenet]]
+id = "the_consumer_executor_ruling_moved_who_spawns_and_who_pins_and_left_the_thread_count_rule_standing_as_a_bound_on_the_closures_handed_out"
+what = "The ruling that the consumer supplies the executor moved who spawns threads and who pins them, and did not touch how many workers the engine uses. The thread-count rule therefore stands, restated against what the engine now controls: the engine hands out a number of closures equal to the smaller of the runnable worker count and the parallelisable width plus one, the width being the most trunks any phase carries and the one extra being the convergence worker."
+because = "The previous round deleted the rule while moving the pool to the consumer, and the deletion let the code overrule the design."
+mechanism = "`min(runnable worker count, parallelisable_width + 1)`; the engine design's `max_trunks_per_phase`; `mock/PRINCIPLES.md.tmpl` Pre-allocated thread pool."
+source = "mock/design_rounds/202609191001/202609191000_topic.second-review-on-arvo-dev.md:19-19, mock/design_rounds/202609191001/202609191001_changelist.doc.lock.md:13-13"
+provenance = ["mock::design_rounds::202609191001::202609191000_topic.second-review-on-arvo-dev::#a-the-thread-count-rule-was-deleted-to-match-the-code"]
+quote = '''
+`mock/PRINCIPLES.md.tmpl`, Pre-allocated thread pool, said `Threads = min(physical_cores, parallelisable_width + 1)`. The founding spec carries the same rule (`202604200055/202603181200_topic.hilavitkutin-design-consolidation.md`, the thread-count paragraph: the "+1" is the convergence thread). The previous round deleted it while moving the pool to the consumer. The ruling moved who spawns and who pins; it did not touch how many workers the engine uses, so the deletion let the code overrule the design. The rule comes back restated against what the engine now controls: the closures it hands out, `min(runnable worker count, parallelisable_width + 1)`, where the parallelisable width is the most trunks any phase carries (the engine design's `max_trunks_per_phase`). `run_parallel` hands out one closure per clamped worker regardless of the plan, so it does not honour the rule: a `FIXME:` at that site, and a catalogue test stating the bound.
+---
+The paragraph keeps what the previous round said about the executor owning the threads and the pinning, and gets the founding rule back in the form the engine can still honour: the engine hands out `min(runnable worker count, parallelisable_width + 1)` closures, the parallelisable width being the most trunks any phase carries and the "+1" the convergence worker. It says the engine does not honour it yet and hands out one closure per worker.
+'''
+origin = "proposed"
+written_by = "topic of round 202609191001 'the second review of the arvo-dev review fixes' and its doc changelist, 2026-09-19, agent-written"
+standing = "provisional"
+subject = "execution"
+keywords = ["thread count", "parallelisable width", "convergence worker", "closures handed out", "runnable worker count", "consumer executor", "deleted rule"]
+cites = ["the_closures_handed_out_number_the_smaller_of_the_clamped_worker_count_and_the_parallelisable_width_plus_the_convergence_worker", "the_thread_count_is_the_smaller_of_the_physical_cores_and_the_parallelisable_width_plus_one", "op_ruled_that_the_consumer_supplies_the_os_thread_executor_and_the_engine_ships_only_the_executor_contract"]
+
+[[tenet]]
+id = "as_of_2026_09_19_the_engine_hands_out_one_closure_per_clamped_worker_whatever_the_plan_and_the_gap_is_recorded_beside_the_code_and_not_in_the_principle_text"
+what = "As of 2026-09-19, the engine hands out one closure per clamped worker whatever the plan's width, so it does not honour the thread-count bound. The gap is recorded where implementation status belongs, as a marked comment at the call site and an ignored catalogue test, and the principle text ends on the rule alone and does not state the engine's current status."
+mechanism = "`run_parallel`; `FIXME:` at the `runnable_worker_count` call in `scheduler/run_parallel.rs`; the ignored catalogue test in `tests/gate2_worker_count.rs`; `mock/PRINCIPLES.md.tmpl` (Pre-allocated thread pool)."
+source = "mock/design_rounds/202609191001/202609191000_topic.second-review-on-arvo-dev.md:19-19, mock/design_rounds/202609191201/202609191201_changelist.doc.lock.md:9-13"
+provenance = ["mock::design_rounds::202609191001::202609191000_topic.second-review-on-arvo-dev::#a-the-thread-count-rule-was-deleted-to-match-the-code"]
+quote = '''
+`mock/PRINCIPLES.md.tmpl`, Pre-allocated thread pool, said `Threads = min(physical_cores, parallelisable_width + 1)`. The founding spec carries the same rule (`202604200055/202603181200_topic.hilavitkutin-design-consolidation.md`, the thread-count paragraph: the "+1" is the convergence thread). The previous round deleted it while moving the pool to the consumer. The ruling moved who spawns and who pins; it did not touch how many workers the engine uses, so the deletion let the code overrule the design. The rule comes back restated against what the engine now controls: the closures it hands out, `min(runnable worker count, parallelisable_width + 1)`, where the parallelisable width is the most trunks any phase carries (the engine design's `max_trunks_per_phase`). `run_parallel` hands out one closure per clamped worker regardless of the plan, so it does not honour the rule: a `FIXME:` at that site, and a catalogue test stating the bound.
+---
+## CHANGE: the thread-count paragraph FROM ending on the engine's current status TO the rule alone
+
+File: `mock/PRINCIPLES.md.tmpl` (Pre-allocated thread pool).
+
+The sentence "The engine does not honour this yet: it hands out one closure per worker whatever the plan's width." is removed. The gap stays recorded where implementation status belongs, the `FIXME:` at the `runnable_worker_count` call in `scheduler/run_parallel.rs` and the ignored catalogue test in `tests/gate2_worker_count.rs`.
+'''
+origin = "proposed"
+written_by = "topic of round 202609191001 and doc changelist of round 202609191201, 2026-09-19, agent-written"
+standing = "provisional"
+subject = "execution"
+keywords = ["thread count", "FIXME", "gate2_worker_count", "run_parallel", "implementation status", "catalogue test", "one closure per worker"]
+rules_out = ["the thread-count paragraph ending on the engine's current status"]
+cites = ["the_consumer_executor_ruling_moved_who_spawns_and_who_pins_and_left_the_thread_count_rule_standing_as_a_bound_on_the_closures_handed_out"]
+
+[[tenet]]
+id = "the_spin_then_park_middle_tier_is_wired_into_both_frame_waits_with_a_consumer_tunable_budget_and_the_shutdown_wait_stays_park_only"
+what = "The canonical spin-then-park middle tier is wired unconditionally into the frame waits. The worker frame wait and the scheduler done wait spin a bounded budget, re-checking the word each iteration so the lost-wakeup discipline is untouched, and then park through the same load-check-wait pattern as before. The budget is a consumer-tunable run configuration constant defaulting to the canonical performance-core figure of 128, and zero restores park-immediately exactly. The shutdown wait stays park-only, since latency is irrelevant there. Wiring the telemetry-driven tier selection remains a follow-up the ledger names, because the telemetry is undriven and a zero prediction selects the unbounded spin-only tier."
+because = "The frame waits never called the parking machinery that already ships, and park-immediately was the safe wrong tier."
+mechanism = "`thread/parking.rs` (`WakeStrategy`, `pick_tier`, `spin_budget_for`, `spin`); `thread/frame.rs`; `RunCfg` budget constant defaulting to 128; `predicted_wait_ns` telemetry, always zero."
+source = "mock/design_rounds/202607202310/202607202300_topic.wake-spin-preroll.md:10-18, mock/design_rounds/202607202310/202607202300_topic.wake-spin-preroll.md:22-30"
+provenance = ["mock::design_rounds::202607202310::202607202300_topic.wake-spin-preroll::#the-finding-that-shapes-the-round"]
+quote = '''
+The canonical three-tier parking machinery already ships in
+`thread/parking.rs` (`WakeStrategy` with the Topic 6 axis K budgets,
+`pick_tier`, `spin_budget_for`, `spin`); the frame waits in
+`thread/frame.rs` simply never call it, parking immediately. The
+ledger's gate is real: full `pick_tier` selection needs the
+`predicted_wait_ns` telemetry, which is undriven (always zero), and a
+zero prediction selects the unbounded spin-only tier, which must not
+guard an unbounded between-frames wait. Park-immediately was the safe
+wrong tier.
+---
+The safe canonical increment: the UNCONDITIONAL middle tier. The
+worker frame wait and the scheduler done wait spin a bounded budget
+(re-checking the word each iteration, so the lost-wakeup discipline is
+untouched) and then park through the same load-check-wait pattern as
+today. The budget is a consumer-tunable `RunCfg` const defaulting to
+the canonical P-core 128 (toolbox-not-policer), with zero restoring
+park-immediately exactly; the shutdown wait stays park-only (latency
+irrelevant). The telemetry-driven `pick_tier` wiring remains the
+D-phase follow-up the ledger names.
+'''
+origin = "proposed"
+written_by = "topic of round 202607202310 'the wake spin pre-roll (GATE-2 deviation 3)', 2026-07-19, agent-written"
+standing = "provisional"
+subject = "execution"
+keywords = ["wake", "spin pre-roll", "spin budget", "park", "RunCfg", "pick_tier", "shutdown wait", "frame wait"]
+cites = ["the_thread_pool_is_pre_allocated_and_wakes_by_spinning_first_and_then_parking"]
+
+[[tenet]]
+id = "the_spin_budget_default_flips_from_128_to_zero_to_the_measured_winner_while_the_machinery_stays_and_consumers_may_override"
+what = "The wake policy bench ruled against the bounded spin pre-roll on the measured host, because park-immediately wins at every size, a fixed per-frame spin penalty from wake-word cache-line contention and core competition. Per the prior round's evidence exit, the machinery stays, as the parameter, the constant and the budget-sweep test, and the default becomes the measured winner, so the spin budget default flips from 128 to 0. Consumers on hosts where the trade runs the other way override the constant."
+mechanism = "`RunCfg::WAKE_SPIN_BUDGET` flips from 128 to 0, doc comment citing the bench; park-immediately wins 1.64x / 1.34x / 1.11x at n = 64 / 1024 / 8192."
+source = "mock/design_rounds/202607202351/202607202350_topic.wake-budget-default-zero.md:8-16"
+provenance = ["mock::design_rounds::202607202351::202607202350_topic.wake-budget-default-zero::#topic-flip-the-wake-spin-budget-default-to-the-measured-winner"]
+quote = '''
+The wake_policy bench ruled against the bounded spin pre-roll on this
+host: park-immediately wins at every size (1.64x / 1.34x / 1.11x at
+n = 64 / 1024 / 8192), a fixed per-frame spin penalty from wake-word
+cache-line contention and core competition. Per the prior round's
+evidence exit, the machinery stays (parameter, const, budget-sweep
+test) and the DEFAULT becomes the measured winner:
+`RunCfg::WAKE_SPIN_BUDGET` flips from 128 to 0, doc comment citing
+the bench. Consumers on hosts where the trade runs the other way
+override the const.
+'''
+origin = "proposed"
+written_by = "topic of round 202607202351 'flip the wake spin budget default to the measured winner', 2026-07-19, agent-written"
+standing = "provisional"
+subject = "execution"
+keywords = ["WAKE_SPIN_BUDGET", "wake_policy bench", "park-immediately", "default zero", "spin budget", "RunCfg", "evidence exit"]
+rules_out = ["the spin budget default of 128"]
+cites = ["the_spin_then_park_middle_tier_is_wired_into_both_frame_waits_with_a_consumer_tunable_budget_and_the_shutdown_wait_stays_park_only", "a_wake_bench_rules_for_park_immediately_with_a_spin_budget_default_of_zero_and_the_machinery_shipping_tunable"]
+
+[[tenet]]
+id = "as_of_2026_11_13_the_fused_run_entry_refuses_a_unit_with_no_per_record_map_but_not_an_accumulator_writing_one_and_drops_its_append_silently"
+what = "As of 2026-11-13, the fused run entry refuses at compile time a unit that has no per-record map, but it does not refuse a unit that has a per-record map and also writes an accumulator: the fused chain never runs that unit's own execute and the append is silently dropped. The fused entry also lacks the per-frame accumulator reset that the other two run entries perform, so running the body alone would hit the capacity assert at the first frame. This is a gap, committed as an ignored two-frame append test and ticketed, and the engine change that would make the fused entry refuse an accumulator-writing carrier is not part of the suite round."
+mechanism = "`run_fused`; `RecordOp`; `ChainWu`; the compile-fail pair `unmapped_unit_fused`; the ignored two-frame append test on `run_fused`; ticket `0fb716c5a463`; finding H25; `reset_accumulators` called by `run.rs` and `run_parallel.rs` at frame start and not by `run_fused.rs`."
+source = "mock/design_rounds/202611130044/202611130044_topic.suite-can-fail-review-fixes.md:13-13, mock/design_rounds/202611130044/202611130044_topic.suite-can-fail-review-fixes.md:20-22, mock/design_rounds/202611130044/202611130044_changelist.doc.lock.md:11-11, mock/design_rounds/202611130058/202611130058_topic.suite-can-fail-second-review.md:14-14"
+provenance = ["mock::design_rounds::202611130044::202611130044_topic.suite-can-fail-review-fixes::#findings-and-what-answers-each"]
+quote = '''
+2. The `append_fused` pair shows that a unit without a per-record map is refused by `run_fused`, and the changelist claimed more: that appends cannot reach the fused entry. They can. A unit that implements `RecordOp` and also writes an accumulator compiles through `run_fused`, the fused `ChainWu` never runs its `execute`, and the append is silently dropped. Answer: the pair is renamed for what it shows (`unmapped_unit_fused`), the hole is a committed two-frame append test on `run_fused` that fails today and is ignored with its ticket (`0fb716c5a463`), and H25 is reported ticketed rather than closed.
+---
+## Not in this round
+
+The engine change that would make `run_fused` refuse an accumulator-writing carrier (`0fb716c5a463`), the test providers that move with the scheduler (`6393002dea2d`), and the `add_resource` advice in the committed diagnostics (`71f89b0d7775`).
+---
+After the paragraph on within-fiber fusion, a paragraph says that `FuseCarrier` bounds a unit on `RecordOp` and `Copy` and not on its write set, so a `RecordOp` unit that also writes an accumulator is accepted by `run_fused` and its body never runs, that a unit with no per-record map is refused at compile time, and that the gap is ticket `0fb716c5a463`, with `run` the entry for an accumulator-writing unit meanwhile.
+---
+3. The design sentence and the ticket describe the `run_fused` gap without the missing `reset_accumulators` call: `run.rs` and `run_parallel.rs` reset the accumulators at frame start and `run_fused.rs` does not, so running the body alone would hit the capacity assert at frame one. Answer: the design sentence, the catalogue row and the ticket (bumped) name the reset.
+'''
+origin = "proposed"
+written_by = "topics of rounds 202611130044 'suite-can-fail-review-fixes' and 202611130058 'suite-can-fail-second-review', 2026-11-13, agent-written, answering review passes"
+standing = "provisional"
+subject = "execution"
+keywords = ["run_fused", "RecordOp", "accumulator append", "silently dropped", "reset_accumulators", "fused chain", "ticket 0fb716c5a463", "H25"]
+rules_out = ["appends cannot reach the fused entry"]

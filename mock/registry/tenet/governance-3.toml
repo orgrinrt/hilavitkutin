@@ -372,3 +372,56 @@ subject = "governance"
 keywords = ["supersession", "delete superseded code", "reachability", "drift", "tether test", "doc paragraph", "preservation reflex"]
 rules_out = ["something still references it"]
 cites = ["a_superseded_text_is_deprecated_and_never_amended_by_an_addendum"]
+
+[[tenet]]
+id = "a_changelist_claim_is_verified_against_what_landed_and_every_verification_line_is_run_before_the_lock"
+what = "A claim in a changelist is verified against what landed and not against the working tree, because a claim verified before a commit can be falsified by that commit's own formatter. Until a claim-verifier lint exists, the discipline is to run every verification line of a changelist as a command against the committed state before the changelist locks."
+mechanism = "`git show HEAD` after the pre-commit autofix, which runs rustfmt; the claim-verifier lint of `cl-claim-sketch-discipline.md` is tracked upstream and does not exist yet."
+source = "mock/design_rounds/202608090300/202608090300_topic.the-kind-width-is-still-fixed.md:55-63, mock/design_rounds/202608101600/202608101600_topic.a-locked-claim-that-was-never-executed.md:40-44"
+provenance = ["mock::design_rounds::202608090300::202608090300_topic.the-kind-width-is-still-fixed::#a-record-defect-worth-stating-because-it-will-recur"]
+quote = '''
+`grep -c 'impl const SymShape for SixteenMinters'`, and the source reads `const
+impl`. The verification **was** run and **was** true when run. The pre-commit
+autofix then ran rustfmt, which rewrote the keyword order, and the locked
+changelist shipped naming a command that returns zero against the source it
+describes.
+
+So a claim verified before a commit can be falsified by that commit's own
+formatter. Verify against what landed, not against the working tree. The
+workspace rule now says so.
+---
+Naming that here rather than proposing a mechanism: the lint that would close it
+is `cl-claim-sketch-discipline.md`'s claim-verifier, which is tracked upstream
+and does not exist yet. Until it does, the discipline is to run every
+verification line as a command against `git show HEAD` before locking, which is
+what this round does for its own.
+'''
+origin = "proposed"
+written_by = "topics of rounds 202608090300 'the kind width is still fixed' and 202608101600 'a locked claim that was never executed', agent-written"
+standing = "provisional"
+subject = "governance"
+keywords = ["verification", "git show HEAD", "autofix", "rustfmt", "locked changelist", "claim verifier", "verify against what landed"]
+
+[[tenet]]
+id = "a_locked_changelist_stays_locked_and_is_corrected_by_a_later_round_and_a_subject_is_not_bent_to_fit_a_wrongly_written_check"
+what = "A locked changelist stays locked, and stays wrong where it is wrong, which is what an audit trail is for. The correction is recorded in a later round and not made by rewriting it. The subject of a check is not bent to make a wrongly written check true, because that is how a check stops measuring anything, and the correction belongs to the changelist rather than to the file."
+source = "mock/design_rounds/202608090130/202608090130_topic.the-origin-mechanism-round-one-only-named.md:37-39, mock/design_rounds/202608090300/202608090300_topic.the-kind-width-is-still-fixed.md:65-66, mock/design_rounds/202608101600/202608101600_changelist.src.lock.md:31-33"
+provenance = ["mock::design_rounds::202608090130::202608090130_topic.the-origin-mechanism-round-one-only-named::#why-this-round-exists"]
+quote = '''
+This round builds the mechanism. Round one's locked changelist stays locked and
+stays wrong about round one, which is what an audit trail is for; this topic is
+the record of that, and the correction is a later round rather than a rewrite.
+---
+The locked changelist stays locked and stays wrong in that one command. This
+topic is the correction.
+---
+**The file is not being edited to make the grep true.** Bending a subject to match
+a check that was written wrongly is how a check stops measuring anything, and the
+correction belongs to the changelist rather than to the file.
+'''
+origin = "proposed"
+written_by = "topics of rounds 202608090130 and 202608090300 and source changelist of round 202608101600, agent-written"
+standing = "provisional"
+subject = "governance"
+keywords = ["locked changelist", "audit trail", "correction", "later round", "wrong check", "grep", "bending a subject"]
+cites = ["a_changelist_claim_is_verified_against_what_landed_and_every_verification_line_is_run_before_the_lock"]
