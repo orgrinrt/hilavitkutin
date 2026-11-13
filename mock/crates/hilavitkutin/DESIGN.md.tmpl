@@ -383,10 +383,9 @@ bounds each unit on `RecordOp` and `Copy` and not on the unit's write set, so a
 unit that implements `RecordOp` and also writes an accumulator is accepted, the
 fused unit runs only the map, and the unit's own body, with its appends, never
 runs. A unit with no per-record map is refused at compile time. `run_fused`
-also never calls the per-frame accumulator reset that `run` and `run_parallel`
-make at frame start, so running the unit's body there is not enough on its own:
-the second frame would append past the reserved capacity and be refused.
-The gap is tracked as ticket `0fb716c5a463`; until it closes, an
+makes the same per-frame accumulator reset as `run` and `run_parallel`, so its
+verdict is the frame's own and a refusal from an earlier frame does not carry
+into it. The gap is tracked as ticket `0fb716c5a463`; until it closes, an
 accumulator-writing unit goes through `run`.
 
 Appending past an accumulator's reserved capacity is refused, and the refusal is
@@ -396,15 +395,19 @@ records it accepted, and `wanted`, the appends the frame asked of it. An append
 always advances `wanted`; it writes and advances the live length only while
 `wanted` equals the live length and the live length is below the capacity.
 Otherwise it writes nothing. So `wanted` is never below the live length, and the
-accumulator has refused exactly when `wanted` is above it. The refusal is sticky:
-once one append is refused, every later append on that accumulator in the frame
-is refused and the live length does not move, the law a `notko` `Fill` keeps for
-a lend. A refused append never writes, so the soundness floor holds without an
-assert. At the close of the frame `run`, `run_fused` and `run_parallel` walk the
-bindings in registration order and return the first accumulator with `wanted`
-above its live length as an `AccumRefused`, through the run-config's output
-(`RunCfg::Out` is built from `Outcome<(), AccumRefused>`). The records the
-accumulator accepted before the refusal stay in its live prefix. A consumer sizes
+accumulator has refused exactly when `wanted` is above it. The refusal is sticky
+per binding: once one append on a binding is refused, every later append on that
+binding in the frame is refused and its live length does not move, the law a
+`notko` `Fill` keeps for a lend. A refused append never writes, so the soundness
+floor holds without an assert. At the close of the frame `run`, `run_fused` and
+`run_parallel` walk the bindings in registration order and return the first
+accumulator with `wanted` above its live length as an `AccumRefused`, through
+the run-config's output (`RunCfg::Out` is built from `Outcome<(), AccumRefused>`).
+On one thread the accumulator is one binding, so the records it kept are a
+prefix of the appends the frame asked of it. Under `run_parallel` each core
+appends through a binding of its own over its own region, with its own sticky
+refusal, so one core can refuse while another still accepts: the records kept
+depend on the worker count, and the `AccumRefused` value does not. A consumer sizes
 the accumulator for the maximum number of appends a single frame can make, and
 reads the run's output to learn when it did not.
 
@@ -547,13 +550,18 @@ sequential fallback for non-commutative).
 
 `run_parallel` realizes this on the no-alloc `Accum` surface as per-core
 regions of the single reserved buffer. The accumulator reserves cap =
-build-time record count (the global at-most-one-append-per-record bound),
-and core c appends into the sub-region at element offset `lo_c`, the same
-head+tail record-slice start the morsel-local path uses (`per =
+build-time record count (the global at-most-one-append-per-record bound).
+The leading meta bands run on the main thread before the publish and append on
+the shared binding, so `[0, len)` holds their records when the workers start.
+Core c appends into the sub-region at element offset `len + lo_c`, where `lo_c`
+is the same head+tail record-slice start the morsel-local path uses (`per =
 ceil(total/ncores)`, `lo = (c*per).min(total)`, `hi = (lo+per).min(total)`),
-with cap `hi_c - lo_c` and its own live-length and `wanted` cells. Offset `lo_c`
-(not a separate `c*per` buffer) tiles the reserved buffer exactly because the
-slice sizes sum to total. Disjoint byte ranges plus per-core cells mean no shared
+with cap `hi_c - lo_c` clipped to what is left of the capacity past the offset,
+and its own live-length and `wanted` cells. Offset `len + lo_c` (not a separate
+`c*per` buffer) tiles the reserved buffer past the leading records because the
+slice sizes sum to total; the last regions lose the room the leading records
+took, and a region left with no room refuses every append on it. Disjoint byte
+ranges plus per-core cells mean no shared
 mutable state: the `resolve_append` path is the single-core one, only the
 per-core `AccumColPtr` projection is new, and each core's two cells are written
 by that core alone. An append past a region's cap is refused under the same
@@ -564,13 +572,15 @@ its `frame_done_arrive`, whose Release pairs with the Acquire of
 `frame_await_done`; the main thread reads the rows only after that wait returns,
 when every worker has arrived and gone back to waiting for the next publish, so
 no worker touches the bindings until the next frame. After the phase a forward
-compaction concatenates the per-core live prefixes in ascending core order into
-`[0, sum live)`; the write cursor never exceeds `lo_c` so the copy is
-forward-safe, and order is preserved because each core walks an ascending
-contiguous slice and appends in record order. The merge sets the shared
-binding's live length to the summed live counts and its `wanted` to that sum
-plus every refused append (its own from the leading bands and `wanted_c -
-live_c` per core), so the shared binding has refused exactly when some append was
+compaction concatenates the per-core live prefixes in ascending core order after
+the leading records, into `[len, len + sum live)`; the write cursor never
+exceeds the region's offset so the copy is forward-safe, and order is preserved
+because each core walks an ascending contiguous slice and appends in record
+order. The merge sets the shared binding's live length to the leading records
+plus the summed live counts and its `wanted` to that plus every refused append
+(its own from the leading bands and `wanted_c - live_c` per core), saturating,
+so no record any band accepted leaves the counts and the shared binding has
+refused exactly when some append was
 refused anywhere, and the trailing bands append on it under the same sticky
 rule. `wanted` counts what the bodies asked, which does not depend on the split,
 so an emitter that asks more than the reserved capacity gets the same
@@ -579,10 +589,10 @@ merged prefix is byte-identical to the single-core unit-outer `run()` append
 when nothing was refused. The first slice scopes this to the
 at-most-one-append-per-record convergence pattern; multi-append needs region cap
 = per-region worst case (a follow-up). Until then a frame that fits the reserved
-capacity whole but asks more than one append per record on one core's slice is
-refused on more than one worker and accepted on one, with `wanted` at or below
-the capacity in its `AccumRefused`, which says the region and not the
-reservation refused. Non-commutative accumulation keeps the sequential
+capacity whole but asks more than one append per record on one core's slice, or
+whose leading records take the room a last region needed, is refused on more
+than one worker and accepted on one, with `wanted` at or below the capacity in
+its `AccumRefused`, which says the region and not the reservation refused. Non-commutative accumulation keeps the sequential
 single-core fallback, routed by a commutativity hint that defaults to
 single-core until reachable at dispatch.
 
@@ -1184,7 +1194,8 @@ first refusing accumulator as an `AccumRefused` (the paragraph on appending
 past the reserved capacity, under dispatch codegen above, states the rule once). It is never a silent drop and
 never a write past the buffer. The consumer sizes the accumulator for the most
 appends one frame can make. Under the schedule-once-reuse model one built
-scheduler runs many frames, so `run` resets every accumulator live-length and
+scheduler runs many frames, so every run entry (`run`, `run_fused` and
+`run_parallel`) resets every accumulator live-length and
 `wanted` count to zero at frame start, via a type-level
 `ResetAccumulators` walk over the bindings (a no-op at every non-accumulator
 node, two `Cell` writes per `AccumBinding`); each frame appends into a fresh

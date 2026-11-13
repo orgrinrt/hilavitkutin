@@ -493,10 +493,14 @@ trait ResolveAccumAppend<T: ColumnValue, I> {
 
 An accumulator append past the reserved capacity is refused, never asserted
 and never written. The engine counts every append the frame asks of the
-accumulator beside its live length; once one append is refused, every later
-append on it in the same frame is refused too, so the accepted records are the
-prefix the frame asked for first and the live length stops. `len` returns that
-live length. The run hands the first refusing accumulator back as an
+accumulator beside its live length; once one append through a binding is
+refused, every later append through that binding in the same frame is refused
+too, and its live length stops. On one thread the accumulator is one binding, so
+the records it kept are a prefix of the appends the frame asked of it. Under
+`run_parallel` each core appends through its own binding over its own region,
+so one core can refuse while another still accepts: the records kept depend on
+the worker count, and the `AccumRefused` value does not. `len` returns the live
+length of the binding the body appends through. The run hands the first refusing accumulator back as an
 `AccumRefused` through the run config's output (see "`AccumRefused` and the
 run's output" below); the body that appended learns nothing at the call, and
 no caller obligation covers the capacity.
@@ -1130,7 +1134,6 @@ writing the const explicitly in their `impl RunCfg` block:
 ```rust
 impl RunCfg for MyApp {
     type Out = ...;
-    type Err = ...;
     const MAX_PLAN_AFFECTING_RESOURCES: USize = USize(8);  // tight envelope
 }
 ```
@@ -1146,14 +1149,17 @@ how much. It carries the accumulator's position among the scheduler's
 accumulators in registration order (`accum()`) and a `notko::Exhausted`
 (`exhausted()`) whose `wanted` is every append the frame asked of it and whose
 `had` is its reserved capacity. Both fields are private and read through
-`const fn` accessors, so a value is only built by the engine at the close of a
-frame.
+`const fn` accessors. `new` builds a value from its two parts: the engine builds
+the frame's own at the close from the counts it kept, and a caller can build one
+to compare a run's output against. A value claims nothing beyond its two parts;
+what makes the run's output true is that the engine counted it.
 
 `RunCfg::Out` is bound on `From<notko::Outcome<(), AccumRefused>>`, and every
 run entry returns `Cfg::Out::from(verdict)`: `Ok(())` when no accumulator
 refused, `Err` with the first refusing accumulator, walked in registration
-order, otherwise. `DefaultRunCfg` takes `Out = notko::Outcome<(), AccumRefused>`
-and `Err = AccumRefused`, so its `From` is the reflexive one. `RunCfg` is
+order, otherwise. `DefaultRunCfg` takes `Out = notko::Outcome<(), AccumRefused>`,
+so its `From` is the reflexive one. The error type lives inside `Out` and
+`RunCfg` declares no separate one. `RunCfg` is
 sealed, `DefaultRunCfg` is its one impl, and the bound costs no consumer an
 impl. `wanted` counts what the bodies asked, which does not depend on how the
 records were split over workers, so an emitter that asks more than the reserved
