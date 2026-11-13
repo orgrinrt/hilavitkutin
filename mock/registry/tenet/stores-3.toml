@@ -17,8 +17,8 @@ quote = '''
 origin = "proposed"
 written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
 standing = "provisional"
-stamped_by = "experts"
-stamp = 'provisional, 2026-11-13: his part is the hybrid call of erased, global-capable addressing, recorded as his decision of 2026-07-02 at mock/design_rounds/202607161000/202606210600_topic.hybrid-decision.md:12-19, and the layout of blob, snapshot and live collections is the bench decision of the row the_value_of_a_resource_is_one_contiguous_record_blob_and_the_per_member_column_decomposition_was_refuted_by_bench; that the drift-fix arc is the storage-model work and that no fork remains is the reading of the agent-written addendum at mock/research/202606210600_resource-storage-model-canonical-addendum.md:97-101, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: his part is the hybrid call of erased, global-capable addressing, recorded as his decision of 2026-07-02 at mock/design_rounds/202607161000/202606210600_topic.hybrid-decision.md:12-19, and the layout of blob, snapshot and live collections is the bench decision of the row the_value_of_a_resource_is_one_contiguous_record_blob_and_the_per_member_column_decomposition_was_refuted_by_bench; that the drift-fix arc is the storage-model work and that no fork remains is the reading of the agent-written addendum at mock/research/202606210600_resource-storage-model-canonical-addendum.md:97-101, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["drift-fix arc", "storage model", "scalar snapshot", "live-streamed", "noalias", "erased addressing", "hybrid", "settled layout"]
 related = ["tenet::a_resource_value_is_addressed_through_an_erased_static_shape_so_it_can_cross_a_plugin_boundary"]
 
@@ -107,8 +107,8 @@ between two threads; they share the ceiling formula and nothing else.
 origin = "proposed"
 written_by = "engine design template as on the branch recover/unlanded-rounds-and-benches, commit of 2026-08-30, not on dev; the text does not say whose it is"
 standing = "provisional"
-stamped_by = "experts"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["accumulator", "per-core region", "merge", "append order", "N-way regioning", "reserved buffer"]
 
 [[tenet]]
@@ -124,8 +124,8 @@ The sticky refusal is a second count on each accumulator binding beside the live
 origin = "proposed"
 written_by = "topic overflow-is-a-value of 2026-11-13, round 202611130402, roadmap step HV1b, agent-written"
 standing = "provisional"
-stamped_by = "experts"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["accumulator", "append", "capacity", "refusal", "sticky", "wanted", "overflow", "AccumRefused"]
 rejects = ["An append past an accumulator's reserved capacity panics"]
 related = ["tenet::an_accumulator_append_saturates_at_the_reserved_capacity_which_equals_the_record_count_at_build"]
@@ -145,8 +145,8 @@ The refusal is read at the close. After the last band of the frame, `run` walks 
 origin = "proposed"
 written_by = "topic overflow-is-a-value of 2026-11-13, round 202611130402, roadmap step HV1b, agent-written"
 standing = "provisional"
-stamped_by = "experts"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["accumulator", "refusal", "close", "worker count", "registration order", "run output", "Exhausted"]
 related = ["tenet::an_append_past_an_accumulator_s_capacity_is_counted_and_never_written_and_the_refusal_is_sticky_for_the_frame"]
 
@@ -189,8 +189,8 @@ Round 202611130402 built the refusal only. `RunCfg` is sealed, `DefaultRunCfg` i
 origin = "proposed"
 written_by = "topic overflow-is-the-consumers-choice of 2026-11-13, round 202611130554, the working out of op's ruling, agent-written"
 standing = "provisional"
-stamped_by = "experts"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["AccumOverflow", "Refuse", "Assert", "run configuration", "sealed", "close", "calling thread", "typestate"]
 related = ["tenet::the_consumer_picks_on_the_run_configuration_whether_an_over_capacity_append_is_a_refusal_or_an_assert"]
 
@@ -207,8 +207,8 @@ quote = '''
 origin = "proposed"
 written_by = "topic overflow-review-fixes of 2026-11-13, round 202611130500, review pass one of the overflow round, agent-written"
 standing = "provisional"
-stamped_by = "experts"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["run_parallel", "per-core region", "leading bands", "merge", "prefix", "worker count", "accumulator"]
 related = ["tenet::the_refusal_of_an_accumulator_is_read_at_the_close_and_is_the_same_value_at_every_worker_count"]
 
@@ -225,8 +225,8 @@ A lane is a unit struct implementing `Lane` (its item type and initial value) an
 origin = "proposed"
 written_by = "the findings of the sketch frame-view-typestate, dated 2026-11-12 and 2026-11-13; it calls itself sketch S3 of the roadmap for building kaski's engine on the stack's contracts, job hv-sketch-frame-view, and says hilavitkutin declares no canon it was checked against"
 standing = "provisional"
-stamped_by = "experts"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["frame", "lane", "committed", "staged", "double buffer", "frame lane", "landed store", "sketch", "frame view"]
 related = ["tenet::a_writer_precedes_every_reader_of_what_it_writes"]
 
@@ -245,8 +245,8 @@ quote = '''
 origin = "proposed"
 written_by = "the findings of the sketch frame-view-typestate, dated 2026-11-12 and 2026-11-13; it calls itself sketch S3 of the roadmap for building kaski's engine on the stack's contracts, job hv-sketch-frame-view, and says hilavitkutin declares no canon it was checked against"
 standing = "provisional"
-stamped_by = "experts"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["view", "committed frame", "staged handle", "write-only", "read list", "step kernel", "frame start", "sketch"]
 related = ["tenet::a_sketch_of_november_2026_holds_every_lane_of_a_frame_twice_committed_and_staged"]
 
@@ -263,8 +263,8 @@ quote = '''
 origin = "proposed"
 written_by = "the findings of the sketch frame-view-typestate, dated 2026-11-12 and 2026-11-13; it calls itself sketch S3 of the roadmap for building kaski's engine on the stack's contracts, job hv-sketch-frame-view, and says hilavitkutin declares no canon it was checked against"
 standing = "provisional"
-stamped_by = "experts"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["close unit", "landed store", "after the step lands", "view", "frame close", "sketch"]
 related = ["tenet::a_sketch_of_november_2026_holds_every_lane_of_a_frame_twice_committed_and_staged"]
 
@@ -289,8 +289,8 @@ write-byte sum. The L1 window formula (A3b) needs the size array. The plan stage
 origin = "proposed"
 written_by = "topic a3a-store-size-collection of 2026-06-19, round 202606202500, agent-written"
 standing = "provisional"
-stamped_by = "experts"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["StoreElemBytes", "StoreSizes", "store_sizes", "per-store size", "ColumnValue", "BIT_WIDTH", "A3a", "morsel budget"]
 related = ["tenet::the_morsel_size_is_the_l1_budget_divided_by_the_written_bytes_per_record_within_fixed_bounds"]
 
@@ -346,8 +346,8 @@ Verification: `grep -A2 "StoreElemBytes for Resource" mock/crates/hilavitkutin/s
 origin = "proposed"
 written_by = "topic a3b-l1-morsel-formula of 2026-07-16, round 202607161410, and its src changelist, agent-written"
 standing = "provisional"
-stamped_by = "experts"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["StoreElemBytes", "ResourceFootprint", "L1_BYTES", "Resource", "StagedResource", "Accum", "R5 footprint", "morsel budget"]
 rejects = ["flat scalar sizes"]
 related = ["tenet::only_a_column_contributes_per_record_bytes_to_the_morsel_working_set_and_the_other_store_markers_contribute_zero", "tenet::per_fiber_morsel_sizing_folds_over_blob_strides_plus_the_collection_bytes_term_and_rides_after_the_drift_fix", "tenet::the_api_macros_crate_is_the_proc_macro_companion_of_the_api_crate_and_derives_a_resource_s_write_collection_footprint"]
@@ -375,8 +375,8 @@ quote = '''
 origin = "proposed"
 written_by = "topic a3b-l1-morsel-formula of 2026-07-16, round 202607161410, agent-written"
 standing = "provisional"
-stamped_by = "experts"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["ResourceFootprint", "blanket impl", "coherence", "derive", "bare scalar", "zero footprint", "L1 write budget"]
 related = ["tenet::a_resource_and_a_staged_resource_contribute_their_declared_footprint_to_the_morsel_budget_and_an_accumulator_contributes_zero", "tenet::the_api_macros_crate_is_the_proc_macro_companion_of_the_api_crate_and_derives_a_resource_s_write_collection_footprint"]
 
@@ -497,8 +497,8 @@ static-shape addressing are absent. The round's research artifacts
 origin = "proposed"
 written_by = "doc changelist of 2026-07-16, round 202606210600 (resource storage model), agent-written, folding in the decision of 2026-07-02"
 standing = "provisional"
-stamped_by = "experts"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["erased base pointer", "static shape", "ResourcePtr", "backcast", "drain", "projection", "plugin boundary", "domain 19"]
 rejects = ["a monomorphised `ResourcePtr<T>` recorded at drain"]
 related = ["tenet::a_resource_value_is_addressed_through_an_erased_static_shape_so_it_can_cross_a_plugin_boundary", "tenet::the_value_of_a_resource_is_one_contiguous_record_blob_and_the_per_member_column_decomposition_was_refuted_by_bench"]

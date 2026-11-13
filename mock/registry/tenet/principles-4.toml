@@ -18,8 +18,8 @@ The substrate provides a derive macro `#[derive(Resource)]` / `#[derive(RunCfg)]
 origin = "proposed"
 written_by = "design round 202605101036, topic 3 plan algorithm chain, soundness invariant S2, dated 2026-05-10, agent-written; the text does not say whose decision it is"
 standing = "provisional"
-stamped_by = "experts"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["sealed traits", "Sealed supertrait", "derive macro", "dispatch role", "coherence", "S2", "RunCfg", "BuilderInput::Dispatch"]
 
 [[tenet]]
@@ -35,8 +35,8 @@ quote = '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 5 adapt subsystem, decision log entry Audit-2 M5 dated 2026-05-10, agent-written; the text does not say whose decision it is"
 standing = "provisional"
-stamped_by = "experts"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["proc-macro-only impl path", "min_specialization", "double derive", "trybuild", "Sealed", "pair-impl coherence", "M5", "S2"]
 rejects = ["S2's attribution of pair-impl coherence safety to `min_specialization` is incorrect"]
 related = ["tenet::the_dispatch_determining_traits_are_sealed_with_a_private_supertrait_and_consumers_reach_them_only_through_derive_macros"]
@@ -54,8 +54,8 @@ quote = '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 4 dispatch codegen, Axis B vocabulary discipline of the decision log dated 2026-05-10, agent-written; the text does not say whose decision it is"
 standing = "provisional"
-stamped_by = "experts"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["vocabulary discipline", "descriptive names", "Approach A", "polka-dots letters", "MonoTuple", "IndirectPerFiber", "bench-paper citations"]
 related = ["tenet::the_first_version_ships_a_mono_tuple_baseline_a_trunk_level_and_a_whole_schedule_dispatch_approach_and_the_indirect_per_fiber_one_waits_in_the_backlog"]
 
@@ -117,7 +117,7 @@ code threads `D: PlanDims` / `C: Capacity`, never a length.
 origin = "proposed"
 written_by = "sketch findings capacity-as-a-TYPE of 2026-05-30, addendum 2 reporting the working out of the maintainer's refinement; agent-written"
 standing = "provisional"
-stamped_by = "experts"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["exact capacity", "round-up to rung", "Dim<N>", "PlanDims", "bare usize literal", "declare the budget once", "Capacity bound"]
 related = ["tenet::fixed_capacity_is_one_generic_dimension_marker_implementing_the_capacity_trait_and_the_macro_rung_ladder_is_dropped", "tenet::container_capacity_lives_at_type_level_and_a_consumer_needing_more_picks_the_bigger_type"]
