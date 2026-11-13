@@ -574,6 +574,27 @@ merges them after the workers rejoin, preserving append order. It is a
 different mechanism from head+tail convergence, which splits input records
 between two threads; they share the ceiling formula and nothing else.
 
+A `Replaceable` swap installs the whole value as one blob write through the
+same `Selector` witness the drain and the projection read use, plus a
+store-dirty mark; no other pointer derivation exists on the swap path. Under
+the bench-decided storage layout a resource value is one reserved blob record
+(scalar snapshot plus live-streamed collections), so the whole-blob install is
+the specified mechanism, not an excluded shortcut. The earlier per-leaf-copy
+rule was grounded on the refuted pre-bench layout, and the revert of the
+one-line install that followed it was a mis-citation; the witnessed blob write
+is canonical. Collection-bearing values gain per-record element writes for
+their `Seq` and `Map` halves only when the collection wiring lands (tracked by
+the catalogued swap test); until then the collection halves of a swapped value
+are out of the swap's scope by design, not by omission.
+
+A plan-affecting swap goes through `replace_resource<T: PlanAffecting>`, which
+locates `Resource<T>` through the same witness shape, performs the identical
+install and store-dirty mark, and sets the plan-dirty bit for `T`. `run` and
+`run_parallel` enter the plan band when it is the first frame or any
+plan-dirty bit is set, consuming and clearing the bits on entry; a plain
+`Replaceable` swap never forces the band, which is the intended cost asymmetry
+between a value swap's dirty cone and a plan recompute.
+
 The worker's region boundaries and the merge's read offsets are the same
 function of `(total, ncores, core)`, computed once and shared rather than
 spelled twice. That is the property that makes the merge correct: it reads
@@ -1361,36 +1382,43 @@ must come after the owning Kit in the builder chain (or after the
 relevant `.with(Resource::new(value))` / `.with(Column::<T>::new())`
 calls).
 
-### `Scheduler::replace_resource`
+### `Scheduler::replace_value` and `Scheduler::replace_resource`
 
 ```rust
 impl<Wus, Stores> Scheduler<Wus, Stores> {
- pub fn replace_resource<T: Replaceable>(&mut self, _new: T)
+ pub fn replace_value<V: Replaceable>(&mut self, new: V)
+ where
+ Stores: Contains<Resource<V>>;
+ pub fn replace_resource<T: PlanAffecting>(&mut self, new: T)
  where
  Stores: Contains<Resource<T>>;
 }
 ```
 
-App-level method to swap the existing `Resource<T>` instance in
-the scheduler's data plane. The static `T: Replaceable` bound
-rejects override attempts on types that did not opt in via
-`impl Replaceable for T {}`. The `Stores: Contains<Resource<T>>`
-bound proves the resource exists in the registered stores.
+App-level methods to swap the existing `Resource<T>` instance in
+the scheduler's data plane. Both install the value they are handed,
+as the swap paragraphs under domain 19 specify, and `replace_resource`
+also sets the plan-dirty bit for its type. The static `V: Replaceable`
+bound rejects override attempts on types that did not opt in via
+`impl Replaceable for T {}`, and a `PlanAffecting` type can never
+carry that impl, so each type routes through exactly one of the two.
+The `Stores: Contains<Resource<T>>` bound proves the resource exists
+in the registered stores.
 
 Replaceable opt-in is the only enforced annotation on
 Owned types (per audit C2/M4 plus the S5 visibility-axis
 finding); see `hilavitkutin-api::Replaceable` and
 the design notes.
 
-When a consumer attempts `scheduler.replace_resource(NotReplaceable)`,
+When a consumer attempts `scheduler.replace_value(NotReplaceable)`,
 rustc emits an E0277 with a high-quality diagnostic that names
 the offending type, lists the types that DO impl `Replaceable`,
 and points at the bound declaration. See
 `mock/research/sketches/202605050615_kit_taxonomy/FINDINGS.md`
 for the empirical evidence.
 
-`replace_resource` is app-only. Called between `.build()` and
-`scheduler.run()`. Not a hot-path operation; the typestate change
+Both are app-only. Called between `.build()` and
+`scheduler.run()`, or between two frames. Not a hot-path operation; the typestate change
 is logical only (the `Resource<T>` slot's value is replaced; its
 type-level identity in `Stores` is unchanged).
 
