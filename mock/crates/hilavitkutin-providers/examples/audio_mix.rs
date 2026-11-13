@@ -19,7 +19,7 @@ fn main() {
     // The end-to-end shape consumers will write here:
     //
     //   let mut sched = Scheduler::builder()
-    //       .with(Column::<Sample>::new())
+    //       .with(Column::<Sample>::start())
     //       .with(Mixer::channel(0))
     //       .with(Mixer::channel(1))
     //       .with(Mixer::channel(2))

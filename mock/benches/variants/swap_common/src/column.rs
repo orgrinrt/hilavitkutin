@@ -34,14 +34,14 @@ use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{EachApi, HasEach};
-use hilavitkutin_api::store::{Buffered, Column, Exchange, Resource, Snapshot};
+use hilavitkutin_api::store::{Buffered, Column, Exchange, Resource, Snapshot, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_api::{Written, rec};
 
 use super::{C1, C2, HeapBump, Hints, SwapVal, fnv1a_u32_slice, store};
 
 /// The record's own number, filled once before the first pass.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct Slot(pub u32);
 
 /// A prepared carrier behind type-erased closures.
@@ -141,9 +141,9 @@ macro_rules! carrier {
                 // record numbers, two sides of the middle column, the output.
                 let provider = HeapBump::new(5 * records * 4 + (1 << 16));
                 let sched = Scheduler::builder()
-                    .with(Column::<Slot>::new())
+                    .with(Column::<Slot>::start())
                     .with($registered)
-                    .with(Column::<C2>::new())
+                    .with(Column::<C2>::start())
                     .with(Resource::new(SwapVal(seed)))
                     .with(Produce)
                     .with(Consume)
@@ -221,7 +221,7 @@ carrier!(
     plain,
     Column<C1>,
     ColPtrCons<C1, ColPtrNil>,
-    Column::<C1>::new()
+    Column::<C1>::start()
 );
 carrier!(
     /// The carrier over a buffered middle column brought in by a copy.

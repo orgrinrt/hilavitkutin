@@ -2,7 +2,7 @@
 // and the builder registers neither column. `build` must refuse, and name the
 // stores under the wrappers, since a wrapper is not what is registered.
 // The twin `unregistered_wrapped_store_pass.rs` differs only by the two
-// `.with(Column::<..>::new())` lines.
+// `.with(Column::<..>::start())` lines.
 
 use core::cell::Cell;
 

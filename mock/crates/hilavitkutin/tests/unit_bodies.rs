@@ -26,7 +26,7 @@ use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{ColumnReaderApi, ColumnWriterApi, EachApi, HasEach};
 use hilavitkutin_api::footprint::ResourceFootprint;
 use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
-use hilavitkutin_api::store::{Column, Replaceable, Resource};
+use hilavitkutin_api::store::{Column, Replaceable, Resource, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_api::{Differs, ResourceRead, Written, rec};
 use hilavitkutin_providers::ArenaColumnStorage;
@@ -36,13 +36,13 @@ use stable_provider::StableProvider;
 const RECORDS: usize = 600;
 const SENTINEL: u32 = 0xDEAD;
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug, Default)]
 struct Slot(u32);
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug, Default)]
 struct Height(u32);
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug, Default)]
 struct Seen(u32);
 
 /// A resource of one scalar, read by value.
@@ -153,8 +153,8 @@ impl WorkUnit<Always> for Survey {
 #[test]
 fn a_value_function_reads_a_resource_by_value_and_one_in_place() {
     let mut scheduler = Scheduler::builder()
-        .with(Column::<Slot>::new())
-        .with(Column::<Height>::new())
+        .with(Column::<Slot>::start())
+        .with(Column::<Height>::start())
         .with(Resource::new(Table {
             marks: [7, 11],
         }))
@@ -275,9 +275,9 @@ macro_rules! positional_write {
         #[test]
         fn $test() {
             let mut scheduler = Scheduler::builder()
-                .with(Column::<Slot>::new())
-                .with(Column::<Height>::new())
-                .with(Column::<Seen>::new())
+                .with(Column::<Slot>::start())
+                .with(Column::<Height>::start())
+                .with(Column::<Seen>::start())
                 .with($lay)
                 .with(Watch)
                 .build(store(), USize(RECORDS))

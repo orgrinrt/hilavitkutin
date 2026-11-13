@@ -37,7 +37,7 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
-use hilavitkutin_api::store::Column;
+use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 
 use crate::executor::BenchExecutor;
@@ -58,9 +58,9 @@ type One<T> = Cons<Column<T>, Empty>;
 // thus its own trunk after block-diagonalisation).
 macro_rules! def_chain {
     ($inv:ident, $outv:ident, $wu:ident) => {
-        #[derive(Copy, Clone)]
+        #[derive(Copy, Clone, Default)]
         struct $inv(u32);
-        #[derive(Copy, Clone)]
+        #[derive(Copy, Clone, Default)]
         #[allow(dead_code)] // written by the WU, read back post-run as raw u32 for the hash
         struct $outv(u32);
 
@@ -107,14 +107,14 @@ def_chain!(In3, Out3, H3);
 macro_rules! build_sched {
     ($provider:expr, $n:expr) => {
         Scheduler::builder()
-            .with(Column::<In0>::new())
-            .with(Column::<In1>::new())
-            .with(Column::<In2>::new())
-            .with(Column::<In3>::new())
-            .with(Column::<Out0>::new())
-            .with(Column::<Out1>::new())
-            .with(Column::<Out2>::new())
-            .with(Column::<Out3>::new())
+            .with(Column::<In0>::start())
+            .with(Column::<In1>::start())
+            .with(Column::<In2>::start())
+            .with(Column::<In3>::start())
+            .with(Column::<Out0>::start())
+            .with(Column::<Out1>::start())
+            .with(Column::<Out2>::start())
+            .with(Column::<Out3>::start())
             .with(H0)
             .with(H1)
             .with(H2)

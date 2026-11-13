@@ -24,7 +24,7 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
-use hilavitkutin_api::store::Column;
+use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_api::{ReadVals, RecordOp, WriteVals, rec};
 
@@ -46,19 +46,19 @@ pub const NAME: &str = "element_wise";
 // The host pre-populates In[i] = i (the global record index); WorkUnits
 // transform element-wise and never synthesise a value from the record's global
 // position (each yields morsel-relative indices).
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Inv(u32);
 // The fold takes a unit whose value function returns for a column listed
 // bare, and such a column's value type is `PartialEq`. The fused unit and
 // the four `execute` bodies write by position, which stores and does not
 // compare, so the measured loop carries no compare.
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Default)]
 struct Av(u32);
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Default)]
 struct Bv(u32);
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Default)]
 struct Cv(u32);
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Default)]
 #[allow(dead_code)] // written by S4, read back post-run as raw u32 for the hash
 struct Dv(u32);
 
@@ -207,11 +207,11 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
     let eng_startup = bench(warmup, iters, || {
         let provider = HeapBump::new(arena_bytes(5, n));
         let scheduler = Scheduler::builder()
-            .with(Column::<Dv>::new())
-            .with(Column::<Cv>::new())
-            .with(Column::<Bv>::new())
-            .with(Column::<Av>::new())
-            .with(Column::<Inv>::new())
+            .with(Column::<Dv>::start())
+            .with(Column::<Cv>::start())
+            .with(Column::<Bv>::start())
+            .with(Column::<Av>::start())
+            .with(Column::<Inv>::start())
             .with(S1)
             .with(S2)
             .with(S3)
@@ -232,11 +232,11 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
     // ----- runtime engine: build once, run many -----
     let provider = HeapBump::new(arena_bytes(5, n));
     let mut sched = Scheduler::builder()
-        .with(Column::<Dv>::new())
-        .with(Column::<Cv>::new())
-        .with(Column::<Bv>::new())
-        .with(Column::<Av>::new())
-        .with(Column::<Inv>::new())
+        .with(Column::<Dv>::start())
+        .with(Column::<Cv>::start())
+        .with(Column::<Bv>::start())
+        .with(Column::<Av>::start())
+        .with(Column::<Inv>::start())
         .with(S1)
         .with(S2)
         .with(S3)

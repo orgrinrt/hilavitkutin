@@ -30,7 +30,7 @@ use hilavitkutin_api::context::{
     ResourceProviderApi,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::{Column, Resource};
+use hilavitkutin_api::store::{Column, Resource, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
@@ -107,7 +107,7 @@ impl hilavitkutin_api::footprint::ResourceFootprint for Zst {
 // One column unit so the scheduler has a dispatchable carrier; it reads
 // nothing and writes its own column, unrelated to the swapped resources
 // (the swap-of-an-unread-resource case rides every test below).
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Out(u32);
 
 type WriteOut = Cons<Column<Out>, Empty>;
@@ -192,7 +192,7 @@ fn double_swap_before_run_last_value_wins() {
 // Reads the zero-sized resource and writes its own column, counting its
 // executions. A swap of the resource must seed this unit for the next frame;
 // that is the only thing a zero-sized swap can be observed to do.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct ZOut(u32);
 
 type ReadZst = Cons<Resource<Zst>, Empty>;
@@ -253,7 +253,7 @@ fn zst_swap_seeds_its_reader_for_the_next_frame() {
     let provider = BumpProvider::<32768>::new();
     let mut scheduler = Scheduler::builder()
         .with(Resource::new(Zst))
-        .with(Column::<ZOut>::new())
+        .with(Column::<ZOut>::start())
         .with(ZstReaderWu)
         .build(store(provider), USize(RECORDS))
         .unwrap_or_else(|_| panic!("build should succeed"));
@@ -317,7 +317,7 @@ fn replace_resource_opens_the_plan_band_replace_value_does_not() {
     let mut scheduler = Scheduler::builder()
         .with(Resource::new(Val(5)))
         .with(Resource::new(Cfgish(1)))
-        .with(Column::<Out>::new())
+        .with(Column::<Out>::start())
         .with(FillWu)
         .build(store(provider), USize(RECORDS))
         .unwrap_or_else(|_| panic!("build should succeed"));

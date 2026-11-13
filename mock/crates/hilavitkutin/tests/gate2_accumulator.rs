@@ -42,7 +42,7 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::{Accum, Column};
+use hilavitkutin_api::store::{Accum, Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
@@ -86,7 +86,7 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
 
 const N: usize = 256;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Inv(u32);
 #[derive(Copy, Clone)]
 struct Av(u32);
@@ -143,7 +143,7 @@ macro_rules! build_and_seed {
     ($provider:expr) => {{
         let scheduler = Scheduler::builder()
             .with(Accum::<Av>::new())
-            .with(Column::<Inv>::new())
+            .with(Column::<Inv>::start())
             .with(KeepWu)
             .build(store($provider), USize(N))
             .unwrap_or_else(|_| panic!("build should succeed"));
@@ -228,7 +228,7 @@ fn run_parallel_accumulator_matches_single_core() {
 // accumulator region is still sized from that slice. This exists to find out
 // whether that configuration can be built and run, not to assert a conclusion.
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Sv(u32);
 
 type ColSide = Cons<Column<Sv>, Empty>;
@@ -273,8 +273,8 @@ fn accumulator_in_a_two_trunk_phase_matches_single_core() {
     let provider = BumpProvider::<16384>::new();
     let scheduler = Scheduler::builder()
         .with(Accum::<Av>::new())
-        .with(Column::<Inv>::new())
-        .with(Column::<Sv>::new())
+        .with(Column::<Inv>::start())
+        .with(Column::<Sv>::start())
         .with(KeepWu)
         .with(SideWu)
         .build(store(provider), USize(N))

@@ -65,7 +65,7 @@ use crate::plan::grouping::{BundleMasks, reach_reads_write_nothing};
 /// }
 ///
 /// let _ = Scheduler::builder()
-///     .with(Column::<Height>::new())
+///     .with(Column::<Height>::start_from(Height(0)))
 ///     .with(Smooth)
 ///     .build(NullColumnStorage, USize(4));
 /// ```
@@ -126,8 +126,8 @@ use crate::plan::grouping::{BundleMasks, reach_reads_write_nothing};
 /// }
 ///
 /// let _ = Scheduler::builder()
-///     .with(Column::<Height>::new())
-///     .with(Column::<Smoothed>::new())
+///     .with(Column::<Height>::start_from(Height(0)))
+///     .with(Column::<Smoothed>::start_from(Smoothed(0)))
 ///     .with(Smooth)
 ///     .build(NullColumnStorage, USize(4));
 /// ```

@@ -41,7 +41,7 @@ use hilavitkutin_api::context::{
 use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
 use hilavitkutin_api::meta::SchedulerMetrics;
 use hilavitkutin_api::run_cfg::{PassStart, ScheduleEnd};
-use hilavitkutin_api::store::{Accum, Column};
+use hilavitkutin_api::store::{Accum, Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, HasSchedule, OnMeta, WorkUnit};
 use hilavitkutin_api::{Differs, Written, rec};
 use hilavitkutin_providers::ArenaColumnStorage;
@@ -51,13 +51,13 @@ use stable_provider::StableProvider;
 const RECORDS: usize = 600;
 const SENTINEL: u32 = 0xDEAD;
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug, Default)]
 struct Slot(u32);
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug, Default)]
 struct Height(u32);
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug, Default)]
 struct Seen(u32);
 
 /// A queued change: the record to write and the value to write there.
@@ -258,9 +258,9 @@ macro_rules! close_on_one_core {
         fn $test() {
             let execs = counter();
             let mut scheduler = Scheduler::builder()
-                .with(Column::<Slot>::new())
-                .with(Column::<Height>::new())
-                .with(Column::<Seen>::new())
+                .with(Column::<Slot>::start())
+                .with(Column::<Height>::start())
+                .with(Column::<Seen>::start())
                 .with(Accum::<Change>::new())
                 .with($close(execs))
                 .with(Emit)
@@ -343,9 +343,9 @@ macro_rules! close_across_workers {
         fn $test() {
             let execs = counter();
             let scheduler = Scheduler::builder()
-                .with(Column::<Slot>::new())
-                .with(Column::<Height>::new())
-                .with(Column::<Seen>::new())
+                .with(Column::<Slot>::start())
+                .with(Column::<Height>::start())
+                .with(Column::<Seen>::start())
                 .with(Accum::<Change>::new())
                 .with(Emit)
                 .with(Watch)
@@ -430,8 +430,8 @@ impl WorkUnit<OnMeta<ScheduleEnd>> for Collect {
 
 fn collected<const W: usize>() -> Vec<u32> {
     let scheduler = Scheduler::builder()
-        .with(Column::<Slot>::new())
-        .with(Column::<Seen>::new())
+        .with(Column::<Slot>::start())
+        .with(Column::<Seen>::start())
         .with(Accum::<Change>::new())
         .with(Emit)
         .with(Collect)
@@ -546,8 +546,8 @@ impl WorkUnit<OnMeta<ScheduleEnd>> for Tally {
 fn a_leading_band_s_write_reaches_its_readers_in_the_same_pass() {
     let execs = counter();
     let mut scheduler = Scheduler::builder()
-        .with(Column::<Height>::new())
-        .with(Column::<Seen>::new())
+        .with(Column::<Height>::start())
+        .with(Column::<Seen>::start())
         .with(Setup(execs))
         .with(Watch)
         .build(store(), USize(RECORDS))
@@ -582,8 +582,8 @@ fn a_reader_registered_ahead_of_a_leading_band_s_writer_follows_it_all_the_same(
     // registration, so the setup still runs before the reader registered
     // ahead of it, and the reader sees the setup's write of the same pass.
     let mut scheduler = Scheduler::builder()
-        .with(Column::<Height>::new())
-        .with(Column::<Seen>::new())
+        .with(Column::<Height>::start())
+        .with(Column::<Seen>::start())
         .with(Watch)
         .with(Setup(counter()))
         .build(store(), USize(RECORDS))
@@ -632,9 +632,9 @@ impl WorkUnit<Always> for Lift {
 #[test]
 fn a_reader_registered_ahead_of_a_writer_of_its_own_rank_is_refused() {
     let built = Scheduler::builder()
-        .with(Column::<Slot>::new())
-        .with(Column::<Height>::new())
-        .with(Column::<Seen>::new())
+        .with(Column::<Slot>::start())
+        .with(Column::<Height>::start())
+        .with(Column::<Seen>::start())
         .with(Watch)
         .with(Lift)
         .build(store(), USize(RECORDS));
@@ -658,9 +658,9 @@ macro_rules! bands_on_the_phase_loop {
             let setups = counter();
             let closes = counter();
             let scheduler = Scheduler::builder()
-                .with(Column::<Height>::new())
-                .with(Column::<Seen>::new())
-                .with(Column::<Slot>::new())
+                .with(Column::<Height>::start())
+                .with(Column::<Seen>::start())
+                .with(Column::<Slot>::start())
                 .with(Setup(setups))
                 .with(Watch)
                 .with(Tally(closes))

@@ -18,10 +18,11 @@ fn compile_error_fixtures() {
     t.compile_fail("tests/trybuild/map_bare_incomparable.rs");
     t.compile_fail("tests/trybuild/map_reads_an_accumulator.rs");
     t.compile_fail("tests/trybuild/read_undeclared.rs");
-    // What a buffered column is registered with. The refusal of `start` on
+    // What a column is registered with, plain or buffered. The refusal of `start` on
     // an element type with neither a constructor nor a default is a
     // `compile_fail` doctest on `Buffered::start`: the compiler's message
     // there points into the checkout of a dependency, which a `.stderr`
     // file cannot hold across machines.
     t.compile_fail("tests/trybuild/buffered_marker_registered.rs");
+    t.compile_fail("tests/trybuild/column_marker_registered.rs");
 }

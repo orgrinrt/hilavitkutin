@@ -381,9 +381,9 @@ fn a_poisoned_live_side_never_reaches_the_phase_loop() {
 macro_rules! warm_and_fade {
     ($entry:ident) => {{
         let mut scheduler = Scheduler::builder()
-            .with(Column::<Pos>::new())
-            .with(Column::<Glow>::new())
-            .with(Column::<Ash>::new())
+            .with(Column::<Pos>::start_from(Pos(common::num(0))))
+            .with(Column::<Glow>::start_from(Glow(common::num(0))))
+            .with(Column::<Ash>::start_from(Ash(common::num(0))))
             .with(Warm)
             .with(Fade)
             .build(store(), RECORDS)

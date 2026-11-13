@@ -68,7 +68,7 @@ impl<Wus, Stores, Platform, Vals: StoreValues, WuVals, Clk>
     /// Register one provider on the scheduler.
     ///
     /// Accepts any `P: BuilderInput`: WorkUnit unit-structs, Kits,
-    /// `Resource::new(value)`, `Column::<T>::new()`,
+    /// `Resource::new(value)`, `Column::<T>::start()`,
     /// `Virtual::<T>::new()`, `ExtensionSurface::<TraitFamily>::new()`,
     /// and platform impls. The per-kind typestate update flows through
     /// `P::Dispatch` and lands on the appropriate accumulator. The

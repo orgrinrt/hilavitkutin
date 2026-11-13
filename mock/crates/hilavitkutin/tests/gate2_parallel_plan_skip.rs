@@ -39,7 +39,7 @@ use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{ColumnWriterApi, EachApi, HasColumnWriter, HasEach};
 use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::run_cfg::PlanStage;
-use hilavitkutin_api::store::Column;
+use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, HasSchedule, OnMeta, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
@@ -85,9 +85,9 @@ const N: usize = 8;
 
 static PLAN_RUNS: AtomicUsize = AtomicUsize::new(0);
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Pv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)] // written by the consumer, read back post-run as raw u32
 struct Av(u32);
 
@@ -158,8 +158,8 @@ fn worker_phase_loop_skips_plan_band_on_clean_frame() {
     PLAN_RUNS.store(0, Ordering::Relaxed);
     let provider = BumpProvider::<16384>::new();
     let scheduler = Scheduler::builder()
-        .with(Column::<Pv>::new())
-        .with(Column::<Av>::new())
+        .with(Column::<Pv>::start())
+        .with(Column::<Av>::start())
         .with(PlanWu)
         .with(ConsumerWu)
         .build(store(provider), USize(N))

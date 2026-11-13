@@ -60,7 +60,7 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::{Accum, Column};
+use hilavitkutin_api::store::{Accum, Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
@@ -80,7 +80,7 @@ const PRODUCER_TAG: u8 = 0;
 const CONSUMER_TAG: u8 = 1;
 const APPENDER_TAG: u8 = 2;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)]
 struct Cv(u32);
 #[derive(Copy, Clone)]
@@ -206,7 +206,7 @@ fn mixed_plan_dispatches_whole_carrier_flat() {
     DISPATCH_ORDER.with(|o| o.borrow_mut().clear());
     let provider = StableProvider::new(32768);
     let mut scheduler = Scheduler::builder()
-        .with(Column::<Cv>::new())
+        .with(Column::<Cv>::start())
         .with(Accum::<Av>::new())
         .with(ProducerWu)
         .with(ConsumerWu)

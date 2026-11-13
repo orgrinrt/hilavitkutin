@@ -293,16 +293,19 @@ macro_rules! scheduled {
         use hilavitkutin_frozen_authors::*;
 
         let scheduler = $builder
-            .with(Column::<Pos>::new())
-            .with(Column::<Vel>::new())
+            .with(Column::<Pos>::start_from(Pos($crate::common::num(0))))
+            .with(Column::<Vel>::start_from(Vel($crate::common::num(0))))
             .with(Field::start_from(Heat($crate::common::num(0))))
-            .with(Column::<Edge>::new())
+            .with(Column::<Edge>::start_from(Edge {
+                west: arvo::Bool(false),
+                east: arvo::Bool(false),
+            }))
             .with(Virtual::<Overheat>::new())
-            .with(Column::<Alarms>::new())
+            .with(Column::<Alarms>::start_from(Alarms($crate::common::num(0))))
             .with(Pool::start_from(Level($crate::common::num(0))))
-            .with(Column::<Peak>::new())
-            .with(Column::<Glow>::new())
-            .with(Column::<Ash>::new())
+            .with(Column::<Peak>::start_from(Peak($crate::common::num(0))))
+            .with(Column::<Glow>::start_from(Glow($crate::common::num(0))))
+            .with(Column::<Ash>::start_from(Ash($crate::common::num(0))))
             $(.with($unit))+
             .build($crate::common::store(), RECORDS)
             .unwrap_or_else(|_| panic!("the units build"));

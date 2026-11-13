@@ -39,7 +39,7 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::platform::{MemoryProviderApi, ThreadPoolApi};
-use hilavitkutin_api::store::Column;
+use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
@@ -86,13 +86,13 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
 
 const N: usize = 4;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Inv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Av(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Bv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)] // written by Combiner, read back post-run as raw u32
 struct Zv(u32);
 
@@ -234,10 +234,10 @@ impl ThreadPoolApi for CountingPool {
 fn run_parallel_threaded_fan_in_is_correct() {
     let provider = BumpProvider::<16384>::new();
     let scheduler = Scheduler::builder()
-        .with(Column::<Inv>::new())
-        .with(Column::<Av>::new())
-        .with(Column::<Bv>::new())
-        .with(Column::<Zv>::new())
+        .with(Column::<Inv>::start())
+        .with(Column::<Av>::start())
+        .with(Column::<Bv>::start())
+        .with(Column::<Zv>::start())
         .with(ProducerA)
         .with(ProducerB)
         .with(Combiner)
@@ -286,10 +286,10 @@ fn run_parallel_threaded_fan_in_is_correct() {
 fn run_parallel_spawns_the_pool_once_across_frames() {
     let provider = BumpProvider::<16384>::new();
     let scheduler = Scheduler::builder()
-        .with(Column::<Inv>::new())
-        .with(Column::<Av>::new())
-        .with(Column::<Bv>::new())
-        .with(Column::<Zv>::new())
+        .with(Column::<Inv>::start())
+        .with(Column::<Av>::start())
+        .with(Column::<Bv>::start())
+        .with(Column::<Zv>::start())
         .with(ProducerA)
         .with(ProducerB)
         .with(Combiner)
@@ -338,17 +338,17 @@ fn run_parallel_spawns_the_pool_once_across_frames() {
 // Sink fan-in (waist 2). Per record i: P1=2i, P2=3i, Mid=5i, Q1=5i, Q2=10i,
 // Sink=15i.
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct P1v(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct P2v(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Mv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Q1v(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Q2v(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)] // written by Sink, read back post-run as raw u32
 struct Sv(u32);
 
@@ -542,9 +542,9 @@ impl WorkUnit<Always> for Sink {
 // fixture cannot. A combiner in phase 1 reads all three. Per record i:
 // Av=10i, Bv=100i, Cv=1000i, Wv=1110i.
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Cv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)] // written by Combiner3, read back post-run as raw u32
 struct Wv(u32);
 
@@ -616,11 +616,11 @@ impl WorkUnit<Always> for Combiner3 {
 fn run_parallel_three_trunks_two_cores_matches_single_core() {
     let provider = BumpProvider::<32768>::new();
     let scheduler = Scheduler::builder()
-        .with(Column::<Inv>::new())
-        .with(Column::<Av>::new())
-        .with(Column::<Bv>::new())
-        .with(Column::<Cv>::new())
-        .with(Column::<Wv>::new())
+        .with(Column::<Inv>::start())
+        .with(Column::<Av>::start())
+        .with(Column::<Bv>::start())
+        .with(Column::<Cv>::start())
+        .with(Column::<Wv>::start())
         .with(ProducerA)
         .with(ProducerB)
         .with(ProducerC)
@@ -675,13 +675,13 @@ fn run_parallel_three_trunks_two_cores_matches_single_core() {
 fn run_parallel_threaded_two_waists_reuses_barrier() {
     let provider = BumpProvider::<32768>::new();
     let scheduler = Scheduler::builder()
-        .with(Column::<Inv>::new())
-        .with(Column::<P1v>::new())
-        .with(Column::<P2v>::new())
-        .with(Column::<Mv>::new())
-        .with(Column::<Q1v>::new())
-        .with(Column::<Q2v>::new())
-        .with(Column::<Sv>::new())
+        .with(Column::<Inv>::start())
+        .with(Column::<P1v>::start())
+        .with(Column::<P2v>::start())
+        .with(Column::<Mv>::start())
+        .with(Column::<Q1v>::start())
+        .with(Column::<Q2v>::start())
+        .with(Column::<Sv>::start())
         .with(P1)
         .with(P2)
         .with(Mid)
@@ -742,9 +742,9 @@ fn run_parallel_threaded_two_waists_reuses_barrier() {
 // it. Five column-disjoint producers against four records reaches a core in that
 // range; every other parallel fixture here tops out at three trunks and cannot.
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Dv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Ev(u32);
 
 type ColD = Cons<Column<Dv>, Empty>;
@@ -831,12 +831,12 @@ impl WorkUnit<Always> for ProducerE {
 fn every_producer_runs_when_cores_outnumber_records() {
     let provider = BumpProvider::<32768>::new();
     let scheduler = Scheduler::builder()
-        .with(Column::<Inv>::new())
-        .with(Column::<Av>::new())
-        .with(Column::<Bv>::new())
-        .with(Column::<Cv>::new())
-        .with(Column::<Dv>::new())
-        .with(Column::<Ev>::new())
+        .with(Column::<Inv>::start())
+        .with(Column::<Av>::start())
+        .with(Column::<Bv>::start())
+        .with(Column::<Cv>::start())
+        .with(Column::<Dv>::start())
+        .with(Column::<Ev>::start())
         .with(ProducerA)
         .with(ProducerB)
         .with(ProducerC)

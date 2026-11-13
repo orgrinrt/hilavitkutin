@@ -45,7 +45,7 @@ use hilavitkutin_api::context::{
     VirtualFirerApi,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::{Column, Virtual};
+use hilavitkutin_api::store::{Column, StartsFromDefault, Virtual};
 use hilavitkutin_api::work_unit::{Always, HasSchedule, On, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 
@@ -93,15 +93,15 @@ const N: usize = 16;
 struct Tick;
 struct Never;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Gate(u32);
 // Distinct sentinel types per consumer so the type-keyed projection resolves
 // each uniquely (three same-typed columns would be ambiguous).
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct RanA(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct RanB(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct RanN(u32);
 
 type WTick = Cons<Virtual<Tick>, Cons<Column<Gate>, Empty>>;
@@ -197,10 +197,10 @@ fn on_consumer_runs_iff_its_virtual_fired() {
     let mut scheduler = Scheduler::builder()
         .with(Virtual::<Tick>::new())
         .with(Virtual::<Never>::new())
-        .with(Column::<Gate>::new())
-        .with(Column::<RanN>::new()) // ConN sentinel
-        .with(Column::<RanB>::new()) // ConB sentinel
-        .with(Column::<RanA>::new()) // ConA sentinel (head of bindings chain)
+        .with(Column::<Gate>::start())
+        .with(Column::<RanN>::start()) // ConN sentinel
+        .with(Column::<RanB>::start()) // ConB sentinel
+        .with(Column::<RanA>::start()) // ConA sentinel (head of bindings chain)
         .with(Producer)
         .with(ConN)
         .with(ConB)

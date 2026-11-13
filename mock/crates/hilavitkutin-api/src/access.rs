@@ -51,7 +51,7 @@ impl<H: Member, T: AccessSet> AccessSet for Cons<H, T> {
 /// failure is reported in this crate's words with the store named.
 #[diagnostic::on_unimplemented(
     message = "store `{Self}` does not contain `{S}`",
-    note = "Register it with `.with(Resource::new(value))`, `.with(Column::<T>::new())`, `.with(Virtual::<T>::new())`, or install a Kit that owns it via `.with(MyKit)`. If `.build()` reports `overflow evaluating the requirement`, declare `#![recursion_limit = \"1024\"]` at your crate root.",
+    note = "Register it with `.with(Resource::new(value))`, `.with(Column::<T>::start())`, `.with(Virtual::<T>::new())`, or install a Kit that owns it via `.with(MyKit)`. If `.build()` reports `overflow evaluating the requirement`, declare `#![recursion_limit = \"1024\"]` at your crate root.",
     note = "In a unit's body the list is the unit's own `type Read` or `type Write`: a positional accessor reaches a store the unit lists there bare. A store read with a reach, and a `Buffered<T, M>` under any member, are reached through the value function."
 )]
 pub trait Holds<S>: List {}
