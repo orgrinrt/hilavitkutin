@@ -22,6 +22,7 @@ use frame_wide::{
     validate_every_arm,
     worker_main,
     workload_for,
+    write_findings,
 };
 use mockspace_bench_harness::{self as harness, BenchManifest, BenchResult, EnvMeta};
 
@@ -121,8 +122,7 @@ fn run_cell(
             cache_path: csv.clone(),
             report_path: findings.clone(),
         };
-        harness::write_report_for_routine(&result, &routine, "warm", &findings)
-            .map_err(|e| e.to_string())?;
+        write_findings(&result, &routine, "warm", &findings)?;
         eprintln!("  regenerated {findings}");
         return Ok(());
     }
@@ -157,8 +157,7 @@ fn run_cell(
     let result = harness::run(&config, &routine, &workload_for(bench))
         .map_err(|e| format!("bench `{bench}` n={n}: {e}"))?;
     harness::write_csv(&result, &csv).map_err(|e| e.to_string())?;
-    harness::write_report_for_routine(&result, &routine, "warm", &findings)
-        .map_err(|e| e.to_string())?;
+    write_findings(&result, &routine, "warm", &findings)?;
     eprintln!("  wrote {csv} and {findings}");
     Ok(())
 }

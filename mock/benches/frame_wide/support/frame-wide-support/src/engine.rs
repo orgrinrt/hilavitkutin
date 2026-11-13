@@ -3,8 +3,9 @@
 //! Two generic units cover all twelve: `Map` reads one column and writes one,
 //! `Join` reads three and writes one. Each registered unit is a distinct
 //! monomorphisation, so each has its own type identity and access set, and the
-//! plan sees the DAG the frame describes: three independent three-stage paths
-//! off the input, a join over their tails, and two independent transforms.
+//! plan sees the DAG the frame describes: three independent three-stage
+//! pipelines off the input, a join over their tails, and two independent
+//! transforms.
 //!
 //! What the bench needs and the engine lacks is built here, named as such:
 //! the heap-backed bump provider, the `ThreadPoolApi` executor over
@@ -126,7 +127,7 @@ impl<KN: Kernel, S: Word, D: Word, const K: u32> WorkUnit<Always> for Map<KN, S,
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: `S` is written for every record before this unit runs
-            // (the input by the host, a chain column by its producer, ordered
+            // (the input by the host, a pipeline column by its producer, ordered
             // before by the RAW edge); `D` is reserved for the record count
             // and written only here; the morsel covers reserved records only.
             let s = unsafe { ctx.reader().read::<S, _>(i) };
@@ -304,14 +305,39 @@ unsafe fn hash_column<T: Word>(base: *const T, n: usize) -> u64 {
 
 /// Build one engine arm for one regime.
 ///
-/// The builder chain is written once, in this macro, and expanded once per
-/// kernel. It cannot be a function generic over the kernel: the scheduler's
-/// type is the output of the chain and `run` carries where-clauses over it,
+/// The builder call sequence is written once, in this macro, and expanded once
+/// per kernel. It cannot be a function generic over the kernel: the scheduler's
+/// type is the output of that sequence and `run` carries where-clauses over it,
 /// which a generic body would have to prove for every kernel and cannot name.
 /// Each expansion is concrete, so they discharge there. The state is a tuple
 /// so the scheduler's type is never written down, and `StateArm` erases it.
+///
+/// The first pipeline's stages come in as a token list rather than written
+/// inline, so the engine negative control is the same builder call sequence
+/// with one `Map` left out of that list and nothing else changed. Stating the
+/// twelve-unit topology twice would defeat the control: a reader could not tell
+/// a deliberate omission from a typo in a second copy.
 macro_rules! engine_arm {
-    ($kn:ty, $n:expr, $parallel:expr) => {{
+    // The first pipeline as the frame describes it: three stages, `In` to `A1`
+    // to `A2` to `A3`.
+    ($kn:ty, $n:expr, $parallel:expr, full) => {
+        engine_arm!(@build $kn, $n, $parallel, [
+            Map::<$kn, In, A1, K_A1>,
+            Map::<$kn, A1, A2, K_A2>,
+            Map::<$kn, A2, A3, K_A3>,
+        ])
+    };
+    // The same pipeline with the `A1` to `A2` stage left out and `A3` taken
+    // from `A1` instead: eleven units where the frame has twelve, and the same
+    // wrong frame `record_without_a2` computes. `Column::<A2>` stays
+    // registered, so the difference from `full` is one `Map` and nothing else.
+    ($kn:ty, $n:expr, $parallel:expr, without_a2) => {
+        engine_arm!(@build $kn, $n, $parallel, [
+            Map::<$kn, In, A1, K_A1>,
+            Map::<$kn, A1, A3, K_A3>,
+        ])
+    };
+    (@build $kn:ty, $n:expr, $parallel:expr, [$($a_stage:ty),+ $(,)?]) => {{
         let n: usize = $n;
         let sched = Scheduler::builder()
             .with(Column::<In>::new())
@@ -327,9 +353,7 @@ macro_rules! engine_arm {
             .with(Column::<Jn>::new())
             .with(Column::<T1>::new())
             .with(Column::<T2>::new())
-            .with(Map::<$kn, In, A1, K_A1>::new())
-            .with(Map::<$kn, A1, A2, K_A2>::new())
-            .with(Map::<$kn, A2, A3, K_A3>::new())
+            $(.with(<$a_stage>::new()))+
             .with(Map::<$kn, In, B1, K_B1>::new())
             .with(Map::<$kn, B1, B2, K_B2>::new())
             .with(Map::<$kn, B2, B3, K_B3>::new())
@@ -390,7 +414,24 @@ macro_rules! engine_arm {
 /// Build the single-core or the parallel engine arm for one regime.
 pub fn build(regime: Regime, n: usize, parallel: bool) -> Box<dyn FrameArm> {
     match regime {
-        Regime::Heavy => engine_arm!(Heavy, n, parallel),
-        Regime::Light => engine_arm!(Light, n, parallel),
+        Regime::Heavy => engine_arm!(Heavy, n, parallel, full),
+        Regime::Light => engine_arm!(Light, n, parallel, full),
+    }
+}
+
+/// Build the engine negative control for one regime: the same twelve-unit
+/// builder call sequence with the first pipeline's second `Map` omitted.
+///
+/// The fused negative control (`record_without_a2`) proves the validation
+/// refuses a wrong frame stated in the `frame_record` switch. It says nothing
+/// about the engine arm, whose topology is stated independently in the builder
+/// call sequence above, and that spelling is the one a reader can least check
+/// by eye: thirteen `Column` lines and twelve `Map` and `Join` lines whose
+/// correctness is in which type parameter sits in which position. This arm is
+/// that spelling with one unit missing, run through the same validation path.
+pub fn build_without_a2(regime: Regime, n: usize) -> Box<dyn FrameArm> {
+    match regime {
+        Regime::Heavy => engine_arm!(Heavy, n, false, without_a2),
+        Regime::Light => engine_arm!(Light, n, false, without_a2),
     }
 }

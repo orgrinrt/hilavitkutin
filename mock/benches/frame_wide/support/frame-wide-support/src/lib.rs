@@ -1,10 +1,10 @@
 //! The `frame_wide` workload, defined once for every arm that runs it.
 //!
-//! One simulation frame over a wide DAG: three independent three-stage chains
-//! off a shared input column, a fan-in stage joining their tails, and two
-//! independent single-stage transforms off the same input. Twelve work units
-//! over thirteen columns, so the engine's plan has real phases, trunks and
-//! fibers to find rather than one linear chain.
+//! One simulation frame over a wide DAG: three independent three-stage
+//! pipelines off a shared input column, a fan-in stage joining their tails, and
+//! two independent single-stage transforms off the same input. Twelve work
+//! units over thirteen columns, so the engine's plan has real phases, trunks
+//! and fibers to find rather than one linear pipeline.
 //!
 //! Every arm computes the same three output columns from the same input, and
 //! the digest over those three columns is what the harness compares byte-exact
@@ -141,14 +141,14 @@ pub const K_J: u32 = 0x7FEB_352D;
 pub const K_T1: u32 = 0x846C_A68B;
 pub const K_T2: u32 = 0xBF58_476D;
 
-/// The fan-in: one record of the join column from the three chain tails.
+/// The fan-in: one record of the join column from the three pipeline tails.
 #[inline(always)]
 pub fn join<KN: Kernel>(a: u32, b: u32, c: u32) -> u32 {
     KN::apply(a ^ b.rotate_left(7) ^ c.rotate_left(19), K_J)
 }
 
-/// The whole frame for one record, fused: the three chains, the join and the
-/// two transforms, returning `(join, t1, t2)`.
+/// The whole frame for one record, fused: the three pipelines, the join and
+/// the two transforms, returning `(join, t1, t2)`.
 ///
 /// This is the reference the hand-written arms run and the thing every other
 /// arm has to agree with. Nothing else states what the frame computes.
@@ -157,7 +157,7 @@ pub fn record<KN: Kernel>(v: u32) -> (u32, u32, u32) {
     frame_record::<KN, false>(v)
 }
 
-/// The negative control: `record` with the second stage of the first chain
+/// The negative control: `record` with the second stage of the first pipeline
 /// dropped, so `a3` is computed from `a1` directly.
 ///
 /// It exists to be rejected. The cross-arm validation is only worth something
@@ -202,7 +202,7 @@ pub fn reference_digest<KN: Kernel>(records: &[u32]) -> FrameOut {
     [j.finish(), t1.finish(), t2.finish()]
 }
 
-/// How many columns the frame reserves: the input, nine chain columns, the
+/// How many columns the frame reserves: the input, nine pipeline columns, the
 /// join column and the two transform columns.
 pub const COLUMNS: usize = 13;
 
@@ -233,10 +233,10 @@ pub struct FrameInput<const N: usize> {
 /// The digest one call writes: the FNV-1a hash of the join column and of the
 /// two transform columns.
 ///
-/// The three chain tails are not hashed directly. A fused arm keeps them in
+/// The three pipeline tails are not hashed directly. A fused arm keeps them in
 /// registers and never materialises them, and hashing them would force it to.
-/// Every chain feeds the join, so a stage dropped anywhere inside a chain
-/// moves the first word, which is what the negative control relies on.
+/// Every pipeline feeds the join, so a stage dropped anywhere inside one moves
+/// the first word, which is what the negative control relies on.
 pub type FrameOut = [u64; 3];
 
 const FNV_OFFSET: u64 = 0xCBF2_9CE4_8422_2325;
@@ -336,9 +336,10 @@ impl<const N: usize, const HEAVY: bool> mockspace_bench_core::Routine for FrameR
 
     /// The by-value constructor. The harness never calls it: the override of
     /// `build_input_bytes` below is its only caller on that path, and a frame
-    /// over millions of records would not fit on the stack here. It stays
-    /// written, and correct, because the trait requires it and a test calling
-    /// it directly at a small `N` is the usual way it gets reached.
+    /// over millions of records would not fit on the stack here.
+    ///
+    /// `the_two_input_builders_agree` holds it to the byte image, so the two
+    /// cannot drift while only one of them is reached by a run.
     fn build_input(seed: u64) -> FrameInput<N> {
         let mut x = seed.wrapping_mul(0x9E37_79B9_7F4A_7C15);
         let mut out = FrameInput {
@@ -401,8 +402,14 @@ impl<const N: usize, const HEAVY: bool> mockspace_bench_core::Routine for FrameR
 /// is measured is the frame and nothing else. Every arm copies the records
 /// into an input buffer of its own in `load`, the engine into its input
 /// column and the others into a `Vec`, so at the start of every frame each
-/// arm's input has just been written and the cache state it starts from is
-/// the same.
+/// arm's input has just been written and is equally hot.
+///
+/// That holds of the input and of nothing else. The arms keep different
+/// working sets between frames and the frame starts on whatever the last one
+/// left: `hand` holds four buffers, `rust_nostd` thirteen, the engine thirteen
+/// columns in its arena, and `rust_std` frees and reallocates its output
+/// vectors every frame. The input is the one part of the cache state that is
+/// the same across arms.
 pub trait FrameArm {
     /// Put the frame's input records in place. Untimed.
     fn load(&mut self, records: &[u32]);
@@ -416,7 +423,7 @@ pub trait FrameArm {
 ///
 /// Every arm is some state plus three operations on it, and one arm's state is
 /// a `Scheduler` whose type cannot be written down: it is the output of a
-/// builder chain over thirteen columns and twelve units. Holding it in a
+/// builder call sequence over thirteen columns and twelve units. Holding it in a
 /// generic field and erasing the whole thing behind `Box<dyn FrameArm>` is
 /// what lets the engine arms and the plain arms share one shape.
 pub struct StateArm<S, L, F, D> {
@@ -480,9 +487,12 @@ pub enum ArmKind {
     RustStd,
     /// The idiomatic std shape threaded with `std::thread::scope`.
     RustStdPar,
-    /// The negative control: the hand path with one chain stage dropped.
+    /// The negative control: the hand path with one pipeline stage dropped.
     /// Never listed in the manifest; it exists to be rejected.
     DropStage,
+    /// The engine negative control: the engine builder call sequence with one
+    /// `Map` omitted. Never listed in the manifest; it exists to be rejected.
+    EngineDropStage,
 }
 
 /// Build one arm for one regime and record count.
@@ -490,6 +500,7 @@ pub fn build_arm(kind: ArmKind, regime: Regime, n: usize) -> Box<dyn FrameArm> {
     match kind {
         ArmKind::Engine => engine::build(regime, n, false),
         ArmKind::EnginePar => engine::build(regime, n, true),
+        ArmKind::EngineDropStage => engine::build_without_a2(regime, n),
         _ => plain::build(kind, regime, n),
     }
 }
@@ -552,4 +563,73 @@ pub fn bench_call<const N: usize>(
         *output = arm.digest();
         call
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use mockspace_bench_core::Routine;
+
+    use super::*;
+
+    /// How many records the round-trip runs over. Small, because
+    /// `build_input` puts the whole column on the stack.
+    const RT: usize = 4096;
+
+    /// Decode the record column out of a byte image the way the harness does.
+    fn records_from_bytes(bytes: &[u8]) -> Vec<u32> {
+        bytes[8 ..]
+            .chunks_exact(4)
+            .map(|c| u32::from_le_bytes([c[0], c[1], c[2], c[3]]))
+            .collect()
+    }
+
+    /// The two input builders have to produce the same input.
+    ///
+    /// Only `build_input_bytes` is reached by a run, so a drift in
+    /// `build_input` would not show anywhere: the doc comment asserting it is
+    /// correct would be the only thing saying so. Both regimes, several seeds,
+    /// and the tag as well as the records, since the tag is what tells a
+    /// variant which sweep it is running under.
+    #[test]
+    fn the_two_input_builders_agree() {
+        for seed in [0u64, 1, 7, 0x9E37_79B9_7F4A_7C15, u64::MAX] {
+            let heavy = <FrameHeavy<RT> as Routine>::build_input(seed);
+            let heavy_bytes = <FrameHeavy<RT> as Routine>::build_input_bytes(seed);
+            assert_eq!(heavy.regime, TAG_HEAVY, "seed {seed}: heavy tag");
+            assert_eq!(
+                u32::from_le_bytes([
+                    heavy_bytes[0],
+                    heavy_bytes[1],
+                    heavy_bytes[2],
+                    heavy_bytes[3],
+                ]),
+                TAG_HEAVY,
+                "seed {seed}: heavy byte-image tag"
+            );
+            assert_eq!(
+                heavy.records.as_slice(),
+                records_from_bytes(&heavy_bytes).as_slice(),
+                "seed {seed}: heavy records"
+            );
+
+            let light = <FrameLight<RT> as Routine>::build_input(seed);
+            let light_bytes = <FrameLight<RT> as Routine>::build_input_bytes(seed);
+            assert_eq!(light.regime, TAG_LIGHT, "seed {seed}: light tag");
+            assert_eq!(
+                light.records.as_slice(),
+                records_from_bytes(&light_bytes).as_slice(),
+                "seed {seed}: light records"
+            );
+        }
+    }
+
+    /// The control for the one above: a stream that differs has to be caught.
+    ///
+    /// Without it, two builders that both returned a zero column would pass.
+    #[test]
+    fn two_seeds_do_not_produce_the_same_records() {
+        let a = <FrameHeavy<RT> as Routine>::build_input(1);
+        let b = <FrameHeavy<RT> as Routine>::build_input(2);
+        assert_ne!(a.records.as_slice(), b.records.as_slice());
+    }
 }

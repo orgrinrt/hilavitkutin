@@ -10,6 +10,13 @@
 //! passes written the way most std code is, `map` and `collect` into fresh
 //! vectors every frame; `rust_std` runs it over all records and `rust_std_par`
 //! over one chunk of records per thread.
+//!
+//! Both chunked arms take their chunk length from `Outs`, which reads the core
+//! budget once when the arm is built. The engine arm spawns its pool once and
+//! pays nothing per frame for it, so a `std::thread::available_parallelism`
+//! call inside the frame closure would be a cost one side of the comparison
+//! carries and the other does not. On Linux that call reads the cgroup files
+//! before `sched_getaffinity`, which is not free.
 
 use crate::engine::threads;
 use crate::{
@@ -39,21 +46,24 @@ use crate::{
 };
 
 /// The input buffer and the three output columns, which every plain arm
-/// keeps between calls.
+/// keeps between calls, plus the chunk length the threaded arms split on.
 struct Outs {
-    inp: Vec<u32>,
-    j:   Vec<u32>,
-    t1:  Vec<u32>,
-    t2:  Vec<u32>,
+    inp:   Vec<u32>,
+    j:     Vec<u32>,
+    t1:    Vec<u32>,
+    t2:    Vec<u32>,
+    /// Records per thread, read once here rather than once per frame.
+    chunk: usize,
 }
 
 impl Outs {
     fn new(n: usize) -> Self {
         Self {
-            inp: vec![0; n],
-            j:   vec![0; n],
-            t1:  vec![0; n],
-            t2:  vec![0; n],
+            inp:   vec![0; n],
+            j:     vec![0; n],
+            t1:    vec![0; n],
+            t2:    vec![0; n],
+            chunk: n.div_ceil(threads()).max(1),
         }
     }
 
@@ -97,7 +107,7 @@ fn fused_range<R: Fn(u32) -> (u32, u32, u32)>(
 
 /// The fused frame split into one contiguous chunk of records per thread.
 fn fused_par<R: Fn(u32) -> (u32, u32, u32) + Copy + Send>(rec: R, o: &mut Outs) {
-    let chunk = o.inp.len().div_ceil(threads()).max(1);
+    let chunk = o.chunk;
     std::thread::scope(|sc| {
         for (((inp, j), t1), t2) in o
             .inp
@@ -113,7 +123,7 @@ fn fused_par<R: Fn(u32) -> (u32, u32, u32) + Copy + Send>(rec: R, o: &mut Outs) 
 
 // ----- the preallocated column shape -----
 
-/// The nine chain columns `rust_nostd` materialises, allocated once.
+/// The nine pipeline columns `rust_nostd` materialises, allocated once.
 struct Mid {
     a1: Vec<u32>,
     a2: Vec<u32>,
@@ -198,34 +208,35 @@ fn columns_collected<KN: Kernel>(inp: &[u32]) -> [Vec<u32>; 3] {
     [j, collect::<KN>(inp, K_T1), collect::<KN>(inp, K_T2)]
 }
 
-/// The collected shape over one chunk of records per thread, each chunk's
-/// columns copied into place once its thread returns.
+/// The collected shape over one chunk of records per thread, each thread
+/// writing its own chunk of the three output columns.
+///
+/// The copy out of the collected vectors stays, because collecting into fresh
+/// vectors every frame is what this arm is the bar for: `rust_std` ends a frame
+/// holding three new vectors and moves them into place, and a chunked form has
+/// nothing to move into, since the outputs are one allocation each. What
+/// changed is where the copy runs. It was serial on the calling thread after
+/// every chunk had been joined; it now runs on the thread that produced the
+/// chunk, as `fused_par` writes its own chunk, so the one piece of per-chunk
+/// work the arm cannot shed is spread like the rest of it.
 fn columns_collected_par<KN: Kernel>(o: &mut Outs) {
-    let chunk = o.inp.len().div_ceil(threads()).max(1);
-    let parts: Vec<[Vec<u32>; 3]> = std::thread::scope(|sc| {
-        let handles: Vec<_> = o
+    let chunk = o.chunk;
+    std::thread::scope(|sc| {
+        for (((inp, j), t1), t2) in o
             .inp
             .chunks(chunk)
-            .map(|inp| sc.spawn(move || columns_collected::<KN>(inp)))
-            .collect();
-        handles
-            .into_iter()
-            .map(|h| {
-                h.join()
-                    .expect("frame_wide: a rust_std_par thread panicked")
-            })
-            .collect()
+            .zip(o.j.chunks_mut(chunk))
+            .zip(o.t1.chunks_mut(chunk))
+            .zip(o.t2.chunks_mut(chunk))
+        {
+            sc.spawn(move || {
+                let [pj, pt1, pt2] = columns_collected::<KN>(inp);
+                j.copy_from_slice(&pj);
+                t1.copy_from_slice(&pt1);
+                t2.copy_from_slice(&pt2);
+            });
+        }
     });
-    for (((part, j), t1), t2) in parts
-        .iter()
-        .zip(o.j.chunks_mut(chunk))
-        .zip(o.t1.chunks_mut(chunk))
-        .zip(o.t2.chunks_mut(chunk))
-    {
-        j.copy_from_slice(&part[0]);
-        t1.copy_from_slice(&part[1]);
-        t2.copy_from_slice(&part[2]);
-    }
 }
 
 // ----- the arms -----
@@ -295,8 +306,8 @@ fn build_for<KN: Kernel + Send>(kind: ArmKind, n: usize) -> Box<dyn FrameArm> {
                 digest,
             ))
         },
-        ArmKind::Engine | ArmKind::EnginePar => {
-            unreachable!("frame_wide: the engine arms are built by `engine::build`")
+        ArmKind::Engine | ArmKind::EnginePar | ArmKind::EngineDropStage => {
+            unreachable!("frame_wide: the engine arms are built in `engine`")
         },
     }
 }

@@ -21,6 +21,14 @@
 # `--n` restricts the run to one record count and `--only <sweep>` to one
 # sweep. With neither, every configured cell runs, which at the large counts is
 # hours of machine time.
+#
+# Correctness first, every time: `./run-checks.sh` builds the member and runs
+# the grouping test, the support crate's unit tests and the negative controls.
+# A timing taken without it has not been shown to compute the frame.
+#
+# A median says how long a frame took, not how much machine it took.
+# `./occupancy.sh <arm>` prints the cores one arm actually runs on, and the
+# parallel arms are read with both numbers or neither.
 
 # Sized for a frame measured in milliseconds, not nanoseconds: a sample is the
 # mean of `batch_size` calls, a worker yields `runs_per_pass / batch_size`

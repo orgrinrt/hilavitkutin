@@ -1,0 +1,21 @@
+[package]
+name = "fw_engine_drop_stage"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# The engine negative control. Never listed in `bench.toml`: it is built and run
+# only by `tests/negative_control.rs`, which shows the cross-arm validation
+# refusing it. The engine arm states the frame's twelve-unit topology in a
+# builder call sequence of its own, which the fused control does not reach; this
+# arm is that sequence with one `Map` omitted. See `engine::build_without_a2` in
+# the support crate.
+[lib]
+name = "fw_engine_drop_stage"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+frame-wide-support = { path = "../../support/frame-wide-support" }
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev", features = ["std"] }
+mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev" }

@@ -1,5 +1,5 @@
 //! `drop_stage`: the negative control, the hand path with the second stage of
-//! the first chain dropped. It exists to be rejected by validation.
+//! the first pipeline dropped. It exists to be rejected by validation.
 
 use frame_wide_support::{ArmKind, FrameInput, FrameOut, bench_call};
 use mockspace_bench_core::FfiBenchCall;

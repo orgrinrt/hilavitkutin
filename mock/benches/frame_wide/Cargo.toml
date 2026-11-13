@@ -32,10 +32,25 @@ name = "negative_control"
 path = "tests/negative_control.rs"
 harness = false
 
+# What the engine's plan makes of this frame: the phase and trunk of every
+# unit and the mask each core is handed, read out of the engine's own grouping.
+# Pure compile-time analysis, so it runs in milliseconds and needs no dylib.
+[[test]]
+name = "engine_grouping"
+path = "tests/engine_grouping.rs"
+
 [dependencies]
 frame-wide-support = { path = "support/frame-wide-support" }
 mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev", features = ["std"] }
 mockspace-bench-harness = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev" }
+
+# `engine_grouping` reaches the engine's grouping directly. The arms reach it
+# only through `frame-wide-support`, so these are test-only.
+[dev-dependencies]
+hilavitkutin = { path = "../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../crates/hilavitkutin-api" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
+arvo-bitmask = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
 
 [profile.release]
 opt-level = 3

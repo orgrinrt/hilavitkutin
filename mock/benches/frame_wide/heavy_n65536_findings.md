@@ -1,131 +1,177 @@
+## Before the numbers
+
+Nothing in this file is a verdict on any arm, and no delta below is a reason to
+use one arm over another.
+
+The engine arms measure the engine without its headline features. Op, on 13
+November: the engine arms measure something that "doesn't yet include any of
+the actual headline features like fusing and the adaptive trunk/fiber/morsel
+crunching on the datadlow-ish schedule. It's bare bones, barely lowers to
+anything interesting yet. So no calls should be made based on those yet, they
+are a baseline to compare against then." An engine number here is a baseline
+for a later comparison and decides nothing.
+
+Every delta below is taken against `hand`, the hand-written fused path, rather
+than against an engine arm. The bench matrix names `hand` as the bar the engine
+is measured against, so a row against it says how far an arm is from what a
+person writes for this workload. Where the report says the baseline is the
+slowest variant and reads as picked by accident, it was not: it is set in this
+member's driver, on purpose, and is meant to be the bar whether it wins or
+loses. Do not re-baseline on whichever arm happens to be fastest.
+
+The lines under each highlight that call a large delta a reason to switch, or a
+dominant winner a safe default pick, are the harness's stock phrasing for any
+dataset. They are not a judgement about these arms and should be read as
+describing the shape of the numbers, nothing more.
+
+A median here is wall-clock time and carries nothing about how many cores an
+arm used to reach it. Two arms with the same median are not the same cost if
+one of them ran on one core and the other on two. The occupancy of every
+parallel arm is measured separately and stated beside these medians in
+`mock/research/202611131400_frame-wide-first-run.md`. Read the two together or
+neither.
+
+The generated report follows.
+
 # Wide frame, heavy per-record compute
 
 7 variants, 8 samples per variant.
-Baseline: **engine**
+Baseline: **hand**
 
 ## Highlights
 
-Baseline for all deltas below: **engine**. (Deltas are paired `variant - baseline` medians; `*` marks a CI that excludes zero.)
+Baseline for all deltas below: **hand**. (Deltas are paired `variant - baseline` medians; `*` marks a CI that excludes zero.)
 
-### hand_par dominates: 19% faster than the next best (rust_std_par)
+### Baseline (hand) is the SLOWEST variant; every rival beats it
 
-hand_par (1.35 ms) leads rust_std_par (1.61 ms) by 19%, a clear separation rather than a photo finish. CV 14.2%.
+The declared/defaulted baseline hand has the worst median (3.39 ms). Every delta is therefore measured against the worst performer, which flatters all rivals and compresses the differences that matter among them (e.g. fastest hand_par at 1.03 ms).
+
+_Why it matters:_ A baseline picked by accident (often the first variant to run / sort) silently skews every comparison. Re-baseline via `[bench.<name>.normalise]` on a representative variant.
+
+### hand_par dominates: 29% faster than the next best (rust_std_par)
+
+hand_par (1.03 ms) leads rust_std_par (1.34 ms) by 29%, a clear separation rather than a photo finish. CV 7.2%.
 
 _Why it matters:_ A dominant, well-separated winner is a safe default pick for this workload shape.
 
-### hand_par beats baseline by 58% (significant)
+### hand_par beats baseline by 69% (significant)
 
-hand_par is -1.61 ms (58%) faster than baseline engine, with a CI that excludes zero.
+hand_par is -2.35 ms (69%) faster than baseline hand, with a CI that excludes zero.
 
 _Why it matters:_ A large, significant improvement over the current baseline is a concrete reason to switch.
 
-### hand is an outlier: 2.5x slower than the field
+### hand is an outlier: 3.3x slower than the field
 
-hand (3.42 ms) is 2.5x the fastest (1.35 ms), well off the pack.
+hand (3.39 ms) is 3.3x the fastest (1.03 ms), well off the pack.
 
 _Why it matters:_ A >2x outlier is almost never the right choice; if it is intentional (e.g. it buys correctness), say so explicitly.
 
-### rust_std_par shows alternating (throttle bounce) (autocorr -0.50)
+### engine_par shows alternating (throttle bounce) (autocorr -0.50)
 
-rust_std_par's per-pass series has lag-1 autocorrelation -0.50, indicating alternating (throttle bounce). Its timing may not be at steady state.
+engine_par's per-pass series has lag-1 autocorrelation -0.50, indicating alternating (throttle bounce). Its timing may not be at steady state.
 
 _Why it matters:_ Autocorrelated samples violate the independence the CIs assume; the interval is optimistic until the drift is warmed out or cooled down.
 
-### Two tiers: {hand_par, rust_std_par} vs {rust_nostd, engine_par, engine, rust_std, hand} (70% apart)
+### Two tiers: {hand_par, rust_std_par} vs {rust_nostd, rust_std, engine, engine_par, hand} (113% apart)
 
-The field splits into a fast tier {hand_par, rust_std_par} and a slow tier {rust_nostd, engine_par, engine, rust_std, hand} with a 70% jump between them - a qualitative difference, not a gradient.
+The field splits into a fast tier {hand_par, rust_std_par} and a slow tier {rust_nostd, rust_std, engine, engine_par, hand} with a 113% jump between them - a qualitative difference, not a gradient.
 
 _Why it matters:_ A tier split usually reflects a mechanism boundary (branchless vs branch, cached vs not); the tier, not the exact rank, is the finding.
 
-### rust_std_par is inconsistent: worst-20% is 1.6x its best-20%
+### Wide spread: slowest is 3.3x the fastest
 
-rust_std_par's best 20% of batches run at 1.23 ms but its worst 20% at 1.94 ms (1.6x) - a bimodal or bursty profile the median hides.
+Fastest hand_par (1.03 ms) to slowest hand (3.39 ms): 3.3x. The strategy choice matters a lot for this workload.
+
+_Why it matters:_ A wide field means the strategy is load-bearing here; getting it right (or wrong) has large consequences.
+
+### engine_par is inconsistent: worst-20% is 1.6x its best-20%
+
+engine_par's best 20% of batches run at 2.82 ms but its worst 20% at 4.40 ms (1.6x) - a bimodal or bursty profile the median hides.
 
 _Why it matters:_ A fat tail matters for latency budgets even when the median looks fine; a steadier variant may serve better under load.
 
 ## Key findings
 
-- **Fastest: hand_par** at 1351788.0 ns median (-51.6% vs baseline)
-- 2 variants significantly faster than baseline
-- 2 variants significantly slower than baseline
-- Spread: 2.53x (fastest 1351788.0 ns, slowest 3416134.8 ns)
+- **Fastest: hand_par** at 1034137.3 ns median (-69.5% vs baseline)
+- 4 variants significantly faster than baseline
+- Spread: 3.28x (fastest 1034137.3 ns, slowest 3393279.1 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| engine | 2885374ns | 2792300ns | 2625409ns | 2714606ns | 3078441ns | base |
-| engine_par | 2901023ns | 2744711ns | 2514764ns | 2670443ns | 3170522ns | +0.54% |
-| hand | 3412987ns | 3417988ns | 3361582ns | 3391354ns | 3442062ns | +18.29% |
-| hand_par | 1326522ns | 1354166ns | 1076972ns | 1193587ns | 1488610ns | -54.03% |
-| rust_nostd | 2725317ns | 2731503ns | 2652557ns | 2692169ns | 2768368ns | -5.55% |
-| rust_std | 3099261ns | 3057513ns | 2914260ns | 2975684ns | 3238195ns | +7.41% |
-| rust_std_par | 1628988ns | 1612267ns | 1231690ns | 1339867ns | 1945153ns | -43.54% |
+| engine | 2985585ns | 2994843ns | 2628000ns | 2654973ns | 3322940ns | -14.03% |
+| engine_par | 3672269ns | 3015144ns | 2823555ns | 2983720ns | 4400859ns | +5.74% |
+| hand | 3472982ns | 3396858ns | 2711785ns | 3368627ns | 3741547ns | base |
+| hand_par | 1050271ns | 1035695ns | 957076ns | 1016052ns | 1099234ns | -69.76% |
+| rust_nostd | 2893281ns | 2842164ns | 2773197ns | 2813028ns | 2983493ns | -16.69% |
+| rust_std | 3126236ns | 2929479ns | 2799398ns | 2873169ns | 3397746ns | -9.98% |
+| rust_std_par | 1337118ns | 1338001ns | 1108678ns | 1237730ns | 1468769ns | -61.50% |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| engine | 2883793ns | 2624239ns | 3076660ns | base | 0.273 |
-| engine_par | 2898747ns | 2512726ns | 3168187ns | +0.52% | 0.271 |
-| hand | 3411503ns | 3360883ns | 3440353ns | +18.30% | 0.231 |
-| hand_par | 1324417ns | 1075853ns | 1486306ns | -54.07% | 0.594 |
-| rust_nostd | 2723274ns | 2650686ns | 2766373ns | -5.57% | 0.289 |
-| rust_std | 3097105ns | 2911888ns | 3236096ns | +7.40% | 0.254 |
-| rust_std_par | 1626679ns | 1229480ns | 1942892ns | -43.59% | 0.483 |
+| engine | 2984057ns | 2626385ns | 3321253ns | -14.02% | 0.264 |
+| engine_par | 3670100ns | 2821872ns | 4398474ns | +5.75% | 0.214 |
+| hand | 3470566ns | 2710163ns | 3739138ns | base | 0.227 |
+| hand_par | 1048862ns | 956207ns | 1097838ns | -69.78% | 0.750 |
+| rust_nostd | 2890554ns | 2771579ns | 2980052ns | -16.71% | 0.272 |
+| rust_std | 3123922ns | 2796895ns | 3395483ns | -9.99% | 0.252 |
+| rust_std_par | 1335508ns | 1107281ns | 1467094ns | -61.52% | 0.589 |
 
 ## Performance model
 
-- Peak throughput: **0.731 Gops/s** (hand_par; best 20% batches)
+- Peak throughput: **0.822 Gops/s** (hand_par; best 20% batches)
 - Ops per call: 786432
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| engine | 0.282 | 38.5% |
-| engine_par | 0.287 | 39.2% |
-| hand | 0.230 | 31.5% |
-| hand_par | 0.582 | 79.6% |
-| rust_nostd | 0.288 | 39.4% |
-| rust_std | 0.257 | 35.2% |
-| rust_std_par | 0.488 | 66.8% |
+| engine | 0.263 | 31.9% |
+| engine_par | 0.261 | 31.7% |
+| hand | 0.232 | 28.2% |
+| hand_par | 0.760 | 92.5% |
+| rust_nostd | 0.277 | 33.7% |
+| rust_std | 0.269 | 32.7% |
+| rust_std_par | 0.589 | 71.6% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| engine | 2885374ns | 2885374ns | base |
-| engine_par | 2901023ns | 2901023ns | +0.54% |
-| hand | 3412987ns | 3412987ns | +18.29% |
-| hand_par | 1326522ns | 1326522ns | -54.03% |
-| rust_nostd | 2725317ns | 2725317ns | -5.55% |
-| rust_std | 3099261ns | 3099261ns | +7.41% |
-| rust_std_par | 1628988ns | 1628988ns | -43.54% |
+| engine | 2985585ns | 2985585ns | -14.03% |
+| engine_par | 3672269ns | 3672269ns | +5.74% |
+| hand | 3472982ns | 3472982ns | base |
+| hand_par | 1050271ns | 1050271ns | -69.76% |
+| rust_nostd | 2893281ns | 2893281ns | -16.69% |
+| rust_std | 3126236ns | 3126236ns | -9.98% |
+| rust_std_par | 1337118ns | 1337118ns | -61.50% |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| engine | 2790864ns | base | --- | [2640272, 3057535] | --- | --- | --- | --- |
-| engine_par | 2742097ns | no significant difference | [-544808, +711022]ns | [2555314, 3431291] | no | 0.7266 | 0.7266 | 0 |
-| hand | 3416135ns | +615098.5ns (+22.0%) | [+393225, +736645]ns | [3377935, 3445689] | YES (adj: no) | 0.1055 | 0.0703 | 0 |
-| hand_par | 1351788ns | -1613642.7ns (-57.8%) | [-1727842, -1197242]ns | [1124411, 1426997] | YES | 0.0234 | 0.0078 | 0 |
-| rust_nostd | 2729571ns | no significant difference | [-295410, +147081]ns | [2664033, 2771320] | no | 0.7266 | 0.7266 | 0 |
-| rust_std | 3055325ns | +289970.3ns (+10.4%) | [+201162, +480613]ns | [2934683, 3282368] | YES (adj: no) | 0.1055 | 0.0703 | 0 |
-| rust_std_par | 1610005ns | -1248085.6ns (-44.7%) | [-1573325, -761699]ns | [1257315, 2008410] | YES | 0.0234 | 0.0078 | 0 |
+| hand | 3393279ns | base | --- | [3350959, 3857149] | --- | --- | --- | --- |
+| engine | 2993321ns | -407282.1ns (-12.0%) | [-1230764, -20444]ns | [2633009, 3305006] | YES (adj: no) | 0.1055 | 0.0703 | 0 |
+| engine_par | 3012981ns | no significant difference | [-793796, +111709]ns | [2962211, 3229383] | no | 0.2891 | 0.2891 | 0 |
+| hand_par | 1034137ns | -2352721.9ns (-69.3%) | [-2853464, -2132100]ns | [1003685, 1100174] | YES | 0.0234 | 0.0078 | 0 |
+| rust_nostd | 2840323ns | -525080.0ns (-15.5%) | [-1060285, -112946]ns | [2796864, 2958153] | YES (adj: no) | 0.1055 | 0.0703 | 0 |
+| rust_std | 2927264ns | no significant difference | [-546621, +261349]ns | [2860090, 3486453] | no | 0.2891 | 0.2891 | 0 |
+| rust_std_par | 1336216ns | -2262908.1ns (-66.7%) | [-2510385, -1960774]ns | [1140621, 1426300] | YES | 0.0234 | 0.0078 | 0 |
 
 ## Per-pass consistency (nonstop algo, Δ vs baseline)
 
-| Run | Pass | engine | engine_par | hand | hand_par | rust_nostd | rust_std | rust_std_par |
+| Run | Pass | hand | engine | engine_par | hand_par | rust_nostd | rust_std | rust_std_par |
 |---|---|---|---|---|---|---|---|---|
-| 1 | 1 | 2680271ns | +2.3% | +27.8% | -47.3% | +3.2% | +14.0% | -27.8% |
-| 1 | 2 | 2803250ns | +0.9% | +21.5% | -56.7% | -4.5% | +11.1% | -53.8% |
+| 1 | 1 | 3806579ns | -30.8% | -19.8% | -73.6% | -26.5% | -8.9% | -64.9% |
+| 1 | 2 | 3358983ns | -1.7% | -10.9% | -69.2% | -13.4% | -14.4% | -62.3% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
 | engine | -0.500 | moderate- |
-| engine_par | -0.500 | moderate- |
+| engine_par | -0.500 | HIGH- (thermal bounce) |
 | hand | -0.500 | moderate- |
 | hand_par | -0.500 | moderate- |
 | rust_nostd | -0.500 | moderate- |
@@ -134,198 +180,198 @@ _Why it matters:_ A fat tail matters for latency budgets even when the median lo
 
 **Consistency summary:**
 
-- **engine_par**: won 0/2, lost 2/2
-- **hand**: won 0/2, lost 2/2
+- **engine**: won 2/2, lost 0/2
+- **engine_par**: won 2/2, lost 0/2
 - **hand_par**: won 2/2, lost 0/2
-- **rust_nostd**: won 1/2, lost 1/2
-- **rust_std**: won 0/2, lost 2/2
+- **rust_nostd**: won 2/2, lost 0/2
+- **rust_std**: won 2/2, lost 0/2
 - **rust_std_par**: won 2/2, lost 0/2
 
 ## Bridge overhead per variant
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| engine | 991581.9ns | 2883792.7ns | 34.4% | HIGH |
-| engine_par | 1116732.2ns | 2898746.9ns | 38.5% | HIGH |
-| hand | 1013111.4ns | 3411503.3ns | 29.7% | HIGH |
-| hand_par | 995747.0ns | 1324417.2ns | 75.2% | HIGH |
-| rust_nostd | 993519.1ns | 2723273.5ns | 36.5% | HIGH |
-| rust_std | 1040743.7ns | 3097104.7ns | 33.6% | HIGH |
-| rust_std_par | 1031094.4ns | 1626678.5ns | 63.4% | HIGH |
+| engine | 997703.9ns | 2984057.4ns | 33.4% | HIGH |
+| engine_par | 998523.3ns | 3670099.7ns | 27.2% | HIGH |
+| hand | 969887.9ns | 3470566.2ns | 27.9% | HIGH |
+| hand_par | 1006351.2ns | 1048861.6ns | 95.9% | HIGH |
+| rust_nostd | 1041461.6ns | 2890554.2ns | 36.0% | HIGH |
+| rust_std | 1055621.3ns | 3123922.4ns | 33.8% | HIGH |
+| rust_std_par | 1042807.5ns | 1335507.8ns | 78.1% | HIGH |
 
 ## Distribution (algo ns)
 
 ```
-engine (n=8, range 2624238.7-3076659.5 ns)
-  2624238.7 |########################################
-  2646859.7 |
-  2669480.8 |
-  2692101.8 |
-  2714722.9 |####################
-  2737343.9 |
-  2759965.0 |####################
-  2782586.0 |########################################
-  2805207.0 |
-  2827828.1 |
-  2850449.1 |
-  2873070.2 |
-  2895691.2 |
-  2918312.3 |
-  2940933.3 |
-  2963554.3 |
-  2986175.4 |
-  3008796.4 |
-  3031417.5 |
-  3054038.5 |####################
+engine (n=8, range 2626385.4-3321253.0 ns)
+  2626385.4 |########################################
+  2661128.8 |#############
+  2695872.2 |
+  2730615.5 |
+  2765358.9 |
+  2800102.3 |
+  2834845.7 |
+  2869589.1 |
+  2904332.4 |
+  2939075.8 |
+  2973819.2 |
+  3008562.6 |
+  3043306.0 |
+  3078049.3 |
+  3112792.7 |
+  3147536.1 |
+  3182279.5 |
+  3217022.9 |
+  3251766.2 |
+  3286509.6 |########################################
   (0 below, 1 above range)
 
-engine_par (n=8, range 2512726.3-3168186.7 ns)
-  2512726.3 |####################
-  2545499.3 |####################
-  2578272.3 |
-  2611045.4 |
-  2643818.4 |
-  2676591.4 |
-  2709364.4 |########################################
-  2742137.4 |####################
-  2774910.4 |
-  2807683.5 |
-  2840456.5 |
-  2873229.5 |
-  2906002.5 |####################
-  2938775.5 |
-  2971548.6 |
-  3004321.6 |
-  3037094.6 |
-  3069867.6 |
-  3102640.6 |
-  3135413.7 |
-  (0 below, 2 above range)
-
-hand (n=8, range 3360883.4-3440353.4 ns)
-  3360883.4 |########################################
-  3364856.9 |
-  3368830.4 |
-  3372803.9 |
-  3376777.4 |########################################
-  3380750.9 |
-  3384724.4 |########################################
-  3388697.9 |
-  3392671.4 |
-  3396644.9 |
-  3400618.4 |
-  3404591.9 |########################################
-  3408565.4 |
-  3412538.9 |
-  3416512.4 |
-  3420485.9 |
-  3424459.4 |########################################
-  3428432.9 |
-  3432406.4 |
-  3436379.9 |########################################
-  (0 below, 2 above range)
-
-hand_par (n=8, range 1075853.3-1486306.4 ns)
-  1075853.3 |########################################
-  1096376.0 |
-  1116898.6 |########################################
-  1137421.3 |########################################
-  1157943.9 |
-  1178466.6 |
-  1198989.2 |
-  1219511.9 |
-  1240034.6 |
-  1260557.2 |
-  1281079.9 |########################################
-  1301602.5 |
-  1322125.2 |
-  1342647.8 |
-  1363170.5 |
-  1383693.2 |########################################
-  1404215.8 |########################################
-  1424738.5 |########################################
-  1445261.1 |
-  1465783.8 |
+engine_par (n=8, range 2821872.0-4398474.4 ns)
+  2821872.0 |#############
+  2900702.1 |#############
+  2979532.2 |########################################
+  3058362.4 |#############
+  3137192.5 |
+  3216022.6 |#############
+  3294852.7 |
+  3373682.8 |
+  3452513.0 |
+  3531343.1 |
+  3610173.2 |
+  3689003.3 |
+  3767833.4 |
+  3846663.5 |
+  3925493.7 |
+  4004323.8 |
+  4083153.9 |
+  4161984.0 |
+  4240814.1 |
+  4319644.3 |
   (0 below, 1 above range)
 
-rust_nostd (n=8, range 2650686.3-2766372.6 ns)
-  2650686.3 |########################################
-  2656470.6 |
-  2662254.9 |########################################
-  2668039.3 |
-  2673823.6 |
-  2679607.9 |
-  2685392.2 |########################################
-  2691176.5 |
-  2696960.8 |
-  2702745.2 |
-  2708529.5 |
-  2714313.8 |########################################
-  2720098.1 |
-  2725882.4 |
-  2731666.7 |
-  2737451.1 |
-  2743235.4 |########################################
-  2749019.7 |
-  2754804.0 |
-  2760588.3 |########################################
-  (0 below, 2 above range)
-
-rust_std (n=8, range 2911888.3-3236095.6 ns)
-  2911888.3 |########################################
-  2928098.7 |########################################
-  2944309.0 |
-  2960519.4 |
-  2976729.8 |########################################
-  2992940.1 |########################################
-  3009150.5 |
-  3025360.9 |
-  3041571.2 |
-  3057781.6 |
-  3073992.0 |
-  3090202.3 |########################################
-  3106412.7 |
-  3122623.0 |
-  3138833.4 |
-  3155043.8 |
-  3171254.1 |
-  3187464.5 |
-  3203674.9 |
-  3219885.2 |
+hand (n=8, range 2710163.4-3739138.2 ns)
+  2710163.4 |####################
+  2761612.1 |
+  2813060.9 |
+  2864509.6 |
+  2915958.4 |
+  2967407.1 |
+  3018855.8 |
+  3070304.6 |
+  3121753.3 |
+  3173202.1 |
+  3224650.8 |
+  3276099.6 |
+  3327548.3 |########################################
+  3378997.0 |########################################
+  3430445.8 |
+  3481894.5 |
+  3533343.3 |
+  3584792.0 |
+  3636240.7 |
+  3687689.5 |
   (0 below, 3 above range)
 
-rust_std_par (n=8, range 1229480.0-1942892.4 ns)
-  1229480.0 |########################################
-  1265150.6 |
-  1300821.2 |####################
-  1336491.9 |
-  1372162.5 |
-  1407833.1 |####################
-  1443503.7 |
-  1479174.3 |
-  1514844.9 |
-  1550515.6 |
-  1586186.2 |
-  1621856.8 |
-  1657527.4 |
-  1693198.0 |
-  1728868.6 |
-  1764539.3 |####################
-  1800209.9 |
-  1835880.5 |####################
-  1871551.1 |
-  1907221.7 |
+hand_par (n=8, range 956207.1-1097838.1 ns)
+  956207.1 |####################
+  963288.7 |
+  970370.2 |
+  977451.8 |
+  984533.3 |
+  991614.8 |
+  998696.4 |####################
+  1005777.9 |####################
+  1012859.5 |
+  1019941.0 |
+  1027022.6 |####################
+  1034104.1 |########################################
+  1041185.7 |
+  1048267.2 |
+  1055348.8 |
+  1062430.3 |
+  1069511.9 |
+  1076593.4 |
+  1083675.0 |
+  1090756.5 |
   (0 below, 2 above range)
+
+rust_nostd (n=8, range 2771578.7-2980052.2 ns)
+  2771578.7 |####################
+  2782002.4 |
+  2792426.1 |########################################
+  2802849.7 |
+  2813273.4 |
+  2823697.1 |
+  2834120.8 |####################
+  2844544.4 |####################
+  2854968.1 |####################
+  2865391.8 |
+  2875815.5 |
+  2886239.1 |
+  2896662.8 |
+  2907086.5 |
+  2917510.2 |
+  2927933.8 |
+  2938357.5 |
+  2948781.2 |####################
+  2959204.9 |
+  2969628.5 |
+  (0 below, 1 above range)
+
+rust_std (n=8, range 2796895.2-3395483.0 ns)
+  2796895.2 |#############
+  2826824.6 |
+  2856754.0 |########################################
+  2886683.4 |
+  2916612.8 |
+  2946542.1 |#############
+  2976471.5 |
+  3006400.9 |
+  3036330.3 |
+  3066259.7 |
+  3096189.1 |
+  3126118.5 |
+  3156047.9 |
+  3185977.2 |
+  3215906.6 |
+  3245836.0 |
+  3275765.4 |
+  3305694.8 |
+  3335624.2 |
+  3365553.6 |
+  (0 below, 3 above range)
+
+rust_std_par (n=8, range 1107281.2-1467093.5 ns)
+  1107281.2 |########################################
+  1125271.8 |########################################
+  1143262.4 |
+  1161253.0 |
+  1179243.7 |
+  1197234.3 |
+  1215224.9 |
+  1233215.5 |########################################
+  1251206.1 |
+  1269196.7 |
+  1287187.4 |
+  1305178.0 |########################################
+  1323168.6 |
+  1341159.2 |########################################
+  1359149.8 |
+  1377140.4 |########################################
+  1395131.1 |
+  1413121.7 |########################################
+  1431112.3 |
+  1449102.9 |
+  (0 below, 1 above range)
 
 ```
 
 ## Diagnostics
 
-- **engine**: bridge=35.6% of algo (FFI overhead may distort results)
-- **engine_par**: bridge=37.6% of algo (FFI overhead may distort results)
-- **hand**: bridge=29.1% of algo (FFI overhead may distort results)
-- **hand_par**: bridge=73.4% of algo (FFI overhead may distort results)
-- **rust_nostd**: bridge=36.6% of algo (FFI overhead may distort results)
-- **rust_std**: bridge=34.0% of algo (FFI overhead may distort results)
-- **rust_std_par**: CV=20.4% (high variance, measurements may be unstable)
-- **rust_std_par**: bridge=63.7% of algo (FFI overhead may distort results)
+- **engine**: bridge=33.0% of algo (FFI overhead may distort results)
+- **engine_par**: CV=47.3% (high variance, measurements may be unstable)
+- **engine_par**: bridge=33.5% of algo (FFI overhead may distort results)
+- **hand**: bridge=29.5% of algo (FFI overhead may distort results)
+- **hand_par**: bridge=98.9% of algo (FFI overhead may distort results)
+- **rust_nostd**: bridge=36.0% of algo (FFI overhead may distort results)
+- **rust_std**: bridge=36.0% of algo (FFI overhead may distort results)
+- **rust_std_par**: bridge=75.6% of algo (FFI overhead may distort results)
