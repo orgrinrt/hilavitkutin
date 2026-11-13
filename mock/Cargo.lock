@@ -209,6 +209,7 @@ dependencies = [
  "arvo-spectral",
  "arvo-tensor",
  "hilavitkutin-api",
+ "hilavitkutin-build",
  "hilavitkutin-kit",
  "hilavitkutin-providers",
  "libc",
@@ -223,6 +224,7 @@ dependencies = [
  "arvo",
  "arvo-bitmask",
  "arvo-tensor",
+ "hilavitkutin-build",
  "hilavitkutin-ctx",
  "notko",
  "trybuild",
@@ -235,6 +237,7 @@ dependencies = [
  "arvo",
  "arvo-tensor",
  "hilavitkutin-api",
+ "hilavitkutin-build",
  "proc-macro2",
  "quote",
  "syn 2.0.119",
@@ -244,19 +247,22 @@ dependencies = [
 name = "hilavitkutin-build"
 version = "0.1.0"
 dependencies = [
- "arvo",
  "notko",
 ]
 
 [[package]]
 name = "hilavitkutin-ctx"
 version = "0.1.0"
+dependencies = [
+ "hilavitkutin-build",
+]
 
 [[package]]
 name = "hilavitkutin-extensions"
 version = "0.1.0"
 dependencies = [
  "arvo",
+ "hilavitkutin-build",
  "hilavitkutin-linking",
  "notko",
 ]
@@ -265,6 +271,7 @@ dependencies = [
 name = "hilavitkutin-extensions-macros"
 version = "0.1.0"
 dependencies = [
+ "hilavitkutin-build",
  "hilavitkutin-extensions",
  "libloading",
  "proc-macro2",
@@ -278,6 +285,7 @@ name = "hilavitkutin-kit"
 version = "0.1.0"
 dependencies = [
  "hilavitkutin-api",
+ "hilavitkutin-build",
 ]
 
 [[package]]
@@ -286,6 +294,7 @@ version = "0.1.0"
 dependencies = [
  "arvo",
  "arvo-bits",
+ "hilavitkutin-build",
  "libc",
  "notko",
  "windows-sys 0.52.0",
@@ -300,6 +309,7 @@ dependencies = [
  "arvo-hash",
  "arvo-refit",
  "hilavitkutin-api",
+ "hilavitkutin-build",
  "hilavitkutin-str",
  "notko",
 ]
@@ -313,6 +323,7 @@ dependencies = [
  "arvo-tensor",
  "hilavitkutin",
  "hilavitkutin-api",
+ "hilavitkutin-build",
  "hilavitkutin-kit",
  "hilavitkutin-str",
  "notko",
@@ -325,6 +336,7 @@ dependencies = [
  "arvo",
  "arvo-bits",
  "arvo-refit",
+ "hilavitkutin-build",
  "hilavitkutin-sym",
  "notko",
 ]
@@ -335,6 +347,7 @@ version = "0.1.0"
 dependencies = [
  "arvo",
  "arvo-bits",
+ "hilavitkutin-build",
  "notko",
 ]
 

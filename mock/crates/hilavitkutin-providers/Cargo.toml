@@ -17,3 +17,6 @@ hilavitkutin-str.workspace = true
 
 [dev-dependencies]
 hilavitkutin.workspace = true
+
+[build-dependencies]
+hilavitkutin-build.workspace = true
