@@ -2,8 +2,10 @@
 
 use core::marker::PhantomData;
 
+use arvo_tensor::ConstCapacity;
+
+use crate::plan::PlanDims;
 use crate::plan::grouping::{BundleMasks, reach_reads_write_nothing};
-use crate::plan::{DefaultPlanDims, PlanDims};
 
 /// A unit that reads a plain column with a reach does not write that column.
 ///
@@ -129,21 +131,141 @@ use crate::plan::{DefaultPlanDims, PlanDims};
 ///     .with(Smooth)
 ///     .build(NullColumnStorage, USize(4));
 /// ```
-pub(super) struct ReachRule<Wus, Stores, Witnesses>(PhantomData<(Wus, Stores, Witnesses)>);
+///
+/// The rule folds the bundle at the plan dimensions `D` it is handed, the ones
+/// `build` computes the plan at, and names none of its own. Two units that
+/// hold the rule evaluate at dimensions with room for them:
+///
+/// ```
+/// use hilavitkutin::dispatch::engine_ctx::CtxFor;
+/// use hilavitkutin::plan::DefaultPlanDims;
+/// use hilavitkutin::scheduler::ReachRule;
+/// use hilavitkutin_api::access::{Cons, Empty};
+/// use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
+/// use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
+/// use hilavitkutin_api::store::Column;
+/// use hilavitkutin_api::work_unit::WorkUnit;
+///
+/// #[derive(Copy, Clone, PartialEq)]
+/// struct Height(u32);
+///
+/// type Stores = Cons<Column<Height>, Empty>;
+///
+/// macro_rules! writer {
+///     ($name:ident) => {
+///         #[derive(Copy, Clone)]
+///         struct $name;
+///
+///         impl BuilderInput for $name {
+///             type Dispatch = UnitDispatch<Self>;
+///             type Init = Self;
+///         }
+///
+///         impl WorkUnit for $name {
+///             type Ctx<'frame> = CtxFor<'frame, Self::Read, Self::Write>;
+///             type Hint = (Immediate, Atomic, Normal);
+///             type Read = Empty;
+///             type Write = Stores;
+///
+///             fn execute<'frame>(&self, _ctx: &Self::Ctx<'frame>) {}
+///         }
+///     };
+/// }
+///
+/// writer!(First);
+/// writer!(Second);
+///
+/// type Units = Cons<First, Cons<Second, Empty>>;
+///
+/// let () = ReachRule::<Units, Stores, _, DefaultPlanDims>::HOLDS;
+/// ```
+///
+/// At dimensions with room for one unit the same two do not evaluate, since
+/// the fold runs over arrays of the handed capacity:
+///
+/// ```compile_fail,E0080
+/// use arvo::{Bits, Hot, Unsigned};
+/// use arvo_tensor::Dim;
+/// use hilavitkutin::dispatch::engine_ctx::CtxFor;
+/// use hilavitkutin::plan::PlanDims;
+/// use hilavitkutin::scheduler::ReachRule;
+/// use hilavitkutin_api::access::{Cons, Empty};
+/// use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
+/// use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
+/// use hilavitkutin_api::store::Column;
+/// use hilavitkutin_api::work_unit::WorkUnit;
+///
+/// struct Narrow;
+///
+/// impl PlanDims for Narrow {
+///     type AccumsPerCore = Dim<1>;
+///     type AdjRow = Bits<64, Hot, Unsigned>;
+///     type Columns = Dim<1>;
+///     type ColumnsPerFiber = Dim<1>;
+///     type ComponentsPerTrunk = Dim<1>;
+///     type Cores = Dim<1>;
+///     type Edges = Dim<1>;
+///     type Fibers = Dim<1>;
+///     type Lanes = Dim<1>;
+///     type Phases = Dim<1>;
+///     type PlanAffecting = Dim<1>;
+///     type Stores = Dim<1>;
+///     type Trunks = Dim<1>;
+///     type TrunksPerPhase = Dim<1>;
+///     type Units = Dim<1>;
+///     type UnitsPerFiber = Dim<1>;
+/// }
+///
+/// #[derive(Copy, Clone, PartialEq)]
+/// struct Height(u32);
+///
+/// type Stores = Cons<Column<Height>, Empty>;
+///
+/// macro_rules! writer {
+///     ($name:ident) => {
+///         #[derive(Copy, Clone)]
+///         struct $name;
+///
+///         impl BuilderInput for $name {
+///             type Dispatch = UnitDispatch<Self>;
+///             type Init = Self;
+///         }
+///
+///         impl WorkUnit for $name {
+///             type Ctx<'frame> = CtxFor<'frame, Self::Read, Self::Write>;
+///             type Hint = (Immediate, Atomic, Normal);
+///             type Read = Empty;
+///             type Write = Stores;
+///
+///             fn execute<'frame>(&self, _ctx: &Self::Ctx<'frame>) {}
+///         }
+///     };
+/// }
+///
+/// writer!(First);
+/// writer!(Second);
+///
+/// type Units = Cons<First, Cons<Second, Empty>>;
+///
+/// let () = ReachRule::<Units, Stores, _, Narrow>::HOLDS;
+/// ```
+pub struct ReachRule<Wus, Stores, Witnesses, D>(PhantomData<(Wus, Stores, Witnesses, D)>);
 
-impl<Wus, Stores, Witnesses> ReachRule<Wus, Stores, Witnesses>
+impl<Wus, Stores, Witnesses, D> ReachRule<Wus, Stores, Witnesses, D>
 where
-    Wus: const BundleMasks<Stores, Witnesses, <DefaultPlanDims as PlanDims>::Stores>,
+    D: PlanDims,
+    <D as PlanDims>::Units: const ConstCapacity,
+    Wus: const BundleMasks<Stores, Witnesses, <D as PlanDims>::Stores>,
 {
     /// Evaluates only when no unit of `Wus` writes a plain column it reads
     /// with a reach.
-    pub(super) const HOLDS: () = assert!(
+    pub const HOLDS: () = assert!(
         reach_reads_write_nothing::<
             Wus,
             Stores,
             Witnesses,
-            <DefaultPlanDims as PlanDims>::Units,
-            <DefaultPlanDims as PlanDims>::Stores,
+            <D as PlanDims>::Units,
+            <D as PlanDims>::Stores,
         >()
         .0,
         "a unit writes a plain column it reads with a reach. Write the result to another column, or make the column a `Buffered<T, M>`, whose reach read sees the values the last pass left."

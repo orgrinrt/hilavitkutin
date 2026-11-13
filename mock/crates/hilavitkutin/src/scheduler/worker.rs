@@ -19,6 +19,7 @@ use arvo_tensor::ConstCapacity;
 use hilavitkutin_api::ColumnStorage;
 use hilavitkutin_api::run_cfg::RunCfg;
 use hilavitkutin_api::store_values::StoreValues;
+use notko::Maybe;
 
 use super::{Scheduler, WorkerCtx};
 use crate::dispatch::fiber_run::RunFiber;
@@ -30,10 +31,12 @@ use crate::plan::grouping::{
     GATE2_MAX_ACCUMS,
     consumer_mask,
     consumer_phase_end,
+    group_n,
     phase_count,
     plan_phase_count,
     pre_consumer_phase_count,
 };
+use crate::plan::reach_cut::{cut_segments, reach_cuts};
 use crate::resource::bindings::{BindingsFor, CollectAccumCounts, RebaseBindings, accum_slice};
 use crate::thread::barrier::waist_barrier;
 use crate::thread::frame::{frame_await, frame_done_arrive, frame_exit_arrive};
@@ -111,8 +114,9 @@ pub(super) fn worker_main<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>(
             // dispatches the whole carrier ONCE over a per-core bindings copy
             // whose accumulators are offset into the core's region with fresh
             // cells, then publishes its per-accumulator live counts for the
-            // main-thread merge. No phase loop or waist barrier: cores are
-            // independent over disjoint record ranges, joined only by the merge.
+            // main-thread merge. No phase loop: the cores walk disjoint record
+            // ranges and are joined by the merge, and they meet at a barrier
+            // only ahead of a unit that reads with a reach behind a writer.
             worker_accum_unit_outer::<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>(
                 s,
                 USize(core_id),
@@ -157,6 +161,10 @@ pub(super) fn worker_main<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>(
 /// `frame_done_arrive` Release that follows publishes them to the merge). The
 /// core's row is zeroed first so a non-participating core (surplus, or a
 /// record-less frame's non-zero cores) contributes zeros to the merge.
+///
+/// A carrier whose consumer units include a read with a reach behind a writer
+/// is walked in segments cut ahead of each such reader, with the phase barrier
+/// crossed by every core between two segments.
 fn worker_accum_unit_outer<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>(
     s: &Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>,
     core: USize,
@@ -193,6 +201,59 @@ fn worker_accum_unit_outer<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>
     // unit must run exactly once, not once per core). With records, a surplus
     // core (an empty region) appends nothing and is skipped.
     let run_this = if total0 == 0 { core.0 == 0 } else { region.0 > 0 }; // lint:allow(no-bare-numeric) reason: participation guard; tracked: #121
+    // The reach boundary on this path: where a consumer unit reads a plain
+    // column with a reach behind a writer of it, the walk is cut ahead of that
+    // unit and every core meets at a barrier there, so the writer's whole
+    // range has landed on every slice before any core starts the reader. The
+    // cuts are a fold over the registered units, so a carrier with no such
+    // reader takes the uncut walk below and crosses nothing.
+    let (cuts, cut) = reach_cuts::<
+        WuVals,
+        Stores,
+        GW,
+        <D as PlanDims>::Units,
+        <D as PlanDims>::Stores,
+        <D as PlanDims>::AdjRow,
+    >();
+    if cut.0 {
+        let consumers = consumer_mask::<
+            WuVals,
+            Stores,
+            GW,
+            <D as PlanDims>::Units,
+            <D as PlanDims>::Stores,
+            <D as PlanDims>::AdjRow,
+        >();
+        let units =
+            group_n::<WuVals, Stores, GW, <D as PlanDims>::Units, <D as PlanDims>::Stores>();
+        // A core that walks nothing still meets the others at every barrier:
+        // the barrier counts every core, and the segments are the same on each.
+        let per_core = if run_this {
+            Maybe::Is(s.bindings.rebase_accums(lo, region))
+        } else {
+            Maybe::Isnt
+        };
+        let epoch = USize(s.virtual_epoch.load(Ordering::Relaxed));
+        cut_segments(cuts, consumers, units, |segment, last| {
+            if let Maybe::Is(per_core) = &per_core {
+                s.wu_values.run_gated(
+                    per_core,
+                    &s.meta_block,
+                    MorselRange::new(lo, region),
+                    segment,
+                    <USize as Identity<Additive>>::IDENTITY,
+                    epoch,
+                );
+            }
+            if !last.0 {
+                waist_barrier(&s.pool, core, ncores, || s.clock.now_ns());
+            }
+        });
+        if let Maybe::Is(per_core) = &per_core {
+            publish_accum_counts(s, core, per_core);
+        }
+        return;
+    }
     if !run_this {
         return;
     }
@@ -250,8 +311,24 @@ fn worker_accum_unit_outer<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>
             USize(s.virtual_epoch.load(Ordering::Relaxed)),
         );
     }
-    // Publish this core's per-accumulator live and `wanted` counts. Only this
-    // worker writes its row, and only before its `frame_done_arrive`.
+    publish_accum_counts(s, core, &per_core);
+}
+
+/// Publish one core's per-accumulator live and `wanted` counts from its
+/// per-core bindings copy. Only this worker writes its row, and only before
+/// its `frame_done_arrive`.
+fn publish_accum_counts<Cfg, WuVals, Vals, CS, D, Stores, Clk>(
+    s: &Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>,
+    core: USize,
+    per_core: &<Vals as BindingsFor>::Bindings,
+) where
+    Cfg: RunCfg,
+    Vals: StoreValues + BindingsFor,
+    CS: ColumnStorage,
+    D: PlanDims,
+    Clk: hilavitkutin_api::platform::ClockApi,
+    <Vals as BindingsFor>::Bindings: CollectAccumCounts,
+{
     let mut live = [<USize as Identity<Additive>>::IDENTITY; GATE2_MAX_ACCUMS];
     let mut wanted = [<USize as Identity<Additive>>::IDENTITY; GATE2_MAX_ACCUMS];
     let mut idx = <USize as Identity<Additive>>::IDENTITY;

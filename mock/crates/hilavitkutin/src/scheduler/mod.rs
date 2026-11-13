@@ -98,6 +98,7 @@ mod buildable;
 mod defaults;
 mod dirty;
 mod reach_rule;
+pub use reach_rule::ReachRule;
 mod run;
 mod run_fused;
 mod run_parallel;

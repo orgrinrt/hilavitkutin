@@ -49,7 +49,8 @@ where
         + StoreSizes<<DefaultPlanDims as PlanDims>::Stores>,
     Bindings: PlaceIn<Stores, PlaceWit>,
 {
-    const RULES: () = ReachRule::<Wus, Stores, UnitWit>::HOLDS;
+    // The dimensions `plan` below computes the plan at.
+    const RULES: () = ReachRule::<Wus, Stores, UnitWit, DefaultPlanDims>::HOLDS;
 
     #[inline]
     fn plan(

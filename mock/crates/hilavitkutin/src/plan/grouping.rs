@@ -33,6 +33,7 @@ use super::access::AccessMask;
 pub use super::bundle_masks::{BundleMasks, UnitAccess};
 use super::edge::{raw_edge, reach_behind_a_writer};
 use super::project::WitnessIndex;
+use super::unit_masks::{masks_of, reaches_of};
 
 /// Fixed upper bound on registered units for the GATE-2 const grouping arrays.
 ///
@@ -235,50 +236,6 @@ const fn compute_trunks<CS: Capacity>(
         trunk_out[u] = USize(r); // lint:allow(no-bare-numeric) reason: component-min id; tracked: #121
         u += 1; // lint:allow(no-bare-numeric) reason: index step; tracked: #121
     }
-}
-
-/// Fold the per-unit read/write masks and lifecycle ranks for a registered
-/// bundle into `CU`-capacity locals, returning `(reads, writes, ranks,
-/// unit_count)`.
-const fn masks_of<Wus, Stores, Witnesses, CU: Capacity + [const] ConstCapacity, CS: Capacity>() -> (
-    <CU as ConstCapacity>::Array<AccessMask<CS>>,
-    <CU as ConstCapacity>::Array<AccessMask<CS>>,
-    <CU as ConstCapacity>::Array<USize>,
-    USize,
-)
-where
-    Wus: [const] BundleMasks<Stores, Witnesses, CS>,
-{
-    // The grouping scratch is a `CU`-capacity GAT array, sliced into the
-    // slice-based `BundleMasks::fill` via the `ConstCapacity` slice bridge.
-    // `fill` is slice-based, so the per-cons-cell `MaskProject` recursion is
-    // capacity-blind (CU appears only here, never in the recursive
-    // obligation); the P0.1b probe confirmed no trait-solver overflow. Consumers
-    // index the returned arrays through `<CU as ConstCapacity>::get`.
-    let mut reads = <CU as ConstCapacity>::filled(AccessMask::<CS>::empty());
-    let mut writes = <CU as ConstCapacity>::filled(AccessMask::<CS>::empty());
-    let mut ranks = <CU as ConstCapacity>::filled(<USize as Identity<Additive>>::IDENTITY);
-    let n = <Wus as BundleMasks<Stores, Witnesses, CS>>::fill(
-        <CU as ConstCapacity>::slice_mut(&mut reads),
-        <CU as ConstCapacity>::slice_mut(&mut writes),
-        <CU as ConstCapacity>::slice_mut(&mut ranks),
-        <USize as Identity<Additive>>::IDENTITY,
-    );
-    (reads, writes, ranks, n)
-}
-
-/// Fold, per unit, the plain columns it reads with a reach.
-const fn reaches_of<Wus, Stores, Witnesses, CU: Capacity + [const] ConstCapacity, CS: Capacity>()
--> <CU as ConstCapacity>::Array<AccessMask<CS>>
-where
-    Wus: [const] BundleMasks<Stores, Witnesses, CS>,
-{
-    let mut reaches = <CU as ConstCapacity>::filled(AccessMask::<CS>::empty());
-    <Wus as BundleMasks<Stores, Witnesses, CS>>::fill_reaches(
-        <CU as ConstCapacity>::slice_mut(&mut reaches),
-        <USize as Identity<Additive>>::IDENTITY,
-    );
-    reaches
 }
 
 /// Whether no unit of the bundle writes a plain column it reads with a reach.

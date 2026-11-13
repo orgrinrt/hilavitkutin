@@ -263,6 +263,17 @@ impl ColKind for Snapshot {
 /// frozen in the running pass.
 pub struct Flip<T> {
     other:  ColumnPtr<T>,
+    // SAFETY: a `Cell` the workers of `run_parallel` read through the shared
+    // scheduler while the thread that drives the pass writes it, so the two
+    // are kept apart by the sequence of the pass and by nothing in the type.
+    // `bring_in` is the one writer. It runs on the driving thread at the
+    // boundary, after `frame_await_done` has seen every worker arrive and
+    // before the next `frame_publish`, and its Acquire and Release there put
+    // the write behind every read of the pass that ended and ahead of every
+    // read of the pass that follows. A worker reads the cell only inside a
+    // published pass, when it binds a context, and on the unit-outer path it
+    // reads the per-core copy `dup_side` makes inside that same pass. A read
+    // or a write moved outside that window is a data race.
     turned: Cell<Bool>,
 }
 
