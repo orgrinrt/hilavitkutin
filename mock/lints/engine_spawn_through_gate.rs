@@ -61,7 +61,7 @@ impl CrateLint for EngineSpawnThroughGate {
             return Vec::new();
         }
         let mut errors = Vec::new();
-        for file in ctx.all_sources {
+        for file in ctx.all_sources() {
             let path = file.rel_path.to_string_lossy().into_owned();
             for finding in findings(&file.text) {
                 let mut e = LintError::with_severity(
