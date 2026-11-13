@@ -13,6 +13,19 @@ fn tool() -> &'static Path {
     Path::new(env!("CARGO_MANIFEST_DIR"))
 }
 
+/// Held by each test that builds the probe.
+///
+/// cargo puts the wasm build at one path whatever features it was built with
+/// and lets go of its own lock before the runner starts, so two tests building
+/// it two ways at once can each run the other's module.
+static BUILDS: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+fn one_build_at_a_time() -> std::sync::MutexGuard<'static, ()> {
+    BUILDS
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+}
+
 #[test]
 fn a_stream_is_a_digest_a_line_and_nothing_else() {
     assert_eq!(
@@ -114,6 +127,7 @@ fn a_target_nothing_here_runs_is_inconclusive_and_never_clean() {
 
 #[test]
 fn the_host_and_wasm_leave_the_same_stream() {
+    let _held = one_build_at_a_time();
     let (host, wasm) = both(tool(), WASM, &[]).unwrap_or_else(|why| panic!("{why}"));
     assert_eq!(host.len(), 8, "a digest for each frame");
     assert!(
@@ -125,6 +139,7 @@ fn the_host_and_wasm_leave_the_same_stream() {
 
 #[test]
 fn a_wasm_build_that_computes_otherwise_is_told_apart() {
+    let _held = one_build_at_a_time();
     let (host, wasm) = both(tool(), WASM, &["skew"]).unwrap_or_else(|why| panic!("{why}"));
     let said = differences(&host, &wasm, WASM.0);
     assert_eq!(said.len(), 1, "{said:?}");
