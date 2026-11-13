@@ -400,6 +400,9 @@ where
     type CoreDispatch = ();
 }
 
+// FIXME(e3cb3f33eb38): the two marker impls below are asserted over the `()`
+// placeholder above and prove nothing about a dispatch body yet; they should
+// follow a real one.
 impl LockFreeDispatch for StandardCodegen {}
 
 impl Scheduled for StandardCodegen {}

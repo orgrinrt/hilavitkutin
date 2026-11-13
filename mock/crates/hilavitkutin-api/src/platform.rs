@@ -461,12 +461,13 @@ impl Executor for HybridExecutor {
         core_id: USize,
         wake_strategy: &WakeStrategy,
     ) -> notko::Outcome<(), ExecutorError> {
-        // The runtime body lands alongside the CoreProgram surface
-        // in Pass 6 (Scheduler::run). The mainloop body monomorphises
-        // per (C, P, CoreProgram) at scheduler-build time; this stub
-        // observes the shutdown signal and returns the cleanup
-        // outcome so the type and its sealed impls are reachable to
-        // downstream construction code.
+        // FIXME(fe682c10859c): the worker mainloop is not written. It
+        // would walk the pre-computed CoreProgram, dispatch morsels,
+        // hit the phase barriers and observe the shutdown signal,
+        // monomorphised per (C, P, CoreProgram) at scheduler-build
+        // time. This body does none of that and returns Ok, so the type
+        // and its sealed impls are reachable to downstream construction
+        // code.
         let _ = (pool, core_id, wake_strategy);
         notko::Outcome::Ok(())
     }

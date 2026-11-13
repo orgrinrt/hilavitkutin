@@ -29,18 +29,20 @@ impl<
     Clk: hilavitkutin_api::platform::ClockApi,
 > Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>
 {
-    /// Replace the existing `Resource<T>` instance in the data
-    /// plane with `_new`, marking the plan dirty.
+    /// Mark the `Resource<T>` store changed for the next frame.
     ///
-    /// `T: PlanAffecting` routes the call onto the dirty-marking
-    /// path; the next `run()` recomputes the execution plan.
-    /// Consumers that need a cheap value swap on a non-plan-
-    /// affecting resource use `replace_value`.
+    /// `T: PlanAffecting` routes the call onto the dirty-marking path. The
+    /// call does not install `_new` and does not recompute the execution
+    /// plan: it only marks the store dirty, so the units reading it run on
+    /// the next frame against the value already held. Consumers that need a
+    /// cheap value swap on a non-plan-affecting resource use `replace_value`,
+    /// which has the same gap.
     pub fn replace_resource<T: PlanAffecting, Index>(&mut self, _new: T)
     where
         Stores: Locate<T, Index>,
         Index: WitnessIndex,
     {
+        // FIXME(147e3897011f): `_new` is discarded; the data-plane install and the plan recompute are not written.
         // A swapped resource is a changed input, so mark its store dirty for
         // the next frame (domain-16 incremental skip seed).
         self.mark_dirty::<T, Index>();
@@ -50,17 +52,19 @@ impl<
         let _ = &self.plan_dirty;
     }
 
-    /// Cheap value-swap path for non-plan-affecting resources.
+    /// Mark the store of a non-plan-affecting resource changed.
     ///
-    /// `T: Replaceable` opts the type into runtime replacement
-    /// without signalling plan recompute. The `Replaceable` marker
-    /// is consumer-driven per Topic 8 axis B (replaceable but not
+    /// `T: Replaceable` opts the type into runtime replacement without
+    /// signalling a plan recompute. The call does not install `_new`: it
+    /// only marks the store dirty for the next frame. The `Replaceable`
+    /// marker is consumer-driven per Topic 8 axis B (replaceable but not
     /// plan-affecting is the typical case for app-level state).
     pub fn replace_value<T: Replaceable, Index>(&mut self, _new: T)
     where
         Stores: Locate<T, Index>,
         Index: WitnessIndex,
     {
+        // FIXME(147e3897011f): `_new` is discarded; the data-plane value install is not written.
         // A swapped value is a changed input: mark its store dirty for the
         // next frame so dependents re-run (domain-16 incremental skip). No
         // plan-recompute dirty, since the value swap is not structural. The

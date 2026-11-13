@@ -22,11 +22,11 @@
 //! Lives under `tests/` so the bare numeric record values do not trip the
 //! src-tree primitive lints.
 
-use core::cell::{Cell, UnsafeCell};
-use core::mem::MaybeUninit;
+mod stable_provider;
+
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use arvo::{Bool, USize};
+use arvo::USize;
 use hilavitkutin::dispatch::engine_ctx::{
     AccPtrCons,
     AccPtrNil,
@@ -55,42 +55,10 @@ use hilavitkutin_api::store::{Accum, Column};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
+use stable_provider::StableProvider;
 
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
-}
-
-struct BumpProvider<const N: usize> {
-    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
-    used: Cell<usize>,
-}
-impl<const N: usize> BumpProvider<N> {
-    fn new() -> Self {
-        Self {
-            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
-            used: Cell::new(0),
-        }
-    }
-}
-unsafe impl<const N: usize> Send for BumpProvider<N> {}
-unsafe impl<const N: usize> Sync for BumpProvider<N> {}
-impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
-    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
-        let base = self.buf.get() as *mut u8;
-        let used = self.used.get();
-        let align = align.0.max(1);
-        let aligned = (used + align - 1) / align * align;
-        if aligned + len.0 > N {
-            return core::ptr::null_mut();
-        }
-        self.used.set(aligned + len.0);
-        // SAFETY: aligned + len <= N, in bounds of the owned buffer.
-        unsafe { base.add(aligned) }
-    }
-
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
-
-    unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
 /// Strictly increasing counter clock: every `now_ns` call returns a larger
@@ -115,8 +83,8 @@ impl ClockApi for CounterClock {
 }
 
 const N: usize = 4;
-// Accumulator capacity headroom over the per-frame appends (appends saturate at
-// the reserved capacity, which equals the record count at build).
+// Accumulator capacity headroom over the per-frame appends (an append past
+// the reserved capacity, which equals the record count at build, asserts).
 const RECORDS: usize = 64;
 
 #[derive(Copy, Clone)]
@@ -496,7 +464,7 @@ macro_rules! fan_in {
 // --- Invariant: single-core `run` crosses no waist barrier, so idle is zero. ---
 #[test]
 fn single_core_run_no_idle() {
-    let provider = BumpProvider::<16384>::new();
+    let provider = StableProvider::new(16384);
     let mut scheduler = fan_in!(provider);
     let r = scheduler.run();
     assert!(matches!(r, Outcome::Ok(())));
@@ -539,7 +507,7 @@ impl WorkUnit<Always> for AccumWu {
 
 #[test]
 fn accum_unit_outer_no_idle() {
-    let provider = BumpProvider::<16384>::new();
+    let provider = StableProvider::new(16384);
     let scheduler = Scheduler::builder()
         .clock(CounterClock::new())
         .with(Accum::<Mark>::new())
@@ -561,7 +529,7 @@ fn accum_unit_outer_no_idle() {
 // --- Measurement: an imbalanced multi-core column pipeline parks a follower. ---
 #[test]
 fn imbalanced_parallel_records_idle() {
-    let provider = BumpProvider::<16384>::new();
+    let provider = StableProvider::new(16384);
     let scheduler = two_waist!(provider);
 
     let pool = TestExecutor::new();
