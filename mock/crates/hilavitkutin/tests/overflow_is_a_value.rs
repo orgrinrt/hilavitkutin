@@ -11,6 +11,10 @@
 //! its own records. Every check runs over two frames, so the per-frame reset of
 //! both counts is held too.
 //!
+//! Built with `DefaultRunCfg<Assert>`, the same frame's run returns `()` and
+//! panics at the close with that refusal, at one worker and at `MAX_CORES`, and
+//! a frame that refuses nothing returns `()` without panicking.
+//!
 //! The truncating mutant drops a refused append without counting it; the
 //! refusal never reaches the output and the value tests here fail. It builds
 //! only with the check's variable set: `HILAVITKUTIN_MUTANT_CHECK=1 cargo test
@@ -35,7 +39,6 @@ use hilavitkutin::dispatch::engine_ctx::{
 };
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin::thread::MAX_CORES;
-use hilavitkutin_api::AccumRefused;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{
@@ -47,8 +50,10 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::platform::{MemoryProviderApi, ThreadPoolApi};
+use hilavitkutin_api::run_cfg::DefaultRunCfg;
 use hilavitkutin_api::store::{Accum, Column};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
+use hilavitkutin_api::{AccumRefused, Assert};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
 use notko::lend::Exhausted;
@@ -200,13 +205,13 @@ fn expected_av(workers: usize) -> [u32; N] {
 /// bindings head is `Av`, its tail `Bv`, then `Inv`; the arena reserves in that
 /// order, which puts `Bv` directly after `Av`.
 macro_rules! build {
-    ($($unit:expr),+) => {{
+    (@finish [$($finish:tt)+] $($unit:expr),+) => {{
         let scheduler = Scheduler::builder()
             .with(Column::<Inv>::new())
             .with(Accum::<Bv>::new())
             .with(Accum::<Av>::new())
             $(.with($unit))+
-            .build(store(StableProvider::new(16384)), USize(N))
+            .$($finish)+(store(StableProvider::new(16384)), USize(N))
             .unwrap_or_else(|_| panic!("build should succeed"));
         let in_base = scheduler.__bindings().__tail().__tail().__ptr().as_ptr() as *mut u32;
         for i in 0 .. N {
@@ -215,6 +220,12 @@ macro_rules! build {
         }
         scheduler
     }};
+    (assert: $($unit:expr),+) => {
+        build!(@finish [build_with::<DefaultRunCfg<Assert>, _, _>] $($unit),+)
+    };
+    ($($unit:expr),+) => {
+        build!(@finish [build] $($unit),+)
+    };
 }
 
 /// Check one closed frame: the output, both live lengths, both buffers, and that
@@ -397,4 +408,41 @@ fn a_skew_that_fits_the_reservation_is_accepted_at_every_worker_count() {
     parallel(&FixedWorkers::<2>, &want, 2);
     parallel(&FixedWorkers::<4>, &want, 4);
     parallel(&FixedWorkers::<MAX_CORES>, &want, MAX_CORES);
+}
+
+/// The assert configuration's run output is `()`, and its run panics, at the
+/// close and on the calling thread, when an accumulator refused an append.
+fn assert_parallel<P: ThreadPoolApi>(pool: &P) {
+    let scheduler = build!(assert: SkewWu, GuardWu);
+    let mut scheduler = core::pin::pin!(scheduler);
+    let () = scheduler.as_mut().run_parallel(pool);
+}
+
+#[test]
+#[should_panic(
+    expected = "under the assert configuration: AccumRefused { accum: USize(1), exhausted: Exhausted { wanted: 515, had: 512 } }"
+)]
+fn the_assert_configuration_panics_at_one_worker() {
+    assert_parallel(&FixedWorkers::<1>);
+}
+
+#[test]
+#[should_panic(
+    expected = "under the assert configuration: AccumRefused { accum: USize(1), exhausted: Exhausted { wanted: 515, had: 512 } }"
+)]
+fn the_assert_configuration_panics_at_max_cores_workers() {
+    assert_parallel(&FixedWorkers::<MAX_CORES>);
+}
+
+#[test]
+fn the_assert_configuration_returns_unit_when_nothing_refused() {
+    let mut single = build!(assert: GuardWu);
+    let () = single.run();
+    fn parallel<P: ThreadPoolApi>(pool: &P) {
+        let scheduler = build!(assert: GuardWu);
+        let mut scheduler = core::pin::pin!(scheduler);
+        let () = scheduler.as_mut().run_parallel(pool);
+    }
+    parallel(&FixedWorkers::<1>);
+    parallel(&FixedWorkers::<MAX_CORES>);
 }

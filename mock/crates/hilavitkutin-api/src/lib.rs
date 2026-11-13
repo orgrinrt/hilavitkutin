@@ -23,6 +23,7 @@ mod sealed {
 }
 
 pub mod access;
+pub mod accum_overflow;
 pub mod accum_refused;
 pub mod adapt;
 pub mod builder;
@@ -50,6 +51,7 @@ pub mod work_unit;
 pub mod work_unit_values;
 
 pub use access::{AccessSet, Concat, Cons, Contains, ContainsAll, Empty};
+pub use accum_overflow::{AccumOverflow, Assert, Refuse};
 pub use accum_refused::AccumRefused;
 pub use adapt::{
     AdaptAxis,

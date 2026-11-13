@@ -22,7 +22,7 @@ use core::marker::PhantomData;
 use arvo::{Additive, Identity, USize};
 
 use crate::access::Cons;
-use crate::accum_refused::AccumRefused;
+use crate::accum_overflow::{AccumOverflow, Refuse};
 use crate::builder_input::{BuilderInput, Dispatch};
 
 mod sealed {
@@ -59,11 +59,14 @@ pub trait PlanAffecting: sealed::Sealed + BuilderInput {}
 pub trait RunCfg:
     sealed::Sealed + BuilderInput<Dispatch = RunCfgDispatch<Self>> + HasRecordCount + Sized + 'static
 {
-    /// The run's output. Every run entry returns `Self::Out` built from the
-    /// frame's verdict: `Ok(())`, or `Err` with the first accumulator that
-    /// refused an append, walked in registration order.
-    /// The error type lives inside `Out`; the trait declares no separate one.
-    type Out: From<notko::Outcome<(), AccumRefused>>;
+    /// The run's output: the overflow choice's output, and nothing else.
+    type Out;
+
+    /// What the run does when an accumulator refused an append. Every run
+    /// entry returns `Self::Overflow::conclude(verdict)`, where the verdict is
+    /// `Ok(())`, or `Err` with the first accumulator that refused, walked in
+    /// registration order.
+    type Overflow: AccumOverflow<Out = Self::Out>;
 
     /// Cap on resources marked `PlanAffecting`. Drives the dirty-
     /// bitmask width. Default 256 (32-byte bitmask, fits one cache
@@ -115,46 +118,51 @@ pub trait RunCfg:
 }
 
 /// Substrate default RunCfg. Consumers may use this when they have
-/// no special run-config needs; `Scheduler::run()` returns
-/// `Outcome<(), AccumRefused>`.
-pub struct DefaultRunCfg {
+/// no special run-config needs. `O` is the overflow choice:
+/// `DefaultRunCfg` (with `Refuse`) makes `Scheduler::run()` return
+/// `Outcome<(), AccumRefused>`, and `DefaultRunCfg<Assert>` makes it
+/// return `()` and panic when an accumulator refused an append.
+pub struct DefaultRunCfg<O: AccumOverflow = Refuse> {
     /// Record count for the pipeline. Drives morsel sizing.
     pub record_count: USize,
+    _overflow:        PhantomData<O>,
 }
 
-impl DefaultRunCfg {
+impl<O: AccumOverflow> DefaultRunCfg<O> {
     /// Construct with the given record count.
     pub const fn new(record_count: USize) -> Self {
         Self {
             record_count,
+            _overflow: PhantomData,
         }
     }
 }
 
-impl Default for DefaultRunCfg {
+impl<O: AccumOverflow> Default for DefaultRunCfg<O> {
     fn default() -> Self {
         Self::new(<USize as Identity<Additive>>::IDENTITY)
     }
 }
 
-impl sealed::Sealed for DefaultRunCfg {}
+impl<O: AccumOverflow> sealed::Sealed for DefaultRunCfg<O> {}
 
-impl HasRecordCount for DefaultRunCfg {
+impl<O: AccumOverflow> HasRecordCount for DefaultRunCfg<O> {
     fn record_count(&self) -> USize {
         self.record_count
     }
 }
 
-impl BuilderInput for DefaultRunCfg {
+impl<O: AccumOverflow> BuilderInput for DefaultRunCfg<O> {
     type Dispatch = RunCfgDispatch<Self>;
     type Init = Self;
 }
 
-impl RunCfg for DefaultRunCfg {
-    type Out = notko::Outcome<(), AccumRefused>;
+impl<O: AccumOverflow> RunCfg for DefaultRunCfg<O> {
+    type Out = <O as AccumOverflow>::Out;
+    type Overflow = O;
 }
 
-impl PlanAffecting for DefaultRunCfg {}
+impl<O: AccumOverflow> PlanAffecting for DefaultRunCfg<O> {}
 
 /// Router for the consumer-supplied run-config. Single-slot
 /// typestate; the builder transitions `RunCfgSlot::Empty → Filled<C>`

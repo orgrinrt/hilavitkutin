@@ -185,9 +185,9 @@ where
         // store bindings, so a dependency cycle returns without allocating.
         // The morsel budget comes from the run-config consts (domain 12).
         let budget = MorselBudget {
-            l1_usable:  DefaultRunCfg::L1_USABLE,
-            min_morsel: DefaultRunCfg::MIN_MORSEL,
-            max_morsel: DefaultRunCfg::MAX_MORSEL,
+            l1_usable:  <DefaultRunCfg as RunCfg>::L1_USABLE,
+            min_morsel: <DefaultRunCfg as RunCfg>::MIN_MORSEL,
+            max_morsel: <DefaultRunCfg as RunCfg>::MAX_MORSEL,
         };
         let plan = match compute_plan::<Wus, Stores, BWit>(record_count, budget) {
             notko::Outcome::Ok(p) => p,
