@@ -137,8 +137,10 @@ participate in dispatch.
 
 ## Store types (domain 06)
 
-Three store types, one scheduling mechanism, and the accumulator as a
-column whose write is an append. All of them are views over
+Four store markers and one scheduling mechanism. By what it holds, state
+is still one of three things: a collection of records, a single value,
+or a signal with no data. The accumulator is a collection, and it has a
+marker of its own beside the column. All of them are views over
 one `ColumnStorage` (see "Unified columnar storage" below); they differ
 in intent and access, not in backing.
 
@@ -154,6 +156,21 @@ three. It reserves a capacity at build, is reset to no values at the top
 of a frame and grows as units append during it. The values appended in a
 frame are what the close of that frame reads (see "Maintenance units and
 the close" below).
+
+The accumulator is a marker and not a column under a wrapper in the
+write list, for what each form does in the types and in the plumbing. A
+column is one run of records that lasts across frames and is written by
+position. An accumulator is a region per core with a length of its own,
+empty at the top of every frame and written at its end. With a marker,
+the store that is registered says which of the two storages it gets, and
+`StoreDispatch<Accum<T>>` reserves it with no look at any unit. A
+positional write to an accumulator, or an append to a column, fails at
+the accessor's own bound in the unit that tried it. A column of `T` and
+an accumulator of `T` are two stores. With a wrapper over `Column<T>`,
+the storage a store gets would follow from how every unit lists it, a
+unit appending to a store another unit writes by position could only be
+refused when the whole schedule is built, and the two stores of `T`
+would be one name.
 
 The scheduler sees StoreId pairs for edge construction. Does not care
 about cardinality. `Write<Resource<X>> → Read<Resource<X>>` builds
@@ -211,53 +228,18 @@ section still calls by its earlier name.
 
 ## Record counts
 
-A column's record count is a fact of its storage. `ColumnStorage`
-reserves a column for a count, answers `count(id)` for it and resizes it
-on a second `reserve` (see "Unified columnar storage" below), and record
-counts are among the parameters the plan stage reads from the consumer's
-data. `Column<T>` carries no count and no second parameter. Which
-columns belong together is the consumer's schema, and a consumer that
-wants its schema in the types wraps the value type on its own side.
+A scheduler holds one record count, the one `build` takes, and every
+column it holds has that many records. `Column<T>` carries no count and
+no second parameter. An accumulator's capacity is that same count.
+Resources and virtuals hold no record count.
 
-A column registered with `Column::<T>::new()` holds the run
-configuration's record count, as every column did. A column that holds
-another count says so where it is registered:
-
-```rust
-.with(Column::<T>::new())                  // the run configuration's record count
-.with(Column::<T>::with_count(n))          // n records for as long as the scheduler lives
-.with(Column::<T>::with_capacity(cap, n))  // n records now, replaceable up to cap
-```
-
-`with_count` and `with_capacity` return a `Counted<Column<T>>`, a
-registration of the same store that stages an `Extent` (a count and the
-capacity it may be replaced within) where `new()` stages nothing.
-`Counted` routes through `StoreDispatch<Column<T>>`, so the store list
-and every access set name `Column<T>` whichever way it was registered.
-
-Whether a column's count may be replaced is declared in the column's
-value type. `with_capacity` asks `T: Replaceable`, the opt-in marker a
-replaced resource value already asks, and so does the scheduler's
-`replace_count`, which takes a list of columns and one count and gives
-every column of the list that count between passes. A count past a
-column's capacity is refused as a value and nothing is replaced. A
-column whose value type is not `Replaceable` keeps the count it was
-built with.
-
-A unit runs over the records of its columns, so the columns in its read
-and write lists hold one count. Counts are run-time values. The plan
-stage checks this where it reads them, at `build` and at the end of a
-`replace_count`, and a unit whose columns hold different counts is
-refused there as a value. A fiber's units share one count, and its
-record range and morsel window are taken over that count. Resources,
-virtuals and accumulators hold no record count and are free in any
-unit. An accumulator's capacity is the run configuration's record count,
-as before.
-
-The api gives a column no way to name the set of records it belongs to,
-and a unit no way to read a column of another count at a record it
-computes. The first is the consumer's wrapper to write. The second is
-not in this revision.
+Record sets of different counts in one frame, such as beings, tiles and
+items, are not in this revision. They are either several sets in one
+schedule, each with a count of its own as a plan parameter, or one
+schedule for each set with the crossings carried through resources and
+accumulators. The api takes neither form before both are measured on
+data of that shape, and until then a consumer with several sets builds a
+scheduler for each.
 
 ## LinkedBin
 
@@ -565,16 +547,33 @@ impl WorkUnit<OnMeta<ScheduleEnd>> for ApplyHeat {
 
 ### Reading a store as it stood when the pass began
 
-A column whose every writer is a unit at the close holds, for every
+A store whose every writer is a unit at the close holds, for every
 ordinary unit of a pass, the value it held when the pass began. No store
-kind and no read marker says so. It follows from rank. A unit that steps
-a whole field from one frame to the next reads the field's column,
-returns the next value into a second column, and a close unit carries
-the second column into the first once every reader is done. The second
-column and the carry are the consumer's, declared like any other store
-and unit. Where the carry is a whole copy the engine may later rotate
-the two columns' storage in its place, with neither declaration
-changing.
+kind and no read marker says so. It follows from rank.
+
+Keeping the value of this pass apart from the value of the next, and
+bringing the next in, is the work of a unit at the close. It has three
+forms, and a consumer picks one for each store by how much of the store
+changes in a pass.
+
+1. Changes gathered and applied. Ordinary units append the changes they
+   mean, and a close unit applies them in place, as `ApplyHeat` does
+   above. The store has one copy, and the close costs what changed.
+2. A second column carried over. A unit that steps a whole field reads
+   the field's column and returns the next value into a second column,
+   and a close unit carries the second column into the first once every
+   reader is done. The close costs a copy of the column.
+3. Two buffers in one resource. The resource's value holds both buffers
+   and says which of them is current. A close unit fills the other
+   buffer and names it current as its last write, and a reader reads the
+   buffer the value names. Nothing is copied.
+
+The second column, the two buffers and the unit that brings the next
+value in are the consumer's, declared like any other store and unit.
+Between passes the scheduler replaces a whole resource value whose type
+is `Replaceable` (the engine's design has the call). The api has no
+exchange of two columns' storage, which would step a whole field with no
+copy.
 
 The generation counters and version stamps the plumbing keeps answer one
 question, whether something changed since a unit last ran, so that
@@ -1574,9 +1573,6 @@ after every worker has re-parked, so it never stalls a `run_parallel` join.
 
 A store that can be asked during a run for more than it reserved
 concludes through `RunCfg::Overflow` and adds no second configuration.
-A record count replaced past a column's capacity is asked between
-passes, is refused at the call as a value (see "Record counts"), and is
-no part of a run's output.
 
 ### Lifetime contract
 
