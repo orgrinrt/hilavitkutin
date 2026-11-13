@@ -1,6 +1,6 @@
 # The rows the written history does not back, or that stand against it
 
-This file lists the 129 rows of the registry that were left as they were when the rest were ratified by default or put on a stamp. Each of them is here for one of two reasons the record itself gives: the source says in words that the content waits on the maintainer or was an agent's own call, or a passage that is his says otherwise on the same point. None of them is ratified and none carries a stamp.
+This file lists the 131 rows of the registry that were left as they were when the rest were ratified by default or put on a stamp. Each of them is here for one of two reasons the record itself gives: the source says in words that the content waits on the maintainer or was an agent's own call, or a passage that is his says otherwise on the same point. None of them is ratified and none carries a stamp.
 
 It follows from his words of 13 November 2026, kept whole in `OP-ANSWERS-18.md` beside this file:
 
@@ -198,7 +198,7 @@ Passages: `mock/research/sketches/202611122242_frame-view-typestate/FINDINGS.md:
 
 ### Dispatch below ten thousand records
 
-The founding spec keeps the indirect per-fiber dispatch below ten thousand records in two places and lists it as superseded in a third, and the later rounds each took one of the two readings. 5 rows. The question rows carry the options.
+The founding spec keeps the indirect per-fiber dispatch below ten thousand records in two places and lists it as superseded in a third, and the later rounds each took one of the two readings. 6 rows. The question rows carry the options.
 
 #### `the_dispatch_form_depends_on_the_record_count_below_or_above_ten_thousand`
 
@@ -250,6 +250,14 @@ A tenet. It says: As a first body, approach selection picks the whole-schedule f
 Finding: This row picks the per-fiber indirect call for several fibers below 10K, while the founding spec marks that approach superseded at 1.17x overhead and another row (the_indirect_per_fiber_approach_is_superseded_by_the_trunk_and_schedule_approaches_for_its_overhead) says the same.
 
 Passages: `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1653-1655`, `mock/design_rounds/202605250600/202605250600_topic.hila-c2-select-approach-base.md:25-29`.
+
+#### `the_indirect_per_fiber_approach_is_superseded_by_the_trunk_and_schedule_approaches_for_its_overhead`
+
+A tenet. It says: The indirect per-fiber dispatch approach, which was initially preferred, is superseded by the trunk-level and whole-schedule approaches on the bench findings, because its 1.17x overhead is unacceptable.
+
+Finding: Lines 1653-1654 list the indirect per-fiber approach as superseded by the trunk-level and whole-schedule ones; lines 1168 and 1558-1560 of the same spec keep it below ten thousand records. Open question whether_the_indirect_per_fiber_dispatch_stays_for_fewer_than_ten_thousand_records_or_is_superseded. The reader of its slice classed it a as founding text; it is classed b here so that the founding rows on both sides of this point are treated alike.
+
+Passages: `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1653-1654`, `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1168-1168`, `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1558-1560`.
 
 
 ### No external crate, beside the arrayvec line
@@ -348,7 +356,7 @@ Passages: `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-desig
 
 ### Entry or record as the innermost unit
 
-The principles list entry among the dead terms and end the vocabulary at record. The founding spec ends its hierarchy at entry. Both documents are his. 1 row. The options were written for this file:
+The principles list entry among the dead terms and end the vocabulary at record. The founding spec ends its hierarchy at entry. Both documents are his. 2 rows. The options were written for this file:
 
 1. Record is the innermost unit and entry is a dead term, as the principles say.
 2. Entry stays the innermost unit of the hierarchy, as the founding spec says, and record names one data point in a column.
@@ -360,6 +368,14 @@ A tenet. It says: The canonical terms are pipeline, core, phase, waist, trunk, f
 Finding: PRINCIPLES.md.tmpl lists entry among the dead terms and ends the vocabulary at record, while the founding spec's hierarchy ends at entry and defines it as the canonical innermost unit; row tenet::the_hierarchy_runs_from_pipeline_down_through_phase_trunk_fiber_and_morsel_to_entry holds the other side.
 
 Passages: `mock/PRINCIPLES.md.tmpl:281-287`, `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:71-80`.
+
+#### `the_hierarchy_runs_from_pipeline_down_through_phase_trunk_fiber_and_morsel_to_entry`
+
+A tenet. It says: The vocabulary is a hierarchy from the coarsest to the finest level: pipeline, core, phase with waist, trunk, fiber with branch and bridge, morsel, micro-morsel and entry.
+
+Finding: The founding spec ends its hierarchy at entry and calls it the innermost unit; the principles list entry among the dead terms and end the vocabulary at record, as the row entry_is_a_dead_term_and_the_canonical_vocabulary_ends_at_micro_morsel_and_record says. Both documents are his. The reader of its slice classed it a as founding text; it is classed b here so that both sides of this point are treated alike.
+
+Passages: `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:71-80`, `mock/PRINCIPLES.md.tmpl:281-287`.
 
 
 ### Whether hilavitkutin's own columns are double-buffered
