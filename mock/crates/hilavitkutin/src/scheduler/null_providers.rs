@@ -34,6 +34,7 @@ impl MemoryProviderApi for NullMemoryProvider {
         &self,
         _ptr: *mut u8, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer by contract; tracked: #72
         _len: arvo::USize,
+        _align: arvo::USize,
     ) {
     }
 

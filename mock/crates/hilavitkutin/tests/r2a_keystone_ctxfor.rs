@@ -20,7 +20,11 @@ use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{
-    AccumWriterApi, HasAccumWriter, HasResourceProvider, HasVirtualFirer, ResourceProviderApi,
+    AccumWriterApi,
+    HasAccumWriter,
+    HasResourceProvider,
+    HasVirtualFirer,
+    ResourceProviderApi,
     VirtualFirerApi,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
@@ -35,12 +39,15 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 }
 
 struct BumpProvider<const N: usize> {
-    buf: UnsafeCell<[MaybeUninit<u8>; N]>,
+    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
     used: Cell<usize>,
 }
 impl<const N: usize> BumpProvider<N> {
     fn new() -> Self {
-        Self { buf: UnsafeCell::new([const { MaybeUninit::uninit() }; N]), used: Cell::new(0) }
+        Self {
+            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
+            used: Cell::new(0),
+        }
     }
 }
 unsafe impl<const N: usize> Send for BumpProvider<N> {}
@@ -58,7 +65,9 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
         // SAFETY: aligned + len <= N, in bounds of the owned buffer.
         unsafe { base.add(aligned) }
     }
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+
+    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
+
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
@@ -125,17 +134,18 @@ type Hints = (
 // Ctx computed by `CtxFor` (NOT hand-spelled).
 struct AdaptShapedWu;
 impl BuilderInput for AdaptShapedWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl HasSchedule for AdaptShapedWu {
     type Sched = OnMeta<ScheduleEnd>;
 }
 impl WorkUnit<OnMeta<ScheduleEnd>> for AdaptShapedWu {
+    type Ctx<'frame> = CtxFor<'frame, Read9, WriteAV, OnMeta<ScheduleEnd>>;
+    type Hint = Hints;
     type Read = Read9;
     type Write = WriteAV;
-    type Hint = Hints;
-    type Ctx<'frame> = CtxFor<'frame, Read9, WriteAV, OnMeta<ScheduleEnd>>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         // Read all nine resources through the projected Ctx (proves every one of
         // the nine index-witness chains resolves, the granularity-flagged risk),
@@ -161,14 +171,15 @@ impl WorkUnit<OnMeta<ScheduleEnd>> for AdaptShapedWu {
 // WU's meta-band append.
 struct ConsumerWu;
 impl BuilderInput for ConsumerWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for ConsumerWu {
+    type Ctx<'frame> = CtxFor<'frame, Empty, Cons<Accum<Mark>, Empty>, Always>;
+    type Hint = Hints;
     type Read = Empty;
     type Write = Cons<Accum<Mark>, Empty>;
-    type Hint = Hints;
-    type Ctx<'frame> = CtxFor<'frame, Empty, Cons<Accum<Mark>, Empty>, Always>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         // SAFETY: Mark reserved (CAP); one append per frame stays in capacity.
         unsafe { ctx.accums().append::<Mark, _>(Mark(9)) };

@@ -16,17 +16,10 @@ pub mod frame;
 pub mod handle;
 pub mod hybrid;
 pub mod parking;
-pub mod pool;
 
 use arvo::USize;
 use arvo_tensor::{Capacity, cap_size};
 pub use assignment::{CoreAssignment, NO_TRUNK};
-pub use barrier::{
-    BarrierArrival,
-    phase_barrier_arrive,
-    phase_barrier_observe,
-    phase_barrier_reset,
-};
 pub use class::{CoreClass, MAX_CORES, classify_cores, runnable_worker_count};
 pub use convergence::Convergence;
 pub use frame::{
@@ -51,7 +44,6 @@ pub use parking::{
     spin,
     spin_budget_for,
 };
-pub use pool::{ThreadPool, ThreadPoolBuilder};
 
 use crate::plan::PlanDims;
 

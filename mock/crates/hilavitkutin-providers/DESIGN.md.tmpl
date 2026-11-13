@@ -168,7 +168,11 @@ re-reserve frees the prior block first. `column_ptr` / `column_ptr_mut`
 return the recorded base cast to the scalar type (raw, not a slice, per
 R6). `count` reads the slot. `release` is a no-op (the reader-count
 reclamation is a columnar-engine concern). `Drop` deallocates every
-live slot through the provider.
+live slot through the provider, passing `CACHE_LINE_ALIGN` back so the free
+layout matches the reserve layout. Every column is reserved at that 64-byte
+alignment because the canonical design requires it, and a free that assumed
+anything narrower would be undefined behaviour under a layout-taking
+allocator.
 
 Correctness, not performance: the slot table is a flat scan and each
 column is a separate provider allocation. The point is a working

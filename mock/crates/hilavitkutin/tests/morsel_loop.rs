@@ -45,14 +45,14 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 
 // Stack-backed test memory provider (mirrors tests/column_dispatch.rs).
 struct BumpProvider<const N: usize> {
-    buf: UnsafeCell<[MaybeUninit<u8>; N]>,
+    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
     used: Cell<usize>,
 }
 
 impl<const N: usize> BumpProvider<N> {
     fn new() -> Self {
         Self {
-            buf: UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
+            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
             used: Cell::new(0),
         }
     }
@@ -75,7 +75,7 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
         unsafe { base.add(aligned) }
     }
 
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
 
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
@@ -101,19 +101,19 @@ type Col = Cons<Column<Tv>, Empty>;
 struct RelIndexWu;
 
 impl BuilderInput for RelIndexWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 
 impl WorkUnit<Always> for RelIndexWu {
-    type Read = Empty;
-    type Write = Col;
+    type Ctx<'frame> = EngineCtx<'frame, Empty, Col, SnapNil, ColPtrNil, ColPtrCons<Tv, ColPtrNil>>;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, Empty, Col, SnapNil, ColPtrNil, ColPtrCons<Tv, ColPtrNil>>;
+    type Read = Empty;
+    type Write = Col;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
@@ -141,12 +141,15 @@ fn morsel_windowing_writes_relative_index_per_morsel() {
     let msize = scheduler.__fiber_morsel_size(USize(0)).0;
     assert!(msize > 0, "fiber 0 carries a plan-baked window");
     // The record count must exceed the window for the windowing to split.
-    assert!(RECORDS > msize, "test record count must exceed the morsel window");
+    assert!(
+        RECORDS > msize,
+        "test record count must exceed the morsel window"
+    );
 
     // Pre-fill every record with the sentinel through the binding pointer, so a
     // morsel that never runs leaves its records detectably untouched.
     let base = scheduler.__bindings().__ptr().as_ptr();
-    for k in 0..RECORDS {
+    for k in 0 .. RECORDS {
         // SAFETY: the drain reserved `RECORDS` records; `k` is in bounds.
         unsafe { core::ptr::write(base.add(k), Tv(SENTINEL)) };
     }
@@ -155,7 +158,7 @@ fn morsel_windowing_writes_relative_index_per_morsel() {
     assert!(matches!(result, Outcome::Ok(())));
 
     let base = scheduler.__bindings().__ptr().as_ptr();
-    for k in 0..RECORDS {
+    for k in 0 .. RECORDS {
         // SAFETY: every record was written by the probe (or, on failure, holds
         // the sentinel); `k` is in bounds of the reserved column.
         let v = unsafe { core::ptr::read(base.add(k)) };

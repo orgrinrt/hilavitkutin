@@ -81,3 +81,22 @@ seed storage chapter replaces its open-question wording with the spec,
 governance item 1 (and the A2-3 remainder in item 6) closes, and #696
 plus #697 complete. S3 and Swap-D remain #344-gated inside the ratified
 spec by name, not as open questions.
+
+## The answer, 2026-11-13
+
+Op was asked on 13 November, with this memo's numbers, the two open gaps
+and his last recorded word of 19 July in the question, whether the
+implementation may land. He answered, whole: "Land as provisional". The
+options were ratify and land, land as provisional, ratify with changes,
+and keep holding.
+
+So the ask above is not granted. S1 through S7 are not the ratified
+swap-semantics canon, no registry row is written, and governance item 1
+and the A2-3 remainder in item 6 stay open. What the answer grants is
+that the implementation ships on the trunk meanwhile, which it does
+under round `202611131335` on the same evidence this memo carries.
+
+The question put two gaps to him and he ruled on neither, so both stay
+open, ticketed and marked in the source: the plan-dirty bit is keyed by
+the store's position where S2 says the plan-affecting id, and a fused
+frame neither consumes nor honours that bit.

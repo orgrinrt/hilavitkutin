@@ -14,7 +14,13 @@ use core::mem::MaybeUninit;
 
 use arvo::{Bool, USize};
 use hilavitkutin::dispatch::engine_ctx::{
-    AccPtrCons, AccPtrNil, ColPtrNil, EngineCtx, MetaRef, SnapNil, VirtNil,
+    AccPtrCons,
+    AccPtrNil,
+    ColPtrNil,
+    EngineCtx,
+    MetaRef,
+    SnapNil,
+    VirtNil,
 };
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
@@ -33,12 +39,15 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 }
 
 struct BumpProvider<const N: usize> {
-    buf: UnsafeCell<[MaybeUninit<u8>; N]>,
+    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
     used: Cell<usize>,
 }
 impl<const N: usize> BumpProvider<N> {
     fn new() -> Self {
-        Self { buf: UnsafeCell::new([const { MaybeUninit::uninit() }; N]), used: Cell::new(0) }
+        Self {
+            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
+            used: Cell::new(0),
+        }
     }
 }
 unsafe impl<const N: usize> Send for BumpProvider<N> {}
@@ -56,7 +65,9 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
         // SAFETY: aligned + len <= N, in bounds of the owned buffer.
         unsafe { base.add(aligned) }
     }
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+
+    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
+
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
@@ -68,8 +79,15 @@ struct Mark(u32);
 
 type AccW = Cons<Accum<Mark>, Empty>;
 
-type ConsumerCtx<'frame> =
-    EngineCtx<'frame, Empty, AccW, SnapNil, ColPtrNil, ColPtrNil, AccPtrCons<'frame, Mark, AccPtrNil>>;
+type ConsumerCtx<'frame> = EngineCtx<
+    'frame,
+    Empty,
+    AccW,
+    SnapNil,
+    ColPtrNil,
+    ColPtrNil,
+    AccPtrCons<'frame, Mark, AccPtrNil>,
+>;
 
 type EndCtx<'frame> = EngineCtx<
     'frame,
@@ -92,14 +110,15 @@ type Hints = (
 // Always consumer (rank 3): sentinel so the pipeline has a consumer band.
 struct ConsumerWu;
 impl BuilderInput for ConsumerWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for ConsumerWu {
+    type Ctx<'frame> = ConsumerCtx<'frame>;
+    type Hint = Hints;
     type Read = Empty;
     type Write = AccW;
-    type Hint = Hints;
-    type Ctx<'frame> = ConsumerCtx<'frame>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         // SAFETY: Mark reserved (CAP); one append per frame stays in capacity.
         unsafe { ctx.accums().append::<Mark, _>(Mark(9)) };
@@ -109,17 +128,18 @@ impl WorkUnit<Always> for ConsumerWu {
 // OnMeta<ScheduleEnd> hook: read the throughput numerator through the bridge.
 struct EndWu;
 impl BuilderInput for EndWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl HasSchedule for EndWu {
     type Sched = OnMeta<ScheduleEnd>;
 }
 impl WorkUnit<OnMeta<ScheduleEnd>> for EndWu {
+    type Ctx<'frame> = EndCtx<'frame>;
+    type Hint = Hints;
     type Read = Empty;
     type Write = AccW;
-    type Hint = Hints;
-    type Ctx<'frame> = EndCtx<'frame>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         let rc = ctx.meta::<SchedulerMetrics>().last_record_count.get();
         // SAFETY: Mark reserved (CAP); one append per frame stays in capacity.
@@ -147,7 +167,11 @@ fn end_hook_reads_record_count_through_the_bridge() {
     assert_eq!(len1, 2, "frame 1: consumer and end hook both ran");
     // SAFETY: two records appended this frame into a reset buffer.
     let buf1 = unsafe { [core::ptr::read(base1.add(0)).0, core::ptr::read(base1.add(1)).0] };
-    assert_eq!(buf1, [9, 0], "frame 1: end hook reads the seed record count (0)");
+    assert_eq!(
+        buf1,
+        [9, 0],
+        "frame 1: end hook reads the seed record count (0)"
+    );
 
     let r2 = scheduler.run();
     assert!(matches!(r2, Outcome::Ok(())));
