@@ -114,6 +114,14 @@ fn run_cell(
     let findings = format!("{bench}_n{n}_findings.md");
 
     if report_only {
+        // A configured size with no CSV has not been run (FIXME(5f526d071953)
+        // covers the three large ones). Regenerating is a pass over whatever
+        // results exist, so an absent cell is skipped rather than ending the
+        // pass and leaving the later cells stale.
+        if !Path::new(&csv).exists() {
+            eprintln!("  skipped {csv}, not run");
+            return Ok(());
+        }
         let samples = harness::load_samples_csv(Path::new(&csv)).map_err(|e| e.to_string())?;
         let result = BenchResult {
             title: config.title.clone(),

@@ -111,10 +111,11 @@ slowest variant and reads as picked by accident, it was not: it is set in this
 member's driver, on purpose, and is meant to be the bar whether it wins or
 loses. Do not re-baseline on whichever arm happens to be fastest.
 
-The lines under each highlight that call a large delta a reason to switch, or a
-dominant winner a safe default pick, are the harness's stock phrasing for any
-dataset. They are not a judgement about these arms and should be read as
-describing the shape of the numbers, nothing more.
+The harness writes a `Why it matters` line under each highlight, calling a large
+delta a reason to switch and a dominant winner a safe default pick. Those lines
+are its stock phrasing for any dataset, they are judgements this file has no
+standing to make, and they are stripped before it is written. What is left under
+each highlight is the shape of the numbers.
 
 A median here is wall-clock time and carries nothing about how many cores an
 arm used to reach it. Two arms with the same median are not the same cost if
@@ -154,9 +155,32 @@ pub fn write_findings(
     }
     let md = format!(
         "{FINDINGS_CAVEAT}{}",
-        harness::generate_report(&ds, &result.title)
+        plain(&harness::generate_report(&ds, &result.title))
     );
     std::fs::write(path, md).map_err(|e| format!("writing {path}: {e}"))
+}
+
+/// Take the harness's editorialising and its emphasis out of a report.
+///
+/// Two things go. The `_Why it matters:_` lines are the harness telling a
+/// reader which way to decide, which is exactly what this member's numbers do
+/// not support, and disclaiming them in the preamble while leaving them in the
+/// body reads worse than either. Bold spans go because the workspace writes no
+/// inline styling in prose a human reads, and a generated body committed to the
+/// repo is prose a human reads.
+///
+/// Everything else is left alone, including the figures and the highlight
+/// headings the bold was wrapped around.
+fn plain(report: &str) -> String {
+    let mut out = String::with_capacity(report.len());
+    for line in report.lines() {
+        if line.trim_start().starts_with("_Why it matters:_") {
+            continue;
+        }
+        out.push_str(&line.replace("**", ""));
+        out.push('\n');
+    }
+    out
 }
 
 /// Whether this process was started as a harness worker.

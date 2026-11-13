@@ -19,10 +19,11 @@ slowest variant and reads as picked by accident, it was not: it is set in this
 member's driver, on purpose, and is meant to be the bar whether it wins or
 loses. Do not re-baseline on whichever arm happens to be fastest.
 
-The lines under each highlight that call a large delta a reason to switch, or a
-dominant winner a safe default pick, are the harness's stock phrasing for any
-dataset. They are not a judgement about these arms and should be read as
-describing the shape of the numbers, nothing more.
+The harness writes a `Why it matters` line under each highlight, calling a large
+delta a reason to switch and a dominant winner a safe default pick. Those lines
+are its stock phrasing for any dataset, they are judgements this file has no
+standing to make, and they are stripped before it is written. What is left under
+each highlight is the shape of the numbers.
 
 A median here is wall-clock time and carries nothing about how many cores an
 arm used to reach it. Two arms with the same median are not the same cost if
@@ -36,63 +37,55 @@ The generated report follows.
 # Wide frame, heavy per-record compute
 
 7 variants, 8 samples per variant.
-Baseline: **hand**
+Baseline: hand
 
 ## Highlights
 
-Baseline for all deltas below: **hand**. (Deltas are paired `variant - baseline` medians; `*` marks a CI that excludes zero.)
+Baseline for all deltas below: hand. (Deltas are paired `variant - baseline` medians; `*` marks a CI that excludes zero.)
 
 ### Baseline (hand) is the SLOWEST variant; every rival beats it
 
 The declared/defaulted baseline hand has the worst median (3.39 ms). Every delta is therefore measured against the worst performer, which flatters all rivals and compresses the differences that matter among them (e.g. fastest hand_par at 1.03 ms).
 
-_Why it matters:_ A baseline picked by accident (often the first variant to run / sort) silently skews every comparison. Re-baseline via `[bench.<name>.normalise]` on a representative variant.
 
 ### hand_par dominates: 29% faster than the next best (rust_std_par)
 
 hand_par (1.03 ms) leads rust_std_par (1.34 ms) by 29%, a clear separation rather than a photo finish. CV 7.2%.
 
-_Why it matters:_ A dominant, well-separated winner is a safe default pick for this workload shape.
 
 ### hand_par beats baseline by 69% (significant)
 
 hand_par is -2.35 ms (69%) faster than baseline hand, with a CI that excludes zero.
 
-_Why it matters:_ A large, significant improvement over the current baseline is a concrete reason to switch.
 
 ### hand is an outlier: 3.3x slower than the field
 
 hand (3.39 ms) is 3.3x the fastest (1.03 ms), well off the pack.
 
-_Why it matters:_ A >2x outlier is almost never the right choice; if it is intentional (e.g. it buys correctness), say so explicitly.
 
 ### engine_par shows alternating (throttle bounce) (autocorr -0.50)
 
 engine_par's per-pass series has lag-1 autocorrelation -0.50, indicating alternating (throttle bounce). Its timing may not be at steady state.
 
-_Why it matters:_ Autocorrelated samples violate the independence the CIs assume; the interval is optimistic until the drift is warmed out or cooled down.
 
 ### Two tiers: {hand_par, rust_std_par} vs {rust_nostd, rust_std, engine, engine_par, hand} (113% apart)
 
 The field splits into a fast tier {hand_par, rust_std_par} and a slow tier {rust_nostd, rust_std, engine, engine_par, hand} with a 113% jump between them - a qualitative difference, not a gradient.
 
-_Why it matters:_ A tier split usually reflects a mechanism boundary (branchless vs branch, cached vs not); the tier, not the exact rank, is the finding.
 
 ### Wide spread: slowest is 3.3x the fastest
 
 Fastest hand_par (1.03 ms) to slowest hand (3.39 ms): 3.3x. The strategy choice matters a lot for this workload.
 
-_Why it matters:_ A wide field means the strategy is load-bearing here; getting it right (or wrong) has large consequences.
 
 ### engine_par is inconsistent: worst-20% is 1.6x its best-20%
 
 engine_par's best 20% of batches run at 2.82 ms but its worst 20% at 4.40 ms (1.6x) - a bimodal or bursty profile the median hides.
 
-_Why it matters:_ A fat tail matters for latency budgets even when the median looks fine; a steadier variant may serve better under load.
 
 ## Key findings
 
-- **Fastest: hand_par** at 1034137.3 ns median (-69.5% vs baseline)
+- Fastest: hand_par at 1034137.3 ns median (-69.5% vs baseline)
 - 4 variants significantly faster than baseline
 - Spread: 3.28x (fastest 1034137.3 ns, slowest 3393279.1 ns)
 
@@ -122,7 +115,7 @@ _Why it matters:_ A fat tail matters for latency budgets even when the median lo
 
 ## Performance model
 
-- Peak throughput: **0.822 Gops/s** (hand_par; best 20% batches)
+- Peak throughput: 0.822 Gops/s (hand_par; best 20% batches)
 - Ops per call: 786432
 
 | Variant | Gops/s (median) | % of peak |
@@ -166,7 +159,7 @@ _Why it matters:_ A fat tail matters for latency budgets even when the median lo
 | 1 | 1 | 3806579ns | -30.8% | -19.8% | -73.6% | -26.5% | -8.9% | -64.9% |
 | 1 | 2 | 3358983ns | -1.7% | -10.9% | -69.2% | -13.4% | -14.4% | -62.3% |
 
-**Autocorrelation (lag-1) per-pass series:**
+Autocorrelation (lag-1) per-pass series:
 
 | Variant | r₁ | note |
 |---|---|---|
@@ -178,14 +171,14 @@ _Why it matters:_ A fat tail matters for latency budgets even when the median lo
 | rust_std | -0.500 | moderate- |
 | rust_std_par | -0.500 | moderate- |
 
-**Consistency summary:**
+Consistency summary:
 
-- **engine**: won 2/2, lost 0/2
-- **engine_par**: won 2/2, lost 0/2
-- **hand_par**: won 2/2, lost 0/2
-- **rust_nostd**: won 2/2, lost 0/2
-- **rust_std**: won 2/2, lost 0/2
-- **rust_std_par**: won 2/2, lost 0/2
+- engine: won 2/2, lost 0/2
+- engine_par: won 2/2, lost 0/2
+- hand_par: won 2/2, lost 0/2
+- rust_nostd: won 2/2, lost 0/2
+- rust_std: won 2/2, lost 0/2
+- rust_std_par: won 2/2, lost 0/2
 
 ## Bridge overhead per variant
 
@@ -367,11 +360,11 @@ rust_std_par (n=8, range 1107281.2-1467093.5 ns)
 
 ## Diagnostics
 
-- **engine**: bridge=33.0% of algo (FFI overhead may distort results)
-- **engine_par**: CV=47.3% (high variance, measurements may be unstable)
-- **engine_par**: bridge=33.5% of algo (FFI overhead may distort results)
-- **hand**: bridge=29.5% of algo (FFI overhead may distort results)
-- **hand_par**: bridge=98.9% of algo (FFI overhead may distort results)
-- **rust_nostd**: bridge=36.0% of algo (FFI overhead may distort results)
-- **rust_std**: bridge=36.0% of algo (FFI overhead may distort results)
-- **rust_std_par**: bridge=75.6% of algo (FFI overhead may distort results)
+- engine: bridge=33.0% of algo (FFI overhead may distort results)
+- engine_par: CV=47.3% (high variance, measurements may be unstable)
+- engine_par: bridge=33.5% of algo (FFI overhead may distort results)
+- hand: bridge=29.5% of algo (FFI overhead may distort results)
+- hand_par: bridge=98.9% of algo (FFI overhead may distort results)
+- rust_nostd: bridge=36.0% of algo (FFI overhead may distort results)
+- rust_std: bridge=36.0% of algo (FFI overhead may distort results)
+- rust_std_par: bridge=75.6% of algo (FFI overhead may distort results)
