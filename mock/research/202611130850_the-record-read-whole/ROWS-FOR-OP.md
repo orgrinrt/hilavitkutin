@@ -45,7 +45,7 @@ Passages: `mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and
 
 A tenet. It says: The context, persistence, identity core, string, kit and providers crates are standalone ecosystem crates that consumers opt into. The context, persistence, identity core and string crates are pure ecosystem crates that the engine does not depend on.
 
-Finding: This row lists persistence among the standalone ecosystem crates, but he chose "Builds on str and api" over standalone for persistence; see row op_ruled_that_the_persistence_crate_builds_on_the_str_and_api_crates_and_never_on_the_engine_or_the_context_crate. The engine-does-not-depend and opt-in parts are not contested.
+Finding: This row lists persistence among the standalone ecosystem crates, but he chose "Builds on str and api" over standalone for persistence; see row op_ruled_that_the_persistence_crate_builds_on_the_str_and_api_crates_and_its_design_holds_over_the_lint. The engine-does-not-depend and opt-in parts are not contested.
 
 Passages: `.data/op-responses/202609181645_hila-std-tier-persistence.md:33-43`, `mock/DESIGN.md.tmpl:32-32`.
 
@@ -53,7 +53,7 @@ Passages: `.data/op-responses/202609181645_hila-std-tier-persistence.md:33-43`, 
 
 A tenet. It says: The persistence crate is the generic bridge between hot and cold storage, and a standalone ecosystem crate.
 
-Finding: The row calls persistence standalone, but he chose "Builds on str and api" over "Standalone, lint holds"; see row op_ruled_that_the_persistence_crate_builds_on_the_str_and_api_crates_and_never_on_the_engine_or_the_context_crate.
+Finding: The row calls persistence standalone, but he chose "Builds on str and api" over "Standalone, lint holds"; see row op_ruled_that_the_persistence_crate_builds_on_the_str_and_api_crates_and_its_design_holds_over_the_lint.
 
 Passages: `.data/op-responses/202609181645_hila-std-tier-persistence.md:33-43`, `mock/DESIGN.md.tmpl:23-23`.
 
