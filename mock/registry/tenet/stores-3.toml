@@ -16,7 +16,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["drift-fix arc", "storage model", "scalar snapshot", "live-streamed", "noalias", "erased addressing", "hybrid", "settled layout"]
 related = ["tenet::a_resource_value_is_addressed_through_an_erased_static_shape_so_it_can_cross_a_plugin_boundary"]
@@ -37,7 +37,7 @@ with #344, shaped by this clause.
 '''
 origin = "proposed"
 written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
-standing = "provisional"
+standing = "pending"
 keywords = ["collection accessor shape", "ptr+len view", "erased descriptor", "read side", "write side", "#344", "founding spec open item"]
 related = ["tenet::a_resource_value_is_addressed_through_an_erased_static_shape_so_it_can_cross_a_plugin_boundary"]
 
@@ -60,7 +60,7 @@ both arms. The supertrait alternatives fail on the merits
 '''
 origin = "proposed"
 written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
-standing = "provisional"
+standing = "pending"
 keywords = ["negative_impls", "PlanAffecting", "Replaceable", "E0751", "exclusivity", "negative impl", "structural wall", "S4"]
 related = ["tenet::plan_affecting_is_an_open_marker_trait_that_consumers_implement_on_resource_value_types"]
 
@@ -79,7 +79,7 @@ band); a lint is advisory where a structural wall exists.
 '''
 origin = "proposed"
 written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
-standing = "provisional"
+standing = "pending"
 keywords = ["supertrait", "PlanAffecting", "Replaceable", "silent-skip hole", "plan band", "lint advisory", "structural wall", "S4"]
 rejects = ["PlanAffecting: Replaceable", "Replaceable: PlanAffecting", "a lint in place of the structural wall"]
 related = ["tenet::a_plan_affecting_type_can_never_take_the_replace_value_path_because_of_a_negative_impl_wall"]
@@ -105,7 +105,7 @@ between two threads; they share the ceiling formula and nothing else.
 '''
 origin = "proposed"
 written_by = "engine design template as on the branch recover/unlanded-rounds-and-benches, commit of 2026-08-30, not on dev; the text does not say whose it is"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["accumulator", "per-core region", "merge", "append order", "N-way regioning", "reserved buffer"]
 
@@ -121,7 +121,7 @@ The sticky refusal is a second count on each accumulator binding beside the live
 '''
 origin = "proposed"
 written_by = "topic overflow-is-a-value of 2026-11-13, round 202611130402, roadmap step HV1b, agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["accumulator", "append", "capacity", "refusal", "sticky", "wanted", "overflow", "AccumRefused"]
 rejects = ["An append past an accumulator's reserved capacity panics"]
@@ -141,7 +141,7 @@ The refusal is read at the close. After the last band of the frame, `run` walks 
 '''
 origin = "proposed"
 written_by = "topic overflow-is-a-value of 2026-11-13, round 202611130402, roadmap step HV1b, agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["accumulator", "refusal", "close", "worker count", "registration order", "run output", "Exhausted"]
 related = ["tenet::an_append_past_an_accumulator_s_capacity_is_counted_and_never_written_and_the_refusal_is_sticky_for_the_frame"]
@@ -184,7 +184,7 @@ Round 202611130402 built the refusal only. `RunCfg` is sealed, `DefaultRunCfg` i
 '''
 origin = "proposed"
 written_by = "topic overflow-is-the-consumers-choice of 2026-11-13, round 202611130554, the working out of op's ruling, agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["AccumOverflow", "Refuse", "Assert", "run configuration", "sealed", "close", "calling thread", "typestate"]
 related = ["tenet::the_consumer_picks_on_the_run_configuration_whether_an_over_capacity_append_is_a_refusal_or_an_assert"]
@@ -201,7 +201,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "topic overflow-review-fixes of 2026-11-13, round 202611130500, review pass one of the overflow round, agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["run_parallel", "per-core region", "leading bands", "merge", "prefix", "worker count", "accumulator"]
 related = ["tenet::the_refusal_of_an_accumulator_is_read_at_the_close_and_is_the_same_value_at_every_worker_count"]
@@ -218,7 +218,7 @@ A lane is a unit struct implementing `Lane` (its item type and initial value) an
 '''
 origin = "proposed"
 written_by = "the findings of the sketch frame-view-typestate, dated 2026-11-12 and 2026-11-13; it calls itself sketch S3 of the roadmap for building kaski's engine on the stack's contracts, job hv-sketch-frame-view, and says hilavitkutin declares no canon it was checked against"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["frame", "lane", "committed", "staged", "double buffer", "frame lane", "landed store", "sketch", "frame view"]
 related = ["tenet::a_writer_precedes_every_reader_of_what_it_writes"]
@@ -237,7 +237,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "the findings of the sketch frame-view-typestate, dated 2026-11-12 and 2026-11-13; it calls itself sketch S3 of the roadmap for building kaski's engine on the stack's contracts, job hv-sketch-frame-view, and says hilavitkutin declares no canon it was checked against"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["view", "committed frame", "staged handle", "write-only", "read list", "step kernel", "frame start", "sketch"]
 related = ["tenet::a_sketch_of_november_2026_holds_every_lane_of_a_frame_twice_committed_and_staged"]
@@ -254,7 +254,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "the findings of the sketch frame-view-typestate, dated 2026-11-12 and 2026-11-13; it calls itself sketch S3 of the roadmap for building kaski's engine on the stack's contracts, job hv-sketch-frame-view, and says hilavitkutin declares no canon it was checked against"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["close unit", "landed store", "after the step lands", "view", "frame close", "sketch"]
 related = ["tenet::a_sketch_of_november_2026_holds_every_lane_of_a_frame_twice_committed_and_staged"]
@@ -279,7 +279,7 @@ write-byte sum. The L1 window formula (A3b) needs the size array. The plan stage
 '''
 origin = "proposed"
 written_by = "topic a3a-store-size-collection of 2026-06-19, round 202606202500, agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["StoreElemBytes", "StoreSizes", "store_sizes", "per-store size", "ColumnValue", "BIT_WIDTH", "A3a", "morsel budget"]
 related = ["tenet::the_morsel_size_is_the_l1_budget_divided_by_the_written_bytes_per_record_within_fixed_bounds"]
@@ -305,7 +305,7 @@ all four on ColumnValue, which broke real carriers; A3b corrects it.)
 '''
 origin = "proposed"
 written_by = "src changelist of round 202606202700 (A3b), agent-written"
-standing = "provisional"
+standing = "pending"
 keywords = ["StoreElemBytes", "per-record columns", "Resource", "StagedResource", "Accum", "Virtual", "ColumnValue bound", "A3b"]
 rejects = ["A3a had bounded all four on ColumnValue"]
 related = ["tenet::as_first_proposed_each_store_marker_reports_its_element_bytes_for_the_morsel_budget_and_a_virtual_reports_none"]
@@ -334,7 +334,7 @@ Verification: `grep -A2 "StoreElemBytes for Resource" mock/crates/hilavitkutin/s
 '''
 origin = "proposed"
 written_by = "topic a3b-l1-morsel-formula of 2026-07-16, round 202607161410, and its src changelist, agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["StoreElemBytes", "ResourceFootprint", "L1_BYTES", "Resource", "StagedResource", "Accum", "R5 footprint", "morsel budget"]
 rejects = ["flat scalar sizes"]
@@ -361,7 +361,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "topic a3b-l1-morsel-formula of 2026-07-16, round 202607161410, agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["ResourceFootprint", "blanket impl", "coherence", "derive", "bare scalar", "zero footprint", "L1 write budget"]
 related = ["tenet::a_resource_and_a_staged_resource_contribute_their_declared_footprint_to_the_morsel_budget_and_an_accumulator_contributes_zero", "tenet::the_api_macros_crate_is_the_proc_macro_companion_of_the_api_crate_and_derives_a_resource_s_write_collection_footprint"]
@@ -395,7 +395,7 @@ strides) and the type-fold problem disappears.
 '''
 origin = "proposed"
 written_by = "topic resource-handle-storage-model of 2026-06-19, round 202606210600, agent-written, later reversed by the same round's bench topics"
-standing = "provisional"
+standing = "pending"
 keywords = ["resource handle", "shape-bound columns", "decompose", "handle store", "DrainStores", "one-record blob", "R5", "unified store"]
 related = ["tenet::a_resource_is_a_handle_and_not_an_inline_value_store_which_is_the_corrected_reading_of_r5"]
 
@@ -480,7 +480,7 @@ static-shape addressing are absent. The round's research artifacts
 '''
 origin = "proposed"
 written_by = "doc changelist of 2026-07-16, round 202606210600 (resource storage model), agent-written, folding in the decision of 2026-07-02"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["erased base pointer", "static shape", "ResourcePtr", "backcast", "drain", "projection", "plugin boundary", "domain 19"]
 rejects = ["a monomorphised `ResourcePtr<T>` recorded at drain"]

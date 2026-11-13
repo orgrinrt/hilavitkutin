@@ -504,7 +504,7 @@ wrapper type like `Exclusive<Resource<T>>` in the AccessSet.
 '''
 origin = "proposed"
 written_by = "topic T5 of the founding round (hilavitkutin-core-design), question Q6, marked resolved there"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["access mode", "Read", "Write", "Pinned", "Immediate", "frozen snapshot", "double-buffered", "freshness", "loimu", "store wrapper"]
 rejects = ["loimu's seven access modes in hilavitkutin"]

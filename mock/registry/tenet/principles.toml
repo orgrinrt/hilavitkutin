@@ -26,7 +26,7 @@ No dependency on polka-*, std, alloc, or external crates in any of
 the three crates. Designed for extraction to a separate repository.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "pending"
 keywords = ["no dependency", "polka", "std", "alloc", "external crates", "no_std", "three crates"]
 
 [[tenet]]
@@ -368,7 +368,7 @@ quote = '''
 - inventory link-time registration = complete before work (#55)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "pending"
 keywords = ["inventory", "link-time registration", "complete before work", "design principle", "#55"]
 
 [[tenet]]

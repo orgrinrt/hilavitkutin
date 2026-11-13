@@ -410,7 +410,7 @@ the arena-layout column; sub-byte bitpacking (`ColumnValue::BIT_WIDTH`) is
 '''
 origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["RCM", "arena-layout", "partial", "inert", "state assessment", "2026-06-11"]
 related = ["tenet::whether_dispatch_follows_rcm_order_or_waist_phase_order_is_decided_by_a_bench"]
@@ -426,7 +426,7 @@ Partial or inert: eight of nine adapt axes carry types but no data;
 '''
 origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["adapt axes", "inert", "types without data", "state assessment", "2026-06-11"]
 
@@ -444,7 +444,7 @@ The easy escape hatch is gone: there is no "registration-order cons-list walk th
 '''
 origin = "proposed"
 written_by = "canon amendment of 2026-06-06 on the unified engine, the working out under the maintainer's ruling, written in the first person by an author the text does not name"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["FiberShape", "typestate", "per-core program", "build time = the type system", "AccessSet", "trait solver", "sketch-prove", "highest risk"]
 rejects = ["a registration-order cons-list walk that works for single core, shipped first"]
@@ -468,7 +468,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["A3b", "per-fiber morsel sizing", "blob stride", "CollectionBytes", "ResourceFootprint", "#163", "#164", "size fold"]
 related = ["tenet::the_value_of_a_resource_is_one_contiguous_record_blob_and_the_per_member_column_decomposition_was_refuted_by_bench"]
@@ -492,6 +492,6 @@ arm (one write per swap, between frames; the stakes do not justify one).
 '''
 origin = "proposed"
 written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
-standing = "provisional"
+standing = "pending"
 keywords = ["Swap-D", "bench", "write_resource_collection_sizes", "morsel term", "#344", "cold write then stream", "budget line", "S7"]
 related = ["tenet::per_fiber_morsel_sizing_folds_over_blob_strides_plus_the_collection_bytes_term_and_rides_after_the_drift_fix"]

@@ -103,7 +103,7 @@ discipline), and measurement variance is fixed with median-of-N runs. The
 gate stays blocking.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "pending"
 keywords = ["perf gate", "per-arm bars", "1.10x", "persistent pool", "median-of-N", "blocking", "baseline", "A1-8"]
 related = ["tenet::the_fairness_correction_sets_the_parallel_baseline_to_optimal_multi_threaded_std_and_supersedes_the_3_5x_claim"]
 
@@ -126,7 +126,7 @@ incidental.
 '''
 origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, constraint note 1, agent-written, elevated to canon by the addendum"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["N-way partition", "heterogeneous carrier", "specialization", "const-gated DCE", "flat carrier", "const evaluation", "r4"]
 rejects = ["partition in the carrier type"]
@@ -146,7 +146,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, constraint note 2, agent-written, elevated to canon by the addendum"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["type-keyed projection", "index witness", "Here", "There", "Selector", "heterogeneous list", "specialization"]
 rejects = ["type-equality specialization"]
@@ -166,7 +166,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, constraint note 3, agent-written, elevated to canon by the addendum"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["generic_const_exprs", "generic constants", "inline const blocks", "IsRoot", "PhaseAt", "caps", "ceilings"]
 related = ["tenet::caps_are_defaults_and_never_policy_so_a_sketch_arc_looks_for_cap_lifting_shapes_now"]

@@ -28,7 +28,7 @@ quote = '''
 - No lost fires
 '''
 origin = "stated"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (mock/research/202606111400_canonical-design-addendum-a1.md:122-131, row whether_meta_units_share_the_consumer_carrier_or_get_a_dedicated_carrier_is_decided_by_sketching_both_shapes), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["clear-on-dispatch", "re-fire", "no lost fires", "consumer bit", "next pass", "resume"]
 related = ["tenet::each_consumer_of_a_virtual_has_its_own_bit_and_a_fire_sets_all_of_them"]
@@ -187,7 +187,7 @@ The column-data-plane round landed INPUT columns: buffers sized to a build-time 
 '''
 origin = "proposed"
 written_by = "design round 202606041800 (accumulator columns), its topic file, an agent-written round that reports the maintainer's model"
-standing = "provisional"
+standing = "pending"
 keywords = ["accumulator", "Accum", "append", "input column", "fourth store", "two-kind", "record count", "capacity", "drain"]
 related = ["tenet::there_are_three_store_types_and_one_scheduling_mechanism", "question::what_an_append_past_the_capacity_of_an_accumulator_does"]
 
@@ -214,7 +214,7 @@ entire mutable and immutable state reduces to these.
 '''
 origin = "proposed"
 written_by = "the standalone spec 202606111800, a reading aid with no design authority of its own by addendum A2"
-standing = "provisional"
+standing = "pending"
 keywords = ["four store shapes", "Accum", "accumulator", "append-only", "reserved capacity", "Resource", "Column", "Virtual"]
 related = ["tenet::there_are_three_store_types_and_one_scheduling_mechanism"]
 
@@ -231,7 +231,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "addendum A1 (locked by the maintainer 2026-06-11), its constraint notes elevated to canon"
-standing = "provisional"
+standing = "pending"
 keywords = ["accumulator", "saturate", "reserved capacity", "record count at build", "soundness guard", "dropped append"]
 related = ["question::what_an_append_past_the_capacity_of_an_accumulator_does"]
 
@@ -277,7 +277,7 @@ quote = '''
    `mock/design_rounds/202606210600_topic.hybrid-decision.md`.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "pending"
 keywords = ["erased addressing", "static shape", "hybrid", "plugin boundary", "cdylib", "wasm", "global-capable", "resource value", "loimu"]
 
 [[tenet]]
@@ -295,7 +295,7 @@ them.
 '''
 origin = "proposed"
 written_by = "the loimu heritage expert memo of round 202606210600, dated 2026-06-19, an agent persona's deliverable"
-standing = "provisional"
+standing = "pending"
 keywords = ["double-buffered", "frozen", "live", "pass boundary", "triple buffering", "temporal prediction", "loimu heritage"]
 related = ["question::whether_hilavitkutin_s_own_columns_are_double_buffered", "question::how_a_unit_reads_the_value_a_store_held_at_frame_start", "tenet::loimu_keeps_its_seven_access_modes_and_maps_them_to_read_and_write_at_the_boundary"]
 
@@ -382,7 +382,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["handle store", "resource id", "pointer provenance", "value blob", "collection columns", "noalias"]
 related = ["tenet::resource_and_column_pointers_must_have_separate_provenance_or_llvm_reloads_resources_every_iteration"]
@@ -450,7 +450,7 @@ blob; only the handle store is separate-provenance.
 '''
 origin = "proposed"
 written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["separate arena", "Seq", "Map", "handle store", "one-record blob", "spec 566", "provenance"]
 rejects = ["a resource-private value arena for collection members"]
@@ -475,7 +475,7 @@ not a decomposition rewrite.
 '''
 origin = "proposed"
 written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["DrainStores", "ResourcePtr", "drift", "one-record blob", "scalar snapshot", "live-stream", "additive fix", "bindings.rs"]
 related = ["tenet::the_scalar_members_of_a_resource_are_snapshotted_to_a_stack_local_before_the_morsel_loop", "tenet::a_seq_or_map_value_is_a_pointer_and_a_length_and_its_elements_are_live_streamed_from_their_column_and_never_copied"]
@@ -495,7 +495,7 @@ tests pin blob-address identity, last-swap-wins, ZST swap, install
 '''
 origin = "proposed"
 written_by = "memo on swap semantics, implementation and bench evidence for ratification, 2026-07-19, round 202607200500 (#697); the text does not name its author"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["negative_impls", "PlanAffecting", "Replaceable", "E0751", "compile_fail doctest", "WATCH tier", "S4", "shipped"]
 related = ["tenet::a_plan_affecting_type_can_never_take_the_replace_value_path_because_of_a_negative_impl_wall"]

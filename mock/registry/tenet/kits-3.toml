@@ -43,6 +43,6 @@ The sketch's negative-impl path is dead. Decision point for the user.
 '''
 origin = "proposed"
 written_by = "sketch findings NotIn<H> compile-time diamond detection of 2026-05-05 (round 202605042200), outcome FAILS; agent-written"
-standing = "provisional"
+standing = "pending"
 keywords = ["NotIn", "negative_impls", "E0751", "first-wins fallback", "duplicate registration", "specialisation forbidden", "TypeId forbidden", "decision point"]
 related = ["tenet::the_proposal_committed_to_a_compile_time_error_on_duplicate_marker_registration_through_a_non_membership_bound_at_the_leaf_registrable_impl", "tenet::the_kit_trait_carries_no_required_member_because_the_type_level_set_difference_hits_the_coherence_wall_and_requirements_live_in_prose"]

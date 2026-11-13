@@ -358,7 +358,7 @@ Never use dead terms: chain, chain group, partition, archetype,
 entity, row, entry, order.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "pending"
 keywords = ["vocabulary discipline", "canonical terms", "dead terms", "entry", "record", "micro-morsel", "waist"]
 related = ["tenet::the_dead_terms_chain_chain_group_partition_archetype_entity_row_and_order_have_named_replacements", "tenet::the_hierarchy_runs_from_pipeline_down_through_phase_trunk_fiber_and_morsel_to_entry"]
 
@@ -406,7 +406,7 @@ nowhere) exists and is unwired.
 '''
 origin = "proposed"
 written_by = "topic n-way-record-split-is-not-convergence of 2026-07-19, round 202607192110, agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["non-canonical mechanism", "load-bearing drift", "single-trunk phase", "serial", "head and tail", "W1", "faster than nothing"]
 related = ["tenet::head_and_tail_convergence_is_designed_and_not_built_and_a_single_trunk_phase_runs_serially_until_it_is", "tenet::the_n_way_record_split_of_a_single_trunk_phase_is_not_head_and_tail_convergence_and_is_drift"]
@@ -449,7 +449,7 @@ five, and the five that remain are pre-existing rather than introduced here.
 '''
 origin = "proposed"
 written_by = "source changelists of rounds 202608090500 and 202608090700, agent-written; the earlier one records the conflict for op and the later one corrects it"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["lint allow", "rustfmt::skip", "same-line requirement", "opening brace", "strict gate", "decorative allow", "formatter"]
 rejects = ["the rule as written cannot be satisfied without #[rustfmt::skip] or a change to the rule", "nothing was wrongly suppressed"]

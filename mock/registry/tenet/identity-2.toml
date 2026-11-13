@@ -203,7 +203,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["hilavitkutin-api", "consumer contract", "platform contracts", "capability", "sink", "codec", "WorkUnit", "AccessSet"]
 related = ["tenet::the_crates_are_the_api_the_engine_the_build_crate_and_the_arvo_family"]
@@ -220,7 +220,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["hilavitkutin-api-macros", "ResourceFootprint", "derive", "proc-macro", "write-collection budget", "L1 morsel", "R5"]
 
@@ -236,7 +236,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["hilavitkutin", "engine crate", "plan", "dispatch", "resource", "thread", "strategy", "adapt", "scheduler"]
 related = ["tenet::the_crates_are_the_api_the_engine_the_build_crate_and_the_arvo_family"]
@@ -253,7 +253,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["hilavitkutin-ctx", "context framework", "provider-gated", "ecosystem", "standalone"]
 
@@ -270,7 +270,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: a passage shows part of it to be his and not the whole of it (mock/design_rounds/202607241915/202607241915_topic.sym-generic-interned-identity.md:6-12), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["hilavitkutin-sym", "hilavitkutin-str", "Sym", "Interner", "Generator", "interned identity", "string domain", "ecosystem"]
 
@@ -286,7 +286,7 @@ hilavitkutin-ctx, -persistence, -sym, -str, -kit, -providers are standalone ecos
 '''
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
-standing = "provisional"
+standing = "pending"
 keywords = ["ecosystem crates", "standalone", "opt-in", "engine does not depend", "ctx", "persistence", "sym", "str", "kit", "providers"]
 
 [[tenet]]
@@ -301,7 +301,7 @@ hilavitkutin-ctx, -persistence, -sym, -str, -kit, -providers are standalone ecos
 '''
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: a passage shows part of it to be his and not the whole of it (mock/design_rounds/202607241915/202607241915_topic.sym-generic-interned-identity.md:6-12; mock/design_rounds/202607241915/202607241915_topic.sym-generic-interned-identity.md:34-34), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["hilavitkutin-str", "hilavitkutin-sym", "identity handle", "arvo", "notko", "foundations", "dependency direction"]
 
@@ -335,7 +335,7 @@ Adding the 10th crate (`hilavitkutin-api-macros`, 2nd proc-macro crate) makes th
 '''
 origin = "proposed"
 written_by = "topic api-macros-resourcefootprint-derive of 2026-06-20, round 202606210300, and its doc changelist, agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["hilavitkutin-api-macros", "proc-macro crate", "ResourceFootprint", "derive", "extensions-macros", "sole proc-macro crate", "forbidden imports"]
 rejects = ["sole proc-macro crate"]
@@ -353,7 +353,7 @@ The identity handle. `hilavitkutin-sym` defines `Sym`, a 4-byte `#[repr(transpar
 '''
 origin = "proposed"
 written_by = "topic of round 202607241915, 2026-07-24, phase TOPIC, agent-written; the text does not say this layout is op's ruling"
-standing = "provisional"
+standing = "pending"
 keywords = ["Sym", "SymLayout", "kind", "id", "four-byte handle", "integer equality", "disjointness by kind", "interned identity"]
 
 [[tenet]]
@@ -368,7 +368,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "doc changelist of round 202607241915, phase DOC, agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["Sym", "SymLayout", "three-bit kind", "flag bit", "string domain", "single kind", "StringInterner", "byte-compatibility"]
 rejects = ["the topic's \"4-bit kind\""]
@@ -386,7 +386,7 @@ The kind-assignment discipline. `hilavitkutin-sym` owns the kind-assignment conv
 '''
 origin = "proposed"
 written_by = "topic of round 202607241915, 2026-07-24, phase TOPIC, agent-written"
-standing = "provisional"
+standing = "pending"
 keywords = ["kind assignment", "sixteen kinds", "string domain", "STR_CONST", "byte-compatibility", "minted binder", "kind reservation"]
 
 [[tenet]]
@@ -401,7 +401,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "doc changelist of round 202607241915, phase DOC, agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["SymKind", "kind assignment table", "three-bit tag", "flag bit", "string domain", "minted binder", "free tags"]
 rejects = ["the const and runtime strings distinguished by tag"]
@@ -424,7 +424,7 @@ when reached for.
 '''
 origin = "proposed"
 written_by = "topic of round 202608090130 'the origin mechanism round one described and did not build', phase TOPIC, agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["Domain", "Shape", "declared not defaulted", "associated_type_defaults", "producer", "tag"]
 
@@ -444,7 +444,7 @@ peers to claim the same origin explicitly.
 '''
 origin = "proposed"
 written_by = "source changelist of round 202608082215 'sym peer collision and a generic kind width', phase IMPL, agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["Generator", "origin", "single minter", "peer collision", "ORIGIN_BITS", "constructor", "minter"]
 
@@ -478,7 +478,7 @@ names.
 '''
 origin = "proposed"
 written_by = "topic and source changelist of round 202608090130 'the origin mechanism round one described and did not build', agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["SymShape", "const trait", "const_trait_impl", "const shim", "new_const", "[const] bound", "generic const path"]
 rejects = ["a `*_const` shim on the default shape"]

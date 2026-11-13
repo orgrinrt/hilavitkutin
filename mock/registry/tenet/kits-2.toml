@@ -54,7 +54,7 @@ consistency more than ergonomic savings.
 '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["InternerKit", "single-resource kit", "direct wiring equivalent", "Kit::default_resources", "auto-wiring", "BuilderResource removed", "no-legacy-shims-pre-1.0", "named preset"]
 related = ["tenet::a_kit_may_own_no_state_or_no_units_and_a_kit_only_declares_that_a_store_exists_while_the_value_is_supplied_at_the_app_call_site"]
@@ -80,7 +80,7 @@ do not want them.
 because = "The workspace's \"tools, not policies\" rule: the crate ships the Resource without forcing override semantics on consumers that do not want them."
 origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["Replaceable", "InternerKit", "test fixture", "deterministic interner", "tools not policies", "opt-in override", "alias type"]
 related = ["tenet::replaceable_is_the_only_enforced_annotation_on_owned_types_and_it_is_opt_in_so_override_of_a_kit_s_resource_is_rejected_at_compile_time_by_default"]
@@ -98,7 +98,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["StandardAdaptKit", "OffAdaptKit", "adapt axes", "metrics sub-resources", "DEFAULT_ constants", "Topic 5 axis A", "themed resource sets", "bench-validated defaults"]
 related = ["tenet::adapt_metrics_are_split_hot_and_cold_with_a_scratch_arena_hot_path_and_a_resource_snapshot_at_the_end_of_the_pass"]
@@ -115,7 +115,7 @@ The 202605091700 round validated `.with(value)` as the unified builder method vi
 '''
 origin = "proposed"
 written_by = "design round 202605101036, topic builder-input rename and reshape, dated 2026-05-10, agent-written; the text does not say whose decision it is, and the passage reports the earlier round 202605091700"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["with", "wrapper struct", "Resource::new", "Column::new", "call site", "disambiguation", "202605091700", "LinkedBin"]
 
@@ -223,7 +223,7 @@ B1 makes the value survive. It adds a sealed value-carrying cons-list (`StageLis
 '''
 origin = "proposed"
 written_by = "design round 202605282319, topic builder value retention (B1), dated 2026-05-28, agent-written; the text does not say whose decision it is"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["StageList", "StagedResource", "into_init", "SchedulerBuilder", "value retention", "platform accumulator", "MemoryProvider", "B1"]
 
@@ -243,7 +243,7 @@ The builder carries `staged: Staged`. `.with<P>(self, provider: P)` moves `provi
 '''
 origin = "proposed"
 written_by = "design round 202605282319, source changelist for builder value retention (B1), phase IMPL, dated 2026-05-28, agent-written; the text does not say whose decision it is"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["BuilderInput", "StagedResource", "into_inner", "Stage<P, Staged>", "no method added", "24 impl sites", "B2 arena"]
 related = ["tenet::the_builder_retains_each_registered_value_in_a_sealed_value_carrying_list_beside_the_type_level_store_list"]
@@ -264,7 +264,7 @@ Each `Dispatch` router carries an associated kind tag; the kind-conditional next
 '''
 origin = "proposed"
 written_by = "sketch builder-kind-dispatch of 2026-05-29 (single-with store-value routing via RouterKind dispatch), outcome WORKS; agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["unified with verb", "RouterKind", "with and store split", "builder", "store-value list", "Place GAT", "B2"]
 rejects = ["the architect's recommended `.with`/`.store` method split (and its fifth builder parameter justification)"]
@@ -302,7 +302,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "sketch outcome builder-provider-shape (status WORKS), dated only by its directory name 202605091700; agent-written"
-standing = "provisional"
+standing = "pending"
 keywords = ["with verb", "library wrapper", "Resource::new", "Column::new", "LinkedBin", "call site", "provider shape", "value form per kind"]
 
 [[tenet]]
@@ -323,7 +323,7 @@ The supertrait bound (`Resource: BuilderInput<Dispatch = StoreDispatch<Self>>`) 
 '''
 origin = "proposed"
 written_by = "hypothesis file of sketch 202605101036-builder-input-reshape, dated 2026-05-10 (round 202605101036); agent-written, and the reshape is stated there as the hypothesis the sketch validates"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["BuilderInput", "bare registration", "wrapper structs", "ExtensionSurface", "extend", "sub-trait", "dyn trait", "sized cases"]
 rejects = ["Consumers had to construct the wrapper at the call site (`.with(Resource::new(state))`, `.with(Column::<Player>::new())`)"]
@@ -352,7 +352,7 @@ The topic file says "Concrete `.build()` where-clause shape, AccessSet arity cei
 '''
 origin = "proposed"
 written_by = "sketch findings app-builder type-state (202605010900), section on what changed from the topic file; agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["SchedulerBuilder", "Stores slot", "two-slot builder", "four-slot builder", "typestate", "Providers slot", "phantom tuple", "unified stores"]
 rejects = ["`SchedulerBuilder<Wus, Resources, Columns, Providers>`", "The four-slot scheme is replaced by the two-slot scheme"]
@@ -369,7 +369,7 @@ Topic 3 said the substrate would commit to two scoping axes: visibility and repl
 '''
 origin = "proposed"
 written_by = "sketch findings S5 kit taxonomy of 2026-05-05 (round 202605042200), reporting the claim of Topic 3; agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["scoping axes", "visibility", "replaceability", "kit owned state", "topic 3", "two-axis annotation surface"]
 
@@ -397,7 +397,7 @@ Topic 3 said the substrate would commit to two scoping axes: visibility and repl
 '''
 origin = "proposed"
 written_by = "sketch findings S5 kit taxonomy of 2026-05-05 (round 202605042200), outcome WORKS with a substantive revision of the visibility axis; agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["Replaceable", "visibility", "kit visibility envelope", "E0446", "scoping axis", "per-type axis", "opt-in marker", "kit shape"]
 rejects = ["two-axis annotation surface", "visibility axis"]
@@ -426,7 +426,7 @@ Drop the `recursion_limit_for_kits!()` macro from the public substrate. The roun
 '''
 origin = "proposed"
 written_by = "sketch findings S1 recursion-limit macro probe of 2026-05-08, outcome FAILS for the macro; agent-written, correcting the locked topic of round 202605042200"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["recursion_limit", "recursion_limit_for_kits", "inner attribute", "macro expansion", "on_unimplemented", "consumer-side directive", "kits", "overflow"]
 rejects = ["Drop the `recursion_limit_for_kits!()` macro from the public substrate", "a `recursion_limit_for_kits!()` macro that consumers invoke at their crate root, expanding to `#![recursion_limit = \"1024\"]`"]
@@ -444,7 +444,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "sketch findings M2 type-level dedup-on-Concat of 2026-05-05 (round 202605042200, audit M2 remediation), outcome BLOCKED; agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["physical dedup", "logical dedup", "Concat", "coherence constraint", "NotIn", "marker Contains", "round 4", "duplicate accumulation"]
 related = ["tenet::the_kit_trait_carries_no_required_member_because_the_type_level_set_difference_hits_the_coherence_wall_and_requirements_live_in_prose"]
@@ -469,6 +469,6 @@ impl<H, R> !NotIn<H> for (H, R) {}
 '''
 origin = "proposed"
 written_by = "sketch findings NotIn<H> compile-time diamond detection of 2026-05-05 (round 202605042200), describing the proposal under audit; agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["NotIn", "duplicate registration", "diamond detection", "Registrable", "compile-time error", "negative impl", "marker registration"]
