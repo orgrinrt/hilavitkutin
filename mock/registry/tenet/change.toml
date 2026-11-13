@@ -122,3 +122,175 @@ standing = "provisional"
 subject = "change"
 keywords = ["temperature", "hot", "warm", "cold", "change frequency", "generation counter", "core assignment", "adaptation"]
 cites = ["change_detection_is_per_morsel_and_skips_what_is_unchanged"]
+
+[[tenet]]
+id = "a_morsel_is_reprocessed_only_when_its_generation_is_past_the_one_last_processed"
+what = "Each morsel has a generation number, a monotonic counter that increments whenever any record in the morsel's range is modified; the column storage or a separate change-tracking layer bumps it when a write occurs. Each fiber, which the topic still calls a chain, records the generation it last processed for each of its input morsels. On the next frame an input morsel whose generation equals the last processed one is skipped, and the output from the previous frame is still valid; one whose generation is greater must be reprocessed. This is incremental execution: only what changed is processed again."
+mechanism = "Frame cost drops from O(total records times ops) to O(changed records times ops)."
+source = "mock/design_rounds/202604200055/202603121800_topic.dispatch-and-optimisation.md:907-927"
+provenance = ["mock::design_rounds::202604200055::202603121800_topic.dispatch-and-optimisation::#change-detection-and-incremental-execution"]
+quote = '''
+**Mechanism: per-morsel generation counter.**
+
+Each morsel has a generation number — a monotonic counter that
+increments whenever any row in the morsel's range is modified. The
+ColumnStorage (or a separate change-tracking layer) bumps the
+generation when a write occurs.
+
+Each chain records the generation it last processed for each of its
+input morsels. On the next frame:
+- If input morsel generation == last processed generation → skip.
+  The output from the previous frame is still valid (in cache AND in
+  the output columns).
+- If input morsel generation > last processed generation → must
+  reprocess. The data has changed.
+
+This is **incremental execution** — only re-process what changed.
+The cost of a frame drops from O(total_rows × ops) to O(changed_rows
+× ops). For a dotfiles daemon watching for config changes, 99% of
+morsels are unchanged between checks. For an ECS game, the fraction
+depends on the system — physics changes every entity every frame,
+but rendering data (mesh, material) is mostly static.
+'''
+origin = "proposed"
+written_by = "topic T3 of the founding round (dispatch-and-optimisation), decision 57"
+standing = "provisional"
+subject = "change"
+keywords = ["generation counter", "monotonic", "last processed generation", "skip", "previous frame", "incremental execution", "change tracking"]
+cites = ["change_detection_is_per_morsel_and_skips_what_is_unchanged"]
+
+[[tenet]]
+id = "the_temporal_extent_of_a_morsel_is_how_many_frames_its_cached_result_stays_valid"
+what = "The morsel cube has three dimensions: the records the morsel covers, the columns it accesses, and a temporal one, which is how many frames the morsel's cached result remains valid. Change detection determines the temporal extent: an unchanged morsel is skipped and a changed one must be reprocessed. For a single exhaustive run every morsel is processed exactly once and the cube degenerates to a two-dimensional window. The temporal dimension turns the pipeline from a batch processor into an incremental one: the schedule and the morsel sizes stay the same, and only the morsels whose input generations have advanced are dispatched."
+mechanism = "X (records), Y (columns), T (temporal). Unchanged morsels have T = infinity, changed morsels T = 0; for a single exhaustive run T = 1 for all morsels."
+source = "mock/design_rounds/202604200055/202603121800_topic.dispatch-and-optimisation.md:942-966"
+provenance = ["mock::design_rounds::202604200055::202603121800_topic.dispatch-and-optimisation::#change-detection-and-incremental-execution"]
+quote = '''
+**The temporal cube, concretely:**
+
+The morsel cube has three dimensions:
+- **X (rows):** spatial extent — which entities this morsel covers.
+  Sized to fit write columns in L1.
+- **Y (columns):** schema extent — which attributes this morsel
+  accesses. Determined by chain partitioning.
+- **T (temporal):** how many frames this morsel's cached result
+  remains valid. Determined by change detection — unchanged morsels
+  have T = ∞ (skip processing), changed morsels have T = 0 (must
+  reprocess).
+
+For a single exhaustive run, T = 1 for all morsels (every morsel
+processed exactly once). The cube degenerates to a 2D window.
+
+For a real-time loop, T varies per morsel:
+- Stable morsels (unchanged data, affinitized core): T = many frames.
+  Cache-warm, skip-eligible.
+- Volatile morsels (frequently changing data): T = 1. Must reprocess
+  every frame.
+
+The temporal dimension transforms the pipeline from a batch processor
+into an incremental processor. The same Schedule, the same chain
+partitioning, the same morsel sizes — but the Executor only dispatches
+morsels whose input generations have advanced.
+'''
+origin = "proposed"
+written_by = "topic T3 of the founding round (dispatch-and-optimisation), the 3D cube model"
+standing = "provisional"
+subject = "change"
+keywords = ["temporal", "cube", "T dimension", "frames", "cached result", "incremental", "generation"]
+cites = ["change_detection_is_per_morsel_and_skips_what_is_unchanged"]
+
+[[tenet]]
+id = "hilavitkutin_should_own_the_version_stamp_and_early_cutoff_and_phantom_write_detection_is_the_consumer_s"
+what = "The version stamp concept is universal: it tracks whether a resource actually changed. hilavitkutin should own the version stamp type and the early cutoff algorithm. Detection of a phantom write, by bitwise comparison for small values and explicit marking for large values, is a storage concern that each consumer can implement differently."
+source = "mock/design_rounds/202604200055/202603141800_research.loimu-dag.md:1021-1025"
+provenance = ["mock::design_rounds::202604200055::202603141800_research.loimu-dag::#what-simplifies-for-polka-saalis"]
+quote = '''
+**Version stamps:** the concept is universal (track whether a resource actually
+changed). hilavitkutin should own the version stamp type and the early cutoff
+algorithm. Phantom-write detection (bitwise comparison for small values, explicit
+marking for large values) is a storage concern that each consumer can implement
+differently.
+'''
+origin = "proposed"
+written_by = "the research note loimu-dag of the founding round"
+standing = "provisional"
+subject = "change"
+keywords = ["version stamp", "early cutoff", "phantom write", "bitwise comparison", "explicit marking", "actually changed", "consumer"]
+cites = ["version_stamps_tell_which_stores_a_unit_actually_modified"]
+
+[[tenet]]
+id = "the_dirty_seed_is_set_by_the_consumer_marking_a_store_dirty_or_by_a_resource_replacement"
+what = "Before each frame a dirty seed, which stores changed since the last frame, propagates forward over the per-unit predecessor masks, and a unit whose entire predecessor set is clean is skipped for that frame, leaving its output columns untouched. The seed is set by the consumer marking a store dirty or by a resource replacement."
+source = "mock/research/pre_seed/202606111800_canonical-spec-standalone.md:384-390"
+provenance = ["mock::research::pre_seed::202606111800_canonical-spec-standalone::#7-incremental-dirty-skip"]
+quote = '''
+A pipeline that runs the same graph every frame usually has frames where most
+inputs did not change. The engine turns the batch processor into an
+incremental one: before each frame, a dirty seed (which stores changed since
+last frame, set by the consumer marking a store dirty or by a resource
+replacement) propagates forward over the per-unit predecessor masks. A unit
+whose entire predecessor set is clean is skipped for that frame, leaving its
+output columns untouched. The propagation is a bitmask sweep over the
+'''
+origin = "proposed"
+written_by = "the standalone spec 202606111800, a reading aid with no design authority of its own by addendum A2"
+standing = "provisional"
+subject = "change"
+keywords = ["dirty seed", "mark dirty", "consumer", "resource replacement", "predecessor masks", "skip"]
+cites = ["a_unit_whose_inputs_are_all_clean_skips_the_pass"]
+
+[[tenet]]
+id = "the_swap_of_a_replaceable_resource_is_to_be_specified_by_a_commissioned_round"
+what = "The maintainer directed that the missing swap specification is researched and designed explicitly and not picked from options. A design round is commissioned to produce the explicit swap specification under the bench-decided layout, covering the two replacement calls, the interplay with plan-affecting resources, the ownership of collection elements, dirty propagation and quiescence. Until it lands, replacing a value only marks the store dirty and the catalogued test stays red."
+mechanism = "`Replaceable` swap under the blob record, erased addressing and collection elements in collection columns; covers `replace_value`, `replace_resource`, the `PlanAffecting` interplay (A2-3), Seq/Map element ownership. `replace_value` stays mark-dirty-only."
+source = "mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:88-94"
+provenance = ["mock::research::pre_seed::202607193200_canon-amendment-a2-precedence-and-rulings::#a2-5-the-202606210600-citation-correction-and-the-commissioned-swap-semantics-round"]
+quote = '''
+Op's direction (2026-07-19): the missing swap spec is researched and designed explicitly, not
+picked from options. A design round is commissioned to produce the explicit `Replaceable` swap
+specification under the bench-decided layout (blob record, erased addressing, collection
+elements in collection columns), covering `replace_value`, `replace_resource`, the
+`PlanAffecting` interplay (A2-3), Seq/Map element ownership, dirty propagation, and quiescence.
+The same round corrects the mis-grounded artifacts. Until it lands, `replace_value` stays
+mark-dirty-only and the catalogued test stays red.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "change"
+keywords = ["swap semantics", "Replaceable", "replace_value", "replace_resource", "PlanAffecting", "quiescence", "commissioned round", "mark dirty"]
+
+[[tenet]]
+id = "a_swap_of_a_resource_value_is_legal_only_between_frames_and_is_observed_from_the_next_run"
+what = "The draft swap specification says that replacing a resource value installs the new value as the whole one-record blob and sets the store's dirty bit, without touching the plan-dirty state. The call is legal only between frames, so no swap can race a live-streamed read or a snapshot in flight. The swap is observable starting at the next run and at no earlier point, and of several swaps before a run only the last is ever observed."
+mechanism = "`Scheduler::replace_value<V: Replaceable>(&mut self, new: V)`: a `ptr::write` of `V` through the same `Selector<V, Index>` witness the drain and the projection read use; no drop of the old value (`V: ColumnValue` is `Copy`); `mark_dirty` on `Resource<V>`, never `plan_dirty`; `&mut self` plus the parked-between-frames invariant."
+source = "mock/research/pre_seed/202607193300_swap-semantics-panel/03-giesen-synthesis.md:23-23"
+provenance = ["mock::research::pre_seed::202607193300_swap-semantics-panel::03-giesen-synthesis::#2-draft-specification"]
+quote = '''
+**S1 (replace_value mechanism).** `Scheduler::replace_value<V: Replaceable>(&mut self, new: V)` installs `new` as the whole one-record blob value: a `ptr::write` of `V` through the same `Selector<V, Index>` witness (the binding's backcast pointer) that the drain and the projection read use. No pointer derived by any other route. No drop of the old value (`V: ColumnValue` is `Copy`; the bytes are overwritten). The call additionally sets the store-dirty bit for `Resource<V>` via `mark_dirty`, and never touches `plan_dirty`. The call is legal only between frames: `&mut self` plus the parked-between-frames invariant (named as load-bearing, since worker raw pointers are outside the borrow checker's jurisdiction) means no swap can race a live-streamed read or an in-flight snapshot. The swap is observable starting at the next `run()` and at no earlier point; of multiple swaps before a `run()`, only the last is ever observed.
+'''
+origin = "proposed"
+written_by = "the swap semantics panel, memo 3 (synthesis and draft specification, 2026-07-19), a dispatched expert persona drafting for the maintainer's ruling"
+standing = "provisional"
+subject = "change"
+keywords = ["swap", "replace_value", "between frames", "next run", "last swap wins", "blob", "dirty bit", "parked between frames"]
+related = ["tenet::the_swap_of_a_replaceable_resource_is_to_be_specified_by_a_commissioned_round"]
+
+[[tenet]]
+id = "the_per_morsel_generation_counters_are_not_built_and_the_engine_has_a_coarse_per_store_dirty_only"
+what = "The roadmap revision r6 records that the per-morsel generation counter the founding spec specifies, bumped on write and propagating through the graph so an unchanged root skips its transitive dependents, is not built: the engine has a coarse dirty state per store only. It asks for a design sketch before any implementation, on where the counters live with no allocation and a morsel count per fiber that varies with the window, and on how they compose with the existing store dirty mask."
+source = "mock/research/202607181300_engine-roadmap-r6.md:315-320"
+provenance = ["mock::research::202607181300_engine-roadmap-r6::#phase-d-adapt-completion"]
+quote = '''
+**D-gen, per-morsel generation counters (S-6).** Domain 12 (`:861`) specifies a per-morsel
+generation counter bumped on write, propagating through the DAG so an unchanged root skips its
+transitive dependents. The engine currently has coarse per-store dirty only. This needs a **design
+sketch before implementation**, at some-shape leeway: the open question is where the counters live
+given no-alloc and a per-fiber morsel count that varies with the window, and how they compose with
+the existing `store_dirty` mask rather than duplicating it. Do not start this one by writing code.
+'''
+origin = "proposed"
+written_by = "the engine roadmap revision r6 of 2026-07-18, agent-written"
+standing = "provisional"
+subject = "change"
+keywords = ["generation counter", "per-morsel", "store_dirty", "not built", "design sketch", "coarse dirty"]
+related = ["tenet::change_detection_is_per_morsel_and_skips_what_is_unchanged", "tenet::the_engine_owns_the_generation_counters_and_the_skip_logic", "question::who_says_that_a_store_changed"]

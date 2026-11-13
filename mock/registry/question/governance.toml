@@ -253,3 +253,34 @@ Answered in their own words:
 subject = "governance"
 keywords = ["lost round", "202607192410", "N-way", "triage", "recovered source"]
 related = ["question::what_happens_to_the_recovered_rounds_on_the_recovery_branch", "question::which_convergence_a_single_trunk_phase_uses"]
+
+[[question]]
+id = "which_copy_of_the_standalone_spec_stands"
+asks = "Two copies of the standalone spec stand in the tree. The one under the pre_seed directory carries the header addendum A2 corrected: a commissioned reading aid with no independent design authority. The one directly under the research directory still says that where it and any older document disagree, it is the design. Which copy stands?"
+options = ["The corrected copy under pre_seed, as addendum A2 rules.", "The copy directly under the research directory, with its own header."]
+state = "open"
+source = "mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:37-39, mock/research/pre_seed/202606111800_canonical-spec-standalone.md:18-26, mock/research/202606111800_canonical-spec-standalone.md:18-22"
+quote = '''
+3. The standalone spec: a commissioned reading aid with no independent design authority. Where
+   it conflicts with tiers 1 or 2, the conflict is a transcription defect in the standalone, to
+   be fixed there. Its header is corrected to state this (same commit as this file).
+---
+It consolidates, for reading convenience, the scattered set of prior
+documents: the founding consolidation spec, the chain of design-round
+amendments, and the reconciliation addendum A1. Per addendum A2
+(`202607193200`, ruling A2-1), this document is a commissioned reading aid
+with no independent design authority: it was commissioned by A1 to spare the
+reader cross-reading the chain, not to override it. Where this document and
+the consolidation spec or a registered amendment disagree, the disagreement
+is a transcription defect in this document, to be fixed here. It does not
+narrate the history of how the design was reached; it restates the design.
+---
+It supersedes, for the purpose of "what is the design," the scattered set of
+prior documents: a founding consolidation spec, a chain of design-round
+amendments, and a recent reconciliation addendum. Where this document and any
+older one disagree, this document is the design. It does not narrate the
+history of how the design was reached; it states the design.
+'''
+subject = "governance"
+keywords = ["standalone spec", "two copies", "header", "precedence", "reading aid", "A2-1", "pre_seed"]
+related = ["tenet::the_record_s_precedence_is_the_founding_spec_then_dated_amendments_then_the_reading_aid_then_the_rest", "tenet::the_standalone_spec_is_a_commissioned_reading_aid_by_its_own_corrected_header"]

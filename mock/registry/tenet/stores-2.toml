@@ -155,3 +155,127 @@ origin = "stated"
 standing = "provisional"
 subject = "stores"
 keywords = ["ColumnHandle", "result extraction", "column accessor", "resource collections", "Seq", "Map", "arena", "storage layout"]
+
+[[tenet]]
+id = "an_accumulator_is_a_column_written_by_append_and_a_fourth_store_marker"
+what = "The design round that landed accumulators reports the maintainer's model as two kinds of column: an input column, whose buffer is sized to a build-time record count, populated before the frame and read and written by index, and an accumulator column, which is written by append during the frame, growing from zero toward a capacity, and whose populated prefix a later drain reads into persistence. It says the maintainer chose this two-kind surface deliberately and not a single global record count. The round represents the accumulator as a distinct store marker beside the three existing ones, the fourth on the same pattern, because making it a role or mode of the column would put indexed random write and ordered append on one marker."
+mechanism = "`Accum<T>`, sibling of `Resource<T>` / `Column<T>` / `Virtual<T>`, with its own binding node, selector, projection and accessor. The alternative, a mode of `Column<T>`, makes the `Contains<...>` membership proof ambiguous (read vs write vs append) and forces a runtime flag or a forbidden specialization."
+source = "mock/design_rounds/202606041800/202606041800_topic.accumulator-columns.md:8-8, mock/design_rounds/202606041800/202606041800_topic.accumulator-columns.md:16-16"
+provenance = ["mock::design_rounds::202606041800::202606041800_topic.accumulator-columns::#topic-accumulator-columns-append-surface-through-dispatch"]
+quote = '''
+The column-data-plane round landed INPUT columns: buffers sized to a build-time record count, populated before the frame, read and written by index. This round lands the second half of op's locked model: ACCUMULATOR columns. An accumulator is written by APPEND during the frame, growing from zero toward a capacity; a later PassEnd drain reads the populated prefix into persistence. op chose this two-kind surface deliberately rather than a single global record count.
+---
+**Kind representation (A1): a distinct `Accum<T>` marker.** Sibling of `Resource<T>` / `Column<T>` / `Virtual<T>`, with its own binding node, selector, projection, and accessor. The alternative (a role or mode of `Column<T>`) collapses two semantically distinct operations (indexed random-write vs ordered append) onto one marker, making the `Contains<...>` membership proof ambiguous (read vs write vs append) and forcing a runtime flag or a forbidden specialization. The engine already has three parallel per-kind markers; `Accum<T>` is the fourth on the same pattern.
+'''
+origin = "proposed"
+written_by = "design round 202606041800 (accumulator columns), its topic file, an agent-written round that reports the maintainer's model"
+standing = "provisional"
+subject = "stores"
+keywords = ["accumulator", "Accum", "append", "input column", "fourth store", "two-kind", "record count", "capacity", "drain"]
+related = ["tenet::there_are_three_store_types_and_one_scheduling_mechanism", "question::what_an_append_past_the_capacity_of_an_accumulator_does"]
+
+[[tenet]]
+id = "the_standalone_spec_lists_four_store_shapes_with_the_accumulator_among_them"
+what = "The standalone spec says state lives in one of four store shapes and there is nothing else: a singleton store of one value, a collection store of N records in columnar layout accessed through morsel windows, an accumulator, which is an append-only output store a unit pushes records into with a reserved capacity fixed at build, and a fired marker carrying no data."
+mechanism = "`Resource<T>`, `Column<T>`, `Accum<T>`, `Virtual<V>`."
+source = "mock/research/pre_seed/202606111800_canonical-spec-standalone.md:162-173"
+provenance = ["mock::research::pre_seed::202606111800_canonical-spec-standalone::#3-2-stores"]
+quote = '''
+State lives in one of four store shapes. There is nothing else; a pipeline's
+entire mutable and immutable state reduces to these.
+
+- **`Resource<T>`**: a singleton store: one value of `T`, with
+  scheduler-managed lifetime. Providers (a clock, a configuration, an
+  interner) are Resources.
+- **`Column<T>`**: a collection store: N records of `T` in columnar layout,
+  accessed through cache-friendly morsel windows.
+- **`Accum<T>`**: an accumulator: an append-only output store a unit pushes
+  records into, with a reserved capacity fixed at build.
+- **`Virtual<V>`**: a fired/event marker carrying no data, used for
+  cross-unit signalling at plan-time-determined boundaries (see 3.3 and 8).
+'''
+origin = "proposed"
+written_by = "the standalone spec 202606111800, a reading aid with no design authority of its own by addendum A2"
+standing = "provisional"
+subject = "stores"
+keywords = ["four store shapes", "Accum", "accumulator", "append-only", "reserved capacity", "Resource", "Column", "Virtual"]
+related = ["tenet::there_are_three_store_types_and_one_scheduling_mechanism"]
+
+[[tenet]]
+id = "an_accumulator_append_saturates_at_the_reserved_capacity_which_equals_the_record_count_at_build"
+what = "Accumulator appends saturate at the reserved capacity, as a soundness guard, and the capacity equals the record count at build. Fixtures and consumers size with headroom, and a silently dropped append means checking the live count against the capacity first."
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:158-160"
+provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#constraint-notes-elevated-to-canon"]
+quote = '''
+4. Accumulator appends saturate at reserved capacity (a soundness guard);
+   capacity equals record count at build. Fixtures and consumers size with
+   headroom; a silently dropped append means live-versus-capacity first.
+'''
+origin = "proposed"
+written_by = "addendum A1 (locked by the maintainer 2026-06-11), its constraint notes elevated to canon"
+standing = "provisional"
+subject = "stores"
+keywords = ["accumulator", "saturate", "reserved capacity", "record count at build", "soundness guard", "dropped append"]
+related = ["question::what_an_append_past_the_capacity_of_an_accumulator_does"]
+
+[[tenet]]
+id = "the_scalar_members_of_a_resource_are_snapshotted_to_a_stack_local_before_the_morsel_loop"
+what = "The small scalar members of a resource are snapshotted to a stack local before the morsel loop. On the bench machine this is neutral in wall-clock time, since the reload is cheap in L1, and it is free insurance on any microarchitecture where it is not. The shipped drain blob lacks this snapshot, and that absence is the drift, not the blob itself."
+mechanism = "`Field` members; spec lines 1714-1724; wall-clock-neutral on M1; V0 reloads, V1 to V5 hoist; the shipped `DrainStores` blob lacks the snapshot."
+source = "mock/research/202606210600_resource-storage-model-canonical-addendum.md:26-30"
+provenance = ["mock::research::202606210600_resource-storage-model-canonical-addendum::#the-model-stated-outright-bench-confirmed"]
+quote = '''
+2. **Scalar snapshot.** The small scalar `Field` members are snapshotted to a stack local before
+   the morsel loop (spec 1714-1724). Wall-clock-neutral on M1 (the reload is L1-cheap), free
+   insurance on any uarch where it is not, and the mechanism is real in codegen (V0 reloads,
+   V1-V5 hoist; verbatim disasm in the findings). The shipped `DrainStores` blob lacks this
+   snapshot; that absence is the drift, not the blob itself.
+'''
+origin = "proposed"
+written_by = "the resource storage addendum (2026-06-19, revised 2026-07-02), bench-decided, named in the amendment chain by addendum A2"
+standing = "provisional"
+subject = "stores"
+keywords = ["scalar snapshot", "stack local", "morsel loop", "Field", "DrainStores", "resource", "blob"]
+
+[[tenet]]
+id = "a_resource_value_is_addressed_through_an_erased_static_shape_so_it_can_cross_a_plugin_boundary"
+what = "The maintainer picked the hybrid: the value bytes of a resource stay one contiguous record, and they are addressed through an erased static-shape descriptor and not through a monomorphised concrete-type pointer, so that a resource value can cross a plugin boundary and interoperate with builtin resources near-natively, as in loimu's model. The bench measured this addressing at parity with the native monomorphised one. He chose it citing future-proofing and parity. Every resource uses the erased addressing, so any resource is plugin-capable without a design change."
+mechanism = "Backcast on access; cdylib/wasm plugin boundary; v4/v1 within +-1.7% across both runs, ties on B/C/E; global-capable, 2026-07-02."
+source = "mock/research/202606210600_resource-storage-model-canonical-addendum.md:46-56"
+provenance = ["mock::research::202606210600_resource-storage-model-canonical-addendum::#the-model-stated-outright-bench-confirmed"]
+quote = '''
+6. **Erased static-shape addressing (op picked the hybrid, global-capable, 2026-07-02).** The
+   value bytes stay the one-record contiguous blob (items 1-5), but are ADDRESSED through an
+   erased static-shape descriptor (backcast on access) rather than a monomorphised concrete-type
+   pointer, so a resource value can cross a cdylib/wasm plugin boundary and interoperate with
+   builtin resources near-natively (loimu's model). The bench measured this addressing at parity
+   with native monomorphised on every axis (v4/v1 within +-1.7% across both runs, ties on B/C/E),
+   so it carries no in-process penalty. Op chose the hybrid citing future-proofing + parity, with
+   the erasure complexity ruled out as an anti-axis. The per-resource-vs-global sub-question
+   resolves to global-capable: every resource uses the erased addressing (any resource
+   plugin-capable without a design change). See
+   `mock/design_rounds/202606210600_topic.hybrid-decision.md`.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "stores"
+keywords = ["erased addressing", "static shape", "hybrid", "plugin boundary", "cdylib", "wasm", "global-capable", "resource value", "loimu"]
+
+[[tenet]]
+id = "an_expert_memo_says_hilavitkutin_s_columns_are_double_buffered_for_the_pass_boundary"
+what = "An expert memo of the storage model round says that hilavitkutin's columns are double-buffered, frozen and live, for the pass boundary, and that hilavitkutin's design has no temporal prediction and no triple buffering, because a pipeline execution engine computes column values and does not extrapolate them between passes. The memo names no source for the sentence."
+source = "mock/research/202606210600_expert-loimu-heritage-storage-model.md:289-293"
+provenance = ["mock::research::202606210600_expert-loimu-heritage-storage-model::#divergence-3-temporal-system-vs-double-buffering"]
+quote = '''
+Hilavitkutin's columns are double-buffered (frozen/live) for the pass boundary. The
+resource handle model adds noalias wins. There is no temporal prediction or triple
+buffering in hilavitkutin's design. The workload does not need it: a pipeline
+execution engine does not extrapolate column values between passes -- it computes
+them.
+'''
+origin = "proposed"
+written_by = "the loimu heritage expert memo of round 202606210600, dated 2026-06-19, an agent persona's deliverable"
+standing = "provisional"
+subject = "stores"
+keywords = ["double-buffered", "frozen", "live", "pass boundary", "triple buffering", "temporal prediction", "loimu heritage"]
+related = ["question::whether_hilavitkutin_s_own_columns_are_double_buffered", "question::how_a_unit_reads_the_value_a_store_held_at_frame_start", "tenet::loimu_keeps_its_seven_access_modes_and_maps_them_to_read_and_write_at_the_boundary"]

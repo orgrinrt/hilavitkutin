@@ -13,3 +13,20 @@ origin = "stated"
 standing = "provisional"
 subject = "extensions"
 keywords = ["HasShape", "ErasedColumn", "loimu", "plugin", "type access", "retained"]
+
+[[tenet]]
+id = "a_pipeline_is_extended_by_new_records_in_existing_columns_or_by_a_facade_unit_over_a_plugin"
+what = "The roadmap revision r2 names two surfaces of extensibility, neither of which needs dispatch that changes at run time. New data is the dominant one: records added to existing columns flow through the same static units, with the record count as an adaptive parameter. New code is the rarer one: the transform of an extension loaded at run time does not enter the engine's monomorphised dispatch and is reached through a statically registered facade unit that calls it across the capability interface, off the per-record path."
+mechanism = "The facade unit calls the extension through the ProviderId capability ABI of hilavitkutin-extensions, per invocation or per morsel batch; the plugin keeps its own monomorphised dispatch inside its cdylib."
+source = "mock/research/202606081500_engine-roadmap-r2.md:64-65"
+provenance = ["mock::research::202606081500_engine-roadmap-r2::#5-new-first-class-section-extensibility-two-surfaces"]
+quote = '''
+- **Surface 1, new DATA (dominant, native):** records added to existing columns flow through the same static WUs. `record_count` is an R6 adaptive parameter. Unbounded data extensibility with zero new dispatch. No roadmap work needed; it falls out of the static-composition + adaptive-params design.
+- **Surface 2, new CODE (rarer, downstream):** a runtime-loaded cdylib extension's transform does NOT enter the engine's monomorphised dispatch (R6: no runtime WU registration). It integrates via a statically-registered FACADE WU that calls the extension through the `ProviderId` capability ABI (hilavitkutin-extensions). The plugin keeps its own devirt (monomorphised in the cdylib); the host keeps its own; the only indirect hop is the ABI call at the FFI seam, per-invocation or per-morsel-batch, OFF the per-record hot path. Behind the facade the plugin runs its own static sub-engine (sub-graph) or is a per-morsel pure-function capability; downstream + bench-decidable.
+'''
+origin = "proposed"
+written_by = "the engine roadmap revision r2 of 2026-06-08, agent-written, listed in addendum A1's amendment chain"
+standing = "provisional"
+subject = "extensions"
+keywords = ["extensibility", "two surfaces", "new data", "new code", "facade", "plugin", "record count", "static dispatch"]
+related = ["tenet::column_type_registration_is_static", "tenet::static_composition_means_every_unit_is_registered_through_the_builder_and_no_schedule_is_dynamic", "question::whether_registration_may_be_bound_by_data"]

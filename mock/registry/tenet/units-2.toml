@@ -1,0 +1,72 @@
+# What the record says about `units`, part 2.
+
+[[tenet]]
+id = "a_pure_per_record_map_may_be_declared_as_an_opt_in_fusion_contract_beside_execute"
+what = "A unit that is a pure per-record map, reading one column and writing one column, value to value, with no cross-record state, may additionally declare that map as an opt-in fusion contract: an input type, an output type and an apply function from one to the other. This is orthogonal to the execute contract, does not change execute, and a simple unit never implements it. Its purpose is linear fusion within a fiber: a straight read-after-write sequence of such maps is folded at the type level into a single fused unit whose body keeps every intermediate in a register. A unit that carries cross-record state, an accumulator, does not implement the contract and stays on the ordinary per-unit dispatch path."
+mechanism = "An associated input type, an associated output type and an apply function. The fold is a compile-time composition of concrete monomorphised calls, no function pointers and no dynamic dispatch; dead-store elimination removes the intermediate column traffic. The shipped trait name and signature live in the engine-facing rustdoc."
+source = "mock/crates/hilavitkutin-api/DESIGN.md.tmpl:239-243"
+provenance = ["mock::crates::hilavitkutin-api::DESIGN::#opt-in-per-record-transform-within-fiber-fusion-contract"]
+quote = '''
+## Opt-in per-record transform (within-fiber fusion contract)
+
+A work unit that is a pure per-record map (reads one column, writes one column, value to value, no cross-record state) may additionally declare that map as an opt-in fusion contract: an associated input type, an associated output type, and an apply function from one to the other. This is orthogonal to the execute contract (it does not change execute) and opt-in (a simple work unit never implements it).
+
+Its purpose is within-fiber linear fusion. When a fiber is a straight read-after-write chain of such maps (stage one writes the column stage two reads, and so on), the engine folds the chain at the type level into a single fused work unit whose body keeps every intermediate in a register (dead-store elimination removes the intermediate column traffic), matching a hand-fused loop. The fold is a compile-time composition of concrete monomorphised calls, no function pointers and no dynamic dispatch. A work unit that carries cross-record state (an accumulator) does not implement the contract and stays on the ordinary per-unit dispatch path. The shipped trait name and signature live in the engine-facing rustdoc; this section states the contract shape.
+'''
+origin = "proposed"
+written_by = "the api design template, section added by design round 202606092000 (within-fiber linear fusion)"
+standing = "provisional"
+subject = "units"
+keywords = ["per-record map", "RecordOp", "apply", "fusion contract", "opt-in", "value to value", "execute", "linear fusion", "run_fused"]
+related = ["tenet::records_within_a_fiber_are_independent"]
+
+[[tenet]]
+id = "execute_receives_a_context_and_nothing_else"
+what = "The execute body of a unit receives a context and nothing else. It does not receive handles to global storage, does not reach into a registry and holds no long-lived references. Everything it can touch is exactly what its access set declared, projected into the context for the duration of one call."
+mechanism = "`trait WorkUnit<Sched = Always> { type Read: AccessSet; type Write: AccessSet; type Hint; type Ctx<'frame>; fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>); }`"
+source = "mock/research/pre_seed/202606111800_canonical-spec-standalone.md:138-145, mock/research/pre_seed/202606111800_canonical-spec-standalone.md:155-158"
+provenance = ["mock::research::pre_seed::202606111800_canonical-spec-standalone::#3-1-workunit"]
+quote = '''
+```rust
+trait WorkUnit<Sched = Always> {
+    type Read: AccessSet;    // the stores this unit reads
+    type Write: AccessSet;   // the stores this unit writes
+    type Hint;               // scheduling hints (priority, atomicity, ...)
+    type Ctx<'frame>;        // the per-frame context handed to execute
+    fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>);
+}
+---
+`execute` receives a `Context` (see 3.4) and nothing else. It does not
+receive handles to global storage, it does not reach into a registry, it
+holds no long-lived references. Everything it can touch is exactly what its
+access set declared, projected into the context for the duration of one call.
+'''
+origin = "proposed"
+written_by = "the standalone spec 202606111800, a reading aid with no design authority of its own by addendum A2"
+standing = "provisional"
+subject = "units"
+keywords = ["execute", "Context", "Ctx", "access set", "nothing else", "WorkUnit", "signature"]
+
+[[tenet]]
+id = "inside_a_fiber_a_unit_is_a_pure_function_from_column_values_to_column_values"
+what = "The founding round's api topic describes the processing of one record inside a fiber as the composition of its units, each a pure function that takes column values and produces column values, with the intermediate columns as named wires between stages that need no memory inside the fiber. The closure a unit registers moves from taking references to columns to a pure function of values that returns values, and the flattener wires the returns to the next stage's inputs."
+source = "mock/design_rounds/202604200055/202603151200_topic.hilavitkutin-api-surface.md:1767-1771, mock/design_rounds/202604200055/202603151200_topic.hilavitkutin-api-surface.md:1840-1843"
+provenance = ["mock::design_rounds::202604200055::202603151200_topic.hilavitkutin-api-surface::#chain-internal-columns-are-dead-stores-only-chain-outputs-need-materialization"]
+quote = '''
+Within a chain, processing row n is: `d(c(b(a(input_n))))`. Each WU is
+a pure function that takes column values and produces column values. The
+chain is a composition of these functions. The intermediate "columns"
+are just named wires between stages — they don't need memory backing
+within the chain.
+---
+The WU's `each` closure signature changes from
+`|col_a: &T, col_b: &mut U| { ... }` to a pure function
+`fn(input_a: T, input_b: T) -> (U, V)` that takes values and returns
+values. The flattener wires the returns to the next stage's inputs.
+'''
+origin = "proposed"
+written_by = "the founding-round topic T6 on the api surface, 202603151200"
+standing = "provisional"
+subject = "units"
+keywords = ["pure function", "values in values out", "each closure", "flattener", "fiber", "composition", "value function"]
+related = ["tenet::a_unit_registers_its_ops_through_each_batch_and_reduce_on_the_context", "tenet::a_pure_per_record_map_may_be_declared_as_an_opt_in_fusion_contract_beside_execute", "question::how_a_unit_in_the_value_form_reads_a_resource"]
