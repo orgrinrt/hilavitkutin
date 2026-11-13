@@ -29,9 +29,6 @@
 //! up as this test failing rather than as a timing nobody can explain. Ticket
 //! `2e38f730c0e4` carries the finding, `5275557889c9` the measurement.
 
-#![feature(generic_const_exprs)]
-#![allow(incomplete_features)]
-
 use arvo::USize;
 use arvo_bitmask::BitAccess;
 use frame_wide_support::engine::{A1, A2, A3, B1, B2, B3, C1, C2, C3, In, Jn, Join, Map, T1, T2};
@@ -194,20 +191,34 @@ fn twelve_units_group_with_no_two_sharing_a_write() {
 
 /// The whole frame lands in one phase.
 ///
-/// The phase axis is waist-bounded: `waist_detect_const` flags a depth whose
-/// level width is a strict local minimum among the occupied depths on either
-/// side. This DAG's occupied depths carry 5, 3, 3 and 1 units (the five units
-/// reading the input, then the three second stages, the three third stages,
-/// and the join). Depth 1 is not a minimum, because depth 2 is no wider.
-/// Depth 3, the join, is the narrowing the frame actually has, and it is the
-/// LAST occupied depth, which the detector's interior scan never reaches: it
-/// runs `k` over `1 ..= occ_n - 2`. So no waist is found and the twelve units
-/// share phase 0.
+/// One phase is what the design's own mechanism produces here, so this
+/// asserts conformance rather than a snapshot.
 ///
-/// This is the root of the occupancy finding. With the join a waist, the frame
-/// would be two phases: eleven units in phase 0 whose five write-disjoint
-/// components are five trunks, and the join alone in phase 1, which the
-/// head+tail convergence path splits across every core by record range.
+/// The design puts waist detection in `arvo_graph::waist_detect`
+/// (`mock/crates/hilavitkutin/DESIGN.md.tmpl:1052-1054`), and the engine calls
+/// it: `plan/grouping.rs:277` runs `waist_detect_const` over the adjacency.
+/// Arvo defines a waist as a depth whose level width is a strict local minimum
+/// "relative to the occupied depths on either side" (`arvo-graph/src/waist.rs:22-25`),
+/// and both variants scan the interior only, `k` from 1 while `k + 1 < occ_n`
+/// (`waist.rs:98-111`, `waist_const.rs:100-111`). Arvo's own comment says why:
+/// "A length-one or length-two occupied list has no interior; no minima are
+/// emitted." The first and last occupied depths are not candidates at all.
+///
+/// Apply that to this frame. The occupied depths carry 5, 3, 3 and 1 units:
+/// the five units reading the input, the three second stages, the three third
+/// stages, and the join. The interior is depths 1 and 2. Depth 1 has width 3
+/// against 5 and 3, so it is not strictly less than its successor. Depth 2 has
+/// width 3 against 3 and 1, so it is not strictly less than its predecessor.
+/// Neither qualifies, the terminal join is not eligible, and the twelve units
+/// share phase 0. Every step follows from the cited rule.
+///
+/// So the engine is not misreading this frame. The question the occupancy
+/// finding actually raises is a design one: whether a terminal fan-in, which
+/// is the only narrowing this shape has, should close a phase even though it
+/// cannot be an interior local minimum. The design does not say, and this test
+/// does not decide it. Question ticket `ecbd88ff1a6a` puts it to op. If the
+/// answer is yes, the waist axis changes and this test is expected to fail,
+/// which is the point of writing the rule down here rather than the number.
 #[test]
 fn the_frame_is_one_phase() {
     let (phase, _trunk, n) = arrays();
