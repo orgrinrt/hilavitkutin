@@ -20,11 +20,11 @@ mod backend;
 mod error;
 mod symbol;
 
-pub use error::{LinkError, IncompatibilityError};
-pub use symbol::{LibrarySymbol, StaticRef, Symbol};
-
 use core::mem::ManuallyDrop;
+
+pub use error::{IncompatibilityError, LinkError};
 use notko::Outcome;
+pub use symbol::{LibrarySymbol, StaticRef, Symbol};
 
 /// Opaque handle to a loaded dynamic library.
 ///
@@ -48,8 +48,13 @@ impl Library {
     /// host platform's path conventions. Returns `PathNotFound` or
     /// `LoadFailed` on failure.
     pub fn load(path: &[u8]) -> Outcome<Self, LinkError> {
+        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: null-terminated byte path for platform loader; tracked: #206
         match backend::platform_load(path) {
-            Outcome::Ok(handle) => Outcome::Ok(Self { handle }),
+            Outcome::Ok(handle) => {
+                Outcome::Ok(Self {
+                    handle,
+                })
+            },
             Outcome::Err(e) => Outcome::Err(e),
         }
     }
@@ -61,7 +66,7 @@ impl Library {
     /// symbols use `resolve_static` instead.
     pub fn resolve<T: LibrarySymbol>(
         &self,
-        name: &[u8],
+        name: &[u8], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: null-terminated byte symbol name for platform resolver; tracked: #206
     ) -> Outcome<Symbol<'_, T>, LinkError> {
         match backend::platform_resolve(self.handle, name) {
             Outcome::Ok(ptr) => Outcome::Ok(Symbol::from_raw(ptr)),
@@ -78,7 +83,7 @@ impl Library {
     /// function pointer to it.
     pub fn resolve_static<T: 'static>(
         &self,
-        name: &[u8],
+        name: &[u8], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: null-terminated byte symbol name for platform resolver; tracked: #206
     ) -> Outcome<StaticRef<'_, T>, LinkError> {
         match backend::platform_resolve(self.handle, name) {
             Outcome::Ok(ptr) => Outcome::Ok(StaticRef::from_raw(ptr)),
@@ -119,6 +124,7 @@ impl Drop for Library {
 /// through to a caller-provided comparison. v1 treats any non-empty
 /// byte slice as compatible; consumers layer richer policies on top.
 pub fn compatibility_check(bytes: &[u8]) -> Outcome<(), IncompatibilityError> {
+    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: raw byte manifest from a loaded library; consumer checks before linking a typed surface; tracked: #206
     if bytes.is_empty() {
         return Outcome::Err(IncompatibilityError::VersionSkew);
     }

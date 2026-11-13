@@ -4,6 +4,8 @@ Source material backing the hilavitkutin designs. Research notes are not gated b
 
 ## What has which standing
 
+This directory splits at the seed consolidation of 2026-07-19.
+
 `seed/` is the flat, self-contained expression of the effective canon: the founding consolidation spec (`202603181200`, round `202604200055`) with the full registered amendment chain (per addendum A2, `pre_seed/202607193200`) applied once, superseded material left out. While unfrozen it is under construction; when its manifest declares it frozen, all further canon changes happen in the registry (`mock/registry/`) rather than here, and a registry row outranks seed text on conflict.
 
 `pre_seed/` is everything that came before: the amendment memos, roadmaps, audits, expert panels, sketches and notes that produced the seed. Read it as history rather than as canon; the surviving content is in `seed/` and, after the drain, in the registry.

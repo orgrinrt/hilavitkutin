@@ -1,7 +1,7 @@
 //! GATE-2 deviation 9: threaded unit-outer accumulator path.
 //!
 //! An accumulator-bearing carrier runs unit-outer. Under `run_parallel` on a
-//! multi-core pool, each core takes its head+tail record slice, appends into its
+//! multi-core pool, each core takes its record slice of the N-way tiling, appends into its
 //! own per-core region of the reserved buffer (offset to the slice start, fresh
 //! live cell), and a post-frame forward compaction merges the per-core regions
 //! into the binding's `[0, sum)` prefix. The result must be byte-identical to the
@@ -34,9 +34,11 @@ use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{
     AccumWriterApi,
     ColumnReaderApi,
+    ColumnWriterApi,
     EachApi,
     HasAccumWriter,
     HasColumnReader,
+    HasColumnWriter,
     HasEach,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
@@ -77,7 +79,7 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
         unsafe { base.add(aligned) }
     }
 
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
 
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
@@ -214,6 +216,117 @@ fn run_parallel_accumulator_matches_single_core() {
         assert_eq!(
             v.0, refbuf[k],
             "threaded merged rec {k} is byte-identical to single-core append order"
+        );
+    }
+}
+
+// ---- probe: an accumulator in a phase that carries a second trunk.
+//
+// Two column-disjoint units in one phase means two trunks, which takes the phase
+// off the tphase == 1 branch and onto the trunk-rank walk. There the core owning
+// KeepWu's trunk walks every record rather than a per-core slice, while its
+// accumulator region is still sized from that slice. This exists to find out
+// whether that configuration can be built and run, not to assert a conclusion.
+
+#[derive(Copy, Clone)]
+struct Sv(u32);
+
+type ColSide = Cons<Column<Sv>, Empty>;
+
+/// Writes its own column and nothing else, so it is a second trunk in KeepWu's
+/// phase and touches no accumulator.
+struct SideWu;
+impl BuilderInput for SideWu {
+    type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
+}
+impl WorkUnit<Always> for SideWu {
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        ColIn,
+        ColSide,
+        SnapNil,
+        ColPtrCons<Inv, ColPtrNil>,
+        ColPtrCons<Sv, ColPtrNil>,
+    >;
+    type Hint = (
+        hilavitkutin_api::hint::Immediate,
+        hilavitkutin_api::hint::Atomic,
+        hilavitkutin_api::hint::Normal,
+    );
+    type Read = ColIn;
+    type Write = ColSide;
+
+    fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
+        ctx.each().run(|i| {
+            // SAFETY: In host-populated for N records; Sv reserved + exclusive.
+            let v = unsafe { ctx.reader().read::<Inv, _>(i) };
+            unsafe { ctx.writer().write::<Sv, _>(i, Sv(v.0 + 1)) };
+        });
+    }
+}
+
+#[test]
+fn accumulator_in_a_two_trunk_phase_matches_single_core() {
+    let (refbuf, reflen) = reference();
+
+    let provider = BumpProvider::<16384>::new();
+    let scheduler = Scheduler::builder()
+        .with(Accum::<Av>::new())
+        .with(Column::<Inv>::new())
+        .with(Column::<Sv>::new())
+        .with(KeepWu)
+        .with(SideWu)
+        .build(store(provider), USize(N))
+        .unwrap_or_else(|_| panic!("build should succeed"));
+    {
+        // Bindings head: Sv, then In, then the AccumBinding<Av>.
+        let b = scheduler.__bindings();
+        let side_base: *mut Sv = b.__ptr().as_ptr();
+        let in_base = b.__tail().__ptr().as_ptr() as *mut u32;
+        let acc_base = b.__tail().__tail().__ptr().as_ptr() as *mut u32;
+        for i in 0 .. N {
+            // SAFETY: all three buffers reserve N records; written once here.
+            // The side column is poisoned so a record its unit skipped is seen.
+            unsafe {
+                *in_base.add(i) = i as u32;
+                *acc_base.add(i) = u32::MAX;
+                *side_base.add(i) = Sv(u32::MAX);
+            }
+        }
+    }
+
+    let pool = TestExecutor::new();
+    let mut scheduler = core::pin::pin!(scheduler);
+    let result = scheduler.as_mut().run_parallel(&pool);
+    assert!(matches!(result, Outcome::Ok(())));
+
+    let sched_ref = scheduler.as_ref();
+    let b = sched_ref.__bindings().__tail().__tail();
+    let live = b.__len_cell().get().0;
+    assert_eq!(
+        live, reflen,
+        "two-trunk parallel live length is the kept count; a different count means \
+         the appends landed outside the per-core region arithmetic"
+    );
+    let base = b.__ptr().as_ptr();
+    for k in 0 .. live {
+        // SAFETY: live records initialised by the appends.
+        let v = unsafe { core::ptr::read(base.add(k)) };
+        assert_eq!(v.0, refbuf[k], "two-trunk parallel rec {k} value/order");
+    }
+
+    // The second trunk is walked whole: its unit wrote `In[i] + 1` into every
+    // record, none left holding the poison and none written twice over with
+    // another value.
+    let side_base: *const Sv = sched_ref.__bindings().__ptr().as_ptr();
+    for i in 0 .. N {
+        // SAFETY: the side column reserves N records and the scheduler is alive.
+        let s = unsafe { core::ptr::read(side_base.add(i)) };
+        assert_eq!(
+            s.0,
+            i as u32 + 1,
+            "side rec {i}: the second trunk's unit did not write it once from In"
         );
     }
 }

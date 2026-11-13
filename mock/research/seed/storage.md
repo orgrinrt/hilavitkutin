@@ -86,9 +86,9 @@ intrinsic to the type, not to one app's registration), and they are
 mutually exclusive by construction: `impl<T: PlanAffecting> !Replaceable
 for T` (`PlanAffecting` dominant), so a type cannot claim both channels.
 The install semantics both channels share are the S1-S7 spec below,
-implemented and awaiting ratification.
+implemented and landed under a provisional stamp, not ratified.
 
-## Replacement semantics: specified, implemented, awaiting ratification
+## Replacement semantics: specified, implemented, provisional
 
 The founding spec left swap semantics open (a memo sentence proposing
 member-by-member copying was expert input mis-cited as canon by two rounds;
@@ -104,9 +104,16 @@ impl making the markers exclusive; S5 the cost-asymmetry caller contract
 test suite; S7 the swap benches
 (install 2 ns / 85 ns / 1.81 us at 64 B / 1 KiB / 64 KiB; next-frame band
 flat for clean and plan arms, value-cone scaling for the value arm). The
-implemented-and-benched spec awaits op ratification as registry rows
-(evidence record `202607201100`); until that ruling lands, the registry
-row absence remains the authoritative canon signal.
+implemented-and-benched spec went to op with that evidence (record
+`202607201100`), and on 2026-11-13 he answered "Land as provisional",
+among ratify and land, land as provisional, ratify with changes, and
+keep holding. So the implementation ships and S1 to S7 are not ratified
+as registry rows; until a ratification lands, the registry row absence
+remains the authoritative canon signal, and the provisional stamp says
+only that the code may be called meanwhile. Two gaps against the spec
+are open and marked in the source: the plan-dirty bit is keyed by the
+store's position where S2 says the plan-affecting id, and a fused frame
+neither consumes nor honours that bit.
 
 ## Open dependent item
 

@@ -11,7 +11,9 @@ impl MemoryProviderApi for StubMemory {
     unsafe fn allocate(&self, _len: USize, _align: USize) -> *mut u8 {
         core::ptr::null_mut()
     }
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+
+    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
+
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
@@ -21,6 +23,7 @@ impl ArenaInterner for StubArena {
     fn arena_intern(&self, _s: &str) -> u32 {
         0
     }
+
     fn arena_resolve(&self, _id: u32) -> &str {
         ""
     }

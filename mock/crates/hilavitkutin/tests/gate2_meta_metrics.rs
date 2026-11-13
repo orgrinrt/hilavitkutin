@@ -31,7 +31,13 @@ use core::mem::MaybeUninit;
 
 use arvo::{Bool, USize};
 use hilavitkutin::dispatch::engine_ctx::{
-    AccPtrCons, AccPtrNil, ColPtrNil, EngineCtx, MetaRef, SnapNil, VirtNil,
+    AccPtrCons,
+    AccPtrNil,
+    ColPtrNil,
+    EngineCtx,
+    MetaRef,
+    SnapNil,
+    VirtNil,
 };
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
@@ -50,12 +56,15 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 }
 
 struct BumpProvider<const N: usize> {
-    buf: UnsafeCell<[MaybeUninit<u8>; N]>,
+    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
     used: Cell<usize>,
 }
 impl<const N: usize> BumpProvider<N> {
     fn new() -> Self {
-        Self { buf: UnsafeCell::new([const { MaybeUninit::uninit() }; N]), used: Cell::new(0) }
+        Self {
+            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
+            used: Cell::new(0),
+        }
     }
 }
 unsafe impl<const N: usize> Send for BumpProvider<N> {}
@@ -73,7 +82,9 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
         // SAFETY: aligned + len <= N, in bounds of the owned buffer.
         unsafe { base.add(aligned) }
     }
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+
+    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
+
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
@@ -87,8 +98,15 @@ type AccW = Cons<Accum<Mark>, Empty>;
 
 // Consumer Ctx: default `MetaNil` meta pointer (the 9th param defaults), so it
 // has no `meta` accessor. Aliases unchanged from pre-bridge code.
-type ConsumerCtx<'frame> =
-    EngineCtx<'frame, Empty, AccW, SnapNil, ColPtrNil, ColPtrNil, AccPtrCons<'frame, Mark, AccPtrNil>>;
+type ConsumerCtx<'frame> = EngineCtx<
+    'frame,
+    Empty,
+    AccW,
+    SnapNil,
+    ColPtrNil,
+    ColPtrNil,
+    AccPtrCons<'frame, Mark, AccPtrNil>,
+>;
 
 // End-hook Ctx: spells `MetaRef<'frame>` as the 9th param, so it carries a meta
 // reference and gains the `meta` accessor.
@@ -113,14 +131,15 @@ type Hints = (
 // ConsumerWu: Always (rank 3). Appends a sentinel every frame.
 struct ConsumerWu;
 impl BuilderInput for ConsumerWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for ConsumerWu {
+    type Ctx<'frame> = ConsumerCtx<'frame>;
+    type Hint = Hints;
     type Read = Empty;
     type Write = AccW;
-    type Hint = Hints;
-    type Ctx<'frame> = ConsumerCtx<'frame>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         // SAFETY: Mark reserved (CAP) and this frame's appends stay in capacity.
         unsafe { ctx.accums().append::<Mark, _>(Mark(9)) };
@@ -131,17 +150,18 @@ impl WorkUnit<Always> for ConsumerWu {
 // accessor and appends it, after the consumer.
 struct EndWu;
 impl BuilderInput for EndWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl HasSchedule for EndWu {
     type Sched = OnMeta<ScheduleEnd>;
 }
 impl WorkUnit<OnMeta<ScheduleEnd>> for EndWu {
+    type Ctx<'frame> = EndCtx<'frame>;
+    type Hint = Hints;
     type Read = Empty;
     type Write = AccW;
-    type Hint = Hints;
-    type Ctx<'frame> = EndCtx<'frame>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         // The bridge: read engine-owned meta state through the gated accessor.
         let pc = ctx.meta::<SchedulerMetrics>().pass_count.get();
