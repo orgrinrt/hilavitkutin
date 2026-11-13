@@ -1486,6 +1486,8 @@ The files under `docs/` are rendered from the templates ledgered above and were 
 
 ## Not yet read
 
+The merge of `dev` into the registry branch on 13 November 2026 (`b14757d9`, the trunk at `271909e5`) brought the last 27 files of the table, which no reader has opened: three rounds on the core loop, four rounds on building every crate through `hilavitkutin-build`, the two findings of the `frame_wide` bench and three research notes on the bench harness. The same merge changed `mock/crates/hilavitkutin-build/DESIGN.md.tmpl`, `BACKLOG.md.tmpl` and `README.md.tmpl`, which are listed as read above at the text they had before it; the lines it changed in them are not read. The registry holds no row from any of these until they are read.
+
 | file | lines | batch |
 |---|---|---|
 | `mock/research/imported-from-polka-dots/bench/calling-convention-bench-results.md` | 537 | 27 |
@@ -1632,3 +1634,30 @@ The files under `docs/` are rendered from the templates ledgered above and were 
 | `mock/research/imported-from-saalis/verkko-protocol.md` | 1042 | 44 |
 | `mock/research/imported-from-saalis/verkko-relay.md` | 479 | 44 |
 | `mock/research/imported-from-saalis/verkko-seat.md` | 470 | 44 |
+| `mock/benches/frame_wide/heavy_n65536_findings.md` | 370 | none, came with the merge of `dev` |
+| `mock/benches/frame_wide/light_n65536_findings.md` | 361 | none, came with the merge of `dev` |
+| `mock/design_rounds/202611130153-yegv/202611130150-x0pf_topic.loop-core-contracts.md` | 21 | none, came with the merge of `dev` |
+| `mock/design_rounds/202611130153-yegv/202611130153-yegv_changelist.doc.lock.md` | 95 | none, came with the merge of `dev` |
+| `mock/design_rounds/202611130153-yegv/202611130207-v2ky_changelist.src.deprecated.md` | 62 | none, came with the merge of `dev` |
+| `mock/design_rounds/202611130153-yegv/202611130232-zwjz_changelist.src.lock.md` | 113 | none, came with the merge of `dev` |
+| `mock/design_rounds/202611130355-yrri/202611130355-mlvq_topic.loop-core-review-one.md` | 15 | none, came with the merge of `dev` |
+| `mock/design_rounds/202611130355-yrri/202611130355-yrri_changelist.doc.lock.md` | 79 | none, came with the merge of `dev` |
+| `mock/design_rounds/202611130355-yrri/202611130406-diig_changelist.src.lock.md` | 58 | none, came with the merge of `dev` |
+| `mock/design_rounds/202611130454-z2b4/202611130454-yzhz_topic.loop-core-review-two.md` | 17 | none, came with the merge of `dev` |
+| `mock/design_rounds/202611130454-z2b4/202611130454-z2b4_changelist.doc.lock.md` | 49 | none, came with the merge of `dev` |
+| `mock/design_rounds/202611130454-z2b4/202611130457-gxd9_changelist.src.lock.md` | 24 | none, came with the merge of `dev` |
+| `mock/design_rounds/202611131717/202611131717_changelist.doc.lock.md` | 71 | none, came with the merge of `dev` |
+| `mock/design_rounds/202611131717/202611131717_changelist.src.lock.md` | 83 | none, came with the merge of `dev` |
+| `mock/design_rounds/202611131717/202611131717_topic.every-crate-builds-through-hilavitkutin-build.md` | 77 | none, came with the merge of `dev` |
+| `mock/design_rounds/202611131745/202611131745_changelist.doc.lock.md` | 29 | none, came with the merge of `dev` |
+| `mock/design_rounds/202611131745/202611131745_changelist.src.lock.md` | 40 | none, came with the merge of `dev` |
+| `mock/design_rounds/202611131745/202611131745_topic.what-the-review-of-the-build-configuration-found.md` | 28 | none, came with the merge of `dev` |
+| `mock/design_rounds/202611131800/202611131800_changelist.doc.lock.md` | 7 | none, came with the merge of `dev` |
+| `mock/design_rounds/202611131800/202611131800_changelist.src.lock.md` | 15 | none, came with the merge of `dev` |
+| `mock/design_rounds/202611131800/202611131800_topic.the-wrapper-is-recognised-by-its-name.md` | 12 | none, came with the merge of `dev` |
+| `mock/design_rounds/202611131815/202611131815_changelist.doc.lock.md` | 7 | none, came with the merge of `dev` |
+| `mock/design_rounds/202611131815/202611131815_changelist.src.lock.md` | 5 | none, came with the merge of `dev` |
+| `mock/design_rounds/202611131815/202611131815_topic.the-design-says-which-text-carries-the-allow.md` | 7 | none, came with the merge of `dev` |
+| `mock/research/202611131250_bench-harness-at-a81e195.md` | 219 | none, came with the merge of `dev` |
+| `mock/research/202611131300_bench-matrix-for-the-intended-region.md` | 239 | none, came with the merge of `dev` |
+| `mock/research/202611131400_frame-wide-first-run.md` | 86 | none, came with the merge of `dev` |
