@@ -8,7 +8,7 @@ Two crates make the split the brief asks for. `engine` stands in for hilavitkuti
 
 ## How to run it
 
-From this directory: `cargo test`. The fixtures are `cargo test --test fixtures`; `TRYBUILD=overwrite` rewrites the diagnostics. The mask probes are `cargo test --test lengths --test lengths_128`.
+From this directory: `cargo test`. The fixtures are `cargo test --test fixtures`; `TRYBUILD=overwrite` rewrites the diagnostics. The mask probes are `cargo test --test lengths --test lengths_128`. The two probes that are meant not to build sit in `probes/`, a crate of its own kept out of this workspace, with their recorded outputs in `probes/out/`. Rerun them with `cargo check --bin lane_twice`, `cargo build --bin lane_twice` and `cargo check --bin limit_256` from `probes/`. The paths in those outputs are the machine they were recorded on.
 
 ## The shape
 
@@ -38,6 +38,7 @@ Prediction is the brief's expected code; every code in the table's third column 
 | 06c a runner opens a step from an unchecked table | data-bound | `error[E0308]: mismatched types` ... `expected `&Checked<i64, _>`, found `&[&[Column<i64>]; 1]`` | not in the brief |
 | 06d a runner builds a checked table by hand | data-bound | `error: cannot construct `Checked<_, _>` with struct literal syntax due to private fields` | not in the brief |
 | 11 a column handle is read as another value type | data-bound | `error[E0308]: mismatched types` ... `expected `Column<i64>`, found `Column<u32>`` | not in the brief |
+| 12 an author implements `Kernel` with its own mask | block | `error[E0277]: the trait bound `Liar: engine::sealed::Sealed` is not satisfied` ... `` `Kernel` is a "sealed trait" `` | not in the brief |
 | 07 the view is kept past the step | block | `error[E0521]: borrowed data escapes outside of associated function` | a lifetime error |
 | 08 a close unit obtains a view | close unit | `error[E0599]: no method named `view` found for struct `Landed<'c, Reg, S>` in the current scope` | E0599 or E0277 |
 | 08b a close unit names a frame lane | close unit | `error[E0277]: `Pos` is not a landed store` | not in the brief |
@@ -47,27 +48,27 @@ Prediction is the brief's expected code; every code in the table's third column 
 
 Fixture 04 fails with a different class from the one predicted, E0308 and not E0277. With a read list of one member the solver has one candidate for `R: Contains<X>`, unifies `X` with that member before it looks at the argument, and reports the argument's type as wrong. The refusal holds and the message names both lanes, but the class depends on the list's length: 04b, the same read with two lanes listed, gives the predicted E0277. A gate that greps for E0277 on a missing read would miss the one-lane case.
 
-Every twin differs from its failing file in the offending token only, except 07, where `Some(view)` becomes `None`: the offending part there is the whole stored value, and the twin replaces it at that one spot.
+Every twin differs from its failing file in the offending token only, except four. In 07, `Some(view)` becomes `None`: the offending part there is the whole stored value, and the twin replaces it at that one spot. In 06c the bare table `&[&[pos][..]]` becomes `&Checked::bind([&[pos][..]]).unwrap()`, and in 06d the three-line struct literal becomes one `Checked::bind` call: in both the offending part is the way the table was made, and the twin makes it the one way allowed. In 12 the author's `impl Kernel` becomes an `impl BlockKernel` wrapped in `Block`, since the twin of implementing the sealed trait is the one route an author has.
 
 Compile-pass, `author/tests/run.rs`: `the_committed_view_is_read_from_two_scoped_threads_at_once` reads two lanes of the view from two `std::thread::scope` threads in one block kernel and stages their sum. WORKS, with no `unsafe impl`: `View` is `Sync` by the auto traits of its parts. Two more runtime tests step a block and a value kernel together, run the close twice, and check the committed values.
 
 ## The position mask at lengths 8, 32 and 128
 
-`author/tests/lengths.rs` and `lengths_128.rs` build registries of 8, 32 and 128 frame lanes. Each test reads back the mask and length of a kernel writing every lane and of two kernels writing the two halves, asserts the halves are disjoint and their union is the whole, and instantiates both on a frame so the `const` block runs.
+`author/tests/lengths.rs` and `lengths_128.rs` build registries of 8, 32 and 128 frame lanes. Each test reads back the mask and length of a kernel writing every lane and of two kernels writing the two halves, asserts the halves are disjoint and their union is the whole, and instantiates both on a frame so the `const` block runs. Those halves are in registry order and contiguous, which a mask folded from list position instead of registry position would pass as well. Two more tests in `lengths.rs` close that: a list `L30 L3 L17` masks bits 30, 3 and 17 of the 32-lane registry, and two interleaved lists out of order (`L6 L0 L4 L2` and `L1 L7 L3 L5`) mask `0b0101_0101` and `0b1010_1010` of the 8-lane registry and step together.
 
 | Length | Evaluates | Recursion limit the instantiating crate needs |
 |---|---|---|
 | 8 | yes | default (128) |
 | 32 | yes | default (128) |
-| 128 | yes | over 256: at 256 the solver stops with `error[E0275]: overflow evaluating the requirement `(Tag<L127, *mut [i32]>, ()): Pick<L127, Here>``; 300 holds |
+| 128 | yes | over 256: at 256 the solver stops with `error[E0275]: overflow evaluating the requirement `(Tag<common::L127, *mut [i32]>, ()): Pick<..., ...>`` (`probes/limit_256.rs`, output in `probes/out/limit_256.check.txt`); 300 holds (`lengths_128.rs`) |
 
 At 128 the registry walk (`Pick`, one step per lane) runs nested in the write-list walk (`Stage`, one step per member), so the depth is about the sum of the two. The limit is an attribute in the crate that instantiates the kernel, the author's crate, though not a feature line. The test file's own `list!` macro needs a raised limit at 128 as well, for the macro's recursion. The `u128` mask has no bit past 128; a larger registry was not probed.
 
-The mask assertion is evaluated during monomorphisation. `cargo check` does not report it: a scratch example declaring `Pos` twice passed `cargo check -p author --example check_probe` and failed `cargo build` of the same example with the E0080 above, after which the probe was deleted. trybuild builds its fixtures, so 05 and 06 hold under it. A gate that only checks does not see a kernel naming a lane twice.
+The mask assertion is evaluated during monomorphisation. `cargo check` does not report it. `probes/lane_twice.rs` is fixture 05's failing file as a binary: `cargo check --bin lane_twice` passes (`probes/out/lane_twice.check.txt`), and `cargo build --bin lane_twice` fails with the E0080 above (`probes/out/lane_twice.build.txt`). trybuild builds its fixtures, so 05 and 06 hold under it. A gate that only checks does not see a kernel naming a lane twice.
 
 ## The data-bound twin of 05 and 06
 
-Fixtures 05 and 06 decide the write lists at compile time, which needs the lists fixed in the engine's types. When bindings are data, as the plan's call 7 default has them for stored columns, no list exists for the compiler to fold, and two writers of one column can only be refused as a value. This correction came after the brief, from two outside readers (`briefs/fixup/stamps-2-spj.md` and `stamps-2-torvalds.md`, section 5 of each). `engine/src/bound.rs` builds that form beside the typed one.
+Fixtures 05 and 06 decide the write lists at compile time, which needs the lists fixed in the engine's types. When bindings are data, as the plan's call 7 default has them for stored columns, no list exists for the compiler to fold, and two writers of one column can only be refused as a value. This correction came after the brief, from two outside readers, section 5 of each of their files (`briefs/fixup/stamps-2-spj.md` and `briefs/fixup/stamps-2-torvalds.md`, documents on the coordinators' message channel, not files of this repository). `engine/src/bound.rs` builds that form beside the typed one.
 
 A column is a `Column<T>` handle, minted by `Columns::bind` and refused with `None` once all `C` columns are bound. A kernel carries its handles as data, and a step's write table is one slice of handles per kernel. `Checked<T, K>` is the checked table. Its fields are private and `Checked::bind` is its only constructor, which refuses any column claimed twice, within one kernel's set or across two, with an `Overlap` naming the column and both claimants. `Columns::begin` takes a `&Checked` and nothing else. It gives each kernel a `ColumnStaged` holding exactly the staged columns its set names, split out of the staging buffers by safe borrows, and `set` on a column the set does not name returns `Undeclared`.
 
@@ -115,6 +116,8 @@ let head = StagedLane::new(unsafe { &mut *lane });
 
 The invariant it asserts: no two live staged handles reach one lane. The `const` block in `Frame::step` and `Frame::step2` establishes it before the call. A write list names each lane once when `MASK.count_ones() == LEN`, and two kernels of one step are disjoint when `A::MASK & B::MASK == 0`. `RawLanes<'s, Reg>` carries the borrow of the staging buffers for `'s`, so no handle outlives the step. Authored kernels write no unsafe and hold no slice or pointer, which is stamp 7 option a. The soundness of the cut rests on the mask assertion, and a runner that skipped it would hand out aliasing handles.
 
+The mask the assertion reads is a safe associated const, so the cut also trusts that every `MASK` is the one folded from its list. `Stage` and `Kernel` are sealed for that (`engine/src/sealed.rs`): a crate outside the engine can name both in bounds and implement neither, so the only impls are the engine's, whose masks come from the list. Fixture 12 is an author stating a mask of its own, refused as E0277 on the seal. An `unsafe trait` would put the same promise in the type but leave an author free to make it; the seal leaves nobody outside the engine to make it at all.
+
 A fully safe cut exists: pluck each member out of a list of `&mut` slices by type, which makes the remainder a different type. It turns fixtures 05 and 06 into E0277 trait errors at the declaration instead of a `const` assertion at instantiation. The brief asks for the position-mask form for those two, so the pluck was not built; it is the alternative to weigh if the unsafe cut is not wanted.
 
 ## Fallbacks
@@ -132,5 +135,6 @@ None. Each check the brief names holds in types (01 to 04, 07 to 10) or, for 05 
 
 - `notko-hlist` has `At<P>`, which goes from position to member. It has nothing that goes from member to position, which the mask needs. The sketch infers the position through its own `Pick<X, P>` on a lane-tagged list and reads the count back through `Position`. The lookup belongs upstream in `notko-hlist` beside `At`, so the engine does not carry a second list walk.
 - `notko-hlist`'s `Contains` impls carry no `#[diagnostic::do_not_recommend]`, unlike `At`'s since `1a978e5`. A downstream compile-fail diagnostic on a missing member therefore prints the cargo git checkout path (fixture 04b's `.stderr` names `/root/.cargo/git/checkouts/notko-f6f26a62b445f4df/1a978e5/...`), and the committed diagnostic matches only on a machine with the same cargo home.
+- Fixture 04b's committed `.stderr` carries the cargo git checkout path of `notko-hlist` (the `Contains` note above), so that one fixture passes only on a machine with the same cargo home. It is fixed upstream or not at all; the sketch cannot normalise it.
 - The reference runner is one thread: `step2` runs its two kernels in turn, but it cuts both kernels' staged handles from one raw set, so the disjointness assertion is already what a parallel runner would rest on.
 - In hilavitkutin's vocabulary a frame lane is a `Column<T>` stepped per frame; the landed store has no settled name there.

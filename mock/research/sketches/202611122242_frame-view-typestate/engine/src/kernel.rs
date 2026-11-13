@@ -3,6 +3,7 @@
 
 use crate::lane::{FrameList, LandedList};
 use crate::registry::{RawLanes, Registry};
+use crate::sealed::Sealed;
 use crate::stage::Stage;
 use crate::view::{Landed, Row, View};
 
@@ -47,7 +48,11 @@ pub struct Value<K>(pub K);
 
 /// What the runner drives: either kernel form, with its write list placed in
 /// the registry at `Ps`.
-pub trait Kernel<Reg: Registry, Ps> {
+///
+/// Sealed (`sealed.rs`): implemented only for `Block` and `Value`, whose masks
+/// are their write lists' `Stage::MASK`. An author implements `BlockKernel` or
+/// `ValueKernel` and never this.
+pub trait Kernel<Reg: Registry, Ps>: Sealed {
     /// The write list's position mask (`Stage::MASK`).
     const MASK: u128;
     /// The write list's length (`Stage::LEN`).

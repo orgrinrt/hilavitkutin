@@ -4,6 +4,7 @@ use notko_hlist::{Cons, Empty, Position};
 
 use crate::lane::{FrameLane, FrameList};
 use crate::registry::{Pick, RawLanes, Registry};
+use crate::sealed::Sealed;
 use crate::slot::Slot;
 use crate::view::StagedLane;
 
@@ -19,7 +20,10 @@ use crate::view::StagedLane;
 /// The mask is a bare `u128` because the sketch may depend on `notko` and
 /// `notko-hlist` only; the production form takes arvo's bit set, and a
 /// registry past 128 lanes needs it, since the shift has no 129th bit.
-pub trait Stage<Reg: Registry, Ps>: FrameList {
+///
+/// Sealed (`sealed.rs`): the runner's unsafe cut trusts `MASK`, so only the
+/// engine's own impls below exist.
+pub trait Stage<Reg: Registry, Ps>: FrameList + Sealed {
     const MASK: u128;
     const LEN: u32;
 

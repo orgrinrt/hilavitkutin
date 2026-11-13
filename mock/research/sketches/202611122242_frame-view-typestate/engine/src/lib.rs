@@ -19,6 +19,7 @@ mod frame;
 mod kernel;
 mod lane;
 mod registry;
+mod sealed;
 mod slot;
 mod stage;
 mod view;

@@ -3,7 +3,8 @@
 //! Needs a raised recursion limit in the crate that instantiates the kernel:
 //! the default 128 stops `list!` below, and 256 stops the trait solver with
 //! `E0275` on the registry walk (`Pick`) nested in the write-list walk
-//! (`Stage`); 300 holds. `FINDINGS.md` has the measured limits.
+//! (`Stage`); 300 holds. The 256 run is `probes/limit_256.rs`, its output
+//! `probes/out/limit_256.check.txt`.
 #![recursion_limit = "300"]
 
 mod common;

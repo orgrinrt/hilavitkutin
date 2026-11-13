@@ -5,6 +5,7 @@
 [workspace]
 resolver = "3"
 members = ["engine", "author"]
+exclude = ["probes"]
 
 [workspace.package]
 edition = "2024"
