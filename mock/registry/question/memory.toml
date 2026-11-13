@@ -30,3 +30,20 @@ libc/Unix per consumer demand.
 subject = "memory"
 keywords = ["hilavitkutin-providers", "ArenaColumnStorage", "AdaptWu", "StandardAdaptKit", "what ships today", "interner", "ColumnStorage default", "scope"]
 related = ["tenet::the_providers_crate_v0_ships_the_interner_value_type_surface_and_a_declarative_interner_kit", "tenet::later_modules_of_the_providers_crate_add_column_storage_clock_and_memory_defaults_per_consumer_demand", "tenet::the_default_column_storage_is_a_naive_arena_backed_placeholder_the_engine_stays_generic_over_and_the_columnar_engine_replaces_later", "tenet::the_adapt_kits_bundle_the_nine_metric_axes_with_a_standard_recipe_with_validated_defaults_and_an_off_recipe_that_disables_the_observer"]
+
+[[question]]
+id = "whether_column_buffers_are_allocated_at_build_to_capacity_or_per_run_once_the_record_count_is_known"
+asks = "Column buffers are sized by a record count that can vary per run. Are they reserved at build to capacity, or allocated by the run loop once the per-frame record count is known?"
+options = ["Columns are NOT allocated at build(); they belong to the run-loop / plan phase (C/E) where the per-frame record_count is known", "columns reserve at build() to capacity, stable pointer for the scheduler lifetime; per-frame live record count is a metadata field, no per-frame allocation"]
+state = "open"
+source = "mock/research/sketches/202605290101_ctx-projection-selector.md:57-59, mock/research/sketches/202606041631_column-source-dual-selector/FINDINGS.md:36-36"
+quote = '''
+## Columns lifetime reframing (corrects the earlier "B2b at build()" framing)
+
+Resource buffers are sized once at `build()` (singleton, scheduler lifetime; shipped in B2a). Column buffers are sized by `record_count`, which varies per run (a real pipeline lints N files where N changes per invocation), so columns are NOT allocated at `build()`; they belong to the run-loop / plan phase (C/E) where the per-frame `record_count` (via `RunCfg: HasRecordCount`) is known. There is no standalone "B2b columns at build()" round; column buffer allocation folds into the run-loop. B3's column accessors operate on the per-frame column buffers passed into the Context at construction. B3 is testable now with hand-provided column buffers, independent of the run-loop.
+---
+Reservation timing (Timing X, separate decision): columns reserve at `build()` to capacity, stable pointer for the scheduler lifetime; per-frame live record count is a metadata field, no per-frame allocation. The `ColumnBinding` Column drain arm stops recording a dangling placeholder and records the real `column_ptr_mut` after a `reserve` sized by the record count.
+'''
+subject = "memory"
+keywords = ["column allocation", "reservation timing", "record_count", "build()", "run loop", "stable pointer", "per-frame allocation"]
+related = ["tenet::column_buffers_are_sized_by_the_per_run_record_count_and_belong_to_the_run_loop_and_not_to_build", "tenet::columns_reserve_at_build_to_capacity_with_a_stable_pointer_and_the_per_frame_record_count_is_a_metadata_field"]

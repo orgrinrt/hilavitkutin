@@ -425,3 +425,24 @@ standing = "provisional"
 subject = "governance"
 keywords = ["locked changelist", "audit trail", "correction", "later round", "wrong check", "grep", "bending a subject"]
 cites = ["a_changelist_claim_is_verified_against_what_landed_and_every_verification_line_is_run_before_the_lock"]
+
+[[tenet]]
+id = "a_drifted_locked_changelist_is_reconciled_by_a_new_round_that_deprecates_it_and_carries_a_corrected_replacement"
+what = "A locked changelist whose wording drifted from shipped source is reconciled in a new round: a new topic file, a deprecation of the original, a replacement changelist with the changelist block corrected and a comparison to the deprecated changelist, a lock of the replacement, and a close of the round. The list, called Option A, stays canonical."
+mechanism = "`cargo mock deprecate`, `cargo mock lock`, `cargo mock close`; replacement CL at `mock/design_rounds/<new-timestamp>/<new-timestamp>_changelist.src.md` with the CHANGE block corrected to `fn validate_descriptor ADDED (public host-side helper)`; the `## Comparison to deprecated changelist` section the deprecation-comparison lint requires."
+source = "mock/research/sketches/202605251400_v2-phase-machine-field-notes.md:72-78"
+provenance = ["mock::research::sketches::202605251400_v2-phase-machine-field-notes::#what-ships-when-the-ceremony-eventually-runs"]
+quote = '''
+The drift memo's Option A list stays canonical:
+
+1. New topic file at `mock/design_rounds/<new-timestamp>/<new-timestamp>_topic.reconcile-validate-descriptor-visibility.md`.
+2. Deprecate the original via `cargo mock deprecate mock/design_rounds/202605090011/202605090011_changelist.src.lock.md` (or whatever its v2 arg shape is).
+3. Author replacement CL at `mock/design_rounds/<new-timestamp>/<new-timestamp>_changelist.src.md` with the CHANGE block corrected to `fn validate_descriptor ADDED (public host-side helper)` plus rustdoc rationale matching shipped source, plus the `## Comparison to deprecated changelist` section the deprecation-comparison lint requires.
+4. Lock the replacement: `cargo mock lock` (or `cargo mock lock <path>`; arg shape unclear).
+5. Close the round: `cargo mock close`.
+'''
+origin = "proposed"
+written_by = "sketch v2 phase machine field notes of 2026-05-25 (workspace task #398), outcome INCONCLUSIVE; agent-written, restating the drift memo's Option A list"
+standing = "provisional"
+subject = "governance"
+keywords = ["Option A", "deprecate and replace", "locked changelist drift", "drift memo", "validate_descriptor", "task 398", "cargo mock deprecate", "replacement changelist"]

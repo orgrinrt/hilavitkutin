@@ -248,3 +248,43 @@ Sealed `trait DispatchCodegen<Cfg: RunCfg>` with TAIT `type CoreDispatch = impl 
 subject = "execution"
 keywords = ["DispatchApproach", "MonoTuple", "IndirectPerFiber", "TrunkMega", "ScheduleMega", "select_approach", "variants that ship"]
 related = ["tenet::the_first_version_ships_a_mono_tuple_baseline_a_trunk_level_and_a_whole_schedule_dispatch_approach_and_the_indirect_per_fiber_one_waits_in_the_backlog", "tenet::the_base_approach_selection_picks_by_record_count_and_fiber_count_and_threshold_tuning_by_benchmark_follows", "tenet::dispatch_code_generation_is_a_sealed_trait_with_one_shipped_implementation_and_three_dispatch_approaches", "tenet::the_indirect_per_fiber_approach_is_superseded_by_the_trunk_and_schedule_approaches_for_its_overhead"]
+
+[[question]]
+id = "whether_per_fiber_windowing_re_walks_the_trunk_carrier_per_fiber_or_enters_the_fiber_s_members_directly"
+asks = "Per-fiber windowed dispatch on the flat carrier either re-walks the carrier for every fiber and window or enters a fiber's members directly. Which does the design hold?"
+options = ["A2b should prefer a DIRECT per-fiber entry (walk to the fiber's members once, then loop windows there) over re-walking the full carrier per fiber", "Serving per-fiber locality on a flat carrier costs re-walks, and that cost is inherent rather than incidental; it cannot be folded away inside this mechanism"]
+state = "open"
+source = "mock/research/sketches/202606202100_a2a-per-fiber-morsel-loop/FINDINGS.md:68-73, mock/research/sketches/202607191200_a4-fibercons-nest-wireability/FINDINGS.md:58-72, mock/research/sketches/202607191200_a4-fibercons-nest-wireability/FINDINGS.md:88-92"
+quote = '''
+- **Re-walk cost.** Driving the per-trunk carrier per fiber re-walks the whole carrier
+  once per fiber per window: O(fibers x windows x carrier_len) const-gate evals. The
+  per-record work stays correct and devirt-clean (gate evals are compile-time-folded
+  branches, not per-record cost), but the walk overhead multiplies. A2b should prefer a
+  DIRECT per-fiber entry (walk to the fiber's members once, then loop windows there)
+  over re-walking the full carrier per fiber.
+---
+## The cost finding survives, and is now a measurement rather than a suspicion
+
+Serving per-fiber locality on a flat carrier costs re-walks, and that cost is inherent
+rather than incidental. For a trunk holding F fibers, dispatch is called once per
+(fiber, morsel). Each call walks that trunk's whole unit list, running only the current
+fiber's units; the other fibers' units do not fold away, because `Member::IS` is const
+per **trunk** membership, not per fiber, so they are rejected by a **runtime**
+`dirty.bit(Pos::INDEX)` test (`dispatch/trunk_gate.rs:114-119`). With F fibers of m
+morsels each over U trunk units, that is F x m x U runtime bit tests where the old
+shared-window shape did m x U, for identical executed work.
+
+It cannot be folded away inside this mechanism: fiber membership is a plan output, so no
+const gate can express it. The FIXME at #340 (plan-baked member masks plus a
+fiber-to-phase map) reduces the walks it is possible to skip, not this term.
+
+---
+A4 and A2b stand as shipped; no redo. The `FiberCons` nest, `RunTrunk`, `RunPhase` and
+`RunPipeline` are dead machinery under `no-legacy-shims-pre-1.0` on the same footing as
+the head+tail types, and belong in G2C-0's deletion audit rather than left to read as an
+unfinished feature for the next person who greps for per-fiber dispatch. G2C-M gains the
+walk-overhead arm above.
+'''
+subject = "execution"
+keywords = ["re-walk", "direct per-fiber entry", "per-fiber windows", "A2b", "A4", "walk overhead", "flat carrier"]
+related = ["tenet::per_fiber_windowing_prefers_a_direct_per_fiber_entry_over_re_walking_the_full_carrier_for_each_fiber", "tenet::serving_per_fiber_locality_on_the_flat_carrier_costs_a_walk_per_fiber_per_morsel_that_no_const_gate_removes_and_a_bench_arm_decides_whether_the_locality_pays"]

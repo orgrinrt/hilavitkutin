@@ -58,3 +58,36 @@ quote = '''
 subject = "plan"
 keywords = ["spectral role deviation", "fiber_theory", "evidence then bless", "Step 7", "Step 8", "plan-chain corrective round", "greedy", "trunk-grained"]
 related = ["tenet::the_spectral_role_deviation_follows_the_same_evidence_then_bless_standard", "tenet::the_spectral_role_deviation_evidence_favours_canon_s_role_split_of_greedy_fibers_and_spectral_trunks"]
+
+[[question]]
+id = "whether_the_trait_solver_overflow_at_the_grouping_unit_cap_belongs_to_the_cap_size_recursion_or_to_the_compounded_obligation_set"
+asks = "The overflow documented at the grouping unit cap is attributed to a capacity-size array length re-proven through the const-gated walk's recursion in one text, and to the compounded obligation set of the real walk or an older nightly in another. Which holds?"
+options = ["a cap_size(CU::CAP) array-length bound re-proven through the const-gated walk's type-level recursion overflowing the trait solver", "a property of that compounded obligation set (or of an older nightly), not of cap_size-through-recursion as such; UNREPRODUCED-IN-REDUCTION, an in-engine probe is required before relying on either the wall or its absence"]
+state = "open"
+source = "mock/research/sketches/202606111450_cap-lifting-shapes/FINDINGS.md:3-10, mock/research/sketches/202606111450_cap-lifting-shapes/FINDINGS.md:128-139"
+quote = '''
+HYPOTHESIS: the engine's three hardcoded caps (GATE2_MAX_UNITS=256 and
+GATE2_MAX_ACCUMS=16 in plan/grouping.rs, plan_dirty `[AtomicBool; 256]` in
+scheduler/mod.rs, MAX_CORES=256 in thread/class.rs) can be lifted to
+consumer-tunable values on nightly-2026-05-28 (1.98.0-nightly cced03bfd),
+despite the two documented blockers: GCE rejecting FIELD ACCESS in generic
+constants (the `Cfg::MAX_PLAN_AFFECTING_RESOURCES.0` form), and a
+`cap_size(CU::CAP)` array-length bound re-proven through the const-gated
+walk's type-level recursion overflowing the trait solver. Expected: the
+---
+OUTCOME: WORKS, at depth 7 and at depth 64 (a macro-built 64-unit cons
+list), with the generic constant inside the recursive trait's method
+signature and the `[(); ..]:` bound on every cons-cell impl. The documented
+trait-solver overflow did NOT reproduce in this reduced fold on this
+nightly. The reduction carries one bound per recursion step; the real
+const-gated walk compounds BundleMasks (4 type params) with per-unit
+MaskProject witness bounds, GateWith, and the RunFiber where-blocks, so the
+overflow documented at GATE2_MAX_UNITS is a property of that compounded
+obligation set (or of an older nightly), not of cap_size-through-recursion
+as such. Treat the engine-side claim as UNREPRODUCED-IN-REDUCTION: an
+in-engine probe is required before relying on either the wall or its
+absence.
+'''
+subject = "plan"
+keywords = ["trait solver overflow", "cap_size recursion", "GATE2_MAX_UNITS", "unreproduced", "in-engine probe", "cap lifting"]
+related = ["tenet::lifting_the_engine_s_hardcoded_caps_was_documented_as_blocked_by_field_access_in_generic_constants_and_a_trait_solver_overflow_through_the_const_gated_walk", "tenet::the_trait_solver_overflow_documented_at_the_grouping_unit_cap_is_unreproduced_in_a_reduced_fold_and_needs_an_in_engine_probe"]
