@@ -1,0 +1,11 @@
+error: usage of an `unsafe` block
+  --> tests/ui/fail/13_an_index_is_forged_by_unsafe_code.rs:19:36
+   |
+19 |             let probe: Index<'_> = unsafe { core::mem::zeroed() };
+   |                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+note: the lint level is defined here
+  --> tests/ui/fail/13_an_index_is_forged_by_unsafe_code.rs:4:11
+   |
+ 4 | #![forbid(unsafe_code)]
+   |           ^^^^^^^^^^^

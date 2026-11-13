@@ -85,6 +85,8 @@ impl<Cfg: RunCfg> Default for Scheduler<Cfg, WuNil, SvEmpty, NullColumnStorage> 
             gate2_ncores:         <USize as Identity<Additive>>::IDENTITY,
             gate2_accum_live:     [const { core::sync::atomic::AtomicUsize::new(0) };
                 MAX_CORES * GATE2_MAX_ACCUMS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic publish array init; tracked: #121
+            gate2_accum_wanted:   [const { core::sync::atomic::AtomicUsize::new(0) };
+                MAX_CORES * GATE2_MAX_ACCUMS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic wanted-publish array init; tracked: #121
             phase_ema:            [const { Cell::new(Nanos::from_raw(0)) }; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-phase EMA zero-init; tracked: #121
             phase_accum:          [const { Cell::new(Nanos::from_raw(0)) }; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-phase accumulator zero-init; tracked: #121
             adapt_reconfigure:    Cell::new(Bool::FALSE),

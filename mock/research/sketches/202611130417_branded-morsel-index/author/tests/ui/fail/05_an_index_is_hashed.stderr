@@ -1,0 +1,7 @@
+error[E0277]: the trait bound `engine::Index<'_>: Hash` is not satisfied
+  --> tests/ui/fail/05_an_index_is_hashed.rs:19:28
+   |
+19 |                 Hash::hash(&probe, &mut hasher);
+   |                 ---------- ^^^^^^ the trait `Hash` is not implemented for `engine::Index<'_>`
+   |                 |
+   |                 required by a bound introduced by this call

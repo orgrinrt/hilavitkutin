@@ -1,0 +1,16 @@
+# Sketch S2: the branded morsel index. Its own workspace, so the repository's
+# build never sees it. `engine` stands in for hilavitkutin and `author` for a
+# crate writing block kernels against it.
+
+[workspace]
+resolver = "3"
+members = ["engine", "author"]
+
+[workspace.package]
+edition = "2024"
+publish = false
+version = "0.0.0"
+
+[workspace.dependencies]
+engine = { path = "engine" }
+trybuild = "=1.0.122"

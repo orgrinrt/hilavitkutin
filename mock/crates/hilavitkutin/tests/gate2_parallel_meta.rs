@@ -51,7 +51,7 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 }
 
 // The accumulator's reserved capacity equals the record count at build, and
-// an append past it asserts (the engine's soundness guard), so the record count
+// an append past it is refused, so the record count
 // provides the headroom for the per-core consumer markers plus the epilogue
 // append.
 const RECORDS: usize = 64;
@@ -93,9 +93,8 @@ type MetaCtx<'frame> = EngineCtx<
     MetaRef<'frame>,
 >;
 
-// StartWu: OnMeta<PassStart> (leading band). Counts executions; appends nothing
-// (a leading-band accumulator append is unsupported on the parallel unit-outer
-// path per the round's documented constraint).
+// StartWu: OnMeta<PassStart> (leading band). Counts executions and appends
+// nothing; `leading_band_appends.rs` holds the leading band's appends.
 struct StartWu;
 impl BuilderInput for StartWu {
     type Dispatch = UnitDispatch<Self>;

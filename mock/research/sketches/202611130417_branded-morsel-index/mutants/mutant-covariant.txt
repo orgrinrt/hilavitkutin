@@ -1,0 +1,323 @@
+   Compiling engine v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611130417_branded-morsel-index/engine)
+   Compiling author v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611130417_branded-morsel-index/author)
+    Finished `test` profile [unoptimized] target(s) in 0.22s
+     Running tests/fixtures.rs (/home/user/target/debug/deps/fixtures-4d94b87b69dced18)
+
+running 1 test
+   Compiling engine v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611130417_branded-morsel-index/engine)
+   Compiling author v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611130417_branded-morsel-index/author)
+   Compiling author-tests v0.0.0 (/home/user/target/tests/trybuild/author)
+    Finished `dev` profile [unoptimized] target(s) in 0.15s
+
+
+test tests/ui/fail/01_two_indices_are_compared_for_equality.rs [should fail to compile] ... mismatch
+
+EXPECTED:
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+error[E0369]: binary operation `==` cannot be applied to type `engine::Index<'_>`
+  --> tests/ui/fail/01_two_indices_are_compared_for_equality.rs:16:34
+   |
+16 |                 let got = (probe == probe) as i64;
+   |                            ----- ^^ ----- engine::Index<'_>
+   |                            |
+   |                            engine::Index<'_>
+   |
+note: `engine::Index<'_>` does not implement `PartialEq`
+  --> $WORKSPACE/engine/src/index.rs
+   |
+   | pub struct Index<'b> {
+   | ^^^^^^^^^^^^^^^^^^^^ `engine::Index<'_>` is defined in another crate
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
+ACTUAL OUTPUT:
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+error[E0369]: binary operation `==` cannot be applied to type `engine::Index<'_>`
+  --> tests/ui/fail/01_two_indices_are_compared_for_equality.rs:16:34
+   |
+16 |                 let got = (probe == probe) as i64;
+   |                            ----- ^^ ----- engine::Index<'_>
+   |                            |
+   |                            engine::Index<'_>
+   |
+note: `engine::Index<'_>` does not implement `PartialEq<engine::Index<'_>>`
+  --> $WORKSPACE/engine/src/index.rs
+   |
+   | pub struct Index<'b> {
+   | ^^^^^^^^^^^^^^^^^^^^ `engine::Index<'_>` is defined in another crate
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+note: If the actual output is the correct output you can bless it by rerunning
+      your test with the environment variable TRYBUILD=overwrite
+
+test tests/ui/fail/02_two_indices_are_ordered.rs [should fail to compile] ... mismatch
+
+EXPECTED:
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+error[E0369]: binary operation `<` cannot be applied to type `engine::Index<'_>`
+  --> tests/ui/fail/02_two_indices_are_ordered.rs:16:34
+   |
+16 |                 let got = (probe < probe) as i64;
+   |                            ----- ^ ----- engine::Index<'_>
+   |                            |
+   |                            engine::Index<'_>
+   |
+note: `engine::Index<'_>` does not implement `PartialOrd`
+  --> $WORKSPACE/engine/src/index.rs
+   |
+   | pub struct Index<'b> {
+   | ^^^^^^^^^^^^^^^^^^^^ `engine::Index<'_>` is defined in another crate
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
+ACTUAL OUTPUT:
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+error[E0369]: binary operation `<` cannot be applied to type `engine::Index<'_>`
+  --> tests/ui/fail/02_two_indices_are_ordered.rs:16:34
+   |
+16 |                 let got = (probe < probe) as i64;
+   |                            ----- ^ ----- engine::Index<'_>
+   |                            |
+   |                            engine::Index<'_>
+   |
+note: `engine::Index<'_>` does not implement `PartialOrd<engine::Index<'_>>`
+  --> $WORKSPACE/engine/src/index.rs
+   |
+   | pub struct Index<'b> {
+   | ^^^^^^^^^^^^^^^^^^^^ `engine::Index<'_>` is defined in another crate
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+note: If the actual output is the correct output you can bless it by rerunning
+      your test with the environment variable TRYBUILD=overwrite
+
+test tests/ui/fail/03_an_index_is_cast_to_an_integer.rs [should fail to compile] ... ok
+test tests/ui/fail/04_an_index_is_formatted.rs [should fail to compile] ... ok
+test tests/ui/fail/05_an_index_is_hashed.rs [should fail to compile] ... ok
+test tests/ui/fail/06_an_index_is_converted_by_from.rs [should fail to compile] ... ok
+test tests/ui/fail/07_an_index_is_stepped_by_arithmetic.rs [should fail to compile] ... mismatch
+
+EXPECTED:
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+error[E0369]: cannot add `engine::Index<'_>` to `engine::Index<'_>`
+  --> tests/ui/fail/07_an_index_is_stepped_by_arithmetic.rs:16:33
+   |
+16 |                 let got = probe + probe;
+   |                           ----- ^ ----- engine::Index<'_>
+   |                           |
+   |                           engine::Index<'_>
+   |
+note: `engine::Index<'_>` does not implement `Add`
+  --> $WORKSPACE/engine/src/index.rs
+   |
+   | pub struct Index<'b> {
+   | ^^^^^^^^^^^^^^^^^^^^ `engine::Index<'_>` is defined in another crate
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
+ACTUAL OUTPUT:
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+error[E0369]: cannot add `engine::Index<'_>` to `engine::Index<'_>`
+  --> tests/ui/fail/07_an_index_is_stepped_by_arithmetic.rs:16:33
+   |
+16 |                 let got = probe + probe;
+   |                           ----- ^ ----- engine::Index<'_>
+   |                           |
+   |                           engine::Index<'_>
+   |
+note: `engine::Index<'_>` does not implement `Add<engine::Index<'_>>`
+  --> $WORKSPACE/engine/src/index.rs
+   |
+   | pub struct Index<'b> {
+   | ^^^^^^^^^^^^^^^^^^^^ `engine::Index<'_>` is defined in another crate
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+note: If the actual output is the correct output you can bless it by rerunning
+      your test with the environment variable TRYBUILD=overwrite
+
+test tests/ui/fail/08_an_index_from_one_each_is_used_in_another.rs [should fail to compile] ... mismatch
+
+EXPECTED:
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+error[E0521]: borrowed data escapes outside of closure
+  --> tests/ui/fail/08_an_index_from_one_each_is_used_in_another.rs:21:25
+   |
+18 |         let kept = outer.indices().next().unwrap();
+   |             ---- `kept` declared here, outside of the closure body
+19 |         second.each(|mut inner| {
+   |                      --------- `inner` is a reference that is only valid in the closure body
+20 |             let mine = inner.indices().next().unwrap();
+21 |             let probe = kept;
+   |                         ^^^^ `inner` escapes the closure body here
+   |
+   = note: requirement occurs because of the type `engine::Index<'_>`, which makes the generic argument `'_` invariant
+   = note: the struct `engine::Index<'b>` is invariant over the parameter `'b`
+   = help: see <https://doc.rust-lang.org/nomicon/subtyping.html> for more information about variance
+
+error[E0521]: borrowed data escapes outside of closure
+  --> tests/ui/fail/08_an_index_from_one_each_is_used_in_another.rs:23:13
+   |
+17 |     first.each(|outer| {
+   |                 -----
+   |                 |
+   |                 `outer` is a reference that is only valid in the closure body
+   |                 has type `Block<'_, '1, i32, i32>`
+...
+23 |             inner.write(probe, 1);
+   |             ^^^^^^^^^^^^^^^^^^^^^
+   |             |
+   |             `outer` escapes the closure body here
+   |             argument requires that `'1` must outlive `'static`
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
+ACTUAL OUTPUT:
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+error[E0521]: borrowed data escapes outside of closure
+  --> tests/ui/fail/08_an_index_from_one_each_is_used_in_another.rs:23:13
+   |
+17 |     first.each(|outer| {
+   |                 -----
+   |                 |
+   |                 `outer` is a reference that is only valid in the closure body
+   |                 has type `Block<'_, '1, i32, i32>`
+...
+23 |             inner.write(probe, 1);
+   |             ^^^^^^^^^^^^^^^^^^^^^
+   |             |
+   |             `outer` escapes the closure body here
+   |             argument requires that `'1` must outlive `'static`
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+note: If the actual output is the correct output you can bless it by rerunning
+      your test with the environment variable TRYBUILD=overwrite
+
+test tests/ui/fail/08b_an_index_from_one_each_is_read_through_another.rs [should fail to compile] ... error
+Expected test case to fail to compile, but it succeeded.
+
+test tests/ui/fail/09_an_index_is_kept_past_its_each.rs [should fail to compile] ... mismatch
+
+EXPECTED:
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+error: lifetime may not live long enough
+  --> tests/ui/fail/09_an_index_is_kept_past_its_each.rs:17:13
+   |
+14 |         let kept = morsel.each(|block| {
+   |                                 ------ return type of closure is engine::Index<'2>
+   |                                 |
+   |                                 has type `Block<'_, '1, i64, i64>`
+...
+17 |             probe
+   |             ^^^^^ returning this value requires that `'1` must outlive `'2`
+   |
+   = note: requirement occurs because of the type `engine::Index<'_>`, which makes the generic argument `'_` invariant
+   = note: the struct `engine::Index<'b>` is invariant over the parameter `'b`
+   = help: see <https://doc.rust-lang.org/nomicon/subtyping.html> for more information about variance
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
+ACTUAL OUTPUT:
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+error: lifetime may not live long enough
+  --> tests/ui/fail/09_an_index_is_kept_past_its_each.rs:17:13
+   |
+14 |         let kept = morsel.each(|block| {
+   |                                 ------ return type of closure is engine::Index<'2>
+   |                                 |
+   |                                 has type `Block<'_, '1, i64, i64>`
+...
+17 |             probe
+   |             ^^^^^ returning this value requires that `'1` must outlive `'2`
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+note: If the actual output is the correct output you can bless it by rerunning
+      your test with the environment variable TRYBUILD=overwrite
+
+test tests/ui/fail/10_an_index_is_stashed_in_the_kernel_across_morsels.rs [should fail to compile] ... mismatch
+
+EXPECTED:
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+error[E0521]: borrowed data escapes outside of closure
+  --> tests/ui/fail/10_an_index_is_stashed_in_the_kernel_across_morsels.rs:19:17
+   |
+15 |     fn block(&self, mut morsel: Morsel<'_, i64, i64>) {
+   |              ----- `self` declared here, outside of the closure body
+16 |         morsel.each(|block| {
+   |                      ----- `block` is a reference that is only valid in the closure body
+...
+19 |                 self.0.set(Some(probe));
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^ `block` escapes the closure body here
+   |
+   = note: requirement occurs because of the type `Cell<Option<engine::Index<'_>>>`, which makes the generic argument `Option<engine::Index<'_>>` invariant
+   = note: the struct `Cell<T>` is invariant over the parameter `T`
+   = help: see <https://doc.rust-lang.org/nomicon/subtyping.html> for more information about variance
+
+error[E0521]: borrowed data escapes outside of method
+  --> tests/ui/fail/10_an_index_is_stashed_in_the_kernel_across_morsels.rs:17:26
+   |
+14 | impl<'k> BlockKernel<i64, i64> for Probe<Index<'k>> {
+   |      -- lifetime `'k` defined here
+15 |     fn block(&self, mut morsel: Morsel<'_, i64, i64>) {
+   |              ----- `self` is a reference that is only valid in the method body
+16 |         morsel.each(|block| {
+17 |             for index in block.indices() {
+   |                          ^^^^^^^^^^^^^^^
+   |                          |
+   |                          `self` escapes the method body here
+   |                          argument requires that `'k` must outlive `'static`
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
+ACTUAL OUTPUT:
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+error[E0521]: borrowed data escapes outside of closure
+  --> tests/ui/fail/10_an_index_is_stashed_in_the_kernel_across_morsels.rs:19:17
+   |
+15 |     fn block(&self, mut morsel: Morsel<'_, i64, i64>) {
+   |              ----- `self` declared here, outside of the closure body
+16 |         morsel.each(|block| {
+   |                      ----- `block` is a reference that is only valid in the closure body
+...
+19 |                 self.0.set(Some(probe));
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^ `block` escapes the closure body here
+   |
+   = note: requirement occurs because of the type `Cell<Option<engine::Index<'_>>>`, which makes the generic argument `Option<engine::Index<'_>>` invariant
+   = note: the struct `Cell<T>` is invariant over the parameter `T`
+   = help: see <https://doc.rust-lang.org/nomicon/subtyping.html> for more information about variance
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+note: If the actual output is the correct output you can bless it by rerunning
+      your test with the environment variable TRYBUILD=overwrite
+
+test tests/ui/fail/11_an_index_is_forged_by_a_struct_literal.rs [should fail to compile] ... ok
+test tests/ui/fail/12_an_index_is_forged_through_a_foreign_trait_impl.rs [should fail to compile] ... ok
+test tests/ui/fail/13_an_index_is_forged_by_unsafe_code.rs [should fail to compile] ... ok
+test tests/ui/pass/01_two_indices_are_compared_for_equality.rs [should pass] ... ok
+test tests/ui/pass/02_two_indices_are_ordered.rs [should pass] ... ok
+test tests/ui/pass/03_an_index_is_cast_to_an_integer.rs [should pass] ... ok
+test tests/ui/pass/04_an_index_is_formatted.rs [should pass] ... ok
+test tests/ui/pass/05_an_index_is_hashed.rs [should pass] ... ok
+test tests/ui/pass/06_an_index_is_converted_by_from.rs [should pass] ... ok
+test tests/ui/pass/07_an_index_is_stepped_by_arithmetic.rs [should pass] ... ok
+test tests/ui/pass/08_an_index_from_one_each_is_used_in_another.rs [should pass] ... ok
+test tests/ui/pass/08b_an_index_from_one_each_is_read_through_another.rs [should pass] ... ok
+test tests/ui/pass/09_an_index_is_kept_past_its_each.rs [should pass] ... ok
+test tests/ui/pass/10_an_index_is_stashed_in_the_kernel_across_morsels.rs [should pass] ... ok
+test tests/ui/pass/11_an_index_is_forged_by_a_struct_literal.rs [should pass] ... ok
+test tests/ui/pass/12_an_index_is_forged_through_a_foreign_trait_impl.rs [should pass] ... ok
+test tests/ui/pass/13_an_index_is_forged_by_unsafe_code.rs [should pass] ... ok
+
+
+test every_refusal_holds_and_every_twin_runs ... FAILED
+
+failures:
+
+---- every_refusal_holds_and_every_twin_runs stdout ----
+
+thread 'every_refusal_holds_and_every_twin_runs' (7896) panicked at /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/trybuild-1.0.122/src/run.rs:103:13:
+7 of 28 tests failed
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: <trybuild::Runner>::run
+   3: <trybuild::TestCases as core::ops::drop::Drop>::drop
+   4: core::ptr::drop_glue::<trybuild::TestCases>
+   5: fixtures::every_refusal_holds_and_every_twin_runs
+   6: fixtures::every_refusal_holds_and_every_twin_runs::{closure#0}
+   7: <fixtures::every_refusal_holds_and_every_twin_runs::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+
+failures:
+    every_refusal_holds_and_every_twin_runs
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.27s
+
+error: test failed, to rerun pass `-p author --test fixtures`

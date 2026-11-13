@@ -39,7 +39,7 @@ The runtime layer (Scheduler + Executor + ExecutionPlan + dispatch + morsel loop
 
 ### `Scheduler::run()` signature
 
-Parameterless `run(&mut self) -> notko::Outcome<Cfg::Ok, Cfg::Err>`. `RunCfg` is consumer-supplied via `.with(my_cfg)` builder method; defaults provided via `HasTrivialCtor`. Dispatch routing happens at the type level via `RunCfgDispatch<Self>` slot. `Scheduler<'frame, Cfg, E>` propagates a frame lifetime through `ExecutionPlan<'frame, ...>` to the per-worker entry, validated by the PoolFrame lifetime sketch under nightly Rust.
+Parameterless `run(&mut self) -> Cfg::Out`, built from the frame's `notko::Outcome<(), AccumRefused>`. `RunCfg` is consumer-supplied via `.with(my_cfg)` builder method; defaults provided via `HasTrivialCtor`. Dispatch routing happens at the type level via `RunCfgDispatch<Self>` slot. `Scheduler<'frame, Cfg, E>` propagates a frame lifetime through `ExecutionPlan<'frame, ...>` to the per-worker entry, validated by the PoolFrame lifetime sketch under nightly Rust.
 
 Plan recompute fires on entry to `run()` when the dirty bit is set; otherwise the cached plan dispatches directly. The dirty bit is keyed per `PlanAffecting`-bound Resource.
 

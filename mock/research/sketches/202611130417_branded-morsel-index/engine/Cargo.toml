@@ -1,0 +1,13 @@
+[package]
+name = "engine"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+[features]
+# Mutants. Each is one deliberate defect in the brand, and the fixtures must
+# catch it: `cargo test -p author --test fixtures --features <name>` is red.
+# The index is a bare integer: no brand at all.
+mutant-bare = []
+# The brand's lifetime is covariant instead of invariant.
+mutant-covariant = []

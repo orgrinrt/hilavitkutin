@@ -44,8 +44,10 @@ use crate::resource::shape::ValueShape;
 use crate::scheduler::BuildError;
 
 mod per_core;
+mod refusal;
 
-pub use per_core::{CollectAccumLive, MergeAccums, RebaseBindings};
+pub use per_core::{CollectAccumCounts, MergeAccums, PerCoreCounts, RebaseBindings};
+pub use refusal::FirstRefusal;
 
 mod sealed {
     pub trait Sealed {}
@@ -138,16 +140,21 @@ impl<T, Tail> ColumnBinding<T, Tail> {
 /// Bindings cons-cell for one registered `Accum<T>`.
 ///
 /// Holds the reserved `ColumnPtr<T>` (base of the capacity buffer, sized by
-/// the build-time record count this round) and a `Cell<USize>` live-length
-/// that the `&self` append accessor advances through interior mutability. The
-/// `Cell` is non-atomic: correct single-core, swapped for an atomic when
-/// multi-core lands. A zero-record (or zero-sized) accumulator records a
+/// the build-time record count this round), a `Cell<USize>` live-length and a
+/// `Cell<USize>` `wanted` count, both advanced by the `&self` append accessor
+/// through interior mutability. `wanted` counts every append the frame asked
+/// of the accumulator; the live length counts the ones written. So `wanted`
+/// is never below the live length, and the accumulator has refused this frame
+/// exactly when `wanted` is above it. The cells are non-atomic: each binding
+/// is written by one thread for the frame (the calling thread, or a worker on
+/// its own per-core copy). A zero-record (or zero-sized) accumulator records a
 /// dangling, well-aligned pointer (never dereferenced, the morsel is empty).
 pub struct AccumBinding<T, Tail> {
-    pub(crate) ptr:  ColumnPtr<T>,
-    pub(crate) len:  Cell<USize>,
-    pub(crate) cap:  USize,
-    pub(crate) tail: Tail,
+    pub(crate) ptr:    ColumnPtr<T>,
+    pub(crate) len:    Cell<USize>,
+    pub(crate) wanted: Cell<USize>,
+    pub(crate) cap:    USize,
+    pub(crate) tail:   Tail,
 }
 
 impl<T, Tail> AccumBinding<T, Tail> {
@@ -159,8 +166,8 @@ impl<T, Tail> AccumBinding<T, Tail> {
     }
 
     /// The reserved record capacity. Hidden accessor used by the
-    /// `AccumSelector` (an append past this bound asserts) and by tests. Not
-    /// part of the supported surface.
+    /// `AccumSelector` (an append past this bound is refused) and by tests.
+    /// Not part of the supported surface.
     #[doc(hidden)]
     pub fn __cap(&self) -> USize {
         self.cap
@@ -172,6 +179,14 @@ impl<T, Tail> AccumBinding<T, Tail> {
     #[doc(hidden)]
     pub fn __len_cell(&self) -> &Cell<USize> {
         &self.len
+    }
+
+    /// The `wanted` cell: every append the frame asked of the accumulator.
+    /// Hidden accessor used by the `AccumSelector` (the projection borrows it
+    /// for `'frame`) and by tests. Not supported surface.
+    #[doc(hidden)]
+    pub fn __wanted_cell(&self) -> &Cell<USize> {
+        &self.wanted
     }
 
     /// The tail node. Hidden accessor used by the pass-through selectors and by
@@ -476,22 +491,22 @@ where
     }
 }
 
-/// Zeroes every accumulator live-length in a bindings list at frame start.
+/// Zeroes every accumulator live length and `wanted` count at frame start.
 ///
 /// The schedule-once-reuse model runs one built scheduler across many frames.
-/// An `AccumBinding` holds a `Cell<USize>` live-length the append accessor
-/// advances during a frame; without a per-frame reset the next frame would
-/// append from the prior frame's offset (and hit the capacity assert once it
-/// reaches the reserved capacity). `Scheduler::run` calls this at frame start so each frame
-/// appends into a fresh buffer.
+/// An `AccumBinding` holds a live length and a `wanted` count the append
+/// accessor advances during a frame; without a per-frame reset the next frame
+/// would append from the prior frame's offset and inherit its refusal. Every
+/// run entry calls this at frame start so each frame appends into a fresh
+/// buffer with nothing refused.
 ///
 /// The walk is the bindings-cons-list mirror of `DrainStores`: a no-op at every
-/// non-accumulator node and one `Cell` write per `AccumBinding`, recursing into
-/// the tail. The reset is `&self`: the live-length is interior-mutable
+/// non-accumulator node and two `Cell` writes per `AccumBinding`, recursing
+/// into the tail. The reset is `&self`: both counts are interior-mutable
 /// (`Cell`), so no `&mut` is needed. For an accumulator-free carrier the walk
 /// visits no `AccumBinding` and compiles to nothing.
 pub trait ResetAccumulators {
-    /// Zero every accumulator live-length cell in this bindings list.
+    /// Zero every accumulator live-length and `wanted` cell in this list.
     fn reset_accumulators(&self);
 }
 
@@ -525,6 +540,7 @@ impl<T, Tail: ResetAccumulators> ResetAccumulators for AccumBinding<T, Tail> {
     #[inline]
     fn reset_accumulators(&self) {
         self.len.set(USize(0)); // lint:allow(no-bare-numeric) reason: zero live-length reset at frame start; tracked: #345
+        self.wanted.set(USize(0)); // lint:allow(no-bare-numeric) reason: zero wanted count reset at frame start; tracked: #345
         self.tail.reset_accumulators();
     }
 }
@@ -543,8 +559,8 @@ where
         // the prior columns (capacity equals the record count this round) and
         // record its base pointer plus a zero live-length. Records are appended
         // by WorkUnits during the frame; the drain reserves and zeroes the live
-        // count, it does not initialise records. Appending past `record_count`
-        // is out of contract this round (the plan does not yet bound it).
+        // and `wanted` counts, it does not initialise records. An append past
+        // `record_count` is refused and counted in `wanted`.
         let (_marker, rest) = self.into_parts();
         let id = StoreId(*next_id);
         *next_id = USize(next_id.0 + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal drain-order counter; tracked: #72
@@ -573,8 +589,9 @@ where
                 notko::Outcome::Ok(AccumBinding {
                     ptr,
                     len: Cell::new(USize(0)), // lint:allow(no-bare-numeric) reason: zero live-length init on a fresh accumulator; tracked: #345
+                    wanted: Cell::new(USize(0)), // lint:allow(no-bare-numeric) reason: zero wanted count on a fresh accumulator; tracked: #345
                     // Capacity equals the reserved record count this round; the
-                    // append accessor asserts against it.
+                    // append accessor refuses past it.
                     cap: record_count,
                     tail,
                 })

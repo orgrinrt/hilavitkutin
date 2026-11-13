@@ -19,6 +19,7 @@ use hilavitkutin_api::run_cfg::RunCfg;
 use hilavitkutin_api::store_values::StoreValues;
 
 use super::Scheduler;
+use super::verdict::frame_verdict;
 use crate::dispatch::morsel::MorselRange;
 use crate::dispatch::trunk_dispatch::RunTrunkDispatch;
 use crate::meta::fold_ema;
@@ -31,7 +32,7 @@ use crate::plan::grouping::{
     pre_consumer_phase_count,
 };
 use crate::plan::{AccessMask, PlanDims};
-use crate::resource::bindings::{BindingsFor, ResetAccumulators};
+use crate::resource::bindings::{BindingsFor, FirstRefusal, ResetAccumulators};
 
 impl<
     Cfg: RunCfg,
@@ -44,7 +45,8 @@ impl<
 > Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>
 {
     /// Dispatch the retained WorkUnit carrier in carrier order, windowing the
-    /// record range into morsels, then return `Cfg::Out::default()`.
+    /// record range into morsels, then return the frame verdict through
+    /// `Cfg::Out`: `Ok(())`, or the first accumulator that refused an append.
     ///
     /// The retained `wu_values` carrier is walked as one type-level `RunFiber`
     /// recursion in carrier (registration) order, which `build()` validated is a
@@ -76,7 +78,6 @@ impl<
     #[rustfmt::skip] // keeps the allow on the signature it governs
     pub fn run<Witnesses, GW>(&mut self) -> Cfg::Out // lint:allow(no-bare-numeric) reason: const-generic dispatch entry position; tracked: #121
     where
-        Cfg::Out: Default,
         WuVals: RunTrunkDispatch<
                 WuVals,
                 <Vals as BindingsFor>::Bindings,
@@ -91,7 +92,7 @@ impl<
         WuVals: BundleMasks<Stores, GW, <D as PlanDims>::Stores>,
         <D as PlanDims>::Units: ConstCapacity,
         <D as PlanDims>::AdjRow: BitAccess + Identity<Additive>,
-        <Vals as BindingsFor>::Bindings: ResetAccumulators,
+        <Vals as BindingsFor>::Bindings: ResetAccumulators + FirstRefusal,
     {
         // E8 adapt: sample the frame start; the cold-start state is the EMA
         // seed flag (the first frame stores its raw duration).
@@ -343,6 +344,6 @@ impl<
         // E8 adapt tuning: read the just-folded per-phase EMA and set the
         // reconfigure trigger when the frame's phases are imbalanced.
         self.select_adapt_config();
-        Cfg::Out::default()
+        frame_verdict::<Cfg, _>(&self.bindings)
     }
 }
