@@ -5,7 +5,7 @@
 //! advances; the drain zeroes it once at build time. Without a per-frame reset
 //! in `run`, the second frame starts at the live offset the first frame left,
 //! so appends land past the prior data and the live-length grows frame over
-//! frame (saturating at capacity). `run` must reset every accumulator
+//! frame until the capacity assert fires. `run` must reset every accumulator
 //! live-length to zero at frame start so each frame appends into a fresh buffer.
 //!
 //! Fail-first: before the reset lands, the two-frame run leaves the live-length
@@ -39,14 +39,14 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 
 // Stack-backed test memory provider (mirrors tests/accum_dispatch.rs).
 struct BumpProvider<const N: usize> {
-    buf: UnsafeCell<[MaybeUninit<u8>; N]>,
+    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
     used: Cell<usize>,
 }
 
 impl<const N: usize> BumpProvider<N> {
     fn new() -> Self {
         Self {
-            buf: UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
+            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
             used: Cell::new(0),
         }
     }
@@ -75,8 +75,8 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
 }
 
 // Reserved capacity per accumulator. Wide enough that two frames of K appends
-// each (2 + 2 = 4) would NOT saturate, so the bug shows as a grown live-length
-// (4) rather than a saturated one; the reset is what brings it back to K.
+// each (2 + 2 = 4) stay within it, so the bug shows as a grown live-length (4)
+// rather than a capacity assert; the reset is what brings it back to K.
 const CAP: usize = 4;
 // Appends per frame.
 const K: usize = 2;
@@ -93,20 +93,27 @@ type AccW = Cons<Accum<Av>, Empty>;
 struct AppendKWu;
 
 impl BuilderInput for AppendKWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 
 impl WorkUnit<Always> for AppendKWu {
-    type Read = Empty;
-    type Write = AccW;
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        Empty,
+        AccW,
+        SnapNil,
+        ColPtrNil,
+        ColPtrNil,
+        AccPtrCons<'frame, Av, AccPtrNil>,
+    >;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> =
-        EngineCtx<'frame, Empty, AccW, SnapNil, ColPtrNil, ColPtrNil, AccPtrCons<'frame, Av, AccPtrNil>>;
+    type Read = Empty;
+    type Write = AccW;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         // SAFETY: `build` reserved `CAP` (>= K) records for `Av` and the plan

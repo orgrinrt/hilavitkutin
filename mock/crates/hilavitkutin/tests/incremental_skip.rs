@@ -29,11 +29,17 @@
 //! `[3, 3, 3]`, so both post-cold assertions fail. The gate is what makes
 //! the clean units skip.
 //!
+//! The counts alone cannot tell a skip that is correct from one that is stale,
+//! so a differential test drives a skipping scheduler and an every-store-dirty
+//! scheduler through one input history and asserts equal column bytes at every
+//! frame, with the every-store-dirty run also checked against a model of the
+//! chain. A twin test changes an input without `mark_dirty` and asserts the two
+//! runs differ.
+//!
 //! Lives under `tests/` so the bare numeric record values and counters do
 //! not trip the src-tree primitive lints.
 
-use core::cell::{Cell, UnsafeCell};
-use core::mem::MaybeUninit;
+use core::cell::Cell;
 use std::cell::RefCell;
 
 use arvo::{Bool, USize};
@@ -42,8 +48,14 @@ use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{
-    ColumnReaderApi, ColumnWriterApi, EachApi, HasColumnReader, HasColumnWriter, HasEach,
-    HasResourceProvider, ResourceProviderApi,
+    ColumnReaderApi,
+    ColumnWriterApi,
+    EachApi,
+    HasColumnReader,
+    HasColumnWriter,
+    HasEach,
+    HasResourceProvider,
+    ResourceProviderApi,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::store::{Column, Resource};
@@ -56,36 +68,45 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
 }
 
-// Stack-backed test memory provider (mirrors tests/morsel_outer.rs).
-struct BumpProvider<const N: usize> {
-    buf: UnsafeCell<[MaybeUninit<u8>; N]>,
+// Heap-backed bump provider whose buffer address survives moves of the
+// provider: the scheduler and its storage move after `build`, and the column
+// bases recorded at build must stay valid. An inline-array provider moves its
+// buffer with the scheduler and leaves those bases dangling (ticket
+// `6393002dea2d`), which made two schedulers in one test alias each other.
+struct StableProvider {
+    base: *mut u8,
+    cap:  usize,
     used: Cell<usize>,
 }
 
-impl<const N: usize> BumpProvider<N> {
-    fn new() -> Self {
+impl StableProvider {
+    fn new(cap: usize) -> Self {
+        let leaked: &'static mut [u8] = std::vec![0u8; cap].leak();
         Self {
-            buf: UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
+            base: leaked.as_mut_ptr(),
+            cap,
             used: Cell::new(0),
         }
     }
 }
 
-unsafe impl<const N: usize> Send for BumpProvider<N> {}
-unsafe impl<const N: usize> Sync for BumpProvider<N> {}
+unsafe impl Send for StableProvider {}
+unsafe impl Sync for StableProvider {}
 
-impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
+impl MemoryProviderApi for StableProvider {
     unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
-        let base = self.buf.get() as *mut u8;
-        let used = self.used.get();
         let align = align.0.max(1);
+        let used = self.used.get();
         let aligned = (used + align - 1) / align * align;
-        if aligned + len.0 > N {
+        if aligned + len.0 > self.cap {
             return core::ptr::null_mut();
         }
         self.used.set(aligned + len.0);
-        // SAFETY: `aligned + len <= N`, in bounds of the owned buffer.
-        unsafe { base.add(aligned) }
+        // SAFETY: `aligned + len <= cap`, inside the leaked buffer. The base is
+        // from a Vec<u8>, whose alignment is 1, so over-aligned requests would
+        // need padding at the base; the stores here are u32 and u8 only and the
+        // test asserts on the bytes it reads.
+        unsafe { self.base.add(aligned) }
     }
 
     unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
@@ -146,20 +167,26 @@ const SECOND_CONSUMER: usize = 3;
 struct ProducerWu;
 
 impl BuilderInput for ProducerWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 
 impl WorkUnit<Always> for ProducerWu {
-    type Read = ReadA;
-    type Write = WriteCa;
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        ReadA,
+        WriteCa,
+        SnapCons<InA, SnapNil>,
+        ColPtrNil,
+        ColPtrCons<Ca, ColPtrNil>,
+    >;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> =
-        EngineCtx<'frame, ReadA, WriteCa, SnapCons<InA, SnapNil>, ColPtrNil, ColPtrCons<Ca, ColPtrNil>>;
+    type Read = ReadA;
+    type Write = WriteCa;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         EXEC.with(|e| e.borrow_mut()[PRODUCER] += 1);
@@ -178,18 +205,11 @@ impl WorkUnit<Always> for ProducerWu {
 struct ConsumerWu;
 
 impl BuilderInput for ConsumerWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 
 impl WorkUnit<Always> for ConsumerWu {
-    type Read = ReadCa;
-    type Write = WriteCb;
-    type Hint = (
-        hilavitkutin_api::hint::Immediate,
-        hilavitkutin_api::hint::Atomic,
-        hilavitkutin_api::hint::Normal,
-    );
     type Ctx<'frame> = EngineCtx<
         'frame,
         ReadCa,
@@ -198,6 +218,13 @@ impl WorkUnit<Always> for ConsumerWu {
         ColPtrCons<Ca, ColPtrNil>,
         ColPtrCons<Cb, ColPtrNil>,
     >;
+    type Hint = (
+        hilavitkutin_api::hint::Immediate,
+        hilavitkutin_api::hint::Atomic,
+        hilavitkutin_api::hint::Normal,
+    );
+    type Read = ReadCa;
+    type Write = WriteCb;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         EXEC.with(|e| e.borrow_mut()[CONSUMER] += 1);
@@ -216,20 +243,26 @@ impl WorkUnit<Always> for ConsumerWu {
 struct UnrelatedWu;
 
 impl BuilderInput for UnrelatedWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 
 impl WorkUnit<Always> for UnrelatedWu {
-    type Read = ReadC;
-    type Write = WriteCc;
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        ReadC,
+        WriteCc,
+        SnapCons<InC, SnapNil>,
+        ColPtrNil,
+        ColPtrCons<Cc, ColPtrNil>,
+    >;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> =
-        EngineCtx<'frame, ReadC, WriteCc, SnapCons<InC, SnapNil>, ColPtrNil, ColPtrCons<Cc, ColPtrNil>>;
+    type Read = ReadC;
+    type Write = WriteCc;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         EXEC.with(|e| e.borrow_mut()[UNRELATED] += 1);
@@ -249,18 +282,11 @@ impl WorkUnit<Always> for UnrelatedWu {
 struct SecondConsumerWu;
 
 impl BuilderInput for SecondConsumerWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 
 impl WorkUnit<Always> for SecondConsumerWu {
-    type Read = ReadCb;
-    type Write = WriteCd;
-    type Hint = (
-        hilavitkutin_api::hint::Immediate,
-        hilavitkutin_api::hint::Atomic,
-        hilavitkutin_api::hint::Normal,
-    );
     type Ctx<'frame> = EngineCtx<
         'frame,
         ReadCb,
@@ -269,6 +295,13 @@ impl WorkUnit<Always> for SecondConsumerWu {
         ColPtrCons<Cb, ColPtrNil>,
         ColPtrCons<Cd, ColPtrNil>,
     >;
+    type Hint = (
+        hilavitkutin_api::hint::Immediate,
+        hilavitkutin_api::hint::Atomic,
+        hilavitkutin_api::hint::Normal,
+    );
+    type Read = ReadCb;
+    type Write = WriteCd;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         EXEC.with(|e| e.borrow_mut()[SECOND_CONSUMER] += 1);
@@ -289,7 +322,7 @@ fn counts() -> [u32; 4] {
 #[test]
 fn incremental_skip_runs_only_the_changed_cone() {
     EXEC.with(|e| *e.borrow_mut() = [0, 0, 0, 0]);
-    let provider = BumpProvider::<32768>::new();
+    let provider = StableProvider::new(32768);
     let mut scheduler = Scheduler::builder()
         .with(Resource::new(InA(100)))
         .with(Resource::new(InC(200)))
@@ -337,7 +370,7 @@ fn incremental_skip_runs_only_the_changed_cone() {
 #[test]
 fn incremental_skip_propagates_two_hops() {
     EXEC.with(|e| *e.borrow_mut() = [0, 0, 0, 0]);
-    let provider = BumpProvider::<32768>::new();
+    let provider = StableProvider::new(32768);
     // Producer -> Consumer -> SecondConsumer is a depth-two RAW chain
     // (InA -> Ca -> Cb -> Cd); the unrelated unit reads InC -> Cc. Registration
     // order is topological (each writer before its reader), which `build`
@@ -386,6 +419,177 @@ fn incremental_skip_propagates_two_hops() {
         "marking InA propagates dirt two hops: producer, consumer, and second \
          consumer all re-run; the unrelated InC chain stays clean and skipped"
     );
+}
+
+// Differential: a skipping scheduler and an every-store-dirty scheduler are
+// driven through the same input history on the single-core entry (`run`), and
+// every column holds equal bytes after every frame.
+//
+// Registration order InA, InC, Ca, Cb, Cc, Cd puts the last registered store at
+// the bindings head, so Cd is the head and each registered store before it sits
+// one tail deeper: Cc 1, Cb 2, Ca 3, InC 4, InA 5.
+macro_rules! four_chain_scheduler {
+    ($provider:expr) => {
+        Scheduler::builder()
+            .with(Resource::new(InA(100)))
+            .with(Resource::new(InC(200)))
+            .with(Column::<Ca>::new())
+            .with(Column::<Cb>::new())
+            .with(Column::<Cc>::new())
+            .with(Column::<Cd>::new())
+            .with(ProducerWu)
+            .with(ConsumerWu)
+            .with(SecondConsumerWu)
+            .with(UnrelatedWu)
+            .build(store($provider), USize(RECORDS))
+            .unwrap_or_else(|_| panic!("build should succeed"))
+    };
+}
+
+macro_rules! set_inputs {
+    ($sched:expr, $a:expr, $c:expr) => {{
+        // SAFETY: both resources were moved in at build and live in the
+        // store-reserved one-record blobs for the scheduler's lifetime; no
+        // frame is running while the host writes.
+        unsafe {
+            *$sched
+                .__bindings()
+                .__tail()
+                .__tail()
+                .__tail()
+                .__tail()
+                .__tail()
+                .__ptr()
+                .as_ptr() = InA($a);
+            *$sched
+                .__bindings()
+                .__tail()
+                .__tail()
+                .__tail()
+                .__tail()
+                .__ptr()
+                .as_ptr() = InC($c);
+        }
+    }};
+}
+
+macro_rules! snapshot {
+    ($sched:expr) => {{
+        let b = $sched.__bindings();
+        let ca = b.__tail().__tail().__tail().__ptr().as_ptr() as *const u32;
+        let cb = b.__tail().__tail().__ptr().as_ptr() as *const u32;
+        let cc = b.__tail().__ptr().as_ptr() as *const u32;
+        let cd = b.__ptr().as_ptr() as *const u32;
+        let mut out = [[0u32; RECORDS]; 4];
+        for i in 0 .. RECORDS {
+            // SAFETY: each column holds RECORDS reserved records of a
+            // Copy newtype over u32; the scheduler (hence storage) is alive.
+            unsafe {
+                out[0][i] = *ca.add(i);
+                out[1][i] = *cb.add(i);
+                out[2][i] = *cc.add(i);
+                out[3][i] = *cd.add(i);
+            }
+        }
+        out
+    }};
+}
+
+// Marks every registered store dirty, so every unit is seeded directly and no
+// result leans on the predecessor propagation.
+macro_rules! mark_every_store {
+    ($sched:expr) => {{
+        $sched.mark_dirty::<Resource<InA>, _>();
+        $sched.mark_dirty::<Resource<InC>, _>();
+        $sched.mark_dirty::<Column<Ca>, _>();
+        $sched.mark_dirty::<Column<Cb>, _>();
+        $sched.mark_dirty::<Column<Cc>, _>();
+        $sched.mark_dirty::<Column<Cd>, _>();
+    }};
+}
+
+// One frame of the input history: the new value of each resource, or `None`
+// to leave it as the previous frame had it.
+type Step = (Option<u32>, Option<u32>);
+
+const HISTORY: [Step; 7] = [
+    (None, None),
+    (None, None),
+    (Some(7), None),
+    (None, Some(9)),
+    (Some(11), Some(13)),
+    (None, None),
+    (Some(11), None),
+];
+
+#[test]
+fn skipping_run_matches_every_store_dirty_run_at_every_frame() {
+    let provider_a = StableProvider::new(32768);
+    let provider_b = StableProvider::new(32768);
+    let mut skipping = four_chain_scheduler!(provider_a);
+    let mut every = four_chain_scheduler!(provider_b);
+    let (mut a, mut c) = (100u32, 200u32);
+
+    // Cold frame: both run everything.
+    assert!(matches!(skipping.run(), Outcome::Ok(())));
+    assert!(matches!(every.run(), Outcome::Ok(())));
+    assert_eq!(snapshot!(skipping), snapshot!(every), "cold frame");
+    assert_eq!(snapshot!(every), model(a, c), "cold frame: model");
+
+    for (frame, (na, nc)) in HISTORY.iter().enumerate() {
+        if let Some(v) = na {
+            a = *v;
+            skipping.mark_dirty::<Resource<InA>, _>();
+        }
+        if let Some(v) = nc {
+            c = *v;
+            skipping.mark_dirty::<Resource<InC>, _>();
+        }
+        set_inputs!(skipping, a, c);
+        set_inputs!(every, a, c);
+        mark_every_store!(every);
+        assert!(matches!(skipping.run(), Outcome::Ok(())));
+        assert!(matches!(every.run(), Outcome::Ok(())));
+        assert_eq!(
+            snapshot!(skipping),
+            snapshot!(every),
+            "frame {frame}: skipping and every-store-dirty runs must hold equal column bytes"
+        );
+        // The every-store-dirty run is itself checked against a model of the
+        // chain, so two runs that are equally stale cannot pass.
+        assert_eq!(snapshot!(every), model(a, c), "frame {frame}: model");
+    }
+}
+
+// What the four units compute from the two inputs, independent of the engine.
+fn model(a: u32, c: u32) -> [[u32; RECORDS]; 4] {
+    let mut out = [[0u32; RECORDS]; 4];
+    for i in 0 .. RECORDS {
+        out[0][i] = a + i as u32;
+        out[1][i] = a + i as u32;
+        out[2][i] = c + i as u32;
+        out[3][i] = a + i as u32;
+    }
+    out
+}
+
+#[test]
+fn skipping_run_diverges_when_a_mutated_store_is_not_marked() {
+    let provider_a = StableProvider::new(32768);
+    let provider_b = StableProvider::new(32768);
+    let mut skipping = four_chain_scheduler!(provider_a);
+    let mut every = four_chain_scheduler!(provider_b);
+    assert!(matches!(skipping.run(), Outcome::Ok(())));
+    assert!(matches!(every.run(), Outcome::Ok(())));
+
+    // The host changes InA but forgets `mark_dirty`: the skipping run keeps the
+    // stale cone, which is what the differential above must be able to see.
+    set_inputs!(skipping, 7, 200);
+    set_inputs!(every, 7, 200);
+    mark_every_store!(every);
+    assert!(matches!(skipping.run(), Outcome::Ok(())));
+    assert!(matches!(every.run(), Outcome::Ok(())));
+    assert_ne!(snapshot!(skipping), snapshot!(every));
 }
 
 // A3b: test-local resource values carry no Seq/Map members; zero footprint.

@@ -31,14 +31,25 @@ use std::cell::RefCell;
 
 use arvo::{Bool, USize};
 use hilavitkutin::dispatch::engine_ctx::{
-    AccPtrCons, AccPtrNil, ColPtrCons, ColPtrNil, EngineCtx, SnapNil,
+    AccPtrCons,
+    AccPtrNil,
+    ColPtrCons,
+    ColPtrNil,
+    EngineCtx,
+    SnapNil,
 };
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{
-    AccumWriterApi, ColumnReaderApi, ColumnWriterApi, EachApi, HasAccumWriter, HasColumnReader,
-    HasColumnWriter, HasEach,
+    AccumWriterApi,
+    ColumnReaderApi,
+    ColumnWriterApi,
+    EachApi,
+    HasAccumWriter,
+    HasColumnReader,
+    HasColumnWriter,
+    HasEach,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::store::{Accum, Column};
@@ -53,14 +64,14 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 
 // Stack-backed test memory provider (mirrors tests/column_dispatch.rs).
 struct BumpProvider<const N: usize> {
-    buf: UnsafeCell<[MaybeUninit<u8>; N]>,
+    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
     used: Cell<usize>,
 }
 
 impl<const N: usize> BumpProvider<N> {
     fn new() -> Self {
         Self {
-            buf: UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
+            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
             used: Cell::new(0),
         }
     }
@@ -116,19 +127,19 @@ thread_local! {
 struct ProducerWu;
 
 impl BuilderInput for ProducerWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 
 impl WorkUnit<Always> for ProducerWu {
-    type Read = Empty;
-    type Write = Col;
+    type Ctx<'frame> = EngineCtx<'frame, Empty, Col, SnapNil, ColPtrNil, ColPtrCons<Cv, ColPtrNil>>;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, Empty, Col, SnapNil, ColPtrNil, ColPtrCons<Cv, ColPtrNil>>;
+    type Read = Empty;
+    type Write = Col;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         DISPATCH_ORDER.with(|o| o.borrow_mut().push(PRODUCER_TAG));
@@ -145,19 +156,19 @@ impl WorkUnit<Always> for ProducerWu {
 struct ConsumerWu;
 
 impl BuilderInput for ConsumerWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 
 impl WorkUnit<Always> for ConsumerWu {
-    type Read = Col;
-    type Write = Empty;
+    type Ctx<'frame> = EngineCtx<'frame, Col, Empty, SnapNil, ColPtrCons<Cv, ColPtrNil>, ColPtrNil>;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, Col, Empty, SnapNil, ColPtrCons<Cv, ColPtrNil>, ColPtrNil>;
+    type Read = Col;
+    type Write = Empty;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         DISPATCH_ORDER.with(|o| o.borrow_mut().push(CONSUMER_TAG));
@@ -189,7 +200,10 @@ fn accumulator_free_pipeline_dispatches_morsel_outer() {
     let window = scheduler.__fiber_morsel_size(USize(0)).0;
     assert!(window > 0, "fiber 0 carries a plan-baked window");
     let morsels = RECORDS.div_ceil(window);
-    assert!(morsels >= 2, "test record count must exceed the morsel window");
+    assert!(
+        morsels >= 2,
+        "test record count must exceed the morsel window"
+    );
 
     let result = scheduler.run();
     assert!(matches!(result, Outcome::Ok(())));
@@ -199,7 +213,7 @@ fn accumulator_free_pipeline_dispatches_morsel_outer() {
         // Two dispatch calls per morsel: morsel-outer runs both units within
         // each morsel before advancing.
         let mut expected = std::vec::Vec::new();
-        for _ in 0..morsels {
+        for _ in 0 .. morsels {
             expected.push(PRODUCER_TAG);
             expected.push(CONSUMER_TAG);
         }
@@ -234,26 +248,33 @@ const APPENDER_B_TAG: u8 = 1;
 struct AppenderA;
 
 impl BuilderInput for AppenderA {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 
 impl WorkUnit<Always> for AppenderA {
-    type Read = Empty;
-    type Write = AccWa;
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        Empty,
+        AccWa,
+        SnapNil,
+        ColPtrNil,
+        ColPtrNil,
+        AccPtrCons<'frame, Av, AccPtrNil>,
+    >;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> =
-        EngineCtx<'frame, Empty, AccWa, SnapNil, ColPtrNil, ColPtrNil, AccPtrCons<'frame, Av, AccPtrNil>>;
+    type Read = Empty;
+    type Write = AccWa;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         DISPATCH_ORDER.with(|o| o.borrow_mut().push(APPENDER_A_TAG));
         // SAFETY: `build` reserved the `Accum<Av>` buffer for the record count
         // (>= the one append per dispatch) and the plan proved this unit the
-        // exclusive appender; the append saturates within the reservation.
+        // exclusive appender; the append stays within the reservation.
         unsafe { ctx.accums().append::<Av, _>(Av(1)) };
     }
 }
@@ -262,20 +283,27 @@ impl WorkUnit<Always> for AppenderA {
 struct AppenderB;
 
 impl BuilderInput for AppenderB {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 
 impl WorkUnit<Always> for AppenderB {
-    type Read = Empty;
-    type Write = AccWb;
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        Empty,
+        AccWb,
+        SnapNil,
+        ColPtrNil,
+        ColPtrNil,
+        AccPtrCons<'frame, Bv, AccPtrNil>,
+    >;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> =
-        EngineCtx<'frame, Empty, AccWb, SnapNil, ColPtrNil, ColPtrNil, AccPtrCons<'frame, Bv, AccPtrNil>>;
+    type Read = Empty;
+    type Write = AccWb;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         DISPATCH_ORDER.with(|o| o.borrow_mut().push(APPENDER_B_TAG));

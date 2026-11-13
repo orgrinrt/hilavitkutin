@@ -42,14 +42,14 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 
 // Stack-backed test memory provider (mirrors tests/column_dispatch.rs).
 struct BumpProvider<const N: usize> {
-    buf: UnsafeCell<[MaybeUninit<u8>; N]>,
+    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
     used: Cell<usize>,
 }
 
 impl<const N: usize> BumpProvider<N> {
     fn new() -> Self {
         Self {
-            buf: UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
+            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
             used: Cell::new(0),
         }
     }
@@ -95,24 +95,35 @@ type AccW = Cons<Accum<Av>, Empty>;
 struct AppendWu;
 
 impl BuilderInput for AppendWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 
 impl WorkUnit<Always> for AppendWu {
-    type Read = Empty;
-    type Write = AccW;
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        Empty,
+        AccW,
+        SnapNil,
+        ColPtrNil,
+        ColPtrNil,
+        AccPtrCons<'frame, Av, AccPtrNil>,
+    >;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> =
-        EngineCtx<'frame, Empty, AccW, SnapNil, ColPtrNil, ColPtrNil, AccPtrCons<'frame, Av, AccPtrNil>>;
+    type Read = Empty;
+    type Write = AccW;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         // The drain initialised the live length to zero before the frame.
-        assert_eq!(ctx.accums().len::<Av, _>().0, 0, "live length starts at zero");
+        assert_eq!(
+            ctx.accums().len::<Av, _>().0,
+            0,
+            "live length starts at zero"
+        );
         // SAFETY: `build` reserved the `Accum<Av>` buffer for the record count
         // (>= 3) and the plan proved this unit the exclusive appender; the
         // three appends stay within the reserved capacity. Each append advances
@@ -121,7 +132,11 @@ impl WorkUnit<Always> for AppendWu {
         assert_eq!(ctx.accums().len::<Av, _>().0, 1, "len advances per append");
         unsafe { ctx.accums().append::<Av, _>(Av(101)) };
         unsafe { ctx.accums().append::<Av, _>(Av(102)) };
-        assert_eq!(ctx.accums().len::<Av, _>().0, 3, "len reflects all three appends");
+        assert_eq!(
+            ctx.accums().len::<Av, _>().0,
+            3,
+            "len reflects all three appends"
+        );
     }
 }
 
@@ -134,23 +149,30 @@ const CAP_SMALL: usize = 2;
 // `CAP_SMALL`. Appending past the reserved capacity is a contract violation; the
 // append path asserts the bound before writing, so the append at index
 // `CAP_SMALL` panics ahead of any out-of-bounds write.
-struct SaturateWu;
+struct OverAppendWu;
 
-impl BuilderInput for SaturateWu {
-    type Init = Self;
+impl BuilderInput for OverAppendWu {
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 
-impl WorkUnit<Always> for SaturateWu {
-    type Read = Empty;
-    type Write = AccW;
+impl WorkUnit<Always> for OverAppendWu {
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        Empty,
+        AccW,
+        SnapNil,
+        ColPtrNil,
+        ColPtrNil,
+        AccPtrCons<'frame, Av, AccPtrNil>,
+    >;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> =
-        EngineCtx<'frame, Empty, AccW, SnapNil, ColPtrNil, ColPtrNil, AccPtrCons<'frame, Av, AccPtrNil>>;
+    type Read = Empty;
+    type Write = AccW;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         // SAFETY: `build` reserved `CAP_SMALL` records; the appender holds the
@@ -167,10 +189,10 @@ impl WorkUnit<Always> for SaturateWu {
     }
 }
 
-// Appending past the reserved capacity is a contract violation, not a silent
-// saturating drop: the append path asserts the live length is below the reserved
+// Appending past the reserved capacity is a contract violation, never a silent
+// drop: the append path asserts the live length is below the reserved
 // capacity and panics before the write, so a misconfigured capacity fails loudly
-// instead of losing records. `SaturateWu` appends `CAP_SMALL + 3` times into a
+// instead of losing records. `OverAppendWu` appends `CAP_SMALL + 3` times into a
 // `CAP_SMALL` accumulator; the append at index `CAP_SMALL` panics.
 #[test]
 #[should_panic(expected = "reserved capacity")]
@@ -178,7 +200,7 @@ fn accum_append_panics_past_reserved_capacity() {
     let provider = BumpProvider::<8192>::new();
     let mut scheduler = Scheduler::builder()
         .with(Accum::<Av>::new())
-        .with(SaturateWu)
+        .with(OverAppendWu)
         .build(store(provider), USize(CAP_SMALL))
         .unwrap_or_else(|_| panic!("build should succeed"));
 

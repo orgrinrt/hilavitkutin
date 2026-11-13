@@ -83,7 +83,7 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
 }
 
 // The accumulator's reserved capacity equals the record count at build, and
-// appends saturate at it (the engine's soundness guard), so the record count
+// an append past it asserts (the engine's soundness guard), so the record count
 // provides the headroom for the per-core consumer markers plus the epilogue
 // append.
 const RECORDS: usize = 64;

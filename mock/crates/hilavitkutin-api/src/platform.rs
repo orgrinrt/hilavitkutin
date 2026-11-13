@@ -466,7 +466,9 @@ impl Executor for HybridExecutor {
         // per (C, P, CoreProgram) at scheduler-build time; this stub
         // observes the shutdown signal and returns the cleanup
         // outcome so the type and its sealed impls are reachable to
-        // downstream construction code.
+        // downstream construction code. It walks no program and
+        // observes nothing; ticket `fe682c10859c` tracks the real
+        // mainloop.
         let _ = (pool, core_id, wake_strategy);
         notko::Outcome::Ok(())
     }

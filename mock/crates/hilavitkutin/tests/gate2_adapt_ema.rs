@@ -104,8 +104,8 @@ impl ClockApi for ScriptClock {
     }
 }
 
-// Record capacity with headroom over the per-frame appends (appends saturate
-// at the reserved capacity, which equals the record count at build).
+// Record capacity with headroom over the per-frame appends (an append past
+// the reserved capacity, which equals the record count at build, asserts).
 const RECORDS: usize = 64;
 
 #[derive(Copy, Clone)]

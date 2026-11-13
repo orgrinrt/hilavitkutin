@@ -159,7 +159,7 @@ impl<T, Tail> AccumBinding<T, Tail> {
     }
 
     /// The reserved record capacity. Hidden accessor used by the
-    /// `AccumSelector` (the append saturates at this bound) and by tests. Not
+    /// `AccumSelector` (an append past this bound asserts) and by tests. Not
     /// part of the supported surface.
     #[doc(hidden)]
     pub fn __cap(&self) -> USize {

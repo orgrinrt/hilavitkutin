@@ -9,13 +9,16 @@
 //! `Column<CollisionEvent>`. Head + tail convergence variant per
 //! Topic 3 axis E exercises irregular per-fiber load.
 //!
-//! Pass 7 ships this file as a structural example; the WU bodies
-//! and `Scheduler::run` wiring land across subsequent rounds.
+//! This file is a structural sketch with an empty `main`: the unit
+//! bodies and the run wiring are not written. `Scheduler::run`,
+//! `run_fused` and `run_parallel` exist, and `tests/incremental_skip.rs`
+//! in the engine crate shows a unit shape that runs. Ticket
+//! `559df4cb0767` decides whether this becomes a runnable example or is
+//! deleted.
 
 fn main() {
-    // structural example demonstrating the parallel-columns +
-    // per-WU access-set call-site shape. Real dispatch lands when
-    // Scheduler::run's body fills in.
+    // structural sketch of the parallel-columns + per-WU access-set
+    // call-site shape; it runs nothing.
     //
     // The end-to-end shape consumers will write here:
     //

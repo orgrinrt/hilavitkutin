@@ -1,0 +1,49 @@
+error[E0277]: store `hilavitkutin_api::Empty` does not contain `Column<Cb>`
+  --> tests/ui/undeclared_read_fail.rs:42:50
+   |
+42 |             let v = unsafe { ctx.reader().read::<Cb, _>(i) };
+   |                                                  ^^ the trait `Contains<Column<Cb>>` is not implemented for `hilavitkutin_api::Empty`
+   |
+   = note: Register it with `.add_resource::<T>(initial)`, `.add_column::<T>()`, `.add_virtual::<T>()`, or install a Kit that registers it. If `.build()` reports `overflow evaluating the requirement`, declare `#![recursion_limit = "1024"]` at your crate root.
+help: `Cons<H, T>` implements trait `Contains<S>`
+  --> $WORKSPACE/crates/hilavitkutin-api/src/access.rs
+   |
+   | impl<H: 'static, T: 'static + AccessSet> Contains<H> for Cons<H, T> {}
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `Contains<H>`
+...
+   | impl<H: 'static, T: 'static + AccessSet, M: 'static> Contains<M> for Cons<H, T> where T: Contains<M> {}
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `Contains<M>`
+   = note: required for `Cons<Column<Ca>, hilavitkutin_api::Empty>` to implement `Contains<Column<Cb>>`
+note: required by a bound in `hilavitkutin_api::ColumnReaderApi::read`
+  --> $WORKSPACE/crates/hilavitkutin-api/src/context.rs
+   |
+   |     unsafe fn read<T: ColumnValue, I>(&self, i: USize) -> T
+   |               ---- required by a bound in this associated function
+   |     where
+   |         R: Contains<Column<T>>,
+   |            ^^^^^^^^^^^^^^^^^^^ required by this bound in `ColumnReaderApi::read`
+
+error[E0277]: the trait bound `ColPtrNil: ColSelector<Cb, _>` is not satisfied
+  --> tests/ui/undeclared_read_fail.rs:42:43
+   |
+42 |             let v = unsafe { ctx.reader().read::<Cb, _>(i) };
+   |                                           ^^^^ the trait `ColSelector<Cb, _>` is not implemented for `ColPtrNil`
+   |
+   = help: the following other types implement trait `ColSelector<T, Index>`:
+             `AccumBinding<U, Tail>` implements `ColSelector<T, There<I>>`
+             `ColPtrCons<T, Tail>` implements `ColSelector<T, Here>`
+             `ColPtrCons<U, Tail>` implements `ColSelector<T, There<I>>`
+             `ColumnBinding<T, Tail>` implements `ColSelector<T, Here>`
+             `ColumnBinding<U, Tail>` implements `ColSelector<T, There<I>>`
+             `ResourceBinding<U, Tail>` implements `ColSelector<T, There<I>>`
+             `VirtualBinding<U, Tail>` implements `ColSelector<T, There<I>>`
+   = note: required for `ColPtrCons<Ca, ColPtrNil>` to implement `ColSelector<Cb, There<_>>`
+   = note: required for `EngineCtx<'_, Cons<Column<Ca>, hilavitkutin_api::Empty>, Cons<Column<Cb>, hilavitkutin_api::Empty>, SnapNil, ColPtrCons<Ca, ColPtrNil>, ColPtrCons<Cb, ColPtrNil>>` to implement `ResolveColumnRead<Cb, There<_>>`
+note: required by a bound in `hilavitkutin_api::ColumnReaderApi::read`
+  --> $WORKSPACE/crates/hilavitkutin-api/src/context.rs
+   |
+   |     unsafe fn read<T: ColumnValue, I>(&self, i: USize) -> T
+   |               ---- required by a bound in this associated function
+...
+   |         Self: ResolveColumnRead<T, I>;
+   |               ^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `ColumnReaderApi::read`
