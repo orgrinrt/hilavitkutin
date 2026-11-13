@@ -71,9 +71,7 @@ quote = '''
   bench findings (1.17x overhead unacceptable)
 '''
 origin = "stated"
-standing = "ratified"
-ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1553-1555", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1653-1654"]
+standing = "provisional"
 subject = "execution"
 keywords = ["Approach C", "superseded", "approach D", "approach E", "1.17x overhead", "indirect per-fiber"]
 
