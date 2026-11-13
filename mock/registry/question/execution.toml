@@ -205,3 +205,23 @@ The clamp paragraph keeps the ceiling, which follows from the per-core state bei
 subject = "execution"
 keywords = ["zero workers", "executor reports zero", "run_parallel", "frame_await_done", "refuse", "run inline", "one closure", "provisional"]
 related = ["tenet::the_engine_clamps_the_worker_count_it_runs_on_to_the_ceiling_of_its_per_core_state_and_workers_past_the_ceiling_are_never_handed_a_closure"]
+
+[[question]]
+id = "whether_the_indirect_per_fiber_dispatch_stays_for_fewer_than_ten_thousand_records_or_is_superseded"
+asks = "The founding spec names the indirect per-fiber approach, beside the trunk-level one, for fewer than ten thousand records, and its own list of replaced material says the indirect per-fiber approach was superseded by the trunk-level and whole-schedule approaches for its overhead. Which holds for fewer than ten thousand records?"
+options = ["below ten thousand records the dispatch is the indirect per-fiber approach or the trunk-level one (the row-size passage: '<10K records: C or D')", "the indirect per-fiber approach is superseded by the trunk-level and whole-schedule approaches, its 1.17x overhead unacceptable (the list of replaced material: 'Approach C (initially preferred) → superseded by D/E')"]
+state = "open"
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1168-1168, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1558-1560, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1653-1654"
+quote = '''
+- <10K records: IndirectPerFiber or TrunkMega. >10K: ScheduleMega.
+---
+Row size determines approach (T6 L1507-1517):
+- <10K records: C or D (smaller function bodies, better icache — LLVM
+  makes better register allocation for separated functions)
+---
+- T6 Approach C (initially preferred) → superseded by D/E based on
+  bench findings (1.17x overhead unacceptable)
+'''
+subject = "execution"
+keywords = ["dispatch approach", "indirect per fiber", "trunk mega", "schedule mega", "record count", "ten thousand records", "superseded"]
+related = ["tenet::the_dispatch_form_depends_on_the_record_count_below_or_above_ten_thousand", "tenet::the_dispatch_approach_is_chosen_by_record_count_between_fiber_level_trunk_level_and_whole_schedule_functions", "tenet::the_indirect_per_fiber_approach_is_superseded_by_the_trunk_and_schedule_approaches_for_its_overhead", "tenet::hilavitkutin_is_for_millions_of_simulation_and_crunching_work_data_going_constantly_and_one_to_four_morsels_is_almost_never_its_case"]
