@@ -32,7 +32,9 @@ the paths.
 ## Windows wrapper
 
 The committed wrapper is POSIX sh. A Windows host without a POSIX
-shell needs a second text and a way to pick it.
+shell needs a second text and a way to pick it. Until it lands a
+Windows host without `sh` fails every rustc call of a configured
+workspace, since cargo runs the wrapper for each one.
 
 ## LLVM pass plugin C++ source
 
