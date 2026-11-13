@@ -56,9 +56,12 @@ The width is the point. Truncated to 28 bits, ten thousand distinct strings
 collide with a probability of about 17 percent, and a collision on disk
 returns the wrong string without any sign that it did. At 64 bits the same
 count collides with a probability near 3e-12. The ten-thousand-string test
-counts collisions at the stored width, and counts them again at a width
-narrow enough to collide, so a counter that cannot see a collision does not
-pass for one that sees none.
+evicts ten thousand strings through `evict_str` and requires as many distinct
+keys, and counts the same keys again at a width narrow enough to collide, so a
+counter that cannot see a collision does not pass for one that sees none. Ten
+thousand strings seldom collide at 28 bits by luck, so a second test searches
+for two strings that share their low 28 bits and requires `evict_str` to key
+them apart, which a key cut to 28 bits fails.
 
 Evict: a handle resolves to bytes through the interner (a const handle
 through the const table, a runtime handle through the arena), and the bytes

@@ -382,9 +382,12 @@ a constructor to choose. `Generator::single` is offered on exactly those shapes,
 `Standard` and `WideKind` among them, because the property it needs is one
 origin and not the name of one shape. It takes no argument and returns no
 refusal. Its totality is not assumed: the single origin's index must lie inside
-what the shape reserved for origins, and that is checked when the constructor is
-instantiated for a shape, so a shape that declared one origin and mapped it
-outside its own range does not compile with `single` in use. Under `Standard`
+what the shape reserved for origins, and the constructor asserts it. Where
+`single` sits in a constant, a shape that declared one origin and mapped it
+outside its own range is a build error; anywhere else, including `Default`, it
+is a panic at the first call, because the language's const support does not yet
+let a `const` block read the constructor's `[const]` bound. A test pins the
+panic. Under `Standard`
 the counter takes the full 28 bits, and under `WideKind` its 26. Nothing changes
 for a consumer with one minter, and there is no second origin for it to name.
 
