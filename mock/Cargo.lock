@@ -253,6 +253,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "hilavitkutin-conformance"
+version = "0.1.0"
+dependencies = [
+ "arvo",
+ "arvo-hash",
+ "arvo-tensor",
+ "hilavitkutin",
+ "hilavitkutin-api",
+ "hilavitkutin-build",
+ "notko",
+ "notko-hlist",
+]
+
+[[package]]
 name = "hilavitkutin-ctx"
 version = "0.1.0"
 dependencies = [
@@ -280,6 +294,20 @@ dependencies = [
  "quote",
  "syn 2.0.119",
  "trybuild",
+]
+
+[[package]]
+name = "hilavitkutin-frozen-authors"
+version = "0.1.0"
+dependencies = [
+ "arvo",
+ "arvo-tensor",
+ "hilavitkutin",
+ "hilavitkutin-api",
+ "hilavitkutin-build",
+ "hilavitkutin-conformance",
+ "hilavitkutin-providers",
+ "notko",
 ]
 
 [[package]]
