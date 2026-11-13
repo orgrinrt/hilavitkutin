@@ -1,10 +1,11 @@
 // A unit with no per-record map (it does not implement `RecordOp`) is run
-// through `run_fused`. The fused entry folds the carrier into a chain of
-// `RecordOp` maps, so the carrier is refused at compile time. This shows only
-// that refusal: a unit that implements `RecordOp` and also writes an
-// accumulator is accepted, which `tests/fused_append.rs` records. The twin
-// `unmapped_unit_fused_pass.rs` differs only in the entry called: `run`
-// instead of `run_fused`.
+// through `run_fused`, with the two columns the fused chain would bind
+// registered. The fused entry folds the carrier into a chain of `RecordOp`
+// maps, so the carrier is refused at compile time, and that missing
+// implementation is the only error. This shows only that refusal: a unit that
+// implements `RecordOp` and also writes an accumulator is accepted, which
+// `tests/fused_append.rs` records. The twin `unmapped_unit_fused_pass.rs`
+// differs only in the `impl RecordOp` block.
 
 use core::cell::Cell;
 
@@ -46,6 +47,12 @@ impl MemoryProviderApi for Provider {
 
 #[derive(Copy, Clone)]
 struct Av(u32);
+
+#[derive(Copy, Clone)]
+struct Xa(u32);
+
+#[derive(Copy, Clone)]
+struct Ya(u32);
 
 type AccW = Cons<Accum<Av>, Empty>;
 
@@ -91,6 +98,8 @@ fn main() {
         used: Cell::new(0),
     };
     let mut scheduler = Scheduler::builder()
+        .with(hilavitkutin_api::store::Column::<Xa>::new())
+        .with(hilavitkutin_api::store::Column::<Ya>::new())
         .with(Accum::<Av>::new())
         .with(LogOnlyWu)
         .build(store(provider), USize(4))

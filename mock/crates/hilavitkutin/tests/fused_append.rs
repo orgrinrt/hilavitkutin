@@ -6,13 +6,15 @@
 //! the carrier into a chain of `RecordOp` maps and runs only the maps: the
 //! unit's body, with its appends, never runs, and nothing refuses the carrier
 //! at compile time because `FuseCarrier` bounds a unit on `RecordOp` and `Copy`
-//! and not on its write set.
+//! and not on its write set. `run_fused` also never makes the per-frame
+//! accumulator reset that `run` and `run_parallel` make, so running the body
+//! alone would meet the capacity assert at frame one.
 //!
 //! The first test holds the behaviour the second is compared against, so the
 //! second cannot fail for the harness's sake. The second asserts the same live
 //! length through `run_fused` and fails today; it is ignored with ticket
 //! `0fb716c5a463`, which owns making the fused entry refuse the carrier or run
-//! the body. Drop the `#[ignore]` when that ticket closes (a refusal turns this
+//! the body and reset. Drop the `#[ignore]` when that ticket closes (a refusal turns this
 //! into a compile-fail pair).
 //!
 //! Lives under `tests/` so the bare numeric record values do not trip the
@@ -195,11 +197,11 @@ fn run_appends_one_value_per_record_each_frame() {
 }
 
 #[test]
-#[ignore = "catalogue: run_fused runs only the map and never the body of a RecordOp unit that also appends; needs the fused entry to refuse the carrier or run the body; tracked #run_fused_does_not_refuse_a_recordop_unit_that_writes_an_acc"]
+#[ignore = "catalogue: run_fused runs only the map and never the body of a RecordOp unit that also appends; needs the fused entry to refuse the carrier, or to run the body and reset; tracked #run_fused_does_not_refuse_a_recordop_unit_that_writes_an_acc"]
 fn run_fused_appends_one_value_per_record_each_frame() {
     let mut scheduler = scheduler!();
     for frame in 0 .. 2 {
-        let _ = scheduler.run_fused();
+        assert!(matches!(scheduler.run_fused(), Outcome::Ok(())));
         assert_eq!(
             scheduler.__bindings().__len_cell().get(),
             USize(RECORDS),

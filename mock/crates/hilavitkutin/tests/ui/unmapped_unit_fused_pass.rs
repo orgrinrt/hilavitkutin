@@ -1,7 +1,7 @@
-// A unit with no per-record map (it does not implement `RecordOp`) is run
-// through `run`, which accepts it. The twin `unmapped_unit_fused_fail.rs`
-// differs only in the entry called: `run_fused` instead of `run`, which
-// refuses the carrier at compile time.
+// The same unit and registration as `unmapped_unit_fused_fail.rs`, with the
+// `impl RecordOp` block added and `run_fused` still called. With the per-record
+// map declared the carrier is accepted, which shows the refusal in the failing
+// twin is about that one missing implementation and not about the scaffolding.
 
 use core::cell::Cell;
 
@@ -44,6 +44,12 @@ impl MemoryProviderApi for Provider {
 #[derive(Copy, Clone)]
 struct Av(u32);
 
+#[derive(Copy, Clone)]
+struct Xa(u32);
+
+#[derive(Copy, Clone)]
+struct Ya(u32);
+
 type AccW = Cons<Accum<Av>, Empty>;
 
 #[derive(Copy, Clone)]
@@ -77,6 +83,15 @@ impl WorkUnit<Always> for LogOnlyWu {
     }
 }
 
+impl hilavitkutin_api::RecordOp for LogOnlyWu {
+    type In = Xa;
+    type Out = Ya;
+
+    fn apply(&self, x: Xa) -> Ya {
+        Ya(x.0)
+    }
+}
+
 fn store(provider: Provider) -> ArenaColumnStorage<Provider> {
     ArenaColumnStorage::new(provider)
 }
@@ -88,9 +103,11 @@ fn main() {
         used: Cell::new(0),
     };
     let mut scheduler = Scheduler::builder()
+        .with(hilavitkutin_api::store::Column::<Xa>::new())
+        .with(hilavitkutin_api::store::Column::<Ya>::new())
         .with(Accum::<Av>::new())
         .with(LogOnlyWu)
         .build(store(provider), USize(4))
         .unwrap_or_else(|_| panic!("build should succeed"));
-    let _ = scheduler.run();
+    let _ = scheduler.run_fused();
 }
