@@ -81,3 +81,27 @@ Answered in their own words:
 subject = "ordering"
 keywords = ["two writers", "frame-buffered", "staged", "schedule", "refuse", "priority"]
 related = ["question::how_two_writers_of_one_store_are_ordered", "tenet::two_writers_of_one_store_are_ordered_by_hint_priority"]
+
+[[question]]
+id = "whether_the_most_dependents_step_stays_between_hints_and_registration"
+asks = "When two units write one store, is the order hints, then most downstream dependents, then registration, or hints and then registration alone?"
+options = [
+    "Hints, dependents, registration: his earlier answer names only the fallback the spec left open, the most-dependents step stays",
+    "Hints, registration: his earlier answer is the whole rule",
+]
+state = "answered"
+answer = "Hints, dependents, registration"
+answered = "2026-11-13 about 10:35 UTC: channel document briefs/fixup/op-answers-13.md, entry 3"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS-13.md:25-31"
+quote = '''
+## 3. Tie-break between two writers of one store
+
+Options: [a: Hints, dependents, registration: his earlier answer names only the fallback the spec left open, the most-dependents step stays] [b: Hints, registration: his earlier answer is the whole rule].
+
+Answer, verbatim: "Hints, dependents, registration"
+
+Reading: option a. Scheduling hints, then most downstream dependents, then registration order.
+'''
+subject = "ordering"
+keywords = ["two writers", "tie-break", "scheduling hints", "most dependents", "registration order", "fallback"]
+related = ["question::how_two_writers_of_one_store_are_ordered"]

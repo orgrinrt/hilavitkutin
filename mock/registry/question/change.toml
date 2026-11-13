@@ -162,3 +162,30 @@ replacement) propagates forward over the per-unit predecessor masks. A unit
 subject = "change"
 keywords = ["changed", "dirty", "mark dirty", "generation counter", "version stamp", "phantom write", "writing unit", "consumer"]
 related = ["question::which_stores_declare_what_changed_means", "question::what_changed_means_for_a_computed_column", "tenet::the_dirty_seed_is_set_by_the_consumer_marking_a_store_dirty_or_by_a_resource_replacement", "tenet::hilavitkutin_should_own_the_version_stamp_and_early_cutoff_and_phantom_write_detection_is_the_consumer_s", "tenet::change_detection_is_per_morsel_and_skips_what_is_unchanged"]
+
+[[question]]
+id = "who_rotates_a_buffered_store"
+asks = "Who rotates a buffered store in hilavitkutin, a store read as the value it held at frame start while the next value is written?"
+options = [
+    "Wrapper in the access set: hilavitkutin-api gains a store wrapper naming a store as buffered two or three deep; the schedule knows frozen and live, puts no edge between reader of old and writer of new, rotates at the pass boundary",
+    "Consumer rotates: hilavitkutin stays read and write only, the previous and next value are two declared stores the consumer swaps between passes",
+    "Opt-in crate over the api: the core stays read and write only, a separate opt-in crate offers the buffered wrapper and rotation built from two declared stores",
+]
+state = "open"
+answer = "No option chosen. Op: I am almost sure this was researched and spiked and even benched perhaps, for multibuffering and swaps, and the hilavitkutin should also have specs for the maintenance work units already that do this kind of shit and adaptation and all. The question is not put to him again; it is answered from the record."
+answered = "2026-11-13 about 10:35 UTC: channel document briefs/fixup/op-answers-13.md, entry 1"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS-13.md:5-13"
+quote = '''
+## 1. Who rotates a buffered store
+
+Asked: who rotates a buffered store in hilavitkutin (a store read as the value it held at frame start while the next value is written)? The founding record gives read and write only and leaves double and triple buffering to loimu's layer as two or three declared stores; it names a store wrapper in the access set as the way a new access form would enter, and rates loimu's swap buffer as directly portable.
+
+Options: [a: Wrapper in the access set: `hilavitkutin-api` gains a store wrapper naming a store as buffered two or three deep; the schedule knows frozen and live, puts no edge between reader of old and writer of new, rotates at the pass boundary] [b: Consumer rotates: hilavitkutin stays read and write only, the previous and next value are two declared stores the consumer swaps between passes] [c: Opt-in crate over the api: the core stays read and write only, a separate opt-in crate offers the buffered wrapper and rotation built from two declared stores].
+
+Answer, verbatim: "I am almost sure this was researched and spiked and even benched perhaps, for multibuffering and swaps, and the hilavitkutin should also have specs for the maintenance work units already that do this kind of shit and adaptation and all. I am now wondering if the inlander branch or a few of them contain all this work entirely unlanded so you guys just have only stale shit at hand?"
+
+Reading: no option chosen. He recalls research, sketches and perhaps benches on multi-buffering and swaps, and specs for maintenance work units that do rotation and adaptation, and suspects that work sits on unlanded branches so that `dev` is stale ("inlander" read as unlanded). Checked the same minute, facts about the repository and not his words: `origin/recover/unlanded-rounds-and-benches` (13 commits of 30 August 2026, 592 files, 38615 insertions over `dev`, 96 conflicts against `dev` today) was never landed and carries swap benches (`mock/benches/results/swap_band`, `swap_cost`, variants `sb_none`, `sb_plan`, `sb_value`), 14 design round files, 19 research files, sketches, 41 engine tests and source under `plan/` and `dispatch/`. On `dev` itself the round `202605101036` (topics adapt-subsystem, plan-algorithm-chain, resource-resolution, thread-pool) specifies the meta work unit `AdaptWu` and a flipped-index double buffer for its published snapshot (plan-algorithm-chain 1181-1208); the registry read had not reached these when ANSWERS.md was written. The question is not re-asked: it is answered from that work once read, and the recovery branch is landed.
+'''
+subject = "change"
+keywords = ["buffered store", "rotation", "double buffer", "triple buffer", "frame start", "swap", "maintenance work unit"]
+related = ["question::whether_hilavitkutin_s_own_columns_are_double_buffered", "question::how_a_unit_reads_the_value_a_store_held_at_frame_start"]

@@ -146,3 +146,27 @@ them.
 subject = "stores"
 keywords = ["double-buffered", "frozen", "live", "pass boundary", "rotation", "frame start", "buffered store"]
 related = ["tenet::loimu_keeps_its_seven_access_modes_and_maps_them_to_read_and_write_at_the_boundary", "tenet::an_expert_memo_says_hilavitkutin_s_columns_are_double_buffered_for_the_pass_boundary", "tenet::loimu_s_layers_stay_in_loimu_and_hilavitkutin_provides_the_foundation", "question::how_a_unit_reads_the_value_a_store_held_at_frame_start"]
+
+[[question]]
+id = "which_shape_the_accumulator_takes_is_left_to_the_api_revision"
+asks = "Is the accumulator a column with an append write, or a fourth store kind beside resource, column and virtual?"
+options = [
+    "A column with an append write: three kinds stand, the accumulator is a column whose write form is append, marked by a wrapper in the access set",
+    "A fourth store kind: resource, column, accumulator, virtual",
+]
+state = "answered"
+answer = "Whichever makes most sense typestate and plumbing wise"
+answered = "2026-11-13 about 10:35 UTC: channel document briefs/fixup/op-answers-13.md, entry 4"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS-13.md:33-39"
+quote = '''
+## 4. Whether the accumulator is a fourth store kind
+
+Options: [a: A column with an append write: three kinds stand, the accumulator is a column whose write form is append, marked by a wrapper in the access set] [b: A fourth store kind: resource, column, accumulator, virtual].
+
+Answer, verbatim: "Whichever makes most sense typestate and plumbing wise"
+
+Reading: no preference between the two as such; the api revision decides by which gives the cleaner typestate and plumbing, and says why. Not returned to him as a question.
+'''
+subject = "stores"
+keywords = ["accumulator", "fourth store kind", "append write", "typestate", "plumbing", "api revision"]
+related = ["question::whether_the_accumulator_is_a_fourth_store_kind"]
