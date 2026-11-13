@@ -673,3 +673,487 @@ All under `mock/research/sketches/202611131951_load-time-units-seat02/`:
 
 Each is a spike: it proves the one thing its README names, once, on x86_64 Linux glibc with
 nightly-2026-05-28. Its names, field orders and shapes are scaffolding, not proposals.
+
+## Reconciliation with seat 01
+
+Written after phase one was pushed (`2bbf5726`). Seat 01's file is
+`mock/research/202611131951_load-time-units/01_aaltonen.md` on `research/load-time-units-seat01` at
+`80e85ad4`; I read it whole, and the sources of every sketch under
+`mock/research/sketches/202611131951_load-time-units-seat01/`, from a detached read worktree that
+is removed once this section is committed. Citations of the form `01:N` are lines of seat 01's file.
+Nothing above this heading has been edited. Where I now think a phase-one line is wrong, I say so
+here and cite it as `02:N`.
+
+Two new spikes decide disagreements, both committed with their output:
+`s6-occupant-as-resource/` and `s7-write-set-not-cell-width/`. I reran seat 01's `c1-oversized-cell`
+and `b2-resize-loses-records` from its tree. Both reds reproduce, and `growth_moves_the_base_pointer`
+passes (`s7-write-set-not-cell-width/OUTPUT-seat01-c1-b2-rerun.txt`).
+
+### 1. Where the two files agree
+
+"Same instrument" means both seats ran the same kind of check against the same code, so the second
+one adds independence of authorship but not of method. "Two instruments" means the checks differed
+in method or fixture.
+
+1. The loader cannot open a library that is not already mapped on Linux glibc, because 4 is passed
+   as `RTLD_LOCAL`. Reached independently (02:297-301, 02:113-120; 01:53, 01:102). The instrument is
+   the same, a fresh cdylib through `Library::load`, but the fixtures differ: mine is an
+   `#[export_extension]` descriptor library also driven through `ExtensionHost::load`, and seat 01's
+   is a bare C kernel. So this is two fixtures on one instrument. It is not op's call. It is the
+   ticketed defect, and both spikes are the test that ticket asks for.
+2. `hilavitkutin-linking/tests/basic.rs` loads only libc, which is setup that helps. Reached
+   independently, on the same instrument, a reading of the test (02:113-120; 01:33).
+3. `hilavitkutin-api/tests/column_storage.rs:47-55` is a tautology and should be deleted. Reached
+   independently, on the same instrument (02:131-135; 01:31).
+4. The whole suite does not link. Two binaries fail on `__start_hilavitkutin_strings` and
+   `__stop_hilavitkutin_strings`, and the rest gives 464 passed, 0 failed, 21 ignored. Reached
+   independently, with the same command and the same count (02:100-107; 01:27).
+5. A re-reserve through `ArenaColumnStorage` drops the column, against the contract's "resizes it".
+   Reached independently on two instruments: my s4 used `OsMemoryProvider` (mmap) going from 4 to 8
+   records, and seat 01's b2 used a std-heap provider going from 8 to 16 (02:473-477; 01:41, 01:177).
+   The base pointer is where the two runs differ, and they compose rather than conflict. In mine it
+   came back at the same address. In seat 01's it moved, because the test holds a second
+   allocation so the allocator cannot hand the block back (`b2-resize-loses-records/tests/resize.rs:69-75`).
+   So the base's identity after a re-reserve is unspecified. A context holding the old pointer reads
+   zeros on one provider and dangles on another. The loss of the records is the one property, and
+   both instruments show it.
+6. The stack audit misquotes `storage.rs:46-47` as saying "undefined". Reached independently, same
+   instrument (02:65-69; 01:42).
+7. Both C tickets are malformed against the trunk, because `ColumnValue` is any `Copy + 'static`.
+   Reached independently on two instruments: my s5 compiles a consumer's own types, and seat 01's
+   sketches store `i32` newtypes in the real engine (02:530-541; 01:43, 01:273).
+8. The trunk dropped R3's sixteen-byte cap. Reached independently on two instruments: s5 admits a
+   32-byte record and c1 a 4 KiB one (02:159-164; 01:15, 01:235).
+9. R6 governs. No unit is registered at load, and an arm that registers one is a canon amendment.
+   Reached independently, from the same text (02:76-87; 01:117).
+10. The record is ambiguous on what "plugin load" means to the plan, and the question goes to op.
+    Reached independently (02:88-97; 01:21). Seat 01 found a sentence I missed (item 4.1 below).
+11. Load-time behaviour can run inside a compiled unit whose access set is the build's, with
+    anything outside that set refused at load. Reached independently on two instruments: my s2 is
+    standalone native code with a bytecode variant and s3 is content rows over closed forms, while
+    seat 01's a3 is an interpreter and a4 a native kernel inside the trunk engine (02:286-316;
+    01:90-98).
+12. The call into foreign or interpreted code must be once a morsel, never once a record. Reached
+    independently on two instruments: my s2's release assembly shows the per-record host loop with
+    `callq` inside and no vector instruction (02:310-316), and seat 01 quotes the tier-3
+    `registration_binding` medians (01:96). Neither is a bench.
+13. Prior art: Kohn, Leis and Neumann; the Bevy removal. These are the same fetched files, with the
+    same hashes. That is one instrument cited twice, not corroboration.
+14. Reserving address space and committing on growth works and keeps the base fixed. Reached
+    independently on two instruments: my s4 reserves 32 GiB with `PROT_NONE | MAP_NORESERVE` and
+    commits with `mprotect` (02:484-488), and seat 01's b3 `Reserved<T>` reserves 512 MiB and grows
+    to ten million records (01:179). Seat 01 adds that `MemoryProviderApi` has no reserve or commit
+    entry. My phase one blamed only the empty `protect` (`os.rs:80-83`). Both are true, and both
+    are needed.
+15. Deletion is the R3 tombstone, and identity lives as data in a column the consumer owns, never
+    as a handle. Reached independently (02:495-498, 02:513-517; 01:185).
+16. kaski's `modding_is_content_only_never_engine_code` is demoted and binds nothing, and
+    `content_kinds_are_open_and_interned` binds. Reached independently, same instrument (02:232-239;
+    01:47).
+17. `BIT_WIDTH` is read by nothing, and nothing packs. Reached independently on two instruments: my
+    s5 test on `bool`, and seat 01's reading of source (02:561-562; 01:17).
+18. Nothing in either file is priced. Every "how much" is owed to the harness.
+
+### 2. Where they disagree
+
+D1. Whether the record's seam exists, and where load-time code lives.
+- Seat 01: the record's "one nod toward a plugin reading columns" is HasShape/ErasedColumn
+  (01:67). Its A-1 options are (a) nothing load-time enters hilavitkutin, or (b) an opt-in crate
+  ships a slot-unit contract (01:132-136). The slot unit takes its kernel as a field at build
+  (`a4-slot-unit/host/tests/slot.rs:143-146`, `:223-225`).
+- Me in phase one: the record designs a seam, `ExtensionSurface<dyn F>` (formerly `LinkedBin`),
+  with `PlanStage` on plugin load, and hilavitkutin should finish it as a store kind with an
+  envelope (02:212-218, 02:354-357). My sentence that a unit reading it "is ordered by the plan like
+  any other reader of a store" (02:217-218) was read off the doc comment, not run, and it is false.
+- Evidence and decision: s6. Registering `ExtensionSurface::<dyn Family>::new()` and calling
+  `build` does not compile. The surface implements none of `StoreAccumKind`, `StoreElemBytes`,
+  `BindingsFor` or `DrainStores` (`s6-occupant-as-resource/OUTPUT-surface-does-not-compile.txt`;
+  `hilavitkutin-api/src/builder_input.rs:174-187`). No test anywhere registers it. Its only
+  appearances are `builder_input.rs`, `lib.rs` and a doc line in `builder.rs`. So my phase-one
+  sentence that "the trunk half-built it" (02:650) is generous: it is a marker that breaks `build`.
+  In the same spike, an occupant held in an ordinary `Resource` works on the trunk today, with no
+  new mechanism. The occupant is a C-ABI kernel pointer, which is `Copy + 'static` and 8 bytes, so
+  it is already a column value inside R3, and it is marked `PlanAffecting`. The unit declares it in
+  its read set, so the plan orders the unit by its access set. Swapping it after build with
+  `replace_resource` opens the plan band once, the unit reruns (7 to 14 morsel calls), and every
+  record of the next frame is the new occupant's. The frame after shuts the band again.
+- Resolution: neither phase-one position survives intact. Seat 01 is wrong that the record has no
+  seam, and wrong to bind the occupant at build (see attack 2). I was wrong that the seam's shape is
+  a new store kind to finish. The `Resource` mechanism already gives what the surface promised:
+  ordering by access set, a dirty seed for readers, and one plan band per load. The one thing it
+  does not give is a tie between the occupant's lifetime and the library handle, which matters on
+  unload. That is the decision for op, below as merged call M3.
+
+D2. When the occupant is bound.
+- Seat 01: at build, as a field of the unit (`slot.rs:143-146`).
+- Me: after build, swapped through a handle (02:304-309, s2's `AtomicPtr`), and now through a
+  `PlanAffecting` resource (s6).
+- Decision: s6. Binding at build means a library loaded after the schedule exists cannot reach the
+  unit without a rebuild. A rebuild "loses every column", in seat 01's own words (01:203), because
+  `build` consumes the storage (`builder.rs:167-171`). The extensions design's arbitrary-time
+  linking invariant (`hilavitkutin-extensions/DESIGN.md.tmpl:143-152`) needs binding after build.
+  s6 shows it, and a swap at the morsel boundary is s2's switch point.
+
+D3. What the sixteen-byte cap is for, and whether a derived bound replaces it.
+- Seat 01: "The record's 16-byte bound is what keeps the formula meaningful" (01:235). Its C4
+  derives a per-cell bound `size_of::<T>() <= L1_USABLE / MIN_MORSEL`, which is 384 B (01:241).
+- Me in phase one: the cap has no stated reason that applies to a column, with an option to bind it
+  only on `Field<T>` (02:572-576, 02:656-657).
+- Evidence and decision: the record and s7. The record does give column reasons: "Clean
+  power-of-two, fits u128, aligns with SIMD" (spec `:388`) and "Forces interned IDs for
+  String/PathBuf/Vec" (spec `:461`), with the cap on the blanket impl itself (spec `:448-449`). My
+  option (b) rested on a false premise, and I withdraw it. Seat 01's inference fails too. Step 9 sums
+  a fiber's write set (`step9_morsel.rs:40-56`) and clamps the window at `MIN_MORSEL` (`:73-75`).
+  The record writes that clamp itself:
+  `(L1_usable / Σ write_sizes).clamp(MIN_MORSEL, MAX_MORSEL) & !3` (spec `:834`), with
+  `MIN_MORSEL` "configurable (not a design decision)" (`:840`). s7 shows that forty 16-byte write
+  columns, every cell inside R3, overshoot the L1 budget (40960 B against 24576 B). Two 384-byte
+  columns, every cell inside seat 01's derived bound, also overshoot (49152 B). The quantity is a
+  fiber's summed write width against `L1_USABLE / MIN_MORSEL`, never one cell's width. So the cap
+  stands for its own reasons, c1's L1 red is a consequence the record designed and not a symptom of
+  the missing cap, and the derived bound's rationale is refuted.
+
+D4. Whose types `repr(C)` binds.
+- Seat 01: restore `repr(C)` "on every stored type, by derive or lint, as the record says"
+  (01:16, 01:269).
+- Me: phase one missed the record's `repr(C)` text entirely. My reading now is that it binds domain
+  newtypes and seam types, not every consumer type.
+- Evidence: the record says "repr(C) on domain newtypes enforced by `#[derive(ColumnValue)]` macro or
+  lint, not by the trait itself" (spec `:462`). The blanket is "any `Copy + 'static` type ≤16 bytes
+  is column-storable. Zero friction for consumers" (`:448-449`), and "Consumers store whatever they
+  want" (`:458-459`). The retained list's "repr(C) on stored types (T3 §Q3)" (`:477`) is a summary
+  line. The text with the mechanism in it says the trait does not require it. A blanket that admits
+  any Copy type cannot also demand `repr(C)` of it.
+- What would decide it: T3 §Q3 itself, the round the summary cites, which neither seat read. Until
+  then the call goes to op (merged call M12), and this disagreement is not converged.
+
+D5. Whether B carries op calls.
+- Seat 01: four calls, B-1 to B-4 (01:201-210).
+- Me: almost none, because op and the record have answered (02:503-517).
+- Evidence: B-1's option (c) is op's own answer, which seat 01 quotes (01:160). B-2 is settled by
+  seat 01's own sentence "The design is right and the code is wrong. Fix the code toward the
+  design" (01:57), and then re-asked as "Either is honest" (01:206). B-3 is answered by the record:
+  "mmap-backed (with linked-page fallback for no-mmap platforms)" (core topic `:683-685`). Only the
+  identity and compaction question (B-4, my B-question) is open in the record. Not converged on
+  framing. On substance it converges, because seat 01 says what the right answers are.
+
+D6. Whether B1 works today.
+- Me: "B1 works today up to roughly physical memory" (02:478).
+- Seat 01: the trunk cannot express it, because the count is a build argument (01:183).
+- Decision: source. `record_count` is a private field of the scheduler (`scheduler/mod.rs:181`). It
+  is set at `build` (`builder.rs:167-171`), read by every run entry (`run.rs:132`,
+  `run_fused.rs:111`, `run_trunks.rs:63`), and assigned nowhere after build. Seat 01 is right, and my
+  sentence is wrong. What s4 showed is that the provider's side of B1 works: residency follows what
+  is touched. The live count cannot move, so every unit walks the whole capacity. That is owed work:
+  a count the plan band reads, beside `replace_resource`, as R6's "record counts (from consumer
+  data)" requires (spec `:2443`).
+
+D7. Where admission lives.
+- Me in phase one: a domain-agnostic helper in `hilavitkutin-extensions` (02:361-364).
+- Seat 01: the consumer, implicitly (01:119).
+- Decision: my own s2's red. Native code is not bound by a declaration (02:304-307). An
+  interpreted program is checked by its own interpreter against the unit's slots (seat 01's a3).
+  With the occupant as a resource, the host unit hands it only windows of its own declared columns,
+  so the envelope is structural. I move to seat 01's side: admission is the consumer's.
+
+D8. Interned names across the seam. Seat 01 raised it and I did not. See section 4 and merged
+call M5.
+
+### 3. Attacks on seat 01
+
+1. "That is the record's one nod toward a plugin reading columns" (01:67) is false. Here is what
+   the record and the trunk have:
+   - the core topic's `PlanStage` "fired when DAG changes (startup, plugin load)" (`:723`);
+   - the virtual-bit packing "Recomputed on DAG change (plugin load, reconfiguration)" (`:247-248`);
+   - "loimu with WASM plugins build it from work units" (`:776-779`);
+   - the api design's `LinkedBin`/`ExtensionSurface` section (`hilavitkutin-api/DESIGN.md.tmpl:193-214`);
+   - the type itself (`builder_input.rs:155-193`).
+
+   A file whose A-1 offers to ship "a slot-unit contract" in a new opt-in crate (01:134) did not
+   look at the api crate it would sit on, which already declares one. That declaration does not
+   compile when used (s6), and that is the finding seat 01 walked past. Replacement: merged call M3.
+2. The slot unit is not a load-time unit in the sense the extension stack means. Its kernel is a
+   struct field set in `.with(Slot { kernel })` before `build` (`slot.rs:223-225`). So its library
+   must be loaded before the schedule exists, and no library loaded later can reach it. The test
+   proves that a kernel resolved at startup can run inside a static schedule. It does not prove
+   load-time behaviour inside one. Replacement, built and green: the occupant is a `PlanAffecting`
+   resource holding the C-ABI table. The host unit declares it in its read set and calls it once a
+   morsel, and a load after build is a `replace_resource` that buys exactly one plan band (s6). The
+   unload half is open (M3).
+3. c1's conclusion (01:235) and C4's rationale (01:241) are refuted by s7, and by the record's own
+   clamp (spec `:834`, `:840`). The red is real, but it is the designed floor of the morsel formula,
+   not a cost of the missing cap. A 16-byte-clean fiber hits the same red. Replacement: restore the
+   cap for the reasons the record gives (`:388`, `:461`). State the L1 promise as a fiber-level
+   rule, and decide what happens when a fiber's write width exceeds `L1_USABLE / MIN_MORSEL` (M10).
+4. "repr(C) on every stored type ... as the record says" (01:269) misreads spec `:462`, which says
+   "not by the trait itself", for the reasons in D4. Replacement: `repr(C)` is required of a value
+   type that crosses an image seam, enforced where the seam is declared. The workspace rule already
+   says FFI structs are wire shapes built at the call site. Domain newtypes take the derive per
+   `:462`.
+5. B-1, B-2 and B-3 are put to op although op or the record already answers them, and B-2
+   contradicts seat 01's own 01:57 (D5). Op told the helpers not to bring him questions the record
+   answers (op-answers-25). Replacement: all three are owed work.
+   - The count becomes a plan parameter (D6).
+   - `reserve` copies, then frees, then the scheduler rebinds. The base's identity is unspecified
+     (agreement 5).
+   - mmap reserve and commit on the os tier, with pages elsewhere.
+6. Citations that do not hold:
+   - The 15 October quotes are cited at `:282` and `:300` (01:69). They are at `:284` (the
+     layer-two act) and `:303` (op's "Okay yeah we'll want a dsl ... Preferably behind an
+     interface"). The substance holds and the lines do not.
+   - "op's standing instruction on 13 November was to do the work" (01:35) carries no citation, and
+     it is the license seat 01 used to override the test gate.
+   - `EXTENSIONS_RESEARCH.md:42-46` is about `inventory`'s `.init_array` constructors, not the
+     `__start`/`__stop` section bounds `hilavitkutin-str` reads. Both are linker magic, but they are
+     different mechanisms, so "names this mechanism" (01:54) overstates it. The finding about names
+     across an image stands on seat 01's own spike, not on that citation.
+7. The A composition's "Zero-cost shipping of first-party packs: A6" (01:127) and A6's "needs a Rust
+   toolchain on the player's machine, or a build service" (01:113) miss that kaski's own row bars
+   it: "Rust will never be the authoring language and [won't] ship rustc with the game or it's sdk"
+   (`kaski/mock/registry/tenet/content.toml:219-228`, provisional). A first-party pack compiled in is
+   just the build. A third-party pack compiled by its author is Unity's pattern, which is A4 with
+   native code. A6 as a player-side step is closed for kaski.
+8. c2's composition, a split rule rounding windows and per-core splits to `64 / BIT_WIDTH`
+   (01:250), ignores op's stated mutation paradigm. "Intended case in the mutation paradigm is
+   writing through queues ... queued up ops that drain verctoeised and optimized at the close"
+   (op-answers-25, which seat 01 itself cites at 01:161). A packed column written only through a
+   queue drained at the close has one writer by construction, so the split rule is needed only for
+   a unit writing a packed column directly. Replacement: merged call M11, option a.
+
+### 4. What seat 01 has that I missed, and whether it holds
+
+1. Domain 16. The plan reruns on "more records, new WUs, structural DAG change" (spec `:1476-1477`),
+   and the consumer "changes WU registration" (`:1487`). This holds: I read both lines. It is a
+   third place in tension with R6, beside the two core-topic lines I cited. Read with R6 and with s6,
+   the consistent reading is that a change to the unit set is a rebuild. A change of occupant or
+   count is a plan band.
+2. The context has no window slice. `read(i)` and `write(i, v)` are its only column access
+   (`hilavitkutin-api/src/context.rs:117`, `:134`). This holds. My phase-one call point, "hands the
+   occupant one wire view a morsel" (02:358-360), assumed an accessor the trunk does not have, so s2
+   modelled it outside the engine. s6 and seat 01's a4 both copy each morsel in and out. The record
+   has the shape: "One base pointer per morsel, columns at `base + col_offset + i * stride`" (spec
+   `:397-398`). It is owed work on the api.
+3. The record count is fixed at build. This holds (D6).
+4. `hilavitkutin-providers/tests/column_storage.rs:215`,
+   `a_second_reserve_frees_the_first_block_as_it_was_reserved`, pins the free. This holds: it is the
+   one test that looks at a resize, and it asserts the behaviour that breaks the contract.
+5. Names do not cross an image (A4-2, A4-3), and const names do not resolve on wasm (A4-4). This
+   holds against source: `static_entries` returns `&[]` off linux, android, macos and ios
+   (`hilavitkutin-str/src/section.rs:69-80`), and lookup is a linear scan
+   (`hilavitkutin-str/src/interner.rs:119-140`) where the design claims "O(1)"
+   (`hilavitkutin-str/DESIGN.md.tmpl:117`, `:137`). I did not rerun seat 01's a4 name tests, and the
+   red rests on their committed output alone. The wasm half is a defect, not a design call: a name
+   declared in an image must resolve in that image on every target kaski ships.
+6. The record's `repr(C)` text (spec `:462`, `:477`). This holds as text. The reading is contested
+   (D4).
+7. b3's page straddle. This holds arithmetically: 6144 is 1.5 times 4096, so nearly every window
+   straddles a 4096-record page. I add one refinement. A page must be sized in records, not bytes,
+   because one fiber's columns have different strides, and a page of fixed bytes is a different
+   record count per column. With pages in records, the planner rounds the window down to a divisor
+   of the page, once per fiber.
+8. c2's race. This holds as a hazard of the read-modify-write model seat 01 wrote, which seat 01
+   says itself (01:305).
+9. c6's layout. This holds as an existence claim under `-Zrandomize-layout`. One compiler at one
+   version is stable in practice.
+10. The pending ticket `which_registration_hilavitkutin_s_contract_takes_beside_the`
+    (`tickets-hilavitkutin.toml:565-572`). This holds, and it is the same question as A from the
+    registration side. In phase one I knew of its round (02:229-231, 02:260-261) but not that it now waits on op.
+11. The accumulator refusal carries `wanted` and `had` (`hilavitkutin-api/src/accum_refused.rs:12-19`).
+    This holds, and it makes the spawn queue (seat 01's B6) half-built already.
+12. The record's own Approach C figure is "one fn ptr per fiber per morsel", 1.17x (spec `:1553`),
+    "unacceptable" (`:1653-1654`). Seat 01 cites it against A8. I add what neither file said. An
+    occupant called once a morsel across the C ABI is Approach C's cost class by construction,
+    because nothing inlines across that barrier. The record refused that cost for compiled units,
+    which can be fused. It did not consider code that cannot be. The bench owed for M1 must have an
+    arm for the same kernel compiled in as a unit, so the barrier's price is a number and not an
+    analogy.
+
+Unlicensed things newly met, per the standing instruction:
+- `ExtensionSurface` is documented as a builder input with `Dispatch = StoreDispatch<Self>`
+  (`builder_input.rs:164`, `:184-187`). It breaks `build` when registered (s6), and no test in the
+  repository registers it. The doc also promises `SchedulerBuilder::extend` per round
+  `202605101036` D5 (`:166-167`), which does not exist.
+- The api design promises "the typestate proves coverage at `.build()` time"
+  (`hilavitkutin-api/DESIGN.md.tmpl:208-210`) for a type that cannot reach `.build()`.
+
+### 5. The op calls of both files, merged
+
+Each call gives its options with the recommended one first, which seat proposed it, and whether
+both seats agree. "Provisional stamp" marks a call both seats agree on that the governing record
+cannot derive. The dispatcher puts those to op as questions.
+
+M1. Does code that arrives at load ever become a unit in hilavitkutin's plan? Merges my
+A1-question and seat 01's A-1.
+- Options:
+  - a: never; it runs as the occupant of a compiled host unit, read from that unit's declared access
+    set, and R6 stands;
+  - b: an extension unit joins the plan at `PlanStage` with masks declared at load, R6 is amended,
+    and Approach C returns for those units;
+  - c: hilavitkutin offers only content as data, and any code seam is the consumer's, above the api.
+- Proposed by both. Both recommend a.
+- The record derives a from R6 (spec `:2439-2440`), so this is not a stamp. It still goes to op as
+  the panel's answer, because op asked for the panel. What would move it to b: a harness bench on
+  the intended region of an occupant once a morsel, against the same kernel compiled in and fused,
+  against Approach C.
+
+M2. What a "plugin load" is to the plan. Merges my A2-question and seat 01's A-2. The record's
+lines are core `:247-248` and `:723`, and spec `:1476-1477` and `:1487`, against R6.
+- Options:
+  - a: a change of what the plan is parameterised by, which is an occupant, a gate or a count; on
+    the trunk that is a `PlanAffecting` swap that opens one plan band (s6), and the unit set is
+    fixed;
+  - b: a change of the unit set, which is M1(b);
+  - c: as (a), and the plugin and registration wording in domain 16 and the core topic is marked as
+    superseded by R6 in the record's next consolidation.
+- Proposed by both. Both recommend a, and seat 01 also offers c.
+- Provisional stamp: the record's words do not decide what their author meant.
+
+M3. The record's seam, `ExtensionSurface`. New in reconciliation, from s6.
+- Options:
+  - a: retire it from the api and its design; the occupant is a `PlanAffecting` resource holding a
+    C-ABI table, which the trunk already orders, dirties and replans (s6); the extension host owns
+    the rule that an occupant is swapped out before its library is dropped;
+  - b: finish it as a store kind that holds the occupant and ties its lifetime to the library
+    handle, so an unload cannot leave a dangling occupant;
+  - c: leave it as is, a declared marker that breaks `build`.
+- Proposed by seat 02. Seat 01 did not consider the type, so there is no agreement.
+- What decides between a and b: whether unload safety belongs in the type or in the host's
+  discipline, shown by a spike that drops a library while its occupant is installed. c is not an
+  option anyone should take. It is listed because it is the current state.
+
+M4. Where admission of a load-time occupant lives. Merges my A3-question with seat 01's implicit
+position.
+- Options:
+  - a: the consumer's, since native occupants are not bound by a declaration (s2's red) and
+    interpreted ones are checked by their own interpreter;
+  - b: a domain-agnostic helper in `hilavitkutin-extensions`.
+- Both now recommend a. I moved (D7).
+- Provisional stamp: the record is silent.
+
+M5. Names across an image seam. Seat 01's A-3, with a replacement option added.
+- Options:
+  - e (seat 02 recommends): no `Str` crosses the C ABI; an occupant names stores and keys as text in
+    its descriptor, the host interns them at load, and the occupant refers to them by position in
+    its own declared list, so there is one table and no handle crosses;
+  - a: the extension interns through the host's interner, passed as function pointers;
+  - b: the host pulls each library's const table through an exported symbol and merges it;
+  - c: const and run-time handles compare by hash;
+  - d: retire the linker section for a build-time table.
+- Proposed by seat 01, with e added by seat 02. Seat 01 made no recommendation, so there is no
+  agreement.
+- What decides it: whether a mod may define a name the base game reads by constant. If not, e is
+  enough. Separately, and not op's: const names must resolve on wasm in their own image. That is a
+  defect (section 4.5).
+
+M6. Isolation. My A4-question.
+- Options:
+  - c first: wasm is the consumer's occupant behind the same seam, as the linking design leans
+    (`hilavitkutin-linking/DESIGN.md.tmpl:83`);
+  - a: native full trust only, v1;
+  - b: a wasm transport in hilavitkutin's extension stack.
+- Proposed by seat 02. Seat 01 did not pose it.
+
+M7. Consolidate with `which_registration_hilavitkutin_s_contract_takes_beside_the`. Seat 01's A-4.
+Both agree that this panel's evidence supports that ticket's option a, typed only. It is the
+dispatcher's to merge, not a separate call.
+
+M8. Stable identity across removal. Merges my B-question and seat 01's B-4.
+- Options:
+  - a: tombstones (R3) by default, with a swap-compaction pass at the close for columns that declare
+    it; identity is a durable id column the consumer owns, and compaction emits a remap;
+  - b: identity is hilavitkutin's, a store kind that keeps an id per record;
+  - c: positions stable always, with no compaction.
+- Proposed by both. Both recommend a.
+- Provisional stamp: the record has the tombstone (spec `:385-386`) and says nothing on compaction
+  or identity.
+
+M9. The live count, reserve, and growth per tier. Seat 01's B-1, B-2 and B-3. Recommended: not put
+to op. They are owed work as listed in attack 5, because op ("Both, declared per domain", and
+"Bench both first" for record sets) and the record (core `:683-685`, R6 `:2443`) answer them.
+- Proposed by seat 01. Seat 02 disagrees that they are op's.
+
+M10. The fiber's write width against L1. New in reconciliation, from s7.
+- Options:
+  - a (seat 02 recommends, low confidence): report at build any fiber whose summed write width
+    exceeds `L1_USABLE / MIN_MORSEL`, as a value, and keep the record's clamp;
+  - b: the planner splits such a fiber so each part fits;
+  - c: refuse it at build;
+  - d: the trunk today, silent.
+- Proposed by seat 02. Seat 01 framed the same red as a cell-bound question, so there is no
+  agreement yet.
+- What decides between a and b: a harness bench of a forty-column fiber, split against unsplit.
+
+M11. Packing. Seat 01's C-2, with a replacement option added.
+- Options:
+  - a (seat 02 recommends): BitPacked layout per R4; packed columns written in parallel only through
+    queues drained at the close, per op's mutation paradigm; a unit writing a packed column directly
+    gets windows and per-core splits rounded to `64 / BIT_WIDTH`;
+  - b: rounding for every packed column, as seat 01 proposes;
+  - c: single writer per packed column per phase;
+  - d: not now.
+- Proposed by seat 01, with a refined by seat 02. Both agree that packing is owed by R4 and that an
+  unrounded split loses writes. They do not agree on which composition is recommended.
+
+M12. `repr(C)`. Seat 01's C-3.
+- Options:
+  - b (seat 02 recommends): required on value types that cross an image seam, at the seam, plus the
+    derive for domain newtypes per spec `:462`;
+  - a (seat 01's reading): every stored type, by derive or lint;
+  - c: none.
+- Not converged (D4). What decides it: T3 §Q3.
+
+M13. The sixteen-byte cap. Merges my C1-question and seat 01's C-1.
+- Options:
+  - a: restore it as R3 and R4 say, a compile-time refusal on the blanket impl;
+  - b: seat 01's derived bound;
+  - c: no bound, which amends R3 and R4.
+- Both now recommend a. I withdrew my Field-only option, and s7 removes b's rationale.
+- The record derives a, so this is not a stamp. The trunk's missing cap is drift to be fixed. It
+  goes to op only if he wants c.
+
+M14. Close both C tickets as malformed against the trunk, filing M11 to M13 in their place. Both
+agree. This is the dispatcher's call.
+
+Not calls, and owed by both files' evidence:
+- the loader constant per target, with a fresh-library test;
+- deletion of the two tautological tests (`column_storage.rs:47-55`, `column_value.rs:48-62`);
+- a re-reserve contract test, and `reserve` made to keep contents;
+- a count the plan band reads;
+- a reserve and commit entry on `MemoryProviderApi`, and a body for `protect`;
+- a window slice on the context;
+- const names resolving on wasm;
+- the suite linking.
+
+### The composition that holds
+
+The schedule stays what R6 says it is. The units, the graph and the dispatch are the build's.
+
+What arrives at load is one of three things:
+- data: rows in typed columns, kinds interned at load (s3, seat 01's A1);
+- an interpreted program, checked at load against a compiled unit's slots and run a vector at a
+  time per morsel (seat 01's a3);
+- a native kernel, compiled by its author, never by the player.
+
+The second and third are occupants of a compiled host unit, held in a `PlanAffecting` resource that
+the unit declares. A load or a swap is one plan band and a dirty seed, which is the record's "plugin
+load" read consistently with R6, and it runs on the trunk today (s6). The call crosses once a
+morsel, never once a record (s2 assembly, the tier-3 bench), and costs Approach C's class by
+construction. That cost is unpriced and is the bench M1 owes.
+
+hilavitkutin owes the finished parts:
+- a loader that loads;
+- a window slice;
+- names that survive the seam;
+- the fate of `ExtensionSurface` (M3);
+- a count that moves;
+- a `reserve` that keeps its contents;
+- reserve and commit on the os tier, with pages, sized in records, elsewhere.
+
+The cell is the consumer's own type up to the record's sixteen bytes. The L1 promise is a fiber
+rule, not a cell rule (s7). Packing waits on R4's layout with op's queues as the writer.
+
+Not converged:
+- `repr(C)` scope (D4);
+- the fate of `ExtensionSurface` (M3), because seat 01 did not address it;
+- the recommended composition for packing (M11);
+- whether B carries op calls (D5).
