@@ -71,6 +71,7 @@ quote = '''
 origin = "proposed"
 written_by = "sketch findings capacity-as-a-TYPE of 2026-05-30 (numeric-position convention, T13), outcome WORKS with no feature gates; agent-written"
 standing = "pending"
+superseded_by = ["fixed_capacity_is_one_generic_dimension_marker_implementing_the_capacity_trait_and_the_macro_rung_ladder_is_dropped"]
 keywords = ["Capacity trait", "rung ladder", "Cap4", "literal-length array", "associated array type", "capacity as type", "T13"]
 
 [[tenet]]
@@ -94,6 +95,7 @@ ratified_from = ["quote: mock/research/sketches/202605301145_capacity-as-type/FI
 keywords = ["Dim<const N>", "Capacity trait", "rung ladder dropped", "op refinement", "cap(DIM)", "capacity as type", "array length"]
 rejects = ["the macro rung ladder"]
 related = ["tenet::fixed_capacity_is_a_non_generic_capacity_trait_implemented_by_a_macro_generated_ladder_of_exact_rungs_binding_literal_length_arrays"]
+lineage = ["fixed_capacity_is_a_non_generic_capacity_trait_implemented_by_a_macro_generated_ladder_of_exact_rungs_binding_literal_length_arrays:ea19bf0fd0eaec47"]
 
 [[tenet]]
 id = "with_one_dimension_marker_exact_capacities_come_free_and_live_code_threads_the_plan_dimensions_and_never_a_length"

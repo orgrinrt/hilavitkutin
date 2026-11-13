@@ -96,6 +96,7 @@ than having to reconstruct why the obvious one-line install is wrong.
 origin = "proposed"
 written_by = "topic revert-the-blob-install of 2026-07-19, round 202607193110, and its doc changelist, agent-written"
 standing = "pending"
+superseded_by = ["a_replaceable_swap_installs_the_whole_value_as_one_blob_write_through_the_drain_s_selector_and_the_member_by_member_wording_is_refuted"]
 keywords = ["member-by-member", "replace_value", "Replaceable swap", "blob memcpy", "catalogued red", "decomposed install", "#654"]
 related = ["tenet::op_ruled_the_install_given_to_the_swap_of_a_replaceable_value_reverted"]
 
@@ -139,6 +140,7 @@ standing = "pending"
 keywords = ["replace_value", "whole-blob install", "Selector witness", "S1", "mis-citation", "member-by-member", "mark_dirty", "#344"]
 rejects = ["A Replaceable swap is a member-by-member copy"]
 related = ["tenet::as_of_round_202607193110_a_replaceable_swap_is_a_member_by_member_copy_into_column_slots_and_not_a_blob_write", "tenet::a_replaceable_swap_installs_the_whole_value_as_one_blob_write_and_marks_the_store_dirty", "tenet::replace_value_takes_the_new_value_directly_because_the_bindings_are_keyed_by_the_value_type"]
+lineage = ["as_of_round_202607193110_a_replaceable_swap_is_a_member_by_member_copy_into_column_slots_and_not_a_blob_write:f96d71dfd224e5b4"]
 
 [[tenet]]
 id = "the_plan_affecting_marker_is_an_open_per_type_opt_in_and_not_a_sealed_builder_input_marker_with_one_run_configuration_implementor"
