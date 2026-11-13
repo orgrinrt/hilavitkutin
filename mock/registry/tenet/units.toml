@@ -504,8 +504,9 @@ wrapper type like `Exclusive<Resource<T>>` in the AccessSet.
 '''
 origin = "proposed"
 written_by = "topic T5 of the founding round (hilavitkutin-core-design), question Q6, marked resolved there"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["access mode", "Read", "Write", "Pinned", "Immediate", "frozen snapshot", "double-buffered", "freshness", "loimu", "store wrapper"]
 rejects = ["loimu's seven access modes in hilavitkutin"]
 related = ["tenet::a_writer_precedes_every_reader_of_what_it_writes"]

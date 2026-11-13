@@ -15,7 +15,7 @@ The flat carrier stays flat; the partition lives in const data (`GROUPING`), and
 '''
 origin = "proposed"
 written_by = "design round 202606080400, topic GATE-2 G-e const-gated per-trunk dispatch, dated 2026-06-08, agent-written; the text does not say whose decision it is"
-standing = "pending"
+standing = "held"
 keywords = ["RunTrunkSel", "run_one_trunk", "const-gated trunk", "POS + 1", "member-only program", "G-e", "trunk_of", "DCE"]
 
 [[tenet]]
@@ -42,8 +42,9 @@ Make the shipped per-trunk walk `RunGatedTrunk` (round 2a) trunk-only keyed (a t
 '''
 origin = "proposed"
 written_by = "design round 202606080400, topic GATE-2 G-e correction to drive the shipped RunGatedTrunk, and its source changelist, dated 2026-06-08, agent-written; the text says it supersedes the design framing of the earlier topic of the same round"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["RunGatedTrunk", "trunk-only keyed", "outer dispatcher", "RunTrunkSel", "phase loop", "Peano Pos", "G-e", "Scheduler::run"]
 rejects = ["that topic proposed a NEW `RunTrunkSel` + `run_one_trunk` walk, which reinvents shipped infra"]
 related = ["tenet::per_trunk_dispatch_is_a_const_range_walk_that_selects_the_members_of_one_trunk_and_each_trunk_is_its_own_monomorphisation"]
@@ -70,8 +71,9 @@ The G-e outer dispatcher `RunTrunkDispatch` already walks the carrier and, at ea
 '''
 origin = "proposed"
 written_by = "design round 202606080700, topic GATE-2 G2-N core-pinned per-trunk dispatch, dated 2026-06-08, agent-written; the text calls the runtime mask path an interim that op chose"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["run_core_phase", "core_phase_mask", "run_gated", "RunTrunkDispatch", "core ownership", "trunk rank", "G2-N", "compiled per-core program"]
 rejects = ["That is the R4b-inline interim op chose, not the canonical compiled per-core program."]
 related = ["tenet::n_core_dispatch_walks_the_flat_carrier_gated_by_a_runtime_mask_of_the_trunks_a_core_owns_and_the_const_gated_enumeration_is_superseded", "tenet::the_outer_dispatcher_drives_the_shipped_per_trunk_walk_keyed_by_trunk_only_and_phase_order_is_a_runtime_loop"]
@@ -100,7 +102,7 @@ proven Pin shape:
 '''
 origin = "proposed"
 written_by = "design round 202606072030, topic GATE-2 R4c round B2 threaded run_parallel, dated 2026-06-07, agent-written; the text does not say whose decision it is"
-standing = "pending"
+standing = "held"
 keywords = ["run_parallel", "main-orchestrated", "frame_publish", "frame_await_done", "waist barrier", "persistent pool", "worker_main", "R4c"]
 rejects = ["no worker-side sense-reversing barrier"]
 
@@ -132,8 +134,9 @@ Move the waist barrier worker-side, so a frame is ONE publish/await round-trip r
 '''
 origin = "proposed"
 written_by = "design round 202606071808, topic GATE-2 worker-side waist barrier (deviation section 4 reconciliation), dated 2026-06-07, agent-written; the text does not say whose decision it is"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["waist_barrier", "sense-reversing barrier", "barrier_sense", "worker-side barrier", "main-orchestrated", "phase_arrived", "deviation section 4", "wide_parallel"]
 related = ["tenet::the_main_thread_drives_each_phase_of_a_parallel_frame_and_is_itself_the_barrier_between_phases"]
 
@@ -151,7 +154,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "doc changelist 202606051659 of 2026-06-05 (phase DOC, single-core dispatch codegen), locked; agent-written round artifact that does not name the maintainer as its author"
-standing = "pending"
+standing = "held"
 keywords = ["devirtualization", "always-inline walk", "ColProject", "AccumProject", "CollectFiber", "FiberSlot", "fiber_shim", "single-core dispatch"]
 
 [[tenet]]
@@ -170,7 +173,7 @@ Superseded / reversed. These are NOT deleted: `CollectFiber` + `FiberSlot` + `no
 '''
 origin = "proposed"
 written_by = "src changelist 202606062330 of 2026-06-06 (phase SRC, increment 1 of the dispatch devirtualization doc changelist), locked; agent-written round artifact that does not name the maintainer as its author"
-standing = "pending"
+standing = "held"
 keywords = ["CollectFiber", "RunFiber", "FiberSlot", "noop_fiber_shim", "slot array", "range-gated walk", "fiber_dispatch", "superseded"]
 rejects = ["extend `RunFiber` to a column-capable range-gated walk and make it the dispatch path", "The deprecated CL would have deleted them in favour of the `RunFiber` walk"]
 related = ["tenet::the_single_core_dispatch_is_a_column_capable_inline_walk_with_no_stored_function_pointer_and_the_slot_array_dispatch_is_deleted"]
@@ -199,7 +202,7 @@ mistakes: abstract impl-WF recursion (Alt A) and GCE-expressivity + monomorphisa
 '''
 origin = "proposed"
 written_by = "sketch findings gate2-pairs-enumeration-dispatch (GATE-2 chart S3 / R3a-pre), outcome FAILS, dated only by its directory name 202606070906; agent-written"
-standing = "pending"
+standing = "held"
 keywords = ["pairs enumeration", "const-generic monomorphisation", "proc-macro", "type-level cons-list", "phase and trunk", "E0275", "GATE-2", "overly complex generic constant"]
 related = ["tenet::n_core_dispatch_walks_the_flat_carrier_gated_by_a_runtime_mask_of_the_trunks_a_core_owns_and_the_const_gated_enumeration_is_superseded", "tenet::type_level_n_way_partition_of_a_heterogeneous_carrier_needs_forbidden_specialization_so_partition_lives_in_const_evaluation"]
 
@@ -233,8 +236,9 @@ walk-overhead arm above.
 '''
 origin = "proposed"
 written_by = "sketch A4-b findings of 2026-07-19 (FiberCons nest wireability, outcome FAILS for the nest), agent-written"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["FiberCons", "nested carrier", "flat walk", "per-fiber window", "dead machinery", "deletion audit", "A4", "A2b"]
 rejects = ["both A4 and A2b should be redone on the nest", "A4 and A2b stand as shipped; no redo"]
 related = ["tenet::trunk_isolation_comes_from_a_flat_carrier_walk_gated_by_const_phase_and_trunk_and_the_nested_value_carriers_are_superseded", "tenet::type_level_n_way_partition_of_a_heterogeneous_carrier_needs_forbidden_specialization_so_partition_lives_in_const_evaluation"]
@@ -272,8 +276,9 @@ about the mechanism worth surfacing to op, not something to quietly absorb.
 '''
 origin = "proposed"
 written_by = "sketch A4-b findings of 2026-07-19 (FiberCons nest wireability), agent-written"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["walk overhead", "per-fiber windows", "Member::IS", "runtime dirty test", "G2C-M", "bench arm", "shared-window", "re-walk"]
 related = ["tenet::the_per_fiber_window_walk_over_the_flat_carrier_stands_and_the_nested_fiber_trunk_phase_and_pipeline_walks_are_dead_machinery_for_the_deletion_audit"]
 
@@ -292,8 +297,9 @@ point.
 '''
 origin = "proposed"
 written_by = "sketch A4-b findings of 2026-07-19 (FiberCons nest wireability), agent-written; the text says the grouping is rejected on canon (domain 12/14)"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["shared window", "fiber-at-a-time", "L1 pressure", "per-fiber window", "pass collapse", "domain 12", "domain 14"]
 rejects = ["Grouping fibers by shared window to collapse the passes"]
 
@@ -335,8 +341,9 @@ silently dropped: the decision was sound for the shape it assumed, and the shape
 '''
 origin = "proposed"
 written_by = "sketch A4 findings of 2026-07-19 (per-fiber morsel windows on the parallel dispatch path), agent-written; it corrects the roadmap's A4 statement"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["A4", "per-fiber windows", "fiber-outer", "morsel-inner", "dispatch_core", "FiberDispatch", "gate2_fiber", "run_core_phase"]
 rejects = ["through a unit-to-fiber-size lookup, which needs a `gate2_fiber` mapping alongside the existing `gate2_phase` and `gate2_trunk` scratch"]
 
@@ -365,6 +372,7 @@ A2b: implement `run_one_trunk_windowed` (or the direct-per-fiber-entry refinemen
 '''
 origin = "proposed"
 written_by = "sketch A2a findings of 2026-06-19 (per-fiber morsel loop drives the per-trunk monomorphised dispatch), agent-written, outcome WORKS as a source-grounded derivation"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["re-walk cost", "direct per-fiber entry", "per-fiber windowing", "fiber_mask", "run_one_trunk_windowed", "A2b", "carrier walk"]

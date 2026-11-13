@@ -15,8 +15,9 @@ reference for what the design is. This seed is.
 '''
 origin = "proposed"
 written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["pre_seed", "paper trail", "git::commit", "provenance", "reference", "archived design rounds"]
 related = ["tenet::the_seed_is_the_flat_self_contained_expression_of_the_effective_engine_canon_as_of_2026_07_19"]
 
@@ -34,8 +35,9 @@ in order: first the collection pass completes (every chapter drained from its
 '''
 origin = "proposed"
 written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["frozen = false", "MANIFEST.md", "under construction", "corrected against sources", "seed", "freeze"]
 related = ["tenet::the_seed_is_the_flat_self_contained_expression_of_the_effective_engine_canon_as_of_2026_07_19"]
 
@@ -56,8 +58,9 @@ the seed frozen. A seed with unresolved open questions does not freeze.
 '''
 origin = "proposed"
 written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["freeze gate", "collection pass", "open questions", "verification passes", "manifest", "losslessness", "resolution batch", "frozen"]
 related = ["tenet::while_the_manifest_says_frozen_false_the_seed_is_under_construction_and_chapters_may_be_corrected_against_their_sources"]
 
@@ -76,8 +79,9 @@ to the chapters as committed. An op-ordered redo of the pass ran 2026-07-20
 '''
 origin = "proposed"
 written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["verification pass 1", "four audits", "FIT AFTER LISTED FIXES", "fix batch", "seed", "2026-07-19"]
 related = ["tenet::the_seed_freeze_is_gated_in_order_by_the_collection_pass_the_open_question_batch_the_verification_passes_and_the_manifest_declaration"]
 
@@ -99,8 +103,9 @@ prose, spectral currency, manifest staleness and tier labels, S5, term
 definitions, consumer scale envelope) is applied as committed. The second
 '''
 origin = "stated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: his part is the order to redo the pass, which mock/research/202607210300_seed-verification-redo.md:3-6 records as op-ordered because he did not accept the pass-one judgement as sufficient on its own; the verdict, the sweeps and the fix batch are the audit of the agents and not his, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: his part is the order to redo the pass, which mock/research/202607210300_seed-verification-redo.md:3-6 records as op-ordered because he did not accept the pass-one judgement as sufficient on its own; the verdict, the sweeps and the fix batch are the audit of the agents and not his, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["op-ordered redo", "verification pass", "deep audit", "founding-spec coverage", "chain sweep", "fix batch", "2026-07-20", "no blockers"]
 related = ["tenet::as_of_2026_07_21_verification_pass_one_gave_fit_after_listed_fixes_and_the_fix_batch_is_applied"]
 
@@ -118,8 +123,9 @@ in the registry (`mock/registry/`, created at drain time), and a registry row ou
 '''
 origin = "proposed"
 written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["frozen seed", "never changes", "registry rows", "amendment", "ruling", "clarification", "status change", "drain time"]
 related = ["tenet::the_seed_freeze_is_gated_in_order_by_the_collection_pass_the_open_question_batch_the_verification_passes_and_the_manifest_declaration"]
 
@@ -136,8 +142,9 @@ the seed chapter is the current word.
 '''
 origin = "proposed"
 written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["registry row", "outranks", "seed text", "conflict", "absence of a row", "current word", "precedence"]
 related = ["tenet::once_the_seed_is_frozen_its_text_never_changes_and_every_later_change_to_canon_lands_as_registry_rows"]
 
@@ -186,8 +193,9 @@ are listed in the chapters that own them.
 '''
 origin = "proposed"
 written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["bench-decided forks", "bench oracle", "open fork", "build the candidates", "rule from findings", "performance fork"]
 related = ["tenet::rcm_wins_against_rival_ordering_theories_at_dram_scale_and_order_is_near_neutral_below_it_so_step_5_stands"]
 
@@ -208,8 +216,9 @@ statements with the settled design:
 '''
 origin = "proposed"
 written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["open questions", "blocking the freeze", "resolution channel", "pre-freeze batch", "settled design", "in place statements"]
 related = ["tenet::the_seed_freeze_is_gated_in_order_by_the_collection_pass_the_open_question_batch_the_verification_passes_and_the_manifest_declaration"]
 
@@ -236,7 +245,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
-standing = "pending"
+standing = "provisional"
 superseded_by = ["the_swap_semantics_item_landed_under_a_provisional_stamp_with_s1_through_s7_not_ratified_and_two_gaps_open_against_the_spec"]
 keywords = ["Replaceable swap", "open question 1", "ratification", "S1 through S7", "Swap-D", "#344", "cost asymmetry", "seed freeze"]
 related = ["tenet::the_maintainer_held_ratification_of_the_swap_spec_until_it_was_implemented_and_benched", "tenet::ratifying_the_swap_spec_replaces_the_seed_chapter_s_open_question_wording_and_closes_the_governance_items_and_the_two_issues"]
@@ -269,8 +278,9 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21 and to 2026-11-13, agent-written; the text does not name its author"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: the landing under a provisional stamp with S1 through S7 not ratified is his word (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-1305.md:13-41, "Land as provisional"), and the rest is the seed chapter recording the item, which nothing read shows to be his, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: the landing under a provisional stamp with S1 through S7 not ratified is his word (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-1305.md:13-41, "Land as provisional"), and the rest is the seed chapter recording the item, which nothing read shows to be his, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["Replaceable swap", "open question 1", "Land as provisional", "provisional stamp", "S1 through S7", "Swap-D", "#344", "plan-dirty bit", "fused frame"]
 related = ["tenet::the_maintainer_held_ratification_of_the_swap_spec_until_it_was_implemented_and_benched", "tenet::ratifying_the_swap_spec_replaces_the_seed_chapter_s_open_question_wording_and_closes_the_governance_items_and_the_two_issues"]
 
@@ -308,8 +318,9 @@ was deliberately left out as superseded.
 '''
 origin = "proposed"
 written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["MANIFEST.md", "drain", "sources", "left out", "superseded", "chapter", "losslessness"]
 
 [[tenet]]
@@ -336,7 +347,7 @@ Bench evidence aggregated in `mock/benches/NIGHT_FINDINGS_2026-05-11.md`. Audit 
 '''
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
-standing = "pending"
+standing = "held"
 keywords = ["design round 202605101036", "autonomous topic locks", "user-attention items", "revisitable constants", "NIGHT_FINDINGS", "bottom-up implementation", "example apps"]
 
 [[tenet]]
@@ -353,8 +364,9 @@ The public surface described here plus the specific type and method names locked
 '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["shipping commitment", "v1 contract", "preserve", "explicit deprecation", "follow-up rounds", "src CL", "type-level provider ids", "lifecycle logging hooks"]
 
 [[tenet]]
@@ -373,8 +385,9 @@ clarifying gloss consistent with the spec, not a competing rule.
 '''
 origin = "proposed"
 written_by = "topic n-way-record-split-is-not-convergence of 2026-07-19, round 202607192110, agent-written; the text does not say whose ruling the settlement of 2026-07-19 was"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["authority", "tiebreak", "consolidation spec", "clarifying gloss", "blanket supersede", "N-way", "2026-07-19"]
 related = ["tenet::the_unified_engine_amendment_carries_authority_over_intermediate_artifacts_and_the_standalone_carries_none", "tenet::the_n_way_record_split_of_a_single_trunk_phase_is_not_head_and_tail_convergence_and_is_drift"]
 
@@ -401,8 +414,9 @@ no way to tell whether the concern was addressed or abandoned. The rewritten ent
 '''
 origin = "proposed"
 written_by = "topic retire-the-fn-pointer-spawn of 2026-07-19, round 202607192810, and its doc changelist, agent-written"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["backlog note", "resolved by supersession", "record of resolution", "BACKLOG", "deleted code", "answered not dropped"]
 related = ["tenet::thread_spawn_copies_a_pointer_sized_closure_under_a_compile_time_size_check_and_never_casts_a_function_pointer_or_allocates"]
 
@@ -425,8 +439,9 @@ goes, and the test and the doc paragraph go with it, because they document the t
 '''
 origin = "proposed"
 written_by = "topic delete-superseded-dispatch-and-barrier of 2026-07-19, round 202607192910, agent-written, grounded on op's direction that chart-the-path exists to remove redundancy, YAGNI rot and drift; the supersession test is the topic's own"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["supersession", "delete superseded code", "reachability", "drift", "tether test", "doc paragraph", "preservation reflex"]
 rejects = ["something still references it"]
 related = ["tenet::a_superseded_text_is_deprecated_and_never_amended_by_an_addendum"]
@@ -457,8 +472,9 @@ what this round does for its own.
 '''
 origin = "proposed"
 written_by = "topics of rounds 202608090300 'the kind width is still fixed' and 202608101600 'a locked claim that was never executed', agent-written"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["verification", "git show HEAD", "autofix", "rustfmt", "locked changelist", "claim verifier", "verify against what landed"]
 
 [[tenet]]
@@ -481,8 +497,9 @@ correction belongs to the changelist rather than to the file.
 '''
 origin = "proposed"
 written_by = "topics of rounds 202608090130 and 202608090300 and source changelist of round 202608101600, agent-written"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["locked changelist", "audit trail", "correction", "later round", "wrong check", "grep", "bending a subject"]
 related = ["tenet::a_changelist_claim_is_verified_against_what_landed_and_every_verification_line_is_run_before_the_lock"]
 
@@ -504,5 +521,5 @@ The drift memo's Option A list stays canonical:
 '''
 origin = "proposed"
 written_by = "sketch v2 phase machine field notes of 2026-05-25 (workspace task #398), outcome INCONCLUSIVE; agent-written, restating the drift memo's Option A list"
-standing = "pending"
+standing = "held"
 keywords = ["Option A", "deprecate and replace", "locked changelist drift", "drift memo", "validate_descriptor", "task 398", "cargo mock deprecate", "replacement changelist"]

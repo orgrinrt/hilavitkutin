@@ -55,7 +55,7 @@ Meta resources (restricted via MetaAccess marker trait):
 - `meta::SchedulerMetrics` — EMA timing data (domain 22)
 '''
 origin = "stated"
-standing = "pending"
+standing = "held"
 keywords = ["meta resources", "Dag", "ExecutionPlan", "LaneAssignment", "SchedulerMetrics", "MetaAccess", "marker trait"]
 
 [[tenet]]
@@ -154,8 +154,9 @@ pass (pass_count always changes), so readers always dispatch.
 '''
 origin = "proposed"
 written_by = "topic T5 of the founding round (hilavitkutin-core-design)"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["SchedulerMetrics", "previous pass", "one pass behind", "pass start", "metrics resource", "version stamp"]
 
 [[tenet]]
@@ -196,8 +197,9 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, constraint note 5, agent-written, elevated to canon by the addendum"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["MetaBlock", "MetaAccess", "MetaRef", "scheduler field", "Copy resources", "Cell", "compile-time enforcement"]
 
 [[tenet]]
@@ -212,8 +214,9 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 5 adapt subsystem, decisions dated 2026-05-10; the text does not say whose each decision is"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["AdaptWu", "meta unit", "ScheduleEnd", "adaptation", "providers crate", "opt-in"]
 
 [[tenet]]
@@ -242,8 +245,9 @@ quote = '''
 - [x] **Axis A. Multi-axis individual BuilderInputs + Kit-recipe presets (REFRAMED twice; final shape).** Nine axes ship as individual `BuilderInput`s in `pub mod adapt`: `PassDurationConfig`, `PhaseEmaConfig`, `FiberEmaConfig`, `ChangeClassConfig`, `CacheResidencyConfig`, `ThroughputConfig`, `PredictiveParkingConfig`, `MemoryWatermarkConfig`, `CoreIdleTimeConfig`. Each is a heterogeneous specialised struct (carries only its meaningful knobs); each impls `BuilderInput<Dispatch = <Self>Dispatch<Self>>` with its own dispatch slot (no collision); each impls sealed `AdaptAxis: Sealed` for the universal `is_enabled() + sample_skip()` accessors; each has `Default` impl (sensible-on baseline per axis) + `Self::off()` const fn (disabled shorthand). **No top-level `AdaptConfig` composite struct** — the user's Kit reframe replaced the struct + const fn presets with: (1) individual axis-configs as the primary surface and (2) Kit recipes (`StandardAdaptKit`, `OffAdaptKit`, optionally domain-specific consumer Kits) as documented combinations. Consumer registers axes individually `.with(my_phase_ema_config)`, or via a Kit `.with(StandardAdaptKit::default())`, or composes `.with(StandardAdaptKit).with(my_fiber_override)` (later `.with` replaces the slot for that axis). Cadence interleaving via per-axis `sample_skip`. Core-idle-time axis included for load-distribution sensitivity, breadcrumb mechanism in Topic 6's parking primitive. **C1 audit finding dissolves:** without a composite `AdaptConfig` struct, there is no `AdaptCfgDispatch<Self>` slot needed; each axis has its own slot via standard `BuilderInput` pattern. The workspace convention applies cleanly without scope-clarification gymnastics. Plan stage reads each axis-config via its accessor; absent registrations use the trivial-ctor default. **Workspace convention dogfooded properly:** individuals primary + Kits as recipes, same shape as Axis F's metrics layer. (Earlier "AdaptConfig as struct + const fn presets" framing retired by this reframe; the C1 audit response that locked `AdaptConfig` as a `BuilderInput` is also retired by the reframe.)
 '''
 origin = "stated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["adapt axis", "BuilderInput", "StandardAdaptKit", "OffAdaptKit", "no composite AdaptConfig", "sample_skip"]
 related = ["tenet::each_adaptation_metric_is_its_own_axis_with_independent_tuning"]
 
@@ -262,8 +266,9 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 5 adapt subsystem, decisions dated 2026-05-10; the text does not say whose each decision is"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["AdaptArena", "metrics snapshot", "scratch arena", "ScheduleEnd", "B3 hybrid", "consumer-readable"]
 
 [[tenet]]
@@ -278,8 +283,9 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 5 adapt subsystem, decisions dated 2026-05-10; the text does not say whose each decision is"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["inline metrics", "producer core", "phase barrier", "cache-line ping-pong", "progress counter", "lint"]
 
 [[tenet]]
@@ -295,8 +301,9 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 5 adapt subsystem, decisions dated 2026-05-10; the text does not say whose each decision is"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["AnomalyFired", "virtual", "anomaly", "metrics resources", "phase explosion", "audit"]
 rejects = ["Per-anomaly Virtual proliferation (the previously locked Axis E shape) is retracted"]
 
@@ -311,8 +318,9 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 5 adapt subsystem, decisions dated 2026-05-10; the text does not say whose each decision is"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["re-plan", "adapt unit", "plan caching", "dirty detection", "observer", "signal"]
 
 [[tenet]]
@@ -327,8 +335,9 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 5 adapt subsystem, decisions dated 2026-05-10; the text does not say whose each decision is"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["predictive parking", "predicted wait", "policy and mechanism", "ParkStrategy", "PredictiveParkingMetrics"]
 
 [[tenet]]
@@ -342,8 +351,9 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 5 adapt subsystem, decisions dated 2026-05-10; the text does not say whose each decision is"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["adapt metrics", "inner loop", "fiber completion", "phase boundary", "ASM invariants"]
 
 [[tenet]]
@@ -360,7 +370,7 @@ Use case: AdaptWu at ScheduleEnd phase observes `ResourceSnapshot<AdaptMetrics>`
 '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 8 resource resolution of 2026-05-11, which calls its decisions autonomous trivial calls"
-standing = "pending"
+standing = "held"
 keywords = ["ResourceSnapshot", "AdaptWu", "ScheduleEnd", "predicted wait", "read only"]
 
 [[tenet]]
@@ -388,8 +398,9 @@ it" sentence is dropped and the prose states the metric holds on every path.
 '''
 origin = "proposed"
 written_by = "topic r3b-parallel-fused of 2026-06-20, round 202606200200, and its doc changelist, agent-written"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["change_seen_count", "run_parallel", "run_fused", "change class", "scheduler metrics", "OnMeta", "store_dirty"]
 rejects = ["the \"do not yet maintain it\" sentence"]
 related = ["tenet::the_scheduler_metrics_resource_carries_pass_count_ema_durations_active_units_stolen_count_and_idle_time_with_a_one_eighth_decay"]
@@ -426,8 +437,9 @@ duration EMA": how long phase p took this frame, summed across its morsels).
 '''
 origin = "proposed"
 written_by = "topic phase-ema-per-frame-fix of 2026-06-19, round 202606192345, a post-review fix to round 202606192301, agent-written"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["phase_ema", "phase_accum", "per-phase EMA", "dispatch_trunks", "per frame", "one-eighth", "fold_ema", "morsel"]
 rejects = ["the fold runs per (phase, morsel), not per frame"]
 related = ["tenet::the_scheduler_metrics_resource_carries_pass_count_ema_durations_active_units_stolen_count_and_idle_time_with_a_one_eighth_decay"]
@@ -446,8 +458,9 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "topic a2b-dispatch-loop-inversion of 2026-07-16, round 202607161810, agent-written"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["phase_accum", "per-phase timing", "per frame", "now_ns", "start stop pair", "dispatch loop inversion"]
 related = ["tenet::a_phase_s_duration_average_folds_the_phase_total_of_the_frame_once_per_frame_and_not_once_per_morsel"]
 
@@ -465,8 +478,9 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "topic a2b-dispatch-loop-inversion of 2026-07-16, round 202607161810, agent-written"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: a passage shows part of it to be his and not the whole of it (mock/research/202606111400_canonical-design-addendum-a1.md:122-131), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: a passage shows part of it to be his and not the whole of it (mock/research/202606111400_canonical-design-addendum-a1.md:122-131), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["meta bands", "once per frame", "per window", "lifecycle hooks", "self-hosting kernel", "dispatch loop inversion"]
 rejects = ["every dirty meta unit per window on multi-window frames"]
 related = ["tenet::the_scheduler_is_itself_a_pipeline_and_meta_units_run_at_lifecycle_points"]
@@ -484,7 +498,8 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 5 adapt subsystem, Axis E of the decision log dated 2026-05-10, agent-written; the text does not say whose decision it is"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["anomaly", "Virtual", "BalanceAnomaly", "MemoryPressure", "AccessSet union", "AdaptWu", "Axis E", "no coarse flag"]
 related = ["tenet::anomalies_are_virtual_marker_types_so_that_observers_compose_through_access_set_union"]

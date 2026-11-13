@@ -167,8 +167,9 @@ but rendering data (mesh, material) is mostly static.
 '''
 origin = "proposed"
 written_by = "topic T3 of the founding round (dispatch-and-optimisation), decision 57"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["generation counter", "monotonic", "last processed generation", "skip", "previous frame", "incremental execution", "change tracking"]
 related = ["tenet::change_detection_is_per_morsel_and_skips_what_is_unchanged"]
 
@@ -208,8 +209,9 @@ morsels whose input generations have advanced.
 '''
 origin = "proposed"
 written_by = "topic T3 of the founding round (dispatch-and-optimisation), the 3D cube model"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["temporal", "cube", "T dimension", "frames", "cached result", "incremental", "generation"]
 related = ["tenet::change_detection_is_per_morsel_and_skips_what_is_unchanged"]
 
@@ -228,8 +230,9 @@ differently.
 '''
 origin = "proposed"
 written_by = "the research note loimu-dag of the founding round"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["version stamp", "early cutoff", "phantom write", "bitwise comparison", "explicit marking", "actually changed", "consumer"]
 related = ["tenet::version_stamps_tell_which_stores_a_unit_actually_modified"]
 
@@ -250,8 +253,9 @@ output columns untouched. The propagation is a bitmask sweep over the
 '''
 origin = "proposed"
 written_by = "the standalone spec 202606111800, a reading aid with no design authority of its own by addendum A2"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["dirty seed", "mark dirty", "consumer", "resource replacement", "predecessor masks", "skip"]
 related = ["tenet::a_unit_whose_inputs_are_all_clean_skips_the_pass"]
 
@@ -289,7 +293,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "the swap semantics panel, memo 3 (synthesis and draft specification, 2026-07-19), a dispatched expert persona drafting for the maintainer's ruling"
-standing = "pending"
+standing = "held"
 keywords = ["swap", "replace_value", "between frames", "next run", "last swap wins", "blob", "dirty bit", "parked between frames"]
 related = ["tenet::the_swap_of_a_replaceable_resource_is_to_be_specified_by_a_commissioned_round"]
 
@@ -309,8 +313,9 @@ the existing `store_dirty` mask rather than duplicating it. Do not start this on
 '''
 origin = "proposed"
 written_by = "the engine roadmap revision r6 of 2026-07-18, agent-written"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["generation counter", "per-morsel", "store_dirty", "not built", "design sketch", "coarse dirty"]
 related = ["tenet::change_detection_is_per_morsel_and_skips_what_is_unchanged", "tenet::the_engine_owns_the_generation_counters_and_the_skip_logic", "question::who_says_that_a_store_changed"]
 
@@ -348,8 +353,9 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["replace_resource", "replace_value", "mark dirty", "partial", "inert", "state assessment", "2026-06-11"]
 related = ["tenet::the_swap_of_a_replaceable_resource_is_to_be_specified_by_a_commissioned_round"]
 
@@ -374,7 +380,7 @@ plan band at phase 0, and the consumed bits clear.
 '''
 origin = "proposed"
 written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
-standing = "pending"
+standing = "held"
 keywords = ["replace_resource", "PlanAffecting", "plan_dirty", "PlanAffectingId", "band gate", "leading plan band", "phase 0", "S2"]
 related = ["tenet::a_swap_of_a_resource_value_is_legal_only_between_frames_and_is_observed_from_the_next_run", "tenet::plan_affecting_is_an_open_marker_trait_that_consumers_implement_on_resource_value_types"]
 
@@ -396,7 +402,7 @@ is the pre-A2-3 form; the implementing round corrects it. The shipped
 '''
 origin = "proposed"
 written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
-standing = "pending"
+standing = "held"
 keywords = ["Locate", "PlanAffecting", "BuilderInput", "seal", "#696", "A2-3", "replace_resource signature", "Stores"]
 related = ["tenet::plan_affecting_is_an_open_marker_trait_that_consumers_implement_on_resource_value_types"]
 
@@ -415,8 +421,9 @@ obligation.
 '''
 origin = "proposed"
 written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["plan-dirty wiring", "band gate", "first_frame", "replace_resource", "implementing round", "gap", "2026-07-19"]
 related = ["tenet::replacing_a_plan_affecting_resource_does_the_replace_value_write_and_sets_the_plan_dirty_bit_the_next_run_consumes"]
 
@@ -433,7 +440,7 @@ a foreign base pointer breaks provenance. (b) A swap never writes past the
 '''
 origin = "proposed"
 written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
-standing = "pending"
+standing = "held"
 keywords = ["swap", "base pointer", "Seq", "Map", "ptr+len view", "provenance", "columns never resized", "S3"]
 related = ["tenet::a_seq_or_map_value_is_a_pointer_and_a_length_and_its_elements_are_live_streamed_from_their_column_and_never_copied"]
 
@@ -451,7 +458,7 @@ member's `Cap` bound N; the new value shares the old value's exact
 '''
 origin = "proposed"
 written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
-standing = "pending"
+standing = "held"
 keywords = ["swap", "Cap bound", "Seq<T, N>", "capacity", "by construction", "collection member", "S3"]
 
 [[tenet]]
@@ -468,7 +475,7 @@ elements, then the length updates; the blob carries only the ptr+len view.
 '''
 origin = "proposed"
 written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
-standing = "pending"
+standing = "held"
 keywords = ["swap", "element bytes", "collection-column region", "length update", "ptr+len view", "blob", "S3"]
 related = ["tenet::a_swap_never_changes_the_base_pointer_of_a_seq_or_map_member_because_a_foreign_base_pointer_breaks_provenance"]
 
@@ -487,6 +494,6 @@ underspecified. The same resolution answers the founding spec's open
 '''
 origin = "proposed"
 written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
-standing = "pending"
+standing = "held"
 keywords = ["#344", "write-side wiring", "collection-bearing swap", "scalar members", "ptr+len view", "unimplementable", "S3"]
 related = ["tenet::swap_writes_element_bytes_into_the_member_s_existing_collection_column_region_and_then_updates_the_length"]

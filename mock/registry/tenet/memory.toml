@@ -16,8 +16,9 @@ quote = '''
 | `std` | Windows, other | std::alloc | std::thread | std::time::Instant | catch_unwind |
 '''
 origin = "stated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:22-32, row platform_tiers_are_os_and_no_os_only_and_the_std_tier_is_deferred_indefinitely), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:22-32, row platform_tiers_are_os_and_no_os_only_and_the_std_tier_is_deferred_indefinitely), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["platform tiers", "no_os", "os", "std", "bare metal", "WASM", "mmap", "catch_unwind"]
 
 [[tenet]]
@@ -30,8 +31,9 @@ quote = '''
 - `os` and `std` mutually exclusive. `os` gets optimisation investment.
 '''
 origin = "stated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:22-32, row platform_tiers_are_os_and_no_os_only_and_the_std_tier_is_deferred_indefinitely), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:22-32, row platform_tiers_are_os_and_no_os_only_and_the_std_tier_is_deferred_indefinitely), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["os tier", "std tier", "mutually exclusive", "optimisation investment", "platform"]
 related = ["tenet::the_platform_has_three_tiers_no_os_os_and_std"]
 
@@ -90,8 +92,9 @@ quote = '''
 Each tier ships defaults. Consumer overrides via scheduler builder.
 '''
 origin = "stated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:22-32, row the_os_tier_creates_no_threads_and_ships_a_memory_provider_and_a_clock_while_the_engine_hands_the_executor_one_pointer_sized_closure_per_worker), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:22-32, row the_os_tier_creates_no_threads_and_ships_a_memory_provider_and_a_clock_while_the_engine_hands_the_executor_one_pointer_sized_closure_per_worker), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["defaults", "override", "scheduler builder", "platform tier", "consumer"]
 related = ["tenet::the_platform_contracts_are_memory_provider_thread_pool_and_clock_traits_in_the_api_crate"]
 
@@ -193,8 +196,9 @@ Bench evidence (T6 L1660-1669, aarch64):
   x13). Zero resource memory ops in loop. Written back once via `stp`.
 '''
 origin = "stated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (mock/research/202606210600_resource-storage-model-canonical-addendum.md:26-38, row a_seq_or_map_value_is_a_pointer_and_a_length_and_its_elements_are_live_streamed_from_their_column_and_never_copied), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (mock/research/202606210600_resource-storage-model-canonical-addendum.md:26-38, row a_seq_or_map_value_is_a_pointer_and_a_length_and_its_elements_are_live_streamed_from_their_column_and_never_copied), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["stack-local resource caching", "snapshot", "res_ptr", "register promotion", "write-back", "stp", "fiber dispatcher", "aarch64"]
 related = ["tenet::resource_and_column_pointers_must_have_separate_provenance_or_llvm_reloads_resources_every_iteration"]
 
@@ -263,8 +267,9 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, constraint note 7, agent-written, elevated to canon by the addendum"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["clock", "SchedulerBuilder::clock", "builder slot", "null clock", "no_os", "monotonic clock", ".with", "providers"]
 
 [[tenet]]
@@ -305,8 +310,9 @@ hilavitkutin-ctx, -persistence, -sym, -str, -kit, -providers are standalone ecos
 '''
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["hilavitkutin-providers", "default providers", "Resource-backed", "Kit impls", "standalone", "no engine dependency", "scheduler"]
 
 [[tenet]]
@@ -324,8 +330,9 @@ wiring, no reverse dep.
 '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["hilavitkutin-providers", "Resource-backed providers", "standalone ecosystem crate", "kit installation", "direct wiring", "no reverse dependency"]
 related = ["tenet::the_providers_crate_ships_default_resource_backed_providers_and_kit_impls_that_consumers_wire_in"]
 
@@ -348,8 +355,9 @@ tracks the future generalisation.
 because = "The engine's resource access pattern is sequential during single-thread morsel dispatch."
 origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["InternerApi", "intern", "resolve", "MemoryProviderApi", "ClockApi", "'static", "no Send + Sync", "single-thread morsel dispatch", "SyncArena"]
 
 [[tenet]]
@@ -386,8 +394,9 @@ an engine prerequisite.
 because = "The platform contracts in api (memory / threadpool / clock) are the engine-required surfaces; the interner is an opt-in provider, not an engine prerequisite."
 origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["HasInterner", "Ctx tuple bound", "interner accessor", "opt-in provider", "platform contracts", "HasMemoryProvider", "HasClock", "execute", "Str"]
 related = ["tenet::the_platform_contracts_are_memory_provider_thread_pool_and_clock_traits_in_the_api_crate"]
 
@@ -419,8 +428,9 @@ sentinel id `u32::MAX` from `arena_intern`. Consumers tune
 '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["MemoryArena", "BYTES", "ENTRIES", "inline storage", "ArenaInterner", "28-bit id", "sentinel u32::MAX", "arena_intern", "arena_resolve", "capacity overflow"]
 
 [[tenet]]
@@ -451,8 +461,9 @@ independent dimensions a consumer tunes.
 because = "Byte capacity and entry-count are independent dimensions a consumer tunes."
 origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["default_interner", "const fn", "BYTES", "ENTRIES", "StringInterner", "two const generics", "Resource::new", "wiring building block"]
 
 [[tenet]]
@@ -485,7 +496,8 @@ pub struct ArenaColumnStorage<M: MemoryProviderApi, D: Capacity = Dim<256>> {
 '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["ArenaColumnStorage", "ColumnStorage", "CS: ColumnStorage", "placeholder", "MemoryProviderApi", "Capacity", "Dim<256>", "Mask256", "StoreId", "slot table"]
 related = ["tenet::the_consumer_provides_the_backing_memory_of_a_column"]

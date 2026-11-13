@@ -26,7 +26,7 @@ No dependency on polka-*, std, alloc, or external crates in any of
 the three crates. Designed for extraction to a separate repository.
 '''
 origin = "stated"
-standing = "pending"
+standing = "held"
 keywords = ["no dependency", "polka", "std", "alloc", "external crates", "no_std", "three crates"]
 
 [[tenet]]
@@ -199,7 +199,7 @@ quote = '''
   Governs what form every type takes. (T1 L140-162 §3)
 '''
 origin = "stated"
-standing = "pending"
+standing = "held"
 keywords = ["type taxonomy", "trait", "newtype", "repr(C) enum", "primitive", "cross-cutting"]
 
 [[tenet]]
@@ -366,7 +366,7 @@ quote = '''
 - inventory link-time registration = complete before work (#55)
 '''
 origin = "stated"
-standing = "pending"
+standing = "held"
 keywords = ["inventory", "link-time registration", "complete before work", "design principle", "#55"]
 
 [[tenet]]

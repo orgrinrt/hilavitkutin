@@ -12,8 +12,9 @@ Where extension across an ABI boundary is required, use registered
 traits + `repr(C)` descriptors (inventory pattern), not `dyn`.
 '''
 origin = "stated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: its lines mock/PRINCIPLES.md.tmpl:78-79 were written by 8e63891 of 2026-04-20, which ported the shared principles fragment of the workspace into the template, and not by the seed 680a672, and no capture of op speaks of that fragment; the founding spec gives the C layout and function pointers as the minimal ABI surface at mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2226-2226, which row repr_c_and_function_pointers_give_the_minimal_abi_surface holds, while the inventory registration it names at mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2227-2227 is held pending in row link_time_registration_through_inventory_is_complete_before_work_starts and stands against row discovery_is_pull_based_only_and_linker_section_scanning_registration_is_rejected; searched mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2198-2238 and the round topic mock/design_rounds/202604200055/202603111529_topic.paradigm-and-architecture.md:1117-1152, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: its lines mock/PRINCIPLES.md.tmpl:78-79 were written by 8e63891 of 2026-04-20, which ported the shared principles fragment of the workspace into the template, and not by the seed 680a672, and no capture of op speaks of that fragment; the founding spec gives the C layout and function pointers as the minimal ABI surface at mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2226-2226, which row repr_c_and_function_pointers_give_the_minimal_abi_surface holds, while the inventory registration it names at mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2227-2227 is held pending in row link_time_registration_through_inventory_is_complete_before_work_starts and stands against row discovery_is_pull_based_only_and_linker_section_scanning_registration_is_rejected; searched mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2198-2238 and the round topic mock/design_rounds/202604200055/202603111529_topic.paradigm-and-architecture.md:1117-1152, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["ABI boundary", "registered traits", "repr(C) descriptors", "inventory pattern", "extension", "no dyn"]
 related = ["tenet::repr_c_and_function_pointers_give_the_minimal_abi_surface", "tenet::link_time_registration_through_inventory_is_complete_before_work_starts"]
 
@@ -42,7 +43,7 @@ There is no fourth "bare primitive" category. Raw `u8`..`u128`,
 source; every numeric identity flows through arvo's type system.
 '''
 origin = "stated"
-standing = "pending"
+standing = "held"
 keywords = ["type taxonomy", "trait", "newtype", "repr(C) enum", "no fourth category", "UFixed", "ContentHash", "Priority"]
 related = ["tenet::the_type_taxonomy_is_trait_newtype_repr_c_enum_or_primitive_and_it_governs_the_form_of_every_type"]
 
@@ -68,8 +69,9 @@ layer: capacity is a compile-time choice the consumer makes once,
 not a runtime allocation the callee fabricates.
 '''
 origin = "stated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: its lines mock/PRINCIPLES.md.tmpl:102-111 were written by 8e63891 of 2026-04-20, which ported the shared principles fragment of the workspace into the template, and not by the seed 680a672, and no capture of op speaks of that fragment; the founding spec sizes the resource collections by a const generic at mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:535-545, which row a_resource_is_scalars_and_const_sized_collections_only holds, and the arvo crates at mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:142-143, which row the_arvo_crates_are_no_std_without_alloc_and_sized_by_const_generics holds, while a column holds as many records as the consumer brings and hilavitkutin does not know the count ahead of time at mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1462-1463, so the spec does not put the capacity of every container at type level, and op allows large and even dynamic allocations on a statically typed backing at mock/research/202611130850_the-record-read-whole/OP-ANSWERS-FRAGMENT.md:25-25; searched mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:130-270, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:531-560, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1455-1475 and mock/research/202611130850_the-record-read-whole/OP-ANSWERS-FRAGMENT.md:19-25, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: its lines mock/PRINCIPLES.md.tmpl:102-111 were written by 8e63891 of 2026-04-20, which ported the shared principles fragment of the workspace into the template, and not by the seed 680a672, and no capture of op speaks of that fragment; the founding spec sizes the resource collections by a const generic at mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:535-545, which row a_resource_is_scalars_and_const_sized_collections_only holds, and the arvo crates at mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:142-143, which row the_arvo_crates_are_no_std_without_alloc_and_sized_by_const_generics holds, while a column holds as many records as the consumer brings and hilavitkutin does not know the count ahead of time at mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1462-1463, so the spec does not put the capacity of every container at type level, and op allows large and even dynamic allocations on a statically typed backing at mock/research/202611130850_the-record-read-whole/OP-ANSWERS-FRAGMENT.md:25-25; searched mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:130-270, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:531-560, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1455-1475 and mock/research/202611130850_the-record-read-whole/OP-ANSWERS-FRAGMENT.md:19-25, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["const capacity", "type-level size", "Mask64", "Mask256", "Seq", "Map", "Cap", "no runtime resize"]
 
 [[tenet]]
@@ -87,8 +89,9 @@ No parallel versioning tables, no parallel serialization paths, no
 "fast path" alongside a "slow path". One mechanism per concern.
 '''
 origin = "stated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: its lines mock/PRINCIPLES.md.tmpl:113-117 were written by 8e63891 of 2026-04-20, which ported the shared principles fragment of the workspace into the template, and not by the seed 680a672, and no capture of op speaks of that fragment; the founding spec says there is no ad hoc logic and only reusable abstractions at mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2229-2229, which row there_is_no_ad_hoc_logic_and_only_reusable_abstractions holds, and not that of two subsystems solving one problem one must go, nor anything of versioning tables, serialisation paths or a fast path beside a slow one; searched mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2198-2300, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: its lines mock/PRINCIPLES.md.tmpl:113-117 were written by 8e63891 of 2026-04-20, which ported the shared principles fragment of the workspace into the template, and not by the seed 680a672, and no capture of op speaks of that fragment; the founding spec says there is no ad hoc logic and only reusable abstractions at mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2229-2229, which row there_is_no_ad_hoc_logic_and_only_reusable_abstractions holds, and not that of two subsystems solving one problem one must go, nor anything of versioning tables, serialisation paths or a fast path beside a slow one; searched mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2198-2300, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["one mechanism", "not two", "parallel versioning", "parallel serialization", "fast path", "slow path"]
 
 [[tenet]]
@@ -109,8 +112,9 @@ versus `Column` is intent (persistent / cold versus hot / per-morsel),
 not a separate mechanism.
 '''
 origin = "stated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: its source mock/PRINCIPLES.md.tmpl:119-126 was written by the round commit 18fcb5d of 2026-05-30, the unified columnar storage round, and not by the seed commit 680a672, so it is the text of that round and not founding, and no passage of his states it; the bench-decided passage mock/research/202606210600_resource-storage-model-canonical-addendum.md:17-24 (row the_value_of_a_resource_is_one_contiguous_record_blob_and_the_per_member_column_decomposition_was_refuted_by_bench) refutes its decomposition of every aggregate into scalar columns for the value of a resource, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: its source mock/PRINCIPLES.md.tmpl:119-126 was written by the round commit 18fcb5d of 2026-05-30, the unified columnar storage round, and not by the seed commit 680a672, so it is the text of that round and not founding, and no passage of his states it; the bench-decided passage mock/research/202606210600_resource-storage-model-canonical-addendum.md:17-24 (row the_value_of_a_resource_is_one_contiguous_record_blob_and_the_per_member_column_decomposition_was_refuted_by_bench) refutes its decomposition of every aggregate into scalar columns for the value of a resource, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["unified columnar storage", "ColumnStorage", "ColumnValue", "MemoryProvider", "resource", "column", "execution plan", "struct-of-arrays"]
 
 [[tenet]]
@@ -130,8 +134,9 @@ not two" applied to the data plane: the engine accreted disjoint arenas
 once, and unwinding them onto the one store is the correction.
 '''
 origin = "stated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: its source mock/PRINCIPLES.md.tmpl:128-133 was written by the round commit 18fcb5d of 2026-05-30, the unified columnar storage round, and not by the seed commit 680a672, so it is the text of that round and not founding, and no passage of his states it, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: its source mock/PRINCIPLES.md.tmpl:128-133 was written by the round commit 18fcb5d of 2026-05-30, the unified columnar storage round, and not by the seed commit 680a672, so it is the text of that round and not founding, and no passage of his states it, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["no bespoke storage", "arena", "MaybeUninit pool", "column", "ColumnStorage", "store markers", "one mechanism"]
 related = ["tenet::there_is_one_mechanism_per_concern_and_where_two_subsystems_solve_one_problem_differently_one_must_go", "tenet::all_engine_runtime_state_lives_in_one_columnar_store_and_a_resource_versus_a_column_is_intent_and_not_mechanism"]
 
@@ -149,8 +154,9 @@ cache lines), which is pool coordination, not consumer data. A storage
 lint enforces the rule.
 '''
 origin = "stated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: its source mock/PRINCIPLES.md.tmpl:135-138 was written by the round commit 18fcb5d of 2026-05-30, the unified columnar storage round, and not by the seed commit 680a672, so it is the text of that round and not founding, and no passage of his states it, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: its source mock/PRINCIPLES.md.tmpl:135-138 was written by the round commit 18fcb5d of 2026-05-30, the unified columnar storage round, and not by the seed commit 680a672, so it is the text of that round and not founding, and no passage of his states it, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["PoolFrame", "fixed array exception", "atomic progress slots", "wake slots", "storage lint", "pool coordination"]
 related = ["tenet::no_subsystem_has_bespoke_storage_and_a_subsystem_needing_to_hold_n_things_uses_a_column"]
 
@@ -170,8 +176,9 @@ for truly closed sets only (`Priority`, `ErrorClass`, `FieldKind`,
 `HealthStatus`).
 '''
 origin = "stated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: its lines mock/PRINCIPLES.md.tmpl:140-145 were written by 8e63891 of 2026-04-20, which ported the shared principles fragment of the workspace into the template, and not by the seed 680a672, and no capture of op speaks of that fragment; the founding spec states the four forms of type at mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2205-2206, which row the_type_taxonomy_is_trait_newtype_repr_c_enum_or_primitive_and_it_governs_the_form_of_every_type holds, and not that an enum is for a truly closed set only, and it says at mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2105-2107 that hilavitkutin itself has no registration attribute, as row a_unit_is_manually_implementable_and_hilavitkutin_itself_provides_no_registration_attribute holds, while the inventory pattern this row names stands against row discovery_is_pull_based_only_and_linker_section_scanning_registration_is_rejected; searched mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2082-2196, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2198-2238 and the round topic mock/design_rounds/202604200055/202603111529_topic.paradigm-and-architecture.md:140-162, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: its lines mock/PRINCIPLES.md.tmpl:140-145 were written by 8e63891 of 2026-04-20, which ported the shared principles fragment of the workspace into the template, and not by the seed 680a672, and no capture of op speaks of that fragment; the founding spec states the four forms of type at mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2205-2206, which row the_type_taxonomy_is_trait_newtype_repr_c_enum_or_primitive_and_it_governs_the_form_of_every_type holds, and not that an enum is for a truly closed set only, and it says at mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2105-2107 that hilavitkutin itself has no registration attribute, as row a_unit_is_manually_implementable_and_hilavitkutin_itself_provides_no_registration_attribute holds, while the inventory pattern this row names stands against row discovery_is_pull_based_only_and_linker_section_scanning_registration_is_rejected; searched mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2082-2196, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2198-2238 and the round topic mock/design_rounds/202604200055/202603111529_topic.paradigm-and-architecture.md:140-162, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["registered traits", "repr(C) enum", "closed set", "Priority", "ErrorClass", "FieldKind", "HealthStatus", "#[register]"]
 related = ["tenet::a_position_where_two_implementations_with_different_behaviour_are_imaginable_is_a_trait_slot_and_never_an_extensible_enum"]
 
@@ -191,8 +198,9 @@ descriptor's name field is a const pointer to it. No duplication,
 no copies, no parallel naming.
 '''
 origin = "stated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: its lines mock/PRINCIPLES.md.tmpl:147-151 were written by 8e63891 of 2026-04-20, which ported the shared principles fragment of the workspace into the template, and not by the seed 680a672, and no capture of op speaks of that fragment; the founding spec names a constant name only as the way saalis registers its own units, at mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2105-2107, where it says hilavitkutin itself has no registration attribute, and it says nothing of a descriptor name pointing at it; searched mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2082-2196 and mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2198-2238, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: its lines mock/PRINCIPLES.md.tmpl:147-151 were written by 8e63891 of 2026-04-20, which ported the shared principles fragment of the workspace into the template, and not by the seed 680a672, and no capture of op speaks of that fragment; the founding spec names a constant name only as the way saalis registers its own units, at mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2105-2107, where it says hilavitkutin itself has no registration attribute, and it says nothing of a descriptor name pointing at it; searched mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2082-2196 and mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2198-2238, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["Named::NAME", "single source of truth", "descriptor name", "const pointer", "registrable type"]
 
 [[tenet]]
@@ -209,8 +217,9 @@ levels, HTTP methods, all ZSTs. Marker types carry compile-time
 identity without runtime footprint.
 '''
 origin = "stated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: its lines mock/PRINCIPLES.md.tmpl:153-157 were written by 8e63891 of 2026-04-20, which ported the shared principles fragment of the workspace into the template, and not by the seed 680a672, and no capture of op speaks of that fragment; the founding spec says ZSTs are the logic layer at mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2222-2222, which row zero_sized_types_are_the_logic_layer holds, and op asks for the typestate to be designed first with ZSTs and markers at mock/research/202611130850_the-record-read-whole/OP-ANSWERS-FRAGMENT.md:13-17, but no passage names the schema kinds, events, settings domains, storage locations, access levels and HTTP methods this row lists; searched mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2198-2238 and mock/research/202611130850_the-record-read-whole/OP-ANSWERS-FRAGMENT.md:7-17, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: its lines mock/PRINCIPLES.md.tmpl:153-157 were written by 8e63891 of 2026-04-20, which ported the shared principles fragment of the workspace into the template, and not by the seed 680a672, and no capture of op speaks of that fragment; the founding spec says ZSTs are the logic layer at mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2222-2222, which row zero_sized_types_are_the_logic_layer holds, and op asks for the typestate to be designed first with ZSTs and markers at mock/research/202611130850_the-record-read-whole/OP-ANSWERS-FRAGMENT.md:13-17, but no passage names the schema kinds, events, settings domains, storage locations, access levels and HTTP methods this row lists; searched mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2198-2238 and mock/research/202611130850_the-record-read-whole/OP-ANSWERS-FRAGMENT.md:7-17, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["ZST markers", "discrimination", "schema kinds", "events", "access levels", "compile-time identity", "no runtime footprint"]
 related = ["tenet::zero_sized_types_are_the_logic_layer"]
 
@@ -220,6 +229,7 @@ subject = "principles"
 what = "Every crate is no standard library with no allocation. Consumers provide a memory provider: the os tier uses mmap, and the no_os tier requires the consumer to plug one in."
 mechanism = "`#![no_std]`; `MemoryProvider` (os tier uses mmap; no_os tier: consumer plugs one in)."
 source = "mock/PRINCIPLES.md.tmpl:198-200"
+rev = "d793fa84071089b2b3d93da05b329aa8d7cfac43"
 provenance = ["mock::PRINCIPLES::#no-std-no-alloc"]
 quote = '''
 Every crate is `#![no_std]` with no allocation. Consumers provide a
@@ -239,6 +249,7 @@ subject = "principles"
 what = "There is no std tier."
 rejects = ["a std tier"]
 source = "mock/PRINCIPLES.md.tmpl:200-200"
+rev = "d793fa84071089b2b3d93da05b329aa8d7cfac43"
 provenance = ["mock::PRINCIPLES::#no-std-no-alloc"]
 quote = '''
 to plug one in). There is no std tier, and no crate here spawns
@@ -258,6 +269,7 @@ what = "No crate in the family spawns threads. The executor behind the thread po
 mechanism = "`ThreadPoolApi`."
 rejects = ["a crate in the family spawning threads"]
 source = "mock/PRINCIPLES.md.tmpl:200-202"
+rev = "d793fa84071089b2b3d93da05b329aa8d7cfac43"
 provenance = ["mock::PRINCIPLES::#no-std-no-alloc"]
 quote = '''
 to plug one in). There is no std tier, and no crate here spawns
@@ -322,8 +334,9 @@ engine hands it its closures once, on the first parallel run, and
 the workers persist for the pipeline's lifetime. The engine chooses
 '''
 origin = "stated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: its source mock/PRINCIPLES.md.tmpl:227-229 was written by the round commit e3fa3f4 of 2026-09-19 and not by the seed commit 680a672, and his answer mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:20-32 puts the executor in the consumer without saying when or how the engine hands it work, so handing the closures once on the first parallel run is that round deriving from his answer; the part that is his, the pool as the consumer executor whose workers persist for the pipeline lifetime, is the row the_pool_is_the_consumer_s_executor_behind_the_executor_contract_and_its_workers_persist_for_the_pipeline_s_lifetime, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: its source mock/PRINCIPLES.md.tmpl:227-229 was written by the round commit e3fa3f4 of 2026-09-19 and not by the seed commit 680a672, and his answer mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:20-32 puts the executor in the consumer without saying when or how the engine hands it work, so handing the closures once on the first parallel run is that round deriving from his answer; the part that is his, the pool as the consumer executor whose workers persist for the pipeline lifetime, is the row the_pool_is_the_consumer_s_executor_behind_the_executor_contract_and_its_workers_persist_for_the_pipeline_s_lifetime, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["ThreadPoolApi", "consumer executor", "first parallel run", "closures"]
 related = ["tenet::the_pool_is_the_consumer_s_executor_behind_the_executor_contract_and_its_workers_persist_for_the_pipeline_s_lifetime"]
 
@@ -359,6 +372,7 @@ subject = "principles"
 what = "The canonical terms are pipeline, core, phase, waist, trunk, fiber, branch, bridge, morsel, micro-morsel and record. The dead terms are chain, chain group, partition, archetype, entity, row, entry and order, and they are never used."
 rejects = ["chain", "chain group", "partition", "archetype", "entity", "row", "entry", "order"]
 source = "mock/PRINCIPLES.md.tmpl:281-287"
+rev = "d793fa84071089b2b3d93da05b329aa8d7cfac43"
 provenance = ["mock::PRINCIPLES::#vocabulary-discipline"]
 quote = '''
 ## Vocabulary discipline
@@ -370,7 +384,7 @@ Never use dead terms: chain, chain group, partition, archetype,
 entity, row, entry, order.
 '''
 origin = "stated"
-standing = "pending"
+standing = "held"
 keywords = ["vocabulary discipline", "canonical terms", "dead terms", "entry", "record", "micro-morsel", "waist"]
 related = ["tenet::the_dead_terms_chain_chain_group_partition_archetype_entity_row_and_order_have_named_replacements", "tenet::the_hierarchy_runs_from_pipeline_down_through_phase_trunk_fiber_and_morsel_to_entry"]
 
@@ -418,8 +432,9 @@ nowhere) exists and is unwired.
 '''
 origin = "proposed"
 written_by = "topic n-way-record-split-is-not-convergence of 2026-07-19, round 202607192110, agent-written"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["non-canonical mechanism", "load-bearing drift", "single-trunk phase", "serial", "head and tail", "W1", "faster than nothing"]
 related = ["tenet::head_and_tail_convergence_is_designed_and_not_built_and_a_single_trunk_phase_runs_serially_until_it_is", "tenet::the_n_way_record_split_of_a_single_trunk_phase_is_not_head_and_tail_convergence_and_is_drift"]
 
@@ -461,8 +476,9 @@ five, and the five that remain are pre-existing rather than introduced here.
 '''
 origin = "proposed"
 written_by = "source changelists of rounds 202608090500 and 202608090700, agent-written; the earlier one records the conflict for op and the later one corrects it"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["lint allow", "rustfmt::skip", "same-line requirement", "opening brace", "strict gate", "decorative allow", "formatter"]
 rejects = ["the rule as written cannot be satisfied without #[rustfmt::skip] or a change to the rule", "nothing was wrongly suppressed"]
 related = ["tenet::the_lint_allow_escape_hatch_is_for_a_genuinely_unavoidable_boundary_and_always_carries_a_tracked_remediation_task"]
