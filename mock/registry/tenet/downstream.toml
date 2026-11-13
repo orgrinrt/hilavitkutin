@@ -100,3 +100,96 @@ written_by = "the design template of the workspace, agent-written, undated"
 standing = "provisional"
 subject = "downstream"
 keywords = ["downstream consumers", "signal frameworks", "DAG frameworks", "language runtimes", "pipeline-shaped workloads", "register units", "plan dispatch adapt loop"]
+
+[[tenet]]
+id = "loimu_is_an_old_reference_that_hilavitkutin_primarily_replaces"
+what = "Loimu is an old reference. Hilavitkutin is primarily the replacement for it. Restarting loimu later on hilavitkutin is a pending consideration, and loimu is not remembered as important as anything other than a reference."
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS-14.md:4-4"
+provenance = ["mock::research::202611130850_the-record-read-whole::OP-ANSWERS-14::#op-s-words-batch-14-13-november-2026-about-10-55-utc-said-unprompted"]
+quote = '''
+And loimu is an old reference. I don't remember revitalizing it. Hilavitkutin is primarily the replacement for it, with a pending consideration to later down the line restart loimu based on hilavitkutin, I can't remember loimu being important as anything other than reference, so so weird you mention it at all
+'''
+origin = "stated"
+standing = "provisional"
+subject = "downstream"
+keywords = ["loimu", "reference", "replacement", "downstream user", "restart", "consumer"]
+rules_out = ["loimu as a live downstream user of hilavitkutin"]
+cites = ["loimu_s_layers_stay_in_loimu_and_hilavitkutin_provides_the_foundation", "loimu_double_buffers_record_data_and_its_readers_get_the_frozen_snapshot", "polka_and_saalis_use_the_full_pipeline_and_loimu_uses_only_the_scheduler_abstractions", "the_per_project_defaults_are_sequential_for_polka_dots_mixed_for_saalis_and_phased_with_convergence_for_loimu", "loimu_keeps_its_seven_access_modes_and_maps_them_to_read_and_write_at_the_boundary"]
+
+[[tenet]]
+id = "ikiuni_s_design_applies_every_change_at_the_frame_barrier_by_a_double_buffer_swap"
+what = "In ikiuni, a reference and not hilavitkutin's record, a change never takes effect in place. It applies at the next frame barrier: the frame a tick computes over is read-only for the whole computation, and every change the tick produces is published together into the next frame by a double-buffer swap. A tick reads the previous committed frame as an immutable input and writes the next frame as output, and no reader within a tick observes another reader's write."
+source = "mock/research/202611130850_the-record-read-whole/IKIUNI.md:34-38"
+provenance = ["mock::research::202611130850_the-record-read-whole::IKIUNI::#mock-research-0000-canonical-design-firstmost-reference-000-fundamentals-index-md-lines-177-to-186"]
+quote = '''
+> A Mutation never takes effect in place. It applies at the next frame barrier: the frame a tick computes
+> over is read-only for the whole of that computation, and every Mutation the tick produces is published
+> together into the next frame by a double-buffer swap. A tick therefore reads the previous committed frame
+> as an immutable input and writes the next frame as output, and no reader within a tick observes another
+> reader's write. This application-timing law is what makes the order among a tick's own Mutations a pure
+'''
+origin = "proposed"
+written_by = "ikiuni's canonical design, 000_FUNDAMENTALS_INDEX, at orgrinrt/ikiuni dev 634be3b; ikiuni's, a reference, not hilavitkutin's record"
+standing = "provisional"
+subject = "downstream"
+keywords = ["ikiuni", "double buffer", "frame barrier", "mutation", "previous committed frame", "next frame", "swap", "reference"]
+cites = ["loimu_double_buffers_record_data_and_its_readers_get_the_frozen_snapshot"]
+
+[[tenet]]
+id = "in_ikiuni_the_frame_close_bracket_of_the_tick_loop_swaps_the_double_buffer_and_it_is_not_a_system"
+what = "In ikiuni, a reference and not hilavitkutin's record, frame-open and frame-close are reserved structural brackets and not systems. Frame-open ingests the committed frame. Frame-close drains the queue of changes, runs the conservation check, swaps the double buffer and seals the frame. Content systems schedule only in the interior between the brackets and cannot order themselves across one."
+source = "mock/research/202611130850_the-record-read-whole/IKIUNI.md:58-64"
+provenance = ["mock::research::202611130850_the-record-read-whole::IKIUNI::#mock-research-202606221200-imported-design-history-design-archive-2026-06-22-first-canonical-design-done-2026-06-19-settling-200-engine-std-md-lines-51-to-57"]
+quote = '''
+> - **Frame-open and frame-close are reserved structural brackets, not systems.** They ARE the next-frame
+>   keystone (000) made concrete, not nodes with empty dependency lists. Frame-open ingests the committed
+>   frame, delivers the clock and batch constants (200:47), and faults in any queued deltas. Frame-close
+>   drains the Mutation queue (the queue-during/drain-after seam, 200:23), runs the conservation check
+>   (200:43), swaps the double buffer, and seals the frame. Content systems schedule only in the interior
+>   BETWEEN the brackets and cannot, by construction, order themselves across a bracket. A mis-declared
+>   dependency can only mis-order work within the frame, never move it across the barrier that defines the
+'''
+origin = "proposed"
+written_by = "ikiuni's imported design history, settling 200 engine std of 2026-06-19, at orgrinrt/ikiuni dev 634be3b; ikiuni's, a reference, not hilavitkutin's record"
+standing = "provisional"
+subject = "downstream"
+keywords = ["ikiuni", "frame-close", "frame-open", "bracket", "tick loop", "swap", "double buffer", "who rotates", "reference"]
+cites = ["ikiuni_s_design_applies_every_change_at_the_frame_barrier_by_a_double_buffer_swap"]
+
+[[tenet]]
+id = "ikiuni_chose_bevy_s_ecs_because_the_hilavitkutin_stack_was_not_ready"
+what = "In ikiuni, a reference and not hilavitkutin's record, the store of entities and components was decided as bevy's on 16 June 2026, recorded as the user's call: the ideal would be the project's own stack of hilavitkutin, arvo and notko, but that was not ready, so the rebuild worked from existing options."
+source = "mock/research/202611130850_the-record-read-whole/IKIUNI.md:74-80"
+provenance = ["mock::research::202611130850_the-record-read-whole::IKIUNI::#mock-research-202606221200-imported-design-history-design-archive-2026-06-22-first-canonical-design-done-2026-06-16-data-oriented-engine-direction-md-lines-59-to-65"]
+quote = '''
+> ## ECS substrate: DECIDED = bevy_ecs (2026-06-16, user call)
+>
+> `bevy_ecs` used standalone, with rendering, GUI, windowing, and HID input ditched entirely. The ideal
+> would be the project's own `hilavitkutin` + `arvo` + `notko` stack, but that is not ready, so the
+> rebuild works from existing options. `bevy_ecs` is a proven staple for the user's PoC and ideation
+> work; stripped of the render and input layers it is a lean, mature, parallel, archetypal-columnar ECS
+> core, which is the one part needed here and the part bevy does almost perfectly.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "downstream"
+keywords = ["ikiuni", "bevy", "bevy_ecs", "hilavitkutin stack", "not ready", "user call", "reference"]
+
+[[tenet]]
+id = "in_ikiuni_bevy_is_one_engine_behind_a_contract_that_a_later_hilavitkutin_engine_can_satisfy"
+what = "In ikiuni, a reference and not hilavitkutin's record, the models and contracts stay authoritative and bevy's store is one implementation that runs them, recorded as the user's call of 16 June 2026. An abstract runtime contract is what bevy satisfies, so a later engine on the hilavitkutin stack can satisfy the same contract and take bevy's place with no change to the models, the contracts or the systems written against them."
+source = "mock/research/202611130850_the-record-read-whole/IKIUNI.md:84-89"
+provenance = ["mock::research::202611130850_the-record-read-whole::IKIUNI::#mock-research-202606221200-imported-design-history-design-archive-2026-06-22-first-canonical-design-done-2026-06-16-data-oriented-engine-direction-md-lines-74-to-79"]
+quote = '''
+> ## Contracts above bevy: bevy is one swappable engine impl (2026-06-16, user call)
+>
+> The models and contracts stay authoritative; `bevy_ecs` is one implementation that runs them, not the
+> foundation. There is an abstract `runtime` / `engine` contract that bevy satisfies, so a later
+> hilavitkutin-stack engine can satisfy the same contract and swap bevy out with no change to the models,
+> the contracts, or the systems written against them. The contracts (traits) and models (concrete types
+'''
+origin = "stated"
+standing = "provisional"
+subject = "downstream"
+keywords = ["ikiuni", "contract", "swappable engine", "bevy", "hilavitkutin stack", "user call", "reference"]
+cites = ["ikiuni_chose_bevy_s_ecs_because_the_hilavitkutin_stack_was_not_ready"]

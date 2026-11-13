@@ -24,12 +24,15 @@ and is written SPEC below. Rows are cited as `tenet::<id>` and
 
 ## How far the read had come when this was written
 
-This is the second form of the answers, of 13 November 2026, about 11:30
-UTC. The first form went out at 10:15 UTC. Op answered four questions on it
-at about 10:35 UTC; they are in `OP-ANSWERS-13.md` beside this file and are
-`question` rows. On his words the read turned to the unlanded work and to the
-round of May 2026 before anything else, and questions 1, 2, 3 and 6 below
-are revised from what those hold.
+This is the third form of the answers, of 13 November 2026, about 11:30 UTC.
+The first form went out at 10:15 UTC and the second at about 11:10 UTC. Op
+answered four questions on the first form at about 10:35 UTC; they are in
+`OP-ANSWERS-13.md` beside this file and are `question` rows. On his words
+the read turned to the unlanded work and to the round of May 2026 before
+anything else, and questions 1, 2, 3 and 6 below are revised from what those
+hold. At about 10:55 UTC he said that loimu is an old reference and that the
+buffering he recalls may have been discussed in ikiuni; his words are in
+`OP-ANSWERS-14.md`, and what ikiuni holds is in `IKIUNI.md`.
 
 Read whole and first hand: the founding spec, amendments A1 and A2, the
 unified-engine amendment, the resource storage addendum, the governance
@@ -41,10 +44,12 @@ spec and the passages quoted from its body, and op's answers. Read whole by
 the readers, with every quote checked against the file: the seven
 founding-round topics, the founding research notes, the research notes and
 roadmaps from May to July 2026 with the `pre_seed` set, the seed, the design
-and readme templates of the workspace and of every crate, the design rounds
-from the founding one to 28 May 2026 and from 19 June to 13 November 2026,
-and every document that only the branch
-`origin/recover/unlanded-rounds-and-benches` carries.
+and readme templates of the workspace and of every crate, every design round
+from the founding one to 13 November 2026, the sketch findings up to 8 June
+2026, and every document that only the branch
+`origin/recover/unlanded-rounds-and-benches` carries. Ikiuni was not read
+whole. It was searched for buffering, swaps and maintenance units, and the
+passages found were read in their files.
 
 That branch holds less unread design than its size suggests. Its design
 rounds, research notes, seed and sketches are on `dev` already, byte for
@@ -53,13 +58,11 @@ byte. What only it carries is the bench findings under
 design templates. The template passages that say something about the design
 are copied in `RECOVERED.md` beside this file.
 
-Not yet read when this was written: the design rounds from 29 May to 19 June
-2026, the sketches' findings files, the bench findings on `dev`, and the
-research imported from polka-dots and saalis. `LEDGER.md` lists every file
-with its state. Where an answer says the record has no passage for
-something, that is a statement about the part read, and the unread part can
-still hold one.
-
+Not yet read when this was written: the sketch findings from 9 June 2026 on,
+the bench findings on `dev`, and the research imported from polka-dots and
+saalis. `LEDGER.md` lists every file with its state. Where an answer says
+the record has no passage for something, that is a statement about the part
+read, and the unread part can still hold one.
 ## 1. Reading the value a store held at frame start, and what the counters are for
 
 ### What the record decides
@@ -80,9 +83,18 @@ write, and no buffered store.
 > - No triggers, no emits — data access patterns fully capture ordering
 >   (T1 decisions #17, #25)
 
-The founding round took up exactly this question for loimu, the downstream
-user that double and triple buffers, and resolved it. The spec cites the
-resolution at line 678 for the rule that a write implies a read.
+The founding round took up exactly this question for loimu, the earlier
+project whose data was buffered two and three deep, and resolved it. The
+spec cites the resolution at line 678 for the rule that a write implies a
+read. Loimu is no live user of hilavitkutin. Op said on 13 November that it
+is an old reference which hilavitkutin primarily replaces
+(`tenet::loimu_is_an_old_reference_that_hilavitkutin_primarily_replaces`),
+so where the founding texts below say loimu, they describe the reference the
+design was worked out against.
+
+`research/202611130850_the-record-read-whole/OP-ANSWERS-14.md:4-4`
+
+> And loimu is an old reference. I don't remember revitalizing it. Hilavitkutin is primarily the replacement for it, with a pending consideration to later down the line restart loimu based on hilavitkutin, I can't remember loimu being important as anything other than reference, so so weird you mention it at all
 
 `design_rounds/202604200055/202603141800_topic.hilavitkutin-core-design.md:643-661`
 
@@ -106,10 +118,11 @@ resolution at line 678 for the rule that a write implies a read.
 > added without changing the WorkUnit trait — it would be a new store
 > wrapper type like `Exclusive<Resource<T>>` in the AccessSet.
 
-So the frozen read is loimu's, built in loimu's layer over a two-mode
-hilavitkutin. The loimu research the founding round read shows how: each
-field is several columns, and the reader of the frozen one and the writer of
-the live one touch different stores.
+So the founding round keeps hilavitkutin at two modes and puts the frozen
+read in a layer built over it, by whoever consumes it. The loimu research
+the founding round read shows how that reference did it: each field is
+several columns, and the reader of the frozen one and the writer of the live
+one touch different stores.
 
 `design_rounds/202604200055/202603141800_research.loimu-dag.md:299-301`
 
@@ -423,11 +436,12 @@ Rows: `tenet::ordering_is_the_data_flow`,
 
 Op's first answer of 13 November says the counters were designed for exactly
 this, that known downstream users triple buffer, and that the spec should
-answer it at least in intent. The record agrees on the downstream users and
-on the intent that a consumer can buffer two or three deep over
-hilavitkutin. In the part read it does not give the counters that job: no
-passage has a counter or a generation select or hold an earlier value of a
-store.
+answer it at least in intent. The record has the intent that a consumer can
+buffer two or three deep over hilavitkutin. The only user it names as doing
+so is loimu, which by op's later words of that day is a reference and no
+live user. In the part read the record does not give the counters that job:
+no passage has a counter or a generation select or hold an earlier value of
+a store.
 
 His second answer, on who rotates, chose none of the three options. He
 recalled research, spikes and perhaps benches on multi-buffering and swaps,
@@ -522,18 +536,76 @@ records a per-store dirty mask standing in their place
 > given no-alloc and a per-fiber morsel count that varies with the window, and how they compose with
 > the existing `store_dirty` mask rather than duplicating it. Do not start this one by writing code.
 
-So the record holds a hilavitkutin of read and write that leaves buffering
-to the consumer, one unit that double-buffers its own snapshot and flips it
-itself, and a proposal that hilavitkutin carry a buffering primitive. Who
-rotates a store that is read at its frame-start value while its next value
-is written in the same pass, it does not say. The row
-`question::who_rotates_a_buffered_store` carries the three options and op's
-words.
+Op also said on 13 November that the buffering he recalls may have been
+discussed in ikiuni, the engine concept repository that weighed hilavitkutin
+against bevy. Ikiuni is a reference and not hilavitkutin's record. It does
+hold a buffering design, and it does say who rotates. The passages are
+copied in `IKIUNI.md` beside this file, from ikiuni's `dev`.
 
-The rounds of 29 May to 19 June 2026, the sketch findings and the bench
-findings on `dev` were not read when this was written. The rounds of 19 June
-to 12 November were read, and they hold the swap round quoted above and no
-buffering of a store.
+Ikiuni buffers the whole frame two deep. Every computation of a tick reads
+the previous committed frame, which is read-only for the whole tick, and
+every change is published into the next frame together
+(`tenet::ikiuni_s_design_applies_every_change_at_the_frame_barrier_by_a_double_buffer_swap`).
+
+`research/202611130850_the-record-read-whole/IKIUNI.md:34-38`
+
+> > A Mutation never takes effect in place. It applies at the next frame barrier: the frame a tick computes
+> > over is read-only for the whole of that computation, and every Mutation the tick produces is published
+> > together into the next frame by a double-buffer swap. A tick therefore reads the previous committed frame
+> > as an immutable input and writes the next frame as output, and no reader within a tick observes another
+> > reader's write. This application-timing law is what makes the order among a tick's own Mutations a pure
+
+The swap is done by the tick loop's closing bracket, which ikiuni says is a
+reserved part of the frame and not a system
+(`tenet::in_ikiuni_the_frame_close_bracket_of_the_tick_loop_swaps_the_double_buffer_and_it_is_not_a_system`).
+
+`research/202611130850_the-record-read-whole/IKIUNI.md:58-64`
+
+> > - **Frame-open and frame-close are reserved structural brackets, not systems.** They ARE the next-frame
+> >   keystone (000) made concrete, not nodes with empty dependency lists. Frame-open ingests the committed
+> >   frame, delivers the clock and batch constants (200:47), and faults in any queued deltas. Frame-close
+> >   drains the Mutation queue (the queue-during/drain-after seam, 200:23), runs the conservation check
+> >   (200:43), swaps the double buffer, and seals the frame. Content systems schedule only in the interior
+> >   BETWEEN the brackets and cannot, by construction, order themselves across a bracket. A mis-declared
+> >   dependency can only mis-order work within the frame, never move it across the barrier that defines the
+
+That design was written for an engine on bevy. Ikiuni records, as the user's
+call of 16 June 2026, that the hilavitkutin stack would have been the ideal
+and was not ready, and that the engine stays behind a contract a later
+hilavitkutin engine can satisfy
+(`tenet::ikiuni_chose_bevy_s_ecs_because_the_hilavitkutin_stack_was_not_ready`,
+`tenet::in_ikiuni_bevy_is_one_engine_behind_a_contract_that_a_later_hilavitkutin_engine_can_satisfy`).
+
+`research/202611130850_the-record-read-whole/IKIUNI.md:74-80`
+
+> > ## ECS substrate: DECIDED = bevy_ecs (2026-06-16, user call)
+> >
+> > `bevy_ecs` used standalone, with rendering, GUI, windowing, and HID input ditched entirely. The ideal
+> > would be the project's own `hilavitkutin` + `arvo` + `notko` stack, but that is not ready, so the
+> > rebuild works from existing options. `bevy_ecs` is a proven staple for the user's PoC and ideation
+> > work; stripped of the render and input layers it is a lean, mature, parallel, archetypal-columnar ECS
+> > core, which is the one part needed here and the part bevy does almost perfectly.
+
+Ikiuni's design is two deep and for the whole frame. A search of its
+principles, its canonical design and its imported design history finds
+double buffering in 20 files and finds triple buffering, multi buffering
+and a maintenance unit in none. It has no passage on how the closing
+bracket's swap would be carried by hilavitkutin's units, stores or schedule.
+
+So the record holds a hilavitkutin of read and write that leaves buffering
+to the layer over it, one unit that double-buffers its own snapshot and
+flips it itself, a swap of a resource's whole value between frames, and a
+proposal that hilavitkutin carry a buffering primitive. Ikiuni, beside the
+record, holds a frame buffered two deep and swapped by the frame's closing
+bracket. Who rotates a store of hilavitkutin that is read at its frame-start
+value while its next value is written in the same pass, the record does not
+say. The row `question::who_rotates_a_buffered_store` carries the three
+options and op's words.
+
+The sketch findings from 9 June 2026 on, the bench findings on `dev` and the
+imported research were not read when this was written. Every design round
+was read, and the rounds hold the swap round quoted above and no buffering
+of a store.
 
 ## 2. Columns of different record counts
 
