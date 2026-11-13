@@ -20,3 +20,6 @@ windows-sys = { version = "0.52", default-features = false, features = ["Win32_S
 
 [features]
 default = []
+
+[build-dependencies]
+hilavitkutin-build.workspace = true

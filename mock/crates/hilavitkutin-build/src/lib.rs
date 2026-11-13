@@ -1,7 +1,9 @@
 //! hilavitkutin-build: shared build-dependency crate.
 //!
-//! A consumer's `build.rs` resolves a [`BuildConfig`] from cargo's
-//! environment and asks this crate what to print and what to write.
+//! A consumer's `build.rs` calls [`configure`] with a closure that reads
+//! cargo's environment, and prints the directives it writes: the cfg
+//! and the crate's rustc flags, which the workspace wrapper
+//! ([`write_wrapper`]) appends to its rustc.
 //! The crate optimises HOW code is compiled (pragmas, profiles, rustc
 //! wrapper), not what it does. Standalone, no runtime deps.
 //!
@@ -22,7 +24,9 @@
 //! [`axis`] holds the three-axis classification (Target / Tier /
 //! Passes). [`config`] exposes `BuildConfig::from_cargo()`.
 //! [`requirements`] contains the static pragma-to-external-tool
-//! table. [`bootstrap`] writes the directives and the config file.
+//! table. [`flags`] writes each pragma's rustc flags. [`bootstrap`]
+//! reads the environment through the script's closure and writes the
+//! directives, the wrapper and the config file.
 //! [`guards`] exposes `compile_error!` macro helpers.
 //!
 //! # Pragma roster
@@ -55,14 +59,23 @@
 pub mod axis;
 pub mod bootstrap;
 pub mod config;
+pub mod flags;
 pub mod guards;
 pub mod pragma;
 pub mod profile;
 pub mod requirements;
 
 pub use axis::{PassesAxis, TargetAxis, TierAxis};
-pub use bootstrap::{write_config_file, write_directives};
+pub use bootstrap::{
+    Env,
+    configure,
+    configure_with,
+    write_config_file,
+    write_directives,
+    write_wrapper,
+};
 pub use config::BuildConfig;
+pub use flags::write_rustflags;
 pub use pragma::{Pragma, PragmaIter, PragmaSet};
 pub use profile::Profile;
 pub use requirements::{PragmaRequirement, REQUIREMENTS, Requirement, requirements_for};

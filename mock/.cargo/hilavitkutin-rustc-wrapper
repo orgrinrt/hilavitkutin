@@ -1,0 +1,3 @@
+#!/bin/sh
+# Written by hilavitkutin-build: appends the flags a crate's build script chose for it.
+exec "$@" $HILAVITKUTIN_BUILD_RUSTFLAGS

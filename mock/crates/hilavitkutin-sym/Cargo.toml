@@ -10,3 +10,6 @@ repository.workspace = true
 arvo.workspace = true
 arvo-bits.workspace = true
 notko.workspace = true
+
+[build-dependencies]
+hilavitkutin-build.workspace = true

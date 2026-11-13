@@ -35,45 +35,51 @@ impl Profile {
     pub const fn default_pragmas(self) -> PragmaSet {
         let base = PragmaSet::new();
         match self {
-            Profile::Dev => base
-                .with(Pragma::ParallelCodegen(0))
-                .with(Pragma::SharedGenerics),
-            Profile::DevOpt => base
-                .with(Pragma::LoopOptimization)
-                .with(Pragma::ParallelCodegen(0))
-                .with(Pragma::SharedGenerics),
-            Profile::Release => base
-                .with(Pragma::LoopOptimization)
-                .with(Pragma::MathPeephole)
-                .with(Pragma::FastMath)
-                .with(Pragma::ExpandedLto)
-                .with(Pragma::Pgo)
-                .with(Pragma::Bolt)
-                .with(Pragma::ParallelCodegen(0)),
-            Profile::Profiling => base
-                .with(Pragma::LoopOptimization)
-                .with(Pragma::MathPeephole)
-                .with(Pragma::FastMath)
-                .with(Pragma::Pgo)
-                .with(Pragma::Bolt)
-                .with(Pragma::Profiling)
-                .with(Pragma::ParallelCodegen(0)),
-            Profile::Ci => base
-                .with(Pragma::LoopOptimization)
-                .with(Pragma::ExpandedLto)
-                .with(Pragma::ParallelCodegen(0)),
+            Profile::Dev => {
+                base.with(Pragma::ParallelCodegen(0))
+                    .with(Pragma::SharedGenerics)
+            },
+            Profile::DevOpt => {
+                base.with(Pragma::LoopOptimization)
+                    .with(Pragma::ParallelCodegen(0))
+                    .with(Pragma::SharedGenerics)
+            },
+            Profile::Release => {
+                base.with(Pragma::LoopOptimization)
+                    .with(Pragma::MathPeephole)
+                    .with(Pragma::FastMath)
+                    .with(Pragma::ExpandedLto)
+                    .with(Pragma::Pgo)
+                    .with(Pragma::Bolt)
+                    .with(Pragma::ParallelCodegen(0))
+            },
+            Profile::Profiling => {
+                base.with(Pragma::LoopOptimization)
+                    .with(Pragma::MathPeephole)
+                    .with(Pragma::FastMath)
+                    .with(Pragma::Pgo)
+                    .with(Pragma::Bolt)
+                    .with(Pragma::Profiling)
+                    .with(Pragma::ParallelCodegen(0))
+            },
+            Profile::Ci => {
+                base.with(Pragma::LoopOptimization)
+                    .with(Pragma::ExpandedLto)
+                    .with(Pragma::ParallelCodegen(0))
+            },
         }
     }
 
-    /// Resolve from a cargo `$PROFILE` env value. Unknown names fall
-    /// through to `Dev` per src CL §Impl-time decisions item 2.
-    pub fn from_cargo_profile(name: &str) -> Self { // lint:allow(no-bare-string) reason: cargo env `$PROFILE` value; tracked: #72
+    /// Resolve from a cargo `$PROFILE` env value.
+    ///
+    /// Cargo passes a build script only `debug` or `release`, by which
+    /// built-in profile the one being built inherits from, so the
+    /// custom profiles are not reachable from it. Anything else falls
+    /// back to `Dev`.
+    pub fn from_cargo_profile(name: &str) -> Self {
+        // lint:allow(no-bare-string) reason: cargo env `$PROFILE` value; tracked: #72
         match name {
-            "dev" => Profile::Dev,
-            "dev-opt" => Profile::DevOpt,
             "release" => Profile::Release,
-            "profiling" => Profile::Profiling,
-            "ci" => Profile::Ci,
             _ => Profile::Dev,
         }
     }

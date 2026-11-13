@@ -14,3 +14,6 @@ arvo.workspace = true
 
 [features]
 default = []
+
+[build-dependencies]
+hilavitkutin-build.workspace = true
