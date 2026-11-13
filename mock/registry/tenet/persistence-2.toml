@@ -128,7 +128,7 @@ Op: "Builds on str and api". The rule said persistence and str do not depend on 
 origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["quote: .data/op-responses/202609181645_hila-std-tier-persistence.md:31-43"]
+ratified_from = ["quote: mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:34-46"]
 keywords = ["persistence", "builds on str and api", "forbidden-imports", "op's ruling", "2026-09-18", "MemoryProvider", "hilavitkutin-str"]
 rejects = ["The rule said persistence and str do not depend on each other"]
 related = ["tenet::the_persistence_crate_is_the_generic_hot_cold_storage_bridge_as_a_standalone_ecosystem_crate", "tenet::the_persistence_crate_does_not_depend_on_the_engine_and_works_on_raw_column_data_through_evict_and_inject_over_a_consumer_provided_column_storage"]

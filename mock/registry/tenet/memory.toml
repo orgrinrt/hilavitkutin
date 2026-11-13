@@ -17,7 +17,7 @@ quote = '''
 '''
 origin = "stated"
 standing = "pending"
-stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (.data/op-responses/202609181645_hila-std-tier-persistence.md:19-29, row platform_tiers_are_os_and_no_os_only_and_the_std_tier_is_deferred_indefinitely), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:22-32, row platform_tiers_are_os_and_no_os_only_and_the_std_tier_is_deferred_indefinitely), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["platform tiers", "no_os", "os", "std", "bare metal", "WASM", "mmap", "catch_unwind"]
 
 [[tenet]]
@@ -31,7 +31,7 @@ quote = '''
 '''
 origin = "stated"
 standing = "pending"
-stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (.data/op-responses/202609181645_hila-std-tier-persistence.md:19-29, row platform_tiers_are_os_and_no_os_only_and_the_std_tier_is_deferred_indefinitely), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:22-32, row platform_tiers_are_os_and_no_os_only_and_the_std_tier_is_deferred_indefinitely), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["os tier", "std tier", "mutually exclusive", "optimisation investment", "platform"]
 related = ["tenet::the_platform_has_three_tiers_no_os_os_and_std"]
 
@@ -91,7 +91,7 @@ Each tier ships defaults. Consumer overrides via scheduler builder.
 '''
 origin = "stated"
 standing = "pending"
-stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (.data/op-responses/202609181645_hila-std-tier-persistence.md:19-29, row the_os_tier_creates_no_threads_and_ships_a_memory_provider_and_a_clock_while_the_engine_hands_the_executor_one_pointer_sized_closure_per_worker), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:22-32, row the_os_tier_creates_no_threads_and_ships_a_memory_provider_and_a_clock_while_the_engine_hands_the_executor_one_pointer_sized_closure_per_worker), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["defaults", "override", "scheduler builder", "platform tier", "consumer"]
 related = ["tenet::the_platform_contracts_are_memory_provider_thread_pool_and_clock_traits_in_the_api_crate"]
 

@@ -105,7 +105,7 @@ provides the ColumnStorage interface.
 origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "pending"
-stamp = 'provisional, 2026-11-13: a passage shows part of it to be his and not the whole of it (.data/op-responses/202609181645_hila-std-tier-persistence.md:31-43; mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2406-2414), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+stamp = 'provisional, 2026-11-13: a passage shows part of it to be his and not the whole of it (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:34-46; mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2406-2414), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["evict", "inject", "ColumnStorage", "raw column data", "no engine dependency", "MemoryProviderApi", "hilavitkutin-str", "R2"]
 related = ["tenet::column_data_moves_out_of_and_into_the_engine_through_evict_dump_and_inject_import"]
 
