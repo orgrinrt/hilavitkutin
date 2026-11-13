@@ -3,14 +3,15 @@
 //! A frozen crate changes only through a line in its ledger. `LEDGER.toml`
 //! carries one line per file: its path, its form, the content hash, the
 //! number of edits made to it so far and whether its form is locked.
-//! `BREAKS.toml` carries one line per edit. The lint reads every file of the
-//! crate, its manifest and any build script with its sources and tests, and
+//! `BREAKS.toml` carries one line per edit. The lint reads every frozen file
+//! of the crate, its manifest and any build script with its sources, and
 //! refuses a file with no line, a line naming a file that is gone, a hash that
 //! is not the file's, an edit count that is not the number of edits recorded,
-//! and a locked line whose count moved since its lock. It also refuses a
-//! dependency in the manifest on anything but `hilavitkutin-contracts`, since
-//! a frozen crate is written from the contracts alone. The crate's documents
-//! (`*.md.tmpl`) and the two ledgers themselves have no line.
+//! and a locked line whose count moved since its lock. The manifest has a
+//! line like any other file, so a dependency added or dropped is a recorded
+//! edit. The files under `tests/` are the harness that runs the crate and are
+//! not frozen. The crate's documents (`*.md.tmpl`) and the two ledgers
+//! themselves have no line either.
 //!
 //! A ledger line is
 //!
@@ -25,8 +26,8 @@
 //!
 //! and a locked line adds `locked_breaks`, the count recorded at its lock. The
 //! form is a word the crate chooses, and the lint checks only that it is
-//! there. A `BREAKS.toml` line is `[[break]]` with `slice`, `file`, `form`,
-//! `hash` and `reason`. Only that subset of TOML is read: one `key = value` a
+//! there. A `BREAKS.toml` line is `[[break]]` with `file`, `hash` and
+//! `reason`, and only `file` is read. Only that subset of TOML is read: one `key = value` a
 //! line, strings in double quotes with no escapes, counts in decimal, `#`
 //! comments. The hash is FNV-1a over the file's bytes, 64 bits, written as
 //! `fnv1a64:` and sixteen hex digits.
@@ -49,9 +50,8 @@ struct FrozenLedger;
 const NAME: &str = "frozen-ledger";
 const LEDGER: &str = "LEDGER.toml";
 const BREAKS: &str = "BREAKS.toml";
-const MANIFEST: &str = "Cargo.toml";
-/// The one crate a frozen crate may depend on.
-const CONTRACTS: &str = "hilavitkutin-contracts";
+/// The directory of the crate's harness, which is not frozen.
+const HARNESS: &str = "tests/";
 
 impl Lint for FrozenLedger {
     fn name(&self) -> &'static str {
@@ -91,7 +91,7 @@ impl CrateLint for FrozenLedger {
             .filter(|rel| listed(rel))
             .collect();
         let found = if view.is_file(root.join(LEDGER)) {
-            findings(text(LEDGER), text(BREAKS), text(MANIFEST), &files, |path| {
+            findings(text(LEDGER), text(BREAKS), &files, |path| {
                 view.bytes(root.join(path)).map(<[u8]>::to_vec)
             })
         } else {
@@ -120,7 +120,7 @@ impl CrateLint for FrozenLedger {
 
 /// Whether a crate-relative file needs a ledger line.
 fn listed(rel: &str) -> bool {
-    rel != LEDGER && rel != BREAKS && !rel.ends_with(".md.tmpl")
+    rel != LEDGER && rel != BREAKS && !rel.ends_with(".md.tmpl") && !rel.starts_with(HARNESS)
 }
 
 /// The content hash as the ledger writes it.
@@ -255,50 +255,15 @@ fn parse_breaks(breaks: &str) -> Result<Vec<&str>, Vec<Finding>> {
     if bad.is_empty() { Ok(files) } else { Err(bad) }
 }
 
-/// Every dependency the manifest names on anything but the contracts.
-fn foreign_dependencies(manifest: &str) -> Vec<Finding> {
-    let mut found = Vec::new();
-    let mut in_dependencies = false;
-    for (n, text) in manifest.lines().enumerate() {
-        match line(text) {
-            Line::Header(section) => {
-                in_dependencies = section.ends_with("dependencies");
-                let named = section
-                    .rsplit_once('.')
-                    .map(|(head, name)| (head, name.trim_matches('"')));
-                if let Some((head, name)) = named
-                    && head.ends_with("dependencies")
-                    && name != CONTRACTS
-                {
-                    found.push(at(MANIFEST, n + 1, format!("a dependency on `{name}`")));
-                }
-            },
-            Line::Pair(key, _) if in_dependencies => {
-                let name = key.split('.').next().unwrap_or(key).trim_matches('"');
-                if name != CONTRACTS {
-                    found.push(at(
-                        MANIFEST,
-                        n + 1,
-                        format!("a dependency on `{name}`: a frozen crate depends on `{CONTRACTS}` alone"),
-                    ));
-                }
-            },
-            _ => {},
-        }
-    }
-    found
-}
-
-/// Everything the lint refuses, over the text of the two ledgers and the
-/// manifest, the files the ledger must list, and the bytes of a file by path.
+/// Everything the lint refuses, over the text of the two ledgers, the files
+/// the ledger must list, and the bytes of a file by path.
 pub(crate) fn findings<R: Fn(&str) -> Option<Vec<u8>>>(
     ledger: &str,
     breaks: &str,
-    manifest: &str,
     files: &[String],
     read: R,
 ) -> Vec<Finding> {
-    let mut found = foreign_dependencies(manifest);
+    let mut found = Vec::new();
     let rows = match parse_ledger(ledger) {
         Ok(rows) => rows,
         Err(bad) => {

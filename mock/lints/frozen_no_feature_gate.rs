@@ -1,8 +1,8 @@
 //! Lint: a frozen crate enables no unstable feature.
 //!
-//! A frozen crate is written as a consumer would write it, against the
-//! contracts on the toolchain they ship for. A `#![feature(..)]` in one would
-//! let it reach past what the contracts give, and a law that holds over it
+//! A frozen crate is written as a consumer would write it, against the api
+//! on the toolchain it ships for. A `#![feature(..)]` in one would let it
+//! reach past what the api gives, and a law that holds over it
 //! would then hold over something no consumer can write. The lint refuses an
 //! inner `feature` attribute in the `src/` of the frozen crates, bare or
 //! under `cfg_attr`.
@@ -56,7 +56,7 @@ fn findings(text: &str) -> Vec<Finding> {
         .filter(|(_, code)| enables_a_feature(&compact(code)))
         .map(|(line, _)| Finding {
             line,
-            message: "a frozen crate enables no unstable feature; write it against the contracts on the toolchain a consumer has".into(),
+            message: "a frozen crate enables no unstable feature; write it against the api on the toolchain a consumer has".into(),
         })
         .collect()
 }

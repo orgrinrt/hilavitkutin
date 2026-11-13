@@ -1,13 +1,13 @@
 //! What the frozen lints share: which crates they read, how a file is walked
 //! as code, and how a finding becomes a `LintError`.
 //!
-//! A frozen crate is written as a consumer would write it, from the contracts
-//! alone. Each lint names one way a file could hide what the contracts make
-//! its author do, and refuses it in the `src/` of `hilavitkutin-frozen-authors`.
+//! A frozen crate is written as a consumer would write it, against the api.
+//! Each lint names one way a file could hide what the api makes its author
+//! do, and refuses it in the `src/` of `hilavitkutin-frozen-authors`.
 //!
 //! Comments, doc comments and string literals are not read. There is no
-//! escape: a frozen file that needs one is not written from the contracts
-//! alone, which is what the lints refuse. The runner drops a finding whose
+//! escape: a frozen file that needs one is not written as a consumer could
+//! write it, which is what the lints refuse. The runner drops a finding whose
 //! line carries a `lint:allow` marker unless the lint says markers do not
 //! decide, so each frozen lint says so (`Lint::markers_decide`).
 

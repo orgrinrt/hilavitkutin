@@ -75,6 +75,6 @@ fn the_runner_keeps_a_finding_on_a_line_with_a_marker() {
 #[test]
 fn only_a_frozen_crate_is_in_reach() {
     assert!(scan::applies_to("hilavitkutin-frozen-authors"));
-    assert!(!scan::applies_to("hilavitkutin-contracts"));
+    assert!(!scan::applies_to("hilavitkutin-api"));
     assert!(!scan::applies_to("hilavitkutin"));
 }

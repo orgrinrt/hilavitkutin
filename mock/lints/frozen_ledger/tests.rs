@@ -3,7 +3,7 @@
 use super::*;
 
 const MANIFEST_OK: &str =
-    "[package]\nname = \"x\"\n\n[dependencies]\nhilavitkutin-contracts.workspace = true\n";
+    "[package]\nname = \"x\"\n\n[dependencies]\nhilavitkutin-api.workspace = true\n";
 
 fn ledger_of(rows: &[(&str, &str, usize)]) -> String {
     let mut out = String::from("# a comment\n");
@@ -46,7 +46,7 @@ fn the_hash_is_fnv1a_64() {
 
 #[test]
 fn a_ledger_over_every_file_holds() {
-    assert_eq!(findings(&good(), "", MANIFEST_OK, &files(), read), vec![]);
+    assert_eq!(findings(&good(), "", &files(), read), vec![]);
 }
 
 #[test]
@@ -57,7 +57,7 @@ fn an_edited_file_is_refused() {
             p => read(p),
         }
     };
-    let found = findings(&good(), "", MANIFEST_OK, &files(), edited);
+    let found = findings(&good(), "", &files(), edited);
     assert_eq!(found.len(), 1, "{found:?}");
     assert_eq!(found[0].line, 10);
     assert!(found[0].message.contains("src/lib.rs` hashes to"));
@@ -68,37 +68,32 @@ fn the_manifest_and_a_build_script_need_lines() {
     let only_lib = ledger_of(&[("src/lib.rs", &hash_text(b"#![no_std]\n"), 0)]);
     let mut all = files();
     all.push("build.rs".to_string());
-    assert_eq!(
-        messages(findings(&only_lib, "", MANIFEST_OK, &all, read)),
-        vec!["`Cargo.toml` has no line in the ledger", "`build.rs` has no line in the ledger",]
-    );
+    assert_eq!(messages(findings(&only_lib, "", &all, read)), vec![
+        "`Cargo.toml` has no line in the ledger",
+        "`build.rs` has no line in the ledger",
+    ]);
 }
 
 #[test]
 fn a_listed_file_that_is_gone_is_refused() {
     let mut rows = good();
     rows.push_str("\n[[file]]\npath = \"src/gone.rs\"\nform = \"value\"\nhash = \"fnv1a64:0000000000000000\"\nbreaks = 0\nlocked = false\n");
-    assert_eq!(
-        messages(findings(&rows, "", MANIFEST_OK, &files(), read)),
-        vec!["`src/gone.rs` is listed and gone"]
-    );
+    assert_eq!(messages(findings(&rows, "", &files(), read)), vec![
+        "`src/gone.rs` is listed and gone"
+    ]);
 }
 
 #[test]
 fn a_break_count_must_match_the_recorded_edits() {
-    let breaks = "[[break]]\nslice = \"HL0a\"\nfile = \"src/lib.rs\"\nform = \"value\"\nhash = \"fnv1a64:0\"\nreason = \"r\"\n";
-    assert_eq!(
-        messages(findings(&good(), breaks, MANIFEST_OK, &files(), read)),
-        vec!["`src/lib.rs` counts 0 breaks and 1 are recorded"]
-    );
+    let breaks = "[[break]]\nfile = \"src/lib.rs\"\nhash = \"fnv1a64:0\"\nreason = \"r\"\n";
+    assert_eq!(messages(findings(&good(), breaks, &files(), read)), vec![
+        "`src/lib.rs` counts 0 breaks and 1 are recorded"
+    ]);
     let counted = ledger_of(&[
         ("Cargo.toml", &hash_text(MANIFEST_OK.as_bytes()), 0),
         ("src/lib.rs", &hash_text(b"#![no_std]\n"), 1),
     ]);
-    assert_eq!(
-        findings(&counted, breaks, MANIFEST_OK, &files(), read),
-        vec![]
-    );
+    assert_eq!(findings(&counted, breaks, &files(), read), vec![]);
 }
 
 #[test]
@@ -112,7 +107,7 @@ fn a_locked_line_keeps_its_count() {
         "breaks = 0\nlocked = false\n",
         "breaks = 0\nlocked = true\n",
     );
-    let found = messages(findings(&locked, "", MANIFEST_OK, &files(), read));
+    let found = messages(findings(&locked, "", &files(), read));
     assert!(
         found.contains(&"`src/lib.rs` is locked at 1 breaks and counts 0".to_string()),
         "{found:?}"
@@ -124,32 +119,24 @@ fn a_locked_line_keeps_its_count() {
 }
 
 #[test]
-fn a_dependency_beside_the_contracts_is_refused() {
-    let manifest = format!(
-        "{MANIFEST_OK}notko.workspace = true\n\n[dev-dependencies.extra]\npath = \"x\"\n\n[build-dependencies]\ncc = \"1\"\n"
-    );
-    let rows = ledger_of(&[
-        ("Cargo.toml", &hash_text(manifest.as_bytes()), 0),
-        ("src/lib.rs", &hash_text(b"#![no_std]\n"), 0),
-    ]);
+fn a_dependency_added_to_the_manifest_is_an_edit() {
+    let manifest = format!("{MANIFEST_OK}notko.workspace = true\n");
     let read = |path: &str| {
         match path {
             "Cargo.toml" => Some(manifest.as_bytes().to_vec()),
             p => read(p),
         }
     };
-    let found = findings(&rows, "", &manifest, &files(), read);
-    assert_eq!(
-        found.iter().map(|f| f.line).collect::<Vec<_>>(),
-        vec![6, 8, 12],
-        "{found:?}"
-    );
+    let found = findings(&good(), "", &files(), read);
+    assert_eq!(found.len(), 1, "{found:?}");
+    assert_eq!(found[0].line, 3);
+    assert!(found[0].message.contains("Cargo.toml` hashes to"));
 }
 
 #[test]
 fn a_malformed_line_is_refused_and_named() {
     let bad = good().replace("breaks = 0", "breaks = none");
-    let found = findings(&bad, "", MANIFEST_OK, &files(), read);
+    let found = findings(&bad, "", &files(), read);
     assert_eq!(found.iter().map(|f| f.line).collect::<Vec<_>>(), vec![
         7, 14
     ]);
@@ -163,7 +150,20 @@ fn the_documents_and_the_ledgers_need_no_line() {
     assert!(!listed("DESIGN.md.tmpl"));
     assert!(listed("Cargo.toml"));
     assert!(listed("build.rs"));
-    assert!(listed("tests/ledger.rs"));
+    assert!(listed("src/units.rs"));
+}
+
+#[test]
+fn the_harness_is_not_frozen() {
+    assert!(!listed("tests/against_the_reference.rs"));
+    assert!(!listed("tests/ui/a_case.stderr"));
+    assert!(listed("src/tests/inner.rs"));
+}
+
+#[test]
+fn a_harness_file_the_ledger_lacks_is_clean_through_the_runner() {
+    let fixture = crate_with(&good()).with_doc("tests/harness.rs", "fn main() {}\n");
+    assert_eq!(reported(fixture), vec![]);
 }
 
 // ---- through the runner, which reads the crate through the lint's view -------
@@ -225,6 +225,6 @@ fn a_marker_in_the_ledger_drops_nothing_through_the_runner() {
 #[test]
 fn a_crate_that_is_not_frozen_needs_no_ledger() {
     let plain = mockspace::testkit::LintFixture::new("#![no_std]\n")
-        .with_crate_name("hilavitkutin-contracts", "contracts");
+        .with_crate_name("hilavitkutin-api", "api");
     assert_eq!(reported(plain), vec![]);
 }

@@ -1,9 +1,9 @@
 //! Lint: a frozen crate raises no recursion limit.
 //!
-//! The contracts promise that an author's kernel list compiles at the
-//! default limits. A `recursion_limit` attribute in a frozen crate would let
-//! a shape pass there that a consumer would hit the default limit with, so
-//! the law would hold over something the contracts do not deliver. The lint
+//! The api promises that an author's unit list compiles at the default
+//! limits. A `recursion_limit` attribute in a frozen crate would let a shape
+//! pass there that a consumer would hit the default limit with, so the law
+//! would hold over something the api does not deliver. The lint
 //! refuses the attribute in the `src/` of the frozen crates, the type-length
 //! limit's sibling included.
 //!
@@ -62,7 +62,7 @@ fn findings(text: &str) -> Vec<Finding> {
             Some(Finding {
                 line,
                 message: format!(
-                    "a frozen crate raises no `{named}`; the contracts hold at the default limits"
+                    "a frozen crate raises no `{named}`; the api holds at the default limits"
                 ),
             })
         })
