@@ -4,8 +4,10 @@
 id = "which_order_the_dispatch_follows_the_rcm_order_of_units_or_the_waist_phase_order"
 asks = "Which order canon keeps for dispatch: the RCM order of units as their execution order, or the shipped waist-phase order. The text registers the fork open with a bench oracle and holds that neither is drift until the bench lands."
 options = ["the spec's Step 5/8 dual-ordering position: RCM row order is the unit execution order", "the shipped waist-phase order"]
-state = "open"
-stamp = 'open, 2026-11-13: op ruled that a bench decides it (mock/research/202606111400_canonical-design-addendum-a1.md:49-57), and the bench of 2026-07-20 reports that the RCM order stands (mock/research/202607200800_a1-1-ordering-theory-bench-expansion.md:82-90); no word of his read takes that result as the answer, so the question stays open on a stamp under his words "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+state = "answered"
+answer = "Canon Step 5 stands, on stronger grounds than before: the RCM row order is the execution order, now validated against rival ordering theories rather than against a single scramble, at realistic scale."
+answered = "2026-11-13, by default from the written history: mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md"
+answered_from = ["ruled: mock/research/202606111400_canonical-design-addendum-a1.md:49-57", "ruled: mock/research/202607200800_a1-1-ordering-theory-bench-expansion.md:82-90"]
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:51-57"
 quote = '''
 The spec's Step 5/8 dual-ordering position (RCM row order = WU execution
