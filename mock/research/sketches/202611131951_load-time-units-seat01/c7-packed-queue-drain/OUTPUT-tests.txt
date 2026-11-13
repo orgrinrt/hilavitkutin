@@ -1,0 +1,63 @@
+   Compiling c7-packed-queue-drain v0.0.0 (/home/user/.worktrees/hv-ltp-seat01r/mock/research/sketches/202611131951_load-time-units-seat01/c7-packed-queue-drain)
+    Finished `release` profile [optimized] target(s) in 0.41s
+     Running unittests src/lib.rs (/home/user/target/release/deps/c7_packed_queue_drain-26ffd4caed450d9d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/drain.rs (/home/user/target/release/deps/drain-e16767ca530fc07d)
+
+running 5 tests
+test a_single_drainer_loses_nothing ... single drainer: 0 of 200000 closes lost a write (Single)
+ok
+test two_drainers_split_by_queue_position_lose_nothing ... two drainers, queue halves: 79522 of 200000 closes lost a write (ByQueuePosition)
+
+thread 'two_drainers_split_by_queue_position_lose_nothing' (30562) panicked at tests/drain.rs:19:5:
+assertion `left == right` failed: two drainers, queue halves: a queued write was lost at the close
+  left: 79522
+ right: 0
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: core::panicking::assert_failed_inner
+   3: core::panicking::assert_failed::<usize, usize>
+   4: <drain::two_drainers_split_by_queue_position_lose_nothing::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+FAILED
+test two_drainers_split_by_queue_position_with_fetch_or_lose_nothing ... two drainers, queue halves, fetch_or: 0 of 200000 closes lost a write (ByQueuePositionFetchOr)
+ok
+test two_drainers_split_by_record_at_64_lose_nothing ... two drainers, records split at 64 (word-aligned): 0 of 200000 closes lost a write (ByRecord { split: 64 })
+ok
+test two_drainers_split_by_record_at_68_lose_nothing ... two drainers, records split at 68 (4-aligned): 155965 of 200000 closes lost a write (ByRecord { split: 68 })
+
+thread 'two_drainers_split_by_record_at_68_lose_nothing' (30574) panicked at tests/drain.rs:19:5:
+assertion `left == right` failed: two drainers, records split at 68 (4-aligned): a queued write was lost at the close
+  left: 155965
+ right: 0
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: core::panicking::assert_failed_inner
+   3: core::panicking::assert_failed::<usize, usize>
+   4: <drain::two_drainers_split_by_record_at_68_lose_nothing::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+FAILED
+
+failures:
+
+failures:
+    two_drainers_split_by_queue_position_lose_nothing
+    two_drainers_split_by_record_at_68_lose_nothing
+
+test result: FAILED. 3 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.95s
+
+error: test failed, to rerun pass `--test drain`
+   Doc-tests c7_packed_queue_drain
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: 1 target failed:
+    `--test drain`
