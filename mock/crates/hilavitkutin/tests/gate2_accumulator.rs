@@ -1,7 +1,7 @@
 //! GATE-2 deviation 9: threaded unit-outer accumulator path.
 //!
 //! An accumulator-bearing carrier runs unit-outer. Under `run_parallel` on a
-//! multi-core pool, each core takes its head+tail record slice, appends into its
+//! multi-core pool, each core takes its record slice of the N-way tiling, appends into its
 //! own per-core region of the reserved buffer (offset to the slice start, fresh
 //! live cell), and a post-frame forward compaction merges the per-core regions
 //! into the binding's `[0, sum)` prefix. The result must be byte-identical to the

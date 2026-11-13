@@ -107,7 +107,7 @@ pub(super) fn worker_main<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>(
         if s.carrier_unit_outer().0 {
             // Deviation 9 threaded accumulator path: an accumulator-bearing
             // carrier runs unit-outer (each unit completes its full record
-            // range). Each core takes its head+tail record slice `[lo, hi)`,
+            // range). Each core takes its own record slice `[lo, hi)` of the N-way tiling,
             // dispatches the whole carrier ONCE over a per-core bindings copy
             // whose accumulators are offset into the core's region with fresh
             // cells, then publishes its per-accumulator live counts for the
@@ -127,12 +127,11 @@ pub(super) fn worker_main<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>(
         // barrier (the canonical worker-side sync; the main thread no longer
         // round-trips per phase). Phase order is the array order 0..nphases.
         // On a clean (not plan-dirty) frame the loop starts past the leading
-        // plan band; `plan_band` is published between frames while every
-        // worker is parked (first frame OR a consumed `replace_resource`
-        // plan-dirty bit), so the read is stable under the publish/await
+        // plan band; `first_frame` is written between frames while every
+        // worker is parked, so the read is stable under the publish/await
         // happens-before. All workers compute the same start, so the interior
         // waist-barrier counts stay matched.
-        let mut p = if s.plan_band.load(Ordering::Relaxed) { 0 } else { plan_phases }; // lint:allow(no-bare-numeric) reason: phase loop start; tracked: #121
+        let mut p = if s.first_frame.load(Ordering::Relaxed) { 0 } else { plan_phases }; // lint:allow(no-bare-numeric) reason: phase loop start; tracked: #121
         while p < nphases {
             s.run_core_phase::<Witnesses, GW>(USize(core_id), USize(p), ncores, total, msize);
             if p + 1 < nphases {
@@ -174,7 +173,7 @@ fn accum_slice(total: USize, ncores: USize, core: USize) -> (USize, USize) {
     (USize(lo), USize(hi - lo)) // lint:allow(no-bare-numeric) reason: slice length; tracked: #121
 }
 
-/// One core's unit-outer accumulator dispatch over its head+tail record slice
+/// One core's unit-outer accumulator dispatch over its record slice of the N-way tiling
 /// (GATE-2 deviation 9). Builds a per-core bindings copy with every accumulator
 /// offset to the slice start (fresh live and `wanted` cells, slice-sized cap),
 /// dispatches the whole carrier once over `[lo, hi)`, and publishes the

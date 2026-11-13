@@ -14,7 +14,6 @@
 #![feature(const_ops)]
 #![feature(const_trait_impl)]
 #![feature(marker_trait_attr)]
-#![feature(negative_impls)]
 #![allow(incomplete_features)]
 
 mod sealed {

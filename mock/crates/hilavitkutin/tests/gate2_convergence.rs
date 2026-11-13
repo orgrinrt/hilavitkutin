@@ -15,10 +15,12 @@
 
 use core::cell::{Cell, UnsafeCell};
 use core::mem::MaybeUninit;
+use std::sync::Mutex;
+use std::thread::ThreadId;
 
 use arvo::{Bool, USize};
 mod common;
-use common::TestExecutor;
+use common::{FixedWorkers, TestExecutor};
 use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
@@ -88,7 +90,7 @@ type ColF = Cons<Column<Fv>, Empty>;
 // derives from the (windowed) input, never from the morsel-relative each() index
 // (which addresses within the core's slice, not the absolute record): a WU body
 // reads its inputs through the reader, which maps relative -> absolute.
-struct Filler;
+struct Filler(Option<&'static Mutex<Vec<ThreadId>>>);
 impl BuilderInput for Filler {
     type Dispatch = UnitDispatch<Self>;
     type Init = Self;
@@ -111,6 +113,12 @@ impl WorkUnit<Always> for Filler {
     type Write = ColF;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
+        if let Some(seen) = self.0 {
+            // One mark per call, taken once so the record loop stays plain.
+            seen.lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .push(std::thread::current().id());
+        }
         ctx.each().run(|i| {
             // SAFETY: In host-populated for N records; Fv reserved + exclusive;
             // the morsel covers a window of the owning core's walk, and the
@@ -122,12 +130,12 @@ impl WorkUnit<Always> for Filler {
 }
 
 #[test]
-fn run_parallel_single_trunk_phase_converges() {
+fn run_parallel_single_trunk_phase_covers_every_record_once() {
     let provider = BumpProvider::<8192>::new();
     let scheduler = Scheduler::builder()
         .with(Column::<Inv>::new())
         .with(Column::<Fv>::new())
-        .with(Filler)
+        .with(Filler(None))
         .build(store(provider), USize(N))
         .unwrap_or_else(|_| panic!("build should succeed"));
 
@@ -163,4 +171,48 @@ fn run_parallel_single_trunk_phase_converges() {
             "rec {i}: single-trunk phase covers every record, each written once"
         );
     }
+}
+
+/// Head+tail convergence, as the design asks for it: with two workers, the one
+/// trunk of a single-trunk phase is walked from both ends, so two threads
+/// execute its unit. Today one owning core walks the whole range, so one thread
+/// is seen and this fails.
+#[test]
+#[ignore = "catalogue: head+tail convergence is designed and not built, so a single-trunk phase under run_parallel is walked by its one owning core and a second worker takes none of it; tracked #hilavitkutin_catalogue_a_single_trunk_phase_is_walked_by_one"]
+fn a_single_trunk_phase_is_walked_from_head_and_tail() {
+    static SEEN: Mutex<Vec<ThreadId>> = Mutex::new(Vec::new());
+
+    let provider = BumpProvider::<8192>::new();
+    let scheduler = Scheduler::builder()
+        .with(Column::<Inv>::new())
+        .with(Column::<Fv>::new())
+        .with(Filler(Some(&SEEN)))
+        .build(store(provider), USize(N))
+        .unwrap_or_else(|_| panic!("build should succeed"));
+
+    let in_base = scheduler.__bindings().__tail().__ptr().as_ptr() as *mut u32;
+    for i in 0 .. N {
+        // SAFETY: In reserved for N records of u32; the scheduler is alive.
+        unsafe { *in_base.add(i) = i as u32 };
+    }
+
+    let pool = FixedWorkers::<2>;
+    let mut scheduler = core::pin::pin!(scheduler);
+    assert!(matches!(
+        scheduler.as_mut().run_parallel(&pool),
+        Outcome::Ok(())
+    ));
+
+    let seen = SEEN.lock().unwrap_or_else(|e| e.into_inner());
+    let mut distinct: Vec<ThreadId> = Vec::new();
+    for id in seen.iter() {
+        if !distinct.contains(id) {
+            distinct.push(*id);
+        }
+    }
+    assert_eq!(
+        distinct.len(),
+        2,
+        "two workers walk the single trunk, one from the head and one from the tail"
+    );
 }

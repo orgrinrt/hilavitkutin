@@ -842,26 +842,6 @@ batch_size = 10
 harness_runs = 2
 cooldowns_ms = [0]
 
-# Swap-semantics ratification evidence (spec S7, round 202607200500).
-# swap_cost: the witnessed blob install cost across value sizes; each
-# arm's timed body is exactly one replace_value of a 64 B / 1 KiB /
-# 64 KiB payload (per-variant scheduler, seed-pure installs). Outputs
-# differ across arms by construction (different payload types).
-[bench.swap_cost]
-title = "replace_value blob install cost across value sizes"
-workload = "realistic"
-master_seed = "0x51C3_5107_0000_0001"
-may_differ = true
-variants = ["sc_v64b", "sc_v1k", "sc_v64k"]
-sizes = [64]
-
-# swap_band: the next-frame cost asymmetry on one carrier (producer to
-# consumer cone off a Replaceable value, an unrelated chain, an
-# OnMeta plan unit with fixed synthetic recompute cost). sb_none times
-# the all-clean skip frame; sb_value pays the Replaceable dirty cone;
-# sb_plan pays the PlanAffecting cone plus the leading plan band.
-# Records = n x 1024. Frames are microseconds-to-milliseconds, so the
-# timing override replaces the nanosecond-calibrated global knobs.
 [bench.wake_policy]
 title = "frame wake policy: park-immediately vs bounded spin pre-roll"
 workload = "realistic"
@@ -875,21 +855,6 @@ passes = 3
 runs_per_pass = 30
 batch_size = 10
 harness_runs = 2
-
-[bench.swap_band]
-title = "next-frame asymmetry: clean skip vs value-swap cone vs plan band"
-workload = "realistic"
-master_seed = "0x51C3_5107_0000_0002"
-may_differ = true
-variants = ["sb_none", "sb_value", "sb_plan"]
-sizes = [64, 1024, 8192]
-
-[bench.swap_band.timing]
-passes = 3
-runs_per_pass = 30
-batch_size = 10
-harness_runs = 2
-cooldowns_ms = [0]
 
 # The definitive spectral-versus-greedy fiber comparison (#644; seed
 # governance item 3, evidence-then-bless oracle for the spectral role

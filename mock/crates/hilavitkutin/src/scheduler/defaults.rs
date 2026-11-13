@@ -64,7 +64,6 @@ impl<Cfg: RunCfg> Default for Scheduler<Cfg, WuNil, SvEmpty, NullColumnStorage> 
             ),
             store_dirty:          Cell::new(AccessMask::empty()),
             first_frame:          AtomicBool::new(true),
-            plan_band:            AtomicBool::new(true),
             virtual_epoch:        AtomicUsize::new(0),
             meta_block:           crate::meta::MetaBlock::default(),
             clock:                super::DefaultClock::new(),

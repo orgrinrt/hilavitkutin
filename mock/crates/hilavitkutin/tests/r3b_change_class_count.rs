@@ -4,10 +4,12 @@
 //! `SchedulerMetrics::change_seen_count` in the single-core `run` fold for every
 //! frame whose `store_dirty` was non-empty.
 //!
-//! This is a white-box test: it marks the store dirty directly through the
-//! hidden `__mark_store_dirty` accessor, without registering a resource to
-//! replace, then asserts the hook observes the count through the bridge.
-//! Mirrors `r3c_throughput_record_count.rs`.
+//! `store_dirty`'s only public trigger is `replace_resource<T: PlanAffecting>`,
+//! and `PlanAffecting` is sealed, so an external test cannot mark the store dirty
+//! through the supported surface. This is a white-box test: it uses the hidden
+//! `__mark_store_dirty` accessor to set the dirty mask directly, then asserts the
+//! hook observes the count through the bridge. Mirrors
+//! `r3c_throughput_record_count.rs`.
 //!
 //! Lives under `tests/` so the bare numeric record values do not trip the
 //! src-tree primitive lints.
