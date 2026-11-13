@@ -158,7 +158,7 @@ Asked through the coordinator whether an append past an accumulator's capacity s
 origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["quote: mock/design_rounds/202611130554/202611130600_topic.overflow-is-the-consumers-choice.md:9-9", "quote: .data/op-responses/202611130550_four-calls-that-shape-the-hilavitkutin-api-revision.md:18-42"]
+ratified_from = ["quote: mock/design_rounds/202611130554/202611130600_topic.overflow-is-the-consumers-choice.md:9-9", "quote: mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:232-256"]
 keywords = ["accumulator", "overflow", "configurable by the consumer", "run configuration", "refuse", "assert", "ruling"]
 related = ["tenet::an_append_past_an_accumulator_s_capacity_is_counted_and_never_written_and_the_refusal_is_sticky_for_the_frame"]
 

@@ -64,7 +64,7 @@ most downstream dependents first, then deterministic fallback.
 origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:591-593", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1056-1059", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1278-1281", "later: .data/op-responses/202611130808_read-the-whole-hilavitkutin-spec-and-port-it-to-a-registry.md:90-112, how_two_writers_of_one_store_are_ordered"]
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:591-593", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1056-1059", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1278-1281", "later: mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:513-535, how_two_writers_of_one_store_are_ordered"]
 keywords = ["write-write", "two writers", "hint", "urgency", "divisibility", "significance", "tie-break", "dependents", "fallback", "type name"]
 related = ["question::how_two_writers_of_one_store_are_ordered"]
 
