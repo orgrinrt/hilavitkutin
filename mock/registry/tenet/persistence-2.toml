@@ -5,7 +5,7 @@ id = "a_backup_is_a_copy_of_the_data_directory_because_every_file_is_an_archive_
 subject = "persistence"
 what = "A backup is a copy of the data directory. Every file is an archive and is always consistent because writes complete through the memory provider, and the consumer wraps the copy in whatever container format it wants."
 mechanism = "Container formats named: ZIP+zstd, custom container."
-source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:183-188"
+source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:208-213"
 provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#backup"]
 quote = '''
 ## Backup
@@ -28,7 +28,7 @@ id = "the_engine_reaches_persistence_only_through_a_persistence_provider_registe
 subject = "persistence"
 what = "The engine never depends on the persistence crate's types. Consumers wire persistence in through a persistence provider trait registered on the scheduler builder, and the engine's resource resolution reaches the provider through the standard provider accessor pattern."
 mechanism = "`PersistenceProvider` trait registered on the `SchedulerBuilder`; the standard `Has...Provider` accessor pattern. Round 202605101036, Topic 8 axis C."
-source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:211-217"
+source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:236-242"
 provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#engine-integration-boundary-round-202605101036"]
 quote = '''
 ## Engine integration boundary (round 202605101036)
@@ -52,7 +52,7 @@ id = "an_end_of_pass_unit_drains_accumulator_columns_through_the_provider_commit
 subject = "persistence"
 what = "A unit that runs at the end of a pass, supplied by the consumer or the layer it builds on, reads the accumulator columns and writes them through the provider's commit. The commit is the phase-end synchronisation point, so persistence writes are ordered after the phase barrier and before the next phase's morsel dispatch begins, and the barrier's release-acquire pair guarantees visibility across threads."
 mechanism = "`PassEnd` WorkUnit writes through `PersistenceProvider::commit(...)`; Release-Acquire pair of the barrier (Topic 3 S7 atomic-ordering protocol)."
-source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:219-225"
+source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:244-250"
 provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#engine-integration-boundary-round-202605101036"]
 quote = '''
 PassEnd WU drain protocol: a substrate or consumer-authored PassEnd
@@ -75,7 +75,7 @@ id = "substrate_consumers_ship_their_own_persistence_provider_implementations_an
 subject = "persistence"
 what = "The narrow integration shape preserves the rule that the persistence crate is a standalone ecosystem crate. Consumers that build on the engine ship their own provider implementations, and the persistence crate ships no glue on the engine side."
 mechanism = "Substrate consumers named: vehje, future loimu."
-source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:227-229"
+source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:252-254"
 provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#engine-integration-boundary-round-202605101036"]
 quote = '''
 The narrow integration shape preserves the standalone-ecosystem-crate

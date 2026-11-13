@@ -53,7 +53,7 @@ id = "the_persistence_crate_is_consumer_agnostic_and_knows_nothing_of_metadata_t
 subject = "persistence"
 what = "The persistence crate is a bridge between the in-memory columnar hot store and the on-disk archived cold store, and it is consumer-agnostic. It carries no domain knowledge: it knows nothing of metadata tables, records or domain schemas, and any hilavitkutin consumer can reuse it."
 mechanism = "`#![no_std]`, no alloc. Design rule: no std, no alloc, no domain knowledge."
-source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:3-6, mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:23-27, mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:206-209"
+source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:3-6, mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:23-27, mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:231-234"
 provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#hilavitkutin-persistence-design-overview"]
 quote = '''
 `#![no_std]`, no alloc. Generic hot-cold storage bridge for the
@@ -163,31 +163,50 @@ keywords = ["ColumnValue", "Archived", "identity archive", "zero overhead", "sta
 id = "an_interned_string_handle_is_session_specific_so_it_is_stored_on_disk_as_its_content_hash"
 subject = "persistence"
 what = "A string handle is specific to a session, so on disk it is stored as its content hash, which is stable across sessions. Evicting turns a handle into bytes and then into a content hash, and injecting looks the hash up in the string table and interns it into a runtime handle. Constant handles already are content hashes."
-mechanism = "`impl Archive for Str { type Archived = u32; }`: low 28 bits carry the FNV content hash, bit 31 is the const/runtime flag. Runtime API uses arvo_hash `ContentHash` (alias for arvo_bits `Bits<28>`); the rkyv Archived form is a bare u32. Const handles (bit 31 = 0) are identity on evict and are matched against the const table first on inject."
-source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:38-58, mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:152-153"
+mechanism = "`impl Archive for Str { type Archived = u64; }`: the full 64-bit FNV-1a content hash of the bytes. Runtime API uses arvo_hash `ContentHash` (alias for arvo_bits `Bits<64, Hot>`). An unresolvable handle evicts to `PersistenceError::Missing`; on inject the candidate const handle is built from the low 28 bits of the key and accepted only if its string hashes back to the whole key."
+source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:38-77, mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:177-178"
 provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#str-content-hash-translation"]
 quote = '''
 ### Str, content hash translation
 
-Str handles are session-specific (runtime IDs). On disk, stored as
-content hashes (stable across sessions). The runtime API uses
-arvo_hash ContentHash for the hash value; the rkyv Archived form
-is a bare u32 to pin the on-disk byte layout.
+Str handles are session-specific (runtime IDs), and a const handle holds
+only 28 bits of its string's hash. On disk a string is stored as its
+content hash at full width, the 64-bit FNV-1a hash of its bytes, stable
+across sessions. The runtime API uses arvo_hash ContentHash for the hash
+value; the rkyv Archived form is a bare u64 to pin the on-disk byte
+layout.
 
 ```rust
 impl Archive for Str {
- // Disk-layout ABI: low 28 bits carry the FNV content hash, bit
- // 31 is the const/runtime flag. Runtime API uses ContentHash.
- type Archived = u32;
+ // Disk-layout ABI: the full 64-bit FNV-1a content hash of the bytes.
+ // Runtime API uses ContentHash, which has the same width.
+ type Archived = u64;
 }
 ```
 
-Evict: handle resolves to bytes, then to a content hash.
-Inject: content hash looks up the string table, interns, returns a
+The width is the point. Truncated to 28 bits, ten thousand distinct strings
+collide with a probability of about 17 percent, and a collision on disk
+returns the wrong string without any sign that it did. At 64 bits the same
+count collides with a probability near 3e-12. The ten-thousand-string test
+evicts ten thousand strings through `evict_str` and requires as many distinct
+keys, and counts the same keys again at a width narrow enough to collide, so a
+counter that cannot see a collision does not pass for one that sees none. Ten
+thousand strings seldom collide at 28 bits by luck, so a second test searches
+for two strings that share their low 28 bits and requires `evict_str` to key
+them apart, which a key cut to 28 bits fails.
+
+Evict: a handle resolves to bytes through the interner (a const handle
+through the const table, a runtime handle through the arena), and the bytes
+hash to the key. A handle the interner cannot resolve evicts to
+`PersistenceError::Missing`, since a const handle alone no longer carries the
+key.
+Inject: the content hash looks up the string table, interns, returns a
 runtime handle.
 
-Const handles (bit 31 = 0) are already content hashes on evict
-(identity). On inject, matched against the const table first.
+On inject the const table is consulted first. The candidate const handle
+is built from the low 28 bits of the key, and it is accepted only if the
+string it resolves to hashes back to the whole key, so a handle that
+shares 28 bits with the key and nothing else is not taken for the string.
 ---
 Content hash = stable file-level identity.
 Sequential ID = ephemeral session-level identity.
@@ -197,14 +216,14 @@ written_by = "the design template of hilavitkutin-persistence, agent-written, un
 standing = "provisional"
 stamped_by = "experts"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
-keywords = ["Str", "content hash", "FNV", "ContentHash", "Bits<28>", "const/runtime flag", "session-specific handle", "evict inject", "intern"]
+keywords = ["Str", "content hash", "FNV", "ContentHash", "Bits<64, Hot>", "64-bit FNV-1a", "session-specific handle", "evict inject", "intern"]
 
 [[tenet]]
 id = "a_value_that_crosses_the_archive_boundary_on_disk_is_specified_by_its_byte_layout_and_not_by_its_runtime_type"
 subject = "persistence"
-what = "Every value that crosses the archive boundary on disk is specified by its byte layout. The archived type names the disk form and the runtime type names the in-memory form. The conversion between the runtime hash type and the disk form is a single masked cast with no format change."
-mechanism = "Pinned disk-layout types: Str Archived to u32 (low 28 bits FNV content hash, bit 31 const/runtime flag); integer primitive columns archive to themselves. Runtime `ContentHash` = alias for arvo_bits `Bits<28>`; conversion is a single masked cast."
-source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:60-75"
+what = "Every value that crosses the archive boundary on disk is specified by its byte layout. The archived type names the disk form and the runtime type names the in-memory form. The runtime hash type has the width of the disk form, so the conversion between them is a plain copy."
+mechanism = "Pinned disk-layout types: Str Archived to u64 (the full 64-bit FNV-1a content hash; the const and runtime flag does not travel to disk); integer primitive columns archive to themselves. Runtime `ContentHash` = alias for arvo_bits `Bits<64, Hot>`; conversion is a plain copy."
+source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:79-95"
 provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#disk-layout-types-rkyv-abi"]
 quote = '''
 ### Disk-layout types (rkyv ABI)
@@ -216,26 +235,27 @@ runtime type names the in-memory form.
 
 Current disk-layout types, pinned:
 
-- Str Archived to u32. Low 28 bits carry the FNV content hash; bit
- 31 is the const/runtime flag.
+- Str Archived to u64. The full 64-bit FNV-1a content hash of the
+ string's bytes; the const and runtime flag does not travel to disk,
+ because the key names the string and not the session's handle for it.
 - Integer primitive columns archive to themselves (identity).
 
-The runtime API carries the hash value as arvo_hash ContentHash,
-an alias for arvo_bits Bits<28>. Conversion at the rkyv boundary
-is a single masked cast; no format change.
+The runtime API carries the hash value as arvo_hash ContentHash, an
+alias for arvo_bits Bits<64, Hot>, the same width as the archived form,
+so the rkyv boundary is a plain copy.
 '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
 stamped_by = "experts"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
-keywords = ["disk-layout types", "rkyv ABI", "Archived", "byte layout", "pinned", "masked cast", "ContentHash"]
+keywords = ["disk-layout types", "rkyv ABI", "Archived", "byte layout", "pinned", "plain copy", "ContentHash"]
 
 [[tenet]]
 id = "disk_layout_types_are_exempt_from_the_primitive_vocabulary_because_a_semantic_newtype_would_add_a_conversion_on_the_hottest_serialisation_path"
 subject = "persistence"
 what = "Disk-layout types are exempt from the primitive-vocabulary discipline. They exist to pin a byte layout across sessions, and giving them a semantic newtype would add a conversion call on the hottest serialisation path without changing the on-disk format."
-source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:77-80"
+source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:102-105"
 provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#disk-layout-types-rkyv-abi"]
 quote = '''
 Disk-layout types are exempt from the primitive-vocabulary
@@ -255,7 +275,7 @@ id = "a_consumer_type_needing_custom_serialisation_implements_the_archive_trait_
 subject = "persistence"
 what = "A consumer type that needs custom handling at the serialisation boundary implements the archive trait directly. It is the same mechanism as for the shipped types, and no new trait is introduced."
 mechanism = "Consumer types `impl Archive` directly."
-source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:82-85"
+source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:107-110"
 provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#extending"]
 quote = '''
 ### Extending
@@ -275,7 +295,7 @@ id = "the_cold_store_keeps_a_manifest_a_table_file_per_table_and_a_runtime_strin
 subject = "persistence"
 what = "Each consumer has one data directory holding a manifest with the table directory and metadata, one archive file of column data per table and one archive file for the runtime string table. The consumer extends the directory with domain-specific files of its own."
 mechanism = "`data_dir/manifest.rkyv`, `tables/<name>.rkyv`, `strings/runtime.rkyv` (content_hash to bytes). Consumer extensions named: locale overlays, search indices, warmup manifests."
-source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:89-101"
+source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:114-126"
 provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#file-layout-per-consumer"]
 quote = '''
 ### File layout (per consumer)
@@ -304,7 +324,7 @@ id = "evict_serialises_raw_column_arrays_through_the_memory_provider_and_inject_
 subject = "persistence"
 what = "Evicting serialises raw typed column arrays, translating string handles to content hashes and leaving everything else as it is, and writes the file through the memory provider. Injecting maps the archive file through the memory provider, reads the archived data directly with no copy, translates content hashes back into runtime handles for string columns and hands a pointer over for everything else, into the column storage."
 mechanism = "Evict: column data -> rkyv serialize (with `PersistenceContext` carrying the interner) -> Str handle to content_hash, all else identity -> write `.rkyv` via MemoryProvider. Inject: mmap `.rkyv` via MemoryProvider -> archived data directly accessible (zero-copy) -> Str columns content_hash to intern to runtime handle, all else pointer handoff -> inject into ColumnStorage."
-source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:103-121"
+source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:128-146"
 provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#data-flow"]
 quote = '''
 ### Data flow
@@ -340,7 +360,7 @@ id = "the_cold_store_provides_the_flush_mechanism_and_the_consumer_decides_when_
 subject = "persistence"
 what = "The cold store provides the mechanism for flushing, loading a table and taking a snapshot for backup, and the consumer decides when to flush."
 mechanism = "`flush(dirty_set)` serialises dirty data to disk; `load(table)` mmaps and injects a table; `snapshot(target)` copies all files for backup."
-source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:123-129"
+source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:148-154"
 provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#flush-coordination"]
 quote = '''
 ### Flush coordination
@@ -363,7 +383,7 @@ id = "eviction_is_sieve_over_the_column_storage_keyed_by_table_and_segment_range
 subject = "persistence"
 what = "Eviction uses a SIEVE cache that wraps the column storage. It is keyed by table and segment range and weighted by byte size."
 mechanism = "`SieveCache` wrapping `ColumnStorage`; key `(TableId, SegmentRange)`; weight `EvictionWeight` (u64 backing)."
-source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:131-134, mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:203-203"
+source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:156-159, mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:228-228"
 provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#sieve-eviction"]
 quote = '''
 ## SIEVE eviction
@@ -384,7 +404,7 @@ keywords = ["SIEVE", "SieveCache", "eviction", "TableId", "SegmentRange", "Evict
 id = "dirty_data_is_flushed_before_it_is_evicted_so_the_hot_store_is_reconstructable_from_the_cold_store_files"
 subject = "persistence"
 what = "Dirty data is flushed before it is evicted, and the hot store is fully reconstructable from the cold store files."
-source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:136-137"
+source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:161-162"
 provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#sieve-eviction"]
 quote = '''
 Key invariant: dirty data is flushed before eviction. The
@@ -402,7 +422,7 @@ id = "the_consumer_provides_the_memory_budget_the_budget_phase_changes_and_the_e
 subject = "persistence"
 what = "The consumer provides the memory budget the hot store gets, the changes of that budget between phases of the application and its preferences for eviction granularity."
 mechanism = "Example named: game launch to shrink."
-source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:139-142"
+source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:164-167"
 provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#sieve-eviction"]
 quote = '''
 The consumer provides:
@@ -422,7 +442,7 @@ id = "runtime_strings_persist_as_content_hash_and_bytes_pairs_and_the_content_ha
 subject = "persistence"
 what = "Runtime strings are persisted as pairs of content hash and string bytes. On load the constant table comes from the binary, each persisted pair is interned to a sequential identifier, and string column values are resolved by content hash lookup. The content hash is the stable file-level identity and the sequential identifier is the ephemeral session-level identity."
 mechanism = "`(content_hash, string_bytes)` pairs in `runtime.rkyv`; const table from the binary (linker section); `StringTable` type."
-source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:144-153"
+source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:169-178"
 provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#string-table-persistence"]
 quote = '''
 ## String table persistence
@@ -448,7 +468,7 @@ id = "the_manifest_is_a_table_directory_of_table_metadata_archived_like_everythi
 subject = "persistence"
 what = "The manifest is the directory of tables, holding for each table its name hash, schema version, record count and column metadata. It is archived like everything else, and the consumer extends it with domain-specific metadata such as schema versions and migration state."
 mechanism = "`Manifest { tables: map of table_id -> TableMeta, count: ColumnCount }`; `TableMeta { name_hash: ContentHash, version: SchemaVersion, record_count: USize, column_count: ColumnCount, columns }`. Persistence-local newtypes over USize or raw integer: SchemaVersion (u32 ordinal), record_count, ColumnCount, Cardinality, BufferOffset, BufferLen, BitWidth (u32), EvictionWeight (u64)."
-source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:155-181"
+source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:180-206"
 provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#manifest"]
 quote = '''
 ## Manifest
@@ -470,7 +490,7 @@ struct TableMeta {
 
 Domain aliases:
 
-- ContentHash comes from arvo_hash (alias for arvo_bits Bits<28>).
+- ContentHash comes from arvo_hash (alias for arvo_bits Bits<64, Hot>).
 - SchemaVersion, record_count, ColumnCount, Cardinality,
  BufferOffset, BufferLen, BitWidth, EvictionWeight are
  persistence-local newtypes over USize or raw integer (when the bit
