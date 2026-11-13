@@ -15,7 +15,7 @@ The canonical spec is
 
 ## Identity
 
-{{crate_count}} crates, flat structure, five logical groupings:
+{{crate_count}} crates, flat structure, six logical groupings:
 
 **API (consumer-facing contracts).** `hilavitkutin-api` ships `WorkUnit`, `AccessSet`, `Column<T>`, `Resource<T>`, `Virtual<T>`, `Context`, `Contains`, and the platform contracts (`Clock`, `MemoryProvider`, `ThreadPool`). `hilavitkutin-api-macros` is its proc-macro companion, emitting `#[derive(ResourceFootprint)]` so a resource value type reports its L1-morsel write-collection footprint (canonical R5).
 
@@ -26,6 +26,8 @@ The canonical spec is
 **Ecosystem (standalone opt-in sub-libraries).** `hilavitkutin-sym` is the generic interned-identity core (the `Sym` handle, domain traits, `Interner`, `Generator`), `hilavitkutin-str` is the interned string system built on it (one string domain), `hilavitkutin-ctx` is the provider-gated context framework, and `hilavitkutin-persistence` is the generic hot/cold storage bridge.
 
 **Plugin host infrastructure (reusable downstream loader layer).** Three crates make up the layer. `hilavitkutin-linking` is the cross-platform dynamic library loader primitive: pull-based explicit-symbol resolution over dlopen / LoadLibrary, `no_std`, no allocator. `hilavitkutin-extensions` is the contract-bound host orchestration layered above it: `ExtensionDescriptor` shape, lifecycle with per-extension host-opaque context pointer, capability dispatch via stable `CapabilityId`, required-versus-optional failure policy. `hilavitkutin-extensions-macros` is the proc-macro companion that emits the `#[repr(C)]` descriptor, the `__hilavitkutin_extension_descriptor` exported fn, and the capability trampolines via `#[export_extension]`. All three remain domain-agnostic; downstream consumers (viola, etc.) layer their own contract crates on top.
+
+**Conformance (what the engine is held to).** `hilavitkutin-conformance` holds the one-thread reference runner `Oracle`, which states what a frame means against `hilavitkutin-api` alone, the digest `Fold`, and the laws as functions over recorded runs with the mutants each law has to fail. `hilavitkutin-frozen-authors` holds value-form work units written as a consumer writes them, beside a hand model, frozen under `LEDGER.toml`: a file of it changes only with a line in `BREAKS.toml`. Its tests hold `run`, `run_parallel` and `run_fused` to the reference.
 
 ## Crate table
 

@@ -46,6 +46,8 @@ hilavitkutin-sym = "#E6F2E6 | #2D6A2D"
 hilavitkutin-str = "#E6F2E6 | #2D6A2D"
 hilavitkutin-kit = "#E6F2E6 | #2D6A2D"
 hilavitkutin-providers = "#E6F2E6 | #2D6A2D"
+hilavitkutin-conformance = "#F7EEE8 | #8A4B2D"
+hilavitkutin-frozen-authors = "#F7EEE8 | #8A4B2D"
 
 # ---------------------------------------------------------------------------
 # Lint configuration
@@ -161,6 +163,12 @@ rules = [
     { scope = "hilavitkutin-extensions", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*, hilavitkutin_str::*, hilavitkutin_build::*", reason = "hilavitkutin-extensions is the contract-bound host layer; depends only on hilavitkutin-linking plus substrate. Must not depend on engine, api, ecosystem, or build-time in its runtime source; its build script takes hilavitkutin-build as a build-dependency" },
     { scope = "hilavitkutin-extensions-macros", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*, hilavitkutin_str::*, hilavitkutin_build::*, hilavitkutin_linking::*", reason = "proc-macro crate; emitted output references ::hilavitkutin_extensions::* paths only. No other hilavitkutin-crate references at proc-macro runtime or in emission; the build script takes hilavitkutin-build as a build-dependency" },
     { scope = "hilavitkutin-api-macros", forbidden = "hilavitkutin::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*, hilavitkutin_str::*, hilavitkutin_build::*, hilavitkutin_linking::*, hilavitkutin_extensions::*", reason = "proc-macro crate; emitted output references ::hilavitkutin_api::* paths only. No other hilavitkutin-crate references at proc-macro runtime or in emission; the build script takes hilavitkutin-build as a build-dependency" },
+
+    # What the engine is held to. The instruments are written against the api
+    # and never against the engine they hold; the frozen units are a consumer
+    # and name the api and the engine's context type, nothing else of the stack.
+    { scope = "hilavitkutin-conformance", forbidden = "hilavitkutin::*, hilavitkutin_frozen_authors::*, hilavitkutin_kit::*, hilavitkutin_providers::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*, hilavitkutin_str::*, hilavitkutin_build::*, hilavitkutin_linking::*, hilavitkutin_extensions::*", reason = "hilavitkutin-conformance states what a frame means against hilavitkutin-api alone. A reference written against the engine it holds would share the engine's defects; its tests take the engine as a dev-dependency for the context type a unit names" },
+    { scope = "hilavitkutin-frozen-authors", forbidden = "hilavitkutin_conformance::*, hilavitkutin_kit::*, hilavitkutin_providers::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*, hilavitkutin_str::*, hilavitkutin_build::*, hilavitkutin_linking::*, hilavitkutin_extensions::*", reason = "hilavitkutin-frozen-authors is written as a consumer writes units: against hilavitkutin-api, with the engine's context type. Its hand model names neither, and its tests take the instruments as dev-dependencies" },
 
     # Engine consumes arvo bit contracts via the L2 `arvo-bitmask` surface,
     # never directly from L1 `arvo-bits`. Direct L1 coupling would bypass the

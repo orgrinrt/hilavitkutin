@@ -1357,7 +1357,11 @@ for, so the planner's steps see a wrapper as its store. Two things are
 read from the wrapper itself. A const assertion at `build` refuses a unit
 whose write mask holds a plain column its read list names with a reach.
 The assertion folds the masks at the dimensions `build` computes the plan
-at, which it is handed and does not name for itself.
+at, which it is handed and does not name for itself. It is the associated
+constant `HOLDS` of `ReachRule`, a public type over the units, the stores
+and the plan dimensions, so a caller that plans at dimensions of its own
+asks the same rule at those, and a bundle with more units than the
+dimensions hold fails the fold where a silent pass would have been.
 And a read-after-write edge into a read with a reach is a phase boundary:
 the writer's whole range lands, on every core, before the reader's phase
 starts. The plan already keeps work that needs all of its input before
@@ -1599,6 +1603,31 @@ per-fiber status (Completed / Failed / Poisoned).
 
 R2 APIs: evict/dump + inject/import for column persistence.
 hilavitkutin owns generation counters; consumer owns storage.
+
+## What the entries are held to
+
+`run`, `run_parallel` and `run_fused` are three ways through one frame, and
+the frame has one meaning. It is stated outside this crate, by the reference
+runner of `hilavitkutin-conformance`, which is written against the api and
+plans nothing: the units in the sequence they are registered, each over every
+record, every `Always` unit in every frame. Each entry is run on the frozen
+author units beside the reference from one starting state, and after every
+frame the stores of the two are written down as words and compared. The
+comparison lives in the tests of `hilavitkutin-frozen-authors`, since that
+crate is the consumer the engine and the reference both serve.
+
+Three properties of this crate are what that comparison leans on. The
+incremental skip may rest a unit only where its output would have been the
+same, so an entry that skips equals a reference that never does. The merge of
+the per-core accumulator regions gives the appends in the sequence of the
+records, so an accumulator compares value by value at every worker count while
+nothing is refused. And a buffered column is read on its frozen side by every
+unit of a pass, on every core, so what a unit reads there does not depend on
+which core wrote first.
+
+A frame in which an entry and the reference differ is a defect of the entry.
+It is kept as a failing test with its ticket until the entry is fixed, and the
+reference is not changed to agree.
 
 ## Platform implementations (domain 02)
 

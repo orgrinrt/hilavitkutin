@@ -14,8 +14,8 @@ apply_to: ["**/Cargo.toml"]
 
 ### Crate structure
 
-Twelve crates total: ten plain `rlib` crates plus two proc-macro
-crates. Flat structure.
+Fifteen crates total: thirteen plain `rlib` crates plus two
+proc-macro crates. Flat structure.
 
 - `hilavitkutin-api` is the consumer-facing contract crate. Traits
  and data shapes only; no concrete engine logic.
@@ -55,6 +55,16 @@ crates. Flat structure.
  author. One of two proc-macro crates in the stack (with
  `hilavitkutin-api-macros`). Its emitted output is
  `no_std`-compatible.
+- `hilavitkutin-conformance` is what a runner of work units is held
+ to: the reference runner, the digest and the laws. Depends on
+ `hilavitkutin-api`, arvo, arvo-hash, notko and notko-hlist. Must
+ never depend on `hilavitkutin` outside `[dev-dependencies]`.
+- `hilavitkutin-frozen-authors` is a consumer's crate of value-form
+ work units beside a hand model, frozen under `LEDGER.toml` and
+ `BREAKS.toml`. Depends on `hilavitkutin-api` and `hilavitkutin`.
+ `publish = false`. A file of it is never edited without a line in
+ `BREAKS.toml` and a new hash in `LEDGER.toml`; its `tests/` are not
+ frozen.
 
 ### Plugin host crates (layer, not loophole)
 

@@ -15,9 +15,11 @@
 | `hilavitkutin-api-macros` | Proc-macro companion to `hilavitkutin-api`. Emits `#[derive(ResourceFootprint)]`, which sums a resource value type's `Field`/`Seq`/`Map` field footprints so the engine reads its L1-morsel write-collection budget (canonical R5). |
 | `hilavitkutin` | Engine: plan, dispatch, resource, thread, strategy, adapt, scheduler. |
 | `hilavitkutin-build` | Build-time optimisations (LLVM passes, MIR, cfg emission, PGO/BOLT workflows). Standalone build-dep, no runtime deps. |
+| `hilavitkutin-conformance` | What a runner of work units is held to: the one-thread reference runner `Oracle`, the digest `Fold`, and the laws as functions over recorded runs, with the mutants each law has to fail. Written against `hilavitkutin-api` alone. `no_std`, no alloc. |
 | `hilavitkutin-ctx` | Provider-gated context framework (ecosystem, standalone). |
 | `hilavitkutin-extensions` | Contract-bound extension host orchestration (descriptor, lifecycle, capability dispatch, failure policy) layered over `hilavitkutin-linking`. Domain-agnostic. `no_std`, no allocator, no dyn. |
 | `hilavitkutin-extensions-macros` | Proc-macro companion to `hilavitkutin-extensions`. Emits `#[repr(C)]` descriptor + exported-symbol fn + capability trampolines via `#[export_extension]`. One of two proc-macro crates in the stack (with `hilavitkutin-api-macros`). |
+| `hilavitkutin-frozen-authors` | Value-form work units written as a consumer writes them, beside a hand model of their frame, frozen under a ledger of content hashes so that a contract change an author would feel is recorded as a break. Not published. |
 | `hilavitkutin-kit` | Kit preset trait. Declarative bundle: `type Units` (cons-list of WorkUnits) plus `type Owned` (cons-list of Resources / Columns / Virtuals). Engine reads associated types at compile time on `.add_kit::<K>()`. Standalone (no other hilavitkutin-crate deps). |
 | `hilavitkutin-linking` | Cross-platform dynamic library loading primitive (dlopen / LoadLibrary + typed Symbol / StaticRef). Pull-based explicit-symbol resolution. `no_std`, no allocator. Renamed from prior `hilavitkutin-extensions`. |
 | `hilavitkutin-persistence` | Generic hot-cold storage bridge (ecosystem, standalone). |
@@ -32,6 +34,12 @@ A consumer crate depends on `hilavitkutin`. The engine pulls `hilavitkutin-api` 
 hilavitkutin-ctx, -persistence, -sym, -str, -kit, -providers are standalone ecosystem crates that consumers opt into. ctx, persistence, sym, str are pure ecosystem (engine does not depend on them). hilavitkutin-str depends on hilavitkutin-sym for the identity handle; hilavitkutin-sym itself depends only on the foundations (arvo, notko), sitting below the rest of the ecosystem. kit is a contract crate the engine depends on for its `.add_kit()` method, but it has no reverse dependency on the engine; consumers can author Kits without pulling the engine in. providers ships default Kit impls consumers wire in (interner, future ColumnStorage / Clock / Memory defaults); it consumes api + str + kit + the foundations crates, no reverse dep.
 
 hilavitkutin-linking, hilavitkutin-extensions, hilavitkutin-extensions-macros make up the plugin-host layer. Downstream consumer ecosystems build domain-specific contract crates on top.
+
+hilavitkutin-conformance and hilavitkutin-frozen-authors are what the engine is held to and what it is held with. conformance depends on hilavitkutin-api and the foundations (arvo, arvo-hash, notko, notko-hlist) and never on the engine, since a reference written against the thing it holds would share its defects. frozen-authors is a consumer: it depends on hilavitkutin-api and on the engine for the context type a unit names. Nothing at runtime depends on either. The engine is compared with the reference in frozen-authors' tests, which take conformance and providers as dev-dependencies.
+
+## What a frame means
+
+The engine may split the records into morsels, spread them over cores, fuse units into one loop and rest a unit whose inputs did not change. None of that may change what a frame computes, and what a frame computes is stated once, by the reference runner of `hilavitkutin-conformance`: the units in the sequence they are registered, each over every record, a buffered column read on its frozen side and brought in at the boundary. `run`, `run_parallel` at every worker count and `run_fused` are each held to it on the frozen author units, word for word and frame after frame. A difference between an entry and the reference is a defect of the entry.
 
 ## Runtime
 

@@ -17,6 +17,9 @@ members = [
     "crates/hilavitkutin-linking",
     "crates/hilavitkutin-extensions",
     "crates/hilavitkutin-extensions-macros",
+    # What the engine is held to, and the units it is held with
+    "crates/hilavitkutin-conformance",
+    "crates/hilavitkutin-frozen-authors",
 ]
 
 [workspace.package]
@@ -72,6 +75,10 @@ hilavitkutin-providers = { path = "crates/hilavitkutin-providers", version = "0.
 hilavitkutin-linking = { path = "crates/hilavitkutin-linking", version = "0.1.0" }
 hilavitkutin-extensions = { path = "crates/hilavitkutin-extensions", version = "0.1.0" }
 hilavitkutin-extensions-macros = { path = "crates/hilavitkutin-extensions-macros", version = "0.1.0" }
+
+# What the engine is held to, and the units it is held with
+hilavitkutin-conformance = { path = "crates/hilavitkutin-conformance", version = "0.1.0" }
+hilavitkutin-frozen-authors = { path = "crates/hilavitkutin-frozen-authors", version = "0.1.0" }
 
 # The pinned arvo crates name notko by its `ssh` spelling in their own
 # manifests, and cargo keys a git source by the URL as written. Without this the
