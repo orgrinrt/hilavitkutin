@@ -9,12 +9,13 @@
 use core::sync::atomic::Ordering;
 
 use arvo_bitmask::{BitAccess, BitLogic, BitSequence};
-use hilavitkutin_api::ColumnStorage;
 use hilavitkutin_api::run_cfg::{PlanAffecting, RunCfg};
-use hilavitkutin_api::store::Replaceable;
+use hilavitkutin_api::store::{Replaceable, Resource};
 use hilavitkutin_api::store_values::StoreValues;
+use hilavitkutin_api::{ColumnStorage, ColumnValue};
 
 use super::Scheduler;
+use crate::dispatch::engine_ctx::Selector;
 use crate::plan::PlanDims;
 use crate::plan::project::{Locate, WitnessIndex};
 use crate::resource::bindings::BindingsFor;
@@ -29,47 +30,113 @@ impl<
     Clk: hilavitkutin_api::platform::ClockApi,
 > Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>
 {
-    /// Mark the `Resource<T>` store changed for the next frame.
+    // FIXME(4b54e5a34009): both swap methods below follow the swap
+    // specification, clauses S1, S2 and S4, which is implemented and benched
+    // and still waits on the maintainer's ratification. Their shape is not
+    // final until that ruling is recorded.
+    /// Replace a plan-affecting resource and ask for a plan band.
     ///
-    /// `T: PlanAffecting` routes the call onto the dirty-marking path. The
-    /// call does not install `_new` and does not recompute the execution
-    /// plan: it only marks the store dirty, so the units reading it run on
-    /// the next frame against the value already held. Consumers that need a
-    /// cheap value swap on a non-plan-affecting resource use `replace_value`,
-    /// which has the same gap.
-    pub fn replace_resource<T: PlanAffecting, Index>(&mut self, _new: T)
+    /// `T: PlanAffecting` routes the call onto the recompute path: the value
+    /// is installed, its store is marked dirty, and its plan-dirty bit is set
+    /// so the next frame opens on the leading plan band. Consumers that need
+    /// a cheap value swap on a non-plan-affecting resource use
+    /// `replace_value`. App-only: called between `build` and `run`, or
+    /// between two frames.
+    pub fn replace_resource<T: PlanAffecting + ColumnValue, Index, PtrIndex>(&mut self, new: T)
     where
-        Stores: Locate<T, Index>,
+        Stores: Locate<Resource<T>, Index>,
         Index: WitnessIndex,
+        <Vals as BindingsFor>::Bindings: Selector<T, PtrIndex>,
     {
-        // FIXME(147e3897011f): `_new` is discarded; the data-plane install and the plan recompute are not written.
+        // The identical witnessed blob install as `replace_value`: one
+        // whole-value write through the binding pointer the drain wrote
+        // through. Store values are `Copy` (drain contract), so the
+        // overwrite drops nothing.
+        let ptr = Selector::<T, PtrIndex>::get(&self.bindings);
+        // SAFETY: the binding pointer names the one-record column reserved
+        // and initialised for `T` at build; `&mut self` means no frame is in
+        // flight, so no reader aliases the slot during the write.
+        // FIXME(74e2b9918149): under `run_parallel` a parked worker still
+        // holds a `&Scheduler` across this `&mut self`. No worker reads while
+        // parked, so it is no data race, but it breaks the aliasing model
+        // until the worker-visible state moves into a provider allocation.
+        unsafe {
+            core::ptr::write(ptr.as_ptr(), new);
+        }
         // A swapped resource is a changed input, so mark its store dirty for
         // the next frame (domain-16 incremental skip seed).
-        self.mark_dirty::<T, Index>();
-        // The domain-22 plan-recompute seed (`plan_dirty` by PlanAffectingId)
-        // and the data-plane value install are sequenced with the adapt
-        // subsystem (runtime plan recompute on resource swap).
-        let _ = &self.plan_dirty;
+        self.mark_dirty::<Resource<T>, Index>();
+        // Domain-22 plan-recompute seed: set the plan-dirty bit for `T`,
+        // keyed by the same store-position witness. The next frame's band
+        // gate consumes and clears the bits. Positions past the
+        // `D::PlanAffecting` capacity share the last slot, which loses
+        // nothing while any set bit opens the band.
+        // FIXME(0ba7325f0216): the swap specification keys this bit by the
+        // plan-affecting id, not by store position, and with a capacity of
+        // zero there is no slot, so the bit is dropped with no signal.
+        let bits = self.plan_dirty.as_ref();
+        let slot = Index::INDEX.0.min(bits.len().saturating_sub(1)); // lint:allow(no-bare-numeric) reason: bounded slice index from the store-position witness; tracked: #121
+        if let Some(bit) = bits.get(slot) {
+            bit.store(true, Ordering::Relaxed);
+        }
     }
 
-    /// Mark the store of a non-plan-affecting resource changed.
+    /// Cheap value swap for a non-plan-affecting resource.
     ///
-    /// `T: Replaceable` opts the type into runtime replacement without
-    /// signalling a plan recompute. The call does not install `_new`: it
-    /// only marks the store dirty for the next frame. The `Replaceable`
-    /// marker is consumer-driven per Topic 8 axis B (replaceable but not
-    /// plan-affecting is the typical case for app-level state).
-    pub fn replace_value<T: Replaceable, Index>(&mut self, _new: T)
+    /// `V: Replaceable` opts the type into runtime replacement without
+    /// signalling a plan recompute: the value is installed and its store is
+    /// marked dirty, so the units reading it run on the next frame. The
+    /// `Replaceable` marker is consumer-driven per Topic 8 axis B
+    /// (replaceable but not plan-affecting is the typical case for app-level
+    /// state). App-only: called between `build` and `run`, or between two
+    /// frames.
+    pub fn replace_value<V: Replaceable + ColumnValue, Index, PtrIndex>(&mut self, new: V)
     where
-        Stores: Locate<T, Index>,
+        Stores: Locate<Resource<V>, Index>,
         Index: WitnessIndex,
+        <Vals as BindingsFor>::Bindings: Selector<V, PtrIndex>,
     {
-        // FIXME(147e3897011f): `_new` is discarded; the data-plane value install is not written.
+        // The specified install (swap spec S1, superseding the refuted
+        // member-by-member wording of `202606210600`): one whole-blob write
+        // through the `Selector` witness, the same binding pointer the drain
+        // wrote through and the projection reads through. No other pointer
+        // derivation exists on the swap path. Collection halves gain
+        // per-record element writes with the #344 collection wiring (S3).
+        let ptr = Selector::<V, PtrIndex>::get(&self.bindings);
+        // SAFETY: the binding pointer names the one-record column reserved
+        // and initialised for `V` at build; `&mut self` means no frame is in
+        // flight, so no reader aliases the slot during the write. Store
+        // values are `Copy` (drain contract), so the overwrite drops nothing.
+        // FIXME(74e2b9918149): the same parked-worker aliasing as in
+        // `replace_resource` above applies under `run_parallel`.
+        unsafe {
+            core::ptr::write(ptr.as_ptr(), new);
+        }
         // A swapped value is a changed input: mark its store dirty for the
         // next frame so dependents re-run (domain-16 incremental skip). No
-        // plan-recompute dirty, since the value swap is not structural. The
-        // data-plane value install is sequenced with the adapt subsystem.
-        self.mark_dirty::<T, Index>();
+        // plan-recompute dirty, since the value swap is not structural.
+        self.mark_dirty::<Resource<V>, Index>();
+    }
+
+    /// Decide this frame's plan band and publish the decision.
+    ///
+    /// Swap spec S2: the band opens on the first frame or when any plan-dirty
+    /// bit was set by `replace_resource` since the last frame that consumed
+    /// them. Consuming clears the bits, so one swap buys one plan band. The
+    /// decision is stored in `plan_band` for the worker-side band start.
+    /// Called between frames, before any worker wakes, by `run` and by
+    /// `run_parallel`; both reach the bits and the flag through a shared
+    /// reference, since they are atomics.
+    pub(super) fn consume_plan_dirty(&self) -> arvo::Bool {
+        let mut swapped = false; // lint:allow(no-bare-numeric) reason: fold over the atomic bit array; tracked: #121
+        for bit in self.plan_dirty.as_ref() {
+            if bit.swap(false, Ordering::Relaxed) {
+                swapped = true;
+            }
+        }
+        let dirty = self.first_frame.load(Ordering::Relaxed) || swapped;
+        self.plan_band.store(dirty, Ordering::Relaxed);
+        arvo::Bool(dirty)
     }
 
     /// Mark the store named by type `T` changed for the next frame.

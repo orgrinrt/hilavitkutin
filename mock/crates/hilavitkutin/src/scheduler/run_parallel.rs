@@ -245,6 +245,12 @@ impl<
         // bands dispatch after the await plus merge below. `core = 0, ncores =
         // 1` makes this thread own every trunk in the dispatched phases. The
         // band ranges are const and empty for a no-meta carrier.
+        // Swap spec S2, parallel path: decide and publish the plan band while
+        // every worker is parked, so the worker phase loops and the
+        // leading-band dispatch below agree.
+        // SAFETY: between frames; the bits and the flag are atomics reached
+        // through a shared reference.
+        let plan_dirty_frame = unsafe { (*me).consume_plan_dirty() }.0; // lint:allow(no-bare-numeric) reason: band decision read once per frame; tracked: #121
         let unit_outer = unsafe { (*me).carrier_unit_outer() }.0;
         let pre_phases = pre_consumer_phase_count::<
             WuVals,
@@ -256,7 +262,7 @@ impl<
         >()
         .0; // lint:allow(no-bare-numeric) reason: leading-band loop bound; tracked: #121
         if unit_outer && pre_phases > 0 {
-            let start = if unsafe { (*me).first_frame.load(Ordering::Relaxed) } {
+            let start = if plan_dirty_frame {
                 0 // lint:allow(no-bare-numeric) reason: plan-dirty frame runs the plan band; tracked: #121
             } else {
                 plan_phase_count::<

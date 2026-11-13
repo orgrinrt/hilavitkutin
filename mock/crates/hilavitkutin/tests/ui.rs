@@ -24,7 +24,6 @@ fn compile_fail_fixtures() {
 }
 
 #[test]
-#[ignore = "catalogue: replace_resource and replace_value take the store marker and discard the value, so a consumer cannot replace one; this case does not compile until they take the value type; tracked #hilavitkutin_replace_resource_and_replace_value_discard_the"]
 fn a_replaced_value_is_read_by_the_next_run() {
     let t = trybuild::TestCases::new();
     t.pass("tests/ui/replace_value_installs_pass.rs");

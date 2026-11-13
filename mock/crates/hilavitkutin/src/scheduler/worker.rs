@@ -127,11 +127,12 @@ pub(super) fn worker_main<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>(
         // barrier (the canonical worker-side sync; the main thread no longer
         // round-trips per phase). Phase order is the array order 0..nphases.
         // On a clean (not plan-dirty) frame the loop starts past the leading
-        // plan band; `first_frame` is written between frames while every
-        // worker is parked, so the read is stable under the publish/await
+        // plan band; `plan_band` is published between frames while every
+        // worker is parked (first frame OR a consumed `replace_resource`
+        // plan-dirty bit), so the read is stable under the publish/await
         // happens-before. All workers compute the same start, so the interior
         // waist-barrier counts stay matched.
-        let mut p = if s.first_frame.load(Ordering::Relaxed) { 0 } else { plan_phases }; // lint:allow(no-bare-numeric) reason: phase loop start; tracked: #121
+        let mut p = if s.plan_band.load(Ordering::Relaxed) { 0 } else { plan_phases }; // lint:allow(no-bare-numeric) reason: phase loop start; tracked: #121
         while p < nphases {
             s.run_core_phase::<Witnesses, GW>(USize(core_id), USize(p), ncores, total, msize);
             if p + 1 < nphases {

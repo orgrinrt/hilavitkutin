@@ -216,6 +216,11 @@ pub struct Scheduler<
     /// false afterward. `AtomicBool` (Relaxed, ordered by the frame barriers)
     /// so the between-frame write goes through a shared reference.
     first_frame:          AtomicBool,
+    /// This frame's plan-band decision, published between frames before the
+    /// workers wake (same write discipline as `first_frame`, so the
+    /// worker-side happens-before argument is unchanged): true when it is
+    /// the first frame or any `plan_dirty` bit was consumed at frame entry.
+    plan_band:            AtomicBool,
     /// E4 slice 1: the virtual-fire epoch. Incremented once per pass before
     /// dispatch; a producer's `fire<V>` stamps its `Virtual<V>` cell with the
     /// current value, and an `On<V>` consumer's gate opens when the cell equals

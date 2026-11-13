@@ -343,3 +343,45 @@ fn column_free_sees_the_alignment_its_reserve_used() {
         "the free saw a different alignment than the reserve used"
     );
 }
+
+impl hilavitkutin_api::store::Replaceable for Ra {}
+
+/// `replace_value` writes the new value into the data plane.
+///
+/// The body took `_new`, marked the store dirty, and dropped it, so a consumer
+/// saw the dirty flag and concluded the swap had happened. Worse than an
+/// unimplemented function: it reported success for work it did not do.
+///
+/// The signature could not have done otherwise. `T` unified to the marker
+/// `Resource<Ra>`, which is `PhantomData` and carries no value; there was
+/// nothing to install. The parameter is now the value type, which is also what
+/// the bindings are keyed by, so `Selector<Ra, Index>` resolves the slot.
+///
+/// Green under the swap spec S1 install (round 202607200500): the swap IS the
+/// whole-blob write through the same witness the drain wrote through. The
+/// collection halves of a swapped value (per-record `Seq` / `Map` element
+/// writes, spec S3) stay gated on the #344 collection wiring; `Ra` is scalar,
+/// so this test is complete for the scalar-blob half.
+#[test]
+fn replace_value_installs_into_the_data_plane() {
+    let provider = BumpProvider::<256>::new();
+    let mut scheduler = Scheduler::builder()
+        .with(Resource::new(Ra(99)))
+        .build(store(provider), USize(0))
+        .unwrap_or_else(|_| panic!("build should succeed"));
+
+    // SAFETY: written with Ra(99) at build time; the scheduler is alive.
+    let before = unsafe { *scheduler.__bindings().__ptr().as_ptr() };
+    assert_eq!(before, Ra(99), "precondition: the build value is in place");
+
+    scheduler.replace_value(Ra(7));
+
+    // SAFETY: same pointer, still owned by the live scheduler.
+    let after = unsafe { *scheduler.__bindings().__ptr().as_ptr() };
+    assert_eq!(
+        after,
+        Ra(7),
+        "replace_value must install the new value; Ra(99) here means the \
+         argument was dropped and only the dirty flag was set"
+    );
+}
