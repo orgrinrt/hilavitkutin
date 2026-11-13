@@ -1,13 +1,15 @@
-//! What a buffered column holds before any unit has written it.
+//! What a column, plain or buffered, holds before any unit has written it.
 //!
-//! A `Buffered<T, M>` is registered with the value every record of it starts
-//! from, and the build writes that value to both sides. The first pass reads
-//! it, and a record no unit wrote in a pass still holds it after the boundary.
+//! A `Column<T>` and a `Buffered<T, M>` are registered with the value every
+//! record starts from, and the build writes that value to every record: of the
+//! one reservation of a plain column, and of both sides of a buffered one. The
+//! first pass reads it, and a record no unit wrote in a pass still holds it
+//! after the boundary.
 //!
 //! Every scheduler here is built over memory that is `0xA5` at every byte, so
-//! a side the build left alone reads as 2779096485 and not as a zero that
-//! could pass for a start. No test here writes a side by hand: the hidden
-//! bases are read after the passes and nothing else.
+//! a reservation the build left alone reads as 2779096485 and not as a zero
+//! that could pass for a start. No test here writes a column by hand: the
+//! hidden bases are read after the passes and nothing else.
 //!
 //! Lives under `tests/` so the bare numeric record values do not trip the
 //! src-tree primitive lints.
@@ -31,7 +33,10 @@ use notko::Outcome;
 use stable_provider::StableProvider;
 
 const RECORDS: usize = 20_000;
-const POISON: u32 = 0xA5A5_A5A5;
+
+/// What the output column starts from: no start under test, and not what
+/// memory the build left alone reads as.
+const UNSEEN: u32 = 0x0BAD_5EED;
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 struct Height(u32);
@@ -55,7 +60,7 @@ impl Default for Built {
 /// Starts from its default, which is zero: the start that memory which
 /// happens to be zero would pass for.
 #[derive(Copy, Clone, PartialEq, Debug, Default)]
-struct Plain(u32);
+struct Zeroed(u32);
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 struct Seen(u32);
@@ -86,50 +91,105 @@ fn every(got: &[u32], want: u32, what: &str) {
     }
 }
 
-// The premise of every test below: a side the build does not write reads as
-// the poison. A plain column is such a side, and the unit that reads it here
-// writes what it read to the output.
-#[derive(Copy, Clone)]
-struct Echo;
+mod plain {
+    use super::*;
 
-impl BuilderInput for Echo {
-    type Dispatch = UnitDispatch<Self>;
-    type Init = Self;
-}
+    // Writes what it read of a plain column of `$t` to the output. Nothing
+    // writes the column it reads, so what it reads is what the build left.
+    macro_rules! watch {
+        ($unit:ident, $t:ident) => {
+            #[derive(Copy, Clone)]
+            struct $unit;
 
-impl WorkUnit<Always> for Echo {
-    type Ctx<'frame> = EngineCtx<
-        'frame,
-        Cons<Column<Height>, Empty>,
-        Cons<Column<Seen>, Empty>,
-        SnapNil,
-        ColPtrCons<Height, ColPtrNil>,
-        ColPtrCons<Seen, ColPtrNil>,
-        AccPtrNil,
-    >;
-    type Hint = (Immediate, Atomic, Normal);
-    type Read = Cons<Column<Height>, Empty>;
-    type Write = Cons<Column<Seen>, Empty>;
+            impl BuilderInput for $unit {
+                type Dispatch = UnitDispatch<Self>;
+                type Init = Self;
+            }
 
-    fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        ctx.each()
-            .map(|read| rec![Seen(read.get(Column::<Height>::new()).0)]);
+            impl WorkUnit<Always> for $unit {
+                type Ctx<'frame> = EngineCtx<
+                    'frame,
+                    Cons<Column<$t>, Empty>,
+                    Cons<Column<Seen>, Empty>,
+                    SnapNil,
+                    ColPtrCons<$t, ColPtrNil>,
+                    ColPtrCons<Seen, ColPtrNil>,
+                    AccPtrNil,
+                >;
+                type Hint = (Immediate, Atomic, Normal);
+                type Read = Cons<Column<$t>, Empty>;
+                type Write = Cons<Column<Seen>, Empty>;
+
+                fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
+                    ctx.each()
+                        .map(|read| rec![Seen(read.get(Column::<$t>::new()).0)]);
+                }
+            }
+        };
     }
-}
+    watch!(WatchHeight, Height);
+    watch!(WatchBuilt, Built);
+    watch!(WatchZeroed, Zeroed);
 
-#[test]
-fn memory_the_build_does_not_write_reads_as_the_poison() {
-    let mut scheduler = Scheduler::builder()
-        .with(Column::<Height>::new())
-        .with(Column::<Seen>::new())
-        .with(Echo)
-        .build(store(), USize(RECORDS))
-        .unwrap_or_else(|_| panic!("build should succeed"));
-    assert!(matches!(scheduler.run(), Outcome::Ok(())));
-    let seen = scheduler.__bindings().__ptr().as_ptr();
-    // SAFETY: between passes.
-    let got = unsafe { all(seen, |s: Seen| s.0) };
-    every(&got, POISON, "a plain column nobody filled");
+    // What the first pass read of a column nothing wrote, and the column
+    // after it.
+    macro_rules! the_first_pass_reads {
+        ($test:ident, $unit:ident, $t:ident, $started:expr, $want:expr) => {
+            #[test]
+            fn $test() {
+                let mut scheduler = Scheduler::builder()
+                    .with($started)
+                    .with(Column::<Seen>::start_from(Seen(UNSEEN)))
+                    .with($unit)
+                    .build(store(), USize(RECORDS))
+                    .unwrap_or_else(|_| panic!("build should succeed"));
+                assert!(matches!(scheduler.run(), Outcome::Ok(())));
+                let seen = scheduler.__bindings().__ptr().as_ptr();
+                // SAFETY: between passes.
+                let got = unsafe { all(seen, |s: Seen| s.0) };
+                every(&got, $want, "what the first pass read");
+                let column = scheduler.__bindings().__tail().__ptr().as_ptr();
+                // SAFETY: between passes.
+                let got = unsafe { all(column, |v: $t| v.0) };
+                every(&got, $want, "the column");
+            }
+        };
+    }
+    the_first_pass_reads!(
+        an_explicit_start,
+        WatchHeight,
+        Height,
+        Column::<Height>::start_from(Height(5)),
+        5
+    );
+    the_first_pass_reads!(
+        the_constructor_of_a_type_that_has_one,
+        WatchBuilt,
+        Built,
+        Column::<Built>::start(),
+        7
+    );
+    the_first_pass_reads!(
+        the_default_of_a_type_that_has_no_constructor,
+        WatchZeroed,
+        Zeroed,
+        Column::<Zeroed>::start(),
+        0
+    );
+
+    // A column a scheduler is built with and no unit names holds its start
+    // all the same: the write is the build's and waits on no reader.
+    #[test]
+    fn a_column_no_unit_names_holds_its_start() {
+        let scheduler = Scheduler::builder()
+            .with(Column::<Height>::start_from(Height(5)))
+            .build(store(), USize(RECORDS))
+            .unwrap_or_else(|_| panic!("build should succeed"));
+        let column = scheduler.__bindings().__ptr().as_ptr();
+        // SAFETY: no pass has run.
+        let got = unsafe { all(column, |h: Height| h.0) };
+        every(&got, 5, "the column");
+    }
 }
 
 macro_rules! suite {
@@ -171,17 +231,17 @@ macro_rules! suite {
             }
             watch!(WatchHeight, Height);
             watch!(WatchBuilt, Built);
-            watch!(WatchPlain, Plain);
+            watch!(WatchZeroed, Zeroed);
 
             // What the first pass read, and both sides after it: the store
             // is one nothing wrote, so the start is on both.
             macro_rules! the_first_pass_reads {
-                ($test:ident, $unit:ident, $t:ident, $staged:expr, $want:expr) => {
+                ($test:ident, $unit:ident, $t:ident, $started:expr, $want:expr) => {
                     #[test]
                     fn $test() {
                         let mut scheduler = Scheduler::builder()
-                            .with($staged)
-                            .with(Column::<Seen>::new())
+                            .with($started)
+                            .with(Column::<Seen>::start_from(Seen(UNSEEN)))
                             .with($unit)
                             .build(store(), USize(RECORDS))
                             .unwrap_or_else(|_| panic!("build should succeed"));
@@ -218,9 +278,9 @@ macro_rules! suite {
             );
             the_first_pass_reads!(
                 the_default_of_a_type_that_has_no_constructor,
-                WatchPlain,
-                Plain,
-                Buffered::<Plain, $mode>::start(),
+                WatchZeroed,
+                Zeroed,
+                Buffered::<Zeroed, $mode>::start(),
                 0
             );
 

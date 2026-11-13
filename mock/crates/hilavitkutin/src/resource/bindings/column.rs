@@ -12,7 +12,7 @@ use core::mem::MaybeUninit;
 use core::sync::atomic::{AtomicBool, Ordering};
 
 use arvo::{Bool, USize};
-use hilavitkutin_api::store::{Buffered, Column, Exchange, Snapshot};
+use hilavitkutin_api::store::{BufferMode, Buffered, Column, Exchange, Snapshot, Starts};
 use hilavitkutin_api::{ColumnStorage, ColumnValue, StoreId};
 
 use crate::resource::provenance::ColumnPtr;
@@ -327,6 +327,26 @@ impl ColKind for Exchange {
     unsafe fn bring_in<T>(_first: ColumnPtr<T>, side: &Flip<T>, _count: USize) {
         side.turned.set(Bool(!side.turned.get().0));
     }
+}
+
+/// The kind a store that is registered with a start is kept as.
+///
+/// The api says which stores start and with a value of which type. This says
+/// how the engine keeps each: a `Column<T>` as `Plain`, a `Buffered<T, M>` as
+/// its mode. The drain reads the kind off the marker, so one arm of it serves
+/// both.
+pub trait Kept: Starts {
+    /// How many reservations stand behind the store, and which a read and a
+    /// write reach.
+    type Kind: ColKind;
+}
+
+impl<T> Kept for Column<T> {
+    type Kind = Plain;
+}
+
+impl<T, M: BufferMode + ColKind> Kept for Buffered<T, M> {
+    type Kind = M;
 }
 
 /// Bindings cons-cell for one registered `Column<T>` or `Buffered<T, M>`.

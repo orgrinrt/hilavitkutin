@@ -36,16 +36,8 @@ use core::mem::size_of;
 
 use arvo::{Bool, USize};
 use hilavitkutin_api::access::{AccessSet, Cons, Empty};
-use hilavitkutin_api::store::{
-    Accum,
-    BufferMode,
-    Buffered,
-    Column,
-    Resource,
-    StagedBuffered,
-    StagedResource,
-    Virtual,
-};
+use hilavitkutin_api::member::Member;
+use hilavitkutin_api::store::{Accum, Column, Resource, StagedResource, Started, Virtual};
 use hilavitkutin_api::store_values::{StoreValues, Sv, SvEmpty};
 use hilavitkutin_api::{ColumnStorage, ColumnValue, StoreId};
 
@@ -59,7 +51,7 @@ mod per_core;
 mod refusal;
 
 pub use close::{BringIn, PlaceIn};
-pub use column::{ColKind, ColumnBinding, Flip, MarkPtr, Plain};
+pub use column::{ColKind, ColumnBinding, Flip, Kept, MarkPtr, Plain};
 use column::{drain_column, reserve_records};
 pub(crate) use per_core::accum_slice;
 pub use per_core::{CollectAccumCounts, MergeAccums, PerCoreCounts, RebaseBindings};
@@ -276,17 +268,15 @@ impl<T: 'static, L: StoreValues + BindingsFor> BindingsFor for Sv<Column<T>, L> 
     type Markers = Cons<Column<T>, <L as BindingsFor>::Markers>;
 }
 
-impl<T: 'static, M: BufferMode + ColKind, L: StoreValues + BindingsFor> sealed::Sealed
-    for Sv<StagedBuffered<T, M>, L>
+impl<S: Kept + Member + 'static, L: StoreValues + BindingsFor> sealed::Sealed
+    for Sv<Started<S>, L>
 {
 }
-impl<T: 'static, M: BufferMode + ColKind, L: StoreValues + BindingsFor> BindingsFor
-    for Sv<StagedBuffered<T, M>, L>
-{
-    type Bindings = ColumnBinding<T, <L as BindingsFor>::Bindings, M>;
+impl<S: Kept + Member + 'static, L: StoreValues + BindingsFor> BindingsFor for Sv<Started<S>, L> {
+    type Bindings = ColumnBinding<S::Value, <L as BindingsFor>::Bindings, S::Kind>;
     // As with a resource, the value list carries the carrier and the access
     // sets name the marker.
-    type Markers = Cons<Buffered<T, M>, <L as BindingsFor>::Markers>;
+    type Markers = Cons<S, <L as BindingsFor>::Markers>;
 }
 
 impl<T: 'static, L: StoreValues + BindingsFor> sealed::Sealed for Sv<Virtual<T>, L> {}
@@ -429,8 +419,9 @@ where
     }
 }
 
-impl<T: ColumnValue, M: BufferMode + ColKind, L> DrainStores for Sv<StagedBuffered<T, M>, L>
+impl<S: Kept + Member + 'static, L> DrainStores for Sv<Started<S>, L>
 where
+    S::Value: ColumnValue,
     L: StoreValues + BindingsFor + DrainStores,
 {
     fn drain<CS: ColumnStorage>(
@@ -439,17 +430,19 @@ where
         next_id: &mut USize,
         record_count: USize,
     ) -> notko::Outcome<Self::Bindings, BuildError> {
-        // Two reservations of one layout, the live side and the frozen one,
-        // at two storage ids one after the other. The store is one store in
-        // every access mask all the same. Every record of both holds the
-        // value the store was registered with once the drain returns, so no
-        // read of a pass reaches a record nothing wrote.
+        // A column of either kind. A plain one is one reservation of
+        // `record_count` records. A buffered one is two of one layout, the
+        // live side and the frozen one, at two storage ids one after the
+        // other, and one store in every access mask all the same.
         let (carrier, rest) = self.into_parts();
         let start = carrier.into_inner();
-        let drained = drain_column::<T, M, CS, _>(cs, next_id, record_count, |cs, next_id| {
-            <L as DrainStores>::drain(rest, cs, next_id, record_count)
-        });
-        if let notko::Outcome::Ok(binding) = &drained {
+        let drained =
+            drain_column::<S::Value, S::Kind, CS, _>(cs, next_id, record_count, |cs, next_id| {
+                <L as DrainStores>::drain(rest, cs, next_id, record_count)
+            });
+        if <S::Kind as ColKind>::BUFFERED.0
+            && let notko::Outcome::Ok(binding) = &drained
+        {
             binding.start_from(start);
         }
         drained
