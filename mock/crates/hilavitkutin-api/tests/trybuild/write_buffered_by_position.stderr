@@ -1,0 +1,15 @@
+error[E0277]: a column of `_` cannot be written by position here
+  --> tests/trybuild/write_buffered_by_position.rs:26:74
+   |
+26 |         ColumnWriterApi::<write![Buffered<Temp>]>::write(&ctx, USize(0), Temp(1));
+   |                                                                          ^^^^^^^ the trait `WriteAt<_, (Next<_>, _)>` is not implemented for `(Cons<Buffered<Temp>, hilavitkutin_api::Empty>, _)`
+   |
+   = note: The positional `write` reaches a `Column<T>` the unit lists in `type Write` bare, under `Written<_>` or under `Differs<_>`. A `Buffered<T, M>` is written through the value function alone.
+note: required by a bound in `hilavitkutin_api::ColumnWriterApi::write`
+  --> src/context.rs
+   |
+   |     unsafe fn write<T: ColumnValue, I>(&self, i: USize, v: T)
+   |               ----- required by a bound in this associated function
+   |     where
+   |         (W, Self): WriteAt<T, I, Ctx = Self>,
+   |                    ^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `ColumnWriterApi::write`

@@ -32,6 +32,9 @@ repository = "https://github.com/orgrinrt/hilavitkutin"
 # (BoundedPush, Decoder) and by any downstream crate needing the
 # fallibility ladder.
 notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev", version = "0.0.1", default-features = false, features = ["const", "try_trait_v2"] }
+# The type-level list the access sets are made of, with membership, append
+# and the product of values over a list.
+notko-hlist = { git = "https://github.com/orgrinrt/notko.git", branch = "dev", version = "0.0.1" }
 
 # arvo substrate — referenced via path when developing in tandem, via
 # crates.io / git dep once published. For now the mockspace validates

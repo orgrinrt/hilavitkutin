@@ -1,13 +1,25 @@
 //! Store marker types must all be zero-sized.
 
 #![no_std]
-#![feature(adt_const_params)]
-#![feature(generic_const_exprs)]
-#![allow(incomplete_features)]
+
+use core::mem::size_of;
 
 use arvo::{Cap, USize};
-use core::mem::size_of;
-use hilavitkutin_api::{Column, Field, Map, Resource, Seq, Virtual};
+use hilavitkutin_api::{
+    Accum,
+    Buffered,
+    Column,
+    Differs,
+    Exchange,
+    Field,
+    Map,
+    Reach,
+    Resource,
+    Seq,
+    Snapshot,
+    Virtual,
+    Written,
+};
 
 struct Pos;
 struct Gravity;
@@ -20,6 +32,36 @@ fn resource_is_zst() {
 #[test]
 fn column_is_zst() {
     assert_eq!(size_of::<Column<Pos>>(), 0);
+}
+
+#[test]
+fn buffered_is_zst_in_both_modes() {
+    assert_eq!(size_of::<Buffered<Pos>>(), 0);
+    assert_eq!(size_of::<Buffered<Pos, Snapshot>>(), 0);
+    assert_eq!(size_of::<Buffered<Pos, Exchange>>(), 0);
+    assert_eq!(size_of::<Snapshot>(), 0);
+    assert_eq!(size_of::<Exchange>(), 0);
+}
+
+// The mode left out is `Snapshot`.
+#[test]
+fn buffered_defaults_to_snapshot() {
+    trait SameAs<B> {}
+    impl<T> SameAs<T> for T {}
+    fn same<A: SameAs<B>, B>() {}
+    same::<Buffered<Pos>, Buffered<Pos, Snapshot>>();
+}
+
+#[test]
+fn accum_is_zst() {
+    assert_eq!(size_of::<Accum<Pos>>(), 0);
+}
+
+#[test]
+fn wrappers_are_zst() {
+    assert_eq!(size_of::<Reach<Column<Pos>, { Cap(USize(2)) }>>(), 0);
+    assert_eq!(size_of::<Written<Column<Pos>>>(), 0);
+    assert_eq!(size_of::<Differs<Buffered<Pos, Exchange>>>(), 0);
 }
 
 #[test]

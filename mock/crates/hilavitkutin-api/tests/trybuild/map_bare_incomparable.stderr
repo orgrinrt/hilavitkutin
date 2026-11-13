@@ -1,0 +1,12 @@
+error[E0277]: a value function cannot return the list `Cons<Column<Raw>, hilavitkutin_api::Empty>`
+  --> tests/trybuild/map_bare_incomparable.rs:14:26
+   |
+14 |     a_function_returns::<write![Column<Raw>]>();
+   |                          ^^^^^^^^^^^^^^^^^^^ the trait `WriteSet` is not implemented for `Cons<Column<Raw>, hilavitkutin_api::Empty>`
+   |
+   = note: Every member of the write list of a unit that calls `map` is `Writable`: a `Column<T>` or a `Buffered<T, M>` (bare where `T: PartialEq`, else under `Written<_>`), an `Accum<T>` or a `Virtual<V>`.
+note: required by a bound in `a_function_returns`
+  --> tests/trybuild/map_bare_incomparable.rs:10:26
+   |
+10 | fn a_function_returns<W: WriteSet>() {}
+   |                          ^^^^^^^^ required by this bound in `a_function_returns`

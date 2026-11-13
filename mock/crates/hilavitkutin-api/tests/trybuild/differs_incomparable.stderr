@@ -1,0 +1,12 @@
+error[E0277]: `Cons<Differs<Column<Raw>>, hilavitkutin_api::Empty>` is not an access set
+  --> tests/trybuild/differs_incomparable.rs:12:21
+   |
+12 |     is_access_set::<write![Differs<Column<Raw>>]>();
+   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `AccessSet` is not implemented for `Cons<Differs<Column<Raw>>, hilavitkutin_api::Empty>`
+   |
+   = note: An access set is `Empty`, or `Cons<H, T>` where `H` is a store marker (`Resource`, `Column`, `Buffered`, `Accum`, `Virtual`) or a wrapper over a `Column` or a `Buffered` (`Reach`, `Written`, `Differs`) and `T` is an access set. `Differs` asks `PartialEq` of the value type, and `Written` asks nothing of it. The `read!` and `write!` macros build one from a flat list.
+note: required by a bound in `is_access_set`
+  --> tests/trybuild/differs_incomparable.rs:9:21
+   |
+ 9 | fn is_access_set<L: AccessSet>() {}
+   |                     ^^^^^^^^^ required by this bound in `is_access_set`

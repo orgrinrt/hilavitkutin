@@ -11,6 +11,7 @@
 use arvo::Cap;
 use hilavitkutin_api::footprint::ResourceFootprint;
 use hilavitkutin_api::store::{Field, Map, Seq};
+use hilavitkutin_api::values::ResourceRead;
 use hilavitkutin_api_macros::ResourceFootprint;
 
 const SEQ_N: Cap = arvo_tensor::cap(11);
@@ -19,14 +20,68 @@ const MAP_N: Cap = arvo_tensor::cap(7);
 #[derive(ResourceFootprint)]
 struct FixtureRes {
     scalar: Field<u32>,
-    seq: Seq<u16, SEQ_N>,
-    map: Map<u8, u32, MAP_N>,
+    seq:    Seq<u16, SEQ_N>,
+    map:    Map<u8, u32, MAP_N>,
 }
 
-#[derive(ResourceFootprint)]
+#[derive(ResourceFootprint, Clone, Copy)]
 struct ScalarOnly {
     a: Field<u32>,
     b: Field<u16>,
+}
+
+/// A resource of plain scalar fields, with values to tell a copy by.
+#[derive(ResourceFootprint, Clone, Copy, PartialEq, Debug)]
+struct Step {
+    dt:    u32,
+    scale: u16,
+}
+
+/// Holds for a `ResourceRead` whose value is `V` at every lifetime.
+fn reads_as<T, V>(_: &T)
+where
+    T: for<'a> ResourceRead<Val<'a> = V>,
+{
+}
+
+/// Holds for a `ResourceRead` whose value is a reference to itself.
+fn reads_by_reference<T>(_: &T)
+where
+    T: for<'a> ResourceRead<Val<'a> = &'a T>,
+{
+}
+
+#[test]
+fn derive_reads_scalar_fields_by_value() {
+    let step = Step {
+        dt:    7,
+        scale: 3,
+    };
+    reads_as::<Step, Step>(&step);
+    // A copy of the value, and not a borrow of the resource.
+    let read: Step = ResourceRead::read(&step);
+    assert_eq!(read, step);
+
+    let scalar = ScalarOnly {
+        a: Field::default(),
+        b: Field::default(),
+    };
+    reads_as::<ScalarOnly, ScalarOnly>(&scalar);
+}
+
+#[test]
+fn derive_reads_a_collection_by_reference() {
+    let res = FixtureRes {
+        scalar: Field::default(),
+        seq:    Seq::default(),
+        map:    Map::default(),
+    };
+    reads_by_reference(&res);
+    let read: &FixtureRes = ResourceRead::read(&res);
+    assert!(
+        core::ptr::eq(read, &res),
+        "the read borrows the resource in place"
+    );
 }
 
 #[test]

@@ -23,6 +23,7 @@ use arvo_tensor::cap_size;
 
 use crate::column_value::ColumnValue;
 use crate::store::{Field, Map, Seq};
+use crate::values::ResourceRead;
 
 /// Round a bit count up to whole bytes.
 const fn bytes_of_bits(bits: USize) -> USize {
@@ -82,6 +83,16 @@ macro_rules! impl_scalar_footprint {
             impl ResourceFootprint for $t {
                 const L1_BYTES: USize = <USize as Identity<Additive>>::IDENTITY;
             }
+
+            // A scalar resource is read by value by a value function.
+            impl ResourceRead for $t {
+                type Val<'a> = $t;
+
+                #[inline(always)]
+                fn read(&self) -> $t {
+                    *self
+                }
+            }
         )*
     };
 }
@@ -90,10 +101,5 @@ macro_rules! impl_scalar_footprint {
 #[rustfmt::skip]
 impl_scalar_footprint!(u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize, bool, char, ()); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: definition-site scalar list for the zero-footprint impls; tracked: #121
 
-impl ResourceFootprint for USize {
-    const L1_BYTES: USize = <USize as Identity<Additive>>::IDENTITY;
-}
-
-impl ResourceFootprint for arvo::Bool {
-    const L1_BYTES: USize = <USize as Identity<Additive>>::IDENTITY;
-}
+// The two arvo scalars the engine's own resources hold, by the same macro.
+impl_scalar_footprint!(USize, arvo::Bool);

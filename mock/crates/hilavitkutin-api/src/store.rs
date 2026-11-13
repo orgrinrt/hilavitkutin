@@ -1,8 +1,8 @@
 //! Store marker types.
 //!
-//! Zero-sized type-level descriptors for the three store shapes
-//! (`Resource`, `Column`, `Virtual`) and the three resource layouts
-//! (`Field`, `Seq`, `Map`). The scheduler sees `StoreId` pairs at
+//! Zero-sized type-level descriptors for the store shapes (`Resource`,
+//! `Column`, `Buffered` with its two modes, `Accum`, `Virtual`) and the
+//! three resource layouts (`Field`, `Seq`, `Map`). The scheduler sees `StoreId` pairs at
 //! runtime; these types are the compile-time identity erased to
 //! plain indices by execution time.
 
@@ -147,6 +147,75 @@ impl<T: 'static> BuilderInput for Accum<T> {
 impl<T> notko::HasTrivialCtor for Accum<T> {
     fn new() -> Self {
         Accum(PhantomData)
+    }
+}
+
+/// The live side of a buffered column is copied into its frozen side.
+///
+/// The default mode. The live side always holds the whole store, so a unit
+/// may write any part of it.
+pub struct Snapshot;
+
+/// The two sides of a buffered column trade places, with no copy.
+///
+/// The side a unit then writes into holds the values of two passes before,
+/// so the store is right only where a unit that writes it writes every
+/// record, which a value function does.
+pub struct Exchange;
+
+/// How the live side of a buffered column becomes its frozen side.
+///
+/// `Snapshot` and `Exchange`, and no other.
+#[allow(private_bounds)]
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` is not a mode of a buffered column",
+    note = "The modes are `Snapshot` (the live side is copied into the frozen side, the default) and `Exchange` (the two sides trade places)."
+)]
+pub trait BufferMode: crate::sealed::Sealed + 'static {}
+
+impl crate::sealed::Sealed for Snapshot {}
+impl BufferMode for Snapshot {}
+impl crate::sealed::Sealed for Exchange {}
+impl BufferMode for Exchange {}
+
+/// A column held in two sides: read frozen, written live.
+///
+/// Every read sees the frozen side, which is the store as it stood when the
+/// pass began, and every write lands on the live side. After the last unit
+/// of a pass the live side of every buffered store the pass changed becomes
+/// its frozen side. `M` says how, and is settled at compile time.
+#[repr(transparent)]
+pub struct Buffered<T, M = Snapshot>(PhantomData<(T, M)>);
+
+impl<T, M> Copy for Buffered<T, M> {}
+impl<T, M> Clone for Buffered<T, M> {
+    #[inline(always)]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<T, M> Default for Buffered<T, M> {
+    #[inline(always)]
+    fn default() -> Self {
+        Buffered(PhantomData)
+    }
+}
+
+impl<T, M> Buffered<T, M> {
+    /// Construct a `Buffered<T, M>` marker.
+    pub const fn new() -> Self {
+        Buffered(PhantomData)
+    }
+}
+
+impl<T: 'static, M: BufferMode> BuilderInput for Buffered<T, M> {
+    type Dispatch = StoreDispatch<Self>;
+    type Init = ();
+}
+
+impl<T, M> notko::HasTrivialCtor for Buffered<T, M> {
+    fn new() -> Self {
+        Buffered(PhantomData)
     }
 }
 
