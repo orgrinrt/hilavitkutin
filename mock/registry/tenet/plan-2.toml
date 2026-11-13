@@ -23,7 +23,7 @@ WUs get grouped first.
 origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1328-1339", "later: mock/research/202606111400_canonical-design-addendum-a1.md:49-57, whether_dispatch_follows_rcm_order_or_waist_phase_order_is_decided_by_a_bench"]
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1328-1339", "later: mock/research/202606111400_canonical-design-addendum-a1.md:49-57, whether_dispatch_follows_rcm_order_or_waist_phase_order_is_decided_by_a_bench", "later: mock/research/202607200800_a1-1-ordering-theory-bench-expansion.md:82-90, rcm_wins_against_rival_ordering_theories_at_dram_scale_and_order_is_near_neutral_below_it_so_step_5_stands"]
 keywords = ["RCM", "row reordering", "unit execution order", "fiber grouping", "arvo-sparse", "fan-out", "column sets"]
 
 [[tenet]]

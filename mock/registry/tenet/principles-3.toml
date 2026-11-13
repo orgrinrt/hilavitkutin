@@ -43,9 +43,7 @@ There is no fourth "bare primitive" category. Raw `u8`..`u128`,
 source; every numeric identity flows through arvo's type system.
 '''
 origin = "stated"
-standing = "ratified"
-ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:81-94"]
+standing = "pending"
 keywords = ["type taxonomy", "trait", "newtype", "repr(C) enum", "no fourth category", "UFixed", "ContentHash", "Priority"]
 related = ["tenet::the_type_taxonomy_is_trait_newtype_repr_c_enum_or_primitive_and_it_governs_the_form_of_every_type"]
 

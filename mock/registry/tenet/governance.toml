@@ -42,9 +42,8 @@ quote = '''
 state. Resolves supersessions and tensions across prior topics.
 '''
 origin = "stated"
-standing = "ratified"
-ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:5-6"]
+standing = "pending"
+stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point: his explicit ruling of 2026-06-06 at mock/research/202606061000_canon-amendment-unified-engine.md:3-3 gives the unified-engine amendment the same standing as the consolidation spec (row the_unified_engine_amendment_is_canon_with_the_standing_of_the_consolidation_spec_and_wins_over_intermediate_artifacts), so the consolidation is no longer the single source of truth, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["single source of truth", "consolidation", "supersession", "tensions", "design state", "source topics"]
 
 [[tenet]]
