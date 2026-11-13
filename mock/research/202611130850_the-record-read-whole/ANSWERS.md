@@ -24,8 +24,9 @@ and is written SPEC below. Rows are cited as `tenet::<id>` and
 
 ## How far the read had come when this was written
 
-This is the third form of the answers, of 13 November 2026, about 11:30 UTC.
-The first form went out at 10:15 UTC and the second at about 11:10 UTC. Op
+This is the fourth form of the answers, of 13 November 2026, about 11:40 UTC.
+The first form went out at 10:15 UTC, the second at about 11:10 UTC and the
+third at about 11:30 UTC. Op
 answered four questions on the first form at about 10:35 UTC; they are in
 `OP-ANSWERS-13.md` beside this file and are `question` rows. On his words
 the read turned to the unlanded work and to the round of May 2026 before
@@ -45,8 +46,8 @@ the readers, with every quote checked against the file: the seven
 founding-round topics, the founding research notes, the research notes and
 roadmaps from May to July 2026 with the `pre_seed` set, the seed, the design
 and readme templates of the workspace and of every crate, every design round
-from the founding one to 13 November 2026, the sketch findings up to 8 June
-2026, and every document that only the branch
+from the founding one to 13 November 2026, the findings of every sketch, the
+bench findings on `dev`, and every document that only the branch
 `origin/recover/unlanded-rounds-and-benches` carries. Ikiuni was not read
 whole. It was searched for buffering, swaps and maintenance units, and the
 passages found were read in their files.
@@ -58,11 +59,11 @@ byte. What only it carries is the bench findings under
 design templates. The template passages that say something about the design
 are copied in `RECOVERED.md` beside this file.
 
-Not yet read when this was written: the sketch findings from 9 June 2026 on,
-the bench findings on `dev`, and the research imported from polka-dots and
+Not yet read when this was written: the research imported from polka-dots and
 saalis. `LEDGER.md` lists every file with its state. Where an answer says
 the record has no passage for something, that is a statement about the part
 read, and the unread part can still hold one.
+
 ## 1. Reading the value a store held at frame start, and what the counters are for
 
 ### What the record decides
@@ -536,6 +537,56 @@ records a per-store dirty mask standing in their place
 > given no-alloc and a per-fiber morsel count that varies with the window, and how they compose with
 > the existing `store_dirty` mask rather than duplicating it. Do not start this one by writing code.
 
+The sketch findings were read after the first three forms of this answer,
+and one sketch of 12 and 13 November 2026 is the nearest thing in
+hilavitkutin's own record to a store read at its frame-start value while its
+next value is written. It is a feasibility sketch written by a helper for
+the roadmap of building kaski's engine on the stack's contracts. It is
+agent-written and intermediate, it says itself that it was checked against
+no canon, and a sketch shows that a shape can be built, never that the shape
+was chosen. Its frame holds every lane twice
+(`tenet::a_sketch_of_november_2026_holds_every_lane_of_a_frame_twice_committed_and_staged`).
+
+`research/sketches/202611122242_frame-view-typestate/FINDINGS.md:15-15`
+
+> A lane is a unit struct implementing `Lane` (its item type and initial value) and one of `FrameLane` or `LandedStore`. The registry is a type alias, a `notko_hlist` list of every lane. `Frame<Reg, N>` holds N rows of every lane twice, committed and staged.
+
+A unit of the step reads the committed form through a view that has no write
+and writes the staged form through handles that have no read
+(`tenet::in_the_frame_view_sketch_a_step_kernel_reads_the_committed_frame_through_a_view_and_writes_through_staged_handles`).
+
+`research/sketches/202611122242_frame-view-typestate/FINDINGS.md:17-19`
+
+> `View<'s, Reg, R>` is the committed frame for the step `'s`, restricted to the read list `R`. It is a list of shared slices and a phantom, so it is `Copy`, and `Sync` exactly when every lane's item is, which `Lane::Item` requires. Its one read is `view.get(Lane, row)`, bounded on `R: Contains<Lane>`; it has no write method. `Row` is an opaque brand built only by the engine, with no order and no integer conversion (stamp 7, F's note).
+>
+> `StagedLane<'s, X>` is one write-only handle: `set(row, value)` and nothing else, neither `Copy` nor `Clone`. A block kernel receives one per member of its write list as a nested tuple and destructures it. A value kernel returns a nested tuple of values per row and the runner writes them through the handles itself.
+
+The findings do not say in words who exchanges the two forms. They say what
+runs after the exchange
+(`tenet::in_the_frame_view_sketch_a_close_unit_gets_the_landed_stores_after_the_step_lands_and_never_the_view`).
+
+`research/sketches/202611122242_frame-view-typestate/FINDINGS.md:21-21`
+
+> `Landed<'c, Reg, S>` is what a close unit gets after the step lands: `get`, `set` and `rows` on the stores `S` names, which must be landed stores. There is no path from it to a view, and the view's constructor is crate-private.
+
+The sketch's code does the exchange in the runner. This is a statement about
+the code of a sketch and no statement of design:
+`Frame::step` in `mock/research/sketches/202611122242_frame-view-typestate/engine/src/frame.rs`
+copies the committed form over the staged one at line 41, runs the kernels,
+and at line 49 swaps the two with `core::mem::swap`. The close unit runs
+after that, at line 90, on the landed stores. So in this one sketch the
+runner rotates and no unit does, the depth is two, and the whole frame is
+exchanged at once. A second sketch of the same two days names the same
+exchange in passing, as one of the whole-store operations its runner writes
+in place.
+
+`research/sketches/202611122252_runner-generic-workunit/FINDINGS.md:43-43`
+
+> What the registry did need is a different shape for whole-store operations. A by-value `Clone` over the 64-deep product recurses with a stack frame per level holding the rest of the product, and in the debug profile it overflows a thread with the default 2 MiB stack and runs on 16 MiB; in release it runs on 2 MiB. `stack-probe/tests/deep_by_value.rs` shows the three cases, each in a child process, and `diagnostics/registry-by-value-clone-overflows-the-default-stack.txt` holds the overflow and the release run beside it. Writing the operations in place (`copy_from`, `splat_in` over `MaybeUninit` with field writes, `made` on top of it, and `mem::swap` between the double buffers) runs it on the default stack. Anything deep in notko-hlist that moves a whole product by value has the same exposure.
+
+Neither sketch has a store buffered three deep or a maintenance unit that
+rotates.
+
 Op also said on 13 November that the buffering he recalls may have been
 discussed in ikiuni, the engine concept repository that weighed hilavitkutin
 against bevy. Ikiuni is a reference and not hilavitkutin's record. It does
@@ -594,18 +645,25 @@ bracket's swap would be carried by hilavitkutin's units, stores or schedule.
 
 So the record holds a hilavitkutin of read and write that leaves buffering
 to the layer over it, one unit that double-buffers its own snapshot and
-flips it itself, a swap of a resource's whole value between frames, and a
-proposal that hilavitkutin carry a buffering primitive. Ikiuni, beside the
-record, holds a frame buffered two deep and swapped by the frame's closing
-bracket. Who rotates a store of hilavitkutin that is read at its frame-start
-value while its next value is written in the same pass, the record does not
-say. The row `question::who_rotates_a_buffered_store` carries the three
-options and op's words.
+flips it itself, a swap of a resource's whole value between frames, a
+proposal that hilavitkutin carry a buffering primitive, and a sketch of
+November 2026 whose runner holds every lane twice and exchanges the two
+forms itself before the close unit runs. Ikiuni, beside the record, holds a
+frame buffered two deep and swapped by the frame's closing bracket. The
+sketch and ikiuni agree on who rotates: the runner at the frame's close, and
+no unit. Neither is a decision for hilavitkutin. The sketch is agent-written
+feasibility work and ikiuni is a reference, so who rotates a store of
+hilavitkutin that is read at its frame-start value while its next value is
+written in the same pass is still without a stated or ratified passage. The
+row `question::who_rotates_a_buffered_store` carries the three options, op's
+words and the rows above.
 
-The sketch findings from 9 June 2026 on, the bench findings on `dev` and the
-imported research were not read when this was written. Every design round
-was read, and the rounds hold the swap round quoted above and no buffering
-of a store.
+The research imported from polka-dots and saalis was not read when this was
+written. Every design round, every sketch's findings and the bench findings
+on `dev` were read. The rounds hold the swap round quoted above and no
+buffering of a store, and the bench findings hold none either: the one
+bench that compares a live read with a copied snapshot is of a sequence
+member's payload and not of a store's frame.
 
 ## 2. Columns of different record counts
 

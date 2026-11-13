@@ -197,3 +197,53 @@ standing = "provisional"
 subject = "stores"
 keywords = ["run_parallel", "per-core region", "leading bands", "merge", "prefix", "worker count", "accumulator"]
 cites = ["the_refusal_of_an_accumulator_is_read_at_the_close_and_is_the_same_value_at_every_worker_count"]
+
+[[tenet]]
+id = "a_sketch_of_november_2026_holds_every_lane_of_a_frame_twice_committed_and_staged"
+what = "In a sketch, a lane is declared with its item type and its initial value and as one of two kinds, a frame lane or a landed store. The registry is the list of every lane, and the frame holds the rows of every lane twice, a committed form and a staged form."
+mechanism = "`Lane`, `FrameLane`, `LandedStore`; the registry is a `notko_hlist` list; `Frame<Reg, N>`."
+source = "mock/research/sketches/202611122242_frame-view-typestate/FINDINGS.md:15-15"
+provenance = ["mock::research::sketches::202611122242_frame-view-typestate::FINDINGS::#the-shape"]
+quote = '''
+A lane is a unit struct implementing `Lane` (its item type and initial value) and one of `FrameLane` or `LandedStore`. The registry is a type alias, a `notko_hlist` list of every lane. `Frame<Reg, N>` holds N rows of every lane twice, committed and staged.
+'''
+origin = "proposed"
+written_by = "the findings of the sketch frame-view-typestate, dated 2026-11-12 and 2026-11-13; it calls itself sketch S3 of the roadmap for building kaski's engine on the stack's contracts, job hv-sketch-frame-view, and says hilavitkutin declares no canon it was checked against"
+standing = "provisional"
+subject = "stores"
+keywords = ["frame", "lane", "committed", "staged", "double buffer", "frame lane", "landed store", "sketch", "frame view"]
+cites = ["a_writer_precedes_every_reader_of_what_it_writes"]
+
+[[tenet]]
+id = "in_the_frame_view_sketch_a_step_kernel_reads_the_committed_frame_through_a_view_and_writes_through_staged_handles"
+what = "In the same sketch, a step kernel is handed a view of the committed frame for the length of the step, restricted to the list of lanes it reads. The view can be copied and read from every thread and has no write. What the kernel writes goes through one write-only handle per lane of its write list, which has no read and cannot be copied."
+mechanism = "`View<'s, Reg, R>` with `view.get(Lane, row)` bounded on `R: Contains<Lane>`; `StagedLane<'s, X>` with `set(row, value)`, neither `Copy` nor `Clone`; a value kernel returns a tuple of values per row and the runner writes them through the handles."
+source = "mock/research/sketches/202611122242_frame-view-typestate/FINDINGS.md:17-19"
+provenance = ["mock::research::sketches::202611122242_frame-view-typestate::FINDINGS::#the-shape"]
+quote = '''
+`View<'s, Reg, R>` is the committed frame for the step `'s`, restricted to the read list `R`. It is a list of shared slices and a phantom, so it is `Copy`, and `Sync` exactly when every lane's item is, which `Lane::Item` requires. Its one read is `view.get(Lane, row)`, bounded on `R: Contains<Lane>`; it has no write method. `Row` is an opaque brand built only by the engine, with no order and no integer conversion (stamp 7, F's note).
+
+`StagedLane<'s, X>` is one write-only handle: `set(row, value)` and nothing else, neither `Copy` nor `Clone`. A block kernel receives one per member of its write list as a nested tuple and destructures it. A value kernel returns a nested tuple of values per row and the runner writes them through the handles itself.
+'''
+origin = "proposed"
+written_by = "the findings of the sketch frame-view-typestate, dated 2026-11-12 and 2026-11-13; it calls itself sketch S3 of the roadmap for building kaski's engine on the stack's contracts, job hv-sketch-frame-view, and says hilavitkutin declares no canon it was checked against"
+standing = "provisional"
+subject = "stores"
+keywords = ["view", "committed frame", "staged handle", "write-only", "read list", "step kernel", "frame start", "sketch"]
+cites = ["a_sketch_of_november_2026_holds_every_lane_of_a_frame_twice_committed_and_staged"]
+
+[[tenet]]
+id = "in_the_frame_view_sketch_a_close_unit_gets_the_landed_stores_after_the_step_lands_and_never_the_view"
+what = "In the same sketch, a close unit is handed, after the step lands, the landed stores it names, which it reads and writes. It has no path to the view of the committed frame."
+mechanism = "`Landed<'c, Reg, S>` with `get`, `set` and `rows`; the view's constructor is private to the engine crate."
+source = "mock/research/sketches/202611122242_frame-view-typestate/FINDINGS.md:21-21"
+provenance = ["mock::research::sketches::202611122242_frame-view-typestate::FINDINGS::#the-shape"]
+quote = '''
+`Landed<'c, Reg, S>` is what a close unit gets after the step lands: `get`, `set` and `rows` on the stores `S` names, which must be landed stores. There is no path from it to a view, and the view's constructor is crate-private.
+'''
+origin = "proposed"
+written_by = "the findings of the sketch frame-view-typestate, dated 2026-11-12 and 2026-11-13; it calls itself sketch S3 of the roadmap for building kaski's engine on the stack's contracts, job hv-sketch-frame-view, and says hilavitkutin declares no canon it was checked against"
+standing = "provisional"
+subject = "stores"
+keywords = ["close unit", "landed store", "after the step lands", "view", "frame close", "sketch"]
+cites = ["a_sketch_of_november_2026_holds_every_lane_of_a_frame_twice_committed_and_staged"]

@@ -41,6 +41,12 @@ file once, by its form on the working branch. The recovery side's changes to
 the engine and api design templates were read first hand as a diff, and the
 passages that say something about the design are copied in `RECOVERED.md`.
 
+The bench findings under `mock/benches/` are mostly one generated file per
+bench and per size: a title, a short list of key findings and then tables of
+timings. Those 176 files were read down to the end of their key findings and
+their tables were not, and the table below says so in the last column of
+each. The bench findings written by hand were read whole.
+
 ## Read
 
 | file | lines | date | standing, by its own words | holds | read by |
@@ -69,6 +75,186 @@ passages that say something about the design are copied in `RECOVERED.md`.
 | `mock/agent/skills/commit-style/SKILL.md.tmpl` | 92 | undated | unstated (skill template) | commit message format and byline policy | batch 45 |
 | `mock/agent/skills/lint-rules/SKILL.md.tmpl` | 109 | undated | unstated (skill template) | lint sources, severities, custom lint table | batch 45 |
 | `mock/agent/skills/type-surface-review/SKILL.md.tmpl` | 80 | undated | unstated (skill template) | pub signature self-review checklist | batch 45 |
+| `mock/benches/NIGHT_FINDINGS_2026-05-11.md` | 884 | 2026-05-11 | unstated (findings) | overnight bench results with design implications | batch 46 |
+| `mock/benches/README.md` | 45 | no date line | unstated (readme) | bench framework layout, workflow, status, origin | batch 46 |
+| `mock/benches/atomic_inc_strategy_n1024_findings.md` | 320 | no date line | unstated (findings) | key-findings stub: Atomic increment strategy (fastest inc_load_store) | batch 46, down to the end of its key findings |
+| `mock/benches/atomic_inc_strategy_n16384_findings.md` | 319 | no date line | unstated (findings) | key-findings stub: Atomic increment strategy (fastest inc_load_store) | batch 46, down to the end of its key findings |
+| `mock/benches/atomic_inc_strategy_n256_findings.md` | 318 | no date line | unstated (findings) | key-findings stub: Atomic increment strategy (fastest inc_load_store) | batch 46, down to the end of its key findings |
+| `mock/benches/atomic_inc_strategy_n4096_findings.md` | 320 | no date line | unstated (findings) | key-findings stub: Atomic increment strategy (fastest inc_load_store) | batch 46, down to the end of its key findings |
+| `mock/benches/atomic_ordering_cost_n1024_findings.md` | 318 | no date line | unstated (findings) | key-findings stub: Atomic ordering cost (fastest atomic_relaxed) | batch 46, down to the end of its key findings |
+| `mock/benches/atomic_ordering_cost_n16384_findings.md` | 318 | no date line | unstated (findings) | key-findings stub: Atomic ordering cost (fastest atomic_relaxed) | batch 46, down to the end of its key findings |
+| `mock/benches/atomic_ordering_cost_n256_findings.md` | 319 | no date line | unstated (findings) | key-findings stub: Atomic ordering cost (fastest atomic_relaxed) | batch 46, down to the end of its key findings |
+| `mock/benches/atomic_ordering_cost_n4096_findings.md` | 318 | no date line | unstated (findings) | key-findings stub: Atomic ordering cost (fastest atomic_relaxed) | batch 46, down to the end of its key findings |
+| `mock/benches/atomic_ordering_cost_n64_findings.md` | 322 | no date line | unstated (findings) | key-findings stub: Atomic ordering cost (fastest atomic_seqcst) | batch 46, down to the end of its key findings |
+| `mock/benches/atomic_vs_plain_n1024_findings.md` | 317 | no date line | unstated (findings) | key-findings stub: Accumulator typing cost (fastest acc_plain) | batch 46, down to the end of its key findings |
+| `mock/benches/atomic_vs_plain_n16384_findings.md` | 316 | no date line | unstated (findings) | key-findings stub: Accumulator typing cost (fastest acc_atomic_relaxed) | batch 46, down to the end of its key findings |
+| `mock/benches/atomic_vs_plain_n256_findings.md` | 319 | no date line | unstated (findings) | key-findings stub: Accumulator typing cost (fastest acc_atomic_relaxed) | batch 46, down to the end of its key findings |
+| `mock/benches/atomic_vs_plain_n4096_findings.md` | 318 | no date line | unstated (findings) | key-findings stub: Accumulator typing cost (fastest acc_plain) | batch 46, down to the end of its key findings |
+| `mock/benches/bit_count_ops_n1024_findings.md` | 318 | no date line | unstated (findings) | key-findings stub: Trailing-zero count (fastest ctz_loop) | batch 46, down to the end of its key findings |
+| `mock/benches/bit_count_ops_n16384_findings.md` | 321 | no date line | unstated (findings) | key-findings stub: Trailing-zero count (fastest ctz_debruijn) | batch 46, down to the end of its key findings |
+| `mock/benches/bit_count_ops_n256_findings.md` | 321 | no date line | unstated (findings) | key-findings stub: Trailing-zero count (fastest ctz_debruijn) | batch 46, down to the end of its key findings |
+| `mock/benches/bit_count_ops_n4096_findings.md` | 321 | no date line | unstated (findings) | key-findings stub: Trailing-zero count (fastest ctz_debruijn) | batch 46, down to the end of its key findings |
+| `mock/benches/bounds_check_n1024_findings.md` | 319 | no date line | unstated (findings) | key-findings stub: Bounds-check elision (fastest bc_index) | batch 46, down to the end of its key findings |
+| `mock/benches/bounds_check_n16384_findings.md` | 318 | no date line | unstated (findings) | key-findings stub: Bounds-check elision (fastest bc_iter) | batch 46, down to the end of its key findings |
+| `mock/benches/bounds_check_n256_findings.md` | 320 | no date line | unstated (findings) | key-findings stub: Bounds-check elision (fastest bc_index) | batch 46, down to the end of its key findings |
+| `mock/benches/bounds_check_n4096_findings.md` | 318 | no date line | unstated (findings) | key-findings stub: Bounds-check elision (fastest bc_unchecked) | batch 46, down to the end of its key findings |
+| `mock/benches/branch_pattern_n1024_findings.md` | 286 | no date line | unstated (findings) | key-findings stub: Branchful if/else vs branchless cmov/csel under data-dependent input (fastest branch_cmov) | batch 46, down to the end of its key findings |
+| `mock/benches/branch_pattern_n16384_findings.md` | 285 | no date line | unstated (findings) | key-findings stub: Branchful if/else vs branchless cmov/csel under data-dependent input (fastest branch_if) | batch 46, down to the end of its key findings |
+| `mock/benches/branch_pattern_n256_findings.md` | 287 | no date line | unstated (findings) | key-findings stub: Branchful if/else vs branchless cmov/csel under data-dependent input (fastest branch_cmov) | batch 46, down to the end of its key findings |
+| `mock/benches/branch_pattern_n4096_findings.md` | 285 | no date line | unstated (findings) | key-findings stub: Branchful if/else vs branchless cmov/csel under data-dependent input (fastest branch_if) | batch 46, down to the end of its key findings |
+| `mock/benches/branch_pattern_n64_findings.md` | 285 | no date line | unstated (findings) | key-findings stub: Branchful if/else vs branchless cmov/csel under data-dependent input (fastest branch_if) | batch 46, down to the end of its key findings |
+| `mock/benches/branch_predictability_n1024_findings.md` | 319 | no date line | unstated (findings) | key-findings stub: Branch predictability (fastest bp_skew_low) | batch 46, down to the end of its key findings |
+| `mock/benches/branch_predictability_n16384_findings.md` | 316 | no date line | unstated (findings) | key-findings stub: Branch predictability (fastest bp_skew_high) | batch 46, down to the end of its key findings |
+| `mock/benches/branch_predictability_n256_findings.md` | 321 | no date line | unstated (findings) | key-findings stub: Branch predictability (fastest bp_balanced) | batch 46, down to the end of its key findings |
+| `mock/benches/branch_predictability_n4096_findings.md` | 319 | no date line | unstated (findings) | key-findings stub: Branch predictability (fastest bp_skew_low) | batch 46, down to the end of its key findings |
+| `mock/benches/cache_layout_n1024_findings.md` | 288 | no date line | unstated (findings) | key-findings stub: AoS vs SoA (column-store) layout under partial-field iteration (fastest layout_soa) | batch 46, down to the end of its key findings |
+| `mock/benches/cache_layout_n16384_findings.md` | 285 | no date line | unstated (findings) | key-findings stub: AoS vs SoA (column-store) layout under partial-field iteration (fastest layout_aos) | batch 46, down to the end of its key findings |
+| `mock/benches/cache_layout_n256_findings.md` | 290 | no date line | unstated (findings) | key-findings stub: AoS vs SoA (column-store) layout under partial-field iteration (fastest layout_aos) | batch 46, down to the end of its key findings |
+| `mock/benches/cache_layout_n4096_findings.md` | 286 | no date line | unstated (findings) | key-findings stub: AoS vs SoA (column-store) layout under partial-field iteration (fastest layout_aos) | batch 46, down to the end of its key findings |
+| `mock/benches/cache_layout_n64_findings.md` | 290 | no date line | unstated (findings) | key-findings stub: AoS vs SoA (column-store) layout under partial-field iteration (fastest layout_aos) | batch 46, down to the end of its key findings |
+| `mock/benches/codegen_dispatch_axis_a_assertions.md` | 124 | no date line | "canonical statement of intent" | five disasm checks for static dispatch codegen | batch 46 |
+| `mock/benches/dep_graph_csr_9_n128_findings.md` | 320 | no date line | unstated (findings) | key-findings stub: DependencyGraph backing (fastest dep_graph_hybrid) | batch 46, down to the end of its key findings |
+| `mock/benches/dep_graph_csr_9_n16_findings.md` | 320 | no date line | unstated (findings) | key-findings stub: DependencyGraph backing (fastest dep_graph_csr) | batch 46, down to the end of its key findings |
+| `mock/benches/dep_graph_csr_9_n256_findings.md` | 319 | no date line | unstated (findings) | key-findings stub: DependencyGraph backing (fastest dep_graph_hybrid) | batch 46, down to the end of its key findings |
+| `mock/benches/dep_graph_csr_9_n32_findings.md` | 318 | no date line | unstated (findings) | key-findings stub: DependencyGraph backing (fastest dep_graph_csr) | batch 46, down to the end of its key findings |
+| `mock/benches/dep_graph_csr_9_n64_findings.md` | 319 | no date line | unstated (findings) | key-findings stub: DependencyGraph backing (fastest dep_graph_hybrid) | batch 46, down to the end of its key findings |
+| `mock/benches/dep_graph_csr_9_n8_findings.md` | 318 | no date line | unstated (findings) | key-findings stub: DependencyGraph backing (fastest dep_graph_csr) | batch 46, down to the end of its key findings |
+| `mock/benches/dispatch_dynamic_n1024_findings.md` | 314 | no date line | unstated (findings) | key-findings stub: Dynamic dispatch shapes (fastest dispatch_volatile) | batch 46, down to the end of its key findings |
+| `mock/benches/dispatch_dynamic_n16384_findings.md` | 318 | no date line | unstated (findings) | key-findings stub: Dynamic dispatch shapes (fastest dispatch_direct) | batch 46, down to the end of its key findings |
+| `mock/benches/dispatch_dynamic_n256_findings.md` | 313 | no date line | unstated (findings) | key-findings stub: Dynamic dispatch shapes (fastest dispatch_direct) | batch 46, down to the end of its key findings |
+| `mock/benches/dispatch_dynamic_n4096_findings.md` | 317 | no date line | unstated (findings) | key-findings stub: Dynamic dispatch shapes (fastest dispatch_volatile) | batch 46, down to the end of its key findings |
+| `mock/benches/dispatch_dynamic_n64_findings.md` | 324 | no date line | unstated (findings) | key-findings stub: Dynamic dispatch shapes (fastest dispatch_direct) | batch 46, down to the end of its key findings |
+| `mock/benches/dispatch_static_n1024_findings.md` | 312 | no date line | unstated (findings) | key-findings stub: Static dispatch shapes (fastest dispatch_trait) | batch 46, down to the end of its key findings |
+| `mock/benches/dispatch_static_n16384_findings.md` | 316 | no date line | unstated (findings) | key-findings stub: Static dispatch shapes (fastest dispatch_direct) | batch 46, down to the end of its key findings |
+| `mock/benches/dispatch_static_n256_findings.md` | 312 | no date line | unstated (findings) | key-findings stub: Static dispatch shapes (fastest dispatch_const_ptr) | batch 46, down to the end of its key findings |
+| `mock/benches/dispatch_static_n4096_findings.md` | 313 | no date line | unstated (findings) | key-findings stub: Static dispatch shapes (fastest dispatch_trait) | batch 46, down to the end of its key findings |
+| `mock/benches/dispatch_static_n64_findings.md` | 324 | no date line | unstated (findings) | key-findings stub: Static dispatch shapes (fastest dispatch_direct) | batch 46, down to the end of its key findings |
+| `mock/benches/ema_axis_h_n1024_findings.md` | 318 | no date line | unstated (findings) | key-findings stub: EMA streaming pass (fastest ema_neon) | batch 46, down to the end of its key findings |
+| `mock/benches/ema_axis_h_n16384_findings.md` | 317 | no date line | unstated (findings) | key-findings stub: EMA streaming pass (fastest ema_neon) | batch 46, down to the end of its key findings |
+| `mock/benches/ema_axis_h_n256_findings.md` | 319 | no date line | unstated (findings) | key-findings stub: EMA streaming pass (fastest ema_neon) | batch 46, down to the end of its key findings |
+| `mock/benches/ema_axis_h_n4096_findings.md` | 318 | no date line | unstated (findings) | key-findings stub: EMA streaming pass (fastest ema_neon) | batch 46, down to the end of its key findings |
+| `mock/benches/ema_axis_h_n64_findings.md` | 325 | no date line | unstated (findings) | key-findings stub: EMA streaming pass (fastest ema_neon) | batch 46, down to the end of its key findings |
+| `mock/benches/ema_formulation_n1024_findings.md` | 319 | no date line | unstated (findings) | key-findings stub: EMA formulation (fastest ema_form_intshift) | batch 46, down to the end of its key findings |
+| `mock/benches/ema_formulation_n16384_findings.md` | 317 | no date line | unstated (findings) | key-findings stub: EMA formulation (fastest ema_form_intshift) | batch 46, down to the end of its key findings |
+| `mock/benches/ema_formulation_n256_findings.md` | 322 | no date line | unstated (findings) | key-findings stub: EMA formulation (fastest ema_form_intshift) | batch 46, down to the end of its key findings |
+| `mock/benches/ema_formulation_n4096_findings.md` | 319 | no date line | unstated (findings) | key-findings stub: EMA formulation (fastest ema_form_intshift) | batch 46, down to the end of its key findings |
+| `mock/benches/engine_vs_std/FINDINGS.md` | 176 | no date line (body table dated 2026-06-05) | unstated (findings) | single-core engine versus fused std, perf gate | batch 46 |
+| `mock/benches/float_width_n1024_findings.md` | 320 | no date line | unstated (findings) | key-findings stub: Float width strategy (fastest float_f64) | batch 46, down to the end of its key findings |
+| `mock/benches/float_width_n16384_findings.md` | 319 | no date line | unstated (findings) | key-findings stub: Float width strategy (fastest float_f64) | batch 46, down to the end of its key findings |
+| `mock/benches/float_width_n256_findings.md` | 318 | no date line | unstated (findings) | key-findings stub: Float width strategy (fastest float_f32) | batch 46, down to the end of its key findings |
+| `mock/benches/float_width_n4096_findings.md` | 320 | no date line | unstated (findings) | key-findings stub: Float width strategy (fastest float_f64) | batch 46, down to the end of its key findings |
+| `mock/benches/fnptr_table_dispatch_n1024_findings.md` | 286 | no date line | unstated (findings) | key-findings stub: Fn-pointer table vs match dispatch for 16-variant hot loop (fastest fpt_match_16) | batch 46, down to the end of its key findings |
+| `mock/benches/fnptr_table_dispatch_n16384_findings.md` | 286 | no date line | unstated (findings) | key-findings stub: Fn-pointer table vs match dispatch for 16-variant hot loop (fastest fpt_match_16) | batch 46, down to the end of its key findings |
+| `mock/benches/fnptr_table_dispatch_n256_findings.md` | 286 | no date line | unstated (findings) | key-findings stub: Fn-pointer table vs match dispatch for 16-variant hot loop (fastest fpt_table_16) | batch 46, down to the end of its key findings |
+| `mock/benches/fnptr_table_dispatch_n4096_findings.md` | 287 | no date line | unstated (findings) | key-findings stub: Fn-pointer table vs match dispatch for 16-variant hot loop (fastest fpt_match_16) | batch 46, down to the end of its key findings |
+| `mock/benches/fold_strategy_n1024_findings.md` | 319 | no date line | unstated (findings) | key-findings stub: Fold ILP (fastest fold_quad) | batch 46, down to the end of its key findings |
+| `mock/benches/fold_strategy_n16384_findings.md` | 318 | no date line | unstated (findings) | key-findings stub: Fold ILP (fastest fold_quad) | batch 46, down to the end of its key findings |
+| `mock/benches/fold_strategy_n256_findings.md` | 322 | no date line | unstated (findings) | key-findings stub: Fold ILP (fastest fold_paired) | batch 46, down to the end of its key findings |
+| `mock/benches/fold_strategy_n4096_findings.md` | 319 | no date line | unstated (findings) | key-findings stub: Fold ILP (fastest fold_quad) | batch 46, down to the end of its key findings |
+| `mock/benches/fxpmul_strategy_n1024_findings.md` | 286 | no date line | unstated (findings) | key-findings stub: Fixed-point mul (fastest fxpmul_hot) | batch 46, down to the end of its key findings |
+| `mock/benches/fxpmul_strategy_n16384_findings.md` | 282 | no date line | unstated (findings) | key-findings stub: Fixed-point mul (fastest fxpmul_hot) | batch 46, down to the end of its key findings |
+| `mock/benches/fxpmul_strategy_n256_findings.md` | 287 | no date line | unstated (findings) | key-findings stub: Fixed-point mul (fastest fxpmul_hot) | batch 46, down to the end of its key findings |
+| `mock/benches/fxpmul_strategy_n4096_findings.md` | 282 | no date line | unstated (findings) | key-findings stub: Fixed-point mul (fastest fxpmul_hot) | batch 46, down to the end of its key findings |
+| `mock/benches/fxpmul_strategy_n64_findings.md` | 289 | no date line | unstated (findings) | key-findings stub: Fixed-point mul (fastest fxpmul_hot) | batch 46, down to the end of its key findings |
+| `mock/benches/hash_algos_n1024_findings.md` | 317 | no date line | unstated (findings) | key-findings stub: Hash mixer (fastest hash_xxh) | batch 46, down to the end of its key findings |
+| `mock/benches/hash_algos_n16384_findings.md` | 317 | no date line | unstated (findings) | key-findings stub: Hash mixer (fastest hash_sip) | batch 46, down to the end of its key findings |
+| `mock/benches/hash_algos_n256_findings.md` | 319 | no date line | unstated (findings) | key-findings stub: Hash mixer (fastest hash_xxh) | batch 46, down to the end of its key findings |
+| `mock/benches/hash_algos_n4096_findings.md` | 317 | no date line | unstated (findings) | key-findings stub: Hash mixer (fastest hash_xxh) | batch 46, down to the end of its key findings |
+| `mock/benches/hash_algos_n64_findings.md` | 321 | no date line | unstated (findings) | key-findings stub: Hash mixer (fastest hash_xxh) | batch 46, down to the end of its key findings |
+| `mock/benches/inline_strategy_n1024_findings.md` | 320 | no date line | unstated (findings) | key-findings stub: Inline strategy (fastest inline_default) | batch 46, down to the end of its key findings |
+| `mock/benches/inline_strategy_n16384_findings.md` | 317 | no date line | unstated (findings) | key-findings stub: Inline strategy (fastest inline_default) | batch 46, down to the end of its key findings |
+| `mock/benches/inline_strategy_n256_findings.md` | 319 | no date line | unstated (findings) | key-findings stub: Inline strategy (fastest inline_default) | batch 46, down to the end of its key findings |
+| `mock/benches/inline_strategy_n4096_findings.md` | 318 | no date line | unstated (findings) | key-findings stub: Inline strategy (fastest inline_never) | batch 46, down to the end of its key findings |
+| `mock/benches/iter_patterns_n1024_findings.md` | 322 | no date line | unstated (findings) | key-findings stub: Column iteration patterns (fastest iter_strided) | batch 46, down to the end of its key findings |
+| `mock/benches/iter_patterns_n16384_findings.md` | 319 | no date line | unstated (findings) | key-findings stub: Column iteration patterns (fastest iter_strided) | batch 46, down to the end of its key findings |
+| `mock/benches/iter_patterns_n256_findings.md` | 324 | no date line | unstated (findings) | key-findings stub: Column iteration patterns (fastest iter_strided) | batch 46, down to the end of its key findings |
+| `mock/benches/iter_patterns_n4096_findings.md` | 318 | no date line | unstated (findings) | key-findings stub: Column iteration patterns (fastest iter_strided) | batch 46, down to the end of its key findings |
+| `mock/benches/load_alignment_n1024_findings.md` | 318 | no date line | unstated (findings) | key-findings stub: Load alignment strategy (fastest load_aligned) | batch 46, down to the end of its key findings |
+| `mock/benches/load_alignment_n16384_findings.md` | 318 | no date line | unstated (findings) | key-findings stub: Load alignment strategy (fastest load_byte_pack) | batch 46, down to the end of its key findings |
+| `mock/benches/load_alignment_n256_findings.md` | 322 | no date line | unstated (findings) | key-findings stub: Load alignment strategy (fastest load_aligned) | batch 46, down to the end of its key findings |
+| `mock/benches/load_alignment_n4096_findings.md` | 318 | no date line | unstated (findings) | key-findings stub: Load alignment strategy (fastest load_unaligned) | batch 46, down to the end of its key findings |
+| `mock/benches/match_arm_count_n1024_findings.md` | 318 | no date line | unstated (findings) | key-findings stub: Match arm count (fastest match_2_arms) | batch 46, down to the end of its key findings |
+| `mock/benches/match_arm_count_n16384_findings.md` | 319 | no date line | unstated (findings) | key-findings stub: Match arm count (fastest match_2_arms) | batch 46, down to the end of its key findings |
+| `mock/benches/match_arm_count_n256_findings.md` | 321 | no date line | unstated (findings) | key-findings stub: Match arm count (fastest match_2_arms) | batch 46, down to the end of its key findings |
+| `mock/benches/match_arm_count_n4096_findings.md` | 318 | no date line | unstated (findings) | key-findings stub: Match arm count (fastest match_2_arms) | batch 46, down to the end of its key findings |
+| `mock/benches/memcpy_patterns_n1024_findings.md` | 318 | no date line | unstated (findings) | key-findings stub: Memory copy patterns (fastest memcpy_unrolled) | batch 46, down to the end of its key findings |
+| `mock/benches/memcpy_patterns_n16384_findings.md` | 316 | no date line | unstated (findings) | key-findings stub: Memory copy patterns (fastest memcpy_unrolled) | batch 46, down to the end of its key findings |
+| `mock/benches/memcpy_patterns_n256_findings.md` | 317 | no date line | unstated (findings) | key-findings stub: Memory copy patterns (fastest memcpy_intrinsic) | batch 46, down to the end of its key findings |
+| `mock/benches/memcpy_patterns_n4096_findings.md` | 317 | no date line | unstated (findings) | key-findings stub: Memory copy patterns (fastest memcpy_intrinsic) | batch 46, down to the end of its key findings |
+| `mock/benches/memcpy_patterns_n64_findings.md` | 318 | no date line | unstated (findings) | key-findings stub: Memory copy patterns (fastest memcpy_intrinsic) | batch 46, down to the end of its key findings |
+| `mock/benches/minmax_strategy_n1024_findings.md` | 313 | no date line | unstated (findings) | key-findings stub: Min/max (fastest minmax_branch) | batch 46, down to the end of its key findings |
+| `mock/benches/minmax_strategy_n16384_findings.md` | 319 | no date line | unstated (findings) | key-findings stub: Min/max (fastest minmax_branch) | batch 46, down to the end of its key findings |
+| `mock/benches/minmax_strategy_n256_findings.md` | 321 | no date line | unstated (findings) | key-findings stub: Min/max (fastest minmax_intrinsic) | batch 46, down to the end of its key findings |
+| `mock/benches/minmax_strategy_n4096_findings.md` | 313 | no date line | unstated (findings) | key-findings stub: Min/max (fastest minmax_intrinsic) | batch 46, down to the end of its key findings |
+| `mock/benches/modulo_strategy_n1024_findings.md` | 320 | no date line | unstated (findings) | key-findings stub: Modulo strategy (fastest mod_pow2_const) | batch 46, down to the end of its key findings |
+| `mock/benches/modulo_strategy_n16384_findings.md` | 320 | no date line | unstated (findings) | key-findings stub: Modulo strategy (fastest mod_pow2_const) | batch 46, down to the end of its key findings |
+| `mock/benches/modulo_strategy_n256_findings.md` | 321 | no date line | unstated (findings) | key-findings stub: Modulo strategy (fastest mod_pow2_const) | batch 46, down to the end of its key findings |
+| `mock/benches/modulo_strategy_n4096_findings.md` | 319 | no date line | unstated (findings) | key-findings stub: Modulo strategy (fastest mod_pow2_const) | batch 46, down to the end of its key findings |
+| `mock/benches/popcount_strategy_n1024_findings.md` | 317 | no date line | unstated (findings) | key-findings stub: Popcount lowering (fastest popcount_std) | batch 46, down to the end of its key findings |
+| `mock/benches/popcount_strategy_n16384_findings.md` | 320 | no date line | unstated (findings) | key-findings stub: Popcount lowering (fastest popcount_std) | batch 46, down to the end of its key findings |
+| `mock/benches/popcount_strategy_n256_findings.md` | 318 | no date line | unstated (findings) | key-findings stub: Popcount lowering (fastest popcount_std) | batch 46, down to the end of its key findings |
+| `mock/benches/popcount_strategy_n4096_findings.md` | 320 | no date line | unstated (findings) | key-findings stub: Popcount lowering (fastest popcount_std) | batch 46, down to the end of its key findings |
+| `mock/benches/popcount_strategy_n64_findings.md` | 323 | no date line | unstated (findings) | key-findings stub: Popcount lowering (fastest popcount_std) | batch 46, down to the end of its key findings |
+| `mock/benches/rotate_strategy_n1024_findings.md` | 317 | no date line | unstated (findings) | key-findings stub: Rotate strategy (fastest rot_intrinsic_const) | batch 46, down to the end of its key findings |
+| `mock/benches/rotate_strategy_n16384_findings.md` | 319 | no date line | unstated (findings) | key-findings stub: Rotate strategy (fastest rot_manual_shifts) | batch 46, down to the end of its key findings |
+| `mock/benches/rotate_strategy_n256_findings.md` | 320 | no date line | unstated (findings) | key-findings stub: Rotate strategy (fastest rot_intrinsic_const) | batch 46, down to the end of its key findings |
+| `mock/benches/rotate_strategy_n4096_findings.md` | 319 | no date line | unstated (findings) | key-findings stub: Rotate strategy (fastest rot_manual_shifts) | batch 46, down to the end of its key findings |
+| `mock/benches/rsb_bwide_n16384_findings.md` | 246 | no date line | unstated (findings) | key-findings stub: Intra-resource member gather at M=64 (fastest wide_blob) | batch 46, down to the end of its key findings |
+| `mock/benches/rsb_bwide_n256_findings.md` | 246 | no date line | unstated (findings) | key-findings stub: Intra-resource member gather at M=64 (fastest wide_blob) | batch 46, down to the end of its key findings |
+| `mock/benches/rsb_bwide_n4194304_findings.md` | 249 | no date line | unstated (findings) | key-findings stub: Intra-resource member gather at M=64 (fastest wide_blob) | batch 46, down to the end of its key findings |
+| `mock/benches/rsb_clean_n1024_findings.md` | 376 | no date line | unstated (findings) | key-findings stub: Resource storage layouts under clean morsel loop (algo only) (fastest v0_blob) | batch 46, down to the end of its key findings |
+| `mock/benches/rsb_clean_n16384_findings.md` | 377 | no date line | unstated (findings) | key-findings stub: Resource storage layouts under clean morsel loop (algo only) (fastest v1_snapshot) | batch 46, down to the end of its key findings |
+| `mock/benches/rsb_clean_n262144_findings.md` | 378 | no date line | unstated (findings) | key-findings stub: Resource storage layouts under clean morsel loop (algo only) (fastest v2_decomposed) | batch 46, down to the end of its key findings |
+| `mock/benches/rsb_heavy_thrash_n1024_findings.md` | 376 | no date line | unstated (findings) | key-findings stub: Resource storage layouts under L1-evicting heavy-memory mix-in (fastest v0_blob) | batch 46, down to the end of its key findings |
+| `mock/benches/rsb_heavy_thrash_n16384_findings.md` | 381 | no date line | unstated (findings) | key-findings stub: Resource storage layouts under L1-evicting heavy-memory mix-in (fastest v1_snapshot) | batch 46, down to the end of its key findings |
+| `mock/benches/rsb_heavy_thrash_n262144_findings.md` | 381 | no date line | unstated (findings) | key-findings stub: Resource storage layouts under L1-evicting heavy-memory mix-in (fastest v3_shapebound) | batch 46, down to the end of its key findings |
+| `mock/benches/rsb_light_thrash_n1024_findings.md` | 378 | no date line | unstated (findings) | key-findings stub: Resource storage layouts under light surrounding work (fastest v0_blob) | batch 46, down to the end of its key findings |
+| `mock/benches/rsb_light_thrash_n16384_findings.md` | 378 | no date line | unstated (findings) | key-findings stub: Resource storage layouts under light surrounding work (fastest v3_shapebound) | batch 46, down to the end of its key findings |
+| `mock/benches/rsb_light_thrash_n262144_findings.md` | 378 | no date line | unstated (findings) | key-findings stub: Resource storage layouts under light surrounding work (fastest v3_shapebound) | batch 46, down to the end of its key findings |
+| `mock/benches/rsb_seqd_n1048576_findings.md` | 247 | no date line | unstated (findings) | key-findings stub: Seq collection member (fastest seq_live) | batch 46, down to the end of its key findings |
+| `mock/benches/rsb_seqd_n16777216_findings.md` | 249 | no date line | unstated (findings) | key-findings stub: Seq collection member (fastest seq_live) | batch 46, down to the end of its key findings |
+| `mock/benches/rsb_seqd_n4194304_findings.md` | 247 | no date line | unstated (findings) | key-findings stub: Seq collection member (fastest seq_live) | batch 46, down to the end of its key findings |
+| `mock/benches/rsb_seqd_n65536_findings.md` | 247 | no date line | unstated (findings) | key-findings stub: Seq collection member (fastest seq_live) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run1/rsb_bwide_n16384_findings.md` | 249 | no date line | unstated (findings) | key-findings stub: Intra-resource member gather at M=64 (fastest wide_blob) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run1/rsb_bwide_n256_findings.md` | 247 | no date line | unstated (findings) | key-findings stub: Intra-resource member gather at M=64 (fastest wide_blob) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run1/rsb_bwide_n4194304_findings.md` | 248 | no date line | unstated (findings) | key-findings stub: Intra-resource member gather at M=64 (fastest wide_blob) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run1/rsb_clean_n1024_findings.md` | 379 | no date line | unstated (findings) | key-findings stub: Resource storage layouts under clean morsel loop (algo only) (fastest v1_snapshot) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run1/rsb_clean_n16384_findings.md` | 376 | no date line | unstated (findings) | key-findings stub: Resource storage layouts under clean morsel loop (algo only) (fastest v3_shapebound) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run1/rsb_clean_n262144_findings.md` | 375 | no date line | unstated (findings) | key-findings stub: Resource storage layouts under clean morsel loop (algo only) (fastest v1_snapshot) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run1/rsb_heavy_thrash_n1024_findings.md` | 381 | no date line | unstated (findings) | key-findings stub: Resource storage layouts under L1-evicting heavy-memory mix-in (fastest v3_shapebound) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run1/rsb_heavy_thrash_n16384_findings.md` | 381 | no date line | unstated (findings) | key-findings stub: Resource storage layouts under L1-evicting heavy-memory mix-in (fastest v2_decomposed) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run1/rsb_heavy_thrash_n262144_findings.md` | 380 | no date line | unstated (findings) | key-findings stub: Resource storage layouts under L1-evicting heavy-memory mix-in (fastest v2_decomposed) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run1/rsb_light_thrash_n1024_findings.md` | 375 | no date line | unstated (findings) | key-findings stub: Resource storage layouts under light surrounding work (fastest v3_shapebound) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run1/rsb_light_thrash_n16384_findings.md` | 376 | no date line | unstated (findings) | key-findings stub: Resource storage layouts under light surrounding work (fastest v2_decomposed) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run1/rsb_light_thrash_n262144_findings.md` | 386 | no date line | unstated (findings) | key-findings stub: Resource storage layouts under light surrounding work (fastest v2_decomposed) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run1/rsb_seqd_n1048576_findings.md` | 247 | no date line | unstated (findings) | key-findings stub: Seq collection member (fastest seq_live) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run1/rsb_seqd_n16777216_findings.md` | 248 | no date line | unstated (findings) | key-findings stub: Seq collection member (fastest seq_live) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run1/rsb_seqd_n4194304_findings.md` | 248 | no date line | unstated (findings) | key-findings stub: Seq collection member (fastest seq_live) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run1/rsb_seqd_n65536_findings.md` | 247 | no date line | unstated (findings) | key-findings stub: Seq collection member (fastest seq_live) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run2/rsb_bwide_n16384_findings.md` | 246 | no date line | unstated (findings) | key-findings stub: Intra-resource member gather at M=64 (fastest wide_blob) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run2/rsb_bwide_n256_findings.md` | 246 | no date line | unstated (findings) | key-findings stub: Intra-resource member gather at M=64 (fastest wide_blob) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run2/rsb_bwide_n4194304_findings.md` | 249 | no date line | unstated (findings) | key-findings stub: Intra-resource member gather at M=64 (fastest wide_blob) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run2/rsb_clean_n1024_findings.md` | 376 | no date line | unstated (findings) | key-findings stub: Resource storage layouts under clean morsel loop (algo only) (fastest v0_blob) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run2/rsb_clean_n16384_findings.md` | 377 | no date line | unstated (findings) | key-findings stub: Resource storage layouts under clean morsel loop (algo only) (fastest v1_snapshot) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run2/rsb_clean_n262144_findings.md` | 378 | no date line | unstated (findings) | key-findings stub: Resource storage layouts under clean morsel loop (algo only) (fastest v2_decomposed) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run2/rsb_heavy_thrash_n1024_findings.md` | 376 | no date line | unstated (findings) | key-findings stub: Resource storage layouts under L1-evicting heavy-memory mix-in (fastest v0_blob) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run2/rsb_heavy_thrash_n16384_findings.md` | 381 | no date line | unstated (findings) | key-findings stub: Resource storage layouts under L1-evicting heavy-memory mix-in (fastest v1_snapshot) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run2/rsb_heavy_thrash_n262144_findings.md` | 381 | no date line | unstated (findings) | key-findings stub: Resource storage layouts under L1-evicting heavy-memory mix-in (fastest v3_shapebound) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run2/rsb_light_thrash_n1024_findings.md` | 378 | no date line | unstated (findings) | key-findings stub: Resource storage layouts under light surrounding work (fastest v0_blob) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run2/rsb_light_thrash_n16384_findings.md` | 378 | no date line | unstated (findings) | key-findings stub: Resource storage layouts under light surrounding work (fastest v3_shapebound) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run2/rsb_light_thrash_n262144_findings.md` | 378 | no date line | unstated (findings) | key-findings stub: Resource storage layouts under light surrounding work (fastest v3_shapebound) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run2/rsb_seqd_n1048576_findings.md` | 247 | no date line | unstated (findings) | key-findings stub: Seq collection member (fastest seq_live) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run2/rsb_seqd_n16777216_findings.md` | 249 | no date line | unstated (findings) | key-findings stub: Seq collection member (fastest seq_live) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run2/rsb_seqd_n4194304_findings.md` | 247 | no date line | unstated (findings) | key-findings stub: Seq collection member (fastest seq_live) | batch 46, down to the end of its key findings |
+| `mock/benches/runs/run2/rsb_seqd_n65536_findings.md` | 247 | no date line | unstated (findings) | key-findings stub: Seq collection member (fastest seq_live) | batch 46, down to the end of its key findings |
+| `mock/benches/sat_arithmetic_n1024_findings.md` | 318 | no date line | unstated (findings) | key-findings stub: Overflow strategy (fastest sat_wrap) | batch 46, down to the end of its key findings |
+| `mock/benches/sat_arithmetic_n16384_findings.md` | 320 | no date line | unstated (findings) | key-findings stub: Overflow strategy (fastest sat_wrap) | batch 46, down to the end of its key findings |
+| `mock/benches/sat_arithmetic_n256_findings.md` | 319 | no date line | unstated (findings) | key-findings stub: Overflow strategy (fastest sat_wrap) | batch 46, down to the end of its key findings |
+| `mock/benches/sat_arithmetic_n4096_findings.md` | 320 | no date line | unstated (findings) | key-findings stub: Overflow strategy (fastest sat_wrap) | batch 46, down to the end of its key findings |
+| `mock/benches/shift_amount_origin_n1024_findings.md` | 320 | no date line | unstated (findings) | key-findings stub: Shift amount (fastest shr_const) | batch 46, down to the end of its key findings |
+| `mock/benches/shift_amount_origin_n16384_findings.md` | 319 | no date line | unstated (findings) | key-findings stub: Shift amount (fastest shr_const) | batch 46, down to the end of its key findings |
+| `mock/benches/shift_amount_origin_n256_findings.md` | 324 | no date line | unstated (findings) | key-findings stub: Shift amount (fastest shr_const) | batch 46, down to the end of its key findings |
+| `mock/benches/shift_amount_origin_n4096_findings.md` | 317 | no date line | unstated (findings) | key-findings stub: Shift amount (fastest shr_const) | batch 46, down to the end of its key findings |
 | `mock/catalogue.md` | 21 | undated | unstated (catalogue of ignored tests) | rows of ignored catalogue tests with gaps | batch 45 |
 | `mock/crates/hilavitkutin-api/BACKLOG.md.tmpl` | 308 | undated | unstated (backlog) | api crate deferred items and bench follow-ups | batch 45 |
 | `mock/crates/hilavitkutin-api/DESIGN.md.tmpl` | 1377 | undated | unstated, design template | consumer-facing types, traits, platform contracts | batch 12 |
@@ -461,6 +647,278 @@ passages that say something about the design are copied in `RECOVERED.md`.
 | `mock/design_rounds/202605290214/202605290214_topic.engine-id-index-roundtrip-test.md` | 26 | 2026-05-29 | "**Phase:** TOPIC" | round-trip test for id index accessors | batch 19 |
 | `mock/design_rounds/202605290312-abandoned/202605290312_changelist.doc.lock.md` | 18 | 2026-05-29 | "**Phase:** DOC" abandoned (directory name) | DependencyGraph to CsrBidirectional adapter, no doc edits | batch 19 |
 | `mock/design_rounds/202605290312-abandoned/202605290312_changelist.src.md` | 20 | 2026-05-29 | "**Phase:** SRC" abandoned (directory name) | arvo-tensor dep, to_csr_bidirectional adapter | batch 19 |
+| `mock/design_rounds/202605290312-abandoned/202605290312_topic.plan-csr-adapter.md` | 43 | 2026-05-29 | abandoned (directory name) | Phase C wires the plan stage's stubbed steps (RCM, block-diagonal, | batch 20 |
+| `mock/design_rounds/202605291450/202605291450_changelist.doc.lock.md` | 5 | 2026-05-29 | unstated doc changelist (file name carries lock) | Source-only round. No `.md.tmpl` documentation-template edits. The substance is the | batch 20 |
+| `mock/design_rounds/202605291450/202605291450_changelist.src.lock.md` | 15 | 2026-05-29 | unstated src changelist (file name carries lock) | Build-config: enable notko's `try_trait_v2` feature so notko's core `Try` / | batch 20 |
+| `mock/design_rounds/202605291450/202605291450_topic.enable-notko-try-trait-v2.md` | 16 | 2026-05-29 | unstated topic | hilavitkutin has no `core::ops::Try` impls of its own, so the | batch 20 |
+| `mock/design_rounds/202605291700/202605291007_topic.unstable-feature-soundness-sweep.md` | 48 | 2026-05-29 | unstated topic | hilavitkutin enables full `specialization` in both hilavitkutin-api and the engine, | batch 20 |
+| `mock/design_rounds/202605291700/202605291700_changelist.doc.lock.md` | 22 | 2026-05-29 | unstated doc changelist (file name carries lock) | Refresh the hilavitkutin-api provider-API design doc to reflect the spec-free | batch 20 |
+| `mock/design_rounds/202605291700/202605291701_changelist.src.lock.md` | 90 | 2026-05-29 | unstated src changelist (file name carries lock) | Replace the engine's type-keyed accessor lookup, which used forbidden full | batch 20 |
+| `mock/design_rounds/202605291730/202605291730_changelist.doc.lock.md` | 8 | 2026-05-29 | unstated doc changelist (file name carries lock) | No `*.md.tmpl` documentation changes. The spec-free accessor and the read/write | batch 20 |
+| `mock/design_rounds/202605291730/202605291730_topic.engine-ctx-multi-column-test.md` | 16 | 2026-05-29 | unstated topic | PR #96 split the `EngineCtx` column bundle into a read | batch 20 |
+| `mock/design_rounds/202605291730/202605291731_changelist.src.lock.md` | 16 | 2026-05-29 | unstated src changelist (file name carries lock) | File: `mock/crates/hilavitkutin/tests/engine_ctx.rs` | batch 20 |
+| `mock/design_rounds/202605291800/202605291800_changelist.doc.lock.md` | 9 | 2026-05-29 | unstated doc changelist (file name carries lock) | No `*.md.tmpl` documentation changes. `hilavitkutin-api/DESIGN.md.tmpl` already documents | batch 20 |
+| `mock/design_rounds/202605291800/202605291800_topic.remove-associated-type-defaults.md` | 20 | 2026-05-29 | unstated topic | talk: the next-gen trait solver flags it unsound, and no | batch 20 |
+| `mock/design_rounds/202605291800/202605291801_changelist.src.lock.md` | 17 | 2026-05-29 | unstated src changelist (file name carries lock) | File: `mock/crates/hilavitkutin-api/src/builder_input.rs:61` | batch 20 |
+| `mock/design_rounds/202605291823/202605291823_changelist.doc.lock.md` | 19 | 2026-05-29 | unstated doc changelist (file name carries lock) | No documentation template changes. The only doc edit is to | batch 20 |
+| `mock/design_rounds/202605291823/202605291823_changelist.src.lock.md` | 27 | 2026-05-29 | unstated src changelist (file name carries lock) | Remove the redundant `#![feature(min_specialization)]` gate from | batch 20 |
+| `mock/design_rounds/202605291823/202605291823_topic.drop-redundant-min-spec-gate.md` | 50 | 2026-05-29 | unstated topic | (line 18) and `#![feature(specialization)]` (line 26). The full | batch 20 |
+| `mock/design_rounds/202605291830/202605291830_changelist.doc.lock.md` | 8 | 2026-05-29 | unstated doc changelist (file name carries lock) | No `*.md.tmpl` documentation changes. This round only touches crate-root `#![feature(...)]` | batch 20 |
+| `mock/design_rounds/202605291830/202605291830_topic.scope-gce-gates.md` | 20 | 2026-05-29 | unstated topic | hole #97156 is const-`TypeId` into HRTB-subtyping types, which the stack | batch 20 |
+| `mock/design_rounds/202605291830/202605291831_changelist.src.lock.md` | 25 | 2026-05-29 | unstated src changelist (file name carries lock) | File: `mock/crates/hilavitkutin-api/src/lib.rs:16` | batch 20 |
+| `mock/design_rounds/202605291835/202605291835_changelist.doc.lock.md` | 17 | 2026-05-29 | unstated doc changelist (file name carries lock) | No documentation template changes. This round only regenerates | batch 20 |
+| `mock/design_rounds/202605291835/202605291835_changelist.src.lock.md` | 30 | 2026-05-29 | unstated src changelist (file name carries lock) | Realign the `hilavitkutin-extensions-macros` trybuild goldens with the macro | batch 20 |
+| `mock/design_rounds/202605291835/202605291835_topic.fix-trybuild-goldens.md` | 50 | 2026-05-29 | unstated topic | under `tests/fixtures/fail/*.rs` must fail to compile with a stable error | batch 20 |
+| `mock/design_rounds/202605291845/202605291845_changelist.doc.lock.md` | 73 | 2026-05-29 | unstated doc changelist (file name carries lock) | This is a source-focused round. No `*.md.tmpl` template prose changes | batch 20 |
+| `mock/design_rounds/202605291845/202605291845_changelist.src.lock.md` | 66 | 2026-05-29 | unstated src changelist (file name carries lock) | Lift the engine's plan + thread const-generic dimension vocabulary from | batch 20 |
+| `mock/design_rounds/202605291845/202605291845_topic.lift-plan-dims-to-cap.md` | 67 | 2026-05-29 | unstated topic | The engine's plan and thread layers size their const-generic dimensions | batch 20 |
+| `mock/design_rounds/202605292030/202605292030_changelist.doc.lock.md` | 22 | 2026-05-29 | unstated doc changelist (file name carries lock) | Source-only round; no `*.md.tmpl` template changes. The design rationale lives | batch 20 |
+| `mock/design_rounds/202605292030/202605292030_changelist.src.lock.md` | 18 | 2026-05-29 | unstated src changelist (file name carries lock) | Files: `mock/crates/hilavitkutin/tests/{core_assignment,plan_inputs,plan_runner,plan_types,synthesise_core_programs,dispatch_types}.rs` | batch 20 |
+| `mock/design_rounds/202605292030/202605292030_topic.drop-unused-adt-const-params-test-gate.md` | 26 | 2026-05-29 | unstated topic | The cap-lift round (202605291845) added `#![feature(adt_const_params)]` alongside | batch 20 |
+| `mock/design_rounds/202605292215/202605292215_changelist.doc.lock.md` | 28 | 2026-05-29 | unstated doc changelist (file name carries lock) | One prose sentence added to the plan-stage description in the | batch 20 |
+| `mock/design_rounds/202605292215/202605292215_changelist.src.lock.md` | 69 | 2026-05-29 | unstated src changelist (file name carries lock) | Add the `DependencyGraph` to `arvo_sparse::CsrBidirectional` adapter and a strict | batch 20 |
+| `mock/design_rounds/202605292215/202605292215_topic.csr-bidirectional-adapter.md` | 51 | 2026-05-29 | unstated topic | The plan stage builds a `DependencyGraph<MAX_UNITS, MAX_EDGES>` in CSR form | batch 20 |
+| `mock/design_rounds/202605292257/202605292257_changelist.doc.lock.md` | 15 | 2026-05-29 | unstated doc changelist (file name carries lock) | Refine the step-5 line to state that the RCM pass | batch 20 |
+| `mock/design_rounds/202605292257/202605292257_changelist.src.lock.md` | 27 | 2026-05-29 | unstated src changelist (file name carries lock) | Wires plan step 4 to the real Reverse Cuthill-McKee reordering | batch 20 |
+| `mock/design_rounds/202605292257/202605292257_topic.plan-rcm-reorder-wiring.md` | 20 | 2026-05-29 | unstated topic | Plan step 4 (`steps::rcm_reorder`, `plan/steps.rs:209`) is a pass-through stub: it | batch 20 |
+| `mock/design_rounds/202605292352/202605292352_changelist.doc.lock.md` | 15 | 2026-05-29 | unstated doc changelist (file name carries lock) | Refine the block-diagonal step line to state it now detects | batch 20 |
+| `mock/design_rounds/202605292352/202605292352_changelist.src.lock.md` | 31 | 2026-05-29 | unstated src changelist (file name carries lock) | Wires plan step 5 to arvo's `block_diagonal_via` and projects per-phase | batch 20 |
+| `mock/design_rounds/202605292352/202605292352_topic.plan-block-diagonal-trunks.md` | 22 | 2026-05-29 | unstated topic | Step 5 `steps::block_diagonalise` (`plan/steps.rs`) is a stub returning `Bool::TRUE`; the | batch 20 |
+| `mock/design_rounds/202605300006/202605300006_changelist.doc.lock.md` | 13 | 2026-05-30 | unstated doc changelist (file name carries lock) | No `*.md.tmpl` documentation changes. The fixes are source-comment only: the | batch 20 |
+| `mock/design_rounds/202605300006/202605300006_changelist.src.lock.md` | 15 | 2026-05-30 | unstated src changelist (file name carries lock) | Source-comment fixes from the pr-reviewer-senior review of PR #104. No | batch 20 |
+| `mock/design_rounds/202605300006/202605300006_topic.c1c-post-review-fixes.md` | 21 | 2026-05-30 | unstated topic | PR #104 wired step 5 to block detection and dropped | batch 20 |
+| `mock/design_rounds/202605300120/202605300120_changelist.doc.lock.md` | 15 | 2026-05-30 | unstated doc changelist (file name carries lock) | Refine the spectral step line to state it now computes | batch 20 |
+| `mock/design_rounds/202605300120/202605300120_changelist.src.lock.md` | 23 | 2026-05-30 | unstated src changelist (file name carries lock) | Wires plan step 6 to spectral partitioning via an engine-local | batch 20 |
+| `mock/design_rounds/202605300120/202605300120_topic.plan-spectral-fibers.md` | 18 | 2026-05-30 | unstated topic | Step 6 `steps::spectral_partition` (`plan/steps.rs`) is a stub returning `FiberGrouping::new()`; its | batch 20 |
+| `mock/design_rounds/202605300321/202605300321_changelist.doc.lock.md` | 18 | 2026-05-30 | unstated doc changelist (file name carries lock) | Update the plan-stage step list so the documented contract matches | batch 20 |
+| `mock/design_rounds/202605300321/202605300321_changelist.src.lock.md` | 32 | 2026-05-30 | unstated src changelist (file name carries lock) | Three new `steps` functions plus a runner rewire populate `Trunk.components` | batch 20 |
+| `mock/design_rounds/202605300321/202605300321_topic.fiber-trunk-projection.md` | 24 | 2026-05-30 | unstated topic | After C1c the per-phase trunk skeletons carry `Phase.id`, `trunk_count`, and | batch 20 |
+| `mock/design_rounds/202605300351/202605300351_changelist.doc.lock.md` | 18 | 2026-05-30 | unstated doc changelist (file name carries lock) | C1d-3a's step 8 prose said the width-gated spectral former for | batch 20 |
+| `mock/design_rounds/202605300351/202605300351_changelist.src.lock.md` | 32 | 2026-05-30 | unstated src changelist (file name carries lock) | The arvo dependency moves to the live-node-count fix; the engine | batch 20 |
+| `mock/design_rounds/202605300351/202605300351_topic.spectral-width-gate.md` | 18 | 2026-05-30 | unstated topic | C1d-3a landed the per-block fiber-to-trunk-component projection with the greedy former | batch 20 |
+| `mock/design_rounds/202605300413/202605300413_changelist.doc.lock.md` | 8 | 2026-05-30 | unstated doc changelist (file name carries lock) | The fix is a source-only correction of the `plan/laplacian.rs` module | batch 20 |
+| `mock/design_rounds/202605300413/202605300413_changelist.src.lock.md` | 8 | 2026-05-30 | unstated src changelist (file name carries lock) | File: `mock/crates/hilavitkutin/src/plan/laplacian.rs` | batch 20 |
+| `mock/design_rounds/202605300413/202605300413_topic.laplacian-doc-fix.md` | 12 | 2026-05-30 | unstated topic | The `plan/laplacian.rs` module doc (from C1d-1) describes the loose-CSR-aware live-`node_count` | batch 20 |
+| `mock/design_rounds/202605300651/202605300651_changelist.doc.lock.md` | 17 | no date line | unstated doc changelist (file name carries lock) | The bundle-to-`PlanInputs` projection adds internal plan-stage machinery to the engine | batch 20 |
+| `mock/design_rounds/202605300651/202605300651_changelist.src.lock.md` | 52 | no date line | unstated src changelist (file name carries lock) | Kernel validated by `mock/research/sketches/202605300626_plan-inputs-locate-witness/` (single access set) and a bundle-walk | batch 20 |
+| `mock/design_rounds/202605300651/202605300651_topic.plan-inputs-from-bundle.md` | 30 | 2026-05-30 | unstated topic | The plan stage (`compute_execution_plan`) takes a `PlanInputs` (per-unit read/write access | batch 20 |
+| `mock/design_rounds/202605300720/202605300720_changelist.doc.lock.md` | 9 | no date line | unstated doc changelist (file name carries lock) | Both fixes (the bundle integration test and the `MAX_STORES <= | batch 20 |
+| `mock/design_rounds/202605300720/202605300720_changelist.src.lock.md` | 15 | no date line | unstated src changelist (file name carries lock) | File: `mock/crates/hilavitkutin/src/plan/project.rs` | batch 20 |
+| `mock/design_rounds/202605300720/202605300720_topic.plan-inputs-projection-fixes.md` | 14 | 2026-05-30 | unstated topic | The projection round (202605300651) landed the `plan::project` module but the | batch 20 |
+| `mock/design_rounds/202605300858/202605300858_changelist.doc.lock.md` | 18 | no date line | unstated doc changelist (file name carries lock) | The dispatch-codegen section of `crates/hilavitkutin/DESIGN.md.tmpl` documents the per-fiber-shape monomorphisation `run_fiber<S: | batch 20 |
+| `mock/design_rounds/202605300858/202605300858_changelist.src.lock.md` | 37 | no date line | unstated src changelist (file name carries lock) | Feasibility validated by `mock/research/sketches/202605300823_run-fiber-wutuple-walk` (the heterogeneous walk with per-unit projected | batch 20 |
+| `mock/design_rounds/202605300858/202605300858_topic.c2-run-fiber-walk.md` | 24 | 2026-05-30 | unstated topic | The engine analyses a pipeline into phases, trunks, and fibers, | batch 20 |
+| `mock/design_rounds/202605300957/202605300957_changelist.doc.lock.md` | 48 | 2026-05-30 | unstated doc changelist (file name carries lock) | This round's doc work is two prose updates to | batch 20 |
+| `mock/design_rounds/202605300957/202605300957_changelist.src.lock.md` | 57 | 2026-05-30 | unstated src changelist (file name carries lock) | Retain registered WorkUnit instances on a builder value-list that | batch 20 |
+| `mock/design_rounds/202605300957/202605300957_topic.c2-build-captures-wus.md` | 96 | 2026-05-30 | unstated topic | Slice 1 shipped the `RunFiber` walk: given a value-carrying WorkUnit | batch 20 |
+| `mock/design_rounds/202605301058-abandoned/202605301058_changelist.doc.lock.md` | 54 | 2026-05-30 | abandoned (directory name) | The slice-2 prose states the walk order is registration-list order | batch 20 |
+| `mock/design_rounds/202605301058-abandoned/202605301058_changelist.src.md` | 117 | 2026-05-30 | abandoned (directory name) | Slice 2 made `run()` walk the retained units in registration-list | batch 20 |
+| `mock/design_rounds/202605301058-abandoned/202605301058_topic.c2-topo-dispatch.md` | 104 | 2026-05-30 | abandoned (directory name) | Slice 2 connected the builder to `run()`: registered WorkUnit instances | batch 20 |
+| `mock/design_rounds/202605301730/202605301730_changelist.doc.lock.md` | 52 | 2026-05-30 | unstated doc changelist (file name carries lock) | Describe, in the engine `DESIGN.md.tmpl`, the `PlanDims` capacity bundle that | batch 20 |
+| `mock/design_rounds/202605301730/202605301730_changelist.src.lock.md` | 71 | 2026-05-30 | unstated src changelist (file name carries lock) | Replace the ~209 `const _: Cap` plan-dimension parameters across the | batch 20 |
+| `mock/design_rounds/202605301730/202605301730_topic.capacity-plandims-adoption.md` | 79 | 2026-05-30 | unstated topic | The engine sizes every plan structure with `Cap` const generics: | batch 20 |
+| `mock/design_rounds/202605301800/202605301800_changelist.doc.lock.md` | 7 | 2026-05-30 | unstated doc changelist (file name carries lock) | No `*.md.tmpl` design-doc edits. The fixes touch only `.rs` source; | batch 20 |
+| `mock/design_rounds/202605301800/202605301800_changelist.src.lock.md` | 17 | 2026-05-30 | unstated src changelist (file name carries lock) | Two cosmetic fixes from the PR #111 review. No behaviour | batch 20 |
+| `mock/design_rounds/202605301800/202605301800_topic.plandims-review-fixes.md` | 12 | 2026-05-30 | unstated topic | The pr-reviewer-senior pass on the PlanDims adoption (round 202605301730) raised | batch 20 |
+| `mock/design_rounds/202605301830-abandoned/202605301830_changelist.doc.lock.md` | 33 | no date line | abandoned (directory name) | The dispatch-codegen section of `crates/hilavitkutin/DESIGN.md.tmpl` documents `RunFiber` as the pre-codegen | batch 20 |
+| `mock/design_rounds/202605301830-abandoned/202605301830_changelist.src.md` | 64 | no date line | abandoned (directory name) | Slice 2 made `run()` walk the retained units in registration-list | batch 20 |
+| `mock/design_rounds/202605301830-abandoned/202605301830_topic.c2-topo-dispatch.md` | 40 | 2026-05-30 | abandoned (directory name) | This round makes `run` dispatch in the plan's topological order | batch 20 |
+| `mock/design_rounds/202605302100/202605302100_changelist.doc.lock.md` | 98 | 2026-05-30 | unstated doc changelist (file name carries lock) | Pin the unified columnar storage contract in `hilavitkutin-api`'s `DESIGN.md.tmpl`: the | batch 20 |
+| `mock/design_rounds/202605302100/202605302100_changelist.src.lock.md` | 36 | 2026-05-30 | unstated src changelist (file name carries lock) | Ship the unified columnar storage contract in `hilavitkutin-api`: the `ColumnStorage` | batch 20 |
+| `mock/design_rounds/202605302100/202605302100_topic.unified-columnar-storage.md` | 79 | 2026-05-30 | unstated topic | The engine has accreted several disjoint, hand-rolled storage mechanisms. The | batch 20 |
+| `mock/design_rounds/202605302200/202605302200_changelist.doc.lock.md` | 20 | 2026-05-30 | unstated doc changelist (file name carries lock) | Name the naive arena-backed `ColumnStorage` placeholder in `hilavitkutin-providers`'s `DESIGN.md.tmpl`: `ArenaColumnStorage<M, | batch 20 |
+| `mock/design_rounds/202605302200/202605302200_changelist.src.lock.md` | 34 | 2026-05-30 | unstated src changelist (file name carries lock) | Ship `ArenaColumnStorage<M, D>` in `hilavitkutin-providers`: the naive arena-backed `ColumnStorage` impl | batch 20 |
+| `mock/design_rounds/202605302200/202605302200_topic.naive-arena-columnstorage.md` | 23 | 2026-05-30 | unstated topic | Round 202605302100 (archived) landed the `ColumnStorage` and `Decompose` contract in | batch 20 |
+| `mock/design_rounds/202605302300/202605302300_changelist.doc.lock.md` | 16 | 2026-05-30 | unstated doc changelist (file name carries lock) | Record the second review finding (the `!Send` / `!Sync` raw | batch 20 |
+| `mock/design_rounds/202605302300/202605302300_changelist.src.lock.md` | 20 | 2026-05-30 | unstated src changelist (file name carries lock) | Fix the `ArenaColumnStorage::reserve` byte-length overflow (PR #112 review finding 1): | batch 20 |
+| `mock/design_rounds/202605302300/202605302300_topic.columnstorage-overflow-fix.md` | 15 | 2026-05-30 | unstated topic | Local review of PR #112 found a soundness gap in | batch 20 |
+| `mock/design_rounds/202605302331/202605302330_changelist.doc.deprecated.md` | 25 | 2026-05-30 | unstated doc changelist (file name carries deprecated) | Reframe the engine DESIGN to describe the store-backed execution plan: | batch 20 |
+| `mock/design_rounds/202605302331/202605302330_topic.store-backed-plan.md` | 48 | 2026-05-30 | unstated topic | The plan-stage output `ExecutionPlan<DefaultPlanDims>` measures 11,031,312 bytes. `compute_execution_plan::<DefaultPlanDims>` builds it | batch 20 |
+| `mock/design_rounds/202605302331/202605302331_changelist.doc.lock.md` | 38 | 2026-05-30 | unstated doc changelist (file name carries lock) | Reframe the engine DESIGN to describe the FLAT execution plan, | batch 20 |
+| `mock/design_rounds/202605302331/202605302332_changelist.src.lock.md` | 60 | 2026-05-30 | unstated src changelist (file name carries lock) | Flatten the nested const-array `ExecutionPlan` into CSR flat pools. The | batch 20 |
+| `mock/design_rounds/202605310633/202605310633_changelist.doc.lock.md` | 45 | 2026-05-31 | unstated doc changelist (file name carries lock) | One documentation surface changes this round: the engine `DESIGN.md.tmpl` | batch 20 |
+| `mock/design_rounds/202605310633/202605310633_changelist.src.lock.md` | 118 | 2026-05-31 | unstated src changelist (file name carries lock) | The engine becomes generic over `CS: ColumnStorage` where it was | batch 20 |
+| `mock/design_rounds/202605310633/202605310633_topic.resource-arena-columnstorage.md` | 106 | 2026-05-31 | unstated topic | The unified columnar storage arc (task #654) puts all engine | batch 20 |
+| `mock/design_rounds/202605310847/202605310847_changelist.doc.lock.md` | 33 | 2026-05-31 | unstated doc changelist (file name carries lock) | The plan-stage prose in the engine DESIGN describes step 1 | batch 20 |
+| `mock/design_rounds/202605310847/202605310847_changelist.src.lock.md` | 70 | 2026-05-31 | unstated src changelist (file name carries lock) | wrote. This drops the dependency when the writer is registered | batch 20 |
+| `mock/design_rounds/202605310847/202605310847_topic.build-dag-order-independent-raw.md` | 103 | 2026-05-31 | unstated topic | The plan stage analyses a registered WorkUnit bundle into a | batch 20 |
+| `mock/design_rounds/202605311030/202605311030_changelist.doc.lock.md` | 56 | 2026-05-31 | unstated doc changelist (file name carries lock) | The dispatch and scheduler prose in `DESIGN.md.tmpl` currently states that | batch 20 |
+| `mock/design_rounds/202605311030/202605311030_changelist.src.lock.md` | 101 | 2026-05-31 | unstated src changelist (file name carries lock) | Wire the plan's topological permutation into `Scheduler::run`. A new | batch 20 |
+| `mock/design_rounds/202605311030/202605311030_topic.topo-dispatch-wiring.md` | 74 | 2026-05-31 | unstated topic | The scheduler retains its registered WorkUnit instances on a value-carrying | batch 20 |
+| `mock/design_rounds/202605311130/202605311130_changelist.doc.lock.md` | 39 | 2026-05-31 | unstated doc changelist (file name carries lock) | The scheduler-build prose in `DESIGN.md.tmpl` (updated last round for | batch 20 |
+| `mock/design_rounds/202605311130/202605311130_changelist.src.lock.md` | 70 | 2026-05-31 | unstated src changelist (file name carries lock) | Store-back the plan's six flat CSR pools on the scheduler's | batch 20 |
+| `mock/design_rounds/202605311130/202605311130_topic.store-back-plan.md` | 74 | 2026-05-31 | unstated topic | The scheduler computes a full `ExecutionPlan` at `build()` (to read | batch 20 |
+| `mock/design_rounds/202606041529/202606041529_changelist.doc.lock.md` | 11 | 2026-06-04 | unstated doc changelist (file name carries lock) | One edit, naming the append overflow contract in the engine | batch 20 |
+| `mock/design_rounds/202606041529/202606041529_changelist.src.lock.md` | 29 | 2026-06-04 | unstated src changelist (file name carries lock) | Brings the append in line with round 202606041800's Fork D: | batch 20 |
+| `mock/design_rounds/202606041529/202606041529_topic.accumulator-append-saturates-at-capacity.md` | 27 | 2026-06-04 | unstated topic | The accumulator-columns round landed the append surface but shipped the | batch 20 |
+| `mock/design_rounds/202606041537/202606041537_changelist.doc.lock.md` | 28 | 2026-06-04 | unstated doc changelist (file name carries lock) | data plane "the resource arena, ArenaFor / DrainStores". This round | batch 20 |
+| `mock/design_rounds/202606041537/202606041537_changelist.src.lock.md` | 61 | 2026-06-04 | unstated src changelist (file name carries lock) | Pure rename of the resource data-plane index from "arena" to | batch 20 |
+| `mock/design_rounds/202606041537/202606041537_topic.rename-resource-arena-to-bindings.md` | 54 | 2026-06-04 | unstated topic | The `resource::arena` module, its `Arena*` types, and the scheduler's `arena` | batch 20 |
+| `mock/design_rounds/202606041609/202606041609_changelist.doc.lock.md` | 11 | 2026-06-04 | unstated doc changelist (file name carries lock) | Two prose edits in the engine design doc so the | batch 20 |
+| `mock/design_rounds/202606041609/202606041609_changelist.src.lock.md` | 31 | 2026-06-04 | unstated src changelist (file name carries lock) | Windows `Scheduler::run`'s single full-range morsel into multiple morsels, unit-outer: each | batch 20 |
+| `mock/design_rounds/202606041609/202606041609_topic.morsel-loop-windowing.md` | 52 | 2026-06-04 | unstated topic | For each topological step, window the record range into morsels | batch 20 |
+| `mock/design_rounds/202606041624/202606041624_changelist.doc.lock.md` | 7 | 2026-06-04 | unstated doc changelist (file name carries lock) | No `*.md.tmpl` design-doc changes this round. The edits are rustdoc | batch 20 |
+| `mock/design_rounds/202606041624/202606041624_changelist.src.lock.md` | 26 | 2026-06-04 | unstated src changelist (file name carries lock) | Rustdoc-only. Three doc comments updated to match the windowed dispatch | batch 20 |
+| `mock/design_rounds/202606041624/202606041624_topic.morsel-dispatch-doc-contract.md` | 23 | 2026-06-04 | unstated topic | The morsel-loop round windowed `Scheduler::run`'s dispatch but left two rustdoc | batch 20 |
+| `mock/design_rounds/202606041631/202606041631_changelist.doc.lock.md` | 60 | 2026-06-04 | unstated doc changelist (file name carries lock) | The round lands input columns through dispatch. The engine DESIGN | batch 20 |
+| `mock/design_rounds/202606041631/202606041631_changelist.src.lock.md` | 100 | 2026-06-04 | unstated src changelist (file name carries lock) | Wires input columns through dispatch. The per-WU column Context | batch 20 |
+| `mock/design_rounds/202606041631/202606041631_topic.column-data-plane.md` | 44 | 2026-06-04 | unstated topic | The engine dispatches resource-only WorkUnits today. A WorkUnit that reads | batch 20 |
+| `mock/design_rounds/202606041643/202606041643_changelist.doc.lock.md` | 11 | 2026-06-04 | unstated doc changelist (file name carries lock) | The engine design doc describes `Scheduler::run` / `build` dispatch order | batch 20 |
+| `mock/design_rounds/202606041643/202606041643_changelist.src.lock.md` | 26 | 2026-06-04 | unstated src changelist (file name carries lock) | Makes dispatch follow the plan's phase structure: the dispatch order | batch 20 |
+| `mock/design_rounds/202606041643/202606041643_topic.phase-sequential-dispatch.md` | 42 | 2026-06-04 | unstated topic | The cron's enumerated scope (column data plane, column dispatch, morsel | batch 20 |
+| `mock/design_rounds/202606041720/202606041720_changelist.doc.lock.md` | 14 | 2026-06-04 | unstated doc changelist (file name carries lock) | No `*.md.tmpl` changes. The fix is a source-contract correction in | batch 20 |
+| `mock/design_rounds/202606041720/202606041720_changelist.src.lock.md` | 44 | 2026-06-04 | unstated src changelist (file name carries lock) | Makes the per-WorkUnit Context iteration accessors yield morsel-relative | batch 20 |
+| `mock/design_rounds/202606041720/202606041720_topic.morsel-relative-iteration.md` | 23 | 2026-06-04 | unstated topic | The column-data-plane round wired input columns through dispatch. Reviewing it | batch 20 |
+| `mock/design_rounds/202606041800/202606041800_changelist.doc.lock.md` | 24 | 2026-06-04 | unstated doc changelist (file name carries lock) | The round adds the accumulator store kind (append-during-frame columns) as | batch 20 |
+| `mock/design_rounds/202606041800/202606041800_changelist.src.lock.md` | 50 | 2026-06-04 | unstated src changelist (file name carries lock) | Adds the accumulator store kind: columns written by APPEND during | batch 20 |
+| `mock/design_rounds/202606041800/202606041800_topic.accumulator-columns.md` | 45 | 2026-06-04 | unstated topic | The column-data-plane round landed INPUT columns: buffers sized to a | batch 20 |
+| `mock/design_rounds/202606041802/202606041802_changelist.doc.lock.md` | 7 | 2026-06-04 | unstated doc changelist (file name carries lock) | No `*.md.tmpl` design-doc changes this round. The edits are rustdoc | batch 20 |
+| `mock/design_rounds/202606041802/202606041802_changelist.src.lock.md` | 25 | 2026-06-04 | unstated src changelist (file name carries lock) | Two correctness-hardening edits to the plan projection in `scheduler/mod.rs`, clearing | batch 20 |
+| `mock/design_rounds/202606041802/202606041802_topic.plan-projection-hardening.md` | 28 | 2026-06-04 | unstated topic | The engine's single-core dispatch is complete. Two silent-failure surfaces in | batch 20 |
+| `mock/design_rounds/202606041836/202606041836_changelist.doc.lock.md` | 19 | 2026-06-04 | unstated doc changelist (file name carries lock) | One sentence into `mock/crates/hilavitkutin/DESIGN.md.tmpl` recording the new up-front `compute_execution_plan` rejection, | batch 20 |
+| `mock/design_rounds/202606041836/202606041836_changelist.src.lock.md` | 34 | 2026-06-04 | unstated src changelist (file name carries lock) | Reject a `PlanDims` whose phase or trunk capacity exceeds the | batch 20 |
+| `mock/design_rounds/202606041836/202606041836_topic.plan-dims-id-width-guard.md` | 33 | 2026-06-04 | unstated topic | A consumer who overrides `PlanDims` with a wider phase or | batch 20 |
+| `mock/design_rounds/202606041903/202606041903_changelist.doc.lock.md` | 11 | 2026-06-04 | unstated doc changelist (file name carries lock) | No documentation change. This round is test-only (a regression guard | batch 20 |
+| `mock/design_rounds/202606041903/202606041903_changelist.src.lock.md` | 27 | 2026-06-04 | unstated src changelist (file name carries lock) | Test-only. Assert the resource-arena partial-failure cleanup conjunction directly (#656 note | batch 20 |
+| `mock/design_rounds/202606041903/202606041903_topic.resource-arena-partial-failure.md` | 25 | 2026-06-04 | unstated topic | The resource-arena drain (`resource/bindings.rs` `DrainStores`) reserves one column per non-ZST | batch 20 |
+| `mock/design_rounds/202606050220/202606050203_topic.single-core-dispatch-completion.md` | 47 | 2026-06-05 | unstated topic | That transition is this round. Unit-outer is correct but it | batch 20 |
+| `mock/design_rounds/202606050220/202606050220_changelist.doc.lock.md` | 11 | 2026-06-05 | unstated doc changelist (file name carries lock) | One prose edit in the engine design doc so the | batch 20 |
+| `mock/design_rounds/202606050220/202606050220_changelist.src.lock.md` | 33 | 2026-06-05 | unstated src changelist (file name carries lock) | Slice 1 of GATE 1. `Scheduler::run` dispatches unit-outer (each unit | batch 20 |
+| `mock/design_rounds/202606050259/202606050259_changelist.doc.lock.md` | 7 | 2026-06-05 | unstated doc changelist (file name carries lock) | No design-template (`*.md.tmpl`) changes this round. The morsel-outer dispatch nesting | batch 20 |
+| `mock/design_rounds/202606050259/202606050259_changelist.src.lock.md` | 17 | 2026-06-05 | unstated src changelist (file name carries lock) | Two PR #127 reviewer fixes, both source-only, no behaviour change. | batch 20 |
+| `mock/design_rounds/202606050259/202606050259_topic.morsel-outer-postreview.md` | 14 | 2026-06-05 | unstated topic | The neutral PR reviewer cleared the morsel-outer dispatch change for | batch 20 |
+| `mock/design_rounds/202606051215/202606051215_changelist.doc.lock.md` | 7 | 2026-06-05 | unstated doc changelist (file name carries lock) | No design-template (`*.md.tmpl`) changes this round. The engine design doc | batch 20 |
+| `mock/design_rounds/202606051215/202606051215_changelist.src.lock.md` | 16 | 2026-06-05 | unstated src changelist (file name carries lock) | File: `mock/crates/hilavitkutin/src/plan/steps.rs` | batch 20 |
+| `mock/design_rounds/202606051215/202606051215_topic.real-waist-detect.md` | 19 | 2026-06-05 | unstated topic | arvo ships exactly this. `arvo_graph::waist_detect` (`arvo-graph/src/waist.rs:27`) takes a DAG adjacency | batch 20 |
+| `mock/design_rounds/202606051500/202606051500_changelist.doc.lock.md` | 23 | 2026-06-05 | unstated doc changelist (file name carries lock) | One file: `mock/crates/hilavitkutin/DESIGN.md.tmpl`. The dispatch-nesting paragraph (around line 159) currently | batch 20 |
+| `mock/design_rounds/202606051500/202606051500_changelist.src.lock.md` | 37 | 2026-06-05 | unstated src changelist (file name carries lock) | Restructure `Scheduler::run` from the whole-plan `accum_free` morsel-outer guard to a | batch 20 |
+| `mock/design_rounds/202606051500/202606051500_topic.fiber-structured-morsel-outer-dispatch.md` | 43 | 2026-06-05 | unstated topic | What the whole-plan guard does NOT do: a plan with | batch 20 |
+| `mock/design_rounds/202606051600/202606051600_changelist.doc.lock.md` | 11 | 2026-06-05 | unstated doc changelist (file name carries lock) | No documentation changes. The two fixes are source-only: delete the | batch 20 |
+| `mock/design_rounds/202606051600/202606051600_changelist.src.lock.md` | 17 | 2026-06-05 | unstated src changelist (file name carries lock) | File: `mock/crates/hilavitkutin/src/resource/bindings.rs` | batch 20 |
+| `mock/design_rounds/202606051600/202606051600_topic.dispatch-post-review-cleanup.md` | 12 | 2026-06-05 | unstated topic | 1. Delete the now-dead `AccumFreeBindings` trait and its five impls | batch 20 |
+| `mock/design_rounds/202606051659/202606051554_topic.dispatch-codegen-fusion.md` | 33 | 2026-06-05 | unstated topic | This round opens Phase D, the dispatch-codegen keystone. The single-core | batch 20 |
+| `mock/design_rounds/202606051659/202606051659_changelist.doc.lock.md` | 60 | 2026-06-05 | unstated doc changelist (file name carries lock) | This changelist edits `mock/crates/hilavitkutin/DESIGN.md.tmpl` to describe the corrected single-core dispatch | batch 20 |
+| `mock/design_rounds/202606051659/202606051733_changelist.src.deprecated.md` | 50 | 2026-06-05 | unstated src changelist (file name carries deprecated) | This is increment 1 of the locked dispatch-codegen design: replace | batch 20 |
+| `mock/design_rounds/202606051659/202606062330_changelist.src.lock.md` | 85 | 2026-06-06 | unstated src changelist (file name carries lock) | This increment lands the proven dispatch-ORDER keystone machinery (the compile-time-foldable | batch 20 |
+| `mock/design_rounds/202606052250/202606052250_changelist.doc.lock.md` | 21 | 2026-06-05 | unstated doc changelist (file name carries lock) | This round is a mechanical transitive dependency bump (arvo `dev` | batch 20 |
+| `mock/design_rounds/202606052250/202606052250_changelist.src.lock.md` | 20 | 2026-06-05 | unstated src changelist (file name carries lock) | Mechanical transitive update. Bumps the arvo git source to `dev` | batch 20 |
+| `mock/design_rounds/202606052250/202606052250_topic.arvo-bump-waist-detect.md` | 24 | 2026-06-05 | "**Phase:** TOPIC" | title: Topic: bump arvo to dev HEAD, fix the waist_detect call | batch 21 |
+| `mock/design_rounds/202606061446/202606061446_changelist.doc.lock.md` | 20 | no date line | unstated (changelist doc) | title: Doc changelist: D1d builder-append + topo-registration validation | batch 21 |
+| `mock/design_rounds/202606061446/202606061446_changelist.src.lock.md` | 33 | no date line | unstated (changelist src) | title: Src changelist: D1d-a builder appends the WorkUnit carrier | batch 21 |
+| `mock/design_rounds/202606061446/202606061446_topic.gate1-dispatch-builder-append.md` | 33 | 2026-06-06 | "**Phase:** TOPIC" | title: GATE-1 dispatch, step D1d: builder appends, build validates registration is topologically valid | batch 21 |
+| `mock/design_rounds/202606061730/202606061730_changelist.doc.lock.md` | 48 | 2026-06-06 | "**Phase:** DOC" | title: Doc changelist: build-time topological-registration gate | batch 21 |
+| `mock/design_rounds/202606061730/202606061730_changelist.src.lock.md` | 79 | 2026-06-06 | "**Phase:** SRC" | title: Src changelist: build-time topological-registration gate | batch 21 |
+| `mock/design_rounds/202606061730/202606061730_topic.gate1-dispatch-topo-registration-gate.md` | 70 | 2026-06-06 | "**Phase:** TOPIC" | title: Build-time topological-registration gate | batch 21 |
+| `mock/design_rounds/202606061830/202606061830_changelist.doc.lock.md` | 34 | 2026-06-06 | "**Phase:** DOC" | title: Doc changelist: recommended order in the build error | batch 21 |
+| `mock/design_rounds/202606061830/202606061830_changelist.src.lock.md` | 54 | 2026-06-06 | "**Phase:** SRC" | title: Src changelist: recommended order in the build error | batch 21 |
+| `mock/design_rounds/202606061830/202606061830_topic.gate1-dispatch-recommended-order.md` | 54 | 2026-06-06 | "**Phase:** TOPIC" | title: Recommended registration order in the build error | batch 21 |
+| `mock/design_rounds/202606062047/202606062047_changelist.doc.lock.md` | 29 | 2026-06-06 | "**Phase:** DOC" | title: Doc changelist | batch 21 |
+| `mock/design_rounds/202606062047/202606062047_changelist.src.lock.md` | 51 | 2026-06-06 | "**Phase:** IMPL" | title: Source changelist | batch 21 |
+| `mock/design_rounds/202606062047/202606062047_topic.d668-engine-adjrow-cap-lift.md` | 79 | 2026-06-06 | "**Phase:** TOPIC" | title: Lift the engine's 64-node waist cap onto `D::Units` | batch 21 |
+| `mock/design_rounds/202606070048/202606070048_changelist.doc.lock.md` | 28 | 2026-06-07 | "**Phase:** DOC" | title: DOC changelist: G2-0a RunTrunk over FiberCons | batch 21 |
+| `mock/design_rounds/202606070048/202606070048_changelist.src.lock.md` | 31 | 2026-06-07 | "**Phase:** DRAFT -> IMPL" | title: SRC changelist: G2-0a RunTrunk over FiberCons | batch 21 |
+| `mock/design_rounds/202606070048/202606070048_topic.gate2-g2-0a-runtrunk-fibercons.md` | 28 | 2026-06-07 | "**Phase:** TOPIC" | title: Topic: GATE-2 G2-0a, RunTrunk over FiberCons, the inner trunk-nesting level | batch 21 |
+| `mock/design_rounds/202606070100/202606070100_changelist.doc.lock.md` | 28 | 2026-06-07 | "**Phase:** DOC" | title: DOC changelist: G2-0b RunPhase / RunPipeline + waist barrier | batch 21 |
+| `mock/design_rounds/202606070100/202606070100_changelist.src.lock.md` | 31 | 2026-06-07 | "**Phase:** DRAFT -> IMPL" | title: SRC changelist: G2-0b RunPhase / RunPipeline + waist barrier | batch 21 |
+| `mock/design_rounds/202606070100/202606070100_topic.gate2-g2-0b-runphase-waist.md` | 30 | 2026-06-07 | "**Phase:** TOPIC" | title: Topic: GATE-2 G2-0b, RunPhase over TrunkCons, RunPipeline over PhaseCons, degenerate waist barrier | batch 21 |
+| `mock/design_rounds/202606070839/202606070839_changelist.doc.lock.md` | 19 | 2026-06-07 | "**Phase:** DOC" | changelist doc changelist, round 202606070839 | batch 21 |
+| `mock/design_rounds/202606070839/202606070839_changelist.src.lock.md` | 43 | 2026-06-07 | "**Phase:** SRC" | changelist src changelist, round 202606070839 | batch 21 |
+| `mock/design_rounds/202606070839/202606070839_topic.gate2-waist-bounded-phase.md` | 69 | 2026-06-07 | "**Phase:** TOPIC" | topic: gate2-waist-bounded-phase | batch 21 |
+| `mock/design_rounds/202606070900/202606070900_changelist.doc.lock.md` | 18 | no date line | "**Phase:** DOC" | title: Doc changelist: GATE-2 const grouping | batch 21 |
+| `mock/design_rounds/202606070900/202606070900_changelist.src.lock.md` | 33 | no date line | "**Phase:** IMPL" | title: Src changelist: GATE-2 const grouping | batch 21 |
+| `mock/design_rounds/202606070900/202606070900_topic.gate2-const-grouping.md` | 34 | 2026-06-07 | "**Phase:** TOPIC" | title: Topic: GATE-2 const grouping from the registered bundle | batch 21 |
+| `mock/design_rounds/202606071100/202606071100_changelist.doc.lock.md` | 18 | no date line | "**Phase:** DOC" | title: Doc changelist: GATE-2 const-gated walk mechanism (round 2a) | batch 21 |
+| `mock/design_rounds/202606071100/202606071100_changelist.src.lock.md` | 36 | no date line | "**Phase:** IMPL" | title: Src changelist: GATE-2 const-gated walk mechanism (round 2a) | batch 21 |
+| `mock/design_rounds/202606071100/202606071100_topic.gate2-const-gated-dispatch.md` | 45 | 2026-06-07 | "**Phase:** TOPIC" | title: Topic: GATE-2 const-gated trunk dispatch + Scheduler::run re-point | batch 21 |
+| `mock/design_rounds/202606071109/202606071109_changelist.doc.lock.md` | 11 | 2026-06-07 | "**Phase:** DOC" | changelist doc changelist, round 202606071109 | batch 21 |
+| `mock/design_rounds/202606071109/202606071109_changelist.src.lock.md` | 22 | 2026-06-07 | "**Phase:** SRC" | changelist src changelist, round 202606071109 | batch 21 |
+| `mock/design_rounds/202606071109/202606071109_topic.gate2-r4a-core-phase-masks.md` | 69 | 2026-06-07 | "**Phase:** TOPIC" | topic: gate2-r4a-core-phase-masks | batch 21 |
+| `mock/design_rounds/202606071139/202606071139_changelist.doc.lock.md` | 30 | 2026-06-07 | "**Phase:** DOC" | changelist doc changelist, round 202606071139 | batch 21 |
+| `mock/design_rounds/202606071139/202606071139_changelist.src.lock.md` | 35 | 2026-06-07 | "**Phase:** SRC" | changelist src changelist, round 202606071139 | batch 21 |
+| `mock/design_rounds/202606071139/202606071139_topic.gate2-r4b-run-parallel-inline.md` | 61 | 2026-06-07 | "**Phase:** TOPIC" | topic: gate2-r4b-run-parallel-inline | batch 21 |
+| `mock/design_rounds/202606071300-abandoned/202606071300_changelist.doc.lock.md` | 14 | no date line | abandoned (directory name); "**Phase:** DOC" | title: Doc changelist: GATE-2 phase-sectioned single-core run re-point (round 2b) | batch 21 |
+| `mock/design_rounds/202606071300-abandoned/202606071300_changelist.src.md` | 26 | no date line | abandoned (directory name); "**Phase:** IMPL" | title: Src changelist: GATE-2 phase-sectioned single-core run (round 2b) | batch 21 |
+| `mock/design_rounds/202606071300-abandoned/202606071300_topic.gate2-phase-sectioned-run.md` | 36 | 2026-06-07 | abandoned (directory name); "**Phase:** TOPIC" | title: Topic: GATE-2 phase-sectioned single-core run re-point (round 2b) | batch 21 |
+| `mock/design_rounds/202606071730/202606071730_changelist.doc.lock.md` | 20 | 2026-06-07 | "**Phase:** DOC" | title: Doc changelist: GATE-2 R4c slice 1, OsThreadPool::spawn | batch 21 |
+| `mock/design_rounds/202606071730/202606071730_changelist.src.lock.md` | 38 | 2026-06-07 | "**Phase:** SRC" | title: Src changelist: GATE-2 R4c slice 1, OsThreadPool::spawn | batch 21 |
+| `mock/design_rounds/202606071730/202606071730_topic.gate2-r4c-osthreadpool-spawn.md` | 63 | 2026-06-07 | "**Phase:** TOPIC" | title: Topic: GATE-2 R4c slice 1, real OsThreadPool::spawn | batch 21 |
+| `mock/design_rounds/202606071808/202606071805_topic.gate2-worker-side-waist-barrier.md` | 65 | 2026-06-07 | "**Phase:** TOPIC" | title: Topic: GATE-2 worker-side waist barrier (deviation §4 reconciliation) | batch 21 |
+| `mock/design_rounds/202606071808/202606071808_changelist.doc.lock.md` | 17 | no date line | "**Phase:** DOC" | title: Doc changelist: gate2 worker-side waist barrier | batch 21 |
+| `mock/design_rounds/202606071808/202606071810_changelist.src.lock.md` | 35 | no date line | "**Phase:** SRC" | title: Source changelist: gate2 worker-side waist barrier | batch 21 |
+| `mock/design_rounds/202606071856/202606071834_topic.gate2-head-tail-convergence.md` | 39 | 2026-06-07 | "**Phase:** TOPIC" | title: Topic: GATE-2 head+tail convergence for single-trunk phases (deviation §8, slice 1) | batch 21 |
+| `mock/design_rounds/202606071856/202606071856_changelist.doc.lock.md` | 15 | no date line | "**Phase:** DOC" | title: Doc changelist: gate2 head+tail convergence | batch 21 |
+| `mock/design_rounds/202606071856/202606071856_changelist.src.lock.md` | 27 | no date line | "**Phase:** SRC" | title: Source changelist: gate2 head+tail convergence | batch 21 |
+| `mock/design_rounds/202606071900/202606071900_changelist.doc.lock.md` | 19 | 2026-06-07 | "**Phase:** DOC" | title: Doc changelist: GATE-2 R4c round A, frame wake-word protocol | batch 21 |
+| `mock/design_rounds/202606071900/202606071900_changelist.src.lock.md` | 34 | 2026-06-07 | "**Phase:** SRC" | title: Src changelist: GATE-2 R4c round A, frame wake-word protocol | batch 21 |
+| `mock/design_rounds/202606071900/202606071900_topic.gate2-r4c-frame-protocol.md` | 64 | 2026-06-07 | "**Phase:** TOPIC" | title: Topic: GATE-2 R4c round A, frame wake-word protocol | batch 21 |
+| `mock/design_rounds/202606072000-2/202606071933_topic.gate2-accumulator-threaded.md` | 38 | 2026-06-07 | "**Phase:** TOPIC" | title: Topic: GATE-2 accumulator unit-outer threaded path (deviation §9) | batch 21 |
+| `mock/design_rounds/202606072000-2/202606072000_changelist.doc.lock.md` | 60 | 2026-06-07 | "**Phase:** DOC" | title: Doc changelist: GATE-2 accumulator unit-outer threaded path (deviation §9) | batch 21 |
+| `mock/design_rounds/202606072000-2/202606072010_changelist.src.lock.md` | 92 | 2026-06-07 | "**Phase:** IMPL" | title: Src changelist: GATE-2 accumulator unit-outer threaded path (deviation §9) | batch 21 |
+| `mock/design_rounds/202606072000/202606072000_changelist.doc.lock.md` | 16 | 2026-06-07 | "**Phase:** DOC" | title: Doc changelist: GATE-2 R4c round B1, extract run_core_phase | batch 21 |
+| `mock/design_rounds/202606072000/202606072000_changelist.src.lock.md` | 23 | 2026-06-07 | "**Phase:** SRC" | title: Src changelist: GATE-2 R4c round B1, extract run_core_phase | batch 21 |
+| `mock/design_rounds/202606072000/202606072000_topic.gate2-r4c-run-core-phase.md` | 53 | 2026-06-07 | "**Phase:** TOPIC" | title: Topic: GATE-2 R4c round B1, extract run_core_phase primitive | batch 21 |
+| `mock/design_rounds/202606072030/202606072030_changelist.doc.lock.md` | 18 | 2026-06-07 | "**Phase:** DOC" | title: Doc changelist: GATE-2 R4c round B2, threaded run_parallel | batch 21 |
+| `mock/design_rounds/202606072030/202606072030_changelist.src.lock.md` | 42 | 2026-06-07 | "**Phase:** SRC" | title: Src changelist: GATE-2 R4c round B2, threaded run_parallel | batch 21 |
+| `mock/design_rounds/202606072030/202606072030_topic.gate2-r4c-threaded-run-parallel.md` | 61 | 2026-06-07 | "**Phase:** TOPIC" | title: Topic: GATE-2 R4c round B2, threaded run_parallel | batch 21 |
+| `mock/design_rounds/202606080400/202606080100_topic.gate2-ge-const-gated-trunk-dispatch.md` | 39 | 2026-06-08 | "**Phase:** TOPIC" | title: Topic: GATE-2 G-e, const-gated per-trunk dispatch, re-point Scheduler::run | batch 21 |
+| `mock/design_rounds/202606080400/202606080300_topic.gate2-ge-drive-shipped-rungatedtrunk.md` | 41 | 2026-06-08 | "**Phase:** TOPIC" | title: Topic: GATE-2 G-e correction, drive the SHIPPED RunGatedTrunk, trunk-only keyed | batch 21 |
+| `mock/design_rounds/202606080400/202606080400_changelist.doc.lock.md` | 56 | 2026-06-08 | "**Phase:** DOC" | title: Doc changelist: GATE-2 G-e const-gated per-trunk dispatch re-point | batch 21 |
+| `mock/design_rounds/202606080400/202606080500_changelist.src.lock.md` | 56 | 2026-06-08 | "**Phase:** SRC" | title: Src changelist: GATE-2 G-e const-gated per-trunk dispatch + Scheduler::run re-point | batch 21 |
+| `mock/design_rounds/202606080700/202606080600_topic.gate2-n-core-pinned-trunk-dispatch.md` | 36 | 2026-06-08 | "**Phase:** TOPIC" | title: Topic: GATE-2 G2-N, core-pinned per-trunk dispatch (re-point run_parallel onto the compiled monos) | batch 21 |
+| `mock/design_rounds/202606080700/202606080700_changelist.doc.lock.md` | 48 | 2026-06-08 | "**Phase:** DOC" | title: Doc changelist: GATE-2 G2-N core-pinned per-trunk dispatch | batch 21 |
+| `mock/design_rounds/202606080700/202606080800_changelist.src.lock.md` | 48 | 2026-06-08 | "**Phase:** SRC (IMPL)" | title: Src changelist: GATE-2 G2-N core-pinned per-trunk dispatch | batch 21 |
+| `mock/design_rounds/202606081300/202606081200_topic.gate2-e4-virtual-firing-and-on-gating.md` | 41 | 2026-06-08 | "**Phase:** TOPIC" | title: Topic: GATE-2 E4 foundation, real virtual firing + `On<V>` dispatch-gating | batch 21 |
+| `mock/design_rounds/202606081300/202606081300_changelist.doc.lock.md` | 30 | 2026-06-08 | "**Phase:** DOC" | title: Doc changelist: GATE-2 E4 slice 1, virtual flag system (firing + On-gating) | batch 21 |
+| `mock/design_rounds/202606081300/202606081300_changelist.src.lock.md` | 71 | 2026-06-08 | "**Phase:** SRC (DRAFT -> IMPL)" | title: Src changelist: GATE-2 E4 slice 1, virtual firing + On-gating | batch 21 |
+| `mock/design_rounds/202606082100/202606081900_topic.gate2-e4-slice2-self-hosting-meta-pipeline.md` | 60 | 2026-06-08 | "**Phase:** TOPIC" | title: Topic: GATE-2 E4 slice 2, self-hosting meta pipeline (meta virtuals + MetaAccess + kernel) | batch 21 |
+| `mock/design_rounds/202606082100/202606082100_changelist.doc.lock.md` | 115 | 2026-06-08 | "**Phase:** DOC" | title: DOC changelist: GATE-2 E4 slice-2, self-hosting meta pipeline | batch 21 |
+| `mock/design_rounds/202606082100/202606082100_changelist.src.lock.md` | 119 | 2026-06-08 | "**Phase:** IMPL" | title: SRC changelist: GATE-2 E4 slice-2, self-hosting meta pipeline | batch 21 |
+| `mock/design_rounds/202606090400/202606090000_topic.gate2-e4-slice3-consumer-meta-hooks.md` | 142 | 2026-06-08 | "**Phase:** TOPIC" | title: Topic: GATE-2 E4 slice 3, consumer meta hooks (real meta firing + MetaAccess + SchedulerMetrics) | batch 21 |
+| `mock/design_rounds/202606090400/202606090200_changelist.doc.deprecated.md` | 73 | 2026-06-08 | "**Phase:** DOC"; deprecated (file name) | title: DOC changelist: GATE-2 E4 slice 3a, SchedulerMetrics + provided metrics WU + consumer hook | batch 21 |
+| `mock/design_rounds/202606090400/202606090200_changelist.src.deprecated.md` | 54 | 2026-06-08 | "**Phase:** IMPL"; deprecated (file name) | title: SRC changelist: GATE-2 E4 slice 3a, SchedulerMetrics + provided metrics WU + consumer hook | batch 21 |
+| `mock/design_rounds/202606090400/202606090400_changelist.doc.lock.md` | 75 | 2026-06-08 | "**Phase:** DOC" | title: DOC changelist: GATE-2 E4 slice 3, engine-to-meta bridge + SchedulerMetrics + consumer hook | batch 21 |
+| `mock/design_rounds/202606090400/202606090400_changelist.src.deprecated.md` | 68 | 2026-06-08 | "**Phase:** IMPL"; deprecated (file name) | title: SRC changelist: GATE-2 E4 slice 3, engine-to-meta bridge + SchedulerMetrics + consumer hook | batch 21 |
+| `mock/design_rounds/202606090400/202606090500_changelist.src.lock.md` | 89 | 2026-06-08 | "**Phase:** IMPL" | title: SRC changelist: GATE-2 E4 slice 3, engine-to-meta bridge + SchedulerMetrics + consumer hook | batch 21 |
+| `mock/design_rounds/202606091000/202606091000_changelist.doc.lock.md` | 26 | 2026-06-09 | "**Phase:** DOC" | title: Doc changelist: no doc changes (source aligns to existing design) | batch 21 |
+| `mock/design_rounds/202606091000/202606091000_changelist.src.lock.md` | 42 | 2026-06-09 | "**Phase:** SRC" | title: Src changelist: RunFiber whole-program dispatch, delete the FiberSlot path | batch 21 |
+| `mock/design_rounds/202606091000/202606091000_topic.d1e-runfiber-dispatch.md` | 37 | 2026-06-09 | "**Phase:** TOPIC" | title: D1e: RunFiber whole-program dispatch replaces the erased FiberSlot path | batch 21 |
+| `mock/design_rounds/202606091600/202606091600_changelist.doc.lock.md` | 20 | no date line | "**Phase:** DOC" | title: Doc changelist: spec-free ColumnValue | batch 21 |
+| `mock/design_rounds/202606091600/202606091600_changelist.src.lock.md` | 29 | no date line | "**Phase:** IMPL (src)" | title: Src changelist: spec-free ColumnValue, drop full `specialization` | batch 21 |
+| `mock/design_rounds/202606091600/202606091600_topic.spec-free-columnvalue-drop-full-specialization.md` | 32 | no date line | "**Phase:** TOPIC" | title: Topic: spec-free ColumnValue, drop the full `specialization` gate | batch 21 |
+| `mock/design_rounds/202606092000/202606092000_changelist.doc.lock.md` | 19 | no date line | "**Phase:** DOC" | title: Doc changelist: D4 within-fiber linear fusion | batch 21 |
+| `mock/design_rounds/202606092000/202606092000_changelist.src.lock.md` | 38 | no date line | "**Phase:** IMPL (src)" | title: Src changelist: D4 within-fiber linear fusion | batch 21 |
+| `mock/design_rounds/202606092000/202606092000_topic.d4-within-fiber-linear-fusion.md` | 51 | no date line | "**Phase:** TOPIC" | title: Topic: D4 within-fiber linear fusion (deep single-fiber rust-pipe) | batch 21 |
+| `mock/design_rounds/202606100900/202606100900_changelist.doc.lock.md` | 23 | 2026-06-10 | "**Phase:** DOC" | title: Doc changelist: document the per-frame accumulator reset in the run contract | batch 21 |
+| `mock/design_rounds/202606100900/202606100900_changelist.src.lock.md` | 36 | 2026-06-10 | "**Phase:** SRC" | title: Src changelist: ResetAccumulators walk, run() resets at frame start | batch 21 |
+| `mock/design_rounds/202606100900/202606100900_topic.accum-per-frame-reset.md` | 29 | 2026-06-10 | "**Phase:** TOPIC" | title: Per-frame accumulator reset in run() | batch 21 |
+| `mock/design_rounds/202606110910/202606110855_topic.gate2-e4-run-parallel-meta-parity.md` | 113 | 2026-06-11 | "**Phase:** TOPIC" | title: GATE-2 E4: run_parallel meta-pipeline parity | batch 21 |
+| `mock/design_rounds/202606110910/202606110910_changelist.doc.lock.md` | 56 | 2026-06-11 | "**Phase:** DOC" | title: DOC changelist: GATE-2 E4, run_parallel meta parity | batch 21 |
+| `mock/design_rounds/202606110910/202606110920_changelist.src.lock.md` | 122 | 2026-06-11 | "**Phase:** IMPL" | title: SRC changelist: GATE-2 E4, run_parallel meta parity | batch 21 |
+| `mock/design_rounds/202606110957/202606110948_topic.gate2-e8-adapt-pass-duration-ema.md` | 70 | 2026-06-11 | "**Phase:** TOPIC" | title: GATE-2 E8 adapt, slice 1: Clock-sourced pass-duration EMA through the bridge | batch 21 |
+| `mock/design_rounds/202606110957/202606110957_changelist.doc.lock.md` | 46 | 2026-06-11 | "**Phase:** DOC" | title: DOC changelist: E8 adapt slice 1, pass-duration EMA + clock | batch 21 |
+| `mock/design_rounds/202606110957/202606111010_changelist.src.lock.md` | 132 | 2026-06-11 | "**Phase:** IMPL" | title: SRC changelist: GATE-2 E8, clock-sourced pass-duration EMA | batch 21 |
+| `mock/design_rounds/202606111200/202606111200_changelist.doc.lock.md` | 20 | no date line | "**Phase:** DOC" | title: Doc changelist: E7 incremental-skip (GATE-1) | batch 21 |
+| `mock/design_rounds/202606111200/202606111200_changelist.src.lock.md` | 55 | no date line | "**Phase:** IMPL" | title: Src changelist: E7 incremental-skip (GATE-1) | batch 21 |
+| `mock/design_rounds/202606111200/202606111200_topic.e7-dirty-skip-incremental.md` | 28 | 2026-06-11 | "**Phase:** TOPIC" | topic: e7-dirty-skip-incremental | batch 21 |
+| `mock/design_rounds/202606111600/202606111600_changelist.doc.lock.md` | 73 | 2026-06-11 | "**Phase:** DOC" | title: Doc changelist: D6 ASM-dispatch-gate | batch 21 |
+| `mock/design_rounds/202606111600/202606111600_changelist.src.lock.md` | 103 | 2026-06-11 | "**Phase:** SRC" | title: Source changelist: D6 ASM-dispatch-gate | batch 21 |
+| `mock/design_rounds/202606111600/202606111600_topic.d6-asm-dispatch-gate.md` | 121 | 2026-06-11 | "**Phase:** TOPIC" | title: D6: a standing ASM-checklist gate on the emitted dispatch monos | batch 21 |
+| `mock/design_rounds/202606111700/202606111700_changelist.doc.lock.md` | 17 | 2026-06-11 | "**Phase:** DOC" | title: Doc changelist: GATE-1 test-audit remediation | batch 21 |
+| `mock/design_rounds/202606111700/202606111700_changelist.src.lock.md` | 48 | 2026-06-11 | "**Phase:** SRC" | title: Source changelist: GATE-1 test-audit remediation | batch 21 |
+| `mock/design_rounds/202606111700/202606111700_topic.gate1-test-audit-remediation.md` | 65 | 2026-06-11 | "**Phase:** TOPIC" | title: GATE-1 test-audit remediation | batch 21 |
+| `mock/design_rounds/202606111800/202606111800_changelist.doc.lock.md` | 12 | 2026-06-11 | "**Phase:** DOC" | title: Doc changelist: read-mask invariant guard | batch 21 |
+| `mock/design_rounds/202606111800/202606111800_changelist.src.lock.md` | 31 | 2026-06-11 | "**Phase:** SRC" | title: Source changelist: read-mask invariant guard | batch 21 |
+| `mock/design_rounds/202606111800/202606111800_topic.gate1-readmask-invariant-guard.md` | 32 | 2026-06-11 | "**Phase:** TOPIC" | title: GATE-1 read-mask copy: guard the carrier-equals-topo invariant | batch 21 |
+| `mock/design_rounds/202606190700/202606190700_changelist.doc.lock.md` | 26 | 2026-06-19 | "**Phase:** DOC" | title: Doc changelist: core-idle adapt axis | batch 21 |
+| `mock/design_rounds/202606190700/202606190700_changelist.src.lock.md` | 65 | 2026-06-19 | "**Phase:** SRC" | title: Src changelist: core-idle adapt axis | batch 21 |
+| `mock/design_rounds/202606190700/202606190700_topic.core-idle-adapt-axis.md` | 101 | 2026-06-19 | "**Phase:** TOPIC" | title: Topic: core-idle adapt axis (domain 22) | batch 21 |
+| `mock/design_rounds/202606191000/202606191000_changelist.doc.lock.md` | 15 | no date line | "**Phase:** DOC" | title: Doc CL: parallel between-frame field interior-mutability discipline | batch 21 |
+| `mock/design_rounds/202606191000/202606191000_changelist.src.lock.md` | 33 | no date line | "**Phase:** IMPL" | title: Src CL: parallel between-frame field interior-mutability | batch 21 |
+| `mock/design_rounds/202606191000/202606191000_topic.gate2-parallel-aliasing-soundness.md` | 57 | 2026-06-19 | unstated (topic) | title: Topic: GATE-2 parallel aliasing-model soundness | batch 21 |
+| `mock/design_rounds/202606191200/202606191200_changelist.doc.lock.md` | 25 | no date line | "**Phase:** DOC" | title: Doc CL: PlanDims gains AccumsPerCore + PlanAffecting for cap lifting | batch 21 |
+| `mock/design_rounds/202606191200/202606191200_changelist.src.lock.md` | 61 | 2026-06-19 | "**Phase:** IMPL" | title: Src CL: lift engine caps onto PlanDims | batch 21 |
+| `mock/design_rounds/202606191200/202606191200_topic.gate2-caps-lifting.md` | 50 | 2026-06-19 | unstated (topic) | title: Topic: lift the engine grouping caps to a Caps capacity-type | batch 21 |
+| `mock/design_rounds/202606191400/202606191400_changelist.doc.lock.md` | 17 | no date line | "**Phase:** DOC" | title: Doc CL: CtxFor computed Context type | batch 21 |
 | `mock/design_rounds/202606191400/202606191400_changelist.src.lock.md` | 37 | no date line | "**Phase:** IMPL"; name carries lock | src changelist: CtxFor alias, four fold traits | batch 22 |
 | `mock/design_rounds/202606191400/202606191400_topic.ctxfor-computed-ctx.md` | 62 | 2026-06-19 | unstated, topic | topic: CtxFor computed per-WorkUnit Context type | batch 22 |
 | `mock/design_rounds/202606191500/202606191500_changelist.doc.lock.md` | 11 | no date line | "**Phase:** DOC"; name carries lock | doc changelist: units-cap guard sentence | batch 22 |
@@ -846,6 +1304,86 @@ passages that say something about the design are copied in `RECOVERED.md`.
 | `mock/research/seed/plan.md` | 224 | as of 2026-07-19 | seed chapter, not frozen | analysis steps, fibers, morsels, data loading | first hand |
 | `mock/research/seed/scheduler.md` | 126 | as of 2026-07-19 | seed chapter, not frozen | builder, meta pipeline, version stamps, errors | first hand |
 | `mock/research/seed/storage.md` | 116 | as of 2026-07-19 | seed chapter, not frozen | resource storage model, snapshot, replace and install | first hand |
+| `mock/research/sketches/202605050503_accessset_arity/FINDINGS.md` | 174 | 2026-05-05 | "Outcome: WORKS, both A (macro flat" ; later "Correction (post-audit)" | sketch S2 AccessSet arity, recursive HList recommended, audit correction | batch 25 |
+| `mock/research/sketches/202605050530_deep_stacking/FINDINGS.md` | 103 | 2026-05-05 | "Outcome: WORKS." | sketch S1 depth-4 typestate builder compiles, errors | batch 25 |
+| `mock/research/sketches/202605050555_replaceable_polarity/FINDINGS.md` | 80 | 2026-05-05 | "Outcome: WORKS (both polarities). Recommend opt-in." | sketch S4 Replaceable marker opt-in versus opt-out | batch 25 |
+| `mock/research/sketches/202605050615_kit_taxonomy/FINDINGS.md` | 107 | 2026-05-05 | "supersedes the original paper-only S5 conclusions" | sketch S5 kit Owned-state, visibility not a substrate axis | batch 25 |
+| `mock/research/sketches/202605050615_kit_taxonomy/sketch_skeletons.md` | 13 | no date line | "preserved as audit trail" (per FINDINGS.md:107); own text unstated, sketch note | pointer note: kit shapes analysed elsewhere, not built | batch 25 |
+| `mock/research/sketches/202605050700_deep_stacking_d5/FINDINGS.md` | 117 | 2026-05-05 | "Outcome: WORKS." | sketch S1b depth-5, 25 WUs, compile time, duplicates | batch 25 |
+| `mock/research/sketches/202605050800_dedup_concat/FINDINGS.md` | 98 | 2026-05-05 | "M2 closes as INVESTIGATED, DEFERRED." | type-level dedup blocked by coherence; logical dedup suffices | batch 25 |
+| `mock/research/sketches/202605082230_recursion_limit_macro/FINDINGS.md` | 63 | 2026-05-08 | "Outcome: FAILS WITH `error: an inner attribute is not permitted in this context`" | macro expanding to recursion_limit attribute fails; macro dropped | batch 25 |
+| `mock/research/sketches/202605091700-builder-provider-shape/HYPOTHESIS.md` | 35 | no date line (dir name 2026-05-09) | "Outcome: see `OUTCOME.md`." | hypothesis: unified .with(value) builder with Provider trait | batch 25 |
+| `mock/research/sketches/202605091700-builder-provider-shape/OUTCOME.md` | 120 | 2026-05-09 | "Status: WORKS" | .with builder, Provider::Dispatch routers, doc CL specification | batch 25 |
+| `mock/research/sketches/202605101036-builder-input-reshape/HYPOTHESIS.md` | 26 | 2026-05-10 | "Outcome: see" none; unstated hypothesis | BuilderInput rename, no wrapper structs, extend dyn | batch 25 |
+| `mock/research/sketches/202605101036-builder-input-reshape/OUTCOME.md` | 68 | 2026-05-10 | "Status: WORKS." | BuilderInput reshape compiles; supertrait dispatch bound enforced | batch 25 |
+| `mock/research/sketches/202605101036-codegen-entrypoint-tait/FINDINGS.md` | 129 | no date line (dir name 2026-05-10) | "Outcome: **WORKS**. Validated dramatically." | sealed DispatchCodegen trait with TAIT lowers transparently; struct-field fails | batch 25 |
+| `mock/research/sketches/202605101036-codegen-entrypoint-tait/SKETCH.md` | 48 | no date line (dir name 2026-05-10) | "Round: 202605101036" hypothesis sketch, status unstated | hypothesis and plan for codegen entrypoint TAIT | batch 25 |
+| `mock/research/sketches/202605101036-codegen-tait-capture/FINDINGS.md` | 67 | no date line (dir name 2026-05-10; text names 2026-05-10) | "Outcome: **WORKS**." | TAIT dispatch codegen transparent with ten const generics, captures | batch 25 |
+| `mock/research/sketches/202605101036-codegen-tait-capture/SKETCH.md` | 51 | no date line (dir name 2026-05-10) | "Outcome (to be filled)" ; unfilled sketch plan | hypothesis for TAIT with realistic captured state | batch 25 |
+| `mock/research/sketches/202605101036-const-zero-bloat/FINDINGS.md` | 56 | no date line (dir name 2026-05-10) | "Outcome: **WORKS**." | pub const emits zero bytes; named defaults locked | batch 25 |
+| `mock/research/sketches/202605101036-ema-vectorisation/FINDINGS.md` | 80 | no date line (dir name 2026-05-10) | "Outcome: **WORKS**." | cfg-gated NEON/SSE2/scalar EMA update asm verified | batch 25 |
+| `mock/research/sketches/202605101036-ema-vectorisation/SKETCH.md` | 50 | no date line (dir name 2026-05-10) | "Outcome (to be filled)" ; unfilled sketch plan | hypothesis for cfg-gated SIMD EMA paths | batch 25 |
+| `mock/research/sketches/202605101036-fibershape-typing/FINDINGS.md` | 89 | no date line (dir name 2026-05-10) | "Outcome: **WORKS**." | sealed FiberShape generic monomorphises per shape, no runtime branch | batch 25 |
+| `mock/research/sketches/202605101036-fibershape-typing/SKETCH.md` | 50 | no date line (dir name 2026-05-10) | "Outcome (to be filled)" ; unfilled sketch plan | hypothesis promoting FiberShape from enum to sealed trait | batch 25 |
+| `mock/research/sketches/202605101036-poolframe-lifetime/FINDINGS.md` | 131 | 2026-05-11 | "Outcome: WORKS." | PoolFrame Pin lifetime contained; WorkUnit Ctx becomes GAT | batch 25 |
+| `mock/research/sketches/202605101036-poolframe-lifetime/SKETCH.md` | 91 | 2026-05-11 | "Status: in-flight" | plan and criteria for PoolFrame lifetime sketch | batch 25 |
+| `mock/research/sketches/202605101036-progress-counter-arena/FINDINGS.md` | 45 | no date line (dir name 2026-05-10) | "Outcome: **WORKS**." | progress counter arena lowers to single stlr/ldar | batch 25 |
+| `mock/research/sketches/202605101036-resource-column-virtual-as-traits/HYPOTHESIS.md` | 31 | 2026-05-10 | unstated; hypothesis, outcome shape only | flip Resource/Column/Virtual from wrapper structs to traits | batch 25 |
+| `mock/research/sketches/202605121400-call-site-cap-turbofish/OUTCOME.md` | 231 | 2026-05-12 | "Status: PASSES (with const-fn refinement to the original hypothesis)" | call-site Cap const-arg via const fn wrapper works | batch 25 |
+| `mock/research/sketches/202605121400-call-site-cap-turbofish/SKETCH.md` | 79 | 2026-05-12 | "See `OUTCOME.md` after `cargo check`." ; sketch, status unstated | hypothesis: usize engine wrapper turbofish into arvo Cap | batch 25 |
+| `mock/research/sketches/202605131500-witness-propagation/OUTCOME.md` | 122 | 2026-05-13 | "Status: HYPOTHESIS CONFIRMED" | witness clause propagation costs trait solver little | batch 25 |
+| `mock/research/sketches/202605131500-witness-propagation/SKETCH.md` | 75 | 2026-05-13 | "See `OUTCOME.md` after `cargo check` + measurements." ; sketch, status unstated | hypothesis and criteria for witness propagation cost | batch 25 |
+| `mock/research/sketches/202605131530-csr-to-bitmatrix/SKETCH.md` | 45 | 2026-05-13 | unstated; sketch | CSR to BitMatrix and UnitId/NodeId bridge hypothesis | batch 25 |
+| `mock/research/sketches/202605131600-array-reshape-consumed/OUTCOME.md` | 141 | 2026-05-13 | "Status: HYPOTHESIS CONFIRMED (with one bug caught and fixed)" | arvo-to-engine array reshape per-element copy proven | batch 25 |
+| `mock/research/sketches/202605131600-array-reshape-consumed/SKETCH.md` | 144 | 2026-05-13 | "See `OUTCOME.md` after `cargo check`." ; sketch, status unstated | hypothesis and three reshape strategies for arvo outputs | batch 25 |
+| `mock/research/sketches/202605131700-plan-forward-arvo-wire-up.md` | 190 | 2026-05-13 | "Status: all blocking unknowns sketched and proven; one mechanical gap remains (S6)" | apply plan wiring three plan stubs to arvo | batch 25 |
+| `mock/research/sketches/202605251400_v2-phase-machine-field-notes.md` | 101 | 2026-05-25 | "Outcome: INCONCLUSIVE." | field notes experimenting with v2 cargo mock phase machine | batch 25 |
+| `mock/research/sketches/202605251500_cl-drift-closure-clarification.md` | 73 | 2026-05-25 | "Outcome: WORKS." | recommends closing task 398; locked CLs immutable, drift documented | batch 25 |
+| `mock/research/sketches/202605290002_builder-kind-dispatch.md` | 81 | no date line (name 2026-05-29) | "Outcome: WORKS." ; "Validated mechanism, not yet shipped." | single .with routing via RouterKind, store-value list | batch 25 |
+| `mock/research/sketches/202605290101_ctx-projection-selector.md` | 63 | no date line (name 2026-05-29) | "Outcome: WORKS." ; "Validated mechanism, not yet shipped." | per-WU Context via Selector/Project index witnesses | batch 25 |
+| `mock/research/sketches/202605290245_usize-to-cap-const-bridge.md` | 50 | no date line (name 2026-05-29) | "Outcome: the naive form FAILS; the const-fn form WORKS." | usize to Cap const-fn bridge for graph-to-Csr adapter | batch 25 |
+| `mock/research/sketches/202605291007_engine-ctx-spec-free-accessor/findings.md` | 92 | 2026-05-29 | "Verdict: op-gate PASSES." | specialization-free type-keyed EngineCtx accessor via index witness | batch 25 |
+| `mock/research/sketches/202605300823_run-fiber-wutuple-walk/FINDINGS.md` | 37 | no date line (dir name 2026-05-30) | "Outcome: WORKS" | recursive WU walk builds per-WU EngineCtx, compiles | batch 25 |
+| `mock/research/sketches/202605301145_capacity-as-type/FINDINGS.md` | 151 | 2026-05-30 | "Outcome: WORKS, and with NO `#![feature(...)]` gates." | capacity as a type, Dim const marker, no generic const exprs | batch 25 |
+| `mock/research/sketches/202605301700_plandims-bundle/FINDINGS.md` | 58 | 2026-05-30 | "Outcome: WORKS." | PlanDims bundle of Capacity types resolves generically | batch 25 |
+| `mock/research/sketches/202605302345_store-backed-flat-plan/FINDINGS.md` | 138 | 2026-05-30 | "Outcome: WORKS." | flat-CSR execution plan backed by column storage, Send/Sync | batch 25 |
+| `mock/research/sketches/202606041631_column-source-dual-selector/FINDINGS.md` | 36 | 2026-06-04 | "Verdict: WORKS" | bindings list serves as resource and column source | batch 25 |
+| `mock/research/sketches/202606041800_accumulator-append-selector/FINDINGS.md` | 40 | 2026-06-04 | "Verdict: WORKS" | Accum<T> store selector and append over bindings | batch 25 |
+| `mock/research/sketches/202606051601_column-capable-runfiber-walk/FINDINGS.md` | 34 | no date line (dir name 2026-06-05) | "Outcome: WORKS" | inline column-capable fiber walk devirtualises | batch 25 |
+| `mock/research/sketches/202606052130_rcm-order-into-static-body/FINDINGS.md` | 192 | no date line (dir name 2026-06-05) | "Status: WORKS (body), FORK OPEN (order-assembly mechanism)." | branching diamond devirtualised; open fork on RCM order source | batch 25 |
+| `mock/research/sketches/202606052130_rcm-order-into-static-body/HYPOTHESIS.md` | 39 | no date line (dir name 2026-06-05) | "Status: HYPOTHESIS (probe not yet run)." | hypothesis carrying RCM-ordered fiber grouping into static body | batch 25 |
+| `mock/research/sketches/202606060500_approach-e-schedule-mega/FINDINGS.md` | 112 | no date line (dir name 2026-06-06) | "Status: WORKS." | schedule-mega single-core body devirtualises, RCM order bench | batch 25 |
+| `mock/research/sketches/202606060500_approach-e-schedule-mega/HYPOTHESIS.md` | 63 | no date line (dir name 2026-06-06) | unstated; hypothesis | morsel-outer multi-phase schedule-mega body hypothesis | batch 25 |
+| `mock/research/sketches/202606060730_runfibercol-accumulator-inline/FINDINGS.md` | 124 | no date line (dir name 2026-06-06) | "Outcome: WORKS" | inline walk with non-empty accumulator resolves; plan-order bridge | batch 25 |
+| `mock/research/sketches/202606070829_gate2-waist-phase-from-masks/FINDINGS.md` | 73 | no date line (dir name 2026-06-07) | "Outcome: WORKS." | const waist-bounded phase axis derived from access masks | batch 25 |
+| `mock/research/sketches/202606070906_gate2-pairs-enumeration-dispatch/FINDINGS.md` | 96 | no date line (dir name 2026-06-07) | "Outcome: FAILS." | compile-time (phase,trunk) mono enumeration walls on rustc | batch 25 |
+| `mock/research/sketches/202606071945_gate2-accumulator-percore-region-merge/FINDINGS.md` | 143 | 2026-06-07 | "Outcome: WORKS" | per-core accumulator regions with forward compaction merge | batch 25 |
+| `mock/research/sketches/202606080130_gate2-ge-const-range-dispatcher/FINDINGS.md` | 94 | 2026-06-08 | "Outcome: WORKS" | trunk-root dispatcher: structural recursion plus runtime phase loop | batch 25 |
+| `mock/research/sketches/202606080200_gate2-ge-outer-drives-rungatedtrunk/FINDINGS.md` | 104 | 2026-06-08 | "Outcome: WORKS" ; "corrects 080130" | outer dispatcher drives shipped RunGatedTrunk, trunk-only keying | batch 25 |
+| `mock/research/sketches/202606081700_e4-scheduled-blanket-coherence/FINDINGS.md` | 31 | no date line (dir name 2026-06-08) | "Outcome: WORKS" | blanket Scheduled impl coherent with explicit On<V> impl | batch 25 |
+| `mock/research/sketches/202606081800_e4-gate-firer-trait-shapes/FINDINGS.md` | 92 | 2026-06-08 | "Outcome: WORKS." | virtual firer and gate share V-keyed stamp cell, epoch decay | batch 25 |
+| `mock/research/sketches/202606082000_e4-slice2-lifecycle-classify/FINDINGS.md` | 84 | 2026-06-08 | "Outcome: WORKS, with a forced surface adaptation." | distinct OnMeta marker needed for const lifecycle classification | batch 25 |
+| `mock/research/sketches/202606082200_e4-slice2-rank-phase-renumber/FINDINGS.md` | 90 | 2026-06-08 | "Outcome: WORKS." | lifecycle rank as outer phase key, renumbered phases | batch 25 |
+| `mock/research/sketches/202606090100_facade-accessset-containsall/FINDINGS.md` | 106 | no date line (history 2026-06-09, revalidated 2026-06-11) | "OUTCOME WORKS" | plugin facade WorkUnit registers, groups conservatively under ContainsAll | batch 25 |
+| `mock/research/sketches/202606090200_facade-per-morsel-abi-hop/FINDINGS.md` | 92 | no date line (history 2026-06-09, revalidated 2026-06-11) | "OUTCOME WORKS" | facade hops ABI once per morsel, host walk zero blr | batch 25 |
+| `mock/research/sketches/202606090300_e4-slice3-meta-bridge-accessor/FINDINGS.md` | 93 | 2026-06-08 | "**Round:** 202606090000 (E4 slice-3, task #685), at TOPIC" | sketch findings: engine-owned meta block, OnMeta-gated Ctx accessor chosen over auto-registered meta stores | batch 26 |
+| `mock/research/sketches/202606111000_e1-e7-dirty-gated-walk/FINDINGS.md` | 33 | no date line | "## Outcome: WORKS" | sketch: RunFiber walk gated per unit by dirty mask, still devirtualised | batch 26 |
+| `mock/research/sketches/202606111430_ctxfor-computed-ctx/FINDINGS.md` | 139 | no date line | "WORKS" | sketch: computed per-unit Ctx type CtxFor from access sets and schedule | batch 26 |
+| `mock/research/sketches/202606111440_meta-carrier-shapes/FINDINGS.md` | 160 | no date line | "### Outcome: WORKS" | sketch comparing shared meta carrier against dedicated meta carrier, with codegen counts | batch 26 |
+| `mock/research/sketches/202606111450_cap-lifting-shapes/FINDINGS.md` | 205 | no date line | unstated (findings) | sketch of shapes for lifting hardcoded engine caps to consumer-tunable values | batch 26 |
+| `mock/research/sketches/202606202100_a2a-per-fiber-morsel-loop/FINDINGS.md` | 91 | 2026-06-19 | "**Outcome: WORKS (source-grounded derivation). Compile proof = A2b itself.**" | sketch: per-fiber morsel window loop over per-trunk dispatch | batch 26 |
+| `mock/research/sketches/202606202400_a3-per-store-size-collection/FINDINGS.md` | 118 | 2026-06-20 | "**Outcome:** WORKS" | sketch: per-store byte size array and per-fiber write-byte sum | batch 26 |
+| `mock/research/sketches/202606210100_a3-resource-footprint/FINDINGS.md` | 120 | 2026-06-21 | "**Outcome:** WORKS" | sketch: type-level L1 write footprint of Resource, Seq, Map fields | batch 26 |
+| `mock/research/sketches/202607171733_plannable-declaration-split/FINDINGS.md` | 90 | 2026-07-17 | "## Outcome: WORKS" | sketch: Plannable trait lifting WorkUnit declaration half via blanket impl | batch 26 |
+| `mock/research/sketches/202607190900_a4-parallel-per-fiber-windows/FINDINGS.md` | 135 | 2026-07-19 | "**Outcome: WORKS (source-grounded derivation), with two corrections to the roadmap's" | sketch: per-fiber windows on parallel dispatch, two roadmap corrections | batch 26 |
+| `mock/research/sketches/202607191200_a4-fibercons-nest-wireability/FINDINGS.md` | 92 | 2026-07-19 | "**Outcome: FAILS. The nest is unwireable from flat registration" | sketch: FiberCons nest cannot be derived from flat registration | batch 26 |
+| `mock/research/sketches/202607201300_arena-poolframe/FINDINGS.md` | 34 | no date line | "**Outcome: WORKS** (the hypothesis held exactly)." | sketch: arena-resident worker plane dissolves Pin only if whole plane moves | batch 26 |
+| `mock/research/sketches/202611122242_frame-view-typestate/FINDINGS.md` | 145 | 2026-11-12 and 2026-11-13 | "Outcome: WORKS." | sketch S3: frame view, staged lanes, kernel forms as compile-checked types | batch 26 |
+| `mock/research/sketches/202611122252_runner-generic-workunit/FINDINGS.md` | 121 | no date line | unstated (findings) | sketch: runner-generic work unit, two trait arms E1 E2 compared | batch 26 |
+| `mock/research/sketches/202611130039_wasm-digest-under-node/FINDINGS.md` | 103 | 2026-11-13 | "Outcome: WORKS." | sketch: no_std kernel digests equal native versus wasm under node | batch 26 |
+| `mock/research/sketches/202611130417_branded-morsel-index/FINDINGS.md` | 93 | 2026-11-13 | "Outcome: WORKS." | sketch S2: branded morsel index, safe read and write, compile refusals | batch 26 |
+| `mock/research/sketches/app-builder-typestate-202605010900/FINDINGS.md` | 266 | 2026-05-01 | "## Update 2026-05-01 round 202605011500 (final design after third reviewer)" | sketch: SchedulerBuilder typestate, Kit trait, cons-list stores, uncapped | batch 26 |
+| `mock/research/sketches/registrable-not-in-202605051200/FINDINGS.md` | 73 | 2026-05-05 | "**Outcome:** FAILS" | sketch: NotIn diamond detection fails; four options offered | batch 26 |
 
 ## Read from the recovery branch
 
@@ -853,7 +1391,6 @@ These files are not on the working branch. They were read from `origin/recover/u
 
 | file | lines | date | standing, by its own words | holds | read by |
 |---|---|---|---|---|---|
-| `mock/benches/engine_vs_std/FINDINGS.md` | 151 | unstated | "STATUS: PREMATURE / SUPERSEDED." | single-core engine versus std bench, gap attributed | batch R5 |
 | `mock/benches/results/INDEX.md` | 57 | unstated | unstated, results index | generated index of bench results and findings links | batch R5 |
 | `mock/benches/results/fiber_theory/fiber_theory_n16_findings.md` | 288 (header; timings tables not shown) | unstated | unstated, bench findings | bench key findings, median and spread | batch R5 |
 | `mock/benches/results/fiber_theory/fiber_theory_n32_findings.md` | 288 (header; timings tables not shown) | unstated | unstated, bench findings | bench key findings, median and spread | batch R5 |
@@ -951,457 +1488,6 @@ The files under `docs/` are rendered from the templates ledgered above and were 
 
 | file | lines | batch |
 |---|---|---|
-| `mock/benches/NIGHT_FINDINGS_2026-05-11.md` | 884 | 46 |
-| `mock/benches/README.md` | 45 | 46 |
-| `mock/benches/atomic_inc_strategy_n1024_findings.md excerpt` | 320 | 46 |
-| `mock/benches/atomic_inc_strategy_n16384_findings.md excerpt` | 319 | 46 |
-| `mock/benches/atomic_inc_strategy_n256_findings.md excerpt` | 318 | 46 |
-| `mock/benches/atomic_inc_strategy_n4096_findings.md excerpt` | 320 | 46 |
-| `mock/benches/atomic_ordering_cost_n1024_findings.md excerpt` | 318 | 46 |
-| `mock/benches/atomic_ordering_cost_n16384_findings.md excerpt` | 318 | 46 |
-| `mock/benches/atomic_ordering_cost_n256_findings.md excerpt` | 319 | 46 |
-| `mock/benches/atomic_ordering_cost_n4096_findings.md excerpt` | 318 | 46 |
-| `mock/benches/atomic_ordering_cost_n64_findings.md excerpt` | 322 | 46 |
-| `mock/benches/atomic_vs_plain_n1024_findings.md excerpt` | 317 | 46 |
-| `mock/benches/atomic_vs_plain_n16384_findings.md excerpt` | 316 | 46 |
-| `mock/benches/atomic_vs_plain_n256_findings.md excerpt` | 319 | 46 |
-| `mock/benches/atomic_vs_plain_n4096_findings.md excerpt` | 318 | 46 |
-| `mock/benches/bit_count_ops_n1024_findings.md excerpt` | 318 | 46 |
-| `mock/benches/bit_count_ops_n16384_findings.md excerpt` | 321 | 46 |
-| `mock/benches/bit_count_ops_n256_findings.md excerpt` | 321 | 46 |
-| `mock/benches/bit_count_ops_n4096_findings.md excerpt` | 321 | 46 |
-| `mock/benches/bounds_check_n1024_findings.md excerpt` | 319 | 46 |
-| `mock/benches/bounds_check_n16384_findings.md excerpt` | 318 | 46 |
-| `mock/benches/bounds_check_n256_findings.md excerpt` | 320 | 46 |
-| `mock/benches/bounds_check_n4096_findings.md excerpt` | 318 | 46 |
-| `mock/benches/branch_pattern_n1024_findings.md excerpt` | 286 | 46 |
-| `mock/benches/branch_pattern_n16384_findings.md excerpt` | 285 | 46 |
-| `mock/benches/branch_pattern_n256_findings.md excerpt` | 287 | 46 |
-| `mock/benches/branch_pattern_n4096_findings.md excerpt` | 285 | 46 |
-| `mock/benches/branch_pattern_n64_findings.md excerpt` | 285 | 46 |
-| `mock/benches/branch_predictability_n1024_findings.md excerpt` | 319 | 46 |
-| `mock/benches/branch_predictability_n16384_findings.md excerpt` | 316 | 46 |
-| `mock/benches/branch_predictability_n256_findings.md excerpt` | 321 | 46 |
-| `mock/benches/branch_predictability_n4096_findings.md excerpt` | 319 | 46 |
-| `mock/benches/cache_layout_n1024_findings.md excerpt` | 288 | 46 |
-| `mock/benches/cache_layout_n16384_findings.md excerpt` | 285 | 46 |
-| `mock/benches/cache_layout_n256_findings.md excerpt` | 290 | 46 |
-| `mock/benches/cache_layout_n4096_findings.md excerpt` | 286 | 46 |
-| `mock/benches/cache_layout_n64_findings.md excerpt` | 290 | 46 |
-| `mock/benches/codegen_dispatch_axis_a_assertions.md` | 124 | 46 |
-| `mock/benches/dep_graph_csr_9_n128_findings.md excerpt` | 320 | 46 |
-| `mock/benches/dep_graph_csr_9_n16_findings.md excerpt` | 320 | 46 |
-| `mock/benches/dep_graph_csr_9_n256_findings.md excerpt` | 319 | 46 |
-| `mock/benches/dep_graph_csr_9_n32_findings.md excerpt` | 318 | 46 |
-| `mock/benches/dep_graph_csr_9_n64_findings.md excerpt` | 319 | 46 |
-| `mock/benches/dep_graph_csr_9_n8_findings.md excerpt` | 318 | 46 |
-| `mock/benches/dispatch_dynamic_n1024_findings.md excerpt` | 314 | 46 |
-| `mock/benches/dispatch_dynamic_n16384_findings.md excerpt` | 318 | 46 |
-| `mock/benches/dispatch_dynamic_n256_findings.md excerpt` | 313 | 46 |
-| `mock/benches/dispatch_dynamic_n4096_findings.md excerpt` | 317 | 46 |
-| `mock/benches/dispatch_dynamic_n64_findings.md excerpt` | 324 | 46 |
-| `mock/benches/dispatch_static_n1024_findings.md excerpt` | 312 | 46 |
-| `mock/benches/dispatch_static_n16384_findings.md excerpt` | 316 | 46 |
-| `mock/benches/dispatch_static_n256_findings.md excerpt` | 312 | 46 |
-| `mock/benches/dispatch_static_n4096_findings.md excerpt` | 313 | 46 |
-| `mock/benches/dispatch_static_n64_findings.md excerpt` | 324 | 46 |
-| `mock/benches/ema_axis_h_n1024_findings.md excerpt` | 318 | 46 |
-| `mock/benches/ema_axis_h_n16384_findings.md excerpt` | 317 | 46 |
-| `mock/benches/ema_axis_h_n256_findings.md excerpt` | 319 | 46 |
-| `mock/benches/ema_axis_h_n4096_findings.md excerpt` | 318 | 46 |
-| `mock/benches/ema_axis_h_n64_findings.md excerpt` | 325 | 46 |
-| `mock/benches/ema_formulation_n1024_findings.md excerpt` | 319 | 46 |
-| `mock/benches/ema_formulation_n16384_findings.md excerpt` | 317 | 46 |
-| `mock/benches/ema_formulation_n256_findings.md excerpt` | 322 | 46 |
-| `mock/benches/ema_formulation_n4096_findings.md excerpt` | 319 | 46 |
-| `mock/benches/float_width_n1024_findings.md excerpt` | 320 | 46 |
-| `mock/benches/float_width_n16384_findings.md excerpt` | 319 | 46 |
-| `mock/benches/float_width_n256_findings.md excerpt` | 318 | 46 |
-| `mock/benches/float_width_n4096_findings.md excerpt` | 320 | 46 |
-| `mock/benches/fnptr_table_dispatch_n1024_findings.md excerpt` | 286 | 46 |
-| `mock/benches/fnptr_table_dispatch_n16384_findings.md excerpt` | 286 | 46 |
-| `mock/benches/fnptr_table_dispatch_n256_findings.md excerpt` | 286 | 46 |
-| `mock/benches/fnptr_table_dispatch_n4096_findings.md excerpt` | 287 | 46 |
-| `mock/benches/fold_strategy_n1024_findings.md excerpt` | 319 | 46 |
-| `mock/benches/fold_strategy_n16384_findings.md excerpt` | 318 | 46 |
-| `mock/benches/fold_strategy_n256_findings.md excerpt` | 322 | 46 |
-| `mock/benches/fold_strategy_n4096_findings.md excerpt` | 319 | 46 |
-| `mock/benches/fxpmul_strategy_n1024_findings.md excerpt` | 286 | 46 |
-| `mock/benches/fxpmul_strategy_n16384_findings.md excerpt` | 282 | 46 |
-| `mock/benches/fxpmul_strategy_n256_findings.md excerpt` | 287 | 46 |
-| `mock/benches/fxpmul_strategy_n4096_findings.md excerpt` | 282 | 46 |
-| `mock/benches/fxpmul_strategy_n64_findings.md excerpt` | 289 | 46 |
-| `mock/benches/hash_algos_n1024_findings.md excerpt` | 317 | 46 |
-| `mock/benches/hash_algos_n16384_findings.md excerpt` | 317 | 46 |
-| `mock/benches/hash_algos_n256_findings.md excerpt` | 319 | 46 |
-| `mock/benches/hash_algos_n4096_findings.md excerpt` | 317 | 46 |
-| `mock/benches/hash_algos_n64_findings.md excerpt` | 321 | 46 |
-| `mock/benches/inline_strategy_n1024_findings.md excerpt` | 320 | 46 |
-| `mock/benches/inline_strategy_n16384_findings.md excerpt` | 317 | 46 |
-| `mock/benches/inline_strategy_n256_findings.md excerpt` | 319 | 46 |
-| `mock/benches/inline_strategy_n4096_findings.md excerpt` | 318 | 46 |
-| `mock/benches/iter_patterns_n1024_findings.md excerpt` | 322 | 46 |
-| `mock/benches/iter_patterns_n16384_findings.md excerpt` | 319 | 46 |
-| `mock/benches/iter_patterns_n256_findings.md excerpt` | 324 | 46 |
-| `mock/benches/iter_patterns_n4096_findings.md excerpt` | 318 | 46 |
-| `mock/benches/load_alignment_n1024_findings.md excerpt` | 318 | 46 |
-| `mock/benches/load_alignment_n16384_findings.md excerpt` | 318 | 46 |
-| `mock/benches/load_alignment_n256_findings.md excerpt` | 322 | 46 |
-| `mock/benches/load_alignment_n4096_findings.md excerpt` | 318 | 46 |
-| `mock/benches/match_arm_count_n1024_findings.md excerpt` | 318 | 46 |
-| `mock/benches/match_arm_count_n16384_findings.md excerpt` | 319 | 46 |
-| `mock/benches/match_arm_count_n256_findings.md excerpt` | 321 | 46 |
-| `mock/benches/match_arm_count_n4096_findings.md excerpt` | 318 | 46 |
-| `mock/benches/memcpy_patterns_n1024_findings.md excerpt` | 318 | 46 |
-| `mock/benches/memcpy_patterns_n16384_findings.md excerpt` | 316 | 46 |
-| `mock/benches/memcpy_patterns_n256_findings.md excerpt` | 317 | 46 |
-| `mock/benches/memcpy_patterns_n4096_findings.md excerpt` | 317 | 46 |
-| `mock/benches/memcpy_patterns_n64_findings.md excerpt` | 318 | 46 |
-| `mock/benches/minmax_strategy_n1024_findings.md excerpt` | 313 | 46 |
-| `mock/benches/minmax_strategy_n16384_findings.md excerpt` | 319 | 46 |
-| `mock/benches/minmax_strategy_n256_findings.md excerpt` | 321 | 46 |
-| `mock/benches/minmax_strategy_n4096_findings.md excerpt` | 313 | 46 |
-| `mock/benches/modulo_strategy_n1024_findings.md excerpt` | 320 | 46 |
-| `mock/benches/modulo_strategy_n16384_findings.md excerpt` | 320 | 46 |
-| `mock/benches/modulo_strategy_n256_findings.md excerpt` | 321 | 46 |
-| `mock/benches/modulo_strategy_n4096_findings.md excerpt` | 319 | 46 |
-| `mock/benches/popcount_strategy_n1024_findings.md excerpt` | 317 | 46 |
-| `mock/benches/popcount_strategy_n16384_findings.md excerpt` | 320 | 46 |
-| `mock/benches/popcount_strategy_n256_findings.md excerpt` | 318 | 46 |
-| `mock/benches/popcount_strategy_n4096_findings.md excerpt` | 320 | 46 |
-| `mock/benches/popcount_strategy_n64_findings.md excerpt` | 323 | 46 |
-| `mock/benches/rotate_strategy_n1024_findings.md excerpt` | 317 | 46 |
-| `mock/benches/rotate_strategy_n16384_findings.md excerpt` | 319 | 46 |
-| `mock/benches/rotate_strategy_n256_findings.md excerpt` | 320 | 46 |
-| `mock/benches/rotate_strategy_n4096_findings.md excerpt` | 319 | 46 |
-| `mock/benches/rsb_bwide_n16384_findings.md excerpt` | 246 | 46 |
-| `mock/benches/rsb_bwide_n256_findings.md excerpt` | 246 | 46 |
-| `mock/benches/rsb_bwide_n4194304_findings.md excerpt` | 249 | 46 |
-| `mock/benches/rsb_clean_n1024_findings.md excerpt` | 376 | 46 |
-| `mock/benches/rsb_clean_n16384_findings.md excerpt` | 377 | 46 |
-| `mock/benches/rsb_clean_n262144_findings.md excerpt` | 378 | 46 |
-| `mock/benches/rsb_heavy_thrash_n1024_findings.md excerpt` | 376 | 46 |
-| `mock/benches/rsb_heavy_thrash_n16384_findings.md excerpt` | 381 | 46 |
-| `mock/benches/rsb_heavy_thrash_n262144_findings.md excerpt` | 381 | 46 |
-| `mock/benches/rsb_light_thrash_n1024_findings.md excerpt` | 378 | 46 |
-| `mock/benches/rsb_light_thrash_n16384_findings.md excerpt` | 378 | 46 |
-| `mock/benches/rsb_light_thrash_n262144_findings.md excerpt` | 378 | 46 |
-| `mock/benches/rsb_seqd_n1048576_findings.md excerpt` | 247 | 46 |
-| `mock/benches/rsb_seqd_n16777216_findings.md excerpt` | 249 | 46 |
-| `mock/benches/rsb_seqd_n4194304_findings.md excerpt` | 247 | 46 |
-| `mock/benches/rsb_seqd_n65536_findings.md excerpt` | 247 | 46 |
-| `mock/benches/runs/run1/rsb_bwide_n16384_findings.md excerpt` | 249 | 46 |
-| `mock/benches/runs/run1/rsb_bwide_n256_findings.md excerpt` | 247 | 46 |
-| `mock/benches/runs/run1/rsb_bwide_n4194304_findings.md excerpt` | 248 | 46 |
-| `mock/benches/runs/run1/rsb_clean_n1024_findings.md excerpt` | 379 | 46 |
-| `mock/benches/runs/run1/rsb_clean_n16384_findings.md excerpt` | 376 | 46 |
-| `mock/benches/runs/run1/rsb_clean_n262144_findings.md excerpt` | 375 | 46 |
-| `mock/benches/runs/run1/rsb_heavy_thrash_n1024_findings.md excerpt` | 381 | 46 |
-| `mock/benches/runs/run1/rsb_heavy_thrash_n16384_findings.md excerpt` | 381 | 46 |
-| `mock/benches/runs/run1/rsb_heavy_thrash_n262144_findings.md excerpt` | 380 | 46 |
-| `mock/benches/runs/run1/rsb_light_thrash_n1024_findings.md excerpt` | 375 | 46 |
-| `mock/benches/runs/run1/rsb_light_thrash_n16384_findings.md excerpt` | 376 | 46 |
-| `mock/benches/runs/run1/rsb_light_thrash_n262144_findings.md excerpt` | 386 | 46 |
-| `mock/benches/runs/run1/rsb_seqd_n1048576_findings.md excerpt` | 247 | 46 |
-| `mock/benches/runs/run1/rsb_seqd_n16777216_findings.md excerpt` | 248 | 46 |
-| `mock/benches/runs/run1/rsb_seqd_n4194304_findings.md excerpt` | 248 | 46 |
-| `mock/benches/runs/run1/rsb_seqd_n65536_findings.md excerpt` | 247 | 46 |
-| `mock/benches/runs/run2/rsb_bwide_n16384_findings.md excerpt` | 246 | 46 |
-| `mock/benches/runs/run2/rsb_bwide_n256_findings.md excerpt` | 246 | 46 |
-| `mock/benches/runs/run2/rsb_bwide_n4194304_findings.md excerpt` | 249 | 46 |
-| `mock/benches/runs/run2/rsb_clean_n1024_findings.md excerpt` | 376 | 46 |
-| `mock/benches/runs/run2/rsb_clean_n16384_findings.md excerpt` | 377 | 46 |
-| `mock/benches/runs/run2/rsb_clean_n262144_findings.md excerpt` | 378 | 46 |
-| `mock/benches/runs/run2/rsb_heavy_thrash_n1024_findings.md excerpt` | 376 | 46 |
-| `mock/benches/runs/run2/rsb_heavy_thrash_n16384_findings.md excerpt` | 381 | 46 |
-| `mock/benches/runs/run2/rsb_heavy_thrash_n262144_findings.md excerpt` | 381 | 46 |
-| `mock/benches/runs/run2/rsb_light_thrash_n1024_findings.md excerpt` | 378 | 46 |
-| `mock/benches/runs/run2/rsb_light_thrash_n16384_findings.md excerpt` | 378 | 46 |
-| `mock/benches/runs/run2/rsb_light_thrash_n262144_findings.md excerpt` | 378 | 46 |
-| `mock/benches/runs/run2/rsb_seqd_n1048576_findings.md excerpt` | 247 | 46 |
-| `mock/benches/runs/run2/rsb_seqd_n16777216_findings.md excerpt` | 249 | 46 |
-| `mock/benches/runs/run2/rsb_seqd_n4194304_findings.md excerpt` | 247 | 46 |
-| `mock/benches/runs/run2/rsb_seqd_n65536_findings.md excerpt` | 247 | 46 |
-| `mock/benches/sat_arithmetic_n1024_findings.md excerpt` | 318 | 46 |
-| `mock/benches/sat_arithmetic_n16384_findings.md excerpt` | 320 | 46 |
-| `mock/benches/sat_arithmetic_n256_findings.md excerpt` | 319 | 46 |
-| `mock/benches/sat_arithmetic_n4096_findings.md excerpt` | 320 | 46 |
-| `mock/benches/shift_amount_origin_n1024_findings.md excerpt` | 320 | 46 |
-| `mock/benches/shift_amount_origin_n16384_findings.md excerpt` | 319 | 46 |
-| `mock/benches/shift_amount_origin_n256_findings.md excerpt` | 324 | 46 |
-| `mock/benches/shift_amount_origin_n4096_findings.md excerpt` | 317 | 46 |
-| `mock/design_rounds/202605290312-abandoned/202605290312_topic.plan-csr-adapter.md` | 43 | 20 |
-| `mock/design_rounds/202605291450/202605291450_changelist.doc.lock.md` | 5 | 20 |
-| `mock/design_rounds/202605291450/202605291450_changelist.src.lock.md` | 15 | 20 |
-| `mock/design_rounds/202605291450/202605291450_topic.enable-notko-try-trait-v2.md` | 16 | 20 |
-| `mock/design_rounds/202605291700/202605291007_topic.unstable-feature-soundness-sweep.md` | 48 | 20 |
-| `mock/design_rounds/202605291700/202605291700_changelist.doc.lock.md` | 22 | 20 |
-| `mock/design_rounds/202605291700/202605291701_changelist.src.lock.md` | 90 | 20 |
-| `mock/design_rounds/202605291730/202605291730_changelist.doc.lock.md` | 8 | 20 |
-| `mock/design_rounds/202605291730/202605291730_topic.engine-ctx-multi-column-test.md` | 16 | 20 |
-| `mock/design_rounds/202605291730/202605291731_changelist.src.lock.md` | 16 | 20 |
-| `mock/design_rounds/202605291800/202605291800_changelist.doc.lock.md` | 9 | 20 |
-| `mock/design_rounds/202605291800/202605291800_topic.remove-associated-type-defaults.md` | 20 | 20 |
-| `mock/design_rounds/202605291800/202605291801_changelist.src.lock.md` | 17 | 20 |
-| `mock/design_rounds/202605291823/202605291823_changelist.doc.lock.md` | 19 | 20 |
-| `mock/design_rounds/202605291823/202605291823_changelist.src.lock.md` | 27 | 20 |
-| `mock/design_rounds/202605291823/202605291823_topic.drop-redundant-min-spec-gate.md` | 50 | 20 |
-| `mock/design_rounds/202605291830/202605291830_changelist.doc.lock.md` | 8 | 20 |
-| `mock/design_rounds/202605291830/202605291830_topic.scope-gce-gates.md` | 20 | 20 |
-| `mock/design_rounds/202605291830/202605291831_changelist.src.lock.md` | 25 | 20 |
-| `mock/design_rounds/202605291835/202605291835_changelist.doc.lock.md` | 17 | 20 |
-| `mock/design_rounds/202605291835/202605291835_changelist.src.lock.md` | 30 | 20 |
-| `mock/design_rounds/202605291835/202605291835_topic.fix-trybuild-goldens.md` | 50 | 20 |
-| `mock/design_rounds/202605291845/202605291845_changelist.doc.lock.md` | 73 | 20 |
-| `mock/design_rounds/202605291845/202605291845_changelist.src.lock.md` | 66 | 20 |
-| `mock/design_rounds/202605291845/202605291845_topic.lift-plan-dims-to-cap.md` | 67 | 20 |
-| `mock/design_rounds/202605292030/202605292030_changelist.doc.lock.md` | 22 | 20 |
-| `mock/design_rounds/202605292030/202605292030_changelist.src.lock.md` | 18 | 20 |
-| `mock/design_rounds/202605292030/202605292030_topic.drop-unused-adt-const-params-test-gate.md` | 26 | 20 |
-| `mock/design_rounds/202605292215/202605292215_changelist.doc.lock.md` | 28 | 20 |
-| `mock/design_rounds/202605292215/202605292215_changelist.src.lock.md` | 69 | 20 |
-| `mock/design_rounds/202605292215/202605292215_topic.csr-bidirectional-adapter.md` | 51 | 20 |
-| `mock/design_rounds/202605292257/202605292257_changelist.doc.lock.md` | 15 | 20 |
-| `mock/design_rounds/202605292257/202605292257_changelist.src.lock.md` | 27 | 20 |
-| `mock/design_rounds/202605292257/202605292257_topic.plan-rcm-reorder-wiring.md` | 20 | 20 |
-| `mock/design_rounds/202605292352/202605292352_changelist.doc.lock.md` | 15 | 20 |
-| `mock/design_rounds/202605292352/202605292352_changelist.src.lock.md` | 31 | 20 |
-| `mock/design_rounds/202605292352/202605292352_topic.plan-block-diagonal-trunks.md` | 22 | 20 |
-| `mock/design_rounds/202605300006/202605300006_changelist.doc.lock.md` | 13 | 20 |
-| `mock/design_rounds/202605300006/202605300006_changelist.src.lock.md` | 15 | 20 |
-| `mock/design_rounds/202605300006/202605300006_topic.c1c-post-review-fixes.md` | 21 | 20 |
-| `mock/design_rounds/202605300120/202605300120_changelist.doc.lock.md` | 15 | 20 |
-| `mock/design_rounds/202605300120/202605300120_changelist.src.lock.md` | 23 | 20 |
-| `mock/design_rounds/202605300120/202605300120_topic.plan-spectral-fibers.md` | 18 | 20 |
-| `mock/design_rounds/202605300321/202605300321_changelist.doc.lock.md` | 18 | 20 |
-| `mock/design_rounds/202605300321/202605300321_changelist.src.lock.md` | 32 | 20 |
-| `mock/design_rounds/202605300321/202605300321_topic.fiber-trunk-projection.md` | 24 | 20 |
-| `mock/design_rounds/202605300351/202605300351_changelist.doc.lock.md` | 18 | 20 |
-| `mock/design_rounds/202605300351/202605300351_changelist.src.lock.md` | 32 | 20 |
-| `mock/design_rounds/202605300351/202605300351_topic.spectral-width-gate.md` | 18 | 20 |
-| `mock/design_rounds/202605300413/202605300413_changelist.doc.lock.md` | 8 | 20 |
-| `mock/design_rounds/202605300413/202605300413_changelist.src.lock.md` | 8 | 20 |
-| `mock/design_rounds/202605300413/202605300413_topic.laplacian-doc-fix.md` | 12 | 20 |
-| `mock/design_rounds/202605300651/202605300651_changelist.doc.lock.md` | 17 | 20 |
-| `mock/design_rounds/202605300651/202605300651_changelist.src.lock.md` | 52 | 20 |
-| `mock/design_rounds/202605300651/202605300651_topic.plan-inputs-from-bundle.md` | 30 | 20 |
-| `mock/design_rounds/202605300720/202605300720_changelist.doc.lock.md` | 9 | 20 |
-| `mock/design_rounds/202605300720/202605300720_changelist.src.lock.md` | 15 | 20 |
-| `mock/design_rounds/202605300720/202605300720_topic.plan-inputs-projection-fixes.md` | 14 | 20 |
-| `mock/design_rounds/202605300858/202605300858_changelist.doc.lock.md` | 18 | 20 |
-| `mock/design_rounds/202605300858/202605300858_changelist.src.lock.md` | 37 | 20 |
-| `mock/design_rounds/202605300858/202605300858_topic.c2-run-fiber-walk.md` | 24 | 20 |
-| `mock/design_rounds/202605300957/202605300957_changelist.doc.lock.md` | 48 | 20 |
-| `mock/design_rounds/202605300957/202605300957_changelist.src.lock.md` | 57 | 20 |
-| `mock/design_rounds/202605300957/202605300957_topic.c2-build-captures-wus.md` | 96 | 20 |
-| `mock/design_rounds/202605301058-abandoned/202605301058_changelist.doc.lock.md` | 54 | 20 |
-| `mock/design_rounds/202605301058-abandoned/202605301058_changelist.src.md` | 117 | 20 |
-| `mock/design_rounds/202605301058-abandoned/202605301058_topic.c2-topo-dispatch.md` | 104 | 20 |
-| `mock/design_rounds/202605301730/202605301730_changelist.doc.lock.md` | 52 | 20 |
-| `mock/design_rounds/202605301730/202605301730_changelist.src.lock.md` | 71 | 20 |
-| `mock/design_rounds/202605301730/202605301730_topic.capacity-plandims-adoption.md` | 79 | 20 |
-| `mock/design_rounds/202605301800/202605301800_changelist.doc.lock.md` | 7 | 20 |
-| `mock/design_rounds/202605301800/202605301800_changelist.src.lock.md` | 17 | 20 |
-| `mock/design_rounds/202605301800/202605301800_topic.plandims-review-fixes.md` | 12 | 20 |
-| `mock/design_rounds/202605301830-abandoned/202605301830_changelist.doc.lock.md` | 33 | 20 |
-| `mock/design_rounds/202605301830-abandoned/202605301830_changelist.src.md` | 64 | 20 |
-| `mock/design_rounds/202605301830-abandoned/202605301830_topic.c2-topo-dispatch.md` | 40 | 20 |
-| `mock/design_rounds/202605302100/202605302100_changelist.doc.lock.md` | 98 | 20 |
-| `mock/design_rounds/202605302100/202605302100_changelist.src.lock.md` | 36 | 20 |
-| `mock/design_rounds/202605302100/202605302100_topic.unified-columnar-storage.md` | 79 | 20 |
-| `mock/design_rounds/202605302200/202605302200_changelist.doc.lock.md` | 20 | 20 |
-| `mock/design_rounds/202605302200/202605302200_changelist.src.lock.md` | 34 | 20 |
-| `mock/design_rounds/202605302200/202605302200_topic.naive-arena-columnstorage.md` | 23 | 20 |
-| `mock/design_rounds/202605302300/202605302300_changelist.doc.lock.md` | 16 | 20 |
-| `mock/design_rounds/202605302300/202605302300_changelist.src.lock.md` | 20 | 20 |
-| `mock/design_rounds/202605302300/202605302300_topic.columnstorage-overflow-fix.md` | 15 | 20 |
-| `mock/design_rounds/202605302331/202605302330_changelist.doc.deprecated.md` | 25 | 20 |
-| `mock/design_rounds/202605302331/202605302330_topic.store-backed-plan.md` | 48 | 20 |
-| `mock/design_rounds/202605302331/202605302331_changelist.doc.lock.md` | 38 | 20 |
-| `mock/design_rounds/202605302331/202605302332_changelist.src.lock.md` | 60 | 20 |
-| `mock/design_rounds/202605310633/202605310633_changelist.doc.lock.md` | 45 | 20 |
-| `mock/design_rounds/202605310633/202605310633_changelist.src.lock.md` | 118 | 20 |
-| `mock/design_rounds/202605310633/202605310633_topic.resource-arena-columnstorage.md` | 106 | 20 |
-| `mock/design_rounds/202605310847/202605310847_changelist.doc.lock.md` | 33 | 20 |
-| `mock/design_rounds/202605310847/202605310847_changelist.src.lock.md` | 70 | 20 |
-| `mock/design_rounds/202605310847/202605310847_topic.build-dag-order-independent-raw.md` | 103 | 20 |
-| `mock/design_rounds/202605311030/202605311030_changelist.doc.lock.md` | 56 | 20 |
-| `mock/design_rounds/202605311030/202605311030_changelist.src.lock.md` | 101 | 20 |
-| `mock/design_rounds/202605311030/202605311030_topic.topo-dispatch-wiring.md` | 74 | 20 |
-| `mock/design_rounds/202605311130/202605311130_changelist.doc.lock.md` | 39 | 20 |
-| `mock/design_rounds/202605311130/202605311130_changelist.src.lock.md` | 70 | 20 |
-| `mock/design_rounds/202605311130/202605311130_topic.store-back-plan.md` | 74 | 20 |
-| `mock/design_rounds/202606041529/202606041529_changelist.doc.lock.md` | 11 | 20 |
-| `mock/design_rounds/202606041529/202606041529_changelist.src.lock.md` | 29 | 20 |
-| `mock/design_rounds/202606041529/202606041529_topic.accumulator-append-saturates-at-capacity.md` | 27 | 20 |
-| `mock/design_rounds/202606041537/202606041537_changelist.doc.lock.md` | 28 | 20 |
-| `mock/design_rounds/202606041537/202606041537_changelist.src.lock.md` | 61 | 20 |
-| `mock/design_rounds/202606041537/202606041537_topic.rename-resource-arena-to-bindings.md` | 54 | 20 |
-| `mock/design_rounds/202606041609/202606041609_changelist.doc.lock.md` | 11 | 20 |
-| `mock/design_rounds/202606041609/202606041609_changelist.src.lock.md` | 31 | 20 |
-| `mock/design_rounds/202606041609/202606041609_topic.morsel-loop-windowing.md` | 52 | 20 |
-| `mock/design_rounds/202606041624/202606041624_changelist.doc.lock.md` | 7 | 20 |
-| `mock/design_rounds/202606041624/202606041624_changelist.src.lock.md` | 26 | 20 |
-| `mock/design_rounds/202606041624/202606041624_topic.morsel-dispatch-doc-contract.md` | 23 | 20 |
-| `mock/design_rounds/202606041631/202606041631_changelist.doc.lock.md` | 60 | 20 |
-| `mock/design_rounds/202606041631/202606041631_changelist.src.lock.md` | 100 | 20 |
-| `mock/design_rounds/202606041631/202606041631_topic.column-data-plane.md` | 44 | 20 |
-| `mock/design_rounds/202606041643/202606041643_changelist.doc.lock.md` | 11 | 20 |
-| `mock/design_rounds/202606041643/202606041643_changelist.src.lock.md` | 26 | 20 |
-| `mock/design_rounds/202606041643/202606041643_topic.phase-sequential-dispatch.md` | 42 | 20 |
-| `mock/design_rounds/202606041720/202606041720_changelist.doc.lock.md` | 14 | 20 |
-| `mock/design_rounds/202606041720/202606041720_changelist.src.lock.md` | 44 | 20 |
-| `mock/design_rounds/202606041720/202606041720_topic.morsel-relative-iteration.md` | 23 | 20 |
-| `mock/design_rounds/202606041800/202606041800_changelist.doc.lock.md` | 24 | 20 |
-| `mock/design_rounds/202606041800/202606041800_changelist.src.lock.md` | 50 | 20 |
-| `mock/design_rounds/202606041800/202606041800_topic.accumulator-columns.md` | 45 | 20 |
-| `mock/design_rounds/202606041802/202606041802_changelist.doc.lock.md` | 7 | 20 |
-| `mock/design_rounds/202606041802/202606041802_changelist.src.lock.md` | 25 | 20 |
-| `mock/design_rounds/202606041802/202606041802_topic.plan-projection-hardening.md` | 28 | 20 |
-| `mock/design_rounds/202606041836/202606041836_changelist.doc.lock.md` | 19 | 20 |
-| `mock/design_rounds/202606041836/202606041836_changelist.src.lock.md` | 34 | 20 |
-| `mock/design_rounds/202606041836/202606041836_topic.plan-dims-id-width-guard.md` | 33 | 20 |
-| `mock/design_rounds/202606041903/202606041903_changelist.doc.lock.md` | 11 | 20 |
-| `mock/design_rounds/202606041903/202606041903_changelist.src.lock.md` | 27 | 20 |
-| `mock/design_rounds/202606041903/202606041903_topic.resource-arena-partial-failure.md` | 25 | 20 |
-| `mock/design_rounds/202606050220/202606050203_topic.single-core-dispatch-completion.md` | 47 | 20 |
-| `mock/design_rounds/202606050220/202606050220_changelist.doc.lock.md` | 11 | 20 |
-| `mock/design_rounds/202606050220/202606050220_changelist.src.lock.md` | 33 | 20 |
-| `mock/design_rounds/202606050259/202606050259_changelist.doc.lock.md` | 7 | 20 |
-| `mock/design_rounds/202606050259/202606050259_changelist.src.lock.md` | 17 | 20 |
-| `mock/design_rounds/202606050259/202606050259_topic.morsel-outer-postreview.md` | 14 | 20 |
-| `mock/design_rounds/202606051215/202606051215_changelist.doc.lock.md` | 7 | 20 |
-| `mock/design_rounds/202606051215/202606051215_changelist.src.lock.md` | 16 | 20 |
-| `mock/design_rounds/202606051215/202606051215_topic.real-waist-detect.md` | 19 | 20 |
-| `mock/design_rounds/202606051500/202606051500_changelist.doc.lock.md` | 23 | 20 |
-| `mock/design_rounds/202606051500/202606051500_changelist.src.lock.md` | 37 | 20 |
-| `mock/design_rounds/202606051500/202606051500_topic.fiber-structured-morsel-outer-dispatch.md` | 43 | 20 |
-| `mock/design_rounds/202606051600/202606051600_changelist.doc.lock.md` | 11 | 20 |
-| `mock/design_rounds/202606051600/202606051600_changelist.src.lock.md` | 17 | 20 |
-| `mock/design_rounds/202606051600/202606051600_topic.dispatch-post-review-cleanup.md` | 12 | 20 |
-| `mock/design_rounds/202606051659/202606051554_topic.dispatch-codegen-fusion.md` | 33 | 20 |
-| `mock/design_rounds/202606051659/202606051659_changelist.doc.lock.md` | 60 | 20 |
-| `mock/design_rounds/202606051659/202606051733_changelist.src.deprecated.md` | 50 | 20 |
-| `mock/design_rounds/202606051659/202606062330_changelist.src.lock.md` | 85 | 20 |
-| `mock/design_rounds/202606052250/202606052250_changelist.doc.lock.md` | 21 | 20 |
-| `mock/design_rounds/202606052250/202606052250_changelist.src.lock.md` | 20 | 20 |
-| `mock/design_rounds/202606052250/202606052250_topic.arvo-bump-waist-detect.md` | 24 | 21 |
-| `mock/design_rounds/202606061446/202606061446_changelist.doc.lock.md` | 20 | 21 |
-| `mock/design_rounds/202606061446/202606061446_changelist.src.lock.md` | 33 | 21 |
-| `mock/design_rounds/202606061446/202606061446_topic.gate1-dispatch-builder-append.md` | 33 | 21 |
-| `mock/design_rounds/202606061730/202606061730_changelist.doc.lock.md` | 48 | 21 |
-| `mock/design_rounds/202606061730/202606061730_changelist.src.lock.md` | 79 | 21 |
-| `mock/design_rounds/202606061730/202606061730_topic.gate1-dispatch-topo-registration-gate.md` | 70 | 21 |
-| `mock/design_rounds/202606061830/202606061830_changelist.doc.lock.md` | 34 | 21 |
-| `mock/design_rounds/202606061830/202606061830_changelist.src.lock.md` | 54 | 21 |
-| `mock/design_rounds/202606061830/202606061830_topic.gate1-dispatch-recommended-order.md` | 54 | 21 |
-| `mock/design_rounds/202606062047/202606062047_changelist.doc.lock.md` | 29 | 21 |
-| `mock/design_rounds/202606062047/202606062047_changelist.src.lock.md` | 51 | 21 |
-| `mock/design_rounds/202606062047/202606062047_topic.d668-engine-adjrow-cap-lift.md` | 79 | 21 |
-| `mock/design_rounds/202606070048/202606070048_changelist.doc.lock.md` | 28 | 21 |
-| `mock/design_rounds/202606070048/202606070048_changelist.src.lock.md` | 31 | 21 |
-| `mock/design_rounds/202606070048/202606070048_topic.gate2-g2-0a-runtrunk-fibercons.md` | 28 | 21 |
-| `mock/design_rounds/202606070100/202606070100_changelist.doc.lock.md` | 28 | 21 |
-| `mock/design_rounds/202606070100/202606070100_changelist.src.lock.md` | 31 | 21 |
-| `mock/design_rounds/202606070100/202606070100_topic.gate2-g2-0b-runphase-waist.md` | 30 | 21 |
-| `mock/design_rounds/202606070839/202606070839_changelist.doc.lock.md` | 19 | 21 |
-| `mock/design_rounds/202606070839/202606070839_changelist.src.lock.md` | 43 | 21 |
-| `mock/design_rounds/202606070839/202606070839_topic.gate2-waist-bounded-phase.md` | 69 | 21 |
-| `mock/design_rounds/202606070900/202606070900_changelist.doc.lock.md` | 18 | 21 |
-| `mock/design_rounds/202606070900/202606070900_changelist.src.lock.md` | 33 | 21 |
-| `mock/design_rounds/202606070900/202606070900_topic.gate2-const-grouping.md` | 34 | 21 |
-| `mock/design_rounds/202606071100/202606071100_changelist.doc.lock.md` | 18 | 21 |
-| `mock/design_rounds/202606071100/202606071100_changelist.src.lock.md` | 36 | 21 |
-| `mock/design_rounds/202606071100/202606071100_topic.gate2-const-gated-dispatch.md` | 45 | 21 |
-| `mock/design_rounds/202606071109/202606071109_changelist.doc.lock.md` | 11 | 21 |
-| `mock/design_rounds/202606071109/202606071109_changelist.src.lock.md` | 22 | 21 |
-| `mock/design_rounds/202606071109/202606071109_topic.gate2-r4a-core-phase-masks.md` | 69 | 21 |
-| `mock/design_rounds/202606071139/202606071139_changelist.doc.lock.md` | 30 | 21 |
-| `mock/design_rounds/202606071139/202606071139_changelist.src.lock.md` | 35 | 21 |
-| `mock/design_rounds/202606071139/202606071139_topic.gate2-r4b-run-parallel-inline.md` | 61 | 21 |
-| `mock/design_rounds/202606071300-abandoned/202606071300_changelist.doc.lock.md` | 14 | 21 |
-| `mock/design_rounds/202606071300-abandoned/202606071300_changelist.src.md` | 26 | 21 |
-| `mock/design_rounds/202606071300-abandoned/202606071300_topic.gate2-phase-sectioned-run.md` | 36 | 21 |
-| `mock/design_rounds/202606071730/202606071730_changelist.doc.lock.md` | 20 | 21 |
-| `mock/design_rounds/202606071730/202606071730_changelist.src.lock.md` | 38 | 21 |
-| `mock/design_rounds/202606071730/202606071730_topic.gate2-r4c-osthreadpool-spawn.md` | 63 | 21 |
-| `mock/design_rounds/202606071808/202606071805_topic.gate2-worker-side-waist-barrier.md` | 65 | 21 |
-| `mock/design_rounds/202606071808/202606071808_changelist.doc.lock.md` | 17 | 21 |
-| `mock/design_rounds/202606071808/202606071810_changelist.src.lock.md` | 35 | 21 |
-| `mock/design_rounds/202606071856/202606071834_topic.gate2-head-tail-convergence.md` | 39 | 21 |
-| `mock/design_rounds/202606071856/202606071856_changelist.doc.lock.md` | 15 | 21 |
-| `mock/design_rounds/202606071856/202606071856_changelist.src.lock.md` | 27 | 21 |
-| `mock/design_rounds/202606071900/202606071900_changelist.doc.lock.md` | 19 | 21 |
-| `mock/design_rounds/202606071900/202606071900_changelist.src.lock.md` | 34 | 21 |
-| `mock/design_rounds/202606071900/202606071900_topic.gate2-r4c-frame-protocol.md` | 64 | 21 |
-| `mock/design_rounds/202606072000-2/202606071933_topic.gate2-accumulator-threaded.md` | 38 | 21 |
-| `mock/design_rounds/202606072000-2/202606072000_changelist.doc.lock.md` | 60 | 21 |
-| `mock/design_rounds/202606072000-2/202606072010_changelist.src.lock.md` | 92 | 21 |
-| `mock/design_rounds/202606072000/202606072000_changelist.doc.lock.md` | 16 | 21 |
-| `mock/design_rounds/202606072000/202606072000_changelist.src.lock.md` | 23 | 21 |
-| `mock/design_rounds/202606072000/202606072000_topic.gate2-r4c-run-core-phase.md` | 53 | 21 |
-| `mock/design_rounds/202606072030/202606072030_changelist.doc.lock.md` | 18 | 21 |
-| `mock/design_rounds/202606072030/202606072030_changelist.src.lock.md` | 42 | 21 |
-| `mock/design_rounds/202606072030/202606072030_topic.gate2-r4c-threaded-run-parallel.md` | 61 | 21 |
-| `mock/design_rounds/202606080400/202606080100_topic.gate2-ge-const-gated-trunk-dispatch.md` | 39 | 21 |
-| `mock/design_rounds/202606080400/202606080300_topic.gate2-ge-drive-shipped-rungatedtrunk.md` | 41 | 21 |
-| `mock/design_rounds/202606080400/202606080400_changelist.doc.lock.md` | 56 | 21 |
-| `mock/design_rounds/202606080400/202606080500_changelist.src.lock.md` | 56 | 21 |
-| `mock/design_rounds/202606080700/202606080600_topic.gate2-n-core-pinned-trunk-dispatch.md` | 36 | 21 |
-| `mock/design_rounds/202606080700/202606080700_changelist.doc.lock.md` | 48 | 21 |
-| `mock/design_rounds/202606080700/202606080800_changelist.src.lock.md` | 48 | 21 |
-| `mock/design_rounds/202606081300/202606081200_topic.gate2-e4-virtual-firing-and-on-gating.md` | 41 | 21 |
-| `mock/design_rounds/202606081300/202606081300_changelist.doc.lock.md` | 30 | 21 |
-| `mock/design_rounds/202606081300/202606081300_changelist.src.lock.md` | 71 | 21 |
-| `mock/design_rounds/202606082100/202606081900_topic.gate2-e4-slice2-self-hosting-meta-pipeline.md` | 60 | 21 |
-| `mock/design_rounds/202606082100/202606082100_changelist.doc.lock.md` | 115 | 21 |
-| `mock/design_rounds/202606082100/202606082100_changelist.src.lock.md` | 119 | 21 |
-| `mock/design_rounds/202606090400/202606090000_topic.gate2-e4-slice3-consumer-meta-hooks.md` | 142 | 21 |
-| `mock/design_rounds/202606090400/202606090200_changelist.doc.deprecated.md` | 73 | 21 |
-| `mock/design_rounds/202606090400/202606090200_changelist.src.deprecated.md` | 54 | 21 |
-| `mock/design_rounds/202606090400/202606090400_changelist.doc.lock.md` | 75 | 21 |
-| `mock/design_rounds/202606090400/202606090400_changelist.src.deprecated.md` | 68 | 21 |
-| `mock/design_rounds/202606090400/202606090500_changelist.src.lock.md` | 89 | 21 |
-| `mock/design_rounds/202606091000/202606091000_changelist.doc.lock.md` | 26 | 21 |
-| `mock/design_rounds/202606091000/202606091000_changelist.src.lock.md` | 42 | 21 |
-| `mock/design_rounds/202606091000/202606091000_topic.d1e-runfiber-dispatch.md` | 37 | 21 |
-| `mock/design_rounds/202606091600/202606091600_changelist.doc.lock.md` | 20 | 21 |
-| `mock/design_rounds/202606091600/202606091600_changelist.src.lock.md` | 29 | 21 |
-| `mock/design_rounds/202606091600/202606091600_topic.spec-free-columnvalue-drop-full-specialization.md` | 32 | 21 |
-| `mock/design_rounds/202606092000/202606092000_changelist.doc.lock.md` | 19 | 21 |
-| `mock/design_rounds/202606092000/202606092000_changelist.src.lock.md` | 38 | 21 |
-| `mock/design_rounds/202606092000/202606092000_topic.d4-within-fiber-linear-fusion.md` | 51 | 21 |
-| `mock/design_rounds/202606100900/202606100900_changelist.doc.lock.md` | 23 | 21 |
-| `mock/design_rounds/202606100900/202606100900_changelist.src.lock.md` | 36 | 21 |
-| `mock/design_rounds/202606100900/202606100900_topic.accum-per-frame-reset.md` | 29 | 21 |
-| `mock/design_rounds/202606110910/202606110855_topic.gate2-e4-run-parallel-meta-parity.md` | 113 | 21 |
-| `mock/design_rounds/202606110910/202606110910_changelist.doc.lock.md` | 56 | 21 |
-| `mock/design_rounds/202606110910/202606110920_changelist.src.lock.md` | 122 | 21 |
-| `mock/design_rounds/202606110957/202606110948_topic.gate2-e8-adapt-pass-duration-ema.md` | 70 | 21 |
-| `mock/design_rounds/202606110957/202606110957_changelist.doc.lock.md` | 46 | 21 |
-| `mock/design_rounds/202606110957/202606111010_changelist.src.lock.md` | 132 | 21 |
-| `mock/design_rounds/202606111200/202606111200_changelist.doc.lock.md` | 20 | 21 |
-| `mock/design_rounds/202606111200/202606111200_changelist.src.lock.md` | 55 | 21 |
-| `mock/design_rounds/202606111200/202606111200_topic.e7-dirty-skip-incremental.md` | 28 | 21 |
-| `mock/design_rounds/202606111600/202606111600_changelist.doc.lock.md` | 73 | 21 |
-| `mock/design_rounds/202606111600/202606111600_changelist.src.lock.md` | 103 | 21 |
-| `mock/design_rounds/202606111600/202606111600_topic.d6-asm-dispatch-gate.md` | 121 | 21 |
-| `mock/design_rounds/202606111700/202606111700_changelist.doc.lock.md` | 17 | 21 |
-| `mock/design_rounds/202606111700/202606111700_changelist.src.lock.md` | 48 | 21 |
-| `mock/design_rounds/202606111700/202606111700_topic.gate1-test-audit-remediation.md` | 65 | 21 |
-| `mock/design_rounds/202606111800/202606111800_changelist.doc.lock.md` | 12 | 21 |
-| `mock/design_rounds/202606111800/202606111800_changelist.src.lock.md` | 31 | 21 |
-| `mock/design_rounds/202606111800/202606111800_topic.gate1-readmask-invariant-guard.md` | 32 | 21 |
-| `mock/design_rounds/202606190700/202606190700_changelist.doc.lock.md` | 26 | 21 |
-| `mock/design_rounds/202606190700/202606190700_changelist.src.lock.md` | 65 | 21 |
-| `mock/design_rounds/202606190700/202606190700_topic.core-idle-adapt-axis.md` | 101 | 21 |
-| `mock/design_rounds/202606191000/202606191000_changelist.doc.lock.md` | 15 | 21 |
-| `mock/design_rounds/202606191000/202606191000_changelist.src.lock.md` | 33 | 21 |
-| `mock/design_rounds/202606191000/202606191000_topic.gate2-parallel-aliasing-soundness.md` | 57 | 21 |
-| `mock/design_rounds/202606191200/202606191200_changelist.doc.lock.md` | 25 | 21 |
-| `mock/design_rounds/202606191200/202606191200_changelist.src.lock.md` | 61 | 21 |
-| `mock/design_rounds/202606191200/202606191200_topic.gate2-caps-lifting.md` | 50 | 21 |
-| `mock/design_rounds/202606191400/202606191400_changelist.doc.lock.md` | 17 | 21 |
 | `mock/research/imported-from-polka-dots/bench/calling-convention-bench-results.md` | 537 | 27 |
 | `mock/research/imported-from-polka-dots/build-configuration-research.md` | 282 | 27 |
 | `mock/research/imported-from-polka-dots/design_rounds/2026-02-21/2026-02-21_initial-architecture.md` | 78 | 27 |
@@ -1546,84 +1632,3 @@ The files under `docs/` are rendered from the templates ledgered above and were 
 | `mock/research/imported-from-saalis/verkko-protocol.md` | 1042 | 44 |
 | `mock/research/imported-from-saalis/verkko-relay.md` | 479 | 44 |
 | `mock/research/imported-from-saalis/verkko-seat.md` | 470 | 44 |
-| `mock/research/sketches/202605050503_accessset_arity/FINDINGS.md` | 174 | 25 |
-| `mock/research/sketches/202605050530_deep_stacking/FINDINGS.md` | 103 | 25 |
-| `mock/research/sketches/202605050555_replaceable_polarity/FINDINGS.md` | 80 | 25 |
-| `mock/research/sketches/202605050615_kit_taxonomy/FINDINGS.md` | 107 | 25 |
-| `mock/research/sketches/202605050615_kit_taxonomy/sketch_skeletons.md` | 13 | 25 |
-| `mock/research/sketches/202605050700_deep_stacking_d5/FINDINGS.md` | 117 | 25 |
-| `mock/research/sketches/202605050800_dedup_concat/FINDINGS.md` | 98 | 25 |
-| `mock/research/sketches/202605082230_recursion_limit_macro/FINDINGS.md` | 63 | 25 |
-| `mock/research/sketches/202605091700-builder-provider-shape/HYPOTHESIS.md` | 35 | 25 |
-| `mock/research/sketches/202605091700-builder-provider-shape/OUTCOME.md` | 120 | 25 |
-| `mock/research/sketches/202605101036-builder-input-reshape/HYPOTHESIS.md` | 26 | 25 |
-| `mock/research/sketches/202605101036-builder-input-reshape/OUTCOME.md` | 68 | 25 |
-| `mock/research/sketches/202605101036-codegen-entrypoint-tait/FINDINGS.md` | 129 | 25 |
-| `mock/research/sketches/202605101036-codegen-entrypoint-tait/SKETCH.md` | 48 | 25 |
-| `mock/research/sketches/202605101036-codegen-tait-capture/FINDINGS.md` | 67 | 25 |
-| `mock/research/sketches/202605101036-codegen-tait-capture/SKETCH.md` | 51 | 25 |
-| `mock/research/sketches/202605101036-const-zero-bloat/FINDINGS.md` | 56 | 25 |
-| `mock/research/sketches/202605101036-ema-vectorisation/FINDINGS.md` | 80 | 25 |
-| `mock/research/sketches/202605101036-ema-vectorisation/SKETCH.md` | 50 | 25 |
-| `mock/research/sketches/202605101036-fibershape-typing/FINDINGS.md` | 89 | 25 |
-| `mock/research/sketches/202605101036-fibershape-typing/SKETCH.md` | 50 | 25 |
-| `mock/research/sketches/202605101036-poolframe-lifetime/FINDINGS.md` | 131 | 25 |
-| `mock/research/sketches/202605101036-poolframe-lifetime/SKETCH.md` | 91 | 25 |
-| `mock/research/sketches/202605101036-progress-counter-arena/FINDINGS.md` | 45 | 25 |
-| `mock/research/sketches/202605101036-resource-column-virtual-as-traits/HYPOTHESIS.md` | 31 | 25 |
-| `mock/research/sketches/202605121400-call-site-cap-turbofish/OUTCOME.md` | 231 | 25 |
-| `mock/research/sketches/202605121400-call-site-cap-turbofish/SKETCH.md` | 79 | 25 |
-| `mock/research/sketches/202605131500-witness-propagation/OUTCOME.md` | 122 | 25 |
-| `mock/research/sketches/202605131500-witness-propagation/SKETCH.md` | 75 | 25 |
-| `mock/research/sketches/202605131530-csr-to-bitmatrix/SKETCH.md` | 45 | 25 |
-| `mock/research/sketches/202605131600-array-reshape-consumed/OUTCOME.md` | 141 | 25 |
-| `mock/research/sketches/202605131600-array-reshape-consumed/SKETCH.md` | 144 | 25 |
-| `mock/research/sketches/202605131700-plan-forward-arvo-wire-up.md` | 190 | 25 |
-| `mock/research/sketches/202605251400_v2-phase-machine-field-notes.md` | 101 | 25 |
-| `mock/research/sketches/202605251500_cl-drift-closure-clarification.md` | 73 | 25 |
-| `mock/research/sketches/202605290002_builder-kind-dispatch.md` | 81 | 25 |
-| `mock/research/sketches/202605290101_ctx-projection-selector.md` | 63 | 25 |
-| `mock/research/sketches/202605290245_usize-to-cap-const-bridge.md` | 50 | 25 |
-| `mock/research/sketches/202605291007_engine-ctx-spec-free-accessor/findings.md` | 92 | 25 |
-| `mock/research/sketches/202605300823_run-fiber-wutuple-walk/FINDINGS.md` | 37 | 25 |
-| `mock/research/sketches/202605301145_capacity-as-type/FINDINGS.md` | 151 | 25 |
-| `mock/research/sketches/202605301700_plandims-bundle/FINDINGS.md` | 58 | 25 |
-| `mock/research/sketches/202605302345_store-backed-flat-plan/FINDINGS.md` | 138 | 25 |
-| `mock/research/sketches/202606041631_column-source-dual-selector/FINDINGS.md` | 36 | 25 |
-| `mock/research/sketches/202606041800_accumulator-append-selector/FINDINGS.md` | 40 | 25 |
-| `mock/research/sketches/202606051601_column-capable-runfiber-walk/FINDINGS.md` | 34 | 25 |
-| `mock/research/sketches/202606052130_rcm-order-into-static-body/FINDINGS.md` | 192 | 25 |
-| `mock/research/sketches/202606052130_rcm-order-into-static-body/HYPOTHESIS.md` | 39 | 25 |
-| `mock/research/sketches/202606060500_approach-e-schedule-mega/FINDINGS.md` | 112 | 25 |
-| `mock/research/sketches/202606060500_approach-e-schedule-mega/HYPOTHESIS.md` | 63 | 25 |
-| `mock/research/sketches/202606060730_runfibercol-accumulator-inline/FINDINGS.md` | 124 | 25 |
-| `mock/research/sketches/202606070829_gate2-waist-phase-from-masks/FINDINGS.md` | 73 | 25 |
-| `mock/research/sketches/202606070906_gate2-pairs-enumeration-dispatch/FINDINGS.md` | 96 | 25 |
-| `mock/research/sketches/202606071945_gate2-accumulator-percore-region-merge/FINDINGS.md` | 143 | 25 |
-| `mock/research/sketches/202606080130_gate2-ge-const-range-dispatcher/FINDINGS.md` | 94 | 25 |
-| `mock/research/sketches/202606080200_gate2-ge-outer-drives-rungatedtrunk/FINDINGS.md` | 104 | 25 |
-| `mock/research/sketches/202606081400_e4-schedule-gated-walk/FINDINGS.md` | 29 | 25 |
-| `mock/research/sketches/202606081700_e4-scheduled-blanket-coherence/FINDINGS.md` | 31 | 25 |
-| `mock/research/sketches/202606081800_e4-gate-firer-trait-shapes/FINDINGS.md` | 92 | 25 |
-| `mock/research/sketches/202606082000_e4-slice2-lifecycle-classify/FINDINGS.md` | 84 | 25 |
-| `mock/research/sketches/202606082200_e4-slice2-rank-phase-renumber/FINDINGS.md` | 90 | 25 |
-| `mock/research/sketches/202606090100_facade-accessset-containsall/FINDINGS.md` | 106 | 25 |
-| `mock/research/sketches/202606090200_facade-per-morsel-abi-hop/FINDINGS.md` | 92 | 25 |
-| `mock/research/sketches/202606090300_e4-slice3-meta-bridge-accessor/FINDINGS.md` | 93 | 26 |
-| `mock/research/sketches/202606111000_e1-e7-dirty-gated-walk/FINDINGS.md` | 33 | 26 |
-| `mock/research/sketches/202606111430_ctxfor-computed-ctx/FINDINGS.md` | 139 | 26 |
-| `mock/research/sketches/202606111440_meta-carrier-shapes/FINDINGS.md` | 160 | 26 |
-| `mock/research/sketches/202606111450_cap-lifting-shapes/FINDINGS.md` | 205 | 26 |
-| `mock/research/sketches/202606202100_a2a-per-fiber-morsel-loop/FINDINGS.md` | 91 | 26 |
-| `mock/research/sketches/202606202400_a3-per-store-size-collection/FINDINGS.md` | 118 | 26 |
-| `mock/research/sketches/202606210100_a3-resource-footprint/FINDINGS.md` | 120 | 26 |
-| `mock/research/sketches/202607171733_plannable-declaration-split/FINDINGS.md` | 90 | 26 |
-| `mock/research/sketches/202607190900_a4-parallel-per-fiber-windows/FINDINGS.md` | 135 | 26 |
-| `mock/research/sketches/202607191200_a4-fibercons-nest-wireability/FINDINGS.md` | 92 | 26 |
-| `mock/research/sketches/202607201300_arena-poolframe/FINDINGS.md` | 34 | 26 |
-| `mock/research/sketches/202611122242_frame-view-typestate/FINDINGS.md` | 145 | 26 |
-| `mock/research/sketches/202611122252_runner-generic-workunit/FINDINGS.md` | 121 | 26 |
-| `mock/research/sketches/202611130039_wasm-digest-under-node/FINDINGS.md` | 103 | 26 |
-| `mock/research/sketches/202611130417_branded-morsel-index/FINDINGS.md` | 93 | 26 |
-| `mock/research/sketches/app-builder-typestate-202605010900/FINDINGS.md` | 266 | 26 |
-| `mock/research/sketches/registrable-not-in-202605051200/FINDINGS.md` | 73 | 26 |
