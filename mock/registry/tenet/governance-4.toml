@@ -28,8 +28,9 @@ When a future round's source application drifts from its lock-time CL claim, the
 '''
 origin = "proposed"
 written_by = "sketch cl-drift-closure-clarification of 2026-05-25 (workspace task #398), outcome WORKS; agent-written"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["locked changelist", "immutable", "drift documentation", "retroactive reconciliation", "wording mismatch", "deprecation", "task 398"]
 rejects = ["Option A: deprecate-and-replace via mockspace flow", "The \"Option A\" framing in PR #85's drift memo was based on a misreading"]
 related = ["tenet::a_drifted_locked_changelist_is_reconciled_by_a_new_round_that_deprecates_it_and_carries_a_corrected_replacement"]

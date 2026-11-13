@@ -15,8 +15,9 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-linking, agent-written, undated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["IncompatibilityError", "compatibility_check", "version skew", "arch mismatch", "ABI mismatch", "narrow hook"]
 
 [[tenet]]
@@ -40,8 +41,9 @@ No hilavitkutin crate depends upward from this one. The engine itself never uses
 '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-linking, agent-written, undated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["architectural position", "extension stack", "engine never uses", "static composition", "cdylib extensions", "downstream hosts", "viola"]
 related = ["tenet::the_extension_stack_layers_strictly_downward_from_the_consumer_contract_crate_to_the_os_loader_and_the_engine_does_not_depend_on_it"]
 
@@ -64,8 +66,9 @@ Additional platforms can be added without changing the public API. wasm32 is exp
 '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-linking, agent-written, undated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["platform coverage", "macOS aarch64", "Linux x86_64", "Windows x86_64", "wasm32", "out of scope", "separate transport", "v1"]
 rejects = ["wasm32"]
 
@@ -85,8 +88,9 @@ No global registry exists. The host never reads a static "currently loaded libra
 '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-linking, agent-written, undated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["arbitrary-time linking", "non-negotiable", "no global registry", "no init ordering", "per-library lifecycle", "by construction", "typed symbol lifetime"]
 related = ["tenet::the_extensions_crate_preserves_the_arbitrary_time_linking_invariant_by_construction_through_four_api_level_absences"]
 
@@ -103,8 +107,9 @@ This invariant propagates forward into the upper host layer (`hilavitkutin-exten
 '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-linking, agent-written, undated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["consumer obligation", "arbitrary-time linking", "ecosystem-wide semantics", "propagates", "documented loss", "viola-plugin-abi", "higher layer"]
 rejects = ["all libraries loaded before any invoked", "init ordering gates invocation", "the full ecosystem must be known before proceeding"]
 related = ["tenet::host_code_built_on_the_extensions_crate_must_tolerate_arbitrary_time_loading_and_ecosystem_wide_semantics_belong_to_a_higher_layer"]
@@ -123,8 +128,9 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-linking, agent-written, undated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["non-scope", "descriptor shapes", "role identifiers", "capability IDs", "no parsing", "lifecycle orchestration", "consumer responsibility"]
 rejects = ["Define extension descriptor shapes, role identifiers, or capability IDs", "Host or orchestrate lifecycle"]
 
@@ -140,7 +146,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-linking, agent-written, undated"
-standing = "pending"
+standing = "held"
 keywords = ["pull-based discovery", "inventory", "ctor", "distributed_slice", ".init_array", "linker sections", "named symbol", "rejected"]
 rejects = ["Scan linker sections for registration. `inventory`, `ctor`, `#[distributed_slice]`, `.init_array` discovery are all explicitly rejected."]
 related = ["tenet::no_linker_section_is_scanned_and_no_constructor_registration_runs_and_the_extension_defines_its_symbol_as_a_function_returning_a_const_descriptor"]
@@ -157,8 +163,9 @@ quote = '''
 because = "It preserves the LLVM optimisation barrier and the Rust ABI stability boundary that the broader extension architecture requires."
 origin = "proposed"
 written_by = "the design template of hilavitkutin-linking, agent-written, undated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["cdylib", "dylib", "C-ABI", "LLVM optimisation barrier", "Rust ABI stability", "extension crate type"]
 rejects = ["Support Rust `dylib` crate type"]
 
@@ -177,8 +184,9 @@ This crate was introduced as `hilavitkutin-extensions` in design (PR #34, merged
 because = "The crate mechanically performs runtime dynamic linking; the name extensions is better suited to the user-facing contract host above, which matches external vocabulary for IDE extensions and similar contract-bound unit systems."
 origin = "proposed"
 written_by = "the design template of hilavitkutin-linking, agent-written, undated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["rename", "hilavitkutin-linking", "hilavitkutin-extensions", "PR #34", "2026-04-24", "extensions name reclaimed", "IDE extensions vocabulary"]
 
 [[tenet]]
@@ -220,7 +228,8 @@ Regenerate `docs/LINKING.md`, `docs/EXTENSIONS.md`,
 '''
 origin = "proposed"
 written_by = "topic of round 202609190620 'remove the stale mockspace build-dep claim', 2026-09-19, phase TOPIC, agent-written"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["build-time dependency", "mockspace", "hilavitkutin-linking", "hilavitkutin-extensions", "build.rs", "stale claim", "DESIGN.md.tmpl"]
 rejects = ["mockspace (workspace convention) bootstraps the mock workflow via build.rs"]

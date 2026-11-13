@@ -321,6 +321,14 @@ ledgers = "mock/catalogue.md"
 [lints.no-superseded-citation]
 field = "superseded_by"
 
+# A provisional stamp on a tenet is written whole, names the question ticket
+# that asks the maintainer, and never sits on a ratified tenet.
+[lints.a-provisional-stamp-is-not-a-ratification]
+namespaces = "tenet"
+tiered = "tenet"
+tier_field = "standing"
+ratified = "ratified"
+
 # ---------------------------------------------------------------------------
 # Primitive-substrate introducers (task #125)
 # ---------------------------------------------------------------------------
@@ -464,8 +472,8 @@ description = "The tenets that replace this one. A superseded tenet is kept rath
 name = "standing"
 type = "string"
 required = true
-description = "`provisional` where the maintainer has not ratified it and lets it stand as the best current statement: it binds, and is never cited as settled. No row of this registry is provisional: what the readers drew from the record and the maintainer has not gone through binds nothing until he has. `pending` where the maintainer has not ratified it and it waits on him, whether it sits on a stamp (`stamp` says which), is replaced by a later word of his (`superseded_by`, or the stamp names the passage) or is listed for him in `mock/research/202611130850_the-record-read-whole/ROWS-FOR-OP.md`: shown and searched, binding nothing. `ratified` where the maintainer went through it on a named date, with their answer in the row's `answers`, or where the written history shows its content to be the maintainer's own and it is ratified by default under their words of 13 November 2026, which `ratified_by` quotes and `ratified_from` gives the passages for. `demoted` where it is kept as reference and binds nothing. Apart from `superseded_by`: a superseded row does not bind whatever its standing."
-values = ["provisional", "ratified", "pending", "demoted"]
+description = "`provisional` where the maintainer has not ratified it and lets it stand as the best current statement: it binds, and is never cited as settled. A provisional row that carries a stamp (`stamped_by` and `stamp`) binds nothing: a stamp is never a ratification, and every provisional row of this registry carries one. `held` where the written history does not back it or a word of the maintainer stands against it, so it is held for him, listed with its finding in `mock/research/202611130850_the-record-read-whole/ROWS-FOR-OP.md`: shown and searched, binding nothing, and carrying no stamp. `ratified` where the maintainer went through it on a named date, with their answer in the row's `answers`, or where the written history shows its content to be the maintainer's own and it is ratified by default under their words of 13 November 2026, which `ratified_by` quotes and `ratified_from` gives the passages for. `demoted` where it is kept as reference and binds nothing. Apart from `superseded_by`: a superseded row does not bind whatever its standing."
+values = ["provisional", "ratified", "held", "demoted"]
 
 [[registry.namespace.field]]
 name = "subject"
@@ -510,10 +518,17 @@ required = false
 description = "The passages a ratification by default rests on, one entry each as `<kind>: <path>:<first>-<last>`. The kind is `founding` (the founding spec or the principles), `ruled` (an amendment whose text says the maintainer ruled it or a bench decided it with their call), `quote` (a passage quoting the maintainer or saying in words that they ruled it) or `ratified-elsewhere` (another passage of the record saying so of the same content). An entry led by `later` names a later passage of the same standing that changes the same point."
 
 [[registry.namespace.field]]
+name = "stamped_by"
+type = "string"
+required = false
+values = ["coordinators", "experts"]
+description = "On a provisional row: who stamped it while the maintainer was away, `coordinators` where the coordinators converged on it and `experts` where readers of the record found nothing of his standing against it. Written with `stamp` and never without it."
+
+[[registry.namespace.field]]
 name = "stamp"
 type = "string"
 required = false
-description = "On a pending row: the stamp it is recorded on until the maintainer rules, with the date and the words that allow it. A stamp is never a ratification and the maintainer's answer can overturn it."
+description = "On a provisional row: what was stamped and why, with the date, the words of the maintainer that allow it, the passages read and the question ticket that asks him to make it formal, in backticks after the word `ticket`. A stamp is never a ratification: the row keeps its standing, binds nothing, and the maintainer's answer can overturn it."
 
 
 [[registry.namespace]]

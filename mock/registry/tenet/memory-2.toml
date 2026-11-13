@@ -22,8 +22,9 @@ allocator.
 '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["reserve", "column_ptr", "column_ptr_mut", "64-byte aligned", "release no-op", "raw pointer R6", "Drop deallocate", "reader-count reclamation"]
 related = ["tenet::a_column_s_lifetime_is_told_to_the_consumer_as_an_advisory_release"]
 
@@ -40,8 +41,9 @@ column is a separate provider allocation. The point is a working
 '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["ArenaColumnStorage", "correctness not performance", "flat scan", "separate allocation per column", "placeholder", "columnar engine"]
 
 [[tenet]]
@@ -64,8 +66,9 @@ quote = '''
 because = "Reintroducing the M parameter needs allocate-at-builder-time plumbing the engine does not yet have."
 origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["MemoryArena", "HasMemoryProvider", "M parameter", "allocate-at-builder-time", "inline storage", "BACKLOG", "2026-05-01"]
 rejects = ["M: HasMemoryProvider parameter on MemoryArena"]
 
@@ -92,7 +95,7 @@ column with a mismatched layout.
 '''
 origin = "proposed"
 written_by = "api design template as on the branch recover/unlanded-rounds-and-benches, commit of 2026-08-30, not on dev; the text does not say whose it is"
-standing = "pending"
+standing = "held"
 keywords = ["deallocate", "alignment", "MemoryProvider", "safety contract", "64-byte alignment", "layout"]
 
 [[tenet]]
@@ -131,7 +134,7 @@ it, and a provider that ignores alignment (a bump arena) may simply not read the
 '''
 origin = "proposed"
 written_by = "doc changelist of round 202607192010 (2026-07-19), settling the question its topic reachable-bodies-contradicting-contracts left open, agent-written"
-standing = "pending"
+standing = "held"
 keywords = ["deallocate", "alignment", "MemoryProviderApi", "Layout", "std::alloc", "bump arena", "safety contract", "free site"]
 rejects = ["requires only that `ptr` and `len` match a prior `allocate`"]
 related = ["tenet::a_deallocation_is_given_the_same_alignment_as_its_allocation"]
@@ -174,8 +177,9 @@ The std tier. The option he chose: "hilavitkutin ships only the executor contrac
 '''
 origin = "proposed"
 written_by = "topic of round 202609181402 'hilavitkutin on arvo's current dev', 2026-09-18, agent-written"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: the sentence is the round applying his answer at mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:20-32, whose words and options do not name tests or benches, and it was part of the row op_ruled_that_the_consumer_supplies_the_os_thread_executor_and_the_engine_ships_only_the_executor_contract until it was taken out of that ratified row, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: the sentence is the round applying his answer at mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:20-32, whose words and options do not name tests or benches, and it was part of the row op_ruled_that_the_consumer_supplies_the_os_thread_executor_and_the_engine_ships_only_the_executor_contract until it was taken out of that ratified row, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["tests", "engine_vs_std", "bench", "executor", "test executor"]
 related = ["tenet::op_ruled_that_the_consumer_supplies_the_os_thread_executor_and_the_engine_ships_only_the_executor_contract"]
 
@@ -191,8 +195,9 @@ Op, choosing "hilavitkutin ships only the executor contract (a trait). The OS-th
 '''
 origin = "proposed"
 written_by = "doc changelist of round 202609181402 'hilavitkutin on arvo's current dev', 2026-09-18, agent-written"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: his part is the answer Consumer supplies it, which the passage quotes and which mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:20-32 holds whole, and which the rows no_crate_spawns_threads_and_the_executor_behind_the_thread_pool_contract_is_the_consumer_s_or_lives_outside_the_family and there_is_no_std_platform_tier hold; that the os tier ships mmap and clock_gettime and that the engine hands the executor one pointer-sized closure per worker is what the changelist mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:13-13 derives from it, in its own words the design says, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: his part is the answer Consumer supplies it, which the passage quotes and which mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:20-32 holds whole, and which the rows no_crate_spawns_threads_and_the_executor_behind_the_thread_pool_contract_is_the_consumer_s_or_lives_outside_the_family and there_is_no_std_platform_tier hold; that the os tier ships mmap and clock_gettime and that the engine hands the executor one pointer-sized closure per worker is what the changelist mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:13-13 derives from it, in its own words the design says, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["os tier", "mmap", "clock_gettime", "MemoryProvider", "Clock", "pointer-sized closure", "ThreadPoolApi", "no pthreads"]
 related = ["tenet::op_ruled_that_the_consumer_supplies_the_os_thread_executor_and_the_engine_ships_only_the_executor_contract", "tenet::the_os_and_std_tiers_are_mutually_exclusive_and_the_os_tier_gets_the_optimisation_investment"]
 
@@ -210,7 +215,7 @@ Resource buffers are sized once at `build()` (singleton, scheduler lifetime; shi
 '''
 origin = "proposed"
 written_by = "sketch ctx-projection-selector (per-WU Context via Selector and Project index witnesses), dated only by its filename 202605290101 as 2026-05-29, reframing the earlier \"B2b at build()\" claim; agent-written"
-standing = "pending"
+standing = "held"
 keywords = ["column buffers", "record_count", "build()", "run loop", "resource buffers", "B2b", "per-frame allocation", "HasRecordCount"]
 rejects = ["B2b columns at build()", "the earlier \"B2b at build()\" framing"]
 related = ["tenet::the_engine_does_not_load_data_and_does_not_know_record_counts_ahead"]
@@ -227,6 +232,6 @@ Reservation timing (Timing X, separate decision): columns reserve at `build()` t
 '''
 origin = "proposed"
 written_by = "sketch findings column-source-dual-selector of 2026-06-04 (round column-data-plane, unified bindings as resource and column source, Shape A), verdict WORKS; agent-written"
-standing = "pending"
+standing = "held"
 keywords = ["reservation timing", "Timing X", "reserve at build", "stable pointer", "column_ptr_mut", "record count metadata", "ColumnBinding", "per-frame allocation"]
 related = ["tenet::an_accumulator_append_saturates_at_the_reserved_capacity_which_equals_the_record_count_at_build"]

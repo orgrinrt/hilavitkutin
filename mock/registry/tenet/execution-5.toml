@@ -12,7 +12,7 @@ Work-stealing BACKLOG. Spin-budget calibration micro-bench at `ThreadPool::build
 '''
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
-standing = "pending"
+standing = "held"
 keywords = ["Scheduler::Drop", "shutdown flag", "exit counter", "no thread handle", "futex wake", "consumer executor"]
 
 [[tenet]]
@@ -27,8 +27,9 @@ Forward iter by default; Topic 3 axis E adds head+tail convergence variant for c
 '''
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["morsel loop", "forward iteration", "head+tail convergence", "commutative", "single-trunk phase", "morsel size", "SIMD width", "L1 write budget"]
 related = ["tenet::a_unit_declares_whether_it_is_commutative"]
 
@@ -46,7 +47,7 @@ Forward iter by default; Topic 3 axis E adds head+tail convergence variant for c
 '''
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
-standing = "pending"
+standing = "held"
 keywords = ["micro-morsel", "MICRO_MORSEL_INTERVAL", "MAX_DRIFT_RECORDS", "spin_loop", "drift tolerance", "no futex", "64 records", "32 records"]
 
 [[tenet]]
@@ -61,8 +62,9 @@ Codegen emits `dmb st` (aarch64) / `sfence` (x86_64) between final FiberOutput n
 '''
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["dmb st", "sfence", "stnp", "non-temporal store", "progress counter", "Release store", "invariant S3", "FiberOutput"]
 related = ["tenet::progress_counters_are_stack_atomics_with_a_release_store_by_the_producer_and_an_acquire_load_by_the_consumer"]
 
@@ -78,8 +80,9 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["AdaptWu", "ScheduleEnd", "ResourceSnapshot", "AdaptMetrics", "predicted_wait_ns", "adapt observer", "Topic 1 axis 5", "Topic 5", "custom adaptation"]
 related = ["tenet::waiting_is_parked_in_three_tiers_chosen_from_the_predicted_wait_of_each_phase_with_per_os_atomic_wait_primitives"]
 
@@ -101,8 +104,9 @@ it was neither, and both the branch and the description are gone. Either way the
 '''
 origin = "proposed"
 written_by = "engine design template as on the branch recover/unlanded-rounds-and-benches, commit of 2026-08-30, not on dev; the text does not say whose it is"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["head and tail convergence", "single-trunk phase", "not built", "serial", "record range split", "commutative fiber"]
 related = ["tenet::a_single_trunk_phase_runs_head_and_tail_convergence_with_two_threads_from_opposite_ends"]
 
@@ -127,8 +131,9 @@ owns the same trunks in every per-fiber walk. Single-trunk phases are the
 '''
 origin = "proposed"
 written_by = "engine design template as on the branch recover/unlanded-rounds-and-benches, commit of 2026-08-30, not on dev; the text does not say whose it is"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["fiber-outer walk", "per-fiber morsel size", "window", "L1-hot", "trunk ownership", "FiberDispatch"]
 
 [[tenet]]
@@ -153,8 +158,9 @@ correctness invariant that both dispatch paths depend on.
 '''
 origin = "proposed"
 written_by = "engine design template as on the branch recover/unlanded-rounds-and-benches, commit of 2026-08-30, not on dev; the text does not say whose it is"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["fiber descriptor", "coverage invariant", "member mask", "silent truncation", "debug assertion", "derive_phase_dispatch_order"]
 
 [[tenet]]
@@ -175,8 +181,9 @@ belongs to a different core. Offset `lo_c` (not a
 '''
 origin = "proposed"
 written_by = "engine design template as on the branch recover/unlanded-rounds-and-benches, commit of 2026-08-30, not on dev; the text does not say whose it is"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["region boundaries", "merge offsets", "shared computation", "accumulator merge", "per-core region"]
 
 [[tenet]]
@@ -192,8 +199,9 @@ At every phase boundary, the engine emits a release fence on the producer side a
 '''
 origin = "proposed"
 written_by = "design round 202605101036, topic plan algorithm chain, section S7 added 2026-05-10 after an audit; the text does not say whose it is"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["phase barrier", "release fence", "acquire fence", "Relaxed", "cross-thread visibility", "AdaptWu"]
 
 [[tenet]]
@@ -210,8 +218,9 @@ This is the single biggest soundness anchor for the runtime; mismatches against 
 '''
 origin = "proposed"
 written_by = "design round 202605101036, topic plan algorithm chain, section S7 added 2026-05-10 after an audit; the text does not say whose it is"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["atomic ordering", "cross-thread", "ordering table", "soundness anchor", "progress counter", "audit"]
 
 [[tenet]]
@@ -230,8 +239,9 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "topic a2b-dispatch-loop-inversion of 2026-07-16, round 202607161810, agent-written"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["mixed carrier", "incremental skip", "accumulator fiber", "morsel_local", "dirty gate", "unit-outer", "all-ones mask"]
 rejects = ["The old global either/or (any accumulator fiber forced the whole frame unit-outer with an all-ones mask)"]
 related = ["tenet::a_unit_whose_inputs_are_all_clean_skips_the_pass", "tenet::change_detection_is_per_morsel_and_skips_what_is_unchanged"]
@@ -264,7 +274,7 @@ sizes the accumulator for its maximum per-frame appends; that is the contract.
 '''
 origin = "proposed"
 written_by = "topic accum-overcap-hard-error of 2026-06-20, round 202606200300, agent-written"
-standing = "pending"
+standing = "held"
 keywords = ["accumulator", "over-capacity", "resolve_append", "panic", "assert", "silent drop", "capacity contract", "fail-loud"]
 rejects = ["a silent drop"]
 related = ["tenet::an_accumulator_append_saturates_at_the_reserved_capacity_which_equals_the_record_count_at_build"]
@@ -303,8 +313,9 @@ applies. The decision was sound for the shape it assumed; the shape changed.
 '''
 origin = "proposed"
 written_by = "topic a4-parallel-per-fiber-windows of 2026-07-19, round 202607190930, agent-written, correcting the plan of record in roadmap r6"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["A4", "parallel path", "per-fiber window", "fiber-outer", "loop inversion", "gate2_fiber", "run_core_phase", "dispatch_core"]
 rejects = ["through a unit-to-fiber-size lookup, which needs a `gate2_fiber` mapping"]
 related = ["tenet::each_core_walks_a_phase_fiber_by_fiber_and_windows_the_records_by_that_fiber_s_morsel_size", "tenet::a_fiber_s_morsel_size_is_a_window_and_the_fiber_covers_the_one_record_range_in_count_over_window_morsels"]
@@ -344,8 +355,9 @@ as an N-way record or morsel partition."
 '''
 origin = "proposed"
 written_by = "topic n-way-record-split-is-not-convergence of 2026-07-19, round 202607192110, agent-written"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["N-way record split", "head and tail convergence", "single-trunk phase", "commutative", "two threads", "opposite ends", "drift", "run_core_phase"]
 rejects = ["an N-way record or morsel partition"]
 related = ["tenet::a_single_trunk_phase_runs_head_and_tail_convergence_with_two_threads_from_opposite_ends", "tenet::head_and_tail_convergence_is_designed_and_not_built_and_a_single_trunk_phase_runs_serially_until_it_is"]
@@ -377,8 +389,9 @@ r7's R1 entry are corrected in the same commit range.
 '''
 origin = "proposed"
 written_by = "topic delete-the-n-way-record-split of 2026-07-19, round 202607192410, and the src changelist of round 202607192310, agent-written, correcting an earlier pass of the same arc"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["record slice", "participation", "accumulator path", "run_core_phase", "waist", "trunk-rank ownership", "N-way record split", "strand"]
 rejects = ["the deletion would strand trunks"]
 related = ["tenet::the_n_way_record_split_of_a_single_trunk_phase_is_not_head_and_tail_convergence_and_is_drift", "tenet::each_core_appends_into_its_own_region_of_an_accumulator_and_the_main_thread_merges_the_regions_in_order"]
@@ -415,8 +428,9 @@ with its module, which resolves the "three barriers" finding without needing its
 '''
 origin = "proposed"
 written_by = "topic delete-superseded-dispatch-and-barrier of 2026-07-19, round 202607192910, agent-written"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["phase_run", "nested carrier", "RunPhase", "RunPipeline", "const-eval grouping", "superseded", "waist barrier", "phase_pipeline_dispatch"]
 rejects = ["the nested-carrier type construction"]
 related = ["tenet::r4_replaces_the_nested_carrier_type_construction_with_const_eval_grouping_and_const_gated_dce"]
@@ -451,8 +465,9 @@ promise is what should be deleted, not honoured.
 '''
 origin = "proposed"
 written_by = "topic delete-superseded-dispatch-and-barrier of 2026-07-19, round 202607192910, agent-written, correcting an earlier conclusion of the same arc"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["phase barrier", "waist_barrier", "sense-reversing", "phase_arrived", "drift", "barrier protocol", "phase_barrier_arrive"]
 rejects = ["canon names no runtime barrier shape, so both should stay with a clarifying doc note"]
 related = ["tenet::the_pool_frame_is_the_engine_internal_data_plane_on_per_pool_cache_lines_and_the_phase_barrier_is_one_atomic_counter"]
@@ -473,7 +488,8 @@ The clamp paragraph names `runnable_worker_count` as the thread module's `pub co
 '''
 origin = "proposed"
 written_by = "topic of round 202609190201 'the review findings on the arvo-dev round' and doc changelists of rounds 202609190201 and 202609191001, 2026-09-19, agent-written"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["worker count", "MAX_CORES", "clamp", "run_parallel", "runnable_worker_count", "worker_ctxs", "per-core state"]
 related = ["tenet::the_closures_handed_out_number_the_smaller_of_the_clamped_worker_count_and_the_parallelisable_width_plus_the_convergence_worker"]

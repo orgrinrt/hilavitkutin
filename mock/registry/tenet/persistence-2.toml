@@ -18,8 +18,9 @@ container, etc.).
 because = "All files are rkyv archives, always consistent (complete writes via MemoryProvider)."
 origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["backup", "snapshot", "copy data directory", "consistent archives", "ZIP+zstd", "complete writes", "container format"]
 
 [[tenet]]
@@ -40,8 +41,9 @@ standard `Has...Provider` accessor pattern.
 '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["PersistenceProvider", "SchedulerBuilder", "Has...Provider", "engine boundary", "Topic 8 axis C", "resource resolution", "no direct dependency"]
 related = ["tenet::persistence_is_wired_in_by_the_consumer_through_a_provider_and_the_engine_never_depends_on_the_persistence_crate_s_types"]
 
@@ -63,8 +65,9 @@ pair (Topic 3 S7 atomic-ordering protocol).
 '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["PassEnd", "drain protocol", "PersistenceProvider::commit", "accumulator columns", "phase barrier", "Release-Acquire", "Topic 3 S7", "commit boundary"]
 
 [[tenet]]
@@ -81,8 +84,9 @@ provider impls; this crate ships no engine-side glue.
 '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["standalone ecosystem crate", "provider impls", "vehje", "loimu", "no engine-side glue", "substrate consumers"]
 
 [[tenet]]
@@ -104,7 +108,7 @@ The integration is intentionally narrow: the engine never depends on `hilavitkut
 '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 8 resource resolution of 2026-05-11, which calls its decisions autonomous trivial calls"
-standing = "pending"
+standing = "held"
 keywords = ["persistence spine", "PersistenceProvider", "cold store", "PassEnd", "commit", "hot side column", "standalone crate"]
 
 [[tenet]]
@@ -154,8 +158,9 @@ Op: "Builds on str and api". The rule said persistence and str do not depend on 
 - On persistence's dependencies, choosing among standalone, "Builds on str and api", and str without api: "Builds on str and api".
 '''
 origin = "stated"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: his answer at mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:36-46 chooses the option that the per-crate design holds and that the lint allows the str crate and the api crate while it still forbids the engine, which is the row op_ruled_that_the_persistence_crate_builds_on_the_str_and_api_crates_and_its_design_holds_over_the_lint; that the lint forbids the context crate too, that its reason says what the crate builds on and the wording of the cargo rule are the rounds applying his answer (mock/design_rounds/202609181402/202609181401_topic.hilavitkutin-on-arvo-dev.md:83-83, mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:31-31), and were added to the ratified row in words that are not his, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "provisional"
+stamped_by = "experts"
+stamp = 'provisional, 2026-11-13: his answer at mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:36-46 chooses the option that the per-crate design holds and that the lint allows the str crate and the api crate while it still forbids the engine, which is the row op_ruled_that_the_persistence_crate_builds_on_the_str_and_api_crates_and_its_design_holds_over_the_lint; that the lint forbids the context crate too, that its reason says what the crate builds on and the wording of the cargo rule are the rounds applying his answer (mock/design_rounds/202609181402/202609181401_topic.hilavitkutin-on-arvo-dev.md:83-83, mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:31-31), and were added to the ratified row in words that are not his, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["persistence", "builds on str and api", "forbidden-imports", "op's ruling", "2026-09-18", "MemoryProvider", "hilavitkutin-str"]
 rejects = ["The rule said persistence and str do not depend on each other"]
 related = ["tenet::the_persistence_crate_is_the_generic_hot_cold_storage_bridge_as_a_standalone_ecosystem_crate", "tenet::the_persistence_crate_does_not_depend_on_the_engine_and_works_on_raw_column_data_through_evict_and_inject_over_a_consumer_provided_column_storage"]
