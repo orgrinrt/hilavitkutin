@@ -44,18 +44,20 @@ pub trait Provider {
 }
 ```
 
-The associated `Init` names the construction-time value type. For
-stateful wrappers (`Resource<T>`) it is the inner `T`. For the
-zero-data wrappers (`Column<T>`, `Virtual<T>`, `LinkedBin<dyn Trait>`)
-it is `()`. For unit-struct WorkUnits, Kits, and platform-impl types
-it is `Self` (the registration value IS the construction value).
+The associated `Init` names the construction-time value type. For a
+store that holds values it is the value's type: the inner `T` of a
+`Resource<T>`, and the element type of a `Column<T>` or a
+`Buffered<T, M>`, whose start it is. For the zero-data wrappers
+(`Accum<T>`, `Virtual<T>`, `LinkedBin<dyn Trait>`) it is `()`. For
+unit-struct WorkUnits, Kits, and platform-impl types it is `Self` (the
+registration value IS the construction value).
 
-`Resource::new(value)` returns a value-carrying carrier rather than
-dropping `value`. The builder moves each registered input onto a
-staged value list at `.with`, so a registered store value is retained
-until `build()` moves it into the `MemoryProvider`-allocated arena.
-The zero-data wrappers (`Column<T>`, `Virtual<T>`) carry no value;
-their `Init` is `()`.
+`Resource::new(value)` and a column's `start()` and `start_from(value)`
+return a value-carrying carrier rather than dropping the value. The
+builder moves each registered input onto a staged value list at `.with`,
+so a registered store value is retained until `build()` moves it into
+the `MemoryProvider`-allocated arena. The zero-data wrappers
+(`Accum<T>`, `Virtual<T>`) carry no value; their `Init` is `()`.
 
 `Dispatch` is the per-kind typestate router (next subsection). The
 constant `KIND: ProviderKind` is a documentation and debugging aid;
@@ -63,7 +65,7 @@ load-bearing dispatch is via `Provider::Dispatch`, not the constant.
 
 The trait carries `#[diagnostic::on_unimplemented]`. The message
 points at the constructors a consumer reaches for: `Resource::new(value)`,
-`Column::<T>::new()`, `Virtual::<T>::new()`, `LinkedBin::<dyn TraitFamily>::new()`,
+`Column::<T>::start()`, `Virtual::<T>::new()`, `LinkedBin::<dyn TraitFamily>::new()`,
 plus the unit-struct WorkUnit, Kit, and platform-impl shapes. A type
 that does not impl `Provider` cannot reach `.with`; the diagnostic
 names the gap directly.
@@ -172,27 +174,37 @@ record, which a value function does. `Snapshot` is the default since it
 is right under any writer. "Reading a store as it stood when the pass
 began" below has the rules.
 
-A buffered column is registered with the value every record of it starts
-from, and its element type decides which ways of naming that value there
-are. Both sides hold it at every record before the first pass, so the
-first pass reads it wherever no unit has written yet.
+A column, plain or buffered, is registered with the value every record
+of it starts from, and its element type decides which ways of naming
+that value there are. Every record of a plain column holds it before the
+first pass, and so does every record of both sides of a buffered one, so
+a read of the first pass sees it wherever no unit has written yet. No
+read of a column reaches a record nothing wrote.
 
 ```rust
-pub struct StagedBuffered<T, M = Snapshot>(/* the start, and the mode */);
+pub trait Starts: Sealed { type Value; }                     // `Column<T>` and `Buffered<T, M>`, and no other
+pub struct Started<S: Starts>(/* the start of the store `S` */);
 
-impl<T, M> Buffered<T, M> {
+impl<T> Column<T> {
     pub const fn new() -> Self;                              // the marker a unit names the store by
-    pub fn start_from(value: T) -> StagedBuffered<T, M>;     // any element type
+    pub const fn start_from(value: T) -> Started<Self>;      // any element type
 }
-impl<T: HasTrivialCtor, M> Buffered<T, M> {
-    pub fn start() -> StagedBuffered<T, M>;                  // the type's trivial constructor
+impl<T: HasTrivialCtor> Column<T> {
+    pub const fn start() -> Started<Self>;                   // the type's trivial constructor
 }
-pub trait StartsFromDefault {
-    type Staged;
-    fn start() -> Self::Staged;                              // the type's default
+// `Buffered<T, M>` has the same three.
+
+pub trait StartsFromDefault: Starts {
+    fn start() -> Started<Self>;                             // the type's default
 }
-impl<T: Default, M> StartsFromDefault for Buffered<T, M> { type Staged = StagedBuffered<T, M>; }
+impl<S: Starts> StartsFromDefault for S where S::Value: Default {}
 ```
+
+`Starts` is what the two columns share: a store that holds a value of
+its element type at every record. `Started<S>` is the one carrier of a
+start, for either. The three functions are written on each marker and
+not once over the trait, since the first tier has to be an inherent
+function (below) and an inherent function is written on a type.
 
 `start()` reads the element type's own start in a fixed sequence: its
 trivial constructor (`HasTrivialCtor`, from notko) where it has one, else
@@ -201,8 +213,15 @@ that has neither there is no `start()`, the call does not compile, and
 `start_from(value)` is the one way to register the column. `start_from`
 is there for every element type, so a type with a start of its own can
 still be started from another value. The marker alone is not registered:
-`.with(Buffered::<T>::new())` does not compile, since it says nothing of
-what the first pass reads.
+`.with(Column::<T>::new())` and `.with(Buffered::<T>::new())` do not
+compile, since the marker says nothing of what the first pass reads.
+
+The constructor is ahead of the default for what each is. A type that
+implements `HasTrivialCtor` beside `Default` has said what it is made as
+from nothing, and the constructor is callable in a constant, so a column
+of such a type can be registered from one. The default of a type that
+has both is still within reach, by the trait's own path or as
+`start_from(T::default())`.
 
 The sequence is not two blanket impls of one trait, which would overlap
 for a type that has both. The first tier is an inherent function under
@@ -213,6 +232,12 @@ tier is called, and the choice is made where `start()` is written, from
 what is known of the type there: a generic caller that knows only
 `T: Default` gets the default.
 <!-- FIXME(df2e4da2d376): a tier ahead of the two, for a type whose all-zeros pattern is a value of it, waits on a trait notko does not have -->
+
+The start is one value for the whole store. Data that differs from
+record to record is written by a unit in a pass, as any column is
+written. A column a kit owns is named by its marker in the kit's list
+and has no start there.
+<!-- FIXME(ac91dfb44d6e): a kit names the columns it owns by marker alone, and what such a column starts from is undecided -->
 
 `Accum<T>` is a marker of its own on the same pattern. It reserves a
 capacity at build, is reset to no values at the top of a frame and grows
@@ -266,36 +291,36 @@ indices by execution time.
 
 ### Store wrappers as Providers
 
-`Resource<T>`, `Column<T>`, and `Virtual<T>` each impl `Provider` so
-they reach `.with` on the SchedulerBuilder. Their `Dispatch` is
-`StoreDispatch<Self>`. `Resource<T>::Init = T` (the wrapper carries
-the inner value at construction). `Column<T>::Init = ()` and
-`Virtual<T>::Init = ()` (zero-data markers).
-
-Construction at the call site is uniform:
+A store reaches `.with` on the SchedulerBuilder through a `Provider`
+whose `Dispatch` is `StoreDispatch` of the store's marker. A store that
+holds values is registered with a carrier of its value, and a store that
+holds none with its marker:
 
 ```rust
-.with(Resource::new(value))     // stateful wrapper, takes inner T
-.with(Column::<T>::new())       // zero-data wrapper, generic turbofish
-.with(Virtual::<T>::new())      // zero-data wrapper, generic turbofish
+.with(Resource::new(value))            // the resource's value
+.with(Column::<T>::start())            // the start of every record, from the element type
+.with(Column::<T>::start_from(value))  // the start of every record, named
+.with(Buffered::<T>::start())          // the same two for a buffered column,
+.with(Buffered::<T, Exchange>::start_from(value)) // in either mode
+.with(Accum::<T>::new())               // no values until a unit appends
+.with(Virtual::<T>::new())             // no data
 ```
 
-`Column` and `Virtual` impl `HasTrivialCtor` (from notko); the
-`new()` method on each calls through to the trait's const-callable
-zero-arg constructor. `Resource` keeps its inherent
-`pub const fn new(value: T) -> Self` constructor because it carries
-state; it does not impl `HasTrivialCtor`.
+`Resource::new(value)` returns a `StagedResource<T>`, with `Init = T`
+and `Dispatch = StoreDispatch<Resource<T>>`. A column's `start()` and
+`start_from(value)` return a `Started<S>` for its marker `S`, with
+`Init` the element type and `Dispatch = StoreDispatch<S>`. In both the
+store list holds the marker and a unit names the store by it. "Store
+types" above has which of the two calls exists for which element type.
+`Accum<T>` and `Virtual<T>` are their own providers, with `Init = ()`
+and `Dispatch = StoreDispatch<Self>`.
 
-`Accum<T>` registers the same way as `Column`
-(`.with(Accum::<T>::new())`), with `Init = ()` and
-`Dispatch = StoreDispatch<Self>`. `Buffered<T, M>` registers as
-`Resource` does, through a carrier of a value:
-`.with(Buffered::<T>::start())` or `.with(Buffered::<T>::start_from(value))`
-for the default mode, and the same two on `Buffered::<T, Exchange>` for
-the other. The carrier is `StagedBuffered<T, M>`, with `Init = T` and
-`Dispatch = StoreDispatch<Buffered<T, M>>`, so the store list holds the
-marker and a unit names the store as before. "Store types" above has
-which of the two exists for which element type.
+`Column<T>` and `Buffered<T, M>` are not providers: the marker of a
+store that holds a value at every record says nothing of that value.
+
+`Column`, `Buffered`, `Accum` and `Virtual` impl `HasTrivialCtor` (from
+notko), the trait's const-callable zero-arg constructor of the marker.
+`Resource` has no marker constructor of its own and does not impl it.
 
 ## Record counts
 
@@ -585,7 +610,7 @@ writes (the engine's DESIGN says where that is), and the engine makes
 the compare only for a write it reads so. The bound is asked of every
 unit all the same, so that a unit's types stay as they are when the
 engine reads more units' writes.
-<!-- FIXME(8e2e2326d588): the engine reads the mark for maintenance units and for buffered columns alone -->
+<!-- FIXME(8c7cc9768579): the engine reads the mark for maintenance units and for buffered columns alone -->
 
 ## Maintenance units and the close
 
@@ -722,7 +747,8 @@ no second side. Ordinary units append the changes they mean, and a unit
 at the close applies them to a `Column` in place, as `ApplyHeat` does
 above. The store has one copy and the close costs what changed. A column
 whose every writer is at the close holds, for every ordinary unit of a
-pass, the value it had when the pass began. That follows from rank and
+pass, the value it had when the pass began, which in the first pass is
+the value it was registered with. That follows from rank and
 no word of the contract states it: it is a fact of a registration, which
 a consumer keeps by the bound of its own named under "Maintenance units
 and the close". The engine's own scheduler metrics are published by rank
@@ -1342,7 +1368,7 @@ unsatisfied bound is reported on `Holds` with the api's message:
 
 ```text
 note: store `{Self}` does not contain `{T}`. Register it with
- `.with(Resource::new(value))`, `.with(Column::<T>::new())`,
+ `.with(Resource::new(value))`, `.with(Column::<T>::start())`,
  `.with(Virtual::<T>::new())`, or install a Kit that owns it via
  `.with(MyKit)`. If `.build()` reports `overflow evaluating the
  requirement`, declare `#![recursion_limit = "1024"]` at your crate
@@ -1432,7 +1458,7 @@ do not duplicate proof work inside a membership.
 
 When a consumer registers a WU via `.with(MyWu)` whose `Read`
 mentions a store not added via `.with(Resource::new(value))` /
-`.with(Column::<T>::new())` / `.with(Virtual::<T>::new())` /
+`.with(Column::<T>::start())` / `.with(Virtual::<T>::new())` /
 `.with(MyKit)`, rustc reports the missing membership using the
 diagnostic message above, naming the missing store by type. The
 inline error leads with the `Empty: Contains<...>` failure on the
