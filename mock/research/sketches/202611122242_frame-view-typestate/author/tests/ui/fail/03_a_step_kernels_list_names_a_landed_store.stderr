@@ -1,0 +1,22 @@
+error[E0277]: `Landings` is not a frame lane
+  --> tests/ui/fail/03_a_step_kernels_list_names_a_landed_store.rs:11:18
+   |
+11 |     type Reads = Cons<Landings, Empty>;
+   |                  ^^^^^^^^^^^^^^^^^^^^^ the trait `FrameLane` is not implemented for `Landings`
+   |
+   = note: A step kernel's read and write lists name frame lanes only. A landed store is named by a close unit.
+help: the following other types implement trait `FrameLane`
+  --> src/lib.rs
+   |
+   | impl FrameLane for Pos {}
+   | ^^^^^^^^^^^^^^^^^^^^^^ `Pos`
+   | impl FrameLane for Vel {}
+   | ^^^^^^^^^^^^^^^^^^^^^^ `Vel`
+   | impl FrameLane for Heat {}
+   | ^^^^^^^^^^^^^^^^^^^^^^^ `Heat`
+   = note: required for `Cons<Landings, notko_hlist::Empty>` to implement `FrameList`
+note: required by a bound in `engine::ValueKernel::Reads`
+  --> $WORKSPACE/engine/src/kernel.rs
+   |
+   |     type Reads: FrameList;
+   |                 ^^^^^^^^^ required by this bound in `ValueKernel::Reads`

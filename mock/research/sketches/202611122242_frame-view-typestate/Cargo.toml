@@ -1,0 +1,16 @@
+# Sketch S3: the committed frame view and the two kernel regimes as types.
+# Its own workspace, so the repository's build never sees it. `engine` stands
+# in for hilavitkutin and `author` for a crate writing kernels against it.
+
+[workspace]
+resolver = "3"
+members = ["engine", "author"]
+
+[workspace.package]
+edition = "2024"
+publish = false
+version = "0.0.0"
+
+[workspace.dependencies]
+notko-hlist = { git = "https://github.com/orgrinrt/notko.git", rev = "1a978e5c2db6c8f68bf94a6fcae266394f172b17" }
+engine = { path = "engine" }

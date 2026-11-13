@@ -1,0 +1,12 @@
+[package]
+name = "author"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+[dependencies]
+engine.workspace = true
+notko-hlist.workspace = true
+
+[dev-dependencies]
+trybuild = "1"
