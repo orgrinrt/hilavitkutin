@@ -31,7 +31,7 @@ repository = "https://github.com/orgrinrt/hilavitkutin"
 # primitives. Consumed by hilavitkutin-api for its contract traits
 # (BoundedPush, Decoder) and by any downstream crate needing the
 # fallibility ladder.
-notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", version = "0.0.1", default-features = false, features = ["const", "try_trait_v2"] }
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev", version = "0.0.1", default-features = false, features = ["const", "try_trait_v2"] }
 
 # arvo substrate — referenced via path when developing in tandem, via
 # crates.io / git dep once published. For now the mockspace validates
@@ -69,3 +69,10 @@ hilavitkutin-providers = { path = "crates/hilavitkutin-providers", version = "0.
 hilavitkutin-linking = { path = "crates/hilavitkutin-linking", version = "0.1.0" }
 hilavitkutin-extensions = { path = "crates/hilavitkutin-extensions", version = "0.1.0" }
 hilavitkutin-extensions-macros = { path = "crates/hilavitkutin-extensions-macros", version = "0.1.0" }
+
+# The pinned arvo crates name notko by its `ssh` spelling in their own
+# manifests, and cargo keys a git source by the URL as written. Without this the
+# graph holds a second notko, and a type of one is not a type of the other.
+# The patch points that spelling at the `https` source named above.
+[patch."ssh://git@github.com/orgrinrt/notko.git"]
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev" }
