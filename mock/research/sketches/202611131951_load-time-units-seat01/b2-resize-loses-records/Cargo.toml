@@ -1,0 +1,16 @@
+# Arm B, growth through the trunk's `ColumnStorage::reserve`. The contract says
+# "Re-reserving an existing id resizes it" (hilavitkutin-api/src/storage.rs:46-47).
+# This spike checks what a resize keeps, against the trunk's only shipped
+# implementation, `hilavitkutin_providers::ArenaColumnStorage`.
+
+[package]
+name = "b2-resize-loses-records"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+[dependencies]
+hilavitkutin-api.workspace = true
+hilavitkutin-providers.workspace = true
+arvo.workspace = true
+notko.workspace = true
