@@ -1,0 +1,19 @@
+[workspace]
+
+[package]
+name = "s1-host"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+hilavitkutin-linking = { path = "../../../../../crates/hilavitkutin-linking" }
+hilavitkutin-extensions = { path = "../../../../../crates/hilavitkutin-extensions" }
+libc = { version = "0.2" }
+
+[patch."ssh://git@github.com/orgrinrt/notko.git"]
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev" }
