@@ -70,18 +70,18 @@ fn ci_defaults() {
     assert!(!s.contains(Pragma::Profiling));
 }
 
+/// Cargo passes a build script `debug` or `release` and nothing else.
 #[test]
-fn from_cargo_profile_known_values() {
-    assert_eq!(Profile::from_cargo_profile("dev"), Profile::Dev);
-    assert_eq!(Profile::from_cargo_profile("dev-opt"), Profile::DevOpt);
+fn the_two_names_cargo_passes_resolve() {
+    assert_eq!(Profile::from_cargo_profile("debug"), Profile::Dev);
     assert_eq!(Profile::from_cargo_profile("release"), Profile::Release);
-    assert_eq!(Profile::from_cargo_profile("profiling"), Profile::Profiling);
-    assert_eq!(Profile::from_cargo_profile("ci"), Profile::Ci);
 }
 
+/// A name cargo never passes, the custom profile names among them, is
+/// `Dev`: cargo does not tell a build script which custom profile it builds.
 #[test]
 fn from_cargo_profile_unknown_falls_through_to_dev() {
-    assert_eq!(Profile::from_cargo_profile(""), Profile::Dev);
-    assert_eq!(Profile::from_cargo_profile("bench"), Profile::Dev);
-    assert_eq!(Profile::from_cargo_profile("Release"), Profile::Dev); // case-sensitive
+    for name in ["", "bench", "Release", "dev", "dev-opt", "profiling", "ci"] {
+        assert_eq!(Profile::from_cargo_profile(name), Profile::Dev, "{name:?}");
+    }
 }

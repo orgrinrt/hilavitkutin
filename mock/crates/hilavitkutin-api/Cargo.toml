@@ -19,3 +19,6 @@ trybuild = "1"
 
 [features]
 default = []
+
+[build-dependencies]
+hilavitkutin-build.workspace = true

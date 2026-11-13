@@ -1,0 +1,5 @@
+# Every crate whose build script calls `hilavitkutin_build::configure` gets the rustc flags its
+# pragmas chose through this wrapper. The wrapper's text is `hilavitkutin_build::write_wrapper`'s,
+# and a test of that crate holds this copy to it.
+[build]
+rustc-workspace-wrapper = ".cargo/hilavitkutin-rustc-wrapper"

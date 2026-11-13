@@ -79,3 +79,11 @@ hilavitkutin-extensions-macros = { path = "crates/hilavitkutin-extensions-macros
 # The patch points that spelling at the `https` source named above.
 [patch."ssh://git@github.com/orgrinrt/notko.git"]
 notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev" }
+
+# The release config of `hilavitkutin-build`. ExpandedLto is these two keys, which a build script
+# cannot set, so they live here; the other release pragmas reach rustc through the wrapper in
+# `.cargo/`.
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

@@ -24,3 +24,6 @@ notko.workspace = true          # Maybe, Outcome
 
 [features]
 default = []
+
+[build-dependencies]
+hilavitkutin-build.workspace = true
