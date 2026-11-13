@@ -140,3 +140,30 @@ type directly. The Payload trait simplifies to ColumnValue:
 subject = "records"
 keywords = ["Payload", "SlotSize", "Slot15", "Slot16", "sealed set", "ColumnValue", "R4"]
 related = ["tenet::the_column_value_trait_replaces_the_payload_and_slot_size_system"]
+
+[[question]]
+id = "how_record_sets_of_different_counts_live_together"
+asks = "How do record sets of different counts live together in hilavitkutin, such as beings, tiles and items in one frame?"
+options = [
+    "Several sets in one schedule, each contiguous with its own count as a plan parameter, a fiber belonging to one set, a cross-set reach a declared read the plan orders",
+    "One schedule per set, as the founding round says, crossings through resources or accumulators the consumer carries",
+    "Bench both first: sketch and bench both shapes on kaski-like data before the api takes either",
+]
+state = "answered"
+answer = "Bench both first"
+answered = "2026-11-13 about 10:35 UTC: channel document briefs/fixup/op-answers-13.md, entry 2"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS-13.md:15-23"
+quote = '''
+## 2. Record sets of different counts
+
+Asked: how do record sets of different counts live together in hilavitkutin (beings, tiles, items in one frame)? The founding record has one count per schedule and separate schedules per set of columns held by the consumer; it has no passage on one schedule holding several counts.
+
+Options: [a: Several sets in one schedule, each contiguous with its own count as a plan parameter, a fiber belonging to one set, a cross-set reach a declared read the plan orders] [b: One schedule per set, as the founding round says, crossings through resources or accumulators the consumer carries] [c: Bench both first: sketch and bench both shapes on kaski-like data before the api takes either].
+
+Answer, verbatim: "Bench both first"
+
+Reading: option c. The api revision takes neither shape until a sketch and a bench of both exist.
+'''
+subject = "records"
+keywords = ["record set", "record count", "several counts", "one schedule per set", "bench both", "cross-set read"]
+related = ["question::where_the_record_count_of_a_column_lives"]
