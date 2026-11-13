@@ -204,6 +204,7 @@ answer = "Op ruled: unseal it. Consumers implement `PlanAffecting` on resource v
 answered = "2026-11-13, by default from the written history: mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md"
 answered_from = ["quote: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:55-62"]
 source = "mock/design_rounds/202605101036/202605101036_topic.resource-resolution.md:33-37, mock/crates/hilavitkutin-api/DESIGN.md.tmpl:1119-1127, mock/research/202611130850_the-record-read-whole/RECOVERED.md:137-146"
+rev = "c5f337a926adeddebc3b343a44d27e40c8a01503"
 quote = '''
 Sealed marker trait in `hilavitkutin-api`. Implementations are opt-in by consumers OR derived by macro:
 

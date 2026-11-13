@@ -215,6 +215,7 @@ subject = "governance"
 what = "The Replaceable swap semantics item is recorded as the spec implemented and benched on 2026-07-19, with the witnessed blob install, the plan-dirty band trigger and the exclusivity shipped and the test suite green. The benches confirm the cost asymmetry: the install is the linear memcpy, a value swap pays its cone, a plan swap pays the band, and neither leaks. The item awaits the maintainer's ratification of S1 through S7, and S3 and Swap-D stay gated on #344 inside the spec."
 mechanism = "Round `202607200500`; evidence record `202607201100_swap-semantics-ratification-evidence.md`; S1 witnessed blob install, S2 plan-dirty band trigger, S4 exclusivity, S6 suite, S7 benches; Swap-D decides whether the morsel budget's write-collection term absorbs swap traffic."
 source = "mock/research/seed/governance.md:96-106"
+rev = "c5f337a926adeddebc3b343a44d27e40c8a01503"
 provenance = ["mock::research::seed::governance::#open-questions-blocking-the-freeze"]
 quote = '''
 1. **`Replaceable` swap semantics**: SPEC IMPLEMENTED AND BENCHED
@@ -239,7 +240,7 @@ related = ["tenet::the_maintainer_held_ratification_of_the_swap_spec_until_it_wa
 id = "plan_affecting_is_ruled_an_open_marker_trait_and_what_a_plan_affecting_swap_propagates_resolves_inside_the_swap_item"
 subject = "governance"
 what = "The plan-affecting marker is ruled an open marker trait by addendum A2-3, so the ruling is made, and the remaining interplay detail, which is what a plan-affecting swap propagates, resolves inside the swap-semantics item."
-source = "mock/research/seed/governance.md:162-165"
+source = "mock/research/seed/governance.md:168-171"
 provenance = ["mock::research::seed::governance::#open-questions-blocking-the-freeze"]
 quote = '''
 6. **`PlanAffecting`** is ruled an open marker trait (A2-3); the ruling is
@@ -260,7 +261,7 @@ id = "the_manifest_records_per_chapter_which_sources_drained_into_it_and_what_wa
 subject = "governance"
 what = "The manifest records, for each chapter, which sources drained into it and what was deliberately left out as superseded."
 mechanism = "`MANIFEST.md`."
-source = "mock/research/seed/governance.md:194-195"
+source = "mock/research/seed/governance.md:200-201"
 provenance = ["mock::research::seed::governance::#chapter-map"]
 quote = '''
 `MANIFEST.md` records, per chapter, which sources drained into it and what

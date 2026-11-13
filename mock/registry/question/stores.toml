@@ -176,7 +176,7 @@ id = "what_the_shape_of_consumer_reads_of_seq_and_map_after_the_pipeline_is"
 asks = "What the shape of the consumer's reads of sequence and map members after the pipeline is. The seed lists the resource collection accessor shape as open, waiting on the storage layout work it depends on."
 options = ["the item waits on the storage layout work it depends on (the seed's open-question statement)", "collection access on both the read side and the write side is the ptr+len view over the member's collection-column region behind the erased descriptor, with the API landing with #344 (the swap spec's answer)"]
 state = "open"
-source = "mock/research/seed/governance.md:122-124"
+source = "mock/research/seed/governance.md:128-130"
 quote = '''
 4. **Resource collection accessor shape** (consumer reads of `Seq`/`Map`
    post-pipeline) waits on the storage layout work it depends on. See

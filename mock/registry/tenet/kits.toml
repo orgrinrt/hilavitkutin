@@ -413,6 +413,7 @@ subject = "kits"
 what = "Replaceable is the only enforced annotation on owned types, and kit authors opt in per type. An override of a kit-owned resource by the app is rejected at compile time unless the type opted in, which makes the polarity safer by default and follows the workspace rule of tools and not policies."
 mechanism = "`Replaceable` marker in `hilavitkutin-api`; the static bound `T: Replaceable` on `Scheduler::replace_resource::<T>(value)` in the engine crate; `impl Replaceable for LintConfig {}` allows override, `RoundState` without the impl is locked. Polarity decision in sketch S4, `mock/research/sketches/202605050555_replaceable_polarity/`."
 source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:190-211"
+rev = "c5f337a926adeddebc3b343a44d27e40c8a01503"
 provenance = ["mock::crates::hilavitkutin-kit::DESIGN::#replaceable-enforced-override-gating"]
 quote = '''
 ## Replaceable: enforced override gating

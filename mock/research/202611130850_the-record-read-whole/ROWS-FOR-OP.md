@@ -454,7 +454,7 @@ A tenet. It says: The GATE-2 deviation 3, park-immediately, is resolved by bench
 
 Finding: The founding spec says the pre-allocated pool wakes by a hybrid spin 128 then park, while the row makes park-immediately the ruling with the spin budget defaulting to zero. The registry row the_thread_pool_is_pre_allocated_and_wakes_by_spinning_first_and_then_parking carries the founding side, and the record of the re-examination shows he only flagged the first result as too convenient and asked for a second look.
 
-Passages: `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:778-779`, `mock/research/seed/governance.md:146-158`.
+Passages: `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:778-779`, `mock/research/seed/governance.md:152-164`.
 
 #### `whether_the_default_wake_is_the_spin_then_park_hybrid_of_the_spec_or_park_immediately_ruled_by_the_wake_bench`
 
@@ -467,7 +467,7 @@ Its options on record:
 
 Finding: The founding spec says the pool wakes by a hybrid spin 128 then park while the bench round ruled park-immediately with the budget defaulting to zero, so the question's two sides are the record's own conflict and nothing of his settles it, the re-examination record showing only that he called the first result too convenient.
 
-Passages: `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:778-779`, `mock/research/seed/governance.md:146-158`.
+Passages: `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:778-779`, `mock/research/seed/governance.md:152-164`.
 
 
 ### Calls drawn from the benches of the bare engine
@@ -817,7 +817,7 @@ A tenet. It says: The Replaceable swap specification is a draft pending the main
 
 Finding: The row records that the swap spec waits on his ratification, and governance still says it awaits it; the commissioning part is his direction in A2-5 lines 88-94.
 
-Passages: `mock/research/202607200200_replaceable-swap-semantics-spec.md:4-6`, `mock/research/seed/governance.md:96-106`.
+Passages: `mock/research/202607200200_replaceable-swap-semantics-spec.md:4-6`, `mock/research/seed/governance.md:96-106` (as it stood at c5f337a, before the trunk rewrote the passage).
 
 #### `the_swap_d_bench_is_commissioned_with_the_trigger_when_the_344_write_side_lands`
 
@@ -857,7 +857,7 @@ A tenet. It says: The ask is to ratify S1 through S7 as the swap-semantics canon
 
 Finding: This is the ask of the evidence memo to him, and the governance chapter still says it awaits his ratification of S1 through S7; the record shows no answer.
 
-Passages: `mock/research/202607201100_swap-semantics-ratification-evidence.md:77-83`, `mock/research/seed/governance.md:96-106`.
+Passages: `mock/research/202607201100_swap-semantics-ratification-evidence.md:77-83`, `mock/research/seed/governance.md:96-106` (as it stood at c5f337a, before the trunk rewrote the passage).
 
 #### `whether_the_maintainer_ratifies_s1_through_s7_of_the_swap_spec_as_the_swap_semantics_canon`
 
@@ -870,7 +870,7 @@ Its options on record:
 
 Finding: Open question waiting on his ratification: the memo puts the ask to him and governance says it still awaits it, with no answer of his in the record or the captures.
 
-Passages: `mock/research/202607201100_swap-semantics-ratification-evidence.md:77-83`, `mock/research/seed/governance.md:96-106`.
+Passages: `mock/research/202607201100_swap-semantics-ratification-evidence.md:77-83`, `mock/research/seed/governance.md:96-106` (as it stood at c5f337a, before the trunk rewrote the passage).
 
 #### `a_replaceable_swap_installs_the_whole_value_as_one_blob_write_and_marks_the_store_dirty`
 
@@ -878,7 +878,7 @@ A tenet. It says: Swapping a replaceable resource installs the whole value as on
 
 Finding: The whole-blob install is clause S1 of a specification whose own status line says DRAFT pending op ratification, and the seed's governance records that it awaits his ratification of S1 through S7. The row states as the design what the record says waits on him.
 
-Passages: `mock/research/202607200200_replaceable-swap-semantics-spec.md:3-8`, `mock/research/seed/governance.md:96-104`.
+Passages: `mock/research/202607200200_replaceable-swap-semantics-spec.md:3-8`, `mock/research/seed/governance.md:96-104` (as it stood at c5f337a, before the trunk rewrote the passage).
 
 #### `a_swap_of_a_resource_value_is_legal_only_between_frames_and_is_observed_from_the_next_run`
 
@@ -894,7 +894,7 @@ A tenet. It says: The Replaceable swap semantics item is recorded as the spec im
 
 Finding: The item says in words that it awaits the op ratification of S1 through S7, with S3 and Swap-D staying gated on #344, so the content is implemented work pending his ruling.
 
-Passages: `mock/research/seed/governance.md:96-106`.
+Passages: `mock/research/seed/governance.md:96-106` (as it stood at c5f337a, before the trunk rewrote the passage).
 
 #### `what_the_shape_of_consumer_reads_of_seq_and_map_after_the_pipeline_is`
 
@@ -907,7 +907,7 @@ Its options on record:
 
 Finding: The seed says the accessor shape waits on the storage layout work it depends on, while the swap spec answers it with the ptr and len view over the member's collection-column region, the API landing with #344; that spec is itself a draft pending his ratification, and the other side is the row collection_access_read_and_write_is_the_ptr_len_view_over_the_member_s_collection_column_region_behind_the_erased_descriptor.
 
-Passages: `mock/research/seed/governance.md:122-124`, `mock/research/202607200200_replaceable-swap-semantics-spec.md:68-75`.
+Passages: `mock/research/seed/governance.md:128-130`, `mock/research/202607200200_replaceable-swap-semantics-spec.md:68-75`.
 
 
 ### The deviations of the shipped engine that wait on a bless
@@ -928,7 +928,7 @@ A tenet. It says: The evidence for the GATE-2 deviations 1 and 6, the inline poo
 
 Finding: The item opens by saying the six GATE-2 deviations each await an evidence-then-bless ruling, and the relocation round is named as the proposed ruling, so the content is an agent's proposal pending his review.
 
-Passages: `mock/research/seed/governance.md:125-133`.
+Passages: `mock/research/seed/governance.md:131-139`.
 
 #### `deviation_five_has_a_confirmed_aliasing_hole_so_the_plane_relocation_is_soundness_required_and_resolves_deviations_one_five_and_six_in_one_round`
 
@@ -936,7 +936,7 @@ A tenet. It says: The GATE-2 deviation 5, raw scheduler aliasing, was audited on
 
 Finding: The same item states the deviations await the evidence-then-bless ruling; the audit is delivered evidence and the one-round resolution is still the proposal put to him, not a ruling.
 
-Passages: `mock/research/seed/governance.md:125-138`.
+Passages: `mock/research/seed/governance.md:131-144`.
 
 #### `deviation_four_pointer_size_spawn_is_sound_as_shipped_and_the_proposed_ruling_blesses_it_with_a_compile_time_size_check`
 
@@ -944,7 +944,7 @@ A tenet. It says: The design memo for the GATE-2 deviation 4, the pointer-size s
 
 Finding: The deviations await an evidence-then-bless ruling and the passage calls the blessing with the compile-time size check "the proposed ruling", an agent's proposal pending his review.
 
-Passages: `mock/research/seed/governance.md:125-126`, `mock/research/seed/governance.md:142-146`.
+Passages: `mock/research/seed/governance.md:131-132`, `mock/research/seed/governance.md:148-152`.
 
 #### `the_spectral_role_deviation_evidence_favours_canon_s_role_split_of_greedy_fibers_and_spectral_trunks`
 
@@ -952,7 +952,7 @@ A tenet. It says: The evidence on the spectral role deviation was delivered on 2
 
 Finding: The item calls the restoration of the step 7 and 8 roles "the proposed ruling" and says it "Awaits the op bless per evidence-then-bless".
 
-Passages: `mock/research/seed/governance.md:114-121`.
+Passages: `mock/research/seed/governance.md:120-127`.
 
 #### `whether_the_maintainer_blesses_the_plane_relocation_round_for_deviations_one_five_and_six_and_the_bless_of_deviation_four`
 
@@ -965,7 +965,7 @@ Its options on record:
 
 Finding: A2-4 records that the shipped shapes deviate from the canon shapes and that none is blessed or rebuilt by default, and the seed carries the proposed rulings for deviations 1, 5, 6 and 4; the canon side and the shipped side conflict and nothing of his rules between them.
 
-Passages: `mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:64-71`, `mock/research/seed/governance.md:125-146`.
+Passages: `mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:64-71`, `mock/research/seed/governance.md:131-152`.
 
 #### `whether_the_maintainer_blesses_the_proposed_restoration_of_the_canon_s_trunk_and_fiber_roles_for_spectral_and_greedy_grouping`
 
@@ -978,7 +978,7 @@ Its options on record:
 
 Finding: Canon forms trunks spectrally while the shipped code forms fibers spectrally within wide blocks, and A2-4's closing sentence puts that deviation under evidence-then-bless; the evidence is delivered and the item still awaits his bless, so nothing of his settles the two sides.
 
-Passages: `mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:72-73`, `mock/research/seed/governance.md:114-121`.
+Passages: `mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:72-73`, `mock/research/seed/governance.md:120-127`.
 
 #### `the_engine_holds_no_thread_handle_and_dropping_the_scheduler_stops_the_workers_by_flag_and_wake_and_waits_on_an_exit_counter`
 
