@@ -11,6 +11,8 @@ members = [
     "c2-packed-word-race",
     "a3-morsel-interpreter",
     "b3-paged-column",
+    "a4-slot-unit/ext",
+    "a4-slot-unit/host",
 ]
 
 [workspace.package]
