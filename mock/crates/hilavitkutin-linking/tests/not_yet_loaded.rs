@@ -20,34 +20,45 @@ unsafe extern "C" {
     fn dlopen(path: *const c_char, flags: c_int) -> *mut c_void;
 }
 
-#[cfg(target_arch = "x86_64")]
-const CANDIDATES: &[&[u8]] = &[
-    b"/lib/x86_64-linux-gnu/libanl.so.1\0",
-    b"/lib/x86_64-linux-gnu/libresolv.so.2\0",
-    b"/lib/x86_64-linux-gnu/libBrokenLocale.so.1\0",
-    b"/lib/x86_64-linux-gnu/libthread_db.so.1\0",
+/// Small glibc libraries the test binary does not link against, so none of
+/// them is mapped before the test asks for it.
+const LIBRARIES: &[&str] = &[
+    "libanl.so.1",
+    "libresolv.so.2",
+    "libBrokenLocale.so.1",
+    "libthread_db.so.1",
+    "libutil.so.1",
 ];
 
-#[cfg(target_arch = "aarch64")]
-const CANDIDATES: &[&[u8]] = &[
-    b"/lib/aarch64-linux-gnu/libanl.so.1\0",
-    b"/lib/aarch64-linux-gnu/libresolv.so.2\0",
-    b"/lib/aarch64-linux-gnu/libBrokenLocale.so.1\0",
-    b"/lib/aarch64-linux-gnu/libthread_db.so.1\0",
+/// Where glibc keeps them across the common layouts: Debian multiarch, the
+/// Fedora and Arch lib64, and a plain lib.
+const DIRECTORIES: &[&str] = &[
+    "/lib/x86_64-linux-gnu",
+    "/usr/lib/x86_64-linux-gnu",
+    "/lib/aarch64-linux-gnu",
+    "/usr/lib/aarch64-linux-gnu",
+    "/lib64",
+    "/usr/lib64",
+    "/lib",
+    "/usr/lib",
 ];
 
-fn not_mapped(path: &[u8]) -> bool {
-    let name = core::str::from_utf8(path).unwrap().trim_end_matches('\0');
-    let file = name.rsplit('/').next().unwrap();
+fn not_mapped(file: &str) -> bool {
     let maps = std::fs::read_to_string("/proc/self/maps").unwrap();
     !maps.contains(file)
 }
 
-fn candidate() -> &'static [u8] {
-    for path in CANDIDATES {
-        let name = core::str::from_utf8(path).unwrap().trim_end_matches('\0');
-        if std::path::Path::new(name).exists() && not_mapped(path) {
-            return path;
+/// A NUL-terminated path to a library that exists on this host and is not
+/// yet mapped into the process.
+fn candidate() -> std::vec::Vec<u8> {
+    for dir in DIRECTORIES {
+        for file in LIBRARIES {
+            let path = std::format!("{dir}/{file}");
+            if std::path::Path::new(&path).is_file() && not_mapped(file) {
+                let mut bytes = path.into_bytes();
+                bytes.push(0);
+                return bytes;
+            }
         }
     }
     panic!("none of the candidate libraries is present and unmapped on this host");
@@ -56,6 +67,7 @@ fn candidate() -> &'static [u8] {
 #[test]
 fn a_library_not_yet_resident_loads() {
     let path = candidate();
+    let path = path.as_slice();
 
     // The control comes first and shows the premise: with 4 as the flag, as
     // it was before this was made per target, glibc refuses the library, so

@@ -61,9 +61,13 @@ fn read_symbols(bytes: &[u8]) -> Result<Symbols, String> {
                 .filter(|s| s.is_definition())
                 .map(|s| name_of(&s))
                 .collect::<Result<_, _>>()?;
+            // Defined symbols only: an undefined entry names something the
+            // library imports, and a trampoline name imported from elsewhere
+            // is not a trampoline that survived.
             let table = file
                 .symbols()
                 .chain(file.dynamic_symbols())
+                .filter(|s| s.is_definition())
                 .map(|s| name_of(&s))
                 .collect::<Result<_, _>>()?;
             Ok(Symbols {
@@ -80,6 +84,7 @@ fn read_symbols(bytes: &[u8]) -> Result<Symbols, String> {
                 .collect();
             let table = file
                 .symbols()
+                .filter(|s| s.is_definition())
                 .map(|s| name_of(&s))
                 .collect::<Result<_, _>>()?;
             Ok(Symbols {

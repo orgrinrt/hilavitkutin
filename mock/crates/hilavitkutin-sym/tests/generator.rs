@@ -3,7 +3,17 @@
 //! disjoint from other domains.
 
 use arvo_bits::{Bits, Hot};
-use hilavitkutin_sym::{Domain, GenerativeDomain, Generator, Standard, Sym, SymKind, WideKind};
+use hilavitkutin_sym::shape::OneOrigin;
+use hilavitkutin_sym::{
+    Domain,
+    GenerativeDomain,
+    Generator,
+    Standard,
+    Sym,
+    SymKind,
+    SymShape,
+    WideKind,
+};
 use notko::Maybe;
 
 /// A generative test domain at kind `0b010` (outside the reserved string and
@@ -91,7 +101,7 @@ impl GenerativeDomain for WideGen {}
 /// below stops compiling if it stops being one.
 #[test]
 fn single_is_total_on_every_one_origin_shape() {
-    use hilavitkutin_sym::shape::{OneOrigin, origin_index_in_range};
+    use hilavitkutin_sym::shape::origin_index_in_range;
 
     assert!(
         origin_index_in_range::<Standard>(OneOrigin),
@@ -106,6 +116,49 @@ fn single_is_total_on_every_one_origin_shape() {
     const AT_REST: Generator<TestGen> = Generator::single();
     let mut g = AT_REST;
     assert_eq!(expect(g.mint()).kind(), TestGen::KIND);
+}
+
+/// A shape with one origin and no room for it: `ORIGIN_BITS` is zero, so the
+/// only index in range is 0, and the shape reports 1.
+#[derive(Copy, Clone)]
+struct NoRoomForItsOrigin;
+
+const impl SymShape for NoRoomForItsOrigin {
+    type Layout = <Standard as SymShape>::Layout;
+    type Origin = OneOrigin;
+
+    const COUNTER_BITS: arvo::USize = <Standard as SymShape>::COUNTER_BITS;
+    const ID_BITS: arvo::USize = <Standard as SymShape>::ID_BITS;
+    const KIND_BITS: arvo::USize = <Standard as SymShape>::KIND_BITS;
+    const ORIGIN_BITS: arvo::USize = <Standard as SymShape>::ORIGIN_BITS;
+
+    #[rustfmt::skip]
+    fn origin_index(_: Self::Origin) -> arvo::USize {
+        arvo::USize(1) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the deliberate defect, an index past the zero bits reserved; tracked: #34
+    }
+}
+
+struct NoRoomGen;
+impl Domain for NoRoomGen {
+    type Shape = NoRoomForItsOrigin;
+
+    const KIND: SymKind<NoRoomForItsOrigin> = SymKind::new(arvo_bits::Bits::from_raw(0b010));
+}
+impl GenerativeDomain for NoRoomGen {}
+
+/// The failure path the assert exists for: a one-origin shape whose origin
+/// index is out of range, offered to `single`. Outside a constant it panics
+/// at the call. `Default` is the same call, so it panics alike.
+#[test]
+#[should_panic(expected = "a one-origin shape must keep its only origin inside its reserved range")]
+fn single_panics_on_a_one_origin_shape_with_no_room_for_it() {
+    let _ = Generator::<NoRoomGen>::single();
+}
+
+#[test]
+#[should_panic(expected = "a one-origin shape must keep its only origin inside its reserved range")]
+fn default_panics_on_a_one_origin_shape_with_no_room_for_it() {
+    let _ = Generator::<NoRoomGen>::default();
 }
 
 #[test]

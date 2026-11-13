@@ -7,29 +7,17 @@ use notko::Outcome;
 
 use crate::error::LinkError;
 
-const RTLD_NOW: c_int = 2;
+/// Resolve every symbol at load time. The value is the target libc's, from
+/// the `libc` crate: it is 0 on 32-bit Android where it is 2 elsewhere.
+const RTLD_NOW: c_int = libc::RTLD_NOW;
 
-/// Symbols stay private to the library. The value is per target: Apple's
-/// `dlfcn.h` defines it as 4, and every other unix libc as 0 (the default
-/// the flag spells out). Where the value is 4 outside Apple it is another
-/// flag: glibc's `RTLD_NOLOAD`, which makes `dlopen` return null for any
-/// library the process has not already mapped.
-#[cfg(any(
-    target_os = "macos",
-    target_os = "ios",
-    target_os = "tvos",
-    target_os = "watchos",
-    target_os = "visionos",
-))]
-const RTLD_LOCAL: c_int = 4;
-#[cfg(not(any(
-    target_os = "macos",
-    target_os = "ios",
-    target_os = "tvos",
-    target_os = "watchos",
-    target_os = "visionos",
-)))]
-const RTLD_LOCAL: c_int = 0;
+/// Keep the library's symbols private to the loading scope. The value is the
+/// target libc's, from the `libc` crate, because it is not the same number
+/// everywhere: 4 on Apple, 0 on Linux, 0x200 on NetBSD and QNX. Where the
+/// value 4 is passed outside Apple it is another flag, glibc's `RTLD_NOLOAD`,
+/// which makes `dlopen` return null for any library the process has not
+/// already mapped.
+const RTLD_LOCAL: c_int = libc::RTLD_LOCAL;
 
 unsafe extern "C" {
     fn dlopen(path: *const c_char, flags: c_int) -> *mut c_void;

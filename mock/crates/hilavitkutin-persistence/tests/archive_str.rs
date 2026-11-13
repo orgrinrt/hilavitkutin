@@ -229,19 +229,89 @@ fn collisions_at(bits: u32, keys: &[u64]) -> usize {
     reduced.windows(2).filter(|w| w[0] == w[1]).count()
 }
 
-/// The content key is wide enough that ten thousand strings do not collide.
-/// The counter is shown to see collisions first: at 16 bits the same strings
-/// collide by the hundreds, so a count of zero at 64 bits is a measurement
-/// and not a counter that cannot see one.
+/// The keys `evict_str` hands back for `count` distinct interned strings.
+fn evicted_keys(interner: &StringInterner<VecInterner>, count: usize) -> Vec<u64> {
+    (0 .. count)
+        .map(|i| {
+            let text = format!("string-{i}");
+            let key = evicted(evict_str(interner.intern(&text), interner));
+            assert_eq!(key, content_hash(&text), "evict keys a string by its hash");
+            key.to_raw()
+        })
+        .collect()
+}
+
+/// Ten thousand strings evicted through `evict_str` take ten thousand distinct
+/// keys. The same keys are counted again at 16 bits first, where they collide
+/// by the hundreds, so a count of zero at the stored width is a measurement
+/// and not a counter that cannot see one. A key cut to 28 bits would show up
+/// in the stored count only by luck, which is why the next test searches for
+/// the collision instead of hoping for it.
 #[test]
-fn ten_thousand_strings_do_not_collide_at_the_stored_width() {
-    let keys: Vec<u64> = (0 .. 10_000)
-        .map(|i| const_fnv1a(&format!("string-{i}")))
-        .collect();
+fn ten_thousand_strings_evict_to_distinct_keys() {
+    let interner = StringInterner::new(VecInterner::new());
+    let keys = evicted_keys(&interner, 10_000);
 
     assert!(
         collisions_at(16, &keys) > 100,
         "the control: 16 bits must collide heavily, or the counter is blind"
     );
-    assert_eq!(collisions_at(64, &keys), 0);
+    assert_eq!(
+        collisions_at(64, &keys),
+        0,
+        "the stored key is the width the evict path returns"
+    );
+}
+
+/// Two strings that agree on their low 28 bits, found by search. A key cut to
+/// 28 bits keys them the same and returns the wrong string on inject; the full
+/// key tells them apart.
+#[test]
+fn strings_sharing_28_bits_evict_to_different_keys() {
+    let mask = (1u64 << 28) - 1;
+    let mut seen: std::collections::HashMap<u64, String> = std::collections::HashMap::new();
+    let mut pair: Option<(String, String)> = None;
+    for i in 0 .. 2_000_000u64 {
+        let text = format!("probe-{i}");
+        let low = const_fnv1a(&text) & mask;
+        if let Some(earlier) = seen.insert(low, text.clone()) {
+            pair = Some((earlier, text));
+            break;
+        }
+    }
+    let (a, b) = pair.expect("two probes sharing their low 28 bits exist well inside the search");
+
+    let interner = StringInterner::new(VecInterner::new());
+    let ka = evicted(evict_str(interner.intern(&a), &interner)).to_raw();
+    let kb = evicted(evict_str(interner.intern(&b), &interner)).to_raw();
+
+    assert_ne!(a, b);
+    assert_eq!(
+        ka & mask,
+        kb & mask,
+        "the premise: they share their low 28 bits"
+    );
+    assert_ne!(ka, kb, "evict keys them apart at the full width");
+
+    // The same through inject: the key of one resolves to that string.
+    let payload_a: &'static [u8] = Box::leak(a.clone().into_bytes().into_boxed_slice());
+    let entries: &'static [StringTableEntry] = Box::leak(Box::new([StringTableEntry {
+        content_hash: ContentHash::from_raw(ka),
+        bytes_offset: BufferOffset(<USize as Identity<Additive>>::IDENTITY),
+        bytes_len:    BufferLen(USize(payload_a.len())),
+    }]));
+    let table = StringTable {
+        entries,
+        buffer: payload_a,
+    };
+    match inject_str(ContentHash::from_raw(kb), &interner, &table) {
+        Outcome::Ok(h) => {
+            assert_ne!(
+                interner.resolve(h),
+                Maybe::Is(a.as_str()),
+                "the other key must not return the first string"
+            )
+        },
+        Outcome::Err(e) => assert_eq!(e, PersistenceError::Missing),
+    }
 }
