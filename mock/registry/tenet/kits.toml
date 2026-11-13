@@ -12,6 +12,7 @@ quote = '''
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "kits"
 keywords = ["hilavitkutin-kit", "Kit", "type Units", "type Owned", "add_kit", "declarative bundle", "preset", "compile time"]
 
@@ -29,6 +30,7 @@ hilavitkutin-ctx, -persistence, -sym, -str, -kit, -providers are standalone ecos
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "kits"
 keywords = ["hilavitkutin-kit", "contract crate", "add_kit", "no reverse dependency", "author kits", "standalone"]
 
@@ -44,6 +46,7 @@ quote = '''
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "kits"
 keywords = ["InternerKit", "InternerApi", "HasInterner", "MemoryArena", "default_interner", "providers v0", "round 4 shape"]
 
@@ -65,6 +68,7 @@ the scheduler's typestate.
 origin = "proposed"
 written_by = "the design template of hilavitkutin-kit, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "kits"
 keywords = ["hilavitkutin-kit", "Kit", "declarative bundle", "SchedulerBuilder", "add_kit", "typestate", "compile time", "one trait"]
 cites = ["the_kit_crate_declares_a_preset_as_an_associated_type_bundle_the_engine_reads_at_compile_time_on_add_kit"]
@@ -86,6 +90,7 @@ and `type Owned` (the stores).
 origin = "proposed"
 written_by = "the design template of hilavitkutin-kit, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "kits"
 keywords = ["kit purpose", "bundle", "runner unit", "logger unit", "interner resource", "type Units", "type Owned", "registration"]
 
@@ -106,6 +111,7 @@ and prepends them onto the SchedulerBuilder's accumulators via
 origin = "proposed"
 written_by = "the design template of hilavitkutin-kit, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "kits"
 keywords = ["type-level kit", "no install method", "Concat", "K::Units", "K::Owned", "add_kit", "accumulators", "builder"]
 rules_out = ["an install method", "composing builder method chains", "naming SchedulerBuilder"]
@@ -139,6 +145,7 @@ ecosystem crate the engine consumes for one specific contract.
 origin = "proposed"
 written_by = "the design template of hilavitkutin-kit, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "kits"
 keywords = ["separate crate", "layering", "below the engine", "ecosystem crate", "author kits without the engine", "hilavitkutin-ctx", "future kit helpers"]
 cites = ["the_kit_crate_is_a_contract_the_engine_depends_on_and_it_has_no_dependency_on_the_engine"]
@@ -166,6 +173,7 @@ core primitives in `hilavitkutin-api`.
 origin = "proposed"
 written_by = "the design template of hilavitkutin-kit, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "kits"
 keywords = ["Kit trait", "type Units", "type Owned", "WorkUnitBundle", "StoreBundle", "cons-list", "two associated types"]
 
@@ -190,6 +198,7 @@ because = "The type-level set difference operator hits the same coherence wall a
 origin = "proposed"
 written_by = "the design template of hilavitkutin-kit, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "kits"
 keywords = ["Required", "requirements_doc", "set difference", "coherence wall", "NotIn", "audit M6", "required external resources", "rustdoc"]
 rules_out = ["Required as an associated type derivable from Units::AccessSet \\ Owned"]
@@ -258,6 +267,7 @@ since the api has no `Kit::default_resources()` association
 origin = "proposed"
 written_by = "the design template of hilavitkutin-kit, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "kits"
 keywords = ["empty Owned", "pure provider preset", "InternerKit", "TracingKit", "RunnerKit", "read!", "default_resources", "add_resource", "call site"]
 cites = ["the_providers_crate_v0_ships_the_interner_value_type_surface_and_a_declarative_interner_kit"]
@@ -305,6 +315,7 @@ because = "Rust's E0446 forbids private types in the associated-type positions o
 origin = "proposed"
 written_by = "the design template of hilavitkutin-kit, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "kits"
 keywords = ["E0446", "private type in public interface", "kit visibility", "whole-kit pub", "pub(crate)", "kit-private mode", "kit_taxonomy", "S5 sketch"]
 
@@ -333,6 +344,7 @@ builder; the bridge is unnecessary.
 origin = "proposed"
 written_by = "the design template of hilavitkutin-kit, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "kits"
 keywords = ["kit-author crates", "forbidden-imports", "no engine import", "BuilderResource", "bridge removed", "hilavitkutin-api markers", "install method gone"]
 
@@ -368,6 +380,7 @@ satisfies the proof.
 origin = "proposed"
 written_by = "the design template of hilavitkutin-kit, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "kits"
 keywords = ["kit composition", "add_kit order", "Concat", "ContainsAll", "AccumRead", "dependency order", "build", "accumulated Stores"]
 
@@ -389,6 +402,7 @@ level, written out in the super-kit's impl).
 origin = "proposed"
 written_by = "the design template of hilavitkutin-kit, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "kits"
 keywords = ["super-kit", "kit nesting", "no install body", "Concat composition", "union of projections", "bundle kits"]
 rules_out = ["a kit installing another kit inside its declaration"]
@@ -427,6 +441,7 @@ because = "Opt-in is safer by default, per the \"tools, not policies\" workspace
 origin = "proposed"
 written_by = "the design template of hilavitkutin-kit, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "kits"
 keywords = ["Replaceable", "replace_resource", "opt-in override", "enforced annotation", "polarity", "S4 sketch", "tools not policies", "LintConfig"]
 
@@ -462,5 +477,6 @@ diagnostic without reading the api docs first.
 origin = "proposed"
 written_by = "the design template of hilavitkutin-kit, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "kits"
 keywords = ["recursion_limit", "512", "1024", "Concat recursion", "ContainsAll", "deep kit chains", "S1b depth-5 sketch", "diagnostic message"]

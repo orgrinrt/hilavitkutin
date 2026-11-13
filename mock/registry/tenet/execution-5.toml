@@ -27,6 +27,7 @@ Forward iter by default; Topic 3 axis E adds head+tail convergence variant for c
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "execution"
 keywords = ["morsel loop", "forward iteration", "head+tail convergence", "commutative", "single-trunk phase", "morsel size", "SIMD width", "L1 write budget"]
 cites = ["a_unit_declares_whether_it_is_commutative"]
@@ -60,6 +61,7 @@ Codegen emits `dmb st` (aarch64) / `sfence` (x86_64) between final FiberOutput n
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "execution"
 keywords = ["dmb st", "sfence", "stnp", "non-temporal store", "progress counter", "Release store", "invariant S3", "FiberOutput"]
 cites = ["progress_counters_are_stack_atomics_with_a_release_store_by_the_producer_and_an_acquire_load_by_the_consumer"]
@@ -76,6 +78,7 @@ quote = '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "execution"
 keywords = ["AdaptWu", "ScheduleEnd", "ResourceSnapshot", "AdaptMetrics", "predicted_wait_ns", "adapt observer", "Topic 1 axis 5", "Topic 5", "custom adaptation"]
 cites = ["waiting_is_parked_in_three_tiers_chosen_from_the_predicted_wait_of_each_phase_with_per_os_atomic_wait_primitives"]
@@ -98,6 +101,7 @@ it was neither, and both the branch and the description are gone. Either way the
 origin = "proposed"
 written_by = "engine design template as on the branch recover/unlanded-rounds-and-benches, commit of 2026-08-30, not on dev; the text does not say whose it is"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "execution"
 keywords = ["head and tail convergence", "single-trunk phase", "not built", "serial", "record range split", "commutative fiber"]
 cites = ["a_single_trunk_phase_runs_head_and_tail_convergence_with_two_threads_from_opposite_ends"]
@@ -123,6 +127,7 @@ owns the same trunks in every per-fiber walk. Single-trunk phases are the
 origin = "proposed"
 written_by = "engine design template as on the branch recover/unlanded-rounds-and-benches, commit of 2026-08-30, not on dev; the text does not say whose it is"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "execution"
 keywords = ["fiber-outer walk", "per-fiber morsel size", "window", "L1-hot", "trunk ownership", "FiberDispatch"]
 
@@ -148,6 +153,7 @@ correctness invariant that both dispatch paths depend on.
 origin = "proposed"
 written_by = "engine design template as on the branch recover/unlanded-rounds-and-benches, commit of 2026-08-30, not on dev; the text does not say whose it is"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "execution"
 keywords = ["fiber descriptor", "coverage invariant", "member mask", "silent truncation", "debug assertion", "derive_phase_dispatch_order"]
 
@@ -169,6 +175,7 @@ belongs to a different core. Offset `lo_c` (not a
 origin = "proposed"
 written_by = "engine design template as on the branch recover/unlanded-rounds-and-benches, commit of 2026-08-30, not on dev; the text does not say whose it is"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "execution"
 keywords = ["region boundaries", "merge offsets", "shared computation", "accumulator merge", "per-core region"]
 
@@ -185,6 +192,7 @@ At every phase boundary, the engine emits a release fence on the producer side a
 origin = "proposed"
 written_by = "design round 202605101036, topic plan algorithm chain, section S7 added 2026-05-10 after an audit; the text does not say whose it is"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "execution"
 keywords = ["phase barrier", "release fence", "acquire fence", "Relaxed", "cross-thread visibility", "AdaptWu"]
 
@@ -202,6 +210,7 @@ This is the single biggest soundness anchor for the runtime; mismatches against 
 origin = "proposed"
 written_by = "design round 202605101036, topic plan algorithm chain, section S7 added 2026-05-10 after an audit; the text does not say whose it is"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "execution"
 keywords = ["atomic ordering", "cross-thread", "ordering table", "soundness anchor", "progress counter", "audit"]
 
@@ -221,6 +230,7 @@ quote = '''
 origin = "proposed"
 written_by = "topic a2b-dispatch-loop-inversion of 2026-07-16, round 202607161810, agent-written"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "execution"
 keywords = ["mixed carrier", "incremental skip", "accumulator fiber", "morsel_local", "dirty gate", "unit-outer", "all-ones mask"]
 rules_out = ["The old global either/or (any accumulator fiber forced the whole frame unit-outer with an all-ones mask)"]
@@ -293,6 +303,7 @@ applies. The decision was sound for the shape it assumed; the shape changed.
 origin = "proposed"
 written_by = "topic a4-parallel-per-fiber-windows of 2026-07-19, round 202607190930, agent-written, correcting the plan of record in roadmap r6"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "execution"
 keywords = ["A4", "parallel path", "per-fiber window", "fiber-outer", "loop inversion", "gate2_fiber", "run_core_phase", "dispatch_core"]
 rules_out = ["through a unit-to-fiber-size lookup, which needs a `gate2_fiber` mapping"]
@@ -333,6 +344,7 @@ as an N-way record or morsel partition."
 origin = "proposed"
 written_by = "topic n-way-record-split-is-not-convergence of 2026-07-19, round 202607192110, agent-written"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "execution"
 keywords = ["N-way record split", "head and tail convergence", "single-trunk phase", "commutative", "two threads", "opposite ends", "drift", "run_core_phase"]
 rules_out = ["an N-way record or morsel partition"]
@@ -365,6 +377,7 @@ r7's R1 entry are corrected in the same commit range.
 origin = "proposed"
 written_by = "topic delete-the-n-way-record-split of 2026-07-19, round 202607192410, and the src changelist of round 202607192310, agent-written, correcting an earlier pass of the same arc"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "execution"
 keywords = ["record slice", "participation", "accumulator path", "run_core_phase", "waist", "trunk-rank ownership", "N-way record split", "strand"]
 rules_out = ["the deletion would strand trunks"]
@@ -402,6 +415,7 @@ with its module, which resolves the "three barriers" finding without needing its
 origin = "proposed"
 written_by = "topic delete-superseded-dispatch-and-barrier of 2026-07-19, round 202607192910, agent-written"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "execution"
 keywords = ["phase_run", "nested carrier", "RunPhase", "RunPipeline", "const-eval grouping", "superseded", "waist barrier", "phase_pipeline_dispatch"]
 rules_out = ["the nested-carrier type construction"]
@@ -437,6 +451,7 @@ promise is what should be deleted, not honoured.
 origin = "proposed"
 written_by = "topic delete-superseded-dispatch-and-barrier of 2026-07-19, round 202607192910, agent-written, correcting an earlier conclusion of the same arc"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "execution"
 keywords = ["phase barrier", "waist_barrier", "sense-reversing", "phase_arrived", "drift", "barrier protocol", "phase_barrier_arrive"]
 rules_out = ["canon names no runtime barrier shape, so both should stay with a clarifying doc note"]
@@ -458,6 +473,7 @@ The clamp paragraph names `runnable_worker_count` as the thread module's `pub co
 origin = "proposed"
 written_by = "topic of round 202609190201 'the review findings on the arvo-dev round' and doc changelists of rounds 202609190201 and 202609191001, 2026-09-19, agent-written"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "execution"
 keywords = ["worker count", "MAX_CORES", "clamp", "run_parallel", "runnable_worker_count", "worker_ctxs", "per-core state"]
 cites = ["the_closures_handed_out_number_the_smaller_of_the_clamped_worker_count_and_the_parallelisable_width_plus_the_convergence_worker"]

@@ -127,7 +127,10 @@ related = ["tenet::records_within_a_fiber_are_independent"]
 id = "whether_the_slot_size_set_adjusts_to_sixteen_bytes_or_is_dropped"
 asks = "Does the sealed slot size set adjust from Slot15 to Slot16, or is the sealed slot size system dropped?"
 options = ["Payload/SlotSize (domain 05): Slot15 becomes Slot16 and the sealed set adjusts", "the sealed SlotSize system is dropped and Payload simplifies to ColumnValue"]
-state = "open"
+state = "answered"
+answer = "The sealed SlotSize system (T3 §Q3 L3100-3377) is dropped."
+answered = "2026-11-13, by default from the written history: mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md"
+answered_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:427-429"]
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:409-410, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:427-429"
 quote = '''
 - Payload/SlotSize (domain 05): Slot15 → Slot16, sealed set adjusts

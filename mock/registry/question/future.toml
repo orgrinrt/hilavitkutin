@@ -4,6 +4,7 @@
 id = "what_the_accessor_shape_for_consumers_reading_resource_collections_after_the_pipeline_is"
 asks = "What is the typed accessor shape for consumers reading resource collections after the pipeline, given that resource sequences and maps are backed by the arena?"
 state = "open"
+stamp = 'open, 2026-11-13: the written history does not answer it in the words of op and nothing read shows its sides to be against each other, so it stays open on a stamp under his words "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2470-2473"
 quote = '''
 1. **Resource collection accessor shape** (item 25): R5 defines Seq/Map
@@ -19,6 +20,7 @@ related = ["tenet::the_accessor_for_resource_collections_follows_from_the_resour
 id = "what_the_api_surface_const_generic_sizing_and_llvm_optimisation_of_each_arvo_sub_crate_are"
 asks = "What are the API surface, the const-generic sizing and the LLVM optimisation of each arvo sub-crate (arvo, arvo-bitmask, arvo-sparse, arvo-graph, arvo-spectral, arvo-comb)?"
 state = "open"
+stamp = 'open, 2026-11-13: the written history does not answer it in the words of op and nothing read shows its sides to be against each other, so it stays open on a stamp under his words "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2475-2478"
 quote = '''
 2. **arvo sub-crate detailed design**: domain 01 defines the crate

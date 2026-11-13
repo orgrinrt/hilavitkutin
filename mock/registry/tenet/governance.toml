@@ -9,7 +9,9 @@ quote = '''
 > I am wary and uncomfortable if that means you are adding something entirely out of place or too specialized or too parallel to what hilavitkutin is now, in there, since you separate it from the current stuff in hila
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:21-21"]
 subject = "governance"
 keywords = ["parallel", "out of place", "specialised", "second vocabulary", "beside", "new crates"]
 related = ["question::how_the_contract_crates_put_beside_the_api_are_handled"]
@@ -23,7 +25,9 @@ quote = '''
 > Also we should start using the newer mockspace features like the registry and tools in both arvo and hilavitkutin. Worth it to start writing up the canon where it is missing and filling in even where it exists, and start using tickets. If tickets aren't upstreamed to mockstream yet as we use them in kaski, approx our shape for now and copy over some of the related tools that aren't upstreamed but useful and needed etc. or rather perhaps upstream the tools in full, the ones that don't depend on kaski specifically, to the mocksoace extra lints for now. I think the mockspace extensions as crates (deps in its toml) already support tools too along with lints, and perhaps also agent stuff too and maybe even registry schemas?
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:60-60"]
 subject = "governance"
 keywords = ["registry", "tools", "canon", "tickets", "mockspace", "upstream"]
 
@@ -37,7 +41,9 @@ quote = '''
 state. Resolves supersessions and tensions across prior topics.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:5-6", "later: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:10-41, the_record_s_precedence_is_the_founding_spec_then_dated_amendments_then_the_reading_aid_then_the_rest"]
 subject = "governance"
 keywords = ["single source of truth", "consolidation", "supersession", "tensions", "design state", "source topics"]
 
@@ -51,7 +57,9 @@ T7 was written from T6 alone without full context from T1-T5; its
 content is provisional until confirmed against the other topics.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:21-22", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2382-2390"]
 subject = "governance"
 keywords = ["T7", "execution-model", "provisional", "confirmed", "source topics", "T6 bench"]
 
@@ -69,7 +77,9 @@ quote = '''
 T6 bench finding (type-native outperforms 128-bit) is now authoritative.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:383-383", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:390-392"]
 subject = "governance"
 keywords = ["supersedes", "type-native stride", "128-bit", "T6 bench", "R3", "authoritative"]
 
@@ -88,7 +98,9 @@ quote = '''
 - T4 §Q6 `Check<size_of ≤ 15>` pattern → updated to ≤ 16
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:466-471"]
 subject = "governance"
 keywords = ["Payload", "SlotSize", "ColumnValue", "supersedes", "15-byte", "16-byte", "R4"]
 cites = ["each_column_has_its_own_stride_and_a_value_is_at_most_sixteen_bytes"]
@@ -106,7 +118,9 @@ quote = '''
   retained, Stride type gone
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:568-571"]
 subject = "governance"
 keywords = ["ColumnStorage", "SlabColumn", "Stride", "raw pointers", "supersedes", "slices"]
 cites = ["the_consumer_provides_the_backing_memory_of_a_column"]
@@ -126,7 +140,9 @@ quote = '''
 - T2 decisions #9, #12, #13, #14 — superseded by T3 decision #51
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:803-808"]
 subject = "governance"
 keywords = ["supersedes", "flat DAG", "phases", "LOD levels", "fiber", "trunk", "partition", "T3 decision #51"]
 
@@ -150,7 +166,9 @@ quote = '''
   updated (chain → fiber)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1190-1200"]
 subject = "governance"
 keywords = ["supersedes", "archetype", "chain", "partition", "order field", "T3 decision #48", "T7 1.3", "vocabulary"]
 cites = ["scheduling_hints_replace_an_order_field_on_the_unit"]
@@ -164,7 +182,9 @@ quote = '''
 - Source code lies — trust only documentation (#59)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2231-2231"]
 subject = "governance"
 keywords = ["source code lies", "trust documentation", "design principle", "#59", "docs"]
 
@@ -177,7 +197,9 @@ quote = '''
 - No rule without a lint, no lint without a test (#60)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2232-2232"]
 subject = "governance"
 keywords = ["no rule without a lint", "no lint without a test", "design principle", "#60", "enforcement"]
 
@@ -190,7 +212,9 @@ quote = '''
 - Rules live in mockspace templates (#61)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2233-2233"]
 subject = "governance"
 keywords = ["rules", "mockspace templates", "design principle", "#61"]
 
@@ -203,7 +227,9 @@ quote = '''
 - Responsible AI tooling — Co-Authored-By (#64)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2236-2236"]
 subject = "governance"
 keywords = ["responsible AI tooling", "Co-Authored-By", "design principle", "#64", "attribution"]
 
@@ -216,7 +242,9 @@ quote = '''
 - Topic files frozen once committed (#65)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2237-2237"]
 subject = "governance"
 keywords = ["topic files", "frozen", "committed", "design principle", "#65"]
 
@@ -229,7 +257,9 @@ quote = '''
 - Deprecation not addendum (#66)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2238-2238"]
 subject = "governance"
 keywords = ["deprecation", "addendum", "design principle", "#66", "supersession"]
 
@@ -258,6 +288,7 @@ The precedence order is therefore:
 origin = "proposed"
 written_by = "addendum A2 (locked 2026-07-19), section A2-1, a provenance trace the maintainer delegated with the words it quotes"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "governance"
 keywords = ["precedence", "ladder", "founding canon", "amendments", "date order", "standalone", "reading aid", "intermediate", "never canon"]
 
@@ -282,6 +313,7 @@ reviewed round.
 origin = "proposed"
 written_by = "addendum A2 (locked 2026-07-19), section A2-1, a provenance trace the maintainer delegated with the words it quotes"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "governance"
 keywords = ["standalone spec", "commission", "conflict", "transcription defect", "consolidation", "provenance", "squash"]
 
@@ -322,7 +354,9 @@ narrate the history of how the design was reached; it restates the design.
 '''
 origin = "proposed"
 written_by = "the standalone spec 202606111800, the header of the copy under mock/research/pre_seed as corrected with addendum A2"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["ratified-elsewhere: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:3-7", "ratified-elsewhere: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:10-41"]
 subject = "governance"
 keywords = ["standalone spec", "reading aid", "no design authority", "transcription defect", "header", "A2-1"]
 related = ["tenet::the_record_s_precedence_is_the_founding_spec_then_dated_amendments_then_the_reading_aid_then_the_rest"]
@@ -344,7 +378,9 @@ and content, it's all inferrable in context." The trace and its conclusion:
 
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:4-5", "quote: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:10-14"]
 subject = "governance"
 keywords = ["precedence", "provenance trace", "delegated", "A2-1", "timestamps", "ruling"]
 cites = ["the_record_s_precedence_is_the_founding_spec_then_dated_amendments_then_the_reading_aid_then_the_rest"]
@@ -363,6 +399,7 @@ artifacts (its own status line, op explicit), while the standalone carries none.
 origin = "proposed"
 written_by = "addendum A2 of 2026-07-19, section A2-1, a provenance trace of the record; the text does not say whether the maintainer ruled this refinement himself"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "governance"
 keywords = ["unified-engine amendment", "standalone spec", "blanket-wins", "intermediate artifacts", "r7", "authority", "precedence"]
 cites = ["the_record_s_precedence_is_the_founding_spec_then_dated_amendments_then_the_reading_aid_then_the_rest"]
@@ -384,6 +421,7 @@ is hereby registered as part of the chain, positioned by its date (before the re
 origin = "proposed"
 written_by = "addendum A2 of 2026-07-19, section A2-2, a registry addition; the text does not say whether the maintainer ruled it himself"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "governance"
 keywords = ["amendment chain", "registry", "unified-engine amendment", "A2-2", "rechart", "date order"]
 
@@ -404,7 +442,9 @@ against the shipped shape where the ledger names a bench trigger, and presented 
 evidence for a bless-or-rebuild ruling. None is blessed by default; none is rebuilt by default.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["ruled: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:64-71"]
 subject = "governance"
 keywords = ["GATE-2", "agent-call", "evidence-then-bless", "deviation", "bless or rebuild", "PoolFrame", "waist barrier", "spin tier"]
 
@@ -419,7 +459,9 @@ The same standard governs the spectral role deviation (canon step 7 trunk format
 2026-07-19 ruling on it.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:64-73"]
 subject = "governance"
 keywords = ["spectral", "trunk formation", "canon step 7", "evidence-then-bless", "deviation", "role"]
 cites = ["the_gate_2_agent_call_deviations_are_blessed_or_rebuilt_only_on_evidence_put_to_the_maintainer"]
@@ -447,6 +489,7 @@ catalogued test's ignore reason encode refuted-layout language.
 origin = "proposed"
 written_by = "addendum A2 of 2026-07-19, section A2-5, a citation correction (the finding is the document's own trace; the maintainer's direction that follows it is a separate row)"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "governance"
 keywords = ["citation correction", "mis-citation", "swap", "expert input memo", "storage addendum", "blob record", "Decompose", "revert round"]
 cites = ["the_swap_of_a_replaceable_resource_is_to_be_specified_by_a_commissioned_round", "the_record_s_precedence_is_the_founding_spec_then_dated_amendments_then_the_reading_aid_then_the_rest"]
@@ -465,6 +508,7 @@ quote = '''
 origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "governance"
 keywords = ["rechart", "r3", "core-pinned", "column-disjoint", "trunks", "waists", "bridges", "compile-time"]
 cites = ["the_effective_canon_is_the_consolidation_spec_as_modified_in_order_by_seven_registered_amendments"]

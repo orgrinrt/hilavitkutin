@@ -10,7 +10,9 @@ quote = '''
 - Fire sets ALL consumer bits for that virtual
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:703-704"]
 subject = "stores"
 keywords = ["per-(virtual, consumer) bit", "fire sets all consumer bits", "consumer", "virtual", "gate"]
 
@@ -26,6 +28,7 @@ quote = '''
 '''
 origin = "stated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (mock/research/202606111400_canonical-design-addendum-a1.md:122-131, row whether_meta_units_share_the_consumer_carrier_or_get_a_dedicated_carrier_is_decided_by_sketching_both_shapes), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "stores"
 keywords = ["clear-on-dispatch", "re-fire", "no lost fires", "consumer bit", "next pass", "resume"]
 cites = ["each_consumer_of_a_virtual_has_its_own_bit_and_a_fire_sets_all_of_them"]
@@ -44,7 +47,9 @@ quote = '''
 - Full clear every 256 passes (epoch wraparound)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:709-713"]
 subject = "stores"
 keywords = ["epoch", "u8", "epoch wraparound", "reset", "memset", "256 passes", "virtual flags"]
 
@@ -59,7 +64,9 @@ quote = '''
 One cache line. fire_external: atomic store relaxed for cross-thread
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:715-716"]
 subject = "stores"
 keywords = ["flag storage", "96 bits", "12 bytes", "64 virtuals", "one cache line", "consumers"]
 
@@ -74,7 +81,9 @@ One cache line. fire_external: atomic store relaxed for cross-thread
 signalling (T5 L541). Internal fire: non-atomic (T5 L542).
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:716-717"]
 subject = "stores"
 keywords = ["fire_external", "atomic store", "relaxed", "cross-thread signalling", "internal fire", "non-atomic"]
 
@@ -91,7 +100,9 @@ quote = '''
 value. `.resource_default::<T>()` for convenience where `T: Default`.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2178-2181"]
 subject = "stores"
 keywords = ["resource initialization", "resource", "resource_default", "Default", "initial value", "builder"]
 
@@ -113,7 +124,9 @@ in the context struct. Writing inline data through `&self` is UB
 (LLVM adds noalias to `&self`, inline writes violate it).
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1684-1691", "later: mock/research/202606210600_resource-storage-model-canonical-addendum.md:70-79, none"]
 subject = "stores"
 keywords = ["resource storage", "pointer indirection", "slab storage", "inline write", "noalias", "Field", "Seq", "Map"]
 cites = ["a_resource_is_scalars_and_const_sized_collections_only"]
@@ -131,7 +144,9 @@ quote = '''
   canonical storage
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1769-1772"]
 subject = "stores"
 keywords = ["resource API", "ctx.resource", "resource_mut", "raw pointers", "stack-local cache", "canonical storage", "consumer API"]
 
@@ -152,7 +167,9 @@ quote = '''
     the accessor before the storage layout exists.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2351-2357"]
 subject = "stores"
 keywords = ["ColumnHandle", "result extraction", "column accessor", "resource collections", "Seq", "Map", "arena", "storage layout"]
 
@@ -233,7 +250,9 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "the resource storage addendum (2026-06-19, revised 2026-07-02), bench-decided, named in the amendment chain by addendum A2"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["ruled: mock/research/202606210600_resource-storage-model-canonical-addendum.md:26-30", "ruled: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:29-36", "ruled: mock/research/202606210600_storage-bench-findings.md:366-368"]
 subject = "stores"
 keywords = ["scalar snapshot", "stack local", "morsel loop", "Field", "DrainStores", "resource", "blob"]
 
@@ -311,7 +330,9 @@ A `Resource<T>` is a **handle**, not an inline-value store.
 '''
 origin = "proposed"
 written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding-elsewhere: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1689-1722"]
 subject = "stores"
 keywords = ["Resource handle", "R5", "reading correction", "pointer indirection", "external slab storage", "separate provenance", "stack-local hoist", "Field Seq Map"]
 cites = ["a_resource_is_scalars_and_const_sized_collections_only"]
@@ -340,7 +361,9 @@ collection members. See `mock/research/202606210600_storage-bench-findings.md` (
 '''
 origin = "proposed"
 written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["ruled: mock/research/202606210600_resource-storage-model-canonical-addendum.md:18-25", "ruled: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:29-36", "ruled: mock/research/202606210600_storage-bench-findings.md:361-365"]
 subject = "stores"
 keywords = ["one-record blob", "Decompose", "V2 decomposed", "V3 shape-bound", "false sharing", "Dim<256>", "six-variant bench", "intra-resource locality"]
 rules_out = ["decomposing a resource value into per-member columns", "a shape-bound shared column layout for resource members"]
@@ -359,6 +382,7 @@ quote = '''
 origin = "proposed"
 written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "stores"
 keywords = ["handle store", "resource id", "pointer provenance", "value blob", "collection columns", "noalias"]
 cites = ["resource_and_column_pointers_must_have_separate_provenance_or_llvm_reloads_resources_every_iteration"]
@@ -378,7 +402,9 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["ruled: mock/research/202606210600_resource-storage-model-canonical-addendum.md:34-38", "ruled: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:29-36", "ruled: mock/research/202606210600_storage-bench-findings.md:369-371"]
 subject = "stores"
 keywords = ["Seq", "Map", "live-streamed", "snapshot copy", "pointer and length", "axis D", "collection members", "stride"]
 rules_out = ["copying the elements of a collection into the snapshot"]
@@ -402,7 +428,9 @@ column-count). The one genuine R5 clarification that stands: **"separate arena f
 '''
 origin = "proposed"
 written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["ruled: mock/research/202606210600_resource-storage-model-canonical-addendum.md:70-77", "ruled: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:29-36", "ruled: mock/research/202606210600_storage-bench-findings.md:361-365"]
 subject = "stores"
 keywords = ["retraction", "shape-bound columns", "three field types", "value composition", "Decompose seam", "R5 reading", "bench refuted"]
 rules_out = ["the shape-bound-columns reading of the spec's resource section"]
@@ -422,6 +450,7 @@ blob; only the handle store is separate-provenance.
 origin = "proposed"
 written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "stores"
 keywords = ["separate arena", "Seq", "Map", "handle store", "one-record blob", "spec 566", "provenance"]
 rules_out = ["a resource-private value arena for collection members"]
@@ -446,6 +475,7 @@ not a decomposition rewrite.
 origin = "proposed"
 written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "stores"
 keywords = ["DrainStores", "ResourcePtr", "drift", "one-record blob", "scalar snapshot", "live-stream", "additive fix", "bindings.rs"]
 cites = ["the_scalar_members_of_a_resource_are_snapshotted_to_a_stack_local_before_the_morsel_loop", "a_seq_or_map_value_is_a_pointer_and_a_length_and_its_elements_are_live_streamed_from_their_column_and_never_copied"]
@@ -465,6 +495,7 @@ tests pin blob-address identity, last-swap-wins, ZST swap, install
 origin = "proposed"
 written_by = "memo on swap semantics, implementation and bench evidence for ratification, 2026-07-19, round 202607200500 (#697); the text does not name its author"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "stores"
 keywords = ["negative_impls", "PlanAffecting", "Replaceable", "E0751", "compile_fail doctest", "WATCH tier", "S4", "shipped"]
 cites = ["a_plan_affecting_type_can_never_take_the_replace_value_path_because_of_a_negative_impl_wall"]

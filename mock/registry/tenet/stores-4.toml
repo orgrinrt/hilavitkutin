@@ -26,6 +26,7 @@ in one round.
 origin = "proposed"
 written_by = "src changelist of round 202607192710 (D1 install arm, 2026-07-19), agent-written"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "stores"
 keywords = ["replace_value", "Replaceable", "signature", "Selector", "value type", "install", "reasoned pick"]
 cites = ["a_replaceable_swap_installs_the_whole_value_as_one_blob_write_and_marks_the_store_dirty"]
@@ -50,7 +51,9 @@ into its column slot ... **not an in-place blob memcpy**". The install is exactl
 write that sentence rules out.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: mock/design_rounds/202607193110/202607193100_topic.revert-the-blob-install.md:5-7"]
 subject = "stores"
 keywords = ["revert it now", "replace_value", "install", "revert", "blob install", "2026-07-19"]
 cites = ["replace_value_takes_the_new_value_directly_because_the_bindings_are_keyed_by_the_value_type"]
@@ -178,6 +181,7 @@ mention of `impl PlanAffecting` declarations stays valid and unchanged.
 origin = "stated"
 written_by = "src changelist of round 202607192710 (2026-07-19) and doc changelist of round 202607200900 (2026-07-20), agent-written, the second applying the A2-3 ruling"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "stores"
 keywords = ["PlanAffecting", "sealed", "open marker", "replace_resource", "BuilderInput", "Replaceable", "A2-3", "DefaultRunCfg"]
 rules_out = ["sealed BuilderInput marker"]
@@ -199,6 +203,7 @@ Replaced. The old note promised per-arvo-width `min_specialization` coverage ins
 origin = "proposed"
 written_by = "design round 202606091600, doc changelist for a spec-free ColumnValue, dated 2026-06-09, agent-written; the text does not say whose decision it is"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "stores"
 keywords = ["ColumnValue", "BIT_WIDTH", "blanket impl", "specialization", "sub-byte width", "bitpacking", "arvo width traits", "default const"]
 rules_out = ["`default const`", "full `specialization`", "sub-byte width specialisations", "per-arvo-width `min_specialization` coverage inside `ColumnValue`"]
@@ -225,6 +230,7 @@ A `ResourceFootprint { const L1_BYTES: USize }` trait the value type implements.
 origin = "proposed"
 written_by = "sketch A3-2 findings of 2026-06-21 (type-level L1-morsel write-collection footprint of Resource<T>), outcome WORKS; agent-written"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "stores"
 keywords = ["ResourceFootprint", "ColumnValue", "A3a", "per-store size fold", "StoreElemBytes", "coherence", "Resource<T>", "L1 footprint"]
 rules_out = ["A3a bounded `Resource<T>` on `T: ColumnValue` and used `size_of::<T>()`"]
@@ -244,6 +250,7 @@ quote = '''
 origin = "proposed"
 written_by = "sketch A3 findings of 2026-06-20 (per-store size collection and per-fiber write-byte sum), hard sub-problem 3, agent-written; describes the skeleton as built"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "stores"
 keywords = ["AccessMask", "64-store cap", "StoreCeiling", "ASSERT_FITS", "arvo-bitmask", "multi-container", "skeleton cap", "per-store size array"]
 cites = ["the_access_mask_is_a_bitmask_so_every_scheduler_operation_is_a_single_bitwise_instruction"]
@@ -265,6 +272,7 @@ The mask assertion is evaluated during monomorphisation. `cargo check` does not 
 origin = "proposed"
 written_by = "sketch S3 findings of 2026-11-12 and 2026-11-13 (the frame view and the two kernel regimes as types, job hv-sketch-frame-view, step HV3), agent-written"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "stores"
 keywords = ["monomorphisation-time check", "cargo check", "cargo build", "E0080", "const assertion", "trybuild", "lane twice", "frame view"]
 cites = ["in_the_frame_view_sketch_a_step_kernel_reads_the_committed_frame_through_a_view_and_writes_through_staged_handles"]
@@ -289,6 +297,7 @@ At 128 the registry walk (`Pick`, one step per lane) runs nested in the write-li
 origin = "proposed"
 written_by = "sketch S3 findings of 2026-11-12 and 2026-11-13 (the frame view and the two kernel regimes as types), agent-written"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "stores"
 keywords = ["position mask", "u128", "128 lanes", "recursion limit", "E0275", "Pick", "Stage", "registry length"]
 cites = ["as_of_2026_06_20_the_access_mask_backs_its_bits_in_one_machine_word_so_the_skeleton_caps_the_stores_at_64_until_the_multi_container_bitmask_swap"]

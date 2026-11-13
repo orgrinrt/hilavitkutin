@@ -16,7 +16,9 @@ quote = '''
 | loimu | 100K-10M | wide | phased with convergence |
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1964-1970"]
 subject = "downstream"
 keywords = ["per-project defaults", "polka-dots", "saalis", "loimu", "sequential", "adaptive", "phased", "record count"]
 
@@ -30,7 +32,9 @@ quote = '''
   loimu=scheduler abstractions only. (T4 L1958-1972)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2282-2283"]
 subject = "downstream"
 keywords = ["polka", "saalis", "loimu", "full pipeline", "scheduler abstractions", "per-project scope"]
 
@@ -47,6 +51,7 @@ get the live buffer (exclusive).
 origin = "proposed"
 written_by = "the research note loimu-storage of the founding round, describing loimu"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "downstream"
 keywords = ["loimu", "double-buffered", "frozen", "live", "snapshot", "previous pass", "reader", "writer"]
 related = ["tenet::loimu_keeps_its_seven_access_modes_and_maps_them_to_read_and_write_at_the_boundary"]
@@ -65,6 +70,7 @@ quote = '''
 origin = "proposed"
 written_by = "the research note loimu-synthesis of the founding round, its portability ratings"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "downstream"
 keywords = ["SwapBuffer", "Exchange", "Snapshot", "double-buffering", "portable", "loimu", "column data"]
 related = ["tenet::loimu_double_buffers_record_data_and_its_readers_get_the_frozen_snapshot"]
@@ -82,6 +88,7 @@ stay in loimu. hilavitkutin provides the foundation they build on.
 origin = "proposed"
 written_by = "the founding-round research note on loimu's storage, 202603141800"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "downstream"
 keywords = ["loimu", "temporal columns", "seven access modes", "layers", "foundation", "primitives"]
 related = ["tenet::loimu_keeps_its_seven_access_modes_and_maps_them_to_read_and_write_at_the_boundary", "question::whether_hilavitkutin_s_own_columns_are_double_buffered"]
@@ -98,6 +105,7 @@ Downstream consumer applications layer on top of hilavitkutin: signal / DAG fram
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "downstream"
 keywords = ["downstream consumers", "signal frameworks", "DAG frameworks", "language runtimes", "pipeline-shaped workloads", "register units", "plan dispatch adapt loop"]
 
@@ -110,7 +118,9 @@ quote = '''
 And loimu is an old reference. I don't remember revitalizing it. Hilavitkutin is primarily the replacement for it, with a pending consideration to later down the line restart loimu based on hilavitkutin, I can't remember loimu being important as anything other than reference, so so weird you mention it at all
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: mock/research/202611130850_the-record-read-whole/OP-ANSWERS-14.md:4-4"]
 subject = "downstream"
 keywords = ["loimu", "reference", "replacement", "downstream user", "restart", "consumer"]
 rules_out = ["loimu as a live downstream user of hilavitkutin"]
@@ -131,6 +141,7 @@ quote = '''
 origin = "proposed"
 written_by = "ikiuni's canonical design, 000_FUNDAMENTALS_INDEX, at orgrinrt/ikiuni dev 634be3b; ikiuni's, a reference, not hilavitkutin's record"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: a reference from ikiuni and no part of the record of hilavitkutin, so the written history of hilavitkutin was not asked about it (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "downstream"
 keywords = ["ikiuni", "double buffer", "frame barrier", "mutation", "previous committed frame", "next frame", "swap", "reference"]
 cites = ["loimu_double_buffers_record_data_and_its_readers_get_the_frozen_snapshot"]
@@ -152,6 +163,7 @@ quote = '''
 origin = "proposed"
 written_by = "ikiuni's imported design history, settling 200 engine std of 2026-06-19, at orgrinrt/ikiuni dev 634be3b; ikiuni's, a reference, not hilavitkutin's record"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: a reference from ikiuni and no part of the record of hilavitkutin, so the written history of hilavitkutin was not asked about it (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "downstream"
 keywords = ["ikiuni", "frame-close", "frame-open", "bracket", "tick loop", "swap", "double buffer", "who rotates", "reference"]
 cites = ["ikiuni_s_design_applies_every_change_at_the_frame_barrier_by_a_double_buffer_swap"]
@@ -172,6 +184,7 @@ quote = '''
 '''
 origin = "stated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: a reference from ikiuni and no part of the record of hilavitkutin, so the written history of hilavitkutin was not asked about it (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "downstream"
 keywords = ["ikiuni", "bevy", "bevy_ecs", "hilavitkutin stack", "not ready", "user call", "reference"]
 
@@ -190,6 +203,7 @@ quote = '''
 '''
 origin = "stated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: a reference from ikiuni and no part of the record of hilavitkutin, so the written history of hilavitkutin was not asked about it (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "downstream"
 keywords = ["ikiuni", "contract", "swappable engine", "bevy", "hilavitkutin stack", "user call", "reference"]
 cites = ["ikiuni_chose_bevy_s_ecs_because_the_hilavitkutin_stack_was_not_ready"]

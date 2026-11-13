@@ -100,6 +100,7 @@ what, not that the question is closed forever.
 origin = "proposed"
 written_by = "doc changelist of round 202608091600 'credit the mechanism that actually holds', 2026-08-09, agent-written"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "identity"
 keywords = ["round trip", "associated type", "accessor converts", "declared width", "last rung", "width law"]
 rules_out = ["the associated type is the rung that ends the class"]
@@ -135,6 +136,7 @@ instantiations to check is choosing what not to find out.
 origin = "proposed"
 written_by = "topic of round 202608091100 'widths tied to the mechanism and a dead gate', 2026-08-09, phase TOPIC, agent-written"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "identity"
 keywords = ["COUNTER_BITS", "span law", "origin_ceiling", "origin_base", "ORIGIN_BITS", "sum law", "every shape"]
 
@@ -196,6 +198,7 @@ shapes that exist; a derivation covers the ones that do not yet.
 origin = "proposed"
 written_by = "source and doc changelists of round 202608101000 'an origin is an index, and the run is derived', 2026-08-10, agent-written"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "identity"
 keywords = ["origin_index", "derived run", "disjoint runs", "COUNTER_BITS", "free functions", "origin_base", "origin_ceiling", "disjointness by arithmetic"]
 rules_out = ["The code let a shape supply two arbitrary numbers"]
@@ -220,6 +223,7 @@ already used in this crate for the same reason.
 origin = "proposed"
 written_by = "source changelist of round 202608101000 'an origin is an index, and the run is derived', 2026-08-10, agent-written"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "identity"
 keywords = ["provided trait method", "free function", "overridable", "origin_base", "width_of", "illegal state representable"]
 rules_out = ["provided trait methods"]
@@ -243,6 +247,7 @@ unaffected. Counts measured after the autofix rather than predicted here.
 origin = "proposed"
 written_by = "source changelist of round 202608101000 'an origin is an index, and the run is derived', 2026-08-10, agent-written"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "identity"
 keywords = ["span law", "tautology", "derivation", "SixteenMinters", "deleted law", "COUNTER_BITS"]
 rules_out = ["The span law was deleted rather than kept"]
@@ -294,6 +299,7 @@ round claims a reduction and names what remains.
 origin = "proposed"
 written_by = "doc changelist and topic of round 202608101900 'the sixth route and what a shape may still decide', 2026-08-10, agent-written"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "identity"
 keywords = ["id_from_counter", "counter projection", "layout", "round-trip law", "reduction not elimination", "SymShape", "Uint<28, Hot>"]
 rules_out = ["a shape whose origins overlap cannot be written"]
@@ -320,6 +326,7 @@ Verification: `grep -c 'is gone with it'` returns 0; the document names
 origin = "proposed"
 written_by = "doc changelist of round 202608101900 'the sixth route and what a shape may still decide', 2026-08-10, agent-written"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "identity"
 keywords = ["Generator::at", "Maybe", "out-of-range index", "origin index", "open extension point", "refusal at point of use"]
 cites = ["a_generator_is_built_for_an_origin_and_a_shape_with_no_origin_bits_has_one_origin_and_a_constructor_with_no_argument"]
@@ -341,6 +348,7 @@ The crate is `no_std` and touches neither the environment nor the filesystem. Th
 origin = "proposed"
 written_by = "topic and doc changelist of round 202609181402 'hilavitkutin on arvo's current dev', 2026-09-18, agent-written; the text says the crate was settled by the workspace rule and not by a ruling"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "identity"
 keywords = ["hilavitkutin-build", "no_std", "core::fmt::Write", "CARGO_CFG", "build script", "extern crate std", "PROFILE"]
 rules_out = ["the crate touching the environment or the filesystem"]

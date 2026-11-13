@@ -17,7 +17,9 @@ pub trait WorkUnit<Schedule = Always>: Send + Sync + 'static {
 }
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:640-647", "later: mock/research/202606111400_canonical-design-addendum-a1.md:110-120, the_consumer_spelling_of_a_unit_reduces_to_read_write_hint_and_schedule_with_the_engine_context_computed_if_feasible"]
 subject = "units"
 keywords = ["WorkUnit", "AccessSet", "Read", "Write", "SchedulingHint", "COMMUTATIVE", "execute", "Context", "NAME"]
 cites = ["a_unit_declares_whether_it_is_commutative"]
@@ -34,7 +36,9 @@ quote = '''
 - `On<V>` — when virtual V fires
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:650-652"]
 subject = "units"
 keywords = ["Schedule", "Always", "On<V>", "virtual fires", "schedule condition", "unconditional"]
 
@@ -48,7 +52,9 @@ quote = '''
 - After<U> DROPPED (T6) — use Virtual + On<V> instead
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:653-653"]
 subject = "units"
 keywords = ["After<U>", "dropped", "Virtual", "On<V>", "T6", "schedule condition"]
 cites = ["a_schedule_condition_is_either_always_or_on_a_virtual_firing"]
@@ -64,7 +70,9 @@ quote = '''
 - `&self` receiver on Context (load-bearing: prevents noalias UB)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:656-656"]
 subject = "units"
 keywords = ["Context", "&self receiver", "noalias", "UB", "load-bearing", "T6 CRITICAL"]
 
@@ -77,7 +85,9 @@ quote = '''
 - Resource access via pointer to external storage (R5)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:659-659"]
 subject = "units"
 keywords = ["resource access", "pointer", "external storage", "R5", "Context"]
 
@@ -91,7 +101,9 @@ quote = '''
 - `ctx.each()` / `ctx.batch()` / `ctx.reduce()` op registration (T6 L768-783)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:660-660"]
 subject = "units"
 keywords = ["ctx.each", "ctx.batch", "ctx.reduce", "op registration", "Context", "T6"]
 
@@ -104,7 +116,9 @@ quote = '''
 - Op author controls inner loop, framework controls morsel boundaries
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:663-663"]
 subject = "units"
 keywords = ["inner loop contract", "op author", "morsel boundaries", "framework", "T3"]
 
@@ -118,7 +132,9 @@ quote = '''
 - `#[inline(always)]` on morsel dispatch loop
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:664-664"]
 subject = "units"
 keywords = ["inline(always)", "morsel dispatch loop", "inner loop", "inlining"]
 
@@ -133,7 +149,9 @@ quote = '''
   type-native stride, contiguous, non-aliasing Read/Write
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:665-666"]
 subject = "units"
 keywords = ["inner loop contract", "ColumnValue", "type-native stride", "contiguous", "non-aliasing", "inputs"]
 
@@ -149,7 +167,9 @@ quote = '''
 - Optional `for_each_row` utility for common pattern
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:662-662", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:667-667"]
 subject = "units"
 keywords = ["for_each_row", "utility", "optional", "common pattern", "inner loop"]
 
@@ -165,7 +185,9 @@ quote = '''
 - process_batch = single entry point (T3 decision #82)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:662-662", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:668-668"]
 subject = "units"
 keywords = ["process_batch", "single entry point", "T3 decision #82", "inner loop contract"]
 
@@ -180,7 +202,9 @@ quote = '''
 - Consumers handle registration (polka: inventory, saalis: Named, loimu: macros)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:671-672"]
 subject = "units"
 keywords = ["registration", "#[register]", "inventory", "Named", "macros", "consumers", "manually implementable"]
 
@@ -193,7 +217,9 @@ quote = '''
 - Scheduler accepts WUs via explicit builder API
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:673-673"]
 subject = "units"
 keywords = ["scheduler builder", "explicit builder API", "registration", "work units"]
 
@@ -207,7 +233,9 @@ quote = '''
 - ECS-as-DI: Read/Write declarations ARE dependency injection
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:674-674"]
 subject = "units"
 keywords = ["ECS-as-DI", "dependency injection", "Read", "Write", "declarations"]
 
@@ -224,7 +252,9 @@ quote = '''
 constraint.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:677-677", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1178-1179"]
 subject = "units"
 keywords = ["8 unique columns", "register pressure", "guideline", "not constraint", "WU authoring"]
 
@@ -238,7 +268,9 @@ quote = '''
 - Write implies Read (T5 §Q6)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:678-678"]
 subject = "units"
 keywords = ["write implies read", "Read", "Write", "T5 Q6", "access set"]
 
@@ -261,7 +293,9 @@ Everything else derived: DAG, ordering, phases, trunks, fibers, morsel
 sizes, strategy, codegen, sync.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:679-679", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1181-1188"]
 subject = "units"
 keywords = ["what WUs must declare", "Read", "Write", "SchedulingHint", "Urgency", "Divisibility", "Significance", "derived"]
 cites = ["scheduling_hints_replace_an_order_field_on_the_unit"]
@@ -279,7 +313,9 @@ nodes in the DAG, but the scheduler treats them identically to any
 other WU. The consumer writes them; hilavitkutin schedules them.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1481-1484"]
 subject = "units"
 keywords = ["loader", "root node", "no read dependencies", "WorkUnit", "type Read = ()", "no special status"]
 cites = ["the_consumer_materialises_external_data_into_columns_through_its_own_loader_units_and_manages_storage_lifecycle"]
@@ -296,7 +332,9 @@ One `.add::<MyWU>()` handles all schedule conditions — `Always`,
 separate `add_on`.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2101-2103"]
 subject = "units"
 keywords = ["add", "builder", "schedule conditions", "Always", "On<V>", "registration", "no add_on"]
 
@@ -313,7 +351,9 @@ their way (polka: inventory, saalis: Named, loimu: macros). ECS-as-DI:
 Read/Write declarations ARE dependency injection.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2105-2108"]
 subject = "units"
 keywords = ["registration", "#[register]", "explicit builder API", "dependency injection", "inventory", "Named", "macros", "ECS-as-DI"]
 
@@ -342,7 +382,9 @@ no_os/os tiers panic = abort already. On std tier we prefer abort.
 
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2147-2153", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2157-2157", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2448-2452", "later: mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:13-13, there_is_no_std_platform_tier"]
 subject = "units"
 keywords = ["abort on failure", "execute", "no Result", "catch_unwind", "panic", "unwind tables", "landing pads", "R7"]
 
@@ -357,7 +399,9 @@ quote = '''
   failure via version stamps or error virtual, then poisons dependents.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2154-2156"]
 subject = "units"
 keywords = ["error column", "error virtual", "data flow", "control flow", "version stamps", "poison dependents"]
 cites = ["execute_returns_nothing_and_a_failing_unit_aborts_because_abort_gives_better_llvm_codegen"]
@@ -384,7 +428,9 @@ Scheduler::<MAX_UNITS, MAX_STORES, MAX_LANES>::builder()
 ```
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2087-2099"]
 subject = "units"
 keywords = ["Scheduler builder", "MAX_UNITS", "MAX_STORES", "MAX_LANES", "const generics", "memory override", "thread pool override", "clock override"]
 cites = ["each_platform_tier_ships_defaults_and_the_consumer_overrides_them_through_the_scheduler_builder"]
@@ -401,7 +447,9 @@ quote = '''
 - Independent fibers continue
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2159-2162"]
 subject = "units"
 keywords = ["fiber failure", "freeze progress counter", "poison dependents", "independent fibers continue", "error propagation"]
 cites = ["a_unit_signals_failure_through_data_flow_by_writing_an_error_column_or_firing_an_error_virtual"]
@@ -420,7 +468,9 @@ quote = '''
 - Pipeline::run() returns PipelineResult status only
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2163-2167"]
 subject = "units"
 keywords = ["PipelineResult", "Completed", "Failed", "Poisoned", "Pipeline::run", "no result extraction", "partial failure"]
 
@@ -454,6 +504,7 @@ wrapper type like `Exclusive<Resource<T>>` in the AccessSet.
 origin = "proposed"
 written_by = "topic T5 of the founding round (hilavitkutin-core-design), question Q6, marked resolved there"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "units"
 keywords = ["access mode", "Read", "Write", "Pinned", "Immediate", "frozen snapshot", "double-buffered", "freshness", "loimu", "store wrapper"]
 rules_out = ["loimu's seven access modes in hilavitkutin"]

@@ -11,7 +11,9 @@ Where extension across an ABI boundary is required, use registered
 traits + `repr(C)` descriptors (inventory pattern), not `dyn`.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:78-79"]
 subject = "principles"
 keywords = ["ABI boundary", "registered traits", "repr(C) descriptors", "inventory pattern", "extension", "no dyn"]
 cites = ["repr_c_and_function_pointers_give_the_minimal_abi_surface", "link_time_registration_through_inventory_is_complete_before_work_starts"]
@@ -40,7 +42,9 @@ There is no fourth "bare primitive" category. Raw `u8`..`u128`,
 source; every numeric identity flows through arvo's type system.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:81-94"]
 subject = "principles"
 keywords = ["type taxonomy", "trait", "newtype", "repr(C) enum", "no fourth category", "UFixed", "ContentHash", "Priority"]
 cites = ["the_type_taxonomy_is_trait_newtype_repr_c_enum_or_primitive_and_it_governs_the_form_of_every_type"]
@@ -66,7 +70,9 @@ layer: capacity is a compile-time choice the consumer makes once,
 not a runtime allocation the callee fabricates.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:102-111"]
 subject = "principles"
 keywords = ["const capacity", "type-level size", "Mask64", "Mask256", "Seq", "Map", "Cap", "no runtime resize"]
 
@@ -84,7 +90,9 @@ No parallel versioning tables, no parallel serialization paths, no
 "fast path" alongside a "slow path". One mechanism per concern.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:113-117"]
 subject = "principles"
 keywords = ["one mechanism", "not two", "parallel versioning", "parallel serialization", "fast path", "slow path"]
 
@@ -105,7 +113,9 @@ versus `Column` is intent (persistent / cold versus hot / per-morsel),
 not a separate mechanism.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:119-126", "later: mock/research/202606210600_resource-storage-model-canonical-addendum.md:17-24, a_resource_is_a_handle_and_not_an_inline_value_store_which_is_the_corrected_reading_of_r5"]
 subject = "principles"
 keywords = ["unified columnar storage", "ColumnStorage", "ColumnValue", "MemoryProvider", "resource", "column", "execution plan", "struct-of-arrays"]
 
@@ -125,7 +135,9 @@ not two" applied to the data plane: the engine accreted disjoint arenas
 once, and unwinding them onto the one store is the correction.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:128-133"]
 subject = "principles"
 keywords = ["no bespoke storage", "arena", "MaybeUninit pool", "column", "ColumnStorage", "store markers", "one mechanism"]
 cites = ["there_is_one_mechanism_per_concern_and_where_two_subsystems_solve_one_problem_differently_one_must_go", "all_engine_runtime_state_lives_in_one_columnar_store_and_a_resource_versus_a_column_is_intent_and_not_mechanism"]
@@ -143,7 +155,9 @@ cache lines), which is pool coordination, not consumer data. A storage
 lint enforces the rule.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:135-138"]
 subject = "principles"
 keywords = ["PoolFrame", "fixed array exception", "atomic progress slots", "wake slots", "storage lint", "pool coordination"]
 cites = ["no_subsystem_has_bespoke_storage_and_a_subsystem_needing_to_hold_n_things_uses_a_column"]
@@ -163,7 +177,9 @@ for truly closed sets only (`Priority`, `ErrorClass`, `FieldKind`,
 `HealthStatus`).
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:140-145"]
 subject = "principles"
 keywords = ["registered traits", "repr(C) enum", "closed set", "Priority", "ErrorClass", "FieldKind", "HealthStatus", "#[register]"]
 cites = ["a_position_where_two_implementations_with_different_behaviour_are_imaginable_is_a_trait_slot_and_never_an_extensible_enum"]
@@ -183,7 +199,9 @@ descriptor's name field is a const pointer to it. No duplication,
 no copies, no parallel naming.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:147-151"]
 subject = "principles"
 keywords = ["Named::NAME", "single source of truth", "descriptor name", "const pointer", "registrable type"]
 
@@ -200,7 +218,9 @@ levels, HTTP methods, all ZSTs. Marker types carry compile-time
 identity without runtime footprint.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:153-157"]
 subject = "principles"
 keywords = ["ZST markers", "discrimination", "schema kinds", "events", "access levels", "compile-time identity", "no runtime footprint"]
 cites = ["zero_sized_types_are_the_logic_layer"]
@@ -217,7 +237,9 @@ Every crate is `#![no_std]` with no allocation. Consumers provide a
 to plug one in). There is no std tier, and no crate here spawns
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:198-200", "founding: mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:13-13"]
 subject = "principles"
 keywords = ["no_std", "no alloc", "MemoryProvider", "os tier", "no_os tier", "mmap", "consumer provides"]
 cites = ["the_os_and_std_tiers_are_mutually_exclusive_and_the_os_tier_gets_the_optimisation_investment", "the_no_os_tier_is_trait_contracts_only_and_the_consumer_provides_every_platform_implementation"]
@@ -232,7 +254,9 @@ quote = '''
 to plug one in). There is no std tier, and no crate here spawns
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:200-200", "founding: mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:13-13"]
 subject = "principles"
 keywords = ["no std tier", "platform tiers", "os tier", "no_os tier"]
 cites = ["the_platform_has_three_tiers_no_os_os_and_std"]
@@ -250,7 +274,9 @@ threads: the executor behind `ThreadPoolApi` is the consumer's, or
 lives in a crate outside this family.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:200-202", "founding: mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:13-13"]
 subject = "principles"
 keywords = ["no thread spawn", "ThreadPoolApi", "executor", "consumer executor", "thread pool contract"]
 cites = ["at_run_time_the_engine_spawns_threads_that_run_their_compiled_programs_with_no_scheduler_loop_or_work_queues"]
@@ -266,7 +292,9 @@ allocation (arena sizing, fiber layouts) happens once per pipeline
 lifetime, not per frame.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:204-206"]
 subject = "principles"
 keywords = ["no runtime allocation", "plan-time allocation", "arena sizing", "fiber layouts", "pipeline lifetime", "per frame"]
 cites = ["allocation_is_managed_by_the_scheduler_and_declared_at_compile_time_and_never_fabricated_at_runtime"]
@@ -284,7 +312,9 @@ AccessSet; the monomorphised function IS the type identity. LLVM
 devirtualises the fused pipeline into straight-line code.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:210-212"]
 subject = "principles"
 keywords = ["monomorphisation is the dispatch", "type identity", "AccessSet", "devirtualisation", "straight-line code", "no TypeId"]
 cites = ["std_any_is_banned_so_there_is_no_type_id_and_no_type_erasure", "dyn_is_banned_entirely_with_no_exceptions"]
@@ -304,7 +334,9 @@ the workers persist for the pipeline's lifetime. The engine chooses
 executor's. No runtime spawn.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:227-229", "founding: mock/PRINCIPLES.md.tmpl:231-231"]
 subject = "principles"
 keywords = ["pre-allocated thread pool", "ThreadPoolApi", "consumer executor", "first parallel run", "workers persist", "no runtime spawn"]
 cites = ["the_thread_pool_is_pre_allocated_and_wakes_by_spinning_first_and_then_parking"]
@@ -346,7 +378,9 @@ and that axis is an anti-axis in this workspace: it is not counted against a des
 downside ruled out and a future-proofing upside in hand at parity cost, the hybrid wins.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: mock/design_rounds/202607161000/202606210600_topic.hybrid-decision.md:12-19", "quote: mock/design_rounds/202607161000/202606210600_topic.hybrid-decision.md:55-56"]
 subject = "principles"
 keywords = ["anti-axis", "complexity versus simplicity", "hybrid", "future-proof", "parity", "backcast machinery", "not counted against a design"]
 cites = ["a_resource_value_is_addressed_through_an_erased_static_shape_so_it_can_cross_a_plugin_boundary"]
@@ -372,6 +406,7 @@ nowhere) exists and is unwired.
 origin = "proposed"
 written_by = "topic n-way-record-split-is-not-convergence of 2026-07-19, round 202607192110, agent-written"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "principles"
 keywords = ["non-canonical mechanism", "load-bearing drift", "single-trunk phase", "serial", "head and tail", "W1", "faster than nothing"]
 cites = ["head_and_tail_convergence_is_designed_and_not_built_and_a_single_trunk_phase_runs_serially_until_it_is", "the_n_way_record_split_of_a_single_trunk_phase_is_not_head_and_tail_convergence_and_is_drift"]
@@ -414,6 +449,7 @@ five, and the five that remain are pre-existing rather than introduced here.
 origin = "proposed"
 written_by = "source changelists of rounds 202608090500 and 202608090700, agent-written; the earlier one records the conflict for op and the later one corrects it"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "principles"
 keywords = ["lint allow", "rustfmt::skip", "same-line requirement", "opening brace", "strict gate", "decorative allow", "formatter"]
 rules_out = ["the rule as written cannot be satisfied without #[rustfmt::skip] or a change to the rule", "nothing was wrongly suppressed"]
@@ -432,7 +468,9 @@ Op, verbatim, on the convergence bench's short-fiber result (below one to four m
 I think our benches should perhaps better reflect that"
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: mock/research/202611130850_the-record-read-whole/OP-ANSWERS-20.md:3-6"]
 subject = "principles"
 keywords = ["intended workload", "millions of records", "one to four morsels", "short fiber", "small workload", "bench scope", "convergence bench", "sequential frame"]
 related = ["tenet::below_ten_thousand_records_execution_is_sequential_and_above_one_hundred_thousand_threading_is_always_considered", "tenet::the_dispatch_form_depends_on_the_record_count_below_or_above_ten_thousand", "tenet::the_dispatch_approach_is_chosen_by_record_count_between_fiber_level_trunk_level_and_whole_schedule_functions", "tenet::the_per_project_defaults_are_sequential_for_polka_dots_mixed_for_saalis_and_phased_with_convergence_for_loimu", "tenet::no_single_scheduling_strategy_dominates_and_the_best_depends_on_compute_balance_phase_topology_and_record_count", "tenet::the_strategy_is_selected_at_plan_time_from_estimated_compute_weights_and_a_wrong_pick_costs_about_ten_to_twenty_percent", "question::which_convergence_a_single_trunk_phase_uses", "question::whether_the_default_wake_is_the_spin_then_park_hybrid_of_the_spec_or_park_immediately_ruled_by_the_wake_bench"]
@@ -448,7 +486,9 @@ Op, verbatim, following op-answers-20:
 "And to add, those answers don't yet include any of the actual headline features like fusing and the adaptive trunk/fiber/morsel crunching on the datadlow-ish schedule. It's bare bones, barely lowers to anything interesting yet. So no calls should be made based on those yet, they are a baseline to compare against then. I mean the benches that bench hila against a hand-written optimized path and just regular old rust on no_std and on std etc whatever we have written so far (probably very limited comparison still) and the threaded variants of each"
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: mock/research/202611130850_the-record-read-whole/OP-ANSWERS-21.md:3-5"]
 subject = "principles"
 keywords = ["bench baseline", "engine against hand-written", "plain rust", "no_std", "std", "threaded variants", "fusing", "adaptive trunk fiber morsel", "no call on the benches", "perf gate", "convergence bench"]
 rules_out = ["A design call, a verdict on the engine or a ruling made on the numbers of these benches before the headline features exist."]

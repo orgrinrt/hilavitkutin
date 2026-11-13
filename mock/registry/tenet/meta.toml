@@ -13,7 +13,9 @@ points:
 
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2119-2123"]
 subject = "meta"
 keywords = ["self-hosting scheduler", "meta work units", "lifecycle points", "scheduler is a pipeline", "meta"]
 
@@ -31,7 +33,9 @@ Meta virtuals:
 - `meta::ScheduleEnd` — fired after all consumer work
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2124-2128"]
 subject = "meta"
 keywords = ["meta virtuals", "PlanStage", "ScheduleReady", "PassStart", "ScheduleEnd", "lifecycle"]
 cites = ["a_virtual_is_a_pure_flag_and_carries_no_data"]
@@ -50,7 +54,9 @@ Meta resources (restricted via MetaAccess marker trait):
 - `meta::SchedulerMetrics` — EMA timing data (domain 22)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2130-2134"]
 subject = "meta"
 keywords = ["meta resources", "Dag", "ExecutionPlan", "LaneAssignment", "SchedulerMetrics", "MetaAccess", "marker trait"]
 
@@ -64,7 +70,9 @@ The irreducible kernel is ~50 lines: fire PlanStage, wait for plan
 WUs, fire ScheduleReady, dispatch consumer WUs, fire ScheduleEnd.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2136-2137"]
 subject = "meta"
 keywords = ["irreducible kernel", "50 lines", "PlanStage", "ScheduleReady", "ScheduleEnd", "dispatch", "kernel"]
 
@@ -83,7 +91,9 @@ per-unit EMA, `active_units`, `stolen_count`, `idle_ns`. Decay:
 AVX2 8×u32 for all unit EMAs in one pass (T5 L1054-1066).
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2035-2040"]
 subject = "meta"
 keywords = ["SchedulerMetrics", "EMA", "pass_count", "ema_pass_duration_ns", "stolen_count", "idle_ns", "NEON", "AVX2"]
 
@@ -99,7 +109,9 @@ EMA of pass duration enables frame budgeting (game loops) and progress
 bars (batch pipelines). Consumer reads via SchedulerMetrics (domain 23).
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2060-2063"]
 subject = "meta"
 keywords = ["frame time prediction", "EMA", "frame budgeting", "progress bars", "SchedulerMetrics", "T3 #65"]
 
@@ -119,7 +131,9 @@ cadence logic. hilavitkutin provides measurement data, consumer
 decides policy.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1985-1991"]
 subject = "meta"
 keywords = ["cadence", "SchedulerMetrics", "On<meta::ScheduleEnd>", "consumer policy", "measurement data", "T5 Q5"]
 
@@ -142,6 +156,7 @@ pass (pass_count always changes), so readers always dispatch.
 origin = "proposed"
 written_by = "topic T5 of the founding round (hilavitkutin-core-design)"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "meta"
 keywords = ["SchedulerMetrics", "previous pass", "one pass behind", "pass start", "metrics resource", "version stamp"]
 
@@ -162,7 +177,9 @@ unsupported on the parallel unit-outer path, and the slice-1b
 clear-on-dispatch semantics (#687).
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["ruled: mock/research/202606111400_canonical-design-addendum-a1.md:47-47", "ruled: mock/research/202606111400_canonical-design-addendum-a1.md:122-131"]
 subject = "meta"
 keywords = ["meta carrier", "meta WUs", "band walk", "sketch", "morsel loop", "accumulator append", "clear-on-dispatch", "#687"]
 
@@ -181,6 +198,7 @@ quote = '''
 origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, constraint note 5, agent-written, elevated to canon by the addendum"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "meta"
 keywords = ["MetaBlock", "MetaAccess", "MetaRef", "scheduler field", "Copy resources", "Cell", "compile-time enforcement"]
 
@@ -196,6 +214,7 @@ quote = '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 5 adapt subsystem, decisions dated 2026-05-10; the text does not say whose each decision is"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "meta"
 keywords = ["AdaptWu", "meta unit", "ScheduleEnd", "adaptation", "providers crate", "opt-in"]
 
@@ -208,7 +227,9 @@ quote = '''
 Originally proposed as four opaque modes (Off / Fast / Standard / Aggressive). User reframed during topic conversation: each metric is its own axis with independent tuning, in line with the workspace's multi-axis design pattern (arvo Strategy markers, WorkUnit Hint).
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:46-48"]
 subject = "meta"
 keywords = ["adapt axes", "multi-axis", "independent tuning", "adapt modes", "reframe"]
 
@@ -223,6 +244,7 @@ quote = '''
 '''
 origin = "stated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "meta"
 keywords = ["adapt axis", "BuilderInput", "StandardAdaptKit", "OffAdaptKit", "no composite AdaptConfig", "sample_skip"]
 cites = ["each_adaptation_metric_is_its_own_axis_with_independent_tuning"]
@@ -242,6 +264,7 @@ quote = '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 5 adapt subsystem, decisions dated 2026-05-10; the text does not say whose each decision is"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "meta"
 keywords = ["AdaptArena", "metrics snapshot", "scratch arena", "ScheduleEnd", "B3 hybrid", "consumer-readable"]
 
@@ -257,6 +280,7 @@ quote = '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 5 adapt subsystem, decisions dated 2026-05-10; the text does not say whose each decision is"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "meta"
 keywords = ["inline metrics", "producer core", "phase barrier", "cache-line ping-pong", "progress counter", "lint"]
 
@@ -273,6 +297,7 @@ quote = '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 5 adapt subsystem, decisions dated 2026-05-10; the text does not say whose each decision is"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "meta"
 keywords = ["AnomalyFired", "virtual", "anomaly", "metrics resources", "phase explosion", "audit"]
 rules_out = ["Per-anomaly Virtual proliferation (the previously locked Axis E shape) is retracted"]
@@ -288,6 +313,7 @@ quote = '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 5 adapt subsystem, decisions dated 2026-05-10; the text does not say whose each decision is"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "meta"
 keywords = ["re-plan", "adapt unit", "plan caching", "dirty detection", "observer", "signal"]
 
@@ -303,6 +329,7 @@ quote = '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 5 adapt subsystem, decisions dated 2026-05-10; the text does not say whose each decision is"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "meta"
 keywords = ["predictive parking", "predicted wait", "policy and mechanism", "ParkStrategy", "PredictiveParkingMetrics"]
 
@@ -317,6 +344,7 @@ quote = '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 5 adapt subsystem, decisions dated 2026-05-10; the text does not say whose each decision is"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "meta"
 keywords = ["adapt metrics", "inner loop", "fiber completion", "phase boundary", "ASM invariants"]
 
@@ -362,6 +390,7 @@ it" sentence is dropped and the prose states the metric holds on every path.
 origin = "proposed"
 written_by = "topic r3b-parallel-fused of 2026-06-20, round 202606200200, and its doc changelist, agent-written"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "meta"
 keywords = ["change_seen_count", "run_parallel", "run_fused", "change class", "scheduler metrics", "OnMeta", "store_dirty"]
 rules_out = ["the \"do not yet maintain it\" sentence"]
@@ -399,6 +428,7 @@ duration EMA": how long phase p took this frame, summed across its morsels).
 origin = "proposed"
 written_by = "topic phase-ema-per-frame-fix of 2026-06-19, round 202606192345, a post-review fix to round 202606192301, agent-written"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "meta"
 keywords = ["phase_ema", "phase_accum", "per-phase EMA", "dispatch_trunks", "per frame", "one-eighth", "fold_ema", "morsel"]
 rules_out = ["the fold runs per (phase, morsel), not per frame"]
@@ -418,6 +448,7 @@ quote = '''
 origin = "proposed"
 written_by = "topic a2b-dispatch-loop-inversion of 2026-07-16, round 202607161810, agent-written"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "meta"
 keywords = ["phase_accum", "per-phase timing", "per frame", "now_ns", "start stop pair", "dispatch loop inversion"]
 cites = ["a_phase_s_duration_average_folds_the_phase_total_of_the_frame_once_per_frame_and_not_once_per_morsel"]
@@ -436,6 +467,7 @@ quote = '''
 origin = "proposed"
 written_by = "topic a2b-dispatch-loop-inversion of 2026-07-16, round 202607161810, agent-written"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: a passage shows part of it to be his and not the whole of it (mock/research/202606111400_canonical-design-addendum-a1.md:122-131), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "meta"
 keywords = ["meta bands", "once per frame", "per window", "lifecycle hooks", "self-hosting kernel", "dispatch loop inversion"]
 rules_out = ["every dirty meta unit per window on multi-window frames"]
@@ -454,6 +486,7 @@ quote = '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 5 adapt subsystem, Axis E of the decision log dated 2026-05-10, agent-written; the text does not say whose decision it is"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "meta"
 keywords = ["anomaly", "Virtual", "BalanceAnomaly", "MemoryPressure", "AccessSet union", "AdaptWu", "Axis E", "no coarse flag"]
 cites = ["anomalies_are_virtual_marker_types_so_that_observers_compose_through_access_set_union"]

@@ -61,6 +61,7 @@ Corrected production site: a type-level fold over the global `Stores` AccessSet,
 origin = "proposed"
 written_by = "src changelist of round 202606051500 (fiber-structured morsel-outer dispatch), 2026-06-05, locked; agent-written round artifact that records a deviation from the locked doc changelist"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "plan"
 keywords = ["accumulator mask", "type-level fold", "Stores list position", "MaskProject", "store index space", "morsel-local", "deviation"]
 rules_out = ["place the accumulator-store-set production at the store DRAIN, as a `Mask` over `D::Stores`"]
@@ -129,6 +130,7 @@ walk's type-level recursion overflowing the trait solver. Expected: the
 origin = "proposed"
 written_by = "sketch findings cap-lifting-shapes of 2026-06-11, hypothesis section stating the two documented blockers; agent-written"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "plan"
 keywords = ["cap lifting", "GATE2_MAX_UNITS", "generic const expressions", "field access", "trait solver overflow", "cap_size", "MAX_CORES", "plan_dirty"]
 cites = ["generic_const_exprs_has_two_ceilings_no_field_access_on_generic_constants_and_a_complexity_limit_on_inline_const_blocks", "the_plan_dirty_array_stays_hardcoded_at_256_with_a_documented_deferral_because_rustc_rejects_field_access_on_generic_constants"]
@@ -157,6 +159,7 @@ absence.
 origin = "proposed"
 written_by = "sketch findings cap-lifting-shapes of 2026-06-11, shape s2c; agent-written"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "plan"
 keywords = ["trait solver overflow", "unreproduced", "cap_size", "GATE2_MAX_UNITS", "in-engine probe", "s2c", "compounded obligations", "recursion depth 64"]
 cites = ["lifting_the_engine_s_hardcoded_caps_was_documented_as_blocked_by_field_access_in_generic_constants_and_a_trait_solver_overflow_through_the_const_gated_walk"]

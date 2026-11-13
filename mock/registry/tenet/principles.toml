@@ -9,7 +9,9 @@ quote = '''
 > And things can be added and extended and changed in hilavitkutin as long as the main principles and paradigm itself, the intent, doesn't change with it and it doesn't compromise on its main pillars of full, exhaustive typestate, contracts first, all machinery and logic runs on contracts alone, people impl its parts and the engine runs it via the contracts. And optimisations first and foremost, always, though as said, we can start simpler and later go deeper, incrementally. And whatever gets added, matches in taste and execution, is not a drop looser in typestate or strictness with no std, no alloc, unless behind a feature that is entirely opt in and not required for things to work
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:339-339"]
 subject = "principles"
 keywords = ["pillars", "typestate", "contracts first", "optimisation", "no std", "no alloc", "opt-in feature", "intent", "extend", "change"]
 
@@ -37,7 +39,9 @@ quote = '''
   LLVM optimisation discipline as numerics. Define once, reuse everywhere.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:142-143"]
 subject = "principles"
 keywords = ["arvo", "no_std", "no alloc", "const-generic", "LLVM discipline", "define once"]
 
@@ -58,7 +62,9 @@ the same machine instructions as raw integers.
   structs (T4 §Q8)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:166-170", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:261-262"]
 subject = "principles"
 keywords = ["arvo-types-only", "lint", "fixed-point newtypes", "weights", "raw u32", "usize", "data-facing structs"]
 
@@ -76,7 +82,9 @@ quote = '''
   struct-field fn arrays don't devirtualise (12.6x slower).
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:364-367"]
 subject = "principles"
 keywords = ["ExpandedLto", "fat LTO", "codegen-units=1", "devirtualise", "monomorphised dispatch", "12.6x"]
 
@@ -96,7 +104,9 @@ std::alloc on std, consumer-provided on no_os). Fixed-size structures
 use stack arrays, arrayvec, or SlabColumn.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:284-286", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:308-310", "later: mock/research/202606111400_canonical-design-addendum-a1.md:165-166, platform_tiers_are_os_and_no_os_only_and_the_std_tier_is_deferred_indefinitely"]
 subject = "principles"
 keywords = ["no alloc", "no Vec", "no Box", "no String", "SlabColumn", "arrayvec", "stack arrays", "mmap"]
 
@@ -111,7 +121,9 @@ quote = '''
   NOT enforced on consumers. Consumers store whatever they want.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:458-459"]
 subject = "principles"
 keywords = ["no raw primitives", "arvo-types-only", "internal lint", "consumers", "T4 Q8"]
 
@@ -127,7 +139,9 @@ quote = '''
 - No slice methods (slices cause aliasing UB when WUs fused)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:657-658"]
 subject = "principles"
 keywords = ["raw pointer", "no slices", "aliasing UB", "Context", "fused units", "unsafe fn read", "unsafe fn write"]
 
@@ -141,7 +155,9 @@ quote = '''
 asm where measurement confirms the win.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:883-884"]
 subject = "principles"
 keywords = ["idiomatic Rust", "profile", "asm", "measurement", "intrinsics", "microkernels", "T5 Q11"]
 
@@ -166,7 +182,9 @@ is what enables LLVM devirtualisation — the schedule is statically
 analysable. No runtime WU registration, no dynamic schedules.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2110-2114", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2435-2440"]
 subject = "principles"
 keywords = ["static composition", "no runtime registration", "no dynamic schedules", "devirtualisation", "builder", "statically analysable", "R6"]
 
@@ -180,7 +198,9 @@ quote = '''
   Governs what form every type takes. (T1 L140-162 §3)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2205-2206"]
 subject = "principles"
 keywords = ["type taxonomy", "trait", "newtype", "repr(C) enum", "primitive", "cross-cutting"]
 
@@ -193,7 +213,9 @@ quote = '''
 - **dyn ban:** entirely banned, no exceptions. (T1 L169-170 §4.1)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2207-2207"]
 subject = "principles"
 keywords = ["dyn ban", "dynamic dispatch", "no exceptions", "cross-cutting constraint", "no-dyn"]
 
@@ -207,7 +229,9 @@ quote = '''
 - **std::any ban:** no TypeId, no type erasure. (T1 L171 §4.1)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2208-2208"]
 subject = "principles"
 keywords = ["std::any ban", "TypeId", "type erasure", "cross-cutting constraint", "no-std-any"]
 
@@ -221,7 +245,9 @@ quote = '''
   (T1 L172-192 §4.1-4.3)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2209-2210"]
 subject = "principles"
 keywords = ["newtype mandate", "String", "Vec", "Box", "documented newtype", "cross-cutting constraint"]
 
@@ -235,7 +261,9 @@ quote = '''
   dependency. (T1 L1414 decision #91, T2 L961 decision #7)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2211-2212"]
 subject = "principles"
 keywords = ["own implementation", "DuckDB", "architectural reference", "no dependency", "cross-cutting constraint"]
 
@@ -248,7 +276,9 @@ quote = '''
 - Contracts before implementations — traits first, always (#49)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2221-2221"]
 subject = "principles"
 keywords = ["contracts before implementations", "traits first", "design principle", "#49"]
 
@@ -261,7 +291,9 @@ quote = '''
 - ZSTs are the logic layer (#50)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2222-2222"]
 subject = "principles"
 keywords = ["ZST", "zero-sized types", "logic layer", "design principle", "#50"]
 
@@ -274,7 +306,9 @@ quote = '''
 - No dyn escape hatches — redesign instead (#51)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2223-2223"]
 subject = "principles"
 keywords = ["no dyn escape hatches", "redesign", "design principle", "#51"]
 cites = ["dyn_is_banned_entirely_with_no_exceptions"]
@@ -288,7 +322,9 @@ quote = '''
 - Every heap allocation documented (#52)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2224-2224"]
 subject = "principles"
 keywords = ["heap allocation", "documented", "design principle", "#52"]
 
@@ -301,7 +337,9 @@ quote = '''
 - Columnar storage maps to schema-as-traits (#53)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2225-2225"]
 subject = "principles"
 keywords = ["columnar storage", "schema-as-traits", "design principle", "#53"]
 
@@ -314,7 +352,9 @@ quote = '''
 - repr(C) + fn pointers = minimal ABI surface (#54)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2226-2226"]
 subject = "principles"
 keywords = ["repr(C)", "function pointers", "ABI surface", "design principle", "#54"]
 
@@ -340,7 +380,9 @@ quote = '''
 - Compiler metaphor forces data-transformation thinking (#56)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2228-2228"]
 subject = "principles"
 keywords = ["compiler metaphor", "data transformation", "design principle", "#56"]
 
@@ -353,7 +395,9 @@ quote = '''
 - No ad-hoc logic — reusable abstractions (#57)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2229-2229"]
 subject = "principles"
 keywords = ["no ad-hoc logic", "reusable abstractions", "design principle", "#57"]
 
@@ -366,7 +410,9 @@ quote = '''
 - NEVER "pragmatic shortcut" — change design not implementation (#58)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2230-2230"]
 subject = "principles"
 keywords = ["no pragmatic shortcut", "change design not implementation", "design principle", "#58"]
 
@@ -379,7 +425,9 @@ quote = '''
 - Typed IDs everywhere (#62)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2234-2234"]
 subject = "principles"
 keywords = ["typed IDs", "identifiers", "design principle", "#62"]
 
@@ -392,7 +440,9 @@ quote = '''
 - Production quality in mockspace (#63)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2235-2235"]
 subject = "principles"
 keywords = ["production quality", "mockspace", "design principle", "#63"]
 
@@ -414,7 +464,9 @@ quote = '''
 - sdk-traits-only: SDK crates export only traits, repr(C), proc macros
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2240-2248"]
 subject = "principles"
 keywords = ["enforcement lints", "no-raw-primitives", "no-dyn", "no-std-any", "arvo-types-only", "no-unwrap", "no-toml-value", "no-ui-below-cli", "sdk-traits-only"]
 
@@ -433,7 +485,9 @@ quote = '''
   dictionary_passing_style
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2250-2255"]
 subject = "principles"
 keywords = ["nightly feature gates", "min_specialization", "adt_const_params", "const_trait_impl", "explicit_tail_calls", "loop_match", "build_std", "scalable_vectors"]
 
@@ -461,7 +515,9 @@ in the common case; LLVM auto-vectorises when these 8 killers are
 absent. (T3 §Q3, cross-cuts domains 04, 05, 09, 13, 14, 17)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2257-2271"]
 subject = "principles"
 keywords = ["auto-vectorisation", "vectorisation killers", "SIMD contract", "no-dyn", "Copy bound", "64-byte alignment", "columnar storage", "no intrinsics"]
 cites = ["llvm_auto_vectorisation_through_no_dyn_monomorphisation_is_the_vectorisation_contract"]

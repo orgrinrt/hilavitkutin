@@ -20,7 +20,9 @@ the same topo depth), RCM determines which of those equal-depth
 WUs get grouped first.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1328-1339", "later: mock/research/202606111400_canonical-design-addendum-a1.md:49-57, whether_dispatch_follows_rcm_order_or_waist_phase_order_is_decided_by_a_bench"]
 subject = "plan"
 keywords = ["RCM", "row reordering", "unit execution order", "fiber grouping", "arvo-sparse", "fan-out", "column sets"]
 
@@ -40,7 +42,9 @@ is the physical manifestation of "co-location" — RCM determines the
 actual byte offsets of columns within the arena.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1341-1347"]
 subject = "plan"
 keywords = ["RCM", "column reordering", "arena layout", "co-location", "byte offsets", "cache lines", "stride"]
 cites = ["storage_is_contiguous_and_a_fiber_s_columns_share_one_arena"]
@@ -60,7 +64,9 @@ groups. These should align with the phases from step 4 — if they
 don't, something is wrong with the waist detection.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1349-1355"]
 subject = "plan"
 keywords = ["block diagonal", "bipartite graph", "connected components", "phase validation", "arvo-sparse", "independently schedulable"]
 
@@ -81,7 +87,9 @@ Dulmage-Mendelsohn refines the block structure:
   is consumed. The core of the pipeline.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1357-1365"]
 subject = "plan"
 keywords = ["Dulmage-Mendelsohn", "horizontal components", "vertical components", "square components", "dead-end units", "arvo-sparse"]
 
@@ -114,7 +122,9 @@ cut ensures the shared read volume is minimal — trunks that need
 the same read columns end up in the same trunk when possible.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1373-1392"]
 subject = "plan"
 keywords = ["spectral partitioning", "Fiedler vector", "trunk formation", "arvo-spectral", "cut weight", "L1", "zero sync", "more than five fibers"]
 cites = ["a_trunk_is_a_column_disjoint_maximal_path_within_a_phase_and_trunks_share_no_write_columns"]
@@ -130,7 +140,9 @@ detection already identified phase boundaries; within a small phase,
 all fibers form one trunk.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1394-1396"]
 subject = "plan"
 keywords = ["single trunk", "five fibers", "spectral", "overkill", "small phase"]
 
@@ -154,7 +166,9 @@ feasibility predicate is the full holistic check from domain 14
 pipeline breaker).
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1398-1408"]
 subject = "plan"
 keywords = ["greedy grouping", "fiber grouping", "holistic feasibility check", "register file", "L1 write budget", "ten operations", "arvo-comb"]
 
@@ -174,7 +188,9 @@ holistic check. DP finds the grouping that minimizes total data walks
 across all fibers.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1410-1416"]
 subject = "plan"
 keywords = ["matrix chain DP", "optimal fiber grouping", "cost function", "type-native stride", "data walks", "arvo-comb"]
 
@@ -196,7 +212,9 @@ generic bitmask structures). No incremental plan maintenance — full
 recompute is cheap enough.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1476-1477", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1486-1491"]
 subject = "plan"
 keywords = ["plan recomputation", "plan stage", "morsel splits", "full recompute", "no incremental", "pipeline change"]
 cites = ["morsel_boundaries_are_stable_unless_the_record_count_changes"]
@@ -215,7 +233,9 @@ in the arena, so the loader's write pattern warms the cache optimally
 for downstream fibers.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1493-1498"]
 subject = "plan"
 keywords = ["loader placement", "cache impact", "initial cache state", "morsel cube", "RCM", "arena", "downstream fibers"]
 
@@ -237,7 +257,9 @@ temperature). These adjust at plan time without changing the pipeline
 composition. Eliminates need for fallback dispatch approaches.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2114-2117", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2442-2446"]
 subject = "plan"
 keywords = ["adaptive parameters", "plan stage", "morsel sizes", "hardware detection", "EMA", "strategy selection", "temperature", "affinity"]
 cites = ["static_composition_means_every_unit_is_registered_through_the_builder_and_no_schedule_is_dynamic"]
@@ -257,7 +279,9 @@ Static analysis (at schedule construction, plan-time):
 - Memory watermark: peak concurrent column allocation
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2011-2017"]
 subject = "plan"
 keywords = ["static analysis", "cache pressure profile", "data flow volume", "column lifetime map", "memory watermark", "plan-time"]
 
@@ -277,7 +301,9 @@ Runtime analysis (across frames, between passes):
 - Throughput trending: detect thermal throttling, memory pressure
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2019-2026"]
 subject = "plan"
 keywords = ["runtime analysis", "per-morsel timing", "hot warm cold", "cache residency prediction", "frame time prediction", "throughput trending", "thermal throttling"]
 cites = ["generation_counter_activity_classifies_morsels_by_temperature"]
@@ -296,7 +322,9 @@ Temperature from change detection counters (domain 12) + per-morsel
 timing.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2028-2033"]
 subject = "plan"
 keywords = ["morsel temperature", "core assignment", "P-cores", "E-cores", "hot morsels", "cold morsels", "deferred"]
 cites = ["generation_counter_activity_classifies_morsels_by_temperature"]
@@ -317,7 +345,9 @@ shifted → re-select per-phase configs. If record count changed →
 full plan recompute. Triggers are cheap bitmask comparisons.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2042-2048"]
 subject = "plan"
 keywords = ["reorganisation triggers", "between frames", "EMA thresholds", "recompute morsel sizes", "re-select config", "bitmask comparison"]
 
@@ -338,7 +368,9 @@ property is intrinsic to the type, not to one app's registration. Implementation
 under #696 and rides the swap-semantics round (A2-5), since the two surfaces interact.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["ruled: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:55-62"]
 subject = "plan"
 keywords = ["PlanAffecting", "unsealed", "marker trait", "Replaceable", "plan-dirty", "recompute", "resource value type", "#696"]
 cites = ["the_swap_of_a_replaceable_resource_is_to_be_specified_by_a_commissioned_round"]
@@ -359,7 +391,9 @@ wording canon keeps. Until the bench lands, neither order is drift; the fork
 is registered open with a bench oracle.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["ruled: mock/research/202606111400_canonical-design-addendum-a1.md:47-47", "ruled: mock/research/202606111400_canonical-design-addendum-a1.md:49-57", "later: mock/research/202607200800_a1-1-ordering-theory-bench-expansion.md:82-90, rcm_wins_against_rival_ordering_theories_at_dram_scale_and_order_is_near_neutral_below_it_so_step_5_stands"]
 subject = "plan"
 keywords = ["RCM", "dispatch order", "waist-phase order", "bench oracle", "cache locality", "fan-out", "dual ordering", "A1-1"]
 cites = ["rcm_always_runs_and_reorders_the_units_so_column_sharing_units_are_adjacent_for_fiber_grouping"]
@@ -376,6 +410,7 @@ the arena-layout column; sub-byte bitpacking (`ColumnValue::BIT_WIDTH`) is
 origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "plan"
 keywords = ["RCM", "arena-layout", "partial", "inert", "state assessment", "2026-06-11"]
 cites = ["whether_dispatch_follows_rcm_order_or_waist_phase_order_is_decided_by_a_bench"]
@@ -391,6 +426,7 @@ Partial or inert: eight of nine adapt axes carry types but no data;
 origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "plan"
 keywords = ["adapt axes", "inert", "types without data", "state assessment", "2026-06-11"]
 
@@ -408,6 +444,7 @@ The easy escape hatch is gone: there is no "registration-order cons-list walk th
 origin = "proposed"
 written_by = "canon amendment of 2026-06-06 on the unified engine, the working out under the maintainer's ruling, written in the first person by an author the text does not name"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "plan"
 keywords = ["FiberShape", "typestate", "per-core program", "build time = the type system", "AccessSet", "trait solver", "sketch-prove", "highest risk"]
 rules_out = ["a registration-order cons-list walk that works for single core, shipped first"]
@@ -431,6 +468,7 @@ quote = '''
 origin = "proposed"
 written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "plan"
 keywords = ["A3b", "per-fiber morsel sizing", "blob stride", "CollectionBytes", "ResourceFootprint", "#163", "#164", "size fold"]
 cites = ["the_value_of_a_resource_is_one_contiguous_record_blob_and_the_per_member_column_decomposition_was_refuted_by_bench"]

@@ -9,7 +9,9 @@ quote = '''
 the three crates. Designed for extraction to a separate repository.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:63-63"]
 subject = "future"
 keywords = ["extraction", "separate repository", "three crates", "designed for"]
 
@@ -23,7 +25,9 @@ quote = '''
   lifecycle)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:139-140"]
 subject = "future"
 keywords = ["arvo", "extracted", "own repo", "lifecycle", "workspace", "later"]
 cites = ["arvo_is_a_standalone_no_std_primitive_family_shared_across_projects"]
@@ -38,7 +42,9 @@ quote = '''
 by signal state for branch-free loops. Theoretical — not bench-validated.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:722-723"]
 subject = "future"
 keywords = ["signal-ordered execution", "record reordering", "branch-free loops", "theoretical", "not bench-validated"]
 
@@ -54,7 +60,9 @@ quote = '''
 - SpMV (sparse matrix-vector multiply) — deferred but same family
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:196-196", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:203-203"]
 subject = "future"
 keywords = ["SpMV", "sparse matrix-vector multiply", "deferred", "arvo-sparse"]
 
@@ -69,7 +77,9 @@ primitives used across all arvo consumers. Detailed design of each
 crate deferred to its own design round.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:132-134"]
 subject = "future"
 keywords = ["arvo", "expanded", "mathematical primitives", "deferred", "own design round", "numerics-only"]
 
@@ -86,7 +96,9 @@ quote = '''
 - Morton/Hilbert dispatch ordering (arvo-comb)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1433-1437"]
 subject = "future"
 keywords = ["deferred algorithms", "SpMV", "fill-reducing ordering", "CSE detection", "Morton", "Hilbert", "not day-one", "T3 #71-74"]
 
@@ -102,7 +114,9 @@ quote = '''
    design. Can't design the accessor before the storage exists.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2470-2473"]
 subject = "future"
 keywords = ["resource collection accessor", "Seq", "Map", "storage layout", "future design round", "post-pipeline reads"]
 
@@ -118,7 +132,9 @@ quote = '''
    round for API surface, const-generic sizing, and LLVM optimisation.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2475-2478"]
 subject = "future"
 keywords = ["arvo sub-crates", "design round", "API surface", "const-generic sizing", "LLVM optimisation", "arvo-bitmask", "arvo-sparse", "arvo-graph"]
 cites = ["the_detailed_design_of_each_arvo_crate_is_deferred_to_its_own_design_round"]
@@ -136,7 +152,9 @@ arc charted to the full canonical design, without further gate ceremony.
 The chart-the-path routine produces the arc's roadmap.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["ruled: mock/research/202606111400_canonical-design-addendum-a1.md:4-4", "ruled: mock/research/202606111400_canonical-design-addendum-a1.md:47-47", "ruled: mock/research/202606111400_canonical-design-addendum-a1.md:72-77"]
 subject = "future"
 keywords = ["GATE-2", "completion arc", "chart-the-path", "roadmap", "perf gate", "E5", "E6", "E8", "A1-3"]
 
@@ -152,7 +170,9 @@ All four unslotted feature groups chart into the arc:
    strategy, sub-byte bitpacking stride, intrinsics/microkernels.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["ruled: mock/research/202606111400_canonical-design-addendum-a1.md:47-47", "ruled: mock/research/202606111400_canonical-design-addendum-a1.md:72-82"]
 subject = "future"
 keywords = ["micro-morsels", "branch dispatch", "shared-read column", "bitpacking stride", "intrinsics", "microkernels", "perf substance"]
 cites = ["gate_2_closes_with_cleanup_and_a_perf_gate_rerun_and_the_remainder_is_one_completion_arc_charted_to_the_full_canonical_design"]
@@ -172,7 +192,9 @@ All four unslotted feature groups chart into the arc:
    stolen/idle counters.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["ruled: mock/research/202606111400_canonical-design-addendum-a1.md:47-47", "ruled: mock/research/202606111400_canonical-design-addendum-a1.md:72-86"]
 subject = "future"
 keywords = ["adapt completion", "reorganisation triggers", "morsel recompute", "per-phase re-select", "predictive parking", "stolen counters", "#345"]
 cites = ["gate_2_closes_with_cleanup_and_a_perf_gate_rerun_and_the_remainder_is_one_completion_arc_charted_to_the_full_canonical_design"]
@@ -190,7 +212,9 @@ All four unslotted feature groups chart into the arc:
    providers polish, persistence spine wiring (R2 evict/inject).
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["ruled: mock/research/202606111400_canonical-design-addendum-a1.md:47-47", "ruled: mock/research/202606111400_canonical-design-addendum-a1.md:72-88"]
 subject = "future"
 keywords = ["ecosystem bridges", "facade", "plugin-host", "kits", "providers", "persistence spine", "evict inject", "R2"]
 cites = ["gate_2_closes_with_cleanup_and_a_perf_gate_rerun_and_the_remainder_is_one_completion_arc_charted_to_the_full_canonical_design"]
@@ -209,7 +233,9 @@ All four unslotted feature groups chart into the arc:
    schedule introspection (#183).
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["ruled: mock/research/202606111400_canonical-design-addendum-a1.md:47-47", "ruled: mock/research/202606111400_canonical-design-addendum-a1.md:72-91"]
 subject = "future"
 keywords = ["PipelineResult", "Poisoned", "dependent poisoning", "work-stealing", "Executor", "schedule introspection", "#183", "ops surface"]
 cites = ["gate_2_closes_with_cleanup_and_a_perf_gate_rerun_and_the_remainder_is_one_completion_arc_charted_to_the_full_canonical_design"]
@@ -256,6 +282,7 @@ Work-stealing BACKLOG. Spin-budget calibration micro-bench at `ThreadPool::build
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "future"
 keywords = ["work-stealing", "backlog", "spin budget", "ThreadPool::build", "calibration micro-bench", "fixed 128", "v1"]
 cites = ["work_stealing_is_not_the_default_and_the_consumer_may_provide_a_stealing_executor"]
@@ -271,6 +298,7 @@ quote = '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "future"
 keywords = ["hot-reload", "ref-counted unload", "load-once", "drop-once", "BACKLOG", "v1", "extensions"]
 
@@ -289,6 +317,7 @@ The shape described here plus the specific type and method names locked in the s
 origin = "proposed"
 written_by = "the design template of hilavitkutin-linking, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "future"
 keywords = ["async loading", "telemetry", "signature verification", "BACKLOG", "unload ref-counting", "additional platforms", "v1 contract", "follow-up rounds"]
 
@@ -318,6 +347,7 @@ because = "Bevy proves the raw builder pattern is ergonomically sufficient at th
 origin = "proposed"
 written_by = "the design template of hilavitkutin-kit, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "future"
 keywords = ["app! macro", "define_app!", "task #295", "deferred ergonomics", "raw builder", "Bevy", "viola", "vehje", "parked"]
 rules_out = ["a declarative app! / define_app! macro"]
@@ -337,6 +367,7 @@ multi-thread access. Tracked in BACKLOG.
 origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "future"
 keywords = ["MemoryArena", "!Sync", "Mutex shim", "SyncArena", "multi-thread access", "BACKLOG", "StringInterner"]
 
@@ -357,6 +388,7 @@ libc/Unix per consumer demand.
 origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "future"
 keywords = ["Clock default", "MemoryProvider default", "libc", "Unix", "consumer demand", "crate scope", "future rounds"]
 cites = ["later_modules_of_the_providers_crate_add_column_storage_clock_and_memory_defaults_per_consumer_demand"]
@@ -382,5 +414,6 @@ mechanism to surface to op rather than absorb. If bandwidth saturates by 4 cores
 origin = "proposed"
 written_by = "engine roadmap r6 as on the branch recover/unlanded-rounds-and-benches, passage added 2026-07-19, not on dev; the text does not say whose it is"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "future"
 keywords = ["walk overhead", "per-fiber window", "shared window", "dirty bit tests", "G2C-M", "bench"]

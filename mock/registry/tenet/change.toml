@@ -14,7 +14,9 @@ quote = '''
 - evict/inject APIs (R2) handle persistence to consumer storage
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:861-865"]
 subject = "change"
 keywords = ["generation counter", "change detection", "skip", "unchanged", "incremental", "morsel", "bump on write"]
 
@@ -29,7 +31,9 @@ hilavitkutin owns per-morsel generation counters and skip-unchanged
 DAG propagation logic (runtime scheduling concern). For persistence,
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2406-2408"]
 subject = "change"
 keywords = ["generation counter", "skip-unchanged", "incremental execution", "owns", "R2"]
 cites = ["change_detection_is_per_morsel_and_skips_what_is_unchanged"]
@@ -57,7 +61,9 @@ processor (re-run only what changed). Feeds domain 12 (change
 detection per morsel).
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1418-1431"]
 subject = "change"
 keywords = ["dirty", "propagation", "incremental skip", "generation counter", "root inputs", "since last pass", "clean"]
 cites = ["change_detection_is_per_morsel_and_skips_what_is_unchanged"]
@@ -78,7 +84,9 @@ Increment only on completion — no partial writes (domain 08). 2-5 u64
 per unit stamp view, packed in one cache line.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2139-2145"]
 subject = "change"
 keywords = ["version stamp", "before", "current", "changed stores", "actually modified", "bitmask", "completion"]
 cites = ["no_write_is_partial"]
@@ -96,7 +104,9 @@ quote = '''
 - Correctness independent of atomicity
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:615-619"]
 subject = "change"
 keywords = ["partial write", "buffer", "write on return", "completion", "atomicity", "downstream"]
 
@@ -118,7 +128,9 @@ Temperature from change detection counters (domain 12) + per-morsel
 timing.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2021-2022", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2028-2033"]
 subject = "change"
 keywords = ["temperature", "hot", "warm", "cold", "change frequency", "generation counter", "core assignment", "adaptation"]
 cites = ["change_detection_is_per_morsel_and_skips_what_is_unchanged"]
@@ -155,6 +167,7 @@ but rendering data (mesh, material) is mostly static.
 origin = "proposed"
 written_by = "topic T3 of the founding round (dispatch-and-optimisation), decision 57"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "change"
 keywords = ["generation counter", "monotonic", "last processed generation", "skip", "previous frame", "incremental execution", "change tracking"]
 cites = ["change_detection_is_per_morsel_and_skips_what_is_unchanged"]
@@ -195,6 +208,7 @@ morsels whose input generations have advanced.
 origin = "proposed"
 written_by = "topic T3 of the founding round (dispatch-and-optimisation), the 3D cube model"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "change"
 keywords = ["temporal", "cube", "T dimension", "frames", "cached result", "incremental", "generation"]
 cites = ["change_detection_is_per_morsel_and_skips_what_is_unchanged"]
@@ -214,6 +228,7 @@ differently.
 origin = "proposed"
 written_by = "the research note loimu-dag of the founding round"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "change"
 keywords = ["version stamp", "early cutoff", "phantom write", "bitwise comparison", "explicit marking", "actually changed", "consumer"]
 cites = ["version_stamps_tell_which_stores_a_unit_actually_modified"]
@@ -235,6 +250,7 @@ output columns untouched. The propagation is a bitmask sweep over the
 origin = "proposed"
 written_by = "the standalone spec 202606111800, a reading aid with no design authority of its own by addendum A2"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "change"
 keywords = ["dirty seed", "mark dirty", "consumer", "resource replacement", "predecessor masks", "skip"]
 cites = ["a_unit_whose_inputs_are_all_clean_skips_the_pass"]
@@ -255,7 +271,9 @@ The same round corrects the mis-grounded artifacts. Until it lands, `replace_val
 mark-dirty-only and the catalogued test stays red.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:88-94"]
 subject = "change"
 keywords = ["swap semantics", "Replaceable", "replace_value", "replace_resource", "PlanAffecting", "quiescence", "commissioned round", "mark dirty"]
 
@@ -291,6 +309,7 @@ the existing `store_dirty` mask rather than duplicating it. Do not start this on
 origin = "proposed"
 written_by = "the engine roadmap revision r6 of 2026-07-18, agent-written"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "change"
 keywords = ["generation counter", "per-morsel", "store_dirty", "not built", "design sketch", "coarse dirty"]
 related = ["tenet::change_detection_is_per_morsel_and_skips_what_is_unchanged", "tenet::the_engine_owns_the_generation_counters_and_the_skip_logic", "question::who_says_that_a_store_changed"]
@@ -310,7 +329,9 @@ The same round corrects the mis-grounded artifacts. Until it lands, `replace_val
 mark-dirty-only and the catalogued test stays red.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:88-94"]
 subject = "change"
 keywords = ["swap semantics", "commissioned round", "mis-grounded artifacts", "correction", "Replaceable", "citation"]
 cites = ["the_swap_of_a_replaceable_resource_is_to_be_specified_by_a_commissioned_round", "two_shipped_rounds_cited_an_expert_input_memo_as_if_it_were_the_storage_addendum"]
@@ -327,6 +348,7 @@ quote = '''
 origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "change"
 keywords = ["replace_resource", "replace_value", "mark dirty", "partial", "inert", "state assessment", "2026-06-11"]
 cites = ["the_swap_of_a_replaceable_resource_is_to_be_specified_by_a_commissioned_round"]
@@ -393,6 +415,7 @@ obligation.
 origin = "proposed"
 written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "change"
 keywords = ["plan-dirty wiring", "band gate", "first_frame", "replace_resource", "implementing round", "gap", "2026-07-19"]
 cites = ["replacing_a_plan_affecting_resource_does_the_replace_value_write_and_sets_the_plan_dirty_bit_the_next_run_consumes"]

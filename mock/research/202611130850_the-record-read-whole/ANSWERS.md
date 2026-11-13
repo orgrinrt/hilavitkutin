@@ -35,6 +35,19 @@ hold. At about 10:55 UTC he said that loimu is an old reference and that the
 buffering he recalls may have been discussed in ikiuni; his words are in
 `OP-ANSWERS-14.md`, and what ikiuni holds is in `IKIUNI.md`.
 
+After this form was written, at about 12:00 UTC, he said he would not walk
+hundreds of rows, and that the rows are filled as ratified by default from
+the written history, with only the unbacked and the conflicting ones brought
+to him. His words are in `OP-ANSWERS-18.md`. Readers then classed every row
+against the record. A tenet whose content a passage shows to be his carries
+`standing = "ratified"` with that passage in `ratified_from`. A row with no
+word of his either way stands on a `stamp`. The rows the record does not
+back, or that stand against a word of his, are listed in `ROWS-FOR-OP.md`
+beside this file and are neither ratified nor stamped. The answers below
+were written before that pass and cite rows by id, whatever their standing
+is now. His two remarks on the benches, of about 12:20 and 12:25 UTC, are in
+`OP-ANSWERS-20.md` and `OP-ANSWERS-21.md` and are rows of their own.
+
 Read whole and first hand: the founding spec, amendments A1 and A2, the
 unified-engine amendment, the resource storage addendum, the governance
 seed, the swap specification, its ratification evidence and the topic of the

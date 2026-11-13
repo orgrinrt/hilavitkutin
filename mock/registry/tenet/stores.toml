@@ -15,7 +15,9 @@ pub struct Virtual<T>(PhantomData<T>);   // zero-data, DAG edge only
 ```
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:491-496"]
 subject = "stores"
 keywords = ["store types", "three", "resource", "column", "virtual", "singleton", "collection", "zero-data"]
 
@@ -31,7 +33,9 @@ quote = '''
   the same edge as Write<Column<Y>> → Read<Column<Y>>.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:498-500"]
 subject = "stores"
 keywords = ["store id", "edge", "cardinality", "resource", "column", "scheduler"]
 cites = ["there_are_three_store_types_and_one_scheduling_mechanism"]
@@ -48,7 +52,9 @@ quote = '''
 - Virtual<T>: no storage, fire-only via ctx.fire::<T>()
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:502-504"]
 subject = "stores"
 keywords = ["resource access", "column access", "virtual", "fire", "morsel-scoped", "raw pointer"]
 cites = ["there_are_three_store_types_and_one_scheduling_mechanism"]
@@ -70,7 +76,9 @@ wrapper around hilavitkutin's `Column<T>`. Translation happens in
 the consumer's registration layer.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2397-2404"]
 subject = "stores"
 keywords = ["column", "schema", "IR", "consumer-side", "typed slot", "registration layer", "R1"]
 
@@ -84,7 +92,9 @@ column data in) APIs. Column type registration is static (compile-time)
 — no runtime column type creation. Consumers build hot-cold storage
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2411-2412"]
 subject = "stores"
 keywords = ["static registration", "compile-time", "runtime column type", "no runtime creation", "R2", "content", "dynamic column"]
 rules_out = ["runtime column type creation"]
@@ -111,7 +121,9 @@ Element values in Seq/Map are NOT constrained to 16 bytes — only
 Field<T> has the ColumnValue limit.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:535-547", "later: mock/research/202606210600_resource-storage-model-canonical-addendum.md:70-79, none"]
 subject = "stores"
 keywords = ["resource model", "field", "seq", "map", "const-sized", "no dynamic collections", "R5"]
 rules_out = ["dynamic collections"]
@@ -126,7 +138,9 @@ quote = '''
 in Column or Resource alongside the Virtual.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:719-720"]
 subject = "stores"
 keywords = ["virtual", "flag", "data carrier", "fire"]
 cites = ["there_are_three_store_types_and_one_scheduling_mechanism"]
@@ -148,7 +162,9 @@ quote = '''
 - Separate arena for resource Seq/Map allocations
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:557-562", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:566-566", "later: mock/research/202606210600_resource-storage-model-canonical-addendum.md:70-79, none"]
 subject = "stores"
 keywords = ["column storage", "backing memory", "allocator", "raw pointers", "slices", "aliasing", "alignment"]
 
@@ -164,7 +180,9 @@ quote = '''
   fiber completion, release fires at zero (T3 decision #36)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:563-565"]
 subject = "stores"
 keywords = ["release", "advisory", "column lifetime", "consumer count", "readers"]
 
@@ -186,7 +204,9 @@ pub trait ColumnValue: Copy + 'static {
 - **No pack/unpack.** Type IS the storage. No SlotSize intermediary.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:427-429", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:432-434", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:464-464"]
 subject = "stores"
 keywords = ["ColumnValue", "no pack/unpack", "type is storage", "SlotSize", "Payload", "BIT_WIDTH", "R4"]
 cites = ["each_column_has_its_own_stride_and_a_value_is_at_most_sixteen_bytes"]
@@ -208,6 +228,7 @@ impl<T: Copy + 'static> ColumnValue for T {
 '''
 origin = "stated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (mock/research/202606111400_canonical-design-addendum-a1.md:190-194, row the_round_level_amendments_registered_by_a1_are_five_dated_rounds), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "stores"
 keywords = ["blanket impl", "ColumnValue", "Copy", "'static", "16 bytes", "min_specialization", "zero friction"]
 
@@ -230,6 +251,7 @@ impl ColumnValue for UFixed<1, 0> {
 '''
 origin = "stated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (mock/research/202606111400_canonical-design-addendum-a1.md:190-194, row the_round_level_amendments_registered_by_a1_are_five_dated_rounds), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "stores"
 keywords = ["min_specialization", "BIT_WIDTH", "default const", "specialising impl", "UFixed<1, 0>", "explicit override"]
 
@@ -246,7 +268,9 @@ quote = '''
   column layout mode (T5 §Q10).
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:454-457"]
 subject = "stores"
 keywords = ["BIT_WIDTH", "bitpacking", "BitPacked", "sub-byte", "UFixed<1,0>", "UFixed<4,0>", "byte-aligned"]
 
@@ -261,7 +285,9 @@ quote = '''
   blanket impl's where clause. Forces interned IDs for String/PathBuf/Vec.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:460-461"]
 subject = "stores"
 keywords = ["16-byte max", "where clause", "interned IDs", "String", "PathBuf", "Vec", "compile-time"]
 cites = ["each_column_has_its_own_stride_and_a_value_is_at_most_sixteen_bytes"]
@@ -277,7 +303,9 @@ quote = '''
   or lint, not by the trait itself.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:462-463"]
 subject = "stores"
 keywords = ["repr(C)", "domain newtypes", "derive(ColumnValue)", "lint", "ColumnValue trait"]
 
@@ -293,7 +321,9 @@ quote = '''
 - Column<T> where T: ColumnValue (R4). No IR parameter (R1).
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:478-478", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:501-501"]
 subject = "stores"
 keywords = ["Column<T>", "In<IR>", "As<T>", "R1", "consumer-side", "no IR parameter", "ColumnValue"]
 
@@ -308,7 +338,9 @@ quote = '''
   (T5 L868)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:250-251"]
 subject = "stores"
 keywords = ["boolean columns", "UFixed<1,0>", "BitPacked", "8x density", "one bit"]
 
@@ -324,7 +356,9 @@ quote = '''
 - Bit position assignment computed once at plan time
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:507-507", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:512-512"]
 subject = "stores"
 keywords = ["StoreId", "u16", "dense index", "plan time", "bit position", "AccessMask"]
 
@@ -341,7 +375,9 @@ quote = '''
   OR for union, `== 0` for empty check
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:508-511"]
 subject = "stores"
 keywords = ["AccessMask", "Mask64", "Mask256", "bitwise", "AND", "OR", "conflict", "arvo-bitmask"]
 
@@ -356,7 +392,9 @@ quote = '''
   implements AccessSet
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:515-516"]
 subject = "stores"
 keywords = ["AccessSet", "tuples", "Column", "Resource", "compile-time", "store descriptors"]
 
@@ -372,7 +410,9 @@ quote = '''
   function IS the type identity — no TypeId, no std::any)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:517-519"]
 subject = "stores"
 keywords = ["monomorphised function", "type identity", "no TypeId", "no std::any", "AccessMask", "plan phase"]
 
@@ -389,7 +429,9 @@ indices by the time execution begins. The Schedule lowers types to
 indices.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:522-525"]
 subject = "stores"
 keywords = ["ZST erasure", "marker types", "usize indices", "Schedule lowers types", "type safety", "morsel sizes"]
 
@@ -404,7 +446,9 @@ quote = '''
 - Packed into u8 bytes, grouped into u64 words (arvo-bitmask types)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:690-691"]
 subject = "stores"
 keywords = ["virtual flags", "bit-packed", "u8", "u64", "arvo-bitmask", "fire flags"]
 cites = ["a_virtual_is_a_pure_flag_and_carries_no_data"]
@@ -419,7 +463,9 @@ quote = '''
 - Hierarchical check: u64 == 0 → skip 64, u8 == 0 → skip 8
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:692-692"]
 subject = "stores"
 keywords = ["hierarchical check", "skip 64", "skip 8", "u64 == 0", "virtual flags", "scan"]
 
@@ -434,7 +480,9 @@ quote = '''
 - T::INDEX const-folded from compile-time type identity
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:693-694"]
 subject = "stores"
 keywords = ["ctx.fire", "T::INDEX", "const-folded", "byte load", "OR", "byte store", "fire cost"]
 
@@ -452,6 +500,8 @@ quote = '''
 - Computed once at plan time, zero runtime cost
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:696-700"]
 subject = "stores"
 keywords = ["affinity-ordered", "bit assignment", "bin-packing", "co-firing", "cold words", "plan time", "arvo-comb"]
