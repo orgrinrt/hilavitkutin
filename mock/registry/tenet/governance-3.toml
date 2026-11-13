@@ -141,6 +141,10 @@ stamp = 'provisional, 2026-11-13: nothing read in the written history shows it t
 keywords = ["registry row", "outranks", "seed text", "conflict", "absence of a row", "current word", "precedence"]
 related = ["tenet::once_the_seed_is_frozen_its_text_never_changes_and_every_later_change_to_canon_lands_as_registry_rows"]
 
+# The two row ids in parentheses in `what` name the rows the standard governs, which its
+# passage states in words; they were written so `already-said` finds a cited row, since it
+# refuses to answer while no row carries `cites`. They come out when ticket ef03a0834389
+# is fixed.
 [[tenet]]
 id = "the_evidence_then_bless_standard_is_part_of_canon_and_governs_every_recorded_deviation_of_a_shipped_mechanism"
 subject = "governance"

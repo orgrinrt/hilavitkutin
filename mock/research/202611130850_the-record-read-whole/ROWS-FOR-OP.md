@@ -692,7 +692,7 @@ Passages: `mock/research/pre_seed/202606111800_canonical-spec-standalone.md:18-2
 
 ### The swap specification, S1 to S7
 
-The specification of what replacing a resource value does is a draft whose status line says it waits on his ratification, and the record says he held that ratification until it was implemented and benched. The governance chapter of the seed says it is implemented and benched and still waits. These 25 rows are its clauses and the rows about its state. The options are those of the question row `whether_the_maintainer_ratifies_s1_through_s7_of_the_swap_spec_as_the_swap_semantics_canon`, listed below with the rest.
+The specification of what replacing a resource value does is a draft whose status line says it waits on his ratification, and the record says he held that ratification until it was implemented and benched. On 13 November 2026 at 13:20 he was asked whether it may land, and he chose "Land as provisional": it lands on dev under a provisional stamp, and ratification waits until the two gaps the question named are fixed, the plan-dirty bit keyed by the store position where S2 says the plan-affecting id, and a fused frame ignoring the bit (`OP-ANSWERS-1305.md:13-41`). So these 25 rows no longer wait on an answer from him. They stay here, unratified and binding nothing, until the two gaps are fixed and the ratification is put to him again with the question row `whether_the_maintainer_ratifies_s1_through_s7_of_the_swap_spec_as_the_swap_semantics_canon`, which stays open. The row `the_swap_semantics_item_landed_under_a_provisional_stamp_with_s1_through_s7_not_ratified_and_two_gaps_open_against_the_spec` records his answer.
 
 #### `a_replaceable_swap_installs_the_whole_value_as_one_blob_write_through_the_drain_s_selector_and_the_member_by_member_wording_is_refuted`
 
@@ -855,7 +855,7 @@ Passages: `mock/research/202607200200_replaceable-swap-semantics-spec.md:4-6`.
 
 A tenet. It says: The ask is to ratify S1 through S7 as the swap-semantics canon. On ratification the seed storage chapter replaces its open-question wording with the spec, governance item 1 and the A2-3 remainder in item 6 close, and #696 and #697 complete. S3 and the Swap-D bench remain gated on #344 inside the ratified spec by name, and not as open questions.
 
-Finding: This is the ask of the evidence memo to him, and the governance chapter still says it awaits his ratification of S1 through S7; the record shows no answer.
+Finding: This is the ask of the evidence memo to him, and the governance chapter still says it awaits his ratification of S1 through S7; asked on 13 November 2026 whether it may land, he chose "Land as provisional", with ratification waiting until the two gaps are fixed (`OP-ANSWERS-1305.md:13-41`), so the ask stands open for after them.
 
 Passages: `mock/research/202607201100_swap-semantics-ratification-evidence.md:77-83`, `mock/research/seed/governance.md:96-106` (as it stood at c5f337a, before the trunk rewrote the passage).
 
