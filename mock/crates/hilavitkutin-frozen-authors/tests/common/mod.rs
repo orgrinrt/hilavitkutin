@@ -8,6 +8,7 @@
 
 #![allow(dead_code)]
 
+pub mod lend;
 #[path = "../../../hilavitkutin/tests/stable_provider/mod.rs"]
 pub mod stable_provider;
 #[path = "../../../hilavitkutin/tests/common/mod.rs"]
@@ -61,7 +62,7 @@ pub fn words_of(
     peak: &[Peak],
     glow: &[Glow],
     ash: &[Ash],
-    overheat: bool,
+    overheat: Bool,
     crossed: &[Crossed],
     sorted: bool,
 ) -> Vec<Word> {
@@ -78,7 +79,7 @@ pub fn words_of(
         peak,
         glow,
         ash,
-        Bool(overheat),
+        overheat,
         &crossed,
         |word| out.push(word),
     );
@@ -102,7 +103,7 @@ pub fn model_frames(frames: usize, sorted: bool, cross: bool) -> Vec<Vec<Word>> 
                 &model.peak,
                 &model.glow,
                 &model.ash,
-                model.overheat.0,
+                model.overheat,
                 crossed,
                 sorted,
             )
@@ -167,42 +168,9 @@ macro_rules! oracle_frames {
         use hilavitkutin_conformance::{Lent, Oracle, Refusal};
         use hilavitkutin_frozen_authors::*;
         use notko::Outcome;
-        use $crate::common::{num, words_of};
+        use $crate::common::words_of;
 
-        let mut start = Model::new();
-        let mut heat_live = [Heat(num($poison)); RECORDS.0];
-        let mut level_live = [Level(num($poison)); RECORDS.0];
-        let world = (
-            Lent::<Column<Pos>>::over(&mut start.pos),
-            (
-                Lent::<Column<Vel>>::over(&mut start.vel),
-                (
-                    Lent::<Field>::over(&mut start.heat, &mut heat_live),
-                    (
-                        Lent::<Column<Edge>>::over(&mut start.edge),
-                        (
-                            Lent::<Accum<Crossed>>::over(&mut start.appended),
-                            (
-                                Lent::<Virtual<Overheat>>::unfired(),
-                                (
-                                    Lent::<Column<Alarms>>::over(&mut start.alarms),
-                                    (
-                                        Lent::<Pool>::over(&mut start.level, &mut level_live),
-                                        (
-                                            Lent::<Column<Peak>>::over(&mut start.peak),
-                                            (
-                                                Lent::<Column<Glow>>::over(&mut start.glow),
-                                                (Lent::<Column<Ash>>::over(&mut start.ash), ()),
-                                            ),
-                                        ),
-                                    ),
-                                ),
-                            ),
-                        ),
-                    ),
-                ),
-            ),
-        );
+        $crate::lend!(world, $poison);
         (|| -> Result<Vec<Vec<hilavitkutin_conformance::Word>>, Refusal> {
             let mut oracle = match Oracle::<_, $keeping, $visiting>::new(world, RECORDS) {
                 Outcome::Ok(oracle) => oracle,
@@ -213,18 +181,7 @@ macro_rules! oracle_frames {
                 if let Outcome::Err(refusal) = oracle.frame(&$units) {
                     return Err(refusal);
                 }
-                out.push(words_of(
-                    oracle.of::<Column<Pos>, _>().values(),
-                    oracle.of::<Field, _>().frozen(),
-                    oracle.of::<Column<Alarms>, _>().values(),
-                    oracle.of::<Pool, _>().frozen(),
-                    oracle.of::<Column<Peak>, _>().values(),
-                    oracle.of::<Column<Glow>, _>().values(),
-                    oracle.of::<Column<Ash>, _>().values(),
-                    oracle.of::<Virtual<Overheat>, _>().fired().0,
-                    oracle.of::<Accum<Crossed>, _>().appended(),
-                    $sorted,
-                ));
+                out.push($crate::kept!(oracle, words_of, $sorted));
             }
             Ok(out)
         })()
@@ -310,7 +267,7 @@ impl Stores<'_> {
                 core::slice::from_raw_parts(self.peak, N),
                 core::slice::from_raw_parts(self.glow, N),
                 core::slice::from_raw_parts(self.ash, N),
-                (self.fired)(frame),
+                Bool((self.fired)(frame)),
                 &(self.crossed)(),
                 sorted,
             )
