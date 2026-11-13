@@ -13,7 +13,7 @@ use hilavitkutin_contracts::bind::{StagedFn, Staging, StepFn, Units};
 use hilavitkutin_contracts::domain::Word;
 use hilavitkutin_contracts::kernel::{Kernels, ValueKernel};
 use hilavitkutin_contracts::num::{Count, Index};
-use hilavitkutin_contracts::store::{Read, Stage, Store};
+use hilavitkutin_contracts::store::{Read, Stage};
 use hilavitkutin_frozen_authors::Plane;
 use hilavitkutin_frozen_implementors::{Columns, Forward, Records};
 use hilavitkutin_laws::{Law, Verdict, morsel_split_and_order};
@@ -23,31 +23,28 @@ type One = Columns<Plane, COLUMNS, { common::CELLS }>;
 type Two = Records<Plane, COLUMNS, { common::CELLS }>;
 
 fn fill<K: ValueKernel<Domain = Plane>, W: Stage<Plane>, R: Read<Plane>>(
-    mut staging: Staging<'_, K, W>,
-    committed: &R,
+    mut staging: Staging<'_, K, W, R>,
 ) {
     let mut at = staging.low();
     while at.lt(staging.high()).get() {
-        let values = K::at(staging.unit().gather(committed, at));
+        let values = K::at(staging.unit().gather(at));
         assert!(matches!(staging.scatter(at, values), Outcome::Ok(())));
         at = at.next();
     }
 }
 
-struct Spread<'scope, 'env, 'c, R> {
-    scope:     &'scope Scope<'scope, 'env>,
-    committed: &'c R,
+struct Spread<'scope, 'env> {
+    scope: &'scope Scope<'scope, 'env>,
 }
 
-impl<'scope, 'env, 's: 'scope, 'c: 'scope, R: Read<Plane> + Sync, W: Stage<Plane> + 'scope>
-    StagedFn<'s, Plane, W> for Spread<'scope, 'env, 'c, R>
+impl<'scope, 'env, 'v: 'scope, R: Read<Plane> + Sync + 'v, W: Stage<Plane> + 'scope>
+    StagedFn<'v, Plane, W, R> for Spread<'scope, 'env>
 {
-    fn unit<K: ValueKernel<Domain = Plane>>(&mut self, staging: Staging<'s, K, W>) {
+    fn unit<K: ValueKernel<Domain = Plane>>(&mut self, staging: Staging<'v, K, W, R>) {
         let middle = Index::from_host((staging.low().host() + staging.high().host()) / 2);
         let (below, from) = staging.split(middle);
-        let committed = self.committed;
-        self.scope.spawn(move || fill(below, committed));
-        self.scope.spawn(move || fill(from, committed));
+        self.scope.spawn(move || fill(below));
+        self.scope.spawn(move || fill(from));
     }
 }
 
@@ -56,17 +53,15 @@ struct Threads;
 macro_rules! threads_over {
     ($($store:ty),*) => {$(
         impl StepFn<Plane, $store> for Threads {
-            fn step<'s, L: Kernels<Plane, P>, P>(
+            fn step<'v, 's, L: Kernels<Plane, P>, P>(
                 &mut self,
-                committed: &<$store as Store<Plane>>::Committed<'s>,
-                mut units: Units<'s, Plane, L, $store, P>,
+                mut units: Units<'v, 's, Plane, L, $store, P>,
             ) where
                 $store: 's,
             {
                 scope(|scope| {
                     let mut spread = Spread {
                         scope,
-                        committed,
                     };
                     while units.next(&mut spread).get() {}
                 });

@@ -32,19 +32,16 @@ use hilavitkutin_contracts::num::{Count, Index};
 use hilavitkutin_contracts::store::{Morsel, Read, Stage, Store, Visit, Visitor};
 use hilavitkutin_contracts::{Maybe, Outcome};
 
-struct Records<'p, 's, 'c, K: ValueKernel, R, W> {
-    staging:   &'p mut Staging<'s, K, W>,
-    committed: &'c R,
-    outside:   &'p mut Maybe<Outside>,
+struct Records<'p, 'v, K: ValueKernel, W, R> {
+    staging: &'p mut Staging<'v, K, W, R>,
+    outside: &'p mut Maybe<Outside>,
 }
 
-impl<K: ValueKernel, R: Read<K::Domain>, W: Stage<K::Domain>> Visitor
-    for Records<'_, '_, '_, K, R, W>
-{
+impl<K: ValueKernel, W: Stage<K::Domain>, R: Read<K::Domain>> Visitor for Records<'_, '_, K, W, R> {
     fn morsel(&mut self, _len: Count) {}
 
     fn record(&mut self, at: Index) {
-        let reads = self.staging.unit().gather(self.committed, at);
+        let reads = self.staging.unit().gather(at);
         if let Outcome::Err(outside) = self.staging.scatter(at, K::at(reads))
             && let Maybe::Isnt = self.outside
         {
@@ -53,20 +50,18 @@ impl<K: ValueKernel, R: Read<K::Domain>, W: Stage<K::Domain>> Visitor
     }
 }
 
-struct Stepper<'c, R, V> {
-    committed: &'c R,
-    visit:     &'c V,
-    morsel:    Morsel,
-    outside:   Maybe<Outside>,
+struct Stepper<'c, V> {
+    visit:   &'c V,
+    morsel:  Morsel,
+    outside: Maybe<Outside>,
 }
 
-impl<'s, D: Domain, R: Read<D>, W: Stage<D>, V: Visit> StagedFn<'s, D, W> for Stepper<'_, R, V> {
-    fn unit<K: ValueKernel<Domain = D>>(&mut self, mut staging: Staging<'s, K, W>) {
-        let extent = self.committed.extent();
+impl<'v, D: Domain, W: Stage<D>, R: Read<D>, V: Visit> StagedFn<'v, D, W, R> for Stepper<'_, V> {
+    fn unit<K: ValueKernel<Domain = D>>(&mut self, mut staging: Staging<'v, K, W, R>) {
+        let extent = staging.unit().extent();
         let mut records = Records {
-            staging:   &mut staging,
-            committed: self.committed,
-            outside:   &mut self.outside,
+            staging: &mut staging,
+            outside: &mut self.outside,
         };
         self.visit.visit(extent, self.morsel, &mut records);
     }
@@ -79,17 +74,13 @@ struct OneThread<'v, V> {
 }
 
 impl<D: Domain, S: Store<D>, V: Visit> StepFn<D, S> for OneThread<'_, V> {
-    fn step<'s, L: Kernels<D, P>, P>(
-        &mut self,
-        committed: &S::Committed<'s>,
-        mut units: Units<'s, D, L, S, P>,
-    ) where
+    fn step<'v, 's, L: Kernels<D, P>, P>(&mut self, mut units: Units<'v, 's, D, L, S, P>)
+    where
         S: 's,
     {
         let mut stepper = Stepper {
-            committed,
-            visit: self.visit,
-            morsel: self.morsel,
+            visit:   self.visit,
+            morsel:  self.morsel,
             outside: Maybe::Isnt,
         };
         while units.next(&mut stepper).get() {}
@@ -97,17 +88,19 @@ impl<D: Domain, S: Store<D>, V: Visit> StepFn<D, S> for OneThread<'_, V> {
     }
 }
 
-struct Digester<'v, R> {
-    committed: &'v R,
-    into:      Digest,
+struct Digester {
+    into: Digest,
 }
 
-impl<'t, D: Domain, R: Read<D>> UnitFn<'t, D> for Digester<'_, R> {
-    fn unit<K: ValueKernel<Domain = D>>(&mut self, unit: Unit<'t, K>) {
-        let extent = self.committed.extent();
+impl<D: Domain, R: Read<D>> UnitFn<D, R> for Digester {
+    fn unit<'v, K: ValueKernel<Domain = D>>(&mut self, unit: Unit<'v, K, R>)
+    where
+        R: 'v,
+    {
+        let extent = unit.extent();
         let mut at = Index::FIRST;
         while at.within(extent).get() {
-            unit.absorb(self.committed, at, &mut self.into);
+            unit.absorb(at, &mut self.into);
             at = at.next();
         }
     }
@@ -140,9 +133,7 @@ pub fn digest<D: Domain, L: Kernels<D, P>, S: Store<D>, P>(
 ) -> Digest {
     let mut into = Digest::new();
     frame.absorb(&mut into);
-    let committed = bound.committed();
     let mut digester = Digester {
-        committed: &committed,
         into,
     };
     bound.each(&mut digester);

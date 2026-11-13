@@ -3,7 +3,7 @@
 use notko::Outcome;
 
 use crate::bind::roles::{Formats, MintList};
-use crate::bind::{BindRefusal, Binding, UnitFn, check_kernel, unit_of};
+use crate::bind::{BindRefusal, Binding, Each, check_kernel, unit_of};
 use crate::domain::{Domain, Reads, Roles, Writes};
 use crate::list::{Cons, Empty, Values};
 use crate::num::{Bool, ColumnNo, Ordinal, USize};
@@ -66,7 +66,7 @@ mod sealed {
             formats: &F,
         ) -> Outcome<(), BindRefusal>;
         fn writes<F: FnMut(ColumnNo)>(binding: &Binding<'_>, f: &mut F);
-        fn dispatch<'t, U: UnitFn<'t, D>>(binding: &'t Binding<'t>, f: &mut U);
+        fn dispatch<'t, U: Each<'t, D>>(binding: &'t Binding<'t>, f: &mut U);
     }
 
     impl<D: Domain> KernelList<D, ()> for Empty {
@@ -87,7 +87,7 @@ mod sealed {
 
         fn writes<F: FnMut(ColumnNo)>(_binding: &Binding<'_>, _f: &mut F) {}
 
-        fn dispatch<'t, U: UnitFn<'t, D>>(_binding: &'t Binding<'t>, _f: &mut U) {}
+        fn dispatch<'t, U: Each<'t, D>>(_binding: &'t Binding<'t>, _f: &mut U) {}
     }
 
     impl<D: Domain, K: ValueKernel<Domain = D>, T: KernelList<D, PT>, PR, PW, PT>
@@ -118,11 +118,11 @@ mod sealed {
             <K::Writes as MintList<D, K::Roles, PW>>::columns(binding, f);
         }
 
-        fn dispatch<'t, U: UnitFn<'t, D>>(binding: &'t Binding<'t>, f: &mut U) {
+        fn dispatch<'t, U: Each<'t, D>>(binding: &'t Binding<'t>, f: &mut U) {
             if binding.kernel != K::ID {
                 return T::dispatch(binding, f);
             }
-            f.unit::<K>(unit_of::<D, K, PR, PW>(binding));
+            f.handles::<K>(unit_of::<D, K, PR, PW>(binding));
         }
     }
 }

@@ -14,11 +14,13 @@
 //! and the staged parts a step hands out are disjoint because of it.
 
 pub(crate) mod roles;
+pub(crate) mod walk;
 
 use core::marker::PhantomData;
 
 use notko::{Maybe, Outcome};
 use roles::{Formats, MintList, ReadRoles, WriteRoles};
+pub(crate) use walk::{Each, Handles};
 
 use crate::digest::Digest;
 use crate::domain::{Domain, FormatId, Word};
@@ -151,57 +153,48 @@ impl<D, V> Col<D, V> {
     }
 }
 
-/// A unit of a checked table, its kernel known as a type: the handles of its reads and writes.
-pub struct Unit<'t, K: ValueKernel> {
-    binding: &'t Binding<'t>,
-    reads:   <K::Reads as ReadRoles<K::Domain>>::Handles,
-    writes:  <K::Writes as ReadRoles<K::Domain>>::Handles,
+/// A unit of a checked table, its kernel known as a type, with the committed view of the store the
+/// table holds. Only [`Bound::each`] and [`Units::next`] make one, so a unit's handles are only
+/// ever applied to the store they were checked against.
+pub struct Unit<'v, K: ValueKernel, R> {
+    handles:   Handles<'v, K>,
+    committed: &'v R,
 }
 
-impl<K: ValueKernel> Clone for Unit<'_, K> {
+impl<K: ValueKernel, R> Clone for Unit<'_, K, R> {
     fn clone(&self) -> Self {
         *self
     }
 }
 
-impl<K: ValueKernel> Copy for Unit<'_, K> {}
+impl<K: ValueKernel, R> Copy for Unit<'_, K, R> {}
 
-impl<'t, K: ValueKernel> Unit<'t, K> {
-    pub(crate) const fn new(
-        binding: &'t Binding<'t>,
-        reads: <K::Reads as ReadRoles<K::Domain>>::Handles,
-        writes: <K::Writes as ReadRoles<K::Domain>>::Handles,
-    ) -> Self {
-        Self {
-            binding,
-            reads,
-            writes,
-        }
-    }
-
+impl<'v, K: ValueKernel, R: Read<K::Domain>> Unit<'v, K, R> {
     /// The unit's declared identity.
     pub const fn id(&self) -> UnitId {
-        self.binding.unit
+        self.handles.binding.unit
+    }
+
+    /// How many records the committed view holds.
+    pub fn extent(&self) -> Count {
+        self.committed.extent()
     }
 
     /// The values of the kernel's reads at the record at `at` of the committed view.
-    pub fn gather<R: Read<K::Domain>>(&self, committed: &R, at: Index) -> <K::Reads as Values>::Of {
-        K::Reads::gather(committed, at, &self.reads)
+    pub fn gather(&self, at: Index) -> <K::Reads as Values>::Of {
+        K::Reads::gather(self.committed, at, &self.handles.reads)
     }
 
-    /// Folds the values of the unit's written columns at `at` into `into`, in write-list order.
-    pub fn absorb<R: Read<K::Domain>>(&self, committed: &R, at: Index, into: &mut Digest) {
-        K::Writes::absorb(committed, at, &self.writes, into);
+    /// Folds the values of the unit's written columns at `at` of the committed view into `into`,
+    /// in write-list order.
+    pub fn absorb(&self, at: Index, into: &mut Digest) {
+        K::Writes::absorb(self.committed, at, &self.handles.writes, into);
     }
 
-    /// Pushes the words of the unit's written columns at `at`, in write-list order.
-    pub fn words<R: Read<K::Domain>, P: notko::sink::Push<Word>>(
-        &self,
-        committed: &R,
-        at: Index,
-        out: &mut P,
-    ) {
-        K::Writes::words(committed, at, &self.writes, out);
+    /// Pushes the words of the unit's written columns at `at` of the committed view, in
+    /// write-list order.
+    pub fn words<P: notko::sink::Push<Word>>(&self, at: Index, out: &mut P) {
+        K::Writes::words(self.committed, at, &self.handles.writes, out);
     }
 }
 
@@ -215,17 +208,18 @@ pub struct Outside {
 }
 
 /// One unit's staged part of a step: the cells of exactly the stored columns the unit writes, at
-/// the positions from `low` up to `high`. `Send` when the store's part is, which every store's is.
-pub struct Staging<'t, K: ValueKernel, W> {
-    unit: Unit<'t, K>,
+/// the positions from `low` up to `high`, with the unit and its store's committed view. `Send`
+/// when the store's part is `Send` and its committed view `Sync`, which every store's are.
+pub struct Staging<'v, K: ValueKernel, W, R> {
+    unit: Unit<'v, K, R>,
     part: W,
     low:  Index,
     high: Index,
 }
 
-impl<'t, K: ValueKernel, W: Stage<K::Domain>> Staging<'t, K, W> {
-    /// The unit whose part this is.
-    pub const fn unit(&self) -> &Unit<'t, K> {
+impl<'v, K: ValueKernel, W: Stage<K::Domain>, R: Read<K::Domain>> Staging<'v, K, W, R> {
+    /// The unit whose part this is, with the committed view it reads.
+    pub const fn unit(&self) -> &Unit<'v, K, R> {
         &self.unit
     }
 
@@ -273,64 +267,82 @@ impl<'t, K: ValueKernel, W: Stage<K::Domain>> Staging<'t, K, W> {
                 at,
             });
         }
-        K::Writes::scatter(&mut self.part, at, &self.unit.writes, values);
+        K::Writes::scatter(&mut self.part, at, &self.unit.handles.writes, values);
         Outcome::Ok(())
     }
 }
 
-/// What a runner hands [`Bound::each`]: called once per unit, with the unit's kernel as a type.
-pub trait UnitFn<'t, D: Domain> {
+/// What a runner hands [`Bound::each`]: called once per unit, with the unit's kernel as a type
+/// and `R`, the committed view of the bound store.
+pub trait UnitFn<D: Domain, R> {
     /// One unit.
-    fn unit<K: ValueKernel<Domain = D>>(&mut self, unit: Unit<'t, K>);
+    fn unit<'v, K: ValueKernel<Domain = D>>(&mut self, unit: Unit<'v, K, R>)
+    where
+        R: 'v;
 }
 
-/// What a runner hands [`Bound::step`] for each unit of the step, with its staged part.
-pub trait StagedFn<'s, D: Domain, W: Stage<D>> {
+/// What a runner hands [`Units::next`] for each unit of the step, with its staged part `W` and
+/// `R`, the committed view the step reads.
+pub trait StagedFn<'v, D: Domain, W: Stage<D>, R> {
     /// One unit's staged part, its kernel as a type.
-    fn unit<K: ValueKernel<Domain = D>>(&mut self, staging: Staging<'s, K, W>);
+    fn unit<K: ValueKernel<Domain = D>>(&mut self, staging: Staging<'v, K, W, R>);
 }
 
-/// The units of an open step, each handed out once with its staged part.
-pub struct Units<'s, D: Domain, L, S: Store<D> + 's, P> {
-    bindings: &'s [Binding<'s>],
-    next:     usize,
-    rest:     Maybe<S::Staged<'s>>,
-    extent:   Count,
-    marker:   PhantomData<fn() -> (D, L, P)>,
+/// The units of an open step, each handed out once with its staged part and the step's
+/// committed view.
+pub struct Units<'v, 's, D: Domain, L, S: Store<D> + 's, P> {
+    bindings:  &'v [Binding<'v>],
+    committed: &'v S::Committed<'s>,
+    next:      usize,
+    rest:      Maybe<S::Staged<'s>>,
+    extent:    Count,
+    marker:    PhantomData<fn() -> (D, L, P)>,
 }
 
-struct Handing<'f, 's, D: Domain, W, F> {
-    rest:   &'f mut Maybe<W>,
-    extent: Count,
-    f:      &'f mut F,
-    marker: PhantomData<fn() -> (&'s (), D)>,
+struct Handing<'f, 'v, D: Domain, W, R, F> {
+    committed: &'v R,
+    rest:      &'f mut Maybe<W>,
+    extent:    Count,
+    f:         &'f mut F,
+    marker:    PhantomData<fn() -> D>,
 }
 
-impl<'s, D: Domain, W: Stage<D>, F: StagedFn<'s, D, W>> UnitFn<'s, D> for Handing<'_, 's, D, W, F> {
-    fn unit<K: ValueKernel<Domain = D>>(&mut self, unit: Unit<'s, K>) {
+impl<'v, D: Domain, W: Stage<D>, R: Read<D>, F: StagedFn<'v, D, W, R>> Each<'v, D>
+    for Handing<'_, 'v, D, W, R, F>
+{
+    fn handles<K: ValueKernel<Domain = D>>(&mut self, handles: Handles<'v, K>) {
         let Maybe::Is(rest) = core::mem::replace(self.rest, Maybe::Isnt) else {
             return;
         };
-        let (mine, others) = rest.take(&Writes(&unit.writes));
+        let (mine, others) = rest.take(&Writes(&handles.writes));
         *self.rest = Maybe::Is(others);
         self.f.unit(Staging {
-            unit,
+            unit: Unit {
+                handles,
+                committed: self.committed,
+            },
             part: mine,
-            low: Index::FIRST,
+            low:  Index::FIRST,
             high: self.extent.end(),
         });
     }
 }
 
-impl<'s, D: Domain, L: Kernels<D, P>, S: Store<D> + 's, P> Units<'s, D, L, S, P> {
+impl<'v, 's, D: Domain, L: Kernels<D, P>, S: Store<D> + 's, P> Units<'v, 's, D, L, S, P> {
+    /// How many records the step's store holds.
+    pub const fn extent(&self) -> Count {
+        self.extent
+    }
+
     /// Hands the next unit and its staged part, holding every position, to `f`; false when every
     /// unit has been handed out.
-    pub fn next<F: StagedFn<'s, D, S::Staged<'s>>>(&mut self, f: &mut F) -> Bool {
+    pub fn next<F: StagedFn<'v, D, S::Staged<'s>, S::Committed<'s>>>(&mut self, f: &mut F) -> Bool {
         let Some(binding) = self.bindings.get(self.next) else {
             return Bool::FALSE;
         };
         self.next += 1;
         L::dispatch(binding, &mut Handing {
+            committed: self.committed,
             rest: &mut self.rest,
             extent: self.extent,
             f,
@@ -340,16 +352,27 @@ impl<'s, D: Domain, L: Kernels<D, P>, S: Store<D> + 's, P> Units<'s, D, L, S, P>
     }
 }
 
-/// What a runner hands [`Bound::step`]: called once per step with the committed view and the
-/// units, which it takes from as it likes.
+/// What a runner hands [`Bound::step`]: called once per step with the units, which it takes from
+/// as it likes. Each unit comes with the step's committed view, and no other.
 pub trait StepFn<D: Domain, S: Store<D>> {
     /// One step.
-    fn step<'s, L: Kernels<D, P>, P>(
-        &mut self,
-        committed: &S::Committed<'s>,
-        units: Units<'s, D, L, S, P>,
-    ) where
+    fn step<'v, 's, L: Kernels<D, P>, P>(&mut self, units: Units<'v, 's, D, L, S, P>)
+    where
         S: 's;
+}
+
+struct Viewing<'f, 'v, R, F> {
+    committed: &'v R,
+    f:         &'f mut F,
+}
+
+impl<'v, D: Domain, R: Read<D>, F: UnitFn<D, R>> Each<'v, D> for Viewing<'_, 'v, R, F> {
+    fn handles<K: ValueKernel<Domain = D>>(&mut self, handles: Handles<'v, K>) {
+        self.f.unit(Unit {
+            handles,
+            committed: self.committed,
+        });
+    }
 }
 
 /// The checked binding table, holding the store it was checked against. No public field and no
@@ -376,23 +399,29 @@ impl<'b, D: Domain, L: Kernels<D, P>, S: Store<D>, P> Bound<'b, D, L, S, P> {
         self.store.committed()
     }
 
-    /// Hands every unit to `f`, in table order.
-    pub fn each<'a, F: UnitFn<'a, D>>(&'a self, f: &mut F) {
+    /// Hands every unit to `f` in table order, each with the store's committed view.
+    pub fn each<'a, F: UnitFn<D, S::Committed<'a>>>(&'a self, f: &mut F) {
+        let committed = self.store.committed();
+        let mut viewing = Viewing {
+            committed: &committed,
+            f,
+        };
         let mut i = 0;
         while i < self.bindings.len() {
-            L::dispatch(&self.bindings[i], f);
+            L::dispatch(&self.bindings[i], &mut viewing);
             i += 1;
         }
     }
 
-    /// Opens a step on the store and hands `f` the committed view and the units, each with the
-    /// staged cells of the columns it writes.
+    /// Opens a step on the store and hands `f` the units, each with the step's committed view and
+    /// the staged cells of the columns it writes.
     pub fn step<F: StepFn<D, S>>(&mut self, f: &mut F) {
         let extent = self.store.extent();
         let bindings: &[Binding<'_>] = self.bindings;
         let (committed, staged) = self.store.step(Opening::new());
-        f.step::<L, P>(&committed, Units {
+        f.step::<L, P>(Units {
             bindings,
+            committed: &committed,
             next: 0,
             rest: Maybe::Is(staged),
             extent,
@@ -519,15 +548,15 @@ where
     }
 }
 
-/// The unit of `binding`, its handles minted.
+/// The handles of `binding`'s unit, minted.
 pub(crate) fn unit_of<'t, D: Domain, K: ValueKernel<Domain = D>, PR, PW>(
     binding: &'t Binding<'t>,
-) -> Unit<'t, K>
+) -> Handles<'t, K>
 where
     K::Reads: MintList<D, K::Roles, PR>,
     K::Writes: MintList<D, K::Roles, PW>,
 {
     let reads = <K::Reads as MintList<D, K::Roles, PR>>::mint(binding, Ordinal::FIRST);
     let writes = <K::Writes as MintList<D, K::Roles, PW>>::mint(binding, Ordinal::FIRST);
-    Unit::new(binding, reads, writes)
+    Handles::new(binding, reads, writes)
 }

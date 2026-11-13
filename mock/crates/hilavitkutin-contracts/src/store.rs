@@ -63,8 +63,9 @@ impl<H: crate::bind::roles::Columns> Taking for Writes<'_, H> {
 /// [`split`](Self::split) cut it into disjoint parts.
 pub trait Stage<D: Domain>: Send + Sized {
     /// Cuts off the cells of the columns `columns` holds, at every position this part holds:
-    /// the part holding those, then the rest. The store notes the columns as written, so the swap
-    /// commits their staged cells.
+    /// the part holding those, then the rest. Taking marks the columns written whether or not
+    /// anything is put to them, and the swap commits their staged cells as they are: a runner
+    /// that takes a part and writes nothing to it commits whatever those cells held.
     fn take<T: Taking>(self, columns: &T) -> (Self, Self);
     /// Cuts at `at`, a position from the first this part holds up to one past its last: the part
     /// holding the positions below `at`, then the part holding `at` and those after it.

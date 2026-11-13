@@ -2,13 +2,18 @@
 //! from them, and reading and writing a record through the handles.
 //!
 //! A kernel's roles are its `Roles` list, one per column it names. A member finds its role by the
-//! place of its column in that list, which the compiler infers (`PlaceOf`): a member naming a
-//! column the list does not hold, or a list holding one column twice, does not build. The places
-//! of a list of kernels are carried as a type parameter `P` wherever the list is walked, inferred
-//! where the list is first bound.
+//! place of its column in that list (`PlaceOf`). A member naming a column the list does not hold
+//! has no place and does not build. A list holding one column twice builds as a declaration, and
+//! its members then have two places: where the places are inferred, the bind is ambiguous and does
+//! not build, but a caller who writes the places out can put two members of that column on two
+//! roles, and nothing refuses it. The places of a list of kernels are carried as a type parameter
+//! `P` wherever the list is walked, inferred where the list is first bound.
 //!
 //! Sealed: nothing outside this crate names these traits, so the only handles that exist are the
 //! ones `mint` made from a binding `check` passed.
+
+// FIXME(64c5363cc578): one role per column holds only while `P` is inferred; a role list naming a
+// column twice, bound with its places written out, puts one column's members on two roles.
 
 use notko::sink::Push;
 use notko::{Maybe, Outcome};
