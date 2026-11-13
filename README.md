@@ -44,7 +44,11 @@ note: Impl one of the dispatch-determining sub-traits on `Foo`: `Resource` / `Co
 
 Order of registration matters for the type-level proof. A Kit whose WorkUnits read from another Kit's owned state must come after the owning Kit in the chain. The builder accepts any order that satisfies the proof; the diagnostic pinpoints what is missing when it does not.
 
-Once `.build()` returns, the resulting `Scheduler` is the runtime handle. Its type parameters carry the run config, the unit and store values, the column storage, the plan dimensions, the store access set and the clock; most are defaulted, and the ones that matter are inferred from the builder chain. `Scheduler::replace_resource::<T>` and `Scheduler::replace_value::<T>` mark a store changed for the next frame; they do not yet install the new value, which is listed under Status.
+Once `.build()` returns, the resulting `Scheduler` is the runtime handle. Its type parameters carry the run config, the unit and store values, the column storage, the plan dimensions, the store access set and the clock; most are defaulted, and the ones that matter are inferred from the builder chain.
+
+An accumulator append past its reserved capacity is never written. What the run does about it is picked on the run config at compile time. By default the run returns the refusal as a value, an `Outcome<(), AccumRefused>` naming the first accumulator that ran out and how many appends it was asked for against its capacity. A run built with `build_with::<DefaultRunCfg<Assert>, _, _>` returns `()` instead and panics at the end of the frame when an accumulator refused, on the thread that called the run.
+
+`Scheduler::replace_resource::<T>` and `Scheduler::replace_value::<T>` mark a store changed for the next frame; they do not yet install the new value, which is listed under Status.
 
 ## Plan and runtime
 
