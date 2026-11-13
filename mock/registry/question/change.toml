@@ -188,7 +188,7 @@ Reading: no option chosen. He recalls research, sketches and perhaps benches on 
 '''
 subject = "change"
 keywords = ["buffered store", "rotation", "double buffer", "triple buffer", "frame start", "swap", "maintenance work unit"]
-related = ["question::whether_hilavitkutin_s_own_columns_are_double_buffered", "question::how_a_unit_reads_the_value_a_store_held_at_frame_start"]
+related = ["question::whether_hilavitkutin_s_own_columns_are_double_buffered", "question::how_a_unit_reads_the_value_a_store_held_at_frame_start", "tenet::a_sketch_of_november_2026_holds_every_lane_of_a_frame_twice_committed_and_staged", "tenet::in_the_frame_view_sketch_a_close_unit_gets_the_landed_stores_after_the_step_lands_and_never_the_view", "tenet::in_ikiuni_the_frame_close_bracket_of_the_tick_loop_swaps_the_double_buffer_and_it_is_not_a_system"]
 
 [[question]]
 id = "whether_the_plan_affecting_marker_is_sealed_or_open"
