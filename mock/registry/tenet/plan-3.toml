@@ -5,7 +5,7 @@ id = "the_spectral_role_deviation_evidence_favours_canon_s_role_split_of_greedy_
 subject = "plan"
 what = "The evidence on the spectral role deviation was delivered on 2026-07-19. Canon forms trunks spectrally while the shipped code forms fibers spectrally within wide blocks. Both the cost and the grouping character favour canon's role split: greedy is linear and fiber-grained, and spectral is two to three orders heavier and trunk-grained. The proposed ruling restores the roles of steps 7 and 8 through a plan-chain corrective round and awaits the maintainer's bless."
 mechanism = "Record `202607201200_spectral-role-bench-evidence.md`; bench `fiber_theory`."
-source = "mock/research/seed/governance.md:114-121"
+source = "mock/research/seed/governance.md:120-127"
 provenance = ["mock::research::seed::governance::#open-questions-blocking-the-freeze"]
 quote = '''
 3. **The spectral role deviation** (canon forms trunks spectrally; shipped
@@ -28,7 +28,7 @@ id = "rcm_wins_against_rival_ordering_theories_at_dram_scale_and_order_is_near_n
 subject = "plan"
 what = "The fork of the RCM order as execution order is resolved by bench on 2026-07-19. RCM wins against rival ordering theories at the DRAM-resident scale the engine targets, where naive registration order loses 1.65 times, and order is near-neutral below that scale, so the wording of step 5 stands. The evidence record supersedes the first record's chain-topology claim."
 mechanism = "Oracle A1-1; evidence record `202607200800_a1-1-ordering-theory-bench-expansion.md`; naive registration order loses 1.65x at DRAM-resident scale."
-source = "mock/research/seed/governance.md:107-113"
+source = "mock/research/seed/governance.md:113-119"
 provenance = ["mock::research::seed::governance::#open-questions-blocking-the-freeze"]
 quote = '''
 2. **RCM row order as execution order**: RESOLVED by bench (2026-07-19,
@@ -51,7 +51,7 @@ id = "light_threshold_is_a_bench_set_tunable_registered_with_the_value_bench_pen
 subject = "plan"
 what = "The light threshold is resolved by registration: it is a tunable constant set by bench, whose registry item carries the value bench-pending by design. The oracle is the adaptive-versus-pipe-chase crossover sweep, and the gate of the oracle is the build of the adapt-phase strategy. The value lands as a post-freeze registry amendment when the gate opens."
 mechanism = "`LIGHT_THRESHOLD`; value BENCH-PENDING; record `202607202100_light-threshold-gate-record.md`; oracle: adaptive-versus-pipe-chase crossover sweep."
-source = "mock/research/seed/governance.md:172-177"
+source = "mock/research/seed/governance.md:178-183"
 provenance = ["mock::research::seed::governance::#open-questions-blocking-the-freeze"]
 quote = '''
 8. **`LIGHT_THRESHOLD`**: RESOLVED by registration (2026-07-19, record

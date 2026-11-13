@@ -375,7 +375,7 @@ keywords = ["MemoryArena", "!Sync", "Mutex shim", "SyncArena", "multi-thread acc
 id = "clock_and_libc_unix_memory_provider_defaults_land_in_their_own_rounds_when_consumer_demand_surfaces"
 subject = "future"
 what = "The providers crate's scope at this stage is the interner and the arena column storage backing. The clock default and the memory provider default for libc and Unix each land in their own round when consumer demand surfaces."
-source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:13-14, mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:185-188"
+source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:13-14, mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:189-192"
 provenance = ["mock::crates::hilavitkutin-providers::DESIGN::#hilavitkutin-providers"]
 quote = '''
 Future rounds add the Clock default and a MemoryProvider default for

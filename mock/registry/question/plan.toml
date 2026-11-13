@@ -46,7 +46,7 @@ id = "whether_the_maintainer_blesses_the_proposed_restoration_of_the_canon_s_tru
 asks = "Whether the maintainer blesses the proposed ruling that restores the roles of canon's steps 7 and 8, through a plan-chain corrective round, in place of the shipped code that forms fibers spectrally within wide blocks. The evidence has been delivered and the item awaits his bless under evidence-then-bless."
 options = ["bless the proposed ruling: canon's role split, spectral forms trunks and greedy forms fibers, is restored via a plan-chain corrective round", "keep the shipped code, which forms fibers spectrally within wide blocks"]
 state = "open"
-source = "mock/research/seed/governance.md:114-121"
+source = "mock/research/seed/governance.md:120-127"
 quote = '''
 3. **The spectral role deviation** (canon forms trunks spectrally; shipped
    code forms fibers spectrally within wide blocks): EVIDENCE DELIVERED

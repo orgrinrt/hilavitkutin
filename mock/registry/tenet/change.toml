@@ -297,7 +297,7 @@ related = ["tenet::the_swap_of_a_replaceable_resource_is_to_be_specified_by_a_co
 id = "the_per_morsel_generation_counters_are_not_built_and_the_engine_has_a_coarse_per_store_dirty_only"
 subject = "change"
 what = "The roadmap revision r6 records that the per-morsel generation counter the founding spec specifies, bumped on write and propagating through the graph so an unchanged root skips its transitive dependents, is not built: the engine has a coarse dirty state per store only. It asks for a design sketch before any implementation, on where the counters live with no allocation and a morsel count per fiber that varies with the window, and on how they compose with the existing store dirty mask."
-source = "mock/research/202607181300_engine-roadmap-r6.md:315-320"
+source = "mock/research/202607181300_engine-roadmap-r6.md:326-331"
 provenance = ["mock::research::202607181300_engine-roadmap-r6::#phase-d-adapt-completion"]
 quote = '''
 **D-gen, per-morsel generation counters (S-6).** Domain 12 (`:861`) specifies a per-morsel

@@ -133,7 +133,7 @@ id = "whether_the_default_wake_is_the_spin_then_park_hybrid_of_the_spec_or_park_
 asks = "Whether the default wake of the thread pool is the spin-then-park hybrid, or park-immediately, which the wake bench ruled for with a spin budget default of zero and the spin-then-park machinery shipping tunable."
 options = ["the spin-then-park hybrid as the default wake", "park-immediately by default, spin-then-park built and tunable with default budget 0, as the wake bench ruled"]
 state = "open"
-source = "mock/research/seed/governance.md:146-158"
+source = "mock/research/seed/governance.md:152-164"
 quote = '''
    relocation round. Deviation 3 (park-immediately): RESOLVED BY BENCH
    (2026-07-19, round 202607202310 + follow-through 202607202351,
@@ -158,7 +158,7 @@ id = "whether_the_maintainer_blesses_the_plane_relocation_round_for_deviations_o
 asks = "Whether the maintainer rules on the GATE-2 deviations that the seed lists as awaiting an evidence-then-bless ruling: the relocation round proposed for deviations 1, 5 and 6, and the blessing of the pointer-size spawn of deviation 4 with a compile-time size check."
 options = ["bless the proposed rulings: the plane relocation round for deviations 1, 5 and 6, and the blessing of deviation 4 with the size check lifted to compile time", "rebuild the deviations to the canon shape"]
 state = "open"
-source = "mock/research/seed/governance.md:125-133, mock/research/seed/governance.md:133-138, mock/research/seed/governance.md:142-146"
+source = "mock/research/seed/governance.md:131-139, mock/research/seed/governance.md:139-144, mock/research/seed/governance.md:148-152"
 quote = '''
 5. **The six GATE-2 agent-call deviations** each await an
    evidence-then-bless ruling. See [[execution]]. Deviations 1 and 6

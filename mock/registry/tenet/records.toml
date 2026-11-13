@@ -265,7 +265,7 @@ id = "the_only_cross_record_surface_is_the_accumulator_append_path"
 subject = "records"
 what = "The per-record read and write accessors are morsel-relative, and the only surface that crosses records is the accumulator append path. A fiber with no accumulator therefore has every dependency between its units local to a morsel and is dispatched morsel-outer: one morsel runs the fiber's whole unit sequence before the next. A fiber that bears an accumulator stays unit-outer, where a unit completes its record range before the next unit runs, which is the form that is safe across records."
 mechanism = "The nesting is per fiber, chosen by the fiber's `morsel_local` bit."
-source = "mock/crates/hilavitkutin/DESIGN.md.tmpl:324-331"
+source = "mock/crates/hilavitkutin/DESIGN.md.tmpl:325-332"
 provenance = ["mock::crates::hilavitkutin::DESIGN::#dispatch-codegen-domain-17"]
 quote = '''
 The nesting is per-fiber, chosen by the fiber's `morsel_local` bit. An
