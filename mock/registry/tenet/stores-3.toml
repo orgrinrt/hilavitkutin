@@ -17,7 +17,7 @@ quote = '''
 origin = "proposed"
 written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
 standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+stamp = 'provisional, 2026-11-13: his part is the hybrid call of erased, global-capable addressing, recorded as his decision of 2026-07-02 at mock/design_rounds/202607161000/202606210600_topic.hybrid-decision.md:12-19, and the layout of blob, snapshot and live collections is the bench decision of the row the_value_of_a_resource_is_one_contiguous_record_blob_and_the_per_member_column_decomposition_was_refuted_by_bench; that the drift-fix arc is the storage-model work and that no fork remains is the reading of the agent-written addendum at mock/research/202606210600_resource-storage-model-canonical-addendum.md:97-101, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["drift-fix arc", "storage model", "scalar snapshot", "live-streamed", "noalias", "erased addressing", "hybrid", "settled layout"]
 related = ["tenet::a_resource_value_is_addressed_through_an_erased_static_shape_so_it_can_cross_a_plugin_boundary"]
 

@@ -100,7 +100,7 @@ definitions, consumer scale envelope) is applied as committed. The second
 '''
 origin = "stated"
 standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+stamp = 'provisional, 2026-11-13: his part is the order to redo the pass, which mock/research/202607210300_seed-verification-redo.md:3-6 records as op-ordered because he did not accept the pass-one judgement as sufficient on its own; the verdict, the sweeps and the fix batch are the audit of the agents and not his, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["op-ordered redo", "verification pass", "deep audit", "founding-spec coverage", "chain sweep", "fix batch", "2026-07-20", "no blockers"]
 related = ["tenet::as_of_2026_07_21_verification_pass_one_gave_fit_after_listed_fixes_and_the_fix_batch_is_applied"]
 
