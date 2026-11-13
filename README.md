@@ -10,7 +10,7 @@
 
 </div>
 
-Typed WorkUnits declare their read / write access sets to the scheduler builder. Every registration goes through one method, `.with(input)`, which routes on the input's `BuilderInput` impl: a `WorkUnit` accumulates onto the unit typestate, and a `Column`, `Resource`, `Virtual` or `Kit` registers a store. At `.build()`, every declared access is type-checked against the registered stores. A WorkUnit that names a store the builder does not have fails to compile, with the diagnostic pointing at the missing marker.
+Typed WorkUnits declare their read / write access sets to the scheduler builder. Every registration goes through one method, `.with(input)`, which routes on the input's `BuilderInput` impl: a `WorkUnit` accumulates onto the unit typestate, and a `Column`, `Buffered`, `Accum`, `Resource`, `Virtual` or `Kit` registers a store. At `.build()`, every declared access is type-checked against the registered stores. A WorkUnit that names a store the builder does not have fails to compile, with the diagnostic pointing at the missing marker.
 
 `.build()` then runs the plan stage end to end. Access-set overlap builds the dependency graph; topological sort and upward rank find the critical path; waist detection partitions phases; RCM reordering and block-diagonal layout cluster adjacent work for cache locality; spectral partitioning groups trunks; combinatorial DP groups fibers; per-fiber morsels are sized to cache. The output is a per-core dispatch program: a monomorphised function per physical core encoding phases, record ranges, morsel boundaries, and sync points.
 
@@ -20,7 +20,7 @@ At run time, the dispatch programs drive a pre-allocated thread pool. Trunks of 
 
 The scheduler builder is a typestate. Each registration accumulates a type parameter onto the builder; `.build()` reads the accumulated state and type-checks every registered WorkUnit's read / write access against the registered stores.
 
-One registration method covers the surface. `.with(input)` accepts anything implementing `BuilderInput`, and that impl's `Dispatch` associated type decides where the input lands: onto the unit typestate for a `WorkUnit`, or onto the store typestate for a `Column`, `Resource`, `Virtual` or `Kit`. A `Kit` carries `type Units` and `type Owned`, so one `.with(kit)` prepends a whole bundle of WorkUnits and stores at once. `.clock(clock)` is the one separate method, because the clock value has to be retained rather than tracked by type alone.
+One registration method covers the surface. `.with(input)` accepts anything implementing `BuilderInput`, and that impl's `Dispatch` associated type decides where the input lands: onto the unit typestate for a `WorkUnit`, or onto the store typestate for a `Column`, `Buffered`, `Accum`, `Resource`, `Virtual` or `Kit`. A `Kit` carries `type Units` and `type Owned`, so one `.with(kit)` prepends a whole bundle of WorkUnits and stores at once. `.clock(clock)` is the one separate method, because the clock value has to be retained rather than tracked by type alone.
 
 ```rust
 use hilavitkutin::scheduler::Scheduler;
@@ -48,7 +48,9 @@ Once `.build()` returns, the resulting `Scheduler` is the runtime handle. Its ty
 
 An accumulator append past its reserved capacity is never written. What the run does about it is picked on the run config at compile time. By default the run returns the refusal as a value, an `Outcome<(), AccumRefused>` naming the first accumulator that ran out and how many appends it was asked for against its capacity. A run built with `build_with::<DefaultRunCfg<Assert>, _, _>` returns `()` instead and panics at the end of the frame when an accumulator refused, on the thread that called the run.
 
-`Scheduler::replace_resource::<T>` and `Scheduler::replace_value::<T>` mark a store changed for the next frame; they do not yet install the new value, which is listed under Status.
+A `Buffered<T>` is a column kept in two sides. Every read of it sees the frozen side and every write lands on the live one, so a unit can read the records around its own and write the same store in one pass, and what one pass wrote is what every unit reads in the next. The engine brings the live side over when the pass is done and only for a store the pass changed, by a copy under the default `Snapshot` mode or by turning the two sides under `Exchange`, which is right only where every writer writes every record.
+
+`Scheduler::replace_resource::<T>` and `Scheduler::replace_value::<T>` install a new value between two frames and mark its store changed for the next one. Both are provisional, which is listed under Status.
 
 ## Plan and runtime
 
@@ -192,7 +194,7 @@ files that exercise the atomic-ordering paths.
 
 ## Status
 
-Design is mature across the engine, the plugin-host layer, and the standalone ecosystem crates; implementation status varies per crate. The plugin-host layer (linking + extensions + extensions-macros) is implemented. The api crate and the standalone ecosystem extensions (ctx, str, persistence, providers) are partially implemented. The engine's runtime modules ship and the engine's tests run them: the plan analysis chain, the adapt subsystem, the thread pool, the morsel loop and resource resolution. Plan caching, the lowered core dispatch, the default worker executor (it returns without running a program) and installing a replaced resource's value after build are not final. hilavitkutin-build runs as a build-dependency stub today; full wrapper script generation and config schema are deferred to follow-up rounds.
+Design is mature across the engine, the plugin-host layer, and the standalone ecosystem crates; implementation status varies per crate. The plugin-host layer (linking + extensions + extensions-macros) is implemented. The api crate and the standalone ecosystem extensions (ctx, str, persistence, providers) are partially implemented. The engine's runtime modules ship and the engine's tests run them: the plan analysis chain, the adapt subsystem, the thread pool, the morsel loop and resource resolution. Plan caching, the lowered core dispatch, the default worker executor (it returns without running a program) and the two calls that replace a resource's value between frames are not final. hilavitkutin-build runs as a build-dependency stub today; full wrapper script generation and config schema are deferred to follow-up rounds.
 
 Public names may change; renames ship cleanly without deprecation aliases. Several pieces gate on unstable rustc features: `const_trait_impl`, `adt_const_params`, `generic_const_exprs`, `marker_trait_attr` for the trait solver work, plus `-Z config-include` for the build crate.
 

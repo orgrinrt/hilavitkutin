@@ -67,7 +67,7 @@ mod sealed {
 ///
 /// Restricts the meta resources to meta work units. The compile-time `Context`
 /// bound that enforces "consumer work units cannot reach the meta resources" is
-/// a follow-up (slice 3); this round lands the marker and the resource types.
+/// not provided yet; only the marker and the resource types exist.
 #[allow(private_bounds)]
 pub trait MetaAccess: sealed::Sealed {}
 
@@ -77,7 +77,7 @@ pub struct Dag;
 pub struct ExecutionPlan;
 /// Meta resource: the per-core lane assignments.
 pub struct LaneAssignment;
-/// Meta resource: scheduler self-observation state (domain 22).
+/// Meta resource: scheduler self-observation state.
 ///
 /// Engine-owned mutable meta state, NOT a consumer `Resource` (consumer
 /// resources are `Copy` and read-only after init, so they cannot carry mutable

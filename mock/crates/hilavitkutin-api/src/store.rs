@@ -310,7 +310,7 @@ impl<K, V, const N: Cap> Default for Map<K, V, N> {
 }
 
 // ---------------------------------------------------------------------
-// Round 4 substrate: StoreBundle + Replaceable.
+// `StoreBundle` and `Replaceable`.
 //
 // StoreBundle marks Cons-list bundles of store markers (Resource /
 // Column / Virtual / Field / Seq / Map / mixed). Used by Kit's
@@ -320,8 +320,7 @@ impl<K, V, const N: Cap> Default for Map<K, V, N> {
 // Replaceable opts a store-typed value into Scheduler::replace_resource
 // override semantics. Apps impl Replaceable per-type to opt their
 // Resources into override semantics; non-opt-in types stay locked.
-// Single substrate-enforced annotation on Owned types per
-// topic_round_4_layered_enforcement.md.
+// Single substrate-enforced annotation on Owned types.
 // ---------------------------------------------------------------------
 
 use crate::access::{Cons, Empty};

@@ -9,13 +9,18 @@ use core::marker::PhantomData;
 use arvo::{Bool, USize};
 
 use crate::access::AccessSet;
-use crate::meta::{MetaVirtual, RANK_CONSUMER};
+use crate::builder_input::BuilderInput;
 use crate::context::{
-    HasBatch, HasColumnReader, HasColumnWriter, HasEach, HasReduce, HasResourceProvider,
+    HasBatch,
+    HasColumnReader,
+    HasColumnWriter,
+    HasEach,
+    HasReduce,
+    HasResourceProvider,
     HasVirtualFirer,
 };
 use crate::hint::SchedulingHint;
-use crate::builder_input::BuilderInput;
+use crate::meta::{MetaVirtual, RANK_CONSUMER};
 
 /// Schedule marker: the WU runs every pass.
 #[derive(Copy, Clone, Default, Debug)]
@@ -61,7 +66,7 @@ pub trait WorkUnit<Schedule = Always>: BuilderInput<Init = Self> + Send + Sync +
     type Hint: SchedulingHint;
     /// Provider-tuple shape this WU's body consumes.
     ///
-    /// GAT-shaped per Topic 1 axis 4 + Topic 6 axis C: the `'frame`
+    /// GAT-shaped: the `'frame`
     /// lifetime threads through from `Scheduler<'frame, ...>` so
     /// the Ctx can carry `Pin<&'frame PoolFrame>` and per-phase
     /// `ResourceSnapshot<'phase, R>` views without forcing every
@@ -137,13 +142,13 @@ pub trait Plannable<Schedule = Always> {
 /// fiber execution model takes the blanket and writes no `Plannable`
 /// impl of its own; only a non-`WorkUnit` runner hand-implements it.
 impl<W: WorkUnit<S>, S> Plannable<S> for W {
+    type Hint = <W as WorkUnit<S>>::Hint;
     type Read = <W as WorkUnit<S>>::Read;
     type Write = <W as WorkUnit<S>>::Write;
-    type Hint = <W as WorkUnit<S>>::Hint;
 }
 
 // ---------------------------------------------------------------------
-// E4 slice 1: schedule recovery for the dispatch carrier.
+// Schedule recovery for the dispatch carrier.
 //
 // A heterogeneous WU carrier (mixing `Always` and `On<V>` units) cannot
 // recover a member's schedule from a free `WorkUnit<S>` bound (S is
@@ -210,7 +215,7 @@ impl<W: WorkUnit<Always>> HasSchedule for W {
 }
 
 // ---------------------------------------------------------------------
-// Round 4 substrate: WorkUnitBundle.
+// `WorkUnitBundle`.
 //
 // Cons-list bundle of WorkUnit types with accumulated Read / Write
 // access sets. AccumRead is the Concat-projected union of every WU's
@@ -237,7 +242,7 @@ impl WorkUnitBundle for Empty {
     type AccumWrite = Empty;
 }
 
-// E4 slice 1: recover each unit's schedule so a mixed `Always` / `On<V>` carrier
+// Recover each unit's schedule so a mixed `Always` / `On<V>` carrier
 // accumulates. `<W as WorkUnit<<W as HasSchedule>::Sched>>::{Read,Write}` reads
 // the right impl for either kind; the blanket gives every Always WU `HasSchedule`
 // with zero churn.
@@ -250,8 +255,8 @@ where
     <<W as WorkUnit<<W as HasSchedule>::Sched>>::Read as Concat<T::AccumRead>>::Out: AccessSet,
     <<W as WorkUnit<<W as HasSchedule>::Sched>>::Write as Concat<T::AccumWrite>>::Out: AccessSet,
 {
-    type AccumRead = <<W as WorkUnit<<W as HasSchedule>::Sched>>::Read as Concat<T::AccumRead>>::Out;
+    type AccumRead =
+        <<W as WorkUnit<<W as HasSchedule>::Sched>>::Read as Concat<T::AccumRead>>::Out;
     type AccumWrite =
         <<W as WorkUnit<<W as HasSchedule>::Sched>>::Write as Concat<T::AccumWrite>>::Out;
 }
-

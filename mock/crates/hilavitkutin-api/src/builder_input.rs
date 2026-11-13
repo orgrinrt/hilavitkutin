@@ -5,8 +5,8 @@
 //! `BuilderInput`. The trait carries two associated items:
 //!
 //! - `Init` names the construction-time value type. For stateful
-//!   wrappers (legacy `Resource<T>` shape; bare types under the
-//!   Topic 2 reshape) it is `Self`. For zero-data markers
+//!   wrappers (the `Resource<T>` shape and bare types) it is `Self`.
+//!   For zero-data markers
 //!   (`ExtensionSurface<dyn TraitFamily>`) it is `()`. Each impl
 //!   declares `Init` explicitly; the trait carries no default.
 //! - `Dispatch` is the per-kind typestate router. The four shipped
@@ -29,9 +29,7 @@
 //! Kind discrimination flows through trait identity (sub-traits
 //! `Resource` / `Column` / `Virtual` / `WorkUnit` / `Kit` /
 //! `MemoryProvider` / `ThreadPool` / `Clock` / `RunCfg` declare
-//! their own `Dispatch` slot), not a const enum. The previous
-//! `Provider::KIND` const + `ProviderKind` enum were retired in
-//! round 202605101036.
+//! their own `Dispatch` slot), not a const enum.
 
 use core::marker::PhantomData;
 
@@ -117,9 +115,9 @@ impl<W, Wus, Stores, Platform> Dispatch<Wus, Stores, Platform> for UnitDispatch<
 where
     Wus: Concat<Cons<W, Empty>>,
 {
-    type NextWus = <Wus as Concat<Cons<W, Empty>>>::Out;
-    type NextStores = Stores;
     type NextPlatform = Platform;
+    type NextStores = Stores;
+    type NextWus = <Wus as Concat<Cons<W, Empty>>>::Out;
 }
 
 /// Router for store-kind inputs. Prepends `S` onto the store
@@ -127,9 +125,9 @@ where
 pub struct StoreDispatch<S>(PhantomData<S>);
 
 impl<S, Wus, Stores, Platform> Dispatch<Wus, Stores, Platform> for StoreDispatch<S> {
-    type NextWus = Wus;
-    type NextStores = Cons<S, Stores>;
     type NextPlatform = Platform;
+    type NextStores = Cons<S, Stores>;
+    type NextWus = Wus;
 }
 
 // `KitDispatch<K>` lives in `hilavitkutin-kit` next to the `Kit`
@@ -147,9 +145,9 @@ impl<S, Wus, Stores, Platform> Dispatch<Wus, Stores, Platform> for StoreDispatch
 pub struct PlatformDispatch<P>(PhantomData<P>);
 
 impl<P, Wus, Stores, Platform> Dispatch<Wus, Stores, Platform> for PlatformDispatch<P> {
-    type NextWus = Wus;
-    type NextStores = Stores;
     type NextPlatform = Cons<P, Platform>;
+    type NextStores = Stores;
+    type NextWus = Wus;
 }
 
 /// Type-system anchor for an extension-loaded input bin keyed by
@@ -164,13 +162,11 @@ impl<P, Wus, Stores, Platform> Dispatch<Wus, Stores, Platform> for PlatformDispa
 /// Implements `BuilderInput<Init = ()>` with `Dispatch = StoreDispatch<Self>`.
 /// Construct via `ExtensionSurface::<dyn TraitFamily>::new()` (or
 /// via the dedicated `SchedulerBuilder::extend::<dyn TraitFamily>()`
-/// method per Topic 2 D5, which wraps internally).
+/// method, which wraps internally).
 ///
-/// Renamed from `LinkedBin` in round 202605101036 Topic 2 D5: the
-/// `Extension` prefix names the actual semantics (the app declares
-/// an extension-loadable surface), and `Surface` names the role
-/// inside the typestate (a slot the extension layer fills at
-/// runtime).
+/// The `Extension` prefix names the semantics (the app declares an
+/// extension-loadable surface), and `Surface` names the role inside
+/// the typestate (a slot the extension layer fills at runtime).
 #[repr(transparent)]
 pub struct ExtensionSurface<T: ?Sized>(PhantomData<T>);
 
@@ -182,8 +178,8 @@ impl<T: ?Sized> ExtensionSurface<T> {
 }
 
 impl<T: ?Sized + 'static> BuilderInput for ExtensionSurface<T> {
-    type Init = ();
     type Dispatch = StoreDispatch<Self>;
+    type Init = ();
 }
 
 impl<T: ?Sized + 'static> notko::HasTrivialCtor for ExtensionSurface<T> {

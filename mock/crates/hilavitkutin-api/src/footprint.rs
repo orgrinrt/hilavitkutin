@@ -1,4 +1,4 @@
-//! Per-store L1-morsel write-footprint contracts (canonical R5, domain 12).
+//! Per-store L1-morsel write-footprint contracts (canonical R5).
 //!
 //! The per-fiber morsel-window formula is
 //! `morsel = (L1_USABLE / Σ write_sizes).clamp(MIN_MORSEL, MAX_MORSEL) & !3`,

@@ -1,7 +1,7 @@
 //! Adapt-axis taxonomy: nine sealed BuilderInput configs that drive
 //! the adapt subsystem's per-axis sampling + tuning surface.
 //!
-//! Topic 5 axis A final lock: each axis is its own `BuilderInput<
+//! Each axis is its own `BuilderInput<
 //! Dispatch = AdaptAxisDispatch<Self>>`, impls sealed `AdaptAxis`,
 //! ships `Default` + `Self::off()`. The consumer registers individual
 //! axes via `.with(PassDurationAxis::default())`; `StandardAdaptKit`
@@ -37,7 +37,7 @@ mod sealed {
     pub(crate) trait Sealed {}
 }
 
-/// Sealed adapt-axis trait. Topic 5 axis A.
+/// Sealed adapt-axis trait.
 ///
 /// Every consumer-registered axis impls this; the engine's `AdaptWu`
 /// (in hilavitkutin-providers) walks the registered axes via the

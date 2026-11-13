@@ -3,12 +3,6 @@
 //! Plan-stage code uses `Depth::D` for total recursive counts.
 //! `AccessSet::LEN` reports immediate-tuple-arity (always 2 for
 //! cons-list cells); the two consts coexist with distinct contracts.
-//!
-//! Round 4 deleted the four sealed builder bridges (`Buildable`,
-//! `WuSatisfied`, `BuilderExtending`, `BuilderResource`). Their
-//! roles are subsumed by `WorkUnitBundle` (in `work_unit`) +
-//! `StoreBundle` (in `store`) + `ContainsAll<L>` (in `access`). See
-//! `mock/design_rounds/202605042200_changelist.doc.lock.md`.
 
 use arvo::USize;
 use arvo::strategy::{Additive, Identity, Multiplicative};
