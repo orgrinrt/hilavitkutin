@@ -1213,7 +1213,8 @@ bundle, the store access set, the platform tuple). The fourth,
 `StoreValues`, is a value-carrying cons-list aligned with `Stores`:
 `.with` routes each registered value through a `RouterKind` tag on its
 dispatch router and a `Place` view, so store carriers (a
-`StagedResource<T>`, a `Column<T>`, a `Virtual<T>`) are retained on
+`StagedResource<T>`, a `StagedBuffered<T, M>`, a `Column<T>`, a
+`Virtual<T>`) are retained on
 `StoreValues` in registration order. WorkUnit values are retained too,
 on a parallel WorkUnit-value list (the value-carrying unit cons-list the
 run walk consumes): the WorkUnit placement kind appends each registered
@@ -1326,7 +1327,15 @@ yet. A `Window` holds the base of the side it reads, the record's index
 and the column's count, and `before` and `after` answer from those.
 
 A buffered column is two reservations of one layout under one store id,
-both made at plan time and neither ever moved. One is the frozen side
+both made at plan time and neither ever moved. The drain takes the value
+the store was registered with out of its `StagedBuffered<T, M>` and
+writes it to every record of both reservations, so no read of either
+side reaches memory nothing wrote. Both are written and not the frozen
+one alone: under `Snapshot` the boundary copies the whole live side over
+the frozen one, and under `Exchange` the live side becomes it, so a
+record no unit wrote in the first pass has to hold the start on the live
+side too. The engine has the one path, and which of the api's
+constructors made the value does not reach it. One is the frozen side
 and the other the live side, and the dispatch binds both bases into a
 unit's context when it binds the frame's contexts. The gather reads the
 frozen base and the scatter stores at the live base, for a unit of any

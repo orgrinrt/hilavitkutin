@@ -172,6 +172,48 @@ record, which a value function does. `Snapshot` is the default since it
 is right under any writer. "Reading a store as it stood when the pass
 began" below has the rules.
 
+A buffered column is registered with the value every record of it starts
+from, and its element type decides which ways of naming that value there
+are. Both sides hold it at every record before the first pass, so the
+first pass reads it wherever no unit has written yet.
+
+```rust
+pub struct StagedBuffered<T, M = Snapshot>(/* the start, and the mode */);
+
+impl<T, M> Buffered<T, M> {
+    pub const fn new() -> Self;                              // the marker a unit names the store by
+    pub fn start_from(value: T) -> StagedBuffered<T, M>;     // any element type
+}
+impl<T: HasTrivialCtor, M> Buffered<T, M> {
+    pub fn start() -> StagedBuffered<T, M>;                  // the type's trivial constructor
+}
+pub trait StartsFromDefault {
+    type Staged;
+    fn start() -> Self::Staged;                              // the type's default
+}
+impl<T: Default, M> StartsFromDefault for Buffered<T, M> { type Staged = StagedBuffered<T, M>; }
+```
+
+`start()` reads the element type's own start in a fixed sequence: its
+trivial constructor (`HasTrivialCtor`, from notko) where it has one, else
+its `Default`. For a type that has both it is the constructor. For a type
+that has neither there is no `start()`, the call does not compile, and
+`start_from(value)` is the one way to register the column. `start_from`
+is there for every element type, so a type with a start of its own can
+still be started from another value. The marker alone is not registered:
+`.with(Buffered::<T>::new())` does not compile, since it says nothing of
+what the first pass reads.
+
+The sequence is not two blanket impls of one trait, which would overlap
+for a type that has both. The first tier is an inherent function under
+its bound and the second a trait's function under its own, and an
+inherent function is found first and passed over where its bound does
+not hold. So `StartsFromDefault` has to be in scope where the default
+tier is called, and the choice is made where `start()` is written, from
+what is known of the type there: a generic caller that knows only
+`T: Default` gets the default.
+<!-- FIXME(df2e4da2d376): a tier ahead of the two, for a type whose all-zeros pattern is a value of it, waits on a trait notko does not have -->
+
 `Accum<T>` is a marker of its own on the same pattern. It reserves a
 capacity at build, is reset to no values at the top of a frame and grows
 as units append during it. The values appended in a frame are what the
@@ -246,10 +288,14 @@ state; it does not impl `HasTrivialCtor`.
 
 `Accum<T>` registers the same way as `Column`
 (`.with(Accum::<T>::new())`), with `Init = ()` and
-`Dispatch = StoreDispatch<Self>`. So does `Buffered<T, M>`
-(`.with(Buffered::<T>::new())` for the default mode,
-`.with(Buffered::<T, Exchange>::new())` for the other). Both of its
-sides start as a column starts.
+`Dispatch = StoreDispatch<Self>`. `Buffered<T, M>` registers as
+`Resource` does, through a carrier of a value:
+`.with(Buffered::<T>::start())` or `.with(Buffered::<T>::start_from(value))`
+for the default mode, and the same two on `Buffered::<T, Exchange>` for
+the other. The carrier is `StagedBuffered<T, M>`, with `Init = T` and
+`Dispatch = StoreDispatch<Buffered<T, M>>`, so the store list holds the
+marker and a unit names the store as before. "Store types" above has
+which of the two exists for which element type.
 
 ## Record counts
 
@@ -653,7 +699,8 @@ and marks that store changed for the units that read it, which run in
 the pass that follows. No unit of the consumer's brings a live side in,
 and none sees one early. What a unit writes in one pass is what every
 unit reads in the next, with no exception for rank: a buffered column a
-unit of the first pass fills is read from the second pass on. Whether
+unit of the first pass fills is read from the second pass on, and what
+the first pass reads of it is the value it was registered with. Whether
 the pass changed the store is the write member's rule (see "What counts
 as changed").
 
