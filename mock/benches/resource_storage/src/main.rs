@@ -20,7 +20,7 @@
 //! Run: `cargo run --release` from this dir (after building the six variant
 //! cdylibs). Or via `mock bench run`.
 
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process::ExitCode;
 
 use mockspace_bench_core::{ByteRoutine, routine_bridge};
@@ -47,18 +47,13 @@ fn main() -> ExitCode {
 
     for (bench_name, section) in &manifest.bench {
         for (size_idx, _size) in section.sizes.iter().enumerate() {
-            let mut config = match manifest.for_size(bench_name, size_idx, &dir) {
+            let config = match manifest.for_size(bench_name, size_idx, &dir) {
                 Ok(c) => c,
                 Err(e) => {
                     eprintln!("error: {e}");
                     return ExitCode::FAILURE;
                 },
             };
-            config.variant_paths = config
-                .variant_paths
-                .into_iter()
-                .map(shape_variant_path)
-                .collect();
             let routine = match routine_for(config.n, &section.workload) {
                 Some(r) => r,
                 None => {
@@ -194,17 +189,6 @@ fn routine_for(n: usize, bench: &str) -> Option<RoutineSpec> {
         name: bench.to_string(),
         bridge,
     })
-}
-
-fn shape_variant_path(p: PathBuf) -> PathBuf {
-    let parent = p.parent().map(Path::to_path_buf).unwrap_or_default();
-    let stem = p.file_name().and_then(|s| s.to_str()).unwrap_or("");
-    parent.join(format!(
-        "{}{}{}",
-        std::env::consts::DLL_PREFIX,
-        stem,
-        std::env::consts::DLL_SUFFIX
-    ))
 }
 
 fn run_worker(args: &[String]) -> ExitCode {
