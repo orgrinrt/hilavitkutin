@@ -108,6 +108,34 @@ standing = "pending"
 keywords = ["persistence spine", "PersistenceProvider", "cold store", "PassEnd", "commit", "hot side column", "standalone crate"]
 
 [[tenet]]
+id = "op_ruled_that_the_persistence_crate_builds_on_the_str_and_api_crates_and_its_design_holds_over_the_lint"
+subject = "persistence"
+what = "Op ruled on 2026-09-18, choosing among persistence being standalone, persistence building on the str crate and the api crate, and persistence using str without the api, that persistence builds on str and api: the per-crate design holds, and the scope of the lint for persistence is corrected to allow the str crate and the api crate while it still forbids the engine."
+mechanism = "`hilavitkutin-persistence` lists `hilavitkutin-str` and takes memory from the shared `MemoryProvider` of `hilavitkutin-api`; rule-4 of the lint config. Op's answer: \"Builds on str and api\"."
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:36-46"
+provenance = ["mock::research::202611130850_the-record-read-whole::OP-ANSWERS-0918::#what-was-going-on"]
+quote = '''
+> `hilavitkutin-persistence`: its DESIGN lists `hilavitkutin-str` and a shared `MemoryProvider` from the api as dependencies, but the lint config (rule-4) says persistence is a standalone crate and forbids importing `hilavitkutin_str` and `hilavitkutin_api`. Which one holds?
+
+Options offered:
+
+1. **Standalone, lint holds.** Persistence depends on arvo and notko only; the str and MemoryProvider uses move behind its own traits and the DESIGN is corrected.
+2. **Builds on str and api.** The DESIGN holds; rule-4's scope for persistence is corrected to allow `hilavitkutin_str` and `hilavitkutin_api`, still forbidding the engine.
+3. **Str yes, api no.** Persistence may use hilavitkutin-str (a sibling ecosystem crate) but not the api; MemoryProvider comes through its own trait.
+
+## Answered
+
+> Builds on str and api
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:34-46"]
+keywords = ["persistence", "builds on str and api", "op's ruling", "2026-09-18", "MemoryProvider", "hilavitkutin-str", "hilavitkutin-api"]
+rejects = ["persistence as a standalone crate", "persistence using str without the api"]
+related = ["tenet::op_ruled_that_the_persistence_crate_builds_on_the_str_and_api_crates_and_never_on_the_engine_or_the_context_crate"]
+
+[[tenet]]
 id = "op_ruled_that_the_persistence_crate_builds_on_the_str_and_api_crates_and_never_on_the_engine_or_the_context_crate"
 subject = "persistence"
 what = "Op ruled on 2026-09-18, choosing among persistence being standalone, persistence building on the str crate and the api crate, and persistence using str without the api, that persistence builds on str and api. The per-crate design governs and the lint line was wrong. The lint now forbids only the engine and the context crate, and its reason says what the crate builds on. The cargo rule, which said persistence and str do not depend on each other, now says persistence builds on the str crate and the api crate, never on the engine or the context crate."
@@ -126,9 +154,8 @@ Op: "Builds on str and api". The rule said persistence and str do not depend on 
 - On persistence's dependencies, choosing among standalone, "Builds on str and api", and str without api: "Builds on str and api".
 '''
 origin = "stated"
-standing = "ratified"
-ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["quote: mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:34-46"]
+standing = "pending"
+stamp = 'provisional, 2026-11-13: his answer at mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:36-46 chooses the option that the per-crate design holds and that the lint allows the str crate and the api crate while it still forbids the engine, which is the row op_ruled_that_the_persistence_crate_builds_on_the_str_and_api_crates_and_its_design_holds_over_the_lint; that the lint forbids the context crate too, that its reason says what the crate builds on and the wording of the cargo rule are the rounds applying his answer (mock/design_rounds/202609181402/202609181401_topic.hilavitkutin-on-arvo-dev.md:83-83, mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:31-31), and were added to the ratified row in words that are not his, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["persistence", "builds on str and api", "forbidden-imports", "op's ruling", "2026-09-18", "MemoryProvider", "hilavitkutin-str"]
 rejects = ["The rule said persistence and str do not depend on each other"]
 related = ["tenet::the_persistence_crate_is_the_generic_hot_cold_storage_bridge_as_a_standalone_ecosystem_crate", "tenet::the_persistence_crate_does_not_depend_on_the_engine_and_works_on_raw_column_data_through_evict_and_inject_over_a_consumer_provided_column_storage"]
