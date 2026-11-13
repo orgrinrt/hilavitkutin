@@ -2,6 +2,8 @@
 
 Sibling of `AUDIT.md`. The audit was asked to judge hilavitkutin as part of the stack, with the downstream being kaski, a general game engine in the sense that Unreal, Unity and Godot are, plus generic applications and server daemons built on hilavitkutin, arvo and notko.
 
+What this file rests on should be said first, because it is the weakest-sourced part of the audit. Nobody on this audit read kaski. The kaski facts below come from the panel reading of 13 November (the tick budget, the fixed-point lane) and from op's own words about what kaski is; everything else is reasoning about what a game engine and a daemon need, which is reasoning and not evidence about this particular consumer. A reader who knows kaski should check the needs listed here against it before acting on them. The hilavitkutin side of every pair is first-hand.
+
 That is a much wider brief than the one the engine was designed against. The founding consumers were polka with about 200 records and a deep chain, saalis at 10,000 to 100,000, and loimu at 100,000 to 10 million (`design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1964-1970`). Op has since said the target is cases with millions of records crunching constantly, and that 1 to 4 morsels is almost never a realistic use case (channel `op-answers-20`). The gap between those two statements is the subject of this file.
 
 ## What a game engine needs that is not there
