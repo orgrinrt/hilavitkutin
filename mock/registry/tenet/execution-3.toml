@@ -2,6 +2,7 @@
 
 [[tenet]]
 id = "every_fiber_dispatch_function_is_checked_in_the_assembly_against_five_conditions"
+subject = "execution"
 what = "For any fiber dispatch function the generated assembly is verified against five checks: no indirect branch in the function body, all column accesses use indexed addressing, no stack loads in the per-record inner loop, the morsel size is an immediate constant, and no calls to a morsel size function or a fiber dispatch function."
 mechanism = "1. Zero `blr` in the function body. 2. All column accesses use indexed addressing `[reg, counter, lsl #3]`. 3. No `[sp, ...]` loads in the per-record inner loop (prologue and morsel only). 4. Morsel size is an immediate constant. 5. No `bl morsel_size` or `bl fiber_dispatch` calls. All 26 dispatch functions in the bench pass all 5 checks."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1636-1645"
@@ -22,11 +23,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1636-1645"]
-subject = "execution"
 keywords = ["ASM verification", "blr", "indexed addressing", "immediate constant", "inner loop", "fiber dispatch", "checklist", "26 dispatch functions"]
 
 [[tenet]]
 id = "inline_fences_are_eliminated_because_progress_is_tracked_externally"
+subject = "execution"
 what = "Inline fence branch prediction is gone: fences are eliminated entirely by the external progress tracking."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1648-1649"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#17-dispatch-codegen"]
@@ -38,11 +39,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1648-1649"]
-subject = "execution"
 keywords = ["inline fences", "branch prediction", "external progress tracking", "superseded", "T2 §7"]
 
 [[tenet]]
 id = "the_dispatch_table_model_is_refined_to_monomorphised_tuple_dispatch"
+subject = "execution"
 what = "The earlier dispatch table model is refined into monomorphised tuple dispatch."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1650-1651"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#17-dispatch-codegen"]
@@ -54,11 +55,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1650-1651"]
-subject = "execution"
 keywords = ["dispatch table", "monomorphised tuple dispatch", "superseded", "T6"]
 
 [[tenet]]
 id = "the_indirect_per_fiber_approach_is_superseded_by_the_trunk_and_schedule_approaches_for_its_overhead"
+subject = "execution"
 what = "The indirect per-fiber dispatch approach, which was initially preferred, is superseded by the trunk-level and whole-schedule approaches on the bench findings, because its 1.17x overhead is unacceptable."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1553-1555, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1653-1654"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#17-dispatch-codegen"]
@@ -72,11 +73,11 @@ quote = '''
 '''
 origin = "stated"
 standing = "provisional"
-subject = "execution"
 keywords = ["Approach C", "superseded", "approach D", "approach E", "1.17x overhead", "indirect per-fiber"]
 
 [[tenet]]
 id = "phase_decomposition_is_part_of_the_cache_hierarchy_and_tiling_domain_and_not_a_domain_of_its_own"
+subject = "execution"
 what = "Phase decomposition is merged into the domain of the cache hierarchy, tiling and phase decomposition and has no domain of its own."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1673-1674"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#18-phase-decomposition-merged-into-domain-11"]
@@ -88,11 +89,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1673-1674"]
-subject = "execution"
 keywords = ["phase decomposition", "domain 18", "domain 11", "cache hierarchy", "tiling", "merged"]
 
 [[tenet]]
 id = "each_convergence_thread_accumulates_into_its_own_stack_local_resource_and_non_commutative_accumulation_runs_sequentially"
+subject = "execution"
 what = "Units that accumulate into a resource have cross-record dependencies through it, so two head and tail convergence threads would otherwise accumulate into the same resource concurrently. Each convergence thread gets its own stack-local accumulator; after convergence an additive accumulation adds the two accumulators, and a non-commutative accumulation falls back to sequential processing of that fiber and skips head and tail."
 mechanism = "Uses the same stack-local caching pattern; each thread's snapshot is independent. `ru`/`rw` per element."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1750-1760, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1762-1763"
@@ -117,12 +118,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1750-1760", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1762-1763"]
-subject = "execution"
 keywords = ["resource accumulation", "head and tail convergence", "stack-local accumulator", "additive", "non-commutative", "sequential fallback", "ru", "rw"]
-cites = ["a_single_trunk_phase_runs_head_and_tail_convergence_with_two_threads_from_opposite_ends", "a_unit_declares_whether_it_is_commutative"]
+related = ["tenet::a_single_trunk_phase_runs_head_and_tail_convergence_with_two_threads_from_opposite_ends", "tenet::a_unit_declares_whether_it_is_commutative"]
 
 [[tenet]]
 id = "a_fiber_has_resource_accumulation_when_a_unit_writes_a_resource_it_also_reads_and_this_is_detected_at_plan_time"
+subject = "execution"
 what = "Resource accumulation is detected at plan time from the unit metadata: a fiber has it if any unit in the fiber writes a resource that it also reads. If the accumulation is non-commutative, convergence is skipped for that fiber."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1762-1766"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#19-resource-handling"]
@@ -137,11 +138,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1762-1766"]
-subject = "execution"
 keywords = ["resource accumulation detection", "plan time", "unit metadata", "read and write the same resource", "skip convergence", "commutativity"]
 
 [[tenet]]
 id = "core_assignment_is_heterogeneous_aware_with_p_cores_on_the_critical_path_and_proportionally_smaller_ranges_for_e_cores"
+subject = "execution"
 what = "On a machine with core types, the critical path trunks go to the P-cores and the leaf and branch fibers to the E-cores. P-cores get larger morsels because of their larger L1 and L2, and E-cores get proportionally smaller morsel ranges and not an equal distribution, because E-cores run at about 40% of P-core speed and drag performance down under an even split."
 mechanism = "Detected at startup, once: L1/L2 size per core type, core count per type (P-cores, E-cores), core type identity. T3 decision #39 for critical path to P-cores."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1810-1823"
@@ -166,12 +167,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1810-1823"]
-subject = "execution"
 keywords = ["heterogeneous cores", "P-cores", "E-cores", "core assignment", "critical path", "morsel size per core", "core type detection"]
-cites = ["hardware_is_detected_once_at_startup_with_a_fallback_of_a_thirty_two_kilobyte_l1_and_one_core"]
+related = ["tenet::hardware_is_detected_once_at_startup_with_a_fallback_of_a_thirty_two_kilobyte_l1_and_one_core"]
 
 [[tenet]]
 id = "the_thread_count_is_the_smaller_of_the_physical_cores_and_the_parallelisable_width_plus_one"
+subject = "execution"
 what = "The thread count is the smaller of the physical core count and the parallelisable width plus one, where the plus one is the chaser or convergence thread. In the bench on M1, eight threads (four P-cores plus four E-cores) were worse than four threads on the P-cores only."
 mechanism = "`min(physical_cores, parallelisable width + 1)`. Bench: 8 threads (4P+4E) worse than 4 threads (4P only) on M1 (T6 L1407-1458)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1825-1827"
@@ -185,11 +186,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1825-1827"]
-subject = "execution"
 keywords = ["thread count", "physical cores", "parallelisable width", "chaser thread", "convergence thread", "M1", "4P+4E"]
 
 [[tenet]]
 id = "the_pool_moves_the_parallel_crossover_from_about_fifty_thousand_records_to_about_two_thousand"
+subject = "execution"
 what = "A pool eliminates the small-N catastrophe: the record count at which parallel execution pays off drops from about 50K for spawn and join strategies to about 2K. At 2K records spawn and join was 2.33x worse and the pool is 0.93x, 7% faster than sequential."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1806-1808"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#20-threading-model"]
@@ -202,12 +203,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1806-1808"]
-subject = "execution"
 keywords = ["thread pool", "crossover", "small-N catastrophe", "2K records", "spawn/join", "0.93x", "2.33x"]
-cites = ["the_thread_pool_is_pre_allocated_and_wakes_by_spinning_first_and_then_parking"]
+related = ["tenet::the_thread_pool_is_pre_allocated_and_wakes_by_spinning_first_and_then_parking"]
 
 [[tenet]]
 id = "phases_overlap_through_progress_counters_so_total_time_is_the_longest_phase_plus_fill_latency"
+subject = "execution"
 what = "Phases overlap through the progress counters: phase N+1 starts as soon as phase N has produced enough records for one morsel, so total time is about the longest phase plus fill latency and not the sum of the phases. With four cores and four phases all phases are active at once, each processing a different record window."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1847-1853"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#20-threading-model"]
@@ -224,11 +225,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1847-1853"]
-subject = "execution"
 keywords = ["pipeline parallelism", "phase overlap", "progress counters", "fill latency", "record window", "AtomicUsize"]
 
 [[tenet]]
 id = "work_stealing_is_not_the_default_and_the_consumer_may_provide_a_stealing_executor"
+subject = "execution"
 what = "The default is deterministic morsel assignment, pre-partitioned at plan time with no atomic fetch-and-add. If variable per-record time causes imbalance, the consumer can provide a stealing executor through the executor trait, while the library provides the deterministic one."
 mechanism = "T3 decisions #96-97; T5 L1110-1113. Imbalance case T3 DF9."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1868-1874"
@@ -246,11 +247,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1868-1874"]
-subject = "execution"
 keywords = ["work-stealing", "deterministic morsel assignment", "Executor trait", "pre-partitioned", "no fetch_add", "imbalance"]
 
 [[tenet]]
 id = "pool_threads_remove_the_three_allocations_of_a_thread_spawn_which_are_negligible_anyway"
+subject = "execution"
 what = "A thread spawn adds three malloc calls, which is negligible against a pipeline of about 17 milliseconds, and the pre-allocated pool eliminates them."
 mechanism = "`std::thread::spawn`: 3 `malloc` calls, ~100ns at ~17ms per pipeline, 0.0006%."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1876-1879"
@@ -265,11 +266,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1876-1879"]
-subject = "execution"
 keywords = ["thread spawn overhead", "malloc", "pre-allocated pool", "negligible", "0.0006%"]
 
 [[tenet]]
 id = "no_single_scheduling_strategy_dominates_and_the_best_depends_on_compute_balance_phase_topology_and_record_count"
+subject = "execution"
 what = "No single scheduling strategy dominates all workloads: the best total wall time depends on the compute balance, the phase topology and the record count."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1902-1904"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#21-scheduling-strategy"]
@@ -282,11 +283,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1902-1904"]
-subject = "execution"
 keywords = ["scheduling strategy", "no dominant strategy", "compute balance", "phase topology", "record count", "wall time"]
 
 [[tenet]]
 id = "below_ten_thousand_records_execution_is_sequential_and_above_one_hundred_thousand_threading_is_always_considered"
+subject = "execution"
 what = "Below 10K records execution is always sequential, because thread overhead dominates; from 10K to 100K the choice depends on the pipeline shape; above 100K threading is always considered."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1906-1909"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#21-scheduling-strategy"]
@@ -300,11 +301,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1906-1909"]
-subject = "execution"
 keywords = ["record count thresholds", "sequential", "10K records", "100K records", "thread overhead", "pipeline shape"]
 
 [[tenet]]
 id = "the_pipeline_shape_chooses_adaptive_sequential_or_phased_and_deep_pipelines_never_significantly_benefit_from_threading"
+subject = "execution"
 what = "The pipeline shape selects the strategy: a wide pipeline, with many roots and low depth, uses adaptive or pipe-chase; a deep one, with serial dependencies and few roots, runs sequentially; a mixed one, where phases have parallel trunks, runs phased. Deep pipelines never significantly benefit from threading, because serial dependency depth is a fundamental limit."
 mechanism = "Wide: roots > depth/2. Deep: depth > fibers/2 and roots <= 2. Mixed: phases have parallel trunks. A 7-fiber deep pipeline gains nothing from threading and adds 1.03-1.05x overhead (T6 L2283-2355)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1911-1921"
@@ -326,11 +327,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1911-1921"]
-subject = "execution"
 keywords = ["pipeline shape", "wide", "deep", "mixed", "adaptive", "pipe-chase", "phased", "sequential", "serial dependency depth"]
 
 [[tenet]]
 id = "each_phase_is_given_its_own_adaptive_config_by_its_own_topology_and_not_by_a_global_heuristic"
+subject = "execution"
 what = "Domain 14 produces adaptive configs per phase (maximum fuse, balanced, maximum split), and this domain selects one for each phase from that phase's own topology: a clear mega-trunk gets maximum fuse with head and tail convergence, wide independent branches get maximum split, moderate depth and width gets balanced. This is not a global heuristic, and each phase is evaluated independently."
 mechanism = "Configs MAX_FUSE / BALANCED / MAX_SPLIT, produced by domain 14."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1923-1932"
@@ -351,11 +352,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1923-1932"]
-subject = "execution"
 keywords = ["per-phase config", "MAX_FUSE", "BALANCED", "MAX_SPLIT", "mega-trunk", "head+tail convergence", "independent evaluation"]
 
 [[tenet]]
 id = "the_strategy_is_selected_at_plan_time_from_estimated_compute_weights_and_a_wrong_pick_costs_about_ten_to_twenty_percent"
+subject = "execution"
 what = "At plan time the scheduler knows each fiber's column count, each fiber's unit count and complexity from the scheduling hints, the dependency graph and the total record count, and from these estimates compute weight ratios: below 10K records it is sequential, a consumer to producer weight ratio above 0.5 gives chase and steal, a producer weight below the light threshold gives adaptive, and otherwise pipe-chase. The weight estimate is rough, from unit count times column access counts in light, medium and heavy classes, and a wrong selection costs about 10 to 20% and is not catastrophic."
 mechanism = "`record_count < 10K` -> Sequential. `consumer_weight / producer_weight > 0.5` -> ChaseSteal. `producer_weight < LIGHT_THRESHOLD` -> Adaptive. else -> PipeChase. Bench at 2M records vs sequential: pipe-chase 0.56-0.58x (A+B interleaved core 0, C chases core 1), chase+steal 0.55-0.56x, adaptive 0.32-0.54x (no frame budget, continuous chaser); asymmetric L-H workload with chase+steal 0.34x."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1934-1962"
@@ -395,11 +396,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1934-1962"]
-subject = "execution"
 keywords = ["plan-time strategy selection", "compute weight", "ChaseSteal", "Adaptive", "PipeChase", "Sequential", "LIGHT_THRESHOLD", "wrong selection"]
 
 [[tenet]]
 id = "the_frame_budget_controls_incrementality_and_not_throughput_and_adaptive_strategies_ignore_it"
+subject = "execution"
 what = "The frame budget controls incrementality, meaning the frame count, and not throughput. Adaptive strategies ignore the budget and sequential is stable across budgets; the budget matters mainly for game loops with time budgets and is irrelevant for batch pipelines."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1972-1977"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#21-scheduling-strategy"]
@@ -415,11 +416,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1972-1977"]
-subject = "execution"
 keywords = ["frame budget", "incrementality", "game loops", "batch pipelines", "adaptive ignores budget", "throughput"]
 
 [[tenet]]
 id = "predictive_parking_at_sync_points_chooses_spin_backoff_or_park_from_the_estimated_wait"
+subject = "execution"
 what = "At phase boundaries the wait time is estimated from the compute weight of the other core's remaining work: a short wait spins, a medium wait spins with backoff, and a long wait parks the thread. A wrong prediction costs at most one park and unpark cycle."
 mechanism = "<100ns spin; 100ns-10µs `spin_loop()` with backoff; >10µs `thread::park()`. Wrong prediction costs ~1µs."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2050-2058"
@@ -439,11 +440,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2050-2058"]
-subject = "execution"
 keywords = ["predictive parking", "sync points", "spin", "spin_loop", "thread::park", "backoff", "wait estimate"]
 
 [[tenet]]
 id = "there_is_no_waker_concept_because_the_spin_then_park_wake_is_the_answer"
+subject = "execution"
 what = "No waker or wake slot concept is needed: the spin loop followed by parking in the hybrid wake pattern of the threading model is the answer."
 mechanism = "Hybrid wake: spin 128, then park."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2295-2297"
@@ -457,11 +458,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2295-2297"]
-subject = "execution"
 keywords = ["waker", "WakeSlot", "hybrid wake", "spin 128", "park", "resolved"]
 
 [[tenet]]
 id = "the_minimum_morsel_size_is_configurable_and_not_a_design_decision"
+subject = "execution"
 what = "The minimum morsel size is configurable and is not a design decision."
 mechanism = "MIN_MORSEL."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2327-2327"
@@ -473,11 +474,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2327-2327"]
-subject = "execution"
 keywords = ["MIN_MORSEL", "configurable", "morsel size", "not a design decision"]
 
 [[tenet]]
 id = "the_apple_128_byte_dma_unit_is_dismissed_as_out_of_scope_and_sixty_four_bytes_governs_data_alignment"
+subject = "execution"
 what = "The 128-byte DMA coherency unit of Apple silicon is dismissed as out of scope: 64 bytes is the data alignment concern, while 128 bytes is for SoC-level prefetch configuration and not for column access. It is relevant only to false sharing in cross-core atomics, which the threading model already prevents through morsel boundary alignment."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2369-2373"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#from-t4-all-resolved"]
@@ -492,11 +493,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2369-2373"]
-subject = "execution"
 keywords = ["Apple 128B DMA", "dismissed", "64B alignment", "false sharing", "morsel boundary alignment", "SoC prefetch"]
 
 [[tenet]]
 id = "the_engine_is_one_and_the_core_count_is_configuration"
+subject = "execution"
 what = "There is no separate single-core or single-threaded engine, run or dispatch path. The engine is one thing: the runner is configured with a core count and then adapts by its usual rules, and the same primitives and the same code paths run at one core, two cores or seven. The plan always computes the single best sequence and the parallelised per-core programs it can from all statically available data within the configured core count; at one core that best sequence is serial, as a natural consequence of the same algorithms. Single-core mode is never special-cased against multi-core mode in code, and sequential is a per-phase strategy the plan may select, not a separate engine."
 source = "mock/research/202606061000_canon-amendment-unified-engine.md:7-9"
 provenance = ["mock::research::202606061000_canon-amendment-unified-engine::#the-ruling"]
@@ -509,6 +510,5 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["ruled: mock/research/202606061000_canon-amendment-unified-engine.md:1-3", "ruled: mock/research/202606061000_canon-amendment-unified-engine.md:7-9"]
-subject = "execution"
 keywords = ["unified engine", "core count", "configuration", "single-core", "no special case", "sequential strategy", "per-core program"]
-rules_out = ["a separate single-core engine or dispatch path"]
+rejects = ["a separate single-core engine or dispatch path"]

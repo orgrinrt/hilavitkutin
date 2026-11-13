@@ -2,6 +2,7 @@
 
 [[tenet]]
 id = "per_trunk_dispatch_is_a_const_range_walk_that_selects_the_members_of_one_trunk_and_each_trunk_is_its_own_monomorphisation"
+subject = "execution"
 what = "Per-trunk isolation is a const-gated walk over the flat unit carrier that runs only the members of one trunk, so that each trunk value monomorphises once and dead-code elimination removes every non-member position, leaving a member-only program equivalent to the flat walk restricted to that trunk. The flat carrier stays flat and the partition lives in const data."
 mechanism = "`trait RunTrunkSel<A, WL, const POS, const TRUNK>` with `{ POS + 1 }` const-generic threading; body gated by whether the carrier position is a member of `TRUNK`, running `RunFiber::run`; `run_one_trunk::<.., const TRUNK>(carrier, bindings, morsel)`; gate from `trunk_of(POS) == TRUNK` or `is_member::<.., PHASE, TRUNK>()`; `WuNil` terminates; sketch 071230 objdump."
 source = "mock/design_rounds/202606080400/202606080100_topic.gate2-ge-const-gated-trunk-dispatch.md:16-19"
@@ -15,11 +16,11 @@ The flat carrier stays flat; the partition lives in const data (`GROUPING`), and
 origin = "proposed"
 written_by = "design round 202606080400, topic GATE-2 G-e const-gated per-trunk dispatch, dated 2026-06-08, agent-written; the text does not say whose decision it is"
 standing = "provisional"
-subject = "execution"
 keywords = ["RunTrunkSel", "run_one_trunk", "const-gated trunk", "POS + 1", "member-only program", "G-e", "trunk_of", "DCE"]
 
 [[tenet]]
 id = "the_outer_dispatcher_drives_the_shipped_per_trunk_walk_keyed_by_trunk_only_and_phase_order_is_a_runtime_loop"
+subject = "execution"
 what = "The single-core run is driven by an outer dispatcher that walks the carrier and fires the shipped per-trunk walk once per trunk root in its phase's pass, with phase order as a runtime loop and a waist between phases that is a no-op on one core. The per-trunk walk is keyed by trunk only, since a trunk lies wholly within one phase. A new walk beside the shipped one is not built."
 because = "A parallel walk reinvents shipped infrastructure, and dropping the phase from the per-trunk walk's key removes an always-generic-constant-expression const argument."
 mechanism = "`RunGatedTrunk<const TRUNK, Pos>` over `WuCons` / `WuNil` with a Peano `Pos` witness (`Here` / `There<..>`), gate `trunk_of(Pos::INDEX) == TRUNK`; outer `Discover<Full, const POS>` bound `Full: RunGatedTrunk<POS, Here>`, const gate `trunk_of(POS) == POS` and runtime `phase_of(POS) == p`; top `for p in 0..phase_count { carrier.run(carrier, p, ..); waist }`; `RunFiber::run_head`; `Scheduler::run` re-pointed; `run_parallel` untouched; sketches `202606080130` and `202606080200`; round 202606080400."
@@ -43,13 +44,13 @@ origin = "proposed"
 written_by = "design round 202606080400, topic GATE-2 G-e correction to drive the shipped RunGatedTrunk, and its source changelist, dated 2026-06-08, agent-written; the text says it supersedes the design framing of the earlier topic of the same round"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "execution"
 keywords = ["RunGatedTrunk", "trunk-only keyed", "outer dispatcher", "RunTrunkSel", "phase loop", "Peano Pos", "G-e", "Scheduler::run"]
-rules_out = ["that topic proposed a NEW `RunTrunkSel` + `run_one_trunk` walk, which reinvents shipped infra"]
-cites = ["per_trunk_dispatch_is_a_const_range_walk_that_selects_the_members_of_one_trunk_and_each_trunk_is_its_own_monomorphisation"]
+rejects = ["that topic proposed a NEW `RunTrunkSel` + `run_one_trunk` walk, which reinvents shipped infra"]
+related = ["tenet::per_trunk_dispatch_is_a_const_range_walk_that_selects_the_members_of_one_trunk_and_each_trunk_is_its_own_monomorphisation"]
 
 [[tenet]]
 id = "the_core_pinned_walk_filters_trunk_roots_by_core_ownership_once_per_trunk_and_the_runtime_mask_path_is_the_interim_it_replaces"
+subject = "execution"
 what = "As of the round of 2026-06-08, the worker's per-core and per-phase dispatch uses a runtime mask path with an ownership test per unit, which is an interim chosen earlier and not the canonical compiled per-core program. The round re-points worker dispatch onto the compiled per-trunk programs, keeping each trunk its own member-only monomorphisation and selecting at run time the subset a core owns, with the ownership test applied once per trunk root."
 mechanism = "`run_core_phase` computing `core_phase_mask` and walking via `run_gated<M: BitAccess>`; replaced by a core-aware variant of `RunTrunkDispatch::dispatch` (or a `dispatch_core` method) taking runtime `core`, `ncores` and a running within-phase trunk-rank counter; ownership rule `rank % ncores == core`, firing `RunGatedTrunk::<TRUNK = POS, Here>`; `IsRoot::IS`, `PhaseAt::VAL`; single-core is `rank % 1 == 0`."
 source = "mock/design_rounds/202606080700/202606080600_topic.gate2-n-core-pinned-trunk-dispatch.md:12-12, mock/design_rounds/202606080700/202606080600_topic.gate2-n-core-pinned-trunk-dispatch.md:16-18, mock/design_rounds/202606080700/202606080600_topic.gate2-n-core-pinned-trunk-dispatch.md:20-22, mock/design_rounds/202606080700/202606080600_topic.gate2-n-core-pinned-trunk-dispatch.md:24-24"
@@ -71,13 +72,13 @@ origin = "proposed"
 written_by = "design round 202606080700, topic GATE-2 G2-N core-pinned per-trunk dispatch, dated 2026-06-08, agent-written; the text calls the runtime mask path an interim that op chose"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "execution"
 keywords = ["run_core_phase", "core_phase_mask", "run_gated", "RunTrunkDispatch", "core ownership", "trunk rank", "G2-N", "compiled per-core program"]
-rules_out = ["That is the R4b-inline interim op chose, not the canonical compiled per-core program."]
-cites = ["n_core_dispatch_walks_the_flat_carrier_gated_by_a_runtime_mask_of_the_trunks_a_core_owns_and_the_const_gated_enumeration_is_superseded", "the_outer_dispatcher_drives_the_shipped_per_trunk_walk_keyed_by_trunk_only_and_phase_order_is_a_runtime_loop"]
+rejects = ["That is the R4b-inline interim op chose, not the canonical compiled per-core program."]
+related = ["tenet::n_core_dispatch_walks_the_flat_carrier_gated_by_a_runtime_mask_of_the_trunks_a_core_owns_and_the_const_gated_enumeration_is_superseded", "tenet::the_outer_dispatcher_drives_the_shipped_per_trunk_walk_keyed_by_trunk_only_and_phase_order_is_a_runtime_loop"]
 
 [[tenet]]
 id = "the_main_thread_drives_each_phase_of_a_parallel_frame_and_is_itself_the_barrier_between_phases"
+subject = "execution"
 what = "In the first threaded executor, the main thread drives the phases of a frame by publishing each phase and waiting for all workers to finish it, so the main thread is itself the barrier between phases and there is no worker-side sense-reversing barrier. Workers derive the phase from the sequence value."
 mechanism = "`for p in 0..nphases { frame_publish(&me.pool); frame_await_done(&me.pool, ncores) }`; worker loop `frame_await`, `run_core_phase(core, p, ...)`, `frame_done_arrive`, with `p = (last-1) % nphases`; persistent pool, `OsThreadPool::spawn`."
 source = "mock/design_rounds/202606072030/202606072030_topic.gate2-r4c-threaded-run-parallel.md:13-13, mock/design_rounds/202606072030/202606072030_topic.gate2-r4c-threaded-run-parallel.md:21-22, mock/design_rounds/202606072030/202606072030_topic.gate2-r4c-threaded-run-parallel.md:35-37, mock/design_rounds/202606072030/202606072030_topic.gate2-r4c-threaded-run-parallel.md:38-41"
@@ -100,12 +101,12 @@ proven Pin shape:
 origin = "proposed"
 written_by = "design round 202606072030, topic GATE-2 R4c round B2 threaded run_parallel, dated 2026-06-07, agent-written; the text does not say whose decision it is"
 standing = "provisional"
-subject = "execution"
 keywords = ["run_parallel", "main-orchestrated", "frame_publish", "frame_await_done", "waist barrier", "persistent pool", "worker_main", "R4c"]
-rules_out = ["no worker-side sense-reversing barrier"]
+rejects = ["no worker-side sense-reversing barrier"]
 
 [[tenet]]
 id = "the_waist_barrier_moves_worker_side_as_a_sense_reversing_barrier_so_a_frame_is_one_publish_and_await_round_trip"
+subject = "execution"
 what = "The waist barrier moves worker-side, so that a frame is one publish and await round trip regardless of the number of phases, and workers cross each waist through a sense-reversing barrier, which fixes the reset race of a reusable barrier. Workers stay hot across phases within a frame and synchronise at each waist, as the canonical design has them sequence their own fibers inside a compiled per-core program."
 because = "The deviation ledger set the trigger that if per-phase parking dominates, the canonical worker-side barrier is the escalation, and the expanded bench shows it does."
 mechanism = "New `PoolFrame.barrier_sense: AtomicU32`; `waist_barrier(pool, expected)` in `thread/barrier.rs`: snapshot sense, `phase_arrived.fetch_add(1, AcqRel)`, last arriver resets `phase_arrived` and bumps `barrier_sense`, then `atomic_wake_all`, else `atomic_wait` until the sense changes; `phase_barrier_arrive`/`reset`/`observe` kept; `run_parallel` main side becomes one `frame_publish` and `frame_await_done` per frame; bench `wide_parallel` 2.45x at N=4096 then 0.53x, 0.34x, 0.28x at 64K, 1M, 4M; spec domain 17."
@@ -133,12 +134,12 @@ origin = "proposed"
 written_by = "design round 202606071808, topic GATE-2 worker-side waist barrier (deviation section 4 reconciliation), dated 2026-06-07, agent-written; the text does not say whose decision it is"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "execution"
 keywords = ["waist_barrier", "sense-reversing barrier", "barrier_sense", "worker-side barrier", "main-orchestrated", "phase_arrived", "deviation section 4", "wide_parallel"]
-cites = ["the_main_thread_drives_each_phase_of_a_parallel_frame_and_is_itself_the_barrier_between_phases"]
+related = ["tenet::the_main_thread_drives_each_phase_of_a_parallel_frame_and_is_itself_the_barrier_between_phases"]
 
 [[tenet]]
 id = "the_single_core_dispatch_is_a_column_capable_inline_walk_with_no_stored_function_pointer_and_the_slot_array_dispatch_is_deleted"
+subject = "execution"
 what = "The dispatch walk is extended past resource-only to project a unit's read and write columns alongside its resources, so a fiber's unit sequence monomorphises into one straight-line body with no stored function pointer. The column-capable walk is the only single-core dispatch path, and the per-unit erased slot dispatch is deleted."
 mechanism = "`ColProject` / `AccumProject` projection; release-ASM check in the sketch FINDINGS: no dispatch symbol survives, zero indirect branches in the dispatch region; `CollectFiber`, `FiberSlot` and the per-unit `fiber_shim` are deleted."
 source = "mock/design_rounds/202606051659/202606051659_changelist.doc.lock.md:22-22, mock/design_rounds/202606051659/202606051659_changelist.doc.lock.md:27-27"
@@ -151,11 +152,11 @@ quote = '''
 origin = "proposed"
 written_by = "doc changelist 202606051659 of 2026-06-05 (phase DOC, single-core dispatch codegen), locked; agent-written round artifact that does not name the maintainer as its author"
 standing = "provisional"
-subject = "execution"
 keywords = ["devirtualization", "always-inline walk", "ColProject", "AccumProject", "CollectFiber", "FiberSlot", "fiber_shim", "single-core dispatch"]
 
 [[tenet]]
 id = "the_per_unit_slot_array_dispatch_stays_as_the_shipped_per_fiber_mechanism_and_the_inline_walk_is_deleted_rather_than_extended"
+subject = "execution"
 what = "The per-unit slot array and its collecting machinery stay as the shipped per-fiber dispatch mechanism. The sequential inline walk that was to be extended into a column-capable range-gated dispatch path is deleted instead of extended."
 mechanism = "`CollectFiber`, `FiberSlot` and `noop_fiber_shim` stay as the shipped dispatch mechanism and `Scheduler::run` consumes `CollectFiber`, which already provides column- and accumulator-capable per-fiber dispatch (one `FiberSlot` per unit, the four-witness `Witnesses` inference, the 7-param `EngineCtx` GAT tie over `Empty`/`Cons`). `RunFiber<A, Witnesses>` is deleted together with `tests/fiber_walk.rs`, the only user of `RunFiber` and `run_fiber_walk`. Range-gating and per-fiber dispatch mode (morsel-outer vs unit-outer) live in `Scheduler::run`'s `fiber_dispatch` walk, unchanged."
 source = "mock/design_rounds/202606051659/202606062330_changelist.src.lock.md:14-14, mock/design_rounds/202606051659/202606062330_changelist.src.lock.md:23-23, mock/design_rounds/202606051659/202606062330_changelist.src.lock.md:26-26"
@@ -170,13 +171,13 @@ Superseded / reversed. These are NOT deleted: `CollectFiber` + `FiberSlot` + `no
 origin = "proposed"
 written_by = "src changelist 202606062330 of 2026-06-06 (phase SRC, increment 1 of the dispatch devirtualization doc changelist), locked; agent-written round artifact that does not name the maintainer as its author"
 standing = "provisional"
-subject = "execution"
 keywords = ["CollectFiber", "RunFiber", "FiberSlot", "noop_fiber_shim", "slot array", "range-gated walk", "fiber_dispatch", "superseded"]
-rules_out = ["extend `RunFiber` to a column-capable range-gated walk and make it the dispatch path", "The deprecated CL would have deleted them in favour of the `RunFiber` walk"]
-cites = ["the_single_core_dispatch_is_a_column_capable_inline_walk_with_no_stored_function_pointer_and_the_slot_array_dispatch_is_deleted"]
+rejects = ["extend `RunFiber` to a column-capable range-gated walk and make it the dispatch path", "The deprecated CL would have deleted them in favour of the `RunFiber` walk"]
+related = ["tenet::the_single_core_dispatch_is_a_column_capable_inline_walk_with_no_stored_function_pointer_and_the_slot_array_dispatch_is_deleted"]
 
 [[tenet]]
 id = "a_per_core_program_over_an_enumerated_set_of_per_trunk_monomorphisations_cannot_be_built_in_pure_rust_for_an_arbitrary_grouping"
+subject = "execution"
 what = "Enumerating the distinct phase and trunk pairs of a grouping at compile time and dispatching one per-trunk monomorphisation per pair is not expressible in pure Rust on the pinned nightly. Turning the grouping's const data into a type-level list needs a proc-macro. The const-gated mechanism works for one fixed, known phase and trunk and not for an engine-derived enumeration over an arbitrary grouping."
 mechanism = "Encodings tried: trait bool-dispatch recursion (`RunStep<const I, const CONT>`) and free-fn const-generic recursion; the only pure-Rust escape that terminates structurally is a type-level cons-list of the pairs walked with a `Nil` base, like the shipped Peano `Pos` walk in `run_one_trunk`; hand-picked monomorphisations dispatched at 2.84x (Sketch B); nightly-2026-05-28."
 source = "mock/research/sketches/202606070906_gate2-pairs-enumeration-dispatch/FINDINGS.md:12-14, mock/research/sketches/202606070906_gate2-pairs-enumeration-dispatch/FINDINGS.md:21-23, mock/research/sketches/202606070906_gate2-pairs-enumeration-dispatch/FINDINGS.md:38-38, mock/research/sketches/202606070906_gate2-pairs-enumeration-dispatch/FINDINGS.md:60-62"
@@ -199,12 +200,12 @@ mistakes: abstract impl-WF recursion (Alt A) and GCE-expressivity + monomorphisa
 origin = "proposed"
 written_by = "sketch findings gate2-pairs-enumeration-dispatch (GATE-2 chart S3 / R3a-pre), outcome FAILS, dated only by its directory name 202606070906; agent-written"
 standing = "provisional"
-subject = "execution"
 keywords = ["pairs enumeration", "const-generic monomorphisation", "proc-macro", "type-level cons-list", "phase and trunk", "E0275", "GATE-2", "overly complex generic constant"]
-cites = ["n_core_dispatch_walks_the_flat_carrier_gated_by_a_runtime_mask_of_the_trunks_a_core_owns_and_the_const_gated_enumeration_is_superseded", "type_level_n_way_partition_of_a_heterogeneous_carrier_needs_forbidden_specialization_so_partition_lives_in_const_evaluation"]
+related = ["tenet::n_core_dispatch_walks_the_flat_carrier_gated_by_a_runtime_mask_of_the_trunks_a_core_owns_and_the_const_gated_enumeration_is_superseded", "tenet::type_level_n_way_partition_of_a_heterogeneous_carrier_needs_forbidden_specialization_so_partition_lives_in_const_evaluation"]
 
 [[tenet]]
 id = "the_per_fiber_window_walk_over_the_flat_carrier_stands_and_the_nested_fiber_trunk_phase_and_pipeline_walks_are_dead_machinery_for_the_deletion_audit"
+subject = "execution"
 what = "The per-fiber window walk over the flat carrier stands as shipped and is not redone on the nested per-fiber, per-trunk, per-phase and per-pipeline walks. The flat walk is the only shape in which per-fiber windows are expressible on the mandated carrier, and it serves the per-fiber locality intent through the structure the spec's dispatch domain specifies. The nested walks are dead machinery that belongs in a deletion audit and not left to read as an unfinished feature."
 mechanism = "`RunPipeline -> RunPhase -> RunTrunk -> RunFiber` nest over `PhaseCons`/`TrunkCons`/`FiberCons`; A4 and A2b stand as shipped; deletion audit G2C-0; rule `no-legacy-shims-pre-1.0`; spec domain 17 (`:1564-1617`) puts the grouping in the plan and the dispatch structure in the emitted per-core program."
 source = "mock/research/sketches/202607191200_a4-fibercons-nest-wireability/FINDINGS.md:4-8, mock/research/sketches/202607191200_a4-fibercons-nest-wireability/FINDINGS.md:47-48, mock/research/sketches/202607191200_a4-fibercons-nest-wireability/FINDINGS.md:53-56, mock/research/sketches/202607191200_a4-fibercons-nest-wireability/FINDINGS.md:88-92"
@@ -234,13 +235,13 @@ origin = "proposed"
 written_by = "sketch A4-b findings of 2026-07-19 (FiberCons nest wireability, outcome FAILS for the nest), agent-written"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "execution"
 keywords = ["FiberCons", "nested carrier", "flat walk", "per-fiber window", "dead machinery", "deletion audit", "A4", "A2b"]
-rules_out = ["both A4 and A2b should be redone on the nest", "A4 and A2b stand as shipped; no redo"]
-cites = ["trunk_isolation_comes_from_a_flat_carrier_walk_gated_by_const_phase_and_trunk_and_the_nested_value_carriers_are_superseded", "type_level_n_way_partition_of_a_heterogeneous_carrier_needs_forbidden_specialization_so_partition_lives_in_const_evaluation"]
+rejects = ["both A4 and A2b should be redone on the nest", "A4 and A2b stand as shipped; no redo"]
+related = ["tenet::trunk_isolation_comes_from_a_flat_carrier_walk_gated_by_const_phase_and_trunk_and_the_nested_value_carriers_are_superseded", "tenet::type_level_n_way_partition_of_a_heterogeneous_carrier_needs_forbidden_specialization_so_partition_lives_in_const_evaluation"]
 
 [[tenet]]
 id = "serving_per_fiber_locality_on_the_flat_carrier_costs_a_walk_per_fiber_per_morsel_that_no_const_gate_removes_and_a_bench_arm_decides_whether_the_locality_pays"
+subject = "execution"
 what = "Serving per-fiber locality on a flat carrier costs re-walks, and the cost is inherent: dispatch is called once per fiber and morsel, each call walks the trunk's whole unit list, and the other fibers' units are rejected by a runtime test because fiber membership is a plan output that no const gate can express. Whether the locality win covers the walk cost is a measurement and not an argument, and the bench G2C-M must carry an arm that compares per-fiber windowed dispatch against the old shared-window shape."
 mechanism = "F fibers of m morsels each over U trunk units: F x m x U runtime `dirty.bit(Pos::INDEX)` tests against m x U for the shared-window shape, for identical executed work; `Member::IS` is const per trunk, not per fiber (`dispatch/trunk_gate.rs:114-119`); the FIXME at #340 (plan-baked member masks plus a fiber-to-phase map) reduces the walks it is possible to skip, not this term; bench arm G2C-M at fiber counts of 1, 2, 4 and 8, on both a bandwidth-heavy and a compute-heavy fiber."
 source = "mock/research/sketches/202607191200_a4-fibercons-nest-wireability/FINDINGS.md:58-72, mock/research/sketches/202607191200_a4-fibercons-nest-wireability/FINDINGS.md:79-84"
@@ -273,12 +274,12 @@ origin = "proposed"
 written_by = "sketch A4-b findings of 2026-07-19 (FiberCons nest wireability), agent-written"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "execution"
 keywords = ["walk overhead", "per-fiber windows", "Member::IS", "runtime dirty test", "G2C-M", "bench arm", "shared-window", "re-walk"]
-cites = ["the_per_fiber_window_walk_over_the_flat_carrier_stands_and_the_nested_fiber_trunk_phase_and_pipeline_walks_are_dead_machinery_for_the_deletion_audit"]
+related = ["tenet::the_per_fiber_window_walk_over_the_flat_carrier_stands_and_the_nested_fiber_trunk_phase_and_pipeline_walks_are_dead_machinery_for_the_deletion_audit"]
 
 [[tenet]]
 id = "each_fiber_is_dispatched_on_its_own_window_and_fibers_are_never_grouped_by_shared_window_to_collapse_the_passes"
+subject = "execution"
 what = "Fibers are not grouped by a shared window to collapse the dispatch passes. Fibers sharing a window would be dispatched together per morsel, which puts both fibers' columns live in the same window, the L1 pressure the per-fiber window was computed to avoid. Strict fiber-at-a-time is the point."
 source = "mock/research/sketches/202607191200_a4-fibercons-nest-wireability/FINDINGS.md:73-77"
 provenance = ["mock::research::sketches::202607191200_a4-fibercons-nest-wireability::FINDINGS::#the-cost-finding-survives-and-is-now-a-measurement-rather-than-a-suspicion"]
@@ -293,12 +294,12 @@ origin = "proposed"
 written_by = "sketch A4-b findings of 2026-07-19 (FiberCons nest wireability), agent-written; the text says the grouping is rejected on canon (domain 12/14)"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "execution"
 keywords = ["shared window", "fiber-at-a-time", "L1 pressure", "per-fiber window", "pass collapse", "domain 12", "domain 14"]
-rules_out = ["Grouping fibers by shared window to collapse the passes"]
+rejects = ["Grouping fibers by shared window to collapse the passes"]
 
 [[tenet]]
 id = "per_fiber_windows_on_the_parallel_path_come_from_a_fiber_outer_morsel_inner_loop_driven_by_the_plan_s_fiber_descriptors_and_no_per_unit_fiber_lookup_is_kept"
+subject = "execution"
 what = "Per-fiber windows on the parallel dispatch path need the same loop inversion the run function received in A2b: fiber-outer and morsel-inner, with one window sequence per fiber. The loop is driven by the plan's fiber descriptors, which already carry the fiber's slice of the order and its window size, so no unit-to-fiber-size lookup and no third per-unit array alongside the phase and trunk arrays is kept."
 because = "One dispatch call already spans every fiber in every trunk the core owns for that phase under a single morsel argument, and those fibers have different windows, so a per-unit size lookup cannot express it: the size has to select the loop, and the loop is outside the call."
 mechanism = "`RunTrunkDispatch::dispatch_core` (`dispatch/trunk_dispatch.rs:143-170`) walks the entire carrier in one call under a single `morsel: MorselRange`; the morsel loop is outside it (`scheduler/mod.rs:2150-2170`); `FiberDispatch` descriptors carry `start`, `len` and `morsel_size`; no third `[USize; GATE2_MAX_UNITS]` array and no `gate2_fiber` mapping; the A4 ledger row reads `specced`, not `ready`."
@@ -336,12 +337,12 @@ origin = "proposed"
 written_by = "sketch A4 findings of 2026-07-19 (per-fiber morsel windows on the parallel dispatch path), agent-written; it corrects the roadmap's A4 statement"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "execution"
 keywords = ["A4", "per-fiber windows", "fiber-outer", "morsel-inner", "dispatch_core", "FiberDispatch", "gate2_fiber", "run_core_phase"]
-rules_out = ["through a unit-to-fiber-size lookup, which needs a `gate2_fiber` mapping alongside the existing `gate2_phase` and `gate2_trunk` scratch"]
+rejects = ["through a unit-to-fiber-size lookup, which needs a `gate2_fiber` mapping alongside the existing `gate2_phase` and `gate2_trunk` scratch"]
 
 [[tenet]]
 id = "per_fiber_windowing_prefers_a_direct_per_fiber_entry_over_re_walking_the_full_carrier_for_each_fiber"
+subject = "execution"
 what = "Driving the per-trunk carrier once per fiber and window re-walks the whole carrier for each, so the walk overhead multiplies while the per-record work stays correct and devirtualisation-clean. Per-fiber windowing should prefer a direct per-fiber entry that walks to the fiber's members once and then loops the windows there."
 mechanism = "O(fibers x windows x carrier_len) const-gate evaluations for the re-walk; gate evaluations are compile-time-folded branches, not per-record cost; `run_one_trunk_windowed` or the direct-per-fiber-entry refinement; the production per-fiber member selector must be a new `fiber_mask & dirty` and not an overload of `dirty`."
 source = "mock/research/sketches/202606202100_a2a-per-fiber-morsel-loop/FINDINGS.md:66-77, mock/research/sketches/202606202100_a2a-per-fiber-morsel-loop/FINDINGS.md:88-88"
@@ -366,5 +367,4 @@ origin = "proposed"
 written_by = "sketch A2a findings of 2026-06-19 (per-fiber morsel loop drives the per-trunk monomorphised dispatch), agent-written, outcome WORKS as a source-grounded derivation"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "execution"
 keywords = ["re-walk cost", "direct per-fiber entry", "per-fiber windowing", "fiber_mask", "run_one_trunk_windowed", "A2b", "carrier walk"]

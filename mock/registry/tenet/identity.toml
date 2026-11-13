@@ -2,6 +2,7 @@
 
 [[tenet]]
 id = "the_crates_are_the_api_the_engine_the_build_crate_and_the_arvo_family"
+subject = "identity"
 what = "The design names three hilavitkutin crates: the api crate with the consumer-facing types, traits and platform contracts, the engine crate, and the build crate for build-time optimisation. Beside them stand the arvo crates for numeric, bitmask, sparse, graph, spectral and combinatorial primitives."
 mechanism = "hilavitkutin-api (consumer-facing types, traits, platform contracts); hilavitkutin (engine: scheduling, dispatch, codegen, platform impls); hilavitkutin-build (build-time optimisations: LLVM, MIR, codegen, cfg emission); arvo; arvo-bitmask; arvo-sparse; arvo-graph; arvo-spectral; arvo-comb."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:29-37"
@@ -21,11 +22,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:29-37"]
-subject = "identity"
 keywords = ["crate structure", "hilavitkutin-api", "hilavitkutin", "hilavitkutin-build", "arvo", "engine", "crates"]
 
 [[tenet]]
 id = "the_engine_depends_at_run_time_on_the_api_and_the_arvo_crates"
+subject = "identity"
 what = "At run time the consumer depends on the engine, and the engine depends on the api crate and on the arvo crates. The spectral crate depends on the sparse crate, and the combinatorial crate depends on the bitmask crate."
 mechanism = "consumer -> hilavitkutin -> hilavitkutin-api; arvo, arvo-bitmask, arvo-graph, arvo-sparse; arvo-spectral (deps: arvo-sparse); arvo-comb (deps: arvo-bitmask)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:40-47"
@@ -44,12 +45,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:40-47"]
-subject = "identity"
 keywords = ["runtime dependency graph", "consumer", "hilavitkutin", "arvo-spectral", "arvo-comb", "dependencies"]
-cites = ["the_crates_are_the_api_the_engine_the_build_crate_and_the_arvo_family"]
+related = ["tenet::the_crates_are_the_api_the_engine_the_build_crate_and_the_arvo_family"]
 
 [[tenet]]
 id = "the_build_crate_is_a_build_dependency_of_every_crate_and_has_no_runtime_dependencies"
+subject = "identity"
 what = "The build crate is a standalone build dependency with no runtime dependencies. The api crate, the engine and every consumer use it from their build script, and it provides configuration emission, compiler wrapper scripts, LLVM pass configuration, profile-guided and post-link workflows and pragma-based build configuration."
 mechanism = "hilavitkutin-api/build.rs, hilavitkutin/build.rs and consumer/build.rs each depend on hilavitkutin-build; it provides cfg emission, rustc wrapper scripts, LLVM pass config, PGO/BOLT workflows and pragma-based build configuration."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:50-60"
@@ -71,11 +72,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:50-60"]
-subject = "identity"
 keywords = ["hilavitkutin-build", "build-dependency", "build.rs", "cfg emission", "no runtime deps", "rustc wrapper"]
 
 [[tenet]]
 id = "arvo_is_a_standalone_no_std_primitive_family_shared_across_projects"
+subject = "identity"
 what = "Arvo is a standalone primitive library family used across projects, and its name is the Finnish word for value, worth or estimate."
 mechanism = "Standalone `#![no_std]` family; users named: polka, saalis, loimu, hilavitkutin."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:137-138, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:141-141"
@@ -90,11 +91,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:137-138", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:141-141"]
-subject = "identity"
 keywords = ["arvo", "primitive library", "cross-project", "polka", "saalis", "loimu", "no_std"]
 
 [[tenet]]
 id = "the_arvo_crates_depend_on_each_other_in_one_direction_only"
+subject = "identity"
 what = "The numerics and bitmask crates depend on no other arvo crate, the sparse, graph and combinatorial crates build on the bitmask and numerics crates, and the spectral crate builds on the sparse crate."
 mechanism = "arvo (none); arvo-bitmask (none); arvo-sparse (arvo-bitmask, arvo); arvo-graph (arvo-bitmask, arvo); arvo-spectral (arvo-sparse); arvo-comb (arvo-bitmask, arvo)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:158-163"
@@ -111,11 +112,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:158-163"]
-subject = "identity"
 keywords = ["arvo dependency flow", "arvo-sparse", "arvo-graph", "arvo-spectral", "arvo-comb", "arvo-bitmask"]
 
 [[tenet]]
 id = "hilavitkutin_does_not_care_what_is_in_the_columns_only_the_read_and_write_dependency_structure"
+subject = "identity"
 what = "Column data types come from arvo, and hilavitkutin does not care what is in the columns, only the read and write dependency structure."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:247-248"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
@@ -127,11 +128,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:247-248"]
-subject = "identity"
 keywords = ["column data types", "arvo", "dependency structure", "read/write", "orthogonality", "what is in the columns"]
 
 [[tenet]]
 id = "arvo_detects_hardware_in_its_own_build_script_and_takes_only_the_fast_math_cfg_from_the_build_crate"
+subject = "identity"
 what = "Arvo detects hardware capabilities in its own build script from the target feature variable, not from custom cfg flags of the build crate. The only cfg it takes from the build crate is the fast math flag, set when the fast math pragma is active."
 mechanism = "`CARGO_CFG_TARGET_FEATURE` read in arvo's build.rs; the only cfg from hilavitkutin-build is `arvo_fast_math` (when the FastMath pragma is active)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:254-257"
@@ -146,11 +147,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:254-257"]
-subject = "identity"
 keywords = ["arvo build.rs", "CARGO_CFG_TARGET_FEATURE", "arvo_fast_math", "FastMath", "hardware detection", "cfg"]
 
 [[tenet]]
 id = "arvo_implementations_select_their_backend_by_target_feature_and_a_peephole_pass_fires_on_fast_floats"
+subject = "identity"
 what = "Arvo implementations choose a hardware intrinsic or a software approximation by target feature, and the math peephole LLVM pass fires on fast float operations."
 mechanism = "Backend selected via `target_feature`; `MathPeephole` LLVM pass fires on `FastFloat` operations."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:258-260"
@@ -164,11 +165,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:258-260"]
-subject = "identity"
 keywords = ["target_feature", "backend", "MathPeephole", "FastFloat", "intrinsic", "software approximation"]
 
 [[tenet]]
 id = "the_dead_terms_chain_chain_group_partition_archetype_entity_row_and_order_have_named_replacements"
+subject = "identity"
 what = "Several earlier terms are dead and have a named replacement. The words for the older grouping levels are replaced by fiber, trunk and phase, the word for column co-access is replaced by fiber, the two words for a data point by record, and an order on a unit by scheduling hints."
 mechanism = "chain → fiber; chain group → trunk; partition → phase; archetype → fiber (it was just column co-access, which is fiber formation); entity → record; row → record; order (on WU) → scheduling hints (WUs declare hints, the scheduler derives ordering)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:92-101"
@@ -189,12 +190,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:92-101"]
-subject = "identity"
 keywords = ["dead terms", "chain", "chain group", "partition", "archetype", "entity", "row", "order", "vocabulary"]
-cites = ["scheduling_hints_replace_an_order_field_on_the_unit"]
+related = ["tenet::scheduling_hints_replace_an_order_field_on_the_unit"]
 
 [[tenet]]
 id = "the_build_crate_is_a_shared_build_dependency_and_not_an_xtask_and_it_optimises_how_code_is_compiled"
+subject = "identity"
 what = "The build crate is a shared build dependency and not an xtask. Every crate's build script calls its configure entry point, and it is independent of the runtime, optimising how the code is compiled."
 mechanism = "`hilavitkutin_build::configure().run()` in every crate's build.rs, under `[build-dependencies]`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:324-327"
@@ -209,11 +210,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:324-327"]
-subject = "identity"
 keywords = ["hilavitkutin-build", "build-dependency", "not an xtask", "configure().run()", "build.rs", "independent of runtime"]
 
 [[tenet]]
 id = "build_configuration_has_four_parts_and_no_custom_cargo_features"
+subject = "identity"
 what = "The build configuration has four parts: the build crate emits cfg flags, there are no custom cargo features because the compiler supplies target features, a compiler workspace wrapper carries all the LLVM codegen flags per target and tier, and mutually exclusive features are rejected with a compile error."
 mechanism = "(1) hilavitkutin-build (build-dep): cfg flag emission; (2) no custom cargo features (compiler provides target_feature, CARGO_CFG_*); (3) RUSTC_WORKSPACE_WRAPPER: all LLVM codegen flags per (target, tier); (4) compile_error! for mutually exclusive features. T4 §Q1."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:329-333"
@@ -229,11 +230,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:329-333"]
-subject = "identity"
 keywords = ["four-part build model", "RUSTC_WORKSPACE_WRAPPER", "no cargo features", "compile_error!", "target_feature", "cfg emission"]
 
 [[tenet]]
 id = "build_behaviour_is_set_through_pragmas_enabled_per_profile_by_a_builder"
+subject = "identity"
 what = "Build behaviour is set through pragmas that a builder enables per profile. The built-in pragmas cover loop optimisation, polyhedral optimisation, math peephole, fast math, expanded link-time optimisation, post-link optimisation, profile guidance, profiling, building the standard library, parallel codegen, shared generics and loop fusion."
 mechanism = '`configure().profile("release", |p| p.enable::<(LoopOptimization, FastMath, ExpandedLto, Bolt, Pgo)>()).run()`. Built-in pragmas: LoopOptimization, Polly, MathPeephole, FastMath, ExpandedLto, Bolt, Pgo, Profiling, BuildStd, ParallelCodegen<N>, SharedGenerics, LoopFusion.'
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:335-339"
@@ -249,11 +250,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:335-339"]
-subject = "identity"
 keywords = ["pragma", "builder API", "LoopOptimization", "Polly", "FastMath", "ExpandedLto", "Bolt", "Pgo", "profile"]
 
 [[tenet]]
 id = "a_pragma_declares_the_pragmas_it_requires_through_the_pragma_trait"
+subject = "identity"
 what = "A pragma declares which other pragmas it requires, so that dependencies between pragmas are enforced."
 mechanism = "Pragma trait with `type Requires`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:340-340"
@@ -265,11 +266,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:340-340"]
-subject = "identity"
 keywords = ["Pragma trait", "type Requires", "dependency enforcement", "pragma"]
 
 [[tenet]]
 id = "a_pragma_takes_effect_by_generated_config_by_the_compiler_wrapper_or_by_a_post_build_hook"
+subject = "identity"
 what = "Pragmas take effect by one of three mechanisms: generated configuration, the compiler wrapper, or a post-build hook."
 mechanism = "Generated config: ExpandedLto, Pgo, BuildStd. rustc wrapper: LoopOptimization, Polly, MathPeephole, FastMath. Post-build hook: Bolt, Profiling."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:341-343"
@@ -283,11 +284,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:341-343"]
-subject = "identity"
 keywords = ["pragma effects", "generated config", "rustc wrapper", "post-build hook", "Bolt", "Profiling", "Pgo"]
 
 [[tenet]]
 id = "llvm_passes_are_registered_at_the_vectorizer_start_and_optimizer_last_points_after_ir_cleanup_for_polly"
+subject = "identity"
 what = "LLVM offers 551 passes in LLVM 22.1.0. IR cleanup passes prepare for polyhedral loop detection, passes are registered at the vectorizer start and optimizer last extension points, and Polly works on aarch64 Linux."
 mechanism = "551 passes in LLVM 22.1.0; IRCE, LoopPredication, SimplifyCFG for Polly SCoP detection; registration at `VectorizerStartEP` + `OptimizerLastEP`; Polly confirmed on aarch64-linux (Apple Container)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:345-349"
@@ -303,11 +304,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:345-349"]
-subject = "identity"
 keywords = ["LLVM passes", "Polly", "SCoP detection", "VectorizerStartEP", "OptimizerLastEP", "IRCE", "aarch64"]
 
 [[tenet]]
 id = "one_shared_benchmark_run_produces_both_pgo_and_bolt_profiles_through_an_automatic_pipeline"
+subject = "identity"
 what = "Shared benchmark runs produce both the profile-guided optimisation data and the post-link optimisation data, and the pipeline is automatic through a post-build hook of the compiler wrapper."
 mechanism = "Shared benchmark runs produce PGO (.profraw) and BOLT (perf.data); automatic pipeline via rustc wrapper post-build hook."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:352-353"
@@ -320,11 +321,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:352-353"]
-subject = "identity"
 keywords = ["PGO", "BOLT", ".profraw", "perf.data", "benchmark runs", "rustc wrapper", "post-build hook"]
 
 [[tenet]]
 id = "bolt_is_linux_elf_only_and_machine_function_split_is_a_partial_alternative_on_macos"
+subject = "identity"
 what = "The post-link optimiser works on Linux ELF only and has no Mach-O support, and machine function splitting is a partial alternative on macOS."
 mechanism = "BOLT Linux ELF only (no Mach-O); machine-function-split as macOS partial alternative."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:354-354"
@@ -336,11 +337,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:354-354"]
-subject = "identity"
 keywords = ["BOLT", "ELF", "Mach-O", "machine-function-split", "macOS", "Linux"]
 
 [[tenet]]
 id = "optimisation_proceeds_through_five_tiers_from_stock_to_profile_guided_bolt"
+subject = "identity"
 what = "The optimisation tiers run from stock through plugins, static BOLT and profile-guided optimisation to profile-guided BOLT."
 mechanism = "Stock → Plugins → Static BOLT → PGO → Profile-guided BOLT."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:355-355"
@@ -352,11 +353,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:355-355"]
-subject = "identity"
 keywords = ["optimization tiers", "Stock", "Plugins", "Static BOLT", "PGO", "profile-guided BOLT"]
 
 [[tenet]]
 id = "there_are_five_build_profiles_dev_dev_opt_release_profiling_and_ci"
+subject = "identity"
 what = "There are five build profiles: dev, dev-opt, release, profiling and ci."
 mechanism = "dev (Cranelift for workspace, LLVM for deps); dev-opt (LLVM, opt-level=2, LoopOptimization); release (opt-level=3, full pragmas); profiling (inherits release, keeps debug info); ci (inherits release, thin LTO for caching)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:357-362"
@@ -373,11 +374,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:357-362"]
-subject = "identity"
 keywords = ["build profiles", "dev", "dev-opt", "release", "profiling", "ci", "Cranelift", "thin LTO"]
 
 [[tenet]]
 id = "arvo_numerics_are_fixed_point_types_with_hot_precise_and_warm_strategy_markers"
+subject = "identity"
 what = "The arvo numerics are fixed-point types over a sixty-four-bit integer, with strategy markers that cap the lanes for hot use, use the full width for precise use and decide at run time for warm use."
 mechanism = "`UFixed<I, F>` / `IFixed<I, F>` (repr(transparent) over u64/i64); strategy markers `Hot` (lane-capped), `Precise` (full-width), `Warm` (runtime)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:173-176"
@@ -392,11 +393,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:173-176"]
-subject = "identity"
 keywords = ["UFixed", "IFixed", "fixed-point", "Hot", "Precise", "Warm", "strategy markers", "repr(transparent)"]
 
 [[tenet]]
 id = "arvo_float_wrappers_are_a_fast_math_float_and_a_strict_ieee_float"
+subject = "identity"
 what = "Arvo wraps floats in a fast float that uses LLVM intrinsics with fast math and a strict float that follows IEEE 754."
 mechanism = "`FastFloat` (LLVM intrinsics, fast-math); `StrictFloat` (IEEE 754)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:177-178"
@@ -409,11 +410,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:177-178"]
-subject = "identity"
 keywords = ["FastFloat", "StrictFloat", "IEEE 754", "fast-math", "LLVM intrinsics", "float wrappers"]
 
 [[tenet]]
 id = "numeric_capabilities_are_small_composable_traits_and_there_is_no_monolithic_numeric_trait"
+subject = "identity"
 what = "Numeric capabilities are small composable traits, and there is no monolithic numeric trait: bounds are composed from the small traits as needed."
 mechanism = "`TotalOrd`, `Sqrt`, `Recip`, `Abs`, `FromConstant`; compose bounds: `T: Add + Mul + Sqrt`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:179-180, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:183-183"
@@ -428,11 +429,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:179-180", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:183-183"]
-subject = "identity"
 keywords = ["TotalOrd", "Sqrt", "Recip", "Abs", "FromConstant", "no monolithic Numeric trait", "compose bounds"]
 
 [[tenet]]
 id = "arvo_names_semantic_aliases_for_common_numeric_roles"
+subject = "identity"
 what = "Arvo provides semantic aliases for the common numeric roles."
 mechanism = "`Ratio`, `Factor`, `Norm`, `Coord`, `Angle`, `Count`, `Average`, `Deviation`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:181-182"
@@ -445,11 +446,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:181-182"]
-subject = "identity"
 keywords = ["semantic aliases", "Ratio", "Factor", "Norm", "Coord", "Angle", "Count", "Average", "Deviation"]
 
 [[tenet]]
 id = "the_bitmask_crate_holds_fixed_width_masks_bit_matrices_and_set_operations"
+subject = "identity"
 what = "The bitmask crate holds fixed-width bitmask types, a bit-matrix adjacency for graphs of up to sixty-four nodes, the set operations, bit counting and scanning, and the dirty propagation as a sequence of ors."
 mechanism = "`Mask64(u64)`, `Mask256([u64; 4])`; bit-matrix adjacency `[u64; N]` for <=64 nodes; union, intersection, difference, complement; popcount, trailing/leading zeros, iterate set bits; dirty propagation (OR sequences): `predecessors[N] & dirty_mask`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:187-191"
@@ -465,11 +466,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:187-191"]
-subject = "identity"
 keywords = ["arvo-bitmask", "Mask64", "Mask256", "bit-matrix", "set operations", "popcount", "dirty propagation"]
 
 [[tenet]]
 id = "the_bitmask_crate_is_the_cross_cutting_foundation_of_the_other_arvo_crates"
+subject = "identity"
 what = "The bitmask crate is the cross-cutting foundation for all the other arvo crates."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:186-186, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:192-192"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
@@ -482,11 +483,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:186-186", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:192-192"]
-subject = "identity"
 keywords = ["arvo-bitmask", "cross-cutting foundation", "arvo crates"]
 
 [[tenet]]
 id = "the_sparse_crate_holds_csr_the_access_matrix_reordering_and_decomposition_algorithms"
+subject = "identity"
 what = "The sparse crate holds the compressed sparse row format for more than two hundred and fifty-six nodes, the sparse binary matrix of the access matrix, bandwidth-minimising reordering, block diagonal detection and the Dulmage-Mendelsohn decomposition."
 mechanism = "CSR for >256 nodes; sparse binary matrix (access matrix); RCM reordering (bandwidth minimization, O(n+nnz)); block diagonal detection (permutation to block diagonal form); Dulmage-Mendelsohn decomposition (structural rank, fine/coarse, dead column elimination)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:197-202"
@@ -503,11 +504,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:197-202"]
-subject = "identity"
 keywords = ["arvo-sparse", "CSR", "RCM", "block diagonal", "Dulmage-Mendelsohn", "access matrix", "bandwidth"]
 
 [[tenet]]
 id = "the_spectral_crate_is_const_generic_and_stack_allocated_in_small_fixed_sizes"
+subject = "identity"
 what = "The spectral crate is const-generic and stack allocated, with a four kilobyte weight matrix, a two hundred and fifty-six byte eigenvector and thirty iterations."
 mechanism = "`[[u8; 64]; 64]` weight matrix (4 KB), `[f32; 64]` eigenvector (256 bytes), 30 iterations."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:224-225"
@@ -520,5 +521,4 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:224-225"]
-subject = "identity"
 keywords = ["arvo-spectral", "const-generic", "stack-allocated", "weight matrix", "eigenvector", "30 iterations"]

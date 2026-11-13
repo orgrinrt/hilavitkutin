@@ -2,6 +2,7 @@
 
 [[tenet]]
 id = "a_pure_per_record_map_may_be_declared_as_an_opt_in_fusion_contract_beside_execute"
+subject = "units"
 what = "A unit that is a pure per-record map, reading one column and writing one column, value to value, with no cross-record state, may additionally declare that map as an opt-in fusion contract: an input type, an output type and an apply function from one to the other. This is orthogonal to the execute contract, does not change execute, and a simple unit never implements it. Its purpose is linear fusion within a fiber: a straight read-after-write sequence of such maps is folded at the type level into a single fused unit whose body keeps every intermediate in a register. A unit that carries cross-record state, an accumulator, does not implement the contract and stays on the ordinary per-unit dispatch path."
 mechanism = "An associated input type, an associated output type and an apply function. The fold is a compile-time composition of concrete monomorphised calls, no function pointers and no dynamic dispatch; dead-store elimination removes the intermediate column traffic. The shipped trait name and signature live in the engine-facing rustdoc."
 source = "mock/crates/hilavitkutin-api/DESIGN.md.tmpl:239-243"
@@ -17,12 +18,12 @@ origin = "proposed"
 written_by = "the api design template, section added by design round 202606092000 (within-fiber linear fusion)"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "units"
 keywords = ["per-record map", "RecordOp", "apply", "fusion contract", "opt-in", "value to value", "execute", "linear fusion", "run_fused"]
 related = ["tenet::records_within_a_fiber_are_independent"]
 
 [[tenet]]
 id = "execute_receives_a_context_and_nothing_else"
+subject = "units"
 what = "The execute body of a unit receives a context and nothing else. It does not receive handles to global storage, does not reach into a registry and holds no long-lived references. Everything it can touch is exactly what its access set declared, projected into the context for the duration of one call."
 mechanism = "`trait WorkUnit<Sched = Always> { type Read: AccessSet; type Write: AccessSet; type Hint; type Ctx<'frame>; fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>); }`"
 source = "mock/research/pre_seed/202606111800_canonical-spec-standalone.md:138-145, mock/research/pre_seed/202606111800_canonical-spec-standalone.md:155-158"
@@ -46,11 +47,11 @@ origin = "proposed"
 written_by = "the standalone spec 202606111800, a reading aid with no design authority of its own by addendum A2"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: a passage shows part of it to be his and not the whole of it (mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:639-660), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "units"
 keywords = ["execute", "Context", "Ctx", "access set", "nothing else", "WorkUnit", "signature"]
 
 [[tenet]]
 id = "inside_a_fiber_a_unit_is_a_pure_function_from_column_values_to_column_values"
+subject = "units"
 what = "The founding round's api topic describes the processing of one record inside a fiber as the composition of its units, each a pure function that takes column values and produces column values, with the intermediate columns as named wires between stages that need no memory inside the fiber. The closure a unit registers moves from taking references to columns to a pure function of values that returns values, and the flattener wires the returns to the next stage's inputs."
 source = "mock/design_rounds/202604200055/202603151200_topic.hilavitkutin-api-surface.md:1767-1771, mock/design_rounds/202604200055/202603151200_topic.hilavitkutin-api-surface.md:1840-1843"
 provenance = ["mock::design_rounds::202604200055::202603151200_topic.hilavitkutin-api-surface::#chain-internal-columns-are-dead-stores-only-chain-outputs-need-materialization"]
@@ -70,12 +71,12 @@ origin = "proposed"
 written_by = "the founding-round topic T6 on the api surface, 202603151200"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "units"
 keywords = ["pure function", "values in values out", "each closure", "flattener", "fiber", "composition", "value function"]
 related = ["tenet::a_unit_registers_its_ops_through_each_batch_and_reduce_on_the_context", "tenet::a_pure_per_record_map_may_be_declared_as_an_opt_in_fusion_contract_beside_execute", "question::how_a_unit_in_the_value_form_reads_a_resource"]
 
 [[tenet]]
 id = "the_consumer_spelling_of_a_unit_reduces_to_read_write_hint_and_schedule_with_the_engine_context_computed_if_feasible"
+subject = "units"
 what = "The canonical consumer spelling of a unit reduces to its read set, write set, hint and schedule. The full nine-parameter engine context shape is computed by an api-side type function instead of being hand-spelled per unit, if a feasibility sketch proves the type function under the current toolchain. If it walls, the fallback discussion re-opens with the sketch findings, and the derive-macro and keep-explicit alternatives stay on the table only in that event."
 mechanism = "Working name `CtxFor<'frame, R, W, Sched>` replacing the hand-spelled nine-parameter `EngineCtx`; sketch covers GAT normalization and GCE interaction; `BuilderInput` and `HasSchedule` impls stay explicit either way."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:112-120"
@@ -95,11 +96,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["ruled: mock/research/202606111400_canonical-design-addendum-a1.md:47-47", "ruled: mock/research/202606111400_canonical-design-addendum-a1.md:110-120"]
-subject = "units"
 keywords = ["CtxFor", "EngineCtx", "computed Ctx", "WorkUnit spelling", "type function", "derive macro", "GAT", "A1-6"]
 
 [[tenet]]
 id = "the_context_of_a_unit_is_a_generic_associated_type_over_a_frame_lifetime_the_scheduler_owns"
+subject = "units"
 what = "The context of a unit is a generic associated type over a frame lifetime owned by the scheduler. The engine instantiates it at dispatch time with the live frame lifetime, so a unit can read borrows into state derived from the pool frame, such as progress slots and predicted-wait readers, without its implementation carrying an explicit lifetime parameter. Dispatch sites use higher-ranked trait bounds."
 mechanism = "`WorkUnit::Ctx` is `type Ctx<'frame>`; borrows into `PoolFrame`-derived state; dispatch sites use HRTB; validated by the lifetime sketch shipped alongside round 202605101036."
 source = "mock/PRINCIPLES.md.tmpl:217-223"
@@ -117,12 +118,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:217-223"]
-subject = "units"
 keywords = ["WorkUnit::Ctx", "GAT", "frame lifetime", "PoolFrame", "HRTB", "progress slots", "predicted-wait readers", "round 202605101036"]
-cites = ["execute_receives_a_context_and_nothing_else"]
+related = ["tenet::execute_receives_a_context_and_nothing_else"]
 
 [[tenet]]
 id = "a_unit_over_columns_receives_a_morsel_window_and_a_unit_over_resources_only_runs_once_per_record"
+subject = "units"
 what = "Whether a unit is dispatched per morsel or per record is inferred from the shape of its access set. A unit that works on columns receives a morsel window, and a unit that touches only resources is dispatched per record."
 mechanism = "Column-shaped WUs receive a `Morsel<T>` window; resource-only WUs dispatch per-record."
 source = "mock/DESIGN.md.tmpl:86-86"
@@ -135,11 +136,11 @@ written_by = "the design template of the workspace, agent-written, undated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding-elsewhere: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:844-845"]
-subject = "units"
 keywords = ["per-morsel dispatch", "per-record dispatch", "Morsel<T>", "AccessSet shape", "column-shaped", "resource-only", "inferred"]
 
 [[tenet]]
 id = "the_scheduling_hint_stays_sealed_and_gains_one_additive_arm_a_four_tuple_with_an_open_extension_marker"
+subject = "units"
 what = "The scheduling hint stays sealed over the tuple shapes the api names and gains one additive arm, a four-tuple whose fourth member is an open marker that a downstream runner implements to carry one runner-specific dimension. A three-tuple and a four-tuple are different types, so nothing existing changes, and the seal still holds with the extension marker as the one open slot inside the tuples. A runner that declares an extension marker reads its own dimension. No extension markers ship in the crate."
 because = "A runner with a dimension that the triple lacks cannot express it, and unsealing would cost the engine its ability to reason about every hint shape."
 mechanism = "`pub trait HintExt: 'static {}` and `impl<U: UrgencyValue, D: DivisibilityValue, S: SignificanceValue, X: HintExt> SchedulingHint for (U, D, S, X) {}`; `SchedulingHint` sealed at hint.rs:68 for `(U, D, S)` triples."
@@ -174,12 +175,12 @@ origin = "proposed"
 written_by = "topic plannable-declaration-split of 2026-07-17, round 202607171807, and its doc changelist, agent-written"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "units"
 keywords = ["SchedulingHint", "HintExt", "sealed", "four-tuple", "extension slot", "additive", "urgency divisibility significance"]
-cites = ["the_divisibility_hint_sets_whether_a_unit_runs_all_morsels_at_once_one_at_a_time_or_adaptively"]
+related = ["tenet::the_divisibility_hint_sets_whether_a_unit_runs_all_morsels_at_once_one_at_a_time_or_adaptively"]
 
 [[tenet]]
 id = "a_four_tuple_hint_schedules_as_its_three_axis_prefix_and_reading_a_fourth_dimension_is_a_later_gate_for_the_runner_that_defines_one"
+subject = "units"
 what = "A hint carrying an extension marker schedules as its urgency, divisibility and significance prefix would, and reading a fourth dimension is a later gate for whichever runner defines one. The design makes no claim of present engine behaviour for the extension, because the engine is untouched, the hint has no extraction api, and no extension markers ship."
 source = "mock/design_rounds/202607171807/202607171807_changelist.doc.lock.md:44-48, mock/design_rounds/202607171824/202607171824_changelist.doc.lock.md:8-14, mock/design_rounds/202607171824/202607171824_topic.plannable-post-review-fixes.md:24-29"
 provenance = ["mock::design_rounds::202607171807::202607171807_changelist.doc.lock::#change-document-the-hintext-slot-in-the-hint-prose"]
@@ -209,13 +210,13 @@ origin = "proposed"
 written_by = "doc changelist of round 202607171824 (2026-07-17) softening a sentence of round 202607171807, with its topic plannable-post-review-fixes, agent-written"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "units"
 keywords = ["HintExt", "four-tuple", "prefix", "engine reads", "softened", "intent", "SchedulingHint", "fourth dimension"]
-rules_out = ["the engine reads urgency, divisibility, and significance and ignores the extension"]
-cites = ["the_scheduling_hint_stays_sealed_and_gains_one_additive_arm_a_four_tuple_with_an_open_extension_marker"]
+rejects = ["the engine reads urgency, divisibility, and significance and ignores the extension"]
+related = ["tenet::the_scheduling_hint_stays_sealed_and_gains_one_additive_arm_a_four_tuple_with_an_open_extension_marker"]
 
 [[tenet]]
 id = "the_hint_extension_round_lands_the_mechanism_with_no_markers_because_no_dimension_beyond_the_three_has_a_consumer"
+subject = "units"
 what = "The round that introduced the runner-agnostic declaration trait lands that trait in full, as the load-bearing prerequisite that a runner which does not use the column-record execution model can implement, and lands only the extension mechanism of the hint, with zero extension markers defined, because no hint dimension beyond urgency, divisibility and significance has a consumer yet. Inventing markers now would be speculative surface with no reader, so the mechanism is ready and the content waits for a real need. The divisibility axis already expresses whether work can be split or paused, which a tiling-capable runner would reach for first, so the extension slot may never gain a marker; it exists so that a genuinely new dimension lands additively and not by unsealing."
 mechanism = "`Plannable<Schedule>` in full; `HintExt` mechanism only, the 4-tuple `(U, D, S, X: HintExt)` arm; zero `HintExt` markers defined."
 source = "mock/design_rounds/202607171807/202607171807_changelist.doc.lock.md:10-24, mock/design_rounds/202607171807/202607171733_topic.plannable-declaration-split.md:73-77"
@@ -247,13 +248,13 @@ origin = "proposed"
 written_by = "doc changelist of round 202607171807 (2026-07-17), a scope decision narrowing its topic plannable-declaration-split, agent-written"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "units"
 keywords = ["Plannable", "HintExt", "scope decision", "no markers", "speculative surface", "divisibility", "unsealing", "runner-agnostic declaration"]
-rules_out = ["a fully-worked hint extension"]
-cites = ["the_scheduling_hint_stays_sealed_and_gains_one_additive_arm_a_four_tuple_with_an_open_extension_marker", "a_unit_declares_its_name_read_set_write_set_hint_commutativity_and_an_execute_function"]
+rejects = ["a fully-worked hint extension"]
+related = ["tenet::the_scheduling_hint_stays_sealed_and_gains_one_additive_arm_a_four_tuple_with_an_open_extension_marker", "tenet::a_unit_declares_its_name_read_set_write_set_hint_commutativity_and_an_execute_function"]
 
 [[tenet]]
 id = "the_builder_appends_each_registered_unit_so_the_carrier_type_order_equals_registration_order_and_build_requires_a_topological_registration"
+subject = "units"
 what = "The builder appends each registered unit to the unit carrier, so the carrier's type order equals the registration order, where it had prepended each one. Building requires the registration order to be a valid topological order of the dependency graph and, when it is not, returns an error that names the engine-computed recommended order."
 because = "The producer-before-consumer registration requirement is a provisional compromise, to be relaxed once the engine applies the cache-optimal order itself."
 mechanism = "`UnitDispatch<W>::NextWus` becomes the append output; `WorkUnitKind::place` appends; recursive `WuAppend<P>` on `WuCons`/`WuNil`; build-time check against the `DependencyGraph` returning a `BuildError` variant; the recommended order is the RCM-row order from `plan.rcm_order` where available, else a plain topological order; store and platform carriers unchanged; roadmap r2 section 8 decision (b)."
@@ -276,13 +277,13 @@ origin = "proposed"
 written_by = "design round 202606061446, topic gate1 dispatch builder append (D1d), dated 2026-06-06, agent-written; the passage cites roadmap r2 section 8 'op decision (b)' for the provisional requirement only"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "units"
 keywords = ["builder append", "prepend", "WuAppend", "registration order", "topological order", "BuildError", "recommended order", "UnitDispatch"]
-rules_out = ["The scheduler builder PREPENDS each registered WorkUnit onto the carrier."]
-cites = ["producer_before_consumer_registration_is_provisional_and_the_ideal_is_auto_ordering"]
+rejects = ["The scheduler builder PREPENDS each registered WorkUnit onto the carrier."]
+related = ["tenet::producer_before_consumer_registration_is_provisional_and_the_ideal_is_auto_ordering"]
 
 [[tenet]]
 id = "the_access_set_substrate_adopts_the_recursive_list_under_a_marker_trait_as_its_single_shape_and_the_flat_arity_implementations_are_deleted"
+subject = "units"
 what = "The access-set substrate adopts the recursive list shape under a marker trait as its single shape. The change is to delete the flat-arity implementations and rename the existing recursive primitives."
 because = "The recursive shape has no structural arity cap, since two implementations cover any depth; set operations scale as one recursive implementation each; the verbosity of the nested list disappears behind a macro that emits the type alias from a flat list; and the error messages are comparable, more verbose but more informative."
 mechanism = "`Empty` terminator and `Cons<H, T>` with a recursive `Contains<X>`; `#[marker] pub trait Contains<X>` (feature `marker_trait_attr`); a `set!` macro; the flat-arity `Contains` impls cover arities 1 through 12 by macro, and a recursive `(H, R)` Cons-style impl already exists in `access.rs`."
@@ -318,13 +319,13 @@ origin = "proposed"
 written_by = "sketch findings S2 AccessSet arity of 2026-05-05 (round 202605042200), with its post-audit correction section; agent-written"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "units"
 keywords = ["AccessSet", "recursive HList", "marker trait", "flat-arity impls", "arity cap", "Contains", "round 4", "set! macro"]
-rules_out = ["the flat-arity impls"]
-cites = ["an_access_set_is_a_trait_on_tuples_of_stores", "the_arity_twelve_cap_continues_to_govern_unit_read_and_write_declarations_and_not_the_builder_accumulator"]
+rejects = ["the flat-arity impls"]
+related = ["tenet::an_access_set_is_a_trait_on_tuples_of_stores", "tenet::the_arity_twelve_cap_continues_to_govern_unit_read_and_write_declarations_and_not_the_builder_accumulator"]
 
 [[tenet]]
 id = "the_arity_twelve_cap_continues_to_govern_unit_read_and_write_declarations_and_not_the_builder_accumulator"
+subject = "units"
 what = "The access set needs no extension to higher arities: the arity-twelve cap continues to govern the unit read and write declarations, which are flat tuples, and it does not govern the builder's accumulator, which is a cons-list."
 source = "mock/research/sketches/app-builder-typestate-202605010900/FINDINGS.md:166-178"
 provenance = ["mock::research::sketches::app-builder-typestate-202605010900::FINDINGS::#accessset-arity-ceiling-not-the-binding-constraint"]
@@ -346,11 +347,11 @@ No need to extend AccessSet to higher arities. The arity-12 cap continues to gov
 origin = "proposed"
 written_by = "sketch findings app-builder type-state (202605010900), body section on the AccessSet arity ceiling, written before its update of 2026-05-01 round 202605011500; agent-written"
 standing = "provisional"
-subject = "units"
 keywords = ["arity-12 cap", "AccessSet", "cons-list", "builder accumulator", "flat tuples", "Read and Write declarations", "recursion limit"]
 
 [[tenet]]
 id = "a_unit_s_read_and_write_declarations_are_cons_lists_written_through_macros_and_the_satisfaction_proof_is_recursive_with_no_arity_cap"
+subject = "units"
 what = "The read and write declarations of a unit are written through macros that convert flat-tuple syntax to the cons-list shape, and the satisfaction proof is recursive over the cons-list, with no cap on how many stores a unit declares."
 because = "The original per-arity cap of twelve on the satisfaction trait bites real consumers: one legitimately reads from sixteen or more stores."
 mechanism = "`read!` / `write!` macros; `WuSatisfied<A>` recursive over the cons-list; consumers migrate from `type Read = (Resource<X>, Column<Y>);` to `type Read = read![Resource<X>, Column<Y>];`; verified by `smoke_wu_with_sixteen_stores`, a single unit declaring 16 stores in Read; the consumer is vehje typecheck."
@@ -369,13 +370,13 @@ origin = "proposed"
 written_by = "sketch findings app-builder type-state (202605010900), update of 2026-05-01 round 202605011500 (final design after third reviewer); agent-written"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "units"
 keywords = ["WuSatisfied", "read! macro", "write! macro", "cons-list", "arity cap", "16 stores", "vehje", "uncap"]
-rules_out = ["The original per-arity 0..=12 cap on `WuSatisfied<A>`"]
-cites = ["the_arity_twelve_cap_continues_to_govern_unit_read_and_write_declarations_and_not_the_builder_accumulator"]
+rejects = ["The original per-arity 0..=12 cap on `WuSatisfied<A>`"]
+related = ["tenet::the_arity_twelve_cap_continues_to_govern_unit_read_and_write_declarations_and_not_the_builder_accumulator"]
 
 [[tenet]]
 id = "a_declaration_trait_parameterised_by_the_schedule_is_granted_to_every_unit_by_one_blanket_across_all_schedules"
+subject = "units"
 what = "The declaration half of a unit, its reads, writes and hint, is granted by one blanket implementation to every unit under any schedule, because the schedule is a parameter of the declaration trait. No explicit implementation is needed for a unit under a schedule other than the always one, which is strictly more general than the earlier schedule trait, whose blanket pins the always schedule and requires an explicit implementation per unit under an event-type schedule."
 mechanism = "`Plannable<Schedule = Always>` with `impl<W: WorkUnit<S>, S> Plannable<S> for W`; `AdaptWu`, an `impl WorkUnit<On<ScheduleEnd>>`, is accepted at a `T: Plannable<S>` bound; `HasSchedule` (`work_unit.rs:145`) has a blanket that pins `Always`."
 source = "mock/research/sketches/202607171733_plannable-declaration-split/FINDINGS.md:28-34, mock/research/sketches/202607171733_plannable-declaration-split/FINDINGS.md:38-41"
@@ -398,6 +399,5 @@ origin = "proposed"
 written_by = "sketch findings plannable-declaration-split of 2026-07-17 (round 202607171733), outcome WORKS; agent-written"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "units"
 keywords = ["Plannable", "HasSchedule", "blanket impl", "schedule parameter", "On<V>", "AdaptWu", "declaration half", "runner-agnostic"]
-cites = ["the_hint_extension_round_lands_the_mechanism_with_no_markers_because_no_dimension_beyond_the_three_has_a_consumer"]
+related = ["tenet::the_hint_extension_round_lands_the_mechanism_with_no_markers_because_no_dimension_beyond_the_three_has_a_consumer"]

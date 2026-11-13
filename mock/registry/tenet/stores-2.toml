@@ -2,6 +2,7 @@
 
 [[tenet]]
 id = "each_consumer_of_a_virtual_has_its_own_bit_and_a_fire_sets_all_of_them"
+subject = "stores"
 what = "Each consumer has its own bit for each virtual it is gated on, and a fire sets all the consumer bits of that virtual."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:703-704"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#10-virtual-flag-system"]
@@ -13,11 +14,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:703-704"]
-subject = "stores"
 keywords = ["per-(virtual, consumer) bit", "fire sets all consumer bits", "consumer", "virtual", "gate"]
 
 [[tenet]]
 id = "a_consumer_bit_clears_on_first_dispatch_and_a_refire_during_execution_runs_the_consumer_again_next_pass"
+subject = "stores"
 what = "A consumer's bit is cleared on its first dispatch and not on resume or completion. A re-fire during execution makes the consumer run again in the next pass, so no fire is lost."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:705-707"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#10-virtual-flag-system"]
@@ -29,12 +30,12 @@ quote = '''
 origin = "stated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (mock/research/202606111400_canonical-design-addendum-a1.md:122-131, row whether_meta_units_share_the_consumer_carrier_or_get_a_dedicated_carrier_is_decided_by_sketching_both_shapes), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "stores"
 keywords = ["clear-on-dispatch", "re-fire", "no lost fires", "consumer bit", "next pass", "resume"]
-cites = ["each_consumer_of_a_virtual_has_its_own_bit_and_a_fire_sets_all_of_them"]
+related = ["tenet::each_consumer_of_a_virtual_has_its_own_bit_and_a_fire_sets_all_of_them"]
 
 [[tenet]]
 id = "virtual_flags_are_reset_by_one_epoch_increment_and_fully_cleared_every_two_hundred_and_fifty_six_passes"
+subject = "stores"
 what = "The flags are reset by incrementing a global epoch once per pass instead of clearing memory: a flag counts as set when its value equals the current epoch. A full clear is done every two hundred and fifty-six passes, at the epoch wraparound."
 mechanism = "Global epoch u8, incremented per pass; 'flag is set' = flag_value == current_epoch; reset = one u8 increment (not memset); full clear every 256 passes."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:709-713"
@@ -50,11 +51,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:709-713"]
-subject = "stores"
 keywords = ["epoch", "u8", "epoch wraparound", "reset", "memset", "256 passes", "virtual flags"]
 
 [[tenet]]
 id = "virtual_flag_storage_is_about_twelve_bytes_for_sixty_four_virtuals_in_one_cache_line"
+subject = "stores"
 what = "The flag storage for sixty-four virtuals with an average of one and a half consumers is about ninety-six bits, twelve bytes, which is one cache line."
 mechanism = "~96 bits = 12 bytes for 64 virtuals × 1.5 consumers avg."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:715-716"
@@ -67,11 +68,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:715-716"]
-subject = "stores"
 keywords = ["flag storage", "96 bits", "12 bytes", "64 virtuals", "one cache line", "consumers"]
 
 [[tenet]]
 id = "an_external_fire_is_a_relaxed_atomic_store_and_an_internal_fire_is_non_atomic"
+subject = "stores"
 what = "A fire from outside is an atomic store with relaxed ordering, for signalling across threads, and an internal fire is non-atomic."
 mechanism = "`fire_external`: atomic store relaxed; internal fire: non-atomic."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:716-717"
@@ -84,11 +85,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:716-717"]
-subject = "stores"
 keywords = ["fire_external", "atomic store", "relaxed", "cross-thread signalling", "internal fire", "non-atomic"]
 
 [[tenet]]
 id = "a_resource_takes_its_initial_value_from_the_consumer_through_the_builder"
+subject = "stores"
 what = "The consumer provides a resource's initial value as the primary API, and a convenience form exists for value types that implement default."
 mechanism = "`.resource::<T>(value)` is primary; `.resource_default::<T>()` where `T: Default`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2178-2181"
@@ -103,11 +104,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2178-2181"]
-subject = "stores"
 keywords = ["resource initialization", "resource", "resource_default", "Default", "initial value", "builder"]
 
 [[tenet]]
 id = "resource_data_sits_behind_pointer_indirection_to_external_slab_storage_and_never_inline_in_the_context"
+subject = "stores"
 what = "A resource's fields sit behind pointer indirection to external slab storage and not inline in the context struct, because writing inline data through a shared reference is undefined behaviour."
 because = "LLVM adds noalias to a shared reference, and inline writes violate it."
 mechanism = "Three field types: `Field<T>` where T: ColumnValue (at most 16 bytes, a scalar), `Seq<T, const N: usize>` (const-sized array, separate arena), `Map<K, V, const N: usize>` (const-sized map, separate arena)."
@@ -127,12 +128,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1684-1691", "later: mock/research/202606210600_resource-storage-model-canonical-addendum.md:70-79, none"]
-subject = "stores"
 keywords = ["resource storage", "pointer indirection", "slab storage", "inline write", "noalias", "Field", "Seq", "Map"]
-cites = ["a_resource_is_scalars_and_const_sized_collections_only"]
+related = ["tenet::a_resource_is_scalars_and_const_sized_collections_only"]
 
 [[tenet]]
 id = "the_resource_handle_given_to_consumers_stays_a_reference_while_the_internals_use_raw_pointers_through_a_stack_local_cache"
+subject = "stores"
 what = "The consumer API for resources stays the same: a shared reference for reading and an exclusive reference for writing a resource. The internal implementation instead goes through raw pointers via a stack-local cache and not through direct references to the canonical storage."
 mechanism = "`ctx.resource::<T>() -> &T` and `ctx.resource_mut::<T>() -> &mut T` remain the consumer API (T5)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1769-1772"
@@ -147,11 +148,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1769-1772"]
-subject = "stores"
 keywords = ["resource API", "ctx.resource", "resource_mut", "raw pointers", "stack-local cache", "canonical storage", "consumer API"]
 
 [[tenet]]
 id = "a_single_column_typed_accessor_is_eliminated_because_the_consumer_reads_storage_directly"
+subject = "stores"
 what = "A single-column typed accessor is eliminated, since the consumer already owns the column storage and accesses columns directly. The accessor shape for collections inside a resource, which span several columns and are backed by the arena, will follow from the resource collection storage layout design once that is done."
 because = "The accessor cannot be designed before the storage layout exists."
 mechanism = "ColumnHandle eliminated."
@@ -170,11 +171,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2351-2357"]
-subject = "stores"
 keywords = ["ColumnHandle", "result extraction", "column accessor", "resource collections", "Seq", "Map", "arena", "storage layout"]
 
 [[tenet]]
 id = "an_accumulator_is_a_column_written_by_append_and_a_fourth_store_marker"
+subject = "stores"
 what = "The design round that landed accumulators reports the maintainer's model as two kinds of column: an input column, whose buffer is sized to a build-time record count, populated before the frame and read and written by index, and an accumulator column, which is written by append during the frame, growing from zero toward a capacity, and whose populated prefix a later drain reads into persistence. It says the maintainer chose this two-kind surface deliberately and not a single global record count. The round represents the accumulator as a distinct store marker beside the three existing ones, the fourth on the same pattern, because making it a role or mode of the column would put indexed random write and ordered append on one marker."
 mechanism = "`Accum<T>`, sibling of `Resource<T>` / `Column<T>` / `Virtual<T>`, with its own binding node, selector, projection and accessor. The alternative, a mode of `Column<T>`, makes the `Contains<...>` membership proof ambiguous (read vs write vs append) and forces a runtime flag or a forbidden specialization."
 source = "mock/design_rounds/202606041800/202606041800_topic.accumulator-columns.md:8-8, mock/design_rounds/202606041800/202606041800_topic.accumulator-columns.md:16-16"
@@ -187,12 +188,12 @@ The column-data-plane round landed INPUT columns: buffers sized to a build-time 
 origin = "proposed"
 written_by = "design round 202606041800 (accumulator columns), its topic file, an agent-written round that reports the maintainer's model"
 standing = "provisional"
-subject = "stores"
 keywords = ["accumulator", "Accum", "append", "input column", "fourth store", "two-kind", "record count", "capacity", "drain"]
 related = ["tenet::there_are_three_store_types_and_one_scheduling_mechanism", "question::what_an_append_past_the_capacity_of_an_accumulator_does"]
 
 [[tenet]]
 id = "the_standalone_spec_lists_four_store_shapes_with_the_accumulator_among_them"
+subject = "stores"
 what = "The standalone spec says state lives in one of four store shapes and there is nothing else: a singleton store of one value, a collection store of N records in columnar layout accessed through morsel windows, an accumulator, which is an append-only output store a unit pushes records into with a reserved capacity fixed at build, and a fired marker carrying no data."
 mechanism = "`Resource<T>`, `Column<T>`, `Accum<T>`, `Virtual<V>`."
 source = "mock/research/pre_seed/202606111800_canonical-spec-standalone.md:162-173"
@@ -214,12 +215,12 @@ entire mutable and immutable state reduces to these.
 origin = "proposed"
 written_by = "the standalone spec 202606111800, a reading aid with no design authority of its own by addendum A2"
 standing = "provisional"
-subject = "stores"
 keywords = ["four store shapes", "Accum", "accumulator", "append-only", "reserved capacity", "Resource", "Column", "Virtual"]
 related = ["tenet::there_are_three_store_types_and_one_scheduling_mechanism"]
 
 [[tenet]]
 id = "an_accumulator_append_saturates_at_the_reserved_capacity_which_equals_the_record_count_at_build"
+subject = "stores"
 what = "Accumulator appends saturate at the reserved capacity, as a soundness guard, and the capacity equals the record count at build. Fixtures and consumers size with headroom, and a silently dropped append means checking the live count against the capacity first."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:158-160"
 provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#constraint-notes-elevated-to-canon"]
@@ -231,12 +232,12 @@ quote = '''
 origin = "proposed"
 written_by = "addendum A1 (locked by the maintainer 2026-06-11), its constraint notes elevated to canon"
 standing = "provisional"
-subject = "stores"
 keywords = ["accumulator", "saturate", "reserved capacity", "record count at build", "soundness guard", "dropped append"]
 related = ["question::what_an_append_past_the_capacity_of_an_accumulator_does"]
 
 [[tenet]]
 id = "the_scalar_members_of_a_resource_are_snapshotted_to_a_stack_local_before_the_morsel_loop"
+subject = "stores"
 what = "The small scalar members of a resource are snapshotted to a stack local before the morsel loop. On the bench machine this is neutral in wall-clock time, since the reload is cheap in L1, and it is free insurance on any microarchitecture where it is not. The shipped drain blob lacks this snapshot, and that absence is the drift, not the blob itself."
 mechanism = "`Field` members; spec lines 1714-1724; wall-clock-neutral on M1; V0 reloads, V1 to V5 hoist; the shipped `DrainStores` blob lacks the snapshot."
 source = "mock/research/202606210600_resource-storage-model-canonical-addendum.md:26-30"
@@ -253,11 +254,11 @@ written_by = "the resource storage addendum (2026-06-19, revised 2026-07-02), be
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["ruled: mock/research/202606210600_resource-storage-model-canonical-addendum.md:26-30", "ruled: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:29-36", "ruled: mock/research/202606210600_storage-bench-findings.md:366-368"]
-subject = "stores"
 keywords = ["scalar snapshot", "stack local", "morsel loop", "Field", "DrainStores", "resource", "blob"]
 
 [[tenet]]
 id = "a_resource_value_is_addressed_through_an_erased_static_shape_so_it_can_cross_a_plugin_boundary"
+subject = "stores"
 what = "The maintainer picked the hybrid: the value bytes of a resource stay one contiguous record, and they are addressed through an erased static-shape descriptor and not through a monomorphised concrete-type pointer, so that a resource value can cross a plugin boundary and interoperate with builtin resources near-natively, as in loimu's model. The bench measured this addressing at parity with the native monomorphised one. He chose it citing future-proofing and parity. Every resource uses the erased addressing, so any resource is plugin-capable without a design change."
 mechanism = "Backcast on access; cdylib/wasm plugin boundary; v4/v1 within +-1.7% across both runs, ties on B/C/E; global-capable, 2026-07-02."
 source = "mock/research/202606210600_resource-storage-model-canonical-addendum.md:46-56"
@@ -277,11 +278,11 @@ quote = '''
 '''
 origin = "stated"
 standing = "provisional"
-subject = "stores"
 keywords = ["erased addressing", "static shape", "hybrid", "plugin boundary", "cdylib", "wasm", "global-capable", "resource value", "loimu"]
 
 [[tenet]]
 id = "an_expert_memo_says_hilavitkutin_s_columns_are_double_buffered_for_the_pass_boundary"
+subject = "stores"
 what = "An expert memo of the storage model round says that hilavitkutin's columns are double-buffered, frozen and live, for the pass boundary, and that hilavitkutin's design has no temporal prediction and no triple buffering, because a pipeline execution engine computes column values and does not extrapolate them between passes. The memo names no source for the sentence."
 source = "mock/research/202606210600_expert-loimu-heritage-storage-model.md:289-293"
 provenance = ["mock::research::202606210600_expert-loimu-heritage-storage-model::#divergence-3-temporal-system-vs-double-buffering"]
@@ -295,12 +296,12 @@ them.
 origin = "proposed"
 written_by = "the loimu heritage expert memo of round 202606210600, dated 2026-06-19, an agent persona's deliverable"
 standing = "provisional"
-subject = "stores"
 keywords = ["double-buffered", "frozen", "live", "pass boundary", "triple buffering", "temporal prediction", "loimu heritage"]
 related = ["question::whether_hilavitkutin_s_own_columns_are_double_buffered", "question::how_a_unit_reads_the_value_a_store_held_at_frame_start", "tenet::loimu_keeps_its_seven_access_modes_and_maps_them_to_read_and_write_at_the_boundary"]
 
 [[tenet]]
 id = "a_resource_is_a_handle_and_not_an_inline_value_store_which_is_the_corrected_reading_of_r5"
+subject = "stores"
 what = "A resource is a handle and not an inline-value store. The handle model is the corrected reading of the spec's resource section: resources sit behind pointer indirection to external slab storage and not inline in the context struct, and resource storage and column storage have separate pointer provenance, with the stack-local hoist as the noalias mechanism."
 mechanism = "`Resource<T>` as a handle. Spec 1689: \"All behind pointer indirection to external slab storage. NOT inline in the context struct.\"; spec 1695-1704: separate pointer provenance, resource data in a stack-local region LLVM can prove non-aliasing with column pointers; spec 537/1684: resources consist of three field types Field/Seq/Map. Oracle: consolidation spec R5, lines 535-566 and 1682-1710."
 source = "mock/research/202606210600_resource-storage-model-canonical-addendum.md:4-6, mock/research/202606210600_resource-storage-model-canonical-addendum.md:12-12, mock/research/202606210600_resource-storage-model-canonical-addendum.md:14-16, mock/research/202606210600_resource-storage-model-canonical-addendum.md:58-68"
@@ -333,12 +334,12 @@ written_by = "canonical addendum on the resource storage model, 2026-06-19, revi
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding-elsewhere: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1689-1722"]
-subject = "stores"
 keywords = ["Resource handle", "R5", "reading correction", "pointer indirection", "external slab storage", "separate provenance", "stack-local hoist", "Field Seq Map"]
-cites = ["a_resource_is_scalars_and_const_sized_collections_only"]
+related = ["tenet::a_resource_is_scalars_and_const_sized_collections_only"]
 
 [[tenet]]
 id = "the_value_of_a_resource_is_one_contiguous_record_blob_and_the_per_member_column_decomposition_was_refuted_by_bench"
+subject = "stores"
 what = "The value of a resource lives as a per-resource contiguous blob of one record, bumped from the arena, and is not decomposed into per-member columns. The six-variant bench decided this: the decomposed layout loses intra-resource locality and crosses the column-count cap on realistic resource sets, and the shape-bound shared layout carries a cross-core false-sharing penalty and a resize hazard, and neither buys a hot-loop win. The decompose trait remains the per-member seam for the size fold and for the collection pointer and length, but the value bytes stay contiguous."
 mechanism = "V2 (each member its own column) loses intra-resource locality, up to 3.1x at M=64, and crosses the `Dim<256>` column-count cap; V3 (shape-bound shared layout) carries a 3.4x cross-core false-sharing penalty plus a resize-invalidates-all-sharers hazard; V2 and V3 lose axes B/C/E for no hot-loop win. `Decompose` in `hilavitkutin-api/src/storage.rs`. Findings: `mock/research/202606210600_storage-bench-findings.md`; round resolution `mock/design_rounds/202606210600_topic.bench-run2-resolution.md`."
 source = "mock/research/202606210600_resource-storage-model-canonical-addendum.md:7-11, mock/research/202606210600_resource-storage-model-canonical-addendum.md:18-25"
@@ -364,13 +365,13 @@ written_by = "canonical addendum on the resource storage model, 2026-06-19, revi
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["ruled: mock/research/202606210600_resource-storage-model-canonical-addendum.md:18-25", "ruled: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:29-36", "ruled: mock/research/202606210600_storage-bench-findings.md:361-365"]
-subject = "stores"
 keywords = ["one-record blob", "Decompose", "V2 decomposed", "V3 shape-bound", "false sharing", "Dim<256>", "six-variant bench", "intra-resource locality"]
-rules_out = ["decomposing a resource value into per-member columns", "a shape-bound shared column layout for resource members"]
-cites = ["a_resource_is_a_handle_and_not_an_inline_value_store_which_is_the_corrected_reading_of_r5"]
+rejects = ["decomposing a resource value into per-member columns", "a shape-bound shared column layout for resource members"]
+related = ["tenet::a_resource_is_a_handle_and_not_an_inline_value_store_which_is_the_corrected_reading_of_r5"]
 
 [[tenet]]
 id = "the_resource_handle_store_holds_pointers_to_the_value_blob_and_the_collection_columns_with_provenance_distinct_from_the_value_columns"
+subject = "stores"
 what = "The resource handle holds the pointers to its value blob and to its collection columns, in a store keyed by resource id, with pointer provenance distinct from the value columns. This is what the noalias property rests on."
 source = "mock/research/202606210600_resource-storage-model-canonical-addendum.md:31-33"
 provenance = ["mock::research::202606210600_resource-storage-model-canonical-addendum::#the-model-stated-outright-bench-confirmed"]
@@ -383,12 +384,12 @@ origin = "proposed"
 written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "stores"
 keywords = ["handle store", "resource id", "pointer provenance", "value blob", "collection columns", "noalias"]
-cites = ["resource_and_column_pointers_must_have_separate_provenance_or_llvm_reloads_resources_every_iteration"]
+related = ["tenet::resource_and_column_pointers_must_have_separate_provenance_or_llvm_reloads_resources_every_iteration"]
 
 [[tenet]]
 id = "a_seq_or_map_value_is_a_pointer_and_a_length_and_its_elements_are_live_streamed_from_their_column_and_never_copied"
+subject = "stores"
 what = "A sequence or map value is a pointer to the first element plus a length counted in strides, with elements stored consecutively. The snapshot copies only the pointer and length and never the elements, so the collection is streamed live from its column inside the loop. The bench decided this on axis D: live-streaming beats snapshot-copying by about 2.5 times once the collection exceeds cache, with parity below about 4 MiB."
 mechanism = "`Seq`/`Map` = pointer-to-first + length (count of strides); axis D: live-stream beats snapshot-copy by ~2.5x above cache (64 MiB), parity below ~4 MiB, confirmed in both runs."
 source = "mock/research/202606210600_resource-storage-model-canonical-addendum.md:34-38"
@@ -405,13 +406,13 @@ written_by = "canonical addendum on the resource storage model, 2026-06-19, revi
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["ruled: mock/research/202606210600_resource-storage-model-canonical-addendum.md:34-38", "ruled: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:29-36", "ruled: mock/research/202606210600_storage-bench-findings.md:369-371"]
-subject = "stores"
 keywords = ["Seq", "Map", "live-streamed", "snapshot copy", "pointer and length", "axis D", "collection members", "stride"]
-rules_out = ["copying the elements of a collection into the snapshot"]
-cites = ["the_value_of_a_resource_is_one_contiguous_record_blob_and_the_per_member_column_decomposition_was_refuted_by_bench"]
+rejects = ["copying the elements of a collection into the snapshot"]
+related = ["tenet::the_value_of_a_resource_is_one_contiguous_record_blob_and_the_per_member_column_decomposition_was_refuted_by_bench"]
 
 [[tenet]]
 id = "the_spec_s_three_field_types_are_value_composition_read_by_the_decompose_seam_and_not_a_column_per_member"
+subject = "stores"
 what = "The spec's statement that a resource consists of three field types is value-composition, which is what the decompose seam reads for sizing, and is not a statement that each member is its own shape-bound column. Shape-bound sharing appears nowhere in the spec because it is not the design, and the bench confirmed it loses. The original version of the addendum asserted the shape-bound-columns reading, and the bench refuted it."
 mechanism = "V3: 3.4x false-sharing + resize hazard; V2: locality + column-count."
 source = "mock/research/202606210600_resource-storage-model-canonical-addendum.md:70-77"
@@ -431,13 +432,13 @@ written_by = "canonical addendum on the resource storage model, 2026-06-19, revi
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["ruled: mock/research/202606210600_resource-storage-model-canonical-addendum.md:70-77", "ruled: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:29-36", "ruled: mock/research/202606210600_storage-bench-findings.md:361-365"]
-subject = "stores"
 keywords = ["retraction", "shape-bound columns", "three field types", "value composition", "Decompose seam", "R5 reading", "bench refuted"]
-rules_out = ["the shape-bound-columns reading of the spec's resource section"]
-cites = ["the_value_of_a_resource_is_one_contiguous_record_blob_and_the_per_member_column_decomposition_was_refuted_by_bench"]
+rejects = ["the shape-bound-columns reading of the spec's resource section"]
+related = ["tenet::the_value_of_a_resource_is_one_contiguous_record_blob_and_the_per_member_column_decomposition_was_refuted_by_bench"]
 
 [[tenet]]
 id = "the_spec_s_separate_arena_for_seq_and_map_attaches_to_the_handle_store_and_not_to_a_resource_private_value_arena"
+subject = "stores"
 what = "The one genuine clarification of the spec's resource section that stands is that the separate arena for sequences and maps attaches to the handle store, and not to a resource-private value arena. The value is a one-record blob, and only the handle store has separate provenance."
 mechanism = "Spec line 566, \"separate arena for Seq/Map\"."
 source = "mock/research/202606210600_resource-storage-model-canonical-addendum.md:77-79"
@@ -451,13 +452,13 @@ origin = "proposed"
 written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "stores"
 keywords = ["separate arena", "Seq", "Map", "handle store", "one-record blob", "spec 566", "provenance"]
-rules_out = ["a resource-private value arena for collection members"]
-cites = ["the_resource_handle_store_holds_pointers_to_the_value_blob_and_the_collection_columns_with_provenance_distinct_from_the_value_columns"]
+rejects = ["a resource-private value arena for collection members"]
+related = ["tenet::the_resource_handle_store_holds_pointers_to_the_value_blob_and_the_collection_columns_with_provenance_distinct_from_the_value_columns"]
 
 [[tenet]]
 id = "as_of_2026_07_02_the_drain_stores_blob_is_the_correct_layout_and_the_drift_is_the_missing_snapshot_and_live_stream_path"
+subject = "stores"
 what = "As of 2026-07-02, the storage addendum records that the shipped drain stores reserve a one-record blob per resource behind a single resource pointer, and that the bench confirms the blob as the correct layout. The drift is that the drain stores read the value live through the pointer every iteration, with no stack snapshot of the scalar members and no live-stream path for collection members. The fix is additive, adding the snapshot and the live-stream, and not a decomposition rewrite."
 mechanism = "`DrainStores` at `mock/crates/hilavitkutin/src/resource/bindings.rs:22`; `ResourcePtr<T>`."
 source = "mock/research/202606210600_resource-storage-model-canonical-addendum.md:81-88"
@@ -476,12 +477,12 @@ origin = "proposed"
 written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "stores"
 keywords = ["DrainStores", "ResourcePtr", "drift", "one-record blob", "scalar snapshot", "live-stream", "additive fix", "bindings.rs"]
-cites = ["the_scalar_members_of_a_resource_are_snapshotted_to_a_stack_local_before_the_morsel_loop", "a_seq_or_map_value_is_a_pointer_and_a_length_and_its_elements_are_live_streamed_from_their_column_and_never_copied"]
+related = ["tenet::the_scalar_members_of_a_resource_are_snapshotted_to_a_stack_local_before_the_morsel_loop", "tenet::a_seq_or_map_value_is_a_pointer_and_a_length_and_its_elements_are_live_streamed_from_their_column_and_never_copied"]
 
 [[tenet]]
 id = "as_of_2026_07_19_the_negative_impl_ships_with_a_compile_fail_doctest_for_e0751"
+subject = "stores"
 what = "As of 2026-07-19, the ratification evidence memo records that the crate ships the negative implementation that no plan-affecting type is replaceable, under the negative-impls feature in the watch tier, with an executable compile-fail doctest that expects E0751."
 mechanism = "`impl<T: PlanAffecting> !Replaceable for T` under `negative_impls` (WATCH tier); `compile_fail,E0751` doctest (S4)."
 source = "mock/research/202607201100_swap-semantics-ratification-evidence.md:19-22"
@@ -496,6 +497,5 @@ origin = "proposed"
 written_by = "memo on swap semantics, implementation and bench evidence for ratification, 2026-07-19, round 202607200500 (#697); the text does not name its author"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "stores"
 keywords = ["negative_impls", "PlanAffecting", "Replaceable", "E0751", "compile_fail doctest", "WATCH tier", "S4", "shipped"]
-cites = ["a_plan_affecting_type_can_never_take_the_replace_value_path_because_of_a_negative_impl_wall"]
+related = ["tenet::a_plan_affecting_type_can_never_take_the_replace_value_path_because_of_a_negative_impl_wall"]

@@ -2,6 +2,7 @@
 
 [[tenet]]
 id = "the_three_hilavitkutin_crates_are_designed_for_extraction_to_a_separate_repository"
+subject = "future"
 what = "The three hilavitkutin crates are designed so that they can be extracted to a separate repository."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:63-63"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#crate-structure"]
@@ -12,11 +13,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:63-63"]
-subject = "future"
 keywords = ["extraction", "separate repository", "three crates", "designed for"]
 
 [[tenet]]
 id = "arvo_lives_in_the_hilavitkutin_workspace_and_is_extracted_to_its_own_repository_later"
+subject = "future"
 what = "Arvo lives in the hilavitkutin workspace and is extracted to its own repository later, on the same lifecycle."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:139-140"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
@@ -28,12 +29,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:139-140"]
-subject = "future"
 keywords = ["arvo", "extracted", "own repo", "lifecycle", "workspace", "later"]
-cites = ["arvo_is_a_standalone_no_std_primitive_family_shared_across_projects"]
+related = ["tenet::arvo_is_a_standalone_no_std_primitive_family_shared_across_projects"]
 
 [[tenet]]
 id = "signal_ordered_execution_is_a_theory_and_is_not_bench_validated"
+subject = "future"
 what = "Signal-ordered execution, which reorders records by signal state for branch-free loops, is theoretical and has not been validated by a benchmark."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:722-723"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#10-virtual-flag-system"]
@@ -45,11 +46,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:722-723"]
-subject = "future"
 keywords = ["signal-ordered execution", "record reordering", "branch-free loops", "theoretical", "not bench-validated"]
 
 [[tenet]]
 id = "sparse_matrix_vector_multiplication_belongs_to_the_sparse_crate_family_and_is_deferred"
+subject = "future"
 what = "Sparse matrix-vector multiplication belongs to the same family as the sparse crate and is deferred."
 mechanism = "SpMV."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:196-196, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:203-203"
@@ -63,11 +64,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:196-196", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:203-203"]
-subject = "future"
 keywords = ["SpMV", "sparse matrix-vector multiply", "deferred", "arvo-sparse"]
 
 [[tenet]]
 id = "the_detailed_design_of_each_arvo_crate_is_deferred_to_its_own_design_round"
+subject = "future"
 what = "Arvo is expanded from numerics only to include the mathematical primitives used across all its consumers, and the detailed design of each arvo crate is deferred to its own design round."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:132-134"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
@@ -80,11 +81,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:132-134"]
-subject = "future"
 keywords = ["arvo", "expanded", "mathematical primitives", "deferred", "own design round", "numerics-only"]
 
 [[tenet]]
 id = "the_sparse_matrix_techniques_and_morton_hilbert_dispatch_ordering_are_deferred_and_not_day_one"
+subject = "future"
 what = "Four algorithms are deferred and not part of day one: sparse matrix-vector multiply patterns, fill-reducing ordering and common subexpression detection in arvo-sparse, and Morton or Hilbert dispatch ordering in arvo-comb."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1433-1437"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
@@ -99,11 +100,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1433-1437"]
-subject = "future"
 keywords = ["deferred algorithms", "SpMV", "fill-reducing ordering", "CSE detection", "Morton", "Hilbert", "not day-one", "T3 #71-74"]
 
 [[tenet]]
 id = "the_accessor_for_resource_collections_follows_from_the_resource_collection_storage_layout_design"
+subject = "future"
 what = "The typed accessor through which consumers read resource collections after the pipeline runs is designed after, and follows from, the storage layout design for resource collections."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2470-2473"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#known-open-items-for-future-design-rounds"]
@@ -117,11 +118,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2470-2473"]
-subject = "future"
 keywords = ["resource collection accessor", "Seq", "Map", "storage layout", "future design round", "post-pipeline reads"]
 
 [[tenet]]
 id = "each_arvo_sub_crate_gets_its_own_design_round_for_api_surface_const_generic_sizing_and_llvm_optimisation"
+subject = "future"
 what = "Each arvo sub-crate needs its own design round for its API surface, its const-generic sizing and its LLVM optimisation, on top of the crate split and dependency flow that the first domain defines."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2475-2478"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#known-open-items-for-future-design-rounds"]
@@ -135,12 +136,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2475-2478"]
-subject = "future"
 keywords = ["arvo sub-crates", "design round", "API surface", "const-generic sizing", "LLVM optimisation", "arvo-bitmask", "arvo-sparse", "arvo-graph"]
-cites = ["the_detailed_design_of_each_arvo_crate_is_deferred_to_its_own_design_round"]
+related = ["tenet::the_detailed_design_of_each_arvo_crate_is_deferred_to_its_own_design_round"]
 
 [[tenet]]
 id = "gate_2_closes_with_cleanup_and_a_perf_gate_rerun_and_the_remainder_is_one_completion_arc_charted_to_the_full_canonical_design"
+subject = "future"
 what = "GATE-2 closes with its cleanup and a re-run of the perf gate. Everything remaining is one completion arc charted to the full canonical design, without further gate ceremony, and the chart-the-path routine produces the roadmap of the arc."
 mechanism = "GATE-2 is #662; remainder named as E5, E6, E8 and the unslotted canon features."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:74-77"
@@ -155,11 +156,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["ruled: mock/research/202606111400_canonical-design-addendum-a1.md:4-4", "ruled: mock/research/202606111400_canonical-design-addendum-a1.md:47-47", "ruled: mock/research/202606111400_canonical-design-addendum-a1.md:72-77"]
-subject = "future"
 keywords = ["GATE-2", "completion arc", "chart-the-path", "roadmap", "perf gate", "E5", "E6", "E8", "A1-3"]
 
 [[tenet]]
 id = "the_completion_arc_charts_micro_morsels_branch_dispatch_shape_shared_read_strategy_bitpacking_and_microkernels"
+subject = "future"
 what = "The perf-substance group is charted into the completion arc: micro-morsels, the branch dispatch shape, the shared-read-column strategy, the sub-byte bitpacking stride, and intrinsics with microkernels."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:79-82"
 provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#a1-3-gate-2-closes-the-remainder-is-one-completion-arc"]
@@ -173,12 +174,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["ruled: mock/research/202606111400_canonical-design-addendum-a1.md:47-47", "ruled: mock/research/202606111400_canonical-design-addendum-a1.md:72-82"]
-subject = "future"
 keywords = ["micro-morsels", "branch dispatch", "shared-read column", "bitpacking stride", "intrinsics", "microkernels", "perf substance"]
-cites = ["gate_2_closes_with_cleanup_and_a_perf_gate_rerun_and_the_remainder_is_one_completion_arc_charted_to_the_full_canonical_design"]
+related = ["tenet::gate_2_closes_with_cleanup_and_a_perf_gate_rerun_and_the_remainder_is_one_completion_arc_charted_to_the_full_canonical_design"]
 
 [[tenet]]
 id = "the_completion_arc_charts_the_three_adapt_reorganisation_triggers_predictive_parking_and_stolen_idle_counters"
+subject = "future"
 what = "The adapt-completion group is charted into the completion arc: the three reorganisation triggers (morsel recompute, per-phase config re-select, and record-count plan recompute including the replace-resource call writing the value), predictive parking, and stolen and idle counters."
 mechanism = "Task #345 for `replace_resource` writing the value."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:79-79, mock/research/202606111400_canonical-design-addendum-a1.md:83-86"
@@ -195,12 +196,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["ruled: mock/research/202606111400_canonical-design-addendum-a1.md:47-47", "ruled: mock/research/202606111400_canonical-design-addendum-a1.md:72-86"]
-subject = "future"
 keywords = ["adapt completion", "reorganisation triggers", "morsel recompute", "per-phase re-select", "predictive parking", "stolen counters", "#345"]
-cites = ["gate_2_closes_with_cleanup_and_a_perf_gate_rerun_and_the_remainder_is_one_completion_arc_charted_to_the_full_canonical_design"]
+related = ["tenet::gate_2_closes_with_cleanup_and_a_perf_gate_rerun_and_the_remainder_is_one_completion_arc_charted_to_the_full_canonical_design"]
 
 [[tenet]]
 id = "the_completion_arc_charts_facade_plugin_host_integration_kits_and_providers_polish_and_persistence_wiring"
+subject = "future"
 what = "The ecosystem-bridges group is charted into the completion arc: facade and plugin-host engine integration, polish of kits and providers, and wiring of the persistence spine."
 mechanism = "Persistence spine: R2 evict/inject."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:79-79, mock/research/202606111400_canonical-design-addendum-a1.md:87-88"
@@ -215,12 +216,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["ruled: mock/research/202606111400_canonical-design-addendum-a1.md:47-47", "ruled: mock/research/202606111400_canonical-design-addendum-a1.md:72-88"]
-subject = "future"
 keywords = ["ecosystem bridges", "facade", "plugin-host", "kits", "providers", "persistence spine", "evict inject", "R2"]
-cites = ["gate_2_closes_with_cleanup_and_a_perf_gate_rerun_and_the_remainder_is_one_completion_arc_charted_to_the_full_canonical_design"]
+related = ["tenet::gate_2_closes_with_cleanup_and_a_perf_gate_rerun_and_the_remainder_is_one_completion_arc_charted_to_the_full_canonical_design"]
 
 [[tenet]]
 id = "the_completion_arc_charts_the_pipeline_result_status_surface_the_stealing_executor_and_schedule_introspection"
+subject = "future"
 what = "The ops-surface group is charted into the completion arc: a pipeline result status surface of completed, failed and poisoned with dependent poisoning, the work-stealing executor extension point, and schedule introspection."
 mechanism = "`PipelineResult` (Completed/Failed/Poisoned); `Executor` extension point; schedule introspection #183."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:79-79, mock/research/202606111400_canonical-design-addendum-a1.md:89-91"
@@ -236,12 +237,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["ruled: mock/research/202606111400_canonical-design-addendum-a1.md:47-47", "ruled: mock/research/202606111400_canonical-design-addendum-a1.md:72-91"]
-subject = "future"
 keywords = ["PipelineResult", "Poisoned", "dependent poisoning", "work-stealing", "Executor", "schedule introspection", "#183", "ops surface"]
-cites = ["gate_2_closes_with_cleanup_and_a_perf_gate_rerun_and_the_remainder_is_one_completion_arc_charted_to_the_full_canonical_design"]
+related = ["tenet::gate_2_closes_with_cleanup_and_a_perf_gate_rerun_and_the_remainder_is_one_completion_arc_charted_to_the_full_canonical_design"]
 
 [[tenet]]
 id = "later_modules_of_the_providers_crate_add_column_storage_clock_and_memory_defaults_per_consumer_demand"
+subject = "future"
 what = "Later modules of the providers crate are meant to add default column storage, clock and memory providers, each when a consumer demands it."
 mechanism = "Future modules add ColumnStorage / Clock / Memory defaults."
 source = "mock/DESIGN.md.tmpl:24-24"
@@ -252,11 +253,11 @@ quote = '''
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
 standing = "provisional"
-subject = "future"
 keywords = ["hilavitkutin-providers", "ColumnStorage", "Clock", "Memory", "defaults", "per consumer demand", "future modules"]
 
 [[tenet]]
 id = "plan_recompute_is_sequential_and_single_threaded_in_the_first_version_and_parallelising_it_waits_for_pipelines_of_256_units_or_more"
+subject = "future"
 what = "In the first version the plan recompute runs sequentially on one thread. Making it parallel is deferred until consumers ship pipelines of 256 units or more."
 mechanism = "Sequential single-threaded recompute in v1; parallelisation deferred until consumers ship 256+ WU pipelines."
 source = "mock/DESIGN.md.tmpl:100-100"
@@ -267,11 +268,11 @@ Per-`PlanAffecting`-resource dirty bit array. Plan cache lives with Scheduler fo
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
 standing = "provisional"
-subject = "future"
 keywords = ["plan recompute", "sequential", "single-threaded", "v1", "parallelisation deferred", "256 units"]
 
 [[tenet]]
 id = "work_stealing_and_calibration_of_the_spin_budget_at_pool_build_are_backlog_and_the_spin_budget_is_fixed_at_128_in_the_first_version"
+subject = "future"
 what = "Work stealing and a calibration micro-bench for the spin budget when the thread pool is built are deferred to the backlog. The spin budget is fixed in the first version."
 mechanism = "Spin-budget calibration micro-bench at `ThreadPool::build()` BACKLOG; fixed 128 in v1."
 source = "mock/DESIGN.md.tmpl:78-78"
@@ -283,12 +284,12 @@ origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "future"
 keywords = ["work-stealing", "backlog", "spin budget", "ThreadPool::build", "calibration micro-bench", "fixed 128", "v1"]
-cites = ["work_stealing_is_not_the_default_and_the_consumer_may_provide_a_stealing_executor"]
+related = ["tenet::work_stealing_is_not_the_default_and_the_consumer_may_provide_a_stealing_executor"]
 
 [[tenet]]
 id = "hot_reload_with_ref_counted_unload_is_not_supported_in_the_first_version_which_is_load_once_and_drop_once"
+subject = "future"
 what = "Hot reload with reference-counted unload is not supported in the first version, which is load once and drop once, and it is recorded in the backlog."
 source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:179-179"
 provenance = ["mock::crates::hilavitkutin-extensions::DESIGN::#non-scope"]
@@ -299,11 +300,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "future"
 keywords = ["hot-reload", "ref-counted unload", "load-once", "drop-once", "BACKLOG", "v1", "extensions"]
 
 [[tenet]]
 id = "async_loading_wrappers_telemetry_and_signature_verification_are_not_in_the_first_version_of_the_linking_crate"
+subject = "future"
 what = "The first version of the linking crate provides no async loading wrappers, no telemetry and no signature verification, and all three are backlog items. Follow-up design rounds may extend the crate, with explicit unload reference counting, telemetry and additional platform targets named as examples, but must preserve the first-version contract unless an explicit deprecation is scheduled."
 source = "mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:104-104, mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:115-117"
 provenance = ["mock::crates::hilavitkutin-linking::DESIGN::#non-scope"]
@@ -318,11 +319,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-linking, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "future"
 keywords = ["async loading", "telemetry", "signature verification", "BACKLOG", "unload ref-counting", "additional platforms", "v1 contract", "follow-up rounds"]
 
 [[tenet]]
 id = "a_declarative_app_macro_folding_the_builder_calls_is_parked_and_likely_never_because_the_raw_builder_is_ergonomic_enough_at_ten_registrations"
+subject = "future"
 what = "A declarative macro that folds the unit, resource, column and kit registration calls into a single block was considered and parked as a P2 task, likely never. The raw builder pattern is ergonomically sufficient at the call counts that the named consumers reach, around ten registrations per app, and the macro adds complexity without a measurable readability win at that scale. If a downstream consumer surfaces a real ergonomics complaint, the task is revisited."
 mechanism = "`app!` / `define_app!` macro folding `.add_unit::<WU>()` / `.add_resource()` / `.add_column()` / `.add_kit()`; task #295 (P2, likely never); Bevy cited as proof the raw builder suffices; consumers named: viola, vehje."
 source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:249-262"
@@ -348,12 +349,12 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-kit, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "future"
 keywords = ["app! macro", "define_app!", "task #295", "deferred ergonomics", "raw builder", "Bevy", "viola", "vehje", "parked"]
-rules_out = ["a declarative app! / define_app! macro"]
+rejects = ["a declarative app! / define_app! macro"]
 
 [[tenet]]
 id = "the_memory_arena_is_not_sync_by_default_and_multi_thread_access_needs_a_consumer_mutex_shim_or_a_future_sync_arena"
+subject = "future"
 what = "The memory arena is not shareable between threads by default. The eventual interner resource over it needs either a consumer-supplied mutex shim or a future synchronised arena variant for multi-thread access, which is tracked in the backlog."
 mechanism = "`MemoryArena` is `!Sync`; consumer-supplied Mutex shim or a future SyncArena variant; BACKLOG."
 source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:73-76"
@@ -368,11 +369,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "future"
 keywords = ["MemoryArena", "!Sync", "Mutex shim", "SyncArena", "multi-thread access", "BACKLOG", "StringInterner"]
 
 [[tenet]]
 id = "clock_and_libc_unix_memory_provider_defaults_land_in_their_own_rounds_when_consumer_demand_surfaces"
+subject = "future"
 what = "The providers crate's scope at this stage is the interner and the arena column storage backing. The clock default and the memory provider default for libc and Unix each land in their own round when consumer demand surfaces."
 source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:13-14, mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:185-188"
 provenance = ["mock::crates::hilavitkutin-providers::DESIGN::#hilavitkutin-providers"]
@@ -389,12 +390,12 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "future"
 keywords = ["Clock default", "MemoryProvider default", "libc", "Unix", "consumer demand", "crate scope", "future rounds"]
-cites = ["later_modules_of_the_providers_crate_add_column_storage_clock_and_memory_defaults_per_consumer_demand"]
+related = ["tenet::later_modules_of_the_providers_crate_add_column_storage_clock_and_memory_defaults_per_consumer_demand"]
 
 [[tenet]]
 id = "per_fiber_windowed_dispatch_is_to_be_measured_against_the_shared_window_and_a_loss_goes_to_the_maintainer"
+subject = "future"
 what = "Serving a window per fiber on the flat carrier costs repeated walks, and a sketch found the cost inherent to the mandated mechanism. The roadmap asks for per-fiber windowed dispatch to be measured against the shared-window shape at fiber counts of 1, 2, 4 and 8 on both fiber kinds; if the locality win does not cover the walk cost at realistic fiber counts, that is a finding about the mechanism to bring to the maintainer and not to absorb."
 mechanism = "With F fibers of m morsels each over U trunk units, dispatch does F x m x U runtime `dirty.bit` tests where the shared-window shape did m x U, because `Member::IS` is const per trunk and not per fiber; sketch `202607191200_a4-fibercons-nest-wireability`; roadmap item G2C-M."
 source = "mock/research/202611130850_the-record-read-whole/RECOVERED.md:153-162"
@@ -415,5 +416,4 @@ origin = "proposed"
 written_by = "engine roadmap r6 as on the branch recover/unlanded-rounds-and-benches, passage added 2026-07-19, not on dev; the text does not say whose it is"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "future"
 keywords = ["walk overhead", "per-fiber window", "shared window", "dirty bit tests", "G2C-M", "bench"]

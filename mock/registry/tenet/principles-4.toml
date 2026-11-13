@@ -2,6 +2,7 @@
 
 [[tenet]]
 id = "the_dispatch_determining_traits_are_sealed_with_a_private_supertrait_and_consumers_reach_them_only_through_derive_macros"
+subject = "principles"
 what = "The dispatch-determining traits are all sealed with a private supertrait, and a consumer reaches them only through derive macros, which force exactly one dispatch role per type. Without the seal a consumer could implement two roles on one type at once, leaving the builder input's dispatch ambiguous with an opaque coherence error."
 mechanism = "`RunCfg`, `Resource`, `Column`, `Virtual`, `WorkUnit`, `Kit`, `MemoryProvider`, `ThreadPool`, `Clock` sealed via `mod sealed { pub trait Sealed {} }`; derive macros `#[derive(Resource)]` / `#[derive(RunCfg)]` emit `impl sealed::Sealed`; `BuilderInput::Dispatch` resolution; invariant S2."
 source = "mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:1073-1076, mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:1090-1090"
@@ -18,11 +19,11 @@ origin = "proposed"
 written_by = "design round 202605101036, topic 3 plan algorithm chain, soundness invariant S2, dated 2026-05-10, agent-written; the text does not say whose decision it is"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "principles"
 keywords = ["sealed traits", "Sealed supertrait", "derive macro", "dispatch role", "coherence", "S2", "RunCfg", "BuilderInput::Dispatch"]
 
 [[tenet]]
 id = "coherence_safety_of_the_sealed_dispatch_traits_comes_from_the_proc_macro_only_impl_path_and_not_from_minimal_specialization"
+subject = "principles"
 what = "Coherence safety of the sealed dispatch traits comes from the proc-macro-only implementation path, where a consumer type can implement the seal only through derive macros and the macro rejects a double derive. Minimal specialization resolves overlap within one trait, and does not stop the projections of two distinct traits from being computed on the same type."
 mechanism = "`#[derive(Resource)]` / `#[derive(RunCfg)]` rejecting double-derives; `min_specialization`; a `trybuild` fixture added to the Topic 11 test bar proving double-derive rejection; Topic 3 S2 text amended."
 source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:276-276"
@@ -34,13 +35,13 @@ origin = "proposed"
 written_by = "design round 202605101036, topic 5 adapt subsystem, decision log entry Audit-2 M5 dated 2026-05-10, agent-written; the text does not say whose decision it is"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "principles"
 keywords = ["proc-macro-only impl path", "min_specialization", "double derive", "trybuild", "Sealed", "pair-impl coherence", "M5", "S2"]
-rules_out = ["S2's attribution of pair-impl coherence safety to `min_specialization` is incorrect"]
-cites = ["the_dispatch_determining_traits_are_sealed_with_a_private_supertrait_and_consumers_reach_them_only_through_derive_macros"]
+rejects = ["S2's attribution of pair-impl coherence safety to `min_specialization` is incorrect"]
+related = ["tenet::the_dispatch_determining_traits_are_sealed_with_a_private_supertrait_and_consumers_reach_them_only_through_derive_macros"]
 
 [[tenet]]
 id = "engine_prose_and_source_name_the_dispatch_approaches_descriptively_and_the_bench_paper_letters_are_citations_only"
+subject = "principles"
 what = "Engine-side prose and source name the dispatch approaches by descriptive names only. The A, B, C, D and E letters of polka-dots are used only as bench-paper citations."
 mechanism = "Example: \"MonoTuple beats IndirectPerFiber by ~17% on the polka-dots T6 bench\" in place of \"Approach A beats Approach C\"."
 source = "mock/design_rounds/202605101036/202605101036_topic.dispatch-codegen.md:216-216"
@@ -52,12 +53,12 @@ origin = "proposed"
 written_by = "design round 202605101036, topic 4 dispatch codegen, Axis B vocabulary discipline of the decision log dated 2026-05-10, agent-written; the text does not say whose decision it is"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "principles"
 keywords = ["vocabulary discipline", "descriptive names", "Approach A", "polka-dots letters", "MonoTuple", "IndirectPerFiber", "bench-paper citations"]
-cites = ["the_first_version_ships_a_mono_tuple_baseline_a_trunk_level_and_a_whole_schedule_dispatch_approach_and_the_indirect_per_fiber_one_waits_in_the_backlog"]
+related = ["tenet::the_first_version_ships_a_mono_tuple_baseline_a_trunk_level_and_a_whole_schedule_dispatch_approach_and_the_indirect_per_fiber_one_waits_in_the_backlog"]
 
 [[tenet]]
 id = "fixed_capacity_is_a_non_generic_capacity_trait_implemented_by_a_macro_generated_ladder_of_exact_rungs_binding_literal_length_arrays"
+subject = "principles"
 what = "Fixed capacity is a non-generic capacity trait that carries the array as an associated type, with a macro-generated ladder of rungs, each binding a literal-length array."
 mechanism = "`trait Capacity { type Array<T>; const CAP: Cap; const N: usize; fn empty/as_slice/as_mut_slice }`; rungs `Cap4`, `Cap8`, `Cap16` with `type Array<T> = [T; 4]`."
 source = "mock/research/sketches/202605301145_capacity-as-type/FINDINGS.md:25-27"
@@ -70,11 +71,11 @@ quote = '''
 origin = "proposed"
 written_by = "sketch findings capacity-as-a-TYPE of 2026-05-30 (numeric-position convention, T13), outcome WORKS with no feature gates; agent-written"
 standing = "provisional"
-subject = "principles"
 keywords = ["Capacity trait", "rung ladder", "Cap4", "literal-length array", "associated array type", "capacity as type", "T13"]
 
 [[tenet]]
 id = "fixed_capacity_is_one_generic_dimension_marker_implementing_the_capacity_trait_and_the_macro_rung_ladder_is_dropped"
+subject = "principles"
 what = "A single generic marker over one constant dimension implements the non-generic capacity trait, using the dimension directly as the array length and mapping the capacity value from it. The macro rung ladder is dropped."
 mechanism = "`Dim<const DIM: usize>` implementing the (non-generic) `Capacity` trait, with `DIM` as the array length and `CAP: Cap = cap(DIM)`."
 source = "mock/research/sketches/202605301145_capacity-as-type/FINDINGS.md:126-130"
@@ -90,13 +91,13 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["quote: mock/research/sketches/202605301145_capacity-as-type/FINDINGS.md:125-130"]
-subject = "principles"
 keywords = ["Dim<const N>", "Capacity trait", "rung ladder dropped", "op refinement", "cap(DIM)", "capacity as type", "array length"]
-rules_out = ["the macro rung ladder"]
-cites = ["fixed_capacity_is_a_non_generic_capacity_trait_implemented_by_a_macro_generated_ladder_of_exact_rungs_binding_literal_length_arrays"]
+rejects = ["the macro rung ladder"]
+related = ["tenet::fixed_capacity_is_a_non_generic_capacity_trait_implemented_by_a_macro_generated_ladder_of_exact_rungs_binding_literal_length_arrays"]
 
 [[tenet]]
 id = "with_one_dimension_marker_exact_capacities_come_free_and_live_code_threads_the_plan_dimensions_and_never_a_length"
+subject = "principles"
 what = "With a single generic dimension marker there are no fixed rungs, so the exact capacity is available for free and the earlier open question of exact capacity versus rounding up to a rung is moot. The only bare usize literal in live code is the dimension inside a plan-dimensions implementation, where the budget is declared once, and live code threads the plan-dimensions and capacity bounds and never a length."
 mechanism = "`Dim<N>` inside a `PlanDims` impl; live code threads `D: PlanDims` / `C: Capacity`."
 source = "mock/research/sketches/202605301145_capacity-as-type/FINDINGS.md:142-146"
@@ -112,6 +113,5 @@ origin = "proposed"
 written_by = "sketch findings capacity-as-a-TYPE of 2026-05-30, addendum 2 reporting the working out of the maintainer's refinement; agent-written"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "principles"
 keywords = ["exact capacity", "round-up to rung", "Dim<N>", "PlanDims", "bare usize literal", "declare the budget once", "Capacity bound"]
-cites = ["fixed_capacity_is_one_generic_dimension_marker_implementing_the_capacity_trait_and_the_macro_rung_ladder_is_dropped", "container_capacity_lives_at_type_level_and_a_consumer_needing_more_picks_the_bigger_type"]
+related = ["tenet::fixed_capacity_is_one_generic_dimension_marker_implementing_the_capacity_trait_and_the_macro_rung_ladder_is_dropped", "tenet::container_capacity_lives_at_type_level_and_a_consumer_needing_more_picks_the_bigger_type"]

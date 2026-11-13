@@ -2,6 +2,7 @@
 
 [[tenet]]
 id = "change_detection_is_per_morsel_and_skips_what_is_unchanged"
+subject = "change"
 what = "Change detection is per morsel: a write marks the morsel as changed and an unchanged morsel is skipped. It propagates through the graph, so an unchanged root skips all its transitive dependents, which turns the pipeline from a batch processor into an incremental one."
 mechanism = "A per-morsel generation counter, bumped on write. Persistence to consumer storage goes through the evict and inject APIs."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:861-865"
@@ -17,11 +18,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:861-865"]
-subject = "change"
 keywords = ["generation counter", "change detection", "skip", "unchanged", "incremental", "morsel", "bump on write"]
 
 [[tenet]]
 id = "the_engine_owns_the_generation_counters_and_the_skip_logic"
+subject = "change"
 what = "hilavitkutin owns the per-morsel generation counters and the logic that skips what is unchanged across the graph, as a runtime scheduling concern."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2406-2408"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#resolutions"]
@@ -34,12 +35,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2406-2408"]
-subject = "change"
 keywords = ["generation counter", "skip-unchanged", "incremental execution", "owns", "R2"]
-cites = ["change_detection_is_per_morsel_and_skips_what_is_unchanged"]
+related = ["tenet::change_detection_is_per_morsel_and_skips_what_is_unchanged"]
 
 [[tenet]]
 id = "a_unit_whose_inputs_are_all_clean_skips_the_pass"
+subject = "change"
 what = "At run time, before each pass, the generation counters on the root units' inputs are checked. What is unchanged since the last pass is clean, the mark propagates along every edge of the graph, and a unit whose whole predecessor set is clean skips execution entirely, so only what changed is re-run."
 mechanism = "`dirty[j] |= dirty[i]` for every edge i→j, as a bitmask OR sequence, `predecessors[N] & dirty_mask`: one AND per unit."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1418-1431"
@@ -64,12 +65,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1418-1431"]
-subject = "change"
 keywords = ["dirty", "propagation", "incremental skip", "generation counter", "root inputs", "since last pass", "clean"]
-cites = ["change_detection_is_per_morsel_and_skips_what_is_unchanged"]
+related = ["tenet::change_detection_is_per_morsel_and_skips_what_is_unchanged"]
 
 [[tenet]]
 id = "version_stamps_tell_which_stores_a_unit_actually_modified"
+subject = "change"
 what = "Each store has a version stamp. The versions are captured before a unit runs and compared after, which gives the stores the unit actually modified. A stamp increments only on completion."
 mechanism = "Parallel arrays (SoA): separate contiguous `[u64; MAX_STORES]` for the before and the current stamps; the changed stores are a bitmask; 2 to 5 u64 per unit stamp view, packed in one cache line."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2139-2145"
@@ -87,12 +88,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2139-2145"]
-subject = "change"
 keywords = ["version stamp", "before", "current", "changed stores", "actually modified", "bitmask", "completion"]
-cites = ["no_write_is_partial"]
+related = ["tenet::no_write_is_partial"]
 
 [[tenet]]
 id = "no_write_is_partial"
+subject = "change"
 what = "No write is partial: a unit buffers internally and writes on return, downstream units do not run until it completes, version stamps increment only on completion, and correctness does not depend on atomicity."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:615-619"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#08-determinism-and-ordering"]
@@ -107,11 +108,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:615-619"]
-subject = "change"
 keywords = ["partial write", "buffer", "write on return", "completion", "atomicity", "downstream"]
 
 [[tenet]]
 id = "generation_counter_activity_classifies_morsels_by_temperature"
+subject = "change"
 what = "Across frames the engine classifies morsels as hot, warm or cold by how often they change, and uses that with per-morsel timing to assign them to cores: hot morsels to the fast cores, cold ones to the slow cores or deferred."
 mechanism = "Change frequency read from generation counter activity; hot morsels to P-cores, cold morsels to E-cores."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2021-2022, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2028-2033"
@@ -131,12 +132,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2021-2022", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2028-2033"]
-subject = "change"
 keywords = ["temperature", "hot", "warm", "cold", "change frequency", "generation counter", "core assignment", "adaptation"]
-cites = ["change_detection_is_per_morsel_and_skips_what_is_unchanged"]
+related = ["tenet::change_detection_is_per_morsel_and_skips_what_is_unchanged"]
 
 [[tenet]]
 id = "a_morsel_is_reprocessed_only_when_its_generation_is_past_the_one_last_processed"
+subject = "change"
 what = "Each morsel has a generation number, a monotonic counter that increments whenever any record in the morsel's range is modified; the column storage or a separate change-tracking layer bumps it when a write occurs. Each fiber, which the topic still calls a chain, records the generation it last processed for each of its input morsels. On the next frame an input morsel whose generation equals the last processed one is skipped, and the output from the previous frame is still valid; one whose generation is greater must be reprocessed. This is incremental execution: only what changed is processed again."
 mechanism = "Frame cost drops from O(total records times ops) to O(changed records times ops)."
 source = "mock/design_rounds/202604200055/202603121800_topic.dispatch-and-optimisation.md:907-927"
@@ -168,12 +169,12 @@ origin = "proposed"
 written_by = "topic T3 of the founding round (dispatch-and-optimisation), decision 57"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "change"
 keywords = ["generation counter", "monotonic", "last processed generation", "skip", "previous frame", "incremental execution", "change tracking"]
-cites = ["change_detection_is_per_morsel_and_skips_what_is_unchanged"]
+related = ["tenet::change_detection_is_per_morsel_and_skips_what_is_unchanged"]
 
 [[tenet]]
 id = "the_temporal_extent_of_a_morsel_is_how_many_frames_its_cached_result_stays_valid"
+subject = "change"
 what = "The morsel cube has three dimensions: the records the morsel covers, the columns it accesses, and a temporal one, which is how many frames the morsel's cached result remains valid. Change detection determines the temporal extent: an unchanged morsel is skipped and a changed one must be reprocessed. For a single exhaustive run every morsel is processed exactly once and the cube degenerates to a two-dimensional window. The temporal dimension turns the pipeline from a batch processor into an incremental one: the schedule and the morsel sizes stay the same, and only the morsels whose input generations have advanced are dispatched."
 mechanism = "X (records), Y (columns), T (temporal). Unchanged morsels have T = infinity, changed morsels T = 0; for a single exhaustive run T = 1 for all morsels."
 source = "mock/design_rounds/202604200055/202603121800_topic.dispatch-and-optimisation.md:942-966"
@@ -209,12 +210,12 @@ origin = "proposed"
 written_by = "topic T3 of the founding round (dispatch-and-optimisation), the 3D cube model"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "change"
 keywords = ["temporal", "cube", "T dimension", "frames", "cached result", "incremental", "generation"]
-cites = ["change_detection_is_per_morsel_and_skips_what_is_unchanged"]
+related = ["tenet::change_detection_is_per_morsel_and_skips_what_is_unchanged"]
 
 [[tenet]]
 id = "hilavitkutin_should_own_the_version_stamp_and_early_cutoff_and_phantom_write_detection_is_the_consumer_s"
+subject = "change"
 what = "The version stamp concept is universal: it tracks whether a resource actually changed. hilavitkutin should own the version stamp type and the early cutoff algorithm. Detection of a phantom write, by bitwise comparison for small values and explicit marking for large values, is a storage concern that each consumer can implement differently."
 source = "mock/design_rounds/202604200055/202603141800_research.loimu-dag.md:1021-1025"
 provenance = ["mock::design_rounds::202604200055::202603141800_research.loimu-dag::#what-simplifies-for-polka-saalis"]
@@ -229,12 +230,12 @@ origin = "proposed"
 written_by = "the research note loimu-dag of the founding round"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "change"
 keywords = ["version stamp", "early cutoff", "phantom write", "bitwise comparison", "explicit marking", "actually changed", "consumer"]
-cites = ["version_stamps_tell_which_stores_a_unit_actually_modified"]
+related = ["tenet::version_stamps_tell_which_stores_a_unit_actually_modified"]
 
 [[tenet]]
 id = "the_dirty_seed_is_set_by_the_consumer_marking_a_store_dirty_or_by_a_resource_replacement"
+subject = "change"
 what = "Before each frame a dirty seed, which stores changed since the last frame, propagates forward over the per-unit predecessor masks, and a unit whose entire predecessor set is clean is skipped for that frame, leaving its output columns untouched. The seed is set by the consumer marking a store dirty or by a resource replacement."
 source = "mock/research/pre_seed/202606111800_canonical-spec-standalone.md:384-390"
 provenance = ["mock::research::pre_seed::202606111800_canonical-spec-standalone::#7-incremental-dirty-skip"]
@@ -251,12 +252,12 @@ origin = "proposed"
 written_by = "the standalone spec 202606111800, a reading aid with no design authority of its own by addendum A2"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "change"
 keywords = ["dirty seed", "mark dirty", "consumer", "resource replacement", "predecessor masks", "skip"]
-cites = ["a_unit_whose_inputs_are_all_clean_skips_the_pass"]
+related = ["tenet::a_unit_whose_inputs_are_all_clean_skips_the_pass"]
 
 [[tenet]]
 id = "the_swap_of_a_replaceable_resource_is_to_be_specified_by_a_commissioned_round"
+subject = "change"
 what = "The maintainer directed that the missing swap specification is researched and designed explicitly and not picked from options. A design round is commissioned to produce the explicit swap specification under the bench-decided layout, covering the two replacement calls, the interplay with plan-affecting resources, the ownership of collection elements, dirty propagation and quiescence. Until it lands, replacing a value only marks the store dirty and the catalogued test stays red."
 mechanism = "`Replaceable` swap under the blob record, erased addressing and collection elements in collection columns; covers `replace_value`, `replace_resource`, the `PlanAffecting` interplay (A2-3), Seq/Map element ownership. `replace_value` stays mark-dirty-only."
 source = "mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:88-94"
@@ -274,11 +275,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["quote: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:88-94"]
-subject = "change"
 keywords = ["swap semantics", "Replaceable", "replace_value", "replace_resource", "PlanAffecting", "quiescence", "commissioned round", "mark dirty"]
 
 [[tenet]]
 id = "a_swap_of_a_resource_value_is_legal_only_between_frames_and_is_observed_from_the_next_run"
+subject = "change"
 what = "The draft swap specification says that replacing a resource value installs the new value as the whole one-record blob and sets the store's dirty bit, without touching the plan-dirty state. The call is legal only between frames, so no swap can race a live-streamed read or a snapshot in flight. The swap is observable starting at the next run and at no earlier point, and of several swaps before a run only the last is ever observed."
 mechanism = "`Scheduler::replace_value<V: Replaceable>(&mut self, new: V)`: a `ptr::write` of `V` through the same `Selector<V, Index>` witness the drain and the projection read use; no drop of the old value (`V: ColumnValue` is `Copy`); `mark_dirty` on `Resource<V>`, never `plan_dirty`; `&mut self` plus the parked-between-frames invariant."
 source = "mock/research/pre_seed/202607193300_swap-semantics-panel/03-giesen-synthesis.md:23-23"
@@ -289,12 +290,12 @@ quote = '''
 origin = "proposed"
 written_by = "the swap semantics panel, memo 3 (synthesis and draft specification, 2026-07-19), a dispatched expert persona drafting for the maintainer's ruling"
 standing = "provisional"
-subject = "change"
 keywords = ["swap", "replace_value", "between frames", "next run", "last swap wins", "blob", "dirty bit", "parked between frames"]
 related = ["tenet::the_swap_of_a_replaceable_resource_is_to_be_specified_by_a_commissioned_round"]
 
 [[tenet]]
 id = "the_per_morsel_generation_counters_are_not_built_and_the_engine_has_a_coarse_per_store_dirty_only"
+subject = "change"
 what = "The roadmap revision r6 records that the per-morsel generation counter the founding spec specifies, bumped on write and propagating through the graph so an unchanged root skips its transitive dependents, is not built: the engine has a coarse dirty state per store only. It asks for a design sketch before any implementation, on where the counters live with no allocation and a morsel count per fiber that varies with the window, and on how they compose with the existing store dirty mask."
 source = "mock/research/202607181300_engine-roadmap-r6.md:315-320"
 provenance = ["mock::research::202607181300_engine-roadmap-r6::#phase-d-adapt-completion"]
@@ -310,12 +311,12 @@ origin = "proposed"
 written_by = "the engine roadmap revision r6 of 2026-07-18, agent-written"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "change"
 keywords = ["generation counter", "per-morsel", "store_dirty", "not built", "design sketch", "coarse dirty"]
 related = ["tenet::change_detection_is_per_morsel_and_skips_what_is_unchanged", "tenet::the_engine_owns_the_generation_counters_and_the_skip_logic", "question::who_says_that_a_store_changed"]
 
 [[tenet]]
 id = "the_commissioned_swap_round_also_corrects_the_artifacts_grounded_on_the_mis_citation"
+subject = "change"
 what = "The design round commissioned to specify the swap of a replaceable resource also corrects the artifacts that were grounded on the mis-citation of the expert input memo."
 source = "mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:88-94"
 provenance = ["mock::research::pre_seed::202607193200_canon-amendment-a2-precedence-and-rulings::#a2-5-the-202606210600-citation-correction-and-the-commissioned-swap-semantics-round"]
@@ -332,12 +333,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["quote: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:88-94"]
-subject = "change"
 keywords = ["swap semantics", "commissioned round", "mis-grounded artifacts", "correction", "Replaceable", "citation"]
-cites = ["the_swap_of_a_replaceable_resource_is_to_be_specified_by_a_commissioned_round", "two_shipped_rounds_cited_an_expert_input_memo_as_if_it_were_the_storage_addendum"]
+related = ["tenet::the_swap_of_a_replaceable_resource_is_to_be_specified_by_a_commissioned_round", "tenet::two_shipped_rounds_cited_an_expert_input_memo_as_if_it_were_the_storage_addendum"]
 
 [[tenet]]
 id = "as_of_2026_06_11_replace_resource_and_replace_value_mark_dirty_without_writing_the_value"
+subject = "change"
 what = "As of 2026-06-11, addendum A1 records that the replace-resource and replace-value calls mark the store dirty without writing the value."
 mechanism = "`replace_resource` / `replace_value` mark dirty only."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:40-40"
@@ -349,12 +350,12 @@ origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "change"
 keywords = ["replace_resource", "replace_value", "mark dirty", "partial", "inert", "state assessment", "2026-06-11"]
-cites = ["the_swap_of_a_replaceable_resource_is_to_be_specified_by_a_commissioned_round"]
+related = ["tenet::the_swap_of_a_replaceable_resource_is_to_be_specified_by_a_commissioned_round"]
 
 [[tenet]]
 id = "replacing_a_plan_affecting_resource_does_the_replace_value_write_and_sets_the_plan_dirty_bit_the_next_run_consumes"
+subject = "change"
 what = "Replacing a plan-affecting resource performs the identical write and store-dirty mark as replacing a value, and additionally sets the plan-dirty bit for the type's plan-affecting identity in the scheduler's plan-dirty bit array. The very next run consumes that array: the band gate is the first frame or any plan-dirty bit, a plan-dirty frame enters the leading plan band at phase 0, and the consumed bits clear."
 mechanism = "`Scheduler::replace_resource<T: PlanAffecting>(&mut self, new: T)`; the S1 write and store-dirty mark; `plan_dirty` bit for `T`'s `PlanAffectingId`; band gate `first_frame OR any plan_dirty bit`; leading plan band at phase 0."
 source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:22-22, mock/research/202607200200_replaceable-swap-semantics-spec.md:40-47"
@@ -374,12 +375,12 @@ plan band at phase 0, and the consumed bits clear.
 origin = "proposed"
 written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
 standing = "provisional"
-subject = "change"
 keywords = ["replace_resource", "PlanAffecting", "plan_dirty", "PlanAffectingId", "band gate", "leading plan band", "phase 0", "S2"]
-cites = ["a_swap_of_a_resource_value_is_legal_only_between_frames_and_is_observed_from_the_next_run", "plan_affecting_is_an_open_marker_trait_that_consumers_implement_on_resource_value_types"]
+related = ["tenet::a_swap_of_a_resource_value_is_legal_only_between_frames_and_is_observed_from_the_next_run", "tenet::plan_affecting_is_an_open_marker_trait_that_consumers_implement_on_resource_value_types"]
 
 [[tenet]]
 id = "the_replace_resource_signature_rides_the_open_plan_affecting_marker_and_the_locate_target_unifies_with_the_value_swap"
+subject = "change"
 what = "The signature obligation of the replace-resource clause rides #696: the plan-affecting marker becomes open on resource value types, with the builder-input supertrait and the seal drop, per addendum A2-3, and the locate target unifies with S1 to a locate bound on the resource store. The shipped locate shape is the form from before A2-3, and the implementing round corrects it."
 mechanism = "`BuilderInput` supertrait and the seal drop (A2-3); `Stores: Locate<Resource<T>, Index>`; shipped `Locate<T, Index>` is the pre-A2-3 form; #696."
 source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:22-22, mock/research/202607200200_replaceable-swap-semantics-spec.md:49-53"
@@ -396,12 +397,12 @@ is the pre-A2-3 form; the implementing round corrects it. The shipped
 origin = "proposed"
 written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
 standing = "provisional"
-subject = "change"
 keywords = ["Locate", "PlanAffecting", "BuilderInput", "seal", "#696", "A2-3", "replace_resource signature", "Stores"]
-cites = ["plan_affecting_is_an_open_marker_trait_that_consumers_implement_on_resource_value_types"]
+related = ["tenet::plan_affecting_is_an_open_marker_trait_that_consumers_implement_on_resource_value_types"]
 
 [[tenet]]
 id = "as_of_2026_07_19_the_plan_dirty_wiring_is_a_gap_and_closing_it_is_the_implementing_round_s_first_obligation"
+subject = "change"
 what = "As of 2026-07-19, the swap spec records a gap in the shipped plan-dirty wiring: the band gate is computed from the first frame only, and the replace-resource call sets no bit. Closing the gap is the first obligation of the implementing round."
 mechanism = "Band gate computed from `first_frame` only; `replace_resource` sets no bit."
 source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:53-56"
@@ -416,12 +417,12 @@ origin = "proposed"
 written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "change"
 keywords = ["plan-dirty wiring", "band gate", "first_frame", "replace_resource", "implementing round", "gap", "2026-07-19"]
-cites = ["replacing_a_plan_affecting_resource_does_the_replace_value_write_and_sets_the_plan_dirty_bit_the_next_run_consumes"]
+related = ["tenet::replacing_a_plan_affecting_resource_does_the_replace_value_write_and_sets_the_plan_dirty_bit_the_next_run_consumes"]
 
 [[tenet]]
 id = "a_swap_never_changes_the_base_pointer_of_a_seq_or_map_member_because_a_foreign_base_pointer_breaks_provenance"
+subject = "change"
 what = "A swap never changes the base pointer of the pointer and length view of a sequence or map member. Columns are sized at plan time and never resized, and a foreign base pointer breaks provenance."
 source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:60-62"
 provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s3-collection-members"]
@@ -433,12 +434,12 @@ a foreign base pointer breaks provenance. (b) A swap never writes past the
 origin = "proposed"
 written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
 standing = "provisional"
-subject = "change"
 keywords = ["swap", "base pointer", "Seq", "Map", "ptr+len view", "provenance", "columns never resized", "S3"]
-cites = ["a_seq_or_map_value_is_a_pointer_and_a_length_and_its_elements_are_live_streamed_from_their_column_and_never_copied"]
+related = ["tenet::a_seq_or_map_value_is_a_pointer_and_a_length_and_its_elements_are_live_streamed_from_their_column_and_never_copied"]
 
 [[tenet]]
 id = "a_swap_never_writes_past_the_member_s_cap_bound_because_the_new_value_shares_the_old_value_s_exact_type"
+subject = "change"
 what = "A swap never writes past the capacity bound N of the member, because the new value shares the exact sequence type of the old value, so the bound holds by construction."
 mechanism = "`Seq<T, N>` same type for old and new value; `Cap` bound N."
 source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:62-64"
@@ -451,11 +452,11 @@ member's `Cap` bound N; the new value shares the old value's exact
 origin = "proposed"
 written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
 standing = "provisional"
-subject = "change"
 keywords = ["swap", "Cap bound", "Seq<T, N>", "capacity", "by construction", "collection member", "S3"]
 
 [[tenet]]
 id = "swap_writes_element_bytes_into_the_member_s_existing_collection_column_region_and_then_updates_the_length"
+subject = "change"
 what = "The element bytes of a swap are written into the member's existing collection-column region, up to the new element count, and then the length updates. The blob carries only the pointer and length view."
 mechanism = "Elements up to N' written into the existing collection-column region; then length update; the blob holds ptr+len only."
 source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:64-66"
@@ -468,12 +469,12 @@ elements, then the length updates; the blob carries only the ptr+len view.
 origin = "proposed"
 written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
 standing = "provisional"
-subject = "change"
 keywords = ["swap", "element bytes", "collection-column region", "length update", "ptr+len view", "blob", "S3"]
-cites = ["a_swap_never_changes_the_base_pointer_of_a_seq_or_map_member_because_a_foreign_base_pointer_breaks_provenance"]
+related = ["tenet::a_swap_never_changes_the_base_pointer_of_a_seq_or_map_member_because_a_foreign_base_pointer_breaks_provenance"]
 
 [[tenet]]
 id = "until_the_344_write_side_lands_a_collection_bearing_swap_installs_only_the_scalar_members_and_the_ptr_len_view"
+subject = "change"
 what = "The concrete accessor that writes the element bytes is contingent on the write-side wiring of #344. Until that lands, a collection-bearing swap installs the scalar members and the pointer and length view only, and the element-write half is unimplementable and not underspecified."
 mechanism = "#344 write-side wiring; the concrete accessor performs clause (c) of S3."
 source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:68-71"
@@ -487,6 +488,5 @@ underspecified. The same resolution answers the founding spec's open
 origin = "proposed"
 written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
 standing = "provisional"
-subject = "change"
 keywords = ["#344", "write-side wiring", "collection-bearing swap", "scalar members", "ptr+len view", "unimplementable", "S3"]
-cites = ["swap_writes_element_bytes_into_the_member_s_existing_collection_column_region_and_then_updates_the_length"]
+related = ["tenet::swap_writes_element_bytes_into_the_member_s_existing_collection_column_region_and_then_updates_the_length"]

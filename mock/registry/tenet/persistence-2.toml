@@ -2,6 +2,7 @@
 
 [[tenet]]
 id = "a_backup_is_a_copy_of_the_data_directory_because_every_file_is_an_archive_written_completely"
+subject = "persistence"
 what = "A backup is a copy of the data directory. Every file is an archive and is always consistent because writes complete through the memory provider, and the consumer wraps the copy in whatever container format it wants."
 mechanism = "Container formats named: ZIP+zstd, custom container."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:183-188"
@@ -19,11 +20,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "persistence"
 keywords = ["backup", "snapshot", "copy data directory", "consistent archives", "ZIP+zstd", "complete writes", "container format"]
 
 [[tenet]]
 id = "the_engine_reaches_persistence_only_through_a_persistence_provider_registered_on_the_scheduler_builder"
+subject = "persistence"
 what = "The engine never depends on the persistence crate's types. Consumers wire persistence in through a persistence provider trait registered on the scheduler builder, and the engine's resource resolution reaches the provider through the standard provider accessor pattern."
 mechanism = "`PersistenceProvider` trait registered on the `SchedulerBuilder`; the standard `Has...Provider` accessor pattern. Round 202605101036, Topic 8 axis C."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:211-217"
@@ -41,12 +42,12 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "persistence"
 keywords = ["PersistenceProvider", "SchedulerBuilder", "Has...Provider", "engine boundary", "Topic 8 axis C", "resource resolution", "no direct dependency"]
-cites = ["persistence_is_wired_in_by_the_consumer_through_a_provider_and_the_engine_never_depends_on_the_persistence_crate_s_types"]
+related = ["tenet::persistence_is_wired_in_by_the_consumer_through_a_provider_and_the_engine_never_depends_on_the_persistence_crate_s_types"]
 
 [[tenet]]
 id = "an_end_of_pass_unit_drains_accumulator_columns_through_the_provider_commit_ordered_after_the_phase_barrier_and_before_the_next_phase_s_dispatch"
+subject = "persistence"
 what = "A unit that runs at the end of a pass, supplied by the consumer or the layer it builds on, reads the accumulator columns and writes them through the provider's commit. The commit is the phase-end synchronisation point, so persistence writes are ordered after the phase barrier and before the next phase's morsel dispatch begins, and the barrier's release-acquire pair guarantees visibility across threads."
 mechanism = "`PassEnd` WorkUnit writes through `PersistenceProvider::commit(...)`; Release-Acquire pair of the barrier (Topic 3 S7 atomic-ordering protocol)."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:219-225"
@@ -64,11 +65,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "persistence"
 keywords = ["PassEnd", "drain protocol", "PersistenceProvider::commit", "accumulator columns", "phase barrier", "Release-Acquire", "Topic 3 S7", "commit boundary"]
 
 [[tenet]]
 id = "substrate_consumers_ship_their_own_persistence_provider_implementations_and_the_crate_ships_no_engine_side_glue"
+subject = "persistence"
 what = "The narrow integration shape preserves the rule that the persistence crate is a standalone ecosystem crate. Consumers that build on the engine ship their own provider implementations, and the persistence crate ships no glue on the engine side."
 mechanism = "Substrate consumers named: vehje, future loimu."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:227-229"
@@ -82,11 +83,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "persistence"
 keywords = ["standalone ecosystem crate", "provider impls", "vehje", "loimu", "no engine-side glue", "substrate consumers"]
 
 [[tenet]]
 id = "the_engine_reaches_persistence_only_through_a_resource_the_consumer_wires_and_never_names_the_persistence_crate_s_types"
+subject = "persistence"
 what = "Persistence is the cold-store sibling of the runtime data plane, and the integration is narrow on purpose: the engine never depends on the persistence crate's types directly, and the consumer wires persistence in as a pluggable resource. Reads on the hot side copy from cold into a column at the plan stage, so the runtime touches the column and not persistence; writes on the cold side are a unit at the end of the pass draining accumulator columns into persistence."
 because = "This preserves the rule that the persistence crate is a standalone ecosystem crate."
 mechanism = "`Resource<P>` where `P: PersistenceProvider`; a PassEnd unit calls `PersistenceProvider::commit`."
@@ -104,11 +105,11 @@ The integration is intentionally narrow: the engine never depends on `hilavitkut
 origin = "proposed"
 written_by = "design round 202605101036, topic 8 resource resolution of 2026-05-11, which calls its decisions autonomous trivial calls"
 standing = "provisional"
-subject = "persistence"
 keywords = ["persistence spine", "PersistenceProvider", "cold store", "PassEnd", "commit", "hot side column", "standalone crate"]
 
 [[tenet]]
 id = "op_ruled_that_the_persistence_crate_builds_on_the_str_and_api_crates_and_never_on_the_engine_or_the_context_crate"
+subject = "persistence"
 what = "Op ruled on 2026-09-18, choosing among persistence being standalone, persistence building on the str crate and the api crate, and persistence using str without the api, that persistence builds on str and api. The per-crate design governs and the lint line was wrong. The lint now forbids only the engine and the context crate, and its reason says what the crate builds on. The cargo rule, which said persistence and str do not depend on each other, now says persistence builds on the str crate and the api crate, never on the engine or the context crate."
 mechanism = "The `forbidden-imports` rule for `hilavitkutin-persistence` forbids only `hilavitkutin` and `hilavitkutin-ctx`; the per-crate design lists `hilavitkutin-str` and takes memory from the shared `MemoryProvider` of `hilavitkutin-api`; `mock/agent/rules/cargo.md.tmpl` carries the dependency rule. Op's answer: \"Builds on str and api\"."
 source = "mock/design_rounds/202609181402/202609181401_topic.hilavitkutin-on-arvo-dev.md:70-70, mock/design_rounds/202609181402/202609181401_topic.hilavitkutin-on-arvo-dev.md:77-77, mock/design_rounds/202609181402/202609181401_topic.hilavitkutin-on-arvo-dev.md:83-83, mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:31-31, mock/design_rounds/202609190201/202609190200_topic.review-fixes-on-arvo-dev.md:12-12"
@@ -128,7 +129,6 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["quote: .data/op-responses/202609181645_hila-std-tier-persistence.md:31-43"]
-subject = "persistence"
 keywords = ["persistence", "builds on str and api", "forbidden-imports", "op's ruling", "2026-09-18", "MemoryProvider", "hilavitkutin-str"]
-rules_out = ["The rule said persistence and str do not depend on each other"]
-cites = ["the_persistence_crate_is_the_generic_hot_cold_storage_bridge_as_a_standalone_ecosystem_crate", "the_persistence_crate_does_not_depend_on_the_engine_and_works_on_raw_column_data_through_evict_and_inject_over_a_consumer_provided_column_storage"]
+rejects = ["The rule said persistence and str do not depend on each other"]
+related = ["tenet::the_persistence_crate_is_the_generic_hot_cold_storage_bridge_as_a_standalone_ecosystem_crate", "tenet::the_persistence_crate_does_not_depend_on_the_engine_and_works_on_raw_column_data_through_evict_and_inject_over_a_consumer_provided_column_storage"]

@@ -2,6 +2,7 @@
 
 [[tenet]]
 id = "the_interner_kit_form_gains_consistency_rather_than_ergonomics_for_a_single_resource_and_pays_off_when_several_stores_are_bundled"
+subject = "kits"
 what = "A kit that owns one interner resource and no units is equivalent to wiring that resource directly onto the builder. The kit form becomes valuable once a consumer bundles several resources or columns under one named preset, and for the single-resource interner case the gain is consistency more than ergonomic savings."
 mechanism = "`Scheduler::builder().with(Resource::new(default_interner::<4096, 256>())).with(InternerKit::<4096, 256>).build()`; equivalent direct form `Scheduler::builder().with(Resource::new(default_interner::<4096, 256>())).build()`. The Kit declares the type-level commitment that the resource exists in `Stores`; the instance is supplied by the app; the api has no `Kit::default_resources()` association; auto-wiring follow-up in BACKLOG. The v0.1 `BuilderResource<T>` bridge was deleted entirely per `no-legacy-shims-pre-1.0.md`."
 source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:93-135"
@@ -55,12 +56,12 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["InternerKit", "single-resource kit", "direct wiring equivalent", "Kit::default_resources", "auto-wiring", "BuilderResource removed", "no-legacy-shims-pre-1.0", "named preset"]
-cites = ["a_kit_may_own_no_state_or_no_units_and_a_kit_only_declares_that_a_store_exists_while_the_value_is_supplied_at_the_app_call_site"]
+related = ["tenet::a_kit_may_own_no_state_or_no_units_and_a_kit_only_declares_that_a_store_exists_while_the_value_is_supplied_at_the_app_call_site"]
 
 [[tenet]]
 id = "the_interner_resource_is_not_replaceable_by_default_and_an_app_needing_a_test_fixture_opts_in_on_its_own_alias_type"
+subject = "kits"
 what = "The interner resource does not implement the replaceable marker by default. An app that needs test-fixture replacement, for example a deterministic interner for unit tests, implements the marker itself on the relevant alias type, which matches the workspace rule of tools and not policies: the crate ships the resource without forcing override semantics on consumers that do not want them."
 mechanism = "`Resource<StringInterner<MemoryArena<...>>>` has no `impl Replaceable`; apps impl `Replaceable` on their alias type."
 source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:137-145"
@@ -81,12 +82,12 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["Replaceable", "InternerKit", "test fixture", "deterministic interner", "tools not policies", "opt-in override", "alias type"]
-cites = ["replaceable_is_the_only_enforced_annotation_on_owned_types_and_it_is_opt_in_so_override_of_a_kit_s_resource_is_rejected_at_compile_time_by_default"]
+related = ["tenet::replaceable_is_the_only_enforced_annotation_on_owned_types_and_it_is_opt_in_so_override_of_a_kit_s_resource_is_rejected_at_compile_time_by_default"]
 
 [[tenet]]
 id = "the_adapt_kits_bundle_the_nine_metric_axes_with_a_standard_recipe_with_validated_defaults_and_an_off_recipe_that_disables_the_observer"
+subject = "kits"
 what = "Two convenience kit recipes bundle the nine adapt axes. The standard recipe ships all axes with bench-validated defaults, and the off recipe ships none, which disables the adapt observer. Custom mixes are consumer-authored kits, following the workspace convention that themed resource sets are built from individuals that stay primary."
 mechanism = "`StandardAdaptKit`, `OffAdaptKit` (Topic 5 axis A); per-axis `AdaptMetrics` sub-resources `PassDurationMetrics`, `PhaseEMAMetrics`, `FiberEMAMetrics`, `ChangeClassMetrics`, `CacheResidencyMetrics`, `ThroughputTrendingMetrics`, `PredictiveParkingMetrics`, `MemoryWatermarkMetrics`, `CoreIdleTimeMetrics` (Topic 5 axis F) under `pub mod metrics::*`, with per-axis `pub const DEFAULT_*` constants (Topic 5 axis C)."
 source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:26-27"
@@ -99,12 +100,12 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["StandardAdaptKit", "OffAdaptKit", "adapt axes", "metrics sub-resources", "DEFAULT_ constants", "Topic 5 axis A", "themed resource sets", "bench-validated defaults"]
-cites = ["adapt_metrics_are_split_hot_and_cold_with_a_scratch_arena_hot_path_and_a_resource_snapshot_at_the_end_of_the_pass"]
+related = ["tenet::adapt_metrics_are_split_hot_and_cold_with_a_scratch_arena_hot_path_and_a_resource_snapshot_at_the_end_of_the_pass"]
 
 [[tenet]]
 id = "each_kind_of_input_to_the_builder_was_first_disambiguated_at_the_call_site_by_a_wrapper_struct"
+subject = "kits"
 what = "In the earlier round the builder took each registered value through one with method, and the kind of the value was disambiguated at the call site by a wrapper struct for each store kind. That pushed the per-kind disambiguation onto the consumer."
 mechanism = "`.with(Resource::new(Interner))` and `.with(Column::<Player>::new())` through wrapper structs `Resource<T>`, `Column<T>`, `Virtual<T>`, `LinkedBin<T>`; round 202605091700."
 source = "mock/design_rounds/202605101036/202605101036_topic.builder-input-rename-and-reshape.md:8-8"
@@ -116,11 +117,11 @@ origin = "proposed"
 written_by = "design round 202605101036, topic builder-input rename and reshape, dated 2026-05-10, agent-written; the text does not say whose decision it is, and the passage reports the earlier round 202605091700"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["with", "wrapper struct", "Resource::new", "Column::new", "call site", "disambiguation", "202605091700", "LinkedBin"]
 
 [[tenet]]
 id = "a_consumer_type_is_itself_the_builder_input_and_the_kind_wrappers_are_deleted_so_values_are_passed_bare"
+subject = "kits"
 what = "A consumer type is itself the builder input and the store kind, so values are passed to the builder bare at every call site. Kind disambiguation moves from the call site to the identity of the sub-trait at the declaration site, mirroring the pattern units and kits already use, and the wrapper structs for resource, column and virtual are deleted."
 because = "The wrapper design pushes per-kind disambiguation to the call site and forces consumers to wrap each value."
 mechanism = "`impl BuilderInput for Interner { type Dispatch = StoreDispatch<Self>; }` plus `impl Resource for Interner {}`; `Column`, `Virtual` and `WorkUnit` as sub-traits with supertrait `BuilderInput<Dispatch = ...>`; `.with(Interner { .. })`, `.with(Player::default())`, `.with(Tick)`; wrapper structs `Resource<T>`, `Column<T>`, `Virtual<T>` deleted; trait rename `Provider` to `BuilderInput`; recorded 2026-05-10 by user-led design conversation."
@@ -206,13 +207,13 @@ written_by = "design round 202605101036, topic builder-input rename and reshape,
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["quote: mock/design_rounds/202605101036/202605101036_topic.builder-input-rename-and-reshape.md:8-10", "quote: mock/design_rounds/202605101036/202605101036_topic.builder-input-rename-and-reshape.md:130-132"]
-subject = "kits"
 keywords = ["BuilderInput", "bare-pass", "sub-trait", "wrapper structs deleted", "StoreDispatch", "Provider rename", "with", "202605091700"]
-rules_out = ["The 202605091700 wrapper-required design is superseded by this topic for Resource/Column/Virtual", "Wrapper structs `Resource<T>` / `Column<T>` / `Virtual<T>` deleted."]
-cites = ["each_kind_of_input_to_the_builder_was_first_disambiguated_at_the_call_site_by_a_wrapper_struct"]
+rejects = ["The 202605091700 wrapper-required design is superseded by this topic for Resource/Column/Virtual", "Wrapper structs `Resource<T>` / `Column<T>` / `Virtual<T>` deleted."]
+related = ["tenet::each_kind_of_input_to_the_builder_was_first_disambiguated_at_the_call_site_by_a_wrapper_struct"]
 
 [[tenet]]
 id = "the_builder_retains_each_registered_value_in_a_sealed_value_carrying_list_beside_the_type_level_store_list"
+subject = "kits"
 what = "The scheduler builder retains each registered value in a sealed value-carrying list that is separate from the type-level access-set list tracking store identity. A resource constructor returns a carrier that owns the value while its marker type still routes into the stores, and the builder also threads the platform accumulator so a registered memory provider is carried."
 mechanism = "Sealed `StageList` (`StageEmpty`, `Stage<H, T>`); `Resource::new(value)` returns `StagedResource<T>` implementing `BuilderInput<Init = T, Dispatch = StoreDispatch<Resource<T>>>`; `BuilderInput` gains `into_init(self) -> Self::Init`; builder reshaped to `SchedulerBuilder<Wus, Stores, Platform, Staged>`; pre-1.0 no-legacy-shims clean delete-and-replace."
 source = "mock/design_rounds/202605282319/202605282319_topic.builder-value-retention.md:12-12"
@@ -224,11 +225,11 @@ origin = "proposed"
 written_by = "design round 202605282319, topic builder value retention (B1), dated 2026-05-28, agent-written; the text does not say whose decision it is"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["StageList", "StagedResource", "into_init", "SchedulerBuilder", "value retention", "platform accumulator", "MemoryProvider", "B1"]
 
 [[tenet]]
 id = "the_value_retention_adds_no_method_to_the_builder_input_trait_and_the_builder_moves_the_registered_input_onto_the_staged_list"
+subject = "kits"
 what = "Value retention is delivered without adding any method to the builder input trait, which keeps its two associated types, so none of the existing implementation sites change. The value carrier owns the registered value and exposes it through an into-inner accessor for the later arena move, and the builder moves the registered input itself onto the staged list."
 mechanism = "`BuilderInput` stays `Init` + `Dispatch`; 24 existing `impl BuilderInput` sites unchanged; `pub struct StagedResource<T>(T)` with `into_inner(self) -> T`; `.with<P>(self, provider: P)` moves `provider` onto `Stage<P, Staged>`; `Scheduler::builder()` returns `SchedulerBuilder<Empty, Empty, Empty, StageEmpty>`; the arena move is round B2."
 source = "mock/design_rounds/202605282319/202605282319_changelist.src.lock.md:3-3, mock/design_rounds/202605282319/202605282319_changelist.src.lock.md:12-12, mock/design_rounds/202605282319/202605282319_changelist.src.lock.md:27-27"
@@ -244,12 +245,12 @@ origin = "proposed"
 written_by = "design round 202605282319, source changelist for builder value retention (B1), phase IMPL, dated 2026-05-28, agent-written; the text does not say whose decision it is"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["BuilderInput", "StagedResource", "into_inner", "Stage<P, Staged>", "no method added", "24 impl sites", "B2 arena"]
-cites = ["the_builder_retains_each_registered_value_in_a_sealed_value_carrying_list_beside_the_type_level_store_list"]
+related = ["tenet::the_builder_retains_each_registered_value_in_a_sealed_value_carrying_list_beside_the_type_level_store_list"]
 
 [[tenet]]
 id = "the_scheduler_builder_keeps_one_unified_verb_for_registering_values_and_the_split_into_with_and_store_methods_is_rejected"
+subject = "kits"
 what = "The scheduler builder keeps its single unified verb for registering values, with store values routed from other values at the type level. The architect's recommended split into separate methods for general values and for stores, with its fifth builder parameter, is rejected."
 mechanism = "Router kind tags on each dispatch router (`StoreDispatch`, `UnitDispatch`, `PlatformDispatch`) with a `Place<P>` GAT keyed on the tag; the store-value list is aligned with `Stores`, so the value drain walks both in lockstep with no search."
 source = "mock/research/sketches/202605290002_builder-kind-dispatch.md:3-3, mock/research/sketches/202605290002_builder-kind-dispatch.md:7-7, mock/research/sketches/202605290002_builder-kind-dispatch.md:15-15"
@@ -265,12 +266,12 @@ origin = "proposed"
 written_by = "sketch builder-kind-dispatch of 2026-05-29 (single-with store-value routing via RouterKind dispatch), outcome WORKS; agent-written"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["unified with verb", "RouterKind", "with and store split", "builder", "store-value list", "Place GAT", "B2"]
-rules_out = ["the architect's recommended `.with`/`.store` method split (and its fifth builder parameter justification)"]
+rejects = ["the architect's recommended `.with`/`.store` method split (and its fifth builder parameter justification)"]
 
 [[tenet]]
 id = "a_resource_column_or_virtual_is_registered_through_the_one_with_verb_by_constructing_its_library_wrapper_at_the_call_site"
+subject = "kits"
 what = "A resource, a column and a virtual are registered through the one with verb by constructing a library wrapper at the call site, with one value form per kind."
 mechanism = "`.with(Resource::new(GameState::default()))`, `.with(Column::<Player>::new())`, `.with(Virtual::<Tick>::new())`, `.with(LinkedBin::<dyn LinterApi>::new())`; `.with(MyMemory::new(arena))`, `.with(InputKit)`, `.with(SpawnerWu)` for providers, kits and units; `pub const trait Marker: Provider<Init = ()>`."
 source = "mock/research/sketches/202605091700-builder-provider-shape/OUTCOME.md:21-24, mock/research/sketches/202605091700-builder-provider-shape/OUTCOME.md:27-43"
@@ -302,11 +303,11 @@ quote = '''
 origin = "proposed"
 written_by = "sketch outcome builder-provider-shape (status WORKS), dated only by its directory name 202605091700; agent-written"
 standing = "provisional"
-subject = "kits"
 keywords = ["with verb", "library wrapper", "Resource::new", "Column::new", "LinkedBin", "call site", "provider shape", "value form per kind"]
 
 [[tenet]]
 id = "for_the_sized_cases_a_consumer_type_implements_the_builder_input_trait_and_one_sub_trait_directly_and_is_registered_bare"
+subject = "kits"
 what = "The reshape eliminates the library wrapper structs for the sized cases: a consumer type implements the builder-input trait plus one sub-trait directly and is registered bare through the one with verb. A trait object still needs a wrapper because it is unsized, and it arrives through a separate extend method."
 mechanism = "`BuilderInput` plus one sub-trait (`Resource`, `Column`, `Virtual`, `WorkUnit`, `Kit`, `MemoryProvider`, `ThreadPool`, `Clock`) with the supertrait bound `BuilderInput<Dispatch = ...Dispatch<Self>>`; `.with(state)`, `.with(player_default)`, `.with(Tick)`, `.with(SpawnerWu)`, `.with(InputKit)`, `.with(MyClock)` all work bare; `ExtensionSurface<T: ?Sized>` via a separate `.extend::<dyn Trait>()` builder method."
 source = "mock/research/sketches/202605101036-builder-input-reshape/HYPOTHESIS.md:5-5, mock/research/sketches/202605101036-builder-input-reshape/HYPOTHESIS.md:9-11, mock/research/sketches/202605101036-builder-input-reshape/HYPOTHESIS.md:13-13"
@@ -324,13 +325,13 @@ origin = "proposed"
 written_by = "hypothesis file of sketch 202605101036-builder-input-reshape, dated 2026-05-10 (round 202605101036); agent-written, and the reshape is stated there as the hypothesis the sketch validates"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["BuilderInput", "bare registration", "wrapper structs", "ExtensionSurface", "extend", "sub-trait", "dyn trait", "sized cases"]
-rules_out = ["Consumers had to construct the wrapper at the call site (`.with(Resource::new(state))`, `.with(Column::<Player>::new())`)"]
-cites = ["a_resource_column_or_virtual_is_registered_through_the_one_with_verb_by_constructing_its_library_wrapper_at_the_call_site"]
+rejects = ["Consumers had to construct the wrapper at the call site (`.with(Resource::new(state))`, `.with(Column::<Player>::new())`)"]
+related = ["tenet::a_resource_column_or_virtual_is_registered_through_the_one_with_verb_by_constructing_its_library_wrapper_at_the_call_site"]
 
 [[tenet]]
 id = "the_builder_carries_the_registered_units_and_one_unified_stores_list_and_not_four_slots_for_units_resources_columns_and_providers"
+subject = "kits"
 what = "The scheduler builder has two type slots, the registered units and one unified stores list, and not four. The resource, column and virtual distinction is encoded in the marker types themselves and the list just holds them all, so every concern the four-slot version was meant to address, kind safety and kit projections, collapses into membership in the one stores list. A kit's accessor projection is just additional resource registrations that the unit's context bound already references, so no separate providers slot is needed."
 because = "Splitting resources from columns at the type level requires per-member filtering of the unit's mixed read and write tuple, and the existing access-set design in the api does not split by store kind, so the four-slot sketch did not compile."
 mechanism = "`SchedulerBuilder<Wus, Stores>` replacing `SchedulerBuilder<Wus, Resources, Columns, Providers>`; `Read` is `(Resource<X>, Column<Y>, Virtual<Z>)` mixed; the DOC changelist writes against two slots."
@@ -353,13 +354,13 @@ origin = "proposed"
 written_by = "sketch findings app-builder type-state (202605010900), section on what changed from the topic file; agent-written"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["SchedulerBuilder", "Stores slot", "two-slot builder", "four-slot builder", "typestate", "Providers slot", "phantom tuple", "unified stores"]
-rules_out = ["`SchedulerBuilder<Wus, Resources, Columns, Providers>`", "The four-slot scheme is replaced by the two-slot scheme"]
-cites = ["the_scheduler_is_built_by_a_builder_that_is_const_generic_over_units_stores_and_lanes_with_overrides_for_the_platform_traits"]
+rejects = ["`SchedulerBuilder<Wus, Resources, Columns, Providers>`", "The four-slot scheme is replaced by the two-slot scheme"]
+related = ["tenet::the_scheduler_is_built_by_a_builder_that_is_const_generic_over_units_stores_and_lanes_with_overrides_for_the_platform_traits"]
 
 [[tenet]]
 id = "the_substrate_commits_to_two_scoping_axes_for_kit_owned_state_visibility_and_replaceability"
+subject = "kits"
 what = "Topic 3 said the substrate would commit to two scoping axes, visibility and replaceability, and the sketch shows the substrate gets one and a half."
 source = "mock/research/sketches/202605050615_kit_taxonomy/FINDINGS.md:66-66"
 provenance = ["mock::research::sketches::202605050615_kit_taxonomy::FINDINGS::#what-this-means-for-the-round-4-plan"]
@@ -370,11 +371,11 @@ origin = "proposed"
 written_by = "sketch findings S5 kit taxonomy of 2026-05-05 (round 202605042200), reporting the claim of Topic 3; agent-written"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["scoping axes", "visibility", "replaceability", "kit owned state", "topic 3", "two-axis annotation surface"]
 
 [[tenet]]
 id = "replaceability_is_the_one_scoping_axis_the_substrate_enforces_and_kit_visibility_is_a_per_kit_shape_choice_and_not_a_per_type_axis"
+subject = "kits"
 what = "Replaceability is the one scoping axis the substrate enforces, through an opt-in marker and a static bound on the replacing call, with a clean compile error when a consumer overrides a type that is not replaceable. Visibility is not a substrate axis but a kit-shape convention, either the whole kit public or the whole kit crate-private and shipped from its own crate, because the language forbids per-type kit-internalness under the chosen kit trait shape. The annotation surface is one axis plus a structural choice, called the kit visibility envelope."
 mechanism = "`T: Replaceable` bound on `replace_resource`; Rust E0446 forbids private types in the associated-type positions of a public trait; Pattern A, kit `pub` with every Owned type `pub`; pattern B, kit `pub(crate)` in its own crate with a pub helper function that consumes a builder and returns one; \"kit visibility envelope\" replaces \"visibility axis\"."
 source = "mock/research/sketches/202605050615_kit_taxonomy/FINDINGS.md:54-54, mock/research/sketches/202605050615_kit_taxonomy/FINDINGS.md:58-60, mock/research/sketches/202605050615_kit_taxonomy/FINDINGS.md:66-69, mock/research/sketches/202605050615_kit_taxonomy/FINDINGS.md:73-74"
@@ -398,13 +399,13 @@ origin = "proposed"
 written_by = "sketch findings S5 kit taxonomy of 2026-05-05 (round 202605042200), outcome WORKS with a substantive revision of the visibility axis; agent-written"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["Replaceable", "visibility", "kit visibility envelope", "E0446", "scoping axis", "per-type axis", "opt-in marker", "kit shape"]
-rules_out = ["two-axis annotation surface", "visibility axis"]
-cites = ["the_substrate_commits_to_two_scoping_axes_for_kit_owned_state_visibility_and_replaceability", "replaceable_is_the_only_enforced_annotation_on_owned_types_and_it_is_opt_in_so_override_of_a_kit_s_resource_is_rejected_at_compile_time_by_default", "every_type_in_a_public_kit_impl_s_owned_position_must_be_as_visible_as_the_impl_so_a_kit_is_either_wholly_public_or_wholly_crate_private"]
+rejects = ["two-axis annotation surface", "visibility axis"]
+related = ["tenet::the_substrate_commits_to_two_scoping_axes_for_kit_owned_state_visibility_and_replaceability", "tenet::replaceable_is_the_only_enforced_annotation_on_owned_types_and_it_is_opt_in_so_override_of_a_kit_s_resource_is_rejected_at_compile_time_by_default", "tenet::every_type_in_a_public_kit_impl_s_owned_position_must_be_as_visible_as_the_impl_so_a_kit_is_either_wholly_public_or_wholly_crate_private"]
 
 [[tenet]]
 id = "no_macro_expanding_to_a_crate_level_recursion_limit_attribute_is_shipped_and_the_directive_is_a_documented_manual_consumer_side_attribute"
+subject = "kits"
 what = "The kit substrate ships no macro that expands to the crate-level recursion-limit attribute, because a macro invocation sits at an item position and an inner attribute cannot be produced there. The round's scope refocuses on documenting the directive as a manual consumer-side attribute with guidance on when to raise it, wiring the trait diagnostics to name the attribute in their notes, and filing a follow-up to revisit if rustc gains crate-root inner-attribute-from-macro support."
 because = "A macro invocation position is an item position and macro expansion produces items, while an inner attribute binds to its containing item, so it cannot be an item itself."
 mechanism = "`recursion_limit_for_kits!()` expanding to `#![recursion_limit = \"1024\"]` fails with `error: an inner attribute is not permitted in this context`; the fix is `#![recursion_limit = \"1024\"]` as a manual directive in DESIGN.md.tmpl and `#[diagnostic::on_unimplemented]` notes that mention the attribute."
@@ -427,13 +428,13 @@ origin = "proposed"
 written_by = "sketch findings S1 recursion-limit macro probe of 2026-05-08, outcome FAILS for the macro; agent-written, correcting the locked topic of round 202605042200"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["recursion_limit", "recursion_limit_for_kits", "inner attribute", "macro expansion", "on_unimplemented", "consumer-side directive", "kits", "overflow"]
-rules_out = ["Drop the `recursion_limit_for_kits!()` macro from the public substrate", "a `recursion_limit_for_kits!()` macro that consumers invoke at their crate root, expanding to `#![recursion_limit = \"1024\"]`"]
-cites = ["the_kit_crate_declares_a_recursion_limit_of_512_defensively_and_a_consumer_hitting_it_declares_its_own"]
+rejects = ["Drop the `recursion_limit_for_kits!()` macro from the public substrate", "a `recursion_limit_for_kits!()` macro that consumers invoke at their crate root, expanding to `#![recursion_limit = \"1024\"]`"]
+related = ["tenet::the_kit_crate_declares_a_recursion_limit_of_512_defensively_and_a_consumer_hitting_it_declares_its_own"]
 
 [[tenet]]
 id = "the_typestate_ships_without_physical_dedup_of_the_accumulated_lists_and_logical_dedup_through_the_marker_membership_trait_suffices"
+subject = "kits"
 what = "Physical dedup of the accumulated lists is blocked by the same coherence constraint as the non-membership proof, so round 4 of the typestate ships without it. Logical dedup through the marker membership trait is what the typestate already gets for free and it suffices for correctness. The trait-solver cost from duplicate accumulation is real but not pathological at the validated depth of five and twenty-five units."
 mechanism = "`#[marker] Contains`; round-3 `NotIn` proof; depth-5 / 25-WU scale."
 source = "mock/research/sketches/202605050800_dedup_concat/FINDINGS.md:6-6"
@@ -445,12 +446,12 @@ origin = "proposed"
 written_by = "sketch findings M2 type-level dedup-on-Concat of 2026-05-05 (round 202605042200, audit M2 remediation), outcome BLOCKED; agent-written"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["physical dedup", "logical dedup", "Concat", "coherence constraint", "NotIn", "marker Contains", "round 4", "duplicate accumulation"]
-cites = ["the_kit_trait_carries_no_required_member_because_the_type_level_set_difference_hits_the_coherence_wall_and_requirements_live_in_prose"]
+related = ["tenet::the_kit_trait_carries_no_required_member_because_the_type_level_set_difference_hits_the_coherence_wall_and_requirements_live_in_prose"]
 
 [[tenet]]
 id = "the_proposal_committed_to_a_compile_time_error_on_duplicate_marker_registration_through_a_non_membership_bound_at_the_leaf_registrable_impl"
+subject = "kits"
 what = "The proposal commits to a compile-time error on registering a marker twice, through a non-membership bound on the stores list at the engine's leaf registrable implementation."
 mechanism = "`Stores: NotIn<H>` bound; encoding in `sketch.rs`: `#[marker] pub trait NotIn<H> {}` with `impl<H> NotIn<H> for () {}`, `impl<H, K, R> NotIn<H> for (K, R) where R: NotIn<H> {}` and `impl<H, R> !NotIn<H> for (H, R) {}`."
 source = "mock/research/sketches/registrable-not-in-202605051200/FINDINGS.md:9-17"
@@ -470,5 +471,4 @@ origin = "proposed"
 written_by = "sketch findings NotIn<H> compile-time diamond detection of 2026-05-05 (round 202605042200), describing the proposal under audit; agent-written"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["NotIn", "duplicate registration", "diamond detection", "Registrable", "compile-time error", "negative impl", "marker registration"]

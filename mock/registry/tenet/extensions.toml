@@ -2,6 +2,7 @@
 
 [[tenet]]
 id = "plugin_type_access_to_columns_comes_from_has_shape_and_erased_column_from_loimu"
+subject = "extensions"
 what = "Plugins reach column types through the shape and erased column abstractions taken from loimu."
 mechanism = "`HasShape` / `ErasedColumn` from loimu (T5 L674), for plugin type access."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:577-577"
@@ -13,11 +14,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:577-577"]
-subject = "extensions"
 keywords = ["HasShape", "ErasedColumn", "loimu", "plugin", "type access", "retained"]
 
 [[tenet]]
 id = "a_pipeline_is_extended_by_new_records_in_existing_columns_or_by_a_facade_unit_over_a_plugin"
+subject = "extensions"
 what = "The roadmap revision r2 names two surfaces of extensibility, neither of which needs dispatch that changes at run time. New data is the dominant one: records added to existing columns flow through the same static units, with the record count as an adaptive parameter. New code is the rarer one: the transform of an extension loaded at run time does not enter the engine's monomorphised dispatch and is reached through a statically registered facade unit that calls it across the capability interface, off the per-record path."
 mechanism = "The facade unit calls the extension through the ProviderId capability ABI of hilavitkutin-extensions, per invocation or per morsel batch; the plugin keeps its own monomorphised dispatch inside its cdylib."
 source = "mock/research/202606081500_engine-roadmap-r2.md:64-65"
@@ -30,12 +31,12 @@ origin = "proposed"
 written_by = "the engine roadmap revision r2 of 2026-06-08, agent-written, listed in addendum A1's amendment chain"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "extensions"
 keywords = ["extensibility", "two surfaces", "new data", "new code", "facade", "plugin", "record count", "static dispatch"]
 related = ["tenet::column_type_registration_is_static", "tenet::static_composition_means_every_unit_is_registered_through_the_builder_and_no_schedule_is_dynamic", "question::whether_registration_may_be_bound_by_data"]
 
 [[tenet]]
 id = "the_two_unconcluded_plugin_facade_sketches_are_driven_to_recorded_findings_before_the_chart"
+subject = "extensions"
 what = "The two unconcluded plugin-facade sketches, the opaque access set past the contains-all bound and the per-morsel ABI hop, are driven to recorded WORKS or FAILS findings before the chart-the-path run, so the roadmap charts the ecosystem-bridge group on proven ground rather than around a named unknown."
 mechanism = "Sketch 7-4a: opaque `AccessSet` past `ContainsAll`; sketch 7-4b: per-morsel ABI hop; outcomes WORKS / FAILS."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:104-108"
@@ -51,11 +52,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["ruled: mock/research/202606111400_canonical-design-addendum-a1.md:4-4", "ruled: mock/research/202606111400_canonical-design-addendum-a1.md:47-47", "ruled: mock/research/202606111400_canonical-design-addendum-a1.md:102-108"]
-subject = "extensions"
 keywords = ["plugin facade", "sketch 7-4a", "sketch 7-4b", "opaque AccessSet", "ContainsAll", "ABI hop", "WORKS FAILS", "A1-5"]
 
 [[tenet]]
 id = "the_plugin_host_layer_is_the_linking_extensions_and_extensions_macros_crates_and_downstream_ecosystems_build_their_own_contract_crates_on_it"
+subject = "extensions"
 what = "The plugin-host layer is made of three crates: the linking crate, the extensions crate and its macro companion. Downstream consumer ecosystems build their own domain-specific contract crates on top of it."
 mechanism = "hilavitkutin-linking, hilavitkutin-extensions, hilavitkutin-extensions-macros."
 source = "mock/DESIGN.md.tmpl:34-34"
@@ -67,11 +68,11 @@ origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "extensions"
 keywords = ["plugin host", "hilavitkutin-linking", "hilavitkutin-extensions", "hilavitkutin-extensions-macros", "downstream contract crates", "layer"]
 
 [[tenet]]
 id = "the_extensions_crate_is_the_domain_agnostic_host_orchestration_layered_over_the_linking_crate"
+subject = "extensions"
 what = "The extensions crate is the contract-bound host orchestration for extensions, layered over the linking crate and domain-agnostic. It covers the descriptor, the lifecycle, the capability dispatch and the failure policy, and it needs no standard library, no allocator and no dynamic dispatch."
 mechanism = "`hilavitkutin-extensions`: descriptor, lifecycle, capability dispatch, failure policy, over `hilavitkutin-linking`. `no_std`, no allocator, no dyn."
 source = "mock/DESIGN.md.tmpl:19-19"
@@ -83,11 +84,11 @@ origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "extensions"
 keywords = ["hilavitkutin-extensions", "extension host", "descriptor", "lifecycle", "capability dispatch", "failure policy", "domain-agnostic", "no_std"]
 
 [[tenet]]
 id = "the_extensions_macros_crate_emits_the_descriptor_the_exported_symbol_and_the_capability_trampolines"
+subject = "extensions"
 what = "The macro companion of the extensions crate generates the C-layout descriptor, the exported-symbol function and the capability trampolines. It is one of two proc-macro crates in the stack, the other being the macro companion of the api crate."
 mechanism = "`hilavitkutin-extensions-macros` emits a `#[repr(C)]` descriptor, an exported-symbol fn and capability trampolines via `#[export_extension]`."
 source = "mock/DESIGN.md.tmpl:20-20"
@@ -99,11 +100,11 @@ origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: a passage shows part of it to be his and not the whole of it (mock/design_rounds/202604240615/202604240615_topic.hilavitkutin-extensions-host.md:192-207), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "extensions"
 keywords = ["hilavitkutin-extensions-macros", "export_extension", "repr(C) descriptor", "capability trampolines", "proc-macro", "exported symbol"]
 
 [[tenet]]
 id = "the_linking_crate_is_the_cross_platform_dynamic_library_loading_primitive_with_pull_based_symbol_resolution"
+subject = "extensions"
 what = "The linking crate is the cross-platform dynamic library loading primitive. It resolves symbols explicitly on pull, needs no standard library and no allocator, and was renamed from the former extensions crate."
 mechanism = "`hilavitkutin-linking`: dlopen / LoadLibrary plus typed `Symbol` / `StaticRef`; renamed from prior `hilavitkutin-extensions`."
 source = "mock/DESIGN.md.tmpl:22-22"
@@ -115,11 +116,11 @@ origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "extensions"
 keywords = ["hilavitkutin-linking", "dlopen", "LoadLibrary", "Symbol", "StaticRef", "pull-based", "explicit symbol", "renamed"]
 
 [[tenet]]
 id = "the_extensions_crate_owns_the_descriptor_shape_pull_based_discovery_the_lifecycle_provider_dispatch_requirement_classes_and_the_failure_policy"
+subject = "extensions"
 what = "The extensions crate owns the C-layout descriptor shape, pull-based discovery through one well-known exported symbol, the per-extension lifecycle, provider dispatch by stable identifier plus an opaque vtable pointer, the classification of each load as required or optional, and a pluggable failure policy. It is layered on the linking crate's loader primitive."
 mechanism = "`ExtensionDescriptor` `#[repr(C)]`; init with a host-opaque pointer; shutdown via drop or explicit close; provider table entries are (stable identifier, opaque vtable pointer)."
 source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:3-9"
@@ -137,12 +138,12 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "extensions"
 keywords = ["ExtensionDescriptor", "pull-based discovery", "lifecycle", "provider dispatch", "required vs optional", "failure policy", "well-known symbol", "host-opaque pointer"]
-cites = ["the_extensions_crate_is_the_domain_agnostic_host_orchestration_layered_over_the_linking_crate"]
+related = ["tenet::the_extensions_crate_is_the_domain_agnostic_host_orchestration_layered_over_the_linking_crate"]
 
 [[tenet]]
 id = "the_extensions_crate_has_no_alloc_no_dyn_and_no_linker_magic_registration_and_its_tables_and_errors_are_static_and_fixed_size"
+subject = "extensions"
 what = "The extensions crate has no standard library, no allocator, no dynamic dispatch and no registration by linker tricks. Descriptors are static references, provider tables are static slices, and errors are fixed-size enums with fixed-width payloads."
 mechanism = "`#![no_std]`; descriptors `&'static`; provider tables `&'static [ProviderEntry]`; errors are fixed-size enums with fixed-width payloads."
 source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:11-14"
@@ -157,12 +158,12 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "extensions"
 keywords = ["no_std", "no alloc", "no dyn", "no linker-magic", "&'static descriptor", "ProviderEntry slice", "fixed-size errors"]
-cites = ["extension_across_an_abi_boundary_is_by_registered_traits_and_c_layout_descriptors_and_never_by_dyn"]
+related = ["tenet::extension_across_an_abi_boundary_is_by_registered_traits_and_c_layout_descriptors_and_never_by_dyn"]
 
 [[tenet]]
 id = "the_extensions_crate_is_domain_agnostic_and_consumer_contract_crates_carry_the_domain_types_and_may_wrap_the_export_attribute"
+subject = "extensions"
 what = "The extensions crate knows what a descriptor, a provider identifier and a lifecycle hook are, and nothing about diagnostics, syntax-tree shapes, linter interfaces or any specific consumer domain. Downstream consumer contract crates carry the domain-specific types and may wrap the primary export attribute under their own domain-named macro."
 mechanism = "Example named: `viola-plugin-abi`; a domain-named attribute such as `#[viola::plugin]` that expands to `#[export_extension(required_host_providers = [viola::PROVIDER_NAM])]` plus domain-specific trait bounds on the target type."
 source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:16-21, mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:154-169"
@@ -196,12 +197,12 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "extensions"
 keywords = ["domain-agnostic", "consumer contract crate", "viola-plugin-abi", "export_extension", "domain-named macro", "provider id", "descriptor"]
-cites = ["the_plugin_host_layer_is_the_linking_extensions_and_extensions_macros_crates_and_downstream_ecosystems_build_their_own_contract_crates_on_it"]
+related = ["tenet::the_plugin_host_layer_is_the_linking_extensions_and_extensions_macros_crates_and_downstream_ecosystems_build_their_own_contract_crates_on_it"]
 
 [[tenet]]
 id = "the_descriptor_is_a_c_layout_manifest_whose_leading_tag_gates_all_reads_and_whose_size_field_supports_forward_evolution"
+subject = "extensions"
 what = "The descriptor is the C-layout manifest an extension exposes to the host. Its first field is a tag that gates all later reads, its second field is the descriptor's size at the extension's build time so that a host of one ABI version can validate and skip trailing bytes of a higher one, and the ABI version must match the host's. It then carries the extension's name, version, required host providers, provider table and optional init and shutdown function pointers."
 mechanism = "`ExtensionDescriptor` fields in layout order: `tag: u32` (`EXTENSION_DESCRIPTOR_TAG`), `descriptor_size: u32` (`core::mem::size_of` at the extension's build time), `abi_version: AbiVersion` (`#[repr(transparent)]` over `u32`, must match `HOST_ABI_VERSION`), name pointer and length (`*const u8`, `u32`), version triple, required host providers pointer and length (`*const ProviderId`, `u32`), providers table pointer and length (`*const ProviderEntry`, `u32`), optional init fn pointer, optional shutdown fn pointer."
 source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:25-25"
@@ -213,11 +214,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "extensions"
 keywords = ["ExtensionDescriptor", "tag", "descriptor_size", "abi_version", "forward evolution", "repr(C)", "required_host_providers", "providers table", "init_fn", "shutdown_fn"]
 
 [[tenet]]
 id = "descriptor_length_fields_are_bare_u32_for_a_wire_stable_layout_and_each_is_bounded_by_a_ceiling_of_one_mebi_entries"
+subject = "extensions"
 what = "The three length fields of the descriptor are 32-bit integers so that the layout is wire-stable and independent of the platform, where an earlier shape used the pointer-sized integer and varied in byte width across pointer sizes. Each length is bounded when the descriptor is read by a ceiling of about a million entries, which is well above any plausible extension's surface and bounds the worst-case slice at roughly 16 MiB."
 mechanism = "`MAX_DESCRIPTOR_LIST_LEN: u32 = 1 << 20` (1_048_576), applied to name bytes, providers entries and required host providers; violation is `ExtensionError::DescriptorBoundsExceeded { field, len }`; `ProviderEntry` is 16 bytes on 64-bit, giving about 16 MiB."
 source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:25-25, mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:34-34"
@@ -231,11 +232,11 @@ because = "A previous shape used USize and varied byte width across pointer size
 origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
-subject = "extensions"
 keywords = ["MAX_DESCRIPTOR_LIST_LEN", "1 << 20", "u32 length", "wire-stable", "DescriptorBoundsExceeded", "bounds check", "16 MiB", "USize"]
 
 [[tenet]]
 id = "the_extension_version_is_a_c_layout_semver_triple_with_a_padding_slot_and_bare_u16_fields"
+subject = "extensions"
 what = "The extension version in the descriptor is a C-layout semantic version of four 16-bit fields: major, minor, patch and a padding slot for future use. The fields are bare 16-bit integers by the wire-primitive policy, because the arvo family has no wire-stable 16-bit newtype yet."
 mechanism = "`ExtensionVersion` `#[repr(C)]`, four `u16` fields."
 source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:26-26"
@@ -247,11 +248,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "extensions"
 keywords = ["ExtensionVersion", "semver triple", "u16", "padding slot", "repr(C)", "wire-stable newtype"]
 
 [[tenet]]
 id = "a_provider_table_entry_pairs_a_stable_identifier_with_an_opaque_vtable_pointer_that_the_consumer_trampoline_casts_back_and_the_host_never_dereferences"
+subject = "extensions"
 what = "A provider table entry is a pair of a provider identifier and an opaque pointer to a vtable. The consumer's generated trampoline casts the pointer back to its domain-specific interface, and the host never dereferences the pointer."
 mechanism = "`ProviderEntry` = `(ProviderId, *const c_void)`; `Extension::provider(id)` returns `Maybe<*const c_void>`."
 source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:27-27, mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:66-66"
@@ -265,11 +266,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "extensions"
 keywords = ["ProviderEntry", "ProviderId", "opaque vtable", "c_void", "Extension::provider", "trampoline", "host never dereferences"]
 
 [[tenet]]
 id = "a_provider_identifier_is_a_compile_time_fnv_64_hash_of_an_ascii_name_and_a_collision_is_settled_by_renaming"
+subject = "extensions"
 what = "A provider identifier is a 64-bit value derived at compile time from an ASCII byte-string name, evaluated on both the host and the extension side, which makes it bit-equal across independently compiled binaries. Collisions are vanishingly rare but not impossible, and when one occurs the consumers rename, which is a compile-time operation, so no runtime collision detection is needed."
 mechanism = "`ProviderId` is a `#[repr(transparent)]` newtype over `u64`; `ProviderId::from_name(name)` is a `const fn` using FNV-64; consumer contract crates declare ids as consts, for example `pub const PROVIDER_LINTER: ProviderId = ProviderId::from_name(b\"viola.linter.v1\");`. The `pub u64` field is the deliberate FFI-wire constructor pattern."
 source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:28-28, mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:100-104"
@@ -287,11 +288,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "extensions"
 keywords = ["ProviderId", "FNV-64", "from_name", "const fn", "collision", "rename", "bit-equality", "provider names"]
 
 [[tenet]]
 id = "the_host_abi_version_is_2_and_it_bumps_on_any_descriptor_layout_or_symbol_name_change_with_no_legacy_read_path"
+subject = "extensions"
 what = "The host advertises an ABI version that the descriptor must match. Its current value is 2, the bump from 1 marked the introduction of the tag, the descriptor size and the 32-bit length fields, and it bumps further on any descriptor layout change or symbol name change. The rule against legacy shims before version 1.0 applies, so there is no read path for the old version and extensions built against version 1 fail the check on load."
 mechanism = "`HOST_ABI_VERSION: AbiVersion = AbiVersion(2)`; `ExtensionError::AbiVersionMismatch { expected, got }`; the v1.1 layout change introduced `tag`, `descriptor_size` and `u32`-typed length fields."
 source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:30-31"
@@ -304,11 +305,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "extensions"
 keywords = ["HOST_ABI_VERSION", "AbiVersion", "bump", "no legacy shims", "pre-1.0", "v1.1 layout", "abi_version check"]
 
 [[tenet]]
 id = "the_single_well_known_symbol_is_a_null_terminated_name_shared_between_host_and_extension_author_through_the_macro"
+subject = "extensions"
 what = "The single well-known exported symbol that extensions expose is named by a null-terminated C string constant, shared between the host and the extension author through the macro's emission path."
 mechanism = "`DESCRIPTOR_SYMBOL: &CStr`, constructed at const via `CStr::from_bytes_with_nul_unchecked` over a literal with a known trailing nul; the exported symbol is `__hilavitkutin_extension_descriptor`."
 source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:32-32"
@@ -320,11 +321,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "extensions"
 keywords = ["DESCRIPTOR_SYMBOL", "CStr", "well-known symbol", "from_bytes_with_nul_unchecked", "exported symbol", "macro emission"]
 
 [[tenet]]
 id = "the_descriptor_tag_is_the_four_bytes_hile_and_the_host_matches_it_before_reading_any_other_field"
+subject = "extensions"
 what = "The first field of the descriptor carries a constant tag whose four bytes spell HILE in memory order on little-endian targets, which is the platform set the linking crate commits to. The host matches the tag before reading any other field, so that a wrong tag yields a tag mismatch error and not garbage layout fed into the version comparison."
 mechanism = "`EXTENSION_DESCRIPTOR_TAG: u32 = 0x454C4948`; `ExtensionError::DescriptorTagMismatch { found: u32 }`; the `#[export_extension]` macro embeds the tag automatically."
 source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:33-33"
@@ -336,11 +337,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "extensions"
 keywords = ["EXTENSION_DESCRIPTOR_TAG", "0x454C4948", "HILE", "DescriptorTagMismatch", "little-endian", "descriptor validation"]
 
 [[tenet]]
 id = "an_extension_handle_runs_shutdown_exactly_once_on_drop_and_an_explicit_close_returns_the_shutdown_error_that_drop_must_swallow"
+subject = "extensions"
 what = "The host-level handle of a loaded extension holds the loader's library, the static descriptor resolved at load time and the host-opaque pointer threaded through init and shutdown. Dropping it runs shutdown exactly once and then drops the library, and an explicit close does the same but returns any shutdown error, which a drop cannot surface."
 mechanism = "`Extension` returned by `ExtensionHost::load`; `Extension::close(self) -> Outcome<(), ExtensionError>`; `Drop` swallows errors; holds `Library`, `&'static ExtensionDescriptor` and a host-opaque `*mut c_void`."
 source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:35-36, mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:68-68"
@@ -355,11 +356,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "extensions"
 keywords = ["Extension", "Extension::close", "Drop", "shutdown once", "Library", "Outcome", "host-opaque pointer", "ExtensionHost::load"]
 
 [[tenet]]
 id = "each_load_is_classified_required_or_optional_and_the_default_policy_aborts_on_required_failure_and_continues_on_optional_failure"
+subject = "extensions"
 what = "Each load is classified as required or optional. The default failure policy is stateless: a failed required load aborts and a failed optional load continues. A required failure always propagates as an error. An optional failure either yields success with nothing loaded when the policy says continue, which models a best-effort consumer for whom loading something or not are both normal outcomes, or propagates as an error when the policy says abort."
 mechanism = "`ExtensionRequirement` { `Required`, `Optional` }; `PolicyVerdict` { `Continue`, `Abort` }; `default_policy`; `Outcome::Ok(Maybe::Nothing)` for an optional failure with Continue; `Outcome::Err` otherwise."
 source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:38-39, mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:42-42, mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:64-64, mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:106-108"
@@ -380,11 +381,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "extensions"
 keywords = ["ExtensionRequirement", "Required", "Optional", "PolicyVerdict", "default_policy", "Outcome", "Maybe::Nothing", "failure policy", "best-effort"]
 
 [[tenet]]
 id = "policy_and_shutdown_hooks_are_plain_function_pointers_with_no_dyn_no_heap_and_no_closures_so_state_lives_in_a_static"
+subject = "extensions"
 what = "The failure policy hook and the shutdown observer hook are plain function pointers, with no dynamic dispatch, no heap and no closures. A consumer that needs state keeps it in its own instance or in static memory and exposes a plain function that reads it."
 mechanism = "`FailurePolicyFn`: `fn(&ExtensionError, ExtensionRequirement) -> PolicyVerdict`, installed with `ExtensionHost::new(caps).with_policy(their_fn)`; `ShutdownObserverFn`: `fn(name: &[u8], status: ExtensionAbiStatus)`, installed with `with_shutdown_observer(observer)`."
 source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:40-41, mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:108-108, mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:110-110"
@@ -401,11 +402,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "extensions"
 keywords = ["FailurePolicyFn", "ShutdownObserverFn", "fn pointer", "no dyn", "no heap", "no closures", "with_policy", "with_shutdown_observer", "static state"]
 
 [[tenet]]
 id = "the_shutdown_observer_is_a_hook_separate_from_the_failure_policy_because_drop_has_no_caller_to_report_errors_to"
+subject = "extensions"
 what = "The shutdown observer is a separate hook from the failure policy. A drop has no caller to surface errors to, so a consumer that needs to log shutdown failures or attribute them to extensions installs an observer at host construction. The observer also fires on an explicit close for symmetry, so one observer is notified on either path."
 mechanism = "Fires once per extension from `Extension::close` and from the `Drop` path, with the declared name and the status returned by `shutdown_fn` (`ExtensionAbiStatus::Ok` if the extension declared no shutdown)."
 source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:68-68, mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:110-110"
@@ -420,11 +421,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "extensions"
 keywords = ["shutdown observer", "Drop", "close", "error attribution", "logging shutdown failures", "with_shutdown_observer", "symmetry"]
 
 [[tenet]]
 id = "the_host_layer_error_is_a_non_exhaustive_c_layout_enum_with_a_variant_for_each_way_a_load_can_fail"
+subject = "extensions"
 what = "The host-layer error is a non-exhaustive C-layout enum with a variant for each way a load or shutdown can fail: link failure, a missing or invalid descriptor, a tag mismatch, a descriptor too small, an ABI version mismatch, a length over the ceiling, an unsupported extension version, a missing required host provider, and failed init or shutdown."
 mechanism = "`ExtensionError` `#[repr(C)] #[non_exhaustive]`: `LinkFailed { cause: LinkError }`, `DescriptorMissing`, `DescriptorInvalid`, `DescriptorTagMismatch { found: u32 }`, `DescriptorSizeTooSmall { advertised: u32, minimum: u32 }`, `AbiVersionMismatch { expected, got }`, `DescriptorBoundsExceeded { field: &'static str, len: u32 }` (field is \"name\", \"providers\" or \"required_host_providers\"), `ExtensionVersionUnsupported`, `RequiredHostProviderMissing { provider: ProviderId }`, `InitFailed { status }`, `ShutdownFailed { status }`. `ExtensionAbiStatus` `#[repr(u32)]`: `Ok`, `InitFailed`, `InvalidArg`, `NotSupported`, `Internal`."
 source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:29-29, mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:43-43"
@@ -438,11 +439,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "extensions"
 keywords = ["ExtensionError", "ExtensionAbiStatus", "non_exhaustive", "DescriptorBoundsExceeded", "RequiredHostProviderMissing", "InitFailed", "ShutdownFailed", "repr(C) error"]
 
 [[tenet]]
 id = "an_extension_author_supplies_metadata_and_optional_init_and_shutdown_and_provider_export_through_four_traits"
+subject = "extensions"
 what = "An extension author feeds the name, the version and the required host providers into the export macro through a metadata trait, may implement an optional init trait and a matching optional shutdown trait for behaviour beyond the no-op default, and advertises a provider through a provider-export trait that gives its identifier and its vtable pointer."
 mechanism = "`ExtensionMeta` (`NAME: &'static [u8]`, `VERSION: ExtensionVersion`, `REQUIRED_HOST_PROVIDERS: &'static [ProviderId]`); `InitHandler` (`extern \"C\" fn init(host_ctx: *mut c_void) -> ExtensionAbiStatus`); `ShutdownHandler`; `ProviderExport` (`const ID: ProviderId`, `const VTABLE_PTR: *const c_void`), typically implemented through a consumer-domain macro."
 source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:44-47"
@@ -457,11 +458,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "extensions"
 keywords = ["ExtensionMeta", "InitHandler", "ShutdownHandler", "ProviderExport", "VTABLE_PTR", "REQUIRED_HOST_PROVIDERS", "export_extension", "extension author"]
 
 [[tenet]]
 id = "ffi_wire_descriptor_fields_use_an_arvo_newtype_where_one_is_wire_identical_and_otherwise_a_bare_primitive_by_deliberate_choice"
+subject = "extensions"
 what = "Descriptor fields that cross the boundary need a wire-stable footprint, so a two-tier rule applies. An arvo transparent newtype is used when its backing is wire-identical to the C type, and a bare primitive is kept where no wire-stable arvo newtype exists, because the width of a fixed-point backing comes from its strategy and is not pinned to the C integer width. Each such bare primitive carries a lint-allow comment recording the contract, raw pointer fields stay as they are, and a future fixed-width wire primitive would collapse the second tier into the first."
 mechanism = "Tier 1: `USize(pub usize)` over `usize` for every `len` field paired with a pointer, `Bool(pub bool)`. Tier 2 bare: `abi_version: u32`, `ExtensionVersion { major: u16, ... }`, `ProviderId`'s inner `u64`, each with a trailing `// lint:allow(...) tracked: #206`. `UFixed<I, F, S>` is rejected for the backing width varying with `S: Strategy`. Raw pointers (`*const u8`, `*const ProviderEntry`, `*const ProviderId`) are outside the numeric-lint scope. Future `UWire<N>` (fixed backing for exactly N wire bits, no Strategy axis), recorded in BACKLOG."
 source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:49-58"
@@ -481,6 +482,5 @@ A future arvo primitive `UWire<N>` (fixed backing for exactly `N` wire bits, no 
 origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
-subject = "extensions"
 keywords = ["FFI-wire primitive policy", "USize", "Bool", "UFixed", "UWire<N>", "bare primitive", "lint:allow", "repr(transparent)", "wire-stable"]
-cites = ["no_bare_primitive_exists_anywhere_in_the_stack", "a_foreign_contract_forcing_a_primitive_is_first_met_by_implementing_it_on_an_arvo_type_and_otherwise_the_crate_is_dropped"]
+related = ["tenet::no_bare_primitive_exists_anywhere_in_the_stack", "tenet::a_foreign_contract_forcing_a_primitive_is_first_met_by_implementing_it_on_an_arvo_type_and_otherwise_the_crate_is_dropped"]

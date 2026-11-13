@@ -2,6 +2,7 @@
 
 [[tenet]]
 id = "a_unit_declares_its_name_read_set_write_set_hint_commutativity_and_an_execute_function"
+subject = "units"
 what = "A unit is a trait with a name, a read access set, a write access set, a scheduling hint with a default, a commutativity flag and an execute function that takes a context over its read and write sets. It is generic over its schedule condition, which defaults to always."
 mechanism = "`pub trait WorkUnit<Schedule = Always>: Send + Sync + 'static { const NAME: &'static str; type Read: AccessSet; type Write: AccessSet; type Hint: SchedulingHint = (Immediate, Atomic, Normal); const COMMUTATIVE: bool; fn execute(&self, ctx: Context<Self::Read, Self::Write>); }`"
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:640-647"
@@ -20,12 +21,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:640-647", "later: mock/research/202606111400_canonical-design-addendum-a1.md:110-120, the_consumer_spelling_of_a_unit_reduces_to_read_write_hint_and_schedule_with_the_engine_context_computed_if_feasible"]
-subject = "units"
 keywords = ["WorkUnit", "AccessSet", "Read", "Write", "SchedulingHint", "COMMUTATIVE", "execute", "Context", "NAME"]
-cites = ["a_unit_declares_whether_it_is_commutative"]
+related = ["tenet::a_unit_declares_whether_it_is_commutative"]
 
 [[tenet]]
 id = "a_schedule_condition_is_either_always_or_on_a_virtual_firing"
+subject = "units"
 what = "A unit's schedule condition is either unconditional, which is the default, or on a virtual, which runs the unit when that virtual fires."
 mechanism = "`Always` (unconditional, default); `On<V>` (when virtual V fires)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:650-652"
@@ -39,11 +40,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:650-652"]
-subject = "units"
 keywords = ["Schedule", "Always", "On<V>", "virtual fires", "schedule condition", "unconditional"]
 
 [[tenet]]
 id = "the_after_condition_is_dropped_and_a_virtual_with_an_on_condition_is_used_instead"
+subject = "units"
 what = "The after condition on a unit is dropped, and a virtual with an on condition is used instead."
 mechanism = "`After<U>` DROPPED (T6); use `Virtual` + `On<V>`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:653-653"
@@ -55,12 +56,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:653-653"]
-subject = "units"
 keywords = ["After<U>", "dropped", "Virtual", "On<V>", "T6", "schedule condition"]
-cites = ["a_schedule_condition_is_either_always_or_on_a_virtual_firing"]
+related = ["tenet::a_schedule_condition_is_either_always_or_on_a_virtual_firing"]
 
 [[tenet]]
 id = "the_context_is_taken_by_shared_reference_because_that_prevents_noalias_undefined_behaviour"
+subject = "units"
 what = "The context is received by shared reference, and this is load-bearing because it prevents undefined behaviour from noalias assumptions."
 mechanism = "`&self` receiver on Context."
 because = "Load-bearing: prevents noalias UB."
@@ -73,11 +74,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:656-656"]
-subject = "units"
 keywords = ["Context", "&self receiver", "noalias", "UB", "load-bearing", "T6 CRITICAL"]
 
 [[tenet]]
 id = "a_unit_reaches_a_resource_through_a_pointer_to_external_storage"
+subject = "units"
 what = "A unit reaches a resource through a pointer to external storage."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:659-659"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#09-workunit-trait"]
@@ -88,11 +89,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:659-659"]
-subject = "units"
 keywords = ["resource access", "pointer", "external storage", "R5", "Context"]
 
 [[tenet]]
 id = "a_unit_registers_its_ops_through_each_batch_and_reduce_on_the_context"
+subject = "units"
 what = "A unit registers its ops through the each, batch and reduce operations of the context."
 mechanism = "`ctx.each()` / `ctx.batch()` / `ctx.reduce()` op registration (T6 L768-783)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:660-660"
@@ -104,11 +105,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:660-660"]
-subject = "units"
 keywords = ["ctx.each", "ctx.batch", "ctx.reduce", "op registration", "Context", "T6"]
 
 [[tenet]]
 id = "the_op_author_controls_the_inner_loop_and_the_framework_controls_the_morsel_boundaries"
+subject = "units"
 what = "The author of an op controls the inner loop, and the framework controls the morsel boundaries."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:663-663"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#09-workunit-trait"]
@@ -119,11 +120,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:663-663"]
-subject = "units"
 keywords = ["inner loop contract", "op author", "morsel boundaries", "framework", "T3"]
 
 [[tenet]]
 id = "the_morsel_dispatch_loop_is_always_inlined"
+subject = "units"
 what = "The morsel dispatch loop is marked to be always inlined."
 mechanism = "`#[inline(always)]` on morsel dispatch loop."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:664-664"
@@ -135,11 +136,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:664-664"]
-subject = "units"
 keywords = ["inline(always)", "morsel dispatch loop", "inner loop", "inlining"]
 
 [[tenet]]
 id = "the_framework_constrains_the_inputs_of_an_op_to_column_values_with_native_stride_contiguous_and_non_aliasing"
+subject = "units"
 what = "The framework constrains the inputs of an op: column values that are copyable and at most sixteen bytes, type-native stride, contiguous storage, and non-aliasing read and write sets."
 mechanism = "ColumnValue (Copy + 'static, <= 16 bytes), type-native stride, contiguous, non-aliasing Read/Write."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:665-666"
@@ -152,11 +153,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:665-666"]
-subject = "units"
 keywords = ["inner loop contract", "ColumnValue", "type-native stride", "contiguous", "non-aliasing", "inputs"]
 
 [[tenet]]
 id = "an_optional_utility_covers_the_common_pattern_of_a_loop_over_records"
+subject = "units"
 what = "An optional utility covers a common pattern of the inner loop contract."
 mechanism = "`for_each_row` utility (optional)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:662-662, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:667-667"
@@ -170,11 +171,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:662-662", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:667-667"]
-subject = "units"
 keywords = ["for_each_row", "utility", "optional", "common pattern", "inner loop"]
 
 [[tenet]]
 id = "process_batch_is_the_single_entry_point"
+subject = "units"
 what = "The batch processing call is the single entry point of the inner loop contract."
 mechanism = "`process_batch` = single entry point (T3 decision #82)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:662-662, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:668-668"
@@ -188,11 +189,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:662-662", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:668-668"]
-subject = "units"
 keywords = ["process_batch", "single entry point", "T3 decision #82", "inner loop contract"]
 
 [[tenet]]
 id = "a_unit_is_manually_implementable_and_hilavitkutin_itself_provides_no_registration_attribute"
+subject = "units"
 what = "A unit is implemented by hand, hilavitkutin itself provides no registration attribute, and the consumers handle registration in their own ways."
 mechanism = "No `#[register]` in hilavitkutin itself; polka uses inventory, saalis uses Named, loimu uses macros."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:671-672"
@@ -205,11 +206,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:671-672"]
-subject = "units"
 keywords = ["registration", "#[register]", "inventory", "Named", "macros", "consumers", "manually implementable"]
 
 [[tenet]]
 id = "the_scheduler_accepts_units_through_an_explicit_builder_api"
+subject = "units"
 what = "The scheduler accepts units through an explicit builder interface."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:673-673"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#09-workunit-trait"]
@@ -220,11 +221,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:673-673"]
-subject = "units"
 keywords = ["scheduler builder", "explicit builder API", "registration", "work units"]
 
 [[tenet]]
 id = "read_and_write_declarations_are_the_dependency_injection"
+subject = "units"
 what = "The read and write declarations of a unit are its dependency injection, an ECS treated as dependency injection."
 mechanism = "ECS-as-DI: Read/Write declarations ARE dependency injection."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:674-674"
@@ -236,11 +237,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:674-674"]
-subject = "units"
 keywords = ["ECS-as-DI", "dependency injection", "Read", "Write", "declarations"]
 
 [[tenet]]
 id = "a_unit_uses_at_most_eight_unique_columns_as_a_guideline_and_not_a_constraint"
+subject = "units"
 what = "A unit is guided to use at most eight unique columns, as a guideline against register pressure and not as a constraint."
 mechanism = "<= 8 unique columns per WU."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:677-677, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1178-1179"
@@ -255,11 +256,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:677-677", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1178-1179"]
-subject = "units"
 keywords = ["8 unique columns", "register pressure", "guideline", "not constraint", "WU authoring"]
 
 [[tenet]]
 id = "a_write_declaration_implies_a_read"
+subject = "units"
 what = "Writing a store implies reading it."
 mechanism = "Write implies Read (T5 §Q6)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:678-678"
@@ -271,11 +272,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:678-678"]
-subject = "units"
 keywords = ["write implies read", "Read", "Write", "T5 Q6", "access set"]
 
 [[tenet]]
 id = "a_unit_declares_only_its_reads_writes_and_hints_and_everything_else_is_derived"
+subject = "units"
 what = "A unit must declare its read column set, its write column set and its scheduling hints, and everything else is derived: the DAG, the ordering, phases, trunks, fibers, morsel sizes, strategy, codegen and synchronisation."
 mechanism = "`type Read: AccessSet`, `type Write: AccessSet`, `type Hint: SchedulingHint` (Urgency, Divisibility, Significance)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:679-679, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1181-1188"
@@ -296,12 +297,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:679-679", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1181-1188"]
-subject = "units"
 keywords = ["what WUs must declare", "Read", "Write", "SchedulingHint", "Urgency", "Divisibility", "Significance", "derived"]
-cites = ["scheduling_hints_replace_an_order_field_on_the_unit"]
+related = ["tenet::scheduling_hints_replace_an_order_field_on_the_unit"]
 
 [[tenet]]
 id = "a_loader_is_an_ordinary_unit_with_no_special_status_and_its_empty_read_set_makes_it_a_root"
+subject = "units"
 what = "Loaders have no special status in the engine. A loader declares no reads, which makes it a root node of the graph, and the scheduler treats it like any other unit: the consumer writes it and the engine schedules it."
 mechanism = "`type Read = ()`, `type Write = (Column<A>, ...)`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1481-1484"
@@ -316,12 +317,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1481-1484"]
-subject = "units"
 keywords = ["loader", "root node", "no read dependencies", "WorkUnit", "type Read = ()", "no special status"]
-cites = ["the_consumer_materialises_external_data_into_columns_through_its_own_loader_units_and_manages_storage_lifecycle"]
+related = ["tenet::the_consumer_materialises_external_data_into_columns_through_its_own_loader_units_and_manages_storage_lifecycle"]
 
 [[tenet]]
 id = "a_unit_registers_through_the_builder_with_one_add_whatever_its_schedule_condition"
+subject = "units"
 what = "One add call on the builder registers any unit and handles all schedule conditions, such as the always and on conditions, because the condition is part of the trait implementation and not of the builder call. There is no separate add for on-conditions."
 mechanism = "`.add::<MyWU>()` handles all schedule conditions; `Always`, `On<V>` and the rest are on the trait impl, not the builder call. No separate `add_on`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2101-2103"
@@ -335,11 +336,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2101-2103"]
-subject = "units"
 keywords = ["add", "builder", "schedule conditions", "Always", "On<V>", "registration", "no add_on"]
 
 [[tenet]]
 id = "the_engine_has_no_register_macro_and_consumers_register_their_units_their_own_way_with_the_declarations_as_injection"
+subject = "units"
 what = "Consumers register units through the explicit builder API, and the engine itself provides no register attribute. Consumers handle registration in their own way, and in the ECS-as-dependency-injection view the read and write declarations are the dependency injection."
 mechanism = "No `#[register]` in hilavitkutin itself. polka: inventory, saalis: Named, loimu: macros."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2105-2108"
@@ -354,11 +355,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2105-2108"]
-subject = "units"
 keywords = ["registration", "#[register]", "explicit builder API", "dependency injection", "inventory", "Named", "macros", "ECS-as-DI"]
 
 [[tenet]]
 id = "execute_returns_nothing_and_a_failing_unit_aborts_because_abort_gives_better_llvm_codegen"
+subject = "units"
 what = "A unit's execute method returns nothing and carries no result on the hot path. Failure aborts: on the no_os and os tiers panic is abort already, and on the std tier catching an unwind is available but abort is preferred."
 because = "Abort enables more aggressive LLVM optimisation, with no unwind tables and no landing pads."
 mechanism = "`execute()` returns `()`. No `Result` return type on the hot path. `catch_unwind` is available on the std tier, and abort is preferred."
@@ -385,11 +386,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2147-2153", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2157-2157", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2448-2452", "later: mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:13-13, there_is_no_std_platform_tier"]
-subject = "units"
 keywords = ["abort on failure", "execute", "no Result", "catch_unwind", "panic", "unwind tables", "landing pads", "R7"]
 
 [[tenet]]
 id = "a_unit_signals_failure_through_data_flow_by_writing_an_error_column_or_firing_an_error_virtual"
+subject = "units"
 what = "A unit that needs to signal failure writes to an error column or fires an error virtual, so that failure is data flow and not control flow. The scheduler detects the failure through version stamps or the error virtual, then poisons the dependents."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2154-2156"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#23-scheduler-builder-and-meta"]
@@ -402,12 +403,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2154-2156"]
-subject = "units"
 keywords = ["error column", "error virtual", "data flow", "control flow", "version stamps", "poison dependents"]
-cites = ["execute_returns_nothing_and_a_failing_unit_aborts_because_abort_gives_better_llvm_codegen"]
+related = ["tenet::execute_returns_nothing_and_a_failing_unit_aborts_because_abort_gives_better_llvm_codegen"]
 
 [[tenet]]
 id = "the_scheduler_is_built_by_a_builder_that_is_const_generic_over_units_stores_and_lanes_with_overrides_for_the_platform_traits"
+subject = "units"
 what = "The scheduler is constructed through a builder that is const-generic over the maximum number of units, stores and lanes. It registers units, columns and resources, and optionally overrides the memory provider, the thread pool and the clock before building the scheduler."
 mechanism = "`Scheduler::<MAX_UNITS, MAX_STORES, MAX_LANES>::builder().add::<MyWU>().resource::<T>(initial).resource_default::<T>().column::<T>().memory(my_provider).threads(my_pool).clock(my_clock).build()`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2087-2099"
@@ -431,12 +432,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2087-2099"]
-subject = "units"
 keywords = ["Scheduler builder", "MAX_UNITS", "MAX_STORES", "MAX_LANES", "const generics", "memory override", "thread pool override", "clock override"]
-cites = ["each_platform_tier_ships_defaults_and_the_consumer_overrides_them_through_the_scheduler_builder"]
+related = ["tenet::each_platform_tier_ships_defaults_and_the_consumer_overrides_them_through_the_scheduler_builder"]
 
 [[tenet]]
 id = "a_failed_fiber_freezes_its_progress_counter_and_poisons_its_dependents_while_independent_fibers_continue"
+subject = "units"
 what = "A fiber failure freezes the fiber's progress counter and poisons all dependent fibers, while independent fibers continue."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2159-2162"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#23-scheduler-builder-and-meta"]
@@ -450,12 +451,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2159-2162"]
-subject = "units"
 keywords = ["fiber failure", "freeze progress counter", "poison dependents", "independent fibers continue", "error propagation"]
-cites = ["a_unit_signals_failure_through_data_flow_by_writing_an_error_column_or_firing_an_error_virtual"]
+related = ["tenet::a_unit_signals_failure_through_data_flow_by_writing_an_error_column_or_firing_an_error_virtual"]
 
 [[tenet]]
 id = "the_pipeline_run_returns_a_per_fiber_status_and_extracts_no_result_and_the_consumer_decides_on_partial_failure"
+subject = "units"
 what = "Running the pipeline returns only a result status with a per-fiber state of completed, failed or poisoned. The consumer decides whether a partial failure is acceptable, and it reads the column storage directly, since no result is extracted from the run."
 mechanism = "`PipelineResult`: per-fiber status (Completed / Failed / Poisoned). `Pipeline::run()` returns `PipelineResult` status only."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2163-2167"
@@ -471,11 +472,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2163-2167"]
-subject = "units"
 keywords = ["PipelineResult", "Completed", "Failed", "Poisoned", "Pipeline::run", "no result extraction", "partial failure"]
 
 [[tenet]]
 id = "loimu_keeps_its_seven_access_modes_and_maps_them_to_read_and_write_at_the_boundary"
+subject = "units"
 what = "There are two access modes only, read and write, and write implies read. The seven access modes of loimu control ordering, freshness and determinism within its double-buffered view system and are loimu-specific concerns tied to its temporal prediction, rotation groups and frame generation; polka and saalis need none of this. In the founding record, loimu maps its seven modes to read and write at the hilavitkutin boundary and implements the richer semantics in its own layer. If a third mode is needed later, it can be added as a new store wrapper type in the access set without changing the unit trait."
 mechanism = "loimu's modes: `Pinned`, `Immediate`, `MutImmediate`, `Sample`, `Post`, `Approx`, `Defer`. A later third mode, e.g. `ReadExclusive`, would be a wrapper such as `Exclusive<Resource<T>>` in the `AccessSet`."
 source = "mock/design_rounds/202604200055/202603141800_topic.hilavitkutin-core-design.md:643-661"
@@ -505,7 +506,6 @@ origin = "proposed"
 written_by = "topic T5 of the founding round (hilavitkutin-core-design), question Q6, marked resolved there"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "units"
 keywords = ["access mode", "Read", "Write", "Pinned", "Immediate", "frozen snapshot", "double-buffered", "freshness", "loimu", "store wrapper"]
-rules_out = ["loimu's seven access modes in hilavitkutin"]
+rejects = ["loimu's seven access modes in hilavitkutin"]
 related = ["tenet::a_writer_precedes_every_reader_of_what_it_writes"]

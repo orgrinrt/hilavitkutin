@@ -2,6 +2,7 @@
 
 [[tenet]]
 id = "the_per_project_defaults_are_sequential_for_polka_dots_mixed_for_saalis_and_phased_with_convergence_for_loimu"
+subject = "downstream"
 what = "In the founding record, the per-project strategy defaults follow the project's record count and pipeline shape: polka-dots with about 200 records and a deep pipeline runs sequentially in about a microsecond, saalis with 10K to 100K records and a mixed shape runs sequentially for deep pipelines and adaptively for wide ones, and loimu with 100K to 10M records and a wide shape runs phased with convergence."
 mechanism = "polka-dots: ~200 records, deep, sequential, 1µs total. saalis: 10K-100K, mixed, sequential for deep, adaptive for wide. loimu: 100K-10M, wide, phased with convergence."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1964-1970"
@@ -19,11 +20,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1964-1970"]
-subject = "downstream"
 keywords = ["per-project defaults", "polka-dots", "saalis", "loimu", "sequential", "adaptive", "phased", "record count"]
 
 [[tenet]]
 id = "polka_and_saalis_use_the_full_pipeline_and_loimu_uses_only_the_scheduler_abstractions"
+subject = "downstream"
 what = "In the founding record, polka and saalis use the full pipeline, and loimu uses the scheduler abstractions only."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2282-2283"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
@@ -35,11 +36,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2282-2283"]
-subject = "downstream"
 keywords = ["polka", "saalis", "loimu", "full pipeline", "scheduler abstractions", "per-project scope"]
 
 [[tenet]]
 id = "loimu_double_buffers_record_data_and_its_readers_get_the_frozen_snapshot"
+subject = "downstream"
 what = "In loimu, record data in views is double-buffered, frozen and live, by default. A behaviour that reads gets the frozen snapshot and runs in parallel, and a behaviour that writes gets the live buffer exclusively."
 source = "mock/design_rounds/202604200055/202603141800_research.loimu-storage.md:826-828"
 provenance = ["mock::design_rounds::202604200055::202603141800_research.loimu-storage::#double-buffered-access"]
@@ -52,12 +53,12 @@ origin = "proposed"
 written_by = "the research note loimu-storage of the founding round, describing loimu"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "downstream"
 keywords = ["loimu", "double-buffered", "frozen", "live", "snapshot", "previous pass", "reader", "writer"]
 related = ["tenet::loimu_keeps_its_seven_access_modes_and_maps_them_to_read_and_write_at_the_boundary"]
 
 [[tenet]]
 id = "loimu_s_swap_buffer_is_rated_directly_portable_as_a_double_buffering_primitive"
+subject = "downstream"
 what = "The synthesis of the loimu research rates loimu's swap buffer, with its exchange and snapshot modes, as directly portable: a double-buffering primitive for any column data."
 mechanism = "`SwapBuffer` (Exchange + Snapshot modes)."
 source = "mock/design_rounds/202604200055/202603141800_research.loimu-synthesis.md:290-290, mock/design_rounds/202604200055/202603141800_research.loimu-synthesis.md:294-294"
@@ -71,12 +72,12 @@ origin = "proposed"
 written_by = "the research note loimu-synthesis of the founding round, its portability ratings"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "downstream"
 keywords = ["SwapBuffer", "Exchange", "Snapshot", "double-buffering", "portable", "loimu", "column data"]
 related = ["tenet::loimu_double_buffers_record_data_and_its_readers_get_the_frozen_snapshot"]
 
 [[tenet]]
 id = "loimu_s_layers_stay_in_loimu_and_hilavitkutin_provides_the_foundation"
+subject = "downstream"
 what = "The founding research on loimu's storage says that loimu layers temporal columns, spring dynamics, reel backends, cadence policies, signal arenas and seven access modes on top of the primitives, that those layers stay in loimu, and that hilavitkutin provides the foundation they build on."
 source = "mock/design_rounds/202604200055/202603141800_research.loimu-storage.md:1135-1137"
 provenance = ["mock::design_rounds::202604200055::202603141800_research.loimu-storage::#what-the-unified-store-should-look-like"]
@@ -89,12 +90,12 @@ origin = "proposed"
 written_by = "the founding-round research note on loimu's storage, 202603141800"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "downstream"
 keywords = ["loimu", "temporal columns", "seven access modes", "layers", "foundation", "primitives"]
 related = ["tenet::loimu_keeps_its_seven_access_modes_and_maps_them_to_read_and_write_at_the_boundary", "question::whether_hilavitkutin_s_own_columns_are_double_buffered"]
 
 [[tenet]]
 id = "downstream_consumers_register_their_own_units_and_storage_shapes_and_the_engine_schedules_them_through_one_loop"
+subject = "downstream"
 what = "Downstream consumer applications layer on top of the engine: signal and graph frameworks, language runtimes and other workloads shaped as pipelines. Each consumer registers its own units and storage shapes, and the engine schedules them all through the same plan, dispatch and adapt loop."
 mechanism = "Examples named: signal / DAG frameworks, language runtimes (macros, scratch buffers, generative pipelines)."
 source = "mock/DESIGN.md.tmpl:160-160"
@@ -106,11 +107,11 @@ origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "downstream"
 keywords = ["downstream consumers", "signal frameworks", "DAG frameworks", "language runtimes", "pipeline-shaped workloads", "register units", "plan dispatch adapt loop"]
 
 [[tenet]]
 id = "loimu_is_an_old_reference_that_hilavitkutin_primarily_replaces"
+subject = "downstream"
 what = "Loimu is an old reference. Hilavitkutin is primarily the replacement for it. Restarting loimu later on hilavitkutin is a pending consideration, and loimu is not remembered as important as anything other than a reference."
 source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS-14.md:4-4"
 provenance = ["mock::research::202611130850_the-record-read-whole::OP-ANSWERS-14::#op-s-words-batch-14-13-november-2026-about-10-55-utc-said-unprompted"]
@@ -121,13 +122,13 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["quote: mock/research/202611130850_the-record-read-whole/OP-ANSWERS-14.md:4-4"]
-subject = "downstream"
 keywords = ["loimu", "reference", "replacement", "downstream user", "restart", "consumer"]
-rules_out = ["loimu as a live downstream user of hilavitkutin"]
-cites = ["loimu_s_layers_stay_in_loimu_and_hilavitkutin_provides_the_foundation", "loimu_double_buffers_record_data_and_its_readers_get_the_frozen_snapshot", "polka_and_saalis_use_the_full_pipeline_and_loimu_uses_only_the_scheduler_abstractions", "the_per_project_defaults_are_sequential_for_polka_dots_mixed_for_saalis_and_phased_with_convergence_for_loimu", "loimu_keeps_its_seven_access_modes_and_maps_them_to_read_and_write_at_the_boundary"]
+rejects = ["loimu as a live downstream user of hilavitkutin"]
+related = ["tenet::loimu_s_layers_stay_in_loimu_and_hilavitkutin_provides_the_foundation", "tenet::loimu_double_buffers_record_data_and_its_readers_get_the_frozen_snapshot", "tenet::polka_and_saalis_use_the_full_pipeline_and_loimu_uses_only_the_scheduler_abstractions", "tenet::the_per_project_defaults_are_sequential_for_polka_dots_mixed_for_saalis_and_phased_with_convergence_for_loimu", "tenet::loimu_keeps_its_seven_access_modes_and_maps_them_to_read_and_write_at_the_boundary"]
 
 [[tenet]]
 id = "ikiuni_s_design_applies_every_change_at_the_frame_barrier_by_a_double_buffer_swap"
+subject = "downstream"
 what = "In ikiuni, a reference and not hilavitkutin's record, a change never takes effect in place. It applies at the next frame barrier: the frame a tick computes over is read-only for the whole computation, and every change the tick produces is published together into the next frame by a double-buffer swap. A tick reads the previous committed frame as an immutable input and writes the next frame as output, and no reader within a tick observes another reader's write."
 source = "mock/research/202611130850_the-record-read-whole/IKIUNI.md:34-38"
 provenance = ["mock::research::202611130850_the-record-read-whole::IKIUNI::#mock-research-0000-canonical-design-firstmost-reference-000-fundamentals-index-md-lines-177-to-186"]
@@ -142,12 +143,12 @@ origin = "proposed"
 written_by = "ikiuni's canonical design, 000_FUNDAMENTALS_INDEX, at orgrinrt/ikiuni dev 634be3b; ikiuni's, a reference, not hilavitkutin's record"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: a reference from ikiuni and no part of the record of hilavitkutin, so the written history of hilavitkutin was not asked about it (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "downstream"
 keywords = ["ikiuni", "double buffer", "frame barrier", "mutation", "previous committed frame", "next frame", "swap", "reference"]
-cites = ["loimu_double_buffers_record_data_and_its_readers_get_the_frozen_snapshot"]
+related = ["tenet::loimu_double_buffers_record_data_and_its_readers_get_the_frozen_snapshot"]
 
 [[tenet]]
 id = "in_ikiuni_the_frame_close_bracket_of_the_tick_loop_swaps_the_double_buffer_and_it_is_not_a_system"
+subject = "downstream"
 what = "In ikiuni, a reference and not hilavitkutin's record, frame-open and frame-close are reserved structural brackets and not systems. Frame-open ingests the committed frame. Frame-close drains the queue of changes, runs the conservation check, swaps the double buffer and seals the frame. Content systems schedule only in the interior between the brackets and cannot order themselves across one."
 source = "mock/research/202611130850_the-record-read-whole/IKIUNI.md:58-64"
 provenance = ["mock::research::202611130850_the-record-read-whole::IKIUNI::#mock-research-202606221200-imported-design-history-design-archive-2026-06-22-first-canonical-design-done-2026-06-19-settling-200-engine-std-md-lines-51-to-57"]
@@ -164,12 +165,12 @@ origin = "proposed"
 written_by = "ikiuni's imported design history, settling 200 engine std of 2026-06-19, at orgrinrt/ikiuni dev 634be3b; ikiuni's, a reference, not hilavitkutin's record"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: a reference from ikiuni and no part of the record of hilavitkutin, so the written history of hilavitkutin was not asked about it (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "downstream"
 keywords = ["ikiuni", "frame-close", "frame-open", "bracket", "tick loop", "swap", "double buffer", "who rotates", "reference"]
-cites = ["ikiuni_s_design_applies_every_change_at_the_frame_barrier_by_a_double_buffer_swap"]
+related = ["tenet::ikiuni_s_design_applies_every_change_at_the_frame_barrier_by_a_double_buffer_swap"]
 
 [[tenet]]
 id = "ikiuni_chose_bevy_s_ecs_because_the_hilavitkutin_stack_was_not_ready"
+subject = "downstream"
 what = "In ikiuni, a reference and not hilavitkutin's record, the store of entities and components was decided as bevy's on 16 June 2026, recorded as the user's call: the ideal would be the project's own stack of hilavitkutin, arvo and notko, but that was not ready, so the rebuild worked from existing options."
 source = "mock/research/202611130850_the-record-read-whole/IKIUNI.md:74-80"
 provenance = ["mock::research::202611130850_the-record-read-whole::IKIUNI::#mock-research-202606221200-imported-design-history-design-archive-2026-06-22-first-canonical-design-done-2026-06-16-data-oriented-engine-direction-md-lines-59-to-65"]
@@ -185,11 +186,11 @@ quote = '''
 origin = "stated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: a reference from ikiuni and no part of the record of hilavitkutin, so the written history of hilavitkutin was not asked about it (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "downstream"
 keywords = ["ikiuni", "bevy", "bevy_ecs", "hilavitkutin stack", "not ready", "user call", "reference"]
 
 [[tenet]]
 id = "in_ikiuni_bevy_is_one_engine_behind_a_contract_that_a_later_hilavitkutin_engine_can_satisfy"
+subject = "downstream"
 what = "In ikiuni, a reference and not hilavitkutin's record, the models and contracts stay authoritative and bevy's store is one implementation that runs them, recorded as the user's call of 16 June 2026. An abstract runtime contract is what bevy satisfies, so a later engine on the hilavitkutin stack can satisfy the same contract and take bevy's place with no change to the models, the contracts or the systems written against them."
 source = "mock/research/202611130850_the-record-read-whole/IKIUNI.md:84-89"
 provenance = ["mock::research::202611130850_the-record-read-whole::IKIUNI::#mock-research-202606221200-imported-design-history-design-archive-2026-06-22-first-canonical-design-done-2026-06-16-data-oriented-engine-direction-md-lines-74-to-79"]
@@ -204,6 +205,5 @@ quote = '''
 origin = "stated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: a reference from ikiuni and no part of the record of hilavitkutin, so the written history of hilavitkutin was not asked about it (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "downstream"
 keywords = ["ikiuni", "contract", "swappable engine", "bevy", "hilavitkutin stack", "user call", "reference"]
-cites = ["ikiuni_chose_bevy_s_ecs_because_the_hilavitkutin_stack_was_not_ready"]
+related = ["tenet::ikiuni_chose_bevy_s_ecs_because_the_hilavitkutin_stack_was_not_ready"]
