@@ -301,3 +301,74 @@ written_by = "the design template of hilavitkutin-extensions, agent-written, und
 standing = "provisional"
 subject = "governance"
 keywords = ["shipping commitment", "v1 contract", "preserve", "explicit deprecation", "follow-up rounds", "src CL", "type-level provider ids", "lifecycle logging hooks"]
+
+[[tenet]]
+id = "the_n_way_gloss_is_a_clarifying_amendment_consistent_with_the_spec_because_the_tiebreak_document_states_the_two_way_requirement_itself"
+what = "The authority question was settled on 2026-07-19: neither standalone document blanket-supersedes the other, and each conflict resolves on its own merits with the consolidation spec as tiebreak. For the N-way record split that settles the question and does not block it, because the tiebreak document states the two-way requirement itself, so the amendment is a clarifying gloss consistent with the spec and not a competing rule."
+mechanism = "Spec `:770-771` and `:1840-1841`; amendment `202606111800:447-450`."
+source = "mock/design_rounds/202607192110/202607192100_topic.n-way-record-split-is-not-convergence.md:35-39"
+provenance = ["mock::design_rounds::202607192110::202607192100_topic.n-way-record-split-is-not-convergence::#why-this-is-drift-rather-than-an-alternative"]
+quote = '''
+The authority question that phrasing raises was settled on 2026-07-19: neither standalone document
+blanket-supersedes the other, and each conflict resolves on its own merits with the consolidation
+spec as tiebreak. That settles this one rather than blocking it, because the tiebreak document
+states the 2-way requirement itself, at both `:770-771` and `:1840-1841`. The amendment is a
+clarifying gloss consistent with the spec, not a competing rule.
+'''
+origin = "proposed"
+written_by = "topic n-way-record-split-is-not-convergence of 2026-07-19, round 202607192110, agent-written; the text does not say whose ruling the settlement of 2026-07-19 was"
+standing = "provisional"
+subject = "governance"
+keywords = ["authority", "tiebreak", "consolidation spec", "clarifying gloss", "blanket supersede", "N-way", "2026-07-19"]
+cites = ["the_unified_engine_amendment_carries_authority_over_intermediate_artifacts_and_the_standalone_carries_none", "the_n_way_record_split_of_a_single_trunk_phase_is_not_head_and_tail_convergence_and_is_drift"]
+
+[[tenet]]
+id = "a_backlog_note_answered_by_a_later_design_is_rewritten_as_a_record_of_its_resolution_and_not_deleted"
+what = "A backlog note whose concern a later design answered, and did not drop, is kept and rewritten as a record of how the concern was resolved, instead of being left open against deleted code or deleted along with the code. A reader who finds both the code and the note gone could not tell whether the concern was addressed or abandoned."
+source = "mock/design_rounds/202607192810/202607192800_topic.retire-the-fn-pointer-spawn.md:36-42, mock/design_rounds/202607192810/202607192810_changelist.doc.lock.md:16-17, mock/design_rounds/202607192810/202607192810_changelist.doc.lock.md:26-27"
+provenance = ["mock::design_rounds::202607192810::202607192800_topic.retire-the-fn-pointer-spawn::#the-design-note-the-check-surfaced"]
+quote = '''
+That round has since happened, and it resolved the concern differently from either option the note
+proposed. The live path never casts a function pointer: it copies a closure's bytes, and the closure
+captures a data pointer. The `fn*`-versus-`void*` parity question does not arise for it, and the
+size/align check makes the copy's precondition explicit rather than assumed.
+
+So the note is resolved by supersession, not still open. Deleting the code it tracks without saying
+so would leave a reader to conclude the concern was dropped rather than answered.
+---
+It becomes a record of how the concern was resolved, rather than an open item pointing at deleted
+code.
+---
+Worth keeping rather than deleting outright: a reader who finds the code gone and the note gone has
+no way to tell whether the concern was addressed or abandoned. The rewritten entry says which.
+'''
+origin = "proposed"
+written_by = "topic retire-the-fn-pointer-spawn of 2026-07-19, round 202607192810, and its doc changelist, agent-written"
+standing = "provisional"
+subject = "governance"
+keywords = ["backlog note", "resolved by supersession", "record of resolution", "BACKLOG", "deleted code", "answered not dropped"]
+cites = ["thread_spawn_copies_a_pointer_sized_closure_under_a_compile_time_size_check_and_never_casts_a_function_pointer_or_allocates"]
+
+[[tenet]]
+id = "code_superseded_by_a_later_design_decision_is_deleted_with_its_test_and_doc_paragraph_and_a_remaining_reference_is_no_reason_to_keep_it"
+what = "Whether superseded code is kept is decided by supersession: has a later design decision replaced it. If so the code goes, and its test and its doc paragraph go with it, because they document the thing that lost. That something still references it, a test exercising it, a design paragraph naming it or a backlog note promising to wire it, is no reason to keep it, because that signal is satisfied by exactly the artefacts that describe the superseded mechanism and so always votes to keep drift alive."
+source = "mock/design_rounds/202607192910/202607192900_topic.delete-superseded-dispatch-and-barrier.md:10-18"
+provenance = ["mock::design_rounds::202607192910::202607192900_topic.delete-superseded-dispatch-and-barrier::#the-test-that-was-being-used-and-why-it-was-wrong"]
+quote = '''
+## The test that was being used, and why it was wrong
+
+Earlier passes in this arc kept both of these on the signal "something still references it": a test
+exercises `phase_run`, a design paragraph names it, a BACKLOG note promises to wire the phase
+barriers. That signal is worthless here. It is satisfied by exactly the artefacts that describe the
+superseded mechanism, so it will always vote to keep drift alive.
+
+The test that matters is **supersession**. Has a later design decision replaced this? If so the code
+goes, and the test and the doc paragraph go with it, because they document the thing that lost.
+'''
+origin = "proposed"
+written_by = "topic delete-superseded-dispatch-and-barrier of 2026-07-19, round 202607192910, agent-written, grounded on op's direction that chart-the-path exists to remove redundancy, YAGNI rot and drift; the supersession test is the topic's own"
+standing = "provisional"
+subject = "governance"
+keywords = ["supersession", "delete superseded code", "reachability", "drift", "tether test", "doc paragraph", "preservation reflex"]
+rules_out = ["something still references it"]
+cites = ["a_superseded_text_is_deprecated_and_never_amended_by_an_addendum"]

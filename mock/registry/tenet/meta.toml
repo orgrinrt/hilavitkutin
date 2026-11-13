@@ -336,3 +336,107 @@ written_by = "design round 202605101036, topic 8 resource resolution of 2026-05-
 standing = "provisional"
 subject = "meta"
 keywords = ["ResourceSnapshot", "AdaptWu", "ScheduleEnd", "predicted wait", "read only"]
+
+[[tenet]]
+id = "the_change_seen_count_metric_is_maintained_identically_on_all_three_run_paths"
+what = "As of 2026-06-20, the count of frames in which a store was dirty is kept on every run path, single-core, parallel and fused alike, so a hook that reads it at the end of the schedule never sees a stuck zero beside live siblings. It was first kept in the single-core fold only, and the design prose carried a single-core qualifier for that, which is removed."
+mechanism = "`change_seen_count`; capture `!store_dirty.get().is_empty().0` before the per-frame reset and increment in the EMA fold when set; paths `run`, `run_parallel`, `run_fused`; read by an `OnMeta<ScheduleEnd>` hook."
+source = "mock/design_rounds/202606200200/202606200200_topic.r3b-parallel-fused.md:9-18, mock/design_rounds/202606200200/202606200200_changelist.doc.lock.md:7-9"
+provenance = ["mock::design_rounds::202606200200::202606200200_topic.r3b-parallel-fused::#change"]
+quote = '''
+PR #144 maintained `change_seen_count` (the change_class numerator) in the
+single-core `run` fold only. `run_parallel` and `run_fused` reset `store_dirty`
+without counting it, so an `OnMeta<ScheduleEnd>` hook reading `change_seen_count`
+under those paths read stuck-at-zero beside the live siblings. This round mirrors
+the single-core capture-and-increment into both folds: capture
+`!store_dirty.get().is_empty().0` before the per-frame reset, increment
+`change_seen_count` in the EMA fold when set. The metric is then consistent across
+all three run paths, so the DESIGN qualifier added in round 202606200100 is
+removed. A parallel-path white-box test (multi-core thread pool, `__mark_store_dirty`)
+asserts the count through the bridge.
+---
+Remove the single-core qualifier: `change_seen_count` is now maintained in all
+three run paths (`run`, `run_parallel`, `run_fused`), so the "do not yet maintain
+it" sentence is dropped and the prose states the metric holds on every path.
+'''
+origin = "proposed"
+written_by = "topic r3b-parallel-fused of 2026-06-20, round 202606200200, and its doc changelist, agent-written"
+standing = "provisional"
+subject = "meta"
+keywords = ["change_seen_count", "run_parallel", "run_fused", "change class", "scheduler metrics", "OnMeta", "store_dirty"]
+rules_out = ["the \"do not yet maintain it\" sentence"]
+cites = ["the_scheduler_metrics_resource_carries_pass_count_ema_durations_active_units_stolen_count_and_idle_time_with_a_one_eighth_decay"]
+
+[[tenet]]
+id = "a_phase_s_duration_average_folds_the_phase_total_of_the_frame_once_per_frame_and_not_once_per_morsel"
+what = "The per-phase duration average is the same one-eighth moving average the pass duration uses, seeded on the first frame. It folds how long a phase took in the whole frame, summed across its morsels, once per frame. It is not folded once per phase and morsel, which on a multi-morsel frame would leave the first frame holding the last morsel's duration and decay later frames per morsel."
+mechanism = "`phase_accum: [Cell<Nanos>; GATE2_MAX_UNITS]` beside `phase_ema`; `dispatch_trunks` adds each phase's per-morsel duration into `phase_accum[p]` (saturating) with no seed read; `run` folds `phase_accum[p]` into `phase_ema[p]` once at the pass-duration EMA fold point with the same `ema_seed`, after the morsel loop, then zeroes it."
+source = "mock/design_rounds/202606192345/202606192345_topic.phase-ema-per-frame-fix.md:10-18, mock/design_rounds/202606192345/202606192345_topic.phase-ema-per-frame-fix.md:22-32"
+provenance = ["mock::design_rounds::202606192345::202606192345_topic.phase-ema-per-frame-fix::#current-state"]
+quote = '''
+The per-phase EMA just landed (round 202606192301) folds the phase duration
+into `phase_ema[p]` INSIDE `dispatch_trunks`. But `dispatch_trunks` is called
+once per MORSEL window on the morsel-outer path (the common record-bearing
+case), so the fold runs per (phase, morsel), not per frame. On a multi-morsel
+frame (`total > MORSEL_SIZE`) frame 1 ends holding the last morsel's raw
+duration, and later frames decay 1/8 per morsel, not per frame. The DESIGN says
+"the same 1/8 EMA the pass-duration fold uses, seeded on the first frame", which
+is per-frame semantics the code does not honor when there is more than one
+morsel. The single-morsel N=4 test did not exercise it.
+---
+Make the code match the per-frame DESIGN (the natural reading of "per-phase
+duration EMA": how long phase p took this frame, summed across its morsels).
+
+1. Add a per-frame accumulator field `phase_accum: [Cell<Nanos>;
+   GATE2_MAX_UNITS]` alongside `phase_ema`.
+2. `dispatch_trunks` ADDS each phase's per-morsel duration into `phase_accum[p]`
+   (saturating), instead of folding into `phase_ema`. No seed read there.
+3. `run` folds each phase's per-frame total (`phase_accum[p]`) into
+   `phase_ema[p]` once, at the existing pass-duration EMA fold point (same
+   `ema_seed`, after the morsel loop), then zeroes `phase_accum[p]`. Bounded by
+   the phase count.
+'''
+origin = "proposed"
+written_by = "topic phase-ema-per-frame-fix of 2026-06-19, round 202606192345, a post-review fix to round 202606192301, agent-written"
+standing = "provisional"
+subject = "meta"
+keywords = ["phase_ema", "phase_accum", "per-phase EMA", "dispatch_trunks", "per frame", "one-eighth", "fold_ema", "morsel"]
+rules_out = ["the fold runs per (phase, morsel), not per frame"]
+cites = ["the_scheduler_metrics_resource_carries_pass_count_ema_durations_active_units_stolen_count_and_idle_time_with_a_one_eighth_decay"]
+
+[[tenet]]
+id = "per_phase_timing_samples_one_start_and_stop_pair_per_phase_per_frame"
+what = "Per-phase timing is taken per frame: each phase's duration accumulator folds one start and stop pair per phase per frame, where before it folded one per window."
+mechanism = "`phase_accum[p]`; scripted-clock tests that count `now_ns` reads rehab to the new counts."
+source = "mock/design_rounds/202607161810/202607161800_topic.a2b-dispatch-loop-inversion.md:85-87"
+provenance = ["mock::design_rounds::202607161810::202607161800_topic.a2b-dispatch-loop-inversion::#behaviour-deltas-intended-canonical-correcting"]
+quote = '''
+- **Per-phase timing is per frame.** `phase_accum[p]` folds one start/stop
+  pair per phase per frame (previously per window). Scripted-clock tests
+  that count `now_ns` reads rehab to the new counts.
+'''
+origin = "proposed"
+written_by = "topic a2b-dispatch-loop-inversion of 2026-07-16, round 202607161810, agent-written"
+standing = "provisional"
+subject = "meta"
+keywords = ["phase_accum", "per-phase timing", "per frame", "now_ns", "start stop pair", "dispatch loop inversion"]
+cites = ["a_phase_s_duration_average_folds_the_phase_total_of_the_frame_once_per_frame_and_not_once_per_morsel"]
+
+[[tenet]]
+id = "meta_bands_run_once_per_frame_and_not_once_per_morsel_window"
+what = "The meta bands run once per frame and not once per morsel window. The earlier shape ran every dirty meta unit per window on frames with several windows, while the self-hosting kernel design has the bands as per-pass lifecycle hooks."
+mechanism = "Self-hosting kernel design E4: the bands are per-pass lifecycle hooks."
+source = "mock/design_rounds/202607161810/202607161800_topic.a2b-dispatch-loop-inversion.md:77-79"
+provenance = ["mock::design_rounds::202607161810::202607161800_topic.a2b-dispatch-loop-inversion::#behaviour-deltas-intended-canonical-correcting"]
+quote = '''
+- **Meta bands run once per frame**, not once per window. The old shape ran
+  every dirty meta unit per window on multi-window frames; the self-hosting
+  kernel design (E4) has the bands as per-pass lifecycle hooks.
+'''
+origin = "proposed"
+written_by = "topic a2b-dispatch-loop-inversion of 2026-07-16, round 202607161810, agent-written"
+standing = "provisional"
+subject = "meta"
+keywords = ["meta bands", "once per frame", "per window", "lifecycle hooks", "self-hosting kernel", "dispatch loop inversion"]
+rules_out = ["every dirty meta unit per window on multi-window frames"]
+cites = ["the_scheduler_is_itself_a_pipeline_and_meta_units_run_at_lifecycle_points"]

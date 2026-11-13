@@ -159,3 +159,103 @@ written_by = "the design template of the workspace, agent-written, undated"
 standing = "provisional"
 subject = "plan"
 keywords = ["PlanAffecting", "MAX_PLAN_AFFECTING_RESOURCES", "opt in", "RunCfg", "sealed marker", "cap of 16"]
+
+[[tenet]]
+id = "the_usable_first_level_cache_and_the_morsel_bounds_are_consumer_tunable_defaults_on_the_run_configuration"
+what = "The usable first-level cache size and the minimum and maximum morsel size are consumer-tunable defaults on the run configuration, a toolbox and not a policy, tuned by writing the constant like the morsel size constant. Hardware detection of the cache later overrides the source of the default and not the knob."
+mechanism = "`RunCfg::L1_USABLE` default `24_576` (the spec's 32 KB detection fallback times 0.75), `MIN_MORSEL` default `64` (one micro-morsel interval; the spec marks the floor configurable), `MAX_MORSEL` default `8192` (spec-fixed default); consumer-tunable by writing the const, like `MORSEL_SIZE`; `build` threads `DefaultRunCfg`'s values and `build_with::<Cfg>` threads `Cfg`'s."
+source = "mock/design_rounds/202607161410/202607161400_topic.a3b-l1-morsel-formula.md:35-42"
+provenance = ["mock::design_rounds::202607161410::202607161400_topic.a3b-l1-morsel-formula::#resolutions-this-round-settles"]
+quote = '''
+2. **The budget knobs are `RunCfg` consts (toolbox, not policy):**
+   `L1_USABLE` (default `24_576` = the spec's 32 KB detection fallback times
+   0.75), `MIN_MORSEL` (default `64`, one micro-morsel interval; spec marks the
+   floor configurable), `MAX_MORSEL` (default `8192`, spec-fixed default).
+   Consumer-tunable by writing the const, like `MORSEL_SIZE`. Hardware L1
+   detection (domain: platform tiers) later overrides the DEFAULT source, not the
+   knob. `build` threads `DefaultRunCfg`'s values; `build_with::<Cfg>` threads
+   `Cfg`'s.
+'''
+origin = "proposed"
+written_by = "topic a3b-l1-morsel-formula of 2026-07-16, round 202607161410, agent-written"
+standing = "provisional"
+subject = "plan"
+keywords = ["L1_USABLE", "MIN_MORSEL", "MAX_MORSEL", "RunCfg", "consumer-tunable", "toolbox not policer", "24576", "morsel window"]
+cites = ["the_morsel_size_is_the_l1_budget_divided_by_the_written_bytes_per_record_within_fixed_bounds", "the_minimum_morsel_size_is_configurable_and_not_a_design_decision"]
+
+[[tenet]]
+id = "the_scheduler_scratch_is_sized_by_the_plan_dimension_capacities_and_the_three_fixed_constants_are_deleted_outright"
+what = "The scheduler's scratch fields, the core classification result and the pool frame are sized from the capacities of the plan dimensions, as projections off the dimension type the scheduler already carries. The three fixed constants for the unit, accumulator and core ceilings are deleted outright, with no legacy shims before 1.0, and the compile-time guard on the unit capacity is retired because this is the lift it waited for. A consumer shrinks each of these budgets by one plan-dimension implementation, and the default scheduler stops carrying 256-core scratch for single-core apps."
+mechanism = "`worker_ctxs` as `<D::Cores as Capacity>::Array<WorkerCtx>`; `gate2_phase`/`gate2_trunk` and `phase_ema`/`phase_accum` as `<D::Units as Capacity>::Array<_>`; `gate2_accum_live` as the nested `<D::Cores as Capacity>::Array<<D::AccumsPerCore as Capacity>::Array<AtomicUsize>>` indexed `[core][accum]` (#690); non-`Copy` cells through `Capacity::from_fn`; `classify_cores` returns `C::Array<CoreClass>`; `PoolFrame<'arena, C: Capacity, P: Capacity>` instantiated as `PoolFrame<'static, D::Cores, Dim<1>>`; deleted `GATE2_MAX_UNITS`, `GATE2_MAX_ACCUMS`, `MAX_CORES`; retired `UnitsFitGate2`; the phase axis stays `Dim<1>` and widening it is B2."
+source = "mock/design_rounds/202607200100_topic.b1-cap-lifting-completion.md:12-15, mock/design_rounds/202607200100_topic.b1-cap-lifting-completion.md:29-40, mock/design_rounds/202607200100_topic.b1-cap-lifting-completion.md:42-47"
+provenance = ["mock::design_rounds::202607200100_topic.b1-cap-lifting-completion::#what-is-left-of-the-arc"]
+quote = '''
+The first slice moved `plan_dirty`, the grouping caps, and the `PlanDims` surface onto
+`Capacity` associated types; `PlanDims` already carries `Units`, `Cores`, `AccumsPerCore`,
+`PlanAffecting`. The residual is that the scheduler's scratch fields and two neighbours still
+size themselves by the three fixed constants the trait was built to replace:
+---
+Every field becomes a `Capacity` GAT projection off the `D: PlanDims` the scheduler already
+carries: `<D::Cores as Capacity>::Array<WorkerCtx>`, `<D::Units as Capacity>::Array<USize>`,
+and the publish array as the nested two-dimensional composition
+`<D::Cores as Capacity>::Array<<D::AccumsPerCore as Capacity>::Array<AtomicUsize>>` (a product
+needs a const expression; nesting needs only two projections). `merge_accums` and the worker
+publish sites index `[core][accum]` instead of `core * GATE2_MAX_ACCUMS + accum`; that nested
+interface is #690. Non-`Copy` cells (atomics, `Cell<Nanos>`) initialise through
+`Capacity::from_fn`. `classify_cores` gains a capacity parameter and returns
+`C::Array<CoreClass>` (two callers). `PoolFrame` re-types over capacity axes,
+`PoolFrame<'arena, C: Capacity, P: Capacity>`, fields as projections; the engine instantiates
+`PoolFrame<'static, D::Cores, Dim<1>>`. The phase axis stays `Dim<1>`: widening it to real `P`
+is B2, and the re-typed signature is exactly the shape B2 widens into.
+---
+With no users left, `GATE2_MAX_UNITS`, `GATE2_MAX_ACCUMS`, and `MAX_CORES` are deleted
+outright (pre-1.0, no legacy shims), and the `UnitsFitGate2` build guard is retired: its
+message says "reduce Units or wait for the #690 lift onto Units", and this round is that lift.
+The consumer consequence is the A1-2 goal: a consumer shrinks every one of these budgets by
+one `PlanDims` impl, and the default scheduler stops carrying 256-core scratch for
+single-core apps.
+'''
+origin = "proposed"
+written_by = "topic b1-cap-lifting-completion of 2026-07-20, agent-written, grounded on canon A1-2 and sketch 202606111450 s1"
+standing = "provisional"
+subject = "plan"
+keywords = ["cap lifting", "PlanDims", "Capacity", "GATE2_MAX_UNITS", "MAX_CORES", "UnitsFitGate2", "PoolFrame", "#690"]
+rules_out = ["the three fixed constants the trait was built to replace"]
+cites = ["a_units_capacity_above_the_fixed_parallel_ceiling_fails_the_build_until_the_ceiling_is_lifted", "caps_are_defaults_and_never_policy_so_a_sketch_arc_looks_for_cap_lifting_shapes_now", "container_capacity_lives_at_type_level_and_a_consumer_needing_more_picks_the_bigger_type"]
+
+[[tenet]]
+id = "a_units_capacity_above_the_fixed_parallel_ceiling_fails_the_build_until_the_ceiling_is_lifted"
+what = "As of 2026-06-19, a unit capacity larger than the fixed width of the parallel path's scratch arrays is a compile-time error that names the ceiling and the lift, and not a latent run-time out-of-bounds panic. It costs nothing at run time and leaves the single-core run unaffected. It is the guard half of the lift, and the full lift sizes the scratch by the unit capacity."
+because = "The grouping producer was lifted to size its scratch by the unit capacity while the parallel path's fields stayed 256 wide, which left the precondition that the unit capacity not exceed 256 unenforced."
+mechanism = "`const { assert!(...) }` at the top of `run_parallel`, failing the build per monomorphisation when `cap_size(<D::Units as Capacity>::CAP) > GATE2_MAX_UNITS`; guard half of #690, the full lift sizing `gate2_phase` and `gate2_trunk` onto `D::Units` and removing `GATE2_MAX_UNITS` with the `gate2_accum_live` nesting and `merge_accums` redesign."
+source = "mock/design_rounds/202606191500/202606191500_topic.units-cap-guard.md:9-18, mock/design_rounds/202606191500/202606191500_topic.units-cap-guard.md:22-31"
+provenance = ["mock::design_rounds::202606191500::202606191500_topic.units-cap-guard::#problem"]
+quote = '''
+P0.1c lifted the grouping producer (`masks_of`/`final_phases_of` and the
+`phase_of`/`trunk_of`/`group_n` consumers) to size its scratch by `D::Units`.
+But `run_parallel`'s `gate2_phase` / `gate2_trunk` scheduler fields and its
+first-call precompute locals stayed fixed `[USize; GATE2_MAX_UNITS]` (256).
+`grouping_arrays` writes `phase_out[u]` for `u in 0..group_n()`, and
+`group_n <= Units::CAP`. So a consumer setting `Units` above 256 (with that
+many units) would index past the 256-wide arrays in `run_parallel` (a runtime
+OOB panic). Pre-P0.1c the producer and these consumers shared one 256 ceiling;
+the lift left an unenforced precondition `Units::CAP <= GATE2_MAX_UNITS`.
+Nothing in-tree sets `Units > 256`, so it is latent.
+---
+Add a compile-time `const { assert!(...) }` at the top of `run_parallel` that
+fails the build (per-D monomorphisation) when
+`cap_size(<D::Units as Capacity>::CAP) > GATE2_MAX_UNITS`, turning the latent
+runtime panic into a clear compile error naming the ceiling and the #690 lift.
+Zero runtime cost. Single-core `run` is unaffected (it indexes via
+`ConstCapacity::get`, no 256-wide buffer).
+
+This is the guard half of #690; the full lift (sizing `gate2_phase` /
+`gate2_trunk` onto `D::Units`, removing `GATE2_MAX_UNITS`) lands with the
+`gate2_accum_live` nesting + `merge_accums` redesign in #690.
+'''
+origin = "proposed"
+written_by = "topic units-cap-guard of 2026-06-19, round 202606191500, agent-written"
+standing = "provisional"
+subject = "plan"
+keywords = ["units cap", "compile-time guard", "run_parallel", "GATE2_MAX_UNITS", "#690", "Capacity", "const assert"]
+cites = ["a_documented_fixed_cap_is_acceptable_only_as_the_proven_infeasible_fallback_with_a_tracked_lift_condition", "caps_are_defaults_and_never_policy_so_a_sketch_arc_looks_for_cap_lifting_shapes_now"]

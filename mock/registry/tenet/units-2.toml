@@ -128,3 +128,114 @@ written_by = "the design template of the workspace, agent-written, undated"
 standing = "provisional"
 subject = "units"
 keywords = ["per-morsel dispatch", "per-record dispatch", "Morsel<T>", "AccessSet shape", "column-shaped", "resource-only", "inferred"]
+
+[[tenet]]
+id = "the_scheduling_hint_stays_sealed_and_gains_one_additive_arm_a_four_tuple_with_an_open_extension_marker"
+what = "The scheduling hint stays sealed over the tuple shapes the api names and gains one additive arm, a four-tuple whose fourth member is an open marker that a downstream runner implements to carry one runner-specific dimension. A three-tuple and a four-tuple are different types, so nothing existing changes, and the seal still holds with the extension marker as the one open slot inside the tuples. A runner that declares an extension marker reads its own dimension. No extension markers ship in the crate."
+because = "A runner with a dimension that the triple lacks cannot express it, and unsealing would cost the engine its ability to reason about every hint shape."
+mechanism = "`pub trait HintExt: 'static {}` and `impl<U: UrgencyValue, D: DivisibilityValue, S: SignificanceValue, X: HintExt> SchedulingHint for (U, D, S, X) {}`; `SchedulingHint` sealed at hint.rs:68 for `(U, D, S)` triples."
+source = "mock/design_rounds/202607171807/202607171733_topic.plannable-declaration-split.md:73-89, mock/design_rounds/202607171807/202607171807_changelist.doc.lock.md:44-48"
+provenance = ["mock::design_rounds::202607171807::202607171733_topic.plannable-declaration-split::#the-hint-s-extensibility-settled-in-the-same-round"]
+quote = '''
+## The hint's extensibility, settled in the same round
+
+`SchedulingHint` is sealed (`hint.rs:68`) and implemented only for `(U, D, S)` triples of urgency,
+divisibility, and significance markers. A runner with a dimension the triple lacks cannot express it,
+and unsealing would cost the engine its ability to reason about every hint shape.
+
+The additive fix keeps the seal and adds one arm:
+
+```rust
+pub trait HintExt: 'static {}
+impl<U: UrgencyValue, D: DivisibilityValue, S: SignificanceValue, X: HintExt> SchedulingHint for (U, D, S, X) {}
+```
+
+A 3-tuple and a 4-tuple are different types, so the arms cannot overlap and nothing existing changes.
+The engine keeps reading urgency, divisibility, and significance, and ignores the extension. A runner
+that declares an extension marker reads its own dimension. The seal still holds: `SchedulingHint` is
+implemented only for tuple shapes this crate names, and `HintExt` is the one open slot inside them.
+---
+Where the scheduling hint is described (the three-axis tuple), note that `SchedulingHint` stays
+sealed and gains one additive arm: the 4-tuple `(U, D, S, X: HintExt)`, where `HintExt` is an open
+marker trait a downstream runner implements to carry a fourth, runner-specific dimension. The engine
+reads urgency, divisibility, and significance and ignores the extension. No `HintExt` markers ship
+in this crate.
+'''
+origin = "proposed"
+written_by = "topic plannable-declaration-split of 2026-07-17, round 202607171807, and its doc changelist, agent-written"
+standing = "provisional"
+subject = "units"
+keywords = ["SchedulingHint", "HintExt", "sealed", "four-tuple", "extension slot", "additive", "urgency divisibility significance"]
+cites = ["the_divisibility_hint_sets_whether_a_unit_runs_all_morsels_at_once_one_at_a_time_or_adaptively"]
+
+[[tenet]]
+id = "a_four_tuple_hint_schedules_as_its_three_axis_prefix_and_reading_a_fourth_dimension_is_a_later_gate_for_the_runner_that_defines_one"
+what = "A hint carrying an extension marker schedules as its urgency, divisibility and significance prefix would, and reading a fourth dimension is a later gate for whichever runner defines one. The design makes no claim of present engine behaviour for the extension, because the engine is untouched, the hint has no extraction api, and no extension markers ship."
+source = "mock/design_rounds/202607171807/202607171807_changelist.doc.lock.md:44-48, mock/design_rounds/202607171824/202607171824_changelist.doc.lock.md:8-14, mock/design_rounds/202607171824/202607171824_topic.plannable-post-review-fixes.md:24-29"
+provenance = ["mock::design_rounds::202607171807::202607171807_changelist.doc.lock::#change-document-the-hintext-slot-in-the-hint-prose"]
+quote = '''
+Where the scheduling hint is described (the three-axis tuple), note that `SchedulingHint` stays
+sealed and gains one additive arm: the 4-tuple `(U, D, S, X: HintExt)`, where `HintExt` is an open
+marker trait a downstream runner implements to carry a fourth, runner-specific dimension. The engine
+reads urgency, divisibility, and significance and ignores the extension. No `HintExt` markers ship
+in this crate.
+---
+## CHANGE: soften "the engine reads urgency, divisibility, and significance and ignores the extension"
+
+File: `mock/crates/hilavitkutin-api/DESIGN.md.tmpl`
+The sentence states an engine mechanism that is not implemented (the engine is untouched;
+`SchedulingHint` has no extraction API; no `HintExt` markers ship). Restate as intent: a 4-tuple
+hint schedules as its `(U, D, S)` prefix would, and reading a fourth dimension is a later gate for
+whichever runner defines one. No claim of present engine behaviour.
+---
+3. **"The engine reads the first three axes and ignores the fourth" is stated as present fact.** The
+   engine is untouched, `SchedulingHint` is a bare marker with no extraction API, and no `HintExt`
+   markers ship, so that sentence describes behaviour that is not yet reachable. It appears in both
+   `src/hint.rs` and the api `DESIGN.md.tmpl`. Fix: soften both to state the intent (a 4-tuple
+   schedules as its `(U, D, S)` prefix would) without asserting an engine mechanism that is a later
+   gate.
+'''
+origin = "proposed"
+written_by = "doc changelist of round 202607171824 (2026-07-17) softening a sentence of round 202607171807, with its topic plannable-post-review-fixes, agent-written"
+standing = "provisional"
+subject = "units"
+keywords = ["HintExt", "four-tuple", "prefix", "engine reads", "softened", "intent", "SchedulingHint", "fourth dimension"]
+rules_out = ["the engine reads urgency, divisibility, and significance and ignores the extension"]
+cites = ["the_scheduling_hint_stays_sealed_and_gains_one_additive_arm_a_four_tuple_with_an_open_extension_marker"]
+
+[[tenet]]
+id = "the_hint_extension_round_lands_the_mechanism_with_no_markers_because_no_dimension_beyond_the_three_has_a_consumer"
+what = "The round that introduced the runner-agnostic declaration trait lands that trait in full, as the load-bearing prerequisite that a runner which does not use the column-record execution model can implement, and lands only the extension mechanism of the hint, with zero extension markers defined, because no hint dimension beyond urgency, divisibility and significance has a consumer yet. Inventing markers now would be speculative surface with no reader, so the mechanism is ready and the content waits for a real need. The divisibility axis already expresses whether work can be split or paused, which a tiling-capable runner would reach for first, so the extension slot may never gain a marker; it exists so that a genuinely new dimension lands additively and not by unsealing."
+mechanism = "`Plannable<Schedule>` in full; `HintExt` mechanism only, the 4-tuple `(U, D, S, X: HintExt)` arm; zero `HintExt` markers defined."
+source = "mock/design_rounds/202607171807/202607171807_changelist.doc.lock.md:10-24, mock/design_rounds/202607171807/202607171733_topic.plannable-declaration-split.md:73-77"
+provenance = ["mock::design_rounds::202607171807::202607171807_changelist.doc.lock::#scope-decision-recorded-here-the-topic-said-more-this-narrows-it"]
+quote = '''
+## Scope decision recorded here (the topic said more; this narrows it)
+
+The topic proposed landing both `Plannable` and a fully-worked hint extension. This round lands:
+
+1. **`Plannable<Schedule>`** in full. It is the load-bearing prerequisite: a runner-agnostic
+   declaration a non-fiber consumer can implement without the column-record execution model.
+2. **The `HintExt` mechanism only**, not any extension markers. The 4-tuple
+   `(U, D, S, X: HintExt)` arm is added so the seal has one open slot, but zero `HintExt` markers
+   are defined, because no concrete hint dimension beyond urgency/divisibility/significance has a
+   consumer yet. Adding invented markers now would be speculative surface with no reader. The
+   mechanism is proven and ready; the content waits for a real need.
+
+The divisibility axis already expresses "can this work be split or paused", which is the axis a
+tiling-capable runner would first reach for, so the extension slot may never gain a marker. It
+exists so that if a genuinely new dimension appears, it lands additively rather than by unsealing.
+---
+## The hint's extensibility, settled in the same round
+
+`SchedulingHint` is sealed (`hint.rs:68`) and implemented only for `(U, D, S)` triples of urgency,
+divisibility, and significance markers. A runner with a dimension the triple lacks cannot express it,
+and unsealing would cost the engine its ability to reason about every hint shape.
+'''
+origin = "proposed"
+written_by = "doc changelist of round 202607171807 (2026-07-17), a scope decision narrowing its topic plannable-declaration-split, agent-written"
+standing = "provisional"
+subject = "units"
+keywords = ["Plannable", "HintExt", "scope decision", "no markers", "speculative surface", "divisibility", "unsealing", "runner-agnostic declaration"]
+rules_out = ["a fully-worked hint extension"]
+cites = ["the_scheduling_hint_stays_sealed_and_gains_one_additive_arm_a_four_tuple_with_an_open_extension_marker", "a_unit_declares_its_name_read_set_write_set_hint_commutativity_and_an_execute_function"]

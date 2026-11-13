@@ -247,3 +247,224 @@ standing = "provisional"
 subject = "stores"
 keywords = ["close unit", "landed store", "after the step lands", "view", "frame close", "sketch"]
 cites = ["a_sketch_of_november_2026_holds_every_lane_of_a_frame_twice_committed_and_staged"]
+
+[[tenet]]
+id = "as_first_proposed_each_store_marker_reports_its_element_bytes_for_the_morsel_budget_and_a_virtual_reports_none"
+what = "As first proposed in the first slice of the per-fiber morsel sizing, each store marker contributes an element byte size to a per-store size array that feeds the morsel window formula. The column, resource, accumulator and staged resource markers over a column value give the bit width rounded up to whole bytes, and a virtual gives zero because it holds no record bytes."
+mechanism = "`StoreElemBytes { const BYTES: USize }` with disjoint per-marker impls, `(BIT_WIDTH + 7) / 8` for `Column`/`Resource`/`Accum`/`StagedResource` over `T: ColumnValue` and `USize::ZERO` for `Virtual<T>`; `StoreSizes<CS>` fold over the `Stores` cons-list, a sibling of `AccumStoresMask`; `store_sizes::<Stores, CS>()` entry."
+source = "mock/design_rounds/202606202500/202606202500_topic.a3a-store-size-collection.md:10-11, mock/design_rounds/202606202500/202606202500_topic.a3a-store-size-collection.md:21-26"
+provenance = ["mock::design_rounds::202606202500::202606202500_topic.a3a-store-size-collection::#current-state"]
+quote = '''
+The A3 sketch proved the per-store element-byte-size collection + per-fiber
+write-byte sum. The L1 window formula (A3b) needs the size array. The plan stage
+---
+- `StoreElemBytes { const BYTES: USize }` with disjoint per-marker impls:
+  `Column`/`Resource`/`Accum`/`StagedResource` over `T: ColumnValue` give
+  `(BIT_WIDTH + 7) / 8`; `Virtual<T>` gives `USize::ZERO` (no record bytes).
+- `StoreSizes<CS>` fold over the `Stores` cons-list (sibling of
+  `AccumStoresMask`) writing each store's bytes into a slot.
+- `store_sizes::<Stores, CS>()` entry (sibling of `accum_stores_mask`).
+'''
+origin = "proposed"
+written_by = "topic a3a-store-size-collection of 2026-06-19, round 202606202500, agent-written"
+standing = "provisional"
+subject = "stores"
+keywords = ["StoreElemBytes", "StoreSizes", "store_sizes", "per-store size", "ColumnValue", "BIT_WIDTH", "A3a", "morsel budget"]
+cites = ["the_morsel_size_is_the_l1_budget_divided_by_the_written_bytes_per_record_within_fixed_bounds"]
+
+[[tenet]]
+id = "only_a_column_contributes_per_record_bytes_to_the_morsel_working_set_and_the_other_store_markers_contribute_zero"
+what = "Only a column contributes its element bytes to the per-record morsel working set. A resource and a staged resource are singletons, accumulator fibers dispatch unit-outer with no morsel window, and a virtual is fired, so those four markers contribute zero with no column-value bound, which lets a resource over a value that is not a column value still be sized. The first slice had bounded all four on the column value and broke real carriers."
+mechanism = "`StoreElemBytes` in plan/project.rs: `Column<T: ColumnValue>` gives its element bytes; `Resource`, `StagedResource`, `Accum` and `Virtual` give `USize::ZERO` with no `ColumnValue` bound, so a `Resource<T>` over a non-ColumnValue provider or interner still satisfies `StoreSizes`."
+source = "mock/design_rounds/202606202700/202606202700_changelist.src.lock.md:29-38"
+provenance = ["mock::design_rounds::202606202700::202606202700_changelist.src.lock::#change-refine-storeelembytes-to-per-record-columns-only"]
+quote = '''
+## CHANGE: refine `StoreElemBytes` to per-record columns only
+File: `mock/crates/hilavitkutin/src/plan/project.rs`
+Verification: `grep "impl<T> StoreElemBytes for Resource" mock/crates/hilavitkutin/src/plan/project.rs` (no ColumnValue bound).
+
+Only `Column<T: ColumnValue>` contributes its element bytes to the per-record
+morsel working set. `Resource`/`StagedResource` are singletons, `Accum` fibers
+dispatch unit-outer (no morsel window), `Virtual` is fired: all four contribute
+`USize::ZERO` with NO `ColumnValue` bound, so a `Resource<T>` over a
+non-ColumnValue provider/interner still satisfies `StoreSizes`. (A3a had bounded
+all four on ColumnValue, which broke real carriers; A3b corrects it.)
+'''
+origin = "proposed"
+written_by = "src changelist of round 202606202700 (A3b), agent-written"
+standing = "provisional"
+subject = "stores"
+keywords = ["StoreElemBytes", "per-record columns", "Resource", "StagedResource", "Accum", "Virtual", "ColumnValue bound", "A3b"]
+rules_out = ["A3a had bounded all four on ColumnValue"]
+cites = ["as_first_proposed_each_store_marker_reports_its_element_bytes_for_the_morsel_budget_and_a_virtual_reports_none"]
+
+[[tenet]]
+id = "a_resource_and_a_staged_resource_contribute_their_declared_footprint_to_the_morsel_budget_and_an_accumulator_contributes_zero"
+what = "A resource and a staged resource contribute to the morsel budget the first-level cache footprint that their value type declares, the collection footprint, in place of a flat scalar size. An accumulator contributes zero because it dispatches unit-outer, and a column and a virtual are unchanged."
+mechanism = "`StoreElemBytes` arms in plan/project.rs: `Resource<T>` and `StagedResource<T>` require `T: ResourceFootprint` and report `<T as ResourceFootprint>::L1_BYTES`; `Accum<T>` reports `USize::ZERO`; `Column<T>` and `Virtual<T>` unchanged; the R5 footprint model."
+source = "mock/design_rounds/202607161410/202607161400_topic.a3b-l1-morsel-formula.md:51-53, mock/design_rounds/202607161410/202607161400_topic.a3b-l1-morsel-formula.md:62-63, mock/design_rounds/202607161410/202607161420_changelist.src.lock.md:24-29"
+provenance = ["mock::design_rounds::202607161410::202607161400_topic.a3b-l1-morsel-formula::#resolutions-this-round-settles"]
+quote = '''
+4. **`Resource<T>` footprint sourcing and the coherence call.** The fold's
+   `Resource<T>`/`StagedResource<T>` arms read `<T as ResourceFootprint>::L1_BYTES`
+   (the R5-correct collection footprint). A blanket
+---
+5. **`Accum<T>` contributes zero** to the L1 morsel budget (unit-outer dispatch
+   per the re-chart), correcting A3a's scalar-size arm. `Virtual<T>` stays zero.
+---
+## CHANGE: `StoreElemBytes` arms FROM flat scalar sizes TO the R5 footprint model
+File: `mock/crates/hilavitkutin/src/plan/project.rs`
+`Resource<T>` / `StagedResource<T>` arms require `T: ResourceFootprint` and
+report `<T as ResourceFootprint>::L1_BYTES`; the `Accum<T>` arm reports zero
+(unit-outer dispatch); `Column<T>` and `Virtual<T>` are unchanged.
+Verification: `grep -A2 "StoreElemBytes for Resource" mock/crates/hilavitkutin/src/plan/project.rs` shows `L1_BYTES`, and `grep -A4 "StoreElemBytes for Accum" mock/crates/hilavitkutin/src/plan/project.rs` shows `USize::ZERO`.
+'''
+origin = "proposed"
+written_by = "topic a3b-l1-morsel-formula of 2026-07-16, round 202607161410, and its src changelist, agent-written"
+standing = "provisional"
+subject = "stores"
+keywords = ["StoreElemBytes", "ResourceFootprint", "L1_BYTES", "Resource", "StagedResource", "Accum", "R5 footprint", "morsel budget"]
+rules_out = ["flat scalar sizes"]
+cites = ["only_a_column_contributes_per_record_bytes_to_the_morsel_working_set_and_the_other_store_markers_contribute_zero", "per_fiber_morsel_sizing_folds_over_blob_strides_plus_the_collection_bytes_term_and_rides_after_the_drift_fix", "the_api_macros_crate_is_the_proc_macro_companion_of_the_api_crate_and_derives_a_resource_s_write_collection_footprint"]
+
+[[tenet]]
+id = "a_blanket_footprint_implementation_is_rejected_because_it_conflicts_with_the_derive_and_bare_scalars_get_explicit_zero_footprints"
+what = "A blanket footprint implementation over every column value is rejected, because it would cover every consumer struct and make the derived implementation a coherence conflict. The api instead ships explicit zero-footprint implementations for the bare scalar primitives, so a bare-scalar resource value is the degenerate single-field case and adds nothing to the first-level cache write budget, while consumer struct values use the derive."
+mechanism = "`impl<T: ColumnValue> ResourceFootprint for T` rejected; explicit zero-footprint impls for an unsigned or signed integer, `bool`, `char`, `arvo::USize` and `arvo::Bool` in the api footprint module; consumer structs use `#[derive(ResourceFootprint)]`."
+source = "mock/design_rounds/202607161410/202607161400_topic.a3b-l1-morsel-formula.md:51-60"
+provenance = ["mock::design_rounds::202607161410::202607161400_topic.a3b-l1-morsel-formula::#resolutions-this-round-settles"]
+quote = '''
+4. **`Resource<T>` footprint sourcing and the coherence call.** The fold's
+   `Resource<T>`/`StagedResource<T>` arms read `<T as ResourceFootprint>::L1_BYTES`
+   (the R5-correct collection footprint). A blanket
+   `impl<T: ColumnValue> ResourceFootprint for T` would cover every consumer
+   struct and make the `#[derive(ResourceFootprint)]` impl a coherence conflict,
+   so it is rejected. Instead the api ships explicit zero-footprint impls for the
+   bare scalar primitives (an unsigned/signed integer, `bool`, `char`, plus
+   `arvo::USize` and `arvo::Bool`): a bare-scalar resource value is the
+   degenerate single-`Field` case and contributes nothing to the L1 write
+   budget. Consumer struct values use the derive.
+'''
+origin = "proposed"
+written_by = "topic a3b-l1-morsel-formula of 2026-07-16, round 202607161410, agent-written"
+standing = "provisional"
+subject = "stores"
+keywords = ["ResourceFootprint", "blanket impl", "coherence", "derive", "bare scalar", "zero footprint", "L1 write budget"]
+cites = ["a_resource_and_a_staged_resource_contribute_their_declared_footprint_to_the_morsel_budget_and_an_accumulator_contributes_zero", "the_api_macros_crate_is_the_proc_macro_companion_of_the_api_crate_and_derives_a_resource_s_write_collection_footprint"]
+
+[[tenet]]
+id = "a_resource_handle_s_members_decompose_into_per_member_shape_bound_columns_in_the_unified_store"
+what = "As first stated in the round of 2026-06-19, a resource is a handle whose field, sequence and map members each decompose into their own column in the unified type-erased columnar store, keyed by shape so that a field type appearing in many resources collapses to one column. The resource record holds only the pointers to those columns, in a separate handle store keyed by resource id with its own pointer provenance, and there is no private value arena. On that statement the one-record blob of the shipped drain was named the drift."
+mechanism = "`DrainStores` (bindings.rs:22) reserved a one-record opaque column per `Resource<T>` behind a single `ResourcePtr<T>`."
+source = "mock/design_rounds/202607161000/202606210600_topic.resource-handle-storage-model.md:10-18, mock/design_rounds/202607161000/202606210600_topic.resource-handle-storage-model.md:41-48"
+provenance = ["mock::design_rounds::202607161000::202606210600_topic.resource-handle-storage-model::#the-realization"]
+quote = '''
+A `Resource<T>` is a **handle**. It does not store its value inline. `T` decomposes
+per-member: each `Field`/`Seq`/`Map` member becomes its own column in the **unified,
+type-erased columnar store**, keyed/shared by **shape** (stride), so a `Field<u32>`
+appearing in many resources collapses to one shape-bound column rather than a
+type-unique column per concrete `T` (type-unique is too wide and explodes the column
+count). The resource record itself holds only the **pointers** (or pointer + index)
+to its members' columns, in a **separate handle store keyed by resource id**, with
+separate pointer provenance from the value columns. The resource has **no private
+value arena**.
+---
+`DrainStores` (bindings.rs:22) reserves a **one-record opaque column per `Resource<T>`**:
+the whole value moved in as a blob behind a single `ResourcePtr<T>`. That is NOT the
+canonical model. Canonical: the members decompose into per-member shape-bound columns,
+and the resource is a handle of their pointers/indices. The blob impl is the drift to
+fix; it is also what manufactured the morsel-size "dissonance" (the heterogeneous
+bare-RunCfg-vs-Resource-vs-Column type-fold). Once every value is a shape-bound column
+with a known stride and the resource is a handle, per-store size is uniform (column
+strides) and the type-fold problem disappears.
+'''
+origin = "proposed"
+written_by = "topic resource-handle-storage-model of 2026-06-19, round 202606210600, agent-written, later reversed by the same round's bench topics"
+standing = "provisional"
+subject = "stores"
+keywords = ["resource handle", "shape-bound columns", "decompose", "handle store", "DrainStores", "one-record blob", "R5", "unified store"]
+cites = ["a_resource_is_a_handle_and_not_an_inline_value_store_which_is_the_corrected_reading_of_r5"]
+
+[[tenet]]
+id = "a_resource_value_is_a_one_record_blob_and_the_bench_reverses_the_decomposition_to_shape_bound_columns"
+what = "The bench and the experts reverse the decomposition: a resource value is a one-record blob per resource, the handle pointing to a contiguous value, with a stack-local snapshot of the scalar members before the morsel loop and the large sequence and map members streamed live and not copied. The decision first stood provisional pending a second run, and the second run confirmed the first on every axis. The decomposed layout and the shape-bound shared layout are both refuted."
+mechanism = "Bench variants: V2 decomposed per-member columns loses axis B and axis C; V3 shape-bound shared columns lose axis E plus a resize-invalidates-all-sharers hazard; large collection members streamed live beat snapshot-copy about 2.5 times at 64 MiB."
+source = "mock/design_rounds/202607161000/202606210600_topic.bench-decision.md:8-13, mock/design_rounds/202607161000/202606210600_topic.bench-decision.md:17-22, mock/design_rounds/202607161000/202606210600_topic.bench-run2-resolution.md:12-16, mock/design_rounds/202607161000/202606210600_topic.bench-run2-resolution.md:41-52"
+provenance = ["mock::design_rounds::202607161000::202606210600_topic.bench-decision::#status-provisional"]
+quote = '''
+## Status: PROVISIONAL
+
+Op directed a couple of full harness runs before judging. **Only run-1 has completed.**
+This topic records the decision the pressure-test + run-1 point to; it is NOT locked. Run-2
+(confirmation) + a full CSV aggregation (min/median `algo_ns` per section x n x variant) are
+deferred to next week, then the decision locks or revises.
+---
+The earlier addendum (`202606210600_resource-storage-model-canonical-addendum.md`) asserted
+**decompose-to-shape-bound-columns**. The bench + experts **reverse** that. The winner is:
+
+**A one-record blob per resource (the handle points to a contiguous value), with a
+stack-local snapshot of the scalar `Field` members before the morsel loop, and large
+`Seq`/`Map` collection members streamed live (NOT snapshot-copied).**
+---
+## Run-2 confirmed run-1 on every axis
+
+A second full 16-arm pass on the same M1 host, independent of run-1 (the harness `run` path consults no
+dylib cache), 74 minutes, all arms byte-exact-validated. Read on the best-20% (min) low-noise estimator,
+every axis verdict reproduced:
+---
+## Decided by the bench (independent of the requirements call)
+
+- Resource is a handle, not an inline-value store (R5:1689).
+- The per-record value layout is a one-record blob (per-resource contiguous on the arena), NOT decomposed
+  per-member columns (V2: loses axis B and C) and NOT shape-bound shared columns (V3: loses axis E plus the
+  resize-invalidates-all-sharers hazard). This reverses the addendum's original decompose-to-shape-bound.
+- Scalar Field members: stack-snapshot before the morsel loop (wall-clock-neutral on M1, free insurance,
+  mechanism proven in disasm, real where the reload is not L1-cheap).
+- Seq/Map collection members: stream live from the column, never snapshot-copy (~2.5x at 64 MiB). The
+  snapshot copies only the small scalars and the collection ptr+len, not the elements.
+- The noalias invariant is architectural: the handle store never aliases the value columns, and scalars are
+  snapshotted before the loop.
+'''
+origin = "proposed"
+written_by = "topics bench-decision (2026-06-20, run-1, provisional) and bench-run2-resolution (2026-07-02) of round 202606210600, agent-written"
+standing = "provisional"
+subject = "stores"
+keywords = ["bench decision", "one-record blob", "decompose", "shape-bound", "run-2", "stack snapshot", "live stream", "V1 V2 V3"]
+rules_out = ["decompose-to-shape-bound-columns"]
+cites = ["a_resource_handle_s_members_decompose_into_per_member_shape_bound_columns_in_the_unified_store", "the_value_of_a_resource_is_one_contiguous_record_blob_and_the_per_member_column_decomposition_was_refuted_by_bench"]
+
+[[tenet]]
+id = "the_resource_binding_records_an_erased_base_pointer_and_a_static_shape_and_the_typed_pointer_is_backcast_at_projection"
+what = "The design documents state the resource binding recorded at drain as an erased base pointer plus a static shape descriptor, with the typed view recovered by a backcast when a unit's context is projected, in place of a monomorphised typed pointer recorded at drain. In process this is at parity with a monomorphised pointer, and it exists so that a resource value can cross a dynamic-library or wasm extension boundary near-natively. It applies to every resource uniformly, so any resource is extension-visible without a per-resource design change."
+mechanism = "`mock/crates/hilavitkutin/DESIGN.md.tmpl` domain-19 section and builder/drain paragraph; the drain still reserves a one-record column per `Resource<T>` and writes the staged value in; the typed `ResourcePtr<T>` is backcast at projection; zero-sized resources keep the dangling-pointer path."
+source = "mock/design_rounds/202607161000/202607161000_changelist.doc.lock.md:14-19, mock/design_rounds/202607161000/202607161000_changelist.doc.lock.md:38-44, mock/design_rounds/202607161000/202607161000_changelist.doc.lock.md:54-58"
+provenance = ["mock::design_rounds::202607161000::202607161000_changelist.doc.lock::#current-state"]
+quote = '''
+`mock/crates/hilavitkutin/DESIGN.md.tmpl` carries the domain-19 resource-handling
+statement in its pre-bench form: stack-local caching and pointer separation are
+stated, but the addressing is described as a monomorphised `ResourcePtr<T>`
+recorded at drain ("records a `ResourcePtr<T>` derived from the column base
+pointer"), and the collection (`Seq`/`Map`) access discipline and the erased
+static-shape addressing are absent. The round's research artifacts
+---
+   Add the erased static-shape addressing: the binding records an erased base
+   pointer plus a static shape descriptor; the typed view is recovered by a
+   backcast at projection time. In-process this is parity with a monomorphised
+   pointer; it exists so a resource value can cross a dynamic-library or wasm
+   extension boundary near-natively. It applies to every resource uniformly
+   (global-capable), so any resource is extension-visible without a per-resource
+   design change.
+---
+3. **Builder/drain section (`build(storage, record_count)` paragraph).** The
+   drain still reserves a one-record column per `Resource<T>` and writes the
+   staged value in; it now records the erased base plus the value's static shape,
+   from which the typed `ResourcePtr<T>` is backcast at projection. Zero-sized
+   resources keep the dangling-pointer path.
+'''
+origin = "proposed"
+written_by = "doc changelist of 2026-07-16, round 202606210600 (resource storage model), agent-written, folding in the decision of 2026-07-02"
+standing = "provisional"
+subject = "stores"
+keywords = ["erased base pointer", "static shape", "ResourcePtr", "backcast", "drain", "projection", "plugin boundary", "domain 19"]
+rules_out = ["a monomorphised `ResourcePtr<T>` recorded at drain"]
+cites = ["a_resource_value_is_addressed_through_an_erased_static_shape_so_it_can_cross_a_plugin_boundary", "the_value_of_a_resource_is_one_contiguous_record_blob_and_the_per_member_column_decomposition_was_refuted_by_bench"]
