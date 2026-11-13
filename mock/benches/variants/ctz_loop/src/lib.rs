@@ -7,12 +7,14 @@
 //! Worst case for ctz computation. Models what a "portable, no
 //! intrinsics, no clever tricks" implementation would produce.
 
-use mockspace_bench_core::{timed, FfiBenchCall};
+use ctz_common::sum_trailing_zeros;
+use mockspace_bench_core::{FfiBenchCall, timed};
 use mockspace_bench_macro::bench_variant;
 
+/// The shift-and-test count, stopping at 64 so that zero ends.
 #[inline(always)]
-fn ctz_loop(mut v: u64) -> u64 {
-    let mut count: u64 = 0;
+fn ctz_loop(mut v: u64) -> u32 {
+    let mut count = 0u32;
     while v & 1 == 0 && count < 64 {
         v >>= 1;
         count += 1;
@@ -24,15 +26,23 @@ fn ctz_loop(mut v: u64) -> u64 {
 fn run_ctz_loop<const N: usize>(input: &[u8; N], output: &mut [u8; 8]) -> FfiBenchCall {
     timed! {
         run {
-            let words = N / 8;
-            let p = input.as_ptr() as *const u64;
-            let mut acc: u64 = 0;
-            for i in 0..words {
-                let v = unsafe { *p.add(i) };
-                let tz = ctz_loop(v | 1);
-                acc = acc.wrapping_add(tz);
-            }
+            let acc = sum_trailing_zeros(input, ctz_loop);
             output.copy_from_slice(&acc.to_le_bytes());
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use ctz_common::{agrees_with_std, sum_trailing_zeros, varies};
+
+    #[test]
+    fn the_count_agrees_with_std() {
+        agrees_with_std(super::ctz_loop).unwrap();
+    }
+
+    #[test]
+    fn the_kernel_does_not_time_a_constant() {
+        assert!(varies(|i| sum_trailing_zeros(i, super::ctz_loop)));
     }
 }

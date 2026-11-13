@@ -1,0 +1,18 @@
+[workspace]
+
+[package]
+name = "ctz_common"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# Shared loop of the bit_count_ops bench and the checks every arm runs on its
+# own count. The arms (ctz_intrinsic, ctz_debruijn, ctz_loop) differ only in the
+# trailing-zero count they hand `sum_trailing_zeros`, so the three cdylibs time
+# the same loop over the same words.
+[lib]
+name = "ctz_common"
+path = "src/lib.rs"
+
+[dependencies]
+kernel_checks = { path = "../kernel_checks" }
