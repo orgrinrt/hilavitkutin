@@ -17,13 +17,14 @@ use hilavitkutin_api::run_cfg::RunCfg;
 use hilavitkutin_api::store_values::StoreValues;
 use hilavitkutin_api::work_unit_values::{WuCons, WuNil};
 
+use super::verdict::frame_verdict;
 use super::{PlanHandle, Scheduler};
 use crate::dispatch::fiber_run::RunFiber;
 use crate::dispatch::fusion::{ChainWu, FuseCarrier};
 use crate::dispatch::morsel::MorselRange;
 use crate::meta::fold_ema;
 use crate::plan::{AccessMask, PlanDims};
-use crate::resource::bindings::BindingsFor;
+use crate::resource::bindings::{BindingsFor, FirstRefusal};
 
 impl<
     Cfg: RunCfg,
@@ -65,10 +66,10 @@ impl<
     /// over an empty morsel.
     pub fn run_fused<W2>(&mut self) -> Cfg::Out
     where
-        Cfg::Out: Default,
         WuVals: FuseCarrier,
         WuCons<ChainWu<<WuVals as FuseCarrier>::Chain>, WuNil>:
             RunFiber<<Vals as BindingsFor>::Bindings, W2>,
+        <Vals as BindingsFor>::Bindings: FirstRefusal,
     {
         let _ = (
             &self.plan_dirty,
@@ -142,7 +143,7 @@ impl<
             m.change_seen_count
                 .set(arvo::USize(m.change_seen_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: increment by one frame; tracked: #121
         }
-        Cfg::Out::default()
+        frame_verdict::<Cfg, _>(&self.bindings)
     }
 
     /// Borrow the resource bindings. Hidden test accessor: lets in-crate

@@ -51,7 +51,7 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 }
 
 // The accumulator's reserved capacity equals the record count at build, and
-// an append past it asserts (the engine's soundness guard), so the record count
+// an append past it is refused, so the record count
 // provides the headroom for the per-core consumer markers plus the epilogue
 // append.
 const RECORDS: usize = 64;

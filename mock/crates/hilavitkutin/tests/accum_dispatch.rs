@@ -25,6 +25,7 @@ mod stable_provider;
 use arvo::USize;
 use hilavitkutin::dispatch::engine_ctx::{AccPtrCons, AccPtrNil, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
+use hilavitkutin_api::AccumRefused;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{AccumWriterApi, HasAccumWriter};
@@ -33,6 +34,7 @@ use hilavitkutin_api::store::Accum;
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
+use notko::lend::Exhausted;
 use stable_provider::StableProvider;
 
 /// Wrap a provider in the default-capacity arena store (`D = Dim<256>`).
@@ -109,9 +111,9 @@ impl WorkUnit<Always> for AppendWu {
 const CAP_SMALL: usize = 2;
 
 // Over-capacity appender: appends five values to an `Accum<Av>` reserved to
-// `CAP_SMALL`. Appending past the reserved capacity is a contract violation; the
-// append path asserts the bound before writing, so the append at index
-// `CAP_SMALL` panics ahead of any out-of-bounds write.
+// `CAP_SMALL`. Appending past the reserved capacity is refused: the first
+// `CAP_SMALL` appends land, the rest write nothing, and the run returns the
+// refusal.
 struct OverAppendWu;
 
 impl BuilderInput for OverAppendWu {
@@ -139,9 +141,9 @@ impl WorkUnit<Always> for OverAppendWu {
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         // SAFETY: `build` reserved `CAP_SMALL` records; the appender holds the
-        // exclusive slot. Appending past the reserved capacity is a contract
-        // violation: the append path asserts the bound before writing, so the
-        // append at index `CAP_SMALL` panics ahead of any out-of-bounds write.
+        // exclusive slot. Appending past the reserved capacity is refused and
+        // writes nothing, so the appends from index `CAP_SMALL` on never reach
+        // the buffer.
         unsafe {
             ctx.accums().append::<Av, _>(Av(200));
             ctx.accums().append::<Av, _>(Av(201));
@@ -152,14 +154,12 @@ impl WorkUnit<Always> for OverAppendWu {
     }
 }
 
-// Appending past the reserved capacity is a contract violation, never a silent
-// drop: the append path asserts the live length is below the reserved
-// capacity and panics before the write, so a misconfigured capacity fails loudly
-// instead of losing records. `OverAppendWu` appends `CAP_SMALL + 3` times into a
-// `CAP_SMALL` accumulator; the append at index `CAP_SMALL` panics.
+// Appending past the reserved capacity is refused, never a silent drop and never
+// a panic: `OverAppendWu` appends `CAP_SMALL + 3` times into a `CAP_SMALL`
+// accumulator, the first `CAP_SMALL` land, the rest write nothing, and the run
+// returns the refusal with every append it was asked for.
 #[test]
-#[should_panic(expected = "reserved capacity")]
-fn accum_append_panics_past_reserved_capacity() {
+fn accum_append_past_reserved_capacity_is_refused_as_a_value() {
     let provider = StableProvider::new(8192);
     let mut scheduler = Scheduler::builder()
         .with(Accum::<Av>::new())
@@ -167,7 +167,30 @@ fn accum_append_panics_past_reserved_capacity() {
         .build(store(provider), USize(CAP_SMALL))
         .unwrap_or_else(|_| panic!("build should succeed"));
 
-    let _ = scheduler.run();
+    let result = scheduler.run();
+    let expected = AccumRefused::new(USize(0), Exhausted {
+        wanted: CAP_SMALL + 3,
+        had:    CAP_SMALL,
+    });
+    match result {
+        Outcome::Err(got) => assert_eq!(got, expected, "the refusal is the run's output"),
+        Outcome::Ok(()) => panic!("the run returned Ok past the reserved capacity"),
+    }
+
+    let bindings = scheduler.__bindings();
+    assert_eq!(
+        bindings.__len_cell().get(),
+        USize(CAP_SMALL),
+        "only the first CAP_SMALL appends landed"
+    );
+    let base = bindings.__ptr().as_ptr();
+    // SAFETY: the drain reserved `CAP_SMALL` records and both were appended.
+    let landed = unsafe { [core::ptr::read(base.add(0)), core::ptr::read(base.add(1))] };
+    assert_eq!(
+        landed.map(|a| a.0),
+        [200, 201],
+        "the accepted records are the first appends, in order"
+    );
 }
 
 #[test]

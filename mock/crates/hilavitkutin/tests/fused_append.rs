@@ -8,7 +8,7 @@
 //! at compile time because `FuseCarrier` bounds a unit on `RecordOp` and `Copy`
 //! and not on its write set. `run_fused` also never makes the per-frame
 //! accumulator reset that `run` and `run_parallel` make, so running the body
-//! alone would meet the capacity assert at frame one.
+//! alone would be refused once the live length reaches the capacity.
 //!
 //! The first test holds the behaviour the second is compared against, so the
 //! second cannot fail for the harness's sake. The second asserts the same live

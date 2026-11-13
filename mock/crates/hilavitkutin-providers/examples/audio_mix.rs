@@ -26,7 +26,7 @@ fn main() {
     //       .with(Mixer::channel(3))
     //       .with(MasterBus)
     //       .build();
-    //   let _: Outcome<(), ()> = sched.run();
+    //   let _: Outcome<(), AccumRefused> = sched.run();
     //
     // is the Pass-8-wiring target. The Mixer bodies use
     // ctx.batch() over Column<Sample> with arvo `IFixed` fixed-

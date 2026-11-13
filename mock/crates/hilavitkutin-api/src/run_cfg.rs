@@ -22,6 +22,7 @@ use core::marker::PhantomData;
 use arvo::{Additive, Identity, USize};
 
 use crate::access::Cons;
+use crate::accum_refused::AccumRefused;
 use crate::builder_input::{BuilderInput, Dispatch};
 
 mod sealed {
@@ -58,13 +59,12 @@ pub trait PlanAffecting: sealed::Sealed + BuilderInput {}
 pub trait RunCfg:
     sealed::Sealed + BuilderInput<Dispatch = RunCfgDispatch<Self>> + HasRecordCount + Sized + 'static
 {
-    /// Successful run-output type. The `Scheduler::run() -> Self::Out`
-    /// return type is parameterised by this. Typically
-    /// `notko::Outcome<Summary, Error>` or `notko::Outcome<(), ()>`.
-    type Out;
+    /// The run's output. Every run entry returns `Self::Out` built from the
+    /// frame's verdict: `Ok(())`, or `Err` with the first accumulator that
+    /// refused an append, walked in registration order.
+    type Out: From<notko::Outcome<(), AccumRefused>>;
 
-    /// Failure type surfaced through `Self::Out::Err`. Heavy consumers
-    /// override to structured errors; simple consumers leave at `()`.
+    /// Failure type the run reports.
     type Err;
 
     /// Cap on resources marked `PlanAffecting`. Drives the dirty-
@@ -117,8 +117,8 @@ pub trait RunCfg:
 }
 
 /// Substrate default RunCfg. Consumers may use this when they have
-/// no special run-config needs; the `Scheduler::run() -> Outcome<(), ()>`
-/// shape is the typical case.
+/// no special run-config needs; `Scheduler::run()` returns
+/// `Outcome<(), AccumRefused>`.
 pub struct DefaultRunCfg {
     /// Record count for the pipeline. Drives morsel sizing.
     pub record_count: USize,
@@ -153,8 +153,8 @@ impl BuilderInput for DefaultRunCfg {
 }
 
 impl RunCfg for DefaultRunCfg {
-    type Err = ();
-    type Out = notko::Outcome<(), ()>;
+    type Err = AccumRefused;
+    type Out = notko::Outcome<(), AccumRefused>;
 }
 
 impl PlanAffecting for DefaultRunCfg {}

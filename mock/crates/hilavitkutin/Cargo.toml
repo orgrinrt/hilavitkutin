@@ -36,3 +36,7 @@ platform-no-os = []
 # `core::hint::black_box` for `noinline_barrier`. Nightly
 # `core::intrinsics::prefetch_*` is a follow-up (BACKLOG).
 intrinsics-std = []
+# Test-only mutant: an accumulator append refused at the capacity is dropped
+# without being counted, so no refusal reaches the run's output. The overflow
+# suite must fail with it on. Never enabled outside that check.
+mutant-truncating-append = []
