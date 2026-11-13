@@ -1,0 +1,49 @@
+[workspace]
+resolver = "3"
+members = [
+    "owed",
+    "plumb",
+    "e1/vocab",
+    "e1/unit",
+    "e1/run-ordered",
+    "e1/run-permuted",
+    "e1/run-fused",
+    "e1/run-threaded",
+    "e1/run-registry",
+    "e1/check",
+    "e1/fixtures",
+    "e1/grow",
+    "e2/vocab",
+    "e2/unit",
+    "e2/run-ordered",
+    "e2/run-permuted",
+    "e2/run-fused",
+    "e2/run-threaded",
+    "e2/run-registry",
+    "e2/check",
+    "e2/fixtures",
+    "e2/grow",
+]
+
+[workspace.dependencies]
+notko-hlist = { git = "https://github.com/orgrinrt/notko.git", rev = "1a978e5c2db6c8f68bf94a6fcae266394f172b17", default-features = false }
+rg-owed = { path = "owed" }
+rg-plumb = { path = "plumb" }
+e1-vocab = { path = "e1/vocab" }
+e1-unit = { path = "e1/unit" }
+e1-run-ordered = { path = "e1/run-ordered" }
+e1-run-permuted = { path = "e1/run-permuted" }
+e1-run-fused = { path = "e1/run-fused" }
+e1-run-threaded = { path = "e1/run-threaded" }
+e1-run-registry = { path = "e1/run-registry" }
+e2-vocab = { path = "e2/vocab" }
+e2-unit = { path = "e2/unit" }
+e2-run-ordered = { path = "e2/run-ordered" }
+e2-run-permuted = { path = "e2/run-permuted" }
+e2-run-fused = { path = "e2/run-fused" }
+e2-run-threaded = { path = "e2/run-threaded" }
+e2-run-registry = { path = "e2/run-registry" }
+trybuild = "1"
+
+[profile.release]
+codegen-units = 1
