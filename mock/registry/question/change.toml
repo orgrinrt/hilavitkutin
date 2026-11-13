@@ -189,3 +189,44 @@ Reading: no option chosen. He recalls research, sketches and perhaps benches on 
 subject = "change"
 keywords = ["buffered store", "rotation", "double buffer", "triple buffer", "frame start", "swap", "maintenance work unit"]
 related = ["question::whether_hilavitkutin_s_own_columns_are_double_buffered", "question::how_a_unit_reads_the_value_a_store_held_at_frame_start"]
+
+[[question]]
+id = "whether_the_plan_affecting_marker_is_sealed_or_open"
+asks = "Is the marker that makes a resource plan-affecting a sealed trait, or an open marker a consumer implements on its own resource value types?"
+options = [
+    "Sealed: the round of May 2026 and the api design template on dev declare it as a sealed marker over the builder input",
+    "Open: amendment A2-3 and the swap specification make it an open marker on resource value types, and the api design template on the recovery branch says so",
+]
+state = "open"
+source = "mock/design_rounds/202605101036/202605101036_topic.resource-resolution.md:33-37, mock/crates/hilavitkutin-api/DESIGN.md.tmpl:1119-1127, mock/research/202611130850_the-record-read-whole/RECOVERED.md:137-146"
+quote = '''
+Sealed marker trait in `hilavitkutin-api`. Implementations are opt-in by consumers OR derived by macro:
+
+```rust
+pub trait PlanAffecting: BuilderInput + private::Sealed {}
+```
+---
+### `PlanAffecting: BuilderInput + Sealed`
+
+Sealed marker trait. Resources implementing `PlanAffecting` dirty the
+plan cache when replaced via `Scheduler::replace_resource`; resources
+without it are cheap value-swaps. Default is NOT plan-affecting.
+
+```rust
+pub trait PlanAffecting: BuilderInput + private::Sealed {}
+```
+---
+### `PlanAffecting` open marker
+
+Open marker trait on resource value types, per-type consumer opt-in
+mirroring `Replaceable`. Resources implementing `PlanAffecting` dirty
+the plan cache when replaced via `Scheduler::replace_resource`;
+resources without it are cheap value-swaps. Default is NOT
+plan-affecting. `PlanAffecting` and `Replaceable` are mutually
+exclusive with `PlanAffecting` dominant (see the `Replaceable`
+section's negative impl); a plan-affecting swap performs the identical
+witnessed blob install plus the plan-dirty bit.
+'''
+subject = "change"
+keywords = ["PlanAffecting", "sealed", "open marker", "A2-3", "api design template", "recovery branch"]
+related = ["tenet::as_of_round_202605101036_plan_affecting_is_a_sealed_marker_and_a_resource_without_it_is_swapped_cheaply", "tenet::plan_affecting_is_an_open_marker_trait_that_consumers_implement_on_resource_value_types"]
