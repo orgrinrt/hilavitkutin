@@ -1,0 +1,113 @@
+warning: hilavitkutin-ctx@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-api@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-kit@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-sym@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-str@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-providers@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+   Compiling hilavitkutin v0.1.0 (/home/user/.worktrees/hv-ltp-seat02/mock/crates/hilavitkutin)
+warning: struct `AdaptArena` is never constructed
+  --> /home/user/.worktrees/hv-ltp-seat02/mock/crates/hilavitkutin/src/adapt/arena.rs:38:19
+   |
+38 | pub(crate) struct AdaptArena<'arena, CF: Capacity, CC: Capacity, CP: Capacity> {
+   |                   ^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: associated function `new` is never used
+  --> /home/user/.worktrees/hv-ltp-seat02/mock/crates/hilavitkutin/src/adapt/arena.rs:46:25
+   |
+43 | impl<'arena, CF: Capacity, CC: Capacity, CP: Capacity> AdaptArena<'arena, CF, CC, CP> {
+   | ------------------------------------------------------------------------------------- associated function in this implementation
+...
+46 |     pub(crate) const fn new() -> Self {
+   |                         ^^^
+
+warning: path statement with no effect
+  --> /home/user/.worktrees/hv-ltp-seat02/mock/crates/hilavitkutin/src/plan/dirty.rs:50:9
+   |
+50 |         Self::_ASSERT_FITS_IN_USIZE;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(path_statements)]` (part of `#[warn(unused)]`) on by default
+
+warning: path statement with no effect
+   --> /home/user/.worktrees/hv-ltp-seat02/mock/crates/hilavitkutin/src/plan/project.rs:176:5
+    |
+176 |     StoreCeiling::<CS>::ASSERT_FITS;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: path statement with no effect
+   --> /home/user/.worktrees/hv-ltp-seat02/mock/crates/hilavitkutin/src/plan/project.rs:250:5
+    |
+250 |     StoreCeiling::<CS>::ASSERT_FITS;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: path statement with no effect
+   --> /home/user/.worktrees/hv-ltp-seat02/mock/crates/hilavitkutin/src/plan/project.rs:332:5
+    |
+332 |     StoreCeiling::<CS>::ASSERT_FITS;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: path statement with no effect
+   --> /home/user/.worktrees/hv-ltp-seat02/mock/crates/hilavitkutin/src/plan/project.rs:357:5
+    |
+357 |     StoreCeiling::<CS>::ASSERT_FITS;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+   Compiling s4-growth v0.0.0 (/home/user/.worktrees/hv-ltp-seat02/mock/research/sketches/202611131951_load-time-units-seat02/s4-growth)
+warning: `hilavitkutin` (lib) generated 7 warnings
+    Finished `test` profile [unoptimized] target(s) in 0.70s
+     Running unittests src/lib.rs (/home/user/target/debug/deps/s4_growth-87efc25e8200d329)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/growth.rs (/home/user/target/debug/deps/growth-376dec75eaf29ac5)
+
+running 2 tests
+test a_capacity_far_above_the_live_count_costs_address_space_not_memory ... overcommit_memory = 0; reserve of 32 GiB: refused
+
+thread 'a_capacity_far_above_the_live_count_costs_address_space_not_memory' (22722) panicked at tests/growth.rs:44:5:
+the provider refused the reservation (overcommit mode 0)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test re_reserving_a_column_keeps_the_records_it_held ... base moved: false; first four after the resize: [0, 0, 0, 0]; count now 8
+
+thread 're_reserving_a_column_keeps_the_records_it_held' (22723) panicked at tests/growth.rs:29:5:
+assertion `left == right` failed: the resize dropped what the column held
+  left: [0, 0, 0, 0]
+ right: [100, 101, 102, 103]
+FAILED
+
+failures:
+
+failures:
+    a_capacity_far_above_the_live_count_costs_address_space_not_memory
+    re_reserving_a_column_keeps_the_records_it_held
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--test growth`
+     Running tests/reserve_commit.rs (/home/user/target/debug/deps/reserve_commit-273bbce92908901e)
+
+running 2 tests
+test a_reservation_committed_as_it_grows_keeps_its_base_and_its_records ... overcommit_memory = 0; PROT_NONE reserve of 32 GiB: granted
+rss before growth 2748 KiB, after 1048576 records 10944 KiB, touched 8192 KiB
+ok
+test the_shipped_provider_grants_a_capacity_under_physical_memory_and_touch_decides_residency ... 4 GiB capacity: rss 2888 -> 2888 after reserve -> 11080 KiB after 1048576 records (8192 KiB touched)
+ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+   Doc-tests s4_growth
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: 1 target failed:
+    `--test growth`
+
+[exited with code 101]

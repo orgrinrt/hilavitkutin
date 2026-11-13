@@ -1,0 +1,21 @@
+[workspace]
+
+[package]
+name = "s4-growth"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+hilavitkutin-api = { path = "../../../../crates/hilavitkutin-api" }
+hilavitkutin = { path = "../../../../crates/hilavitkutin" }
+hilavitkutin-providers = { path = "../../../../crates/hilavitkutin-providers" }
+libc = "0.2"
+
+[patch."ssh://git@github.com/orgrinrt/notko.git"]
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev" }

@@ -1,0 +1,44 @@
+   Compiling s2-extension-surface-unit v0.0.0 (/home/user/.worktrees/hv-ltp-seat02/mock/research/sketches/202611131951_load-time-units-seat02/s2-extension-surface-unit)
+    Finished `release` profile [optimized] target(s) in 0.22s
+     Running unittests src/lib.rs (/home/user/target/release/deps/s2_extension_surface_unit-0b0c9b0a76c531cb)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/envelope.rs (/home/user/target/release/deps/envelope-2e45b15083ef7c91)
+
+running 5 tests
+test a_conforming_extension_is_admitted_and_computes_the_function ... ok
+test a_read_of_a_store_the_host_unit_never_declared_is_refused_at_load ... ok
+test a_write_outside_the_host_units_envelope_is_refused_at_load ... ok
+test an_extension_that_writes_what_it_declared_as_read_is_caught ... FAILED
+test swapping_the_variant_between_morsels_changes_nothing_in_the_result ... ok
+
+failures:
+
+---- an_extension_that_writes_what_it_declared_as_read_is_caught stdout ----
+
+thread 'an_extension_that_writes_what_it_declared_as_read_is_caught' (4733) panicked at tests/envelope.rs:84:5:
+assertion `left == right` failed: records of the read-only store written with nothing at the boundary noticing
+  left: 4095
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    an_extension_that_writes_what_it_declared_as_read_is_caught
+
+test result: FAILED. 4 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--test envelope`
+   Doc-tests s2_extension_surface_unit
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: 1 target failed:
+    `--test envelope`
+
+[exited with code 101]
