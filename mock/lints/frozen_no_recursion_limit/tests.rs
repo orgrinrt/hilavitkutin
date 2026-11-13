@@ -48,9 +48,11 @@ fn comments_and_strings_are_not_read() {
 }
 
 #[test]
-fn the_escape_lets_one_line_pass() {
-    assert!(
+fn no_escape_lets_a_line_pass() {
+    assert_eq!(
         lines("#![recursion_limit = \"512\"] // lint:allow(frozen-no-recursion-limit) probing\n")
-            .is_empty()
+            .len(),
+        1,
+        "a lint:allow comment is not read"
     );
 }

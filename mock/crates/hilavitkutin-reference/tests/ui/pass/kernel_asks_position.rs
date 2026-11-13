@@ -1,20 +1,24 @@
-//! Twin: the store side, a visiting order's visitor, is handed positions and may use them.
-use hilavitkutin_contracts::num::{Count, Index};
-use hilavitkutin_contracts::store::{Visit, Visitor};
-use hilavitkutin_frozen_implementors::Forward;
+//! Twin: the same kernel, handed its values and nothing else.
+use hilavitkutin_contracts::domain::Own;
+use hilavitkutin_contracts::kernel::{KernelId, ValueKernel};
+use hilavitkutin_contracts::list::{Cons, Empty};
+use hilavitkutin_contracts::num::{Int, USize};
+use hilavitkutin_frozen_authors::{Heat, Plane};
 
-struct Last(Index);
+type L = Int<16>;
+struct Where;
 
-impl Visitor for Last {
-    fn morsel(&mut self, _len: Count) {}
+impl ValueKernel for Where {
+    type Domain = Plane;
+    type Reads = Cons<Own<Heat<L>>, Empty>;
+    type Roles = Cons<Heat<L>, Empty>;
+    type Writes = Cons<Own<Heat<L>>, Empty>;
 
-    fn record(&mut self, at: Index) {
-        self.0 = self.0.max(at);
+    const ID: KernelId = KernelId::new(USize::from_host(7));
+
+    fn at((here, ()): (L, ())) -> (L, ()) {
+        (here, ())
     }
 }
 
-fn main() {
-    let mut last = Last(Index::FIRST);
-    Forward.visit(Count::from_host(4), Count::ONE, &mut last);
-    assert_eq!(last.0, Index::from_host(3));
-}
+fn main() {}

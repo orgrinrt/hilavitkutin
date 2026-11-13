@@ -3,7 +3,7 @@ name = "hilavitkutin-reference"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "The reference runner of the loop core: step, swap, digest and run"
+description = "The reference runner of the loop core: step, digest and run"
 repository.workspace = true
 
 [dependencies]

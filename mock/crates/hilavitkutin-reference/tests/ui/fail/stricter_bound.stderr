@@ -1,5 +1,5 @@
 error[E0276]: impl has stricter requirements than trait
-  --> tests/ui/fail/stricter_bound.rs:21:12
+  --> tests/ui/fail/stricter_bound.rs:22:12
    |
-21 |         L: Ord,
+22 |         L: Ord,
    |            ^^^ impl has extra requirement `L: Ord`

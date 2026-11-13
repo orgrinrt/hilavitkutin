@@ -88,7 +88,10 @@ const COUNT: [usize; 8] = [
     Count::ZERO.host(),
     Count::ONE.host(),
     C3.add(Count::ONE).host(),
-    C3.sub(Count::ONE).host(),
+    match C3.sub(Count::ONE) {
+        Maybe::Is(n) => n.host(),
+        Maybe::Isnt => usize::MAX,
+    },
     C3.next().host(),
     C3.end().host(),
     C3.min(Count::ONE).host(),
@@ -108,6 +111,12 @@ fn count_doors() {
     assert_eq!(COUNT_CMP, [true, true, true, true, false]);
     assert_eq!(C3.cmp(C3), Ordering::Equal);
     assert_eq!(<Count as Identity<Additive>>::IDENTITY, Count::ZERO);
+    assert_eq!(
+        Count::ZERO.sub(Count::ONE),
+        Maybe::Isnt,
+        "a count does not go below zero"
+    );
+    assert_eq!(C3.sub(C3), Maybe::Is(Count::ZERO));
 }
 
 type I8 = Int<8>;
@@ -162,3 +171,49 @@ fn lane_doors() {
     );
     assert_eq!(<I8 as Lane>::narrow(w), I8::MAX);
 }
+
+/// At `B` bits the register holds `MAX_TERMS` subtracted minimums, the most a sum of members can
+/// reach, and not one more. The sum is built by doubling, so 64 bits costs 64 steps.
+fn term_bound<const B: u32>() {
+    let min = Int::<B>::MIN.widen();
+    let one = Wide::<B>::ZERO.sub(min);
+    let mut half = one;
+    for _ in 1 .. B {
+        assert!(half.fits_add(half).get(), "{B} bits");
+        half = half.add(half);
+    }
+    let all = half.sub(one).add(half);
+    assert_eq!(
+        Wide::<B>::MAX_TERMS.host() as u128,
+        (1u128 << B) - 1,
+        "{B} bits: the bound counts every term the register holds"
+    );
+    assert!(
+        all.sub(one).fits_sub(min).get(),
+        "{B} bits: the last term fits"
+    );
+    assert!(!all.fits_sub(min).get(), "{B} bits: one term more does not");
+    let low = Wide::<B>::ZERO.sub(all);
+    assert!(
+        low.fits_add(min).get(),
+        "{B} bits: the low side holds one more"
+    );
+    assert!(
+        !low.add(min).fits_add(min).get(),
+        "{B} bits: and no further"
+    );
+}
+
+macro_rules! every_width {
+    ($($b:literal)*) => {
+        #[test]
+        fn the_term_bound_holds_at_every_width() {
+            $(term_bound::<$b>();)*
+        }
+    };
+}
+
+every_width!(
+    1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32
+    33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64
+);

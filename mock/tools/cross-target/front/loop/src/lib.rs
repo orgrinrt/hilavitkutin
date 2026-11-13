@@ -14,8 +14,8 @@ use hilavitkutin_contracts::digest::Digest;
 use hilavitkutin_contracts::domain::{Cell, Value, Word};
 use hilavitkutin_contracts::kernel::ValueKernel;
 use hilavitkutin_contracts::list::{Cons, Empty};
-use hilavitkutin_contracts::num::{Count, Index, Int, USize};
-use hilavitkutin_contracts::store::{Store, Visit};
+use hilavitkutin_contracts::num::{ColumnNo, Count, Index, Int, USize};
+use hilavitkutin_contracts::store::{Morsel, Store, Visit};
 use hilavitkutin_contracts::{Maybe, Outcome};
 use hilavitkutin_frozen_authors::{Diffuse, Extent, Plane};
 use hilavitkutin_frozen_implementors::{Columns, Forward, Permuted, Records};
@@ -42,6 +42,13 @@ const SHAPE: Extent = Extent {
 };
 const RATE: i64 = 3;
 
+const fn morsel(size: usize) -> Morsel {
+    match Morsel::of(Count::from_host(size)) {
+        Maybe::Is(morsel) => morsel,
+        Maybe::Isnt => Morsel::ONE,
+    }
+}
+
 /// What a case left: how many digests it wrote, and the frame its run
 /// refused at, if it refused.
 pub struct Report {
@@ -53,13 +60,13 @@ pub struct Report {
 pub fn run_case(case: USize, out: &mut [Word; FRAMES]) -> Report {
     let mut digests = [Digest::new(); FRAMES];
     let report = match case.host() {
-        0 => stream::<Columns<Plane, 1, CELLS>, _>(&Forward, Count::from_host(7), &mut digests),
+        0 => stream::<Columns<Plane, 1, CELLS>, _>(&Forward, morsel(7), &mut digests),
         1 => {
             stream::<Records<Plane, 1, CELLS>, _>(
                 &Permuted {
                     seed: USize::from_host(11),
                 },
-                Count::ONE,
+                Morsel::ONE,
                 &mut digests,
             )
         },
@@ -68,16 +75,12 @@ pub fn run_case(case: USize, out: &mut [Word; FRAMES]) -> Report {
                 &Permuted {
                     seed: USize::from_host(1_000_003),
                 },
-                Count::from_host(CELLS),
+                morsel(CELLS),
                 &mut digests,
             )
         },
         3 => {
-            stream::<Records<Plane, 1, CELLS>, _>(
-                &Forward,
-                Count::from_host(5),
-                &mut digests[.. FRAMES / 2],
-            )
+            stream::<Records<Plane, 1, CELLS>, _>(&Forward, morsel(5), &mut digests[.. FRAMES / 2])
         },
         _ => {
             Report {
@@ -113,7 +116,7 @@ macro_rules! fill {
             }
 
             fn load(&mut self, at: Index, word: Word) {
-                self.set(USize::from_host(0), at, word);
+                self.set(ColumnNo::from_host(0), at, word);
             }
         }
     )*};
@@ -126,7 +129,7 @@ fn word(v: i64) -> Word {
 }
 
 /// One run of `FRAMES` frames, its digests into `digests`.
-fn stream<S: Fill, V: Visit>(visit: &V, morsel: Count, digests: &mut [Digest]) -> Report {
+fn stream<S: Fill, V: Visit>(visit: &V, morsel: Morsel, digests: &mut [Digest]) -> Report {
     let none = Report {
         written: Count::ZERO,
         refused: Maybe::Isnt,
@@ -140,10 +143,10 @@ fn stream<S: Fill, V: Visit>(visit: &V, morsel: Count, digests: &mut [Digest]) -
         store.load(Index::from_host(at), word(v));
     }
     let role = Role {
-        column: USize::from_host(0),
+        column: ColumnNo::from_host(0),
         format: L::FORMAT,
     };
-    let roles = [role; 6];
+    let roles = [role];
     let params = [Coefficient {
         format: L::FORMAT,
         word:   word(RATE),
@@ -154,13 +157,12 @@ fn stream<S: Fill, V: Visit>(visit: &V, morsel: Count, digests: &mut [Digest]) -
         roles:  &roles,
         params: &params,
     }];
-    let Outcome::Ok(bound) = bind::<Plane, List, S>(&bindings, &store) else {
+    let Outcome::Ok(mut bound) = bind::<Plane, List, S, _>(&bindings, &mut store) else {
         return none;
     };
     let mut out = Run::new(digests);
     let refused = match run(
-        &bound,
-        &mut store,
+        &mut bound,
         visit,
         morsel,
         Count::from_host(FRAMES),
@@ -169,6 +171,10 @@ fn stream<S: Fill, V: Visit>(visit: &V, morsel: Count, digests: &mut [Digest]) -
         Outcome::Ok(()) => Maybe::Isnt,
         Outcome::Err(Refusal::DigestsFull {
             frame,
+        })
+        | Outcome::Err(Refusal::Outside {
+            frame,
+            ..
         }) => Maybe::Is(frame),
     };
     Report {

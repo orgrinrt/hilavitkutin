@@ -6,8 +6,9 @@
 //! its author or implementor do, and refuses it in the `src/` of
 //! `hilavitkutin-frozen-authors` and `hilavitkutin-frozen-implementors`.
 //!
-//! Comments, doc comments and string literals are not read. The escape is
-//! `// lint:allow(<lint name>)` on the line, with a reason.
+//! Comments, doc comments and string literals are not read. There is no
+//! escape: a frozen file that needs one is not written from the contracts
+//! alone, which is what the lints refuse.
 
 use mockspace::{LintContext, LintError, Severity};
 
@@ -27,18 +28,12 @@ pub(crate) struct Finding {
     pub(crate) message: String,
 }
 
-/// Each line of `text` as code, with its 1-based number, skipping lines that
-/// carry the escape for `name`.
-pub(crate) fn code_lines<'t>(
-    text: &'t str,
-    name: &'t str,
-) -> impl Iterator<Item = (usize, String)> + 't {
+/// Each line of `text` as code, with its 1-based number.
+pub(crate) fn code_lines(text: &str) -> impl Iterator<Item = (usize, String)> + '_ {
     let mut in_block_comment = false;
-    let allow = format!("lint:allow({name})");
-    text.lines().enumerate().filter_map(move |(idx, raw)| {
-        let code = code::code_of(raw, &mut in_block_comment);
-        (!raw.contains(&allow)).then_some((idx + 1, code))
-    })
+    text.lines()
+        .enumerate()
+        .map(move |(idx, raw)| (idx + 1, code::code_of(raw, &mut in_block_comment)))
 }
 
 /// The code with every whitespace character removed, so `# ! [ feature` and

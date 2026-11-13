@@ -5,11 +5,12 @@ use core::mem;
 
 use hilavitkutin_contracts::Maybe;
 use hilavitkutin_contracts::bind::Col;
-use hilavitkutin_contracts::domain::{Cell, Domain, FormatId, Value, Word};
-use hilavitkutin_contracts::num::{Bool, Count, Index, USize};
-use hilavitkutin_contracts::store::{Read, Store, Write};
+use hilavitkutin_contracts::domain::{Domain, FormatId, Value, Word};
+use hilavitkutin_contracts::num::{Bool, ColumnNo, Count, Index};
+use hilavitkutin_contracts::store::{Opening, Read, Store};
 
 use crate::keys::Keys;
+use crate::lanes::{Ahead, Lanes, value};
 
 /// `COLUMNS` stored columns of up to `CAP` records, each column one contiguous run of cells.
 pub struct Columns<D: Domain, const COLUMNS: usize, const CAP: usize> {
@@ -39,12 +40,12 @@ impl<D: Domain, const COLUMNS: usize, const CAP: usize> Columns<D, COLUMNS, CAP>
     }
 
     /// Sets the committed cell of `column` at `at`.
-    pub fn set(&mut self, column: USize, at: Index, word: Word) {
+    pub fn set(&mut self, column: ColumnNo, at: Index, word: Word) {
         self.committed[column.host()][at.host()] = word;
     }
 
     /// The committed cell of `column` at `at`.
-    pub fn cell(&self, column: USize, at: Index) -> Word {
+    pub fn cell(&self, column: ColumnNo, at: Index) -> Word {
         self.committed[column.host()][at.host()]
     }
 
@@ -54,15 +55,14 @@ impl<D: Domain, const COLUMNS: usize, const CAP: usize> Columns<D, COLUMNS, CAP>
     }
 }
 
+/// The committed view of a [`Columns`] store.
 pub struct ColumnsRead<'s, D: Domain, const COLUMNS: usize, const CAP: usize> {
     keys:  &'s Keys<D, CAP>,
     cells: &'s [[Word; CAP]; COLUMNS],
 }
 
-pub struct ColumnsWrite<'s, const COLUMNS: usize, const CAP: usize> {
-    cells:   &'s mut [[Word; CAP]; COLUMNS],
-    written: &'s mut [Bool; COLUMNS],
-}
+/// The staged cells of a [`Columns`] store, or a part of them.
+pub type ColumnsWrite<'s, D, const COLUMNS: usize> = Lanes<'s, D, COLUMNS, Ahead>;
 
 impl<D: Domain, const COLUMNS: usize, const CAP: usize> Read<D>
     for ColumnsRead<'_, D, COLUMNS, CAP>
@@ -72,9 +72,7 @@ impl<D: Domain, const COLUMNS: usize, const CAP: usize> Read<D>
     }
 
     fn get<V: Value>(&self, col: Col<D, V>, at: Index) -> V {
-        V::from_cell(V::Cell::from_word(
-            self.cells[col.column().host()][at.host()],
-        ))
+        value(self.cells[col.column().host()][at.host()])
     }
 
     fn near(&self, at: Index, step: D::Step) -> Maybe<Index> {
@@ -82,18 +80,9 @@ impl<D: Domain, const COLUMNS: usize, const CAP: usize> Read<D>
     }
 }
 
-impl<D: Domain, const COLUMNS: usize, const CAP: usize> Write<D>
-    for ColumnsWrite<'_, COLUMNS, CAP>
-{
-    fn put<V: Value>(&mut self, col: Col<D, V>, at: Index, value: V) {
-        self.cells[col.column().host()][at.host()] = value.cell().word();
-        self.written[col.column().host()] = Bool::TRUE;
-    }
-}
-
 impl<D: Domain, const COLUMNS: usize, const CAP: usize> Store<D> for Columns<D, COLUMNS, CAP> {
     type Committed<'s> = ColumnsRead<'s, D, COLUMNS, CAP>;
-    type Staged<'s> = ColumnsWrite<'s, COLUMNS, CAP>;
+    type Staged<'s> = ColumnsWrite<'s, D, COLUMNS>;
 
     fn shape(&self) -> D::Shape {
         self.keys.shape()
@@ -103,23 +92,21 @@ impl<D: Domain, const COLUMNS: usize, const CAP: usize> Store<D> for Columns<D, 
         self.keys.extent()
     }
 
-    fn format(&self, column: USize) -> Maybe<FormatId> {
+    fn format(&self, column: ColumnNo) -> Maybe<FormatId> {
         match self.formats.get(column.host()) {
             Some(format) => Maybe::Is(*format),
             None => Maybe::Isnt,
         }
     }
 
-    fn step(&mut self) -> (Self::Committed<'_>, Self::Staged<'_>) {
+    fn step(&mut self, _opening: Opening) -> (Self::Committed<'_>, Self::Staged<'_>) {
+        let extent = self.keys.extent();
         (
             ColumnsRead {
                 keys:  &self.keys,
                 cells: &self.committed,
             },
-            ColumnsWrite {
-                cells:   &mut self.staged,
-                written: &mut self.written,
-            },
+            Lanes::whole(&mut self.staged, extent, &mut self.written),
         )
     }
 

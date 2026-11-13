@@ -1,19 +1,28 @@
-//! B1 to B3 over both frozen stores and the honest probe, every morsel size, both visiting
-//! orders, each run equal to the model.
+//! B1 to B3 over both frozen stores and the honest probe, every morsel size, both visiting orders
+//! and two permutation seeds, each run equal to the model.
 
 mod common;
 
 use common::probe::{Honest, Probe};
-use common::{Cells, MORSELS, cells_per_frame, digest_stream, isolation, model_frames};
+use common::{
+    COLUMNS,
+    Cells,
+    INPUTS,
+    MORSELS,
+    cells_per_frame,
+    digest_stream,
+    isolation,
+    model_frames,
+};
 use hilavitkutin_contracts::domain::Word;
-use hilavitkutin_contracts::num::{Count, USize};
-use hilavitkutin_contracts::store::Visit;
+use hilavitkutin_contracts::num::{Count, Index, USize};
+use hilavitkutin_contracts::store::{Morsel, Visit, Visitor};
 use hilavitkutin_frozen_authors::Plane;
 use hilavitkutin_frozen_implementors::{Columns, Forward, Permuted, Records};
 use hilavitkutin_laws::{Law, Verdict, frame_isolation, model, morsel_split_and_order};
 
-type One = Columns<Plane, 1, { common::CELLS }>;
-type Two = Records<Plane, 1, { common::CELLS }>;
+type One = Columns<Plane, COLUMNS, { common::CELLS }>;
+type Two = Records<Plane, COLUMNS, { common::CELLS }>;
 
 const SEEDS: [Permuted; 2] = [
     Permuted {
@@ -25,19 +34,21 @@ const SEEDS: [Permuted; 2] = [
 ];
 
 fn b1<S: Cells, V: Visit>(visit: &V) {
-    let expected = model_frames();
-    for morsel in MORSELS {
-        let run = cells_per_frame::<S, V>(visit, morsel);
-        assert_eq!(
-            model(&run, &expected),
-            Verdict::Holds(Law::Model),
-            "morsel {morsel:?}"
-        );
+    for input in INPUTS {
+        let expected = model_frames(input);
+        for morsel in MORSELS {
+            let run = cells_per_frame::<S, V>(visit, morsel, input);
+            assert_eq!(
+                model(&run, &expected),
+                Verdict::Holds(Law::Model),
+                "input {input:?}, morsel {morsel:?}"
+            );
+        }
     }
 }
 
 #[test]
-fn b1_model_over_both_stores_both_orders_every_morsel() {
+fn b1_model_over_both_stores_both_orders_every_morsel_every_input() {
     b1::<One, _>(&Forward);
     b1::<Two, _>(&Forward);
     b1::<Probe<Honest>, _>(&Forward);
@@ -84,65 +95,78 @@ fn b3<S: Cells, V: Visit>(visit: &V) {
 }
 
 #[test]
-fn b3_frame_isolation_over_both_stores() {
+fn b3_frame_isolation_over_both_stores_both_orders() {
     b3::<One, _>(&Forward);
     b3::<Two, _>(&Forward);
     b3::<Probe<Honest>, _>(&Forward);
-    b3::<One, _>(&SEEDS[0]);
-    b3::<Two, _>(&SEEDS[0]);
+    for permuted in &SEEDS {
+        b3::<One, _>(permuted);
+        b3::<Two, _>(permuted);
+        b3::<Probe<Honest>, _>(permuted);
+    }
+}
+
+struct Tally {
+    seen:    [u32; common::CELLS],
+    morsels: Vec<usize>,
+    order:   Vec<usize>,
+}
+
+impl Visitor for Tally {
+    fn morsel(&mut self, len: Count) {
+        self.morsels.push(len.host());
+    }
+
+    fn record(&mut self, at: Index) {
+        self.seen[at.host()] += 1;
+        self.order.push(at.host());
+    }
+}
+
+fn tally<V: Visit>(visit: &V, extent: usize, morsel: Morsel) -> Tally {
+    let mut t = Tally {
+        seen:    [0; common::CELLS],
+        morsels: Vec::new(),
+        order:   Vec::new(),
+    };
+    visit.visit(Count::from_host(extent), morsel, &mut t);
+    t
 }
 
 #[test]
 fn both_visits_cover_every_record_once_in_morsels_of_the_asked_size() {
-    struct Tally {
-        seen:    [u32; common::CELLS],
-        morsels: Vec<usize>,
-    }
-    impl hilavitkutin_contracts::store::Visitor for Tally {
-        fn morsel(&mut self, len: Count) {
-            self.morsels.push(len.host());
-        }
-
-        fn record(&mut self, at: hilavitkutin_contracts::num::Index) {
-            self.seen[at.host()] += 1;
-        }
-    }
-    fn tally<V: Visit>(visit: &V, size: Count) -> Tally {
-        let mut t = Tally {
-            seen:    [0; common::CELLS],
-            morsels: Vec::new(),
-        };
-        visit.visit(Count::from_host(common::CELLS), size, &mut t);
-        t
-    }
-    for size in MORSELS {
-        for t in [tally(&Forward, size), tally(&SEEDS[0], size), tally(&SEEDS[1], size)] {
+    for morsel in MORSELS {
+        let size = morsel.size().host();
+        for t in [
+            tally(&Forward, common::CELLS, morsel),
+            tally(&SEEDS[0], common::CELLS, morsel),
+            tally(&SEEDS[1], common::CELLS, morsel),
+        ] {
             assert!(t.seen.iter().all(|&n| n == 1));
-            let (last, full) = t.morsels.split_last().unwrap();
-            assert!(full.iter().all(|&n| n == size.host()));
-            assert!(*last >= 1 && *last <= size.host());
+            let (last, full) = t
+                .morsels
+                .split_last()
+                .expect("a plane is at least one morsel");
+            assert!(full.iter().all(|&n| n == size));
+            assert!(*last >= 1 && *last <= size);
         }
     }
-    let forward: Vec<u32> = {
-        let mut order = Vec::new();
-        struct Order<'o>(&'o mut Vec<u32>);
-        impl hilavitkutin_contracts::store::Visitor for Order<'_> {
-            fn morsel(&mut self, _len: Count) {}
-
-            fn record(&mut self, at: hilavitkutin_contracts::num::Index) {
-                self.0.push(at.host() as u32);
-            }
-        }
-        SEEDS[0].visit(
-            Count::from_host(common::CELLS),
-            Count::ONE,
-            &mut Order(&mut order),
-        );
-        order
-    };
     assert_ne!(
-        forward,
-        (0 .. common::CELLS as u32).collect::<Vec<_>>(),
+        tally(&SEEDS[0], common::CELLS, Morsel::ONE).order,
+        (0 .. common::CELLS).collect::<Vec<_>>(),
         "the permuted order is not forward"
     );
+}
+
+#[test]
+fn an_extent_below_the_morsel_is_one_short_morsel_and_zero_is_none() {
+    let seven = MORSELS[1];
+    for t in [tally(&Forward, 3, seven), tally(&SEEDS[0], 3, seven)] {
+        assert_eq!(t.morsels, vec![3]);
+        assert_eq!(&t.seen[.. 3], &[1, 1, 1]);
+    }
+    for t in [tally(&Forward, 0, seven), tally(&SEEDS[0], 0, seven)] {
+        assert!(t.morsels.is_empty());
+        assert!(t.order.is_empty());
+    }
 }

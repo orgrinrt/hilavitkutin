@@ -5,9 +5,7 @@ edition.workspace = true
 license.workspace = true
 description = "Stores and visiting orders written against the loop core contracts alone, frozen"
 repository.workspace = true
+publish = false
 
 [dependencies]
 hilavitkutin-contracts.workspace = true
-
-[dev-dependencies]
-hilavitkutin-laws.workspace = true

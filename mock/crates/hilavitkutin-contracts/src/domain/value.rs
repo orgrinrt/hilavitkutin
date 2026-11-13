@@ -28,17 +28,20 @@ impl Word {
 }
 
 /// The format a value is in: plain data the bind compares.
+///
+/// Only this crate makes one, one for each value type it declares, so no two value types share a
+/// format and a binding cannot pass one value's cells off as another's.
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub struct FormatId(USize);
 
 impl FormatId {
     /// The format numbered `code`. Unlocked: the representation settles at the storage step.
-    pub const fn new(code: USize) -> Self {
+    pub(crate) const fn new(code: USize) -> Self {
         Self(code)
     }
 }
 
-mod sealed {
+pub(crate) mod sealed {
     pub(crate) trait Sealed {}
 }
 
@@ -104,7 +107,11 @@ cells! {
 }
 
 /// What a column holds: a format's value.
-pub trait Value: Copy + Absorb + Send + Sync + 'static {
+///
+/// Sealed: the value types are this crate's, each with its own `FormatId`. A new format is an edit
+/// here, which is what keeps the formats distinct.
+#[allow(private_bounds)]
+pub trait Value: Copy + Absorb + Send + Sync + 'static + sealed::Sealed {
     /// Its stored form.
     type Cell: Cell;
     /// Its format, which the bind compares.

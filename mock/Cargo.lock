@@ -317,7 +317,6 @@ name = "hilavitkutin-frozen-authors"
 version = "0.1.0"
 dependencies = [
  "hilavitkutin-contracts",
- "hilavitkutin-laws",
 ]
 
 [[package]]
@@ -325,7 +324,6 @@ name = "hilavitkutin-frozen-implementors"
 version = "0.1.0"
 dependencies = [
  "hilavitkutin-contracts",
- "hilavitkutin-laws",
 ]
 
 [[package]]
@@ -468,12 +466,12 @@ source = "git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=dev#90b531
 [[package]]
 name = "notko"
 version = "0.0.1"
-source = "git+ssh://git@github.com/orgrinrt/notko.git?branch=dev#0a13d99a33027ad1314e5da2c036dffab8d061e5"
+source = "git+ssh://git@github.com/orgrinrt/notko.git?branch=dev#8a74dbcda7fbee2d2e57b47474a3b1e6d08650ed"
 
 [[package]]
 name = "notko-hlist"
 version = "0.0.1"
-source = "git+ssh://git@github.com/orgrinrt/notko.git?branch=dev#0a13d99a33027ad1314e5da2c036dffab8d061e5"
+source = "git+ssh://git@github.com/orgrinrt/notko.git?branch=dev#8a74dbcda7fbee2d2e57b47474a3b1e6d08650ed"
 
 [[package]]
 name = "proc-macro2"

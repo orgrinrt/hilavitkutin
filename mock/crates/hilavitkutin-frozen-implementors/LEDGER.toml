@@ -1,10 +1,17 @@
 # One line per frozen file: path, form, content hash, breaks so far, locked.
 
 [[file]]
+path = "Cargo.toml"
+form = "manifest"
+hash = "fnv1a64:385e4bd4ad050cb5"
+breaks = 0
+locked = false
+
+[[file]]
 path = "src/lib.rs"
 form = "crate"
-hash = "fnv1a64:13d627631815dacc"
-breaks = 0
+hash = "fnv1a64:52ae219e84016ccc"
+breaks = 1
 locked = false
 
 [[file]]
@@ -15,22 +22,29 @@ breaks = 0
 locked = false
 
 [[file]]
+path = "src/lanes.rs"
+form = "store"
+hash = "fnv1a64:df3044b05a0f7f02"
+breaks = 0
+locked = false
+
+[[file]]
 path = "src/columns.rs"
 form = "store"
-hash = "fnv1a64:9511b760f4e648fd"
-breaks = 0
+hash = "fnv1a64:266dba8640070ee1"
+breaks = 1
 locked = false
 
 [[file]]
 path = "src/records.rs"
 form = "store"
-hash = "fnv1a64:fdf3930559993264"
-breaks = 0
+hash = "fnv1a64:a0f1a60cc705d207"
+breaks = 1
 locked = false
 
 [[file]]
 path = "src/visit.rs"
 form = "visit"
-hash = "fnv1a64:6100cb69e8ada561"
-breaks = 0
+hash = "fnv1a64:32a9e89ba47edabf"
+breaks = 1
 locked = false

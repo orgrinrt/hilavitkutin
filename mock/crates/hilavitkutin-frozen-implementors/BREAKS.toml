@@ -1,2 +1,29 @@
 # One row per edit of a ledgered file before its form locks: slice, file, form, hash, reason.
-# None yet.
+
+[[break]]
+slice = "HL0a"
+file = "src/lib.rs"
+form = "crate"
+hash = "fnv1a64:52ae219e84016ccc"
+reason = "exports the staged lanes both stores hand out"
+
+[[break]]
+slice = "HL0a"
+file = "src/columns.rs"
+form = "store"
+hash = "fnv1a64:266dba8640070ee1"
+reason = "hands its staged side out as lanes cut by write set and by position, its committed view Sync"
+
+[[break]]
+slice = "HL0a"
+file = "src/records.rs"
+form = "store"
+hash = "fnv1a64:a0f1a60cc705d207"
+reason = "keeps its staged side a column at a time so that it cuts by column, folded into the records on a swap"
+
+[[break]]
+slice = "HL0a"
+file = "src/visit.rs"
+form = "visit"
+hash = "fnv1a64:32a9e89ba47edabf"
+reason = "takes its morsel as a Morsel, which is never zero"

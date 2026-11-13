@@ -51,7 +51,7 @@ impl CrateLint for FrozenNoRecursionLimit {
 }
 
 fn findings(text: &str) -> Vec<Finding> {
-    code_lines(text, NAME)
+    code_lines(text)
         .filter_map(|(line, code)| {
             let code = compact(&code);
             let named = LIMITS.into_iter().find(|limit| names(&code, limit))?;

@@ -1,14 +1,15 @@
-//! The members of a kernel's read and write lists.
+//! The members of a kernel's read and write lists, and the list of its roles.
 //!
 //! `Own<C>` is this record's value of column `C`; `Near<C, O>` the value at offset `O` from this
 //! record's key, or `C::OUTSIDE` where that is outside the shape; `Param<R>` a resource's value,
-//! constant over the step. A write list holds `Own` members only. Every member is a role: which
-//! stored column, or which value, fills it comes from a binding.
+//! constant over the step. A write list holds `Own` members only. Every column a kernel names is a
+//! role, listed once in its `Roles`: the members naming one column share its role, and which stored
+//! column fills it comes from a binding. A coefficient fills each `Param` member.
 
 use core::marker::PhantomData;
 
 use super::{Column, Domain, Offset, Resource, Value};
-use crate::bind::roles::{Gather, ReadRoles, WriteRole, WriteRoles};
+use crate::bind::roles::{Gather, ReadRoles, RoleList, WriteRoles};
 use crate::list::{Cons, Empty, Values};
 
 /// This record's value of column `C`.
@@ -48,7 +49,7 @@ impl<D: Domain, R: Resource> ReadMember<D> for Param<R> {}
 
 /// A member a kernel of domain `D` may write: `Own` of `D`'s columns.
 #[allow(private_bounds)]
-pub trait WriteMember<D: Domain>: Member + WriteRole<D> {}
+pub trait WriteMember<D: Domain>: Member + Gather<D> {}
 
 impl<D: Domain, C: Column<Domain = D>> WriteMember<D> for Own<C> {}
 
@@ -59,9 +60,17 @@ pub trait Reads<D: Domain>: Values + ReadRoles<D> {}
 impl<D: Domain> Reads<D> for Empty {}
 impl<D: Domain, H: ReadMember<D>, T: Reads<D>> Reads<D> for Cons<H, T> {}
 
-/// A write list of domain `D`: every member a `WriteMember<D>`.
+/// A write list of domain `D`: every member an `Own` of one of `D`'s columns.
 #[allow(private_bounds)]
 pub trait Writes<D: Domain>: Values + WriteRoles<D> {}
 
 impl<D: Domain> Writes<D> for Empty {}
-impl<D: Domain, H: WriteMember<D>, T: Writes<D>> Writes<D> for Cons<H, T> {}
+impl<D: Domain, C: Column<Domain = D>, T: Writes<D>> Writes<D> for Cons<Own<C>, T> {}
+
+/// A kernel's role list of domain `D`: columns of `D`, each once. A list holding one column twice
+/// gives the members naming it two places, and does not build where the kernel is bound.
+#[allow(private_bounds)]
+pub trait Roles<D: Domain>: RoleList<D> {}
+
+impl<D: Domain> Roles<D> for Empty {}
+impl<D: Domain, C: Column<Domain = D>, T: Roles<D>> Roles<D> for Cons<C, T> {}

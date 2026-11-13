@@ -1,21 +1,30 @@
-//! A committed view kept past the step: the swap needs the store the view still borrows.
-use hilavitkutin_contracts::Maybe;
+//! A committed view kept past the swap: the swap needs the table the view still borrows.
+use hilavitkutin_contracts::bind::{Binding, bind};
 use hilavitkutin_contracts::domain::Value;
-use hilavitkutin_contracts::num::{Count, Int};
-use hilavitkutin_contracts::store::{Read, Store};
-use hilavitkutin_frozen_authors::{Extent, Plane};
+use hilavitkutin_contracts::list::{Cons, Empty};
+use hilavitkutin_contracts::num::{ColumnNo, Count, Index, Int};
+use hilavitkutin_contracts::{Maybe, Outcome};
+use hilavitkutin_frozen_authors::{Diffuse, Extent, Plane};
 use hilavitkutin_frozen_implementors::Columns;
+
+type L = Int<16>;
 
 fn main() {
     let shape = Extent {
         east:  Count::from_host(2),
         north: Count::from_host(2),
     };
-    let Maybe::Is(mut store) = Columns::<Plane, 1, 4>::new(shape, [Int::<16>::FORMAT]) else {
+    let Maybe::Is(mut store) = Columns::<Plane, 1, 4>::new(shape, [L::FORMAT]) else {
         return;
     };
-    let (committed, _staged) = store.step();
-    store.swap();
-    let extent = committed.extent();
-    assert_eq!(extent, Count::from_host(4));
+    let bindings: [Binding<'_>; 0] = [];
+    let Outcome::Ok(mut bound) =
+        bind::<Plane, Cons<Diffuse<L>, Empty>, _, _>(&bindings, &mut store)
+    else {
+        return;
+    };
+    let committed = bound.committed();
+    bound.swap();
+    let _ = hilavitkutin_contracts::store::Read::extent(&committed);
+    let _ = (ColumnNo::from_host(0), Index::FIRST);
 }

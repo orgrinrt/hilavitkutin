@@ -1,2 +1,8 @@
 # One row per edit of a ledgered file before its form locks: slice, file, form, hash, reason.
-# None yet.
+
+[[break]]
+slice = "HL0a"
+file = "src/diffuse.rs"
+form = "value-kernel"
+hash = "fnv1a64:465f6eba069c78d9"
+reason = "names its role list: one role for each column it reads or writes"

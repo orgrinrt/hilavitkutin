@@ -3,7 +3,7 @@ name = "hilavitkutin-laws"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "The laws a loop core run is held to, and the ledger check of the frozen crates"
+description = "The laws a loop core run is held to"
 repository.workspace = true
 
 [dependencies]

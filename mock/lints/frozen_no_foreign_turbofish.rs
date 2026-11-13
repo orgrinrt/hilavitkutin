@@ -62,7 +62,7 @@ impl CrateLint for FrozenNoForeignTurbofish {
 fn findings(text: &str) -> Vec<Finding> {
     let declared = declared(text);
     let mut out = Vec::new();
-    for (line, code) in code_lines(text, NAME) {
+    for (line, code) in code_lines(text) {
         let code = compact(&code);
         for (at, _) in code.match_indices("::<") {
             let item = item_before(&code[.. at]);
@@ -83,7 +83,7 @@ fn findings(text: &str) -> Vec<Finding> {
 /// The names the file's item keywords declare.
 fn declared(text: &str) -> BTreeSet<String> {
     let mut words = Vec::new();
-    for (_, code) in code_lines(text, NAME) {
+    for (_, code) in code_lines(text) {
         let mut rest = code.as_str();
         while !rest.is_empty() {
             let start = rest

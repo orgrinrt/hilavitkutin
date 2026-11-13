@@ -14,7 +14,7 @@ mod usize;
 
 pub use bool::Bool;
 pub use identity::{Additive, Identity};
-pub use index::{Count, Index};
+pub use index::{ColumnNo, Count, Index, Ordinal};
 pub use int::{Int, Wide};
 pub use lane::Lane;
 pub use usize::USize;

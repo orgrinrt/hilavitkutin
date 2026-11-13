@@ -48,7 +48,7 @@ impl CrateLint for FrozenNoFeatureGate {
 }
 
 fn findings(text: &str) -> Vec<Finding> {
-    code_lines(text, NAME)
+    code_lines(text)
         .filter(|(_, code)| enables_a_feature(&compact(code)))
         .map(|(line, _)| Finding {
             line,

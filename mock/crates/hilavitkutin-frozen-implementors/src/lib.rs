@@ -10,9 +10,11 @@
 
 mod columns;
 mod keys;
+mod lanes;
 mod records;
 mod visit;
 
 pub use columns::{Columns, ColumnsRead, ColumnsWrite};
+pub use lanes::{Ahead, Behind, Lanes, Order};
 pub use records::{Records, RecordsRead, RecordsWrite};
 pub use visit::{Forward, Permuted};

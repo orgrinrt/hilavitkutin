@@ -1,30 +1,34 @@
-//! Store two: every record's cells side by side, records laid out last key first, two buffers
-//! with a flag saying which one is committed.
+//! Store two: every record's committed cells side by side, records laid out last key first; the
+//! staged cells a column at a time in the same slot order, folded into the records on a swap.
+//!
+//! The staged side is kept by column because a step cuts it by column, one part to each unit, and
+//! a record's cells side by side cannot be cut that way without sharing a record between two
+//! parts.
 
 use hilavitkutin_contracts::Maybe;
 use hilavitkutin_contracts::bind::Col;
-use hilavitkutin_contracts::domain::{Cell, Domain, FormatId, Value, Word};
-use hilavitkutin_contracts::num::{Bool, Count, Index, USize};
-use hilavitkutin_contracts::store::{Read, Store, Write};
+use hilavitkutin_contracts::domain::{Domain, FormatId, Value, Word};
+use hilavitkutin_contracts::num::{Bool, ColumnNo, Count, Index};
+use hilavitkutin_contracts::store::{Opening, Read, Store};
 
 use crate::keys::Keys;
+use crate::lanes::{Behind, Lanes, value};
 
-/// `COLUMNS` stored columns of up to `CAP` records, each record one run of its cells, the record
-/// at position `at` in slot `extent - 1 - at`.
+/// `COLUMNS` stored columns of up to `CAP` records, each committed record one run of its cells,
+/// the record at position `at` in slot `extent - 1 - at`.
 pub struct Records<D: Domain, const COLUMNS: usize, const CAP: usize> {
-    keys:    Keys<D, CAP>,
-    formats: [FormatId; COLUMNS],
-    buffers: [[[Word; COLUMNS]; CAP]; 2],
-    front:   Bool,
-    written: [Bool; COLUMNS],
+    keys:      Keys<D, CAP>,
+    formats:   [FormatId; COLUMNS],
+    committed: [[Word; COLUMNS]; CAP],
+    staged:    [[Word; CAP]; COLUMNS],
+    written:   [Bool; COLUMNS],
 }
 
-const fn slot(extent: Count, at: Index) -> usize {
-    extent.host() - 1 - at.host()
-}
-
-const fn side(front: Bool) -> usize {
-    if front.get() { 1 } else { 0 }
+fn slot(extent: Count, at: Index) -> usize {
+    match extent.end().since(at.next()) {
+        Maybe::Is(n) => n.host(),
+        Maybe::Isnt => 0,
+    }
 }
 
 impl<D: Domain, const COLUMNS: usize, const CAP: usize> Records<D, COLUMNS, CAP> {
@@ -36,8 +40,8 @@ impl<D: Domain, const COLUMNS: usize, const CAP: usize> Records<D, COLUMNS, CAP>
                 Maybe::Is(Self {
                     keys,
                     formats,
-                    buffers: [[[Word::ZERO; COLUMNS]; CAP]; 2],
-                    front: Bool::FALSE,
+                    committed: [[Word::ZERO; COLUMNS]; CAP],
+                    staged: [[Word::ZERO; CAP]; COLUMNS],
                     written: [Bool::FALSE; COLUMNS],
                 })
             },
@@ -46,32 +50,30 @@ impl<D: Domain, const COLUMNS: usize, const CAP: usize> Records<D, COLUMNS, CAP>
     }
 
     /// Sets the committed cell of `column` at `at`.
-    pub fn set(&mut self, column: USize, at: Index, word: Word) {
+    pub fn set(&mut self, column: ColumnNo, at: Index, word: Word) {
         let s = slot(self.keys.extent(), at);
-        self.buffers[side(self.front)][s][column.host()] = word;
+        self.committed[s][column.host()] = word;
     }
 
     /// The committed cell of `column` at `at`.
-    pub fn cell(&self, column: USize, at: Index) -> Word {
-        self.buffers[side(self.front)][slot(self.keys.extent(), at)][column.host()]
+    pub fn cell(&self, column: ColumnNo, at: Index) -> Word {
+        self.committed[slot(self.keys.extent(), at)][column.host()]
     }
 
     /// Fills every staged cell with `word`: what a step must never read.
     pub fn poison_staged(&mut self, word: Word) {
-        self.buffers[side(self.front.not())] = [[word; COLUMNS]; CAP];
+        self.staged = [[word; CAP]; COLUMNS];
     }
 }
 
+/// The committed view of a [`Records`] store.
 pub struct RecordsRead<'s, D: Domain, const COLUMNS: usize, const CAP: usize> {
     keys:  &'s Keys<D, CAP>,
     cells: &'s [[Word; COLUMNS]; CAP],
 }
 
-pub struct RecordsWrite<'s, const COLUMNS: usize, const CAP: usize> {
-    extent:  Count,
-    cells:   &'s mut [[Word; COLUMNS]; CAP],
-    written: &'s mut [Bool; COLUMNS],
-}
+/// The staged cells of a [`Records`] store, or a part of them.
+pub type RecordsWrite<'s, D, const COLUMNS: usize> = Lanes<'s, D, COLUMNS, Behind>;
 
 impl<D: Domain, const COLUMNS: usize, const CAP: usize> Read<D>
     for RecordsRead<'_, D, COLUMNS, CAP>
@@ -81,8 +83,7 @@ impl<D: Domain, const COLUMNS: usize, const CAP: usize> Read<D>
     }
 
     fn get<V: Value>(&self, col: Col<D, V>, at: Index) -> V {
-        let word = self.cells[slot(self.keys.extent(), at)][col.column().host()];
-        V::from_cell(V::Cell::from_word(word))
+        value(self.cells[slot(self.keys.extent(), at)][col.column().host()])
     }
 
     fn near(&self, at: Index, step: D::Step) -> Maybe<Index> {
@@ -90,18 +91,9 @@ impl<D: Domain, const COLUMNS: usize, const CAP: usize> Read<D>
     }
 }
 
-impl<D: Domain, const COLUMNS: usize, const CAP: usize> Write<D>
-    for RecordsWrite<'_, COLUMNS, CAP>
-{
-    fn put<V: Value>(&mut self, col: Col<D, V>, at: Index, value: V) {
-        self.cells[slot(self.extent, at)][col.column().host()] = value.cell().word();
-        self.written[col.column().host()] = Bool::TRUE;
-    }
-}
-
 impl<D: Domain, const COLUMNS: usize, const CAP: usize> Store<D> for Records<D, COLUMNS, CAP> {
     type Committed<'s> = RecordsRead<'s, D, COLUMNS, CAP>;
-    type Staged<'s> = RecordsWrite<'s, COLUMNS, CAP>;
+    type Staged<'s> = RecordsWrite<'s, D, COLUMNS>;
 
     fn shape(&self) -> D::Shape {
         self.keys.shape()
@@ -111,52 +103,44 @@ impl<D: Domain, const COLUMNS: usize, const CAP: usize> Store<D> for Records<D, 
         self.keys.extent()
     }
 
-    fn format(&self, column: USize) -> Maybe<FormatId> {
+    fn format(&self, column: ColumnNo) -> Maybe<FormatId> {
         match self.formats.get(column.host()) {
             Some(format) => Maybe::Is(*format),
             None => Maybe::Isnt,
         }
     }
 
-    fn step(&mut self) -> (Self::Committed<'_>, Self::Staged<'_>) {
+    fn step(&mut self, _opening: Opening) -> (Self::Committed<'_>, Self::Staged<'_>) {
         let extent = self.keys.extent();
-        let [zero, one] = &mut self.buffers;
-        let (committed, staged) = if self.front.get() { (one, zero) } else { (zero, one) };
         (
             RecordsRead {
                 keys:  &self.keys,
-                cells: committed,
+                cells: &self.committed,
             },
-            RecordsWrite {
-                extent,
-                cells: staged,
-                written: &mut self.written,
-            },
+            Lanes::whole(&mut self.staged, extent, &mut self.written),
         )
     }
 
     fn committed(&self) -> Self::Committed<'_> {
         RecordsRead {
             keys:  &self.keys,
-            cells: &self.buffers[side(self.front)],
+            cells: &self.committed,
         }
     }
 
     fn swap(&mut self) {
-        let committed = side(self.front);
-        let staged = side(self.front.not());
+        let extent = self.keys.extent().host();
         let mut c = 0;
         while c < COLUMNS {
-            if !self.written[c].get() {
+            if self.written[c].get() {
                 let mut s = 0;
-                while s < CAP {
-                    self.buffers[staged][s][c] = self.buffers[committed][s][c];
+                while s < extent {
+                    self.committed[s][c] = self.staged[c][s];
                     s += 1;
                 }
             }
             self.written[c] = Bool::FALSE;
             c += 1;
         }
-        self.front = self.front.not();
     }
 }

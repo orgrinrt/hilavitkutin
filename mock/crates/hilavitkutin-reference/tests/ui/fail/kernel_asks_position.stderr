@@ -1,12 +1,12 @@
 error[E0050]: method `at` has 2 parameters but the declaration in trait `at` has 1
-  --> tests/ui/fail/kernel_asks_position.rs:18:23
+  --> tests/ui/fail/kernel_asks_position.rs:19:23
    |
-18 |     fn at((here, ()): (L, ()), at: Index) -> (L, ()) {
+19 |     fn at((here, ()): (L, ()), at: Index) -> (L, ()) {
    |                       ^^^^^^^^^^^^^^^^^^ expected 1 parameter, found 2
    |
    = note: `at` from trait: `fn(<<Self as ValueKernel>::Reads as hilavitkutin_contracts::list::Values>::Of) -> <<Self as ValueKernel>::Writes as hilavitkutin_contracts::list::Values>::Of`
 help: remove the extra parameter to match the trait
    |
-18 -     fn at((here, ()): (L, ()), at: Index) -> (L, ()) {
-18 +     fn at((here, ()): (L, ())) -> (L, ()) {
+19 -     fn at((here, ()): (L, ()), at: Index) -> (L, ()) {
+19 +     fn at((here, ()): (L, ())) -> (L, ()) {
    |

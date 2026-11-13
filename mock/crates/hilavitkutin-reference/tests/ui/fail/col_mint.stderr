@@ -1,0 +1,10 @@
+error[E0624]: associated function `mint` is private
+ --> tests/ui/fail/col_mint.rs:9:30
+  |
+9 |     let _ = Col::<Plane, L>::mint(ColumnNo::from_host(0));
+  |                              ^^^^ private associated function
+  |
+ ::: $WORKSPACE/crates/hilavitkutin-contracts/src/bind/mod.rs
+  |
+  |     pub(crate) const fn mint(column: ColumnNo) -> Self {
+  |     -------------------------------------------------- private associated function defined here

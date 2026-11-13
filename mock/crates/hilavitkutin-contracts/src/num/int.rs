@@ -162,6 +162,8 @@ impl<const BITS: u32> Lane for Int<BITS> {
     }
 }
 
+impl<const BITS: u32> crate::domain::value::sealed::Sealed for Int<BITS> {}
+
 impl<const BITS: u32> Value for Int<BITS> {
     type Cell = Cell64;
 

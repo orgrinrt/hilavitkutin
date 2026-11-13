@@ -1,8 +1,12 @@
-//! `Index` and `Count`, this crate's own: a position among records and a number of records.
+//! `Index`, `Count`, `Ordinal` and `ColumnNo`, this crate's own: a position among records, a
+//! number of records, the place of an item in a list of plain data, and the number of a stored
+//! column.
 //!
-//! Two distinct types over one `USize`, so a count passed where an index goes is refused at build
-//! in every implementor. Only the arithmetic that keeps its meaning exists: an index after a count
-//! is an index, an index since an index is a count, a count plus or minus a count is a count.
+//! Four distinct types over one `USize`, so a count passed where an index goes, or a binding's
+//! place passed where a record's goes, is refused at build in every implementor. Only the
+//! arithmetic that keeps its meaning exists: an index after a count is an index, an index since an
+//! index is a count, a count plus a count is a count, and a count less a count is a count or
+//! nothing below zero.
 
 use core::cmp::Ordering;
 
@@ -17,6 +21,15 @@ pub struct Index(USize);
 /// A number of records, morsels or frames.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub struct Count(USize);
+
+/// The place of an item in a list of plain data: a binding in its table, a role or a coefficient in
+/// its binding, a run among the runs a law compares.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+pub struct Ordinal(USize);
+
+/// The number of a stored column of a store, which a binding names and a store finds a column by.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+pub struct ColumnNo(USize);
 
 /// The comparisons both types share, each over the one carrier beneath.
 macro_rules! compared {
@@ -77,6 +90,23 @@ macro_rules! compared {
 
 compared!(Index);
 compared!(Count);
+compared!(Ordinal);
+compared!(ColumnNo);
+
+impl Ordinal {
+    /// The first place.
+    pub const FIRST: Self = Self(USize::from_host(0));
+
+    /// The next place.
+    pub const fn next(self) -> Self {
+        Self(self.0.add(USize::from_host(1)))
+    }
+
+    /// The place `by` places after this one.
+    pub const fn after(self, by: Count) -> Self {
+        Self(self.0.add(by.0))
+    }
+}
 
 impl Index {
     /// The first position.
@@ -127,9 +157,13 @@ impl Count {
         Self(self.0.add(rhs.0))
     }
 
-    /// The difference, wrapping at the target's width.
-    pub const fn sub(self, rhs: Self) -> Self {
-        Self(self.0.sub(rhs.0))
+    /// The difference, or nothing where `rhs` is the larger.
+    pub const fn sub(self, rhs: Self) -> Maybe<Self> {
+        if rhs.0.le(self.0).get() {
+            Maybe::Is(Self(self.0.sub(rhs.0)))
+        } else {
+            Maybe::Isnt
+        }
     }
 
     /// One more.

@@ -1,6 +1,13 @@
 # One line per frozen file: path, form, content hash, breaks so far, locked.
 
 [[file]]
+path = "Cargo.toml"
+form = "manifest"
+hash = "fnv1a64:d54efc8be4aaf173"
+breaks = 0
+locked = false
+
+[[file]]
 path = "src/lib.rs"
 form = "crate"
 hash = "fnv1a64:07c82ab22261e276"
@@ -17,8 +24,8 @@ locked = false
 [[file]]
 path = "src/diffuse.rs"
 form = "value-kernel"
-hash = "fnv1a64:1d9bd7156bf38574"
-breaks = 0
+hash = "fnv1a64:465f6eba069c78d9"
+breaks = 1
 locked = false
 
 [[file]]

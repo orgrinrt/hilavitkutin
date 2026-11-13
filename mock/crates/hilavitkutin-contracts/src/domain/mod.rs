@@ -2,9 +2,9 @@
 //! read list.
 
 mod member;
-mod value;
+pub(crate) mod value;
 
-pub use member::{Member, Near, Own, Param, ReadMember, Reads, WriteMember, Writes};
+pub use member::{Member, Near, Own, Param, ReadMember, Reads, Roles, WriteMember, Writes};
 use notko::Maybe;
 pub use value::{Cell, Cell8, Cell16, Cell32, Cell64, FormatId, Value, Word};
 

@@ -1,0 +1,19 @@
+error[E0283]: type annotations needed
+  --> tests/ui/fail/role_named_twice.rs:46:13
+   |
+46 |     let _ = bind::<Plane, Cons<Keep, Empty>, _, _>(&bindings, &mut store);
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot infer type of the type parameter `P` declared on the function `bind`
+   |
+   = note: multiple `impl`s satisfying `Cons<Heat<hilavitkutin_contracts::num::Int<16>>, Cons<Heat<hilavitkutin_contracts::num::Int<16>>, hilavitkutin_contracts::list::Empty>>: notko_hlist::place_of::PlaceOf<Heat<hilavitkutin_contracts::num::Int<16>>, _>` found in the `notko_hlist` crate:
+           - impl<H, M, P, T> notko_hlist::place_of::PlaceOf<M, There<P>> for Cons<H, T>
+             where P: notko_hlist::position::Place, T: notko_hlist::place_of::PlaceOf<M, P>;
+           - impl<M, T> notko_hlist::place_of::PlaceOf<M, Here> for Cons<M, T>
+             where T: List;
+   = note: required for `Own<Heat<hilavitkutin_contracts::num::Int<16>>>` to implement `bind::roles::Mint<Plane, Cons<Heat<hilavitkutin_contracts::num::Int<16>>, Cons<Heat<hilavitkutin_contracts::num::Int<16>>, hilavitkutin_contracts::list::Empty>>, _>`
+   = note: required for `Cons<Own<Heat<hilavitkutin_contracts::num::Int<16>>>, hilavitkutin_contracts::list::Empty>` to implement `bind::roles::MintList<Plane, Cons<Heat<hilavitkutin_contracts::num::Int<16>>, Cons<Heat<hilavitkutin_contracts::num::Int<16>>, hilavitkutin_contracts::list::Empty>>, (_, ())>`
+   = note: required for `Cons<Keep, hilavitkutin_contracts::list::Empty>` to implement `Kernels<Plane, (((_, ()), (_, ())), ())>`
+note: required by a bound in `bind`
+  --> $WORKSPACE/crates/hilavitkutin-contracts/src/bind/mod.rs
+   |
+   | pub fn bind<'b, D: Domain, L: Kernels<D, P>, S: Store<D>, P>(
+   |                               ^^^^^^^^^^^^^ required by this bound in `bind`

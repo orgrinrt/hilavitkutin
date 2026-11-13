@@ -1,0 +1,25 @@
+error[E0277]: `Cons<Flux, hilavitkutin_contracts::list::Empty>` has no place for `Heat<hilavitkutin_contracts::num::Int<16>>`
+  --> tests/ui/fail/member_outside_roles.rs:46:27
+   |
+46 |     let _ = bind::<Plane, Cons<Keep, Empty>, _, _>(&bindings, &mut store);
+   |                           ^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+   |
+   = help: the trait `notko_hlist::place_of::PlaceOf<Heat<hilavitkutin_contracts::num::Int<16>>, There<_>>` is not implemented for `Cons<Flux, hilavitkutin_contracts::list::Empty>`
+   = note: A member is at `Here` when it is the head of a `Cons`, and at `There<P>` when the tail holds it at `P`. The usual cause is a member the list does not hold. If the compiler reports `type annotations needed` instead, the list holds the member at more than one place. If it reports `overflow evaluating the requirement`, the walk is one step per cell and the list is deeper than the default recursion limit, so the crate root wants `#![recursion_limit = "1024"]`.
+help: the trait `Kernels<D, ((PR, PW), PT)>` is implemented for `Cons<K, T>`
+  --> $WORKSPACE/crates/hilavitkutin-contracts/src/kernel.rs
+   |
+   | / impl<D: Domain, K: ValueKernel<Domain = D>, T: Kernels<D, PT>, PR, PW, PT> Kernels<D, ((PR, PW), PT)>
+   | |     for Cons<K, T>
+   | | where
+   | |     K::Reads: MintList<D, K::Roles, PR>,
+   | |     K::Writes: MintList<D, K::Roles, PW>,
+   | |_________________________________________^
+   = note: required for `Own<Heat<hilavitkutin_contracts::num::Int<16>>>` to implement `bind::roles::Mint<Plane, Cons<Flux, hilavitkutin_contracts::list::Empty>, There<_>>`
+   = note: required for `Cons<Own<Heat<hilavitkutin_contracts::num::Int<16>>>, hilavitkutin_contracts::list::Empty>` to implement `bind::roles::MintList<Plane, Cons<Flux, hilavitkutin_contracts::list::Empty>, (There<_>, ())>`
+   = note: required for `Cons<Keep, hilavitkutin_contracts::list::Empty>` to implement `Kernels<Plane, (((There<_>, ()), (There<_>, ())), ())>`
+note: required by a bound in `bind`
+  --> $WORKSPACE/crates/hilavitkutin-contracts/src/bind/mod.rs
+   |
+   | pub fn bind<'b, D: Domain, L: Kernels<D, P>, S: Store<D>, P>(
+   |                               ^^^^^^^^^^^^^ required by this bound in `bind`

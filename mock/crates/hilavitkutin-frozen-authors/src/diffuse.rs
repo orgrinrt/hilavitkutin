@@ -48,6 +48,7 @@ impl<L: Lane + Value + Identity<Additive>> ValueKernel for Diffuse<L> {
             >,
         >,
     >;
+    type Roles = Cons<Heat<L>, Empty>;
     type Writes = Cons<Own<Heat<L>>, Empty>;
 
     const ID: KernelId = {

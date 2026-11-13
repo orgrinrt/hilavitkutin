@@ -1,0 +1,11 @@
+error[E0451]: fields `bindings`, `store` and `marker` of struct `hilavitkutin_contracts::bind::Bound` are private
+  --> tests/ui/fail/bound_literal.rs:25:9
+   |
+24 |     let _: Bound<'_, Plane, List, Columns<Plane, 1, 4>, ()> = Bound {
+   |                                                               ----- in this type
+25 |         bindings: &bindings,
+   |         ^^^^^^^^ private field
+26 |         store:    &mut store,
+   |         ^^^^^ private field
+27 |         marker:   PhantomData,
+   |         ^^^^^^ private field

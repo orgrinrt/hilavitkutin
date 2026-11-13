@@ -138,6 +138,14 @@ commit = "error"
 build = "error"
 push = "error"
 
+# A frozen crate changes only through its ledger: every file of the crate,
+# its manifest and build script included, has a line with its current hash,
+# and its manifest names no dependency but the contracts. Repo lint.
+[lints.frozen-ledger]
+commit = "error"
+build = "error"
+push = "error"
+
 # Advisory: vocabulary terms are common English words; warn everywhere,
 # never block. Author suppresses with `// lint:allow(vocabulary-discipline)`.
 [lints.vocabulary-discipline]

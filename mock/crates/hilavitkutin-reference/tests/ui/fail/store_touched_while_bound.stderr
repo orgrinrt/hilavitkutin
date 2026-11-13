@@ -1,0 +1,10 @@
+error[E0499]: cannot borrow `store` as mutable more than once at a time
+  --> tests/ui/fail/store_touched_while_bound.rs:24:5
+   |
+21 |     let Outcome::Ok(mut bound) = bind::<Plane, Cons<Diffuse<L>, Empty>, _, _>(&bindings, &mut store) else {
+   |                                                                                          ---------- first mutable borrow occurs here
+...
+24 |     store.set(ColumnNo::from_host(0), Index::FIRST, L::from_raw(1).cell().word());
+   |     ^^^^^ second mutable borrow occurs here
+25 |     bound.swap();
+   |     ----- first borrow later used here

@@ -14,6 +14,7 @@ struct Keep;
 impl ValueKernel for Keep {
     type Domain = Plane;
     type Reads = Cons<Own<Heat<L>>, Empty>;
+    type Roles = Cons<Heat<L>, Empty>;
     type Writes = Cons<Own<Heat<L>>, Empty>;
 
     const ID: KernelId = KernelId::new(USize::from_host(1));
@@ -28,10 +29,10 @@ fn main() {
         east:  Count::from_host(2),
         north: Count::from_host(2),
     };
-    let Maybe::Is(store) = Columns::<Plane, 1, 4>::new(shape, [L::FORMAT]) else {
+    let Maybe::Is(mut store) = Columns::<Plane, 1, 4>::new(shape, [L::FORMAT]) else {
         return;
     };
     let bindings: [Binding<'_>; 0] = [];
-    let bound = bind::<Plane, Cons<Diffuse<L>, Cons<Keep, Empty>>, _>(&bindings, &store);
+    let bound = bind::<Plane, Cons<Diffuse<L>, Cons<Keep, Empty>>, _, _>(&bindings, &mut store);
     assert!(matches!(bound, Outcome::Ok(_)));
 }

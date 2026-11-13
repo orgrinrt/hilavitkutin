@@ -11,6 +11,7 @@ struct Shift;
 impl ValueKernel for Shift {
     type Domain = Plane;
     type Reads = Cons<Own<Heat<L>>, Cons<Near<Heat<L>, East>, Empty>>;
+    type Roles = Cons<Heat<L>, Empty>;
     type Writes = Cons<Own<Heat<L>>, Empty>;
 
     const ID: KernelId = KernelId::new(USize::from_host(7));
