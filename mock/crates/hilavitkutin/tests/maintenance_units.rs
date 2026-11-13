@@ -277,13 +277,10 @@ macro_rules! close_on_one_core {
                 .__ptr()
                 .as_ptr();
             // SAFETY: before the first pass.
-            unsafe {
-                fill(slots, |i| Slot(i as u32));
-                fill(heights, |_| Height(0));
-            }
+            unsafe { fill(slots, |i| Slot(i as u32)) };
 
             // Pass 1: the reader runs ahead of the close and sees the column
-            // as the build left it. The close applies the queue.
+            // at its start. The close applies the queue.
             assert!(matches!(scheduler.run(), Outcome::Ok(())));
             assert_eq!(execs.load(Ordering::Relaxed), 1, "the close ran once");
             // SAFETY: between passes.
@@ -360,10 +357,7 @@ macro_rules! close_across_workers {
             let heights = b.__tail().__tail().__ptr().as_ptr();
             let slots = b.__tail().__tail().__tail().__ptr().as_ptr();
             // SAFETY: before the first pass.
-            unsafe {
-                fill(slots, |i| Slot(i as u32));
-                fill(heights, |_| Height(0));
-            }
+            unsafe { fill(slots, |i| Slot(i as u32)) };
             assert!(matches!(
                 scheduler.as_mut().run_parallel(&pool),
                 Outcome::Ok(())
@@ -431,7 +425,7 @@ impl WorkUnit<OnMeta<ScheduleEnd>> for Collect {
 fn collected<const W: usize>() -> Vec<u32> {
     let scheduler = Scheduler::builder()
         .with(Column::<Slot>::start())
-        .with(Column::<Seen>::start())
+        .with(Column::<Seen>::start_from(Seen(SENTINEL)))
         .with(Accum::<Change>::new())
         .with(Emit)
         .with(Collect)
@@ -444,10 +438,7 @@ fn collected<const W: usize>() -> Vec<u32> {
     let seen = b.__tail().__ptr().as_ptr();
     let slots = b.__tail().__tail().__ptr().as_ptr();
     // SAFETY: before the first pass.
-    unsafe {
-        fill(slots, |i| Slot(i as u32));
-        fill(seen, |_| Seen(SENTINEL));
-    }
+    unsafe { fill(slots, |i| Slot(i as u32)) };
     assert!(matches!(
         scheduler.as_mut().run_parallel(&pool),
         Outcome::Ok(())
@@ -553,9 +544,6 @@ fn a_leading_band_s_write_reaches_its_readers_in_the_same_pass() {
         .build(store(), USize(RECORDS))
         .unwrap_or_else(|_| panic!("build should succeed"));
     let seen = scheduler.__bindings().__ptr().as_ptr();
-    let heights = scheduler.__bindings().__tail().__ptr().as_ptr();
-    // SAFETY: before the first pass.
-    unsafe { fill(heights, |_| Height(0)) };
     // Passes 1 and 2: the column holds 1 after the setup.
     for _ in 0 .. 2 {
         assert!(matches!(scheduler.run(), Outcome::Ok(())));
@@ -589,9 +577,6 @@ fn a_reader_registered_ahead_of_a_leading_band_s_writer_follows_it_all_the_same(
         .build(store(), USize(RECORDS))
         .unwrap_or_else(|_| panic!("two ranks take the sequence of their ranks"));
     let seen = scheduler.__bindings().__ptr().as_ptr();
-    let heights = scheduler.__bindings().__tail().__ptr().as_ptr();
-    // SAFETY: before the first pass.
-    unsafe { fill(heights, |_| Height(0)) };
     for want in [1, 1, 9, 9] {
         // SAFETY: between passes.
         unsafe { fill(seen, |_| Seen(SENTINEL)) };
@@ -660,7 +645,7 @@ macro_rules! bands_on_the_phase_loop {
             let scheduler = Scheduler::builder()
                 .with(Column::<Height>::start())
                 .with(Column::<Seen>::start())
-                .with(Column::<Slot>::start())
+                .with(Column::<Slot>::start_from(Slot(SENTINEL)))
                 .with(Setup(setups))
                 .with(Watch)
                 .with(Tally(closes))
@@ -673,11 +658,6 @@ macro_rules! bands_on_the_phase_loop {
             let slots = b.__ptr().as_ptr();
             let seen = b.__tail().__ptr().as_ptr();
             let heights = b.__tail().__tail().__ptr().as_ptr();
-            // SAFETY: before the first pass.
-            unsafe {
-                fill_n(heights, WIDE, |_| Height(0));
-                fill_n(slots, WIDE, |_| Slot(SENTINEL));
-            }
             for pass in 1 ..= 2 {
                 assert!(matches!(
                     scheduler.as_mut().run_parallel(&pool),

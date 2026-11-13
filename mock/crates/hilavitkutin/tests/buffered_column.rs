@@ -240,15 +240,12 @@ macro_rules! suite {
             #[test]
             fn a_plain_and_a_buffered_column_of_one_type_are_two_stores() {
                 let mut scheduler = Scheduler::builder()
-                    .with(Column::<Height>::start())
+                    .with(Column::<Height>::start_from(Height(3)))
                     .with(Col::start_from(Height(5)))
                     .with(Column::<Seen>::start())
                     .with(Both)
                     .build(store(), USize(RECORDS))
                     .unwrap_or_else(|_| panic!("build should succeed"));
-                let plain = scheduler.__bindings().__tail().__tail().__ptr().as_ptr();
-                // SAFETY: before the first pass.
-                unsafe { fill(plain, |_| Height(3)) };
                 assert!(matches!(scheduler.run(), Outcome::Ok(())));
                 let seen = scheduler.__bindings().__ptr().as_ptr();
                 // SAFETY: between passes.
@@ -543,15 +540,12 @@ mod plain {
     #[test]
     fn a_plain_column_s_reader_waits_on_its_writer() {
         let mut scheduler = Scheduler::builder()
-            .with(Col::start())
+            .with(Col::start_from(Height(10)))
             .with(Column::<Seen>::start())
             .with(Raise)
             .with(Watch)
             .build(store(), USize(RECORDS))
             .unwrap_or_else(|_| panic!("build should succeed"));
-        let col = scheduler.__bindings().__tail().__ptr().as_ptr();
-        // SAFETY: before the first pass.
-        unsafe { fill(col, |_| Height(10)) };
         assert!(matches!(scheduler.run(), Outcome::Ok(())));
         let seen = scheduler.__bindings().__ptr().as_ptr();
         // SAFETY: between passes.

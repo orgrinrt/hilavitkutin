@@ -276,7 +276,7 @@ macro_rules! positional_write {
         fn $test() {
             let mut scheduler = Scheduler::builder()
                 .with(Column::<Slot>::start())
-                .with(Column::<Height>::start())
+                .with(Column::<Height>::start_from(Height(SENTINEL)))
                 .with(Column::<Seen>::start())
                 .with($lay)
                 .with(Watch)
@@ -286,10 +286,7 @@ macro_rules! positional_write {
             let heights = scheduler.__bindings().__tail().__ptr().as_ptr();
             let slots = scheduler.__bindings().__tail().__tail().__ptr().as_ptr();
             // SAFETY: before the first pass.
-            unsafe {
-                fill(slots, |i| Slot(i as u32));
-                fill(heights, |_| Height(SENTINEL));
-            }
+            unsafe { fill(slots, |i| Slot(i as u32)) };
             assert!(matches!(scheduler.run(), Outcome::Ok(())));
             let want: Vec<u32> = (0 .. RECORDS as u32).map(|s| s * 2).collect();
             // SAFETY: between passes.
