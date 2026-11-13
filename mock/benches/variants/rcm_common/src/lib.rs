@@ -47,7 +47,6 @@ static ORDER: Mutex<Vec<usize>> = Mutex::new(Vec::new());
 macro_rules! def_col {
     ($name:ident) => {
         #[derive(Copy, Clone)]
-        #[allow(dead_code)] // read/written through raw column pointers
         pub struct $name(pub u32);
     };
 }

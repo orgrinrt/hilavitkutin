@@ -89,10 +89,8 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
 const RECORDS: usize = 7000;
 
 #[derive(Copy, Clone)]
-#[allow(dead_code)] // written for the record footprint; read back as raw u32
 struct Narrow(u32);
 #[derive(Copy, Clone)]
-#[allow(dead_code)] // written for the record footprint; read back as raw u64
 struct Wide(u64);
 
 type NarrowCol = Cons<Column<Narrow>, Empty>;
@@ -187,12 +185,12 @@ fn parallel_fibers_window_by_their_own_plan_baked_size() {
     // Poison both columns so an uncovered record is caught rather than reading
     // as a coincidentally-correct zero. Columns from head: Wide(0), Narrow(1).
     // SAFETY: both reserved for RECORDS records; the scheduler is alive.
-    let wide_base = scheduler.__bindings().__ptr().as_ptr() as *mut u64;
-    let narrow_base = scheduler.__bindings().__tail().__ptr().as_ptr() as *mut u32;
+    let wide_base: *mut Wide = scheduler.__bindings().__ptr().as_ptr();
+    let narrow_base: *mut Narrow = scheduler.__bindings().__tail().__ptr().as_ptr();
     for i in 0 .. RECORDS {
         unsafe {
-            *wide_base.add(i) = u64::MAX;
-            *narrow_base.add(i) = u32::MAX;
+            *wide_base.add(i) = Wide(u64::MAX);
+            *narrow_base.add(i) = Narrow(u32::MAX);
         }
     }
 
@@ -235,12 +233,12 @@ fn parallel_fibers_window_by_their_own_plan_baked_size() {
     // legitimately holds 0 when it opens the wide fiber's second morsel. The
     // count assertion above plus this coverage check together pin the range as
     // covered exactly once.
-    let wide_base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const u64;
-    let narrow_base = scheduler.as_ref().__bindings().__tail().__ptr().as_ptr() as *const u32;
+    let wide_base: *const Wide = scheduler.as_ref().__bindings().__ptr().as_ptr();
+    let narrow_base: *const Narrow = scheduler.as_ref().__bindings().__tail().__ptr().as_ptr();
     for i in 0 .. RECORDS {
         // SAFETY: both hold RECORDS reserved records; the scheduler is alive.
-        let w = unsafe { *wide_base.add(i) };
-        let n = unsafe { *narrow_base.add(i) };
+        let w = unsafe { (*wide_base.add(i)).0 };
+        let n = unsafe { (*narrow_base.add(i)).0 };
         assert_ne!(
             w,
             u64::MAX,

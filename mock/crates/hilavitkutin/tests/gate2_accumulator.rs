@@ -229,7 +229,6 @@ fn run_parallel_accumulator_matches_single_core() {
 // whether that configuration can be built and run, not to assert a conclusion.
 
 #[derive(Copy, Clone)]
-#[allow(dead_code)] // written by SideWu, never read back; presence forces a second trunk
 struct Sv(u32);
 
 type ColSide = Cons<Column<Sv>, Empty>;
@@ -283,13 +282,16 @@ fn accumulator_in_a_two_trunk_phase_matches_single_core() {
     {
         // Bindings head: Sv, then In, then the AccumBinding<Av>.
         let b = scheduler.__bindings();
+        let side_base: *mut Sv = b.__ptr().as_ptr();
         let in_base = b.__tail().__ptr().as_ptr() as *mut u32;
         let acc_base = b.__tail().__tail().__ptr().as_ptr() as *mut u32;
         for i in 0 .. N {
-            // SAFETY: both buffers reserve N u32 records; written once here.
+            // SAFETY: all three buffers reserve N records; written once here.
+            // The side column is poisoned so a record its unit skipped is seen.
             unsafe {
                 *in_base.add(i) = i as u32;
                 *acc_base.add(i) = u32::MAX;
+                *side_base.add(i) = Sv(u32::MAX);
             }
         }
     }
@@ -312,5 +314,19 @@ fn accumulator_in_a_two_trunk_phase_matches_single_core() {
         // SAFETY: live records initialised by the appends.
         let v = unsafe { core::ptr::read(base.add(k)) };
         assert_eq!(v.0, refbuf[k], "two-trunk parallel rec {k} value/order");
+    }
+
+    // The second trunk is walked whole: its unit wrote `In[i] + 1` into every
+    // record, none left holding the poison and none written twice over with
+    // another value.
+    let side_base: *const Sv = sched_ref.__bindings().__ptr().as_ptr();
+    for i in 0 .. N {
+        // SAFETY: the side column reserves N records and the scheduler is alive.
+        let s = unsafe { core::ptr::read(side_base.add(i)) };
+        assert_eq!(
+            s.0,
+            i as u32 + 1,
+            "side rec {i}: the second trunk's unit did not write it once from In"
+        );
     }
 }
