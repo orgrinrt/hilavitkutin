@@ -5,7 +5,7 @@
 //! advances; the drain zeroes it once at build time. Without a per-frame reset
 //! in `run`, the second frame starts at the live offset the first frame left,
 //! so appends land past the prior data and the live-length grows frame over
-//! frame (saturating at capacity). `run` must reset every accumulator
+//! frame until the capacity assert fires. `run` must reset every accumulator
 //! live-length to zero at frame start so each frame appends into a fresh buffer.
 //!
 //! Fail-first: before the reset lands, the two-frame run leaves the live-length
@@ -18,10 +18,9 @@
 //! Lives under `tests/` so the bare numeric record values do not trip the
 //! src-tree primitive lints.
 
-use core::cell::{Cell, UnsafeCell};
-use core::mem::MaybeUninit;
+mod stable_provider;
 
-use arvo::{Bool, USize};
+use arvo::USize;
 use hilavitkutin::dispatch::engine_ctx::{AccPtrCons, AccPtrNil, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
@@ -32,51 +31,15 @@ use hilavitkutin_api::store::Accum;
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
+use stable_provider::StableProvider;
 
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
 }
 
-// Stack-backed test memory provider (mirrors tests/accum_dispatch.rs).
-struct BumpProvider<const N: usize> {
-    buf: UnsafeCell<[MaybeUninit<u8>; N]>,
-    used: Cell<usize>,
-}
-
-impl<const N: usize> BumpProvider<N> {
-    fn new() -> Self {
-        Self {
-            buf: UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
-            used: Cell::new(0),
-        }
-    }
-}
-
-unsafe impl<const N: usize> Send for BumpProvider<N> {}
-unsafe impl<const N: usize> Sync for BumpProvider<N> {}
-
-impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
-    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
-        let base = self.buf.get() as *mut u8;
-        let used = self.used.get();
-        let align = align.0.max(1);
-        let aligned = (used + align - 1) / align * align;
-        if aligned + len.0 > N {
-            return core::ptr::null_mut();
-        }
-        self.used.set(aligned + len.0);
-        // SAFETY: `aligned + len <= N`, in bounds of the owned buffer.
-        unsafe { base.add(aligned) }
-    }
-
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
-
-    unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
-}
-
 // Reserved capacity per accumulator. Wide enough that two frames of K appends
-// each (2 + 2 = 4) would NOT saturate, so the bug shows as a grown live-length
-// (4) rather than a saturated one; the reset is what brings it back to K.
+// each (2 + 2 = 4) stay within it, so the bug shows as a grown live-length (4)
+// rather than a capacity assert; the reset is what brings it back to K.
 const CAP: usize = 4;
 // Appends per frame.
 const K: usize = 2;
@@ -93,20 +56,27 @@ type AccW = Cons<Accum<Av>, Empty>;
 struct AppendKWu;
 
 impl BuilderInput for AppendKWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 
 impl WorkUnit<Always> for AppendKWu {
-    type Read = Empty;
-    type Write = AccW;
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        Empty,
+        AccW,
+        SnapNil,
+        ColPtrNil,
+        ColPtrNil,
+        AccPtrCons<'frame, Av, AccPtrNil>,
+    >;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> =
-        EngineCtx<'frame, Empty, AccW, SnapNil, ColPtrNil, ColPtrNil, AccPtrCons<'frame, Av, AccPtrNil>>;
+    type Read = Empty;
+    type Write = AccW;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         // SAFETY: `build` reserved `CAP` (>= K) records for `Av` and the plan
@@ -121,7 +91,7 @@ impl WorkUnit<Always> for AppendKWu {
 
 #[test]
 fn accum_resets_live_length_each_frame() {
-    let provider = BumpProvider::<8192>::new();
+    let provider = StableProvider::new(8192);
     let mut scheduler = Scheduler::builder()
         .with(Accum::<Av>::new())
         .with(AppendKWu)

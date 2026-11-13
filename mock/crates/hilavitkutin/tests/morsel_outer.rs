@@ -25,67 +25,42 @@
 //! Lives under `tests/` so the bare numeric record values do not trip the
 //! src-tree primitive lints.
 
-use core::cell::{Cell, UnsafeCell};
-use core::mem::MaybeUninit;
+mod stable_provider;
+
 use std::cell::RefCell;
 
-use arvo::{Bool, USize};
+use arvo::USize;
 use hilavitkutin::dispatch::engine_ctx::{
-    AccPtrCons, AccPtrNil, ColPtrCons, ColPtrNil, EngineCtx, SnapNil,
+    AccPtrCons,
+    AccPtrNil,
+    ColPtrCons,
+    ColPtrNil,
+    EngineCtx,
+    SnapNil,
 };
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{
-    AccumWriterApi, ColumnReaderApi, ColumnWriterApi, EachApi, HasAccumWriter, HasColumnReader,
-    HasColumnWriter, HasEach,
+    AccumWriterApi,
+    ColumnReaderApi,
+    ColumnWriterApi,
+    EachApi,
+    HasAccumWriter,
+    HasColumnReader,
+    HasColumnWriter,
+    HasEach,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::store::{Accum, Column};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
+use stable_provider::StableProvider;
 
 /// Wrap a provider in the default-capacity arena store (`D = Dim<256>`).
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
-}
-
-// Stack-backed test memory provider (mirrors tests/column_dispatch.rs).
-struct BumpProvider<const N: usize> {
-    buf: UnsafeCell<[MaybeUninit<u8>; N]>,
-    used: Cell<usize>,
-}
-
-impl<const N: usize> BumpProvider<N> {
-    fn new() -> Self {
-        Self {
-            buf: UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
-            used: Cell::new(0),
-        }
-    }
-}
-
-unsafe impl<const N: usize> Send for BumpProvider<N> {}
-unsafe impl<const N: usize> Sync for BumpProvider<N> {}
-
-impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
-    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
-        let base = self.buf.get() as *mut u8;
-        let used = self.used.get();
-        let align = align.0.max(1);
-        let aligned = (used + align - 1) / align * align;
-        if aligned + len.0 > N {
-            return core::ptr::null_mut();
-        }
-        self.used.set(aligned + len.0);
-        // SAFETY: `aligned + len <= N`, in bounds of the owned buffer.
-        unsafe { base.add(aligned) }
-    }
-
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
-
-    unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
 // Two morsels under the fiber's plan-baked L1 window (one 4-byte write column
@@ -116,19 +91,19 @@ thread_local! {
 struct ProducerWu;
 
 impl BuilderInput for ProducerWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 
 impl WorkUnit<Always> for ProducerWu {
-    type Read = Empty;
-    type Write = Col;
+    type Ctx<'frame> = EngineCtx<'frame, Empty, Col, SnapNil, ColPtrNil, ColPtrCons<Cv, ColPtrNil>>;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, Empty, Col, SnapNil, ColPtrNil, ColPtrCons<Cv, ColPtrNil>>;
+    type Read = Empty;
+    type Write = Col;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         DISPATCH_ORDER.with(|o| o.borrow_mut().push(PRODUCER_TAG));
@@ -145,19 +120,19 @@ impl WorkUnit<Always> for ProducerWu {
 struct ConsumerWu;
 
 impl BuilderInput for ConsumerWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 
 impl WorkUnit<Always> for ConsumerWu {
-    type Read = Col;
-    type Write = Empty;
+    type Ctx<'frame> = EngineCtx<'frame, Col, Empty, SnapNil, ColPtrCons<Cv, ColPtrNil>, ColPtrNil>;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, Col, Empty, SnapNil, ColPtrCons<Cv, ColPtrNil>, ColPtrNil>;
+    type Read = Col;
+    type Write = Empty;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         DISPATCH_ORDER.with(|o| o.borrow_mut().push(CONSUMER_TAG));
@@ -173,7 +148,7 @@ impl WorkUnit<Always> for ConsumerWu {
 #[test]
 fn accumulator_free_pipeline_dispatches_morsel_outer() {
     DISPATCH_ORDER.with(|o| o.borrow_mut().clear());
-    let provider = BumpProvider::<65536>::new();
+    let provider = StableProvider::new(65536);
     let mut scheduler = Scheduler::builder()
         .with(Column::<Cv>::new())
         .with(ProducerWu)
@@ -189,7 +164,10 @@ fn accumulator_free_pipeline_dispatches_morsel_outer() {
     let window = scheduler.__fiber_morsel_size(USize(0)).0;
     assert!(window > 0, "fiber 0 carries a plan-baked window");
     let morsels = RECORDS.div_ceil(window);
-    assert!(morsels >= 2, "test record count must exceed the morsel window");
+    assert!(
+        morsels >= 2,
+        "test record count must exceed the morsel window"
+    );
 
     let result = scheduler.run();
     assert!(matches!(result, Outcome::Ok(())));
@@ -199,7 +177,7 @@ fn accumulator_free_pipeline_dispatches_morsel_outer() {
         // Two dispatch calls per morsel: morsel-outer runs both units within
         // each morsel before advancing.
         let mut expected = std::vec::Vec::new();
-        for _ in 0..morsels {
+        for _ in 0 .. morsels {
             expected.push(PRODUCER_TAG);
             expected.push(CONSUMER_TAG);
         }
@@ -234,26 +212,33 @@ const APPENDER_B_TAG: u8 = 1;
 struct AppenderA;
 
 impl BuilderInput for AppenderA {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 
 impl WorkUnit<Always> for AppenderA {
-    type Read = Empty;
-    type Write = AccWa;
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        Empty,
+        AccWa,
+        SnapNil,
+        ColPtrNil,
+        ColPtrNil,
+        AccPtrCons<'frame, Av, AccPtrNil>,
+    >;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> =
-        EngineCtx<'frame, Empty, AccWa, SnapNil, ColPtrNil, ColPtrNil, AccPtrCons<'frame, Av, AccPtrNil>>;
+    type Read = Empty;
+    type Write = AccWa;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         DISPATCH_ORDER.with(|o| o.borrow_mut().push(APPENDER_A_TAG));
         // SAFETY: `build` reserved the `Accum<Av>` buffer for the record count
         // (>= the one append per dispatch) and the plan proved this unit the
-        // exclusive appender; the append saturates within the reservation.
+        // exclusive appender; the append stays within the reservation.
         unsafe { ctx.accums().append::<Av, _>(Av(1)) };
     }
 }
@@ -262,20 +247,27 @@ impl WorkUnit<Always> for AppenderA {
 struct AppenderB;
 
 impl BuilderInput for AppenderB {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 
 impl WorkUnit<Always> for AppenderB {
-    type Read = Empty;
-    type Write = AccWb;
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        Empty,
+        AccWb,
+        SnapNil,
+        ColPtrNil,
+        ColPtrNil,
+        AccPtrCons<'frame, Bv, AccPtrNil>,
+    >;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> =
-        EngineCtx<'frame, Empty, AccWb, SnapNil, ColPtrNil, ColPtrNil, AccPtrCons<'frame, Bv, AccPtrNil>>;
+    type Read = Empty;
+    type Write = AccWb;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         DISPATCH_ORDER.with(|o| o.borrow_mut().push(APPENDER_B_TAG));
@@ -300,7 +292,7 @@ fn accumulator_pipeline_dispatches_unit_outer() {
     // post-GATE-1 Approach-A `FiberCons` nesting (#670); the flat walk cannot
     // slice the carrier per unit at a runtime morsel index.
     DISPATCH_ORDER.with(|o| o.borrow_mut().clear());
-    let provider = BumpProvider::<131072>::new();
+    let provider = StableProvider::new(131072);
     let mut scheduler = Scheduler::builder()
         .with(Accum::<Av>::new())
         .with(Accum::<Bv>::new())

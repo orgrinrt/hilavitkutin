@@ -33,65 +33,41 @@
 //! Lives under `tests/` so the bare numeric record values do not trip the
 //! src-tree primitive lints.
 
-use core::cell::{Cell, UnsafeCell};
-use core::mem::MaybeUninit;
+mod stable_provider;
+
 use std::cell::RefCell;
 
-use arvo::{Bool, USize};
+use arvo::USize;
 use hilavitkutin::dispatch::engine_ctx::{
-    AccPtrCons, AccPtrNil, ColPtrCons, ColPtrNil, EngineCtx, SnapNil,
+    AccPtrCons,
+    AccPtrNil,
+    ColPtrCons,
+    ColPtrNil,
+    EngineCtx,
+    SnapNil,
 };
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{
-    AccumWriterApi, ColumnReaderApi, ColumnWriterApi, EachApi, HasAccumWriter, HasColumnReader,
-    HasColumnWriter, HasEach,
+    AccumWriterApi,
+    ColumnReaderApi,
+    ColumnWriterApi,
+    EachApi,
+    HasAccumWriter,
+    HasColumnReader,
+    HasColumnWriter,
+    HasEach,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::store::{Accum, Column};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
+use stable_provider::StableProvider;
 
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
-}
-
-struct BumpProvider<const N: usize> {
-    buf: UnsafeCell<[MaybeUninit<u8>; N]>,
-    used: Cell<usize>,
-}
-
-impl<const N: usize> BumpProvider<N> {
-    fn new() -> Self {
-        Self {
-            buf: UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
-            used: Cell::new(0),
-        }
-    }
-}
-
-unsafe impl<const N: usize> Send for BumpProvider<N> {}
-unsafe impl<const N: usize> Sync for BumpProvider<N> {}
-
-impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
-    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
-        let base = self.buf.get() as *mut u8;
-        let used = self.used.get();
-        let align = align.0.max(1);
-        let aligned = (used + align - 1) / align * align;
-        if aligned + len.0 > N {
-            return core::ptr::null_mut();
-        }
-        self.used.set(aligned + len.0);
-        // SAFETY: `aligned + len <= N`, in bounds of the owned buffer.
-        unsafe { base.add(aligned) }
-    }
-
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
-
-    unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
 // Three morsels under the 256-record default `MORSEL_SIZE`: [0,256), [256,512),
@@ -123,19 +99,19 @@ thread_local! {
 struct ProducerWu;
 
 impl BuilderInput for ProducerWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 
 impl WorkUnit<Always> for ProducerWu {
-    type Read = Empty;
-    type Write = Col;
+    type Ctx<'frame> = EngineCtx<'frame, Empty, Col, SnapNil, ColPtrNil, ColPtrCons<Cv, ColPtrNil>>;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, Empty, Col, SnapNil, ColPtrNil, ColPtrCons<Cv, ColPtrNil>>;
+    type Read = Empty;
+    type Write = Col;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         DISPATCH_ORDER.with(|o| o.borrow_mut().push(PRODUCER_TAG));
@@ -152,19 +128,19 @@ impl WorkUnit<Always> for ProducerWu {
 struct ConsumerWu;
 
 impl BuilderInput for ConsumerWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 
 impl WorkUnit<Always> for ConsumerWu {
-    type Read = Col;
-    type Write = Empty;
+    type Ctx<'frame> = EngineCtx<'frame, Col, Empty, SnapNil, ColPtrCons<Cv, ColPtrNil>, ColPtrNil>;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, Col, Empty, SnapNil, ColPtrCons<Cv, ColPtrNil>, ColPtrNil>;
+    type Read = Col;
+    type Write = Empty;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         DISPATCH_ORDER.with(|o| o.borrow_mut().push(CONSUMER_TAG));
@@ -181,18 +157,11 @@ impl WorkUnit<Always> for ConsumerWu {
 struct AppenderWu;
 
 impl BuilderInput for AppenderWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 
 impl WorkUnit<Always> for AppenderWu {
-    type Read = Empty;
-    type Write = AccW;
-    type Hint = (
-        hilavitkutin_api::hint::Immediate,
-        hilavitkutin_api::hint::Atomic,
-        hilavitkutin_api::hint::Normal,
-    );
     type Ctx<'frame> = EngineCtx<
         'frame,
         Empty,
@@ -202,12 +171,19 @@ impl WorkUnit<Always> for AppenderWu {
         ColPtrNil,
         AccPtrCons<'frame, Av, AccPtrNil>,
     >;
+    type Hint = (
+        hilavitkutin_api::hint::Immediate,
+        hilavitkutin_api::hint::Atomic,
+        hilavitkutin_api::hint::Normal,
+    );
+    type Read = Empty;
+    type Write = AccW;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         DISPATCH_ORDER.with(|o| o.borrow_mut().push(APPENDER_TAG));
         // SAFETY: `build` reserved the `Accum<Av>` buffer for the record count
         // (>= the one append per dispatch) and the plan proved this unit the
-        // exclusive appender; the append saturates within the reservation.
+        // exclusive appender; the append stays within the reservation.
         unsafe { ctx.accums().append::<Av, _>(Av(1)) };
     }
 }
@@ -228,7 +204,7 @@ fn mixed_plan_dispatches_whole_carrier_flat() {
     // build. The original per-fiber-block assertion is the contract #670
     // re-enables.
     DISPATCH_ORDER.with(|o| o.borrow_mut().clear());
-    let provider = BumpProvider::<32768>::new();
+    let provider = StableProvider::new(32768);
     let mut scheduler = Scheduler::builder()
         .with(Column::<Cv>::new())
         .with(Accum::<Av>::new())
