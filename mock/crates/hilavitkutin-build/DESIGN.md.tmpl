@@ -272,13 +272,14 @@ remain in the consumer's Cargo.toml. NOT pragma-controlled.
 A tuned set is made coherent by `PragmaSet::coherent`: MathPeephole
 goes when FastMath is out, Profiling when Pgo and Bolt both are.
 
-The crate holds two strings, the variable's name and the wrapper's
-text, and the five option names as `const` text. `no-bare-static-str`
-keeps such text out of release binaries; this crate is only ever a
-build-dependency and reaches none, so each carries a `lint:allow`
-naming the ticket
+The variable's name is a `const` string, `RUSTFLAGS_VAR`.
+`no-bare-static-str` keeps such text out of release binaries; this
+crate is only ever a build-dependency and reaches none, so it carries a
+`lint:allow` naming the ticket
 `no_bare_static_str_does_not_know_a_build_dependency_only_cra` until
-the lint knows a build-dependency-only crate.
+the lint knows a build-dependency-only crate. The wrapper's text is
+written with `write!` and is no `const`, and the five option names are
+a `[&str; 5]`, which the lint does not read.
 
 ## PGO + BOLT workflows (T4 §Q5)
 
