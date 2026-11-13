@@ -4,7 +4,7 @@
 
 use std::cell::RefCell;
 
-use hilavitkutin_str::{str_const, ArenaInterner, Str, StringInterner};
+use hilavitkutin_str::{ArenaInterner, Str, StringInterner, str_const};
 use notko::Maybe;
 
 struct VecInterner {
@@ -87,6 +87,20 @@ fn intern_static_short_circuits_on_const() {
     let i = interner.intern_static("interner-const-static");
     assert_eq!(c, i);
     assert!(i.is_const().0);
+}
+
+#[test]
+#[cfg(any(
+    target_os = "linux",
+    target_os = "android",
+    target_os = "macos",
+    target_os = "ios"
+))]
+fn the_empty_string_is_a_const_string() {
+    let interner = StringInterner::new(VecInterner::new());
+    let h = interner.intern("");
+    assert!(h.is_const().0);
+    assert_eq!(interner.resolve(h), Maybe::Is(""));
 }
 
 #[test]
