@@ -9,8 +9,8 @@ error[E0277]: `Cons<Flux, hilavitkutin_contracts::list::Empty>` has no place for
 help: the trait `Kernels<D, ((PR, PW), PT)>` is implemented for `Cons<K, T>`
   --> $WORKSPACE/crates/hilavitkutin-contracts/src/kernel.rs
    |
-   | / impl<D: Domain, K: ValueKernel<Domain = D>, T: Kernels<D, PT>, PR, PW, PT> Kernels<D, ((PR, PW), PT)>
-   | |     for Cons<K, T>
+   | / impl<D: Domain, K: ValueKernel<Domain = D>, T: Kernels<D, PT>, PR, PW, PT>
+   | |     Kernels<D, ((PR, PW), PT)> for Cons<K, T>
    | | where
    | |     K::Reads: MintList<D, K::Roles, PR>,
    | |     K::Writes: MintList<D, K::Roles, PW>,

@@ -1,9 +1,9 @@
 error[E0502]: cannot borrow `bound` as mutable because it is also borrowed as immutable
-  --> tests/ui/fail/view_past_step.rs:25:5
+  --> tests/ui/fail/view_past_step.rs:27:5
    |
-24 |     let committed = bound.committed();
+26 |     let committed = bound.committed();
    |                     ----- immutable borrow occurs here
-25 |     bound.swap();
+27 |     bound.swap();
    |     ^^^^^^^^^^^^ mutable borrow occurs here
-26 |     let _ = hilavitkutin_contracts::store::Read::extent(&committed);
+28 |     let _ = hilavitkutin_contracts::store::Read::extent(&committed);
    |                                                         ---------- immutable borrow later used here
