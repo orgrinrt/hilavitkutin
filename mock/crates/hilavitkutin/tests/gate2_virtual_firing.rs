@@ -24,14 +24,25 @@ use core::mem::MaybeUninit;
 
 use arvo::{Bool, USize};
 use hilavitkutin::dispatch::engine_ctx::{
-    ColPtrCons, ColPtrNil, EngineCtx, SnapNil, VirtCons, VirtNil,
+    ColPtrCons,
+    ColPtrNil,
+    EngineCtx,
+    SnapNil,
+    VirtCons,
+    VirtNil,
 };
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{
-    ColumnReaderApi, ColumnWriterApi, EachApi, HasColumnReader, HasColumnWriter, HasEach,
-    HasVirtualFirer, VirtualFirerApi,
+    ColumnReaderApi,
+    ColumnWriterApi,
+    EachApi,
+    HasColumnReader,
+    HasColumnWriter,
+    HasEach,
+    HasVirtualFirer,
+    VirtualFirerApi,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::store::{Column, Virtual};
@@ -43,12 +54,15 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 }
 
 struct BumpProvider<const N: usize> {
-    buf: UnsafeCell<[MaybeUninit<u8>; N]>,
+    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
     used: Cell<usize>,
 }
 impl<const N: usize> BumpProvider<N> {
     fn new() -> Self {
-        Self { buf: UnsafeCell::new([const { MaybeUninit::uninit() }; N]), used: Cell::new(0) }
+        Self {
+            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
+            used: Cell::new(0),
+        }
     }
 }
 unsafe impl<const N: usize> Send for BumpProvider<N> {}
@@ -66,7 +80,9 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
         // SAFETY: aligned + len <= N, in bounds of the owned buffer.
         unsafe { base.add(aligned) }
     }
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+
+    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
+
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
@@ -95,17 +111,10 @@ type ColGate = Cons<Column<Gate>, Empty>;
 // source; its write set carries both the virtual and the column.
 struct Producer;
 impl BuilderInput for Producer {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for Producer {
-    type Read = Empty;
-    type Write = WTick;
-    type Hint = (
-        hilavitkutin_api::hint::Immediate,
-        hilavitkutin_api::hint::Atomic,
-        hilavitkutin_api::hint::Normal,
-    );
     // Write-virtual bundle is non-nil here: `VirtCons<Tick, VirtNil>` projects
     // the `Virtual<Tick>` stamp cell so `fire::<Tick>()` can stamp it.
     type Ctx<'frame> = EngineCtx<
@@ -118,6 +127,14 @@ impl WorkUnit<Always> for Producer {
         hilavitkutin::dispatch::engine_ctx::AccPtrNil,
         VirtCons<'frame, Tick, VirtNil>,
     >;
+    type Hint = (
+        hilavitkutin_api::hint::Immediate,
+        hilavitkutin_api::hint::Atomic,
+        hilavitkutin_api::hint::Normal,
+    );
+    type Read = Empty;
+    type Write = WTick;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: Gate reserved + exclusive; morsel covers this slice.
@@ -134,20 +151,13 @@ macro_rules! consumer {
     ($name:ident, $sched:ty, $ran:ident) => {
         struct $name;
         impl BuilderInput for $name {
-            type Init = Self;
             type Dispatch = UnitDispatch<Self>;
+            type Init = Self;
         }
         impl HasSchedule for $name {
             type Sched = $sched;
         }
         impl WorkUnit<$sched> for $name {
-            type Read = ColGate;
-            type Write = Cons<Column<$ran>, Empty>;
-            type Hint = (
-                hilavitkutin_api::hint::Immediate,
-                hilavitkutin_api::hint::Atomic,
-                hilavitkutin_api::hint::Normal,
-            );
             type Ctx<'frame> = EngineCtx<
                 'frame,
                 ColGate,
@@ -156,6 +166,14 @@ macro_rules! consumer {
                 ColPtrCons<Gate, ColPtrNil>,
                 ColPtrCons<$ran, ColPtrNil>,
             >;
+            type Hint = (
+                hilavitkutin_api::hint::Immediate,
+                hilavitkutin_api::hint::Atomic,
+                hilavitkutin_api::hint::Normal,
+            );
+            type Read = ColGate;
+            type Write = Cons<Column<$ran>, Empty>;
+
             fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
                 ctx.each().run(|i| {
                     // SAFETY: Gate produced this frame; Ran reserved + exclusive.
@@ -194,7 +212,7 @@ fn on_consumer_runs_iff_its_virtual_fired() {
     let a_base = scheduler.__bindings().__ptr().as_ptr() as *mut u32;
     let b_base = scheduler.__bindings().__tail().__ptr().as_ptr() as *mut u32;
     let n_base = scheduler.__bindings().__tail().__tail().__ptr().as_ptr() as *mut u32;
-    for i in 0..N {
+    for i in 0 .. N {
         // SAFETY: three Ran columns reserved for N records; scheduler alive.
         unsafe {
             *a_base.add(i) = 0;
@@ -208,11 +226,17 @@ fn on_consumer_runs_iff_its_virtual_fired() {
     let a = scheduler.__bindings().__ptr().as_ptr() as *const u32;
     let b = scheduler.__bindings().__tail().__ptr().as_ptr() as *const u32;
     let n = scheduler.__bindings().__tail().__tail().__ptr().as_ptr() as *const u32;
-    for i in 0..N {
+    for i in 0 .. N {
         // SAFETY: Ran columns hold N reserved records; scheduler alive.
         let (va, vb, vn) = unsafe { (*a.add(i), *b.add(i), *n.add(i)) };
         assert_eq!(va, 1, "rec {i}: On<Tick> consumer A ran (Tick fired)");
-        assert_eq!(vb, 1, "rec {i}: On<Tick> consumer B ran (same fire, multi-consumer)");
-        assert_eq!(vn, 0, "rec {i}: On<Never> consumer skipped (Never never fired)");
+        assert_eq!(
+            vb, 1,
+            "rec {i}: On<Tick> consumer B ran (same fire, multi-consumer)"
+        );
+        assert_eq!(
+            vn, 0,
+            "rec {i}: On<Never> consumer skipped (Never never fired)"
+        );
     }
 }

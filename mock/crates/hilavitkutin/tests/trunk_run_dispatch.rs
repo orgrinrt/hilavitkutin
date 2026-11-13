@@ -40,7 +40,12 @@ use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{
-    ColumnReaderApi, ColumnWriterApi, EachApi, HasColumnReader, HasColumnWriter, HasEach,
+    ColumnReaderApi,
+    ColumnWriterApi,
+    EachApi,
+    HasColumnReader,
+    HasColumnWriter,
+    HasEach,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::store::Column;
@@ -52,13 +57,16 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 }
 
 struct BumpProvider<const N: usize> {
-    buf: UnsafeCell<[MaybeUninit<u8>; N]>,
+    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
     used: Cell<usize>,
 }
 
 impl<const N: usize> BumpProvider<N> {
     fn new() -> Self {
-        Self { buf: UnsafeCell::new([const { MaybeUninit::uninit() }; N]), used: Cell::new(0) }
+        Self {
+            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
+            used: Cell::new(0),
+        }
     }
 }
 
@@ -79,7 +87,7 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
         unsafe { base.add(aligned) }
     }
 
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
 
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
@@ -109,19 +117,26 @@ type One<T> = Cons<Column<T>, Empty>;
 #[derive(Copy, Clone)]
 struct SX;
 impl BuilderInput for SX {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for SX {
-    type Read = One<InX>;
-    type Write = One<AX>;
+    type Ctx<'f> = EngineCtx<
+        'f,
+        One<InX>,
+        One<AX>,
+        SnapNil,
+        ColPtrCons<InX, ColPtrNil>,
+        ColPtrCons<AX, ColPtrNil>,
+    >;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'f> =
-        EngineCtx<'f, One<InX>, One<AX>, SnapNil, ColPtrCons<InX, ColPtrNil>, ColPtrCons<AX, ColPtrNil>>;
+    type Read = One<InX>;
+    type Write = One<AX>;
+
     fn execute<'f>(&self, ctx: &Self::Ctx<'f>) {
         ctx.each().run(|i| {
             // SAFETY: InX host-populated for N records; AX reserved + exclusively
@@ -136,19 +151,26 @@ impl WorkUnit<Always> for SX {
 #[derive(Copy, Clone)]
 struct SZ;
 impl BuilderInput for SZ {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for SZ {
-    type Read = One<AX>;
-    type Write = One<CZ>;
+    type Ctx<'f> = EngineCtx<
+        'f,
+        One<AX>,
+        One<CZ>,
+        SnapNil,
+        ColPtrCons<AX, ColPtrNil>,
+        ColPtrCons<CZ, ColPtrNil>,
+    >;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'f> =
-        EngineCtx<'f, One<AX>, One<CZ>, SnapNil, ColPtrCons<AX, ColPtrNil>, ColPtrCons<CZ, ColPtrNil>>;
+    type Read = One<AX>;
+    type Write = One<CZ>;
+
     fn execute<'f>(&self, ctx: &Self::Ctx<'f>) {
         ctx.each().run(|i| {
             // SAFETY: SX (ordered before SZ by the RAW edge) wrote every AX the
@@ -187,7 +209,7 @@ fn runtrunk_two_fiber_trunk_matches_flat_walk() {
         .build(store(BumpProvider::<32768>::new()), USize(N))
         .unwrap_or_else(|_| panic!("flat engine build should succeed"));
     let flat_inx = flat.__bindings().__ptr().as_ptr() as *mut InX;
-    for i in 0..N {
+    for i in 0 .. N {
         // SAFETY: InX reserved for N records; storage alive; one write each.
         unsafe { *flat_inx.add(i) = InX(i as u32) };
     }
@@ -211,22 +233,35 @@ fn runtrunk_two_fiber_trunk_matches_flat_walk() {
         .build(store(BumpProvider::<32768>::new()), USize(N))
         .unwrap_or_else(|_| panic!("trunk engine build should succeed"));
     let trunk_inx = trunk.__bindings().__ptr().as_ptr() as *mut InX;
-    for i in 0..N {
+    for i in 0 .. N {
         // SAFETY: InX reserved for N records; storage alive; one write each.
         unsafe { *trunk_inx.add(i) = InX(i as u32) };
     }
     let trunk_carrier = FiberCons {
-        fiber: WuCons { head: SX, tail: WuNil },
-        rest: FiberCons { fiber: WuCons { head: SZ, tail: WuNil }, rest: FiberNil },
+        fiber: WuCons {
+            head: SX,
+            tail: WuNil,
+        },
+        rest:  FiberCons {
+            fiber: WuCons {
+                head: SZ,
+                tail: WuNil,
+            },
+            rest:  FiberNil,
+        },
     };
-    trunk_dispatch(trunk.__bindings(), &trunk_carrier, MorselRange::new(USize(0), USize(N)));
+    trunk_dispatch(
+        trunk.__bindings(),
+        &trunk_carrier,
+        MorselRange::new(USize(0), USize(N)),
+    );
     let trunk_ax = trunk.__bindings().__tail().__ptr().as_ptr() as *const u32;
     let trunk_cz = trunk.__bindings().__tail().__tail().__ptr().as_ptr() as *const u32;
     // SAFETY: AX, CZ each reserved for N records; storage alive; written every record.
     let trunk_ax = unsafe { core::slice::from_raw_parts(trunk_ax, N) };
     let trunk_cz = unsafe { core::slice::from_raw_parts(trunk_cz, N) };
 
-    for i in 0..N {
+    for i in 0 .. N {
         assert_eq!(flat_ax[i], fx(i as u32), "flat AX[{i}]");
         assert_eq!(flat_cz[i], fz(fx(i as u32)), "flat CZ[{i}]");
         assert_eq!(

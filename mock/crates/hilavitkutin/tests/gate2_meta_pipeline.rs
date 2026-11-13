@@ -30,7 +30,13 @@ use core::mem::MaybeUninit;
 
 use arvo::{Bool, USize};
 use hilavitkutin::dispatch::engine_ctx::{
-    AccPtrCons, AccPtrNil, ColPtrNil, EngineCtx, MetaRef, SnapNil, VirtNil,
+    AccPtrCons,
+    AccPtrNil,
+    ColPtrNil,
+    EngineCtx,
+    MetaRef,
+    SnapNil,
+    VirtNil,
 };
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
@@ -48,12 +54,15 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 }
 
 struct BumpProvider<const N: usize> {
-    buf: UnsafeCell<[MaybeUninit<u8>; N]>,
+    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
     used: Cell<usize>,
 }
 impl<const N: usize> BumpProvider<N> {
     fn new() -> Self {
-        Self { buf: UnsafeCell::new([const { MaybeUninit::uninit() }; N]), used: Cell::new(0) }
+        Self {
+            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
+            used: Cell::new(0),
+        }
     }
 }
 unsafe impl<const N: usize> Send for BumpProvider<N> {}
@@ -71,7 +80,9 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
         // SAFETY: aligned + len <= N, in bounds of the owned buffer.
         unsafe { base.add(aligned) }
     }
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+
+    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
+
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
@@ -83,8 +94,15 @@ struct Mark(u32);
 
 type AccW = Cons<Accum<Mark>, Empty>;
 // Consumer (`Always`) Ctx: default `MetaNil` meta pointer (no meta access).
-type AccCtx<'frame> =
-    EngineCtx<'frame, Empty, AccW, SnapNil, ColPtrNil, ColPtrNil, AccPtrCons<'frame, Mark, AccPtrNil>>;
+type AccCtx<'frame> = EngineCtx<
+    'frame,
+    Empty,
+    AccW,
+    SnapNil,
+    ColPtrNil,
+    ColPtrNil,
+    AccPtrCons<'frame, Mark, AccPtrNil>,
+>;
 // Meta (`OnMeta<V>`) Ctx: carries a `MetaRef`, since `OnMeta` units are meta
 // work units (the `MetaPtrFor` mapping makes their Ctx's 9th param `MetaRef`).
 // These units do not read meta state here; the meta pointer rides unused.
@@ -109,17 +127,18 @@ type Hints = (
 // PlanWu: OnMeta<PlanStage> (rank 0). Appends 1 when it runs.
 struct PlanWu;
 impl BuilderInput for PlanWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl HasSchedule for PlanWu {
     type Sched = OnMeta<PlanStage>;
 }
 impl WorkUnit<OnMeta<PlanStage>> for PlanWu {
+    type Ctx<'frame> = MetaAccCtx<'frame>;
+    type Hint = Hints;
     type Read = Empty;
     type Write = AccW;
-    type Hint = Hints;
-    type Ctx<'frame> = MetaAccCtx<'frame>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         // SAFETY: Mark reserved (CAP) and this frame's appends stay in capacity.
         unsafe { ctx.accums().append::<Mark, _>(Mark(1)) };
@@ -129,14 +148,15 @@ impl WorkUnit<OnMeta<PlanStage>> for PlanWu {
 // ConsumerWu: Always (rank 3). Appends 2 every frame.
 struct ConsumerWu;
 impl BuilderInput for ConsumerWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for ConsumerWu {
+    type Ctx<'frame> = AccCtx<'frame>;
+    type Hint = Hints;
     type Read = Empty;
     type Write = AccW;
-    type Hint = Hints;
-    type Ctx<'frame> = AccCtx<'frame>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         // SAFETY: Mark reserved (CAP) and this frame's appends stay in capacity.
         unsafe { ctx.accums().append::<Mark, _>(Mark(2)) };
@@ -146,17 +166,18 @@ impl WorkUnit<Always> for ConsumerWu {
 // EndWu: OnMeta<ScheduleEnd> (rank 4). Appends 3 after the consumer.
 struct EndWu;
 impl BuilderInput for EndWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl HasSchedule for EndWu {
     type Sched = OnMeta<ScheduleEnd>;
 }
 impl WorkUnit<OnMeta<ScheduleEnd>> for EndWu {
+    type Ctx<'frame> = MetaAccCtx<'frame>;
+    type Hint = Hints;
     type Read = Empty;
     type Write = AccW;
-    type Hint = Hints;
-    type Ctx<'frame> = MetaAccCtx<'frame>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         // SAFETY: Mark reserved (CAP) and this frame's appends stay in capacity.
         unsafe { ctx.accums().append::<Mark, _>(Mark(3)) };
@@ -200,11 +221,12 @@ fn meta_lifecycle_bands_dispatch_in_order_and_plan_stage_is_dirty_only() {
     assert!(matches!(r2, Outcome::Ok(())));
     let len2 = scheduler.__bindings().__len_cell().get().0;
     let base2 = scheduler.__bindings().__ptr().as_ptr();
-    assert_eq!(len2, 2, "frame 2: plan band skipped (plan-stage unit did not run)");
+    assert_eq!(
+        len2, 2,
+        "frame 2: plan band skipped (plan-stage unit did not run)"
+    );
     // SAFETY: two records appended this frame into a reset buffer.
-    let buf2 = unsafe {
-        [core::ptr::read(base2.add(0)).0, core::ptr::read(base2.add(1)).0]
-    };
+    let buf2 = unsafe { [core::ptr::read(base2.add(0)).0, core::ptr::read(base2.add(1)).0] };
     assert_eq!(
         buf2,
         [2, 3],

@@ -1,0 +1,16 @@
+[package]
+name = "stc-support"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# Everything the arms share: the routine, the data, the kernels, the engine
+# drivers, the in-bench crew and its record splits, and the std arm. Each arm
+# under variants/ is a one-line cdylib over this crate, so the arms differ only
+# in what they measure.
+[dependencies]
+engine_vs_std = { path = "../../engine_vs_std" }
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev", features = ["std"] }

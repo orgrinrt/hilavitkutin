@@ -24,12 +24,14 @@ pub trait IntoStr {
 }
 
 impl IntoStr for Str {
+    #[rustfmt::skip]
     fn into_str(self, _: &StringInterner<impl ArenaInterner>) -> Str { // lint:allow(no-alloc) reason: interner wrapper, not std `String`; tracked: #72
         self
     }
 }
 
 impl IntoStr for &'static str {
+    #[rustfmt::skip]
     fn into_str(self, interner: &StringInterner<impl ArenaInterner>) -> Str { // lint:allow(no-alloc) reason: interner wrapper, not std `String`; tracked: #72
         interner.intern_static(self)
     }
