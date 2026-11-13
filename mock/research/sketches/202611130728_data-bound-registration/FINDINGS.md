@@ -12,7 +12,7 @@ The belief going in was that the column side is easy and the unit side is where 
 
 ## What was tried, in order
 
-The crate is `src/lib.rs`, its own workspace, `no_std` outside the tests. `cargo test` runs ten unit tests and three compile-fail doctests. Two features each turn on one function that must not compile, so the refusals below can be read again with `cargo build --features <name>`.
+The crate is `src/lib.rs` with its tests in `src/tests.rs`, its own workspace, `no_std` outside the tests. `cargo test` runs ten unit tests and three compile-fail doctests. Two features each turn on one function that must not compile, so the refusals below can be read again with `cargo build --features <name>`.
 
 ### 1. A column table with a checked cast back
 
@@ -28,9 +28,9 @@ So the view is bounded on `Plain`, an unsafe marker trait for types with no inva
 
 ```
 error[E0277]: the trait bound `bool: Plain` is not satisfied
-   --> src/lib.rs:397:28
+   --> src/lib.rs:427:28
     |
-397 |     let _ = table.column::<bool>(slot);
+427 |     let _ = table.column::<bool>(slot);
     |                   ------   ^^^^ the trait `Plain` is not implemented for `bool`
     |                   |
     |                   required by a bound introduced by this call
@@ -46,9 +46,9 @@ error[E0277]: the trait bound `bool: Plain` is not satisfied
               i8
             and 7 others
 note: required by a bound in `Table::<'s, CAP>::column`
-   --> src/lib.rs:207:22
+   --> src/lib.rs:226:22
     |
-207 |     pub fn column<X: Plain>(&self, slot: Slot) -> Result<Column<'_, X>, Refused> {
+226 |     pub fn column<X: Plain>(&self, slot: Slot) -> Result<Column<'_, X>, Refused> {
     |                      ^^^^^ required by this bound in `Table::<'s, CAP>::column`
 ```
 
@@ -72,9 +72,9 @@ A plan over declarations that arrive at run time cannot be a constant (`--featur
 
 ```
 error[E0435]: attempt to use a non-constant value in a constant
-   --> src/lib.rs:405:56
+   --> src/lib.rs:435:56
     |
-405 |     const PLAN: Result<[u8; 2], PlanRefused> = phases(&reads, &writes);
+435 |     const PLAN: Result<[u8; 2], PlanRefused> = phases(&reads, &writes);
     |                                                        ^^^^^ non-constant value
     |
 help: consider using `let` instead of `const`
@@ -95,7 +95,7 @@ assertion `left == right` failed
  right: Some(Shape { declared: Shape { size: 4, align: 4 }, asked: Shape { size: 8, align: 4 } })
 ```
 
-The check was put back and the suite is green with the new case in it.
+The check was put back and the suite is green with the new case in it. The tests have since moved to `src/tests.rs`, so the panic above names the line the assertion had at the time.
 
 ## The result
 
