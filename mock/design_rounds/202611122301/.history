@@ -1,0 +1,50 @@
+a5121e6 chore: lock src changelist 202611130020
+f59705e test: make the engine suite able to fail
+4aafd68 chore: lock the suite-can-fail doc changelist
+d19d73c docs: open the suite-can-fail round and fix stale status text
+4b327c5 fix: make hilavitkutin dev pass its own commit gate
+af823b7 fix: pin the research sketches' arvo deps by rev
+6ee3746 chore: move mockspace config to the repo root, drop its dep
+d14bec3 fix: drop the unlocked duplicate of a closed round's doc changelist
+e3fa3f4 feat: bring hilavitkutin up on arvo `1b2796e9` without a std tier
+2f06ffe chore: land the design rounds and research the recovery branch carried
+1fbb2e9 chore: take the shared tool configs, and ignore a stray sketch lockfile
+a677bfd fix: pin the mock toolchain and take the structural lints from the pack
+220edfb chore: take the shared rustfmt and deny configs
+313d427 Merge pull request #3 from orgrinrt/chore/patch-pass-2026-08
+06c7b41 docs: correct the ctx macro names and the CapabilityId constructor
+288660e docs: drop crates.io and docs.rs badges for an unpublished crate
+3de0b5c docs: sync manifest descriptions and drop their em-dash
+ee536c9 docs: remove tier-1 leakage and a dead test path from MIRI.md
+7bcf666 docs: name the phase configs as the enum spells them
+3ef35d2 docs: describe the builder api the scheduler actually ships
+0df662c chore: remove github actions workflows
+603e663 chore: migrate to the mockspace launcher
+3c5fb09 feat: factor hilavitkutin-sym generic interned-identity core
+fa0cf62 docs: give every r6 leaf an assigned resolution
+c729cb4 docs: re-chart engine roadmap against canon as r6
+fb4c6da feat: add Plannable declaration trait and the HintExt hint slot
+7865e97 feat: invert run dispatch to fiber-outer morsel-inner per plan window
+78d38d6 feat: per-fiber l1 morsel-window formula from runcfg budget
+b0e863d feat: erased resource addressing and ctx snapshot per storage bench
+0725c4e feat: add hilavitkutin-api-macros crate with ResourceFootprint derive
+09ade36 feat: add CollectionBytes + ResourceFootprint footprint traits
+e8dd5d7 docs: sketch A3-2 resource-collection footprint surface
+378fef9 docs: re-chart A3 morsel formula on the canonical R5 resource model
+8198fdc feat: add per-store element-byte-size collection for L1 morsel formula
+bd0ccc0 docs: sketch A3 per-store size collection for L1 morsel formula
+f54ac23 feat: add run_one_trunk_windowed for fiber-outer morsel dispatch
+91530de docs: sketch A2a per-fiber morsel loop drives per-trunk dispatch
+f10a385 docs: backlog note for generalized asm-emission contract tests
+dc9e754 docs: granular roadmap, sketch plan, asm-contract-test discipline
+488ce26 feat: thread per-fiber morsel size onto FiberDispatch
+826494b docs: resolve arc-audit roadmap (head+tail/overlap in scope, internals-first)
+631a0ba docs: critical arc audit and updated canonical roadmap
+fe09f5c refactor: rename morsel_sizes to morsel_windows for per-fiber morsel slice 1
+556ca6f docs: per-fiber morsel-loop wiring blueprint
+e42d979 docs: chart adapt actuation arc (dead consumption surfaces)
+2038eb2 feat: select_adapt_config phase-imbalance reconfigure trigger
+c905fba feat: per-phase duration EMA + catalogue adapt performance contracts
+74e3d3e feat: core-idle adapt axis via waist-barrier follower timing
+9f281af feat: change_seen_count on all run paths, accumulator over-capacity is a hard error
+cd4e6d8 feat: count change_class frames via store_dirty into SchedulerMetrics

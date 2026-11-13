@@ -66,9 +66,10 @@ pub trait ResolveColumnWrite<T: ColumnValue, I> {
 pub trait ResolveAccumAppend<T: ColumnValue, I> {
     /// Append `v` at the accumulator's live offset and advance the live length.
     ///
-    /// The append saturates at the reserved capacity: once the live length
-    /// reaches the capacity the append is dropped, so it never writes past the
-    /// reserved buffer.
+    /// An append past the reserved capacity is a contract violation: the
+    /// engine asserts the live length is below the capacity and panics before
+    /// the write, so it never writes past the reserved buffer and never drops
+    /// a record silently.
     ///
     /// # Safety
     ///
@@ -143,9 +144,10 @@ pub trait ColumnWriterApi<W: AccessSet> {
     note = "Implemented by the scheduler-generated context. If your WorkUnit Ctx hits this bound, ensure the provider tuple satisfies `HasAccumWriter<W>` for the write set the WU declares."
 )]
 pub trait AccumWriterApi<W: AccessSet> {
-    /// Append `v` to accumulator `T`, advancing its live length. The append
-    /// saturates at the reserved capacity (dropped once the live length reaches
-    /// it), so it never writes past the buffer.
+    /// Append `v` to accumulator `T`, advancing its live length. An append
+    /// past the reserved capacity asserts and panics before the write, so it
+    /// never writes past the buffer; size the accumulator for the largest
+    /// per-frame append count.
     ///
     /// Drive appends from the per-record loop (`each` / `reduce` / `batch`) so
     /// the total across the frame equals the record count: `execute` runs once

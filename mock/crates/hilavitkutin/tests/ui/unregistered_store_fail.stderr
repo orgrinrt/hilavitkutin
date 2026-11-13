@@ -1,0 +1,19 @@
+error[E0599]: the method `build` exists for struct `SchedulerBuilder<Cons<ReadsInA, hilavitkutin_api::Empty>, hilavitkutin_api::Empty, hilavitkutin_api::Empty, DefaultStoreValues, WuCons<ReadsInA, WuNil>>`, but its trait bounds were not satisfied
+  --> tests/ui/unregistered_store_fail.rs:84:10
+   |
+82 |       let _ = Scheduler::builder()
+   |  _____________-
+83 | |         .with(ReadsInA)
+84 | |         .build(store(provider), USize(0));
+   | |         -^^^^^ method cannot be called due to unsatisfied trait bounds
+   | |_________|
+   |
+   |
+  ::: $WORKSPACE/crates/hilavitkutin-api/src/access.rs
+   |
+   |   pub struct Empty;
+   |   ---------------- doesn't satisfy `_: ContainsAll<Cons<Resource<InA>, Empty>>` or `hilavitkutin_api::Empty: Contains<Resource<InA>>`
+   |
+   = note: the following trait bounds were not satisfied:
+           `hilavitkutin_api::Empty: Contains<Resource<InA>>`
+           which is required by `hilavitkutin_api::Empty: ContainsAll<Cons<Resource<InA>, hilavitkutin_api::Empty>>`
