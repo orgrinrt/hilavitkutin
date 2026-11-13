@@ -7,6 +7,7 @@
 resolver = "3"
 members = [
     "b2-resize-loses-records",
+    "c1-oversized-cell",
 ]
 
 [workspace.package]
