@@ -195,17 +195,17 @@ per type:
 
 ```rust
 pub struct LintConfig;
-impl Replaceable for LintConfig {} // app may override via.replace_value
+impl Replaceable for LintConfig {} // app may override via.replace_resource
 
 pub struct RoundState;
 // no impl Replaceable: locked, cannot be overridden
 ```
 
 The static `T: Replaceable` bound on
-`Scheduler::replace_value::<T>(value)` (declared in the engine
+`Scheduler::replace_resource::<T>(value)` (declared in the engine
 crate) rejects override attempts on non-opt-in types at compile
 time. See `hilavitkutin-api::Replaceable` and
-`hilavitkutin::Scheduler::replace_value` for the trait
+`hilavitkutin::Scheduler::replace_resource` for the trait
 documentation; see S4 (`mock/research/sketches/202605050555_replaceable_polarity/`)
 for the polarity decision (opt-in is safer-by-default per the
 "tools, not policies" workspace rule).
