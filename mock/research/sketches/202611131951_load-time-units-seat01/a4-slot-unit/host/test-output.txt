@@ -3,9 +3,9 @@ warning: hilavitkutin-api@0.1.0: hilavitkutin-build chose rustc flags for this c
 warning: hilavitkutin-kit@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
 warning: hilavitkutin-sym@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
 warning: hilavitkutin-str@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-linking@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
 warning: hilavitkutin-providers@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
 warning: hilavitkutin@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
-warning: hilavitkutin-linking@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
 warning: struct `AdaptArena` is never constructed
   --> /home/user/.worktrees/hv-ltp-seat01/mock/crates/hilavitkutin/src/adapt/arena.rs:38:19
    |
@@ -57,7 +57,7 @@ warning: path statement with no effect
 
 warning: `hilavitkutin` (lib) generated 7 warnings
    Compiling a4-host v0.0.0 (/home/user/.worktrees/hv-ltp-seat01/mock/research/sketches/202611131951_load-time-units-seat01/a4-slot-unit/host)
-    Finished `test` profile [unoptimized] target(s) in 1.41s
+    Finished `test` profile [unoptimized] target(s) in 1.57s
      Running unittests src/lib.rs (/home/user/target/debug/deps/a4_host-c30476ce547e4c86)
 
 running 0 tests
@@ -68,7 +68,7 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
 running 2 tests
 test a_library_not_yet_mapped_loads ... 
-thread 'a_library_not_yet_mapped_loads' (23732) panicked at a4-slot-unit/host/tests/loader.rs:34:5:
+thread 'a_library_not_yet_mapped_loads' (13436) panicked at a4-slot-unit/host/tests/loader.rs:34:5:
 Library::load refused "/home/user/target/debug/liba4_ext.so", a file that exists and that dlopen with the platform's own RTLD_LOCAL opens
 stack backtrace:
    0: __rustc::rust_begin_unwind
@@ -85,16 +85,16 @@ failures:
 failures:
     a_library_not_yet_mapped_loads
 
-test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
 
 error: test failed, to rerun pass `-p a4-host --test loader`
      Running tests/slot.rs (/home/user/target/debug/deps/slot-54ec19c4a1cdc70c)
 
-running 2 tests
+running 3 tests
 test a_name_minted_in_an_extension_resolves_in_the_host ... host section: 1 entries; extension section: 1 entries
 host id 78089561 -> "host.kind.pos"; extension id 240139607 -> "(nothing)"
 
-thread 'a_name_minted_in_an_extension_resolves_in_the_host' (23735) panicked at a4-slot-unit/host/tests/slot.rs:288:5:
+thread 'a_name_minted_in_an_extension_resolves_in_the_host' (13439) panicked at a4-slot-unit/host/tests/slot.rs:288:5:
 a name the extension declared with str_const! does not resolve in the host
 stack backtrace:
    0: __rustc::rust_begin_unwind
@@ -105,13 +105,26 @@ stack backtrace:
 note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
 FAILED
 test a_slot_unit_runs_an_extension_kernel_in_the_schedule ... ok
+test one_name_has_one_handle_on_both_sides_of_the_seam ... host intern of the same text: const false id 0; extension handle: const true id 240139607
+
+thread 'one_name_has_one_handle_on_both_sides_of_the_seam' (13441) panicked at a4-slot-unit/host/tests/slot.rs:331:5:
+the host and the extension hold two different handles for one name
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: slot::one_name_has_one_handle_on_both_sides_of_the_seam
+   3: slot::one_name_has_one_handle_on_both_sides_of_the_seam::{closure#0}
+   4: <slot::one_name_has_one_handle_on_both_sides_of_the_seam::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+FAILED
 
 failures:
 
 failures:
     a_name_minted_in_an_extension_resolves_in_the_host
+    one_name_has_one_handle_on_both_sides_of_the_seam
 
-test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+test result: FAILED. 1 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
 
 error: test failed, to rerun pass `-p a4-host --test slot`
    Doc-tests a4_host
