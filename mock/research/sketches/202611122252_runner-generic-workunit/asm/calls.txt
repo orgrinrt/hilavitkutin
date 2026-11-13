@@ -1,0 +1,56 @@
+# Release asm (codegen-units = 1), every call instruction in each runner's run(), and
+# what the register operands were loaded with. An ad-hoc reading, not a measurement.
+
+== e1_run_ordered
+functions:
+_RNvCsef8k7jWpCIx_14e1_run_ordered3run:
+calls:
+      4 	callq	*%r13
+      1 	callq	*%rbx
+      4 	callq	*_RNvNtCslfAf2Mv2Tp5_4core9panicking18panic_bounds_check@GOTPCREL(%rip)
+      2 	callq	*memcpy@GOTPCREL(%rip)
+call registers loaded from:
+	movq	memcpy@GOTPCREL(%rip), %r13
+	movq	_RNvCsgErUYOSqLxx_7e1_unit9integrate@GOTPCREL(%rip), %rbx
+	movq	memcpy@GOTPCREL(%rip), %r13
+symbols naming smooth: 0
+
+== e1_run_fused
+functions:
+_RNvCs3TQFTY7BEIa_12e1_run_fused3run:
+calls:
+      4 	callq	*%r15
+      1 	callq	*_RNvCsgErUYOSqLxx_7e1_unit9integrate@GOTPCREL(%rip)
+      4 	callq	*_RNvNtCslfAf2Mv2Tp5_4core9panicking18panic_bounds_check@GOTPCREL(%rip)
+      2 	callq	*memcpy@GOTPCREL(%rip)
+call registers loaded from:
+	movq	memcpy@GOTPCREL(%rip), %r15
+	movq	memcpy@GOTPCREL(%rip), %r15
+symbols naming smooth: 0
+
+== e2_run_ordered
+functions:
+_RNvCsbk7em1PW2Fu_14e2_run_ordered3run:
+calls:
+      4 	callq	*%r13
+      1 	callq	*%rbx
+      4 	callq	*_RNvNtCslfAf2Mv2Tp5_4core9panicking18panic_bounds_check@GOTPCREL(%rip)
+      2 	callq	*memcpy@GOTPCREL(%rip)
+call registers loaded from:
+	movq	memcpy@GOTPCREL(%rip), %r13
+	movq	_RNvCsaxH9DGv8OdY_7e2_unit9integrate@GOTPCREL(%rip), %rbx
+	movq	memcpy@GOTPCREL(%rip), %r13
+symbols naming smooth: 0
+
+== e2_run_fused
+functions:
+_RNvCs4HKHCVxUxx_12e2_run_fused3run:
+calls:
+      4 	callq	*%r15
+      1 	callq	*_RNvCsaxH9DGv8OdY_7e2_unit9integrate@GOTPCREL(%rip)
+      4 	callq	*_RNvNtCslfAf2Mv2Tp5_4core9panicking18panic_bounds_check@GOTPCREL(%rip)
+      2 	callq	*memcpy@GOTPCREL(%rip)
+call registers loaded from:
+	movq	memcpy@GOTPCREL(%rip), %r15
+	movq	memcpy@GOTPCREL(%rip), %r15
+symbols naming smooth: 0

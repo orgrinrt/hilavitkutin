@@ -1,0 +1,4 @@
+e2/run-threaded/src/lib.rs:88:17: error[E0277]: `<S as Project>::Prod<ColMut<'_>>` cannot be sent between threads safely: `<S as Project>::Prod<ColMut<'_>>` cannot be sent between threads safely
+e2/run-threaded/src/lib.rs:88:17: error[E0277]: `<S as Project>::Prod<Col<'a>>` cannot be shared between threads safely: `<S as Project>::Prod<Col<'a>>` cannot be shared between threads safely
+e2/run-threaded/src/lib.rs:88:17: error[E0277]: `E` cannot be sent between threads safely: `E` cannot be sent between threads safely
+error: could not compile `e2-run-threaded` (lib) due to 3 previous errors
