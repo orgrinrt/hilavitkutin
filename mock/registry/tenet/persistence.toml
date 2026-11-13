@@ -1,0 +1,16 @@
+# What the record says about `persistence`, part 1.
+
+[[tenet]]
+id = "column_data_moves_out_of_and_into_the_engine_through_evict_dump_and_inject_import"
+what = "Column data is moved out of the engine and into it again through the evict and dump and the inject and import column data interfaces."
+mechanism = "evict/dump + inject/import column data APIs (R2)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:579-579"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#07-column-storage"]
+quote = '''
+- evict/dump + inject/import column data APIs (R2)
+'''
+origin = "stated"
+standing = "provisional"
+subject = "persistence"
+keywords = ["evict", "dump", "inject", "import", "column data", "R2", "persistence"]
+cites = ["change_detection_is_per_morsel_and_skips_what_is_unchanged"]

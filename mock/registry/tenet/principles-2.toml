@@ -1,0 +1,19 @@
+# What the record says about `principles`, part 2.
+
+[[tenet]]
+id = "lock_free_dispatch_is_a_library_guarantee_and_the_only_atomics_are_progress_counters_with_plain_store_and_load"
+what = "Dispatch is lock-free by construction: a static dispatch table, one writer and N readers, and deterministic morsel assignment. There are no locks and no compare-and-swap in the dispatch path, and the only atomics are progress counters using plain store and load, never read-modify-write. This is a library guarantee and not an Executor implementation detail."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1629-1634"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#17-dispatch-codegen"]
+quote = '''
+**Lock-free guarantee (T3 decisions #103-104):**
+- Lock-free dispatch by construction: static dispatch table,
+  one-writer-N-readers, deterministic morsel assignment
+- This is a library guarantee, not an Executor implementation detail
+- No locks, no CAS in the dispatch path. The only atomics are
+  progress counters (plain store/load, not RMW).
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["lock-free", "static dispatch table", "one-writer-N-readers", "no CAS", "library guarantee", "Executor", "progress counters"]

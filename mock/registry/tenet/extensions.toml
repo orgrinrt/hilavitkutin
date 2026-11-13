@@ -1,0 +1,15 @@
+# What the record says about `extensions`, part 1.
+
+[[tenet]]
+id = "plugin_type_access_to_columns_comes_from_has_shape_and_erased_column_from_loimu"
+what = "Plugins reach column types through the shape and erased column abstractions taken from loimu."
+mechanism = "`HasShape` / `ErasedColumn` from loimu (T5 L674), for plugin type access."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:577-577"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#07-column-storage"]
+quote = '''
+- HasShape/ErasedColumn from loimu (T5 L674) — for plugin type access
+'''
+origin = "stated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["HasShape", "ErasedColumn", "loimu", "plugin", "type access", "retained"]

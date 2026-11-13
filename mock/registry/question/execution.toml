@@ -86,3 +86,40 @@ Chosen:
 subject = "execution"
 keywords = ["convergence", "head and tail", "N-way", "partition", "roadmap", "r6", "supersession", "agent's call"]
 related = ["question::which_convergence_a_single_trunk_phase_uses"]
+
+[[question]]
+id = "whether_the_morsel_size_counts_every_fiber_column_or_only_the_written_ones"
+asks = "Does the morsel size formula divide the L1 budget by the sizes of all columns of the fiber, or only by the sizes of the write columns and write resource collections?"
+options = ["L1_usable / (Σ size_of::<T_i>() for fiber columns), as the downstream-changes list of domain 04 puts it", "(L1_usable / Σ write_sizes), where read-only columns and read-only resource collections ride the L2 prefetcher and do not consume the L1 budget, as domain 12 puts it"]
+state = "open"
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:407-408, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:832-839"
+quote = '''
+- Morsel formula: `L1_usable / (Σ size_of::<T_i>() for fiber columns)`
+  instead of `L1_usable / (col_count * 16)`
+---
+**Morsel sizing formula (with R3 type-native stride, R5 resource model):**
+```
+morsel_size = (L1_usable / Σ write_sizes).clamp(MIN_MORSEL, MAX_MORSEL) & !3
+```
+- L1_usable = detected_L1 × 0.75
+- write_sizes = Σ size_of::<T_i>() for write columns + write resource
+  collection sizes (R5). Read-only columns and read-only resource
+  collections ride L2 prefetcher, don't consume L1 budget.
+'''
+subject = "execution"
+keywords = ["morsel formula", "L1_usable", "write sizes", "fiber columns", "read-only columns", "R3", "R5"]
+related = ["tenet::the_morsel_size_is_the_l1_budget_divided_by_the_written_bytes_per_record_within_fixed_bounds"]
+
+[[question]]
+id = "which_figure_the_sorting_claim_in_the_distilled_rules_holds_and_which_baseline_the_comparisons_use"
+asks = "The distilled T7 text carries known inconsistencies: which figure holds for the 10.7% sorting claim, and which baseline do the comparisons use?"
+options = ["the sorting claim is 4.8% against compiled", "the sorting claim is 10.7% against write-sized", "baselines differ between sections, 37.4ms in one and 40.4ms in another"]
+state = "open"
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2384-2386"
+quote = '''
+T7 was distilled from T6 only. Known inconsistencies:
+- 10.7% sorting claim: 4.8% vs compiled, 10.7% vs write-sized
+- Baseline differences between sections (37.4ms vs 40.4ms)
+'''
+subject = "execution"
+keywords = ["sorting claim", "10.7%", "4.8%", "baseline", "37.4ms", "40.4ms", "T7 inconsistencies"]

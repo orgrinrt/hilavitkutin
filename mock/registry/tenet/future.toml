@@ -1,0 +1,124 @@
+# What the record says about `future`, part 1.
+
+[[tenet]]
+id = "the_three_hilavitkutin_crates_are_designed_for_extraction_to_a_separate_repository"
+what = "The three hilavitkutin crates are designed so that they can be extracted to a separate repository."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:63-63"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#crate-structure"]
+quote = '''
+the three crates. Designed for extraction to a separate repository.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "future"
+keywords = ["extraction", "separate repository", "three crates", "designed for"]
+
+[[tenet]]
+id = "arvo_lives_in_the_hilavitkutin_workspace_and_is_extracted_to_its_own_repository_later"
+what = "Arvo lives in the hilavitkutin workspace and is extracted to its own repository later, on the same lifecycle."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:139-140"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+quote = '''
+- Lives in hilavitkutin workspace, extracted to own repo later (same
+  lifecycle)
+'''
+origin = "stated"
+standing = "provisional"
+subject = "future"
+keywords = ["arvo", "extracted", "own repo", "lifecycle", "workspace", "later"]
+cites = ["arvo_is_a_standalone_no_std_primitive_family_shared_across_projects"]
+
+[[tenet]]
+id = "signal_ordered_execution_is_a_theory_and_is_not_bench_validated"
+what = "Signal-ordered execution, which reorders records by signal state for branch-free loops, is theoretical and has not been validated by a benchmark."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:722-723"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#10-virtual-flag-system"]
+quote = '''
+**Signal-ordered execution theory (T6 L3507-3585):** record reordering
+by signal state for branch-free loops. Theoretical — not bench-validated.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "future"
+keywords = ["signal-ordered execution", "record reordering", "branch-free loops", "theoretical", "not bench-validated"]
+
+[[tenet]]
+id = "sparse_matrix_vector_multiplication_belongs_to_the_sparse_crate_family_and_is_deferred"
+what = "Sparse matrix-vector multiplication belongs to the same family as the sparse crate and is deferred."
+mechanism = "SpMV."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:196-196, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:203-203"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+quote = '''
+**arvo-sparse:**
+---
+- SpMV (sparse matrix-vector multiply) — deferred but same family
+'''
+origin = "stated"
+standing = "provisional"
+subject = "future"
+keywords = ["SpMV", "sparse matrix-vector multiply", "deferred", "arvo-sparse"]
+
+[[tenet]]
+id = "the_detailed_design_of_each_arvo_crate_is_deferred_to_its_own_design_round"
+what = "Arvo is expanded from numerics only to include the mathematical primitives used across all its consumers, and the detailed design of each arvo crate is deferred to its own design round."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:132-134"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+quote = '''
+**CONSOLIDATED.** Expanded from numerics-only to include mathematical
+primitives used across all arvo consumers. Detailed design of each
+crate deferred to its own design round.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "future"
+keywords = ["arvo", "expanded", "mathematical primitives", "deferred", "own design round", "numerics-only"]
+
+[[tenet]]
+id = "the_sparse_matrix_techniques_and_morton_hilbert_dispatch_ordering_are_deferred_and_not_day_one"
+what = "Four algorithms are deferred and not part of day one: sparse matrix-vector multiply patterns, fill-reducing ordering and common subexpression detection in arvo-sparse, and Morton or Hilbert dispatch ordering in arvo-comb."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1433-1437"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
+quote = '''
+**Deferred algorithms** (T3 decisions #71-74, not day-one):
+- SpMV (sparse matrix-vector multiply) patterns (arvo-sparse)
+- Fill-reducing ordering (arvo-sparse)
+- CSE (common subexpression) detection (arvo-sparse)
+- Morton/Hilbert dispatch ordering (arvo-comb)
+'''
+origin = "stated"
+standing = "provisional"
+subject = "future"
+keywords = ["deferred algorithms", "SpMV", "fill-reducing ordering", "CSE detection", "Morton", "Hilbert", "not day-one", "T3 #71-74"]
+
+[[tenet]]
+id = "the_accessor_for_resource_collections_follows_from_the_resource_collection_storage_layout_design"
+what = "The typed accessor through which consumers read resource collections after the pipeline runs is designed after, and follows from, the storage layout design for resource collections."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2470-2473"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#known-open-items-for-future-design-rounds"]
+quote = '''
+1. **Resource collection accessor shape** (item 25): R5 defines Seq/Map
+   backed by arena, but the typed accessor for consumers reading
+   resource collections post-pipeline depends on the storage layout
+   design. Can't design the accessor before the storage exists.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "future"
+keywords = ["resource collection accessor", "Seq", "Map", "storage layout", "future design round", "post-pipeline reads"]
+
+[[tenet]]
+id = "each_arvo_sub_crate_gets_its_own_design_round_for_api_surface_const_generic_sizing_and_llvm_optimisation"
+what = "Each arvo sub-crate needs its own design round for its API surface, its const-generic sizing and its LLVM optimisation, on top of the crate split and dependency flow that the first domain defines."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2475-2478"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#known-open-items-for-future-design-rounds"]
+quote = '''
+2. **arvo sub-crate detailed design**: domain 01 defines the crate
+   split (arvo, arvo-bitmask, arvo-sparse, arvo-graph, arvo-spectral,
+   arvo-comb) and dependency flow. Each crate needs its own design
+   round for API surface, const-generic sizing, and LLVM optimisation.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "future"
+keywords = ["arvo sub-crates", "design round", "API surface", "const-generic sizing", "LLVM optimisation", "arvo-bitmask", "arvo-sparse", "arvo-graph"]
+cites = ["the_detailed_design_of_each_arvo_crate_is_deferred_to_its_own_design_round"]

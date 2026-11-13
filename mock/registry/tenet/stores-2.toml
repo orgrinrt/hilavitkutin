@@ -1,0 +1,157 @@
+# What the record says about `stores`, part 2.
+
+[[tenet]]
+id = "each_consumer_of_a_virtual_has_its_own_bit_and_a_fire_sets_all_of_them"
+what = "Each consumer has its own bit for each virtual it is gated on, and a fire sets all the consumer bits of that virtual."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:703-704"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#10-virtual-flag-system"]
+quote = '''
+- Each consumer has its own bit for each virtual it gates on
+- Fire sets ALL consumer bits for that virtual
+'''
+origin = "stated"
+standing = "provisional"
+subject = "stores"
+keywords = ["per-(virtual, consumer) bit", "fire sets all consumer bits", "consumer", "virtual", "gate"]
+
+[[tenet]]
+id = "a_consumer_bit_clears_on_first_dispatch_and_a_refire_during_execution_runs_the_consumer_again_next_pass"
+what = "A consumer's bit is cleared on its first dispatch and not on resume or completion. A re-fire during execution makes the consumer run again in the next pass, so no fire is lost."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:705-707"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#10-virtual-flag-system"]
+quote = '''
+- Clear-on-dispatch: bit cleared on first dispatch, not resume/completion
+- Re-fire during execution → consumer runs again next pass
+- No lost fires
+'''
+origin = "stated"
+standing = "provisional"
+subject = "stores"
+keywords = ["clear-on-dispatch", "re-fire", "no lost fires", "consumer bit", "next pass", "resume"]
+cites = ["each_consumer_of_a_virtual_has_its_own_bit_and_a_fire_sets_all_of_them"]
+
+[[tenet]]
+id = "virtual_flags_are_reset_by_one_epoch_increment_and_fully_cleared_every_two_hundred_and_fifty_six_passes"
+what = "The flags are reset by incrementing a global epoch once per pass instead of clearing memory: a flag counts as set when its value equals the current epoch. A full clear is done every two hundred and fifty-six passes, at the epoch wraparound."
+mechanism = "Global epoch u8, incremented per pass; 'flag is set' = flag_value == current_epoch; reset = one u8 increment (not memset); full clear every 256 passes."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:709-713"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#10-virtual-flag-system"]
+quote = '''
+**Epoch-based reset (T5 L1124-1128, T6 L444-454):**
+- Global epoch u8, incremented per pass
+- "Flag is set" = flag_value == current_epoch
+- Reset = one u8 increment (not memset)
+- Full clear every 256 passes (epoch wraparound)
+'''
+origin = "stated"
+standing = "provisional"
+subject = "stores"
+keywords = ["epoch", "u8", "epoch wraparound", "reset", "memset", "256 passes", "virtual flags"]
+
+[[tenet]]
+id = "virtual_flag_storage_is_about_twelve_bytes_for_sixty_four_virtuals_in_one_cache_line"
+what = "The flag storage for sixty-four virtuals with an average of one and a half consumers is about ninety-six bits, twelve bytes, which is one cache line."
+mechanism = "~96 bits = 12 bytes for 64 virtuals × 1.5 consumers avg."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:715-716"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#10-virtual-flag-system"]
+quote = '''
+**Storage:** ~96 bits = 12 bytes for 64 virtuals × 1.5 consumers avg.
+One cache line. fire_external: atomic store relaxed for cross-thread
+'''
+origin = "stated"
+standing = "provisional"
+subject = "stores"
+keywords = ["flag storage", "96 bits", "12 bytes", "64 virtuals", "one cache line", "consumers"]
+
+[[tenet]]
+id = "an_external_fire_is_a_relaxed_atomic_store_and_an_internal_fire_is_non_atomic"
+what = "A fire from outside is an atomic store with relaxed ordering, for signalling across threads, and an internal fire is non-atomic."
+mechanism = "`fire_external`: atomic store relaxed; internal fire: non-atomic."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:716-717"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#10-virtual-flag-system"]
+quote = '''
+One cache line. fire_external: atomic store relaxed for cross-thread
+signalling (T5 L541). Internal fire: non-atomic (T5 L542).
+'''
+origin = "stated"
+standing = "provisional"
+subject = "stores"
+keywords = ["fire_external", "atomic store", "relaxed", "cross-thread signalling", "internal fire", "non-atomic"]
+
+[[tenet]]
+id = "a_resource_takes_its_initial_value_from_the_consumer_through_the_builder"
+what = "The consumer provides a resource's initial value as the primary API, and a convenience form exists for value types that implement default."
+mechanism = "`.resource::<T>(value)` is primary; `.resource_default::<T>()` where `T: Default`."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2178-2181"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#23-scheduler-builder-and-meta"]
+quote = '''
+**Resource initialization (resolved):**
+
+`.resource::<T>(value)` is the primary API — consumer provides initial
+value. `.resource_default::<T>()` for convenience where `T: Default`.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "stores"
+keywords = ["resource initialization", "resource", "resource_default", "Default", "initial value", "builder"]
+
+[[tenet]]
+id = "resource_data_sits_behind_pointer_indirection_to_external_slab_storage_and_never_inline_in_the_context"
+what = "A resource's fields sit behind pointer indirection to external slab storage and not inline in the context struct, because writing inline data through a shared reference is undefined behaviour."
+because = "LLVM adds noalias to a shared reference, and inline writes violate it."
+mechanism = "Three field types: `Field<T>` where T: ColumnValue (at most 16 bytes, a scalar), `Seq<T, const N: usize>` (const-sized array, separate arena), `Map<K, V, const N: usize>` (const-sized map, separate arena)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1684-1691"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#19-resource-handling"]
+quote = '''
+Resources consist of three field types:
+- `Field<T>` where T: ColumnValue (≤16 bytes) — scalar
+- `Seq<T, const N: usize>` — const-sized array, separate arena
+- `Map<K, V, const N: usize>` — const-sized map, separate arena
+
+All behind pointer indirection to external slab storage. NOT inline
+in the context struct. Writing inline data through `&self` is UB
+(LLVM adds noalias to `&self`, inline writes violate it).
+'''
+origin = "stated"
+standing = "provisional"
+subject = "stores"
+keywords = ["resource storage", "pointer indirection", "slab storage", "inline write", "noalias", "Field", "Seq", "Map"]
+cites = ["a_resource_is_scalars_and_const_sized_collections_only"]
+
+[[tenet]]
+id = "the_resource_handle_given_to_consumers_stays_a_reference_while_the_internals_use_raw_pointers_through_a_stack_local_cache"
+what = "The consumer API for resources stays the same: a shared reference for reading and an exclusive reference for writing a resource. The internal implementation instead goes through raw pointers via a stack-local cache and not through direct references to the canonical storage."
+mechanism = "`ctx.resource::<T>() -> &T` and `ctx.resource_mut::<T>() -> &mut T` remain the consumer API (T5)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1769-1772"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#19-resource-handling"]
+quote = '''
+- T5 `ctx.resource::<T>() → &T` / `ctx.resource_mut::<T>() → &mut T`
+  still the consumer API, but the internal implementation uses raw
+  pointers through stack-local cache, not direct references to
+  canonical storage
+'''
+origin = "stated"
+standing = "provisional"
+subject = "stores"
+keywords = ["resource API", "ctx.resource", "resource_mut", "raw pointers", "stack-local cache", "canonical storage", "consumer API"]
+
+[[tenet]]
+id = "a_single_column_typed_accessor_is_eliminated_because_the_consumer_reads_storage_directly"
+what = "A single-column typed accessor is eliminated, since the consumer already owns the column storage and accesses columns directly. The accessor shape for collections inside a resource, which span several columns and are backed by the arena, will follow from the resource collection storage layout design once that is done."
+because = "The accessor cannot be designed before the storage layout exists."
+mechanism = "ColumnHandle eliminated."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2351-2357"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#from-t3-all-resolved"]
+quote = '''
+25. **Result extraction / ColumnHandle** → domain 23. ColumnHandle as
+    a single-column typed accessor is eliminated — consumer already
+    owns ColumnStorage and accesses columns directly. The accessor
+    shape for resource-internal collections (R5 Seq/Map backed by
+    arena, spanning multiple columns) will follow from the resource
+    collection storage layout design when that is done — can't design
+    the accessor before the storage layout exists.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "stores"
+keywords = ["ColumnHandle", "result extraction", "column accessor", "resource collections", "Seq", "Map", "arena", "storage layout"]

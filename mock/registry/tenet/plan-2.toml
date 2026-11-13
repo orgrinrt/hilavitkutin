@@ -1,0 +1,322 @@
+# What the record says about `plan`, part 2.
+
+[[tenet]]
+id = "rcm_always_runs_and_reorders_the_units_so_column_sharing_units_are_adjacent_for_fiber_grouping"
+what = "RCM reordering always runs on the access matrix. Its unit reordering orders the units so that those accessing similar column sets are adjacent, which lets the greedy fiber grouping walk meet column-sharing units in sequence and produce better fibers than a plain topological order; for wide graphs with fan-out it decides which of the equal-depth units are grouped first."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1328-1339"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
+quote = '''
+**Step 5: RCM reordering → fiber grouping order + arena layout**
+(arvo-sparse, always run)
+
+RCM operates on the access matrix and produces two orderings:
+
+Row reordering (WU execution order): RCM reorders WUs so that ops
+accessing similar column sets are adjacent. When the greedy fiber
+grouping walk (step 8) processes WUs in this order, it encounters
+column-sharing WUs in sequence, producing better fiber groupings
+than a naive topo order. For wide DAGs with fan-out (many WUs at
+the same topo depth), RCM determines which of those equal-depth
+WUs get grouped first.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "plan"
+keywords = ["RCM", "row reordering", "unit execution order", "fiber grouping", "arvo-sparse", "fan-out", "column sets"]
+
+[[tenet]]
+id = "rcm_column_reordering_decides_the_byte_offsets_of_columns_within_the_co_located_arena"
+what = "RCM also reorders the columns, so that columns accessed together have adjacent offsets within the co-located arena and end up in adjacent cache lines, which the prefetcher brings in at once. This is the physical manifestation of co-location: RCM determines the actual byte offsets of columns within the arena."
+mechanism = "A fiber's morsel walks `arena_base + col_offset + i * stride`."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1341-1347"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
+quote = '''
+Column reordering (arena memory layout): RCM reorders columns so
+that co-accessed columns have adjacent offsets within the co-located
+arena (domain 04). When a fiber's morsel walks `arena_base +
+col_offset + i * stride`, columns that are read together end up in
+adjacent cache lines. The prefetcher brings in both at once. This
+is the physical manifestation of "co-location" — RCM determines the
+actual byte offsets of columns within the arena.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "plan"
+keywords = ["RCM", "column reordering", "arena layout", "co-location", "byte offsets", "cache lines", "stride"]
+cites = ["storage_is_contiguous_and_a_fiber_s_columns_share_one_arena"]
+
+[[tenet]]
+id = "block_diagonal_components_of_the_unit_column_graph_should_align_with_the_phases_from_waist_detection"
+what = "A bipartite graph of units and columns is built from the access matrix, and its connected components are independently schedulable groups. These should align with the phases found by waist detection; if they do not, something is wrong with the waist detection. This step always runs."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1349-1355"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
+quote = '''
+**Step 6: Block diagonal + Dulmage-Mendelsohn → phase validation +
+dead column elimination** (arvo-sparse, always run)
+
+Build bipartite graph (WUs on one side, columns on other side, edges
+from access matrix). Connected components = independently schedulable
+groups. These should align with the phases from step 4 — if they
+don't, something is wrong with the waist detection.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "plan"
+keywords = ["block diagonal", "bipartite graph", "connected components", "phase validation", "arvo-sparse", "independently schedulable"]
+
+[[tenet]]
+id = "dulmage_mendelsohn_splits_the_pipeline_into_dead_end_units_input_only_columns_and_a_matched_core"
+what = "Dulmage-Mendelsohn refines the block structure into three kinds of component. Horizontal components are units whose output columns no other unit reads, dead ends whose output can be eliminated unless it is a final consumer output. Vertical components are columns that are only inputs, never written by transform units and read-only for all phases after loading. Square components are matched unit and column pairs where every unit's output is consumed, the core of the pipeline."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1357-1365"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
+quote = '''
+Dulmage-Mendelsohn refines the block structure:
+- Horizontal components: WUs whose output columns are never read by
+  any other WU. These are dead-end WUs — their output can be
+  eliminated entirely unless it's a final consumer output.
+- Vertical components: columns that are only inputs (loaded by root
+  WUs, never written by transform WUs). These are read-only for all
+  phases after loading.
+- Square components: matched WU-column pairs where every WU's output
+  is consumed. The core of the pipeline.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "plan"
+keywords = ["Dulmage-Mendelsohn", "horizontal components", "vertical components", "square components", "dead-end units", "arvo-sparse"]
+
+[[tenet]]
+id = "spectral_bisection_forms_trunks_by_cutting_the_fibers_graph_where_the_shared_data_volume_is_smallest"
+what = "When there are more than five fibers, trunks are formed by spectral bisection of a weighted graph of the fibers, where the edge weight between two fibers is the data volume of the columns they share. The cut minimises the volume crossing the trunk boundary, so fibers within a trunk share heavy column sets on one core's L1, and the cut between trunks carries only read-only columns from previous phases or lightweight bridge columns. Trunks share no write columns with other trunks, so there is zero synchronisation, and they may share read-only columns from earlier phase output."
+mechanism = "Nodes are fibers. Edge weight is `Σ size_of::<T_i>()` for the columns shared between two fibers, the volume that would need L2/L3 coherence if the fibers ran on different cores. The Fiedler vector bisects the graph. Runs after the initial greedy fiber grouping pass."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1373-1392"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
+quote = '''
+**Step 7: Spectral partitioning → trunk formation** (arvo-spectral,
+when >5 fibers)
+
+After fiber grouping (step 8, which runs first for the initial
+greedy pass), build a weighted graph where:
+- Nodes = fibers
+- Edge weight = Σ size_of::<T_i>() for columns shared between two
+  fibers (the data volume that would need L2/L3 coherence if the
+  fibers ran on different cores)
+
+The Fiedler vector bisects this graph to minimize cut weight — the
+data volume crossing the trunk boundary. The result: trunks where
+fibers within a trunk share heavy column sets (kept on one core's
+L1), and the cut between trunks is minimal (only read-only columns
+from previous phases, or lightweight bridge columns).
+
+Trunks share NO write columns with other trunks (zero sync). They
+MAY share read-only columns from previous phase output. The spectral
+cut ensures the shared read volume is minimal — trunks that need
+the same read columns end up in the same trunk when possible.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "plan"
+keywords = ["spectral partitioning", "Fiedler vector", "trunk formation", "arvo-spectral", "cut weight", "L1", "zero sync", "more than five fibers"]
+cites = ["a_trunk_is_a_column_disjoint_maximal_path_within_a_phase_and_trunks_share_no_write_columns"]
+
+[[tenet]]
+id = "a_phase_with_five_fibers_or_fewer_forms_a_single_trunk_because_spectral_bisection_is_overkill"
+what = "For five fibers or fewer, spectral bisection is overkill and there is a single trunk: the waist detection already identified the phase boundaries, and within a small phase all fibers form one trunk."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1394-1396"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
+quote = '''
+For ≤5 fibers: single trunk (spectral is overkill). The waist
+detection already identified phase boundaries; within a small phase,
+all fibers form one trunk.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "plan"
+keywords = ["single trunk", "five fibers", "spectral", "overkill", "small phase"]
+
+[[tenet]]
+id = "greedy_fiber_grouping_walks_the_units_in_rcm_order_and_joins_a_fiber_only_where_the_holistic_check_passes"
+what = "Greedy fiber grouping, used for ten units or fewer and as the fallback, processes the units in the RCM-reordered topological order. A unit joins a fiber when all its predecessors are in that one fiber and the full feasibility check passes; otherwise it starts a new fiber."
+mechanism = "The feasibility predicate is the full holistic check of domain 14: register file, L1 write budget, L1 plus L2 total, no fan-in and no pipeline breaker. Implemented in arvo-comb."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1398-1408"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
+quote = '''
+**Step 8: Fiber grouping** (arvo-comb)
+
+Two modes depending on WU count:
+
+Greedy grouping (≤10 ops, or as fallback): the walk from domain 14.
+Process WUs in RCM-reordered topo order (step 5). For each WU: if
+all predecessors are in one fiber AND the holistic feasibility check
+passes → group into that fiber. Otherwise → new fiber. The
+feasibility predicate is the full holistic check from domain 14
+(register file + L1 write budget + L1+L2 total + no fan-in + no
+pipeline breaker).
+'''
+origin = "stated"
+standing = "provisional"
+subject = "plan"
+keywords = ["greedy grouping", "fiber grouping", "holistic feasibility check", "register file", "L1 write budget", "ten operations", "arvo-comb"]
+
+[[tenet]]
+id = "above_ten_units_fibers_are_grouped_by_matrix_chain_dp_that_minimises_the_total_data_walks"
+what = "For more than ten units, fiber grouping uses a matrix chain dynamic program that explores the full solution space. Its cost is the memory bandwidth consumed by one data walk through a fiber's arena, computed from the type-native strides, and it finds the grouping that minimises total data walks across all fibers, under the same full feasibility check."
+mechanism = "`cost(i,j) = record_count × Σ size_of::<T_k>()` for the union columns of ops i..j."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1410-1416"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
+quote = '''
+Matrix chain DP (>10 ops): explores the full solution space. Cost
+function: `cost(i,j) = record_count × Σ size_of::<T_k>() for union columns
+of ops i..j`. This uses the actual type-native strides (R3) and the
+co-located arena model — the cost IS the memory bandwidth consumed by
+one data walk through the fiber's arena. Feasibility uses the same
+holistic check. DP finds the grouping that minimizes total data walks
+across all fibers.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "plan"
+keywords = ["matrix chain DP", "optimal fiber grouping", "cost function", "type-native stride", "data walks", "arvo-comb"]
+
+[[tenet]]
+id = "the_plan_reruns_in_full_on_any_pipeline_structure_change_and_is_never_maintained_incrementally"
+what = "Morsel ranges, fiber grouping and trunk formation are all plan-stage outputs. When the consumer adds records, changes the unit registration or modifies the pipeline structure, the plan stage reruns in full at a cost of microseconds, so there is no incremental plan maintenance."
+because = "A full recompute is cheap enough, since the analysis algorithms run on const-generic bitmask structures."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1476-1477, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1486-1491"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#16-data-loading"]
+quote = '''
+- Recompute morsel splits at plan stage on any significant pipeline
+  change (more records, new WUs, structural DAG change)
+---
+**Plan recomputation:** morsel ranges, fiber grouping, trunk formation
+— all plan-stage outputs. When the consumer adds records, changes WU
+registration, or modifies the pipeline structure, the plan stage
+reruns. This is a microsecond cost (domain 15 algorithms on const-
+generic bitmask structures). No incremental plan maintenance — full
+recompute is cheap enough.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "plan"
+keywords = ["plan recomputation", "plan stage", "morsel splits", "full recompute", "no incremental", "pipeline change"]
+cites = ["morsel_boundaries_are_stable_unless_the_record_count_changes"]
+
+[[tenet]]
+id = "the_loader_at_the_start_of_the_pipeline_sets_the_initial_cache_state_and_rcm_places_columns_to_warm_it_for_downstream_fibers"
+what = "The first unit in the pipeline, a loader at the base of the morsel cube, determines the initial cache state for all subsequent units. RCM column reordering places co-accessed columns adjacent in the arena, so that the loader's write pattern warms the cache optimally for downstream fibers."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1493-1498"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#16-data-loading"]
+quote = '''
+**Cache impact of loader placement** (T3 decisions #75-79): the first
+WU in the pipeline (loader at z=0 in the morsel cube) determines the
+initial cache state for all subsequent WUs. RCM column reordering
+(domain 15) addresses this by placing co-accessed columns adjacent
+in the arena, so the loader's write pattern warms the cache optimally
+for downstream fibers.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "plan"
+keywords = ["loader placement", "cache impact", "initial cache state", "morsel cube", "RCM", "arena", "downstream fibers"]
+
+[[tenet]]
+id = "the_plan_parameters_adapt_at_plan_time_and_the_pipeline_composition_does_not"
+what = "Plan-stage parameters are adaptive: morsel sizes from runtime hardware detection, record counts from consumer data, per-phase strategy selection from the EMA metrics, and morsel-to-core affinity from temperature. They adjust at plan time without changing the pipeline composition, and that eliminates the need for fallback dispatch approaches."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2114-2117, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2442-2446"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#23-scheduler-builder-and-meta"]
+quote = '''
+dynamic schedules. The plan stage adjusts only what compile time
+cannot: morsel sizes from runtime hardware detection, record counts,
+EMA-based recomputation. This eliminates the need for fallback dispatch
+approaches (Approach C) entirely.
+---
+Plan-stage parameters are adaptive: morsel sizes (from runtime hardware
+detection), record counts (from consumer data), per-phase strategy
+selection (from EMA metrics), and morsel-to-core affinity (from
+temperature). These adjust at plan time without changing the pipeline
+composition. Eliminates need for fallback dispatch approaches.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "plan"
+keywords = ["adaptive parameters", "plan stage", "morsel sizes", "hardware detection", "EMA", "strategy selection", "temperature", "affinity"]
+cites = ["static_composition_means_every_unit_is_registered_through_the_builder_and_no_schedule_is_dynamic"]
+
+[[tenet]]
+id = "static_analysis_computes_cache_pressure_data_flow_column_lifetimes_and_the_memory_watermark_at_plan_time"
+what = "Static analysis at schedule construction produces four things: a cache pressure profile of per-fiber L1 and L2 pressure from column sizes, a data flow volume map of the bytes flowing between fibers, a column lifetime map of when each column is first written and last read, and a memory watermark of the peak concurrent column allocation."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2011-2017"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#22-runtime-adaptation"]
+quote = '''
+**Two analysis tiers (T3 L1117-1206, decisions #61-65):**
+
+Static analysis (at schedule construction, plan-time):
+- Cache pressure profile: per-fiber L1/L2 pressure from column sizes
+- Data flow volume map: bytes flowing between fibers
+- Column lifetime map: when each column is first written, last read
+- Memory watermark: peak concurrent column allocation
+'''
+origin = "stated"
+standing = "provisional"
+subject = "plan"
+keywords = ["static analysis", "cache pressure profile", "data flow volume", "column lifetime map", "memory watermark", "plan-time"]
+
+[[tenet]]
+id = "runtime_analysis_across_frames_measures_morsel_timing_change_frequency_residency_frame_time_and_throughput"
+what = "Runtime analysis, across frames and between passes, covers five things: the actual execution time per morsel, the change frequency that classifies morsels as hot, warm or cold from generation counter activity, a prediction of which morsels are likely L1-warm from the previous frame, a frame time prediction from an EMA of pass duration, and throughput trending that detects thermal throttling and memory pressure."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2019-2026"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#22-runtime-adaptation"]
+quote = '''
+Runtime analysis (across frames, between passes):
+- Per-morsel timing: actual execution time per morsel
+- Change frequency: classify morsels as hot/warm/cold based on
+  generation counter activity (domain 12)
+- Cache residency prediction: which morsels are likely L1-warm from
+  the previous frame
+- Frame time prediction: EMA of pass duration for budgeting
+- Throughput trending: detect thermal throttling, memory pressure
+'''
+origin = "stated"
+standing = "provisional"
+subject = "plan"
+keywords = ["runtime analysis", "per-morsel timing", "hot warm cold", "cache residency prediction", "frame time prediction", "throughput trending", "thermal throttling"]
+cites = ["generation_counter_activity_classifies_morsels_by_temperature"]
+
+[[tenet]]
+id = "hot_morsels_go_to_p_cores_and_cold_morsels_to_e_cores_or_are_deferred"
+what = "Hot morsels, which change frequently and take high compute, go to the P-cores. Cold morsels, which change rarely and are often skipped, go to the E-cores or are deferred. Temperature comes from the change detection counters together with per-morsel timing."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2028-2033"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#22-runtime-adaptation"]
+quote = '''
+**Morsel temperature → core assignment (T3 decision #64):**
+
+Hot morsels (frequently changing, high compute) → P-cores. Cold
+morsels (rarely changing, often skipped) → E-cores or deferred.
+Temperature from change detection counters (domain 12) + per-morsel
+timing.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "plan"
+keywords = ["morsel temperature", "core assignment", "P-cores", "E-cores", "hot morsels", "cold morsels", "deferred"]
+cites = ["generation_counter_activity_classifies_morsels_by_temperature"]
+
+[[tenet]]
+id = "reorganisation_is_triggered_between_frames_by_cheap_bitmask_comparisons_of_the_ema_against_thresholds"
+what = "The executor reorganises between frames and never during execution. Comparing the EMAs against thresholds, a significant change in fiber morsel timing recomputes the morsel sizes, a shift in phase balance re-selects the per-phase configs, and a changed record count triggers a full plan recompute. The triggers are cheap bitmask comparisons."
+mechanism = "Uses the arvo-bitmask dirty propagation pattern."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2042-2048"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#22-runtime-adaptation"]
+quote = '''
+**Executor reorganisation triggers (T3 decision #62):**
+
+Between frames, not during execution. Compare EMAs against thresholds
+(arvo-bitmask dirty propagation pattern). If fiber morsel timing
+changed significantly → recompute morsel sizes. If phase balance
+shifted → re-select per-phase configs. If record count changed →
+full plan recompute. Triggers are cheap bitmask comparisons.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "plan"
+keywords = ["reorganisation triggers", "between frames", "EMA thresholds", "recompute morsel sizes", "re-select config", "bitmask comparison"]
