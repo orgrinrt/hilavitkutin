@@ -85,15 +85,53 @@ fn a_listed_file_that_is_gone_is_refused() {
 
 #[test]
 fn a_break_count_must_match_the_recorded_edits() {
-    let breaks = "[[break]]\nfile = \"src/lib.rs\"\nhash = \"fnv1a64:0\"\nreason = \"r\"\n";
-    assert_eq!(messages(findings(&good(), breaks, &files(), read)), vec![
+    let breaks = break_of("src/lib.rs", &hash_text(b"#![no_std]\n"));
+    assert_eq!(messages(findings(&good(), &breaks, &files(), read)), vec![
         "`src/lib.rs` counts 0 breaks and 1 are recorded"
     ]);
-    let counted = ledger_of(&[
+    assert_eq!(findings(&broken_once(), &breaks, &files(), read), vec![]);
+}
+
+/// One `BREAKS.toml` entry.
+fn break_of(file: &str, hash: &str) -> String {
+    format!("[[break]]\nfile = \"{file}\"\nhash = \"{hash}\"\nreason = \"r\"\n")
+}
+
+/// The ledger of `good` with `src/lib.rs` counted as broken once.
+fn broken_once() -> String {
+    ledger_of(&[
         ("Cargo.toml", &hash_text(MANIFEST_OK.as_bytes()), 0),
         ("src/lib.rs", &hash_text(b"#![no_std]\n"), 1),
+    ])
+}
+
+// A break records the hash its edit left the file at, so the last one of a
+// file is the hash the ledger carries for it.
+#[test]
+fn the_last_break_of_a_file_carries_the_hash_of_its_line() {
+    let stale = break_of("src/lib.rs", "fnv1a64:0000000000000000");
+    let found = messages(findings(&broken_once(), &stale, &files(), read));
+    assert_eq!(found.len(), 1, "{found:?}");
+    assert!(found[0].contains("last break"), "{found:?}");
+
+    // An earlier break of the file keeps the hash of its own edit.
+    let twice = ledger_of(&[
+        ("Cargo.toml", &hash_text(MANIFEST_OK.as_bytes()), 0),
+        ("src/lib.rs", &hash_text(b"#![no_std]\n"), 2),
     ]);
-    assert_eq!(findings(&counted, breaks, &files(), read), vec![]);
+    let both = format!(
+        "{stale}\n{}",
+        break_of("src/lib.rs", &hash_text(b"#![no_std]\n"))
+    );
+    assert_eq!(findings(&twice, &both, &files(), read), vec![]);
+}
+
+#[test]
+fn a_break_with_no_hash_is_refused() {
+    let bare = "[[break]]\nfile = \"src/lib.rs\"\nreason = \"r\"\n";
+    let found = findings(&broken_once(), bare, &files(), read);
+    assert_eq!(found.len(), 1, "{found:?}");
+    assert_eq!((found[0].file, found[0].line), ("BREAKS.toml", 1));
 }
 
 #[test]

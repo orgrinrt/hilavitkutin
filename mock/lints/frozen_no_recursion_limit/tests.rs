@@ -32,6 +32,22 @@ fn one_under_cfg_attr_is_refused() {
     );
 }
 
+// The compiler takes an attribute broken between any two of its tokens.
+#[test]
+fn an_attribute_broken_over_lines_is_refused() {
+    assert_eq!(lines("#![\nrecursion_limit = \"512\"]\n"), vec![1]);
+    assert_eq!(
+        lines("#![no_std]\n#![cfg_attr(\n    test,\n    type_length_limit = \"9\"\n)]\n"),
+        vec![2]
+    );
+}
+
+// The name on a line of its own, outside any attribute, is no attribute.
+#[test]
+fn the_name_after_an_attribute_has_closed_passes() {
+    assert!(lines("#[inline]\nfn recursion_limit() {}\n").is_empty());
+}
+
 #[test]
 fn the_shipped_attributes_pass() {
     assert!(lines("#![no_std]\n#![deny(unsafe_op_in_unsafe_fn)]\n").is_empty());

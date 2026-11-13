@@ -24,6 +24,21 @@ fn a_feature_under_cfg_attr_is_refused() {
     assert_eq!(lines("#![cfg_attr(test, feature(test))]\n"), vec![1]);
 }
 
+// The compiler takes an attribute broken between any two of its tokens.
+#[test]
+fn an_attribute_broken_over_lines_is_refused() {
+    assert_eq!(lines("#![\nfeature(never_type)]\n"), vec![1]);
+    assert_eq!(
+        lines("#![no_std]\n#!\n[cfg_attr(\n    test,\n    feature(test)\n)]\n"),
+        vec![2]
+    );
+}
+
+#[test]
+fn an_attribute_after_a_broken_one_is_read_on_its_own() {
+    assert!(lines("#![cfg_attr(\n    test,\n    allow(dead_code)\n)]\n#[cfg(feature = \"x\")]\nfn f() {}\n").is_empty());
+}
+
 #[test]
 fn the_shipped_attributes_pass() {
     assert!(lines("#![no_std]\n#![deny(unsafe_op_in_unsafe_fn)]\n").is_empty());
