@@ -3,7 +3,7 @@
 
 use crate::lane::{FrameList, LandedList};
 use crate::registry::{RawLanes, Registry};
-use crate::sealed::Sealed;
+use crate::sealed::Token;
 use crate::stage::Stage;
 use crate::view::{Landed, Row, View};
 
@@ -52,11 +52,15 @@ pub struct Value<K>(pub K);
 /// Sealed (`sealed.rs`): implemented only for `Block` and `Value`, whose masks
 /// are their write lists' `Stage::MASK`. An author implements `BlockKernel` or
 /// `ValueKernel` and never this.
-pub trait Kernel<Reg: Registry, Ps>: Sealed {
+pub trait Kernel<Reg: Registry, Ps> {
     /// The write list's position mask (`Stage::MASK`).
     const MASK: u128;
     /// The write list's length (`Stage::LEN`).
     const LEN: u32;
+
+    /// The seal: an impl outside the engine cannot name `Token`.
+    #[doc(hidden)]
+    fn seal(_: Token);
 
     /// Runs the kernel for one step.
     ///
@@ -76,6 +80,8 @@ where
     const LEN: u32 = <K::Writes as Stage<Reg, Ps>>::LEN;
     const MASK: u128 = <K::Writes as Stage<Reg, Ps>>::MASK;
 
+    fn seal(_: Token) {}
+
     unsafe fn run_in<'s>(view: Reg::Shared<'s>, rows: u32, raw: &RawLanes<'s, Reg>) {
         // SAFETY: passed on from the caller unchanged.
         let out = unsafe { <K::Writes as Stage<Reg, Ps>>::parts(raw) };
@@ -91,6 +97,8 @@ where
 {
     const LEN: u32 = <K::Writes as Stage<Reg, Ps>>::LEN;
     const MASK: u128 = <K::Writes as Stage<Reg, Ps>>::MASK;
+
+    fn seal(_: Token) {}
 
     unsafe fn run_in<'s>(view: Reg::Shared<'s>, rows: u32, raw: &RawLanes<'s, Reg>) {
         // SAFETY: passed on from the caller unchanged.

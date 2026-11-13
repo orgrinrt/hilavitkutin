@@ -2,21 +2,17 @@
 //!
 //! The runner's one unsafe cut trusts `MASK` and `LEN`. Those are safe
 //! associated consts, so an impl outside the engine could state any mask it
-//! liked. Sealing keeps every impl in this crate, where each mask is folded
-//! from the list it describes: `Sealed` is public in a private module, so a
-//! crate outside can name `Stage` and `Kernel` in bounds but cannot implement
-//! either.
+//! liked. Each trait therefore has a required method taking `Token`, a type in
+//! this private module: a crate outside cannot name `Token`, so it cannot
+//! write the method, and so it cannot implement either trait, whatever self
+//! type or position list it picks.
+//!
+//! A supertrait seal is not enough here. The engine has to implement it for
+//! every `Cons<H, T>`, `Block<K>` and `Value<K>`, and the orphan rule then lets
+//! a crate outside implement `Stage` for `Cons<Pos, Empty>` at a position list
+//! of its own, or `Kernel` for `Block` of a kernel of its own (fixtures 12b and
+//! 12c, which built under that seal).
 
-use notko_hlist::{Cons, Empty};
-
-use crate::kernel::{Block, Value};
-
-pub trait Sealed {}
-
-impl Sealed for Empty {}
-
-impl<H, T> Sealed for Cons<H, T> {}
-
-impl<K> Sealed for Block<K> {}
-
-impl<K> Sealed for Value<K> {}
+/// Named only in this crate. No constructor is needed: the method taking it is
+/// never called.
+pub struct Token(());

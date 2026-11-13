@@ -4,7 +4,7 @@ use notko_hlist::{Cons, Empty, Position};
 
 use crate::lane::{FrameLane, FrameList};
 use crate::registry::{Pick, RawLanes, Registry};
-use crate::sealed::Sealed;
+use crate::sealed::Token;
 use crate::slot::Slot;
 use crate::view::StagedLane;
 
@@ -23,9 +23,13 @@ use crate::view::StagedLane;
 ///
 /// Sealed (`sealed.rs`): the runner's unsafe cut trusts `MASK`, so only the
 /// engine's own impls below exist.
-pub trait Stage<Reg: Registry, Ps>: FrameList + Sealed {
+pub trait Stage<Reg: Registry, Ps>: FrameList {
     const MASK: u128;
     const LEN: u32;
+
+    /// The seal: an impl outside the engine cannot name `Token`.
+    #[doc(hidden)]
+    fn seal(_: Token);
 
     /// Cuts one staged handle per member out of the raw lanes.
     ///
@@ -41,6 +45,8 @@ impl<Reg: Registry> Stage<Reg, Empty> for Empty {
     const LEN: u32 = 0;
     const MASK: u128 = 0;
 
+    fn seal(_: Token) {}
+
     unsafe fn parts<'s>(_raw: &RawLanes<'s, Reg>) {}
 }
 
@@ -54,6 +60,8 @@ where
 {
     const LEN: u32 = T::LEN + 1;
     const MASK: u128 = (1u128 << <P as Position<Slot>>::INDEX.0) | T::MASK;
+
+    fn seal(_: Token) {}
 
     unsafe fn parts<'s>(raw: &RawLanes<'s, Reg>) -> Self::Parts<'s> {
         let lane: *mut [H::Item] = *raw.lanes.pick();
