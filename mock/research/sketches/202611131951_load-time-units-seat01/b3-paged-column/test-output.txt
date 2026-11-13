@@ -1,0 +1,47 @@
+    Finished `release` profile [optimized] target(s) in 0.02s
+     Running unittests src/lib.rs (/home/user/target/release/deps/b3_paged_column-976bc9812e3513be)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/growth.rs (/home/user/target/release/deps/growth-16540b426a1de609)
+
+running 4 tests
+test a_paged_column_grows_without_moving_a_record ... ok
+test a_reserved_column_grows_without_moving_its_base ... reserved 512 MiB; committed 8192 bytes at 1000 records, 80003072 bytes at 10 M records
+ok
+test a_window_dividing_the_page_never_straddles ... ok
+test the_trunk_window_over_power_of_two_pages_never_straddles ... window 6144 over 4096-record pages: 170 of 171 morsels straddle
+window 6144 over 8192-record pages: 85 of 171 morsels straddle
+window 6144 over 16384-record pages: 42 of 171 morsels straddle
+
+thread 'the_trunk_window_over_power_of_two_pages_never_straddles' (14212) panicked at b3-paged-column/tests/growth.rs:61:5:
+assertion `left == right` failed: morsels of 6144 records straddle 8192-record pages
+  left: 85
+ right: 0
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: core::panicking::assert_failed_inner
+   3: core::panicking::assert_failed::<usize, usize>
+   4: <growth::the_trunk_window_over_power_of_two_pages_never_straddles::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+FAILED
+
+failures:
+
+failures:
+    the_trunk_window_over_power_of_two_pages_never_straddles
+
+test result: FAILED. 3 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+
+error: test failed, to rerun pass `-p b3-paged-column --test growth`
+   Doc-tests b3_paged_column
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: 1 target failed:
+    `-p b3-paged-column --test growth`
