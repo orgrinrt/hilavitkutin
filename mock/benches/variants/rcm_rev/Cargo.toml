@@ -1,0 +1,22 @@
+[workspace]
+
+[package]
+name = "rcm_rev"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "rcm_rev"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "a81e1956361a205261b90e5214dde932db4f1913", features = ["std"] }
+mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", rev = "a81e1956361a205261b90e5214dde932db4f1913" }
+rcm_common = { path = "../rcm_common" }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

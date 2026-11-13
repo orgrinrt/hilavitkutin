@@ -1,0 +1,50 @@
+88d1724 chore: lock src changelist 202611131408
+110eec6 test: read the swap fixtures' columns and drop their suppressions
+cda60bb chore: lock doc changelist 202611131408
+f27aaa6 docs: write the doc changelist for the swap fixtures
+b4253c7 docs: open the round on the swap fixtures nothing reads
+f668003 chore: merge dev into the swap branch
+c1d4025 chore: close design round 202611131336
+35864e6 chore: lock src changelist 202611131337
+c475422 refactor: drop the answered ticket marker on the swap methods
+17b5251 chore: lock doc changelist 202611131336
+d682167 docs: mark the swap specification unratified in the engine design
+60338b4 docs: record op's provisional answer on the swap spec
+49ab344 feat: land the recovered engine source, tests and bench variants
+ab63d61 bench: measure single trunk convergence against hand written loops
+154744e chore: regenerate generated files after merge
+3a89261 Merge branch 'work/recover-landing-source' into work/recover-landing-swap
+5d2fbd7 chore: lock src changelist 202611131300 and close round 202611131259
+3a4a3c9 fix: share one accumulator split and make four tests able to fail
+39817b0 chore: lock doc changelist 202611131259
+7c9bbc4 docs: say what a single-trunk phase does and drop its history
+b9e0891 chore: lock src changelist 202611131242 and close round 202611131241
+79a6089 feat: keep the swap of round 202607200900 on its own branch
+3866f5f chore: lock doc changelist 202611131241
+41306e9 docs: put the swap text of round 202607200900 back on the held branch
+9116b72 docs: open the round that keeps the held swap on its own branch
+672b8e7 chore: lock src changelist 202611131230 and close round 202611131112
+1e193d2 fix: hold the swap out of the recovered source, after the second review
+544422a chore: lock doc changelist 202611131112
+8a97a57 docs: hold the swap text out of the recovered design templates
+0f356df chore: deprecate src changelist 202611131117 and unlock doc
+b28be69 test: observe the plan band and the swap's dirty mark, after review
+afe3339 fix: name the tickets on the parallel gate fixture and swap entry
+68e7e32 Merge remote-tracking branch 'origin/dev' into work/recover-landing-source
+1973247 chore: merge the recovery branch over the consolidated source
+f577a21 feat: port the recovered swap, plan band, sym shapes and benches
+ada51bb chore: port the lints to the one view of the tree
+656aa2e chore: lock doc changelist 202611131112
+034e4c2 docs: carry the unlanded rounds' design text onto dev's templates
+4ec8503 docs: open the round that lands the recovered source
+6e971d1 docs: keep the perf gate section under the corrected findings
+6524900 docs: land the unlanded bench results and their run history
+c42d707 feat: make an append past capacity a refusal the consumer configures
+27abd8a research: sketch a branded index for exclusive column writes
+26e926b fix: spell the notko git source by https
+c2b392d test: make the hilavitkutin suite able to fail
+0928042 research: sketch one kernel's digests on native and wasm32
+b373d70 research: sketch the frame view and the two regimes as types
+cfe40b4 research: sketch kernels that run unchanged under five runners
+4b327c5 fix: make hilavitkutin dev pass its own commit gate
+af823b7 fix: pin the research sketches' arvo deps by rev

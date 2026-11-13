@@ -45,14 +45,14 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 
 // Stack-backed test memory provider (mirrors tests/fiber_walk.rs).
 struct BumpProvider<const N: usize> {
-    buf: UnsafeCell<[MaybeUninit<u8>; N]>,
+    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
     used: Cell<usize>,
 }
 
 impl<const N: usize> BumpProvider<N> {
     fn new() -> Self {
         Self {
-            buf: UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
+            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
             used: Cell::new(0),
         }
     }
@@ -75,7 +75,7 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
         unsafe { base.add(aligned) }
     }
 
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
 
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
@@ -98,19 +98,19 @@ thread_local! {
 struct ReadAWu;
 
 impl BuilderInput for ReadAWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 
 impl WorkUnit<Always> for ReadAWu {
-    type Read = ReadA;
-    type Write = Empty;
+    type Ctx<'frame> = EngineCtx<'frame, ReadA, Empty, SnapCons<Ra, SnapNil>, ColPtrNil, ColPtrNil>;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, ReadA, Empty, SnapCons<Ra, SnapNil>, ColPtrNil, ColPtrNil>;
+    type Read = ReadA;
+    type Write = Empty;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         let v: &Ra = ctx.resources().resource();
@@ -121,19 +121,19 @@ impl WorkUnit<Always> for ReadAWu {
 struct ReadBWu;
 
 impl BuilderInput for ReadBWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 
 impl WorkUnit<Always> for ReadBWu {
-    type Read = ReadB;
-    type Write = Empty;
+    type Ctx<'frame> = EngineCtx<'frame, ReadB, Empty, SnapCons<Rb, SnapNil>, ColPtrNil, ColPtrNil>;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, ReadB, Empty, SnapCons<Rb, SnapNil>, ColPtrNil, ColPtrNil>;
+    type Read = ReadB;
+    type Write = Empty;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         let v: &Rb = ctx.resources().resource();
@@ -203,19 +203,19 @@ const WRITER_MARKER: u32 = 99;
 struct WriteAWu;
 
 impl BuilderInput for WriteAWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 
 impl WorkUnit<Always> for WriteAWu {
-    type Read = Empty;
-    type Write = WriteA;
+    type Ctx<'frame> = EngineCtx<'frame, Empty, WriteA, SnapNil, ColPtrNil, ColPtrNil>;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, Empty, WriteA, SnapNil, ColPtrNil, ColPtrNil>;
+    type Read = Empty;
+    type Write = WriteA;
 
     fn execute<'frame>(&self, _ctx: &Self::Ctx<'frame>) {
         OBSERVED.with(|o| o.borrow_mut().push(WRITER_MARKER));
@@ -263,19 +263,19 @@ fn run_dispatches_in_topological_order_not_registration() {
 struct CycleAWu;
 
 impl BuilderInput for CycleAWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 
 impl WorkUnit<Always> for CycleAWu {
-    type Read = ReadA;
-    type Write = ReadB;
+    type Ctx<'frame> = EngineCtx<'frame, ReadA, ReadB, SnapCons<Ra, SnapNil>, ColPtrNil, ColPtrNil>;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, ReadA, ReadB, SnapCons<Ra, SnapNil>, ColPtrNil, ColPtrNil>;
+    type Read = ReadA;
+    type Write = ReadB;
 
     fn execute<'frame>(&self, _ctx: &Self::Ctx<'frame>) {}
 }
@@ -283,19 +283,19 @@ impl WorkUnit<Always> for CycleAWu {
 struct CycleBWu;
 
 impl BuilderInput for CycleBWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 
 impl WorkUnit<Always> for CycleBWu {
-    type Read = ReadB;
-    type Write = ReadA;
+    type Ctx<'frame> = EngineCtx<'frame, ReadB, ReadA, SnapCons<Rb, SnapNil>, ColPtrNil, ColPtrNil>;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, ReadB, ReadA, SnapCons<Rb, SnapNil>, ColPtrNil, ColPtrNil>;
+    type Read = ReadB;
+    type Write = ReadA;
 
     fn execute<'frame>(&self, _ctx: &Self::Ctx<'frame>) {}
 }
@@ -363,17 +363,21 @@ fn build_rejects_anti_topological_registration() {
                  (slot 0), got {:?}",
                 recommended
             );
-        }
-        Outcome::Err(other) => panic!(
-            "an acyclic registration whose carrier order runs a reader before its \
+        },
+        Outcome::Err(other) => {
+            panic!(
+                "an acyclic registration whose carrier order runs a reader before its \
              writer is rejected with NonTopologicalRegistration (not another \
              BuildError), got {:?}",
-            other
-        ),
-        Outcome::Ok(_) => panic!(
-            "an acyclic registration whose carrier order runs a reader before its \
+                other
+            )
+        },
+        Outcome::Ok(_) => {
+            panic!(
+                "an acyclic registration whose carrier order runs a reader before its \
              writer must be rejected, not build successfully"
-        ),
+            )
+        },
     }
 }
 

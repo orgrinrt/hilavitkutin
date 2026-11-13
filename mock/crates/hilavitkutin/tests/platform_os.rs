@@ -21,13 +21,13 @@ fn os_memory_allocate_deallocate_roundtrip() {
     assert!(!ptr.is_null(), "mmap returned null for a 4KiB request");
 
     // Touch every byte so the kernel actually faults in pages.
-    for i in 0..*len {
+    for i in 0 .. *len {
         // SAFETY: ptr covers `len` bytes per the trait contract.
         unsafe { ptr.add(i).write(0xAB) };
     }
 
     // SAFETY: ptr came from allocate with the same len.
-    unsafe { provider.deallocate(ptr, len) };
+    unsafe { provider.deallocate(ptr, len, align) };
 }
 
 #[test]
@@ -36,7 +36,8 @@ fn os_memory_protect_is_ok_stub() {
     let len = USize(4096);
 
     // SAFETY: see roundtrip test.
-    let ptr = unsafe { provider.allocate(len, USize(16)) };
+    let align = USize(16);
+    let ptr = unsafe { provider.allocate(len, align) };
     assert!(!ptr.is_null());
 
     // Stub: protect is a no-op this round. Verify it doesn't
@@ -45,7 +46,7 @@ fn os_memory_protect_is_ok_stub() {
     unsafe { provider.protect(ptr, len, Bool::TRUE, Bool::TRUE) };
 
     // SAFETY: ptr is still valid after the stubbed protect.
-    unsafe { provider.deallocate(ptr, len) };
+    unsafe { provider.deallocate(ptr, len, align) };
 }
 
 #[test]
@@ -53,11 +54,16 @@ fn os_clock_is_monotonic() {
     let clock = OsClock::new();
     let a = clock.now_ns();
     // Spin briefly to make a forward delta measurable.
-    for _ in 0..1_000 {
+    for _ in 0 .. 1_000 {
         core::hint::spin_loop();
     }
     let b = clock.now_ns();
     let a_raw = a.to_raw();
     let b_raw = b.to_raw();
-    assert!(b_raw >= a_raw, "clock went backwards: {} -> {}", a_raw, b_raw);
+    assert!(
+        b_raw >= a_raw,
+        "clock went backwards: {} -> {}",
+        a_raw,
+        b_raw
+    );
 }

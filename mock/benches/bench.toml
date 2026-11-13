@@ -1,3 +1,8 @@
+# Bench docs generation: the docs regeneration pass emits BENCHES.md
+# plus graphviz visualisations under docs/ from the bench history.
+[docgen]
+enabled = true
+
 # Bench harness configuration for the hilavitkutin runtime megaround
 # (202605101036). Three benches:
 #
@@ -116,6 +121,7 @@ variants = [
 title = "Dynamic dispatch shapes: direct vs opaque fn pointer vs runtime table"
 workload = "realistic"
 master_seed = 0x40ff_ee15_d34d_b33f
+may_differ = true
 
 [[bench.dispatch_dynamic.sizes]]
 n = 64
@@ -241,6 +247,7 @@ variants = ["variants/popcount_std/target/release/popcount_std", "variants/popco
 title = "Hash mixer: FNV-1a vs xxh-style block vs SipHash-style ARX"
 workload = "realistic"
 master_seed = 0x1111_2222_3333_4444
+may_differ = true
 
 [[bench.hash_algos.sizes]]
 n = 64
@@ -266,6 +273,7 @@ variants = ["variants/hash_fnv1a/target/release/hash_fnv1a", "variants/hash_xxh/
 title = "Fixed-point mul: Precise (i128 intermediate) vs Hot (i64 truncate)"
 workload = "realistic"
 master_seed = 0x5555_6666_7777_0007
+may_differ = true
 
 [[bench.fxpmul_strategy.sizes]]
 n = 64
@@ -341,6 +349,7 @@ variants = ["variants/atomic_relaxed/target/release/atomic_relaxed", "variants/a
 title = "AoS vs SoA (column-store) layout under partial-field iteration"
 workload = "realistic"
 master_seed = 0x5ead_beef_0123_4567
+may_differ = true
 
 [[bench.cache_layout.sizes]]
 n = 64
@@ -433,6 +442,7 @@ variants = ["variants/minmax_intrinsic/target/release/minmax_intrinsic", "varian
 title = "Float width strategy: f32 (FastFloat) vs f64 (StrictFloat) vs i64-fixed-point (UFixed Hot)"
 workload = "realistic"
 master_seed = 0x2e51_9d3b_c768_a4f0
+may_differ = true
 
 [[bench.float_width.sizes]]
 n = 256
@@ -454,6 +464,7 @@ variants = ["variants/float_f32/target/release/float_f32", "variants/float_f64/t
 title = "Match arm count: 2 vs 8 vs 64 — jump-table dispatch scaling"
 workload = "realistic"
 master_seed = 0x3c87_15d9_a4b6_82f1
+may_differ = true
 
 [[bench.match_arm_count.sizes]]
 n = 256
@@ -475,6 +486,7 @@ variants = ["variants/match_2_arms/target/release/match_2_arms", "variants/match
 title = "Shift amount: const vs loop-invariant runtime vs per-iter independent"
 workload = "realistic"
 master_seed = 0x6a92_bf08_e314_750d
+may_differ = true
 
 [[bench.shift_amount_origin.sizes]]
 n = 256
@@ -496,6 +508,7 @@ variants = ["variants/shr_const/target/release/shr_const", "variants/shr_loop_in
 title = "Rotate strategy: intrinsic const vs manual shifts vs variable amount"
 workload = "realistic"
 master_seed = 0x71f6_92ab_4e08_d325
+may_differ = true
 
 [[bench.rotate_strategy.sizes]]
 n = 256
@@ -538,6 +551,7 @@ variants = ["variants/sat_wrap/target/release/sat_wrap", "variants/sat_saturate/
 title = "Fold ILP: sequential single-acc vs paired 2-way vs quad 4-way"
 workload = "realistic"
 master_seed = 0x239f_b805_47ae_61c2
+may_differ = true
 
 [[bench.fold_strategy.sizes]]
 n = 256
@@ -622,6 +636,7 @@ variants = ["variants/acc_plain/target/release/acc_plain", "variants/acc_atomic_
 title = "Branch predictability: skewed-rare vs balanced 50/50 vs skewed-common"
 workload = "realistic"
 master_seed = 0x1b41_e7c3_5fa2_8d06
+may_differ = true
 
 [[bench.branch_predictability.sizes]]
 n = 256
@@ -706,6 +721,7 @@ variants = ["variants/load_aligned/target/release/load_aligned", "variants/load_
 title = "Modulo strategy: const pow2 (AND mask) vs const non-pow2 (magic mul) vs opaque divisor (full udiv)"
 workload = "realistic"
 master_seed = 0x4dd5_82c1_e7fa_3b96
+may_differ = true
 
 [[bench.modulo_strategy.sizes]]
 n = 256
@@ -727,6 +743,7 @@ variants = ["variants/mod_pow2_const/target/release/mod_pow2_const", "variants/m
 title = "EMA formulation: Q0.32 saturating fixed-point vs float vs integer-shift"
 workload = "realistic"
 master_seed = 0x6c97_b3e2_5a1d_8f04
+may_differ = true
 
 [[bench.ema_formulation.sizes]]
 n = 256
@@ -748,6 +765,7 @@ variants = ["variants/ema_form_q32/target/release/ema_form_q32", "variants/ema_f
 title = "Column iteration patterns: sequential vs strided vs data-dependent gather"
 workload = "realistic"
 master_seed = 0x3a5c_8e91_b2d4_f607
+may_differ = true
 
 [[bench.iter_patterns.sizes]]
 n = 256
@@ -771,3 +789,119 @@ runs_per_pass = 2000
 batch_size = 100
 harness_runs = 1
 cooldowns_ms = [0]
+
+# A1-1 dispatch-order oracle: four valid topological orders of the same
+# wide fan-out DAG, driven against the real engine, graded by how many of
+# the seven consecutive dispatch transitions share an input column.
+# rcm_adj (7/7, the RCM row order) and rcm_rev (7/7 reversed, the control
+# proving adjacency and not numbering is the mechanism) against rcm_half
+# (4/7, the dose-response midpoint) and rcm_scr (0/7, the stride-4
+# scramble). The harness size `n` is seed-material length; the variants
+# run `n * 1024` records (64 -> 64K records / 256 KiB columns, 256 ->
+# 256K / 1 MiB, 1024 -> 1M / 4 MiB, 2048 -> 2M / 8 MiB at the M1 SLC
+# edge, 4096 -> 4M / 16 MiB past it). Byte-exact outputs across all
+# orders. Frames are milliseconds, so the timing override replaces the
+# nanosecond-calibrated global knobs.
+[bench.rcm_order]
+title = "A1-1 dispatch order: column-adjacency dose response across valid topo orders"
+workload = "realistic"
+master_seed = "0x51C3_04D3_1234_5678"
+variants = ["rcm_adj", "rcm_rev", "rcm_half", "rcm_scr"]
+sizes = [64, 256, 1024, 2048, 4096, 8192, 16384]
+
+[bench.rcm_order.timing]
+passes = 3
+runs_per_pass = 30
+batch_size = 10
+harness_runs = 2
+cooldowns_ms = [0]
+
+# Ordering-theory rivals: the chain topology above cannot rank ordering
+# ALGORITHMS (on a chain, RCM, spectral, and greedy all collapse to the
+# same adjacency order), so this bench drives a 3x4 grid sharing topology
+# where they diverge. Columns are the 17 grid edges; WU n reads the edges
+# incident to grid node n and writes its own output; all permutations are
+# valid topological orders. Arms, by objective: riv_rcm minimises maximum
+# reuse distance (bandwidth 4, canon Step 5's pick), riv_spec minimises
+# total reuse distance (the minimum-linear-arrangement objective,
+# bandwidth 3), riv_snake maximises immediate consecutive sharing
+# (greedy nearest-neighbour, bandwidth 7), riv_rowm is the naive
+# row-major baseline, riv_scr the no-consecutive-sharing worst case.
+# Same n-to-records mapping and timing regime as rcm_order.
+[bench.rcm_rivals]
+title = "ordering theories on a grid: RCM vs spectral vs greedy vs row-major"
+workload = "realistic"
+master_seed = "0x51C3_04D3_1234_5679"
+variants = ["riv_rcm", "riv_spec", "riv_snake", "riv_rowm", "riv_scr"]
+sizes = [64, 256, 1024, 2048, 4096, 8192, 16384]
+
+[bench.rcm_rivals.timing]
+passes = 3
+runs_per_pass = 30
+batch_size = 10
+harness_runs = 2
+cooldowns_ms = [0]
+
+# Swap-semantics ratification evidence (spec S7, round 202607200500).
+# swap_cost: the witnessed blob install cost across value sizes; each
+# arm's timed body is exactly one replace_value of a 64 B / 1 KiB /
+# 64 KiB payload (per-variant scheduler, seed-pure installs). Outputs
+# differ across arms by construction (different payload types).
+[bench.swap_cost]
+title = "replace_value blob install cost across value sizes"
+workload = "realistic"
+master_seed = "0x51C3_5107_0000_0001"
+may_differ = true
+variants = ["sc_v64b", "sc_v1k", "sc_v64k"]
+sizes = [64]
+
+# swap_band: the next-frame cost asymmetry on one carrier (producer to
+# consumer cone off a Replaceable value, an unrelated chain, an
+# OnMeta plan unit with fixed synthetic recompute cost). sb_none times
+# the all-clean skip frame; sb_value pays the Replaceable dirty cone;
+# sb_plan pays the PlanAffecting cone plus the leading plan band.
+# Records = n x 1024. Frames are microseconds-to-milliseconds, so the
+# timing override replaces the nanosecond-calibrated global knobs.
+[bench.wake_policy]
+title = "frame wake policy: park-immediately vs bounded spin pre-roll"
+workload = "realistic"
+master_seed = "0x51C3_5107_0000_0003"
+may_differ = false
+variants = ["wp_park", "wp_spin", "wp_lp0", "wp_isb8", "wp_nh128", "wp_nh2k", "wp_nh8k"]
+sizes = [64, 1024, 8192]
+
+[bench.wake_policy.timing]
+passes = 3
+runs_per_pass = 30
+batch_size = 10
+harness_runs = 2
+
+[bench.swap_band]
+title = "next-frame asymmetry: clean skip vs value-swap cone vs plan band"
+workload = "realistic"
+master_seed = "0x51C3_5107_0000_0002"
+may_differ = true
+variants = ["sb_none", "sb_value", "sb_plan"]
+sizes = [64, 1024, 8192]
+
+[bench.swap_band.timing]
+passes = 3
+runs_per_pass = 30
+batch_size = 10
+harness_runs = 2
+cooldowns_ms = [0]
+
+# The definitive spectral-versus-greedy fiber comparison (#644; seed
+# governance item 3, evidence-then-bless oracle for the spectral role
+# deviation). Both arms run the SHIPPED plan functions on the same
+# layered wide-fan-out DAG family; n is the unit count (engine default
+# capacity 64). The timed body is one grouping call; the quality
+# proxies (fiber count, cut edges) come from the fiber_common quality
+# test and ride the findings memo. Groupings legitimately differ.
+[bench.fiber_theory]
+title = "fiber grouping theories: greedy topo walk vs spectral bisection"
+workload = "realistic"
+master_seed = "0x51C3_F1BE_0000_0001"
+may_differ = true
+variants = ["fib_greedy", "fib_spectral"]
+sizes = [8, 16, 32, 64]

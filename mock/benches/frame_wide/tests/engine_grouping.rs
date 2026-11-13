@@ -33,7 +33,7 @@ use arvo::USize;
 use arvo_bitmask::BitAccess;
 use frame_wide_support::engine::{A1, A2, A3, B1, B2, B3, C1, C2, C3, In, Jn, Join, Map, T1, T2};
 use frame_wide_support::{Heavy, K_A1, K_A2, K_A3, K_B1, K_B2, K_B3, K_C1, K_C2, K_C3, K_T1, K_T2};
-use hilavitkutin::dispatch::core_mask::{core_phase_mask, grouping_arrays, phase_trunk_count};
+use hilavitkutin::dispatch::core_mask::{core_phase_mask, grouping_arrays};
 use hilavitkutin::dispatch::engine_ctx::{Here, There};
 use hilavitkutin::plan::grouping::{GATE2_MAX_UNITS, group_n, phase_of, trunk_of};
 use hilavitkutin::plan::{DefaultPlanDims, PlanDims};
@@ -254,11 +254,14 @@ fn the_join_merges_three_pipelines_into_one_trunk_of_ten() {
         );
         assert_eq!(trunk[u].0, expected[u], "unit {u} is in the wrong trunk");
     }
-    assert_eq!(
-        phase_trunk_count(&phase, &trunk, USize(n), USize(0)).0,
-        3,
-        "phase 0 carries three trunks"
-    );
+    // A trunk root is a unit that is its own trunk: the grouping names each
+    // trunk by its least unit. The engine had a helper for this count and
+    // dropped it with the convergence path that used it, so it is counted
+    // here from the arrays the test already holds.
+    let roots_in_phase_0 = (0 .. n)
+        .filter(|&u| phase[u].0 == 0 && trunk[u].0 == u)
+        .count();
+    assert_eq!(roots_in_phase_0, 3, "phase 0 carries three trunks");
 }
 
 /// What each of four cores is handed, which is the finding in one assertion.

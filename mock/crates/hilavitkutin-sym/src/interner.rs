@@ -13,8 +13,8 @@ use crate::handle::Sym;
 /// for a handle the producer does not know.
 pub trait Interner<D: InterningDomain> {
     /// Fold `value` into a stable handle.
-    fn intern(&self, value: &D::Value) -> Sym;
+    fn intern(&self, value: &D::Value) -> Sym<D::Shape>;
 
     /// Recover the value a handle stands in for, if this producer knows it.
-    fn resolve(&self, sym: Sym) -> Maybe<&D::Value>;
+    fn resolve(&self, sym: Sym<D::Shape>) -> Maybe<&D::Value>;
 }

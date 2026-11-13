@@ -1,0 +1,15 @@
+[package]
+name = "stc-head-tail"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "stc_head_tail"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+stc-support = { path = "../../support" }
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "f42844c7f7f8be9c54dd96b9a975a6c7da3fea5e", features = ["std"] }
+mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", rev = "f42844c7f7f8be9c54dd96b9a975a6c7da3fea5e" }
