@@ -219,6 +219,11 @@ macro_rules! suite {
             unit!(Settle, read Bare as Cols, write Bare as Cols, |read| {
                 rec![Height((read.get(Col::new()).0 + 1).min(2))]
             });
+            // Raises the even values and returns the odd ones as it read them.
+            unit!(Half, read Bare as Cols, write Bare as Cols, |read| {
+                let v = read.get(Col::new()).0;
+                rec![Height(if v % 2 == 0 { v + 1 } else { v })]
+            });
             unit!(Fill, read Empty as ColPtrNil, write Bare as Cols, |_read| rec![Height(7)]);
             unit!(Watch, read Bare as Cols, write Out as OutCols, |read| {
                 rec![Seen(read.get(Col::new()).0)]
@@ -331,6 +336,34 @@ macro_rules! suite {
                         "pass {pass}: the two bases are the two the build reserved",
                     );
                 }
+            }
+
+            // A write lands on the live side at every record, the ones whose
+            // value equals the frozen side's too. The live side starts as
+            // something else, so a store made only where the value differs
+            // would leave the sentinel at every odd record.
+            #[test]
+            fn a_value_equal_to_the_frozen_one_still_lands_on_the_live_side() {
+                let mut scheduler = Scheduler::builder()
+                    .with(Col::new())
+                    .with(Half)
+                    .build(store(), USize(RECORDS))
+                    .unwrap_or_else(|_| panic!("build should succeed"));
+                let frozen = scheduler.__bindings().__frozen().as_ptr();
+                let live = scheduler.__bindings().__live().as_ptr();
+                // SAFETY: before the first pass.
+                unsafe {
+                    fill(frozen, |i| Height(i as u32));
+                    fill(live, |_| Height(SENTINEL));
+                }
+                assert!(matches!(scheduler.run(), Outcome::Ok(())));
+                let want: Vec<u32> = (0 .. RECORDS as u32)
+                    .map(|i| if i % 2 == 0 { i + 1 } else { i })
+                    .collect();
+                let frozen = scheduler.__bindings().__frozen().as_ptr();
+                // SAFETY: between passes.
+                let got = unsafe { all(frozen, |h: Height| h.0) };
+                same(&got, &want, "every record of the pass's write is on the frozen side");
             }
 
             // A reader of a buffered column sees what the last pass left, so it
