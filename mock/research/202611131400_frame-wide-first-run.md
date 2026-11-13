@@ -39,19 +39,19 @@ The support crate's own tests hold `build_input` to `build_input_bytes` over fiv
 
 The figures are the medians of the timed region only, which is the frame. Loading the input and computing the digest sit outside it for every arm; the findings files call that span the bridge, and it is about one millisecond a call at this size, nearly all of it the digest.
 
-A median says how long a frame took and nothing about how much machine it took to get there, and for this bench that second number is the whole point of the parallel arms. The cores column is process-wide CPU, fields 14 and 15 of `/proc/<tgid>/stat`, over a fifteen second window on a worker running one arm's frame back to back, printed by `./occupancy.sh <arm>`.
+A median says how long a frame took and nothing about how much machine it took to get there, and for this bench that second number is the whole point of the parallel arms. The cores column is process-wide CPU, fields 14 and 15 of `/proc/<tgid>/stat`, over a fifteen second window on a worker running one arm's frame back to back, printed by `./occupancy.sh <arm>`. The figures below are medians of three such windows, and `./occupancy.sh all` writes all three readings per arm and regime to `mock/benches/frame_wide/occupancy.txt`, which is committed beside the bench. Read the readings rather than the median where the spread matters: it is a tick or two for every single-threaded arm and much wider for the parallel ones.
 
 | Arm | heavy, ms | heavy, cores | light, µs | light, cores |
 |---|---|---|---|---|
 | `engine` | 2.99 | 0.99 | 173 | 0.99 |
-| `engine_par` | 3.01 | 1.08 | 325 | 0.97 |
+| `engine_par` | 3.01 | 1.11 | 325 | 1.00 |
 | `hand` | 3.39 | 0.99 | 71.3 | 0.99 |
-| `hand_par` | 1.03 | 1.74 | 192 | 1.10 |
+| `hand_par` | 1.03 | 1.74 | 192 | 1.03 |
 | `rust_nostd` | 2.84 | 0.99 | 190 | 0.99 |
-| `rust_std` | 2.93 | 0.98 | 162 | 0.98 |
-| `rust_std_par` | 1.34 | 2.11 | 524 | 1.57 |
+| `rust_std` | 2.93 | 0.99 | 162 | 0.98 |
+| `rust_std_par` | 1.34 | 2.22 | 524 | 1.64 |
 
-Read the cores column for what it is. It covers the whole worker loop, the untimed bridge as well as the frame, and the bridge is single-threaded and about a millisecond a call, so every parallel arm's figure is pulled toward one. It is not pulled equally: the bridge is about half of `hand_par`'s window at a frame of 1.03 ms and about a quarter of `engine_par`'s at 3.01 ms, so the dilution is heavier where the frame is shorter. Each figure is therefore a floor on that arm's in-frame spread rather than a measure of it, and an arm reading higher than another did use more machine, while the ratio between two of them is not the ratio of their in-frame parallelism. One sample per arm, not committed, and a figure a later reader should re-measure with `./occupancy.sh` rather than trust. Per-thread sampling over `/proc/<tgid>/task/*/stat` is worse and does not fix it: an arm that spawns per frame has a different short-lived thread set at every sample and a reaped thread's ticks are gone, which on the run that first measured it put `hand_par` at 0.48 cores against this instrument's 2.16 on the same build.
+Read the cores column for what it is. It covers the whole worker loop, the untimed bridge as well as the frame, and the bridge is single-threaded and about a millisecond a call, so every parallel arm's figure is pulled toward one. It is not pulled equally: the bridge is about half of `hand_par`'s window at a frame of 1.03 ms and about a quarter of `engine_par`'s at 3.01 ms, so the dilution is heavier where the frame is shorter. Each figure is therefore a floor on that arm's in-frame spread rather than a measure of it, and an arm reading higher than another did use more machine, while the ratio between two of them is not the ratio of their in-frame parallelism. The readings behind each figure are in `occupancy.txt` beside the bench, and a later reader should open those rather than trust the median alone. Per-thread sampling over `/proc/<tgid>/task/*/stat` is worse and does not fix it: an arm that spawns per frame has a different short-lived thread set at every sample and a reaped thread's ticks are gone, which on the run that first measured it put `hand_par` at 0.48 cores against this instrument's 2.16 on the same build.
 
 The full reports, with intervals, are `mock/benches/frame_wide/heavy_n65536_findings.md` and `light_n65536_findings.md`, beside their CSVs and meta files. Every delta in them is taken against `hand` rather than against an engine arm, and each opens with the caveat above it, so a reader who finds one of those files alone and never reaches this note still meets op's words before any number.
 
@@ -59,7 +59,7 @@ Some of what the table shows is a property of the bars rather than of anything t
 
 ## Why `engine_par` runs on one core
 
-`engine_par` is the one row that would be read wrong from the medians alone. Under `heavy` it sits at 3.01 ms against `engine` at 2.99, which reads as four cores buying nothing, and under `light` it is nearly twice the single-core arm. The cores column says the four cores were never there: 1.08 under `heavy` and 0.97 under `light`, against `hand_par`'s 1.74 over the same frame on the same budget.
+`engine_par` is the one row that would be read wrong from the medians alone. Under `heavy` it sits at 3.01 ms against `engine` at 2.99, which reads as four cores buying nothing, and under `light` it is nearly twice the single-core arm. The cores column says the four cores were never there: 1.11 under `heavy` and 1.00 under `light`, against `hand_par`'s 1.74 over the same frame on the same budget.
 
 The cause is in the engine rather than in the bench, and it is the waist-bounded phase axis. `mock/benches/frame_wide/tests/engine_grouping.rs` holds it as six assertions over the engine's own `grouping_arrays`, `phase_of`, `trunk_of`, `phase_trunk_count` and `core_phase_mask`, called on the real `Map` and `Join` types the arm registers, so what follows is read out of the plan and not modelled.
 
