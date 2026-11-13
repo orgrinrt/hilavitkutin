@@ -128,3 +128,43 @@ subject = "memory"
 keywords = ["deallocate", "alignment", "MemoryProviderApi", "Layout", "std::alloc", "bump arena", "safety contract", "free site"]
 rules_out = ["requires only that `ptr` and `len` match a prior `allocate`"]
 cites = ["a_deallocation_is_given_the_same_alignment_as_its_allocation"]
+
+[[tenet]]
+id = "op_ruled_that_the_consumer_supplies_the_os_thread_executor_and_the_engine_ships_only_the_executor_contract"
+what = "Op ruled on 2026-09-18, choosing among the consumer supplying the executor, a separate crate for the std executor, and both as arms, that the consumer supplies it. The engine ships only the executor contract, a trait, and the OS-thread executor lives in the consumer, or in a crate outside the hilavitkutin family, gated per target and feature. The intent is that no crate of the family spawns threads and that the thread pool contract is the whole of what the engine owns. Tests and the engine-versus-std bench define their own executors in test and bench code."
+mechanism = "`ThreadPoolApi` is the whole of what the engine owns; applied to `std_tier.rs` and equally to `OsThreadPool` in `platform/os.rs`; the `hilavitkutin-platform-std` crate and both-as-arms options were not chosen; the `engine_vs_std` bench. Verbatim record: `.data/op-responses/202609181645_hila-std-tier-persistence.md` in the workspace repository. Op's answer: \"Consumer supplies it\"."
+source = "mock/design_rounds/202609181402/202609181401_topic.hilavitkutin-on-arvo-dev.md:77-81, mock/design_rounds/202609190201/202609190200_topic.review-fixes-on-arvo-dev.md:11-11, mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:13-13"
+provenance = ["mock::design_rounds::202609181402::202609181401_topic.hilavitkutin-on-arvo-dev::#op-s-rulings-on-the-three-handed-back-conflicts-2026-09-18"]
+quote = '''
+## Op's rulings on the three handed-back conflicts, 2026-09-18
+
+Verbatim record: `.data/op-responses/202609181645_hila-std-tier-persistence.md` in the workspace repository.
+
+The std tier. The option he chose: "hilavitkutin ships only the executor contract (a trait). The OS-thread executor lives in the consumer, or in a crate outside the hilavitkutin* family, gated per target and feature." His answer: "Consumer supplies it". The intent is that no `hilavitkutin*` crate spawns threads; `ThreadPoolApi` is the whole of what the engine owns. Applied to `std_tier.rs` and equally to `OsThreadPool` in `platform/os.rs`, which spawned pthreads under the same tier logic and falls under the same sentence. Tests and the `engine_vs_std` bench define their own executors in test and bench code.
+---
+- On where the code that spawns OS threads lives, choosing among "Consumer supplies it", a separate `hilavitkutin-platform-std` crate, and both as arms: "Consumer supplies it". The engine ships only the executor contract.
+---
+Op, choosing "hilavitkutin ships only the executor contract (a trait). The OS-thread executor lives in the consumer, or in a crate outside the hilavitkutin* family, gated per target and feature.": "Consumer supplies it". The std fallback tier is gone, and the os tier no longer creates pthreads: it ships mmap for `MemoryProvider` and clock_gettime for `Clock`. `ThreadPoolApi` is the whole of the engine's side, and the design says the engine hands the executor one pointer-sized closure per worker, so an executor carries it without allocating.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "memory"
+keywords = ["std tier", "executor contract", "consumer supplies it", "ThreadPoolApi", "OsThreadPool", "op's ruling", "2026-09-18", "no thread spawn"]
+rules_out = ["The std fallback tier", "the os tier creating pthreads"]
+cites = ["no_crate_spawns_threads_and_the_executor_behind_the_thread_pool_contract_is_the_consumer_s_or_lives_outside_the_family", "platform_tiers_are_os_and_no_os_only_and_the_std_tier_is_deferred_indefinitely", "the_os_and_std_tiers_are_mutually_exclusive_and_the_os_tier_gets_the_optimisation_investment"]
+
+[[tenet]]
+id = "the_os_tier_creates_no_threads_and_ships_a_memory_provider_and_a_clock_while_the_engine_hands_the_executor_one_pointer_sized_closure_per_worker"
+what = "The os tier no longer creates threads: it ships a memory provider built on memory mapping and a clock built on the system clock call. The thread pool contract is the whole of the engine's side, and the engine hands the executor one pointer-sized closure per worker, so an executor carries it without allocating."
+mechanism = "mmap for `MemoryProvider`, `clock_gettime` for `Clock`; `ThreadPoolApi`."
+source = "mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:13-13"
+provenance = ["mock::design_rounds::202609181402::202609181402_changelist.doc.lock::#change-the-platform-tiers-lose-the-std-tier-and-no-tier-spawns-threads"]
+quote = '''
+Op, choosing "hilavitkutin ships only the executor contract (a trait). The OS-thread executor lives in the consumer, or in a crate outside the hilavitkutin* family, gated per target and feature.": "Consumer supplies it". The std fallback tier is gone, and the os tier no longer creates pthreads: it ships mmap for `MemoryProvider` and clock_gettime for `Clock`. `ThreadPoolApi` is the whole of the engine's side, and the design says the engine hands the executor one pointer-sized closure per worker, so an executor carries it without allocating.
+'''
+origin = "proposed"
+written_by = "doc changelist of round 202609181402 'hilavitkutin on arvo's current dev', 2026-09-18, agent-written"
+standing = "provisional"
+subject = "memory"
+keywords = ["os tier", "mmap", "clock_gettime", "MemoryProvider", "Clock", "pointer-sized closure", "ThreadPoolApi", "no pthreads"]
+cites = ["op_ruled_that_the_consumer_supplies_the_os_thread_executor_and_the_engine_ships_only_the_executor_contract", "the_os_and_std_tiers_are_mutually_exclusive_and_the_os_tier_gets_the_optimisation_investment"]

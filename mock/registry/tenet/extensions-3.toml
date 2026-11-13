@@ -172,3 +172,46 @@ written_by = "the design template of hilavitkutin-linking, agent-written, undate
 standing = "provisional"
 subject = "extensions"
 keywords = ["rename", "hilavitkutin-linking", "hilavitkutin-extensions", "PR #34", "2026-04-24", "extensions name reclaimed", "IDE extensions vocabulary"]
+
+[[tenet]]
+id = "the_linking_extensions_and_extensions_macros_designs_state_no_build_time_dependency_on_mockspace_because_no_crate_has_one"
+what = "The design documents of the linking, extensions and extensions-macros crates state no build-time dependency on the mockspace workflow. No crate in the workspace carries a build script calling into it or a build-dependency on it, and the workspace dependency itself is gone, so the stale claim is deleted and not rewritten into some other claim, matching the sibling crates, which state their dependencies without mentioning it."
+mechanism = "`mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:75`, `mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:143` and `mock/crates/hilavitkutin-extensions-macros/DESIGN.md.tmpl:45` each carried a `Build-time` claim; the generated `docs/*.md` counterparts regenerate by `cargo mock`."
+source = "mock/design_rounds/202609190620/202609190619_topic.remove-the-stale-mockspace-build-dep-claim.md:18-39, mock/design_rounds/202609190620/202609190619_topic.remove-the-stale-mockspace-build-dep-claim.md:43-44, mock/design_rounds/202609190620/202609190619_topic.remove-the-stale-mockspace-build-dep-claim.md:55-56"
+provenance = ["mock::design_rounds::202609190620::202609190619_topic.remove-the-stale-mockspace-build-dep-claim::#what-is-wrong"]
+quote = '''
+- `mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:75`: "mockspace (workspace
+  convention) bootstraps the mock workflow via build.rs."
+- `mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:143`: "Build-time:
+  mockspace (workspace convention)."
+- `mock/crates/hilavitkutin-extensions-macros/DESIGN.md.tmpl:45`: "Build-time:
+  mockspace (workspace convention)."
+
+None of this is true after PR #8. No crate in this workspace carries a
+`build.rs` calling into mockspace, no crate declares a
+`[build-dependencies]` entry on it, and the workspace `mockspace` dependency
+itself is gone from `mock/Cargo.toml`. The claim was already false before PR
+#8, going back to `202607311110_topic.launcher-migration.md`, which tore down
+every crate's bootstrap `build.rs` and the matching `[build-dependencies]`
+entries but explicitly scoped itself away from crate source and design docs.
+PR #8 removing the last trace of the dependency from `mock/Cargo.toml` is
+what surfaces the gap now, in review.
+
+No other crate's `DESIGN.md.tmpl` makes this claim (`hilavitkutin`,
+`hilavitkutin-build`, and `hilavitkutin-persistence` each state their
+dependencies without mentioning mockspace at all), so the fix is a deletion,
+matching the sibling crates' existing shape, not a rewrite to some other
+claim.
+---
+Delete the false "Build-time" claim from each of the three `DESIGN.md.tmpl`
+sources:
+---
+Regenerate `docs/LINKING.md`, `docs/EXTENSIONS.md`,
+`docs/EXTENSIONS_MACROS.md` via `cargo mock` so the rendered documents match.
+'''
+origin = "proposed"
+written_by = "topic of round 202609190620 'remove the stale mockspace build-dep claim', 2026-09-19, phase TOPIC, agent-written"
+standing = "provisional"
+subject = "extensions"
+keywords = ["build-time dependency", "mockspace", "hilavitkutin-linking", "hilavitkutin-extensions", "build.rs", "stale claim", "DESIGN.md.tmpl"]
+rules_out = ["mockspace (workspace convention) bootstraps the mock workflow via build.rs"]

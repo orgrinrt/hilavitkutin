@@ -441,3 +441,23 @@ subject = "execution"
 keywords = ["phase barrier", "waist_barrier", "sense-reversing", "phase_arrived", "drift", "barrier protocol", "phase_barrier_arrive"]
 rules_out = ["canon names no runtime barrier shape, so both should stay with a clarifying doc note"]
 cites = ["the_pool_frame_is_the_engine_internal_data_plane_on_per_pool_cache_lines_and_the_phase_barrier_is_one_atomic_counter"]
+
+[[tenet]]
+id = "the_engine_clamps_the_worker_count_it_runs_on_to_the_ceiling_of_its_per_core_state_and_workers_past_the_ceiling_are_never_handed_a_closure"
+what = "The engine clamps the worker count it runs on to the ceiling its per-core state is sized by, and past the ceiling the extra workers are never handed a closure. Without the clamp, a worker count past the ceiling indexes past the per-core state and panics. The design was silent on this, and the code already expects a worker count past the ceiling."
+mechanism = "`run_parallel` indexes `worker_ctxs[c]` for every `c < worker_count()`; `worker_ctxs` holds `MAX_CORES` (256), so 257 panics. `thread/barrier.rs` bounds its idle slot for a count past the ceiling and `classify_cores` clamps; `runnable_worker_count` is the thread module's `pub const fn` that computes it."
+source = "mock/design_rounds/202609190201/202609190200_topic.review-fixes-on-arvo-dev.md:44-44, mock/design_rounds/202609190201/202609190201_changelist.doc.lock.md:29-29, mock/design_rounds/202609191001/202609191001_changelist.doc.lock.md:25-25"
+provenance = ["mock::design_rounds::202609190201::202609190200_topic.review-fixes-on-arvo-dev::#seven-an-executor-reporting-more-than-max-cores-workers-panics"]
+quote = '''
+`run_parallel` indexes `worker_ctxs[c]` for every `c < worker_count()`, and `worker_ctxs` holds `MAX_CORES` (256). At 257 it panics. At 0 it spawns nothing, publishes a frame nobody runs, and returns as though the frame ran. The design is silent on both. The code already expects a worker count past `MAX_CORES` (`thread/barrier.rs` bounds its idle slot for exactly that, and `classify_cores` clamps), so the engine clamps the count it runs on into `1..=MAX_CORES`: past the ceiling the extra workers are never handed a closure, and at zero the engine still hands the executor one, since `spawn` submits work whatever the executor reports. The engine design gains the sentence.
+---
+The design was silent. The engine's per-core state is sized by `MAX_CORES`; past it the extra workers are never handed a closure. At zero the engine hands the executor one closure anyway, since a frame nobody runs would return as though it ran.
+---
+The clamp paragraph names `runnable_worker_count` as the thread module's `pub const fn` that computes it.
+'''
+origin = "proposed"
+written_by = "topic of round 202609190201 'the review findings on the arvo-dev round' and doc changelists of rounds 202609190201 and 202609191001, 2026-09-19, agent-written"
+standing = "provisional"
+subject = "execution"
+keywords = ["worker count", "MAX_CORES", "clamp", "run_parallel", "runnable_worker_count", "worker_ctxs", "per-core state"]
+cites = ["the_closures_handed_out_number_the_smaller_of_the_clamped_worker_count_and_the_parallelisable_width_plus_the_convergence_worker"]
