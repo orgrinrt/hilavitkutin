@@ -3,28 +3,122 @@
 //!
 //! The fixture under `tests/lto_smoke_fixture/` is a standalone cdylib
 //! that uses `#[export_extension(init = Init, shutdown = Shutdown)]`. We
-//! build it with `cargo build --release`, then run `nm` on the resulting
-//! shared library and assert that:
+//! build it with `cargo build --release`, read the resulting library with the
+//! `object` crate, and assert that:
 //!
-//! 1. `__hilavitkutin_extension_descriptor` is exported (the entry point).
-//! 2. The init / shutdown trampoline names appear as substrings in the
-//!    symbol table. Rust mangling keeps the original ident as a substring
-//!    within the mangled form (Itanium-style `_ZN<len><name>17h<hash>E`),
-//!    so `ext_init_trampoline` and `ext_shutdown_trampoline` are findable
-//!    even though the full mangled symbol differs.
+//! 1. `__hilavitkutin_extension_descriptor` is among the library's exports,
+//!    read from the dynamic symbols of an ELF file, the exports of a Mach-O
+//!    file and the export table of a PE image.
+//! 2. Where the file carries a symbol table, as ELF and Mach-O do, the init
+//!    and shutdown trampoline names appear in it. Rust mangling keeps the
+//!    original ident as a substring of the mangled form, so
+//!    `ext_init_trampoline` and `ext_shutdown_trampoline` are findable even
+//!    though the full mangled symbol differs. A PE image has no such table,
+//!    so on Windows this step does not apply and step 3 stands in for it.
+//! 3. Loading the library, the descriptor's `init_fn` and `shutdown_fn` are
+//!    present and resolve to different addresses.
 //!
-//! On non-Unix targets the test is a catalogued contract, ignored: `nm` is
-//! not the standard tool on Windows, and parity verification via
-//! `dumpbin /SYMBOLS` is a separate harness tracked in the macros crate's
-//! BACKLOG.
+//! The reader refuses a file it cannot parse rather than finding nothing in
+//! it, and `a_list_without_the_shutdown_trampoline_is_reported` shows the
+//! check reports a missing symbol instead of passing over it.
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
-const FIXTURE_PKG: &str = "lto-smoke-fixture";
-const FIXTURE_LIB: &str = "lto_smoke_fixture";
+use object::{BinaryFormat, Object, ObjectSymbol};
 
-#[cfg(unix)]
+const FIXTURE_LIB: &str = "lto_smoke_fixture";
+const DESCRIPTOR: &str = "__hilavitkutin_extension_descriptor";
+const TRAMPOLINES: [&str; 2] = ["ext_init_trampoline", "ext_shutdown_trampoline"];
+
+/// What a built library offers to the outside, and what its file records.
+struct Symbols {
+    /// Names the loader can resolve.
+    exports: Vec<Vec<u8>>,
+    /// Every name the file's symbol table records, or none where the format
+    /// has no such table.
+    table:   Option<Vec<Vec<u8>>>,
+}
+
+/// A symbol's name, or why the file would not give it. A name that cannot be
+/// read refuses the file, since skipping it would read as the symbol absent.
+fn name_of<'data>(symbol: &impl ObjectSymbol<'data>) -> Result<Vec<u8>, String> {
+    symbol
+        .name_bytes()
+        .map(<[u8]>::to_vec)
+        .map_err(|e| format!("unreadable symbol name: {e}"))
+}
+
+/// Read a library's symbols, or say why it cannot.
+fn read_symbols(bytes: &[u8]) -> Result<Symbols, String> {
+    let file = object::File::parse(bytes).map_err(|e| format!("not an object file: {e}"))?;
+    match file.format() {
+        BinaryFormat::Elf => {
+            // The dynamic symbols are the exports of an ELF library; the
+            // static table lists the rest, trampolines included.
+            let exports = file
+                .dynamic_symbols()
+                .filter(|s| s.is_definition())
+                .map(|s| name_of(&s))
+                .collect::<Result<_, _>>()?;
+            let table = file
+                .symbols()
+                .chain(file.dynamic_symbols())
+                .map(|s| name_of(&s))
+                .collect::<Result<_, _>>()?;
+            Ok(Symbols {
+                exports,
+                table: Some(table),
+            })
+        },
+        BinaryFormat::MachO => {
+            let exports = file
+                .exports()
+                .map_err(|e| format!("unreadable export trie: {e}"))?
+                .iter()
+                .map(|e| e.name().to_vec())
+                .collect();
+            let table = file
+                .symbols()
+                .map(|s| name_of(&s))
+                .collect::<Result<_, _>>()?;
+            Ok(Symbols {
+                exports,
+                table: Some(table),
+            })
+        },
+        BinaryFormat::Pe => {
+            let exports = file
+                .exports()
+                .map_err(|e| format!("unreadable export table: {e}"))?
+                .iter()
+                .map(|e| e.name().to_vec())
+                .collect();
+            Ok(Symbols {
+                exports,
+                table: None,
+            })
+        },
+        other => Err(format!("not a library format this test reads: {other:?}")),
+    }
+}
+
+/// The wanted names that no name in `names` contains.
+///
+/// Substring, because mangling wraps an ident (`_ZN..17h<hash>E`) and Mach-O
+/// prefixes an underscore, and the ident survives both.
+fn missing<'a>(names: &[Vec<u8>], wanted: &[&'a str]) -> Vec<&'a str> {
+    wanted
+        .iter()
+        .copied()
+        .filter(|w| !names.iter().any(|n| contains(n, w.as_bytes())))
+        .collect()
+}
+
+fn contains(haystack: &[u8], needle: &[u8]) -> bool {
+    haystack.windows(needle.len()).any(|w| w == needle)
+}
+
 #[test]
 fn trampolines_survive_lto() {
     let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -57,46 +151,40 @@ fn trampolines_survive_lto() {
     let candidates = [
         target_dir.join(format!("lib{FIXTURE_LIB}.dylib")),
         target_dir.join(format!("lib{FIXTURE_LIB}.so")),
+        target_dir.join(format!("{FIXTURE_LIB}.dll")),
     ];
     let cdylib = candidates
         .iter()
         .find(|p| p.exists())
         .unwrap_or_else(|| panic!("no cdylib output found among {:?}", candidates));
 
-    let nm = Command::new("nm").arg(cdylib).output().expect("invoke nm");
-    if !nm.status.success() {
-        panic!(
-            "nm failed on {:?}\n--- stderr ---\n{}",
-            cdylib,
-            String::from_utf8_lossy(&nm.stderr),
+    let bytes = std::fs::read(cdylib).expect("read the LTO fixture");
+    let symbols = read_symbols(&bytes)
+        .unwrap_or_else(|why| panic!("cannot read the LTO fixture {cdylib:?}: {why}"));
+
+    assert!(
+        missing(&symbols.exports, &[DESCRIPTOR]).is_empty(),
+        "exported descriptor function missing from the exports of {cdylib:?}",
+    );
+    if let Some(table) = &symbols.table {
+        let gone = missing(table, &TRAMPOLINES);
+        assert!(
+            gone.is_empty(),
+            "trampolines did not survive LTO in {cdylib:?}, missing: {gone:?}",
         );
     }
-    let symbols = String::from_utf8_lossy(&nm.stdout);
 
-    assert!(
-        symbols.contains("__hilavitkutin_extension_descriptor"),
-        "exported descriptor function missing from {:?}; nm output:\n{}",
-        cdylib,
-        symbols,
-    );
-    assert!(
-        symbols.contains("ext_init_trampoline"),
-        "init trampoline did not survive LTO in {:?}; nm output:\n{}",
-        cdylib,
-        symbols,
-    );
-    assert!(
-        symbols.contains("ext_shutdown_trampoline"),
-        "shutdown trampoline did not survive LTO in {:?}; nm output:\n{}",
-        cdylib,
-        symbols,
-    );
+    assert_distinct_lifecycle_addresses(cdylib);
+}
 
-    // dlopen the cdylib and assert that init_fn and shutdown_fn fn-pointer
-    // slots in the descriptor resolve to distinct addresses. nm-substring
-    // survival is necessary; distinct fn-pointer addresses is what the
-    // framework's contract actually requires (and what ICF address aliasing
-    // would silently break for non-trivial consumer impls).
+/// Load the library and assert that the descriptor's `init_fn` and
+/// `shutdown_fn` slots are present and resolve to distinct addresses.
+///
+/// Symbol survival is necessary; distinct fn-pointer addresses is what the
+/// framework's contract actually requires, and what ICF address aliasing would
+/// silently break for non-trivial consumer impls. On a PE image, which has no
+/// symbol table to read, this is the check that stands in for the second.
+fn assert_distinct_lifecycle_addresses(cdylib: &Path) {
     use core::ffi::c_void;
 
     use hilavitkutin_extensions::{ExtensionAbiStatus, ExtensionDescriptor};
@@ -104,9 +192,9 @@ fn trampolines_survive_lto() {
     type DescriptorFn = unsafe extern "C" fn() -> *const ExtensionDescriptor;
     type LifecycleFn = unsafe extern "C" fn(*mut c_void) -> ExtensionAbiStatus;
 
-    let lib = unsafe { libloading::Library::new(cdylib).expect("dlopen the LTO fixture") };
+    let lib = unsafe { libloading::Library::new(cdylib).expect("load the LTO fixture") };
     let descriptor_fn = unsafe {
-        lib.get::<DescriptorFn>(b"__hilavitkutin_extension_descriptor")
+        lib.get::<DescriptorFn>(DESCRIPTOR.as_bytes())
             .expect("resolve descriptor symbol")
     };
     let descriptor_ptr = unsafe { descriptor_fn() };
@@ -116,7 +204,7 @@ fn trampolines_survive_lto() {
     );
     // SAFETY: descriptor function returned a non-null pointer to the
     // extension's static descriptor; valid for the lifetime of the
-    // loaded library, which is the rest of this test.
+    // loaded library, which is the rest of this function.
     let descriptor = unsafe { &*descriptor_ptr };
     let init_fn: Option<LifecycleFn> = descriptor.init_fn;
     let shutdown_fn: Option<LifecycleFn> = descriptor.shutdown_fn;
@@ -133,10 +221,6 @@ fn trampolines_survive_lto() {
          discriminator (b\"init\" vs b\"shutdown\" via core::hint::black_box) \
          is what keeps the addresses distinct.",
     );
-
-    // Suppress the unused-import warning on platforms that compile this
-    // module but skip the body via cfg.
-    let _ = FIXTURE_PKG;
 }
 
 /// The directory cargo builds the fixture into.
@@ -145,8 +229,7 @@ fn trampolines_survive_lto() {
 /// `build.target-dir` in any `.cargo/config.toml` above the fixture, or a
 /// `CARGO_TARGET_DIR` in the environment, moves it, and a fixed path then
 /// finds no library and fails for a reason unrelated to LTO.
-#[cfg(unix)]
-fn fixture_target_dir(fixture_manifest: &std::path::Path) -> PathBuf {
+fn fixture_target_dir(fixture_manifest: &Path) -> PathBuf {
     let metadata = Command::new("cargo")
         .arg("metadata")
         .arg("--format-version")
@@ -215,20 +298,34 @@ fn target_directory_is_absent_when_the_value_never_closes() {
     );
 }
 
-/// CONTRACT: the trampolines survive fat LTO on a non-unix host too.
-///
-/// The unix test reads the symbol table with `nm`, which a Windows toolchain
-/// does not ship. The same assertion needs `dumpbin /SYMBOLS` or the `object`
-/// crate there.
-#[cfg(not(unix))]
+fn names(list: &[&str]) -> Vec<Vec<u8>> {
+    list.iter().map(|s| s.as_bytes().to_vec()).collect()
+}
+
 #[test]
-#[ignore = "catalogue: trampoline survival under fat LTO is unchecked off unix; needs a dumpbin or object-crate symbol reader; tracked #hilavitkutin_catalogue_trampoline_survival_under_fat_lto_is"]
-fn trampolines_survive_lto() {
-    unimplemented!(
-        "contract: `__hilavitkutin_extension_descriptor` is exported and \
-         `ext_init_trampoline` / `ext_shutdown_trampoline` appear in the symbol \
-         table of the fat-LTO fixture cdylib. Fill when a symbol reader for \
-         non-unix hosts lands. \
-         tracked #hilavitkutin_catalogue_trampoline_survival_under_fat_lto_is"
-    );
+fn a_list_without_the_shutdown_trampoline_is_reported() {
+    // The control for the survival check: a table that kept the init
+    // trampoline and lost the shutdown one is reported as missing exactly it,
+    // so a pass above means both names were there.
+    let table = names(&[
+        "_ZN15lto_smoke_fixture19ext_init_trampoline17h0123456789abcdefE",
+        "unrelated_symbol",
+    ]);
+    assert_eq!(missing(&table, &TRAMPOLINES), vec![
+        "ext_shutdown_trampoline"
+    ]);
+    assert!(missing(&table, &["ext_init_trampoline"]).is_empty());
+}
+
+#[test]
+fn a_mach_o_underscore_prefix_does_not_hide_the_descriptor() {
+    let exports = names(&["___hilavitkutin_extension_descriptor"]);
+    assert!(missing(&exports, &[DESCRIPTOR]).is_empty());
+}
+
+#[test]
+fn a_file_that_is_not_an_object_is_refused() {
+    // Nothing found in an unreadable file must not pass for nothing missing.
+    assert!(read_symbols(b"this is not a shared library").is_err());
+    assert!(read_symbols(&[]).is_err());
 }
