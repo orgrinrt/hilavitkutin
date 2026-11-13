@@ -1,18 +1,27 @@
 // The same unit and registration as `unmapped_unit_fused_fail.rs`, with the
-// `impl RecordOp` block added and `run_fused` still called. With the per-record
-// map declared the carrier is accepted, which shows the refusal in the failing
-// twin is about that one missing implementation and not about the scaffolding.
+// `impl RecordOp` block added and `run_fused` still called. The unit is a pure
+// per-record map (it reads one column, writes another and keeps no
+// accumulator), so declaring its map is accurate and the carrier is accepted.
+// That shows the refusal in the failing twin is about that one missing
+// implementation and not about the scaffolding.
 
 use core::cell::Cell;
 
 use arvo::{Bool, USize};
-use hilavitkutin::dispatch::engine_ctx::{AccPtrCons, AccPtrNil, ColPtrNil, EngineCtx, SnapNil};
+use hilavitkutin::dispatch::engine_ctx::{AccPtrNil, ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
-use hilavitkutin_api::context::{AccumWriterApi, HasAccumWriter};
+use hilavitkutin_api::context::{
+    ColumnReaderApi,
+    ColumnWriterApi,
+    EachApi,
+    HasColumnReader,
+    HasColumnWriter,
+    HasEach,
+};
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::Accum;
+use hilavitkutin_api::store::Column;
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 
@@ -42,48 +51,51 @@ impl MemoryProviderApi for Provider {
 }
 
 #[derive(Copy, Clone)]
-struct Av(u32);
-
-#[derive(Copy, Clone)]
 struct Xa(u32);
 
 #[derive(Copy, Clone)]
 struct Ya(u32);
 
-type AccW = Cons<Accum<Av>, Empty>;
+type ReadX = Cons<Column<Xa>, Empty>;
+type WriteY = Cons<Column<Ya>, Empty>;
 
 #[derive(Copy, Clone)]
-struct LogOnlyWu;
+struct MapWu;
 
-impl BuilderInput for LogOnlyWu {
+impl BuilderInput for MapWu {
     type Dispatch = UnitDispatch<Self>;
     type Init = Self;
 }
 
-impl WorkUnit<Always> for LogOnlyWu {
+impl WorkUnit<Always> for MapWu {
     type Ctx<'frame> = EngineCtx<
         'frame,
-        Empty,
-        AccW,
+        ReadX,
+        WriteY,
         SnapNil,
-        ColPtrNil,
-        ColPtrNil,
-        AccPtrCons<'frame, Av, AccPtrNil>,
+        ColPtrCons<Xa, ColPtrNil>,
+        ColPtrCons<Ya, ColPtrNil>,
+        AccPtrNil,
     >;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Read = Empty;
-    type Write = AccW;
+    type Read = ReadX;
+    type Write = WriteY;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        unsafe { ctx.accums().append::<Av, _>(Av(700)) };
+        ctx.each().run(|i| {
+            // SAFETY: `Xa` is read only here and `Ya` is this unit's exclusive
+            // write column, both reserved for the record range.
+            let x = unsafe { ctx.reader().read::<Xa, _>(i) };
+            unsafe { ctx.writer().write::<Ya, _>(i, Ya(x.0)) };
+        });
     }
 }
 
-impl hilavitkutin_api::RecordOp for LogOnlyWu {
+impl hilavitkutin_api::RecordOp for MapWu {
     type In = Xa;
     type Out = Ya;
 
@@ -103,11 +115,11 @@ fn main() {
         used: Cell::new(0),
     };
     let mut scheduler = Scheduler::builder()
-        .with(hilavitkutin_api::store::Column::<Xa>::new())
-        .with(hilavitkutin_api::store::Column::<Ya>::new())
-        .with(Accum::<Av>::new())
-        .with(LogOnlyWu)
+        .with(Column::<Xa>::new())
+        .with(Column::<Ya>::new())
+        .with(MapWu)
         .build(store(provider), USize(4))
         .unwrap_or_else(|_| panic!("build should succeed"));
-    let _ = scheduler.run_fused();
+    let outcome = scheduler.run_fused();
+    assert!(matches!(outcome, notko::Outcome::Ok(())));
 }

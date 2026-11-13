@@ -1,14 +1,14 @@
-error[E0277]: `LogOnlyWu` does not declare a per-record map for fusion
-   --> tests/ui/unmapped_unit_fused_fail.rs:107:13
+error[E0277]: `MapWu` does not declare a per-record map for fusion
+   --> tests/ui/unmapped_unit_fused_fail.rs:116:19
     |
-107 |     let _ = scheduler.run_fused();
-    |             ^^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+116 |     let outcome = scheduler.run_fused();
+    |                   ^^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
     |
-help: the trait `RecordOp` is not implemented for `LogOnlyWu`
-   --> tests/ui/unmapped_unit_fused_fail.rs:60:1
+help: the trait `RecordOp` is not implemented for `MapWu`
+   --> tests/ui/unmapped_unit_fused_fail.rs:65:1
     |
- 60 | struct LogOnlyWu;
-    | ^^^^^^^^^^^^^^^^
+ 65 | struct MapWu;
+    | ^^^^^^^^^^^^
     = note: Implement `RecordOp` on a WorkUnit that is a pure per-record map (one column in, one column out, no cross-record state) to let the engine fuse a linear chain of such units. Declare `type In`, `type Out`, and `fn apply(&self, x: In) -> Out`. A unit with cross-record state (an accumulator) does not implement `RecordOp`.
 help: the following other types implement trait `FuseCarrier`
    --> src/dispatch/fusion.rs
@@ -24,4 +24,4 @@ help: the following other types implement trait `FuseCarrier`
     | |     WuCons<H2, T>: FuseCarrier,
     | |     <WuCons<H2, T> as FuseCarrier>::Chain: OpChain<In = <H as RecordOp>::Out>,
     | |______________________________________________________________________________^ `WuCons<H, WuCons<H2, T>>`
-    = note: required for `WuCons<LogOnlyWu, WuNil>` to implement `FuseCarrier`
+    = note: required for `WuCons<MapWu, WuNil>` to implement `FuseCarrier`

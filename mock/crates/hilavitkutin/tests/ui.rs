@@ -19,4 +19,8 @@ fn compile_fail_fixtures() {
     t.compile_fail("tests/ui/undeclared_read_fail.rs");
     t.pass("tests/ui/unmapped_unit_fused_pass.rs");
     t.compile_fail("tests/ui/unmapped_unit_fused_fail.rs");
+    t.pass("tests/ui/replace_value_unreachable_pass.rs");
+    t.compile_fail("tests/ui/replace_value_unreachable_fail.rs");
+    t.pass("tests/ui/replace_value_orphan_pass.rs");
+    t.compile_fail("tests/ui/replace_value_orphan_fail.rs");
 }

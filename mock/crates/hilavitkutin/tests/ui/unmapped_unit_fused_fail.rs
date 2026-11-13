@@ -1,22 +1,29 @@
-// A unit with no per-record map (it does not implement `RecordOp`) is run
-// through `run_fused`, with the two columns the fused chain would bind
-// registered. The fused entry folds the carrier into a chain of `RecordOp`
-// maps, so the carrier is refused at compile time, and that missing
-// implementation is the only error. This shows only that refusal: a unit that
-// implements `RecordOp` and also writes an accumulator is accepted, which
-// `tests/fused_append.rs` records. The twin `unmapped_unit_fused_pass.rs`
-// differs only in the `impl RecordOp` block.
+// A unit that is a pure per-record map (it reads one column, writes another and
+// keeps no accumulator) is run through `run_fused`, but it does not declare its
+// map: it does not implement `RecordOp`. The fused entry folds the carrier into
+// a chain of `RecordOp` maps, so the carrier is refused at compile time, and
+// that missing implementation is the only error. The twin
+// `unmapped_unit_fused_pass.rs` differs only in the `impl RecordOp` block. The
+// gap in the other direction, an accumulator-writing unit that does implement
+// `RecordOp` and is accepted, is recorded by `tests/fused_append.rs`.
 
 use core::cell::Cell;
 
 use arvo::{Bool, USize};
-use hilavitkutin::dispatch::engine_ctx::{AccPtrCons, AccPtrNil, ColPtrNil, EngineCtx, SnapNil};
+use hilavitkutin::dispatch::engine_ctx::{AccPtrNil, ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
-use hilavitkutin_api::context::{AccumWriterApi, HasAccumWriter};
+use hilavitkutin_api::context::{
+    ColumnReaderApi,
+    ColumnWriterApi,
+    EachApi,
+    HasColumnReader,
+    HasColumnWriter,
+    HasEach,
+};
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::Accum;
+use hilavitkutin_api::store::Column;
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 
@@ -46,44 +53,47 @@ impl MemoryProviderApi for Provider {
 }
 
 #[derive(Copy, Clone)]
-struct Av(u32);
-
-#[derive(Copy, Clone)]
 struct Xa(u32);
 
 #[derive(Copy, Clone)]
 struct Ya(u32);
 
-type AccW = Cons<Accum<Av>, Empty>;
+type ReadX = Cons<Column<Xa>, Empty>;
+type WriteY = Cons<Column<Ya>, Empty>;
 
 #[derive(Copy, Clone)]
-struct LogOnlyWu;
+struct MapWu;
 
-impl BuilderInput for LogOnlyWu {
+impl BuilderInput for MapWu {
     type Dispatch = UnitDispatch<Self>;
     type Init = Self;
 }
 
-impl WorkUnit<Always> for LogOnlyWu {
+impl WorkUnit<Always> for MapWu {
     type Ctx<'frame> = EngineCtx<
         'frame,
-        Empty,
-        AccW,
+        ReadX,
+        WriteY,
         SnapNil,
-        ColPtrNil,
-        ColPtrNil,
-        AccPtrCons<'frame, Av, AccPtrNil>,
+        ColPtrCons<Xa, ColPtrNil>,
+        ColPtrCons<Ya, ColPtrNil>,
+        AccPtrNil,
     >;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Read = Empty;
-    type Write = AccW;
+    type Read = ReadX;
+    type Write = WriteY;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        unsafe { ctx.accums().append::<Av, _>(Av(700)) };
+        ctx.each().run(|i| {
+            // SAFETY: `Xa` is read only here and `Ya` is this unit's exclusive
+            // write column, both reserved for the record range.
+            let x = unsafe { ctx.reader().read::<Xa, _>(i) };
+            unsafe { ctx.writer().write::<Ya, _>(i, Ya(x.0)) };
+        });
     }
 }
 
@@ -98,11 +108,11 @@ fn main() {
         used: Cell::new(0),
     };
     let mut scheduler = Scheduler::builder()
-        .with(hilavitkutin_api::store::Column::<Xa>::new())
-        .with(hilavitkutin_api::store::Column::<Ya>::new())
-        .with(Accum::<Av>::new())
-        .with(LogOnlyWu)
+        .with(Column::<Xa>::new())
+        .with(Column::<Ya>::new())
+        .with(MapWu)
         .build(store(provider), USize(4))
         .unwrap_or_else(|_| panic!("build should succeed"));
-    let _ = scheduler.run_fused();
+    let outcome = scheduler.run_fused();
+    assert!(matches!(outcome, notko::Outcome::Ok(())));
 }

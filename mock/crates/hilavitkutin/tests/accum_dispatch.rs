@@ -20,10 +20,9 @@
 //! Lives under `tests/` so the bare numeric record values do not trip the
 //! src-tree primitive lints.
 
-use core::cell::{Cell, UnsafeCell};
-use core::mem::MaybeUninit;
+mod stable_provider;
 
-use arvo::{Bool, USize};
+use arvo::USize;
 use hilavitkutin::dispatch::engine_ctx::{AccPtrCons, AccPtrNil, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
@@ -34,47 +33,11 @@ use hilavitkutin_api::store::Accum;
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
+use stable_provider::StableProvider;
 
 /// Wrap a provider in the default-capacity arena store (`D = Dim<256>`).
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
-}
-
-// Stack-backed test memory provider (mirrors tests/column_dispatch.rs).
-struct BumpProvider<const N: usize> {
-    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
-    used: Cell<usize>,
-}
-
-impl<const N: usize> BumpProvider<N> {
-    fn new() -> Self {
-        Self {
-            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
-            used: Cell::new(0),
-        }
-    }
-}
-
-unsafe impl<const N: usize> Send for BumpProvider<N> {}
-unsafe impl<const N: usize> Sync for BumpProvider<N> {}
-
-impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
-    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
-        let base = self.buf.get() as *mut u8;
-        let used = self.used.get();
-        let align = align.0.max(1);
-        let aligned = (used + align - 1) / align * align;
-        if aligned + len.0 > N {
-            return core::ptr::null_mut();
-        }
-        self.used.set(aligned + len.0);
-        // SAFETY: `aligned + len <= N`, in bounds of the owned buffer.
-        unsafe { base.add(aligned) }
-    }
-
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
-
-    unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
 // The capacity the accumulator reserves (>= the three appends). The live
@@ -197,7 +160,7 @@ impl WorkUnit<Always> for OverAppendWu {
 #[test]
 #[should_panic(expected = "reserved capacity")]
 fn accum_append_panics_past_reserved_capacity() {
-    let provider = BumpProvider::<8192>::new();
+    let provider = StableProvider::new(8192);
     let mut scheduler = Scheduler::builder()
         .with(Accum::<Av>::new())
         .with(OverAppendWu)
@@ -209,7 +172,7 @@ fn accum_append_panics_past_reserved_capacity() {
 
 #[test]
 fn accum_appends_land_in_order_with_live_length_through_run() {
-    let provider = BumpProvider::<8192>::new();
+    let provider = StableProvider::new(8192);
     let mut scheduler = Scheduler::builder()
         .with(Accum::<Av>::new())
         .with(AppendWu)

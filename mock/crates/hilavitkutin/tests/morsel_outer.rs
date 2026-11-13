@@ -25,11 +25,11 @@
 //! Lives under `tests/` so the bare numeric record values do not trip the
 //! src-tree primitive lints.
 
-use core::cell::{Cell, UnsafeCell};
-use core::mem::MaybeUninit;
+mod stable_provider;
+
 use std::cell::RefCell;
 
-use arvo::{Bool, USize};
+use arvo::USize;
 use hilavitkutin::dispatch::engine_ctx::{
     AccPtrCons,
     AccPtrNil,
@@ -56,47 +56,11 @@ use hilavitkutin_api::store::{Accum, Column};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
+use stable_provider::StableProvider;
 
 /// Wrap a provider in the default-capacity arena store (`D = Dim<256>`).
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
-}
-
-// Stack-backed test memory provider (mirrors tests/column_dispatch.rs).
-struct BumpProvider<const N: usize> {
-    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
-    used: Cell<usize>,
-}
-
-impl<const N: usize> BumpProvider<N> {
-    fn new() -> Self {
-        Self {
-            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
-            used: Cell::new(0),
-        }
-    }
-}
-
-unsafe impl<const N: usize> Send for BumpProvider<N> {}
-unsafe impl<const N: usize> Sync for BumpProvider<N> {}
-
-impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
-    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
-        let base = self.buf.get() as *mut u8;
-        let used = self.used.get();
-        let align = align.0.max(1);
-        let aligned = (used + align - 1) / align * align;
-        if aligned + len.0 > N {
-            return core::ptr::null_mut();
-        }
-        self.used.set(aligned + len.0);
-        // SAFETY: `aligned + len <= N`, in bounds of the owned buffer.
-        unsafe { base.add(aligned) }
-    }
-
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
-
-    unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
 // Two morsels under the fiber's plan-baked L1 window (one 4-byte write column
@@ -184,7 +148,7 @@ impl WorkUnit<Always> for ConsumerWu {
 #[test]
 fn accumulator_free_pipeline_dispatches_morsel_outer() {
     DISPATCH_ORDER.with(|o| o.borrow_mut().clear());
-    let provider = BumpProvider::<65536>::new();
+    let provider = StableProvider::new(65536);
     let mut scheduler = Scheduler::builder()
         .with(Column::<Cv>::new())
         .with(ProducerWu)
@@ -328,7 +292,7 @@ fn accumulator_pipeline_dispatches_unit_outer() {
     // post-GATE-1 Approach-A `FiberCons` nesting (#670); the flat walk cannot
     // slice the carrier per unit at a runtime morsel index.
     DISPATCH_ORDER.with(|o| o.borrow_mut().clear());
-    let provider = BumpProvider::<131072>::new();
+    let provider = StableProvider::new(131072);
     let mut scheduler = Scheduler::builder()
         .with(Accum::<Av>::new())
         .with(Accum::<Bv>::new())

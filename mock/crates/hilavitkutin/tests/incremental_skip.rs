@@ -39,10 +39,11 @@
 //! Lives under `tests/` so the bare numeric record values and counters do
 //! not trip the src-tree primitive lints.
 
-use core::cell::Cell;
+mod stable_provider;
+
 use std::cell::RefCell;
 
-use arvo::{Bool, USize};
+use arvo::USize;
 use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapCons, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
@@ -62,57 +63,11 @@ use hilavitkutin_api::store::{Column, Resource};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
+use stable_provider::StableProvider;
 
 /// Wrap a provider in the default-capacity arena store (`D = Dim<256>`).
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
-}
-
-// Heap-backed bump provider whose buffer address survives moves of the
-// provider: the scheduler and its storage move after `build`, and the column
-// bases recorded at build must stay valid. An inline-array provider moves its
-// buffer with the scheduler and leaves those bases dangling (ticket
-// `6393002dea2d`), which made two schedulers in one test alias each other.
-struct StableProvider {
-    base: *mut u8,
-    cap:  usize,
-    used: Cell<usize>,
-}
-
-impl StableProvider {
-    fn new(cap: usize) -> Self {
-        let leaked: &'static mut [u8] = std::vec![0u8; cap].leak();
-        Self {
-            base: leaked.as_mut_ptr(),
-            cap,
-            used: Cell::new(0),
-        }
-    }
-}
-
-unsafe impl Send for StableProvider {}
-unsafe impl Sync for StableProvider {}
-
-impl MemoryProviderApi for StableProvider {
-    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
-        let align = align.0.max(1);
-        // Align the address, not the offset: the base comes from a `Vec<u8>`,
-        // whose own alignment is one, so an aligned offset alone would not give
-        // a `u32` column a four-byte aligned address.
-        let addr = self.base as usize + self.used.get();
-        let aligned = (addr + align - 1) / align * align - self.base as usize;
-        if aligned + len.0 > self.cap {
-            return core::ptr::null_mut();
-        }
-        self.used.set(aligned + len.0);
-        // SAFETY: `aligned + len <= cap`, inside the leaked buffer, and the
-        // returned address is a multiple of `align`.
-        unsafe { self.base.add(aligned) }
-    }
-
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
-
-    unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
 // A few records, one morsel under the 256 default: an accumulator-free
