@@ -1,0 +1,17 @@
+# Ad-hoc spike of the stack audit of 13 November 2026: the shapes a four-stage
+# map over columns can take, timed with a plain std timer. Its own workspace,
+# so the repository's build never sees it. Not a bench: see FINDINGS.md.
+
+[workspace]
+
+[package]
+name = "chain-shapes-adhoc"
+edition = "2024"
+publish = false
+version = "0.0.0"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
