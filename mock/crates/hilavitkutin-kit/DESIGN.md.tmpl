@@ -40,7 +40,7 @@ pub trait Kit {
 
 Two associated types only. `Units` is a cons-list of `WorkUnit`
 declarations the Kit ships; `Owned` is a cons-list of store markers
-(`Resource<T>` / `Column<T>` / `Accum<T>` / `Virtual<T>`) the Kit declares as
+(`Resource<T>` / `Column<T>` / `Buffered<T, M>` / `Accum<T>` / `Virtual<T>`) the Kit declares as
 its own. Both bounds (`WorkUnitBundle`, `StoreBundle`) are
 core primitives in `hilavitkutin-api`.
 
