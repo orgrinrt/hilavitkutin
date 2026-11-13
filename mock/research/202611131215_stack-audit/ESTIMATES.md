@@ -42,7 +42,7 @@ So the honest statement is that the engine's cost against hand-written no_std co
 
 ## Compared with other frameworks
 
-These are reasoning from published design and from what each system is for. None was run for this audit and no number below is measured.
+These are reasoning from published design and from what each system is for. None was run for this audit, no number below is measured, and no source was opened for them either: the characterisations come from what this auditor already knew about each system, which means they can be out of date and a reader should check any of them before acting on it. Where one of these comparisons would decide something, it wants a source fetched and persisted, which is what the workspace rule about research asks for and what this audit did not do.
 
 Bevy ECS. The closest first-party comparison in Rust, and the one kaski's audience would reach for. Bevy's scheduler resolves system access sets at runtime into a dependency graph and runs systems on a thread pool; iteration goes through archetype tables with per-component slices, and queries are typed but dispatch is a dynamic walk. The estimate is that a hilavitkutin built to intent is substantially ahead on a chain of per-record operations over the same columns, because the intermediates fuse and Bevy's systems each make a pass, and that Bevy is ahead on everything structural: spawn and despawn, variable entity counts, sparse components, change detection that the framework maintains rather than the user. The honest summary is that they are not solving the same problem, and that hilavitkutin would be a poor general ECS and a good crunching core underneath one.
 
