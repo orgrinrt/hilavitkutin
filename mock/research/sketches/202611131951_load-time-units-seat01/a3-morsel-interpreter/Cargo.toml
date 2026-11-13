@@ -1,0 +1,17 @@
+# Arm A3, behaviour that arrives at load time as data, run by a work unit
+# compiled into the schedule. The unit's access set is a compile-time fact; the
+# program it runs is parsed and checked against that set when content loads.
+# Runs on the trunk engine with no change to it.
+
+[package]
+name = "a3-morsel-interpreter"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+[dependencies]
+hilavitkutin = { path = "../../../../crates/hilavitkutin" }
+hilavitkutin-api.workspace = true
+hilavitkutin-providers.workspace = true
+arvo.workspace = true
+notko.workspace = true

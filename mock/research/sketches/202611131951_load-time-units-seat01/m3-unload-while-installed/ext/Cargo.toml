@@ -1,0 +1,12 @@
+# The extension: one C-ABI kernel over a morsel, nothing else, so that
+# dlclose really unmaps it (no thread-local destructors, nothing that would
+# make glibc mark the image NODELETE).
+
+[package]
+name = "m3-ext"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
