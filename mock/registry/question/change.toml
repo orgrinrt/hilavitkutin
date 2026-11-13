@@ -1,0 +1,134 @@
+# The questions whose subject is `change`.
+
+[[question]]
+id = "how_a_unit_reads_the_value_a_store_held_at_frame_start"
+asks = "A unit needs the value a store held at the start of the frame while the same or another unit produces the next value. How should hilavitkutin say that?"
+options = [
+    "Read marker, engine buffers: An ordinary column plus a read marker meaning 'as of frame start'; the engine derives the buffering from the access declarations. Writers stay ordinary writers, ordered like any others.",
+    "Two-sided store, meta swap: One store kind with a committed and a staged side, swapped by a meta unit on the scheduler's own pipeline; its writers are ordered like any writers.",
+    "Two stores and a carry unit: Two ordinary stores and a unit on the frame-end meta band that carries next to current. Nothing new in the api.",
+    "As the revision wrote: A kind with a committed and staged side, one writer only, swapped by the engine outside the meta band.",
+]
+state = "answered"
+answer = "I am almost 100% we have these counters/increments already designed exactly for something like this. Hilavitkutin has a spec and known downstream users (not us at least not yet) that do triple buffering even and the spec should answer that already at least in intent… have you not read the whole thing? Perhaps you better increase your efforts on porting the canon and design in hila to a registry so canon tools and such can be used on it, as unearth and already said too and whatever else we are upstrwaming"
+answered = "2026-11-13 08:13: .data/op-responses/202611130808_read-the-whole-hilavitkutin-spec-and-port-it-to-a-registry.md"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:537-563"
+quote = '''
+#### Last frame
+
+  ```text
+  hilavitkutin: a unit needs the value a store held at the start of the frame while the same or another unit produces the next value (kaski's fields step this way). The record is silent on it. How should hilavitkutin say that?
+  ```
+
+Options offered:
+
+1. Read marker, engine buffers
+
+   An ordinary column plus a read marker meaning 'as of frame start'; the engine derives the buffering from the access declarations. Writers stay ordinary writers, ordered like any others.
+
+2. Two-sided store, meta swap
+
+   One store kind with a committed and a staged side, swapped by a meta unit on the scheduler's own pipeline; its writers are ordered like any writers.
+
+3. Two stores and a carry unit
+
+   Two ordinary stores and a unit on the frame-end meta band that carries next to current. Nothing new in the api.
+
+4. As the revision wrote
+
+   A kind with a committed and staged side, one writer only, swapped by the engine outside the meta band.
+
+Answered in their own words:
+
+> I am almost 100% we have these counters/increments already designed exactly for something like this. Hilavitkutin has a spec and known downstream users (not us at least not yet) that do triple buffering even and the spec should answer that already at least in intent… have you not read the whole thing? Perhaps you better increase your efforts on porting the canon and design in hila to a registry so canon tools and such can be used on it, as unearth and already said too and whatever else we are upstrwaming
+'''
+subject = "change"
+keywords = ["frame start", "last frame", "committed", "staged", "buffering", "triple buffering", "counters", "increments", "read marker", "swap"]
+related = ["tenet::no_write_is_partial", "tenet::version_stamps_tell_which_stores_a_unit_actually_modified", "tenet::change_detection_is_per_morsel_and_skips_what_is_unchanged"]
+
+[[question]]
+id = "what_changed_means_for_a_computed_column"
+asks = "When hilavitkutin tracks which records changed in a frame, so that only readers of changed data are woken, what does changed mean for a computed column?"
+options = [
+    "Differs from the frame before (Recommended): A value compared with the committed one, at a granularity fixed in the contract. Equal rewrites wake nobody and the plumbing has no discretion.",
+    "Written this frame: Any write marks it changed, whatever the value. Cheaper to track, wakes more.",
+    "Declared per column: The column (or the unit writing it) declares which of the two holds, as a trait or const; default differs.",
+]
+state = "answered"
+answer = "Declared per column"
+answered = "2026-11-13 05:50: .data/op-responses/202611130550_four-calls-that-shape-the-hilavitkutin-api-revision.md"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:258-280"
+quote = '''
+#### Changed
+
+  ```text
+  When hilavitkutin tracks which records 'changed' in a frame (so only readers of changed data are woken), what does changed mean for a computed column? Both experts picked the first option; they call it a derivation of yours to confirm, not canon text.
+  ```
+
+Options offered:
+
+1. Differs from the frame before (Recommended)
+
+   A value compared with the committed one, at a granularity fixed in the contract. Equal rewrites wake nobody and the plumbing has no discretion.
+
+2. Written this frame
+
+   Any write marks it changed, whatever the value. Cheaper to track, wakes more.
+
+3. Declared per column
+
+   The column (or the unit writing it) declares which of the two holds, as a trait or const; default differs.
+
+Chosen:
+
+- Declared per column
+'''
+subject = "change"
+keywords = ["changed", "differs", "written", "declared per column", "wake", "computed column"]
+related = ["question::which_stores_declare_what_changed_means", "tenet::change_detection_is_per_morsel_and_skips_what_is_unchanged"]
+
+[[question]]
+id = "which_stores_declare_what_changed_means"
+asks = "The answer that what changed means is declared per column was applied only to the new frame-buffered column kind, because a column written in place has no committed copy to compare with. Which stores declare it?"
+options = [
+    "Every per-record kind, sensible defaults: Every per-record store kind declares it; the default is differs for the frame-buffered kind and written for a column written in place. Declaring differs on an in-place column asks its values to be comparable and costs a compare.",
+    "Frame-buffered only: Only the frame-buffered kind declares it; an in-place column counts as changed whenever its writer ran.",
+    "Every kind, default differs: Every per-record kind declares it and the default is differs everywhere, so every column value must be comparable.",
+    "The writing unit declares: The unit that writes says which meaning holds for its write, not the store.",
+]
+state = "answered"
+answer = "Last option. Pretty sure this is somewhere in the research and proposed canon…"
+answered = "2026-11-13 07:59: .data/op-responses/202611130726_does-anyone-here-know-what-hilavitkutin-is.md"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:431-457"
+quote = '''
+#### Changed scope
+
+  ```text
+  You answered that what 'changed' means is declared per column (differs from the committed frame, or written this frame). The changelist applies that only to the new frame-buffered column kind, because a column written in place has no committed copy to compare with. Which stores declare it?
+  ```
+
+Options offered:
+
+1. Every per-record kind, sensible defaults
+
+   Every per-record store kind declares it; the default is differs for the frame-buffered kind and written for a column written in place. Declaring differs on an in-place column asks its values to be comparable and costs a compare.
+
+2. Frame-buffered only
+
+   Only the frame-buffered kind declares it; an in-place column counts as changed whenever its writer ran.
+
+3. Every kind, default differs
+
+   Every per-record kind declares it and the default is differs everywhere, so every column value must be comparable.
+
+4. The writing unit declares
+
+   The unit that writes says which meaning holds for its write, not the store.
+
+Answered in their own words:
+
+> Last option. Pretty sure this is somewhere in the research and proposed canon…
+'''
+subject = "change"
+keywords = ["changed", "who declares", "writing unit", "differs", "written", "frame-buffered", "in place"]
+related = ["question::what_changed_means_for_a_computed_column"]

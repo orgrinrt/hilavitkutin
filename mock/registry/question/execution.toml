@@ -1,0 +1,88 @@
+# The questions whose subject is `execution`.
+
+[[question]]
+id = "which_convergence_a_single_trunk_phase_uses"
+asks = "For single-trunk phases: head-and-tail convergence or the N-way record split? The records were reversed back to head-and-tail in July, the N-way path is what runs on the trunk, and the design text carries both. Which is the design?"
+options = [
+    "Head-and-tail, finish the deletion: As r8 and the seed say. The N-way path in `worker.rs` is removed, the head-and-tail types get driven, the design's ceil-slice passages are corrected, a commutativity test is added.",
+    "N-way, retire head-and-tail: The N-way record-order split is the design; the unused head-and-tail types and the seed sentence go.",
+    "Both, chosen at plan time: Two inhabitants the planner picks between per fiber (commutative single-trunk: head-and-tail; ordered appends: N-way forward slices), stated in the contract.",
+    "Measure first: A bench under the harness with both arms on single-trunk workloads; the question returns with the numbers. The code stays as it is meanwhile.",
+]
+state = "answered"
+answer = "Measure first"
+answered = "2026-11-13 06:02: .data/op-responses/202611130602_convergence-is-measured-first.md"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:349-375"
+quote = '''
+#### Convergence
+
+  ```text
+  hilavitkutin, single-trunk phases: head-and-tail convergence or the N-way record split? The records were reversed back to head-and-tail in July (r7, r8, and the seed says 'Never an N-way record or morsel partition'), but the N-way path is what runs on `dev` and your design text carries both. Which is the design?
+  ```
+
+Options offered:
+
+1. Head-and-tail, finish the deletion
+
+   As r8 and the seed say. The N-way path in `worker.rs` is removed, the head-and-tail types get driven, the design's ceil-slice passages are corrected, a commutativity test is added.
+
+2. N-way, retire head-and-tail
+
+   The N-way record-order split is the design; the unused head-and-tail types and the seed sentence go.
+
+3. Both, chosen at plan time
+
+   Two inhabitants the planner picks between per fiber (commutative single-trunk: head-and-tail; ordered appends: N-way forward slices), stated in the contract.
+
+4. Measure first
+
+   A bench under the harness with both arms on single-trunk workloads; the question returns with the numbers. The code stays as it is meanwhile.
+
+Chosen:
+
+- Measure first
+'''
+subject = "execution"
+keywords = ["convergence", "head and tail", "N-way", "record split", "single trunk", "measure", "bench"]
+related = ["question::what_is_done_with_the_supersession_the_roadmap_records_as_an_agent_s_call"]
+
+[[question]]
+id = "what_is_done_with_the_supersession_the_roadmap_records_as_an_agent_s_call"
+asks = "The roadmap's r6 records a supersession as the agent's call rather than the maintainer's: head-and-tail convergence replaced by an N-way record-order partition. No agent can ratify it. What is done with it?"
+options = [
+    "Bring me both designs: A one-page side by side of head-and-tail convergence and the N-way partition, with what each costs and what the code does today, as a question ticket for you. Nothing depends on it meanwhile.",
+    "Reverse it: Head-and-tail convergence is the design again; the N-way partition is recorded as a proposal.",
+    "Ratify it: The N-way record-order partition stands as the design.",
+]
+state = "answered"
+answer = "Bring me both designs"
+answered = "2026-11-13 05:39: .data/op-responses/202611130539_the-canon-walk-and-arvo-is-claimed-then-reworked.md"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:148-170"
+quote = '''
+#### r6 call
+
+  ```text
+  hilavitkutin's roadmap r6 records a supersession as 'the agent's call rather than op's': head-and-tail convergence replaced by an N-way record-order partition. No agent can ratify it. What do you want done with it?
+  ```
+
+Options offered:
+
+1. Bring me both designs
+
+   A one-page side by side of head-and-tail convergence and the N-way partition, with what each costs and what the code does today, as a question ticket for you. Nothing depends on it meanwhile.
+
+2. Reverse it
+
+   Head-and-tail convergence is the design again; the N-way partition is recorded as a proposal.
+
+3. Ratify it
+
+   The N-way record-order partition stands as the design.
+
+Chosen:
+
+- Bring me both designs
+'''
+subject = "execution"
+keywords = ["convergence", "head and tail", "N-way", "partition", "roadmap", "r6", "supersession", "agent's call"]
+related = ["question::which_convergence_a_single_trunk_phase_uses"]

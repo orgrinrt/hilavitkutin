@@ -1,0 +1,14 @@
+# The tenets whose subject is `principles`.
+
+[[tenet]]
+id = "a_change_keeps_the_intent_and_does_not_compromise_the_pillars"
+what = "Things can be added, extended and changed in hilavitkutin as long as the main principles and the intent do not change with it and its main pillars are not compromised. The pillars are full, exhaustive typestate; contracts first, with all machinery and logic running on contracts alone, so that people implement its parts and the engine runs them through the contracts; and optimisation first and foremost, always, though it can start simpler and go deeper later, incrementally. Whatever gets added matches in taste and execution and is not a drop looser in typestate or strictness, with no std and no alloc unless behind a feature that is entirely opt-in and not required for things to work."
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:339-339"
+provenance = ["mock::research::202611130850_the-record-read-whole::OP-ANSWERS::#said-unprompted-at-05-52"]
+quote = '''
+> And things can be added and extended and changed in hilavitkutin as long as the main principles and paradigm itself, the intent, doesn't change with it and it doesn't compromise on its main pillars of full, exhaustive typestate, contracts first, all machinery and logic runs on contracts alone, people impl its parts and the engine runs it via the contracts. And optimisations first and foremost, always, though as said, we can start simpler and later go deeper, incrementally. And whatever gets added, matches in taste and execution, is not a drop looser in typestate or strictness with no std, no alloc, unless behind a feature that is entirely opt in and not required for things to work
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["pillars", "typestate", "contracts first", "optimisation", "no std", "no alloc", "opt-in feature", "intent", "extend", "change"]

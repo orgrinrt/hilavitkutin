@@ -1,0 +1,116 @@
+# The tenets whose subject is `ordering`.
+
+[[tenet]]
+id = "ordering_is_the_data_flow"
+what = "Ordering is the data flow: the edges of the graph come from where a write of a column meets a read of it, and data access patterns fully capture ordering, with no triggers and no emits."
+mechanism = "DAG edges from Write→Read column overlap."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:589-590, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:594-595"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#08-determinism-and-ordering"]
+quote = '''
+**Ordering IS the data flow (T1 §10.6):**
+- DAG edges from Write→Read column overlap
+---
+- No triggers, no emits — data access patterns fully capture ordering
+  (T1 decisions #17, #25)
+'''
+origin = "stated"
+standing = "provisional"
+subject = "ordering"
+keywords = ["dag", "edges", "triggers", "emits", "read after write", "data flow"]
+
+[[tenet]]
+id = "a_writer_precedes_every_reader_of_what_it_writes"
+what = "A unit that writes a store precedes every unit that reads that store."
+mechanism = "For every pair (i, j), `(write_masks[i] & read_masks[j]) != 0` means unit i must precede unit j: one AND and one compare per pair, giving a bit-matrix DAG."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1273-1276"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
+quote = '''
+DAG edges: for every pair (i, j), `(write_masks[i] & read_masks[j])
+!= 0` → WU i must precede WU j. This is a single AND + compare per
+pair. O(N²) on u64 values. For 50 WUs: 2500 ANDs, ~1µs. The result
+is a bit-matrix DAG: `dag[i] |= 1 << j` where i precedes j.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "ordering"
+keywords = ["read after write", "precede", "access matrix", "write mask", "read mask", "edge"]
+
+[[tenet]]
+id = "two_writers_of_one_store_are_ordered_by_hint_priority"
+what = "Where two units write the same store, the order between them is resolved by scheduling hint priority: Urgency, then Divisibility, then Significance. The tie-break is the unit with the most downstream dependents first, then a deterministic fallback."
+mechanism = "The deterministic fallback is given once as \"type name or similar\" and is otherwise unnamed."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:591-593, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1056-1059, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1278-1281"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#08-determinism-and-ordering"]
+quote = '''
+- Write-write ambiguity resolved by scheduling hint priority (Urgency,
+  Divisibility, Significance). Tie-break: most deps first, then
+  deterministic fallback. Supersedes T6 L2637 `order` field.
+---
+1. Build DAG: write→read edges (arvo-bitmask adjacency). Write-write
+   ambiguity resolved by scheduling hints (Urgency, Divisibility,
+   Significance — domain 09). Higher-priority hint wins. Tie-break:
+   most deps first, then deterministic fallback (type name or similar).
+---
+Write-write to the same store: both WUs have the bit set in their
+write masks. Ordering resolved by scheduling hint priority (domain
+09): compare Urgency, then Divisibility, then Significance. Tie-break:
+most downstream dependents first, then deterministic fallback.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "ordering"
+keywords = ["write-write", "two writers", "hint", "urgency", "divisibility", "significance", "tie-break", "dependents", "fallback", "type name"]
+related = ["question::how_two_writers_of_one_store_are_ordered"]
+
+[[tenet]]
+id = "scheduling_hints_replace_an_order_field_on_the_unit"
+what = "Scheduling hints replace an explicit order field on the unit."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:593-593, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2390-2391"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#08-determinism-and-ordering"]
+quote = '''
+  deterministic fallback. Supersedes T6 L2637 `order` field.
+---
+Vocabulary updated (chain→fiber, row→record). T7's `order` field
+on WU replaced by scheduling hints.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "ordering"
+keywords = ["order field", "hints", "superseded"]
+rules_out = ["order field"]
+cites = ["two_writers_of_one_store_are_ordered_by_hint_priority"]
+
+[[tenet]]
+id = "a_unit_declares_whether_it_is_commutative"
+what = "A work unit declares whether it is commutative, and a fiber is commutative only when all of its units are. A commutative fiber is eligible for front-back processing, multi-core morsel dispatch and deterministic segment assignment; a non-commutative one is processed in a single direction only."
+mechanism = "`COMMUTATIVE: bool` on the WorkUnit."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:597-602"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#08-determinism-and-ordering"]
+quote = '''
+**Commutativity (T3 §tiling model L440-510):**
+- WorkUnit declares `COMMUTATIVE: bool` (T3 decision #45)
+- Commutative fiber = ALL constituent WUs commutative (T3 decision #46)
+- Commutative → eligible for front-back processing, multi-core morsel
+  dispatch, deterministic segment assignment
+- Non-commutative → single-direction processing only
+'''
+origin = "stated"
+standing = "provisional"
+subject = "ordering"
+keywords = ["commutative", "commutativity", "front-back", "segment", "single direction"]
+
+[[tenet]]
+id = "ordering_is_guaranteed_by_construction"
+what = "Ordering is guaranteed by construction: a non-commutative fiber runs on a single core and is trivially ordered, a commutative one runs in deterministic segments that are always in record order, and no lineariser or other ordering mechanism is needed."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:604-607"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#08-determinism-and-ordering"]
+quote = '''
+**Ordering guaranteed by construction (T3 §Q6):**
+- Non-commutative: single-core = trivially ordered (T3 decision #99)
+- Commutative: deterministic segments = always in record order (T3 decision #100)
+- No lineariser needed (unlike Polars). No ordering mechanism needed.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "ordering"
+keywords = ["determinism", "lineariser", "record order", "deterministic segments", "single-core"]

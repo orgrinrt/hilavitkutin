@@ -1,0 +1,28 @@
+# The tenets whose subject is `governance`.
+
+[[tenet]]
+id = "the_maintainer_is_wary_of_anything_put_beside_what_hilavitkutin_is"
+what = "The maintainer is wary and uncomfortable where something added to hilavitkutin is out of place, too specialised or too parallel to what hilavitkutin is now, kept apart from what is already in it."
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:21-21"
+provenance = ["mock::research::202611130850_the-record-read-whole::OP-ANSWERS::#said-unprompted-at-05-12"]
+quote = '''
+> I am wary and uncomfortable if that means you are adding something entirely out of place or too specialized or too parallel to what hilavitkutin is now, in there, since you separate it from the current stuff in hila
+'''
+origin = "stated"
+standing = "provisional"
+subject = "governance"
+keywords = ["parallel", "out of place", "specialised", "second vocabulary", "beside", "new crates"]
+related = ["question::how_the_contract_crates_put_beside_the_api_are_handled"]
+
+[[tenet]]
+id = "hilavitkutin_takes_the_registry_the_tools_and_tickets_into_use"
+what = "hilavitkutin starts using the newer mockspace features, the registry and the tools. The canon is written up where it is missing and filled in where it exists, and tickets are taken into use."
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:60-60"
+provenance = ["mock::research::202611130850_the-record-read-whole::OP-ANSWERS::#said-unprompted-at-05-26"]
+quote = '''
+> Also we should start using the newer mockspace features like the registry and tools in both arvo and hilavitkutin. Worth it to start writing up the canon where it is missing and filling in even where it exists, and start using tickets. If tickets aren't upstreamed to mockstream yet as we use them in kaski, approx our shape for now and copy over some of the related tools that aren't upstreamed but useful and needed etc. or rather perhaps upstream the tools in full, the ones that don't depend on kaski specifically, to the mocksoace extra lints for now. I think the mockspace extensions as crates (deps in its toml) already support tools too along with lints, and perhaps also agent stuff too and maybe even registry schemas?
+'''
+origin = "stated"
+standing = "provisional"
+subject = "governance"
+keywords = ["registry", "tools", "canon", "tickets", "mockspace", "upstream"]

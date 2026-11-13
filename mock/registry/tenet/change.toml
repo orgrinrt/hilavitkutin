@@ -1,0 +1,124 @@
+# The tenets whose subject is `change`.
+
+[[tenet]]
+id = "change_detection_is_per_morsel_and_skips_what_is_unchanged"
+what = "Change detection is per morsel: a write marks the morsel as changed and an unchanged morsel is skipped. It propagates through the graph, so an unchanged root skips all its transitive dependents, which turns the pipeline from a batch processor into an incremental one."
+mechanism = "A per-morsel generation counter, bumped on write. Persistence to consumer storage goes through the evict and inject APIs."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:861-865"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#12-morsel-model"]
+quote = '''
+**Change detection (T3 decisions #57-58, R2 evict/inject):**
+- Per-morsel generation counter — bump on write, skip if unchanged
+- Propagates through DAG — unchanged root skips all transitive dependents
+- Transforms pipeline from batch processor to incremental processor
+- evict/inject APIs (R2) handle persistence to consumer storage
+'''
+origin = "stated"
+standing = "provisional"
+subject = "change"
+keywords = ["generation counter", "change detection", "skip", "unchanged", "incremental", "morsel", "bump on write"]
+
+[[tenet]]
+id = "the_engine_owns_the_generation_counters_and_the_skip_logic"
+what = "hilavitkutin owns the per-morsel generation counters and the logic that skips what is unchanged across the graph, as a runtime scheduling concern."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2406-2408"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#resolutions"]
+quote = '''
+**R2. Incremental execution: counters in hilavitkutin, persistence via evict/inject API.** (item 5)
+hilavitkutin owns per-morsel generation counters and skip-unchanged
+DAG propagation logic (runtime scheduling concern). For persistence,
+'''
+origin = "stated"
+standing = "provisional"
+subject = "change"
+keywords = ["generation counter", "skip-unchanged", "incremental execution", "owns", "R2"]
+cites = ["change_detection_is_per_morsel_and_skips_what_is_unchanged"]
+
+[[tenet]]
+id = "a_unit_whose_inputs_are_all_clean_skips_the_pass"
+what = "At run time, before each pass, the generation counters on the root units' inputs are checked. What is unchanged since the last pass is clean, the mark propagates along every edge of the graph, and a unit whose whole predecessor set is clean skips execution entirely, so only what changed is re-run."
+mechanism = "`dirty[j] |= dirty[i]` for every edge i→j, as a bitmask OR sequence, `predecessors[N] & dirty_mask`: one AND per unit."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1418-1431"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
+quote = '''
+**Step 9: Dirty propagation → incremental skip** (arvo-bitmask)
+
+At runtime (not plan-time), before each pass: check generation
+counters on root WU inputs. If unchanged since last pass, set
+dirty bit to 0. Propagate through the DAG:
+`dirty[j] |= dirty[i]` for every edge i→j. A WU whose entire
+predecessor set is clean (all dirty bits 0) skips execution entirely.
+
+The propagation is a bitmask OR sequence: `predecessors[N] & dirty_mask`.
+One AND per WU. For 50 WUs: 50 AND operations on u64 values. The
+entire dirty check is ~50 nanoseconds. This transforms the pipeline
+from a batch processor (re-run everything) to an incremental
+processor (re-run only what changed). Feeds domain 12 (change
+detection per morsel).
+'''
+origin = "stated"
+standing = "provisional"
+subject = "change"
+keywords = ["dirty", "propagation", "incremental skip", "generation counter", "root inputs", "since last pass", "clean"]
+cites = ["change_detection_is_per_morsel_and_skips_what_is_unchanged"]
+
+[[tenet]]
+id = "version_stamps_tell_which_stores_a_unit_actually_modified"
+what = "Each store has a version stamp. The versions are captured before a unit runs and compared after, which gives the stores the unit actually modified. A stamp increments only on completion."
+mechanism = "Parallel arrays (SoA): separate contiguous `[u64; MAX_STORES]` for the before and the current stamps; the changed stores are a bitmask; 2 to 5 u64 per unit stamp view, packed in one cache line."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2139-2145"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#23-scheduler-builder-and-meta"]
+quote = '''
+**Version stamps (T5 §Q10, T6 §Q10):**
+
+Parallel arrays (SoA): separate contiguous `[u64; MAX_STORES]` for
+"before" and "current" stamps. Capture before-versions before WU runs,
+compare after. Changed stores = bitmask of actually-modified columns.
+Increment only on completion — no partial writes (domain 08). 2-5 u64
+per unit stamp view, packed in one cache line.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "change"
+keywords = ["version stamp", "before", "current", "changed stores", "actually modified", "bitmask", "completion"]
+cites = ["no_write_is_partial"]
+
+[[tenet]]
+id = "no_write_is_partial"
+what = "No write is partial: a unit buffers internally and writes on return, downstream units do not run until it completes, version stamps increment only on completion, and correctness does not depend on atomicity."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:615-619"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#08-determinism-and-ordering"]
+quote = '''
+**No partial writes (T5 L375-383):**
+- WUs buffer internally, write on return
+- Downstream doesn't run until completion
+- Version stamps increment only on completion
+- Correctness independent of atomicity
+'''
+origin = "stated"
+standing = "provisional"
+subject = "change"
+keywords = ["partial write", "buffer", "write on return", "completion", "atomicity", "downstream"]
+
+[[tenet]]
+id = "generation_counter_activity_classifies_morsels_by_temperature"
+what = "Across frames the engine classifies morsels as hot, warm or cold by how often they change, and uses that with per-morsel timing to assign them to cores: hot morsels to the fast cores, cold ones to the slow cores or deferred."
+mechanism = "Change frequency read from generation counter activity; hot morsels to P-cores, cold morsels to E-cores."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2021-2022, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2028-2033"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#22-runtime-adaptation"]
+quote = '''
+- Change frequency: classify morsels as hot/warm/cold based on
+  generation counter activity (domain 12)
+---
+**Morsel temperature → core assignment (T3 decision #64):**
+
+Hot morsels (frequently changing, high compute) → P-cores. Cold
+morsels (rarely changing, often skipped) → E-cores or deferred.
+Temperature from change detection counters (domain 12) + per-morsel
+timing.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "change"
+keywords = ["temperature", "hot", "warm", "cold", "change frequency", "generation counter", "core assignment", "adaptation"]
+cites = ["change_detection_is_per_morsel_and_skips_what_is_unchanged"]

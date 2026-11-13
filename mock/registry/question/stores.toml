@@ -1,0 +1,82 @@
+# The questions whose subject is `stores`.
+
+[[question]]
+id = "what_an_append_past_the_capacity_of_an_accumulator_does"
+asks = "hilavitkutin asserts (panics) when a unit appends past an accumulator's capacity. A branch about to land makes that a refusal returned as a value from the run. Is that wanted?"
+options = [
+    "Refusal as a value (Recommended): `run` returns the refusal; no panic path on a worker of a no_std engine that spawns nothing. If someone wants an abort it is the memory provider's property.",
+    "Assert stays the default: The panic stays; a refusal value is something a provider opts into.",
+    "Configurable by the consumer: A const, generic or trait parameter on the run configuration picks refuse or assert, default refuse.",
+]
+state = "answered"
+answer = "Configurable by the consumer"
+answered = "2026-11-13 05:50: .data/op-responses/202611130550_four-calls-that-shape-the-hilavitkutin-api-revision.md"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:234-256"
+quote = '''
+#### Overflow
+
+  ```text
+  hilavitkutin today asserts (panics) when a unit appends past an accumulator's capacity. A branch about to land makes that a refusal returned as a value from `run` (the frame fails closed, nothing is silently dropped, same result at every worker count). Both experts picked the first option. Do you want it?
+  ```
+
+Options offered:
+
+1. Refusal as a value (Recommended)
+
+   `run` returns the refusal; no panic path on a worker of a no_std engine that spawns nothing. If someone wants an abort it is the memory provider's property.
+
+2. Assert stays the default
+
+   The panic stays; a refusal value is something a provider opts into.
+
+3. Configurable by the consumer
+
+   A const, generic or trait parameter on the run configuration picks refuse or assert, default refuse.
+
+Chosen:
+
+- Configurable by the consumer
+'''
+subject = "stores"
+keywords = ["accumulator", "append", "capacity", "overflow", "refusal", "panic", "assert", "configurable"]
+
+[[question]]
+id = "whether_registration_may_be_bound_by_data"
+asks = "A branch added a run-time binding table: content rows say which stored column fills which column of which kernel, so content can add columns with no Rust. hilavitkutin registers by type at compile time. Is the data-bound way wanted in hilavitkutin?"
+options = [
+    "Typed only for now: Registration stays by type as designed. Kaski's content-defined channels are solved above it (lane index inside a typed block column) and a data-bound table is revisited only if that fails.",
+    "Both, typed first: The typed registration stays primary; a data-bound table is a second, opt-in way to register, designed in the api round with the erased shape-described addressing you chose for resources on 2 July as its base.",
+    "Decide in the api round: Leave it open; the round brings a sketch and a bench of both and you pick there.",
+]
+state = "answered"
+answer = "Decide in the api round"
+answered = "2026-11-13 05:32: .data/op-responses/202611130508_the-canon-goes-provisional-and-hilavitkutin-is-revised-in.md"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:96-118"
+quote = '''
+#### Data bind
+
+  ```text
+  The branch added a run-time binding table: content rows say which stored column fills which column of which kernel, so content can add columns with no Rust. Today hilavitkutin registers by type at compile time. Do you want the data-bound way in hilavitkutin?
+  ```
+
+Options offered:
+
+1. Typed only for now
+
+   Registration stays by type as designed. Kaski's content-defined channels are solved above it (lane index inside a typed block column) and a data-bound table is revisited only if that fails.
+
+2. Both, typed first
+
+   The typed registration stays primary; a data-bound table is a second, opt-in way to register, designed in the api round with the erased shape-described addressing you chose for resources on 2 July as its base.
+
+3. Decide in the api round
+
+   Leave it open; the round brings a sketch and a bench of both and you pick there.
+
+Chosen:
+
+- Decide in the api round
+'''
+subject = "stores"
+keywords = ["data-bound", "binding table", "content", "no Rust", "registration", "run-time", "typed", "columns added by content"]
+related = ["tenet::column_type_registration_is_static"]

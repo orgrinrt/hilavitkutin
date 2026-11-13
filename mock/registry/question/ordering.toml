@@ -1,0 +1,83 @@
+# The questions whose subject is `ordering`.
+
+[[question]]
+id = "how_two_writers_of_one_store_are_ordered"
+asks = "The founding spec and the seed say two writers of one store are ordered by hint priority, then by most downstream dependents, then a fixed fallback. The engine's design template and the code order them by registration position alone and read no hints. Which is the design?"
+options = [
+    "Hints first, as founded: Hint priority, then most dependents, then a fixed fallback. The code's registration-position order is a deviation to fix, and the engine design line is corrected.",
+    "Hints, registration as fallback: Hint priority, then most dependents, with registration position named as the fixed deterministic fallback.",
+    "Registration position: Registration position is the rule, as the engine design and code have it; the founding rule is retired.",
+]
+state = "answered"
+answer = "Hints, registration as fallback"
+answered = "2026-11-13 08:13: .data/op-responses/202611130808_read-the-whole-hilavitkutin-spec-and-port-it-to-a-registry.md"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:513-535"
+quote = '''
+#### Write order
+
+  ```text
+  hilavitkutin: the founding spec and the seed say two writers of one store are ordered by hint priority, then by most downstream dependents, then a fixed fallback. The engine's design template and the code order them by registration position alone and read no hints. Which is the design?
+  ```
+
+Options offered:
+
+1. Hints first, as founded
+
+   Hint priority, then most dependents, then a fixed fallback. The code's registration-position order is a deviation to fix, and the engine design line is corrected.
+
+2. Hints, registration as fallback
+
+   Hint priority, then most dependents, with registration position named as the fixed deterministic fallback.
+
+3. Registration position
+
+   Registration position is the rule, as the engine design and code have it; the founding rule is retired.
+
+Chosen:
+
+- Hints, registration as fallback
+'''
+subject = "ordering"
+keywords = ["write-write", "two writers", "hint", "registration position", "fallback", "tie-break", "dependents"]
+related = ["tenet::two_writers_of_one_store_are_ordered_by_hint_priority"]
+
+[[question]]
+id = "what_happens_when_two_units_write_one_frame_buffered_column"
+asks = "Two units write the same frame-buffered column in one frame. For other store kinds the design resolves write-write by scheduling priority. For the frame-buffered kind there is no order between two writers of the staged side. What should happen?"
+options = [
+    "Refuse now, disjoint sets later: Refused at build (compile time) now; a later form lets two writers declare disjoint record sets and both write.",
+    "Refuse at build: Always a compile-time refusal; one writer per frame-buffered column, full stop.",
+    "Priority, as other kinds: Resolved by scheduling priority like every other kind; the lower-priority writer's work on overlapping records is dead.",
+]
+state = "answered"
+answer = "Schedule should exist for this specifically. Are we sure that you and the agents working on this actually know what hilavitkutin is and is intended to be?"
+answered = "2026-11-13 07:59: .data/op-responses/202611130726_does-anyone-here-know-what-hilavitkutin-is.md"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:459-481"
+quote = '''
+#### Two writers
+
+  ```text
+  Two units write the same frame-buffered column in one frame. Today, for other store kinds, your design resolves write-write by scheduling priority. For the frame-buffered kind there is no order between two writers of the staged side. What should happen?
+  ```
+
+Options offered:
+
+1. Refuse now, disjoint sets later
+
+   Refused at build (compile time) now; a later form lets two writers declare disjoint record sets and both write.
+
+2. Refuse at build
+
+   Always a compile-time refusal; one writer per frame-buffered column, full stop.
+
+3. Priority, as other kinds
+
+   Resolved by scheduling priority like every other kind; the lower-priority writer's work on overlapping records is dead.
+
+Answered in their own words:
+
+> Schedule should exist for this specifically. Are we sure that you and the agents working on this actually know what hilavitkutin is and is intended to be?
+'''
+subject = "ordering"
+keywords = ["two writers", "frame-buffered", "staged", "schedule", "refuse", "priority"]
+related = ["question::how_two_writers_of_one_store_are_ordered", "tenet::two_writers_of_one_store_are_ordered_by_hint_priority"]

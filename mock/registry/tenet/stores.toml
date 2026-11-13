@@ -1,0 +1,169 @@
+# The tenets whose subject is `stores`.
+
+[[tenet]]
+id = "there_are_three_store_types_and_one_scheduling_mechanism"
+what = "There are three store types and one scheduling mechanism: a resource is a singleton holding one value, a column is a collection of N values chunked into morsels, and a virtual holds no data and is an edge of the graph only."
+mechanism = "`Resource<T>(PhantomData<T>)`, `Column<T>(PhantomData<T>)`, `Virtual<T>(PhantomData<T>)`."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:491-496"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#06-store-types"]
+quote = '''
+**Three store types, one scheduling mechanism (T5 L198-208):**
+```rust
+pub struct Resource<T>(PhantomData<T>);  // singleton, one value
+pub struct Column<T>(PhantomData<T>);    // collection, N values, morsel-chunked
+pub struct Virtual<T>(PhantomData<T>);   // zero-data, DAG edge only
+```
+'''
+origin = "stated"
+standing = "provisional"
+subject = "stores"
+keywords = ["store types", "three", "resource", "column", "virtual", "singleton", "collection", "zero-data"]
+
+[[tenet]]
+id = "the_scheduler_builds_edges_from_store_identities_and_ignores_cardinality"
+what = "The scheduler sees pairs of store identities when it builds edges and does not care about cardinality: a write and a read of a resource build the same edge as a write and a read of a column."
+mechanism = "`StoreId` pairs; `Write<Resource<X>>` to `Read<Resource<X>>` builds the same edge as `Write<Column<Y>>` to `Read<Column<Y>>`."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:498-500"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#06-store-types"]
+quote = '''
+- Scheduler sees StoreId pairs for edge construction. Does not care
+  about cardinality. Write<Resource<X>> → Read<Resource<X>> builds
+  the same edge as Write<Column<Y>> → Read<Column<Y>>.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "stores"
+keywords = ["store id", "edge", "cardinality", "resource", "column", "scheduler"]
+cites = ["there_are_three_store_types_and_one_scheduling_mechanism"]
+
+[[tenet]]
+id = "each_store_type_has_its_own_access"
+what = "A resource is a singleton and is read as one value; a column is a collection accessed within the scope of a morsel; a virtual has no storage and can only be fired."
+mechanism = "`ctx.resource::<T>()` returning `&T`; morsel-scoped raw pointers (cu/cw) for a column; `ctx.fire::<T>()` for a virtual."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:502-504"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#06-store-types"]
+quote = '''
+- Resource<T>: singleton, accessed via ctx.resource::<T>() → &T
+- Column<T>: collection, morsel-scoped access via raw pointers (cu/cw)
+- Virtual<T>: no storage, fire-only via ctx.fire::<T>()
+'''
+origin = "stated"
+standing = "provisional"
+subject = "stores"
+keywords = ["resource access", "column access", "virtual", "fire", "morsel-scoped", "raw pointer"]
+cites = ["there_are_three_store_types_and_one_scheduling_mechanism"]
+
+[[tenet]]
+id = "a_column_is_a_typed_storage_slot_and_domain_schemas_are_the_consumer_s"
+what = "A column is a typed storage slot. hilavitkutin does not know or care about domain schemas: it schedules on the read and write column sets only, and a schema layered over columns is the consumer's, translated in the consumer's registration layer."
+mechanism = "`Column<T>` in hilavitkutin-api; the `Column<In<IR>, As<T>>` schema-as-traits pattern is a consumer wrapper around it (polka-sdk, saalis-sdk)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2397-2404"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#resolutions"]
+quote = '''
+**R1. Column<T> only — IR is consumer-side.** (items 1, 2)
+hilavitkutin-api defines `Column<T>` as a typed storage slot. The
+`Column<In<IR>, As<T>>` schema-as-traits pattern is consumer-side
+(polka-sdk, saalis-sdk). hilavitkutin doesn't know or care about
+domain schemas — it schedules based on Read/Write column sets only.
+The `In<CatalogueIR, Installed>` syntax in polka-dots is a consumer
+wrapper around hilavitkutin's `Column<T>`. Translation happens in
+the consumer's registration layer.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "stores"
+keywords = ["column", "schema", "IR", "consumer-side", "typed slot", "registration layer", "R1"]
+
+[[tenet]]
+id = "column_type_registration_is_static"
+what = "Column type registration is static, at compile time. No column type is created at run time."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2411-2412"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#resolutions"]
+quote = '''
+column data in) APIs. Column type registration is static (compile-time)
+— no runtime column type creation. Consumers build hot-cold storage
+'''
+origin = "stated"
+standing = "provisional"
+subject = "stores"
+keywords = ["static registration", "compile-time", "runtime column type", "no runtime creation", "R2", "content", "dynamic column"]
+rules_out = ["runtime column type creation"]
+
+[[tenet]]
+id = "a_resource_is_scalars_and_const_sized_collections_only"
+what = "A resource consists of three field types only: a scalar field of a column value, a const-sized array and a const-sized map. There are no dynamic collections; the allocation size is known at compile time."
+mechanism = "`Field<T>` where T: ColumnValue (at most 16 bytes), stack-local cached; `Seq<T, const N: usize>` and `Map<K, V, const N: usize>` in a separate arena. Element values of Seq and Map are not held to 16 bytes."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:535-547"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#07-column-storage"]
+quote = '''
+**Resolution R5: Resource model — scalars + const-sized collections.**
+
+Resources consist of three field types only:
+- `Field<T>` where T: ColumnValue (≤16 bytes) — scalar, stack-local
+  cached, LLVM promotes to registers. Only accessed fields loaded.
+- `Seq<T, const N: usize>` — const-sized array in separate arena.
+  Stack-local copied if small, L2-hinted if read-only.
+- `Map<K, V, const N: usize>` — const-sized map in separate arena.
+  Same caching pattern as Seq.
+
+No dynamic collections. Allocation size is const generic (compile-time).
+Element values in Seq/Map are NOT constrained to 16 bytes — only
+Field<T> has the ColumnValue limit.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "stores"
+keywords = ["resource model", "field", "seq", "map", "const-sized", "no dynamic collections", "R5"]
+rules_out = ["dynamic collections"]
+
+[[tenet]]
+id = "a_virtual_is_a_pure_flag_and_carries_no_data"
+what = "A virtual is a pure flag and not a data carrier. Data goes in a column or a resource alongside the virtual."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:719-720"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#10-virtual-flag-system"]
+quote = '''
+**Virtuals are pure flags, not data carriers (T5 L490).** Data goes
+in Column or Resource alongside the Virtual.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "stores"
+keywords = ["virtual", "flag", "data carrier", "fire"]
+cites = ["there_are_three_store_types_and_one_scheduling_mechanism"]
+
+[[tenet]]
+id = "the_consumer_provides_the_backing_memory_of_a_column"
+what = "The consumer provides the backing memory of column storage and the library never calls an allocator directly. Column storage is reached through raw pointers and never through slices."
+mechanism = "The ColumnStorage trait: raw pointers (slices cause aliasing UB when units are fused), type-native stride, 64-byte alignment on column arrays, a separate arena for resource Seq and Map allocations."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:557-562, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:566-566"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#07-column-storage"]
+quote = '''
+**ColumnStorage trait (updated from T2):**
+- Raw pointers, NOT slices (T6 §CRITICAL: slices cause aliasing UB)
+- Type-native stride (R3) — no universal Stride type
+- Consumer provides backing memory (arena, mmap, etc.)
+- Library never calls allocator directly
+- 64-byte alignment on column arrays (T3 §Q3 L2825-2860)
+---
+- Separate arena for resource Seq/Map allocations
+'''
+origin = "stated"
+standing = "provisional"
+subject = "stores"
+keywords = ["column storage", "backing memory", "allocator", "raw pointers", "slices", "aliasing", "alignment"]
+
+[[tenet]]
+id = "a_column_s_lifetime_is_told_to_the_consumer_as_an_advisory_release"
+what = "The consumer is told when a column's data is no longer needed, as an advisory release: the schedule counts the readers of a column ahead of time, counts down as fibers complete, and release fires at zero."
+mechanism = "`release(column)`; the consumer-count model pre-computed by the Schedule."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:563-565"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#07-column-storage"]
+quote = '''
+- release(column) advisory for column lifetime (T3 decision #34)
+- Consumer-count model: Schedule pre-computes readers, decrements on
+  fiber completion, release fires at zero (T3 decision #36)
+'''
+origin = "stated"
+standing = "provisional"
+subject = "stores"
+keywords = ["release", "advisory", "column lifetime", "consumer count", "readers"]

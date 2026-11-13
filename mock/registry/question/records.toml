@@ -1,0 +1,124 @@
+# The questions whose subject is `records`.
+
+[[question]]
+id = "where_the_record_count_of_a_column_lives"
+asks = "Columns in one scheduler may need different record counts. Today there is one record count. Where does the count live?"
+options = [
+    "On the column in storage: Each column carries its count in storage; a fiber takes the count of its columns, and a unit over columns of unequal count is refused at build.",
+    "On the column's type: A group parameter on the column type names which record set it belongs to; columns of one group share a count.",
+    "Consumer wrappers name groups: The engine sees per-column counts only; grouping columns into record sets is a consumer-side wrapper.",
+]
+state = "answered"
+answer = "Okay so i am fairway confident this is also answered. Isn’t the intent a contiguous per prototype and indices to process needed windows to it? Pretty sure the design has answers to these things and more"
+answered = "2026-11-13 08:13: .data/op-responses/202611130808_read-the-whole-hilavitkutin-spec-and-port-it-to-a-registry.md"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:565-587"
+quote = '''
+#### Counts
+
+  ```text
+  hilavitkutin: columns in one scheduler may need different record counts (kaski: tiles, beings, items). Today there is one record count. Where does the count live?
+  ```
+
+Options offered:
+
+1. On the column in storage
+
+   Each column carries its count in storage; a fiber takes the count of its columns, and a unit over columns of unequal count is refused at build.
+
+2. On the column's type
+
+   A group parameter on the column type names which record set it belongs to; columns of one group share a count.
+
+3. Consumer wrappers name groups
+
+   The engine sees per-column counts only; grouping columns into record sets is a consumer-side wrapper.
+
+Answered in their own words:
+
+> Okay so i am fairway confident this is also answered. Isn’t the intent a contiguous per prototype and indices to process needed windows to it? Pretty sure the design has answers to these things and more
+'''
+subject = "records"
+keywords = ["record count", "different counts", "prototype", "contiguous", "indices", "windows", "group", "record set"]
+related = ["tenet::storage_is_contiguous_and_a_fiber_s_columns_share_one_arena", "tenet::the_engine_does_not_load_data_and_does_not_know_record_counts_ahead", "tenet::a_record_is_the_global_data_identity"]
+
+[[question]]
+id = "whether_the_extent_of_a_record_domain_is_fixed"
+asks = "A record domain is a set of records with its own count, replacing the scheduler's single record count. Is a domain's extent fixed for the life of a built scheduler, or can it be replaced between passes?"
+options = [
+    "Replaceable between passes: The extent is a value the consumer may replace between passes up to a capacity fixed at build; the plan is built for the capacity and passes run over the current extent.",
+    "Fixed at build: The extent is fixed when the scheduler is built; a world that grows rebuilds the scheduler.",
+    "Both, declared per domain: A domain declares in its type whether its extent is fixed or replaceable up to a capacity; fixed domains let the planner assume more.",
+]
+state = "answered"
+answer = "Both, declared per domain"
+answered = "2026-11-13 07:59: .data/op-responses/202611130726_does-anyone-here-know-what-hilavitkutin-is.md"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:483-505"
+quote = '''
+#### Extent
+
+  ```text
+  A record domain is a set of records with its own count (replacing the scheduler's single record count). Is a domain's extent fixed for the life of a built scheduler, or can it be replaced between passes (as a value is swapped with `replace_value`)? Kaski's world grows, loads tiles and has births and deaths.
+  ```
+
+Options offered:
+
+1. Replaceable between passes
+
+   The extent is a value the consumer may replace between passes up to a capacity fixed at build; the plan is built for the capacity and passes run over the current extent.
+
+2. Fixed at build
+
+   The extent is fixed when the scheduler is built; a world that grows rebuilds the scheduler.
+
+3. Both, declared per domain
+
+   A domain declares in its type whether its extent is fixed or replaceable up to a capacity; fixed domains let the planner assume more.
+
+Chosen:
+
+- Both, declared per domain
+'''
+subject = "records"
+keywords = ["record domain", "extent", "capacity", "fixed", "replaceable", "between passes", "record count"]
+related = ["question::where_the_record_count_of_a_column_lives", "tenet::morsel_boundaries_are_stable_unless_the_record_count_changes"]
+
+[[question]]
+id = "whether_hilavitkutin_owns_geometry"
+asks = "Does hilavitkutin own geometry: axes, neighbour offsets, the value past an edge?"
+options = [
+    "No, only a declared reach: The engine knows only a declared cross-record read with a reach in records, so it can plan and fuse around it; axes, offsets and edge values are the consumer's (kaski's) to map onto record positions.",
+    "Opt-in crate over the api: Geometry lives in an opt-in hilavitkutin crate built on the api's declared cross-record read; the core api stays free of it.",
+    "Yes, in the api: Axes, offsets and boundary values are api concepts.",
+]
+state = "answered"
+answer = "Opt-in crate over the api"
+answered = "2026-11-13 08:13: .data/op-responses/202611130808_read-the-whole-hilavitkutin-spec-and-port-it-to-a-registry.md"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:589-611"
+quote = '''
+#### Geometry
+
+  ```text
+  hilavitkutin: does it own geometry (axes, neighbour offsets, the value past an edge)? Your text says it 'does not own the data model'. Kaski's field kernels read neighbours east, north and up.
+  ```
+
+Options offered:
+
+1. No, only a declared reach
+
+   The engine knows only a declared cross-record read with a reach in records, so it can plan and fuse around it; axes, offsets and edge values are the consumer's (kaski's) to map onto record positions.
+
+2. Opt-in crate over the api
+
+   Geometry lives in an opt-in hilavitkutin crate built on the api's declared cross-record read; the core api stays free of it.
+
+3. Yes, in the api
+
+   Axes, offsets and boundary values are api concepts.
+
+Chosen:
+
+- Opt-in crate over the api
+'''
+subject = "records"
+keywords = ["geometry", "axes", "neighbour", "offset", "edge", "boundary", "cross-record read", "reach", "opt-in crate"]
+related = ["tenet::records_within_a_fiber_are_independent"]

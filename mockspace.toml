@@ -8,6 +8,11 @@ crate_prefix = "hilavitkutin"
 abi_version = 1
 mock_dir = "mock"
 
+# The canon is typed rows under `mock/registry/`: the subjects and the tenets
+# under them. The questions under `mock/registry/question/` are no canon, so the
+# globs leave them out; the registry loader reads every file all the same.
+canon_paths = ["mock/registry/*.toml", "mock/registry/tenet/*.toml"]
+
 proc_macro_crates = ["hilavitkutin-extensions-macros", "hilavitkutin-api-macros"]
 module_crates = []
 
@@ -311,6 +316,11 @@ severity = "advisory"
 [lints.catalogue-ignore]
 ledgers = "mock/catalogue.md"
 
+# A tenet a newer one replaced names its replacement in `superseded_by`, and a
+# design or source file citing it is refused.
+[lints.no-superseded-citation]
+field = "superseded_by"
+
 # ---------------------------------------------------------------------------
 # Primitive-substrate introducers (task #125)
 # ---------------------------------------------------------------------------
@@ -329,3 +339,228 @@ ledgers = "mock/catalogue.md"
 
 [primitive-introductions]
 hilavitkutin-str = ["static-string"]
+
+# --- the canon's namespaces --------------------------------------------------
+#
+# `subject` and `tenet` are declared as the shared workflow tools read them
+# (`canon`, `quote-check`), field for field, so the tools read these rows
+# unchanged once their pack is declared under `[lint-crates]`. `tenet` gains the
+# fields a transcription of the record needs: the passage a row rests on
+# (`source`, `quote`, `rev`), the technique a passage names kept apart from its
+# intent (`mechanism`), and whose text the passage is (`origin`, `written_by`).
+# `question` is what the record leaves open or states two ways, and what op was
+# asked with the options he chose among; it binds nothing and is no canon.
+
+[[registry.namespace]]
+key = "subject"
+title = "Subjects"
+description = "What a tenet is about. Every tenet names one."
+
+[[registry.namespace.field]]
+name = "what"
+type = "string"
+required = true
+description = "The subject, in a sentence: what the tenets under it are about."
+
+[[registry.namespace.field]]
+name = "keywords"
+type = "string[]"
+required = false
+description = "The words somebody would search for to find this subject, especially the ones its sentence does not itself use."
+
+[[registry.namespace.field]]
+name = "answers"
+type = "string[]"
+required = false
+description = "What the maintainer answered about this row, one entry each as `<at>: <capture path>`, the time they answered and the capture holding their words verbatim. An array, so several can collect over time; an answer attaches to the row it answers and is never written into the row's other fields."
+
+
+[[registry.namespace]]
+key = "tenet"
+title = "Tenets"
+description = "One thing the record says the engine is, does or must hold to, as intent. Its `standing` says whether the maintainer has ratified it, and its `origin` whether the passage it rests on is the maintainer's own text or an agent-written proposal."
+
+[[registry.namespace.field]]
+name = "what"
+type = "string"
+required = true
+description = "The intent, in one or two sentences, in the passage's own words where a sentence of it states the intent. It never says more than the passage in `quote` says."
+
+[[registry.namespace.field]]
+name = "because"
+type = "string"
+required = false
+description = "The reasoning the passage gives for it, where it gives one."
+
+[[registry.namespace.field]]
+name = "mechanism"
+type = "string"
+required = false
+description = "The technique or concrete shape the passage names for carrying the intent out: a type, a formula, a number, a named algorithm. Kept apart from `what`, because a mechanism can be replaced while the intent stands."
+
+[[registry.namespace.field]]
+name = "provenance"
+type = "ref[]"
+required = true
+description = "Where it was established: the document the passage is in, as a citation."
+
+[[registry.namespace.field]]
+name = "source"
+type = "string"
+required = true
+description = "The passage the row rests on, as `quote-check` reads a locator: `<path>:<first>-<last>` from the repository root, several joined by `, `, a path led by `<branch>:` where the file is read from a branch other than the trunk."
+
+[[registry.namespace.field]]
+name = "quote"
+type = "string"
+required = true
+description = "The cited lines, exactly as they stand, several ranges joined by a line holding `---`. Checked against `source` by `mock quote-check tenet . --doc source`."
+visibility = "internal"
+
+[[registry.namespace.field]]
+name = "rev"
+type = "string"
+required = false
+description = "The commit the cited lines were read at, where the file is not read from the trunk's head."
+
+[[registry.namespace.field]]
+name = "origin"
+type = "string"
+required = true
+description = "`stated` where the passage is the maintainer's own text: the founding consolidation spec, the principles, a ruling the record quotes. `proposed` where it is a later agent-written round, roadmap, memo or audit, which then names its writer in `written_by`. Whether the row binds is `standing`, not this."
+values = ["stated", "proposed"]
+
+[[registry.namespace.field]]
+name = "written_by"
+type = "string"
+required = false
+description = "Who the document says wrote the passage, where `origin` is `proposed`."
+
+[[registry.namespace.field]]
+name = "keywords"
+type = "string[]"
+required = false
+description = "The words somebody would search for to find this row."
+
+[[registry.namespace.field]]
+name = "rules_out"
+type = "string[]"
+required = false
+description = "The words and names this tenet rules out of designs, code and content, each a word or a few words in lower case. Empty where the tenet rules out no word, which is most of them."
+
+[[registry.namespace.field]]
+name = "superseded_by"
+type = "tenet[]"
+required = false
+description = "The tenets that replace this one. A superseded tenet is kept rather than deleted, so the canon that replaced it is read with it in view; it no longer binds."
+
+[[registry.namespace.field]]
+name = "standing"
+type = "string"
+required = true
+description = "`provisional` where the maintainer has not ratified it: read as the best current statement and never cited as settled. `ratified` where the maintainer went through it on a named date, with their answer in the row's `answers`. `demoted` where it is kept as reference and binds nothing. Apart from `superseded_by`: a superseded row does not bind whatever its standing."
+values = ["provisional", "ratified", "demoted"]
+
+[[registry.namespace.field]]
+name = "subject"
+type = "subject"
+required = true
+description = "What it is about. One subject per tenet: where its words touch several, it names the one most of them are about."
+
+[[registry.namespace.field]]
+name = "cites"
+type = "tenet[]"
+required = false
+description = "The other tenets its words name by slug, in the order they are named."
+
+[[registry.namespace.field]]
+name = "lineage"
+type = "string[]"
+required = false
+description = "The replaced tenets this row names on purpose, as lineage, each as `<replaced id>:<fingerprint>`. Empty on nearly every row."
+
+[[registry.namespace.field]]
+name = "related"
+type = "ref[]"
+required = false
+description = "Every row this row relates to, written as `namespace::slug` of any namespace. This is the one field for a relation. A link is written once, on the one row, and never again on the row it points at; `cargo mock links <namespace>::<slug>` gives the other end. What the relation means is said in the row's words, not here."
+
+[[registry.namespace.field]]
+name = "answers"
+type = "string[]"
+required = false
+description = "What the maintainer answered about this row, one entry each as `<at>: <capture path>`, the time they answered and the capture holding their words verbatim."
+
+
+[[registry.namespace]]
+key = "question"
+title = "Questions"
+description = "What the record leaves open or states two ways, and what the maintainer was asked, with the options. It binds nothing: a tenet states an intent, a question says where the record does not settle one or where the maintainer settled one by an answer."
+
+[[registry.namespace.field]]
+name = "asks"
+type = "string"
+required = true
+description = "The question, in a sentence."
+
+[[registry.namespace.field]]
+name = "options"
+type = "string[]"
+required = false
+description = "The options it is open between, or the options the maintainer chose among, each as it was put."
+
+[[registry.namespace.field]]
+name = "state"
+type = "string"
+required = true
+description = "`open` where the record does not settle it. `answered` where the maintainer answered it, with their words in `answer`."
+values = ["open", "answered"]
+
+[[registry.namespace.field]]
+name = "answer"
+type = "string"
+required = false
+description = "The maintainer's answer, verbatim, where `state` is `answered`."
+
+[[registry.namespace.field]]
+name = "answered"
+type = "string"
+required = false
+description = "When and where the answer was given, as `<at>: <capture path>`."
+
+[[registry.namespace.field]]
+name = "source"
+type = "string"
+required = false
+description = "The passages that pose the question or disagree, as a `quote-check` locator: `<path>:<first>-<last>`, several joined by `, `."
+
+[[registry.namespace.field]]
+name = "quote"
+type = "string"
+required = false
+description = "The cited lines, exactly as they stand, several ranges joined by a line holding `---`."
+visibility = "internal"
+
+[[registry.namespace.field]]
+name = "rev"
+type = "string"
+required = false
+description = "The commit the cited lines were read at, where the file is not read from the trunk's head."
+
+[[registry.namespace.field]]
+name = "subject"
+type = "subject"
+required = true
+description = "What it is about."
+
+[[registry.namespace.field]]
+name = "keywords"
+type = "string[]"
+required = false
+description = "The words somebody would search for to find this row."
+
+[[registry.namespace.field]]
+name = "related"
+type = "ref[]"
+required = false
+description = "The rows the question is between or about, written as `namespace::slug`: the tenets that state it two ways, the tenets an answer settles."
