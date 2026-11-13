@@ -1,0 +1,70 @@
+# One simulation frame, wide: three independent three-stage pipelines over one
+# input column, a fan-in stage joining their tails, and two independent
+# single-stage transforms of the input. Twelve work units over thirteen
+# columns. Seven arms compute the same frame and are validated byte-exact
+# against each other and against the reference `record` before any timing is
+# taken.
+#
+# Two sweeps. `heavy` gives every stage real per-record compute (eight rounds
+# of a multiply, xor and shift mix), so the frame is bound by arithmetic.
+# `light` gives every stage one wrapping multiply, so the frame is bound by
+# memory and by whatever each arm pays per stage.
+#
+# The engine arms measure the engine as it stands, which does not yet include
+# fusion or the adaptive trunk, fiber and morsel scheduling. They are a
+# baseline to compare against later, and nothing here decides anything about
+# the engine.
+#
+# Run from this directory, after building the member:
+#   CARGO_INCREMENTAL=0 cargo build --release --workspace
+#   <target-dir>/release/frame_wide --n 65536
+# `--n` restricts the run to one record count and `--only <sweep>` to one
+# sweep. With neither, every configured cell runs, which at the large counts is
+# hours of machine time.
+#
+# Correctness first, every time: `./run-checks.sh` builds the member and runs
+# the grouping test, the support crate's unit tests and the negative controls.
+# A timing taken without it has not been shown to compute the frame.
+#
+# A median says how long a frame took, not how much machine it took.
+# `./occupancy.sh <arm>` prints the cores one arm actually runs on, and the
+# parallel arms are read with both numbers or neither.
+
+# Sized for a frame measured in milliseconds, not nanoseconds: a sample is the
+# mean of `batch_size` calls, a worker yields `runs_per_pass / batch_size`
+# samples, and one worker runs per arm, pass and mode. On x86_64 every worker
+# also sleeps three seconds calibrating its counter before its first call
+# (ticket 3ec38cb5c7c8), and validation spawns one probe worker per arm per
+# seed, so the seed count is kept low: four seeds of 65536 records each is
+# already a quarter million records checked per arm against the reference.
+[timing]
+passes = 2
+runs_per_pass = 20
+batch_size = 5
+harness_runs = 1
+cooldowns_ms = [0]
+validation_seeds = 4
+determinism_check_seeds = 4
+
+[bench.heavy]
+title = "Wide frame, heavy per-record compute"
+workload = "frame"
+master_seed = "0xF4A3_E000_0000_0001"
+may_differ = false
+required = true
+threaded = true
+arms = ["fw_engine", "fw_engine_par", "fw_hand", "fw_hand_par", "fw_rust_nostd", "fw_rust_std", "fw_rust_std_par"]
+# FIXME(5f526d071953): only 65536 has been run. The three large sizes are the
+# intended region and are configured, but no cell of them has results, so this
+# list advertises more than the tree holds.
+sizes = [65536, 1048576, 4194304, 16777216]
+
+[bench.light]
+title = "Wide frame, one multiply per stage"
+workload = "frame"
+master_seed = "0xF4A3_E000_0000_0002"
+may_differ = false
+required = true
+threaded = true
+arms = ["fw_engine", "fw_engine_par", "fw_hand", "fw_hand_par", "fw_rust_nostd", "fw_rust_std", "fw_rust_std_par"]
+sizes = [65536, 1048576, 4194304, 16777216]

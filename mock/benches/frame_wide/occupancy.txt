@@ -1,0 +1,26 @@
+# Cores per arm, frame_wide, n=65536
+#
+# Process-wide CPU over a 15s window on a worker running one
+# arm's frame back to back, 3 readings an arm and regime.
+# The window covers the untimed bridge as well as the frame, so each
+# figure is a floor on that arm's in-frame spread, not a measure of
+# it. Read ./occupancy.sh's header before quoting one.
+#
+# Built: release, opt-level 3, fat LTO, one codegen unit.
+# Measured: 2026-11-13 17:03 UTC on 4 cores.
+
+arm              regime             readings                 median
+fw_hand          frame_wide/heavy   0.99 0.99 0.99           0.99
+fw_hand          frame_wide/light   0.99 0.99 0.98           0.99
+fw_hand_par      frame_wide/heavy   2.03 1.59 1.74           1.74
+fw_hand_par      frame_wide/light   1.15 1.03 0.95           1.03
+fw_rust_nostd    frame_wide/heavy   0.99 0.99 0.98           0.99
+fw_rust_nostd    frame_wide/light   0.99 0.99 0.98           0.99
+fw_rust_std      frame_wide/heavy   0.99 0.99 0.99           0.99
+fw_rust_std      frame_wide/light   0.98 0.99 0.98           0.98
+fw_rust_std_par  frame_wide/heavy   2.24 2.13 2.22           2.22
+fw_rust_std_par  frame_wide/light   1.66 1.61 1.64           1.64
+fw_engine        frame_wide/heavy   0.99 0.99 0.99           0.99
+fw_engine        frame_wide/light   0.99 0.99 0.99           0.99
+fw_engine_par    frame_wide/heavy   1.11 1.11 1.10           1.11
+fw_engine_par    frame_wide/light   1.00 1.00 1.00           1.00

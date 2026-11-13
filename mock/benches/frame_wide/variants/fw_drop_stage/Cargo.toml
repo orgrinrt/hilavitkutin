@@ -1,0 +1,18 @@
+[package]
+name = "fw_drop_stage"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# The negative control. Never listed in `bench.toml`: it is built and run only
+# by `tests/negative_control.rs`, which shows the cross-arm validation refusing
+# it. See `record_without_a2` in the support crate for what it gets wrong.
+[lib]
+name = "fw_drop_stage"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+frame-wide-support = { path = "../../support/frame-wide-support" }
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "f42844c7f7f8be9c54dd96b9a975a6c7da3fea5e", features = ["std"] }
+mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", rev = "f42844c7f7f8be9c54dd96b9a975a6c7da3fea5e" }

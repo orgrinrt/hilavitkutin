@@ -148,3 +148,105 @@ fn axis_a_gate(args: &[String]) -> ExitCode {
     }
     ExitCode::SUCCESS
 }
+
+#[cfg(test)]
+mod tests {
+    use variant_path::{shaped_as_the_drivers_once_did, shaped_once};
+
+    use super::*;
+
+    /// Resolve every cell the repo's own manifest declares, and hand back
+    /// the variant paths `drive` resolves for each.
+    fn resolved_variant_paths() -> Vec<(String, usize, Vec<PathBuf>)> {
+        let dir = std::env::current_dir().expect("readable cwd");
+        let manifest = BenchManifest::load(&dir.join("bench.toml")).expect("the repo's bench.toml");
+
+        let mut out = Vec::new();
+        for (bench_name, section) in &manifest.bench {
+            for (size_idx, _) in section.sizes.iter().enumerate() {
+                let config = manifest
+                    .for_size(bench_name, size_idx, &dir)
+                    .unwrap_or_else(|e| panic!("bench `{bench_name}` size {size_idx}: {e}"));
+                out.push((bench_name.clone(), size_idx, config.variant_paths.clone()));
+            }
+        }
+        out
+    }
+
+    /// Every variant path the manifest resolves carries the platform
+    /// dylib prefix and suffix exactly once.
+    ///
+    /// The driver itself no longer touches these paths: `drive` resolves
+    /// them and loads them. It once shaped an already-resolved path a second
+    /// time, turning every arm into `liblibema_neon.so.so`, so the property
+    /// is held here over what `for_size` resolves for every cell the manifest
+    /// declares. A second shaping inside `drive`, after that point, is the
+    /// harness's to catch and would not show here.
+    #[test]
+    fn the_resolved_variant_paths_are_shaped_once() {
+        let cells = resolved_variant_paths();
+        let mut checked = 0usize;
+        for (bench_name, size_idx, paths) in &cells {
+            for path in paths {
+                let name = path
+                    .file_name()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or_else(|| {
+                        panic!("bench `{bench_name}`: variant path has no file name")
+                    });
+                if let Err(e) = shaped_once(name) {
+                    panic!("bench `{bench_name}` size {size_idx}: {e}");
+                }
+                checked += 1;
+            }
+        }
+        assert!(
+            checked > 0,
+            "the manifest resolved no variant paths, so this test asserted nothing"
+        );
+    }
+
+    /// Put the old shaping back over the same paths and the check above
+    /// refuses every one of them.
+    ///
+    /// Without this, a check that accepted everything would leave the
+    /// test above green and say nothing. The shaping here is the
+    /// driver's own, as it stood until df8a9419, applied to the real
+    /// resolved paths rather than to a name the test invented.
+    #[test]
+    fn the_shaping_the_driver_once_did_is_refused_on_every_cell() {
+        let cells = resolved_variant_paths();
+        let mut refused = 0usize;
+        for (bench_name, size_idx, paths) in &cells {
+            for path in paths {
+                let doubled = shaped_as_the_drivers_once_did(path);
+                let name = doubled
+                    .file_name()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or_else(|| {
+                        panic!("bench `{bench_name}`: doubled path has no file name")
+                    });
+                match shaped_once(name) {
+                    Ok(()) => {
+                        panic!(
+                            "bench `{bench_name}` size {size_idx}: the check accepted `{name}`, so \
+                         the test above proves nothing"
+                        )
+                    },
+                    Err(e) => {
+                        assert!(
+                            e.contains("twice"),
+                            "bench `{bench_name}` size {size_idx}: the refusal should say an affix \
+                         doubled, got `{e}`"
+                        )
+                    },
+                }
+                refused += 1;
+            }
+        }
+        assert!(
+            refused > 0,
+            "no cell was checked, so this control asserted nothing"
+        );
+    }
+}
