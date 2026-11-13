@@ -1031,6 +1031,33 @@ rule as a constraint note.
 Op's answer of 13 November on an append past the capacity is "Configurable
 by the consumer", which replaces the fixed saturation of the A1 note.
 
+The rounds hold three states of that rule, in order. The A1 note of 11 June
+2026 has the append saturate at the capacity, and the record past it is
+dropped. A round of 20 June 2026, agent-written, makes the same append a
+violation of the capacity contract that asserts before the write
+(`tenet::an_append_past_an_accumulator_s_reserved_capacity_is_a_contract_violation_that_asserts_and_never_drops_silently`).
+
+`design_rounds/202606200300/202606200300_topic.accum-overcap-hard-error.md:19-26`
+
+> Over-appending a fixed-capacity accumulator is a capacity-contract violation (a
+> bug, like an out-of-bounds index), not a recoverable runtime condition. The run
+> entries return the consumer-defined `Cfg::Out`, so there is no uniform `Outcome`
+> channel to carry a recoverable error. The fix is fail-loud: `resolve_append`
+> asserts `live < cap` and panics before the write when the contract is violated.
+> The assert fires before any write, so the soundness floor (no out-of-bounds write)
+> is preserved; the difference is a loud abort instead of a silent drop. A consumer
+> sizes the accumulator for its maximum per-frame appends; that is the contract.
+
+The rounds of 13 November 2026 then make the refusal a value that is counted
+and read at the close, and record op's answer that the consumer picks
+between that and the assert
+(`tenet::an_append_past_an_accumulator_s_capacity_is_counted_and_never_written_and_the_refusal_is_sticky_for_the_frame`,
+`tenet::the_consumer_picks_on_the_run_configuration_whether_an_over_capacity_append_is_a_refusal_or_an_assert`).
+
+`design_rounds/202611130554/202611130600_topic.overflow-is-the-consumers-choice.md:9-9`
+
+> Asked through the coordinator whether an append past an accumulator's capacity should be a refusal as a value, with the options [a refusal as a value everywhere | the assert stays the default, refusal is a provider's opt-in | configurable by the consumer: a const, generic or trait parameter on the run configuration picks refuse or assert, default refuse], op answered, verbatim: "Configurable by the consumer".
+
 Rows: `tenet::there_are_three_store_types_and_one_scheduling_mechanism`,
 `tenet::the_scheduler_builds_edges_from_store_identities_and_ignores_cardinality`,
 `tenet::an_accumulator_is_a_column_written_by_append_and_a_fourth_store_marker`,
