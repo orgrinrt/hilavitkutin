@@ -185,7 +185,7 @@ written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-0
 standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["bench-decided forks", "bench oracle", "open fork", "build the candidates", "rule from findings", "performance fork"]
-related = ["tenet::whether_dispatch_follows_rcm_order_or_waist_phase_order_is_decided_by_a_bench"]
+related = ["tenet::rcm_wins_against_rival_ordering_theories_at_dram_scale_and_order_is_near_neutral_below_it_so_step_5_stands"]
 
 [[tenet]]
 id = "every_open_question_blocking_the_freeze_has_a_named_resolution_channel_and_the_pre_freeze_batch_replaces_the_in_place_statements_with_settled_design"

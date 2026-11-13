@@ -41,10 +41,10 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
-standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["ruled: mock/research/202607200800_a1-1-ordering-theory-bench-expansion.md:82-101", "ruled: mock/research/202606111400_canonical-design-addendum-a1.md:49-57"]
 keywords = ["RCM", "ordering theories", "DRAM-resident", "registration order", "1.65x", "Step 5", "A1-1", "bench resolved"]
-related = ["tenet::whether_dispatch_follows_rcm_order_or_waist_phase_order_is_decided_by_a_bench"]
 
 [[tenet]]
 id = "light_threshold_is_a_bench_set_tunable_registered_with_the_value_bench_pending_until_the_adapt_phase_strategy_build_opens_its_gate"
