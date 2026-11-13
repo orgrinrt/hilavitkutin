@@ -108,7 +108,6 @@ impl hilavitkutin_api::footprint::ResourceFootprint for Zst {
 // nothing and writes its own column, unrelated to the swapped resources
 // (the swap-of-an-unread-resource case rides every test below).
 #[derive(Copy, Clone)]
-#[allow(dead_code)]
 struct Out(u32);
 
 type WriteOut = Cons<Column<Out>, Empty>;
@@ -194,7 +193,6 @@ fn double_swap_before_run_last_value_wins() {
 // executions. A swap of the resource must seed this unit for the next frame;
 // that is the only thing a zero-sized swap can be observed to do.
 #[derive(Copy, Clone)]
-#[allow(dead_code)]
 struct ZOut(u32);
 
 type ReadZst = Cons<Resource<Zst>, Empty>;
@@ -245,6 +243,10 @@ impl WorkUnit<Always> for ZstReaderWu {
 /// clean frame, runs again on the frame after the swap, and is skipped again
 /// once that frame has cleared the mark. A swap that installed nothing and
 /// marked nothing leaves the count at one.
+///
+/// The count says the reader was entered. Its column says it covered its
+/// records: the column is poisoned before the swap and every record holds its
+/// index again after the frame that follows.
 #[test]
 fn zst_swap_seeds_its_reader_for_the_next_frame() {
     ZST_READER_RUNS.with(|c| c.set(0));
@@ -270,6 +272,13 @@ fn zst_swap_seeds_its_reader_for_the_next_frame() {
         "a clean frame skips the reader"
     );
 
+    // Bindings head: the reader's column, registered last.
+    let zout_base: *mut ZOut = scheduler.__bindings().__ptr().as_ptr();
+    for i in 0 .. RECORDS {
+        // SAFETY: the column reserves RECORDS records; the scheduler is alive.
+        unsafe { *zout_base.add(i) = ZOut(u32::MAX) };
+    }
+
     scheduler.replace_value(Zst);
     assert!(matches!(scheduler.run(), Outcome::Ok(())));
     assert_eq!(
@@ -277,6 +286,15 @@ fn zst_swap_seeds_its_reader_for_the_next_frame() {
         2,
         "the swap marks the store, so the reader runs on the next frame"
     );
+    let zout_base: *const ZOut = scheduler.__bindings().__ptr().as_ptr();
+    for i in 0 .. RECORDS {
+        // SAFETY: as above; the frame after the swap wrote every record.
+        let z = unsafe { (*zout_base.add(i)).0 };
+        assert_eq!(
+            z, i as u32,
+            "zout rec {i}: the reader ran after the swap and did not cover it"
+        );
+    }
 
     assert!(matches!(scheduler.run(), Outcome::Ok(())));
     assert_eq!(
@@ -304,12 +322,31 @@ fn replace_resource_opens_the_plan_band_replace_value_does_not() {
         .build(store(provider), USize(RECORDS))
         .unwrap_or_else(|_| panic!("build should succeed"));
 
+    // Poison the carrier's column, so a record the cold frame did not reach
+    // is caught. Bindings head: the column, registered last.
+    let out_base: *mut Out = scheduler.__bindings().__ptr().as_ptr();
+    for i in 0 .. RECORDS {
+        // SAFETY: the column reserves RECORDS records; the scheduler is alive.
+        unsafe { *out_base.add(i) = Out(u32::MAX) };
+    }
+
     // Cold first frame: always plan-dirty.
     assert!(matches!(scheduler.run(), Outcome::Ok(())));
     assert!(
         scheduler.__plan_band().0,
         "the first frame always enters the band"
     );
+    // The band decisions below are read on frames of a carrier that does
+    // dispatch: the cold frame wrote every record of its column.
+    let out_base: *const Out = scheduler.__bindings().__ptr().as_ptr();
+    for i in 0 .. RECORDS {
+        // SAFETY: as above; the cold frame wrote every record.
+        let out = unsafe { (*out_base.add(i)).0 };
+        assert_eq!(
+            out, i as u32,
+            "out rec {i}: the cold frame did not dispatch the carrier over it"
+        );
+    }
 
     // Clean frame: no swap, band closed.
     assert!(matches!(scheduler.run(), Outcome::Ok(())));

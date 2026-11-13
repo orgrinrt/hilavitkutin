@@ -110,7 +110,6 @@ impl hilavitkutin_api::footprint::ResourceFootprint for Cfgish {
 #[derive(Copy, Clone)]
 struct Pv(u32);
 #[derive(Copy, Clone)]
-#[allow(dead_code)] // written by the consumer for the record footprint
 struct Av(u32);
 
 type ColP = Cons<Column<Pv>, Empty>;
@@ -198,14 +197,67 @@ macro_rules! build {
     };
 }
 
+/// Poison both columns, so a record a frame did not reach is caught on the
+/// consumer's and a record the plan unit's dispatch touched is caught on its
+/// own. Bindings from the head: `Av`, registered last, then `Pv`.
+macro_rules! poison_columns {
+    ($scheduler:expr) => {{
+        let consumer: *mut Av = $scheduler.__bindings().__ptr().as_ptr();
+        let plan: *mut Pv = $scheduler.__bindings().__tail().__ptr().as_ptr();
+        for i in 0 .. RECORDS {
+            // SAFETY: both columns reserve RECORDS records; the scheduler is alive.
+            unsafe {
+                *consumer.add(i) = Av(u32::MAX);
+                *plan.add(i) = Pv(u32::MAX);
+            }
+        }
+    }};
+}
+
+/// Hold the plan unit's column to the poison: the unit declares the write to
+/// be store-anchored and its body writes nothing, so no frame may change it.
+macro_rules! assert_plan_column_untouched {
+    ($scheduler:expr, $path:literal) => {{
+        let base: *const Pv = $scheduler.__bindings().__tail().__ptr().as_ptr();
+        for i in 0 .. RECORDS {
+            // SAFETY: the column reserves RECORDS records; the scheduler is alive.
+            let p = unsafe { (*base.add(i)).0 };
+            assert_eq!(
+                p,
+                u32::MAX,
+                "{}: plan rec {i} changed, and the plan unit writes nothing",
+                $path
+            );
+        }
+    }};
+}
+
+/// Hold every record of the consumer's column to what `ConsumerWu` writes.
+macro_rules! assert_consumer_covered {
+    ($scheduler:expr, $path:literal) => {{
+        let base: *const Av = $scheduler.__bindings().__ptr().as_ptr();
+        for i in 0 .. RECORDS {
+            // SAFETY: the column reserves RECORDS records; the scheduler is alive.
+            let a = unsafe { (*base.add(i)).0 };
+            assert_eq!(
+                a, 7,
+                "{}: consumer rec {i} was not written by the cold frame",
+                $path
+            );
+        }
+    }};
+}
+
 #[test]
 fn a_plan_affecting_swap_runs_the_plan_band_and_a_value_swap_does_not() {
     // Single core.
     {
         let mut scheduler = build!(BumpProvider::<32768>::new());
+        poison_columns!(scheduler);
 
         let cold = frame_delta!(scheduler.run());
         assert!(cold > 0, "run: the cold frame runs the plan band");
+        assert_consumer_covered!(scheduler, "run");
 
         assert_eq!(
             frame_delta!(scheduler.run()),
@@ -232,6 +284,7 @@ fn a_plan_affecting_swap_runs_the_plan_band_and_a_value_swap_does_not() {
             0,
             "run: the bit was consumed, the next clean frame skips the band"
         );
+        assert_plan_column_untouched!(scheduler, "run");
     }
 
     // Parallel: the decision is consumed on the calling thread and read by
@@ -240,9 +293,11 @@ fn a_plan_affecting_swap_runs_the_plan_band_and_a_value_swap_does_not() {
         let scheduler = build!(BumpProvider::<32768>::new());
         let pool = TestExecutor::new();
         let mut scheduler = core::pin::pin!(scheduler);
+        poison_columns!(scheduler.as_ref());
 
         let cold = frame_delta!(scheduler.as_mut().run_parallel(&pool));
         assert!(cold > 0, "run_parallel: the cold frame runs the plan band");
+        assert_consumer_covered!(scheduler.as_ref(), "run_parallel");
 
         assert_eq!(
             frame_delta!(scheduler.as_mut().run_parallel(&pool)),
@@ -272,5 +327,6 @@ fn a_plan_affecting_swap_runs_the_plan_band_and_a_value_swap_does_not() {
             0,
             "run_parallel: the bit was consumed, the next clean frame skips the band"
         );
+        assert_plan_column_untouched!(scheduler.as_ref(), "run_parallel");
     }
 }

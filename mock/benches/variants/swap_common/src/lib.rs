@@ -92,16 +92,12 @@ impl hilavitkutin_api::footprint::ResourceFootprint for OtherIn {
 }
 
 #[derive(Copy, Clone)]
-#[allow(dead_code)]
 pub struct C1(pub u32);
 #[derive(Copy, Clone)]
-#[allow(dead_code)]
 pub struct C2(pub u32);
 #[derive(Copy, Clone)]
-#[allow(dead_code)]
 pub struct C3(pub u32);
 #[derive(Copy, Clone)]
-#[allow(dead_code)]
 pub struct Cp(pub u32);
 
 type ReadV = Cons<Resource<SwapVal>, Empty>;
