@@ -34,3 +34,9 @@ strip = false
 arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
 hilavitkutin-extensions = { path = "../../../hilavitkutin-extensions" }
 hilavitkutin-extensions-macros = { path = "../.." }
+
+# The path crates above take notko from the parent workspace, which names it by
+# `https`, and arvo names it by `ssh`. This fixture is its own root, so the
+# parent's patch does not reach it; without this the graph holds two notko.
+[patch."ssh://git@github.com/orgrinrt/notko.git"]
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev" }
