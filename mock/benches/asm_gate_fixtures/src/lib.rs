@@ -36,7 +36,6 @@ use hilavitkutin::dispatch::engine_ctx::{
     SnapNil,
 };
 use hilavitkutin::scheduler::Scheduler;
-use hilavitkutin_api::RecordOp;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{
@@ -54,6 +53,7 @@ use hilavitkutin_api::context::{
 use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
 use hilavitkutin_api::store::{Accum, Column, Resource};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
+use hilavitkutin_api::{ReadVals, RecordOp, WriteVals, rec};
 
 // The fixed record count for every fixture. Small enough that the release build
 // is quick, large enough that the morsel loop is a real loop.
@@ -63,13 +63,16 @@ const N: usize = 256;
 
 #[derive(Copy, Clone)]
 struct Inv(u32);
-#[derive(Copy, Clone)]
+// `PartialEq` for the fold, as in `engine_vs_std::element_wise`: the written
+// columns are listed bare, and every write here is by position and compares
+// nothing.
+#[derive(Copy, Clone, PartialEq)]
 struct Av(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 struct Bv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 struct Cv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 #[allow(dead_code)] // written by S4, read back post-run as raw u32 for the hash
 struct Dv(u32);
 
@@ -186,35 +189,23 @@ impl WorkUnit<Always> for S4 {
 }
 
 impl RecordOp for S1 {
-    type In = Inv;
-    type Out = Av;
-
-    fn apply(&self, x: Inv) -> Av {
-        Av(stage1(x.0))
+    fn apply(&self, read: &ReadVals<'_, One<Inv>>) -> WriteVals<One<Av>> {
+        rec![Av(stage1(read.get(Column::<Inv>::new()).0))]
     }
 }
 impl RecordOp for S2 {
-    type In = Av;
-    type Out = Bv;
-
-    fn apply(&self, x: Av) -> Bv {
-        Bv(stage2(x.0))
+    fn apply(&self, read: &ReadVals<'_, One<Av>>) -> WriteVals<One<Bv>> {
+        rec![Bv(stage2(read.get(Column::<Av>::new()).0))]
     }
 }
 impl RecordOp for S3 {
-    type In = Bv;
-    type Out = Cv;
-
-    fn apply(&self, x: Bv) -> Cv {
-        Cv(stage3(x.0))
+    fn apply(&self, read: &ReadVals<'_, One<Bv>>) -> WriteVals<One<Cv>> {
+        rec![Cv(stage3(read.get(Column::<Bv>::new()).0))]
     }
 }
 impl RecordOp for S4 {
-    type In = Cv;
-    type Out = Dv;
-
-    fn apply(&self, x: Cv) -> Dv {
-        Dv(stage4(x.0))
+    fn apply(&self, read: &ReadVals<'_, One<Cv>>) -> WriteVals<One<Dv>> {
+        rec![Dv(stage4(read.get(Column::<Cv>::new()).0))]
     }
 }
 
@@ -342,10 +333,11 @@ impl WorkUnit<Always> for AppendChain {
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
-            // SAFETY: In host-populated; append advances live-length under the
-            // reserved capacity (= record count).
+            // SAFETY: In host-populated for the record count.
             let inp = unsafe { ctx.reader().read::<AInv, _>(i) };
-            unsafe { ctx.accums().append::<AAv, _>(AAv(chain(inp.0))) };
+            // The append is safe and stays under the reserved capacity, the
+            // record count.
+            ctx.accums().append::<AAv, _>(AAv(chain(inp.0)));
         });
     }
 }

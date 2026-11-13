@@ -97,9 +97,9 @@ impl<K: Kernel> WorkUnit<Always> for FoldUnit<K> {
             let v = unsafe { ctx.reader().read::<Val, _>(i) };
             fold_step::<K>(acc, v.0)
         });
-        // SAFETY: at most one partial per window, far under the reserved
-        // capacity of one per record.
-        unsafe { ctx.accums().append::<Part, _>(Part(partial)) };
+        // At most one partial per window, far under the reserved capacity of
+        // one per record.
+        ctx.accums().append::<Part, _>(Part(partial));
     }
 }
 
@@ -128,10 +128,11 @@ impl<K: Kernel> WorkUnit<Always> for AppendUnit<K> {
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         use hilavitkutin_api::context::EachApi as _;
         ctx.each().run(|i| {
-            // SAFETY: as in the fold; one append per record, within the
-            // reserved capacity of one per record.
+            // SAFETY: as in the fold.
             let v = unsafe { ctx.reader().read::<Val, _>(i) };
-            unsafe { ctx.accums().append::<Out, _>(Out(K::apply(v.0))) };
+            // One append per record, within the reserved capacity of one per
+            // record.
+            ctx.accums().append::<Out, _>(Out(K::apply(v.0)));
         });
     }
 }

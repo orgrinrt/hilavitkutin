@@ -290,7 +290,9 @@ fn column_base<T, B, I>(bindings: &B) -> *mut T
 where
     B: ColSelector<T, I>,
 {
-    <B as ColSelector<T, I>>::get(bindings).as_ptr()
+    // The columns this bench reaches are plain, so the base reads see is the
+    // one base the column has and writes land on it too.
+    <B as ColSelector<T, I>>::get(bindings).__read().as_ptr()
 }
 
 /// Hash `n` records of a column read back through its base pointer.

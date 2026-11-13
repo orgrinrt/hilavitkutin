@@ -77,11 +77,12 @@ impl WorkUnit<Always> for AppendChain {
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: In host-populated for the record count; read adds the
-            // morsel start. The append advances the live-length under the
-            // reserved capacity (= record count); the appends across the frame
-            // total the record count, within the reservation.
+            // morsel start.
             let inp = unsafe { ctx.reader().read::<Inv, _>(i) };
-            unsafe { ctx.accums().append::<Av, _>(Av(chain(inp.0))) };
+            // The append is safe: it advances the live length under the
+            // reserved capacity (the record count), and one past it is
+            // refused and counted.
+            ctx.accums().append::<Av, _>(Av(chain(inp.0)));
         });
     }
 }

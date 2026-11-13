@@ -75,6 +75,27 @@ pub struct ColRef<T> {
     pub(super) count: USize,
 }
 
+impl<T> ColRef<T> {
+    /// The base every read of the pass sees. Hidden accessor for a host that
+    /// reaches a column through the bindings: for a plain column it is the
+    /// one base the column has, for a buffered column its frozen side. Not
+    /// part of the supported surface.
+    #[doc(hidden)]
+    #[inline(always)]
+    pub const fn __read(&self) -> ColumnPtr<T> {
+        self.read
+    }
+
+    /// The base every write of the pass lands on: the one base of a plain
+    /// column, the live side of a buffered one. Hidden accessor, as `__read`.
+    /// Not part of the supported surface.
+    #[doc(hidden)]
+    #[inline(always)]
+    pub const fn __write(&self) -> ColumnPtr<T> {
+        self.write
+    }
+}
+
 impl<T> Copy for ColRef<T> {}
 impl<T> Clone for ColRef<T> {
     #[inline(always)]

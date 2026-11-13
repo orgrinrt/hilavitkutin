@@ -21,7 +21,14 @@ use core::sync::atomic::{AtomicUsize, Ordering};
 
 use arvo::{Cap, USize};
 use common::FixedWorkers;
-use hilavitkutin::dispatch::engine_ctx::{AccPtrNil, ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
+use hilavitkutin::dispatch::engine_ctx::{
+    AccPtrNil,
+    ColPtrCons,
+    ColPtrNil,
+    ColSelector,
+    EngineCtx,
+    SnapNil,
+};
 use hilavitkutin::scheduler::{BuildError, Scheduler};
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
@@ -246,6 +253,27 @@ macro_rules! suite {
                 // SAFETY: between passes.
                 let got = unsafe { all(seen, |s: Seen| s.0) };
                 assert!(got.iter().all(|v| *v == 503), "each read reached its own store");
+            }
+
+            // A host that finds a column by its type gets the bases of that
+            // column's binding: the frozen and the live side of a buffered
+            // column, and the one base of a plain column for both.
+            #[test]
+            fn a_column_found_by_type_answers_the_bases_of_its_binding() {
+                let scheduler = Scheduler::builder()
+                    .with(Column::<Height>::new())
+                    .with(Col::new())
+                    .with(Column::<Seen>::new())
+                    .with(Both)
+                    .build(store(), USize(RECORDS))
+                    .unwrap_or_else(|_| panic!("build should succeed"));
+                let b = scheduler.__bindings();
+                let buffered = <_ as ColSelector<Height, _, $mode>>::get(b);
+                assert_eq!(buffered.__read().as_ptr(), b.__tail().__frozen().as_ptr());
+                assert_eq!(buffered.__write().as_ptr(), b.__tail().__live().as_ptr());
+                let plain = <_ as ColSelector<Height, _>>::get(b);
+                assert_eq!(plain.__read().as_ptr(), b.__tail().__tail().__ptr().as_ptr());
+                assert_eq!(plain.__write().as_ptr(), b.__tail().__tail().__ptr().as_ptr());
             }
 
             #[test]
