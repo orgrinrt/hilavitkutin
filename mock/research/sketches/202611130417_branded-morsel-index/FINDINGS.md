@@ -76,6 +76,14 @@ An ad-hoc reading of the release asm, not a measurement; the listing is `asm/che
 - The lifetime refusal is E0521 for the brief's case of a brand used in another `each` (08), and the read form of it (08b) is the only fixture an invariant brand is needed for.
 - The brief's five refusals were joined by seven: `From` conversion, arithmetic, the read path, an index kept past its `each`, one kept across morsels, and the two safe forging routes and the unsafe one.
 
+## What is not established
+
+- A morsel of more than one read and one write column; the brand ties every column of a block the same way, but no block here has three.
+- A block or an index sent to another thread. `Index` is `Send` and `Sync` by its parts; no test sends one.
+- A block kernel reaching a neighbouring record. The brand gives no arithmetic, so a window inside a block kernel needs an engine-side operation that was not designed here.
+- A runner that permutes the sequence `indices` yields in; the hole above rests on the runner sketch's precedent, not on a run here.
+- Whether the bounds checks cost anything measurable. The asm reading counts calls, and any number belongs in `mock/benches/`.
+
 ## For the next step
 
 - V3's block kernel can take this shape as it is: `each` with a higher-ranked brand, an invariant `Index`, `read` and `write` at it. Its signature stays unlocked until HV15, as the roadmap says, since the morsel here is one read and one write column and not the store's layout.
