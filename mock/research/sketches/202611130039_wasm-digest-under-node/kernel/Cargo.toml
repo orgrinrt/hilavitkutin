@@ -1,0 +1,13 @@
+[package]
+name = "wasm-digest-kernel"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[features]
+# The negative control: the digest absorbs the line length as a pointer-width
+# integer in native bytes, so the digest depends on the target's `usize`.
+control-usize-len = []
+
+[lib]
+path = "src/lib.rs"

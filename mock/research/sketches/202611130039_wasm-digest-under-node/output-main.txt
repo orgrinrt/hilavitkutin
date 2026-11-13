@@ -1,0 +1,2 @@
+SAME: 1701 lines, native and node agree
+main exit=0

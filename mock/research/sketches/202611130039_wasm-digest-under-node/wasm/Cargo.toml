@@ -1,0 +1,18 @@
+[package]
+name = "wasm-digest-wasm"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[features]
+control-usize-len = ["wasm-digest-kernel/control-usize-len"]
+# A probe: builds the front end without its panic handler, to record the
+# compiler's words for what a `no_std` `cdylib` needs.
+omit-panic-handler = []
+
+[dependencies]
+wasm-digest-kernel = { path = "../kernel" }
+
+[lib]
+crate-type = ["cdylib"]
+path = "src/lib.rs"
