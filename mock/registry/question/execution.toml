@@ -123,3 +123,62 @@ T7 was distilled from T6 only. Known inconsistencies:
 '''
 subject = "execution"
 keywords = ["sorting claim", "10.7%", "4.8%", "baseline", "37.4ms", "40.4ms", "T7 inconsistencies"]
+
+[[question]]
+id = "whether_the_default_wake_is_the_spin_then_park_hybrid_of_the_spec_or_park_immediately_ruled_by_the_wake_bench"
+asks = "Whether the default wake of the thread pool is the spin-then-park hybrid, or park-immediately, which the wake bench ruled for with a spin budget default of zero and the spin-then-park machinery shipping tunable."
+options = ["the spin-then-park hybrid as the default wake", "park-immediately by default, spin-then-park built and tunable with default budget 0, as the wake bench ruled"]
+state = "open"
+source = "mock/research/seed/governance.md:146-158"
+quote = '''
+   relocation round. Deviation 3 (park-immediately): RESOLVED BY BENCH
+   (2026-07-19, round 202607202310 + follow-through 202607202351,
+   record `202607202340_wake-policy-evidence.md`, margins and mechanism
+   corrected by the re-examination `202607210100`, the controlling
+   evidence): the canonical
+   spin-then-park middle tier was built (budget parameter on both
+   frame waits, consumer-tunable `RunCfg::WAKE_SPIN_BUDGET`,
+   budget-sweep equivalence test) and the wake_policy bench ruled for
+   park-immediately, reproducibly: across seven wait policies, three
+   sizes, and three invocations park is never worse and no spin
+   policy is ever better (the round-1 point margins are retired as
+   variance-inflated; the spin iteration is ISB on aarch64 at 9 to
+   20 ns). The default is 0, the machinery ships tunable, and any
+'''
+subject = "execution"
+keywords = ["wake policy", "spin then park", "park-immediately", "spin 128", "WAKE_SPIN_BUDGET", "deviation 3"]
+related = ["tenet::the_thread_pool_is_pre_allocated_and_wakes_by_spinning_first_and_then_parking", "tenet::a_wake_bench_rules_for_park_immediately_with_a_spin_budget_default_of_zero_and_the_machinery_shipping_tunable"]
+
+[[question]]
+id = "whether_the_maintainer_blesses_the_plane_relocation_round_for_deviations_one_five_and_six_and_the_bless_of_deviation_four"
+asks = "Whether the maintainer rules on the GATE-2 deviations that the seed lists as awaiting an evidence-then-bless ruling: the relocation round proposed for deviations 1, 5 and 6, and the blessing of the pointer-size spawn of deviation 4 with a compile-time size check."
+options = ["bless the proposed rulings: the plane relocation round for deviations 1, 5 and 6, and the blessing of deviation 4 with the size check lifted to compile time", "rebuild the deviations to the canon shape"]
+state = "open"
+source = "mock/research/seed/governance.md:125-133, mock/research/seed/governance.md:133-138, mock/research/seed/governance.md:142-146"
+quote = '''
+5. **The six GATE-2 agent-call deviations** each await an
+   evidence-then-bless ruling. See [[execution]]. Deviations 1 and 6
+   (inline `PoolFrame` with `Pin`; inline GATE-2 scratch): EVIDENCE
+   DELIVERED (2026-07-19, record
+   `202607201400_gate2-deviation-1-6-evidence.md`, sketch
+   `202607201300_arena-poolframe` WORKS): the whole-plane arena route is
+   mechanically proven, dissolves the consumer `Pin` and the ~48 KiB
+   single-core dead weight, and the proposed ruling is the relocation
+   round. Deviation 5 (raw aliasing): AUDITED with a CONFIRMED hole
+---
+   round. Deviation 5 (raw aliasing): AUDITED with a CONFIRMED hole
+   (2026-07-19, record `202607201600`): the between-frames `&mut`
+   surface aliases a parked worker's held `&Scheduler`
+   (miscompilation-class, timing-independent), so the plane relocation
+   is soundness-required and deviations 1, 5, and 6 resolve in one
+   round; the finding is catalogued as an ignored test. Deviation 2 (core-ownership mask): EVIDENCE DELIVERED (record
+---
+   armed. Deviation 4 (pointer-size spawn): DESIGN MEMO DELIVERED
+   (record `202607202000`): sound as shipped, contract gap named, the
+   proposed ruling blesses the mechanism, lifts the size check to
+   compile time, and folds inline-storage widening into the plane
+   relocation round. Deviation 3 (park-immediately): RESOLVED BY BENCH
+'''
+subject = "execution"
+keywords = ["GATE-2 deviations", "evidence then bless", "plane relocation", "deviation 4", "deviation 5", "bless or rebuild", "awaiting ruling"]
+related = ["tenet::deviations_one_and_six_are_answered_by_the_whole_plane_arena_route_and_the_proposed_ruling_is_the_relocation_round", "tenet::deviation_five_has_a_confirmed_aliasing_hole_so_the_plane_relocation_is_soundness_required_and_resolves_deviations_one_five_and_six_in_one_round", "tenet::deviation_four_pointer_size_spawn_is_sound_as_shipped_and_the_proposed_ruling_blesses_it_with_a_compile_time_size_check"]

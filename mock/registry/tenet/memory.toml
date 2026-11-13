@@ -212,3 +212,250 @@ origin = "stated"
 standing = "provisional"
 subject = "memory"
 keywords = ["LoopVersioningLICM", "pointer separation", "data layout", "aliasing", "no LLVM pass"]
+
+[[tenet]]
+id = "platform_tiers_are_os_and_no_os_only_and_the_std_tier_is_deferred_indefinitely"
+what = "The platform tiers are os and no_os only, and the std tier is deferred indefinitely, as a decision of the maintainer registered in workspace memory."
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:165-166"
+provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#constraint-notes-elevated-to-canon"]
+quote = '''
+6. Platform tiers are os and no_os only; the std tier is deferred
+   indefinitely (op decision, registered in workspace memory).
+'''
+origin = "stated"
+standing = "provisional"
+subject = "memory"
+keywords = ["platform tiers", "os", "no_os", "std tier", "deferred", "workspace memory"]
+
+[[tenet]]
+id = "the_clock_is_a_builder_slot_provider_with_an_os_tier_default_and_a_null_clock_on_no_os"
+what = "The clock is a builder-slot provider. It defaults to the os-tier monotonic clock under the default feature, and to a null clock on no_os until dependency injection supplies one. Platform inputs routed through the generic with call drop their values, so value-carrying providers get dedicated slots."
+mechanism = "`SchedulerBuilder::clock`; `.with(...)` drops platform input values."
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:167-171"
+provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#constraint-notes-elevated-to-canon"]
+quote = '''
+7. The clock is a builder-slot provider (`SchedulerBuilder::clock`),
+   defaulting to the os-tier monotonic clock under the default feature and
+   to a null clock on no_os until DI supplies one. Platform inputs routed
+   through `.with(...)` drop their values; value-carrying providers get
+   dedicated slots.
+'''
+origin = "proposed"
+written_by = "addendum A1 of 2026-06-11, constraint note 7, agent-written, elevated to canon by the addendum"
+standing = "provisional"
+subject = "memory"
+keywords = ["clock", "SchedulerBuilder::clock", "builder slot", "null clock", "no_os", "monotonic clock", ".with", "providers"]
+
+[[tenet]]
+id = "the_noalias_invariant_is_kept_as_an_architectural_guarantee_and_not_claimed_as_a_scalar_speedup"
+what = "The handle store never aliases the value columns, and scalar members are snapshotted before the loop, so LLVM keeps them in registers across the morsel loop. The spec's figure of 1.28 to 1.40 times is a March 2026 distillation that the bench did not reproduce as a scalar wall-clock effect on M1, where scalars are L1-resident, but the mechanism is real and decisive for large collection members. The invariant is kept as an architectural guarantee and not as a claimed scalar speedup."
+mechanism = "Spec line 1698, figure 1.28-1.40x; not reproduced on M1 (hoist is wall-clock-nil); decisive for large collection members (axis D)."
+source = "mock/research/202606210600_resource-storage-model-canonical-addendum.md:39-45"
+provenance = ["mock::research::202606210600_resource-storage-model-canonical-addendum::#the-model-stated-outright-bench-confirmed"]
+quote = '''
+5. **Noalias invariant (architectural).** The handle store never aliases the value columns
+   (separate provenance), and scalar members are snapshotted before the loop, so LLVM keeps them
+   in registers across the morsel loop. The spec's 1.28-1.40x figure (1698) is a March-2026
+   distillation; the bench did NOT reproduce it as a scalar wall-clock effect on M1 (scalars are
+   L1-resident, so the hoist is wall-clock-nil there), but the mechanism is real and it is
+   decisive for large collection members (axis D). Keep the invariant as an architectural
+   guarantee, not a claimed scalar speedup.
+'''
+origin = "proposed"
+written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
+standing = "provisional"
+subject = "memory"
+keywords = ["noalias invariant", "architectural guarantee", "1.28-1.40x", "scalar speedup", "M1", "registers", "morsel loop", "axis D"]
+cites = ["resource_and_column_pointers_must_have_separate_provenance_or_llvm_reloads_resources_every_iteration"]
+
+[[tenet]]
+id = "the_providers_crate_ships_default_resource_backed_providers_and_kit_impls_that_consumers_wire_in"
+what = "The providers crate ships default providers, backed by resources, for the scheduler, and default kit implementations that consumers wire in. It depends on the api, string and kit crates and the foundations crates, with no dependency back on the engine."
+mechanism = "`hilavitkutin-providers`: consumes api + str + kit + the foundations crates; no reverse dep; standalone (no engine dep)."
+source = "mock/DESIGN.md.tmpl:24-24, mock/DESIGN.md.tmpl:32-32"
+provenance = ["mock::DESIGN::#crate-layout"]
+quote = '''
+| `hilavitkutin-providers` | Default Resource-backed providers for the scheduler. v0 ships the interner value-type surface (InternerApi / HasInterner / MemoryArena + default_interner constructor) plus the declarative `InternerKit` (round-4 shape: `type Units = read![]`, `type Owned = read![Resource<...>]`). Future modules add ColumnStorage / Clock / Memory defaults per consumer demand. Standalone (no engine dep). |
+---
+hilavitkutin-ctx, -persistence, -sym, -str, -kit, -providers are standalone ecosystem crates that consumers opt into. ctx, persistence, sym, str are pure ecosystem (engine does not depend on them). hilavitkutin-str depends on hilavitkutin-sym for the identity handle; hilavitkutin-sym itself depends only on the foundations (arvo, notko), sitting below the rest of the ecosystem. kit is a contract crate the engine depends on for its `.add_kit()` method, but it has no reverse dependency on the engine; consumers can author Kits without pulling the engine in. providers ships default Kit impls consumers wire in (interner, future ColumnStorage / Clock / Memory defaults); it consumes api + str + kit + the foundations crates, no reverse dep.
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+subject = "memory"
+keywords = ["hilavitkutin-providers", "default providers", "Resource-backed", "Kit impls", "standalone", "no engine dependency", "scheduler"]
+
+[[tenet]]
+id = "the_providers_crate_is_consumed_by_the_engine_through_kit_installation_or_direct_wiring_and_has_no_reverse_dependency"
+what = "The providers crate ships default providers, backed by resources, for the scheduler. It is a standalone ecosystem crate that the engine consumes either by kit installation or by wiring a resource into the builder directly, with no dependency back."
+mechanism = "`builder.with(Resource::new(...))` direct wiring, or kit installation."
+source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:3-6"
+provenance = ["mock::crates::hilavitkutin-providers::DESIGN::#hilavitkutin-providers"]
+quote = '''
+Default Resource-backed providers for the hilavitkutin scheduler.
+Standalone ecosystem crate: consumed by the engine via Kit
+installation or via direct `builder.with(Resource::new(...))`
+wiring, no reverse dep.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-providers, agent-written, undated"
+standing = "provisional"
+subject = "memory"
+keywords = ["hilavitkutin-providers", "Resource-backed providers", "standalone ecosystem crate", "kit installation", "direct wiring", "no reverse dependency"]
+cites = ["the_providers_crate_ships_default_resource_backed_providers_and_kit_impls_that_consumers_wire_in"]
+
+[[tenet]]
+id = "the_interner_provider_trait_parallels_the_memory_and_clock_provider_traits_and_the_value_lives_in_a_resource_without_a_thread_safety_bound_in_the_first_version"
+what = "The interner provider trait has the same shape as the memory provider and clock provider traits, with methods to intern a string into a handle and to resolve a handle back to a string if present. It is bound to live as long as the program so that the value can live in a resource, and the first version does not require it to be shareable between threads, because the engine's resource access is sequential during single-thread morsel dispatch. A synchronised arena variant is tracked in the backlog as the future generalisation."
+mechanism = "`InternerApi`: `intern(&str) -> Str`, `resolve(Str) -> Maybe<&str>`; `'static` so it can live in a `Resource<T>`; v0 does not require `Send + Sync`; the Sync arena variant is in BACKLOG."
+source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:20-20, mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:37-41"
+provenance = ["mock::crates::hilavitkutin-providers::DESIGN::#surface"]
+quote = '''
+| `InternerApi` | Provider-shape trait paralleling `MemoryProviderApi` / `ClockApi`. Methods `intern(&str) -> Str`, `resolve(Str) -> Maybe<&str>`. |
+---
+The trait carries `'static` so the value can live in a
+`Resource<T>`. v0 does not require `Send + Sync` on the provider
+because the engine's resource access pattern is sequential during
+single-thread morsel dispatch. The Sync arena variant in BACKLOG
+tracks the future generalisation.
+'''
+because = "The engine's resource access pattern is sequential during single-thread morsel dispatch."
+origin = "proposed"
+written_by = "the design template of hilavitkutin-providers, agent-written, undated"
+standing = "provisional"
+subject = "memory"
+keywords = ["InternerApi", "intern", "resolve", "MemoryProviderApi", "ClockApi", "'static", "no Send + Sync", "single-thread morsel dispatch", "SyncArena"]
+
+[[tenet]]
+id = "a_unit_that_handles_interned_strings_declares_the_interner_accessor_in_its_context_bound_and_the_accessor_lives_in_providers_because_the_interner_is_opt_in"
+what = "Units that handle interned strings, such as lexers, file walkers and diagnostic emitters, declare the interner accessor in the bound of their context tuple and intern and resolve through it from within execution. The accessor lives in the providers crate and not in the api crate, because the platform contracts in the api crate for memory, thread pool and clock are the surfaces the engine requires, while the interner is an opt-in provider and not an engine prerequisite."
+mechanism = "`pub trait HasInterner { type Provider: InternerApi; fn interner(&self) -> &Self::Provider; }`, mirroring `HasMemoryProvider` / `HasClock`; usage `ctx.interner().intern(s)` / `ctx.interner().resolve(handle)` inside `execute()`."
+source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:21-21, mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:30-35, mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:43-55"
+provenance = ["mock::crates::hilavitkutin-providers::DESIGN::#surface"]
+quote = '''
+| `HasInterner` | Accessor trait for the Context-provider tuple. Mirrors `HasMemoryProvider` / `HasClock`. |
+---
+### `InternerApi`
+
+The provider shape. WorkUnits that handle `Str` (lexers, file
+walkers, diagnostic emitters, etc.) declare `HasInterner` in their
+`Ctx` tuple bound and call `ctx.interner().intern(s)` /
+`ctx.interner().resolve(handle)` from within `execute()`.
+---
+### `HasInterner`
+
+```rust
+pub trait HasInterner {
+ type Provider: InternerApi;
+ fn interner(&self) -> &Self::Provider;
+}
+```
+
+The accessor lives in providers, not in api. The platform
+contracts in api (memory / threadpool / clock) are the
+engine-required surfaces; the interner is an opt-in provider, not
+an engine prerequisite.
+'''
+because = "The platform contracts in api (memory / threadpool / clock) are the engine-required surfaces; the interner is an opt-in provider, not an engine prerequisite."
+origin = "proposed"
+written_by = "the design template of hilavitkutin-providers, agent-written, undated"
+standing = "provisional"
+subject = "memory"
+keywords = ["HasInterner", "Ctx tuple bound", "interner accessor", "opt-in provider", "platform contracts", "HasMemoryProvider", "HasClock", "execute", "Str"]
+cites = ["the_platform_contracts_are_memory_provider_thread_pool_and_clock_traits_in_the_api_crate"]
+
+[[tenet]]
+id = "the_memory_arena_is_an_inline_storage_interner_with_const_generic_byte_and_entry_caps_and_overflow_returns_a_sentinel_id"
+what = "The default interner backing holds its bytes and its entry table inline, with the byte capacity and the entry capacity as const generics that a consumer tunes to its workload. Each runtime-interned string gets a sequential 28-bit identifier, which is its entry index, and when the arena runs out of bytes or entry slots the intern call returns a sentinel identifier."
+mechanism = "`MemoryArena<BYTES, ENTRIES>`: `[u8; BYTES]` plus `[Entry; ENTRIES]` where each entry records `(offset, len)`; interior mutability via `Cell` for the cursor and entry count and `UnsafeCell` for the buffer and table; `arena_resolve(id)` slices `[offset..offset+len]`; overflow returns sentinel id `u32::MAX` from `arena_intern`. It is the inline-storage `ArenaInterner` impl that backs the default `StringInterner`."
+source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:22-22, mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:57-71"
+provenance = ["mock::crates::hilavitkutin-providers::DESIGN::#surface"]
+quote = '''
+| `MemoryArena<BYTES, ENTRIES>` | Inline-storage `ArenaInterner` impl. Const-generic byte-cap and entry-cap. Backs the default `StringInterner`. |
+---
+### `MemoryArena<BYTES, ENTRIES>`
+
+Inline-storage `ArenaInterner` impl. Holds `[u8; BYTES]` bytes plus
+an `[Entry; ENTRIES]` table where each entry records `(offset,
+len)` for a previously-interned string. Interior mutability via
+`Cell` for the cursor and entry count, `UnsafeCell` for the
+buffer and table.
+
+Each runtime-interned string gets a sequential 28-bit id (the
+entry index). `arena_resolve(id)` looks up the entry and slices
+`[offset..offset+len]` from the byte buffer.
+
+Capacity overflow (out of bytes or out of entry slots) returns
+sentinel id `u32::MAX` from `arena_intern`. Consumers tune
+`BYTES` and `ENTRIES` to their workload.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-providers, agent-written, undated"
+standing = "provisional"
+subject = "memory"
+keywords = ["MemoryArena", "BYTES", "ENTRIES", "inline storage", "ArenaInterner", "28-bit id", "sentinel u32::MAX", "arena_intern", "arena_resolve", "capacity overflow"]
+
+[[tenet]]
+id = "the_default_interner_constructor_takes_two_const_generics_because_byte_capacity_and_entry_count_are_independent_dimensions"
+what = "A constant function builds the default string interner over a memory arena. It takes two const generics, because the byte capacity and the entry count are independent dimensions that a consumer tunes, and consumers wire the result onto the scheduler as a resource."
+mechanism = "`pub const fn default_interner<const BYTES: usize, const ENTRIES: usize>() -> StringInterner<MemoryArena<BYTES, ENTRIES>> { StringInterner::new(MemoryArena::new()) }`; wiring `builder.with(Resource::new(default_interner::<BYTES, ENTRIES>()))`."
+source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:23-23, mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:78-91"
+provenance = ["mock::crates::hilavitkutin-providers::DESIGN::#surface"]
+quote = '''
+| `default_interner<BYTES, ENTRIES>()` | Free fn building `StringInterner<MemoryArena<BYTES, ENTRIES>>`. The wiring building block; consumers call it via `builder.with(Resource::new(...))` directly or implicitly through `InternerKit`. |
+---
+### `default_interner()` constructor
+
+```rust
+pub const fn default_interner<const BYTES: usize, const ENTRIES: usize>()
+ -> StringInterner<MemoryArena<BYTES, ENTRIES>>
+{
+ StringInterner::new(MemoryArena::new())
+}
+```
+
+Consumers wire it onto the scheduler with
+`builder.with(Resource::new(default_interner::<BYTES, ENTRIES>()))`.
+Two const generics because byte capacity and entry-count are
+independent dimensions a consumer tunes.
+'''
+because = "Byte capacity and entry-count are independent dimensions a consumer tunes."
+origin = "proposed"
+written_by = "the design template of hilavitkutin-providers, agent-written, undated"
+standing = "provisional"
+subject = "memory"
+keywords = ["default_interner", "const fn", "BYTES", "ENTRIES", "StringInterner", "two const generics", "Resource::new", "wiring building block"]
+
+[[tenet]]
+id = "the_default_column_storage_is_a_naive_arena_backed_placeholder_the_engine_stays_generic_over_and_the_columnar_engine_replaces_later"
+what = "The default backing for the unified columnar store is a naive arena-backed implementation of the column storage contract. The engine stays generic over the column storage type, so consumers and the engine's own tests wire this one in as the concrete store, and the columnar engine replaces it later without touching any consumer of the contract. The allocator is a memory provider type, and a second parameter caps the number of distinct columns."
+mechanism = "`ArenaColumnStorage<M: MemoryProviderApi, D: Capacity = Dim<256>>`; `D::Array<Maybe<ColumnSlot>>` fixed slot table recording each column's base / bytes / record count, indexed by `StoreId`; `Dim<256>` matches the engine's `Mask256` store ceiling; `hilavitkutin_api::ColumnStorage`; `CS: ColumnStorage`."
+source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:28-28, mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:147-163"
+provenance = ["mock::crates::hilavitkutin-providers::DESIGN::#surface"]
+quote = '''
+| `ArenaColumnStorage<M, D>` | Naive arena-backed `ColumnStorage` impl: the default backing for the unified columnar store. `M: MemoryProviderApi` is the allocator; `D: Capacity = Dim<256>` caps the distinct-column count. Placeholder shape; the columnar engine replaces it later without touching any `CS: ColumnStorage` consumer. |
+---
+### `ArenaColumnStorage<M, D>`
+
+The default backing for the unified columnar store
+(`hilavitkutin_api::ColumnStorage`). A naive arena placeholder: the
+engine stays generic over `CS: ColumnStorage`, and consumers (and the
+engine's own tests) wire this in as the concrete store. The columnar
+engine replaces it later without touching any `CS: ColumnStorage`
+consumer.
+
+```rust
+pub struct ArenaColumnStorage<M: MemoryProviderApi, D: Capacity = Dim<256>> {
+    // M: the allocator. D: caps the distinct-column count (Dim<256>
+    // matches the engine's Mask256 store ceiling). A fixed slot table
+    // D::Array<Maybe<ColumnSlot>> records each column's base / bytes /
+    // record count, indexed by StoreId.
+}
+```
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-providers, agent-written, undated"
+standing = "provisional"
+subject = "memory"
+keywords = ["ArenaColumnStorage", "ColumnStorage", "CS: ColumnStorage", "placeholder", "MemoryProviderApi", "Capacity", "Dim<256>", "Mask256", "StoreId", "slot table"]
+cites = ["the_consumer_provides_the_backing_memory_of_a_column"]

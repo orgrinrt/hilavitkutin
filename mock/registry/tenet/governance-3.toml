@@ -1,0 +1,303 @@
+# What the record says about `governance`, part 3.
+
+[[tenet]]
+id = "the_documents_the_seed_drained_live_under_pre_seed_as_paper_trail_and_the_seed_is_the_reference_for_what_the_design_is"
+what = "The documents that fed the seed now live under the pre-seed research directory, or in the archived design rounds, as paper trail. They are citable by a commit reference for provenance, but they are no longer the reference for what the design is. The seed is."
+mechanism = "`mock/research/pre_seed/`; citation form `git::commit::<hash>`."
+source = "mock/research/seed/governance.md:34-37"
+provenance = ["mock::research::seed::governance::#sources-and-precedence"]
+quote = '''
+All of those documents now live under `mock/research/pre_seed/` (or in the
+archived design rounds) as paper trail. They are citable by
+`git::commit::<hash>` reference for provenance, but they are no longer the
+reference for what the design is. This seed is.
+'''
+origin = "proposed"
+written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
+standing = "provisional"
+subject = "governance"
+keywords = ["pre_seed", "paper trail", "git::commit", "provenance", "reference", "archived design rounds"]
+cites = ["the_seed_is_the_flat_self_contained_expression_of_the_effective_engine_canon_as_of_2026_07_19"]
+
+[[tenet]]
+id = "while_the_manifest_says_frozen_false_the_seed_is_under_construction_and_chapters_may_be_corrected_against_their_sources"
+what = "While the manifest says the seed is not frozen, it is under construction and chapters may still be corrected against their sources."
+mechanism = "`frozen = false` in `MANIFEST.md`."
+source = "mock/research/seed/governance.md:41-43"
+provenance = ["mock::research::seed::governance::#lifecycle"]
+quote = '''
+While `frozen = false` in `MANIFEST.md`, this seed is under construction and
+chapters may still be corrected against their sources. The freeze is gated,
+in order: first the collection pass completes (every chapter drained from its
+'''
+origin = "proposed"
+written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
+standing = "provisional"
+subject = "governance"
+keywords = ["frozen = false", "MANIFEST.md", "under construction", "corrected against sources", "seed", "freeze"]
+cites = ["the_seed_is_the_flat_self_contained_expression_of_the_effective_engine_canon_as_of_2026_07_19"]
+
+[[tenet]]
+id = "the_seed_freeze_is_gated_in_order_by_the_collection_pass_the_open_question_batch_the_verification_passes_and_the_manifest_declaration"
+what = "The freeze of the seed is gated, in order. First the collection pass completes, with every chapter drained from its sources and the manifest proving losslessness. Then every open question is resolved in one batch of in-flight design work, in which bench-decided forks are benched and the calls reserved to the maintainer are designed and ruled, and the chapters are updated with the resolutions. Then the independent verification passes audit the seed against the full research backdrop, and then the manifest declares the seed frozen. A seed with unresolved open questions does not freeze."
+source = "mock/research/seed/governance.md:43-49"
+provenance = ["mock::research::seed::governance::#lifecycle"]
+quote = '''
+in order: first the collection pass completes (every chapter drained from its
+sources with the manifest proving losslessness); then every open question
+listed below is resolved in one batch of in-flight design work (bench-decided
+forks are benched, op-gated calls are designed and ruled), and the chapters
+are updated with the resolutions; then the independent verification passes
+audit the seed against the full research backdrop; then the manifest declares
+the seed frozen. A seed with unresolved open questions does not freeze.
+'''
+origin = "proposed"
+written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
+standing = "provisional"
+subject = "governance"
+keywords = ["freeze gate", "collection pass", "open questions", "verification passes", "manifest", "losslessness", "resolution batch", "frozen"]
+cites = ["while_the_manifest_says_frozen_false_the_seed_is_under_construction_and_chapters_may_be_corrected_against_their_sources"]
+
+[[tenet]]
+id = "as_of_2026_07_21_verification_pass_one_gave_fit_after_listed_fixes_and_the_fix_batch_is_applied"
+what = "As of the notes of 2026-07-21, the seed's verification pass 1 ran on 2026-07-19 as four independent audits, with the verdict fit after listed fixes, and the fix batch is applied to the chapters as committed."
+mechanism = "Record `202607210010_seed-verification-pass-1.md` with the deep-audit report alongside."
+source = "mock/research/seed/governance.md:51-54"
+provenance = ["mock::research::seed::governance::#lifecycle"]
+quote = '''
+Verification pass 1 ran 2026-07-19 (four independent audits; record
+`202607210010_seed-verification-pass-1.md` with the deep-audit report
+alongside): verdict FIT AFTER LISTED FIXES, and the fix batch is applied
+to the chapters as committed. An op-ordered redo of the pass ran 2026-07-20
+'''
+origin = "proposed"
+written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
+standing = "provisional"
+subject = "governance"
+keywords = ["verification pass 1", "four audits", "FIT AFTER LISTED FIXES", "fix batch", "seed", "2026-07-19"]
+cites = ["the_seed_freeze_is_gated_in_order_by_the_collection_pass_the_open_question_batch_the_verification_passes_and_the_manifest_declaration"]
+
+[[tenet]]
+id = "the_maintainer_ordered_a_redo_of_verification_pass_one_against_the_original_sources"
+what = "The maintainer ordered a redo of the verification pass, which ran on 2026-07-20 against the original sources: one deep audit verifying every manifest drain claim, plus three parallel sweeps for founding-spec coverage, amendment-chain coverage, and currency and self-containment. The verdict was fit after listed fixes, with no blockers and the chain sweep clean, and the fix batch is applied as committed."
+mechanism = "Record `202607210300_seed-verification-redo.md`; fix batch: stale wake and parking prose, spectral currency, manifest staleness and tier labels, S5, term definitions, consumer scale envelope."
+source = "mock/research/seed/governance.md:54-61"
+provenance = ["mock::research::seed::governance::#lifecycle"]
+quote = '''
+to the chapters as committed. An op-ordered redo of the pass ran 2026-07-20
+against the original sources (one deep audit verifying every manifest drain
+claim, plus three parallel sweeps: founding-spec coverage, amendment-chain
+coverage, currency and self-containment; record
+`202607210300_seed-verification-redo.md`): verdict FIT AFTER LISTED FIXES,
+no blockers, chain sweep clean, and the fix batch (stale wake and parking
+prose, spectral currency, manifest staleness and tier labels, S5, term
+definitions, consumer scale envelope) is applied as committed. The second
+'''
+origin = "stated"
+standing = "provisional"
+subject = "governance"
+keywords = ["op-ordered redo", "verification pass", "deep audit", "founding-spec coverage", "chain sweep", "fix batch", "2026-07-20", "no blockers"]
+cites = ["as_of_2026_07_21_verification_pass_one_gave_fit_after_listed_fixes_and_the_fix_batch_is_applied"]
+
+[[tenet]]
+id = "once_the_seed_is_frozen_its_text_never_changes_and_every_later_change_to_canon_lands_as_registry_rows"
+what = "Once the seed is frozen, its text never changes again. From that point every amendment, ruling, clarification and status change to canon lands as items in the registry, which is created at drain time."
+mechanism = "Registry at `mock/registry/`."
+source = "mock/research/seed/governance.md:64-66"
+provenance = ["mock::research::seed::governance::#lifecycle"]
+quote = '''
+Once frozen, the seed text never changes again. From that point every
+amendment, ruling, clarification, and status change to canon lands as rows
+in the registry (`mock/registry/`, created at drain time), and a registry row outranks seed text
+'''
+origin = "proposed"
+written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
+standing = "provisional"
+subject = "governance"
+keywords = ["frozen seed", "never changes", "registry rows", "amendment", "ruling", "clarification", "status change", "drain time"]
+cites = ["the_seed_freeze_is_gated_in_order_by_the_collection_pass_the_open_question_batch_the_verification_passes_and_the_manifest_declaration"]
+
+[[tenet]]
+id = "a_registry_row_outranks_seed_text_wherever_the_two_conflict_and_the_absence_of_a_row_leaves_the_seed_chapter_the_current_word"
+what = "A registry item outranks seed text wherever the two conflict. The absence of a registry item on a point means the seed chapter is the current word."
+source = "mock/research/seed/governance.md:66-68"
+provenance = ["mock::research::seed::governance::#lifecycle"]
+quote = '''
+in the registry (`mock/registry/`, created at drain time), and a registry row outranks seed text
+wherever the two conflict. The absence of a registry row on a point means
+the seed chapter is the current word.
+'''
+origin = "proposed"
+written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
+standing = "provisional"
+subject = "governance"
+keywords = ["registry row", "outranks", "seed text", "conflict", "absence of a row", "current word", "precedence"]
+cites = ["once_the_seed_is_frozen_its_text_never_changes_and_every_later_change_to_canon_lands_as_registry_rows"]
+
+[[tenet]]
+id = "the_evidence_then_bless_standard_is_part_of_canon_and_governs_every_recorded_deviation_of_a_shipped_mechanism"
+what = "The evidence-then-bless standard is part of canon and not process trivia. Shipped mechanisms that deviate from a canonical mechanism are neither blessed by default nor rebuilt by default. For each recorded deviation the canonical shape is built or sketched, benched against the shipped shape where a bench trigger is named, and the evidence is presented for a ruling to bless it or rebuild it. It governs the six GATE-2 agent-call deviations and the spectral role deviation."
+mechanism = "A2-4; chapters [[execution]] and [[plan]]."
+source = "mock/research/seed/governance.md:72-80"
+provenance = ["mock::research::seed::governance::#standards-the-seed-carries-forward"]
+quote = '''
+Two standing decision standards are part of canon, not process trivia:
+
+**Evidence then bless (A2-4).** Shipped mechanisms that deviate from a
+canonical mechanism are neither blessed by default nor rebuilt by default.
+For each recorded deviation, the canonical shape is built or sketched,
+benched against the shipped shape where a bench trigger is named, and the
+evidence is presented for a bless-or-rebuild ruling. This governs the six
+GATE-2 agent-call deviations and the spectral role deviation (see
+[[execution]] and [[plan]]).
+'''
+origin = "proposed"
+written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
+standing = "provisional"
+subject = "governance"
+keywords = ["evidence then bless", "A2-4", "deviation", "bless or rebuild", "GATE-2", "spectral role", "standing standard"]
+cites = ["the_gate_2_agent_call_deviations_are_blessed_or_rebuilt_only_on_evidence_put_to_the_maintainer", "the_spectral_role_deviation_follows_the_same_evidence_then_bless_standard"]
+
+[[tenet]]
+id = "a_fork_over_which_implementation_performs_better_is_registered_open_with_a_named_bench_oracle_and_ruled_from_the_findings"
+what = "A fork that asks which implementation, algorithm or data shape performs better is resolved by building the candidates and benching them, and then ruling from the findings. Canon registers such forks open with a named bench oracle and does not pick by argument. The open bench forks are listed in the chapters that own them."
+source = "mock/research/seed/governance.md:82-86"
+provenance = ["mock::research::seed::governance::#standards-the-seed-carries-forward"]
+quote = '''
+**Bench-decided forks.** Where the fork is which implementation, algorithm,
+or data shape performs better, the resolver is to build the candidates and
+bench them, then rule from the findings. Canon registers such forks open with
+a named bench oracle rather than picking by argument. The open bench forks
+are listed in the chapters that own them.
+'''
+origin = "proposed"
+written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
+standing = "provisional"
+subject = "governance"
+keywords = ["bench-decided forks", "bench oracle", "open fork", "build the candidates", "rule from findings", "performance fork"]
+cites = ["whether_dispatch_follows_rcm_order_or_waist_phase_order_is_decided_by_a_bench"]
+
+[[tenet]]
+id = "every_open_question_blocking_the_freeze_has_a_named_resolution_channel_and_the_pre_freeze_batch_replaces_the_in_place_statements_with_settled_design"
+what = "Canon currently knows what it does not say. Each listed open item has a named resolution channel and must be resolved, by the design work, the bench run or the ruling, in the pre-freeze resolution batch. The chapters state each item in place today, and the batch replaces those statements with the settled design."
+source = "mock/research/seed/governance.md:88-94"
+provenance = ["mock::research::seed::governance::#open-questions-blocking-the-freeze"]
+quote = '''
+## Open questions blocking the freeze
+
+Canon currently knows what it does not say. Each item below is open with a
+named resolution channel, and each must be resolved (the design work done,
+the bench run, the ruling made) in the pre-freeze resolution batch. The
+chapters state each item in place today; the resolution batch replaces those
+statements with the settled design:
+'''
+origin = "proposed"
+written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
+standing = "provisional"
+subject = "governance"
+keywords = ["open questions", "blocking the freeze", "resolution channel", "pre-freeze batch", "settled design", "in place statements"]
+cites = ["the_seed_freeze_is_gated_in_order_by_the_collection_pass_the_open_question_batch_the_verification_passes_and_the_manifest_declaration"]
+
+[[tenet]]
+id = "the_swap_semantics_item_is_implemented_and_benched_and_awaits_the_ratification_of_s1_through_s7_with_s3_and_swap_d_gated_on_344"
+what = "The Replaceable swap semantics item is recorded as the spec implemented and benched on 2026-07-19, with the witnessed blob install, the plan-dirty band trigger and the exclusivity shipped and the test suite green. The benches confirm the cost asymmetry: the install is the linear memcpy, a value swap pays its cone, a plan swap pays the band, and neither leaks. The item awaits the maintainer's ratification of S1 through S7, and S3 and Swap-D stay gated on #344 inside the spec."
+mechanism = "Round `202607200500`; evidence record `202607201100_swap-semantics-ratification-evidence.md`; S1 witnessed blob install, S2 plan-dirty band trigger, S4 exclusivity, S6 suite, S7 benches; Swap-D decides whether the morsel budget's write-collection term absorbs swap traffic."
+source = "mock/research/seed/governance.md:96-106"
+provenance = ["mock::research::seed::governance::#open-questions-blocking-the-freeze"]
+quote = '''
+1. **`Replaceable` swap semantics**: SPEC IMPLEMENTED AND BENCHED
+   (2026-07-19, round `202607200500`; evidence record
+   `202607201100_swap-semantics-ratification-evidence.md`). The S1
+   witnessed blob install, S2 plan-dirty band trigger, and S4
+   exclusivity ship with the S6 suite green; the S7 benches confirm the
+   cost asymmetry (install is the linear memcpy; a value swap pays its
+   cone, a plan swap pays the band, neither leaks). Awaits the op
+   ratification of S1 through S7; S3 and Swap-D (the commissioned
+   cold-write-then-stream collection-swap bench, deciding whether the
+   morsel budget's write-collection term absorbs swap traffic) stay
+   #344-gated inside the spec. See [[storage]].
+'''
+origin = "proposed"
+written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
+standing = "provisional"
+subject = "governance"
+keywords = ["Replaceable swap", "open question 1", "ratification", "S1 through S7", "Swap-D", "#344", "cost asymmetry", "seed freeze"]
+cites = ["the_maintainer_held_ratification_of_the_swap_spec_until_it_was_implemented_and_benched", "ratifying_the_swap_spec_replaces_the_seed_chapter_s_open_question_wording_and_closes_the_governance_items_and_the_two_issues"]
+
+[[tenet]]
+id = "plan_affecting_is_ruled_an_open_marker_trait_and_what_a_plan_affecting_swap_propagates_resolves_inside_the_swap_item"
+what = "The plan-affecting marker is ruled an open marker trait by addendum A2-3, so the ruling is made, and the remaining interplay detail, which is what a plan-affecting swap propagates, resolves inside the swap-semantics item."
+source = "mock/research/seed/governance.md:162-165"
+provenance = ["mock::research::seed::governance::#open-questions-blocking-the-freeze"]
+quote = '''
+6. **`PlanAffecting`** is ruled an open marker trait (A2-3); the ruling is
+   made, and the remaining interplay detail (what a plan-affecting swap
+   propagates) resolves inside the swap-semantics item. See [[storage]] and
+   [[scheduler]].
+'''
+origin = "proposed"
+written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
+standing = "provisional"
+subject = "governance"
+keywords = ["PlanAffecting", "open marker trait", "A2-3", "swap-semantics item", "propagation", "open question 6"]
+cites = ["plan_affecting_is_an_open_marker_trait_that_consumers_implement_on_resource_value_types"]
+
+[[tenet]]
+id = "the_manifest_records_per_chapter_which_sources_drained_into_it_and_what_was_left_out_as_superseded"
+what = "The manifest records, for each chapter, which sources drained into it and what was deliberately left out as superseded."
+mechanism = "`MANIFEST.md`."
+source = "mock/research/seed/governance.md:194-195"
+provenance = ["mock::research::seed::governance::#chapter-map"]
+quote = '''
+`MANIFEST.md` records, per chapter, which sources drained into it and what
+was deliberately left out as superseded.
+'''
+origin = "proposed"
+written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
+standing = "provisional"
+subject = "governance"
+keywords = ["MANIFEST.md", "drain", "sources", "left out", "superseded", "chapter", "losslessness"]
+
+[[tenet]]
+id = "the_runtime_layer_was_crystallised_in_design_round_202605101036_and_its_flagged_constants_are_revisitable_with_low_impact"
+what = "The runtime layer was crystallised in a design round, closed pending sketches on 2026-05-11, across eleven topics, and implementation lands bottom-up. Five items that the autonomous topic locks flagged for the maintainer's attention are constants or naming choices that can be revisited with low impact, and none of them blocks downstream implementation."
+mechanism = "Round 202605101036 (closed-pending-sketches 2026-05-11). Flagged: `WakeStrategy { p_spin_iters: 128, e_spin_iters: 32 }`, `MICRO_MORSEL_INTERVAL = 64`, `MAX_DRIFT_RECORDS = 32`, `MAX_PLAN_AFFECTING_RESOURCES = 16`, three example apps `word_count`, `particle_step`, `audio_mix`. Bench evidence in `mock/benches/NIGHT_FINDINGS_2026-05-11.md`."
+source = "mock/DESIGN.md.tmpl:38-38, mock/DESIGN.md.tmpl:146-156"
+provenance = ["mock::DESIGN::#runtime"]
+quote = '''
+The runtime layer (Scheduler + Executor + ExecutionPlan + dispatch + morsel loop + adapt + persistence wiring) crystallised in design round 202605101036. The locked shape:
+---
+**Pre-implementation; runtime megaround design locked.** Design round 202605101036 (closed-pending-sketches 2026-05-11) crystallised the runtime layer across 11 topics (Scheduler::run signature, BuilderInput reshape, plan algorithm chain, dispatch codegen, adapt subsystem, thread pool, morsel loop, resource resolution, plan caching, per-core dispatch, test+example bar). Implementation lands bottom-up via the round's src CL.
+
+Five user-attention items flagged from the autonomous topic locks:
+- `WakeStrategy { p_spin_iters: 128, e_spin_iters: 32 }` default ratio.
+- `MICRO_MORSEL_INTERVAL = 64`, `MAX_DRIFT_RECORDS = 32`.
+- `MAX_PLAN_AFFECTING_RESOURCES = 16` cap.
+- Three example apps: `word_count`, `particle_step`, `audio_mix`.
+
+Each is a low-impact-revisitable constant or naming choice. None block downstream implementation.
+
+Bench evidence aggregated in `mock/benches/NIGHT_FINDINGS_2026-05-11.md`. Audit trail for every locked decision.
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+subject = "governance"
+keywords = ["design round 202605101036", "autonomous topic locks", "user-attention items", "revisitable constants", "NIGHT_FINDINGS", "bottom-up implementation", "example apps"]
+
+[[tenet]]
+id = "follow_up_rounds_may_extend_the_extensions_crate_but_must_preserve_the_v1_contract_unless_deprecation_is_scheduled"
+what = "The shipping commitment is the public surface described in the template plus the type and method names locked in the source changelist. Follow-up rounds may extend the crate, with type-level provider identifiers, lifecycle logging hooks and hot-reload orchestration named as examples, but must preserve the first-version contract unless an explicit deprecation is scheduled."
+mechanism = "Examples of extensions named: type-level provider ids, lifecycle logging hooks, hot-reload orchestration."
+source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:189-191"
+provenance = ["mock::crates::hilavitkutin-extensions::DESIGN::#shipping-commitment"]
+quote = '''
+## Shipping commitment
+
+The public surface described here plus the specific type and method names locked in the src CL of. Follow-up rounds may extend the crate (type-level provider ids, lifecycle logging hooks, hot-reload orchestration) but must preserve the v1 contract unless explicit deprecation is scheduled.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
+standing = "provisional"
+subject = "governance"
+keywords = ["shipping commitment", "v1 contract", "preserve", "explicit deprecation", "follow-up rounds", "src CL", "type-level provider ids", "lifecycle logging hooks"]

@@ -284,3 +284,22 @@ history of how the design was reached; it states the design.
 subject = "governance"
 keywords = ["standalone spec", "two copies", "header", "precedence", "reading aid", "A2-1", "pre_seed"]
 related = ["tenet::the_record_s_precedence_is_the_founding_spec_then_dated_amendments_then_the_reading_aid_then_the_rest", "tenet::the_standalone_spec_is_a_commissioned_reading_aid_by_its_own_corrected_header"]
+
+[[question]]
+id = "whether_the_maintainer_ratifies_s1_through_s7_of_the_swap_spec_as_the_swap_semantics_canon"
+asks = "Whether the maintainer ratifies S1 through S7 of the swap spec as the swap-semantics canon, which the evidence memo puts to him as its ask."
+options = ["ratify S1 through S7, after which the seed storage chapter replaces its open-question wording with the spec and #696 and #697 complete", "do not ratify"]
+state = "open"
+source = "mock/research/202607201100_swap-semantics-ratification-evidence.md:77-83"
+quote = '''
+## The ask
+
+Ratify S1 through S7 as the swap-semantics canon. On ratification, the
+seed storage chapter replaces its open-question wording with the spec,
+governance item 1 (and the A2-3 remainder in item 6) closes, and #696
+plus #697 complete. S3 and Swap-D remain #344-gated inside the ratified
+spec by name, not as open questions.
+'''
+subject = "governance"
+keywords = ["ratification", "swap spec", "S1 through S7", "swap-semantics canon", "seed storage chapter", "the ask"]
+related = ["tenet::ratifying_the_swap_spec_replaces_the_seed_chapter_s_open_question_wording_and_closes_the_governance_items_and_the_two_issues"]

@@ -294,3 +294,176 @@ standing = "provisional"
 subject = "change"
 keywords = ["generation counter", "per-morsel", "store_dirty", "not built", "design sketch", "coarse dirty"]
 related = ["tenet::change_detection_is_per_morsel_and_skips_what_is_unchanged", "tenet::the_engine_owns_the_generation_counters_and_the_skip_logic", "question::who_says_that_a_store_changed"]
+
+[[tenet]]
+id = "the_commissioned_swap_round_also_corrects_the_artifacts_grounded_on_the_mis_citation"
+what = "The design round commissioned to specify the swap of a replaceable resource also corrects the artifacts that were grounded on the mis-citation of the expert input memo."
+source = "mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:88-94"
+provenance = ["mock::research::pre_seed::202607193200_canon-amendment-a2-precedence-and-rulings::#a2-5-the-202606210600-citation-correction-and-the-commissioned-swap-semantics-round"]
+quote = '''
+Op's direction (2026-07-19): the missing swap spec is researched and designed explicitly, not
+picked from options. A design round is commissioned to produce the explicit `Replaceable` swap
+specification under the bench-decided layout (blob record, erased addressing, collection
+elements in collection columns), covering `replace_value`, `replace_resource`, the
+`PlanAffecting` interplay (A2-3), Seq/Map element ownership, dirty propagation, and quiescence.
+The same round corrects the mis-grounded artifacts. Until it lands, `replace_value` stays
+mark-dirty-only and the catalogued test stays red.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "change"
+keywords = ["swap semantics", "commissioned round", "mis-grounded artifacts", "correction", "Replaceable", "citation"]
+cites = ["the_swap_of_a_replaceable_resource_is_to_be_specified_by_a_commissioned_round", "two_shipped_rounds_cited_an_expert_input_memo_as_if_it_were_the_storage_addendum"]
+
+[[tenet]]
+id = "as_of_2026_06_11_replace_resource_and_replace_value_mark_dirty_without_writing_the_value"
+what = "As of 2026-06-11, addendum A1 records that the replace-resource and replace-value calls mark the store dirty without writing the value."
+mechanism = "`replace_resource` / `replace_value` mark dirty only."
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:40-40"
+provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#state-assessment-truth-of-impl-2026-06-11"]
+quote = '''
+`replace_resource` / `replace_value` mark dirty without writing the value;
+'''
+origin = "proposed"
+written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
+standing = "provisional"
+subject = "change"
+keywords = ["replace_resource", "replace_value", "mark dirty", "partial", "inert", "state assessment", "2026-06-11"]
+cites = ["the_swap_of_a_replaceable_resource_is_to_be_specified_by_a_commissioned_round"]
+
+[[tenet]]
+id = "replacing_a_plan_affecting_resource_does_the_replace_value_write_and_sets_the_plan_dirty_bit_the_next_run_consumes"
+what = "Replacing a plan-affecting resource performs the identical write and store-dirty mark as replacing a value, and additionally sets the plan-dirty bit for the type's plan-affecting identity in the scheduler's plan-dirty bit array. The very next run consumes that array: the band gate is the first frame or any plan-dirty bit, a plan-dirty frame enters the leading plan band at phase 0, and the consumed bits clear."
+mechanism = "`Scheduler::replace_resource<T: PlanAffecting>(&mut self, new: T)`; the S1 write and store-dirty mark; `plan_dirty` bit for `T`'s `PlanAffectingId`; band gate `first_frame OR any plan_dirty bit`; leading plan band at phase 0."
+source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:22-22, mock/research/202607200200_replaceable-swap-semantics-spec.md:40-47"
+provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s1-replace-value-mechanism"]
+quote = '''
+## S1: replace_value mechanism
+---
+## S2: replace_resource mechanism
+
+`Scheduler::replace_resource<T: PlanAffecting>(&mut self, new: T)` performs
+the identical S1 write and store-dirty mark, and additionally sets the
+`plan_dirty` bit for `T`'s `PlanAffectingId` in the scheduler's plan-dirty
+bit array. The very next `run()` consumes that array: the band gate is
+`first_frame OR any plan_dirty bit`, a plan-dirty frame enters the leading
+plan band at phase 0, and the consumed bits clear.
+'''
+origin = "proposed"
+written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
+standing = "provisional"
+subject = "change"
+keywords = ["replace_resource", "PlanAffecting", "plan_dirty", "PlanAffectingId", "band gate", "leading plan band", "phase 0", "S2"]
+cites = ["a_swap_of_a_resource_value_is_legal_only_between_frames_and_is_observed_from_the_next_run", "plan_affecting_is_an_open_marker_trait_that_consumers_implement_on_resource_value_types"]
+
+[[tenet]]
+id = "the_replace_resource_signature_rides_the_open_plan_affecting_marker_and_the_locate_target_unifies_with_the_value_swap"
+what = "The signature obligation of the replace-resource clause rides #696: the plan-affecting marker becomes open on resource value types, with the builder-input supertrait and the seal drop, per addendum A2-3, and the locate target unifies with S1 to a locate bound on the resource store. The shipped locate shape is the form from before A2-3, and the implementing round corrects it."
+mechanism = "`BuilderInput` supertrait and the seal drop (A2-3); `Stores: Locate<Resource<T>, Index>`; shipped `Locate<T, Index>` is the pre-A2-3 form; #696."
+source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:22-22, mock/research/202607200200_replaceable-swap-semantics-spec.md:49-53"
+provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s1-replace-value-mechanism"]
+quote = '''
+## S1: replace_value mechanism
+---
+Signature obligation riding #696: `PlanAffecting` becomes an open marker on
+resource value types (the `BuilderInput` supertrait and the seal drop, per
+A2-3), and the `Locate` target unifies with S1 to
+`Stores: Locate<Resource<T>, Index>`. The shipped `Locate<T, Index>` shape
+is the pre-A2-3 form; the implementing round corrects it. The shipped
+'''
+origin = "proposed"
+written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
+standing = "provisional"
+subject = "change"
+keywords = ["Locate", "PlanAffecting", "BuilderInput", "seal", "#696", "A2-3", "replace_resource signature", "Stores"]
+cites = ["plan_affecting_is_an_open_marker_trait_that_consumers_implement_on_resource_value_types"]
+
+[[tenet]]
+id = "as_of_2026_07_19_the_plan_dirty_wiring_is_a_gap_and_closing_it_is_the_implementing_round_s_first_obligation"
+what = "As of 2026-07-19, the swap spec records a gap in the shipped plan-dirty wiring: the band gate is computed from the first frame only, and the replace-resource call sets no bit. Closing the gap is the first obligation of the implementing round."
+mechanism = "Band gate computed from `first_frame` only; `replace_resource` sets no bit."
+source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:53-56"
+provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s2-replace-resource-mechanism"]
+quote = '''
+is the pre-A2-3 form; the implementing round corrects it. The shipped
+plan-dirty wiring gap (the band gate computed from `first_frame` only;
+`replace_resource` setting no bit) is the implementing round's first
+obligation.
+'''
+origin = "proposed"
+written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
+standing = "provisional"
+subject = "change"
+keywords = ["plan-dirty wiring", "band gate", "first_frame", "replace_resource", "implementing round", "gap", "2026-07-19"]
+cites = ["replacing_a_plan_affecting_resource_does_the_replace_value_write_and_sets_the_plan_dirty_bit_the_next_run_consumes"]
+
+[[tenet]]
+id = "a_swap_never_changes_the_base_pointer_of_a_seq_or_map_member_because_a_foreign_base_pointer_breaks_provenance"
+what = "A swap never changes the base pointer of the pointer and length view of a sequence or map member. Columns are sized at plan time and never resized, and a foreign base pointer breaks provenance."
+source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:60-62"
+provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s3-collection-members"]
+quote = '''
+Normative now: (a) a swap never changes the base pointer of a `Seq`/`Map`
+member's ptr+len view; columns are sized at plan time and never resized, and
+a foreign base pointer breaks provenance. (b) A swap never writes past the
+'''
+origin = "proposed"
+written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
+standing = "provisional"
+subject = "change"
+keywords = ["swap", "base pointer", "Seq", "Map", "ptr+len view", "provenance", "columns never resized", "S3"]
+cites = ["a_seq_or_map_value_is_a_pointer_and_a_length_and_its_elements_are_live_streamed_from_their_column_and_never_copied"]
+
+[[tenet]]
+id = "a_swap_never_writes_past_the_member_s_cap_bound_because_the_new_value_shares_the_old_value_s_exact_type"
+what = "A swap never writes past the capacity bound N of the member, because the new value shares the exact sequence type of the old value, so the bound holds by construction."
+mechanism = "`Seq<T, N>` same type for old and new value; `Cap` bound N."
+source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:62-64"
+provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s3-collection-members"]
+quote = '''
+a foreign base pointer breaks provenance. (b) A swap never writes past the
+member's `Cap` bound N; the new value shares the old value's exact
+`Seq<T, N>` type, so the bound holds by construction. (c) Element bytes are
+'''
+origin = "proposed"
+written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
+standing = "provisional"
+subject = "change"
+keywords = ["swap", "Cap bound", "Seq<T, N>", "capacity", "by construction", "collection member", "S3"]
+
+[[tenet]]
+id = "swap_writes_element_bytes_into_the_member_s_existing_collection_column_region_and_then_updates_the_length"
+what = "The element bytes of a swap are written into the member's existing collection-column region, up to the new element count, and then the length updates. The blob carries only the pointer and length view."
+mechanism = "Elements up to N' written into the existing collection-column region; then length update; the blob holds ptr+len only."
+source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:64-66"
+provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s3-collection-members"]
+quote = '''
+`Seq<T, N>` type, so the bound holds by construction. (c) Element bytes are
+written into the member's existing collection-column region, up to N'
+elements, then the length updates; the blob carries only the ptr+len view.
+'''
+origin = "proposed"
+written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
+standing = "provisional"
+subject = "change"
+keywords = ["swap", "element bytes", "collection-column region", "length update", "ptr+len view", "blob", "S3"]
+cites = ["a_swap_never_changes_the_base_pointer_of_a_seq_or_map_member_because_a_foreign_base_pointer_breaks_provenance"]
+
+[[tenet]]
+id = "until_the_344_write_side_lands_a_collection_bearing_swap_installs_only_the_scalar_members_and_the_ptr_len_view"
+what = "The concrete accessor that writes the element bytes is contingent on the write-side wiring of #344. Until that lands, a collection-bearing swap installs the scalar members and the pointer and length view only, and the element-write half is unimplementable and not underspecified."
+mechanism = "#344 write-side wiring; the concrete accessor performs clause (c) of S3."
+source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:68-71"
+provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s3-collection-members"]
+quote = '''
+Contingent on the #344 write-side wiring: the concrete accessor performing
+(c). Until that lands, a collection-bearing swap installs the scalar members
+and the ptr+len view only; the element-write half is unimplementable, not
+underspecified. The same resolution answers the founding spec's open
+'''
+origin = "proposed"
+written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
+standing = "provisional"
+subject = "change"
+keywords = ["#344", "write-side wiring", "collection-bearing swap", "scalar members", "ptr+len view", "unimplementable", "S3"]
+cites = ["swap_writes_element_bytes_into_the_member_s_existing_collection_column_region_and_then_updates_the_length"]

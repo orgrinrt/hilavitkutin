@@ -1,0 +1,76 @@
+# The questions whose subject is `kits`, part 1.
+
+[[question]]
+id = "whether_the_kit_crate_has_zero_dependencies_or_depends_on_the_api_crate"
+asks = "The kit design template opens by calling the crate zero-dependency, yet the trait's bounds and the authoring section name core primitives and markers of the api crate. Does the kit crate depend on the api crate?"
+options = ["zero deps (kit template, opening: \"`#![no_std]`, zero deps.\")", "the kit declaration depends on hilavitkutin-api for WorkUnitBundle, StoreBundle, Replaceable and the store markers (kit template: \"Both bounds (`WorkUnitBundle`, `StoreBundle`) are core primitives in `hilavitkutin-api`\")"]
+state = "open"
+source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:3-3, mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:41-45, mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:145-150, mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:215-222"
+quote = '''
+`#![no_std]`, zero deps. Ships exactly one trait, `Kit`. The
+---
+Two associated types only. `Units` is a cons-list of `WorkUnit`
+declarations the Kit ships; `Owned` is a cons-list of store markers
+(`Resource<T>` / `Column<T>` / `Virtual<T>`) the Kit declares as
+its own. Both bounds (`WorkUnitBundle`, `StoreBundle`) are
+core primitives in `hilavitkutin-api`.
+---
+### Kits in crates that cannot import the engine
+
+The Kit declaration is purely a type-level statement; it depends
+only on `hilavitkutin-api` (for `WorkUnitBundle`, `StoreBundle`,
+`Replaceable`, plus the `Resource<T>` / `Column<T>` / `Virtual<T>`
+markers) and on `hilavitkutin-kit` itself (for the `Kit` trait).
+---
+`hilavitkutin-kit` slots between `hilavitkutin-ctx` and the
+engine. The crate carries no other dependencies; the engine
+depends on it for `.add_kit::<K>()`, but the reverse never
+happens. A consumer can author a Kit in a downstream crate that
+depends only on `hilavitkutin-kit` plus the bare api markers
+(`Resource<T>`, `Column<T>`, `Virtual<T>`, `WorkUnitBundle`,
+`StoreBundle`, `Replaceable` from `hilavitkutin-api`) without
+pulling the engine in.
+'''
+subject = "kits"
+keywords = ["zero deps", "hilavitkutin-api dependency", "WorkUnitBundle", "StoreBundle", "Replaceable", "kit crate dependencies", "standalone"]
+related = ["tenet::a_kit_is_a_declarative_bundle_of_the_units_it_ships_and_the_stores_it_owns_that_the_engine_reads_at_compile_time_into_the_builder_typestate", "tenet::the_kit_trait_has_two_associated_types_only_both_cons_lists_bounded_by_core_primitives_of_the_api_crate", "tenet::the_kit_crate_is_a_contract_the_engine_depends_on_and_it_has_no_dependency_on_the_engine"]
+
+[[question]]
+id = "what_the_builder_call_is_that_adds_a_kit_or_a_resource"
+asks = "The workspace design template and the kit design template add a kit with an add-kit call, while the providers design template wires a kit and a resource with the builder's with call. Which builder calls add a kit and a resource?"
+options = ["`.add_kit::<K>()` for a kit and `.resource::<T>(...)` or `builder.add_resource(...)` for a resource (workspace template, kit template)", "`.with(InternerKit::<BYTES, ENTRIES>)` for a kit and `builder.with(Resource::new(...))` for a resource (providers template)"]
+state = "open"
+source = "mock/DESIGN.md.tmpl:21-21, mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:108-110, mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:160-170, mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:24-24, mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:114-121"
+quote = '''
+| `hilavitkutin-kit` | Kit preset trait. Declarative bundle: `type Units` (cons-list of WorkUnits) plus `type Owned` (cons-list of Resources / Columns / Virtuals). Engine reads associated types at compile time on `.add_kit::<K>()`. Standalone (no other hilavitkutin-crate deps). |
+---
+Resource exists in `Stores`. The actual value is supplied at the
+app's call site via `builder.add_resource(default_interner::<...>())`,
+since the api has no `Kit::default_resources()` association
+---
+## Composition
+
+Kits compose by being added in sequence on the SchedulerBuilder:
+
+```rust
+let scheduler = Scheduler::builder()
+.resource::<StringInterner<...>>(default_interner())
+.add_kit::<RunnerKit>()
+.add_kit::<LinterKit>()
+.add_kit::<TracingKit>()
+.build();
+---
+| `InternerKit<BYTES, ENTRIES>` | Kit impl that declares `Resource<StringInterner<MemoryArena<BYTES, ENTRIES>>>` as `Owned`. Pure declaration; no install method. Engine reads `K::Units` and `K::Owned` at compile time on `.with(InternerKit::<BYTES, ENTRIES>)`. |
+---
+Usage on the scheduler:
+
+```rust
+let scheduler = Scheduler::builder()
+.with(Resource::new(default_interner::<4096, 256>()))
+.with(InternerKit::<4096, 256>)
+.build();
+```
+'''
+subject = "kits"
+keywords = ["add_kit", "with", "add_resource", "resource", "builder API", "InternerKit", "SchedulerBuilder", "naming"]
+related = ["tenet::the_kit_crate_declares_a_preset_as_an_associated_type_bundle_the_engine_reads_at_compile_time_on_add_kit", "tenet::kits_compose_by_sequential_add_kit_calls_and_dependency_order_is_the_simplest_discipline_for_the_contains_all_proof", "tenet::the_interner_kit_form_gains_consistency_rather_than_ergonomics_for_a_single_resource_and_pays_off_when_several_stores_are_bundled"]

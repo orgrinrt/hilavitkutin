@@ -70,3 +70,61 @@ standing = "provisional"
 subject = "units"
 keywords = ["pure function", "values in values out", "each closure", "flattener", "fiber", "composition", "value function"]
 related = ["tenet::a_unit_registers_its_ops_through_each_batch_and_reduce_on_the_context", "tenet::a_pure_per_record_map_may_be_declared_as_an_opt_in_fusion_contract_beside_execute", "question::how_a_unit_in_the_value_form_reads_a_resource"]
+
+[[tenet]]
+id = "the_consumer_spelling_of_a_unit_reduces_to_read_write_hint_and_schedule_with_the_engine_context_computed_if_feasible"
+what = "The canonical consumer spelling of a unit reduces to its read set, write set, hint and schedule. The full nine-parameter engine context shape is computed by an api-side type function instead of being hand-spelled per unit, if a feasibility sketch proves the type function under the current toolchain. If it walls, the fallback discussion re-opens with the sketch findings, and the derive-macro and keep-explicit alternatives stay on the table only in that event."
+mechanism = "Working name `CtxFor<'frame, R, W, Sched>` replacing the hand-spelled nine-parameter `EngineCtx`; sketch covers GAT normalization and GCE interaction; `BuilderInput` and `HasSchedule` impls stay explicit either way."
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:112-120"
+provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#a1-6-the-consumer-surface-adopts-a-computed-ctx-type-if-feasible"]
+quote = '''
+The canonical consumer spelling of a WorkUnit reduces to `Read`, `Write`,
+`Hint`, and schedule; the full nine-parameter `EngineCtx` shape is computed
+by an api-side type function (working name `CtxFor<'frame, R, W, Sched>`)
+instead of hand-spelled per WU. A feasibility sketch proves or refutes the
+type function under the current toolchain (GAT normalization, GCE
+interaction). If it walls, the fallback discussion re-opens with the sketch
+findings; the derive-macro and keep-explicit alternatives stay on the table
+only in that event. `BuilderInput` and `HasSchedule` impls stay explicit
+either way.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "units"
+keywords = ["CtxFor", "EngineCtx", "computed Ctx", "WorkUnit spelling", "type function", "derive macro", "GAT", "A1-6"]
+
+[[tenet]]
+id = "the_context_of_a_unit_is_a_generic_associated_type_over_a_frame_lifetime_the_scheduler_owns"
+what = "The context of a unit is a generic associated type over a frame lifetime owned by the scheduler. The engine instantiates it at dispatch time with the live frame lifetime, so a unit can read borrows into state derived from the pool frame, such as progress slots and predicted-wait readers, without its implementation carrying an explicit lifetime parameter. Dispatch sites use higher-ranked trait bounds."
+mechanism = "`WorkUnit::Ctx` is `type Ctx<'frame>`; borrows into `PoolFrame`-derived state; dispatch sites use HRTB; validated by the lifetime sketch shipped alongside round 202605101036."
+source = "mock/PRINCIPLES.md.tmpl:217-223"
+provenance = ["mock::PRINCIPLES::#monomorphisation-is-the-dispatch"]
+quote = '''
+`WorkUnit::Ctx` is a Generic Associated Type (`type Ctx<'frame>`)
+over a frame lifetime owned by the scheduler. The engine instantiates
+it at dispatch time with the live `'frame`, so the WU can read borrows
+into `PoolFrame`-derived state (progress slots, predicted-wait readers)
+without forcing the consumer's `impl WorkUnit` to carry an explicit
+`<'frame>` parameter. Dispatch sites use HRTB. Validated by the lifetime
+sketch shipped alongside round 202605101036.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "units"
+keywords = ["WorkUnit::Ctx", "GAT", "frame lifetime", "PoolFrame", "HRTB", "progress slots", "predicted-wait readers", "round 202605101036"]
+cites = ["execute_receives_a_context_and_nothing_else"]
+
+[[tenet]]
+id = "a_unit_over_columns_receives_a_morsel_window_and_a_unit_over_resources_only_runs_once_per_record"
+what = "Whether a unit is dispatched per morsel or per record is inferred from the shape of its access set. A unit that works on columns receives a morsel window, and a unit that touches only resources is dispatched per record."
+mechanism = "Column-shaped WUs receive a `Morsel<T>` window; resource-only WUs dispatch per-record."
+source = "mock/DESIGN.md.tmpl:86-86"
+provenance = ["mock::DESIGN::#morsel-loop"]
+quote = '''
+Per-morsel vs per-record WU dispatch inferred from AccessSet shape: column-shaped WUs receive a `Morsel<T>` window; resource-only WUs dispatch per-record.
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+subject = "units"
+keywords = ["per-morsel dispatch", "per-record dispatch", "Morsel<T>", "AccessSet shape", "column-shaped", "resource-only", "inferred"]

@@ -279,3 +279,192 @@ standing = "provisional"
 subject = "stores"
 keywords = ["double-buffered", "frozen", "live", "pass boundary", "triple buffering", "temporal prediction", "loimu heritage"]
 related = ["question::whether_hilavitkutin_s_own_columns_are_double_buffered", "question::how_a_unit_reads_the_value_a_store_held_at_frame_start", "tenet::loimu_keeps_its_seven_access_modes_and_maps_them_to_read_and_write_at_the_boundary"]
+
+[[tenet]]
+id = "a_resource_is_a_handle_and_not_an_inline_value_store_which_is_the_corrected_reading_of_r5"
+what = "A resource is a handle and not an inline-value store. The handle model is the corrected reading of the spec's resource section: resources sit behind pointer indirection to external slab storage and not inline in the context struct, and resource storage and column storage have separate pointer provenance, with the stack-local hoist as the noalias mechanism."
+mechanism = "`Resource<T>` as a handle. Spec 1689: \"All behind pointer indirection to external slab storage. NOT inline in the context struct.\"; spec 1695-1704: separate pointer provenance, resource data in a stack-local region LLVM can prove non-aliasing with column pointers; spec 537/1684: resources consist of three field types Field/Seq/Map. Oracle: consolidation spec R5, lines 535-566 and 1682-1710."
+source = "mock/research/202606210600_resource-storage-model-canonical-addendum.md:4-6, mock/research/202606210600_resource-storage-model-canonical-addendum.md:12-12, mock/research/202606210600_resource-storage-model-canonical-addendum.md:14-16, mock/research/202606210600_resource-storage-model-canonical-addendum.md:58-68"
+provenance = ["mock::research::202606210600_resource-storage-model-canonical-addendum::#canonical-addendum-the-resource-storage-model-handle-one-record-blob"]
+quote = '''
+**Status:** canonical reading-correction of consolidation-spec R5, now with the layout fork
+resolved by the six-variant bench (round 202606210600, both runs). The handle model is the
+corrected READING of R5 (solid). The original version of this addendum ALSO asserted a
+---
+**Oracle:** consolidation spec R5 (`mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md` lines 535-566, 1682-1710).
+---
+## The model, stated outright (bench-confirmed)
+
+A `Resource<T>` is a **handle**, not an inline-value store.
+---
+## Why the handle model is what R5 says (the reading correction)
+
+- Spec **1689**: "All behind pointer indirection to external slab storage. NOT inline in
+  the context struct." -> the resource holds pointers; values are external. This is item 1+3.
+- Spec **1695-1704**: "Resource storage and column storage must have separate pointer
+  provenance ... resource data lives in a stack-local region that LLVM can prove
+  non-aliasing with column pointers." -> the **handle store** is the separate-provenance
+  thing; the stack-local hoist is the noalias mechanism. This is item 3+5.
+- Spec **537/1684**: "Resources consist of three field types `Field`/`Seq`/`Map`." -> the
+  per-member composition read by the `Decompose` seam (size fold + collection ptr+len); the
+  value bytes themselves stay contiguous in the blob (item 1), not one column per member.
+'''
+origin = "proposed"
+written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
+standing = "provisional"
+subject = "stores"
+keywords = ["Resource handle", "R5", "reading correction", "pointer indirection", "external slab storage", "separate provenance", "stack-local hoist", "Field Seq Map"]
+cites = ["a_resource_is_scalars_and_const_sized_collections_only"]
+
+[[tenet]]
+id = "the_value_of_a_resource_is_one_contiguous_record_blob_and_the_per_member_column_decomposition_was_refuted_by_bench"
+what = "The value of a resource lives as a per-resource contiguous blob of one record, bumped from the arena, and is not decomposed into per-member columns. The six-variant bench decided this: the decomposed layout loses intra-resource locality and crosses the column-count cap on realistic resource sets, and the shape-bound shared layout carries a cross-core false-sharing penalty and a resize hazard, and neither buys a hot-loop win. The decompose trait remains the per-member seam for the size fold and for the collection pointer and length, but the value bytes stay contiguous."
+mechanism = "V2 (each member its own column) loses intra-resource locality, up to 3.1x at M=64, and crosses the `Dim<256>` column-count cap; V3 (shape-bound shared layout) carries a 3.4x cross-core false-sharing penalty plus a resize-invalidates-all-sharers hazard; V2 and V3 lose axes B/C/E for no hot-loop win. `Decompose` in `hilavitkutin-api/src/storage.rs`. Findings: `mock/research/202606210600_storage-bench-findings.md`; round resolution `mock/design_rounds/202606210600_topic.bench-run2-resolution.md`."
+source = "mock/research/202606210600_resource-storage-model-canonical-addendum.md:7-11, mock/research/202606210600_resource-storage-model-canonical-addendum.md:18-25"
+provenance = ["mock::research::202606210600_resource-storage-model-canonical-addendum::#canonical-addendum-the-resource-storage-model-handle-one-record-blob"]
+quote = '''
+per-member decompose-to-shape-bound-columns layout; the bench refuted that (V2 decomposed and
+V3 shape-bound lose axes B/C/E for no hot-loop win). The layout below is the bench-decided one:
+a one-record blob (per-resource contiguous value), scalar-snapshotted, with live-streamed
+collection members. See `mock/research/202606210600_storage-bench-findings.md` (the full findings
++ run-2 confirmation) and `mock/design_rounds/202606210600_topic.bench-run2-resolution.md`.
+---
+1. **One-record blob value.** `T`'s value lives as a per-resource contiguous blob (one record),
+   bumped from the arena, NOT decomposed into per-member columns. The bench decided this: the
+   decomposed layout (V2, each member its own column) loses intra-resource locality (up to 3.1x
+   at M=64) and crosses the `Dim<256>` column-count cap on realistic resource sets; the
+   shape-bound shared layout (V3) carries a 3.4x cross-core false-sharing penalty plus a
+   resize-invalidates-all-sharers hazard. Neither buys a hot-loop win. The `Decompose` trait
+   (`hilavitkutin-api/src/storage.rs`) remains the per-member seam for the size fold and the
+   collection ptr+len, but the value bytes stay contiguous.
+'''
+origin = "proposed"
+written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
+standing = "provisional"
+subject = "stores"
+keywords = ["one-record blob", "Decompose", "V2 decomposed", "V3 shape-bound", "false sharing", "Dim<256>", "six-variant bench", "intra-resource locality"]
+rules_out = ["decomposing a resource value into per-member columns", "a shape-bound shared column layout for resource members"]
+cites = ["a_resource_is_a_handle_and_not_an_inline_value_store_which_is_the_corrected_reading_of_r5"]
+
+[[tenet]]
+id = "the_resource_handle_store_holds_pointers_to_the_value_blob_and_the_collection_columns_with_provenance_distinct_from_the_value_columns"
+what = "The resource handle holds the pointers to its value blob and to its collection columns, in a store keyed by resource id, with pointer provenance distinct from the value columns. This is what the noalias property rests on."
+source = "mock/research/202606210600_resource-storage-model-canonical-addendum.md:31-33"
+provenance = ["mock::research::202606210600_resource-storage-model-canonical-addendum::#the-model-stated-outright-bench-confirmed"]
+quote = '''
+3. **Handle store, separate provenance.** The resource handle holds the pointer(s) to its value
+   blob and to its collection columns, in a store keyed by resource id, with pointer provenance
+   distinct from the value columns. This is the noalias substrate.
+'''
+origin = "proposed"
+written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
+standing = "provisional"
+subject = "stores"
+keywords = ["handle store", "resource id", "pointer provenance", "value blob", "collection columns", "noalias"]
+cites = ["resource_and_column_pointers_must_have_separate_provenance_or_llvm_reloads_resources_every_iteration"]
+
+[[tenet]]
+id = "a_seq_or_map_value_is_a_pointer_and_a_length_and_its_elements_are_live_streamed_from_their_column_and_never_copied"
+what = "A sequence or map value is a pointer to the first element plus a length counted in strides, with elements stored consecutively. The snapshot copies only the pointer and length and never the elements, so the collection is streamed live from its column inside the loop. The bench decided this on axis D: live-streaming beats snapshot-copying by about 2.5 times once the collection exceeds cache, with parity below about 4 MiB."
+mechanism = "`Seq`/`Map` = pointer-to-first + length (count of strides); axis D: live-stream beats snapshot-copy by ~2.5x above cache (64 MiB), parity below ~4 MiB, confirmed in both runs."
+source = "mock/research/202606210600_resource-storage-model-canonical-addendum.md:34-38"
+provenance = ["mock::research::202606210600_resource-storage-model-canonical-addendum::#the-model-stated-outright-bench-confirmed"]
+quote = '''
+4. **`Seq`/`Map` are live-streamed, not copied.** A `Seq`/`Map` value is a pointer-to-first plus a
+   length (count of strides), elements stored consecutively. The snapshot copies ONLY the ptr+len,
+   never the elements: the collection is streamed live from its column inside the loop. The bench
+   decided this (axis D): live-stream beats snapshot-copy by ~2.5x once the collection exceeds
+   cache (64 MiB), parity below ~4 MiB, confirmed in both runs.
+'''
+origin = "proposed"
+written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
+standing = "provisional"
+subject = "stores"
+keywords = ["Seq", "Map", "live-streamed", "snapshot copy", "pointer and length", "axis D", "collection members", "stride"]
+rules_out = ["copying the elements of a collection into the snapshot"]
+cites = ["the_value_of_a_resource_is_one_contiguous_record_blob_and_the_per_member_column_decomposition_was_refuted_by_bench"]
+
+[[tenet]]
+id = "the_spec_s_three_field_types_are_value_composition_read_by_the_decompose_seam_and_not_a_column_per_member"
+what = "The spec's statement that a resource consists of three field types is value-composition, which is what the decompose seam reads for sizing, and is not a statement that each member is its own shape-bound column. Shape-bound sharing appears nowhere in the spec because it is not the design, and the bench confirmed it loses. The original version of the addendum asserted the shape-bound-columns reading, and the bench refuted it."
+mechanism = "V3: 3.4x false-sharing + resize hazard; V2: locality + column-count."
+source = "mock/research/202606210600_resource-storage-model-canonical-addendum.md:70-77"
+provenance = ["mock::research::202606210600_resource-storage-model-canonical-addendum::#retraction-the-shape-bound-columns-reading-was-wrong-bench"]
+quote = '''
+## Retraction: the shape-bound-columns reading was wrong (bench)
+
+The original addendum closed a "point R5 left light" by asserting a per-member
+shape-bound-columns decomposition. The bench refuted it. R5 says "consist of three field types",
+which is value-composition (what the `Decompose` seam reads for sizing), NOT "each member is its
+own shape-bound column." Shape-bound sharing appears nowhere in R5 because it is not the design;
+the six-variant bench confirmed it loses (V3: 3.4x false-sharing + resize hazard; V2: locality +
+column-count). The one genuine R5 clarification that stands: **"separate arena for Seq/Map" (566)
+'''
+origin = "proposed"
+written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
+standing = "provisional"
+subject = "stores"
+keywords = ["retraction", "shape-bound columns", "three field types", "value composition", "Decompose seam", "R5 reading", "bench refuted"]
+rules_out = ["the shape-bound-columns reading of the spec's resource section"]
+cites = ["the_value_of_a_resource_is_one_contiguous_record_blob_and_the_per_member_column_decomposition_was_refuted_by_bench"]
+
+[[tenet]]
+id = "the_spec_s_separate_arena_for_seq_and_map_attaches_to_the_handle_store_and_not_to_a_resource_private_value_arena"
+what = "The one genuine clarification of the spec's resource section that stands is that the separate arena for sequences and maps attaches to the handle store, and not to a resource-private value arena. The value is a one-record blob, and only the handle store has separate provenance."
+mechanism = "Spec line 566, \"separate arena for Seq/Map\"."
+source = "mock/research/202606210600_resource-storage-model-canonical-addendum.md:77-79"
+provenance = ["mock::research::202606210600_resource-storage-model-canonical-addendum::#retraction-the-shape-bound-columns-reading-was-wrong-bench"]
+quote = '''
+column-count). The one genuine R5 clarification that stands: **"separate arena for Seq/Map" (566)
+attaches to the handle store, not to a resource-private value arena.** The value is a one-record
+blob; only the handle store is separate-provenance.
+'''
+origin = "proposed"
+written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
+standing = "provisional"
+subject = "stores"
+keywords = ["separate arena", "Seq", "Map", "handle store", "one-record blob", "spec 566", "provenance"]
+rules_out = ["a resource-private value arena for collection members"]
+cites = ["the_resource_handle_store_holds_pointers_to_the_value_blob_and_the_collection_columns_with_provenance_distinct_from_the_value_columns"]
+
+[[tenet]]
+id = "as_of_2026_07_02_the_drain_stores_blob_is_the_correct_layout_and_the_drift_is_the_missing_snapshot_and_live_stream_path"
+what = "As of 2026-07-02, the storage addendum records that the shipped drain stores reserve a one-record blob per resource behind a single resource pointer, and that the bench confirms the blob as the correct layout. The drift is that the drain stores read the value live through the pointer every iteration, with no stack snapshot of the scalar members and no live-stream path for collection members. The fix is additive, adding the snapshot and the live-stream, and not a decomposition rewrite."
+mechanism = "`DrainStores` at `mock/crates/hilavitkutin/src/resource/bindings.rs:22`; `ResourcePtr<T>`."
+source = "mock/research/202606210600_resource-storage-model-canonical-addendum.md:81-88"
+provenance = ["mock::research::202606210600_resource-storage-model-canonical-addendum::#the-shipped-impl-is-drift-only-in-lacking-the-snapshot"]
+quote = '''
+## The shipped impl is drift only in lacking the snapshot
+
+`DrainStores` (`mock/crates/hilavitkutin/src/resource/bindings.rs:22`) reserves a one-record blob
+per `Resource<T>` behind a single `ResourcePtr<T>`. The bench confirms the blob is the CORRECT
+per-record layout, so this is not the drift. The drift is that `DrainStores` reads the value live
+through the pointer every iteration with no stack-snapshot of the scalar members and no
+live-stream path for collection members. The fix is additive (add the snapshot + the live-stream),
+not a decomposition rewrite.
+'''
+origin = "proposed"
+written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
+standing = "provisional"
+subject = "stores"
+keywords = ["DrainStores", "ResourcePtr", "drift", "one-record blob", "scalar snapshot", "live-stream", "additive fix", "bindings.rs"]
+cites = ["the_scalar_members_of_a_resource_are_snapshotted_to_a_stack_local_before_the_morsel_loop", "a_seq_or_map_value_is_a_pointer_and_a_length_and_its_elements_are_live_streamed_from_their_column_and_never_copied"]
+
+[[tenet]]
+id = "as_of_2026_07_19_the_negative_impl_ships_with_a_compile_fail_doctest_for_e0751"
+what = "As of 2026-07-19, the ratification evidence memo records that the crate ships the negative implementation that no plan-affecting type is replaceable, under the negative-impls feature in the watch tier, with an executable compile-fail doctest that expects E0751."
+mechanism = "`impl<T: PlanAffecting> !Replaceable for T` under `negative_impls` (WATCH tier); `compile_fail,E0751` doctest (S4)."
+source = "mock/research/202607201100_swap-semantics-ratification-evidence.md:19-22"
+provenance = ["mock::research::202607201100_swap-semantics-ratification-evidence::#what-shipped-both-changelists-locked"]
+quote = '''
+decision for the worker phase loops. S4: the crate ships
+`impl<T: PlanAffecting> !Replaceable for T` under `negative_impls`
+(WATCH tier), with an executable `compile_fail,E0751` doctest. S6: five
+tests pin blob-address identity, last-swap-wins, ZST swap, install
+'''
+origin = "proposed"
+written_by = "memo on swap semantics, implementation and bench evidence for ratification, 2026-07-19, round 202607200500 (#697); the text does not name its author"
+standing = "provisional"
+subject = "stores"
+keywords = ["negative_impls", "PlanAffecting", "Replaceable", "E0751", "compile_fail doctest", "WATCH tier", "S4", "shipped"]
+cites = ["a_plan_affecting_type_can_never_take_the_replace_value_path_because_of_a_negative_impl_wall"]

@@ -258,3 +258,19 @@ standing = "provisional"
 subject = "records"
 keywords = ["cross-record", "morsel-relative", "accumulator append", "morsel-outer", "unit-outer", "morsel_local", "read", "write"]
 related = ["tenet::records_within_a_fiber_are_independent"]
+
+[[tenet]]
+id = "as_of_2026_06_11_sub_byte_bitpacking_is_declared_but_stride_is_the_size_of_the_type"
+what = "As of 2026-06-11, addendum A1 records that sub-byte bitpacking is declared through the column value bit width, while the stride is the size of the type."
+mechanism = "`ColumnValue::BIT_WIDTH` declared; stride is `size_of::<T>()`."
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:42-43"
+provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#state-assessment-truth-of-impl-2026-06-11"]
+quote = '''
+the arena-layout column; sub-byte bitpacking (`ColumnValue::BIT_WIDTH`) is
+declared but stride is `size_of::<T>()`; `topo_order` / `topo_count`,
+'''
+origin = "proposed"
+written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
+standing = "provisional"
+subject = "records"
+keywords = ["bitpacking", "BIT_WIDTH", "ColumnValue", "stride", "size_of", "partial", "state assessment", "2026-06-11"]

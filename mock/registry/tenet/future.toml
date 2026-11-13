@@ -122,3 +122,265 @@ standing = "provisional"
 subject = "future"
 keywords = ["arvo sub-crates", "design round", "API surface", "const-generic sizing", "LLVM optimisation", "arvo-bitmask", "arvo-sparse", "arvo-graph"]
 cites = ["the_detailed_design_of_each_arvo_crate_is_deferred_to_its_own_design_round"]
+
+[[tenet]]
+id = "gate_2_closes_with_cleanup_and_a_perf_gate_rerun_and_the_remainder_is_one_completion_arc_charted_to_the_full_canonical_design"
+what = "GATE-2 closes with its cleanup and a re-run of the perf gate. Everything remaining is one completion arc charted to the full canonical design, without further gate ceremony, and the chart-the-path routine produces the roadmap of the arc."
+mechanism = "GATE-2 is #662; remainder named as E5, E6, E8 and the unslotted canon features."
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:74-77"
+provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#a1-3-gate-2-closes-the-remainder-is-one-completion-arc"]
+quote = '''
+GATE-2 (#662) closes with its cleanup and a perf-gate re-run. Everything
+remaining (E5/E6/E8, the unslotted canon features below) is one completion
+arc charted to the full canonical design, without further gate ceremony.
+The chart-the-path routine produces the arc's roadmap.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "future"
+keywords = ["GATE-2", "completion arc", "chart-the-path", "roadmap", "perf gate", "E5", "E6", "E8", "A1-3"]
+
+[[tenet]]
+id = "the_completion_arc_charts_micro_morsels_branch_dispatch_shape_shared_read_strategy_bitpacking_and_microkernels"
+what = "The perf-substance group is charted into the completion arc: micro-morsels, the branch dispatch shape, the shared-read-column strategy, the sub-byte bitpacking stride, and intrinsics with microkernels."
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:79-82"
+provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#a1-3-gate-2-closes-the-remainder-is-one-completion-arc"]
+quote = '''
+All four unslotted feature groups chart into the arc:
+
+1. Perf substance: micro-morsels, branch dispatch shape, shared-read-column
+   strategy, sub-byte bitpacking stride, intrinsics/microkernels.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "future"
+keywords = ["micro-morsels", "branch dispatch", "shared-read column", "bitpacking stride", "intrinsics", "microkernels", "perf substance"]
+cites = ["gate_2_closes_with_cleanup_and_a_perf_gate_rerun_and_the_remainder_is_one_completion_arc_charted_to_the_full_canonical_design"]
+
+[[tenet]]
+id = "the_completion_arc_charts_the_three_adapt_reorganisation_triggers_predictive_parking_and_stolen_idle_counters"
+what = "The adapt-completion group is charted into the completion arc: the three reorganisation triggers (morsel recompute, per-phase config re-select, and record-count plan recompute including the replace-resource call writing the value), predictive parking, and stolen and idle counters."
+mechanism = "Task #345 for `replace_resource` writing the value."
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:79-79, mock/research/202606111400_canonical-design-addendum-a1.md:83-86"
+provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#a1-3-gate-2-closes-the-remainder-is-one-completion-arc"]
+quote = '''
+All four unslotted feature groups chart into the arc:
+---
+2. Adapt completion: the three reorganisation triggers (morsel recompute,
+   per-phase config re-select, record-count plan recompute including
+   `replace_resource` writing the value, task #345), predictive parking,
+   stolen/idle counters.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "future"
+keywords = ["adapt completion", "reorganisation triggers", "morsel recompute", "per-phase re-select", "predictive parking", "stolen counters", "#345"]
+cites = ["gate_2_closes_with_cleanup_and_a_perf_gate_rerun_and_the_remainder_is_one_completion_arc_charted_to_the_full_canonical_design"]
+
+[[tenet]]
+id = "the_completion_arc_charts_facade_plugin_host_integration_kits_and_providers_polish_and_persistence_wiring"
+what = "The ecosystem-bridges group is charted into the completion arc: facade and plugin-host engine integration, polish of kits and providers, and wiring of the persistence spine."
+mechanism = "Persistence spine: R2 evict/inject."
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:79-79, mock/research/202606111400_canonical-design-addendum-a1.md:87-88"
+provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#a1-3-gate-2-closes-the-remainder-is-one-completion-arc"]
+quote = '''
+All four unslotted feature groups chart into the arc:
+---
+3. Ecosystem bridges: facade/plugin-host engine integration, kits and
+   providers polish, persistence spine wiring (R2 evict/inject).
+'''
+origin = "stated"
+standing = "provisional"
+subject = "future"
+keywords = ["ecosystem bridges", "facade", "plugin-host", "kits", "providers", "persistence spine", "evict inject", "R2"]
+cites = ["gate_2_closes_with_cleanup_and_a_perf_gate_rerun_and_the_remainder_is_one_completion_arc_charted_to_the_full_canonical_design"]
+
+[[tenet]]
+id = "the_completion_arc_charts_the_pipeline_result_status_surface_the_stealing_executor_and_schedule_introspection"
+what = "The ops-surface group is charted into the completion arc: a pipeline result status surface of completed, failed and poisoned with dependent poisoning, the work-stealing executor extension point, and schedule introspection."
+mechanism = "`PipelineResult` (Completed/Failed/Poisoned); `Executor` extension point; schedule introspection #183."
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:79-79, mock/research/202606111400_canonical-design-addendum-a1.md:89-91"
+provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#a1-3-gate-2-closes-the-remainder-is-one-completion-arc"]
+quote = '''
+All four unslotted feature groups chart into the arc:
+---
+4. Ops surface: `PipelineResult` status surface (Completed/Failed/Poisoned
+   with dependent poisoning), the work-stealing `Executor` extension point,
+   schedule introspection (#183).
+'''
+origin = "stated"
+standing = "provisional"
+subject = "future"
+keywords = ["PipelineResult", "Poisoned", "dependent poisoning", "work-stealing", "Executor", "schedule introspection", "#183", "ops surface"]
+cites = ["gate_2_closes_with_cleanup_and_a_perf_gate_rerun_and_the_remainder_is_one_completion_arc_charted_to_the_full_canonical_design"]
+
+[[tenet]]
+id = "later_modules_of_the_providers_crate_add_column_storage_clock_and_memory_defaults_per_consumer_demand"
+what = "Later modules of the providers crate are meant to add default column storage, clock and memory providers, each when a consumer demands it."
+mechanism = "Future modules add ColumnStorage / Clock / Memory defaults."
+source = "mock/DESIGN.md.tmpl:24-24"
+provenance = ["mock::DESIGN::#crate-layout"]
+quote = '''
+| `hilavitkutin-providers` | Default Resource-backed providers for the scheduler. v0 ships the interner value-type surface (InternerApi / HasInterner / MemoryArena + default_interner constructor) plus the declarative `InternerKit` (round-4 shape: `type Units = read![]`, `type Owned = read![Resource<...>]`). Future modules add ColumnStorage / Clock / Memory defaults per consumer demand. Standalone (no engine dep). |
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+subject = "future"
+keywords = ["hilavitkutin-providers", "ColumnStorage", "Clock", "Memory", "defaults", "per consumer demand", "future modules"]
+
+[[tenet]]
+id = "plan_recompute_is_sequential_and_single_threaded_in_the_first_version_and_parallelising_it_waits_for_pipelines_of_256_units_or_more"
+what = "In the first version the plan recompute runs sequentially on one thread. Making it parallel is deferred until consumers ship pipelines of 256 units or more."
+mechanism = "Sequential single-threaded recompute in v1; parallelisation deferred until consumers ship 256+ WU pipelines."
+source = "mock/DESIGN.md.tmpl:100-100"
+provenance = ["mock::DESIGN::#plan-caching"]
+quote = '''
+Per-`PlanAffecting`-resource dirty bit array. Plan cache lives with Scheduler for the pipeline's lifetime: the cached plan is the flat `ExecutionPlan`, reused across frames and recomputed only when a `PlanAffecting` resource dirties. Sequential single-threaded recompute in v1 (parallelisation deferred until consumers ship 256+ WU pipelines). Moving the flat plan columns onto the scheduler's columnar store is the next step in the unified-storage arc.
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+subject = "future"
+keywords = ["plan recompute", "sequential", "single-threaded", "v1", "parallelisation deferred", "256 units"]
+
+[[tenet]]
+id = "work_stealing_and_calibration_of_the_spin_budget_at_pool_build_are_backlog_and_the_spin_budget_is_fixed_at_128_in_the_first_version"
+what = "Work stealing and a calibration micro-bench for the spin budget when the thread pool is built are deferred to the backlog. The spin budget is fixed in the first version."
+mechanism = "Spin-budget calibration micro-bench at `ThreadPool::build()` BACKLOG; fixed 128 in v1."
+source = "mock/DESIGN.md.tmpl:78-78"
+provenance = ["mock::DESIGN::#thread-pool-executor"]
+quote = '''
+Work-stealing BACKLOG. Spin-budget calibration micro-bench at `ThreadPool::build()` BACKLOG; fixed 128 in v1. `Scheduler::Drop` sets `shutdown` flag, futex-wakes all parked, and waits on the exit counter until every worker has left its mainloop; the engine holds no thread handle to join, because the threads are the consumer executor's.
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+subject = "future"
+keywords = ["work-stealing", "backlog", "spin budget", "ThreadPool::build", "calibration micro-bench", "fixed 128", "v1"]
+cites = ["work_stealing_is_not_the_default_and_the_consumer_may_provide_a_stealing_executor"]
+
+[[tenet]]
+id = "hot_reload_with_ref_counted_unload_is_not_supported_in_the_first_version_which_is_load_once_and_drop_once"
+what = "Hot reload with reference-counted unload is not supported in the first version, which is load once and drop once, and it is recorded in the backlog."
+source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:179-179"
+provenance = ["mock::crates::hilavitkutin-extensions::DESIGN::#non-scope"]
+quote = '''
+- Support hot-reload with ref-counted unload. V1 is load-once, drop-once. BACKLOG.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
+standing = "provisional"
+subject = "future"
+keywords = ["hot-reload", "ref-counted unload", "load-once", "drop-once", "BACKLOG", "v1", "extensions"]
+
+[[tenet]]
+id = "async_loading_wrappers_telemetry_and_signature_verification_are_not_in_the_first_version_of_the_linking_crate"
+what = "The first version of the linking crate provides no async loading wrappers, no telemetry and no signature verification, and all three are backlog items. Follow-up design rounds may extend the crate, with explicit unload reference counting, telemetry and additional platform targets named as examples, but must preserve the first-version contract unless an explicit deprecation is scheduled."
+source = "mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:104-104, mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:115-117"
+provenance = ["mock::crates::hilavitkutin-linking::DESIGN::#non-scope"]
+quote = '''
+- Provide async loading wrappers, telemetry, or signature verification in v1. Those are BACKLOG items.
+---
+## Shipping commitment
+
+The shape described here plus the specific type and method names locked in the src CL of. Follow-up design rounds may extend the crate (for example to add explicit unload ref-counting, telemetry, or additional platform targets) but must preserve the v1 contract unless explicit deprecation is scheduled.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-linking, agent-written, undated"
+standing = "provisional"
+subject = "future"
+keywords = ["async loading", "telemetry", "signature verification", "BACKLOG", "unload ref-counting", "additional platforms", "v1 contract", "follow-up rounds"]
+
+[[tenet]]
+id = "a_declarative_app_macro_folding_the_builder_calls_is_parked_and_likely_never_because_the_raw_builder_is_ergonomic_enough_at_ten_registrations"
+what = "A declarative macro that folds the unit, resource, column and kit registration calls into a single block was considered and parked as a P2 task, likely never. The raw builder pattern is ergonomically sufficient at the call counts that the named consumers reach, around ten registrations per app, and the macro adds complexity without a measurable readability win at that scale. If a downstream consumer surfaces a real ergonomics complaint, the task is revisited."
+mechanism = "`app!` / `define_app!` macro folding `.add_unit::<WU>()` / `.add_resource()` / `.add_column()` / `.add_kit()`; task #295 (P2, likely never); Bevy cited as proof the raw builder suffices; consumers named: viola, vehje."
+source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:249-262"
+provenance = ["mock::crates::hilavitkutin-kit::DESIGN::#deferred-ergonomics"]
+quote = '''
+## Deferred ergonomics
+
+A declarative `app!` / `define_app!` macro that folds
+`.add_unit::<WU>()` / `.add_resource()` / `.add_column()` /
+`.add_kit()` calls into a single block was considered and parked
+at task #295 (P2,
+likely never). Bevy proves the raw builder pattern is
+ergonomically sufficient at the call counts viola, vehje, and
+similar consumers reach (around ten registrations per app). The
+macro adds complexity without a measurable readability win at
+that scale.
+
+If a downstream consumer surfaces a real ergonomics complaint,
+revisit #295.
+'''
+because = "Bevy proves the raw builder pattern is ergonomically sufficient at the call counts viola, vehje, and similar consumers reach; the macro adds complexity without a measurable readability win at that scale."
+origin = "proposed"
+written_by = "the design template of hilavitkutin-kit, agent-written, undated"
+standing = "provisional"
+subject = "future"
+keywords = ["app! macro", "define_app!", "task #295", "deferred ergonomics", "raw builder", "Bevy", "viola", "vehje", "parked"]
+rules_out = ["a declarative app! / define_app! macro"]
+
+[[tenet]]
+id = "the_memory_arena_is_not_sync_by_default_and_multi_thread_access_needs_a_consumer_mutex_shim_or_a_future_sync_arena"
+what = "The memory arena is not shareable between threads by default. The eventual interner resource over it needs either a consumer-supplied mutex shim or a future synchronised arena variant for multi-thread access, which is tracked in the backlog."
+mechanism = "`MemoryArena` is `!Sync`; consumer-supplied Mutex shim or a future SyncArena variant; BACKLOG."
+source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:73-76"
+provenance = ["mock::crates::hilavitkutin-providers::DESIGN::#memoryarena-bytes-entries"]
+quote = '''
+`MemoryArena` is `!Sync` by default. The eventual
+`Resource<StringInterner<MemoryArena<...>>>` will need either a
+consumer-supplied Mutex shim or a future SyncArena variant for
+multi-thread access. Tracked in BACKLOG.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-providers, agent-written, undated"
+standing = "provisional"
+subject = "future"
+keywords = ["MemoryArena", "!Sync", "Mutex shim", "SyncArena", "multi-thread access", "BACKLOG", "StringInterner"]
+
+[[tenet]]
+id = "clock_and_libc_unix_memory_provider_defaults_land_in_their_own_rounds_when_consumer_demand_surfaces"
+what = "The providers crate's scope at this stage is the interner and the arena column storage backing. The clock default and the memory provider default for libc and Unix each land in their own round when consumer demand surfaces."
+source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:13-14, mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:185-188"
+provenance = ["mock::crates::hilavitkutin-providers::DESIGN::#hilavitkutin-providers"]
+quote = '''
+Future rounds add the Clock default and a MemoryProvider default for
+libc/Unix per consumer demand.
+---
+- **Clock / MemoryProvider defaults.** Per crate scope: interner and
+ the `ArenaColumnStorage` backing at this stage. The Clock and
+ libc/Unix MemoryProvider defaults each land in their own round when
+ consumer demand surfaces.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-providers, agent-written, undated"
+standing = "provisional"
+subject = "future"
+keywords = ["Clock default", "MemoryProvider default", "libc", "Unix", "consumer demand", "crate scope", "future rounds"]
+cites = ["later_modules_of_the_providers_crate_add_column_storage_clock_and_memory_defaults_per_consumer_demand"]
+
+[[tenet]]
+id = "per_fiber_windowed_dispatch_is_to_be_measured_against_the_shared_window_and_a_loss_goes_to_the_maintainer"
+what = "Serving a window per fiber on the flat carrier costs repeated walks, and a sketch found the cost inherent to the mandated mechanism. The roadmap asks for per-fiber windowed dispatch to be measured against the shared-window shape at fiber counts of 1, 2, 4 and 8 on both fiber kinds; if the locality win does not cover the walk cost at realistic fiber counts, that is a finding about the mechanism to bring to the maintainer and not to absorb."
+mechanism = "With F fibers of m morsels each over U trunk units, dispatch does F x m x U runtime `dirty.bit` tests where the shared-window shape did m x U, because `Member::IS` is const per trunk and not per fiber; sketch `202607191200_a4-fibercons-nest-wireability`; roadmap item G2C-M."
+source = "mock/research/202611130850_the-record-read-whole/RECOVERED.md:153-162"
+provenance = ["mock::research::202611130850_the-record-read-whole::RECOVERED::#mock-research-202607181300-engine-roadmap-r6-md-lines-211-to-220"]
+quote = '''
+**G2C-M also carries the per-fiber walk-overhead arm (added 2026-07-19).** Serving per-fiber L1
+windows on the flat carrier costs re-walks, and the sketch
+`202607191200_a4-fibercons-nest-wireability` established that the cost is inherent to the mandated
+mechanism rather than a shape choice: with F fibers of m morsels each over U trunk units, dispatch
+does F x m x U runtime `dirty.bit` tests where the old shared-window shape did m x U, for identical
+executed work, because `Member::IS` is const per trunk rather than per fiber. Measure per-fiber
+windowed dispatch against the shared-window shape at fiber counts 1, 2, 4 and 8, on both fiber
+kinds. This applies to `run` as much as to `run_core_phase`, since A2b shipped the same shape. If
+the locality win does not cover the walk cost at realistic fiber counts, that is a finding about the
+mechanism to surface to op rather than absorb. If bandwidth saturates by 4 cores on the heavy fiber, that is the ceiling
+'''
+origin = "proposed"
+written_by = "engine roadmap r6 as on the branch recover/unlanded-rounds-and-benches, passage added 2026-07-19, not on dev; the text does not say whose it is"
+standing = "provisional"
+subject = "future"
+keywords = ["walk overhead", "per-fiber window", "shared window", "dirty bit tests", "G2C-M", "bench"]
