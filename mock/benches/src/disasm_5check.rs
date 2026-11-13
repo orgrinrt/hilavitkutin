@@ -18,25 +18,26 @@
 //! sketch-heritage validation: see
 //! `mock/benches/codegen_dispatch_axis_a_assertions.md`.
 
-use std::fmt;
-use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::{fmt, fs};
+
+use crate::disasm::{self, Insn};
 
 /// One check's outcome.
 #[derive(Debug, Clone)]
 pub struct CheckOutcome {
-    pub name: &'static str,
-    pub pass: bool,
+    pub name:   &'static str,
+    pub pass:   bool,
     pub detail: String,
 }
 
 /// Full 5-check report for one variant's symbol.
 #[derive(Debug, Clone)]
 pub struct CheckReport {
-    pub variant: String,
-    pub dylib: PathBuf,
-    pub symbol: String,
+    pub variant:  String,
+    pub dylib:    PathBuf,
+    pub symbol:   String,
     pub outcomes: Vec<CheckOutcome>,
 }
 
@@ -49,8 +50,8 @@ impl CheckReport {
 /// Consolidated report across all variants of one bench / N pair.
 #[derive(Debug, Clone)]
 pub struct BenchReport {
-    pub bench: String,
-    pub n: usize,
+    pub bench:   String,
+    pub n:       usize,
     pub reports: Vec<CheckReport>,
 }
 
@@ -72,7 +73,12 @@ pub fn run_checks(
     morsel_immediates: &[u64],
 ) -> Result<CheckReport, String> {
     let disasm = read_disasm(dylib_path, symbol)?;
-    Ok(run_checks_on_disasm(&disasm, dylib_path, symbol, morsel_immediates))
+    Ok(run_checks_on_disasm(
+        &disasm,
+        dylib_path,
+        symbol,
+        morsel_immediates,
+    ))
 }
 
 /// Run the five checks against already-read disassembly text.
@@ -106,26 +112,8 @@ pub fn run_checks_on_disasm(
 }
 
 fn read_disasm(dylib: &Path, symbol: &str) -> Result<String, String> {
-    // Try objdump first, isolating one symbol via the `=` form
-    // (`--disassemble-symbols=NAME`; the space-separated form is parsed as a
-    // second input file and fails). macOS prepends an underscore to symbol
-    // names; Linux does not. Accept the result only when a real per-symbol
-    // instruction block came back: objdump exits 0 with just the file-format
-    // header when the symbol is absent, which is not a usable disassembly.
-    for name in [symbol.to_string(), format!("_{symbol}")] {
-        let out = Command::new("objdump")
-            .arg("-d")
-            .arg(format!("--disassemble-symbols={name}"))
-            .arg(dylib)
-            .output();
-        if let Ok(o) = out {
-            if o.status.success() {
-                let s = String::from_utf8_lossy(&o.stdout);
-                if s.contains(&format!("<{name}>:")) {
-                    return Ok(s.into_owned());
-                }
-            }
-        }
+    if let Some(text) = disasm::disassemble(dylib, symbol) {
+        return Ok(text);
     }
     // Fall back to otool on macOS. Dumps the whole text segment;
     // checks scan for `bench_entry` markers in pattern matching.
@@ -140,129 +128,119 @@ fn read_disasm(dylib: &Path, symbol: &str) -> Result<String, String> {
     Ok(String::from_utf8_lossy(&otool.stdout).into_owned())
 }
 
+/// The instructions of a listing, lines that are not instructions dropped.
+fn insns(disasm: &str) -> impl Iterator<Item = Insn<'_>> {
+    disasm.lines().filter_map(Insn::parse)
+}
+
 fn check_no_indirect_call(disasm: &str) -> CheckOutcome {
-    // aarch64 indirect: `blr xN`. x86_64 indirect: `callq *rN` or
-    // `call *rN`. Both forms appear as line tokens; counting line
-    // occurrences gives a sound lower bound on indirect calls in
-    // the body. Direct `bl`/`call` to a named symbol is check 5's
-    // concern, not this one.
-    let n = disasm
-        .lines()
-        .filter(|l| {
-            let t = l.trim_start();
-            t.starts_with("blr\t")
-                || t.starts_with("blr ")
-                || l.contains("\tblr\t")
-                || l.contains("\tcallq\t*")
-                || l.contains("\tcall\t*")
-        })
-        .count();
+    // An indirect call whose target the body loaded from an import's GOT
+    // slot is the dynamic linker's (`memset`, `syscall`), not a stored
+    // function pointer, and is reported but not counted. Every other one is
+    // a target read from data, which is the regression this check refuses.
+    let calls = disasm::indirect_calls(disasm);
+    let mut imports = calls.to_imports.clone();
+    imports.sort();
+    imports.dedup();
+    let detail = if calls.unresolved.is_empty() {
+        format!(
+            "0 indirect calls through a stored pointer ({} to imports via the GOT: {})",
+            calls.to_imports.len(),
+            list_or_none(&imports)
+        )
+    } else {
+        format!(
+            "{} indirect calls through a stored pointer, at {} ({} more to imports via the GOT)",
+            calls.unresolved.len(),
+            calls.unresolved.join(", "),
+            calls.to_imports.len()
+        )
+    };
     CheckOutcome {
         name: "1. zero indirect call in inner body",
-        pass: n == 0,
-        detail: format!("{n} indirect call instructions"),
+        pass: calls.unresolved.is_empty(),
+        detail,
     }
+}
+
+fn list_or_none(names: &[String]) -> String {
+    if names.is_empty() { "none".to_string() } else { names.join(", ") }
 }
 
 fn check_indexed_addressing(disasm: &str) -> CheckOutcome {
     // aarch64 indexed load: `ldr xN, [xBase, xIdx, lsl #SCALE]`.
-    // x86_64 indexed load: `mov rax, qword ptr [rBase + rIdx*SCALE]`.
-    let aarch = disasm
-        .lines()
-        .filter(|l| l.contains(", lsl #") && l.contains("["))
-        .count();
-    let x86 = disasm
-        .lines()
-        .filter(|l| {
-            l.contains("ptr [") && (l.contains("*4") || l.contains("*8") || l.contains("*2"))
+    // x86_64 AT&T indexed operand: `(%base,%idx,SCALE)`.
+    let total = insns(disasm)
+        .filter(|i| {
+            let o = i.operands;
+            (o.contains('[') && o.contains(", lsl #"))
+                || ["2)", "4)", "8)"]
+                    .iter()
+                    .any(|s| o.contains(&format!(",{s}")) && o.contains(",%"))
         })
         .count();
-    let total = aarch + x86;
     CheckOutcome {
-        name: "2. indexed addressing on column loads",
-        pass: total > 0,
+        name:   "2. indexed addressing on column loads",
+        pass:   total > 0,
         detail: format!("{total} indexed-addressing instructions"),
     }
 }
 
 fn check_no_stack_in_inner_loop(disasm: &str) -> CheckOutcome {
     // Stack-relative loads/stores anywhere in the symbol body
-    // signal register spills. Prologue/epilogue stack ops appear
-    // in the first and last few lines; the threshold below tolerates
-    // a small count rather than insisting on zero, because epilogue
-    // restores are unavoidable on aarch64 leaf-fns that touch
-    // callee-saved registers.
-    let n = disasm
-        .lines()
-        .filter(|l| {
-            l.contains("[sp,") || l.contains("[rsp,") || l.contains("[rsp+") || l.contains("[rsp-")
-        })
+    // signal register spills. Prologue/epilogue stack ops are
+    // counted too; the check reports the total rather than
+    // locating the loop, and gates nothing.
+    let n = insns(disasm)
+        .filter(|i| i.operands.contains("[sp") || i.operands.contains("(%rsp)"))
         .count();
     CheckOutcome {
-        name: "3. no stack-relative accesses in inner loop",
-        pass: n == 0,
+        name:   "3. no stack-relative accesses in inner loop",
+        pass:   n == 0,
         detail: format!("{n} stack-relative accesses"),
     }
 }
 
 fn check_immediate_morsel_size(disasm: &str, morsel_immediates: &[u64]) -> CheckOutcome {
-    let mut found: Vec<u64> = Vec::new();
-    for &m in morsel_immediates {
-        // aarch64 immediate: `#256`. x86_64 immediate decimal:
-        // `, 256` or hex `0x100`. Search all three forms.
-        let aarch_pat = format!("#{m}");
-        let x86_dec_pat = format!(", {m}");
-        let x86_hex_pat = format!("0x{m:x}");
-        if disasm.contains(&aarch_pat)
-            || disasm.contains(&x86_dec_pat)
-            || disasm.contains(&x86_hex_pat)
-        {
-            found.push(m);
-        }
-    }
-    let pass = !found.is_empty();
+    let all: Vec<Insn<'_>> = insns(disasm).collect();
+    let found = morsel_immediates
+        .iter()
+        .filter(|&&m| {
+            // aarch64 `#256` / `#0x100`, x86_64 AT&T `$256` / `$0x100`.
+            let forms =
+                [format!("#{m}"), format!("#0x{m:x}"), format!("${m}"), format!("$0x{m:x}")];
+            all.iter().any(|i| {
+                i.operands
+                    .split([',', ' '])
+                    .any(|t| forms.iter().any(|f| t.trim() == f))
+            })
+        })
+        .count();
     CheckOutcome {
-        name: "4. immediate-constant morsel size baked",
-        pass,
+        name:   "4. immediate-constant morsel size baked",
+        pass:   found > 0,
         detail: format!(
-            "found {} of {} expected immediates",
-            found.len(),
+            "found {found} of {} expected immediates",
             morsel_immediates.len()
         ),
     }
 }
 
 fn check_no_bl_to_helpers(disasm: &str) -> CheckOutcome {
-    // Direct `bl <symbol>` (aarch64) or `call <symbol>` (x86_64) to
-    // any function whose name pattern matches a per-record helper
-    // that should have inlined. Demangled names are best-effort;
-    // objdump usually emits both mangled and demangled forms.
-    let mut hits: usize = 0;
-    for line in disasm.lines() {
-        let t = line.trim_start();
-        let is_direct_branch = t.starts_with("bl\t")
-            || t.starts_with("bl ")
-            || line.contains("\tbl\t")
-            || line.contains("\tcallq\t")
-            || line.contains("\tcall\t");
-        if !is_direct_branch {
-            continue;
-        }
-        if line.contains("*") {
-            continue; // indirect; counted by check 1
-        }
-        let names_helper = line.contains("morsel")
-            || line.contains("fiber_dispatch")
-            || line.contains("wu_fn")
-            || line.contains("invoke_wu")
-            || line.contains("iter_morsel");
-        if names_helper {
-            hits += 1;
-        }
-    }
+    // A direct call to a per-record helper that should have inlined, named
+    // by the `<symbol>` objdump prints beside the target address.
+    let hits = insns(disasm)
+        .filter(|i| i.is_call() && !i.is_indirect_call())
+        .filter(|i| {
+            let target = i.comment_symbol().unwrap_or("");
+            ["morsel", "fiber_dispatch", "wu_fn", "invoke_wu", "iter_morsel"]
+                .iter()
+                .any(|h| target.contains(h))
+        })
+        .count();
     CheckOutcome {
-        name: "5. no direct call to morsel/fiber/wu_fn helpers",
-        pass: hits == 0,
+        name:   "5. no direct call to morsel/fiber/wu_fn helpers",
+        pass:   hits == 0,
         detail: format!("{hits} direct calls to helper symbols"),
     }
 }
@@ -271,7 +249,13 @@ impl fmt::Display for CheckReport {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "### variant `{}`", self.variant)?;
         writeln!(f)?;
-        writeln!(f, "- dylib: `{}`", self.dylib.display())?;
+        // The file name, not the path: the path is the build directory of
+        // whoever ran it, and a committed report regenerates byte-identical.
+        let dylib = self.dylib.file_name().map_or_else(
+            || self.dylib.display().to_string(),
+            |n| n.to_string_lossy().into_owned(),
+        );
+        writeln!(f, "- dylib: `{dylib}`")?;
         writeln!(f, "- symbol: `{}`", self.symbol)?;
         writeln!(
             f,
@@ -315,11 +299,7 @@ impl fmt::Display for BenchReport {
         writeln!(
             f,
             "Status: {}",
-            if self.any_fail() {
-                "AT LEAST ONE FAIL"
-            } else {
-                "ALL PASS"
-            }
+            if self.any_fail() { "AT LEAST ONE FAIL" } else { "ALL PASS" }
         )?;
         writeln!(f)?;
         for r in &self.reports {
