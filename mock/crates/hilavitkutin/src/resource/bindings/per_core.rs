@@ -14,7 +14,7 @@ use crate::resource::provenance::ColumnPtr;
 /// Per-core rebase of the bindings for the GATE-2 deviation 9 threaded
 /// accumulator path.
 ///
-/// Each worker drives the unit-outer accumulator dispatch over its head+tail
+/// Each worker drives the unit-outer accumulator dispatch over its
 /// record slice `[lo, lo+region_cap)` against a per-core COPY of the bindings:
 /// every `AccumBinding` is offset past the records the leading bands accepted on
 /// it, to `base + len + lo` clipped to its capacity, with fresh zero live-length
@@ -87,6 +87,33 @@ impl<T, Tail: RebaseBindings> RebaseBindings for VirtualBinding<T, Tail> {
 const fn region_start(leading: USize, lo: USize, cap: USize) -> USize {
     let start = leading.0.saturating_add(lo.0); // lint:allow(no-bare-numeric) reason: region offset past the leading records; tracked: #121
     USize(if start < cap.0 { start } else { cap.0 })
+}
+
+/// Stride between per-core accumulator regions: `ceil(total / ncores)`.
+#[inline]
+const fn accum_per(total: USize, ncores: USize) -> USize {
+    let n = if ncores.0 == 0 { 1 } else { ncores.0 }; // lint:allow(no-bare-numeric) reason: avoid div by zero; tracked: #121
+    USize(total.0.div_ceil(n)) // lint:allow(no-bare-numeric) reason: ceil record slice; tracked: #121
+}
+
+/// One core's exclusive accumulator region as `(lo, len)`.
+///
+/// The single definition of the accumulator's record split. The worker
+/// rebases its bindings onto this region and the merge reads core c's region
+/// at this `lo`. Both sides must agree exactly or the merge reads a region a
+/// different core wrote, so both call this and neither spells the arithmetic.
+///
+/// Regions tile `[0, total)` in core order, so the merge can concatenate them
+/// in ascending core order without gaps. A surplus core (more cores than
+/// records) gets `len == 0` and appends nothing.
+#[inline]
+pub(crate) const fn accum_slice(total: USize, ncores: USize, core: USize) -> (USize, USize) {
+    let per = accum_per(total, ncores).0;
+    let at = core.0 * per; // lint:allow(no-bare-numeric) reason: unclipped slice start; tracked: #121
+    let lo = if at < total.0 { at } else { total.0 }; // lint:allow(no-bare-numeric) reason: slice start clipped to the record count; tracked: #121
+    let end = lo + per; // lint:allow(no-bare-numeric) reason: unclipped slice end; tracked: #121
+    let hi = if end < total.0 { end } else { total.0 }; // lint:allow(no-bare-numeric) reason: slice end clipped to the record count; tracked: #121
+    (USize(lo), USize(hi - lo)) // lint:allow(no-bare-numeric) reason: slice length; tracked: #121
 }
 
 impl<T, Tail: RebaseBindings> RebaseBindings for AccumBinding<T, Tail> {
@@ -164,11 +191,10 @@ impl<T, Tail: CollectAccumCounts> CollectAccumCounts for AccumBinding<T, Tail> {
 /// The per-core counts the merge reads, one row of `stride` per core.
 ///
 /// `live[c * stride + a]` and `wanted[c * stride + a]` are core `c`'s live and
-/// `wanted` counts for accumulator `a`; `per`, `ncores` and `total` give each
-/// core's slice start `lo_c = (c * per).min(total)`.
+/// `wanted` counts for accumulator `a`; `ncores` and `total` give each core's
+/// slice start through `accum_slice`, the definition the worker placed it by.
 #[derive(Clone, Copy)]
 pub struct PerCoreCounts<'a> {
-    per:    USize,
     ncores: USize,
     total:  USize,
     live:   &'a [USize],
@@ -177,10 +203,9 @@ pub struct PerCoreCounts<'a> {
 }
 
 impl<'a> PerCoreCounts<'a> {
-    /// Bundle `per` records per core slice over `ncores` cores and `total`
-    /// records, with the cores' `live` and `wanted` rows of width `stride`.
+    /// Bundle the split of `total` records over `ncores` cores with the
+    /// cores' `live` and `wanted` rows of width `stride`.
     pub const fn new(
-        per: USize,
         ncores: USize,
         total: USize,
         live: &'a [USize],
@@ -188,7 +213,6 @@ impl<'a> PerCoreCounts<'a> {
         stride: USize,
     ) -> Self {
         Self {
-            per,
             ncores,
             total,
             live,
@@ -265,7 +289,7 @@ impl<T, Tail: MergeAccums> MergeAccums for AccumBinding<T, Tail> {
         let mut write_pos = leading.0; // lint:allow(no-bare-numeric) reason: compaction cursor; tracked: #121
         let mut c = 0; // lint:allow(no-bare-numeric) reason: core index; tracked: #121
         while c < counts.ncores.0 {
-            let lo = USize((c * counts.per.0).min(counts.total.0)); // lint:allow(no-bare-numeric) reason: core slice start; tracked: #121
+            let (lo, _) = accum_slice(counts.total, counts.ncores, USize(c)); // lint:allow(no-bare-numeric) reason: core index into the shared split; tracked: #121
             let src = region_start(leading, lo, self.cap).0; // lint:allow(no-bare-numeric) reason: the region start the rebase used; tracked: #121
             let slot = c * counts.stride.0 + a; // lint:allow(no-bare-numeric) reason: per-(core,accum) slot; tracked: #121
             let live_ca = counts.live[slot];

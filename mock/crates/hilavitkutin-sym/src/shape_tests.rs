@@ -2,36 +2,65 @@
 
 use super::*;
 
-/// Every width a shape declares, summed, must be the whole handle. A shape
-/// with a hole or an overlap has every accessor wrong.
+/// Whether the widths `S` declares, summed with the flag bit, are the whole
+/// handle. A shape with a hole or an overlap has every accessor wrong.
 ///
+/// A verdict rather than an assertion, like the origin laws below, so the
+/// same law is asked of the shipped shapes and of a shape built to break
+/// something else.
+#[rustfmt::skip]
+fn widths_account_for_the_handle<S: SymShape>() -> bool { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a test-local verdict function's own `bool` return; tracked: #34
+    S::KIND_BITS.0 + S::ORIGIN_BITS.0 + S::COUNTER_BITS.0 + 1 == 32
+}
+
+/// Whether `S`'s id is its origin and its counter together. A shape that
+/// says otherwise mints into bits its id accessor cannot read.
+#[rustfmt::skip]
+fn id_is_origin_plus_counter<S: SymShape>() -> bool { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a test-local verdict function's own `bool` return; tracked: #34
+    S::ID_BITS.0 == S::ORIGIN_BITS.0 + S::COUNTER_BITS.0
+}
+
+/// Whether `S` declares the widths its layout has.
+///
+/// The law that makes every other width mean something. A shape declares
+/// widths; its layout has them. Nothing else ties the two, so without this a
+/// shape could declare a three-bit field is nine bits wide and pass the two
+/// laws above, which would make the declarations descriptions rather than
+/// constraints.
+#[rustfmt::skip]
+fn declared_widths_are_the_layouts<S: SymShape>() -> bool { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a test-local verdict function's own `bool` return; tracked: #34
+    S::KIND_BITS.0 == <<S::Layout as SymLayoutOps>::Kind as FieldWidth>::WIDTH.0
+        && S::ID_BITS.0 == <<S::Layout as SymLayoutOps>::Id as FieldWidth>::WIDTH.0
+}
+
+/// Every width law at once, for a fixture that must be wrong in one way only.
+#[rustfmt::skip]
+fn satisfies_every_width_law<S: SymShape>() -> bool { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a test-local verdict function's own `bool` return; tracked: #34
+    widths_account_for_the_handle::<S>()
+        && id_is_origin_plus_counter::<S>()
+        && declared_widths_are_the_layouts::<S>()
+}
+
 /// Asserted for every shape rather than for the default alone:
 /// choosing which instantiations to check is choosing what not to find out.
 #[test]
 fn every_shape_accounts_for_all_thirty_two_bits() {
-    fn check<S: SymShape>(name: &'static str) {
-        let total = S::KIND_BITS.0 + S::ORIGIN_BITS.0 + S::COUNTER_BITS.0 + 1;
-        assert_eq!(total, 32, "{name} does not account for the whole handle");
-    }
-    check::<Standard>("Standard");
-    check::<SixteenMinters>("SixteenMinters");
-    check::<WideKind>("WideKind");
+    assert!(widths_account_for_the_handle::<Standard>(), "Standard");
+    assert!(
+        widths_account_for_the_handle::<SixteenMinters>(),
+        "SixteenMinters"
+    );
+    assert!(widths_account_for_the_handle::<WideKind>(), "WideKind");
 }
 
-/// The id is the origin and the counter together, for every shape. A shape
-/// that says otherwise mints into bits its id accessor cannot read.
 #[test]
 fn every_shape_id_is_origin_plus_counter() {
-    fn check<S: SymShape>(name: &'static str) {
-        assert_eq!(
-            S::ID_BITS.0,
-            S::ORIGIN_BITS.0 + S::COUNTER_BITS.0,
-            "{name} id width disagrees with its parts"
-        );
-    }
-    check::<Standard>("Standard");
-    check::<SixteenMinters>("SixteenMinters");
-    check::<WideKind>("WideKind");
+    assert!(id_is_origin_plus_counter::<Standard>(), "Standard");
+    assert!(
+        id_is_origin_plus_counter::<SixteenMinters>(),
+        "SixteenMinters"
+    );
+    assert!(id_is_origin_plus_counter::<WideKind>(), "WideKind");
 }
 
 /// The kind width genuinely varies across shipped shapes. Without this the
@@ -49,28 +78,52 @@ fn the_kind_width_varies_across_shapes() {
     );
 }
 
-/// The law that makes every other width mean something.
-///
-/// A shape declares widths; its layout has them. Nothing tied the two, so a
-/// shape could declare a three-bit field is nine bits wide and pass every
-/// law, which made the declarations descriptions rather than constraints.
 #[test]
 fn every_shape_declares_the_widths_its_layout_actually_has() {
-    fn check<S: SymShape>(name: &'static str) {
-        assert_eq!(
-            S::KIND_BITS.0,
-            <<S::Layout as SymLayoutOps>::Kind as FieldWidth>::WIDTH.0,
-            "{name} declares a kind width its layout does not carry"
-        );
-        assert_eq!(
-            S::ID_BITS.0,
-            <<S::Layout as SymLayoutOps>::Id as FieldWidth>::WIDTH.0,
-            "{name} declares an id width its layout does not carry"
-        );
+    assert!(declared_widths_are_the_layouts::<Standard>(), "Standard");
+    assert!(
+        declared_widths_are_the_layouts::<SixteenMinters>(),
+        "SixteenMinters"
+    );
+    assert!(declared_widths_are_the_layouts::<WideKind>(), "WideKind");
+}
+
+/// A shape that declares a kind width its layout does not have.
+///
+/// The layout law's own liar. Its three declared widths and the flag sum to
+/// the whole handle and its id is its origin plus its counter, so the two
+/// arithmetic laws pass; the layout it names carries a three-bit kind and a
+/// twenty-eight-bit id, and it declares five and twenty-six.
+#[derive(Copy, Clone, Default, Eq, Hash, PartialEq, Debug)]
+struct WidthsItsLayoutLacks;
+
+const impl SymShape for WidthsItsLayoutLacks {
+    type Layout = crate::handle::SymLayout;
+    type Origin = OneOrigin;
+
+    const COUNTER_BITS: USize = USize(26);
+    const ID_BITS: USize = USize(26);
+    const KIND_BITS: USize = USize(5);
+    const ORIGIN_BITS: USize = USize(0);
+
+    #[rustfmt::skip]
+    fn origin_index(_: Self::Origin) -> USize {
+        USize(0) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: one origin, index zero; tracked: #34
     }
-    check::<Standard>("Standard");
-    check::<SixteenMinters>("SixteenMinters");
-    check::<WideKind>("WideKind");
+}
+
+#[test]
+fn the_layout_law_rejects_widths_the_layout_does_not_carry() {
+    assert!(
+        widths_account_for_the_handle::<WidthsItsLayoutLacks>()
+            && id_is_origin_plus_counter::<WidthsItsLayoutLacks>(),
+        "the fixture must pass the two arithmetic laws, or the rejection below \
+         is not the layout law's"
+    );
+    assert!(
+        !declared_widths_are_the_layouts::<WidthsItsLayoutLacks>(),
+        "a shape declaring widths its layout does not carry must be rejected"
+    );
 }
 
 // The span law that stood here is gone, and its removal is a result rather
@@ -171,16 +224,15 @@ fn the_injectivity_law_rejects_a_shape_that_collapses_its_origins() {
     );
 }
 
-/// And it passes every width law, which is why a width law was never going
-/// to be the instrument for this.
+/// And it passes every width law, the one against its layout included, so
+/// the rejection above is the injectivity law's and nothing else's. A width
+/// law was never going to be the instrument for this.
 #[test]
 fn the_collapsing_shape_still_satisfies_every_width_law() {
-    type S = TwoOriginsOneIndex;
-    assert_eq!(
-        S::KIND_BITS.0 + S::ORIGIN_BITS.0 + S::COUNTER_BITS.0 + 1,
-        32
+    assert!(
+        satisfies_every_width_law::<TwoOriginsOneIndex>(),
+        "the fixture is meant to be wrong in its origin mapping only"
     );
-    assert_eq!(S::ID_BITS.0, S::ORIGIN_BITS.0 + S::COUNTER_BITS.0);
 }
 
 /// Disjointness is arithmetic now, not an assertion.
@@ -212,7 +264,7 @@ fn derived_runs_never_overlap_for_distinct_indices() {
 
 /// A shape whose index runs past the width it reserved.
 ///
-/// The second route the ninth review found, kept rather than reverted.
+/// A second way to mint one handle from two origins, kept as a fixture.
 /// The derived runs are disjoint in `u32` and truncate onto each other
 /// inside the id field, so two origins mint one handle while every width
 /// law passes. `Generator::at` refuses it, which is where a check binds for
@@ -243,14 +295,13 @@ fn the_range_check_rejects_an_index_past_its_origin_bits() {
     );
 }
 
-/// And it passes every width law, which is why a width law was never going
-/// to be the instrument for this.
+/// And it passes every width law, the one against its layout included, so
+/// the rejection above is the range check's and nothing else's. A width law
+/// was never going to be the instrument for this.
 #[test]
 fn the_out_of_range_shape_still_satisfies_every_width_law() {
-    type S = IndexPastOriginBits;
-    assert_eq!(
-        S::KIND_BITS.0 + S::ORIGIN_BITS.0 + S::COUNTER_BITS.0 + 1,
-        32
+    assert!(
+        satisfies_every_width_law::<IndexPastOriginBits>(),
+        "the fixture is meant to be wrong in its origin index only"
     );
-    assert_eq!(S::ID_BITS.0, S::ORIGIN_BITS.0 + S::COUNTER_BITS.0);
 }

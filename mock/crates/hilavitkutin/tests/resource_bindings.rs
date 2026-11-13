@@ -106,6 +106,9 @@ static DEALLOCS: AtomicUsize = AtomicUsize::new(0);
 // into a spurious poison-panic in the next.
 static COUNTING_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
+/// Alignment observed at the most recent successful `allocate`.
+static LAST_ALLOC_ALIGN: AtomicUsize = AtomicUsize::new(0);
+
 /// Alignment observed at the most recent `deallocate`, so a test can
 /// check the value survived the round trip rather than trusting it did.
 static LAST_DEALLOC_ALIGN: AtomicUsize = AtomicUsize::new(0);
@@ -120,6 +123,7 @@ impl<const N: usize> MemoryProviderApi for CountingProvider<N> {
         // success-only count).
         if !ptr.is_null() {
             ALLOCS.fetch_add(1, Ordering::SeqCst);
+            LAST_ALLOC_ALIGN.store(*align, Ordering::SeqCst);
         }
         ptr
     }
@@ -314,32 +318,51 @@ impl hilavitkutin_api::footprint::ResourceFootprint for Rc {
 
 /// The alignment a column was reserved with must reach its free.
 ///
-/// `ArenaColumnStorage` reserves every column at 64-byte alignment
-/// because the canonical design requires it. Before `deallocate` carried
-/// `align`, the std provider rebuilt the freeing layout from a word and
-/// every column free was a layout mismatch. Nothing caught it: the bump
-/// providers used throughout these tests ignore alignment on free, so
-/// the suite stayed green while the contract was unsatisfiable.
-///
-/// This asserts the value observed at the free is the one the reserve
-/// used, which is the property the parameter exists to provide.
+/// The store reserves every column at cache-line alignment, and a provider
+/// that frees by layout needs that alignment back. The bump providers used
+/// throughout these tests ignore alignment on free, so a store that guessed
+/// would keep the suite green. This drops a built scheduler and compares
+/// what the provider was given at the free with what it was given at the
+/// reserve. The store's own two freeing sites are read block by block in
+/// `hilavitkutin-providers/tests/column_storage.rs`; this is the engine
+/// reaching one of them through the scheduler's drop.
 #[test]
-fn column_free_sees_the_alignment_its_reserve_used() {
-    let _guard = COUNTING_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+fn a_dropped_scheduler_frees_its_column_at_the_alignment_it_reserved() {
+    let _serial = COUNTING_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    LAST_ALLOC_ALIGN.store(0, Ordering::SeqCst);
     LAST_DEALLOC_ALIGN.store(0, Ordering::SeqCst);
+    DEALLOCS.store(0, Ordering::SeqCst);
 
-    let provider = CountingProvider::<65536> {
-        inner: BumpProvider::new(),
+    let reserved_at = {
+        let provider = CountingProvider::<256> {
+            inner: BumpProvider::<256>::new(),
+        };
+        let scheduler = Scheduler::builder()
+            .with(Resource::new(Ra(7)))
+            .build(store(provider), USize(0))
+            .unwrap_or_else(|_| panic!("build should succeed"));
+        let reserved_at = LAST_ALLOC_ALIGN.load(Ordering::SeqCst);
+        assert_eq!(
+            reserved_at, 64,
+            "the build reserves the resource's column at cache-line alignment"
+        );
+        assert_eq!(
+            DEALLOCS.load(Ordering::SeqCst),
+            0,
+            "nothing is freed while the scheduler lives"
+        );
+        drop(scheduler);
+        reserved_at
     };
-    // SAFETY: 64 is a power of two and the bump arena covers 4KiB.
-    let ptr = unsafe { provider.allocate(USize(4096), USize(64)) };
-    assert!(!ptr.is_null(), "bump arena refused a 4KiB reservation");
-    // SAFETY: ptr came from the allocate directly above.
-    unsafe { provider.deallocate(ptr, USize(4096), USize(64)) };
 
     assert_eq!(
+        DEALLOCS.load(Ordering::SeqCst),
+        1,
+        "the drop frees the one column"
+    );
+    assert_eq!(
         LAST_DEALLOC_ALIGN.load(Ordering::SeqCst),
-        64,
+        reserved_at,
         "the free saw a different alignment than the reserve used"
     );
 }

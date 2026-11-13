@@ -112,7 +112,7 @@ impl<D: GenerativeDomain<Shape = Standard>> Generator<D> {
     /// range. Going through [`Generator::at`] would force every caller to
     /// handle a refusal that cannot happen. Pinned by
     /// `single_is_total_because_standard_has_one_origin`.
-    pub fn single() -> Self {
+    pub const fn single() -> Self {
         Self {
             next:      Uint::<28, Hot>::from_raw(crate::shape::origin_base::<D::Shape>(OneOrigin)),
             ceiling:   Uint::<28, Hot>::from_raw(crate::shape::origin_ceiling::<D::Shape>(
