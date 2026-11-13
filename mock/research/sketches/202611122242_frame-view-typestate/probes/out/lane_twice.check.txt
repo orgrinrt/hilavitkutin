@@ -1,0 +1,4 @@
+    Checking engine v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611122242_frame-view-typestate/engine)
+    Checking author v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611122242_frame-view-typestate/author)
+    Checking probes v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611122242_frame-view-typestate/probes)
+    Finished `dev` profile [unoptimized] target(s) in 0.11s

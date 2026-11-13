@@ -1,0 +1,8 @@
+[package]
+name = "rg-plumb"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+rg-owed = { workspace = true }

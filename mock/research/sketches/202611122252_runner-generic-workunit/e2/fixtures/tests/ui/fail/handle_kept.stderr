@@ -1,0 +1,11 @@
+error[E0597]: `h` does not live long enough
+  --> tests/ui/fail/handle_kept.rs:27:16
+   |
+26 |         let h = Handle(i);
+   |             - binding `h` declared here
+27 |         kernel(&h, &mut keep);
+   |                ^^ borrowed value does not live long enough
+28 |     }
+   |     - `h` dropped here while still borrowed
+29 |     let _ = keep;
+   |             ---- borrow later used here

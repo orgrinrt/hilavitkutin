@@ -1,0 +1,9 @@
+error[E0499]: cannot borrow `pos` as mutable more than once at a time
+  --> tests/ui/fail/09b_a_staged_handle_is_borrowed_twice.rs:18:21
+   |
+17 |             let a = &mut pos;
+   |                     -------- first mutable borrow occurs here
+18 |             let b = &mut pos;
+   |                     ^^^^^^^^ second mutable borrow occurs here
+19 |             a.set(r, 1);
+   |             - first borrow later used here

@@ -1,0 +1,31 @@
+error[E0080]: evaluation panicked: two kernels of one step declare the same staged lane
+ --> $RUST/core/src/panic.rs
+  |
+  |           $crate::panicking::panic_fmt($crate::const_format_args!($($t)+));
+  |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ evaluation of `engine::Frame::<notko_hlist::Cons<author::Pos, notko_hlist::Cons<author::Vel, notko_hlist::Cons<author::Heat, notko_hlist::Cons<author::Landings, notko_hlist::Empty>>>>, 2>::step2::<engine::Block<Mover>, engine::Value<Other>, notko_hlist::Cons<notko_hlist::Here, notko_hlist::Cons<notko_hlist::There<notko_hlist::Here>, notko_hlist::Empty>>, notko_hlist::Cons<notko_hlist::Here, notko_hlist::Empty>>::{constant#0}` failed here
+  |
+ ::: $WORKSPACE/engine/src/frame.rs
+  |
+  | /             assert!(
+  | |                 A::MASK & B::MASK == 0,
+  | |                 "two kernels of one step declare the same staged lane"
+  | |             );
+  | |_____________- in this macro invocation
+
+note: erroneous constant encountered
+ --> $WORKSPACE/engine/src/frame.rs
+  |
+  | /         const {
+  | |             assert!(
+  | |                 A::MASK.count_ones() == A::LEN,
+  | |                 "a kernel declares one staged lane twice"
+... |
+  | |             );
+  | |         }
+  | |_________^
+
+note: the above error was encountered while instantiating `fn Frame::<Cons<Pos, Cons<Vel, Cons<Heat, Cons<Landings, notko_hlist::Empty>>>>, 2>::step2::<Block<Mover>, Value<Other>, Cons<Here, Cons<There<Here>, notko_hlist::Empty>>, Cons<Here, notko_hlist::Empty>>`
+  --> tests/ui/fail/06_two_kernels_of_one_step_declare_one_staged_lane.rs:29:5
+   |
+29 |     Frame::<World, 2>::new().step2(Block(Mover), Value(Other));
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

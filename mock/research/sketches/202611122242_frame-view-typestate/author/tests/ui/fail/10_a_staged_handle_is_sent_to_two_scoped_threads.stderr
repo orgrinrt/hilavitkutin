@@ -1,0 +1,11 @@
+error[E0382]: use of moved value: `pos`
+  --> tests/ui/fail/10_a_staged_handle_is_sent_to_two_scoped_threads.rs:19:21
+   |
+18 |             s.spawn(move || pos.set(r, 1));
+   |                     ------- --- variable moved due to use in closure
+   |                     |
+   |                     value moved into closure here
+19 |             s.spawn(move || pos.set(r, 2));
+   |                     ^^^^^^^^^^^^^^^^^^^^^ value used here after move
+   |
+   = note: move occurs because `pos` has type `StagedLane<'_, Pos>`, which does not implement the `Copy` trait

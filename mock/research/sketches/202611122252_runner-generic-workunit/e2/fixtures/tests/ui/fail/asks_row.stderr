@@ -1,0 +1,10 @@
+error[E0599]: no method named `row` found for reference `&impl Reads<L>` in the current scope
+  --> tests/ui/fail/asks_row.rs:28:7
+   |
+28 |     r.row()
+   |       ^^^
+   |
+help: there is a method `borrow` with a similar name
+   |
+28 |     r.borrow()
+   |       +++

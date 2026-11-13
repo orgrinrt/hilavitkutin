@@ -1,0 +1,8 @@
+[package]
+name = "engine"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+[dependencies]
+notko-hlist.workspace = true

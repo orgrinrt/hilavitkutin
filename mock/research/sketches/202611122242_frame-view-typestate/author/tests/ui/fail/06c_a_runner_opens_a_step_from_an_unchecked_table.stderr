@@ -1,0 +1,15 @@
+error[E0308]: mismatched types
+ --> tests/ui/fail/06c_a_runner_opens_a_step_from_an_unchecked_table.rs:9:28
+  |
+9 |     let step = store.begin(&[&[pos][..]]);
+  |                      ----- ^^^^^^^^^^^^^ expected `&Checked<i64, _>`, found `&[&[Column<i64>]; 1]`
+  |                      |
+  |                      arguments to this method are incorrect
+  |
+  = note: expected reference `&Checked<i64, _>`
+             found reference `&[&[Column<i64>]; 1]`
+note: method defined here
+ --> $WORKSPACE/engine/src/bound.rs
+  |
+  |     pub fn begin<const K: usize>(&mut self, checked: &Checked<T, K>) -> Step<'_, T, C, N, K> {
+  |            ^^^^^
