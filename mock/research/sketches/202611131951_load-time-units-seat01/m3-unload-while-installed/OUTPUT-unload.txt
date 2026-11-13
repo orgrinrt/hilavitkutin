@@ -1,11 +1,11 @@
 warning: hilavitkutin-ctx@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
 warning: hilavitkutin-api@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
-warning: hilavitkutin-sym@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
 warning: hilavitkutin-kit@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-sym@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
 warning: hilavitkutin-str@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
-warning: hilavitkutin-providers@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
-warning: hilavitkutin@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
 warning: hilavitkutin-linking@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-providers@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
 warning: struct `AdaptArena` is never constructed
   --> /home/user/.worktrees/hv-ltp-seat01r/mock/crates/hilavitkutin/src/adapt/arena.rs:38:19
    |
@@ -57,7 +57,7 @@ warning: path statement with no effect
 
 warning: `hilavitkutin` (lib) generated 7 warnings
    Compiling m3-host v0.0.0 (/home/user/.worktrees/hv-ltp-seat01r/mock/research/sketches/202611131951_load-time-units-seat01/m3-unload-while-installed/host)
-    Finished `test` profile [unoptimized] target(s) in 1.59s
+    Finished `test` profile [unoptimized] target(s) in 1.66s
      Running tests/unload.rs (/home/user/target/debug/deps/unload-87493a5c7c13df36)
 
 running 4 tests
@@ -78,7 +78,7 @@ test every_frame_after_the_drop_is_sound_with_the_occupant_left_installed ... [e
 [every_frame_after_the_drop_is_sound_with_the_occupant_left_installed] M3: frame 4, Column<A> marked dirty: running
 [every_frame_after_the_drop_is_sound_with_the_occupant_left_installed] child exit: code None, signal Some(11)
 
-thread 'every_frame_after_the_drop_is_sound_with_the_occupant_left_installed' (18676) panicked at host/tests/unload.rs:270:5:
+thread 'every_frame_after_the_drop_is_sound_with_the_occupant_left_installed' (16800) panicked at host/tests/unload.rs:293:5:
 a frame after the library was dropped under an installed occupant killed the process (signal Some(11))
 stack backtrace:
    0: __rustc::rust_begin_unwind

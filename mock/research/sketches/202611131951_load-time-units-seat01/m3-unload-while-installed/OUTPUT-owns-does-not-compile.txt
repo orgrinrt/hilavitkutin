@@ -58,15 +58,15 @@ warning: path statement with no effect
 warning: `hilavitkutin` (lib) generated 7 warnings
    Compiling m3-host v0.0.0 (/home/user/.worktrees/hv-ltp-seat01r/mock/research/sketches/202611131951_load-time-units-seat01/m3-unload-while-installed/host)
 error[E0599]: the method `build` exists for struct `SchedulerBuilder<Empty, Cons<Resource<...>, ...>, ..., ..., ...>`, but its trait bounds were not satisfied
-  --> host/tests/owns.rs:53:10
+  --> host/tests/owns.rs:60:10
    |
-41 |   struct OwningOccupant {
+48 |   struct OwningOccupant {
    |   --------------------- doesn't satisfy `OwningOccupant: Copy`
 ...
-51 |       let _s = Scheduler::builder()
+58 |       let _s = Scheduler::builder()
    |  ______________-
-52 | |         .with(Resource::new(occ))
-53 | |         .build(store(ZeroedHeap), USize(0))
+59 | |         .with(Resource::new(occ))
+60 | |         .build(store(ZeroedHeap), USize(0))
    | |         -^^^^^ method cannot be called due to unsatisfied trait bounds
    | |_________|
    |
@@ -79,12 +79,12 @@ error[E0599]: the method `build` exists for struct `SchedulerBuilder<Empty, Cons
    = note: the following trait bounds were not satisfied:
            `OwningOccupant: Copy`
            which is required by `Sv<StagedResource<OwningOccupant>, DefaultStoreValues>: DrainStores`
-   = note: the full name for the type has been written to '/home/user/target/debug/deps/owns-40a5e7218b4e44d9.long-type-14456646199841041714.txt'
+   = note: the full name for the type has been written to '/home/user/target/debug/deps/owns-40a5e7218b4e44d9.long-type-4075208794974508832.txt'
    = note: consider using `--verbose` to print the full type name to the console
 help: consider annotating `OwningOccupant` with `#[derive(Clone, Copy)]`
    |
-41 + #[derive(Clone, Copy)]
-42 | struct OwningOccupant {
+48 + #[derive(Clone, Copy)]
+49 | struct OwningOccupant {
    |
 
 For more information about this error, try `rustc --explain E0599`.
