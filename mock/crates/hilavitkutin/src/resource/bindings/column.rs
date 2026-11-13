@@ -422,28 +422,32 @@ impl<T, Tail, K: ColKind> ColumnBinding<T, Tail, K> {
 }
 
 impl<T: ColumnValue, Tail, K: ColKind> ColumnBinding<T, Tail, K> {
-    /// Write `value` to every record of the frozen and of the live side.
+    /// Write `value` to every record of every reservation behind the store.
     ///
-    /// What the drain of a buffered column does with the start it was
-    /// registered with. Both sides take it: the first pass reads the frozen
-    /// one, and a boundary brings the whole live one in, the records no unit
-    /// wrote in the pass among them.
+    /// What the drain does with the start a column was registered with. A
+    /// plain column has the one reservation. Both sides of a buffered one
+    /// take it: the first pass reads the frozen one, and a boundary brings
+    /// the whole live one in, the records no unit wrote in the pass among
+    /// them.
     pub(super) fn start_from(&self, value: T) {
-        for side in [K::frozen(self.ptr, &self.side), K::live(self.ptr, &self.side)] {
-            // SAFETY: each side is a reservation of `count` records of `T`
-            // the drain just made, and nothing else reaches it before the
-            // drain returns. The records are unwritten, so they are taken as
-            // `MaybeUninit<T>` and nothing is read or dropped. A reservation
-            // of no bytes is a dangling aligned pointer, over which a slice
-            // of no records, or of records of no size, touches no memory.
-            let records = unsafe {
-                core::slice::from_raw_parts_mut(
-                    side.as_ptr().cast::<MaybeUninit<T>>(),
-                    self.count.0,
-                )
-            };
-            records.fill(MaybeUninit::new(value));
+        self.fill(K::frozen(self.ptr, &self.side), value);
+        if K::BUFFERED.0 {
+            self.fill(K::live(self.ptr, &self.side), value);
         }
+    }
+
+    /// Write `value` to every record of the reservation at `side`.
+    fn fill(&self, side: ColumnPtr<T>, value: T) {
+        // SAFETY: `side` is a reservation of `count` records of `T` the drain
+        // just made, and nothing else reaches it before the drain returns.
+        // The records are unwritten, so they are taken as `MaybeUninit<T>`
+        // and nothing is read or dropped. A reservation of no bytes is a
+        // dangling aligned pointer, over which a slice of no records, or of
+        // records of no size, touches no memory.
+        let records = unsafe {
+            core::slice::from_raw_parts_mut(side.as_ptr().cast::<MaybeUninit<T>>(), self.count.0)
+        };
+        records.fill(MaybeUninit::new(value));
     }
 }
 
@@ -454,9 +458,9 @@ pub(super) fn drain_column<T: ColumnValue, K: ColKind, CS: ColumnStorage, Tail>(
     record_count: USize,
     tail: impl FnOnce(&mut CS, &mut USize) -> notko::Outcome<Tail, BuildError>,
 ) -> notko::Outcome<ColumnBinding<T, Tail, K>, BuildError> {
-    // Records are written by producer units during the frame; this reserves
-    // and does not initialise. The drain of a buffered column writes its
-    // start over both sides once this has returned.
+    // This reserves and does not initialise. The drain of a column that was
+    // registered with a start writes it over every reservation once this
+    // has returned.
     let ptr = match reserve_records::<T, CS>(cs, next_id, record_count) {
         notko::Outcome::Ok(ptr) => ptr,
         notko::Outcome::Err(e) => return notko::Outcome::Err(e),

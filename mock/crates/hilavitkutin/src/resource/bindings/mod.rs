@@ -433,16 +433,17 @@ where
         // A column of either kind. A plain one is one reservation of
         // `record_count` records. A buffered one is two of one layout, the
         // live side and the frozen one, at two storage ids one after the
-        // other, and one store in every access mask all the same.
+        // other, and one store in every access mask all the same. Every
+        // record of every reservation holds the value the store was
+        // registered with once the drain returns, so no read of a pass
+        // reaches a record nothing wrote.
         let (carrier, rest) = self.into_parts();
         let start = carrier.into_inner();
         let drained =
             drain_column::<S::Value, S::Kind, CS, _>(cs, next_id, record_count, |cs, next_id| {
                 <L as DrainStores>::drain(rest, cs, next_id, record_count)
             });
-        if <S::Kind as ColKind>::BUFFERED.0
-            && let notko::Outcome::Ok(binding) = &drained
-        {
+        if let notko::Outcome::Ok(binding) = &drained {
             binding.start_from(start);
         }
         drained
