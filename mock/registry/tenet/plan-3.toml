@@ -428,3 +428,37 @@ subject = "plan"
 keywords = ["PlanDims", "AccumsPerCore", "PlanAffecting", "Capacity", "cap lifting", "GATE2_MAX_UNITS", "plan_dirty", "no Caps trait"]
 rules_out = ["adding a separate trait"]
 cites = ["when_the_grouping_scratch_probe_compiles_a_caps_trait_carries_the_unit_accum_and_plan_dirty_capacities_and_every_hardcoded_cap_site_migrates", "caps_are_defaults_and_never_policy_so_a_sketch_arc_looks_for_cap_lifting_shapes_now"]
+
+[[tenet]]
+id = "the_flat_execution_plan_ships_first_and_the_store_backed_plan_stays_the_end_state_as_the_explicit_next_round"
+what = "The flat execution plan ships on its own, as the piece that dissolves the overflow and unblocks a parked task. The store-backed plan stays the end state of the arc, unchanged, and is demoted to the engine backlog as the explicit next round; only the round boundary moves."
+mechanism = "End state: `ExecutionPlan` as a `Copy` handle (meta-`StoreId`s plus counts) with the data in the scheduler-owned `ColumnStorage`, and `Scheduler` gaining `CS: ColumnStorage = ArenaColumnStorage<M, Dim<256>>` with an `unsafe impl Send`/`Sync`; bundled in the deprecated changelist with an engine -> `hilavitkutin-providers` dependency for the default store, a 64-byte-aligned test `MemoryProvider` and the scheduler `Send`/`Sync` lifecycle; the flatten dissolves the 11 MB overflow and unblocks #647; the store-backing prose moves to forward-looking notes pointing at `BACKLOG.md`."
+source = "mock/design_rounds/202605302331/202605302331_changelist.doc.lock.md:15-15"
+provenance = ["mock::design_rounds::202605302331::202605302331_changelist.doc.lock::#comparison-to-deprecated-changelist"]
+quote = '''
+Supersedes `202605302330_changelist.doc.deprecated.md`. That CL framed this round as the full store-backed cut: `ExecutionPlan` becomes a `Copy` handle (meta-`StoreId`s plus counts), the data lives in the scheduler-owned `ColumnStorage`, and the `Scheduler` gains `CS: ColumnStorage = ArenaColumnStorage<M, Dim<256>>` with an `unsafe impl Send`/`Sync`. That shape is correct as the arc's end state, but it bundles the load-bearing flatten with cross-crate plumbing (an engine -> `hilavitkutin-providers` dependency for the default store, a 64-byte-aligned test `MemoryProvider`, the scheduler `Send`/`Sync` lifecycle) into one atomic-compile change. This CL stages the arc: it keeps the same end-state design but ships the flatten alone in this round (the piece that dissolves the 11 MB overflow and unblocks #647), and demotes the store-backing to the engine BACKLOG as the explicit next round. The end state is unchanged; only the round boundary moves. The deprecated CL's `## Store-backed execution plan` DESIGN subsection becomes `## Flat execution plan`; the store-backing prose moves to forward-looking notes pointing at `BACKLOG.md`.
+'''
+origin = "proposed"
+written_by = "doc changelist 202605302331 of 2026-05-30 (round 202605302330 store-backed-plan, slice 1: flatten), locked; agent-written round artifact that does not name the maintainer as its author"
+standing = "provisional"
+subject = "plan"
+keywords = ["flat execution plan", "store-backed plan", "round boundary", "ColumnStorage", "ExecutionPlan Copy handle", "11 MB overflow", "staging", "backlog"]
+rules_out = ["the full store-backed cut"]
+cites = ["the_plan_is_a_flat_csr_style_tree_of_phases_trunks_and_fibers_sized_by_the_plan_dimensions"]
+
+[[tenet]]
+id = "the_accumulator_store_set_is_produced_at_the_store_drain_as_a_flat_bitmask_and_a_fiber_is_morsel_local_when_no_unit_in_it_writes_an_accumulator"
+what = "A fiber is morsel-local exactly when no unit in it writes an accumulator. The set of accumulator stores is produced at the store drain, where the accumulator stores are visible as distinct type-level facts, as a small flat bitmask shaped over the drain's stores, with no allocation and no new trait machinery beyond the existing const-fold pattern."
+mechanism = "`resource/bindings.rs`, where `Sv<Accum<T>, _>` nodes are visible as distinct type-level facts, the same layer `AccumFreeBindings` folds; a `Mask`-shaped bitmask over `D::Stores`; fibers are formed plan-side from store access masks that do not distinguish accumulator stores, while the accumulator distinction is type-level (`AccumBinding`)."
+source = "mock/design_rounds/202606051500/202606051500_changelist.doc.lock.md:11-11, mock/design_rounds/202606051500/202606051500_changelist.doc.lock.md:13-13"
+provenance = ["mock::design_rounds::202606051500::202606051500_changelist.doc.lock::#resolved-design-architect-read-agent-a8dcb4c5"]
+quote = '''
+The fork was the per-fiber morsel-local signal: a fiber is morsel-local iff no unit in it writes an accumulator, but fibers are formed plan-side from store access masks that do not distinguish accumulator stores, while the accumulator distinction is type-level (`AccumBinding`). The read resolved it to **Shape A with the drain as the production site**:
+---
+- The accumulator-`StoreId` set is produced at the store drain (`resource/bindings.rs`, where `Sv<Accum<T>, _>` nodes are visible as distinct type-level facts, the same layer `AccumFreeBindings` folds) as a small flat bitmask (`Mask`-shaped over `D::Stores`), no alloc, no new trait machinery beyond the existing const-fold pattern.
+'''
+origin = "proposed"
+written_by = "doc changelist of round 202606051500 (fiber-structured morsel-outer dispatch), 2026-06-05, locked; agent-written round artifact recording an architect read, which does not name the maintainer as its author"
+standing = "provisional"
+subject = "plan"
+keywords = ["morsel-local", "accumulator store set", "store drain", "AccumBinding", "flat bitmask", "fiber formation", "Shape A"]

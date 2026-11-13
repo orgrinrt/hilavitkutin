@@ -203,3 +203,108 @@ subject = "stores"
 keywords = ["ColumnValue", "BIT_WIDTH", "blanket impl", "specialization", "sub-byte width", "bitpacking", "arvo width traits", "default const"]
 rules_out = ["`default const`", "full `specialization`", "sub-byte width specialisations", "per-arvo-width `min_specialization` coverage inside `ColumnValue`"]
 cites = ["a_column_value_is_the_storage_type_itself_and_there_is_no_pack_or_unpack"]
+
+[[tenet]]
+id = "a_resource_contributes_its_footprint_to_the_per_store_size_fold_through_a_footprint_trait_its_value_type_implements_and_not_through_the_column_value_bound"
+what = "A resource contributes its footprint to the per-store size fold through a footprint trait that its value type implements, which holds whatever the value type's copy-ability or size. The fold then resolves for a resource value type holding sequence or map fields, a provider struct, or any non-Copy or over-sixteen-byte value. A column keeps the column-value bound, because column records are column values."
+because = "Bounding the resource on the column-value trait and using its plain size does not resolve for a value type that is not a column value, so the earlier bound made the fold fail for such a resource."
+mechanism = "`Resource<T>` re-bounded on `ResourceFootprint` (const `L1_BYTES`), where A3a bounded `Resource<T>` on `T: ColumnValue` and used `size_of::<T>()`; `Column<T>` keeps the `ColumnValue` bound."
+source = "mock/research/sketches/202606210100_a3-resource-footprint/FINDINGS.md:59-59, mock/research/sketches/202606210100_a3-resource-footprint/FINDINGS.md:96-102"
+provenance = ["mock::research::sketches::202606210100_a3-resource-footprint::FINDINGS::#claim-2-per-resource-type-footprint-trait-hand-written"]
+quote = '''
+A `ResourceFootprint { const L1_BYTES: USize }` trait the value type implements. The
+---
+- **The A3a ColumnValue-bound coherence issue is real and this fixes it.** A3a bounded
+  `Resource<T>` on `T: ColumnValue` and used `size_of::<T>()`. A resource value type
+  holding `Seq`/`Map` fields, a provider struct, or any non-Copy / >16B value is NOT
+  `ColumnValue`, so A3a's `impl ... for Resource<T: ColumnValue>` would not resolve for
+  such a `Resource` in the fold. Re-bounding `Resource<T>` on `ResourceFootprint` (which
+  the value type implements regardless of Copy/size) removes the wall. `Column<T>` keeps
+  the `ColumnValue` bound (column records ARE ColumnValue).
+'''
+origin = "proposed"
+written_by = "sketch A3-2 findings of 2026-06-21 (type-level L1-morsel write-collection footprint of Resource<T>), outcome WORKS; agent-written"
+standing = "provisional"
+subject = "stores"
+keywords = ["ResourceFootprint", "ColumnValue", "A3a", "per-store size fold", "StoreElemBytes", "coherence", "Resource<T>", "L1 footprint"]
+rules_out = ["A3a bounded `Resource<T>` on `T: ColumnValue` and used `size_of::<T>()`"]
+cites = ["a_resource_and_a_staged_resource_contribute_their_declared_footprint_to_the_morsel_budget_and_an_accumulator_contributes_zero"]
+
+[[tenet]]
+id = "as_of_2026_06_20_the_access_mask_backs_its_bits_in_one_machine_word_so_the_skeleton_caps_the_stores_at_64_until_the_multi_container_bitmask_swap"
+what = "As of 2026-06-20, the A3 sketch records that the access mask backs its bits in one machine word, so the skeleton caps the stores at 64. The per-store size array and the sum walk share that ceiling until the multi-container bitmask swap lands, and the cap is not specific to the per-store size collection."
+mechanism = "`AccessMask` backed by one `USize` word, `StoreCeiling::ASSERT_FITS`, cap 64, a `< 64` ceiling; the arvo-bitmask multi-container swap."
+source = "mock/research/sketches/202606202400_a3-per-store-size-collection/FINDINGS.md:106-108"
+provenance = ["mock::research::sketches::202606202400_a3-per-store-size-collection::FINDINGS::#hard-sub-problems-surfaced"]
+quote = '''
+3. 64-store skeleton cap: `AccessMask` backs bits in one `USize` word
+   (`StoreCeiling::ASSERT_FITS`, cap 64); the size array and the sum walk share that
+   `< 64` ceiling until the arvo-bitmask multi-container swap lands. Not A3-specific.
+'''
+origin = "proposed"
+written_by = "sketch A3 findings of 2026-06-20 (per-store size collection and per-fiber write-byte sum), hard sub-problem 3, agent-written; describes the skeleton as built"
+standing = "provisional"
+subject = "stores"
+keywords = ["AccessMask", "64-store cap", "StoreCeiling", "ASSERT_FITS", "arvo-bitmask", "multi-container", "skeleton cap", "per-store size array"]
+cites = ["the_access_mask_is_a_bitmask_so_every_scheduler_operation_is_a_single_bitwise_instruction"]
+
+[[tenet]]
+id = "the_write_list_mask_assertion_is_evaluated_during_monomorphisation_so_a_check_only_gate_does_not_see_a_kernel_naming_a_lane_twice"
+what = "The write-list mask assertion of the frame view is evaluated during monomorphisation, so a check does not report it and only a build does. A gate that only checks does not see a kernel naming a lane twice, and the fixtures hold because they are built."
+mechanism = "E0080 \"evaluation panicked\" from the inline `const` block; `probes/lane_twice.rs`: `cargo check --bin lane_twice` passes (`probes/out/lane_twice.check.txt`) and `cargo build --bin lane_twice` fails (`probes/out/lane_twice.build.txt`); trybuild builds its fixtures, so fixtures 05 and 06 hold under it."
+source = "mock/research/sketches/202611122242_frame-view-typestate/FINDINGS.md:23-23, mock/research/sketches/202611122242_frame-view-typestate/FINDINGS.md:36-37, mock/research/sketches/202611122242_frame-view-typestate/FINDINGS.md:70-70"
+provenance = ["mock::research::sketches::202611122242_frame-view-typestate::FINDINGS::#the-shape"]
+quote = '''
+The position mask: each lane's place in the registry is found by the solver (`Pick<X, P>` on a list tagged by lane, `P` inferred as `Here` or `There<..>`), read back as a count through `notko_hlist::Position<Slot>::INDEX`, and folded into `Stage::MASK: u128`, with `Stage::LEN` the list's length. The runner asserts `MASK.count_ones() == LEN` per kernel, and `A::MASK & B::MASK == 0` for two kernels of one step, in an inline `const` block in `Frame::step` and `Frame::step2`.
+---
+| 05 one kernel declares one staged lane twice | block | `error[E0080]: evaluation panicked: a kernel declares one staged lane twice` | none given |
+| 06 two kernels of one step declare one staged lane | block and value | `error[E0080]: evaluation panicked: two kernels of one step declare the same staged lane` | none given |
+---
+The mask assertion is evaluated during monomorphisation. `cargo check` does not report it. `probes/lane_twice.rs` is fixture 05's failing file as a binary: `cargo check --bin lane_twice` passes (`probes/out/lane_twice.check.txt`), and `cargo build --bin lane_twice` fails with the E0080 above (`probes/out/lane_twice.build.txt`). trybuild builds its fixtures, so 05 and 06 hold under it. A gate that only checks does not see a kernel naming a lane twice.
+'''
+origin = "proposed"
+written_by = "sketch S3 findings of 2026-11-12 and 2026-11-13 (the frame view and the two kernel regimes as types, job hv-sketch-frame-view, step HV3), agent-written"
+standing = "provisional"
+subject = "stores"
+keywords = ["monomorphisation-time check", "cargo check", "cargo build", "E0080", "const assertion", "trybuild", "lane twice", "frame view"]
+cites = ["in_the_frame_view_sketch_a_step_kernel_reads_the_committed_frame_through_a_view_and_writes_through_staged_handles"]
+
+[[tenet]]
+id = "in_the_frame_view_sketch_the_position_mask_is_a_u128_and_a_registry_of_128_lanes_needs_a_recursion_limit_over_256_in_the_instantiating_crate"
+what = "In the frame view sketch the position mask has no bit past 128, and a larger registry was not probed. At 128 lanes the registry walk runs nested in the write-list walk, so the depth is about the sum of the two, and the crate that instantiates the kernel needs a recursion limit over 256, set as an attribute and not a feature line."
+mechanism = "`Stage::MASK: u128`; `Pick` (one step per lane) nested in `Stage` (one step per member); at limit 256 the solver stops with `error[E0275]` (`probes/limit_256.rs`); a limit of 300 holds (`lengths_128.rs`); the test file's own `list!` macro needs a raised limit at 128 for the macro's recursion; lengths 8 and 32 evaluate under the default limit of 128."
+source = "mock/research/sketches/202611122242_frame-view-typestate/FINDINGS.md:23-23, mock/research/sketches/202611122242_frame-view-typestate/FINDINGS.md:62-68"
+provenance = ["mock::research::sketches::202611122242_frame-view-typestate::FINDINGS::#the-shape"]
+quote = '''
+The position mask: each lane's place in the registry is found by the solver (`Pick<X, P>` on a list tagged by lane, `P` inferred as `Here` or `There<..>`), read back as a count through `notko_hlist::Position<Slot>::INDEX`, and folded into `Stage::MASK: u128`, with `Stage::LEN` the list's length. The runner asserts `MASK.count_ones() == LEN` per kernel, and `A::MASK & B::MASK == 0` for two kernels of one step, in an inline `const` block in `Frame::step` and `Frame::step2`.
+---
+| Length | Evaluates | Recursion limit the instantiating crate needs |
+|---|---|---|
+| 8 | yes | default (128) |
+| 32 | yes | default (128) |
+| 128 | yes | over 256: at 256 the solver stops with `error[E0275]: overflow evaluating the requirement `(Tag<common::L127, *mut [i32]>, ()): Pick<..., ...>`` (`probes/limit_256.rs`, output in `probes/out/limit_256.check.txt`); 300 holds (`lengths_128.rs`) |
+
+At 128 the registry walk (`Pick`, one step per lane) runs nested in the write-list walk (`Stage`, one step per member), so the depth is about the sum of the two. The limit is an attribute in the crate that instantiates the kernel, the author's crate, though not a feature line. The test file's own `list!` macro needs a raised limit at 128 as well, for the macro's recursion. The `u128` mask has no bit past 128; a larger registry was not probed.
+'''
+origin = "proposed"
+written_by = "sketch S3 findings of 2026-11-12 and 2026-11-13 (the frame view and the two kernel regimes as types), agent-written"
+standing = "provisional"
+subject = "stores"
+keywords = ["position mask", "u128", "128 lanes", "recursion limit", "E0275", "Pick", "Stage", "registry length"]
+cites = ["as_of_2026_06_20_the_access_mask_backs_its_bits_in_one_machine_word_so_the_skeleton_caps_the_stores_at_64_until_the_multi_container_bitmask_swap"]
+
+[[tenet]]
+id = "the_two_writers_refusal_rests_on_the_data_bound_form_because_columns_bound_from_data_have_no_list_for_a_type_level_mask_to_fold"
+what = "The contract on two writers of one column can rest on the data-bound form. Under the plan's default the stored columns are bound from data, so the type-level mask has no list to fold for them and holds only where a list is fixed in the engine's types. The data-bound form is also safe without the check, since the split hands each staged column to at most one kernel and a second claimant would get nothing rather than an alias. What the check adds is that the second writer is refused at bind, by name, and not found at the step. The price is that the refusals the typed form makes at compile time become values."
+mechanism = "A second writer is refused at bind, a write to an undeclared column at the write, and a column past capacity at bind, as values; only the value-type confusion (fixture 11) and the bypasses of the check (06c, 06d) stay compile errors; call 7's default binds stored columns from data; fixtures 05 and 06 are the type-level form."
+source = "mock/research/sketches/202611122242_frame-view-typestate/FINDINGS.md:91-91"
+provenance = ["mock::research::sketches::202611122242_frame-view-typestate::FINDINGS::#the-data-bound-twin-of-05-and-06"]
+quote = '''
+Which of the two the contract can rest on: the data-bound form. Under call 7's default the stored columns are bound from data, so the type-level mask of 05 and 06 has no list to fold for them, and holds only where a list is fixed in the engine's types. The data-bound form is also safe without the check. The split hands each staged column to at most one kernel, so a second claimant would get nothing rather than an alias. What the check adds is that the second writer is refused at bind, by name, instead of finding at the step that its writes are refused. The price is that the three refusals the typed form makes at compile time become values. A second writer is refused at bind, a write to an undeclared column at the write, and a column past capacity at bind. Only the value-type confusion (11) and the bypasses of the check (06c, 06d) stay compile errors.
+'''
+origin = "proposed"
+written_by = "sketch S3 findings of 2026-11-12 and 2026-11-13 (the frame view and the two kernel regimes as types), section on which form the contract can rest on; agent-written"
+standing = "provisional"
+subject = "stores"
+keywords = ["data-bound form", "type-level mask", "second writer", "refused at bind", "Checked table", "undeclared column", "staged columns", "call 7"]
+cites = ["in_the_frame_view_sketch_a_step_kernel_reads_the_committed_frame_through_a_view_and_writes_through_staged_handles"]

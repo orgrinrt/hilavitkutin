@@ -168,3 +168,38 @@ standing = "provisional"
 subject = "memory"
 keywords = ["os tier", "mmap", "clock_gettime", "MemoryProvider", "Clock", "pointer-sized closure", "ThreadPoolApi", "no pthreads"]
 cites = ["op_ruled_that_the_consumer_supplies_the_os_thread_executor_and_the_engine_ships_only_the_executor_contract", "the_os_and_std_tiers_are_mutually_exclusive_and_the_os_tier_gets_the_optimisation_investment"]
+
+[[tenet]]
+id = "column_buffers_are_sized_by_the_per_run_record_count_and_belong_to_the_run_loop_and_not_to_build"
+what = "Resource buffers are sized once at build, as a singleton for the scheduler's lifetime. Column buffers are sized by the record count, which varies per run, so columns are not allocated at build: they belong to the run loop and plan phase, where the per-frame record count is known, and there is no standalone round for columns at build."
+mechanism = "Resource buffers sized once at `build()` (shipped in B2a); the per-frame `record_count` arrives via `RunCfg: HasRecordCount`; B3's column accessors operate on the per-frame column buffers passed into the Context at construction."
+source = "mock/research/sketches/202605290101_ctx-projection-selector.md:57-59"
+provenance = ["mock::research::sketches::202605290101_ctx-projection-selector::#columns-lifetime-reframing-corrects-the-earlier-b2b-at-build-framing"]
+quote = '''
+## Columns lifetime reframing (corrects the earlier "B2b at build()" framing)
+
+Resource buffers are sized once at `build()` (singleton, scheduler lifetime; shipped in B2a). Column buffers are sized by `record_count`, which varies per run (a real pipeline lints N files where N changes per invocation), so columns are NOT allocated at `build()`; they belong to the run-loop / plan phase (C/E) where the per-frame `record_count` (via `RunCfg: HasRecordCount`) is known. There is no standalone "B2b columns at build()" round; column buffer allocation folds into the run-loop. B3's column accessors operate on the per-frame column buffers passed into the Context at construction. B3 is testable now with hand-provided column buffers, independent of the run-loop.
+'''
+origin = "proposed"
+written_by = "sketch ctx-projection-selector (per-WU Context via Selector and Project index witnesses), dated only by its filename 202605290101 as 2026-05-29, reframing the earlier \"B2b at build()\" claim; agent-written"
+standing = "provisional"
+subject = "memory"
+keywords = ["column buffers", "record_count", "build()", "run loop", "resource buffers", "B2b", "per-frame allocation", "HasRecordCount"]
+rules_out = ["B2b columns at build()", "the earlier \"B2b at build()\" framing"]
+cites = ["the_engine_does_not_load_data_and_does_not_know_record_counts_ahead"]
+
+[[tenet]]
+id = "columns_reserve_at_build_to_capacity_with_a_stable_pointer_and_the_per_frame_record_count_is_a_metadata_field"
+what = "Columns reserve at build to capacity, with a stable pointer for the scheduler's lifetime, and the per-frame live record count is a metadata field, with no per-frame allocation. The text records this as a separate decision on reservation timing."
+mechanism = "\"Timing X\"; the `ColumnBinding` Column drain arm stops recording a dangling placeholder and records the real `column_ptr_mut` after a `reserve` sized by the record count."
+source = "mock/research/sketches/202606041631_column-source-dual-selector/FINDINGS.md:36-36"
+provenance = ["mock::research::sketches::202606041631_column-source-dual-selector::FINDINGS::#what-this-unblocks"]
+quote = '''
+Reservation timing (Timing X, separate decision): columns reserve at `build()` to capacity, stable pointer for the scheduler lifetime; per-frame live record count is a metadata field, no per-frame allocation. The `ColumnBinding` Column drain arm stops recording a dangling placeholder and records the real `column_ptr_mut` after a `reserve` sized by the record count.
+'''
+origin = "proposed"
+written_by = "sketch findings column-source-dual-selector of 2026-06-04 (round column-data-plane, unified bindings as resource and column source, Shape A), verdict WORKS; agent-written"
+standing = "provisional"
+subject = "memory"
+keywords = ["reservation timing", "Timing X", "reserve at build", "stable pointer", "column_ptr_mut", "record count metadata", "ColumnBinding", "per-frame allocation"]
+cites = ["an_accumulator_append_saturates_at_the_reserved_capacity_which_equals_the_record_count_at_build"]

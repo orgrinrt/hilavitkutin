@@ -1,0 +1,48 @@
+# What the record says about `kits`, part 3.
+
+[[tenet]]
+id = "compile_time_detection_of_a_duplicate_marker_registration_cannot_be_encoded_under_the_workspace_constraints_and_the_first_wins_fallback_promise_is_unsubstantiated"
+what = "A compile-time error on registering a marker twice cannot be delivered with the sketched non-membership encoding under the workspace's constraints, and the negative-impl path is dead. The earlier promise of a compile-time error preferred with a runtime first-wins fallback is unsubstantiated, and the fallback's semantics were left vague. The proposal must commit to one of four directions, which is a decision point for the user."
+because = "Rust has no predicate that one type is not another at the type level, so the positive blanket admits the case where the two types are equal and conflicts with the negative implementation. Every escape needs unstable specialisation, which the workspace forbids, or a type-inequality witness equivalent to `TypeId`, which it forbids as well."
+mechanism = "E0751 with and without `feature(with_negative_coherence)`; the proposal's \"engine-side check on Stores cons-list at runtime\" is wrong because Stores is a type and not a runtime value."
+source = "mock/research/sketches/registrable-not-in-202605051200/FINDINGS.md:26-26, mock/research/sketches/registrable-not-in-202605051200/FINDINGS.md:36-48, mock/research/sketches/registrable-not-in-202605051200/FINDINGS.md:52-52, mock/research/sketches/registrable-not-in-202605051200/FINDINGS.md:54-66"
+provenance = ["mock::research::sketches::registrable-not-in-202605051200::FINDINGS::#observed-result"]
+quote = '''
+error[E0751]: found both positive and negative implementation of trait `NotIn<_>` for type `(_, _)`:
+---
+Tested on rustc nightly. Same failure with and without `feature(with_negative_coherence)` enabled. The positive blanket's universally-quantified `K` includes the case `K = H`, which conflicts with the negative impl regardless of which negative-coherence feature is active.
+
+## Why it fails
+
+Rust does not have a "K is not H" predicate at the type level. The positive blanket `impl<H, K, R> NotIn<H> for (K, R)` admits ALL K including K = H. The negative impl `impl<H, R> !NotIn<H> for (H, R)` is correct semantically (the case K = H), but the trait coherence checker sees both impls applying when the substitution `K = H` happens, and rejects.
+
+The encoding would require either:
+
+a) **Subtractive blanket** with an explicit "K not equal H" bound — Rust doesn't have it.
+b) **Specialisation** with `default impl` on the blanket and override on `(H, R)` — `feature(specialization)` is much more unstable than `negative_impls` and the workspace forbids unstable specialisation.
+c) **An auxiliary `TypeNeq<A, B>` witness trait** — equivalent to `TypeId` semantically; workspace forbids `TypeId`.
+
+No viable encoding survives the workspace's nightly-feature constraints.
+---
+The third revision's "compile-time error preferred; runtime first-wins fallback" is an unsubstantiated promise. Compile-time error via `NotIn<H>` cannot be delivered with the sketched encoding under workspace constraints. The "fallback" was named but its semantics were left vague (the proposal said "engine-side check on Stores cons-list at runtime", which is wrong: Stores is a type, not a runtime value).
+---
+## Path forward (recommendations for round 4)
+
+The proposal must commit to ONE of:
+
+1. **Silent shadowing, Bevy-style.** Accept that two `Resource<Foo>` entries in `Stores` cons-list are tolerated; `Contains<Resource<Foo>>` proofs match the first occurrence; consumer is responsible for not creating diamonds. Document loudly. Add `#[diagnostic::on_unimplemented]` hint when consumers hit the related "Resource registered twice but only first is read" debugging surface.
+
+2. **Runtime panic at engine `.resource(t)`.** Engine maintains a runtime registry of registered marker TypeId-equivalents (without using `TypeId`; possibly via `core::any::type_name::<T>()` string equality, or a sealed enum-of-markers pattern). Detect duplicate at registration call; panic. Costs one runtime check per registration; trade for explicit failure mode.
+
+3. **`.replace::<M>(value)` explicit operator** on the builder + silent-shadow as default. Consumer writing `.with(MyResource).with(MyResource)` shadows; consumer writing `.replace::<Resource<Foo>>(new)` explicitly overwrites. The `.replace` operator gates on `Stores: Contains<M>` (must already be present). This is the cleanest design and matches Bevy's `init_resource` vs `insert_resource` distinction.
+
+4. **Drop diamond detection entirely** for v0; track as a future follow-up when `feature(negative_impls)` matures or a new approach surfaces.
+
+The sketch's negative-impl path is dead. Decision point for the user.
+'''
+origin = "proposed"
+written_by = "sketch findings NotIn<H> compile-time diamond detection of 2026-05-05 (round 202605042200), outcome FAILS; agent-written"
+standing = "provisional"
+subject = "kits"
+keywords = ["NotIn", "negative_impls", "E0751", "first-wins fallback", "duplicate registration", "specialisation forbidden", "TypeId forbidden", "decision point"]
+cites = ["the_proposal_committed_to_a_compile_time_error_on_duplicate_marker_registration_through_a_non_membership_bound_at_the_leaf_registrable_impl", "the_kit_trait_carries_no_required_member_because_the_type_level_set_difference_hits_the_coherence_wall_and_requirements_live_in_prose"]

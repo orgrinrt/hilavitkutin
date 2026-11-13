@@ -239,3 +239,220 @@ standing = "provisional"
 subject = "kits"
 keywords = ["BuilderInput", "StagedResource", "into_inner", "Stage<P, Staged>", "no method added", "24 impl sites", "B2 arena"]
 cites = ["the_builder_retains_each_registered_value_in_a_sealed_value_carrying_list_beside_the_type_level_store_list"]
+
+[[tenet]]
+id = "the_scheduler_builder_keeps_one_unified_verb_for_registering_values_and_the_split_into_with_and_store_methods_is_rejected"
+what = "The scheduler builder keeps its single unified verb for registering values, with store values routed from other values at the type level. The architect's recommended split into separate methods for general values and for stores, with its fifth builder parameter, is rejected."
+mechanism = "Router kind tags on each dispatch router (`StoreDispatch`, `UnitDispatch`, `PlatformDispatch`) with a `Place<P>` GAT keyed on the tag; the store-value list is aligned with `Stores`, so the value drain walks both in lockstep with no search."
+source = "mock/research/sketches/202605290002_builder-kind-dispatch.md:3-3, mock/research/sketches/202605290002_builder-kind-dispatch.md:7-7, mock/research/sketches/202605290002_builder-kind-dispatch.md:15-15"
+provenance = ["mock::research::sketches::202605290002_builder-kind-dispatch::#sketch-single-with-store-value-routing-via-routerkind-dispatch"]
+quote = '''
+**Hypothesis:** the scheduler builder can keep its single unified `.with(value)` verb (per `DESIGN.md`) while retaining ONLY store-registration values on a `Stores`-aligned value list, routing store-vs-nonstore at the type level without the overlapping-impl / coherence error that a heterogeneous-list search (`FindCarrier`) hits, and without specialization, on stable `no_std` Rust.
+---
+This unblocks B2: it lets the value drain walk a `Stores`-aligned store-value list in lockstep (no search), so the arena build is coherence-clean. It also means the architect's recommended `.with`/`.store` method split (and its fifth builder parameter justification) is rejected: the unified verb survives.
+---
+Each `Dispatch` router carries an associated kind tag; the kind-conditional next-list computation lives on a `Place<P>` GAT keyed on the tag as `Self` (three disjoint `Self` types, so coherence sees no overlap). The builder's single `.with` return type projects through it.
+'''
+origin = "proposed"
+written_by = "sketch builder-kind-dispatch of 2026-05-29 (single-with store-value routing via RouterKind dispatch), outcome WORKS; agent-written"
+standing = "provisional"
+subject = "kits"
+keywords = ["unified with verb", "RouterKind", "with and store split", "builder", "store-value list", "Place GAT", "B2"]
+rules_out = ["the architect's recommended `.with`/`.store` method split (and its fifth builder parameter justification)"]
+
+[[tenet]]
+id = "a_resource_column_or_virtual_is_registered_through_the_one_with_verb_by_constructing_its_library_wrapper_at_the_call_site"
+what = "A resource, a column and a virtual are registered through the one with verb by constructing a library wrapper at the call site, with one value form per kind."
+mechanism = "`.with(Resource::new(GameState::default()))`, `.with(Column::<Player>::new())`, `.with(Virtual::<Tick>::new())`, `.with(LinkedBin::<dyn LinterApi>::new())`; `.with(MyMemory::new(arena))`, `.with(InputKit)`, `.with(SpawnerWu)` for providers, kits and units; `pub const trait Marker: Provider<Init = ()>`."
+source = "mock/research/sketches/202605091700-builder-provider-shape/OUTCOME.md:21-24, mock/research/sketches/202605091700-builder-provider-shape/OUTCOME.md:27-43"
+provenance = ["mock::research::sketches::202605091700-builder-provider-shape::OUTCOME::#what-the-sketch-proves"]
+quote = '''
+3. **`pub const trait Marker: Provider<Init = ()>`** with `fn new() -> Self`
+   compiles with the `pub const trait` keyword form. Library-side
+   wrappers (`Column<T>`, `Virtual<T>`, `LinkedBin<T: ?Sized>`) impl
+   `Marker` to surface a `const fn new()` for call-site uniformity.
+---
+5. **End-to-end ergonomics matches the design.** Call site reads as
+   ten lines of `.with(value)`, value-form per kind:
+
+   ```rust
+   SchedulerBuilder::new()
+       .with(MyMemory::new(arena))
+       .with(MyThreadPool::new(8))
+       .with(MyClock)
+       .with(Resource::new(GameState::default()))
+       .with(Column::<Player>::new())
+       .with(Virtual::<Tick>::new())
+       .with(LinkedBin::<dyn LinterApi>::new())
+       .with(InputKit)
+       .with(SpawnerWu)
+       .with(PhysicsWu)
+       .build();
+   ```
+'''
+origin = "proposed"
+written_by = "sketch outcome builder-provider-shape (status WORKS), dated only by its directory name 202605091700; agent-written"
+standing = "provisional"
+subject = "kits"
+keywords = ["with verb", "library wrapper", "Resource::new", "Column::new", "LinkedBin", "call site", "provider shape", "value form per kind"]
+
+[[tenet]]
+id = "for_the_sized_cases_a_consumer_type_implements_the_builder_input_trait_and_one_sub_trait_directly_and_is_registered_bare"
+what = "The reshape eliminates the library wrapper structs for the sized cases: a consumer type implements the builder-input trait plus one sub-trait directly and is registered bare through the one with verb. A trait object still needs a wrapper because it is unsized, and it arrives through a separate extend method."
+mechanism = "`BuilderInput` plus one sub-trait (`Resource`, `Column`, `Virtual`, `WorkUnit`, `Kit`, `MemoryProvider`, `ThreadPool`, `Clock`) with the supertrait bound `BuilderInput<Dispatch = ...Dispatch<Self>>`; `.with(state)`, `.with(player_default)`, `.with(Tick)`, `.with(SpawnerWu)`, `.with(InputKit)`, `.with(MyClock)` all work bare; `ExtensionSurface<T: ?Sized>` via a separate `.extend::<dyn Trait>()` builder method."
+source = "mock/research/sketches/202605101036-builder-input-reshape/HYPOTHESIS.md:5-5, mock/research/sketches/202605101036-builder-input-reshape/HYPOTHESIS.md:9-11, mock/research/sketches/202605101036-builder-input-reshape/HYPOTHESIS.md:13-13"
+provenance = ["mock::research::sketches::202605101036-builder-input-reshape::HYPOTHESIS::#builderinput-trait-reshape"]
+quote = '''
+**Topic:** Validate that `Provider` renamed to `BuilderInput` with `type Init = Self` (assoc-type default) and `type Dispatch`, plus sub-traits (`Resource`, `Column`, `Virtual`, `WorkUnit`, `Kit`, `MemoryProvider`, `ThreadPool`, `Clock`) supertrait-bound on `BuilderInput<Dispatch = ...Dispatch<Self>>`, compiles cleanly under nightly with `feature(associated_type_defaults, min_specialization, marker_trait_attr)`.
+---
+The 202605091700 sketch validated `.with(value)` plus three router structs (`UnitDispatch`, `StoreDispatch`, `PlatDispatch`) and library-side wrapper types (`Resource<T>`, `Column<T>`, `Virtual<T>`, `LinkedBin<T>`). Consumers had to construct the wrapper at the call site (`.with(Resource::new(state))`, `.with(Column::<Player>::new())`).
+
+This reshape eliminates the wrapper structs for the sized cases. Consumer types implement `BuilderInput` plus one sub-trait directly. `.with(state)`, `.with(player_default)`, `.with(Tick)`, `.with(SpawnerWu)`, `.with(InputKit)`, `.with(MyClock)` all work bare. `dyn Trait` still needs a wrapper (`ExtensionSurface<T: ?Sized>`) because `dyn` is unsized; that arrives via a separate `.extend::<dyn Trait>()` builder method.
+---
+The supertrait bound (`Resource: BuilderInput<Dispatch = StoreDispatch<Self>>`) is the safety net: if a consumer impls `Resource` but their `BuilderInput::Dispatch` is `UnitDispatch<Self>`, the impl fails at trait-resolution time with the supertrait equality constraint unsatisfied.
+'''
+origin = "proposed"
+written_by = "hypothesis file of sketch 202605101036-builder-input-reshape, dated 2026-05-10 (round 202605101036); agent-written, and the reshape is stated there as the hypothesis the sketch validates"
+standing = "provisional"
+subject = "kits"
+keywords = ["BuilderInput", "bare registration", "wrapper structs", "ExtensionSurface", "extend", "sub-trait", "dyn trait", "sized cases"]
+rules_out = ["Consumers had to construct the wrapper at the call site (`.with(Resource::new(state))`, `.with(Column::<Player>::new())`)"]
+cites = ["a_resource_column_or_virtual_is_registered_through_the_one_with_verb_by_constructing_its_library_wrapper_at_the_call_site"]
+
+[[tenet]]
+id = "the_builder_carries_the_registered_units_and_one_unified_stores_list_and_not_four_slots_for_units_resources_columns_and_providers"
+what = "The scheduler builder has two type slots, the registered units and one unified stores list, and not four. The resource, column and virtual distinction is encoded in the marker types themselves and the list just holds them all, so every concern the four-slot version was meant to address, kind safety and kit projections, collapses into membership in the one stores list. A kit's accessor projection is just additional resource registrations that the unit's context bound already references, so no separate providers slot is needed."
+because = "Splitting resources from columns at the type level requires per-member filtering of the unit's mixed read and write tuple, and the existing access-set design in the api does not split by store kind, so the four-slot sketch did not compile."
+mechanism = "`SchedulerBuilder<Wus, Stores>` replacing `SchedulerBuilder<Wus, Resources, Columns, Providers>`; `Read` is `(Resource<X>, Column<Y>, Virtual<Z>)` mixed; the DOC changelist writes against two slots."
+source = "mock/research/sketches/app-builder-typestate-202605010900/FINDINGS.md:133-143"
+provenance = ["mock::research::sketches::app-builder-typestate-202605010900::FINDINGS::#what-changed-from-the-topic-file"]
+quote = '''
+One subtle correction:
+
+**Builder shape is `SchedulerBuilder<Wus, Stores>`, not `SchedulerBuilder<Wus, Resources, Columns, Providers>` as the topic file initially sketched.**
+
+The topic file mentioned "four tail type parameters carrying phantom tuples: registered WU types, registered Resource value types, registered Column value types, registered accessor-projection markers from Kits". The first sketch implemented exactly that. It didn't compile, because splitting Resources from Columns at the type level requires per-member filtering of the WU's mixed Read/Write tuple. Plus the existing `AccessSet` design in `hilavitkutin-api` does not split by store kind (Read is `(Resource<X>, Column<Y>, Virtual<Z>)` mixed).
+
+Single unified `Stores` slot matches the api shape exactly. Resource / Column / Virtual distinction is encoded in the marker types themselves; the registry just holds them all. Every concern the four-slot version was meant to address (kind safety, Kit projections) collapses into membership in the single `Stores` tuple.
+
+The "Providers" slot from the topic file becomes unnecessary too: a Kit's "accessor projection" is just additional `Resource<T>` registrations that the WU's `Ctx` bound already references. Nothing separate to track.
+
+The topic file says "Concrete `.build()` where-clause shape, AccessSet arity ceiling for accumulator tuples, and exact composition of 'providers' are settled in DOC phase with code sketches." This is that sketch. The four-slot scheme is replaced by the two-slot scheme; DOC CL writes against two slots.
+'''
+origin = "proposed"
+written_by = "sketch findings app-builder type-state (202605010900), section on what changed from the topic file; agent-written"
+standing = "provisional"
+subject = "kits"
+keywords = ["SchedulerBuilder", "Stores slot", "two-slot builder", "four-slot builder", "typestate", "Providers slot", "phantom tuple", "unified stores"]
+rules_out = ["`SchedulerBuilder<Wus, Resources, Columns, Providers>`", "The four-slot scheme is replaced by the two-slot scheme"]
+cites = ["the_scheduler_is_built_by_a_builder_that_is_const_generic_over_units_stores_and_lanes_with_overrides_for_the_platform_traits"]
+
+[[tenet]]
+id = "the_substrate_commits_to_two_scoping_axes_for_kit_owned_state_visibility_and_replaceability"
+what = "Topic 3 said the substrate would commit to two scoping axes, visibility and replaceability, and the sketch shows the substrate gets one and a half."
+source = "mock/research/sketches/202605050615_kit_taxonomy/FINDINGS.md:66-66"
+provenance = ["mock::research::sketches::202605050615_kit_taxonomy::FINDINGS::#what-this-means-for-the-round-4-plan"]
+quote = '''
+Topic 3 said the substrate would commit to two scoping axes: visibility and replaceability. The sketch shows the substrate gets one and a half:
+'''
+origin = "proposed"
+written_by = "sketch findings S5 kit taxonomy of 2026-05-05 (round 202605042200), reporting the claim of Topic 3; agent-written"
+standing = "provisional"
+subject = "kits"
+keywords = ["scoping axes", "visibility", "replaceability", "kit owned state", "topic 3", "two-axis annotation surface"]
+
+[[tenet]]
+id = "replaceability_is_the_one_scoping_axis_the_substrate_enforces_and_kit_visibility_is_a_per_kit_shape_choice_and_not_a_per_type_axis"
+what = "Replaceability is the one scoping axis the substrate enforces, through an opt-in marker and a static bound on the replacing call, with a clean compile error when a consumer overrides a type that is not replaceable. Visibility is not a substrate axis but a kit-shape convention, either the whole kit public or the whole kit crate-private and shipped from its own crate, because the language forbids per-type kit-internalness under the chosen kit trait shape. The annotation surface is one axis plus a structural choice, called the kit visibility envelope."
+mechanism = "`T: Replaceable` bound on `replace_resource`; Rust E0446 forbids private types in the associated-type positions of a public trait; Pattern A, kit `pub` with every Owned type `pub`; pattern B, kit `pub(crate)` in its own crate with a pub helper function that consumes a builder and returns one; \"kit visibility envelope\" replaces \"visibility axis\"."
+source = "mock/research/sketches/202605050615_kit_taxonomy/FINDINGS.md:54-54, mock/research/sketches/202605050615_kit_taxonomy/FINDINGS.md:58-60, mock/research/sketches/202605050615_kit_taxonomy/FINDINGS.md:66-69, mock/research/sketches/202605050615_kit_taxonomy/FINDINGS.md:73-74"
+provenance = ["mock::research::sketches::202605050615_kit_taxonomy::FINDINGS::#visibility-finding-substantive"]
+quote = '''
+The implication: **visibility cannot be a per-Owned-type substrate axis under the current `pub Kit { type Owned: StoreBundle; }` shape.** Every Owned type must be at least as visible as the Kit impl. Topic 3's "pub(crate) wrapping of locked-down kit-internal state" does not compose with `pub Kit` impls.
+---
+A. Kit declared `pub`, every Owned type `pub`. Visibility provides nothing the substrate enforces; only `Replaceable` distinguishes overridable from non-overridable. Convention (the kit author keeps non-Replaceable types out of the kit's public re-export surface) is the only signal kit-internal-vs-public.
+
+B. Kit declared `pub(crate)`, every Owned type `pub(crate)`, kit lives in its own crate. Consumers register the kit via a pub helper-fn that consumes a builder and returns one without naming the kit. The kit-internal types are then genuinely kit-private at the crate boundary. The substrate cannot mix levels in a single Kit impl.
+---
+Topic 3 said the substrate would commit to two scoping axes: visibility and replaceability. The sketch shows the substrate gets one and a half:
+
+- **Replaceable** is a real substrate axis. The opt-in marker plus the static `T: Replaceable` bound on `replace_resource` does the work, with a clean compile error when consumers try to override a non-Replaceable type.
+- **Visibility** is *not* a substrate axis. It is a kit-shape convention applied at the level of "the whole kit is pub" or "the whole kit is pub(crate) and shipped from its own crate". The substrate cannot enforce per-Owned-type kit-internalness because Rust's E0446 forbids it under the chosen Kit trait shape.
+---
+1. **Drop "two-axis annotation surface" framing.** The annotation surface has one axis (Replaceable) plus a structural choice (kit visibility = whole-kit-pub vs whole-kit-pub(crate)-with-helper-fn).
+2. **Rename "visibility axis" to "kit visibility envelope".** The envelope is set by the kit author when shipping the kit crate. The substrate observes; it does not enforce per-type.
+'''
+origin = "proposed"
+written_by = "sketch findings S5 kit taxonomy of 2026-05-05 (round 202605042200), outcome WORKS with a substantive revision of the visibility axis; agent-written"
+standing = "provisional"
+subject = "kits"
+keywords = ["Replaceable", "visibility", "kit visibility envelope", "E0446", "scoping axis", "per-type axis", "opt-in marker", "kit shape"]
+rules_out = ["two-axis annotation surface", "visibility axis"]
+cites = ["the_substrate_commits_to_two_scoping_axes_for_kit_owned_state_visibility_and_replaceability", "replaceable_is_the_only_enforced_annotation_on_owned_types_and_it_is_opt_in_so_override_of_a_kit_s_resource_is_rejected_at_compile_time_by_default", "every_type_in_a_public_kit_impl_s_owned_position_must_be_as_visible_as_the_impl_so_a_kit_is_either_wholly_public_or_wholly_crate_private"]
+
+[[tenet]]
+id = "no_macro_expanding_to_a_crate_level_recursion_limit_attribute_is_shipped_and_the_directive_is_a_documented_manual_consumer_side_attribute"
+what = "The kit substrate ships no macro that expands to the crate-level recursion-limit attribute, because a macro invocation sits at an item position and an inner attribute cannot be produced there. The round's scope refocuses on documenting the directive as a manual consumer-side attribute with guidance on when to raise it, wiring the trait diagnostics to name the attribute in their notes, and filing a follow-up to revisit if rustc gains crate-root inner-attribute-from-macro support."
+because = "A macro invocation position is an item position and macro expansion produces items, while an inner attribute binds to its containing item, so it cannot be an item itself."
+mechanism = "`recursion_limit_for_kits!()` expanding to `#![recursion_limit = \"1024\"]` fails with `error: an inner attribute is not permitted in this context`; the fix is `#![recursion_limit = \"1024\"]` as a manual directive in DESIGN.md.tmpl and `#[diagnostic::on_unimplemented]` notes that mention the attribute."
+source = "mock/research/sketches/202605082230_recursion_limit_macro/FINDINGS.md:9-9, mock/research/sketches/202605082230_recursion_limit_macro/FINDINGS.md:29-31, mock/research/sketches/202605082230_recursion_limit_macro/FINDINGS.md:37-41"
+provenance = ["mock::research::sketches::202605082230_recursion_limit_macro::FINDINGS::#hypothesis-tested"]
+quote = '''
+Round 202605042200's locked topic file proposed shipping a `recursion_limit_for_kits!()` macro that consumers invoke at their crate root, expanding to `#![recursion_limit = "1024"]`. The macro shape:
+---
+Compilation fails with `error: an inner attribute is not permitted in this context` pointing at the `#![recursion_limit = "1024"]` token inside the macro body. rustc's diagnostic note: "inner attributes ... annotate the item enclosing them, and are usually found at the beginning of source files".
+
+The reason: `macro_rules!` invocation positions are item-positions, and macro expansion produces items. An inner attribute is bound to a containing item (the crate root for `#![...]`), and the rule is that inner attributes must appear textually before items, not as items themselves. Even when the macro invocation is the very first token after module-level doc comments and outer attributes, the expansion does not happen "before" the item position; it happens AT the item position, and items can't be inner attributes.
+---
+Drop the `recursion_limit_for_kits!()` macro from the public substrate. The round's scope refocuses on:
+
+1. Documenting `#![recursion_limit = "1024"]` as a manual consumer-side directive in DESIGN.md.tmpl with thorough guidance on when to bump.
+2. Wiring the trait diagnostics (`#[diagnostic::on_unimplemented]`) to mention the attribute in the relevant `note` field so consumers hitting "overflow evaluating the requirement" land on a message that names the fix verbatim.
+3. Filing a follow-up workspace task to revisit if rustc gains crate-root inner-attribute-from-macro support.
+'''
+origin = "proposed"
+written_by = "sketch findings S1 recursion-limit macro probe of 2026-05-08, outcome FAILS for the macro; agent-written, correcting the locked topic of round 202605042200"
+standing = "provisional"
+subject = "kits"
+keywords = ["recursion_limit", "recursion_limit_for_kits", "inner attribute", "macro expansion", "on_unimplemented", "consumer-side directive", "kits", "overflow"]
+rules_out = ["Drop the `recursion_limit_for_kits!()` macro from the public substrate", "a `recursion_limit_for_kits!()` macro that consumers invoke at their crate root, expanding to `#![recursion_limit = \"1024\"]`"]
+cites = ["the_kit_crate_declares_a_recursion_limit_of_512_defensively_and_a_consumer_hitting_it_declares_its_own"]
+
+[[tenet]]
+id = "the_typestate_ships_without_physical_dedup_of_the_accumulated_lists_and_logical_dedup_through_the_marker_membership_trait_suffices"
+what = "Physical dedup of the accumulated lists is blocked by the same coherence constraint as the non-membership proof, so round 4 of the typestate ships without it. Logical dedup through the marker membership trait is what the typestate already gets for free and it suffices for correctness. The trait-solver cost from duplicate accumulation is real but not pathological at the validated depth of five and twenty-five units."
+mechanism = "`#[marker] Contains`; round-3 `NotIn` proof; depth-5 / 25-WU scale."
+source = "mock/research/sketches/202605050800_dedup_concat/FINDINGS.md:6-6"
+provenance = ["mock::research::sketches::202605050800_dedup_concat::FINDINGS::#findings-m2-type-level-dedup-on-concat"]
+quote = '''
+**Outcome:** Physical dedup BLOCKED by the same coherence constraint as round-3 NotIn. Logical dedup via `#[marker] Contains` is what the typestate already gets for free; it suffices for correctness. Round-4 ships without physical dedup; trait-solver cost from duplicate accumulation is real but not pathological at the validated depth-5 / 25-WU scale.
+'''
+origin = "proposed"
+written_by = "sketch findings M2 type-level dedup-on-Concat of 2026-05-05 (round 202605042200, audit M2 remediation), outcome BLOCKED; agent-written"
+standing = "provisional"
+subject = "kits"
+keywords = ["physical dedup", "logical dedup", "Concat", "coherence constraint", "NotIn", "marker Contains", "round 4", "duplicate accumulation"]
+cites = ["the_kit_trait_carries_no_required_member_because_the_type_level_set_difference_hits_the_coherence_wall_and_requirements_live_in_prose"]
+
+[[tenet]]
+id = "the_proposal_committed_to_a_compile_time_error_on_duplicate_marker_registration_through_a_non_membership_bound_at_the_leaf_registrable_impl"
+what = "The proposal commits to a compile-time error on registering a marker twice, through a non-membership bound on the stores list at the engine's leaf registrable implementation."
+mechanism = "`Stores: NotIn<H>` bound; encoding in `sketch.rs`: `#[marker] pub trait NotIn<H> {}` with `impl<H> NotIn<H> for () {}`, `impl<H, K, R> NotIn<H> for (K, R) where R: NotIn<H> {}` and `impl<H, R> !NotIn<H> for (H, R) {}`."
+source = "mock/research/sketches/registrable-not-in-202605051200/FINDINGS.md:9-17"
+provenance = ["mock::research::sketches::registrable-not-in-202605051200::FINDINGS::#setup"]
+quote = '''
+The proposal commits to compile-time error on duplicate-marker registration via `Stores: NotIn<H>` bound at the engine's leaf Registrable impl. Encoding sketched in `sketch.rs`:
+
+```rust
+#[marker]
+pub trait NotIn<H> {}
+
+impl<H> NotIn<H> for () {}
+impl<H, K, R> NotIn<H> for (K, R) where R: NotIn<H> {}
+impl<H, R> !NotIn<H> for (H, R) {}
+'''
+origin = "proposed"
+written_by = "sketch findings NotIn<H> compile-time diamond detection of 2026-05-05 (round 202605042200), describing the proposal under audit; agent-written"
+standing = "provisional"
+subject = "kits"
+keywords = ["NotIn", "duplicate registration", "diamond detection", "Registrable", "compile-time error", "negative impl", "marker registration"]

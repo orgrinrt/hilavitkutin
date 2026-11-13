@@ -91,3 +91,28 @@ Round: 202605282319. Phase: IMPL. Makes the scheduler builder retain each regist
 subject = "kits"
 keywords = ["into_init", "BuilderInput", "Init", "Dispatch", "StagedResource", "value retention", "B1", "topic against src changelist"]
 related = ["tenet::the_builder_retains_each_registered_value_in_a_sealed_value_carrying_list_beside_the_type_level_store_list", "tenet::the_value_retention_adds_no_method_to_the_builder_input_trait_and_the_builder_moves_the_registered_input_onto_the_staged_list"]
+
+[[question]]
+id = "what_the_builder_does_about_a_marker_registered_twice_given_that_compile_time_detection_cannot_be_encoded"
+asks = "Compile-time detection of a duplicate marker registration cannot be encoded. The proposal must commit to one of four directions for a marker registered twice. Which does the design take?"
+options = ["Silent shadowing, Bevy-style: two entries of one resource are tolerated in the stores cons-list, membership proofs match the first occurrence, the consumer is responsible for not creating diamonds, documented loudly with a diagnostic hint", "Runtime panic at the engine resource call: the engine maintains a runtime registry of registered markers without using TypeId, possibly by type-name string equality or a sealed enum-of-markers pattern, and panics on a duplicate at one runtime check per registration", "An explicit replace operator on the builder with silent shadowing as the default: a replace operator gated on the stores already containing the marker, matching Bevy's init_resource versus insert_resource distinction", "Drop diamond detection entirely for v0 and track it as a future follow-up when negative_impls matures or a new approach surfaces"]
+state = "open"
+source = "mock/research/sketches/registrable-not-in-202605051200/FINDINGS.md:54-66"
+quote = '''
+## Path forward (recommendations for round 4)
+
+The proposal must commit to ONE of:
+
+1. **Silent shadowing, Bevy-style.** Accept that two `Resource<Foo>` entries in `Stores` cons-list are tolerated; `Contains<Resource<Foo>>` proofs match the first occurrence; consumer is responsible for not creating diamonds. Document loudly. Add `#[diagnostic::on_unimplemented]` hint when consumers hit the related "Resource registered twice but only first is read" debugging surface.
+
+2. **Runtime panic at engine `.resource(t)`.** Engine maintains a runtime registry of registered marker TypeId-equivalents (without using `TypeId`; possibly via `core::any::type_name::<T>()` string equality, or a sealed enum-of-markers pattern). Detect duplicate at registration call; panic. Costs one runtime check per registration; trade for explicit failure mode.
+
+3. **`.replace::<M>(value)` explicit operator** on the builder + silent-shadow as default. Consumer writing `.with(MyResource).with(MyResource)` shadows; consumer writing `.replace::<Resource<Foo>>(new)` explicitly overwrites. The `.replace` operator gates on `Stores: Contains<M>` (must already be present). This is the cleanest design and matches Bevy's `init_resource` vs `insert_resource` distinction.
+
+4. **Drop diamond detection entirely** for v0; track as a future follow-up when `feature(negative_impls)` matures or a new approach surfaces.
+
+The sketch's negative-impl path is dead. Decision point for the user.
+'''
+subject = "kits"
+keywords = ["duplicate registration", "silent shadowing", "replace operator", "runtime panic", "diamond detection", "NotIn", "Bevy init_resource", "builder"]
+related = ["tenet::compile_time_detection_of_a_duplicate_marker_registration_cannot_be_encoded_under_the_workspace_constraints_and_the_first_wins_fallback_promise_is_unsubstantiated"]
