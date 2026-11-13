@@ -135,33 +135,29 @@ Documentation and debugging aid only. The const projection
 provider where the bound expected a Memory provider"; it does not
 participate in dispatch.
 
-## Store kinds (domain 06)
+## Store types (domain 06)
 
-Five store kinds, one scheduling mechanism. All of them are views over
+Three store types, one scheduling mechanism, and the accumulator as a
+column whose write is an append. All of them are views over
 one `ColumnStorage` (see "Unified columnar storage" below); they differ
 in intent and access, not in backing.
 
 ```rust
-pub struct Resource<T>(PhantomData<T>);                   // singleton, one value
-pub struct Column<T, D = Records>(PhantomData<(T, D)>);   // one value per record of D, written in place
-pub struct Buffered<T, D = Records, Ch = Differs>(PhantomData<(T, D, Ch)>); // one value per record of D, read as last committed
-pub struct Accum<T>(PhantomData<T>);                      // appended during a pass, grown from zero
-pub struct Virtual<T>(PhantomData<T>);                    // zero-data, DAG edge only
+pub struct Resource<T>(PhantomData<T>); // singleton, one value
+pub struct Column<T>(PhantomData<T>);   // collection, morsel-chunked
+pub struct Accum<T>(PhantomData<T>);    // a column written by append, grown from zero each frame
+pub struct Virtual<T>(PhantomData<T>);  // zero-data, DAG edge only
 ```
 
-`Column<T, D>` and `Buffered<T, D>` hold one value for each record of the
-domain `D` (see "Record domains" below), and `Records` is the domain a
-column is in when none is named. `Accum<T>` reserves a capacity at build
-and grows from zero as units append during a pass, the populated prefix
-being what a drain reads after the pass. `Buffered<T, D>` is described
-under "The frame-buffered kind" below.
+`Accum<T>` is a marker of its own on the same pattern as the other
+three. It reserves a capacity at build, is reset to no values at the top
+of a frame and grows as units append during it. The values appended in a
+frame are what the close of that frame reads (see "Maintenance units and
+the close" below).
 
 The scheduler sees StoreId pairs for edge construction. Does not care
 about cardinality. `Write<Resource<X>> → Read<Resource<X>>` builds
-the same edge as `Write<Column<Y>> → Read<Column<Y>>`. A `Buffered`
-store is the one kind that builds no edge between its writer and its
-readers, since a reader of it never sees what the writer wrote in the
-same pass.
+the same edge as `Write<Column<Y>> → Read<Column<Y>>`.
 
 `StoreId` is a dense index assigned at plan time. Wraps an arvo
 fixed-point newtype (not raw u16). `AccessMask` is the arvo-bitmask
@@ -175,7 +171,9 @@ crate, and consumer code meets them either directly or through the
 `read!` / `write!` macros (which expand to nested `Cons` cells). The
 api declares no list of its own: `Contains`, `ContainsAll` and `Concat`
 are the shared crate's as well, and `AccessSet` adds the count as a
-`USize` and the bound that says a list is made of store markers.
+`USize` and the bound that says a list is made of members: store
+markers, and the two wrappers over a store marker described under
+"Members of an access set" below.
 Compile-time store descriptors. Plan phase converts to runtime AccessMask via
 monomorphised generic functions (the monomorphised function IS the
 type identity, no TypeId, no std::any).
@@ -206,61 +204,60 @@ zero-arg constructor. `Resource` keeps its inherent
 `pub const fn new(value: T) -> Self` constructor because it carries
 state; it does not impl `HasTrivialCtor`.
 
-`Buffered<T, D>` and `Accum<T>` register the same way as `Column`
-(`.with(Buffered::<T, D>::new())`, `.with(Accum::<T>::new())`), with
-`Init = ()` and `Dispatch = StoreDispatch<Self>` on `BuilderInput`, the
-trait this section still calls by its earlier name.
+`Accum<T>` registers the same way as `Column`
+(`.with(Accum::<T>::new())`), with `Init = ()` and
+`Dispatch = StoreDispatch<Self>` on `BuilderInput`, the trait this
+section still calls by its earlier name.
 
-## Record domains
+## Record counts
 
-A record domain is a set of records with a count of its own and a key
-order of its own. Every `Column` and `Buffered` store is in one domain,
-named by the marker's second parameter, and one store list may hold
-columns of several domains whose counts differ.
+A column's record count is a fact of its storage. `ColumnStorage`
+reserves a column for a count, answers `count(id)` for it and resizes it
+on a second `reserve` (see "Unified columnar storage" below), and record
+counts are among the parameters the plan stage reads from the consumer's
+data. `Column<T>` carries no count and no second parameter. Which
+columns belong together is the consumer's schema, and a consumer that
+wants its schema in the types wraps the value type on its own side.
+
+A column registered with `Column::<T>::new()` holds the run
+configuration's record count, as every column did. A column that holds
+another count says so where it is registered:
 
 ```rust
-pub trait Domain: 'static {
-    type Axes: Grid;  // the axes, first axis outermost
-    type Reach: List; // the offsets a neighbour read in this domain may name
-}
-
-pub struct Records;                            // one axis, empty reach
-pub struct Extent<D: Domain>(PhantomData<D>);  // the run-time shape of D
+.with(Column::<T>::new())                  // the run configuration's record count
+.with(Column::<T>::with_count(n))          // n records for as long as the scheduler lives
+.with(Column::<T>::with_capacity(cap, n))  // n records now, replaceable up to cap
 ```
 
-An axis is a marker type, and `Grid` is implemented for lists of axes. A
-shape holds one length per axis, a key holds one coordinate per axis, and
-`Grid` gives the record count of a shape and the conversion between a
-key and a record's position in both directions. The key order is the
-sequence of the axes list with the first axis outermost, so that in a
-domain of the axes north then east the records of one northing are
-adjacent.
+`with_count` and `with_capacity` return a `Counted<Column<T>>`, a
+registration of the same store that stages an `Extent` (a count and the
+capacity it may be replaced within) where `new()` stages nothing.
+`Counted` routes through `StoreDispatch<Column<T>>`, so the store list
+and every access set name `Column<T>` whichever way it was registered.
 
-`Records` is the domain of one axis that every column is in when no
-domain is named, which is every column written before domains existed.
-`Column<T>` therefore means what it meant.
+Whether a column's count may be replaced is declared in the column's
+value type. `with_capacity` asks `T: Replaceable`, the opt-in marker a
+replaced resource value already asks, and so does the scheduler's
+`replace_count`, which takes a list of columns and one count and gives
+every column of the list that count between passes. A count past a
+column's capacity is refused as a value and nothing is replaced. A
+column whose value type is not `Replaceable` keeps the count it was
+built with.
 
-Extents are run-time values and arrive as stores. `Extent<D>` is a
-singleton store holding the shape of `D`, registered like a resource
-with `.with(Extent::<D>::new(shape))`, or `.with(Extent::records(count))`
-for `Records`. `build` takes no record count: each column is sized from
-the extent registered for its domain, and a store list that holds a
-column of `D` and no `Extent<D>` is refused at `build` by the same
-membership bound that refuses a unit reading an unregistered store. A
-unit may read an extent. No unit writes one, so the count of a domain is
-fixed for as long as a built scheduler lives.
+A unit runs over the records of its columns, so the columns in its read
+and write lists hold one count. Counts are run-time values. The plan
+stage checks this where it reads them, at `build` and at the end of a
+`replace_count`, and a unit whose columns hold different counts is
+refused there as a value. A fiber's units share one count, and its
+record range and morsel window are taken over that count. Resources,
+virtuals and accumulators hold no record count and are free in any
+unit. An accumulator's capacity is the run configuration's record count,
+as before.
 
-A unit iterates one domain, and it does not write which. The domain is
-computed from the unit's read and write lists: every `Column` and
-`Buffered` member of both names one domain, and a unit whose members
-name two is refused where it is declared, with a message that says a
-unit iterates one domain and these members are in two. A unit with no
-such member iterates `Records`. Resources, extents, virtuals and
-accumulators belong to no domain and are free in any unit.
-
-The plan carries a record count for each domain that some registered
-unit iterates. A fiber holds units of one domain, and its record range
-and morsel window are those of that domain.
+The api gives a column no way to name the set of records it belongs to,
+and a unit no way to read a column of another count at a record it
+computes. The first is the consumer's wrapper to write. The second is
+not in this revision.
 
 ## LinkedBin
 
@@ -308,223 +305,281 @@ width-reporting traits where bitpacking consumes it, not encoded as a
 `ColumnValue` specialisation here. No pack/unpack today: the type IS the
 storage (R3, R4).
 
-Every store kind that holds values (`Column`, `Buffered`, `Accum`, and
+Every store that holds values (`Column`, `Accum`, and
 `Resource` through its own bound) takes any `ColumnValue` at its native
 stride. The contract has no sealed value type, no cell every value must
 convert through, and no format tag. A store's identity is its marker
 type and its `StoreId` is the plan's to assign, so an author declares no
 id either.
 
-## The value form (domain 09)
+## The value function (domain 09)
 
-`RecordOp` is the form a unit is written in first. A unit declares the
-members it reads and the members it writes, and is a function from the
-values of its reads at one record to the values of its writes at that
-record.
+A unit's body is written first as a function from values to values. The
+function takes the values of the unit's read list at one record and
+returns the values of its write list at that record, and the unit hands
+it to `each` from `execute`, which stays the one entry point of a unit:
 
 ```rust
-pub trait RecordOp: Send + Sync + 'static {
-    type Read: ReadList;
-    type Write: WriteList + Along<Self::Read>;
-    fn apply(&self, read: &Vals<Self::Read>) -> Vals<Self::Write>;
+impl WorkUnit for Integrate {
+    type Read = read![Column<Pos>, Column<Vel>, Resource<Step>];
+    type Write = write![Column<Pos>];
+    // Hint and Ctx as under "WorkUnit trait" below
+
+    fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
+        ctx.each().map(|r| rec![r.get(POS).moved(r.get(VEL), r.get(STEP))]);
+    }
 }
 ```
 
-`Vals<L>` is the shared list crate's product of one value per member of
-`L`. A read is `read.get(MEMBER)` and is bounded on the read list holding
-that member, so reading a member the unit did not declare does not
-compile. The writes are returned by value as one product over the write
-list, built in the list's sequence by the `rec!` macro, so a unit cannot
-leave a declared write without a value and holds no handle that could be
-used twice or kept.
+`map` is on `EachApi`, beside the `run` that hands the body a position
+(see "WU Context providers" below):
 
-What a member's value is depends on its kind:
+```rust
+fn map<F>(&self, f: F)
+where
+    R: ReadSet,
+    W: WriteSet,
+    F: for<'a> Fn(&ReadVals<'a, R>) -> WriteVals<W>;
+```
+
+The engine applies the function to the records of the morsel the context
+is bound to and stores what it returns: a column value at the record the
+function was applied to, a present accumulator value by an append, a set
+virtual by firing it. The body holds no handle to write through, so it
+cannot write a record other than its own, cannot write one twice, and
+cannot leave a declared write without a value. The function must be a
+pure function of its reads: the engine may apply it to the records in
+any sequence and on any thread.
+
+`ReadVals<'a, R>` and `WriteVals<W>` are the shared list crate's products
+over the two lists, holding for each member the value its kind gives it:
+
+```rust
+pub trait Readable: Member { type Val<'a>; }  // what a function reads of this member at one record
+pub trait Writable: Member { type Val; }      // what a function returns for this member
+```
+
+`ReadSet` is implemented for a list whose members are all `Readable` and
+`WriteSet` for one whose members are all `Writable`. A read is
+`r.get(MEMBER)` and is bounded on the read list holding that member, so
+reading a member the unit did not declare does not compile. The writes
+are returned as one product over the write list, built in the list's
+sequence by the `rec!` macro.
 
 | Member | In a read list | In a write list |
 |---|---|---|
-| a column | its `T`, the record's value | its `T`, the record's new value |
-| a frame-buffered store | its `T`, the record's committed value | its `T`, the record's staged value |
-| a neighbour read | the neighbour's committed value, or the edge's | not a write |
-| a resource | its `T` | not written in this form |
-| an extent | the shape | not written |
-| an accumulator | not read | a `Maybe<T>`: append the value, or append nothing |
-| a virtual | not read | a `Bool`: fire, or do not |
+| `Column<T>` | its `T`, the record's value | its `T`, the record's new value |
+| `Reach<Column<T>, N>` | a `Window` on the record and `N` records to either side | not a write |
+| `Differs<Column<T>>` | not a read | its `T`, the record's new value |
+| `Resource<T>` | the value or a reference to it, by the resource's kind | not written by a function |
+| `Accum<T>` | not read by a function | a `Maybe<T>`: append the value, or append nothing |
+| `Virtual<T>` | not read | a `Bool`: fire, or do not |
 
-A value-form unit names no engine type. It has no context, sees no
-index and no morsel range, and its crate depends on this crate alone.
-`apply` must be a pure function of its reads: the engine may call it for
-the records of a domain in any sequence, on any thread, and may compose
-it with other units.
+`Reach` and `Differs` are the two wrappers of "Members of an access
+set" below.
+
+A resource is read in the form its value type declares:
+
+```rust
+pub trait ResourceRead: 'static {
+    type Val<'a>;  // Self for a resource of scalar fields, &'a Self for one that holds a collection
+}
+```
+
+The `ResourceFootprint` derive writes the implementation from the same
+fields it sizes: a value type whose fields are all `Field` scalars is
+read by value, and one that holds a `Seq` or a `Map` is read by
+reference for the length of one application. The choice is made in the
+types and costs no branch. A resource whose value type has no
+`ResourceRead` is still read through `resource()` in a positional body
+and cannot be named in the read list of a unit that calls `map`.
 
 The api prefers not to break its public face when the plumbing
 changes. The preference weighs most for the authors of units and of
 data structures and less for the authors of runners, who are still
 counted. It is a preference: a break is made where the design is better
-for it, and each one is recorded with its reason. A unit in the value
-form is what the preference costs least to keep for, since nothing of
-the plumbing appears in it.
+for it, and each one is recorded with its reason. A body written as a
+value function is what the preference costs least to keep for, since
+nothing of the plumbing appears in the function.
 
-`ReadList` and `WriteList` are implemented for lists of members of the
-kinds the table admits, and give the list of stores the members stand
-for (a `Near` read stands for the store it reads). `Along` joins the
-domains of the two lists and is what refuses a unit in two domains.
+The positional accessors (`read`, `write`, `run`, `batch`, `reduce`)
+stay for a body that needs the whole morsel, a reduction over it, or a
+record it names itself. Their use in an ordinary unit and in a
+maintenance unit is set out under "Maintenance units and the close".
 
-### The two forms and their routers
+### The function under a name, and fusion
 
-`WorkUnit` (below) is the block form: a unit handed a context for one
-morsel, written where the body needs the whole morsel, a reduction over
-it, or the providers directly. The value form is the default and the
-block form is the wider one, and both stay.
-
-Which form a unit is in is read off the router it names on
-`BuilderInput`:
+The engine folds units together at compile time, and a fold cannot see
+into a closure built inside `execute`. `RecordOp` is the same function
+under a name on the unit's own type:
 
 ```rust
-impl BuilderInput for Diffuse {
-    type Init = Self;
-    type Dispatch = RecordDispatch<Self>;   // value form
-}
-
-impl BuilderInput for Tally {
-    type Init = Self;
-    type Dispatch = UnitDispatch<Self>;     // block form, as before
+pub trait RecordOp<S = Always>: WorkUnit<S> {
+    fn apply(&self, read: &ReadVals<'_, Self::Read>) -> WriteVals<Self::Write>;
 }
 ```
 
-Both routers append the unit to the builder's unit list. One api trait
-says what the plan needs of either form:
-
-```rust
-pub trait Declares<W> {
-    type Read: AccessSet;       // the stores read
-    type Write: AccessSet;      // the stores written
-    type Domain: Domain;        // the domain iterated
-    type Sched: ScheduleGate;   // when it runs
-    type Hint: SchedulingHint;  // how it is priced
-}
-
-impl<W: HasSchedule + Plannable<W::Sched>> Declares<W> for UnitDispatch<W> { /* W's Plannable, the domain folded from its sets */ }
-impl<U: RecordOp, S: ScheduleGate, H: SchedulingHint> Declares<U> for RecordDispatch<U, S, H> { /* from U's lists */ }
-```
-
-The two implementations are on two distinct types, so they cannot
-overlap and need no unstable feature. `WorkUnitBundle` and every fold
-of the plan bind a unit as `W: BuilderInput` with
-`W::Dispatch: Declares<W>`. A runner implements a run trait of its own
-for the two router types, which is how the engine runs a value-form unit
-(gather the reads of a record, call `apply`, scatter the writes) without
-the unit or this crate naming the engine. A runner that implements its
-run trait for `RecordDispatch` alone runs value-form units and refuses a
-block-form unit at compile time, the block form being bound to the one
-runner whose context it names.
-
-A value-form unit's schedule and hint ride on the router as defaulted
-parameters: `RecordDispatch<Self>` runs every pass with the default
-hint, `RecordDispatch<Self, On<V>>` runs when the virtual `V` fires, and
-a third parameter carries a hint other than the default.
-
-### Fusion
+A unit that offers it writes `execute` as
+`ctx.each().map(|r| self.apply(r))`, so the function exists once. The
+trait sits under `WorkUnit` and reads the unit's own lists: it declares
+no stores, no schedule and no hint of its own, and `Plannable` stays the
+one declaration the plan reads.
 
 Within-fiber linear fusion folds a straight read-after-write run of
-value-form maps into one fused unit whose body keeps every intermediate
-in a register (dead-store elimination removes the intermediate column
-traffic), matching a hand-fused loop. The fold is a compile-time
-composition of concrete monomorphised calls, no function pointers and no
-dynamic dispatch. In this revision the fold takes a unit whose read
-list is one `Column` of `Records` and whose write list is one `Column`
-of `Records`; any other unit stays on the per-unit dispatch path. A
-block-form unit may implement `RecordOp` beside `WorkUnit` to offer its
-map to the fold, as before, and its `apply` then takes and returns
-one-member products.
+units that offer `RecordOp` into one fused unit whose body keeps every
+intermediate in a register (dead-store elimination removes the
+intermediate column traffic), matching a hand-fused loop. The fold is a
+compile-time composition of concrete monomorphised calls, no function
+pointers and no dynamic dispatch. In this revision the fold takes a unit
+whose read list is one `Column` and whose write list is one `Column`. A
+`RecordOp` over longer lists, a wrapper member or another store runs per
+unit through its own `execute`.
 
-## Neighbour reads
+## Members of an access set
 
-A unit may read a store at a declared offset from the record it is
-applied to.
+A read or write list is a list of members. A store marker is a member
+that stands for itself, so every list written before members existed is
+a list of members and means what it meant. A wrapper over a store marker
+is a member that stands for that store and says one more thing about how
+the unit reads or writes it. Read and write stay the only two modes, and
+a need the two do not cover is carried by a wrapper in the list.
 
 ```rust
-pub struct Shift<A, const N: isize>(PhantomData<A>);  // N steps along axis A
+pub trait Member: 'static {
+    type Store;  // the store this member stands for
+}
 
-pub struct Near<C, O, E>(PhantomData<(C, O, E)>)
-where
-    C: Committed,
-    <C::Domain as Domain>::Reach: Contains<O>;
+pub struct Reach<C, const N: Cap>(PhantomData<C>);  // read C at the record and N records to either side
+pub struct Differs<C>(PhantomData<C>);              // write C, changed only where the value differs
+```
 
-pub trait Edge<V>: 'static {
-    const OUTSIDE: V;  // the value read past the extent
+`AccessSet` is implemented for the lists whose cells are members. The
+plan's access masks, the totals of `WorkUnitBundle` and `HoldsAll` read
+`Member::Store`, so a wrapper asks of registration and of the schedule
+what the bare store would, and what is said of it below on top. `Holds`
+asks for the bare marker in the list and is the bound of the positional
+accessors, so a store a unit names through a wrapper is reached through
+the value function alone. A wrapper is never registered: it names a
+registered store in a list.
+
+### A read with a reach
+
+`Reach<Column<T>, N>` in a read list says the function reads the column
+at the record it is applied to and at up to `N` records before and after
+it in the column's sequence. Its value is a `Window`:
+
+```rust
+impl<'a, T: ColumnValue, const N: Cap> Window<'a, T, N> {
+    pub fn here(&self) -> T;
+    pub fn before<const K: Cap>(&self) -> Maybe<T>;  // K records earlier, nothing before the first record
+    pub fn after<const K: Cap>(&self) -> Maybe<T>;   // K records later, nothing past the last
 }
 ```
 
-`Near<C, O, E>` is a member of a read list. Its value is the committed
-value of store `C` at the record offset by `O`, or `E::OUTSIDE` where
-that lands past the extent of the domain. An offset `O` is a list of
-`Shift` cells, so an offset along two axes at once is a list of two, and
-a unit that reads east, north and up names three `Near` members.
+A `K` greater than `N` does not compile. The reach is a count of records
+along the column's one sequence, a const parameter of the type `Seq`
+takes its capacity in, and this crate knows nothing more of it. Axes,
+the shape of a grid, a neighbour in two dimensions and the value read
+past an edge are geometry, which belongs to an opt-in crate over this
+read and is not in this crate.
 
-The offset must be in the reach its domain declares, checked where the
-type is named, so a read past the declared reach does not compile. The
-reach is on the domain because it is the one thing the plumbing must
-know for every reader at once. The value past the extent is on the read,
-since two readers of one store may want different ones.
+What the declaration buys is that the plan knows it. A unit that reads a
+column with a reach does not also write that column, which is refused at
+compile time when the scheduler is built. Every writer of the column
+finishes its whole record range before the reader starts, so the values
+at the neighbouring records are the ones the writers left, whatever
+sequence the records are visited in and however many threads visit
+them. A unit that wants the values around a record as they stood when
+the pass began reads, with a reach, a column written at the close (see
+"Maintenance units and the close").
 
-`Committed` is implemented for `Buffered` and for no other kind. A
-neighbour read of a column written in place would give a value that
-depends on the sequence the records are visited in, which the engine
-does not promise, so it is refused. The block form has no neighbour
-read.
+The positional accessors have no read with a reach in this revision.
 
-## The frame-buffered kind
+### What counts as changed
 
-`Buffered<T, D>` holds two sides. A read of it, at the record or at a
-neighbour, sees the committed side, which is what the store held when
-the pass began. A write goes to the staged side. At the close of the
-pass the two sides are swapped for every `Buffered` store written in
-that pass, and a store no unit wrote keeps its committed side.
+Whether a write changed a store is declared by the unit that writes it,
+on the member it writes. A plain `Column<T>` in a write list counts as
+changed by the unit wherever the unit wrote it. `Differs<Column<T>>`
+counts as changed only where the value the function returned differs
+from the value the record held, which the engine compares beside the
+store, and it asks `T: PartialEq`. Two units may write one column under
+different declarations. The skip of unchanged work (the engine's DESIGN)
+reads the declaration, and no store carries a rule of its own.
 
-A `Buffered` store is written in the value form only. The swap is
-sound because the staged side holds a value for every record of the
-domain when it becomes the committed side, which a value-form unit
-guarantees by returning a value for every record it is applied to and a
-block body, free to skip a record, cannot. The block form reads a
-`Buffered` store and does not write one.
+## Maintenance units and the close
 
-What counts as a change of the store, when the next pass asks which
-units must run again, is declared on the store and is not the
-plumbing's to choose:
+A unit scheduled `OnMeta<V>` is a maintenance unit. Its lifecycle rank
+places it outside the band the consumer's ordinary units run in. A unit
+on a plan-stage virtual or on `PassStart` runs before every ordinary
+unit of the pass and is where a pass is set up. A unit on `ScheduleEnd`
+runs after all of them and is the close of the pass. Rank orders units
+of different rank, whatever stores they share.
+
+The two kinds of unit write differently. An ordinary unit writes what
+its function returns, at the record the function was applied to, and it
+appends. A change it means for another record leaves it as an appended
+value, and a unit at the close applies it. A maintenance unit writes in
+place: the positional `write(i, v)` at a record the body names is its
+surface, and applying the changes a pass gathered is its work. Its
+context is bound to the whole record range of its columns, so the
+position it names is the record's index.
+
+`write` stays `unsafe` with the obligation it has had, that `i` is below
+the column's record count. The other half of what a positional write
+leans on, that no other unit touches the record meanwhile, holds on the
+close band by rank. This revision does not take `write` away from an
+ordinary unit, since every positional unit written so far calls it. It
+is `unsafe` there as well, and a consumer that forbids in-place writes
+outside its maintenance units keeps its ordinary units in crates that
+forbid `unsafe`.
+
+A maintenance unit reads what the pass appended through an accessor that
+its context alone carries:
 
 ```rust
-pub trait Changed<T>: 'static {}
-pub struct Differs;  // changed when a staged value differs from the committed one
-pub struct Written;  // changed whenever its writer ran
-
-impl<T: PartialEq> Changed<T> for Differs {}
-impl<T> Changed<T> for Written {}
+trait AccumReaderApi<R: AccessSet> {
+ fn each<T: ColumnValue, I, F: FnMut(T)>(&self, f: F)
+ where R: Holds<Accum<T>>, Self: ResolveAccumRead<T, I>;
+}
 ```
 
-It is the marker's third parameter and `Differs` is the default, so
-`Buffered<Heat, Plane>` wakes its readers only in a pass after one whose
-writer staged a value that differs from the committed one, and
-`Buffered<Heat, Plane, Written>` wakes them after every pass its writer
-ran in. `Differs` asks that the value type can be compared. A column
-written in place keeps the rule it has, that a store counts as changed
-when a unit that writes it ran.
+`each` calls `f` once for every value appended to the accumulator in
+this pass so far. A runner implements the accessor on the context of a
+maintenance unit and on no other, the way the engine gates its `meta`
+accessor, so an ordinary unit's context cannot name it and no bound of
+`WorkUnit::Ctx` changes. The unit lists `Accum<T>` in its read list, and
+the plan orders it after the appenders as it orders any reader after a
+writer. A close unit that applies gathered changes reads:
 
-For the plan the kind means that the writer and the readers of one
-`Buffered` store have no read-after-write edge and no conflict, in
-whichever sequence they are registered, and that the kind
-has at most one writer. Two units writing one `Buffered` store are
-refused at `build`, at compile time. The priority rule that resolves two
-writers of any other kind has nothing to resolve here, since the later
-writer would replace the earlier writer's staged values whole with no
-reader between them.
+```rust
+impl WorkUnit<OnMeta<ScheduleEnd>> for ApplyHeat {
+    type Read = read![Accum<HeatChange>];
+    type Write = write![Column<Heat>];
+    // Hint and Ctx as under "WorkUnit trait" below
 
-A `Buffered` store relates to `ResourceSnapshot` (below) as a column
-relates to a resource. Both are a read-only view of a committed state
-that work may read while the next state is produced: the snapshot for a
-resource across a phase, the committed side for a column across a pass.
+    fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
+        ctx.appended().each(|c: HeatChange| unsafe { ctx.writer().write(c.at, c.heat) });
+    }
+}
+```
 
-A unit that reads its own previous value and writes its next one names
-the same `Buffered` store in both lists.
+### Reading a store as it stood when the pass began
+
+A column whose every writer is a unit at the close holds, for every
+ordinary unit of a pass, the value it held when the pass began. No store
+kind and no read marker says so. It follows from rank. A unit that steps
+a whole field from one frame to the next reads the field's column,
+returns the next value into a second column, and a close unit carries
+the second column into the first once every reader is done. The second
+column and the carry are the consumer's, declared like any other store
+and unit. Where the carry is a whole copy the engine may later rotate
+the two columns' storage in its place, with neither declaration
+changing.
+
+The generation counters and version stamps the plumbing keeps answer one
+question, whether something changed since a unit last ran, so that
+unchanged work is skipped. They select no value: no read names a
+generation and a unit never sees one.
 
 ## Unified columnar storage (domain 07)
 
@@ -608,7 +663,7 @@ pub trait WorkUnit<Schedule = Always>:
 {
  type Read: AccessSet;
  type Write: AccessSet;
- type Hint: SchedulingHint = (Immediate, Atomic, Normal);
+ type Hint: SchedulingHint;
  type Ctx<'frame>: HasColumnReader<Self::Read>
  + HasColumnWriter<Self::Write>
  + HasResourceProvider<Self::Read>
@@ -647,15 +702,19 @@ Schedule conditions:
 - `Always`: unconditional (default)
 - `On<V>`: when virtual V fires
 
-Write-write ambiguity resolved by scheduling hint priority across
-three dimensions. Tie-break: most deps first, then deterministic
-fallback. This holds for every store kind but `Buffered`, where a
-second writer is refused at `build` (see "The frame-buffered kind").
+- `OnMeta<V>`: on a lifecycle virtual of the engine, which makes the
+  unit a maintenance unit (see "Maintenance units and the close")
 
-`WorkUnit` is the block form of a unit and `RecordOp` the value form
-(see "The value form" above for how the two relate and how each
-registers). What this section says of schedules, hints and write-write
-priority holds for a unit of either form.
+Two units that write one store are ordered by the schedule, for every
+store. Scheduling hint priority across the three dimensions decides
+first, then the unit with more dependents downstream, and then the
+position the units were registered in, which is the deterministic
+fallback. No second writer is refused.
+
+`Hint` has no default, so a unit names its hint. The value function
+(above) and the positional accessors are two ways to write the body of
+`execute`, and what this section says of schedules, hints and
+write-write order holds for a unit whichever way its body is written.
 
 ## Plannable trait (domain 09): the runner-agnostic declaration
 
@@ -690,13 +749,10 @@ dispatch rather than executing per record) implements `Plannable` by
 hand, and the two impls cohere by the orphan rule: only the crate that
 owns the local type could make it a `WorkUnit`, and it does not.
 
-The plan stage reads a unit's declaration through `Declares` on the
-router the unit names, never `WorkUnit::execute`. For a unit routed by
-`UnitDispatch` that declaration is its `Plannable`, so planning stays
-generic over `Plannable<S>` for the block form and for a hand-declared
-type. For a unit routed by `RecordDispatch` it is derived from the
-unit's lists, since a blanket `Plannable` over `RecordOp` would overlap
-the one over `WorkUnit`. Coherence and the E0207
+The plan stage reads `Plannable`, never `WorkUnit::execute`, so planning
+is generic over `Plannable<S>`. A unit that offers `RecordOp` is a
+`WorkUnit` first and is planned through the same blanket. Coherence and
+the E0207
 constraint are proven by sketch
 `mock/research/sketches/202607171733_plannable-declaration-split/`.
 
@@ -729,12 +785,12 @@ Provider API traits (access-set-aware via ctx parameterised macros):
 
 ```rust
 trait ColumnReaderApi<R: AccessSet> {
- fn read<'b, C: PerRecord, I>(&self, i: Index<'b>) -> C::Value
- where R: Holds<C>, Self: ResolveColumnRead<C, I>;
+ unsafe fn read<T: ColumnValue, I>(&self, i: USize) -> T
+ where R: Holds<Column<T>>, Self: ResolveColumnRead<T, I>;
 }
 trait ColumnWriterApi<W: AccessSet> {
- fn write<'b, C: InPlace, I>(&self, i: Index<'b>, v: C::Value)
- where W: Holds<C>, Self: ResolveColumnWrite<C, I>;
+ unsafe fn write<T: ColumnValue, I>(&self, i: USize, v: T)
+ where W: Holds<Column<T>>, Self: ResolveColumnWrite<T, I>;
 }
 trait AccumWriterApi<W: AccessSet> {
  fn append<T: ColumnValue, I>(&self, v: T)
@@ -751,51 +807,35 @@ trait VirtualFirerApi<W: AccessSet> {
  where W: Holds<Virtual<V>>;
 }
 trait EachApi<R: AccessSet, W: AccessSet> {
- fn run<F: for<'b> FnMut(Index<'b>)>(&self, f: F); // per-element, fusible
+ fn run<F: FnMut(USize)>(&self, f: F); // per-element by position, fusible
+ fn map<F>(&self, f: F) // per-element by value, see "The value function"
+ where R: ReadSet, W: WriteSet, F: for<'a> Fn(&ReadVals<'a, R>) -> WriteVals<W>;
 }
 trait BatchApi<R: AccessSet, W: AccessSet> {
- fn run<F: for<'b> FnOnce(Block<'b>)>(&self, f: F); // the whole morsel, non-fusible
+ fn run<F: FnMut(USize, USize)>(&self, f: F); // the whole morsel range, non-fusible
 }
 trait ReduceApi<R: AccessSet, W: AccessSet> {
- fn run<A, F: for<'b> FnMut(A, Index<'b>) -> A>(&self, init: A, f: F) -> A;
+ fn run<A: 'static, F: FnMut(A, USize) -> A>(&self, init: A, f: F) -> A;
 }
 ```
 
-`PerRecord` is implemented for the two kinds that hold one value per
-record, `Column` and `Buffered`, and names the value type and the
-domain. `InPlace` is `PerRecord` narrowed to `Column`. `read` and
-`write` are keyed by the store marker, so a block-form unit reads
-`Column<Pos>` and a `Buffered` store through the same method, a read of
-a `Buffered` store returning the committed value. `write` takes an
-`InPlace` store: a block body does not write a `Buffered` store (see
-"The frame-buffered kind").
+`read` and `write` are keyed by the value type of a column the unit
+named bare in its list, and take a position in the morsel the context is
+bound to. Both are `unsafe`: the caller holds that the position is below
+the record count of the window, and for a write that the plan gave this
+unit the record. `map` is the safe way to read and write the record a
+body is applied to, and a body that needs a position (a write at a
+record it computes, a loop over the whole morsel, a reduction) uses the
+positional accessors and takes on the obligation.
 
-Reads, writes and appends are safe. `Index<'b>` is an opaque position in
-the morsel the context is bound to, branded with a lifetime that exists
-only inside the closure it is handed to. It has no public constructor,
-no conversion to or from a number, no comparison and no arithmetic, and
-the higher-ranked bound on the closure keeps it from leaving. An index
-therefore always names a record of the unit's domain inside the window
-the plan gave this unit, and the plan has already proven that no other
-unit writes the unit's write set in that window. `Block<'b>` is the
-whole morsel under one brand: it iterates the morsel's indices and
-gives their count.
-
-An append takes no index, since it names no record: it lands at the
-accumulator's own live length, which the plumbing keeps. A unit appends
-from inside its per-record loop or once a frame from outside it, and
-both are the same call. What makes the call safe is that the unit
-declared the accumulator in its write list, that the plan gives each
-accumulator one appender in a window, and that an append past the
-reserved capacity is refused as a value (below), so no caller
-obligation is left for the body to hold.
-
-The engine mints an index through `Index::mint`, an `unsafe fn` whose
-caller asserts that the position is inside the bound window. That and
-the `Resolve*` bridges below are where the unsafe of a column access
-lives, on the plumbing's side of the contract. The accessor methods
-above are provided by this crate over those bridges, so the position
-inside an index is read by this crate alone.
+An append is safe and takes no position, since it names no record: it
+lands at the accumulator's own live length, which the plumbing keeps. A
+unit appends from inside its per-record loop or once a frame from
+outside it, and both are the same call. What makes the call safe is that
+the unit declared the accumulator in its write list, that the plan gives
+each accumulator one appender in a window, and that an append past the
+reserved capacity is refused as a value (below), so no caller obligation
+is left for the body to hold.
 
 The keyed accessors (`read` / `write` / `resource`) resolve the requested
 store type `T` over the per-WU projected pointer bundle without
@@ -811,11 +851,11 @@ or by turbofish with the index left to inference (`ctx.resource::<T, _>()`).
 trait ResolveResource<T: 'static, I> {
  fn resolve_resource(&self) -> &T;
 }
-trait ResolveColumnRead<C: PerRecord, I> {
- unsafe fn resolve_read(&self, i: USize) -> C::Value; // morsel-offset read
+trait ResolveColumnRead<T: ColumnValue, I> {
+ unsafe fn resolve_read(&self, i: USize) -> T; // morsel-offset read
 }
-trait ResolveColumnWrite<C: InPlace, I> {
- unsafe fn resolve_write(&self, i: USize, v: C::Value); // morsel-offset write
+trait ResolveColumnWrite<T: ColumnValue, I> {
+ unsafe fn resolve_write(&self, i: USize, v: T); // morsel-offset write
 }
 trait ResolveAccumAppend<T: ColumnValue, I> {
  unsafe fn resolve_append(&self, v: T); // append at the live offset, or refuse
@@ -824,10 +864,12 @@ trait ResolveAccumAppend<T: ColumnValue, I> {
 ```
 
 The bridges are implemented by a runner's context and called by this
-crate's accessors, the read and the write with the position an `Index`
-carries. They stay `unsafe`, since they are the plumbing's half: a read
-or a write takes a bare position, and an append asks that its caller
-holds the accumulator's one appender slot. This crate's `append` calls
+crate's accessors. They are `unsafe`, since they are the plumbing's
+half: a read or a write takes a bare position, and an append asks that
+its caller holds the accumulator's one appender slot. `map` is provided
+by a runner over the same bridges, with the positions it walks itself.
+The accumulator reader of a maintenance unit resolves through a
+`ResolveAccumRead` bridge of the same shape. This crate's `append` calls
 it for a unit that declared the accumulator, and the runner that hands
 a unit its context owes the rest: the context reaches one thread at a
 time, and a runner that splits a unit over threads gives each thread a
@@ -857,6 +899,7 @@ provider_generic!(<W: AccessSet> ColumnWriterApi as HasColumnWriter => writer);
 provider_generic!(<R: AccessSet> ResourceProviderApi as HasResourceProvider => resources);
 provider_generic!(<W: AccessSet> VirtualFirerApi as HasVirtualFirer => virtuals);
 provider_generic!(<W: AccessSet> AccumWriterApi as HasAccumWriter => accums);
+provider_generic!(<R: AccessSet> AccumReaderApi as HasAccumReader => appended); // maintenance contexts only
 provider_generic2!(<R: AccessSet, W: AccessSet> EachApi as HasEach => each);
 provider_generic2!(<R: AccessSet, W: AccessSet> BatchApi as HasBatch => batch);
 provider_generic2!(<R: AccessSet, W: AccessSet> ReduceApi as HasReduce => reduce);
@@ -885,10 +928,9 @@ contexts via the const-arith surface on `arvo::USize`.
 
 `&self` receiver on every provider method is load-bearing: prevents
 LLVM noalias metadata that would reorder writes across fused WUs.
-The engine proves the ownership discipline of a write at plan time,
-and the `Index` a write takes carries that proof to the call, which is
-why `read` and `write` are safe to call. An append carries no index and
-is safe for the reasons given with it above.
+Raw-pointer access `unsafe read / write` pinky-swears ownership
+discipline that the engine proves at plan time. An append takes no
+position and is safe for the reasons given with it above.
 
 ## Foundational primitives for Kit (domain 23, )
 
@@ -924,25 +966,23 @@ impl WorkUnitBundle for Empty {
  type AccumWrite = Empty;
 }
 
-// R and Wr stand for the unit's declared stores,
-// <W::Dispatch as Declares<W>>::Read and ::Write.
-impl<W: BuilderInput, T: WorkUnitBundle> WorkUnitBundle for Cons<W, T>
+impl<W: WorkUnit, T: WorkUnitBundle> WorkUnitBundle for Cons<W, T>
 where
- W::Dispatch: Declares<W>,
- R: Concat<T::AccumRead>,
- Wr: Concat<T::AccumWrite>,
- <R as Concat<T::AccumRead>>::Out: AccessSet,
- <Wr as Concat<T::AccumWrite>>::Out: AccessSet,
+ W::Read: Concat<T::AccumRead>,
+ W::Write: Concat<T::AccumWrite>,
+ <W::Read as Concat<T::AccumRead>>::Out: AccessSet,
+ <W::Write as Concat<T::AccumWrite>>::Out: AccessSet,
 {
- type AccumRead = <R as Concat<T::AccumRead>>::Out;
- type AccumWrite = <Wr as Concat<T::AccumWrite>>::Out;
+ type AccumRead = <W::Read as Concat<T::AccumRead>>::Out;
+ type AccumWrite = <W::Write as Concat<T::AccumWrite>>::Out;
 }
 ```
 
-A `WorkUnitBundle` is a list of units of either form with
+A `WorkUnitBundle` is a list of `WorkUnit`s with
 projected per-bundle `AccumRead` and `AccumWrite` totals. The two
-recursive impls accumulate each unit's declared read and write stores,
-read through `Declares`, via `Concat`. The accumulator carries duplicates (the same store
+recursive impls accumulate each unit's `Read` and `Write` lists via
+`Concat`, members as the unit wrote them, so a wrapper reaches the
+totals as a wrapper and `HoldsAll` resolves it to its store. The accumulator carries duplicates (the same store
 appearing in multiple WUs' Read sets shows up once per
 occurrence); logical dedup via `#[marker] Contains` makes
 duplicates correctness-irrelevant. See the audit M2 investigation
@@ -960,8 +1000,8 @@ impl<H, T: StoreBundle> StoreBundle for Cons<H, T> {}
 A marker trait for the Kit's `Owned` declarations. Two-impl
 recursive shape. No projections; the bundle's content is read by
 the engine's `KitDispatch<K>` routing during `.with(MyKit)`, not by
-the trait itself. `StoreBundle` carries `Resource<T>`, `Column<T, D>`,
-`Buffered<T, D>`, `Accum<T>`, `Virtual<T>`, `Extent<D>` and
+the trait itself. `StoreBundle` carries `Resource<T>`, `Column<T>`,
+`Accum<T>`, `Virtual<T>` and
 `LinkedBin<T: ?Sized>` markers in the list
 shape produced by `read!` / `write!` macros from a flat-list syntax.
 
@@ -1011,8 +1051,8 @@ primitives can be read in context.
 The trait carries no `Required` member and no `requirements_doc()`
 helper. "What a kit requires" lives in prose (the kit author lists
 required external Resources in the Kit's rustdoc). The typestate
-proves correctness via `ContainsAll<AccumRead>` plus
-`ContainsAll<AccumWrite>` at `.build()`; the resulting compile
+proves correctness via `HoldsAll<AccumRead>` plus
+`HoldsAll<AccumWrite>` at `.build()`; the resulting compile
 error names the missing marker on the first inline line of the
 diagnostic per the S1b depth-5 sketch outcome.
 
@@ -1021,16 +1061,19 @@ diagnostic per the S1b depth-5 sketch outcome.
 `ContainsAll<L>` is the shared list crate's, like `Contains`: a list
 holds every member of `L`. Its message cannot name the member that is
 missing, so the bounds of `.build()` are written on `HoldsAll<L>`, the
-api's walk of `L` that asks `Holds` of each member and so reports the
-missing store by type (see "`Contains` diagnostic" below).
+api's walk of `L` that asks `Holds` of the store each member stands for
+(`Member::Store`, so a wrapper is resolved to its store here) and so
+reports the missing store by type (see "`Contains` diagnostic" below).
 
-Replaces the deleted `Buildable<Stores>` and `WuSatisfied<A>`
-traits. Two-impl recursive shape: empty list trivially contained;
-non-empty list satisfies when the head is contained and the tail
-is recursively contained. The `#[marker]` attribute permits the
-overlapping resolution shape Contains relies on. Sealed in the shared
-crate by its `List` supertrait; consumers cannot impl it
-directly because the only legitimate shape is the recursive walk.
+`HoldsAll` replaces the deleted `Buildable<Stores>` and `WuSatisfied<A>`
+traits. Two-impl recursive shape: the empty list is trivially held, and
+a non-empty list is held when the head's store is held and the tail is
+recursively held. The two impls are on `Empty` and on `Cons`, so they do
+not overlap and `HoldsAll` is no marker trait. The overlap is in
+`Contains` alone, underneath `Holds`, where the `#[marker]` attribute
+permits it. `ContainsAll` is sealed in the shared crate by its `List`
+supertrait, and `HoldsAll` is sealed here, because the only legitimate
+shape of either is the recursive walk.
 
 The trait solver's recursion grows with the length of `L`, which
 equals the count of distinct Read/Write records across all WUs in
@@ -1190,12 +1233,11 @@ where Wus: WorkUnitBundle, Stores: AccessSet + StoreBundle
 This unfolds via the recursive `HoldsAll` impl into the
 conjunction of per-store `Contains<...>` proofs against `Stores`.
 The recursion impl on `Contains` handles arbitrary-depth
-`Stores` accumulators. `build` takes the storage and no record count,
-and adds one bound per domain: the store list holds an `Extent<D>` for
-the domain `D` of every `Column` and `Buffered` store in it. With `#[marker]` on both `Contains` and
-`ContainsAll`, the trait solver picks any matching impl and stops;
-duplicates in `Wus::AccumRead/Write` extend traversal length but
-do not duplicate proof work.
+`Stores` accumulators. `build` takes the storage and the record count,
+as before. With `#[marker]` on `Contains`, the trait solver picks any
+matching impl of a membership and stops; duplicates in
+`Wus::AccumRead/Write` extend the `HoldsAll` walk by their length but
+do not duplicate proof work inside a membership.
 
 When a consumer registers a WU via `.with(MyWu)` whose `Read`
 mentions a store not added via `.with(Resource::new(value))` /
@@ -1447,12 +1489,6 @@ holding one is guaranteed the underlying storage is not written for
 the snapshot's lifetime and that its content matches what the store
 held at the captured phase.
 
-The committed side of a `Buffered` store is the same guarantee given to
-columns across a pass: what a reader sees is what the store held when
-the pass began, and nothing writes it until the close. The snapshot
-stays the form for a resource at a phase boundary, and neither is built
-on the other.
-
 Use case: `AdaptWu` at `ScheduleEnd` observes the snapshot of
 `AdaptMetrics` to derive `predicted_wait_ns[]` writes for the next
 frame. Pure read.
@@ -1536,11 +1572,11 @@ append path is the same under both: it refuses and counts, and no write passes
 the capacity. The assert fires at the close, on the thread that called the run,
 after every worker has re-parked, so it never stalls a `run_parallel` join.
 
-A `Buffered` store is under the same choice and has nothing to refuse
-today: it has no append, and its committed and staged buffers are both
-sized from its domain's record count, so a write to it lands on a record
-that exists. A store kind that can be asked for more than it reserved
+A store that can be asked during a run for more than it reserved
 concludes through `RunCfg::Overflow` and adds no second configuration.
+A record count replaced past a column's capacity is asked between
+passes, is refused at the call as a value (see "Record counts"), and is
+no part of a run's output.
 
 ### Lifetime contract
 
