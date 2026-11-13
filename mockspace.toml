@@ -307,6 +307,10 @@ mockspace-extra-lints = { git = "ssh://git@github.com/orgrinrt/mockspace-hilavit
 [lints.writing-style]
 severity = "advisory"
 
+# Every ignored test names a row of this ledger, or a row of the registry.
+[lints.catalogue-ignore]
+ledgers = "mock/catalogue.md"
+
 # ---------------------------------------------------------------------------
 # Primitive-substrate introducers (task #125)
 # ---------------------------------------------------------------------------

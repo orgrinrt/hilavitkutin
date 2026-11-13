@@ -149,7 +149,7 @@ fn an_executor_narrower_than_the_plan_gets_its_own_count() {
 }
 
 #[test]
-#[ignore = "catalogue: run_parallel hands out one closure per clamped worker, not min(worker_count, parallelisable_width + 1) as the principles bound it; tracked: FIXME in scheduler/run_parallel.rs"]
+#[ignore = "catalogue: run_parallel hands out one closure per clamped worker, not min(worker_count, parallelisable_width + 1) as the principles bound it; tracked #hilavitkutin_catalogue_run_parallel_hands_out_one_closure_pe"]
 fn an_executor_wider_than_the_plan_gets_width_plus_one() {
     const REPORTED: usize = 8;
     let pool = Reports::<REPORTED>::new();

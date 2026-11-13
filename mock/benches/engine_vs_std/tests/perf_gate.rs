@@ -36,8 +36,17 @@
 //! unambiguously a perf result and never two arms that diverged.
 
 use engine_vs_std::{
-    Mode, SIZES, STARTUP_TOLERANCE, WORKLOADS, WorkloadMeasure, accumulator, branching,
-    element_wise, expected_ratio, measure, wide_parallel,
+    Mode,
+    SIZES,
+    STARTUP_TOLERANCE,
+    WORKLOADS,
+    WorkloadMeasure,
+    accumulator,
+    branching,
+    element_wise,
+    expected_ratio,
+    measure,
+    wide_parallel,
 };
 
 fn assert_checksum(m: &WorkloadMeasure) {
@@ -120,43 +129,43 @@ fn parallel_gate(name: &'static str) {
 }
 
 #[test]
-#[ignore = "perf oracle; run: cargo test --release -- --ignored"]
+#[ignore = "catalogue: perf oracle, a timing assertion that means something only in release; run: cargo test --release -- --ignored; tracked #hilavitkutin_catalogue_engine_vs_std_perf_oracles_are_timing"]
 fn runtime_element_wise() {
     runtime_gate(element_wise::NAME);
 }
 
 #[test]
-#[ignore = "perf oracle; run: cargo test --release -- --ignored"]
+#[ignore = "catalogue: perf oracle, a timing assertion that means something only in release; run: cargo test --release -- --ignored; tracked #hilavitkutin_catalogue_engine_vs_std_perf_oracles_are_timing"]
 fn runtime_branching() {
     runtime_gate(branching::NAME);
 }
 
 #[test]
-#[ignore = "perf oracle; run: cargo test --release -- --ignored"]
+#[ignore = "catalogue: perf oracle, a timing assertion that means something only in release; run: cargo test --release -- --ignored; tracked #hilavitkutin_catalogue_engine_vs_std_perf_oracles_are_timing"]
 fn runtime_accumulator() {
     runtime_gate(accumulator::NAME);
 }
 
 #[test]
-#[ignore = "perf oracle; run: cargo test --release -- --ignored"]
+#[ignore = "catalogue: perf oracle, a timing assertion that means something only in release; run: cargo test --release -- --ignored; tracked #hilavitkutin_catalogue_engine_vs_std_perf_oracles_are_timing"]
 fn runtime_wide_parallel() {
     runtime_gate(wide_parallel::NAME);
 }
 
 #[test]
-#[ignore = "perf oracle, the multi-threaded win path; run: cargo test --release -- --ignored"]
+#[ignore = "catalogue: perf oracle for the multi-threaded win path, a timing assertion that means something only in release; run: cargo test --release -- --ignored; tracked #hilavitkutin_catalogue_engine_vs_std_perf_oracles_are_timing"]
 fn parallel_wide_parallel() {
     parallel_gate(wide_parallel::NAME);
 }
 
 #[test]
-#[ignore = "perf oracle; run: cargo test --release -- --ignored"]
+#[ignore = "catalogue: perf oracle, a timing assertion that means something only in release; run: cargo test --release -- --ignored; tracked #hilavitkutin_catalogue_engine_vs_std_perf_oracles_are_timing"]
 fn parallel_accumulator() {
     parallel_gate(accumulator::NAME);
 }
 
 #[test]
-#[ignore = "perf oracle; run: cargo test --release -- --ignored"]
+#[ignore = "catalogue: perf oracle, a timing assertion that means something only in release; run: cargo test --release -- --ignored; tracked #hilavitkutin_catalogue_engine_vs_std_perf_oracles_are_timing"]
 fn startup_largest_size() {
     let n = *SIZES.iter().max().expect("SIZES is non-empty");
     let mut report = String::new();

@@ -28,7 +28,7 @@ use crate::run_cfg::RunCfgDispatch;
 use crate::work_unit_values::WuAppend;
 
 mod sealed {
-    pub trait Sealed {}
+    pub(crate) trait Sealed {}
 }
 
 /// A value-carrying registration list aligned with the `Stores`
@@ -36,6 +36,7 @@ mod sealed {
 ///
 /// Sealed: only `SvEmpty` and `Sv` inhabit it, so the builder's
 /// store-value accumulator cannot be forged by a consumer.
+#[allow(private_bounds)]
 pub trait StoreValues: sealed::Sealed {}
 
 /// The empty store-value list, the builder's initial store-value

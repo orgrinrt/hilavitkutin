@@ -16,7 +16,7 @@ use arvo::strategy::{Additive, Identity, Multiplicative};
 use crate::access::{Cons, Empty};
 
 mod depth_sealed {
-    pub trait Sealed {}
+    pub(crate) trait Sealed {}
 }
 
 /// Total cons-list element count.
