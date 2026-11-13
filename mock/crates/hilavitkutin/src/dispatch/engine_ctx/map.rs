@@ -188,7 +188,9 @@ unsafe fn land_compared<T: ColumnValue + PartialEq, K: ColKind, MP: MetaRank>(
         // The live side takes the value whatever the frozen side holds, so
         // that the two are equal after the boundary. The change is against
         // the frozen side, the value the pass read.
-        // SAFETY: the caller's guarantee; the frozen side is unwritten.
+        // SAFETY: the caller's guarantee. The frozen side holds a value at
+        // every record from the drain on, which wrote the store's start to
+        // both sides, and no unit writes it while the pass runs.
         let changed = unsafe { core::ptr::read(col.read.as_ptr().add(at.0)) != v };
         // SAFETY: the caller's guarantee.
         unsafe { core::ptr::write(col.write.as_ptr().add(at.0), v) };

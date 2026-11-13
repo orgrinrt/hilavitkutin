@@ -441,12 +441,18 @@ where
     ) -> notko::Outcome<Self::Bindings, BuildError> {
         // Two reservations of one layout, the live side and the frozen one,
         // at two storage ids one after the other. The store is one store in
-        // every access mask all the same.
+        // every access mask all the same. Every record of both holds the
+        // value the store was registered with once the drain returns, so no
+        // read of a pass reaches a record nothing wrote.
         let (carrier, rest) = self.into_parts();
-        let _start = carrier.into_inner();
-        drain_column::<T, M, CS, _>(cs, next_id, record_count, |cs, next_id| {
+        let start = carrier.into_inner();
+        let drained = drain_column::<T, M, CS, _>(cs, next_id, record_count, |cs, next_id| {
             <L as DrainStores>::drain(rest, cs, next_id, record_count)
-        })
+        });
+        if let notko::Outcome::Ok(binding) = &drained {
+            binding.start_from(start);
+        }
+        drained
     }
 }
 
