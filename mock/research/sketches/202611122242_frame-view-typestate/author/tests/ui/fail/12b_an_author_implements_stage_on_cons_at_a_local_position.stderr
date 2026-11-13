@@ -1,0 +1,7 @@
+error[E0046]: not all trait items implemented, missing: `seal`
+  --> tests/ui/fail/12b_an_author_implements_stage_on_cons_at_a_local_position.rs:12:1
+   |
+12 | impl Stage<World, MyPs> for Cons<Pos, Empty> {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ missing `seal` in implementation
+   |
+   = help: implement the missing item: `fn seal(_: engine::sealed::Token) { todo!() }`

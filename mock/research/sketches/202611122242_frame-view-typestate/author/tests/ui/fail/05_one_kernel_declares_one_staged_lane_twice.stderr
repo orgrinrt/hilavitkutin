@@ -1,0 +1,30 @@
+error[E0080]: evaluation panicked: a kernel declares one staged lane twice
+ --> $RUST/core/src/panic.rs
+  |
+  |           $crate::panicking::panic_fmt($crate::const_format_args!($($t)+));
+  |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ evaluation of `engine::Frame::<notko_hlist::Cons<author::Pos, notko_hlist::Cons<author::Vel, notko_hlist::Cons<author::Heat, notko_hlist::Cons<author::Landings, notko_hlist::Empty>>>>, 2>::step::<engine::Block<Twice>, notko_hlist::Cons<notko_hlist::Here, notko_hlist::Cons<notko_hlist::Here, notko_hlist::Empty>>>::{constant#0}` failed here
+  |
+ ::: $WORKSPACE/engine/src/frame.rs
+  |
+  | /             assert!(
+  | |                 K::MASK.count_ones() == K::LEN,
+  | |                 "a kernel declares one staged lane twice"
+  | |             );
+  | |_____________- in this macro invocation
+
+note: erroneous constant encountered
+ --> $WORKSPACE/engine/src/frame.rs
+  |
+  | /         const {
+  | |             assert!(
+  | |                 K::MASK.count_ones() == K::LEN,
+  | |                 "a kernel declares one staged lane twice"
+  | |             );
+  | |         }
+  | |_________^
+
+note: the above error was encountered while instantiating `fn Frame::<Cons<Pos, Cons<Vel, Cons<Heat, Cons<Landings, notko_hlist::Empty>>>>, 2>::step::<Block<Twice>, Cons<Here, Cons<Here, notko_hlist::Empty>>>`
+  --> tests/ui/fail/05_one_kernel_declares_one_staged_lane_twice.rs:19:5
+   |
+19 |     Frame::<World, 2>::new().step(Block(Twice));
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -1,0 +1,18 @@
+error[E0277]: `Pos` is not a landed store
+  --> tests/ui/fail/08b_a_close_unit_names_a_frame_lane.rs:11:19
+   |
+11 |     type Stores = Cons<Pos, Empty>;
+   |                   ^^^^^^^^^^^^^^^^ the trait `LandedStore` is not implemented for `Pos`
+   |
+   = note: A close unit's list names landed stores only. A frame lane is read through the step's view.
+help: the trait `LandedStore` is implemented for `Landings`
+  --> src/lib.rs
+   |
+   | impl LandedStore for Landings {}
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   = note: required for `Cons<Pos, notko_hlist::Empty>` to implement `LandedList`
+note: required by a bound in `engine::CloseUnit::Stores`
+  --> $WORKSPACE/engine/src/kernel.rs
+   |
+   |     type Stores: LandedList;
+   |                  ^^^^^^^^^^ required by this bound in `CloseUnit::Stores`
