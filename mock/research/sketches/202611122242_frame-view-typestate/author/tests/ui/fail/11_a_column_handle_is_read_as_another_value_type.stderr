@@ -1,7 +1,7 @@
 error[E0308]: mismatched types
-  --> tests/ui/fail/11_a_column_handle_is_read_as_another_value_type.rs:13:25
+  --> tests/ui/fail/11_a_column_handle_is_read_as_another_value_type.rs:16:25
    |
-13 |     let read = view.get(count, row);
+16 |     let read = view.get(count, row);
    |                     --- ^^^^^ expected `Column<i64>`, found `Column<u32>`
    |                     |
    |                     arguments to this method are incorrect
