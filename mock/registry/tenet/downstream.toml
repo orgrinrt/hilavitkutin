@@ -2,7 +2,7 @@
 
 [[tenet]]
 id = "the_per_project_defaults_are_sequential_for_polka_dots_mixed_for_saalis_and_phased_with_convergence_for_loimu"
-what = "The per-project strategy defaults follow the project's record count and pipeline shape: polka-dots with about 200 records and a deep pipeline runs sequentially in about a microsecond, saalis with 10K to 100K records and a mixed shape runs sequentially for deep pipelines and adaptively for wide ones, and loimu with 100K to 10M records and a wide shape runs phased with convergence."
+what = "In the founding record, the per-project strategy defaults follow the project's record count and pipeline shape: polka-dots with about 200 records and a deep pipeline runs sequentially in about a microsecond, saalis with 10K to 100K records and a mixed shape runs sequentially for deep pipelines and adaptively for wide ones, and loimu with 100K to 10M records and a wide shape runs phased with convergence."
 mechanism = "polka-dots: ~200 records, deep, sequential, 1µs total. saalis: 10K-100K, mixed, sequential for deep, adaptive for wide. loimu: 100K-10M, wide, phased with convergence."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1964-1970"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#21-scheduling-strategy"]
@@ -22,7 +22,7 @@ keywords = ["per-project defaults", "polka-dots", "saalis", "loimu", "sequential
 
 [[tenet]]
 id = "polka_and_saalis_use_the_full_pipeline_and_loimu_uses_only_the_scheduler_abstractions"
-what = "polka and saalis use the full pipeline, and loimu uses the scheduler abstractions only."
+what = "In the founding record, polka and saalis use the full pipeline, and loimu uses the scheduler abstractions only."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2282-2283"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
 quote = '''
