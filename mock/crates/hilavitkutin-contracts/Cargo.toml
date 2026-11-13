@@ -1,0 +1,11 @@
+[package]
+name = "hilavitkutin-contracts"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "The loop core contracts: numbers, domains, kernels, stores, visits and the bind"
+repository.workspace = true
+
+[dependencies]
+notko.workspace = true
+notko-hlist.workspace = true

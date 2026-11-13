@@ -1,0 +1,13 @@
+error[E0053]: method `at` has an incompatible type for trait
+  --> tests/ui/fail/undeclared_read.rs:16:31
+   |
+16 |     fn at((here, (east, ())): (L, (L, ()))) -> (L, ()) {
+   |                               ^^^^^^^^^^^^ expected `()`, found `(Int<16>, ())`
+   |
+   = note: expected signature `fn((hilavitkutin_contracts::num::Int<16>, ())) -> (hilavitkutin_contracts::num::Int<16>, ())`
+              found signature `fn((hilavitkutin_contracts::num::Int<16>, (hilavitkutin_contracts::num::Int<16>, ()))) -> (hilavitkutin_contracts::num::Int<16>, ())`
+help: change the parameter type to match the trait
+   |
+16 -     fn at((here, (east, ())): (L, (L, ()))) -> (L, ()) {
+16 +     fn at((here, (east, ())): (hilavitkutin_contracts::num::Int<16>, ())) -> (L, ()) {
+   |

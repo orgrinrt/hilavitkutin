@@ -1,0 +1,66 @@
+//! Tests for `frozen-no-feature-gate`: each refused shape, and each
+//! look-alike that has to pass.
+
+use super::*;
+
+fn lines(text: &str) -> Vec<usize> {
+    findings(text).into_iter().map(|f| f.line).collect()
+}
+
+#[test]
+fn a_feature_attribute_is_refused() {
+    assert_eq!(lines("#![no_std]\n#![feature(const_trait_impl)]\n"), vec![
+        2
+    ]);
+}
+
+#[test]
+fn spacing_does_not_hide_it() {
+    assert_eq!(lines("# ! [ feature ( adt_const_params ) ]\n"), vec![1]);
+}
+
+#[test]
+fn a_feature_under_cfg_attr_is_refused() {
+    assert_eq!(lines("#![cfg_attr(test, feature(test))]\n"), vec![1]);
+}
+
+#[test]
+fn the_shipped_attributes_pass() {
+    assert!(lines("#![no_std]\n#![deny(unsafe_op_in_unsafe_fn)]\n").is_empty());
+}
+
+#[test]
+fn a_cargo_feature_cfg_passes() {
+    assert!(
+        lines(
+            "#![cfg_attr(feature = \"x\", allow(dead_code))]\n#[cfg(feature = \"x\")]\nfn f() {}\n"
+        )
+        .is_empty()
+    );
+}
+
+#[test]
+fn an_identifier_ending_in_feature_passes() {
+    assert!(lines("#![cfg_attr(test, no_feature(x))]\n").is_empty());
+}
+
+#[test]
+fn comments_and_strings_are_not_read() {
+    assert!(
+        lines("// #![feature(x)]\n/// #![feature(x)]\nconst S: &str = \"#![feature(x)]\";\n")
+            .is_empty()
+    );
+}
+
+#[test]
+fn the_escape_lets_one_line_pass() {
+    assert!(lines("#![feature(x)] // lint:allow(frozen-no-feature-gate) probing\n").is_empty());
+}
+
+#[test]
+fn every_crate_but_the_frozen_two_is_out_of_reach() {
+    assert!(scan::applies_to("hilavitkutin-frozen-authors"));
+    assert!(scan::applies_to("hilavitkutin-frozen-implementors"));
+    assert!(!scan::applies_to("hilavitkutin-contracts"));
+    assert!(!scan::applies_to("hilavitkutin"));
+}

@@ -1,5 +1,9 @@
 //! hilavitkutin-api: consumer-facing contracts.
 //!
+//! The legacy contract: kept until the engine is ported onto
+//! `hilavitkutin-contracts`, and then removed. New work is written against
+//! `hilavitkutin-contracts`.
+//!
 //! Traits, marker types, and platform contracts that downstream
 //! pipelines build WorkUnits against. The engine crate
 //! (`hilavitkutin`) consumes the same surface.

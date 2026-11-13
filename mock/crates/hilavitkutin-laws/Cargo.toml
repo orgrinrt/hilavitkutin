@@ -1,0 +1,10 @@
+[package]
+name = "hilavitkutin-laws"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "The laws a loop core run is held to, and the ledger check of the frozen crates"
+repository.workspace = true
+
+[dependencies]
+hilavitkutin-contracts.workspace = true

@@ -1,0 +1,29 @@
+# One line per frozen file: path, form, content hash, breaks so far, locked.
+
+[[file]]
+path = "src/lib.rs"
+form = "crate"
+hash = "fnv1a64:07c82ab22261e276"
+breaks = 0
+locked = false
+
+[[file]]
+path = "src/plane.rs"
+form = "domain"
+hash = "fnv1a64:a7350a3342fbc234"
+breaks = 0
+locked = false
+
+[[file]]
+path = "src/diffuse.rs"
+form = "value-kernel"
+hash = "fnv1a64:007bb75e99631e14"
+breaks = 0
+locked = false
+
+[[file]]
+path = "src/model.rs"
+form = "model"
+hash = "fnv1a64:30262a313e98a861"
+breaks = 0
+locked = false

@@ -1,0 +1,16 @@
+[package]
+name = "hilavitkutin-reference"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "The reference runner of the loop core: step, swap, digest and run"
+repository.workspace = true
+
+[dependencies]
+hilavitkutin-contracts.workspace = true
+
+[dev-dependencies]
+hilavitkutin-laws.workspace = true
+hilavitkutin-frozen-authors.workspace = true
+hilavitkutin-frozen-implementors.workspace = true
+trybuild.workspace = true

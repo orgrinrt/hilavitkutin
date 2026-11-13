@@ -1,0 +1,22 @@
+error[E0080]: evaluation panicked: two kernels of one list declare one KernelId
+ --> $RUST/core/src/panic.rs
+  |
+  |         $crate::panicking::panic_fmt($crate::const_format_args!($($t)+));
+  |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ evaluation of `hilavitkutin_contracts::bind::bind::<hilavitkutin_frozen_authors::Plane, hilavitkutin_contracts::list::Cons<hilavitkutin_frozen_authors::Diffuse<hilavitkutin_contracts::num::Int<16>>, hilavitkutin_contracts::list::Cons<Keep, hilavitkutin_contracts::list::Empty>>, hilavitkutin_frozen_implementors::Columns<hilavitkutin_frozen_authors::Plane, 1, 4>>::{constant#0}` failed here
+  |
+ ::: $WORKSPACE/crates/hilavitkutin-contracts/src/bind/mod.rs
+  |
+  |     const { assert!(L::DISTINCT.get(), "two kernels of one list declare one KernelId") };
+  |             -------------------------------------------------------------------------- in this macro invocation
+
+note: erroneous constant encountered
+ --> $WORKSPACE/crates/hilavitkutin-contracts/src/bind/mod.rs
+  |
+  |     const { assert!(L::DISTINCT.get(), "two kernels of one list declare one KernelId") };
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+note: the above error was encountered while instantiating `fn bind::<Plane, Cons<Diffuse<hilavitkutin_contracts::num::Int<16>>, Cons<Keep, hilavitkutin_contracts::list::Empty>>, Columns<Plane, 1, 4>>`
+  --> tests/ui/fail/one_kernel_id.rs:29:17
+   |
+29 |     let bound = bind::<Plane, Cons<Diffuse<L>, Cons<Keep, Empty>>, _>(&bindings, &store);
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

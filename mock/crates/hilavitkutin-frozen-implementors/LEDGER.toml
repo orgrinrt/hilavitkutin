@@ -1,0 +1,36 @@
+# One line per frozen file: path, form, content hash, breaks so far, locked.
+
+[[file]]
+path = "src/lib.rs"
+form = "crate"
+hash = "fnv1a64:13d627631815dacc"
+breaks = 0
+locked = false
+
+[[file]]
+path = "src/keys.rs"
+form = "store"
+hash = "fnv1a64:f4e0143878836fb0"
+breaks = 0
+locked = false
+
+[[file]]
+path = "src/columns.rs"
+form = "store"
+hash = "fnv1a64:eed669eb085e8ffd"
+breaks = 0
+locked = false
+
+[[file]]
+path = "src/records.rs"
+form = "store"
+hash = "fnv1a64:b8f42abe7ab44424"
+breaks = 0
+locked = false
+
+[[file]]
+path = "src/visit.rs"
+form = "visit"
+hash = "fnv1a64:c95f12b572c6fe0d"
+breaks = 0
+locked = false

@@ -3,6 +3,15 @@
 version = 4
 
 [[package]]
+name = "aho-corasick"
+version = "1.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c982642fa9e8606056828ee9a8505737230110bb1099153c79efe865c59d12ba"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
 name = "arvo"
 version = "0.1.0"
 source = "git+ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e92ad2b8176c2177d72a9cffa161b7b92e"
@@ -174,16 +183,39 @@ dependencies = [
 ]
 
 [[package]]
+name = "cc"
+version = "1.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ff2a8126fff0f8c839080d619675a585e61720bb12d2baceae45769fd66f155"
+dependencies = [
+ "find-msvc-tools",
+ "shlex",
+]
+
+[[package]]
 name = "cfg-if"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4e7648175b45a9a48536d676f68d918270699102aa8dab5496df06904c914600"
 
 [[package]]
+name = "cross-target"
+version = "0.1.0"
+dependencies = [
+ "mockspace-lint-rules",
+]
+
+[[package]]
 name = "equivalent"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
+
+[[package]]
+name = "find-msvc-tools"
+version = "0.1.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1c66915cc5391097de7a2b0b972e8505aa33c0df401fd3a6811dbdb32881ba48"
 
 [[package]]
 name = "glob"
@@ -248,6 +280,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "hilavitkutin-contracts"
+version = "0.1.0"
+dependencies = [
+ "notko",
+ "notko-hlist",
+]
+
+[[package]]
 name = "hilavitkutin-ctx"
 version = "0.1.0"
 
@@ -273,10 +313,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "hilavitkutin-frozen-authors"
+version = "0.1.0"
+dependencies = [
+ "hilavitkutin-contracts",
+ "hilavitkutin-laws",
+]
+
+[[package]]
+name = "hilavitkutin-frozen-implementors"
+version = "0.1.0"
+dependencies = [
+ "hilavitkutin-contracts",
+ "hilavitkutin-laws",
+]
+
+[[package]]
 name = "hilavitkutin-kit"
 version = "0.1.0"
 dependencies = [
  "hilavitkutin-api",
+]
+
+[[package]]
+name = "hilavitkutin-laws"
+version = "0.1.0"
+dependencies = [
+ "hilavitkutin-contracts",
 ]
 
 [[package]]
@@ -315,6 +378,17 @@ dependencies = [
  "hilavitkutin-kit",
  "hilavitkutin-str",
  "notko",
+]
+
+[[package]]
+name = "hilavitkutin-reference"
+version = "0.1.0"
+dependencies = [
+ "hilavitkutin-contracts",
+ "hilavitkutin-frozen-authors",
+ "hilavitkutin-frozen-implementors",
+ "hilavitkutin-laws",
+ "trybuild",
 ]
 
 [[package]]
@@ -376,9 +450,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 
 [[package]]
+name = "mockspace-lint-rules"
+version = "0.0.0"
+source = "git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=dev#90b53199f8442de8162dfecf160fe0e830146a62"
+dependencies = [
+ "mockspace-verdicts",
+ "toml 0.8.23",
+ "tree-sitter",
+ "tree-sitter-rust",
+]
+
+[[package]]
+name = "mockspace-verdicts"
+version = "0.0.0"
+source = "git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=dev#90b53199f8442de8162dfecf160fe0e830146a62"
+
+[[package]]
 name = "notko"
 version = "0.0.1"
-source = "git+ssh://git@github.com/orgrinrt/notko.git?branch=dev#1a978e5c2db6c8f68bf94a6fcae266394f172b17"
+source = "git+ssh://git@github.com/orgrinrt/notko.git?branch=dev#0a13d99a33027ad1314e5da2c036dffab8d061e5"
+
+[[package]]
+name = "notko-hlist"
+version = "0.0.1"
+source = "git+ssh://git@github.com/orgrinrt/notko.git?branch=dev#0a13d99a33027ad1314e5da2c036dffab8d061e5"
 
 [[package]]
 name = "proc-macro2"
@@ -397,6 +492,35 @@ checksum = "1fbf4db142a473a8d80c26bbf18454ed458bf8d26c8219c331daecfdbd079001"
 dependencies = [
  "proc-macro2",
 ]
+
+[[package]]
+name = "regex"
+version = "1.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f020237b6c8eed93db2e2cb53c00c60a8e1bc73da7d073199a1180401450218d"
+dependencies = [
+ "aho-corasick",
+ "memchr",
+ "regex-automata",
+ "regex-syntax",
+]
+
+[[package]]
+name = "regex-automata"
+version = "0.4.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ad8553b9b26413251cbf30e620595c7a41b3887f03da04579c0e6b0d6a06b4b2"
+dependencies = [
+ "aho-corasick",
+ "memchr",
+ "regex-syntax",
+]
+
+[[package]]
+name = "regex-syntax"
+version = "0.8.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 
 [[package]]
 name = "serde"
@@ -442,12 +566,33 @@ dependencies = [
 
 [[package]]
 name = "serde_spanned"
+version = "0.6.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bf41e0cfaf7226dca15e8197172c295a782857fcb97fad1808a166870dee75a3"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "serde_spanned"
 version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6662b5879511e06e8999a8a235d848113e942c9124f211511b16466ee2995f26"
 dependencies = [
  "serde_core",
 ]
+
+[[package]]
+name = "shlex"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba"
+
+[[package]]
+name = "streaming-iterator"
+version = "0.1.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b2231b7c3057d5e4ad0156fb3dc807d900806020c5ffa3ee6ff2c8c76fb8520"
 
 [[package]]
 name = "syn"
@@ -488,17 +633,38 @@ dependencies = [
 
 [[package]]
 name = "toml"
+version = "0.8.23"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dc1beb996b9d83529a9e75c17a1686767d148d70663143c7854d8b4a09ced362"
+dependencies = [
+ "serde",
+ "serde_spanned 0.6.9",
+ "toml_datetime 0.6.11",
+ "toml_edit",
+]
+
+[[package]]
+name = "toml"
 version = "1.1.6+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "920602543f0911ab71da12c50d59701da54c196d1a2bf5cb4b75667f137a406a"
 dependencies = [
  "indexmap",
  "serde_core",
- "serde_spanned",
- "toml_datetime",
+ "serde_spanned 1.1.1",
+ "toml_datetime 1.1.1+spec-1.1.0",
  "toml_parser",
  "toml_writer",
- "winnow",
+ "winnow 1.0.4",
+]
+
+[[package]]
+name = "toml_datetime"
+version = "0.6.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "22cddaf88f4fbc13c51aebbf5f8eceb5c7c5a9da2ac40a13519eb5b0a0e8f11c"
+dependencies = [
+ "serde",
 ]
 
 [[package]]
@@ -511,12 +677,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "toml_edit"
+version = "0.22.27"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "41fe8c660ae4257887cf66394862d21dbca4a6ddd26f04a3560410406a2f819a"
+dependencies = [
+ "indexmap",
+ "serde",
+ "serde_spanned 0.6.9",
+ "toml_datetime 0.6.11",
+ "winnow 0.7.15",
+]
+
+[[package]]
 name = "toml_parser"
 version = "1.1.3+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1d38ac1cf9b95face32296c0a3ede1fdc270627c9d9c02a7274dd6d960dc4d56"
 dependencies = [
- "winnow",
+ "winnow 1.0.4",
 ]
 
 [[package]]
@@ -526,10 +705,39 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7d56353a2a665ad0f41a421187180aab746c8c325620617ad883a99a1cbe66d2"
 
 [[package]]
-name = "trybuild"
-version = "1.0.121"
+name = "tree-sitter"
+version = "0.24.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c0cabaa10be1917331a313866bd94526343e03c77bcf69144b62b072ad35d47c"
+checksum = "a5387dffa7ffc7d2dae12b50c6f7aab8ff79d6210147c6613561fc3d474c6f75"
+dependencies = [
+ "cc",
+ "regex",
+ "regex-syntax",
+ "streaming-iterator",
+ "tree-sitter-language",
+]
+
+[[package]]
+name = "tree-sitter-language"
+version = "0.1.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d0af592be68c579aa78a16846bd19422978c3c52e438523d45ff5d1bff1f9d4a"
+
+[[package]]
+name = "tree-sitter-rust"
+version = "0.23.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ca8ccb3e3a3495c8a943f6c3fd24c3804c471fd7f4f16087623c7fa4c0068e8a"
+dependencies = [
+ "cc",
+ "tree-sitter-language",
+]
+
+[[package]]
+name = "trybuild"
+version = "1.0.122"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "62db9c92d704393fbf2132041720cc80b689f2d3f28521015c2ac866223c11b8"
 dependencies = [
  "glob",
  "serde",
@@ -537,7 +745,7 @@ dependencies = [
  "serde_json",
  "target-tuple",
  "termcolor",
- "toml",
+ "toml 1.1.6+spec-1.1.0",
 ]
 
 [[package]]
@@ -642,6 +850,15 @@ name = "windows_x86_64_msvc"
 version = "0.52.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec"
+
+[[package]]
+name = "winnow"
+version = "0.7.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "df79d97927682d2fd8adb29682d1140b343be4ac0f08fd68b7765d9c059d3945"
+dependencies = [
+ "memchr",
+]
 
 [[package]]
 name = "winnow"

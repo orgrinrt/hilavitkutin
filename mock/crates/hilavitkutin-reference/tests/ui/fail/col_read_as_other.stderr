@@ -1,0 +1,17 @@
+error[E0308]: mismatched types
+ --> tests/ui/fail/col_read_as_other.rs:8:19
+  |
+7 | fn read<R: Read<Plane>>(committed: &R, col: Col<Plane, Int<16>>) -> Int<32> {
+  |                                                                     ------- this return type influences the call expression's return type
+8 |     committed.get(col, Index::FIRST)
+  |               --- ^^^ expected `32`, found `16`
+  |               |
+  |               arguments to this method are incorrect
+  |
+  = note: expected struct `Col<Plane, hilavitkutin_contracts::num::Int<32>>`
+             found struct `Col<Plane, hilavitkutin_contracts::num::Int<16>>`
+note: method defined here
+ --> $WORKSPACE/crates/hilavitkutin-contracts/src/store.rs
+  |
+  |     fn get<V: Value>(&self, col: Col<D, V>, at: Index) -> V;
+  |        ^^^

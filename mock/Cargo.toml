@@ -17,6 +17,14 @@ members = [
     "crates/hilavitkutin-linking",
     "crates/hilavitkutin-extensions",
     "crates/hilavitkutin-extensions-macros",
+    # Loop core (roadmap r7, HL0a)
+    "crates/hilavitkutin-contracts",
+    "crates/hilavitkutin-reference",
+    "crates/hilavitkutin-laws",
+    "crates/hilavitkutin-frozen-authors",
+    "crates/hilavitkutin-frozen-implementors",
+    # Project tools, run as `cargo mock <dir>`
+    "tools/cross-target",
 ]
 
 [workspace.package]
@@ -69,3 +77,13 @@ hilavitkutin-providers = { path = "crates/hilavitkutin-providers", version = "0.
 hilavitkutin-linking = { path = "crates/hilavitkutin-linking", version = "0.1.0" }
 hilavitkutin-extensions = { path = "crates/hilavitkutin-extensions", version = "0.1.0" }
 hilavitkutin-extensions-macros = { path = "crates/hilavitkutin-extensions-macros", version = "0.1.0" }
+
+# Loop core. The hlist comes from the notko repository at the same source as
+# notko, so the two unify.
+notko-hlist = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", version = "0.0.1", default-features = false, features = ["const", "membership"] }
+hilavitkutin-contracts = { path = "crates/hilavitkutin-contracts", version = "0.1.0" }
+hilavitkutin-reference = { path = "crates/hilavitkutin-reference", version = "0.1.0" }
+hilavitkutin-laws = { path = "crates/hilavitkutin-laws", version = "0.1.0" }
+hilavitkutin-frozen-authors = { path = "crates/hilavitkutin-frozen-authors", version = "0.1.0" }
+hilavitkutin-frozen-implementors = { path = "crates/hilavitkutin-frozen-implementors", version = "0.1.0" }
+trybuild = "=1.0.122"

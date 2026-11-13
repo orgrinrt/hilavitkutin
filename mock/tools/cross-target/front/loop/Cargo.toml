@@ -1,0 +1,16 @@
+[package]
+name = "cross-target-loop"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+hilavitkutin-contracts.workspace = true
+hilavitkutin-reference.workspace = true
+hilavitkutin-frozen-authors.workspace = true
+hilavitkutin-frozen-implementors.workspace = true
+
+[features]
+# The negative control: each case's first digest folds in the width of a
+# pointer, so the two targets differ. `mock cross-target --control` builds it.
+control = []

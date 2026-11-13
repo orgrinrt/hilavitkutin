@@ -1,0 +1,13 @@
+error[E0308]: mismatched types
+ --> tests/ui/fail/count_for_index.rs:5:32
+  |
+5 |     let _ = Index::FIRST.since(Count::ONE);
+  |                          ----- ^^^^^^^^^^ expected `Index`, found `Count`
+  |                          |
+  |                          arguments to this method are incorrect
+  |
+note: method defined here
+ --> $WORKSPACE/crates/hilavitkutin-contracts/src/num/index.rs
+  |
+  |     pub const fn since(self, earlier: Self) -> Maybe<Count> {
+  |                  ^^^^^

@@ -1,0 +1,9 @@
+[package]
+name = "cross-target-native"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+cross-target-loop = { path = "../loop" }
+hilavitkutin-contracts.workspace = true

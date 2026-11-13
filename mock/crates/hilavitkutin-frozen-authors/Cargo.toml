@@ -1,0 +1,13 @@
+[package]
+name = "hilavitkutin-frozen-authors"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Kernels written against the loop core contracts alone, frozen"
+repository.workspace = true
+
+[dependencies]
+hilavitkutin-contracts.workspace = true
+
+[dev-dependencies]
+hilavitkutin-laws.workspace = true

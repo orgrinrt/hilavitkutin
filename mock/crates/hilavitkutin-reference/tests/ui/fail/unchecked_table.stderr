@@ -1,0 +1,15 @@
+error[E0308]: mismatched types
+  --> tests/ui/fail/unchecked_table.rs:19:17
+   |
+19 |     let _ = run(&bindings, &mut store, &Forward, Count::ONE, Count::ONE, &mut out);
+   |             --- ^^^^^^^^^ expected `&Bound<'_, Plane, _>`, found `&[Binding<'_>; 0]`
+   |             |
+   |             arguments to this function are incorrect
+   |
+   = note: expected reference `&hilavitkutin_contracts::bind::Bound<'_, Plane, _>`
+              found reference `&[Binding<'_>; 0]`
+note: function defined here
+  --> src/lib.rs
+   |
+   | pub fn run<D: Domain, L: Kernels<D>, S: Store<D>, V: Visit>(
+   |        ^^^

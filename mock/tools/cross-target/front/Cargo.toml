@@ -1,0 +1,28 @@
+# The cross-target tool's front ends: one `no_std` loop and two thin hosts.
+# A workspace of its own, because the wasm host builds only for its own
+# target and every member is built with an aborting panic.
+[workspace]
+resolver = "3"
+members = ["loop", "native", "wasm"]
+# The wasm host builds only for `wasm32-unknown-unknown`, so a bare build
+# here leaves it out.
+default-members = ["loop", "native"]
+
+[workspace.package]
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[workspace.dependencies]
+hilavitkutin-contracts = { path = "../../../crates/hilavitkutin-contracts" }
+hilavitkutin-reference = { path = "../../../crates/hilavitkutin-reference" }
+hilavitkutin-frozen-authors = { path = "../../../crates/hilavitkutin-frozen-authors" }
+hilavitkutin-frozen-implementors = { path = "../../../crates/hilavitkutin-frozen-implementors" }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+debug = false
+strip = true
