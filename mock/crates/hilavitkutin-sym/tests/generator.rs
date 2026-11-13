@@ -1,8 +1,9 @@
+#![feature(const_trait_impl)]
 //! `Generator` contract: mints carry the domain kind, are distinct, and stay
 //! disjoint from other domains.
 
 use arvo_bits::{Bits, Hot};
-use hilavitkutin_sym::{Domain, GenerativeDomain, Generator, Standard, Sym, SymKind};
+use hilavitkutin_sym::{Domain, GenerativeDomain, Generator, Standard, Sym, SymKind, WideKind};
 use notko::Maybe;
 
 /// A generative test domain at kind `0b010` (outside the reserved string and
@@ -73,13 +74,23 @@ fn minted_handle_is_disjoint_from_string_kind() {
     assert_ne!(minted.kind(), string_kind);
 }
 
+/// A generative domain on the wide-kind shape: five bits of kind, a 26-bit
+/// counter, one origin.
+struct WideGen;
+impl Domain for WideGen {
+    type Shape = WideKind;
+
+    const KIND: SymKind<WideKind> = SymKind::new(arvo_bits::Bits::from_raw(0b01010));
+}
+impl GenerativeDomain for WideGen {}
+
 /// `Generator::single` takes no origin and returns no refusal. That is sound
 /// only while the shape it is offered on has one origin and that origin's
 /// index is in range, which is what `Generator::at` would have checked. It is
 /// also a `const fn`, so a generator can sit in a constant; the constant
 /// below stops compiling if it stops being one.
 #[test]
-fn single_is_total_because_standard_has_one_origin() {
+fn single_is_total_on_every_one_origin_shape() {
     use hilavitkutin_sym::shape::{OneOrigin, origin_index_in_range};
 
     assert!(
@@ -87,8 +98,32 @@ fn single_is_total_because_standard_has_one_origin() {
         "the one origin of the default shape must be in range, or `single` \
          skips a refusal that can happen"
     );
+    assert!(
+        origin_index_in_range::<WideKind>(OneOrigin),
+        "the one origin of the wide-kind shape must be in range too"
+    );
 
     const AT_REST: Generator<TestGen> = Generator::single();
     let mut g = AT_REST;
     assert_eq!(expect(g.mint()).kind(), TestGen::KIND);
+}
+
+#[test]
+fn single_mints_on_the_wide_kind_shape() {
+    const AT_REST: Generator<WideGen> = Generator::single();
+    let mut g = AT_REST;
+    let a = g.mint();
+    let b = g.mint();
+    match (a, b) {
+        (Maybe::Is(a), Maybe::Is(b)) => {
+            assert_ne!(a, b);
+            assert_eq!(a.kind(), WideGen::KIND);
+            assert_eq!(a.id().to_raw(), 0);
+            assert_eq!(b.id().to_raw(), 1);
+        },
+        _ => panic!("a fresh wide-kind generator mints"),
+    }
+    // `Default` is offered on the same shapes as `single`.
+    let mut d = Generator::<WideGen>::default();
+    assert!(matches!(d.mint(), Maybe::Is(_)));
 }
