@@ -35,8 +35,9 @@ impl<
     // under the maintainer's provisional stamp of 2026-11-13 ("Land as
     // provisional"), so they may be called and a ratification can still
     // change their shape. The two places this implementation differs from the
-    // specification are marked where they are, FIXME(0ba7325f0216) below and
-    // FIXME(b8637199eb8a) in `run_fused.rs`.
+    // specification are marked where they are: the placeholder below that
+    // cites `placeholders_tagged_0ba7325f0216`, and the one in `run_fused.rs`
+    // that cites `placeholders_tagged_b8637199eb8a`.
     /// Replace a plan-affecting resource and ask for a plan band.
     ///
     /// `T: PlanAffecting` routes the call onto the recompute path: the value
@@ -59,7 +60,7 @@ impl<
         // SAFETY: the binding pointer names the one-record column reserved
         // and initialised for `T` at build; `&mut self` means no frame is in
         // flight, so no reader aliases the slot during the write.
-        // FIXME(74e2b9918149): under `run_parallel` a parked worker still
+        // FIXME(placeholders_tagged_74e2b9918149): under `run_parallel` a parked worker still
         // holds a `&Scheduler` across this `&mut self`. No worker reads while
         // parked, so it is no data race, but it breaks the aliasing model
         // until the worker-visible state moves into a provider allocation.
@@ -74,7 +75,7 @@ impl<
         // gate consumes and clears the bits. Positions past the
         // `D::PlanAffecting` capacity share the last slot, which loses
         // nothing while any set bit opens the band.
-        // FIXME(0ba7325f0216): the swap specification keys this bit by the
+        // FIXME(placeholders_tagged_0ba7325f0216): the swap specification keys this bit by the
         // plan-affecting id, not by store position, and with a capacity of
         // zero there is no slot, so the bit is dropped with no signal.
         let bits = self.plan_dirty.as_ref();
@@ -110,7 +111,7 @@ impl<
         // and initialised for `V` at build; `&mut self` means no frame is in
         // flight, so no reader aliases the slot during the write. Store
         // values are `Copy` (drain contract), so the overwrite drops nothing.
-        // FIXME(74e2b9918149): the same parked-worker aliasing as in
+        // FIXME(placeholders_tagged_74e2b9918149): the same parked-worker aliasing as in
         // `replace_resource` above applies under `run_parallel`.
         unsafe {
             core::ptr::write(ptr.as_ptr(), new);

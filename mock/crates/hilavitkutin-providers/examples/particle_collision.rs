@@ -15,7 +15,7 @@
 //! in the engine crate shows a unit shape that runs.
 
 fn main() {
-    // FIXME(559df4cb0767): structural sketch of the parallel-columns +
+    // FIXME(placeholders_tagged_559df4cb0767): structural sketch of the parallel-columns +
     // per-WU access-set call-site shape; it runs nothing. Either it becomes
     // a runnable example or it is deleted.
     //

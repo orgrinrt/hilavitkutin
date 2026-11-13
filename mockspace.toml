@@ -306,7 +306,7 @@ severity = "advisory"
 # Git-based dep spec only — committed config must be portable.
 
 [lint-crates]
-mockspace-extra-lints = { git = "ssh://git@github.com/orgrinrt/mockspace-extra-lints.git", branch = "dev" }
+mockspace-extra-lints = { git = "ssh://git@github.com/orgrinrt/mockspace-extra-lints.git", branch = "dev", features = ["workflow"] }
 
 # Writing-style gate — pre-existing docs trip this until sweeps tidy them.
 [lints.writing-style]
