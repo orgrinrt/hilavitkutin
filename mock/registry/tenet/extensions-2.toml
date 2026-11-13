@@ -16,7 +16,7 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["ExtensionHost", "load sequence", "Library::load", "resolve_static", "host_providers", "required host providers", "init_fn", "host_ctx"]
 
 [[tenet]]
@@ -37,7 +37,7 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["discovery protocol", "validation order", "tag check", "descriptor size check", "ABI version check", "bounds check", "required host provider check", "defensive"]
 
 [[tenet]]
@@ -54,7 +54,7 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["no linker sections", "no constructor registration", "no inventory", "__hilavitkutin_extension_descriptor", "no_mangle", "const descriptor", "export_extension"]
 
 [[tenet]]
@@ -73,7 +73,7 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["trampoline", "LTO", "cdylib stripping", "#[used]", "no_mangle", "inline(never)", "descriptor static", "fat LTO", "__ext_init_trampoline"]
 
 [[tenet]]
@@ -94,7 +94,7 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["ICF", "identical code folding", "black_box", "per-role discriminator", "trampoline aliasing", "lto_smoke", "regression test", "nm"]
 
 [[tenet]]
@@ -111,7 +111,7 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["RTLD_LOCAL", "RTLD_GLOBAL", "symbol collision", "platform_load", "struct ident", "trampoline names", "private symbols"]
 
 [[tenet]]
@@ -128,7 +128,7 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["init_fn", "init once", "InitFailed", "host_ctx", "lifecycle contract", "drop Library on failure"]
 
 [[tenet]]
@@ -145,7 +145,7 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["provider invocation", "vtable pointer", "consumer trampoline", "macro-driven monomorphisation", "typed interface", "cdylib boundary"]
 
 [[tenet]]
@@ -164,7 +164,7 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["shutdown_fn", "shutdown once", "host-opaque pointer", "host_ctx", "per-extension", "arbitrary-time linking", "no shared context"]
 
 [[tenet]]
@@ -200,7 +200,7 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["architectural position", "layering", "downward dependency", "viola-plugin-abi", "linking", "macros", "OS dynamic loader", "engine independent"]
 related = ["tenet::the_plugin_host_layer_is_the_linking_extensions_and_extensions_macros_crates_and_downstream_ecosystems_build_their_own_contract_crates_on_it"]
 
@@ -226,7 +226,7 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["dependencies", "hilavitkutin-linking", "notko", "arvo", "Outcome", "Maybe", "no engine dependency", "no api dependency"]
 
 [[tenet]]
@@ -250,7 +250,7 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["arbitrary-time linking", "no global registry", "no init barrier", "no cross-extension channel", "independent drop", "load_all_extensions", "invariant", "by construction"]
 rejects = ["load_all_extensions(manifest)", "initialize_ecosystem()"]
 
@@ -267,7 +267,7 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["arbitrary-time loading", "consumer obligation", "ecosystem-wide semantics", "init ordering", "all extensions loaded first", "higher layer"]
 rejects = ["all extensions loaded before any invoked", "init ordering gates invocation", "the full extension ecosystem must be known before proceeding"]
 
@@ -287,7 +287,7 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: a passage shows part of it to be his and not the whole of it (mock/design_rounds/202604240615/202604240615_topic.hilavitkutin-extensions-host.md:192-207; mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:154-156), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: a passage shows part of it to be his and not the whole of it (mock/design_rounds/202604240615/202604240615_topic.hilavitkutin-extensions-host.md:192-207; mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:154-156), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["hilavitkutin-extensions-macros", "export_extension", "companion crate", "hand-written descriptor", "boilerplate", "default path"]
 
 [[tenet]]
@@ -310,7 +310,7 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["non-scope", "domain contracts", "directory walking", "manifest parsing", "load order", "no cross-extension channels", "higher-layer concerns"]
 rejects = ["Define domain contracts", "Walk directories to discover extensions", "Provide cross-extension communication channels"]
 
@@ -329,7 +329,7 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["full-trust", "no sandbox", "no metering", "no isolation", "remote fetch", "signature verification", "extension stores", "v1"]
 rejects = ["Sandbox extensions", "meter resource usage", "Fetch extensions from remote sources"]
 
@@ -355,7 +355,7 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-linking, agent-written, undated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["hilavitkutin-linking", "Library::load", "resolve", "resolve_static", "typed handle", "loader lifetime", "single concern"]
 related = ["tenet::the_linking_crate_is_the_cross_platform_dynamic_library_loading_primitive_with_pull_based_symbol_resolution"]
 
@@ -379,7 +379,7 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-linking, agent-written, undated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["narrow loader", "descriptors above", "lifecycle above", "capability matching", "failure policy", "host orchestration", "viola-plugin-abi", "layering"]
 
 [[tenet]]
@@ -416,7 +416,7 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-linking, agent-written, undated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["no_std", "libc", "windows-sys", "notko", "arvo", "arvo-bits", "isolated", "no hilavitkutin dependency", "dependencies"]
 
 [[tenet]]
@@ -437,7 +437,7 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-linking, agent-written, undated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["Library", "RAII close", "Library::close", "unload error", "lifetime 'lib", "use-after-close", "as_raw", "Outcome"]
 
 [[tenet]]
@@ -461,7 +461,7 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-linking, agent-written, undated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["Symbol", "StaticRef", "transmute_copy", "function pointer", "static data", "descriptor export", "separate types", "soundness"]
 
 [[tenet]]
@@ -478,7 +478,7 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-linking, agent-written, undated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["LibrarySymbol", "sealed marker", "extern C", "arity 0 to 8", "function pointer shapes", "no downstream impls"]
 
 [[tenet]]
@@ -495,7 +495,7 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-linking, agent-written, undated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["RTLD_NOW", "RTLD_LOCAL", "RTLD_GLOBAL", "dlopen", "symbol isolation", "missing-symbol errors", "glibc default", "macOS BSD default"]
 
 [[tenet]]
@@ -514,5 +514,5 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-linking, agent-written, undated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["LinkError", "LoadFailed", "platform_code", "errno", "GetLastError", "PathEncodingUnsupported", "MAX_PATH", "no heap payload", "USize"]

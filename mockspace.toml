@@ -328,6 +328,7 @@ namespaces = "tenet"
 tiered = "tenet"
 tier_field = "standing"
 ratified = "ratified"
+stampable = "provisional"
 
 # ---------------------------------------------------------------------------
 # Primitive-substrate introducers (task #125)

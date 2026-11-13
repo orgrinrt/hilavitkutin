@@ -230,7 +230,7 @@ impl<T: Copy + 'static> ColumnValue for T {
 origin = "stated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (mock/research/202606111400_canonical-design-addendum-a1.md:190-194, row the_round_level_amendments_registered_by_a1_are_five_dated_rounds), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (mock/research/202606111400_canonical-design-addendum-a1.md:190-194, row the_round_level_amendments_registered_by_a1_are_five_dated_rounds), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["blanket impl", "ColumnValue", "Copy", "'static", "16 bytes", "min_specialization", "zero friction"]
 
 [[tenet]]
@@ -254,7 +254,7 @@ impl ColumnValue for UFixed<1, 0> {
 origin = "stated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (mock/research/202606111400_canonical-design-addendum-a1.md:190-194, row the_round_level_amendments_registered_by_a1_are_five_dated_rounds), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (mock/research/202606111400_canonical-design-addendum-a1.md:190-194, row the_round_level_amendments_registered_by_a1_are_five_dated_rounds), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["min_specialization", "BIT_WIDTH", "default const", "specialising impl", "UFixed<1, 0>", "explicit override"]
 
 [[tenet]]

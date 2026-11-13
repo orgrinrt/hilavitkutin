@@ -56,7 +56,7 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["InternerKit", "single-resource kit", "direct wiring equivalent", "Kit::default_resources", "auto-wiring", "BuilderResource removed", "no-legacy-shims-pre-1.0", "named preset"]
 related = ["tenet::a_kit_may_own_no_state_or_no_units_and_a_kit_only_declares_that_a_store_exists_while_the_value_is_supplied_at_the_app_call_site"]
 
@@ -83,7 +83,7 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["Replaceable", "InternerKit", "test fixture", "deterministic interner", "tools not policies", "opt-in override", "alias type"]
 related = ["tenet::replaceable_is_the_only_enforced_annotation_on_owned_types_and_it_is_opt_in_so_override_of_a_kit_s_resource_is_rejected_at_compile_time_by_default"]
 
@@ -102,7 +102,7 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["StandardAdaptKit", "OffAdaptKit", "adapt axes", "metrics sub-resources", "DEFAULT_ constants", "Topic 5 axis A", "themed resource sets", "bench-validated defaults"]
 related = ["tenet::adapt_metrics_are_split_hot_and_cold_with_a_scratch_arena_hot_path_and_a_resource_snapshot_at_the_end_of_the_pass"]
 
@@ -120,7 +120,7 @@ origin = "proposed"
 written_by = "design round 202605101036, topic builder-input rename and reshape, dated 2026-05-10, agent-written; the text does not say whose decision it is, and the passage reports the earlier round 202605091700"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["with", "wrapper struct", "Resource::new", "Column::new", "call site", "disambiguation", "202605091700", "LinkedBin"]
 
 [[tenet]]
@@ -229,7 +229,7 @@ origin = "proposed"
 written_by = "design round 202605282319, topic builder value retention (B1), dated 2026-05-28, agent-written; the text does not say whose decision it is"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["StageList", "StagedResource", "into_init", "SchedulerBuilder", "value retention", "platform accumulator", "MemoryProvider", "B1"]
 
 [[tenet]]
@@ -250,7 +250,7 @@ origin = "proposed"
 written_by = "design round 202605282319, source changelist for builder value retention (B1), phase IMPL, dated 2026-05-28, agent-written; the text does not say whose decision it is"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["BuilderInput", "StagedResource", "into_inner", "Stage<P, Staged>", "no method added", "24 impl sites", "B2 arena"]
 related = ["tenet::the_builder_retains_each_registered_value_in_a_sealed_value_carrying_list_beside_the_type_level_store_list"]
 
@@ -272,7 +272,7 @@ origin = "proposed"
 written_by = "sketch builder-kind-dispatch of 2026-05-29 (single-with store-value routing via RouterKind dispatch), outcome WORKS; agent-written"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["unified with verb", "RouterKind", "with and store split", "builder", "store-value list", "Place GAT", "B2"]
 rejects = ["the architect's recommended `.with`/`.store` method split (and its fifth builder parameter justification)"]
 
@@ -333,7 +333,7 @@ origin = "proposed"
 written_by = "hypothesis file of sketch 202605101036-builder-input-reshape, dated 2026-05-10 (round 202605101036); agent-written, and the reshape is stated there as the hypothesis the sketch validates"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["BuilderInput", "bare registration", "wrapper structs", "ExtensionSurface", "extend", "sub-trait", "dyn trait", "sized cases"]
 rejects = ["Consumers had to construct the wrapper at the call site (`.with(Resource::new(state))`, `.with(Column::<Player>::new())`)"]
 related = ["tenet::a_resource_column_or_virtual_is_registered_through_the_one_with_verb_by_constructing_its_library_wrapper_at_the_call_site"]
@@ -364,7 +364,7 @@ origin = "proposed"
 written_by = "sketch findings app-builder type-state (202605010900), section on what changed from the topic file; agent-written"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["SchedulerBuilder", "Stores slot", "two-slot builder", "four-slot builder", "typestate", "Providers slot", "phantom tuple", "unified stores"]
 rejects = ["`SchedulerBuilder<Wus, Resources, Columns, Providers>`", "The four-slot scheme is replaced by the two-slot scheme"]
 related = ["tenet::the_scheduler_is_built_by_a_builder_that_is_const_generic_over_units_stores_and_lanes_with_overrides_for_the_platform_traits"]
@@ -382,7 +382,7 @@ origin = "proposed"
 written_by = "sketch findings S5 kit taxonomy of 2026-05-05 (round 202605042200), reporting the claim of Topic 3; agent-written"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["scoping axes", "visibility", "replaceability", "kit owned state", "topic 3", "two-axis annotation surface"]
 
 [[tenet]]
@@ -411,7 +411,7 @@ origin = "proposed"
 written_by = "sketch findings S5 kit taxonomy of 2026-05-05 (round 202605042200), outcome WORKS with a substantive revision of the visibility axis; agent-written"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["Replaceable", "visibility", "kit visibility envelope", "E0446", "scoping axis", "per-type axis", "opt-in marker", "kit shape"]
 rejects = ["two-axis annotation surface", "visibility axis"]
 related = ["tenet::the_substrate_commits_to_two_scoping_axes_for_kit_owned_state_visibility_and_replaceability", "tenet::replaceable_is_the_only_enforced_annotation_on_owned_types_and_it_is_opt_in_so_override_of_a_kit_s_resource_is_rejected_at_compile_time_by_default", "tenet::every_type_in_a_public_kit_impl_s_owned_position_must_be_as_visible_as_the_impl_so_a_kit_is_either_wholly_public_or_wholly_crate_private"]
@@ -441,7 +441,7 @@ origin = "proposed"
 written_by = "sketch findings S1 recursion-limit macro probe of 2026-05-08, outcome FAILS for the macro; agent-written, correcting the locked topic of round 202605042200"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["recursion_limit", "recursion_limit_for_kits", "inner attribute", "macro expansion", "on_unimplemented", "consumer-side directive", "kits", "overflow"]
 rejects = ["Drop the `recursion_limit_for_kits!()` macro from the public substrate", "a `recursion_limit_for_kits!()` macro that consumers invoke at their crate root, expanding to `#![recursion_limit = \"1024\"]`"]
 related = ["tenet::the_kit_crate_declares_a_recursion_limit_of_512_defensively_and_a_consumer_hitting_it_declares_its_own"]
@@ -460,7 +460,7 @@ origin = "proposed"
 written_by = "sketch findings M2 type-level dedup-on-Concat of 2026-05-05 (round 202605042200, audit M2 remediation), outcome BLOCKED; agent-written"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["physical dedup", "logical dedup", "Concat", "coherence constraint", "NotIn", "marker Contains", "round 4", "duplicate accumulation"]
 related = ["tenet::the_kit_trait_carries_no_required_member_because_the_type_level_set_difference_hits_the_coherence_wall_and_requirements_live_in_prose"]
 
@@ -486,5 +486,5 @@ origin = "proposed"
 written_by = "sketch findings NotIn<H> compile-time diamond detection of 2026-05-05 (round 202605042200), describing the proposal under audit; agent-written"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["NotIn", "duplicate registration", "diamond detection", "Registrable", "compile-time error", "negative impl", "marker registration"]
