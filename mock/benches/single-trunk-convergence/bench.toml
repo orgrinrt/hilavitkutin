@@ -1,0 +1,356 @@
+# Single-trunk convergence: head-and-tail against the N-way ceil slice on one
+# commutative fiber, with the engine's sequential run, the std parallel bar,
+# and the N-way slice on the bench's own crew as the control for machinery.
+#
+# A section is `<workload>_w<W>`, or `<workload>_w<W>_big` for the sizes
+# where one frame takes milliseconds and the budget is cut to fit. `short` is
+# the one-to-four-morsel band of `fold_light`. `W` is the worker count each
+# arm that takes one runs at; `sequential` and `kernel_seq` ignore it and run
+# in every section as the same-run anchors. The machine this was run on has 4
+# cores, so `W = 4` is its maximum and `W = 8` oversubscribes it.
+#
+# Every section validates all arms against each other over three seeds
+# before timing (may_differ = false, required = true): the fold's sum and the
+# append's output sequence must match byte for byte. `threaded = true` keeps
+# the harness from pinning the worker subprocess to one core.
+
+[timing]
+passes = 3
+runs_per_pass = 60
+batch_size = 10
+harness_runs = 1
+cooldowns_ms = [0]
+validation_seeds = 3
+determinism_check_seeds = 1
+
+# ---------------------------------------------------------------- W = 1
+
+[bench.short_w1]
+title = "fold_light, short fiber (1 to 4 morsels), W = 1"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = false
+required = true
+baseline = "sequential"
+variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
+sizes = [16, 64, 256, 1024]
+timing = { runs_per_pass = 150, batch_size = 25 }
+
+[bench.fold_light_w1]
+title = "fold_light, W = 1"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = false
+required = true
+baseline = "sequential"
+variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
+sizes = [4096, 65536, 1048576]
+
+[bench.fold_light_w1_big]
+title = "fold_light, far above cache, W = 1"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = false
+required = true
+baseline = "sequential"
+variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
+sizes = [16777216, 134217728]
+timing = { runs_per_pass = 8, batch_size = 4 }
+
+[bench.fold_heavy_w1]
+title = "fold_heavy, W = 1"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = false
+required = true
+baseline = "sequential"
+variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
+sizes = [4096, 65536]
+
+[bench.fold_heavy_w1_big]
+title = "fold_heavy, frames of tens of milliseconds, W = 1"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = false
+required = true
+baseline = "sequential"
+variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
+sizes = [1048576]
+timing = { runs_per_pass = 8, batch_size = 4 }
+
+[bench.append_w1]
+title = "append, W = 1"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = false
+required = true
+baseline = "sequential"
+variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
+sizes = [4096, 65536, 1048576]
+
+[bench.append_w1_big]
+title = "append, far above cache, W = 1"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = false
+required = true
+baseline = "sequential"
+variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
+sizes = [16777216]
+timing = { runs_per_pass = 8, batch_size = 4 }
+
+# ---------------------------------------------------------------- W = 2
+
+[bench.short_w2]
+title = "fold_light, short fiber (1 to 4 morsels), W = 2"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = false
+required = true
+baseline = "sequential"
+variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
+sizes = [16, 64, 256, 1024]
+timing = { runs_per_pass = 150, batch_size = 25 }
+
+[bench.fold_light_w2]
+title = "fold_light, W = 2"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = false
+required = true
+baseline = "sequential"
+variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
+sizes = [4096, 65536, 1048576]
+
+[bench.fold_light_w2_big]
+title = "fold_light, far above cache, W = 2"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = false
+required = true
+baseline = "sequential"
+variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
+sizes = [16777216, 134217728]
+timing = { runs_per_pass = 8, batch_size = 4 }
+
+[bench.fold_heavy_w2]
+title = "fold_heavy, W = 2"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = false
+required = true
+baseline = "sequential"
+variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
+sizes = [4096, 65536]
+
+[bench.fold_heavy_w2_big]
+title = "fold_heavy, frames of tens of milliseconds, W = 2"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = false
+required = true
+baseline = "sequential"
+variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
+sizes = [1048576]
+timing = { runs_per_pass = 8, batch_size = 4 }
+
+[bench.append_w2]
+title = "append, W = 2"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = false
+required = true
+baseline = "sequential"
+variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
+sizes = [4096, 65536, 1048576]
+
+[bench.append_w2_big]
+title = "append, far above cache, W = 2"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = false
+required = true
+baseline = "sequential"
+variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
+sizes = [16777216]
+timing = { runs_per_pass = 8, batch_size = 4 }
+
+# ---------------------------------------------------------------- W = 4 (the machine's maximum)
+
+[bench.short_w4]
+title = "fold_light, short fiber (1 to 4 morsels), W = 4"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = false
+required = true
+baseline = "sequential"
+variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
+sizes = [16, 64, 256, 1024]
+timing = { runs_per_pass = 150, batch_size = 25 }
+
+[bench.fold_light_w4]
+title = "fold_light, W = 4"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = false
+required = true
+baseline = "sequential"
+variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
+sizes = [4096, 65536, 1048576]
+
+[bench.fold_light_w4_big]
+title = "fold_light, far above cache, W = 4"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = false
+required = true
+baseline = "sequential"
+variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
+sizes = [16777216, 134217728]
+timing = { runs_per_pass = 8, batch_size = 4 }
+
+[bench.fold_heavy_w4]
+title = "fold_heavy, W = 4"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = false
+required = true
+baseline = "sequential"
+variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
+sizes = [4096, 65536]
+
+[bench.fold_heavy_w4_big]
+title = "fold_heavy, frames of tens of milliseconds, W = 4"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = false
+required = true
+baseline = "sequential"
+variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
+sizes = [1048576]
+timing = { runs_per_pass = 8, batch_size = 4 }
+
+[bench.append_w4]
+title = "append, W = 4"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = false
+required = true
+baseline = "sequential"
+variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
+sizes = [4096, 65536, 1048576]
+
+[bench.append_w4_big]
+title = "append, far above cache, W = 4"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = false
+required = true
+baseline = "sequential"
+variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
+sizes = [16777216]
+timing = { runs_per_pass = 8, batch_size = 4 }
+
+# ---------------------------------------------------------------- W = 8 (oversubscribed)
+
+[bench.short_w8]
+title = "fold_light, short fiber (1 to 4 morsels), W = 8"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = false
+required = true
+baseline = "sequential"
+variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
+sizes = [16, 64, 256, 1024]
+timing = { runs_per_pass = 150, batch_size = 25 }
+
+[bench.fold_light_w8]
+title = "fold_light, W = 8"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = false
+required = true
+baseline = "sequential"
+variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
+sizes = [4096, 65536, 1048576]
+
+[bench.fold_light_w8_big]
+title = "fold_light, far above cache, W = 8"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = false
+required = true
+baseline = "sequential"
+variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
+sizes = [16777216, 134217728]
+timing = { runs_per_pass = 8, batch_size = 4 }
+
+[bench.fold_heavy_w8]
+title = "fold_heavy, W = 8"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = false
+required = true
+baseline = "sequential"
+variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
+sizes = [4096, 65536]
+
+[bench.fold_heavy_w8_big]
+title = "fold_heavy, frames of tens of milliseconds, W = 8"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = false
+required = true
+baseline = "sequential"
+variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
+sizes = [1048576]
+timing = { runs_per_pass = 8, batch_size = 4 }
+
+[bench.append_w8]
+title = "append, W = 8"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = false
+required = true
+baseline = "sequential"
+variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
+sizes = [4096, 65536, 1048576]
+
+[bench.append_w8_big]
+title = "append, far above cache, W = 8"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = false
+required = true
+baseline = "sequential"
+variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
+sizes = [16777216]
+timing = { runs_per_pass = 8, batch_size = 4 }
