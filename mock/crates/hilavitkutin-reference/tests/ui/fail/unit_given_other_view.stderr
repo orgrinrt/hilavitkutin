@@ -1,9 +1,9 @@
 error[E0451]: fields `handles` and `committed` of struct `Unit` are private
-  --> tests/ui/fail/unit_given_other_view.rs:26:13
+  --> tests/ui/fail/unit_given_other_view.rs:25:13
    |
-25 |         let _moved = Unit::<K, R> {
+24 |         let _moved = Unit::<K, R> {
    |                      ------------ in this type
-26 |             committed: self.other,
+25 |             committed: self.other,
    |             ^^^^^^^^^^^^^^^^^^^^^ private field
-27 |             ..unit
+26 |             ..unit
    |               ^^^^ field `handles` is private
