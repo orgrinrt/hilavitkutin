@@ -1,0 +1,43 @@
+SSE2 packed multiply (pmuludq) in the frame body of each arm
+
+Built release, opt-level 3, lto fat, codegen-units 1, no target-cpu
+flag, so baseline x86-64: SSE2 is available and AVX2 is not used.
+Produced by ./vectorisation.sh; rerun it to refresh.
+
+arm              regime    count  symbols
+fw_hand          heavy       216        1
+fw_hand          light        12        1
+fw_hand_par      heavy       216        1
+fw_hand_par      light        12        1
+fw_rust_nostd    heavy       216        1
+fw_rust_nostd    light        46        1
+fw_rust_std      heavy        36        2
+fw_rust_std      light        46        1
+fw_rust_std_par  heavy        36        2
+fw_rust_std_par  light        46        1
+fw_engine        heavy       756        4
+fw_engine        light       212        4
+fw_engine_par    heavy       756        4
+fw_engine_par    light       212        4
+
+An arm with no row for a regime emitted none of the instruction there.
+An untagged row would be support-crate code carrying neither kernel in
+its symbol, which would mean the regime split above is incomplete.
+
+The first occurrence in the heavy frame body of fw_hand, in context:
+
+  <_RNvXs5_Cse9VyRSYQ9fU_18frame_wide_supportINtB5_8StateArmNtNtB5_5plain4OutsNCINvBU_9build_forNtB5_5HeavyE0NCB1c_s0_0NCB1c_s_0ENtB5_8FrameArm5frameB5_>:
+
+     1510f:	movdqa -0x117e8(%rip),%xmm15        # 3930 <GCC_except_table391+0x118>
+     15118:	nopl   0x0(%rax,%rax,1)
+     15120:	movdqu (%rcx,%r9,4),%xmm0
+     15126:	movdqa %xmm0,%xmm5
+     1512a:	pxor   -0x115f2(%rip),%xmm5        # 3b40 <GCC_except_table391+0x328>
+     15132:	pshufd $0xf5,%xmm5,%xmm6
+     15137:	pmuludq %xmm1,%xmm5
+     1513b:	pshufd $0xe8,%xmm5,%xmm5
+     15140:	pmuludq %xmm1,%xmm6
+     15144:	pshufd $0xe8,%xmm6,%xmm6
+     15149:	punpckldq %xmm6,%xmm5
+     1514d:	psubd  %xmm2,%xmm5
+     15151:	movdqa %xmm5,%xmm6

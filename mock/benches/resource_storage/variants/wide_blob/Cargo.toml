@@ -13,8 +13,8 @@ crate-type = ["cdylib"]
 
 [dependencies]
 rsb-kernels = { path = "../../kernels-shared" }
-mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev", features = ["std"] }
-mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev" }
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "a81e1956361a205261b90e5214dde932db4f1913", features = ["std"] }
+mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", rev = "a81e1956361a205261b90e5214dde932db4f1913" }
 
 [profile.release]
 opt-level = 3

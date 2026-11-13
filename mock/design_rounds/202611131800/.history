@@ -1,0 +1,50 @@
+50911b3 chore: lock src changelist 202611131800
+63440f9 fix: recognise the wrapper by its name and drop dead lint markers
+58f5cdc chore: lock doc changelist 202611131800
+d3e444c docs: say the wrapper is recognised by its name
+b2afbb5 docs: open the round on recognising the wrapper by its name
+390a56f docs: regenerate the build and structure docs
+02ddd1d chore: close design round 202611131745
+d3de3cd chore: lock src changelist 202611131745
+b3203e4 fix: keep the pragma set coherent and warn when flags are dropped
+c81999b chore: lock doc changelist 202611131745
+f137886 docs: say what FastMath reaches and what a consumer commits
+b6b941c docs: add the doc changelist for the build configuration review
+b3ae256 docs: open the round on the build configuration review
+6de413b docs: regenerate the build and structure docs
+d25d9b3 chore: keep the two open topics flat after the close
+a1c30e5 chore: close round 202611131717
+9c31d61 chore: lock src changelist 202611131717
+24519c7 feat: build every crate through `hilavitkutin-build` and its wrapper
+cfc4e90 docs: lock the doc changelist
+df36edb docs: design how a pragma reaches rustc through the build script
+1eed2dc docs: open the round for building through `hilavitkutin-build`
+81c5c58 docs: land the record from every unmerged branch
+311a2ae feat: install a swapped resource value under a provisional spec
+c490269 docs: audit hilavitkutin as part of the stack
+49ab344 feat: land the recovered engine source, tests and bench variants
+ab63d61 bench: measure single trunk convergence against hand written loops
+ada51bb chore: port the lints to the one view of the tree
+6e971d1 docs: keep the perf gate section under the corrected findings
+6524900 docs: land the unlanded bench results and their run history
+c42d707 feat: make an append past capacity a refusal the consumer configures
+27abd8a research: sketch a branded index for exclusive column writes
+26e926b fix: spell the notko git source by https
+c2b392d test: make the hilavitkutin suite able to fail
+0928042 research: sketch one kernel's digests on native and wasm32
+b373d70 research: sketch the frame view and the two regimes as types
+cfe40b4 research: sketch kernels that run unchanged under five runners
+4b327c5 fix: make hilavitkutin dev pass its own commit gate
+af823b7 fix: pin the research sketches' arvo deps by rev
+6ee3746 chore: move mockspace config to the repo root, drop its dep
+d14bec3 fix: drop the unlocked duplicate of a closed round's doc changelist
+e3fa3f4 feat: bring hilavitkutin up on arvo `1b2796e9` without a std tier
+2f06ffe chore: land the design rounds and research the recovery branch carried
+1fbb2e9 chore: take the shared tool configs, and ignore a stray sketch lockfile
+a677bfd fix: pin the mock toolchain and take the structural lints from the pack
+220edfb chore: take the shared rustfmt and deny configs
+313d427 Merge pull request #3 from orgrinrt/chore/patch-pass-2026-08
+06c7b41 docs: correct the ctx macro names and the CapabilityId constructor
+288660e docs: drop crates.io and docs.rs badges for an unpublished crate
+3de0b5c docs: sync manifest descriptions and drop their em-dash
+ee536c9 docs: remove tier-1 leakage and a dead test path from MIRI.md
