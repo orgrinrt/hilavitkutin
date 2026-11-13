@@ -50,7 +50,7 @@ The two runners differ on purpose. The engine walks records from the first and s
 
 ## The result
 
-`cargo test --workspace` is green: 3 comparison tests, 10 author fixture pairs, 1 runner fixture pair.
+`cargo test --workspace` is green: 3 comparison tests, 11 author fixture pairs, 1 runner fixture pair.
 
 `both_runners_leave_the_same_stores` runs `Diffuse` and `Drift` for five passes under each runner over the two-domain world, with the block-form `Tally` in the engine's list, and compares every store. Accumulator appends are compared sorted, since the sequence of appends is not something the value form promises. The test also asserts that the stores moved, that `Tally` ran once a pass, and one position by hand. `one_pass_of_diffuse_matches_the_hand_worked_plane` checks a 2 by 2 plane against values worked on paper in the test's comments, so that two runners wrong in the same way would not pass.
 
@@ -82,9 +82,12 @@ The refusals, each with a twin under `ui/pass/` that differs in the offending to
 | `author` 08, a value unit writes a resource | E0277, `Resource<i64>: Writes` is not satisfied | the `type Write` line |
 | `author` 09, a unit returns fewer values than it writes | E0271, the product of the write list against the product built | the `rec!` line |
 | `author` 10, a value unit reads an accumulator | E0277, `Accum<Crossed>: Reads` is not satisfied | the `type Read` line |
+| `author` 11, a list is asked for a store it does not hold | E0277, `the store Other is not in Cons<..>`, with the api's own note | the call that names the list |
 | `check` 01, the oracle is handed a block-form unit | E0277, `UnitDispatch<Tally>: Checks<Tally, _, _>` is not satisfied | the `oracle::pass` call |
 
 Fixture 04 is a fact about the dependency graph and not about a type: it holds because `author/Cargo.toml` lists `api` alone. Fixture 05 is the type-level half: the value form has no associated type in which a context could be named. Fixture 06 reports E0308 because the list has one member and the solver fixes the argument's type to it; with a longer list the same mistake reads as E0277 on `Contains`, as fixture 04b of `202611122242_frame-view-typestate` records.
+
+Fixture 11 was added while the round's design was being written, for one question the adoption of the shared list raises. `Contains` is the shared crate's trait and carries the shared crate's message, and an attribute cannot be put on a foreign trait, so the api's own note on a missing store (how to register it) would be lost. `Holds<S>` is an api trait with that note, implemented by one blanket over every list that `Contains<S>`, and the blanket carries `#[diagnostic::do_not_recommend]`, so the compiler reports the unmet `Holds` bound with the api's message and does not descend to `Contains`. The recorded diagnostic shows the api's message and note and no line of the shared crate's.
 
 Two things that might not have compiled and did. `Grid: Project<Prod<Val> = <Self as Grid>::Shape>`, an equality on a generic associated type in a supertrait position, is accepted and lets a shape be read through `Has::pick` with no cast. The position witnesses of every gather and scatter are inferred through the unit list with no turbofish at either `pass` call site; the one place a caller writes a type argument is `World::fill`, to name the domain.
 

@@ -26,6 +26,24 @@ pub use notko_hlist::{
 };
 
 // ---------------------------------------------------------------------------
+// The api's own message on a store missing from a list.
+// ---------------------------------------------------------------------------
+
+/// The list holds the store `S`, said with the api's own message.
+///
+/// `Contains` is the shared crate's and carries the shared crate's message. A
+/// bound on this trait reports the message below instead, because the blanket
+/// is marked so that the compiler does not descend into it.
+#[diagnostic::on_unimplemented(
+    message = "the store `{S}` is not in `{Self}`",
+    note = "register it with `.with(..)` before `build`, or install a kit that owns it"
+)]
+pub trait Holds<S>: List {}
+
+#[diagnostic::do_not_recommend]
+impl<L: Contains<S>, S> Holds<S> for L {}
+
+// ---------------------------------------------------------------------------
 // Record domains.
 // ---------------------------------------------------------------------------
 
