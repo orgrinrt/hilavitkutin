@@ -13,7 +13,7 @@ use mockspace::{CrateLint, Lint, LintContext, LintError, Severity};
 
 #[path = "frozen/scan.rs"]
 mod scan;
-use scan::{Finding, code_lines, compact, is_ident_char};
+use scan::{Finding, attributes, is_ident_char};
 
 pub fn lint() -> Box<dyn CrateLint> {
     Box::new(FrozenNoFeatureGate)
@@ -52,8 +52,9 @@ impl CrateLint for FrozenNoFeatureGate {
 }
 
 fn findings(text: &str) -> Vec<Finding> {
-    code_lines(text)
-        .filter(|(_, code)| enables_a_feature(&compact(code)))
+    attributes(text)
+        .into_iter()
+        .filter(|(_, attribute)| enables_a_feature(attribute))
         .map(|(line, _)| Finding {
             line,
             message: "a frozen crate enables no unstable feature; write it against the api on the toolchain a consumer has".into(),
@@ -61,12 +62,12 @@ fn findings(text: &str) -> Vec<Finding> {
         .collect()
 }
 
-/// Whether a compacted line opens an inner attribute that names `feature(`.
-fn enables_a_feature(code: &str) -> bool {
-    let Some(at) = code.find("#![") else {
+/// Whether an attribute, with its whitespace removed, is an inner one that
+/// names `feature(`.
+fn enables_a_feature(attribute: &str) -> bool {
+    let Some(attr) = attribute.strip_prefix("#![") else {
         return false;
     };
-    let attr = &code[at + 3 ..];
     let names_feature = attr
         .match_indices("feature(")
         .any(|(i, _)| !attr[.. i].chars().next_back().is_some_and(is_ident_char));

@@ -7,7 +7,12 @@
 //! of the crate, its manifest and any build script with its sources, and
 //! refuses a file with no line, a line naming a file that is gone, a hash that
 //! is not the file's, an edit count that is not the number of edits recorded,
-//! and a locked line whose count moved since its lock. The manifest has a
+//! a last recorded edit whose hash is not the line's, and a locked line whose
+//! count moved since its lock. It then reads the ledger at the commit the
+//! tree left the trunk at, and refuses a file whose hash moved since with no
+//! higher count, and one whose hash moved at all where the trunk has it
+//! locked. A crate in no repository, and one the trunk had no ledger for at
+//! that commit, is held to the tree alone. The manifest has a
 //! line like any other file, so a dependency added or dropped is a recorded
 //! edit. The files under `tests/` are the harness that runs the crate and are
 //! not frozen. The crate's documents (`*.md.tmpl`) and the two ledgers
@@ -27,7 +32,8 @@
 //! and a locked line adds `locked_breaks`, the count recorded at its lock. The
 //! form is a word the crate chooses, and the lint checks only that it is
 //! there. A `BREAKS.toml` line is `[[break]]` with `file`, `hash` and
-//! `reason`, and only `file` is read. Only that subset of TOML is read: one `key = value` a
+//! `reason`; `file` and `hash` are read, and `hash` is the one the edit left
+//! the file at. Only that subset of TOML is read: one `key = value` a
 //! line, strings in double quotes with no escapes, counts in decimal, `#`
 //! comments. The hash is FNV-1a over the file's bytes, 64 bits, written as
 //! `fnv1a64:` and sixteen hex digits.
@@ -50,6 +56,8 @@ struct FrozenLedger;
 const NAME: &str = "frozen-ledger";
 const LEDGER: &str = "LEDGER.toml";
 const BREAKS: &str = "BREAKS.toml";
+/// The trunk a branch is held to, as a clone names it.
+const TRUNK: &str = "origin/dev";
 /// The directory of the crate's harness, which is not frozen.
 const HARNESS: &str = "tests/";
 
@@ -91,9 +99,24 @@ impl CrateLint for FrozenLedger {
             .filter(|rel| listed(rel))
             .collect();
         let found = if view.is_file(root.join(LEDGER)) {
-            findings(text(LEDGER), text(BREAKS), &files, |path| {
+            let mut found = findings(text(LEDGER), text(BREAKS), &files, |path| {
                 view.bytes(root.join(path)).map(<[u8]>::to_vec)
-            })
+            });
+            let git = |args: &[&str]| view.git_in(root, args).ok_text().map(str::to_string);
+            match trunk_ledger(git) {
+                Ok(Some(then)) => found.extend(since(text(LEDGER), &then)),
+                Ok(None) => {},
+                Err(NoTrunk) => {
+                    // The clone's fault and not the tree's, so it is asked again each run.
+                    view.untraced("the clone shares no commit with the trunk");
+                    found.push(at(
+                        LEDGER,
+                        1,
+                        format!("this clone shares no commit with `{TRUNK}`, so no edit can be held to the trunk: fetch it with its history"),
+                    ));
+                },
+            }
+            found
         } else {
             vec![at(
                 LEDGER,
@@ -233,26 +256,51 @@ fn parse_ledger(ledger: &str) -> Result<Vec<Listed<'_>>, Vec<Finding>> {
     if bad.is_empty() { Ok(rows) } else { Err(bad) }
 }
 
-/// The number of `BREAKS.toml` edits for each file, or the malformed lines.
-fn parse_breaks(breaks: &str) -> Result<Vec<&str>, Vec<Finding>> {
-    let mut files = Vec::new();
+/// One recorded edit: the line its entry opens on, the file and the hash the
+/// edit left it at.
+#[derive(Default)]
+struct Edit<'a> {
+    line: usize,
+    file: Option<&'a str>,
+    hash: Option<&'a str>,
+}
+
+/// The edits `BREAKS.toml` records, in the sequence it records them, or the
+/// malformed lines found reading it.
+fn parse_breaks(breaks: &str) -> Result<Vec<Edit<'_>>, Vec<Finding>> {
+    let mut edits: Vec<Edit<'_>> = Vec::new();
     let mut bad = Vec::new();
-    let mut in_row = false;
     for (n, text) in breaks.lines().enumerate() {
-        match line(text) {
-            Line::Blank => {},
-            Line::Header("break") => in_row = true,
-            Line::Pair("file", value) if in_row => {
-                match string(value) {
-                    Some(file) => files.push(file),
-                    None => bad.push(at(BREAKS, n + 1, "`file` is not a quoted path".to_string())),
+        let n = n + 1;
+        match (line(text), edits.last_mut()) {
+            (Line::Blank, _) => {},
+            (Line::Header("break"), _) => {
+                edits.push(Edit {
+                    line: n,
+                    ..Edit::default()
+                });
+            },
+            (Line::Pair(key @ ("file" | "hash"), value), Some(edit)) => {
+                match (key, string(value)) {
+                    ("file", Some(file)) => edit.file = Some(file),
+                    (_, Some(hash)) => edit.hash = Some(hash),
+                    (..) => bad.push(at(BREAKS, n, format!("`{key}` is not a quoted string"))),
                 }
             },
-            Line::Pair(..) if in_row => {},
-            _ => bad.push(at(BREAKS, n + 1, "not a break line".to_string())),
+            (Line::Pair(..), Some(_)) => {},
+            _ => bad.push(at(BREAKS, n, "not a break line".to_string())),
         }
     }
-    if bad.is_empty() { Ok(files) } else { Err(bad) }
+    for edit in &edits {
+        if edit.file.is_none() || edit.hash.is_none() {
+            bad.push(at(
+                BREAKS,
+                edit.line,
+                "a break lacks one of file and hash".to_string(),
+            ));
+        }
+    }
+    if bad.is_empty() { Ok(edits) } else { Err(bad) }
 }
 
 /// Everything the lint refuses, over the text of the two ledgers, the files
@@ -313,12 +361,24 @@ pub(crate) fn findings<R: Fn(&str) -> Option<Vec<u8>>>(
                 format!("`{path}` hashes to {now}, not {hash}: an edit needs its line and a break"),
             ));
         }
-        let recorded = edits.iter().filter(|e| **e == path).count();
+        let recorded = edits.iter().filter(|e| e.file == Some(path)).count();
         if recorded != count {
             found.push(at(
                 LEDGER,
                 row.line,
                 format!("`{path}` counts {count} breaks and {recorded} are recorded"),
+            ));
+        }
+        let last = edits.iter().rev().find(|e| e.file == Some(path));
+        if let Some((edit, left_at)) = last.and_then(|e| Some((e, e.hash?)))
+            && left_at != hash
+        {
+            found.push(at(
+                BREAKS,
+                edit.line,
+                format!(
+                    "the last break of `{path}` records {left_at}, and its line carries {hash}"
+                ),
             ));
         }
         if locked {
@@ -342,6 +402,68 @@ pub(crate) fn findings<R: Fn(&str) -> Option<Vec<u8>>>(
         }
     }
     found
+}
+
+/// What the tree's ledger owes the ledger its branch left the trunk with.
+///
+/// `then` is the text of `LEDGER.toml` at that commit. A file both ledgers
+/// list whose hash moved was edited since. The edit is refused where the
+/// trunk has the file locked, and where its count of breaks did not rise;
+/// `findings` then holds the higher count to an entry of `BREAKS.toml` that
+/// records the new hash. Files only one of the two lists are not compared,
+/// and neither is a ledger that does not parse, which `findings` refuses on
+/// this side and refused on the trunk before it landed.
+pub(crate) fn since(ledger: &str, then: &str) -> Vec<Finding> {
+    let (Ok(now), Ok(then)) = (parse_ledger(ledger), parse_ledger(then)) else {
+        return Vec::new();
+    };
+    let mut found = Vec::new();
+    for row in &now {
+        let (Some(path), Some(hash), Some(count)) = (row.path, row.hash, row.breaks) else {
+            continue;
+        };
+        let Some(was) = then.iter().find(|r| r.path == Some(path)) else {
+            continue;
+        };
+        if was.hash == Some(hash) {
+            continue;
+        }
+        if was.locked == Some(true) {
+            found.push(at(
+                LEDGER,
+                row.line,
+                format!("`{path}` is locked on the trunk and its hash moved: a locked file does not change"),
+            ));
+        } else if was.breaks.is_none_or(|before| count <= before) {
+            found.push(at(
+                LEDGER,
+                row.line,
+                format!("`{path}` changed since the trunk and still counts {count} breaks: an edit needs a break recorded for it"),
+            ));
+        }
+    }
+    found
+}
+
+/// The clone shares no commit with the trunk, so it has nothing to hold an
+/// edit to.
+#[derive(Debug, PartialEq)]
+pub(crate) struct NoTrunk;
+
+/// The ledger at the commit this tree left the trunk at, where there is one.
+///
+/// `git` runs a read-only git command in the crate's directory and gives what
+/// it printed where it exited zero. `Ok(None)` where the crate is in no
+/// repository, and where the trunk had no ledger at that commit, which is a
+/// crate the branch adds.
+pub(crate) fn trunk_ledger<G: Fn(&[&str]) -> Option<String>>(
+    git: G,
+) -> Result<Option<String>, NoTrunk> {
+    if git(&["rev-parse", "--is-inside-work-tree"]).is_none() {
+        return Ok(None);
+    }
+    let base = git(&["merge-base", "HEAD", TRUNK]).ok_or(NoTrunk)?;
+    Ok(git(&["show", &format!("{}:./{LEDGER}", base.trim())]))
 }
 
 // Beside the lint in a subdirectory, which the lint discovery does not read.

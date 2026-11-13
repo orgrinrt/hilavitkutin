@@ -2,6 +2,9 @@
 
 use super::*;
 
+// What the lint holds a tree to on the trunk.
+mod trunk_tests;
+
 const MANIFEST_OK: &str =
     "[package]\nname = \"x\"\n\n[dependencies]\nhilavitkutin-api.workspace = true\n";
 

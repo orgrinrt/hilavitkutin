@@ -34,17 +34,56 @@ pub(crate) struct Finding {
 }
 
 /// Each line of `text` as code, with its 1-based number.
-pub(crate) fn code_lines(text: &str) -> impl Iterator<Item = (usize, String)> + '_ {
+fn code_lines(text: &str) -> impl Iterator<Item = (usize, String)> + '_ {
     let mut in_block_comment = false;
     text.lines()
         .enumerate()
         .map(move |(idx, raw)| (idx + 1, code::code_of(raw, &mut in_block_comment)))
 }
 
-/// The code with every whitespace character removed, so `# ! [ feature` and
-/// `#![feature` read the same.
-pub(crate) fn compact(code: &str) -> String {
-    code.chars().filter(|c| !c.is_whitespace()).collect()
+/// Each attribute of `text`, inner and outer, from its `#` to the bracket
+/// that closes it, with the 1-based line its `#` is on.
+///
+/// The attribute comes back with every whitespace character removed, so
+/// `# ! [ feature` and `#![feature` read the same. The compiler takes an
+/// attribute broken over lines between any two of its tokens, so the text is
+/// read as one run of code and no attribute ends at the end of a line. One
+/// that never closes runs to the end of the text.
+pub(crate) fn attributes(text: &str) -> Vec<(usize, String)> {
+    let code: Vec<(usize, char)> = code_lines(text)
+        .flat_map(|(line, code)| {
+            code.chars()
+                .filter(|c| !c.is_whitespace())
+                .map(|c| (line, c))
+                .collect::<Vec<_>>()
+        })
+        .collect();
+    let at = |i: usize| code.get(i).map(|&(_, c)| c);
+    let mut found = Vec::new();
+    let mut i = 0;
+    while i < code.len() {
+        let open = if at(i + 1) == Some('!') { i + 2 } else { i + 1 };
+        if at(i) != Some('#') || at(open) != Some('[') {
+            i += 1;
+            continue;
+        }
+        let mut depth = 0usize;
+        let mut end = code.len();
+        for (k, &(_, c)) in code.iter().enumerate().skip(open) {
+            match c {
+                '[' => depth += 1,
+                ']' if depth == 1 => {
+                    end = k + 1;
+                    break;
+                },
+                ']' => depth -= 1,
+                _ => {},
+            }
+        }
+        found.push((code[i].0, code[i .. end].iter().map(|&(_, c)| c).collect()));
+        i = end;
+    }
+    found
 }
 
 /// Every finding `find` reports in the crate's sources, as hard errors.

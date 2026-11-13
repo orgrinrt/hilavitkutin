@@ -13,7 +13,7 @@ use mockspace::{CrateLint, Lint, LintContext, LintError, Severity};
 
 #[path = "frozen/scan.rs"]
 mod scan;
-use scan::{Finding, code_lines, compact, is_ident_char};
+use scan::{Finding, attributes, is_ident_char};
 
 pub fn lint() -> Box<dyn CrateLint> {
     Box::new(FrozenNoRecursionLimit)
@@ -55,10 +55,10 @@ impl CrateLint for FrozenNoRecursionLimit {
 }
 
 fn findings(text: &str) -> Vec<Finding> {
-    code_lines(text)
-        .filter_map(|(line, code)| {
-            let code = compact(&code);
-            let named = LIMITS.into_iter().find(|limit| names(&code, limit))?;
+    attributes(text)
+        .into_iter()
+        .filter_map(|(line, attribute)| {
+            let named = LIMITS.into_iter().find(|limit| names(&attribute, limit))?;
             Some(Finding {
                 line,
                 message: format!(
@@ -69,14 +69,13 @@ fn findings(text: &str) -> Vec<Finding> {
         .collect()
 }
 
-/// Whether a compacted line has an attribute naming `limit` as a whole word.
-fn names(code: &str, limit: &str) -> bool {
-    (code.contains("#[") || code.contains("#!["))
-        && code.match_indices(limit).any(|(at, _)| {
-            let before = code[.. at].chars().next_back();
-            let after = code[at + limit.len() ..].chars().next();
-            !before.is_some_and(is_ident_char) && !after.is_some_and(is_ident_char)
-        })
+/// Whether an attribute names `limit` as a whole word.
+fn names(attribute: &str, limit: &str) -> bool {
+    attribute.match_indices(limit).any(|(at, _)| {
+        let before = attribute[.. at].chars().next_back();
+        let after = attribute[at + limit.len() ..].chars().next();
+        !before.is_some_and(is_ident_char) && !after.is_some_and(is_ident_char)
+    })
 }
 
 // Beside the lint in a subdirectory, which the lint discovery does not read.
