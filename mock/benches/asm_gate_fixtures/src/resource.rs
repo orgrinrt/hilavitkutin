@@ -69,5 +69,5 @@ pub extern "C" fn asm_gate_resource_snapshot() -> u64 {
     let _ = sched.run();
     let rout = sched.__bindings().__tail().__tail().__ptr().as_ptr() as *const u32;
     // SAFETY: ROut holds N written records; scheduler alive.
-    black_box(unsafe { fnv1a_u32_slice(core::slice::from_raw_parts(rout, N)) })
+    black_box(unsafe { fnv1a_u32(core::slice::from_raw_parts(rout, N)) })
 }

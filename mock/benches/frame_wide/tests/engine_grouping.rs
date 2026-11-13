@@ -19,10 +19,11 @@
 //! that comment stays true. Ticket `bc858e83ffbc` carries the duplication.
 //!
 //! The units are the support crate's own, so the access sets are the ones the
-//! engine arm builds with. What is written out here is the store order and the
-//! per-unit projection witnesses, which the builder derives from the order the
-//! columns and units are registered in, repeated here by hand rather than
-//! taken from the arm (ticket `3bb61f3abdec`).
+//! engine arm builds with, and so are their orders: `frame!` in the support
+//! crate spells the columns and units once, the arm registers from it, and
+//! `Stores` and `Units` here are that same spelling. What is written out here
+//! is the per-unit projection witnesses, which the `Locate` bounds hold to the
+//! units at their positions.
 //!
 //! Nothing here is a verdict on the engine. It records the shape the plan
 //! currently finds, so a change to the waist axis or to trunk ownership shows
@@ -31,82 +32,23 @@
 
 use arvo::USize;
 use arvo_bitmask::BitAccess;
-use frame_wide_support::engine::{A1, A2, A3, B1, B2, B3, C1, C2, C3, In, Jn, Join, Map, T1, T2};
-use frame_wide_support::{Heavy, K_A1, K_A2, K_A3, K_B1, K_B2, K_B3, K_C1, K_C2, K_C3, K_T1, K_T2};
+use frame_wide_support::Heavy;
 use hilavitkutin::dispatch::core_mask::{core_phase_mask, grouping_arrays};
 use hilavitkutin::dispatch::engine_ctx::{Here, There};
 use hilavitkutin::plan::grouping::{GATE2_MAX_UNITS, group_n, phase_of, trunk_of};
 use hilavitkutin::plan::{DefaultPlanDims, PlanDims};
 use hilavitkutin_api::access::{Cons, Empty};
-use hilavitkutin_api::store::Column;
 
-// The store order is the order `engine_arm!` registers the columns in.
-type Stores = Cons<
-    Column<In>,
-    Cons<
-        Column<A1>,
-        Cons<
-            Column<A2>,
-            Cons<
-                Column<A3>,
-                Cons<
-                    Column<B1>,
-                    Cons<
-                        Column<B2>,
-                        Cons<
-                            Column<B3>,
-                            Cons<
-                                Column<C1>,
-                                Cons<
-                                    Column<C2>,
-                                    Cons<
-                                        Column<C3>,
-                                        Cons<Column<Jn>, Cons<Column<T1>, Cons<Column<T2>, Empty>>>,
-                                    >,
-                                >,
-                            >,
-                        >,
-                    >,
-                >,
-            >,
-        >,
-    >,
->;
-
+// The store and unit lists are the arm's own: `frame!` spells both once and
+// the engine arm registers from that same spelling, so neither order is
+// repeated here.
+type Stores = frame_wide_support::engine::Stores;
 type CS = <DefaultPlanDims as PlanDims>::Stores;
 type CU = <DefaultPlanDims as PlanDims>::Units;
 type Adj = <DefaultPlanDims as PlanDims>::AdjRow;
 
-// The twelve units, in the order `engine_arm!` registers them.
-type U0 = Map<Heavy, In, A1, K_A1>;
-type U1 = Map<Heavy, A1, A2, K_A2>;
-type U2 = Map<Heavy, A2, A3, K_A3>;
-type U3 = Map<Heavy, In, B1, K_B1>;
-type U4 = Map<Heavy, B1, B2, K_B2>;
-type U5 = Map<Heavy, B2, B3, K_B3>;
-type U6 = Map<Heavy, In, C1, K_C1>;
-type U7 = Map<Heavy, C1, C2, K_C2>;
-type U8 = Map<Heavy, C2, C3, K_C3>;
-type U9 = Join<Heavy, A3, B3, C3, Jn>;
-type U10 = Map<Heavy, In, T1, K_T1>;
-type U11 = Map<Heavy, In, T2, K_T2>;
-
-type Units = Cons<
-    U0,
-    Cons<
-        U1,
-        Cons<
-            U2,
-            Cons<
-                U3,
-                Cons<
-                    U4,
-                    Cons<U5, Cons<U6, Cons<U7, Cons<U8, Cons<U9, Cons<U10, Cons<U11, Empty>>>>>>>,
-                >,
-            >,
-        >,
-    >,
->;
+// The twelve units, in the order the engine arm registers them.
+type Units = frame_wide_support::engine::Units<Heavy>;
 
 // Store positions, 0 through 12.
 type P0 = Here;
@@ -169,13 +111,11 @@ fn arrays() -> ([USize; GATE2_MAX_UNITS], [USize; GATE2_MAX_UNITS], usize) {
 /// Twelve units group, and no two of them share a trunk by writing one
 /// column.
 ///
-/// This does not reach the builder. The `Stores`, `Units` and `Witnesses`
-/// above are written out by hand to match what `engine_arm!` registers, and
-/// the witnesses are held to the real access sets by the `Locate` bounds, so
-/// a witness naming the wrong column does not compile. The order of the units
-/// and of the columns is not held to anything: reorder the macro and this file
-/// stays green while describing a frame the arm no longer builds. Ticket
-/// `3bb61f3abdec` carries that gap.
+/// This does not reach the builder, but it reads the same frame: `Stores` and
+/// `Units` are the lists `frame!` hands the engine arm, so a column or unit
+/// moved there moves here. The witnesses are written out by hand and held to
+/// the units at their positions by the `Locate` bounds, so a witness naming the
+/// wrong column, or a unit moved under its witness, does not compile.
 #[test]
 fn twelve_units_group_with_no_two_sharing_a_write() {
     assert_eq!(group_n::<Units, Stores, Witnesses, CU, CS>().0, N_UNITS);

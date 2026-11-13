@@ -105,3 +105,60 @@ fn a_stage_is_never_written_over() {
     assert!(!again.status.success());
     std::fs::remove_dir_all(&out).ok();
 }
+
+/// Stage the fixture with its checks set to pass or to fail, and answer the
+/// run and whether the checks ran.
+fn stage_with_checks(tag: &str, fail: bool) -> (std::process::Output, bool, PathBuf) {
+    let out = std::env::temp_dir().join(format!("stage-script-{tag}-{}", std::process::id()));
+    let ran = std::env::temp_dir().join(format!("stage-script-{tag}-ran-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&out);
+    let _ = std::fs::remove_file(&ran);
+    let mut cmd = Command::new(stage_script());
+    cmd.arg(fixture())
+        .arg(&out)
+        .env("STAGE_FIXTURE_CHECKS_RAN", &ran);
+    if fail {
+        cmd.env("STAGE_FIXTURE_CHECKS_FAIL", "1");
+    }
+    let run = cmd.output().unwrap();
+    let checked = ran.exists();
+    let _ = std::fs::remove_file(&ran);
+    (run, checked, out)
+}
+
+/// A member's `run-checks.sh` runs before it is staged.
+#[test]
+fn the_members_checks_run_before_it_is_staged() {
+    let (run, checked, out) = stage_with_checks("checked", false);
+    assert!(
+        run.status.success(),
+        "{}",
+        String::from_utf8_lossy(&run.stderr)
+    );
+    assert!(
+        checked,
+        "stage.sh staged the member without running its checks"
+    );
+    assert!(out.join("binaries.sha256").exists());
+    std::fs::remove_dir_all(&out).ok();
+}
+
+/// The negative control: failing checks stop the stage before anything is
+/// built or written, so no number can be taken from a member whose own tests
+/// are red.
+#[test]
+fn a_member_whose_checks_fail_is_not_staged() {
+    let (run, checked, out) = stage_with_checks("refused", true);
+    assert!(
+        !run.status.success(),
+        "stage.sh staged a member whose checks failed"
+    );
+    assert!(checked, "the refusal never reached the checks");
+    let stderr = String::from_utf8_lossy(&run.stderr);
+    assert!(stderr.contains("checks of"), "{stderr}");
+    assert!(
+        !out.exists(),
+        "a refused stage left {} behind",
+        out.display()
+    );
+}

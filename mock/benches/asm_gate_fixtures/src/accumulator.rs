@@ -62,5 +62,5 @@ pub extern "C" fn asm_gate_accumulator() -> u64 {
     let av_base = sched.__bindings().__ptr().as_ptr() as *const u32;
     // SAFETY: the appender wrote `len` records into the Av buffer; scheduler alive.
     let slice = unsafe { core::slice::from_raw_parts(av_base, len) };
-    black_box(fnv1a_u32_slice(slice))
+    black_box(fnv1a_u32(slice))
 }

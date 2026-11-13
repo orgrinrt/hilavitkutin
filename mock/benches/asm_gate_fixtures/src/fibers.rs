@@ -142,8 +142,8 @@ pub extern "C" fn asm_gate_windowed_fibers() -> u64 {
         .__ptr()
         .as_ptr() as *const u32;
     // SAFETY: both output columns hold N written records; scheduler alive.
-    let h1 = unsafe { fnv1a_u32_slice(core::slice::from_raw_parts(pout, N)) };
-    let h2 = unsafe { fnv1a_u32_slice(core::slice::from_raw_parts(qout, N)) };
+    let h1 = unsafe { fnv1a_u32(core::slice::from_raw_parts(pout, N)) };
+    let h2 = unsafe { fnv1a_u32(core::slice::from_raw_parts(qout, N)) };
     black_box(h1 ^ h2)
 }
 
@@ -205,20 +205,20 @@ pub extern "C" fn asm_gate_parallel_fiber_windows() -> u64 {
         .__ptr()
         .as_ptr() as *const u32;
     // SAFETY: both output columns hold N written records; scheduler alive.
-    let h1 = unsafe { fnv1a_u32_slice(core::slice::from_raw_parts(pout, N)) };
-    let h2 = unsafe { fnv1a_u32_slice(core::slice::from_raw_parts(qout, N)) };
+    let h1 = unsafe { fnv1a_u32(core::slice::from_raw_parts(pout, N)) };
+    let h2 = unsafe { fnv1a_u32(core::slice::from_raw_parts(qout, N)) };
     black_box(h1 ^ h2)
 }
 
 /// The bench executor with its `spawn` kept out of line, so the thread
 /// creation std does there stays out of the fixture wrapper the gate checks.
-struct OutOfLineSpawn(engine_vs_std::executor::BenchExecutor);
+struct OutOfLineSpawn(evs_support::executor::BenchExecutor);
 
 impl OutOfLineSpawn {
     /// The bench executor sized to the machine, built out of line.
     #[inline(never)]
     fn new() -> Self {
-        Self(engine_vs_std::executor::BenchExecutor::new())
+        Self(evs_support::executor::BenchExecutor::new())
     }
 }
 

@@ -1,4 +1,4 @@
-//! The `frame_wide` driver: validate every arm of a cell, then time it.
+//! The `frme_wide` driver: validate every arm of a cell, then time it.
 //!
 //! The harness has two entry points and only `driver::drive_spec` validates.
 //! This member keeps its own loop, like `resource_storage`, and so calls
@@ -7,10 +7,9 @@
 //! whose arms do not all agree with the reference and with each other is not
 //! timed, and the run fails.
 //!
-//! Before any cell is timed the driver runs `./run-checks.sh`, which is the
-//! build, the grouping test, the checks gate's own test, the support crate's
-//! unit tests and the two negative controls. Nothing invoked that script until
-//! now, so its checks passed only when somebody remembered to run them.
+//! Its checks (`./run-checks.sh`: the build, the grouping test, the support
+//! crate's unit tests and the negative controls) run when it is staged, since
+//! `../stage.sh` runs them before it builds anything for timing.
 //!
 //! A timing run starts from a stage (`mock/benches/stage.sh .`, then
 //! `<stage>/release/frame_wide`), so the arms it loads are the ones staged
@@ -21,8 +20,7 @@
 //!
 //! Flags: `--n <N>` runs only that record count, `--only <sweep>` only that
 //! sweep (repeatable), `--report-only` regenerates the findings from the CSVs
-//! already written, `--skip-checks` runs without the checks and says so. The
-//! harness re-executes this binary with `--worker`, which
+//! already written. The harness re-executes this binary with `--worker`, which
 //! `frame_wide::worker_main` answers.
 
 use std::path::{Path, PathBuf};
@@ -62,33 +60,6 @@ fn flag_values(args: &[String], flag: &str) -> Vec<String> {
         .collect()
 }
 
-/// Run `run-checks.sh` before anything is timed, or say that it was skipped.
-///
-/// The script's own header calls itself everything that has to pass before a
-/// timing from this member counts, and until now nothing invoked it. This
-/// member declares its own `[workspace]`, as every bench member here does, so
-/// `cargo mock test` never reaches it and its tests passed only because
-/// somebody ran them by hand. Timing a cell is minutes of work; the checks are
-/// a couple of minutes of it, nearly all counter calibration, so paying them
-/// is cheaper than a number nobody can vouch for.
-///
-/// `--skip-checks` is for iterating on the driver itself. It prints, because a
-/// run that skipped them should not look like a run that passed them.
-fn run_checks(skip: bool) -> Result<(), String> {
-    if skip {
-        eprintln!("  checks skipped (--skip-checks): these timings are not vouched for");
-        return Ok(());
-    }
-    eprintln!("  running ./run-checks.sh");
-    let status = std::process::Command::new("./run-checks.sh")
-        .status()
-        .map_err(|e| format!("could not run ./run-checks.sh: {e}"))?;
-    if !status.success() {
-        return Err("./run-checks.sh failed, so nothing was timed".to_string());
-    }
-    Ok(())
-}
-
 fn drive(args: &[String]) -> Result<(), String> {
     let report_only = args.iter().any(|a| a == "--report-only");
     let only = flag_values(args, "--only");
@@ -103,7 +74,6 @@ fn drive(args: &[String]) -> Result<(), String> {
         let stage = Stage::of_current_exe()?;
         stage.verify()?;
         eprintln!("  staged at {}", stage.dir().display());
-        run_checks(args.iter().any(|a| a == "--skip-checks"))?;
         Some(stage)
     };
 

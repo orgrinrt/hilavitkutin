@@ -1,0 +1,20 @@
+[package]
+name = "evs-support"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# The workloads, their arms, the routine and the design's ceilings, defined
+# once for the driver and every variant cdylib.
+[lib]
+name = "evs_support"
+path = "src/lib.rs"
+
+[dependencies]
+bench-arm = { path = "../../bench-arm" }
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "f42844c7f7f8be9c54dd96b9a975a6c7da3fea5e", features = ["std"] }

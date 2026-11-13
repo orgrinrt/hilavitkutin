@@ -20,6 +20,9 @@ use crate::{ConvInput, ConvOutput, data, std_par, walk};
 /// One measured arm.
 pub trait Arm: 'static {
     const NAME: &'static str;
+    /// How many walkers the arm's fold runs at a worker count of `workers`.
+    /// Every fold is built with it, so a test holds the count to it.
+    fn walkers(workers: usize) -> usize;
     fn fold<K: Kernel>(data: Vec<u32>, workers: usize) -> impl FnMut(Op) -> ConvOutput + 'static;
     fn append<K: Kernel>(data: Vec<u32>, workers: usize) -> impl FnMut(Op) -> ConvOutput + 'static;
 }
@@ -29,6 +32,10 @@ pub struct Sequential;
 
 impl Arm for Sequential {
     const NAME: &'static str = "sequential";
+
+    fn walkers(_workers: usize) -> usize {
+        1
+    }
 
     fn fold<K: Kernel>(data: Vec<u32>, _workers: usize) -> impl FnMut(Op) -> ConvOutput + 'static {
         engine::fold::<K>(&data, Drive::Seq)
@@ -49,8 +56,12 @@ pub struct Nway;
 impl Arm for Nway {
     const NAME: &'static str = "nway";
 
+    fn walkers(workers: usize) -> usize {
+        workers
+    }
+
     fn fold<K: Kernel>(data: Vec<u32>, workers: usize) -> impl FnMut(Op) -> ConvOutput + 'static {
-        engine::fold::<K>(&data, Drive::Par(workers))
+        engine::fold::<K>(&data, Drive::Par(Self::walkers(workers)))
     }
 
     fn append<K: Kernel>(data: Vec<u32>, workers: usize) -> impl FnMut(Op) -> ConvOutput + 'static {
@@ -72,8 +83,12 @@ pub struct HeadTail;
 impl Arm for HeadTail {
     const NAME: &'static str = "head_tail";
 
+    fn walkers(workers: usize) -> usize {
+        workers.min(2)
+    }
+
     fn fold<K: Kernel>(data: Vec<u32>, workers: usize) -> impl FnMut(Op) -> ConvOutput + 'static {
-        walk::fold::<K, HeadTailMid>(data, HeadTailMid::new(), workers.min(2))
+        walk::fold::<K, HeadTailMid>(data, HeadTailMid::new(), Self::walkers(workers))
     }
 
     fn append<K: Kernel>(
@@ -92,8 +107,12 @@ pub struct HeadTailDynamic;
 impl Arm for HeadTailDynamic {
     const NAME: &'static str = "head_tail_dyn";
 
+    fn walkers(workers: usize) -> usize {
+        workers.min(2)
+    }
+
     fn fold<K: Kernel>(data: Vec<u32>, workers: usize) -> impl FnMut(Op) -> ConvOutput + 'static {
-        walk::fold::<K, HeadTailDyn>(data, HeadTailDyn::new(), workers.min(2))
+        walk::fold::<K, HeadTailDyn>(data, HeadTailDyn::new(), Self::walkers(workers))
     }
 
     fn append<K: Kernel>(
@@ -111,8 +130,12 @@ pub struct KernelSeq;
 impl Arm for KernelSeq {
     const NAME: &'static str = "kernel_seq";
 
-    fn fold<K: Kernel>(data: Vec<u32>, _workers: usize) -> impl FnMut(Op) -> ConvOutput + 'static {
-        walk::fold::<K, Ceil>(data, Ceil, 1)
+    fn walkers(_workers: usize) -> usize {
+        1
+    }
+
+    fn fold<K: Kernel>(data: Vec<u32>, workers: usize) -> impl FnMut(Op) -> ConvOutput + 'static {
+        walk::fold::<K, Ceil>(data, Ceil, Self::walkers(workers))
     }
 
     fn append<K: Kernel>(
@@ -130,8 +153,12 @@ pub struct KernelNway;
 impl Arm for KernelNway {
     const NAME: &'static str = "kernel_nway";
 
+    fn walkers(workers: usize) -> usize {
+        workers
+    }
+
     fn fold<K: Kernel>(data: Vec<u32>, workers: usize) -> impl FnMut(Op) -> ConvOutput + 'static {
-        walk::fold::<K, Ceil>(data, Ceil, workers)
+        walk::fold::<K, Ceil>(data, Ceil, Self::walkers(workers))
     }
 
     fn append<K: Kernel>(data: Vec<u32>, workers: usize) -> impl FnMut(Op) -> ConvOutput + 'static {
@@ -145,8 +172,12 @@ pub struct StdParallel;
 impl Arm for StdParallel {
     const NAME: &'static str = "std_parallel";
 
+    fn walkers(workers: usize) -> usize {
+        workers
+    }
+
     fn fold<K: Kernel>(data: Vec<u32>, workers: usize) -> impl FnMut(Op) -> ConvOutput + 'static {
-        std_par::fold::<K>(data, workers)
+        std_par::fold::<K>(data, Self::walkers(workers))
     }
 
     fn append<K: Kernel>(data: Vec<u32>, workers: usize) -> impl FnMut(Op) -> ConvOutput + 'static {

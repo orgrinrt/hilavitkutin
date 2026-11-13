@@ -10,25 +10,15 @@
 //! `asm_gate_control_stored_pointer`, calls through a stored function pointer,
 //! and the gate requires check 1 to fail on it.
 //!
-//! The WorkUnit and `RecordOp` definitions mirror `engine_vs_std::element_wise`
+//! The WorkUnit and `RecordOp` definitions mirror `evs_support::element_wise`
 //! and `::accumulator` (the perf-gate workloads) so the gate reads the same
 //! dispatch the perf gate measures. Provider, stage, and hash helpers are reused
-//! from `engine_vs_std` rather than duplicated.
+//! from `evs-support` rather than duplicated.
 
 use core::hint::black_box;
 
 use arvo::USize;
-use engine_vs_std::{
-    HeapBump,
-    arena_bytes,
-    chain,
-    fnv1a_u32_slice,
-    stage1,
-    stage2,
-    stage3,
-    stage4,
-    store,
-};
+use evs_support::{HeapBump, arena_bytes, chain, fnv1a_u32, stage1, stage2, stage3, stage4, store};
 use hilavitkutin::dispatch::engine_ctx::{
     AccPtrCons,
     AccPtrNil,
@@ -63,7 +53,7 @@ use hilavitkutin_api::work_unit::{Always, WorkUnit};
 // is quick, large enough that the morsel loop is a real loop.
 const N: usize = 256;
 
-// ----- the four-stage column chain (mirrors engine_vs_std::element_wise) -----
+// ----- the four-stage column chain (mirrors evs_support::element_wise) -----
 
 #[derive(Copy, Clone)]
 struct Inv(u32);
@@ -255,7 +245,7 @@ macro_rules! chain_scheduler {
 /// SAFETY: `dv_base` points at N reserved Dv records (repr u32) in a live arena.
 unsafe fn dv_hash(dv_base: *const u32) -> u64 {
     let slice = unsafe { core::slice::from_raw_parts(dv_base, N) };
-    fnv1a_u32_slice(slice)
+    fnv1a_u32(slice)
 }
 
 // ----- fixture 1: column chain via run() (morsel-outer RAW path) -----

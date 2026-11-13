@@ -99,6 +99,37 @@ impl Stage {
             Err(String::from_utf8_lossy(&out.stderr).trim().to_string())
         }
     }
+
+    /// Point the link at `link` (a member's `./target`) at this stage, so a
+    /// manifest naming arms under `target/` reads the ones staged beside the
+    /// driver and never what another worktree last built into the shared
+    /// target directory.
+    ///
+    /// A link left by an earlier run points at that run's build, which is the
+    /// stale set of arms the stage exists to keep out, so a link pointing
+    /// anywhere else is replaced. A real directory at `link` is refused rather
+    /// than removed: it is somebody's build, not a link a driver made.
+    pub fn link_into(&self, link: &Path) -> Result<(), String> {
+        match link.symlink_metadata() {
+            Ok(meta) if meta.file_type().is_symlink() => {
+                if std::fs::read_link(link).is_ok_and(|to| to == self.dir) {
+                    return Ok(());
+                }
+                std::fs::remove_file(link)
+                    .map_err(|e| format!("replacing the old {} link: {e}", link.display()))?;
+            },
+            Ok(_) => {
+                return Err(format!(
+                    "{} is a directory, not a link; the arms would be read from it rather than \
+                     from this binary's stage",
+                    link.display()
+                ));
+            },
+            Err(_) => {},
+        }
+        std::os::unix::fs::symlink(&self.dir, link)
+            .map_err(|e| format!("linking {} to {}: {e}", link.display(), self.dir.display()))
+    }
 }
 
 /// The one staging script, beside this crate.
@@ -171,5 +202,34 @@ mod tests {
         write_stage(&dir);
         assert!(Stage::of_executable(&dir.join("release/deps/driver")).is_err());
         std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn a_link_is_made_replaced_when_stale_and_a_directory_is_refused() {
+        let dir = scratch("link");
+        write_stage(&dir);
+        let stage = Stage::of_executable(&dir.join("release/driver")).unwrap();
+        let link = dir.join("target");
+        stage.link_into(&link).unwrap();
+        assert_eq!(std::fs::read_link(&link).unwrap(), dir);
+        stage.link_into(&link).unwrap();
+
+        std::fs::remove_file(&link).unwrap();
+        std::os::unix::fs::symlink(std::env::temp_dir(), &link).unwrap();
+        stage.link_into(&link).unwrap();
+        assert_eq!(
+            std::fs::read_link(&link).unwrap(),
+            dir,
+            "a stale link is replaced"
+        );
+
+        std::fs::remove_file(&link).unwrap();
+        std::fs::create_dir(&link).unwrap();
+        assert!(
+            stage.link_into(&link).is_err(),
+            "a real directory is refused"
+        );
+        assert!(link.is_dir(), "and left in place");
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

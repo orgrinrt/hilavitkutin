@@ -51,13 +51,14 @@ fn main() -> ExitCode {
             },
         };
     }
-    let stage = match Stage::of_current_exe().and_then(|s| link_target(&s).map(|()| s)) {
-        Ok(stage) => stage,
-        Err(e) => {
-            eprintln!("error: {e}");
-            return ExitCode::FAILURE;
-        },
-    };
+    let stage =
+        match Stage::of_current_exe().and_then(|s| s.link_into(Path::new("target")).map(|()| s)) {
+            Ok(stage) => stage,
+            Err(e) => {
+                eprintln!("error: {e}");
+                return ExitCode::FAILURE;
+            },
+        };
     let code = drive(&DriverRegistry {
         build_workload,
         routine_for,
@@ -70,36 +71,6 @@ fn main() -> ExitCode {
         return ExitCode::FAILURE;
     }
     code
-}
-
-/// Point `./target` at the stage this binary runs from.
-///
-/// A link left by an earlier run points at that run's build, which is exactly
-/// the stale set of arms the stage exists to keep out, so a link pointing
-/// anywhere else is replaced. A real directory at `./target` is refused rather
-/// than removed: it is somebody's build, not a link this binary made.
-fn link_target(stage: &Stage) -> Result<(), String> {
-    let link = Path::new("target");
-    let want = stage.dir();
-    match link.symlink_metadata() {
-        Ok(meta) if meta.file_type().is_symlink() => {
-            if std::fs::read_link(link).is_ok_and(|to| to == want) {
-                return Ok(());
-            }
-            std::fs::remove_file(link)
-                .map_err(|e| format!("replacing the old ./target link: {e}"))?;
-        },
-        Ok(_) => {
-            return Err(
-                "./target is a directory, not a link; the arms would be read from it rather than \
-                 from this binary's stage"
-                    .to_string(),
-            );
-        },
-        Err(_) => {},
-    }
-    std::os::unix::fs::symlink(want, link)
-        .map_err(|e| format!("linking ./target to {}: {e}", want.display()))
 }
 
 /// The program around the measured call: the light surrounding work of the

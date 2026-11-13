@@ -48,6 +48,16 @@ member="${1:?usage: stage.sh <member-dir> [<out-dir>]}"
 member=$(cd "$member" && pwd)
 [ -f "$member/Cargo.toml" ] || die "$member has no Cargo.toml"
 
+# The member's own checks run before anything of it is built for timing. Each
+# member is a workspace of its own, which no gate of this repository reaches
+# (`cargo mock test` runs the repository's members, not these), so a stage is
+# the one step every measurement passes through and the one place the checks
+# are certain to run before a number is taken. Their output goes to stderr; a
+# member with no `run-checks.sh` has no checks to run.
+if [ -e "$member/run-checks.sh" ]; then
+    (cd "$member" && ./run-checks.sh) >&2 || die "the checks of $member failed; nothing was staged"
+fi
+
 if [ -n "${2:-}" ]; then
     out="$2"
     [ ! -e "$out" ] || die "$out exists; a stage is written once, into a directory nothing else holds"

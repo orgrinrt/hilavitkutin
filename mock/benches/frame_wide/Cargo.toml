@@ -39,13 +39,10 @@ harness = false
 name = "engine_grouping"
 path = "tests/engine_grouping.rs"
 
-# The gate that runs `run-checks.sh` before anything is timed, driven against a
-# stub script so the refusal is seen rather than assumed. `harness = false`
-# because it spawns the built driver; it times no cell and needs no manifest.
+# The driver run from the target directory rather than a stage is refused.
 [[test]]
-name = "checks_gate"
-path = "tests/checks_gate.rs"
-harness = false
+name = "unstaged_driver"
+path = "tests/unstaged_driver.rs"
 
 [dependencies]
 frame-wide-support = { path = "support/frame-wide-support" }
