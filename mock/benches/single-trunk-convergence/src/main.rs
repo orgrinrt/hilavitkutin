@@ -120,7 +120,7 @@ fn routine_for(config: &BenchConfig) -> Option<RoutineSpec> {
     };
     bridge.input_builder = builder(kind, w)?;
     Some(RoutineSpec {
-        name: section.to_string(),
+        name: config.bench_name.rsplit('/').next()?.to_string(),
         bridge,
     })
 }
