@@ -393,8 +393,6 @@ is registered open with a bench oracle.
 '''
 origin = "stated"
 standing = "provisional"
-stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: its source is his ruling A1-1 at mock/research/202606111400_canonical-design-addendum-a1.md:49-57, which put the fork to a bench and held it open until the bench landed, and the bench-decided later passage mock/research/202607200800_a1-1-ordering-theory-bench-expansion.md:82-90 closes it, as row rcm_wins_against_rival_ordering_theories_at_dram_scale_and_order_is_near_neutral_below_it_so_step_5_stands holds, which replaces this row whole, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["RCM", "dispatch order", "waist-phase order", "bench oracle", "cache locality", "fan-out", "dual ordering", "A1-1"]
 related = ["tenet::rcm_always_runs_and_reorders_the_units_so_column_sharing_units_are_adjacent_for_fiber_grouping"]
 
