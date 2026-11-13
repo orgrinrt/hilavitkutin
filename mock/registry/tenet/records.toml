@@ -99,3 +99,92 @@ origin = "stated"
 standing = "provisional"
 subject = "records"
 keywords = ["morsel boundary", "stable", "record range", "record count", "frames"]
+
+[[tenet]]
+id = "a_record_is_one_data_point_in_a_column_and_the_words_entity_and_row_are_dead"
+what = "A record is one data point in a column, a column has N records and a morsel windows into a range of records. The older words for it are dead because the one implies an ECS and the other implies tabular joins, and columns are independent."
+mechanism = "Dead terms: `entity` (implies ECS; hilavitkutin is not an ECS) and `row` (implies tabular joins; columns are independent); both replaced by `record`."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:79-79, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:99-100"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#vocabulary"]
+quote = '''
+| **record** | One data point in a column. The global identity. A column has N records. A morsel windows into a range of records. Not "entity" (no ECS connotation), not "row" (no tabular connotation). |
+---
+| entity | record | "Entity" implies ECS; hilavitkutin is not an ECS |
+| row | record | "Row" implies tabular joins; columns are independent |
+'''
+origin = "stated"
+standing = "provisional"
+subject = "records"
+keywords = ["record", "entity", "row", "dead terms", "column", "ECS", "tabular joins"]
+cites = ["a_record_is_the_global_data_identity"]
+
+[[tenet]]
+id = "columns_are_aligned_to_sixty_four_bytes_at_their_array_base"
+what = "Column arrays are aligned to sixty-four bytes at their base addresses."
+mechanism = "64-byte alignment on column array base addresses (T3 §Q3)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:400-400"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#04-column-memory-layout"]
+quote = '''
+- 64-byte alignment on column array base addresses (T3 §Q3 L2825-2860)
+'''
+origin = "stated"
+standing = "provisional"
+subject = "records"
+keywords = ["64-byte alignment", "column array base", "alignment", "T3 Q3", "cache line"]
+
+[[tenet]]
+id = "column_access_is_sequential_and_prefetcher_optimal"
+what = "Column access is sequential, which is the pattern the prefetcher serves best, and all the source topics agree on it."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:401-401"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#04-column-memory-layout"]
+quote = '''
+- Sequential access pattern, prefetcher-optimal (all topics agree)
+'''
+origin = "stated"
+standing = "provisional"
+subject = "records"
+keywords = ["sequential access", "prefetcher-optimal", "columnar storage", "access pattern"]
+
+[[tenet]]
+id = "column_layout_is_chosen_from_scheduling_hints_per_column_among_byte_aligned_natural_and_bit_packed"
+what = "The layout of each column follows from the scheduling hints and is byte aligned, natural or bit packed, without the assumption of one uniform stride."
+mechanism = "`ByteAligned` / `Natural` / `BitPacked` per column (T5 §Q10 L840-870)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:402-404, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:764-764"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#04-column-memory-layout"]
+quote = '''
+- Column layout from scheduling hints: ByteAligned/Natural/BitPacked
+  still applies per column (T5 §Q10 L840-870), just without the
+  uniform stride assumption
+---
+- Column layout from hints: ByteAligned/Natural/BitPacked (T5 §Q10)
+'''
+origin = "stated"
+standing = "provisional"
+subject = "records"
+keywords = ["column layout", "ByteAligned", "Natural", "BitPacked", "scheduling hints", "stride", "T5 Q10"]
+
+[[tenet]]
+id = "the_fiber_s_columns_are_one_neighbourhood_with_one_base_register_and_internal_columns_stay_in_registers"
+what = "With co-location, all of a fiber's data lies in one cache-line neighbourhood, the columns internal to the fiber are register-to-register data paths, only the fiber's outputs are written to memory, and one base register with offset immediates replaces many separate pointers. A morsel boundary is one base pointer update."
+mechanism = "`arena_base + col_A_offset + i * stride_A`; `arena_base + col_B_offset + i * stride_B`; record index `i` advances one cursor covering all columns."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:961-972"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#14-fiber-formation"]
+quote = '''
+All columns within a fiber share one arena allocation. The morsel
+context has one base pointer. Each column at a known static offset:
+```
+arena_base + col_A_offset + i * stride_A
+arena_base + col_B_offset + i * stride_B
+```
+Record index `i` advances one cursor covering all columns. Morsel boundary
+= one base pointer update. Co-location means:
+- All fiber data in one cache-line neighborhood
+- Fiber-internal columns are register-to-register data paths (DSE)
+- Fiber outputs are the only columns written to memory
+- One base register + offset immediates, not N separate pointers
+'''
+origin = "stated"
+standing = "provisional"
+subject = "records"
+keywords = ["co-located arena", "base pointer", "offset immediates", "DSE", "register-to-register", "one cursor", "morsel boundary"]
+cites = ["storage_is_contiguous_and_a_fiber_s_columns_share_one_arena"]

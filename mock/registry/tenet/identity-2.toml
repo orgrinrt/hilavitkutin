@@ -1,0 +1,156 @@
+# What the record says about `identity`, part 2.
+
+[[tenet]]
+id = "the_graph_crate_holds_the_dag_algorithms_for_ordering_ranks_paths_waists_and_renumbering"
+what = "The graph crate holds the DAG algorithms: topological sort with a fixed-size queue, connected components, weighted longest and shortest paths, upward and downward rank, critical path analysis, waist detection and node renumbering that matches the reverse topological order."
+mechanism = "Kahn's topological sort (fixed-size queue + in-degree array); connected components (DFS/BFS on bitmask adjacency); `rank(u) = cost(u) + max(rank(successors(u)))`; waist detection by concurrent path counting in topo order; node renumbering to sequential IDs matching reverse topo order (prefetcher-optimal access)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:207-215"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+quote = '''
+- Topological sort (Kahn's): fixed-size queue + in-degree array
+- Connected components: DFS/BFS on bitmask adjacency
+- Longest/shortest weighted path
+- Upward/downward rank computation: `rank(u) = cost(u) +
+  max(rank(successors(u)))`
+- Critical path analysis
+- Waist detection: concurrent path counting in DAG topo order
+- Node renumbering: sequential IDs matching reverse topo order
+  (prefetcher-optimal access)
+'''
+origin = "stated"
+standing = "provisional"
+subject = "identity"
+keywords = ["arvo-graph", "Kahn's", "topological sort", "connected components", "rank", "critical path", "waist detection", "renumbering"]
+
+[[tenet]]
+id = "the_spectral_crate_holds_laplacian_power_iteration_fiedler_and_bisection"
+what = "The spectral crate holds Laplacian construction from a weighted adjacency, power iteration for eigenvectors, the Fiedler vector, and spectral bisection and k-way partitioning by recursive bisection."
+mechanism = "L = D - W; power iteration; Fiedler vector (second-smallest eigenvalue of the Laplacian); spectral bisection and k-way partitioning (recursive bisection)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:220-223"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+quote = '''
+- Laplacian construction from weighted adjacency: L = D - W
+- Power iteration for eigenvector computation
+- Fiedler vector (second-smallest eigenvalue of Laplacian)
+- Spectral bisection and k-way partitioning (recursive bisection)
+'''
+origin = "stated"
+standing = "provisional"
+subject = "identity"
+keywords = ["arvo-spectral", "Laplacian", "power iteration", "Fiedler vector", "spectral bisection", "k-way partitioning"]
+
+[[tenet]]
+id = "the_combinatorial_crate_holds_matrix_chain_dp_greedy_interval_grouping_and_bin_packing"
+what = "The combinatorial crate holds the matrix chain ordering dynamic program for optimal interval grouping under constraints, the greedy interval grouping that is the fusion walk, and a greedy two-level bin packing."
+mechanism = "Matrix chain ordering DP (cost function + feasibility check + DP recurrence); greedy interval grouping (fusion walk) with a feasibility predicate; two-level greedy bin-packing (e.g. affinity-ordered bit assignment from domain 10)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:229-234"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+quote = '''
+- Matrix chain ordering DP: optimal interval grouping under
+  constraints. Cost function + feasibility check + DP recurrence.
+- Greedy interval grouping (fusion walk): constrained sequential
+  grouping with feasibility predicate.
+- Bin-packing: greedy two-level (e.g. affinity-ordered bit
+  assignment from domain 10).
+'''
+origin = "stated"
+standing = "provisional"
+subject = "identity"
+keywords = ["arvo-comb", "matrix chain DP", "greedy grouping", "fusion walk", "bin-packing", "feasibility predicate"]
+
+[[tenet]]
+id = "hilavitkutin_uses_each_arvo_crate_for_a_named_job_in_the_engine"
+what = "The engine uses arvo numerics for all its internal numerics, the bitmask crate for the access mask, DAG adjacency and virtual flag storage, the graph crate for topological sort, waist detection, rank and components, the sparse crate for the access matrix and its reordering, the spectral crate for trunk formation, and the combinatorial crate for fiber grouping and morsel bin packing."
+mechanism = "arvo (all internal numerics); arvo-bitmask (AccessMask, DAG adjacency, virtual flag storage); arvo-graph (topo sort, waist detection, rank computation, connected components); arvo-sparse (access matrix, RCM, block diagonal, Dulmage-Mendelsohn); arvo-spectral (trunk formation, Fiedler); arvo-comb (fiber grouping DP, morsel bin-pack)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:238-246"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+quote = '''
+- hilavitkutin uses arvo (numerics) for all internal numerics
+- hilavitkutin uses arvo-bitmask for AccessMask, DAG adjacency,
+  virtual flag storage
+- hilavitkutin uses arvo-graph for topo sort, waist detection, rank
+  computation, connected components
+- hilavitkutin uses arvo-sparse for access matrix, RCM, block
+  diagonal, Dulmage-Mendelsohn
+- hilavitkutin uses arvo-spectral for trunk formation (Fiedler)
+- hilavitkutin uses arvo-comb for fiber grouping DP, morsel bin-pack
+'''
+origin = "stated"
+standing = "provisional"
+subject = "identity"
+keywords = ["relationship to hilavitkutin", "arvo-bitmask", "arvo-graph", "arvo-sparse", "arvo-spectral", "arvo-comb", "AccessMask"]
+
+[[tenet]]
+id = "the_analysis_algorithms_are_reusable_primitives_in_the_arvo_crates_and_not_specific_to_hilavitkutin"
+what = "The analysis algorithms are not specific to hilavitkutin: they are reusable mathematical primitives that live in the arvo crates, defined once under the same discipline of no standard library, no allocation, const generics and LLVM optimisation. hilavitkutin consumes them, and so can saalis, loimu or any other project."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1235-1238"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
+quote = '''
+These algorithms are not hilavitkutin-specific. They are reusable
+mathematical primitives that live in arvo crates (domain 01). Define
+once with the same no_std/no_alloc/const-generic/LLVM-optimised
+discipline. hilavitkutin consumes them; so can saalis, loimu, anything.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "identity"
+keywords = ["analysis algorithms", "arvo crates", "reusable primitives", "no_std", "const-generic", "saalis", "loimu"]
+cites = ["arvo_is_a_standalone_no_std_primitive_family_shared_across_projects"]
+
+[[tenet]]
+id = "the_data_structures_of_the_analysis_are_named_phase_map_fiber_plan_and_trunk_plan"
+what = "The earlier data structure names built on partition and chain are replaced by names built on phase, fiber and trunk."
+mechanism = "PartitionMap becomes PhaseMap, ChainPlan becomes FiberPlan, ChainGroupPlan becomes TrunkPlan. T3 used partition and chain group, updated to phase and trunk."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1439-1443"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
+quote = '''
+**What this supersedes:**
+- T3 used "partition" and "chain group" → updated to "phase" and
+  "trunk"
+- T6 data structure names: PartitionMap → PhaseMap, ChainPlan →
+  FiberPlan, ChainGroupPlan → TrunkPlan
+'''
+origin = "stated"
+standing = "provisional"
+subject = "identity"
+keywords = ["PhaseMap", "FiberPlan", "TrunkPlan", "PartitionMap", "ChainPlan", "ChainGroupPlan", "vocabulary"]
+cites = ["the_dead_terms_chain_chain_group_partition_archetype_entity_row_and_order_have_named_replacements"]
+
+[[tenet]]
+id = "the_consumer_materialises_external_data_into_columns_through_its_own_loader_units_and_manages_storage_lifecycle"
+what = "The consumer materialises external data into the engine's columns before execution, through loader units it defines, provides the memory provider, and manages the storage lifecycle: allocation, growth and eviction via the R2 APIs. The engine accepts whatever columns the consumer provides."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1465-1475"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#16-data-loading"]
+quote = '''
+**Consumer's responsibility:**
+- Provide a MemoryProvider (domain 02 platform traits)
+- Materialise external data into hilavitkutin columns before execution
+- Define loader WorkUnits (`type Read = ()`, `type Write = (Column<A>,
+  ...)`) that bridge from external data to columns
+- Manage storage lifecycle (allocation, growth, eviction via R2 APIs)
+
+**hilavitkutin's responsibility:**
+- Accept whatever columns the consumer provides
+- Build the DAG from WU Read/Write declarations (loaders are root nodes
+  with no read dependencies)
+'''
+origin = "stated"
+standing = "provisional"
+subject = "identity"
+keywords = ["consumer responsibility", "materialise", "loader units", "MemoryProvider", "storage lifecycle", "evict", "inject"]
+cites = ["the_engine_does_not_load_data_and_does_not_know_record_counts_ahead", "the_consumer_provides_the_backing_memory_of_a_column"]
+
+[[tenet]]
+id = "the_engine_owns_dag_scheduling_dispatch_morsels_stages_stealing_and_progress_and_not_storage_schema_queries_ui_or_io"
+what = "The engine's scope is DAG scheduling, unit dispatch, morsel chunking, pipeline stages, work-stealing and progress tracking. It does not own column storage, the data model, schema, query planning, the user interface or IO."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2279-2281"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+quote = '''
+- hilavitkutin scope: owns DAG scheduling, WU dispatch, morsel chunking,
+  pipeline stages, work-stealing, progress tracking. Does NOT own column
+  storage, data model, schema, query planning, UI, IO. (T4 L1941-1987)
+'''
+origin = "stated"
+standing = "provisional"
+subject = "identity"
+keywords = ["scope", "DAG scheduling", "dispatch", "morsel chunking", "does not own", "column storage", "query planning", "IO"]

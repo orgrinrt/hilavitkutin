@@ -1,0 +1,124 @@
+# What the record says about `meta`, part 1.
+
+[[tenet]]
+id = "the_scheduler_is_itself_a_pipeline_and_meta_units_run_at_lifecycle_points"
+what = "The scheduler is itself a pipeline: meta work units run at lifecycle points, so the scheduler schedules itself."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2119-2123"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#23-scheduler-builder-and-meta"]
+quote = '''
+**Self-hosting scheduler (T5 §Q9, L716-802):**
+
+The scheduler is itself a pipeline. Meta work units run at lifecycle
+points:
+
+'''
+origin = "stated"
+standing = "provisional"
+subject = "meta"
+keywords = ["self-hosting scheduler", "meta work units", "lifecycle points", "scheduler is a pipeline", "meta"]
+
+[[tenet]]
+id = "four_meta_virtuals_fire_plan_stage_schedule_ready_pass_start_and_schedule_end"
+what = "There are four meta virtuals: plan stage, fired when the graph changes and the plan is to be recomputed; schedule ready, fired when the plan-stage units complete; pass start, fired at the start of each pass; and schedule end, fired after all consumer work."
+mechanism = "`meta::PlanStage`, `meta::ScheduleReady`, `meta::PassStart`, `meta::ScheduleEnd`."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2124-2128"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#23-scheduler-builder-and-meta"]
+quote = '''
+Meta virtuals:
+- `meta::PlanStage` — fired when DAG changes (recompute plan)
+- `meta::ScheduleReady` — fired when plan-stage units complete
+- `meta::PassStart` — fired at start of each pass
+- `meta::ScheduleEnd` — fired after all consumer work
+'''
+origin = "stated"
+standing = "provisional"
+subject = "meta"
+keywords = ["meta virtuals", "PlanStage", "ScheduleReady", "PassStart", "ScheduleEnd", "lifecycle"]
+cites = ["a_virtual_is_a_pure_flag_and_carries_no_data"]
+
+[[tenet]]
+id = "four_meta_resources_hold_the_graph_the_plan_the_lane_assignment_and_the_metrics_and_are_restricted_by_a_marker_trait"
+what = "There are four meta resources, the dependency graph, the execution plan with the fiber, trunk and phase assignments, the core assignments, and the scheduler metrics with the EMA timing data. Access to them is restricted through a marker trait."
+mechanism = "`meta::Dag`, `meta::ExecutionPlan`, `meta::LaneAssignment`, `meta::SchedulerMetrics`; restricted via the `MetaAccess` marker trait."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2130-2134"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#23-scheduler-builder-and-meta"]
+quote = '''
+Meta resources (restricted via MetaAccess marker trait):
+- `meta::Dag` — the dependency graph
+- `meta::ExecutionPlan` — fiber/trunk/phase assignments
+- `meta::LaneAssignment` — core assignments
+- `meta::SchedulerMetrics` — EMA timing data (domain 22)
+'''
+origin = "stated"
+standing = "provisional"
+subject = "meta"
+keywords = ["meta resources", "Dag", "ExecutionPlan", "LaneAssignment", "SchedulerMetrics", "MetaAccess", "marker trait"]
+
+[[tenet]]
+id = "the_irreducible_kernel_is_about_fifty_lines_that_fire_plan_stage_wait_fire_ready_dispatch_and_fire_end"
+what = "The irreducible kernel of the self-hosting scheduler is about 50 lines: fire plan stage, wait for the plan units, fire schedule ready, dispatch the consumer units, and fire schedule end."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2136-2137"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#23-scheduler-builder-and-meta"]
+quote = '''
+The irreducible kernel is ~50 lines: fire PlanStage, wait for plan
+WUs, fire ScheduleReady, dispatch consumer WUs, fire ScheduleEnd.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "meta"
+keywords = ["irreducible kernel", "50 lines", "PlanStage", "ScheduleReady", "ScheduleEnd", "dispatch", "kernel"]
+
+[[tenet]]
+id = "the_scheduler_metrics_resource_carries_pass_count_ema_durations_active_units_stolen_count_and_idle_time_with_a_one_eighth_decay"
+what = "The scheduler metrics resource carries the pass count, the EMA of pass duration, a per-unit EMA, the number of active units, the stolen count and the idle time. The EMA decays by one eighth per update, and a vectorised batch update refreshes all unit EMAs in one pass."
+mechanism = "`pass_count`, `ema_pass_duration_ns`, per-unit EMA, `active_units`, `stolen_count`, `idle_ns`. Decay `(ema * 7 + measured) / 8`. Vectorised batch update: NEON 4×u32 or AVX2 8×u32 (T5 L1054-1066)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2035-2040"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#22-runtime-adaptation"]
+quote = '''
+**EMA metrics (T5 §Q5, L601-637):**
+
+SchedulerMetrics resource: `pass_count`, `ema_pass_duration_ns`,
+per-unit EMA, `active_units`, `stolen_count`, `idle_ns`. Decay:
+`(ema * 7 + measured) / 8`. Vectorized batch update: NEON 4×u32 or
+AVX2 8×u32 for all unit EMAs in one pass (T5 L1054-1066).
+'''
+origin = "stated"
+standing = "provisional"
+subject = "meta"
+keywords = ["SchedulerMetrics", "EMA", "pass_count", "ema_pass_duration_ns", "stolen_count", "idle_ns", "NEON", "AVX2"]
+
+[[tenet]]
+id = "the_frame_time_prediction_from_the_ema_serves_frame_budgeting_and_progress_bars_through_the_metrics"
+what = "An EMA of pass duration enables frame budgeting in game loops and progress bars in batch pipelines, and the consumer reads it through the scheduler metrics."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2060-2063"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#22-runtime-adaptation"]
+quote = '''
+**Frame time prediction (T3 decision #65):**
+
+EMA of pass duration enables frame budgeting (game loops) and progress
+bars (batch pipelines). Consumer reads via SchedulerMetrics (domain 23).
+'''
+origin = "stated"
+standing = "provisional"
+subject = "meta"
+keywords = ["frame time prediction", "EMA", "frame budgeting", "progress bars", "SchedulerMetrics", "T3 #65"]
+
+[[tenet]]
+id = "cadence_is_the_consumer_layer_and_the_engine_provides_the_measurements_while_the_consumer_decides_policy"
+what = "Cadence belongs to the consumer layer: the consumer reads the scheduler metrics through a unit that runs on schedule end and implements its own cadence logic. hilavitkutin provides the measurement data and the consumer decides policy."
+mechanism = "`On<meta::ScheduleEnd>` WU reads `SchedulerMetrics`."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1985-1991"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#21-scheduling-strategy"]
+quote = '''
+**Cadence as consumer-layer (T5 §Q5):**
+
+SchedulerMetrics resource: pass_count, ema_pass_duration_ns,
+active_units, stolen_count, idle_ns. EMA 1/8 decay. Consumer reads
+metrics via `On<meta::ScheduleEnd>` WU and implements their own
+cadence logic. hilavitkutin provides measurement data, consumer
+decides policy.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "meta"
+keywords = ["cadence", "SchedulerMetrics", "On<meta::ScheduleEnd>", "consumer policy", "measurement data", "T5 Q5"]

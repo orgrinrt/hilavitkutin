@@ -1,0 +1,214 @@
+# What the record says about `memory`, part 1.
+
+[[tenet]]
+id = "the_platform_has_three_tiers_no_os_os_and_std"
+what = "There are three platform tiers: no_os for bare metal and WASM, os as the default for Linux and macOS, and std for Windows and other targets. The tiers differ in who provides memory, threads and clock and in how panics are handled."
+mechanism = "no_os: bare metal, WASM; memory, threads and clock provided by the consumer; panics abort. os (default): Linux, macOS; raw mmap / extern C, raw clone / pthread, raw clock_gettime; panics abort. std: Windows, other; std::alloc, std::thread, std::time::Instant; panics catch_unwind."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:275-280"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#02-platform-tiers"]
+quote = '''
+**Three tiers:**
+| Tier | Target | Memory | Threads | Clock | Panics |
+|---|---|---|---|---|---|
+| `no_os` | bare metal, WASM | Consumer provides | Consumer provides | Consumer provides | abort |
+| `os` (default) | Linux, macOS | raw mmap / extern "C" | raw clone / pthread | raw clock_gettime | abort |
+| `std` | Windows, other | std::alloc | std::thread | std::time::Instant | catch_unwind |
+'''
+origin = "stated"
+standing = "provisional"
+subject = "memory"
+keywords = ["platform tiers", "no_os", "os", "std", "bare metal", "WASM", "mmap", "catch_unwind"]
+
+[[tenet]]
+id = "the_os_and_std_tiers_are_mutually_exclusive_and_the_os_tier_gets_the_optimisation_investment"
+what = "The os tier and the std tier are mutually exclusive, and the os tier gets the optimisation investment."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:282-282"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#02-platform-tiers"]
+quote = '''
+- `os` and `std` mutually exclusive. `os` gets optimisation investment.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "memory"
+keywords = ["os tier", "std tier", "mutually exclusive", "optimisation investment", "platform"]
+cites = ["the_platform_has_three_tiers_no_os_os_and_std"]
+
+[[tenet]]
+id = "the_no_os_tier_is_trait_contracts_only_and_the_consumer_provides_every_platform_implementation"
+what = "The no_os tier is trait contracts only, and the consumer provides all the platform implementations."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:283-283"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#02-platform-tiers"]
+quote = '''
+- `no_os` = trait contracts only; consumer provides all platform impls.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "memory"
+keywords = ["no_os", "trait contracts", "consumer provides", "platform impls", "bare metal"]
+cites = ["the_platform_has_three_tiers_no_os_os_and_std"]
+
+[[tenet]]
+id = "the_platform_contracts_are_memory_provider_thread_pool_and_clock_traits_in_the_api_crate"
+what = "The platform contracts live in the api crate as three traits: a memory provider that allocates, deallocates and protects memory, a thread pool that takes work and reports its worker count, and a clock that reports the time in nanoseconds."
+mechanism = "`pub trait MemoryProvider: Send + Sync { unsafe fn allocate(&self, len: usize, align: usize) -> *mut u8; unsafe fn deallocate(&self, ptr: *mut u8, len: usize); unsafe fn protect(&self, ptr: *mut u8, len: usize, read: bool, write: bool); }`; `pub trait ThreadPool: Send + Sync { fn spawn(&self, f: impl FnOnce() + Send + 'static); fn worker_count(&self) -> usize; }`; `pub trait Clock: Send + Sync { fn now_ns(&self) -> u64; }`."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:288-301"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#02-platform-tiers"]
+quote = '''
+**Platform traits (in hilavitkutin-api):**
+```rust
+pub trait MemoryProvider: Send + Sync {
+    unsafe fn allocate(&self, len: usize, align: usize) -> *mut u8;
+    unsafe fn deallocate(&self, ptr: *mut u8, len: usize);
+    unsafe fn protect(&self, ptr: *mut u8, len: usize, read: bool, write: bool);
+}
+pub trait ThreadPool: Send + Sync {
+    fn spawn(&self, f: impl FnOnce() + Send + 'static);
+    fn worker_count(&self) -> usize;
+}
+pub trait Clock: Send + Sync {
+    fn now_ns(&self) -> u64;
+}
+'''
+origin = "stated"
+standing = "provisional"
+subject = "memory"
+keywords = ["MemoryProvider", "ThreadPool", "Clock", "platform traits", "hilavitkutin-api", "allocate", "worker_count", "now_ns"]
+
+[[tenet]]
+id = "each_platform_tier_ships_defaults_and_the_consumer_overrides_them_through_the_scheduler_builder"
+what = "Each platform tier ships default implementations, and the consumer overrides them through the scheduler builder."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:303-303"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#02-platform-tiers"]
+quote = '''
+Each tier ships defaults. Consumer overrides via scheduler builder.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "memory"
+keywords = ["defaults", "override", "scheduler builder", "platform tier", "consumer"]
+cites = ["the_platform_contracts_are_memory_provider_thread_pool_and_clock_traits_in_the_api_crate"]
+
+[[tenet]]
+id = "platform_traits_are_taken_by_impl_trait_and_the_scheduler_is_generic_over_them_and_never_dyn"
+what = "The platform traits are taken in argument position as anonymous generics, so each call site monomorphises, and the scheduler is generic over the platform types and never dynamically dispatched. Storing a dynamic memory provider object would violate the ban on dynamic dispatch."
+mechanism = "`impl Trait` in argument position; Scheduler generic over the platform types; no `dyn MemoryProvider`."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:304-306"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#02-platform-tiers"]
+quote = '''
+Platform traits use `impl Trait` in argument position — each callsite
+monomorphises. The Scheduler is generic over the platform types (not
+`dyn`). Storing `dyn MemoryProvider` would violate the dyn ban.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "memory"
+keywords = ["impl Trait", "monomorphise", "no dyn", "Scheduler generic", "platform types", "MemoryProvider"]
+
+[[tenet]]
+id = "hardware_is_detected_once_at_startup_with_a_fallback_of_a_thirty_two_kilobyte_l1_and_one_core"
+what = "Hardware detection runs once at startup, with a different mechanism per target, and falls back to a thirty-two kilobyte L1 cache and one core."
+mechanism = "CPUID (x86), sysctl (macOS ARM), sysfs (Linux ARM); fallback 32 KB L1, 1 core."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:312-313"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#02-platform-tiers"]
+quote = '''
+**Hardware detection:** CPUID (x86), sysctl (macOS ARM), sysfs (Linux ARM).
+Fallback: 32 KB L1, 1 core. Detection runs once at startup.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "memory"
+keywords = ["hardware detection", "CPUID", "sysctl", "sysfs", "L1 size", "fallback", "startup"]
+
+[[tenet]]
+id = "resource_and_column_pointers_must_have_separate_provenance_or_llvm_reloads_resources_every_iteration"
+what = "Resource storage and column storage must have separate pointer provenance. Two raw pointers from the same struct may alias in LLVM's view, so it cannot prove that a column store does not affect a resource read, and without separation it reloads resources from memory every iteration instead of keeping them in registers. This is a pointer provenance issue and not the shared-reference versus exclusive-reference issue: the fix is pointer separation and not the reference type."
+mechanism = "Measured overhead without separation: 1.28-1.40x (T6 L1654-1658). `cw()` store to a column versus `ru()` read of a resource."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1693-1701, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1708-1712"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#19-resource-handling"]
+quote = '''
+**Pointer separation (T6 L1612-1687):**
+
+Resource storage and column storage must have separate pointer
+provenance. Two raw pointers from the same struct may alias in LLVM's
+view — LLVM cannot prove that a `cw()` store to one column doesn't
+affect a `ru()` read from a resource if both pointers originate from
+the same struct. Result without separation: LLVM reloads resources
+from memory every iteration instead of keeping them in registers.
+Measured: 1.28-1.40x overhead (T6 L1654-1658).
+---
+This is NOT the same issue as `&self` vs `&mut self` (the cu/cw
+noalias finding from domain 09). That prevents LLVM from reordering
+writes across fused WUs. This is a pointer provenance issue: two raw
+pointers from the same struct may alias. The fix is pointer
+separation, not reference type.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "memory"
+keywords = ["pointer separation", "pointer provenance", "aliasing", "resource reload", "cw", "ru", "noalias", "registers"]
+cites = ["the_context_is_taken_by_shared_reference_because_that_prevents_noalias_undefined_behaviour"]
+
+[[tenet]]
+id = "the_fiber_dispatcher_snapshots_resources_to_a_stack_local_array_before_the_morsel_loop_and_writes_mutable_ones_back_after"
+what = "Resource data lives in a stack-local region that LLVM can prove does not alias the column pointers. Before the morsel loop the fiber dispatcher snapshots all accessed resources to a stack-local array and redirects the resource pointer to it; LLVM then promotes all resource accesses to registers, leaving zero resource memory operations in the hot loop, and after the loop the mutable resources are written back to the canonical storage."
+mechanism = "Write-back via `stp`. Bench on aarch64: without caching 21 memory operations per iteration with 6 resource reloads through `[x0, #N]` (res_ptr), read-only resources reloaded every iteration; with caching all 4 resources promoted to registers (x3, x9, x10, x13) and written back once."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1703-1706, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1714-1730"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#19-resource-handling"]
+quote = '''
+The fix: resource data lives in a stack-local region that LLVM can
+prove non-aliasing with column pointers. The fiber dispatcher handles
+this automatically — it knows the resource set from WU Read/Write
+declarations.
+---
+**Stack-local resource caching (T6 L1649-1687, T7 §6.1):**
+
+Before the morsel loop, the fiber dispatcher:
+1. Snapshots all accessed resources to a stack-local array
+2. Redirects res_ptr to the stack-local copy
+
+LLVM proves stack memory doesn't alias heap column data → promotes
+all resource accesses to registers. Zero resource memory ops in the
+hot loop. After the loop, mutable resources are written back to
+canonical storage via `stp`.
+
+Bench evidence (T6 L1660-1669, aarch64):
+- Without caching: 21 memory ops per iteration, 6 resource reloads
+  through `[x0, #N]` (res_ptr). Read-only resources reloaded every
+  iteration.
+- With caching: all 4 resources promoted to registers (x3, x9, x10,
+  x13). Zero resource memory ops in loop. Written back once via `stp`.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "memory"
+keywords = ["stack-local resource caching", "snapshot", "res_ptr", "register promotion", "write-back", "stp", "fiber dispatcher", "aarch64"]
+cites = ["resource_and_column_pointers_must_have_separate_provenance_or_llvm_reloads_resources_every_iteration"]
+
+[[tenet]]
+id = "resource_caching_is_mechanical_and_derived_from_the_unit_declarations_and_emitted_by_the_flattener"
+what = "Resource caching is mechanical: it is derived from the resource read and write sets in the unit declarations, and the codegen flattener emits it automatically as part of the rust-pipe pattern."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1732-1734"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#19-resource-handling"]
+quote = '''
+The caching is mechanical — derived from the WU declarations' resource
+Read/Write sets. The codegen (domain 17 flattener) emits it
+automatically as part of the rust-pipe pattern.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "memory"
+keywords = ["resource caching", "mechanical", "unit declarations", "flattener", "rust-pipe", "automatic"]
+
+[[tenet]]
+id = "the_pointer_separation_removes_the_loop_versioning_licm_concern_because_the_data_layout_fixes_aliasing"
+what = "The earlier concern about the loop-versioning LICM pass is solved by pointer separation: no LLVM pass is needed, since the data layout itself fixes the aliasing."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1773-1774"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#19-resource-handling"]
+quote = '''
+- T3 L746 LoopVersioningLICM concern → solved by pointer separation
+  (no LLVM pass needed, the data layout itself fixes aliasing)
+'''
+origin = "stated"
+standing = "provisional"
+subject = "memory"
+keywords = ["LoopVersioningLICM", "pointer separation", "data layout", "aliasing", "no LLVM pass"]

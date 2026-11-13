@@ -26,3 +26,209 @@ origin = "stated"
 standing = "provisional"
 subject = "governance"
 keywords = ["registry", "tools", "canon", "tickets", "mockspace", "upstream"]
+
+[[tenet]]
+id = "the_consolidation_is_the_single_source_of_truth_for_the_current_design"
+what = "The consolidation record is the single source of truth for hilavitkutin's current design state, and it resolves the supersessions and tensions across the earlier topics."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:5-6"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#topic-hilavitkutin-design-consolidation"]
+quote = '''
+**Purpose:** Single source of truth for hilavitkutin's current design
+state. Resolves supersessions and tensions across prior topics.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "governance"
+keywords = ["single source of truth", "consolidation", "supersession", "tensions", "design state", "source topics"]
+
+[[tenet]]
+id = "the_execution_model_topic_is_provisional_until_confirmed_against_the_other_topics"
+what = "The seventh topic was written from the sixth topic alone, without the full context of the first five topics, so its content is provisional until it is confirmed against the other topics."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:21-22"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#source-topics-chronological"]
+quote = '''
+T7 was written from T6 alone without full context from T1-T5; its
+content is provisional until confirmed against the other topics.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "governance"
+keywords = ["T7", "execution-model", "provisional", "confirmed", "source topics", "T6 bench"]
+
+[[tenet]]
+id = "type_native_stride_supersedes_the_tagged_128_bit_stride_and_the_bench_finding_governs"
+what = "The type-native stride supersedes the earlier 128-bit tagged stride, the universal 128-bit stride and the rule that the stride is the SIMD lane. The benchmark finding that type-native stride outperforms the 128-bit one is now the authoritative text."
+mechanism = "Superseded: T1 decisions #80-81, T2 decision #1, T3 decision #90."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:383-383, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:390-392"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#04-column-memory-layout"]
+quote = '''
+**Resolution R3: type-native stride, no flags byte.**
+---
+**Supersedes:** T1 decisions #80-81 (128-bit tagged stride), T2 decision #1
+(universal 128-bit), T3 decision #90 (stride IS the SIMD lane). The
+T6 bench finding (type-native outperforms 128-bit) is now authoritative.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "governance"
+keywords = ["supersedes", "type-native stride", "128-bit", "T6 bench", "R3", "authoritative"]
+
+[[tenet]]
+id = "the_column_value_trait_replaces_the_payload_and_slot_size_system"
+what = "The column value trait with its blanket implementation replaces the payload trait and the sealed slot size system. The rule that stride is the SIMD lane is superseded by R3, and the fifteen-byte constraint is updated to sixteen bytes."
+mechanism = "Replaced: T3 decisions #83-87 (Payload trait, sealed SlotSize, Slot1-15), T3 decision #90, T1 decisions #82-83, the T4 §Q6 `Check<size_of <= 15>` pattern (now <= 16)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:466-471"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#05-column-value-types"]
+quote = '''
+**What this supersedes:**
+- T3 decisions #83-87 (Payload trait, sealed SlotSize, Slot1-15) → replaced
+  by ColumnValue with blanket impl
+- T3 decision #90 (stride IS the SIMD lane) → superseded by R3
+- T1 decisions #82-83 (15-byte constraint) → updated to 16-byte
+- T4 §Q6 `Check<size_of ≤ 15>` pattern → updated to ≤ 16
+'''
+origin = "stated"
+standing = "provisional"
+subject = "governance"
+keywords = ["Payload", "SlotSize", "ColumnValue", "supersedes", "15-byte", "16-byte", "R4"]
+cites = ["each_column_has_its_own_stride_and_a_value_is_at_most_sixteen_bytes"]
+
+[[tenet]]
+id = "column_storage_returns_raw_pointers_and_the_stride_type_is_gone"
+what = "The column storage trait no longer returns slices of a stride type but raw pointers, and the stride type is gone. The principles of the slab column as one implementation are retained."
+mechanism = "Supersedes T2 L806-807 (ColumnStorage returns &[Stride]) and T5 L672-684 §Q7 (SlabColumn as one implementation, principles retained, Stride type gone)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:568-571"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#07-column-storage"]
+quote = '''
+**What this supersedes:**
+- T2 L806-807: ColumnStorage returns &[Stride] → raw pointers instead
+- T5 L672-684 §Q7: SlabColumn as one implementation → principles
+  retained, Stride type gone
+'''
+origin = "stated"
+standing = "provisional"
+subject = "governance"
+keywords = ["ColumnStorage", "SlabColumn", "Stride", "raw pointers", "supersedes", "slices"]
+cites = ["the_consumer_provides_the_backing_memory_of_a_column"]
+
+[[tenet]]
+id = "phases_emerged_from_the_bench_and_replace_the_flat_dag_and_the_older_level_of_detail_names"
+what = "Phases emerged from the benchmark and replace the earlier flat DAG. The old level-of-detail steps chain, chain group and partition are refined to fiber, trunk and phase, while the entry, morsel and pipeline levels are unchanged, and four earlier decisions of the second topic are superseded by a later decision of the third."
+mechanism = "Supersedes: T1 decision #17 (flat DAG, not phased); T3 LOD levels 2-4 (chain, chain group, partition) refined to fiber, trunk, phase; levels 0-1 (entry, morsel) and 5 (pipeline) unchanged; T2 decisions #9, #12, #13, #14 superseded by T3 decision #51."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:803-808"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#11-cache-hierarchy-tiling-and-phase-decomposition"]
+quote = '''
+**What T6 supersedes:**
+- T1 decision #17 "flat DAG, not phased" — phases emerged from bench
+- T3 LOD levels 2-4 (chain → chain group → partition) — refined to
+  fiber → trunk → phase. Levels 0-1 (entry, morsel) and 5 (pipeline)
+  unchanged.
+- T2 decisions #9, #12, #13, #14 — superseded by T3 decision #51
+'''
+origin = "stated"
+standing = "provisional"
+subject = "governance"
+keywords = ["supersedes", "flat DAG", "phases", "LOD levels", "fiber", "trunk", "partition", "T3 decision #51"]
+
+[[tenet]]
+id = "the_earlier_archetype_chain_and_partition_decisions_are_superseded_by_fibers_trunks_and_phases"
+what = "The earlier archetype scheduling hint, the chain partitioning decisions and the tiling model level-of-detail steps are superseded by the fiber, trunk and phase model. The rule that partitions are connected components is subsumed by phase detection via waist analysis, the order field on a unit is replaced by scheduling hint priority, and the greedy fusion algorithm is retained with its vocabulary updated."
+mechanism = "Superseded: T1 §11.4.6 archetype as scheduling hint (dead, subsumed by fibers); T2 decisions #9-13 (by T3 decision #51, refined by T6/T7 register-file-aware limits); T3 decisions #41-51 (LOD levels refined: chain to fiber, chain group to trunk, partition to phase); T3 decision #48 (partitions = connected components, subsumed by phase detection via waist analysis); T6 `order` field on WU (replaced by scheduling hint priority); T7 §1.3 Kahn's + greedy fusion (retained, vocabulary updated)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1190-1200"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#14-fiber-formation"]
+quote = '''
+**What this supersedes:**
+- T1 §11.4.6 "archetype as scheduling hint" → dead, subsumed by fibers
+- T2 decisions #9-13 (chain partitioning, max_cols) → superseded by T3
+  decision #51, further refined by T6/T7 register-file-aware limits
+- T3 decisions #41-51 (tiling model, LOD levels 2-4) → LOD levels
+  refined: "chain" → fiber, "chain group" → trunk, "partition" → phase
+- T3 decision #48 "partitions = connected components" → subsumed by
+  phase detection via waist analysis
+- T6 `order` field on WU → replaced by scheduling hint priority
+- T7 §1.3 "Kahn's + greedy fusion" → algorithm retained, vocabulary
+  updated (chain → fiber)
+'''
+origin = "stated"
+standing = "provisional"
+subject = "governance"
+keywords = ["supersedes", "archetype", "chain", "partition", "order field", "T3 decision #48", "T7 1.3", "vocabulary"]
+cites = ["scheduling_hints_replace_an_order_field_on_the_unit"]
+
+[[tenet]]
+id = "source_code_lies_and_only_documentation_is_trusted"
+what = "Source code lies, and only documentation is trusted."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2231-2231"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+quote = '''
+- Source code lies — trust only documentation (#59)
+'''
+origin = "stated"
+standing = "provisional"
+subject = "governance"
+keywords = ["source code lies", "trust documentation", "design principle", "#59", "docs"]
+
+[[tenet]]
+id = "no_rule_exists_without_a_lint_and_no_lint_without_a_test"
+what = "No rule exists without a lint, and no lint without a test."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2232-2232"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+quote = '''
+- No rule without a lint, no lint without a test (#60)
+'''
+origin = "stated"
+standing = "provisional"
+subject = "governance"
+keywords = ["no rule without a lint", "no lint without a test", "design principle", "#60", "enforcement"]
+
+[[tenet]]
+id = "rules_live_in_the_mockspace_templates"
+what = "Rules live in the mockspace templates."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2233-2233"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+quote = '''
+- Rules live in mockspace templates (#61)
+'''
+origin = "stated"
+standing = "provisional"
+subject = "governance"
+keywords = ["rules", "mockspace templates", "design principle", "#61"]
+
+[[tenet]]
+id = "ai_tooling_is_used_responsibly_with_a_co_authored_by_line"
+what = "AI tooling is used responsibly, which includes a Co-Authored-By line."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2236-2236"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+quote = '''
+- Responsible AI tooling — Co-Authored-By (#64)
+'''
+origin = "stated"
+standing = "provisional"
+subject = "governance"
+keywords = ["responsible AI tooling", "Co-Authored-By", "design principle", "#64", "attribution"]
+
+[[tenet]]
+id = "topic_files_are_frozen_once_committed"
+what = "Topic files are frozen once committed."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2237-2237"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+quote = '''
+- Topic files frozen once committed (#65)
+'''
+origin = "stated"
+standing = "provisional"
+subject = "governance"
+keywords = ["topic files", "frozen", "committed", "design principle", "#65"]
+
+[[tenet]]
+id = "a_superseded_text_is_deprecated_and_never_amended_by_an_addendum"
+what = "Deprecation is used and not an addendum."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2238-2238"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+quote = '''
+- Deprecation not addendum (#66)
+'''
+origin = "stated"
+standing = "provisional"
+subject = "governance"
+keywords = ["deprecation", "addendum", "design principle", "#66", "supersession"]
