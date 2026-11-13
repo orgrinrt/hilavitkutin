@@ -196,7 +196,9 @@ pub use store::{
     Resource,
     Seq,
     Snapshot,
+    StagedBuffered,
     StagedResource,
+    StartsFromDefault,
     StoreBundle,
     Virtual,
 };

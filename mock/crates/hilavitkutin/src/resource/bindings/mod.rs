@@ -42,6 +42,7 @@ use hilavitkutin_api::store::{
     Buffered,
     Column,
     Resource,
+    StagedBuffered,
     StagedResource,
     Virtual,
 };
@@ -229,7 +230,7 @@ impl<T, Tail> VirtualBinding<T, Tail> {
 /// Maps a `StoreValues` list to its concrete bindings shape.
 ///
 /// Sealed: the arms (`SvEmpty`, and `Sv` headed by `StagedResource<T>`,
-/// `Column<T>`, `Buffered<T, M>`, `Virtual<T>` or `Accum<T>`) are the only
+/// `Column<T>`, `StagedBuffered<T, M>`, `Virtual<T>` or `Accum<T>`) are the only
 /// store-value shapes the builder places on the list. The heads are
 /// distinct concrete types, so the arms are non-overlapping.
 #[allow(private_bounds)]
@@ -276,13 +277,15 @@ impl<T: 'static, L: StoreValues + BindingsFor> BindingsFor for Sv<Column<T>, L> 
 }
 
 impl<T: 'static, M: BufferMode + ColKind, L: StoreValues + BindingsFor> sealed::Sealed
-    for Sv<Buffered<T, M>, L>
+    for Sv<StagedBuffered<T, M>, L>
 {
 }
 impl<T: 'static, M: BufferMode + ColKind, L: StoreValues + BindingsFor> BindingsFor
-    for Sv<Buffered<T, M>, L>
+    for Sv<StagedBuffered<T, M>, L>
 {
     type Bindings = ColumnBinding<T, <L as BindingsFor>::Bindings, M>;
+    // As with a resource, the value list carries the carrier and the access
+    // sets name the marker.
     type Markers = Cons<Buffered<T, M>, <L as BindingsFor>::Markers>;
 }
 
@@ -426,7 +429,7 @@ where
     }
 }
 
-impl<T: ColumnValue, M: BufferMode + ColKind, L> DrainStores for Sv<Buffered<T, M>, L>
+impl<T: ColumnValue, M: BufferMode + ColKind, L> DrainStores for Sv<StagedBuffered<T, M>, L>
 where
     L: StoreValues + BindingsFor + DrainStores,
 {
@@ -439,7 +442,8 @@ where
         // Two reservations of one layout, the live side and the frozen one,
         // at two storage ids one after the other. The store is one store in
         // every access mask all the same.
-        let (_marker, rest) = self.into_parts();
+        let (carrier, rest) = self.into_parts();
+        let _start = carrier.into_inner();
         drain_column::<T, M, CS, _>(cs, next_id, record_count, |cs, next_id| {
             <L as DrainStores>::drain(rest, cs, next_id, record_count)
         })

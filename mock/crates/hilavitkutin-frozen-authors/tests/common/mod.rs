@@ -295,11 +295,11 @@ macro_rules! scheduled {
         let scheduler = $builder
             .with(Column::<Pos>::new())
             .with(Column::<Vel>::new())
-            .with(Field::new())
+            .with(Field::start_from(Heat($crate::common::num(0))))
             .with(Column::<Edge>::new())
             .with(Virtual::<Overheat>::new())
             .with(Column::<Alarms>::new())
-            .with(Pool::new())
+            .with(Pool::start_from(Level($crate::common::num(0))))
             .with(Column::<Peak>::new())
             .with(Column::<Glow>::new())
             .with(Column::<Ash>::new())

@@ -241,18 +241,14 @@ macro_rules! suite {
             fn a_plain_and_a_buffered_column_of_one_type_are_two_stores() {
                 let mut scheduler = Scheduler::builder()
                     .with(Column::<Height>::new())
-                    .with(Col::new())
+                    .with(Col::start_from(Height(5)))
                     .with(Column::<Seen>::new())
                     .with(Both)
                     .build(store(), USize(RECORDS))
                     .unwrap_or_else(|_| panic!("build should succeed"));
-                let buffered = scheduler.__bindings().__tail().__frozen().as_ptr();
                 let plain = scheduler.__bindings().__tail().__tail().__ptr().as_ptr();
                 // SAFETY: before the first pass.
-                unsafe {
-                    fill(plain, |_| Height(3));
-                    fill(buffered, |_| Height(5));
-                }
+                unsafe { fill(plain, |_| Height(3)) };
                 assert!(matches!(scheduler.run(), Outcome::Ok(())));
                 let seen = scheduler.__bindings().__ptr().as_ptr();
                 // SAFETY: between passes.
@@ -267,7 +263,7 @@ macro_rules! suite {
             fn a_column_found_by_type_answers_the_bases_of_its_binding() {
                 let scheduler = Scheduler::builder()
                     .with(Column::<Height>::new())
-                    .with(Col::new())
+                    .with(Col::start_from(Height(0)))
                     .with(Column::<Seen>::new())
                     .with(Both)
                     .build(store(), USize(RECORDS))
@@ -284,7 +280,7 @@ macro_rules! suite {
             #[test]
             fn a_reach_read_and_a_write_of_one_store_on_one_core() {
                 let mut scheduler = Scheduler::builder()
-                    .with(Col::new())
+                    .with(Col::start_from(Height(0)))
                     .with(Spread)
                     .build(store(), USize(RECORDS))
                     .unwrap_or_else(|_| panic!("build should succeed"));
@@ -312,7 +308,7 @@ macro_rules! suite {
             #[test]
             fn a_reach_read_and_a_write_of_one_store_across_workers() {
                 let scheduler = Scheduler::builder()
-                    .with(Col::new())
+                    .with(Col::start_from(Height(0)))
                     .with(Spread)
                     .build(store(), USize(RECORDS))
                     .unwrap_or_else(|_| panic!("build should succeed"));
@@ -345,7 +341,7 @@ macro_rules! suite {
             #[test]
             fn a_value_equal_to_the_frozen_one_still_lands_on_the_live_side() {
                 let mut scheduler = Scheduler::builder()
-                    .with(Col::new())
+                    .with(Col::start_from(Height(0)))
                     .with(Half)
                     .build(store(), USize(RECORDS))
                     .unwrap_or_else(|_| panic!("build should succeed"));
@@ -374,15 +370,12 @@ macro_rules! suite {
                     #[test]
                     fn $test() {
                         let mut scheduler = Scheduler::builder()
-                            .with(Col::new())
+                            .with(Col::start_from(Height(10)))
                             .with(Column::<Seen>::new())
                             .with($a)
                             .with($b)
                             .build(store(), USize(RECORDS))
                             .unwrap_or_else(|_| panic!("no edge stands between the two"));
-                        let col = scheduler.__bindings().__tail().__frozen().as_ptr();
-                        // SAFETY: before the first pass.
-                        unsafe { fill(col, |_| Height(10)) };
                         assert!(matches!(scheduler.run(), Outcome::Ok(())));
                         let seen = scheduler.__bindings().__ptr().as_ptr();
                         // SAFETY: between passes.
@@ -406,14 +399,11 @@ macro_rules! suite {
                     #[test]
                     fn $test() {
                         let mut scheduler = Scheduler::builder()
-                            .with(Col::new())
+                            .with(Col::start_from(Height(10)))
                             .with($a)
                             .with($b)
                             .build(store(), USize(RECORDS))
                             .unwrap_or_else(|_| panic!("build should succeed"));
-                        let col = scheduler.__bindings().__frozen().as_ptr();
-                        // SAFETY: before the first pass.
-                        unsafe { fill(col, |_| Height(10)) };
                         assert!(matches!(scheduler.run(), Outcome::Ok(())));
                         let frozen = scheduler.__bindings().__frozen().as_ptr();
                         // SAFETY: between passes.
@@ -428,19 +418,16 @@ macro_rules! suite {
             #[test]
             fn a_store_nobody_wrote_is_left_alone() {
                 let mut scheduler = Scheduler::builder()
-                    .with(Col::new())
+                    .with(Col::start_from(Height(10)))
                     .with(Column::<Seen>::new())
                     .with(Watch)
                     .build(store(), USize(RECORDS))
                     .unwrap_or_else(|_| panic!("build should succeed"));
                 let frozen = scheduler.__bindings().__tail().__frozen().as_ptr();
                 let live = scheduler.__bindings().__tail().__live().as_ptr();
-                // SAFETY: before the first pass. The live side holds values a
-                // boundary would bring in if it ran.
-                unsafe {
-                    fill(frozen, |_| Height(10));
-                    fill(live, |_| Height(SENTINEL));
-                }
+                // SAFETY: before the first pass. The live side is given values
+                // a boundary would bring in if it ran.
+                unsafe { fill(live, |_| Height(SENTINEL)) };
                 assert!(matches!(scheduler.run(), Outcome::Ok(())));
                 assert_eq!(scheduler.__bindings().__tail().__frozen().as_ptr(), frozen);
                 // SAFETY: between passes.
@@ -451,15 +438,13 @@ macro_rules! suite {
             #[test]
             fn a_writer_that_returns_what_it_read_changes_nothing() {
                 let mut scheduler = Scheduler::builder()
-                    .with(Col::new())
+                    .with(Col::start_from(Height(10)))
                     .with(Column::<Seen>::new())
                     .with(Keep)
                     .with(Watch)
                     .build(store(), USize(RECORDS))
                     .unwrap_or_else(|_| panic!("build should succeed"));
                 let frozen = scheduler.__bindings().__tail().__frozen().as_ptr();
-                // SAFETY: before the first pass.
-                unsafe { fill(frozen, |_| Height(10)) };
                 assert!(matches!(scheduler.run(), Outcome::Ok(())));
                 assert_eq!(
                     scheduler.__bindings().__tail().__frozen().as_ptr(),
@@ -480,16 +465,13 @@ macro_rules! suite {
             #[test]
             fn readers_run_the_pass_after_a_change_and_rest_once_it_settles() {
                 let mut scheduler = Scheduler::builder()
-                    .with(Col::new())
+                    .with(Col::start_from(Height(0)))
                     .with(Column::<Seen>::new())
                     .with(Settle)
                     .with(Watch)
                     .build(store(), USize(RECORDS))
                     .unwrap_or_else(|_| panic!("build should succeed"));
-                let col = scheduler.__bindings().__tail().__frozen().as_ptr();
                 let seen = scheduler.__bindings().__ptr().as_ptr();
-                // SAFETY: before the first pass.
-                unsafe { fill(col, |_| Height(0)) };
                 // Passes 1 to 3: the store changed in the pass before (or the
                 // frame is the first), so the reader runs and sees 0, 1, 2.
                 for want in 0 .. 3 {
@@ -517,20 +499,17 @@ macro_rules! suite {
             #[test]
             fn a_store_filled_in_the_first_pass_is_read_from_the_second() {
                 let mut scheduler = Scheduler::builder()
-                    .with(Col::new())
+                    .with(Col::start_from(Height(0)))
                     .with(Column::<Seen>::new())
                     .with(Fill)
                     .with(Watch)
                     .build(store(), USize(RECORDS))
                     .unwrap_or_else(|_| panic!("build should succeed"));
-                let col = scheduler.__bindings().__tail().__frozen().as_ptr();
                 let seen = scheduler.__bindings().__ptr().as_ptr();
-                // SAFETY: before the first pass.
-                unsafe { fill(col, |_| Height(0)) };
                 assert!(matches!(scheduler.run(), Outcome::Ok(())));
                 // SAFETY: between passes.
                 let got = unsafe { all(seen, |s: Seen| s.0) };
-                assert!(got.iter().all(|v| *v == 0), "pass 1 reads the unfilled store");
+                assert!(got.iter().all(|v| *v == 0), "pass 1 reads the store's start");
                 assert!(matches!(scheduler.run(), Outcome::Ok(())));
                 // SAFETY: between passes.
                 let got = unsafe { all(seen, |s: Seen| s.0) };

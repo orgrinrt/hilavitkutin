@@ -203,14 +203,117 @@ impl<T, M> Default for Buffered<T, M> {
 
 impl<T, M> Buffered<T, M> {
     /// Construct a `Buffered<T, M>` marker.
+    ///
+    /// The marker is what a unit names the store by. It is not what a
+    /// scheduler is built with, since it says nothing of what the first pass
+    /// reads, so it is no `BuilderInput`. A store is registered with
+    /// [`start`](Buffered::start) or [`start_from`](Buffered::start_from).
     pub const fn new() -> Self {
         Buffered(PhantomData)
     }
+
+    /// Register the store with `value` at every record of both sides.
+    ///
+    /// There for every element type, also one that has a start of its own.
+    #[inline]
+    pub const fn start_from(value: T) -> StagedBuffered<T, M> {
+        StagedBuffered(value, PhantomData)
+    }
 }
 
-impl<T: 'static, M: BufferMode> BuilderInput for Buffered<T, M> {
-    type Dispatch = StoreDispatch<Self>;
-    type Init = ();
+impl<T: notko::HasTrivialCtor, M> Buffered<T, M> {
+    /// Register the store with the element type's own start at every record.
+    ///
+    /// The start is the type's trivial constructor where it has one, else
+    /// its `Default` through [`StartsFromDefault`], and for a type that has
+    /// both it is the constructor:
+    ///
+    /// ```
+    /// use hilavitkutin_api::store::{Buffered, StartsFromDefault};
+    ///
+    /// #[derive(Copy, Clone, PartialEq, Debug)]
+    /// struct Both(u8);
+    /// impl notko::HasTrivialCtor for Both {
+    ///     fn new() -> Self {
+    ///         Both(7)
+    ///     }
+    /// }
+    /// impl Default for Both {
+    ///     fn default() -> Self {
+    ///         Both(9)
+    ///     }
+    /// }
+    ///
+    /// #[derive(Copy, Clone, PartialEq, Debug, Default)]
+    /// struct Plain(u8);
+    ///
+    /// assert_eq!(Buffered::<Both>::start().into_inner(), Both(7));
+    /// assert_eq!(Buffered::<Plain>::start().into_inner(), Plain(0));
+    /// ```
+    ///
+    /// An element type with neither has no `start`, and
+    /// [`start_from`](Buffered::start_from) is the one way to register it:
+    ///
+    /// ```compile_fail,E0599
+    /// use hilavitkutin_api::store::{Buffered, StartsFromDefault};
+    ///
+    /// #[derive(Copy, Clone)]
+    /// struct Neither(u8);
+    /// let _ = Buffered::<Neither>::start();
+    /// ```
+    #[inline]
+    pub const fn start() -> StagedBuffered<T, M>
+    where
+        T: [const] notko::HasTrivialCtor,
+    {
+        StagedBuffered(<T as notko::HasTrivialCtor>::new(), PhantomData)
+    }
+}
+
+/// The second way a buffered column's element type gives it a start.
+///
+/// Implemented for `Buffered<T, M>` where `T: Default`. Its `start` is found
+/// only where the inherent [`Buffered::start`] does not apply, which is where
+/// the element type has no trivial constructor, so the two make one sequence.
+/// The choice is made where `start()` is written, from what is known of the
+/// type there: a generic caller that knows only `T: Default` gets the default.
+pub trait StartsFromDefault {
+    /// What the builder is handed.
+    type Staged;
+
+    /// Register the store with the element type's default at every record.
+    fn start() -> Self::Staged;
+}
+
+impl<T: Default, M> StartsFromDefault for Buffered<T, M> {
+    type Staged = StagedBuffered<T, M>;
+
+    #[inline]
+    fn start() -> StagedBuffered<T, M> {
+        StagedBuffered(T::default(), PhantomData)
+    }
+}
+
+/// A buffered column with the value every record of it starts from.
+///
+/// [`Buffered::start`] and [`Buffered::start_from`] return this. The builder
+/// keeps it on its value list and the drain writes the value to every record
+/// of both sides. The `Buffered<T, M>` marker, not this carrier, is what
+/// lands in the store access set, routed via
+/// `StoreDispatch<Buffered<T, M>>`.
+pub struct StagedBuffered<T, M = Snapshot>(T, PhantomData<M>);
+
+impl<T, M> StagedBuffered<T, M> {
+    /// Take the start value out of the carrier.
+    #[inline]
+    pub fn into_inner(self) -> T {
+        self.0
+    }
+}
+
+impl<T: 'static, M: BufferMode> BuilderInput for StagedBuffered<T, M> {
+    type Dispatch = StoreDispatch<Buffered<T, M>>;
+    type Init = T;
 }
 
 impl<T, M> notko::HasTrivialCtor for Buffered<T, M> {

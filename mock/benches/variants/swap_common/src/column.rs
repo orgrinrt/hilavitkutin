@@ -66,7 +66,7 @@ pub fn column_checksum(value: u64, records: usize) -> u64 {
 }
 
 macro_rules! carrier {
-    ($(#[$doc:meta])* $prepare:ident, $module:ident, $col:ty, $cols:ty) => {
+    ($(#[$doc:meta])* $prepare:ident, $module:ident, $col:ty, $cols:ty, $registered:expr) => {
         mod $module {
             use super::*;
 
@@ -142,7 +142,7 @@ macro_rules! carrier {
                 let provider = HeapBump::new(5 * records * 4 + (1 << 16));
                 let sched = Scheduler::builder()
                     .with(Column::<Slot>::new())
-                    .with(Col::new())
+                    .with($registered)
                     .with(Column::<C2>::new())
                     .with(Resource::new(SwapVal(seed)))
                     .with(Produce)
@@ -220,21 +220,24 @@ carrier!(
     prepare_column_plain,
     plain,
     Column<C1>,
-    ColPtrCons<C1, ColPtrNil>
+    ColPtrCons<C1, ColPtrNil>,
+    Column::<C1>::new()
 );
 carrier!(
     /// The carrier over a buffered middle column brought in by a copy.
     prepare_column_snapshot,
     snapshot,
     Buffered<C1, Snapshot>,
-    ColPtrCons<C1, ColPtrNil, Snapshot>
+    ColPtrCons<C1, ColPtrNil, Snapshot>,
+    Buffered::<C1, Snapshot>::start_from(C1(0))
 );
 carrier!(
     /// The carrier over a buffered middle column brought in by an exchange.
     prepare_column_exchange,
     exchange,
     Buffered<C1, Exchange>,
-    ColPtrCons<C1, ColPtrNil, Exchange>
+    ColPtrCons<C1, ColPtrNil, Exchange>,
+    Buffered::<C1, Exchange>::start_from(C1(0))
 );
 
 /// The seed an arm takes from the harness input: FNV-1a over its bytes.

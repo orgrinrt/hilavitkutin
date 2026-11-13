@@ -20,6 +20,7 @@ pub use crate::store::{
     Replaceable,
     Resource,
     Snapshot,
+    StartsFromDefault,
     StoreBundle,
     Virtual,
 };
