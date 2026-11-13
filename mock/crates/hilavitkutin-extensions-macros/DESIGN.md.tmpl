@@ -53,6 +53,10 @@ The emitted code must compile under:
 
 All `ProviderId` values are const-evaluated at the consumer's compile time via `ProviderId::from_name(...)`. All descriptor pointers reference extension-static const data. All trampolines are plain `extern "C" fn`, not closures.
 
+## Trampoline survival under fat LTO
+
+The trampolines are reached only through the descriptor's function pointers, so a linker that merges identical code or drops what no symbol names could remove or alias them without any compile error. The crate's smoke test builds a standalone cdylib fixture with `lto = "fat"` and reads the result on every host, with one reader of object files, so no host needs `nm` or `dumpbin` on its path. Three things must hold. The descriptor symbol is among the library's exports, read from the dynamic symbols of an ELF file, the exports of a Mach-O file and the export table of a PE image. Where the file carries a symbol table, as ELF and Mach-O do, the names of the init and shutdown trampolines appear in it. And loading the library, the descriptor's `init_fn` and `shutdown_fn` are present and resolve to different addresses, which is the property the framework relies on and the one address aliasing would break. A PE image carries no symbol table of that kind, so on Windows the second check does not apply and the third stands in for it. The reader refuses a library it cannot parse instead of finding nothing in it, and the test shows that a symbol list without the shutdown trampoline is reported as missing it.
+
 ## Non-scope
 
 This crate does not own:

@@ -12,12 +12,12 @@ use crate::primitives::{BufferLen, BufferOffset};
 /// A single entry in the string-table header.
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct StringTableEntry {
-    /// 28-bit FNV content hash.
+    /// Full 64-bit FNV-1a content hash of the string's bytes.
     pub content_hash: ContentHash,
     /// Byte offset into the string-table buffer.
     pub bytes_offset: BufferOffset,
     /// Byte length at that offset.
-    pub bytes_len: BufferLen,
+    pub bytes_len:    BufferLen,
 }
 
 /// Runtime string table, as referenced from a loaded cold store.
@@ -28,7 +28,7 @@ pub struct StringTable {
     /// Header slice.
     pub entries: &'static [StringTableEntry],
     /// Bytes pool.
-    pub buffer: &'static [u8],
+    pub buffer:  &'static [u8],
 }
 
 impl StringTable {
@@ -36,13 +36,14 @@ impl StringTable {
     pub const fn empty() -> Self {
         Self {
             entries: &[],
-            buffer: &[],
+            buffer:  &[],
         }
     }
 
     /// Look up bytes for a content hash. O(n) linear scan this
     /// skeleton round; a perfect-hash lookup lands in the follow-up
     /// round when the lookup hot path is measured.
+    #[rustfmt::skip]
     pub fn lookup(&self, content_hash: ContentHash) -> Maybe<&[u8]> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: mmap byte-slice return; u8 is the canonical byte primitive; tracked: #72
         let mut i = 0;
         while i < self.entries.len() {
@@ -51,7 +52,7 @@ impl StringTable {
                 let start = *e.bytes_offset.0;
                 let end = start + *e.bytes_len.0;
                 if end <= self.buffer.len() {
-                    return Maybe::Is(&self.buffer[start..end]);
+                    return Maybe::Is(&self.buffer[start .. end]);
                 }
                 return Maybe::Isnt;
             }
@@ -66,4 +67,3 @@ impl Default for StringTable {
         Self::empty()
     }
 }
-

@@ -4,66 +4,67 @@
 //! trait lands with rkyv. This round ships the pure bit-layout halves
 //! as free functions so consumers can evict / inject handles today.
 //!
-//! Const handles (bit 31 = 0) carry content hashes directly (28-bit
-//! FNV truncation); identity on evict. Runtime handles (bit 31 = 1)
-//! resolve to bytes via the interner, then re-hash. Injection runs
-//! the reverse: match the const table first; otherwise look up bytes
-//! in the string table and intern.
+//! A string is stored under its full 64-bit FNV-1a content hash. A const
+//! handle carries only 28 bits of that hash, so it cannot be the key by
+//! itself: evict resolves any handle to its bytes through the interner and
+//! hashes the bytes. Injection runs the reverse: a const handle built from
+//! the low 28 bits of the key is accepted only when the string it resolves
+//! to hashes back to the whole key; otherwise the bytes come from the string
+//! table and are interned.
 
-use arvo_bits::{Bits, Hot};
 use arvo_hash::ContentHash;
-use arvo_refit::{Narrow, Widen};
-use hilavitkutin_str::{const_fnv1a, ArenaInterner, Str, StringInterner};
+use arvo_refit::Narrow;
+use hilavitkutin_str::{ArenaInterner, Str, StringInterner, const_fnv1a};
 use notko::{Maybe, Outcome};
 
 use crate::error::PersistenceError;
 use crate::string_table::StringTable;
 
+/// The on-disk content hash of a string: the full FNV-1a hash of its bytes.
+#[rustfmt::skip]
+fn content_hash_of(s: &str) -> ContentHash { // lint:allow(no-bare-string) reason: persistence boundary: the bytes being hashed; tracked: #72
+    ContentHash::from_raw(const_fnv1a(s))
+}
+
 /// Evict a `Str` handle to its on-disk content-hash value.
 ///
-/// Const handles (bit 31 = 0) already carry a 28-bit content hash;
-/// their id portion is returned unchanged. Runtime handles resolve
-/// via the interner and re-hash the bytes.
-pub fn evict_str<A: ArenaInterner>(handle: Str, interner: &StringInterner<A>) -> ContentHash {
-    if handle.is_const().0 {
-        ContentHash::from_raw(handle.id().widen_to())
-    } else {
-        let s = interner
-            .resolve(handle)
-            .unwrap();
-        ContentHash::from_raw(const_fnv1a(s) & <Bits<32> as Widen<u64>>::widen_to(Str::ID_MASK))
+/// The handle resolves to bytes through the interner, a const handle through
+/// the const table and a runtime handle through the arena, and the bytes hash
+/// to the key. A handle the interner cannot resolve evicts to
+/// `PersistenceError::Missing`: a const handle holds 28 bits of the hash and
+/// no longer stands for the key without the string behind it.
+pub fn evict_str<A: ArenaInterner>(
+    handle: Str,
+    interner: &StringInterner<A>,
+) -> Outcome<ContentHash, PersistenceError> {
+    match interner.resolve(handle) {
+        Maybe::Is(s) => Outcome::Ok(content_hash_of(s)),
+        Maybe::Isnt => Outcome::Err(PersistenceError::Missing),
     }
 }
 
 /// Inject a content hash back as a live `Str` handle.
 ///
-/// First checks the const table (via the interner's resolve path):
-/// if the hash matches a known const entry, returns that const
-/// handle. Otherwise looks up the bytes in `string_table` and interns
+/// First checks the const table (via the interner's resolve path): the
+/// candidate const handle is built from the low 28 bits of the key and taken
+/// only if the string it resolves to hashes back to the whole key, so a
+/// handle that shares 28 bits with the key and nothing else is not taken for
+/// the string. Otherwise looks up the bytes in `string_table` and interns
 /// them through the arena, returning a runtime handle.
 pub fn inject_str<A: ArenaInterner>(
     content_hash: ContentHash,
     interner: &StringInterner<A>,
     string_table: &StringTable,
 ) -> Outcome<Str, PersistenceError> {
-    let masked_bits: Bits<28, Hot> = content_hash.narrow_to::<28>();
-
-    // Consult const table via the interner. A const hit returns the
-    // const handle unchanged; a miss falls through to the runtime
-    // lookup path.
-    let candidate = Str::__make(masked_bits);
-    if let Maybe::Is(resolved) = interner.resolve(candidate) {
-        // Confirm the const entry hashes back to the same masked id.
-        let back: Bits<28, Hot> = Bits::<64, Hot>::from_raw(const_fnv1a(resolved)).narrow_to::<28>();
-        if back == masked_bits {
+    let candidate = Str::__make(content_hash.narrow_to::<28>());
+    if let Maybe::Is(resolved) = interner.resolve(candidate)
+        && content_hash_of(resolved) == content_hash {
             return Outcome::Ok(candidate);
         }
-    }
 
     // Runtime path: look up bytes in the string table, intern via
     // the arena, return a runtime handle.
-    let lookup_hash = ContentHash::from_raw(masked_bits.widen_to());
-    let bytes = match string_table.lookup(lookup_hash) {
+    let bytes = match string_table.lookup(content_hash) {
         Maybe::Is(b) => b,
         Maybe::Isnt => return Outcome::Err(PersistenceError::Missing),
     };

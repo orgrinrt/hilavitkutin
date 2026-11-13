@@ -5,11 +5,11 @@
 ///
 /// One macro invocation produces both sides of the registration:
 /// the linker-section entry (read at startup by the section walker)
-/// and the handle value the call site uses immediately.
+/// and the handle value the call site uses immediately. Both come from
+/// `StaticStrEntry::new`, so the handle is the entry's own `hash`.
 #[macro_export]
 macro_rules! str_const {
     ($s:literal) => {{
-        use arvo_bits::BitsRefitCtor as _;
         #[used]
         #[cfg_attr(
             any(target_os = "linux", target_os = "android"),
@@ -19,14 +19,7 @@ macro_rules! str_const {
             any(target_os = "macos", target_os = "ios"),
             unsafe(link_section = "__DATA,__hvkstr")
         )]
-        static __ENTRY: $crate::StaticStrEntry = $crate::StaticStrEntry {
-            hash:  $crate::Str::__make(::arvo_bits::Bits::<28>::from_narrowed(
-                $crate::const_fnv1a($s),
-            )),
-            value: $s,
-        };
-        $crate::Str::__make(::arvo_bits::Bits::<28>::from_narrowed($crate::const_fnv1a(
-            $s,
-        )))
+        static __ENTRY: $crate::StaticStrEntry = $crate::StaticStrEntry::new($s);
+        $crate::StaticStrEntry::new($s).hash
     }};
 }
