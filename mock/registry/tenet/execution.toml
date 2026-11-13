@@ -13,7 +13,7 @@ quote = '''
 pipeline → core → phase ↔ waist → trunk → fiber ↔ branch ↔ bridge → morsel → micro-morsel → entry
 '''
 origin = "stated"
-standing = "provisional"
+standing = "pending"
 keywords = ["hierarchy", "pipeline", "core", "phase", "waist", "trunk", "fiber", "branch", "bridge", "morsel", "micro-morsel", "entry"]
 
 [[tenet]]

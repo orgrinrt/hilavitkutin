@@ -42,7 +42,7 @@ so existing pipelines are byte-identical.
 '''
 origin = "proposed"
 written_by = "design round 202606191200, topic lift the engine grouping caps to a Caps capacity-type, dated 2026-06-19, agent-written; the text does not say whose decision it is"
-standing = "provisional"
+standing = "pending"
 keywords = ["Caps trait", "ConstCapacity", "GATE2_MAX_UNITS", "plan_dirty", "cap lifting", "P0.1b probe", "PlanDims", "trait-solver overflow"]
 related = ["tenet::caps_are_defaults_and_never_policy_so_a_sketch_arc_looks_for_cap_lifting_shapes_now"]
 
@@ -61,7 +61,7 @@ Corrected production site: a type-level fold over the global `Stores` AccessSet,
 '''
 origin = "proposed"
 written_by = "src changelist of round 202606051500 (fiber-structured morsel-outer dispatch), 2026-06-05, locked; agent-written round artifact that records a deviation from the locked doc changelist"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["accumulator mask", "type-level fold", "Stores list position", "MaskProject", "store index space", "morsel-local", "deviation"]
 rejects = ["place the accumulator-store-set production at the store DRAIN, as a `Mask` over `D::Stores`"]
@@ -108,7 +108,7 @@ Everything else stays usize.
 '''
 origin = "proposed"
 written_by = "sketch outcome S2 witness-propagation of 2026-05-13 (status HYPOTHESIS CONFIRMED), agent-written; it answers the unresolved witness-propagation question of sketch 202605121400-call-site-cap-turbofish"
-standing = "provisional"
+standing = "pending"
 keywords = ["witness propagation", "cap_size", "cap_of", "MAX_UNITS", "Cap lift", "trait solver", "witness clause", "attempt 3 hang"]
 rejects = ["swept every engine `<const MAX_*: usize>` to `<const MAX_*: Cap>` AND added a `[(); cap_size(MAX_X)]:` clause for every MAX_X on every fn"]
 
@@ -130,7 +130,7 @@ walk's type-level recursion overflowing the trait solver. Expected: the
 '''
 origin = "proposed"
 written_by = "sketch findings cap-lifting-shapes of 2026-06-11, hypothesis section stating the two documented blockers; agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["cap lifting", "GATE2_MAX_UNITS", "generic const expressions", "field access", "trait solver overflow", "cap_size", "MAX_CORES", "plan_dirty"]
 related = ["tenet::generic_const_exprs_has_two_ceilings_no_field_access_on_generic_constants_and_a_complexity_limit_on_inline_const_blocks", "tenet::the_plan_dirty_array_stays_hardcoded_at_256_with_a_documented_deferral_because_rustc_rejects_field_access_on_generic_constants"]
@@ -159,7 +159,7 @@ absence.
 '''
 origin = "proposed"
 written_by = "sketch findings cap-lifting-shapes of 2026-06-11, shape s2c; agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["trait solver overflow", "unreproduced", "cap_size", "GATE2_MAX_UNITS", "in-engine probe", "s2c", "compounded obligations", "recursion depth 64"]
 related = ["tenet::lifting_the_engine_s_hardcoded_caps_was_documented_as_blocked_by_field_access_in_generic_constants_and_a_trait_solver_overflow_through_the_const_gated_walk"]

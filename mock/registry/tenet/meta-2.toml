@@ -13,7 +13,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 5 adapt subsystem, decision log entry on audit M1 dissolving with the Kit reframe, dated 2026-05-10, agent-written; the text does not say whose decision it is"
-standing = "provisional"
+standing = "pending"
 keywords = ["cadence-aware budget", "sample_skip", "M1", "LCM window", "AdaptConfig", "Kit reframe", "L1 budget", "worst-case-all-active"]
 related = ["tenet::the_nine_adapt_axes_ship_as_individual_inputs_and_kits_are_only_recipes_over_them"]
 
@@ -36,7 +36,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 5 adapt subsystem, decision log entry Audit-2 M6 dated 2026-05-10, agent-written; the text does not say whose decision it is"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["worst-case-all-active", "hot_arena_bytes", "M6", "M10", "morsel size", "cadence", "L1 reservation", "static morsel per fiber"]
 rejects = ["The \"cadence-aware budget tightness unlocked by the Kit reframe\" claim from the Kit-reframe paragraph is retracted; cadence helps CPU cost only."]
@@ -57,7 +57,7 @@ Earlier draft referenced a unified `Resource<SchedulerMetrics>`. **That shape is
 '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 5 adapt subsystem, vocabulary note and Axis F of the decision log dated 2026-05-10, agent-written; the text does not say whose decision it is"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["metrics::*", "per-axis sub-resources", "MetricsKit", "SchedulerMetrics", "AdaptMetrics", "AdaptArena", "Axis F", "retired"]
 rejects = ["a unified `Resource<SchedulerMetrics>`", "`AdaptMetrics` as a Resource type"]
@@ -75,7 +75,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 5 adapt subsystem, Axis F capacity note (audit M6) dated 2026-05-10, agent-written; the text does not say whose decision it is"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["MAX_SUBSTRATE_RESOURCES", "MAX_COLUMNS", "substrate resources", "access-mask region", "capacity note", "metrics resources"]
 related = ["tenet::each_adaptation_axis_has_its_own_consumer_readable_metrics_resource_and_the_unified_scheduler_metrics_resource_is_retired"]
@@ -92,7 +92,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 5 adapt subsystem, Axis F consumer Ctx-bound note (audit M7) dated 2026-05-10, agent-written; the text does not say whose decision it is"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["Has<metrics::...>", "Ctx bound", "Provider suffix", "BuilderInput", "accessor trait", "consumer read", "naming"]
 related = ["tenet::each_adaptation_axis_has_its_own_consumer_readable_metrics_resource_and_the_unified_scheduler_metrics_resource_is_retired"]
@@ -134,7 +134,7 @@ per-unit rank array.
 '''
 origin = "proposed"
 written_by = "design round 202606082100, doc changelist for GATE-2 E4 slice-2 self-hosting meta pipeline, section on a forced surface deviation, dated 2026-06-08, agent-written; the text does not say whose decision it is"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["OnMeta", "On<meta::V>", "Lifecycle", "MetaVirtual", "E0119", "lifecycle rank", "meta work unit", "forced deviation"]
 rejects = ["const-time lifecycle classification of a meta work unit versus a consumer work unit CANNOT use the same `On<V>` marker"]
@@ -160,7 +160,7 @@ implement its own cadence policy. For that, the kernel must fire REAL
 '''
 origin = "proposed"
 written_by = "design round 202606090000, topic GATE-2 E4 slice 3 consumer meta hooks, dated 2026-06-08, agent-written; the text does not say whose decision it is"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["meta virtual firing", "On<meta::ScheduleEnd>", "SchedulerMetrics", "lifecycle points", "consumer hook", "OnMeta band", "stamp == epoch", "slice 3"]
 related = ["tenet::meta_units_declare_a_distinct_schedule_marker_because_one_marker_cannot_classify_meta_and_consumer_units_without_overlap", "tenet::the_scheduler_is_itself_a_pipeline_and_meta_units_run_at_lifecycle_points"]
@@ -210,7 +210,7 @@ skips `i == j`); no kernel special-casing.
 '''
 origin = "proposed"
 written_by = "design round 202606090400, deprecated doc changelist for GATE-2 E4 slice 3a, dated 2026-06-08, agent-written; the text does not say whose decision it is, and the file is marked deprecated"
-standing = "provisional"
+standing = "pending"
 keywords = ["SchedulerMetrics", "SchedulerMetricsWu", "pass_count", "consumer resource", "no kernel write", "E0119", "OnMeta<PassStart>", "slice 3a"]
 
 [[tenet]]

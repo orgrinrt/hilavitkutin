@@ -143,7 +143,7 @@ explicit priority). Virtual columns (zero-sized types like
 '''
 origin = "proposed"
 written_by = "the research note scheduler-algorithm-deep-dive of the founding round"
-standing = "provisional"
+standing = "pending"
 keywords = ["two writers", "registration order", "explicit priority", "write-write", "edge"]
 superseded_by = ["two_writers_of_one_store_are_ordered_by_hint_priority"]
 related = ["question::how_two_writers_of_one_store_are_ordered"]
@@ -217,7 +217,7 @@ reordering automation, not whether RCM touches dispatch. See the workspace rule
 '''
 origin = "proposed"
 written_by = "sketch findings runfibercol-accumulator-inline (Phase D, task 340), outcome WORKS on nightly-2026-05-28, undated; agent-written"
-standing = "provisional"
+standing = "pending"
 keywords = ["registration order", "RCM order", "build-time validation", "RunFiberCol", "group_fibers", "codegen flattener", "GATE 1", "equal-depth reordering"]
 related = ["tenet::the_builder_appends_each_registered_unit_so_the_carrier_type_order_equals_registration_order_and_build_requires_a_topological_registration", "tenet::rcm_always_runs_and_reorders_the_units_so_column_sharing_units_are_adjacent_for_fiber_grouping"]
 
@@ -236,7 +236,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "doc changelist 202606051659 of 2026-06-05 (phase DOC, single-core dispatch codegen), locked; agent-written round artifact that does not name the maintainer as its author"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: op ruled that a bench decides the dispatch order (mock/research/202606111400_canonical-design-addendum-a1.md:49-57), and the bench of 2026-07-20 reports the RCM order this row states (mock/research/202607200800_a1-1-ordering-theory-bench-expansion.md:82-90); no word of his read takes that result as the answer, so the row stands on a stamp under his words "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["RCM", "dispatch order", "topological order", "execution order", "group_fibers", "registration order", "canonical design", "BuildError"]
 rejects = ["dispatch should run in plain registration/topological order with RCM unused single-core", "dispatch run in plain registration order with RCM unused"]

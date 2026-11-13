@@ -288,7 +288,7 @@ The precedence order is therefore:
 '''
 origin = "proposed"
 written_by = "addendum A2 (locked 2026-07-19), section A2-1, a provenance trace the maintainer delegated with the words it quotes"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["precedence", "ladder", "founding canon", "amendments", "date order", "standalone", "reading aid", "intermediate", "never canon"]
 
@@ -313,7 +313,7 @@ reviewed round.
 '''
 origin = "proposed"
 written_by = "addendum A2 (locked 2026-07-19), section A2-1, a provenance trace the maintainer delegated with the words it quotes"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["standalone spec", "commission", "conflict", "transcription defect", "consolidation", "provenance", "squash"]
 
@@ -332,7 +332,7 @@ history of how the design was reached; it states the design.
 '''
 origin = "proposed"
 written_by = "the standalone spec 202606111800, the header of the copy under mock/research that addendum A2 did not correct"
-standing = "provisional"
+standing = "pending"
 keywords = ["standalone spec", "supersedes", "header", "this document is the design", "older documents"]
 superseded_by = ["the_record_s_precedence_is_the_founding_spec_then_dated_amendments_then_the_reading_aid_then_the_rest"]
 
@@ -399,7 +399,7 @@ artifacts (its own status line, op explicit), while the standalone carries none.
 '''
 origin = "proposed"
 written_by = "addendum A2 of 2026-07-19, section A2-1, a provenance trace of the record; the text does not say whether the maintainer ruled this refinement himself"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["unified-engine amendment", "standalone spec", "blanket-wins", "intermediate artifacts", "r7", "authority", "precedence"]
 related = ["tenet::the_record_s_precedence_is_the_founding_spec_then_dated_amendments_then_the_reading_aid_then_the_rest"]
@@ -421,7 +421,7 @@ is hereby registered as part of the chain, positioned by its date (before the re
 '''
 origin = "proposed"
 written_by = "addendum A2 of 2026-07-19, section A2-2, a registry addition; the text does not say whether the maintainer ruled it himself"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["amendment chain", "registry", "unified-engine amendment", "A2-2", "rechart", "date order"]
 
@@ -489,7 +489,7 @@ catalogued test's ignore reason encode refuted-layout language.
 '''
 origin = "proposed"
 written_by = "addendum A2 of 2026-07-19, section A2-5, a citation correction (the finding is the document's own trace; the maintainer's direction that follows it is a separate row)"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["citation correction", "mis-citation", "swap", "expert input memo", "storage addendum", "blob record", "Decompose", "revert round"]
 related = ["tenet::the_swap_of_a_replaceable_resource_is_to_be_specified_by_a_commissioned_round", "tenet::the_record_s_precedence_is_the_founding_spec_then_dated_amendments_then_the_reading_aid_then_the_rest"]
@@ -508,7 +508,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["rechart", "r3", "core-pinned", "column-disjoint", "trunks", "waists", "bridges", "compile-time"]
 related = ["tenet::the_effective_canon_is_the_consolidation_spec_as_modified_in_order_by_seven_registered_amendments"]

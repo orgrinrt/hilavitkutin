@@ -15,7 +15,7 @@ If a consumer registers more than 16 PlanAffecting types, compile-time fails wit
 '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 8 resource resolution, user-attention call marked autonomous and revisitable, dated 2026-05-11, agent-written; the text does not say whose decision it is"
-standing = "provisional"
+standing = "pending"
 keywords = ["MAX_PLAN_AFFECTING_RESOURCES", "PlanAffectingId", "dirty-bit array", "cap of 16", "on_unimplemented", "const generic override", "Scheduler"]
 related = ["tenet::a_resource_is_plan_affecting_only_when_the_consumer_opts_it_in_and_the_number_of_them_is_capped"]
 
@@ -33,7 +33,7 @@ Topic 1 axis 4 said "interim: replace_resource unconditionally dirties until Top
 '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 8 resource resolution, Axis B and the Topic 1 amendments, dated 2026-05-11, agent-written; the text does not say whose decision it is"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["replace_resource", "PlanAffecting", "interim path", "unconditionally dirties", "Topic 1 amendment", "dirty bit", "conditional dirty"]
 rejects = ["interim: replace_resource unconditionally dirties until Topic 8's PlanAffecting marker lands"]
@@ -53,7 +53,7 @@ Locked at DESIGN.md.tmpl lines 320-323. Rule: "replace_resource is app-only. Cal
 '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 1 scheduler run signature, locked decision A7 quoting the design template, dated 2026-05-10, agent-written; the text does not say whose decision it is"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["replace_resource", "app-only", "between build and run", "A7", ".build()", "scheduler.run()"]
 related = ["tenet::a_swap_of_a_resource_value_is_legal_only_between_frames_and_is_observed_from_the_next_run"]
@@ -72,7 +72,7 @@ This round's src CL lifts the array dimension to `Cfg::MAX_PLAN_AFFECTING_RESOUR
 '''
 origin = "proposed"
 written_by = "design round 202605232000, topic runtime megaround post-review fixes, locked decision A2, dated 2026-05-23, agent-written; the text does not say whose decision it is"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["plan_dirty", "MAX_PLAN_AFFECTING_RESOURCES", "Cfg", "generic_const_exprs", "per-Cfg typestate", "hardcoded 256", "A2"]
 related = ["tenet::the_plan_dirty_bit_array_is_keyed_by_the_plan_affecting_id_under_a_default_cap_of_sixteen_and_exceeding_it_fails_at_compile_time"]
@@ -98,7 +98,7 @@ This src CL supersedes `202605232000_changelist.src.deprecated.md`. The earlier 
 '''
 origin = "proposed"
 written_by = "design round 202605232000, source changelist for the runtime megaround post-review fixes, phase SRC, dated 2026-05-23, agent-written; the text does not say whose decision it is"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["plan_dirty", "generic_const_exprs", "documented deferral", "256", "field access on generic constants", "#345", "Topic A2 pivot"]
 rejects = ["assumed the `Scheduler::plan_dirty` lift to `Cfg::MAX_PLAN_AFFECTING_RESOURCES.0` would land under `feature(generic_const_exprs)`"]

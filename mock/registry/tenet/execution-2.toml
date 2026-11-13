@@ -277,7 +277,7 @@ quote = '''
 - <10K records: IndirectPerFiber or TrunkMega. >10K: ScheduleMega.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "pending"
 keywords = ["IndirectPerFiber", "TrunkMega", "ScheduleMega", "10K records", "dispatch", "mega function"]
 
 [[tenet]]
@@ -372,7 +372,7 @@ Row size determines approach (T6 L1507-1517):
   over morsel iterations)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "pending"
 keywords = ["dispatch approaches", "mono tuple", "trunk mega", "schedule mega", "record count threshold", "10K records", "icache", "vs hand-fused"]
 
 [[tenet]]
@@ -476,7 +476,7 @@ complete. No scheduler loop. No work queues. No atomics except at
 phase sync points.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (.data/op-responses/202609181645_hila-std-tier-persistence.md:17-29, row the_pool_is_the_consumer_s_executor_and_the_engine_hands_it_its_closures_once_on_the_first_parallel_run), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["no scheduler loop", "no work queues", "spawn N threads", "join", "compiled program", "phase sync"]
 

@@ -19,7 +19,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
-standing = "provisional"
+standing = "pending"
 keywords = ["spectral role deviation", "fiber_theory", "greedy", "spectral", "trunk-grained", "fiber-grained", "Step 7", "plan-chain corrective round"]
 related = ["tenet::the_spectral_role_deviation_follows_the_same_evidence_then_bless_standard", "tenet::spectral_bisection_forms_trunks_by_cutting_the_fibers_graph_where_the_shared_data_volume_is_smallest"]
 
@@ -41,7 +41,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["RCM", "ordering theories", "DRAM-resident", "registration order", "1.65x", "Step 5", "A1-1", "bench resolved"]
 related = ["tenet::whether_dispatch_follows_rcm_order_or_waist_phase_order_is_decided_by_a_bench"]
@@ -63,7 +63,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["LIGHT_THRESHOLD", "BENCH-PENDING", "tunable constant", "crossover sweep", "adaptive", "pipe-chase", "post-freeze amendment", "adapt-phase strategy"]
 
@@ -79,7 +79,7 @@ Plan recompute fires on entry to `run()` when the dirty bit is set; otherwise th
 '''
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["plan recompute", "dirty bit", "PlanAffecting", "run", "cached plan", "entry to run"]
 
@@ -99,7 +99,7 @@ Each step names its foundations crate dependency: `arvo-bitmask` for set ops, `a
 '''
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: a passage shows part of it to be his and not the whole of it (mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:90-92; mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1229-1262), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["plan algorithm chain", "12 steps", "FiberShape", "shape_classification", "build_dag", "topo_sort", "RCM", "spectral", "polka-dots"]
 
@@ -115,7 +115,7 @@ Free-function composition over the 12-step canonical chain inherited from the po
 '''
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["ExecutionPlan", "flat plan", "CSR-style", "PlanDims", "phases array", "trunks pool", "fibers pool", "11 MB", "unified storage"]
 
@@ -131,7 +131,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["DependencyGraph", "CSR", "row_offsets", "col_indices", "edge_kinds", "dep_graph_csr_9", "bench-locked", "MAX_UNITS", "MAX_EDGES"]
 
@@ -147,7 +147,7 @@ Per-`PlanAffecting`-resource dirty bit array. Plan cache lives with Scheduler fo
 '''
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["plan cache", "scheduler lifetime", "PlanAffecting", "dirty bit array", "reused across frames", "recompute"]
 related = ["tenet::the_plan_recomputes_on_entry_to_run_when_the_dirty_bit_is_set_and_the_dirty_bit_is_keyed_per_plan_affecting_resource"]
@@ -164,7 +164,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
-standing = "provisional"
+standing = "pending"
 keywords = ["PlanAffecting", "MAX_PLAN_AFFECTING_RESOURCES", "opt in", "RunCfg", "sealed marker", "cap of 16"]
 
 [[tenet]]
@@ -186,7 +186,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "topic a3b-l1-morsel-formula of 2026-07-16, round 202607161410, agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["L1_USABLE", "MIN_MORSEL", "MAX_MORSEL", "RunCfg", "consumer-tunable", "toolbox not policer", "24576", "morsel window"]
 related = ["tenet::the_morsel_size_is_the_l1_budget_divided_by_the_written_bytes_per_record_within_fixed_bounds", "tenet::the_minimum_morsel_size_is_configurable_and_not_a_design_decision"]
@@ -226,7 +226,7 @@ single-core apps.
 '''
 origin = "proposed"
 written_by = "topic b1-cap-lifting-completion of 2026-07-20, agent-written, grounded on canon A1-2 and sketch 202606111450 s1"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["cap lifting", "PlanDims", "Capacity", "GATE2_MAX_UNITS", "MAX_CORES", "UnitsFitGate2", "PoolFrame", "#690"]
 rejects = ["the three fixed constants the trait was built to replace"]
@@ -265,7 +265,7 @@ This is the guard half of #690; the full lift (sizing `gate2_phase` /
 '''
 origin = "proposed"
 written_by = "topic units-cap-guard of 2026-06-19, round 202606191500, agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["units cap", "compile-time guard", "run_parallel", "GATE2_MAX_UNITS", "#690", "Capacity", "const assert"]
 related = ["tenet::a_documented_fixed_cap_is_acceptable_only_as_the_proven_infeasible_fallback_with_a_tracked_lift_condition", "tenet::caps_are_defaults_and_never_policy_so_a_sketch_arc_looks_for_cap_lifting_shapes_now"]
@@ -284,7 +284,7 @@ The same three the previous round named (B1 cap-lifting, the shared hlist, the l
 '''
 origin = "proposed"
 written_by = "source changelists of rounds 202609190201 and 202609191001, 2026-09-19, agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["B1 cap-lifting", "MAX_CORES", "PlanDims", "core capacity", "runnable_worker_count", "worker-count clamp", "gate2_ncores"]
 related = ["tenet::the_scheduler_scratch_is_sized_by_the_plan_dimension_capacities_and_the_three_fixed_constants_are_deleted_outright", "tenet::the_engine_clamps_the_worker_count_it_runs_on_to_the_ceiling_of_its_per_core_state_and_workers_past_the_ceiling_are_never_handed_a_closure"]
@@ -315,7 +315,7 @@ For runtime-decided sizing (where the consumer would otherwise need a different 
 '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 3 plan algorithm chain, invariant M9 and the plan shape sketch, dated 2026-05-10, agent-written; the text does not say whose decision it is"
-standing = "provisional"
+standing = "pending"
 keywords = ["MAX_UNITS_PER_FIBER", "MAX_COLUMNS_PER_FIBER", "CeilingDiv", "const generics", "monomorphisation cost", "M9", "ExecutionPlan", "derived caps"]
 
 [[tenet]]
@@ -331,7 +331,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 5 adapt subsystem, decision log entry Audit-2 m3 dated 2026-05-10, agent-written; the text does not say whose decision it is"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["MAX_UNITS_PER_FIBER", "MAX_COLUMNS_PER_FIBER", "CeilingDiv", "spectral clusters", "own const generic", "m3", "worst case", "recommended heuristic"]
 rejects = ["Topic 3 M9 derivation `MAX_UNITS_PER_FIBER = CeilingDiv<MAX_UNITS, MAX_FIBERS>::RESULT` is wrong for realistic workloads"]
@@ -349,7 +349,7 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 3 plan algorithm chain, consolidated decision 2 on the ExecutionPlan shape, dated 2026-05-10, agent-written; the text does not say whose decision it is"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["ExecutionPlan", "seven const generics", "TrunkComponent", "UnitMeta", "free functions", "plan::analysis", "MAX_COMPONENTS_PER_TRUNK", "runtime hierarchy"]
 related = ["tenet::the_plan_is_a_flat_csr_style_tree_of_phases_trunks_and_fibers_sized_by_the_plan_dimensions"]
@@ -405,7 +405,7 @@ Pending bench. The bench tests CSR vs dense `DependencyGraph::add_edge` + `iter_
 '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 9 plan caching and dirty detection, Axis B bench-locked, dated 2026-05-11, agent-written; the text does not say whose decision it is"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["DependencyGraph", "CSR", "dense", "CSR_THRESHOLD_N", "bench dep_graph_csr_9", "crossover", "hybrid", "bench-locked"]
 rejects = ["Locked: CSR canonical at all N, no threshold.", "lock the value into engine code as `CSR_THRESHOLD_N`"]
@@ -440,7 +440,7 @@ lift. Defaults stay 256/16/etc so existing pipelines are byte-identical.
 '''
 origin = "proposed"
 written_by = "design round 202606191200, doc changelist for lifting the engine grouping caps, dated 2026-06-19, agent-written; the text does not say whose decision it is"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["PlanDims", "AccumsPerCore", "PlanAffecting", "Capacity", "cap lifting", "GATE2_MAX_UNITS", "plan_dirty", "no Caps trait"]
 rejects = ["adding a separate trait"]
@@ -458,7 +458,7 @@ Supersedes `202605302330_changelist.doc.deprecated.md`. That CL framed this roun
 '''
 origin = "proposed"
 written_by = "doc changelist 202605302331 of 2026-05-30 (round 202605302330 store-backed-plan, slice 1: flatten), locked; agent-written round artifact that does not name the maintainer as its author"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["flat execution plan", "store-backed plan", "round boundary", "ColumnStorage", "ExecutionPlan Copy handle", "11 MB overflow", "staging", "backlog"]
 rejects = ["the full store-backed cut"]
@@ -478,5 +478,5 @@ The fork was the per-fiber morsel-local signal: a fiber is morsel-local iff no u
 '''
 origin = "proposed"
 written_by = "doc changelist of round 202606051500 (fiber-structured morsel-outer dispatch), 2026-06-05, locked; agent-written round artifact recording an architect read, which does not name the maintainer as its author"
-standing = "provisional"
+standing = "pending"
 keywords = ["morsel-local", "accumulator store set", "store drain", "AccumBinding", "flat bitmask", "fiber formation", "Shape A"]

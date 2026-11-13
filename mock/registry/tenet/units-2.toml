@@ -16,7 +16,7 @@ Its purpose is within-fiber linear fusion. When a fiber is a straight read-after
 '''
 origin = "proposed"
 written_by = "the api design template, section added by design round 202606092000 (within-fiber linear fusion)"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["per-record map", "RecordOp", "apply", "fusion contract", "opt-in", "value to value", "execute", "linear fusion", "run_fused"]
 related = ["tenet::records_within_a_fiber_are_independent"]
@@ -45,7 +45,7 @@ access set declared, projected into the context for the duration of one call.
 '''
 origin = "proposed"
 written_by = "the standalone spec 202606111800, a reading aid with no design authority of its own by addendum A2"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: a passage shows part of it to be his and not the whole of it (mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:639-660), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["execute", "Context", "Ctx", "access set", "nothing else", "WorkUnit", "signature"]
 
@@ -69,7 +69,7 @@ values. The flattener wires the returns to the next stage's inputs.
 '''
 origin = "proposed"
 written_by = "the founding-round topic T6 on the api surface, 202603151200"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["pure function", "values in values out", "each closure", "flattener", "fiber", "composition", "value function"]
 related = ["tenet::a_unit_registers_its_ops_through_each_batch_and_reduce_on_the_context", "tenet::a_pure_per_record_map_may_be_declared_as_an_opt_in_fusion_contract_beside_execute", "question::how_a_unit_in_the_value_form_reads_a_resource"]
@@ -173,7 +173,7 @@ in this crate.
 '''
 origin = "proposed"
 written_by = "topic plannable-declaration-split of 2026-07-17, round 202607171807, and its doc changelist, agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["SchedulingHint", "HintExt", "sealed", "four-tuple", "extension slot", "additive", "urgency divisibility significance"]
 related = ["tenet::the_divisibility_hint_sets_whether_a_unit_runs_all_morsels_at_once_one_at_a_time_or_adaptively"]
@@ -208,7 +208,7 @@ whichever runner defines one. No claim of present engine behaviour.
 '''
 origin = "proposed"
 written_by = "doc changelist of round 202607171824 (2026-07-17) softening a sentence of round 202607171807, with its topic plannable-post-review-fixes, agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["HintExt", "four-tuple", "prefix", "engine reads", "softened", "intent", "SchedulingHint", "fourth dimension"]
 rejects = ["the engine reads urgency, divisibility, and significance and ignores the extension"]
@@ -246,7 +246,7 @@ and unsealing would cost the engine its ability to reason about every hint shape
 '''
 origin = "proposed"
 written_by = "doc changelist of round 202607171807 (2026-07-17), a scope decision narrowing its topic plannable-declaration-split, agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["Plannable", "HintExt", "scope decision", "no markers", "speculative surface", "divisibility", "unsealing", "runner-agnostic declaration"]
 rejects = ["a fully-worked hint extension"]
@@ -275,7 +275,7 @@ The producer-before-consumer registration requirement is a PROVISIONAL compromis
 '''
 origin = "proposed"
 written_by = "design round 202606061446, topic gate1 dispatch builder append (D1d), dated 2026-06-06, agent-written; the passage cites roadmap r2 section 8 'op decision (b)' for the provisional requirement only"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["builder append", "prepend", "WuAppend", "registration order", "topological order", "BuildError", "recommended order", "UnitDispatch"]
 rejects = ["The scheduler builder PREPENDS each registered WorkUnit onto the carrier."]
@@ -317,7 +317,7 @@ The recommendation B (recursive HList with `#[marker]`) is correct; the typestat
 '''
 origin = "proposed"
 written_by = "sketch findings S2 AccessSet arity of 2026-05-05 (round 202605042200), with its post-audit correction section; agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["AccessSet", "recursive HList", "marker trait", "flat-arity impls", "arity cap", "Contains", "round 4", "set! macro"]
 rejects = ["the flat-arity impls"]
@@ -346,7 +346,7 @@ No need to extend AccessSet to higher arities. The arity-12 cap continues to gov
 '''
 origin = "proposed"
 written_by = "sketch findings app-builder type-state (202605010900), body section on the AccessSet arity ceiling, written before its update of 2026-05-01 round 202605011500; agent-written"
-standing = "provisional"
+standing = "pending"
 keywords = ["arity-12 cap", "AccessSet", "cons-list", "builder accumulator", "flat tuples", "Read and Write declarations", "recursion limit"]
 
 [[tenet]]
@@ -368,7 +368,7 @@ Consumer migrates from `type Read = (Resource<X>, Column<Y>);` to `type Read = r
 '''
 origin = "proposed"
 written_by = "sketch findings app-builder type-state (202605010900), update of 2026-05-01 round 202605011500 (final design after third reviewer); agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["WuSatisfied", "read! macro", "write! macro", "cons-list", "arity cap", "16 stores", "vehje", "uncap"]
 rejects = ["The original per-arity 0..=12 cap on `WuSatisfied<A>`"]
@@ -397,7 +397,7 @@ The load-bearing detail is that `Schedule` is a **parameter of `Plannable`**, no
 '''
 origin = "proposed"
 written_by = "sketch findings plannable-declaration-split of 2026-07-17 (round 202607171733), outcome WORKS; agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["Plannable", "HasSchedule", "blanket impl", "schedule parameter", "On<V>", "AdaptWu", "declaration half", "runner-agnostic"]
 related = ["tenet::the_hint_extension_round_lands_the_mechanism_with_no_markers_because_no_dimension_beyond_the_three_has_a_consumer"]

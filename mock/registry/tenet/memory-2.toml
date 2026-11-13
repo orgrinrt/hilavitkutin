@@ -19,7 +19,7 @@ live slot through the provider.
 '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["reserve", "column_ptr", "column_ptr_mut", "64-byte aligned", "release no-op", "raw pointer R6", "Drop deallocate", "reader-count reclamation"]
 related = ["tenet::a_column_s_lifetime_is_told_to_the_consumer_as_an_advisory_release"]
@@ -37,7 +37,7 @@ column is a separate provider allocation. The point is a working
 '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["ArenaColumnStorage", "correctness not performance", "flat scan", "separate allocation per column", "placeholder", "columnar engine"]
 
@@ -61,7 +61,7 @@ quote = '''
 because = "Reintroducing the M parameter needs allocate-at-builder-time plumbing the engine does not yet have."
 origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["MemoryArena", "HasMemoryProvider", "M parameter", "allocate-at-builder-time", "inline storage", "BACKLOG", "2026-05-01"]
 rejects = ["M: HasMemoryProvider parameter on MemoryArena"]
@@ -89,7 +89,7 @@ column with a mismatched layout.
 '''
 origin = "proposed"
 written_by = "api design template as on the branch recover/unlanded-rounds-and-benches, commit of 2026-08-30, not on dev; the text does not say whose it is"
-standing = "provisional"
+standing = "pending"
 keywords = ["deallocate", "alignment", "MemoryProvider", "safety contract", "64-byte alignment", "layout"]
 
 [[tenet]]
@@ -128,7 +128,7 @@ it, and a provider that ignores alignment (a bump arena) may simply not read the
 '''
 origin = "proposed"
 written_by = "doc changelist of round 202607192010 (2026-07-19), settling the question its topic reachable-bodies-contradicting-contracts left open, agent-written"
-standing = "provisional"
+standing = "pending"
 keywords = ["deallocate", "alignment", "MemoryProviderApi", "Layout", "std::alloc", "bump arena", "safety contract", "free site"]
 rejects = ["requires only that `ptr` and `len` match a prior `allocate`"]
 related = ["tenet::a_deallocation_is_given_the_same_alignment_as_its_allocation"]
@@ -171,7 +171,7 @@ Op, choosing "hilavitkutin ships only the executor contract (a trait). The OS-th
 '''
 origin = "proposed"
 written_by = "doc changelist of round 202609181402 'hilavitkutin on arvo's current dev', 2026-09-18, agent-written"
-standing = "provisional"
+standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["os tier", "mmap", "clock_gettime", "MemoryProvider", "Clock", "pointer-sized closure", "ThreadPoolApi", "no pthreads"]
 related = ["tenet::op_ruled_that_the_consumer_supplies_the_os_thread_executor_and_the_engine_ships_only_the_executor_contract", "tenet::the_os_and_std_tiers_are_mutually_exclusive_and_the_os_tier_gets_the_optimisation_investment"]
@@ -190,7 +190,7 @@ Resource buffers are sized once at `build()` (singleton, scheduler lifetime; shi
 '''
 origin = "proposed"
 written_by = "sketch ctx-projection-selector (per-WU Context via Selector and Project index witnesses), dated only by its filename 202605290101 as 2026-05-29, reframing the earlier \"B2b at build()\" claim; agent-written"
-standing = "provisional"
+standing = "pending"
 keywords = ["column buffers", "record_count", "build()", "run loop", "resource buffers", "B2b", "per-frame allocation", "HasRecordCount"]
 rejects = ["B2b columns at build()", "the earlier \"B2b at build()\" framing"]
 related = ["tenet::the_engine_does_not_load_data_and_does_not_know_record_counts_ahead"]
@@ -207,6 +207,6 @@ Reservation timing (Timing X, separate decision): columns reserve at `build()` t
 '''
 origin = "proposed"
 written_by = "sketch findings column-source-dual-selector of 2026-06-04 (round column-data-plane, unified bindings as resource and column source, Shape A), verdict WORKS; agent-written"
-standing = "provisional"
+standing = "pending"
 keywords = ["reservation timing", "Timing X", "reserve at build", "stable pointer", "column_ptr_mut", "record count metadata", "ColumnBinding", "per-frame allocation"]
 related = ["tenet::an_accumulator_append_saturates_at_the_reserved_capacity_which_equals_the_record_count_at_build"]

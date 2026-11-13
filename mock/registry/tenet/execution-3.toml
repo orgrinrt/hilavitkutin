@@ -72,7 +72,7 @@ quote = '''
   bench findings (1.17x overhead unacceptable)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "pending"
 keywords = ["Approach C", "superseded", "approach D", "approach E", "1.17x overhead", "indirect per-fiber"]
 
 [[tenet]]
