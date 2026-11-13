@@ -9,13 +9,14 @@
 //! Higher discriminant = higher priority. Tie-break by most deps
 //! first, then deterministic fallback.
 
-use arvo::{fbits, ibits, strategy::Hot, UFixed};
+use arvo::strategy::Hot;
+use arvo::{UFixed, fbits, ibits};
 
 mod hint_sealed {
     /// Hint-subsystem private seal. Separate from the crate-level
     /// `sealed::Sealed` to avoid clashing with the tuple impls in
     /// `access.rs`.
-    pub trait Sealed {} // lint:allow(undocumented_type) reason: sealing marker trait; semantics live on parent trait docs; tracked: #72
+    pub(crate) trait Sealed {} // lint:allow(undocumented_type) reason: sealing marker trait; semantics live on parent trait docs; tracked: #72
 }
 
 /// How soon the WU must run. 4 levels fit in 2 bits.
@@ -32,6 +33,7 @@ pub type Significance = UFixed<{ ibits(3) }, { fbits(0) }, Hot>;
     message = "`{Self}` is not an Urgency marker",
     note = "Available markers: `Immediate`, `Steady`, `Relaxed`, `Deferred`. Sealed; consumer-defined markers are not supported."
 )]
+#[allow(private_bounds)]
 pub trait UrgencyValue: hint_sealed::Sealed + 'static {
     /// Discriminant. Higher = higher urgency.
     const VALUE: Urgency;
@@ -42,6 +44,7 @@ pub trait UrgencyValue: hint_sealed::Sealed + 'static {
     message = "`{Self}` is not a Divisibility marker",
     note = "Available markers: `Atomic`, `Adaptive`, `Interruptible`. Sealed; consumer-defined markers are not supported."
 )]
+#[allow(private_bounds)]
 pub trait DivisibilityValue: hint_sealed::Sealed + 'static {
     /// Discriminant. Higher = more rigid scheduling.
     const VALUE: Divisibility;
@@ -52,6 +55,7 @@ pub trait DivisibilityValue: hint_sealed::Sealed + 'static {
     message = "`{Self}` is not a Significance marker",
     note = "Available markers: `Critical`, `Important`, `Normal`, `Opportunistic`, `Optional`. Sealed; consumer-defined markers are not supported."
 )]
+#[allow(private_bounds)]
 pub trait SignificanceValue: hint_sealed::Sealed + 'static {
     /// Discriminant. Higher = more significant.
     const VALUE: Significance;
@@ -65,6 +69,7 @@ pub trait SignificanceValue: hint_sealed::Sealed + 'static {
     message = "`{Self}` is not a SchedulingHint tuple",
     note = "SchedulingHint is implemented on the tuple `(U: UrgencyValue, D: DivisibilityValue, S: SignificanceValue)`. Use the substrate-provided ZST markers (`Immediate` / `Steady` / `Relaxed` / `Deferred` for U; `Atomic` / `Adaptive` / `Interruptible` for D; `Critical` / `Important` / `Normal` / `Opportunistic` / `Optional` for S)."
 )]
+#[allow(private_bounds)]
 pub trait SchedulingHint: hint_sealed::Sealed + 'static {}
 
 impl<U: UrgencyValue, D: DivisibilityValue, S: SignificanceValue> hint_sealed::Sealed

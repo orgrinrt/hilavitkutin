@@ -130,7 +130,7 @@ fn erased_backcast_roundtrip() {
 }
 
 #[test]
-#[ignore = "catalogue: Seq/Map collection members not yet wired into resource values; the live-stream asserts (snapshot copies ptr+len only, elements stream from the column) land with that wiring; tracked #344"]
+#[ignore = "catalogue: Seq/Map collection members not yet wired into resource values; the live-stream asserts (snapshot copies ptr+len only, elements stream from the column) land with that wiring; tracked #hilavitkutin_catalogue_seq_and_map_collection_members_are_no"]
 fn collection_members_live_stream_not_snapshot_copied() {
     // Intended behaviour, per the domain-19 design and bench axis D: a
     // `Seq`/`Map` member of a resource value is a pointer-plus-length view

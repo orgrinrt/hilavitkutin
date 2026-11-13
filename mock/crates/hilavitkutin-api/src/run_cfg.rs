@@ -25,12 +25,13 @@ use crate::access::Cons;
 use crate::builder_input::{BuilderInput, Dispatch};
 
 mod sealed {
-    pub trait Sealed {}
+    pub(crate) trait Sealed {}
 }
 
 /// Required-field accessor: every `RunCfg` impl declares the
 /// pipeline's record count. Topic 1 axis 2 supertrait bound on
 /// `RunCfg`.
+#[allow(private_bounds)]
 pub trait HasRecordCount: sealed::Sealed {
     fn record_count(&self) -> USize;
 }
@@ -40,6 +41,7 @@ pub trait HasRecordCount: sealed::Sealed {
 /// Default: NOT plan-affecting. Consumers opt in for resources
 /// whose value shape changes the plan (e.g., the `RunCfg` resource
 /// itself). Topic 8 axis B.
+#[allow(private_bounds)]
 pub trait PlanAffecting: sealed::Sealed + BuilderInput {}
 
 /// Consumer-supplied run-config trait. Single-slot typestate; one
@@ -52,6 +54,7 @@ pub trait PlanAffecting: sealed::Sealed + BuilderInput {}
 /// consumer-tunable default on this trait, not a hardcoded
 /// substrate constant. Override by writing the const explicitly in
 /// the consumer's `impl RunCfg` block.
+#[allow(private_bounds)]
 pub trait RunCfg:
     sealed::Sealed + BuilderInput<Dispatch = RunCfgDispatch<Self>> + HasRecordCount + Sized + 'static
 {

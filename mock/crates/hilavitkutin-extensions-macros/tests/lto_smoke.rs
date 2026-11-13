@@ -222,12 +222,13 @@ fn target_directory_is_absent_when_the_value_never_closes() {
 /// crate there.
 #[cfg(not(unix))]
 #[test]
-#[ignore = "catalogue: trampoline survival under fat LTO is unchecked off unix; needs a dumpbin or object-crate symbol reader; tracked: BACKLOG LTO smoke on Windows"]
+#[ignore = "catalogue: trampoline survival under fat LTO is unchecked off unix; needs a dumpbin or object-crate symbol reader; tracked #hilavitkutin_catalogue_trampoline_survival_under_fat_lto_is"]
 fn trampolines_survive_lto() {
     unimplemented!(
         "contract: `__hilavitkutin_extension_descriptor` is exported and \
          `ext_init_trampoline` / `ext_shutdown_trampoline` appear in the symbol \
          table of the fat-LTO fixture cdylib. Fill when a symbol reader for \
-         non-unix hosts lands. tracked: BACKLOG LTO smoke on Windows"
+         non-unix hosts lands. \
+         tracked #hilavitkutin_catalogue_trampoline_survival_under_fat_lto_is"
     );
 }

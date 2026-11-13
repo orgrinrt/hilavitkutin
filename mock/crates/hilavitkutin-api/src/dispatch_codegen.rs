@@ -31,7 +31,7 @@ use arvo::traits::FromConstant;
 use arvo::{USize, Uint};
 
 mod sealed {
-    pub trait Sealed {}
+    pub(crate) trait Sealed {}
 }
 
 /// `PhaseId` newtype carrying the plan-stage-assigned phase index.
@@ -364,6 +364,7 @@ pub enum RecordRange {
 /// **Pre-stub:** the actual associated `type CoreDispatch = impl
 /// Fn(...)` lowering lands in the engine impl (Pass 3). This trait
 /// declaration just commits the surface.
+#[allow(private_bounds)]
 pub trait DispatchCodegen<Cfg>: sealed::Sealed {
     /// The monomorphised per-core dispatch closure type. Topic 4
     /// axis A Rider 1. Engine impls set this via TAIT
@@ -406,6 +407,7 @@ impl Scheduled for StandardCodegen {}
 /// Sealed marker: codegen output uses zero CAS / zero RMW in the
 /// inner loop. Topic 4 axis G + Topic 5 audit-2 m4. Blanket-impl on
 /// the engine's `StandardCodegen` output type.
+#[allow(private_bounds)]
 pub trait LockFreeDispatch: sealed::Sealed {}
 
 /// Unified API constraint per audit-2 m4: `Scheduled` is the bound
@@ -419,6 +421,7 @@ pub trait Scheduled: LockFreeDispatch {}
 /// per unique fiber shape encountered in the plan; consumers cannot
 /// impl this. `WuTuple` is the typed tuple of WU types in fiber-
 /// execution order; `SHAPE_ID` is the dedup hash.
+#[allow(private_bounds)]
 pub trait FiberShape: sealed::Sealed {
     /// Type-level tuple of WU types in fiber-execution order.
     type WuTuple;
