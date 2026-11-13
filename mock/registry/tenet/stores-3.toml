@@ -17,7 +17,7 @@ quote = '''
 origin = "proposed"
 written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
 standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+stamp = 'provisional, 2026-11-13: his part is the hybrid call of erased, global-capable addressing, recorded as his decision of 2026-07-02 at mock/design_rounds/202607161000/202606210600_topic.hybrid-decision.md:12-19, and the layout of blob, snapshot and live collections is the bench decision of the row the_value_of_a_resource_is_one_contiguous_record_blob_and_the_per_member_column_decomposition_was_refuted_by_bench; that the drift-fix arc is the storage-model work and that no fork remains is the reading of the agent-written addendum at mock/research/202606210600_resource-storage-model-canonical-addendum.md:97-101, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["drift-fix arc", "storage model", "scalar snapshot", "live-streamed", "noalias", "erased addressing", "hybrid", "settled layout"]
 related = ["tenet::a_resource_value_is_addressed_through_an_erased_static_shape_so_it_can_cross_a_plugin_boundary"]
 
@@ -306,6 +306,7 @@ all four on ColumnValue, which broke real carriers; A3b corrects it.)
 origin = "proposed"
 written_by = "src changelist of round 202606202700 (A3b), agent-written"
 standing = "pending"
+superseded_by = ["a_resource_and_a_staged_resource_contribute_their_declared_footprint_to_the_morsel_budget_and_an_accumulator_contributes_zero"]
 keywords = ["StoreElemBytes", "per-record columns", "Resource", "StagedResource", "Accum", "Virtual", "ColumnValue bound", "A3b"]
 rejects = ["A3a had bounded all four on ColumnValue"]
 related = ["tenet::as_first_proposed_each_store_marker_reports_its_element_bytes_for_the_morsel_budget_and_a_virtual_reports_none"]
@@ -339,6 +340,7 @@ stamp = 'provisional, 2026-11-13: nothing read in the written history shows it t
 keywords = ["StoreElemBytes", "ResourceFootprint", "L1_BYTES", "Resource", "StagedResource", "Accum", "R5 footprint", "morsel budget"]
 rejects = ["flat scalar sizes"]
 related = ["tenet::only_a_column_contributes_per_record_bytes_to_the_morsel_working_set_and_the_other_store_markers_contribute_zero", "tenet::per_fiber_morsel_sizing_folds_over_blob_strides_plus_the_collection_bytes_term_and_rides_after_the_drift_fix", "tenet::the_api_macros_crate_is_the_proc_macro_companion_of_the_api_crate_and_derives_a_resource_s_write_collection_footprint"]
+lineage = ["only_a_column_contributes_per_record_bytes_to_the_morsel_working_set_and_the_other_store_markers_contribute_zero:42e2e2fb4a444878"]
 
 [[tenet]]
 id = "a_blanket_footprint_implementation_is_rejected_because_it_conflicts_with_the_derive_and_bare_scalars_get_explicit_zero_footprints"
@@ -396,6 +398,7 @@ strides) and the type-fold problem disappears.
 origin = "proposed"
 written_by = "topic resource-handle-storage-model of 2026-06-19, round 202606210600, agent-written, later reversed by the same round's bench topics"
 standing = "pending"
+superseded_by = ["a_resource_value_is_a_one_record_blob_and_the_bench_reverses_the_decomposition_to_shape_bound_columns"]
 keywords = ["resource handle", "shape-bound columns", "decompose", "handle store", "DrainStores", "one-record blob", "R5", "unified store"]
 related = ["tenet::a_resource_is_a_handle_and_not_an_inline_value_store_which_is_the_corrected_reading_of_r5"]
 
@@ -444,10 +447,11 @@ origin = "proposed"
 written_by = "topics bench-decision (2026-06-20, run-1, provisional) and bench-run2-resolution (2026-07-02) of round 202606210600, agent-written"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["ratified-elsewhere: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:30-36", "ratified-elsewhere: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:80-85", "ratified-elsewhere: mock/research/202606210600_resource-storage-model-canonical-addendum.md:4-12"]
+ratified_from = ["ratified-elsewhere: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:80-85", "ratified-elsewhere: mock/research/202606210600_resource-storage-model-canonical-addendum.md:4-12"]
 keywords = ["bench decision", "one-record blob", "decompose", "shape-bound", "run-2", "stack snapshot", "live stream", "V1 V2 V3"]
 rejects = ["decompose-to-shape-bound-columns"]
 related = ["tenet::a_resource_handle_s_members_decompose_into_per_member_shape_bound_columns_in_the_unified_store", "tenet::the_value_of_a_resource_is_one_contiguous_record_blob_and_the_per_member_column_decomposition_was_refuted_by_bench"]
+lineage = ["a_resource_handle_s_members_decompose_into_per_member_shape_bound_columns_in_the_unified_store:b0427733ec654f17"]
 
 [[tenet]]
 id = "the_resource_binding_records_an_erased_base_pointer_and_a_static_shape_and_the_typed_pointer_is_backcast_at_projection"

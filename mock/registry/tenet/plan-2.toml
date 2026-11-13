@@ -23,7 +23,7 @@ WUs get grouped first.
 origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1328-1339", "later: mock/research/202606111400_canonical-design-addendum-a1.md:49-57, whether_dispatch_follows_rcm_order_or_waist_phase_order_is_decided_by_a_bench"]
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1328-1339", "later: mock/research/202606111400_canonical-design-addendum-a1.md:49-57, whether_dispatch_follows_rcm_order_or_waist_phase_order_is_decided_by_a_bench", "later: mock/research/202607200800_a1-1-ordering-theory-bench-expansion.md:82-90, rcm_wins_against_rival_ordering_theories_at_dram_scale_and_order_is_near_neutral_below_it_so_step_5_stands"]
 keywords = ["RCM", "row reordering", "unit execution order", "fiber grouping", "arvo-sparse", "fan-out", "column sets"]
 
 [[tenet]]
@@ -392,12 +392,12 @@ wording canon keeps. Until the bench lands, neither order is drift; the fork
 is registered open with a bench oracle.
 '''
 origin = "stated"
-standing = "ratified"
-ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["ruled: mock/research/202606111400_canonical-design-addendum-a1.md:47-47", "ruled: mock/research/202606111400_canonical-design-addendum-a1.md:49-57", "later: mock/research/202607200800_a1-1-ordering-theory-bench-expansion.md:82-90, rcm_wins_against_rival_ordering_theories_at_dram_scale_and_order_is_near_neutral_below_it_so_step_5_stands"]
+standing = "pending"
+stamp = 'provisional, 2026-11-13: its source is his ruling A1-1 at mock/research/202606111400_canonical-design-addendum-a1.md:49-57, which put the fork to a bench and held it open until the bench landed, and the bench-decided later passage mock/research/202607200800_a1-1-ordering-theory-bench-expansion.md:82-90 closes it, as row rcm_wins_against_rival_ordering_theories_at_dram_scale_and_order_is_near_neutral_below_it_so_step_5_stands holds, which replaces this row whole, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["RCM", "dispatch order", "waist-phase order", "bench oracle", "cache locality", "fan-out", "dual ordering", "A1-1"]
 related = ["tenet::rcm_always_runs_and_reorders_the_units_so_column_sharing_units_are_adjacent_for_fiber_grouping"]
 
+superseded_by = ["rcm_wins_against_rival_ordering_theories_at_dram_scale_and_order_is_near_neutral_below_it_so_step_5_stands"]
 [[tenet]]
 id = "as_of_2026_06_11_rcm_rides_only_the_arena_layout_column"
 subject = "plan"
@@ -413,7 +413,7 @@ written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status lo
 standing = "pending"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["RCM", "arena-layout", "partial", "inert", "state assessment", "2026-06-11"]
-related = ["tenet::whether_dispatch_follows_rcm_order_or_waist_phase_order_is_decided_by_a_bench"]
+related = ["tenet::rcm_wins_against_rival_ordering_theories_at_dram_scale_and_order_is_near_neutral_below_it_so_step_5_stands"]
 
 [[tenet]]
 id = "as_of_2026_06_11_eight_of_nine_adapt_axes_carry_types_but_no_data"

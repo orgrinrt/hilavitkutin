@@ -271,9 +271,8 @@ which core owns which trunk; pinning a thread to a core is the
 executor's. No runtime spawn.
 '''
 origin = "stated"
-standing = "ratified"
-ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:229-231"]
+standing = "pending"
+stamp = 'provisional, 2026-11-13: its source mock/PRINCIPLES.md.tmpl:229-231 was written by the round commit e3fa3f4 of 2026-09-19 and not by the seed commit 680a672, whose line 680a672:mock/PRINCIPLES.md.tmpl:25-26 pinned each pool thread to a core when possible without saying who pins; the assignment of a trunk to one thread at plan time is his founding text and is the row each_trunk_is_pinned_to_a_pool_thread_at_plan_time_and_leftover_threads_take_convergence_branches_and_bridges, while the pinning being the executor is the derivation of the round from his answer mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:20-32, which does not speak of pinning (mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:17-17), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["core ownership", "trunk", "thread pinning", "executor", "core assignment"]
 related = ["tenet::each_trunk_is_pinned_to_a_pool_thread_at_plan_time_and_leftover_threads_take_convergence_branches_and_bridges"]
 
@@ -291,9 +290,8 @@ clamp, the parallelisable width is the most trunks any phase
 carries, and the one extra is the convergence worker.
 '''
 origin = "stated"
-standing = "ratified"
-ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:233-236"]
+standing = "pending"
+stamp = 'provisional, 2026-11-13: its source mock/PRINCIPLES.md.tmpl:233-236 was written by the round commit e3fa3f4 of 2026-09-19 and not by the seed commit 680a672, whose line 680a672:mock/PRINCIPLES.md.tmpl:24-24 counts threads as the smaller of the physical cores and the parallelisable width plus one, which is his and is the row the_thread_count_is_the_smaller_of_the_physical_cores_and_the_parallelisable_width_plus_one; counting closures against the clamped worker count of an executor is the derivation of the round from his answer mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:20-32, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["closures handed out", "worker_count", "parallelisable width", "convergence worker", "clamp", "most trunks any phase"]
 related = ["tenet::the_thread_count_is_the_smaller_of_the_physical_cores_and_the_parallelisable_width_plus_one"]
 

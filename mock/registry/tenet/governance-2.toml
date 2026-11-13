@@ -41,9 +41,8 @@ registered chain stand unchanged.
 '''
 origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
-standing = "ratified"
-ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["ratified-elsewhere: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:10-13", "ratified-elsewhere: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:23-36"]
+standing = "pending"
+stamp = 'provisional, 2026-11-13: it was ratified from A2-1, the precedence trace at mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:10-47 (entries 10-13 and 23-36), a ruling he delegated to a trace an agent wrote, and whether that trace is his ruling is asked of him as question hilavitkutin_is_the_a2_1_precedence_trace_your_ruling, unanswered, and until he answers it no passage of A2-1 carries a ratification; its own source mock/research/202606111400_canonical-design-addendum-a1.md:4-5, 20-23 is the text of A1 about itself, and the op rulings that A1 records live are its rulings section and not this standing, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["addendum A1", "amendment to canon", "intermediate round", "locked", "consolidation spec", "effective design", "silent"]
 
 [[tenet]]
@@ -226,9 +225,8 @@ live 2026-06-11: the standalone is written "fully self-contained, readable with 
 project knowledge ... superseding the need to cross-read the chain registered above." The
 '''
 origin = "stated"
-standing = "ratified"
-ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["quote: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:15-19", "quote: mock/research/202606111400_canonical-design-addendum-a1.md:205-208"]
+standing = "pending"
+stamp = 'provisional, 2026-11-13: its second half was ratified from A2-1, the precedence trace at mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:15-19, a ruling he delegated to a trace an agent wrote, and whether that trace is his ruling is asked of him as question hilavitkutin_is_the_a2_1_precedence_trace_your_ruling, unanswered, and until he answers it no passage of A2-1 carries a ratification; the item itself at mock/research/202606111400_canonical-design-addendum-a1.md:205-208 is in the sequence of A1 and not in its rulings of op at mock/research/202606111400_canonical-design-addendum-a1.md:47-47, so nothing outside A2-1 says he blessed it, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["standalone spec", "self-contained", "notko", "arvo", "attachments", "cross-read", "commission"]
 related = ["tenet::the_standalone_spec_s_claim_to_win_conflicts_exceeds_its_commission"]
 
@@ -272,7 +270,7 @@ quote = '''
 origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["ruled: mock/research/202606061000_canon-amendment-unified-engine.md:3-3", "later: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:27-46, the_unified_engine_amendment_carries_authority_over_intermediate_artifacts_and_the_standalone_carries_none"]
+ratified_from = ["ruled: mock/research/202606061000_canon-amendment-unified-engine.md:3-3"]
 keywords = ["canon amendment", "unified engine", "authority", "same standing", "intermediate artifacts", "explicit ruling", "2026-06-06"]
 related = ["tenet::the_engine_is_one_and_the_core_count_is_configuration"]
 

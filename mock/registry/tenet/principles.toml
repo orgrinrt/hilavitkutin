@@ -91,8 +91,8 @@ keywords = ["ExpandedLto", "fat LTO", "codegen-units=1", "devirtualise", "monomo
 [[tenet]]
 id = "hilavitkutin_does_not_use_the_alloc_crate_and_dynamic_storage_goes_through_slab_columns_or_stack_arrays"
 subject = "principles"
-what = "The alloc crate is technically available in no_std mode, but hilavitkutin does not use it: there are no heap vectors, boxes or strings. All dynamic storage goes through slab columns, which use mmap on the os tier, std alloc on the std tier and consumer-provided memory on the no_os tier, and fixed-size structures use stack arrays, arrayvec or a slab column. Consumers may use alloc in their own code."
-mechanism = "SlabColumn (mmap on os, std::alloc on std, consumer-provided on no_os); stack arrays; arrayvec."
+what = "The alloc crate is technically available in no_std mode, but hilavitkutin does not use it: there are no heap vectors, boxes or strings. All dynamic storage goes through slab columns, which use mmap on the os tier and consumer-provided memory on the no_os tier, and fixed-size structures use stack arrays, arrayvec or a slab column. Consumers may use alloc in their own code."
+mechanism = "SlabColumn (mmap on os, consumer-provided on no_os); stack arrays; arrayvec. The founding text also names std::alloc on a std tier, which his later answer removes."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:284-286, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:308-310"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#02-platform-tiers"]
 quote = '''
@@ -107,7 +107,7 @@ use stack arrays, arrayvec, or SlabColumn.
 origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:284-286", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:308-310", "later: mock/research/202606111400_canonical-design-addendum-a1.md:165-166, platform_tiers_are_os_and_no_os_only_and_the_std_tier_is_deferred_indefinitely"]
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:284-286", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:308-310", "later: mock/research/202606111400_canonical-design-addendum-a1.md:165-166, platform_tiers_are_os_and_no_os_only_and_the_std_tier_is_deferred_indefinitely", "later: mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:20-32, there_is_no_std_platform_tier"]
 keywords = ["no alloc", "no Vec", "no Box", "no String", "SlabColumn", "arrayvec", "stack arrays", "mmap"]
 
 [[tenet]]
@@ -199,9 +199,7 @@ quote = '''
   Governs what form every type takes. (T1 L140-162 §3)
 '''
 origin = "stated"
-standing = "ratified"
-ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2205-2206"]
+standing = "pending"
 keywords = ["type taxonomy", "trait", "newtype", "repr(C) enum", "primitive", "cross-cutting"]
 
 [[tenet]]
