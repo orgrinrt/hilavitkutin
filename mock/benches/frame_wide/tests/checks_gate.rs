@@ -19,11 +19,11 @@ use std::process::{Command, ExitCode};
 
 use frame_wide::locate_arm;
 
-/// The built driver, found beside the arms.
+/// The driver as built into the target directory, found beside the arms.
 ///
 /// `locate_arm` is the member's own answer to where the build is, so this
 /// reuses it rather than reimplementing the search and drifting from it.
-fn driver() -> Result<PathBuf, String> {
+fn unstaged_driver() -> Result<PathBuf, String> {
     let any_arm = format!(
         "{}fw_hand{}",
         std::env::consts::DLL_PREFIX,
@@ -49,6 +49,47 @@ fn driver() -> Result<PathBuf, String> {
             ))
         },
     }
+}
+
+/// The driver as a timing run starts it: staged by `../stage.sh` into a
+/// directory of its own, and run from there.
+fn staged_driver() -> Result<PathBuf, String> {
+    let member = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let out = std::env::temp_dir().join(format!(
+        "frame_wide_checks_gate_stage_{}",
+        std::process::id()
+    ));
+    let _ = fs::remove_dir_all(&out);
+    let staged = Command::new(member.join("../stage.sh"))
+        .arg(member)
+        .arg(&out)
+        .output()
+        .map_err(|e| format!("running ../stage.sh: {e}"))?;
+    if !staged.status.success() {
+        return Err(format!(
+            "../stage.sh failed: {}",
+            String::from_utf8_lossy(&staged.stderr)
+        ));
+    }
+    Ok(out.join("release").join("frame_wide"))
+}
+
+/// A driver run from the shared target directory refuses before it reaches
+/// the checks, so nothing it would time can be another worktree's build.
+fn an_unstaged_driver_is_refused(_: &Path) -> Result<(), String> {
+    let bin = unstaged_driver()?;
+    let dir = stub_dir("unstaged", 0)?;
+    let (ok, err) = run(&bin, &dir, &[])?;
+    if ok {
+        return Err("an unstaged driver ran".to_string());
+    }
+    if stub_ran(&dir) {
+        return Err("an unstaged driver reached the checks".to_string());
+    }
+    if !err.contains("not started from a stage") {
+        return Err(format!("the refusal does not say why: {err}"));
+    }
+    Ok(())
 }
 
 /// A directory holding a stub `run-checks.sh` that exits with `code` and
@@ -171,7 +212,7 @@ fn report_only_does_not_reach_the_gate(bin: &Path) -> Result<(), String> {
 }
 
 fn main() -> ExitCode {
-    let bin = match driver() {
+    let bin = match staged_driver() {
         Ok(b) => b,
         Err(e) => {
             eprintln!("checks_gate: {e}");
@@ -179,7 +220,11 @@ fn main() -> ExitCode {
         },
     };
 
-    let cases: [(&str, fn(&Path) -> Result<(), String>); 4] = [
+    let cases: [(&str, fn(&Path) -> Result<(), String>); 5] = [
+        (
+            "an_unstaged_driver_is_refused",
+            an_unstaged_driver_is_refused,
+        ),
         (
             "a_failing_check_stops_the_run",
             a_failing_check_stops_the_run,
@@ -209,6 +254,9 @@ fn main() -> ExitCode {
         }
     }
 
+    if let Some(stage) = bin.parent().and_then(Path::parent) {
+        let _ = fs::remove_dir_all(stage);
+    }
     if failed > 0 {
         eprintln!("checks_gate: {failed} of {} failed", cases.len());
         return ExitCode::FAILURE;

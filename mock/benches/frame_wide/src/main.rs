@@ -12,6 +12,13 @@
 //! unit tests and the two negative controls. Nothing invoked that script until
 //! now, so its checks passed only when somebody remembered to run them.
 //!
+//! A timing run starts from a stage (`mock/benches/stage.sh .`, then
+//! `<stage>/release/frame_wide`), so the arms it loads are the ones staged
+//! beside it and not whatever another worktree last built into the shared
+//! target directory. The stage is verified before the first cell and after the
+//! last, and its build record is written beside every CSV as
+//! `<bench>_n<N>.build.txt`.
+//!
 //! Flags: `--n <N>` runs only that record count, `--only <sweep>` only that
 //! sweep (repeatable), `--report-only` regenerates the findings from the CSVs
 //! already written, `--skip-checks` runs without the checks and says so. The
@@ -21,6 +28,7 @@
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
+use bench_stage::Stage;
 use frame_wide::{
     is_worker,
     locate_arm,
@@ -89,9 +97,15 @@ fn drive(args: &[String]) -> Result<(), String> {
         None => None,
     };
 
-    if !report_only {
+    let stage = if report_only {
+        None
+    } else {
+        let stage = Stage::of_current_exe()?;
+        stage.verify()?;
+        eprintln!("  staged at {}", stage.dir().display());
         run_checks(args.iter().any(|a| a == "--skip-checks"))?;
-    }
+        Some(stage)
+    };
 
     let manifest = BenchManifest::load(Path::new("bench.toml")).map_err(|e| e.to_string())?;
     let member_dir = std::env::current_dir()
@@ -109,11 +123,16 @@ fn drive(args: &[String]) -> Result<(), String> {
                 continue;
             }
             cells += 1;
-            run_cell(&manifest, &bench, idx, &member_dir, report_only)?;
+            run_cell(&manifest, &bench, idx, &member_dir, stage.as_ref())?;
         }
     }
     if cells == 0 {
         return Err("no cell matched `--only` and `--n`".to_string());
+    }
+    if let Some(stage) = &stage {
+        stage
+            .verify()
+            .map_err(|e| format!("{e}\nthe timings above are not of the staged build"))?;
     }
     Ok(())
 }
@@ -123,8 +142,9 @@ fn run_cell(
     bench: &str,
     idx: usize,
     member_dir: &Path,
-    report_only: bool,
+    stage: Option<&Stage>,
 ) -> Result<(), String> {
+    let report_only = stage.is_none();
     let mut config = manifest
         .for_size(bench, idx, member_dir)
         .map_err(|e| e.to_string())?;
@@ -203,6 +223,11 @@ fn run_cell(
         .map_err(|e| format!("bench `{bench}` n={n}: {e}"))?;
     harness::write_csv(&result, &csv).map_err(|e| e.to_string())?;
     write_findings(&result, &routine, "warm", &findings)?;
-    eprintln!("  wrote {csv} and {findings}");
+    let build = format!("{bench}_n{n}.build.txt");
+    if let Some(stage) = stage {
+        std::fs::write(&build, stage.build_record()?)
+            .map_err(|e| format!("cannot write {build}: {e}"))?;
+    }
+    eprintln!("  wrote {csv}, {findings} and {build}");
     Ok(())
 }

@@ -29,6 +29,11 @@ use hilavitkutin::thread::{
     request_shutdown,
 };
 use hilavitkutin_api::platform::PoolFrame;
+use hilavitkutin_api::{DefaultRunCfg, RunCfg};
+
+/// The spin budget the engine's frame waits take by default, so the crew waits
+/// the way an engine run with no tuning does.
+const SPIN_BUDGET: USize = <DefaultRunCfg as RunCfg>::WAKE_SPIN_BUDGET;
 
 /// The frame's work as a type-erased call: a trampoline and the closure it
 /// reads. Written by the caller only while every worker is parked.
@@ -129,7 +134,7 @@ impl Crew {
             };
         }
         frame_publish(&self.shared.frame);
-        frame_await_done(&self.shared.frame, USize(self.shared.workers));
+        frame_await_done(&self.shared.frame, USize(self.shared.workers), SPIN_BUDGET);
     }
 }
 
@@ -137,7 +142,7 @@ fn mainloop(s: &Shared, core: usize) {
     let expected = USize(s.workers);
     let mut last = USize(0);
     loop {
-        last = frame_await(&s.frame, last);
+        last = frame_await(&s.frame, last, SPIN_BUDGET);
         if s.frame.shutdown.load(Ordering::Relaxed) {
             frame_exit_arrive(&s.frame, expected);
             return;

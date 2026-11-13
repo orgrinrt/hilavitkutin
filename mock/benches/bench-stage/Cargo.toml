@@ -1,0 +1,15 @@
+[workspace]
+
+# The one answer to where a bench driver's binaries were staged and whether
+# they are still what was staged, for every member driver that times arms.
+# `../stage.sh` writes the stage; this crate only reads it, so the layout and
+# the checksum are defined once, in the script.
+[package]
+name = "bench-stage"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "bench_stage"
+path = "src/lib.rs"
