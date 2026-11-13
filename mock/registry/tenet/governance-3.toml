@@ -144,7 +144,7 @@ related = ["tenet::once_the_seed_is_frozen_its_text_never_changes_and_every_late
 [[tenet]]
 id = "the_evidence_then_bless_standard_is_part_of_canon_and_governs_every_recorded_deviation_of_a_shipped_mechanism"
 subject = "governance"
-what = "The evidence-then-bless standard is part of canon and not process trivia. Shipped mechanisms that deviate from a canonical mechanism are neither blessed by default nor rebuilt by default. For each recorded deviation the canonical shape is built or sketched, benched against the shipped shape where a bench trigger is named, and the evidence is presented for a ruling to bless it or rebuild it. It governs the six GATE-2 agent-call deviations and the spectral role deviation."
+what = "The evidence-then-bless standard is part of canon and not process trivia. Shipped mechanisms that deviate from a canonical mechanism are neither blessed by default nor rebuilt by default. For each recorded deviation the canonical shape is built or sketched, benched against the shipped shape where a bench trigger is named, and the evidence is presented for a ruling to bless it or rebuild it. It governs the six GATE-2 agent-call deviations (`the_gate_2_agent_call_deviations_are_blessed_or_rebuilt_only_on_evidence_put_to_the_maintainer`) and the spectral role deviation (`the_spectral_role_deviation_follows_the_same_evidence_then_bless_standard`)."
 mechanism = "A2-4; chapters [[execution]] and [[plan]]."
 source = "mock/research/seed/governance.md:72-80"
 provenance = ["mock::research::seed::governance::#standards-the-seed-carries-forward"]
@@ -165,7 +165,7 @@ standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["ratified-elsewhere: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:64-73"]
 keywords = ["evidence then bless", "A2-4", "deviation", "bless or rebuild", "GATE-2", "spectral role", "standing standard"]
-related = ["tenet::the_gate_2_agent_call_deviations_are_blessed_or_rebuilt_only_on_evidence_put_to_the_maintainer", "tenet::the_spectral_role_deviation_follows_the_same_evidence_then_bless_standard"]
+cites = ["the_gate_2_agent_call_deviations_are_blessed_or_rebuilt_only_on_evidence_put_to_the_maintainer", "the_spectral_role_deviation_follows_the_same_evidence_then_bless_standard"]
 
 [[tenet]]
 id = "a_fork_over_which_implementation_performs_better_is_registered_open_with_a_named_bench_oracle_and_ruled_from_the_findings"
