@@ -231,7 +231,7 @@ origin = "proposed"
 written_by = "topic T3 of the founding round (dispatch-and-optimisation), design-for note DF4"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["DF4", "archetype", "component set", "separate schedules", "batching", "data granularity", "single run", "record count"]
 
 [[tenet]]
@@ -258,7 +258,7 @@ origin = "proposed"
 written_by = "topic T2 of the founding round (memory-layout-and-platform), decision 27"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["record count", "row count", "loaders", "just in time", "morsel ranges", "cascade", "progress counter"]
 related = ["tenet::the_engine_does_not_load_data_and_does_not_know_record_counts_ahead"]
 
@@ -283,7 +283,7 @@ origin = "proposed"
 written_by = "the engine design template, from design round 202606051500 (fiber-structured morsel-outer dispatch)"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["cross-record", "morsel-relative", "accumulator append", "morsel-outer", "unit-outer", "morsel_local", "read", "write"]
 related = ["tenet::records_within_a_fiber_are_independent"]
 
@@ -302,7 +302,7 @@ origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["bitpacking", "BIT_WIDTH", "ColumnValue", "stride", "size_of", "partial", "state assessment", "2026-06-11"]
 
 [[tenet]]
@@ -328,7 +328,7 @@ origin = "proposed"
 written_by = "topic A3b, the per-fiber L1 morsel-window formula, of 2026-07-16, round 202607161410; its heading calls these the resolutions the round settles, and the text does not say whose they are"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["morsel window", "per fiber", "record count", "L1", "write sizes", "record range", "morsel_windows"]
 related = ["tenet::morsel_ranges_are_partitioned_at_plan_time_without_an_atomic_fetch_add"]
 
@@ -369,7 +369,7 @@ origin = "proposed"
 written_by = "topics per-fiber-morsel-s1-rename and a3b-l1-morsel-formula of rounds 202606201500, 202606202700 and 202607161410 (the last dated 2026-07-16), agent-written"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["morsel_windows", "morsel_sizes", "partition", "window", "per-fiber morsel", "placeholder", "size_morsels", "A3b"]
 rejects = ["a record-count PARTITION"]
 related = ["tenet::a_fiber_s_morsel_size_is_a_window_and_the_fiber_covers_the_one_record_range_in_count_over_window_morsels"]

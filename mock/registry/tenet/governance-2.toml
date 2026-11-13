@@ -20,7 +20,7 @@ origin = "proposed"
 written_by = "addendum A2 of 2026-07-19, its closing section on the registry state after A2; the text does not say whether the maintainer ruled the listing himself"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["amendment chain", "registry state", "storage addendum", "standalone spec", "reading aid", "r3", "r4", "r5", "fairness"]
 related = ["tenet::the_unified_engine_amendment_is_registered_in_the_amendment_chain_by_its_date", "tenet::the_record_s_precedence_is_the_founding_spec_then_dated_amendments_then_the_reading_aid_then_the_rest"]
 
@@ -44,7 +44,7 @@ origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: it was ratified from A2-1, the precedence trace at mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:10-47 (entries 10-13 and 23-36), a ruling he delegated to a trace an agent wrote, and whether that trace is his ruling is asked of him as question hilavitkutin_is_the_a2_1_precedence_trace_your_ruling, unanswered, and until he answers it no passage of A2-1 carries a ratification; its own source mock/research/202606111400_canonical-design-addendum-a1.md:4-5, 20-23 is the text of A1 about itself, and the op rulings that A1 records live are its rulings section and not this standing, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
+stamp = 'provisional, 2026-11-13: it was ratified from A2-1, the precedence trace at mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:10-47 (entries 10-13 and 23-36), a ruling he delegated to a trace an agent wrote, and whether that trace is his ruling is asked of him as question hilavitkutin_is_the_a2_1_precedence_trace_your_ruling, unanswered, and until he answers it no passage of A2-1 carries a ratification; its own source mock/research/202606111400_canonical-design-addendum-a1.md:4-5, 20-23 is the text of A1 about itself, and the op rulings that A1 records live are its rulings section and not this standing, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["addendum A1", "amendment to canon", "intermediate round", "locked", "consolidation spec", "effective design", "silent"]
 
 [[tenet]]
@@ -73,7 +73,7 @@ origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["addendum A1", "reconciliation", "amendment chain", "single pointer", "GATE-2", "shipped reality", "rulings"]
 related = ["tenet::addendum_a1_is_an_amendment_to_canon_and_where_it_is_silent_the_spec_and_registered_chain_stand"]
 
@@ -130,7 +130,7 @@ origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["r2", "supersedes", "fiber grouping", "E0119", "specialization", "C3", "Approach-2", "arena-layout"]
 rejects = ["type-level auto-derived fiber grouping", "r1 Phase D and C3 as they stood"]
 related = ["tenet::the_effective_canon_is_the_consolidation_spec_as_modified_in_order_by_seven_registered_amendments"]
@@ -150,7 +150,7 @@ origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["r4", "nested carrier", "const-eval grouping", "const-gated DCE", "G2-0c", "r3", "replaces"]
 rejects = ["r3's G2-0c nested-carrier type construction"]
 related = ["tenet::the_effective_canon_is_the_consolidation_spec_as_modified_in_order_by_seven_registered_amendments"]
@@ -170,7 +170,7 @@ origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["fairness correction", "parallel arm", "baseline", "multi-threaded std", "3.5x", "parity", "superseded"]
 rejects = ["the earlier 3.5x claim"]
 related = ["tenet::the_effective_canon_is_the_consolidation_spec_as_modified_in_order_by_seven_registered_amendments"]
@@ -190,7 +190,7 @@ origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["r5", "state map", "overview", "deviation ledger", "corrections"]
 related = ["tenet::the_effective_canon_is_the_consolidation_spec_as_modified_in_order_by_seven_registered_amendments"]
 
@@ -212,7 +212,7 @@ origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["round-level amendments", "ColumnValue", "arvo-graph", "GateWith", "MetaBlock", "run_parallel", "clock slot", "EMA"]
 related = ["tenet::the_effective_canon_is_the_consolidation_spec_as_modified_in_order_by_seven_registered_amendments"]
 
@@ -235,7 +235,7 @@ project knowledge ... superseding the need to cross-read the chain registered ab
 origin = "stated"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: its second half was ratified from A2-1, the precedence trace at mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:15-19, a ruling he delegated to a trace an agent wrote, and whether that trace is his ruling is asked of him as question hilavitkutin_is_the_a2_1_precedence_trace_your_ruling, unanswered, and until he answers it no passage of A2-1 carries a ratification; the item itself at mock/research/202606111400_canonical-design-addendum-a1.md:205-208 is in the sequence of A1 and not in its rulings of op at mock/research/202606111400_canonical-design-addendum-a1.md:47-47, so nothing outside A2-1 says he blessed it, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
+stamp = 'provisional, 2026-11-13: its second half was ratified from A2-1, the precedence trace at mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:15-19, a ruling he delegated to a trace an agent wrote, and whether that trace is his ruling is asked of him as question hilavitkutin_is_the_a2_1_precedence_trace_your_ruling, unanswered, and until he answers it no passage of A2-1 carries a ratification; the item itself at mock/research/202606111400_canonical-design-addendum-a1.md:205-208 is in the sequence of A1 and not in its rulings of op at mock/research/202606111400_canonical-design-addendum-a1.md:47-47, so nothing outside A2-1 says he blessed it, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["standalone spec", "self-contained", "notko", "arvo", "attachments", "cross-read", "commission"]
 related = ["tenet::the_standalone_spec_s_claim_to_win_conflicts_exceeds_its_commission"]
 
@@ -263,7 +263,7 @@ origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["sequence", "feasibility sketches", "chart-the-path", "roadmap", "completion arc", "standalone", "build work resumes"]
 related = ["tenet::a_new_standalone_canonical_spec_is_written_self_contained_and_spares_cross_reading_the_chain"]
 
@@ -300,7 +300,7 @@ origin = "proposed"
 written_by = "canon amendment of 2026-06-06 on the unified engine, the working out under the maintainer's ruling, written in the first person by an author the text does not name"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["fold-in", "locked spec", "archived round", "canon-amendment mechanism", "#667", "authoritative record"]
 related = ["tenet::the_unified_engine_amendment_is_canon_with_the_standing_of_the_consolidation_spec_and_wins_over_intermediate_artifacts"]
 
@@ -320,7 +320,7 @@ origin = "proposed"
 written_by = "canon amendment of 2026-06-06 on the unified engine, the working out under the maintainer's ruling, written in the first person by an author the text does not name"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["build-plan memo", "single-core-correct first", "correctness oracle", "drift", "unified engine", "202605282100"]
 rejects = ["a distinct single-core build"]
 related = ["tenet::the_engine_is_one_and_the_core_count_is_configuration"]
@@ -368,7 +368,7 @@ origin = "proposed"
 written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["declined", "durability of canon", "medium", "seed", "registry regime", "audited synthesis", "normative spec"]
 related = ["tenet::the_swap_specification_is_a_draft_that_becomes_the_ruling_source_for_the_swap_rows_once_the_maintainer_ratifies_it"]
 
@@ -394,7 +394,7 @@ origin = "proposed"
 written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: a passage shows part of it to be his and not the whole of it (mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:75-94; mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:55-62), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
+stamp = 'provisional, 2026-11-13: a passage shows part of it to be his and not the whole of it (mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:75-94; mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:55-62), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["refuted language", "member-by-member", "DESIGN template", "replace_value FIXME", "ignore reason", "implementing round", "#696"]
 related = ["tenet::two_shipped_rounds_cited_an_expert_input_memo_as_if_it_were_the_storage_addendum", "tenet::the_commissioned_swap_round_also_corrects_the_artifacts_grounded_on_the_mis_citation"]
 
@@ -462,7 +462,7 @@ origin = "proposed"
 written_by = "memo on swap semantics, implementation and bench evidence for ratification, 2026-07-19, round 202607200500 (#697); the text does not name its author"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["mockspace dev", "bench framework", "PR #269", "PR #270", "timed!", "PR #271", "subprocess validation", "transactional results"]
 
 [[tenet]]
@@ -485,7 +485,7 @@ origin = "proposed"
 written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["seed", "effective engine canon", "self-contained", "amendment chain applied once", "superseded left out", "consolidation spec", "2026-07-19"]
 related = ["tenet::the_record_s_precedence_is_the_founding_spec_then_dated_amendments_then_the_reading_aid_then_the_rest"]
 
@@ -503,6 +503,6 @@ origin = "proposed"
 written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
 standing = "provisional"
 stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["second verification pass", "candidate registry", "drain", "seed", "freeze"]
 related = ["tenet::the_seed_freeze_is_gated_in_order_by_the_collection_pass_the_open_question_batch_the_verification_passes_and_the_manifest_declaration"]
