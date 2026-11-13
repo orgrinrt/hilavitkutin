@@ -244,7 +244,7 @@ quote = '''
 origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["quote: mock/research/202606111400_canonical-design-addendum-a1.md:165-166", "quote: mock/PRINCIPLES.md.tmpl:196-201"]
+ratified_from = ["quote: mock/research/202606111400_canonical-design-addendum-a1.md:165-166", "quote: mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:20-32"]
 keywords = ["platform tiers", "os", "no_os", "std tier", "deferred", "workspace memory"]
 
 [[tenet]]

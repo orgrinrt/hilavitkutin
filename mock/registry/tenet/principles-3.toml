@@ -237,7 +237,7 @@ to plug one in). There is no std tier, and no crate here spawns
 origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:198-200", "founding: mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:13-13"]
+ratified_from = ["founding: 680a672:mock/PRINCIPLES.md.tmpl:5-7", "later: mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:20-32, there_is_no_std_platform_tier"]
 keywords = ["no_std", "no alloc", "MemoryProvider", "os tier", "no_os tier", "mmap", "consumer provides"]
 related = ["tenet::the_os_and_std_tiers_are_mutually_exclusive_and_the_os_tier_gets_the_optimisation_investment", "tenet::the_no_os_tier_is_trait_contracts_only_and_the_consumer_provides_every_platform_implementation"]
 
@@ -254,7 +254,7 @@ to plug one in). There is no std tier, and no crate here spawns
 origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:200-200", "founding: mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:13-13"]
+ratified_from = ["quote: mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:20-32", "quote: mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:13-13"]
 keywords = ["no std tier", "platform tiers", "os tier", "no_os tier"]
 related = ["tenet::the_platform_has_three_tiers_no_os_os_and_std"]
 
@@ -274,7 +274,7 @@ lives in a crate outside this family.
 origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:200-202", "founding: mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:13-13"]
+ratified_from = ["quote: mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:20-32", "quote: mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:13-13"]
 keywords = ["no thread spawn", "ThreadPoolApi", "executor", "consumer executor", "thread pool contract"]
 related = ["tenet::at_run_time_the_engine_spawns_threads_that_run_their_compiled_programs_with_no_scheduler_loop_or_work_queues"]
 
@@ -319,24 +319,46 @@ related = ["tenet::std_any_is_banned_so_there_is_no_type_id_and_no_type_erasure"
 [[tenet]]
 id = "the_pool_is_the_consumer_s_executor_and_the_engine_hands_it_its_closures_once_on_the_first_parallel_run"
 subject = "principles"
-what = "The pool is the consumer's executor behind the thread pool contract. The engine hands it its closures once, on the first parallel run, and the workers persist for the pipeline's lifetime, with no runtime spawn."
+what = "The engine hands the consumer's executor its closures once, on the first parallel run."
 mechanism = "`ThreadPoolApi`."
-rejects = ["runtime spawn"]
-source = "mock/PRINCIPLES.md.tmpl:227-229, mock/PRINCIPLES.md.tmpl:231-231"
+source = "mock/PRINCIPLES.md.tmpl:227-229"
 provenance = ["mock::PRINCIPLES::#pre-allocated-thread-pool"]
 quote = '''
 The pool is the consumer's executor behind `ThreadPoolApi`. The
 engine hands it its closures once, on the first parallel run, and
 the workers persist for the pipeline's lifetime. The engine chooses
+'''
+origin = "stated"
+standing = "pending"
+stamp = 'provisional, 2026-11-13: its source mock/PRINCIPLES.md.tmpl:227-229 was written by the round commit e3fa3f4 of 2026-09-19 and not by the seed commit 680a672, and his answer mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:20-32 puts the executor in the consumer without saying when or how the engine hands it work, so handing the closures once on the first parallel run is that round deriving from his answer; the part that is his, the pool as the consumer executor whose workers persist for the pipeline lifetime, is the row the_pool_is_the_consumer_s_executor_behind_the_executor_contract_and_its_workers_persist_for_the_pipeline_s_lifetime, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+keywords = ["ThreadPoolApi", "consumer executor", "first parallel run", "closures"]
+related = ["tenet::the_pool_is_the_consumer_s_executor_behind_the_executor_contract_and_its_workers_persist_for_the_pipeline_s_lifetime"]
+
+[[tenet]]
+id = "the_pool_is_the_consumer_s_executor_behind_the_executor_contract_and_its_workers_persist_for_the_pipeline_s_lifetime"
+subject = "principles"
+what = "The thread pool is the consumer's executor: the engine ships only the executor contract, and the executor behind it lives in the consumer or in a crate outside the family. Its workers persist for the pipeline's lifetime."
+mechanism = "`ThreadPoolApi`."
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:26-32, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1799-1800"
+provenance = ["mock::research::202611130850_the-record-read-whole::OP-ANSWERS-0918::#what-was-going-on"]
+quote = '''
+1. **Consumer supplies it.** hilavitkutin ships only the executor contract (a trait). The OS-thread executor lives in the consumer, or in a crate outside the hilavitkutin* family, gated per target and feature.
+2. **hilavitkutin-platform-std crate.** A separate hilavitkutin crate that openly needs std, not claiming no_std, and exempted from rule-0 in the lint config by name. The engine stays no_std.
+3. **Both, as arms.** The contract in the engine, plus a first-party std crate as one arm; a consumer may bring its own instead.
+
+## Answered
+
+> Consumer supplies it
 ---
-executor's. No runtime spawn.
+Pool size = `physical_core_count` threads, created once, persist for
+the pipeline's lifetime. Hybrid wake strategy:
 '''
 origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:227-229", "founding: mock/PRINCIPLES.md.tmpl:231-231"]
-keywords = ["pre-allocated thread pool", "ThreadPoolApi", "consumer executor", "first parallel run", "workers persist", "no runtime spawn"]
-related = ["tenet::the_thread_pool_is_pre_allocated_and_wakes_by_spinning_first_and_then_parking"]
+ratified_from = ["quote: mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:20-32", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1799-1800"]
+keywords = ["thread pool", "ThreadPoolApi", "consumer executor", "workers persist", "pipeline lifetime"]
+related = ["tenet::the_thread_pool_is_pre_allocated_and_wakes_by_spinning_first_and_then_parking", "tenet::no_crate_spawns_threads_and_the_executor_behind_the_thread_pool_contract_is_the_consumer_s_or_lives_outside_the_family"]
 
 [[tenet]]
 id = "entry_is_a_dead_term_and_the_canonical_vocabulary_ends_at_micro_morsel_and_record"
