@@ -99,3 +99,143 @@ standing = "provisional"
 subject = "kits"
 keywords = ["StandardAdaptKit", "OffAdaptKit", "adapt axes", "metrics sub-resources", "DEFAULT_ constants", "Topic 5 axis A", "themed resource sets", "bench-validated defaults"]
 cites = ["adapt_metrics_are_split_hot_and_cold_with_a_scratch_arena_hot_path_and_a_resource_snapshot_at_the_end_of_the_pass"]
+
+[[tenet]]
+id = "each_kind_of_input_to_the_builder_was_first_disambiguated_at_the_call_site_by_a_wrapper_struct"
+what = "In the earlier round the builder took each registered value through one with method, and the kind of the value was disambiguated at the call site by a wrapper struct for each store kind. That pushed the per-kind disambiguation onto the consumer."
+mechanism = "`.with(Resource::new(Interner))` and `.with(Column::<Player>::new())` through wrapper structs `Resource<T>`, `Column<T>`, `Virtual<T>`, `LinkedBin<T>`; round 202605091700."
+source = "mock/design_rounds/202605101036/202605101036_topic.builder-input-rename-and-reshape.md:8-8"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.builder-input-rename-and-reshape::#builderinput-rename-resource-column-virtual-reshape"]
+quote = '''
+The 202605091700 round validated `.with(value)` as the unified builder method via wrapper structs (`Resource<T>`, `Column<T>`, `Virtual<T>`, `LinkedBin<T>`). That design works but pushes per-kind-disambiguation to the call site, forcing consumers to write `.with(Resource::new(Interner))` and `.with(Column::<Player>::new())` instead of bare `.with(Interner)` / `.with(Player)`.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic builder-input rename and reshape, dated 2026-05-10, agent-written; the text does not say whose decision it is, and the passage reports the earlier round 202605091700"
+standing = "provisional"
+subject = "kits"
+keywords = ["with", "wrapper struct", "Resource::new", "Column::new", "call site", "disambiguation", "202605091700", "LinkedBin"]
+
+[[tenet]]
+id = "a_consumer_type_is_itself_the_builder_input_and_the_kind_wrappers_are_deleted_so_values_are_passed_bare"
+what = "A consumer type is itself the builder input and the store kind, so values are passed to the builder bare at every call site. Kind disambiguation moves from the call site to the identity of the sub-trait at the declaration site, mirroring the pattern units and kits already use, and the wrapper structs for resource, column and virtual are deleted."
+because = "The wrapper design pushes per-kind disambiguation to the call site and forces consumers to wrap each value."
+mechanism = "`impl BuilderInput for Interner { type Dispatch = StoreDispatch<Self>; }` plus `impl Resource for Interner {}`; `Column`, `Virtual` and `WorkUnit` as sub-traits with supertrait `BuilderInput<Dispatch = ...>`; `.with(Interner { .. })`, `.with(Player::default())`, `.with(Tick)`; wrapper structs `Resource<T>`, `Column<T>`, `Virtual<T>` deleted; trait rename `Provider` to `BuilderInput`; recorded 2026-05-10 by user-led design conversation."
+source = "mock/design_rounds/202605101036/202605101036_topic.builder-input-rename-and-reshape.md:8-8, mock/design_rounds/202605101036/202605101036_topic.builder-input-rename-and-reshape.md:10-10, mock/design_rounds/202605101036/202605101036_topic.builder-input-rename-and-reshape.md:22-58, mock/design_rounds/202605101036/202605101036_topic.builder-input-rename-and-reshape.md:60-88, mock/design_rounds/202605101036/202605101036_topic.builder-input-rename-and-reshape.md:132-132"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.builder-input-rename-and-reshape::#builderinput-rename-resource-column-virtual-reshape"]
+quote = '''
+The 202605091700 round validated `.with(value)` as the unified builder method via wrapper structs (`Resource<T>`, `Column<T>`, `Virtual<T>`, `LinkedBin<T>`). That design works but pushes per-kind-disambiguation to the call site, forcing consumers to write `.with(Resource::new(Interner))` and `.with(Column::<Player>::new())` instead of bare `.with(Interner)` / `.with(Player)`.
+---
+This topic reshapes the API to mirror the WU/Kit pattern (sub-trait + supertrait constraint + per-type direct impl) so consumers bare-pass everywhere, with kind disambiguation moved to trait identity at decl site.
+---
+### D3. Sub-traits per kind, supertrait-constrained on `BuilderInput`
+
+Mirror the existing WU/Kit pattern uniformly. WUs and Kits today have:
+
+```rust
+pub trait WorkUnit<S = Always>: Provider<Init = Self> + Send + Sync + 'static { /* ... */ }
+pub trait Kit: Provider<Init = Self> { /* ... */ }
+```
+
+After this reshape, all kinds use this pattern:
+
+```rust
+pub trait BuilderInput: Sized {
+    type Init = Self;        // assoc-type default; Resource carries Self, others override
+    type Dispatch;           // routes to UnitDispatch / StoreDispatch / KitDispatch / PlatformDispatch
+}
+
+pub trait Resource: BuilderInput<Dispatch = StoreDispatch<Self>> + Sized + 'static {}
+pub trait Column: BuilderInput<Dispatch = StoreDispatch<Self>, Init = ()> + Sized + 'static + ColumnValue {}
+pub trait Virtual: BuilderInput<Dispatch = StoreDispatch<Self>, Init = ()> + Sized + 'static {}
+pub trait WorkUnit<S = Always>: BuilderInput<Dispatch = UnitDispatch<Self>> + Send + Sync + 'static {
+    type Read: AccessSet;
+    type Write: AccessSet;
+    type Hint;
+    type Ctx;
+    fn execute(&self, ctx: &Self::Ctx);
+}
+pub trait Kit: BuilderInput<Dispatch = KitDispatch<Self>> + Sized + 'static {
+    type Units: WorkUnitBundle;
+    type Owned: StoreBundle;
+}
+pub trait MemoryProvider: BuilderInput<Dispatch = PlatformDispatch<Self>> + MemoryProviderApi + Send + Sync + 'static {}
+pub trait ThreadPool: BuilderInput<Dispatch = PlatformDispatch<Self>> + ThreadPoolApi + Send + Sync + 'static {}
+pub trait Clock: BuilderInput<Dispatch = PlatformDispatch<Self>> + ClockApi + Send + Sync + 'static {}
+```
+
+The supertrait bound `Dispatch = StoreDispatch<Self>` enforces consistency at compile time. A consumer impling `Resource for Interner` while having `BuilderInput for Interner { type Dispatch = UnitDispatch<Self>; }` fails the supertrait constraint. Mismatch is a compile error.
+---
+### D4. Wrapper structs `Resource<T>` / `Column<T>` / `Virtual<T>` deleted
+
+No longer needed. Consumer types are themselves the BuilderInput/Resource/Column/Virtual. Bare-pass at call site:
+
+```rust
+struct Interner { /* fields */ }
+impl BuilderInput for Interner { type Dispatch = StoreDispatch<Self>; }
+impl Resource for Interner {}
+
+struct Player { /* fields */ }
+impl BuilderInput for Player { type Dispatch = StoreDispatch<Self>; type Init = (); }
+impl Column for Player {}
+impl ColumnValue for Player { /* BIT_WIDTH */ }
+
+struct Tick;
+impl BuilderInput for Tick { type Dispatch = StoreDispatch<Self>; type Init = (); }
+impl Virtual for Tick {}
+
+// call site (bare-pass everywhere):
+let sched = Scheduler::builder()
+    .with(Interner { /* ... */ })
+    .with(Player::default())
+    .with(Tick)
+    .with(MyClock)
+    .with(SpawnerWu)
+    .with(InternerKit)
+    .extend::<dyn LinterApi>()
+    .build();
+```
+---
+2026-05-10 by user-led design conversation. The 202605091700 wrapper-required design is superseded by this topic for Resource/Column/Virtual; WU/Kit/platform patterns continue unchanged (only the trait rename Provider → BuilderInput affects them mechanically). Sketch validates technical viability before doc CL locks.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic builder-input rename and reshape, dated 2026-05-10, recorded as a user-led design conversation, agent-written; the text does not say that the decision is a ruling of the maintainer"
+standing = "provisional"
+subject = "kits"
+keywords = ["BuilderInput", "bare-pass", "sub-trait", "wrapper structs deleted", "StoreDispatch", "Provider rename", "with", "202605091700"]
+rules_out = ["The 202605091700 wrapper-required design is superseded by this topic for Resource/Column/Virtual", "Wrapper structs `Resource<T>` / `Column<T>` / `Virtual<T>` deleted."]
+cites = ["each_kind_of_input_to_the_builder_was_first_disambiguated_at_the_call_site_by_a_wrapper_struct"]
+
+[[tenet]]
+id = "the_builder_retains_each_registered_value_in_a_sealed_value_carrying_list_beside_the_type_level_store_list"
+what = "The scheduler builder retains each registered value in a sealed value-carrying list that is separate from the type-level access-set list tracking store identity. A resource constructor returns a carrier that owns the value while its marker type still routes into the stores, and the builder also threads the platform accumulator so a registered memory provider is carried."
+mechanism = "Sealed `StageList` (`StageEmpty`, `Stage<H, T>`); `Resource::new(value)` returns `StagedResource<T>` implementing `BuilderInput<Init = T, Dispatch = StoreDispatch<Resource<T>>>`; `BuilderInput` gains `into_init(self) -> Self::Init`; builder reshaped to `SchedulerBuilder<Wus, Stores, Platform, Staged>`; pre-1.0 no-legacy-shims clean delete-and-replace."
+source = "mock/design_rounds/202605282319/202605282319_topic.builder-value-retention.md:12-12"
+provenance = ["mock::design_rounds::202605282319::202605282319_topic.builder-value-retention::#topic-builder-value-retention-the-first-data-plane-round-phase-b-b1"]
+quote = '''
+B1 makes the value survive. It adds a sealed value-carrying cons-list (`StageList`: `StageEmpty`, `Stage<H, T>`) that holds the actual registered values, distinct from the type-level `AccessSet` cons-list that tracks store identity. `Resource::new(value)` returns a value carrier (`StagedResource<T>`) that impls `BuilderInput<Init = T, Dispatch = StoreDispatch<Resource<T>>>`, so the marker type still routes into `Stores` while the value rides in the carrier. `BuilderInput` gains `into_init(self) -> Self::Init` so `.with` can move the construction value out of the carrier and onto the `Staged` list. The builder reshapes to `SchedulerBuilder<Wus, Stores, Platform, Staged>`, threading the platform accumulator (so a registered `MemoryProvider` is carried) and the staged-value list. Per the pre-1.0 no-legacy-shims rule this is a clean delete-and-replace; consumers that build through inference are unaffected.
+'''
+origin = "proposed"
+written_by = "design round 202605282319, topic builder value retention (B1), dated 2026-05-28, agent-written; the text does not say whose decision it is"
+standing = "provisional"
+subject = "kits"
+keywords = ["StageList", "StagedResource", "into_init", "SchedulerBuilder", "value retention", "platform accumulator", "MemoryProvider", "B1"]
+
+[[tenet]]
+id = "the_value_retention_adds_no_method_to_the_builder_input_trait_and_the_builder_moves_the_registered_input_onto_the_staged_list"
+what = "Value retention is delivered without adding any method to the builder input trait, which keeps its two associated types, so none of the existing implementation sites change. The value carrier owns the registered value and exposes it through an into-inner accessor for the later arena move, and the builder moves the registered input itself onto the staged list."
+mechanism = "`BuilderInput` stays `Init` + `Dispatch`; 24 existing `impl BuilderInput` sites unchanged; `pub struct StagedResource<T>(T)` with `into_inner(self) -> T`; `.with<P>(self, provider: P)` moves `provider` onto `Stage<P, Staged>`; `Scheduler::builder()` returns `SchedulerBuilder<Empty, Empty, Empty, StageEmpty>`; the arena move is round B2."
+source = "mock/design_rounds/202605282319/202605282319_changelist.src.lock.md:3-3, mock/design_rounds/202605282319/202605282319_changelist.src.lock.md:12-12, mock/design_rounds/202605282319/202605282319_changelist.src.lock.md:27-27"
+provenance = ["mock::design_rounds::202605282319::202605282319_changelist.src.lock::#source-changelist-builder-value-retention-b1"]
+quote = '''
+Round: 202605282319. Phase: IMPL. Makes the scheduler builder retain each registered value instead of dropping it, by giving `.with` a value-carrying accumulator and having `Resource::new` return a carrier that owns the value. No method is added to `BuilderInput` (it stays `Init` + `Dispatch`), so none of the 24 existing `impl BuilderInput` sites change. The move of retained values into a `MemoryProvider`-allocated arena is the next round (B2).
+---
+`pub struct StagedResource<T>(T)` owning the registered value, with `into_inner(self) -> T` for the arena drain (B2) and the retention test. Its `BuilderInput` routes `Resource<T>` into the store accumulator via `StoreDispatch<Resource<T>>`. Re-export from `hilavitkutin-api/src/lib.rs`.
+---
+The builder carries `staged: Staged`. `.with<P>(self, provider: P)` moves `provider` onto `Stage<P, Staged>` and advances the typestate through `P::Dispatch as Dispatch<Wus, Stores, Platform>` (the real `Platform` accumulator, replacing the hardcoded `Empty`). `Scheduler::builder()` returns `SchedulerBuilder<Empty, Empty, Empty, StageEmpty>`. `build()` / `build_with` carry the extra parameters and consume `staged` (B1 drops it at `build()`; B2 moves it into the arena).
+'''
+origin = "proposed"
+written_by = "design round 202605282319, source changelist for builder value retention (B1), phase IMPL, dated 2026-05-28, agent-written; the text does not say whose decision it is"
+standing = "provisional"
+subject = "kits"
+keywords = ["BuilderInput", "StagedResource", "into_inner", "Stage<P, Staged>", "no method added", "24 impl sites", "B2 arena"]
+cites = ["the_builder_retains_each_registered_value_in_a_sealed_value_carrying_list_beside_the_type_level_store_list"]

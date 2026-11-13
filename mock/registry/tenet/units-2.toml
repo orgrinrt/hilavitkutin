@@ -239,3 +239,31 @@ subject = "units"
 keywords = ["Plannable", "HintExt", "scope decision", "no markers", "speculative surface", "divisibility", "unsealing", "runner-agnostic declaration"]
 rules_out = ["a fully-worked hint extension"]
 cites = ["the_scheduling_hint_stays_sealed_and_gains_one_additive_arm_a_four_tuple_with_an_open_extension_marker", "a_unit_declares_its_name_read_set_write_set_hint_commutativity_and_an_execute_function"]
+
+[[tenet]]
+id = "the_builder_appends_each_registered_unit_so_the_carrier_type_order_equals_registration_order_and_build_requires_a_topological_registration"
+what = "The builder appends each registered unit to the unit carrier, so the carrier's type order equals the registration order, where it had prepended each one. Building requires the registration order to be a valid topological order of the dependency graph and, when it is not, returns an error that names the engine-computed recommended order."
+because = "The producer-before-consumer registration requirement is a provisional compromise, to be relaxed once the engine applies the cache-optimal order itself."
+mechanism = "`UnitDispatch<W>::NextWus` becomes the append output; `WorkUnitKind::place` appends; recursive `WuAppend<P>` on `WuCons`/`WuNil`; build-time check against the `DependencyGraph` returning a `BuildError` variant; the recommended order is the RCM-row order from `plan.rcm_order` where available, else a plain topological order; store and platform carriers unchanged; roadmap r2 section 8 decision (b)."
+source = "mock/design_rounds/202606061446/202606061446_topic.gate1-dispatch-builder-append.md:12-14, mock/design_rounds/202606061446/202606061446_topic.gate1-dispatch-builder-append.md:20-20, mock/design_rounds/202606061446/202606061446_topic.gate1-dispatch-builder-append.md:22-26"
+provenance = ["mock::design_rounds::202606061446::202606061446_topic.gate1-dispatch-builder-append::#current-state"]
+quote = '''
+The scheduler builder PREPENDS each registered WorkUnit onto the carrier. The type accumulator router `UnitDispatch<W>::NextWus = Cons<W, Wus>` (`hilavitkutin-api/src/builder_input.rs:116`) and the value carrier `impl Place<P> for WorkUnitKind { type NextWus<W> = WuCons<P, W>; fn place(..) }` (`hilavitkutin-api/src/store_values.rs:182-196`) both cons the newly-registered WU onto the front. So the `WuVals` carrier ends up in REVERSE registration order. `Scheduler::run` compensates with the runtime `topo_order` field (computed by `derive_phase_dispatch_order` in `build()`) consumed through the `CollectFiber`/`FiberSlot` indexing path. `build()` runs Kahn cycle-detection on the dependency graph but does NOT check that the registration SEQUENCE is itself a valid topological order; it then discards the `DependencyGraph`.
+
+The design docs describe the prepend: `hilavitkutin/DESIGN.md.tmpl:629` ("the WorkUnit placement kind prepends each registered"), `:730` ("`UnitDispatch<Self>`, which prepends `Self` onto the"), and `hilavitkutin-api/DESIGN.md.tmpl:342` ("`UnitDispatch<Self>`, prepending the WU type onto the `Wus`").
+---
+1. **D1d-a: builder appends.** Flip both router sites from prepend to append so registration order equals the carrier TYPE order. Add a recursive `WuAppend<P>` trait on the `WuCons`/`WuNil` value carrier (`WuNil.append(p) = WuCons{p, WuNil}`; `WuCons{h, t}.append(p) = WuCons{h, t.append(p)}`, type and value in lockstep). `UnitDispatch<W>::NextWus` becomes the append output; `WorkUnitKind::place` appends rather than prepends. The store and platform routers keep prepending (store binding order is not the dispatch carrier; its layout is driven by the plan, not registration order). The crate stays compiling: `CollectFiber` still indexes by position and the plan's `topo_order` field still remaps, so the run path stays correct through this step; `CollectFiber` is deleted in the later D1e step, not here.
+---
+2. **D1d-b: build-time topological-registration validation.** Thread the `DependencyGraph` (currently discarded after planning) to a precondition check in `build()`: the registration sequence must be a valid topological order of the dependency DAG (every WorkUnit registered after all WorkUnits whose writes it reads). Return a `BuildError` variant when it is not. This is a typestate precondition, not a delegation of grouping: the engine still computes phases, trunks, fibers, and morsel sizes; the consumer is only required to list WorkUnits in a valid order, a natural constraint.
+
+3. **D1d-c: recommended-order in the error.** The `BuildError` from D1d-b names the engine-computed recommended order (the RCM-row order from `plan.rcm_order` where available, else a plain topological order), so a consumer hitting the error is told the exact permutation to register in.
+
+The producer-before-consumer registration requirement is a PROVISIONAL compromise (roadmap r2 §8 op decision (b)): it is to be relaxed once the engine auto-applies the cache-optimal order itself. Sketch 202606090300 (§7-6) proved a devirt-free auto-RCM mechanism (a const-position-guarded type-level walk: each WU carries a const RCM position, the walk executes per output slot, zero blr, reorders a scrambled registration to RCM order), so the relaxation has a proven path and is not gated on toolchain maturity. The docs and the `BuildError` note the constraint as provisional and point at the auto-RCM follow-on; they do not present it as permanent.
+'''
+origin = "proposed"
+written_by = "design round 202606061446, topic gate1 dispatch builder append (D1d), dated 2026-06-06, agent-written; the passage cites roadmap r2 section 8 'op decision (b)' for the provisional requirement only"
+standing = "provisional"
+subject = "units"
+keywords = ["builder append", "prepend", "WuAppend", "registration order", "topological order", "BuildError", "recommended order", "UnitDispatch"]
+rules_out = ["The scheduler builder PREPENDS each registered WorkUnit onto the carrier."]
+cites = ["producer_before_consumer_registration_is_provisional_and_the_ideal_is_auto_ordering"]

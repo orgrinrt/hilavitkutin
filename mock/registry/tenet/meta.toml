@@ -440,3 +440,20 @@ subject = "meta"
 keywords = ["meta bands", "once per frame", "per window", "lifecycle hooks", "self-hosting kernel", "dispatch loop inversion"]
 rules_out = ["every dirty meta unit per window on multi-window frames"]
 cites = ["the_scheduler_is_itself_a_pipeline_and_meta_units_run_at_lifecycle_points"]
+
+[[tenet]]
+id = "the_adapt_unit_signals_each_kind_of_anomaly_by_its_own_flag_type_and_no_coarse_replan_flag_exists"
+what = "Each kind of anomaly the adapt unit can signal is its own typed flag. A flag fires only when its own axis threshold comparison fires, there is no coarse flag asking for a replan, and an observer that wants any of several anomalies gets that meaning from the union of access sets."
+because = "It keeps remediation specific to each anomaly, costs nothing when a flag is not fired, and leaves the substrate exposing signals while the consumer interprets them."
+mechanism = "Five typed Virtual marker types: `BalanceAnomaly` (from core_idle_time imbalance), `MemoryPressure` (from memory_watermark), `ThroughputAnomaly` (from throughput_trending), `FiberEMADrift` (from fiber_ema hysteresis), `PhaseEMADrift` (from phase_ema hysteresis); the adapt unit's write side is `AccessSet![Virtual<BalanceAnomaly>, Virtual<MemoryPressure>, Virtual<ThroughputAnomaly>, Virtual<FiberEMADrift>, Virtual<PhaseEMADrift>]`; no `Virtual<ReplanRequested>`."
+source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:306-306"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#decision-log"]
+quote = '''
+- [x] **Axis E. Reorganisation trigger: E2 pure per-anomaly Virtuals.** Substrate ships five typed Virtual marker types: `BalanceAnomaly` (from core_idle_time imbalance), `MemoryPressure` (from memory_watermark), `ThroughputAnomaly` (from throughput_trending), `FiberEMADrift` (from fiber_ema hysteresis), `PhaseEMADrift` (from phase_ema hysteresis). AdaptWu's Write side uses `AccessSet![Virtual<BalanceAnomaly>, Virtual<MemoryPressure>, Virtual<ThroughputAnomaly>, Virtual<FiberEMADrift>, Virtual<PhaseEMADrift>]`. Per-axis threshold-mask comparison fires the relevant Virtuals only. No coarse `Virtual<ReplanRequested>`; observers use AccessSet union for any-of-N semantics. Aligns with hilavitkutin's typed-virtual abstraction (the `Virtual<T>` generic carrier is the substrate's existing single uniform mechanism for fired flags); preserves consumer-driven anomaly-specific remediation (different anomalies → different observer responses); zero-overhead when Virtual not fired; toolbox-not-policer alignment (substrate exposes signals, consumer interprets).
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 5 adapt subsystem, Axis E of the decision log dated 2026-05-10, agent-written; the text does not say whose decision it is"
+standing = "provisional"
+subject = "meta"
+keywords = ["anomaly", "Virtual", "BalanceAnomaly", "MemoryPressure", "AccessSet union", "AdaptWu", "Axis E", "no coarse flag"]
+cites = ["anomalies_are_virtual_marker_types_so_that_observers_compose_through_access_set_union"]
