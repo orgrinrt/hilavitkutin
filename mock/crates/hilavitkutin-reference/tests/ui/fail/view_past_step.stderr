@@ -1,9 +1,9 @@
 error[E0499]: cannot borrow `store` as mutable more than once at a time
-  --> tests/ui/fail/view_past_step.rs:13:5
+  --> tests/ui/fail/view_past_step.rs:18:5
    |
-12 |     let (committed, _staged) = store.step();
+17 |     let (committed, _staged) = store.step();
    |                                ----- first mutable borrow occurs here
-13 |     store.swap();
+18 |     store.swap();
    |     ^^^^^ second mutable borrow occurs here
-14 |     let extent = committed.extent();
+19 |     let extent = committed.extent();
    |                  --------- first borrow later used here
