@@ -8,7 +8,7 @@
 //! determines `Scheduler::run()`'s return shape via the dispatch-
 //! routing slot.
 //!
-//! Topic 8 axis B: `PlanAffecting` sealed marker trait declares
+//! Topic 8 axis B: `PlanAffecting` open marker trait declares
 //! that replacing a resource's value via `Scheduler::replace_resource`
 //! must dirty the plan-cache. Default: NOT plan-affecting; consumers
 //! opt in.
@@ -37,13 +37,15 @@ pub trait HasRecordCount: sealed::Sealed {
     fn record_count(&self) -> USize;
 }
 
-/// Sealed marker: indicates that replacing this resource's value
-/// via `Scheduler::replace_resource` must dirty the plan-cache.
-/// Default: NOT plan-affecting. Consumers opt in for resources
-/// whose value shape changes the plan (e.g., the `RunCfg` resource
-/// itself). Topic 8 axis B.
-#[allow(private_bounds)]
-pub trait PlanAffecting: sealed::Sealed + BuilderInput {}
+/// Open marker on resource value types: replacing this resource's
+/// value via `Scheduler::replace_resource` must dirty the plan
+/// cache. Per-type consumer opt-in mirroring `Replaceable`, with
+/// which it is mutually exclusive (`PlanAffecting` dominant; see the
+/// negative impl at the `Replaceable` declaration). Default: NOT
+/// plan-affecting. Consumers opt in for resources whose value shape
+/// changes the plan (e.g., the `RunCfg` resource itself). Topic 8
+/// axis B; unsealed per the A2-3 ruling.
+pub trait PlanAffecting {}
 
 /// Consumer-supplied run-config trait. Single-slot typestate; one
 /// `RunCfg` impl per Scheduler<Cfg> instantiation. Topic 1 axes
