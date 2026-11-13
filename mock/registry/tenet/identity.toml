@@ -191,6 +191,7 @@ standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:92-101"]
 keywords = ["dead terms", "chain", "chain group", "partition", "archetype", "entity", "row", "order", "vocabulary"]
+rules_out = ["chain group"]
 related = ["tenet::scheduling_hints_replace_an_order_field_on_the_unit"]
 
 [[tenet]]
