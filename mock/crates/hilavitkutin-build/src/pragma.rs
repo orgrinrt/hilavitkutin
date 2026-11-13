@@ -32,9 +32,7 @@ impl Pragma {
     /// to a single slot because its param is stored separately in
     /// `PragmaSet::parallel_codegen_units`.
     const fn bit(self) -> u16 {
-        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: 13-pragma bit-mask algorithmic width; build-dep only; tracked: #72
         let idx: u8 = match self {
-            // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: pragma discriminant; tracked: #72
             Pragma::LoopOptimization => 0,
             Pragma::Polly => 1,
             Pragma::MathPeephole => 2,
@@ -56,7 +54,6 @@ impl Pragma {
     /// given bit index. `ParallelCodegen`'s param is supplied
     /// separately by the caller (from `PragmaSet::parallel_codegen_units`).
     const fn from_index(idx: u8, parallel_units: u8) -> Option<Pragma> {
-        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-option) reason: internal pragma reconstructor; u8 discriminant + parallel unit count; Option is internal; tracked: #72
         match idx {
             0 => Some(Pragma::LoopOptimization),
             1 => Some(Pragma::Polly),
@@ -132,13 +129,11 @@ impl PragmaSet {
     /// slot (ignores `n`): use `parallel_codegen_units()` to read
     /// the stored param.
     pub const fn contains(self, p: Pragma) -> bool {
-        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: build-time predicate; consumer output flows into `build.rs` stdout; tracked: #72
         (self.mask & p.bit()) != 0
     }
 
     /// The stored `ParallelCodegen` unit count, if the pragma is set.
     pub const fn parallel_codegen_units(self) -> Option<u8> {
-        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-option) reason: stored pragma parameter; Option because pragma may be absent; tracked: #72
         self.parallel_codegen_units
     }
 
@@ -165,7 +160,6 @@ impl Iterator for PragmaIter {
     type Item = Pragma;
 
     fn next(&mut self) -> Option<Pragma> {
-        // lint:allow(no-bare-option) reason: std `Iterator::next` trait return; cannot deviate; tracked: #72
         while self.idx < 13 {
             let bit = 1u16 << self.idx;
             let i = self.idx;

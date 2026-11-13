@@ -11,7 +11,6 @@ use crate::pragma::{Pragma, PragmaSet};
 
 /// The built-in LLVM options LoopOptimization owns without its plugin.
 const LOOP_OPTIMIZATION: [&str; 5] = [
-    // lint:allow(no-bare-static-str) reason: a build-dependency only, it reaches no binary; tracked: no_bare_static_str_does_not_know_a_build_dependency_only_cra
     "-Cllvm-args=-enable-loop-distribute",
     "-Cllvm-args=-enable-loop-versioning-licm",
     "-Cllvm-args=-enable-interleaved-mem-accesses",
@@ -86,7 +85,6 @@ struct Anything {
 
 impl Write for Anything {
     fn write_str(&mut self, s: &str) -> core::fmt::Result {
-        // lint:allow(no-bare-string) reason: the core::fmt::Write contract; tracked: #72
         self.wrote |= !s.is_empty();
         Ok(())
     }
@@ -95,7 +93,6 @@ impl Write for Anything {
 /// Whether any pragma in `pragmas` writes a rustc flag, so the crate has
 /// something for the wrapper to hand over.
 pub fn writes_flags(pragmas: PragmaSet) -> bool {
-    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: build-time predicate; tracked: #72
     let mut sink = Anything {
         wrote: false,
     };

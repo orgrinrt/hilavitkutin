@@ -232,7 +232,8 @@ fn configure_reads_profile_features_and_wrapper_through_the_closure() {
 /// nothing.
 #[test]
 fn a_missing_wrapper_is_warned_of_when_there_are_flags() {
-    for wrapper in [Maybe::Isnt, Maybe::Is(String::new())] {
+    for wrapper in [Maybe::Isnt, Maybe::Is(String::new()), Maybe::Is(String::from("clippy-driver"))]
+    {
         let mut out = String::new();
         configure(
             |key| {

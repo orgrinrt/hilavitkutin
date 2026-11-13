@@ -77,7 +77,6 @@ impl Profile {
     /// custom profiles are not reachable from it. Anything else falls
     /// back to `Dev`.
     pub fn from_cargo_profile(name: &str) -> Self {
-        // lint:allow(no-bare-string) reason: cargo env `$PROFILE` value; tracked: #72
         match name {
             "release" => Profile::Release,
             _ => Profile::Dev,

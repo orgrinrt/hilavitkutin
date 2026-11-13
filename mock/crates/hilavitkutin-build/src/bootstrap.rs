@@ -81,7 +81,6 @@ impl<S: AsRef<str>, F: FnMut(&'static str) -> Maybe<S>> Env<S> for F {} // lint:
 /// Resolve the build from cargo's environment and write the directives,
 /// with the profile's default pragmas.
 pub fn configure<S: AsRef<str>, W: Write>(env: impl Env<S>, out: &mut W) -> core::fmt::Result {
-    // lint:allow(no-bare-string) reason: env value as the build script read it; tracked: #72
     configure_with(env, |pragmas| pragmas, out)
 }
 
@@ -90,16 +89,17 @@ pub fn configure<S: AsRef<str>, W: Write>(env: impl Env<S>, out: &mut W) -> core
 ///
 /// The tuned set is made coherent, so a pragma whose required pragma
 /// was taken out goes with it. Where the crate has flags to hand over
-/// and cargo names no workspace wrapper (`RUSTC_WORKSPACE_WRAPPER`,
-/// which cargo sets for a build script only where its configuration
-/// names one), a `cargo::warning` says the flags are dropped.
+/// and cargo names no workspace wrapper whose path ends with
+/// `hilavitkutin-rustc-wrapper` (`RUSTC_WORKSPACE_WRAPPER`, which cargo
+/// sets for a build script only where its configuration names one;
+/// `cargo clippy` names `clippy-driver`), a `cargo::warning` says the
+/// flags are dropped.
 ///
 /// A crate whose own code must not take fast float math passes
 /// `|p| p.without(Pragma::FastMath)`, so the `arvo_fast_math` cfg is
 /// never set for it. The cfg reaches that crate alone and never arvo,
 /// whose `Float` is resolved in arvo's own build.
 pub fn configure_with<S: AsRef<str>, W: Write>(
-    // lint:allow(no-bare-string) reason: env value as the build script read it; tracked: #72
     mut env: impl Env<S>,
     tune: impl FnOnce(PragmaSet) -> PragmaSet,
     out: &mut W,
@@ -110,7 +110,7 @@ pub fn configure_with<S: AsRef<str>, W: Write>(
     cfg.pragmas = tune(cfg.pragmas).coherent();
     write_directives(&cfg, out)?;
     let wrapped = match env("RUSTC_WORKSPACE_WRAPPER") {
-        Maybe::Is(path) => !path.as_ref().is_empty(),
+        Maybe::Is(path) => path.as_ref().ends_with("hilavitkutin-rustc-wrapper"),
         Maybe::Isnt => false,
     };
     if !wrapped && writes_flags(cfg.pragmas) {
@@ -125,7 +125,6 @@ pub fn configure_with<S: AsRef<str>, W: Write>(
 
 /// Borrow the text out of a value the build script read.
 fn borrowed<S: AsRef<str>>(value: &Maybe<S>) -> Maybe<&str> {
-    // lint:allow(no-bare-string) reason: env value as the build script read it; tracked: #72
     match value {
         Maybe::Is(s) => Maybe::Is(s.as_ref()),
         Maybe::Isnt => Maybe::Isnt,

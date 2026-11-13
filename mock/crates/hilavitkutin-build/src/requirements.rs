@@ -113,7 +113,6 @@ pub fn requirements_for(p: Pragma) -> &'static [Requirement] {
 }
 
 const fn same_variant(a: Pragma, b: Pragma) -> bool {
-    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal discriminant-equality helper; tracked: #72
     use Pragma::*;
     matches!(
         (a, b),
