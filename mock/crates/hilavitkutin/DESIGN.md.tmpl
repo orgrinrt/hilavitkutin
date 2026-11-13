@@ -266,7 +266,8 @@ meta lifecycle bands (PlanStage before, ScheduleEnd after, with the plan band
 skipped on clean frames) dispatch once per frame over the whole range, the
 same designated-thread band shape `run_parallel` uses. Within a consumer
 phase pass, the per-fiber dispatch descriptors are walked in plan order: a
-`morsel_local` fiber windows `[0, record_count)` by its own plan-baked
+`morsel_local` fiber windows `[0, n)`, where `n` is the record count of the
+domain the fiber's units iterate, by its own plan-baked
 `FiberDispatch.morsel_size` (the domain-12 L1 window computed at plan step 9;
 `RunCfg::MORSEL_SIZE` is only the fallback for a degenerate zero window), one
 member-gated dispatch per window, so the fiber's whole unit sequence runs
@@ -359,8 +360,10 @@ the checklist names the regressing symbol regardless of whether the slowdown
 surfaced in a particular bench size.
 
 The realized within-fiber fusion for a linear chain is a type-level fold. A
-fiber whose units are each a pure per-record map (the opt-in fusion contract in
-the api crate: read one column, write one column, value to value) and which
+fiber whose units are each a pure per-record map (a `RecordOp` of the api crate
+whose read list is one column of `Records` and whose write list is one column
+of `Records`, value to value; a `RecordOp` over longer lists, another domain or
+another store kind is not folded yet and runs per unit) and which
 link as a read-after-write chain folds into a single fused unit whose body runs
 the maps as composed monomorphised calls, every intermediate a register local,
 only the chain's final output column stored. The fold is the canonical spec's
@@ -534,8 +537,10 @@ local accumulator. Merged after convergence (addition for additive,
 sequential fallback for non-commutative).
 
 `run_parallel` realizes this on the no-alloc `Accum` surface as per-core
-regions of the single reserved buffer. The accumulator reserves cap =
-build-time record count (the global at-most-one-append-per-record bound),
+regions of the single reserved buffer. The accumulator reserves cap = the
+record count of the largest registered domain, which is at least the count of
+`Records` (the global at-most-one-append-per-record bound for the units this
+entry accepts, all of which iterate `Records`),
 and core c appends into the sub-region at element offset `lo_c`, the same
 head+tail record-slice start the morsel-local path uses (`per =
 ceil(total/ncores)`, `lo = (c*per).min(total)`, `hi = (lo+per).min(total)`),
@@ -1094,7 +1099,7 @@ order otherwise; this producer-before-consumer constraint is provisional
 Platform and run-config values are still dropped (their type stays
 tracked in the typestate). The single `.with` verb is unchanged.
 
-`build(storage, record_count)` walks `Stores` and `StoreValues` in
+`build(storage)` walks `Stores` and `StoreValues` in
 lockstep, reserves a one-record column per `Resource<T>` through the
 supplied `ColumnStorage`, writes the staged value into the column, and
 records the erased base pointer plus the value's static shape
@@ -1132,13 +1137,16 @@ sizes, the RCM renumber) as columns in the same `ColumnStorage`, at a `StoreId`
 namespace continued past the resource columns, and keeps a `Copy` `PlanHandle`
 (base id plus live counts) so the plan persists in the store for the dispatch
 consumer instead of being dropped after `build`. `build` / `build_with`
-take the frame record count as the column-reservation dimension: they feed
-it to the plan computation in place of the zero placeholder, and the
-`Column<T>` drain arm reserves a real column sized by the record count at a
-`StoreId` continued past the resource columns, recording the real
-`ColumnPtr<T>` and count in the `ColumnBinding` (no longer a dangling
-placeholder). The `Accum<T>` drain arm reserves a column the same way
-(capacity sized to the record count this round) and records the
+take no record count. The column-reservation dimension of a column is the
+record count of its domain, read from the `Extent<D>` value registered for
+that domain before anything is reserved: the counts are fed to the plan
+computation, one per domain, and the `Column<T, D>` drain arm reserves a real
+column sized by its domain's count at a `StoreId` continued past the resource
+columns, recording the real `ColumnPtr<T>` and count in the `ColumnBinding`.
+The `Extent<D>` drain arm stores the shape as a resource does. The
+`Accum<T>` drain arm reserves a column the same way
+(capacity sized to the record count of the largest registered domain, which
+over-reserves for a unit of a smaller domain) and records the
 `ColumnPtr<T>` plus a `Cell` live-length in the `AccumBinding`; the
 live-length starts at zero and a WorkUnit advances it by appending during
 the frame, with a later PassEnd drain reading the populated prefix. An
@@ -1161,6 +1169,66 @@ now (their columnar form and their consumers are later rounds), as do
 accumulator columns (records appended during the frame, drained at PassEnd
 with the persistence spine) and Kit-contributed units (a Kit hands the
 builder unit types, not instances).
+
+### Record domains, the value form and the frame-buffered kind
+
+The api lets a column name a record domain, lets a unit be written as a
+`RecordOp` over values, and adds the `Buffered` store kind. This section
+says what each asks of the engine and what the engine leaves for later.
+
+The plan carries one record count per domain. Each unit's domain is read
+from its declaration (`Declares` on the router it names), `group_fibers`
+never places units of two domains in one fiber, and a fiber's range and
+plan-baked morsel window come from its own domain's count. Where the plan
+wants a single figure, in `select_approach` and in the `last_record_count`
+cell of the metrics, it uses the sum of the registered extents.
+<!-- FIXME(approach_selection_takes_the_sum_of_the_domain_extents_where): the sum of the extents stands in for a per-domain cost model in approach selection -->
+
+A unit reaches the per-unit step of `RunFiber` through the router type it
+names. The step is an engine trait implemented for the api's two routers.
+For `UnitDispatch` it projects the unit's `EngineCtx` and calls `execute`,
+as before. For `RecordDispatch` it walks the indices of the window and, for
+each record, gathers the values of the unit's read list from the projected
+columns, resources and extents, calls `apply`, and scatters the returned
+values: a column value is stored, a present accumulator value is appended,
+a set virtual flag fires. A neighbour read resolves its neighbour's
+position from the record's key and the domain's shape, and yields the
+edge's value where the key leaves the extent. The gather and scatter are
+type-level walks over the lists, so a value-form unit monomorphises into a
+straight-line loop body as a block-form unit does. Every engine fold that
+bound a unit on `WorkUnit` (the access masks in `plan::grouping`, the
+bundle folds, the schedule gate) reads the same facts through `Declares`,
+so the planner's steps see no difference between the two forms.
+
+`Index` values are minted in `each`, `batch` and `reduce` from the
+window the context is bound to, which is the one place the engine asserts a
+position is in range. A context's column accessors resolve the position
+through the `Resolve*` bridges as before.
+
+A `Buffered<T, D>` store drains to two reserved columns of its domain's
+count and a binding that holds both pointers, which of them is the
+committed side, and a staged flag. A read projects the committed pointer,
+a write projects the other and sets the flag. At the end of a pass a
+type-level `SwapBuffered` walk over the bindings (a no-op at every other
+node, like `ResetAccumulators`) flips the committed side of every binding
+whose flag is set and clears the flag. `run`, `run_fused` and
+`run_parallel` all make the walk after the last consumer phase and before
+the ScheduleEnd band. In the access masks a write of a `Buffered` store
+builds no read-after-write edge and no conflict against readers of the
+same store. For the incremental skip, a flip marks the store dirty for the
+next pass, so its readers run again and its writer, if it reads its own
+store, runs until the values settle. A second writer of one `Buffered`
+store is refused at `build` by a const assertion over the units' write
+masks restricted to `Buffered` positions, which fails compilation of the
+`build` call.
+
+Left for later, with nothing in an author's unit changing when each is
+lifted. `run_fused` and `run_parallel` accept a carrier only when every
+unit iterates `Records`, as a bound on each entry, so a scheduler with a
+unit of another domain is driven by `run`. The fused fold takes one-column
+maps of `Records` only. A neighbour read computes its neighbour's position
+per read where a walk by key would step it. A `Buffered` store is two full
+columns where a store nobody reads at a neighbour could share one.
 
 The builder takes one verb: `.with(value)`. Every type accepted by
 `.with` impls the sealed `Provider` trait declared in
