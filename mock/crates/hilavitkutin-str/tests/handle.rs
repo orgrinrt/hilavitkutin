@@ -1,8 +1,5 @@
 //! Bit-layout roundtrips for `Str`.
 
-#![feature(generic_const_exprs)]
-#![allow(incomplete_features)]
-
 use arvo_bits::Bits;
 use hilavitkutin_str::Str;
 

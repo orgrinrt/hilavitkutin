@@ -7,11 +7,22 @@
 //! wrong producer for a domain is a type error.
 
 use crate::kind::SymKind;
+use crate::shape::SymShape;
 
 /// A domain of interned identities. Carries the domain's tag.
 pub trait Domain {
+    /// How this domain's handles divide their 32 bits.
+    ///
+    /// A domain belongs to a shape, so a domain of one shape cannot hand its
+    /// tag to a producer of another: the widths would not line up and the
+    /// compiler says so rather than a store discovering it later.
+    ///
+    /// Declared rather than defaulted: `associated_type_defaults` is forbidden
+    /// in this stack, and a domain saying which shape it is costs one line.
+    type Shape: SymShape;
+
     /// The tag every handle of this domain carries.
-    const KIND: SymKind;
+    const KIND: SymKind<Self::Shape>;
 }
 
 /// A domain whose handles are deduplicated from a value and resolve back to it.

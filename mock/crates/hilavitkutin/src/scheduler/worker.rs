@@ -21,7 +21,6 @@ use hilavitkutin_api::run_cfg::RunCfg;
 use hilavitkutin_api::store_values::StoreValues;
 
 use super::{Scheduler, WorkerCtx};
-use crate::dispatch::core_mask::{phase_mask, phase_trunk_count};
 use crate::dispatch::fiber_run::RunFiber;
 use crate::dispatch::morsel::MorselRange;
 use crate::dispatch::trunk_dispatch::RunTrunkDispatch;
@@ -35,7 +34,7 @@ use crate::plan::grouping::{
     plan_phase_count,
     pre_consumer_phase_count,
 };
-use crate::resource::bindings::{BindingsFor, CollectAccumCounts, RebaseBindings};
+use crate::resource::bindings::{BindingsFor, CollectAccumCounts, RebaseBindings, accum_slice};
 use crate::thread::barrier::waist_barrier;
 use crate::thread::frame::{frame_await, frame_done_arrive, frame_exit_arrive};
 
@@ -100,7 +99,7 @@ pub(super) fn worker_main<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>(
     let msize = USize(Cfg::MORSEL_SIZE.0.max(1)); // lint:allow(no-bare-numeric) reason: morsel length guard; tracked: #121
     let mut last = <USize as Identity<Additive>>::IDENTITY;
     loop {
-        last = frame_await(&s.pool, last);
+        last = frame_await(&s.pool, last, Cfg::WAKE_SPIN_BUDGET);
         if s.pool.shutdown.load(Ordering::Relaxed) {
             frame_exit_arrive(&s.pool, ncores);
             return;
@@ -108,7 +107,7 @@ pub(super) fn worker_main<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>(
         if s.carrier_unit_outer().0 {
             // Deviation 9 threaded accumulator path: an accumulator-bearing
             // carrier runs unit-outer (each unit completes its full record
-            // range). Each core takes its head+tail record slice `[lo, hi)`,
+            // range). Each core takes its own record slice `[lo, hi)` of the N-way tiling,
             // dispatches the whole carrier ONCE over a per-core bindings copy
             // whose accumulators are offset into the core's region with fresh
             // cells, then publishes its per-accumulator live counts for the
@@ -134,16 +133,7 @@ pub(super) fn worker_main<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>(
         // waist-barrier counts stay matched.
         let mut p = if s.first_frame.load(Ordering::Relaxed) { 0 } else { plan_phases }; // lint:allow(no-bare-numeric) reason: phase loop start; tracked: #121
         while p < nphases {
-            s.run_core_phase::<Witnesses, GW>(
-                &s.gate2_phase,
-                &s.gate2_trunk,
-                s.gate2_n,
-                USize(core_id),
-                USize(p),
-                ncores,
-                total,
-                msize,
-            );
+            s.run_core_phase::<Witnesses, GW>(USize(core_id), USize(p), ncores, total, msize);
             if p + 1 < nphases {
                 // every worker participates in each waist, even one that owned
                 // no trunk this phase, so `expected` is the full core count. The
@@ -157,7 +147,7 @@ pub(super) fn worker_main<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>(
     }
 }
 
-/// One core's unit-outer accumulator dispatch over its head+tail record slice
+/// One core's unit-outer accumulator dispatch over its record slice of the N-way tiling
 /// (GATE-2 deviation 9). Builds a per-core bindings copy with every accumulator
 /// offset to the slice start (fresh live and `wanted` cells, slice-sized cap),
 /// dispatches the whole carrier once over `[lo, hi)`, and publishes the
@@ -193,19 +183,19 @@ fn worker_accum_unit_outer<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>
         s.gate2_accum_wanted[core.0 * GATE2_MAX_ACCUMS + z].store(0, Ordering::Relaxed); // lint:allow(no-bare-numeric) reason: per-(core,accum) wanted slot reset; tracked: #121
         z += 1; // lint:allow(no-bare-numeric) reason: index step; tracked: #121
     }
-    // Head+tail record slice for this core (mirrors run_core_phase's split).
-    let per = total0.div_ceil(ncores0); // lint:allow(no-bare-numeric) reason: ceil record slice; tracked: #121
-    let lo = (core.0 * per).min(total0); // lint:allow(no-bare-numeric) reason: slice start; tracked: #121
-    let hi = (lo + per).min(total0); // lint:allow(no-bare-numeric) reason: slice end; tracked: #121
+    // This core's exclusive accumulator region: each core appends into its
+    // own region, merged after the workers rejoin in append order. Derived
+    // from the shared `accum_slice` so the boundaries match the offsets the
+    // merge reads.
+    let (lo, region) = accum_slice(USize(total0), USize(ncores0), core);
     // A record-less frame runs the carrier once on core 0 only (a resource-only
     // unit must run exactly once, not once per core). With records, a surplus
-    // core (`lo == hi`) appends nothing and is skipped.
-    let run_this = if total0 == 0 { core.0 == 0 } else { lo < hi }; // lint:allow(no-bare-numeric) reason: participation guard; tracked: #121
+    // core (an empty region) appends nothing and is skipped.
+    let run_this = if total0 == 0 { core.0 == 0 } else { region.0 > 0 }; // lint:allow(no-bare-numeric) reason: participation guard; tracked: #121
     if !run_this {
         return;
     }
-    let region = hi - lo; // lint:allow(no-bare-numeric) reason: slice length; tracked: #121
-    let per_core = s.bindings.rebase_accums(USize(lo), USize(region));
+    let per_core = s.bindings.rebase_accums(lo, region);
     // E4 parity: meta units do not ride the per-core slice walk (the designated
     // thread dispatches them once per frame around the publish/await window).
     // A no-meta carrier keeps the ungated whole-carrier walk; the band counts
@@ -238,7 +228,7 @@ fn worker_accum_unit_outer<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>
         s.wu_values.run(
             &per_core,
             &s.meta_block,
-            MorselRange::new(USize(lo), USize(region)),
+            MorselRange::new(lo, region),
             USize(s.virtual_epoch.load(Ordering::Relaxed)),
         );
     } else {
@@ -253,7 +243,7 @@ fn worker_accum_unit_outer<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>
         s.wu_values.run_gated(
             &per_core,
             &s.meta_block,
-            MorselRange::new(USize(lo), USize(region)),
+            MorselRange::new(lo, region),
             cmask,
             <USize as Identity<Additive>>::IDENTITY,
             USize(s.virtual_epoch.load(Ordering::Relaxed)),
@@ -286,9 +276,6 @@ impl<
 {
     fn run_core_phase<Witnesses, GW>(
         &self,
-        phase: &[USize],
-        trunk: &[USize],
-        n: USize,
         core: USize,
         p: USize,
         ncores: USize,
@@ -316,39 +303,12 @@ impl<
         // happens-before).
         let epoch = USize(self.virtual_epoch.load(Ordering::Relaxed));
         let total = total.0; // lint:allow(no-bare-numeric) reason: frame record count; tracked: #121
-        let tphase = phase_trunk_count(phase, trunk, n, p);
-        // All-ones dirty: run_parallel dispatches the pure-RAW path (no
-        // incremental skip), so every owned member runs.
-        let all = <<D as PlanDims>::AdjRow as Identity<Additive>>::IDENTITY.bitnot();
-        if tphase.0 == 1 && ncores.0 > 1 && total > 0 {
-            // Head+tail convergence (spec :770): a single-trunk waist-bounded
-            // phase is the serial bottleneck. Ownership there is by record slice,
-            // not by trunk, so all cores walk the same one trunk (the whole-phase
-            // mask) over a disjoint ceil-sized record slice, the union covering
-            // [0, total) with no gap or overlap (surplus cores get lo == hi and
-            // do nothing). Stays on the runtime-mask run_gated path; the per-trunk
-            // dispatch_core walk cannot express a record-range split.
-            let per = total.div_ceil(ncores.0); // lint:allow(no-bare-numeric) reason: ceil record slice; tracked: #121
-            let lo = (core.0 * per).min(total); // lint:allow(no-bare-numeric) reason: slice start; tracked: #121
-            let hi = (lo + per).min(total); // lint:allow(no-bare-numeric) reason: slice end; tracked: #121
-            let mask = phase_mask::<<D as PlanDims>::AdjRow>(phase, n, p);
-            let msize = msize.0; // lint:allow(no-bare-numeric) reason: morsel length; tracked: #121
-            let mut start = lo; // lint:allow(no-bare-numeric) reason: morsel start; tracked: #121
-            while start < hi {
-                let len = msize.min(hi - start);
-                self.wu_values.run_gated(
-                    &self.bindings,
-                    &self.meta_block,
-                    MorselRange::new(USize(start), USize(len)),
-                    mask,
-                    <USize as Identity<Additive>>::IDENTITY,
-                    epoch,
-                );
-                start += len; // lint:allow(no-bare-numeric) reason: morsel step; tracked: #121
-            }
-        } else if total == 0 {
+        if total == 0 {
             // Record-less frame: one empty-morsel dispatch_core so a resource-only
-            // trunk this core owns runs exactly once.
+            // trunk this core owns runs exactly once. All-ones dirty:
+            // run_parallel dispatches the pure-RAW path (no incremental skip),
+            // so every owned member runs.
+            let all = <<D as PlanDims>::AdjRow as Identity<Additive>>::IDENTITY.bitnot();
             let mut rank = <USize as Identity<Additive>>::IDENTITY;
             self.wu_values.dispatch_core(
                 &self.wu_values,
@@ -366,27 +326,64 @@ impl<
                 epoch,
             );
         } else {
-            // Ordinary trunk-rank ownership over the full range: per morsel,
-            // dispatch_core fires the trunks this core owns as compiled per-trunk
-            // monos (one runtime ownership branch per trunk-root, not per unit).
-            let msize = msize.0; // lint:allow(no-bare-numeric) reason: morsel length; tracked: #121
-            let mut start = 0; // lint:allow(no-bare-numeric) reason: morsel start; tracked: #121
-            while start < total {
-                let len = msize.min(total - start);
-                let mut rank = <USize as Identity<Additive>>::IDENTITY;
-                self.wu_values.dispatch_core(
-                    &self.wu_values,
-                    p,
-                    core,
-                    ncores,
-                    &mut rank,
-                    &self.bindings,
-                    &self.meta_block,
-                    MorselRange::new(USize(start), USize(len)),
-                    all,
-                    epoch,
-                );
-                start += len; // lint:allow(no-bare-numeric) reason: morsel step; tracked: #121
+            // fiber-outer / morsel-inner (A4): dispatch_core fires the trunks this
+            // core owns as compiled per-trunk monos, and the walk is driven per
+            // fiber so each one windows the record range by its own plan-baked L1
+            // size rather than by one scalar shared across the phase. The fiber's
+            // member mask rides the `dirty` position, which is the per-unit member
+            // gate `RunGatedTrunk` already consults, so a fiber-restricted mask
+            // runs exactly that fiber's units.
+            // Ownership survives the per-fiber calls because `rank` advances for
+            // every in-phase root independently of the mask and is reset per call,
+            // so each core resolves the same trunk set every time.
+            let descriptors = self.fiber_dispatch.as_ref();
+            let fcount = self.fiber_dispatch_count.0.min(descriptors.len()); // lint:allow(no-bare-numeric) reason: fiber descriptor count; tracked: #121
+            let order = self.topo_order.as_ref();
+            // Same emptiness guard `run` carries: the dispatch mask is the union
+            // of the per-fiber masks, so live units but no fiber descriptors
+            // would silently dispatch nothing rather than run everything.
+            debug_assert!(
+                self.topo_count.0 == 0 || fcount > 0, // lint:allow(no-bare-numeric) reason: emptiness guard; tracked: #121
+                "run_core_phase: live units but no fiber descriptors; the plan formed no fibers the scheduler could see"
+            );
+            let msize = msize.0; // lint:allow(no-bare-numeric) reason: zero-window fallback length; tracked: #121
+            let mut fi = 0; // lint:allow(no-bare-numeric) reason: fiber index; tracked: #121
+            while fi < fcount {
+                let desc = descriptors[fi];
+                // FIXME(2a77ac57ef94): the member mask is rebuilt per (phase, fiber)
+                // here and in `run`; plan-baking the masks plus a fiber-to-phase map
+                // would also skip the walks for fibers outside this phase.
+                let mut fmask = <<D as PlanDims>::AdjRow as Identity<Additive>>::IDENTITY;
+                let kend = (desc.start.0 + desc.len.0).min(order.len()); // lint:allow(no-bare-numeric) reason: fiber slice end; tracked: #121
+                let mut k = desc.start.0; // lint:allow(no-bare-numeric) reason: fiber slice start; tracked: #121
+                while k < kend {
+                    fmask = fmask.with_bit_set(order[k]);
+                    k += 1; // lint:allow(no-bare-numeric) reason: index step; tracked: #121
+                }
+                let w = if desc.morsel_local.0 && desc.morsel_size.0 != 0 {
+                    desc.morsel_size.0
+                } else {
+                    msize
+                }; // lint:allow(no-bare-numeric) reason: window selection; tracked: #121
+                let mut start = 0; // lint:allow(no-bare-numeric) reason: morsel start; tracked: #121
+                while start < total {
+                    let len = w.min(total - start);
+                    let mut rank = <USize as Identity<Additive>>::IDENTITY;
+                    self.wu_values.dispatch_core(
+                        &self.wu_values,
+                        p,
+                        core,
+                        ncores,
+                        &mut rank,
+                        &self.bindings,
+                        &self.meta_block,
+                        MorselRange::new(USize(start), USize(len)),
+                        fmask,
+                        epoch,
+                    );
+                    start += len; // lint:allow(no-bare-numeric) reason: morsel step; tracked: #121
+                }
+                fi += 1; // lint:allow(no-bare-numeric) reason: fiber index step; tracked: #121
             }
         }
     }

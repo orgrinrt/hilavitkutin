@@ -1,0 +1,50 @@
+a83f378 fix: read each fixture column through its type and drop the allows
+b4f80c8 chore: lock doc changelist 202611131325
+cef6367 docs: open the round that removes the added dead-code allows
+5d2fbd7 chore: lock src changelist 202611131300 and close round 202611131259
+3a4a3c9 fix: share one accumulator split and make four tests able to fail
+39817b0 chore: lock doc changelist 202611131259
+7c9bbc4 docs: say what a single-trunk phase does and drop its history
+672b8e7 chore: lock src changelist 202611131230 and close round 202611131112
+1e193d2 fix: hold the swap out of the recovered source, after the second review
+544422a chore: lock doc changelist 202611131112
+8a97a57 docs: hold the swap text out of the recovered design templates
+0f356df chore: deprecate src changelist 202611131117 and unlock doc
+b28be69 test: observe the plan band and the swap's dirty mark, after review
+afe3339 fix: name the tickets on the parallel gate fixture and swap entry
+68e7e32 Merge remote-tracking branch 'origin/dev' into work/recover-landing-source
+1973247 chore: merge the recovery branch over the consolidated source
+f577a21 feat: port the recovered swap, plan band, sym shapes and benches
+ada51bb chore: port the lints to the one view of the tree
+656aa2e chore: lock doc changelist 202611131112
+034e4c2 docs: carry the unlanded rounds' design text onto dev's templates
+4ec8503 docs: open the round that lands the recovered source
+6e971d1 docs: keep the perf gate section under the corrected findings
+6524900 docs: land the unlanded bench results and their run history
+c42d707 feat: make an append past capacity a refusal the consumer configures
+27abd8a research: sketch a branded index for exclusive column writes
+26e926b fix: spell the notko git source by https
+c2b392d test: make the hilavitkutin suite able to fail
+0928042 research: sketch one kernel's digests on native and wasm32
+b373d70 research: sketch the frame view and the two regimes as types
+cfe40b4 research: sketch kernels that run unchanged under five runners
+4b327c5 fix: make hilavitkutin dev pass its own commit gate
+af823b7 fix: pin the research sketches' arvo deps by rev
+6ee3746 chore: move mockspace config to the repo root, drop its dep
+d14bec3 fix: drop the unlocked duplicate of a closed round's doc changelist
+e3fa3f4 feat: bring hilavitkutin up on arvo `1b2796e9` without a std tier
+2f06ffe chore: land the design rounds and research the recovery branch carried
+1fbb2e9 chore: take the shared tool configs, and ignore a stray sketch lockfile
+a677bfd fix: pin the mock toolchain and take the structural lints from the pack
+220edfb chore: take the shared rustfmt and deny configs
+b24f158 chore: park the topo-dispatch slice as a record rather than a stash
+e1c0a46 docs: take the corrected engine-vs-std findings and the design prose the branches carried
+575a165 chore: take the later edits the remote branches carried
+0074676 chore: land the rounds and sketches the remote branches never merged
+1cde773 chore: take the later edits the stale branches carried
+85860be chore: land the rounds, benches and research that never reached the trunk
+986d2db chore: move the config to the root and drop the last mockspace dep
+89b4982 chore: track the generated taplo config
+464e039 chore: generalise the sketch lockfile ignore and regenerate docs
+cb1985c chore: split the local lints onto CrateLint and drop the four the pack ships
+27e6e45 chore: opt in to the interactive design-talk skill

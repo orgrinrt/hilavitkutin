@@ -76,6 +76,22 @@ pub trait RunCfg:
     /// writing the const explicitly.
     const MAX_PLAN_AFFECTING_RESOURCES: USize = USize(256);
 
+    /// Bounded middle-tier spin budget the frame waits run before
+    /// parking. The spin re-loads the wake word each iteration, so the
+    /// lost-wakeup discipline is untouched; zero is park-immediately
+    /// exactly. Default 0 per the re-examined wake_policy evidence
+    /// (record 202607210100): across seven wait policies, three sizes,
+    /// and three invocations, park is never worse and no spin policy
+    /// is ever better; spin loads contend the wake words against the
+    /// publisher and the done arrivals, and on aarch64 the
+    /// `spin_loop` iteration is ISB at 9 to 20 ns, so a non-zero
+    /// override should drop the hint or budget in wall-time rather
+    /// than iterations. Consumer-tunable per
+    /// `arvo-toolbox-not-policer`; the telemetry-driven `pick_tier`
+    /// selection over `predicted_wait_ns` is the adapt-phase
+    /// follow-up, with park-immediately as its bar.
+    const WAKE_SPIN_BUDGET: USize = USize(0);
+
     /// Records per morsel window the single-core run-loop windows the record
     /// range into. Coarser than `MICRO_MORSEL_INTERVAL` (a morsel contains
     /// several micro-morsels). Default 256 (a multiple of the 64-record

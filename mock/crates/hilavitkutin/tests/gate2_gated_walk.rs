@@ -37,14 +37,14 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 }
 
 struct BumpProvider<const N: usize> {
-    buf: UnsafeCell<[MaybeUninit<u8>; N]>,
+    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
     used: Cell<usize>,
 }
 
 impl<const N: usize> BumpProvider<N> {
     fn new() -> Self {
         Self {
-            buf: UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
+            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
             used: Cell::new(0),
         }
     }
@@ -65,7 +65,9 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
         self.used.set(aligned + len.0);
         unsafe { base.add(aligned) }
     }
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+
+    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
+
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
@@ -87,18 +89,20 @@ thread_local! {
 // WuA: writes Column<Av>, reads nothing -> phase 0, trunk {Av}.
 struct WuA;
 impl BuilderInput for WuA {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for WuA {
-    type Read = Empty;
-    type Write = ColA;
+    type Ctx<'frame> =
+        EngineCtx<'frame, Empty, ColA, SnapNil, ColPtrNil, ColPtrCons<Av, ColPtrNil>>;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, Empty, ColA, SnapNil, ColPtrNil, ColPtrCons<Av, ColPtrNil>>;
+    type Read = Empty;
+    type Write = ColA;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             unsafe { ctx.writer().write::<Av, _>(i, Av(i.0 as u32 * 10)) };
@@ -110,18 +114,20 @@ impl WorkUnit<Always> for WuA {
 // WuB: writes Column<Bv>, reads nothing -> phase 0, trunk {Bv} (disjoint from A).
 struct WuB;
 impl BuilderInput for WuB {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for WuB {
-    type Read = Empty;
-    type Write = ColB;
+    type Ctx<'frame> =
+        EngineCtx<'frame, Empty, ColB, SnapNil, ColPtrNil, ColPtrCons<Bv, ColPtrNil>>;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> = EngineCtx<'frame, Empty, ColB, SnapNil, ColPtrNil, ColPtrCons<Bv, ColPtrNil>>;
+    type Read = Empty;
+    type Write = ColB;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             unsafe { ctx.writer().write::<Bv, _>(i, Bv(i.0 as u32 * 100)) };
@@ -144,7 +150,13 @@ fn run_one_trunk_runs_only_trunk0_member() {
         .unwrap_or_else(|_| panic!("build should succeed"));
     // Trunk 0 = WuA (carrier position 0, phase 0). Only WuA's observer fires.
     scheduler.run_one_trunk::<_, _, 0>();
-    OBS_A.with(|o| assert_eq!(o.borrow().as_slice(), &[0u32, 10, 20, 30], "WuA (trunk 0) ran"));
+    OBS_A.with(|o| {
+        assert_eq!(
+            o.borrow().as_slice(),
+            &[0u32, 10, 20, 30],
+            "WuA (trunk 0) ran"
+        )
+    });
     OBS_B.with(|o| assert!(o.borrow().is_empty(), "WuB (trunk 1) did not run"));
 }
 
@@ -162,7 +174,13 @@ fn run_one_trunk_runs_only_trunk1_member() {
         .unwrap_or_else(|_| panic!("build should succeed"));
     // Trunk 1 = WuB (carrier position 1, phase 0). Only WuB's observer fires.
     scheduler.run_one_trunk::<_, _, 1>();
-    OBS_B.with(|o| assert_eq!(o.borrow().as_slice(), &[0u32, 100, 200, 300], "WuB (trunk 1) ran"));
+    OBS_B.with(|o| {
+        assert_eq!(
+            o.borrow().as_slice(),
+            &[0u32, 100, 200, 300],
+            "WuB (trunk 1) ran"
+        )
+    });
     OBS_A.with(|o| assert!(o.borrow().is_empty(), "WuA (trunk 0) did not run"));
 }
 
@@ -181,6 +199,18 @@ fn run_all_trunks_runs_every_trunk_once() {
     // The outer dispatcher: both trunks (WuA = trunk 0, WuB = trunk 1, both
     // phase 0) run, each exactly once, every member over the whole range.
     scheduler.run_all_trunks::<_, _>();
-    OBS_A.with(|o| assert_eq!(o.borrow().as_slice(), &[0u32, 10, 20, 30], "WuA (trunk 0) ran once"));
-    OBS_B.with(|o| assert_eq!(o.borrow().as_slice(), &[0u32, 100, 200, 300], "WuB (trunk 1) ran once"));
+    OBS_A.with(|o| {
+        assert_eq!(
+            o.borrow().as_slice(),
+            &[0u32, 10, 20, 30],
+            "WuA (trunk 0) ran once"
+        )
+    });
+    OBS_B.with(|o| {
+        assert_eq!(
+            o.borrow().as_slice(),
+            &[0u32, 100, 200, 300],
+            "WuB (trunk 1) ran once"
+        )
+    });
 }

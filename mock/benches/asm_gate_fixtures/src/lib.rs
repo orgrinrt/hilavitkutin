@@ -15,24 +15,45 @@
 use core::hint::black_box;
 
 use arvo::USize;
+use engine_vs_std::{
+    HeapBump,
+    arena_bytes,
+    chain,
+    fnv1a_u32_slice,
+    stage1,
+    stage2,
+    stage3,
+    stage4,
+    store,
+};
 use hilavitkutin::dispatch::engine_ctx::{
-    AccPtrCons, AccPtrNil, ColPtrCons, ColPtrNil, EngineCtx, SnapCons, SnapNil,
+    AccPtrCons,
+    AccPtrNil,
+    ColPtrCons,
+    ColPtrNil,
+    EngineCtx,
+    SnapCons,
+    SnapNil,
 };
 use hilavitkutin::scheduler::Scheduler;
+use hilavitkutin_api::RecordOp;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{
-    AccumWriterApi, ColumnReaderApi, ColumnWriterApi, EachApi, HasAccumWriter, HasColumnReader,
-    HasColumnWriter, HasEach, HasResourceProvider, ResourceProviderApi,
+    AccumWriterApi,
+    ColumnReaderApi,
+    ColumnWriterApi,
+    EachApi,
+    HasAccumWriter,
+    HasColumnReader,
+    HasColumnWriter,
+    HasEach,
+    HasResourceProvider,
+    ResourceProviderApi,
 };
 use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
 use hilavitkutin_api::store::{Accum, Column, Resource};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
-use hilavitkutin_api::RecordOp;
-
-use engine_vs_std::{
-    HeapBump, arena_bytes, chain, fnv1a_u32_slice, stage1, stage2, stage3, stage4, store,
-};
 
 // The fixed record count for every fixture. Small enough that the release build
 // is quick, large enough that the morsel loop is a real loop.
@@ -57,15 +78,22 @@ type One<T> = Cons<Column<T>, Empty>;
 #[derive(Copy, Clone)]
 struct S1;
 impl BuilderInput for S1 {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for S1 {
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        One<Inv>,
+        One<Av>,
+        SnapNil,
+        ColPtrCons<Inv, ColPtrNil>,
+        ColPtrCons<Av, ColPtrNil>,
+    >;
+    type Hint = (Immediate, Atomic, Normal);
     type Read = One<Inv>;
     type Write = One<Av>;
-    type Hint = (Immediate, Atomic, Normal);
-    type Ctx<'frame> =
-        EngineCtx<'frame, One<Inv>, One<Av>, SnapNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<Av, ColPtrNil>>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: In host-populated for the record count; Av reserved and
@@ -79,15 +107,22 @@ impl WorkUnit<Always> for S1 {
 #[derive(Copy, Clone)]
 struct S2;
 impl BuilderInput for S2 {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for S2 {
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        One<Av>,
+        One<Bv>,
+        SnapNil,
+        ColPtrCons<Av, ColPtrNil>,
+        ColPtrCons<Bv, ColPtrNil>,
+    >;
+    type Hint = (Immediate, Atomic, Normal);
     type Read = One<Av>;
     type Write = One<Bv>;
-    type Hint = (Immediate, Atomic, Normal);
-    type Ctx<'frame> =
-        EngineCtx<'frame, One<Av>, One<Bv>, SnapNil, ColPtrCons<Av, ColPtrNil>, ColPtrCons<Bv, ColPtrNil>>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             let a = unsafe { ctx.reader().read::<Av, _>(i) };
@@ -99,15 +134,22 @@ impl WorkUnit<Always> for S2 {
 #[derive(Copy, Clone)]
 struct S3;
 impl BuilderInput for S3 {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for S3 {
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        One<Bv>,
+        One<Cv>,
+        SnapNil,
+        ColPtrCons<Bv, ColPtrNil>,
+        ColPtrCons<Cv, ColPtrNil>,
+    >;
+    type Hint = (Immediate, Atomic, Normal);
     type Read = One<Bv>;
     type Write = One<Cv>;
-    type Hint = (Immediate, Atomic, Normal);
-    type Ctx<'frame> =
-        EngineCtx<'frame, One<Bv>, One<Cv>, SnapNil, ColPtrCons<Bv, ColPtrNil>, ColPtrCons<Cv, ColPtrNil>>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             let b = unsafe { ctx.reader().read::<Bv, _>(i) };
@@ -119,15 +161,22 @@ impl WorkUnit<Always> for S3 {
 #[derive(Copy, Clone)]
 struct S4;
 impl BuilderInput for S4 {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for S4 {
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        One<Cv>,
+        One<Dv>,
+        SnapNil,
+        ColPtrCons<Cv, ColPtrNil>,
+        ColPtrCons<Dv, ColPtrNil>,
+    >;
+    type Hint = (Immediate, Atomic, Normal);
     type Read = One<Cv>;
     type Write = One<Dv>;
-    type Hint = (Immediate, Atomic, Normal);
-    type Ctx<'frame> =
-        EngineCtx<'frame, One<Cv>, One<Dv>, SnapNil, ColPtrCons<Cv, ColPtrNil>, ColPtrCons<Dv, ColPtrNil>>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             let c = unsafe { ctx.reader().read::<Cv, _>(i) };
@@ -139,6 +188,7 @@ impl WorkUnit<Always> for S4 {
 impl RecordOp for S1 {
     type In = Inv;
     type Out = Av;
+
     fn apply(&self, x: Inv) -> Av {
         Av(stage1(x.0))
     }
@@ -146,6 +196,7 @@ impl RecordOp for S1 {
 impl RecordOp for S2 {
     type In = Av;
     type Out = Bv;
+
     fn apply(&self, x: Av) -> Bv {
         Bv(stage2(x.0))
     }
@@ -153,6 +204,7 @@ impl RecordOp for S2 {
 impl RecordOp for S3 {
     type In = Bv;
     type Out = Cv;
+
     fn apply(&self, x: Bv) -> Cv {
         Cv(stage3(x.0))
     }
@@ -160,6 +212,7 @@ impl RecordOp for S3 {
 impl RecordOp for S4 {
     type In = Cv;
     type Out = Dv;
+
     fn apply(&self, x: Cv) -> Dv {
         Dv(stage4(x.0))
     }
@@ -187,7 +240,7 @@ macro_rules! chain_scheduler {
         // SAFETY: In reserved for N records of Inv (repr u32); scheduler alive;
         // each reserved slot written once.
         let in_base = $sched.__bindings().__ptr().as_ptr() as *mut Inv;
-        for i in 0..N {
+        for i in 0 .. N {
             unsafe { *in_base.add(i) = Inv(i as u32) };
         }
     };
@@ -208,7 +261,14 @@ unsafe fn dv_hash(dv_base: *const u32) -> u64 {
 pub extern "C" fn asm_gate_column_chain() -> u64 {
     chain_scheduler!(sched);
     let _ = sched.run();
-    let dv_base = sched.__bindings().__tail().__tail().__tail().__tail().__ptr().as_ptr() as *const u32;
+    let dv_base = sched
+        .__bindings()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__ptr()
+        .as_ptr() as *const u32;
     black_box(unsafe { dv_hash(dv_base) })
 }
 
@@ -219,7 +279,14 @@ pub extern "C" fn asm_gate_column_chain() -> u64 {
 pub extern "C" fn asm_gate_fused_chain() -> u64 {
     chain_scheduler!(sched);
     let _ = sched.run_fused();
-    let dv_base = sched.__bindings().__tail().__tail().__tail().__tail().__ptr().as_ptr() as *const u32;
+    let dv_base = sched
+        .__bindings()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__ptr()
+        .as_ptr() as *const u32;
     black_box(unsafe { dv_hash(dv_base) })
 }
 
@@ -233,7 +300,14 @@ pub extern "C" fn asm_gate_dirty_gated() -> u64 {
     // E7 run_gated predicated-branch path), not a clean-frame skip.
     sched.mark_dirty::<Column<Inv>, _>();
     let _ = sched.run();
-    let dv_base = sched.__bindings().__tail().__tail().__tail().__tail().__ptr().as_ptr() as *const u32;
+    let dv_base = sched
+        .__bindings()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__ptr()
+        .as_ptr() as *const u32;
     black_box(unsafe { dv_hash(dv_base) })
 }
 
@@ -249,13 +323,10 @@ type AccW = Cons<Accum<AAv>, Empty>;
 
 struct AppendChain;
 impl BuilderInput for AppendChain {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for AppendChain {
-    type Read = One<AInv>;
-    type Write = AccW;
-    type Hint = (Immediate, Atomic, Normal);
     type Ctx<'frame> = EngineCtx<
         'frame,
         One<AInv>,
@@ -265,6 +336,10 @@ impl WorkUnit<Always> for AppendChain {
         ColPtrNil,
         AccPtrCons<'frame, AAv, AccPtrNil>,
     >;
+    type Hint = (Immediate, Atomic, Normal);
+    type Read = One<AInv>;
+    type Write = AccW;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: In host-populated; append advances live-length under the
@@ -288,7 +363,7 @@ pub extern "C" fn asm_gate_accumulator() -> u64 {
     // Av accumulator is the head; AInv column is one tail down.
     // SAFETY: In reserved for N records of AInv (repr u32); scheduler alive.
     let in_base = sched.__bindings().__tail().__ptr().as_ptr() as *mut AInv;
-    for i in 0..N {
+    for i in 0 .. N {
         unsafe { *in_base.add(i) = AInv(i as u32) };
     }
     let _ = sched.run();
@@ -321,15 +396,22 @@ struct QOut(u32);
 #[derive(Copy, Clone)]
 struct P1;
 impl BuilderInput for P1 {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for P1 {
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        One<PIn>,
+        One<PMid>,
+        SnapNil,
+        ColPtrCons<PIn, ColPtrNil>,
+        ColPtrCons<PMid, ColPtrNil>,
+    >;
+    type Hint = (Immediate, Atomic, Normal);
     type Read = One<PIn>;
     type Write = One<PMid>;
-    type Hint = (Immediate, Atomic, Normal);
-    type Ctx<'frame> =
-        EngineCtx<'frame, One<PIn>, One<PMid>, SnapNil, ColPtrCons<PIn, ColPtrNil>, ColPtrCons<PMid, ColPtrNil>>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: PIn host-populated for the record count; PMid reserved and
@@ -343,15 +425,22 @@ impl WorkUnit<Always> for P1 {
 #[derive(Copy, Clone)]
 struct P2;
 impl BuilderInput for P2 {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for P2 {
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        One<PMid>,
+        One<POut>,
+        SnapNil,
+        ColPtrCons<PMid, ColPtrNil>,
+        ColPtrCons<POut, ColPtrNil>,
+    >;
+    type Hint = (Immediate, Atomic, Normal);
     type Read = One<PMid>;
     type Write = One<POut>;
-    type Hint = (Immediate, Atomic, Normal);
-    type Ctx<'frame> =
-        EngineCtx<'frame, One<PMid>, One<POut>, SnapNil, ColPtrCons<PMid, ColPtrNil>, ColPtrCons<POut, ColPtrNil>>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             let m = unsafe { ctx.reader().read::<PMid, _>(i) };
@@ -363,15 +452,22 @@ impl WorkUnit<Always> for P2 {
 #[derive(Copy, Clone)]
 struct Q1;
 impl BuilderInput for Q1 {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for Q1 {
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        One<QIn>,
+        One<QOut>,
+        SnapNil,
+        ColPtrCons<QIn, ColPtrNil>,
+        ColPtrCons<QOut, ColPtrNil>,
+    >;
+    type Hint = (Immediate, Atomic, Normal);
     type Read = One<QIn>;
     type Write = One<QOut>;
-    type Hint = (Immediate, Atomic, Normal);
-    type Ctx<'frame> =
-        EngineCtx<'frame, One<QIn>, One<QOut>, SnapNil, ColPtrCons<QIn, ColPtrNil>, ColPtrCons<QOut, ColPtrNil>>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             let inp = unsafe { ctx.reader().read::<QIn, _>(i) };
@@ -401,7 +497,7 @@ pub extern "C" fn asm_gate_windowed_fibers() -> u64 {
     // alive; each reserved slot written once.
     let qin = sched.__bindings().__ptr().as_ptr() as *mut u32;
     let pin = sched.__bindings().__tail().__tail().__ptr().as_ptr() as *mut u32;
-    for i in 0..N {
+    for i in 0 .. N {
         unsafe {
             *qin.add(i) = i as u32;
             *pin.add(i) = (i as u32).wrapping_mul(3);
@@ -409,8 +505,75 @@ pub extern "C" fn asm_gate_windowed_fibers() -> u64 {
     }
     let _ = sched.run();
     let qout = sched.__bindings().__tail().__ptr().as_ptr() as *const u32;
-    let pout =
-        sched.__bindings().__tail().__tail().__tail().__tail().__ptr().as_ptr() as *const u32;
+    let pout = sched
+        .__bindings()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__ptr()
+        .as_ptr() as *const u32;
+    // SAFETY: both output columns hold N written records; scheduler alive.
+    let h1 = unsafe { fnv1a_u32_slice(core::slice::from_raw_parts(pout, N)) };
+    let h2 = unsafe { fnv1a_u32_slice(core::slice::from_raw_parts(qout, N)) };
+    black_box(h1 ^ h2)
+}
+
+// ----- fixture 7: per-fiber windows on the parallel path (A4) -----
+
+// Same two-chain carrier as fixture 5, driven through `run_parallel` instead of
+// `run`, so the A4 per-fiber window loop compiles and runs under the gate build.
+//
+// FIXME(35e2aa2b5329): this fixture does NOT yet prove the parallel dispatch body is
+// devirtualised, and the gate's PASS must not be read as if it did. The
+// per-record work runs in `run_core_phase`, which emits no scannable symbol:
+// `nm` finds neither `run_core_phase` nor `worker_main` in the dylib, because
+// both inline into the spawned worker closure. So check 1 covers this wrapper's
+// own body, which is pool setup and the readback hash, and the parallel walk is
+// unscanned. Closing it needs a way to pin the worker-side mono, for example a
+// `#[no_mangle]` shim the worker calls, or teaching the gate to resolve the
+// closure symbol. Until then the single-core `asm_gate_windowed_fibers` fixture
+// is the only real devirtualisation evidence for the per-fiber loop shape, and
+// the two paths share the `dispatch_core` walk that fixture does cover.
+#[unsafe(no_mangle)]
+pub extern "C" fn asm_gate_parallel_fiber_windows() -> u64 {
+    let provider = HeapBump::new(arena_bytes(5, N));
+    let sched = Scheduler::builder()
+        .with(Column::<POut>::new())
+        .with(Column::<PMid>::new())
+        .with(Column::<PIn>::new())
+        .with(Column::<QOut>::new())
+        .with(Column::<QIn>::new())
+        .with(P1)
+        .with(P2)
+        .with(Q1)
+        .build(store(provider), USize(N))
+        .unwrap_or_else(|_| panic!("engine build should succeed"));
+    // Bindings head is the last-registered store: QIn(0) <- QOut(1) <- PIn(2)
+    // <- PMid(3) <- POut(4).
+    // SAFETY: inputs reserved for N records of repr-u32 values; scheduler
+    // alive; each reserved slot written once.
+    let qin = sched.__bindings().__ptr().as_ptr() as *mut u32;
+    let pin = sched.__bindings().__tail().__tail().__ptr().as_ptr() as *mut u32;
+    for i in 0 .. N {
+        unsafe {
+            *qin.add(i) = i as u32;
+            *pin.add(i) = (i as u32).wrapping_mul(3);
+        }
+    }
+    let pool = engine_vs_std::executor::BenchExecutor::new();
+    let mut sched = core::pin::pin!(sched);
+    let _ = sched.as_mut().run_parallel(&pool);
+    let qout = sched.as_ref().__bindings().__tail().__ptr().as_ptr() as *const u32;
+    let pout = sched
+        .as_ref()
+        .__bindings()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__ptr()
+        .as_ptr() as *const u32;
     // SAFETY: both output columns hold N written records; scheduler alive.
     let h1 = unsafe { fnv1a_u32_slice(core::slice::from_raw_parts(pout, N)) };
     let h2 = unsafe { fnv1a_u32_slice(core::slice::from_raw_parts(qout, N)) };
@@ -436,13 +599,10 @@ type ResRead = Cons<Resource<u32>, Cons<Column<RIn>, Empty>>;
 #[derive(Copy, Clone)]
 struct ResMix;
 impl BuilderInput for ResMix {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for ResMix {
-    type Read = ResRead;
-    type Write = One<ROut>;
-    type Hint = (Immediate, Atomic, Normal);
     type Ctx<'frame> = EngineCtx<
         'frame,
         ResRead,
@@ -451,6 +611,10 @@ impl WorkUnit<Always> for ResMix {
         ColPtrCons<RIn, ColPtrNil>,
         ColPtrCons<ROut, ColPtrNil>,
     >;
+    type Hint = (Immediate, Atomic, Normal);
+    type Read = ResRead;
+    type Write = One<ROut>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         let gain: &u32 = ctx.resources().resource();
         let g = *gain;
@@ -477,7 +641,7 @@ pub extern "C" fn asm_gate_resource_snapshot() -> u64 {
     // Bindings head is the resource (last-registered); RIn one tail down.
     // SAFETY: RIn reserved for N records of repr-u32 values; scheduler alive.
     let rin = sched.__bindings().__tail().__ptr().as_ptr() as *mut u32;
-    for i in 0..N {
+    for i in 0 .. N {
         unsafe { *rin.add(i) = i as u32 };
     }
     let _ = sched.run();

@@ -305,7 +305,7 @@ impl<
         // helpers only touch its atomics.
         let pool_frame = unsafe { &(*me).pool };
         frame_publish(pool_frame);
-        frame_await_done(pool_frame, ncores);
+        frame_await_done(pool_frame, ncores, Cfg::WAKE_SPIN_BUDGET);
         // Deviation 9: for the unit-outer accumulator carrier, each worker
         // appended into its own per-core region of the reserved buffer and
         // published its per-accumulator live and `wanted` counts. Forward-compact
@@ -320,7 +320,6 @@ impl<
         if unsafe { (*me).carrier_unit_outer() }.0 {
             let total0 = unsafe { (*me).record_count.0 }; // lint:allow(no-bare-numeric) reason: frame record count; tracked: #121
             let ncores0 = ncores.0.max(1); // lint:allow(no-bare-numeric) reason: avoid div by zero; tracked: #121
-            let per = total0.div_ceil(ncores0); // lint:allow(no-bare-numeric) reason: ceil record slice; tracked: #121
             let mut live = [<USize as Identity<Additive>>::IDENTITY;
                 crate::thread::class::MAX_CORES * GATE2_MAX_ACCUMS];
             let mut wanted = [<USize as Identity<Additive>>::IDENTITY;
@@ -342,7 +341,6 @@ impl<
             unsafe {
                 (*me).bindings.merge_accums(
                     PerCoreCounts::new(
-                        USize(per),
                         ncores,
                         USize(total0),
                         &live,

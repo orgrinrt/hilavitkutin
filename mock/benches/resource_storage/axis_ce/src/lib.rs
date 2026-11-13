@@ -21,7 +21,7 @@ use hilavitkutin_providers::{ArenaColumnStorage, StorageError};
 
 /// A bump `MemoryProvider` over a fixed heap block, for the capacity test.
 pub struct TestProvider {
-    buf: std::cell::UnsafeCell<Vec<u8>>,
+    buf:  std::cell::UnsafeCell<Vec<u8>>,
     used: std::cell::Cell<usize>,
 }
 // SAFETY: the capacity test is single-threaded; the cells are only touched from
@@ -31,7 +31,7 @@ unsafe impl Sync for TestProvider {}
 impl TestProvider {
     pub fn new(bytes: usize) -> Self {
         TestProvider {
-            buf: std::cell::UnsafeCell::new(vec![0u8; bytes]),
+            buf:  std::cell::UnsafeCell::new(vec![0u8; bytes]),
             used: std::cell::Cell::new(0),
         }
     }
@@ -48,7 +48,9 @@ impl MemoryProviderApi for TestProvider {
         self.used.set(used + len.0);
         buf.as_mut_ptr().add(used)
     }
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+
+    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
+
     unsafe fn protect(&self, _p: *mut u8, _l: USize, _r: arvo::Bool, _w: arvo::Bool) {}
 }
 
@@ -59,9 +61,9 @@ impl MemoryProviderApi for TestProvider {
 pub fn reserve_n_columns(columns: usize) -> Result<(), StorageError> {
     let provider = TestProvider::new(columns * 64 + (1 << 16));
     let mut store: ArenaColumnStorage<TestProvider, Dim<256>> = ArenaColumnStorage::new(provider);
-    for id in 0..columns {
+    for id in 0 .. columns {
         match store.reserve::<u32>(StoreId(USize(id)), USize(1)) {
-            notko::Outcome::Ok(()) => {}
+            notko::Outcome::Ok(()) => {},
             notko::Outcome::Err(e) => return Err(e),
         }
     }
@@ -108,7 +110,7 @@ fn contend(packed: bool, slots: usize, iters_per: u64) -> u128 {
         let p = backing.as_mut_ptr() as usize;
         (p + line - 1) / line * line
     };
-    let addrs: Vec<usize> = (0..slots)
+    let addrs: Vec<usize> = (0 .. slots)
         .map(|s| if packed { base + s * 4 } else { base + s * line })
         .collect();
     // keep backing alive for the scope
@@ -117,7 +119,7 @@ fn contend(packed: bool, slots: usize, iters_per: u64) -> u128 {
     let warmup = 3u64;
     let timed = 15u64;
     let mut samples: Vec<u128> = Vec::new();
-    for rep in 0..(warmup + timed) {
+    for rep in 0 .. (warmup + timed) {
         let t = std::time::Instant::now();
         std::thread::scope(|sc| {
             for &addr in &addrs {
@@ -160,7 +162,10 @@ mod tests {
         for layout in ["V0_blob", "V1_snapshot", "V4_erased"] {
             let cols = column_count(layout, resources, m);
             assert!(cols <= 256, "{layout} expected <= 256 columns, got {cols}");
-            assert!(reserve_n_columns(cols).is_ok(), "{layout} reserve of {cols} should succeed");
+            assert!(
+                reserve_n_columns(cols).is_ok(),
+                "{layout} reserve of {cols} should succeed"
+            );
         }
         // V3 shares one column: 3 total.
         assert!(reserve_n_columns(column_count("V3_shapebound", resources, m)).is_ok());
@@ -187,7 +192,9 @@ mod tests {
     /// exact figure, and prints the numbers for the findings doc.
     #[test]
     fn axis_e_false_sharing_penalty() {
-        let threads = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4);
+        let threads = std::thread::available_parallelism()
+            .map(|n| n.get())
+            .unwrap_or(4);
         let (packed, padded) = false_sharing(threads, 80_000_000);
         let ratio = packed as f64 / padded.max(1) as f64;
         println!(
