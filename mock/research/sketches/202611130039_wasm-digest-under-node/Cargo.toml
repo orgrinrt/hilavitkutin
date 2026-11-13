@@ -1,0 +1,19 @@
+[workspace]
+resolver = "3"
+members = ["kernel", "native", "wasm"]
+# The wasm member is a `no_std` `cdylib` that only builds for its own target,
+# so a bare `cargo build` here leaves it out.
+default-members = ["kernel", "native"]
+
+[workspace.package]
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+debug = false
+strip = true
