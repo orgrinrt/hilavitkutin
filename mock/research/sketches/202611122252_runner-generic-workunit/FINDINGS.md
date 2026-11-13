@@ -1,12 +1,12 @@
 # Runner-generic work unit, findings
 
-Chosen arm: E2, one small trait per handed thing. Both arms keep the unit byte-identical under all five runners, but E2 got there with nothing added on the runner side, while E1 needed a where-clause on its context, a fresh borrow per row, a function pointer in place of a type parameter for the permuted layout, and a reach and an event named by every declaration whether used or not. At growth E2 edited no existing runner and E1 edited all of them.
+Chosen arm: E2, one small trait per handed thing. In both arms the unit's source is unchanged under all five runners, but E2 got there with nothing added on the runner side, while E1 needed a where-clause on its context, a fresh borrow per row, a function pointer in place of a type parameter for the permuted layout, and a reach and an event named by every declaration whether used or not. At growth E2 edited no existing runner and E1 edited all of them.
 
 Bounds the fused and threaded runners needed beyond the first two: fused, none. Threaded, three, all on the runner's own split helper and none on the unit or the vocab: in E2 `S::Prod<Col<'a>>: Sync`, `S::Prod<ColMut<'a>>: Send` and `E: Send`; in E1 `S::Prod<Arr<N>>: Sync`, `S::Prod<ColMut<'a>>: Send` and `E: Send`. They come down to the members' values being `Send + Sync` and the event being `Send`, which `i32` and `Crossed` are without a word written. Every runner in both arms leans on `Elem: 'static` with `Value: Copy + 'static`, declared once in `owed`.
 
 Growth edit counts: E1 edited 5 of 5 existing runner crates, each gaining the same three-line `draw` on its context impl, and 3 hand-written fixture contexts (6 files with their twins). E2 edited 0 of 5. In both arms the unit hash did not move.
 
-The question was whether fusion and threading can arrive in the plumbing with no change to an author. They can, under either arm: the unit crate is the same bytes under the ordered, permuted, fused, threaded and registry runners, and all ten runners end on the bytes and the ordered events of a plain array model. What separates the arms is the cost on the runner side and what growth touches.
+The question was whether fusion and threading can arrive in the plumbing with no change to an author. They can, under either arm: the unit's source is unchanged under the ordered, permuted, fused, threaded and registry runners (its hash, below; nothing compares compiled output), and all ten runners end on the bytes and the ordered events of a plain array model. What separates the arms is the cost on the runner side and what growth touches.
 
 ```
 holds for: toolchain nightly-2026-05-28, target x86_64-unknown-linux-gnu,
@@ -34,13 +34,13 @@ The three kernels: (a) `integrate`, the control, `Pos += Vel`; (b) `smooth`, a w
 
 Neither (b) nor (c) stalled under either arm.
 
-Tests: 12 in the workspace, all green. Per check crate three: every runner against the model's bytes and events, the world exercising every kernel, and a negative control where a one-bit change to the model must be seen. Per growth crate two: the sixth runner against the model with the kick, and the kick moving the world. Per fixtures crate one trybuild run of five failing files and five twins.
+Tests: 18 in the workspace, all green in the debug profile; in release the overflow case is ignored, as above. Per check crate three: every runner against the model's bytes and events, the world exercising every kernel, and a negative control where a one-bit change to the model must be seen; E2's check adds the runner mutant. `plumb` has two on the window's wrap and saturation, and `stack-probe` three. Per growth crate two: the sixth runner against the model with the kick, and the kick moving the world. Per fixtures crate one trybuild run of five failing files and five twins.
 
 ## Feature lines and the recursion limit
 
 No crate carries `#![feature]` or `recursion_limit`. Every library crate is `#![no_std]` except `e1/run-threaded` and `e2/run-threaded`, which take std for scoped threads, and the check and fixtures crates, which hold only tests. The 64-store registry is 64 levels deep in its runner crate and needed no `recursion_limit`.
 
-What the registry did need is a different shape for whole-store operations. A by-value `Clone`, `Default` or splat over a 64-deep product recurses with a stack frame per level holding the rest of the product, and it overflowed the default 2 MB test thread in release as well as in debug; 16 MB ran it. Writing the operations in place (`copy_from`, `splat_in` over `MaybeUninit` with field writes, `made` on top of it, and `mem::swap` between the double buffers) runs it on the default stack. Anything deep in notko-hlist that moves a whole product by value has the same exposure.
+What the registry did need is a different shape for whole-store operations. A by-value `Clone` over the 64-deep product recurses with a stack frame per level holding the rest of the product, and in the debug profile it overflows a thread with the default 2 MiB stack and runs on 16 MiB; in release it runs on 2 MiB. `stack-probe/tests/deep_by_value.rs` shows the three cases, each in a child process, and `diagnostics/registry-by-value-clone-overflows-the-default-stack.txt` holds the overflow and the release run beside it. Writing the operations in place (`copy_from`, `splat_in` over `MaybeUninit` with field writes, `made` on top of it, and `mem::swap` between the double buffers) runs it on the default stack. Anything deep in notko-hlist that moves a whole product by value has the same exposure.
 
 ## Unit hashes
 
@@ -73,7 +73,7 @@ In both arms `plumb` gained the `draw` function, and the shared test body was sp
 
 ## Compile-fail pairs
 
-Each failing file sits beside a twin differing in the offending token only, both run by trybuild in `e1/fixtures` and `e2/fixtures`, with the diagnostic committed as the `.stderr` beside the failing file.
+Each failing file sits beside a twin differing in the offending token only, with one exception: the twin of asking for the row changes the kernel's signature from the generic handle to the runner's concrete type, since the call itself is the offending token and only runner-side code may make it. Both are run by trybuild in `e1/fixtures` and `e2/fixtures`, with the diagnostic committed as the `.stderr` beside the failing file.
 
 | pair | expected | E1 | E2 |
 | --- | --- | --- | --- |
@@ -100,11 +100,22 @@ Fused runner, both arms: no call to `smooth` survives either, and `integrate` is
 What `owed` holds, and both arms lean on, that the pinned notko-hlist does not offer:
 
 - the selector `Has<M, P>`, a member to its place with the place inferred, `pick` and `pick_mut` through a carrier;
-- the projection `Project`, a product of a list over a carrier `Prod<C>`, with `read_row`, `write_row`, `cols`, `cols_mut`, `split_mut`, `copy_from`, `splat_in` and `made`;
+- the projection `Project`, a product of a list over a carrier `Prod<C>`, with `read_row`, `write_row`, `cols`, `cols_mut`, `split_mut`, `copy_from`, `splat_in` and `made`. It is sealed, and has to stay sealed or become an `unsafe trait` in notko-hlist: `made` calls `assume_init` on the product `splat_in` filled, which is sound only while every impl's `splat_in` writes every field, the head and then the tail's, down to the end of the list, and only the crate holding the impls can promise that;
 - the sub-list projection `SubOf<S, Ps>`, with `sub`, `put_row` and `put_vals`;
 - `Carrier` and the four carriers `Val`, `Col`, `ColMut` and `Arr`, with the capabilities `ByRow`, `ByRowMut` and `Dup`;
 - `Vals<L>`, the values of a list at one row, read and written by member value.
 
 ## Where this differs from the brief
 
-`owed` is a crate both vocabs re-export rather than a part of each vocab, so the pieces owed to notko-hlist are written once. Members are bare `i32` and positions bare `usize` and `u32`, because the brief excludes arvo. The kernels are free functions, so the impl adding a bound is a context or handle impl. The fixture asks for the row only; no runner here works in morsels, so there is no morsel range to ask for. The window kernel's key has two axes, per the coordinator's correction.
+`owed` is a crate both vocabs re-export rather than a part of each vocab, so the pieces owed to notko-hlist are written once. Members are bare `i32` and positions bare `usize` and `u32`, because the brief excludes arvo. The kernels are free functions, so the impl adding a bound is a context or handle impl. The fixture asks for the row only; no runner here works in morsels, so there is no morsel range to ask for. The window kernel's key has two axes, per the coordinator's correction. The base and the growth probe are one commit rather than two, since both were held uncommitted while dev's own gate was red; `unit-hashes.base.txt` and `runner-hashes.base.txt` hold the state from before the probe.
+
+## The threaded runners and the real executor
+
+Both threaded runners use `std::thread::scope`, which the real executor cannot. What they lean on is the guarantee scope gives: every worker has finished before the call that started them returns, so the column halves each worker writes and the columns all of them read are borrowed for the parallel section and no longer. The real executor owes the same, a join before the store is read again, with the written halves disjoint and handed out once (`Send`) and the read columns shared (`Sync`), and the bounds above are the type side of it.
+
+## Open
+
+- A runner mutant is shown caught for E2 only (`e2/check/tests/mutant.rs`, a window dropping the north axis); E1 has none.
+- Saturation past the reach is tested on `wrap` in `plumb`, which every core's window goes through, not through a runner's handle.
+- Four `panic_bounds_check` calls survive in each `run` that `asm/calls.txt` lists, where the row is below `N` by the loop but the core's index is not proven to the compiler.
+- The `.stderr` files are pinned by `trybuild = "=1.0.122"` and the toolchain in `mock/rust-toolchain.toml`; the repository ignores `Cargo.lock` under `mock/research/`, so the rest of the graph is not locked.

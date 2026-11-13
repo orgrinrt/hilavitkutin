@@ -131,9 +131,21 @@ where
     }
 }
 
+mod sealed {
+    /// Only this crate implements `Project`, so `made` rests on the `splat_in` below.
+    pub trait Sealed {}
+
+    impl Sealed for super::Empty {}
+    impl<H, T> Sealed for super::Cons<H, T> {}
+}
+
 /// The projection from a type list to a product: `Cons<H, T>` holds `C::Of<H>` then
 /// `T`'s product. Every operation here recurses on the list's structure alone.
-pub trait Project: List {
+///
+/// Sealed: `made` hands out an initialised product on the strength of `splat_in`
+/// writing every field, which holds for the two impls in this crate and for no impl
+/// it cannot see.
+pub trait Project: List + sealed::Sealed {
     type Prod<C: Carrier>;
 
     fn read_row<C: ByRow>(p: &Self::Prod<C>, i: usize) -> Self::Prod<Val>;
@@ -156,7 +168,8 @@ pub trait Project: List {
     fn made<const N: usize>(row: &Self::Prod<Val>) -> Self::Prod<Arr<N>> {
         let mut p = core::mem::MaybeUninit::uninit();
         Self::splat_in::<N>(&mut p, row);
-        // SAFETY: `splat_in` writes every field of the product, recursively to `PNil`.
+        // SAFETY: `Project` is sealed, and both of its impls' `splat_in` write every
+        // field of the product, the head and then the tail's, recursively to `PNil`.
         unsafe { p.assume_init() }
     }
 }

@@ -393,3 +393,40 @@ macro_rules! registry {
 pub type ValsOf<L> = <L as Project>::Prod<Val>;
 pub type ColsOf<'a, L> = <L as Project>::Prod<Col<'a>>;
 pub type ArrOf<L, const NN: usize> = <L as Project>::Prod<rg_owed::Arr<NN>>;
+
+#[cfg(test)]
+mod tests {
+    use super::{EAST, NORTH, wrap};
+
+    const REACH: (i32, i32) = (3, 2);
+
+    /// The neighbour with no clamp: what a window that does not saturate would read.
+    fn unclamped(row: usize, off: (i32, i32)) -> usize {
+        let e = (row % EAST) as i32 + off.0;
+        let n = (row / EAST) as i32 + off.1;
+        n.rem_euclid(NORTH as i32) as usize * EAST + e.rem_euclid(EAST as i32) as usize
+    }
+
+    #[test]
+    fn an_offset_past_the_reach_saturates_to_it_per_axis() {
+        for row in [0, 5, EAST - 1, EAST * NORTH - 1] {
+            assert_eq!(wrap(row, (9, 0), REACH), wrap(row, (3, 0), REACH));
+            assert_eq!(wrap(row, (0, -7), REACH), wrap(row, (0, -2), REACH));
+            assert_eq!(wrap(row, (-40, 40), REACH), wrap(row, (-3, 2), REACH));
+            assert_ne!(wrap(row, (9, 0), REACH), unclamped(row, (9, 0)));
+            assert_ne!(wrap(row, (0, -7), REACH), unclamped(row, (0, -7)));
+        }
+    }
+
+    #[test]
+    fn an_offset_within_the_reach_reads_the_neighbour_wrapping_both_axes() {
+        for row in [0, 5, EAST - 1, EAST * NORTH - 1] {
+            for e in -REACH.0 ..= REACH.0 {
+                for n in -REACH.1 ..= REACH.1 {
+                    assert_eq!(wrap(row, (e, n), REACH), unclamped(row, (e, n)));
+                }
+            }
+        }
+        assert_eq!(wrap(0, (-1, -1), REACH), EAST * NORTH - 1);
+    }
+}

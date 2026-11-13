@@ -1,5 +1,5 @@
 error[E0276]: impl has stricter requirements than trait
- --> tests/ui/fail/impl_adds_bound.rs:9:33
-  |
-9 |         D::Reads: Has<M, P>, M: Copy,
-  |                                 ^^^^ impl has extra requirement `M: Copy`
+  --> tests/ui/fail/impl_adds_bound.rs:10:12
+   |
+10 |         M: Copy,
+   |            ^^^^ impl has extra requirement `M: Copy`

@@ -23,6 +23,7 @@ members = [
     "e2/check",
     "e2/fixtures",
     "e2/grow",
+    "stack-probe",
 ]
 
 [workspace.dependencies]
@@ -43,7 +44,7 @@ e2-run-permuted = { path = "e2/run-permuted" }
 e2-run-fused = { path = "e2/run-fused" }
 e2-run-threaded = { path = "e2/run-threaded" }
 e2-run-registry = { path = "e2/run-registry" }
-trybuild = "1"
+trybuild = "=1.0.122"
 
 [profile.release]
 codegen-units = 1
