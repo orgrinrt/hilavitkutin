@@ -3,13 +3,15 @@
 //! Same two-width fixture as `a2b_loop_inversion`, driven through the parallel
 //! path instead of `run`. Two disjoint one-unit pipelines land in two fibers
 //! whose plan-baked L1 windows differ (a 4-byte write column windows wider than
-//! an 8-byte one under the same budget), and they are column-disjoint so phase 0
-//! holds two trunks and the dispatch takes the ordinary trunk-rank branch rather
-//! than the head+tail one.
+//! an 8-byte one under the same budget). They are column-disjoint, so phase 0
+//! holds two trunks and each is dispatched by trunk rank.
 //!
 //! Each unit counts its `execute` calls, and `execute` runs once per (fiber,
 //! morsel), so a unit's count is its fiber's morsel count. The sharp claim: the
-//! two counts DIFFER, and each matches `ceil(records / that fiber's window)`.
+//! two counts DIFFER, and each matches `ceil(records / that fiber's window)`,
+//! the narrow column's unit by the wider window and the wide column's by the
+//! narrower one. A walk that gave each fiber the other's window would produce
+//! the same two counts on the wrong units, so the counts are asserted by unit.
 //! The shared-window shape this replaces gave both fibers the same count, since
 //! one scalar drove the whole phase.
 //!
@@ -210,16 +212,21 @@ fn parallel_fibers_window_by_their_own_plan_baked_size() {
          (a shared phase window would give both the same count)"
     );
 
-    // And each count is its own fiber's morsel count. Matched as an unordered
-    // pair so the assertion does not depend on which descriptor slot a fiber
-    // landed in.
-    let mut got = [narrow, wide];
-    let mut want = [ceil_div(RECORDS, w0), ceil_div(RECORDS, w1)];
-    got.sort_unstable();
-    want.sort_unstable();
+    // And each count is its own fiber's morsel count. The narrow column's
+    // fiber has the wider window, so it is asserted against `max(w0, w1)` and
+    // the wide column's against `min(w0, w1)`. Naming the unit is the point:
+    // comparing the two counts as an unordered pair would also pass a walk
+    // that windowed each fiber by the other's size.
+    let (wider, narrower) = (w0.max(w1), w0.min(w1));
     assert_eq!(
-        got, want,
-        "per-fiber morsel counts come from the windows {w0} and {w1}"
+        narrow,
+        ceil_div(RECORDS, wider),
+        "the 4-byte column's fiber walks the wider window {wider}"
+    );
+    assert_eq!(
+        wide,
+        ceil_div(RECORDS, narrower),
+        "the 8-byte column's fiber walks the narrower window {narrower}"
     );
 
     // Those morsels cover the whole range: no record still holds the poison.

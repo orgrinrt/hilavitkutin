@@ -72,3 +72,23 @@ fn minted_handle_is_disjoint_from_string_kind() {
     assert_ne!(minted, string_like);
     assert_ne!(minted.kind(), string_kind);
 }
+
+/// `Generator::single` takes no origin and returns no refusal. That is sound
+/// only while the shape it is offered on has one origin and that origin's
+/// index is in range, which is what `Generator::at` would have checked. It is
+/// also a `const fn`, so a generator can sit in a constant; the constant
+/// below stops compiling if it stops being one.
+#[test]
+fn single_is_total_because_standard_has_one_origin() {
+    use hilavitkutin_sym::shape::{OneOrigin, origin_index_in_range};
+
+    assert!(
+        origin_index_in_range::<Standard>(OneOrigin),
+        "the one origin of the default shape must be in range, or `single` \
+         skips a refusal that can happen"
+    );
+
+    const AT_REST: Generator<TestGen> = Generator::single();
+    let mut g = AT_REST;
+    assert_eq!(expect(g.mint()).kind(), TestGen::KIND);
+}

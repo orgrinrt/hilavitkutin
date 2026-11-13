@@ -34,7 +34,7 @@ use crate::plan::grouping::{
     plan_phase_count,
     pre_consumer_phase_count,
 };
-use crate::resource::bindings::{BindingsFor, CollectAccumCounts, RebaseBindings};
+use crate::resource::bindings::{BindingsFor, CollectAccumCounts, RebaseBindings, accum_slice};
 use crate::thread::barrier::waist_barrier;
 use crate::thread::frame::{frame_await, frame_done_arrive, frame_exit_arrive};
 
@@ -145,32 +145,6 @@ pub(super) fn worker_main<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>(
         }
         frame_done_arrive(&s.pool, ncores);
     }
-}
-
-/// Stride between per-core accumulator regions: `ceil(total / ncores)`.
-///
-/// The single definition of the accumulator's record split. The worker
-/// derives its own region from this via `accum_slice`; the main thread passes
-/// it to `merge_accums`, which reads core c's region at `c * per`. Both sides
-/// must agree exactly or the merge reads a region a different core wrote, so
-/// the arithmetic lives here once and not at each site.
-#[inline]
-pub(super) fn accum_per(total: USize, ncores: USize) -> USize {
-    let n = ncores.0.max(1); // lint:allow(no-bare-numeric) reason: avoid div by zero; tracked: #121
-    USize(total.0.div_ceil(n)) // lint:allow(no-bare-numeric) reason: ceil record slice; tracked: #121
-}
-
-/// One core's exclusive accumulator region as `(lo, len)`.
-///
-/// Regions tile `[0, total)` in core order, so the merge can concatenate them
-/// in ascending core order without gaps. A surplus core (more cores than
-/// records) gets `len == 0` and appends nothing.
-#[inline]
-fn accum_slice(total: USize, ncores: USize, core: USize) -> (USize, USize) {
-    let per = accum_per(total, ncores).0;
-    let lo = (core.0 * per).min(total.0); // lint:allow(no-bare-numeric) reason: slice start; tracked: #121
-    let hi = (lo + per).min(total.0); // lint:allow(no-bare-numeric) reason: slice end; tracked: #121
-    (USize(lo), USize(hi - lo)) // lint:allow(no-bare-numeric) reason: slice length; tracked: #121
 }
 
 /// One core's unit-outer accumulator dispatch over its record slice of the N-way tiling
