@@ -146,39 +146,185 @@ fn a_set_with_no_flag_writing_pragma_leaves_the_flags_empty() {
     assert!(directives(&cfg).ends_with("cargo::rustc-env=HILAVITKUTIN_BUILD_RUSTFLAGS=\n"));
 }
 
-/// Every flag the release set writes is one the pinned rustc accepts, and
-/// none of the two the design once named and the toolchain refuses.
+/// Compile a one-function library with the pinned `rustc` under `flags`,
+/// optimised and through LLVM's codegen, so an option LLVM does not know
+/// is refused. True when rustc succeeded.
+fn pinned_rustc_takes(flags: &str, name: &str) -> bool {
+    let dir = std::path::Path::new(env!("CARGO_TARGET_TMPDIR")).join(name);
+    std::fs::create_dir_all(&dir).expect("a scratch directory");
+    let source = dir.join("probe.rs");
+    std::fs::write(
+        &source,
+        "pub fn sum(xs: &[u32]) -> u32 { xs.iter().fold(0, |a, x| a.wrapping_add(*x)) }\n",
+    )
+    .expect("the probe source");
+    let status = std::process::Command::new("rustc")
+        .current_dir(env!("CARGO_MANIFEST_DIR"))
+        .args(["--crate-type", "lib", "--edition", "2024", "-O", "--emit=obj", "-o"])
+        .arg(dir.join("probe.o"))
+        .arg(&source)
+        .args(flags.split(' ').filter(|f| !f.is_empty()))
+        .status()
+        .expect("rustc on the path");
+    status.success()
+}
+
+/// Every flag the release set writes is one the pinned rustc takes: a
+/// library is compiled under them. The control, an option LLVM dropped,
+/// is refused by the same call.
 #[test]
-fn no_flag_is_one_the_pinned_toolchain_refuses() {
+fn the_pinned_rustc_takes_every_release_flag() {
     let mut flags = String::new();
     write_rustflags(Profile::Release.default_pragmas(), &mut flags)
         .expect("writing to a String cannot fail");
-    for refused in ["-enable-unsafe-fp-math", "-vectorize-with-block-frequency", "target-cpu"] {
-        assert!(!flags.contains(refused), "{refused} in {flags:?}");
-    }
+    assert!(
+        pinned_rustc_takes(&flags, "release"),
+        "rustc refused {flags:?}"
+    );
+    assert!(
+        !pinned_rustc_takes("-Cllvm-args=-enable-unsafe-fp-math", "control"),
+        "the control was taken, so the probe cannot see a refusal"
+    );
     assert!(!flags.starts_with(' ') && !flags.ends_with(' ') && !flags.contains("  "));
 }
 
+/// The env `configure` reads, with cargo's workspace wrapper named.
+fn release_env(key: &'static str) -> Maybe<String> {
+    match key {
+        "PROFILE" => Maybe::Is(String::from("release")),
+        "RUSTC_WORKSPACE_WRAPPER" => {
+            Maybe::Is(String::from("/repo/.cargo/hilavitkutin-rustc-wrapper"))
+        },
+        _ => Maybe::Isnt,
+    }
+}
+
 #[test]
-fn configure_reads_profile_and_features_through_the_closure() {
+fn configure_reads_profile_features_and_wrapper_through_the_closure() {
     let mut asked = Vec::new();
     let mut out = String::new();
     configure(
         |key| {
             asked.push(key);
-            match key {
-                "PROFILE" => Maybe::Is(String::from("release")),
-                _ => Maybe::Isnt,
-            }
+            release_env(key)
         },
         &mut out,
     )
     .expect("writing to a String cannot fail");
-    assert_eq!(asked, ["PROFILE", "CARGO_CFG_TARGET_FEATURE"]);
+    assert_eq!(asked, [
+        "PROFILE",
+        "CARGO_CFG_TARGET_FEATURE",
+        "RUSTC_WORKSPACE_WRAPPER"
+    ]);
     assert_eq!(
         out,
-        directives(&BuildConfig::from_cargo(Maybe::Is("release"), Maybe::Isnt))
+        format!(
+            "cargo::rerun-if-changed=build.rs\n\
+             cargo::rustc-check-cfg=cfg(arvo_fast_math)\n\
+             cargo::rustc-cfg=arvo_fast_math\n\
+             cargo::rustc-env=HILAVITKUTIN_BUILD_RUSTFLAGS={LOOP_FLAGS} -Zthreads=0\n"
+        )
     );
+}
+
+/// With flags to hand over and no wrapper named, or one named empty, the
+/// build script says the flags are dropped; with none to hand over it says
+/// nothing.
+#[test]
+fn a_missing_wrapper_is_warned_of_when_there_are_flags() {
+    for wrapper in [Maybe::Isnt, Maybe::Is(String::new())] {
+        let mut out = String::new();
+        configure(
+            |key| {
+                match key {
+                    "RUSTC_WORKSPACE_WRAPPER" => wrapper.clone(),
+                    _ => release_env(key),
+                }
+            },
+            &mut out,
+        )
+        .expect("writing to a String cannot fail");
+        assert!(
+            out.contains("cargo::warning=hilavitkutin-build chose rustc flags"),
+            "{out}"
+        );
+    }
+    let mut out = String::new();
+    configure_with(
+        |key| {
+            match key {
+                "RUSTC_WORKSPACE_WRAPPER" => Maybe::Isnt,
+                _ => release_env(key),
+            }
+        },
+        |_| PragmaSet::new().with(Pragma::FastMath),
+        &mut out,
+    )
+    .expect("writing to a String cannot fail");
+    assert!(!out.contains("cargo::warning"), "{out}");
+}
+
+/// Taking a pragma out takes what stands on it: MathPeephole goes with
+/// FastMath, Profiling with the last of Pgo and Bolt.
+#[test]
+fn a_tuned_set_is_made_coherent() {
+    let release = Profile::Release.default_pragmas();
+    assert!(release.contains(Pragma::MathPeephole));
+    let tuned = release.without(Pragma::FastMath).coherent();
+    assert!(!tuned.contains(Pragma::MathPeephole));
+    assert!(tuned.contains(Pragma::LoopOptimization));
+
+    let profiling = Profile::Profiling.default_pragmas();
+    assert!(
+        profiling
+            .without(Pragma::Pgo)
+            .coherent()
+            .contains(Pragma::Profiling)
+    );
+    assert!(
+        !profiling
+            .without(Pragma::Pgo)
+            .without(Pragma::Bolt)
+            .coherent()
+            .contains(Pragma::Profiling)
+    );
+    assert_eq!(release.coherent(), release);
+}
+
+/// The committed wrapper, run with `echo` standing in for rustc, appends
+/// the variable's words and nothing else: unset, empty, set, and holding
+/// a glob that must not be expanded against the directory.
+#[test]
+fn the_wrapper_appends_the_variable_and_nothing_else() {
+    let wrapper = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../.cargo/hilavitkutin-rustc-wrapper"
+    );
+    for (value, expected) in [
+        (None, "rustc --crate-name x\n"),
+        (Some(""), "rustc --crate-name x\n"),
+        (
+            Some("-Zthreads=0 -Zshare-generics=y"),
+            "rustc --crate-name x -Zthreads=0 -Zshare-generics=y\n",
+        ),
+        (Some("*"), "rustc --crate-name x *\n"),
+    ] {
+        let mut command = std::process::Command::new("sh");
+        command
+            .args([wrapper, "echo", "rustc", "--crate-name", "x"])
+            .current_dir(env!("CARGO_MANIFEST_DIR"))
+            .env_remove("HILAVITKUTIN_BUILD_RUSTFLAGS");
+        if let Some(value) = value {
+            command.env("HILAVITKUTIN_BUILD_RUSTFLAGS", value);
+        }
+        let output = command.output().expect("sh on the path");
+        assert!(output.status.success());
+        assert_eq!(
+            String::from_utf8_lossy(&output.stdout),
+            expected,
+            "{value:?}"
+        );
+    }
 }
 
 /// A deterministic simulation crate turns FastMath off, and the cfg goes
@@ -210,7 +356,7 @@ fn the_committed_wrapper_is_the_written_one() {
         include_str!("../../../.cargo/hilavitkutin-rustc-wrapper"),
         text
     );
-    assert!(text.contains("$HILAVITKUTIN_BUILD_RUSTFLAGS\n"));
+    assert!(text.contains("set -f\nexec \"$@\" $HILAVITKUTIN_BUILD_RUSTFLAGS\n"));
 }
 
 #[test]

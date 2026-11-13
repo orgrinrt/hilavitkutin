@@ -33,7 +33,7 @@ pub enum Requirement {
 /// Static pragma -> requirements mapping.
 #[derive(Debug)]
 pub struct PragmaRequirement {
-    pub pragma: Pragma,
+    pub pragma:   Pragma,
     pub requires: &'static [Requirement],
 }
 
@@ -45,56 +45,58 @@ pub struct PragmaRequirement {
 /// param is irrelevant for requirement lookup; callers should match
 /// on the discriminant only.
 pub const REQUIREMENTS: &[PragmaRequirement] = &[
+    // The plugin is what its plugin passes need; its five built-in LLVM
+    // options are written without it (`flags.rs`).
     PragmaRequirement {
-        pragma: Pragma::LoopOptimization,
+        pragma:   Pragma::LoopOptimization,
         requires: &[Requirement::LlvmPassPlugin],
     },
     PragmaRequirement {
-        pragma: Pragma::Polly,
+        pragma:   Pragma::Polly,
         requires: &[Requirement::PollyEnabledLlvm],
     },
     PragmaRequirement {
-        pragma: Pragma::MathPeephole,
+        pragma:   Pragma::MathPeephole,
         requires: &[Requirement::LlvmPassPlugin],
     },
     PragmaRequirement {
-        pragma: Pragma::FastMath,
+        pragma:   Pragma::FastMath,
         requires: &[],
     },
     PragmaRequirement {
-        pragma: Pragma::ExpandedLto,
+        pragma:   Pragma::ExpandedLto,
         requires: &[],
     },
     PragmaRequirement {
-        pragma: Pragma::Pgo,
+        pragma:   Pragma::Pgo,
         requires: &[Requirement::ProfrawProfdata],
     },
     PragmaRequirement {
-        pragma: Pragma::Bolt,
+        pragma:   Pragma::Bolt,
         requires: &[Requirement::LlvmBolt],
     },
     PragmaRequirement {
-        pragma: Pragma::Profiling,
+        pragma:   Pragma::Profiling,
         requires: &[Requirement::ProfrawProfdata],
     },
     PragmaRequirement {
-        pragma: Pragma::BuildStd,
+        pragma:   Pragma::BuildStd,
         requires: &[],
     },
     PragmaRequirement {
-        pragma: Pragma::ParallelCodegen(u8::MAX), // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: sentinel for discriminant-only lookup; param irrelevant; tracked: #72
+        pragma:   Pragma::ParallelCodegen(u8::MAX), // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: sentinel for discriminant-only lookup; param irrelevant; tracked: #72
         requires: &[],
     },
     PragmaRequirement {
-        pragma: Pragma::SharedGenerics,
+        pragma:   Pragma::SharedGenerics,
         requires: &[],
     },
     PragmaRequirement {
-        pragma: Pragma::LoopFusion,
+        pragma:   Pragma::LoopFusion,
         requires: &[Requirement::LlvmPassPlugin],
     },
     PragmaRequirement {
-        pragma: Pragma::MimallocAllocator,
+        pragma:   Pragma::MimallocAllocator,
         requires: &[Requirement::MimallocCrate],
     },
 ];
@@ -110,7 +112,8 @@ pub fn requirements_for(p: Pragma) -> &'static [Requirement] {
     &[]
 }
 
-const fn same_variant(a: Pragma, b: Pragma) -> bool { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal discriminant-equality helper; tracked: #72
+const fn same_variant(a: Pragma, b: Pragma) -> bool {
+    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal discriminant-equality helper; tracked: #72
     use Pragma::*;
     matches!(
         (a, b),

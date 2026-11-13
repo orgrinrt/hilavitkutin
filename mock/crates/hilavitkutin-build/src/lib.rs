@@ -4,6 +4,9 @@
 //! cargo's environment, and prints the directives it writes: the cfg
 //! and the crate's rustc flags, which the workspace wrapper
 //! ([`write_wrapper`]) appends to its rustc.
+//! A consumer commits the wrapper at `.cargo/hilavitkutin-rustc-wrapper`
+//! and names it in `.cargo/config.toml`; the flags reach its own
+//! workspace members only.
 //! The crate optimises HOW code is compiled (pragmas, profiles, rustc
 //! wrapper), not what it does. Standalone, no runtime deps.
 //!
@@ -39,7 +42,7 @@
 //! | `LoopOptimization` | IRCE, LoopPredication, SimplifyCFG, LoopInterchange, LoopDistribute, LoopDataPrefetch, SeparateConstOffsetFromGEP via `polka-passes.so`. |
 //! | `Polly` | Polyhedral optimiser; requires Polly-enabled LLVM. |
 //! | `MathPeephole` | Float peephole rewrites via `math-peephole.so`. |
-//! | `FastMath` | LLVM `unsafe-fp-math` flag plus the `arvo_fast_math` cfg. |
+//! | `FastMath` | The `arvo_fast_math` cfg, for the configured crate's own code; it never reaches arvo. |
 //! | `ExpandedLto` | Fat LTO with codegen-units=1 (generated Cargo config). |
 //! | `Pgo` | Consume PGO profiles when present on disk. |
 //! | `Bolt` | Post-link binary rewriting (Linux ELF only). |
