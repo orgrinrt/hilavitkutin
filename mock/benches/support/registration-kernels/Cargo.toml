@@ -1,0 +1,19 @@
+[workspace]
+
+[package]
+name = "registration-kernels"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# Shared kernels for the registration bench. Every arm cdylib path-depends on
+# this, so the column layout, the two unit bodies and the checksum live in one
+# place and only the binding differs per arm. The bump arena, the transform
+# stages and the column checksum are the storage bench's, reused as they are.
+# std and alloc are allowed here, as in every bench workspace.
+[lib]
+name = "registration_kernels"
+path = "src/lib.rs"
+
+[dependencies]
+rsb-kernels = { path = "../../resource_storage/kernels-shared" }
