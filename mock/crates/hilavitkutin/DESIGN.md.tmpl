@@ -42,9 +42,10 @@ complete execution plan:
    lifecycle rank: for any unit pair where one writes a store the other
    reads, the writer sorts before the reader, regardless of which was
    registered first. Two units of different rank that share a store
-   take the order of their ranks and no edge is built against it, so a
-   close unit that writes a store an ordinary unit reads runs after the
-   reader. WAW conflicts serialise by the api's write-write order: hint
+   take the order of their ranks: an edge that agrees with the ranks is
+   built as any other, and an edge that would run against them is not
+   built, so a close unit that writes a store an ordinary unit reads
+   runs after the reader. WAW conflicts serialise by the api's write-write order: hint
    priority, then the unit with more units downstream of it over the
    RAW edges, then input index (the lower index first) as the
    deterministic fallback. WAR anti-dependencies are a tracked
@@ -88,7 +89,7 @@ complete execution plan:
    per-store size fold: columns at type-native stride, resource values
    at their `Seq`/`Map` collection footprint (`Field` scalars ride the
    register budget), accumulators and virtuals zero. A write through a
-   `Differs` member is sized as a write of its column, and a read with
+   `Written` member is sized as a write of its column, and a read with
    a reach adds nothing, the formula being write-only. A fiber with no
    write bytes takes the `MAX_MORSEL` window. Output
    includes `micro_morsel_interval: USize` alongside the window
@@ -114,16 +115,21 @@ Step 12 produces a per-unit predecessor mask keyed by carrier position (the
 position the dispatch walk threads). At `Scheduler::run()` entry the engine
 seeds a dirty set from per-root change signals: a `PlanAffecting` resource
 swapped via `replace_resource`, a non-plan-affecting value swapped via
-`replace_value`, an input the consumer marked changed, a store a close unit
-changed in the pass before, or the cold first frame
-after build where every root is dirty. The close band's writes are the one seed
-the engine takes from its own units: an ordinary unit that read a store before
-a close unit wrote it has not seen that write, so the write makes the store's
-readers dirty for the next pass. Whether a write changed the store is the
-writing unit's declaration (the api's "What counts as changed"): a plain
-column member counts wherever the unit wrote, a `Differs` member only where a
-value differed, so a field that has settled seeds nothing and its readers
-rest. The mark is per store in this revision. It propagates the seed forward over the
+`replace_value`, an input the consumer marked changed, a store a maintenance
+unit changed, or the cold first frame
+after build where every root is dirty. A maintenance unit's write is the one
+seed the engine takes from a unit. An ordinary unit that read a store before a
+close unit wrote it has not seen that write, so the write makes the store's
+readers dirty for the next pass. A store a unit on the leading meta bands
+writes is taken as changed in every pass the unit runs, so its readers
+dispatch in that pass, as the readers of the scheduler metrics do. Whether a
+close unit's write changed the store is that unit's declaration (the api's
+"What counts as changed"): a plain column member of a value function counts
+only where a value differed, a `Written` member and a write by position
+wherever the unit wrote, so a field that has settled under a comparing close
+unit seeds nothing and its readers rest. The compare is made for a close
+unit's writes alone, since no other unit's writes are read for a seed, and
+the mark is kept per store. It propagates the seed forward over the
 predecessor masks in carrier order (`dirty[j] |= dirty[i]` for every edge
 `i to j`) and skips any unit whose entire predecessor set is clean: a unit whose
 input cone did not change produces identical output whether it runs or not, so
@@ -282,8 +288,7 @@ meta lifecycle bands (PlanStage before, ScheduleEnd after, with the plan band
 skipped on clean frames) dispatch once per frame over the whole range, the
 same designated-thread band shape `run_parallel` uses. Within a consumer
 phase pass, the per-fiber dispatch descriptors are walked in plan order: a
-`morsel_local` fiber windows `[0, n)`, where `n` is the frame record
-count, by its own plan-baked
+`morsel_local` fiber windows `[0, record_count)` by its own plan-baked
 `FiberDispatch.morsel_size` (the domain-12 L1 window computed at plan step 9;
 `RunCfg::MORSEL_SIZE` is only the fallback for a degenerate zero window), one
 member-gated dispatch per window, so the fiber's whole unit sequence runs
@@ -1207,7 +1212,7 @@ namespace continued past the resource columns, and keeps a `Copy` `PlanHandle`
 consumer instead of being dropped after `build`. `build` / `build_with`
 take the frame record count as the column-reservation dimension: they feed
 it to the plan computation in place of the zero placeholder, and the
-`Column<T>` drain arm reserves a real column at a
+`Column<T>` drain arm reserves a real column sized by the record count at a
 `StoreId` continued past the resource columns, recording the real
 `ColumnPtr<T>` and count in the `ColumnBinding` (no longer a dangling
 placeholder). The `Accum<T>` drain arm reserves a column the same way
@@ -1255,10 +1260,12 @@ value is appended, a set virtual flag fires. An append from `map` past the
 accumulator's capacity is handled as any append is, by what the run
 configuration says of overflow. The gather and the scatter are type-level
 walks over the lists, so a body written as a value function monomorphises
-into the straight-line loop a positional body does. For a `Differs` member
-the scatter compares the returned value with the value at the position
-before it stores, and sets the store's changed mark only where the two
-differ. For a plain column member the mark is set when the unit ran. A
+into the straight-line loop a positional body does. For a plain column
+member of a close unit the scatter compares the returned value with the
+value at the position before it stores, and sets the store's changed mark
+only where the two differ. For a `Written` member, and for a write by
+position, the mark is set when the unit wrote. For a unit that is not at
+the close the scatter makes no compare, since nothing reads its mark. A
 `Window` holds the column's base, the record's index and the column's
 count, and `before` and `after` answer from those.
 
@@ -1269,8 +1276,10 @@ read from the wrapper itself. A const assertion at `build` refuses a unit
 whose write mask holds a column its read list names with a reach. And a
 read-after-write edge into a read with a reach is a phase boundary: the
 writer's whole range lands, on every core, before the reader's phase
-starts. It is the boundary the plan already draws for work that needs all
-of its input before its first output.
+starts. The plan already keeps work that needs all of its input before
+its first output out of a fiber; a read with a reach asks for the wider
+boundary, since the writer's records on other cores are part of that
+input.
 
 The close is the ScheduleEnd meta band and needs no walk of its own. What
 the api asks for it is the cross-rank order of plan step 1, the close
@@ -1278,6 +1287,9 @@ band's seed of the next pass's dirty set (under "Incremental skip" above),
 and the accumulator reader on the meta context. The reader walks the
 populated prefix of the accumulator's binding, and after the workers of
 `run_parallel` have joined it walks the per-core regions in core sequence.
+The sequence a close unit meets the values in therefore depends on the
+worker count, as the records an accumulator kept already do, and a close
+unit whose apply does not commute gets a result that depends on it too.
 Accumulators are reset at frame start, so a close unit reads the appends
 of its own pass and a plan-stage unit reads only what the leading meta
 bands appended before it. A meta band runs once per frame on one core
@@ -1289,7 +1301,9 @@ lifted. The fused fold takes one-column maps only. A `Window` computes its
 neighbour's position per read. The changed mark is per store where the
 generation counters would carry it per morsel, and within a pass the skip
 stays structural: a successor of a unit that ran is dirty whether or not
-the unit changed anything. A close unit that carries one column into
+the unit changed anything. An ordinary unit's declaration of what
+counts as changed is in its types and is not read yet, for the same
+reason. A close unit that carries one column into
 another copies it, and the engine has no exchange of two columns' storage.
 An ordinary unit that reads a store it writes
 itself is seeded for the next pass by the consumer marking its input, as
