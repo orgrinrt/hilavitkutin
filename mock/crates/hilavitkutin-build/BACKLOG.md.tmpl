@@ -6,14 +6,33 @@
 > `hilavitkutin_str::Str` instead of `&str` / `String`. See
 > `rules/type-surface.md`.
 
-## rustc workspace wrapper script generation
+## Native target CPU as an opt-in pragma
 
-DESIGN Q4 part 3: `RUSTC_WORKSPACE_WRAPPER` is a thin shell around
-rustc that inspects `CARGO_CFG_*` env vars and computes flag sets
-from the three axes (Target, Tier, Passes). The skeleton ships the
-Rust-side type surface; the bash / PowerShell script emitter lands
-in a follow-up round after the pragma types are battle-tested
-against a concrete consumer.
+The design once had the wrapper add -C target-cpu=native whenever
+target and host matched. That makes a binary that runs only on the
+machine that built it, so it left the defaults. A local build that
+never leaves its machine (a bench, a profiling run) gains from it;
+it comes back as a pragma such a build turns on.
+
+## Custom profiles
+
+Cargo passes a build script PROFILE as debug or release only, so
+dev-opt, profiling and ci resolve to Dev or Release. Telling them
+apart needs another signal (the OUT_DIR path names the profile
+directory); a round picks one and tests it.
+
+## Finding the plugins and the profiles
+
+LoopOptimization's plugin flag, MathPeephole, Polly, Pgo, Bolt and
+Profiling write nothing until the build script finds what they need
+on disk (the plugin objects, merged.profdata, llvm-bolt) and passes
+its paths in. The same closure that reads the environment can carry
+the paths.
+
+## Windows wrapper
+
+The committed wrapper is POSIX sh. A Windows host without a POSIX
+shell needs a second text and a way to pick it.
 
 ## LLVM pass plugin C++ source
 
@@ -41,16 +60,6 @@ Skeleton writes a placeholder file. Real schema serialises the
 resolved `PragmaSet` for downstream tools (e.g. ide-helper,
 build-introspection). Follow-up round pins the TOML shape and
 adds a reader.
-
-## Consumer build.rs migration
-
-Every hilavitkutin-* crate's build.rs calls
-`mockspace::bootstrap::bootstrap_from_buildscript()`. Adding the
-hilavitkutin-build half (read `PROFILE` and
-`CARGO_CFG_TARGET_FEATURE`, build `BuildConfig::from_cargo`, print
-`write_directives`, write `write_config_file` to `OUT_DIR`, as the
-`bootstrap` module's example shows) is a separate infra round that
-lands piecewise as each crate's pragmas become observable.
 
 ## Windows MSVC toolchain support
 
