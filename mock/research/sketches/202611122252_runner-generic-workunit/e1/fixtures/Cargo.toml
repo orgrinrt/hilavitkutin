@@ -1,0 +1,10 @@
+[package]
+name = "e1-fixtures"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dev-dependencies]
+e1-vocab = { workspace = true }
+e1-unit = { workspace = true }
+trybuild = { workspace = true }

@@ -1,0 +1,16 @@
+[package]
+name = "e2-check"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dev-dependencies]
+e2-vocab = { workspace = true }
+e2-unit = { workspace = true }
+rg-owed = { workspace = true }
+rg-plumb = { workspace = true }
+e2-run-ordered = { workspace = true }
+e2-run-permuted = { workspace = true }
+e2-run-fused = { workspace = true }
+e2-run-threaded = { workspace = true }
+e2-run-registry = { workspace = true }

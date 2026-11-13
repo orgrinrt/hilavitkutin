@@ -1,0 +1,2 @@
+e1/run-ordered/src/lib.rs:76:58: error[E0499]: cannot borrow `quiet` as mutable more than once at a time: `quiet` was mutably borrowed here in the previous iteration of the loop
+e1/run-ordered/src/lib.rs:82:61: error[E0499]: cannot borrow `log` as mutable more than once at a time: `log` was mutably borrowed here in the previous iteration of the loop

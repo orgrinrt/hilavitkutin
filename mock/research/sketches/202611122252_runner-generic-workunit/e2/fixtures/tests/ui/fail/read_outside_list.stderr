@@ -1,0 +1,27 @@
+error[E0277]: the trait bound `e2_vocab::Empty: Has<Heat, _>` is not satisfied
+ --> tests/ui/fail/read_outside_list.rs:8:11
+  |
+8 |     r.get(Heat)
+  |       --- ^^^^ the trait `Has<Heat, _>` is not implemented for `e2_vocab::Empty`
+  |       |
+  |       required by a bound introduced by this call
+  |
+help: the following other types implement trait `Has<M, P>`
+ --> $WORKSPACE/owed/src/lib.rs
+  |
+  | impl<M: Elem, T: Project> Has<M, Here> for Cons<M, T> {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `Cons<M, T>` implements `Has<M, notko_hlist::position::Here>`
+...
+  | impl<H: Elem, M: Elem, P: Place, T: Has<M, P>> Has<M, There<P>> for Cons<H, T> {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `Cons<H, T>` implements `Has<M, notko_hlist::position::There<P>>`
+  = note: required for `Cons<Vel, e2_vocab::Empty>` to implement `Has<Heat, notko_hlist::position::There<_>>`
+  = note: 1 redundant requirement hidden
+  = note: required for `Cons<Pos, Cons<Vel, e2_vocab::Empty>>` to implement `Has<Heat, notko_hlist::position::There<notko_hlist::position::There<_>>>`
+note: required by a bound in `e2_vocab::Reads::get`
+ --> $WORKSPACE/e2/vocab/src/lib.rs
+  |
+  |     fn get<M: Elem, P: Place>(&self, member: M) -> M::Value
+  |        --- required by a bound in this associated function
+  |     where
+  |         L: Has<M, P>;
+  |            ^^^^^^^^^ required by this bound in `Reads::get`
