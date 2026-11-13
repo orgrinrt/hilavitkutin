@@ -6,7 +6,7 @@ use crate::handle::Str;
 use crate::hash::const_fnv1a;
 
 /// A single compile-time-registered string entry. Emitted by `str_const!()`
-/// into the `.hilavitkutin_strings` linker section and read back by the
+/// into the `hilavitkutin_strings` linker section and read back by the
 /// section walker at startup.
 #[repr(C)]
 pub struct StaticStrEntry {
@@ -20,7 +20,10 @@ impl StaticStrEntry {
     /// Build the entry for a string literal.
     ///
     /// This is the one place an entry's hash is derived from its string:
-    /// `str_const!` and the section anchor both come through it.
+    /// `str_const!` and the section anchor both come through it. Public only
+    /// because the macro expands in the caller's crate, and not for callers:
+    /// a handle from here for a string nobody registered resolves to nothing.
+    #[doc(hidden)]
     pub const fn new(value: &'static str) -> Self {
         Self {
             hash: Str::__make(Bits::<28>::from_narrowed(const_fnv1a(value))),

@@ -131,7 +131,80 @@ impl<D: GenerativeDomain> Generator<D> {
     /// else a panic at the first call, since a shape with one origin and no
     /// room for it is a defect in the shape. Going through [`Generator::at`]
     /// would force every caller to handle a refusal that cannot happen.
-    /// Pinned by `single_is_total_on_every_one_origin_shape`.
+    /// Pinned by `single_is_total_on_every_one_origin_shape`, by the two
+    /// panic tests, and by the doctests below: a one-origin shape that
+    /// reports index 1 against zero reserved bits is a build error in a
+    /// constant,
+    ///
+    /// ```compile_fail,E0080
+    /// #![feature(const_trait_impl)]
+    /// use arvo::USize;
+    /// use hilavitkutin_sym::shape::OneOrigin;
+    /// use hilavitkutin_sym::{Domain, GenerativeDomain, Generator, Standard, SymKind, SymShape};
+    /// #[derive(Copy, Clone)]
+    /// struct NoRoom;
+    /// const impl SymShape for NoRoom {
+    ///     type Layout = <Standard as SymShape>::Layout;
+    ///     type Origin = OneOrigin;
+    ///     const COUNTER_BITS: USize = <Standard as SymShape>::COUNTER_BITS;
+    ///     const ID_BITS: USize = <Standard as SymShape>::ID_BITS;
+    ///     const KIND_BITS: USize = <Standard as SymShape>::KIND_BITS;
+    ///     const ORIGIN_BITS: USize = <Standard as SymShape>::ORIGIN_BITS;
+    ///     fn origin_index(_: Self::Origin) -> USize { USize(1) }
+    /// }
+    /// struct Peers;
+    /// impl Domain for Peers {
+    ///     type Shape = NoRoom;
+    ///     const KIND: SymKind<NoRoom> = SymKind::new(arvo_bits::Bits::from_raw(0b010));
+    /// }
+    /// impl GenerativeDomain for Peers {}
+    /// const G: Generator<Peers> = Generator::single();
+    /// fn main() { let _g = G; }
+    /// ```
+    ///
+    /// and the same shape with index 0, the one in range, builds, so the
+    /// refusal above is the range check's and nothing else's:
+    ///
+    /// ```
+    /// #![feature(const_trait_impl)]
+    /// use arvo::USize;
+    /// use hilavitkutin_sym::shape::OneOrigin;
+    /// use hilavitkutin_sym::{
+    ///     Domain,
+    ///     GenerativeDomain,
+    ///     Generator,
+    ///     Standard,
+    ///     SymKind,
+    ///     SymShape,
+    /// };
+    /// #[derive(Copy, Clone)]
+    /// struct Room;
+    /// const impl SymShape for Room {
+    ///     type Layout = <Standard as SymShape>::Layout;
+    ///     type Origin = OneOrigin;
+    ///
+    ///     const COUNTER_BITS: USize = <Standard as SymShape>::COUNTER_BITS;
+    ///     const ID_BITS: USize = <Standard as SymShape>::ID_BITS;
+    ///     const KIND_BITS: USize = <Standard as SymShape>::KIND_BITS;
+    ///     const ORIGIN_BITS: USize = <Standard as SymShape>::ORIGIN_BITS;
+    ///
+    ///     fn origin_index(_: Self::Origin) -> USize {
+    ///         USize(0)
+    ///     }
+    /// }
+    /// struct Peers;
+    /// impl Domain for Peers {
+    ///     type Shape = Room;
+    ///
+    ///     const KIND: SymKind<Room> =
+    ///         SymKind::new(arvo_bits::Bits::from_raw(0b010));
+    /// }
+    /// impl GenerativeDomain for Peers {}
+    /// const G: Generator<Peers> = Generator::single();
+    /// fn main() {
+    ///     let _g = G;
+    /// }
+    /// ```
     pub const fn single() -> Self
     where
         D::Shape: [const] SymShape<Origin = OneOrigin>,

@@ -229,6 +229,30 @@ fn collisions_at(bits: u32, keys: &[u64]) -> usize {
     reduced.windows(2).filter(|w| w[0] == w[1]).count()
 }
 
+/// Catalogue: two registered strings that share their low 28 bits take one
+/// const handle, so the handle of the second evicts to whichever string the
+/// const table holds first and the key on disk is the other string's.
+/// "const-7378" and "const-121144" hash to 0x8129587f57b6fb9a and
+/// 0x5e5c4d2577b6fb9a. The design does not say how this resolves, so the
+/// test states the behaviour a stored key needs, each string under its own
+/// key, and stays red where it runs.
+#[test]
+#[ignore = "catalogue: two registered strings sharing 28 hash bits take one const handle; tracked #str_const_two_strings_sharing_28_hash_bits_get_one_const_han"]
+fn two_registered_strings_sharing_28_bits_evict_to_their_own_keys() {
+    let interner = StringInterner::new(VecInterner::new());
+    let first = str_const!("const-7378");
+    let second = str_const!("const-121144");
+    assert_eq!(
+        evicted(evict_str(first, &interner)),
+        content_hash("const-7378")
+    );
+    assert_eq!(
+        evicted(evict_str(second, &interner)),
+        content_hash("const-121144"),
+        "the second string must be stored under its own key"
+    );
+}
+
 /// The keys `evict_str` hands back for `count` distinct interned strings.
 fn evicted_keys(interner: &StringInterner<VecInterner>, count: usize) -> Vec<u64> {
     (0 .. count)

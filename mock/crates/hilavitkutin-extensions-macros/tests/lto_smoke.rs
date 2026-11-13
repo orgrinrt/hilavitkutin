@@ -137,7 +137,7 @@ fn trampolines_survive_lto() {
         fixture_manifest,
     );
 
-    let build = Command::new("cargo")
+    let build = Command::new(env!("CARGO"))
         .arg("build")
         .arg("--release")
         .arg("--manifest-path")
@@ -235,7 +235,7 @@ fn assert_distinct_lifecycle_addresses(cdylib: &Path) {
 /// `CARGO_TARGET_DIR` in the environment, moves it, and a fixed path then
 /// finds no library and fails for a reason unrelated to LTO.
 fn fixture_target_dir(fixture_manifest: &Path) -> PathBuf {
-    let metadata = Command::new("cargo")
+    let metadata = Command::new(env!("CARGO"))
         .arg("metadata")
         .arg("--format-version")
         .arg("1")
