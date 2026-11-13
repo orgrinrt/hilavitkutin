@@ -183,3 +183,156 @@ written_by = "addendum A1 of 2026-06-11, constraint note 5, agent-written, eleva
 standing = "provisional"
 subject = "meta"
 keywords = ["MetaBlock", "MetaAccess", "MetaRef", "scheduler field", "Copy resources", "Cell", "compile-time enforcement"]
+
+[[tenet]]
+id = "the_adapt_unit_is_a_meta_unit_that_observes_the_end_of_the_schedule_and_the_consumer_registers_replaces_or_omits_it"
+what = "Adaptation is a meta unit that observes the end of the schedule. A default one ships with the providers crate; the consumer registers it for the default behaviour, ships its own for custom behaviour, or leaves it out."
+mechanism = "`AdaptWu` observing `ScheduleEnd`; default in `hilavitkutin-providers`; registered via `.with(AdaptWu::default())`."
+source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:15-15"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#inputs-from-prior-topics-binding"]
+quote = '''
+- **Topic 1 Axis 5.** Adapt is a meta-WU (`AdaptWu`) observing `ScheduleEnd`. Substrate ships default `AdaptWu` in `hilavitkutin-providers`; consumer registers via `.with(AdaptWu::default())` for substrate behaviour, ships own `AdaptWu` for custom, omits if not wanted. The integration shape is locked. This topic specifies what the WU body does and what metrics structure it reads/writes.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 5 adapt subsystem, decisions dated 2026-05-10; the text does not say whose each decision is"
+standing = "provisional"
+subject = "meta"
+keywords = ["AdaptWu", "meta unit", "ScheduleEnd", "adaptation", "providers crate", "opt-in"]
+
+[[tenet]]
+id = "each_adaptation_metric_is_its_own_axis_with_independent_tuning"
+what = "Adaptation was first proposed as four opaque modes; the maintainer reframed it during the topic conversation so that each metric is its own axis with independent tuning, in line with the workspace's multi-axis pattern."
+source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:48-48"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#axis-a-adaptconfig-multi-axis-shape-reframed-2026-05-10"]
+quote = '''
+Originally proposed as four opaque modes (Off / Fast / Standard / Aggressive). User reframed during topic conversation: each metric is its own axis with independent tuning, in line with the workspace's multi-axis design pattern (arvo Strategy markers, WorkUnit Hint).
+'''
+origin = "stated"
+standing = "provisional"
+subject = "meta"
+keywords = ["adapt axes", "multi-axis", "independent tuning", "adapt modes", "reframe"]
+
+[[tenet]]
+id = "the_nine_adapt_axes_ship_as_individual_inputs_and_kits_are_only_recipes_over_them"
+what = "The nine adaptation axes ship as individual builder inputs, each a specialised structure carrying only its own knobs, and there is no composite configuration structure above them. Kits are documented combinations of the axes: a consumer registers axes one by one, registers a kit, or registers a kit and then overrides one axis."
+mechanism = "`PassDurationConfig`, `PhaseEmaConfig`, `FiberEmaConfig`, `ChangeClassConfig`, `CacheResidencyConfig`, `ThroughputConfig`, `PredictiveParkingConfig`, `MemoryWatermarkConfig`, `CoreIdleTimeConfig` in `pub mod adapt`; sealed `AdaptAxis` with `is_enabled()` and `sample_skip()`; `StandardAdaptKit`, `OffAdaptKit`; a later `.with` replaces the slot for that axis."
+source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:265-265"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#decision-log"]
+quote = '''
+- [x] **Axis A. Multi-axis individual BuilderInputs + Kit-recipe presets (REFRAMED twice; final shape).** Nine axes ship as individual `BuilderInput`s in `pub mod adapt`: `PassDurationConfig`, `PhaseEmaConfig`, `FiberEmaConfig`, `ChangeClassConfig`, `CacheResidencyConfig`, `ThroughputConfig`, `PredictiveParkingConfig`, `MemoryWatermarkConfig`, `CoreIdleTimeConfig`. Each is a heterogeneous specialised struct (carries only its meaningful knobs); each impls `BuilderInput<Dispatch = <Self>Dispatch<Self>>` with its own dispatch slot (no collision); each impls sealed `AdaptAxis: Sealed` for the universal `is_enabled() + sample_skip()` accessors; each has `Default` impl (sensible-on baseline per axis) + `Self::off()` const fn (disabled shorthand). **No top-level `AdaptConfig` composite struct** — the user's Kit reframe replaced the struct + const fn presets with: (1) individual axis-configs as the primary surface and (2) Kit recipes (`StandardAdaptKit`, `OffAdaptKit`, optionally domain-specific consumer Kits) as documented combinations. Consumer registers axes individually `.with(my_phase_ema_config)`, or via a Kit `.with(StandardAdaptKit::default())`, or composes `.with(StandardAdaptKit).with(my_fiber_override)` (later `.with` replaces the slot for that axis). Cadence interleaving via per-axis `sample_skip`. Core-idle-time axis included for load-distribution sensitivity, breadcrumb mechanism in Topic 6's parking primitive. **C1 audit finding dissolves:** without a composite `AdaptConfig` struct, there is no `AdaptCfgDispatch<Self>` slot needed; each axis has its own slot via standard `BuilderInput` pattern. The workspace convention applies cleanly without scope-clarification gymnastics. Plan stage reads each axis-config via its accessor; absent registrations use the trivial-ctor default. **Workspace convention dogfooded properly:** individuals primary + Kits as recipes, same shape as Axis F's metrics layer. (Earlier "AdaptConfig as struct + const fn presets" framing retired by this reframe; the C1 audit response that locked `AdaptConfig` as a `BuilderInput` is also retired by the reframe.)
+'''
+origin = "stated"
+standing = "provisional"
+subject = "meta"
+keywords = ["adapt axis", "BuilderInput", "StandardAdaptKit", "OffAdaptKit", "no composite AdaptConfig", "sample_skip"]
+cites = ["each_adaptation_metric_is_its_own_axis_with_independent_tuning"]
+
+[[tenet]]
+id = "adapt_metrics_live_in_a_scratch_arena_and_the_adapt_unit_refreshes_a_consumer_readable_snapshot_at_the_end_of_the_schedule"
+what = "The adaptation metrics have a hybrid home: a scratch arena on the hot path, reached directly by the inner loop, and a snapshot resource the consumer can read, which the adapt unit refreshes from the arena at the end of the schedule. The snapshot is small."
+mechanism = "Axis B, option B3. The arena is reached by raw pointer; the snapshot is on the order of MAX_PHASES + MAX_FIBERS + MAX_LANES u64s. The vocabulary section names the raw region `AdaptArena` (not consumer-readable) and the consumer-readable side the per-axis `metrics::*` resources."
+source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:266-266, mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:25-26"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#decision-log"]
+quote = '''
+- [x] **Axis B. AdaptMetrics data plane: B3 hybrid.** Scratch-arena hot path + `Resource<SchedulerMetrics>` snapshot refreshed by AdaptWu at `ScheduleEnd`. Snapshot is small (per-phase + per-fiber + per-core counters, on the order of MAX_PHASES + MAX_FIBERS + MAX_LANES u64s). Inner loop accesses arena directly via raw pointer; consumer reads via standard `Has<SchedulerMetricsProvider>` Ctx bound.
+---
+- **AdaptArena**: the raw scratch-arena memory region (hot per-fiber lines + per-core park slots + cold SoA arena). Plan-stage allocated. Codegen + AdaptWu read/write directly via raw pointer. Not consumer-readable.
+- **`metrics::*` Resources** (per-axis sub-resources from Axis F): `PassDurationMetrics`, `PhaseEmaMetrics`, `FiberEmaMetrics`, `ChangeClassMetrics`, `CacheResidencyMetrics`, `ThroughputMetrics`, `PredictiveParkingMetrics`, `MemoryWatermarkMetrics`, `CoreIdleTimeMetrics`. Consumer-readable. Refreshed from AdaptArena by AdaptWu at `ScheduleEnd`.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 5 adapt subsystem, decisions dated 2026-05-10; the text does not say whose each decision is"
+standing = "provisional"
+subject = "meta"
+keywords = ["AdaptArena", "metrics snapshot", "scratch arena", "ScheduleEnd", "B3 hybrid", "consumer-readable"]
+
+[[tenet]]
+id = "inline_metric_slots_are_written_only_by_the_owning_fiber_s_core_and_read_by_the_adapt_unit_only_after_the_phase_barrier"
+what = "The inline metric slots on a fiber's line are written only by the core that owns the fiber and read only after the phase barrier, by the adapt unit at the end of the schedule; no other core reads them mid-pass. A lint enforces that no consumer unit's access set reads an axis's inline metric directly, only the adapt unit's snapshot resource."
+because = "A line that holds both the progress counter, which another core reads, and inline metric slots risks cache-line ping-pong."
+source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:269-269"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#decision-log"]
+quote = '''
+- [x] **(Audit-2 M3, 2026-05-10):** the per-fiber 64B line co-locating progress counter (cross-core read) + inline metric slots (producer-only writes) risks cache-line ping-pong. **Invariant locked:** inline metric slots on each per-fiber line are **write-only by the owning fiber's producer core, read-only-after-phase-barrier by AdaptWu at `ScheduleEnd`**. No other core reads the metrics slots mid-pass. The line is hot on the producer core throughout the fiber's execution (Modified state); the consumer-side `ldar` on the progress counter alone causes a coherence transition only at fiber completion, not during inner-loop morsels. This is the invariant the design relies on; a lint enforces it (no consumer-WU AccessSet may directly read an axis-config's inline-write metric — only the AdaptWu's snapshot Resource).
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 5 adapt subsystem, decisions dated 2026-05-10; the text does not say whose each decision is"
+standing = "provisional"
+subject = "meta"
+keywords = ["inline metrics", "producer core", "phase barrier", "cache-line ping-pong", "progress counter", "lint"]
+
+[[tenet]]
+id = "the_adapt_unit_fires_one_anomaly_flag_and_the_metrics_resources_carry_which_anomaly_it_was"
+what = "The adapt unit writes a single fired flag for an anomaly, and the metrics resources carry the detail of each anomaly as fields. A consumer observes the one flag and then queries the metrics resource for the specifics. The earlier shape of one flag type per anomaly is retracted."
+because = "Five flag types are five distinct write slots, and observers serialise behind the adapt unit; that risks an explosion of phases in the graph."
+mechanism = "`Virtual<AnomalyFired>`; for example `metrics::CoreIdleTimeMetrics::imbalance_detected: arvo::Bool`."
+source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:284-284"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#decision-log"]
+quote = '''
+- [x] **(Audit-2 M7, 2026-05-10):** AdaptWu writing five `Virtual<T>` types risks DAG phase-explosion (each Virtual is a distinct write slot, observers serialise behind AdaptWu). **Locked: AdaptWu writes a single `Virtual<AnomalyFired>` flag plus the five anomaly-typed `metrics::*` Resources carry per-anomaly detail.** Consumers observe `Virtual<AnomalyFired>` (single edge from AdaptWu), then query the relevant `metrics::*` Resource for the specifics. This collapses AdaptWu's write side from five Virtuals to one Virtual plus the already-locked `metrics::*` Resources. Per-anomaly Virtual proliferation (the previously locked Axis E shape) is retracted; the five anomaly types now live as fields on the snapshot Resources (e.g., `metrics::CoreIdleTimeMetrics::imbalance_detected: arvo::Bool`).
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 5 adapt subsystem, decisions dated 2026-05-10; the text does not say whose each decision is"
+standing = "provisional"
+subject = "meta"
+keywords = ["AnomalyFired", "virtual", "anomaly", "metrics resources", "phase explosion", "audit"]
+rules_out = ["Per-anomaly Virtual proliferation (the previously locked Axis E shape) is retracted"]
+
+[[tenet]]
+id = "the_adapt_unit_signals_and_does_not_re_plan"
+what = "The adapt topic does not own the execution of a re-plan. The adapt unit signals, and the plan caching and dirty detection topic owns the observer that triggers the actual re-planning."
+source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:314-314"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#notes"]
+quote = '''
+- Topic 5 does not own re-plan execution. AdaptWu signals `Virtual<ReplanRequested>`; Topic 9 (plan caching + dirty-detection) owns the observer that triggers actual re-planning.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 5 adapt subsystem, decisions dated 2026-05-10; the text does not say whose each decision is"
+standing = "provisional"
+subject = "meta"
+keywords = ["re-plan", "adapt unit", "plan caching", "dirty detection", "observer", "signal"]
+
+[[tenet]]
+id = "the_adapt_unit_predicts_the_wait_per_phase_and_the_parking_primitive_only_reads_the_prediction"
+what = "Predictive parking is split into policy and mechanism. The adapt unit computes the predicted wait per phase from history at the end of the schedule and writes it to the parking metrics; the parking primitive reads the prediction and picks spin, spin with backoff, or park by the three-tier rule."
+mechanism = "Axis G, option G1: `predicted_wait_per_phase[PhaseId]` written to `PredictiveParkingMetrics`; the parking contract is `(predicted_wait_ns: arvo::UFixed<...>) -> ParkStrategy`; under 100ns spin, 100ns to 10us spin_loop with backoff, over 10us park."
+source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:308-308"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#decision-log"]
+quote = '''
+- [x] **Axis G. Predictive parking boundary: G1 policy in metrics, mechanism in Topic 6.** Policy/mechanism separation. AdaptWu (Topic 5) computes `predicted_wait_per_phase[PhaseId]: arvo::UFixed<I, F, S>` from history at `ScheduleEnd`, writes to `PredictiveParkingMetrics`. Topic 6's parking primitive reads `predicted_wait_ns: arvo::UFixed<I, F, S>` (a fixed-point nanoseconds duration; exact widths picked by Topic 6 to cover the canonical wait range) and dispatches the three-tier rule (under 100ns spin / 100ns to 10us spin_loop+backoff / over 10us thread::park). Topic 6 contract becomes pure: `(predicted_wait_ns: arvo::UFixed<...>) -> ParkStrategy`. **Type-discipline note:** `USize` is forbidden here per `no-bare-primitives.md` (it names index/length, not duration). The fixed-point duration type is the substrate-canonical shape for time intervals. Reasons: single source of truth for prediction logic; Topic 6 stays narrow; multi-axis-friendly (AdaptWu has access to all metrics; parking primitive does not need to declare AccessSet over them); update-rate separation (predictions cold-path once per pass; parking warm-path many times per pass; G3 would repeat prediction logic on the warm path); consumer-readable predictions (custom Executors share the same predictions); SRP-clean.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 5 adapt subsystem, decisions dated 2026-05-10; the text does not say whose each decision is"
+standing = "provisional"
+subject = "meta"
+keywords = ["predictive parking", "predicted wait", "policy and mechanism", "ParkStrategy", "PredictiveParkingMetrics"]
+
+[[tenet]]
+id = "adapt_writes_happen_at_fiber_completion_or_phase_boundaries_and_never_inside_the_inner_record_loop"
+what = "The adapt unit must not break the ASM 6-check invariants: writes to the adaptation metrics happen at fiber completion or at phase boundaries, never inside the inner record loop."
+source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:18-18"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#inputs-from-prior-topics-binding"]
+quote = '''
+- **Topic 4 Axis F.** AdaptWu must not break the ASM 6-check invariants: writes to AdaptMetrics happen at fiber-completion or phase boundaries, never inside the inner record loop.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 5 adapt subsystem, decisions dated 2026-05-10; the text does not say whose each decision is"
+standing = "provisional"
+subject = "meta"
+keywords = ["adapt metrics", "inner loop", "fiber completion", "phase boundary", "ASM invariants"]
+
+[[tenet]]
+id = "the_adapt_unit_reads_its_metrics_through_a_snapshot_at_the_end_of_the_schedule_and_mutates_nothing_through_it"
+what = "At the end of the schedule the adapt unit observes the adaptation metrics through a resource snapshot, to derive the predicted waits it writes for the next frame. Through the snapshot it only reads."
+mechanism = "`ResourceSnapshot<AdaptMetrics>`; `fn execute<'phase>(&self, ctx: &Ctx<'phase>)` with the context holding the snapshot."
+source = "mock/design_rounds/202605101036/202605101036_topic.resource-resolution.md:27-27, mock/design_rounds/202605101036/202605101036_topic.resource-resolution.md:78-78"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.resource-resolution::#axis-a-resourcesnapshot-r-v1-semantics"]
+quote = '''
+Use case: AdaptWu at ScheduleEnd phase observes `ResourceSnapshot<AdaptMetrics>` to derive `predicted_wait_ns[]` writes for the next frame. No mutation; pure read.
+---
+- **Amendment 5:** `AdaptMetrics` snapshot at ScheduleEnd is realised via `ResourceSnapshot<AdaptMetrics>` per axis A. AdaptWu's `execute` signature is `fn execute<'phase>(&self, ctx: &Ctx<'phase>) -> ...` with Ctx holding the snapshot.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 8 resource resolution of 2026-05-11, which calls its decisions autonomous trivial calls"
+standing = "provisional"
+subject = "meta"
+keywords = ["ResourceSnapshot", "AdaptWu", "ScheduleEnd", "predicted wait", "read only"]

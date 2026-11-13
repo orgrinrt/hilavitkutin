@@ -299,3 +299,138 @@ written_by = "engine design template as on the branch recover/unlanded-rounds-an
 standing = "provisional"
 subject = "change"
 keywords = ["Replaceable", "swap", "blob install", "store-dirty mark", "replace_value", "per-leaf copy", "Selector witness"]
+
+[[tenet]]
+id = "the_adapt_unit_publishes_its_metrics_snapshot_through_two_buffers_and_one_index_it_flips"
+what = "The adapt unit publishes its metrics snapshot by a double buffer. The metrics resource holds two buffers and an index that says which is live. At the end of the schedule the adapt unit fills the buffer that is not live and then publishes it with one atomic store of the index; a consumer unit loads the index and reads the buffer it names."
+mechanism = "`MetricsResource<T> { buffer_a, buffer_b, current: AtomicUsize }`; the writer writes the snapshot fields `Relaxed`, then `current.store(next_idx, Release)`; the reader does `current.load(Acquire)`, then `Relaxed` reads. The pattern resolves audit finding M1."
+source = "mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:1176-1176, mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:1181-1198"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.plan-algorithm-chain::#s7-cross-thread-atomic-ordering-protocol-added-2026-05-10-per-audit-2-structural-recommendation"]
+quote = '''
+| AdaptWu→`metrics::*` snapshot publish | AdaptWu (on whatever core runs the meta-WU) | Write all snapshot fields with `Relaxed`; then `current_buffer_idx.store(new_idx, Release)` (double-buffer pattern) | Consumer WU reading `metrics::*` | `current_buffer_idx.load(Acquire)`; then `Relaxed` reads of snapshot fields | `stlr` (idx only) / `ldar` (idx only) | `mov` / `mov` |
+---
+**Double-buffer pattern for AdaptWu snapshot publish (resolves audit M1):**
+
+```rust
+struct MetricsResource<T> {
+    buffer_a: T,
+    buffer_b: T,
+    current: AtomicUsize,  // 0 = a is live, 1 = b is live
+}
+
+// AdaptWu at ScheduleEnd:
+fn execute(&self, ctx: &Self::Ctx) {
+    let mut r = ctx.writer::<MetricsResource<...>>();
+    let next_idx = 1 - r.current.load(Ordering::Relaxed);
+    let next_buf = if next_idx == 0 { &mut r.buffer_a } else { &mut r.buffer_b };
+    // ... fill next_buf from AdaptArena slots (Relaxed reads paired
+    //     with phase-barrier Acquire fence at WU entry) ...
+    r.current.store(next_idx, Ordering::Release);  // single atomic publish
+}
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic plan algorithm chain, section S7 added 2026-05-10 after an audit; the text does not say whose it is"
+standing = "provisional"
+subject = "change"
+keywords = ["double buffer", "flipped index", "snapshot publish", "AdaptWu", "MetricsResource", "current_buffer_idx", "Release", "Acquire"]
+
+[[tenet]]
+id = "a_resource_snapshot_is_a_read_only_view_captured_at_a_phase_barrier_and_it_cannot_outlive_the_phase"
+what = "A resource snapshot is a read-only typed view of a resource captured at a named phase boundary, after the wake and before the next phase's morsels begin. While it lives the storage beneath it is not being written, its content is what the resource held when it was captured, and it cannot escape across a phase barrier."
+mechanism = "`ResourceSnapshot<'phase, R>` with `captured_at: PhaseId`; lifetime invariance prevents lifting it out of the phase."
+source = "mock/design_rounds/202605101036/202605101036_topic.resource-resolution.md:12-12, mock/design_rounds/202605101036/202605101036_topic.resource-resolution.md:18-18, mock/design_rounds/202605101036/202605101036_topic.resource-resolution.md:22-25, mock/design_rounds/202605101036/202605101036_topic.resource-resolution.md:29-29"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.resource-resolution::#axis-a-resourcesnapshot-r-v1-semantics"]
+quote = '''
+A `ResourceSnapshot<R: Resource>` is a **read-only typed view** captured at a named phase boundary. Concretely:
+---
+    captured_at: PhaseId,
+---
+Snapshot captures only at phase barrier (after futex-wake, before next phase's morsels begin). Workers that hold a `ResourceSnapshot<R>` are guaranteed:
+- The underlying `R::Owned` storage is not being written during the snapshot's lifetime.
+- The snapshot's content matches what `R::Owned` held at `captured_at`.
+- Snapshot lifetime is bounded by the current phase (cannot escape across phase barriers).
+---
+Lifetime: `ResourceSnapshot<'phase, R>`. Once `'phase` ends (next phase barrier), the snapshot is invalid; lifetime invariance prevents lift-out.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 8 resource resolution of 2026-05-11, which calls its decisions autonomous trivial calls"
+standing = "provisional"
+subject = "change"
+keywords = ["ResourceSnapshot", "phase barrier", "read-only view", "phase-bounded", "lifetime", "captured_at"]
+
+[[tenet]]
+id = "the_typed_phase_bounded_view_is_the_one_meaning_of_resource_snapshot_and_its_signature_lands_with_the_data_plane"
+what = "The name of the resource snapshot stood for two unrelated ideas: a placeholder stack array meant for caching resources before a morsel loop, and the read-only typed view captured at a phase barrier. The placeholder is deleted outright and the typed view is the surviving meaning. Its concrete signature was stale and is derived again with the data plane; the stack-caching idea is kept and belongs to the dispatch code generation."
+source = "mock/design_rounds/202605282256/202605282256_topic.resource-snapshot-disambiguation.md:10-10, mock/design_rounds/202605282256/202605282256_topic.resource-snapshot-disambiguation.md:12-12, mock/design_rounds/202605282256/202605282256_topic.resource-snapshot-disambiguation.md:14-14, mock/design_rounds/202605282256/202605282256_topic.resource-snapshot-disambiguation.md:30-30"
+provenance = ["mock::design_rounds::202605282256::202605282256_topic.resource-snapshot-disambiguation::#topic-disambiguate-resourcesnapshot-semantics-hila-runtime-b2-335"]
+quote = '''
+The name `ResourceSnapshot` currently denotes two unrelated ideas. The engine crate ships a placeholder `ResourceSnapshot<const N>`: a fixed-size stack array of `Slot` (a `UFixed<64,0>` payload) with a sibling `ResourceCache<'a, R, N>` wrapper and a round-trip test. Its module doc describes a dispatch-time optimization (cache accessed resources to a stack-local array before a morsel loop so LLVM proves the stack does not alias the column buffers, then run the loop with the resources in registers). The locked design (round 202605101036 topic 8 axis A) describes something else entirely under the same name: `ResourceSnapshot<'phase, R>`, a read-only typed view captured at a phase barrier, lifetime-invariant and phase-bounded, observed by `AdaptWu` at `ScheduleEnd` to derive next-frame predictions. One name, two concepts, neither matching the other.
+---
+The placeholder is dead scaffolding. Grep finds no engine call site: only its own definition, the `ResourceCache` wrapper (also unused), the re-exports in `resource/mod.rs`, and one round-trip test. It is not on any dispatch path. Under the pre-1.0 no-legacy-shims rule it is deleted outright, not deprecated.
+---
+The locked design's typed view is the surviving meaning of `ResourceSnapshot`, but its DESIGN signature is stale. `hilavitkutin-api/DESIGN.md.tmpl` documents `ResourceSnapshot<'phase, R: BuilderInput<Dispatch = ResourceDispatch>>` with an `inner: Pin<&'phase R::Owned>` field. Neither `ResourceDispatch` nor `BuilderInput::Owned` exists: the round 202605101036 topic 2 builder reshape replaced per-kind dispatch routers with `StoreDispatch` / `UnitDispatch` / `KitDispatch` / `PlatformDispatch` / `RunCfgDispatch`, and `BuilderInput` carries only `Init` and `Dispatch` associated types. The signature predates the reshape. Its concrete form must be re-derived against the real `BuilderInput` contract, and that re-derivation depends on how a registered store exposes its scheduler-owned storage, which is the Phase B data-plane design. So the typed view ships with the data plane (HILA-RUNTIME-C6), not in this round. This round corrects the DESIGN so it stops presenting a stale signature as a shipping contract.
+---
+3. Record in `hilavitkutin/BACKLOG.md.tmpl` that the dispatch-time stack-caching-of-resources optimization (the idea the placeholder module doc described) belongs to the dispatch codegen (HILA-RUNTIME-C2, Phase D rust-pipe pattern), not a standalone type. The idea is preserved; its home is corrected.
+'''
+origin = "proposed"
+written_by = "design round 202605282256, topic of 2026-05-28 on the two meanings of the resource snapshot; the text does not say whose it is"
+standing = "provisional"
+subject = "change"
+keywords = ["ResourceSnapshot", "placeholder", "stack caching", "typed view", "data plane", "disambiguation"]
+cites = ["a_resource_snapshot_is_a_read_only_view_captured_at_a_phase_barrier_and_it_cannot_outlive_the_phase"]
+
+[[tenet]]
+id = "as_of_round_202605101036_plan_affecting_is_a_sealed_marker_and_a_resource_without_it_is_swapped_cheaply"
+what = "In the round of May 2026 the marker that makes a resource plan-affecting is sealed, taken by consumer opt-in or derived by macro. Replacing the value of a resource that carries it sets the dirty bit for a plan recompute; replacing one that does not is a cheap value swap. The default is not plan-affecting."
+mechanism = "`pub trait PlanAffecting: BuilderInput + private::Sealed {}`; replacement through `Scheduler::replace_resource`."
+source = "mock/design_rounds/202605101036/202605101036_topic.resource-resolution.md:33-41"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.resource-resolution::#axis-b-planaffecting-marker-trait"]
+quote = '''
+Sealed marker trait in `hilavitkutin-api`. Implementations are opt-in by consumers OR derived by macro:
+
+```rust
+pub trait PlanAffecting: BuilderInput + private::Sealed {}
+```
+
+When a `BuilderInput` impl carries `PlanAffecting`, replacing its value via `Scheduler::replace_resource` (or the equivalent post-rename method) triggers a plan recompute dirty bit. When it does NOT, replacement is a cheap value swap.
+
+Default: NOT plan-affecting. Consumers opt in for resources whose value shape changes the plan (e.g., the `RunCfg` resource itself — the dispatch routing target). Most app-state resources (column data, intermediate accumulators, diagnostics) are NOT plan-affecting.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 8 resource resolution of 2026-05-11, which calls its decisions autonomous trivial calls"
+standing = "provisional"
+subject = "change"
+keywords = ["PlanAffecting", "sealed marker", "replace_resource", "value swap", "plan recompute", "dirty bit"]
+
+[[tenet]]
+id = "a_storage_heritage_note_lists_the_per_morsel_snapshot_buffer_s_double_buffering_as_superseded_by_generation_counters"
+what = "A note that puts the storage heritage in order lists what of it is stale or superseded. Among it are temporal storage, as specific to loimu, and the double-buffering of the per-morsel snapshot buffer, as superseded by generation counters."
+source = "mock/research/202605302130_unified-storage-design-archaeology.md:67-67"
+provenance = ["mock::research::202605302130_unified-storage-design-archaeology::#falls-in-nicely-vs-stale"]
+quote = '''
+Stale / superseded: `const N: Cap` / `const N: usize` on storage types (-> `Capacity`); `VersionedStore` threading a const-generic `N` (-> thread `Capacity`); slice-returning `as_slice`/`as_mut_slice` (-> raw pointers, R6); `StoreId` hash identity with `LazyLock` (-> dense plan-time `u16`); `HashMap`-backed `StoreMap` (-> const-array + plan-time index); loimu's dynamic view affinity / hysteresis / restructuring (-> static plan-time co-located fiber arenas); loimu's seven access modes + three fusion tiers (-> Read/Write + commutativity); temporal storage (loimu-specific); per-morsel `SnapshotBuffer` double-buffering (-> generation counters).
+'''
+origin = "proposed"
+written_by = "unified storage design archaeology and synthesis note of 2026-05-30, written for the unified columnar storage task; the text does not say whose it is"
+standing = "provisional"
+subject = "change"
+keywords = ["SnapshotBuffer", "double-buffering", "generation counters", "superseded", "temporal storage", "heritage", "archaeology"]
+cites = ["loimu_double_buffers_record_data_and_its_readers_get_the_frozen_snapshot"]
+
+[[tenet]]
+id = "an_expert_survey_places_the_triple_buffer_temporal_model_in_loimu_s_domain_and_not_in_the_engine"
+what = "A survey of alternative storage models says of loimu's storage model that the insight worth taking is to co-locate what units read together, which the engine's own analysis already approximates, and that the triple-buffer temporal model belongs to loimu's domain, for extrapolation in the interface, and not to the engine."
+source = "mock/research/202606210600_expert-alternatives-storage-model.md:172-175"
+provenance = ["mock::research::202606210600_expert-alternatives-storage-model::#e-loimu-s-storagerecord-views-model-as-is"]
+quote = '''
+- **what is worth grafting:** the *affinity insight* (§5 option 4): co-locate members that WUs read
+  together. In hilavitkutin terms that is a build-time decision the existing waist/trunk analysis
+  already approximates (fibers that read the same resources run together). The triple-buffer temporal
+  model is loimu-domain (UI extrapolation), not engine substrate.
+'''
+origin = "proposed"
+written_by = "expert survey of alternative storage models, research deliverable of 2026-06-19 for round 202606210600, agent-written"
+standing = "provisional"
+subject = "change"
+keywords = ["triple buffer", "temporal model", "loimu domain", "UI extrapolation", "read affinity", "storage model survey"]
+cites = ["loimu_s_layers_stay_in_loimu_and_hilavitkutin_provides_the_foundation"]

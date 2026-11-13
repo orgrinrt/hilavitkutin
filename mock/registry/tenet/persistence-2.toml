@@ -80,3 +80,25 @@ written_by = "the design template of hilavitkutin-persistence, agent-written, un
 standing = "provisional"
 subject = "persistence"
 keywords = ["standalone ecosystem crate", "provider impls", "vehje", "loimu", "no engine-side glue", "substrate consumers"]
+
+[[tenet]]
+id = "the_engine_reaches_persistence_only_through_a_resource_the_consumer_wires_and_never_names_the_persistence_crate_s_types"
+what = "Persistence is the cold-store sibling of the runtime data plane, and the integration is narrow on purpose: the engine never depends on the persistence crate's types directly, and the consumer wires persistence in as a pluggable resource. Reads on the hot side copy from cold into a column at the plan stage, so the runtime touches the column and not persistence; writes on the cold side are a unit at the end of the pass draining accumulator columns into persistence."
+because = "This preserves the rule that the persistence crate is a standalone ecosystem crate."
+mechanism = "`Resource<P>` where `P: PersistenceProvider`; a PassEnd unit calls `PersistenceProvider::commit`."
+source = "mock/design_rounds/202605101036/202605101036_topic.resource-resolution.md:47-53"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.resource-resolution::#axis-c-persistence-spine-hilavitkutin-persistence-integration"]
+quote = '''
+The persistence spine is the cold-store sibling to the runtime data plane. `hilavitkutin-persistence` ships `PersistenceContext` (existing crate). The runtime engine accesses persistence via:
+
+- `Resource<P>` where `P: PersistenceProvider`. Pluggable per consumer.
+- Hot-side (in-frame) reads: copy from cold into a `Column<T>` at PlanStage; runtime touches the column, not persistence directly.
+- Cold-side writes: PassEnd WU drains accumulator columns into persistence via `PersistenceProvider::commit`.
+
+The integration is intentionally narrow: the engine never depends on `hilavitkutin-persistence` types directly. Consumers wire it up via Provider tuples. This preserves the standalone-ecosystem-crate rule for hilavitkutin-persistence.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 8 resource resolution of 2026-05-11, which calls its decisions autonomous trivial calls"
+standing = "provisional"
+subject = "persistence"
+keywords = ["persistence spine", "PersistenceProvider", "cold store", "PassEnd", "commit", "hot side column", "standalone crate"]

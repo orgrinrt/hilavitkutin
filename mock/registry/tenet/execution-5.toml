@@ -171,3 +171,36 @@ written_by = "engine design template as on the branch recover/unlanded-rounds-an
 standing = "provisional"
 subject = "execution"
 keywords = ["region boundaries", "merge offsets", "shared computation", "accumulator merge", "per-core region"]
+
+[[tenet]]
+id = "at_every_phase_boundary_the_engine_fences_release_on_the_producing_side_and_acquire_on_the_consuming_side"
+what = "At every phase boundary the engine emits a release fence on the producer side and an acquire fence on the consumer side. Worker writes between phase boundaries may be relaxed, since the phase barrier carries the visibility across threads; the adapt unit observes after the last barrier, so one acquire fence at its entry is enough for every metrics read."
+source = "mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:1210-1212"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.plan-algorithm-chain::#s7-cross-thread-atomic-ordering-protocol-added-2026-05-10-per-audit-2-structural-recommendation"]
+quote = '''
+**Phase-barrier release-fence convention (resolves audit M2):**
+
+At every phase boundary, the engine emits a release fence on the producer side and an acquire fence on the consumer side. Worker writes between phase boundaries (per-morsel inline metric increments, idle accumulator updates) can use `Relaxed`; the phase barrier carries the cross-thread visibility. AdaptWu's `ScheduleEnd` observation sits after the final phase barrier; an `Acquire` fence at its entry suffices for all metrics reads.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic plan algorithm chain, section S7 added 2026-05-10 after an audit; the text does not say whose it is"
+standing = "provisional"
+subject = "execution"
+keywords = ["phase barrier", "release fence", "acquire fence", "Relaxed", "cross-thread visibility", "AdaptWu"]
+
+[[tenet]]
+id = "every_cross_thread_atomic_of_the_design_stands_in_one_table_with_its_ordering_on_each_side"
+what = "The contract for atomic ordering across threads is consolidated in one table: every cross-thread atomic in the design appears in it with the exact ordering on each side. A mismatch against the table when the source changelist is locked blocks the lock."
+because = "Two audit rounds found the ordering specified inconsistently across the progress counter, the snapshot, the virtuals, the parking predictions and the per-core idle breadcrumb."
+source = "mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:1170-1170, mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:1219-1219"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.plan-algorithm-chain::#s7-cross-thread-atomic-ordering-protocol-added-2026-05-10-per-audit-2-structural-recommendation"]
+quote = '''
+The substrate has multiple cross-thread atomic interactions; the audit-1 + audit-2 rounds found ordering was specified inconsistently across S3 (progress counter), Topic 5 Axis B (snapshot), Topic 5 Axis E (Virtuals), Topic 5 Axis G (parking predictions), and the per-core idle breadcrumb. S7 consolidates the contract; every cross-thread atomic in the design appears in this table with the exact `Ordering` on each side and the architectural mnemonic per platform.
+---
+This is the single biggest soundness anchor for the runtime; mismatches against this table at SRC-CL-lock time block the lock.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic plan algorithm chain, section S7 added 2026-05-10 after an audit; the text does not say whose it is"
+standing = "provisional"
+subject = "execution"
+keywords = ["atomic ordering", "cross-thread", "ordering table", "soundness anchor", "progress counter", "audit"]
