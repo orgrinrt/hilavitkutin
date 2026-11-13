@@ -9,6 +9,7 @@ members = [
     "b2-resize-loses-records",
     "c1-oversized-cell",
     "c2-packed-word-race",
+    "a3-morsel-interpreter",
 ]
 
 [workspace.package]
