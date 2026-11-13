@@ -322,13 +322,15 @@ ledgers = "mock/catalogue.md"
 field = "superseded_by"
 
 # A provisional stamp on a tenet is written whole, names the question ticket
-# that asks the maintainer, and never sits on a ratified tenet.
+# that asks the maintainer, and sits only on a provisional tenet nothing
+# supersedes.
 [lints.a-provisional-stamp-is-not-a-ratification]
 namespaces = "tenet"
 tiered = "tenet"
 tier_field = "standing"
 ratified = "ratified"
 stampable = "provisional"
+superseded_by_field = "superseded_by"
 
 # ---------------------------------------------------------------------------
 # Primitive-substrate introducers (task #125)
