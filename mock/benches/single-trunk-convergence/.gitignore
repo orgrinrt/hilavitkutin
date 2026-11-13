@@ -1,2 +1,5 @@
 # A link to the shared build directory, made by the orchestrator.
 /target
+# The harness's staging of a run in progress, promoted into results/ when the
+# run completes.
+/results/.inflight/

@@ -17,6 +17,9 @@
 //! arms build into the shared target directory; `bench.toml` names them
 //! under `target/`, which this binary links to the directory it was itself
 //! built into when the link is missing.
+//!
+//! `--summary [<results dir>]` folds the promoted CSVs into
+//! `<results dir>/summary.csv` instead of running anything (see `summary`).
 
 use std::path::Path;
 use std::process::ExitCode;
@@ -27,7 +30,24 @@ use mockspace_bench_harness::{self as harness, BenchConfig, RoutineSpec, Workloa
 use stc_support::workload::{APPEND, FOLD_HEAVY, FOLD_LIGHT, by_name};
 use stc_support::{Conv, input_bytes};
 
+mod section;
+mod summary;
+
 fn main() -> ExitCode {
+    let mut args = std::env::args().skip(1);
+    if args.next().as_deref() == Some("--summary") {
+        let dir = args.next().unwrap_or_else(|| "results".to_string());
+        return match summary::run(Path::new(&dir)) {
+            Ok(path) => {
+                println!("{}", path.display());
+                ExitCode::SUCCESS
+            },
+            Err(e) => {
+                eprintln!("error: {e}");
+                ExitCode::FAILURE
+            },
+        };
+    }
     if let Err(e) = link_target() {
         eprintln!("error: {e}");
         return ExitCode::FAILURE;
@@ -77,11 +97,12 @@ fn build_workload(name: &str, _n: usize) -> Workload {
 /// The routine of one section: `Conv<N>` with the input builder for its
 /// workload and worker count.
 fn routine_for(config: &BenchConfig) -> Option<RoutineSpec> {
-    let section = config.bench_name.rsplit('/').next()?;
-    let (name, w) = section.rsplit_once("_w")?;
-    let kind = if name == "short" { FOLD_LIGHT } else { by_name(name)?.id };
-    // `<workload>_w<W>` or `<workload>_w<W>_<band>`.
-    let w: u32 = w.split('_').next()?.parse().ok()?;
+    let section = section::parse(&config.bench_name)?;
+    let kind = match section.workload {
+        "short" => FOLD_LIGHT,
+        name => by_name(name)?.id,
+    };
+    let w = section.workers;
     let mut bridge = match config.n {
         16 => routine_bridge!(Conv<16>),
         64 => routine_bridge!(Conv<64>),
