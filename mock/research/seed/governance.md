@@ -99,8 +99,14 @@ statements with the settled design:
    witnessed blob install, S2 plan-dirty band trigger, and S4
    exclusivity ship with the S6 suite green; the S7 benches confirm the
    cost asymmetry (install is the linear memcpy; a value swap pays its
-   cone, a plan swap pays the band, neither leaks). Awaits the op
-   ratification of S1 through S7; S3 and Swap-D (the commissioned
+   cone, a plan swap pays the band, neither leaks). Landed under a
+   provisional stamp on op's word of 2026-11-13, "Land as provisional",
+   chosen among ratify and land, land as provisional, ratify with
+   changes, and keep holding: the implementation ships and S1 through S7
+   are not ratified. Two gaps stay open against the spec (the plan-dirty
+   bit keyed by the store position where S2 says the plan-affecting id;
+   a fused frame that neither consumes nor honours the bit). S3 and
+   Swap-D (the commissioned
    cold-write-then-stream collection-swap bench, deciding whether the
    morsel budget's write-collection term absorbs swap traffic) stay
    #344-gated inside the spec. See [[storage]].
