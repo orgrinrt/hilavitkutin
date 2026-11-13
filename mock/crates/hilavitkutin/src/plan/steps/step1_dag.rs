@@ -87,12 +87,18 @@ pub fn build_dag<D: PlanDims>(inputs: &PlanInputs<D::Units, D::Stores>) -> Depen
 /// the registration order is topological. WAW edges are appended only for
 /// `source < destination`, so they never back-edge; only a RAW edge (a reader
 /// registered before its writer) can.
+///
+/// An edge between two units of different rank is no back-edge whatever the
+/// slots: the lifecycle bands are dispatched in the sequence of their ranks
+/// and not along the carrier, so a close unit may be registered ahead of the
+/// units it follows, and a unit of a leading band after its readers.
 pub fn first_back_edge<D: PlanDims>(
     inputs: &PlanInputs<D::Units, D::Stores>,
 ) -> Maybe<(USize, USize)> {
     let g = build_dag::<D>(inputs);
     let cols = g.col_indices.as_ref();
     let row_offsets = g.row_offsets.as_ref();
+    let ranks = inputs.ranks.as_ref();
     let mut from = 0;
     let n = g.unit_count.0;
     while from < n && from < cap_size(<D::Units as Capacity>::CAP) {
@@ -104,7 +110,7 @@ pub fn first_back_edge<D: PlanDims>(
             // A back-edge: the source slot is not strictly before the
             // destination slot, so the carrier order would dispatch the
             // destination (reader) before the source (writer).
-            if from >= to {
+            if from >= to && ranks[from].0 == ranks[to].0 {
                 return Maybe::Is((USize(from), USize(to))); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-wrap internal slot indices; tracked: #72
             }
             k += 1;

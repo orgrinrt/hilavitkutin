@@ -304,6 +304,49 @@ impl<
         // happens-before).
         let epoch = USize(self.virtual_epoch.load(Ordering::Relaxed));
         let total = total.0; // lint:allow(no-bare-numeric) reason: frame record count; tracked: #121
+        // A meta band is dispatched once in a frame by one core over the whole
+        // record range, with no consumer unit beside it. Core 0 runs the band's
+        // phase as the owner of every trunk in it (`ncores = 1`), and the other
+        // cores go straight on to the waist barrier, so a maintenance unit does
+        // not ride the per-core trunk split or the morsel windows. The band
+        // bounds are const, so a carrier with no meta unit folds the test away.
+        let pre = pre_consumer_phase_count::<
+            WuVals,
+            Stores,
+            GW,
+            <D as PlanDims>::Units,
+            <D as PlanDims>::Stores,
+            <D as PlanDims>::AdjRow,
+        >()
+        .0; // lint:allow(no-bare-numeric) reason: leading-band bound; tracked: #121
+        let cend = consumer_phase_end::<
+            WuVals,
+            Stores,
+            GW,
+            <D as PlanDims>::Units,
+            <D as PlanDims>::Stores,
+            <D as PlanDims>::AdjRow,
+        >()
+        .0; // lint:allow(no-bare-numeric) reason: trailing-band start; tracked: #121
+        if p.0 < pre || p.0 >= cend {
+            if core.0 == 0 {
+                let all = <<D as PlanDims>::AdjRow as Identity<Additive>>::IDENTITY.bitnot();
+                let mut rank = <USize as Identity<Additive>>::IDENTITY;
+                self.wu_values.dispatch_core(
+                    &self.wu_values,
+                    p,
+                    <USize as Identity<Additive>>::IDENTITY,
+                    USize(1), // lint:allow(no-bare-numeric) reason: designated core owns every trunk; tracked: #121
+                    &mut rank,
+                    &self.bindings,
+                    &self.meta_block,
+                    MorselRange::new(<USize as Identity<Additive>>::IDENTITY, USize(total)),
+                    all,
+                    epoch,
+                );
+            }
+            return;
+        }
         if total == 0 {
             // Record-less frame: one empty-morsel dispatch_core so a resource-only
             // trunk this core owns runs exactly once. All-ones dirty:

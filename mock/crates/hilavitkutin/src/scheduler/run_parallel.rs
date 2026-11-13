@@ -242,8 +242,10 @@ impl<
         // remaining pre-consumer bands) dispatch here, before the publish, so
         // every worker's consumer slice work happens-after them; the trailing
         // bands dispatch after the await plus merge below. `core = 0, ncores =
-        // 1` makes this thread own every trunk in the dispatched phases. The
-        // band ranges are const and empty for a no-meta carrier.
+        // 1` makes this thread own every trunk in the dispatched phases, and
+        // each band is handed the whole record range, since a maintenance unit
+        // may write at a record it names from data. The band ranges are const
+        // and empty for a no-meta carrier.
         // Swap spec S2, parallel path: decide and publish the plan band while
         // every worker is parked, so the worker phase loops and the
         // leading-band dispatch below agree.
@@ -292,7 +294,7 @@ impl<
                         &(*me).meta_block,
                         MorselRange::new(
                             <USize as Identity<Additive>>::IDENTITY,
-                            <USize as Identity<Additive>>::IDENTITY,
+                            (*me).record_count,
                         ),
                         all,
                         epoch,
@@ -390,7 +392,7 @@ impl<
                         &(*me).meta_block,
                         MorselRange::new(
                             <USize as Identity<Additive>>::IDENTITY,
-                            <USize as Identity<Additive>>::IDENTITY,
+                            (*me).record_count,
                         ),
                         all,
                         epoch,

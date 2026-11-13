@@ -172,8 +172,11 @@ impl<
     /// order: a unit is dirty when directly seeded or any predecessor is
     /// dirty. Positions past the live unit count carry empty masks and stay
     /// clean. The walk over the array length runs the predecessors-before-
-    /// dependents single pass because carrier position equals topological
-    /// order (`build` validated it).
+    /// dependents single pass because carrier position is a topological
+    /// order among the consumer units (`build` validated it). An edge between
+    /// two ranks may run against the carrier. The pass does not need it: a
+    /// maintenance unit is never gated by this mask, and what a leading band
+    /// writes reaches its readers through the seed.
     ///
     /// The stores the maintenance units of the pass's leading bands write
     /// join the seed: such a store is taken as changed in every pass its

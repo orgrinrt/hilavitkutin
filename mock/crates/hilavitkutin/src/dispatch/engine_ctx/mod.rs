@@ -57,6 +57,7 @@ mod selectors;
 pub use bundles::{AccumBundleOf, ColBundleOf, CtxFor, ResourceBundleOf, VirtBundleOf};
 pub use col_accum_project::{AccumProject, ColProject};
 pub use col_select::{ColMember, ColSelector};
+pub use ctx_meta_resource::Appended;
 pub use lists::{
     AccPtrCons,
     AccPtrNil,

@@ -67,19 +67,31 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt>
 // unit's context has no `appended()`, so it cannot read an accumulator: the
 // records of one are whole only once the units that append have returned.
 
+/// A maintenance unit's context, seen as the reader of the pass's appends.
+///
+/// `appended()` hands this out and not the context itself. The reader's
+/// `each` and the context's own `each()` would otherwise be two methods of
+/// one name on one type, and a unit that imports both accessor traits could
+/// call neither without spelling the trait out.
+#[repr(transparent)]
+pub struct Appended<Ctx>(Ctx);
+
 impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt> AccumReaderApi<R>
-    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MetaRef<'frame>>
+    for Appended<EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MetaRef<'frame>>>
 {
 }
 
 impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt> HasAccumReader<R>
     for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MetaRef<'frame>>
 {
-    type Provider = Self;
+    type Provider = Appended<Self>;
 
     #[inline(always)]
     fn appended(&self) -> &Self::Provider {
-        self
+        // SAFETY: `Appended<Ctx>` is `repr(transparent)` over `Ctx`, so the
+        // two have one layout and a shared reference to the context is a
+        // shared reference to the view, for the same lifetime.
+        unsafe { &*(self as *const Self as *const Appended<Self>) }
     }
 }
 
@@ -102,13 +114,13 @@ unsafe impl<
     T: ColumnValue,
     I,
 > ResolveAccumRead<T, I>
-    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MetaRef<'frame>>
+    for Appended<EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MetaRef<'frame>>>
 where
     RBundle: SnapSelector<AccSnap<T>, I>,
 {
     #[inline]
     fn resolve_each<F: FnMut(T)>(&self, mut f: F) {
-        let acc = <RBundle as SnapSelector<AccSnap<T>, I>>::get(&self.reads);
+        let acc = <RBundle as SnapSelector<AccSnap<T>, I>>::get(&self.0.reads);
         let mut i = 0; // lint:allow(no-bare-numeric) reason: record index along the populated prefix; tracked: #121
         while i < acc.len.0 {
             // SAFETY: `i < len`, and the append rule wrote every record below
