@@ -115,16 +115,25 @@ impl<
         // E4 slice 2 (self-hosting meta pipeline): a plan-dirty frame runs the
         // leading plan band (`OnMeta<PlanStage>` units recompute the plan); a clean
         // frame skips it. The first frame is always plan-dirty (the plan is computed
-        // once); the `replace_resource`-driven `plan_dirty` bit-array re-dirty is
-        // the domain-22 recompute, sequenced with the adapt subsystem (slice 3). For
-        // a carrier with no plan-stage meta unit, `plan_phase_count` is zero, so this
-        // is a no-op and dispatch is byte-identical to before.
-        let plan_dirty = Bool(self.first_frame.load(Ordering::Relaxed));
-        // `plan_dirty` array / `plan_cache` are the domain-22 plan-recompute seed
-        // and cache (set by `replace_resource`); rebuilding the plan from them is the
-        // adapt subsystem's job, sequenced later. The domain-16 incremental-skip seed
-        // is `store_dirty`, consumed here.
-        let _ = (&self.plan_dirty, &self.plan_cache);
+        // once). For a carrier with no plan-stage meta unit, `plan_phase_count` is
+        // zero, so this is a no-op and dispatch is byte-identical to before.
+        // Swap spec S2: the band opens on the first frame OR when any
+        // plan-dirty bit was set by `replace_resource` since the last frame.
+        // Consuming clears the bits, so one swap buys one plan band.
+        let mut swapped = false;
+        for bit in self.plan_dirty.as_ref() {
+            if bit.swap(false, Ordering::Relaxed) {
+                swapped = true;
+            }
+        }
+        let plan_dirty = Bool(self.first_frame.load(Ordering::Relaxed) || swapped);
+        // Publish the decision for the worker-side band start (between
+        // frames, before any worker wakes).
+        self.plan_band.store(plan_dirty.0, Ordering::Relaxed);
+        // `plan_cache` is the domain-22 plan cache; rebuilding the plan from
+        // the consumed seed is the adapt subsystem's job, sequenced later.
+        // The domain-16 incremental-skip seed is `store_dirty`, consumed here.
+        let _ = &self.plan_cache;
         // Per-frame incremental skip: the dirty-unit mask names which units
         // this frame must run (their input cone changed); the rest are
         // skipped, producing identical output to running them.

@@ -72,9 +72,10 @@ impl<M: MemoryProviderApi, D: Capacity> ColumnStorage for ArenaColumnStorage<M, 
             && !old.ptr.is_null()
         {
             // SAFETY: old.ptr came from a prior allocate on this
-            // provider with old.len_bytes.
+            // provider with old.len_bytes at CACHE_LINE_ALIGN.
             unsafe {
-                self.provider.deallocate(old.ptr, old.len_bytes);
+                self.provider
+                    .deallocate(old.ptr, old.len_bytes, CACHE_LINE_ALIGN);
             }
         }
         // Byte length = record count times element size, checked so a
@@ -151,10 +152,11 @@ impl<M: MemoryProviderApi, D: Capacity> Drop for ArenaColumnStorage<M, D> {
                 && !s.ptr.is_null()
             {
                 // SAFETY: s.ptr came from a prior allocate on this
-                // provider with s.len_bytes; the arena is dropped
-                // once, so no double free.
+                // provider with s.len_bytes at CACHE_LINE_ALIGN; the
+                // arena is dropped once, so no double free.
                 unsafe {
-                    self.provider.deallocate(s.ptr, s.len_bytes);
+                    self.provider
+                        .deallocate(s.ptr, s.len_bytes, CACHE_LINE_ALIGN);
                 }
             }
         }

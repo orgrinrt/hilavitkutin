@@ -3,9 +3,7 @@
 
 use std::cell::RefCell;
 
-use hilavitkutin_str::{
-    str_const, ArenaInterner, AsStr, IntoStr, Str, StringInterner,
-};
+use hilavitkutin_str::{ArenaInterner, AsStr, IntoStr, Str, StringInterner, str_const};
 
 struct NullArena {
     next: RefCell<u32>,
@@ -29,6 +27,7 @@ impl ArenaInterner for NullArena {
         *n += 1;
         id
     }
+
     fn arena_resolve(&self, _id: u32) -> &str {
         // SAFETY: test-only; we only call resolve after a matching
         // intern and don't mutate `last` between the two.

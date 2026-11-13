@@ -1,13 +1,10 @@
-// The intended test for `Scheduler::replace_value`, written as a pass case: a
-// consumer opts its value type into `Replaceable`, replaces the registered
-// value, runs a frame and reads the new value back. It does not compile today,
-// which is the finding: `replace_value` takes the store marker `Resource<InA>`
-// as its argument and bounds `Replaceable` on it, so a consumer can name no
-// value to install and cannot write the impl the diagnostic suggests (the
-// orphan rule refuses `impl Replaceable for Resource<InA>`). It runs from the
-// ignored test `a_replaced_value_is_read_by_the_next_run` in `tests/ui.rs` and
-// goes green when the methods take the value type, as the kit design opts in
-// (ticket `147e3897011f`).
+// `Scheduler::replace_value` as a consumer writes it: the value type opts into
+// `Replaceable`, the registered value is replaced, a frame runs and the new
+// value is read back. The methods take the value type, as the kit design opts
+// in, so the consumer names a value to install and writes the impl on its own
+// type. It runs from `a_replaced_value_is_read_by_the_next_run` in
+// `tests/ui.rs`. While the methods took the store marker `Resource<InA>` this
+// file did not compile (ticket `147e3897011f`).
 
 use core::cell::Cell;
 
@@ -38,7 +35,7 @@ impl MemoryProviderApi for Provider {
         unsafe { self.base.add(aligned) }
     }
 
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
 
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
@@ -67,7 +64,9 @@ fn main() {
         .build(store(provider), USize(4))
         .unwrap_or_else(|_| panic!("build should succeed"));
     scheduler.replace_value(InA(2));
-    assert!(matches!(scheduler.run(), Outcome::Ok(())));
+    // No unit is registered, so nothing names the projection witness list;
+    // the empty carrier accepts any, and `()` is the one spelled here.
+    assert!(matches!(scheduler.run::<(), _>(), Outcome::Ok(())));
     // SAFETY: the one registered resource is the bindings head, and its blob
     // holds an initialised `InA`.
     let read: InA = unsafe { *scheduler.__bindings().__ptr().as_ptr() };

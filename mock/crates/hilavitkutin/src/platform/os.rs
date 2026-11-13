@@ -66,7 +66,10 @@ impl MemoryProviderApi for OsMemoryProvider {
         &self,
         ptr: *mut u8, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer; tracked: #72
         len: USize,
+        _align: USize,
     ) {
+        // `munmap` frees by address and length alone, so the
+        // alignment the block was allocated with is not needed here.
         // Ignore the return value; a failed munmap on a pointer
         // produced by our allocate would be a consumer bug. The
         // trait contract says the pointer becomes invalid after

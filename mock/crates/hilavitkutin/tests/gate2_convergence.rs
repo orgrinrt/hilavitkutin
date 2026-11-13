@@ -1,11 +1,14 @@
-//! GATE-2 §8 slice 1: head+tail convergence for single-trunk phases.
+//! GATE-2 §8 slice 1: a single-trunk phase covers every record exactly once.
 //!
 //! One producer writes `Column<Fv>` for N records, reading nothing: a single WU
 //! is a single trunk in a single phase. Under `run_parallel` on a multi-core
-//! pool, head+tail convergence splits that one trunk's record range across all
-//! cores (each walks a ceil-sized slice; the union covers `[0,N)` with no gap or
-//! overlap). The column is poisoned before the run, so a record left unwritten
-//! by a range gap, or corrupted by an overlap, fails the per-record assert.
+//! pool the one trunk has one owning core, which walks the whole record range;
+//! the other cores own nothing in the phase. Head+tail convergence, which
+//! would let a second core take the tail of that range, is designed and not
+//! built, and the N-way record split that once stood in for it is deleted.
+//! The column is poisoned before the run, so a record left unwritten by a
+//! range gap, or written by more than one core, fails the per-record assert.
+//! The assertion is the one convergence has to keep when it lands.
 //!
 //! Lives under `tests/` so the bare numeric record values do not trip the
 //! src-tree primitive lints.
@@ -66,7 +69,7 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
         unsafe { base.add(aligned) }
     }
 
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
 
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
@@ -110,7 +113,7 @@ impl WorkUnit<Always> for Filler {
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: In host-populated for N records; Fv reserved + exclusive;
-            // the morsel covers only this core's reserved record slice, and the
+            // the morsel covers a window of the owning core's walk, and the
             // reader/writer map the relative index to the absolute column index.
             let inp = unsafe { ctx.reader().read::<Inv, _>(i) };
             unsafe { ctx.writer().write::<Fv, _>(i, Fv(inp.0 * 7)) };
@@ -147,9 +150,9 @@ fn run_parallel_single_trunk_phase_converges() {
     let result = scheduler.as_mut().run_parallel(&pool);
     assert!(matches!(result, Outcome::Ok(())));
 
-    // Every record written exactly once with Fv = i*7: all cores converged on
-    // the single trunk over disjoint slices covering [0,N). A gap leaves the
-    // poison value; an overlap or wrong slice writes the wrong i.
+    // Every record written exactly once with Fv = i*7: the owning core walked
+    // the single trunk over windows covering [0,N). A gap leaves the
+    // poison value; a wrong window writes the wrong i.
     let base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const u32;
     for i in 0 .. N {
         // SAFETY: Fv holds N reserved records; the scheduler is alive.
@@ -157,7 +160,7 @@ fn run_parallel_single_trunk_phase_converges() {
         assert_eq!(
             v,
             (i as u32) * 7,
-            "rec {i}: single-trunk phase converged across cores, each slice written once"
+            "rec {i}: single-trunk phase covers every record, each written once"
         );
     }
 }

@@ -160,10 +160,19 @@ impl<
         &self.bindings
     }
 
-    /// Set `store_dirty` to a non-empty mask. Hidden test accessor: the only
-    /// public trigger for `store_dirty` is `replace_resource<T: PlanAffecting>`,
-    /// and `PlanAffecting` is sealed, so a white-box test for the change_class
-    /// signal sets the dirty mask directly. Not part of the supported surface.
+    /// Test-only observability for the published plan-band decision:
+    /// true when the last frame entered (or the next first frame will
+    /// enter) the leading plan band. Same `__` contract as
+    /// `__bindings`: hidden from docs, not a consumer surface.
+    #[doc(hidden)]
+    pub fn __plan_band(&self) -> arvo::Bool {
+        arvo::Bool(self.plan_band.load(Ordering::Relaxed))
+    }
+
+    /// Set `store_dirty` to a non-empty mask. Hidden test accessor: a
+    /// white-box test for the change_class signal sets the dirty mask
+    /// directly, without registering a resource to replace. Not part of the
+    /// supported surface.
     #[doc(hidden)]
     pub fn __mark_store_dirty(&self) {
         self.store_dirty

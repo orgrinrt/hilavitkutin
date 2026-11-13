@@ -23,6 +23,7 @@ use hilavitkutin_api::run_cfg::RunCfg;
 use hilavitkutin_api::store_values::StoreValues;
 
 use super::verdict::frame_verdict;
+use super::worker::accum_per;
 use super::{Scheduler, SendCtxPtr, UnitsFitGate2, WorkerCtx};
 use crate::dispatch::core_mask::grouping_arrays;
 use crate::dispatch::fiber_run::RunFiber;
@@ -244,6 +245,21 @@ impl<
         // bands dispatch after the await plus merge below. `core = 0, ncores =
         // 1` makes this thread own every trunk in the dispatched phases. The
         // band ranges are const and empty for a no-meta carrier.
+        // Swap spec S2, parallel path: consume the plan-dirty bits and
+        // publish the band decision while every worker is parked, so the
+        // worker phase loops and the leading-band dispatch below agree.
+        // SAFETY: between frames; exclusive field access.
+        let plan_dirty_frame = unsafe {
+            let mut swapped = false;
+            for bit in (*me).plan_dirty.as_ref() {
+                if bit.swap(false, Ordering::Relaxed) {
+                    swapped = true;
+                }
+            }
+            let dirty = (*me).first_frame.load(Ordering::Relaxed) || swapped;
+            (*me).plan_band.store(dirty, Ordering::Relaxed);
+            dirty
+        };
         let unit_outer = unsafe { (*me).carrier_unit_outer() }.0;
         let pre_phases = pre_consumer_phase_count::<
             WuVals,
@@ -255,7 +271,7 @@ impl<
         >()
         .0; // lint:allow(no-bare-numeric) reason: leading-band loop bound; tracked: #121
         if unit_outer && pre_phases > 0 {
-            let start = if unsafe { (*me).first_frame.load(Ordering::Relaxed) } {
+            let start = if plan_dirty_frame {
                 0 // lint:allow(no-bare-numeric) reason: plan-dirty frame runs the plan band; tracked: #121
             } else {
                 plan_phase_count::<
@@ -305,7 +321,7 @@ impl<
         // helpers only touch its atomics.
         let pool_frame = unsafe { &(*me).pool };
         frame_publish(pool_frame);
-        frame_await_done(pool_frame, ncores);
+        frame_await_done(pool_frame, ncores, Cfg::WAKE_SPIN_BUDGET);
         // Deviation 9: for the unit-outer accumulator carrier, each worker
         // appended into its own per-core region of the reserved buffer and
         // published its per-accumulator live and `wanted` counts. Forward-compact
@@ -320,7 +336,8 @@ impl<
         if unsafe { (*me).carrier_unit_outer() }.0 {
             let total0 = unsafe { (*me).record_count.0 }; // lint:allow(no-bare-numeric) reason: frame record count; tracked: #121
             let ncores0 = ncores.0.max(1); // lint:allow(no-bare-numeric) reason: avoid div by zero; tracked: #121
-            let per = total0.div_ceil(ncores0); // lint:allow(no-bare-numeric) reason: ceil record slice; tracked: #121
+            // Same definition the workers used for their region boundaries.
+            let per = accum_per(USize(total0), USize(ncores0)).0; // lint:allow(no-bare-numeric) reason: region stride; tracked: #121
             let mut live = [<USize as Identity<Additive>>::IDENTITY;
                 crate::thread::class::MAX_CORES * GATE2_MAX_ACCUMS];
             let mut wanted = [<USize as Identity<Additive>>::IDENTITY;

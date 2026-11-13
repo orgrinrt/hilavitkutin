@@ -40,8 +40,11 @@ pub trait MemoryProviderApi: Send + Sync + 'static {
     /// # Safety
     ///
     /// `ptr` must come from a prior `allocate` on the same provider
-    /// with the same `len`. Deallocation invalidates the pointer.
-    unsafe fn deallocate(&self, ptr: *mut u8, len: USize); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer; tracked: #72
+    /// with the same `len` and the same `align`. All three are the
+    /// contract: nothing at the free site can recover the alignment,
+    /// and an allocator underneath may need the whole layout to free.
+    /// Deallocation invalidates the pointer.
+    unsafe fn deallocate(&self, ptr: *mut u8, len: USize, align: USize); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer; tracked: #72
 
     /// Change page permissions over a block.
     ///

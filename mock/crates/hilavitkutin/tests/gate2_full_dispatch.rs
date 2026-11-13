@@ -21,7 +21,12 @@ use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{
-    ColumnReaderApi, ColumnWriterApi, EachApi, HasColumnReader, HasColumnWriter, HasEach,
+    ColumnReaderApi,
+    ColumnWriterApi,
+    EachApi,
+    HasColumnReader,
+    HasColumnWriter,
+    HasEach,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::store::Column;
@@ -33,12 +38,15 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 }
 
 struct BumpProvider<const N: usize> {
-    buf: UnsafeCell<[MaybeUninit<u8>; N]>,
+    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
     used: Cell<usize>,
 }
 impl<const N: usize> BumpProvider<N> {
     fn new() -> Self {
-        Self { buf: UnsafeCell::new([const { MaybeUninit::uninit() }; N]), used: Cell::new(0) }
+        Self {
+            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
+            used: Cell::new(0),
+        }
     }
 }
 unsafe impl<const N: usize> Send for BumpProvider<N> {}
@@ -56,7 +64,9 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
         // SAFETY: aligned + len <= N, in bounds of the owned buffer.
         unsafe { base.add(aligned) }
     }
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+
+    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
+
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
@@ -76,19 +86,26 @@ type ColOut = Cons<Column<Out>, Empty>;
 // Producer: Mid = In + 1. Reads In, writes Mid. Phase 0 (the waist).
 struct Producer;
 impl BuilderInput for Producer {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for Producer {
-    type Read = ColIn;
-    type Write = ColMid;
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        ColIn,
+        ColMid,
+        SnapNil,
+        ColPtrCons<Inv, ColPtrNil>,
+        ColPtrCons<Mid, ColPtrNil>,
+    >;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> =
-        EngineCtx<'frame, ColIn, ColMid, SnapNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<Mid, ColPtrNil>>;
+    type Read = ColIn;
+    type Write = ColMid;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: In host-populated; Mid reserved + exclusive; morsel covers
@@ -102,19 +119,26 @@ impl WorkUnit<Always> for Producer {
 // Consumer: Out = Mid * 10. Reads Mid, writes Out. Phase 1 (after the waist).
 struct Consumer;
 impl BuilderInput for Consumer {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for Consumer {
-    type Read = ColMid;
-    type Write = ColOut;
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        ColMid,
+        ColOut,
+        SnapNil,
+        ColPtrCons<Mid, ColPtrNil>,
+        ColPtrCons<Out, ColPtrNil>,
+    >;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> =
-        EngineCtx<'frame, ColMid, ColOut, SnapNil, ColPtrCons<Mid, ColPtrNil>, ColPtrCons<Out, ColPtrNil>>;
+    type Read = ColMid;
+    type Write = ColOut;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: Mid produced this frame by the producer phase; Out reserved
@@ -145,7 +169,7 @@ fn run_drives_two_phase_chain_in_order() {
     let out_base = scheduler.__bindings().__ptr().as_ptr() as *mut u32;
     let mid_base = scheduler.__bindings().__tail().__ptr().as_ptr() as *mut u32;
     let in_base = scheduler.__bindings().__tail().__tail().__ptr().as_ptr() as *mut u32;
-    for i in 0..N {
+    for i in 0 .. N {
         unsafe {
             *in_base.add(i) = i as u32;
             *mid_base.add(i) = u32::MAX;
@@ -158,7 +182,7 @@ fn run_drives_two_phase_chain_in_order() {
     // Out[i] = (In[i] + 1) * 10. If the consumer ran before the producer, it
     // would have read the poison in Mid and Out would not match.
     let base = scheduler.__bindings().__ptr().as_ptr() as *const u32;
-    for i in 0..N {
+    for i in 0 .. N {
         // SAFETY: Out holds N reserved records; scheduler alive.
         let v = unsafe { *base.add(i) };
         assert_eq!(

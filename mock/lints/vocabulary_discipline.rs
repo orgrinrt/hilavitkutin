@@ -74,7 +74,7 @@ impl CrateLint for VocabularyDiscipline {
         }
 
         let mut errors = Vec::new();
-        for (line_idx, line) in ctx.source.lines().enumerate() {
+        for (line_idx, line) in ctx.source().lines().enumerate() {
             let trimmed = line.trim_start();
             if trimmed.contains("lint:allow(vocabulary-discipline)") {
                 continue;

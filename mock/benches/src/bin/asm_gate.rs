@@ -47,7 +47,10 @@ fn main() -> ExitCode {
         return ExitCode::SUCCESS;
     }
 
-    eprintln!("asm_gate: building fixtures (release) at {}", manifest.display());
+    eprintln!(
+        "asm_gate: building fixtures (release) at {}",
+        manifest.display()
+    );
     match Command::new("cargo")
         .arg("build")
         .arg("--release")
@@ -55,25 +58,22 @@ fn main() -> ExitCode {
         .arg(&manifest)
         .status()
     {
-        Ok(s) if s.success() => {}
+        Ok(s) if s.success() => {},
         Ok(s) => {
             eprintln!("asm_gate: fixtures build failed ({s})");
             return ExitCode::FAILURE;
-        }
+        },
         Err(e) => {
             eprintln!("asm_gate: could not spawn cargo to build fixtures: {e}");
             return ExitCode::FAILURE;
-        }
+        },
     }
 
-    let dylib = fixtures_dir
-        .join("target")
-        .join("release")
-        .join(format!(
-            "{}asm_gate_fixtures{}",
-            std::env::consts::DLL_PREFIX,
-            std::env::consts::DLL_SUFFIX
-        ));
+    let dylib = fixtures_dir.join("target").join("release").join(format!(
+        "{}asm_gate_fixtures{}",
+        std::env::consts::DLL_PREFIX,
+        std::env::consts::DLL_SUFFIX
+    ));
     if !dylib.exists() {
         eprintln!("asm_gate: fixtures dylib not found at {}", dylib.display());
         return ExitCode::FAILURE;
@@ -84,7 +84,7 @@ fn main() -> ExitCode {
         Err(e) => {
             eprintln!("asm_gate: could not list symbols: {e}");
             return ExitCode::FAILURE;
-        }
+        },
     };
     let fixture_count = targets.iter().filter(|t| t.is_fixture).count();
     if fixture_count == 0 {
@@ -112,7 +112,7 @@ fn main() -> ExitCode {
             None => {
                 eprintln!("asm_gate: could not disassemble `{}`", target.label);
                 continue;
-            }
+            },
         };
         let report =
             disasm_5check::run_checks_on_disasm(&disasm, &dylib, &target.label, &morsel_immediates);
@@ -147,22 +147,23 @@ fn main() -> ExitCode {
 /// One gate target: its exact (nm) symbol name, a short label, and whether it is
 /// a fixture wrapper (vs an out-of-line dispatch mono).
 struct Target {
-    symbol: String,
-    label: String,
+    symbol:     String,
+    label:      String,
     is_fixture: bool,
 }
 
 /// The six fixture-wrapper shape names (without platform symbol prefix).
-const FIXTURE_NAMES: [&str; 6] = [
+const FIXTURE_NAMES: [&str; 7] = [
     "asm_gate_column_chain",
     "asm_gate_fused_chain",
     "asm_gate_accumulator",
     "asm_gate_dirty_gated",
     "asm_gate_windowed_fibers",
     "asm_gate_resource_snapshot",
+    "asm_gate_parallel_fiber_windows",
 ];
 
-/// Collect the gate targets from `nm`: the six `#[no_mangle]` fixture wrappers
+/// Collect the gate targets from `nm`: the seven `#[no_mangle]` fixture wrappers
 /// (which carry inlined dispatch for the single-caller shapes) plus any
 /// out-of-line `Scheduler::run` / `run_fused` monos (the multi-caller shapes the
 /// wrappers reach by direct `bl`). The union covers every emitted dispatch body
@@ -191,8 +192,8 @@ fn gate_targets(dylib: &Path) -> Result<Vec<Target>, String> {
             .find(|s| name == **s || name == format!("_{s}"))
         {
             targets.push(Target {
-                symbol: name.to_string(),
-                label: format!("fixture `{shape}`"),
+                symbol:     name.to_string(),
+                label:      format!("fixture `{shape}`"),
                 is_fixture: true,
             });
             continue;
@@ -207,15 +208,15 @@ fn gate_targets(dylib: &Path) -> Result<Vec<Target>, String> {
         if name.contains("9run_fused") {
             fused_idx += 1;
             targets.push(Target {
-                symbol: name.to_string(),
-                label: format!("Scheduler::run_fused mono #{fused_idx}"),
+                symbol:     name.to_string(),
+                label:      format!("Scheduler::run_fused mono #{fused_idx}"),
                 is_fixture: false,
             });
         } else if name.contains("3run") {
             run_idx += 1;
             targets.push(Target {
-                symbol: name.to_string(),
-                label: format!("Scheduler::run mono #{run_idx}"),
+                symbol:     name.to_string(),
+                label:      format!("Scheduler::run mono #{run_idx}"),
                 is_fixture: false,
             });
         }
@@ -236,11 +237,7 @@ fn objdump_symbol(dylib: &Path, symbol: &str) -> Option<String> {
         return None;
     }
     let s = String::from_utf8_lossy(&out.stdout).into_owned();
-    if s.contains(&format!("<{symbol}>:")) {
-        Some(s)
-    } else {
-        None
-    }
+    if s.contains(&format!("<{symbol}>:")) { Some(s) } else { None }
 }
 
 fn tool_present(tool: &str) -> bool {

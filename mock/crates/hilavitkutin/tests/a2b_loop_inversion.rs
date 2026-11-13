@@ -28,13 +28,23 @@ use std::vec::Vec;
 
 use arvo::{Bool, USize};
 use hilavitkutin::dispatch::engine_ctx::{
-    AccPtrCons, AccPtrNil, ColPtrCons, ColPtrNil, EngineCtx, SnapNil,
+    AccPtrCons,
+    AccPtrNil,
+    ColPtrCons,
+    ColPtrNil,
+    EngineCtx,
+    SnapNil,
 };
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{
-    AccumWriterApi, ColumnWriterApi, EachApi, HasAccumWriter, HasColumnWriter, HasEach,
+    AccumWriterApi,
+    ColumnWriterApi,
+    EachApi,
+    HasAccumWriter,
+    HasColumnWriter,
+    HasEach,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::store::{Accum, Column};
@@ -52,13 +62,16 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 
 // Stack-backed test memory provider (mirrors tests/column_dispatch.rs).
 struct BumpProvider<const N: usize> {
-    buf: UnsafeCell<[MaybeUninit<u8>; N]>,
+    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
     used: Cell<usize>,
 }
 
 impl<const N: usize> BumpProvider<N> {
     fn new() -> Self {
-        Self { buf: UnsafeCell::new([const { MaybeUninit::uninit() }; N]), used: Cell::new(0) }
+        Self {
+            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
+            used: Cell::new(0),
+        }
     }
 }
 
@@ -79,7 +92,7 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
         unsafe { base.add(aligned) }
     }
 
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize) {}
+    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
 
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
@@ -106,19 +119,19 @@ type WideCol = Cons<Column<Wide>, Empty>;
 
 struct NarrowWu;
 impl BuilderInput for NarrowWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for NarrowWu {
-    type Read = Empty;
-    type Write = NarrowCol;
+    type Ctx<'frame> =
+        EngineCtx<'frame, Empty, NarrowCol, SnapNil, ColPtrNil, ColPtrCons<Narrow, ColPtrNil>>;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> =
-        EngineCtx<'frame, Empty, NarrowCol, SnapNil, ColPtrNil, ColPtrCons<Narrow, ColPtrNil>>;
+    type Read = Empty;
+    type Write = NarrowCol;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         DISPATCH_ORDER.with(|o| o.borrow_mut().push(NARROW_TAG));
@@ -133,19 +146,19 @@ impl WorkUnit<Always> for NarrowWu {
 
 struct WideWu;
 impl BuilderInput for WideWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for WideWu {
-    type Read = Empty;
-    type Write = WideCol;
+    type Ctx<'frame> =
+        EngineCtx<'frame, Empty, WideCol, SnapNil, ColPtrNil, ColPtrCons<Wide, ColPtrNil>>;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> =
-        EngineCtx<'frame, Empty, WideCol, SnapNil, ColPtrNil, ColPtrCons<Wide, ColPtrNil>>;
+    type Read = Empty;
+    type Write = WideCol;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         DISPATCH_ORDER.with(|o| o.borrow_mut().push(WIDE_TAG));
@@ -176,7 +189,10 @@ fn fibers_window_by_their_own_plan_baked_size() {
     let w1 = scheduler.__fiber_morsel_size(USize(1)).0;
     assert!(w0 > 0 && w1 > 0, "both fibers carry plan-baked windows");
     assert_ne!(w0, w1, "the two pipelines' windows must differ");
-    assert!(RECORDS > w0 && RECORDS > w1, "the record count must split both fibers");
+    assert!(
+        RECORDS > w0 && RECORDS > w1,
+        "the record count must split both fibers"
+    );
 
     let result = scheduler.run();
     assert!(matches!(result, Outcome::Ok(())));
@@ -194,11 +210,11 @@ fn fibers_window_by_their_own_plan_baked_size() {
         let second = observed[n0];
         assert_ne!(first, second, "each fiber forms its own block");
         assert!(
-            observed[..n0].iter().all(|&t| t == first),
+            observed[.. n0].iter().all(|&t| t == first),
             "fiber 0 completes its whole window sequence before fiber 1: {observed:?}"
         );
         assert!(
-            observed[n0..].iter().all(|&t| t == second),
+            observed[n0 ..].iter().all(|&t| t == second),
             "fiber 1 runs after fiber 0 completed: {observed:?}"
         );
     });
@@ -221,19 +237,19 @@ type OvAcc = Cons<Accum<Ov>, Empty>;
 
 struct ColWu;
 impl BuilderInput for ColWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for ColWu {
-    type Read = Empty;
-    type Write = CmCol;
+    type Ctx<'frame> =
+        EngineCtx<'frame, Empty, CmCol, SnapNil, ColPtrNil, ColPtrCons<Cm, ColPtrNil>>;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Ctx<'frame> =
-        EngineCtx<'frame, Empty, CmCol, SnapNil, ColPtrNil, ColPtrCons<Cm, ColPtrNil>>;
+    type Read = Empty;
+    type Write = CmCol;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         DISPATCH_ORDER.with(|o| o.borrow_mut().push(COL_TAG));
@@ -246,17 +262,10 @@ impl WorkUnit<Always> for ColWu {
 
 struct AccWu;
 impl BuilderInput for AccWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for AccWu {
-    type Read = Empty;
-    type Write = OvAcc;
-    type Hint = (
-        hilavitkutin_api::hint::Immediate,
-        hilavitkutin_api::hint::Atomic,
-        hilavitkutin_api::hint::Normal,
-    );
     type Ctx<'frame> = EngineCtx<
         'frame,
         Empty,
@@ -266,6 +275,13 @@ impl WorkUnit<Always> for AccWu {
         ColPtrNil,
         AccPtrCons<'frame, Ov, AccPtrNil>,
     >;
+    type Hint = (
+        hilavitkutin_api::hint::Immediate,
+        hilavitkutin_api::hint::Atomic,
+        hilavitkutin_api::hint::Normal,
+    );
+    type Read = Empty;
+    type Write = OvAcc;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         DISPATCH_ORDER.with(|o| o.borrow_mut().push(ACC_TAG));
@@ -294,8 +310,14 @@ fn clean_frame_skips_column_fiber_but_reruns_accumulator_fiber() {
     assert!(matches!(result, Outcome::Ok(())));
     DISPATCH_ORDER.with(|o| {
         let observed = o.borrow();
-        assert!(observed.contains(&COL_TAG), "cold frame runs the column fiber");
-        assert!(observed.contains(&ACC_TAG), "cold frame runs the accumulator fiber");
+        assert!(
+            observed.contains(&COL_TAG),
+            "cold frame runs the column fiber"
+        );
+        assert!(
+            observed.contains(&ACC_TAG),
+            "cold frame runs the accumulator fiber"
+        );
     });
 
     // Clean frame: no store was marked dirty, so the column fiber's RAW
