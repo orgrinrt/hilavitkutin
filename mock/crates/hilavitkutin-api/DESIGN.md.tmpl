@@ -191,7 +191,8 @@ are the shared crate's as well, and `AccessSet` adds the count as a
 `USize` and the bound that says a list is made of members: store
 markers, and the two wrappers over a store marker described under
 "Members of an access set" below.
-Compile-time store descriptors. Plan phase converts to runtime AccessMask via
+
+The lists are compile-time store descriptors. Plan phase converts to runtime AccessMask via
 monomorphised generic functions (the monomorphised function IS the
 type identity, no TypeId, no std::any).
 
@@ -232,6 +233,7 @@ column it holds has that many records. `Column<T>` carries no count and
 no second parameter. An accumulator's capacity is that same count.
 Resources and virtuals hold no record count. A consumer whose record
 sets differ in count builds a scheduler for each set.
+<!-- FIXME(8bcd16133d14): several record sets in one schedule wait on a bench of both forms -->
 
 ## LinkedBin
 
@@ -460,11 +462,13 @@ read and is not in this crate.
 What the declaration buys is that the plan knows it. A unit that reads a
 column with a reach does not also write that column, which is refused at
 compile time when the scheduler is built. Every writer of the column
-finishes its whole record range before the reader starts, so the values
-at the neighbouring records are the ones the writers left, whatever
-sequence the records are visited in and however many threads visit
-them. A unit that wants the values around a record as they stood when
-the pass began reads, with a reach, a column written at the close (see
+that runs before the reader (one on the reader's own band or on a band
+before it) finishes its whole record range before the reader starts, so
+the values at the neighbouring records are the ones those writers left,
+whatever sequence the records are visited in and however many threads
+visit them. A writer at the close runs after the reader. So a unit that
+wants the values around a record as they stood when the pass began
+reads, with a reach, a column whose writers are all at the close (see
 "Maintenance units and the close").
 
 The positional accessors have no read with a reach.
@@ -488,9 +492,16 @@ writes as a value function.
 
 The declaration is read where the skip of unchanged work reads a unit's
 writes (the engine's DESIGN says where that is), and the engine makes
-the compare only for a unit whose writes it reads so.
+the compare only for a unit whose writes it reads so. The bound is asked
+of every value function all the same, so that a unit's types stay as
+they are when the engine reads more units' writes.
+<!-- FIXME(8e2e2326d588): the engine reads the mark for maintenance units alone -->
+<!-- FIXME(29426931e825): whether the default reaches the positional write is undecided -->
 
 ## Maintenance units and the close
+
+A pass is one run of the schedule from its leading bands to its close,
+which the engine's DESIGN also calls a frame.
 
 A unit scheduled `OnMeta<V>` is a maintenance unit. Its lifecycle rank
 places it outside the band the consumer's ordinary units run in. A unit
@@ -502,9 +513,10 @@ share: where a read-after-write edge between them agrees with the ranks
 it is built as any other, and where it would run against them it is not
 built.
 
-A maintenance unit's context is bound to the whole record range of its
-columns, so a position it names is the record's index, and on its band
-no ordinary unit runs beside it. That makes it the place for a write at
+A maintenance unit is dispatched once in a pass, by one core, with its
+context bound to the whole record range of its columns, so a position it
+names is the record's index, and on its band no ordinary unit runs
+beside it. That makes it the place for a write at
 a record the body names from data: applying the changes a pass gathered
 is the usual case. An ordinary unit that means a change for a record
 other than its own appends the change, and a unit at the close applies
@@ -516,6 +528,7 @@ that `i` is below the column's record count and that the plan gave the
 unit the record, and an ordinary unit can still call it. A consumer
 that forbids writes by position outside its maintenance units keeps its
 ordinary units in crates that forbid `unsafe`.
+<!-- FIXME(7f93b9f3e621): a maintenance context has no write of its own yet -->
 
 A maintenance unit reads what the pass appended through an accessor that
 its context alone carries:
@@ -554,6 +567,7 @@ impl WorkUnit<OnMeta<ScheduleEnd>> for ApplyHeat {
 
 ### Reading a store as it stood when the pass began
 
+<!-- FIXME(2143d534c715): the close-writer half of this section is proposed and not yet confirmed -->
 A store whose every writer is a maintenance unit holds one value for
 every ordinary unit of a pass. No store kind and no read marker says so.
 It follows from rank. Where the writers are at the close, that value is
@@ -572,7 +586,9 @@ written in one of two ways with what this crate has.
 2. A second column carried over. A unit that steps a whole field reads
    the field's column and returns the next value into a second column,
    and a close unit carries the second column into the first once every
-   reader is done. The close costs a copy of the column.
+   reader is done. The close costs a copy of the column. A store is
+   named by its value type, so the second column has a value type of its
+   own, a newtype over the field's.
 
 The second column and the unit that brings the next value in are the
 consumer's, declared like any other store and unit. The api has no
@@ -721,8 +737,9 @@ fallback. No second writer is refused.
 
 `Hint` has no default, so a unit names its hint. The value function
 (above) and the positional accessors are two ways to write the body of
-`execute`, and what this section says of schedules, hints and
-write-write order holds for a unit whichever way its body is written.
+`execute`, and what this section says of schedules, hints and the
+sequence of two writers holds for a unit whichever way its body is
+written.
 
 ## Plannable trait (domain 09): the runner-agnostic declaration
 
