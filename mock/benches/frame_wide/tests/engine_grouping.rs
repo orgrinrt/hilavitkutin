@@ -2,17 +2,27 @@
 //! then hands each core.
 //!
 //! `engine_par` ran at 1.08 cores of four on this host while `hand_par` ran at
-//! 2.16, and the wall-clock medians alone say only that four cores bought
-//! nothing. This test says why, in the engine's own terms rather than in a
-//! model of them: it calls the grouping the parallel dispatch calls, over the
-//! real `Map` and `Join` types the engine arm registers, and states the phase
-//! and trunk of every unit and the mask each core is handed.
+//! 1.74, and the wall-clock medians alone say only that four cores bought
+//! nothing. This test says why, over the real `Map` and `Join` types the
+//! engine arm registers: it states the phase and trunk of every unit, and then
+//! what each core is handed.
+//!
+//! The two halves rest on different ground and the difference matters. The
+//! phase and trunk assertions call `grouping_arrays`, `phase_of` and
+//! `trunk_of`, which are the functions the parallel dispatch itself uses
+//! through `PhaseAt` and `IsRoot`, so those are read out of the plan. The
+//! per-core assertions call `core_phase_mask`, and the dispatch does not call
+//! it: `dispatch/trunk_dispatch.rs:246-253` spells the same `rank % ncores ==
+//! core` rule inline over in-phase roots, and a comment there (`:252`) is the
+//! only thing tying the two spellings together. So the per-core numbers below
+//! are the reference rule's, and they are the dispatch's only for as long as
+//! that comment stays true. Ticket `bc858e83ffbc` carries the duplication.
 //!
 //! The units are the support crate's own, so the access sets are the ones the
 //! engine arm builds with. What is written out here is the store order and the
 //! per-unit projection witnesses, which the builder derives from the order the
-//! columns and units are registered in; `the_store_order_matches_the_builder`
-//! holds that spelling to the builder call sequence.
+//! columns and units are registered in, repeated here by hand rather than
+//! taken from the arm (ticket `3bb61f3abdec`).
 //!
 //! Nothing here is a verdict on the engine. It records the shape the plan
 //! currently finds, so a change to the waist axis or to trunk ownership shows
@@ -159,9 +169,18 @@ fn arrays() -> ([USize; GATE2_MAX_UNITS], [USize; GATE2_MAX_UNITS], usize) {
     (phase, trunk, n.0)
 }
 
-/// The builder registers twelve units, and the spelling above has twelve.
+/// Twelve units group, and no two of them share a trunk by writing one
+/// column.
+///
+/// This does not reach the builder. The `Stores`, `Units` and `Witnesses`
+/// above are written out by hand to match what `engine_arm!` registers, and
+/// the witnesses are held to the real access sets by the `Locate` bounds, so
+/// a witness naming the wrong column does not compile. The order of the units
+/// and of the columns is not held to anything: reorder the macro and this file
+/// stays green while describing a frame the arm no longer builds. Ticket
+/// `3bb61f3abdec` carries that gap.
 #[test]
-fn the_store_order_matches_the_builder() {
+fn twelve_units_group_with_no_two_sharing_a_write() {
     assert_eq!(group_n::<Units, Stores, Witnesses, CU, CS>().0, N_UNITS);
     let (_phase, trunk, n) = arrays();
     assert_eq!(n, N_UNITS);

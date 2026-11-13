@@ -10,8 +10,10 @@
 # which are process-wide: they include threads created and reaped inside the
 # window. Per-thread sampling over /proc/<tgid>/task/*/stat is wrong for any
 # arm that spawns per frame, because each sample sees a different short-lived
-# set and a reaped thread's ticks are gone. It put `hand_par` at 0.48 cores
-# against this instrument's 2.16, four and a half times low.
+# set and a reaped thread's ticks are gone. On the run that first measured it,
+# it put `hand_par` at 0.48 cores against this instrument's 2.16 on the same
+# build, four and a half times low. Both are figures from before the arms were
+# made fair to each other; the note's table carries the current ones.
 #
 # The arm is run as a harness timing worker, directly, with no orchestrator:
 # that is one process running one arm's frame back to back, which is what the

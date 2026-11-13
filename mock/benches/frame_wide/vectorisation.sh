@@ -55,7 +55,7 @@ report() {
         objdump -d --no-show-raw-insn "$lib" \
             | awk -v insn="$insn" -v arm="$arm" '
                 /^[0-9a-f]+ </ { sym = $2 }
-                # Only this bench`s own code. A dependency emitting the
+                # Only this bench's own code. A dependency emitting the
                 # instruction somewhere else says nothing about the frame.
                 $0 ~ insn && sym ~ /frame_wide_support/ {
                     regime = (sym ~ /Heavy/) ? "heavy" : ((sym ~ /Light/) ? "light" : "untagged")
