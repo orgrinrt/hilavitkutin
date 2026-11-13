@@ -154,3 +154,129 @@ origin = "stated"
 standing = "provisional"
 subject = "identity"
 keywords = ["scope", "DAG scheduling", "dispatch", "morsel chunking", "does not own", "column storage", "query planning", "IO"]
+
+[[tenet]]
+id = "hilavitkutin_is_a_morsel_driven_pipeline_engine_that_analyses_units_into_phases_trunks_and_fibers_and_runs_them_on_a_pre_allocated_pool"
+what = "Hilavitkutin is a morsel-driven pipeline execution engine. Consumers declare units with typed read and write access sets, and the engine analyses them into phases, trunks and fibers, compiles per-core dispatch programs and runs them on a pre-allocated thread pool."
+mechanism = "`#![no_std]`, no alloc. WorkUnits with typed read/write access sets; per-core dispatch programs."
+source = "mock/DESIGN.md.tmpl:3-6"
+provenance = ["mock::DESIGN::#hilavitkutin-architecture-design"]
+quote = '''
+> Morsel-driven pipeline execution engine. `#![no_std]`, no alloc.
+> Consumers declare WorkUnits with typed read/write access sets; the
+> engine analyses them into phases/trunks/fibers, compiles per-core
+> dispatch programs, runs them on a pre-allocated thread pool.
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+subject = "identity"
+keywords = ["morsel-driven", "pipeline engine", "WorkUnit", "access set", "phases trunks fibers", "dispatch programs", "thread pool", "no_std"]
+
+[[tenet]]
+id = "the_api_crate_carries_the_consumer_facing_types_and_traits_and_the_platform_contracts"
+what = "The api crate is the consumer-facing contract surface: the unit and access-set types, the three store types, the context, and the platform contracts for clock, memory provider and thread pool. It also carries the consumer contract surface for interface positions that receive or emit items outside unit execution."
+mechanism = "`hilavitkutin-api`: WorkUnit, AccessSet, Column/Resource/Virtual, Context, Contains, Clock/MemoryProvider/ThreadPool. The consumer contract surface is capability / sink / codec."
+source = "mock/DESIGN.md.tmpl:14-14"
+provenance = ["mock::DESIGN::#crate-layout"]
+quote = '''
+| `hilavitkutin-api` | Consumer-facing types + traits + platform contracts. WorkUnit, AccessSet, Column/Resource/Virtual, Context, Contains, Clock/MemoryProvider/ThreadPool. Consumer contract surface (capability / sink / codec) for API positions that receive or emit items outside WU execution. |
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+subject = "identity"
+keywords = ["hilavitkutin-api", "consumer contract", "platform contracts", "capability", "sink", "codec", "WorkUnit", "AccessSet"]
+cites = ["the_crates_are_the_api_the_engine_the_build_crate_and_the_arvo_family"]
+
+[[tenet]]
+id = "the_api_macros_crate_is_the_proc_macro_companion_of_the_api_crate_and_derives_a_resource_s_write_collection_footprint"
+what = "A proc-macro companion crate of the api crate derives, for a resource value type, the footprint that the engine reads as its write-collection budget in the first-level cache for a morsel."
+mechanism = "`hilavitkutin-api-macros` emits `#[derive(ResourceFootprint)]`, which sums the `Field` / `Seq` / `Map` field footprints of a resource value type; the engine reads the result as its L1-morsel write-collection budget (canonical R5)."
+source = "mock/DESIGN.md.tmpl:15-15"
+provenance = ["mock::DESIGN::#crate-layout"]
+quote = '''
+| `hilavitkutin-api-macros` | Proc-macro companion to `hilavitkutin-api`. Emits `#[derive(ResourceFootprint)]`, which sums a resource value type's `Field`/`Seq`/`Map` field footprints so the engine reads its L1-morsel write-collection budget (canonical R5). |
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+subject = "identity"
+keywords = ["hilavitkutin-api-macros", "ResourceFootprint", "derive", "proc-macro", "write-collection budget", "L1 morsel", "R5"]
+
+[[tenet]]
+id = "the_engine_crate_holds_plan_dispatch_resource_thread_strategy_adapt_and_scheduler"
+what = "The engine crate holds the plan, the dispatch, the resource handling, the threads, the strategy selection, the adaptation and the scheduler."
+mechanism = "`hilavitkutin`: plan, dispatch, resource, thread, strategy, adapt, scheduler."
+source = "mock/DESIGN.md.tmpl:16-16"
+provenance = ["mock::DESIGN::#crate-layout"]
+quote = '''
+| `hilavitkutin` | Engine: plan, dispatch, resource, thread, strategy, adapt, scheduler. |
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+subject = "identity"
+keywords = ["hilavitkutin", "engine crate", "plan", "dispatch", "resource", "thread", "strategy", "adapt", "scheduler"]
+cites = ["the_crates_are_the_api_the_engine_the_build_crate_and_the_arvo_family"]
+
+[[tenet]]
+id = "the_context_framework_is_a_standalone_ecosystem_crate_gated_by_providers"
+what = "The context framework is a standalone ecosystem crate, and what a context gives access to is gated by providers."
+mechanism = "`hilavitkutin-ctx`: provider-gated context framework (ecosystem, standalone)."
+source = "mock/DESIGN.md.tmpl:18-18"
+provenance = ["mock::DESIGN::#crate-layout"]
+quote = '''
+| `hilavitkutin-ctx` | Provider-gated context framework (ecosystem, standalone). |
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+subject = "identity"
+keywords = ["hilavitkutin-ctx", "context framework", "provider-gated", "ecosystem", "standalone"]
+
+[[tenet]]
+id = "the_interned_identity_core_is_a_standalone_ecosystem_crate_and_the_interned_string_system_is_one_domain_of_it"
+what = "The generic interned-identity core is a standalone ecosystem crate holding the identity handle, the domain traits, the interner and the generator. The interned string system is a second standalone ecosystem crate that is one domain of that core."
+mechanism = "`hilavitkutin-sym`: the `Sym` handle, domain traits, `Interner`, `Generator`. `hilavitkutin-str`: interned string system, one domain of `hilavitkutin-sym`."
+source = "mock/DESIGN.md.tmpl:25-26"
+provenance = ["mock::DESIGN::#crate-layout"]
+quote = '''
+| `hilavitkutin-sym` | Generic interned-identity core: the `Sym` handle, domain traits, `Interner`, `Generator` (ecosystem, standalone). `hilavitkutin-str` builds on it. |
+| `hilavitkutin-str` | Interned string system, one domain of `hilavitkutin-sym` (ecosystem, standalone). |
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+subject = "identity"
+keywords = ["hilavitkutin-sym", "hilavitkutin-str", "Sym", "Interner", "Generator", "interned identity", "string domain", "ecosystem"]
+
+[[tenet]]
+id = "the_ecosystem_crates_are_standalone_and_consumers_opt_into_them"
+what = "The context, persistence, identity core, string, kit and providers crates are standalone ecosystem crates that consumers opt into. The context, persistence, identity core and string crates are pure ecosystem crates that the engine does not depend on."
+mechanism = "hilavitkutin-ctx, -persistence, -sym, -str, -kit, -providers: standalone, opt-in. ctx, persistence, sym, str: the engine does not depend on them."
+source = "mock/DESIGN.md.tmpl:32-32"
+provenance = ["mock::DESIGN::#dependency-graph"]
+quote = '''
+hilavitkutin-ctx, -persistence, -sym, -str, -kit, -providers are standalone ecosystem crates that consumers opt into. ctx, persistence, sym, str are pure ecosystem (engine does not depend on them). hilavitkutin-str depends on hilavitkutin-sym for the identity handle; hilavitkutin-sym itself depends only on the foundations (arvo, notko), sitting below the rest of the ecosystem. kit is a contract crate the engine depends on for its `.add_kit()` method, but it has no reverse dependency on the engine; consumers can author Kits without pulling the engine in. providers ships default Kit impls consumers wire in (interner, future ColumnStorage / Clock / Memory defaults); it consumes api + str + kit + the foundations crates, no reverse dep.
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+subject = "identity"
+keywords = ["ecosystem crates", "standalone", "opt-in", "engine does not depend", "ctx", "persistence", "sym", "str", "kit", "providers"]
+
+[[tenet]]
+id = "the_string_crate_builds_on_the_identity_core_and_the_identity_core_depends_only_on_the_foundations"
+what = "The string crate depends on the identity core for the identity handle, and the identity core itself depends only on the foundations crates, so it sits below the rest of the ecosystem."
+mechanism = "hilavitkutin-str depends on hilavitkutin-sym; hilavitkutin-sym depends only on arvo and notko."
+source = "mock/DESIGN.md.tmpl:32-32"
+provenance = ["mock::DESIGN::#dependency-graph"]
+quote = '''
+hilavitkutin-ctx, -persistence, -sym, -str, -kit, -providers are standalone ecosystem crates that consumers opt into. ctx, persistence, sym, str are pure ecosystem (engine does not depend on them). hilavitkutin-str depends on hilavitkutin-sym for the identity handle; hilavitkutin-sym itself depends only on the foundations (arvo, notko), sitting below the rest of the ecosystem. kit is a contract crate the engine depends on for its `.add_kit()` method, but it has no reverse dependency on the engine; consumers can author Kits without pulling the engine in. providers ships default Kit impls consumers wire in (interner, future ColumnStorage / Clock / Memory defaults); it consumes api + str + kit + the foundations crates, no reverse dep.
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+subject = "identity"
+keywords = ["hilavitkutin-str", "hilavitkutin-sym", "identity handle", "arvo", "notko", "foundations", "dependency direction"]

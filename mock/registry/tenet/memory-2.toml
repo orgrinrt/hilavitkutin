@@ -1,0 +1,89 @@
+# What the record says about `memory`, part 2.
+
+[[tenet]]
+id = "the_arena_column_storage_reserves_64_byte_aligned_blocks_through_the_memory_provider_and_its_release_is_a_no_op"
+what = "Reserving a column allocates its byte count 64-byte aligned through the bound memory provider and records the slot, and a resizing reserve frees the prior block first. The column pointer accessors return the recorded base cast to the scalar type, raw and not a slice, the count reads the slot, release is a no-op because reader-count reclamation is a concern of the columnar engine, and dropping deallocates every live slot through the provider."
+mechanism = "`reserve<T>` allocates `count * size_of::<T>()` bytes 64-byte aligned; `column_ptr` / `column_ptr_mut` return a raw pointer, not a slice, per R6; `count`; `release` no-op; `Drop` deallocates."
+source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:165-171"
+provenance = ["mock::crates::hilavitkutin-providers::DESIGN::#arenacolumnstorage-m-d"]
+quote = '''
+`reserve<T>` allocates `count * size_of::<T>()` bytes 64-byte aligned
+through the bound `MemoryProvider`, recording the slot; a resizing
+re-reserve frees the prior block first. `column_ptr` / `column_ptr_mut`
+return the recorded base cast to the scalar type (raw, not a slice, per
+R6). `count` reads the slot. `release` is a no-op (the reader-count
+reclamation is a columnar-engine concern). `Drop` deallocates every
+live slot through the provider.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-providers, agent-written, undated"
+standing = "provisional"
+subject = "memory"
+keywords = ["reserve", "column_ptr", "column_ptr_mut", "64-byte aligned", "release no-op", "raw pointer R6", "Drop deallocate", "reader-count reclamation"]
+cites = ["a_column_s_lifetime_is_told_to_the_consumer_as_an_advisory_release"]
+
+[[tenet]]
+id = "the_arena_column_storage_aims_at_correctness_with_a_flat_scan_slot_table_and_one_provider_allocation_per_column_while_the_columnar_engine_matures"
+what = "The arena column storage is for correctness and not for performance: its slot table is a flat scan and each column is a separate provider allocation. The point is a working column storage behind the contract while the columnar engine matures."
+source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:173-175"
+provenance = ["mock::crates::hilavitkutin-providers::DESIGN::#arenacolumnstorage-m-d"]
+quote = '''
+Correctness, not performance: the slot table is a flat scan and each
+column is a separate provider allocation. The point is a working
+`ColumnStorage` behind the contract while the columnar engine matures.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-providers, agent-written, undated"
+standing = "provisional"
+subject = "memory"
+keywords = ["ArenaColumnStorage", "correctness not performance", "flat scan", "separate allocation per column", "placeholder", "columnar engine"]
+
+[[tenet]]
+id = "the_memory_arena_has_no_memory_provider_parameter_because_that_needs_allocate_at_builder_time_plumbing_the_engine_lacks"
+what = "The memory arena does not take a memory provider type parameter. An original task description named an arena parameterised over a runtime memory provider, but the crate uses inline storage at the type level instead, since reintroducing the parameter needs allocate-at-builder-time plumbing that the engine does not yet have, which is tracked in the backlog."
+mechanism = "Original 2026-05-01 task description: `MemoryArena<M, BYTES>` with `M: HasMemoryProvider`."
+source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:177-184"
+provenance = ["mock::crates::hilavitkutin-providers::DESIGN::#what-this-crate-deliberately-does-not-ship"]
+quote = '''
+## What this crate deliberately does not ship
+
+- **`M: HasMemoryProvider` parameter on `MemoryArena`.** The
+ original 2026-05-01 task description named `MemoryArena<M, BYTES>`
+ parameterised over a runtime memory provider. The crate uses
+ inline storage at the type level instead. Reintroducing the M
+ parameter needs allocate-at-builder-time plumbing the engine
+ does not yet have. Tracked in BACKLOG.
+'''
+because = "Reintroducing the M parameter needs allocate-at-builder-time plumbing the engine does not yet have."
+origin = "proposed"
+written_by = "the design template of hilavitkutin-providers, agent-written, undated"
+standing = "provisional"
+subject = "memory"
+keywords = ["MemoryArena", "HasMemoryProvider", "M parameter", "allocate-at-builder-time", "inline storage", "BACKLOG", "2026-05-01"]
+rules_out = ["M: HasMemoryProvider parameter on MemoryArena"]
+
+[[tenet]]
+id = "a_deallocation_is_given_the_same_alignment_as_its_allocation"
+what = "Freeing memory through the memory provider takes the same alignment the matching allocation was given, beside the same pointer and length, and all three are part of the safety contract. A provider whose free path ignores alignment may leave the parameter unread."
+because = "An allocator underneath may need the full layout to free correctly, and nothing at the free site can recover the alignment; column slabs are reserved at 64-byte alignment, so a provider left to guess would free every column with a mismatched layout."
+mechanism = "`deallocate` takes `align` beside `ptr` and `len`; `std::alloc` requires the full layout; a bump arena may not read the parameter."
+source = "mock/research/202611130850_the-record-read-whole/RECOVERED.md:123-133"
+provenance = ["mock::research::202611130850_the-record-read-whole::RECOVERED::#mock-crates-hilavitkutin-api-design-md-tmpl-lines-953-to-963"]
+quote = '''
+`deallocate` takes the same `align` the matching `allocate` was given,
+alongside the same `ptr` and `len`. All three are part of the safety
+contract, not just the first two. An allocator underneath may require the
+full layout to free correctly (`std::alloc` does), and nothing at the free
+site can recover the alignment on its own: the caller is the only party
+that knows it. A provider whose free path ignores alignment, such as a
+bump arena, may simply not read the parameter.
+
+The hazard is concrete rather than theoretical. Column slabs are reserved
+at 64-byte alignment, so a provider left to guess a word would free every
+column with a mismatched layout.
+'''
+origin = "proposed"
+written_by = "api design template as on the branch recover/unlanded-rounds-and-benches, commit of 2026-08-30, not on dev; the text does not say whose it is"
+standing = "provisional"
+subject = "memory"
+keywords = ["deallocate", "alignment", "MemoryProvider", "safety contract", "64-byte alignment", "layout"]

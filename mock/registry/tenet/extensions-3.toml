@@ -1,0 +1,174 @@
+# What the record says about `extensions`, part 3.
+
+[[tenet]]
+id = "the_linking_crate_exposes_one_narrow_compatibility_check_for_version_skew_arch_mismatch_and_abi_mismatch_and_all_other_parsing_is_above"
+what = "The linking crate exposes one narrow compatibility hook, with an error type of three variants: version skew, architecture mismatch and ABI mismatch. It parses no descriptors, version strings or capability sets, and all other parsing lives above it."
+mechanism = "`IncompatibilityError` (three variants) and the free function `compatibility_check`."
+source = "mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:31-32, mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:101-101"
+provenance = ["mock::crates::hilavitkutin-linking::DESIGN::#public-items"]
+quote = '''
+- `IncompatibilityError` is the narrow compatibility-check error enum. Three variants: version skew, arch mismatch, ABI mismatch.
+- `compatibility_check` is the free function exposing the narrow compatibility hook colocated with `IncompatibilityError`.
+---
+- Parse descriptors, version strings, or capability sets. It exposes one narrow compatibility helper; all other parsing is above.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-linking, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["IncompatibilityError", "compatibility_check", "version skew", "arch mismatch", "ABI mismatch", "narrow hook"]
+
+[[tenet]]
+id = "the_loader_sits_at_the_bottom_of_the_extension_stack_and_the_engine_never_uses_it_because_dynamic_linking_exists_only_for_downstream_cdylib_hosts"
+what = "The linking crate sits at the bottom of the extension stack, above the operating system's dynamic loader, and no hilavitkutin crate depends upward from it. The engine itself never uses it, since the engine is static composition, and dynamic linking through this crate exists strictly for downstream consumers whose extension ecosystems use cdylib extensions."
+mechanism = "Stack: consumer-specific contract crate (`viola-plugin-abi` or similar), `hilavitkutin-extensions`, `hilavitkutin-linking`, OS dynamic loader (`dlopen` / `LoadLibrary`). Downstream consumers named: viola, future hosts."
+source = "mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:49-58"
+provenance = ["mock::crates::hilavitkutin-linking::DESIGN::#architectural-position"]
+quote = '''
+## Architectural position
+
+The loader sits at the bottom of the extension stack:
+
+- Consumer-specific contract crate (`viola-plugin-abi` or similar)
+- `hilavitkutin-extensions` (domain-agnostic host orchestration)
+- `hilavitkutin-linking` (this crate)
+- OS dynamic loader (`dlopen` / `LoadLibrary`)
+
+No hilavitkutin crate depends upward from this one. The engine itself never uses this crate. The engine is static composition. Dynamic linking through this crate exists strictly for downstream consumers (viola, future hosts) whose extension ecosystems use cdylib extensions.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-linking, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["architectural position", "extension stack", "engine never uses", "static composition", "cdylib extensions", "downstream hosts", "viola"]
+cites = ["the_extension_stack_layers_strictly_downward_from_the_consumer_contract_crate_to_the_os_loader_and_the_engine_does_not_depend_on_it"]
+
+[[tenet]]
+id = "the_first_version_of_the_linking_crate_supports_macos_linux_and_windows_x86_64_and_aarch64_and_not_wasm32"
+what = "The first version supports macOS on aarch64 and x86_64, Linux on x86_64 and aarch64, and Windows on x86_64. Further platforms can be added without changing the public interface. The wasm32 target is explicitly out of scope, because its model is different enough to warrant a separate transport."
+source = "mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:75-83"
+provenance = ["mock::crates::hilavitkutin-linking::DESIGN::#platform-coverage"]
+quote = '''
+## Platform coverage
+
+v1 supports:
+
+- macOS aarch64 and x86_64
+- Linux x86_64 and aarch64
+- Windows x86_64
+
+Additional platforms can be added without changing the public API. wasm32 is explicitly out of scope. The model is different enough to warrant a separate transport.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-linking, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["platform coverage", "macOS aarch64", "Linux x86_64", "Windows x86_64", "wasm32", "out of scope", "separate transport", "v1"]
+rules_out = ["wasm32"]
+
+[[tenet]]
+id = "any_library_can_be_loaded_invoked_and_dropped_at_any_time_independent_of_other_libraries_and_the_loader_enforces_it_by_construction"
+what = "One non-negotiable assumption governs the linking crate: any library can be loaded at any point in the host's execution, invoked immediately and dropped at any time, independent of other libraries. The ABI, the trait contracts and the typed symbol handle semantics all enforce this by construction. There is no global registry, no init ordering is assumed, and lifecycle is strictly per library and never ecosystem-wide."
+mechanism = "No static 'currently loaded libraries' collection; every handle is explicit; the lifetime parameter on the typed symbol handle ties it to its loader, so dropping the loader invalidates outstanding symbols at compile time. Example of correct use: load library A at time T, invoke it at T+1, drop it at T+2, load library B at T+3."
+source = "mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:85-89"
+provenance = ["mock::crates::hilavitkutin-linking::DESIGN::#arbitrary-time-linking-invariant"]
+quote = '''
+## Arbitrary-time linking invariant
+
+One non-negotiable assumption governs everything in this crate: any library can be loaded at any point in the host's execution, invoked immediately, and dropped at any time, independent of other libraries. The ABI, trait contracts, and typed symbol handle semantics all enforce this by construction.
+
+No global registry exists. The host never reads a static "currently loaded libraries" collection; every handle is explicit. No init ordering is assumed. Libraries do not depend on other libraries being loaded first, and each loader handle is self-contained. The lifetime parameter on the typed symbol handle ties it to its loader, so dropping the loader at any time invalidates outstanding symbols at compile time. Lifecycle is strictly per-library, never ecosystem-wide: a consumer may load library A at time T, invoke it at T+1, drop it at T+2, load library B at T+3, and that is correct use.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-linking, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["arbitrary-time linking", "non-negotiable", "no global registry", "no init ordering", "per-library lifecycle", "by construction", "typed symbol lifetime"]
+cites = ["the_extensions_crate_preserves_the_arbitrary_time_linking_invariant_by_construction_through_four_api_level_absences"]
+
+[[tenet]]
+id = "host_code_must_tolerate_arbitrary_time_linking_and_every_layer_of_the_stack_preserves_the_invariant_or_documents_its_loss"
+what = "The consumer-side obligation is that host code built on the linking crate tolerates arbitrary-time linking. Assumptions that all libraries are loaded before any is invoked, that init ordering gates invocation or that the full ecosystem must be known before proceeding are forbidden at the framework level, and a consumer that needs ecosystem-wide semantics builds them in its own higher layer. The invariant propagates into the extensions crate and into any downstream consumer contract crate, and every layer in the stack preserves it or explicitly documents the loss."
+source = "mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:91-93"
+provenance = ["mock::crates::hilavitkutin-linking::DESIGN::#arbitrary-time-linking-invariant"]
+quote = '''
+The consumer-side obligation is that host code built on top of this crate tolerates arbitrary-time linking. Assumptions like "all libraries loaded before any invoked", "init ordering gates invocation", or "the full ecosystem must be known before proceeding" are forbidden at the framework level. Any consumer that needs ecosystem-wide semantics builds them in its own higher layer.
+
+This invariant propagates forward into the upper host layer (`hilavitkutin-extensions`) and into any downstream consumer contract crate (`viola-plugin-abi`, and so on). Every layer in the stack preserves the invariant or explicitly documents the loss.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-linking, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["consumer obligation", "arbitrary-time linking", "ecosystem-wide semantics", "propagates", "documented loss", "viola-plugin-abi", "higher layer"]
+rules_out = ["all libraries loaded before any invoked", "init ordering gates invocation", "the full ecosystem must be known before proceeding"]
+cites = ["host_code_built_on_the_extensions_crate_must_tolerate_arbitrary_time_loading_and_ecosystem_wide_semantics_belong_to_a_higher_layer"]
+
+[[tenet]]
+id = "the_linking_crate_defines_no_descriptor_shapes_and_parses_nothing_and_hosts_no_lifecycle"
+what = "The linking crate does not define extension descriptor shapes, role identifiers or capability identifiers, which live in the extensions crate and in consumer contract crates. It does not parse descriptors, version strings or capability sets beyond its one compatibility helper. It does not host or orchestrate the lifecycle, so calling init, invoke and shutdown on a loaded extension is the consumer's responsibility."
+source = "mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:99-99, mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:101-102"
+provenance = ["mock::crates::hilavitkutin-linking::DESIGN::#non-scope"]
+quote = '''
+- Define extension descriptor shapes, role identifiers, or capability IDs. Those live in hilavitkutin-extensions and consumer contract crates.
+---
+- Parse descriptors, version strings, or capability sets. It exposes one narrow compatibility helper; all other parsing is above.
+- Host or orchestrate lifecycle. Calling init / invoke / shutdown on a loaded extension is the consumer's responsibility.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-linking, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["non-scope", "descriptor shapes", "role identifiers", "capability IDs", "no parsing", "lifecycle orchestration", "consumer responsibility"]
+rules_out = ["Define extension descriptor shapes, role identifiers, or capability IDs", "Host or orchestrate lifecycle"]
+
+[[tenet]]
+id = "discovery_is_pull_based_only_and_linker_section_scanning_registration_is_rejected"
+what = "The linking crate does not scan linker sections for registration. The inventory, constructor, distributed-slice and init-array discovery mechanisms are all explicitly rejected, and discovery is pull-based only: the host asks for a named symbol and the library must export it."
+mechanism = "`inventory`, `ctor`, `#[distributed_slice]`, `.init_array` discovery rejected."
+source = "mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:100-100"
+provenance = ["mock::crates::hilavitkutin-linking::DESIGN::#non-scope"]
+quote = '''
+- Scan linker sections for registration. `inventory`, `ctor`, `#[distributed_slice]`, `.init_array` discovery are all explicitly rejected. Discovery is pull-based only: the host asks for a named symbol; the library must export it.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-linking, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["pull-based discovery", "inventory", "ctor", "distributed_slice", ".init_array", "linker sections", "named symbol", "rejected"]
+rules_out = ["Scan linker sections for registration. `inventory`, `ctor`, `#[distributed_slice]`, `.init_array` discovery are all explicitly rejected."]
+cites = ["no_linker_section_is_scanned_and_no_constructor_registration_runs_and_the_extension_defines_its_symbol_as_a_function_returning_a_const_descriptor"]
+
+[[tenet]]
+id = "only_c_abi_cdylib_extensions_are_loadable_and_the_rust_dylib_crate_type_is_not_supported"
+what = "Only C-ABI cdylib extensions are loadable, and the Rust dylib crate type is not supported. This preserves the LLVM optimisation barrier and the Rust ABI stability boundary that the broader extension architecture requires."
+source = "mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:103-103"
+provenance = ["mock::crates::hilavitkutin-linking::DESIGN::#non-scope"]
+quote = '''
+- Support Rust `dylib` crate type. Only C-ABI `cdylib` extensions are loadable. This preserves the LLVM optimisation barrier and the Rust ABI stability boundary that the broader extension architecture requires.
+'''
+because = "It preserves the LLVM optimisation barrier and the Rust ABI stability boundary that the broader extension architecture requires."
+origin = "proposed"
+written_by = "the design template of hilavitkutin-linking, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["cdylib", "dylib", "C-ABI", "LLVM optimisation barrier", "Rust ABI stability", "extension crate type"]
+rules_out = ["Support Rust `dylib` crate type"]
+
+[[tenet]]
+id = "the_linking_crate_was_introduced_as_the_extensions_crate_and_renamed_so_that_the_extensions_name_belongs_to_the_host_orchestration_layer"
+what = "The linking crate was introduced in design under the name of the extensions crate and has been renamed, and the extensions name is reclaimed for the host orchestration layer above it. The rename reflects that this crate mechanically performs runtime dynamic linking, while the name extensions better suits the user-facing contract host, which matches external vocabulary for IDE extensions and similar contract-bound unit systems."
+mechanism = "Introduced as `hilavitkutin-extensions` in design (PR #34, merged 2026-04-24)."
+source = "mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:106-108"
+provenance = ["mock::crates::hilavitkutin-linking::DESIGN::#origin-and-rename"]
+quote = '''
+## Origin and rename
+
+This crate was introduced as `hilavitkutin-extensions` in design (PR #34, merged 2026-04-24). Currently, renames it to `hilavitkutin-linking` and reclaims the `hilavitkutin-extensions` name for the host orchestration layer above it. The rename reflects that this crate mechanically performs runtime dynamic linking; the name "extensions" is better suited to the user-facing contract host above, which matches external vocabulary for IDE extensions and similar contract-bound unit systems.
+'''
+because = "The crate mechanically performs runtime dynamic linking; the name extensions is better suited to the user-facing contract host above, which matches external vocabulary for IDE extensions and similar contract-bound unit systems."
+origin = "proposed"
+written_by = "the design template of hilavitkutin-linking, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["rename", "hilavitkutin-linking", "hilavitkutin-extensions", "PR #34", "2026-04-24", "extensions name reclaimed", "IDE extensions vocabulary"]

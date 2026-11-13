@@ -1,0 +1,101 @@
+# What the record says about `kits`, part 2.
+
+[[tenet]]
+id = "the_interner_kit_form_gains_consistency_rather_than_ergonomics_for_a_single_resource_and_pays_off_when_several_stores_are_bundled"
+what = "A kit that owns one interner resource and no units is equivalent to wiring that resource directly onto the builder. The kit form becomes valuable once a consumer bundles several resources or columns under one named preset, and for the single-resource interner case the gain is consistency more than ergonomic savings."
+mechanism = "`Scheduler::builder().with(Resource::new(default_interner::<4096, 256>())).with(InternerKit::<4096, 256>).build()`; equivalent direct form `Scheduler::builder().with(Resource::new(default_interner::<4096, 256>())).build()`. The Kit declares the type-level commitment that the resource exists in `Stores`; the instance is supplied by the app; the api has no `Kit::default_resources()` association; auto-wiring follow-up in BACKLOG. The v0.1 `BuilderResource<T>` bridge was deleted entirely per `no-legacy-shims-pre-1.0.md`."
+source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:93-135"
+provenance = ["mock::crates::hilavitkutin-providers::DESIGN::#internerkit-bytes-entries"]
+quote = '''
+### `InternerKit<BYTES, ENTRIES>`
+
+```rust
+pub struct InternerKit<const BYTES: usize, const ENTRIES: usize>;
+
+impl<const BYTES: usize, const ENTRIES: usize> Kit
+ for InternerKit<BYTES, ENTRIES>
+{
+ type Units = read![];
+ type Owned = read![Resource<StringInterner<MemoryArena<BYTES, ENTRIES>>>];
+}
+```
+
+The Kit impl is purely declarative per the round-4 Kit shape
+(`pub trait Kit { type Units: WorkUnitBundle; type Owned: StoreBundle }`).
+It declares no WorkUnits (`type Units = read![]`); it owns one
+Resource. The Kit impl never names `SchedulerBuilder`. The v0.1
+`BuilderResource<T>` bridge is gone (deleted entirely per
+`no-legacy-shims-pre-1.0.md`); the new shape needs no bridge
+because Kits no longer call methods on builders.
+
+Usage on the scheduler:
+
+```rust
+let scheduler = Scheduler::builder()
+.with(Resource::new(default_interner::<4096, 256>()))
+.with(InternerKit::<4096, 256>)
+.build();
+```
+
+The Kit declares the type-level commitment that
+`Resource<StringInterner<MemoryArena<4096, 256>>>` exists in
+`Stores`. The actual instance is supplied by the app via
+`builder.with(Resource::new(...))`; the api has no
+`Kit::default_resources()` association. See BACKLOG for the
+auto-wiring follow-up.
+
+Equivalent to the direct form
+`Scheduler::builder().with(Resource::new(default_interner::<4096, 256>())).build()`
+when there's only this one kit. The Kit form becomes valuable
+once a consumer bundles several Resources / Columns under one
+named preset; for the single-resource interner case the gain is
+consistency more than ergonomic savings.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-providers, agent-written, undated"
+standing = "provisional"
+subject = "kits"
+keywords = ["InternerKit", "single-resource kit", "direct wiring equivalent", "Kit::default_resources", "auto-wiring", "BuilderResource removed", "no-legacy-shims-pre-1.0", "named preset"]
+cites = ["a_kit_may_own_no_state_or_no_units_and_a_kit_only_declares_that_a_store_exists_while_the_value_is_supplied_at_the_app_call_site"]
+
+[[tenet]]
+id = "the_interner_resource_is_not_replaceable_by_default_and_an_app_needing_a_test_fixture_opts_in_on_its_own_alias_type"
+what = "The interner resource does not implement the replaceable marker by default. An app that needs test-fixture replacement, for example a deterministic interner for unit tests, implements the marker itself on the relevant alias type, which matches the workspace rule of tools and not policies: the crate ships the resource without forcing override semantics on consumers that do not want them."
+mechanism = "`Resource<StringInterner<MemoryArena<...>>>` has no `impl Replaceable`; apps impl `Replaceable` on their alias type."
+source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:137-145"
+provenance = ["mock::crates::hilavitkutin-providers::DESIGN::#replaceable-opt-in-for-the-interner-resource"]
+quote = '''
+### Replaceable opt-in for the Interner Resource
+
+The `Resource<StringInterner<MemoryArena<...>>>` does not impl
+`Replaceable` by default. Apps that need test-fixture replacement
+(for example, a deterministic interner for unit tests) impl
+`Replaceable` themselves on the relevant alias type. This matches
+the workspace's "tools, not policies" rule: the crate ships
+the Resource without forcing override semantics on consumers that
+do not want them.
+'''
+because = "The workspace's \"tools, not policies\" rule: the crate ships the Resource without forcing override semantics on consumers that do not want them."
+origin = "proposed"
+written_by = "the design template of hilavitkutin-providers, agent-written, undated"
+standing = "provisional"
+subject = "kits"
+keywords = ["Replaceable", "InternerKit", "test fixture", "deterministic interner", "tools not policies", "opt-in override", "alias type"]
+cites = ["replaceable_is_the_only_enforced_annotation_on_owned_types_and_it_is_opt_in_so_override_of_a_kit_s_resource_is_rejected_at_compile_time_by_default"]
+
+[[tenet]]
+id = "the_adapt_kits_bundle_the_nine_metric_axes_with_a_standard_recipe_with_validated_defaults_and_an_off_recipe_that_disables_the_observer"
+what = "Two convenience kit recipes bundle the nine adapt axes. The standard recipe ships all axes with bench-validated defaults, and the off recipe ships none, which disables the adapt observer. Custom mixes are consumer-authored kits, following the workspace convention that themed resource sets are built from individuals that stay primary."
+mechanism = "`StandardAdaptKit`, `OffAdaptKit` (Topic 5 axis A); per-axis `AdaptMetrics` sub-resources `PassDurationMetrics`, `PhaseEMAMetrics`, `FiberEMAMetrics`, `ChangeClassMetrics`, `CacheResidencyMetrics`, `ThroughputTrendingMetrics`, `PredictiveParkingMetrics`, `MemoryWatermarkMetrics`, `CoreIdleTimeMetrics` (Topic 5 axis F) under `pub mod metrics::*`, with per-axis `pub const DEFAULT_*` constants (Topic 5 axis C)."
+source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:26-27"
+provenance = ["mock::crates::hilavitkutin-providers::DESIGN::#surface"]
+quote = '''
+| `PassDurationMetrics`, `PhaseEMAMetrics`, `FiberEMAMetrics`, `ChangeClassMetrics`, `CacheResidencyMetrics`, `ThroughputTrendingMetrics`, `PredictiveParkingMetrics`, `MemoryWatermarkMetrics`, `CoreIdleTimeMetrics` | Per-axis AdaptMetrics sub-resources (Topic 5 axis F). Each ships individually under `pub mod metrics::*`. Per-axis `pub const DEFAULT_*` named constants per Topic 5 axis C. |
+| `StandardAdaptKit`, `OffAdaptKit` | Convenience Kit recipes bundling the nine axes (Topic 5 axis A). Standard ships all axes with bench-validated defaults; Off ships none (adapt observer disabled). Custom mixes via consumer-authored Kits per the themed-resource-sets-individuals-primary workspace convention. |
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-providers, agent-written, undated"
+standing = "provisional"
+subject = "kits"
+keywords = ["StandardAdaptKit", "OffAdaptKit", "adapt axes", "metrics sub-resources", "DEFAULT_ constants", "Topic 5 axis A", "themed resource sets", "bench-validated defaults"]
+cites = ["adapt_metrics_are_split_hot_and_cold_with_a_scratch_arena_hot_path_and_a_resource_snapshot_at_the_end_of_the_pass"]

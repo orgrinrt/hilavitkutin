@@ -144,3 +144,42 @@ written_by = "topic T5 of the founding round (hilavitkutin-core-design)"
 standing = "provisional"
 subject = "meta"
 keywords = ["SchedulerMetrics", "previous pass", "one pass behind", "pass start", "metrics resource", "version stamp"]
+
+[[tenet]]
+id = "whether_meta_units_share_the_consumer_carrier_or_get_a_dedicated_carrier_is_decided_by_sketching_both_shapes"
+what = "Whether meta units stay on the shared consumer carrier, with bands hoisted out of the morsel loop on every record-bearing path, once per frame, or move to a dedicated meta carrier with an independent band walk, is decided by sketching both shapes far enough to compare complexity and codegen. Either shape must cure the known warts: per-morsel meta execution on record-bearing paths, leading-band accumulator appends unsupported on the parallel unit-outer path, and the clear-on-dispatch semantics of slice 1b."
+mechanism = "Task #687 for the slice-1b clear-on-dispatch semantics; single-core and parallel alike."
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:124-131"
+provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#a1-7-the-meta-carrier-question-is-sketch-decided"]
+quote = '''
+Whether meta WUs stay on the shared consumer carrier (with bands hoisted out
+of the morsel loop on every record-bearing path, once per frame, single-core
+and parallel alike) or move to a dedicated meta carrier with an independent
+band walk is decided by sketching both shapes far enough to compare
+complexity and codegen. The known warts either shape must cure: per-morsel
+meta execution on record-bearing paths, leading-band accumulator appends
+unsupported on the parallel unit-outer path, and the slice-1b
+clear-on-dispatch semantics (#687).
+'''
+origin = "stated"
+standing = "provisional"
+subject = "meta"
+keywords = ["meta carrier", "meta WUs", "band walk", "sketch", "morsel loop", "accumulator append", "clear-on-dispatch", "#687"]
+
+[[tenet]]
+id = "engine_owned_mutable_meta_state_lives_in_the_meta_block_scheduler_field_and_is_reached_by_a_compile_time_gated_accessor"
+what = "Engine-owned mutable meta state lives in a scheduler field, because consumer resources are copy and read-only and cannot carry cells. The accessor gated by meta access exists only on a context that bears a meta reference, enforced at compile time."
+mechanism = "`MetaBlock` scheduler field; `MetaAccess`-gated accessor on a `MetaRef`-bearing Ctx; consumer resources are `Copy` read-only."
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:161-164"
+provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#constraint-notes-elevated-to-canon"]
+quote = '''
+5. Engine-owned mutable meta state lives in the `MetaBlock` scheduler field
+   (consumer resources are `Copy` read-only and cannot carry Cells); the
+   `MetaAccess`-gated accessor exists only on a `MetaRef`-bearing Ctx,
+   enforced at compile time.
+'''
+origin = "proposed"
+written_by = "addendum A1 of 2026-06-11, constraint note 5, agent-written, elevated to canon by the addendum"
+standing = "provisional"
+subject = "meta"
+keywords = ["MetaBlock", "MetaAccess", "MetaRef", "scheduler field", "Copy resources", "Cell", "compile-time enforcement"]

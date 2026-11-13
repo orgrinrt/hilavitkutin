@@ -320,3 +320,140 @@ origin = "stated"
 standing = "provisional"
 subject = "plan"
 keywords = ["reorganisation triggers", "between frames", "EMA thresholds", "recompute morsel sizes", "re-select config", "bitmask comparison"]
+
+[[tenet]]
+id = "plan_affecting_is_an_open_marker_trait_that_consumers_implement_on_resource_value_types"
+what = "The plan-dirty trigger, by which a swapped plan-affecting resource marks the plan for recompute, had no carrier a consumer could reach, because the plan-affecting marker was sealed with one engine-internal implementor. The maintainer ruled it unsealed: consumers implement it on resource value types whose swap invalidates the plan, mirroring the existing opt-in marker for replaceable resources. The property belongs to the type and not to one app's registration."
+mechanism = "`PlanAffecting` unsealed, mirroring the opt-in marker `Replaceable`; implementation tracked under #696 and riding the swap-semantics round (A2-5), since the two surfaces interact."
+source = "mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:55-62"
+provenance = ["mock::research::pre_seed::202607193200_canon-amendment-a2-precedence-and-rulings::#a2-3-planaffecting-ranges-over-an-open-marker-trait-op-2026-07-19"]
+quote = '''
+## A2-3: PlanAffecting ranges over an open marker trait (op, 2026-07-19)
+
+Canon's plan-dirty trigger (a swapped plan-affecting resource marks the plan for recompute) had
+no consumer-reachable carrier: `PlanAffecting` shipped sealed with one engine-internal
+implementor. Op ruled: unseal it. Consumers implement `PlanAffecting` on resource value types
+whose swap invalidates the plan, mirroring the existing `Replaceable` opt-in marker. The
+property is intrinsic to the type, not to one app's registration. Implementation is tracked
+under #696 and rides the swap-semantics round (A2-5), since the two surfaces interact.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "plan"
+keywords = ["PlanAffecting", "unsealed", "marker trait", "Replaceable", "plan-dirty", "recompute", "resource value type", "#696"]
+cites = ["the_swap_of_a_replaceable_resource_is_to_be_specified_by_a_commissioned_round"]
+
+[[tenet]]
+id = "whether_dispatch_follows_rcm_order_or_waist_phase_order_is_decided_by_a_bench"
+what = "The choice between the spec's dual-ordering position, where the RCM order of units is their execution order, and the shipped waist-phase order is resolved by a bench and not by fiat. Both orders can be built behind the const grouping mechanism, and a cache-locality bench on wide fan-out graphs decides which wording canon keeps. Until the bench lands, neither order is drift, and the fork is registered open with a bench oracle."
+mechanism = "Spec steps 5 and 8 dual ordering (RCM row order = WU execution order) versus the shipped waist-phase order; the guarded-walk relaxation proven in r2 section 7-6 carries an arbitrary const-side order; oracle: cache-locality bench on wide fan-out DAGs."
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:51-57"
+provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#a1-1-rcm-dispatch-order-is-bench-decided"]
+quote = '''
+The spec's Step 5/8 dual-ordering position (RCM row order = WU execution
+order) versus the shipped waist-phase order is resolved by bench, not by
+fiat. Both orders are buildable behind the const grouping mechanism (the
+guarded-walk relaxation proven in r2 section 7-6 carries an arbitrary
+const-side order). A cache-locality bench on wide fan-out DAGs decides which
+wording canon keeps. Until the bench lands, neither order is drift; the fork
+is registered open with a bench oracle.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "plan"
+keywords = ["RCM", "dispatch order", "waist-phase order", "bench oracle", "cache locality", "fan-out", "dual ordering", "A1-1"]
+cites = ["rcm_always_runs_and_reorders_the_units_so_column_sharing_units_are_adjacent_for_fiber_grouping"]
+
+[[tenet]]
+id = "as_of_2026_06_11_rcm_rides_only_the_arena_layout_column"
+what = "As of 2026-06-11, addendum A1 records that RCM rides only the arena-layout column."
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:41-42"
+provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#state-assessment-truth-of-impl-2026-06-11"]
+quote = '''
+`PlanCache` is never populated; `steal_fallback` is `todo!()`; RCM rides only
+the arena-layout column; sub-byte bitpacking (`ColumnValue::BIT_WIDTH`) is
+'''
+origin = "proposed"
+written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
+standing = "provisional"
+subject = "plan"
+keywords = ["RCM", "arena-layout", "partial", "inert", "state assessment", "2026-06-11"]
+cites = ["whether_dispatch_follows_rcm_order_or_waist_phase_order_is_decided_by_a_bench"]
+
+[[tenet]]
+id = "as_of_2026_06_11_eight_of_nine_adapt_axes_carry_types_but_no_data"
+what = "As of 2026-06-11, addendum A1 records that eight of the nine adapt axes carry types but no data."
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:39-39"
+provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#state-assessment-truth-of-impl-2026-06-11"]
+quote = '''
+Partial or inert: eight of nine adapt axes carry types but no data;
+'''
+origin = "proposed"
+written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
+standing = "provisional"
+subject = "plan"
+keywords = ["adapt axes", "inert", "types without data", "state assessment", "2026-06-11"]
+
+[[tenet]]
+id = "the_unified_mechanism_is_the_runtime_plan_to_compile_time_per_core_program_bridge_and_fiber_shape_typestate_is_its_unproven_realisation"
+what = "With the special-casing gone there is no registration-order walk that works for single core to ship first. The real mechanism is unavoidable for all core counts: the bridge from the runtime plan to a compile-time per-core program, where the topology of fibers, phases and cores is a function of the associated types of the access sets, which only the trait solver sees. The per-fiber shape typestate is its likely realisation and the highest-risk unproven step, which the engine-completion roadmap must sketch-prove."
+mechanism = "Per-fiber `FiberShape` typestate; \"build time = the type system\"; topology as a function of the WU `AccessSet` associated types."
+source = "mock/research/202606061000_canon-amendment-unified-engine.md:28-30"
+provenance = ["mock::research::202606061000_canon-amendment-unified-engine::#consequence-for-the-dispatch-design"]
+quote = '''
+## Consequence for the dispatch design
+
+The easy escape hatch is gone: there is no "registration-order cons-list walk that works for single core" to ship first. The real unified mechanism is unavoidable, the runtime-plan-to-compile-time per-core-program bridge ("build time = the type system": the fiber/phase/core topology is a function of the WU `AccessSet` associated types, which only the trait solver sees), for all core counts. The per-fiber `FiberShape` typestate is its likely realization and the highest-risk unproven step the engine-completion roadmap must sketch-prove.
+'''
+origin = "proposed"
+written_by = "canon amendment of 2026-06-06 on the unified engine, the working out under the maintainer's ruling, written in the first person by an author the text does not name"
+standing = "provisional"
+subject = "plan"
+keywords = ["FiberShape", "typestate", "per-core program", "build time = the type system", "AccessSet", "trait solver", "sketch-prove", "highest risk"]
+rules_out = ["a registration-order cons-list walk that works for single core, shipped first"]
+cites = ["the_engine_is_one_and_the_core_count_is_configuration"]
+
+[[tenet]]
+id = "per_fiber_morsel_sizing_folds_over_blob_strides_plus_the_collection_bytes_term_and_rides_after_the_drift_fix"
+what = "The A3b per-fiber morsel sizing rides downstream of the drift fix. The per-store size is the blob stride plus, for collection members, the collection-bytes term, and the fold is over blob strides and not over a decomposed per-member column set. The collection-bytes and resource-footprint work, merged, is the const size source for the sequence and map collection-bytes term."
+mechanism = "A3b; `CollectionBytes` term; `CollectionBytes`/`ResourceFootprint` (#163/#164, merged)."
+source = "mock/research/202606210600_resource-storage-model-canonical-addendum.md:90-96"
+provenance = ["mock::research::202606210600_resource-storage-model-canonical-addendum::#status-of-dependent-work"]
+quote = '''
+## Status of dependent work
+
+- A3b per-fiber morsel sizing rides downstream of the drift fix. The per-store size is the blob
+  stride plus, for collection members, the `CollectionBytes` term; the fold is over blob strides,
+  not a decomposed per-member column set.
+- `CollectionBytes`/`ResourceFootprint` (#163/#164, merged) is the const size source for the
+  `Seq`/`Map` collection-bytes term in that formula.
+'''
+origin = "proposed"
+written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
+standing = "provisional"
+subject = "plan"
+keywords = ["A3b", "per-fiber morsel sizing", "blob stride", "CollectionBytes", "ResourceFootprint", "#163", "#164", "size fold"]
+cites = ["the_value_of_a_resource_is_one_contiguous_record_blob_and_the_per_member_column_decomposition_was_refuted_by_bench"]
+
+[[tenet]]
+id = "the_swap_d_bench_is_commissioned_with_the_trigger_when_the_344_write_side_lands"
+what = "A bench named Swap-D, a cold write then a stream, is commissioned with the trigger that #344's write side lands. It decides whether the write-resource-collection-sizes morsel term absorbs the write-then-read traffic of a swap or a separate budget line is owed. There is no accessor-shape arm, since there is one write per swap between frames and the stakes do not justify one."
+mechanism = "Swap-D: N swept 16/64/256, element sizes 4/16/64 bytes, baseline versus swap-at-frame-end; `write_resource_collection_sizes` morsel term."
+source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:113-120"
+provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s7-bench"]
+quote = '''
+## S7: bench
+
+Swap-D (cold-write-then-stream; N swept 16/64/256, element sizes 4/16/64
+bytes, baseline versus swap-at-frame-end): commissioned with the trigger
+"when #344's write side lands". It decides whether the
+`write_resource_collection_sizes` morsel term absorbs the swap's
+write-then-read traffic or a separate budget line is owed. No accessor-shape
+arm (one write per swap, between frames; the stakes do not justify one).
+'''
+origin = "proposed"
+written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
+standing = "provisional"
+subject = "plan"
+keywords = ["Swap-D", "bench", "write_resource_collection_sizes", "morsel term", "#344", "cold write then stream", "budget line", "S7"]
+cites = ["per_fiber_morsel_sizing_folds_over_blob_strides_plus_the_collection_bytes_term_and_rides_after_the_drift_fix"]

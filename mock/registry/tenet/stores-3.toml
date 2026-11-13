@@ -1,0 +1,108 @@
+# What the record says about `stores`, part 3.
+
+[[tenet]]
+id = "the_drift_fix_arc_is_the_storage_model_work_and_no_open_storage_model_fork_remains"
+what = "The drift-fix arc is the storage-model work: add the scalar stack snapshot, the live-streamed collection access, the noalias invariant and the erased static-shape addressing on the existing one-record blob. The layout is fully settled by the bench decision of blob, snapshot and live collections together with the maintainer's hybrid call of erased, global-capable addressing, and no open storage-model fork remains."
+mechanism = "Hybrid decision: `202606210600_topic.hybrid-decision.md`."
+source = "mock/research/202606210600_resource-storage-model-canonical-addendum.md:97-101"
+provenance = ["mock::research::202606210600_resource-storage-model-canonical-addendum::#status-of-dependent-work"]
+quote = '''
+- The drift-fix arc (add scalar stack-snapshot + live-streamed collection access + the noalias
+  invariant + erased static-shape addressing on the existing one-record blob) is the storage-model
+  work. The layout is now fully settled: bench-decided (blob + snapshot + live-collections) plus
+  op's hybrid call (erased addressing, global-capable, `202606210600_topic.hybrid-decision.md`).
+  No open storage-model fork remains.
+'''
+origin = "proposed"
+written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
+standing = "provisional"
+subject = "stores"
+keywords = ["drift-fix arc", "storage model", "scalar snapshot", "live-streamed", "noalias", "erased addressing", "hybrid", "settled layout"]
+cites = ["a_resource_value_is_addressed_through_an_erased_static_shape_so_it_can_cross_a_plugin_boundary"]
+
+[[tenet]]
+id = "collection_access_read_and_write_is_the_ptr_len_view_over_the_member_s_collection_column_region_behind_the_erased_descriptor"
+what = "The swap spec answers the open item of the founding spec on the resource collection accessor shape: collection access, on the read side and the write side alike, is the pointer and length view over the member's collection-column region behind the erased descriptor. The concrete consumer-facing API lands with #344, shaped by this clause."
+mechanism = "ptr+len view over the member's collection-column region behind the erased descriptor; API with #344."
+source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:71-75"
+provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s3-collection-members"]
+quote = '''
+underspecified. The same resolution answers the founding spec's open
+"resource collection accessor shape" item: collection access, read side and
+write side alike, is the ptr+len view over the member's collection-column
+region behind the erased descriptor; the concrete consumer-facing API lands
+with #344, shaped by this clause.
+'''
+origin = "proposed"
+written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
+standing = "provisional"
+subject = "stores"
+keywords = ["collection accessor shape", "ptr+len view", "erased descriptor", "read side", "write side", "#344", "founding spec open item"]
+cites = ["a_resource_value_is_addressed_through_an_erased_static_shape_so_it_can_cross_a_plugin_boundary"]
+
+[[tenet]]
+id = "a_plan_affecting_type_can_never_take_the_replace_value_path_because_of_a_negative_impl_wall"
+what = "The api crate ships a negative implementation that no plan-affecting type is replaceable, behind the negative-impls feature gate, which is in the watch tier and allowed. The plan-affecting trait is dominant: a plan-affecting type can never take the cheap replace-value path, structurally, with the compiler rejecting the consumer's impl at the consumer's impl site, across crates. The evidence is the exclusivity sketch, both arms."
+mechanism = "`impl<T: PlanAffecting> !Replaceable for T` under `#![feature(negative_impls)]` (WATCH tier, allowed; the gate carries the standard vetting comment); E0751 at the consumer's impl site, cross-crate; sketch `202607193310_planaffecting-replaceable-exclusivity`."
+source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:77-84"
+provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s4-trait-relationship-resolved-by-sketch"]
+quote = '''
+## S4: trait relationship (resolved by sketch)
+
+hilavitkutin-api ships `impl<T: PlanAffecting> !Replaceable for T` under
+`#![feature(negative_impls)]` (WATCH tier, allowed; the gate carries the
+standard vetting comment). `PlanAffecting` is dominant: a plan-affecting
+type can never take the cheap `replace_value` path, structurally, with E0751
+at the consumer's impl site, cross-crate. Evidence: the exclusivity sketch,
+both arms. The supertrait alternatives fail on the merits
+'''
+origin = "proposed"
+written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
+standing = "provisional"
+subject = "stores"
+keywords = ["negative_impls", "PlanAffecting", "Replaceable", "E0751", "exclusivity", "negative impl", "structural wall", "S4"]
+cites = ["plan_affecting_is_an_open_marker_trait_that_consumers_implement_on_resource_value_types"]
+
+[[tenet]]
+id = "the_supertrait_alternatives_to_the_negative_impl_fail_and_a_lint_is_advisory_where_a_structural_wall_exists"
+what = "The supertrait alternatives to the negative-impl wall fail on the merits. Making plan-affecting a subtrait of replaceable reopens the silent-skip hole, and making replaceable a subtrait of plan-affecting routes every app-state swap through the plan band. A lint is advisory where a structural wall exists."
+mechanism = "`PlanAffecting: Replaceable` reopens the silent-skip hole; `Replaceable: PlanAffecting` routes every app-state swap through the plan band."
+source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:84-87"
+provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s4-trait-relationship-resolved-by-sketch"]
+quote = '''
+both arms. The supertrait alternatives fail on the merits
+(`PlanAffecting: Replaceable` reopens the silent-skip hole;
+`Replaceable: PlanAffecting` routes every app-state swap through the plan
+band); a lint is advisory where a structural wall exists.
+'''
+origin = "proposed"
+written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
+standing = "provisional"
+subject = "stores"
+keywords = ["supertrait", "PlanAffecting", "Replaceable", "silent-skip hole", "plan band", "lint advisory", "structural wall", "S4"]
+rules_out = ["PlanAffecting: Replaceable", "Replaceable: PlanAffecting", "a lint in place of the structural wall"]
+cites = ["a_plan_affecting_type_can_never_take_the_replace_value_path_because_of_a_negative_impl_wall"]
+
+[[tenet]]
+id = "each_core_appends_into_its_own_region_of_an_accumulator_and_the_main_thread_merges_the_regions_in_order"
+what = "For an accumulator each core owns an exclusive region of the one reserved buffer and the main thread merges the regions after the workers rejoin, preserving append order. This regioning by core is what the design asks for on the accumulator, and it is a different mechanism from head and tail convergence, which splits input records between two threads."
+mechanism = "Cap = build-time record count (at most one append per record); regions tile `[0, total)` one per core: `per = ceil(total/ncores)`, `lo = (c*per).min(total)`, `hi = (lo+per).min(total)`, cap `hi_c - lo_c`, each with its own live-length cell."
+source = "mock/research/202611130850_the-record-read-whole/RECOVERED.md:61-70"
+provenance = ["mock::research::202611130850_the-record-read-whole::RECOVERED::#mock-crates-hilavitkutin-design-md-tmpl-lines-552-to-561"]
+quote = '''
+regions of the single reserved buffer. The accumulator reserves cap =
+build-time record count (the global at-most-one-append-per-record bound),
+and core c appends into the sub-region at element offset `lo_c`, where the
+regions tile `[0, total)` one per core (`per = ceil(total/ncores)`,
+`lo = (c*per).min(total)`, `hi = (lo+per).min(total)`), with cap `hi_c - lo_c`
+and its own live-length cell. This N-way regioning is what the design asks for
+on the accumulator: each core owns an exclusive region and the main thread
+merges them after the workers rejoin, preserving append order. It is a
+different mechanism from head+tail convergence, which splits input records
+between two threads; they share the ceiling formula and nothing else.
+'''
+origin = "proposed"
+written_by = "engine design template as on the branch recover/unlanded-rounds-and-benches, commit of 2026-08-30, not on dev; the text does not say whose it is"
+standing = "provisional"
+subject = "stores"
+keywords = ["accumulator", "per-core region", "merge", "append order", "N-way regioning", "reserved buffer"]

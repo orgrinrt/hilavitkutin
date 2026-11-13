@@ -1,0 +1,331 @@
+# What the record says about `principles`, part 3.
+
+[[tenet]]
+id = "extension_across_an_abi_boundary_is_by_registered_traits_and_c_layout_descriptors_and_never_by_dyn"
+what = "Where extension across an ABI boundary is required, the means are registered traits and C-layout descriptors, which the text calls the inventory pattern, and not dynamic dispatch."
+mechanism = "registered traits + `repr(C)` descriptors (inventory pattern), not `dyn`."
+source = "mock/PRINCIPLES.md.tmpl:78-79"
+provenance = ["mock::PRINCIPLES::#no-dyn-no-box-dyn-no-runtime-dispatch"]
+quote = '''
+Where extension across an ABI boundary is required, use registered
+traits + `repr(C)` descriptors (inventory pattern), not `dyn`.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["ABI boundary", "registered traits", "repr(C) descriptors", "inventory pattern", "extension", "no dyn"]
+cites = ["repr_c_and_function_pointers_give_the_minimal_abi_surface", "link_time_registration_through_inventory_is_complete_before_work_starts"]
+
+[[tenet]]
+id = "every_type_is_a_trait_a_newtype_or_a_c_layout_enum_and_there_is_no_fourth_bare_primitive_category"
+what = "Every type anywhere in source, public or private, in a signature or a field, falls into one of three categories. A trait is for varying behaviour, a shared contract or extensibility, a newtype is for a fixed representation with validation at construction, and a C-layout enum is for a closed set that crosses an ABI boundary. There is no fourth bare primitive category, and every numeric identity flows through the type system of arvo."
+mechanism = "Trait: arithmetic ops, sinks, platform providers. Newtype: `UFixed<I, F, S>`, `USize`, `Bool`, `ContentHash`, strategy markers. `repr(C)` enum: `Priority`, `ErrorClass`."
+rules_out = ["a fourth bare primitive category", "raw u8..u128, i8..i128, f32, f64, usize, isize or bool in source"]
+source = "mock/PRINCIPLES.md.tmpl:81-94"
+provenance = ["mock::PRINCIPLES::#type-taxonomy"]
+quote = '''
+## Type taxonomy
+
+Every type anywhere in source, public or private, fn sig or field,
+local or cast expression, falls into one of three categories:
+
+| Category | When | Examples |
+|----------|------|----------|
+| **Trait** | Varying behavior, shared contract, extensible | arithmetic ops, sinks, platform providers |
+| **Newtype** | Fixed representation, validation at construction | `UFixed<I, F, S>`, `USize`, `Bool`, `ContentHash`, strategy markers |
+| **`repr(C)` enum** | Closed set, crosses ABI boundary | `Priority`, `ErrorClass` |
+
+There is no fourth "bare primitive" category. Raw `u8`..`u128`,
+`i8`..`i128`, `f32`, `f64`, `usize`, `isize`, `bool` never appear in
+source; every numeric identity flows through arvo's type system.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["type taxonomy", "trait", "newtype", "repr(C) enum", "no fourth category", "UFixed", "ContentHash", "Priority"]
+cites = ["the_type_taxonomy_is_trait_newtype_repr_c_enum_or_primitive_and_it_governs_the_form_of_every_type"]
+
+[[tenet]]
+id = "container_capacity_lives_at_type_level_and_a_consumer_needing_more_picks_the_bigger_type"
+what = "Every container's capacity lives at type level. There is no runtime resize and no runtime growth, and a consumer that needs a bigger container picks the bigger type."
+because = "It is what the no heap principle bottoms out in at the storage layer: capacity is a compile-time choice the consumer makes once and not a runtime allocation the callee fabricates."
+mechanism = "`Mask64`, `Mask256`, `Seq<T, N: Cap>`, `Map<K, V, N: Cap>`."
+rules_out = ["runtime resize of a container", "runtime growth of a container"]
+source = "mock/PRINCIPLES.md.tmpl:102-111"
+provenance = ["mock::PRINCIPLES::#sizes-are-const-at-type-level"]
+quote = '''
+## Sizes are const at type level
+
+Every container's capacity lives at type level: `Mask64`, `Mask256`,
+`Seq<T, N: Cap>`, `Map<K, V, N: Cap>`. No runtime resize, no runtime
+grow. If a consumer needs a bigger container, they pick the bigger
+type.
+
+This is what the "no heap" principle bottoms out in at the storage
+layer: capacity is a compile-time choice the consumer makes once,
+not a runtime allocation the callee fabricates.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["const capacity", "type-level size", "Mask64", "Mask256", "Seq", "Map", "Cap", "no runtime resize"]
+
+[[tenet]]
+id = "there_is_one_mechanism_per_concern_and_where_two_subsystems_solve_one_problem_differently_one_must_go"
+what = "If two subsystems solve the same problem differently, one must go. There are no parallel versioning tables, no parallel serialisation paths and no fast path beside a slow path, and there is one mechanism per concern."
+rules_out = ["parallel versioning tables", "parallel serialization paths", "a fast path alongside a slow path"]
+source = "mock/PRINCIPLES.md.tmpl:113-117"
+provenance = ["mock::PRINCIPLES::#one-mechanism-not-two"]
+quote = '''
+## One mechanism, not two
+
+If two subsystems solve the same problem differently, one must go.
+No parallel versioning tables, no parallel serialization paths, no
+"fast path" alongside a "slow path". One mechanism per concern.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["one mechanism", "not two", "parallel versioning", "parallel serialization", "fast path", "slow path"]
+
+[[tenet]]
+id = "all_engine_runtime_state_lives_in_one_columnar_store_and_a_resource_versus_a_column_is_intent_and_not_mechanism"
+what = "All engine runtime state lives in one store. Resources, columns and the execution plan all back onto the same column storage, which owns columns of scalar column values allocated through the memory provider. Every aggregate decomposes struct-of-arrays style into scalar columns, and resource versus column is intent, persistent and cold versus hot and per morsel, and not a separate mechanism."
+mechanism = "`ColumnStorage` owns columns of `ColumnValue` scalars allocated through `MemoryProvider`; `Resource` versus `Column` is intent (persistent / cold versus hot / per-morsel)."
+source = "mock/PRINCIPLES.md.tmpl:119-126"
+provenance = ["mock::PRINCIPLES::#unified-columnar-storage"]
+quote = '''
+## Unified columnar storage
+
+All engine runtime state lives in one store. Resources, columns, and
+the execution plan all back onto `ColumnStorage`, which owns columns of
+`ColumnValue` scalars allocated through `MemoryProvider`. Every
+aggregate struct-of-arrays-decomposes to scalar columns; `Resource`
+versus `Column` is intent (persistent / cold versus hot / per-morsel),
+not a separate mechanism.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["unified columnar storage", "ColumnStorage", "ColumnValue", "MemoryProvider", "resource", "column", "execution plan", "struct-of-arrays"]
+
+[[tenet]]
+id = "no_subsystem_has_bespoke_storage_and_a_subsystem_needing_to_hold_n_things_uses_a_column"
+what = "There is no bespoke per-subsystem storage. A subsystem that needs to hold N things uses a column and does not build a new arena."
+because = "It is one mechanism, not two, applied to the data plane: the engine accreted disjoint arenas once, and unwinding them onto the one store is the correction."
+rules_out = ["a hand-rolled arena", "a MaybeUninit pool", "a raw fixed buffer holding runtime data outside the column storage and the store markers", "a new arena when a subsystem needs to hold N things"]
+source = "mock/PRINCIPLES.md.tmpl:128-133"
+provenance = ["mock::PRINCIPLES::#unified-columnar-storage"]
+quote = '''
+There is no bespoke per-subsystem storage. No hand-rolled arena, no
+`MaybeUninit` pool, no raw fixed buffer holding runtime data outside
+`ColumnStorage` and the store markers. When a subsystem needs to hold N
+things, the answer is a column, not a new arena. This is "one mechanism,
+not two" applied to the data plane: the engine accreted disjoint arenas
+once, and unwinding them onto the one store is the correction.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["no bespoke storage", "arena", "MaybeUninit pool", "column", "ColumnStorage", "store markers", "one mechanism"]
+cites = ["there_is_one_mechanism_per_concern_and_where_two_subsystems_solve_one_problem_differently_one_must_go", "all_engine_runtime_state_lives_in_one_columnar_store_and_a_resource_versus_a_column_is_intent_and_not_mechanism"]
+
+[[tenet]]
+id = "the_pool_frame_synchronisation_structure_is_the_single_sanctioned_fixed_array_and_a_storage_lint_enforces_the_rule"
+what = "The single sanctioned fixed-array exception is the thread-pool synchronisation structure, with atomic progress and wake slots on cache lines. It is pool coordination and not consumer data, and a storage lint enforces the rule."
+mechanism = "`PoolFrame`: atomic progress / wake slots on cache lines."
+source = "mock/PRINCIPLES.md.tmpl:135-138"
+provenance = ["mock::PRINCIPLES::#unified-columnar-storage"]
+quote = '''
+The single sanctioned fixed-array exception is the thread-pool
+`PoolFrame` synchronisation structure (atomic progress / wake slots on
+cache lines), which is pool coordination, not consumer data. A storage
+lint enforces the rule.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["PoolFrame", "fixed array exception", "atomic progress slots", "wake slots", "storage lint", "pool coordination"]
+cites = ["no_subsystem_has_bespoke_storage_and_a_subsystem_needing_to_hold_n_things_uses_a_column"]
+
+[[tenet]]
+id = "a_concept_that_might_need_extension_is_a_registered_trait_and_enums_are_for_truly_closed_sets_only"
+what = "If a concept might need extension, it is a trait with registration, or the inventory equivalent of the stack, and not a C-layout enum. Enums are for truly closed sets only."
+mechanism = "trait + `#[register]` (or the stack's inventory equivalent); closed-set enums: `Priority`, `ErrorClass`, `FieldKind`, `HealthStatus`."
+source = "mock/PRINCIPLES.md.tmpl:140-145"
+provenance = ["mock::PRINCIPLES::#registered-traits-over-repr-c-enums"]
+quote = '''
+## Registered traits over `repr(C)` enums
+
+If a concept might need extension, it's a trait + `#[register]` (or
+the stack's inventory equivalent), not a `repr(C)` enum. Enums are
+for truly closed sets only (`Priority`, `ErrorClass`, `FieldKind`,
+`HealthStatus`).
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["registered traits", "repr(C) enum", "closed set", "Priority", "ErrorClass", "FieldKind", "HealthStatus", "#[register]"]
+cites = ["a_position_where_two_implementations_with_different_behaviour_are_imaginable_is_a_trait_slot_and_never_an_extensible_enum"]
+
+[[tenet]]
+id = "every_registrable_type_has_one_constant_name_and_the_descriptor_name_points_at_it"
+what = "Every registrable type has one constant name, and the name field of its descriptor is a constant pointer to it. There is no duplication, no copy and no parallel naming."
+mechanism = "`Named::NAME`: `const NAME: &'static str`."
+rules_out = ["duplicated names", "copies of the name", "parallel naming"]
+source = "mock/PRINCIPLES.md.tmpl:147-151"
+provenance = ["mock::PRINCIPLES::#named-name-single-source-of-truth"]
+quote = '''
+## `Named::NAME` single source of truth
+
+Every registrable type has `const NAME: &'static str`. The
+descriptor's name field is a const pointer to it. No duplication,
+no copies, no parallel naming.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["Named::NAME", "single source of truth", "descriptor name", "const pointer", "registrable type"]
+
+[[tenet]]
+id = "schema_kinds_events_settings_domains_storage_locations_and_access_levels_are_zero_sized_markers"
+what = "Schema kinds, events, settings domains, storage locations, access levels and HTTP methods are all zero-sized marker types, which carry compile-time identity without runtime footprint."
+source = "mock/PRINCIPLES.md.tmpl:153-157"
+provenance = ["mock::PRINCIPLES::#zst-markers-for-discrimination"]
+quote = '''
+## ZST markers for discrimination
+
+Schema kinds, events, settings domains, storage locations, access
+levels, HTTP methods, all ZSTs. Marker types carry compile-time
+identity without runtime footprint.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["ZST markers", "discrimination", "schema kinds", "events", "access levels", "compile-time identity", "no runtime footprint"]
+cites = ["zero_sized_types_are_the_logic_layer"]
+
+[[tenet]]
+id = "every_crate_is_no_std_with_no_allocation_and_the_consumer_provides_the_memory_provider"
+what = "Every crate is no standard library with no allocation. Consumers provide a memory provider: the os tier uses mmap, and the no_os tier requires the consumer to plug one in."
+mechanism = "`#![no_std]`; `MemoryProvider` (os tier uses mmap; no_os tier: consumer plugs one in)."
+source = "mock/PRINCIPLES.md.tmpl:198-200"
+provenance = ["mock::PRINCIPLES::#no-std-no-alloc"]
+quote = '''
+Every crate is `#![no_std]` with no allocation. Consumers provide a
+`MemoryProvider` (os tier uses mmap; no_os tier requires the consumer
+to plug one in). There is no std tier, and no crate here spawns
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["no_std", "no alloc", "MemoryProvider", "os tier", "no_os tier", "mmap", "consumer provides"]
+cites = ["the_os_and_std_tiers_are_mutually_exclusive_and_the_os_tier_gets_the_optimisation_investment", "the_no_os_tier_is_trait_contracts_only_and_the_consumer_provides_every_platform_implementation"]
+
+[[tenet]]
+id = "there_is_no_std_platform_tier"
+what = "There is no std tier."
+rules_out = ["a std tier"]
+source = "mock/PRINCIPLES.md.tmpl:200-200"
+provenance = ["mock::PRINCIPLES::#no-std-no-alloc"]
+quote = '''
+to plug one in). There is no std tier, and no crate here spawns
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["no std tier", "platform tiers", "os tier", "no_os tier"]
+cites = ["the_platform_has_three_tiers_no_os_os_and_std"]
+
+[[tenet]]
+id = "no_crate_spawns_threads_and_the_executor_behind_the_thread_pool_contract_is_the_consumer_s_or_lives_outside_the_family"
+what = "No crate in the family spawns threads. The executor behind the thread pool contract is the consumer's, or lives in a crate outside this family."
+mechanism = "`ThreadPoolApi`."
+rules_out = ["a crate in the family spawning threads"]
+source = "mock/PRINCIPLES.md.tmpl:200-202"
+provenance = ["mock::PRINCIPLES::#no-std-no-alloc"]
+quote = '''
+to plug one in). There is no std tier, and no crate here spawns
+threads: the executor behind `ThreadPoolApi` is the consumer's, or
+lives in a crate outside this family.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["no thread spawn", "ThreadPoolApi", "executor", "consumer executor", "thread pool contract"]
+cites = ["at_run_time_the_engine_spawns_threads_that_run_their_compiled_programs_with_no_scheduler_loop_or_work_queues"]
+
+[[tenet]]
+id = "the_engine_never_calls_the_allocator_at_runtime_and_plan_time_allocation_happens_once_per_pipeline_lifetime"
+what = "The engine never calls into the allocator at runtime. Plan-time allocation, such as arena sizing and fiber layouts, happens once per pipeline lifetime and not per frame."
+source = "mock/PRINCIPLES.md.tmpl:204-206"
+provenance = ["mock::PRINCIPLES::#no-std-no-alloc"]
+quote = '''
+The engine never calls into the allocator at runtime. Plan-time
+allocation (arena sizing, fiber layouts) happens once per pipeline
+lifetime, not per frame.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["no runtime allocation", "plan-time allocation", "arena sizing", "fiber layouts", "pipeline lifetime", "per frame"]
+cites = ["allocation_is_managed_by_the_scheduler_and_declared_at_compile_time_and_never_fabricated_at_runtime"]
+
+[[tenet]]
+id = "the_monomorphised_function_is_the_type_identity_of_a_unit_and_llvm_devirtualises_the_fused_pipeline_into_straight_line_code"
+what = "Units are generic over their access set, so the monomorphised function is the type identity. The compiler then devirtualises the fused pipeline into straight-line code."
+mechanism = "No `dyn`, no `TypeId`, no `std::any`; WUs are generic over their `AccessSet`."
+rules_out = ["dyn", "TypeId", "std::any"]
+source = "mock/PRINCIPLES.md.tmpl:210-212"
+provenance = ["mock::PRINCIPLES::#monomorphisation-is-the-dispatch"]
+quote = '''
+No `dyn`. No `TypeId`. No `std::any`. WUs are generic over their
+AccessSet; the monomorphised function IS the type identity. LLVM
+devirtualises the fused pipeline into straight-line code.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["monomorphisation is the dispatch", "type identity", "AccessSet", "devirtualisation", "straight-line code", "no TypeId"]
+cites = ["std_any_is_banned_so_there_is_no_type_id_and_no_type_erasure", "dyn_is_banned_entirely_with_no_exceptions"]
+
+[[tenet]]
+id = "the_pool_is_the_consumer_s_executor_and_the_engine_hands_it_its_closures_once_on_the_first_parallel_run"
+what = "The pool is the consumer's executor behind the thread pool contract. The engine hands it its closures once, on the first parallel run, and the workers persist for the pipeline's lifetime, with no runtime spawn."
+mechanism = "`ThreadPoolApi`."
+rules_out = ["runtime spawn"]
+source = "mock/PRINCIPLES.md.tmpl:227-229, mock/PRINCIPLES.md.tmpl:231-231"
+provenance = ["mock::PRINCIPLES::#pre-allocated-thread-pool"]
+quote = '''
+The pool is the consumer's executor behind `ThreadPoolApi`. The
+engine hands it its closures once, on the first parallel run, and
+the workers persist for the pipeline's lifetime. The engine chooses
+---
+executor's. No runtime spawn.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["pre-allocated thread pool", "ThreadPoolApi", "consumer executor", "first parallel run", "workers persist", "no runtime spawn"]
+cites = ["the_thread_pool_is_pre_allocated_and_wakes_by_spinning_first_and_then_parking"]
+
+[[tenet]]
+id = "entry_is_a_dead_term_and_the_canonical_vocabulary_ends_at_micro_morsel_and_record"
+what = "The canonical terms are pipeline, core, phase, waist, trunk, fiber, branch, bridge, morsel, micro-morsel and record. The dead terms are chain, chain group, partition, archetype, entity, row, entry and order, and they are never used."
+rules_out = ["chain", "chain group", "partition", "archetype", "entity", "row", "entry", "order"]
+source = "mock/PRINCIPLES.md.tmpl:281-287"
+provenance = ["mock::PRINCIPLES::#vocabulary-discipline"]
+quote = '''
+## Vocabulary discipline
+
+Use canonical terms: pipeline, core, phase, waist, trunk, fiber,
+branch, bridge, morsel, micro-morsel, record.
+
+Never use dead terms: chain, chain group, partition, archetype,
+entity, row, entry, order.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["vocabulary discipline", "canonical terms", "dead terms", "entry", "record", "micro-morsel", "waist"]
+cites = ["the_dead_terms_chain_chain_group_partition_archetype_entity_row_and_order_have_named_replacements", "the_hierarchy_runs_from_pipeline_down_through_phase_trunk_fiber_and_morsel_to_entry"]

@@ -170,3 +170,18 @@ Reading: no preference between the two as such; the api revision decides by whic
 subject = "stores"
 keywords = ["accumulator", "fourth store kind", "append write", "typestate", "plumbing", "api revision"]
 related = ["question::whether_the_accumulator_is_a_fourth_store_kind"]
+
+[[question]]
+id = "what_the_shape_of_consumer_reads_of_seq_and_map_after_the_pipeline_is"
+asks = "What the shape of the consumer's reads of sequence and map members after the pipeline is. The seed lists the resource collection accessor shape as open, waiting on the storage layout work it depends on."
+options = ["the item waits on the storage layout work it depends on (the seed's open-question statement)", "collection access on both the read side and the write side is the ptr+len view over the member's collection-column region behind the erased descriptor, with the API landing with #344 (the swap spec's answer)"]
+state = "open"
+source = "mock/research/seed/governance.md:122-124"
+quote = '''
+4. **Resource collection accessor shape** (consumer reads of `Seq`/`Map`
+   post-pipeline) waits on the storage layout work it depends on. See
+   [[storage]].
+'''
+subject = "stores"
+keywords = ["collection accessor shape", "Seq", "Map", "post-pipeline reads", "storage layout", "open question 4", "consumer read"]
+related = ["tenet::collection_access_read_and_write_is_the_ptr_len_view_over_the_member_s_collection_column_region_behind_the_erased_descriptor"]

@@ -85,3 +85,18 @@ standing = "provisional"
 subject = "downstream"
 keywords = ["loimu", "temporal columns", "seven access modes", "layers", "foundation", "primitives"]
 related = ["tenet::loimu_keeps_its_seven_access_modes_and_maps_them_to_read_and_write_at_the_boundary", "question::whether_hilavitkutin_s_own_columns_are_double_buffered"]
+
+[[tenet]]
+id = "downstream_consumers_register_their_own_units_and_storage_shapes_and_the_engine_schedules_them_through_one_loop"
+what = "Downstream consumer applications layer on top of the engine: signal and graph frameworks, language runtimes and other workloads shaped as pipelines. Each consumer registers its own units and storage shapes, and the engine schedules them all through the same plan, dispatch and adapt loop."
+mechanism = "Examples named: signal / DAG frameworks, language runtimes (macros, scratch buffers, generative pipelines)."
+source = "mock/DESIGN.md.tmpl:160-160"
+provenance = ["mock::DESIGN::#consumers"]
+quote = '''
+Downstream consumer applications layer on top of hilavitkutin: signal / DAG frameworks, language runtimes (macros, scratch buffers, generative pipelines), and other pipeline-shaped workloads. Each consumer registers its own WorkUnits and storage shapes; the engine schedules them through the same plan / dispatch / adapt loop.
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+subject = "downstream"
+keywords = ["downstream consumers", "signal frameworks", "DAG frameworks", "language runtimes", "pipeline-shaped workloads", "register units", "plan dispatch adapt loop"]

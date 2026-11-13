@@ -1,0 +1,470 @@
+# What the record says about `extensions`, part 2.
+
+[[tenet]]
+id = "loading_one_extension_is_one_sequence_from_open_to_init_and_the_result_is_an_extension_wrapping_the_composed_state"
+what = "Loading one extension is a single sequence: open the path through the linking crate, resolve the descriptor symbol, validate the ABI version, verify that every required host provider is among those the host advertises, run the init function with the host context if present, and return an extension handle that wraps the composed state."
+mechanism = "`ExtensionHost::load(path, requirement, host_ctx)`: `hilavitkutin-linking::Library::load`, `Library::resolve_static` of `DESCRIPTOR_SYMBOL`, `abi_version == HOST_ABI_VERSION`, `required_host_providers` check, `init_fn`. `ExtensionHost::new(host_providers)` constructs a host with the providers it offers."
+source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:37-37, mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:62-62"
+provenance = ["mock::crates::hilavitkutin-extensions::DESIGN::#public-items"]
+quote = '''
+- `ExtensionHost` is the entry point for loading. `ExtensionHost::new(host_providers)` constructs a host with the providers the host offers; `with_policy(policy)` supplies an optional failure policy override; `with_shutdown_observer(observer)` supplies an optional observer that fires from `Extension::close` and the `Drop` path; `load(path, requirement, host_ctx)` loads one extension from disk.
+---
+`ExtensionHost::load(path, requirement, host_ctx)` performs the full load sequence: open the path via `hilavitkutin-linking::Library::load`, resolve the `DESCRIPTOR_SYMBOL` via `Library::resolve_static`, validate `abi_version == HOST_ABI_VERSION`, verify every `required_host_providers` id appears in the host's advertised providers, run `init_fn` with `host_ctx` if present, and return `Extension` wrapping the composed state.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["ExtensionHost", "load sequence", "Library::load", "resolve_static", "host_providers", "required host providers", "init_fn", "host_ctx"]
+
+[[tenet]]
+id = "discovery_has_one_step_beyond_opening_the_library_and_the_descriptor_is_validated_in_a_fixed_defensive_order_of_five_steps"
+what = "Discovery has exactly one step beyond opening the library: calling the function exported under the descriptor symbol, which returns a pointer to extension-static memory. The descriptor and the host's advertised providers fully determine validation, and the order of validation is fixed and defensive, each step building confidence that the next read is sound: tag, size, ABI version, length bounds, required host providers. A wrong tag stops all further reading."
+mechanism = "Step 1 `descriptor.tag == EXTENSION_DESCRIPTOR_TAG` (else `DescriptorTagMismatch { found }`, no further fields read). Step 2 `descriptor.descriptor_size >= core::mem::size_of::<ExtensionDescriptor>()` (else `DescriptorSizeTooSmall { advertised, minimum }`). Step 3 `descriptor.abi_version == HOST_ABI_VERSION` (else `AbiVersionMismatch { expected, got }`). Step 4 `name_len`, `providers_len`, `required_host_providers_len` against `MAX_DESCRIPTOR_LIST_LEN` (else `DescriptorBoundsExceeded { field, len }`). Step 5 each id in `required_host_providers` against the host's provider set (else `RequiredHostProviderMissing { provider }`). The function returns `*const ExtensionDescriptor`."
+source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:70-74"
+provenance = ["mock::crates::hilavitkutin-extensions::DESIGN::#pull-based-discovery-protocol"]
+quote = '''
+## Pull-based discovery protocol
+
+The discovery protocol has exactly one step beyond opening the library: call the function exported at the symbol name `DESCRIPTOR_SYMBOL`. That function returns `*const ExtensionDescriptor` pointing at extension-static memory. The descriptor contents plus the host's advertised provider set fully determine validation.
+
+The host's descriptor-validation order is fixed and defensive. Each step builds confidence that the next step's read is sound. Step 1: tag check (`descriptor.tag == EXTENSION_DESCRIPTOR_TAG`). A wrong tag means the layout is suspect; the host surfaces `ExtensionError::DescriptorTagMismatch { found }` and reads no further fields. Step 2: descriptor-size check (`descriptor.descriptor_size >= core::mem::size_of::<ExtensionDescriptor>()`). With the layout established, the host ensures it reads only what its own version of `ExtensionDescriptor` knows; a smaller value surfaces `ExtensionError::DescriptorSizeTooSmall { advertised, minimum }`. Step 3: ABI version check (`descriptor.abi_version == HOST_ABI_VERSION`). The v1.1 layout is now sound; a wrong version surfaces `ExtensionError::AbiVersionMismatch { expected, got }`. Step 4: length-field bounds checks. Each of `name_len`, `providers_len`, and `required_host_providers_len` is validated against `MAX_DESCRIPTOR_LIST_LEN`; the first failure surfaces `ExtensionError::DescriptorBoundsExceeded { field, len }`. Step 5: required-host-provider check (the existing v1 step, unchanged). Each id in `required_host_providers` is verified against the host's advertised provider set; a missing id surfaces `ExtensionError::RequiredHostProviderMissing { provider }`.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["discovery protocol", "validation order", "tag check", "descriptor size check", "ABI version check", "bounds check", "required host provider check", "defensive"]
+
+[[tenet]]
+id = "no_linker_section_is_scanned_and_no_constructor_registration_runs_and_the_extension_defines_its_symbol_as_a_function_returning_a_const_descriptor"
+what = "No linker sections are scanned, no constructor registration tricks are used and no inventory-style collectors run. The extension side defines the descriptor symbol as an exported C function that returns the address of a constant descriptor."
+mechanism = "`#[no_mangle] pub extern \"C\" fn __hilavitkutin_extension_descriptor() -> *const ExtensionDescriptor`, backed by a `const` descriptor; typically emitted by `#[export_extension]`."
+source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:76-76"
+provenance = ["mock::crates::hilavitkutin-extensions::DESIGN::#pull-based-discovery-protocol"]
+quote = '''
+No linker sections are scanned, no constructor-registration tricks are used, and no static `inventory`-style collectors run. The extension-side emission (typically via `#[export_extension]`) defines the symbol as `#[no_mangle] pub extern "C" fn __hilavitkutin_extension_descriptor() -> *const ExtensionDescriptor`, backed by a `const` descriptor whose address the function returns.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["no linker sections", "no constructor registration", "no inventory", "__hilavitkutin_extension_descriptor", "no_mangle", "const descriptor", "export_extension"]
+
+[[tenet]]
+id = "the_macro_keeps_the_trampolines_alive_under_fat_lto_by_an_exported_function_returning_a_used_static_that_holds_their_addresses"
+what = "The macro emits an init trampoline and a shutdown trampoline that wrap the consumer's init and shutdown types, and stores their addresses as function-pointer constants in a static descriptor. The chain keeps the trampoline bytes alive under aggressive link-time optimisation and library stripping: the export forces the descriptor function to stay, the function returns the static, the static is marked used, and the compiler cannot elide a function whose address sits in a preserved static. The trampolines are also marked unmangled and never inlined, so external linkage keeps their names in the symbol table and no inlining into the static's initializer can happen."
+mechanism = "`__ext_init_trampoline_<Struct>`, `__ext_shutdown_trampoline_<Struct>`; `__HILAVITKUTIN_EXT_DESCRIPTOR` static `#[used]`; `__hilavitkutin_extension_descriptor` `#[unsafe(no_mangle)] pub extern \"C\"`; trampolines `#[unsafe(no_mangle)] #[inline(never)]`; aggressive LTO and cdylib stripping."
+source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:80-82"
+provenance = ["mock::crates::hilavitkutin-extensions::DESIGN::#trampoline-preservation-under-lto"]
+quote = '''
+The proc-macro emits two trampolines (`__ext_init_trampoline_<Struct>`, `__ext_shutdown_trampoline_<Struct>`) that wrap the consumer's `init` / `shutdown` types. Their addresses are stored as fn-pointer constants in the `__HILAVITKUTIN_EXT_DESCRIPTOR` static. The static is `#[used]`, and the descriptor function (`__hilavitkutin_extension_descriptor`, `#[unsafe(no_mangle)] pub extern "C"`) returns its address. This chain preserves the trampoline bytes under aggressive LTO + cdylib stripping: the export forces the descriptor function to keep, the function returns the static, the static is `#[used]`, and LLVM cannot elide a function whose address has been taken in a preserved static.
+
+The trampolines additionally carry `#[unsafe(no_mangle)] #[inline(never)]`. `no_mangle` gives external linkage, which keeps both trampoline names in the symbol table after LTO. `inline(never)` prevents an LTO path that would inline a trampoline body into the descriptor static's initializer expression. Neither attribute prevents the linker's identical-code-folding (ICF) pass from aliasing two trampolines to a single address when their bodies are byte-identical. ICF aliasing is benign for the framework's contract: when both impls inline to the same return value (e.g. trivial `init` and `shutdown` both returning `ExtensionAbiStatus::Ok`), the descriptor's two fn-pointer slots refer to one shared body and runtime calls produce the same correct result through either slot. Real consumer extensions ship `init` and `shutdown` impls that compile to non-identical bytes, so ICF does not fold them in practice.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["trampoline", "LTO", "cdylib stripping", "#[used]", "no_mangle", "inline(never)", "descriptor static", "fat LTO", "__ext_init_trampoline"]
+
+[[tenet]]
+id = "identical_code_folding_may_alias_two_trampolines_and_that_is_benign_but_the_macro_still_makes_their_bodies_differ_with_a_per_role_constant"
+what = "The linker's identical-code-folding pass can alias two trampolines to one address when their bodies are byte-identical, and neither unmangling nor non-inlining prevents it. That aliasing is benign for the framework's contract, since both slots then reach one shared body that gives the same correct result, and real extensions have non-identical init and shutdown bodies. As a defensive measure each trampoline embeds a per-role byte-string constant consumed through a black box, so their bodies differ at the byte level and cannot be folded, at the cost of one constant load and a no-op fence per call, which is negligible because trampolines fire only at load and drop."
+mechanism = "`b\"init\"` and `b\"shutdown\"` consumed via `core::hint::black_box`; ICF = identical-code-folding. A regression test `hilavitkutin-extensions-macros/tests/lto_smoke.rs` builds a sample cdylib with `lto = \"fat\"`, asserts both trampoline names survive in `nm` output, dlopens it, resolves the descriptor and asserts `init_fn` and `shutdown_fn` resolve to distinct addresses; it caught an early `inline(never)`-only design that left `shutdown_fn` symbolless and then the ICF aliasing case."
+source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:82-84, mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:88-88"
+provenance = ["mock::crates::hilavitkutin-extensions::DESIGN::#trampoline-preservation-under-lto"]
+quote = '''
+The trampolines additionally carry `#[unsafe(no_mangle)] #[inline(never)]`. `no_mangle` gives external linkage, which keeps both trampoline names in the symbol table after LTO. `inline(never)` prevents an LTO path that would inline a trampoline body into the descriptor static's initializer expression. Neither attribute prevents the linker's identical-code-folding (ICF) pass from aliasing two trampolines to a single address when their bodies are byte-identical. ICF aliasing is benign for the framework's contract: when both impls inline to the same return value (e.g. trivial `init` and `shutdown` both returning `ExtensionAbiStatus::Ok`), the descriptor's two fn-pointer slots refer to one shared body and runtime calls produce the same correct result through either slot. Real consumer extensions ship `init` and `shutdown` impls that compile to non-identical bytes, so ICF does not fold them in practice.
+
+Macro emission goes one step further as a defensive measure: each trampoline body embeds a per-role byte-string constant (`b"init"` for the init trampoline, `b"shutdown"` for the shutdown trampoline) consumed via `core::hint::black_box`. The discriminator forces the trampoline bodies to differ at the byte level even when the wrapped impls are byte-identical, so ICF cannot alias them. The cost is one constant load plus a `black_box` no-op assembly fence per trampoline call, which is negligible because trampolines fire only at extension load and drop.
+---
+A regression test under `hilavitkutin-extensions-macros/tests/lto_smoke.rs` builds a sample cdylib with `lto = "fat"`, asserts both trampoline names survive in `nm` output, dlopens the cdylib, resolves the descriptor, and asserts that `descriptor.init_fn` and `descriptor.shutdown_fn` resolve to distinct addresses. The test caught both an early `inline(never)`-only design that left `shutdown_fn` symbolless, and the subsequent ICF address-aliasing case that the discriminator addresses.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["ICF", "identical code folding", "black_box", "per-role discriminator", "trampoline aliasing", "lto_smoke", "regression test", "nm"]
+
+[[tenet]]
+id = "each_library_is_loaded_with_private_symbols_so_a_trampoline_name_collision_needs_a_host_that_loads_overlapping_struct_names_into_a_global_namespace"
+what = "On the unix backend of the linking crate each library is loaded with its symbols private to the loading scope. Together with trampoline names that embed the consumer's struct identifier, the only way for the unmangled trampolines to collide is a host loading two extensions with overlapping struct names into the same global namespace, which is a configuration the framework does not produce."
+mechanism = "`RTLD_LOCAL` in `hilavitkutin-linking::backend::unix::platform_load`; trampoline names `__ext_init_trampoline_<Struct>`; collision pathway is `RTLD_GLOBAL`."
+source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:86-86"
+provenance = ["mock::crates::hilavitkutin-extensions::DESIGN::#trampoline-preservation-under-lto"]
+quote = '''
+The `RTLD_LOCAL` flag in `hilavitkutin-linking::backend::unix::platform_load` keeps each cdylib's symbols private to the loading scope. Combined with the trampoline names embedding the consumer's struct ident (`__ext_init_trampoline_<Struct>`), this means the only collision pathway for `#[unsafe(no_mangle)]` trampolines requires a host loading two extensions whose struct names overlap into the same `RTLD_GLOBAL` namespace, which is a configuration the framework does not produce.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["RTLD_LOCAL", "RTLD_GLOBAL", "symbol collision", "platform_load", "struct ident", "trampoline names", "private symbols"]
+
+[[tenet]]
+id = "init_runs_exactly_once_after_validation_and_before_any_provider_and_failure_aborts_the_load_and_drops_the_library"
+what = "The host calls the init function exactly once with the host context, immediately after descriptor validation and provider verification and before any provider is invoked. A missing init function is a no-op, and any status other than success aborts the load with an init failure and drops the library."
+mechanism = "`init_fn(host_ctx)`; non-Ok status gives `ExtensionError::InitFailed`."
+source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:92-92"
+provenance = ["mock::crates::hilavitkutin-extensions::DESIGN::#lifecycle-contract"]
+quote = '''
+Init: the host calls `init_fn(host_ctx)` exactly once, immediately after descriptor validation and provider verification, and before any provider is invoked. If `init_fn` is `None`, init is a no-op. If it returns anything other than `ExtensionAbiStatus::Ok`, the load aborts with `ExtensionError::InitFailed` and the library is dropped.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["init_fn", "init once", "InitFailed", "host_ctx", "lifecycle contract", "drop Library on failure"]
+
+[[tenet]]
+id = "the_host_does_not_invoke_providers_and_the_consumer_dispatches_through_a_generated_trampoline_that_restores_the_typed_interface"
+what = "The host does not invoke providers directly. The consumer looks up a vtable pointer by identifier and dispatches through a consumer-generated trampoline, which is where macro-driven monomorphisation reconstructs the typed interface on the consumer's side of the library boundary."
+mechanism = "`Extension::provider(id)` returns a `*const c_void` vtable pointer."
+source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:94-94"
+provenance = ["mock::crates::hilavitkutin-extensions::DESIGN::#lifecycle-contract"]
+quote = '''
+Invoke: the host does not invoke providers directly. The consumer looks up a `*const c_void` vtable pointer via `Extension::provider(id)`, then dispatches through a consumer-generated trampoline. This is where macro-driven monomorphisation reconstructs the typed Rust interface at the consumer side of the cdylib boundary.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["provider invocation", "vtable pointer", "consumer trampoline", "macro-driven monomorphisation", "typed interface", "cdylib boundary"]
+
+[[tenet]]
+id = "shutdown_runs_at_most_once_through_drop_or_close_and_the_host_opaque_pointer_is_per_extension"
+what = "Shutdown runs at most once, either through drop, which swallows errors, or through the explicit close, which returns them. A missing shutdown function is a no-op. The host-opaque pointer is per extension: the host allocates it or passes null at load time and threads the same pointer through init and shutdown, so two simultaneously loaded extensions never see each other's context through this channel."
+mechanism = "`shutdown_fn(host_ctx)`; host-opaque `*mut c_void`. Named as one of the API-level enforcements of the arbitrary-time linking invariant."
+source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:96-98"
+provenance = ["mock::crates::hilavitkutin-extensions::DESIGN::#lifecycle-contract"]
+quote = '''
+Shutdown: either drop runs `shutdown_fn(host_ctx)` and swallows errors, or `Extension::close(self)` runs it and returns the error. In both cases `shutdown_fn` is called at most once. If `None`, shutdown is a no-op.
+
+The host-opaque pointer (`*mut c_void`) is per-extension. The host allocates it (or passes null) at load time and threads the same pointer through init and shutdown. Two simultaneously-loaded extensions never see each other's `host_ctx` through this channel. This is one of the API-level enforcements of the arbitrary-time linking invariant.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["shutdown_fn", "shutdown once", "host-opaque pointer", "host_ctx", "per-extension", "arbitrary-time linking", "no shared context"]
+
+[[tenet]]
+id = "the_extension_stack_layers_strictly_downward_from_the_consumer_contract_crate_to_the_os_loader_and_the_engine_does_not_depend_on_it"
+what = "The extension stack layers downward from the consumer's plugin contract crate, through the macro crate, the extensions crate and the linking crate, to the operating system's dynamic loader. Dependency flow is strictly downward, and the engine, the api, the build-time and the ecosystem crates do not depend on the extensions crate."
+mechanism = "Consumer plugin ABI crates (e.g. `viola-plugin-abi`) define domain-specific `Provider` types implementing `ProviderExport`; `hilavitkutin-extensions-macros` emits the descriptor, the `DESCRIPTOR_SYMBOL` export, the provider table and trampolines; `hilavitkutin-extensions` holds descriptor types, the discovery protocol, the lifecycle orchestrator, provider lookup and failure policy; `hilavitkutin-linking` ships `dlopen` / `LoadLibrary` plus `Library` / `Symbol` / `StaticRef`."
+source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:112-131"
+provenance = ["mock::crates::hilavitkutin-extensions::DESIGN::#architectural-position"]
+quote = '''
+## Architectural position
+
+The extension stack layers downward from the consumer's domain crate
+to the OS:
+
+- Consumer plugin ABI crates (e.g. `viola-plugin-abi`) define
+  domain-specific `Provider` types that implement `ProviderExport`.
+  These crates optionally wrap `#[export_extension]` under a domain-
+  named attribute (e.g. `#[viola::plugin]`).
+- `hilavitkutin-extensions-macros` is the proc-macro crate. It emits
+  the `#[repr(C)]` descriptor, the `DESCRIPTOR_SYMBOL` export, the
+  provider table, and trampolines from user trait impls.
+- `hilavitkutin-extensions` (this crate) holds descriptor types, the
+  discovery protocol, the lifecycle orchestrator, provider lookup,
+  and failure policy.
+- `hilavitkutin-linking` ships `dlopen` / `LoadLibrary` plus typed
+  `Library` / `Symbol` / `StaticRef`.
+- The OS dynamic loader sits underneath.
+
+Dependency flow is strictly downward. The engine crate (`hilavitkutin`) does not depend on this one. Nor does the api, build-time, or ecosystem crates.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["architectural position", "layering", "downward dependency", "viola-plugin-abi", "linking", "macros", "OS dynamic loader", "engine independent"]
+cites = ["the_plugin_host_layer_is_the_linking_extensions_and_extensions_macros_crates_and_downstream_ecosystems_build_their_own_contract_crates_on_it"]
+
+[[tenet]]
+id = "the_extensions_crate_depends_on_linking_notko_and_arvo_only_and_on_no_engine_api_build_ctx_persistence_or_str_crate"
+what = "The extensions crate depends on the linking crate for the loader primitive, on notko for outcome and maybe types in public signatures and on arvo for sizes and other numeric primitives where public signatures express them. It has no dependency on the engine, api, build, context, persistence or string crates."
+mechanism = "Workspace dependencies: hilavitkutin-linking, notko (`Outcome` / `Maybe` / `Just`), arvo (`USize`)."
+source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:133-141"
+provenance = ["mock::crates::hilavitkutin-extensions::DESIGN::#dependencies"]
+quote = '''
+## Dependencies
+
+Workspace dependencies:
+
+- hilavitkutin-linking for the loader primitive.
+- notko for Outcome / Maybe / Just primitives on public signatures.
+- arvo for USize and other numeric primitives where public signatures express sizes.
+
+No dependencies on hilavitkutin, hilavitkutin-api, hilavitkutin-build, hilavitkutin-ctx, hilavitkutin-persistence, hilavitkutin-str.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["dependencies", "hilavitkutin-linking", "notko", "arvo", "Outcome", "Maybe", "no engine dependency", "no api dependency"]
+
+[[tenet]]
+id = "the_extensions_crate_preserves_the_arbitrary_time_linking_invariant_by_construction_through_four_api_level_absences"
+what = "The extensions crate preserves, at the API level and by construction, the arbitrary-time linking invariant, which propagates forward from the linking crate. There is no global registry, so loading returns one extension and nothing accumulates them. There is no ecosystem-wide init barrier, so each extension completes its init before load returns and nothing waits on siblings. There is no cross-extension channel, so the host-opaque pointer is per extension. Drop is independent and per extension, closing one extension and releasing one library with no side effect visible to others."
+mechanism = "No `load_all_extensions(manifest)` entry point, no `initialize_ecosystem()` call; consumers choose their own holding pattern (`Vec`, `Seq<Extension, N>`, `HashMap`, drop-immediately). The invariant propagates forward from `hilavitkutin-linking`."
+source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:143-150"
+provenance = ["mock::crates::hilavitkutin-extensions::DESIGN::#arbitrary-time-linking-invariant"]
+quote = '''
+## Arbitrary-time linking invariant
+
+The invariant propagates forward from `hilavitkutin-linking`. This crate preserves it at the API level by construction:
+
+- No global registry exists. `ExtensionHost::load` returns one `Extension`; no API accumulates them into a static collection. Consumers choose their own holding pattern (`Vec`, `Seq<Extension, N>`, `HashMap`, drop-immediately).
+- No ecosystem-wide init barrier exists. There is no `load_all_extensions(manifest)` entry point; no `initialize_ecosystem()` call. Each `Extension` completes its init before `load` returns; nothing waits on sibling extensions.
+- No cross-extension channel exists. The host-opaque pointer threaded through init and shutdown is per-extension; two extensions never share state through this crate.
+- Drop is independent and per-extension. `Extension::drop` closes exactly one extension and releases exactly one `Library`. No drop side-effect is visible to other extensions.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["arbitrary-time linking", "no global registry", "no init barrier", "no cross-extension channel", "independent drop", "load_all_extensions", "invariant", "by construction"]
+rules_out = ["load_all_extensions(manifest)", "initialize_ecosystem()"]
+
+[[tenet]]
+id = "host_code_built_on_the_extensions_crate_must_tolerate_arbitrary_time_loading_and_ecosystem_wide_semantics_belong_to_a_higher_layer"
+what = "The consumer-side obligation is that host code built on the extensions crate tolerates arbitrary-time loading. Assumptions such as that all extensions are loaded before any is invoked, that init ordering gates invocation, or that the full extension ecosystem must be known before proceeding are forbidden at the framework level. Consumers that need ecosystem-wide semantics build them in their own higher layer."
+source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:152-152"
+provenance = ["mock::crates::hilavitkutin-extensions::DESIGN::#arbitrary-time-linking-invariant"]
+quote = '''
+The consumer-side obligation is that host code built on top of this crate tolerates arbitrary-time loading. Assumptions like "all extensions loaded before any invoked", "init ordering gates invocation", or "the full extension ecosystem must be known before proceeding" are forbidden at the framework level. Consumers that need ecosystem-wide semantics build them in their own higher layer.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["arbitrary-time loading", "consumer obligation", "ecosystem-wide semantics", "init ordering", "all extensions loaded first", "higher layer"]
+rules_out = ["all extensions loaded before any invoked", "init ordering gates invocation", "the full extension ecosystem must be known before proceeding"]
+
+[[tenet]]
+id = "the_macro_crate_is_a_companion_and_the_default_path_for_extension_authors_though_the_descriptor_could_be_written_by_hand"
+what = "The macro crate is a companion to the extensions crate. In principle a consumer could author extensions without it by hand-writing the descriptor constant, the exported descriptor function and the trampolines, but in practice it is the default path, because it collapses that boilerplate to a single export attribute plus the trait impls the consumer would write anyway."
+mechanism = "`#[export_extension]`; hand-written alternative: the descriptor constant plus the `__hilavitkutin_extension_descriptor` exported fn plus the trampolines."
+source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:154-156"
+provenance = ["mock::crates::hilavitkutin-extensions::DESIGN::#relationship-to-hilavitkutin-extensions-macros"]
+quote = '''
+## Relationship to hilavitkutin-extensions-macros
+
+The sibling proc-macro crate is a companion: in principle a consumer could author extensions without it by hand-writing the descriptor constant plus the `__hilavitkutin_extension_descriptor` exported fn plus the trampolines. In practice the macro is the default path for anyone writing an extension, because it collapses the hand-written boilerplate to a single `#[export_extension]` attribute plus the trait impls the consumer would write anyway.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["hilavitkutin-extensions-macros", "export_extension", "companion crate", "hand-written descriptor", "boilerplate", "default path"]
+
+[[tenet]]
+id = "the_extensions_crate_defines_no_domain_contracts_and_walks_no_directories_parses_no_manifests_and_computes_no_load_order"
+what = "The extensions crate does not define domain contracts such as syntax-tree shapes, diagnostic formats or roles, which live in consumer contract crates. It does not walk directories to discover extensions, parse manifests to select them or compute a load order, and downstream consumer hosts build those on top. It provides no cross-extension communication channels, and any coordination is the host's responsibility through the providers it invokes."
+mechanism = "Named as not defined: NAM, AST shapes, diagnostic formats, roles."
+source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:171-177"
+provenance = ["mock::crates::hilavitkutin-extensions::DESIGN::#non-scope"]
+quote = '''
+## Non-scope
+
+This crate does not:
+
+- Define domain contracts (NAM, AST shapes, diagnostic formats, roles). Those live in consumer contract crates.
+- Walk directories to discover extensions, parse manifests to select extensions, or compute load order. Those are higher-layer concerns. Downstream consumer hosts build them on top.
+- Provide cross-extension communication channels. Extensions are independent; any coordination is the host's responsibility via the providers it invokes.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["non-scope", "domain contracts", "directory walking", "manifest parsing", "load order", "no cross-extension channels", "higher-layer concerns"]
+rules_out = ["Define domain contracts", "Walk directories to discover extensions", "Provide cross-extension communication channels"]
+
+[[tenet]]
+id = "extensions_are_full_trust_native_code_in_the_first_version_with_no_sandbox_no_metering_and_no_remote_fetch"
+what = "In the first version extensions are full-trust native code. The crate does not sandbox extensions or meter their resource usage, and it does not fetch extensions from remote sources, verify signatures or interact with extension stores, which is out of scope."
+source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:178-178, mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:180-180"
+provenance = ["mock::crates::hilavitkutin-extensions::DESIGN::#non-scope"]
+quote = '''
+- Sandbox extensions or meter resource usage. V1 is full-trust native code; no isolation.
+---
+- Fetch extensions from remote sources, verify signatures, or interact with extension stores. Out of scope.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["full-trust", "no sandbox", "no metering", "no isolation", "remote fetch", "signature verification", "extension stores", "v1"]
+rules_out = ["Sandbox extensions", "meter resource usage", "Fetch extensions from remote sources"]
+
+[[tenet]]
+id = "the_linking_crate_has_one_concern_open_a_shared_library_resolve_a_named_symbol_and_return_a_handle_bound_to_the_loader"
+what = "The linking crate is one layer above the operating system's loader and one layer below the extension-host orchestration. Its single concern is to open a shared library, resolve an explicit named symbol and return a typed handle whose lifetime is bound to the loader."
+mechanism = "`Library::load(path)` opens a library given a null-terminated byte-slice path; `Library::resolve<F: LibrarySymbol>(&self, name)` and `Library::resolve_static<T: 'static>(&self, name)`."
+source = "mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:3-6, mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:36-39"
+provenance = ["mock::crates::hilavitkutin-linking::DESIGN::#hilavitkutin-linking"]
+quote = '''
+Cross-platform dynamic library loading primitive. One layer above the
+OS loader, one layer below the extension-host orchestration. Single
+concern: open a shared library, resolve an explicit named symbol,
+return a typed handle whose lifetime is bound to the loader.
+---
+`Library::load(path)` opens a library given a null-terminated byte-slice path. The unix backend calls `dlopen(path, RTLD_NOW | RTLD_LOCAL)`. `RTLD_NOW` resolves all of the loaded library's external symbols at load time, surfacing missing-symbol errors immediately rather than at first call. `RTLD_LOCAL` keeps each cdylib's symbols private to the loading scope, so two simultaneously-loaded extensions cannot collide on `#[unsafe(no_mangle)]` symbols whose names happen to match (the trampolines emitted by `hilavitkutin-extensions-macros` rely on this isolation for the bound on their collision risk). On Linux glibc, `RTLD_LOCAL` is the default-when-neither-flag-given so the explicit flag is documentation; on macOS and the BSDs the documented default is `RTLD_GLOBAL` so the explicit flag is load-bearing. Two resolution methods then produce typed handles from that loader:
+
+- `Library::resolve<F: LibrarySymbol>(&self, name)` resolves a function-pointer symbol into `Symbol<'_, F>`. `Symbol::get` returns the fn pointer by value via the `transmute_copy`-from-raw-pointer pattern that matches the platform loader's contract for function symbols.
+- `Library::resolve_static<T: 'static>(&self, name)` resolves a static-data symbol into `StaticRef<'_, T>`. `StaticRef::get` dereferences the resolved pointer to `&T`. This is the pattern every extension ABI uses for its descriptor export.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-linking, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["hilavitkutin-linking", "Library::load", "resolve", "resolve_static", "typed handle", "loader lifetime", "single concern"]
+cites = ["the_linking_crate_is_the_cross_platform_dynamic_library_loading_primitive_with_pull_based_symbol_resolution"]
+
+[[tenet]]
+id = "the_linking_crate_is_kept_narrow_so_the_layers_above_it_can_be_rewritten_without_churning_the_loader"
+what = "Everything about extension descriptors, lifecycle stages, role declaration, capability matching, failure policy, host orchestration and downstream domain contracts sits above the linking crate, in the extensions crate or in consumer-specific contract crates. The crate is deliberately kept narrow so those higher layers can be written or rewritten without churning the loader."
+mechanism = "Example of a consumer contract crate named: `viola-plugin-abi`."
+source = "mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:15-20"
+provenance = ["mock::crates::hilavitkutin-linking::DESIGN::#hilavitkutin-linking"]
+quote = '''
+Everything about extension descriptors, lifecycle stages, role
+declaration, capability matching, failure policy, host orchestration,
+or downstream domain contracts sits above this layer in
+hilavitkutin-extensions or in consumer-specific contract crates such
+as viola-plugin-abi. This crate is deliberately kept narrow so those
+higher layers can be written or rewritten without churning the loader.
+'''
+because = "So that the higher layers can be written or rewritten without churning the loader."
+origin = "proposed"
+written_by = "the design template of hilavitkutin-linking, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["narrow loader", "descriptors above", "lifecycle above", "capability matching", "failure policy", "host orchestration", "viola-plugin-abi", "layering"]
+
+[[tenet]]
+id = "the_linking_crate_is_no_std_depends_on_libc_or_windows_sys_and_on_no_other_hilavitkutin_crate"
+what = "The linking crate needs no standard library. It pulls the C library on Unix targets and the Windows system bindings on Windows targets, and depends on no other hilavitkutin crate: not the engine, the api, the build-time crate, the ecosystem crates or the extensions crate. Its three foundational dependencies are notko for the fallibility ladder, arvo for numeric primitives and arvo-bits for boolean values, and the layer is deliberately isolated."
+mechanism = "`#![no_std]`; `libc` under `cfg(unix)` for dlopen / dlsym / dlclose; `windows-sys` under `cfg(windows)` for LoadLibraryW / GetProcAddress / FreeLibrary under the minimal feature set; notko (`Just` / `Maybe` / `Outcome`), arvo (`USize` / `Cap`), arvo-bits (`Bool`)."
+source = "mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:8-13, mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:60-73"
+provenance = ["mock::crates::hilavitkutin-linking::DESIGN::#hilavitkutin-linking"]
+quote = '''
+The crate is `#![no_std]`. It pulls libc for Unix targets and
+windows-sys for Windows targets. It does not depend on any other
+hilavitkutin crate, not the engine, not the api, not the build-time
+crate, and not the ecosystem crates. The three foundational dependencies
+are notko for the fallibility ladder, arvo for numeric primitives, and
+arvo-bits for boolean values.
+---
+## Dependencies
+
+Workspace dependencies only:
+
+- notko for Just / Maybe / Outcome primitives on public signatures.
+- arvo for USize / Cap and similar numeric primitives where public signatures express sizes or capacities.
+- arvo-bits for Bool where public signatures express boolean values.
+
+Platform dependencies:
+
+- libc under `cfg(unix)` for raw FFI bindings to dlopen / dlsym / dlclose.
+- windows-sys under `cfg(windows)` for raw FFI bindings to LoadLibraryW / GetProcAddress / FreeLibrary under the minimal feature set.
+
+No dependency on hilavitkutin, hilavitkutin-api, hilavitkutin-build, hilavitkutin-ctx, hilavitkutin-persistence, hilavitkutin-str, or hilavitkutin-extensions. The linking layer is deliberately isolated.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-linking, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["no_std", "libc", "windows-sys", "notko", "arvo", "arvo-bits", "isolated", "no hilavitkutin dependency", "dependencies"]
+
+[[tenet]]
+id = "a_library_handle_closes_on_drop_and_an_explicit_close_surfaces_the_unload_error_and_every_symbol_handle_borrows_the_library"
+what = "A library handle is opaque and closes the library when dropped, and an explicit close does the same but returns the platform error at unload, which a drop discards. Every symbol handle resolved from a library borrows it through a lifetime parameter, so use after close is a compile-time error."
+mechanism = "`Library::close(self) -> Outcome<(), LinkError>`; lifetime parameter `'lib` on `Symbol` and `StaticRef`; `as_raw` is an escape hatch on both handles."
+source = "mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:26-26, mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:41-41, mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:45-45"
+provenance = ["mock::crates::hilavitkutin-linking::DESIGN::#public-items"]
+quote = '''
+- `Library` is the opaque loader handle. RAII closes the library on drop; `Library::close` is the explicit form that surfaces unload errors. Every `Symbol` or `StaticRef` resolved from a `Library` borrows it via a lifetime parameter.
+---
+Both handles expose `as_raw` as an escape hatch for cases outside the typed wrappers. The lifetime parameter `'lib` ties either handle to its source `Library`, so use-after-close is a compile-time error.
+---
+`Library::close(self)` explicitly unloads the library and returns `Outcome<(), LinkError>`. Dropping the `Library` achieves the same effect but discards any platform error at unload. Consumers that want to surface those errors call `close`.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-linking, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["Library", "RAII close", "Library::close", "unload error", "lifetime 'lib", "use-after-close", "as_raw", "Outcome"]
+
+[[tenet]]
+id = "a_function_symbol_and_a_static_data_symbol_are_two_separate_handle_types_because_their_pointer_reinterpretation_rules_differ"
+what = "A resolved function symbol and a resolved static-data symbol are deliberately separate handle types. For a function the resolved address is the function-pointer value, and for static data it is the location of a value to dereference, and hiding the difference behind one type would force runtime branching or unsafe code, so two types keep the soundness explicit."
+mechanism = "`Symbol<'_, F>`: `Symbol::get(&self) -> T` returns the function pointer by value via `transmute_copy` from a raw pointer. `StaticRef<'_, T>`: `T: 'static`, `StaticRef::get(&self) -> &T` dereferences the pointer; the pointer-to-static-struct pattern every extension ABI uses for its descriptor export."
+source = "mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:27-28, mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:38-39, mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:43-43"
+provenance = ["mock::crates::hilavitkutin-linking::DESIGN::#public-items"]
+quote = '''
+- `Symbol` is the typed handle to a resolved function-pointer symbol. `T` is restricted by the sealed `LibrarySymbol` marker. `Symbol::get(&self) -> T` returns the function pointer by value.
+- `StaticRef` is the typed handle to a resolved static-data symbol (the pointer-to-static-struct pattern every extension ABI uses for its descriptor export). `T: 'static` is arbitrary data. `StaticRef::get(&self) -> &T` dereferences the pointer.
+---
+- `Library::resolve<F: LibrarySymbol>(&self, name)` resolves a function-pointer symbol into `Symbol<'_, F>`. `Symbol::get` returns the fn pointer by value via the `transmute_copy`-from-raw-pointer pattern that matches the platform loader's contract for function symbols.
+- `Library::resolve_static<T: 'static>(&self, name)` resolves a static-data symbol into `StaticRef<'_, T>`. `StaticRef::get` dereferences the resolved pointer to `&T`. This is the pattern every extension ABI uses for its descriptor export.
+---
+`Symbol` and `StaticRef` are deliberately separate types. The pointer reinterpretation rules differ: for function pointers the resolved address IS the function-pointer value (transmute); for static data the address is the location of a `T` (deref). Hiding the distinction behind a single type would force runtime branching or unsafe; two types keep the soundness explicit.
+'''
+because = "The pointer reinterpretation rules differ; hiding the distinction behind a single type would force runtime branching or unsafe; two types keep the soundness explicit."
+origin = "proposed"
+written_by = "the design template of hilavitkutin-linking, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["Symbol", "StaticRef", "transmute_copy", "function pointer", "static data", "descriptor export", "separate types", "soundness"]
+
+[[tenet]]
+id = "the_symbol_marker_is_sealed_and_admits_c_function_pointers_of_arity_zero_through_eight"
+what = "The marker that restricts which types a function symbol may have is sealed. The first version admits C-ABI function pointers with zero through eight arguments, downstream crates cannot add implementations, and the arity set covers realistic extension-ABI shapes."
+mechanism = "`LibrarySymbol` sealed marker trait over `extern \"C\"` function pointers, arities 0 to 8."
+source = "mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:29-29"
+provenance = ["mock::crates::hilavitkutin-linking::DESIGN::#public-items"]
+quote = '''
+- `LibrarySymbol` is a sealed marker trait over function pointer shapes. v1 admits `extern "C"` function pointers at arities zero through eight. Downstream crates cannot add new impls; the arity set covers realistic extension-ABI shapes.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-linking, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["LibrarySymbol", "sealed marker", "extern C", "arity 0 to 8", "function pointer shapes", "no downstream impls"]
+
+[[tenet]]
+id = "the_unix_backend_loads_with_now_and_local_so_missing_symbols_surface_at_load_and_extension_symbols_stay_private_to_the_loading_scope"
+what = "The Unix backend opens libraries so that all external symbols resolve at load time, which surfaces missing-symbol errors immediately rather than at first call, and so that each library's symbols stay private to the loading scope. Two extensions loaded at once therefore cannot collide on unmangled symbols whose names happen to match, and the trampolines emitted by the macro crate rely on this isolation to bound their collision risk. On Linux with glibc the local mode is the default so the explicit flag is documentation, while on macOS and the BSDs the default is global so the flag is load-bearing."
+mechanism = "`dlopen(path, RTLD_NOW | RTLD_LOCAL)`; `#[unsafe(no_mangle)]` symbols; trampolines from `hilavitkutin-extensions-macros`."
+source = "mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:36-36"
+provenance = ["mock::crates::hilavitkutin-linking::DESIGN::#shape"]
+quote = '''
+`Library::load(path)` opens a library given a null-terminated byte-slice path. The unix backend calls `dlopen(path, RTLD_NOW | RTLD_LOCAL)`. `RTLD_NOW` resolves all of the loaded library's external symbols at load time, surfacing missing-symbol errors immediately rather than at first call. `RTLD_LOCAL` keeps each cdylib's symbols private to the loading scope, so two simultaneously-loaded extensions cannot collide on `#[unsafe(no_mangle)]` symbols whose names happen to match (the trampolines emitted by `hilavitkutin-extensions-macros` rely on this isolation for the bound on their collision risk). On Linux glibc, `RTLD_LOCAL` is the default-when-neither-flag-given so the explicit flag is documentation; on macOS and the BSDs the documented default is `RTLD_GLOBAL` so the explicit flag is load-bearing. Two resolution methods then produce typed handles from that loader:
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-linking, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["RTLD_NOW", "RTLD_LOCAL", "RTLD_GLOBAL", "dlopen", "symbol isolation", "missing-symbol errors", "glibc default", "macOS BSD default"]
+
+[[tenet]]
+id = "link_errors_are_fixed_shape_enum_variants_with_no_heap_payload_and_carry_os_error_codes_as_non_negative_usize"
+what = "Load, resolve and unload errors are fixed-shape enum variants with no heap payload, carrying platform codes as non-negative size values that fit both Unix errno and Windows error ranges. On Windows the code is the last-error value at the failure site. On Unix it is the thread-local errno and is best-effort, because the standard does not require the loader call to set it, and on unsupported Unixes it is zero. A separate variant distinguishes a path the loader cannot transcode from a path the operating system rejects, and in the first version it fires on Windows for non-ASCII paths and for paths beyond the classic length limit."
+mechanism = "`LinkError`, `arvo::USize` platform codes; `LinkError::LoadFailed { platform_code }`; `GetLastError()` on Windows; `__errno_location` on Linux/Android, `__error` on Darwin and BSD; `LinkError::PathEncodingUnsupported` on Windows for non-ASCII paths and paths over the classic `MAX_PATH` (260 wchars); Unix paths are opaque bytes and never produce it. Full UTF-8 to UTF-16 transcoding plus the long-path prefix LongPath support is a separate scope."
+source = "mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:30-30, mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:47-47"
+provenance = ["mock::crates::hilavitkutin-linking::DESIGN::#public-items"]
+quote = '''
+- `LinkError` is the load / resolve / unload error enum. Fixed-shape variants; no heap payloads. Carries `arvo::USize` platform codes where relevant.
+---
+Error shapes are fixed enum variants with no heap payloads. OS error codes are carried as `arvo::USize` values (non-negative on both unix errno and Windows GetLastError ranges). On Windows, `LinkError::LoadFailed { platform_code }` always reflects `GetLastError()` at the failure site. On Unix, the value is the thread-local `errno` read via the per-libc helper (`__errno_location` on Linux/Android, `__error` on Darwin and BSD); since POSIX does not require `dlopen` to set `errno`, the value is best-effort and reflects the most recent libc syscall failure during the load. On unsupported unixes (Solaris, Haiku, etc.) the value is `0`. `LinkError::PathEncodingUnsupported` distinguishes a path the loader cannot transcode from a path that the OS loader rejects after handoff. v1 fires it on Windows for non-ASCII paths and paths exceeding the classic `MAX_PATH` (260 wchars); Unix paths are opaque bytes and never produce it. Full UTF-8 to UTF-16 transcoding plus `\\?\` LongPath support is a separate scope.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-linking, agent-written, undated"
+standing = "provisional"
+subject = "extensions"
+keywords = ["LinkError", "LoadFailed", "platform_code", "errno", "GetLastError", "PathEncodingUnsupported", "MAX_PATH", "no heap payload", "USize"]

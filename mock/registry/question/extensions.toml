@@ -1,0 +1,37 @@
+# The questions whose subject is `extensions`, part 1.
+
+[[question]]
+id = "whether_the_extension_host_dispatches_by_capability_or_by_provider"
+asks = "The workspace design template describes the extensions crate as dispatching capabilities, while the crate's own design template names the unit of dispatch a provider with a ProviderId. Which term and identifier does the extension host use?"
+options = ["capability dispatch (workspace template: \"capability dispatch, failure policy\")", "provider dispatch by stable identifier plus opaque vtable pointer (crate template: \"provider dispatch by stable identifier plus opaque vtable pointer\")"]
+state = "open"
+source = "mock/DESIGN.md.tmpl:19-19, mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:3-9"
+quote = '''
+| `hilavitkutin-extensions` | Contract-bound extension host orchestration (descriptor, lifecycle, capability dispatch, failure policy) layered over `hilavitkutin-linking`. Domain-agnostic. `no_std`, no allocator, no dyn. |
+---
+Contract-bound extension host orchestration, layered on the
+`hilavitkutin-linking` loader primitive. Owns the `ExtensionDescriptor`
+`#[repr(C)]` shape, pull-based discovery via a single well-known
+exported symbol, per-extension lifecycle (init with host-opaque pointer,
+shutdown via drop or explicit close), provider dispatch by stable
+identifier plus opaque vtable pointer, required-versus-optional
+classification, and a pluggable failure policy.
+'''
+subject = "extensions"
+keywords = ["capability", "provider", "ProviderId", "CapabilityId", "extension host", "naming", "dispatch"]
+related = ["tenet::the_extensions_crate_is_the_domain_agnostic_host_orchestration_layered_over_the_linking_crate", "tenet::the_extensions_crate_owns_the_descriptor_shape_pull_based_discovery_the_lifecycle_provider_dispatch_requirement_classes_and_the_failure_policy"]
+
+[[question]]
+id = "whether_a_link_time_registration_mechanism_is_part_of_the_design_or_rejected"
+asks = "The founding spec lists link-time registration through the inventory mechanism as complete before work starts, while the design template of the linking crate rejects inventory, constructor, distributed-slice and init-array discovery in favour of pull-based discovery. Which holds for registering anything at link time?"
+options = ["link-time registration through inventory is complete before work starts (founding spec cross-cutting constraint)", "inventory, ctor, distributed_slice and .init_array discovery are all explicitly rejected; discovery is pull-based only (linking design template)"]
+state = "open"
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2227-2227, mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:100-100"
+quote = '''
+- inventory link-time registration = complete before work (#55)
+---
+- Scan linker sections for registration. `inventory`, `ctor`, `#[distributed_slice]`, `.init_array` discovery are all explicitly rejected. Discovery is pull-based only: the host asks for a named symbol; the library must export it.
+'''
+subject = "extensions"
+keywords = ["inventory", "link-time registration", "ctor", "distributed_slice", "pull-based discovery", "init_array", "extension discovery"]
+related = ["tenet::link_time_registration_through_inventory_is_complete_before_work_starts", "tenet::discovery_is_pull_based_only_and_linker_section_scanning_registration_is_rejected"]

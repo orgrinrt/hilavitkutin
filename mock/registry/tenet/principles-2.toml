@@ -17,3 +17,448 @@ origin = "stated"
 standing = "provisional"
 subject = "principles"
 keywords = ["lock-free", "static dispatch table", "one-writer-N-readers", "no CAS", "library guarantee", "Executor", "progress counters"]
+
+[[tenet]]
+id = "caps_are_defaults_and_never_policy_so_a_sketch_arc_looks_for_cap_lifting_shapes_now"
+what = "Consumer-tunable caps get a redesign arc now. The fixed caps exist because current rustc rejects field access on generic constants and the trait solver overflows on config-driven sizes. The rule that caps are defaults and never policy outranks the convenience of the workaround, so a sketch arc investigates cap-lifting shapes before more code accretes on the fixed sizes."
+mechanism = "Fixed caps: `GATE2_MAX_UNITS = 256`, `GATE2_MAX_ACCUMS = 16`, `plan_dirty: [AtomicBool; 256]`, `MAX_CORES`. Cause: no field access on generic constants under `generic_const_exprs`, and trait-solver overflow on `Cfg`-driven sizes. Shapes to investigate: macro-generated per-cap instantiations, associated-const indirection, alternative bound layering. The rule is called the substrate rule in the text."
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:61-68"
+provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#a1-2-consumer-tunable-caps-get-a-redesign-arc-now"]
+quote = '''
+The fixed caps (`GATE2_MAX_UNITS = 256`, `GATE2_MAX_ACCUMS = 16`,
+`plan_dirty: [AtomicBool; 256]`, `MAX_CORES`) exist because current rustc
+rejects field access on generic constants under `generic_const_exprs` and
+the trait solver overflows on `Cfg`-driven sizes. The substrate rule (caps
+are defaults, never policy) outranks the convenience of the workaround: a
+sketch arc investigates cap-lifting shapes (macro-generated per-cap
+instantiations, associated-const indirection, alternative bound layering)
+before more code accretes on the fixed sizes. Documented fixed caps remain
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["caps", "GATE2_MAX_UNITS", "MAX_CORES", "generic_const_exprs", "cap-lifting", "consumer-tunable", "defaults not policy", "A1-2"]
+
+[[tenet]]
+id = "a_documented_fixed_cap_is_acceptable_only_as_the_proven_infeasible_fallback_with_a_tracked_lift_condition"
+what = "Documented fixed caps remain acceptable only as the proven-infeasible fallback, and each carries a tracked lift condition."
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:68-70"
+provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#a1-2-consumer-tunable-caps-get-a-redesign-arc-now"]
+quote = '''
+before more code accretes on the fixed sizes. Documented fixed caps remain
+acceptable only as the proven-infeasible fallback, each carrying a tracked
+lift condition.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["fixed caps", "fallback", "proven infeasible", "lift condition", "A1-2"]
+cites = ["caps_are_defaults_and_never_policy_so_a_sketch_arc_looks_for_cap_lifting_shapes_now"]
+
+[[tenet]]
+id = "the_dead_weight_inventory_is_deleted_by_the_first_charted_slice_that_touches_its_file"
+what = "Dead-weight cleanup is not a standalone round. Each item of the dead inventory is deleted by the first charted slice that touches its file, with the no-legacy-shims rule applying at that point, and the inventory is the checklist those slices consult."
+mechanism = "The inventory: `topo_order` / `topo_count`, `PlanCache`, `synthesise_core_programs` / `CoreProgram`, `RecommendedOrder`'s run-path absence, the `AdaptMode` alias. The state assessment of 2026-06-11 calls `topo_order`, `topo_count`, `synthesise_core_programs`, `CoreProgram` and `RecommendedOrder` dead or error-path-only weight."
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:43-45, mock/research/202606111400_canonical-design-addendum-a1.md:93-100"
+provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#state-assessment-truth-of-impl-2026-06-11"]
+quote = '''
+declared but stride is `size_of::<T>()`; `topo_order` / `topo_count`,
+`synthesise_core_programs` / `CoreProgram`, and `RecommendedOrder` are dead
+or error-path-only weight.
+---
+### A1-4: Dead-weight cleanup is deferred into touching slices
+
+The dead inventory (`topo_order` / `topo_count`, `PlanCache`,
+`synthesise_core_programs` / `CoreProgram`, `RecommendedOrder`'s run-path
+absence, the `AdaptMode` alias) is not a standalone cleanup round. Each item
+is deleted by the first charted slice that touches its file, with the
+no-legacy-shims rule applying at that point. The inventory above is the
+checklist those slices consult.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["dead weight", "topo_order", "PlanCache", "CoreProgram", "RecommendedOrder", "AdaptMode", "no-legacy-shims", "A1-4"]
+
+[[tenet]]
+id = "the_perf_gate_uses_per_arm_calibrated_bars_over_a_persistent_pool_std_baseline_and_stays_blocking"
+what = "The flat 1.10 times bar of the perf gate retires. The gate demands per-arm calibrated bars, tight where the engine should win and with parity tolerance mid-range, the std baseline upgrades to a persistent-pool variant matching the engine's spawn-once discipline, and measurement variance is fixed with median-of-N runs. The gate stays blocking."
+mechanism = "Flat 1.10x bar retired; per-arm bars; persistent-pool std baseline; median-of-N."
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:135-139"
+provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#a1-8-the-perf-gate-moves-to-per-arm-bars-with-a-stricter-baseline"]
+quote = '''
+The flat 1.10x bar retires. The gate demands per-arm calibrated bars (tight
+where the engine should win, parity tolerance mid-range), the std baseline
+upgrades to a persistent-pool variant (matching the engine's spawn-once
+discipline), and measurement variance is fixed with median-of-N runs. The
+gate stays blocking.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["perf gate", "per-arm bars", "1.10x", "persistent pool", "median-of-N", "blocking", "baseline", "A1-8"]
+cites = ["the_fairness_correction_sets_the_parallel_baseline_to_optimal_multi_threaded_std_and_supersedes_the_3_5x_claim"]
+
+[[tenet]]
+id = "type_level_n_way_partition_of_a_heterogeneous_carrier_needs_forbidden_specialization_so_partition_lives_in_const_evaluation"
+what = "Type-level N-way partition of a heterogeneous carrier requires the forbidden full specialization feature. The canonical mechanism is const data with const-gated dead-code elimination over a flat carrier, so the partition lives in const evaluation and never in the carrier type."
+mechanism = "Mechanism per r4: const data + const-gated DCE over a flat carrier. Toolchain pin nightly-2026-05-28."
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:143-150"
+provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#constraint-notes-elevated-to-canon"]
+quote = '''
+These are facts about building this design under the pinned toolchain
+(nightly-2026-05-28). The standalone spec must carry them; they are not
+incidental.
+
+1. Type-level N-way partition of a heterogeneous carrier requires the
+   forbidden full `specialization`; the canonical mechanism is const data
+   plus const-gated DCE over a flat carrier (r4). Partition lives in const
+   evaluation, never in the carrier type.
+'''
+origin = "proposed"
+written_by = "addendum A1 of 2026-06-11, constraint note 1, agent-written, elevated to canon by the addendum"
+standing = "provisional"
+subject = "principles"
+keywords = ["N-way partition", "heterogeneous carrier", "specialization", "const-gated DCE", "flat carrier", "const evaluation", "r4"]
+rules_out = ["partition in the carrier type"]
+cites = ["r4_replaces_the_nested_carrier_type_construction_with_const_eval_grouping_and_const_gated_dce"]
+
+[[tenet]]
+id = "type_keyed_projection_out_of_heterogeneous_lists_uses_inferred_index_witnesses_and_never_type_equality_specialization"
+what = "Type-keyed projection out of heterogeneous lists uses inferred index witnesses and never type-equality specialization."
+mechanism = "Inferred index witnesses `Here` / `There<I>`, `Selector`-family traits."
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:151-153"
+provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#constraint-notes-elevated-to-canon"]
+quote = '''
+2. Type-keyed projection out of heterogeneous lists uses inferred index
+   witnesses (`Here` / `There<I>`, `Selector`-family traits), never
+   type-equality specialization.
+'''
+origin = "proposed"
+written_by = "addendum A1 of 2026-06-11, constraint note 2, agent-written, elevated to canon by the addendum"
+standing = "provisional"
+subject = "principles"
+keywords = ["type-keyed projection", "index witness", "Here", "There", "Selector", "heterogeneous list", "specialization"]
+rules_out = ["type-equality specialization"]
+
+[[tenet]]
+id = "generic_const_exprs_has_two_ceilings_no_field_access_on_generic_constants_and_a_complexity_limit_on_inline_const_blocks"
+what = "The generic const expressions feature carries two practical ceilings under the pinned toolchain: no field access on generic constants, so caps cannot be sized by configuration today, and a complexity limit on inline const blocks in bounds, worked around by associated-const carrier structs."
+mechanism = "`generic_const_exprs` ceilings; workaround carrier structs `IsRoot` / `PhaseAt`; toolchain nightly-2026-05-28; see A1-2."
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:154-157"
+provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#constraint-notes-elevated-to-canon"]
+quote = '''
+3. `generic_const_exprs` carries two practical ceilings: no field access on
+   generic constants (caps cannot be `Cfg`-sized today; see A1-2) and a
+   complexity limit on inline const blocks in bounds (worked around by
+   associated-const carrier structs such as `IsRoot` / `PhaseAt`).
+'''
+origin = "proposed"
+written_by = "addendum A1 of 2026-06-11, constraint note 3, agent-written, elevated to canon by the addendum"
+standing = "provisional"
+subject = "principles"
+keywords = ["generic_const_exprs", "generic constants", "inline const blocks", "IsRoot", "PhaseAt", "caps", "ceilings"]
+cites = ["caps_are_defaults_and_never_policy_so_a_sketch_arc_looks_for_cap_lifting_shapes_now"]
+
+[[tenet]]
+id = "allocation_is_managed_by_the_scheduler_and_declared_at_compile_time_and_never_fabricated_at_runtime"
+what = "No allocation is ad hoc. Allocation is managed by the scheduler and declared at compile time, and nothing fabricates it at runtime. No standard library and no allocator are the universe of the stack, before they are crate attributes, and the vector, box, reference-counted pointers, hash map, owned string and formatting macro do not exist in it."
+mechanism = "`#![no_std]` + `#![no_alloc]`; `Vec`, `Box`, `Rc`, `Arc`, `HashMap`, `String` and `format!` do not exist."
+source = "mock/PRINCIPLES.md.tmpl:5-10"
+provenance = ["mock::PRINCIPLES::#no-heap-ever"]
+quote = '''
+## No heap. Ever.
+
+No ad-hoc allocations. Allocation is scheduler-managed, declared at
+compile time, never runtime-fabricated. `#![no_std]` + `#![no_alloc]`
+aren't crate attributes first, they're the universe. `Vec`, `Box`,
+`Rc`, `Arc`, `HashMap`, `String`, `format!` don't exist here.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["no heap", "no alloc", "no_std", "scheduler-managed allocation", "compile time", "Vec", "Box", "HashMap"]
+cites = ["hilavitkutin_does_not_use_the_alloc_crate_and_dynamic_storage_goes_through_slab_columns_or_stack_arrays"]
+
+[[tenet]]
+id = "a_need_for_a_growable_container_means_the_shape_is_wrong_and_is_reshaped_toward_an_emitter_iterator_or_bounded_store"
+what = "Where an interface seems to want a runtime-growable container, the shape is wrong and is reshaped toward a trait-bound emitter, an iterator or a bounded store. The heap is not temporarily available, and there is no use of it just for a moment."
+rules_out = ["the heap being temporarily available", "using the heap just for this moment", "a runtime-growable container in an interface"]
+source = "mock/PRINCIPLES.md.tmpl:12-15"
+provenance = ["mock::PRINCIPLES::#no-heap-ever"]
+quote = '''
+If an API feels like it wants a runtime-growable container, the shape
+is wrong: reshape toward a trait-bound emitter / iterator / bounded
+store. The heap is not temporarily available; there is no "just for
+this moment".
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["growable container", "emitter", "iterator", "bounded store", "reshape", "no heap"]
+
+[[tenet]]
+id = "no_bare_primitive_exists_anywhere_in_the_stack"
+what = "Bare numeric types, booleans, option and result types, owned strings and non-static string slices do not exist in the stack. They are not allowed in public signatures, private fields, local bindings, casts, literal suffixes, type aliases, constant and static declarations, trait method parameters, where clauses or tuple-struct fields."
+mechanism = "Banned: `u8` through `u128`, `i8` through `i128`, `f32`, `f64`, `usize`, `isize`, `bool`, `Option`, `Result`, `String`, non-static `&str`."
+rules_out = ["bare primitives in public signatures", "bare primitives in private fields", "bare primitives in internal let bindings", "bare primitives in cast expressions", "bare primitives in literal suffixes", "bare primitives in type aliases", "bare primitives in const and static declarations", "bare primitives in trait method parameter types", "bare primitives in where clauses", "bare primitives in tuple-struct fields"]
+source = "mock/PRINCIPLES.md.tmpl:17-27"
+provenance = ["mock::PRINCIPLES::#no-bare-primitives-anywhere"]
+quote = '''
+## No bare primitives. Anywhere.
+
+`u8` through `u128`, `i8` through `i128`, `f32`, `f64`, `usize`,
+`isize`, `bool`, `Option`, `Result`, `String`, non-static `&str`, **they do not exist in this stack.** Not in public signatures, not
+in private fields, not in internal `let` bindings, not in cast
+expressions, not in literal suffixes, not in type aliases, not in
+`const`/`static` declarations, not in trait method parameter types,
+not in `where` clauses, not in tuple-struct fields.
+
+Substitute vocabulary lives in arvo (`UFixed` / `IFixed` /
+`FastFloat` / `StrictFloat` / `USize` / `Cap` / `Bool`) and notko
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["no bare primitives", "u8", "usize", "bool", "Option", "Result", "String", "everywhere"]
+cites = ["the_no_raw_primitives_lint_is_internal_and_is_not_enforced_on_consumers"]
+
+[[tenet]]
+id = "the_stack_supplies_its_own_vocabulary_for_each_bare_primitive_in_arvo_notko_and_the_string_crate"
+what = "The substitutes for the bare primitives live in arvo for fixed-point numbers, floats, sizes, capacities and booleans, and in notko for the maybe and outcome types. The interned string crate supplies the string identity."
+mechanism = "arvo: `UFixed` / `IFixed` / `FastFloat` / `StrictFloat` / `USize` / `Cap` / `Bool`; notko: `Maybe` / `Outcome` / `Just`; hilavitkutin-str: `Str`."
+source = "mock/PRINCIPLES.md.tmpl:26-29"
+provenance = ["mock::PRINCIPLES::#no-bare-primitives-anywhere"]
+quote = '''
+Substitute vocabulary lives in arvo (`UFixed` / `IFixed` /
+`FastFloat` / `StrictFloat` / `USize` / `Cap` / `Bool`) and notko
+(`Maybe` / `Outcome` / `Just`). hilavitkutin-str supplies `Str` for
+interned string identity. The `arvo-types-only`, `no-bare-numeric`,
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["arvo", "notko", "Maybe", "Outcome", "Str", "UFixed", "FastFloat", "substitute vocabulary"]
+
+[[tenet]]
+id = "six_lints_scan_every_line_of_every_source_file_and_block_the_commit_when_a_bare_primitive_is_written"
+what = "Six lints scan every line of every source file and block a commit the moment a bare primitive is physically written."
+mechanism = "`arvo-types-only`, `no-bare-numeric`, `no-bare-option`, `no-bare-result`, `no-bare-string` and `no-public-raw-field`."
+source = "mock/PRINCIPLES.md.tmpl:29-32"
+provenance = ["mock::PRINCIPLES::#no-bare-primitives-anywhere"]
+quote = '''
+interned string identity. The `arvo-types-only`, `no-bare-numeric`,
+`no-bare-option`, `no-bare-result`, `no-bare-string`, and
+`no-public-raw-field` lints scan every line of every `.rs` file and
+block commits the moment a bare primitive is physically written.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["arvo-types-only", "no-bare-numeric", "no-bare-option", "no-bare-result", "no-bare-string", "no-public-raw-field", "lint", "commit gate"]
+
+[[tenet]]
+id = "a_foreign_contract_forcing_a_primitive_is_first_met_by_implementing_it_on_an_arvo_type_and_otherwise_the_crate_is_dropped"
+what = "Where a foreign crate's trait or an unavoidable language feature forces a specific standard primitive, the first question is whether the foreign contract can be implemented on an arvo type, and if it can, that is the path. If it cannot, the crate is dropped."
+rules_out = ["keeping a foreign crate that forces a bare primitive where the contract cannot be implemented on an arvo type"]
+source = "mock/PRINCIPLES.md.tmpl:34-37"
+provenance = ["mock::PRINCIPLES::#no-bare-primitives-anywhere"]
+quote = '''
+If a foreign crate's trait or an unavoidable language feature forces
+a specific std primitive, the first question is: *can we implement
+the foreign contract on an arvo type instead?* If yes, that's the
+path. If no, the crate smells like ass and we drop it. The escape
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["foreign crate", "foreign trait", "arvo type", "drop the crate", "bare primitive", "unavoidable"]
+
+[[tenet]]
+id = "the_lint_allow_escape_hatch_is_for_a_genuinely_unavoidable_boundary_and_always_carries_a_tracked_remediation_task"
+what = "The lint allow escape hatch exists only for the genuinely unavoidable boundary and always with a tracked remediation task. It is not for skeleton convenience: it is for tracked debt with a linked task, and a suppression that cannot be traced to a specific follow-up means the design is wrong, not the rule."
+mechanism = "`// lint:allow(<rule>) reason:...; tracked: #N`."
+rules_out = ["lint allow for skeleton convenience", "a lint suppression with no tracked follow-up task"]
+source = "mock/PRINCIPLES.md.tmpl:38-40, mock/PRINCIPLES.md.tmpl:186-188"
+provenance = ["mock::PRINCIPLES::#no-bare-primitives-anywhere"]
+quote = '''
+hatch `// lint:allow(<rule>) reason:...; tracked: #N` exists only
+for the genuinely unavoidable boundary, always with a tracked
+remediation task.
+---
+`lint:allow(...)` is NOT for skeleton convenience; it's for tracked
+debt with a linked task id. If the suppression isn't traceable to a
+specific follow-up, the design is wrong, not the rule.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["lint:allow", "escape hatch", "tracked task", "remediation", "unavoidable boundary", "skeleton convenience"]
+
+[[tenet]]
+id = "standard_trait_methods_whose_signatures_the_language_fixes_are_the_escape_hatch_and_everywhere_else_the_rule_stands"
+what = "The escape hatches are implementations of standard trait methods whose signatures the language fixes. Each one carries a lint allow marker with the reason of standard trait parity and a tracked task, and everywhere else the rule stands."
+mechanism = "`fn next() -> Option<Self::Item>`, `fn partial_cmp() -> Option<Ordering>`, `fn fmt() -> fmt::Result`; each carries `// lint:allow(<rule>) reason: std trait parity; tracked: #N`."
+source = "mock/PRINCIPLES.md.tmpl:180-184"
+provenance = ["mock::PRINCIPLES::#primitive-vocabulary-the-stack-s-own"]
+quote = '''
+Escape hatches: std trait method impls whose signatures are fixed by
+the language (`fn next() -> Option<Self::Item>`, `fn partial_cmp() ->
+Option<Ordering>`, `fn fmt() -> fmt::Result`). Each one carries
+`// lint:allow(<rule>) reason: std trait parity; tracked: #N`.
+Everywhere else, the rule stands.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["std trait parity", "escape hatch", "Option", "fmt::Result", "lint:allow", "fixed signature"]
+cites = ["the_lint_allow_escape_hatch_is_for_a_genuinely_unavoidable_boundary_and_always_carries_a_tracked_remediation_task"]
+
+[[tenet]]
+id = "the_primitive_vocabulary_table_names_the_stack_type_that_replaces_each_bare_primitive_and_applies_everywhere"
+what = "The primitive vocabulary documents which stack type replaces which bare primitive. It is not a table for the public interface only, and every mapping applies everywhere the bare primitive might otherwise appear."
+mechanism = "Option to Maybe and Result to Outcome (notko); Vec return to an iterator or trait-bound sink; mutable Vec parameter to a Collector sink; HashMap to a KeyValueStore sink or `Map<K, V, N>`; owned String to `Str`; non-static &str to `&'static str` or `Str`; usize and isize to `USize` / `ISize` / `Cap` / a domain newtype; u8..u128 and i8..i128 to `UFixed` / `IFixed` / `T: Boundable` / `T: NonZeroable`; f32 and f64 to `FastFloat` / `StrictFloat`; bool to `Bool`."
+source = "mock/PRINCIPLES.md.tmpl:159-178"
+provenance = ["mock::PRINCIPLES::#primitive-vocabulary-the-stack-s-own"]
+quote = '''
+## Primitive vocabulary (the stack's own)
+
+The rule is "no bare primitives anywhere" (section above); the table
+here documents WHICH stack type replaces WHICH bare primitive. It is
+not a "for public API only" table. Every mapping applies everywhere
+the bare primitive might otherwise appear.
+
+| Don't | Do | Lives in |
+|-------|----|----------|
+| `Option<T>` | `Maybe<T>` | `notko` |
+| `Result<T, E>` | `Outcome<T, E>` | `notko` |
+| `Vec<T>` return | `impl IntoIterator<Item=T>` / trait-bound sink | trait at the API boundary |
+| `&mut Vec<T>` param | `&mut impl Collector<T>` | hilavitkutin-api contracts |
+| `HashMap<K, V>` | `&mut impl KeyValueStore<K, V>` / `Map<K, V, N>` | hilavitkutin-api |
+| `String` owned | `Str` | `hilavitkutin-str` |
+| `&str` non-static | `&'static str` or `Str` | as above |
+| `usize` / `isize` | `USize` / `ISize` / `Cap` / domain newtype | `arvo::newtype` |
+| `u8..u128` / `i8..i128` | `UFixed` / `IFixed` / `T: Boundable` / `T: NonZeroable` | `arvo` / `notko` traits |
+| `f32` / `f64` | `FastFloat` / `StrictFloat` | `arvo::newtype` |
+| `bool` | `Bool` | `arvo::newtype` |
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["primitive vocabulary", "Maybe", "Outcome", "Collector", "Str", "USize", "FastFloat", "Bool", "replacement table"]
+cites = ["no_bare_primitive_exists_anywhere_in_the_stack"]
+
+[[tenet]]
+id = "signatures_take_trait_bounds_and_the_concrete_type_is_whatever_the_caller_brings"
+what = "Signatures take trait bounds, and the concrete type is whatever the caller brings. The question at a position is not what type goes there but what contract the position represents."
+because = "Monomorphisation makes trait-generic signatures compile to the same code as concrete ones, and inference at call sites means no turbofish."
+source = "mock/PRINCIPLES.md.tmpl:44-45, mock/PRINCIPLES.md.tmpl:47-50"
+provenance = ["mock::PRINCIPLES::#think-in-traits-not-types"]
+quote = '''
+Signatures take trait bounds. The concrete type is whatever the
+caller brings.
+---
+**The question isn't "what type goes here"; it's "what is the contract
+this position represents".** Monomorphisation makes trait-generic
+signatures compile to the same code as concrete ones. Inference at
+call sites means no turbofish.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["trait bounds", "contract", "monomorphisation", "turbofish", "think in traits", "caller brings"]
+cites = ["contracts_come_before_implementations_and_traits_come_first_always"]
+
+[[tenet]]
+id = "the_patterns_of_the_stack_are_all_instances_of_one_trait_contract_rule"
+what = "The patterns throughout the stack are instances of the single mental model that a position represents a contract. The arithmetic traits of arvo, the boolean try contract, the access, context and platform traits of the api and the rule against vectors in trait signatures are all the same rule."
+mechanism = "arvo's `UArith<BITS>` / `IArith<BITS>`, arvo-bits' `Bool: Try`, hilavitkutin-api's 22 access/context/platform traits, the \"no Vec in trait signatures\" rule."
+source = "mock/PRINCIPLES.md.tmpl:52-55"
+provenance = ["mock::PRINCIPLES::#think-in-traits-not-types"]
+quote = '''
+Patterns throughout the stack are instances of this single mental
+model: arvo's `UArith<BITS>` / `IArith<BITS>`, arvo-bits' `Bool: Try`,
+hilavitkutin-api's 22 access/context/platform traits, the
+"no Vec in trait signatures" rule. All the same rule.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["UArith", "IArith", "Bool Try", "22 traits", "access traits", "platform traits", "one mental model"]
+
+[[tenet]]
+id = "a_position_where_two_implementations_with_different_behaviour_are_imaginable_is_a_trait_slot_and_never_an_extensible_enum"
+what = "Where two implementations with different behaviour can be imagined, the position is a trait slot and not a concrete type. A set that would need room for plugin extensions is not an enum and is a trait."
+source = "mock/PRINCIPLES.md.tmpl:57-58, mock/PRINCIPLES.md.tmpl:96-97, mock/PRINCIPLES.md.tmpl:99-100"
+provenance = ["mock::PRINCIPLES::#think-in-traits-not-types"]
+quote = '''
+**Decision test:** "Can I imagine two implementations with different
+behavior?" If yes, it's a trait slot, not a concrete type.
+---
+Decision test is the same as above: if two plausible implementations
+could differ, it's a trait.
+---
+If you're asking "should this enum have room for plugin extensions?"
+It shouldn't be an enum. It should be a trait.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["decision test", "two implementations", "trait slot", "enum", "plugin extension", "concrete type"]
+
+[[tenet]]
+id = "trait_signatures_return_iterators_and_take_sinks_and_never_name_a_vector_or_boxed_slice"
+what = "As a direct consequence of the two principles stated above it, trait return types use an iterator, a slice reference bound or an associated type, and sink positions take a mutable collector, diagnostic sink or byte emitter. Concrete collection types are implementation choices and not contracts."
+mechanism = "Returns: `impl IntoIterator`, `AsRef<[T]>`, associated types. Sinks: `&mut impl Collector<T>` / `&mut impl DiagnosticSink` / `&mut impl ByteEmitter`."
+rules_out = ["Vec in trait signatures", "Box<[T]> in trait signatures", "concrete collection types as contracts"]
+source = "mock/PRINCIPLES.md.tmpl:60-66"
+provenance = ["mock::PRINCIPLES::#no-vec-or-box-t-in-trait-signatures"]
+quote = '''
+## No `Vec` or `Box<[T]>` in trait signatures
+
+Direct consequence of the two principles above. Trait return types
+use `impl IntoIterator`, `AsRef<[T]>`, or associated types. Sink
+positions take `&mut impl Collector<T>` / `&mut impl DiagnosticSink`
+/ `&mut impl ByteEmitter`. Concrete collection types are
+implementation choices, not contracts.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["no Vec", "Box<[T]>", "IntoIterator", "Collector", "DiagnosticSink", "ByteEmitter", "trait signature", "sink"]
+cites = ["allocation_is_managed_by_the_scheduler_and_declared_at_compile_time_and_never_fabricated_at_runtime"]
+
+[[tenet]]
+id = "collections_never_cross_ecosystem_api_boundaries_and_the_boundary_carries_data_flow_and_not_storage"
+what = "Collections never cross ecosystem interface boundaries. They live below the boundary on the implementer's side, and the boundary carries data flow and not storage."
+source = "mock/PRINCIPLES.md.tmpl:68-70"
+provenance = ["mock::PRINCIPLES::#no-vec-or-box-t-in-trait-signatures"]
+quote = '''
+Collections never cross ecosystem API boundaries. They live below
+the boundary, on the implementer's side. The boundary carries data
+flow, not storage.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["collections", "ecosystem boundary", "data flow", "storage", "implementer side", "API boundary"]
+
+[[tenet]]
+id = "all_dispatch_goes_through_monomorphised_trait_bounds_because_dyn_forces_late_binding_heap_and_unstable_vtable_layouts"
+what = "All dispatch goes through monomorphised trait bounds, and no dynamic dispatch, boxed trait object or runtime dispatch is used."
+because = "Dynamic dispatch forces late binding, heap through a boxed trait object, and vtable layouts that are not stable across compilations or dynamic library loading boundaries."
+rules_out = ["dyn Trait", "Box<dyn>", "runtime dispatch"]
+source = "mock/PRINCIPLES.md.tmpl:72-76"
+provenance = ["mock::PRINCIPLES::#no-dyn-no-box-dyn-no-runtime-dispatch"]
+quote = '''
+## No `dyn`, no `Box<dyn>`, no runtime dispatch
+
+All dispatch goes through monomorphised trait bounds. `dyn Trait`
+forces late binding, heap via `Box<dyn>`, and vtable layouts that
+aren't stable across compilations or `dlopen` boundaries.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["no dyn", "Box<dyn>", "late binding", "vtable layout", "dlopen", "monomorphised trait bounds", "runtime dispatch"]
+cites = ["dyn_is_banned_entirely_with_no_exceptions"]

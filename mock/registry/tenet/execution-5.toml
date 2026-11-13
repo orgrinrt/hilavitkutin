@@ -1,0 +1,173 @@
+# What the record says about `execution`, part 5.
+
+[[tenet]]
+id = "the_engine_holds_no_thread_handle_and_dropping_the_scheduler_stops_the_workers_by_flag_and_wake_and_waits_on_an_exit_counter"
+what = "Dropping the scheduler sets the shutdown flag, wakes every parked worker and waits until every worker has left its main loop. The engine holds no thread handle to join, because the threads belong to the consumer's executor."
+mechanism = "`Scheduler::Drop` sets `shutdown`, futex-wakes all parked, waits on the exit counter."
+source = "mock/DESIGN.md.tmpl:78-78"
+provenance = ["mock::DESIGN::#thread-pool-executor"]
+quote = '''
+Work-stealing BACKLOG. Spin-budget calibration micro-bench at `ThreadPool::build()` BACKLOG; fixed 128 in v1. `Scheduler::Drop` sets `shutdown` flag, futex-wakes all parked, and waits on the exit counter until every worker has left its mainloop; the engine holds no thread handle to join, because the threads are the consumer executor's.
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+subject = "execution"
+keywords = ["Scheduler::Drop", "shutdown flag", "exit counter", "no thread handle", "futex wake", "consumer executor"]
+
+[[tenet]]
+id = "the_morsel_loop_runs_forward_by_default_and_head_and_tail_convergence_is_an_added_variant_for_commutative_single_trunk_phases"
+what = "The morsel loop iterates forward by default. A head-and-tail variant is added for fibers that are commutative in a phase of a single trunk. The morsel size is fixed in the plan from the SIMD width and the write budget of the first-level cache."
+mechanism = "Topic 3 axis E adds head+tail convergence; morsel size baked into `ExecutionPlan` at plan-stage step 9 from SIMD-width + L1 write budget."
+source = "mock/DESIGN.md.tmpl:82-82"
+provenance = ["mock::DESIGN::#morsel-loop"]
+quote = '''
+Forward iter by default; Topic 3 axis E adds head+tail convergence variant for commutative single-trunk-phase fibers. Morsel size baked into ExecutionPlan at plan-stage step 9 from SIMD-width + L1 write budget. Micro-morsel boundary every 64 records; sync via `core::hint::spin_loop` budget + 32-record drift tolerance (no futex inside morsel loop; phase barrier handles cross-phase parking).
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+subject = "execution"
+keywords = ["morsel loop", "forward iteration", "head+tail convergence", "commutative", "single-trunk phase", "morsel size", "SIMD width", "L1 write budget"]
+cites = ["a_unit_declares_whether_it_is_commutative"]
+
+[[tenet]]
+id = "micro_morsels_end_every_64_records_and_workers_sync_by_a_spin_budget_within_a_drift_of_32_records_with_no_futex_inside_the_loop"
+what = "A micro-morsel boundary falls every 64 records. Workers synchronise by a spin-loop budget with a tolerance of 32 records of drift, no operating-system wait happens inside the morsel loop, and the phase barrier handles parking across phases."
+mechanism = "`MICRO_MORSEL_INTERVAL = 64`, `MAX_DRIFT_RECORDS = 32`, sync via `core::hint::spin_loop` budget; no futex inside the morsel loop."
+source = "mock/DESIGN.md.tmpl:82-82, mock/DESIGN.md.tmpl:150-150"
+provenance = ["mock::DESIGN::#morsel-loop"]
+quote = '''
+Forward iter by default; Topic 3 axis E adds head+tail convergence variant for commutative single-trunk-phase fibers. Morsel size baked into ExecutionPlan at plan-stage step 9 from SIMD-width + L1 write budget. Micro-morsel boundary every 64 records; sync via `core::hint::spin_loop` budget + 32-record drift tolerance (no futex inside morsel loop; phase barrier handles cross-phase parking).
+---
+- `MICRO_MORSEL_INTERVAL = 64`, `MAX_DRIFT_RECORDS = 32`.
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+subject = "execution"
+keywords = ["micro-morsel", "MICRO_MORSEL_INTERVAL", "MAX_DRIFT_RECORDS", "spin_loop", "drift tolerance", "no futex", "64 records", "32 records"]
+
+[[tenet]]
+id = "a_store_fence_sits_between_the_last_non_temporal_output_writes_and_the_release_store_of_the_progress_counter"
+what = "Generated code puts a store fence between the final non-temporal writes of a fiber's output and the release store of the progress counter, to hold the invariant named S3 in the third topic."
+mechanism = "`dmb st` (aarch64) / `sfence` (x86_64) between FiberOutput non-temporal `stnp` writes and the progress-counter Release store; Topic 3 invariant S3."
+source = "mock/DESIGN.md.tmpl:84-84"
+provenance = ["mock::DESIGN::#morsel-loop"]
+quote = '''
+Codegen emits `dmb st` (aarch64) / `sfence` (x86_64) between final FiberOutput non-temporal `stnp` writes and progress-counter Release store, per Topic 3 invariant S3.
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+subject = "execution"
+keywords = ["dmb st", "sfence", "stnp", "non-temporal store", "progress counter", "Release store", "invariant S3", "FiberOutput"]
+cites = ["progress_counters_are_stack_atomics_with_a_release_store_by_the_producer_and_an_acquire_load_by_the_consumer"]
+
+[[tenet]]
+id = "the_default_adapt_unit_observes_the_end_of_the_schedule_and_writes_the_predicted_wait_for_the_next_frame_and_consumers_may_ship_their_own"
+what = "A default adapt unit observes the schedule end. It consumes the adapt metrics snapshot at the phase boundary and writes the predicted wait values for the next frame. Consumers register it for the default adapt behaviour, or ship their own adapt unit for custom adaptation."
+mechanism = "`AdaptWu` observing `ScheduleEnd` per Topic 1 axis 5 / Topic 5; consumes `ResourceSnapshot<AdaptMetrics>` at the phase boundary and writes `predicted_wait_ns[]`; registered with `.with(AdaptWu::default())`."
+source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:25-25"
+provenance = ["mock::crates::hilavitkutin-providers::DESIGN::#surface"]
+quote = '''
+| `AdaptWu` | Default substrate AdaptWu observing `ScheduleEnd` per Topic 1 axis 5 / Topic 5. Consumes `ResourceSnapshot<AdaptMetrics>` at phase boundary and writes `predicted_wait_ns[]` for the next frame. Consumers register via `.with(AdaptWu::default())` for substrate adapt behaviour; consumers ship their own AdaptWu for custom adaptation. |
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-providers, agent-written, undated"
+standing = "provisional"
+subject = "execution"
+keywords = ["AdaptWu", "ScheduleEnd", "ResourceSnapshot", "AdaptMetrics", "predicted_wait_ns", "adapt observer", "Topic 1 axis 5", "Topic 5", "custom adaptation"]
+cites = ["waiting_is_parked_in_three_tiers_chosen_from_the_predicted_wait_of_each_phase_with_per_os_atomic_wait_primitives"]
+
+[[tenet]]
+id = "head_and_tail_convergence_is_designed_and_not_built_and_a_single_trunk_phase_runs_serially_until_it_is"
+what = "As of the engine design on the recovery branch, a single-trunk phase is the case trunk parallelism cannot help. The canon answers it with head and tail convergence, two threads walking one commutative fiber from opposite ends and meeting in the middle, skipped where resource accumulation is not commutative. That mechanism is not built, so a single-trunk phase runs serially; an earlier split of such phases into one record range per core was described as convergence, was not, and is gone."
+source = "mock/research/202611130850_the-record-read-whole/RECOVERED.md:34-41"
+provenance = ["mock::research::202611130850_the-record-read-whole::RECOVERED::#mock-crates-hilavitkutin-design-md-tmpl-lines-291-to-308"]
+quote = '''
+owns the same trunks in every per-fiber walk. Single-trunk phases are the
+case trunk parallelism cannot help, since there is one trunk to distribute. Canon
+answers them with head+tail convergence: two threads walking one commutative fiber
+from opposite ends, meeting in the middle, skipped where resource accumulation is
+non-commutative. That mechanism is not built yet, so a single-trunk phase currently
+runs serially. An earlier engine split such phases N ways by record range, one
+slice per core, and this paragraph described that split as head+tail convergence;
+it was neither, and both the branch and the description are gone. Either way there
+'''
+origin = "proposed"
+written_by = "engine design template as on the branch recover/unlanded-rounds-and-benches, commit of 2026-08-30, not on dev; the text does not say whose it is"
+standing = "provisional"
+subject = "execution"
+keywords = ["head and tail convergence", "single-trunk phase", "not built", "serial", "record range split", "commutative fiber"]
+cites = ["a_single_trunk_phase_runs_head_and_tail_convergence_with_two_threads_from_opposite_ends"]
+
+[[tenet]]
+id = "each_core_walks_a_phase_fiber_by_fiber_and_windows_the_records_by_that_fiber_s_morsel_size"
+what = "On every core the walk of a phase is fiber-outer: for each fiber in plan order the worker restricts the walk to that fiber's members and windows the records by that fiber's own morsel size, so a fiber's units run over one morsel before the next and its co-located columns stay hot in the first-level cache for the window. Which core owns which trunk is unaffected."
+because = "A fiber's co-located columns stay L1-hot for the window run on every core rather than only on the single-core path."
+mechanism = "Windows `[0, record_count)` by the plan-baked `FiberDispatch.morsel_size`; `RunCfg::MORSEL_SIZE` remains the fallback for a degenerate zero window; the trunk rank advance is independent of the member restriction."
+source = "mock/research/202611130850_the-record-read-whole/RECOVERED.md:26-34"
+provenance = ["mock::research::202611130850_the-record-read-whole::RECOVERED::#mock-crates-hilavitkutin-design-md-tmpl-lines-291-to-308"]
+quote = '''
+program. That per-phase walk is fiber-outer, matching `run`: for each fiber
+descriptor in plan order the worker restricts the walk to that fiber's members
+and windows `[0, record_count)` by that fiber's plan-baked
+`FiberDispatch.morsel_size`, so a fiber's units run over one morsel before the
+next and its co-located columns stay L1-hot for the window run on every core
+rather than only on the single-core path (`RunCfg::MORSEL_SIZE` remains the
+fallback for a degenerate zero window). Trunk-rank ownership is unaffected,
+because the rank advance is independent of the member restriction, so each core
+owns the same trunks in every per-fiber walk. Single-trunk phases are the
+'''
+origin = "proposed"
+written_by = "engine design template as on the branch recover/unlanded-rounds-and-benches, commit of 2026-08-30, not on dev; the text does not say whose it is"
+standing = "provisional"
+subject = "execution"
+keywords = ["fiber-outer walk", "per-fiber morsel size", "window", "L1-hot", "trunk ownership", "FiberDispatch"]
+
+[[tenet]]
+id = "a_unit_no_fiber_descriptor_names_does_not_run_so_the_descriptors_must_cover_every_live_unit"
+what = "Both dispatch paths run under the union of the per-fiber member masks, so a unit that no fiber descriptor names does not run at all, and the descriptors must cover every live unit. As of the recovery branch that coverage is checked by debug assertions only, and the flatten truncates silently once the descriptor pool is full, so a plan too large to describe becomes units that never execute in a release build; making the truncation visible is tracked as follow-up."
+mechanism = "Coverage is established by the flatten in `derive_phase_dispatch_order`, which assigns each live unit to exactly one fiber."
+source = "mock/research/202611130850_the-record-read-whole/RECOVERED.md:47-57"
+provenance = ["mock::research::202611130850_the-record-read-whole::RECOVERED::#mock-crates-hilavitkutin-design-md-tmpl-lines-310-to-320"]
+quote = '''
+Because both paths now dispatch under the union of the per-fiber member masks
+rather than an all-ones mask, the descriptor set must cover every live unit: a
+unit that no descriptor names does not run at all. Coverage is established by
+the flatten in `derive_phase_dispatch_order`, which assigns each live unit to
+exactly one fiber, so the union over descriptors is total. That invariant is
+currently checked by debug assertions only, and the flatten truncates silently
+once the descriptor pool is full, so a plan too large to describe degrades in a
+release build into units that quietly never execute rather than into a build
+failure. Making that truncation visible is tracked as follow-up; until it lands,
+any change to the flatten bounds or to descriptor sizing is changing a
+correctness invariant that both dispatch paths depend on.
+'''
+origin = "proposed"
+written_by = "engine design template as on the branch recover/unlanded-rounds-and-benches, commit of 2026-08-30, not on dev; the text does not say whose it is"
+standing = "provisional"
+subject = "execution"
+keywords = ["fiber descriptor", "coverage invariant", "member mask", "silent truncation", "debug assertion", "derive_phase_dispatch_order"]
+
+[[tenet]]
+id = "the_worker_s_region_bounds_and_the_merge_s_read_offsets_are_one_shared_computation"
+what = "The region boundaries a worker appends within and the offsets the merge reads from are the same function of the total, the core count and the core, computed once and shared and never spelled twice. That is what makes the merge correct: it reads a core's region at exactly the offset that core wrote."
+because = "Two independent copies of the arithmetic would agree only by coincidence, and a divergence is silent, since the merge would read well-formed memory that belongs to a different core."
+source = "mock/research/202611130850_the-record-read-whole/RECOVERED.md:99-105"
+provenance = ["mock::research::202611130850_the-record-read-whole::RECOVERED::#mock-crates-hilavitkutin-design-md-tmpl-lines-584-to-592"]
+quote = '''
+The worker's region boundaries and the merge's read offsets are the same
+function of `(total, ncores, core)`, computed once and shared rather than
+spelled twice. That is the property that makes the merge correct: it reads
+core c's region at exactly the offset core c wrote. Two independent copies of
+the arithmetic would satisfy it only by coincidence, and a divergence between
+them is silent, since the merge would read well-formed memory that simply
+belongs to a different core. Offset `lo_c` (not a
+'''
+origin = "proposed"
+written_by = "engine design template as on the branch recover/unlanded-rounds-and-benches, commit of 2026-08-30, not on dev; the text does not say whose it is"
+standing = "provisional"
+subject = "execution"
+keywords = ["region boundaries", "merge offsets", "shared computation", "accumulator merge", "per-core region"]
