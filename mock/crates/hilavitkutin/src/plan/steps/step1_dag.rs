@@ -7,26 +7,33 @@ use arvo::USize;
 use arvo_tensor::{Capacity, cap_size};
 use notko::Maybe;
 
+use super::super::edge::{raw_edge, with_the_ranks};
 use super::{DependencyGraph, EdgeKind, PlanDims, PlanInputs};
 
 /// Step 1: build the CSR `DependencyGraph` from `AccessMask` overlap.
 ///
-/// RAW edges are order-independent: for every ordered pair `(s, t)`
-/// with `s != t`, if the reader `t` reads what the writer `s` wrote,
-/// append a `Read` edge `s to t` (the writer sorts before the reader,
-/// regardless of input order, so a reader registered before its writer
-/// still gets the dependency). WAW conflicts serialise
-/// deterministically: a `Write` edge `s to t` only when `s < t` (the
-/// lower input index first), so two writers of one store never produce
-/// a back-edge and a spurious cycle. The CSR append-order invariant is
-/// preserved because the outer loop walks the source `s` in ascending
-/// order. WAR anti-dependencies are out of scope (a tracked plan-chain
-/// follow-up).
+/// RAW edges are order-independent between units of one lifecycle rank:
+/// for every ordered pair `(s, t)` with `s != t`, if the reader `t` waits
+/// for a store the writer `s` writes, append a `Read` edge `s to t` (the
+/// writer sorts before the reader, regardless of input order, so a reader
+/// registered before its writer still gets the dependency). Two units of
+/// different rank that share a store take the order of their ranks: an
+/// edge that agrees with the ranks is built as any other, and an edge that
+/// would run against them is not built. A read at the frozen side
+/// (`inputs.frozen`, the buffered columns) waits for no writer and gives no
+/// edge. WAW conflicts serialise deterministically: a `Write` edge
+/// `s to t` only when `s < t` (the lower input index first) and the ranks
+/// agree, so two writers of one store never produce a back-edge and a
+/// spurious cycle. The CSR append-order invariant is preserved because the
+/// outer loop walks the source `s` in ascending order. WAR
+/// anti-dependencies are out of scope (a tracked plan follow-up).
 pub fn build_dag<D: PlanDims>(inputs: &PlanInputs<D::Units, D::Stores>) -> DependencyGraph<D> {
     let mut g: DependencyGraph<D> = DependencyGraph::new();
     let n = inputs.unit_count.0;
     let reads = inputs.reads.as_ref();
+    let frozen = inputs.frozen.as_ref();
     let writes = inputs.writes.as_ref();
+    let ranks = inputs.ranks.as_ref();
     // Outer loop walks the source `s` in ascending order, so every
     // appended edge has a source no smaller than the previous one,
     // satisfying `add_edge_kind`'s CSR append-order invariant.
@@ -35,18 +42,21 @@ pub fn build_dag<D: PlanDims>(inputs: &PlanInputs<D::Units, D::Stores>) -> Depen
         let mut t = 0;
         while t < n {
             if t != s {
-                // RAW: `t` reads what `s` wrote, so the writer `s` runs
+                // RAW: `t` waits for what `s` wrote, so the writer `s` runs
                 // before the reader `t`. Checked for every ordered pair
                 // (not only `s < t`), so a reader registered ahead of its
                 // writer still gets the dependency.
-                if reads[t].overlaps(&writes[s]).0 {
+                let waits = reads[t].without(&frozen[t]);
+                if raw_edge(&writes[s], ranks[s], &waits, ranks[t]).0 {
                     g.add_edge_kind(USize(s), USize(t), EdgeKind::Read); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal loop counter; tracked: #72
                 }
                 // WAW: both write the same store. Serialise
                 // deterministically, the lower input index first, so the
                 // back-direction is never added (two writers cannot form a
                 // spurious cycle).
-                if s < t && writes[t].overlaps(&writes[s]).0 {
+                // FIXME(hilavitkutin_orders_two_writers_of_one_store_by_registration): two writers of one store take hint priority first, then the one with more units downstream, and the input index only last; the hint and downstream steps are not built.
+                if s < t && with_the_ranks(ranks[s], ranks[t]).0 && writes[t].overlaps(&writes[s]).0
+                {
                     g.add_edge_kind(USize(s), USize(t), EdgeKind::Write); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal loop counter; tracked: #72
                 }
             }

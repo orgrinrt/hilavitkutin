@@ -23,10 +23,11 @@ use hilavitkutin_api::store_values::{Place, RouterKind, StoreValues, SvEmpty};
 use hilavitkutin_api::work_unit::WorkUnitBundle;
 use hilavitkutin_api::work_unit_values::{WuAppend, WuNil};
 
-use super::plan_handle::{compute_plan, derive_phase_dispatch_order, store_plan};
+use super::buildable::Buildable;
+use super::plan_handle::{derive_phase_dispatch_order, store_plan};
 use super::{BuildError, DefaultClock, Scheduler, WorkerCtx, empty_pool_frame};
 use crate::plan::grouping::{GATE2_MAX_ACCUMS, GATE2_MAX_UNITS};
-use crate::plan::project::{AccumStoresMask, BundleProject, StoreSizes};
+use crate::plan::project::{AccumStoresMask, StoreSizes};
 use crate::plan::{DefaultPlanDims, MorselBudget, PlanDims};
 use crate::resource::bindings::{BindingsFor, DrainStores};
 use crate::thread::class::MAX_CORES;
@@ -164,6 +165,11 @@ where
     /// pointer in the bindings. Returns `Err(BuildError::AllocationFailed)`
     /// if any reservation fails; the store frees every column reserved
     /// before the failure when it drops at the end of this call.
+    ///
+    /// A unit that reads a plain column with a reach and writes the same
+    /// column fails the build at monomorphisation. `BWit` is the pair of
+    /// projection witnesses, of the units and of the column stores, and it
+    /// infers at the call site.
     pub fn build<BWit, CS: ColumnStorage>(
         self,
         storage: CS,
@@ -173,13 +179,9 @@ where
         BuildError,
     >
     where
-        Wus: BundleProject<
-                Stores,
-                BWit,
-                <DefaultPlanDims as PlanDims>::Units,
-                <DefaultPlanDims as PlanDims>::Stores,
-            >,
+        Wus: Buildable<Stores, <Vals as BindingsFor>::Bindings, BWit>,
     {
+        let () = <Wus as Buildable<Stores, <Vals as BindingsFor>::Bindings, BWit>>::RULES;
         let wu_values = self.wu_values;
         // Compute the plan from the registered bundle before draining the
         // store bindings, so a dependency cycle returns without allocating.
@@ -189,7 +191,10 @@ where
             min_morsel: <DefaultRunCfg as RunCfg>::MIN_MORSEL,
             max_morsel: <DefaultRunCfg as RunCfg>::MAX_MORSEL,
         };
-        let plan = match compute_plan::<Wus, Stores, BWit>(record_count, budget) {
+        let plan = match <Wus as Buildable<Stores, <Vals as BindingsFor>::Bindings, BWit>>::plan(
+            record_count,
+            budget,
+        ) {
             notko::Outcome::Ok(p) => p,
             notko::Outcome::Err(e) => return notko::Outcome::Err(e),
         };
@@ -203,7 +208,12 @@ where
             &mut next_id,
             record_count,
         ) {
-            notko::Outcome::Ok(bindings) => {
+            notko::Outcome::Ok(mut bindings) => {
+                // Give each column store its position in `Stores`, the bit
+                // the boundary reports its change at.
+                <Wus as Buildable<Stores, <Vals as BindingsFor>::Bindings, BWit>>::place(
+                    &mut bindings,
+                );
                 // Store-back the plan's flat pools at the `StoreId` namespace
                 // continued past the resource columns the drain reserved.
                 let plan_handle = match store_plan(&plan, &mut storage, next_id) {
@@ -225,6 +235,7 @@ where
                     plan_cache: super::PlanCache::new(),
                     predecessor_masks: plan.predecessor_masks,
                     read_masks: plan.read_masks,
+                    band_writes: plan.band_writes,
                     store_dirty: Cell::new(super::AccessMask::empty()),
                     first_frame: AtomicBool::new(true),
                     plan_band:  AtomicBool::new(true),
@@ -265,20 +276,17 @@ where
     ///
     /// Used when the consumer registered a custom `RunCfg` via
     /// `.with(MyRunCfg)`; the explicit type parameter threads the
-    /// `Cfg::Out` shape through `Scheduler::run()`.
+    /// `Cfg::Out` shape through `Scheduler::run()`. Holds the same reach rule
+    /// as `build`, and takes the same inferred witness.
     pub fn build_with<Cfg: RunCfg, BWit, CS: ColumnStorage>(
         self,
         storage: CS,
         record_count: USize,
     ) -> notko::Outcome<Scheduler<Cfg, WuVals, Vals, CS, DefaultPlanDims, Stores, Clk>, BuildError>
     where
-        Wus: BundleProject<
-                Stores,
-                BWit,
-                <DefaultPlanDims as PlanDims>::Units,
-                <DefaultPlanDims as PlanDims>::Stores,
-            >,
+        Wus: Buildable<Stores, <Vals as BindingsFor>::Bindings, BWit>,
     {
+        let () = <Wus as Buildable<Stores, <Vals as BindingsFor>::Bindings, BWit>>::RULES;
         let wu_values = self.wu_values;
         // Compute the plan from the registered bundle before draining the
         // store bindings, so a dependency cycle returns without allocating.
@@ -288,7 +296,10 @@ where
             min_morsel: Cfg::MIN_MORSEL,
             max_morsel: Cfg::MAX_MORSEL,
         };
-        let plan = match compute_plan::<Wus, Stores, BWit>(record_count, budget) {
+        let plan = match <Wus as Buildable<Stores, <Vals as BindingsFor>::Bindings, BWit>>::plan(
+            record_count,
+            budget,
+        ) {
             notko::Outcome::Ok(p) => p,
             notko::Outcome::Err(e) => return notko::Outcome::Err(e),
         };
@@ -302,7 +313,12 @@ where
             &mut next_id,
             record_count,
         ) {
-            notko::Outcome::Ok(bindings) => {
+            notko::Outcome::Ok(mut bindings) => {
+                // Give each column store its position in `Stores`, the bit
+                // the boundary reports its change at.
+                <Wus as Buildable<Stores, <Vals as BindingsFor>::Bindings, BWit>>::place(
+                    &mut bindings,
+                );
                 // Store-back the plan's flat pools at the `StoreId` namespace
                 // continued past the resource columns the drain reserved.
                 let plan_handle = match store_plan(&plan, &mut storage, next_id) {
@@ -324,6 +340,7 @@ where
                     plan_cache: super::PlanCache::new(),
                     predecessor_masks: plan.predecessor_masks,
                     read_masks: plan.read_masks,
+                    band_writes: plan.band_writes,
                     store_dirty: Cell::new(super::AccessMask::empty()),
                     first_frame: AtomicBool::new(true),
                     plan_band:  AtomicBool::new(true),

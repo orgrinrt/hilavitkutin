@@ -11,7 +11,7 @@ use core::marker::PhantomData;
 use core::sync::atomic::{AtomicBool, Ordering};
 
 use arvo::{Bool, USize};
-use hilavitkutin_api::store::{Exchange, Snapshot};
+use hilavitkutin_api::store::{Buffered, Column, Exchange, Snapshot};
 use hilavitkutin_api::{ColumnStorage, ColumnValue, StoreId};
 
 use crate::resource::provenance::ColumnPtr;
@@ -144,6 +144,10 @@ pub trait ColKind: sealed::Sealed + 'static {
     /// What the binding keeps beside its first reservation.
     type Side<T>;
 
+    /// The store marker a column of this kind is registered under, which is
+    /// what its position in the store list is found by.
+    type Marker<T>;
+
     /// Whether the store has a frozen side apart from the live one.
     const BUFFERED: Bool;
 
@@ -179,6 +183,7 @@ pub struct Plain;
 
 impl sealed::Sealed for Plain {}
 impl ColKind for Plain {
+    type Marker<T> = Column<T>;
     type Side<T> = PhantomData<T>;
 
     const BUFFERED: Bool = Bool::FALSE;
@@ -216,6 +221,7 @@ impl ColKind for Plain {
 // FIXME(8e2e2326d588): the copy is of the whole column, where a mark kept per morsel would let it copy the morsels that changed
 impl sealed::Sealed for Snapshot {}
 impl ColKind for Snapshot {
+    type Marker<T> = Buffered<T, Snapshot>;
     type Side<T> = ColumnPtr<T>;
 
     const BUFFERED: Bool = Bool::TRUE;
@@ -265,6 +271,7 @@ pub struct Flip<T> {
 // context reads it when it is bound.
 impl sealed::Sealed for Exchange {}
 impl ColKind for Exchange {
+    type Marker<T> = Buffered<T, Exchange>;
     type Side<T> = Flip<T>;
 
     const BUFFERED: Bool = Bool::TRUE;
@@ -316,11 +323,18 @@ impl ColKind for Exchange {
 /// what the kind `K` keeps beside it, the record count and the store's
 /// changed mark. A zero-record (or zero-sized) column records a dangling,
 /// well-aligned pointer, never dereferenced since the morsel is empty.
+///
+/// `pos` is the store's position in the scheduler's store list, the bit the
+/// access masks and the dirty seed know it by. The drain leaves it at zero and
+/// `build` sets it through `PlaceIn`, since a store with no value of its own
+/// (one a kit owns) has a position in that list and no node here, so a node's
+/// place along the bindings does not give it.
 pub struct ColumnBinding<T, Tail, K: ColKind = Plain> {
     pub(crate) ptr:   ColumnPtr<T>,
     pub(crate) side:  K::Side<T>,
     pub(crate) count: USize,
     pub(crate) mark:  ChangeMark,
+    pub(crate) pos:   USize,
     pub(crate) tail:  Tail,
 }
 
@@ -392,6 +406,7 @@ pub(super) fn drain_column<T: ColumnValue, K: ColKind, CS: ColumnStorage, Tail>(
                 side,
                 count: record_count,
                 mark: ChangeMark::clear(),
+                pos: USize(0), // lint:allow(no-bare-numeric) reason: unplaced store position, set by PlaceIn at build; tracked: #121
                 tail,
             })
         },

@@ -129,6 +129,9 @@ pub struct Interner;
 pub struct Workspace;
 #[derive(Copy, Clone)]
 pub struct FileInfo;
+// A column no kit owns, for the raw registration beside a kit.
+#[derive(Copy, Clone)]
+pub struct Notes;
 
 // ---------------------------------------------------------------------
 // Kits (declarative shape).
@@ -203,12 +206,16 @@ fn two_kits_chained_build() {
     assert!(built.is_ok(), "the builder must accept this registration");
 }
 
+// The raw column is one the kit does not own. A column registered twice, once
+// by a kit and once raw, has two positions in the store list, so `build`
+// cannot give its binding one and the registration is refused for want of a
+// type annotation.
 #[test]
 fn mixed_kit_and_raw_build() {
     let built = Scheduler::builder()
         .with(WorkspaceKit)
         .with(Resource::new(Interner))
-        .with(Column::<FileInfo>::new())
+        .with(Column::<Notes>::new())
         .build(store(), USize(0));
     assert!(built.is_ok(), "the builder must accept this registration");
 }

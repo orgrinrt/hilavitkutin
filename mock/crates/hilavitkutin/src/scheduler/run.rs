@@ -23,6 +23,7 @@ use super::verdict::frame_verdict;
 use crate::dispatch::morsel::MorselRange;
 use crate::dispatch::trunk_dispatch::RunTrunkDispatch;
 use crate::meta::fold_ema;
+use crate::plan::PlanDims;
 use crate::plan::grouping::{
     BundleMasks,
     consumer_mask,
@@ -31,7 +32,6 @@ use crate::plan::grouping::{
     plan_phase_count,
     pre_consumer_phase_count,
 };
-use crate::plan::{AccessMask, PlanDims};
 use crate::resource::bindings::{BindingsFor, FirstRefusal, ResetAccumulators};
 
 impl<
@@ -127,7 +127,7 @@ impl<
         // Per-frame incremental skip: the dirty-unit mask names which units
         // this frame must run (their input cone changed); the rest are
         // skipped, producing identical output to running them.
-        let dirty = self.dirty_units();
+        let dirty = self.dirty_units(plan_dirty);
         let msize = Cfg::MORSEL_SIZE.0.max(1);
         let total = self.record_count.0;
         // A2b fiber-outer dispatch. Phase passes run in const-grouping order
@@ -304,8 +304,11 @@ impl<
         // Capture the change_class signal before the seed is consumed: a
         // non-empty store_dirty means an input change was seen this frame.
         let stores_changed = !self.store_dirty.get().is_empty().0;
-        // The frame consumed the change seed; clear it and leave cold-start.
-        self.store_dirty.set(AccessMask::empty());
+        // The frame consumed the change seed. The boundary brings in what the
+        // pass changed and leaves the next frame's seed; then leave cold-start.
+        // SAFETY: the last band of the pass has returned and this path runs
+        // every unit on the calling thread, so no context is alive.
+        unsafe { self.bring_in_changes() };
         self.first_frame.store(false, Ordering::Relaxed);
         // E8 adapt: fold this frame's duration into the pass-duration EMA.
         // Between frames, so the write needs no synchronisation.

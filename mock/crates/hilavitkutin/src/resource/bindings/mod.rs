@@ -57,7 +57,7 @@ mod column;
 mod per_core;
 mod refusal;
 
-pub use close::BringIn;
+pub use close::{BringIn, PlaceIn};
 pub use column::{ColKind, ColumnBinding, Flip, MarkPtr, Plain};
 use column::{drain_column, reserve_records};
 pub(crate) use per_core::accum_slice;
@@ -239,7 +239,7 @@ pub trait BindingsFor: sealed::Sealed {
     /// The bindings hold only `Copy` pointers; the store frees resource
     /// memory on its own `Drop`, so the scheduler runs no bindings walk
     /// on drop and `Bindings` carries no destructor bound.
-    type Bindings;
+    type Bindings: BringIn;
 
     /// The store-marker `AccessSet` this value list registers, in the same
     /// types and order as the builder's `Stores` param. `StoreDispatch<S>`

@@ -29,6 +29,7 @@ use crate::dispatch::fiber_run::RunFiber;
 use crate::dispatch::morsel::MorselRange;
 use crate::dispatch::trunk_dispatch::RunTrunkDispatch;
 use crate::meta::fold_ema;
+use crate::plan::PlanDims;
 use crate::plan::grouping::{
     BundleMasks,
     GATE2_MAX_ACCUMS,
@@ -37,7 +38,6 @@ use crate::plan::grouping::{
     plan_phase_count,
     pre_consumer_phase_count,
 };
-use crate::plan::{AccessMask, PlanDims};
 use crate::resource::bindings::{
     BindingsFor,
     CollectAccumCounts,
@@ -408,10 +408,12 @@ impl<
         // unit's own body still can, and the engine cannot catch it without std.
         // SAFETY: all phases done, every worker re-parked.
         let stores_changed = unsafe { !(*me).store_dirty.get().is_empty().0 };
-        // The frame consumed the change seed; clear it and leave cold-start.
-        // SAFETY: all phases done, every worker re-parked.
+        // The frame consumed the change seed. The boundary brings in what the
+        // pass changed and leaves the next frame's seed; then leave cold-start.
+        // SAFETY: all phases done, every worker re-parked, so no context over
+        // the bindings or a per-core copy of them is alive.
         unsafe {
-            (*me).store_dirty.set(AccessMask::empty());
+            (*me).bring_in_changes();
             (*me).first_frame.store(false, Ordering::Relaxed);
         }
         // E8 adapt: fold this frame's duration into the pass-duration EMA on

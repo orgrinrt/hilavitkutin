@@ -68,6 +68,7 @@ impl<T, Tail: RebaseBindings, K: ColKind> RebaseBindings for ColumnBinding<T, Ta
             side:  K::dup_side(&self.side),
             count: self.count,
             mark:  self.mark.shared(),
+            pos:   self.pos,
             tail:  self.tail.rebase_accums(lo, region_cap),
         }
     }
