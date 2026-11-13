@@ -211,6 +211,7 @@ skips `i == j`); no kernel special-casing.
 origin = "proposed"
 written_by = "design round 202606090400, deprecated doc changelist for GATE-2 E4 slice 3a, dated 2026-06-08, agent-written; the text does not say whose decision it is, and the file is marked deprecated"
 standing = "pending"
+superseded_by = ["the_scheduler_metrics_are_engine_owned_in_a_meta_block_written_by_the_scheduler_and_read_through_a_meta_access_gated_context_accessor"]
 keywords = ["SchedulerMetrics", "SchedulerMetricsWu", "pass_count", "consumer resource", "no kernel write", "E0119", "OnMeta<PassStart>", "slice 3a"]
 
 [[tenet]]
@@ -252,9 +253,8 @@ candidate 1, sketch `202606090300`).
 '''
 origin = "proposed"
 written_by = "design round 202606090400, doc changelist for GATE-2 E4 slice 3 bridge, dated 2026-06-08, agent-written; the text does not say whose decision it is"
-standing = "ratified"
-ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["ratified-elsewhere: mock/research/202606111400_canonical-design-addendum-a1.md:1-6", "ratified-elsewhere: mock/research/202606111400_canonical-design-addendum-a1.md:161-164", "ratified-elsewhere: mock/research/202606111400_canonical-design-addendum-a1.md:190-194", "ratified-elsewhere: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1985-1991"]
+standing = "pending"
 keywords = ["MetaBlock", "MetaRef", "MetaAccess", "meta accessor", "SchedulerMetrics", "pass_count", "engine-owned", "bridge"]
 rejects = ["described `SchedulerMetrics` as a mutable consumer `Resource<T>` populated by a provided `SchedulerMetricsWu`"]
 related = ["tenet::engine_owned_mutable_meta_state_lives_in_the_meta_block_scheduler_field_and_is_reached_by_a_compile_time_gated_accessor", "tenet::the_scheduler_metrics_were_first_a_consumer_resource_populated_by_a_provided_metrics_unit_with_no_kernel_write"]
+lineage = ["the_scheduler_metrics_were_first_a_consumer_resource_populated_by_a_provided_metrics_unit_with_no_kernel_write:d9d8a915577481ca"]

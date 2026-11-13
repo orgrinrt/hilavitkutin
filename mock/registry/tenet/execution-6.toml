@@ -363,6 +363,7 @@ The output-equivalence contract: a `RunTrunk` walk over `FiberCons[fiber_a, fibe
 origin = "proposed"
 written_by = "design round 202606070048, topic GATE-2 G2-0a RunTrunk over FiberCons, dated 2026-06-07, agent-written; the text does not say whose decision it is"
 standing = "pending"
+superseded_by = ["trunk_isolation_comes_from_a_flat_carrier_walk_gated_by_const_phase_and_trunk_and_the_nested_value_carriers_are_superseded"]
 keywords = ["RunTrunk", "FiberCons", "RunFiber", "nested carrier", "G2-0a", "G2-0c", "trunk nesting", "PhaseCons"]
 
 [[tenet]]
@@ -385,6 +386,7 @@ stamp = 'provisional, 2026-11-13: nothing read in the written history shows it t
 keywords = ["flat carrier", "const gate", "phase_of", "trunk_of", "RunFiber", "nested carrier superseded", "DCE", "member-only program"]
 rejects = ["The value-carrier walks `RunTrunk` / `RunPhase` / `RunPipeline` and the `FiberCons` / `TrunkCons` / `PhaseCons` carriers are superseded by the flat-carrier const-gate for trunk isolation; they are not extended by this arc."]
 related = ["tenet::the_nested_value_carrier_walk_runs_a_trunk_over_a_carrier_of_fibers_and_the_scheduler_run_is_re_pointed_onto_it_in_a_later_step", "tenet::r4_replaces_the_nested_carrier_type_construction_with_const_eval_grouping_and_const_gated_dce"]
+lineage = ["the_nested_value_carrier_walk_runs_a_trunk_over_a_carrier_of_fibers_and_the_scheduler_run_is_re_pointed_onto_it_in_a_later_step:6c03aa428d45b8c8"]
 
 [[tenet]]
 id = "the_single_core_run_walks_the_flat_value_carrier_gated_by_const_phase_and_trunk_so_dead_code_elimination_leaves_one_member_only_program_per_phase_and_trunk"
@@ -399,7 +401,7 @@ Re-point `Scheduler::run` through const-gated per-trunk dispatch: a flat walk ov
 origin = "proposed"
 written_by = "design round 202606071100, topic GATE-2 const-gated trunk dispatch and Scheduler::run re-point, round 2, dated 2026-06-07, agent-written; the text says the round is under an op mandate"
 standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+stamp = 'provisional, 2026-11-13: his part is the correction it quotes, that trunks are established before parallelism (mock/design_rounds/202606071100/202606071100_topic.gate2-const-gated-dispatch.md:10-10), and the round says it runs under a mandate of his whose words the repository does not hold; the const-gated walk and the dead-code elimination into one member-only program per phase and trunk are the mechanism of the round, and they replace his earlier call of the runtime mask (row n_core_dispatch_walks_the_flat_carrier_gated_by_a_runtime_mask_of_the_trunks_a_core_owns_and_the_const_gated_enumeration_is_superseded), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["const-gated dispatch", "Scheduler::run", "WuVals", "RunFiber", "phase_of", "trunk_of", "single-core", "per-trunk program"]
 related = ["tenet::trunk_isolation_comes_from_a_flat_carrier_walk_gated_by_const_phase_and_trunk_and_the_nested_value_carriers_are_superseded"]
 
@@ -467,7 +469,7 @@ trunk-level core mask.
 '''
 origin = "stated"
 standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+stamp = 'provisional, 2026-11-13: it is his call in full, which its source records with a date as op decision bench-first runtime mask of 2026-06-07 and quotes as his chosen mechanism (mock/design_rounds/202606071109/202606071109_topic.gate2-r4a-core-phase-masks.md:4-4, 13-17), and a later passage replaces it: the correction of 2026-06-08 at mock/research/202606072100_gate2-canonical-deviation-ledger.md:3-3 records the const-gated per-trunk programs as shipped in place of the runtime mask, under the round mock/design_rounds/202606080400/202606080100_topic.gate2-ge-const-gated-trunk-dispatch.md:6-6, which cites a carrier-mechanism mandate of his whose words the repository does not hold (row the_single_core_run_walks_the_flat_value_carrier_gated_by_const_phase_and_trunk_so_dead_code_elimination_leaves_one_member_only_program_per_phase_and_trunk), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["runtime mask", "run_gated", "core ownership", "RunGatedTrunk", "bench-first runtime mask", "R4a", "N-core dispatch", "plan::grouping"]
 rejects = ["The const-gated mono ENUMERATION (`run_one_trunk` / `RunGatedTrunk`) is superseded by op's runtime-mask choice"]
 related = ["tenet::the_single_core_run_walks_the_flat_value_carrier_gated_by_const_phase_and_trunk_so_dead_code_elimination_leaves_one_member_only_program_per_phase_and_trunk"]

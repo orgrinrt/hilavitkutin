@@ -234,9 +234,7 @@ Substitute vocabulary lives in arvo (`UFixed` / `IFixed` /
 `FastFloat` / `StrictFloat` / `USize` / `Cap` / `Bool`) and notko
 '''
 origin = "stated"
-standing = "ratified"
-ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:17-27"]
+standing = "pending"
 keywords = ["no bare primitives", "u8", "usize", "bool", "Option", "Result", "String", "everywhere"]
 related = ["tenet::the_no_raw_primitives_lint_is_internal_and_is_not_enforced_on_consumers"]
 

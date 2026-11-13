@@ -360,9 +360,9 @@ keywords = ["registration", "#[register]", "explicit builder API", "dependency i
 [[tenet]]
 id = "execute_returns_nothing_and_a_failing_unit_aborts_because_abort_gives_better_llvm_codegen"
 subject = "units"
-what = "A unit's execute method returns nothing and carries no result on the hot path. Failure aborts: on the no_os and os tiers panic is abort already, and on the std tier catching an unwind is available but abort is preferred."
+what = "A unit's execute method returns nothing and carries no result on the hot path. Failure aborts, and on the no_os and os tiers panic is abort already."
 because = "Abort enables more aggressive LLVM optimisation, with no unwind tables and no landing pads."
-mechanism = "`execute()` returns `()`. No `Result` return type on the hot path. `catch_unwind` is available on the std tier, and abort is preferred."
+mechanism = "`execute()` returns `()`. No `Result` return type on the hot path. The founding text also names `catch_unwind` on a std tier, which his later answer removes."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2147-2153, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2157-2157, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2448-2452"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#23-scheduler-builder-and-meta"]
 quote = '''
@@ -385,7 +385,7 @@ no_os/os tiers panic = abort already. On std tier we prefer abort.
 origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2147-2153", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2157-2157", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2448-2452", "later: mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:13-13, there_is_no_std_platform_tier"]
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2147-2153", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2157-2157", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2448-2452", "later: mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:20-32, there_is_no_std_platform_tier"]
 keywords = ["abort on failure", "execute", "no Result", "catch_unwind", "panic", "unwind tables", "landing pads", "R7"]
 
 [[tenet]]

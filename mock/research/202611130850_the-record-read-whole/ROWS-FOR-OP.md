@@ -1,6 +1,6 @@
 # The rows the written history does not back, or that stand against it
 
-This file lists the 131 rows of the registry that were left as they were when the rest were ratified by default or put on a stamp. Each of them is here for one of two reasons the record itself gives: the source says in words that the content waits on the maintainer or was an agent's own call, or a passage that is his says otherwise on the same point. None of them is ratified and none carries a stamp.
+This file lists the 137 rows of the registry that were left as they were when the rest were ratified by default or put on a stamp. Each of them is here for one of two reasons the record itself gives: the source says in words that the content waits on the maintainer or was an agent's own call, or a passage that is his says otherwise on the same point. None of them is ratified and none carries a stamp.
 
 It follows from his words of 13 November 2026, kept whole in `OP-ANSWERS-18.md` beside this file:
 
@@ -45,7 +45,7 @@ Passages: `mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and
 
 A tenet. It says: The context, persistence, identity core, string, kit and providers crates are standalone ecosystem crates that consumers opt into. The context, persistence, identity core and string crates are pure ecosystem crates that the engine does not depend on.
 
-Finding: This row lists persistence among the standalone ecosystem crates, but he chose "Builds on str and api" over standalone for persistence; see row op_ruled_that_the_persistence_crate_builds_on_the_str_and_api_crates_and_never_on_the_engine_or_the_context_crate. The engine-does-not-depend and opt-in parts are not contested.
+Finding: This row lists persistence among the standalone ecosystem crates, but he chose "Builds on str and api" over standalone for persistence; see row op_ruled_that_the_persistence_crate_builds_on_the_str_and_api_crates_and_its_design_holds_over_the_lint. The engine-does-not-depend and opt-in parts are not contested.
 
 Passages: `.data/op-responses/202609181645_hila-std-tier-persistence.md:33-43`, `mock/DESIGN.md.tmpl:32-32`.
 
@@ -53,7 +53,7 @@ Passages: `.data/op-responses/202609181645_hila-std-tier-persistence.md:33-43`, 
 
 A tenet. It says: The persistence crate is the generic bridge between hot and cold storage, and a standalone ecosystem crate.
 
-Finding: The row calls persistence standalone, but he chose "Builds on str and api" over "Standalone, lint holds"; see row op_ruled_that_the_persistence_crate_builds_on_the_str_and_api_crates_and_never_on_the_engine_or_the_context_crate.
+Finding: The row calls persistence standalone, but he chose "Builds on str and api" over "Standalone, lint holds"; see row op_ruled_that_the_persistence_crate_builds_on_the_str_and_api_crates_and_its_design_holds_over_the_lint.
 
 Passages: `.data/op-responses/202609181645_hila-std-tier-persistence.md:33-43`, `mock/DESIGN.md.tmpl:23-23`.
 
@@ -356,7 +356,7 @@ Passages: `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-desig
 
 ### Entry or record as the innermost unit
 
-The principles list entry among the dead terms and end the vocabulary at record. The founding spec ends its hierarchy at entry. Both documents are his. 2 rows. The options were written for this file:
+The principles list entry among the dead terms and end the vocabulary at record. The founding spec ends its hierarchy at entry. Both documents are his. 3 rows. The options were written for this file:
 
 1. Record is the innermost unit and entry is a dead term, as the principles say.
 2. Entry stays the innermost unit of the hierarchy, as the founding spec says, and record names one data point in a column.
@@ -376,6 +376,14 @@ A tenet. It says: The vocabulary is a hierarchy from the coarsest to the finest 
 Finding: The founding spec ends its hierarchy at entry and calls it the innermost unit; the principles list entry among the dead terms and end the vocabulary at record, as the row entry_is_a_dead_term_and_the_canonical_vocabulary_ends_at_micro_morsel_and_record says. Both documents are his. The reader of its slice classed it a as founding text; it is classed b here so that both sides of this point are treated alike.
 
 Passages: `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:71-80`, `mock/PRINCIPLES.md.tmpl:281-287`.
+
+#### `an_entry_is_one_record_and_one_operation_at_register_level`
+
+A tenet. It says: An entry is one record taken with one operation, at register level, and it is the innermost unit.
+
+Finding: The founding spec's vocabulary table defines entry as the innermost unit, which takes the second option of this group, while the principles list entry among the dead terms; the seed commit `680a672` listed entry among the canonical terms, and the style sweep `59b3c18` of 2026-05-05 moved it to the dead terms. It was ratified as founding text and is listed here with the two rows above, so that every side of this point waits on him alike.
+
+Passages: `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:80-80`, `mock/PRINCIPLES.md.tmpl:283-287`.
 
 
 ### Whether hilavitkutin's own columns are double-buffered
@@ -687,6 +695,59 @@ Finding: The pre_seed copy says it is a commissioned reading aid whose disagreem
 
 Passages: `mock/research/pre_seed/202606111800_canonical-spec-standalone.md:18-26`, `mock/research/202606111800_canonical-spec-standalone.md:18-22`.
 
+### Where the mutable meta state of the scheduler lives
+
+The founding spec holds the scheduler metrics as one of four meta resources whose access a marker trait restricts. Addendum A1, locked by him, lists among its constraint notes that the engine-owned mutable meta state lives in a block on the scheduler and not in a store, because consumer resources are copy and read-only, and it does not say he ruled that note. Which of the two stands is the precedence question of A2-1, unanswered. 2 rows. The options were written for this file:
+
+1. The metrics are a meta resource beside the graph, the plan and the core assignments, and a marker trait restricts access to them, as the founding spec says.
+2. The mutable meta state is engine-owned in a block on the scheduler and read through a context accessor gated on the meta-access marker, as the constraint note of A1 says.
+
+#### `four_meta_resources_hold_the_graph_the_plan_the_lane_assignment_and_the_metrics_and_are_restricted_by_a_marker_trait`
+
+A tenet. It says: There are four meta resources, the dependency graph, the execution plan with the fiber, trunk and phase assignments, the core assignments, and the scheduler metrics with the EMA timing data. Access to them is restricted through a marker trait.
+
+Finding: His founding text; the later constraint note of A1 moves the mutable meta state out of the stores, which row the_scheduler_metrics_are_engine_owned_in_a_meta_block_written_by_the_scheduler_and_read_through_a_meta_access_gated_context_accessor holds.
+
+Passages: `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2130-2134`, `mock/research/202606111400_canonical-design-addendum-a1.md:161-164`.
+
+#### `the_scheduler_metrics_are_engine_owned_in_a_meta_block_written_by_the_scheduler_and_read_through_a_meta_access_gated_context_accessor`
+
+A tenet. It says: Meta state is engine-owned, held in a block on the scheduler and not in a store, because consumer stores are copy and read-only. A meta unit reads it through a context accessor gated on the meta-access marker, and the engine maintains the pass count per pass for a consumer end-of-schedule hook to read.
+
+Finding: It was ratified from the status line of A1 and its constraint note 5, which say the addendum is locked and the note elevated to canon but not that he ruled the note, while his founding text holds the metrics as a meta resource; see row four_meta_resources_hold_the_graph_the_plan_the_lane_assignment_and_the_metrics_and_are_restricted_by_a_marker_trait.
+
+Passages: `mock/research/202606111400_canonical-design-addendum-a1.md:1-6`, `mock/research/202606111400_canonical-design-addendum-a1.md:161-164`, `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2130-2134`.
+
+### Primitives as a fourth form of type
+
+The founding spec gives every type one of four forms, the fourth a primitive, and puts its raw-primitives lint on struct fields and public functions. The principles, since the commit `04e1cb9` of 2026-04-20 that ported a shared principles fragment, give three categories and say a bare primitive exists nowhere in source. The repository does not hold the fragment, so nothing in it shows whose words the later text is. 3 rows. The options were written for this file:
+
+1. Four forms, a primitive among them, with the ban on raw primitives scoped to struct fields and public functions, as the founding spec says.
+2. Three categories and no bare primitive anywhere in source, as the principles say.
+
+#### `the_type_taxonomy_is_trait_newtype_repr_c_enum_or_primitive_and_it_governs_the_form_of_every_type`
+
+A tenet. It says: Every type takes one of four forms: a trait, a newtype, a C-layout enum or a primitive. The type taxonomy governs what form every type takes.
+
+Finding: His founding text; the principles since `04e1cb9` say there is no fourth bare primitive category, as row every_type_is_a_trait_a_newtype_or_a_c_layout_enum_and_there_is_no_fourth_bare_primitive_category says.
+
+Passages: `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2205-2206`, `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2240-2241`.
+
+#### `every_type_is_a_trait_a_newtype_or_a_c_layout_enum_and_there_is_no_fourth_bare_primitive_category`
+
+A tenet. It says: Every type anywhere in source falls into one of three categories, a trait, a newtype or a C-layout enum, and there is no fourth bare primitive category.
+
+Finding: It was classed founding, but its lines were written by `8e63891` and `04e1cb9` of 2026-04-20 and not by the seed commit `680a672`, and it stands against the four forms of his founding text, which row the_type_taxonomy_is_trait_newtype_repr_c_enum_or_primitive_and_it_governs_the_form_of_every_type holds.
+
+Passages: `mock/PRINCIPLES.md.tmpl:81-94`, `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2205-2206`.
+
+#### `no_bare_primitive_exists_anywhere_in_the_stack`
+
+A tenet. It says: Bare numeric types, booleans, option and result types, owned strings and non-static string slices do not exist in the stack, in any position of source.
+
+Finding: It was classed founding, but its lines were written by `04e1cb9` of 2026-04-20 and not by the seed commit `680a672`, and the founding spec scopes the raw-primitives lint to struct fields and public functions and keeps a primitive among the forms of type.
+
+Passages: `mock/PRINCIPLES.md.tmpl:17-27`, `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2240-2241`.
 
 ## Part three: work whose own source says it waits on him
 

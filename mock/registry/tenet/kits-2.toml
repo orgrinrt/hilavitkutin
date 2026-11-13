@@ -303,6 +303,7 @@ quote = '''
 origin = "proposed"
 written_by = "sketch outcome builder-provider-shape (status WORKS), dated only by its directory name 202605091700; agent-written"
 standing = "pending"
+superseded_by = ["a_consumer_type_is_itself_the_builder_input_and_the_kind_wrappers_are_deleted_so_values_are_passed_bare"]
 keywords = ["with verb", "library wrapper", "Resource::new", "Column::new", "LinkedBin", "call site", "provider shape", "value form per kind"]
 
 [[tenet]]
@@ -328,6 +329,7 @@ stamp = 'provisional, 2026-11-13: nothing read in the written history shows it t
 keywords = ["BuilderInput", "bare registration", "wrapper structs", "ExtensionSurface", "extend", "sub-trait", "dyn trait", "sized cases"]
 rejects = ["Consumers had to construct the wrapper at the call site (`.with(Resource::new(state))`, `.with(Column::<Player>::new())`)"]
 related = ["tenet::a_resource_column_or_virtual_is_registered_through_the_one_with_verb_by_constructing_its_library_wrapper_at_the_call_site"]
+lineage = ["a_resource_column_or_virtual_is_registered_through_the_one_with_verb_by_constructing_its_library_wrapper_at_the_call_site:cb6d8a58a949a6d9"]
 
 [[tenet]]
 id = "the_builder_carries_the_registered_units_and_one_unified_stores_list_and_not_four_slots_for_units_resources_columns_and_providers"

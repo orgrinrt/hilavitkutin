@@ -139,8 +139,8 @@ related = ["tenet::a_deallocation_is_given_the_same_alignment_as_its_allocation"
 [[tenet]]
 id = "op_ruled_that_the_consumer_supplies_the_os_thread_executor_and_the_engine_ships_only_the_executor_contract"
 subject = "memory"
-what = "Op ruled on 2026-09-18, choosing among the consumer supplying the executor, a separate crate for the std executor, and both as arms, that the consumer supplies it. The engine ships only the executor contract, a trait, and the OS-thread executor lives in the consumer, or in a crate outside the hilavitkutin family, gated per target and feature. The intent is that no crate of the family spawns threads and that the thread pool contract is the whole of what the engine owns. Tests and the engine-versus-std bench define their own executors in test and bench code."
-mechanism = "`ThreadPoolApi` is the whole of what the engine owns; applied to `std_tier.rs` and equally to `OsThreadPool` in `platform/os.rs`; the `hilavitkutin-platform-std` crate and both-as-arms options were not chosen; the `engine_vs_std` bench. Verbatim record: `mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md`, copied from the workspace capture. Op's answer: \"Consumer supplies it\"."
+what = "Op ruled on 2026-09-18, choosing among the consumer supplying the executor, a separate crate for the std executor, and both as arms, that the consumer supplies it. The engine ships only the executor contract, a trait, and the OS-thread executor lives in the consumer, or in a crate outside the hilavitkutin family, gated per target and feature. The intent is that no crate of the family spawns threads and that the thread pool contract is the whole of what the engine owns."
+mechanism = "`ThreadPoolApi` is the whole of what the engine owns; applied to `std_tier.rs` and equally to `OsThreadPool` in `platform/os.rs`; the `hilavitkutin-platform-std` crate and both-as-arms options were not chosen. Verbatim record: `mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md`, copied from the workspace capture. Op's answer: \"Consumer supplies it\"."
 source = "mock/design_rounds/202609181402/202609181401_topic.hilavitkutin-on-arvo-dev.md:77-81, mock/design_rounds/202609190201/202609190200_topic.review-fixes-on-arvo-dev.md:11-11, mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:13-13"
 provenance = ["mock::design_rounds::202609181402::202609181401_topic.hilavitkutin-on-arvo-dev::#op-s-rulings-on-the-three-handed-back-conflicts-2026-09-18"]
 quote = '''
@@ -163,6 +163,23 @@ rejects = ["The std fallback tier", "the os tier creating pthreads"]
 related = ["tenet::no_crate_spawns_threads_and_the_executor_behind_the_thread_pool_contract_is_the_consumer_s_or_lives_outside_the_family", "tenet::platform_tiers_are_os_and_no_os_only_and_the_std_tier_is_deferred_indefinitely", "tenet::the_os_and_std_tiers_are_mutually_exclusive_and_the_os_tier_gets_the_optimisation_investment"]
 
 [[tenet]]
+id = "tests_and_the_engine_versus_std_bench_define_their_own_executors_in_test_and_bench_code"
+subject = "memory"
+what = "Tests and the engine-versus-std bench define their own executors in test and bench code, since the engine ships only the executor contract."
+mechanism = "The `engine_vs_std` bench."
+source = "mock/design_rounds/202609181402/202609181401_topic.hilavitkutin-on-arvo-dev.md:81-81"
+provenance = ["mock::design_rounds::202609181402::202609181401_topic.hilavitkutin-on-arvo-dev::#op-s-rulings-on-the-three-handed-back-conflicts-2026-09-18"]
+quote = '''
+The std tier. The option he chose: "hilavitkutin ships only the executor contract (a trait). The OS-thread executor lives in the consumer, or in a crate outside the hilavitkutin* family, gated per target and feature." His answer: "Consumer supplies it". The intent is that no `hilavitkutin*` crate spawns threads; `ThreadPoolApi` is the whole of what the engine owns. Applied to `std_tier.rs` and equally to `OsThreadPool` in `platform/os.rs`, which spawned pthreads under the same tier logic and falls under the same sentence. Tests and the `engine_vs_std` bench define their own executors in test and bench code.
+'''
+origin = "proposed"
+written_by = "topic of round 202609181402 'hilavitkutin on arvo's current dev', 2026-09-18, agent-written"
+standing = "pending"
+stamp = 'provisional, 2026-11-13: the sentence is the round applying his answer at mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:20-32, whose words and options do not name tests or benches, and it was part of the row op_ruled_that_the_consumer_supplies_the_os_thread_executor_and_the_engine_ships_only_the_executor_contract until it was taken out of that ratified row, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+keywords = ["tests", "engine_vs_std", "bench", "executor", "test executor"]
+related = ["tenet::op_ruled_that_the_consumer_supplies_the_os_thread_executor_and_the_engine_ships_only_the_executor_contract"]
+
+[[tenet]]
 id = "the_os_tier_creates_no_threads_and_ships_a_memory_provider_and_a_clock_while_the_engine_hands_the_executor_one_pointer_sized_closure_per_worker"
 subject = "memory"
 what = "The os tier no longer creates threads: it ships a memory provider built on memory mapping and a clock built on the system clock call. The thread pool contract is the whole of the engine's side, and the engine hands the executor one pointer-sized closure per worker, so an executor carries it without allocating."
@@ -175,7 +192,7 @@ Op, choosing "hilavitkutin ships only the executor contract (a trait). The OS-th
 origin = "proposed"
 written_by = "doc changelist of round 202609181402 'hilavitkutin on arvo's current dev', 2026-09-18, agent-written"
 standing = "pending"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+stamp = 'provisional, 2026-11-13: his part is the answer Consumer supplies it, which the passage quotes and which mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:20-32 holds whole, and which the rows no_crate_spawns_threads_and_the_executor_behind_the_thread_pool_contract_is_the_consumer_s_or_lives_outside_the_family and there_is_no_std_platform_tier hold; that the os tier ships mmap and clock_gettime and that the engine hands the executor one pointer-sized closure per worker is what the changelist mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:13-13 derives from it, in its own words the design says, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["os tier", "mmap", "clock_gettime", "MemoryProvider", "Clock", "pointer-sized closure", "ThreadPoolApi", "no pthreads"]
 related = ["tenet::op_ruled_that_the_consumer_supplies_the_os_thread_executor_and_the_engine_ships_only_the_executor_contract", "tenet::the_os_and_std_tiers_are_mutually_exclusive_and_the_os_tier_gets_the_optimisation_investment"]
 

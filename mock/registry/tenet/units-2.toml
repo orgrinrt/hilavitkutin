@@ -115,9 +115,8 @@ without forcing the consumer's `impl WorkUnit` to carry an explicit
 sketch shipped alongside round 202605101036.
 '''
 origin = "stated"
-standing = "ratified"
-ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:217-223"]
+standing = "pending"
+stamp = 'provisional, 2026-11-13: its source mock/PRINCIPLES.md.tmpl:217-223 was written by the round commit d77e744 of 2026-05-23, the runtime megaround, and not by the seed commit 680a672, so it is the text of that round and not founding, and no passage of his states it, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 keywords = ["WorkUnit::Ctx", "GAT", "frame lifetime", "PoolFrame", "HRTB", "progress slots", "predicted-wait readers", "round 202605101036"]
 related = ["tenet::execute_receives_a_context_and_nothing_else"]
 
