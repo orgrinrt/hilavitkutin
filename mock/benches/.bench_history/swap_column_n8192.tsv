@@ -1,0 +1,5 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794596986	5e6887f	swap_column_n8192	cs_exch	8192	warm	11538794.3	11538794.3	11689682.3
+1794596986	5e6887f	swap_column_n8192	cs_plain	8192	warm	10160316.4	10160316.4	10360918.0
+1794596986	5e6887f	swap_column_n8192	cs_snap	8192	warm	16219785.4	16219785.4	16526974.0
+1794596986	5e6887f	swap_column_n8192	cs_snap_twin	8192	warm	15605199.8	15605199.8	16444264.1
