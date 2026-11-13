@@ -1,0 +1,23 @@
+[package]
+name = "frame-wide-support"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# The `frame_wide` workload and its arms, defined once. Every variant cdylib
+# under `../../variants/` is one call into `bench_call` here, so the workload,
+# the engine scaffolding and the plain bars exist in one place. std is allowed:
+# this is a bench crate outside the no_std, no_alloc `mock/crates` members.
+# The arvo and notko pins are `engine_vs_std`'s, so the engine resolves to the
+# same dependency tree it already builds against there.
+[lib]
+name = "frame_wide_support"
+path = "src/lib.rs"
+
+[dependencies]
+hilavitkutin = { path = "../../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../../crates/hilavitkutin-providers" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev", features = ["std"] }

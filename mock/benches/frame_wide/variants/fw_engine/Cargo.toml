@@ -1,0 +1,15 @@
+[package]
+name = "fw_engine"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "fw_engine"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+frame-wide-support = { path = "../../support/frame-wide-support" }
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev", features = ["std"] }
+mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev" }

@@ -1,0 +1,43 @@
+# The `frame_wide` bench member: one simulation frame of three independent
+# three-stage pipelines, a fan-in joining them and two independent
+# transforms, timed across seven arms. See `bench.toml` for the sweeps.
+#
+# One workspace for the driver, the support crate and every arm, so they share
+# one lockfile, one release profile and one build of the engine. Every arm
+# links the same `mockspace-bench-core` revision, which the harness checks
+# through `bench_abi_hash` before it loads one.
+[workspace]
+members = [".", "support/frame-wide-support", "variants/*"]
+resolver = "2"
+
+[package]
+name = "frame_wide"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "frame_wide"
+path = "src/lib.rs"
+
+[[bin]]
+name = "frame_wide"
+path = "src/main.rs"
+
+# The committed negative control. `harness = false` because the harness
+# re-executes this binary as its validation worker, so `main` has to answer
+# `--worker` itself.
+[[test]]
+name = "negative_control"
+path = "tests/negative_control.rs"
+harness = false
+
+[dependencies]
+frame-wide-support = { path = "support/frame-wide-support" }
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev", features = ["std"] }
+mockspace-bench-harness = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev" }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
