@@ -458,7 +458,7 @@ description = "The tenets that replace this one. A superseded tenet is kept rath
 name = "standing"
 type = "string"
 required = true
-description = "`provisional` where the maintainer has not ratified it: read as the best current statement and never cited as settled. `ratified` where the maintainer went through it on a named date, with their answer in the row's `answers`. `demoted` where it is kept as reference and binds nothing. Apart from `superseded_by`: a superseded row does not bind whatever its standing."
+description = "`provisional` where the maintainer has not ratified it: read as the best current statement and never cited as settled. `ratified` where the maintainer went through it on a named date, with their answer in the row's `answers`, or where the written history shows its content to be the maintainer's own and it is ratified by default under their words of 13 November 2026, which `ratified_by` quotes and `ratified_from` gives the passages for. `demoted` where it is kept as reference and binds nothing. Apart from `superseded_by`: a superseded row does not bind whatever its standing."
 values = ["provisional", "ratified", "demoted"]
 
 [[registry.namespace.field]]
@@ -490,6 +490,24 @@ name = "answers"
 type = "string[]"
 required = false
 description = "What the maintainer answered about this row, one entry each as `<at>: <capture path>`, the time they answered and the capture holding their words verbatim."
+
+[[registry.namespace.field]]
+name = "ratified_by"
+type = "string"
+required = false
+description = "On a row ratified by default from the written history and not by a walk: that it is so, and the maintainer's words that allow it, quoted. Absent on a row the maintainer walked."
+
+[[registry.namespace.field]]
+name = "ratified_from"
+type = "string[]"
+required = false
+description = "The passages a ratification by default rests on, one entry each as `<kind>: <path>:<first>-<last>`. The kind is `founding` (the founding spec or the principles), `ruled` (an amendment whose text says the maintainer ruled it or a bench decided it with their call), `quote` (a passage quoting the maintainer or saying in words that they ruled it) or `ratified-elsewhere` (another passage of the record saying so of the same content). An entry led by `later` names a later passage of the same standing that changes the same point."
+
+[[registry.namespace.field]]
+name = "stamp"
+type = "string"
+required = false
+description = "On a provisional row: the stamp it stands on until the maintainer rules, with the date and the words that allow it. A stamp is never a ratification and the maintainer's answer can overturn it."
 
 
 [[registry.namespace]]
@@ -564,3 +582,15 @@ name = "related"
 type = "ref[]"
 required = false
 description = "The rows the question is between or about, written as `namespace::slug`: the tenets that state it two ways, the tenets an answer settles."
+
+[[registry.namespace.field]]
+name = "answered_from"
+type = "string[]"
+required = false
+description = "On a question answered by default from the written history: the passages that hold the maintainer's answer, one entry each as `<kind>: <path>:<first>-<last>`, with the kinds of a tenet's `ratified_from`."
+
+[[registry.namespace.field]]
+name = "stamp"
+type = "string"
+required = false
+description = "On an open question the maintainer was not asked: the stamp it stays open on, with the date and the words that allow it."
