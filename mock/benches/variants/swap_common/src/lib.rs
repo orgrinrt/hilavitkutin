@@ -19,6 +19,10 @@
 //! size (64 B, 1 KiB, 64 KiB) and returns a closure whose timed body is
 //! exactly one `replace_value` install, so the arm's median is the
 //! witnessed blob write cost at that size.
+//!
+//! `prepare_column_*`, in `column`, builds the column swap carrier: a
+//! producer and a reader over a middle column that is plain, buffered
+//! under `Snapshot` or buffered under `Exchange`.
 
 use std::cell::{RefCell, UnsafeCell};
 use std::mem::MaybeUninit;
@@ -55,6 +59,16 @@ use hilavitkutin_api::work_unit::{Always, HasSchedule, OnMeta, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 pub use rcm_common::{HeapBump, fnv1a_u32_slice};
 
+mod column;
+pub use column::{
+    PreparedColumn,
+    column_checksum,
+    prepare_column_exchange,
+    prepare_column_plain,
+    prepare_column_snapshot,
+    seed_from_input,
+};
+
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
 }
@@ -73,6 +87,13 @@ pub struct SwapVal(pub u64);
 impl hilavitkutin_api::store::Replaceable for SwapVal {}
 impl hilavitkutin_api::footprint::ResourceFootprint for SwapVal {
     const L1_BYTES: USize = USize(0);
+}
+impl hilavitkutin_api::ResourceRead for SwapVal {
+    type Val<'a> = Self;
+
+    fn read(&self) -> Self {
+        *self
+    }
 }
 
 /// Plan-affecting config input.
