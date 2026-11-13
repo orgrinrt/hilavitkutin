@@ -290,3 +290,46 @@ fn a_name_minted_in_an_extension_resolves_in_the_host() {
         "a name the extension declared with str_const! does not resolve in the host"
     );
 }
+
+/// A host arena that actually stores strings, for the case below.
+struct VecArena(RefCell<Vec<&'static str>>);
+impl ArenaInterner for VecArena {
+    fn arena_intern(&self, s: &str) -> u32 {
+        let leaked: &'static str = Box::leak(s.to_owned().into_boxed_str());
+        let mut v = self.0.borrow_mut();
+        v.push(leaked);
+        (v.len() - 1) as u32
+    }
+
+    fn arena_resolve(&self, id: u32) -> &str {
+        self.0.borrow()[id as usize]
+    }
+}
+
+/// The second way the seam splits a name: the host meets the extension's
+/// name as text (from its content, say) and interns it. The host's const
+/// table does not hold it, so it goes to the arena and gets a run-time
+/// handle; the extension holds a const handle for the same text. One name,
+/// two handles, and equality on Str says they differ.
+#[test]
+fn one_name_has_one_handle_on_both_sides_of_the_seam() {
+    let lib = open();
+    let mint: Mint = match lib.resolve::<Mint>(b"ext_mint\0") {
+        Outcome::Ok(s) => s.get(),
+        Outcome::Err(_) => panic!("resolve ext_mint"),
+    };
+    let theirs = Str::__make(Bits::<28, Hot>::from_raw(mint()));
+    let interner = StringInterner::new(VecArena(RefCell::new(Vec::new())));
+    let ours = interner.intern("mod.kind.heat");
+    println!(
+        "host intern of the same text: const {} id {}; extension handle: const {} id {}",
+        ours.is_const().0,
+        ours.id().to_raw(),
+        theirs.is_const().0,
+        theirs.id().to_raw()
+    );
+    assert!(
+        ours == theirs,
+        "the host and the extension hold two different handles for one name"
+    );
+}

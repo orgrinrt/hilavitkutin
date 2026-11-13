@@ -13,6 +13,7 @@ members = [
     "b3-paged-column",
     "a4-slot-unit/ext",
     "a4-slot-unit/host",
+    "a4-names-on-wasm",
 ]
 
 [workspace.package]

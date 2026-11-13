@@ -3,8 +3,8 @@
 //! A slot unit (arm A4) hands an extension a raw column pointer, so host and
 //! extension must agree on the cell's layout though they are compiled apart.
 //! The trunk's `ColumnValue` asks only `Copy + 'static`
-//! (hilavitkutin-api/src/column_value.rs:28), where the founding record kept
-//! "repr(C) on stored types" (spec :475). Rust promises nothing about the
+//! (hilavitkutin-api/src/column_value.rs:25-34), where the founding record kept
+//! "repr(C) on stored types" (spec :477). Rust promises nothing about the
 //! field order of a default-repr struct between two compilations; the
 //! nightly `-Z randomize-layout` flag makes that visible by giving two
 //! compilations two layouts.

@@ -1,0 +1,20 @@
+# Found beside arm A4: whether a name declared with hilavitkutin-str's
+# `str_const!` resolves at all on wasm32, where `static_entries` has no
+# section to walk (hilavitkutin-str/src/section.rs:69-80). Built for
+# wasm32-unknown-unknown and run under node by `run.mjs`.
+
+[package]
+name = "a4-names-on-wasm"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+hilavitkutin-str = { path = "../../../../crates/hilavitkutin-str" }
+notko.workspace = true
+# str_const! expands to a path through arvo_bits rather than through $crate,
+# so every crate that declares a const name must depend on arvo-bits itself.
+arvo-bits = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
