@@ -84,7 +84,7 @@ impl ClockApi for CounterClock {
 
 const N: usize = 4;
 // Accumulator capacity headroom over the per-frame appends (an append past
-// the reserved capacity, which equals the record count at build, asserts).
+// the reserved capacity, which equals the record count at build, is refused).
 const RECORDS: usize = 64;
 
 #[derive(Copy, Clone)]

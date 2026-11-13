@@ -97,13 +97,13 @@ impl<H, Tail> ColPtrCons<H, Tail> {
 // (`SnapCons`) and column (`ColPtrCons`) bundles.
 // ---------------------------------------------------------------------
 
-/// Projected accumulator handle: capacity base, borrowed live-length cell, and
-/// the reserved capacity the append asserts the live length against (a
-/// contract-violating over-append panics before the write).
+/// Projected accumulator handle: capacity base, the borrowed live-length and
+/// `wanted` cells, and the reserved capacity past which an append is refused.
 pub struct AccumColPtr<'frame, T> {
-    pub(super) base: ColumnPtr<T>,
-    pub(super) len:  &'frame Cell<USize>,
-    pub(super) cap:  USize,
+    pub(super) base:   ColumnPtr<T>,
+    pub(super) len:    &'frame Cell<USize>,
+    pub(super) wanted: &'frame Cell<USize>,
+    pub(super) cap:    USize,
 }
 
 impl<'frame, T> Copy for AccumColPtr<'frame, T> {}

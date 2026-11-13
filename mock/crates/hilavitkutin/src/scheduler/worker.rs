@@ -35,7 +35,7 @@ use crate::plan::grouping::{
     plan_phase_count,
     pre_consumer_phase_count,
 };
-use crate::resource::bindings::{BindingsFor, CollectAccumLive, RebaseBindings};
+use crate::resource::bindings::{BindingsFor, CollectAccumCounts, RebaseBindings};
 use crate::thread::barrier::waist_barrier;
 use crate::thread::frame::{frame_await, frame_done_arrive, frame_exit_arrive};
 
@@ -69,7 +69,7 @@ pub(super) fn worker_main<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>(
     WuVals: BundleMasks<Stores, GW, <D as PlanDims>::Stores>,
     <D as PlanDims>::Units: ConstCapacity,
     <D as PlanDims>::AdjRow: BitAccess + Identity<Additive>,
-    <Vals as BindingsFor>::Bindings: RebaseBindings + CollectAccumLive,
+    <Vals as BindingsFor>::Bindings: RebaseBindings + CollectAccumCounts,
 {
     // SAFETY: `ctx` points into the pinned scheduler's `worker_ctxs`, valid until
     // `await_exit` runs at Drop (which joins before teardown).
@@ -159,9 +159,10 @@ pub(super) fn worker_main<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>(
 
 /// One core's unit-outer accumulator dispatch over its head+tail record slice
 /// (GATE-2 deviation 9). Builds a per-core bindings copy with every accumulator
-/// offset to the slice start (fresh live cells, slice-sized cap), dispatches the
-/// whole carrier once over `[lo, hi)`, and publishes the per-accumulator live
-/// counts into the scheduler's `gate2_accum_live` row for this core (Relaxed; the
+/// offset to the slice start (fresh live and `wanted` cells, slice-sized cap),
+/// dispatches the whole carrier once over `[lo, hi)`, and publishes the
+/// per-accumulator live and `wanted` counts into the scheduler's
+/// `gate2_accum_live` and `gate2_accum_wanted` rows for this core (Relaxed; the
 /// `frame_done_arrive` Release that follows publishes them to the merge). The
 /// core's row is zeroed first so a non-participating core (surplus, or a
 /// record-less frame's non-zero cores) contributes zeros to the merge.
@@ -180,7 +181,7 @@ fn worker_accum_unit_outer<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>
     WuVals: BundleMasks<Stores, GW, <D as PlanDims>::Stores>,
     <D as PlanDims>::Units: ConstCapacity,
     <D as PlanDims>::AdjRow: BitAccess + Identity<Additive>,
-    <Vals as BindingsFor>::Bindings: RebaseBindings + CollectAccumLive,
+    <Vals as BindingsFor>::Bindings: RebaseBindings + CollectAccumCounts,
 {
     let total0 = total.0; // lint:allow(no-bare-numeric) reason: frame record count; tracked: #121
     let ncores0 = ncores.0.max(1); // lint:allow(no-bare-numeric) reason: avoid div by zero; tracked: #121
@@ -189,6 +190,7 @@ fn worker_accum_unit_outer<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>
     let mut z = 0; // lint:allow(no-bare-numeric) reason: publish-row index; tracked: #121
     while z < GATE2_MAX_ACCUMS {
         s.gate2_accum_live[core.0 * GATE2_MAX_ACCUMS + z].store(0, Ordering::Relaxed); // lint:allow(no-bare-numeric) reason: per-(core,accum) publish slot reset; tracked: #121
+        s.gate2_accum_wanted[core.0 * GATE2_MAX_ACCUMS + z].store(0, Ordering::Relaxed); // lint:allow(no-bare-numeric) reason: per-(core,accum) wanted slot reset; tracked: #121
         z += 1; // lint:allow(no-bare-numeric) reason: index step; tracked: #121
     }
     // Head+tail record slice for this core (mirrors run_core_phase's split).
@@ -257,13 +259,17 @@ fn worker_accum_unit_outer<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>
             USize(s.virtual_epoch.load(Ordering::Relaxed)),
         );
     }
-    // Publish this core's per-accumulator live counts.
+    // Publish this core's per-accumulator live and `wanted` counts. Only this
+    // worker writes its row, and only before its `frame_done_arrive`.
     let mut live = [<USize as Identity<Additive>>::IDENTITY; GATE2_MAX_ACCUMS];
+    let mut wanted = [<USize as Identity<Additive>>::IDENTITY; GATE2_MAX_ACCUMS];
     let mut idx = <USize as Identity<Additive>>::IDENTITY;
-    per_core.collect_accum_live(&mut live, &mut idx);
+    per_core.collect_accum_counts(&mut live, &mut wanted, &mut idx);
     let mut a = 0; // lint:allow(no-bare-numeric) reason: accum index; tracked: #121
     while a < idx.0 {
-        s.gate2_accum_live[core.0 * GATE2_MAX_ACCUMS + a].store(live[a].0, Ordering::Relaxed); // lint:allow(no-bare-numeric) reason: publish per-(core,accum) live count; tracked: #121
+        let slot = core.0 * GATE2_MAX_ACCUMS + a; // lint:allow(no-bare-numeric) reason: per-(core,accum) slot; tracked: #121
+        s.gate2_accum_live[slot].store(live[a].0, Ordering::Relaxed); // lint:allow(no-bare-numeric) reason: publish per-(core,accum) live count; tracked: #121
+        s.gate2_accum_wanted[slot].store(wanted[a].0, Ordering::Relaxed); // lint:allow(no-bare-numeric) reason: publish per-(core,accum) wanted count; tracked: #121
         a += 1; // lint:allow(no-bare-numeric) reason: index step; tracked: #121
     }
 }

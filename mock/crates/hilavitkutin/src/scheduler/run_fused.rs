@@ -17,13 +17,14 @@ use hilavitkutin_api::run_cfg::RunCfg;
 use hilavitkutin_api::store_values::StoreValues;
 use hilavitkutin_api::work_unit_values::{WuCons, WuNil};
 
+use super::verdict::frame_verdict;
 use super::{PlanHandle, Scheduler};
 use crate::dispatch::fiber_run::RunFiber;
 use crate::dispatch::fusion::{ChainWu, FuseCarrier};
 use crate::dispatch::morsel::MorselRange;
 use crate::meta::fold_ema;
 use crate::plan::{AccessMask, PlanDims};
-use crate::resource::bindings::BindingsFor;
+use crate::resource::bindings::{BindingsFor, FirstRefusal, ResetAccumulators};
 
 impl<
     Cfg: RunCfg,
@@ -59,16 +60,19 @@ impl<
     /// the call site exactly as `run`'s `Witnesses` is, so `scheduler.run_fused()`
     /// needs no turbofish.
     ///
+    /// Like `run`, it resets every accumulator at frame start and returns the
+    /// frame's verdict.
+    ///
     /// A fusible chain writes no accumulator, so it dispatches morsel-outer (the
     /// runtime morsel loop wraps the whole-chain walk so the intermediates stay
     /// register-resident per morsel); a record-less frame runs the chain once
     /// over an empty morsel.
     pub fn run_fused<W2>(&mut self) -> Cfg::Out
     where
-        Cfg::Out: Default,
         WuVals: FuseCarrier,
         WuCons<ChainWu<<WuVals as FuseCarrier>::Chain>, WuNil>:
             RunFiber<<Vals as BindingsFor>::Bindings, W2>,
+        <Vals as BindingsFor>::Bindings: ResetAccumulators + FirstRefusal,
     {
         let _ = (
             &self.plan_dirty,
@@ -80,6 +84,9 @@ impl<
         // seed flag (the first frame stores its raw duration).
         let frame_start = self.clock.now_ns();
         let ema_seed = Bool(self.first_frame.load(Ordering::Relaxed));
+        // Every frame starts with fresh accumulators and nothing refused, as in
+        // `run`, so the verdict at the close is this frame's own.
+        self.bindings.reset_accumulators();
         let fused = WuCons {
             head: ChainWu::new(self.wu_values.fuse()),
             tail: WuNil,
@@ -142,7 +149,7 @@ impl<
             m.change_seen_count
                 .set(arvo::USize(m.change_seen_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: increment by one frame; tracked: #121
         }
-        Cfg::Out::default()
+        frame_verdict::<Cfg, _>(&self.bindings)
     }
 
     /// Borrow the resource bindings. Hidden test accessor: lets in-crate

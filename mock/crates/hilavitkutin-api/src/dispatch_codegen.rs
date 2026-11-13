@@ -368,7 +368,7 @@ pub enum RecordRange {
 pub trait DispatchCodegen<Cfg>: sealed::Sealed {
     /// The monomorphised per-core dispatch closure type. Topic 4
     /// axis A Rider 1. Engine impls set this via TAIT
-    /// `type CoreDispatch = impl Fn(...) -> notko::Outcome<(), Cfg::Err>;`.
+    /// `type CoreDispatch = impl Fn(...) -> notko::Outcome<(), AccumRefused>;`.
     type CoreDispatch;
 }
 
@@ -388,7 +388,7 @@ pub struct StandardCodegen;
 impl sealed::Sealed for StandardCodegen {}
 
 /// `CoreDispatch` is a `()` placeholder. The TAIT lowering
-/// `type CoreDispatch = impl Fn(&PoolFrame<...>) -> Outcome<(), Cfg::Err>;`
+/// `type CoreDispatch = impl Fn(&PoolFrame<...>) -> Outcome<(), AccumRefused>;`
 /// lands once the defining-use closure body emits in the engine's
 /// `dispatch::standard` Pass 3 follow-ups (run_fiber, wu_fn,
 /// morsel, sync). Topic 4 axis A locks to TAIT; this placeholder

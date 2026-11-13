@@ -356,15 +356,16 @@ pub trait AccumSelector<T, Index> {
 }
 
 // Over the scheduler bindings nodes: `Here` matches an `AccumBinding<T, _>`,
-// reading its base pointer and borrowing its live-length cell.
+// reading its base pointer and borrowing its live-length and `wanted` cells.
 
 impl<T, Tail> AccumSelector<T, Here> for AccumBinding<T, Tail> {
     #[inline(always)]
     fn get(&self) -> AccumColPtr<'_, T> {
         AccumColPtr {
-            base: self.__ptr(),
-            len:  self.__len_cell(),
-            cap:  self.__cap(),
+            base:   self.__ptr(),
+            len:    self.__len_cell(),
+            wanted: self.__wanted_cell(),
+            cap:    self.__cap(),
         }
     }
 }

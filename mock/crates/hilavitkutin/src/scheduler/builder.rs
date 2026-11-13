@@ -185,9 +185,9 @@ where
         // store bindings, so a dependency cycle returns without allocating.
         // The morsel budget comes from the run-config consts (domain 12).
         let budget = MorselBudget {
-            l1_usable:  DefaultRunCfg::L1_USABLE,
-            min_morsel: DefaultRunCfg::MIN_MORSEL,
-            max_morsel: DefaultRunCfg::MAX_MORSEL,
+            l1_usable:  <DefaultRunCfg as RunCfg>::L1_USABLE,
+            min_morsel: <DefaultRunCfg as RunCfg>::MIN_MORSEL,
+            max_morsel: <DefaultRunCfg as RunCfg>::MAX_MORSEL,
         };
         let plan = match compute_plan::<Wus, Stores, BWit>(record_count, budget) {
             notko::Outcome::Ok(p) => p,
@@ -248,6 +248,8 @@ where
                     gate2_ncores: <USize as Identity<arvo::strategy::Additive>>::IDENTITY,
                     gate2_accum_live: [const { core::sync::atomic::AtomicUsize::new(0) };
                         MAX_CORES * GATE2_MAX_ACCUMS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic publish array init; tracked: #121
+                    gate2_accum_wanted: [const { core::sync::atomic::AtomicUsize::new(0) };
+                        MAX_CORES * GATE2_MAX_ACCUMS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic wanted-publish array init; tracked: #121
                     phase_ema: [const { Cell::new(hilavitkutin_api::platform::Nanos::from_raw(0)) }; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-phase EMA zero-init; tracked: #121
                     phase_accum: [const { Cell::new(hilavitkutin_api::platform::Nanos::from_raw(0)) }; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-frame accumulator reset; tracked: #121
                     adapt_reconfigure: Cell::new(arvo::Bool::FALSE),
@@ -344,6 +346,8 @@ where
                     gate2_ncores: <USize as Identity<arvo::strategy::Additive>>::IDENTITY,
                     gate2_accum_live: [const { core::sync::atomic::AtomicUsize::new(0) };
                         MAX_CORES * GATE2_MAX_ACCUMS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic publish array init; tracked: #121
+                    gate2_accum_wanted: [const { core::sync::atomic::AtomicUsize::new(0) };
+                        MAX_CORES * GATE2_MAX_ACCUMS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: atomic wanted-publish array init; tracked: #121
                     phase_ema: [const { Cell::new(hilavitkutin_api::platform::Nanos::from_raw(0)) }; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-phase EMA zero-init; tracked: #121
                     phase_accum: [const { Cell::new(hilavitkutin_api::platform::Nanos::from_raw(0)) }; GATE2_MAX_UNITS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-frame accumulator reset; tracked: #121
                     adapt_reconfigure: Cell::new(arvo::Bool::FALSE),

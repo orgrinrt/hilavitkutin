@@ -132,30 +132,40 @@ where
     unsafe fn resolve_append(&self, v: T) {
         let acc = <WAccum as AccumSelector<T, I>>::get(&self.write_accums);
         let live = acc.len.get();
-        // Over-appending a fixed-capacity accumulator is a contract violation,
-        // not a recoverable condition. Assert the live length is below the
-        // reserved capacity and panic before the write: the assert fires ahead of
-        // any out-of-bounds access (the soundness floor holds) and a misconfigured
-        // capacity fails loudly instead of silently dropping the record. A
-        // WorkUnit's appends are not bounded by the plan the way a column write's
-        // morsel index is, so the consumer sizes the accumulator for the maximum
-        // number of appends a single frame can make.
-        assert!(
-            live.0 < acc.cap.0,
-            "accumulator append exceeded its reserved capacity; size the accumulator for the maximum per-frame appends",
-        );
-        // B3 treats the capacity buffer as `[T]`-shaped at stride
-        // `size_of::<T>()`; sub-byte bitpacking is a later round.
-        // SAFETY: the accumulator bundle holds an `AccumColPtr<T>` at the
-        // witnessed index `I` only because `W: Contains<Accum<T>>` placed it
-        // there. The engine's plan-time DAG analysis proves this WU holds the
-        // exclusive appender slot for `T`; no concurrent appender aliases it.
-        // The capacity check above keeps `live` strictly within the reserved
-        // record count, so the write lands in the buffer. `&self` (not
-        // `&mut self`) keeps LLVM from reordering the write across fused WUs.
-        // Valid for `'frame`.
-        unsafe { core::ptr::write(acc.base.as_ptr().add(live.0), v) };
-        acc.len.set(USize(live.0 + 1));
+        let wanted = acc.wanted.get();
+        // Every append is counted as asked. It is written only while nothing
+        // has been refused this frame (`wanted == live`) and the live length is
+        // below the reserved capacity; otherwise only `wanted` moves, so the
+        // refusal is sticky on this binding and the records it accepted are a
+        // prefix of the appends asked through it. Under `run_parallel` each core
+        // appends through its own binding, so that holds per region, not for the
+        // accumulator as a whole. Invariant: `wanted >= live`, and the binding has
+        // refused exactly when `wanted > live`. Both cells are written only by
+        // the thread that owns this binding for the frame. The run reads the
+        // refusal at the close (`FirstRefusal`).
+        //
+        // This branch is the one place the refusal is decided. Keeping an
+        // assert instead is a strategy read here, nothing else moves.
+        if wanted.0 == live.0 && live.0 < acc.cap.0 {
+            // B3 treats the capacity buffer as `[T]`-shaped at stride
+            // `size_of::<T>()`; sub-byte bitpacking is a later round.
+            // SAFETY: the accumulator bundle holds an `AccumColPtr<T>` at the
+            // witnessed index `I` only because `W: Contains<Accum<T>>` placed it
+            // there. The engine's plan-time DAG analysis proves this WU holds
+            // the exclusive appender slot for `T`; no concurrent appender
+            // aliases it. `live < cap` keeps the write strictly within the
+            // reserved record count, so it lands in the buffer. `&self` (not
+            // `&mut self`) keeps LLVM from reordering the write across fused
+            // WUs. Valid for `'frame`.
+            unsafe { core::ptr::write(acc.base.as_ptr().add(live.0), v) };
+            acc.len.set(USize(live.0 + 1)); // lint:allow(no-bare-numeric) reason: live-length step; tracked: #345
+            acc.wanted.set(USize(wanted.0 + 1)); // lint:allow(no-bare-numeric) reason: wanted step, equal to live here; tracked: #345
+        } else {
+            // The truncating mutant drops the refused append without counting
+            // it, which is the defect the overflow suite must catch.
+            #[cfg(not(feature = "mutant-truncating-append"))]
+            acc.wanted.set(USize(wanted.0.saturating_add(1))); // lint:allow(no-bare-numeric) reason: wanted step on a refusal, saturating so the count never wraps below live; tracked: #345
+        }
     }
 
     #[inline]

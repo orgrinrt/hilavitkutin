@@ -64,18 +64,23 @@ pub trait ResolveColumnWrite<T: ColumnValue, I> {
 
 /// Resolve an accumulator append of `T` at the inferred bundle index `I`.
 pub trait ResolveAccumAppend<T: ColumnValue, I> {
-    /// Append `v` at the accumulator's live offset and advance the live length.
+    /// Append `v` at the accumulator's live offset, or refuse it.
     ///
-    /// An append past the reserved capacity is a contract violation: the
-    /// engine asserts the live length is below the capacity and panics before
-    /// the write, so it never writes past the reserved buffer and never drops
-    /// a record silently.
+    /// Every call is counted as asked. The record is written and the live
+    /// length advances only while nothing has been refused through this binding
+    /// this frame and the live length is below its capacity; otherwise nothing
+    /// is written, and every later append through the binding in the same frame
+    /// is refused too. On one thread the accumulator is one binding, so the
+    /// records kept are a prefix of the appends asked. Under `run_parallel` each
+    /// core appends through its own binding over its own region, so one core
+    /// can refuse while another still accepts: the records kept depend on the
+    /// worker count, and the `AccumRefused` value does not. The run returns the
+    /// first refusing accumulator as an `AccumRefused` through `RunCfg::Out`.
     ///
     /// # Safety
     ///
     /// Caller must hold the exclusive appender slot for `T`. Plan-time DAG
-    /// analysis proves it; the capacity bound is checked here, not a caller
-    /// obligation.
+    /// analysis proves it; the capacity is not a caller obligation.
     unsafe fn resolve_append(&self, v: T);
 
     /// The current live length of the projected accumulator `T`.
@@ -144,10 +149,9 @@ pub trait ColumnWriterApi<W: AccessSet> {
     note = "Implemented by the scheduler-generated context. If your WorkUnit Ctx hits this bound, ensure the provider tuple satisfies `HasAccumWriter<W>` for the write set the WU declares."
 )]
 pub trait AccumWriterApi<W: AccessSet> {
-    /// Append `v` to accumulator `T`, advancing its live length. An append
-    /// past the reserved capacity asserts and panics before the write, so it
-    /// never writes past the buffer; size the accumulator for the largest
-    /// per-frame append count.
+    /// Append `v` to accumulator `T`, or refuse it past the reserved capacity,
+    /// as `ResolveAccumAppend::resolve_append` states; a refusal comes back
+    /// from the run, not from this call.
     ///
     /// Drive appends from the per-record loop (`each` / `reduce` / `batch`) so
     /// the total across the frame equals the record count: `execute` runs once

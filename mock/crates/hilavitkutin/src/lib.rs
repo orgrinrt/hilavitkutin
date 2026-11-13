@@ -41,6 +41,18 @@ compile_error!("hilavitkutin: features `platform-os` and `platform-no-os` are mu
 #[cfg(not(any(feature = "platform-os", feature = "platform-no-os")))]
 compile_error!("hilavitkutin: one of `platform-os` or `platform-no-os` must be enabled");
 
+// The truncating mutant drops a refused accumulator append without counting it,
+// for the overflow suite's mutant check alone. Features unify across a build, so
+// a dependent turning it on would silently break the refusal; it builds only
+// when the check also sets `HILAVITKUTIN_MUTANT_CHECK` in the environment.
+#[cfg(feature = "mutant-truncating-append")]
+const _: () = assert!(
+    option_env!("HILAVITKUTIN_MUTANT_CHECK").is_some(),
+    "hilavitkutin: feature `mutant-truncating-append` breaks the accumulator refusal and \
+     is for the overflow suite's mutant check only; set HILAVITKUTIN_MUTANT_CHECK=1 for \
+     that check, and never enable the feature elsewhere"
+);
+
 pub mod adapt;
 pub mod dispatch;
 pub mod intrinsics;

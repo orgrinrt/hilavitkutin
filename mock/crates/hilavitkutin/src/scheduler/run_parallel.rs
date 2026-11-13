@@ -22,6 +22,7 @@ use hilavitkutin_api::platform::{OnePointerClosure, ThreadPoolApi};
 use hilavitkutin_api::run_cfg::RunCfg;
 use hilavitkutin_api::store_values::StoreValues;
 
+use super::verdict::frame_verdict;
 use super::{Scheduler, SendCtxPtr, UnitsFitGate2, WorkerCtx};
 use crate::dispatch::core_mask::grouping_arrays;
 use crate::dispatch::fiber_run::RunFiber;
@@ -39,8 +40,10 @@ use crate::plan::grouping::{
 use crate::plan::{AccessMask, PlanDims};
 use crate::resource::bindings::{
     BindingsFor,
-    CollectAccumLive,
+    CollectAccumCounts,
+    FirstRefusal,
     MergeAccums,
+    PerCoreCounts,
     RebaseBindings,
     ResetAccumulators,
 };
@@ -99,7 +102,6 @@ impl<
     /// `phase` / `trunk` arrays), both inferred at the call site.
     pub fn run_parallel<Witnesses, GW, P>(self: Pin<&mut Self>, pool: &P) -> Cfg::Out
     where
-        Cfg::Out: Default,
         WuVals: RunFiber<<Vals as BindingsFor>::Bindings, Witnesses>,
         WuVals: RunTrunkDispatch<
                 WuVals,
@@ -116,7 +118,7 @@ impl<
         <D as PlanDims>::Units: ConstCapacity,
         <D as PlanDims>::AdjRow: BitAccess + Identity<Additive>,
         <Vals as BindingsFor>::Bindings:
-            ResetAccumulators + RebaseBindings + CollectAccumLive + MergeAccums,
+            ResetAccumulators + RebaseBindings + CollectAccumCounts + MergeAccums + FirstRefusal,
         P: ThreadPoolApi,
     {
         // Cross-cap guard (#690): the grouping producer is sized by `D::Units`,
@@ -306,18 +308,22 @@ impl<
         frame_await_done(pool_frame, ncores);
         // Deviation 9: for the unit-outer accumulator carrier, each worker
         // appended into its own per-core region of the reserved buffer and
-        // published its per-accumulator live counts. Forward-compact those
-        // regions into each accumulator's `[0, sum)` prefix and set the binding
-        // live length, so downstream readers see the same contiguous prefix
-        // single-core `run()` would produce. The `frame_await_done` Acquire
-        // paired with the workers' `frame_done_arrive` Release publishes the live
-        // counts; load them Relaxed under that happens-before.
-        // SAFETY: all workers re-parked; exclusive access to the bindings + array.
+        // published its per-accumulator live and `wanted` counts. Forward-compact
+        // those regions after the leading bands' records and set the binding's
+        // live length, and carry every refused append into its `wanted`, so
+        // downstream readers see the leading records and then the cores' in
+        // `run()` order, no accepted record leaves the counts, and a refusal on
+        // any core stays a refusal. The `frame_await_done` Acquire paired with the workers'
+        // `frame_done_arrive` Release publishes the counts; load them Relaxed
+        // under that happens-before.
+        // SAFETY: all workers re-parked; exclusive access to the bindings + arrays.
         if unsafe { (*me).carrier_unit_outer() }.0 {
             let total0 = unsafe { (*me).record_count.0 }; // lint:allow(no-bare-numeric) reason: frame record count; tracked: #121
             let ncores0 = ncores.0.max(1); // lint:allow(no-bare-numeric) reason: avoid div by zero; tracked: #121
             let per = total0.div_ceil(ncores0); // lint:allow(no-bare-numeric) reason: ceil record slice; tracked: #121
             let mut live = [<USize as Identity<Additive>>::IDENTITY;
+                crate::thread::class::MAX_CORES * GATE2_MAX_ACCUMS];
+            let mut wanted = [<USize as Identity<Additive>>::IDENTITY;
                 crate::thread::class::MAX_CORES * GATE2_MAX_ACCUMS];
             let mut c = 0; // lint:allow(no-bare-numeric) reason: core index; tracked: #121
             while c < ncores0 {
@@ -326,6 +332,8 @@ impl<
                     let slot = c * GATE2_MAX_ACCUMS + a; // lint:allow(no-bare-numeric) reason: flat (core,accum) index; tracked: #121
                     live[slot] =
                         USize(unsafe { (*me).gate2_accum_live[slot].load(Ordering::Relaxed) }); // lint:allow(no-bare-numeric) reason: load published live count; tracked: #121
+                    wanted[slot] =
+                        USize(unsafe { (*me).gate2_accum_wanted[slot].load(Ordering::Relaxed) }); // lint:allow(no-bare-numeric) reason: load published wanted count; tracked: #121
                     a += 1; // lint:allow(no-bare-numeric) reason: index step; tracked: #121
                 }
                 c += 1; // lint:allow(no-bare-numeric) reason: index step; tracked: #121
@@ -333,11 +341,14 @@ impl<
             let mut accum_idx = <USize as Identity<Additive>>::IDENTITY;
             unsafe {
                 (*me).bindings.merge_accums(
-                    USize(per),
-                    ncores,
-                    USize(total0),
-                    &live,
-                    USize(GATE2_MAX_ACCUMS),
+                    PerCoreCounts::new(
+                        USize(per),
+                        ncores,
+                        USize(total0),
+                        &live,
+                        &wanted,
+                        USize(GATE2_MAX_ACCUMS),
+                    ),
                     &mut accum_idx,
                 );
             }
@@ -387,11 +398,10 @@ impl<
         // Capture the change_class signal before the seed is consumed: a
         // non-empty store_dirty means an input change was seen this frame. The
         // increment runs here on the main thread after every worker re-parks, so
-        // it shares the single-core fold's discipline. A consumer's own append on
-        // a worker thread that over-runs an accumulator panics there (the append
-        // path's capacity assert); a worker panic can stall the join rather than
-        // abort cleanly, which is the accepted failure mode for that contract
-        // violation (the over-capacity should_panic test runs single-core).
+        // it shares the single-core fold's discipline. An append past an
+        // accumulator's capacity on a worker is refused and counted, never a
+        // panic, so it cannot keep a worker from arriving; a panic inside a
+        // unit's own body still can, and the engine cannot catch it without std.
         // SAFETY: all phases done, every worker re-parked.
         let stores_changed = unsafe { !(*me).store_dirty.get().is_empty().0 };
         // The frame consumed the change seed; clear it and leave cold-start.
@@ -435,7 +445,10 @@ impl<
             m.idle_ns
                 .set(hilavitkutin_api::platform::Nanos::from_raw(worst));
         }
-        Cfg::Out::default()
+        // The refusal is read after the trailing bands, with every worker
+        // parked, so the counts are final for the frame.
+        // SAFETY: every worker re-parked; exclusive access to the bindings.
+        frame_verdict::<Cfg, _>(unsafe { &(*me).bindings })
     }
 
     /// Whether the carrier is unit-outer (accumulator-bearing): any fiber whose
