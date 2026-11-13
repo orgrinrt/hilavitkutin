@@ -299,3 +299,43 @@ standing = "provisional"
 subject = "records"
 keywords = ["morsel window", "per fiber", "record count", "L1", "write sizes", "record range", "morsel_windows"]
 cites = ["morsel_ranges_are_partitioned_at_plan_time_without_an_atomic_fetch_add"]
+
+[[tenet]]
+id = "a_fiber_s_morsel_entry_in_the_plan_is_a_window_size_and_never_a_record_count_partition"
+what = "The per-fiber morsel entry in the plan is a window chunk size derived from the cache budget, and it is not a partition of the record count among fibers. The earlier placeholder computed shares that sum to the record count, was computed but never consumed by the dispatch, and is replaced by the real windows, so the plan value changes while the dispatch keeps its uniform window until A2b-2."
+mechanism = "`ExecutionPlan::morsel_sizes` computed by `size_morsels` (plan/steps.rs:948) with `Σ morsel_sizes[f] == record_count`; `compute_fiber_morsel_windows` (plan step 9) fills `plan.morsel_windows`; overwritten after `compute_execution_plan` returns Ok with `(l1_usable / Σ write_bytes).clamp(min, max) & !3` (zero sum takes max); tests pinning the placeholder are rehabbed to the window contract and `tests/r6_morsel_window_formula.rs` goes green."
+source = "mock/design_rounds/202606201500/202606201500_topic.per-fiber-morsel-s1-rename.md:10-15, mock/design_rounds/202606202700/202606202700_topic.a3b-l1-morsel-formula.md:18-25, mock/design_rounds/202607161410/202607161400_topic.a3b-l1-morsel-formula.md:12-14, mock/design_rounds/202607161410/202607161400_topic.a3b-l1-morsel-formula.md:30-33"
+provenance = ["mock::design_rounds::202606201500::202606201500_topic.per-fiber-morsel-s1-rename::#current-state"]
+quote = '''
+The blueprint established that per-fiber morsel WINDOW sizing is canonical (spec
+domain 12), and that the shipped `ExecutionPlan::morsel_sizes` is intermediate-
+round drift: `size_morsels` (`plan/steps.rs:948`) computes a record-count
+PARTITION (`Σ morsel_sizes[f] == record_count`), not a window chunk size. The
+dispatch still windows uniformly by the const `Cfg::MORSEL_SIZE`, so the field is
+computed-but-unconsumed.
+---
+2. `compute_plan` gains 3 `USize` params (l1_usable/min/max) + a `Stores:
+   StoreSizes<..Stores>` bound. After `compute_execution_plan` returns Ok(plan),
+   overwrite `plan.morsel_windows`: per fiber, union `inputs.writes[u]` over the
+   fiber's units (`fib.units[k].index().0`, mirroring the morsel_local walk) ->
+   fiber write mask; sum `store_sizes` over set bits -> Σ write_bytes; apply
+   `(l1_usable / Σ).clamp(min, max) & !3` (Σ==0 -> max). Replaces the partition
+   with real windows; the plan VALUE changes, run() consumption is unchanged
+   (still Cfg::MORSEL_SIZE until A2b-2), so existing run() tests stay green.
+---
+`compute_fiber_morsel_windows` (plan step 9) fills `plan.morsel_windows` with a
+record-count PARTITION placeholder (per-fiber record shares summing to the record
+count), not the spec's per-fiber L1 WINDOW size. The A3a fold
+---
+   becomes a WINDOW size; a fiber covers the record range in
+   `ceil(record_count / window)` morsels. This is the designed semantics flip the
+   A1 slice documented as pending; tests pinning the partition placeholder are
+   rehabbed to the window contract and `r6_morsel_window_formula` goes green.
+'''
+origin = "proposed"
+written_by = "topics per-fiber-morsel-s1-rename and a3b-l1-morsel-formula of rounds 202606201500, 202606202700 and 202607161410 (the last dated 2026-07-16), agent-written"
+standing = "provisional"
+subject = "records"
+keywords = ["morsel_windows", "morsel_sizes", "partition", "window", "per-fiber morsel", "placeholder", "size_morsels", "A3b"]
+rules_out = ["a record-count PARTITION"]
+cites = ["a_fiber_s_morsel_size_is_a_window_and_the_fiber_covers_the_one_record_range_in_count_over_window_morsels"]

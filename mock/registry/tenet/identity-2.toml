@@ -280,3 +280,38 @@ written_by = "the design template of the workspace, agent-written, undated"
 standing = "provisional"
 subject = "identity"
 keywords = ["hilavitkutin-str", "hilavitkutin-sym", "identity handle", "arvo", "notko", "foundations", "dependency direction"]
+
+[[tenet]]
+id = "a_derive_that_emits_api_paths_lives_in_its_own_proc_macro_crate_and_the_extensions_macros_crate_is_not_the_sole_one"
+what = "The derive that reports a resource value type's footprint emits paths into the api crate, which the extensions macro crate is forbidden from referencing, so the derive lives in a new proc-macro crate of its own, beside the api crate. The earlier claim that the extensions macro crate is the sole proc-macro crate, with a second needing a design round, no longer holds: the stack has two proc-macro crates."
+because = "Every resource value type must implement the footprint trait for the sizing arm to be bounded on it, and no blanket default exists without specialization, so a derive is mandatory."
+mechanism = "New crate `hilavitkutin-api-macros` with `[lib] proc-macro = true` shipping `#[derive(ResourceFootprint)]`, emitting `::hilavitkutin_api::footprint::*` paths; `hilavitkutin-extensions-macros` is forbidden from referencing them; the crate count becomes 10 and the proc-macro count 2."
+source = "mock/design_rounds/202606210300/202606210300_topic.api-macros-resourcefootprint-derive.md:10-24, mock/design_rounds/202606210300/202606210300_changelist.doc.lock.md:7-8"
+provenance = ["mock::design_rounds::202606210300::202606210300_topic.api-macros-resourcefootprint-derive::#current-state"]
+quote = '''
+A3-redo-1 shipped `CollectionBytes` + `ResourceFootprint` traits in `hilavitkutin-api`
+(`src/footprint.rs`). To re-bound `StoreElemBytes for Resource<T>` on `ResourceFootprint`
+(A3-redo-3), every resource value type must implement `ResourceFootprint`. No
+no-specialization blanket default exists, so a derive is mandatory.
+
+The cargo rule (`cargo.md`) states `hilavitkutin-extensions-macros` is the sole
+proc-macro crate and a second requires a design round. The `ResourceFootprint`
+derive emits `::hilavitkutin_api::footprint::*` paths, which `hilavitkutin-extensions-macros`
+is forbidden from referencing. So the derive needs a NEW proc-macro crate. This is
+that design round.
+
+## Changes proposed
+
+1. New crate `hilavitkutin-api-macros` (`mock/crates/hilavitkutin-api-macros`): `[lib]
+   proc-macro = true`, deps proc-macro2 + syn + quote. Ships `#[derive(ResourceFootprint)]`.
+---
+Adding the 10th crate (`hilavitkutin-api-macros`, 2nd proc-macro crate) makes the
+"nine crates / sole proc-macro crate" claims stale. Update the authored sources:
+'''
+origin = "proposed"
+written_by = "topic api-macros-resourcefootprint-derive of 2026-06-20, round 202606210300, and its doc changelist, agent-written"
+standing = "provisional"
+subject = "identity"
+keywords = ["hilavitkutin-api-macros", "proc-macro crate", "ResourceFootprint", "derive", "extensions-macros", "sole proc-macro crate", "forbidden imports"]
+rules_out = ["sole proc-macro crate"]
+cites = ["the_api_macros_crate_is_the_proc_macro_companion_of_the_api_crate_and_derives_a_resource_s_write_collection_footprint", "the_extensions_macros_crate_emits_the_descriptor_the_exported_symbol_and_the_capability_trampolines"]

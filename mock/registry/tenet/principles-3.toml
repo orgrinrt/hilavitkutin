@@ -329,3 +329,49 @@ standing = "provisional"
 subject = "principles"
 keywords = ["vocabulary discipline", "canonical terms", "dead terms", "entry", "record", "micro-morsel", "waist"]
 cites = ["the_dead_terms_chain_chain_group_partition_archetype_entity_row_and_order_have_named_replacements", "the_hierarchy_runs_from_pipeline_down_through_phase_trunk_fiber_and_morsel_to_entry"]
+
+[[tenet]]
+id = "the_complexity_against_simplicity_axis_is_an_anti_axis_in_this_workspace_and_is_not_counted_against_a_design"
+what = "Op chose the hybrid resource addressing over the pure blob, citing future-proofing and a performance parity that the bench measured, so the hybrid carries only upsides. The one point the bench listed against the erased addressing, its backcast machinery and type-erasure round-trip burden, is a complexity-versus-simplicity concern, and that axis is an anti-axis in this workspace: it is not counted against a design."
+source = "mock/design_rounds/202607161000/202606210600_topic.hybrid-decision.md:12-19"
+provenance = ["mock::design_rounds::202607161000::202606210600_topic.hybrid-decision::#the-decision-op-2026-07-02"]
+quote = '''
+## The decision (op, 2026-07-02)
+
+Go with the **hybrid**. Op's stated reasoning: it is more future-proof, it performs just about the
+same as the pure blob (the bench put V4 within +-1.7% of V1 on every scalar arm across both runs
+and tied on B/C/E), so it carries only upsides. The one thing the bench listed against V4, the
+backcast machinery and type-erasure round-trip burden, is a complexity-versus-simplicity concern,
+and that axis is an anti-axis in this workspace: it is not counted against a design. With the only
+downside ruled out and a future-proofing upside in hand at parity cost, the hybrid wins.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["anti-axis", "complexity versus simplicity", "hybrid", "future-proof", "parity", "backcast machinery", "not counted against a design"]
+cites = ["a_resource_value_is_addressed_through_an_erased_static_shape_so_it_can_cross_a_plugin_boundary"]
+
+[[tenet]]
+id = "a_non_canonical_mechanism_is_not_kept_because_it_beats_nothing_and_single_trunk_phases_run_serially_until_head_and_tail_is_built"
+what = "Deleting the N-way branch leaves single-trunk phases running serially until head and tail convergence is built, which is a real loss of parallelism on exactly the phases that most want it, and it is still the right move. The canon's parallelism comes from trunks, and a single-trunk phase legitimately has none until the mechanism the canon specifies exists. Keeping a non-canonical mechanism because it is faster than nothing is how drift became load-bearing in the first place, and the longer it stays the more of the engine is built against it."
+mechanism = "Roadmap band W1 builds head and tail; its substrate (`HeadTailConvergence`, `RecordRange::Head` and `Tail`, `thread::Convergence`, the `commutative` flag computed at plan/mod.rs:422 and read nowhere) exists and is unwired."
+source = "mock/design_rounds/202607192110/202607192100_topic.n-way-record-split-is-not-convergence.md:56-65"
+provenance = ["mock::design_rounds::202607192110::202607192100_topic.n-way-record-split-is-not-convergence::#what-removing-it-costs-and-why-that-is-correct"]
+quote = '''
+Deleting the branch leaves single-trunk phases running serially until head+tail is built. That is a
+real loss of parallelism on exactly the phases that most want it, and it is still the right move.
+Canon's parallelism comes from trunks; a single-trunk phase legitimately has none until the
+mechanism canon specifies exists. Keeping a non-canonical mechanism because it is faster than
+nothing is how the drift became load-bearing in the first place, and the longer it stays the more
+of the engine is built against it.
+
+The replacement is roadmap band W1, whose substrate (`HeadTailConvergence`, `RecordRange::Head` and
+`Tail`, `thread::Convergence`, the `commutative` flag already computed at `plan/mod.rs:422` and read
+nowhere) exists and is unwired.
+'''
+origin = "proposed"
+written_by = "topic n-way-record-split-is-not-convergence of 2026-07-19, round 202607192110, agent-written"
+standing = "provisional"
+subject = "principles"
+keywords = ["non-canonical mechanism", "load-bearing drift", "single-trunk phase", "serial", "head and tail", "W1", "faster than nothing"]
+cites = ["head_and_tail_convergence_is_designed_and_not_built_and_a_single_trunk_phase_runs_serially_until_it_is", "the_n_way_record_split_of_a_single_trunk_phase_is_not_head_and_tail_convergence_and_is_drift"]

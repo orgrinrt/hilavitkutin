@@ -87,3 +87,44 @@ written_by = "api design template as on the branch recover/unlanded-rounds-and-b
 standing = "provisional"
 subject = "memory"
 keywords = ["deallocate", "alignment", "MemoryProvider", "safety contract", "64-byte alignment", "layout"]
+
+[[tenet]]
+id = "deallocate_takes_the_alignment_because_every_caller_knows_it_and_a_header_or_a_remembering_provider_were_rejected"
+what = "Of three shapes for supplying the alignment at the free site, storing it in a header beside each allocation, having each provider remember its own allocations, or passing it back in, the contract passes it back in, as the allocator underneath requires the full layout and not just the pointer. A header costs memory on every block and is wrong for a bump or arena provider that has no per-block header, and a remembering provider makes a stateless provider stateful for no reason. Every caller already knows the alignment it asked for, so the information was dropped on the way down and never missing. The safety contract states that pointer, length and alignment all match the prior allocation, and a provider that ignores alignment may leave the parameter unread. The earlier contract carried only the pointer and the length."
+mechanism = "`MemoryProviderApi::deallocate(ptr, len)` becomes `deallocate` taking `align` beside `ptr` and `len`; both `ArenaColumnStorage` free sites have `CACHE_LINE_ALIGN` in scope as a constant; `std::alloc::dealloc` takes the `Layout`."
+source = "mock/design_rounds/202607192010/202607192010_changelist.doc.lock.md:11-16, mock/design_rounds/202607192010/202607192010_changelist.doc.lock.md:31-37, mock/design_rounds/202607192010/202607192010_changelist.doc.lock.md:39-43, mock/design_rounds/202607192010/202607192010_changelist.doc.lock.md:47-50"
+provenance = ["mock::design_rounds::202607192010::202607192010_changelist.doc.lock::#what-the-trace-found"]
+quote = '''
+## What the trace found
+
+`MemoryProviderApi::deallocate(ptr, len)` does not carry the alignment, and its safety comment
+requires only that `ptr` and `len` match a prior `allocate`. Alignment is simply absent from
+the contract, so an implementation over `std::alloc` has nothing to reconstruct the `Layout`
+from and guesses a word.
+---
+## The decision: `deallocate` takes `align`
+
+Three shapes were available. Store the alignment in a header beside each allocation, which
+costs memory on every block and is wrong for a bump or arena provider that has no per-block
+header to put it in. Have each provider remember its own allocations, which makes a stateless
+provider stateful for no reason. Or pass the alignment back in, which is what `std::alloc`
+itself requires: `dealloc` takes the `Layout`, not just the pointer.
+---
+The third is correct, and the reason is that our contract was the outlier. Every caller already
+knows the alignment it asked for: both `ArenaColumnStorage` free sites have `CACHE_LINE_ALIGN`
+in scope as a constant. The information was never missing, only dropped on the way down. Adding
+it to the signature aligns our contract with the allocator underneath rather than inventing a
+mechanism to recover what the caller could have said.
+---
+`MemoryProviderApi::deallocate` is documented as taking `align` alongside `ptr` and `len`, and
+the safety contract states that all three must match the values from the prior `allocate`. The
+prose names why: an implementation over a layout-taking allocator cannot free correctly without
+it, and a provider that ignores alignment (a bump arena) may simply not read the parameter.
+'''
+origin = "proposed"
+written_by = "doc changelist of round 202607192010 (2026-07-19), settling the question its topic reachable-bodies-contradicting-contracts left open, agent-written"
+standing = "provisional"
+subject = "memory"
+keywords = ["deallocate", "alignment", "MemoryProviderApi", "Layout", "std::alloc", "bump arena", "safety contract", "free site"]
+rules_out = ["requires only that `ptr` and `len` match a prior `allocate`"]
+cites = ["a_deallocation_is_given_the_same_alignment_as_its_allocation"]
