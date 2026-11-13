@@ -46,6 +46,7 @@ use crate::scheduler::BuildError;
 mod per_core;
 mod refusal;
 
+pub(crate) use per_core::accum_slice;
 pub use per_core::{CollectAccumCounts, MergeAccums, PerCoreCounts, RebaseBindings};
 pub use refusal::FirstRefusal;
 

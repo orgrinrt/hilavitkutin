@@ -950,7 +950,8 @@ back at every WU.
 ```rust
 pub trait MemoryProvider: Send + Sync {
  unsafe fn allocate(&self, len: usize, align: usize) -> *mut u8;
- unsafe fn deallocate(&self, ptr: *mut u8, len: usize);
+ unsafe fn deallocate(&self, ptr: *mut u8, len: usize,
+                      align: usize);
  unsafe fn protect(&self, ptr: *mut u8, len: usize,
  read: bool, write: bool);
 }
@@ -964,6 +965,18 @@ pub trait Clock: Send + Sync {
  fn now_ns(&self) -> u64;
 }
 ```
+
+`deallocate` takes the same `align` the matching `allocate` was given,
+alongside the same `ptr` and `len`. All three are part of the safety
+contract, not just the first two. An allocator underneath may require the
+full layout to free correctly (`std::alloc` does), and nothing at the free
+site can recover the alignment on its own: the caller is the only party
+that knows it. A provider whose free path ignores alignment, such as a
+bump arena, may simply not read the parameter.
+
+The hazard is concrete rather than theoretical. Column slabs are reserved
+at 64-byte alignment, so a provider left to guess a word would free every
+column with a mismatched layout.
 
 All consumed via monomorphisation. The Scheduler is generic over the
 platform types. Storing `dyn MemoryProvider` would violate the dyn

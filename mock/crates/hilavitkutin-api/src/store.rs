@@ -10,8 +10,8 @@ use core::marker::PhantomData;
 
 use arvo::Cap;
 
-use crate::column_value::ColumnValue;
 use crate::builder_input::{BuilderInput, StoreDispatch};
+use crate::column_value::ColumnValue;
 
 /// Singleton store: one value shared across the pipeline.
 #[repr(transparent)]
@@ -67,8 +67,8 @@ impl<T> StagedResource<T> {
 }
 
 impl<T: 'static> BuilderInput for StagedResource<T> {
-    type Init = T;
     type Dispatch = StoreDispatch<Resource<T>>;
+    type Init = T;
 }
 
 /// Collection store: N records per column, morsel-chunked.
@@ -97,8 +97,8 @@ impl<T> Column<T> {
 }
 
 impl<T: 'static> BuilderInput for Column<T> {
-    type Init = ();
     type Dispatch = StoreDispatch<Self>;
+    type Init = ();
 }
 
 impl<T> notko::HasTrivialCtor for Column<T> {
@@ -140,8 +140,8 @@ impl<T> Accum<T> {
 }
 
 impl<T: 'static> BuilderInput for Accum<T> {
-    type Init = ();
     type Dispatch = StoreDispatch<Self>;
+    type Init = ();
 }
 
 impl<T> notko::HasTrivialCtor for Accum<T> {
@@ -176,8 +176,8 @@ impl<T> Virtual<T> {
 }
 
 impl<T: 'static> BuilderInput for Virtual<T> {
-    type Init = ();
     type Dispatch = StoreDispatch<Self>;
+    type Init = ();
 }
 
 impl<T> notko::HasTrivialCtor for Virtual<T> {
@@ -274,4 +274,3 @@ impl<H, T: StoreBundle> StoreBundle for Cons<H, T> {}
     note = "Mark the type with `impl Replaceable for {Self} {{}}` to opt in. Replaceable is intentionally explicit: stores omitted from the replacement set are stable for plan-time analysis."
 )]
 pub trait Replaceable {}
-
