@@ -119,6 +119,30 @@ commit = "error"
 build = "error"
 push = "error"
 
+# A frozen crate is written as a consumer would write it: no feature gate and
+# no raised recursion limit, each of which would hide what the contracts make
+# an author do. A frozen crate also changes only through its ledger: every
+# file of the crate, its manifest and build script included, has a line with
+# its current hash, and its manifest names no dependency but the contracts.
+# Repo lints, `mock/lints/`, bound to the frozen authors crate alone.
+[lints.frozen-no-feature-gate]
+commit = "error"
+build = "error"
+push = "error"
+crates = ["hilavitkutin-frozen-authors"]
+
+[lints.frozen-no-recursion-limit]
+commit = "error"
+build = "error"
+push = "error"
+crates = ["hilavitkutin-frozen-authors"]
+
+[lints.frozen-ledger]
+commit = "error"
+build = "error"
+push = "error"
+crates = ["hilavitkutin-frozen-authors"]
+
 # Advisory: vocabulary terms are common English words; warn everywhere,
 # never block. Author suppresses with `// lint:allow(vocabulary-discipline)`.
 [lints.vocabulary-discipline]
