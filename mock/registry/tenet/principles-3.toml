@@ -418,3 +418,21 @@ subject = "principles"
 keywords = ["lint allow", "rustfmt::skip", "same-line requirement", "opening brace", "strict gate", "decorative allow", "formatter"]
 rules_out = ["the rule as written cannot be satisfied without #[rustfmt::skip] or a change to the rule", "nothing was wrongly suppressed"]
 cites = ["the_lint_allow_escape_hatch_is_for_a_genuinely_unavoidable_boundary_and_always_carries_a_tracked_remediation_task"]
+
+[[tenet]]
+id = "hilavitkutin_is_for_millions_of_simulation_and_crunching_work_data_going_constantly_and_one_to_four_morsels_is_almost_never_its_case"
+what = "hilavitkutin is intended for the cases that have millions of simulation and crunching work data going constantly. A workload of one to four morsels is almost never a realistic use case for it in the first place, and the benches should reflect that better."
+because = "The maintainer said it on the convergence bench's short-fiber result, that below one to four morsels no parallel arm beats the sequential frame."
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS-20.md:3-6"
+provenance = ["mock::research::202611130850_the-record-read-whole::OP-ANSWERS-20::#op-answers-20-13-november-about-12-20-utc-what-hilavitkutin-is-for-and-its-benches"]
+quote = '''
+Op, verbatim, on the convergence bench's short-fiber result (below one to four morsels no parallel arm beats the sequential frame):
+
+"Yeah hilavitkutin is intended for the cases that have millions of simulation and crunching work data going constantly. So 1-4 morsels is almost never a realistic use case for hilavitkutin in the first place
+I think our benches should perhaps better reflect that"
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["intended workload", "millions of records", "one to four morsels", "short fiber", "small workload", "bench scope", "convergence bench", "sequential frame"]
+related = ["tenet::below_ten_thousand_records_execution_is_sequential_and_above_one_hundred_thousand_threading_is_always_considered", "tenet::the_dispatch_form_depends_on_the_record_count_below_or_above_ten_thousand", "tenet::the_dispatch_approach_is_chosen_by_record_count_between_fiber_level_trunk_level_and_whole_schedule_functions", "tenet::the_per_project_defaults_are_sequential_for_polka_dots_mixed_for_saalis_and_phased_with_convergence_for_loimu", "tenet::no_single_scheduling_strategy_dominates_and_the_best_depends_on_compute_balance_phase_topology_and_record_count", "tenet::the_strategy_is_selected_at_plan_time_from_estimated_compute_weights_and_a_wrong_pick_costs_about_ten_to_twenty_percent", "question::which_convergence_a_single_trunk_phase_uses", "question::whether_the_default_wake_is_the_spin_then_park_hybrid_of_the_spec_or_park_immediately_ruled_by_the_wake_bench"]
