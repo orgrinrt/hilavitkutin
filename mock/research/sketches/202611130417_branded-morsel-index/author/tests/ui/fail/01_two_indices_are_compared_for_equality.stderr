@@ -1,0 +1,13 @@
+error[E0369]: binary operation `==` cannot be applied to type `engine::Index<'_>`
+  --> tests/ui/fail/01_two_indices_are_compared_for_equality.rs:16:34
+   |
+16 |                 let got = (probe == probe) as i64;
+   |                            ----- ^^ ----- engine::Index<'_>
+   |                            |
+   |                            engine::Index<'_>
+   |
+note: `engine::Index<'_>` does not implement `PartialEq`
+  --> $WORKSPACE/engine/src/index.rs
+   |
+   | pub struct Index<'b> {
+   | ^^^^^^^^^^^^^^^^^^^^ `engine::Index<'_>` is defined in another crate

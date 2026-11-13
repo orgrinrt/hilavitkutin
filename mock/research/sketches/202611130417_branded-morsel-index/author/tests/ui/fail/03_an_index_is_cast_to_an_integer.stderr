@@ -1,0 +1,5 @@
+error[E0605]: non-primitive cast: `engine::Index<'_>` as `usize`
+  --> tests/ui/fail/03_an_index_is_cast_to_an_integer.rs:16:27
+   |
+16 |                 let got = probe as usize as i64;
+   |                           ^^^^^^^^^^^^^^ an `as` expression can only be used to convert between primitive types or to coerce to a specific trait object
