@@ -20,7 +20,6 @@
 use core::mem::offset_of;
 
 #[derive(Copy, Clone)]
-#[allow(dead_code)]
 struct Cell {
     fill:      u32,
     discharge: i16,
@@ -31,7 +30,6 @@ struct Cell {
 
 #[derive(Copy, Clone)]
 #[repr(C)]
-#[allow(dead_code)]
 struct CellC {
     fill:      u32,
     discharge: i16,
@@ -58,5 +56,36 @@ fn main() {
         offset_of!(CellC, flags),
         offset_of!(CellC, tag),
         size_of::<CellC>()
+    );
+
+    // Inside one image the layout always agrees with itself: a cell written
+    // and read back field by field round-trips, whichever field order this
+    // compilation chose. The disagreement shows only across two images.
+    let cell = Cell {
+        fill:      7,
+        discharge: -3,
+        heat:      200,
+        flags:     5,
+        tag:       0xFEED,
+    };
+    let cell_c = CellC {
+        fill:      7,
+        discharge: -3,
+        heat:      200,
+        flags:     5,
+        tag:       0xFEED,
+    };
+    println!(
+        "same image read back: Cell {} {} {} {} {:#x}, CellC {} {} {} {} {:#x}",
+        cell.fill,
+        cell.discharge,
+        cell.heat,
+        cell.flags,
+        cell.tag,
+        cell_c.fill,
+        cell_c.discharge,
+        cell_c.heat,
+        cell_c.flags,
+        cell_c.tag
     );
 }
