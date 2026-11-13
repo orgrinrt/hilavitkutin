@@ -52,6 +52,7 @@ The paragraph keeps what the previous round said about the executor owning the t
 origin = "proposed"
 written_by = "topic of round 202609191001 'the second review of the arvo-dev review fixes' and its doc changelist, 2026-09-19, agent-written"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "execution"
 keywords = ["thread count", "parallelisable width", "convergence worker", "closures handed out", "runnable worker count", "consumer executor", "deleted rule"]
 cites = ["the_closures_handed_out_number_the_smaller_of_the_clamped_worker_count_and_the_parallelisable_width_plus_the_convergence_worker", "the_thread_count_is_the_smaller_of_the_physical_cores_and_the_parallelisable_width_plus_one", "op_ruled_that_the_consumer_supplies_the_os_thread_executor_and_the_engine_ships_only_the_executor_contract"]
@@ -74,6 +75,7 @@ The sentence "The engine does not honour this yet: it hands out one closure per 
 origin = "proposed"
 written_by = "topic of round 202609191001 and doc changelist of round 202609191201, 2026-09-19, agent-written"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "execution"
 keywords = ["thread count", "FIXME", "gate2_worker_count", "run_parallel", "implementation status", "catalogue test", "one closure per worker"]
 rules_out = ["the thread-count paragraph ending on the engine's current status"]
@@ -159,6 +161,7 @@ After the paragraph on within-fiber fusion, a paragraph says that `FuseCarrier` 
 origin = "proposed"
 written_by = "topics of rounds 202611130044 'suite-can-fail-review-fixes' and 202611130058 'suite-can-fail-second-review', 2026-11-13, agent-written, answering review passes"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "execution"
 keywords = ["run_fused", "RecordOp", "accumulator append", "silently dropped", "reset_accumulators", "fused chain", "ticket 0fb716c5a463", "H25"]
 rules_out = ["appends cannot reach the fused entry"]
@@ -188,6 +191,7 @@ quote = '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 4 dispatch codegen, Axis A of the decision log dated 2026-05-10, agent-written; the text does not say whose decision it is"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "execution"
 keywords = ["DispatchCodegen", "StandardCodegen", "TAIT", "CoreDispatch", "sealed trait", "Axis A", "A3", "build_plan"]
 cites = ["dispatch_code_generation_is_a_sealed_trait_with_one_shipped_implementation_and_three_dispatch_approaches"]
@@ -205,6 +209,7 @@ quote = '''
 origin = "proposed"
 written_by = "design round 202605101036, topic 4 dispatch codegen, Axis B of the decision log dated 2026-05-10, agent-written; the text does not say whose decision it is"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "execution"
 keywords = ["MonoTuple", "TrunkMega", "ScheduleMega", "IndirectPerFiber", "DispatchApproach", "non_exhaustive", "Approach C", "backlog"]
 rules_out = ["Topic 3's current `enum DispatchApproach { IndirectPerFiber, TrunkMega, ScheduleMega }` is semantically wrong"]
@@ -271,6 +276,7 @@ The ASM verification checklist (Topic 3 axis F + Topic 4) gains a sixth check, s
 origin = "proposed"
 written_by = "design round 202605101036, topic 3 plan algorithm chain, invariant S3 corrected per audit-2 C1, dated 2026-05-10, agent-written; the text does not say whose decision it is"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "execution"
 keywords = ["dmb ishst", "sfence", "stnp", "progress counter", "Release store", "S3", "non-temporal store", "ASM checklist"]
 rules_out = ["Earlier draft said \"the fence lowers to `sfence`\" on x86 — that's wrong; `fence(Release)` is a no-op on x86.", "Earlier draft also said `dmb st` on aarch64 — that's local-PE-only and insufficient for cross-core observation"]
@@ -315,6 +321,7 @@ A9 ("post-build Scheduler is ZST, no type params") relaxes slightly: one phantom
 origin = "proposed"
 written_by = "design round 202605101036, topic 1 scheduler run signature, section on the scheduler type after build, dated 2026-05-10, agent-written; the text does not say whose decision it is"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "execution"
 keywords = ["Scheduler", "ZST", "PhantomData", "run-cfg handle", "A9", "type parameter", "post-build"]
 cites = ["the_run_returns_the_foundation_outcome_type_chosen_by_the_run_configuration_and_the_pipeline_result_enum_is_retired"]
@@ -329,7 +336,9 @@ quote = '''
 Re-point `Scheduler::run` through const-gated per-trunk dispatch: a flat walk over the `WuVals` carrier where each position is gated by `const { phase_of(POS) == PHASE && trunk_of(POS) == TRUNK }`, member positions delegating to the shipped `RunFiber` per-unit projection, so dead-code elimination collapses the walk into one member-only program per `(phase, trunk)`. Single-core, output-equivalent to the current flat `RunFiber::run` walk, `#664` no-regress. This establishes the per-trunk dispatch structure (op's correction: trunks established before parallelism); G2-N core-pins one trunk per core onto the shipped pool in a following round.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: mock/design_rounds/202606071100/202606071100_topic.gate2-const-gated-dispatch.md:10-10", "quote: mock/research/202606071200_gate2-carrier-mechanism-fork.md:45-45"]
 subject = "execution"
 keywords = ["trunks before parallelism", "per-trunk dispatch", "core pinning", "G2-N", "op's correction", "const-gated dispatch"]
 
@@ -371,6 +380,7 @@ Consequence for the build: `RunFiber` is reused verbatim (member execution). The
 origin = "proposed"
 written_by = "design round 202606070900, topic GATE-2 const grouping from the registered bundle, reconciliation section, dated 2026-06-07, agent-written; the text says the round is under an op mandate but does not say the reconciliation is op's ruling"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "execution"
 keywords = ["flat carrier", "const gate", "phase_of", "trunk_of", "RunFiber", "nested carrier superseded", "DCE", "member-only program"]
 rules_out = ["The value-carrier walks `RunTrunk` / `RunPhase` / `RunPipeline` and the `FiberCons` / `TrunkCons` / `PhaseCons` carriers are superseded by the flat-carrier const-gate for trunk isolation; they are not extended by this arc."]
@@ -388,6 +398,7 @@ Re-point `Scheduler::run` through const-gated per-trunk dispatch: a flat walk ov
 origin = "proposed"
 written_by = "design round 202606071100, topic GATE-2 const-gated trunk dispatch and Scheduler::run re-point, round 2, dated 2026-06-07, agent-written; the text says the round is under an op mandate"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "execution"
 keywords = ["const-gated dispatch", "Scheduler::run", "WuVals", "RunFiber", "phase_of", "trunk_of", "single-core", "per-trunk program"]
 cites = ["trunk_isolation_comes_from_a_flat_carrier_walk_gated_by_const_phase_and_trunk_and_the_nested_value_carriers_are_superseded"]
@@ -455,6 +466,7 @@ trunk-level core mask.
 '''
 origin = "stated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "execution"
 keywords = ["runtime mask", "run_gated", "core ownership", "RunGatedTrunk", "bench-first runtime mask", "R4a", "N-core dispatch", "plan::grouping"]
 rules_out = ["The const-gated mono ENUMERATION (`run_one_trunk` / `RunGatedTrunk`) is superseded by op's runtime-mask choice"]

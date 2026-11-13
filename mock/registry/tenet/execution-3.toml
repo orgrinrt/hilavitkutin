@@ -19,7 +19,9 @@ All 26 dispatch functions in the bench pass all 5 checks (T6
 L3888-3903). Zero hidden pathologies.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1636-1645"]
 subject = "execution"
 keywords = ["ASM verification", "blr", "indexed addressing", "immediate constant", "inner loop", "fiber dispatch", "checklist", "26 dispatch functions"]
 
@@ -33,7 +35,9 @@ quote = '''
   entirely by T2 §7 external progress tracking
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1648-1649"]
 subject = "execution"
 keywords = ["inline fences", "branch prediction", "external progress tracking", "superseded", "T2 §7"]
 
@@ -47,7 +51,9 @@ quote = '''
   dispatch
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1650-1651"]
 subject = "execution"
 keywords = ["dispatch table", "monomorphised tuple dispatch", "superseded", "T6"]
 
@@ -65,7 +71,9 @@ quote = '''
   bench findings (1.17x overhead unacceptable)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1553-1555", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1653-1654"]
 subject = "execution"
 keywords = ["Approach C", "superseded", "approach D", "approach E", "1.17x overhead", "indirect per-fiber"]
 
@@ -79,7 +87,9 @@ quote = '''
 See domain 11 (cache hierarchy, tiling, and phase decomposition).
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1673-1674"]
 subject = "execution"
 keywords = ["phase decomposition", "domain 18", "domain 11", "cache hierarchy", "tiling", "merged"]
 
@@ -106,7 +116,9 @@ The stack-local caching pattern handles this naturally — each thread's
 snapshot is independent. Detection at plan time from WU metadata:
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1750-1760", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1762-1763"]
 subject = "execution"
 keywords = ["resource accumulation", "head and tail convergence", "stack-local accumulator", "additive", "non-commutative", "sequential fallback", "ru", "rw"]
 cites = ["a_single_trunk_phase_runs_head_and_tail_convergence_with_two_threads_from_opposite_ends", "a_unit_declares_whether_it_is_commutative"]
@@ -124,7 +136,9 @@ fiber has resource accumulation. If the accumulation is non-commutative
 (domain 08), skip convergence.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1762-1766"]
 subject = "execution"
 keywords = ["resource accumulation detection", "plan time", "unit metadata", "read and write the same resource", "skip convergence", "commutativity"]
 
@@ -151,7 +165,9 @@ Core assignment:
   with even distribution)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1810-1823"]
 subject = "execution"
 keywords = ["heterogeneous cores", "P-cores", "E-cores", "core assignment", "critical path", "morsel size per core", "core type detection"]
 cites = ["hardware_is_detected_once_at_startup_with_a_fallback_of_a_thirty_two_kilobyte_l1_and_one_core"]
@@ -168,7 +184,9 @@ Bench: 8 threads (4P+4E) is WORSE than 4 threads (4P only) on M1
 width + 1) — the "+1" is the chaser/convergence thread.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1825-1827"]
 subject = "execution"
 keywords = ["thread count", "physical cores", "parallelisable width", "chaser thread", "convergence thread", "M1", "4P+4E"]
 
@@ -183,7 +201,9 @@ for spawn/join strategies). At 2K records, spawn/join was 2.33x worse;
 the pool is 0.93x (7% faster than sequential).
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1806-1808"]
 subject = "execution"
 keywords = ["thread pool", "crossover", "small-N catastrophe", "2K records", "spawn/join", "0.93x", "2.33x"]
 cites = ["the_thread_pool_is_pre_allocated_and_wakes_by_spinning_first_and_then_parking"]
@@ -203,7 +223,9 @@ phases: all phases active simultaneously, each processing a different
 record window.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1847-1853"]
 subject = "execution"
 keywords = ["pipeline parallelism", "phase overlap", "progress counters", "fill latency", "record window", "AtomicUsize"]
 
@@ -223,7 +245,9 @@ Executor via the Executor trait. The library provides the deterministic
 one.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1868-1874"]
 subject = "execution"
 keywords = ["work-stealing", "deterministic morsel assignment", "Executor trait", "pre-partitioned", "no fetch_add", "imbalance"]
 
@@ -240,7 +264,9 @@ quote = '''
 pipeline — 0.0006%). Negligible. Pre-allocated pool eliminates it.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1876-1879"]
 subject = "execution"
 keywords = ["thread spawn overhead", "malloc", "pre-allocated pool", "negligible", "0.0006%"]
 
@@ -255,7 +281,9 @@ Best total wall time depends on compute balance, phase topology,
 and record count.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1902-1904"]
 subject = "execution"
 keywords = ["scheduling strategy", "no dominant strategy", "compute balance", "phase topology", "record count", "wall time"]
 
@@ -271,7 +299,9 @@ quote = '''
 - \>100K: always consider threading
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1906-1909"]
 subject = "execution"
 keywords = ["record count thresholds", "sequential", "10K records", "100K records", "thread overhead", "pipeline shape"]
 
@@ -295,7 +325,9 @@ L2283-2355): 7-fiber deep pipeline → threading adds 1.03-1.05x
 overhead. Serial dependency depth is a fundamental limit.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1911-1921"]
 subject = "execution"
 keywords = ["pipeline shape", "wide", "deep", "mixed", "adaptive", "pipe-chase", "phased", "sequential", "serial dependency depth"]
 
@@ -318,7 +350,9 @@ based on that phase's topology:
 This is not a global heuristic. Each phase is evaluated independently.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1923-1932"]
 subject = "execution"
 keywords = ["per-phase config", "MAX_FUSE", "BALANCED", "MAX_SPLIT", "mega-trunk", "head+tail convergence", "independent evaluation"]
 
@@ -360,7 +394,9 @@ Asymmetric workloads amplify chase+steal: L-H gives 0.34x (66%
 faster with 2 threads).
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1934-1962"]
 subject = "execution"
 keywords = ["plan-time strategy selection", "compute weight", "ChaseSteal", "Adaptive", "PipeChase", "Sequential", "LIGHT_THRESHOLD", "wrong selection"]
 
@@ -378,7 +414,9 @@ Budget mainly matters for game loops with time budgets. For batch
 pipelines (polka, saalis): irrelevant.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1972-1977"]
 subject = "execution"
 keywords = ["frame budget", "incrementality", "game loops", "batch pipelines", "adaptive ignores budget", "throughput"]
 
@@ -400,7 +438,9 @@ core's remaining work:
 Wrong prediction costs at most one park/unpark cycle (~1µs).
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2050-2058"]
 subject = "execution"
 keywords = ["predictive parking", "sync points", "spin", "spin_loop", "thread::park", "backoff", "wait estimate"]
 
@@ -416,7 +456,9 @@ quote = '''
   waker/WakeSlot concept needed.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2295-2297"]
 subject = "execution"
 keywords = ["waker", "WakeSlot", "hybrid wake", "spin 128", "park", "resolved"]
 
@@ -430,7 +472,9 @@ quote = '''
 9. **MIN_MORSEL** → configurable, not a design decision. Domain 12.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2327-2327"]
 subject = "execution"
 keywords = ["MIN_MORSEL", "configurable", "morsel size", "not a design decision"]
 
@@ -447,7 +491,9 @@ quote = '''
     already prevents false sharing via morsel boundary alignment).
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2369-2373"]
 subject = "execution"
 keywords = ["Apple 128B DMA", "dismissed", "64B alignment", "false sharing", "morsel boundary alignment", "SoC prefetch"]
 
@@ -462,7 +508,9 @@ There is no separate "single-core" or "single-threaded" engine, run, or dispatch
 Single-core mode is therefore never special-cased against multi-core mode in code. Both use the identical computations, calculations, and the identical per-core-program dispatch; both strive for the best possible sequence and parallelised core programs within their given config. "Sequential" is a per-phase strategy the plan may select (consolidation spec `:1916-1956`), not a separate engine.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["ruled: mock/research/202606061000_canon-amendment-unified-engine.md:1-3", "ruled: mock/research/202606061000_canon-amendment-unified-engine.md:7-9"]
 subject = "execution"
 keywords = ["unified engine", "core count", "configuration", "single-core", "no special case", "sequential strategy", "per-core program"]
 rules_out = ["a separate single-core engine or dispatch path"]

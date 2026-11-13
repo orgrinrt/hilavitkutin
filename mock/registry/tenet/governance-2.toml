@@ -18,6 +18,7 @@ The standalone spec `202606111800` is a reading aid outside the chain.
 origin = "proposed"
 written_by = "addendum A2 of 2026-07-19, its closing section on the registry state after A2; the text does not say whether the maintainer ruled the listing himself"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "governance"
 keywords = ["amendment chain", "registry state", "storage addendum", "standalone spec", "reading aid", "r3", "r4", "r5", "fairness"]
 cites = ["the_unified_engine_amendment_is_registered_in_the_amendment_chain_by_its_date", "the_record_s_precedence_is_the_founding_spec_then_dated_amendments_then_the_reading_aid_then_the_rest"]
@@ -39,7 +40,9 @@ registered chain stand unchanged.
 '''
 origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["ratified-elsewhere: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:10-13", "ratified-elsewhere: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:23-36"]
 subject = "governance"
 keywords = ["addendum A1", "amendment to canon", "intermediate round", "locked", "consolidation spec", "effective design", "silent"]
 
@@ -67,6 +70,7 @@ has a single authoritative pointer.
 origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "governance"
 keywords = ["addendum A1", "reconciliation", "amendment chain", "single pointer", "GATE-2", "shipped reality", "rulings"]
 cites = ["addendum_a1_is_an_amendment_to_canon_and_where_it_is_silent_the_spec_and_registered_chain_stand"]
@@ -122,6 +126,7 @@ quote = '''
 origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "governance"
 keywords = ["r2", "supersedes", "fiber grouping", "E0119", "specialization", "C3", "Approach-2", "arena-layout"]
 rules_out = ["type-level auto-derived fiber grouping", "r1 Phase D and C3 as they stood"]
@@ -140,6 +145,7 @@ quote = '''
 origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "governance"
 keywords = ["r4", "nested carrier", "const-eval grouping", "const-gated DCE", "G2-0c", "r3", "replaces"]
 rules_out = ["r3's G2-0c nested-carrier type construction"]
@@ -158,6 +164,7 @@ quote = '''
 origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "governance"
 keywords = ["fairness correction", "parallel arm", "baseline", "multi-threaded std", "3.5x", "parity", "superseded"]
 rules_out = ["the earlier 3.5x claim"]
@@ -176,6 +183,7 @@ quote = '''
 origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "governance"
 keywords = ["r5", "state map", "overview", "deviation ledger", "corrections"]
 cites = ["the_effective_canon_is_the_consolidation_spec_as_modified_in_order_by_seven_registered_amendments"]
@@ -196,6 +204,7 @@ quote = '''
 origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "governance"
 keywords = ["round-level amendments", "ColumnValue", "arvo-graph", "GateWith", "MetaBlock", "run_parallel", "clock slot", "EMA"]
 cites = ["the_effective_canon_is_the_consolidation_spec_as_modified_in_order_by_seven_registered_amendments"]
@@ -216,7 +225,9 @@ live 2026-06-11: the standalone is written "fully self-contained, readable with 
 project knowledge ... superseding the need to cross-read the chain registered above." The
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:15-19", "quote: mock/research/202606111400_canonical-design-addendum-a1.md:205-208"]
 subject = "governance"
 keywords = ["standalone spec", "self-contained", "notko", "arvo", "attachments", "cross-read", "commission"]
 cites = ["the_standalone_spec_s_claim_to_win_conflicts_exceeds_its_commission"]
@@ -243,6 +254,7 @@ quote = '''
 origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "governance"
 keywords = ["sequence", "feasibility sketches", "chart-the-path", "roadmap", "completion arc", "standalone", "build work resumes"]
 cites = ["a_new_standalone_canonical_spec_is_written_self_contained_and_spares_cross_reading_the_chain"]
@@ -257,7 +269,9 @@ quote = '''
 **Status: CANON. Authority: op (O. R. Toimela), 2026-06-06, explicit ruling.** This is not a proposal or a research finding to be weighed; it is an authoritative addition to the canonical hilavitkutin design, made by op under op's authority. It has the same standing as the consolidation spec (`mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md`). Where any intermediate artifact (build-plan memo, audit, design rounds, DESIGN.md.tmpl, agent memory) conflicts with this, this wins.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["ruled: mock/research/202606061000_canon-amendment-unified-engine.md:3-3", "later: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:27-46, the_unified_engine_amendment_carries_authority_over_intermediate_artifacts_and_the_standalone_carries_none"]
 subject = "governance"
 keywords = ["canon amendment", "unified engine", "authority", "same standing", "intermediate artifacts", "explicit ruling", "2026-06-06"]
 cites = ["the_engine_is_one_and_the_core_count_is_configuration"]
@@ -276,6 +290,7 @@ The consolidation spec is a locked, archived design round; it cannot be edited i
 origin = "proposed"
 written_by = "canon amendment of 2026-06-06 on the unified engine, the working out under the maintainer's ruling, written in the first person by an author the text does not name"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "governance"
 keywords = ["fold-in", "locked spec", "archived round", "canon-amendment mechanism", "#667", "authoritative record"]
 cites = ["the_unified_engine_amendment_is_canon_with_the_standing_of_the_consolidation_spec_and_wins_over_intermediate_artifacts"]
@@ -294,6 +309,7 @@ quote = '''
 origin = "proposed"
 written_by = "canon amendment of 2026-06-06 on the unified engine, the working out under the maintainer's ruling, written in the first person by an author the text does not name"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "governance"
 keywords = ["build-plan memo", "single-core-correct first", "correctness oracle", "drift", "unified engine", "202605282100"]
 rules_out = ["a distinct single-core build"]
@@ -340,6 +356,7 @@ inline.
 origin = "proposed"
 written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "governance"
 keywords = ["declined", "durability of canon", "medium", "seed", "registry regime", "audited synthesis", "normative spec"]
 cites = ["the_swap_specification_is_a_draft_that_becomes_the_ruling_source_for_the_swap_rows_once_the_maintainer_ratifies_it"]
@@ -364,6 +381,7 @@ ignore reason. The S2 signature correction additionally touches
 origin = "proposed"
 written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: a passage shows part of it to be his and not the whole of it (mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:75-94; mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:55-62), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "governance"
 keywords = ["refuted language", "member-by-member", "DESIGN template", "replace_value FIXME", "ignore reason", "implementing round", "#696"]
 cites = ["two_shipped_rounds_cited_an_expert_input_memo_as_if_it_were_the_storage_addendum", "the_commissioned_swap_round_also_corrects_the_artifacts_grounded_on_the_mis_citation"]
@@ -382,7 +400,9 @@ absorbing the A2-3 `PlanAffecting` ruling, #696)
 until the spec was implemented and benched; this memo is that evidence.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: mock/research/202607201100_swap-semantics-ratification-evidence.md:4-8", "quote: mock/design_rounds/202607200900/202607200500_topic.replaceable-swap-semantics.md:5-5"]
 subject = "governance"
 keywords = ["ratification held", "swap spec", "implemented and benched", "evidence", "S1 to S7", "#697", "#696"]
 cites = ["the_swap_specification_is_a_draft_that_becomes_the_ruling_source_for_the_swap_rows_once_the_maintainer_ratifies_it"]
@@ -428,6 +448,7 @@ directly), PR #271 (the builtin bench-and-sketch rule), PR #278
 origin = "proposed"
 written_by = "memo on swap semantics, implementation and bench evidence for ratification, 2026-07-19, round 202607200500 (#697); the text does not name its author"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "governance"
 keywords = ["mockspace dev", "bench framework", "PR #269", "PR #270", "timed!", "PR #271", "subprocess validation", "transactional results"]
 
@@ -449,6 +470,7 @@ cross-read to know what the engine is supposed to be.
 origin = "proposed"
 written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "governance"
 keywords = ["seed", "effective engine canon", "self-contained", "amendment chain applied once", "superseded left out", "consolidation spec", "2026-07-19"]
 cites = ["the_record_s_precedence_is_the_founding_spec_then_dated_amendments_then_the_reading_aid_then_the_rest"]
@@ -465,6 +487,7 @@ pass runs on the candidate registry after drain.
 origin = "proposed"
 written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "governance"
 keywords = ["second verification pass", "candidate registry", "drain", "seed", "freeze"]
 cites = ["the_seed_freeze_is_gated_in_order_by_the_collection_pass_the_open_question_batch_the_verification_passes_and_the_manifest_declaration"]

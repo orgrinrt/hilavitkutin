@@ -10,7 +10,9 @@ quote = '''
 - evict/dump + inject/import column data APIs (R2)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:579-579"]
 subject = "persistence"
 keywords = ["evict", "dump", "inject", "import", "column data", "R2", "persistence"]
 cites = ["change_detection_is_per_morsel_and_skips_what_is_unchanged"]
@@ -72,6 +74,7 @@ Reusable across hilavitkutin ecosystem.
 origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "persistence"
 keywords = ["hilavitkutin-persistence", "hot-cold bridge", "consumer-agnostic", "no domain knowledge", "no_std", "reusable", "cold store"]
 cites = ["the_ecosystem_crates_are_standalone_and_consumers_opt_into_them"]
@@ -101,6 +104,7 @@ provides the ColumnStorage interface.
 origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: a passage shows part of it to be his and not the whole of it (.data/op-responses/202609181645_hila-std-tier-persistence.md:31-43; mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2406-2414), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "persistence"
 keywords = ["evict", "inject", "ColumnStorage", "raw column data", "no engine dependency", "MemoryProviderApi", "hilavitkutin-str", "R2"]
 cites = ["column_data_moves_out_of_and_into_the_engine_through_evict_dump_and_inject_import"]
@@ -128,6 +132,7 @@ Everything crosses hot↔cold via rkyv `Archive` trait.
 origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "persistence"
 keywords = ["rkyv", "Archive", "serialisation boundary", "MemoryProvider", "no alloc", "file-backed round", "skeleton"]
 
@@ -146,6 +151,7 @@ archive as themselves. `type Archived = Self`. Zero overhead.
 origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "persistence"
 keywords = ["ColumnValue", "Archived", "identity archive", "zero overhead", "standard types", "rkyv"]
 
@@ -184,6 +190,7 @@ Sequential ID = ephemeral session-level identity.
 origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "persistence"
 keywords = ["Str", "content hash", "FNV", "ContentHash", "Bits<28>", "const/runtime flag", "session-specific handle", "evict inject", "intern"]
 
@@ -214,6 +221,7 @@ is a single masked cast; no format change.
 origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "persistence"
 keywords = ["disk-layout types", "rkyv ABI", "Archived", "byte layout", "pinned", "masked cast", "ContentHash"]
 
@@ -251,6 +259,7 @@ impl Archive directly. Same mechanism, no new traits.
 origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "persistence"
 keywords = ["Archive", "custom serialisation", "consumer types", "extending", "no new traits"]
 
@@ -278,6 +287,7 @@ search indices, warmup manifests, etc.).
 origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "persistence"
 keywords = ["cold store", "file layout", "data_dir", "manifest.rkyv", "tables", "runtime.rkyv", "locale overlays", "search indices", "warmup manifests"]
 
@@ -311,6 +321,7 @@ mmap.rkyv file (via MemoryProvider)
 origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "persistence"
 keywords = ["evict", "inject", "hot to cold", "cold to hot", "zero-copy", "mmap", "PersistenceContext", "pointer handoff", "ColumnStorage"]
 cites = ["column_data_moves_out_of_and_into_the_engine_through_evict_dump_and_inject_import"]
@@ -333,6 +344,7 @@ when to flush:
 origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "persistence"
 keywords = ["flush", "dirty_set", "load", "snapshot", "mechanism not policy", "consumer decides", "cold store"]
 
@@ -353,6 +365,7 @@ quote = '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "persistence"
 keywords = ["SIEVE", "SieveCache", "eviction", "TableId", "SegmentRange", "EvictionWeight", "byte size weight"]
 
@@ -368,6 +381,7 @@ hot store is fully reconstructable from cold store files.
 origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "persistence"
 keywords = ["dirty flush before eviction", "invariant", "reconstructable", "hot store", "cold store", "SIEVE"]
 
@@ -386,6 +400,7 @@ The consumer provides:
 origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "persistence"
 keywords = ["memory budget", "budget phase changes", "eviction granularity", "consumer provides", "hot store RAM", "game launch"]
 
@@ -410,6 +425,7 @@ Sequential ID = ephemeral session-level identity.
 origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "persistence"
 keywords = ["string table persistence", "runtime.rkyv", "content hash", "sequential ID", "const table", "linker section", "StringTable"]
 
@@ -451,5 +467,6 @@ All rkyv-archived. Consumer extends with domain-specific metadata
 origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "persistence"
 keywords = ["Manifest", "TableMeta", "SchemaVersion", "ColumnCount", "BufferOffset", "BufferLen", "BitWidth", "name_hash", "schema versions", "migration state"]

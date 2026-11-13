@@ -14,7 +14,9 @@ quote = '''
   progress counters (plain store/load, not RMW).
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1629-1634"]
 subject = "principles"
 keywords = ["lock-free", "static dispatch table", "one-writer-N-readers", "no CAS", "library guarantee", "Executor", "progress counters"]
 
@@ -35,7 +37,9 @@ instantiations, associated-const indirection, alternative bound layering)
 before more code accretes on the fixed sizes. Documented fixed caps remain
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["ruled: mock/research/202606111400_canonical-design-addendum-a1.md:47-47", "ruled: mock/research/202606111400_canonical-design-addendum-a1.md:59-70"]
 subject = "principles"
 keywords = ["caps", "GATE2_MAX_UNITS", "MAX_CORES", "generic_const_exprs", "cap-lifting", "consumer-tunable", "defaults not policy", "A1-2"]
 
@@ -50,7 +54,9 @@ acceptable only as the proven-infeasible fallback, each carrying a tracked
 lift condition.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["ruled: mock/research/202606111400_canonical-design-addendum-a1.md:47-47", "ruled: mock/research/202606111400_canonical-design-addendum-a1.md:59-70"]
 subject = "principles"
 keywords = ["fixed caps", "fallback", "proven infeasible", "lift condition", "A1-2"]
 cites = ["caps_are_defaults_and_never_policy_so_a_sketch_arc_looks_for_cap_lifting_shapes_now"]
@@ -76,7 +82,9 @@ no-legacy-shims rule applying at that point. The inventory above is the
 checklist those slices consult.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["ruled: mock/research/202606111400_canonical-design-addendum-a1.md:47-47", "ruled: mock/research/202606111400_canonical-design-addendum-a1.md:93-100"]
 subject = "principles"
 keywords = ["dead weight", "topo_order", "PlanCache", "CoreProgram", "RecommendedOrder", "AdaptMode", "no-legacy-shims", "A1-4"]
 
@@ -118,6 +126,7 @@ incidental.
 origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, constraint note 1, agent-written, elevated to canon by the addendum"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "principles"
 keywords = ["N-way partition", "heterogeneous carrier", "specialization", "const-gated DCE", "flat carrier", "const evaluation", "r4"]
 rules_out = ["partition in the carrier type"]
@@ -137,6 +146,7 @@ quote = '''
 origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, constraint note 2, agent-written, elevated to canon by the addendum"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "principles"
 keywords = ["type-keyed projection", "index witness", "Here", "There", "Selector", "heterogeneous list", "specialization"]
 rules_out = ["type-equality specialization"]
@@ -156,6 +166,7 @@ quote = '''
 origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, constraint note 3, agent-written, elevated to canon by the addendum"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "principles"
 keywords = ["generic_const_exprs", "generic constants", "inline const blocks", "IsRoot", "PhaseAt", "caps", "ceilings"]
 cites = ["caps_are_defaults_and_never_policy_so_a_sketch_arc_looks_for_cap_lifting_shapes_now"]
@@ -175,7 +186,9 @@ aren't crate attributes first, they're the universe. `Vec`, `Box`,
 `Rc`, `Arc`, `HashMap`, `String`, `format!` don't exist here.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:5-10"]
 subject = "principles"
 keywords = ["no heap", "no alloc", "no_std", "scheduler-managed allocation", "compile time", "Vec", "Box", "HashMap"]
 cites = ["hilavitkutin_does_not_use_the_alloc_crate_and_dynamic_storage_goes_through_slab_columns_or_stack_arrays"]
@@ -193,7 +206,9 @@ store. The heap is not temporarily available; there is no "just for
 this moment".
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:12-15"]
 subject = "principles"
 keywords = ["growable container", "emitter", "iterator", "bounded store", "reshape", "no heap"]
 
@@ -218,7 +233,9 @@ Substitute vocabulary lives in arvo (`UFixed` / `IFixed` /
 `FastFloat` / `StrictFloat` / `USize` / `Cap` / `Bool`) and notko
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:17-27"]
 subject = "principles"
 keywords = ["no bare primitives", "u8", "usize", "bool", "Option", "Result", "String", "everywhere"]
 cites = ["the_no_raw_primitives_lint_is_internal_and_is_not_enforced_on_consumers"]
@@ -236,7 +253,9 @@ Substitute vocabulary lives in arvo (`UFixed` / `IFixed` /
 interned string identity. The `arvo-types-only`, `no-bare-numeric`,
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:26-29"]
 subject = "principles"
 keywords = ["arvo", "notko", "Maybe", "Outcome", "Str", "UFixed", "FastFloat", "substitute vocabulary"]
 
@@ -253,7 +272,9 @@ interned string identity. The `arvo-types-only`, `no-bare-numeric`,
 block commits the moment a bare primitive is physically written.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:29-32"]
 subject = "principles"
 keywords = ["arvo-types-only", "no-bare-numeric", "no-bare-option", "no-bare-result", "no-bare-string", "no-public-raw-field", "lint", "commit gate"]
 
@@ -270,7 +291,9 @@ the foreign contract on an arvo type instead?* If yes, that's the
 path. If no, the crate smells like ass and we drop it. The escape
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:34-37"]
 subject = "principles"
 keywords = ["foreign crate", "foreign trait", "arvo type", "drop the crate", "bare primitive", "unavoidable"]
 
@@ -291,7 +314,9 @@ debt with a linked task id. If the suppression isn't traceable to a
 specific follow-up, the design is wrong, not the rule.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:38-40", "founding: mock/PRINCIPLES.md.tmpl:186-188"]
 subject = "principles"
 keywords = ["lint:allow", "escape hatch", "tracked task", "remediation", "unavoidable boundary", "skeleton convenience"]
 
@@ -309,7 +334,9 @@ Option<Ordering>`, `fn fmt() -> fmt::Result`). Each one carries
 Everywhere else, the rule stands.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:180-184"]
 subject = "principles"
 keywords = ["std trait parity", "escape hatch", "Option", "fmt::Result", "lint:allow", "fixed signature"]
 cites = ["the_lint_allow_escape_hatch_is_for_a_genuinely_unavoidable_boundary_and_always_carries_a_tracked_remediation_task"]
@@ -343,7 +370,9 @@ the bare primitive might otherwise appear.
 | `bool` | `Bool` | `arvo::newtype` |
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:159-178"]
 subject = "principles"
 keywords = ["primitive vocabulary", "Maybe", "Outcome", "Collector", "Str", "USize", "FastFloat", "Bool", "replacement table"]
 cites = ["no_bare_primitive_exists_anywhere_in_the_stack"]
@@ -364,7 +393,9 @@ signatures compile to the same code as concrete ones. Inference at
 call sites means no turbofish.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:44-45", "founding: mock/PRINCIPLES.md.tmpl:47-50"]
 subject = "principles"
 keywords = ["trait bounds", "contract", "monomorphisation", "turbofish", "think in traits", "caller brings"]
 cites = ["contracts_come_before_implementations_and_traits_come_first_always"]
@@ -382,7 +413,9 @@ hilavitkutin-api's 22 access/context/platform traits, the
 "no Vec in trait signatures" rule. All the same rule.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:52-55"]
 subject = "principles"
 keywords = ["UArith", "IArith", "Bool Try", "22 traits", "access traits", "platform traits", "one mental model"]
 
@@ -402,7 +435,9 @@ If you're asking "should this enum have room for plugin extensions?"
 It shouldn't be an enum. It should be a trait.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:57-58", "founding: mock/PRINCIPLES.md.tmpl:96-97", "founding: mock/PRINCIPLES.md.tmpl:99-100"]
 subject = "principles"
 keywords = ["decision test", "two implementations", "trait slot", "enum", "plugin extension", "concrete type"]
 
@@ -423,7 +458,9 @@ positions take `&mut impl Collector<T>` / `&mut impl DiagnosticSink`
 implementation choices, not contracts.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:60-66"]
 subject = "principles"
 keywords = ["no Vec", "Box<[T]>", "IntoIterator", "Collector", "DiagnosticSink", "ByteEmitter", "trait signature", "sink"]
 cites = ["allocation_is_managed_by_the_scheduler_and_declared_at_compile_time_and_never_fabricated_at_runtime"]
@@ -439,7 +476,9 @@ the boundary, on the implementer's side. The boundary carries data
 flow, not storage.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:68-70"]
 subject = "principles"
 keywords = ["collections", "ecosystem boundary", "data flow", "storage", "implementer side", "API boundary"]
 
@@ -458,7 +497,9 @@ forces late binding, heap via `Box<dyn>`, and vtable layouts that
 aren't stable across compilations or `dlopen` boundaries.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:72-76"]
 subject = "principles"
 keywords = ["no dyn", "Box<dyn>", "late binding", "vtable layout", "dlopen", "monomorphised trait bounds", "runtime dispatch"]
 cites = ["dyn_is_banned_entirely_with_no_exceptions"]

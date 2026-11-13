@@ -14,6 +14,7 @@ quote = '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "extensions"
 keywords = ["ExtensionHost", "load sequence", "Library::load", "resolve_static", "host_providers", "required host providers", "init_fn", "host_ctx"]
 
@@ -33,6 +34,7 @@ The host's descriptor-validation order is fixed and defensive. Each step builds 
 origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "extensions"
 keywords = ["discovery protocol", "validation order", "tag check", "descriptor size check", "ABI version check", "bounds check", "required host provider check", "defensive"]
 
@@ -48,6 +50,7 @@ No linker sections are scanned, no constructor-registration tricks are used, and
 origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "extensions"
 keywords = ["no linker sections", "no constructor registration", "no inventory", "__hilavitkutin_extension_descriptor", "no_mangle", "const descriptor", "export_extension"]
 
@@ -65,6 +68,7 @@ The trampolines additionally carry `#[unsafe(no_mangle)] #[inline(never)]`. `no_
 origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "extensions"
 keywords = ["trampoline", "LTO", "cdylib stripping", "#[used]", "no_mangle", "inline(never)", "descriptor static", "fat LTO", "__ext_init_trampoline"]
 
@@ -84,6 +88,7 @@ A regression test under `hilavitkutin-extensions-macros/tests/lto_smoke.rs` buil
 origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "extensions"
 keywords = ["ICF", "identical code folding", "black_box", "per-role discriminator", "trampoline aliasing", "lto_smoke", "regression test", "nm"]
 
@@ -99,6 +104,7 @@ The `RTLD_LOCAL` flag in `hilavitkutin-linking::backend::unix::platform_load` ke
 origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "extensions"
 keywords = ["RTLD_LOCAL", "RTLD_GLOBAL", "symbol collision", "platform_load", "struct ident", "trampoline names", "private symbols"]
 
@@ -114,6 +120,7 @@ Init: the host calls `init_fn(host_ctx)` exactly once, immediately after descrip
 origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "extensions"
 keywords = ["init_fn", "init once", "InitFailed", "host_ctx", "lifecycle contract", "drop Library on failure"]
 
@@ -129,6 +136,7 @@ Invoke: the host does not invoke providers directly. The consumer looks up a `*c
 origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "extensions"
 keywords = ["provider invocation", "vtable pointer", "consumer trampoline", "macro-driven monomorphisation", "typed interface", "cdylib boundary"]
 
@@ -146,6 +154,7 @@ The host-opaque pointer (`*mut c_void`) is per-extension. The host allocates it 
 origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "extensions"
 keywords = ["shutdown_fn", "shutdown once", "host-opaque pointer", "host_ctx", "per-extension", "arbitrary-time linking", "no shared context"]
 
@@ -180,6 +189,7 @@ Dependency flow is strictly downward. The engine crate (`hilavitkutin`) does not
 origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "extensions"
 keywords = ["architectural position", "layering", "downward dependency", "viola-plugin-abi", "linking", "macros", "OS dynamic loader", "engine independent"]
 cites = ["the_plugin_host_layer_is_the_linking_extensions_and_extensions_macros_crates_and_downstream_ecosystems_build_their_own_contract_crates_on_it"]
@@ -204,6 +214,7 @@ No dependencies on hilavitkutin, hilavitkutin-api, hilavitkutin-build, hilavitku
 origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "extensions"
 keywords = ["dependencies", "hilavitkutin-linking", "notko", "arvo", "Outcome", "Maybe", "no engine dependency", "no api dependency"]
 
@@ -226,6 +237,7 @@ The invariant propagates forward from `hilavitkutin-linking`. This crate preserv
 origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "extensions"
 keywords = ["arbitrary-time linking", "no global registry", "no init barrier", "no cross-extension channel", "independent drop", "load_all_extensions", "invariant", "by construction"]
 rules_out = ["load_all_extensions(manifest)", "initialize_ecosystem()"]
@@ -241,6 +253,7 @@ The consumer-side obligation is that host code built on top of this crate tolera
 origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "extensions"
 keywords = ["arbitrary-time loading", "consumer obligation", "ecosystem-wide semantics", "init ordering", "all extensions loaded first", "higher layer"]
 rules_out = ["all extensions loaded before any invoked", "init ordering gates invocation", "the full extension ecosystem must be known before proceeding"]
@@ -259,6 +272,7 @@ The sibling proc-macro crate is a companion: in principle a consumer could autho
 origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: a passage shows part of it to be his and not the whole of it (mock/design_rounds/202604240615/202604240615_topic.hilavitkutin-extensions-host.md:192-207; mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:154-156), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "extensions"
 keywords = ["hilavitkutin-extensions-macros", "export_extension", "companion crate", "hand-written descriptor", "boilerplate", "default path"]
 
@@ -280,6 +294,7 @@ This crate does not:
 origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "extensions"
 keywords = ["non-scope", "domain contracts", "directory walking", "manifest parsing", "load order", "no cross-extension channels", "higher-layer concerns"]
 rules_out = ["Define domain contracts", "Walk directories to discover extensions", "Provide cross-extension communication channels"]
@@ -297,6 +312,7 @@ quote = '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-extensions, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "extensions"
 keywords = ["full-trust", "no sandbox", "no metering", "no isolation", "remote fetch", "signature verification", "extension stores", "v1"]
 rules_out = ["Sandbox extensions", "meter resource usage", "Fetch extensions from remote sources"]
@@ -321,6 +337,7 @@ return a typed handle whose lifetime is bound to the loader.
 origin = "proposed"
 written_by = "the design template of hilavitkutin-linking, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "extensions"
 keywords = ["hilavitkutin-linking", "Library::load", "resolve", "resolve_static", "typed handle", "loader lifetime", "single concern"]
 cites = ["the_linking_crate_is_the_cross_platform_dynamic_library_loading_primitive_with_pull_based_symbol_resolution"]
@@ -343,6 +360,7 @@ because = "So that the higher layers can be written or rewritten without churnin
 origin = "proposed"
 written_by = "the design template of hilavitkutin-linking, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "extensions"
 keywords = ["narrow loader", "descriptors above", "lifecycle above", "capability matching", "failure policy", "host orchestration", "viola-plugin-abi", "layering"]
 
@@ -378,6 +396,7 @@ No dependency on hilavitkutin, hilavitkutin-api, hilavitkutin-build, hilavitkuti
 origin = "proposed"
 written_by = "the design template of hilavitkutin-linking, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "extensions"
 keywords = ["no_std", "libc", "windows-sys", "notko", "arvo", "arvo-bits", "isolated", "no hilavitkutin dependency", "dependencies"]
 
@@ -397,6 +416,7 @@ Both handles expose `as_raw` as an escape hatch for cases outside the typed wrap
 origin = "proposed"
 written_by = "the design template of hilavitkutin-linking, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "extensions"
 keywords = ["Library", "RAII close", "Library::close", "unload error", "lifetime 'lib", "use-after-close", "as_raw", "Outcome"]
 
@@ -419,6 +439,7 @@ because = "The pointer reinterpretation rules differ; hiding the distinction beh
 origin = "proposed"
 written_by = "the design template of hilavitkutin-linking, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "extensions"
 keywords = ["Symbol", "StaticRef", "transmute_copy", "function pointer", "static data", "descriptor export", "separate types", "soundness"]
 
@@ -434,6 +455,7 @@ quote = '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-linking, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "extensions"
 keywords = ["LibrarySymbol", "sealed marker", "extern C", "arity 0 to 8", "function pointer shapes", "no downstream impls"]
 
@@ -449,6 +471,7 @@ quote = '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-linking, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "extensions"
 keywords = ["RTLD_NOW", "RTLD_LOCAL", "RTLD_GLOBAL", "dlopen", "symbol isolation", "missing-symbol errors", "glibc default", "macOS BSD default"]
 
@@ -466,5 +489,6 @@ Error shapes are fixed enum variants with no heap payloads. OS error codes are c
 origin = "proposed"
 written_by = "the design template of hilavitkutin-linking, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "extensions"
 keywords = ["LinkError", "LoadFailed", "platform_code", "errno", "GetLastError", "PathEncodingUnsupported", "MAX_PATH", "no heap payload", "USize"]

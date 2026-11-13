@@ -18,6 +18,7 @@ because = "All files are rkyv archives, always consistent (complete writes via M
 origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "persistence"
 keywords = ["backup", "snapshot", "copy data directory", "consistent archives", "ZIP+zstd", "complete writes", "container format"]
 
@@ -39,6 +40,7 @@ standard `Has...Provider` accessor pattern.
 origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "persistence"
 keywords = ["PersistenceProvider", "SchedulerBuilder", "Has...Provider", "engine boundary", "Topic 8 axis C", "resource resolution", "no direct dependency"]
 cites = ["persistence_is_wired_in_by_the_consumer_through_a_provider_and_the_engine_never_depends_on_the_persistence_crate_s_types"]
@@ -61,6 +63,7 @@ pair (Topic 3 S7 atomic-ordering protocol).
 origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "persistence"
 keywords = ["PassEnd", "drain protocol", "PersistenceProvider::commit", "accumulator columns", "phase barrier", "Release-Acquire", "Topic 3 S7", "commit boundary"]
 
@@ -78,6 +81,7 @@ provider impls; this crate ships no engine-side glue.
 origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "persistence"
 keywords = ["standalone ecosystem crate", "provider impls", "vehje", "loimu", "no engine-side glue", "substrate consumers"]
 
@@ -121,7 +125,9 @@ Op: "Builds on str and api". The rule said persistence and str do not depend on 
 - On persistence's dependencies, choosing among standalone, "Builds on str and api", and str without api: "Builds on str and api".
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: .data/op-responses/202609181645_hila-std-tier-persistence.md:31-43"]
 subject = "persistence"
 keywords = ["persistence", "builds on str and api", "forbidden-imports", "op's ruling", "2026-09-18", "MemoryProvider", "hilavitkutin-str"]
 rules_out = ["The rule said persistence and str do not depend on each other"]

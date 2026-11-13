@@ -10,7 +10,9 @@ quote = '''
 - Pre-partitioned morsel ranges at plan time (no atomic fetch_add)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:870-870"]
 subject = "execution"
 keywords = ["pre-partitioned", "morsel ranges", "plan time", "fetch_add", "dispatch"]
 
@@ -23,7 +25,9 @@ quote = '''
 - Morsel boundaries baked into compiled per-core programs (→ domain 17)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:871-871"]
 subject = "execution"
 keywords = ["morsel boundaries", "compiled per-core programs", "domain 17", "dispatch", "baked"]
 
@@ -41,7 +45,9 @@ quote = '''
   (8-wide stores, T6 L3901)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:887-888", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:896-897"]
 subject = "execution"
 keywords = ["auto-vectorisation", "no-dyn", "monomorphisation", "NEON", "dup.2d", "stp q0", "vectorisation contract"]
 
@@ -63,7 +69,9 @@ quote = '''
   hand-written pointer advances — T6 L1883-1947)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:886-886", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:889-895"]
 subject = "execution"
 keywords = ["ctlz", "cttz", "copy_nonoverlapping", "write_bytes", "isb", "ldapr", "indexed addressing", "intrinsics"]
 
@@ -85,7 +93,9 @@ Prefetch reserved for random/pointer-chasing access (hash lookups),
 NOT sequential column scans. `#[cfg(target_arch)]` + profiling-gated.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:899-901", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:919-922"]
 subject = "execution"
 keywords = ["prefetch", "prefetch_read_data", "prfm", "prefetcht0", "Apple Silicon", "random access", "hash lookups", "removed"]
 
@@ -104,7 +114,9 @@ likely/unlikely: do NOT use in morsel dispatch loop. LLVM handles
 branch prediction better without hints.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:902-903", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:924-925"]
 subject = "execution"
 keywords = ["likely", "unlikely", "dispatch loop", "vectorisation", "1.40x slower", "branch prediction"]
 
@@ -119,7 +131,9 @@ quote = '''
   for `start..end` iteration (T6 L1394)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:904-905"]
 subject = "execution"
 keywords = ["get_unchecked", "bounds checks", "neutral", "range iteration", "LLVM"]
 
@@ -134,7 +148,9 @@ quote = '''
   addressing, better scheduling — T6 L1922-1947)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:906-907"]
 subject = "execution"
 keywords = ["hand-written ASM", "aarch64", "LLVM", "indexed addressing", "scheduling", "T6"]
 
@@ -158,7 +174,9 @@ quote = '''
 | ~~Explicit prefetch~~ | ~~`prfm`~~ | ~~`prefetcht0`~~ | **REMOVED** — hurts on Apple Silicon |
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:909-919"]
 subject = "execution"
 keywords = ["microkernels", "dc zva", "ldp", "stp", "LSE atomics", "stnp", "dmb", "wfe", "tzcnt", "T5 Q12"]
 
@@ -221,7 +239,9 @@ with pre-computed column pointers at morsel boundaries is the correct
 model. No additional fiber formation constraint needed.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:977-983", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:988-1002", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1004-1016", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1023-1026", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1033-1038"]
 subject = "execution"
 keywords = ["arena addressing", "12-bit immediate", "precomputed column pointers", "no cliff", "arena size threshold", "bench", "co-location"]
 rules_out = ["an arena size threshold as an additional fiber formation constraint"]
@@ -239,7 +259,9 @@ quote = '''
 - Each fiber → monomorphised dispatch with LOCAL `&[WuFn]` slice.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1165-1167"]
 subject = "execution"
 keywords = ["local &[fn] slice", "devirtualise", "WuFn", "struct-field arrays", "12.6x", "no-alloc", "ExpandedLto"]
 cites = ["expanded_lto_is_required_because_monomorphised_tuple_dispatch_does_not_devirtualise_without_it"]
@@ -267,7 +289,9 @@ quote = '''
 - Deep single-fiber: flattener + DSE (rust-pipe, domain 17).
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1169-1169"]
 subject = "execution"
 keywords = ["deep single-fiber", "flattener", "DSE", "rust-pipe", "domain 17", "dispatch"]
 
@@ -286,7 +310,9 @@ dispatch. Resource accumulation: per-thread stack-local accumulator,
 merged after. Non-commutative resource accumulation → skip head+tail.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1171-1176"]
 subject = "execution"
 keywords = ["commutative fiber", "COMMUTATIVE", "head+tail convergence", "multi-core morsel dispatch", "accumulator", "resource accumulation"]
 cites = ["a_unit_declares_whether_it_is_commutative"]
@@ -314,7 +340,9 @@ What does NOT:
   callers, LLVM can't prove slice contents)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1532-1545"]
 subject = "execution"
 keywords = ["devirtualisation", "local slice", "struct-field function pointers", "monomorphised dispatch", "static mut", "blr", "12.6x", "inline(never)"]
 
@@ -374,7 +402,9 @@ This is the `rust-pipe` pattern. 0.95-0.96x baseline (beats hand ASM
 — LLVM makes better instruction scheduling decisions).
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1564-1581"]
 subject = "execution"
 keywords = ["codegen flattener", "rust-pipe", "fiber function", "dead store elimination", "stores at end", "register-to-register", "stack-local resources"]
 cites = ["a_deep_single_fiber_uses_the_flattener_and_dead_store_elimination"]
@@ -395,7 +425,9 @@ quote = '''
   sequences fibers and phase sync
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1588-1594"]
 subject = "execution"
 keywords = ["inline(never)", "inline(always)", "fiber dispatch", "per-core program", "inlining discipline", "fusion", "vectorise"]
 
@@ -426,7 +458,9 @@ Every prior optimisation is subsumed:
 - No dynamic dispatch: the entire program is monomorphised
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1596-1613"]
 subject = "execution"
 keywords = ["compiled per-core dispatch", "per-core program", "record range", "morsel boundaries", "phase sync points", "monomorphised", "head and tail"]
 
@@ -442,6 +476,7 @@ phase sync points.
 '''
 origin = "stated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (.data/op-responses/202609181645_hila-std-tier-persistence.md:17-29, row the_pool_is_the_consumer_s_executor_and_the_engine_hands_it_its_closures_once_on_the_first_parallel_run), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "execution"
 keywords = ["no scheduler loop", "no work queues", "spawn N threads", "join", "compiled program", "phase sync"]
 
@@ -463,6 +498,8 @@ quote = '''
   pipeline execution. Raw pointer (`as usize`) passed to thread.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1619-1627"]
 subject = "execution"
 keywords = ["progress counters", "AtomicUsize", "Release store", "Acquire load", "stlr", "ldar", "spin loop", "stack atomic", "no Arc"]

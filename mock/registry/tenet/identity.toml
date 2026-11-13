@@ -18,7 +18,9 @@ arvo-spectral          spectral methods (Laplacian, power iteration, Fiedler, bi
 arvo-comb              combinatorial optimisation (DP, greedy grouping, bin-packing)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:29-37"]
 subject = "identity"
 keywords = ["crate structure", "hilavitkutin-api", "hilavitkutin", "hilavitkutin-build", "arvo", "engine", "crates"]
 
@@ -39,7 +41,9 @@ consumer
        └─ arvo-comb (deps: arvo-bitmask)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:40-47"]
 subject = "identity"
 keywords = ["runtime dependency graph", "consumer", "hilavitkutin", "arvo-spectral", "arvo-comb", "dependencies"]
 cites = ["the_crates_are_the_api_the_engine_the_build_crate_and_the_arvo_family"]
@@ -64,7 +68,9 @@ PGO/BOLT workflows, and pragma-based build configuration. All three
 hilavitkutin crates and all consumers use it in their build.rs.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:50-60"]
 subject = "identity"
 keywords = ["hilavitkutin-build", "build-dependency", "build.rs", "cfg emission", "no runtime deps", "rustc wrapper"]
 
@@ -81,7 +87,9 @@ quote = '''
 - Name: arvo (Finnish: "value/worth/estimate")
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:137-138", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:141-141"]
 subject = "identity"
 keywords = ["arvo", "primitive library", "cross-project", "polka", "saalis", "loimu", "no_std"]
 
@@ -100,7 +108,9 @@ arvo-spectral        (deps: arvo-sparse)
 arvo-comb            (deps: arvo-bitmask, arvo)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:158-163"]
 subject = "identity"
 keywords = ["arvo dependency flow", "arvo-sparse", "arvo-graph", "arvo-spectral", "arvo-comb", "arvo-bitmask"]
 
@@ -114,7 +124,9 @@ quote = '''
   in the columns, only the read/write dependency structure"
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:247-248"]
 subject = "identity"
 keywords = ["column data types", "arvo", "dependency structure", "read/write", "orthogonality", "what is in the columns"]
 
@@ -131,7 +143,9 @@ quote = '''
   (when FastMath pragma active)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:254-257"]
 subject = "identity"
 keywords = ["arvo build.rs", "CARGO_CFG_TARGET_FEATURE", "arvo_fast_math", "FastMath", "hardware detection", "cfg"]
 
@@ -147,7 +161,9 @@ quote = '''
 - MathPeephole LLVM pass fires on FastFloat operations
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:258-260"]
 subject = "identity"
 keywords = ["target_feature", "backend", "MathPeephole", "FastFloat", "intrinsic", "software approximation"]
 
@@ -170,7 +186,9 @@ quote = '''
 | order (on WU) | scheduling hints | WUs declare hints, scheduler derives ordering |
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:92-101"]
 subject = "identity"
 keywords = ["dead terms", "chain", "chain group", "partition", "archetype", "entity", "row", "order", "vocabulary"]
 cites = ["scheduling_hints_replace_an_order_field_on_the_unit"]
@@ -188,7 +206,9 @@ quote = '''
 - Independent of hilavitkutin runtime — optimises HOW code is compiled
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:324-327"]
 subject = "identity"
 keywords = ["hilavitkutin-build", "build-dependency", "not an xtask", "configure().run()", "build.rs", "independent of runtime"]
 
@@ -206,7 +226,9 @@ quote = '''
 4. compile_error! for mutually exclusive features
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:329-333"]
 subject = "identity"
 keywords = ["four-part build model", "RUSTC_WORKSPACE_WRAPPER", "no cargo features", "compile_error!", "target_feature", "cfg emission"]
 
@@ -224,7 +246,9 @@ quote = '''
   SharedGenerics, LoopFusion
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:335-339"]
 subject = "identity"
 keywords = ["pragma", "builder API", "LoopOptimization", "Polly", "FastMath", "ExpandedLto", "Bolt", "Pgo", "profile"]
 
@@ -238,7 +262,9 @@ quote = '''
 - Pragma trait with type Requires for dependency enforcement
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:340-340"]
 subject = "identity"
 keywords = ["Pragma trait", "type Requires", "dependency enforcement", "pragma"]
 
@@ -254,7 +280,9 @@ quote = '''
   post-build hook (Bolt, Profiling)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:341-343"]
 subject = "identity"
 keywords = ["pragma effects", "generated config", "rustc wrapper", "post-build hook", "Bolt", "Profiling", "Pgo"]
 
@@ -272,7 +300,9 @@ quote = '''
 - Polly works on aarch64-linux (confirmed via Apple Container)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:345-349"]
 subject = "identity"
 keywords = ["LLVM passes", "Polly", "SCoP detection", "VectorizerStartEP", "OptimizerLastEP", "IRCE", "aarch64"]
 
@@ -287,7 +317,9 @@ quote = '''
 - Automatic pipeline via rustc wrapper post-build hook
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:352-353"]
 subject = "identity"
 keywords = ["PGO", "BOLT", ".profraw", "perf.data", "benchmark runs", "rustc wrapper", "post-build hook"]
 
@@ -301,7 +333,9 @@ quote = '''
 - BOLT Linux ELF only (no Mach-O); machine-function-split as macOS partial alternative
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:354-354"]
 subject = "identity"
 keywords = ["BOLT", "ELF", "Mach-O", "machine-function-split", "macOS", "Linux"]
 
@@ -315,7 +349,9 @@ quote = '''
 - Optimization tiers: Stock → Plugins → Static BOLT → PGO → Profile-guided BOLT
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:355-355"]
 subject = "identity"
 keywords = ["optimization tiers", "Stock", "Plugins", "Static BOLT", "PGO", "profile-guided BOLT"]
 
@@ -334,7 +370,9 @@ quote = '''
 - ci (inherits release, thin LTO for caching)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:357-362"]
 subject = "identity"
 keywords = ["build profiles", "dev", "dev-opt", "release", "profiling", "ci", "Cranelift", "thin LTO"]
 
@@ -351,7 +389,9 @@ quote = '''
   `Warm` (runtime)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:173-176"]
 subject = "identity"
 keywords = ["UFixed", "IFixed", "fixed-point", "Hot", "Precise", "Warm", "strategy markers", "repr(transparent)"]
 
@@ -366,7 +406,9 @@ quote = '''
   `StrictFloat` (IEEE 754)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:177-178"]
 subject = "identity"
 keywords = ["FastFloat", "StrictFloat", "IEEE 754", "fast-math", "LLVM intrinsics", "float wrappers"]
 
@@ -383,7 +425,9 @@ quote = '''
 - No monolithic Numeric trait — compose bounds: `T: Add + Mul + Sqrt`
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:179-180", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:183-183"]
 subject = "identity"
 keywords = ["TotalOrd", "Sqrt", "Recip", "Abs", "FromConstant", "no monolithic Numeric trait", "compose bounds"]
 
@@ -398,7 +442,9 @@ quote = '''
   `Count`, `Average`, `Deviation`
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:181-182"]
 subject = "identity"
 keywords = ["semantic aliases", "Ratio", "Factor", "Norm", "Coord", "Angle", "Count", "Average", "Deviation"]
 
@@ -416,7 +462,9 @@ quote = '''
 - Dirty propagation (OR sequences): `predecessors[N] & dirty_mask`
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:187-191"]
 subject = "identity"
 keywords = ["arvo-bitmask", "Mask64", "Mask256", "bit-matrix", "set operations", "popcount", "dirty propagation"]
 
@@ -431,7 +479,9 @@ quote = '''
 - Cross-cutting foundation for all other arvo crates
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:186-186", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:192-192"]
 subject = "identity"
 keywords = ["arvo-bitmask", "cross-cutting foundation", "arvo crates"]
 
@@ -450,7 +500,9 @@ quote = '''
   dead column elimination
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:197-202"]
 subject = "identity"
 keywords = ["arvo-sparse", "CSR", "RCM", "block diagonal", "Dulmage-Mendelsohn", "access matrix", "bandwidth"]
 
@@ -465,6 +517,8 @@ quote = '''
   (4 KB), `[f32; 64]` eigenvector (256 bytes), 30 iterations
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:224-225"]
 subject = "identity"
 keywords = ["arvo-spectral", "const-generic", "stack-allocated", "weight matrix", "eigenvector", "30 iterations"]

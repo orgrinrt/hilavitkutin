@@ -14,7 +14,9 @@ quote = '''
   (T1 decisions #17, #25)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:589-590", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:594-595"]
 subject = "ordering"
 keywords = ["dag", "edges", "triggers", "emits", "read after write", "data flow"]
 
@@ -31,7 +33,9 @@ pair. O(N²) on u64 values. For 50 WUs: 2500 ANDs, ~1µs. The result
 is a bit-matrix DAG: `dag[i] |= 1 << j` where i precedes j.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1273-1276"]
 subject = "ordering"
 keywords = ["read after write", "precede", "access matrix", "write mask", "read mask", "edge"]
 
@@ -57,7 +61,9 @@ write masks. Ordering resolved by scheduling hint priority (domain
 most downstream dependents first, then deterministic fallback.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:591-593", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1056-1059", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1278-1281", "later: .data/op-responses/202611130808_read-the-whole-hilavitkutin-spec-and-port-it-to-a-registry.md:90-112, how_two_writers_of_one_store_are_ordered"]
 subject = "ordering"
 keywords = ["write-write", "two writers", "hint", "urgency", "divisibility", "significance", "tie-break", "dependents", "fallback", "type name"]
 related = ["question::how_two_writers_of_one_store_are_ordered"]
@@ -74,7 +80,9 @@ Vocabulary updated (chain→fiber, row→record). T7's `order` field
 on WU replaced by scheduling hints.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:593-593", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2390-2391"]
 subject = "ordering"
 keywords = ["order field", "hints", "superseded"]
 rules_out = ["order field"]
@@ -95,7 +103,9 @@ quote = '''
 - Non-commutative → single-direction processing only
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:597-602"]
 subject = "ordering"
 keywords = ["commutative", "commutativity", "front-back", "segment", "single direction"]
 
@@ -111,7 +121,9 @@ quote = '''
 - No lineariser needed (unlike Polars). No ordering mechanism needed.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:604-607"]
 subject = "ordering"
 keywords = ["determinism", "lineariser", "record order", "deterministic segments", "single-core"]
 
@@ -151,7 +163,9 @@ quote = '''
 '''
 origin = "proposed"
 written_by = "the standalone spec 202606111800, a reading aid with no design authority of its own by addendum A2"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["ratified-elsewhere: mock/research/202606081500_engine-roadmap-r2.md:89-93"]
 subject = "ordering"
 keywords = ["registration order", "producer before consumer", "provisional", "auto-order", "RCM", "build error", "topological"]
 related = ["question::how_two_writers_of_one_store_are_ordered"]
@@ -222,6 +236,7 @@ quote = '''
 origin = "proposed"
 written_by = "doc changelist 202606051659 of 2026-06-05 (phase DOC, single-core dispatch codegen), locked; agent-written round artifact that does not name the maintainer as its author"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: op ruled that a bench decides the dispatch order (mock/research/202606111400_canonical-design-addendum-a1.md:49-57), and the bench of 2026-07-20 reports the RCM order this row states (mock/research/202607200800_a1-1-ordering-theory-bench-expansion.md:82-90); no word of his read takes that result as the answer, so the row stands on a stamp under his words "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "ordering"
 keywords = ["RCM", "dispatch order", "topological order", "execution order", "group_fibers", "registration order", "canonical design", "BuildError"]
 rules_out = ["dispatch should run in plain registration/topological order with RCM unused single-core", "dispatch run in plain registration order with RCM unused"]
@@ -242,7 +257,9 @@ is the rejected "registration is dispatch, RCM deferred" punt. The choice is
 between (1) and (2), both of which keep RCM as the execution order.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: mock/research/sketches/202606052130_rcm-order-into-static-body/FINDINGS.md:74-79"]
 subject = "ordering"
 keywords = ["standing ruling", "dispatch order assembly", "agent's choice", "bench choice", "ASM gate", "not a blocking fork", "MEMORY LATEST-56"]
 
@@ -271,7 +288,9 @@ between (1) and (2), both of which keep RCM as the execution order.
 '''
 origin = "proposed"
 written_by = "sketch findings rcm-order-into-static-body (Phase D, task 340), status WORKS (body) with the order-assembly fork open, undated; agent-written, citing op's standing ruling"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: mock/research/sketches/202606052130_rcm-order-into-static-body/FINDINGS.md:66-72", "quote: mock/research/sketches/202606052130_rcm-order-into-static-body/FINDINGS.md:74-79", "later: mock/research/202606081500_engine-roadmap-r2.md:92-92, producer_before_consumer_registration_is_provisional_and_the_ideal_is_auto_ordering"]
 subject = "ordering"
 keywords = ["registration order", "RCM deferred", "punt", "execution order", "candidate 3", "build-time validation", "benched refinement"]
 rules_out = ["registration order is the dispatch order, RCM is deferred", "registration is dispatch, RCM deferred"]

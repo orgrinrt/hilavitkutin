@@ -12,7 +12,9 @@ quote = '''
 pipeline → core → phase ↔ waist → trunk → fiber ↔ branch ↔ bridge → morsel → micro-morsel → entry
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:72-74"]
 subject = "execution"
 keywords = ["hierarchy", "pipeline", "core", "phase", "waist", "trunk", "fiber", "branch", "bridge", "morsel", "micro-morsel", "entry"]
 
@@ -25,7 +27,9 @@ quote = '''
 | **entry** | One record × one op. Register level. The innermost unit. |
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:80-80"]
 subject = "execution"
 keywords = ["entry", "record", "op", "register level", "innermost unit"]
 
@@ -46,7 +50,9 @@ quote = '''
   at ECS scale (hundreds of columns per fiber).
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:81-81", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:847-852"]
 subject = "execution"
 keywords = ["micro-morsel", "two-level morsel", "peak_live", "L1", "inner tiling", "ECS scale", "T3 decision #98"]
 
@@ -64,7 +70,9 @@ quote = '''
 - Inner cube: x (micro-morsel) × y (active cols per op) × z (op index)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:82-82", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:854-856"]
 subject = "execution"
 keywords = ["morsel", "3D window", "morsel cube", "records", "columns", "temporal", "L1-sized", "arena"]
 
@@ -77,7 +85,9 @@ quote = '''
 - Morsel-to-core affinity pinned across frames (warm L2)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:858-858"]
 subject = "execution"
 keywords = ["morsel-to-core affinity", "pinned", "frames", "warm L2", "core"]
 
@@ -96,7 +106,9 @@ quote = '''
   decision (domain 17), not a definitional property of the fiber.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:83-83", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:944-948"]
 subject = "execution"
 keywords = ["fiber", "co-location", "morsel windowing", "fused", "separate passes", "execution strategy", "chain"]
 
@@ -114,7 +126,9 @@ quote = '''
 - **Branch:** side path attached to a trunk (peer of fiber).
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:84-84", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:743-744", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:949-949"]
 subject = "execution"
 keywords = ["branch", "side path", "trunk", "chaser", "morsel scope", "peer of fiber"]
 
@@ -132,7 +146,9 @@ quote = '''
 - **Bridge:** fan-in node reading from multiple trunks (peer of fiber).
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:85-85", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:745-746", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:950-950"]
 subject = "execution"
 keywords = ["bridge", "fan-in", "multiple trunks", "parent trunks", "record range", "peer of fiber"]
 
@@ -152,7 +168,9 @@ quote = '''
 - Fibers, branches, and bridges are peers within a trunk.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:86-86", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:741-742", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:951-953"]
 subject = "execution"
 keywords = ["trunk", "column-disjoint", "maximal path", "critical path", "no shared write columns", "zero sync", "chain group"]
 
@@ -168,7 +186,9 @@ quote = '''
   count minimums). Phases execute with pipeline parallelism.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:87-87", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:739-740"]
 subject = "execution"
 keywords = ["waist", "bottleneck", "concurrent path count", "phase boundaries", "DAG", "minimum"]
 
@@ -184,7 +204,9 @@ quote = '''
   count minimums). Phases execute with pipeline parallelism.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:88-88", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:739-740"]
 subject = "execution"
 keywords = ["phase", "wide DAG section", "pipeline parallelism", "execution strategy", "waist", "partition"]
 
@@ -198,7 +220,9 @@ quote = '''
 | **pipeline** | The entire DAG. Coarsest level. |
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:89-90"]
 subject = "execution"
 keywords = ["core", "physical core", "pool thread", "core-pinned trunks", "pipeline", "entire DAG"]
 
@@ -213,7 +237,9 @@ don't "run consecutively for cache reuse" — they form a fiber. The
 archetype concept is fully subsumed.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:955-957"]
 subject = "execution"
 keywords = ["archetype", "fiber", "column sharing", "cache reuse", "subsumed", "dead concept"]
 
@@ -228,7 +254,9 @@ quote = '''
 - Read-only columns overflow to L2 (prefetcher ~80-90% L1 throughput)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:760-761"]
 subject = "execution"
 keywords = ["write columns L1", "read-only L2", "prefetcher", "80-90% throughput", "cache principles", "T3 decision #43"]
 
@@ -253,7 +281,9 @@ quote = '''
 | Read-only shared | Shared L2/L3 | L2 amortised |
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:762-763", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1114-1122"]
 subject = "execution"
 keywords = ["column temperature", "write-only", "read-write", "read-only dense", "read-only sparse", "read-only shared", "T3 decision #50"]
 cites = ["generation_counter_activity_classifies_morsels_by_temperature"]
@@ -269,7 +299,9 @@ quote = '''
   fiber width, not L1 capacity (T6 bench)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:765-766"]
 subject = "execution"
 keywords = ["register file", "binding constraint", "fiber width", "aarch64 14", "x86 10", "register pressure"]
 
@@ -291,7 +323,9 @@ quote = '''
 | phased+convergence | 0.68x | halves serial bottleneck phase |
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:769-769", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:793-799"]
 subject = "execution"
 keywords = ["multi-trunk phases", "trunk parallelism", "separate cores", "phased", "bench", "0.82x"]
 
@@ -313,7 +347,9 @@ quote = '''
 | phased+convergence | 0.68x | halves serial bottleneck phase |
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:770-771", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:793-796", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:799-799"]
 subject = "execution"
 keywords = ["head+tail convergence", "single-trunk phases", "two threads", "opposite ends", "non-commutative", "0.68x"]
 
@@ -329,7 +365,9 @@ quote = '''
   + fill latency (not sum of phases).
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:772-774"]
 subject = "execution"
 keywords = ["pipelined phases", "AtomicUsize", "progress counters", "overlap", "fill latency", "max(phases)"]
 
@@ -344,7 +382,9 @@ quote = '''
   bridges in priority order.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:775-777"]
 subject = "execution"
 keywords = ["core-pinned trunks", "pool thread", "warm L1", "leftover threads", "convergence", "branches", "bridges"]
 
@@ -362,7 +402,9 @@ quote = '''
 | phased-conv (spawn) | 0.62x at 1M | but 15.54x SLOWER at 200 records |
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:778-779", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:800-801"]
 subject = "execution"
 keywords = ["pre-allocated thread pool", "hybrid wake", "spin 128", "park", "small-N catastrophe", "crossover", "15.54x"]
 
@@ -381,7 +423,9 @@ quote = '''
 - Recommendation: approach 1 for ARM, approach 2 for x86 NUMA.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:781-786"]
 subject = "execution"
 keywords = ["shared read columns", "snapshot-to-local", "aligned morsel sync", "ARM", "x86 NUMA", "1.6% overhead", "T6"]
 
@@ -406,7 +450,9 @@ morsel_size = (L1_usable / Σ write_sizes).clamp(MIN_MORSEL, MAX_MORSEL) & !3
 - Per-fiber morsel size (each fiber has its own)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:832-843"]
 subject = "execution"
 keywords = ["morsel sizing", "L1_usable", "write_sizes", "MIN_MORSEL", "MAX_MORSEL", "8192", "per-fiber morsel size", "0.75"]
 cites = ["each_column_has_its_own_stride_and_a_value_is_at_most_sixteen_bytes"]
@@ -427,7 +473,9 @@ quote = '''
 - Consumer's design problem if large collections wreck L1
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:549-555"]
 subject = "execution"
 keywords = ["resource collections", "morsel budget", "write-only sizing", "L2 prefetcher", "const generic N", "Seq", "Map"]
 cites = ["a_resource_is_scalars_and_const_sized_collections_only"]
@@ -443,7 +491,9 @@ quote = '''
   Read/Write → morsel-chunked, Resource/Virtual only → scalar (T5 §Q4)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:844-845"]
 subject = "execution"
 keywords = ["morsel dispatch", "scalar dispatch", "AccessSet inference", "Column", "Resource", "Virtual", "T5 Q4"]
 
@@ -458,6 +508,8 @@ quote = '''
   at a time with steal opportunities, Adaptive=EMA-based (T5 §Q2)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:868-869"]
 subject = "execution"
 keywords = ["Divisibility", "Atomic", "Interruptible", "Adaptive", "EMA", "steal", "scheduling hint"]

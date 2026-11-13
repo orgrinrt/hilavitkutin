@@ -11,7 +11,9 @@ Not "entity" (ECS connotation), not "row" (tabular connotation).
 A column has N records. A morsel windows into a range of records.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2453-2455"]
 subject = "records"
 keywords = ["record", "entity", "row", "morsel", "window", "range", "R8"]
 rules_out = ["entity", "row"]
@@ -30,7 +32,9 @@ quote = '''
   Columns across different fibers are separate allocations.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:395-399"]
 subject = "records"
 keywords = ["contiguous", "columnar", "arena", "co-located", "fiber", "offset", "base pointer", "allocation"]
 
@@ -49,7 +53,9 @@ quote = '''
   Full 16 bytes usable. Clean power-of-two, fits u128, aligns with SIMD.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:383-388"]
 subject = "records"
 keywords = ["stride", "type-native", "16 bytes", "flags byte", "null", "tombstone", "bitmask", "R3"]
 
@@ -66,7 +72,9 @@ quote = '''
   head+tail convergence for those (T6 L2938-2961)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:609-613"]
 subject = "records"
 keywords = ["independent", "record order", "cross-record", "accumulation", "non-commutative", "convergence"]
 
@@ -83,7 +91,9 @@ know record counts ahead of time. The boundary is clean:
 - Accept whatever columns the consumer provides
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1462-1463", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1472-1473"]
 subject = "records"
 keywords = ["record count", "data loading", "allocate", "consumer", "ahead of time", "columns provided"]
 
@@ -96,7 +106,9 @@ quote = '''
 - Stable morsel boundaries (same record ranges unless record count changes)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:859-859"]
 subject = "records"
 keywords = ["morsel boundary", "stable", "record range", "record count", "frames"]
 
@@ -113,7 +125,9 @@ quote = '''
 | row | record | "Row" implies tabular joins; columns are independent |
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:79-79", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:99-100"]
 subject = "records"
 keywords = ["record", "entity", "row", "dead terms", "column", "ECS", "tabular joins"]
 cites = ["a_record_is_the_global_data_identity"]
@@ -128,7 +142,9 @@ quote = '''
 - 64-byte alignment on column array base addresses (T3 §Q3 L2825-2860)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:400-400"]
 subject = "records"
 keywords = ["64-byte alignment", "column array base", "alignment", "T3 Q3", "cache line"]
 
@@ -141,7 +157,9 @@ quote = '''
 - Sequential access pattern, prefetcher-optimal (all topics agree)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:401-401"]
 subject = "records"
 keywords = ["sequential access", "prefetcher-optimal", "columnar storage", "access pattern"]
 
@@ -159,7 +177,9 @@ quote = '''
 - Column layout from hints: ByteAligned/Natural/BitPacked (T5 §Q10)
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:402-404", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:764-764"]
 subject = "records"
 keywords = ["column layout", "ByteAligned", "Natural", "BitPacked", "scheduling hints", "stride", "T5 Q10"]
 
@@ -184,7 +204,9 @@ Record index `i` advances one cursor covering all columns. Morsel boundary
 - One base register + offset immediates, not N separate pointers
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:961-972"]
 subject = "records"
 keywords = ["co-located arena", "base pointer", "offset immediates", "DSE", "register-to-register", "one cursor", "morsel boundary"]
 cites = ["storage_is_contiguous_and_a_fiber_s_columns_share_one_arena"]
@@ -207,6 +229,7 @@ must not assume a single all-encompassing run.
 origin = "proposed"
 written_by = "topic T3 of the founding round (dispatch-and-optimisation), design-for note DF4"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "records"
 keywords = ["DF4", "archetype", "component set", "separate schedules", "batching", "data granularity", "single run", "record count"]
 
@@ -232,6 +255,7 @@ propagates through the chain graph.
 origin = "proposed"
 written_by = "topic T2 of the founding round (memory-layout-and-platform), decision 27"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "records"
 keywords = ["record count", "row count", "loaders", "just in time", "morsel ranges", "cascade", "progress counter"]
 cites = ["the_engine_does_not_load_data_and_does_not_know_record_counts_ahead"]
@@ -255,6 +279,7 @@ completes its record range before the next runs), the cross-record-safe form.
 origin = "proposed"
 written_by = "the engine design template, from design round 202606051500 (fiber-structured morsel-outer dispatch)"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "records"
 keywords = ["cross-record", "morsel-relative", "accumulator append", "morsel-outer", "unit-outer", "morsel_local", "read", "write"]
 related = ["tenet::records_within_a_fiber_are_independent"]
@@ -272,6 +297,7 @@ declared but stride is `size_of::<T>()`; `topo_order` / `topo_count`,
 origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "records"
 keywords = ["bitpacking", "BIT_WIDTH", "ColumnValue", "stride", "size_of", "partial", "state assessment", "2026-06-11"]
 
@@ -296,6 +322,7 @@ quote = '''
 origin = "proposed"
 written_by = "topic A3b, the per-fiber L1 morsel-window formula, of 2026-07-16, round 202607161410; its heading calls these the resolutions the round settles, and the text does not say whose they are"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "records"
 keywords = ["morsel window", "per fiber", "record count", "L1", "write sizes", "record range", "morsel_windows"]
 cites = ["morsel_ranges_are_partitioned_at_plan_time_without_an_atomic_fetch_add"]
@@ -335,6 +362,7 @@ count), not the spec's per-fiber L1 WINDOW size. The A3a fold
 origin = "proposed"
 written_by = "topics per-fiber-morsel-s1-rename and a3b-l1-morsel-formula of rounds 202606201500, 202606202700 and 202607161410 (the last dated 2026-07-16), agent-written"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "records"
 keywords = ["morsel_windows", "morsel_sizes", "partition", "window", "per-fiber morsel", "placeholder", "size_morsels", "A3b"]
 rules_out = ["a record-count PARTITION"]

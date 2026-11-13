@@ -18,6 +18,7 @@ live slot through the provider.
 origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "memory"
 keywords = ["reserve", "column_ptr", "column_ptr_mut", "64-byte aligned", "release no-op", "raw pointer R6", "Drop deallocate", "reader-count reclamation"]
 cites = ["a_column_s_lifetime_is_told_to_the_consumer_as_an_advisory_release"]
@@ -35,6 +36,7 @@ column is a separate provider allocation. The point is a working
 origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "memory"
 keywords = ["ArenaColumnStorage", "correctness not performance", "flat scan", "separate allocation per column", "placeholder", "columnar engine"]
 
@@ -58,6 +60,7 @@ because = "Reintroducing the M parameter needs allocate-at-builder-time plumbing
 origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "memory"
 keywords = ["MemoryArena", "HasMemoryProvider", "M parameter", "allocate-at-builder-time", "inline storage", "BACKLOG", "2026-05-01"]
 rules_out = ["M: HasMemoryProvider parameter on MemoryArena"]
@@ -147,7 +150,9 @@ The std tier. The option he chose: "hilavitkutin ships only the executor contrac
 Op, choosing "hilavitkutin ships only the executor contract (a trait). The OS-thread executor lives in the consumer, or in a crate outside the hilavitkutin* family, gated per target and feature.": "Consumer supplies it". The std fallback tier is gone, and the os tier no longer creates pthreads: it ships mmap for `MemoryProvider` and clock_gettime for `Clock`. `ThreadPoolApi` is the whole of the engine's side, and the design says the engine hands the executor one pointer-sized closure per worker, so an executor carries it without allocating.
 '''
 origin = "stated"
-standing = "provisional"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: .data/op-responses/202609181645_hila-std-tier-persistence.md:17-29"]
 subject = "memory"
 keywords = ["std tier", "executor contract", "consumer supplies it", "ThreadPoolApi", "OsThreadPool", "op's ruling", "2026-09-18", "no thread spawn"]
 rules_out = ["The std fallback tier", "the os tier creating pthreads"]
@@ -165,6 +170,7 @@ Op, choosing "hilavitkutin ships only the executor contract (a trait). The OS-th
 origin = "proposed"
 written_by = "doc changelist of round 202609181402 'hilavitkutin on arvo's current dev', 2026-09-18, agent-written"
 standing = "provisional"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 subject = "memory"
 keywords = ["os tier", "mmap", "clock_gettime", "MemoryProvider", "Clock", "pointer-sized closure", "ThreadPoolApi", "no pthreads"]
 cites = ["op_ruled_that_the_consumer_supplies_the_os_thread_executor_and_the_engine_ships_only_the_executor_contract", "the_os_and_std_tiers_are_mutually_exclusive_and_the_os_tier_gets_the_optimisation_investment"]
