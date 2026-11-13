@@ -8,6 +8,9 @@ publish.workspace = true
 # The negative control: the digest absorbs the line length as a pointer-width
 # integer in native bytes, so the digest depends on the target's `usize`.
 control-usize-len = []
+# A mutant: ties round up instead of to even. The kernel's tie test must fail
+# under it, which `probes.sh` records.
+mutant-half-up = []
 
 [lib]
 path = "src/lib.rs"

@@ -41,4 +41,19 @@ while true; do
         exit 1
     fi
 done
+if [ "$n" = 0 ]; then
+    echo "EMPTY: neither front end printed a line"
+    exit 1
+fi
 echo "SAME: $n lines, native and node agree"
+
+# Without the control, the lines must also be the committed ones, so two
+# front ends that drifted together still fail.
+if [ "${#features[@]}" = 0 ]; then
+    if ! diff -q out/native.txt digests-native.txt > /dev/null; then
+        echo "DRIFT: the lines differ from the committed digests-native.txt"
+        diff out/native.txt digests-native.txt | head -4
+        exit 1
+    fi
+    echo "GOLDEN: the lines equal the committed digests-native.txt"
+fi

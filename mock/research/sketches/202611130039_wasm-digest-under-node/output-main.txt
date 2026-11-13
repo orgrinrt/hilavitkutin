@@ -1,2 +1,3 @@
 SAME: 1701 lines, native and node agree
-main exit=0
+GOLDEN: the lines equal the committed digests-native.txt
+exit=0

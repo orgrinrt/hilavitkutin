@@ -1,0 +1,32 @@
+   Compiling wasm-digest-kernel v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611130039_wasm-digest-under-node/kernel)
+    Finished `release` profile [optimized] target(s) in 5.90s
+     Running unittests src/lib.rs (/home/user/target/release/deps/wasm_digest_kernel-8d69ead891c72c8e)
+
+running 7 tests
+test tests::a_full_array_refuses_with_a_value_and_keeps_its_cells ... ok
+test tests::a_short_digest_buffer_is_refused_before_any_step ... ok
+test tests::the_digest_sees_order_and_length ... ok
+test tests::the_product_saturates_instead_of_wrapping ... ok
+test tests::the_main_case_reaches_saturation ... ok
+test tests::the_small_case_stops_where_the_array_fills ... ok
+test tests::ties_round_to_even_in_both_signs ... FAILED
+
+failures:
+
+---- tests::ties_round_to_even_in_both_signs stdout ----
+
+thread 'tests::ties_round_to_even_in_both_signs' (31361) panicked at kernel/src/lib.rs:347:9:
+assertion `left == right` failed: 0.5 goes to 0
+  left: 1
+ right: 0
+stack backtrace:
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+
+failures:
+    tests::ties_round_to_even_in_both_signs
+
+test result: FAILED. 6 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+error: test failed, to rerun pass `-p wasm-digest-kernel --lib`
+exit=101

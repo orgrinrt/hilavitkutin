@@ -1,4 +1,4 @@
 DIFFER at line 1
   native: c0 s1 92a39b69ea5ef7a3
   node:   c0 s1 924f4fd6e3e01fe1
-control exit=1
+exit=1

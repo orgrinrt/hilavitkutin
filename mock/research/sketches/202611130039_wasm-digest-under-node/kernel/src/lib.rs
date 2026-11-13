@@ -1,8 +1,8 @@
 //! The kernel of the sketch: one integer pass over a growable line of cells,
 //! stepped many times, with a digest after every step.
 //!
-//! The pass is a three-tap average with a widened product, rounded half to
-//! even and saturated. The digest folds the cells by ascending index with a
+//! The pass is a three-tap weighted sum with a widened product, rounded half
+//! to even and saturated. The digest folds the cells by ascending index with a
 //! 64x64 to 128 bit multiply. Nothing here reads the target: no `usize` in a
 //! value, no float, no host call. The same source gives the same digests on
 //! any target, which is what the front ends check.
@@ -16,8 +16,8 @@
 use core::fmt;
 
 /// The tap weights in Q16, applied to the left, middle and right cell.
-/// They sum to 1.375, so a line that alternates in sign grows until it
-/// saturates, and a smooth one decays.
+/// They sum to 0.875, so a smooth line decays. The gain on a line that
+/// alternates in sign is 1.375, so that one grows until it saturates.
 pub const WEIGHTS: [i64; 3] = [0x9000, -0x4000, 0x9000];
 
 /// Fractional bits of the weights.
@@ -136,7 +136,7 @@ pub const fn lcg(x: u64) -> u64 {
         .wrapping_add(1442695040888963407)
 }
 
-/// The three-tap average: a widened product, rounded half to even,
+/// The three-tap weighted sum: a widened product, rounded half to even,
 /// saturated to the `i64` range.
 pub const fn tap(left: i64, middle: i64, right: i64) -> i64 {
     let s: i128 = (WEIGHTS[0] as i128) * (left as i128)
@@ -145,7 +145,10 @@ pub const fn tap(left: i64, middle: i64, right: i64) -> i64 {
     let q = s >> FRAC_BITS;
     let r = s & ((1i128 << FRAC_BITS) - 1);
     let half = 1i128 << (FRAC_BITS - 1);
+    #[cfg(not(feature = "mutant-half-up"))]
     let up = r > half || (r == half && (q & 1) == 1);
+    #[cfg(feature = "mutant-half-up")]
+    let up = r >= half;
     let q = if up { q + 1 } else { q };
     if q > i64::MAX as i128 {
         i64::MAX
@@ -299,21 +302,22 @@ pub fn run<const CAP: usize>(
     };
     let mut s = 1;
     while s <= steps {
-        if grow_every != 0 && s % grow_every == 0
+        if grow_every != 0
+            && s % grow_every == 0
             && let Err(Full {
                 needed,
                 cap,
             }) = cells.push(lcg(seed ^ s as u64) as i64)
-            {
-                return Report {
-                    written: s - 1,
-                    refusal: Some(Refusal::Cells {
-                        step: s,
-                        needed,
-                        cap,
-                    }),
-                };
-            }
+        {
+            return Report {
+                written: s - 1,
+                refusal: Some(Refusal::Cells {
+                    step: s,
+                    needed,
+                    cap,
+                }),
+            };
+        }
         cells.nudge(s, (lcg(seed.rotate_left(17) ^ s as u64) >> 40) as i64);
         cells.step();
         out[s - 1] = cells.digest();

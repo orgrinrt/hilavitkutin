@@ -1,8 +1,10 @@
 # Sketch findings: a no_std loop with a growable model runs under node through a fixed-capacity array, and gives the native digests
 
-**Date:** 2026-11-13
-**Outcome:** WORKS. The fixed-capacity route runs under node 22 and prints the same 1701 lines as the native binary. The negative control, a digest that absorbs the line length as a pointer-width integer, is red on the first line.
-**Unblocks:** a `#![no_std]`, no-alloc reference kernel with a growable model can have its wasm32 digests checked against native ones by a script that exits non-zero on the first differing line. The alloc route is closed for hilavitkutin crates and is only a note below.
+Date: 2026-11-13
+
+Outcome: WORKS. The fixed-capacity route runs under node 22 and prints the same 1701 lines as the native binary. The negative control, a digest that absorbs the line length as a pointer-width integer, is red on the first line.
+
+Unblocks: a `#![no_std]`, no-alloc reference kernel with a growable model can have its wasm32 digests checked against native ones by a script that exits non-zero on the first differing line. The alloc route is closed for hilavitkutin crates and is only a note below.
 
 ## Hypothesis
 
@@ -19,7 +21,7 @@ The kernel (`kernel/src/lib.rs`, `#![no_std]`, `#![forbid(unsafe_code)]`, no dep
 3. Then every cell, by ascending index, as its two's complement 64-bit value: `acc = fold(acc, cell as u64)`.
 4. `fold(acc, x)` is `let m = ((acc ^ x) as u128) * 0x9E3779B97F4A7C15u128; (m as u64) ^ ((m >> 64) as u64)`.
 
-The pass is one three-tap average per step over `i64` cells: a Q16 weight triple `[0x9000, -0x4000, 0x9000]` applied to left, middle and right cell, summed as `i128`, shifted down by 16 with the remainder rounded half to even, then saturated to the `i64` range. The two end cells repeat themselves as their missing neighbour. Each step starts with a small wrapping nudge to one cell (`s % len`), so the line does not settle into a saturated cycle. The loop runs 1000 steps and keeps one digest per step.
+The pass is one three-tap weighted sum per step over `i64` cells: a Q16 weight triple `[0x9000, -0x4000, 0x9000]` (summing to 0.875, with a gain of 1.375 on a line that alternates in sign) applied to left, middle and right cell, summed as `i128`, shifted down by 16 with the remainder rounded half to even, then saturated to the `i64` range. The two end cells repeat themselves as their missing neighbour. Each step starts with a small wrapping nudge to one cell (`s % len`), so the line does not settle into a saturated cycle. The loop runs 1000 steps and keeps one digest per step.
 
 The growable model: the line starts with 54 cells and gains one every 100 steps. Case 0 holds it in an array of 64, which fills at step 1000 and never overflows. Case 1 holds the same run in an array of 60, which is full when step 700 asks for a 61st cell. The refusal is the value `Refusal::Cells { step: 700, needed: 61, cap: 60 }`, the 699 digests before it are kept, and no cell is dropped. Both front ends print it as `c1 end written=699 refusal=cells step=700 needed=61 cap=60`.
 
@@ -35,18 +37,20 @@ $ ./run.sh
 SAME: 1701 lines, native and node agree
 ```
 
-That is 1001 lines for case 0 and 700 for case 1. The expected lines are committed as `digests-native.txt`; `output-main.txt` is the run above with its exit code.
+That is 1001 lines for case 0 and 700 for case 1. The expected lines are committed as `digests-native.txt`; `output-main.txt` is the run above with its exit code. Since the review, `run.sh` also diffs its lines against `digests-native.txt` and fails on an empty output, so two front ends that drifted together or printed nothing are red too. The drift check was shown failing by changing the last digit of line 5 of `digests-native.txt` by hand and restoring it; `output-golden-drift.txt` holds that run, and the hand edit itself is not committed.
 
-The kernel's own tests (`cargo test --release -p wasm-digest-kernel`, 7 passing) pin ties to even in both signs, saturation, order and length sensitivity of the digest, the refusal of a full array with its cells kept, the case 1 stop at step 700, the refusal of a short digest buffer, and that the main case does reach a saturated cell. To show the tie test can fail, the rounding was changed to round half up (`let up = r >= half;`) and the tie test failed:
+The kernel's own tests pin ties to even in both signs, saturation, order and length sensitivity of the digest, the refusal of a full array with its cells kept, the case 1 stop at step 700, the refusal of a short digest buffer, and that the main case does reach a saturated cell. `probes.sh` runs them and records the output in `output-tests.txt`: 7 passed, 0 failed, exit 0.
+
+To show the tie test can fail, the kernel has a feature `mutant-half-up` that rounds ties up (`let up = r >= half;`) instead of to even. `probes.sh` runs the same tests under it and records `output-mutant-half-up.txt`:
 
 ```
-tests::ties_round_to_even_in_both_signs --- FAILED
+test tests::ties_round_to_even_in_both_signs ... FAILED
 assertion `left == right` failed: 0.5 goes to 0
   left: 1
  right: 0
+test result: FAILED. 6 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out
+exit=101
 ```
-
-The file was restored and the tests were green again.
 
 ## The negative control
 
@@ -64,21 +68,22 @@ The output is committed as `output-control.txt`. The script is red on the first 
 
 ## What the cdylib front end needed
 
-The pair below differs in the offending token only: the feature `omit-panic-handler` removes the `#[panic_handler]` function.
+The pair below differs in the offending token only: the feature `omit-panic-handler` removes the `#[panic_handler]` function. The failing half is recorded in `output-omit-panic-handler.txt`:
 
 ```
 $ cargo build --release -p wasm-digest-wasm --target wasm32-unknown-unknown --features omit-panic-handler
 error: `#[panic_handler]` function required, but not found
 error: could not compile `wasm-digest-wasm` (lib) due to 1 previous error
+exit=101
 ```
 
-With the feature off the same command builds. The handler body is `core::arch::wasm32::unreachable()`.
+With the feature off the same command builds, which is the module `output-wasm.txt` measures. The handler body is `core::arch::wasm32::unreachable()`.
 
-Panic strategy: the workspace profile sets `panic = "abort"`. Overriding it with `--config 'profile.release.panic="unwind"'` also built (`Finished release profile`), so nothing here depends on the setting on this target. Only the build was checked, not what a panic does at run time.
+Panic strategy: the workspace profile sets `panic = "abort"`. Overriding it with `--config 'profile.release.panic="unwind"'` also built, recorded in `output-panic-unwind.txt` (`Finished release profile`, `exit=0`), so nothing here depends on the setting on this target. Only the build was checked, not what a panic does at run time.
 
-Exports: `#[unsafe(no_mangle)] pub extern "C" fn` for the three functions. The module's exports, read by node, are `memory`, `out_ptr`, `run_case_export` and `status_ptr`, and its imports are an empty list. No allocator, no `main`, no `#![no_main]`, no linker flag. The two statics are `static mut` arrays written through raw pointers (`addr_of_mut!` and `copy_nonoverlapping`), which is the only `unsafe` in the sketch; the kernel stays safe code. A bare `cargo build` of the workspace would try to build this `no_std` `cdylib` for the host, so `default-members` leaves it out.
+Exports: `#[unsafe(no_mangle)] pub extern "C" fn` for the three functions. The module's exports, read by node (`inspect.mjs`, output in `output-wasm.txt`), are `memory`, `out_ptr`, `run_case_export` and `status_ptr`, and its imports are an empty list. No allocator, no `main`, no `#![no_main]`, no linker flag. The two statics are `static mut` arrays written through raw pointers (`addr_of_mut!` and `copy_nonoverlapping`), which is the only `unsafe` in the sketch; the kernel stays safe code. A bare `cargo build` of the workspace would try to build this `no_std` `cdylib` for the host, so `default-members` leaves it out.
 
-The `.wasm` is 3157 bytes (`wc -c` of `wasm_digest_wasm.wasm`, release profile, fat LTO, one codegen unit, stripped).
+The `.wasm` is 3157 bytes (`bytes: 3157` in `output-wasm.txt`, release profile, fat LTO, one codegen unit, stripped).
 
 ## Does a u128 intermediate compile on wasm32, and agree
 
