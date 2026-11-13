@@ -14,8 +14,8 @@ apply_to: ["**/Cargo.toml"]
 
 ### Crate structure
 
-Eighteen crates total: sixteen plain `rlib` crates plus two
-proc-macro crates. Flat structure.
+{{crate_count}} crates total, two of them proc-macro crates. Flat
+structure.
 
 - `hilavitkutin-contracts` is the contract crate new work is written
  against: domains, the value kernel, the bind, the store. Traits and
@@ -24,7 +24,8 @@ proc-macro crates. Flat structure.
  oracle. `hilavitkutin-laws` holds the laws as functions over plain
  data. `hilavitkutin-frozen-authors` and
  `hilavitkutin-frozen-implementors` hold frozen kernels and stores
- under a ledger (`LEDGER.toml`, `BREAKS.toml`).
+ under a ledger (`LEDGER.toml`, `BREAKS.toml`) that the
+ `frozen-ledger` lint holds.
 - `hilavitkutin-api` is the legacy contract until the engine is
  ported onto `hilavitkutin-contracts`, and is then removed.
 - `hilavitkutin-api` is the consumer-facing contract crate. Traits

@@ -6,14 +6,18 @@ The reference runner is the simplest runner the contracts allow, and it stays th
 
 ## A frame
 
-`step` hands every unit of a checked table, in table order, every record the visiting order gives, in its order and morsels. For each record the unit's reads are gathered from the committed view, its kernel's `at` is called, and its writes are scattered to the staged columns. `swap` makes the staged columns committed. `digest` folds the frame's number and then, unit by unit in table order and record by record in key order, the value of each column the unit writes.
+`step` opens a step on a checked table and takes its units in table order, each with the staged cells of exactly the columns it writes, and hands each unit every record the visiting order gives, in its order and morsels. For each record the unit's reads are gathered from the committed view, its kernel's `at` is called, and its writes are scattered to the unit's staged part. A write the part refuses, which only a visiting order breaking its contract hands out, is kept as the first `Outside` and returned. The checked table's swap makes the written columns committed. `digest` folds the frame's number and then, unit by unit in table order and record by record in key order, the value of each column the unit writes.
 
-Both are the bound handing each unit to a `UnitFn` of the runner's own. `step` hands a `Stepper`, which walks the visiting order for that unit with a visitor calling the unit's kernel at each record it is given. `digest` hands a `Digester`, which walks the unit's records in key order and folds the cells the unit writes. Neither is public: they are how this runner is a `UnitFn`, not a surface another crate uses.
+The runner is four private types. `OneThread` is its `StepFn`: it takes the units one after another. `Stepper` is its `StagedFn`: it walks the visiting order over one unit's part with `Records`, the `Visitor` that calls the kernel at each record. `Digester` is the `UnitFn` the digest is folded by. None is public: they are how this runner meets the contracts, not a surface another crate uses.
 
 ## A run
 
-`run` is a library function: it takes a `Bound`, a store, a visiting order, a morsel size and a frame count, and does that many frames, keeping each frame's digest in a `Run`, which holds storage the caller lends. A full `Run` is refused as a `Refusal` value before the frame that would not fit runs, so the store is as the last digested frame left it. From roadmap step HL0b the close returns its own refusal; this round has no close.
+`run` is a library function: it takes a `Bound`, a visiting order, a `Morsel` and a frame count, and does that many frames, keeping each frame's digest in a `Run`, which holds storage the caller lends. It stops short with a `Refusal` value: `DigestsFull` before a frame that would not fit runs, so the store is as the last digested frame left it, and `Outside` when a frame's visiting order handed a position outside the store, before that frame is swapped in. From roadmap step HL0b the close returns its own refusal; this round has no close.
+
+## Its tests
+
+The tests run every law over two units, `Diffuse` and the test kernel `Mirror`, on three stored columns, one written by neither, over both frozen stores and a probe store, both visiting orders, morsels of one record, seven records and the whole, and three inputs. The probe store carries the mutants each law must fail. A second runner in the tests splits every unit's part at its middle and steps the halves on scoped threads; it is written against the contracts alone, changes no author and no implementor, and its digests equal this runner's.
 
 ## Principles
 
-`#![no_std]` and no alloc: the digests live in caller-lent storage. Monomorphisation is the dispatch: the runner is a `UnitFn` and a `Visitor`, so it calls each kernel as a type.
+`#![no_std]` and no alloc: the digests live in caller-lent storage. Monomorphisation is the dispatch: the runner is a `StepFn`, a `StagedFn` and a `Visitor`, so it calls each kernel as a type.

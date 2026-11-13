@@ -2,17 +2,17 @@
 
 This crate is the surface a consumer writes against, kept apart from any runner so that a later runner, fused, threaded or on another target, demands nothing more of an author or an implementor than the one-thread reference runner does. An author writes kernels against a domain; an implementor writes a store and a visiting order; neither sees the other, and neither sees a runner. What joins them is data: a table of bindings saying which stored column fills which column a kernel names, checked once by `bind`.
 
-`#![no_std]`, no alloc, no `dyn`, no `#![feature]`, no `unsafe`. It depends on `notko` for `Maybe` and `Outcome`, which it re-exports so a crate written against it names one dependency, and on `notko-hlist` for the type-level list. It depends on no other hilavitkutin crate, and on no arvo crate yet: the numbers it needs are proxies here, each going at the swap to arvo.
+`#![no_std]`, no alloc, no `dyn`, no `#![feature]`, no `unsafe`. It depends on `notko` for `Maybe` and `Outcome`, which it re-exports so a crate written against it names one dependency, and on `notko-hlist` for the type-level list and the place of a member in it. It depends on no other hilavitkutin crate, and on no arvo crate yet: the numbers it needs are proxies here, each going at the swap to arvo.
 
 ## The value kernel
 
-A kernel is a type implementing `ValueKernel`. It has no receiver and no context: `at` is handed the values of its reads at one record and returns the values of its writes there. It is handed no position, no range and no view, and asks for none; where a record is, which records are visited and in which morsels is the runner's and the store's. Its reads are one list of members of its domain, its writes a list of `Own` members of the same domain. The two lists are type-level lists, and `at` takes and returns their value projection, a nested pair an author destructures and never indexes:
+A kernel is a type implementing `ValueKernel`. It has no receiver and no context: `at` is handed the values of its reads at one record and returns the values of its writes there. It is handed no position, no range and no view, and asks for none; where a record is, which records are visited and in which morsels is the runner's and the store's. Its reads are one list of members of its domain, its writes a list of `Own` members of the same domain, and its `Roles` the columns those members name, each once. The lists are type-level lists, and `at` takes and returns their value projection, a nested pair an author destructures and never indexes:
 
 ```rust
 fn at((here, (east, (rate, ()))): (L, (L, (L, ())))) -> (L, ());
 ```
 
-A kernel declares its identity, `ID: KernelId`, because a kernel is bound by data and so one kernel type is many units, and an order key needs an identity that is the same across builds. A `KernelId` is below 128 today: two kernels of one list declaring one id fail the build where the list is bound, by a fold of the ids into a 128-bit word. That word is a stand-in for arvo's masks and its width is no interface.
+A kernel declares its identity, `ID: KernelId`, because a kernel is bound by data and so one kernel type is many units, and an order key needs an identity that is the same across builds. A `KernelId` is below 128 today, and that is checked where a kernel list is bound, at build time: an id of 128 or more, or two kernels of one list declaring one id, fail the build there, by a fold of the ids into a 128-bit word. That word is a stand-in for arvo's masks and its width is no interface. A binding naming an id no kernel of the list holds, however wide, is data and is refused as data.
 
 `Kernels` is a list of kernels of one domain, sealed: the walk that finds a binding's kernel by id and the id fold live on a private supertrait.
 
@@ -24,30 +24,64 @@ A `Column` is a value per record of a domain, a `Resource` one value constant ov
 
 The members of a read list are `Own<C>`, this record's value of `C`; `Near<C, O>`, the value at the offset `O` from this record's key, where `O` is an `Offset` the domain's author declares with its step as plain data; and `Param<R>`, a resource's value supplied per binding as a coefficient. A write list holds `Own` members only. `Reads` and `Writes` say a list is one of these, and the walk over each list that checks a binding, mints its handles and reads and writes a record is sealed.
 
-A `Value` is what a column or resource holds: a `Copy` type with one of the closed set of cell widths (`Cell8`, `Cell16`, `Cell32`, `Cell64`), a `FormatId` naming its encoding, and a way into the digest. A store keeps cells as `Word`s and a value moves through its cell.
+`Roles` is the kernel's list of columns, each once. Every `Own` and `Near` member finds its column in it by `PlaceOf`, `notko-hlist`'s place of a type in a list, and the places are inferred where the kernel list is bound, so the members of one column read and write one stored column and nothing compares them at run time. A role list naming a column twice leaves a member's place ambiguous and the bind does not build; a member whose column is not in the list has no place and does not build. No specialization is used.
+
+A `Value` is what a column or resource holds: a `Copy` type with one of the closed set of cell widths (`Cell8`, `Cell16`, `Cell32`, `Cell64`), a `FormatId` naming its encoding, and a way into the digest. `Value` is sealed and `Int` is its one impl, and a `FormatId` is made inside the crate only, one per value type, so two values never share one. A store keeps cells as `Word`s and a value moves through its cell.
 
 ## The bind and the checked table
 
-A `Binding` is one line of the content table: a `UnitId`, the `KernelId` it runs, a `Role` for each of the kernel's column roles (its reads' `Own` and `Near` members, then its writes') naming a stored column and the format the binding says it is in, and a `Coefficient` for each `Param` member. `bind` checks a table of bindings against a kernel list and a store's declared formats and returns either the checked table `Bound` or the first refusal as a `BindRefusal` value: an unknown kernel, a role or coefficient whose format is not the kernel's or the store's, an unknown column, a wrong count of roles or coefficients, two bindings of one unit, or two write roles naming one stored column (`TwoWritersOfOneColumn`). In a step with a committed view and staged columns, two writers of one staged column have no order a priority could resolve, so they are refused rather than ordered.
+A `Binding` is one line of the content table: a `UnitId`, the `KernelId` it runs, a `Role` for each column of the kernel's `Roles`, in that order, naming a stored column and the format the binding says it is in, and a `Coefficient` for each `Param` member. `bind` checks a table of bindings against a kernel list and the store it is handed, and returns either the checked table `Bound` or the first refusal as a `BindRefusal` value: an unknown kernel, a role or coefficient whose format is not the kernel's or the store's, an unknown column, a wrong count of roles or coefficients, two bindings of one unit, or two write roles naming one stored column (`TwoWritersOfOneColumn`), within one binding or across two. In a step with a committed view and staged columns, two writers of one staged column have no order a priority could resolve, so they are refused rather than ordered. A read role and a write role of one binding may name one stored column: the read is of the committed value.
 
-`Bound` has no public field and no public constructor, so every runner takes a table that passed. The typed column handle `Col<D, V>` is minted from a passing binding and from nothing else: the format comparison is made once, at bind, and a store reads and writes through handles without comparing formats again. `Bound::each` hands every unit, as a `Unit` with its kernel known as a type, to a `UnitFn`, which is how a runner is written over every kernel of a list without naming one.
+`bind` takes the store by `&mut`, and `Bound` keeps it for as long as the table lives. So every runner takes a table that passed, a table is never run over a store it was not checked against, and the store cannot change under it. `Bound` has no public field and no public constructor. While it lives the store is reached only through it: read by `Bound::store` and `Bound::committed`, stepped by `Bound::step`, swapped by `Bound::swap`, and walked unit by unit by `Bound::each`, which hands every unit, as a `Unit` with its kernel known as a type, to a `UnitFn`. That is how a runner is written over every kernel of a list without naming one.
+
+The typed column handle `Col<D, V>` is minted from a passing binding and from nothing else: the format comparison is made once, at bind, and a store reads and writes through handles without comparing formats again.
+
+## A step
+
+A step reads the committed view and writes staged cells. `Bound::step` opens one on the store with an `Opening`, which only the checked table makes, and hands a `StepFn` the committed view and `Units`. `Units::next` hands the next unit to a `StagedFn` as a `Staging`: the unit, with its kernel as a type, and its own part of the staged cells, holding exactly the stored columns it writes and every position. A runner cuts a `Staging` by position with `split`, gathers a record's reads from the committed view through the unit, and writes its kernel's values with `scatter`, which refuses as an `Outside` value a position its part does not hold. `low` and `high` say which positions a part holds.
+
+The parts a step hands out are disjoint by construction: by column between units, since the bind refused two writers of one column, and by position within one, since a cut is a cut. A part is `Send` and the committed view `Sync`, so a threaded runner hands parts to its workers and needs nothing more of an author or an implementor than the one-thread runner does.
 
 ## The store and the visiting order
 
-A `Store` holds one shape of one domain's records, its stored columns each in a declared format, as a committed view and staged columns. `step` borrows both for one step, `Read` on the committed view and `Write` on the staged columns; `swap` makes the staged columns committed, and a column no unit wrote keeps its values across the swap. A record is found by its position, an `Index` in key order; positions are the store's and the runner's and no kernel is handed one. How a store lays cells out behind a position is its own.
+A `Store` holds one shape of one domain's records, its stored columns each in a declared format, as a committed view and staged cells. `step`, given the `Opening`, borrows both: the committed view as `Read`, shared and `Sync`, and the whole staged side as `Stage`, `Send`. `Stage::take` splits off the stored columns a `Taking` holds and marks them written; `Stage::split` cuts by position; `Stage::put` writes one cell through a handle, and writes nothing where the part does not hold the column or the position. `swap` makes the staged cells of every column taken since the last swap committed, and a column no unit took keeps its committed values. A record is found by its position, an `Index` in key order; positions are the store's and the runner's and no kernel is handed one. How a store lays cells out behind a position is its own.
 
-A `Visit` hands a `Visitor` every position below the extent exactly once, in morsels of the asked size but the last.
+A `Visit` hands a `Visitor` every position below the extent exactly once, and no other, in morsels of a `Morsel`'s size but the last. A `Morsel` is never zero.
 
 ## Numbers
 
-`num` holds the proxies this crate uses in place of bare primitives: `Bool`, `USize`, and the two distinct position and quantity types `Index` and `Count`, whose host doors `from_host` and `host` are the only bare `usize` at a public position and which have no `raw`. A `Count` cannot stand where an `Index` goes. `Identity` with the monoid marker `Additive` names an identity element.
+`num` holds the proxies this crate uses in place of bare primitives: `Bool`, `USize`, and four distinct position and quantity types. `Index` is a position in a store, `Count` a quantity, `Ordinal` a place in a stream or a list, and `ColumnNo` a stored column. None stands where another goes. Their host doors `from_host` and `host` are the only bare `usize` at a public position, and they have no `raw`. `Count::sub` returns nothing below zero rather than wrapping. `Identity` with the monoid marker `Additive` names an identity element.
 
-`Lane` is the arithmetic vocabulary a kernel generic over a number is bounded by, with names from arvo's value page: `widen` into an exact accumulator, `wide_add` and `wide_sub` on it, `narrow` back, and `MAX_TERMS`, how many widened members the accumulator holds exactly. `Int<BITS>` is the one proxy lane, signed and saturating, with the accumulator `Wide<BITS>` of `2 * BITS` bits; its term bound is `2^BITS - 1`, since `2^BITS` subtracted minimums overflow the register by one. Frozen authors never name `Int`; tests and the cross-target tool do.
+`Lane` is the arithmetic vocabulary a kernel generic over a number is bounded by, with names from arvo's value page: `widen` into an exact accumulator, `wide_add` and `wide_sub` on it, `narrow` back, and `MAX_TERMS`, how many widened members the accumulator holds exactly. `Int<BITS>` is the one proxy lane, signed and saturating, with the accumulator `Wide<BITS>` of `2 * BITS` bits; its term bound is `2^BITS - 1`, since `2^BITS` subtracted minimums overflow the register by one, and the tests hold that bound at every width from 1 to 64. Frozen authors never name `Int`; tests and the cross-target tool do.
 
 ## The digest
 
 `Digest` is the fold a run's state is compared by across runners and targets, and `Absorb` the one way into it. Every word enters as eight little-endian bytes, so nothing that enters depends on the target's pointer width. The fold and the word encoding are unlocked until the journal format locks.
 
+## Shapes not locked
+
+Five shapes stand today and are not safe to lock. Each has a ticket, and each is decided before the contracts lock.
+
+### The push-callback visit
+
+A `Visit` pushes positions into a `Visitor`. A fused or threaded runner may want to pull morsel ranges instead. Ticket `lock_or_replace_the_push_callback_visit_shape_in_hilavitkuti`.
+
+### The domain's walk
+
+A `Domain` walks its keys by `first` and `next` and answers a neighbour by `reach`, so a store keeps a table of keys and searches it. Rank arithmetic or a dense key map may serve a store better. Ticket `lock_or_replace_the_domain_first_next_reach_walk_in_hilavitk`.
+
+### Positions as dense ranks
+
+A position is a dense rank in key order over a fixed extent. Nothing resizes a store or keeps a position stable across a change of shape; growth, sparse keys and stable handles are open. Ticket `decide_positions_beyond_dense_key_order_ranks_with_no_resize`.
+
+### The storage word
+
+`Word`, eight bytes, is the unit a store holds every cell in, and `Cell64` the widest cell, so no value is wider than 64 bits and narrow cells are not packed. Ticket `decide_the_storage_word_and_the_widest_cell_in_hilavitkutin`.
+
+### Values as nested pairs
+
+A kernel's values are a nested pair, destructured as `(a, (b, ()))`. A flat tuple or a named struct per kernel are the alternatives. Ticket `decide_whether_a_kernel_s_values_stay_nested_pairs_in_hilavi`.
+
 ## Principles
 
-`#![no_std]` and no alloc, every crate. Monomorphisation is the dispatch: `Read::get` takes a typed handle, and a runner reaches a kernel through `UnitFn`, never through `dyn` or a type id.
+`#![no_std]` and no alloc, every crate. Monomorphisation is the dispatch: `Read::get` takes a typed handle, and a runner reaches a kernel through `UnitFn` and `StagedFn`, never through `dyn` or a type id.

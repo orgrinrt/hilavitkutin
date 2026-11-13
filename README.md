@@ -6,191 +6,75 @@
 [![GitHub Issues](https://img.shields.io/github/issues/orgrinrt/hilavitkutin.svg)](https://github.com/orgrinrt/hilavitkutin/issues)
 ![License](https://img.shields.io/github/license/orgrinrt/hilavitkutin?color=%23009689)
 
-> Static scheduler and runtime that turns read / write access sets into per-core dispatch with cache-aware morsels. `no_std`, no alloc, no spawn, no dyn.
+> A morsel-driven pipeline engine for `no_std` rust, with its kernels and stores written against one small set of contracts.
 
 </div>
 
-Typed WorkUnits declare their read / write access sets to the scheduler builder. Every registration goes through one method, `.with(input)`, which routes on the input's `BuilderInput` impl: a `WorkUnit` accumulates onto the unit typestate, and a `Column`, `Resource`, `Virtual` or `Kit` registers a store. At `.build()`, every declared access is type-checked against the registered stores. A WorkUnit that names a store the builder does not have fails to compile, with the diagnostic pointing at the missing marker.
+hilavitkutin runs kernels over columns of records, morsel by morsel, with no allocator, no spawn and no `dyn`. New work is written against `hilavitkutin-contracts`, which is where a kernel author and a store implementor meet without seeing each other: the author writes value kernels over a domain of records, the implementor writes the store the records live in and the order they are visited in, and a table of plain data binds the two, checked once by `bind` before anything runs.
 
-`.build()` then runs the plan stage end to end. Access-set overlap builds the dependency graph; topological sort and upward rank find the critical path; waist detection partitions phases; RCM reordering and block-diagonal layout cluster adjacent work for cache locality; spectral partitioning groups trunks; combinatorial DP groups fibers; per-fiber morsels are sized to cache. The output is a per-core dispatch program: a monomorphised function per physical core encoding phases, record ranges, morsel boundaries, and sync points.
+A value kernel has no receiver and is handed no position, only the values of what it reads at one record, and it returns the values of what it writes there. Which stored column fills which of its columns, which records it runs over and in what morsels, belong to the table, the store and the runner, so the same kernel runs over any store and under any runner as it is. A step reads a committed view and writes staged cells, and the checked table cuts the staged side into one part per unit holding only the columns that unit writes, which a runner can cut further by position and hand to its threads with nothing more asked of the author or the implementor.
 
-At run time, the dispatch programs drive a pre-allocated thread pool. Trunks of fibers pin to specific cores for L1 warmth; morsels window into columns of records for cache-aware iteration; LLVM devirtualises the per-core programs into straight-line code. Phases overlap via atomic progress counters: phase N+1 starts as soon as phase N produces enough records for one morsel. Pipeline parallelism is derived from the declared access sets at plan time, not synthesised at run time from hand-written sync primitives.
+`hilavitkutin-reference` is the one-thread runner every other runner is held to by digest, and `hilavitkutin-laws` holds the laws a run is checked against, as plain functions over what the run produced, so a store or a runner written elsewhere can be held to the same laws. The scheduler in `hilavitkutin` and its older contract crate `hilavitkutin-api` predate the contracts and are being ported onto them, after which `hilavitkutin-api` goes.
 
-## Scheduler builder
+## Usage
 
-The scheduler builder is a typestate. Each registration accumulates a type parameter onto the builder; `.build()` reads the accumulated state and type-checks every registered WorkUnit's read / write access against the registered stores.
-
-One registration method covers the surface. `.with(input)` accepts anything implementing `BuilderInput`, and that impl's `Dispatch` associated type decides where the input lands: onto the unit typestate for a `WorkUnit`, or onto the store typestate for a `Column`, `Resource`, `Virtual` or `Kit`. A `Kit` carries `type Units` and `type Owned`, so one `.with(kit)` prepends a whole bundle of WorkUnits and stores at once. `.clock(clock)` is the one separate method, because the clock value has to be retained rather than tracked by type alone.
+A kernel names its domain, what it reads, the columns it touches and what it writes, and an identity that stays the same across builds. Here `Plane` is a two-axis domain with `East` one of its offsets, and `Heat` and `Flux` are columns of it holding the lane `L`:
 
 ```rust
-use hilavitkutin::scheduler::Scheduler;
-use hilavitkutin_api::column::Column;
+use hilavitkutin_contracts::domain::{Near, Own};
+use hilavitkutin_contracts::kernel::{KernelId, ValueKernel};
+use hilavitkutin_contracts::list::{Cons, Empty};
+use hilavitkutin_contracts::num::{Lane, USize};
 
-let scheduler = Scheduler::builder()
-    .with(Column::<Inv>::new())
-    .with(Column::<Outv>::new())
-    .with(Copyer)
-    .build(store(provider), USize(4))
-    .unwrap_or_else(|_| panic!("build should succeed"));
-```
+pub struct Mirror;
 
-`.build()` takes the column storage and the record count, and carries the typestate constraint that every registered WorkUnit's `Read` and `Write` access sets are fully covered by the accumulated stores. Passing something that is not a registered input fails the trait solver at the `.with(...)` call, and `BuilderInput`'s `#[diagnostic::on_unimplemented]` names the missing impl:
+impl ValueKernel for Mirror {
+    type Domain = Plane;
+    type Reads = Cons<Own<Heat>, Cons<Near<Heat, East>, Empty>>;
+    type Roles = Cons<Heat, Cons<Flux, Empty>>;
+    type Writes = Cons<Own<Flux>, Empty>;
 
-```text
-error: `Foo` is not a BuilderInput; pass a registered input value to `SchedulerBuilder::with(...)`
-note: Impl one of the dispatch-determining sub-traits on `Foo`: `Resource` / `Column` /
-      `Virtual` / `WorkUnit` / `Kit` / `MemoryProvider` / `ThreadPool` / `Clock` / `RunCfg`.
-```
+    const ID: KernelId = KernelId::new(USize::from_host(2));
 
-Order of registration matters for the type-level proof. A Kit whose WorkUnits read from another Kit's owned state must come after the owning Kit in the chain. The builder accepts any order that satisfies the proof; the diagnostic pinpoints what is missing when it does not.
-
-Once `.build()` returns, the resulting `Scheduler` is the runtime handle. Its type parameters carry the run config, the unit and store values, the column storage, the plan dimensions, the store access set and the clock; most are defaulted, and the ones that matter are inferred from the builder chain. For stores marked `Replaceable`, `Scheduler::replace_resource::<T>` allows targeted resource swaps between runs.
-
-## Plan and runtime
-
-The plan stage selects a strategy per pipeline shape and a config per phase. Strategy selection happens at plan time based on record count and DAG topology: shallow pipelines run sequential, wide pipelines run adaptive, mixed pipelines run phased with parallel trunks. Per-phase `PhaseConfig` values (`MaxFuse`, `Balanced`, `MaxSplit`) tune how aggressively the dispatch fuses or splits within the phase. None of this changes during a run; the next plan recompute fires only on structural change to the pipeline (new WorkUnits registered, record-count shift, DAG modification).
-
-At run time, two extras compound the per-core cache locality. Commutative fibers parallelise from both ends: a head thread iterates forward, a tail thread iterates backward, accumulators merge at convergence; every commutative fiber gets roughly 2x parallelism for free. On targets with heterogeneous cores, critical-path trunks land on performance cores, and branches and leaves land on efficiency cores with proportionally smaller morsels. Sync points use predictive parking, with short waits as spin loops and long waits as parked threads, sized from runtime measurements rather than fixed thresholds.
-
-The adapt subsystem watches per-morsel timing across runs and proposes recompute when EMA trends drift past tolerance. Plan recompute stays rare by construction: the typestate fixes the structural shape; the adapt subsystem only revises sizes and assignments. The scheduler is itself a pipeline; the plan, dispatch, and adapt stages run as meta WorkUnits on the same engine that runs registered code.
-
-## Provider context
-
-The provider context framework lives in `hilavitkutin-ctx` as a standalone crate (no engine dependency, zero dependencies, `#![no_std]`). It is the mechanism behind every WorkUnit's `Self::Ctx` slot, and it is independently usable by any consumer that needs typed access to a tuple of provider implementations.
-
-The shape is small. `Context<P>` wraps a provider tuple `P`. Three macros generate the rest:
-
-- `provider!(SomeApi as HasSomeProvider => some_method)` declares an accessor trait; the method on the right becomes the call-site form (`ctx.some_method()`).
-- `tuple!(A: HasFoo => foo, B: HasBar => bar)` writes the accessor impls per tuple layout, so position 0 gives `Foo` and position 1 gives `Bar`. Wrong order at the call site fails to compile because the bound is not satisfied.
-- `define_providers!` is a facade that bundles `provider!` and `tuple!` calls into one declaration.
-
-A domain trait declares its `type Ctx: HasFoo + HasBar` and writes the body against `ctx.foo()` / `ctx.bar()`. The same `Self::Ctx` slot resolves per trait, so a single struct can implement two traits with different `Ctx` shapes without ambiguity.
-
-Within hilavitkutin, every WorkUnit's `Self::Ctx` is a provider tuple expressing read / write access plus the engine-required platform contracts (`HasColumnReader<R>`, `HasColumnWriter<W>`, `HasResourceProvider<R>`, `HasVirtualFirer<W>`, `HasEach<R, W>`, `HasBatch<R, W>`, `HasReduce<R, W>`). The `provider_generic!` / `provider_generic2!` variants thread one or two access-set type parameters through. Outside hilavitkutin, the same machinery works elsewhere: a separate consumer crate can declare its own domain trait with `type Ctx: HasConnector + HasWriter` and stay independent of the engine entirely.
-
-```rust
-use hilavitkutin_ctx::define_providers;
-use notko::Outcome;
-
-// declare provider apis and one tuple layout.
-define_providers! {
-    providers {
-        FormatterApi as HasFormatter => formatter,
-        SinkApi      as HasSink      => sink,
-    }
-    layouts {
-        (FormatterApi, SinkApi),       // pos 0 = formatter, pos 1 = sink
-    }
-}
-
-// a domain trait declares which providers its ctx carries.
-trait Logger {
-    type Ctx: HasFormatter + HasSink;
-    fn log(&self, ctx: &Self::Ctx, event: Event) -> Outcome<(), Oops>;
-}
-
-// concrete impl supplies a tuple that matches the layout.
-struct JsonLogger;
-impl Logger for JsonLogger {
-    type Ctx = (JsonFormatter, FileSink);            // both impl their api traits
-    fn log(&self, ctx: &Self::Ctx, event: Event) -> Outcome<(), Oops> {
-        let line = ctx.formatter().format(event)?;   // tuple pos 0 via HasFormatter
-        ctx.sink().write(line)?;                     // tuple pos 1 via HasSink
-        Outcome::Ok(())
+    // the flux at a place is its heat less the heat east of it
+    fn at((here, (east, ())): (L, (L, ()))) -> (L, ()) {
+        (L::narrow(L::wide_sub(here.widen(), east.widen())), ())
     }
 }
 ```
 
-## Extensions and extensibility
-
-`hilavitkutin-linking` is the cross-platform `dlopen` / `LoadLibrary` primitive: explicit symbol lookup by name, `no_std`, no allocator, no linker-magic registration. The handle is `'static`, and the typed `Symbol<'lib, F>` and `StaticRef<'lib, T>` handles tie their lifetime to the source `Library` so use-after-close is a compile-time error. v1 supports macOS / Linux / Windows on the common architectures; wasm32 is explicitly out of scope.
-
-`hilavitkutin-extensions` adds the `ExtensionDescriptor` `#[repr(C)]` shape and per-extension lifecycle on top. Discovery is one well-known exported symbol resolved through the linking layer; no linker sections are scanned. The descriptor carries the ABI version, name, version, required host capabilities, and a capabilities table keyed by stable `CapabilityId`. Each loaded `Extension` handle owns one `Library` plus a host-opaque context pointer threaded through optional init and shutdown calls. A pluggable failure policy classifies required-vs-optional load failures; an optional shutdown observer fires from both `Extension::close` and `Drop` for symmetry.
-
-`hilavitkutin-extensions-macros` is the proc-macro companion. `#[export_extension]` on a struct that implements the relevant capability traits emits the `#[repr(C)]` descriptor constant, the `__hilavitkutin_extension_descriptor` exported function, the capability table, and per-capability trampolines. The single attribute is the entire surface; downstream consumer ecosystems can wrap it under domain-named attributes (for example `#[viola::plugin]`) without cooperation from this crate.
-
-The architectural invariant across the layer: any extension loads, runs, and drops at arbitrary points independent of siblings. No global registry, no init-ordering gate, no ecosystem-wide lifecycle. Consumer hosts that need ecosystem-wide semantics build them in their own layer above.
+The table gives each unit a stored column and its format for every column in `Roles`, in that order. `bind` checks it against the kernel list and the store, and holds the store for as long as the checked table lives, so the table cannot be run over anything it was not checked against:
 
 ```rust
-use hilavitkutin_extensions::CapabilityId;
-use hilavitkutin_extensions_macros::export_extension;
-use notko::Outcome;
+let roles = [
+    Role { column: ColumnNo::from_host(1), format: L::FORMAT },
+    Role { column: ColumnNo::from_host(2), format: L::FORMAT },
+];
+let table = [Binding {
+    unit:   UnitId::new(USize::from_host(0)),
+    kernel: Mirror::ID,
+    roles:  &roles,
+    params: &[],
+}];
 
-// downstream consumer crate ships this contract for its plugin ecosystem.
-pub trait Compressor {
-    fn compress(&self, input: Bytes) -> Outcome<Bytes, Oops>;
-}
-pub const CAP_COMPRESSOR: CapabilityId = CapabilityId::from_name("my_app.compressor.v1");
-
-// extension author writes the impl plus one attribute.
-#[export_extension(name = "gzip")]
-struct Gzip;
-
-impl Compressor for Gzip {
-    fn compress(&self, input: Bytes) -> Outcome<Bytes, Oops> {
-        // gzip logic here
-        Outcome::Ok(input)
-    }
-}
+let mut bound = match bind::<Plane, Cons<Mirror, Empty>, _, _>(&table, &mut store) {
+    Outcome::Ok(bound) => bound,
+    Outcome::Err(refusal) => panic!("{refusal:?}"),
+};
+let mut digests = [Digest::new(); 8];
+let mut out = Run::new(&mut digests);
+let done = run(&mut bound, &visit, Morsel::ONE, Count::from_host(8), &mut out);
 ```
 
-## Build tooling and hooks
-
-`hilavitkutin-build` runs at build time only; its code never links into the produced runtime binary. Integration is one `configure().run()` call from a `build.rs`. The bootstrap writes a generated `target/hilavitkutin-build/hilavitkutin-config.toml` (containing the rustc-workspace-wrapper path, Cargo profile settings such as `lto = "fat"`, `codegen-units = 1`, `profile-use`, plus any flags the active pragmas require) and ensures the matching `include = "..."` line exists in `.cargo/config.toml` so Cargo picks the generated TOML up. Everything mutable lives in the generated file; `cargo clean` wipes all generated state and the next build regenerates it. The committed `.cargo/config.toml` keeps just the include directive; the bootstrap manages it on first run.
-
-Typed pragmas drive the artefact. Each pragma names what it is and what it needs. `LoopOptimization` activates the LLVM pass plugin that runs IRCE, LoopPredication, LoopInterchange, LoopDistribute, and LoopDataPrefetch. `FastMath` flips `-C llvm-args=-enable-unsafe-fp-math` and emits the `arvo_fast_math` cfg. `MathPeephole` (which requires `FastMath`) loads the math-peephole pass plugin. `ExpandedLto` writes `lto = "fat"` + `codegen-units = 1` (required for devirtualisation of the monomorphised dispatch). Combinators (`All<(A, B)>`, `Any<(A, B)>`) declare requirements; conflicts surface at `configure().run()` time, not at build time.
-
-`Pgo` and `Bolt` integrate as post-build hooks. The first release build runs PGO-instrumented benchmarks in the background to generate `merged.profdata`; subsequent builds pick up the profile and recompile with profile-guided inlining, followed by BOLT post-link rewriting on Linux targets. Profiles are gitignored, expire on `cargo clean`, and warn when HEAD has diverged more than 50 commits since generation.
-
-```rust
-// build.rs
-use hilavitkutin_build::{configure, pragmas::*};
-
-fn main() {
-    configure()
-        .profile("release", |p| p.enable::<(
-            ExpandedLto,        // fat lto + codegen-units=1
-            FastMath,           // unsafe-fp-math + arvo_fast_math cfg
-            LoopOptimization,   // llvm pass plugin
-            Pgo, Bolt,          // profile-guided + post-link rewriting
-        )>())
-        .run();
-}
-```
-
-## Ecosystem extensions
-
-Three standalone crates round out the ecosystem. `hilavitkutin-persistence` is the generic hot/cold storage bridge: rkyv-archived cold store on disk, SIEVE eviction over the hot store, content-hash translation for `Str` values across the persistence boundary so handles stay session-specific while disk identity stays stable. `hilavitkutin-str` is the interned string system: `Str` is `#[repr(transparent)]` over a 32-bit packed bitfield (one bit distinguishes const from runtime origin, 28 bits hold the id), const handles content-hash via FNV-1a at compile time and register through linker sections, runtime handles get sequential ids from a host-supplied `ArenaInterner` impl.
-
-`hilavitkutin-providers` ships default Kit implementations on top of the api primitives. v0 is the `InternerKit<BYTES, ENTRIES>` plus a `default_interner()` constructor backed by an inline `MemoryArena<BYTES, ENTRIES>`; future modules add default ColumnStorage, Clock, and MemoryProvider as consumer demand surfaces. Each of the three crates is independently usable and none depend on the engine; the engine reaches for them only when registered via `.add_kit::<K>()` or direct `.add_resource(_)` / `.add_column()` calls on the scheduler builder.
-
-```rust
-use hilavitkutin_persistence::ColdStore;
-use hilavitkutin_str::{Str, str_const};
-use notko::Outcome;
-
-const APP_NAME: Str = str_const!("my_app");           // fnv-1a at compile time, linker section
-
-fn warm(data_dir: PathBytes) -> Outcome<(), Oops> {
-    let cold = ColdStore::open(data_dir)?;
-    cold.load(APP_NAME)?;                             // const str resolves via linker section
-    Outcome::Ok(())
-}
-```
+A refusal is a value either way, from `bind` for a table that does not hold and from `run` for a frame that could not be kept or a visiting order that broke its contract.
 
 ## Testing
 
-`cargo +nightly test --workspace` runs the test suites across every
-crate. Verification of the engine's atomic-ordering guarantees uses
-MIRI under strict-provenance and tree-borrows; see [`MIRI.md`](./MIRI.md)
-at the repo root for the canonical flag invocation and the test
-files that exercise the atomic-ordering paths.
+`cargo +nightly test --workspace` runs the test suites across every crate. Verification of the engine's atomic-ordering guarantees uses MIRI under strict-provenance and tree-borrows; see [`MIRI.md`](./MIRI.md) at the repo root for the flag invocation and the test files that exercise the atomic-ordering paths.
 
 ## Status
 
-Design is mature across the engine, the plugin-host layer, and the standalone ecosystem crates; implementation status varies per crate. The plugin-host layer (linking + extensions + extensions-macros) is implemented. The api crate and the standalone ecosystem extensions (ctx, str, persistence, providers) are partially implemented. The engine's runtime modules (the plan analysis chain, dispatch codegen, adapt subsystem, thread pool, morsel loop, resource resolution, plan caching) are designed and not yet shipped. hilavitkutin-build runs as a build-dependency stub today; full wrapper script generation and config schema are deferred to follow-up rounds.
-
-Public names may change; renames ship cleanly without deprecation aliases. Several pieces gate on unstable rustc features: `const_trait_impl`, `adt_const_params`, `generic_const_exprs`, `marker_trait_attr` for the trait solver work, plus `-Z config-include` for the build crate.
+It's early days. The contracts are not locked, five of their shapes are still open, and names change without deprecation aliases. The plugin-host layer (`hilavitkutin-linking`, `hilavitkutin-extensions` and its macros) is implemented, the ecosystem crates partly, and the engine's runtime is designed and waits on its port onto the contracts. It builds on nightly only: the contracts use no feature gate of their own, but the `notko` paths they turn on and the engine both need unstable rustc features.
 
 ## Support
 

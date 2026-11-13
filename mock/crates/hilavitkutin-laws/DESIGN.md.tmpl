@@ -1,21 +1,21 @@
 # hilavitkutin-laws, Design Overview
 
-A law is stated over what a run produced, written down as words, so that it reads the same over any runner and does not depend on one. Each law returns a `Verdict`: it holds, or it fails with a `Witness` naming the first record and word that differ. The verdict names its law by a `Law`, one per law below, so a test that fails on a verdict says which law it was. Every law has a mutant, kept in the tests of the runner it was written for, that it must fail, and the test asserts the failing verdict rather than a panic.
+A law is stated over what a run produced, written down as words, so that it reads the same over any runner and does not depend on one. Each law returns a `Verdict`: it holds, or it fails with a `Witness`. The verdict names its law by a `Law`, one per law below, so a test that fails on a verdict says which law it was. Every law has a mutant, kept in the tests of the runner it was written for, that it must fail, and the test asserts the failing verdict and its witness rather than a panic.
 
 `#![no_std]`, no alloc. Depends on `hilavitkutin-contracts` for its words and numbers, and on no runner.
 
+## Witnesses
+
+A `Witness` says why a law failed. `Differs` names the stream and the word, both as an `Ordinal`, where two records first differ. `Length` names a stream whose record is not as long as the first. `TooFew` says a law that compares runs was handed fewer than `AT_LEAST`, two, and gives how many it was handed: a law over one run compares nothing and so cannot hold.
+
 ## The laws of this step
 
-B1, `model`: a run's written cells after every frame equal the model's. Its mutant is a store that drops its write to the last record.
+B1, `model`: a run's written cells after every frame equal the model's. Its mutants are a store that drops its write to the last record, a store that serves every column from the first, and a swap that commits the columns no step took.
 
-B2, `morsel_split_and_order`: the digest streams of runs differing only in morsel size, visiting order or store layout are equal. Its mutant is a store whose staged column is its committed one, which updates in place and so reads its own writes in an order the visiting order decides.
+B2, `morsel_split_and_order`: the digest streams of runs differing only in morsel size, visiting order or store layout are equal. It fails with `TooFew` on fewer than two streams. Its mutant is a store whose staged column is its committed one, which updates in place and so reads its own writes in an order the visiting order decides.
 
-B3, `frame_isolation`: a step leaves the committed cells as it found them, and two runs from one committed state whose staged storage was filled with different words before the step commit equal cells. Its mutants are the in-place store, which fails the first clause, and a store that serves reads from its staged column, which fails the second.
-
-## The ledger check
-
-A frozen crate keeps a `LEDGER.toml` with one line per source file (its path, its form, its content hash, a count of breaks and whether it is locked) and a `BREAKS.toml` with one line per edit of a ledgered file before its form locks. `ledger::check` rebuilds each hash from its file and refuses a mismatch, a breaks count that differs from the edits recorded for the file, and a locked line whose count differs from the one recorded at its lock. The content hash is FNV-1a over the file's bytes, independent of the run digest. The two tests each frozen crate runs over its ledger are written once, in this crate's `tests/support/ledger.rs`, which a frozen crate's `tests/ledger.rs` includes: the ledger holds over the files, and every file under `src/` has a line. They read files, so they sit outside `src/`, which stays `no_std`.
+B3, `frame_isolation`: a step leaves the committed cells as it found them, and runs from one committed state whose staged storage was filled with different words before the step commit equal cells. It fails with `TooFew` on fewer than two filled runs, before comparing anything. Its mutants are the in-place store, which fails the first clause, a store that serves reads from its staged column, which fails the second, and the swap that commits untaken columns.
 
 ## Principles
 
-`#![no_std]` and no alloc: a law reads slices the caller holds. No law names a runner, a store or a kernel.
+`#![no_std]` and no alloc: a law reads slices the caller holds. No law names a runner, a store or a kernel. The ledger of the frozen crates is not a law: it is held by the repo lint `frozen-ledger`.
