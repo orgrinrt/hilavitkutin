@@ -30,6 +30,10 @@ impl<
     Clk: hilavitkutin_api::platform::ClockApi,
 > Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>
 {
+    // FIXME(4b54e5a34009): both swap methods below follow the swap
+    // specification, clauses S1, S2 and S4, which is implemented and benched
+    // and still waits on the maintainer's ratification. Their shape is not
+    // final until that ruling is recorded.
     /// Replace a plan-affecting resource and ask for a plan band.
     ///
     /// `T: PlanAffecting` routes the call onto the recompute path: the value
@@ -52,6 +56,10 @@ impl<
         // SAFETY: the binding pointer names the one-record column reserved
         // and initialised for `T` at build; `&mut self` means no frame is in
         // flight, so no reader aliases the slot during the write.
+        // FIXME(74e2b9918149): under `run_parallel` a parked worker still
+        // holds a `&Scheduler` across this `&mut self`. No worker reads while
+        // parked, so it is no data race, but it breaks the aliasing model
+        // until the worker-visible state moves into a provider allocation.
         unsafe {
             core::ptr::write(ptr.as_ptr(), new);
         }
@@ -96,6 +104,8 @@ impl<
         // and initialised for `V` at build; `&mut self` means no frame is in
         // flight, so no reader aliases the slot during the write. Store
         // values are `Copy` (drain contract), so the overwrite drops nothing.
+        // FIXME(74e2b9918149): the same parked-worker aliasing as in
+        // `replace_resource` above applies under `run_parallel`.
         unsafe {
             core::ptr::write(ptr.as_ptr(), new);
         }

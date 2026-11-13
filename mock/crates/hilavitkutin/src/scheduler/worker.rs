@@ -371,7 +371,7 @@ impl<
             // would silently dispatch nothing rather than run everything.
             debug_assert!(
                 self.topo_count.0 == 0 || fcount > 0, // lint:allow(no-bare-numeric) reason: emptiness guard; tracked: #121
-                "run_core_phase: live units but no fiber descriptors; the plan's fiber partition never reached the scheduler"
+                "run_core_phase: live units but no fiber descriptors; the plan formed no fibers the scheduler could see"
             );
             let msize = msize.0; // lint:allow(no-bare-numeric) reason: zero-window fallback length; tracked: #121
             let mut fi = 0; // lint:allow(no-bare-numeric) reason: fiber index; tracked: #121

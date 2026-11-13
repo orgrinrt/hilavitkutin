@@ -17,11 +17,18 @@ use core::cell::{Cell, UnsafeCell};
 use core::mem::MaybeUninit;
 
 use arvo::{Bool, USize};
-use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
+use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapCons, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
-use hilavitkutin_api::context::{ColumnWriterApi, EachApi, HasColumnWriter, HasEach};
+use hilavitkutin_api::context::{
+    ColumnWriterApi,
+    EachApi,
+    HasColumnWriter,
+    HasEach,
+    HasResourceProvider,
+    ResourceProviderApi,
+};
 use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::store::{Column, Resource};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
@@ -183,21 +190,100 @@ fn double_swap_before_run_last_value_wins() {
     assert_eq!(now, Val(3), "the last swap before the frame must win");
 }
 
-/// S1: a ZST swap is a no-op install that still goes through the path.
+// Reads the zero-sized resource and writes its own column, counting its
+// executions. A swap of the resource must seed this unit for the next frame;
+// that is the only thing a zero-sized swap can be observed to do.
+#[derive(Copy, Clone)]
+#[allow(dead_code)]
+struct ZOut(u32);
+
+type ReadZst = Cons<Resource<Zst>, Empty>;
+type WriteZOut = Cons<Column<ZOut>, Empty>;
+
+thread_local! {
+    static ZST_READER_RUNS: Cell<u32> = const { Cell::new(0) };
+}
+
+struct ZstReaderWu;
+
+impl BuilderInput for ZstReaderWu {
+    type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
+}
+
+impl WorkUnit<Always> for ZstReaderWu {
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        ReadZst,
+        WriteZOut,
+        SnapCons<Zst, SnapNil>,
+        ColPtrNil,
+        ColPtrCons<ZOut, ColPtrNil>,
+    >;
+    type Hint = (
+        hilavitkutin_api::hint::Immediate,
+        hilavitkutin_api::hint::Atomic,
+        hilavitkutin_api::hint::Normal,
+    );
+    type Read = ReadZst;
+    type Write = WriteZOut;
+
+    fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
+        ZST_READER_RUNS.with(|c| c.set(c.get() + 1));
+        let _seen: &Zst = ctx.resources().resource();
+        ctx.each().run(|i| {
+            // SAFETY: `build` reserved the `Column<ZOut>` buffer for the
+            // record count and the plan proved this unit the exclusive writer.
+            unsafe { ctx.writer().write::<ZOut, _>(i, ZOut(i.0 as u32)) };
+        });
+    }
+}
+
+/// S1 and S6: a zero-sized swap writes no byte and still seeds the dirty cone.
+///
+/// The unit that reads the resource runs on the cold frame, is skipped on a
+/// clean frame, runs again on the frame after the swap, and is skipped again
+/// once that frame has cleared the mark. A swap that installed nothing and
+/// marked nothing leaves the count at one.
 #[test]
-fn zst_swap_touches_no_memory_and_succeeds() {
+fn zst_swap_seeds_its_reader_for_the_next_frame() {
+    ZST_READER_RUNS.with(|c| c.set(0));
     let provider = BumpProvider::<32768>::new();
     let mut scheduler = Scheduler::builder()
         .with(Resource::new(Zst))
-        .build(store(provider), USize(0))
+        .with(Column::<ZOut>::new())
+        .with(ZstReaderWu)
+        .build(store(provider), USize(RECORDS))
         .unwrap_or_else(|_| panic!("build should succeed"));
 
-    scheduler.replace_value(Zst);
+    assert!(matches!(scheduler.run(), Outcome::Ok(())));
+    assert_eq!(
+        ZST_READER_RUNS.with(Cell::get),
+        1,
+        "the cold frame runs the reader"
+    );
 
-    // SAFETY: a ZST read through the dangling-but-aligned binding pointer
-    // touches no memory (mirrors the drain's ZST arm).
-    let now = unsafe { *scheduler.__bindings().__ptr().as_ptr() };
-    assert_eq!(now, Zst);
+    assert!(matches!(scheduler.run(), Outcome::Ok(())));
+    assert_eq!(
+        ZST_READER_RUNS.with(Cell::get),
+        1,
+        "a clean frame skips the reader"
+    );
+
+    scheduler.replace_value(Zst);
+    assert!(matches!(scheduler.run(), Outcome::Ok(())));
+    assert_eq!(
+        ZST_READER_RUNS.with(Cell::get),
+        2,
+        "the swap marks the store, so the reader runs on the next frame"
+    );
+
+    assert!(matches!(scheduler.run(), Outcome::Ok(())));
+    assert_eq!(
+        ZST_READER_RUNS.with(Cell::get),
+        2,
+        "the frame cleared the mark, so the reader is skipped again"
+    );
 }
 
 /// S2: a plan-affecting swap opens the plan band on a non-first frame; a
@@ -294,4 +380,8 @@ fn parallel_swap_pattern_is_aliasing_clean() {
     // pattern runs under Miri without an aliasing report. Natively it
     // runs regardless, which is why the entry stays ignored until the
     // Miri gate exists.
+    panic!(
+        "unimplemented catalogue case: a swap between two run_parallel frames must run \
+         under Miri with no aliasing report, and no Miri gate exists yet"
+    );
 }
