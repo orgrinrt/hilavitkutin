@@ -1,0 +1,16 @@
+error[E0277]: the trait bound `i128: From<engine::Index<'_>>` is not satisfied
+  --> tests/ui/fail/06_an_index_is_converted_by_from.rs:17:27
+   |
+17 |                 let got = i128::from(probe) as i64;
+   |                           ^^^^ the trait `From<engine::Index<'_>>` is not implemented for `i128`
+   |
+   = help: `i128` implements trait `From<T>`:
+             From<bool>
+             From<i16>
+             From<i32>
+             From<i64>
+             From<i8>
+             From<u16>
+             From<u32>
+             From<u64>
+             From<u8>

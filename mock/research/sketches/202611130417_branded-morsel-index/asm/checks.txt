@@ -1,0 +1,60 @@
+6:_RNvXCshXlAXabyYMR_6authorNtB2_6DoubleINtNtCs8LRIFhAzEAi_6engine6morsel11BlockKernelxxE5block:
+14:	ja	.LBB0_13
+16:	je	.LBB0_12
+26:	je	.LBB0_4
+28:	jmp	.LBB0_7
+29:.LBB0_4:
+34:.LBB0_5:
+43:	jne	.LBB0_5
+45:	je	.LBB0_12
+46:.LBB0_7:
+50:	je	.LBB0_10
+53:.LBB0_9:
+59:	jne	.LBB0_9
+60:.LBB0_10:
+63:	ja	.LBB0_12
+65:.LBB0_11:
+80:	jne	.LBB0_11
+81:.LBB0_12:
+85:.LBB0_13:
+89:	callq	*_RNvNtNtCslfAf2Mv2Tp5_4core5slice5index16slice_index_fail@GOTPCREL(%rip)
+98:_RNvXs0_CshXlAXabyYMR_6authorNtB5_8PreviousINtNtCs8LRIFhAzEAi_6engine6morsel11BlockKernelxxE5block:
+106:	ja	.LBB1_6
+108:	je	.LBB1_5
+114:.LBB1_3:
+116:	jae	.LBB1_7
+122:	jne	.LBB1_3
+123:.LBB1_5:
+127:.LBB1_6:
+131:	callq	*_RNvNtNtCslfAf2Mv2Tp5_4core5slice5index16slice_index_fail@GOTPCREL(%rip)
+132:.LBB1_7:
+134:	callq	*_RNvNtCslfAf2Mv2Tp5_4core9panicking18panic_bounds_check@GOTPCREL(%rip)
+151:_RNvXs_CshXlAXabyYMR_6authorNtB4_8BelowMaxINtNtCs8LRIFhAzEAi_6engine6morsel11BlockKernelxxE5block:
+159:	ja	.LBB2_20
+161:	je	.LBB2_19
+165:	jae	.LBB2_5
+168:	jmp	.LBB2_4
+169:.LBB2_5:
+177:.LBB2_6:
+214:	jne	.LBB2_6
+246:	jmp	.LBB2_8
+247:.LBB2_20:
+250:	callq	*_RNvNtNtCslfAf2Mv2Tp5_4core5slice5index16slice_index_fail@GOTPCREL(%rip)
+251:.LBB2_4:
+256:.LBB2_8:
+258:	jne	.LBB2_4
+266:	je	.LBB2_11
+268:	jmp	.LBB2_14
+269:.LBB2_11:
+276:.LBB2_12:
+285:	jne	.LBB2_12
+287:	je	.LBB2_19
+288:.LBB2_14:
+292:	je	.LBB2_17
+295:.LBB2_16:
+301:	jne	.LBB2_16
+302:.LBB2_17:
+305:	ja	.LBB2_19
+307:.LBB2_18:
+322:	jne	.LBB2_18
+323:.LBB2_19:

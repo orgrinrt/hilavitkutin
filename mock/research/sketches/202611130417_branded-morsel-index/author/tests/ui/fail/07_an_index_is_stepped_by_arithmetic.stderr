@@ -1,0 +1,13 @@
+error[E0369]: cannot add `engine::Index<'_>` to `engine::Index<'_>`
+  --> tests/ui/fail/07_an_index_is_stepped_by_arithmetic.rs:16:33
+   |
+16 |                 let got = probe + probe;
+   |                           ----- ^ ----- engine::Index<'_>
+   |                           |
+   |                           engine::Index<'_>
+   |
+note: `engine::Index<'_>` does not implement `Add`
+  --> $WORKSPACE/engine/src/index.rs
+   |
+   | pub struct Index<'b> {
+   | ^^^^^^^^^^^^^^^^^^^^ `engine::Index<'_>` is defined in another crate
