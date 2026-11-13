@@ -1,0 +1,9 @@
+error[E0271]: type mismatch resolving `<Cons<Column<Pos>, Cons<Accum<Crossed>, Empty>> as Project>::Prod<Val> == PCons<Val, Column<Pos>, PNil>`
+  --> tests/ui/fail/09_a_unit_returns_fewer_values_than_it_writes.rs:16:9
+   |
+16 |         rec![r.get(POS)]
+   |         ^^^^^^^^^^^^^^^^ expected `PCons<Val, Column<Pos>, PNil>`, found `PCons<Val, Column<Pos>, ...>`
+   |
+   = note: expected struct `PCons<Val, Column<Pos>, PNil>`
+              found struct `PCons<Val, Column<Pos>, PCons<Val, Accum<Crossed>, PNil>>`
+   = note: this error originates in the macro `rec` (in Nightly builds, run with -Z macro-backtrace for more info)

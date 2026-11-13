@@ -1,0 +1,44 @@
+error[E0277]: a unit iterates one domain, and these members are in two
+  --> tests/ui/fail/02_a_unit_reads_members_of_two_domains.rs:12:17
+   |
+12 |     type Read = Cons<HeatAt, Cons<Column<Pos>, Empty>>;
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `api::Join<In<Records>>` is not implemented for `In<Plane>`
+   |
+   = note: every `Column`, `Buffered` and `Near` member of one unit names the same domain; read the other domain's data through a `Resource`
+help: `In<D>` implements trait `api::Join<X>`
+  --> $WORKSPACE/api/src/lib.rs
+   |
+   | impl<D> Join<Free> for In<D> {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `api::Join<Free>`
+...
+   | impl<D> Join<In<D>> for In<D> {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `api::Join<In<D>>`
+   = note: required for `Cons<Buffered<Heat, Plane>, Cons<Column<Pos>, api::Empty>>` to implement `ReadList`
+note: required by a bound in `api::RecordOp::Read`
+  --> $WORKSPACE/api/src/lib.rs
+   |
+   |     type Read: ReadList;
+   |                ^^^^^^^^ required by this bound in `RecordOp::Read`
+
+error[E0277]: a unit iterates one domain, and these members are in two
+  --> tests/ui/fail/02_a_unit_reads_members_of_two_domains.rs:13:18
+   |
+13 |     type Write = Cons<HeatAt, Empty>;
+   |                  ^^^^^^^^^^^^^^^^^^^ the trait `api::Join<In<Records>>` is not implemented for `In<Plane>`
+   |
+   = note: every `Column`, `Buffered` and `Near` member of one unit names the same domain; read the other domain's data through a `Resource`
+help: `In<D>` implements trait `api::Join<X>`
+  --> $WORKSPACE/api/src/lib.rs
+   |
+   | impl<D> Join<Free> for In<D> {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `api::Join<Free>`
+...
+   | impl<D> Join<In<D>> for In<D> {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `api::Join<In<D>>`
+   = note: required for `Cons<Buffered<Heat, Plane>, Cons<Column<Pos>, api::Empty>>` to implement `ReadList`
+   = note: required for `Cons<Buffered<Heat, Plane>, api::Empty>` to implement `Along<Cons<Buffered<Heat, Plane>, Cons<Column<Pos>, api::Empty>>>`
+note: required by a bound in `api::RecordOp::Write`
+  --> $WORKSPACE/api/src/lib.rs
+   |
+   |     type Write: Along<Self::Read>;
+   |                 ^^^^^^^^^^^^^^^^^ required by this bound in `RecordOp::Write`

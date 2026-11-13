@@ -1,0 +1,5 @@
+error[E0437]: type `Ctx` is not a member of trait `RecordOp`
+  --> tests/ui/fail/05_a_value_unit_declares_a_context.rs:12:5
+   |
+12 |     type Ctx<'frame> = ();
+   |     ^^^^^^^^^^^^^^^^^^^^^^ not a member of trait `RecordOp`

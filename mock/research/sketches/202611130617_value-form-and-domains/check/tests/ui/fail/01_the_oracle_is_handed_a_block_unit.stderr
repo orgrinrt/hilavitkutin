@@ -1,0 +1,30 @@
+error[E0277]: the trait bound `api::UnitDispatch<Tally>: Checks<Tally, _, _>` is not satisfied
+ --> tests/ui/fail/01_the_oracle_is_handed_a_block_unit.rs:7:18
+  |
+7 |     oracle::pass(&(Diffuse, (Tally, ())), &mut world);
+  |     ------------ ^^^^^^^^^^^^^^^^^^^^^^^ the trait `Checks<Tally, _, _>` is not implemented for `api::UnitDispatch<Tally>`
+  |     |
+  |     required by a bound introduced by this call
+  |
+help: the trait `Checks<U, S, (Pr, Pw, Pe)>` is implemented for `api::RecordDispatch<U>`
+ --> $WORKSPACE/oracle/src/lib.rs
+  |
+  | / impl<U, S, Pr, Pw, Pe> Checks<U, S, (Pr, Pw, Pe)> for RecordDispatch<U>
+  | | where
+  | |     U: RecordOp,
+  | |     S: Project + Has<Extent<DomainOf<U>>, Pe>,
+  | |     Pe: Place,
+  | |     U::Read: Gather<S, Pr>,
+  | |     U::Write: Scatter<S, Pw>,
+  | |_____________________________^
+  = note: required for `(Tally, ())` to implement `Walk<_, (_, ())>`
+  = note: 1 redundant requirement hidden
+  = note: required for `(Diffuse, (Tally, ()))` to implement `Walk<_, (((_, (_, _, (notko_hlist::position::There<notko_hlist::position::Here>, ()), (_, _, (notko_hlist::position::There<notko_hlist::position::Here>, ()), (_, _, (notko_hlist::position::Here, ()), (_, _, (notko_hlist::position::Here, ()), (_, _, (notko_hlist::position::Here, (notko_hlist::position::There<notko_hlist::position::Here>, ())), (_, ()))))))), (_, ()), _), (_, ()))>`
+note: required by a bound in `pass`
+ --> $WORKSPACE/oracle/src/lib.rs
+  |
+  | pub fn pass<S, Us, Ps>(units: &Us, world: &mut World<S>)
+  |        ---- required by a bound in this function
+...
+  |     Us: Walk<S, Ps>,
+  |         ^^^^^^^^^^^ required by this bound in `pass`
