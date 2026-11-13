@@ -567,7 +567,7 @@ impl WorkUnit<OnMeta<ScheduleEnd>> for ApplyHeat {
 
 ### Reading a store as it stood when the pass began
 
-<!-- FIXME(2143d534c715): the close-writer half of this section is proposed and not yet confirmed -->
+<!-- FIXME(2143d534c715): whether a store only a close unit writes is read this way is undecided -->
 A store whose every writer is a maintenance unit holds one value for
 every ordinary unit of a pass. No store kind and no read marker says so.
 It follows from rank. Where the writers are at the close, that value is
