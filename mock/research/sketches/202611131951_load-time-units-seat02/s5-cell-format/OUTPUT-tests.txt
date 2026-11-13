@@ -1,0 +1,45 @@
+    Updating git repository `https://github.com/orgrinrt/notko.git`
+    Updating git repository `ssh://git@github.com/orgrinrt/arvo.git`
+    Updating git repository `ssh://git@github.com/orgrinrt/notko.git`
+     Locking 14 packages to latest Rust 1.98.0-nightly compatible versions
+   Compiling notko v0.0.1 (https://github.com/orgrinrt/notko.git?branch=dev#8a74dbcd)
+   Compiling arvo v0.1.0 (ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e9)
+   Compiling hilavitkutin-ctx v0.1.0 (/home/user/.worktrees/hv-ltp-seat02/mock/crates/hilavitkutin-ctx)
+   Compiling hilavitkutin-api v0.1.0 (/home/user/.worktrees/hv-ltp-seat02/mock/crates/hilavitkutin-api)
+warning: hilavitkutin-ctx@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-api@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+   Compiling arvo-transparent v0.1.0 (ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e9)
+   Compiling arvo-strategy v0.1.0 (ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e9)
+   Compiling arvo-storage v0.1.0 (ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e9)
+   Compiling arvo-bits-contracts v0.1.0 (ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e9)
+   Compiling arvo-bits v0.1.0 (ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e9)
+   Compiling arvo-numeric-contracts v0.1.0 (ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e9)
+   Compiling arvo-mask-contracts v0.1.0 (ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e9)
+   Compiling arvo-tensor v0.1.0 (ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e9)
+   Compiling arvo-bitmask v0.1.0 (ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e9)
+   Compiling s5-cell-format v0.0.0 (/home/user/.worktrees/hv-ltp-seat02/mock/research/sketches/202611131951_load-time-units-seat02/s5-cell-format)
+    Finished `release` profile [optimized] target(s) in 8.16s
+     Running unittests src/lib.rs (/home/user/target/release/deps/s5_cell_format-4b41d87af6aa4c82)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/admits.rs (/home/user/target/release/deps/admits-3a074dd8646572bd)
+
+running 4 tests
+test a_consumers_own_types_are_column_values_at_their_native_width ... ok
+test a_value_wider_than_sixteen_bytes_is_admitted_against_r3 ... ok
+test nothing_below_a_byte_is_packed_by_the_store ... ok
+test the_two_lane_formats_compute_the_same_product_where_both_fit ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests s5_cell_format
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+[exited with code 0]
