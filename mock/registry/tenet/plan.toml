@@ -2,6 +2,7 @@
 
 [[tenet]]
 id = "the_schedule_is_built_once_and_reused_across_frames"
+subject = "plan"
 what = "The schedule is constructed once and executed repeatedly across frames."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:857-857"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#12-morsel-model"]
@@ -12,11 +13,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:857-857"]
-subject = "plan"
 keywords = ["schedule reusable", "construct once", "execute repeatedly", "frames", "plan"]
 
 [[tenet]]
 id = "the_plan_derives_phases_trunks_fibers_morsels_and_strategies_in_seven_steps_at_plan_time"
+subject = "plan"
 what = "The plan derives the pipeline structure in seven steps, all at plan time and with no run-time cost: build the DAG, detect phases by waist analysis, identify trunks, assign branches and bridges, form fibers, size morsels per fiber and select an execution strategy per phase."
 mechanism = "(1) DAG from WU read/write sets (arvo-bitmask adjacency); (2) phases via waist analysis (arvo-graph waist detection); (3) trunks per phase (arvo-spectral for >5 fibers, else arvo-graph connected components on column-disjoint paths); (4) branches and bridges; (5) fibers within each trunk (arvo-comb greedy grouping + arvo-sparse RCM for ordering, per L1 + register budget); (6) morsel sizes per fiber; (7) execution strategy per phase."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:748-757"
@@ -37,11 +38,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:748-757"]
-subject = "plan"
 keywords = ["phase decomposition", "waist analysis", "trunks", "branches", "bridges", "fibers", "plan time", "arvo-spectral"]
 
 [[tenet]]
 id = "the_ratio_of_fused_columns_to_the_maximum_decides_between_fuse_consider_split_and_must_split"
+subject = "plan"
 what = "The number of fused columns against the maximum decides the phase strategy. Below fifty percent of the maximum the phase is fused into one trunk with large morsels, between fifty and a hundred percent a split is considered if the load is balanced and cores are available, and above the maximum it must be split."
 mechanism = "fused_cols < 50% max_cols → FUSE (one trunk, large morsels); 50-100% → CONSIDER SPLIT (if balanced + cores + record count); > max_cols → MUST SPLIT."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:788-791, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1158-1161"
@@ -61,11 +62,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:788-791", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1158-1161"]
-subject = "plan"
 keywords = ["column-count heuristic", "fused_cols", "max_cols", "FUSE", "CONSIDER SPLIT", "MUST SPLIT", "T6 L3696"]
 
 [[tenet]]
 id = "the_access_matrix_unifies_the_pipeline_analyses_and_each_maps_to_an_arvo_algorithm"
+subject = "plan"
 what = "The access matrix is the unifying representation of the pipeline operations. Fiber formation is bandwidth minimisation, phase identification is block diagonal detection, trunk formation is spectral graph analysis when there are more than five fibers, and optimal grouping is the matrix chain dynamic program when there are more than ten ops."
 mechanism = "Fiber formation = bandwidth minimization (arvo-sparse RCM, always run, O(n+nnz)); phase identification = block diagonal detection (arvo-sparse Dulmage-Mendelsohn, always run); trunk formation = spectral graph analysis (arvo-spectral Fiedler, when >5 fibers); optimal grouping = matrix chain DP (arvo-comb, when >10 ops)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1044-1052"
@@ -85,11 +86,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1044-1052"]
-subject = "plan"
 keywords = ["access matrix", "RCM", "Dulmage-Mendelsohn", "Fiedler", "matrix chain DP", "fiber formation", "phase identification"]
 
 [[tenet]]
 id = "fibers_are_formed_by_a_topological_walk_that_groups_a_unit_into_its_predecessor_fiber_when_the_check_passes"
+subject = "plan"
 what = "Fibers are formed by a topological sort followed by a greedy grouping walk. A unit joins a fiber when all its predecessors are in one fiber and the combined feasibility check passes, and otherwise it starts a new fiber with fence dependencies on the upstream fibers. The dependencies between fibers are then computed from the unit-level predecessors."
 mechanism = "arvo-graph Kahn's topological sort (fixed `[u16; MU]` queue + in-degree array, zero heap), then arvo-comb greedy grouping walk; inter-fiber deps from WU-level predecessors. Validated: 17-WU game world → 12 fibers (T6 bench)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1054-1055, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1060-1068"
@@ -112,12 +113,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1054-1055", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1060-1068"]
-subject = "plan"
 keywords = ["Kahn's", "greedy grouping", "fiber formation", "fence dependencies", "topological sort", "[u16; MU]", "17-WU game world"]
-cites = ["two_writers_of_one_store_are_ordered_by_hint_priority"]
+related = ["tenet::two_writers_of_one_store_are_ordered_by_hint_priority"]
 
 [[tenet]]
 id = "a_unit_joins_a_fiber_only_if_its_registers_fit_in_the_available_general_purpose_registers"
+subject = "plan"
 what = "The feasibility check on a fiber requires that the registers it needs fit in the available general-purpose registers: the arena base pointer, the column offset immediates, the write resource pointers, the loop counter, the intermediates and the constants. Co-location reduces the pressure on column pointers, and the register file is the binding constraint and not the L1 capacity."
 mechanism = "aarch64: ~14 usable registers; x86-64: ~10. Co-location: one base + offsets vs N separate pointers; write resource pointers are R5 `Field<T>` (T6 L3428-3505, T7 §1.1)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1070-1079"
@@ -138,12 +139,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1070-1079"]
-subject = "plan"
 keywords = ["feasibility check", "register file", "GPRs", "arena base pointer", "column offsets", "Field<T>", "binding constraint"]
-cites = ["the_register_file_and_not_the_l1_capacity_is_the_binding_constraint_for_fiber_width"]
+related = ["tenet::the_register_file_and_not_the_l1_capacity_is_the_binding_constraint_for_fiber_width"]
 
 [[tenet]]
 id = "the_written_data_of_a_fiber_must_fit_the_l1_write_budget_and_all_accessed_data_must_fit_l1_and_l2_together"
+subject = "plan"
 what = "The sum of the sizes of the write columns and of the write resource collections must fit the L1 write budget, with read-only columns and read-only collections riding the L2 prefetcher, and all the accessed data must fit L1 and L2 combined."
 mechanism = "Σ write column sizes (`size_of::<T_i>()`, R3) + Σ write resource collection sizes (R5: Seq/Map const generic N) <= L1 write budget; L1+L2 total check."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1081-1087"
@@ -161,11 +162,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1081-1087"]
-subject = "plan"
 keywords = ["L1 write budget", "L1+L2 total", "write columns", "resource collections", "feasibility check", "R3", "R5"]
 
 [[tenet]]
 id = "a_unit_with_predecessors_in_more_than_one_fiber_starts_a_new_fiber_and_the_barrier_is_a_bridge"
+subject = "plan"
 what = "A unit joins a fiber only when all its predecessors are in exactly one fiber. Predecessors in several fibers force a new fiber, which is a mandatory barrier and is a bridge."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1089-1090"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#14-fiber-formation"]
@@ -177,11 +178,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1089-1090"]
-subject = "plan"
 keywords = ["no fan-in", "predecessors", "one fiber", "mandatory barrier", "bridge", "new fiber"]
 
 [[tenet]]
 id = "an_op_that_needs_all_its_input_records_before_output_is_a_pipeline_breaker_and_a_materialisation_boundary"
+subject = "plan"
 what = "An op that requires all its input records before it can produce output is a pipeline breaker and forms a materialisation boundary."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1092-1093"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#14-fiber-formation"]
@@ -193,11 +194,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1092-1093"]
-subject = "plan"
 keywords = ["pipeline breaker", "materialization boundary", "all input records", "fiber grouping", "feasibility check"]
 
 [[tenet]]
 id = "the_fiber_grouper_classifies_each_column_statically_as_internal_input_output_or_both"
+subject = "plan"
 what = "The fiber grouper classifies each column statically from the read and write declarations of the units: internal to the fiber, input from upstream, output to downstream, or both internal and output. An internal column is a register-to-register data path and dead-store elimination skips its memory operations; an input is read from memory at morsel start and an output is written to memory at morsel end."
 mechanism = "Fiber-internal: written by one WU, read only by the next WU in the same fiber, not read externally (`d(c(b(a(input_n))))`). Fiber-input: written by upstream fiber/trunk. Fiber-output: read by downstream fiber or final consumer. Fiber-internal AND fiber-output: local reused within the fiber (register) and stored for downstream."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1095-1108"
@@ -222,11 +223,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1095-1108"]
-subject = "plan"
 keywords = ["column classification", "fiber-internal", "fiber-input", "fiber-output", "DSE", "register-to-register", "pure function pipeline"]
 
 [[tenet]]
 id = "the_column_classification_feeds_the_codegen_flattener_that_reads_inputs_runs_a_pure_pipeline_and_stores_outputs_at_the_end"
+subject = "plan"
 what = "The classification feeds the codegen flattener of the dispatch domain: read the inputs, run a pure function pipeline with locals, and store the outputs grouped at the end. Dead-store elimination gives about 0.95 to 0.96 of the baseline."
 mechanism = "DSE: 0.95-0.96x baseline."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1110-1112"
@@ -240,12 +241,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1110-1112"]
-subject = "plan"
 keywords = ["codegen flattener", "DSE", "pure function pipeline", "locals", "output stores", "domain 17", "0.95x"]
-cites = ["the_fiber_grouper_classifies_each_column_statically_as_internal_input_output_or_both"]
+related = ["tenet::the_fiber_grouper_classifies_each_column_statically_as_internal_input_output_or_both"]
 
 [[tenet]]
 id = "a_fiber_s_column_budget_counts_the_unique_columns_across_its_units_and_not_the_sum"
+subject = "plan"
 what = "A fiber's column budget uses the unique set of columns across all the grouped units and not the sum. The deduplication matters, and its mechanism is an implementation detail."
 mechanism = "Dedup via Read+Write tuple types (each column type is unique by definition)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1124-1128"
@@ -261,11 +262,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1124-1128"]
-subject = "plan"
 keywords = ["unique column counting", "dedup", "column budget", "Read+Write tuple types", "fiber"]
 
 [[tenet]]
 id = "trunks_branches_and_bridges_are_found_within_each_phase_by_a_weighted_spanning_tree_decomposition"
+subject = "plan"
 what = "Inside each phase, the spanning tree decomposition weights each unit by its column reads plus writes, takes the longest weighted path as the trunk, lets the trunk follow the heaviest child at a fan-out with the others becoming branches, records a bridge at a fan-in, and recurses per branch."
 mechanism = "Operates within each phase (waist boundaries from domain 11): (1) weight each WU: `col_reads + col_writes`; (2) longest weighted path = trunk (critical path); (3) fan-out: trunk follows heaviest child, others become branches; (4) fan-in: record bridge; (5) recurse per branch."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1130-1137"
@@ -284,11 +285,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1130-1137"]
-subject = "plan"
 keywords = ["spanning tree decomposition", "longest weighted path", "trunk", "branches", "fan-out", "fan-in", "col_reads + col_writes"]
 
 [[tenet]]
 id = "fan_in_barriers_are_mandatory_fiber_breaks_and_the_grouper_decides_which_segments_to_group"
+subject = "plan"
 what = "Natural barriers, which are the fan-ins, are mandatory fiber break points, and between consecutive barriers lie candidate fiber segments. Walking back from the leaves gives the forced fibers and walking back from the barriers gives the maximum fiber count, and the grouper decides which segments to group and which to keep separate."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1139-1143"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#14-fiber-formation"]
@@ -303,11 +304,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1139-1143"]
-subject = "plan"
 keywords = ["natural barriers", "fan-in", "fiber break points", "candidate segments", "fiber segments", "grouper"]
 
 [[tenet]]
 id = "the_grouper_produces_max_fuse_balanced_and_max_split_configs_per_phase_and_selects_by_topology"
+subject = "plan"
 what = "The grouper produces several configurations per phase: one that fuses everything that fits, one that splits at compute balance points, and one in which every segment between barriers is its own fiber. The selection per phase is based on the topology, and its logic lives in the strategy domain."
 mechanism = "MAX_FUSE: group everything that fits, fewest fibers, best cache (phases with a clear mega-trunk benefit most: sequential pass + head+tail convergence beat splitting even with many cores). BALANCED: split at compute balance points, weight proxy WU count × column accesses, ~10% extra data walk, ~30% parallelism gain. MAX_SPLIT: every barrier-to-barrier segment is its own fiber, maximum parallelism."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1145-1156"
@@ -330,11 +331,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1145-1156"]
-subject = "plan"
 keywords = ["MAX_FUSE", "BALANCED", "MAX_SPLIT", "per-phase configs", "mega-trunk", "domain 21", "adaptive configs"]
 
 [[tenet]]
 id = "the_access_matrix_is_the_unifying_representation_and_every_pipeline_operation_maps_to_a_matrix_or_graph_operation"
+subject = "plan"
 what = "The access matrix, with units as one axis and stores as the other, is the unifying representation of the analysis. Every pipeline operation maps to a matrix or graph operation that the arvo crates provide."
 mechanism = "Matrix A, rows are units and columns are stores. DAG construction: arvo-bitmask, bitmask adjacency from read/write overlap. Topological sort: arvo-graph, Kahn's with a fixed-size queue. Node renumbering: arvo-graph. Upward rank: arvo-graph. Waist detection: arvo-graph, concurrent path counting in topological order. Fiber formation: arvo-sparse, RCM bandwidth minimisation. Phase identification: arvo-sparse, block diagonal plus Dulmage-Mendelsohn. Dead column elimination: arvo-sparse, D-M components. Trunk formation: arvo-spectral, Fiedler vector spectral bisection. Optimal fiber grouping: arvo-comb, matrix chain ordering DP. Greedy fiber grouping: arvo-comb, constrained interval grouping. Bit assignment: arvo-comb, two-level greedy bin-packing."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1240-1257"
@@ -363,12 +364,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1240-1257"]
-subject = "plan"
 keywords = ["access matrix", "arvo-bitmask", "arvo-graph", "arvo-sparse", "arvo-spectral", "arvo-comb", "unifying representation", "pipeline analysis"]
-cites = ["ordering_is_the_data_flow"]
+related = ["tenet::ordering_is_the_data_flow"]
 
 [[tenet]]
 id = "the_plan_time_analysis_runs_once_at_schedule_construction_or_when_the_unit_set_changes_at_no_run_time_cost"
+subject = "plan"
 what = "The whole plan-time analysis pipeline runs once, at schedule construction or when the set of units changes, and costs nothing at run time. Every step works on the same access matrix built from the unit declarations."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1261-1263"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
@@ -381,11 +382,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1261-1263"]
-subject = "plan"
 keywords = ["plan-time", "schedule construction", "zero runtime cost", "access matrix", "unit set changes", "analysis pipeline"]
 
 [[tenet]]
 id = "a_unit_precedes_every_unit_that_reads_what_it_writes_and_the_edge_is_one_mask_overlap_test"
+subject = "plan"
 what = "Each unit's read and write sets are lowered to bitmasks at registration, and one unit must precede another when the first one's write mask overlaps the second one's read mask. The result is a bit-matrix graph, built with one AND and compare per pair."
 mechanism = "`type Read: AccessSet` and `type Write: AccessSet` tuple types are lowered to `AccessMask` bitmasks. `read_masks[i]`: bit j set if unit i reads store j. `write_masks[i]`: bit j set if unit i writes store j. Edge: `(write_masks[i] & read_masks[j]) != 0` means unit i precedes unit j. O(N^2) on u64 values; for 50 units 2500 ANDs, about 1 microsecond. Result `dag[i] |= 1 << j` where i precedes j."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1265-1277"
@@ -409,12 +410,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1265-1277"]
-subject = "plan"
 keywords = ["DAG edges", "AccessMask", "write mask", "read mask", "bit-matrix", "registration", "AND compare", "arvo-bitmask"]
-cites = ["ordering_is_the_data_flow", "a_writer_precedes_every_reader_of_what_it_writes", "the_access_mask_is_a_bitmask_so_every_scheduler_operation_is_a_single_bitwise_instruction"]
+related = ["tenet::ordering_is_the_data_flow", "tenet::a_writer_precedes_every_reader_of_what_it_writes", "tenet::the_access_mask_is_a_bitmask_so_every_scheduler_operation_is_a_single_bitwise_instruction"]
 
 [[tenet]]
 id = "after_the_topological_sort_units_are_renumbered_so_the_rank_traversal_is_a_sequential_scan"
+subject = "plan"
 what = "After the topological sort, all unit identifiers are renumbered to match reverse topological order, so that the upward rank traversal reads the rank array sequentially and the hardware prefetcher sees a sequential scan instead of random access."
 because = "It is the same principle as column co-location: make access patterns sequential for the prefetcher."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1283-1290"
@@ -433,11 +434,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1283-1290"]
-subject = "plan"
 keywords = ["topological sort", "Kahn's", "renumbering", "reverse topological order", "rank array", "prefetcher", "sequential access"]
 
 [[tenet]]
 id = "the_trunk_is_the_critical_path_found_by_upward_rank_weighted_by_the_bytes_of_the_accessed_columns"
+subject = "plan"
 what = "Each unit gets an upward rank: its cost plus the highest rank among its successors, computed bottom-up in reverse topological order. The highest-ranked unit is the trunk root and the trunk follows the highest-ranked successor at each step, which is the critical path and the serial bottleneck of the phase; everything else is branches or bridges. The critical path should receive priority treatment, such as core pinning and head and tail convergence."
 because = "A unit's weight is the sum of the sizes of its accessed columns, which approximates per-element compute cost, since more column data means more memory operations and more time."
 mechanism = "`rank(u) = cost(u) + max(rank(successors(u)))`. Weight per unit: `Σ size_of::<T_i>()` over all accessed columns."
@@ -462,12 +463,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1292-1304"]
-subject = "plan"
 keywords = ["upward rank", "critical path", "trunk skeleton", "trunk root", "arvo-graph", "weight", "size_of", "core pinning"]
-cites = ["a_trunk_is_a_column_disjoint_maximal_path_within_a_phase_and_trunks_share_no_write_columns"]
+related = ["tenet::a_trunk_is_a_column_disjoint_maximal_path_within_a_phase_and_trunks_share_no_write_columns"]
 
 [[tenet]]
 id = "a_waist_is_found_by_counting_live_paths_per_topological_level_and_a_local_minimum_is_a_phase_boundary"
+subject = "plan"
 what = "Waist detection walks the topological order and, at each level of units at the same depth, counts the independent paths still alive; where the count drops to a local minimum there is a waist and a phase boundary. It finds narrow bottlenecks within a connected graph, which differs from block diagonal detection, since one connected component can still have waists where all paths converge through a few units before fanning out again."
 mechanism = "A path is a unit with at least one unsatisfied downstream dependency. Implemented in arvo-graph."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1306-1317"
@@ -490,12 +491,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1306-1317"]
-subject = "plan"
 keywords = ["waist detection", "phase boundaries", "local minimum", "independent paths", "topological level", "block diagonal", "arvo-graph"]
-cites = ["a_waist_is_a_narrow_bottleneck_in_the_dag_that_defines_the_phase_boundaries"]
+related = ["tenet::a_waist_is_a_narrow_bottleneck_in_the_dag_that_defines_the_phase_boundaries"]
 
 [[tenet]]
 id = "a_column_no_downstream_unit_reads_is_eliminated_which_enlarges_morsels_and_cuts_register_pressure"
+subject = "plan"
 what = "A column that no downstream unit reads is a wasted store: the fiber grouper marks it eliminable and the codegen flattener skips the store entirely. Dead column elimination reduces the column count in fibers, which means larger morsels and less register pressure."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1367-1371"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
@@ -510,5 +511,4 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1367-1371"]
-subject = "plan"
 keywords = ["dead column elimination", "wasted store", "fiber grouper", "flattener", "morsel size", "register pressure"]

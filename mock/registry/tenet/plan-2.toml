@@ -2,6 +2,7 @@
 
 [[tenet]]
 id = "rcm_always_runs_and_reorders_the_units_so_column_sharing_units_are_adjacent_for_fiber_grouping"
+subject = "plan"
 what = "RCM reordering always runs on the access matrix. Its unit reordering orders the units so that those accessing similar column sets are adjacent, which lets the greedy fiber grouping walk meet column-sharing units in sequence and produce better fibers than a plain topological order; for wide graphs with fan-out it decides which of the equal-depth units are grouped first."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1328-1339"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
@@ -23,11 +24,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1328-1339", "later: mock/research/202606111400_canonical-design-addendum-a1.md:49-57, whether_dispatch_follows_rcm_order_or_waist_phase_order_is_decided_by_a_bench"]
-subject = "plan"
 keywords = ["RCM", "row reordering", "unit execution order", "fiber grouping", "arvo-sparse", "fan-out", "column sets"]
 
 [[tenet]]
 id = "rcm_column_reordering_decides_the_byte_offsets_of_columns_within_the_co_located_arena"
+subject = "plan"
 what = "RCM also reorders the columns, so that columns accessed together have adjacent offsets within the co-located arena and end up in adjacent cache lines, which the prefetcher brings in at once. This is the physical manifestation of co-location: RCM determines the actual byte offsets of columns within the arena."
 mechanism = "A fiber's morsel walks `arena_base + col_offset + i * stride`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1341-1347"
@@ -45,12 +46,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1341-1347"]
-subject = "plan"
 keywords = ["RCM", "column reordering", "arena layout", "co-location", "byte offsets", "cache lines", "stride"]
-cites = ["storage_is_contiguous_and_a_fiber_s_columns_share_one_arena"]
+related = ["tenet::storage_is_contiguous_and_a_fiber_s_columns_share_one_arena"]
 
 [[tenet]]
 id = "block_diagonal_components_of_the_unit_column_graph_should_align_with_the_phases_from_waist_detection"
+subject = "plan"
 what = "A bipartite graph of units and columns is built from the access matrix, and its connected components are independently schedulable groups. These should align with the phases found by waist detection; if they do not, something is wrong with the waist detection. This step always runs."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1349-1355"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
@@ -67,11 +68,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1349-1355"]
-subject = "plan"
 keywords = ["block diagonal", "bipartite graph", "connected components", "phase validation", "arvo-sparse", "independently schedulable"]
 
 [[tenet]]
 id = "dulmage_mendelsohn_splits_the_pipeline_into_dead_end_units_input_only_columns_and_a_matched_core"
+subject = "plan"
 what = "Dulmage-Mendelsohn refines the block structure into three kinds of component. Horizontal components are units whose output columns no other unit reads, dead ends whose output can be eliminated unless it is a final consumer output. Vertical components are columns that are only inputs, never written by transform units and read-only for all phases after loading. Square components are matched unit and column pairs where every unit's output is consumed, the core of the pipeline."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1357-1365"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
@@ -90,11 +91,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1357-1365"]
-subject = "plan"
 keywords = ["Dulmage-Mendelsohn", "horizontal components", "vertical components", "square components", "dead-end units", "arvo-sparse"]
 
 [[tenet]]
 id = "spectral_bisection_forms_trunks_by_cutting_the_fibers_graph_where_the_shared_data_volume_is_smallest"
+subject = "plan"
 what = "When there are more than five fibers, trunks are formed by spectral bisection of a weighted graph of the fibers, where the edge weight between two fibers is the data volume of the columns they share. The cut minimises the volume crossing the trunk boundary, so fibers within a trunk share heavy column sets on one core's L1, and the cut between trunks carries only read-only columns from previous phases or lightweight bridge columns. Trunks share no write columns with other trunks, so there is zero synchronisation, and they may share read-only columns from earlier phase output."
 mechanism = "Nodes are fibers. Edge weight is `Σ size_of::<T_i>()` for the columns shared between two fibers, the volume that would need L2/L3 coherence if the fibers ran on different cores. The Fiedler vector bisects the graph. Runs after the initial greedy fiber grouping pass."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1373-1392"
@@ -125,12 +126,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1373-1392"]
-subject = "plan"
 keywords = ["spectral partitioning", "Fiedler vector", "trunk formation", "arvo-spectral", "cut weight", "L1", "zero sync", "more than five fibers"]
-cites = ["a_trunk_is_a_column_disjoint_maximal_path_within_a_phase_and_trunks_share_no_write_columns"]
+related = ["tenet::a_trunk_is_a_column_disjoint_maximal_path_within_a_phase_and_trunks_share_no_write_columns"]
 
 [[tenet]]
 id = "a_phase_with_five_fibers_or_fewer_forms_a_single_trunk_because_spectral_bisection_is_overkill"
+subject = "plan"
 what = "For five fibers or fewer, spectral bisection is overkill and there is a single trunk: the waist detection already identified the phase boundaries, and within a small phase all fibers form one trunk."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1394-1396"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
@@ -143,11 +144,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1394-1396"]
-subject = "plan"
 keywords = ["single trunk", "five fibers", "spectral", "overkill", "small phase"]
 
 [[tenet]]
 id = "greedy_fiber_grouping_walks_the_units_in_rcm_order_and_joins_a_fiber_only_where_the_holistic_check_passes"
+subject = "plan"
 what = "Greedy fiber grouping, used for ten units or fewer and as the fallback, processes the units in the RCM-reordered topological order. A unit joins a fiber when all its predecessors are in that one fiber and the full feasibility check passes; otherwise it starts a new fiber."
 mechanism = "The feasibility predicate is the full holistic check of domain 14: register file, L1 write budget, L1 plus L2 total, no fan-in and no pipeline breaker. Implemented in arvo-comb."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1398-1408"
@@ -169,11 +170,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1398-1408"]
-subject = "plan"
 keywords = ["greedy grouping", "fiber grouping", "holistic feasibility check", "register file", "L1 write budget", "ten operations", "arvo-comb"]
 
 [[tenet]]
 id = "above_ten_units_fibers_are_grouped_by_matrix_chain_dp_that_minimises_the_total_data_walks"
+subject = "plan"
 what = "For more than ten units, fiber grouping uses a matrix chain dynamic program that explores the full solution space. Its cost is the memory bandwidth consumed by one data walk through a fiber's arena, computed from the type-native strides, and it finds the grouping that minimises total data walks across all fibers, under the same full feasibility check."
 mechanism = "`cost(i,j) = record_count × Σ size_of::<T_k>()` for the union columns of ops i..j."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1410-1416"
@@ -191,11 +192,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1410-1416"]
-subject = "plan"
 keywords = ["matrix chain DP", "optimal fiber grouping", "cost function", "type-native stride", "data walks", "arvo-comb"]
 
 [[tenet]]
 id = "the_plan_reruns_in_full_on_any_pipeline_structure_change_and_is_never_maintained_incrementally"
+subject = "plan"
 what = "Morsel ranges, fiber grouping and trunk formation are all plan-stage outputs. When the consumer adds records, changes the unit registration or modifies the pipeline structure, the plan stage reruns in full at a cost of microseconds, so there is no incremental plan maintenance."
 because = "A full recompute is cheap enough, since the analysis algorithms run on const-generic bitmask structures."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1476-1477, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1486-1491"
@@ -215,12 +216,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1476-1477", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1486-1491"]
-subject = "plan"
 keywords = ["plan recomputation", "plan stage", "morsel splits", "full recompute", "no incremental", "pipeline change"]
-cites = ["morsel_boundaries_are_stable_unless_the_record_count_changes"]
+related = ["tenet::morsel_boundaries_are_stable_unless_the_record_count_changes"]
 
 [[tenet]]
 id = "the_loader_at_the_start_of_the_pipeline_sets_the_initial_cache_state_and_rcm_places_columns_to_warm_it_for_downstream_fibers"
+subject = "plan"
 what = "The first unit in the pipeline, a loader at the base of the morsel cube, determines the initial cache state for all subsequent units. RCM column reordering places co-accessed columns adjacent in the arena, so that the loader's write pattern warms the cache optimally for downstream fibers."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1493-1498"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#16-data-loading"]
@@ -236,11 +237,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1493-1498"]
-subject = "plan"
 keywords = ["loader placement", "cache impact", "initial cache state", "morsel cube", "RCM", "arena", "downstream fibers"]
 
 [[tenet]]
 id = "the_plan_parameters_adapt_at_plan_time_and_the_pipeline_composition_does_not"
+subject = "plan"
 what = "Plan-stage parameters are adaptive: morsel sizes from runtime hardware detection, record counts from consumer data, per-phase strategy selection from the EMA metrics, and morsel-to-core affinity from temperature. They adjust at plan time without changing the pipeline composition, and that eliminates the need for fallback dispatch approaches."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2114-2117, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2442-2446"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#23-scheduler-builder-and-meta"]
@@ -260,12 +261,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2114-2117", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2442-2446"]
-subject = "plan"
 keywords = ["adaptive parameters", "plan stage", "morsel sizes", "hardware detection", "EMA", "strategy selection", "temperature", "affinity"]
-cites = ["static_composition_means_every_unit_is_registered_through_the_builder_and_no_schedule_is_dynamic"]
+related = ["tenet::static_composition_means_every_unit_is_registered_through_the_builder_and_no_schedule_is_dynamic"]
 
 [[tenet]]
 id = "static_analysis_computes_cache_pressure_data_flow_column_lifetimes_and_the_memory_watermark_at_plan_time"
+subject = "plan"
 what = "Static analysis at schedule construction produces four things: a cache pressure profile of per-fiber L1 and L2 pressure from column sizes, a data flow volume map of the bytes flowing between fibers, a column lifetime map of when each column is first written and last read, and a memory watermark of the peak concurrent column allocation."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2011-2017"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#22-runtime-adaptation"]
@@ -282,11 +283,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2011-2017"]
-subject = "plan"
 keywords = ["static analysis", "cache pressure profile", "data flow volume", "column lifetime map", "memory watermark", "plan-time"]
 
 [[tenet]]
 id = "runtime_analysis_across_frames_measures_morsel_timing_change_frequency_residency_frame_time_and_throughput"
+subject = "plan"
 what = "Runtime analysis, across frames and between passes, covers five things: the actual execution time per morsel, the change frequency that classifies morsels as hot, warm or cold from generation counter activity, a prediction of which morsels are likely L1-warm from the previous frame, a frame time prediction from an EMA of pass duration, and throughput trending that detects thermal throttling and memory pressure."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2019-2026"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#22-runtime-adaptation"]
@@ -304,12 +305,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2019-2026"]
-subject = "plan"
 keywords = ["runtime analysis", "per-morsel timing", "hot warm cold", "cache residency prediction", "frame time prediction", "throughput trending", "thermal throttling"]
-cites = ["generation_counter_activity_classifies_morsels_by_temperature"]
+related = ["tenet::generation_counter_activity_classifies_morsels_by_temperature"]
 
 [[tenet]]
 id = "hot_morsels_go_to_p_cores_and_cold_morsels_to_e_cores_or_are_deferred"
+subject = "plan"
 what = "Hot morsels, which change frequently and take high compute, go to the P-cores. Cold morsels, which change rarely and are often skipped, go to the E-cores or are deferred. Temperature comes from the change detection counters together with per-morsel timing."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2028-2033"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#22-runtime-adaptation"]
@@ -325,12 +326,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2028-2033"]
-subject = "plan"
 keywords = ["morsel temperature", "core assignment", "P-cores", "E-cores", "hot morsels", "cold morsels", "deferred"]
-cites = ["generation_counter_activity_classifies_morsels_by_temperature"]
+related = ["tenet::generation_counter_activity_classifies_morsels_by_temperature"]
 
 [[tenet]]
 id = "reorganisation_is_triggered_between_frames_by_cheap_bitmask_comparisons_of_the_ema_against_thresholds"
+subject = "plan"
 what = "The executor reorganises between frames and never during execution. Comparing the EMAs against thresholds, a significant change in fiber morsel timing recomputes the morsel sizes, a shift in phase balance re-selects the per-phase configs, and a changed record count triggers a full plan recompute. The triggers are cheap bitmask comparisons."
 mechanism = "Uses the arvo-bitmask dirty propagation pattern."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2042-2048"
@@ -348,11 +349,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2042-2048"]
-subject = "plan"
 keywords = ["reorganisation triggers", "between frames", "EMA thresholds", "recompute morsel sizes", "re-select config", "bitmask comparison"]
 
 [[tenet]]
 id = "plan_affecting_is_an_open_marker_trait_that_consumers_implement_on_resource_value_types"
+subject = "plan"
 what = "The plan-dirty trigger, by which a swapped plan-affecting resource marks the plan for recompute, had no carrier a consumer could reach, because the plan-affecting marker was sealed with one engine-internal implementor. The maintainer ruled it unsealed: consumers implement it on resource value types whose swap invalidates the plan, mirroring the existing opt-in marker for replaceable resources. The property belongs to the type and not to one app's registration."
 mechanism = "`PlanAffecting` unsealed, mirroring the opt-in marker `Replaceable`; implementation tracked under #696 and riding the swap-semantics round (A2-5), since the two surfaces interact."
 source = "mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:55-62"
@@ -371,12 +372,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["ruled: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:55-62"]
-subject = "plan"
 keywords = ["PlanAffecting", "unsealed", "marker trait", "Replaceable", "plan-dirty", "recompute", "resource value type", "#696"]
-cites = ["the_swap_of_a_replaceable_resource_is_to_be_specified_by_a_commissioned_round"]
+related = ["tenet::the_swap_of_a_replaceable_resource_is_to_be_specified_by_a_commissioned_round"]
 
 [[tenet]]
 id = "whether_dispatch_follows_rcm_order_or_waist_phase_order_is_decided_by_a_bench"
+subject = "plan"
 what = "The choice between the spec's dual-ordering position, where the RCM order of units is their execution order, and the shipped waist-phase order is resolved by a bench and not by fiat. Both orders can be built behind the const grouping mechanism, and a cache-locality bench on wide fan-out graphs decides which wording canon keeps. Until the bench lands, neither order is drift, and the fork is registered open with a bench oracle."
 mechanism = "Spec steps 5 and 8 dual ordering (RCM row order = WU execution order) versus the shipped waist-phase order; the guarded-walk relaxation proven in r2 section 7-6 carries an arbitrary const-side order; oracle: cache-locality bench on wide fan-out DAGs."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:51-57"
@@ -394,12 +395,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["ruled: mock/research/202606111400_canonical-design-addendum-a1.md:47-47", "ruled: mock/research/202606111400_canonical-design-addendum-a1.md:49-57", "later: mock/research/202607200800_a1-1-ordering-theory-bench-expansion.md:82-90, rcm_wins_against_rival_ordering_theories_at_dram_scale_and_order_is_near_neutral_below_it_so_step_5_stands"]
-subject = "plan"
 keywords = ["RCM", "dispatch order", "waist-phase order", "bench oracle", "cache locality", "fan-out", "dual ordering", "A1-1"]
-cites = ["rcm_always_runs_and_reorders_the_units_so_column_sharing_units_are_adjacent_for_fiber_grouping"]
+related = ["tenet::rcm_always_runs_and_reorders_the_units_so_column_sharing_units_are_adjacent_for_fiber_grouping"]
 
 [[tenet]]
 id = "as_of_2026_06_11_rcm_rides_only_the_arena_layout_column"
+subject = "plan"
 what = "As of 2026-06-11, addendum A1 records that RCM rides only the arena-layout column."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:41-42"
 provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#state-assessment-truth-of-impl-2026-06-11"]
@@ -411,12 +412,12 @@ origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "plan"
 keywords = ["RCM", "arena-layout", "partial", "inert", "state assessment", "2026-06-11"]
-cites = ["whether_dispatch_follows_rcm_order_or_waist_phase_order_is_decided_by_a_bench"]
+related = ["tenet::whether_dispatch_follows_rcm_order_or_waist_phase_order_is_decided_by_a_bench"]
 
 [[tenet]]
 id = "as_of_2026_06_11_eight_of_nine_adapt_axes_carry_types_but_no_data"
+subject = "plan"
 what = "As of 2026-06-11, addendum A1 records that eight of the nine adapt axes carry types but no data."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:39-39"
 provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#state-assessment-truth-of-impl-2026-06-11"]
@@ -427,11 +428,11 @@ origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "plan"
 keywords = ["adapt axes", "inert", "types without data", "state assessment", "2026-06-11"]
 
 [[tenet]]
 id = "the_unified_mechanism_is_the_runtime_plan_to_compile_time_per_core_program_bridge_and_fiber_shape_typestate_is_its_unproven_realisation"
+subject = "plan"
 what = "With the special-casing gone there is no registration-order walk that works for single core to ship first. The real mechanism is unavoidable for all core counts: the bridge from the runtime plan to a compile-time per-core program, where the topology of fibers, phases and cores is a function of the associated types of the access sets, which only the trait solver sees. The per-fiber shape typestate is its likely realisation and the highest-risk unproven step, which the engine-completion roadmap must sketch-prove."
 mechanism = "Per-fiber `FiberShape` typestate; \"build time = the type system\"; topology as a function of the WU `AccessSet` associated types."
 source = "mock/research/202606061000_canon-amendment-unified-engine.md:28-30"
@@ -445,13 +446,13 @@ origin = "proposed"
 written_by = "canon amendment of 2026-06-06 on the unified engine, the working out under the maintainer's ruling, written in the first person by an author the text does not name"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "plan"
 keywords = ["FiberShape", "typestate", "per-core program", "build time = the type system", "AccessSet", "trait solver", "sketch-prove", "highest risk"]
-rules_out = ["a registration-order cons-list walk that works for single core, shipped first"]
-cites = ["the_engine_is_one_and_the_core_count_is_configuration"]
+rejects = ["a registration-order cons-list walk that works for single core, shipped first"]
+related = ["tenet::the_engine_is_one_and_the_core_count_is_configuration"]
 
 [[tenet]]
 id = "per_fiber_morsel_sizing_folds_over_blob_strides_plus_the_collection_bytes_term_and_rides_after_the_drift_fix"
+subject = "plan"
 what = "The A3b per-fiber morsel sizing rides downstream of the drift fix. The per-store size is the blob stride plus, for collection members, the collection-bytes term, and the fold is over blob strides and not over a decomposed per-member column set. The collection-bytes and resource-footprint work, merged, is the const size source for the sequence and map collection-bytes term."
 mechanism = "A3b; `CollectionBytes` term; `CollectionBytes`/`ResourceFootprint` (#163/#164, merged)."
 source = "mock/research/202606210600_resource-storage-model-canonical-addendum.md:90-96"
@@ -469,12 +470,12 @@ origin = "proposed"
 written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "plan"
 keywords = ["A3b", "per-fiber morsel sizing", "blob stride", "CollectionBytes", "ResourceFootprint", "#163", "#164", "size fold"]
-cites = ["the_value_of_a_resource_is_one_contiguous_record_blob_and_the_per_member_column_decomposition_was_refuted_by_bench"]
+related = ["tenet::the_value_of_a_resource_is_one_contiguous_record_blob_and_the_per_member_column_decomposition_was_refuted_by_bench"]
 
 [[tenet]]
 id = "the_swap_d_bench_is_commissioned_with_the_trigger_when_the_344_write_side_lands"
+subject = "plan"
 what = "A bench named Swap-D, a cold write then a stream, is commissioned with the trigger that #344's write side lands. It decides whether the write-resource-collection-sizes morsel term absorbs the write-then-read traffic of a swap or a separate budget line is owed. There is no accessor-shape arm, since there is one write per swap between frames and the stakes do not justify one."
 mechanism = "Swap-D: N swept 16/64/256, element sizes 4/16/64 bytes, baseline versus swap-at-frame-end; `write_resource_collection_sizes` morsel term."
 source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:113-120"
@@ -492,6 +493,5 @@ arm (one write per swap, between frames; the stakes do not justify one).
 origin = "proposed"
 written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
 standing = "provisional"
-subject = "plan"
 keywords = ["Swap-D", "bench", "write_resource_collection_sizes", "morsel term", "#344", "cold write then stream", "budget line", "S7"]
-cites = ["per_fiber_morsel_sizing_folds_over_blob_strides_plus_the_collection_bytes_term_and_rides_after_the_drift_fix"]
+related = ["tenet::per_fiber_morsel_sizing_folds_over_blob_strides_plus_the_collection_bytes_term_and_rides_after_the_drift_fix"]

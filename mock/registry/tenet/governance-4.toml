@@ -2,6 +2,7 @@
 
 [[tenet]]
 id = "a_locked_changelist_stays_immutable_and_its_drift_from_shipped_source_is_documented_by_a_sketch_and_a_new_round_is_for_a_design_change_only"
+subject = "governance"
 what = "A locked changelist stays as it was at lock time and is not edited. A drift from shipped source is documented by a sketch under the research sketches that names the original changelist by path and the shipped reality by source line. A future round that genuinely supersedes the original, a substantive design change, deprecates it, and a purely wording mismatch with no design change behind it needs a documentation sketch and no rename or new round."
 because = "The mockspace command that deprecates operates on the current round's active changelists and has no path argument and no mechanism for picking a past round's locked changelist to deprecate."
 mechanism = "`cargo mock deprecate` has no path argument and in the TOPIC phase errors with `no changelist to deprecate (TOPIC phase)`; a supersession renames the original to `.deprecated.md` by manual `git mv` and the new round's changelist carries a `## Comparison to deprecated changelist` section."
@@ -29,7 +30,6 @@ origin = "proposed"
 written_by = "sketch cl-drift-closure-clarification of 2026-05-25 (workspace task #398), outcome WORKS; agent-written"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "governance"
 keywords = ["locked changelist", "immutable", "drift documentation", "retroactive reconciliation", "wording mismatch", "deprecation", "task 398"]
-rules_out = ["Option A: deprecate-and-replace via mockspace flow", "The \"Option A\" framing in PR #85's drift memo was based on a misreading"]
-cites = ["a_drifted_locked_changelist_is_reconciled_by_a_new_round_that_deprecates_it_and_carries_a_corrected_replacement"]
+rejects = ["Option A: deprecate-and-replace via mockspace flow", "The \"Option A\" framing in PR #85's drift memo was based on a misreading"]
+related = ["tenet::a_drifted_locked_changelist_is_reconciled_by_a_new_round_that_deprecates_it_and_carries_a_corrected_replacement"]

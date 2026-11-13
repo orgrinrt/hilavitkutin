@@ -2,6 +2,7 @@
 
 [[tenet]]
 id = "thread_spawn_copies_a_pointer_sized_closure_under_a_compile_time_size_check_and_never_casts_a_function_pointer_or_allocates"
+subject = "execution"
 what = "Spawning a thread takes a generic once-callable closure and copies a pointer-sized closure by value into the thread-creation argument under a compile-time size and alignment assertion. The closure captures a data pointer, so no function pointer is cast and the question of whether function and data pointers have matching size does not arise. A closure that is too fat is a compile error and never an allocation. This is neither option the old backlog note proposed: boxing a function pointer would allocate, which the engine path forbids, and the static work-queue slot was never built."
 mechanism = "`spawn<F: FnOnce() + Send + 'static>` with `tramp<F>` (os.rs:163) and `PtrSizedClosure::<F>::CHECK`."
 source = "mock/design_rounds/202607192810/202607192800_topic.retire-the-fn-pointer-spawn.md:21-24, mock/design_rounds/202607192810/202607192800_topic.retire-the-fn-pointer-spawn.md:36-41, mock/design_rounds/202607192810/202607192810_changelist.doc.lock.md:16-24"
@@ -32,13 +33,13 @@ assertion. The closure captures a data pointer, so no function pointer is cast a
 origin = "proposed"
 written_by = "topic retire-the-fn-pointer-spawn of 2026-07-19, round 202607192810, and its doc changelist, agent-written"
 standing = "provisional"
-subject = "execution"
 keywords = ["spawn", "spawn_fn", "PtrSizedClosure", "pthread_create", "closure", "function pointer", "compile-time check", "allocation-free"]
-rules_out = ["Box<fn()> would allocate, which the engine path forbids"]
-cites = ["deviation_four_pointer_size_spawn_is_sound_as_shipped_and_the_proposed_ruling_blesses_it_with_a_compile_time_size_check", "the_engine_never_calls_the_allocator_at_runtime_and_plan_time_allocation_happens_once_per_pipeline_lifetime"]
+rejects = ["Box<fn()> would allocate, which the engine path forbids"]
+related = ["tenet::deviation_four_pointer_size_spawn_is_sound_as_shipped_and_the_proposed_ruling_blesses_it_with_a_compile_time_size_check", "tenet::the_engine_never_calls_the_allocator_at_runtime_and_plan_time_allocation_happens_once_per_pipeline_lifetime"]
 
 [[tenet]]
 id = "the_consumer_executor_ruling_moved_who_spawns_and_who_pins_and_left_the_thread_count_rule_standing_as_a_bound_on_the_closures_handed_out"
+subject = "execution"
 what = "The ruling that the consumer supplies the executor moved who spawns threads and who pins them, and did not touch how many workers the engine uses. The thread-count rule therefore stands, restated against what the engine now controls: the engine hands out a number of closures equal to the smaller of the runnable worker count and the parallelisable width plus one, the width being the most trunks any phase carries and the one extra being the convergence worker."
 because = "The previous round deleted the rule while moving the pool to the consumer, and the deletion let the code overrule the design."
 mechanism = "`min(runnable worker count, parallelisable_width + 1)`; the engine design's `max_trunks_per_phase`; `mock/PRINCIPLES.md.tmpl` Pre-allocated thread pool."
@@ -53,12 +54,12 @@ origin = "proposed"
 written_by = "topic of round 202609191001 'the second review of the arvo-dev review fixes' and its doc changelist, 2026-09-19, agent-written"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "execution"
 keywords = ["thread count", "parallelisable width", "convergence worker", "closures handed out", "runnable worker count", "consumer executor", "deleted rule"]
-cites = ["the_closures_handed_out_number_the_smaller_of_the_clamped_worker_count_and_the_parallelisable_width_plus_the_convergence_worker", "the_thread_count_is_the_smaller_of_the_physical_cores_and_the_parallelisable_width_plus_one", "op_ruled_that_the_consumer_supplies_the_os_thread_executor_and_the_engine_ships_only_the_executor_contract"]
+related = ["tenet::the_closures_handed_out_number_the_smaller_of_the_clamped_worker_count_and_the_parallelisable_width_plus_the_convergence_worker", "tenet::the_thread_count_is_the_smaller_of_the_physical_cores_and_the_parallelisable_width_plus_one", "tenet::op_ruled_that_the_consumer_supplies_the_os_thread_executor_and_the_engine_ships_only_the_executor_contract"]
 
 [[tenet]]
 id = "as_of_2026_09_19_the_engine_hands_out_one_closure_per_clamped_worker_whatever_the_plan_and_the_gap_is_recorded_beside_the_code_and_not_in_the_principle_text"
+subject = "execution"
 what = "As of 2026-09-19, the engine hands out one closure per clamped worker whatever the plan's width, so it does not honour the thread-count bound. The gap is recorded where implementation status belongs, as a marked comment at the call site and an ignored catalogue test, and the principle text ends on the rule alone and does not state the engine's current status."
 mechanism = "`run_parallel`; `FIXME:` at the `runnable_worker_count` call in `scheduler/run_parallel.rs`; the ignored catalogue test in `tests/gate2_worker_count.rs`; `mock/PRINCIPLES.md.tmpl` (Pre-allocated thread pool)."
 source = "mock/design_rounds/202609191001/202609191000_topic.second-review-on-arvo-dev.md:19-19, mock/design_rounds/202609191201/202609191201_changelist.doc.lock.md:9-13"
@@ -76,13 +77,13 @@ origin = "proposed"
 written_by = "topic of round 202609191001 and doc changelist of round 202609191201, 2026-09-19, agent-written"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "execution"
 keywords = ["thread count", "FIXME", "gate2_worker_count", "run_parallel", "implementation status", "catalogue test", "one closure per worker"]
-rules_out = ["the thread-count paragraph ending on the engine's current status"]
-cites = ["the_consumer_executor_ruling_moved_who_spawns_and_who_pins_and_left_the_thread_count_rule_standing_as_a_bound_on_the_closures_handed_out"]
+rejects = ["the thread-count paragraph ending on the engine's current status"]
+related = ["tenet::the_consumer_executor_ruling_moved_who_spawns_and_who_pins_and_left_the_thread_count_rule_standing_as_a_bound_on_the_closures_handed_out"]
 
 [[tenet]]
 id = "the_spin_then_park_middle_tier_is_wired_into_both_frame_waits_with_a_consumer_tunable_budget_and_the_shutdown_wait_stays_park_only"
+subject = "execution"
 what = "The canonical spin-then-park middle tier is wired unconditionally into the frame waits. The worker frame wait and the scheduler done wait spin a bounded budget, re-checking the word each iteration so the lost-wakeup discipline is untouched, and then park through the same load-check-wait pattern as before. The budget is a consumer-tunable run configuration constant defaulting to the canonical performance-core figure of 128, and zero restores park-immediately exactly. The shutdown wait stays park-only, since latency is irrelevant there. Wiring the telemetry-driven tier selection remains a follow-up the ledger names, because the telemetry is undriven and a zero prediction selects the unbounded spin-only tier."
 because = "The frame waits never called the parking machinery that already ships, and park-immediately was the safe wrong tier."
 mechanism = "`thread/parking.rs` (`WakeStrategy`, `pick_tier`, `spin_budget_for`, `spin`); `thread/frame.rs`; `RunCfg` budget constant defaulting to 128; `predicted_wait_ns` telemetry, always zero."
@@ -112,12 +113,12 @@ D-phase follow-up the ledger names.
 origin = "proposed"
 written_by = "topic of round 202607202310 'the wake spin pre-roll (GATE-2 deviation 3)', 2026-07-19, agent-written"
 standing = "provisional"
-subject = "execution"
 keywords = ["wake", "spin pre-roll", "spin budget", "park", "RunCfg", "pick_tier", "shutdown wait", "frame wait"]
-cites = ["the_thread_pool_is_pre_allocated_and_wakes_by_spinning_first_and_then_parking"]
+related = ["tenet::the_thread_pool_is_pre_allocated_and_wakes_by_spinning_first_and_then_parking"]
 
 [[tenet]]
 id = "the_spin_budget_default_flips_from_128_to_zero_to_the_measured_winner_while_the_machinery_stays_and_consumers_may_override"
+subject = "execution"
 what = "The wake policy bench ruled against the bounded spin pre-roll on the measured host, because park-immediately wins at every size, a fixed per-frame spin penalty from wake-word cache-line contention and core competition. Per the prior round's evidence exit, the machinery stays, as the parameter, the constant and the budget-sweep test, and the default becomes the measured winner, so the spin budget default flips from 128 to 0. Consumers on hosts where the trade runs the other way override the constant."
 mechanism = "`RunCfg::WAKE_SPIN_BUDGET` flips from 128 to 0, doc comment citing the bench; park-immediately wins 1.64x / 1.34x / 1.11x at n = 64 / 1024 / 8192."
 source = "mock/design_rounds/202607202351/202607202350_topic.wake-budget-default-zero.md:8-16"
@@ -136,13 +137,13 @@ override the const.
 origin = "proposed"
 written_by = "topic of round 202607202351 'flip the wake spin budget default to the measured winner', 2026-07-19, agent-written"
 standing = "provisional"
-subject = "execution"
 keywords = ["WAKE_SPIN_BUDGET", "wake_policy bench", "park-immediately", "default zero", "spin budget", "RunCfg", "evidence exit"]
-rules_out = ["the spin budget default of 128"]
-cites = ["the_spin_then_park_middle_tier_is_wired_into_both_frame_waits_with_a_consumer_tunable_budget_and_the_shutdown_wait_stays_park_only", "a_wake_bench_rules_for_park_immediately_with_a_spin_budget_default_of_zero_and_the_machinery_shipping_tunable"]
+rejects = ["the spin budget default of 128"]
+related = ["tenet::the_spin_then_park_middle_tier_is_wired_into_both_frame_waits_with_a_consumer_tunable_budget_and_the_shutdown_wait_stays_park_only", "tenet::a_wake_bench_rules_for_park_immediately_with_a_spin_budget_default_of_zero_and_the_machinery_shipping_tunable"]
 
 [[tenet]]
 id = "as_of_2026_11_13_the_fused_run_entry_refuses_a_unit_with_no_per_record_map_but_not_an_accumulator_writing_one_and_drops_its_append_silently"
+subject = "execution"
 what = "As of 2026-11-13, the fused run entry refuses at compile time a unit that has no per-record map, but it does not refuse a unit that has a per-record map and also writes an accumulator: the fused chain never runs that unit's own execute and the append is silently dropped. The fused entry also lacks the per-frame accumulator reset that the other two run entries perform, so running the body alone would hit the capacity assert at the first frame. This is a gap, committed as an ignored two-frame append test and ticketed, and the engine change that would make the fused entry refuse an accumulator-writing carrier is not part of the suite round."
 mechanism = "`run_fused`; `RecordOp`; `ChainWu`; the compile-fail pair `unmapped_unit_fused`; the ignored two-frame append test on `run_fused`; ticket `0fb716c5a463`; finding H25; `reset_accumulators` called by `run.rs` and `run_parallel.rs` at frame start and not by `run_fused.rs`."
 source = "mock/design_rounds/202611130044/202611130044_topic.suite-can-fail-review-fixes.md:13-13, mock/design_rounds/202611130044/202611130044_topic.suite-can-fail-review-fixes.md:20-22, mock/design_rounds/202611130044/202611130044_changelist.doc.lock.md:11-11, mock/design_rounds/202611130058/202611130058_topic.suite-can-fail-second-review.md:14-14"
@@ -162,12 +163,12 @@ origin = "proposed"
 written_by = "topics of rounds 202611130044 'suite-can-fail-review-fixes' and 202611130058 'suite-can-fail-second-review', 2026-11-13, agent-written, answering review passes"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "execution"
 keywords = ["run_fused", "RecordOp", "accumulator append", "silently dropped", "reset_accumulators", "fused chain", "ticket 0fb716c5a463", "H25"]
-rules_out = ["appends cannot reach the fused entry"]
+rejects = ["appends cannot reach the fused entry"]
 
 [[tenet]]
 id = "dispatch_code_generation_is_a_sealed_trait_over_the_run_configuration_with_one_shipped_implementation_and_further_passes_as_further_sealed_implementations"
+subject = "execution"
 what = "Dispatch code generation is a sealed trait over the run configuration, with the per-core dispatch as an associated type and one implementation shipped in the first version. Further passes, such as a bench-instrumented one and a debug one, arrive as further sealed implementations, and the build function carries all of the plan's const generics through."
 mechanism = "Sealed `trait DispatchCodegen<Cfg: RunCfg>: Sealed` with TAIT `type CoreDispatch = impl Fn(...)` via `feature(impl_trait_in_assoc_type)`; the `ExecutionPlan<...>` parameter carries ten const generics (seven independent, three derived via `CeilingDiv`); sole implementation `StandardCodegen`; future `BenchInstrumentedCodegen`, `DebugCodegen`; sketch `202605101036-codegen-entrypoint-tait` FINDINGS WORKS, call site emits zero `blr`."
 source = "mock/design_rounds/202605101036/202605101036_topic.dispatch-codegen.md:202-215"
@@ -192,12 +193,12 @@ origin = "proposed"
 written_by = "design round 202605101036, topic 4 dispatch codegen, Axis A of the decision log dated 2026-05-10, agent-written; the text does not say whose decision it is"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "execution"
 keywords = ["DispatchCodegen", "StandardCodegen", "TAIT", "CoreDispatch", "sealed trait", "Axis A", "A3", "build_plan"]
-cites = ["dispatch_code_generation_is_a_sealed_trait_with_one_shipped_implementation_and_three_dispatch_approaches"]
+related = ["tenet::dispatch_code_generation_is_a_sealed_trait_with_one_shipped_implementation_and_three_dispatch_approaches"]
 
 [[tenet]]
 id = "the_first_version_ships_a_mono_tuple_baseline_a_trunk_level_and_a_whole_schedule_dispatch_approach_and_the_indirect_per_fiber_one_waits_in_the_backlog"
+subject = "execution"
 what = "Three dispatch approaches ship under descriptive names: a mono-tuple baseline used for tests and as the reference, a trunk-level one for fewer than ten thousand records, and a whole-schedule one for ten thousand or more. The per-fiber indirect approach stays available only as a backlog entry, to be re-added if a workload bench shows a need, and the approach enum is non-exhaustive so additions do not break consumers."
 because = "The per-fiber indirect approach is polka-dots Approach C with a 1.17x penalty and superseded per Domain 17, and it is not the mono-tuple Approach A at the 1.0x baseline."
 mechanism = "`enum DispatchApproach { MonoTuple, TrunkMega, ScheduleMega }` marked `#[non_exhaustive]`; plan-stage selector chooses `MonoTuple` for tests and baseline reference, `TrunkMega` for under 10K, `ScheduleMega` for 10K or more; Topic 3 amendment required to change `IndirectPerFiber` to `MonoTuple`."
@@ -210,13 +211,13 @@ origin = "proposed"
 written_by = "design round 202605101036, topic 4 dispatch codegen, Axis B of the decision log dated 2026-05-10, agent-written; the text does not say whose decision it is"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "execution"
 keywords = ["MonoTuple", "TrunkMega", "ScheduleMega", "IndirectPerFiber", "DispatchApproach", "non_exhaustive", "Approach C", "backlog"]
-rules_out = ["Topic 3's current `enum DispatchApproach { IndirectPerFiber, TrunkMega, ScheduleMega }` is semantically wrong"]
-cites = ["dispatch_code_generation_is_a_sealed_trait_with_one_shipped_implementation_and_three_dispatch_approaches", "the_indirect_per_fiber_approach_is_superseded_by_the_trunk_and_schedule_approaches_for_its_overhead", "the_dispatch_approach_is_chosen_by_record_count_between_fiber_level_trunk_level_and_whole_schedule_functions"]
+rejects = ["Topic 3's current `enum DispatchApproach { IndirectPerFiber, TrunkMega, ScheduleMega }` is semantically wrong"]
+related = ["tenet::dispatch_code_generation_is_a_sealed_trait_with_one_shipped_implementation_and_three_dispatch_approaches", "tenet::the_indirect_per_fiber_approach_is_superseded_by_the_trunk_and_schedule_approaches_for_its_overhead", "tenet::the_dispatch_approach_is_chosen_by_record_count_between_fiber_level_trunk_level_and_whole_schedule_functions"]
 
 [[tenet]]
 id = "the_base_approach_selection_picks_by_record_count_and_fiber_count_and_threshold_tuning_by_benchmark_follows"
+subject = "execution"
 what = "As a first body, approach selection picks the whole-schedule function when the record count is at least ten thousand. Below that, a single fiber picks the trunk-level function because the mega function fits the working set, and several fibers pick the per-fiber indirect call as the lowest-overhead split. Benchmark-tuned thresholds land in a follow-up."
 because = "The whole-schedule function gives LLVM its whole-pipeline optimisation window, and the ten thousand threshold matches the existing under-10K target named in the type doc comments."
 mechanism = "`select_approach`: `record_count >= 10_000` returns `ScheduleMega`; otherwise `fiber_count <= 1` returns `TrunkMega`, else `IndirectPerFiber`; follow-up sweeps `(record_count, fiber_count)` against a dispatch-overhead bench fixture to refine the 10_000 threshold and the `fiber_count <= 1` tiebreaker."
@@ -238,12 +239,12 @@ New entry naming the follow-up: sweep `(record_count, fiber_count)` against the 
 origin = "proposed"
 written_by = "design round 202605250600, topic HILA-RUNTIME-C2 select_approach base implementation and its doc changelist, dated 2026-05-25, agent-written; the text does not say whose decision it is"
 standing = "provisional"
-subject = "execution"
 keywords = ["select_approach", "ScheduleMega", "TrunkMega", "IndirectPerFiber", "record_count", "fiber_count", "10_000", "threshold"]
-cites = ["the_dispatch_approach_is_chosen_by_record_count_between_fiber_level_trunk_level_and_whole_schedule_functions"]
+related = ["tenet::the_dispatch_approach_is_chosen_by_record_count_between_fiber_level_trunk_level_and_whole_schedule_functions"]
 
 [[tenet]]
 id = "a_store_barrier_that_is_inner_shareable_precedes_the_progress_counter_release_store_after_non_temporal_writes"
+subject = "execution"
 what = "After the last non-temporal writes of a fiber's output, the generated code emits an explicit store barrier before the release store of the progress counter. On aarch64 that barrier is the inner-shareable store barrier, since the local one is insufficient for observation by another core, and on x86-64 it is an explicit store fence, since a release fence there is only a compiler barrier. The ASM verification checklist gains a sixth check, scoped per platform."
 because = "Non-temporal stores on aarch64 do not participate in the release semantics of a later release store, so a reader on another core that sees the progress counter may not see the earlier writes."
 mechanism = "aarch64: `dmb ishst` immediately before `progress_counter.store(end_record, Ordering::Release)` (`stlr`); x86_64: `core::arch::x86_64::_mm_sfence()` before the store (`mov`); `dmb st` is local-PE-only; the sixth ASM check: `dmb ishst` / `sfence` immediately preceding the progress counter store; Topic 3 invariant S3, corrected per audit-2 C1."
@@ -277,13 +278,13 @@ origin = "proposed"
 written_by = "design round 202605101036, topic 3 plan algorithm chain, invariant S3 corrected per audit-2 C1, dated 2026-05-10, agent-written; the text does not say whose decision it is"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "execution"
 keywords = ["dmb ishst", "sfence", "stnp", "progress counter", "Release store", "S3", "non-temporal store", "ASM checklist"]
-rules_out = ["Earlier draft said \"the fence lowers to `sfence`\" on x86 — that's wrong; `fence(Release)` is a no-op on x86.", "Earlier draft also said `dmb st` on aarch64 — that's local-PE-only and insufficient for cross-core observation"]
-cites = ["a_store_fence_sits_between_the_last_non_temporal_output_writes_and_the_release_store_of_the_progress_counter"]
+rejects = ["Earlier draft said \"the fence lowers to `sfence`\" on x86 — that's wrong; `fence(Release)` is a no-op on x86.", "Earlier draft also said `dmb st` on aarch64 — that's local-PE-only and insufficient for cross-core observation"]
+related = ["tenet::a_store_fence_sits_between_the_last_non_temporal_output_writes_and_the_release_store_of_the_progress_counter"]
 
 [[tenet]]
 id = "the_run_returns_the_foundation_outcome_type_chosen_by_the_run_configuration_and_the_pipeline_result_enum_is_retired"
+subject = "execution"
 what = "The scheduler's run returns the foundation outcome type, whose success and error types are determined by the consumer's run configuration and propagated through the builder typestate by the existing dispatch routing. The old three-variant pipeline result enum is retired, and the result type uses the stack's own outcome primitive."
 mechanism = "`Scheduler::run()` returns `notko::Outcome<T, E>`, `T` and `E` from the consumer's `RunCfg`; dispatch-routing variant `RunCfgDispatch<C>` (Axis 2); retired `PipelineResult { Completed | Failed | Poisoned }`."
 source = "mock/design_rounds/202605101036/202605101036_topic.scheduler-run-signature.md:119-119, mock/design_rounds/202605101036/202605101036_topic.scheduler-run-signature.md:121-129"
@@ -304,13 +305,13 @@ Consumers pick which type is "the run cfg" by setting `BuilderInput::Dispatch = 
 origin = "proposed"
 written_by = "design round 202605101036, topic 1 scheduler run signature, Axis 2 return shape marked DECIDED, dated 2026-05-10, agent-written; the text does not say whose decision it is"
 standing = "provisional"
-subject = "execution"
 keywords = ["Scheduler::run", "notko::Outcome", "PipelineResult", "RunCfg", "return shape", "Axis 2", "dispatch routing"]
-rules_out = ["The substrate's old `PipelineResult { Completed | Failed | Poisoned }` enum is retired"]
-cites = ["the_pipeline_run_returns_a_per_fiber_status_and_extracts_no_result_and_the_consumer_decides_on_partial_failure", "the_scheduler_run_is_parameterless_and_its_configuration_is_consumer_supplied_through_the_builder_with_trivial_defaults"]
+rejects = ["The substrate's old `PipelineResult { Completed | Failed | Poisoned }` enum is retired"]
+related = ["tenet::the_pipeline_run_returns_a_per_fiber_status_and_extracts_no_result_and_the_consumer_decides_on_partial_failure", "tenet::the_scheduler_run_is_parameterless_and_its_configuration_is_consumer_supplied_through_the_builder_with_trivial_defaults"]
 
 [[tenet]]
 id = "the_built_scheduler_carries_one_phantom_type_parameter_for_the_run_configuration_handle_and_stays_effectively_zero_sized"
+subject = "execution"
 what = "After the build, the scheduler carries one phantom type parameter, the run configuration handle, which relaxes the earlier position that the built scheduler is zero-sized with no type parameters. Storage stays effectively zero and only the type identity widens."
 mechanism = "`PhantomData` carrying the run-cfg handle; relaxes A9 (post-build Scheduler is ZST, no type params)."
 source = "mock/design_rounds/202605101036/202605101036_topic.scheduler-run-signature.md:200-200"
@@ -322,12 +323,12 @@ origin = "proposed"
 written_by = "design round 202605101036, topic 1 scheduler run signature, section on the scheduler type after build, dated 2026-05-10, agent-written; the text does not say whose decision it is"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "execution"
 keywords = ["Scheduler", "ZST", "PhantomData", "run-cfg handle", "A9", "type parameter", "post-build"]
-cites = ["the_run_returns_the_foundation_outcome_type_chosen_by_the_run_configuration_and_the_pipeline_result_enum_is_retired"]
+related = ["tenet::the_run_returns_the_foundation_outcome_type_chosen_by_the_run_configuration_and_the_pipeline_result_enum_is_retired"]
 
 [[tenet]]
 id = "trunks_are_established_as_a_dispatch_structure_before_parallelism_and_core_pinning_of_one_trunk_per_core_follows"
+subject = "execution"
 what = "The per-trunk dispatch structure is established before parallelism, and a following round pins one trunk to each core on the shipped pool."
 mechanism = "G2-N core-pins one trunk per core onto the shipped pool in a following round."
 source = "mock/design_rounds/202606071100/202606071100_topic.gate2-const-gated-dispatch.md:10-10"
@@ -339,11 +340,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["quote: mock/design_rounds/202606071100/202606071100_topic.gate2-const-gated-dispatch.md:10-10", "quote: mock/research/202606071200_gate2-carrier-mechanism-fork.md:45-45"]
-subject = "execution"
 keywords = ["trunks before parallelism", "per-trunk dispatch", "core pinning", "G2-N", "op's correction", "const-gated dispatch"]
 
 [[tenet]]
 id = "the_nested_value_carrier_walk_runs_a_trunk_over_a_carrier_of_fibers_and_the_scheduler_run_is_re_pointed_onto_it_in_a_later_step"
+subject = "execution"
 what = "The trunk level of dispatch is a walk over a nested carrier of fibers, directly above the per-fiber walk, and it produces the same column state as the per-fiber walk over the flat concatenation of those fibers. The scheduler's run is not re-pointed onto the nested carrier in that step; a later step builds the nested phase, trunk and fiber carrier from the plan and replaces the flat walk."
 mechanism = "`FiberCons<F, Rest>` / `FiberNil` in `hilavitkutin-api::work_unit_values`; `RunTrunk<A, WL>` in `dispatch/trunk_run.rs` over the shipped `RunFiber`; G2-0b is the phase level plus waist barrier; G2-0c builds the `PhaseCons<TrunkCons<FiberCons<WuCons>>>` carrier from the plan."
 source = "mock/design_rounds/202606070048/202606070048_topic.gate2-g2-0a-runtrunk-fibercons.md:16-20, mock/design_rounds/202606070048/202606070048_topic.gate2-g2-0a-runtrunk-fibercons.md:22-22, mock/design_rounds/202606070048/202606070048_topic.gate2-g2-0a-runtrunk-fibercons.md:24-24"
@@ -362,11 +363,11 @@ The output-equivalence contract: a `RunTrunk` walk over `FiberCons[fiber_a, fibe
 origin = "proposed"
 written_by = "design round 202606070048, topic GATE-2 G2-0a RunTrunk over FiberCons, dated 2026-06-07, agent-written; the text does not say whose decision it is"
 standing = "provisional"
-subject = "execution"
 keywords = ["RunTrunk", "FiberCons", "RunFiber", "nested carrier", "G2-0a", "G2-0c", "trunk nesting", "PhaseCons"]
 
 [[tenet]]
 id = "trunk_isolation_comes_from_a_flat_carrier_walk_gated_by_const_phase_and_trunk_and_the_nested_value_carriers_are_superseded"
+subject = "execution"
 what = "Trunk isolation comes from a flat ordered walk of the unit carrier gated by constants for phase and trunk, where member positions delegate to the unchanged per-fiber walk and dead-code elimination yields one member-only program per phase and trunk. The nested value-carrying walks and carriers over fibers, trunks and phases are superseded by it and are not extended by this arc, and removing them is a later cleanup."
 because = "Deriving a heterogeneous nested type from flat registration is a forbidden type-level N-way partition, and the plan to build a nested carrier type from the plan walled at that step."
 mechanism = "`const { phase_of(POS) == PHASE && trunk_of(POS) == TRUNK }` over a flat `WuCons` walk; `RunFiber` reused verbatim; superseded `RunTrunk` / `RunPhase` / `RunPipeline` and `FiberCons` / `TrunkCons` / `PhaseCons`; `RunPipeline`'s phase-loop-plus-`waist_barrier` logic conceptually reused later; spec domain 17; fork doc `202606071200`."
@@ -381,13 +382,13 @@ origin = "proposed"
 written_by = "design round 202606070900, topic GATE-2 const grouping from the registered bundle, reconciliation section, dated 2026-06-07, agent-written; the text says the round is under an op mandate but does not say the reconciliation is op's ruling"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "execution"
 keywords = ["flat carrier", "const gate", "phase_of", "trunk_of", "RunFiber", "nested carrier superseded", "DCE", "member-only program"]
-rules_out = ["The value-carrier walks `RunTrunk` / `RunPhase` / `RunPipeline` and the `FiberCons` / `TrunkCons` / `PhaseCons` carriers are superseded by the flat-carrier const-gate for trunk isolation; they are not extended by this arc."]
-cites = ["the_nested_value_carrier_walk_runs_a_trunk_over_a_carrier_of_fibers_and_the_scheduler_run_is_re_pointed_onto_it_in_a_later_step", "r4_replaces_the_nested_carrier_type_construction_with_const_eval_grouping_and_const_gated_dce"]
+rejects = ["The value-carrier walks `RunTrunk` / `RunPhase` / `RunPipeline` and the `FiberCons` / `TrunkCons` / `PhaseCons` carriers are superseded by the flat-carrier const-gate for trunk isolation; they are not extended by this arc."]
+related = ["tenet::the_nested_value_carrier_walk_runs_a_trunk_over_a_carrier_of_fibers_and_the_scheduler_run_is_re_pointed_onto_it_in_a_later_step", "tenet::r4_replaces_the_nested_carrier_type_construction_with_const_eval_grouping_and_const_gated_dce"]
 
 [[tenet]]
 id = "the_single_core_run_walks_the_flat_value_carrier_gated_by_const_phase_and_trunk_so_dead_code_elimination_leaves_one_member_only_program_per_phase_and_trunk"
+subject = "execution"
 what = "The scheduler's run is re-pointed through const-gated per-trunk dispatch, a flat walk over the value carrier in which each position is gated by a constant on its phase and trunk and member positions delegate to the shipped per-fiber walk. Dead-code elimination then collapses the walk into one member-only program per phase and trunk, with single-core output equivalent to the existing flat walk."
 mechanism = "`Scheduler::run` re-pointed; `const { phase_of(POS) == PHASE && trunk_of(POS) == TRUNK }` over the `WuVals` carrier; member positions delegate to the shipped `RunFiber` per-unit projection; `#664` no-regress."
 source = "mock/design_rounds/202606071100/202606071100_topic.gate2-const-gated-dispatch.md:10-10"
@@ -399,12 +400,12 @@ origin = "proposed"
 written_by = "design round 202606071100, topic GATE-2 const-gated trunk dispatch and Scheduler::run re-point, round 2, dated 2026-06-07, agent-written; the text says the round is under an op mandate"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "execution"
 keywords = ["const-gated dispatch", "Scheduler::run", "WuVals", "RunFiber", "phase_of", "trunk_of", "single-core", "per-trunk program"]
-cites = ["trunk_isolation_comes_from_a_flat_carrier_walk_gated_by_const_phase_and_trunk_and_the_nested_value_carriers_are_superseded"]
+related = ["tenet::trunk_isolation_comes_from_a_flat_carrier_walk_gated_by_const_phase_and_trunk_and_the_nested_value_carriers_are_superseded"]
 
 [[tenet]]
 id = "phase_sectioned_dispatch_with_a_waist_between_phases_is_established_before_parallelising"
+subject = "execution"
 what = "Single-core dispatch executes the registered units phase by phase in phase order with a waist barrier between phases, the waist sectioning being established before parallelising. A following round swaps the degenerate barrier for the real one and pins each phase's trunks to cores."
 mechanism = "`Scheduler::run` morsel-outer path re-pointed to phase-by-phase execution; G2-N swaps the degenerate barrier for the real one."
 source = "mock/design_rounds/202606071300-abandoned/202606071300_topic.gate2-phase-sectioned-run.md:10-10"
@@ -414,11 +415,11 @@ Re-point `Scheduler::run` (the morsel-outer dispatch path) to execute the regist
 '''
 origin = "stated"
 standing = "provisional"
-subject = "execution"
 keywords = ["phase-sectioned run", "waist barrier", "phase order", "op's correction", "before parallelising", "G2-N", "round 2b"]
 
 [[tenet]]
 id = "single_core_run_executes_phase_by_phase_under_runtime_phase_masks_with_no_per_trunk_enumeration"
+subject = "execution"
 what = "Single-core output equivalence does not need per-phase-and-trunk monomorphisation, so the run is a runtime loop over the phases, each phase walking the shipped mask-gated walk under a runtime unit mask for that phase with a waist barrier between phases. Const enumeration of every phase and trunk is not done at single-core, since it would hit a count-bound monomorphisation explosion; the const-gated per-trunk programs remain the building block for the per-core case."
 because = "Enumerating every phase and trunk at single-core would hit a count-bound mono-explosion and the const-recursion overflow that round 2a already resolved for the position axis."
 mechanism = "`for p in 0..nphases { for morsel { wu_values.run_gated(bindings, morsel, dirty & phase_mask_p, ZERO) }; waist_barrier(degenerate) }`; per-phase unit mask `{ pos : phase_of(pos) == p }` as a runtime `AdjRow` built once per frame; `RunFiber::run_gated`; `run_one_trunk` / `RunGatedTrunk` are the G2-N per-core building block."
@@ -435,12 +436,12 @@ No const enumeration, no `{N+1}` recursion, no GCE overflow: the phase loop is a
 origin = "proposed"
 written_by = "design round 202606071300, topic GATE-2 phase-sectioned single-core run re-point (round 2b), dated 2026-06-07, agent-written; the round directory is named abandoned, and the text does not say whose decision it is"
 standing = "provisional"
-subject = "execution"
 keywords = ["phase-sectioned run", "runtime phase mask", "run_gated", "waist_barrier", "no const enumeration", "mono explosion", "round 2b", "single-core"]
-cites = ["phase_sectioned_dispatch_with_a_waist_between_phases_is_established_before_parallelising", "the_single_core_run_walks_the_flat_value_carrier_gated_by_const_phase_and_trunk_so_dead_code_elimination_leaves_one_member_only_program_per_phase_and_trunk"]
+related = ["tenet::phase_sectioned_dispatch_with_a_waist_between_phases_is_established_before_parallelising", "tenet::the_single_core_run_walks_the_flat_value_carrier_gated_by_const_phase_and_trunk_so_dead_code_elimination_leaves_one_member_only_program_per_phase_and_trunk"]
 
 [[tenet]]
 id = "n_core_dispatch_walks_the_flat_carrier_gated_by_a_runtime_mask_of_the_trunks_a_core_owns_and_the_const_gated_enumeration_is_superseded"
+subject = "execution"
 what = "For N-core dispatch each worker walks the flat unit carrier gated by a runtime mask of the trunks it owns, reusing the existing mask-gated walk, and one worker owning every trunk is the existing single-core walk. The const-gated enumeration of per-trunk monomorphisations is superseded by this choice, while the grouping data that gives each unit its phase and trunk stays on the path."
 mechanism = "`run_gated<M: BitAccess>` reused; the mask for a core and a phase is the units whose trunk the core owns and whose phase is that phase; per-unit phase and trunk from `plan::grouping` via `phase_of(pos)` / `trunk_of(pos)`; superseded `run_one_trunk` / `RunGatedTrunk`; round R4a, decision \"bench-first runtime mask\" of 2026-06-07."
 source = "mock/design_rounds/202606071109/202606071109_topic.gate2-r4a-core-phase-masks.md:13-17, mock/design_rounds/202606071109/202606071109_topic.gate2-r4a-core-phase-masks.md:4-4, mock/design_rounds/202606071109/202606071109_topic.gate2-r4a-core-phase-masks.md:21-29"
@@ -467,7 +468,6 @@ trunk-level core mask.
 origin = "stated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "execution"
 keywords = ["runtime mask", "run_gated", "core ownership", "RunGatedTrunk", "bench-first runtime mask", "R4a", "N-core dispatch", "plan::grouping"]
-rules_out = ["The const-gated mono ENUMERATION (`run_one_trunk` / `RunGatedTrunk`) is superseded by op's runtime-mask choice"]
-cites = ["the_single_core_run_walks_the_flat_value_carrier_gated_by_const_phase_and_trunk_so_dead_code_elimination_leaves_one_member_only_program_per_phase_and_trunk"]
+rejects = ["The const-gated mono ENUMERATION (`run_one_trunk` / `RunGatedTrunk`) is superseded by op's runtime-mask choice"]
+related = ["tenet::the_single_core_run_walks_the_flat_value_carrier_gated_by_const_phase_and_trunk_so_dead_code_elimination_leaves_one_member_only_program_per_phase_and_trunk"]

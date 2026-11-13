@@ -2,6 +2,7 @@
 
 [[tenet]]
 id = "column_data_moves_out_of_and_into_the_engine_through_evict_dump_and_inject_import"
+subject = "persistence"
 what = "Column data is moved out of the engine and into it again through the evict and dump and the inject and import column data interfaces."
 mechanism = "evict/dump + inject/import column data APIs (R2)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:579-579"
@@ -13,12 +14,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:579-579"]
-subject = "persistence"
 keywords = ["evict", "dump", "inject", "import", "column data", "R2", "persistence"]
-cites = ["change_detection_is_per_morsel_and_skips_what_is_unchanged"]
+related = ["tenet::change_detection_is_per_morsel_and_skips_what_is_unchanged"]
 
 [[tenet]]
 id = "the_persistence_crate_is_the_generic_hot_cold_storage_bridge_as_a_standalone_ecosystem_crate"
+subject = "persistence"
 what = "The persistence crate is the generic bridge between hot and cold storage, and a standalone ecosystem crate."
 mechanism = "`hilavitkutin-persistence`: generic hot-cold storage bridge (ecosystem, standalone)."
 source = "mock/DESIGN.md.tmpl:23-23"
@@ -29,11 +30,11 @@ quote = '''
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
 standing = "provisional"
-subject = "persistence"
 keywords = ["hilavitkutin-persistence", "hot-cold storage", "bridge", "ecosystem", "standalone"]
 
 [[tenet]]
 id = "persistence_is_wired_in_by_the_consumer_through_a_provider_and_the_engine_never_depends_on_the_persistence_crate_s_types"
+subject = "persistence"
 what = "Persistence is supplied by the consumer through a persistence provider trait and a provider tuple. The engine never depends on the persistence crate's types directly, and an end-of-pass unit drains the accumulator columns into persistence through the provider's commit."
 mechanism = "`PersistenceProvider` trait + Provider tuple; `PassEnd` WU drains accumulator columns via `PersistenceProvider::commit`."
 source = "mock/DESIGN.md.tmpl:94-94"
@@ -44,12 +45,12 @@ Persistence integration is consumer-supplied via `PersistenceProvider` trait + P
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
 standing = "provisional"
-subject = "persistence"
 keywords = ["PersistenceProvider", "commit", "PassEnd", "accumulator columns", "Provider tuple", "consumer-supplied", "no direct dependency"]
-cites = ["column_data_moves_out_of_and_into_the_engine_through_evict_dump_and_inject_import"]
+related = ["tenet::column_data_moves_out_of_and_into_the_engine_through_evict_dump_and_inject_import"]
 
 [[tenet]]
 id = "the_persistence_crate_is_consumer_agnostic_and_knows_nothing_of_metadata_tables_records_or_domain_schemas"
+subject = "persistence"
 what = "The persistence crate is a bridge between the in-memory columnar hot store and the on-disk archived cold store, and it is consumer-agnostic. It carries no domain knowledge: it knows nothing of metadata tables, records or domain schemas, and any hilavitkutin consumer can reuse it."
 mechanism = "`#![no_std]`, no alloc. Design rule: no std, no alloc, no domain knowledge."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:3-6, mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:23-27, mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:206-209"
@@ -75,12 +76,12 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "persistence"
 keywords = ["hilavitkutin-persistence", "hot-cold bridge", "consumer-agnostic", "no domain knowledge", "no_std", "reusable", "cold store"]
-cites = ["the_ecosystem_crates_are_standalone_and_consumers_opt_into_them"]
+related = ["tenet::the_ecosystem_crates_are_standalone_and_consumers_opt_into_them"]
 
 [[tenet]]
 id = "the_persistence_crate_does_not_depend_on_the_engine_and_works_on_raw_column_data_through_evict_and_inject_over_a_consumer_provided_column_storage"
+subject = "persistence"
 what = "The persistence crate does not depend on the engine. It operates on raw column data through the evict and inject pattern, and the consumer provides the column storage interface it works against."
 mechanism = "Dependencies: `hilavitkutin-str` (Str type, content hashing), `hilavitkutin-api` (the shared `MemoryProviderApi` the cold store maps and allocates through), `arvo` and `notko` (primitive vocabulary at the API boundary). The consumer provides the `ColumnStorage` interface. Evict/inject pattern (R2)."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:8-21"
@@ -105,12 +106,12 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: a passage shows part of it to be his and not the whole of it (.data/op-responses/202609181645_hila-std-tier-persistence.md:31-43; mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2406-2414), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "persistence"
 keywords = ["evict", "inject", "ColumnStorage", "raw column data", "no engine dependency", "MemoryProviderApi", "hilavitkutin-str", "R2"]
-cites = ["column_data_moves_out_of_and_into_the_engine_through_evict_dump_and_inject_import"]
+related = ["tenet::column_data_moves_out_of_and_into_the_engine_through_evict_dump_and_inject_import"]
 
 [[tenet]]
 id = "all_serialisation_of_persisted_data_goes_through_the_archive_format_and_all_memory_comes_from_the_shared_memory_provider"
+subject = "persistence"
 what = "Everything that crosses between hot and cold storage is serialised in one archive format, and all memory the crate uses comes from the shared memory provider. The archive library is the format the file-backed round takes on, and it is not a dependency yet because the skeleton ships without it."
 mechanism = "rkyv `Archive` trait (no_std, no alloc for reads); `MemoryProvider`. rkyv is not a dependency yet."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:3-6, mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:15-17, mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:29-31"
@@ -133,11 +134,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "persistence"
 keywords = ["rkyv", "Archive", "serialisation boundary", "MemoryProvider", "no alloc", "file-backed round", "skeleton"]
 
 [[tenet]]
 id = "plain_column_value_types_archive_as_themselves_at_zero_overhead"
+subject = "persistence"
 what = "The plain column value types, integers, booleans, fixed-point and floating-point values, are archived as themselves and cost nothing."
 mechanism = "`ColumnValue` types (`u32`, `i64`, `bool`, fixed-point, float): `type Archived = Self`."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:33-36"
@@ -152,11 +153,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "persistence"
 keywords = ["ColumnValue", "Archived", "identity archive", "zero overhead", "standard types", "rkyv"]
 
 [[tenet]]
 id = "an_interned_string_handle_is_session_specific_so_it_is_stored_on_disk_as_its_content_hash"
+subject = "persistence"
 what = "A string handle is specific to a session, so on disk it is stored as its content hash, which is stable across sessions. Evicting turns a handle into bytes and then into a content hash, and injecting looks the hash up in the string table and interns it into a runtime handle. Constant handles already are content hashes."
 mechanism = "`impl Archive for Str { type Archived = u32; }`: low 28 bits carry the FNV content hash, bit 31 is the const/runtime flag. Runtime API uses arvo_hash `ContentHash` (alias for arvo_bits `Bits<28>`); the rkyv Archived form is a bare u32. Const handles (bit 31 = 0) are identity on evict and are matched against the const table first on inject."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:38-58, mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:152-153"
@@ -191,11 +192,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "persistence"
 keywords = ["Str", "content hash", "FNV", "ContentHash", "Bits<28>", "const/runtime flag", "session-specific handle", "evict inject", "intern"]
 
 [[tenet]]
 id = "a_value_that_crosses_the_archive_boundary_on_disk_is_specified_by_its_byte_layout_and_not_by_its_runtime_type"
+subject = "persistence"
 what = "Every value that crosses the archive boundary on disk is specified by its byte layout. The archived type names the disk form and the runtime type names the in-memory form. The conversion between the runtime hash type and the disk form is a single masked cast with no format change."
 mechanism = "Pinned disk-layout types: Str Archived to u32 (low 28 bits FNV content hash, bit 31 const/runtime flag); integer primitive columns archive to themselves. Runtime `ContentHash` = alias for arvo_bits `Bits<28>`; conversion is a single masked cast."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:60-75"
@@ -222,11 +223,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "persistence"
 keywords = ["disk-layout types", "rkyv ABI", "Archived", "byte layout", "pinned", "masked cast", "ContentHash"]
 
 [[tenet]]
 id = "disk_layout_types_are_exempt_from_the_primitive_vocabulary_because_a_semantic_newtype_would_add_a_conversion_on_the_hottest_serialisation_path"
+subject = "persistence"
 what = "Disk-layout types are exempt from the primitive-vocabulary discipline. They exist to pin a byte layout across sessions, and giving them a semantic newtype would add a conversion call on the hottest serialisation path without changing the on-disk format."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:77-80"
 provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#disk-layout-types-rkyv-abi"]
@@ -240,12 +241,12 @@ because = "A semantic newtype would add a conversion call at the hottest seriali
 origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
-subject = "persistence"
 keywords = ["disk-layout types", "primitive vocabulary", "exemption", "newtype", "conversion call", "hot serialisation path"]
-cites = ["no_bare_primitive_exists_anywhere_in_the_stack"]
+related = ["tenet::no_bare_primitive_exists_anywhere_in_the_stack"]
 
 [[tenet]]
 id = "a_consumer_type_needing_custom_serialisation_implements_the_archive_trait_directly_with_no_new_trait"
+subject = "persistence"
 what = "A consumer type that needs custom handling at the serialisation boundary implements the archive trait directly. It is the same mechanism as for the shipped types, and no new trait is introduced."
 mechanism = "Consumer types `impl Archive` directly."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:82-85"
@@ -260,11 +261,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "persistence"
 keywords = ["Archive", "custom serialisation", "consumer types", "extending", "no new traits"]
 
 [[tenet]]
 id = "the_cold_store_keeps_a_manifest_a_table_file_per_table_and_a_runtime_string_file_in_one_data_directory_per_consumer_and_the_consumer_adds_its_own_files"
+subject = "persistence"
 what = "Each consumer has one data directory holding a manifest with the table directory and metadata, one archive file of column data per table and one archive file for the runtime string table. The consumer extends the directory with domain-specific files of its own."
 mechanism = "`data_dir/manifest.rkyv`, `tables/<name>.rkyv`, `strings/runtime.rkyv` (content_hash to bytes). Consumer extensions named: locale overlays, search indices, warmup manifests."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:89-101"
@@ -288,11 +289,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "persistence"
 keywords = ["cold store", "file layout", "data_dir", "manifest.rkyv", "tables", "runtime.rkyv", "locale overlays", "search indices", "warmup manifests"]
 
 [[tenet]]
 id = "evict_serialises_raw_column_arrays_through_the_memory_provider_and_inject_maps_the_archive_and_hands_the_pointer_over_with_zero_copy_reads"
+subject = "persistence"
 what = "Evicting serialises raw typed column arrays, translating string handles to content hashes and leaving everything else as it is, and writes the file through the memory provider. Injecting maps the archive file through the memory provider, reads the archived data directly with no copy, translates content hashes back into runtime handles for string columns and hands a pointer over for everything else, into the column storage."
 mechanism = "Evict: column data -> rkyv serialize (with `PersistenceContext` carrying the interner) -> Str handle to content_hash, all else identity -> write `.rkyv` via MemoryProvider. Inject: mmap `.rkyv` via MemoryProvider -> archived data directly accessible (zero-copy) -> Str columns content_hash to intern to runtime handle, all else pointer handoff -> inject into ColumnStorage."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:103-121"
@@ -322,12 +323,12 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "persistence"
 keywords = ["evict", "inject", "hot to cold", "cold to hot", "zero-copy", "mmap", "PersistenceContext", "pointer handoff", "ColumnStorage"]
-cites = ["column_data_moves_out_of_and_into_the_engine_through_evict_dump_and_inject_import"]
+related = ["tenet::column_data_moves_out_of_and_into_the_engine_through_evict_dump_and_inject_import"]
 
 [[tenet]]
 id = "the_cold_store_provides_the_flush_mechanism_and_the_consumer_decides_when_to_flush"
+subject = "persistence"
 what = "The cold store provides the mechanism for flushing, loading a table and taking a snapshot for backup, and the consumer decides when to flush."
 mechanism = "`flush(dirty_set)` serialises dirty data to disk; `load(table)` mmaps and injects a table; `snapshot(target)` copies all files for backup."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:123-129"
@@ -345,11 +346,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "persistence"
 keywords = ["flush", "dirty_set", "load", "snapshot", "mechanism not policy", "consumer decides", "cold store"]
 
 [[tenet]]
 id = "eviction_is_sieve_over_the_column_storage_keyed_by_table_and_segment_range_and_weighted_by_byte_size"
+subject = "persistence"
 what = "Eviction uses a SIEVE cache that wraps the column storage. It is keyed by table and segment range and weighted by byte size."
 mechanism = "`SieveCache` wrapping `ColumnStorage`; key `(TableId, SegmentRange)`; weight `EvictionWeight` (u64 backing)."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:131-134, mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:203-203"
@@ -366,11 +367,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "persistence"
 keywords = ["SIEVE", "SieveCache", "eviction", "TableId", "SegmentRange", "EvictionWeight", "byte size weight"]
 
 [[tenet]]
 id = "dirty_data_is_flushed_before_it_is_evicted_so_the_hot_store_is_reconstructable_from_the_cold_store_files"
+subject = "persistence"
 what = "Dirty data is flushed before it is evicted, and the hot store is fully reconstructable from the cold store files."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:136-137"
 provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#sieve-eviction"]
@@ -382,11 +383,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "persistence"
 keywords = ["dirty flush before eviction", "invariant", "reconstructable", "hot store", "cold store", "SIEVE"]
 
 [[tenet]]
 id = "the_consumer_provides_the_memory_budget_the_budget_phase_changes_and_the_eviction_granularity_preferences"
+subject = "persistence"
 what = "The consumer provides the memory budget the hot store gets, the changes of that budget between phases of the application and its preferences for eviction granularity."
 mechanism = "Example named: game launch to shrink."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:139-142"
@@ -401,11 +402,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "persistence"
 keywords = ["memory budget", "budget phase changes", "eviction granularity", "consumer provides", "hot store RAM", "game launch"]
 
 [[tenet]]
 id = "runtime_strings_persist_as_content_hash_and_bytes_pairs_and_the_content_hash_is_file_identity_while_the_sequential_id_is_session_identity"
+subject = "persistence"
 what = "Runtime strings are persisted as pairs of content hash and string bytes. On load the constant table comes from the binary, each persisted pair is interned to a sequential identifier, and string column values are resolved by content hash lookup. The content hash is the stable file-level identity and the sequential identifier is the ephemeral session-level identity."
 mechanism = "`(content_hash, string_bytes)` pairs in `runtime.rkyv`; const table from the binary (linker section); `StringTable` type."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:144-153"
@@ -426,11 +427,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "persistence"
 keywords = ["string table persistence", "runtime.rkyv", "content hash", "sequential ID", "const table", "linker section", "StringTable"]
 
 [[tenet]]
 id = "the_manifest_is_a_table_directory_of_table_metadata_archived_like_everything_else_and_the_consumer_extends_it_with_its_own_metadata"
+subject = "persistence"
 what = "The manifest is the directory of tables, holding for each table its name hash, schema version, record count and column metadata. It is archived like everything else, and the consumer extends it with domain-specific metadata such as schema versions and migration state."
 mechanism = "`Manifest { tables: map of table_id -> TableMeta, count: ColumnCount }`; `TableMeta { name_hash: ContentHash, version: SchemaVersion, record_count: USize, column_count: ColumnCount, columns }`. Persistence-local newtypes over USize or raw integer: SchemaVersion (u32 ordinal), record_count, ColumnCount, Cardinality, BufferOffset, BufferLen, BitWidth (u32), EvictionWeight (u64)."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:155-181"
@@ -468,5 +469,4 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-persistence, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "persistence"
 keywords = ["Manifest", "TableMeta", "SchemaVersion", "ColumnCount", "BufferOffset", "BufferLen", "BitWidth", "name_hash", "schema versions", "migration state"]

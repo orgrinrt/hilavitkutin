@@ -2,6 +2,7 @@
 
 [[tenet]]
 id = "there_are_three_store_types_and_one_scheduling_mechanism"
+subject = "stores"
 what = "There are three store types and one scheduling mechanism: a resource is a singleton holding one value, a column is a collection of N values chunked into morsels, and a virtual holds no data and is an edge of the graph only."
 mechanism = "`Resource<T>(PhantomData<T>)`, `Column<T>(PhantomData<T>)`, `Virtual<T>(PhantomData<T>)`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:491-496"
@@ -18,11 +19,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:491-496"]
-subject = "stores"
 keywords = ["store types", "three", "resource", "column", "virtual", "singleton", "collection", "zero-data"]
 
 [[tenet]]
 id = "the_scheduler_builds_edges_from_store_identities_and_ignores_cardinality"
+subject = "stores"
 what = "The scheduler sees pairs of store identities when it builds edges and does not care about cardinality: a write and a read of a resource build the same edge as a write and a read of a column."
 mechanism = "`StoreId` pairs; `Write<Resource<X>>` to `Read<Resource<X>>` builds the same edge as `Write<Column<Y>>` to `Read<Column<Y>>`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:498-500"
@@ -36,12 +37,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:498-500"]
-subject = "stores"
 keywords = ["store id", "edge", "cardinality", "resource", "column", "scheduler"]
-cites = ["there_are_three_store_types_and_one_scheduling_mechanism"]
+related = ["tenet::there_are_three_store_types_and_one_scheduling_mechanism"]
 
 [[tenet]]
 id = "each_store_type_has_its_own_access"
+subject = "stores"
 what = "A resource is a singleton and is read as one value; a column is a collection accessed within the scope of a morsel; a virtual has no storage and can only be fired."
 mechanism = "`ctx.resource::<T>()` returning `&T`; morsel-scoped raw pointers (cu/cw) for a column; `ctx.fire::<T>()` for a virtual."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:502-504"
@@ -55,12 +56,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:502-504"]
-subject = "stores"
 keywords = ["resource access", "column access", "virtual", "fire", "morsel-scoped", "raw pointer"]
-cites = ["there_are_three_store_types_and_one_scheduling_mechanism"]
+related = ["tenet::there_are_three_store_types_and_one_scheduling_mechanism"]
 
 [[tenet]]
 id = "a_column_is_a_typed_storage_slot_and_domain_schemas_are_the_consumer_s"
+subject = "stores"
 what = "A column is a typed storage slot. hilavitkutin does not know or care about domain schemas: it schedules on the read and write column sets only, and a schema layered over columns is the consumer's, translated in the consumer's registration layer."
 mechanism = "`Column<T>` in hilavitkutin-api; the `Column<In<IR>, As<T>>` schema-as-traits pattern is a consumer wrapper around it (polka-sdk, saalis-sdk)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2397-2404"
@@ -79,11 +80,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2397-2404"]
-subject = "stores"
 keywords = ["column", "schema", "IR", "consumer-side", "typed slot", "registration layer", "R1"]
 
 [[tenet]]
 id = "column_type_registration_is_static"
+subject = "stores"
 what = "Column type registration is static, at compile time. No column type is created at run time."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2411-2412"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#resolutions"]
@@ -95,12 +96,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2411-2412"]
-subject = "stores"
 keywords = ["static registration", "compile-time", "runtime column type", "no runtime creation", "R2", "content", "dynamic column"]
-rules_out = ["runtime column type creation"]
+rejects = ["runtime column type creation"]
 
 [[tenet]]
 id = "a_resource_is_scalars_and_const_sized_collections_only"
+subject = "stores"
 what = "A resource consists of three field types only: a scalar field of a column value, a const-sized array and a const-sized map. There are no dynamic collections; the allocation size is known at compile time."
 mechanism = "`Field<T>` where T: ColumnValue (at most 16 bytes), stack-local cached; `Seq<T, const N: usize>` and `Map<K, V, const N: usize>` in a separate arena. Element values of Seq and Map are not held to 16 bytes."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:535-547"
@@ -124,12 +125,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:535-547", "later: mock/research/202606210600_resource-storage-model-canonical-addendum.md:70-79, none"]
-subject = "stores"
 keywords = ["resource model", "field", "seq", "map", "const-sized", "no dynamic collections", "R5"]
-rules_out = ["dynamic collections"]
+rejects = ["dynamic collections"]
 
 [[tenet]]
 id = "a_virtual_is_a_pure_flag_and_carries_no_data"
+subject = "stores"
 what = "A virtual is a pure flag and not a data carrier. Data goes in a column or a resource alongside the virtual."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:719-720"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#10-virtual-flag-system"]
@@ -141,12 +142,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:719-720"]
-subject = "stores"
 keywords = ["virtual", "flag", "data carrier", "fire"]
-cites = ["there_are_three_store_types_and_one_scheduling_mechanism"]
+related = ["tenet::there_are_three_store_types_and_one_scheduling_mechanism"]
 
 [[tenet]]
 id = "the_consumer_provides_the_backing_memory_of_a_column"
+subject = "stores"
 what = "The consumer provides the backing memory of column storage and the library never calls an allocator directly. Column storage is reached through raw pointers and never through slices."
 mechanism = "The ColumnStorage trait: raw pointers (slices cause aliasing UB when units are fused), type-native stride, 64-byte alignment on column arrays, a separate arena for resource Seq and Map allocations."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:557-562, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:566-566"
@@ -165,11 +166,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:557-562", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:566-566", "later: mock/research/202606210600_resource-storage-model-canonical-addendum.md:70-79, none"]
-subject = "stores"
 keywords = ["column storage", "backing memory", "allocator", "raw pointers", "slices", "aliasing", "alignment"]
 
 [[tenet]]
 id = "a_column_s_lifetime_is_told_to_the_consumer_as_an_advisory_release"
+subject = "stores"
 what = "The consumer is told when a column's data is no longer needed, as an advisory release: the schedule counts the readers of a column ahead of time, counts down as fibers complete, and release fires at zero."
 mechanism = "`release(column)`; the consumer-count model pre-computed by the Schedule."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:563-565"
@@ -183,11 +184,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:563-565"]
-subject = "stores"
 keywords = ["release", "advisory", "column lifetime", "consumer count", "readers"]
 
 [[tenet]]
 id = "a_column_value_is_the_storage_type_itself_and_there_is_no_pack_or_unpack"
+subject = "stores"
 what = "With type-native stride the domain type is the storage type, so there is no pack or unpack step and no slot size intermediary. The payload trait simplifies to the column value trait."
 mechanism = "`pub trait ColumnValue: Copy + 'static { const BIT_WIDTH: usize; }`"
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:427-429, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:432-434, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:464-464"
@@ -207,12 +208,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:427-429", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:432-434", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:464-464"]
-subject = "stores"
 keywords = ["ColumnValue", "no pack/unpack", "type is storage", "SlotSize", "Payload", "BIT_WIDTH", "R4"]
-cites = ["each_column_has_its_own_stride_and_a_value_is_at_most_sixteen_bytes"]
+related = ["tenet::each_column_has_its_own_stride_and_a_value_is_at_most_sixteen_bytes"]
 
 [[tenet]]
 id = "any_copy_static_type_of_at_most_sixteen_bytes_is_column_storable_through_a_blanket_implementation"
+subject = "stores"
 what = "Any copyable static type of at most sixteen bytes is storable in a column through a blanket implementation, with no friction for consumers."
 mechanism = "`impl<T: Copy + 'static> ColumnValue for T { default const BIT_WIDTH: usize = core::mem::size_of::<Self>() * 8; }` via min_specialization; `Column<u32>` just works."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:436-439, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:448-449"
@@ -229,11 +230,11 @@ impl<T: Copy + 'static> ColumnValue for T {
 origin = "stated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (mock/research/202606111400_canonical-design-addendum-a1.md:190-194, row the_round_level_amendments_registered_by_a1_are_five_dated_rounds), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "stores"
 keywords = ["blanket impl", "ColumnValue", "Copy", "'static", "16 bytes", "min_specialization", "zero friction"]
 
 [[tenet]]
 id = "a_specialising_implementation_must_state_its_bit_width_explicitly"
+subject = "stores"
 what = "The blanket implementation provides a default bit width, specific types specialise to override it, and the trait itself has no default, so a specialising implementation must state the bit width explicitly and the override is visible and intentional."
 mechanism = "`min_specialization` (nightly, T4 §Q6); `impl ColumnValue for UFixed<1, 0> { const BIT_WIDTH: usize = 1; }`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:441-444, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:450-453"
@@ -252,11 +253,11 @@ impl ColumnValue for UFixed<1, 0> {
 origin = "stated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (mock/research/202606111400_canonical-design-addendum-a1.md:190-194, row the_round_level_amendments_registered_by_a1_are_five_dated_rounds), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "stores"
 keywords = ["min_specialization", "BIT_WIDTH", "default const", "specialising impl", "UFixed<1, 0>", "explicit override"]
 
 [[tenet]]
 id = "the_bit_width_of_a_column_value_informs_bit_packed_storage_and_defaults_to_its_size_in_bits"
+subject = "stores"
 what = "The bit width of a column value informs the storage engine for bit packing. It defaults to the size in bits, which is byte aligned, and sub-byte arvo types override it, and the storage uses it in the bit packed layout mode."
 mechanism = "Default = `size_of * 8`; UFixed<1,0> → 1 bit, UFixed<4,0> → 4 bits; used in BitPacked column layout mode (T5 §Q10)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:454-457"
@@ -271,11 +272,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:454-457"]
-subject = "stores"
 keywords = ["BIT_WIDTH", "bitpacking", "BitPacked", "sub-byte", "UFixed<1,0>", "UFixed<4,0>", "byte-aligned"]
 
 [[tenet]]
 id = "the_sixteen_byte_limit_is_enforced_at_compile_time_and_forces_interned_identifiers_for_strings_and_paths"
+subject = "stores"
 what = "The sixteen-byte limit is enforced at compile time in the where clause of the blanket implementation, which forces interned identifiers in place of strings, paths and vectors."
 mechanism = "16-byte max (was 15 with flags byte), on the blanket impl's where clause; forces interned IDs for String/PathBuf/Vec."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:460-461"
@@ -288,12 +289,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:460-461"]
-subject = "stores"
 keywords = ["16-byte max", "where clause", "interned IDs", "String", "PathBuf", "Vec", "compile-time"]
-cites = ["each_column_has_its_own_stride_and_a_value_is_at_most_sixteen_bytes"]
+related = ["tenet::each_column_has_its_own_stride_and_a_value_is_at_most_sixteen_bytes"]
 
 [[tenet]]
 id = "repr_c_on_domain_newtypes_is_enforced_by_a_derive_macro_or_a_lint_and_not_by_the_trait"
+subject = "stores"
 what = "A C-compatible representation on domain newtypes is enforced by a derive macro or a lint and not by the column value trait itself."
 mechanism = "`#[derive(ColumnValue)]` macro or lint."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:462-463"
@@ -306,11 +307,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:462-463"]
-subject = "stores"
 keywords = ["repr(C)", "domain newtypes", "derive(ColumnValue)", "lint", "ColumnValue trait"]
 
 [[tenet]]
 id = "the_column_ir_wrapper_is_consumer_side_and_hilavitkutin_sees_a_plain_column_of_a_value"
+subject = "stores"
 what = "The column wrapper with an IR and an as-type is on the consumer side, and hilavitkutin sees a plain column of a value."
 mechanism = "`Column<In<IR>, As<T>>` is consumer-side (R1); hilavitkutin sees `Column<T>`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:478-478, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:501-501"
@@ -324,11 +325,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:478-478", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:501-501"]
-subject = "stores"
 keywords = ["Column<T>", "In<IR>", "As<T>", "R1", "consumer-side", "no IR parameter", "ColumnValue"]
 
 [[tenet]]
 id = "boolean_columns_are_one_bit_values_with_eight_times_the_density_in_the_bit_packed_layout"
+subject = "stores"
 what = "Boolean columns are values of the unsigned fixed-point type with one integer bit and no fraction bits, and have eight times the density in the bit packed layout."
 mechanism = "`UFixed<1,0>` with 8x density in BitPacked layout (T5 L868)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:250-251"
@@ -341,11 +342,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:250-251"]
-subject = "stores"
 keywords = ["boolean columns", "UFixed<1,0>", "BitPacked", "8x density", "one bit"]
 
 [[tenet]]
 id = "stores_are_identified_by_dense_indices_assigned_at_plan_time"
+subject = "stores"
 what = "A store is identified by a dense sixteen-bit index that is assigned at plan time, and its bit position in the access mask is computed once at plan time."
 mechanism = "`StoreId(u16)` dense index; bit position assignment computed once at plan time."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:507-507, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:512-512"
@@ -359,11 +360,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:507-507", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:512-512"]
-subject = "stores"
 keywords = ["StoreId", "u16", "dense index", "plan time", "bit position", "AccessMask"]
 
 [[tenet]]
 id = "the_access_mask_is_a_bitmask_so_every_scheduler_operation_is_a_single_bitwise_instruction"
+subject = "stores"
 what = "The access mask is a bitmask type, sixty-four bits for up to sixty-four stores and two hundred and fifty-six bits for up to two hundred and fifty-six stores. Every scheduler operation on it is a single bitwise instruction: and for a conflict, or for a union and a compare with zero for an empty check."
 mechanism = "`AccessMask` is an arvo-bitmask type: `Mask64` for <=64 stores, `Mask256` for <=256 stores; AND for conflict, OR for union, `== 0` for empty check."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:508-511"
@@ -378,11 +379,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:508-511"]
-subject = "stores"
 keywords = ["AccessMask", "Mask64", "Mask256", "bitwise", "AND", "OR", "conflict", "arvo-bitmask"]
 
 [[tenet]]
 id = "an_access_set_is_a_trait_on_tuples_of_stores"
+subject = "stores"
 what = "An access set is a trait implemented on tuples of stores, for example a tuple of two columns and a resource."
 mechanism = "`(Column<PosX>, Column<PosY>, Resource<Gravity>)` implements `AccessSet`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:515-516"
@@ -395,11 +396,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:515-516"]
-subject = "stores"
 keywords = ["AccessSet", "tuples", "Column", "Resource", "compile-time", "store descriptors"]
 
 [[tenet]]
 id = "the_plan_turns_compile_time_store_descriptors_into_runtime_masks_by_monomorphised_functions"
+subject = "stores"
 what = "The plan phase converts the compile-time store descriptors into the runtime access mask through monomorphised generic functions, and the monomorphised function is the type identity, so no runtime type identity facility is used."
 mechanism = "Monomorphised generic functions; no `TypeId`, no `std::any`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:517-519"
@@ -413,11 +414,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:517-519"]
-subject = "stores"
 keywords = ["monomorphised function", "type identity", "no TypeId", "no std::any", "AccessMask", "plan phase"]
 
 [[tenet]]
 id = "column_marker_types_are_zero_sized_and_erased_to_plain_indices_before_execution_begins"
+subject = "stores"
 what = "Column marker types are zero-sized. They constrain the DAG, enforce type safety and determine morsel sizes at compile time, and they are erased to plain indices by the time execution begins. The schedule lowers types to indices."
 mechanism = "ZST column markers, erased to plain `usize` indices."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:522-525"
@@ -432,11 +433,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:522-525"]
-subject = "stores"
 keywords = ["ZST erasure", "marker types", "usize indices", "Schedule lowers types", "type safety", "morsel sizes"]
 
 [[tenet]]
 id = "a_virtual_has_one_bit_in_a_flag_set_packed_into_bytes_and_words"
+subject = "stores"
 what = "There is one bit per registered virtual type, packed into bytes and grouped into sixty-four-bit words."
 mechanism = "One bit per registered Virtual type; packed into u8 bytes, grouped into u64 words (arvo-bitmask types)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:690-691"
@@ -449,12 +450,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:690-691"]
-subject = "stores"
 keywords = ["virtual flags", "bit-packed", "u8", "u64", "arvo-bitmask", "fire flags"]
-cites = ["a_virtual_is_a_pure_flag_and_carries_no_data"]
+related = ["tenet::a_virtual_is_a_pure_flag_and_carries_no_data"]
 
 [[tenet]]
 id = "the_flag_scan_is_hierarchical_so_an_all_zero_word_or_byte_is_skipped_whole"
+subject = "stores"
 what = "The check of the flags is hierarchical, so a word that is zero is skipped as sixty-four flags and a byte that is zero is skipped as eight."
 mechanism = "u64 == 0 → skip 64; u8 == 0 → skip 8."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:692-692"
@@ -466,11 +467,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:692-692"]
-subject = "stores"
 keywords = ["hierarchical check", "skip 64", "skip 8", "u64 == 0", "virtual flags", "scan"]
 
 [[tenet]]
 id = "firing_a_virtual_costs_one_byte_load_one_or_and_one_byte_store_with_a_constant_folded_index"
+subject = "stores"
 what = "Firing a virtual costs one byte load, one or and one byte store, and its index is folded to a constant from the compile-time type identity."
 mechanism = "`ctx.fire::<T>()`; `T::INDEX` const-folded."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:693-694"
@@ -483,11 +484,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:693-694"]
-subject = "stores"
 keywords = ["ctx.fire", "T::INDEX", "const-folded", "byte load", "OR", "byte store", "fire cost"]
 
 [[tenet]]
 id = "co_firing_virtuals_are_packed_into_the_same_byte_or_word_by_greedy_bin_packing_at_plan_time"
+subject = "stores"
 what = "Virtuals that fire together are packed into the same byte or word at plan time, by a two-level greedy bin packing first into words and then into bytes. Cold words stay zero in connector-heavy passes, and the assignment is computed once at plan time at no run-time cost."
 mechanism = "Two-level greedy bin-packing: first u64 words, then bytes; affinity-ordered bit assignment (T5 L233-247)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:696-700"
@@ -503,5 +504,4 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:696-700"]
-subject = "stores"
 keywords = ["affinity-ordered", "bit assignment", "bin-packing", "co-firing", "cold words", "plan time", "arvo-comb"]

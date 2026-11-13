@@ -2,6 +2,7 @@
 
 [[tenet]]
 id = "the_kit_crate_declares_a_preset_as_an_associated_type_bundle_the_engine_reads_at_compile_time_on_add_kit"
+subject = "kits"
 what = "The kit crate defines the preset trait. A kit is a declarative bundle of the units it brings and the stores it owns, and the engine reads the bundle at compile time when a consumer adds the kit."
 mechanism = "`hilavitkutin-kit`: `type Units` (cons-list of WorkUnits) and `type Owned` (cons-list of Resources / Columns / Virtuals), read at compile time on `.add_kit::<K>()`."
 source = "mock/DESIGN.md.tmpl:21-21"
@@ -13,11 +14,11 @@ origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["hilavitkutin-kit", "Kit", "type Units", "type Owned", "add_kit", "declarative bundle", "preset", "compile time"]
 
 [[tenet]]
 id = "the_kit_crate_is_a_contract_the_engine_depends_on_and_it_has_no_dependency_on_the_engine"
+subject = "kits"
 what = "The kit crate is a contract crate that the engine depends on for adding a kit, and it has no dependency back on the engine. Consumers can therefore author kits without pulling the engine in."
 mechanism = "Engine `.add_kit()` depends on `hilavitkutin-kit`; `hilavitkutin-kit` has no other hilavitkutin-crate dependency."
 source = "mock/DESIGN.md.tmpl:21-21, mock/DESIGN.md.tmpl:32-32"
@@ -31,11 +32,11 @@ origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["hilavitkutin-kit", "contract crate", "add_kit", "no reverse dependency", "author kits", "standalone"]
 
 [[tenet]]
 id = "the_providers_crate_v0_ships_the_interner_value_type_surface_and_a_declarative_interner_kit"
+subject = "kits"
 what = "In its first version the providers crate ships the interner value-type surface and the declarative interner kit, whose units are an empty read set and whose owned stores are a resource."
 mechanism = "InternerApi / HasInterner / MemoryArena plus a `default_interner` constructor; `InternerKit` in the round-4 shape: `type Units = read![]`, `type Owned = read![Resource<...>]`."
 source = "mock/DESIGN.md.tmpl:24-24"
@@ -47,11 +48,11 @@ origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["InternerKit", "InternerApi", "HasInterner", "MemoryArena", "default_interner", "providers v0", "round 4 shape"]
 
 [[tenet]]
 id = "a_kit_is_a_declarative_bundle_of_the_units_it_ships_and_the_stores_it_owns_that_the_engine_reads_at_compile_time_into_the_builder_typestate"
+subject = "kits"
 what = "The kit crate ships exactly one trait. A kit is a declarative bundle that names the units it ships and the stores it owns, and the engine reads those declarations at compile time and accumulates them into the scheduler builder's typestate. The engine depends on the kit crate for adding a kit, and the reverse direction does not exist."
 mechanism = "`#![no_std]`; one trait `Kit`; the engine's `SchedulerBuilder<Wus, Stores>` offers `.add_kit::<K>()`."
 source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:3-9"
@@ -69,12 +70,12 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-kit, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["hilavitkutin-kit", "Kit", "declarative bundle", "SchedulerBuilder", "add_kit", "typestate", "compile time", "one trait"]
-cites = ["the_kit_crate_declares_a_preset_as_an_associated_type_bundle_the_engine_reads_at_compile_time_on_add_kit"]
+related = ["tenet::the_kit_crate_declares_a_preset_as_an_associated_type_bundle_the_engine_reads_at_compile_time_on_add_kit"]
 
 [[tenet]]
 id = "a_kit_captures_a_bundle_of_units_and_stores_that_consumer_apps_register_together"
+subject = "kits"
 what = "Most consumer apps register the same handful of units and stores together: a runner unit with its column outputs, a logger unit with its diagnostic store, an interner resource. A kit captures one such bundle, declaring the units it ships and the stores it owns."
 mechanism = "`type Units` (the WorkUnits) and `type Owned` (the stores)."
 source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:13-18"
@@ -91,11 +92,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-kit, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["kit purpose", "bundle", "runner unit", "logger unit", "interner resource", "type Units", "type Owned", "registration"]
 
 [[tenet]]
 id = "authoring_a_kit_is_a_type_level_statement_with_no_install_method_no_builder_chain_and_no_naming_of_the_builder"
+subject = "kits"
 what = "Authoring a kit is purely a type-level statement. Kit authors write no install method, compose no builder method chains and name the scheduler builder nowhere. The engine's add-kit call reads the kit's units and owned stores at compile time and prepends them onto the builder's accumulators."
 mechanism = "`.add_kit::<K>()` reads `K::Units` and `K::Owned` and prepends them onto the SchedulerBuilder's accumulators via `Concat`."
 source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:20-25"
@@ -112,12 +113,12 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-kit, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["type-level kit", "no install method", "Concat", "K::Units", "K::Owned", "add_kit", "accumulators", "builder"]
-rules_out = ["an install method", "composing builder method chains", "naming SchedulerBuilder"]
+rejects = ["an install method", "composing builder method chains", "naming SchedulerBuilder"]
 
 [[tenet]]
 id = "the_kit_crate_is_separate_so_the_kit_shape_lives_below_the_engine_and_above_the_api_and_ctx_layer_and_recurring_kit_helpers_ship_in_it"
+subject = "kits"
 what = "The kit crate exists separately so that the kit shape lives below the engine but above the api and context layer. A consumer can author kits without pulling the engine in, the layering is the same shape the context crate has (an ecosystem crate the engine consumes for one specific contract), and any future kit-related helpers that recurring patterns call for ship in the kit crate."
 mechanism = "A downstream crate can author a Kit depending only on `hilavitkutin-kit` plus the bare api markers (`Resource<T>`, `Column<T>`, `Virtual<T>`, `WorkUnitBundle`, `StoreBundle`, `Replaceable` from `hilavitkutin-api`). `hilavitkutin-kit` slots between `hilavitkutin-ctx` and the engine."
 source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:27-30, mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:213-225"
@@ -146,12 +147,12 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-kit, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["separate crate", "layering", "below the engine", "ecosystem crate", "author kits without the engine", "hilavitkutin-ctx", "future kit helpers"]
-cites = ["the_kit_crate_is_a_contract_the_engine_depends_on_and_it_has_no_dependency_on_the_engine"]
+related = ["tenet::the_kit_crate_is_a_contract_the_engine_depends_on_and_it_has_no_dependency_on_the_engine"]
 
 [[tenet]]
 id = "the_kit_trait_has_two_associated_types_only_both_cons_lists_bounded_by_core_primitives_of_the_api_crate"
+subject = "kits"
 what = "The kit trait has two associated types and no more. The units type is a cons-list of the unit declarations the kit ships and the owned type is a cons-list of store markers the kit declares as its own, and both bounds are core primitives of the api crate."
 mechanism = "`pub trait Kit { type Units: WorkUnitBundle; type Owned: StoreBundle; }`; owned markers `Resource<T>` / `Column<T>` / `Virtual<T>`; `WorkUnitBundle` and `StoreBundle` are in `hilavitkutin-api`."
 source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:34-45"
@@ -174,11 +175,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-kit, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["Kit trait", "type Units", "type Owned", "WorkUnitBundle", "StoreBundle", "cons-list", "two associated types"]
 
 [[tenet]]
 id = "the_kit_trait_carries_no_required_member_because_the_type_level_set_difference_hits_the_coherence_wall_and_requirements_live_in_prose"
+subject = "kits"
 what = "The kit trait carries no member for what a kit requires and no helper that documents requirements. The third topic originally proposed one, derivable as the set difference between the units' access set and the owned stores, but an audit investigation confirmed that the type-level set-difference operator hits the same coherence wall as the round-3 proof of non-membership, and the fourth round drops the claim. What a kit requires lives in prose: the kit author documents the external resources the kit reads but does not own in the kit's rustdoc."
 mechanism = "No `Required` associated type and no `requirements_doc()` helper; proposed shape was `Units::AccessSet \\ Owned`; evidence in `mock/research/sketches/202605050800_dedup_concat/` (audit M6); the wall is the same as round-3's NotIn proof."
 source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:47-55"
@@ -199,12 +200,12 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-kit, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["Required", "requirements_doc", "set difference", "coherence wall", "NotIn", "audit M6", "required external resources", "rustdoc"]
-rules_out = ["Required as an associated type derivable from Units::AccessSet \\ Owned"]
+rejects = ["Required as an associated type derivable from Units::AccessSet \\ Owned"]
 
 [[tenet]]
 id = "a_kit_may_own_no_state_or_no_units_and_a_kit_only_declares_that_a_store_exists_while_the_value_is_supplied_at_the_app_call_site"
+subject = "kits"
 what = "A kit may bundle units and own no state, and an empty owned list is fine because the empty cons-list satisfies the store bundle trivially. A kit may also ship only owned state with no units, as a pure provider preset. In that case the kit declares the type-level commitment that the store exists, and the actual value is supplied at the app's call site, since the api has no way for a kit to give default resources."
 mechanism = "`TracingKit`: `type Units = read![TracerFiber, SampleCollector]; type Owned = read![];`. `InternerKit<const BYTES: usize, const ENTRIES: usize>`: `type Units = read![]; type Owned = read![Resource<StringInterner<MemoryArena<BYTES, ENTRIES>>>];`, value supplied by `builder.add_resource(default_interner::<...>())`; there is no `Kit::default_resources()` association (BACKLOG entry). The `read!` macro from `hilavitkutin-api` expands the flat list into `Cons<H, T>`."
 source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:59-111"
@@ -268,12 +269,12 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-kit, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["empty Owned", "pure provider preset", "InternerKit", "TracingKit", "RunnerKit", "read!", "default_resources", "add_resource", "call site"]
-cites = ["the_providers_crate_v0_ships_the_interner_value_type_surface_and_a_declarative_interner_kit"]
+related = ["tenet::the_providers_crate_v0_ships_the_interner_value_type_surface_and_a_declarative_interner_kit"]
 
 [[tenet]]
 id = "every_type_in_a_public_kit_impl_s_owned_position_must_be_as_visible_as_the_impl_so_a_kit_is_either_wholly_public_or_wholly_crate_private"
+subject = "kits"
 what = "Every type in the owned position of a public kit implementation must be at least as visible as the implementation itself, because the language forbids private types in the associated-type positions of a public trait. Two kit shapes work: a whole-kit public shape, where kit-internal is only a documentation convention that the framework cannot enforce, and a whole-kit crate-private shape inside a per-kit crate, where the crate offers a public helper function that takes a builder and returns one without naming the kit, which is the genuine kit-private mode. A single kit implementation cannot mix the levels, the fourth-round kits ship in the first shape, and the second is an optional choice when kit-private state is genuinely needed at the crate boundary."
 mechanism = "Rust E0446 (\"private type in public interface\") forbids `pub(crate)` or module-private types in pub-trait associated-type positions. Pattern 1: whole-kit `pub` (the Kit struct, every Owned type, every WorkUnit type); pattern 2: whole-kit `pub(crate)` within a per-kit crate with a `pub` helper fn. Evidence: round-4 S5 sketch, `mock/research/sketches/202605050615_kit_taxonomy/FINDINGS.md`."
 source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:113-143"
@@ -316,11 +317,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-kit, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["E0446", "private type in public interface", "kit visibility", "whole-kit pub", "pub(crate)", "kit-private mode", "kit_taxonomy", "S5 sketch"]
 
 [[tenet]]
 id = "kit_author_crates_import_no_engine_item_and_depend_only_on_the_api_markers_and_the_kit_trait"
+subject = "kits"
 what = "A kit declaration depends only on the api crate, for the bundle traits, the replaceable marker and the three store markers, and on the kit crate itself for the kit trait. Kit-author crates do not import the engine directly, and the forbidden-imports rule continues to apply and is trivially satisfied. The earlier bridge layer, which let a kit's install method call the builder against any builder type, is gone, because the new shape has no install method and never names a builder."
 mechanism = "Depends on `hilavitkutin-api` (`WorkUnitBundle`, `StoreBundle`, `Replaceable`, `Resource<T>` / `Column<T>` / `Virtual<T>`) and `hilavitkutin-kit` (`Kit`); the v0.1 `BuilderResource` bridge layer is removed."
 source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:145-158"
@@ -345,11 +346,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-kit, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["kit-author crates", "forbidden-imports", "no engine import", "BuilderResource", "bridge removed", "hilavitkutin-api markers", "install method gone"]
 
 [[tenet]]
 id = "kits_compose_by_sequential_add_kit_calls_and_dependency_order_is_the_simplest_discipline_for_the_contains_all_proof"
+subject = "kits"
 what = "Kits compose by being added in sequence on the scheduler builder. Each add-kit call accumulates the kit's units into the bundle and its owned stores into the stores by type-level concatenation. A kit whose units read another kit's owned state is fine, but that state must be among the accumulated stores by the time the build resolves the bound, so adding kits in dependency order is the simplest discipline, and the builder accepts any order that satisfies the proof."
 mechanism = "`Scheduler::builder().resource::<...>(default_interner()).add_kit::<RunnerKit>().add_kit::<LinterKit>().add_kit::<TracingKit>().build()`; `ContainsAll<Wus::AccumRead>` proof at `.build()`; type-level `Concat`."
 source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:160-180"
@@ -381,11 +382,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-kit, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["kit composition", "add_kit order", "Concat", "ContainsAll", "AccumRead", "dependency order", "build", "accumulated Stores"]
 
 [[tenet]]
 id = "a_kit_cannot_install_another_kit_and_bundling_kits_is_a_super_kit_whose_projections_are_the_union_of_the_inner_ones"
+subject = "kits"
 what = "A kit cannot install another kit, because there is no install body to write, and composing kits is the consumer's choice through the builder chain. A kit author who wants to bundle several kits behind one registration declares a super-kit whose units and owned stores are the union of the inner kits' projections, written out at the type level in the super-kit's implementation."
 mechanism = "Super-kit `Units` and `Owned` via `Concat` composition."
 source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:182-188"
@@ -403,12 +404,12 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-kit, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["super-kit", "kit nesting", "no install body", "Concat composition", "union of projections", "bundle kits"]
-rules_out = ["a kit installing another kit inside its declaration"]
+rejects = ["a kit installing another kit inside its declaration"]
 
 [[tenet]]
 id = "replaceable_is_the_only_enforced_annotation_on_owned_types_and_it_is_opt_in_so_override_of_a_kit_s_resource_is_rejected_at_compile_time_by_default"
+subject = "kits"
 what = "Replaceable is the only enforced annotation on owned types, and kit authors opt in per type. An override of a kit-owned resource by the app is rejected at compile time unless the type opted in, which makes the polarity safer by default and follows the workspace rule of tools and not policies."
 mechanism = "`Replaceable` marker in `hilavitkutin-api`; the static bound `T: Replaceable` on `Scheduler::replace_resource::<T>(value)` in the engine crate; `impl Replaceable for LintConfig {}` allows override, `RoundState` without the impl is locked. Polarity decision in sketch S4, `mock/research/sketches/202605050555_replaceable_polarity/`."
 source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:190-211"
@@ -442,11 +443,11 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-kit, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["Replaceable", "replace_resource", "opt-in override", "enforced annotation", "polarity", "S4 sketch", "tools not policies", "LintConfig"]
 
 [[tenet]]
 id = "the_kit_crate_declares_a_recursion_limit_of_512_defensively_and_a_consumer_hitting_it_declares_its_own"
+subject = "kits"
 what = "The kit crate declares a recursion limit of 512 defensively. A consumer composing deep kit chains sends the trait solver through the cons-list at each add-kit call and again at build, the default of 128 suffices for shallow chains and 512 covers realistic compositions without consumer-side awareness. A consumer whose own crate hits the limit anyway declares its own limit at its crate root, and the kit trait's diagnostic message references that fallback so consumers land on the directive without reading the api docs first."
 mechanism = "`#![recursion_limit = \"512\"]`; Concat recursion at `.add_kit`, ContainsAll recursion plus WorkUnitBundle accumulator recursion at `.build()`; the api crate documents a consumer-side `#![recursion_limit = \"1024\"]`; S1b depth-5 sketch (`mock/research/sketches/202605050700_deep_stacking_d5/`): 25 WUs at 5 tiers compile in 0.53s without exceeding 512."
 source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:227-247"
@@ -478,5 +479,4 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-kit, agent-written, undated"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "kits"
 keywords = ["recursion_limit", "512", "1024", "Concat recursion", "ContainsAll", "deep kit chains", "S1b depth-5 sketch", "diagnostic message"]

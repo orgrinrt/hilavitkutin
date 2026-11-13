@@ -2,6 +2,7 @@
 
 [[tenet]]
 id = "a_record_is_the_global_data_identity"
+subject = "records"
 what = "\"Record\" is the global data identity: a column has N records, and a morsel windows into a range of records. It is not an entity and not a row."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2453-2455"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#resolutions"]
@@ -14,12 +15,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2453-2455"]
-subject = "records"
 keywords = ["record", "entity", "row", "morsel", "window", "range", "R8"]
-rules_out = ["entity", "row"]
+rejects = ["entity", "row"]
 
 [[tenet]]
 id = "storage_is_contiguous_and_a_fiber_s_columns_share_one_arena"
+subject = "records"
 what = "Storage is contiguous and columnar. All columns of a fiber share one arena allocation with known static offsets, and columns of different fibers are separate allocations."
 mechanism = "One base pointer per morsel, columns at `base + col_offset + i * stride`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:395-399"
@@ -35,11 +36,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:395-399"]
-subject = "records"
 keywords = ["contiguous", "columnar", "arena", "co-located", "fiber", "offset", "base pointer", "allocation"]
 
 [[tenet]]
 id = "each_column_has_its_own_stride_and_a_value_is_at_most_sixteen_bytes"
+subject = "records"
 what = "Each column has its own stride, the size of its value type, and a stored value is at most sixteen bytes. There is no per-value flags byte; null and tombstone are a separate bitmask per column."
 mechanism = "Stride = `size_of::<T>()` per column; `size_of::<T>() <= 16`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:383-388"
@@ -56,11 +57,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:383-388"]
-subject = "records"
 keywords = ["stride", "type-native", "16 bytes", "flags byte", "null", "tombstone", "bitmask", "R3"]
 
 [[tenet]]
 id = "records_within_a_fiber_are_independent"
+subject = "records"
 what = "Records within a fiber are independent, and the order in which they are executed does not matter for correctness. The exception is resource accumulation with non-commutative operations, for which head and tail convergence is skipped."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:609-613"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#08-determinism-and-ordering"]
@@ -75,11 +76,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:609-613"]
-subject = "records"
 keywords = ["independent", "record order", "cross-record", "accumulation", "non-commutative", "convergence"]
 
 [[tenet]]
 id = "the_engine_does_not_load_data_and_does_not_know_record_counts_ahead"
+subject = "records"
 what = "hilavitkutin does not load data, does not allocate storage and does not know record counts ahead of time. It accepts whatever columns the consumer provides."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1462-1463, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1472-1473"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#16-data-loading"]
@@ -94,11 +95,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1462-1463", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1472-1473"]
-subject = "records"
 keywords = ["record count", "data loading", "allocate", "consumer", "ahead of time", "columns provided"]
 
 [[tenet]]
 id = "morsel_boundaries_are_stable_unless_the_record_count_changes"
+subject = "records"
 what = "Morsel boundaries are stable across frames: the same record ranges, unless the record count changes."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:859-859"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#12-morsel-model"]
@@ -109,11 +110,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:859-859"]
-subject = "records"
 keywords = ["morsel boundary", "stable", "record range", "record count", "frames"]
 
 [[tenet]]
 id = "a_record_is_one_data_point_in_a_column_and_the_words_entity_and_row_are_dead"
+subject = "records"
 what = "A record is one data point in a column, a column has N records and a morsel windows into a range of records. The older words for it are dead because the one implies an ECS and the other implies tabular joins, and columns are independent."
 mechanism = "Dead terms: `entity` (implies ECS; hilavitkutin is not an ECS) and `row` (implies tabular joins; columns are independent); both replaced by `record`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:79-79, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:99-100"
@@ -128,12 +129,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:79-79", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:99-100"]
-subject = "records"
 keywords = ["record", "entity", "row", "dead terms", "column", "ECS", "tabular joins"]
-cites = ["a_record_is_the_global_data_identity"]
+related = ["tenet::a_record_is_the_global_data_identity"]
 
 [[tenet]]
 id = "columns_are_aligned_to_sixty_four_bytes_at_their_array_base"
+subject = "records"
 what = "Column arrays are aligned to sixty-four bytes at their base addresses."
 mechanism = "64-byte alignment on column array base addresses (T3 §Q3)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:400-400"
@@ -145,11 +146,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:400-400"]
-subject = "records"
 keywords = ["64-byte alignment", "column array base", "alignment", "T3 Q3", "cache line"]
 
 [[tenet]]
 id = "column_access_is_sequential_and_prefetcher_optimal"
+subject = "records"
 what = "Column access is sequential, which is the pattern the prefetcher serves best, and all the source topics agree on it."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:401-401"
 provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#04-column-memory-layout"]
@@ -160,11 +161,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:401-401"]
-subject = "records"
 keywords = ["sequential access", "prefetcher-optimal", "columnar storage", "access pattern"]
 
 [[tenet]]
 id = "column_layout_is_chosen_from_scheduling_hints_per_column_among_byte_aligned_natural_and_bit_packed"
+subject = "records"
 what = "The layout of each column follows from the scheduling hints and is byte aligned, natural or bit packed, without the assumption of one uniform stride."
 mechanism = "`ByteAligned` / `Natural` / `BitPacked` per column (T5 §Q10 L840-870)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:402-404, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:764-764"
@@ -180,11 +181,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:402-404", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:764-764"]
-subject = "records"
 keywords = ["column layout", "ByteAligned", "Natural", "BitPacked", "scheduling hints", "stride", "T5 Q10"]
 
 [[tenet]]
 id = "the_fiber_s_columns_are_one_neighbourhood_with_one_base_register_and_internal_columns_stay_in_registers"
+subject = "records"
 what = "With co-location, all of a fiber's data lies in one cache-line neighbourhood, the columns internal to the fiber are register-to-register data paths, only the fiber's outputs are written to memory, and one base register with offset immediates replaces many separate pointers. A morsel boundary is one base pointer update."
 mechanism = "`arena_base + col_A_offset + i * stride_A`; `arena_base + col_B_offset + i * stride_B`; record index `i` advances one cursor covering all columns."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:961-972"
@@ -207,12 +208,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:961-972"]
-subject = "records"
 keywords = ["co-located arena", "base pointer", "offset immediates", "DSE", "register-to-register", "one cursor", "morsel boundary"]
-cites = ["storage_is_contiguous_and_a_fiber_s_columns_share_one_arena"]
+related = ["tenet::storage_is_contiguous_and_a_fiber_s_columns_share_one_arena"]
 
 [[tenet]]
 id = "at_ecs_scale_the_consumer_holds_separate_schedules_per_component_set"
+subject = "records"
 what = "At ECS scale the consumer manages data granularity: what the topic calls archetypes mean separate schedules per component set and not one giant schedule for everything, and pipeline-level batching, several pipeline runs on subsets, handles data at saalis scale. The library does not need to know about archetypes or batching and just runs the schedule it is given, but the design must not assume a single all-encompassing run."
 mechanism = "Design-for note DF4. Multiple `Pipeline::run()` calls on subsets."
 source = "mock/design_rounds/202604200055/202603121800_topic.dispatch-and-optimisation.md:153-159"
@@ -230,11 +231,11 @@ origin = "proposed"
 written_by = "topic T3 of the founding round (dispatch-and-optimisation), design-for note DF4"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "records"
 keywords = ["DF4", "archetype", "component set", "separate schedules", "batching", "data granularity", "single run", "record count"]
 
 [[tenet]]
 id = "record_counts_are_known_when_loaders_complete_and_cascade_downstream"
+subject = "records"
 what = "Record counts are not known until the loaders complete. A downstream fiber, which the topic still calls a chain, computes its morsel ranges just in time, when its dependencies are first satisfied and the lengths of the upstream columns are known. For a fiber whose inputs come from other transform fibers and not from loaders the count cascades: if the upstream one processed N records, the downstream one also processes N, and the count propagates through the graph."
 mechanism = "Morsel ranges are computed from `(0..current_progress).step_by(morsel_size)`; the progress counter provides the current count."
 source = "mock/design_rounds/202604200055/202603121310_topic.memory-layout-and-platform.md:840-845, mock/design_rounds/202604200055/202603121310_topic.memory-layout-and-platform.md:860-863"
@@ -256,12 +257,12 @@ origin = "proposed"
 written_by = "topic T2 of the founding round (memory-layout-and-platform), decision 27"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "records"
 keywords = ["record count", "row count", "loaders", "just in time", "morsel ranges", "cascade", "progress counter"]
-cites = ["the_engine_does_not_load_data_and_does_not_know_record_counts_ahead"]
+related = ["tenet::the_engine_does_not_load_data_and_does_not_know_record_counts_ahead"]
 
 [[tenet]]
 id = "the_only_cross_record_surface_is_the_accumulator_append_path"
+subject = "records"
 what = "The per-record read and write accessors are morsel-relative, and the only surface that crosses records is the accumulator append path. A fiber with no accumulator therefore has every dependency between its units local to a morsel and is dispatched morsel-outer: one morsel runs the fiber's whole unit sequence before the next. A fiber that bears an accumulator stays unit-outer, where a unit completes its record range before the next unit runs, which is the form that is safe across records."
 mechanism = "The nesting is per fiber, chosen by the fiber's `morsel_local` bit."
 source = "mock/crates/hilavitkutin/DESIGN.md.tmpl:324-331"
@@ -280,12 +281,12 @@ origin = "proposed"
 written_by = "the engine design template, from design round 202606051500 (fiber-structured morsel-outer dispatch)"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "records"
 keywords = ["cross-record", "morsel-relative", "accumulator append", "morsel-outer", "unit-outer", "morsel_local", "read", "write"]
 related = ["tenet::records_within_a_fiber_are_independent"]
 
 [[tenet]]
 id = "as_of_2026_06_11_sub_byte_bitpacking_is_declared_but_stride_is_the_size_of_the_type"
+subject = "records"
 what = "As of 2026-06-11, addendum A1 records that sub-byte bitpacking is declared through the column value bit width, while the stride is the size of the type."
 mechanism = "`ColumnValue::BIT_WIDTH` declared; stride is `size_of::<T>()`."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:42-43"
@@ -298,11 +299,11 @@ origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "records"
 keywords = ["bitpacking", "BIT_WIDTH", "ColumnValue", "stride", "size_of", "partial", "state assessment", "2026-06-11"]
 
 [[tenet]]
 id = "a_fiber_s_morsel_size_is_a_window_and_the_fiber_covers_the_one_record_range_in_count_over_window_morsels"
+subject = "records"
 what = "The per-fiber morsel size is a window, sized from the usable first-level cache and the bytes of the stores the fiber's units write, a store written by two units of one fiber counting once. A fiber covers the record range in the record count divided by the window, rounded up, morsels. A fiber that writes nothing takes the largest window."
 mechanism = "`window = (L1_usable / sum of write sizes).clamp(MIN_MORSEL, MAX_MORSEL) & !3`, per fiber; `plan.morsel_windows[f]` holds the window; `ceil(record_count / window)` morsels."
 source = "mock/design_rounds/202607161410/202607161400_topic.a3b-l1-morsel-formula.md:24-33"
@@ -323,12 +324,12 @@ origin = "proposed"
 written_by = "topic A3b, the per-fiber L1 morsel-window formula, of 2026-07-16, round 202607161410; its heading calls these the resolutions the round settles, and the text does not say whose they are"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "records"
 keywords = ["morsel window", "per fiber", "record count", "L1", "write sizes", "record range", "morsel_windows"]
-cites = ["morsel_ranges_are_partitioned_at_plan_time_without_an_atomic_fetch_add"]
+related = ["tenet::morsel_ranges_are_partitioned_at_plan_time_without_an_atomic_fetch_add"]
 
 [[tenet]]
 id = "a_fiber_s_morsel_entry_in_the_plan_is_a_window_size_and_never_a_record_count_partition"
+subject = "records"
 what = "The per-fiber morsel entry in the plan is a window chunk size derived from the cache budget, and it is not a partition of the record count among fibers. The earlier placeholder computed shares that sum to the record count, was computed but never consumed by the dispatch, and is replaced by the real windows, so the plan value changes while the dispatch keeps its uniform window until A2b-2."
 mechanism = "`ExecutionPlan::morsel_sizes` computed by `size_morsels` (plan/steps.rs:948) with `Σ morsel_sizes[f] == record_count`; `compute_fiber_morsel_windows` (plan step 9) fills `plan.morsel_windows`; overwritten after `compute_execution_plan` returns Ok with `(l1_usable / Σ write_bytes).clamp(min, max) & !3` (zero sum takes max); tests pinning the placeholder are rehabbed to the window contract and `tests/r6_morsel_window_formula.rs` goes green."
 source = "mock/design_rounds/202606201500/202606201500_topic.per-fiber-morsel-s1-rename.md:10-15, mock/design_rounds/202606202700/202606202700_topic.a3b-l1-morsel-formula.md:18-25, mock/design_rounds/202607161410/202607161400_topic.a3b-l1-morsel-formula.md:12-14, mock/design_rounds/202607161410/202607161400_topic.a3b-l1-morsel-formula.md:30-33"
@@ -363,7 +364,6 @@ origin = "proposed"
 written_by = "topics per-fiber-morsel-s1-rename and a3b-l1-morsel-formula of rounds 202606201500, 202606202700 and 202607161410 (the last dated 2026-07-16), agent-written"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "records"
 keywords = ["morsel_windows", "morsel_sizes", "partition", "window", "per-fiber morsel", "placeholder", "size_morsels", "A3b"]
-rules_out = ["a record-count PARTITION"]
-cites = ["a_fiber_s_morsel_size_is_a_window_and_the_fiber_covers_the_one_record_range_in_count_over_window_morsels"]
+rejects = ["a record-count PARTITION"]
+related = ["tenet::a_fiber_s_morsel_size_is_a_window_and_the_fiber_covers_the_one_record_range_in_count_over_window_morsels"]

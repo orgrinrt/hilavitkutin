@@ -2,6 +2,7 @@
 
 [[tenet]]
 id = "extension_across_an_abi_boundary_is_by_registered_traits_and_c_layout_descriptors_and_never_by_dyn"
+subject = "principles"
 what = "Where extension across an ABI boundary is required, the means are registered traits and C-layout descriptors, which the text calls the inventory pattern, and not dynamic dispatch."
 mechanism = "registered traits + `repr(C)` descriptors (inventory pattern), not `dyn`."
 source = "mock/PRINCIPLES.md.tmpl:78-79"
@@ -14,15 +15,15 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:78-79"]
-subject = "principles"
 keywords = ["ABI boundary", "registered traits", "repr(C) descriptors", "inventory pattern", "extension", "no dyn"]
-cites = ["repr_c_and_function_pointers_give_the_minimal_abi_surface", "link_time_registration_through_inventory_is_complete_before_work_starts"]
+related = ["tenet::repr_c_and_function_pointers_give_the_minimal_abi_surface", "tenet::link_time_registration_through_inventory_is_complete_before_work_starts"]
 
 [[tenet]]
 id = "every_type_is_a_trait_a_newtype_or_a_c_layout_enum_and_there_is_no_fourth_bare_primitive_category"
+subject = "principles"
 what = "Every type anywhere in source, public or private, in a signature or a field, falls into one of three categories. A trait is for varying behaviour, a shared contract or extensibility, a newtype is for a fixed representation with validation at construction, and a C-layout enum is for a closed set that crosses an ABI boundary. There is no fourth bare primitive category, and every numeric identity flows through the type system of arvo."
 mechanism = "Trait: arithmetic ops, sinks, platform providers. Newtype: `UFixed<I, F, S>`, `USize`, `Bool`, `ContentHash`, strategy markers. `repr(C)` enum: `Priority`, `ErrorClass`."
-rules_out = ["a fourth bare primitive category", "raw u8..u128, i8..i128, f32, f64, usize, isize or bool in source"]
+rejects = ["a fourth bare primitive category", "raw u8..u128, i8..i128, f32, f64, usize, isize or bool in source"]
 source = "mock/PRINCIPLES.md.tmpl:81-94"
 provenance = ["mock::PRINCIPLES::#type-taxonomy"]
 quote = '''
@@ -45,16 +46,16 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:81-94"]
-subject = "principles"
 keywords = ["type taxonomy", "trait", "newtype", "repr(C) enum", "no fourth category", "UFixed", "ContentHash", "Priority"]
-cites = ["the_type_taxonomy_is_trait_newtype_repr_c_enum_or_primitive_and_it_governs_the_form_of_every_type"]
+related = ["tenet::the_type_taxonomy_is_trait_newtype_repr_c_enum_or_primitive_and_it_governs_the_form_of_every_type"]
 
 [[tenet]]
 id = "container_capacity_lives_at_type_level_and_a_consumer_needing_more_picks_the_bigger_type"
+subject = "principles"
 what = "Every container's capacity lives at type level. There is no runtime resize and no runtime growth, and a consumer that needs a bigger container picks the bigger type."
 because = "It is what the no heap principle bottoms out in at the storage layer: capacity is a compile-time choice the consumer makes once and not a runtime allocation the callee fabricates."
 mechanism = "`Mask64`, `Mask256`, `Seq<T, N: Cap>`, `Map<K, V, N: Cap>`."
-rules_out = ["runtime resize of a container", "runtime growth of a container"]
+rejects = ["runtime resize of a container", "runtime growth of a container"]
 source = "mock/PRINCIPLES.md.tmpl:102-111"
 provenance = ["mock::PRINCIPLES::#sizes-are-const-at-type-level"]
 quote = '''
@@ -73,13 +74,13 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:102-111"]
-subject = "principles"
 keywords = ["const capacity", "type-level size", "Mask64", "Mask256", "Seq", "Map", "Cap", "no runtime resize"]
 
 [[tenet]]
 id = "there_is_one_mechanism_per_concern_and_where_two_subsystems_solve_one_problem_differently_one_must_go"
+subject = "principles"
 what = "If two subsystems solve the same problem differently, one must go. There are no parallel versioning tables, no parallel serialisation paths and no fast path beside a slow path, and there is one mechanism per concern."
-rules_out = ["parallel versioning tables", "parallel serialization paths", "a fast path alongside a slow path"]
+rejects = ["parallel versioning tables", "parallel serialization paths", "a fast path alongside a slow path"]
 source = "mock/PRINCIPLES.md.tmpl:113-117"
 provenance = ["mock::PRINCIPLES::#one-mechanism-not-two"]
 quote = '''
@@ -93,11 +94,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:113-117"]
-subject = "principles"
 keywords = ["one mechanism", "not two", "parallel versioning", "parallel serialization", "fast path", "slow path"]
 
 [[tenet]]
 id = "all_engine_runtime_state_lives_in_one_columnar_store_and_a_resource_versus_a_column_is_intent_and_not_mechanism"
+subject = "principles"
 what = "All engine runtime state lives in one store. Resources, columns and the execution plan all back onto the same column storage, which owns columns of scalar column values allocated through the memory provider. Every aggregate decomposes struct-of-arrays style into scalar columns, and resource versus column is intent, persistent and cold versus hot and per morsel, and not a separate mechanism."
 mechanism = "`ColumnStorage` owns columns of `ColumnValue` scalars allocated through `MemoryProvider`; `Resource` versus `Column` is intent (persistent / cold versus hot / per-morsel)."
 source = "mock/PRINCIPLES.md.tmpl:119-126"
@@ -116,14 +117,14 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:119-126", "later: mock/research/202606210600_resource-storage-model-canonical-addendum.md:17-24, a_resource_is_a_handle_and_not_an_inline_value_store_which_is_the_corrected_reading_of_r5"]
-subject = "principles"
 keywords = ["unified columnar storage", "ColumnStorage", "ColumnValue", "MemoryProvider", "resource", "column", "execution plan", "struct-of-arrays"]
 
 [[tenet]]
 id = "no_subsystem_has_bespoke_storage_and_a_subsystem_needing_to_hold_n_things_uses_a_column"
+subject = "principles"
 what = "There is no bespoke per-subsystem storage. A subsystem that needs to hold N things uses a column and does not build a new arena."
 because = "It is one mechanism, not two, applied to the data plane: the engine accreted disjoint arenas once, and unwinding them onto the one store is the correction."
-rules_out = ["a hand-rolled arena", "a MaybeUninit pool", "a raw fixed buffer holding runtime data outside the column storage and the store markers", "a new arena when a subsystem needs to hold N things"]
+rejects = ["a hand-rolled arena", "a MaybeUninit pool", "a raw fixed buffer holding runtime data outside the column storage and the store markers", "a new arena when a subsystem needs to hold N things"]
 source = "mock/PRINCIPLES.md.tmpl:128-133"
 provenance = ["mock::PRINCIPLES::#unified-columnar-storage"]
 quote = '''
@@ -138,12 +139,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:128-133"]
-subject = "principles"
 keywords = ["no bespoke storage", "arena", "MaybeUninit pool", "column", "ColumnStorage", "store markers", "one mechanism"]
-cites = ["there_is_one_mechanism_per_concern_and_where_two_subsystems_solve_one_problem_differently_one_must_go", "all_engine_runtime_state_lives_in_one_columnar_store_and_a_resource_versus_a_column_is_intent_and_not_mechanism"]
+related = ["tenet::there_is_one_mechanism_per_concern_and_where_two_subsystems_solve_one_problem_differently_one_must_go", "tenet::all_engine_runtime_state_lives_in_one_columnar_store_and_a_resource_versus_a_column_is_intent_and_not_mechanism"]
 
 [[tenet]]
 id = "the_pool_frame_synchronisation_structure_is_the_single_sanctioned_fixed_array_and_a_storage_lint_enforces_the_rule"
+subject = "principles"
 what = "The single sanctioned fixed-array exception is the thread-pool synchronisation structure, with atomic progress and wake slots on cache lines. It is pool coordination and not consumer data, and a storage lint enforces the rule."
 mechanism = "`PoolFrame`: atomic progress / wake slots on cache lines."
 source = "mock/PRINCIPLES.md.tmpl:135-138"
@@ -158,12 +159,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:135-138"]
-subject = "principles"
 keywords = ["PoolFrame", "fixed array exception", "atomic progress slots", "wake slots", "storage lint", "pool coordination"]
-cites = ["no_subsystem_has_bespoke_storage_and_a_subsystem_needing_to_hold_n_things_uses_a_column"]
+related = ["tenet::no_subsystem_has_bespoke_storage_and_a_subsystem_needing_to_hold_n_things_uses_a_column"]
 
 [[tenet]]
 id = "a_concept_that_might_need_extension_is_a_registered_trait_and_enums_are_for_truly_closed_sets_only"
+subject = "principles"
 what = "If a concept might need extension, it is a trait with registration, or the inventory equivalent of the stack, and not a C-layout enum. Enums are for truly closed sets only."
 mechanism = "trait + `#[register]` (or the stack's inventory equivalent); closed-set enums: `Priority`, `ErrorClass`, `FieldKind`, `HealthStatus`."
 source = "mock/PRINCIPLES.md.tmpl:140-145"
@@ -180,15 +181,15 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:140-145"]
-subject = "principles"
 keywords = ["registered traits", "repr(C) enum", "closed set", "Priority", "ErrorClass", "FieldKind", "HealthStatus", "#[register]"]
-cites = ["a_position_where_two_implementations_with_different_behaviour_are_imaginable_is_a_trait_slot_and_never_an_extensible_enum"]
+related = ["tenet::a_position_where_two_implementations_with_different_behaviour_are_imaginable_is_a_trait_slot_and_never_an_extensible_enum"]
 
 [[tenet]]
 id = "every_registrable_type_has_one_constant_name_and_the_descriptor_name_points_at_it"
+subject = "principles"
 what = "Every registrable type has one constant name, and the name field of its descriptor is a constant pointer to it. There is no duplication, no copy and no parallel naming."
 mechanism = "`Named::NAME`: `const NAME: &'static str`."
-rules_out = ["duplicated names", "copies of the name", "parallel naming"]
+rejects = ["duplicated names", "copies of the name", "parallel naming"]
 source = "mock/PRINCIPLES.md.tmpl:147-151"
 provenance = ["mock::PRINCIPLES::#named-name-single-source-of-truth"]
 quote = '''
@@ -202,11 +203,11 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:147-151"]
-subject = "principles"
 keywords = ["Named::NAME", "single source of truth", "descriptor name", "const pointer", "registrable type"]
 
 [[tenet]]
 id = "schema_kinds_events_settings_domains_storage_locations_and_access_levels_are_zero_sized_markers"
+subject = "principles"
 what = "Schema kinds, events, settings domains, storage locations, access levels and HTTP methods are all zero-sized marker types, which carry compile-time identity without runtime footprint."
 source = "mock/PRINCIPLES.md.tmpl:153-157"
 provenance = ["mock::PRINCIPLES::#zst-markers-for-discrimination"]
@@ -221,12 +222,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:153-157"]
-subject = "principles"
 keywords = ["ZST markers", "discrimination", "schema kinds", "events", "access levels", "compile-time identity", "no runtime footprint"]
-cites = ["zero_sized_types_are_the_logic_layer"]
+related = ["tenet::zero_sized_types_are_the_logic_layer"]
 
 [[tenet]]
 id = "every_crate_is_no_std_with_no_allocation_and_the_consumer_provides_the_memory_provider"
+subject = "principles"
 what = "Every crate is no standard library with no allocation. Consumers provide a memory provider: the os tier uses mmap, and the no_os tier requires the consumer to plug one in."
 mechanism = "`#![no_std]`; `MemoryProvider` (os tier uses mmap; no_os tier: consumer plugs one in)."
 source = "mock/PRINCIPLES.md.tmpl:198-200"
@@ -240,14 +241,14 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:198-200", "founding: mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:13-13"]
-subject = "principles"
 keywords = ["no_std", "no alloc", "MemoryProvider", "os tier", "no_os tier", "mmap", "consumer provides"]
-cites = ["the_os_and_std_tiers_are_mutually_exclusive_and_the_os_tier_gets_the_optimisation_investment", "the_no_os_tier_is_trait_contracts_only_and_the_consumer_provides_every_platform_implementation"]
+related = ["tenet::the_os_and_std_tiers_are_mutually_exclusive_and_the_os_tier_gets_the_optimisation_investment", "tenet::the_no_os_tier_is_trait_contracts_only_and_the_consumer_provides_every_platform_implementation"]
 
 [[tenet]]
 id = "there_is_no_std_platform_tier"
+subject = "principles"
 what = "There is no std tier."
-rules_out = ["a std tier"]
+rejects = ["a std tier"]
 source = "mock/PRINCIPLES.md.tmpl:200-200"
 provenance = ["mock::PRINCIPLES::#no-std-no-alloc"]
 quote = '''
@@ -257,15 +258,15 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:200-200", "founding: mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:13-13"]
-subject = "principles"
 keywords = ["no std tier", "platform tiers", "os tier", "no_os tier"]
-cites = ["the_platform_has_three_tiers_no_os_os_and_std"]
+related = ["tenet::the_platform_has_three_tiers_no_os_os_and_std"]
 
 [[tenet]]
 id = "no_crate_spawns_threads_and_the_executor_behind_the_thread_pool_contract_is_the_consumer_s_or_lives_outside_the_family"
+subject = "principles"
 what = "No crate in the family spawns threads. The executor behind the thread pool contract is the consumer's, or lives in a crate outside this family."
 mechanism = "`ThreadPoolApi`."
-rules_out = ["a crate in the family spawning threads"]
+rejects = ["a crate in the family spawning threads"]
 source = "mock/PRINCIPLES.md.tmpl:200-202"
 provenance = ["mock::PRINCIPLES::#no-std-no-alloc"]
 quote = '''
@@ -277,12 +278,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:200-202", "founding: mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:13-13"]
-subject = "principles"
 keywords = ["no thread spawn", "ThreadPoolApi", "executor", "consumer executor", "thread pool contract"]
-cites = ["at_run_time_the_engine_spawns_threads_that_run_their_compiled_programs_with_no_scheduler_loop_or_work_queues"]
+related = ["tenet::at_run_time_the_engine_spawns_threads_that_run_their_compiled_programs_with_no_scheduler_loop_or_work_queues"]
 
 [[tenet]]
 id = "the_engine_never_calls_the_allocator_at_runtime_and_plan_time_allocation_happens_once_per_pipeline_lifetime"
+subject = "principles"
 what = "The engine never calls into the allocator at runtime. Plan-time allocation, such as arena sizing and fiber layouts, happens once per pipeline lifetime and not per frame."
 source = "mock/PRINCIPLES.md.tmpl:204-206"
 provenance = ["mock::PRINCIPLES::#no-std-no-alloc"]
@@ -295,15 +296,15 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:204-206"]
-subject = "principles"
 keywords = ["no runtime allocation", "plan-time allocation", "arena sizing", "fiber layouts", "pipeline lifetime", "per frame"]
-cites = ["allocation_is_managed_by_the_scheduler_and_declared_at_compile_time_and_never_fabricated_at_runtime"]
+related = ["tenet::allocation_is_managed_by_the_scheduler_and_declared_at_compile_time_and_never_fabricated_at_runtime"]
 
 [[tenet]]
 id = "the_monomorphised_function_is_the_type_identity_of_a_unit_and_llvm_devirtualises_the_fused_pipeline_into_straight_line_code"
+subject = "principles"
 what = "Units are generic over their access set, so the monomorphised function is the type identity. The compiler then devirtualises the fused pipeline into straight-line code."
 mechanism = "No `dyn`, no `TypeId`, no `std::any`; WUs are generic over their `AccessSet`."
-rules_out = ["dyn", "TypeId", "std::any"]
+rejects = ["dyn", "TypeId", "std::any"]
 source = "mock/PRINCIPLES.md.tmpl:210-212"
 provenance = ["mock::PRINCIPLES::#monomorphisation-is-the-dispatch"]
 quote = '''
@@ -315,15 +316,15 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:210-212"]
-subject = "principles"
 keywords = ["monomorphisation is the dispatch", "type identity", "AccessSet", "devirtualisation", "straight-line code", "no TypeId"]
-cites = ["std_any_is_banned_so_there_is_no_type_id_and_no_type_erasure", "dyn_is_banned_entirely_with_no_exceptions"]
+related = ["tenet::std_any_is_banned_so_there_is_no_type_id_and_no_type_erasure", "tenet::dyn_is_banned_entirely_with_no_exceptions"]
 
 [[tenet]]
 id = "the_pool_is_the_consumer_s_executor_and_the_engine_hands_it_its_closures_once_on_the_first_parallel_run"
+subject = "principles"
 what = "The pool is the consumer's executor behind the thread pool contract. The engine hands it its closures once, on the first parallel run, and the workers persist for the pipeline's lifetime, with no runtime spawn."
 mechanism = "`ThreadPoolApi`."
-rules_out = ["runtime spawn"]
+rejects = ["runtime spawn"]
 source = "mock/PRINCIPLES.md.tmpl:227-229, mock/PRINCIPLES.md.tmpl:231-231"
 provenance = ["mock::PRINCIPLES::#pre-allocated-thread-pool"]
 quote = '''
@@ -337,14 +338,14 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/PRINCIPLES.md.tmpl:227-229", "founding: mock/PRINCIPLES.md.tmpl:231-231"]
-subject = "principles"
 keywords = ["pre-allocated thread pool", "ThreadPoolApi", "consumer executor", "first parallel run", "workers persist", "no runtime spawn"]
-cites = ["the_thread_pool_is_pre_allocated_and_wakes_by_spinning_first_and_then_parking"]
+related = ["tenet::the_thread_pool_is_pre_allocated_and_wakes_by_spinning_first_and_then_parking"]
 
 [[tenet]]
 id = "entry_is_a_dead_term_and_the_canonical_vocabulary_ends_at_micro_morsel_and_record"
+subject = "principles"
 what = "The canonical terms are pipeline, core, phase, waist, trunk, fiber, branch, bridge, morsel, micro-morsel and record. The dead terms are chain, chain group, partition, archetype, entity, row, entry and order, and they are never used."
-rules_out = ["chain", "chain group", "partition", "archetype", "entity", "row", "entry", "order"]
+rejects = ["chain", "chain group", "partition", "archetype", "entity", "row", "entry", "order"]
 source = "mock/PRINCIPLES.md.tmpl:281-287"
 provenance = ["mock::PRINCIPLES::#vocabulary-discipline"]
 quote = '''
@@ -358,12 +359,12 @@ entity, row, entry, order.
 '''
 origin = "stated"
 standing = "provisional"
-subject = "principles"
 keywords = ["vocabulary discipline", "canonical terms", "dead terms", "entry", "record", "micro-morsel", "waist"]
-cites = ["the_dead_terms_chain_chain_group_partition_archetype_entity_row_and_order_have_named_replacements", "the_hierarchy_runs_from_pipeline_down_through_phase_trunk_fiber_and_morsel_to_entry"]
+related = ["tenet::the_dead_terms_chain_chain_group_partition_archetype_entity_row_and_order_have_named_replacements", "tenet::the_hierarchy_runs_from_pipeline_down_through_phase_trunk_fiber_and_morsel_to_entry"]
 
 [[tenet]]
 id = "the_complexity_against_simplicity_axis_is_an_anti_axis_in_this_workspace_and_is_not_counted_against_a_design"
+subject = "principles"
 what = "Op chose the hybrid resource addressing over the pure blob, citing future-proofing and a performance parity that the bench measured, so the hybrid carries only upsides. The one point the bench listed against the erased addressing, its backcast machinery and type-erasure round-trip burden, is a complexity-versus-simplicity concern, and that axis is an anti-axis in this workspace: it is not counted against a design."
 source = "mock/design_rounds/202607161000/202606210600_topic.hybrid-decision.md:12-19"
 provenance = ["mock::design_rounds::202607161000::202606210600_topic.hybrid-decision::#the-decision-op-2026-07-02"]
@@ -381,12 +382,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["quote: mock/design_rounds/202607161000/202606210600_topic.hybrid-decision.md:12-19", "quote: mock/design_rounds/202607161000/202606210600_topic.hybrid-decision.md:55-56"]
-subject = "principles"
 keywords = ["anti-axis", "complexity versus simplicity", "hybrid", "future-proof", "parity", "backcast machinery", "not counted against a design"]
-cites = ["a_resource_value_is_addressed_through_an_erased_static_shape_so_it_can_cross_a_plugin_boundary"]
+related = ["tenet::a_resource_value_is_addressed_through_an_erased_static_shape_so_it_can_cross_a_plugin_boundary"]
 
 [[tenet]]
 id = "a_non_canonical_mechanism_is_not_kept_because_it_beats_nothing_and_single_trunk_phases_run_serially_until_head_and_tail_is_built"
+subject = "principles"
 what = "Deleting the N-way branch leaves single-trunk phases running serially until head and tail convergence is built, which is a real loss of parallelism on exactly the phases that most want it, and it is still the right move. The canon's parallelism comes from trunks, and a single-trunk phase legitimately has none until the mechanism the canon specifies exists. Keeping a non-canonical mechanism because it is faster than nothing is how drift became load-bearing in the first place, and the longer it stays the more of the engine is built against it."
 mechanism = "Roadmap band W1 builds head and tail; its substrate (`HeadTailConvergence`, `RecordRange::Head` and `Tail`, `thread::Convergence`, the `commutative` flag computed at plan/mod.rs:422 and read nowhere) exists and is unwired."
 source = "mock/design_rounds/202607192110/202607192100_topic.n-way-record-split-is-not-convergence.md:56-65"
@@ -407,12 +408,12 @@ origin = "proposed"
 written_by = "topic n-way-record-split-is-not-convergence of 2026-07-19, round 202607192110, agent-written"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "principles"
 keywords = ["non-canonical mechanism", "load-bearing drift", "single-trunk phase", "serial", "head and tail", "W1", "faster than nothing"]
-cites = ["head_and_tail_convergence_is_designed_and_not_built_and_a_single_trunk_phase_runs_serially_until_it_is", "the_n_way_record_split_of_a_single_trunk_phase_is_not_head_and_tail_convergence_and_is_drift"]
+related = ["tenet::head_and_tail_convergence_is_designed_and_not_built_and_a_single_trunk_phase_runs_serially_until_it_is", "tenet::the_n_way_record_split_of_a_single_trunk_phase_is_not_head_and_tail_convergence_and_is_drift"]
 
 [[tenet]]
 id = "an_allow_on_an_item_line_ending_in_an_opening_brace_is_kept_in_place_by_pinning_the_item_against_the_formatter_and_is_not_a_question_for_op"
+subject = "principles"
 what = "A lint allow comment on an item line that ends in an opening brace is kept where the lint reads it by pinning the item against the formatter, because the formatter otherwise moves the comment into the body, where it suppresses nothing. The earlier conclusion that nothing was wrongly suppressed was wrong: the strict gate reported live violations at exactly those items, and the allows were decorative while the gate passed only because those lints are advisory. The conflict between the same-line requirement and the formatter was never a wall for op."
 mechanism = "`#[rustfmt::skip]` on the affected items; an allow on a line ending in `;` stays put, one on a line ending in `{` is moved into the body by rustfmt on every commit. The strict gate over both crates dropped from fourteen findings to five."
 source = "mock/design_rounds/202608090500/202608090500_changelist.src.lock.md:55-70, mock/design_rounds/202608090700/202608090700_changelist.src.lock.md:48-57"
@@ -450,13 +451,13 @@ origin = "proposed"
 written_by = "source changelists of rounds 202608090500 and 202608090700, agent-written; the earlier one records the conflict for op and the later one corrects it"
 standing = "provisional"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
-subject = "principles"
 keywords = ["lint allow", "rustfmt::skip", "same-line requirement", "opening brace", "strict gate", "decorative allow", "formatter"]
-rules_out = ["the rule as written cannot be satisfied without #[rustfmt::skip] or a change to the rule", "nothing was wrongly suppressed"]
-cites = ["the_lint_allow_escape_hatch_is_for_a_genuinely_unavoidable_boundary_and_always_carries_a_tracked_remediation_task"]
+rejects = ["the rule as written cannot be satisfied without #[rustfmt::skip] or a change to the rule", "nothing was wrongly suppressed"]
+related = ["tenet::the_lint_allow_escape_hatch_is_for_a_genuinely_unavoidable_boundary_and_always_carries_a_tracked_remediation_task"]
 
 [[tenet]]
 id = "hilavitkutin_is_for_millions_of_simulation_and_crunching_work_data_going_constantly_and_one_to_four_morsels_is_almost_never_its_case"
+subject = "principles"
 what = "hilavitkutin is intended for the cases that have millions of simulation and crunching work data going constantly. A workload of one to four morsels is almost never a realistic use case for it in the first place, and the benches should reflect that better."
 because = "The maintainer said it on the convergence bench's short-fiber result, that below one to four morsels no parallel arm beats the sequential frame."
 source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS-20.md:3-6"
@@ -471,12 +472,12 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["quote: mock/research/202611130850_the-record-read-whole/OP-ANSWERS-20.md:3-6"]
-subject = "principles"
 keywords = ["intended workload", "millions of records", "one to four morsels", "short fiber", "small workload", "bench scope", "convergence bench", "sequential frame"]
 related = ["tenet::below_ten_thousand_records_execution_is_sequential_and_above_one_hundred_thousand_threading_is_always_considered", "tenet::the_dispatch_form_depends_on_the_record_count_below_or_above_ten_thousand", "tenet::the_dispatch_approach_is_chosen_by_record_count_between_fiber_level_trunk_level_and_whole_schedule_functions", "tenet::the_per_project_defaults_are_sequential_for_polka_dots_mixed_for_saalis_and_phased_with_convergence_for_loimu", "tenet::no_single_scheduling_strategy_dominates_and_the_best_depends_on_compute_balance_phase_topology_and_record_count", "tenet::the_strategy_is_selected_at_plan_time_from_estimated_compute_weights_and_a_wrong_pick_costs_about_ten_to_twenty_percent", "question::which_convergence_a_single_trunk_phase_uses", "question::whether_the_default_wake_is_the_spin_then_park_hybrid_of_the_spec_or_park_immediately_ruled_by_the_wake_bench"]
 
 [[tenet]]
 id = "the_benches_of_the_engine_against_hand_written_and_plain_rust_paths_are_a_baseline_and_no_call_is_made_on_them_yet"
+subject = "principles"
 what = "The benches that bench hilavitkutin against a hand-written optimised path and against plain Rust on no_std and on std, with the threaded variants of each, do not yet include any of the headline features such as fusing and the adaptive trunk, fiber and morsel crunching on the dataflow-like schedule. The engine in them is bare bones and barely lowers to anything interesting yet. No calls are made based on them yet, and they are a baseline to compare against later."
 source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS-21.md:3-5"
 provenance = ["mock::research::202611130850_the-record-read-whole::OP-ANSWERS-21::#op-answers-21-13-november-about-12-25-utc-the-engine-benches-so-far-are-a-baseline-and-no-call-rests-on-them"]
@@ -489,8 +490,6 @@ origin = "stated"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["quote: mock/research/202611130850_the-record-read-whole/OP-ANSWERS-21.md:3-5"]
-subject = "principles"
 keywords = ["bench baseline", "engine against hand-written", "plain rust", "no_std", "std", "threaded variants", "fusing", "adaptive trunk fiber morsel", "no call on the benches", "perf gate", "convergence bench"]
-rules_out = ["A design call, a verdict on the engine or a ruling made on the numbers of these benches before the headline features exist."]
-cites = ["hilavitkutin_is_for_millions_of_simulation_and_crunching_work_data_going_constantly_and_one_to_four_morsels_is_almost_never_its_case"]
-related = ["tenet::the_perf_gate_uses_per_arm_calibrated_bars_over_a_persistent_pool_std_baseline_and_stays_blocking", "tenet::the_fairness_correction_sets_the_parallel_baseline_to_optimal_multi_threaded_std_and_supersedes_the_3_5x_claim", "tenet::gate_2_closes_with_cleanup_and_a_perf_gate_rerun_and_the_remainder_is_one_completion_arc_charted_to_the_full_canonical_design", "tenet::deviation_two_core_ownership_mask_evidence_leaves_the_bless_standing_with_the_build_script_codegen_escalation_armed", "question::which_convergence_a_single_trunk_phase_uses", "question::whether_the_default_wake_is_the_spin_then_park_hybrid_of_the_spec_or_park_immediately_ruled_by_the_wake_bench"]
+rejects = ["A design call, a verdict on the engine or a ruling made on the numbers of these benches before the headline features exist."]
+related = ["tenet::the_perf_gate_uses_per_arm_calibrated_bars_over_a_persistent_pool_std_baseline_and_stays_blocking", "tenet::the_fairness_correction_sets_the_parallel_baseline_to_optimal_multi_threaded_std_and_supersedes_the_3_5x_claim", "tenet::gate_2_closes_with_cleanup_and_a_perf_gate_rerun_and_the_remainder_is_one_completion_arc_charted_to_the_full_canonical_design", "tenet::deviation_two_core_ownership_mask_evidence_leaves_the_bless_standing_with_the_build_script_codegen_escalation_armed", "question::which_convergence_a_single_trunk_phase_uses", "question::whether_the_default_wake_is_the_spin_then_park_hybrid_of_the_spec_or_park_immediately_ruled_by_the_wake_bench", "tenet::hilavitkutin_is_for_millions_of_simulation_and_crunching_work_data_going_constantly_and_one_to_four_morsels_is_almost_never_its_case"]
