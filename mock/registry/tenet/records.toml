@@ -274,3 +274,28 @@ written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status lo
 standing = "provisional"
 subject = "records"
 keywords = ["bitpacking", "BIT_WIDTH", "ColumnValue", "stride", "size_of", "partial", "state assessment", "2026-06-11"]
+
+[[tenet]]
+id = "a_fiber_s_morsel_size_is_a_window_and_the_fiber_covers_the_one_record_range_in_count_over_window_morsels"
+what = "The per-fiber morsel size is a window, sized from the usable first-level cache and the bytes of the stores the fiber's units write, a store written by two units of one fiber counting once. A fiber covers the record range in the record count divided by the window, rounded up, morsels. A fiber that writes nothing takes the largest window."
+mechanism = "`window = (L1_usable / sum of write sizes).clamp(MIN_MORSEL, MAX_MORSEL) & !3`, per fiber; `plan.morsel_windows[f]` holds the window; `ceil(record_count / window)` morsels."
+source = "mock/design_rounds/202607161410/202607161400_topic.a3b-l1-morsel-formula.md:24-33"
+provenance = ["mock::design_rounds::202607161410::202607161400_topic.a3b-l1-morsel-formula::#resolutions-this-round-settles"]
+quote = '''
+1. **The formula lands as specced (domain 12):**
+   `window = (L1_usable / Σ write_sizes).clamp(MIN_MORSEL, MAX_MORSEL) & !3`,
+   per fiber, where `Σ write_sizes` sums the per-store byte sizes selected by the
+   UNION of the fiber's units' write masks (a store written by two units in one
+   fiber counts once). A fiber with zero write bytes takes the `MAX_MORSEL`
+   window (nothing constrains its L1 write budget). `plan.morsel_windows[f]`
+   becomes a WINDOW size; a fiber covers the record range in
+   `ceil(record_count / window)` morsels. This is the designed semantics flip the
+   A1 slice documented as pending; tests pinning the partition placeholder are
+   rehabbed to the window contract and `r6_morsel_window_formula` goes green.
+'''
+origin = "proposed"
+written_by = "topic A3b, the per-fiber L1 morsel-window formula, of 2026-07-16, round 202607161410; its heading calls these the resolutions the round settles, and the text does not say whose they are"
+standing = "provisional"
+subject = "records"
+keywords = ["morsel window", "per fiber", "record count", "L1", "write sizes", "record range", "morsel_windows"]
+cites = ["morsel_ranges_are_partitioned_at_plan_time_without_an_atomic_fetch_add"]
