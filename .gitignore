@@ -28,6 +28,9 @@ mock/research/sketches/*/libsketch.rmeta
 mock/research/**/Cargo.lock
 mock/benches/variants/**/Cargo.lock
 
+# Per-run selective-test record written by `cargo mock test`
+/mock/test-history/
+
 # Standalone test-fixture target dir (cargo subproject)
 mock/crates/hilavitkutin-extensions-macros/tests/lto_smoke_fixture/target/
 

@@ -24,7 +24,8 @@ lto = "fat"
 codegen-units = 1
 opt-level = 3
 panic = "abort"
-# Keep symbols visible so `nm` can observe trampoline survival. A consumer
+# Keep symbols visible so the smoke test can read trampoline survival from the
+# built library's symbol tables. A consumer
 # release profile may set `strip = "symbols"`; the descriptor's `#[used]`
 # static still keeps the trampoline bytes, but the symbol-level observation
 # we want here requires unstripped output.
