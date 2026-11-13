@@ -15,7 +15,9 @@ The canonical spec is
 
 ## Identity
 
-{{crate_count}} crates, flat structure, five logical groupings:
+{{crate_count}} crates, flat structure, six logical groupings:
+
+**Loop core (the contracts and their oracle).** `hilavitkutin-contracts` is what a kernel author and a store implementor write against: domains, columns and resources, the value kernel `ValueKernel`, the bind with its checked table `Bound` and the typed column handle `Col`, and the store with its visiting order. `hilavitkutin-reference` is the one-thread runner kept as the oracle, `hilavitkutin-laws` the laws a run is held to as functions over plain data, and `hilavitkutin-frozen-authors` and `hilavitkutin-frozen-implementors` the frozen kernels and stores the laws run over. None of the five depends on a legacy crate. `hilavitkutin-api` is the legacy contract until the engine is ported onto `hilavitkutin-contracts`; new work is written against the contracts.
 
 **API (consumer-facing contracts).** `hilavitkutin-api` ships `WorkUnit`, `AccessSet`, `Column<T>`, `Resource<T>`, `Virtual<T>`, `Context`, `Contains`, and the platform contracts (`Clock`, `MemoryProvider`, `ThreadPool`). `hilavitkutin-api-macros` is its proc-macro companion, emitting `#[derive(ResourceFootprint)]` so a resource value type reports its L1-morsel write-collection footprint (canonical R5).
 

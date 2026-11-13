@@ -1,0 +1,3 @@
+### hilavitkutin-contracts
+
+The contracts a kernel author and a store implementor write against. An author names a domain of records, its columns and resources, and writes a value kernel: a function handed the values of its declared reads that returns the values of its declared writes. An implementor writes a store and a visiting order. Between them sits the checked binding table, made only by `bind`, the one source of the typed column handles a store is read and written through. `no_std`, no alloc, no `dyn`, no feature gate.

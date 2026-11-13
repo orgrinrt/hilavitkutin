@@ -119,6 +119,25 @@ commit = "error"
 build = "error"
 push = "error"
 
+# A frozen crate is written as a consumer would write it: no feature gate,
+# no raised recursion limit, and no turbofish naming an item the file did
+# not declare, each of which would hide what the contracts make an author
+# or implementor do (roadmap r7, HL0a). Repo lints, `mock/lints/`.
+[lints.frozen-no-feature-gate]
+commit = "error"
+build = "error"
+push = "error"
+
+[lints.frozen-no-recursion-limit]
+commit = "error"
+build = "error"
+push = "error"
+
+[lints.frozen-no-foreign-turbofish]
+commit = "error"
+build = "error"
+push = "error"
+
 # Advisory: vocabulary terms are common English words; warn everywhere,
 # never block. Author suppresses with `// lint:allow(vocabulary-discipline)`.
 [lints.vocabulary-discipline]
@@ -166,6 +185,17 @@ rules = [
     # never directly from L1 `arvo-bits`. Direct L1 coupling would bypass the
     # intended architecture layering (per arvo's own `.claude/rules`).
     { scope = "hilavitkutin", forbidden = "arvo_bits::*", reason = "engine reaches bit contracts via L2 arvo-bitmask; direct L1 coupling bypasses the layering" },
+
+    # The loop core depends on no legacy crate (roadmap r7, HL0a). The
+    # contracts are the contract and depend on no implementation of them.
+    { scope = "hilavitkutin-contracts", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_reference::*, hilavitkutin_laws::*, hilavitkutin_frozen_authors::*, hilavitkutin_frozen_implementors::*", reason = "hilavitkutin-contracts is the contract; it depends on no legacy crate and on no runner, law or frozen implementation of it" },
+    { scope = "hilavitkutin-reference", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_laws::*, hilavitkutin_frozen_authors::*, hilavitkutin_frozen_implementors::*", reason = "the reference runner reaches stores and kernels through the contracts only, and depends on no legacy crate" },
+    # A law runs nothing: it reads what a run recorded.
+    { scope = "hilavitkutin-laws", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_reference::*, hilavitkutin_frozen_authors::*, hilavitkutin_frozen_implementors::*", reason = "the laws are functions over plain data and import no runner, no frozen crate and no legacy crate" },
+    # A frozen crate is written as a consumer would write it, from the
+    # contracts alone.
+    { scope = "hilavitkutin-frozen-*", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_api_macros::*, hilavitkutin_build::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*, hilavitkutin_str::*, hilavitkutin_sym::*, hilavitkutin_kit::*, hilavitkutin_providers::*, hilavitkutin_linking::*, hilavitkutin_extensions::*, hilavitkutin_reference::*, hilavitkutin_laws::*, hilavitkutin_frozen_authors::*, hilavitkutin_frozen_implementors::*, notko::*, notko_hlist::*, arvo::*", reason = "a frozen crate imports hilavitkutin_contracts only" },
+
 ]
 
 # --- Built-in mockspace lints that don't apply to hilavitkutin -------------

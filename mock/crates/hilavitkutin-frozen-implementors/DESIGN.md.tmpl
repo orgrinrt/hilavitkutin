@@ -1,0 +1,15 @@
+# hilavitkutin-frozen-implementors, Design Overview
+
+These are implementors as a consumer would write them, from the contracts alone, kept frozen so that a later change to the contracts or the plumbing shows up as a change they would need. A frozen file is edited before its form locks only in a commit that updates its ledger hash, raises its breaks count and adds a line to `BREAKS.toml`; after the lock it is not edited, and a changed form arrives as new files beside the old.
+
+`#![no_std]`, no alloc, no `unsafe`, no `#![feature]`. Depends on `hilavitkutin-contracts` alone. Neither store compares formats: the bind did, once.
+
+## The stores
+
+`Columns` keeps `COLUMNS` stored columns of up to `CAP` records, each column one contiguous run of cells, committed and staged as two whole tables that trade places on a swap. `Records` keeps each record's cells side by side, the record at position `at` in slot `extent - 1 - at`, in two buffers with a flag saying which is committed. Both keep a table of the shape's keys in key order and answer a neighbour read by walking the domain's `reach` and halving that table. Both mark the columns a step wrote and carry the rest across the swap.
+
+Each has an inherent `poison_staged`, filling the staged storage with one word, which is how frame isolation is tested; `set` and `cell` load and read committed cells by position for tests.
+
+## The visiting orders
+
+`Forward` visits every position in key order. `Permuted` visits position `(a * i + b) mod extent` at step `i`, `a` coprime with the extent and both drawn from its seed. Both cut the sequence into morsels of the asked size, the last short; a size of zero is the whole.

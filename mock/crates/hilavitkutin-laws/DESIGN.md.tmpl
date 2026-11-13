@@ -1,0 +1,21 @@
+# hilavitkutin-laws, Design Overview
+
+A law is stated over what a run produced, written down as words, so that it reads the same over any runner and does not depend on one. Each law returns a `Verdict`: it holds, or it fails with a `Witness` naming the first record and word that differ. Every law has a mutant, kept in the tests of the runner it was written for, that it must fail, and the test asserts the failing verdict rather than a panic.
+
+`#![no_std]`, no alloc. Depends on `hilavitkutin-contracts` for its words and numbers, and on no runner.
+
+## The laws of this step
+
+B1, `model`: a run's written cells after every frame equal the model's. Its mutant is a store that drops its write to the last record.
+
+B2, `morsel_split_and_order`: the digest streams of runs differing only in morsel size, visiting order or store layout are equal. Its mutant is a store whose staged column is its committed one, which updates in place and so reads its own writes in an order the visiting order decides.
+
+B3, `frame_isolation`: a step leaves the committed cells as it found them, and two runs from one committed state whose staged storage was filled with different words before the step commit equal cells. Its mutants are the in-place store, which fails the first clause, and a store that serves reads from its staged column, which fails the second.
+
+## The ledger check
+
+A frozen crate keeps a `LEDGER.toml` with one line per source file (its path, its form, its content hash, a count of breaks and whether it is locked) and a `BREAKS.toml` with one line per edit of a ledgered file before its form locks. `ledger::check` rebuilds each hash from its file and refuses a mismatch, a breaks count that differs from the edits recorded for the file, and a locked line whose count differs from the one recorded at its lock. The content hash is FNV-1a over the file's bytes, independent of the run digest. The `ledger_test` macro is what each frozen crate's `tests/ledger.rs` expands, adding a refusal for a source file with no line.
+
+## Principles
+
+`#![no_std]` and no alloc: a law reads slices the caller holds. No law names a runner, a store or a kernel.

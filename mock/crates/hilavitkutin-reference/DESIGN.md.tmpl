@@ -1,0 +1,17 @@
+# hilavitkutin-reference, Design Overview
+
+The reference runner is the simplest runner the contracts allow, and it stays that way: no fusion, no threads, no reordering. Every other runner is checked by running it beside this one and comparing digests, so its worth is in being obviously right rather than fast. It reaches the store through the contracts only, which also makes it the harness a store is checked in.
+
+`#![no_std]`, no alloc. Depends on `hilavitkutin-contracts` alone.
+
+## A frame
+
+`step` hands every unit of a checked table, in table order, every record the visiting order gives, in its order and morsels. For each record the unit's reads are gathered from the committed view, its kernel's `at` is called, and its writes are scattered to the staged columns. `swap` makes the staged columns committed. `digest` folds the frame's number and then, unit by unit in table order and record by record in key order, the value of each column the unit writes.
+
+## A run
+
+`run` is a library function: it takes a `Bound`, a store, a visiting order, a morsel size and a frame count, and does that many frames, keeping each frame's digest in a `Run`, which holds storage the caller lends. A full `Run` is refused as a `Refusal` value before the frame that would not fit runs, so the store is as the last digested frame left it. From roadmap step HL0b the close returns its own refusal; this round has no close.
+
+## Principles
+
+`#![no_std]` and no alloc: the digests live in caller-lent storage. Monomorphisation is the dispatch: the runner is a `UnitFn` and a `Visitor`, so it calls each kernel as a type.

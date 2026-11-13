@@ -14,9 +14,19 @@ apply_to: ["**/Cargo.toml"]
 
 ### Crate structure
 
-Twelve crates total: ten plain `rlib` crates plus two proc-macro
-crates. Flat structure.
+Eighteen crates total: sixteen plain `rlib` crates plus two
+proc-macro crates. Flat structure.
 
+- `hilavitkutin-contracts` is the contract crate new work is written
+ against: domains, the value kernel, the bind, the store. Traits and
+ data shapes only; no runner.
+- `hilavitkutin-reference` is the one-thread runner kept as the
+ oracle. `hilavitkutin-laws` holds the laws as functions over plain
+ data. `hilavitkutin-frozen-authors` and
+ `hilavitkutin-frozen-implementors` hold frozen kernels and stores
+ under a ledger (`LEDGER.toml`, `BREAKS.toml`).
+- `hilavitkutin-api` is the legacy contract until the engine is
+ ported onto `hilavitkutin-contracts`, and is then removed.
 - `hilavitkutin-api` is the consumer-facing contract crate. Traits
  and data shapes only; no concrete engine logic.
 - `hilavitkutin-api-macros` is the proc-macro companion to
@@ -89,6 +99,12 @@ reinventing descriptor formats.
 
 ### Dependency direction
 
+- The five loop-core crates depend on no legacy crate: none imports
+ `hilavitkutin` or `hilavitkutin-api`. `hilavitkutin-contracts`
+ depends on notko and notko-hlist only. The frozen crates depend on
+ `hilavitkutin-contracts` only. `hilavitkutin-laws` depends on the
+ contracts and on no runner. `hilavitkutin-reference` depends on the
+ contracts.
 - `hilavitkutin-api`: no hilavitkutin crate deps. May depend on
  arvo if it needs numeric types. Must never depend on
  `hilavitkutin` (circular).

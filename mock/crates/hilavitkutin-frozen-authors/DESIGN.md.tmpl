@@ -1,0 +1,15 @@
+# hilavitkutin-frozen-authors, Design Overview
+
+These are authors as a consumer would write them, from the contracts alone, kept frozen under the same ledger rule as the frozen implementors so that a contract change an author would feel is seen as one. Each kernel sits beside a model, a plain function over arrays written without the contracts, and every run of the kernel is held equal to it.
+
+`#![no_std]`, no alloc, no `unsafe`, no `#![feature]`, no `recursion_limit`, and no turbofish on an item a file did not declare. Depends on `hilavitkutin-contracts` alone.
+
+## Plane
+
+`Plane` is a domain of two axes. A key is a `Spot`, a place on each axis, ordered north first and then east; a shape is an `Extent`, how many places along each axis; a step is a `Toward`, a `Shift` along each axis. `East`, `West`, `North` and `South` are its offsets, one place along one axis.
+
+## Author 1, Diffuse
+
+`Diffuse` is a value kernel generic over its lane `L`. It reads `Own<Heat<L>>`, the neighbour on each side along each of the two axes as `Near` members, and one `Param<Rate<L>>`, and writes `Own<Heat<L>>`. The new heat is the old heat plus the east and north neighbours' heat, minus the west and south neighbours', plus the rate: six terms summed exactly in the lane's accumulator with `widen`, `wide_add` and `wide_sub`, and adapted back once with `narrow`. A neighbour outside the plane reads as the lane's zero. Its `ID` asserts at build time that the six terms fit the lane's term bound.
+
+The model, `model::diffuse`, takes a grid of signed integers of a given width, treats a neighbour off the grid as zero, sums in 128 bits and clamps back to the width. It is written without the contracts, so a defect shared by the kernel and the contracts cannot hide in both.

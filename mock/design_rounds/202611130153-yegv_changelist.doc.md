@@ -36,11 +36,11 @@ The crate layout table (lines 12 to 26) gains five rows. The dependency graph (l
 
 Its README opens by saying it is the legacy contract, kept until the port and then removed, and names `hilavitkutin-contracts` as the contract new work is written against. Ticket `083903437698` owns the removal.
 
-## CHANGE: the agent templates count seventeen crates
+## CHANGE: the agent templates count eighteen crates
 
 **Files:** `mock/agent/` templates naming the crate count or the crate table
 
-They say twelve crates; they gain the five and the same dependency statements as the root design.
+They say twelve crates, a count already one short of the thirteen in the tree (`hilavitkutin-sym` was not counted); they say eighteen, gain a loop-core grouping, and gain the same dependency statements as the root design.
 
 ## CHANGE: `mockspace.toml`, forbidden imports and three lints
 
