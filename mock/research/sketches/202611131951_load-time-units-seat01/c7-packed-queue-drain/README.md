@@ -18,8 +18,8 @@ exists, not that the engine has it).
 | Test | Result | Closes that lost a write |
 |---|---|---|
 | `a_single_drainer_loses_nothing` | green | 0 |
-| `two_drainers_split_by_queue_position_lose_nothing` | red | 132462 (43603 on an earlier run) |
-| `two_drainers_split_by_record_at_68_lose_nothing` | red | 148774 (166523 on an earlier run) |
+| `two_drainers_split_by_queue_position_lose_nothing` | red | 79522 (43603 and 132462 on earlier runs) |
+| `two_drainers_split_by_record_at_68_lose_nothing` | red | 155965 (166523 and 148774 on earlier runs) |
 | `two_drainers_split_by_record_at_64_lose_nothing` | green | 0 |
 | `two_drainers_split_by_queue_position_with_fetch_or_lose_nothing` | green | 0 |
 
@@ -32,5 +32,5 @@ one bit written with overwrite semantics would need a compare-and-swap loop and 
 on the same record, which this spike does not test.
 
 Run: `cargo +nightly-2026-05-28 test --release --no-fail-fast -- --test-threads=1 --nocapture` in
-this directory. Output: `OUTPUT-tests.txt` (the second run; the counts vary run to run, the zeros do
+this directory. Output: `OUTPUT-tests.txt` (the third run; the counts vary run to run, the zeros do
 not).
