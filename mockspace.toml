@@ -522,7 +522,7 @@ name = "stamped_by"
 type = "string"
 required = false
 values = ["coordinators", "experts", "maintainer"]
-description = "On a provisional row: who stamped it while the maintainer was away, `coordinators` where the coordinators converged on it, `experts` where two domain experts agreed after a panel stretch, and `maintainer` where the maintainer himself directed the row onto a stamp, with his passage cited in `stamp`. Written with `stamp` and never without it."
+description = "On a provisional row nothing supersedes, and on no other: who stamped it while the maintainer was away, `coordinators` where the coordinators converged on it, `experts` where two domain experts agreed after a panel stretch, and `maintainer` where the maintainer himself directed the row onto a stamp, with his passage cited in `stamp`. Written with `stamp` and never without it."
 
 [[registry.namespace.field]]
 name = "stamp"
@@ -609,12 +609,6 @@ name = "answered_from"
 type = "string[]"
 required = false
 description = "On a question answered by default from the written history: the passages that hold the maintainer's answer, one entry each as `<kind>: <path>:<first>-<last>`, with the kinds of a tenet's `ratified_from`."
-
-[[registry.namespace.field]]
-name = "stamp"
-type = "string"
-required = false
-description = "On an open question the maintainer was not asked: the stamp it stays open on, with the date and the words that allow it."
 
 # --- the workflow pack's namespaces ------------------------------------------
 #

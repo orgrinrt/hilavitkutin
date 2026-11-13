@@ -118,7 +118,6 @@ id = "which_figure_the_sorting_claim_in_the_distilled_rules_holds_and_which_base
 asks = "The distilled T7 text carries known inconsistencies: which figure holds for the 10.7% sorting claim, and which baseline do the comparisons use?"
 options = ["the sorting claim is 4.8% against compiled", "the sorting claim is 10.7% against write-sized", "baselines differ between sections, 37.4ms in one and 40.4ms in another"]
 state = "open"
-stamp = 'open, 2026-11-13: the written history does not answer it in the words of op and nothing read shows its sides to be against each other, so it stays open on a stamp under his words "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2384-2386"
 quote = '''
 T7 was distilled from T6 only. Known inconsistencies:
@@ -258,7 +257,6 @@ id = "whether_per_fiber_windowing_re_walks_the_trunk_carrier_per_fiber_or_enters
 asks = "Per-fiber windowed dispatch on the flat carrier either re-walks the carrier for every fiber and window or enters a fiber's members directly. Which does the design hold?"
 options = ["A2b should prefer a DIRECT per-fiber entry (walk to the fiber's members once, then loop windows there) over re-walking the full carrier per fiber", "Serving per-fiber locality on a flat carrier costs re-walks, and that cost is inherent rather than incidental; it cannot be folded away inside this mechanism"]
 state = "open"
-stamp = 'open, 2026-11-13: the written history does not answer it in the words of op and nothing read shows its sides to be against each other, so it stays open on a stamp under his words "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
 source = "mock/research/sketches/202606202100_a2a-per-fiber-morsel-loop/FINDINGS.md:68-73, mock/research/sketches/202607191200_a4-fibercons-nest-wireability/FINDINGS.md:58-72, mock/research/sketches/202607191200_a4-fibercons-nest-wireability/FINDINGS.md:88-92"
 quote = '''
 - **Re-walk cost.** Driving the per-trunk carrier per fiber re-walks the whole carrier
