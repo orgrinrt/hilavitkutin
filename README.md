@@ -44,7 +44,7 @@ note: Impl one of the dispatch-determining sub-traits on `Foo`: `Resource` / `Co
 
 Order of registration matters for the type-level proof. A Kit whose WorkUnits read from another Kit's owned state must come after the owning Kit in the chain. The builder accepts any order that satisfies the proof; the diagnostic pinpoints what is missing when it does not.
 
-Once `.build()` returns, the resulting `Scheduler` is the runtime handle. Its type parameters carry the run config, the unit and store values, the column storage, the plan dimensions, the store access set and the clock; most are defaulted, and the ones that matter are inferred from the builder chain. For stores marked `Replaceable`, `Scheduler::replace_resource::<T>` allows targeted resource swaps between runs.
+Once `.build()` returns, the resulting `Scheduler` is the runtime handle. Its type parameters carry the run config, the unit and store values, the column storage, the plan dimensions, the store access set and the clock; most are defaulted, and the ones that matter are inferred from the builder chain. `Scheduler::replace_resource::<T>` and `Scheduler::replace_value::<T>` mark a store changed for the next frame; they do not yet install the new value, which is listed under Status.
 
 ## Plan and runtime
 
@@ -188,7 +188,7 @@ files that exercise the atomic-ordering paths.
 
 ## Status
 
-Design is mature across the engine, the plugin-host layer, and the standalone ecosystem crates; implementation status varies per crate. The plugin-host layer (linking + extensions + extensions-macros) is implemented. The api crate and the standalone ecosystem extensions (ctx, str, persistence, providers) are partially implemented. The engine's runtime modules ship and the engine's tests run them: the plan analysis chain, the adapt subsystem, the thread pool, the morsel loop and resource resolution. Plan caching, the lowered core dispatch and replacing a resource's value after build are not final. hilavitkutin-build runs as a build-dependency stub today; full wrapper script generation and config schema are deferred to follow-up rounds.
+Design is mature across the engine, the plugin-host layer, and the standalone ecosystem crates; implementation status varies per crate. The plugin-host layer (linking + extensions + extensions-macros) is implemented. The api crate and the standalone ecosystem extensions (ctx, str, persistence, providers) are partially implemented. The engine's runtime modules ship and the engine's tests run them: the plan analysis chain, the adapt subsystem, the thread pool, the morsel loop and resource resolution. Plan caching, the lowered core dispatch, the default worker executor (it returns without running a program) and installing a replaced resource's value after build are not final. hilavitkutin-build runs as a build-dependency stub today; full wrapper script generation and config schema are deferred to follow-up rounds.
 
 Public names may change; renames ship cleanly without deprecation aliases. Several pieces gate on unstable rustc features: `const_trait_impl`, `adt_const_params`, `generic_const_exprs`, `marker_trait_attr` for the trait solver work, plus `-Z config-include` for the build crate.
 
