@@ -1,4 +1,8 @@
 [workspace]
+# `variant-path` is a workspace root of its own, so that `resource_storage`,
+# which is also one, can depend on it by path. It is a dev-dependency here
+# rather than a member.
+exclude = ["variant-path"]
 
 [package]
 name = "benches"
@@ -19,9 +23,14 @@ name = "asm_gate"
 path = "src/bin/asm_gate.rs"
 
 [dependencies]
-mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev", features = ["std"] }
-mockspace-bench-harness = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev" }
-mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev" }
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "a81e1956361a205261b90e5214dde932db4f1913", features = ["std"] }
+mockspace-bench-harness = { git = "https://github.com/hiisi-digital/mockspace", rev = "a81e1956361a205261b90e5214dde932db4f1913" }
+mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", rev = "a81e1956361a205261b90e5214dde932db4f1913" }
+
+# Tests only: the driver itself never shapes a variant path, and this crate
+# holds both the rule it has to keep and the shaping it must not go back to.
+[dev-dependencies]
+variant-path = { path = "variant-path" }
 
 [profile.release]
 opt-level = 3
