@@ -64,3 +64,9 @@ arvo-bitmask = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e9
 opt-level = 3
 lto = "fat"
 codegen-units = 1
+
+# The pinned arvo crates name notko by its `ssh` spelling; the patch points
+# that spelling at the `https` source the engine names, so the graph holds one
+# notko (the same patch as mock/Cargo.toml).
+[patch."ssh://git@github.com/orgrinrt/notko.git"]
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev" }
