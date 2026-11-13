@@ -1,0 +1,4 @@
+bytes: 3157
+exports: [{"name":"memory","kind":"memory"},{"name":"out_ptr","kind":"function"},{"name":"run_case_export","kind":"function"},{"name":"status_ptr","kind":"function"}]
+imports: []
+exit=0

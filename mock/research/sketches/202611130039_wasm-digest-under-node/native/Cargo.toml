@@ -1,0 +1,15 @@
+[package]
+name = "wasm-digest-native"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[features]
+control-usize-len = ["wasm-digest-kernel/control-usize-len"]
+
+[dependencies]
+wasm-digest-kernel = { path = "../kernel" }
+
+[[bin]]
+name = "wasm-digest-native"
+path = "src/main.rs"
