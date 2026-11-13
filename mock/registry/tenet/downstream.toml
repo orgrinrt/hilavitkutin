@@ -52,8 +52,8 @@ get the live buffer (exclusive).
 origin = "proposed"
 written_by = "the research note loimu-storage of the founding round, describing loimu"
 standing = "provisional"
-stamped_by = "experts"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["loimu", "double-buffered", "frozen", "live", "snapshot", "previous pass", "reader", "writer"]
 related = ["tenet::loimu_keeps_its_seven_access_modes_and_maps_them_to_read_and_write_at_the_boundary"]
 
@@ -72,8 +72,8 @@ quote = '''
 origin = "proposed"
 written_by = "the research note loimu-synthesis of the founding round, its portability ratings"
 standing = "provisional"
-stamped_by = "experts"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["SwapBuffer", "Exchange", "Snapshot", "double-buffering", "portable", "loimu", "column data"]
 related = ["tenet::loimu_double_buffers_record_data_and_its_readers_get_the_frozen_snapshot"]
 
@@ -91,8 +91,8 @@ stay in loimu. hilavitkutin provides the foundation they build on.
 origin = "proposed"
 written_by = "the founding-round research note on loimu's storage, 202603141800"
 standing = "provisional"
-stamped_by = "experts"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["loimu", "temporal columns", "seven access modes", "layers", "foundation", "primitives"]
 related = ["tenet::loimu_keeps_its_seven_access_modes_and_maps_them_to_read_and_write_at_the_boundary", "question::whether_hilavitkutin_s_own_columns_are_double_buffered"]
 
@@ -109,8 +109,8 @@ Downstream consumer applications layer on top of hilavitkutin: signal / DAG fram
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
 standing = "provisional"
-stamped_by = "experts"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["downstream consumers", "signal frameworks", "DAG frameworks", "language runtimes", "pipeline-shaped workloads", "register units", "plan dispatch adapt loop"]
 
 [[tenet]]
@@ -146,8 +146,8 @@ quote = '''
 origin = "proposed"
 written_by = "ikiuni's canonical design, 000_FUNDAMENTALS_INDEX, at orgrinrt/ikiuni dev 634be3b; ikiuni's, a reference, not hilavitkutin's record"
 standing = "provisional"
-stamped_by = "experts"
-stamp = 'provisional, 2026-11-13: a reference from ikiuni and no part of the record of hilavitkutin, so the written history of hilavitkutin was not asked about it (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: a reference from ikiuni and no part of the record of hilavitkutin, so the written history of hilavitkutin was not asked about it (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["ikiuni", "double buffer", "frame barrier", "mutation", "previous committed frame", "next frame", "swap", "reference"]
 related = ["tenet::loimu_double_buffers_record_data_and_its_readers_get_the_frozen_snapshot"]
 
@@ -169,8 +169,8 @@ quote = '''
 origin = "proposed"
 written_by = "ikiuni's imported design history, settling 200 engine std of 2026-06-19, at orgrinrt/ikiuni dev 634be3b; ikiuni's, a reference, not hilavitkutin's record"
 standing = "provisional"
-stamped_by = "experts"
-stamp = 'provisional, 2026-11-13: a reference from ikiuni and no part of the record of hilavitkutin, so the written history of hilavitkutin was not asked about it (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: a reference from ikiuni and no part of the record of hilavitkutin, so the written history of hilavitkutin was not asked about it (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["ikiuni", "frame-close", "frame-open", "bracket", "tick loop", "swap", "double buffer", "who rotates", "reference"]
 related = ["tenet::ikiuni_s_design_applies_every_change_at_the_frame_barrier_by_a_double_buffer_swap"]
 
@@ -191,8 +191,8 @@ quote = '''
 '''
 origin = "stated"
 standing = "provisional"
-stamped_by = "experts"
-stamp = 'provisional, 2026-11-13: a reference from ikiuni and no part of the record of hilavitkutin, so the written history of hilavitkutin was not asked about it (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: a reference from ikiuni and no part of the record of hilavitkutin, so the written history of hilavitkutin was not asked about it (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["ikiuni", "bevy", "bevy_ecs", "hilavitkutin stack", "not ready", "user call", "reference"]
 
 [[tenet]]
@@ -211,7 +211,7 @@ quote = '''
 '''
 origin = "stated"
 standing = "provisional"
-stamped_by = "experts"
-stamp = 'provisional, 2026-11-13: a reference from ikiuni and no part of the record of hilavitkutin, so the written history of hilavitkutin was not asked about it (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: a reference from ikiuni and no part of the record of hilavitkutin, so the written history of hilavitkutin was not asked about it (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["ikiuni", "contract", "swappable engine", "bevy", "hilavitkutin stack", "user call", "reference"]
 related = ["tenet::ikiuni_chose_bevy_s_ecs_because_the_hilavitkutin_stack_was_not_ready"]

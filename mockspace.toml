@@ -472,7 +472,7 @@ description = "The tenets that replace this one. A superseded tenet is kept rath
 name = "standing"
 type = "string"
 required = true
-description = "`provisional` where the maintainer has not ratified it and lets it stand as the best current statement: it binds, and is never cited as settled. A provisional row that carries a stamp (`stamped_by` and `stamp`) binds nothing: a stamp is never a ratification, and every provisional row of this registry carries one. `held` where the written history does not back it or a word of the maintainer stands against it, so it is held for him, listed with its finding in `mock/research/202611130850_the-record-read-whole/ROWS-FOR-OP.md`: shown and searched, binding nothing, and carrying no stamp. `ratified` where the maintainer went through it on a named date, with their answer in the row's `answers`, or where the written history shows its content to be the maintainer's own and it is ratified by default under their words of 13 November 2026, which `ratified_by` quotes and `ratified_from` gives the passages for. `demoted` where it is kept as reference and binds nothing. Apart from `superseded_by`: a superseded row does not bind whatever its standing."
+description = "`provisional` where the maintainer has not ratified it and lets it stand as the best current statement: it binds, and is never cited as settled. A provisional row may carry a stamp (`stamped_by` and `stamp`), and binds as provisional does: a stamp is as good as the maintainer's word for now and never a ratification. `held` where the written history does not back it or a word of the maintainer stands against it, so it is held for him, listed with its finding in `mock/research/202611130850_the-record-read-whole/ROWS-FOR-OP.md`: shown and searched, binding nothing, and carrying no stamp. `ratified` where the maintainer went through it on a named date, with their answer in the row's `answers`, or where the written history shows its content to be the maintainer's own and it is ratified by default under their words of 13 November 2026, which `ratified_by` quotes and `ratified_from` gives the passages for. `demoted` where it is kept as reference and binds nothing. Apart from `superseded_by`: a superseded row does not bind whatever its standing."
 values = ["provisional", "ratified", "held", "demoted"]
 
 [[registry.namespace.field]]
@@ -521,14 +521,14 @@ description = "The passages a ratification by default rests on, one entry each a
 name = "stamped_by"
 type = "string"
 required = false
-values = ["coordinators", "experts"]
-description = "On a provisional row: who stamped it while the maintainer was away, `coordinators` where the coordinators converged on it and `experts` where readers of the record found nothing of his standing against it. Written with `stamp` and never without it."
+values = ["coordinators", "experts", "maintainer"]
+description = "On a provisional row: who stamped it while the maintainer was away, `coordinators` where the coordinators converged on it, `experts` where two domain experts agreed after a panel stretch, and `maintainer` where the maintainer himself directed the row onto a stamp, with his passage cited in `stamp`. Written with `stamp` and never without it."
 
 [[registry.namespace.field]]
 name = "stamp"
 type = "string"
 required = false
-description = "On a provisional row: what was stamped and why, with the date, the words of the maintainer that allow it, the passages read and the question ticket that asks him to make it formal, in backticks after the word `ticket`. A stamp is never a ratification: the row keeps its standing, binds nothing, and the maintainer's answer can overturn it."
+description = "On a provisional row: what was stamped and why, with the date, the words of the maintainer that allow it, the passages read and the question ticket that asks him to make it formal, in backticks after the word `ticket`. A stamp is never a ratification: the row keeps its standing, binds as provisional does, is never cited as settled, and the maintainer's answer can overturn it."
 
 
 [[registry.namespace]]

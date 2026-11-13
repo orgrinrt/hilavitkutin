@@ -477,8 +477,8 @@ phase sync points.
 '''
 origin = "stated"
 standing = "provisional"
-stamped_by = "experts"
-stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:20-32, row the_pool_is_the_consumer_s_executor_and_the_engine_hands_it_its_closures_once_on_the_first_parallel_run), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:20-32, row the_pool_is_the_consumer_s_executor_and_the_engine_hands_it_its_closures_once_on_the_first_parallel_run), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5), and asked of the maintainer in ticket `86aa80598714`'
 keywords = ["no scheduler loop", "no work queues", "spawn N threads", "join", "compiled program", "phase sync"]
 
 [[tenet]]
