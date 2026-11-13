@@ -1356,6 +1356,8 @@ Every engine fold that reads a unit's lists (the access masks in
 for, so the planner's steps see a wrapper as its store. Two things are
 read from the wrapper itself. A const assertion at `build` refuses a unit
 whose write mask holds a plain column its read list names with a reach.
+The assertion folds the masks at the dimensions `build` computes the plan
+at, which it is handed and does not name for itself.
 And a read-after-write edge into a read with a reach is a phase boundary:
 the writer's whole range lands, on every core, before the reader's phase
 starts. The plan already keeps work that needs all of its input before
@@ -1364,6 +1366,17 @@ boundary, since the writer's records on other cores are part of that
 input. Neither holds for a buffered column. A reach over one reads the
 frozen side, which no unit of the pass writes, so the unit may write the
 store it reads with a reach and no boundary is asked for.
+
+The boundary holds on every path that hands the record range to more than
+one core. The phase loop of `run_parallel` keeps it by the barrier between
+two phases. A carrier with an accumulator takes the unit-outer path, where
+each core walks the whole carrier over its own slice of the records and no
+phase loop runs, so there the walk is cut ahead of each consumer unit that
+reads with a reach behind a writer: every core finishes the units before
+the cut on its slice and crosses the same barrier the phases use, and only
+then does any core start the reader. Where the cuts fall is a property of
+the registered units and folds at compile time, so a carrier with no such
+reader walks as it did and crosses no barrier.
 
 The close is the ScheduleEnd meta band and needs no walk of its own. What
 the api asks for it is the cross-rank sequence of plan step 1, the close
