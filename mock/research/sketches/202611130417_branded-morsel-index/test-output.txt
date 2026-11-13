@@ -1,7 +1,6 @@
-    Blocking waiting for file lock on build directory
    Compiling engine v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611130417_branded-morsel-index/engine)
    Compiling author v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611130417_branded-morsel-index/author)
-    Finished `test` profile [unoptimized] target(s) in 3m 24s
+    Finished `test` profile [unoptimized] target(s) in 0.18s
      Running unittests src/lib.rs (/home/user/target/debug/deps/author-c4964363907590bc)
 
 running 0 tests
@@ -11,10 +10,7 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
      Running tests/fixtures.rs (/home/user/target/debug/deps/fixtures-f7a93c40ac046314)
 
 running 1 test
-   Compiling engine v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611130417_branded-morsel-index/engine)
-   Compiling author v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611130417_branded-morsel-index/author)
-   Compiling author-tests v0.0.0 (/home/user/target/tests/trybuild/author)
-    Finished `dev` profile [unoptimized] target(s) in 0.13s
+    Finished `dev` profile [unoptimized] target(s) in 0.02s
 
 
 test tests/ui/fail/01_two_indices_are_compared_for_equality.rs [should fail to compile] ... ok
@@ -49,16 +45,16 @@ test tests/ui/pass/13_an_index_is_forged_by_unsafe_code.rs [should pass] ... ok
 
 test every_refusal_holds_and_every_twin_runs ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.44s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.80s
 
      Running tests/run.rs (/home/user/target/debug/deps/run-da281474ce4ff231)
 
 running 5 tests
+test below_max_takes_each_morsels_own_largest ... ok
 test columns_of_unequal_length_are_refused ... ok
 test counting_along_the_indices_reaches_a_position ... ok
-test below_max_takes_each_morsels_own_largest ... ok
-test double_writes_each_row_doubled ... ok
-test previous_keeps_an_index_across_rows_of_one_morsel ... ok
+test previous_keeps_an_index_across_records_of_one_morsel ... ok
+test double_writes_each_record_doubled ... ok
 
 test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 

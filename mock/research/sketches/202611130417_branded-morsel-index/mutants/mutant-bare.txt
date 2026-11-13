@@ -1,13 +1,13 @@
    Compiling engine v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611130417_branded-morsel-index/engine)
    Compiling author v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611130417_branded-morsel-index/author)
-    Finished `test` profile [unoptimized] target(s) in 0.22s
+    Finished `test` profile [unoptimized] target(s) in 0.20s
      Running tests/fixtures.rs (/home/user/target/debug/deps/fixtures-8bddc23a3da54484)
 
 running 1 test
    Compiling engine v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611130417_branded-morsel-index/engine)
    Compiling author v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611130417_branded-morsel-index/author)
    Compiling author-tests v0.0.0 (/home/user/target/tests/trybuild/author)
-    Finished `dev` profile [unoptimized] target(s) in 0.14s
+    Finished `dev` profile [unoptimized] target(s) in 0.12s
 
 
 test tests/ui/fail/01_two_indices_are_compared_for_equality.rs [should fail to compile] ... error
@@ -128,12 +128,14 @@ test tests/ui/fail/11_an_index_is_forged_by_a_struct_literal.rs [should fail to 
 EXPECTED:
 ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 error[E0451]: fields `at` and `brand` of struct `engine::Index` are private
-  --> tests/ui/fail/11_an_index_is_forged_by_a_struct_literal.rs:17:48
+  --> tests/ui/fail/11_an_index_is_forged_by_a_struct_literal.rs:18:21
    |
-17 |                 let probe: Index<'_> = Index { at: 0, brand: PhantomData };
-   |                                                ^^     ^^^^^ private field
-   |                                                |
-   |                                                private field
+17 |                 let probe: Index<'_> = Index {
+   |                                        ----- in this type
+18 |                     at:    0,
+   |                     ^^ private field
+19 |                     brand: PhantomData,
+   |                     ^^^^^ private field
 ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
 ACTUAL OUTPUT:
@@ -141,7 +143,7 @@ ACTUAL OUTPUT:
 error[E0071]: expected struct, variant or union type, found `usize`
   --> tests/ui/fail/11_an_index_is_forged_by_a_struct_literal.rs:17:40
    |
-17 |                 let probe: Index<'_> = Index { at: 0, brand: PhantomData };
+17 |                 let probe: Index<'_> = Index {
    |                                        ^^^^^ not a struct
 ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 note: If the actual output is the correct output you can bless it by rerunning
@@ -152,12 +154,14 @@ test tests/ui/fail/12_an_index_is_forged_through_a_foreign_trait_impl.rs [should
 EXPECTED:
 ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 error[E0451]: fields `at` and `brand` of struct `engine::Index` are private
-  --> tests/ui/fail/12_an_index_is_forged_through_a_foreign_trait_impl.rs:17:17
+  --> tests/ui/fail/12_an_index_is_forged_through_a_foreign_trait_impl.rs:18:13
    |
-17 |         Index { at: 0, brand: PhantomData }
-   |                 ^^     ^^^^^ private field
-   |                 |
-   |                 private field
+17 |         Index {
+   |         ----- in this type
+18 |             at:    0,
+   |             ^^ private field
+19 |             brand: PhantomData,
+   |             ^^^^^ private field
 ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
 ACTUAL OUTPUT:
@@ -165,7 +169,7 @@ ACTUAL OUTPUT:
 error[E0071]: expected struct, variant or union type, found `usize`
   --> tests/ui/fail/12_an_index_is_forged_through_a_foreign_trait_impl.rs:17:9
    |
-17 |         Index { at: 0, brand: PhantomData }
+17 |         Index {
    |         ^^^^^ not a struct
 ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 note: If the actual output is the correct output you can bless it by rerunning
@@ -194,7 +198,7 @@ failures:
 
 ---- every_refusal_holds_and_every_twin_runs stdout ----
 
-thread 'every_refusal_holds_and_every_twin_runs' (4808) panicked at /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/trybuild-1.0.122/src/run.rs:103:13:
+thread 'every_refusal_holds_and_every_twin_runs' (8693) panicked at /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/trybuild-1.0.122/src/run.rs:103:13:
 13 of 28 tests failed
 stack backtrace:
    0: __rustc::rust_begin_unwind
@@ -211,6 +215,6 @@ note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose bac
 failures:
     every_refusal_holds_and_every_twin_runs
 
-test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.81s
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.49s
 
 error: test failed, to rerun pass `-p author --test fixtures`

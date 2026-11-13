@@ -14,13 +14,13 @@ pub(crate) type Brand<'b> = PhantomData<fn(&'b ()) -> &'b ()>;
 #[cfg(feature = "mutant-covariant")]
 pub(crate) type Brand<'b> = PhantomData<&'b ()>;
 
-/// One row of a morsel, as an opaque brand.
+/// One record of a morsel, as an opaque brand.
 ///
 /// Built only by `Indices`, which only `Block::indices` makes. Its fields are
 /// private and it derives nothing past `Clone` and `Copy`: no `PartialEq`,
 /// `PartialOrd`, `Hash`, `Debug`, arithmetic, or conversion to or from an
 /// integer. The perimeter is the type's own surface; what an author can learn
-/// from the order `Indices` yields in is outside it (FINDINGS.md).
+/// from the sequence `Indices` yields in is outside it (FINDINGS.md).
 #[cfg(not(feature = "mutant-bare"))]
 #[derive(Clone, Copy)]
 pub struct Index<'b> {
@@ -59,7 +59,7 @@ pub(crate) const fn at(index: Index<'_>) -> usize {
     index
 }
 
-/// Every row of one morsel, under its brand, in an order the engine chooses.
+/// Every record of one morsel, under its brand, in a sequence the engine chooses.
 pub struct Indices<'b> {
     next:  usize,
     end:   usize,

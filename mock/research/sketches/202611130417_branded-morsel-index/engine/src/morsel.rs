@@ -6,7 +6,7 @@ use core::num::NonZeroUsize;
 
 use crate::index::{Brand, Index, Indices, at};
 
-/// One morsel: a run of rows of one read column and one write column, of
+/// One morsel: a run of records of one read column and one write column, of
 /// equal length, which `Morsels` alone builds.
 pub struct Morsel<'m, R, W> {
     read:  &'m [R],
@@ -26,10 +26,10 @@ impl<'m, R, W> Morsel<'m, R, W> {
     where
         F: for<'b> FnOnce(Block<'_, 'b, R, W>) -> O,
     {
-        let rows = self.read.len();
+        let records = self.read.len();
         f(Block {
             read:  self.read,
-            write: &mut self.write[.. rows],
+            write: &mut self.write[.. records],
             brand: PhantomData,
         })
     }
@@ -48,13 +48,13 @@ pub struct Block<'x, 'b, R, W> {
 }
 
 impl<'x, 'b, R, W> Block<'x, 'b, R, W> {
-    /// Every row of the morsel, under this block's brand.
+    /// Every record of the morsel, under this block's brand.
     #[inline]
     pub const fn indices(&self) -> Indices<'b> {
         Indices::new(self.read.len())
     }
 
-    /// The read column at one row.
+    /// The read column at one record.
     #[inline]
     pub fn read(&self, index: Index<'b>) -> R
     where
@@ -63,7 +63,7 @@ impl<'x, 'b, R, W> Block<'x, 'b, R, W> {
         self.read[at(index)]
     }
 
-    /// Writes the write column at one row.
+    /// Writes the write column at one record.
     #[inline]
     pub fn write(&mut self, index: Index<'b>, value: W) {
         self.write[at(index)] = value;
@@ -77,7 +77,7 @@ pub struct Unequal {
     pub write: usize,
 }
 
-/// A read column and a write column, cut into morsels of `len` rows, the last
+/// A read column and a write column, cut into morsels of `len` records, the last
 /// one shorter where `len` does not divide them.
 pub struct Morsels<'m, R, W> {
     read:  &'m [R],
@@ -131,7 +131,7 @@ pub trait BlockKernel<R, W> {
     fn block(&self, morsel: Morsel<'_, R, W>);
 }
 
-/// The reference runner: one thread, the morsels in order.
+/// The reference runner: one thread, the morsels one after another.
 pub fn run<R, W, K>(
     kernel: &K,
     read: &[R],

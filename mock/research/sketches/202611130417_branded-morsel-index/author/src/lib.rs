@@ -1,5 +1,5 @@
 //! A crate writing block kernels against the engine. It writes no `unsafe`
-//! and holds no slice, pointer or integer row: every row it touches is an
+//! and holds no slice, pointer or integer record: every record it touches is an
 //! `Index` the engine minted.
 
 #![no_std]
@@ -7,7 +7,7 @@
 
 use engine::{BlockKernel, Morsel};
 
-/// Writes each row's read value doubled.
+/// Writes each record's read value doubled.
 pub struct Double;
 
 impl BlockKernel<i64, i64> for Double {
@@ -21,7 +21,7 @@ impl BlockKernel<i64, i64> for Double {
     }
 }
 
-/// Writes each row's read value less the morsel's largest: two passes over
+/// Writes each record's read value less the morsel's largest: two passes over
 /// one morsel's indices, the range only a block kernel sees.
 pub struct BelowMax;
 
@@ -40,8 +40,8 @@ impl BlockKernel<i64, i64> for BelowMax {
     }
 }
 
-/// Writes at each row the read value of the row the engine yielded before it
-/// in the same morsel, and the first row its own: an index kept across rows
+/// Writes at each record the read value of the record the engine yielded before it
+/// in the same morsel, and the first record its own: an index kept across records
 /// within one `each`.
 pub struct Previous;
 

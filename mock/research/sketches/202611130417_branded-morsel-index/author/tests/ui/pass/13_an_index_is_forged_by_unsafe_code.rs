@@ -11,8 +11,8 @@ impl BlockKernel<i64, i64> for Probe {
     fn block(&self, mut morsel: Morsel<'_, i64, i64>) {
         morsel.each(|mut block| {
             // SAFETY: all zeros is a valid `usize` and a valid zero-sized
-            // brand, so this is a valid value; it is row 0 of every morsel,
-            // and every morsel here has a row 0. The point is that it is made
+            // brand, so this is a valid value; it is record 0 of every morsel,
+            // and every morsel here has a record 0. The point is that it is made
             // without `each`.
             let probe: Index<'_> = unsafe { core::mem::zeroed() };
             block.write(probe, 1);

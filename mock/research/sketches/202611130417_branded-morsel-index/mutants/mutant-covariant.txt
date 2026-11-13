@@ -1,13 +1,13 @@
    Compiling engine v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611130417_branded-morsel-index/engine)
    Compiling author v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611130417_branded-morsel-index/author)
-    Finished `test` profile [unoptimized] target(s) in 0.20s
+    Finished `test` profile [unoptimized] target(s) in 0.22s
      Running tests/fixtures.rs (/home/user/target/debug/deps/fixtures-4d94b87b69dced18)
 
 running 1 test
    Compiling engine v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611130417_branded-morsel-index/engine)
    Compiling author v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611130417_branded-morsel-index/author)
    Compiling author-tests v0.0.0 (/home/user/target/tests/trybuild/author)
-    Finished `dev` profile [unoptimized] target(s) in 0.14s
+    Finished `dev` profile [unoptimized] target(s) in 0.15s
 
 
 test tests/ui/fail/01_two_indices_are_compared_for_equality.rs [should fail to compile] ... mismatch
@@ -301,7 +301,7 @@ failures:
 
 ---- every_refusal_holds_and_every_twin_runs stdout ----
 
-thread 'every_refusal_holds_and_every_twin_runs' (4005) panicked at /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/trybuild-1.0.122/src/run.rs:103:13:
+thread 'every_refusal_holds_and_every_twin_runs' (7896) panicked at /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/trybuild-1.0.122/src/run.rs:103:13:
 7 of 28 tests failed
 stack backtrace:
    0: __rustc::rust_begin_unwind
@@ -318,6 +318,6 @@ note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose bac
 failures:
     every_refusal_holds_and_every_twin_runs
 
-test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.48s
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.27s
 
 error: test failed, to rerun pass `-p author --test fixtures`
