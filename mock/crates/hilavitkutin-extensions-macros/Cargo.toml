@@ -19,6 +19,9 @@ syn = { version = "2", features = ["full"] }
 trybuild = "1"
 hilavitkutin-extensions.workspace = true
 libloading = "0.8"
+# Reads the fixture cdylib's symbols on every host, so no host needs `nm` or
+# `dumpbin` on its path. Only the three formats a cdylib comes in are built.
+object = { version = "0.37", default-features = false, features = ["std", "read_core", "elf", "macho", "pe"] }
 
 [features]
 default = []

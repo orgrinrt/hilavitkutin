@@ -290,6 +290,7 @@ dependencies = [
  "hilavitkutin-build",
  "hilavitkutin-extensions",
  "libloading",
+ "object",
  "proc-macro2",
  "quote",
  "syn 2.0.119",
@@ -428,6 +429,15 @@ source = "git+https://github.com/orgrinrt/notko.git?branch=dev#8a74dbcda7fbee2d2
 name = "notko-hlist"
 version = "0.0.1"
 source = "git+https://github.com/orgrinrt/notko.git?branch=dev#8a74dbcda7fbee2d2e57b47474a3b1e6d08650ed"
+
+[[package]]
+name = "object"
+version = "0.37.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ff76201f031d8863c38aa7f905eca4f53abbfa15f609db4277d44cd8938f33fe"
+dependencies = [
+ "memchr",
+]
 
 [[package]]
 name = "proc-macro2"
