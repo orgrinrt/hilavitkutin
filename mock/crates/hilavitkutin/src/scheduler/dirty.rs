@@ -30,10 +30,13 @@ impl<
     Clk: hilavitkutin_api::platform::ClockApi,
 > Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>
 {
-    // FIXME(4b54e5a34009): both swap methods below follow the swap
-    // specification, clauses S1, S2 and S4, which is implemented and benched
-    // and still waits on the maintainer's ratification. Their shape is not
-    // final until that ruling is recorded.
+    // Both swap methods below follow the swap specification, clauses S1, S2
+    // and S4, which is implemented and benched and not ratified. They ship
+    // under the maintainer's provisional stamp of 2026-11-13 ("Land as
+    // provisional"), so they may be called and a ratification can still
+    // change their shape. The two places this implementation differs from the
+    // specification are marked where they are, FIXME(0ba7325f0216) below and
+    // FIXME(b8637199eb8a) in `run_fused.rs`.
     /// Replace a plan-affecting resource and ask for a plan band.
     ///
     /// `T: PlanAffecting` routes the call onto the recompute path: the value
