@@ -1,6 +1,6 @@
 # hilavitkutin-laws, Design Overview
 
-A law is stated over what a run produced, written down as words, so that it reads the same over any runner and does not depend on one. Each law returns a `Verdict`: it holds, or it fails with a `Witness` naming the first record and word that differ. Every law has a mutant, kept in the tests of the runner it was written for, that it must fail, and the test asserts the failing verdict rather than a panic.
+A law is stated over what a run produced, written down as words, so that it reads the same over any runner and does not depend on one. Each law returns a `Verdict`: it holds, or it fails with a `Witness` naming the first record and word that differ. The verdict names its law by a `Law`, one per law below, so a test that fails on a verdict says which law it was. Every law has a mutant, kept in the tests of the runner it was written for, that it must fail, and the test asserts the failing verdict rather than a panic.
 
 `#![no_std]`, no alloc. Depends on `hilavitkutin-contracts` for its words and numbers, and on no runner.
 
@@ -14,7 +14,7 @@ B3, `frame_isolation`: a step leaves the committed cells as it found them, and t
 
 ## The ledger check
 
-A frozen crate keeps a `LEDGER.toml` with one line per source file (its path, its form, its content hash, a count of breaks and whether it is locked) and a `BREAKS.toml` with one line per edit of a ledgered file before its form locks. `ledger::check` rebuilds each hash from its file and refuses a mismatch, a breaks count that differs from the edits recorded for the file, and a locked line whose count differs from the one recorded at its lock. The content hash is FNV-1a over the file's bytes, independent of the run digest. The `ledger_test` macro is what each frozen crate's `tests/ledger.rs` expands, adding a refusal for a source file with no line.
+A frozen crate keeps a `LEDGER.toml` with one line per source file (its path, its form, its content hash, a count of breaks and whether it is locked) and a `BREAKS.toml` with one line per edit of a ledgered file before its form locks. `ledger::check` rebuilds each hash from its file and refuses a mismatch, a breaks count that differs from the edits recorded for the file, and a locked line whose count differs from the one recorded at its lock. The content hash is FNV-1a over the file's bytes, independent of the run digest. The two tests each frozen crate runs over its ledger are written once, in this crate's `tests/support/ledger.rs`, which a frozen crate's `tests/ledger.rs` includes: the ledger holds over the files, and every file under `src/` has a line. They read files, so they sit outside `src/`, which stays `no_std`.
 
 ## Principles
 

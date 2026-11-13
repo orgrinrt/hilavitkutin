@@ -48,6 +48,12 @@ They say twelve crates, a count already one short of the thirteen in the tree (`
 
 Rows added under `[lints.forbidden-imports]`, at the table's existing severity: the frozen crates (`hilavitkutin-frozen-*`) may import no hilavitkutin crate but `hilavitkutin_contracts`; `hilavitkutin-laws` may import no runner (`hilavitkutin_reference`) and no engine; and none of the five imports `hilavitkutin::*` or `hilavitkutin_api::*`. Three repo lints under `mock/lints/`, each with a row at error on commit, build and push, reading the frozen crates' `src/`: `frozen-no-feature-gate` (no `#![feature` line), `frozen-no-recursion-limit` (no `recursion_limit` attribute), and `frozen-no-foreign-turbofish` (no `::<` on an item the file did not declare). No severity moves and no exemption is added.
 
+## CHANGE: revised after the first src changelist
+
+**Files:** `mock/crates/hilavitkutin-laws/DESIGN.md.tmpl`, `mock/crates/hilavitkutin-reference/DESIGN.md.tmpl`
+
+The first src changelist, `202611130207-v2ky_changelist.src.deprecated.md`, built three types these designs did not name, and a ledger macro whose body names `std` inside `src/`, which the `forbidden-imports` and `no-alloc` lints refuse in a `hilavitkutin*` crate whatever the macro expands into. The laws design now names `Law`, and puts the two ledger tests in `tests/support/ledger.rs`, which each frozen crate's `tests/ledger.rs` includes, so `src/` stays `no_std` and the tests are still written once. The reference design names `Stepper` and `Digester`, the runner's two private `UnitFn`s. Nothing else in either design moves.
+
 ## Supersedes, for the five new crates
 
 1. `mock/crates/hilavitkutin-api/DESIGN.md.tmpl:359-360`, "No NAME const. WU identity is the type itself. Naming is a consumer concern". The new crates give a kernel a declared `KernelId` and a unit a declared `UnitId`. A kernel is bound by data, so one kernel type is many units, and an order key needs an identity that is the same across builds, which a type is not. The code says the same as the design at `hilavitkutin-api/src/work_unit.rs:5`, and the legacy crate has its own `UnitId` with a public field at `hilavitkutin-api/src/dispatch_codegen.rs:191`; the new one shares the name and nothing else.
