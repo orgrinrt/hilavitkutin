@@ -12,3 +12,6 @@ arvo-bits.workspace = true
 arvo-refit.workspace = true
 hilavitkutin-sym.workspace = true
 notko.workspace = true
+
+[build-dependencies]
+hilavitkutin-build.workspace = true

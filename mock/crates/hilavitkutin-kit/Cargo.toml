@@ -8,3 +8,6 @@ repository.workspace = true
 
 [dependencies]
 hilavitkutin-api.workspace = true
+
+[build-dependencies]
+hilavitkutin-build.workspace = true

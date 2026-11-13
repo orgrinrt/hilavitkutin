@@ -41,3 +41,6 @@ intrinsics-std = []
 # suite must fail with it on. It builds only with HILAVITKUTIN_MUTANT_CHECK set
 # (see `src/lib.rs`), so no other build can pick it up.
 mutant-truncating-append = []
+
+[build-dependencies]
+hilavitkutin-build.workspace = true
