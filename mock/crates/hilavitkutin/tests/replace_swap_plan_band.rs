@@ -45,7 +45,7 @@ use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{ColumnWriterApi, EachApi, HasColumnWriter, HasEach};
 use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::run_cfg::PlanStage;
-use hilavitkutin_api::store::{Column, Resource};
+use hilavitkutin_api::store::{Column, Resource, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, HasSchedule, OnMeta, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
@@ -107,9 +107,9 @@ impl hilavitkutin_api::footprint::ResourceFootprint for Cfgish {
     const L1_BYTES: USize = USize(0);
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Pv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Av(u32);
 
 type ColP = Cons<Column<Pv>, Empty>;
@@ -188,8 +188,8 @@ macro_rules! build {
         Scheduler::builder()
             .with(Resource::new(Val(5)))
             .with(Resource::new(Cfgish(1)))
-            .with(Column::<Pv>::new())
-            .with(Column::<Av>::new())
+            .with(Column::<Pv>::start())
+            .with(Column::<Av>::start())
             .with(PlanWu)
             .with(ConsumerWu)
             .build(store($provider), USize(RECORDS))

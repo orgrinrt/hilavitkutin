@@ -2,7 +2,7 @@
 // and the builder registers both columns bare. `build` takes it: a wrapper in
 // an access set is held by the store under it.
 // The twin `unregistered_wrapped_store_fail.rs` differs only by the two
-// `.with(Column::<..>::new())` lines.
+// `.with(Column::<..>::start())` lines.
 
 use core::cell::Cell;
 
@@ -13,7 +13,7 @@ use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{EachApi, HasEach};
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::Column;
+use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_api::{Differs, Reach, rec};
 use hilavitkutin_providers::ArenaColumnStorage;
@@ -45,10 +45,10 @@ impl MemoryProviderApi for Provider {
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Default)]
 struct Slot(u32);
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Default)]
 struct Height(u32);
 
 type Around = Cons<Reach<Column<Slot>, ONE>, Empty>;
@@ -98,8 +98,8 @@ fn main() {
         used: Cell::new(0),
     };
     let _ = Scheduler::builder()
-        .with(Column::<Slot>::new())
-        .with(Column::<Height>::new())
+        .with(Column::<Slot>::start())
+        .with(Column::<Height>::start())
         .with(Lift)
         .build(store(provider), USize(0));
 }

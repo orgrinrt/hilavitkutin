@@ -4,7 +4,7 @@ error[E0277]: store `Cons<Buffered<Temp>, hilavitkutin_api::Empty>` does not con
 40 |     let _: Temp = unsafe { ColumnReaderApi::<read![Buffered<Temp>]>::read(&ctx, USize(0)) };
    |                                              ^^^^^^^^^^^^^^^^^^^^^ the trait `Holds<Column<_>>` is not implemented for `Cons<Buffered<Temp>, hilavitkutin_api::Empty>`
    |
-   = note: Register it with `.with(Resource::new(value))`, `.with(Column::<T>::new())`, `.with(Virtual::<T>::new())`, or install a Kit that owns it via `.with(MyKit)`. If `.build()` reports `overflow evaluating the requirement`, declare `#![recursion_limit = "1024"]` at your crate root.
+   = note: Register it with `.with(Resource::new(value))`, `.with(Column::<T>::start())`, `.with(Virtual::<T>::new())`, or install a Kit that owns it via `.with(MyKit)`. If `.build()` reports `overflow evaluating the requirement`, declare `#![recursion_limit = "1024"]` at your crate root.
    = note: In a unit's body the list is the unit's own `type Read` or `type Write`: a positional accessor reaches a store the unit lists there bare. A store read with a reach, and a `Buffered<T, M>` under any member, are reached through the value function.
 note: required by a bound in `hilavitkutin_api::ColumnReaderApi::read`
   --> src/context.rs

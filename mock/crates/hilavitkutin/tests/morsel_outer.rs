@@ -52,7 +52,7 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::{Accum, Column};
+use hilavitkutin_api::store::{Accum, Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
@@ -75,7 +75,7 @@ const CONSUMER_TAG: u8 = 1;
 // The payload exists only to give the producer something to write and the
 // consumer something to read (the RAW edge that orders them); the test asserts
 // dispatch order, not the value, so the field is intentionally not inspected.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)]
 struct Cv(u32);
 
@@ -150,7 +150,7 @@ fn accumulator_free_pipeline_dispatches_morsel_outer() {
     DISPATCH_ORDER.with(|o| o.borrow_mut().clear());
     let provider = StableProvider::new(65536);
     let mut scheduler = Scheduler::builder()
-        .with(Column::<Cv>::new())
+        .with(Column::<Cv>::start())
         .with(ProducerWu)
         .with(ConsumerWu)
         .build(store(provider), USize(RECORDS))

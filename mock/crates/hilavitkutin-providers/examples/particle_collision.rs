@@ -22,10 +22,10 @@ fn main() {
     // The end-to-end shape consumers will write here:
     //
     //   let mut sched = Scheduler::builder()
-    //       .with(Column::<Position>::new())
-    //       .with(Column::<Velocity>::new())
-    //       .with(Column::<Mass>::new())
-    //       .with(Column::<CollisionEvent>::new())
+    //       .with(Column::<Position>::start())
+    //       .with(Column::<Velocity>::start())
+    //       .with(Column::<Mass>::start())
+    //       .with(Column::<CollisionEvent>::start())
     //       .with(Integrate)
     //       .with(Collide)
     //       .build();

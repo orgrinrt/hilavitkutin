@@ -35,7 +35,7 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::Column;
+use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_api::{ReadVals, RecordOp, WriteVals, rec};
 use hilavitkutin_providers::ArenaColumnStorage;
@@ -94,15 +94,15 @@ fn chain(i: u32) -> u32 {
     s3(s2(s1(i)))
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct InV(u32);
 // A column a value function returns for is compared with the record it
 // holds, so the three written types carry `PartialEq`.
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Default)]
 struct Av(u32);
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Default)]
 struct Bv(u32);
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Default)]
 struct Cv(u32);
 
 type One<T> = Cons<Column<T>, Empty>;
@@ -227,10 +227,10 @@ fn fused_chain_produces_chained_computation() {
     // Units registered S1, S2, S3: the carrier is topological (S1 writes what S2
     // reads, and so on), which `build` requires.
     let mut sched = Scheduler::builder()
-        .with(Column::<Cv>::new())
-        .with(Column::<Bv>::new())
-        .with(Column::<Av>::new())
-        .with(Column::<InV>::new())
+        .with(Column::<Cv>::start())
+        .with(Column::<Bv>::start())
+        .with(Column::<Av>::start())
+        .with(Column::<InV>::start())
         .with(S1)
         .with(S2)
         .with(S3)

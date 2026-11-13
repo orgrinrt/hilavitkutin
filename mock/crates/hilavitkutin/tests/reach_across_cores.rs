@@ -34,7 +34,7 @@ use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{EachApi, HasEach};
 use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
-use hilavitkutin_api::store::{Accum, Column};
+use hilavitkutin_api::store::{Accum, Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::WorkUnit;
 use hilavitkutin_api::{Reach, rec};
 use hilavitkutin_providers::ArenaColumnStorage;
@@ -47,10 +47,10 @@ const RECORDS: usize = 20_000;
 const EDGE: u32 = 4999;
 const PAUSE: Duration = Duration::from_millis(200);
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug, Default)]
 struct Height(u32);
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug, Default)]
 struct Seen(u32);
 
 #[derive(Copy, Clone, PartialEq, Debug)]
@@ -196,8 +196,8 @@ unsafe fn fill(col: *mut Height, records: usize) {
 fn spread_after(records: usize, passes: u32) -> Vec<(usize, u32, u32)> {
     let scheduler = Scheduler::builder()
         .with(Accum::<Noted>::new())
-        .with(Col::new())
-        .with(Column::<Seen>::new())
+        .with(Col::start())
+        .with(Column::<Seen>::start())
         .with(SlowRaise)
         .with(Spread)
         .with(Note)
@@ -342,8 +342,8 @@ fn the_segments_fall_between_the_cuts() {
 #[test]
 fn the_phase_loop_keeps_the_boundary_ahead_of_a_reach_read() {
     let scheduler = Scheduler::builder()
-        .with(Col::new())
-        .with(Column::<Seen>::new())
+        .with(Col::start())
+        .with(Column::<Seen>::start())
         .with(SlowRaise)
         .with(Spread)
         .build(store(), USize(RECORDS))
@@ -378,8 +378,8 @@ fn the_phase_loop_keeps_the_boundary_ahead_of_a_reach_read() {
 #[test]
 fn a_writer_listed_behind_a_reach_read_of_its_column_is_refused() {
     let plain = Scheduler::builder()
-        .with(Col::new())
-        .with(Column::<Seen>::new())
+        .with(Col::start())
+        .with(Column::<Seen>::start())
         .with(Spread)
         .with(Raise)
         .build(store(), USize(RECORDS));
@@ -394,8 +394,8 @@ fn a_writer_listed_behind_a_reach_read_of_its_column_is_refused() {
 
     let with_an_accumulator = Scheduler::builder()
         .with(Accum::<Noted>::new())
-        .with(Col::new())
-        .with(Column::<Seen>::new())
+        .with(Col::start())
+        .with(Column::<Seen>::start())
         .with(Spread)
         .with(Raise)
         .with(Note)

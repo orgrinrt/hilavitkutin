@@ -30,7 +30,7 @@ use hilavitkutin_api::context::{
 };
 use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
 use hilavitkutin_api::platform::{MemoryProviderApi, ThreadPoolApi};
-use hilavitkutin_api::store::Column;
+use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 
@@ -73,7 +73,7 @@ pub trait Word: Copy + 'static {
 
 macro_rules! words {
     ($($t:ident),* $(,)?) => {$(
-        #[derive(Copy, Clone)]
+        #[derive(Copy, Clone, Default)]
         #[repr(transparent)]
         pub struct $t(u32);
         impl Word for $t {
@@ -342,19 +342,19 @@ macro_rules! engine_arm {
     (@build $kn:ty, $n:expr, $parallel:expr, [$($a_stage:ty),+ $(,)?]) => {{
         let n: usize = $n;
         let sched = Scheduler::builder()
-            .with(Column::<In>::new())
-            .with(Column::<A1>::new())
-            .with(Column::<A2>::new())
-            .with(Column::<A3>::new())
-            .with(Column::<B1>::new())
-            .with(Column::<B2>::new())
-            .with(Column::<B3>::new())
-            .with(Column::<C1>::new())
-            .with(Column::<C2>::new())
-            .with(Column::<C3>::new())
-            .with(Column::<Jn>::new())
-            .with(Column::<T1>::new())
-            .with(Column::<T2>::new())
+            .with(Column::<In>::start())
+            .with(Column::<A1>::start())
+            .with(Column::<A2>::start())
+            .with(Column::<A3>::start())
+            .with(Column::<B1>::start())
+            .with(Column::<B2>::start())
+            .with(Column::<B3>::start())
+            .with(Column::<C1>::start())
+            .with(Column::<C2>::start())
+            .with(Column::<C3>::start())
+            .with(Column::<Jn>::start())
+            .with(Column::<T1>::start())
+            .with(Column::<T2>::start())
             $(.with(<$a_stage>::new()))+
             .with(Map::<$kn, In, B1, K_B1>::new())
             .with(Map::<$kn, B1, B2, K_B2>::new())

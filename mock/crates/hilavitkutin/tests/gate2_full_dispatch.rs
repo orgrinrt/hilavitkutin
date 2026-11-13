@@ -29,7 +29,7 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::Column;
+use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 
@@ -72,11 +72,11 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
 
 const N: usize = 64;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Inv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Mid(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Out(u32);
 
 type ColIn = Cons<Column<Inv>, Empty>;
@@ -153,9 +153,9 @@ impl WorkUnit<Always> for Consumer {
 fn run_drives_two_phase_chain_in_order() {
     let provider = BumpProvider::<16384>::new();
     let mut scheduler = Scheduler::builder()
-        .with(Column::<Inv>::new())
-        .with(Column::<Mid>::new())
-        .with(Column::<Out>::new())
+        .with(Column::<Inv>::start())
+        .with(Column::<Mid>::start())
+        .with(Column::<Out>::start())
         .with(Producer)
         .with(Consumer)
         .build(store(provider), USize(N))

@@ -157,11 +157,6 @@ impl<T: notko::HasTrivialCtor> Column<T> {
     }
 }
 
-impl<T: 'static> BuilderInput for Column<T> {
-    type Dispatch = StoreDispatch<Self>;
-    type Init = ();
-}
-
 impl<T> notko::HasTrivialCtor for Column<T> {
     fn new() -> Self {
         Column(PhantomData)

@@ -36,7 +36,7 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
-use hilavitkutin_api::store::{Accum, Column};
+use hilavitkutin_api::store::{Accum, Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 
 use crate::executor::BenchExecutor;
@@ -44,7 +44,7 @@ use crate::{HeapBump, WorkloadMeasure, arena_bytes, bench, chain, fnv1a_u32_slic
 
 pub const NAME: &str = "accumulator";
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Inv(u32);
 #[derive(Copy, Clone)]
 #[allow(dead_code)] // appended by the WU, read back post-run as raw u32 for the hash
@@ -92,7 +92,7 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
     let eng_startup = bench(warmup, iters, || {
         let provider = HeapBump::new(arena_bytes(2, n));
         let scheduler = Scheduler::builder()
-            .with(Column::<Inv>::new())
+            .with(Column::<Inv>::start())
             .with(Accum::<Av>::new())
             .with(AppendChain)
             .build(store(provider), USize(n))
@@ -109,7 +109,7 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
     // ----- runtime engine -----
     let provider = HeapBump::new(arena_bytes(2, n));
     let mut sched = Scheduler::builder()
-        .with(Column::<Inv>::new())
+        .with(Column::<Inv>::start())
         .with(Accum::<Av>::new())
         .with(AppendChain)
         .build(store(provider), USize(n))
@@ -151,7 +151,7 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
     // of the reserved buffer, merged after the frame (byte-identical to run()).
     let provider_par = HeapBump::new(arena_bytes(2, n));
     let sched_par = Scheduler::builder()
-        .with(Column::<Inv>::new())
+        .with(Column::<Inv>::start())
         .with(Accum::<Av>::new())
         .with(AppendChain)
         .build(store(provider_par), USize(n))

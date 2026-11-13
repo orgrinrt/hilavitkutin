@@ -21,7 +21,7 @@ use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{EachApi, HasEach};
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::{Accum, Column};
+use hilavitkutin_api::store::{Accum, Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_api::{ReadVals, RecordOp, WriteVals, rec};
 use hilavitkutin_providers::ArenaColumnStorage;
@@ -52,10 +52,10 @@ impl MemoryProviderApi for Provider {
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Xa(u32);
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Default)]
 struct Ya(u32);
 
 #[derive(Copy, Clone)]
@@ -114,8 +114,8 @@ fn main() {
     };
     // `Log` is registered last, so its accumulator is the head of the bindings.
     let mut scheduler = Scheduler::builder()
-        .with(Column::<Xa>::new())
-        .with(Column::<Ya>::new())
+        .with(Column::<Xa>::start())
+        .with(Column::<Ya>::start())
         .with(Accum::<Log>::new())
         .with(MapAndLogWu)
         .build(store(provider), USize(4))

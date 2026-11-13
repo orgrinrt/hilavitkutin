@@ -33,7 +33,7 @@ use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{ColumnWriterApi, EachApi, HasColumnWriter, HasEach};
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::Column;
+use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
@@ -90,7 +90,7 @@ const RECORDS: usize = 7000;
 const SENTINEL: u32 = u32::MAX;
 
 // Column value: a Copy newtype over u32, so the blanket `ColumnValue` applies.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Tv(u32);
 
 type Col = Cons<Column<Tv>, Empty>;
@@ -130,7 +130,7 @@ impl WorkUnit<Always> for RelIndexWu {
 fn morsel_windowing_writes_relative_index_per_morsel() {
     let provider = BumpProvider::<65536>::new();
     let mut scheduler = Scheduler::builder()
-        .with(Column::<Tv>::new())
+        .with(Column::<Tv>::start())
         .with(RelIndexWu)
         .build(store(provider), USize(RECORDS))
         .unwrap_or_else(|_| panic!("build should succeed"));

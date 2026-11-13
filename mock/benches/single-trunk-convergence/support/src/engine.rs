@@ -39,14 +39,14 @@ use hilavitkutin_api::context::{
     HasReduce,
 };
 use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
-use hilavitkutin_api::store::{Accum, Column};
+use hilavitkutin_api::store::{Accum, Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 
 use crate::ConvOutput;
 use crate::kernel::{Kernel, fold_step};
 
 /// One record value.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[repr(transparent)]
 struct Val(u32);
 
@@ -162,7 +162,7 @@ macro_rules! build_scheduler {
         // One u32 column and one accumulator of up to 8 bytes per record.
         let provider = HeapBump::new(arena_bytes(3, n));
         let sched = Scheduler::builder()
-            .with(Column::<Val>::new())
+            .with(Column::<Val>::start())
             .with(Accum::<$acc>::new())
             .with($unit)
             .build(store(provider), USize(n))

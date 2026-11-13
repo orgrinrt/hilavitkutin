@@ -35,7 +35,7 @@ use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{ColumnWriterApi, EachApi, HasColumnWriter, HasEach};
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::Column;
+use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
@@ -88,9 +88,9 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
 // per-fiber count is distinguishable from a shared one.
 const RECORDS: usize = 7000;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Narrow(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Wide(u64);
 
 type NarrowCol = Cons<Column<Narrow>, Empty>;
@@ -157,8 +157,8 @@ fn parallel_fibers_window_by_their_own_plan_baked_size() {
 
     let provider = BumpProvider::<131072>::new();
     let scheduler = Scheduler::builder()
-        .with(Column::<Narrow>::new())
-        .with(Column::<Wide>::new())
+        .with(Column::<Narrow>::start())
+        .with(Column::<Wide>::start())
         .with(NarrowWu)
         .with(WideWu)
         .build(store(provider), USize(RECORDS))

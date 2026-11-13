@@ -51,7 +51,7 @@ use hilavitkutin_api::context::{
     ResourceProviderApi,
 };
 use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
-use hilavitkutin_api::store::{Accum, Column, Resource};
+use hilavitkutin_api::store::{Accum, Column, Resource, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_api::{ReadVals, RecordOp, WriteVals, rec};
 
@@ -61,18 +61,18 @@ const N: usize = 256;
 
 // ----- the four-stage column chain (mirrors engine_vs_std::element_wise) -----
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Inv(u32);
 // `PartialEq` for the fold, as in `engine_vs_std::element_wise`: the written
 // columns are listed bare, and every write here is by position and compares
 // nothing.
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Default)]
 struct Av(u32);
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Default)]
 struct Bv(u32);
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Default)]
 struct Cv(u32);
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Default)]
 #[allow(dead_code)] // written by S4, read back post-run as raw u32 for the hash
 struct Dv(u32);
 
@@ -216,11 +216,11 @@ macro_rules! chain_scheduler {
     ($sched:ident) => {
         let provider = HeapBump::new(arena_bytes(5, N));
         let mut $sched = Scheduler::builder()
-            .with(Column::<Dv>::new())
-            .with(Column::<Cv>::new())
-            .with(Column::<Bv>::new())
-            .with(Column::<Av>::new())
-            .with(Column::<Inv>::new())
+            .with(Column::<Dv>::start())
+            .with(Column::<Cv>::start())
+            .with(Column::<Bv>::start())
+            .with(Column::<Av>::start())
+            .with(Column::<Inv>::start())
             .with(S1)
             .with(S2)
             .with(S3)
@@ -304,7 +304,7 @@ pub extern "C" fn asm_gate_dirty_gated() -> u64 {
 
 // ----- fixture 3: accumulator appender via run() (unit-outer never-gated path) -----
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct AInv(u32);
 #[derive(Copy, Clone)]
 #[allow(dead_code)] // appended by the WU, read back post-run as raw u32 for the hash
@@ -347,7 +347,7 @@ impl WorkUnit<Always> for AppendChain {
 pub extern "C" fn asm_gate_accumulator() -> u64 {
     let provider = HeapBump::new(arena_bytes(2, N));
     let mut sched = Scheduler::builder()
-        .with(Column::<AInv>::new())
+        .with(Column::<AInv>::start())
         .with(Accum::<AAv>::new())
         .with(AppendChain)
         .build(store(provider), USize(N))
@@ -372,16 +372,16 @@ pub extern "C" fn asm_gate_accumulator() -> u64 {
 // each fiber's own window sequence. The gate asserts the fiber-outer loop
 // reintroduced no indirect call.
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct PIn(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct PMid(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)] // written by P2, read back post-run as raw u32 for the hash
 struct POut(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct QIn(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)] // written by Q1, read back post-run as raw u32 for the hash
 struct QOut(u32);
 
@@ -473,11 +473,11 @@ impl WorkUnit<Always> for Q1 {
 pub extern "C" fn asm_gate_windowed_fibers() -> u64 {
     let provider = HeapBump::new(arena_bytes(5, N));
     let mut sched = Scheduler::builder()
-        .with(Column::<POut>::new())
-        .with(Column::<PMid>::new())
-        .with(Column::<PIn>::new())
-        .with(Column::<QOut>::new())
-        .with(Column::<QIn>::new())
+        .with(Column::<POut>::start())
+        .with(Column::<PMid>::start())
+        .with(Column::<PIn>::start())
+        .with(Column::<QOut>::start())
+        .with(Column::<QIn>::start())
         .with(P1)
         .with(P2)
         .with(Q1)
@@ -531,11 +531,11 @@ pub extern "C" fn asm_gate_windowed_fibers() -> u64 {
 pub extern "C" fn asm_gate_parallel_fiber_windows() -> u64 {
     let provider = HeapBump::new(arena_bytes(5, N));
     let sched = Scheduler::builder()
-        .with(Column::<POut>::new())
-        .with(Column::<PMid>::new())
-        .with(Column::<PIn>::new())
-        .with(Column::<QOut>::new())
-        .with(Column::<QIn>::new())
+        .with(Column::<POut>::start())
+        .with(Column::<PMid>::start())
+        .with(Column::<PIn>::start())
+        .with(Column::<QOut>::start())
+        .with(Column::<QIn>::start())
         .with(P1)
         .with(P2)
         .with(Q1)
@@ -580,9 +580,9 @@ pub extern "C" fn asm_gate_parallel_fiber_windows() -> u64 {
 // canonical storage. Check 1 gates devirtualisation; checks 2-5 surface the
 // spill/addressing evidence for the promotion.
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct RIn(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)] // written by the WU, read back post-run as raw u32 for the hash
 struct ROut(u32);
 
@@ -624,8 +624,8 @@ impl WorkUnit<Always> for ResMix {
 pub extern "C" fn asm_gate_resource_snapshot() -> u64 {
     let provider = HeapBump::new(arena_bytes(3, N));
     let mut sched = Scheduler::builder()
-        .with(Column::<ROut>::new())
-        .with(Column::<RIn>::new())
+        .with(Column::<ROut>::start())
+        .with(Column::<RIn>::start())
         .with(Resource::new(0x5EED_u32))
         .with(ResMix)
         .build(store(provider), USize(N))

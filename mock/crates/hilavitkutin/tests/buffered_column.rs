@@ -34,7 +34,7 @@ use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{EachApi, HasEach};
 use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
-use hilavitkutin_api::store::{Buffered, Column, Exchange, Snapshot};
+use hilavitkutin_api::store::{Buffered, Column, Exchange, Snapshot, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_api::{Reach, rec};
 use hilavitkutin_providers::ArenaColumnStorage;
@@ -45,10 +45,10 @@ const ONE: Cap = arvo_tensor::cap(1);
 const RECORDS: usize = 20_000;
 const SENTINEL: u32 = 0xDEAD;
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug, Default)]
 struct Height(u32);
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug, Default)]
 struct Seen(u32);
 
 fn store() -> ArenaColumnStorage<StableProvider> {
@@ -89,7 +89,7 @@ impl WorkUnit<Always> for Count {
 fn the_record_range_is_cut_into_several_windows() {
     let windows: &'static AtomicUsize = Box::leak(Box::new(AtomicUsize::new(0)));
     let mut scheduler = Scheduler::builder()
-        .with(Column::<Seen>::new())
+        .with(Column::<Seen>::start())
         .with(Count(windows))
         .build(store(), USize(RECORDS))
         .unwrap_or_else(|_| panic!("build should succeed"));
@@ -240,9 +240,9 @@ macro_rules! suite {
             #[test]
             fn a_plain_and_a_buffered_column_of_one_type_are_two_stores() {
                 let mut scheduler = Scheduler::builder()
-                    .with(Column::<Height>::new())
+                    .with(Column::<Height>::start())
                     .with(Col::start_from(Height(5)))
-                    .with(Column::<Seen>::new())
+                    .with(Column::<Seen>::start())
                     .with(Both)
                     .build(store(), USize(RECORDS))
                     .unwrap_or_else(|_| panic!("build should succeed"));
@@ -262,9 +262,9 @@ macro_rules! suite {
             #[test]
             fn a_column_found_by_type_answers_the_bases_of_its_binding() {
                 let scheduler = Scheduler::builder()
-                    .with(Column::<Height>::new())
+                    .with(Column::<Height>::start())
                     .with(Col::start_from(Height(0)))
-                    .with(Column::<Seen>::new())
+                    .with(Column::<Seen>::start())
                     .with(Both)
                     .build(store(), USize(RECORDS))
                     .unwrap_or_else(|_| panic!("build should succeed"));
@@ -371,7 +371,7 @@ macro_rules! suite {
                     fn $test() {
                         let mut scheduler = Scheduler::builder()
                             .with(Col::start_from(Height(10)))
-                            .with(Column::<Seen>::new())
+                            .with(Column::<Seen>::start())
                             .with($a)
                             .with($b)
                             .build(store(), USize(RECORDS))
@@ -419,7 +419,7 @@ macro_rules! suite {
             fn a_store_nobody_wrote_is_left_alone() {
                 let mut scheduler = Scheduler::builder()
                     .with(Col::start_from(Height(10)))
-                    .with(Column::<Seen>::new())
+                    .with(Column::<Seen>::start())
                     .with(Watch)
                     .build(store(), USize(RECORDS))
                     .unwrap_or_else(|_| panic!("build should succeed"));
@@ -439,7 +439,7 @@ macro_rules! suite {
             fn a_writer_that_returns_what_it_read_changes_nothing() {
                 let mut scheduler = Scheduler::builder()
                     .with(Col::start_from(Height(10)))
-                    .with(Column::<Seen>::new())
+                    .with(Column::<Seen>::start())
                     .with(Keep)
                     .with(Watch)
                     .build(store(), USize(RECORDS))
@@ -466,7 +466,7 @@ macro_rules! suite {
             fn readers_run_the_pass_after_a_change_and_rest_once_it_settles() {
                 let mut scheduler = Scheduler::builder()
                     .with(Col::start_from(Height(0)))
-                    .with(Column::<Seen>::new())
+                    .with(Column::<Seen>::start())
                     .with(Settle)
                     .with(Watch)
                     .build(store(), USize(RECORDS))
@@ -500,7 +500,7 @@ macro_rules! suite {
             fn a_store_filled_in_the_first_pass_is_read_from_the_second() {
                 let mut scheduler = Scheduler::builder()
                     .with(Col::start_from(Height(0)))
-                    .with(Column::<Seen>::new())
+                    .with(Column::<Seen>::start())
                     .with(Fill)
                     .with(Watch)
                     .build(store(), USize(RECORDS))
@@ -543,8 +543,8 @@ mod plain {
     #[test]
     fn a_plain_column_s_reader_waits_on_its_writer() {
         let mut scheduler = Scheduler::builder()
-            .with(Col::new())
-            .with(Column::<Seen>::new())
+            .with(Col::start())
+            .with(Column::<Seen>::start())
             .with(Raise)
             .with(Watch)
             .build(store(), USize(RECORDS))
@@ -584,8 +584,8 @@ mod plain {
     #[test]
     fn a_reach_reader_of_a_plain_column_follows_its_whole_writer_on_one_core() {
         let mut scheduler = Scheduler::builder()
-            .with(Col::new())
-            .with(Column::<Seen>::new())
+            .with(Col::start())
+            .with(Column::<Seen>::start())
             .with(Raise)
             .with(Spread)
             .build(store(), USize(RECORDS))
@@ -608,8 +608,8 @@ mod plain {
     #[test]
     fn a_reach_reader_of_a_plain_column_follows_its_whole_writer_across_workers() {
         let scheduler = Scheduler::builder()
-            .with(Col::new())
-            .with(Column::<Seen>::new())
+            .with(Col::start())
+            .with(Column::<Seen>::start())
             .with(Raise)
             .with(Spread)
             .build(store(), USize(RECORDS))
@@ -638,8 +638,8 @@ mod plain {
     #[test]
     fn a_plain_column_s_reader_registered_first_is_refused() {
         let built = Scheduler::builder()
-            .with(Col::new())
-            .with(Column::<Seen>::new())
+            .with(Col::start())
+            .with(Column::<Seen>::start())
             .with(Watch)
             .with(Raise)
             .build(store(), USize(RECORDS));

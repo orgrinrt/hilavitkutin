@@ -34,7 +34,7 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::Column;
+use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
@@ -78,9 +78,9 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
 
 const N: usize = 256;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Inv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Fv(u32);
 
 type ColIn = Cons<Column<Inv>, Empty>;
@@ -133,8 +133,8 @@ impl WorkUnit<Always> for Filler {
 fn run_parallel_single_trunk_phase_covers_every_record_once() {
     let provider = BumpProvider::<8192>::new();
     let scheduler = Scheduler::builder()
-        .with(Column::<Inv>::new())
-        .with(Column::<Fv>::new())
+        .with(Column::<Inv>::start())
+        .with(Column::<Fv>::start())
         .with(Filler(None))
         .build(store(provider), USize(N))
         .unwrap_or_else(|_| panic!("build should succeed"));
@@ -184,8 +184,8 @@ fn a_single_trunk_phase_is_walked_from_head_and_tail() {
 
     let provider = BumpProvider::<8192>::new();
     let scheduler = Scheduler::builder()
-        .with(Column::<Inv>::new())
-        .with(Column::<Fv>::new())
+        .with(Column::<Inv>::start())
+        .with(Column::<Fv>::start())
         .with(Filler(Some(&SEEN)))
         .build(store(provider), USize(N))
         .unwrap_or_else(|_| panic!("build should succeed"));

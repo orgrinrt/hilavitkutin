@@ -5,9 +5,10 @@
 //! list, not on the `Stores` access set. Each `.with`-registered store
 //! value contributes one binding cons-cell: a `Resource<T>` carrier
 //! (`StagedResource<T>`) contributes a `ResourceBinding<T, _>` holding
-//! the moved-in value's `ResourcePtr<T>`; a `Column<T>` marker
-//! contributes a `ColumnBinding` holding the reserved column buffer base
-//! (`ColumnPtr<T>`, sized to the build-time record count) and the count;
+//! the moved-in value's `ResourcePtr<T>`; a column, plain or buffered,
+//! comes as a `Started<S>` carrier and contributes a `ColumnBinding`
+//! holding the reserved column buffer base (`ColumnPtr<T>`, sized to the
+//! build-time record count) and the count, its start written to every record;
 //! a `Virtual<T>` marker contributes a `VirtualBinding` (no backing
 //! storage).
 //!
@@ -37,7 +38,7 @@ use core::mem::size_of;
 use arvo::{Bool, USize};
 use hilavitkutin_api::access::{AccessSet, Cons, Empty};
 use hilavitkutin_api::member::Member;
-use hilavitkutin_api::store::{Accum, Column, Resource, StagedResource, Started, Virtual};
+use hilavitkutin_api::store::{Accum, Resource, StagedResource, Started, Virtual};
 use hilavitkutin_api::store_values::{StoreValues, Sv, SvEmpty};
 use hilavitkutin_api::{ColumnStorage, ColumnValue, StoreId};
 
@@ -222,7 +223,8 @@ impl<T, Tail> VirtualBinding<T, Tail> {
 /// Maps a `StoreValues` list to its concrete bindings shape.
 ///
 /// Sealed: the arms (`SvEmpty`, and `Sv` headed by `StagedResource<T>`,
-/// `Column<T>`, `StagedBuffered<T, M>`, `Virtual<T>` or `Accum<T>`) are the only
+/// a `Started<S>` carrier of a column, plain or buffered, `Virtual<T>` or
+/// `Accum<T>`) are the only
 /// store-value shapes the builder places on the list. The heads are
 /// distinct concrete types, so the arms are non-overlapping.
 #[allow(private_bounds)]
@@ -262,12 +264,6 @@ impl<T: 'static, L: StoreValues + BindingsFor> BindingsFor for Sv<StagedResource
     type Markers = Cons<Resource<T>, <L as BindingsFor>::Markers>;
 }
 
-impl<T: 'static, L: StoreValues + BindingsFor> sealed::Sealed for Sv<Column<T>, L> {}
-impl<T: 'static, L: StoreValues + BindingsFor> BindingsFor for Sv<Column<T>, L> {
-    type Bindings = ColumnBinding<T, <L as BindingsFor>::Bindings>;
-    type Markers = Cons<Column<T>, <L as BindingsFor>::Markers>;
-}
-
 impl<S: Kept + Member + 'static, L: StoreValues + BindingsFor> sealed::Sealed
     for Sv<Started<S>, L>
 {
@@ -296,9 +292,10 @@ impl<T: 'static, L: StoreValues + BindingsFor> BindingsFor for Sv<Accum<T>, L> {
 /// Implemented on the value list. Per `Resource<T>` value: reserve a
 /// one-record column through the store, write the carrier's value in,
 /// record the column base pointer. A zero-sized `T` reserves no column
-/// and records a dangling pointer. Per `Column<T>` / `Virtual<T>` value:
-/// no reservation (the column buffer round and virtual markers carry no
-/// storage here).
+/// and records a dangling pointer. Per column value, plain or buffered, which
+/// comes as a `Started<S>` carrier: reserve its records and write its start to
+/// every record of every reservation. A `Virtual<T>` marker carries no storage
+/// here.
 ///
 /// Sealed: only the arms below inhabit it.
 #[allow(private_bounds)]
@@ -397,25 +394,6 @@ where
             },
             notko::Outcome::Err(e) => notko::Outcome::Err(e),
         }
-    }
-}
-
-impl<T: ColumnValue, L> DrainStores for Sv<Column<T>, L>
-where
-    L: StoreValues + BindingsFor + DrainStores,
-{
-    fn drain<CS: ColumnStorage>(
-        self,
-        cs: &mut CS,
-        next_id: &mut USize,
-        record_count: USize,
-    ) -> notko::Outcome<Self::Bindings, BuildError> {
-        // One reservation of `record_count` records, at a storage id
-        // continued past the stores drained before it.
-        let (_marker, rest) = self.into_parts();
-        drain_column::<T, Plain, CS, _>(cs, next_id, record_count, |cs, next_id| {
-            <L as DrainStores>::drain(rest, cs, next_id, record_count)
-        })
     }
 }
 

@@ -51,7 +51,7 @@ use hilavitkutin_api::context::{
 };
 use hilavitkutin_api::platform::{MemoryProviderApi, ThreadPoolApi};
 use hilavitkutin_api::run_cfg::DefaultRunCfg;
-use hilavitkutin_api::store::{Accum, Column};
+use hilavitkutin_api::store::{Accum, Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_api::{AccumRefused, Assert};
 use hilavitkutin_providers::ArenaColumnStorage;
@@ -75,7 +75,7 @@ struct Bv(u32);
 
 /// The input column, seeded with each record's global index: the `each` index
 /// is morsel-local, so a unit keyed on it would ask a different total per split.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Inv(u32);
 
 type ColIn = Cons<Column<Inv>, Empty>;
@@ -207,7 +207,7 @@ fn expected_av(workers: usize) -> [u32; N] {
 macro_rules! build {
     (@finish [$($finish:tt)+] $($unit:expr),+) => {{
         let scheduler = Scheduler::builder()
-            .with(Column::<Inv>::new())
+            .with(Column::<Inv>::start())
             .with(Accum::<Bv>::new())
             .with(Accum::<Av>::new())
             $(.with($unit))+

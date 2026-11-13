@@ -21,7 +21,7 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::Column;
+use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 
@@ -50,10 +50,10 @@ impl MemoryProviderApi for Provider {
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Xa(u32);
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Default)]
 struct Ya(u32);
 
 type ReadX = Cons<Column<Xa>, Empty>;
@@ -115,8 +115,8 @@ fn main() {
         used: Cell::new(0),
     };
     let mut scheduler = Scheduler::builder()
-        .with(Column::<Xa>::new())
-        .with(Column::<Ya>::new())
+        .with(Column::<Xa>::start())
+        .with(Column::<Ya>::start())
         .with(MapWu)
         .build(store(provider), USize(4))
         .unwrap_or_else(|_| panic!("build should succeed"));

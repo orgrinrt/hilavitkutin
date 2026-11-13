@@ -49,6 +49,7 @@ use hilavitkutin_api::{
     ResolveVirtualFire,
     Resource,
     ResourceProviderApi,
+    StartsFromDefault,
     UnitDispatch,
     Virtual,
     VirtualFirerApi,
@@ -127,13 +128,13 @@ fn store_for_fifty() -> ArenaColumnStorage<TestProvider<65536>> {
 #[derive(Copy, Clone)]
 pub struct Interner;
 pub struct Workspace;
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct FileInfo;
 // A column no kit owns, for the raw registration beside a kit.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct Notes;
 // A second one, registered after a kit.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct Marks;
 
 // ---------------------------------------------------------------------
@@ -187,7 +188,7 @@ fn raw_resource_registration_builds() {
 #[test]
 fn raw_column_registration_builds() {
     let built = Scheduler::builder()
-        .with(Column::<FileInfo>::new())
+        .with(Column::<FileInfo>::start())
         .build(store(), USize(0));
     assert!(built.is_ok(), "the builder must accept this registration");
 }
@@ -218,7 +219,7 @@ fn mixed_kit_and_raw_build() {
     let built = Scheduler::builder()
         .with(WorkspaceKit)
         .with(Resource::new(Interner))
-        .with(Column::<Notes>::new())
+        .with(Column::<Notes>::start())
         .build(store(), USize(0));
     assert!(built.is_ok(), "the builder must accept this registration");
 }
@@ -230,9 +231,9 @@ fn mixed_kit_and_raw_build() {
 #[test]
 fn a_column_is_placed_by_the_store_list_and_not_by_its_node() {
     let built = Scheduler::builder()
-        .with(Column::<Notes>::new())
+        .with(Column::<Notes>::start())
         .with(WorkspaceKit)
-        .with(Column::<Marks>::new())
+        .with(Column::<Marks>::start())
         .build(store(), USize(0));
     let notko::Outcome::Ok(scheduler) = built else {
         panic!("the builder must accept this registration");

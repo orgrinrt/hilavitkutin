@@ -59,7 +59,7 @@ use hilavitkutin_api::context::{
     ResourceProviderApi,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::{Column, Resource};
+use hilavitkutin_api::store::{Column, Resource, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
@@ -86,16 +86,16 @@ struct InC(u32);
 // `ColumnValue`. The payloads only give the units something to write and
 // read (the RAW edge that orders the producer before the consumer); the
 // test asserts execution counts, not values.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)]
 struct Ca(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)]
 struct Cb(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)]
 struct Cc(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)]
 struct Cd(u32);
 
@@ -282,9 +282,9 @@ fn incremental_skip_runs_only_the_changed_cone() {
     let mut scheduler = Scheduler::builder()
         .with(Resource::new(InA(100)))
         .with(Resource::new(InC(200)))
-        .with(Column::<Ca>::new())
-        .with(Column::<Cb>::new())
-        .with(Column::<Cc>::new())
+        .with(Column::<Ca>::start())
+        .with(Column::<Cb>::start())
+        .with(Column::<Cc>::start())
         .with(ProducerWu)
         .with(ConsumerWu)
         .with(UnrelatedWu)
@@ -334,10 +334,10 @@ fn incremental_skip_propagates_two_hops() {
     let mut scheduler = Scheduler::builder()
         .with(Resource::new(InA(100)))
         .with(Resource::new(InC(200)))
-        .with(Column::<Ca>::new())
-        .with(Column::<Cb>::new())
-        .with(Column::<Cc>::new())
-        .with(Column::<Cd>::new())
+        .with(Column::<Ca>::start())
+        .with(Column::<Cb>::start())
+        .with(Column::<Cc>::start())
+        .with(Column::<Cd>::start())
         .with(ProducerWu)
         .with(ConsumerWu)
         .with(SecondConsumerWu)
@@ -389,10 +389,10 @@ macro_rules! four_chain_scheduler {
         Scheduler::builder()
             .with(Resource::new(InA(100)))
             .with(Resource::new(InC(200)))
-            .with(Column::<Ca>::new())
-            .with(Column::<Cb>::new())
-            .with(Column::<Cc>::new())
-            .with(Column::<Cd>::new())
+            .with(Column::<Ca>::start())
+            .with(Column::<Cb>::start())
+            .with(Column::<Cc>::start())
+            .with(Column::<Cd>::start())
             .with(ProducerWu)
             .with(ConsumerWu)
             .with(SecondConsumerWu)

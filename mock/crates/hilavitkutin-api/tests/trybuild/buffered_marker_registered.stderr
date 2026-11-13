@@ -12,11 +12,11 @@ error[E0277]: `Buffered<Temp>` is not a BuilderInput; pass a registered input va
              Accum<T>
              CacheResidencyAxis
              ChangeClassAxis
-             Column<T>
              CoreIdleTimeAxis
              DefaultRunCfg<O>
              ExtensionSurface<T>
              FiberEmaAxis
+             MemoryWatermarkAxis
            and $N others
 note: required by a bound in `registered`
   --> tests/trybuild/buffered_marker_registered.rs:11:18
