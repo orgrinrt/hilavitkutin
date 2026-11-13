@@ -39,6 +39,14 @@ harness = false
 name = "engine_grouping"
 path = "tests/engine_grouping.rs"
 
+# The gate that runs `run-checks.sh` before anything is timed, driven against a
+# stub script so the refusal is seen rather than assumed. `harness = false`
+# because it spawns the built driver; it times no cell and needs no manifest.
+[[test]]
+name = "checks_gate"
+path = "tests/checks_gate.rs"
+harness = false
+
 [dependencies]
 frame-wide-support = { path = "support/frame-wide-support" }
 mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "f42844c7f7f8be9c54dd96b9a975a6c7da3fea5e", features = ["std"] }

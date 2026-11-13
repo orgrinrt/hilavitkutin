@@ -8,9 +8,9 @@
 //! timed, and the run fails.
 //!
 //! Before any cell is timed the driver runs `./run-checks.sh`, which is the
-//! build, the grouping test, the support crate's unit tests and the two
-//! negative controls. Nothing invoked that script until now, so its checks
-//! passed only when somebody remembered to run them.
+//! build, the grouping test, the checks gate's own test, the support crate's
+//! unit tests and the two negative controls. Nothing invoked that script until
+//! now, so its checks passed only when somebody remembered to run them.
 //!
 //! Flags: `--n <N>` runs only that record count, `--only <sweep>` only that
 //! sweep (repeatable), `--report-only` regenerates the findings from the CSVs
