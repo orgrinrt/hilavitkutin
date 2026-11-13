@@ -276,7 +276,7 @@ fn replace_resource_installs_the_value() {
     );
 }
 
-/// Catalogue (#689, GATE-2 deviation 5): the intended driver pattern
+/// Catalogue (ticket `74e2b9918149`, GATE-2 deviation 5): the intended driver pattern
 /// `run_parallel(..); replace_value(..); run_parallel(..)` materialises
 /// a `&mut Scheduler` between frames while a spawned worker holds a
 /// live `&Scheduler` across its park, an aliasing-model violation the
