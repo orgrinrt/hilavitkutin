@@ -8,7 +8,7 @@ The reference runner is the simplest runner the contracts allow, and it stays th
 
 `step` opens a step on a checked table and takes its units in table order, each with the staged cells of exactly the columns it writes, and hands each unit every record the visiting order gives, in its order and morsels. For each record the unit's reads are gathered from the committed view, its kernel's `at` is called, and its writes are scattered to the unit's staged part. A write the part refuses, which only a visiting order breaking its contract hands out, is kept as the first `Outside` and returned. The checked table's swap makes the written columns committed. `digest` folds the frame's number and then, unit by unit in table order and record by record in key order, the value of each column the unit writes.
 
-The runner is four private types. `OneThread` is its `StepFn`: it takes the units one after another. `Stepper` is its `StagedFn`: it walks the visiting order over one unit's part with `Records`, the `Visitor` that calls the kernel at each record. `Digester` is the `UnitFn` the digest is folded by. None is public: they are how this runner meets the contracts, not a surface another crate uses.
+The runner is four private types. `OneThread` is its `StepFn`: it takes the units one after another. `Stepper` is its `StagedFn`: it walks the visiting order over one unit's part with `Records`, the `Visitor` that calls the kernel at each record. `Digester` is the `UnitFn` the digest is folded by. Every unit arrives with its store's committed view, so none of the four holds a view of its own. None is public: they are how this runner meets the contracts, not a surface another crate uses.
 
 ## A run
 

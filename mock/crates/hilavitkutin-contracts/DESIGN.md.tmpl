@@ -24,7 +24,7 @@ A `Column` is a value per record of a domain, a `Resource` one value constant ov
 
 The members of a read list are `Own<C>`, this record's value of `C`; `Near<C, O>`, the value at the offset `O` from this record's key, where `O` is an `Offset` the domain's author declares with its step as plain data; and `Param<R>`, a resource's value supplied per binding as a coefficient. A write list holds `Own` members only. `Reads` and `Writes` say a list is one of these, and the walk over each list that checks a binding, mints its handles and reads and writes a record is sealed.
 
-`Roles` is the kernel's list of columns, each once. Every `Own` and `Near` member finds its column in it by `PlaceOf`, `notko-hlist`'s place of a type in a list, and the places are inferred where the kernel list is bound, so the members of one column read and write one stored column and nothing compares them at run time. A role list naming a column twice leaves a member's place ambiguous and the bind does not build; a member whose column is not in the list has no place and does not build. No specialization is used.
+`Roles` is the kernel's list of columns, each once. Every `Own` and `Near` member finds its column in it by `PlaceOf`, `notko-hlist`'s place of a type in a list, and the places are inferred where the kernel list is bound, so the members of one column read and write one stored column and nothing compares them at run time. A member whose column is not in the list has no place and does not build. A list naming a column twice builds as a declaration and gives its members two places: where the places are inferred the bind is ambiguous and does not build, but a caller who writes the places out can put two members of one column on two roles, and nothing refuses it yet. That case is catalogued as an ignored test and ticketed (`hilavitkutin_catalogue_explicit_places_bind_one_column_s_mem`); refusing it needs the places kept from the caller or a check on `Roles` that does not rest on specialization. No specialization is used.
 
 A `Value` is what a column or resource holds: a `Copy` type with one of the closed set of cell widths (`Cell8`, `Cell16`, `Cell32`, `Cell64`), a `FormatId` naming its encoding, and a way into the digest. `Value` is sealed and `Int` is its one impl, and a `FormatId` is made inside the crate only, one per value type, so two values never share one. A store keeps cells as `Word`s and a value moves through its cell.
 
@@ -32,19 +32,21 @@ A `Value` is what a column or resource holds: a `Copy` type with one of the clos
 
 A `Binding` is one line of the content table: a `UnitId`, the `KernelId` it runs, a `Role` for each column of the kernel's `Roles`, in that order, naming a stored column and the format the binding says it is in, and a `Coefficient` for each `Param` member. `bind` checks a table of bindings against a kernel list and the store it is handed, and returns either the checked table `Bound` or the first refusal as a `BindRefusal` value: an unknown kernel, a role or coefficient whose format is not the kernel's or the store's, an unknown column, a wrong count of roles or coefficients, two bindings of one unit, or two write roles naming one stored column (`TwoWritersOfOneColumn`), within one binding or across two. In a step with a committed view and staged columns, two writers of one staged column have no order a priority could resolve, so they are refused rather than ordered. A read role and a write role of one binding may name one stored column: the read is of the committed value.
 
-`bind` takes the store by `&mut`, and `Bound` keeps it for as long as the table lives. So every runner takes a table that passed, a table is never run over a store it was not checked against, and the store cannot change under it. `Bound` has no public field and no public constructor. While it lives the store is reached only through it: read by `Bound::store` and `Bound::committed`, stepped by `Bound::step`, swapped by `Bound::swap`, and walked unit by unit by `Bound::each`, which hands every unit, as a `Unit` with its kernel known as a type, to a `UnitFn`. That is how a runner is written over every kernel of a list without naming one.
+`bind` takes the store by `&mut`, and `Bound` keeps it for as long as the table lives. So every runner takes a table that passed, a table is never run over a store it was not checked against, and the store cannot change under it. `Bound` has no public field and no public constructor. While it lives the store is reached only through it: read by `Bound::store` and `Bound::committed`, stepped by `Bound::step`, swapped by `Bound::swap`, and walked unit by unit by `Bound::each`, which hands every unit, as a `Unit` with its kernel known as a type and the store's committed view, to a `UnitFn`. That is how a runner is written over every kernel of a list without naming one.
 
 The typed column handle `Col<D, V>` is minted from a passing binding and from nothing else: the format comparison is made once, at bind, and a store reads and writes through handles without comparing formats again.
 
+A `Unit` pairs a unit's handles with the committed view of the store its table was checked against, and has no public field and no public constructor: only `Bound::each` and `Units::next` make one. Its `gather`, `absorb` and `words` take a position and no view, so a runner cannot apply one table's handles to another store's cells. The handles themselves and the walk that mints them are crate-private.
+
 ## A step
 
-A step reads the committed view and writes staged cells. `Bound::step` opens one on the store with an `Opening`, which only the checked table makes, and hands a `StepFn` the committed view and `Units`. `Units::next` hands the next unit to a `StagedFn` as a `Staging`: the unit, with its kernel as a type, and its own part of the staged cells, holding exactly the stored columns it writes and every position. A runner cuts a `Staging` by position with `split`, gathers a record's reads from the committed view through the unit, and writes its kernel's values with `scatter`, which refuses as an `Outside` value a position its part does not hold. `low` and `high` say which positions a part holds.
+A step reads the committed view and writes staged cells. `Bound::step` opens one on the store with an `Opening`, which only the checked table makes, and hands a `StepFn` the `Units`, which carry the step's committed view and say its `extent`. `Units::next` hands the next unit to a `StagedFn` as a `Staging`: the unit, with its kernel as a type and the committed view, and its own part of the staged cells, holding exactly the stored columns it writes and every position. A runner cuts a `Staging` by position with `split`, gathers a record's reads through the unit, and writes its kernel's values with `scatter`, which refuses as an `Outside` value a position its part does not hold. `low` and `high` say which positions a part holds.
 
 The parts a step hands out are disjoint by construction: by column between units, since the bind refused two writers of one column, and by position within one, since a cut is a cut. A part is `Send` and the committed view `Sync`, so a threaded runner hands parts to its workers and needs nothing more of an author or an implementor than the one-thread runner does.
 
 ## The store and the visiting order
 
-A `Store` holds one shape of one domain's records, its stored columns each in a declared format, as a committed view and staged cells. `step`, given the `Opening`, borrows both: the committed view as `Read`, shared and `Sync`, and the whole staged side as `Stage`, `Send`. `Stage::take` splits off the stored columns a `Taking` holds and marks them written; `Stage::split` cuts by position; `Stage::put` writes one cell through a handle, and writes nothing where the part does not hold the column or the position. `swap` makes the staged cells of every column taken since the last swap committed, and a column no unit took keeps its committed values. A record is found by its position, an `Index` in key order; positions are the store's and the runner's and no kernel is handed one. How a store lays cells out behind a position is its own.
+A `Store` holds one shape of one domain's records, its stored columns each in a declared format, as a committed view and staged cells. `step`, given the `Opening`, borrows both: the committed view as `Read`, shared and `Sync`, and the whole staged side as `Stage`, `Send`. `Stage::take` splits off the stored columns a `Taking` holds and marks them written, whether or not anything is then put to them, so a runner that takes a part and writes nothing commits whatever its staged cells held; `Stage::split` cuts by position; `Stage::put` writes one cell through a handle, and writes nothing where the part does not hold the column or the position. `swap` makes the staged cells of every column taken since the last swap committed, and a column no unit took keeps its committed values. A record is found by its position, an `Index` in key order; positions are the store's and the runner's and no kernel is handed one. How a store lays cells out behind a position is its own.
 
 A `Visit` hands a `Visitor` every position below the extent exactly once, and no other, in morsels of a `Morsel`'s size but the last. A `Morsel` is never zero.
 
@@ -60,7 +62,7 @@ A `Visit` hands a `Visitor` every position below the extent exactly once, and no
 
 ## Shapes not locked
 
-Five shapes stand today and are not safe to lock. Each has a ticket, and each is decided before the contracts lock.
+Seven shapes stand today and are not safe to lock. Each has a ticket, and each is decided before the contracts lock.
 
 ### The push-callback visit
 
@@ -81,6 +83,14 @@ A position is a dense rank in key order over a fixed extent. Nothing resizes a s
 ### Values as nested pairs
 
 A kernel's values are a nested pair, destructured as `(a, (b, ()))`. A flat tuple or a named struct per kernel are the alternatives. Ticket `decide_whether_a_kernel_s_values_stay_nested_pairs_in_hilavi`.
+
+### The places tuple in every runner signature
+
+`P`, the places of a kernel list's members in their role lists, is a type parameter of `bind`, `Bound`, `Units`, `StepFn::step` and the reference's `step`, `digest` and `run`. Callers write `_`, but the parameter carries `notko-hlist`'s place encoding into every runner's plumbing, and it is also what lets an explicit caller place one column's members on two roles. Ticket `decide_whether_the_place_tuple_stays_in_every_runner_signatu`.
+
+### A consumer's own value type
+
+`Value` is sealed and `Int<BITS>` its one inhabitant, so downstream content has no value type of its own. Lifting the seal waits on a rule that keeps a `FormatId` unique across crates. Ticket `decide_how_a_consumer_gets_its_own_value_type_in_hilavitkuti`.
 
 ## Principles
 

@@ -16,3 +16,4 @@ Each `#[ignore = "catalogue: <the gap>; tracked #<id>"]` in this repository name
 - hilavitkutin_catalogue_cold_store_flush_and_open_need_the_mm: cold store flush writes nothing and open reads no manifest; needs the mmap-backed file I/O (was #344)
 - hilavitkutin_catalogue_engine_vs_std_perf_oracles_are_timing: the engine_vs_std perf oracles are timing assertions that only mean something in release; they belong on the bench harness
 - hilavitkutin_catalogue_cold_store_snapshot_copies_nothing_an: cold store snapshot copies nothing; needs the backup mechanism (was #344)
+- hilavitkutin_catalogue_explicit_places_bind_one_column_s_mem: a role list naming one column twice, bound with its places written out, puts one column's members on two roles; one role per column holds only while the places are inferred

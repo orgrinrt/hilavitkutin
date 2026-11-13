@@ -84,6 +84,6 @@ notko-hlist = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev",
 hilavitkutin-contracts = { path = "crates/hilavitkutin-contracts", version = "0.1.0" }
 hilavitkutin-reference = { path = "crates/hilavitkutin-reference", version = "0.1.0" }
 hilavitkutin-laws = { path = "crates/hilavitkutin-laws", version = "0.1.0" }
-hilavitkutin-frozen-authors = { path = "crates/hilavitkutin-frozen-authors", version = "0.1.0" }
-hilavitkutin-frozen-implementors = { path = "crates/hilavitkutin-frozen-implementors", version = "0.1.0" }
+hilavitkutin-frozen-authors = { path = "crates/hilavitkutin-frozen-authors" }
+hilavitkutin-frozen-implementors = { path = "crates/hilavitkutin-frozen-implementors" }
 trybuild = "=1.0.122"
