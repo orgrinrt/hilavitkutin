@@ -14,7 +14,8 @@ canon. Rows from the first tier and from op's rulings carry `origin =
 "stated"`. Rows from founding-round topics, research notes, agent-written
 rounds, the reading aid and the design templates carry `origin = "proposed"`
 and name who wrote them. Op's answers of 13 November 2026 are `question` rows
-with their options and are quoted here from `OP-ANSWERS.md` beside this file.
+with their options and are quoted here from `OP-ANSWERS.md` and
+`OP-ANSWERS-13.md` beside this file.
 
 Paths are relative to `mock/`. The founding spec is
 `design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md`
@@ -23,22 +24,41 @@ and is written SPEC below. Rows are cited as `tenet::<id>` and
 
 ## How far the read had come when this was written
 
-The answers rest on what had been read by 13 November 2026, 10:15 UTC. Read
-whole and first hand: the founding spec, amendments A1 and A2, the
+This is the second form of the answers, of 13 November 2026, about 11:30
+UTC. The first form went out at 10:15 UTC. Op answered four questions on it
+at about 10:35 UTC; they are in `OP-ANSWERS-13.md` beside this file and are
+`question` rows. On his words the read turned to the unlanded work and to the
+round of May 2026 before anything else, and questions 1, 2, 3 and 6 below
+are revised from what those hold.
+
+Read whole and first hand: the founding spec, amendments A1 and A2, the
 unified-engine amendment, the resource storage addendum, the governance
-seed, both headers of the standalone spec and the passages quoted from its
-body, and op's answers. Read whole by the readers, with every quote checked
-against the file: the seven founding-round topics, the founding research
-notes, the research notes and roadmaps from May to July 2026 with the
-`pre_seed` set, the seed, and the design templates of the workspace and of
-every crate. Not yet read when this was written: the design rounds after
-the founding one, apart from the three quoted below, the sketches' findings
-files, the research imported from polka-dots and saalis, the readme
-templates, the bench findings, and the rounds recovered from
-`origin/recover/unlanded-rounds-and-benches`. `LEDGER.md` lists every file
+seed, the swap specification, its ratification evidence and the topic of the
+round that implemented it, the adapt and resource-resolution topics and
+section S7 of the plan topic of round `202605101036`, the rounds of 13
+November 2026 on the accumulator's overflow, both headers of the standalone
+spec and the passages quoted from its body, and op's answers. Read whole by
+the readers, with every quote checked against the file: the seven
+founding-round topics, the founding research notes, the research notes and
+roadmaps from May to July 2026 with the `pre_seed` set, the seed, the design
+and readme templates of the workspace and of every crate, the design rounds
+from the founding one to 28 May 2026 and from 19 June to 13 November 2026,
+and every document that only the branch
+`origin/recover/unlanded-rounds-and-benches` carries.
+
+That branch holds less unread design than its size suggests. Its design
+rounds, research notes, seed and sketches are on `dev` already, byte for
+byte. What only it carries is the bench findings under
+`mock/benches/results/`, engine source and tests, and changes to a few
+design templates. The template passages that say something about the design
+are copied in `RECOVERED.md` beside this file.
+
+Not yet read when this was written: the design rounds from 29 May to 19 June
+2026, the sketches' findings files, the bench findings on `dev`, and the
+research imported from polka-dots and saalis. `LEDGER.md` lists every file
 with its state. Where an answer says the record has no passage for
 something, that is a statement about the part read, and the unread part can
-still hold one. The answers are revised if it does.
+still hold one.
 
 ## 1. Reading the value a store held at frame start, and what the counters are for
 
@@ -178,8 +198,12 @@ snapshot of shared read columns is a cache measure on ARM.
 >   data. Works on unified-memory ARM (M1). Complex on NUMA x86.
 > - Recommendation: approach 1 for ARM, approach 2 for x86 NUMA.
 
-For a resource, the swap of a replaceable value is not specified yet. Op
-commissioned a round for it on 19 July 2026.
+The later record adds three things that are a swap or a buffer by name. Each
+is narrower than a store that is read at its frame-start value while its
+next value is written.
+
+The first is the swap of a resource's value. Amendment A2-5 found it
+unspecified on 19 July 2026 and commissioned a round.
 
 `research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:88-94`
 
@@ -190,6 +214,173 @@ commissioned a round for it on 19 July 2026.
 > `PlanAffecting` interplay (A2-3), Seq/Map element ownership, dirty propagation, and quiescence.
 > The same round corrects the mis-grounded artifacts. Until it lands, `replace_value` stays
 > mark-dirty-only and the catalogued test stays red.
+
+The round wrote a specification in seven clauses. The swap replaces one
+whole value between frames and is seen from the next run on. It keeps no
+earlier value: the old bytes are overwritten.
+
+`research/202607200200_replaceable-swap-semantics-spec.md:24-38`
+
+> `Scheduler::replace_value<V: Replaceable>(&mut self, new: V)` installs `new`
+> as the whole one-record blob value: a `ptr::write` of `V` through the same
+> `Selector<V, Index>` witness (the binding's backcast pointer) that the drain
+> and the projection read use. No pointer derived by any other route (the
+> noalias provenance argument depends on it). No drop of the old value
+> (`V: ColumnValue` is `Copy`; the bytes are overwritten). The call
+> additionally sets the store-dirty bit for `Resource<V>` via `mark_dirty` and
+> never touches `plan_dirty`.
+>
+> The call is legal only between frames. `&mut self` plus the
+> parked-between-frames invariant (named as load-bearing, because worker raw
+> pointers sit outside the borrow checker's jurisdiction) means no swap can
+> race a live-streamed read or an in-flight snapshot. The swap is observable
+> starting at the next `run()` and at no earlier point; of multiple swaps
+> before a `run()`, only the last is ever observed.
+
+A swap of a plan-affecting resource does the same write and also sets the
+bit that sends the next run through the plan band.
+
+`research/202607200200_replaceable-swap-semantics-spec.md:42-47`
+
+> `Scheduler::replace_resource<T: PlanAffecting>(&mut self, new: T)` performs
+> the identical S1 write and store-dirty mark, and additionally sets the
+> `plan_dirty` bit for `T`'s `PlanAffectingId` in the scheduler's plan-dirty
+> bit array. The very next `run()` consumes that array: the band gate is
+> `first_frame OR any plan_dirty bit`, a plan-dirty frame enters the leading
+> plan band at phase 0, and the consumed bits clear.
+
+The specification is a draft pending op's ratification, and op held the
+ratification until it was implemented and benched. The evidence memo reports
+both.
+
+`research/202607200200_replaceable-swap-semantics-spec.md:3-6`
+
+> **Date:** 2026-07-19
+> **Status:** DRAFT pending op ratification (the seed pre-freeze resolution
+> batch). On ratification this document is the ruling source for the swap
+> rulings' registry rows and the seed storage chapter's replacement section.
+
+`research/202607201100_swap-semantics-ratification-evidence.md:6-14`
+
+> **Spec under ratification:** S1 to S7 of
+> `202607200200_replaceable-swap-semantics-spec.md`. Op held ratification
+> until the spec was implemented and benched; this memo is that evidence.
+>
+> ## What shipped (both changelists locked)
+>
+> S1: `replace_value` installs the whole value as one blob write through
+> the same `Selector` witness the drain wrote through, plus the
+> store-dirty mark; no other pointer derivation exists on the swap path.
+
+`research/202607201100_swap-semantics-ratification-evidence.md:53-58`
+
+> Each path pays exactly its own channel and nothing else, which is the
+> S5 asymmetry claim confirmed structurally: the clean-skip baseline is
+> flat and size-independent; the plan swap pays baseline plus the band
+> (flat, record-count-independent, band cost only); the value swap pays
+> baseline plus its dirty cone, scaling linearly with the records the
+> cone touches, and never pays the band.
+
+What that memo calls shipped is not on `dev`. The engine source, the two
+benches `swap_cost` and `swap_band` and the design text that states the
+specification are on the recovery branch only. On `dev` the engine design
+template has no swap paragraph and the api design template still seals the
+plan-affecting marker, which the specification opened. The recovery branch's
+paragraph, as copied:
+
+`research/202611130850_the-record-read-whole/RECOVERED.md:74-85`
+
+> A `Replaceable` swap installs the whole value as one blob write through the
+> same `Selector` witness the drain and the projection read use, plus a
+> store-dirty mark; no other pointer derivation exists on the swap path. Under
+> the bench-decided storage layout a resource value is one reserved blob record
+> (scalar snapshot plus live-streamed collections), so the whole-blob install is
+> the specified mechanism, not an excluded shortcut. The earlier per-leaf-copy
+> rule was grounded on the refuted pre-bench layout, and the revert of the
+> one-line install that followed it was a mis-citation; the witnessed blob write
+> is canonical. Collection-bearing values gain per-record element writes for
+> their `Seq` and `Map` halves only when the collection wiring lands (tracked by
+> the catalogued swap test); until then the collection halves of a swapped value
+> are out of the swap's scope by design, not by omission.
+
+These are the swap benches of the record, and they measure a resource
+value's replacement: `swap_cost` times one install across value sizes, and
+`swap_band` compares, on the next frame, a clean skip, a value swap and a
+plan-affecting swap. Neither measures a store buffered two or three deep.
+
+The second is the adapt unit, which is the maintenance unit the record
+specifies. Round `202605101036` makes adaptation a meta unit that observes
+the end of the schedule; the consumer registers the default one, ships its
+own, or leaves it out.
+
+`design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:15-15`
+
+> - **Topic 1 Axis 5.** Adapt is a meta-WU (`AdaptWu`) observing `ScheduleEnd`. Substrate ships default `AdaptWu` in `hilavitkutin-providers`; consumer registers via `.with(AdaptWu::default())` for substrate behaviour, ships own `AdaptWu` for custom, omits if not wanted. The integration shape is locked. This topic specifies what the WU body does and what metrics structure it reads/writes.
+
+Its work is specified. The metrics are written into a scratch arena on the
+hot path; at the end of the schedule the adapt unit refreshes from the arena
+the resources a consumer can read, computes the predicted wait per phase for
+the parking primitive, and fires one anomaly flag. It signals and does not
+re-plan.
+
+`design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:266-266`
+
+> - [x] **Axis B. AdaptMetrics data plane: B3 hybrid.** Scratch-arena hot path + `Resource<SchedulerMetrics>` snapshot refreshed by AdaptWu at `ScheduleEnd`. Snapshot is small (per-phase + per-fiber + per-core counters, on the order of MAX_PHASES + MAX_FIBERS + MAX_LANES u64s). Inner loop accesses arena directly via raw pointer; consumer reads via standard `Has<SchedulerMetricsProvider>` Ctx bound.
+
+`design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:314-314`
+
+> - Topic 5 does not own re-plan execution. AdaptWu signals `Virtual<ReplanRequested>`; Topic 9 (plan caching + dirty-detection) owns the observer that triggers actual re-planning.
+
+The adapt unit publishes that snapshot through a double buffer, and this is
+the one double buffer hilavitkutin's own design specifies. The resource
+holds two buffers and an index. The adapt unit fills the buffer that is not
+live and flips the index with one atomic store; a reader loads the index and
+reads the buffer it names.
+
+`design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:1181-1198`
+
+> **Double-buffer pattern for AdaptWu snapshot publish (resolves audit M1):**
+>
+> ```rust
+> struct MetricsResource<T> {
+>     buffer_a: T,
+>     buffer_b: T,
+>     current: AtomicUsize,  // 0 = a is live, 1 = b is live
+> }
+>
+> // AdaptWu at ScheduleEnd:
+> fn execute(&self, ctx: &Self::Ctx) {
+>     let mut r = ctx.writer::<MetricsResource<...>>();
+>     let next_idx = 1 - r.current.load(Ordering::Relaxed);
+>     let next_buf = if next_idx == 0 { &mut r.buffer_a } else { &mut r.buffer_b };
+>     // ... fill next_buf from AdaptArena slots (Relaxed reads paired
+>     //     with phase-barrier Acquire fence at WU entry) ...
+>     r.current.store(next_idx, Ordering::Release);  // single atomic publish
+> }
+
+The unit that writes the store is the one that rotates it, inside its own
+write, at the end of the schedule. Nothing in the schedule rotates it for
+the unit, and the unit rotates nothing but its own snapshot. The pattern is
+there for a reader on another thread, and it was added to resolve an audit
+finding on atomic ordering.
+
+The third is the resource snapshot of the same round: a read-only view of a
+resource captured at a phase barrier, which cannot outlive the phase.
+
+`design_rounds/202605101036/202605101036_topic.resource-resolution.md:22-25`
+
+> Snapshot captures only at phase barrier (after futex-wake, before next phase's morsels begin). Workers that hold a `ResourceSnapshot<R>` are guaranteed:
+> - The underlying `R::Owned` storage is not being written during the snapshot's lifetime.
+> - The snapshot's content matches what `R::Owned` held at `captured_at`.
+> - Snapshot lifetime is bounded by the current phase (cannot escape across phase barriers).
+
+It holds the current value still for one phase. It is no earlier value kept
+beside a newer one. A later round found the name used for two things and
+kept this meaning; the concrete signature waits for the data plane.
+
+`design_rounds/202605282256/202605282256_topic.resource-snapshot-disambiguation.md:14-14`
+
+> The locked design's typed view is the surviving meaning of `ResourceSnapshot`, but its DESIGN signature is stale. `hilavitkutin-api/DESIGN.md.tmpl` documents `ResourceSnapshot<'phase, R: BuilderInput<Dispatch = ResourceDispatch>>` with an `inner: Pin<&'phase R::Owned>` field. Neither `ResourceDispatch` nor `BuilderInput::Owned` exists: the round 202605101036 topic 2 builder reshape replaced per-kind dispatch routers with `StoreDispatch` / `UnitDispatch` / `KitDispatch` / `PlatformDispatch` / `RunCfgDispatch`, and `BuilderInput` carries only `Init` and `Dispatch` associated types. The signature predates the reshape. Its concrete form must be re-derived against the real `BuilderInput` contract, and that re-derivation depends on how a registered store exposes its scheduler-owned storage, which is the Phase B data-plane design. So the typed view ships with the data plane (HILA-RUNTIME-C6), not in this round. This round corrects the DESIGN so it stops presenting a stale signature as a shipping contract.
 
 Rows: `tenet::ordering_is_the_data_flow`,
 `tenet::a_write_declaration_implies_a_read`,
@@ -207,20 +398,101 @@ Rows: `tenet::ordering_is_the_data_flow`,
 `tenet::shared_read_columns_between_trunks_are_snapshotted_per_trunk_on_arm_or_read_in_aligned_sync_on_x86_numa`,
 `tenet::the_swap_of_a_replaceable_resource_is_to_be_specified_by_a_commissioned_round`,
 `tenet::a_swap_of_a_resource_value_is_legal_only_between_frames_and_is_observed_from_the_next_run`,
+`tenet::the_swap_specification_is_a_draft_that_becomes_the_ruling_source_for_the_swap_rows_once_the_maintainer_ratifies_it`,
+`tenet::the_maintainer_held_ratification_of_the_swap_spec_until_it_was_implemented_and_benched`,
+`tenet::replacing_a_plan_affecting_resource_does_the_replace_value_write_and_sets_the_plan_dirty_bit_the_next_run_consumes`,
+`tenet::replace_value_is_the_supported_every_frame_swap_and_costs_one_blob_write_then_the_store_s_dirty_cone`,
+`tenet::as_of_2026_07_19_replace_value_ships_as_one_blob_write_through_the_drain_s_selector_witness_plus_the_dirty_mark`,
+`tenet::the_swap_band_bench_proves_channel_separation_and_not_the_absolute_cost_of_a_real_plan_recompute`,
+`tenet::a_replaceable_swap_installs_the_whole_value_as_one_blob_write_and_marks_the_store_dirty`,
+`tenet::the_adapt_unit_is_a_meta_unit_that_observes_the_end_of_the_schedule_and_the_consumer_registers_replaces_or_omits_it`,
+`tenet::adapt_metrics_live_in_a_scratch_arena_and_the_adapt_unit_refreshes_a_consumer_readable_snapshot_at_the_end_of_the_schedule`,
+`tenet::the_adapt_unit_predicts_the_wait_per_phase_and_the_parking_primitive_only_reads_the_prediction`,
+`tenet::the_adapt_unit_fires_one_anomaly_flag_and_the_metrics_resources_carry_which_anomaly_it_was`,
+`tenet::the_adapt_unit_signals_and_does_not_re_plan`,
+`tenet::the_adapt_unit_publishes_its_metrics_snapshot_through_two_buffers_and_one_index_it_flips`,
+`tenet::a_resource_snapshot_is_a_read_only_view_captured_at_a_phase_barrier_and_it_cannot_outlive_the_phase`,
+`tenet::the_typed_phase_bounded_view_is_the_one_meaning_of_resource_snapshot_and_its_signature_lands_with_the_data_plane`,
+`tenet::four_meta_virtuals_fire_plan_stage_schedule_ready_pass_start_and_schedule_end`,
+`question::whether_the_maintainer_ratifies_s1_through_s7_of_the_swap_spec_as_the_swap_semantics_canon`,
+`question::whether_the_plan_affecting_marker_is_sealed_or_open`,
+`question::who_rotates_a_buffered_store`,
 `question::how_a_unit_reads_the_value_a_store_held_at_frame_start`.
 
 ### What the record does not decide
 
-Op's answer of 13 November says the counters were designed for exactly this,
-that known downstream users triple buffer, and that the spec should answer it
-at least in intent. The record agrees on the downstream users and on the
-intent that a consumer can buffer two or three deep over hilavitkutin. In the
-part read it does not give the counters that job: no passage has a counter or
-a generation select or hold an earlier value of a store.
+Op's first answer of 13 November says the counters were designed for exactly
+this, that known downstream users triple buffer, and that the spec should
+answer it at least in intent. The record agrees on the downstream users and
+on the intent that a consumer can buffer two or three deep over
+hilavitkutin. In the part read it does not give the counters that job: no
+passage has a counter or a generation select or hold an earlier value of a
+store.
 
-One passage in the part read says otherwise. An expert memo of the storage
-model round, written by an agent persona and dated 19 June 2026, states that
-hilavitkutin's own columns are double-buffered.
+His second answer, on who rotates, chose none of the three options. He
+recalled research, spikes and perhaps benches on multi-buffering and swaps,
+and specifications of maintenance units that do this and adaptation, and he
+asked whether that work sat unlanded. The record, read as far as the section
+above says, holds the following of what he recalled.
+
+Swaps are specified, implemented and benched, and the implementation is
+unlanded: they are swaps of a resource's whole value between frames. A
+maintenance unit is specified: the adapt unit, a meta unit at the end of the
+schedule. Multi-buffering of hilavitkutin's own stores is specified in one
+place, the adapt unit's snapshot with its two buffers and its flipped index.
+No passage in the part read specifies a column or a consumer's resource
+buffered two or three deep with a rotation the engine or a maintenance unit
+performs, and no bench in it measures one.
+
+The passage that comes closest is section S7 of the plan topic of round
+`202605101036`, lines 1181 to 1198, quoted above. It is the only place where
+hilavitkutin's own design keeps the published value of a store and its next
+value side by side and says who flips them: the unit that writes the store,
+by one atomic store of an index, at the end of its own write, with the
+reader choosing its buffer by loading the index. It is closest and it does
+not decide the question, for two reasons that are readings of mine. It is
+specified for one resource and one writer, as a publish across threads, and
+nothing generalises it. And its reader runs in the pass after the flip; a
+reader and a writer of one such resource inside one pass would be ordered by
+the data flow, reader after writer, so the reader would see the new value.
+
+The second closest is the founding round's resolution quoted at the top of
+this answer: the frozen read is the consumer's layer, and if hilavitkutin
+ever took more, it would enter as a new store wrapper type in the access
+set. A research note of the same round rates loimu's swap buffer as directly
+portable to hilavitkutin as a double-buffering primitive, and the founding
+spec did not take it up.
+
+Two later notes say where the earlier buffering designs went. The storage
+heritage note of 30 May 2026 lists what of that heritage is stale or
+superseded
+(`tenet::a_storage_heritage_note_lists_the_per_morsel_snapshot_buffer_s_double_buffering_as_superseded_by_generation_counters`).
+
+`research/202605302130_unified-storage-design-archaeology.md:67-67`
+
+> Stale / superseded: `const N: Cap` / `const N: usize` on storage types (-> `Capacity`); `VersionedStore` threading a const-generic `N` (-> thread `Capacity`); slice-returning `as_slice`/`as_mut_slice` (-> raw pointers, R6); `StoreId` hash identity with `LazyLock` (-> dense plan-time `u16`); `HashMap`-backed `StoreMap` (-> const-array + plan-time index); loimu's dynamic view affinity / hysteresis / restructuring (-> static plan-time co-located fiber arenas); loimu's seven access modes + three fusion tiers (-> Read/Write + commutativity); temporal storage (loimu-specific); per-morsel `SnapshotBuffer` double-buffering (-> generation counters).
+
+This is the one passage found that ties the counters to buffering, and it
+agrees with op's first answer as far as it goes: the counters took the place
+of the double-buffered snapshot buffer. It says what was replaced. It does
+not say how a reader gets a store's earlier value from a counter, and no
+other passage read does. The expert survey of alternative storage models,
+written for the storage model round, puts the three-deep model outside the
+engine
+(`tenet::an_expert_survey_places_the_triple_buffer_temporal_model_in_loimu_s_domain_and_not_in_the_engine`).
+
+`research/202606210600_expert-alternatives-storage-model.md:172-175`
+
+> - **what is worth grafting:** the *affinity insight* (§5 option 4): co-locate members that WUs read
+>   together. In hilavitkutin terms that is a build-time decision the existing waist/trunk analysis
+>   already approximates (fibers that read the same resources run together). The triple-buffer temporal
+>   model is loimu-domain (UI extrapolation), not engine substrate.
+
+Both are agent-written and intermediate by the precedence.
+
+One passage in the part read says hilavitkutin's columns are double-buffered
+already. It is an expert memo of the storage model round, written by an
+agent persona and dated 19 June 2026.
 
 `research/202606210600_expert-loimu-heritage-storage-model.md:289-293`
 
@@ -231,8 +503,8 @@ hilavitkutin's own columns are double-buffered.
 > them.
 
 The memo gives no source for the sentence, and no passage in the founding
-spec, the amendments or the founding round carries it. By the precedence it
-is intermediate work. It is a row,
+spec, the amendments, the founding round or round `202605101036` carries it.
+By the precedence it is intermediate work. It is a row,
 `tenet::an_expert_memo_says_hilavitkutin_s_columns_are_double_buffered_for_the_pass_boundary`,
 and the disagreement is the open row
 `question::whether_hilavitkutin_s_own_columns_are_double_buffered`.
@@ -250,17 +522,18 @@ records a per-store dirty mask standing in their place
 > given no-alloc and a per-fiber morsel count that varies with the window, and how they compose with
 > the existing `store_dirty` mask rather than duplicating it. Do not start this one by writing code.
 
-What the record leaves open is who rotates. The founding round says the
-arena is loimu's and names where hilavitkutin would take more if it ever
-needed to: a new store wrapper type in the access set. A research note of the
-same round rates loimu's swap buffer as directly portable to hilavitkutin as
-a double-buffering primitive, and the founding spec did not take it up. So
-the record holds both a hilavitkutin that knows nothing of buffering and a
-proposal that it carry the rotation. A question for op follows from that and
-is in the status this file went out with: whether the rotation stays with
-the consumer, as two declared stores it swaps between passes, or whether
-hilavitkutin gains a store wrapper that names a store as buffered, so the
-schedule knows the frozen and the live side and rotates them itself.
+So the record holds a hilavitkutin of read and write that leaves buffering
+to the consumer, one unit that double-buffers its own snapshot and flips it
+itself, and a proposal that hilavitkutin carry a buffering primitive. Who
+rotates a store that is read at its frame-start value while its next value
+is written in the same pass, it does not say. The row
+`question::who_rotates_a_buffered_store` carries the three options and op's
+words.
+
+The rounds of 29 May to 19 June 2026, the sketch findings and the bench
+findings on `dev` were not read when this was written. The rounds of 19 June
+to 12 November were read, and they hold the swap round quoted above and no
+buffering of a store.
 
 ## 2. Columns of different record counts
 
@@ -343,6 +616,7 @@ Rows: `tenet::storage_is_contiguous_and_a_fiber_s_columns_share_one_arena`,
 `tenet::at_ecs_scale_the_consumer_holds_separate_schedules_per_component_set`,
 `tenet::an_accumulator_is_a_column_written_by_append_and_a_fourth_store_marker`,
 `question::where_the_record_count_of_a_column_lives`,
+`question::how_record_sets_of_different_counts_live_together`,
 `question::whether_the_extent_of_a_record_domain_is_fixed`.
 
 ### What the record does not decide
@@ -364,6 +638,33 @@ another set's count, or whether one schedule may hold several counts at
 once. Op's answer of 13 November on the extent of a record domain, "Both,
 declared per domain", takes a domain as given, and the record has no
 passage yet that says what declares one.
+
+Op was asked on 13 November how record sets of different counts live
+together: several sets in one schedule, each contiguous with its own count
+as a plan parameter; one schedule per set, as the founding round has it,
+with crossings carried by the consumer; or a bench of both first. His answer
+is "Bench both first". So the api takes neither shape until both are
+sketched and benched, and the record stands as above until then. The row is
+`question::how_record_sets_of_different_counts_live_together`. The recovery
+branch adds nothing here: its bench findings are on fiber theory, the
+reverse Cuthill-McKee order and its rivals, the wake policy and the two swap
+benches, and none compares the two shapes.
+
+The later rounds keep one count. The round of July 2026 that turns the
+per-fiber morsel size into a window has every fiber cover the same record
+range
+(`tenet::a_fiber_s_morsel_size_is_a_window_and_the_fiber_covers_the_one_record_range_in_count_over_window_morsels`).
+
+`design_rounds/202607161410/202607161400_topic.a3b-l1-morsel-formula.md:29-33`
+
+>    window (nothing constrains its L1 write budget). `plan.morsel_windows[f]`
+>    becomes a WINDOW size; a fiber covers the record range in
+>    `ceil(record_count / window)` morsels. This is the designed semantics flip the
+>    A1 slice documented as pending; tests pinning the partition placeholder are
+>    rehabbed to the window contract and `r6_morsel_window_formula` goes green.
+
+The rounds read from 19 June to 12 November 2026 have no passage on a
+schedule holding several counts.
 
 ## 3. Ordering two writers of one store
 
@@ -406,24 +707,27 @@ priority, and the spec replaced the explicit order field with the hints.
 > explicit priority). Virtual columns (zero-sized types like
 > `Write<SchemaChanged>`) create DAG edges with no storage backing.
 
-Op's answer of 13 November is "Hints, registration as fallback". It agrees
-with the spec on the hints and names the deterministic fallback, which the
-spec had left as "type name or similar": registration order.
+Op's first answer of 13 November is "Hints, registration as fallback". It
+agrees with the spec on the hints and names the deterministic fallback,
+which the spec had left as "type name or similar": registration order. Asked
+the same day whether the step between them stays, he answered "Hints,
+dependents, registration". So the order is settled: the scheduling hints,
+then the most downstream dependents, then registration order.
 
 Rows: `tenet::two_writers_of_one_store_are_ordered_by_hint_priority`,
 `tenet::scheduling_hints_replace_an_order_field_on_the_unit`,
 `tenet::the_founding_research_orders_two_writers_by_registration_order_or_explicit_priority`,
 `tenet::producer_before_consumer_registration_is_provisional_and_the_ideal_is_auto_ordering`,
 `question::how_two_writers_of_one_store_are_ordered`,
+`question::whether_the_most_dependents_step_stays_between_hints_and_registration`,
 `question::what_happens_when_two_units_write_one_frame_buffered_column`.
 
 ### What the record does not decide
 
-Whether the middle step stays. The spec has hints, then most dependents,
-then the deterministic fallback. Op's answer names the first and the last
-and is silent on the middle one. Read as the later ruling changing only what
-it names, the order is hints, most dependents, registration. Read as the
-whole rule, it is hints, registration. The record does not say which.
+The order itself is decided. What stays undecided is in the code and the
+engine design template, which order two writers by registration position
+alone and read no hints; by the answers that is a deviation to fix and not a
+second design.
 
 For two units that write one frame-buffered column, op's answer of
 13 November is "Schedule should exist for this specifically." The record has
@@ -615,9 +919,16 @@ of the agent-written round and of the reading aid. The two fit without a
 contradiction if the accumulator is a column whose write is an append,
 marked by its own wrapper in the access set, which is the extension point
 the founding round named for a new access form (question 1). They contradict
-if the kinds are counted by marker. The row
-`question::whether_the_accumulator_is_a_fourth_store_kind` holds both
-passages and is open.
+if the kinds are counted by marker.
+
+Op was asked this on 13 November with those two shapes as the options, and
+answered "Whichever makes most sense typestate and plumbing wise". He
+prefers neither as such. The api revision decides, by which shape gives the
+cleaner typestate and plumbing, and says why. The rows are
+`question::whether_the_accumulator_is_a_fourth_store_kind`, which holds both
+passages, and
+`question::which_shape_the_accumulator_takes_is_left_to_the_api_revision`,
+which holds his answer.
 
 ## 7. Whether content may add stores without Rust
 

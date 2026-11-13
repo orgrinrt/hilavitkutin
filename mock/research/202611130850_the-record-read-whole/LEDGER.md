@@ -26,6 +26,20 @@ quoted where the file gives itself one and described where it does not.
 
 The line counts in the tables were compared with the files on the branch
 when the ledger was assembled.
+A date a reader had taken from a file name was struck by a script that looks
+for the date in the file, so every date in the tables is one the file
+carries.
+
+The branch `origin/recover/unlanded-rounds-and-benches` was read at its ref
+and not merged. Most of its documents are on the working branch already,
+byte for byte, and are ledgered once, as read here. The documents that only
+it carries have their own table below. Four more documents differ between
+the two branches (the findings of the `engine_vs_std` bench, the design and
+readme templates of `hilavitkutin-sym`, and `mock/research/README.md`); the
+recovery side of each was read by the same reader, and the table lists the
+file once, by its form on the working branch. The recovery side's changes to
+the engine and api design templates were read first hand as a diff, and the
+passages that say something about the design are copied in `RECOVERED.md`.
 
 ## Read
 
@@ -274,16 +288,16 @@ when the ledger was assembled.
 | `mock/design_rounds/202605011500/202605011500_changelist.src.lock.md` | 358 | 2026-05-01 | "**Phase:** SRC-PLAN" | source changelist: uncap Wus, read!/write!, BuilderExtending, Depth | batch 16 |
 | `mock/design_rounds/202605011500/202605011500_topic.third-reviewer-amendments.md` | 168 | 2026-05-01 | "**Phase:** TOPIC (addendum to `202605011500_topic.uncap-wus-and-polish.md`, which is frozen)" | topic: third-reviewer amendments, cons-list uncap | batch 16 |
 | `mock/design_rounds/202605011500/202605011500_topic.uncap-wus-and-polish.md` | 149 | 2026-05-01 | "**Phase:** TOPIC" | topic: uncap Wus, read!/write!, BuilderExtending, Depth | batch 16 |
-| `mock/design_rounds/202605041228/202605041228_changelist.doc.lock.md` | 82 | 2026-05-04 | "status: open" | doc changelist: arvo rounds adoption, typed-const Depth | batch 16 |
-| `mock/design_rounds/202605041228/202605041228_changelist.src.lock.md` | 149 | 2026-05-04 | "status: open" | source CL: arvo pin bump, AccessMask alias deletion, typed-const Depth | batch 17 |
-| `mock/design_rounds/202605041228/202605041228_topic_arvo_rounds_1_8_adoption.md` | 87 | 2026-05-04 | "status: frozen" | topic: mechanical adoption of arvo Rounds 1-8 | batch 17 |
-| `mock/design_rounds/202605041228/202605041228_topic_typed_const_completion.md` | 110 | 2026-05-04 | "status: frozen" | topic: typed-const completion of PR #46 deferred sites | batch 17 |
-| `mock/design_rounds/202605041257/202605041257_changelist.doc.lock.md` | 144 | 2026-05-04 | "status: open" | doc CL: hilavitkutin-providers v0 templates, v0 scoping | batch 17 |
-| `mock/design_rounds/202605041257/202605041257_changelist.src.lock.md` | 80 | 2026-05-04 | "status: open" | source CL: providers crate manifest, interner module, smoke test | batch 17 |
-| `mock/design_rounds/202605041257/202605041257_topic_hilavitkutin_providers_v0.md` | 185 | 2026-05-04 | "status: frozen" | topic: providers crate, InternerApi, MemoryArena, decisions | batch 17 |
-| `mock/design_rounds/202605041320/202605041320_changelist.doc.lock.md` | 27 | 2026-05-04 | "status: open" | doc CL: no template edits for PR #48 fixes | batch 17 |
-| `mock/design_rounds/202605041320/202605041320_changelist.src.lock.md` | 86 | 2026-05-04 | "status: open" | source CL: arena unsafe write fixes, em-dash, soundness test | batch 17 |
-| `mock/design_rounds/202605041320/202605041320_topic_pr48_review_fixes.md` | 109 | 2026-05-04 | "status: frozen" | topic: PR #48 review findings and fixes | batch 17 |
+| `mock/design_rounds/202605041228/202605041228_changelist.doc.lock.md` | 82 | no date line | "status: open" | doc changelist: arvo rounds adoption, typed-const Depth | batch 16 |
+| `mock/design_rounds/202605041228/202605041228_changelist.src.lock.md` | 149 | no date line | "status: open" | source CL: arvo pin bump, AccessMask alias deletion, typed-const Depth | batch 17 |
+| `mock/design_rounds/202605041228/202605041228_topic_arvo_rounds_1_8_adoption.md` | 87 | no date line | "status: frozen" | topic: mechanical adoption of arvo Rounds 1-8 | batch 17 |
+| `mock/design_rounds/202605041228/202605041228_topic_typed_const_completion.md` | 110 | no date line | "status: frozen" | topic: typed-const completion of PR #46 deferred sites | batch 17 |
+| `mock/design_rounds/202605041257/202605041257_changelist.doc.lock.md` | 144 | no date line | "status: open" | doc CL: hilavitkutin-providers v0 templates, v0 scoping | batch 17 |
+| `mock/design_rounds/202605041257/202605041257_changelist.src.lock.md` | 80 | no date line | "status: open" | source CL: providers crate manifest, interner module, smoke test | batch 17 |
+| `mock/design_rounds/202605041257/202605041257_topic_hilavitkutin_providers_v0.md` | 185 | no date line | "status: frozen" | topic: providers crate, InternerApi, MemoryArena, decisions | batch 17 |
+| `mock/design_rounds/202605041320/202605041320_changelist.doc.lock.md` | 27 | no date line | "status: open" | doc CL: no template edits for PR #48 fixes | batch 17 |
+| `mock/design_rounds/202605041320/202605041320_changelist.src.lock.md` | 86 | no date line | "status: open" | source CL: arena unsafe write fixes, em-dash, soundness test | batch 17 |
+| `mock/design_rounds/202605041320/202605041320_topic_pr48_review_fixes.md` | 109 | no date line | "status: frozen" | topic: PR #48 review findings and fixes | batch 17 |
 | `mock/design_rounds/202605041345/202605041345_changelist.doc.lock.md` | 168 | 2026-05-04 | unstated (doc changelist, "Phase: DOC") | doc CL: BuilderResource section, InternerKit promotion | batch 17 |
 | `mock/design_rounds/202605041345/202605041345_changelist.src.lock.md` | 268 | 2026-05-04 | unstated (source changelist, "Phase: SRC-PLAN") | source CL: BuilderResource trait, engine impl, InternerKit | batch 17 |
 | `mock/design_rounds/202605041345/202605041345_topic_providers_v0_1_kit_bridge.md` | 186 | 2026-05-04 | unstated (topic, "Phase: TOPIC") | topic: InternerKit and BuilderResource bridging trait | batch 17 |
@@ -355,23 +369,373 @@ when the ledger was assembled.
 | `mock/design_rounds/202605082349/202605082349_changelist.doc.lock.md` | 48 | 2026-05-08 | "**Phase:** DOC" | Doc CL: SchedulerBuilder method-name updates in templates | batch 18 |
 | `mock/design_rounds/202605082349/202605082349_changelist.src.lock.md` | 139 | 2026-05-08 | "**Phase:** DRAFT" | Source CL: SchedulerBuilder method renames | batch 18 |
 | `mock/design_rounds/202605082349/202605082349_topic_builder_api_rename.md` | 104 | 2026-05-08 | "**Phase:** TOPIC" | SchedulerBuilder method renames for naming consistency | batch 18 |
-| `mock/design_rounds/202605090011/202605090011_changelist.doc.lock.md` | 136 | 2026-05-09 | "phase: DOC" | Doc CL: descriptor v1.1 abi hardening | batch 18 |
-| `mock/design_rounds/202605090011/202605090011_changelist.src.lock.md` | 142 | 2026-05-09 | "phase: DRAFT" | Src CL: descriptor v1.1 abi hardening | batch 18 |
-| `mock/design_rounds/202605090011/202605090011_topic.descriptor-v1-1-abi-hardening.md` | 267 | 2026-05-09 | "phase: TOPIC" | ExtensionDescriptor v1.1 ABI hardening | batch 18 |
-| `mock/design_rounds/202605090033/202605090033_changelist.doc.lock.md` | 43 | 2026-05-09 | "phase: DOC" | Doc CL: descriptor v1.1 review-fix | batch 18 |
-| `mock/design_rounds/202605090033/202605090033_changelist.src.lock.md` | 36 | 2026-05-09 | "phase: DRAFT" | Src CL: descriptor v1.1 review-fix | batch 18 |
-| `mock/design_rounds/202605090033/202605090033_topic.descriptor-v1-1-review-fix.md` | 99 | 2026-05-09 | "phase: TOPIC" | Descriptor v1.1 review-fix | batch 18 |
-| `mock/design_rounds/202605090047/202605090047_changelist.doc.lock.md` | 25 | 2026-05-09 | "phase: DOC" | Doc CL: test rehab #291 | batch 18 |
-| `mock/design_rounds/202605090047/202605090047_changelist.src.lock.md` | 72 | 2026-05-09 | "phase: DRAFT" | Src CL: test rehab #291 (phase 1) | batch 18 |
-| `mock/design_rounds/202605090047/202605090047_topic.test-rehab-291.md` | 99 | 2026-05-09 | "phase: TOPIC" | Hilavitkutin test rehab post-arvo-Round-D | batch 18 |
-| `mock/design_rounds/202605090144/202605090144_changelist.doc.lock.md` | 39 | 2026-05-09 | "phase: DOC" | Doc CL: str linker-section rationale | batch 18 |
-| `mock/design_rounds/202605090144/202605090144_changelist.src.lock.md` | 23 | 2026-05-09 | "phase: DRAFT" | Src CL: str linker-section rationale (no source changes) | batch 18 |
-| `mock/design_rounds/202605090144/202605090144_topic.str-linker-rationale.md` | 128 | 2026-05-09 | "phase: TOPIC" | Linker-section rationale for hilavitkutin-str | batch 18 |
+| `mock/design_rounds/202605090011/202605090011_changelist.doc.lock.md` | 136 | no date line | "phase: DOC" | Doc CL: descriptor v1.1 abi hardening | batch 18 |
+| `mock/design_rounds/202605090011/202605090011_changelist.src.lock.md` | 142 | no date line | "phase: DRAFT" | Src CL: descriptor v1.1 abi hardening | batch 18 |
+| `mock/design_rounds/202605090011/202605090011_topic.descriptor-v1-1-abi-hardening.md` | 267 | no date line | "phase: TOPIC" | ExtensionDescriptor v1.1 ABI hardening | batch 18 |
+| `mock/design_rounds/202605090033/202605090033_changelist.doc.lock.md` | 43 | no date line | "phase: DOC" | Doc CL: descriptor v1.1 review-fix | batch 18 |
+| `mock/design_rounds/202605090033/202605090033_changelist.src.lock.md` | 36 | no date line | "phase: DRAFT" | Src CL: descriptor v1.1 review-fix | batch 18 |
+| `mock/design_rounds/202605090033/202605090033_topic.descriptor-v1-1-review-fix.md` | 99 | no date line | "phase: TOPIC" | Descriptor v1.1 review-fix | batch 18 |
+| `mock/design_rounds/202605090047/202605090047_changelist.doc.lock.md` | 25 | no date line | "phase: DOC" | Doc CL: test rehab #291 | batch 18 |
+| `mock/design_rounds/202605090047/202605090047_changelist.src.lock.md` | 72 | no date line | "phase: DRAFT" | Src CL: test rehab #291 (phase 1) | batch 18 |
+| `mock/design_rounds/202605090047/202605090047_topic.test-rehab-291.md` | 99 | no date line | "phase: TOPIC" | Hilavitkutin test rehab post-arvo-Round-D | batch 18 |
+| `mock/design_rounds/202605090144/202605090144_changelist.doc.lock.md` | 39 | no date line | "phase: DOC" | Doc CL: str linker-section rationale | batch 18 |
+| `mock/design_rounds/202605090144/202605090144_changelist.src.lock.md` | 23 | no date line | "phase: DRAFT" | Src CL: str linker-section rationale (no source changes) | batch 18 |
+| `mock/design_rounds/202605090144/202605090144_topic.str-linker-rationale.md` | 128 | no date line | "phase: TOPIC" | Linker-section rationale for hilavitkutin-str | batch 18 |
 | `mock/design_rounds/202605091700/202605091700_changelist.doc.lock.md` | 287 | 2026-05-09 | "**Phase:** DOC" | Doc changelist: round 202605091700 | batch 18 |
 | `mock/design_rounds/202605091700/202605091700_changelist.src.lock.md` | 190 | 2026-05-09 | "**Phase:** SRC" | Source changelist: round 202605091700 | batch 18 |
 | `mock/design_rounds/202605091700/202605091700_topic.builder-shape.md` | 325 | 2026-05-09 | "**Phase:** TOPIC" | Builder shape: one verb, value-driven, dispatch-via-associated-type | batch 18 |
 | `mock/design_rounds/202605091700/202605091700_topic.provider-unification.md` | 235 | 2026-05-09 | "**Phase:** TOPIC" | Provider unification: capability becomes provider; extensions provide bins, not slots | batch 18 |
 | `mock/design_rounds/202605101036/202605101036_changelist.doc.lock.md` | 203 | 2026-05-11 | "**Phase:** DOC — drafted autonomously per overnight protocol 2026-05-11. Land time = next user session." | Doc changelist: round 202605101036 (hilavitkutin runtime megaround) | batch 18 |
+| `mock/design_rounds/202605101036/202605101036_changelist.src.lock.md` | 653 | 2026-05-11 | "**Phase:** SRC-PLAN. Drafted post-doc-lock" | src changelist for runtime megaround, 8 passes, api and engine shapes | batch 19 |
+| `mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md` | 315 | 2026-05-10 | "**Phase:** TOPIC (open)" | adapt subsystem axes, metrics resources, locked decisions | batch 19 |
+| `mock/design_rounds/202605101036/202605101036_topic.builder-input-rename-and-reshape.md` | 132 | 2026-05-10 | "**Phase:** TOPIC" | Provider renamed BuilderInput; wrapper structs deleted; ExtensionSurface | batch 19 |
+| `mock/design_rounds/202605101036/202605101036_topic.dispatch-codegen.md` | 283 | 2026-05-10 | "**Phase:** TOPIC (open)" | dispatch codegen axes A-H and decision log | batch 19 |
+| `mock/design_rounds/202605101036/202605101036_topic.morsel-loop.md` | 67 | 2026-05-11 | "**Phase:** TOPIC, closed (autonomous trivial calls + one user-attention flag)." | morsel loop axes, micro-morsel interval, sync points | batch 19 |
+| `mock/design_rounds/202605101036/202605101036_topic.per-core-dispatch.md` | 73 | 2026-05-11 | "**Phase:** TOPIC, closed (no fresh axes; consolidated as cross-topic confirmation)." | CoreAssignment and CoreProgram final shape | batch 19 |
+| `mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md` | 1283 | 2026-05-10 | "**Phase:** TOPIC" | 12-step plan chain, ExecutionPlan shape, soundness S1-S7 | batch 19 |
+| `mock/design_rounds/202605101036/202605101036_topic.plan-caching.md` | 87 | 2026-05-11 | "**Phase:** TOPIC, closed (autonomous trivial calls + one bench-gated value)." | plan recompute trigger, CSR graph, dirty granularity | batch 19 |
+| `mock/design_rounds/202605101036/202605101036_topic.resource-resolution.md` | 90 | 2026-05-11 | "**Phase:** TOPIC, closed (autonomous trivial calls + one user-attention flag)." | ResourceSnapshot semantics, PlanAffecting, persistence wiring | batch 19 |
+| `mock/design_rounds/202605101036/202605101036_topic.scheduler-run-signature.md` | 358 | 2026-05-10 | "**Phase:** TOPIC" | Scheduler::run signature, RunCfg, plan-cache, adapt path | batch 19 |
+| `mock/design_rounds/202605101036/202605101036_topic.test-and-example-bar.md` | 84 | 2026-05-11 | "**Phase:** TOPIC, closed (autonomous trivial calls + one user-attention flag for example app picks)." | test pyramid, three example apps, test-utils crate | batch 19 |
+| `mock/design_rounds/202605101036/202605101036_topic.thread-pool.md` | 131 | 2026-05-10 | "**Phase:** TOPIC, closed-pending-sketch (PoolFrame lifetime)." | Executor, parking tiers, PoolFrame, shutdown, WakeStrategy | batch 19 |
+| `mock/design_rounds/202605101200/202605101200_changelist.doc.lock.md` | 14 | 2026-05-10 | "**Phase:** DOC" | doc CL adding KitDispatch SHAME entry | batch 19 |
+| `mock/design_rounds/202605101200/202605101200_changelist.src.lock.md` | 7 | 2026-05-10 | "**Phase:** SRC" | empty source CL, doc-only round | batch 19 |
+| `mock/design_rounds/202605101200/202605101200_topic.kitdispatch-shame.md` | 13 | 2026-05-10 | "**Phase:** TOPIC" | KitDispatch lives in kit crate, SHAME entry | batch 19 |
+| `mock/design_rounds/202605102100/202605102100_changelist.doc.lock.md` | 31 | 2026-05-10 | "**Phase:** DOC" | Capability to Provider doc sweep, BACKLOG entry | batch 19 |
+| `mock/design_rounds/202605102100/202605102100_changelist.src.lock.md` | 31 | 2026-05-10 | "**Phase:** SRC" | em-dash removal, macro identifier renames | batch 19 |
+| `mock/design_rounds/202605102100/202605102100_topic.review-fixups.md` | 20 | 2026-05-10 | "**Phase:** TOPIC" | PR 73 review fixups, mechanical only | batch 19 |
+| `mock/design_rounds/202605110000/202605110000_changelist.doc.lock.md` | 23 | no date line | "phase: DOC" | empty doc CL for engine test rehab | batch 19 |
+| `mock/design_rounds/202605110000/202605110000_changelist.src.lock.md` | 87 | no date line | "phase: SRC" | test fixture migration to arvo types | batch 19 |
+| `mock/design_rounds/202605110000/202605110000_topic.engine-test-rehab.md` | 87 | 2026-05-10 | "**Phase:** TOPIC" | engine test rehab past arvo API drift | batch 19 |
+| `mock/design_rounds/202605232000/202605232000_changelist.doc.lock.md` | 30 | 2026-05-23 | "**Phase:** DOC" | empty doc CL, post-review source fixes | batch 19 |
+| `mock/design_rounds/202605232000/202605232000_changelist.src.deprecated.md` | 48 | 2026-05-23 | "**Phase:** SRC" (file name: deprecated) | superseded src CL, plan_dirty lift | batch 19 |
+| `mock/design_rounds/202605232000/202605232000_changelist.src.lock.md` | 47 | 2026-05-23 | "**Phase:** SRC" | src CL, plan_dirty lift deferred, stub rename | batch 19 |
+| `mock/design_rounds/202605232000/202605232000_topic.runtime-megaround-post-review-fixes.md` | 45 | 2026-05-23 | "**Phase:** TOPIC" | post-review fixes to megaround source drift | batch 19 |
+| `mock/design_rounds/202605232020/202605232020_changelist.doc.lock.md` | 30 | 2026-05-23 | "**Phase:** DOC" | empty doc CL for megaround deferrals | batch 19 |
+| `mock/design_rounds/202605232020/202605232020_changelist.src.lock.md` | 32 | 2026-05-23 | "**Phase:** SRC" | trybuild fixture, MIRI.md, ema_update Sample type | batch 19 |
+| `mock/design_rounds/202605232020/202605232020_topic.runtime-megaround-deferrals.md` | 34 | 2026-05-23 | "**Phase:** TOPIC" | three deferrals from megaround Pass 7 | batch 19 |
+| `mock/design_rounds/202605232029/202605232029_changelist.doc.lock.md` | 16 | 2026-05-23 | "**Phase:** DOC" | empty doc CL for PR review polish | batch 19 |
+| `mock/design_rounds/202605232029/202605232029_changelist.src.lock.md` | 30 | 2026-05-23 | "**Phase:** SRC" | docstring honesty, assertion, README pointer | batch 19 |
+| `mock/design_rounds/202605232029/202605232029_topic.deferrals-pr-review-polish.md` | 32 | 2026-05-23 | "**Phase:** TOPIC" | four review polish items, no design change | batch 19 |
+| `mock/design_rounds/202605250545/202605250545_changelist.doc.lock.md` | 22 | 2026-05-25 | "**Phase:** DOC" | assign_cores DESIGN section, BACKLOG entry | batch 19 |
+| `mock/design_rounds/202605250545/202605250545_changelist.src.lock.md` | 33 | 2026-05-25 | "**Phase:** SRC" | assign_cores round-robin body and tests | batch 19 |
+| `mock/design_rounds/202605250545/202605250545_topic.hila-c4-assign-cores-base.md` | 57 | 2026-05-25 | "**Phase:** TOPIC" | base assign_cores pipeline-wide round-robin | batch 19 |
+| `mock/design_rounds/202605250600/202605250600_changelist.doc.lock.md` | 22 | 2026-05-25 | "**Phase:** DOC" | select_approach DESIGN section, BACKLOG entry | batch 19 |
+| `mock/design_rounds/202605250600/202605250600_changelist.src.lock.md` | 32 | 2026-05-25 | "**Phase:** SRC" | select_approach three-branch body and tests | batch 19 |
+| `mock/design_rounds/202605250600/202605250600_topic.hila-c2-select-approach-base.md` | 56 | 2026-05-25 | "**Phase:** TOPIC" | base select_approach heuristic, 10K threshold | batch 19 |
+| `mock/design_rounds/202605250607/202605250607_changelist.doc.lock.md` | 16 | 2026-05-25 | "**Phase:** DOC" | select_approach DESIGN revised with typed constants | batch 19 |
+| `mock/design_rounds/202605250607/202605250607_changelist.src.lock.md` | 40 | 2026-05-25 | "**Phase:** SRC" | typed USize thresholds in select_approach | batch 19 |
+| `mock/design_rounds/202605250607/202605250607_topic.hila-c2-reviewer-fixes.md` | 33 | 2026-05-25 | "**Phase:** TOPIC" | PR 81 review fixes for select_approach | batch 19 |
+| `mock/design_rounds/202605250615/202605250615_changelist.doc.lock.md` | 22 | 2026-05-25 | "**Phase:** DOC" | codegen stubs DESIGN section, BACKLOG entry | batch 19 |
+| `mock/design_rounds/202605250615/202605250615_changelist.src.lock.md` | 35 | 2026-05-25 | "**Phase:** SRC" | codegen_fiber and codegen_core skeleton returns | batch 19 |
+| `mock/design_rounds/202605250615/202605250615_topic.hila-c2-codegen-stubs.md` | 54 | 2026-05-25 | "**Phase:** TOPIC" | codegen skeleton stubs, LLVM monomorphisation deferred | batch 19 |
+| `mock/design_rounds/202605250628/202605250628_changelist.doc.lock.md` | 22 | 2026-05-25 | "**Phase:** DOC" | Scheduler::run no-op body DESIGN section | batch 19 |
+| `mock/design_rounds/202605250628/202605250628_changelist.src.lock.md` | 27 | 2026-05-25 | "**Phase:** SRC" | run body returns Cfg::Out::default | batch 19 |
+| `mock/design_rounds/202605250628/202605250628_topic.hila-scheduler-run-body.md` | 49 | 2026-05-25 | "**Phase:** TOPIC" | transitional no-op Scheduler::run body | batch 19 |
+| `mock/design_rounds/202605250645/202605250645_changelist.doc.lock.md` | 22 | 2026-05-25 | "**Phase:** DOC" | DESIGN corrections for assign_cores and run bound | batch 19 |
+| `mock/design_rounds/202605250645/202605250645_changelist.src.lock.md` | 32 | 2026-05-25 | "**Phase:** SRC" | test additions, rustdoc trim | batch 19 |
+| `mock/design_rounds/202605250645/202605250645_topic.engine-pr-followups.md` | 41 | 2026-05-25 | "**Phase:** TOPIC" | consolidated engine PR review follow-ups | batch 19 |
+| `mock/design_rounds/202605282256/202605282256_changelist.doc.lock.md` | 25 | no date line | "Phase: DOC" | ResourceSnapshot stale signature removed from docs | batch 19 |
+| `mock/design_rounds/202605282256/202605282256_changelist.src.lock.md` | 32 | no date line | "Phase: IMPL" | delete placeholder ResourceSnapshot, ResourceCache | batch 19 |
+| `mock/design_rounds/202605282256/202605282256_topic.resource-snapshot-disambiguation.md` | 32 | 2026-05-28 | "**Phase:** TOPIC" | one meaning for ResourceSnapshot, placeholder deleted | batch 19 |
+| `mock/design_rounds/202605282319/202605282319_changelist.doc.lock.md` | 17 | no date line | "Phase: DOC" | builder four-param shape with Staged | batch 19 |
+| `mock/design_rounds/202605282319/202605282319_changelist.src.lock.md` | 43 | no date line | "Phase: IMPL" | StagedResource, Stage list, builder retains values | batch 19 |
+| `mock/design_rounds/202605282319/202605282319_topic.builder-value-retention.md` | 29 | 2026-05-28 | "**Phase:** TOPIC" | builder value retention, first data-plane round | batch 19 |
+| `mock/design_rounds/202605290018/202605290018_changelist.doc.lock.md` | 13 | no date line | "Phase: DOC" | builder paragraph to StoreValues arena shape | batch 19 |
+| `mock/design_rounds/202605290018/202605290018_changelist.src.lock.md` | 38 | no date line | "Phase: IMPL" | RouterKind, StoreValues, ResourceArena, Scheduler Drop | batch 19 |
+| `mock/design_rounds/202605290018/202605290018_topic.resource-arena.md` | 34 | 2026-05-29 | "**Phase:** TOPIC" | resource arena first data-plane slice | batch 19 |
+| `mock/design_rounds/202605290049/202605290049_changelist.doc.lock.md` | 7 | no date line | "Phase: DOC" | no template changes, B2a fixups | batch 19 |
+| `mock/design_rounds/202605290049/202605290049_changelist.src.lock.md` | 12 | no date line | "Phase: IMPL" | remove hollow retention test | batch 19 |
+| `mock/design_rounds/202605290049/202605290049_topic.b2a-review-fixups.md` | 19 | 2026-05-29 | "**Phase:** TOPIC" | B2a review fixups, hollow test deleted | batch 19 |
+| `mock/design_rounds/202605290111/202605290111_changelist.doc.lock.md` | 11 | no date line | "Phase: DOC" | EngineCtx note in DESIGN dispatch section | batch 19 |
+| `mock/design_rounds/202605290111/202605290111_changelist.src.lock.md` | 24 | no date line | "Phase: IMPL" | EngineCtx, Selector, Project, projected Context | batch 19 |
+| `mock/design_rounds/202605290111/202605290111_topic.per-wu-context.md` | 29 | 2026-05-29 | "**Phase:** TOPIC" | per-WU projected Context, B3, Selector/Project witnesses | batch 19 |
+| `mock/design_rounds/202605290143/202605290143_changelist.doc.lock.md` | 7 | no date line | "Phase: DOC" | no template changes, bundle-tie fixup | batch 19 |
+| `mock/design_rounds/202605290143/202605290143_changelist.src.lock.md` | 18 | no date line | "Phase: IMPL" | EngineCtx constructor private, compile-fail check | batch 19 |
+| `mock/design_rounds/202605290143/202605290143_topic.b3-bundle-tie-fixup.md` | 22 | 2026-05-29 | "**Phase:** TOPIC" | tie Context bundle types to access sets | batch 19 |
+| `mock/design_rounds/202605290203/202605290203_changelist.doc.lock.md` | 39 | 2026-05-29 | "**Phase:** DOC" | no design edits, arvo to_raw/from_raw confirmed | batch 19 |
+| `mock/design_rounds/202605290203/202605290203_changelist.src.lock.md` | 37 | 2026-05-29 | "**Phase:** SRC" | index/from_index on engine ids, transmute_copy removed | batch 19 |
+| `mock/design_rounds/202605290203/202605290203_topic.plan-id-typed-index.md` | 56 | 2026-05-29 | "**Phase:** TOPIC" | typed id-to-index accessors replace transmute_copy | batch 19 |
+| `mock/design_rounds/202605290214/202605290214_changelist.doc.lock.md` | 13 | 2026-05-29 | "**Phase:** DOC" | no design edits, test coverage only | batch 19 |
+| `mock/design_rounds/202605290214/202605290214_changelist.src.lock.md` | 10 | 2026-05-29 | "**Phase:** SRC" | engine id index round-trip tests | batch 19 |
+| `mock/design_rounds/202605290214/202605290214_topic.engine-id-index-roundtrip-test.md` | 26 | 2026-05-29 | "**Phase:** TOPIC" | round-trip test for id index accessors | batch 19 |
+| `mock/design_rounds/202605290312-abandoned/202605290312_changelist.doc.lock.md` | 18 | 2026-05-29 | "**Phase:** DOC" abandoned (directory name) | DependencyGraph to CsrBidirectional adapter, no doc edits | batch 19 |
+| `mock/design_rounds/202605290312-abandoned/202605290312_changelist.src.md` | 20 | 2026-05-29 | "**Phase:** SRC" abandoned (directory name) | arvo-tensor dep, to_csr_bidirectional adapter | batch 19 |
+| `mock/design_rounds/202606191400/202606191400_changelist.src.lock.md` | 37 | no date line | "**Phase:** IMPL"; name carries lock | src changelist: CtxFor alias, four fold traits | batch 22 |
+| `mock/design_rounds/202606191400/202606191400_topic.ctxfor-computed-ctx.md` | 62 | 2026-06-19 | unstated, topic | topic: CtxFor computed per-WorkUnit Context type | batch 22 |
+| `mock/design_rounds/202606191500/202606191500_changelist.doc.lock.md` | 11 | no date line | "**Phase:** DOC"; name carries lock | doc changelist: units-cap guard sentence | batch 22 |
+| `mock/design_rounds/202606191500/202606191500_changelist.src.lock.md` | 24 | no date line | "**Phase:** IMPL"; name carries lock | src changelist: compile-time Units-cap assert | batch 22 |
+| `mock/design_rounds/202606191500/202606191500_topic.units-cap-guard.md` | 31 | 2026-06-19 | unstated, topic | topic: Units-cap guard for run_parallel | batch 22 |
+| `mock/design_rounds/202606191900/202606191900_changelist.doc.lock.md` | 9 | no date line | "**Phase:** DOC"; name carries lock | doc changelist: R2a keystone, no template change | batch 22 |
+| `mock/design_rounds/202606191900/202606191900_changelist.src.lock.md` | 15 | no date line | "**Phase:** IMPL"; name carries lock | src changelist: nine-resource CtxFor keystone test | batch 22 |
+| `mock/design_rounds/202606191900/202606191900_topic.p1-r2a-keystone.md` | 28 | 2026-06-19 | unstated, topic | topic: nine-resource CtxFor through OnMeta ScheduleEnd | batch 22 |
+| `mock/design_rounds/202606192000/202606192000_changelist.doc.lock.md` | 10 | no date line | "**Phase:** DOC"; name carries lock | doc changelist: last_record_count note | batch 22 |
+| `mock/design_rounds/202606192000/202606192000_changelist.src.lock.md` | 22 | no date line | "**Phase:** IMPL"; name carries lock | src changelist: last_record_count in SchedulerMetrics | batch 22 |
+| `mock/design_rounds/202606192000/202606192000_topic.p1-r3c-throughput.md` | 25 | 2026-06-19 | unstated, topic | topic: throughput axis via last_record_count | batch 22 |
+| `mock/design_rounds/202606192100/202606192100_changelist.doc.lock.md` | 7 | no date line | "**Phase:** DOC"; name carries lock | doc changelist: unused feature gate, no change | batch 22 |
+| `mock/design_rounds/202606192100/202606192100_changelist.src.lock.md` | 9 | no date line | "**Phase:** IMPL"; name carries lock | src changelist: remove unused feature gate | batch 22 |
+| `mock/design_rounds/202606192100/202606192100_topic.api-unused-feature-gate.md` | 18 | 2026-06-19 | unstated, topic | topic: api unused feature gate removal | batch 22 |
+| `mock/design_rounds/202606192200/202606192200_changelist.doc.lock.md` | 7 | no date line | "**Phase:** DOC"; name carries lock | doc changelist: Executor sealed allow, no change | batch 22 |
+| `mock/design_rounds/202606192200/202606192200_changelist.src.lock.md` | 9 | no date line | "**Phase:** IMPL"; name carries lock | src changelist: allow private_bounds on Executor | batch 22 |
+| `mock/design_rounds/202606192200/202606192200_topic.api-sealed-executor.md` | 20 | 2026-06-19 | unstated, topic | topic: api Executor sealed private_bounds allow | batch 22 |
+| `mock/design_rounds/202606192301/202606192301_changelist.doc.lock.md` | 22 | 2026-06-19 | "**Phase:** DOC"; name carries lock | doc changelist: per-phase EMA note | batch 22 |
+| `mock/design_rounds/202606192301/202606192301_changelist.src.lock.md` | 47 | 2026-06-19 | "**Phase:** SRC"; name carries lock | src changelist: phase_ema field and fold | batch 22 |
+| `mock/design_rounds/202606192301/202606192301_topic.phase-ema-adapt-axis.md` | 66 | 2026-06-19 | "**Phase:** TOPIC" | topic: per-phase duration EMA adapt axis | batch 22 |
+| `mock/design_rounds/202606192330/202606192330_changelist.doc.lock.md` | 21 | 2026-06-19 | "**Phase:** DOC"; name carries lock | doc changelist: adapt non-degradation invariant | batch 22 |
+| `mock/design_rounds/202606192330/202606192330_changelist.src.lock.md` | 35 | 2026-06-19 | "**Phase:** SRC"; name carries lock | src changelist: adapt performance contract tests | batch 22 |
+| `mock/design_rounds/202606192330/202606192330_topic.adapt-performance-contracts.md` | 80 | 2026-06-19 | "**Phase:** TOPIC" | topic: adapt performance contracts, seven cases | batch 22 |
+| `mock/design_rounds/202606192345/202606192345_changelist.doc.lock.md` | 10 | 2026-06-19 | "**Phase:** DOC"; name carries lock | doc changelist: per-phase EMA per-frame, no edit | batch 22 |
+| `mock/design_rounds/202606192345/202606192345_changelist.src.lock.md` | 51 | 2026-06-19 | "**Phase:** SRC"; name carries lock | src changelist: phase_accum per-frame fold | batch 22 |
+| `mock/design_rounds/202606192345/202606192345_topic.phase-ema-per-frame-fix.md` | 49 | 2026-06-19 | "**Phase:** TOPIC" | topic: per-phase EMA per-frame fold fix | batch 22 |
+| `mock/design_rounds/202606200000/202606200000_changelist.doc.lock.md` | 9 | no date line | "**Phase:** DOC"; name carries lock | doc changelist: change_seen_count sentence | batch 22 |
+| `mock/design_rounds/202606200000/202606200000_changelist.src.lock.md` | 26 | no date line | "**Phase:** IMPL"; name carries lock | src changelist: change_seen_count in SchedulerMetrics | batch 22 |
+| `mock/design_rounds/202606200000/202606200000_topic.p1-r3b-change-class.md` | 29 | 2026-06-20 | unstated, topic | topic: change_class numerator via store_dirty | batch 22 |
+| `mock/design_rounds/202606200100/202606200100_changelist.doc.lock.md` | 8 | no date line | "**Phase:** DOC"; name carries lock | doc changelist: change_seen_count qualifier, backlog | batch 22 |
+| `mock/design_rounds/202606200100/202606200100_changelist.src.lock.md` | 9 | no date line | "**Phase:** IMPL"; name carries lock | src changelist: R3b post-review test note | batch 22 |
+| `mock/design_rounds/202606200100/202606200100_topic.p1-r3b-fixes.md` | 13 | 2026-06-20 | unstated, topic | topic: R3b post-review fixes | batch 22 |
+| `mock/design_rounds/202606200200/202606200200_changelist.doc.lock.md` | 9 | no date line | "**Phase:** DOC"; name carries lock | doc changelist: change_seen_count all run paths | batch 22 |
+| `mock/design_rounds/202606200200/202606200200_changelist.src.lock.md` | 18 | no date line | "**Phase:** IMPL"; name carries lock | src changelist: change_seen_count parallel and fused | batch 22 |
+| `mock/design_rounds/202606200200/202606200200_topic.r3b-parallel-fused.md` | 18 | 2026-06-20 | unstated, topic | topic: change_seen_count in parallel and fused | batch 22 |
+| `mock/design_rounds/202606200300/202606200300_changelist.doc.lock.md` | 10 | no date line | "**Phase:** DOC"; name carries lock | doc changelist: accumulator over-capacity panics | batch 22 |
+| `mock/design_rounds/202606200300/202606200300_changelist.src.lock.md` | 18 | no date line | "**Phase:** IMPL"; name carries lock | src changelist: resolve_append asserts instead of saturating | batch 22 |
+| `mock/design_rounds/202606200300/202606200300_topic.accum-overcap-hard-error.md` | 35 | 2026-06-20 | unstated, topic | topic: accumulator over-capacity is hard error | batch 22 |
+| `mock/design_rounds/202606200400/202606200400_changelist.doc.lock.md` | 8 | no date line | "**Phase:** DOC"; name carries lock | doc changelist: PR 145 review fixes, empty | batch 22 |
+| `mock/design_rounds/202606200400/202606200400_changelist.src.lock.md` | 14 | no date line | "**Phase:** IMPL"; name carries lock | src changelist: stale saturation comments | batch 22 |
+| `mock/design_rounds/202606200400/202606200400_topic.r3b-overcap-review-fixes.md` | 27 | 2026-06-20 | unstated, topic | topic: PR 145 review fixes, audit-trail correction | batch 22 |
+| `mock/design_rounds/202606201200/202606201200_changelist.doc.lock.md` | 22 | 2026-06-19 | "**Phase:** DOC"; name carries lock | doc changelist: select_adapt_config trigger note | batch 22 |
+| `mock/design_rounds/202606201200/202606201200_changelist.src.lock.md` | 38 | 2026-06-19 | "**Phase:** SRC"; name carries lock | src changelist: select_adapt_config, adapt_reconfigure | batch 22 |
+| `mock/design_rounds/202606201200/202606201200_topic.select-adapt-config.md` | 57 | 2026-06-19 | "**Phase:** TOPIC" | topic: select_adapt_config decision logic | batch 22 |
+| `mock/design_rounds/202606201500/202606201500_changelist.doc.lock.md` | 12 | 2026-06-19 | "**Phase:** DOC"; name carries lock | doc changelist: morsel slice 1 rename, no template change | batch 22 |
+| `mock/design_rounds/202606201500/202606201500_changelist.src.lock.md` | 32 | 2026-06-19 | "**Phase:** SRC"; name carries lock | src changelist: morsel_sizes to morsel_windows rename | batch 22 |
+| `mock/design_rounds/202606201500/202606201500_topic.per-fiber-morsel-s1-rename.md` | 46 | 2026-06-19 | "**Phase:** TOPIC" | topic: per-fiber morsel slice 1 rename | batch 22 |
+| `mock/design_rounds/202606201600/202606201600_changelist.doc.lock.md` | 9 | 2026-06-19 | "**Phase:** DOC"; name carries lock | doc changelist: slice 1 review fixes, no change | batch 22 |
+| `mock/design_rounds/202606201600/202606201600_changelist.src.lock.md` | 20 | 2026-06-19 | "**Phase:** SRC"; name carries lock | src changelist: MorselWindows variant and docs | batch 22 |
+| `mock/design_rounds/202606201600/202606201600_topic.s1-rename-review-fixes.md` | 30 | 2026-06-19 | "**Phase:** TOPIC" | topic: slice 1 rename review fixes | batch 22 |
+| `mock/design_rounds/202606201800/202606201800_changelist.doc.lock.md` | 8 | 2026-06-19 | "**Phase:** DOC"; name carries lock | doc changelist: slice A1, no template change | batch 22 |
+| `mock/design_rounds/202606201800/202606201800_changelist.src.lock.md` | 28 | 2026-06-19 | "**Phase:** SRC"; name carries lock | src changelist: FiberDispatch morsel_size, fiber_plan_idx | batch 22 |
+| `mock/design_rounds/202606201800/202606201800_topic.per-fiber-morsel-a2-descriptor.md` | 34 | 2026-06-19 | "**Phase:** TOPIC" | topic: FiberDispatch per-fiber size field | batch 22 |
+| `mock/design_rounds/202606201900/202606201900_changelist.doc.lock.md` | 7 | 2026-06-19 | "**Phase:** DOC"; name carries lock | doc changelist: fiber_plan_idx test, no change | batch 22 |
+| `mock/design_rounds/202606201900/202606201900_changelist.src.lock.md` | 15 | 2026-06-19 | "**Phase:** SRC"; name carries lock | src changelist: fiber_plan_idx catalogue test | batch 22 |
+| `mock/design_rounds/202606201900/202606201900_topic.a1-fiber-plan-idx-test.md` | 25 | 2026-06-19 | "**Phase:** TOPIC" | topic: fiber_plan_idx CSR-vs-dispatch mapping | batch 22 |
+| `mock/design_rounds/202606202000/202606202000_changelist.doc.lock.md` | 8 | 2026-06-19 | "**Phase:** DOC"; name carries lock | doc changelist: asm-emission backlog note | batch 22 |
+| `mock/design_rounds/202606202000/202606202000_changelist.src.lock.md` | 9 | 2026-06-19 | "**Phase:** SRC"; name carries lock | src changelist: no source change | batch 22 |
+| `mock/design_rounds/202606202000/202606202000_topic.asm-emission-contract-tests.md` | 30 | 2026-06-19 | "**Phase:** TOPIC" | topic: ASM-emission contract tests backlog | batch 22 |
+| `mock/design_rounds/202606202200/202606202200_changelist.doc.lock.md` | 7 | 2026-06-19 | "**Phase:** DOC"; name carries lock | doc changelist: A2b-1, no template change | batch 22 |
+| `mock/design_rounds/202606202200/202606202200_changelist.src.lock.md` | 22 | 2026-06-19 | "**Phase:** SRC"; name carries lock | src changelist: run_one_trunk_windowed | batch 22 |
+| `mock/design_rounds/202606202200/202606202200_topic.per-fiber-morsel-a2b1-windowed-trunk.md` | 31 | 2026-06-19 | "**Phase:** TOPIC" | topic: windowed per-trunk dispatch entry | batch 22 |
+| `mock/design_rounds/202606202300/202606202300_changelist.doc.lock.md` | 7 | 2026-06-19 | "**Phase:** DOC"; name carries lock | doc changelist: A2b-1 review fixes | batch 22 |
+| `mock/design_rounds/202606202300/202606202300_changelist.src.lock.md` | 19 | 2026-06-19 | "**Phase:** SRC"; name carries lock | src changelist: A2b-1 test doc, total==0 note | batch 22 |
+| `mock/design_rounds/202606202300/202606202300_topic.a2b1-review-fixes.md` | 30 | 2026-06-19 | "**Phase:** TOPIC" | topic: A2b-1 review fixes | batch 22 |
+| `mock/design_rounds/202606202500/202606202500_changelist.doc.lock.md` | 7 | 2026-06-19 | "**Phase:** DOC"; name carries lock | doc changelist: A3a, no template change | batch 22 |
+| `mock/design_rounds/202606202500/202606202500_changelist.src.lock.md` | 22 | 2026-06-19 | "**Phase:** SRC"; name carries lock | src changelist: StoreElemBytes and StoreSizes | batch 22 |
+| `mock/design_rounds/202606202500/202606202500_topic.a3a-store-size-collection.md` | 34 | 2026-06-19 | "**Phase:** TOPIC" | topic: per-store size collection | batch 22 |
+| `mock/design_rounds/202606202600/202606202600_changelist.doc.lock.md` | 7 | 2026-06-19 | "**Phase:** DOC"; name carries lock | doc changelist: A3a import cleanup | batch 22 |
+| `mock/design_rounds/202606202600/202606202600_changelist.src.lock.md` | 9 | 2026-06-19 | "**Phase:** SRC"; name carries lock | src changelist: drop unused test imports | batch 22 |
+| `mock/design_rounds/202606202600/202606202600_topic.a3a-unused-imports.md` | 20 | 2026-06-19 | "**Phase:** TOPIC" | topic: A3a unused-import cleanup | batch 22 |
+| `mock/design_rounds/202606202700/202606202700_changelist.doc.lock.md` | 7 | 2026-06-19 | "**Phase:** DOC"; name carries lock | doc changelist: A3b, no template change | batch 22 |
+| `mock/design_rounds/202606202700/202606202700_changelist.src.lock.md` | 46 | 2026-06-19 | "**Phase:** SRC"; name carries lock | src changelist: L1 window formula in compute_plan | batch 22 |
+| `mock/design_rounds/202606202700/202606202700_topic.a3b-l1-morsel-formula.md` | 32 | 2026-06-19 | "**Phase:** TOPIC" | topic: L1 window formula wired into plan | batch 22 |
+| `mock/design_rounds/202606210200/202606210200_changelist.doc.lock.md` | 7 | 2026-06-20 | "**Phase:** DOC"; name carries lock | doc changelist: footprint traits, no template change | batch 22 |
+| `mock/design_rounds/202606210200/202606210200_changelist.src.lock.md` | 25 | 2026-06-20 | "**Phase:** SRC"; name carries lock | src changelist: CollectionBytes, ResourceFootprint | batch 22 |
+| `mock/design_rounds/202606210200/202606210200_topic.a3-redo-1-footprint-traits.md` | 35 | 2026-06-20 | "**Phase:** TOPIC" | topic: CollectionBytes and ResourceFootprint traits | batch 22 |
+| `mock/design_rounds/202606210300/202606210300_changelist.doc.lock.md` | 21 | 2026-06-20 | "**Phase:** DOC"; name carries lock | doc changelist: api-macros crate, crate-count claims | batch 22 |
+| `mock/design_rounds/202606210300/202606210300_changelist.src.lock.md` | 27 | 2026-06-20 | "**Phase:** SRC"; name carries lock | src changelist: api-macros crate, derive | batch 22 |
+| `mock/design_rounds/202606210300/202606210300_topic.api-macros-resourcefootprint-derive.md` | 47 | 2026-06-20 | "**Phase:** TOPIC" | topic: api-macros proc-macro crate, ResourceFootprint derive | batch 22 |
+| `mock/design_rounds/202607161000/202606210600_topic.bench-decision.md` | 57 | 2026-06-20 | "**Phase:** TOPIC"; "## Status: PROVISIONAL" | topic: bench-driven storage decision, provisional | batch 22 |
+| `mock/design_rounds/202607161000/202606210600_topic.bench-run2-resolution.md` | 73 | 2026-07-02 | "**Phase:** TOPIC" | topic: bench run-2 confirms layout | batch 22 |
+| `mock/design_rounds/202607161000/202606210600_topic.hybrid-decision.md` | 74 | 2026-07-02 | "**Phase:** TOPIC" | topic: op picks hybrid, value model settled | batch 22 |
+| `mock/design_rounds/202607161000/202606210600_topic.r5-underspecification.md` | 46 | 2026-06-19 | "**Phase:** TOPIC" | topic: where R5 is light, amendment | batch 22 |
+| `mock/design_rounds/202607161000/202606210600_topic.resource-handle-storage-model.md` | 58 | 2026-06-19 | "**Phase:** TOPIC" | topic: Resource is a handle model | batch 22 |
+| `mock/design_rounds/202607161000/202606210600_topic.storage-model-pressure-test.md` | 47 | 2026-06-19 | "**Phase:** TOPIC" | topic: pressure-test the storage model | batch 22 |
+| `mock/design_rounds/202607161000/202606210600_topic.v1-v4-tiebreak.md` | 19 | 2026-06-20 | "**Phase:** TOPIC" | topic: V1-vs-V4 tiebreak rule | batch 22 |
+| `mock/design_rounds/202607161000/202606210600_topic.v4-plugin-interop-axis.md` | 40 | 2026-06-20 | "**Phase:** TOPIC" | topic: V4 plugin-interop axis | batch 22 |
+| `mock/design_rounds/202607161000/202607161000_changelist.doc.lock.md` | 75 | 2026-07-16 | "**Phase:** DOC (this changelist opens it)"; name carries lock | doc changelist: storage model bench-settled, hybrid | batch 22 |
+| `mock/design_rounds/202607161000/202607161030_changelist.src.lock.md` | 88 | 2026-07-16 | "**Phase:** IMPL (this changelist opens it)"; name carries lock | src changelist: erased-addressed blob, resource snapshot | batch 22 |
+| `mock/design_rounds/202607161200/202607161200_changelist.doc.lock.md` | 16 | 2026-07-16 | "**Phase:** DOC (this changelist opens it; no doc-template edits in scope)"; name carries lock | doc changelist: post-review storage fixes | batch 22 |
+| `mock/design_rounds/202607161200/202607161210_changelist.src.lock.md` | 23 | 2026-07-16 | "**Phase:** IMPL (this changelist opens it)"; name carries lock | src changelist: post-review comment clarifications | batch 22 |
+| `mock/design_rounds/202607161410/202607161400_topic.a3b-l1-morsel-formula.md` | 63 | 2026-07-16 | "**Phase:** TOPIC" | topic: A3b per-fiber L1 morsel-window formula | batch 22 |
+| `mock/design_rounds/202607161410/202607161410_changelist.doc.lock.md` | 17 | 2026-07-16 | "**Phase:** DOC (this changelist opens it)"; name carries lock | doc changelist: A3b budget source | batch 22 |
+| `mock/design_rounds/202607161410/202607161420_changelist.src.lock.md` | 72 | 2026-07-16 | "**Phase:** IMPL (this changelist opens it)"; name carries lock | src changelist: A3b window formula, MorselBudget | batch 22 |
+| `mock/design_rounds/202607161600/202607161600_changelist.doc.lock.md` | 16 | 2026-07-16 | "**Phase:** DOC (this changelist opens it; no doc-template edits in scope)"; name carries lock | doc changelist: A3b post-review fixes | batch 22 |
+| `mock/design_rounds/202607161600/202607161610_changelist.src.lock.md` | 20 | 2026-07-16 | "**Phase:** IMPL (this changelist opens it)"; name carries lock | src changelist: A3b rustdoc, clamp guard | batch 22 |
+| `mock/design_rounds/202607161810/202607161800_topic.a2b-dispatch-loop-inversion.md` | 134 | 2026-07-16 | "**Phase:** TOPIC" | topic: A2b dispatch loop inversion | batch 22 |
+| `mock/design_rounds/202607161810/202607161810_changelist.doc.lock.md` | 32 | 2026-07-16 | "**Phase:** DOC"; name carries lock | doc changelist: A2b dispatch loop inversion | batch 22 |
+| `mock/design_rounds/202607161810/202607161820_changelist.src.lock.md` | 32 | 2026-07-16 | "**Phase:** IMPL"; name carries lock | src changelist: A2b run inversion, asm fixtures | batch 22 |
+| `mock/design_rounds/202607161910/202607161900_topic.a2b-post-review-fixes.md` | 18 | 2026-07-16 | "**Phase:** TOPIC" | topic: A2b post-review doc fixes | batch 22 |
+| `mock/design_rounds/202607161910/202607161910_changelist.doc.lock.md` | 12 | 2026-07-16 | "**Phase:** DOC"; name carries lock | doc changelist: A2b post-review doc fixes | batch 22 |
+| `mock/design_rounds/202607161910/202607161920_changelist.src.lock.md` | 10 | 2026-07-16 | "**Phase:** IMPL"; name carries lock | src changelist: FIXTURE_NAMES comment counts | batch 22 |
+| `mock/design_rounds/202607171807/202607171733_topic.plannable-declaration-split.md` | 127 | 2026-07-17 | "**Phase:** TOPIC" | topic: Plannable declaration split from WorkUnit | batch 22 |
+| `mock/design_rounds/202607171807/202607171807_changelist.doc.lock.md` | 55 | 2026-07-17 | "**Phase:** DOC"; name carries lock | doc changelist: Plannable and HintExt documentation | batch 22 |
+| `mock/design_rounds/202607171807/202607171807_changelist.src.lock.md` | 50 | 2026-07-17 | "**Phase:** IMPL"; name carries lock | src changelist: Plannable trait, HintExt slot | batch 22 |
+| `mock/design_rounds/202607171824/202607171824_changelist.doc.lock.md` | 19 | 2026-07-17 | "**Phase:** DOC"; name carries lock | doc changelist: soften engine-reads-fourth-axis claim | batch 22 |
+| `mock/design_rounds/202607171824/202607171824_changelist.src.lock.md` | 30 | 2026-07-17 | "**Phase:** IMPL"; name carries lock | src changelist: Plannable blanket test, doc note | batch 22 |
+| `mock/design_rounds/202607171824/202607171824_topic.plannable-post-review-fixes.md` | 34 | 2026-07-17 | "**Phase:** TOPIC" | topic: plannable post-review fixes | batch 22 |
+| `mock/design_rounds/202607190930/202607190910_topic.a4-parallel-per-fiber-windows.md` | 81 | 2026-07-19 | "**Phase:** TOPIC" | topic: per-fiber windows on parallel path | batch 22 |
+| `mock/design_rounds/202607190930/202607190930_changelist.doc.lock.md` | 47 | 2026-07-19 | "**Phase:** DOC"; name carries lock | doc changelist: parallel dispatch windowing paragraph | batch 22 |
+| `mock/design_rounds/202607190930/202607190940_changelist.src.lock.md` | 91 | 2026-07-19 | "**Phase:** SRC"; name carries lock | src changelist: run_core_phase fiber-outer branch | batch 22 |
+| `mock/design_rounds/202607191110/202607191100_topic.fiber-descriptor-coverage-invariant.md` | 58 | 2026-07-19 | "**Phase:** TOPIC" | topic: fiber-descriptor coverage invariant | batch 22 |
+| `mock/design_rounds/202607191110/202607191110_changelist.doc.lock.md` | 36 | 2026-07-19 | "**Phase:** DOC"; name carries lock | doc changelist: state descriptor coverage invariant | batch 22 |
+| `mock/design_rounds/202607191110/202607191120_changelist.src.lock.md` | 58 | 2026-07-19 | "**Phase:** SRC"; name carries lock | src changelist: coverage catalogue, parity assert | batch 22 |
+| `mock/design_rounds/202607192010/202607192000_topic.reachable-bodies-contradicting-contracts.md` | 78 | 2026-07-19 | "**Phase:** TOPIC" | topic: reachable bodies contradicting contracts | batch 22 |
+| `mock/design_rounds/202607192010/202607192010_changelist.doc.lock.md` | 61 | 2026-07-19 | "**Phase:** DOC"; name carries lock | doc changelist: deallocate gains alignment | batch 22 |
+| `mock/design_rounds/202607192010/202607192030_changelist.src.lock.md` | 129 | 2026-07-19 | "**Phase:** SRC"; name carries lock | src changelist: spawn spawns, deallocate takes align | batch 22 |
+| `mock/design_rounds/202607192110/202607192100_topic.n-way-record-split-is-not-convergence.md` | 71 | 2026-07-19 | "**Phase:** TOPIC" | topic: N-way record split is not convergence | batch 22 |
+| `mock/design_rounds/202607192110/202607192110_changelist.doc.lock.md` | 81 | 2026-07-19 | "**Phase:** DOC"; name carries lock | doc changelist: stop calling N-way split convergence | batch 22 |
+| `mock/design_rounds/202607192110/202607192120_changelist.src.lock.md` | 51 | 2026-07-19 | "**Phase:** SRC"; name carries lock | src changelist: five-producer test, core surplus | batch 22 |
+| `mock/design_rounds/202607192310/202607192300_topic.accumulator-region-sizing-under-trunk-rank.md` | 49 | 2026-07-19 | "**Phase:** TOPIC" | topic: accumulator region sizing under trunk rank | batch 22 |
+| `mock/design_rounds/202607192310/202607192310_changelist.doc.lock.md` | 23 | 2026-07-19 | "**Phase:** DOC"; name carries lock | doc changelist: none, waits on experiment | batch 22 |
+| `mock/design_rounds/202607192310/202607192320_changelist.src.lock.md` | 61 | 2026-07-19 | "**Phase:** SRC"; name carries lock | src changelist: accumulator in two-trunk phase probe | batch 22 |
+| `mock/design_rounds/202607192410/202607192400_topic.delete-the-n-way-record-split.md` | 50 | 2026-07-19 | "**Phase:** TOPIC" | topic: delete the N-way record split | batch 22 |
+| `mock/design_rounds/202607192410/202607192410_changelist.doc.lock.md` | 27 | 2026-07-19 | "**Phase:** DOC"; name carries lock | doc changelist: docs already describe result | batch 22 |
+| `mock/design_rounds/202607192410/202607192420_changelist.src.lock.md` | 78 | 2026-07-19 | "**Phase:** SRC"; name carries lock | src changelist: remove N-way branch and carve-out | batch 22 |
+| `mock/design_rounds/202607192510/202607192500_topic.delete-the-orphaned-thread-pool.md` | 45 | 2026-07-19 | "**Phase:** TOPIC" | topic: delete the orphaned ThreadPool | batch 22 |
+| `mock/design_rounds/202607192510/202607192510_changelist.doc.lock.md` | 19 | 2026-07-19 | "**Phase:** DOC"; name carries lock | doc changelist: nothing to change | batch 22 |
+| `mock/design_rounds/202607192510/202607192520_changelist.src.lock.md` | 58 | 2026-07-19 | "**Phase:** SRC"; name carries lock | src changelist: remove thread/pool.rs | batch 22 |
+| `mock/design_rounds/202607192610/202607192600_topic.one-definition-for-the-accumulator-slice.md` | 48 | 2026-07-19 | "**Phase:** TOPIC" | topic: one definition for accumulator slice | batch 22 |
+| `mock/design_rounds/202607192610/202607192610_changelist.doc.lock.md` | 26 | 2026-07-19 | "**Phase:** DOC"; name carries lock | doc changelist: name accumulator region invariant | batch 22 |
+| `mock/design_rounds/202607192610/202607192620_changelist.src.lock.md` | 61 | 2026-07-19 | "**Phase:** SRC"; name carries lock | src changelist: accum_slice helper, comment fix | batch 22 |
+| `mock/design_rounds/202607192710/202607192700_topic.replace-resource-install-arm.md` | 54 | 2026-07-19 | "**Phase:** TOPIC" | topic: install arm for replace_resource | batch 22 |
+| `mock/design_rounds/202607192710/202607192710_changelist.doc.lock.md` | 12 | 2026-07-19 | "**Phase:** DOC"; name carries lock | doc changelist: none until shape known | batch 22 |
+| `mock/design_rounds/202607192710/202607192720_changelist.src.lock.md` | 71 | 2026-07-19 | "**Phase:** SRC"; name carries lock | src changelist: replace_value install, value-typed signature | batch 22 |
+| `mock/design_rounds/202607192810/202607192800_topic.retire-the-fn-pointer-spawn.md` | 54 | 2026-07-19 | "**Phase:** TOPIC" | topic: retire the function-pointer spawn | batch 22 |
+| `mock/design_rounds/202607192810/202607192810_changelist.doc.lock.md` | 31 | 2026-07-19 | "**Phase:** DOC"; name carries lock | doc changelist: close POSIX cast backlog note | batch 22 |
+| `mock/design_rounds/202607192810/202607192820_changelist.src.lock.md` | 55 | 2026-07-19 | "**Phase:** SRC"; name carries lock | src changelist: delete spawn_fn and trampoline | batch 22 |
+| `mock/design_rounds/202607192910/202607192900_topic.delete-superseded-dispatch-and-barrier.md` | 60 | 2026-07-19 | "**Phase:** TOPIC" | topic: delete superseded dispatch and barrier | batch 22 |
+| `mock/design_rounds/202607192910/202607192910_changelist.doc.lock.md` | 32 | 2026-07-19 | "**Phase:** DOC"; name carries lock | doc changelist: remove nested-carrier paragraphs | batch 22 |
+| `mock/design_rounds/202607192910/202607192920_changelist.src.lock.md` | 67 | 2026-07-19 | "**Phase:** SRC"; name carries lock | src changelist: delete phase_run, phase_barrier family | batch 22 |
+| `mock/design_rounds/202607193110/202607193100_topic.revert-the-blob-install.md` | 55 | 2026-07-19 | "**Phase:** TOPIC" | topic: revert the blob install | batch 22 |
+| `mock/design_rounds/202607193110/202607193110_changelist.doc.lock.md` | 32 | 2026-07-19 | "**Phase:** DOC"; name carries lock | doc changelist: state what the swap must be | batch 22 |
+| `mock/design_rounds/202607193110/202607193120_changelist.src.lock.md` | 54 | 2026-07-19 | "**Phase:** SRC"; name carries lock | src changelist: remove install, catalogue case | batch 22 |
+| `mock/design_rounds/202607200100_topic.b1-cap-lifting-completion.md` | 53 | 2026-07-20 | "**Phase:** TOPIC" | topic: B1 cap-lifting completion onto PlanDims | batch 22 |
+| `mock/design_rounds/202607200900/202607200500_topic.replaceable-swap-semantics.md` | 55 | 2026-07-19 | unstated, topic | topic: Replaceable swap semantics implemented | batch 22 |
+| `mock/design_rounds/202607200900/202607200900_changelist.doc.lock.md` | 90 | 2026-07-19 | unstated, doc changelist | doc changelist: swap semantics under blob layout | batch 22 |
+| `mock/design_rounds/202607200900/202607201000_changelist.src.lock.md` | 90 | 2026-07-19 | unstated, src changelist | src changelist: swap semantics implementation | batch 22 |
+| `mock/design_rounds/202607201800/202607201700_topic.pre-freeze-evidence-followups.md` | 19 | 2026-07-19 | unstated, topic | topic: pre-freeze evidence follow-ups | batch 22 |
+| `mock/design_rounds/202607201800/202607201800_changelist.doc.lock.md` | 10 | 2026-07-19 | unstated (doc changelist; name ends .lock.md) | no template edits; opens round to src slice | batch 23 |
+| `mock/design_rounds/202607201800/202607201900_changelist.src.lock.md` | 20 | 2026-07-19 | unstated (src changelist; name ends .lock.md) | catalogue aliasing finding as ignored test | batch 23 |
+| `mock/design_rounds/202607202310/202607202300_topic.wake-spin-preroll.md` | 39 | 2026-07-19 | unstated (topic) | wake spin pre-roll topic, deviation 3 | batch 23 |
+| `mock/design_rounds/202607202310/202607202310_changelist.doc.lock.md` | 13 | 2026-07-19 | unstated (doc changelist; name ends .lock.md) | doc CL: no template changes, wake preroll | batch 23 |
+| `mock/design_rounds/202607202310/202607202320_changelist.src.lock.md` | 54 | 2026-07-19 | unstated (src changelist; name ends .lock.md) | src CL: bounded spin before frame waits | batch 23 |
+| `mock/design_rounds/202607202351/202607202350_topic.wake-budget-default-zero.md` | 16 | 2026-07-19 | unstated (topic) | flip wake spin budget default to measured winner | batch 23 |
+| `mock/design_rounds/202607202351/202607202351_changelist.doc.lock.md` | 9 | 2026-07-19 | unstated (doc changelist; name ends .lock.md) | doc CL: no design doc edit owed | batch 23 |
+| `mock/design_rounds/202607202351/202607202352_changelist.src.lock.md` | 16 | 2026-07-19 | unstated (src changelist; name ends .lock.md) | src CL: WAKE_SPIN_BUDGET default 128 to 0 | batch 23 |
+| `mock/design_rounds/202607210111/202607210110_topic.wake-doc-correction.md` | 15 | 2026-07-19 | unstated (topic) | wake budget doc comment correction topic | batch 23 |
+| `mock/design_rounds/202607210111/202607210111_changelist.doc.lock.md` | 8 | 2026-07-19 | unstated (doc changelist; name ends .lock.md) | doc CL: no template surface cites margins | batch 23 |
+| `mock/design_rounds/202607210111/202607210112_changelist.src.lock.md` | 16 | 2026-07-19 | unstated (src changelist; name ends .lock.md) | src CL: doc comment follows re-examination | batch 23 |
+| `mock/design_rounds/202607241915/202607241915_changelist.doc.lock.md` | 53 | no date line | "**Phase:** DOC" | doc CL: new sym crate, str doc updates | batch 23 |
+| `mock/design_rounds/202607241915/202607241915_changelist.src.lock.md` | 87 | no date line | "**Phase:** IMPL" | src CL: create sym crate, refactor str | batch 23 |
+| `mock/design_rounds/202607241915/202607241915_topic.sym-generic-interned-identity.md` | 40 | 2026-07-24 | "**Phase:** TOPIC" | topic: generic interned-identity core, strings one domain | batch 23 |
+| `mock/design_rounds/202607242000/202607242000_changelist.doc.lock.md` | 14 | no date line | "**Phase:** DOC" | doc CL: list sym in root design overview | batch 23 |
+| `mock/design_rounds/202607242000/202607242000_changelist.src.lock.md` | 6 | no date line | "**Phase:** IMPL" | src CL: no source change, doc-only | batch 23 |
+| `mock/design_rounds/202607242000/202607242000_topic.sym-in-design-overview.md` | 15 | 2026-07-24 | "**Phase:** TOPIC" | topic: add sym row to design overview | batch 23 |
+| `mock/design_rounds/202607281547_topic.adopt-the-shared-hlist.md` | 71 | 2026-07-28 | "**Phase:** TOPIC" | topic: replace local cons-list with shared hlist | batch 23 |
+| `mock/design_rounds/202608082215/202608082215_changelist.doc.lock.md` | 116 | no date line | "**Phase:** DOC" | doc CL: SymShape trait, generic kind width | batch 23 |
+| `mock/design_rounds/202608082215/202608082215_changelist.src.lock.md` | 121 | no date line | "**Phase:** IMPL" | src CL: SymShape, Generator origin constructor | batch 23 |
+| `mock/design_rounds/202608082215/202608082215_topic.sym-peer-collision-and-generic-kind.md` | 124 | no date line | "**Phase:** TOPIC" | topic: sym peer collision, fixed kind width | batch 23 |
+| `mock/design_rounds/202608090130/202608090130_changelist.doc.lock.md` | 53 | no date line | "**Phase:** DOC" | doc CL: origin mechanism sharpened, shim removed | batch 23 |
+| `mock/design_rounds/202608090130/202608090130_changelist.src.lock.md` | 93 | no date line | "**Phase:** IMPL" | src CL: const SymShape, SixteenMinters, Generator::at | batch 23 |
+| `mock/design_rounds/202608090130/202608090130_topic.the-origin-mechanism-round-one-only-named.md` | 114 | no date line | "**Phase:** TOPIC" | topic: origin mechanism described but not built | batch 23 |
+| `mock/design_rounds/202608090300/202608090300_changelist.doc.lock.md` | 35 | no date line | "**Phase:** DOC" | doc CL: WideKind shape, widths consumed | batch 23 |
+| `mock/design_rounds/202608090300/202608090300_changelist.src.lock.md` | 69 | no date line | "**Phase:** IMPL" | src CL: WideKind layout, remove ORIGINS, laws | batch 23 |
+| `mock/design_rounds/202608090300/202608090300_topic.the-kind-width-is-still-fixed.md` | 78 | no date line | "**Phase:** TOPIC" | topic: kind width still fixed, decorative widths | batch 23 |
+| `mock/design_rounds/202608090500/202608090500_changelist.doc.lock.md` | 35 | no date line | "**Phase:** DOC" | doc CL: widths load-bearing, drifted signatures | batch 23 |
+| `mock/design_rounds/202608090500/202608090500_changelist.src.lock.md` | 88 | no date line | "**Phase:** IMPL" | src CL: layout widths, law tying declarations | batch 23 |
+| `mock/design_rounds/202608090500/202608090500_topic.assertions-that-describe-do-not-constrain.md` | 76 | no date line | "**Phase:** TOPIC" | topic: assertions describe rather than constrain | batch 23 |
+| `mock/design_rounds/202608090700/202608090700_changelist.doc.lock.md` | 33 | no date line | "**Phase:** DOC" | doc CL: mask-derived width, Interner shape | batch 23 |
+| `mock/design_rounds/202608090700/202608090700_changelist.src.lock.md` | 72 | no date line | "**Phase:** IMPL" | src CL: masks, Interner carries shape, rustfmt skip | batch 23 |
+| `mock/design_rounds/202608090700/202608090700_topic.the-tautology-moved-down-a-rung-twice.md` | 85 | no date line | "**Phase:** TOPIC" | topic: tautology moved down a rung twice | batch 23 |
+| `mock/design_rounds/202608091100/202608091100_changelist.doc.lock.md` | 72 | 2026-08-09 | "**Phase:** DOC" | doc CL: width from associated type, coverage contract | batch 23 |
+| `mock/design_rounds/202608091100/202608091100_changelist.src.lock.md` | 165 | 2026-08-09 | "**Phase:** IMPL" | src CL: FieldWidth, span law, accessor suite | batch 23 |
+| `mock/design_rounds/202608091100/202608091100_topic.widths-tied-to-the-mechanism-and-a-dead-gate.md` | 130 | 2026-08-09 | "**Phase:** TOPIC" | topic: widths tied to mechanism, dead gate | batch 23 |
+| `mock/design_rounds/202608091600/202608091600_changelist.doc.lock.md` | 56 | 2026-08-09 | "**Phase:** DOC" | doc CL: credit round trip not type | batch 23 |
+| `mock/design_rounds/202608091600/202608091600_changelist.src.lock.md` | 116 | 2026-08-09 | "**Phase:** IMPL" | src CL: backstop, derived test widths, fmt finding | batch 23 |
+| `mock/design_rounds/202608091600/202608091600_topic.the-right-account-of-why-it-holds.md` | 84 | 2026-08-09 | "**Phase:** TOPIC" | topic: right account of why widths hold | batch 23 |
+| `mock/design_rounds/202608091900/202608091900_changelist.doc.lock.md` | 12 | 2026-08-09 | "**Phase:** DOC" | doc CL: no document edit needed | batch 23 |
+| `mock/design_rounds/202608091900/202608091900_changelist.src.lock.md` | 21 | 2026-08-09 | "**Phase:** IMPL" | src CL: chain renamed route | batch 23 |
+| `mock/design_rounds/202608091900/202608091900_topic.a-dead-vocabulary-term-i-introduced.md` | 21 | 2026-08-09 | "**Phase:** TOPIC" | topic: dead vocabulary term introduced | batch 23 |
+| `mock/design_rounds/202608092200/202608092200_changelist.doc.lock.md` | 67 | 2026-08-09 | "**Phase:** DOC" | doc CL: laws over behaviour, hardcoded 28 | batch 23 |
+| `mock/design_rounds/202608092200/202608092200_changelist.src.lock.md` | 97 | 2026-08-09 | "**Phase:** IMPL" | src CL: disjointness law, origin fit, equality bounds | batch 23 |
+| `mock/design_rounds/202608092200/202608092200_topic.the-collision-is-still-reachable.md` | 76 | 2026-08-09 | "**Phase:** TOPIC" | topic: collision reachable through extension point | batch 23 |
+| `mock/design_rounds/202608100100/202608100100_changelist.doc.lock.md` | 10 | 2026-08-10 | "**Phase:** DOC" | doc CL: no document edit needed | batch 23 |
+| `mock/design_rounds/202608100100/202608100100_changelist.src.lock.md` | 37 | 2026-08-10 | "**Phase:** IMPL" | src CL: allows at definition sites | batch 23 |
+| `mock/design_rounds/202608100100/202608100100_topic.the-round-that-fixed-it-added-eight.md` | 27 | 2026-08-10 | "**Phase:** TOPIC" | topic: eight allow violations from prior round | batch 23 |
+| `mock/design_rounds/202608100400/202608100400_changelist.doc.lock.md` | 21 | 2026-08-10 | "**Phase:** DOC" | doc CL: refusals are part of the contract | batch 23 |
+| `mock/design_rounds/202608100400/202608100400_changelist.src.lock.md` | 73 | 2026-08-10 | "**Phase:** IMPL" | src CL: refusals module, committed negative test | batch 23 |
+| `mock/design_rounds/202608100400/202608100400_topic.the-refusals-nothing-pins.md` | 58 | 2026-08-10 | "**Phase:** TOPIC" | topic: refusals nothing pins, hand checks | batch 23 |
+| `mock/design_rounds/202608100700/202608100700_changelist.doc.lock.md` | 12 | 2026-08-10 | "**Phase:** DOC" | doc CL: no document edit needed | batch 23 |
+| `mock/design_rounds/202608100700/202608100700_changelist.src.lock.md` | 20 | 2026-08-10 | "**Phase:** IMPL" | src CL: doctests moved to module | batch 23 |
+| `mock/design_rounds/202608100700/202608100700_topic.two-types-that-exist-only-to-carry-docs.md` | 21 | 2026-08-10 | "**Phase:** TOPIC" | topic: two types existing only to carry docs | batch 23 |
+| `mock/design_rounds/202608101000/202608101000_changelist.doc.lock.md` | 52 | 2026-08-10 | "**Phase:** DOC" | doc CL: origin as index, run derived | batch 23 |
+| `mock/design_rounds/202608101000/202608101000_changelist.src.lock.md` | 86 | 2026-08-10 | "**Phase:** IMPL" | src CL: origin_index, base and ceiling derived | batch 23 |
+| `mock/design_rounds/202608101000/202608101000_topic.disjointness-by-construction-not-by-law.md` | 73 | 2026-08-10 | "**Phase:** TOPIC" | topic: disjointness by construction not by law | batch 23 |
+| `mock/design_rounds/202608101300/202608101300_changelist.doc.lock.md` | 9 | 2026-08-10 | "**Phase:** DOC" | doc CL: no document edit needed | batch 23 |
+| `mock/design_rounds/202608101300/202608101300_changelist.src.lock.md` | 27 | 2026-08-10 | "**Phase:** IMPL" | src CL: allows on bodies not signatures | batch 23 |
+| `mock/design_rounds/202608101300/202608101300_topic.three-allows-on-bodies-not-signatures.md` | 22 | 2026-08-10 | "**Phase:** TOPIC" | topic: allows on bodies not signatures | batch 23 |
+| `mock/design_rounds/202608101600/202608101600_changelist.doc.lock.md` | 21 | 2026-08-10 | "**Phase:** DOC" | doc CL: overview header says what file is | batch 23 |
+| `mock/design_rounds/202608101600/202608101600_changelist.src.lock.md` | 45 | 2026-08-10 | "**Phase:** IMPL" | src CL: no source change, two corrections | batch 23 |
+| `mock/design_rounds/202608101600/202608101600_topic.a-locked-claim-that-was-never-executed.md` | 44 | 2026-08-10 | "**Phase:** TOPIC" | topic: locked claim never executed | batch 23 |
+| `mock/design_rounds/202608101900/202608101900_changelist.doc.lock.md` | 48 | 2026-08-10 | "**Phase:** DOC" | doc CL: retract Uint<28> claim, reduction stated | batch 23 |
+| `mock/design_rounds/202608101900/202608101900_changelist.src.lock.md` | 76 | 2026-08-10 | "**Phase:** IMPL" | src CL: id_from_counter to layout, fallible at | batch 23 |
+| `mock/design_rounds/202608101900/202608101900_topic.the-sixth-route-and-what-a-shape-may-still-decide.md` | 62 | 2026-08-10 | "**Phase:** TOPIC" | topic: sixth route, what shape may decide | batch 23 |
+| `mock/design_rounds/202609181402/202609181401_topic.hilavitkutin-on-arvo-dev.md` | 113 | 2026-09-18 | "**Phase:** TOPIC" | topic: arvo dev surface, std tier, op rulings | batch 23 |
+| `mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md` | 43 | 2026-09-18 | "**Phase:** DOC" | doc CL: platform tiers, build, persistence settled | batch 23 |
+| `mock/design_rounds/202609181402/202609181403_changelist.src.lock.md` | 122 | 2026-09-18 | "**Phase:** IMPL" | src CL: Identity migration, std tier removed | batch 23 |
+| `mock/design_rounds/202609190201/202609190200_topic.review-fixes-on-arvo-dev.md` | 56 | 2026-09-19 | "**Phase:** TOPIC" | topic: ten review findings, one-pointer closure | batch 23 |
+| `mock/design_rounds/202609190201/202609190201_changelist.doc.lock.md` | 35 | 2026-09-19 | "**Phase:** DOC" | doc CL: closure gate, threads, persistence deps | batch 23 |
+| `mock/design_rounds/202609190201/202609190202_changelist.src.lock.md` | 92 | 2026-09-19 | "**Phase:** IMPL" | src CL: OnePointerClosure, worker clamp, tests | batch 23 |
+| `mock/design_rounds/202609190620/202607311110_topic.launcher-migration.md` | 71 | 2026-07-31 | "**Phase:** TOPIC" | topic: launcher migration, bootstrap teardown | batch 23 |
+| `mock/design_rounds/202609190620/202609190619_topic.remove-the-stale-mockspace-build-dep-claim.md` | 68 | 2026-09-19 | "**Phase:** TOPIC" | topic: stale mockspace build-dep claim removal | batch 23 |
+| `mock/design_rounds/202609190620/202609190620_changelist.doc.lock.md` | 40 | no date line | unstated (doc changelist; name ends .lock.md) | doc CL: three design docs drop claim | batch 23 |
+| `mock/design_rounds/202609190620/202609190621_changelist.src.lock.md` | 13 | no date line | unstated (src changelist; name ends .lock.md) | src CL: no source change | batch 23 |
+| `mock/design_rounds/202609191001/202609191000_topic.second-review-on-arvo-dev.md` | 43 | 2026-09-19 | "**Phase:** TOPIC" | topic: second review, thread-count rule, zero workers | batch 23 |
+| `mock/design_rounds/202609191001/202609191001_changelist.doc.lock.md` | 29 | 2026-09-19 | "**Phase:** DOC" | doc CL: thread-count rule, zero-worker provisional | batch 23 |
+| `mock/design_rounds/202609191001/202609191002_changelist.src.lock.md` | 57 | 2026-09-19 | "**Phase:** IMPL" | src CL: spawn-site lint, catalogue test, citations | batch 23 |
+| `mock/design_rounds/202609191201/202609191200_topic.spawn-gate-lint-forcing.md` | 21 | 2026-09-19 | "**Phase:** TOPIC" | topic: spawn-gate lint forcing gap | batch 23 |
+| `mock/design_rounds/202609191201/202609191201_changelist.doc.lock.md` | 17 | 2026-09-19 | "**Phase:** DOC" | doc CL: thread-count paragraph rule alone | batch 23 |
+| `mock/design_rounds/202609191201/202609191202_changelist.src.lock.md` | 53 | 2026-09-19 | "**Phase:** IMPL" | src CL: lint matches forcing type, cfg refused | batch 23 |
+| `mock/design_rounds/202611122301/202607200100_topic.b1-cap-lifting-completion.md` | 53 | 2026-07-20 | "**Phase:** TOPIC" | topic: B1 cap-lifting onto PlanDims capacities | batch 23 |
+| `mock/design_rounds/202611122301/202607281547_topic.adopt-the-shared-hlist.md` | 71 | 2026-07-28 | "**Phase:** TOPIC" | topic: adopt shared hlist, substrate switch | batch 23 |
+| `mock/design_rounds/202611122301/202611122258_topic.suite-can-fail.md` | 22 | 2026-11-12 | "**Phase:** TOPIC" | topic: suite-can-fail, replace_value call | batch 23 |
+| `mock/design_rounds/202611122301/202611122301_changelist.doc.lock.md` | 25 | 2026-11-12 | "**Phase:** DOC" | doc CL: accumulator append asserts, README status | batch 23 |
+| `mock/design_rounds/202611122301/202611130020_changelist.src.lock.md` | 54 | 2026-11-13 | "**Phase:** SRC" | src CL: ui pairs, differential, accumulator text | batch 23 |
+| `mock/design_rounds/202611122317/202611122316_topic.the-catalogue-ledger-and-the-sealed-traits.md` | 21 | no date line | unstated (topic) | topic: catalogue ledger, sealed traits | batch 23 |
+| `mock/design_rounds/202611122317/202611122317_changelist.doc.lock.md` | 9 | 2026-11-12 | "**Phase:** DOC" | doc CL: no template changes | batch 23 |
+| `mock/design_rounds/202611122317/202611122318_changelist.src.lock.md` | 28 | 2026-11-12 | "**Phase:** SRC" | src CL: ignore ledger rows, Sealed pub(crate) | batch 23 |
+| `mock/design_rounds/202611130044/202611130034_topic.adopt-the-shared-hlist.md` | 75 | 2026-07-28 | "**Phase:** TOPIC" | refiled hlist topic after round close | batch 23 |
+| `mock/design_rounds/202611130044/202611130034_topic.b1-cap-lifting-completion.md` | 57 | 2026-07-20 | "**Phase:** TOPIC" | refiled B1 cap-lifting topic after round close | batch 23 |
+| `mock/design_rounds/202611130044/202611130044_changelist.doc.lock.md` | 20 | 2026-11-13 | "**Phase:** DOC" | doc CL: fused entry gap stated | batch 23 |
+| `mock/design_rounds/202611130044/202611130044_topic.suite-can-fail-review-fixes.md` | 22 | 2026-11-13 | "**Phase:** TOPIC" | topic: suite-can-fail review fixes | batch 23 |
+| `mock/design_rounds/202611130044/202611130045_changelist.src.lock.md` | 53 | 2026-11-13 | "**Phase:** SRC" | src CL: ui fixtures, fused append test, markers | batch 23 |
+| `mock/design_rounds/202611130058/202611130049_topic.adopt-the-shared-hlist.md` | 75 | 2026-07-28 | "**Phase:** TOPIC" | refiled hlist topic, second refiling | batch 23 |
+| `mock/design_rounds/202611130058/202611130049_topic.b1-cap-lifting-completion.md` | 57 | 2026-07-20 | "**Phase:** TOPIC" | refiled B1 cap-lifting topic, second refiling | batch 23 |
+| `mock/design_rounds/202611130058/202611130058_changelist.doc.lock.md` | 24 | 2026-11-13 | "**Phase:** DOC" | doc CL: replace_resource README, fused reset | batch 23 |
+| `mock/design_rounds/202611130058/202611130058_topic.suite-can-fail-second-review.md` | 22 | 2026-11-13 | "**Phase:** TOPIC" | topic: suite-can-fail second review | batch 23 |
+| `mock/design_rounds/202611130058/202611130102_changelist.src.lock.md` | 42 | 2026-11-13 | "**Phase:** SRC" | src CL: replace docs, fixture isolation, test | batch 23 |
+| `mock/design_rounds/202611130216/202611130105_topic.adopt-the-shared-hlist.md` | 77 | 2026-07-28 | "**Phase:** TOPIC" | refiled hlist topic, third refiling | batch 23 |
+| `mock/design_rounds/202611130216/202611130105_topic.b1-cap-lifting-completion.md` | 59 | 2026-07-20 | "**Phase:** TOPIC" | refiled B1 cap-lifting topic, third refiling | batch 23 |
+| `mock/design_rounds/202611130216/202611130216_changelist.doc.lock.md` | 14 | 2026-11-13 | "**Phase:** DOC" | doc CL: no changes, open topics named | batch 23 |
+| `mock/design_rounds/202611130216/202611130216_topic.suite-can-fail-coordinator-review.md` | 22 | 2026-11-13 | "**Phase:** TOPIC" | topic: suite-can-fail coordinator review | batch 23 |
+| `mock/design_rounds/202611130216/202611130217_changelist.src.lock.md` | 37 | 2026-11-13 | "**Phase:** SRC" | src CL: pure map unit, shared stable provider | batch 23 |
+| `mock/design_rounds/202611130250/202611130249_topic.notko-by-https.md` | 26 | 2026-11-13 | "**Phase:** TOPIC" | topic: notko source spelled by https | batch 23 |
+| `mock/design_rounds/202611130250/202611130250_changelist.doc.lock.md` | 9 | 2026-11-13 | "**Phase:** DOC" | doc CL: no template changes, notko spelling | batch 23 |
+| `mock/design_rounds/202611130250/202611130250_changelist.src.lock.md` | 37 | 2026-11-13 | "**Phase:** SRC" | src CL: notko https, patch section, lock held | batch 23 |
+| `mock/design_rounds/202611130306/202611130224_topic.adopt-the-shared-hlist.md` | 79 | 2026-07-28 | "**Phase:** TOPIC" | refiled hlist topic, fourth refiling | batch 23 |
+| `mock/design_rounds/202611130306/202611130225_topic.b1-cap-lifting-completion.md` | 61 | 2026-07-20 | "**Phase:** TOPIC" | refiled B1 cap-lifting topic, fourth refiling | batch 23 |
+| `mock/design_rounds/202611130306/202611130306_changelist.doc.lock.md` | 14 | 2026-11-13 | "**Phase:** DOC" | doc CL: intended replace test, open topics | batch 23 |
+| `mock/design_rounds/202611130306/202611130306_topic.suite-can-fail-intended-replace-test.md` | 16 | 2026-11-13 | "**Phase:** TOPIC" | the intended replace test as an ignored trybuild pass case | first hand |
+| `mock/design_rounds/202611130306/202611130307_changelist.src.lock.md` | 37 | 2026-11-13 | locked src changelist, "**Phase:** SRC" | replace test added, fixtures asserting the defect deleted | first hand |
+| `mock/design_rounds/202611130402/202611130400_topic.overflow-is-a-value.md` | 38 | 2026-11-13 | "**Phase:** TOPIC" | over-capacity accumulator append as a sticky refusal value | first hand |
+| `mock/design_rounds/202611130402/202611130402_changelist.doc.lock.md` | 44 | 2026-11-13 | locked doc changelist, "**Phase:** DOC" | both designs state the refusal and `AccumRefused` | first hand |
+| `mock/design_rounds/202611130402/202611130408_changelist.src.lock.md` | 63 | 2026-11-13 | locked src changelist, "**Phase:** SRC" | append counts `wanted`, run entries return the refusal | first hand |
+| `mock/design_rounds/202611130500/202611130500_changelist.doc.lock.md` | 38 | no date line | locked doc changelist, "**Phase:** DOC" | review fixes: refusal per binding, regions after leading records | first hand |
+| `mock/design_rounds/202611130500/202611130500_topic.overflow-review-fixes.md` | 27 | 2026-11-13 | "**Phase:** TOPIC" | review of the overflow round, four defects and four smaller | first hand |
+| `mock/design_rounds/202611130500/202611130505_changelist.src.lock.md` | 45 | 2026-11-13 | locked src changelist, "**Phase:** SRC" | fused reset, region start, `RunCfg::Err` removed, mutant fenced | first hand |
+| `mock/design_rounds/202611130546/202611130546_changelist.doc.lock.md` | 26 | no date line | locked doc changelist, "**Phase:** DOC" | review pass two: fused reset sentence, run signature | first hand |
+| `mock/design_rounds/202611130546/202611130546_topic.overflow-review-pass-two.md` | 17 | 2026-11-13 | "**Phase:** TOPIC" | pass two of the overflow review, leftovers named | first hand |
+| `mock/design_rounds/202611130546/202611130547_changelist.src.lock.md` | 34 | 2026-11-13 | locked src changelist, "**Phase:** SRC" | ledger row, no `Cfg::Err`, closed changelists restored | first hand |
+| `mock/design_rounds/202611130554/202611130554_changelist.doc.lock.md` | 30 | no date line | locked doc changelist, "**Phase:** DOC" | op's ruling "Configurable by the consumer" in both designs | first hand |
+| `mock/design_rounds/202611130554/202611130555_changelist.src.lock.md` | 38 | 2026-11-13 | locked src changelist, "**Phase:** SRC" | `AccumOverflow` with `Refuse` and `Assert` on the run config | first hand |
+| `mock/design_rounds/202611130554/202611130600_topic.overflow-is-the-consumers-choice.md` | 23 | 2026-11-13 | "**Phase:** TOPIC" | op's ruling on overflow and the sealed choice it becomes | first hand |
 | `mock/research/202605232100_workunit-cdylib-boundary.md` | 149 | 2026-05-23 | "Status: recommendation memo, aligned with landed `viola-plugin-abi`" | WorkUnit/cdylib FFI boundary, RunLint slots | batch 10 |
 | `mock/research/202605251200_validate-descriptor-cl-drift.md` | 104 | 2026-05-25 | "Status: drift documentation." | locked CL vs shipped validate_descriptor visibility | batch 10 |
 | `mock/research/202605282100_engine-dispatch-build-plan.md` | 98 | 2026-05-28 | unstated (research memo, build plan) | engine dispatch arc: state map, phases A-E, risks | batch 10 |
@@ -466,11 +830,11 @@ when the ledger was assembled.
 | `mock/research/pre_seed/sketches/202607192200_r1-participation-without-record-slices/FINDINGS.md` | 218 | 2026-07-19 | "Hypothesis CONFIRMED at the fourth attempt." | sketch on worker participation after N-way split removal | batch 13 |
 | `mock/research/pre_seed/sketches/202607192700_d1-install-arm/FINDINGS.md` | 130 | 2026-07-19 | "FAILS, and the failure is larger than the hypothesis." | sketch of replace_value install arm | batch 13 |
 | `mock/research/pre_seed/sketches/202607193310_planaffecting-replaceable-exclusivity/FINDINGS.md` | 35 | 2026-07-19 | "Outcome: WORKS" | sketch PlanAffecting/Replaceable negative impl | batch 13 |
-| `mock/research/pre_seed/sketches/202607193500_canon-registry-drain/DRAIN-MANIFEST.md` | 54 | 2026-07-19 | unstated; sketch manifest | drain manifest mapping storage passages to rows | batch 13 |
+| `mock/research/pre_seed/sketches/202607193500_canon-registry-drain/DRAIN-MANIFEST.md` | 54 | no date line | unstated; sketch manifest | drain manifest mapping storage passages to rows | batch 13 |
 | `mock/research/pre_seed/sketches/202607193500_canon-registry-drain/FINDINGS.md` | 103 | 2026-07-19 | "Outcome: WORKS" | sketch findings: storage canon drained to registry | batch 13 |
-| `mock/research/pre_seed/sketches/202607193500_canon-registry-drain/SCHEMA.md` | 91 | 2026-07-19 | unstated; sketch schema | registry namespaces and ref roots fragment | batch 13 |
-| `mock/research/pre_seed/sketches/202607193500_canon-registry-drain/seed/storage.md` | 100 | 2026-07-19 | "Sketch demonstration of a seed chapter" | storage and resources seed chapter demo | batch 13 |
-| `mock/research/seed/MANIFEST.md` | 247 | 2026-07-21 | "frozen = false" | which sources drained into which seed chapter | first hand |
+| `mock/research/pre_seed/sketches/202607193500_canon-registry-drain/SCHEMA.md` | 91 | no date line | unstated; sketch schema | registry namespaces and ref roots fragment | batch 13 |
+| `mock/research/pre_seed/sketches/202607193500_canon-registry-drain/seed/storage.md` | 100 | no date line | "Sketch demonstration of a seed chapter" | storage and resources seed chapter demo | batch 13 |
+| `mock/research/seed/MANIFEST.md` | 247 | no date line | "frozen = false" | which sources drained into which seed chapter | first hand |
 | `mock/research/seed/constraints.md` | 108 | as of 2026-07-19 | seed chapter, not frozen | bans, toolchain limits, standing constraints | first hand |
 | `mock/research/seed/contracts.md` | 120 | as of 2026-07-19 | seed chapter, not frozen | the api contracts: unit, access sets, builder, virtuals | first hand |
 | `mock/research/seed/data-model.md` | 134 | as of 2026-07-19 | seed chapter, not frozen | store kinds, column values, ordering, determinism | first hand |
@@ -489,6 +853,34 @@ These files are not on the working branch. They were read from `origin/recover/u
 
 | file | lines | date | standing, by its own words | holds | read by |
 |---|---|---|---|---|---|
+| `mock/benches/engine_vs_std/FINDINGS.md` | 151 | unstated | "STATUS: PREMATURE / SUPERSEDED." | single-core engine versus std bench, gap attributed | batch R5 |
+| `mock/benches/results/INDEX.md` | 57 | unstated | unstated, results index | generated index of bench results and findings links | batch R5 |
+| `mock/benches/results/fiber_theory/fiber_theory_n16_findings.md` | 288 (header; timings tables not shown) | unstated | unstated, bench findings | bench key findings, median and spread | batch R5 |
+| `mock/benches/results/fiber_theory/fiber_theory_n32_findings.md` | 288 (header; timings tables not shown) | unstated | unstated, bench findings | bench key findings, median and spread | batch R5 |
+| `mock/benches/results/fiber_theory/fiber_theory_n64_findings.md` | 288 (header; timings tables not shown) | unstated | unstated, bench findings | bench key findings, median and spread | batch R5 |
+| `mock/benches/results/fiber_theory/fiber_theory_n8_findings.md` | 287 (header; timings tables not shown) | unstated | unstated, bench findings | bench key findings, median and spread | batch R5 |
+| `mock/benches/results/rcm_order/rcm_order_n1024_findings.md` | 209 (header; timings tables not shown) | unstated | unstated, bench findings | bench key findings, median and spread | batch R5 |
+| `mock/benches/results/rcm_order/rcm_order_n16384_findings.md` | 214 (header; timings tables not shown) | unstated | unstated, bench findings | bench key findings, median and spread | batch R5 |
+| `mock/benches/results/rcm_order/rcm_order_n2048_findings.md` | 209 (header; timings tables not shown) | unstated | unstated, bench findings | bench key findings, median and spread | batch R5 |
+| `mock/benches/results/rcm_order/rcm_order_n256_findings.md` | 210 (header; timings tables not shown) | unstated | unstated, bench findings | bench key findings, median and spread | batch R5 |
+| `mock/benches/results/rcm_order/rcm_order_n4096_findings.md` | 209 (header; timings tables not shown) | unstated | unstated, bench findings | bench key findings, median and spread | batch R5 |
+| `mock/benches/results/rcm_order/rcm_order_n64_findings.md` | 209 (header; timings tables not shown) | unstated | unstated, bench findings | bench key findings, median and spread | batch R5 |
+| `mock/benches/results/rcm_order/rcm_order_n8192_findings.md` | 209 (header; timings tables not shown) | unstated | unstated, bench findings | bench key findings, median and spread | batch R5 |
+| `mock/benches/results/rcm_rivals/rcm_rivals_n1024_findings.md` | 242 (header; timings tables not shown) | unstated | unstated, bench findings | bench key findings, median and spread | batch R5 |
+| `mock/benches/results/rcm_rivals/rcm_rivals_n16384_findings.md` | 247 (header; timings tables not shown) | unstated | unstated, bench findings | bench key findings, median and spread | batch R5 |
+| `mock/benches/results/rcm_rivals/rcm_rivals_n2048_findings.md` | 242 (header; timings tables not shown) | unstated | unstated, bench findings | bench key findings, median and spread | batch R5 |
+| `mock/benches/results/rcm_rivals/rcm_rivals_n256_findings.md` | 240 (header; timings tables not shown) | unstated | unstated, bench findings | bench key findings, median and spread | batch R5 |
+| `mock/benches/results/rcm_rivals/rcm_rivals_n4096_findings.md` | 240 (header; timings tables not shown) | unstated | unstated, bench findings | bench key findings, median and spread | batch R5 |
+| `mock/benches/results/rcm_rivals/rcm_rivals_n64_findings.md` | 240 (header; timings tables not shown) | unstated | unstated, bench findings | bench key findings, median and spread | batch R5 |
+| `mock/benches/results/rcm_rivals/rcm_rivals_n8192_findings.md` | 242 (header; timings tables not shown) | unstated | unstated, bench findings | bench key findings, median and spread | batch R5 |
+| `mock/benches/results/swap_band/swap_band_n1024_findings.md` | 177 (header; timings tables not shown) | unstated | unstated, bench findings | bench key findings, median and spread | batch R5 |
+| `mock/benches/results/swap_band/swap_band_n64_findings.md` | 177 (header; timings tables not shown) | unstated | unstated, bench findings | bench key findings, median and spread | batch R5 |
+| `mock/benches/results/swap_band/swap_band_n8192_findings.md` | 177 (header; timings tables not shown) | unstated | unstated, bench findings | bench key findings, median and spread | batch R5 |
+| `mock/benches/results/swap_cost/swap_cost_n64_findings.md` | 323 (header; timings tables not shown) | unstated | unstated, bench findings | bench key findings, median and spread | batch R5 |
+| `mock/benches/results/wake_policy/wake_policy_n1024_findings.md` | 315 (header; timings tables not shown) | unstated | unstated, bench findings | bench key findings, median and spread | batch R5 |
+| `mock/benches/results/wake_policy/wake_policy_n64_findings.md` | 309 (header; timings tables not shown) | unstated | unstated, bench findings | bench key findings, median and spread | batch R5 |
+| `mock/benches/results/wake_policy/wake_policy_n8192_findings.md` | 309 (header; timings tables not shown) | unstated | unstated, bench findings | bench key findings, median and spread | batch R5 |
+| `mock/design_rounds/202608090700/202608090700_changelist.doc.md` | 33 | 2026-08-09 | "**Phase:** DOC" | doc changelist, sym shape width and interner | batch R5 |
 
 ## Identical duplicates
 
@@ -622,7 +1014,6 @@ The files under `docs/` are rendered from the templates ledgered above and were 
 | `mock/benches/ema_formulation_n16384_findings.md excerpt` | 317 | 46 |
 | `mock/benches/ema_formulation_n256_findings.md excerpt` | 322 | 46 |
 | `mock/benches/ema_formulation_n4096_findings.md excerpt` | 319 | 46 |
-| `mock/benches/engine_vs_std/FINDINGS.md` | 176 | 46 |
 | `mock/benches/float_width_n1024_findings.md excerpt` | 320 | 46 |
 | `mock/benches/float_width_n16384_findings.md excerpt` | 319 | 46 |
 | `mock/benches/float_width_n256_findings.md excerpt` | 318 | 46 |
@@ -739,81 +1130,6 @@ The files under `docs/` are rendered from the templates ledgered above and were 
 | `mock/benches/shift_amount_origin_n16384_findings.md excerpt` | 319 | 46 |
 | `mock/benches/shift_amount_origin_n256_findings.md excerpt` | 324 | 46 |
 | `mock/benches/shift_amount_origin_n4096_findings.md excerpt` | 317 | 46 |
-| `mock/design_rounds/202605101036/202605101036_changelist.src.lock.md` | 653 | 19 |
-| `mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md` | 315 | 19 |
-| `mock/design_rounds/202605101036/202605101036_topic.builder-input-rename-and-reshape.md` | 132 | 19 |
-| `mock/design_rounds/202605101036/202605101036_topic.dispatch-codegen.md` | 283 | 19 |
-| `mock/design_rounds/202605101036/202605101036_topic.morsel-loop.md` | 67 | 19 |
-| `mock/design_rounds/202605101036/202605101036_topic.per-core-dispatch.md` | 73 | 19 |
-| `mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md` | 1283 | 19 |
-| `mock/design_rounds/202605101036/202605101036_topic.plan-caching.md` | 87 | 19 |
-| `mock/design_rounds/202605101036/202605101036_topic.resource-resolution.md` | 90 | 19 |
-| `mock/design_rounds/202605101036/202605101036_topic.scheduler-run-signature.md` | 358 | 19 |
-| `mock/design_rounds/202605101036/202605101036_topic.test-and-example-bar.md` | 84 | 19 |
-| `mock/design_rounds/202605101036/202605101036_topic.thread-pool.md` | 131 | 19 |
-| `mock/design_rounds/202605101200/202605101200_changelist.doc.lock.md` | 14 | 19 |
-| `mock/design_rounds/202605101200/202605101200_changelist.src.lock.md` | 7 | 19 |
-| `mock/design_rounds/202605101200/202605101200_topic.kitdispatch-shame.md` | 13 | 19 |
-| `mock/design_rounds/202605102100/202605102100_changelist.doc.lock.md` | 31 | 19 |
-| `mock/design_rounds/202605102100/202605102100_changelist.src.lock.md` | 31 | 19 |
-| `mock/design_rounds/202605102100/202605102100_topic.review-fixups.md` | 20 | 19 |
-| `mock/design_rounds/202605110000/202605110000_changelist.doc.lock.md` | 23 | 19 |
-| `mock/design_rounds/202605110000/202605110000_changelist.src.lock.md` | 87 | 19 |
-| `mock/design_rounds/202605110000/202605110000_topic.engine-test-rehab.md` | 87 | 19 |
-| `mock/design_rounds/202605232000/202605232000_changelist.doc.lock.md` | 30 | 19 |
-| `mock/design_rounds/202605232000/202605232000_changelist.src.deprecated.md` | 48 | 19 |
-| `mock/design_rounds/202605232000/202605232000_changelist.src.lock.md` | 47 | 19 |
-| `mock/design_rounds/202605232000/202605232000_topic.runtime-megaround-post-review-fixes.md` | 45 | 19 |
-| `mock/design_rounds/202605232020/202605232020_changelist.doc.lock.md` | 30 | 19 |
-| `mock/design_rounds/202605232020/202605232020_changelist.src.lock.md` | 32 | 19 |
-| `mock/design_rounds/202605232020/202605232020_topic.runtime-megaround-deferrals.md` | 34 | 19 |
-| `mock/design_rounds/202605232029/202605232029_changelist.doc.lock.md` | 16 | 19 |
-| `mock/design_rounds/202605232029/202605232029_changelist.src.lock.md` | 30 | 19 |
-| `mock/design_rounds/202605232029/202605232029_topic.deferrals-pr-review-polish.md` | 32 | 19 |
-| `mock/design_rounds/202605250545/202605250545_changelist.doc.lock.md` | 22 | 19 |
-| `mock/design_rounds/202605250545/202605250545_changelist.src.lock.md` | 33 | 19 |
-| `mock/design_rounds/202605250545/202605250545_topic.hila-c4-assign-cores-base.md` | 57 | 19 |
-| `mock/design_rounds/202605250600/202605250600_changelist.doc.lock.md` | 22 | 19 |
-| `mock/design_rounds/202605250600/202605250600_changelist.src.lock.md` | 32 | 19 |
-| `mock/design_rounds/202605250600/202605250600_topic.hila-c2-select-approach-base.md` | 56 | 19 |
-| `mock/design_rounds/202605250607/202605250607_changelist.doc.lock.md` | 16 | 19 |
-| `mock/design_rounds/202605250607/202605250607_changelist.src.lock.md` | 40 | 19 |
-| `mock/design_rounds/202605250607/202605250607_topic.hila-c2-reviewer-fixes.md` | 33 | 19 |
-| `mock/design_rounds/202605250615/202605250615_changelist.doc.lock.md` | 22 | 19 |
-| `mock/design_rounds/202605250615/202605250615_changelist.src.lock.md` | 35 | 19 |
-| `mock/design_rounds/202605250615/202605250615_topic.hila-c2-codegen-stubs.md` | 54 | 19 |
-| `mock/design_rounds/202605250628/202605250628_changelist.doc.lock.md` | 22 | 19 |
-| `mock/design_rounds/202605250628/202605250628_changelist.src.lock.md` | 27 | 19 |
-| `mock/design_rounds/202605250628/202605250628_topic.hila-scheduler-run-body.md` | 49 | 19 |
-| `mock/design_rounds/202605250645/202605250645_changelist.doc.lock.md` | 22 | 19 |
-| `mock/design_rounds/202605250645/202605250645_changelist.src.lock.md` | 32 | 19 |
-| `mock/design_rounds/202605250645/202605250645_topic.engine-pr-followups.md` | 41 | 19 |
-| `mock/design_rounds/202605282256/202605282256_changelist.doc.lock.md` | 25 | 19 |
-| `mock/design_rounds/202605282256/202605282256_changelist.src.lock.md` | 32 | 19 |
-| `mock/design_rounds/202605282256/202605282256_topic.resource-snapshot-disambiguation.md` | 32 | 19 |
-| `mock/design_rounds/202605282319/202605282319_changelist.doc.lock.md` | 17 | 19 |
-| `mock/design_rounds/202605282319/202605282319_changelist.src.lock.md` | 43 | 19 |
-| `mock/design_rounds/202605282319/202605282319_topic.builder-value-retention.md` | 29 | 19 |
-| `mock/design_rounds/202605290018/202605290018_changelist.doc.lock.md` | 13 | 19 |
-| `mock/design_rounds/202605290018/202605290018_changelist.src.lock.md` | 38 | 19 |
-| `mock/design_rounds/202605290018/202605290018_topic.resource-arena.md` | 34 | 19 |
-| `mock/design_rounds/202605290049/202605290049_changelist.doc.lock.md` | 7 | 19 |
-| `mock/design_rounds/202605290049/202605290049_changelist.src.lock.md` | 12 | 19 |
-| `mock/design_rounds/202605290049/202605290049_topic.b2a-review-fixups.md` | 19 | 19 |
-| `mock/design_rounds/202605290111/202605290111_changelist.doc.lock.md` | 11 | 19 |
-| `mock/design_rounds/202605290111/202605290111_changelist.src.lock.md` | 24 | 19 |
-| `mock/design_rounds/202605290111/202605290111_topic.per-wu-context.md` | 29 | 19 |
-| `mock/design_rounds/202605290143/202605290143_changelist.doc.lock.md` | 7 | 19 |
-| `mock/design_rounds/202605290143/202605290143_changelist.src.lock.md` | 18 | 19 |
-| `mock/design_rounds/202605290143/202605290143_topic.b3-bundle-tie-fixup.md` | 22 | 19 |
-| `mock/design_rounds/202605290203/202605290203_changelist.doc.lock.md` | 39 | 19 |
-| `mock/design_rounds/202605290203/202605290203_changelist.src.lock.md` | 37 | 19 |
-| `mock/design_rounds/202605290203/202605290203_topic.plan-id-typed-index.md` | 56 | 19 |
-| `mock/design_rounds/202605290214/202605290214_changelist.doc.lock.md` | 13 | 19 |
-| `mock/design_rounds/202605290214/202605290214_changelist.src.lock.md` | 10 | 19 |
-| `mock/design_rounds/202605290214/202605290214_topic.engine-id-index-roundtrip-test.md` | 26 | 19 |
-| `mock/design_rounds/202605290312-abandoned/202605290312_changelist.doc.lock.md` | 18 | 19 |
-| `mock/design_rounds/202605290312-abandoned/202605290312_changelist.src.md` | 20 | 19 |
 | `mock/design_rounds/202605290312-abandoned/202605290312_topic.plan-csr-adapter.md` | 43 | 20 |
 | `mock/design_rounds/202605291450/202605291450_changelist.doc.lock.md` | 5 | 20 |
 | `mock/design_rounds/202605291450/202605291450_changelist.src.lock.md` | 15 | 20 |
@@ -1086,281 +1402,6 @@ The files under `docs/` are rendered from the templates ledgered above and were 
 | `mock/design_rounds/202606191200/202606191200_changelist.src.lock.md` | 61 | 21 |
 | `mock/design_rounds/202606191200/202606191200_topic.gate2-caps-lifting.md` | 50 | 21 |
 | `mock/design_rounds/202606191400/202606191400_changelist.doc.lock.md` | 17 | 21 |
-| `mock/design_rounds/202606191400/202606191400_changelist.src.lock.md` | 37 | 22 |
-| `mock/design_rounds/202606191400/202606191400_topic.ctxfor-computed-ctx.md` | 62 | 22 |
-| `mock/design_rounds/202606191500/202606191500_changelist.doc.lock.md` | 11 | 22 |
-| `mock/design_rounds/202606191500/202606191500_changelist.src.lock.md` | 24 | 22 |
-| `mock/design_rounds/202606191500/202606191500_topic.units-cap-guard.md` | 31 | 22 |
-| `mock/design_rounds/202606191900/202606191900_changelist.doc.lock.md` | 9 | 22 |
-| `mock/design_rounds/202606191900/202606191900_changelist.src.lock.md` | 15 | 22 |
-| `mock/design_rounds/202606191900/202606191900_topic.p1-r2a-keystone.md` | 28 | 22 |
-| `mock/design_rounds/202606192000/202606192000_changelist.doc.lock.md` | 10 | 22 |
-| `mock/design_rounds/202606192000/202606192000_changelist.src.lock.md` | 22 | 22 |
-| `mock/design_rounds/202606192000/202606192000_topic.p1-r3c-throughput.md` | 25 | 22 |
-| `mock/design_rounds/202606192100/202606192100_changelist.doc.lock.md` | 7 | 22 |
-| `mock/design_rounds/202606192100/202606192100_changelist.src.lock.md` | 9 | 22 |
-| `mock/design_rounds/202606192100/202606192100_topic.api-unused-feature-gate.md` | 18 | 22 |
-| `mock/design_rounds/202606192200/202606192200_changelist.doc.lock.md` | 7 | 22 |
-| `mock/design_rounds/202606192200/202606192200_changelist.src.lock.md` | 9 | 22 |
-| `mock/design_rounds/202606192200/202606192200_topic.api-sealed-executor.md` | 20 | 22 |
-| `mock/design_rounds/202606192301/202606192301_changelist.doc.lock.md` | 22 | 22 |
-| `mock/design_rounds/202606192301/202606192301_changelist.src.lock.md` | 47 | 22 |
-| `mock/design_rounds/202606192301/202606192301_topic.phase-ema-adapt-axis.md` | 66 | 22 |
-| `mock/design_rounds/202606192330/202606192330_changelist.doc.lock.md` | 21 | 22 |
-| `mock/design_rounds/202606192330/202606192330_changelist.src.lock.md` | 35 | 22 |
-| `mock/design_rounds/202606192330/202606192330_topic.adapt-performance-contracts.md` | 80 | 22 |
-| `mock/design_rounds/202606192345/202606192345_changelist.doc.lock.md` | 10 | 22 |
-| `mock/design_rounds/202606192345/202606192345_changelist.src.lock.md` | 51 | 22 |
-| `mock/design_rounds/202606192345/202606192345_topic.phase-ema-per-frame-fix.md` | 49 | 22 |
-| `mock/design_rounds/202606200000/202606200000_changelist.doc.lock.md` | 9 | 22 |
-| `mock/design_rounds/202606200000/202606200000_changelist.src.lock.md` | 26 | 22 |
-| `mock/design_rounds/202606200000/202606200000_topic.p1-r3b-change-class.md` | 29 | 22 |
-| `mock/design_rounds/202606200100/202606200100_changelist.doc.lock.md` | 8 | 22 |
-| `mock/design_rounds/202606200100/202606200100_changelist.src.lock.md` | 9 | 22 |
-| `mock/design_rounds/202606200100/202606200100_topic.p1-r3b-fixes.md` | 13 | 22 |
-| `mock/design_rounds/202606200200/202606200200_changelist.doc.lock.md` | 9 | 22 |
-| `mock/design_rounds/202606200200/202606200200_changelist.src.lock.md` | 18 | 22 |
-| `mock/design_rounds/202606200200/202606200200_topic.r3b-parallel-fused.md` | 18 | 22 |
-| `mock/design_rounds/202606200300/202606200300_changelist.doc.lock.md` | 10 | 22 |
-| `mock/design_rounds/202606200300/202606200300_changelist.src.lock.md` | 18 | 22 |
-| `mock/design_rounds/202606200300/202606200300_topic.accum-overcap-hard-error.md` | 35 | 22 |
-| `mock/design_rounds/202606200400/202606200400_changelist.doc.lock.md` | 8 | 22 |
-| `mock/design_rounds/202606200400/202606200400_changelist.src.lock.md` | 14 | 22 |
-| `mock/design_rounds/202606200400/202606200400_topic.r3b-overcap-review-fixes.md` | 27 | 22 |
-| `mock/design_rounds/202606201200/202606201200_changelist.doc.lock.md` | 22 | 22 |
-| `mock/design_rounds/202606201200/202606201200_changelist.src.lock.md` | 38 | 22 |
-| `mock/design_rounds/202606201200/202606201200_topic.select-adapt-config.md` | 57 | 22 |
-| `mock/design_rounds/202606201500/202606201500_changelist.doc.lock.md` | 12 | 22 |
-| `mock/design_rounds/202606201500/202606201500_changelist.src.lock.md` | 32 | 22 |
-| `mock/design_rounds/202606201500/202606201500_topic.per-fiber-morsel-s1-rename.md` | 46 | 22 |
-| `mock/design_rounds/202606201600/202606201600_changelist.doc.lock.md` | 9 | 22 |
-| `mock/design_rounds/202606201600/202606201600_changelist.src.lock.md` | 20 | 22 |
-| `mock/design_rounds/202606201600/202606201600_topic.s1-rename-review-fixes.md` | 30 | 22 |
-| `mock/design_rounds/202606201800/202606201800_changelist.doc.lock.md` | 8 | 22 |
-| `mock/design_rounds/202606201800/202606201800_changelist.src.lock.md` | 28 | 22 |
-| `mock/design_rounds/202606201800/202606201800_topic.per-fiber-morsel-a2-descriptor.md` | 34 | 22 |
-| `mock/design_rounds/202606201900/202606201900_changelist.doc.lock.md` | 7 | 22 |
-| `mock/design_rounds/202606201900/202606201900_changelist.src.lock.md` | 15 | 22 |
-| `mock/design_rounds/202606201900/202606201900_topic.a1-fiber-plan-idx-test.md` | 25 | 22 |
-| `mock/design_rounds/202606202000/202606202000_changelist.doc.lock.md` | 8 | 22 |
-| `mock/design_rounds/202606202000/202606202000_changelist.src.lock.md` | 9 | 22 |
-| `mock/design_rounds/202606202000/202606202000_topic.asm-emission-contract-tests.md` | 30 | 22 |
-| `mock/design_rounds/202606202200/202606202200_changelist.doc.lock.md` | 7 | 22 |
-| `mock/design_rounds/202606202200/202606202200_changelist.src.lock.md` | 22 | 22 |
-| `mock/design_rounds/202606202200/202606202200_topic.per-fiber-morsel-a2b1-windowed-trunk.md` | 31 | 22 |
-| `mock/design_rounds/202606202300/202606202300_changelist.doc.lock.md` | 7 | 22 |
-| `mock/design_rounds/202606202300/202606202300_changelist.src.lock.md` | 19 | 22 |
-| `mock/design_rounds/202606202300/202606202300_topic.a2b1-review-fixes.md` | 30 | 22 |
-| `mock/design_rounds/202606202500/202606202500_changelist.doc.lock.md` | 7 | 22 |
-| `mock/design_rounds/202606202500/202606202500_changelist.src.lock.md` | 22 | 22 |
-| `mock/design_rounds/202606202500/202606202500_topic.a3a-store-size-collection.md` | 34 | 22 |
-| `mock/design_rounds/202606202600/202606202600_changelist.doc.lock.md` | 7 | 22 |
-| `mock/design_rounds/202606202600/202606202600_changelist.src.lock.md` | 9 | 22 |
-| `mock/design_rounds/202606202600/202606202600_topic.a3a-unused-imports.md` | 20 | 22 |
-| `mock/design_rounds/202606202700/202606202700_changelist.doc.lock.md` | 7 | 22 |
-| `mock/design_rounds/202606202700/202606202700_changelist.src.lock.md` | 46 | 22 |
-| `mock/design_rounds/202606202700/202606202700_topic.a3b-l1-morsel-formula.md` | 32 | 22 |
-| `mock/design_rounds/202606210200/202606210200_changelist.doc.lock.md` | 7 | 22 |
-| `mock/design_rounds/202606210200/202606210200_changelist.src.lock.md` | 25 | 22 |
-| `mock/design_rounds/202606210200/202606210200_topic.a3-redo-1-footprint-traits.md` | 35 | 22 |
-| `mock/design_rounds/202606210300/202606210300_changelist.doc.lock.md` | 21 | 22 |
-| `mock/design_rounds/202606210300/202606210300_changelist.src.lock.md` | 27 | 22 |
-| `mock/design_rounds/202606210300/202606210300_topic.api-macros-resourcefootprint-derive.md` | 47 | 22 |
-| `mock/design_rounds/202607161000/202606210600_topic.bench-decision.md` | 57 | 22 |
-| `mock/design_rounds/202607161000/202606210600_topic.bench-run2-resolution.md` | 73 | 22 |
-| `mock/design_rounds/202607161000/202606210600_topic.hybrid-decision.md` | 74 | 22 |
-| `mock/design_rounds/202607161000/202606210600_topic.r5-underspecification.md` | 46 | 22 |
-| `mock/design_rounds/202607161000/202606210600_topic.resource-handle-storage-model.md` | 58 | 22 |
-| `mock/design_rounds/202607161000/202606210600_topic.storage-model-pressure-test.md` | 47 | 22 |
-| `mock/design_rounds/202607161000/202606210600_topic.v1-v4-tiebreak.md` | 19 | 22 |
-| `mock/design_rounds/202607161000/202606210600_topic.v4-plugin-interop-axis.md` | 40 | 22 |
-| `mock/design_rounds/202607161000/202607161000_changelist.doc.lock.md` | 75 | 22 |
-| `mock/design_rounds/202607161000/202607161030_changelist.src.lock.md` | 88 | 22 |
-| `mock/design_rounds/202607161200/202607161200_changelist.doc.lock.md` | 16 | 22 |
-| `mock/design_rounds/202607161200/202607161210_changelist.src.lock.md` | 23 | 22 |
-| `mock/design_rounds/202607161410/202607161400_topic.a3b-l1-morsel-formula.md` | 63 | 22 |
-| `mock/design_rounds/202607161410/202607161410_changelist.doc.lock.md` | 17 | 22 |
-| `mock/design_rounds/202607161410/202607161420_changelist.src.lock.md` | 72 | 22 |
-| `mock/design_rounds/202607161600/202607161600_changelist.doc.lock.md` | 16 | 22 |
-| `mock/design_rounds/202607161600/202607161610_changelist.src.lock.md` | 20 | 22 |
-| `mock/design_rounds/202607161810/202607161800_topic.a2b-dispatch-loop-inversion.md` | 134 | 22 |
-| `mock/design_rounds/202607161810/202607161810_changelist.doc.lock.md` | 32 | 22 |
-| `mock/design_rounds/202607161810/202607161820_changelist.src.lock.md` | 32 | 22 |
-| `mock/design_rounds/202607161910/202607161900_topic.a2b-post-review-fixes.md` | 18 | 22 |
-| `mock/design_rounds/202607161910/202607161910_changelist.doc.lock.md` | 12 | 22 |
-| `mock/design_rounds/202607161910/202607161920_changelist.src.lock.md` | 10 | 22 |
-| `mock/design_rounds/202607171807/202607171733_topic.plannable-declaration-split.md` | 127 | 22 |
-| `mock/design_rounds/202607171807/202607171807_changelist.doc.lock.md` | 55 | 22 |
-| `mock/design_rounds/202607171807/202607171807_changelist.src.lock.md` | 50 | 22 |
-| `mock/design_rounds/202607171824/202607171824_changelist.doc.lock.md` | 19 | 22 |
-| `mock/design_rounds/202607171824/202607171824_changelist.src.lock.md` | 30 | 22 |
-| `mock/design_rounds/202607171824/202607171824_topic.plannable-post-review-fixes.md` | 34 | 22 |
-| `mock/design_rounds/202607190930/202607190910_topic.a4-parallel-per-fiber-windows.md` | 81 | 22 |
-| `mock/design_rounds/202607190930/202607190930_changelist.doc.lock.md` | 47 | 22 |
-| `mock/design_rounds/202607190930/202607190940_changelist.src.lock.md` | 91 | 22 |
-| `mock/design_rounds/202607191110/202607191100_topic.fiber-descriptor-coverage-invariant.md` | 58 | 22 |
-| `mock/design_rounds/202607191110/202607191110_changelist.doc.lock.md` | 36 | 22 |
-| `mock/design_rounds/202607191110/202607191120_changelist.src.lock.md` | 58 | 22 |
-| `mock/design_rounds/202607192010/202607192000_topic.reachable-bodies-contradicting-contracts.md` | 78 | 22 |
-| `mock/design_rounds/202607192010/202607192010_changelist.doc.lock.md` | 61 | 22 |
-| `mock/design_rounds/202607192010/202607192030_changelist.src.lock.md` | 129 | 22 |
-| `mock/design_rounds/202607192110/202607192100_topic.n-way-record-split-is-not-convergence.md` | 71 | 22 |
-| `mock/design_rounds/202607192110/202607192110_changelist.doc.lock.md` | 81 | 22 |
-| `mock/design_rounds/202607192110/202607192120_changelist.src.lock.md` | 51 | 22 |
-| `mock/design_rounds/202607192310/202607192300_topic.accumulator-region-sizing-under-trunk-rank.md` | 49 | 22 |
-| `mock/design_rounds/202607192310/202607192310_changelist.doc.lock.md` | 23 | 22 |
-| `mock/design_rounds/202607192310/202607192320_changelist.src.lock.md` | 61 | 22 |
-| `mock/design_rounds/202607192410/202607192400_topic.delete-the-n-way-record-split.md` | 50 | 22 |
-| `mock/design_rounds/202607192410/202607192410_changelist.doc.lock.md` | 27 | 22 |
-| `mock/design_rounds/202607192410/202607192420_changelist.src.lock.md` | 78 | 22 |
-| `mock/design_rounds/202607192510/202607192500_topic.delete-the-orphaned-thread-pool.md` | 45 | 22 |
-| `mock/design_rounds/202607192510/202607192510_changelist.doc.lock.md` | 19 | 22 |
-| `mock/design_rounds/202607192510/202607192520_changelist.src.lock.md` | 58 | 22 |
-| `mock/design_rounds/202607192610/202607192600_topic.one-definition-for-the-accumulator-slice.md` | 48 | 22 |
-| `mock/design_rounds/202607192610/202607192610_changelist.doc.lock.md` | 26 | 22 |
-| `mock/design_rounds/202607192610/202607192620_changelist.src.lock.md` | 61 | 22 |
-| `mock/design_rounds/202607192710/202607192700_topic.replace-resource-install-arm.md` | 54 | 22 |
-| `mock/design_rounds/202607192710/202607192710_changelist.doc.lock.md` | 12 | 22 |
-| `mock/design_rounds/202607192710/202607192720_changelist.src.lock.md` | 71 | 22 |
-| `mock/design_rounds/202607192810/202607192800_topic.retire-the-fn-pointer-spawn.md` | 54 | 22 |
-| `mock/design_rounds/202607192810/202607192810_changelist.doc.lock.md` | 31 | 22 |
-| `mock/design_rounds/202607192810/202607192820_changelist.src.lock.md` | 55 | 22 |
-| `mock/design_rounds/202607192910/202607192900_topic.delete-superseded-dispatch-and-barrier.md` | 60 | 22 |
-| `mock/design_rounds/202607192910/202607192910_changelist.doc.lock.md` | 32 | 22 |
-| `mock/design_rounds/202607192910/202607192920_changelist.src.lock.md` | 67 | 22 |
-| `mock/design_rounds/202607193110/202607193100_topic.revert-the-blob-install.md` | 55 | 22 |
-| `mock/design_rounds/202607193110/202607193110_changelist.doc.lock.md` | 32 | 22 |
-| `mock/design_rounds/202607193110/202607193120_changelist.src.lock.md` | 54 | 22 |
-| `mock/design_rounds/202607200100_topic.b1-cap-lifting-completion.md` | 53 | 22 |
-| `mock/design_rounds/202607200900/202607200500_topic.replaceable-swap-semantics.md` | 55 | 22 |
-| `mock/design_rounds/202607200900/202607200900_changelist.doc.lock.md` | 90 | 22 |
-| `mock/design_rounds/202607200900/202607201000_changelist.src.lock.md` | 90 | 22 |
-| `mock/design_rounds/202607201800/202607201700_topic.pre-freeze-evidence-followups.md` | 19 | 22 |
-| `mock/design_rounds/202607201800/202607201800_changelist.doc.lock.md` | 10 | 23 |
-| `mock/design_rounds/202607201800/202607201900_changelist.src.lock.md` | 20 | 23 |
-| `mock/design_rounds/202607202310/202607202300_topic.wake-spin-preroll.md` | 39 | 23 |
-| `mock/design_rounds/202607202310/202607202310_changelist.doc.lock.md` | 13 | 23 |
-| `mock/design_rounds/202607202310/202607202320_changelist.src.lock.md` | 54 | 23 |
-| `mock/design_rounds/202607202351/202607202350_topic.wake-budget-default-zero.md` | 16 | 23 |
-| `mock/design_rounds/202607202351/202607202351_changelist.doc.lock.md` | 9 | 23 |
-| `mock/design_rounds/202607202351/202607202352_changelist.src.lock.md` | 16 | 23 |
-| `mock/design_rounds/202607210111/202607210110_topic.wake-doc-correction.md` | 15 | 23 |
-| `mock/design_rounds/202607210111/202607210111_changelist.doc.lock.md` | 8 | 23 |
-| `mock/design_rounds/202607210111/202607210112_changelist.src.lock.md` | 16 | 23 |
-| `mock/design_rounds/202607241915/202607241915_changelist.doc.lock.md` | 53 | 23 |
-| `mock/design_rounds/202607241915/202607241915_changelist.src.lock.md` | 87 | 23 |
-| `mock/design_rounds/202607241915/202607241915_topic.sym-generic-interned-identity.md` | 40 | 23 |
-| `mock/design_rounds/202607242000/202607242000_changelist.doc.lock.md` | 14 | 23 |
-| `mock/design_rounds/202607242000/202607242000_changelist.src.lock.md` | 6 | 23 |
-| `mock/design_rounds/202607242000/202607242000_topic.sym-in-design-overview.md` | 15 | 23 |
-| `mock/design_rounds/202607281547_topic.adopt-the-shared-hlist.md` | 71 | 23 |
-| `mock/design_rounds/202608082215/202608082215_changelist.doc.lock.md` | 116 | 23 |
-| `mock/design_rounds/202608082215/202608082215_changelist.src.lock.md` | 121 | 23 |
-| `mock/design_rounds/202608082215/202608082215_topic.sym-peer-collision-and-generic-kind.md` | 124 | 23 |
-| `mock/design_rounds/202608090130/202608090130_changelist.doc.lock.md` | 53 | 23 |
-| `mock/design_rounds/202608090130/202608090130_changelist.src.lock.md` | 93 | 23 |
-| `mock/design_rounds/202608090130/202608090130_topic.the-origin-mechanism-round-one-only-named.md` | 114 | 23 |
-| `mock/design_rounds/202608090300/202608090300_changelist.doc.lock.md` | 35 | 23 |
-| `mock/design_rounds/202608090300/202608090300_changelist.src.lock.md` | 69 | 23 |
-| `mock/design_rounds/202608090300/202608090300_topic.the-kind-width-is-still-fixed.md` | 78 | 23 |
-| `mock/design_rounds/202608090500/202608090500_changelist.doc.lock.md` | 35 | 23 |
-| `mock/design_rounds/202608090500/202608090500_changelist.src.lock.md` | 88 | 23 |
-| `mock/design_rounds/202608090500/202608090500_topic.assertions-that-describe-do-not-constrain.md` | 76 | 23 |
-| `mock/design_rounds/202608090700/202608090700_changelist.doc.lock.md` | 33 | 23 |
-| `mock/design_rounds/202608090700/202608090700_changelist.src.lock.md` | 72 | 23 |
-| `mock/design_rounds/202608090700/202608090700_topic.the-tautology-moved-down-a-rung-twice.md` | 85 | 23 |
-| `mock/design_rounds/202608091100/202608091100_changelist.doc.lock.md` | 72 | 23 |
-| `mock/design_rounds/202608091100/202608091100_changelist.src.lock.md` | 165 | 23 |
-| `mock/design_rounds/202608091100/202608091100_topic.widths-tied-to-the-mechanism-and-a-dead-gate.md` | 130 | 23 |
-| `mock/design_rounds/202608091600/202608091600_changelist.doc.lock.md` | 56 | 23 |
-| `mock/design_rounds/202608091600/202608091600_changelist.src.lock.md` | 116 | 23 |
-| `mock/design_rounds/202608091600/202608091600_topic.the-right-account-of-why-it-holds.md` | 84 | 23 |
-| `mock/design_rounds/202608091900/202608091900_changelist.doc.lock.md` | 12 | 23 |
-| `mock/design_rounds/202608091900/202608091900_changelist.src.lock.md` | 21 | 23 |
-| `mock/design_rounds/202608091900/202608091900_topic.a-dead-vocabulary-term-i-introduced.md` | 21 | 23 |
-| `mock/design_rounds/202608092200/202608092200_changelist.doc.lock.md` | 67 | 23 |
-| `mock/design_rounds/202608092200/202608092200_changelist.src.lock.md` | 97 | 23 |
-| `mock/design_rounds/202608092200/202608092200_topic.the-collision-is-still-reachable.md` | 76 | 23 |
-| `mock/design_rounds/202608100100/202608100100_changelist.doc.lock.md` | 10 | 23 |
-| `mock/design_rounds/202608100100/202608100100_changelist.src.lock.md` | 37 | 23 |
-| `mock/design_rounds/202608100100/202608100100_topic.the-round-that-fixed-it-added-eight.md` | 27 | 23 |
-| `mock/design_rounds/202608100400/202608100400_changelist.doc.lock.md` | 21 | 23 |
-| `mock/design_rounds/202608100400/202608100400_changelist.src.lock.md` | 73 | 23 |
-| `mock/design_rounds/202608100400/202608100400_topic.the-refusals-nothing-pins.md` | 58 | 23 |
-| `mock/design_rounds/202608100700/202608100700_changelist.doc.lock.md` | 12 | 23 |
-| `mock/design_rounds/202608100700/202608100700_changelist.src.lock.md` | 20 | 23 |
-| `mock/design_rounds/202608100700/202608100700_topic.two-types-that-exist-only-to-carry-docs.md` | 21 | 23 |
-| `mock/design_rounds/202608101000/202608101000_changelist.doc.lock.md` | 52 | 23 |
-| `mock/design_rounds/202608101000/202608101000_changelist.src.lock.md` | 86 | 23 |
-| `mock/design_rounds/202608101000/202608101000_topic.disjointness-by-construction-not-by-law.md` | 73 | 23 |
-| `mock/design_rounds/202608101300/202608101300_changelist.doc.lock.md` | 9 | 23 |
-| `mock/design_rounds/202608101300/202608101300_changelist.src.lock.md` | 27 | 23 |
-| `mock/design_rounds/202608101300/202608101300_topic.three-allows-on-bodies-not-signatures.md` | 22 | 23 |
-| `mock/design_rounds/202608101600/202608101600_changelist.doc.lock.md` | 21 | 23 |
-| `mock/design_rounds/202608101600/202608101600_changelist.src.lock.md` | 45 | 23 |
-| `mock/design_rounds/202608101600/202608101600_topic.a-locked-claim-that-was-never-executed.md` | 44 | 23 |
-| `mock/design_rounds/202608101900/202608101900_changelist.doc.lock.md` | 48 | 23 |
-| `mock/design_rounds/202608101900/202608101900_changelist.src.lock.md` | 76 | 23 |
-| `mock/design_rounds/202608101900/202608101900_topic.the-sixth-route-and-what-a-shape-may-still-decide.md` | 62 | 23 |
-| `mock/design_rounds/202609181402/202609181401_topic.hilavitkutin-on-arvo-dev.md` | 113 | 23 |
-| `mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md` | 43 | 23 |
-| `mock/design_rounds/202609181402/202609181403_changelist.src.lock.md` | 122 | 23 |
-| `mock/design_rounds/202609190201/202609190200_topic.review-fixes-on-arvo-dev.md` | 56 | 23 |
-| `mock/design_rounds/202609190201/202609190201_changelist.doc.lock.md` | 35 | 23 |
-| `mock/design_rounds/202609190201/202609190202_changelist.src.lock.md` | 92 | 23 |
-| `mock/design_rounds/202609190620/202607311110_topic.launcher-migration.md` | 71 | 23 |
-| `mock/design_rounds/202609190620/202609190619_topic.remove-the-stale-mockspace-build-dep-claim.md` | 68 | 23 |
-| `mock/design_rounds/202609190620/202609190620_changelist.doc.lock.md` | 40 | 23 |
-| `mock/design_rounds/202609190620/202609190621_changelist.src.lock.md` | 13 | 23 |
-| `mock/design_rounds/202609191001/202609191000_topic.second-review-on-arvo-dev.md` | 43 | 23 |
-| `mock/design_rounds/202609191001/202609191001_changelist.doc.lock.md` | 29 | 23 |
-| `mock/design_rounds/202609191001/202609191002_changelist.src.lock.md` | 57 | 23 |
-| `mock/design_rounds/202609191201/202609191200_topic.spawn-gate-lint-forcing.md` | 21 | 23 |
-| `mock/design_rounds/202609191201/202609191201_changelist.doc.lock.md` | 17 | 23 |
-| `mock/design_rounds/202609191201/202609191202_changelist.src.lock.md` | 53 | 23 |
-| `mock/design_rounds/202611122301/202607200100_topic.b1-cap-lifting-completion.md` | 53 | 23 |
-| `mock/design_rounds/202611122301/202607281547_topic.adopt-the-shared-hlist.md` | 71 | 23 |
-| `mock/design_rounds/202611122301/202611122258_topic.suite-can-fail.md` | 22 | 23 |
-| `mock/design_rounds/202611122301/202611122301_changelist.doc.lock.md` | 25 | 23 |
-| `mock/design_rounds/202611122301/202611130020_changelist.src.lock.md` | 54 | 23 |
-| `mock/design_rounds/202611122317/202611122316_topic.the-catalogue-ledger-and-the-sealed-traits.md` | 21 | 23 |
-| `mock/design_rounds/202611122317/202611122317_changelist.doc.lock.md` | 9 | 23 |
-| `mock/design_rounds/202611122317/202611122318_changelist.src.lock.md` | 28 | 23 |
-| `mock/design_rounds/202611130044/202611130034_topic.adopt-the-shared-hlist.md` | 75 | 23 |
-| `mock/design_rounds/202611130044/202611130034_topic.b1-cap-lifting-completion.md` | 57 | 23 |
-| `mock/design_rounds/202611130044/202611130044_changelist.doc.lock.md` | 20 | 23 |
-| `mock/design_rounds/202611130044/202611130044_topic.suite-can-fail-review-fixes.md` | 22 | 23 |
-| `mock/design_rounds/202611130044/202611130045_changelist.src.lock.md` | 53 | 23 |
-| `mock/design_rounds/202611130058/202611130049_topic.adopt-the-shared-hlist.md` | 75 | 23 |
-| `mock/design_rounds/202611130058/202611130049_topic.b1-cap-lifting-completion.md` | 57 | 23 |
-| `mock/design_rounds/202611130058/202611130058_changelist.doc.lock.md` | 24 | 23 |
-| `mock/design_rounds/202611130058/202611130058_topic.suite-can-fail-second-review.md` | 22 | 23 |
-| `mock/design_rounds/202611130058/202611130102_changelist.src.lock.md` | 42 | 23 |
-| `mock/design_rounds/202611130216/202611130105_topic.adopt-the-shared-hlist.md` | 77 | 23 |
-| `mock/design_rounds/202611130216/202611130105_topic.b1-cap-lifting-completion.md` | 59 | 23 |
-| `mock/design_rounds/202611130216/202611130216_changelist.doc.lock.md` | 14 | 23 |
-| `mock/design_rounds/202611130216/202611130216_topic.suite-can-fail-coordinator-review.md` | 22 | 23 |
-| `mock/design_rounds/202611130216/202611130217_changelist.src.lock.md` | 37 | 23 |
-| `mock/design_rounds/202611130250/202611130249_topic.notko-by-https.md` | 26 | 23 |
-| `mock/design_rounds/202611130250/202611130250_changelist.doc.lock.md` | 9 | 23 |
-| `mock/design_rounds/202611130250/202611130250_changelist.src.lock.md` | 37 | 23 |
-| `mock/design_rounds/202611130306/202611130224_topic.adopt-the-shared-hlist.md` | 79 | 23 |
-| `mock/design_rounds/202611130306/202611130225_topic.b1-cap-lifting-completion.md` | 61 | 23 |
-| `mock/design_rounds/202611130306/202611130306_changelist.doc.lock.md` | 14 | 23 |
-| `mock/design_rounds/202611130306/202611130306_topic.suite-can-fail-intended-replace-test.md` | 16 | 24 |
-| `mock/design_rounds/202611130306/202611130307_changelist.src.lock.md` | 37 | 24 |
-| `mock/design_rounds/202611130402/202611130400_topic.overflow-is-a-value.md` | 38 | 24 |
-| `mock/design_rounds/202611130402/202611130402_changelist.doc.lock.md` | 44 | 24 |
-| `mock/design_rounds/202611130402/202611130408_changelist.src.lock.md` | 63 | 24 |
-| `mock/design_rounds/202611130500/202611130500_changelist.doc.lock.md` | 38 | 24 |
-| `mock/design_rounds/202611130500/202611130500_topic.overflow-review-fixes.md` | 27 | 24 |
-| `mock/design_rounds/202611130500/202611130505_changelist.src.lock.md` | 45 | 24 |
-| `mock/design_rounds/202611130546/202611130546_changelist.doc.lock.md` | 26 | 24 |
-| `mock/design_rounds/202611130546/202611130546_topic.overflow-review-pass-two.md` | 17 | 24 |
-| `mock/design_rounds/202611130546/202611130547_changelist.src.lock.md` | 34 | 24 |
-| `mock/design_rounds/202611130554/202611130554_changelist.doc.lock.md` | 30 | 24 |
-| `mock/design_rounds/202611130554/202611130555_changelist.src.lock.md` | 38 | 24 |
-| `mock/design_rounds/202611130554/202611130600_topic.overflow-is-the-consumers-choice.md` | 23 | 24 |
 | `mock/research/imported-from-polka-dots/bench/calling-convention-bench-results.md` | 537 | 27 |
 | `mock/research/imported-from-polka-dots/build-configuration-research.md` | 282 | 27 |
 | `mock/research/imported-from-polka-dots/design_rounds/2026-02-21/2026-02-21_initial-architecture.md` | 78 | 27 |

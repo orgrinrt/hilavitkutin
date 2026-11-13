@@ -106,3 +106,94 @@ written_by = "engine design template as on the branch recover/unlanded-rounds-an
 standing = "provisional"
 subject = "stores"
 keywords = ["accumulator", "per-core region", "merge", "append order", "N-way regioning", "reserved buffer"]
+
+[[tenet]]
+id = "an_append_past_an_accumulator_s_capacity_is_counted_and_never_written_and_the_refusal_is_sticky_for_the_frame"
+what = "Each accumulator binding carries, beside its live length, a count of how many appends the frame asked of it. Every append raises that count. An append writes and raises the live length only when nothing has been refused yet and the live length is below the capacity; otherwise nothing is written. Once one append is refused, every later append on the same binding is refused. No flag is stored apart from the two counts."
+mechanism = "A second cell `wanted` beside `len` on the accumulator binding; write only when `wanted == len` and `len < cap`; refused exactly when `wanted > len`."
+source = "mock/design_rounds/202611130402/202611130400_topic.overflow-is-a-value.md:16-16"
+provenance = ["mock::design_rounds::202611130402::202611130400_topic.overflow-is-a-value::#the-shape"]
+quote = '''
+The sticky refusal is a second count on each accumulator binding beside the live length: how many appends the frame asked of it. Every append bumps it. An append writes and bumps the live length only when nothing has been refused yet (`wanted == len`) and the live length is below the capacity; otherwise it writes nothing and only `wanted` moves. So `wanted >= len` always, and the accumulator has refused this frame exactly when `wanted > len`. That is the sticky state: once one append is refused, every later append on the same binding is refused and the live length does not move, which is the law `notko`'s `Fill` keeps for a lend and the panel stated for the window (L75, N3). No flag is stored apart from the two counts, so there is nothing to keep consistent with them.
+'''
+origin = "proposed"
+written_by = "topic overflow-is-a-value of 2026-11-13, round 202611130402, roadmap step HV1b, agent-written"
+standing = "provisional"
+subject = "stores"
+keywords = ["accumulator", "append", "capacity", "refusal", "sticky", "wanted", "overflow", "AccumRefused"]
+rules_out = ["An append past an accumulator's reserved capacity panics"]
+cites = ["an_accumulator_append_saturates_at_the_reserved_capacity_which_equals_the_record_count_at_build"]
+
+[[tenet]]
+id = "the_refusal_of_an_accumulator_is_read_at_the_close_and_is_the_same_value_at_every_worker_count"
+what = "After the last band of the frame the run walks the bindings in registration order and returns the first accumulator that refused, as a value naming its position among the accumulators, how many appends were asked and the reserved capacity. The count asked does not depend on how the records were split, so the refusal of an emitter that asks more than the reserved capacity is the same value at one, two, four and the maximum number of workers."
+mechanism = "`AccumRefused` with the registration position and `notko::Exhausted { wanted, had }`, handed out through the run configuration's output type; on several workers the merge sums the per-core counts."
+source = "mock/design_rounds/202611130402/202611130400_topic.overflow-is-a-value.md:18-20"
+provenance = ["mock::design_rounds::202611130402::202611130400_topic.overflow-is-a-value::#the-shape"]
+quote = '''
+The refusal is read at the close. After the last band of the frame, `run` walks the bindings in registration order and returns the first accumulator whose `wanted > len`, as a value naming its registration position among the accumulators and `notko::Exhausted { wanted, had }`, with `had` the reserved capacity. The value goes out through the run-config's output: `RunCfg::Out` is bound on `From<Outcome<(), AccumRefused>>`, the default config's `Out` is `Outcome<(), AccumRefused>` (the reflexive `From` covers it), and every run entry returns `Cfg::Out::from(verdict)`. `RunCfg` is sealed, so the default config is the only impl and no consumer impl breaks.
+
+`wanted` is the count of appends the frame asked for, so it does not depend on how the records were split. On one core it is every append the bodies made; on `n` workers the merge sums the per-core counts. `had` is the reserved capacity of the shared binding in both. The refusal of an emitter that asks more than the reserved capacity is therefore the same value at 1, 2, 4 and the maximum worker count, which is the proof the roadmap asks for.
+'''
+origin = "proposed"
+written_by = "topic overflow-is-a-value of 2026-11-13, round 202611130402, roadmap step HV1b, agent-written"
+standing = "provisional"
+subject = "stores"
+keywords = ["accumulator", "refusal", "close", "worker count", "registration order", "run output", "Exhausted"]
+cites = ["an_append_past_an_accumulator_s_capacity_is_counted_and_never_written_and_the_refusal_is_sticky_for_the_frame"]
+
+[[tenet]]
+id = "the_consumer_picks_on_the_run_configuration_whether_an_over_capacity_append_is_a_refusal_or_an_assert"
+what = "Asked whether an append past an accumulator's capacity should be a refusal as a value, among a refusal as a value everywhere, the assert staying the default with refusal a provider's opt-in, and configurable by the consumer through a const, generic or trait parameter on the run configuration with refuse as the default, op answered: configurable by the consumer."
+source = "mock/design_rounds/202611130554/202611130600_topic.overflow-is-the-consumers-choice.md:9-9"
+provenance = ["mock::design_rounds::202611130554::202611130600_topic.overflow-is-the-consumers-choice::#op-s-ruling"]
+quote = '''
+Asked through the coordinator whether an append past an accumulator's capacity should be a refusal as a value, with the options [a refusal as a value everywhere | the assert stays the default, refusal is a provider's opt-in | configurable by the consumer: a const, generic or trait parameter on the run configuration picks refuse or assert, default refuse], op answered, verbatim: "Configurable by the consumer".
+'''
+origin = "stated"
+standing = "provisional"
+subject = "stores"
+keywords = ["accumulator", "overflow", "configurable by the consumer", "run configuration", "refuse", "assert", "ruling"]
+cites = ["an_append_past_an_accumulator_s_capacity_is_counted_and_never_written_and_the_refusal_is_sticky_for_the_frame"]
+
+[[tenet]]
+id = "the_overflow_choice_is_a_sealed_pair_on_the_run_configuration_and_the_assert_fires_at_the_close_on_the_calling_thread"
+what = "The round that carries op's ruling reads its intent as a pick at compile time on the run configuration, with the refusal as a value the default. It names the choice as a sealed set of two, refuse and assert, which it calls the engine's own fixed vocabulary and not content; each fixes the run's output type. The append path is the same under both: it refuses and counts. The assert fires at the close, on the thread that called the run, after every worker has parked again, so that a panic never hits a worker and stalls the join."
+mechanism = "Sealed `AccumOverflow` with `Refuse` and `Assert`; `RunCfg::Overflow: AccumOverflow<Out = Self::Out>`; `DefaultRunCfg<O: AccumOverflow = Refuse>`; `build_with::<DefaultRunCfg<Assert>, _, _>` takes the assert."
+source = "mock/design_rounds/202611130554/202611130600_topic.overflow-is-the-consumers-choice.md:11-21"
+provenance = ["mock::design_rounds::202611130554::202611130600_topic.overflow-is-the-consumers-choice::#op-s-ruling"]
+quote = '''
+The intent: the consumer picks, at compile time and on the run configuration, whether an over-capacity append comes back as a value or stops the run with a panic, and the refusal as a value is the default.
+
+## Current state
+
+Round 202611130402 built the refusal only. `RunCfg` is sealed, `DefaultRunCfg` is its one impl, and `RunCfg::Out` is `notko::Outcome<(), AccumRefused>` there. Every run entry ends in `frame_verdict`, which builds `Cfg::Out` from the frame's verdict. A consumer picks a configuration by type through `build_with::<Cfg, _, _>`; `build` takes `DefaultRunCfg`.
+
+## Changes proposed
+
+1. A sealed `AccumOverflow` names the choice, with two inhabitants, `Refuse` and `Assert`. Each fixes the run's output type and turns the frame's verdict into it: `Refuse` hands the verdict back as `notko::Outcome<(), AccumRefused>`; `Assert` returns `()` and panics on a refusal, naming the `AccumRefused`. The set is the engine's own fixed vocabulary, two behaviours of one branch, not content.
+2. `RunCfg` gains `type Overflow: AccumOverflow<Out = Self::Out>`, so `Out` differs by the choice and nothing else can set it apart from it. `DefaultRunCfg` becomes `DefaultRunCfg<O: AccumOverflow = Refuse>`, so `build` keeps the refusal and `build_with::<DefaultRunCfg<Assert>, _, _>` takes the assert.
+3. The append path does not change under either choice: it refuses and counts. The assert fires at the close, on the thread that called the run, after every worker has re-parked. `dev` asserted inside the append, so under `run_parallel` the panic hit a worker and the join stalled (fault H2). Asserting at the close keeps op's intent, a run that stops on an over-capacity append, without bringing that stall back, and no write passes the capacity under either choice.
+'''
+origin = "proposed"
+written_by = "topic overflow-is-the-consumers-choice of 2026-11-13, round 202611130554, the working out of op's ruling, agent-written"
+standing = "provisional"
+subject = "stores"
+keywords = ["AccumOverflow", "Refuse", "Assert", "run configuration", "sealed", "close", "calling thread", "typestate"]
+cites = ["the_consumer_picks_on_the_run_configuration_whether_an_over_capacity_append_is_a_refusal_or_an_assert"]
+
+[[tenet]]
+id = "under_the_parallel_run_each_core_s_accumulator_region_starts_after_the_leading_records_and_keeps_its_own_refusal"
+what = "Under the parallel run the region of each accumulator a core appends into starts after the records the leading bands already accepted, clipped to the capacity, and the merge compacts from there, so the leading bands' records survive and count, and a region with no room refuses and does not drop. On one thread the accepted records are a prefix of the appends; under the parallel run each region keeps its own prefix, so the bytes kept depend on the worker count while the refusal value does not."
+source = "mock/design_rounds/202611130500/202611130500_topic.overflow-review-fixes.md:22-23"
+provenance = ["mock::design_rounds::202611130500::202611130500_topic.overflow-review-fixes::#changes-proposed"]
+quote = '''
+2. The per-core region of each accumulator starts after the records the leading bands already accepted: core c appends at `len + lo_c`, clipped to the capacity, and the merge compacts from `len` rather than 0. The leading bands' records survive and count. The last regions lose that much room, which the region-skew gap (ticket 9979e2632a6a) already covers, and a region with no room refuses rather than drops. The merged `wanted` saturates.
+3. The rule for the accepted records is stated per region: on one thread the accepted records are a prefix of the appends; under `run_parallel` each region keeps its own prefix, so the bytes kept depend on the worker count while the `AccumRefused` value does not.
+'''
+origin = "proposed"
+written_by = "topic overflow-review-fixes of 2026-11-13, round 202611130500, review pass one of the overflow round, agent-written"
+standing = "provisional"
+subject = "stores"
+keywords = ["run_parallel", "per-core region", "leading bands", "merge", "prefix", "worker count", "accumulator"]
+cites = ["the_refusal_of_an_accumulator_is_read_at_the_close_and_is_the_same_value_at_every_worker_count"]
