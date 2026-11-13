@@ -1,0 +1,52 @@
+warning: hilavitkutin-ctx@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-sym@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-api@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-str@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-kit@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-providers@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+    Finished `test` profile [unoptimized] target(s) in 0.03s
+     Running unittests src/lib.rs (/home/user/target/debug/deps/b2_resize_loses_records-0b3455babdf02329)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/resize.rs (/home/user/target/debug/deps/resize-36461d0525efa9c1)
+
+running 2 tests
+test growth_moves_the_base_pointer ... ok
+test growth_keeps_the_records_already_written ... FAILED
+
+failures:
+
+---- growth_keeps_the_records_already_written stdout ----
+
+thread 'growth_keeps_the_records_already_written' (9342) panicked at b2-resize-loses-records/tests/resize.rs:44:5:
+assertion `left == right` failed: a resize through ColumnStorage::reserve kept none of the records written before it
+  left: [0, 0, 0, 0, 0, 0, 0, 0]
+ right: [1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007]
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: core::panicking::assert_failed_inner
+   3: core::panicking::assert_failed::<alloc::vec::Vec<u64>, alloc::vec::Vec<u64>>
+   4: resize::growth_keeps_the_records_already_written
+   5: resize::growth_keeps_the_records_already_written::{closure#0}
+   6: <resize::growth_keeps_the_records_already_written::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+
+failures:
+    growth_keeps_the_records_already_written
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+error: test failed, to rerun pass `-p b2-resize-loses-records --test resize`
+   Doc-tests b2_resize_loses_records
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: 1 target failed:
+    `-p b2-resize-loses-records --test resize`

@@ -1,0 +1,3 @@
+Cell  (repr Rust): fill 20 discharge 16 heat 24 flags 0 tag 8 size 32
+CellC (repr C)   : fill 0 discharge 4 heat 6 flags 7 tag 8 size 16
+same image read back: Cell 7 -3 200 5 0xfeed, CellC 7 -3 200 5 0xfeed

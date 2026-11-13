@@ -1,0 +1,3 @@
+warning: hilavitkutin-sym@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-str@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+    Finished `dev` profile [unoptimized] target(s) in 0.02s

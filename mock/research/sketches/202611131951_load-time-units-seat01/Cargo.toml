@@ -1,0 +1,28 @@
+# Seat 01 sketches for the load-time units panel (202611131951). Spikes, one
+# directory per arm, each checking one thing. Own workspace so the repository's
+# build never sees it. Run with mock/Cargo.lock copied beside this file (the
+# repository ignores lockfiles) so the git dependencies resolve as the trunk does.
+
+[workspace]
+resolver = "3"
+members = [
+    "b2-resize-loses-records",
+    "c1-oversized-cell",
+    "c2-packed-word-race",
+    "a3-morsel-interpreter",
+    "b3-paged-column",
+    "a4-slot-unit/ext",
+    "a4-slot-unit/host",
+    "a4-names-on-wasm",
+]
+
+[workspace.package]
+edition = "2024"
+publish = false
+version = "0.0.0"
+
+[workspace.dependencies]
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev", version = "0.0.1", default-features = false, features = ["const", "try_trait_v2"] }
