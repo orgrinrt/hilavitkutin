@@ -1,0 +1,15 @@
+# The extension side of arm A4: a native library loaded at run time, exporting
+# a per-morsel kernel and a name minted with hilavitkutin-str's `str_const!`.
+
+[package]
+name = "a4-ext"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+hilavitkutin-str = { path = "../../../../../crates/hilavitkutin-str" }
+arvo-bits = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }

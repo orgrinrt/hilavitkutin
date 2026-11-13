@@ -1,0 +1,2 @@
+Cell  (repr Rust): fill 8 discharge 12 heat 14 flags 15 tag 0 size 16
+CellC (repr C)   : fill 0 discharge 4 heat 6 flags 7 tag 8 size 16
