@@ -436,3 +436,21 @@ standing = "provisional"
 subject = "principles"
 keywords = ["intended workload", "millions of records", "one to four morsels", "short fiber", "small workload", "bench scope", "convergence bench", "sequential frame"]
 related = ["tenet::below_ten_thousand_records_execution_is_sequential_and_above_one_hundred_thousand_threading_is_always_considered", "tenet::the_dispatch_form_depends_on_the_record_count_below_or_above_ten_thousand", "tenet::the_dispatch_approach_is_chosen_by_record_count_between_fiber_level_trunk_level_and_whole_schedule_functions", "tenet::the_per_project_defaults_are_sequential_for_polka_dots_mixed_for_saalis_and_phased_with_convergence_for_loimu", "tenet::no_single_scheduling_strategy_dominates_and_the_best_depends_on_compute_balance_phase_topology_and_record_count", "tenet::the_strategy_is_selected_at_plan_time_from_estimated_compute_weights_and_a_wrong_pick_costs_about_ten_to_twenty_percent", "question::which_convergence_a_single_trunk_phase_uses", "question::whether_the_default_wake_is_the_spin_then_park_hybrid_of_the_spec_or_park_immediately_ruled_by_the_wake_bench"]
+
+[[tenet]]
+id = "the_benches_of_the_engine_against_hand_written_and_plain_rust_paths_are_a_baseline_and_no_call_is_made_on_them_yet"
+what = "The benches that bench hilavitkutin against a hand-written optimised path and against plain Rust on no_std and on std, with the threaded variants of each, do not yet include any of the headline features such as fusing and the adaptive trunk, fiber and morsel crunching on the dataflow-like schedule. The engine in them is bare bones and barely lowers to anything interesting yet. No calls are made based on them yet, and they are a baseline to compare against later."
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS-21.md:3-5"
+provenance = ["mock::research::202611130850_the-record-read-whole::OP-ANSWERS-21::#op-answers-21-13-november-about-12-25-utc-the-engine-benches-so-far-are-a-baseline-and-no-call-rests-on-them"]
+quote = '''
+Op, verbatim, following op-answers-20:
+
+"And to add, those answers don't yet include any of the actual headline features like fusing and the adaptive trunk/fiber/morsel crunching on the datadlow-ish schedule. It's bare bones, barely lowers to anything interesting yet. So no calls should be made based on those yet, they are a baseline to compare against then. I mean the benches that bench hila against a hand-written optimized path and just regular old rust on no_std and on std etc whatever we have written so far (probably very limited comparison still) and the threaded variants of each"
+'''
+origin = "stated"
+standing = "provisional"
+subject = "principles"
+keywords = ["bench baseline", "engine against hand-written", "plain rust", "no_std", "std", "threaded variants", "fusing", "adaptive trunk fiber morsel", "no call on the benches", "perf gate", "convergence bench"]
+rules_out = ["A design call, a verdict on the engine or a ruling made on the numbers of these benches before the headline features exist."]
+cites = ["hilavitkutin_is_for_millions_of_simulation_and_crunching_work_data_going_constantly_and_one_to_four_morsels_is_almost_never_its_case"]
+related = ["tenet::the_perf_gate_uses_per_arm_calibrated_bars_over_a_persistent_pool_std_baseline_and_stays_blocking", "tenet::the_fairness_correction_sets_the_parallel_baseline_to_optimal_multi_threaded_std_and_supersedes_the_3_5x_claim", "tenet::gate_2_closes_with_cleanup_and_a_perf_gate_rerun_and_the_remainder_is_one_completion_arc_charted_to_the_full_canonical_design", "tenet::deviation_two_core_ownership_mask_evidence_leaves_the_bless_standing_with_the_build_script_codegen_escalation_armed", "question::which_convergence_a_single_trunk_phase_uses", "question::whether_the_default_wake_is_the_spin_then_park_hybrid_of_the_spec_or_park_immediately_ruled_by_the_wake_bench"]
