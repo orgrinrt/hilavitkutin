@@ -28,6 +28,10 @@ mock/research/sketches/*/libsketch.rmeta
 mock/research/**/Cargo.lock
 mock/benches/variants/**/Cargo.lock
 
+# A bench variant's `target` as a link, where every workspace builds into one
+# shared directory and the variant paths in `bench.toml` are reached through it.
+mock/benches/variants/*/target
+
 # Standalone test-fixture target dir (cargo subproject)
 mock/crates/hilavitkutin-extensions-macros/tests/lto_smoke_fixture/target/
 
