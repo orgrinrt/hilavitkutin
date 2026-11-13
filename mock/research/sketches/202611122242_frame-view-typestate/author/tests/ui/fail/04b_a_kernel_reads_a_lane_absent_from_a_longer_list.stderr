@@ -1,0 +1,28 @@
+error[E0277]: `notko_hlist::Empty` does not hold `Vel`
+  --> tests/ui/fail/04b_a_kernel_reads_a_lane_absent_from_a_longer_list.rs:15:19
+   |
+15 |         (view.get(Vel, row), ())
+   |               --- ^^^ the trait `Contains<Vel>` is not implemented for `notko_hlist::Empty`
+   |               |
+   |               required by a bound introduced by this call
+   |
+   = note: Membership is decided by walking the cells, so `notko_hlist::Empty` has to be a list built from `Empty` and `Cons<H, T>`, and `Vel` has to be one of its heads. If the compiler reports `overflow evaluating the requirement` instead, the list is deeper than the default recursion limit and the crate root wants `#![recursion_limit = "1024"]`.
+help: `Cons<H, T>` implements trait `Contains<X>`
+  --> /root/.cargo/git/checkouts/notko-f6f26a62b445f4df/1a978e5/notko-hlist/src/membership.rs:49:1
+   |
+49 | impl<H, T: List> Contains<H> for Cons<H, T> {}
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `Contains<H>`
+...
+52 | impl<H, T, X> Contains<X> for Cons<H, T> where T: Contains<X> + List {}
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `Contains<X>`
+   = note: required for `Cons<Heat, notko_hlist::Empty>` to implement `Contains<Vel>`
+   = note: 1 redundant requirement hidden
+   = note: required for `Cons<Pos, Cons<Heat, notko_hlist::Empty>>` to implement `Contains<Vel>`
+note: required by a bound in `View::<'s, Reg, R>::get`
+  --> $WORKSPACE/engine/src/view.rs
+   |
+   |     pub fn get<X, P>(&self, _lane: X, row: Row) -> X::Item
+   |            --- required by a bound in this associated function
+...
+   |         R: Contains<X>,
+   |            ^^^^^^^^^^^ required by this bound in `View::<'s, Reg, R>::get`

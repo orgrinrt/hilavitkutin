@@ -1,0 +1,11 @@
+error[E0599]: no method named `set` found for struct `View<'s, Reg, R>` in the current scope
+  --> tests/ui/fail/02_a_kernel_writes_through_the_committed_view.rs:17:18
+   |
+17 |             view.set(r, 1);
+   |                  ^^^
+   |
+help: there is a method `get` with a similar name
+   |
+17 -             view.set(r, 1);
+17 +             view.get(r, 1);
+   |

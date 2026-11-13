@@ -1,0 +1,39 @@
+   Compiling engine v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611122242_frame-view-typestate/engine)
+   Compiling author v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611122242_frame-view-typestate/author)
+   Compiling probes v0.0.0 (/home/user/hilavitkutin/mock/research/sketches/202611122242_frame-view-typestate/probes)
+error[E0080]: evaluation panicked: a kernel declares one staged lane twice
+  --> /root/.rustup/toolchains/nightly-2026-05-28-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/panic.rs:62:9
+   |
+62 |           $crate::panicking::panic_fmt($crate::const_format_args!($($t)+));
+   |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ evaluation of `engine::Frame::<notko_hlist::Cons<author::Pos, notko_hlist::Cons<author::Vel, notko_hlist::Cons<author::Heat, notko_hlist::Cons<author::Landings, notko_hlist::Empty>>>>, 2>::step::<engine::Block<Twice>, notko_hlist::Cons<notko_hlist::Here, notko_hlist::Cons<notko_hlist::Here, notko_hlist::Empty>>>::{constant#0}` failed here
+   |
+  ::: /home/user/hilavitkutin/mock/research/sketches/202611122242_frame-view-typestate/engine/src/frame.rs:36:13
+   |
+36 | /             assert!(
+37 | |                 K::MASK.count_ones() == K::LEN,
+38 | |                 "a kernel declares one staged lane twice"
+39 | |             );
+   | |_____________- in this macro invocation
+
+note: erroneous constant encountered
+  --> /home/user/hilavitkutin/mock/research/sketches/202611122242_frame-view-typestate/engine/src/frame.rs:35:9
+   |
+35 | /         const {
+36 | |             assert!(
+37 | |                 K::MASK.count_ones() == K::LEN,
+38 | |                 "a kernel declares one staged lane twice"
+39 | |             );
+40 | |         }
+   | |_________^
+
+note: the above error was encountered while instantiating `fn Frame::<Cons<Pos, Cons<Vel, Cons<Heat, ...>>>, 2>::step::<..., ...>`
+  --> lane_twice.rs:20:5
+   |
+20 |     Frame::<World, 2>::new().step(Block(Twice));
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: the full name for the type has been written to '/home/user/target/debug/deps/lane_twice-f5d54d4bf85267d5.long-type-16587207455587245331.txt'
+   = note: consider using `--verbose` to print the full type name to the console
+
+For more information about this error, try `rustc --explain E0080`.
+error: could not compile `probes` (bin "lane_twice") due to 1 previous error

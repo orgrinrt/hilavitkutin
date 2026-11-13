@@ -1,0 +1,5 @@
+error[E0599]: no method named `view` found for struct `Landed<'c, Reg, S>` in the current scope
+  --> tests/ui/fail/08_a_close_unit_obtains_a_view.rs:13:24
+   |
+13 |         let _ = landed.view();
+   |                        ^^^^ method not found in `Landed<'_, Cons<Pos, Cons<Vel, Cons<Heat, Cons<Landings, notko_hlist::Empty>>>>, Cons<Landings, notko_hlist::Empty>>`

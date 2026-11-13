@@ -1,0 +1,7 @@
+error[E0046]: not all trait items implemented, missing: `seal`
+  --> tests/ui/fail/12c_an_author_implements_kernel_on_block_of_a_local_kernel.rs:12:1
+   |
+12 | impl Kernel<World, MyPs> for Block<Liar> {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ missing `seal` in implementation
+   |
+   = help: implement the missing item: `fn seal(_: engine::sealed::Token) { todo!() }`

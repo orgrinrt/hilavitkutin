@@ -1,0 +1,11 @@
+error[E0599]: no method named `get` found for struct `StagedLane<'s, X>` in the current scope
+  --> tests/ui/fail/01_a_block_kernel_reads_its_staged_handle.rs:16:25
+   |
+16 |             let _ = pos.get(Pos, r);
+   |                         ^^^
+   |
+help: there is a method `set` with a similar name
+   |
+16 -             let _ = pos.get(Pos, r);
+16 +             let _ = pos.set(Pos, r);
+   |

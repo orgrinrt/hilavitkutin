@@ -1,0 +1,24 @@
+# Two probes whose point is that they do not build, kept out of the sketch's
+# workspace so `cargo test` there stays green. Each binary's outputs are in
+# `out/`; FINDINGS.md says what each shows and how to rerun it.
+
+[package]
+name = "probes"
+edition = "2024"
+publish = false
+version = "0.0.0"
+
+[workspace]
+
+[dependencies]
+author = { path = "../author" }
+engine = { path = "../engine" }
+notko-hlist = { git = "https://github.com/orgrinrt/notko.git", rev = "1a978e5c2db6c8f68bf94a6fcae266394f172b17" }
+
+[[bin]]
+name = "lane_twice"
+path = "lane_twice.rs"
+
+[[bin]]
+name = "limit_256"
+path = "limit_256.rs"

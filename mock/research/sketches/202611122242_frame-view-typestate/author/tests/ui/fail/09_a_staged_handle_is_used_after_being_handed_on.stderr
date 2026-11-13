@@ -1,0 +1,10 @@
+error[E0382]: borrow of moved value: `pos`
+  --> tests/ui/fail/09_a_staged_handle_is_used_after_being_handed_on.rs:18:13
+   |
+15 |         let (mut pos, ()) = out;
+   |              ------- move occurs because `pos` has type `StagedLane<'_, Pos>`, which does not implement the `Copy` trait
+16 |         let mut handed = pos;
+   |                          --- value moved here
+17 |         for r in view.rows() {
+18 |             pos.set(r, 1);
+   |             ^^^ value borrowed here after move
