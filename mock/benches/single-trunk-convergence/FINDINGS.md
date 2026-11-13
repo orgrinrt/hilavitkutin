@@ -33,29 +33,29 @@ How close head-and-tail comes to its designed 2x, and where. Against the same cr
 
 Holds for: the fold workloads, W in {2, 4, 8}, n in {1048576, 16777216, 134217728} for fold_light and n = 1048576 for fold_heavy, warm, unpinned. Two walkers cannot give 4.72x: against the lowest per-pass median of `kernel_seq` (3.52 ms, 3.12 ms and 3.14 ms at W = 2, 4 and 8) the n = 16777216 rows give 1.52x, 1.41x and 1.18x.
 
-Below the intended region, W in {2, 4, 8}, the same ratio measures 0.76x to 1.94x: at n = 4096, 0.76x to 0.95x on both folds at every W except fold_heavy W = 4 at 1.40x; at n = 65536, 1.94x for fold_heavy W = 2, 1.32x to 1.49x for fold_heavy W = 4 and 8, and 0.95x to 1.23x for fold_light (`results/summary.csv`, rows `warm`, arms `head_tail` and `kernel_seq`).
+Below the region, at n in {4096, 65536}, W in {2, 4, 8}, the same ratio measures 0.76x to 1.94x: at n = 4096, 0.76x to 0.95x on both folds at every W except fold_heavy W = 4 at 1.40x; at n = 65536, 1.94x for fold_heavy W = 2, 1.32x to 1.49x for fold_heavy W = 4 and 8, and 0.95x to 1.23x for fold_light (`results/summary.csv`, rows `warm`, arms `head_tail` and `kernel_seq`). The short band (16 to 1024 records) is further below again and runs even cheaper for one walker: there the ratio falls to 0.64x (fold_light W = 4 n = 16).
 
-At every W from 2 up, head-and-tail runs the same crew of two walkers, so its numbers at W = 2, 4 and 8 are three runs of one configuration; the drop from 1.81x to 1.43x on fold_heavy n = 1048576 is spread between runs, and its per-pass medians at W = 8 range from 2.23 ms to 3.52 ms. Against the engine's own sequential path (`sequential`) the same two walkers give 1.81x at fold_heavy n = 65536 W = 2 (274.1 us to 151.6 us), 1.75x at fold_heavy n = 1048576 W = 2 (4.04 ms to 2.31 ms) and 1.94x at fold_light n = 134217728 W = 4 (88.58 ms to 45.62 ms). The floating meeting point (`head_tail_dyn`, one compare and swap per 256-record block) matches the fixed one on the heavy fold and loses to it on the light fold, by 2.4x at n = 1048576 W = 2 (325.5 us to 133.1 us) and by 1.18x at n = 134217728 W = 2 (53.18 ms to 45.20 ms). On the append, head-and-tail takes the design's sequential fallback, so it costs what one walker costs: `head_tail` and `kernel_seq` are within 1% of each other at n = 16777216 W = 2 (13.84 ms and 13.85 ms).
+At every W from 2 up, head-and-tail runs the same crew of two walkers, so its numbers at W = 2, 4 and 8 are three runs of one configuration; the drop from 1.81x to 1.43x on fold_heavy n = 1048576 is spread between runs, and its per-pass medians at W = 8 range from 2.23 ms to 3.52 ms. Against the engine's own sequential path (`sequential`) the same two walkers give 1.81x at fold_heavy n = 65536 W = 2 (274.1 us to 151.6 us), 1.75x at fold_heavy n = 1048576 W = 2 (4.04 ms to 2.31 ms) and 1.94x at fold_light n = 134217728 W = 4 (88.58 ms to 45.62 ms). The floating meeting point (`head_tail_dyn`, one compare and swap per 256-record block) measures within 2% of the fixed one on fold_heavy at n = 1048576 W in {2, 4} (2.31 ms and 2.52 ms against 2.31 ms and 2.51 ms), and loses to it on the light fold at n of 1048576 and up, by 2.4x at n = 1048576 W = 2 (325.5 us to 133.1 us) and by 1.18x at n = 134217728 W = 2 (53.18 ms to 45.20 ms). Elsewhere the two swap places by row (at fold_heavy n = 65536 W = 8 the floating one measures 192.6 us against 266.1 us, at W = 2 and 4 there it is 10% and 12% slower), so no ordering holds across the whole sweep. On the append, head-and-tail takes the design's sequential fallback, so it costs what one walker costs: `head_tail` and `kernel_seq` are within 1% of each other at n = 16777216 W = 2 (13.84 ms and 13.85 ms).
 
-Where N-way passes it, and by how much. At W = 2 the two splits run the same number of walkers. On the crew they land within 5% of each other on fold_heavy at n = 65536 and 1048576 and on fold_light at n = 16777216 and 134217728 (fold_light n = 134217728: `kernel_nway` 43.11 ms, `head_tail` 45.20 ms; fold_heavy n = 1048576: 2.37 ms and 2.31 ms). On fold_light at n = 65536 and 1048576 head-and-tail measures ahead, 34.4 us against 38.3 us (1.11x) and 133.1 us against 160.5 us (1.21x), and the engine's `nway` measures 52.2 us and 166.0 us there. At W = 4, N-way's two further walkers are the whole of its lead:
+Where N-way passes it, and by how much. At W = 2 the two splits run the same number of walkers. On the crew they land within 5% of each other on fold_heavy at n = 65536 and 1048576 and on fold_light at n = 16777216 and 134217728 (fold_light n = 134217728: `kernel_nway` 43.11 ms, `head_tail` 45.20 ms; fold_heavy n = 1048576: 2.37 ms and 2.31 ms), though at fold_heavy n = 1048576 `kernel_nway` and at fold_light n = 16777216 both arms are spread rows (above 1.5x), so their tie is as uncertain as the modes. On fold_light at n = 65536 and 1048576 head-and-tail measures ahead, 34.4 us against 38.3 us (1.11x) and 133.1 us against 160.5 us (1.21x), and the engine's `nway` measures 52.2 us and 166.0 us there; the n = 1048576 row is a spread row on both arms (`head_tail` 1.61x, `kernel_nway` 1.64x), so its 1.21x is a vote between modes. At W = 4 and 8, where N-way runs more walkers:
 
-| workload | n | W | head_tail | kernel_nway | nway (engine) | head_tail time over N-way time (crew, engine) |
-| --- | --: | --: | --: | --: | --: | --: |
-| fold_light | 134217728 | 4 | 45.62 ms | 25.17 ms | 29.06 ms | 1.81x, 1.57x |
-| fold_light | 16777216 | 4 | 2.21 ms | 1.79 ms | 1.65 ms | 1.23x, 1.34x |
-| fold_light | 1048576 | 4 | 135.3 us | 130.0 us | 191.5 us | 1.04x, 0.71x |
-| fold_heavy | 1048576 | 4 | 2.51 ms | 2.19 ms | 2.45 ms | 1.15x, 1.03x |
-| fold_heavy | 65536 | 4 | 195.6 us | 266.0 us | 181.3 us | 0.74x, 1.08x |
-| append | 16777216 | 4 | 15.50 ms | 7.13 ms | 9.33 ms | 2.17x, 1.66x |
-| append | 1048576 | 4 | 596.1 us | 389.7 us | 824.7 us | 1.53x, 0.72x |
-| fold_light | 134217728 | 8 | 47.03 ms | 25.27 ms | 25.30 ms | 1.86x, 1.86x |
-| fold_light | 1048576 | 8 | 186.3 us | 156.5 us | 184.1 us | 1.19x, 1.01x |
-| append | 1048576 | 8 | 610.7 us | 408.4 us | 858.8 us | 1.50x, 0.71x |
-| fold_light | 16777216 | 8 | 2.67 ms | 1.42 ms | 1.30 ms | 1.88x, 2.06x |
-| fold_heavy | 1048576 | 8 | 2.90 ms | 1.88 ms | 1.97 ms | 1.54x, 1.47x |
-| append | 16777216 | 8 | 15.92 ms | 4.95 ms | 8.46 ms | 3.21x, 1.88x |
+| workload | n | W | head_tail | kernel_nway | nway (engine) | head_tail time over N-way time (crew, engine) | spread |
+| --- | --: | --: | --: | --: | --: | --: | --- |
+| fold_light | 134217728 | 4 | 45.62 ms | 25.17 ms | 29.06 ms | 1.81x, 1.57x | |
+| fold_light | 16777216 | 4 | 2.21 ms | 1.79 ms | 1.65 ms | 1.23x, 1.34x | nway 1.68x |
+| fold_light | 1048576 | 4 | 135.3 us | 130.0 us | 191.5 us | 1.04x, 0.71x | |
+| fold_heavy | 1048576 | 4 | 2.51 ms | 2.19 ms | 2.45 ms | 1.15x, 1.03x | |
+| fold_heavy | 65536 | 4 | 195.6 us | 266.0 us | 181.3 us | 0.74x, 1.08x | kernel_nway 1.65x |
+| append | 16777216 | 4 | 15.50 ms | 7.13 ms | 9.33 ms | 2.17x, 1.66x | |
+| append | 1048576 | 4 | 596.1 us | 389.7 us | 824.7 us | 1.53x, 0.72x | |
+| fold_light | 134217728 | 8 | 47.03 ms | 25.27 ms | 25.30 ms | 1.86x, 1.86x | |
+| fold_light | 1048576 | 8 | 186.3 us | 156.5 us | 184.1 us | 1.19x, 1.01x | |
+| append | 1048576 | 8 | 610.7 us | 408.4 us | 858.8 us | 1.50x, 0.71x | |
+| fold_light | 16777216 | 8 | 2.67 ms | 1.42 ms | 1.30 ms | 1.88x, 2.06x | nway 1.51x |
+| fold_heavy | 1048576 | 8 | 2.90 ms | 1.88 ms | 1.97 ms | 1.54x, 1.47x | head_tail 1.58x |
+| append | 16777216 | 8 | 15.92 ms | 4.95 ms | 8.46 ms | 3.21x, 1.88x | |
 
-Holds for: W in {4, 8}, the n listed; W = 8 runs eight walkers on four vCPUs. The append lines compare N-way with the sequential fallback head-and-tail takes there. The fold lines put N-way's lead over head-and-tail at about what its extra walkers would give where the frame is memory-bound (fold_light n = 134217728: 1.81x at W = 4, 1.86x at W = 8, the machine having four vCPUs), and below it where the kernel is compute-bound (fold_heavy n = 1048576: 1.15x at W = 4, 1.54x at W = 8). The compute-bound reading rests on that one size, the lower edge of the region, measured on 6 batches from 3 processes.
+Holds for: W in {4, 8}, the n listed; W = 8 runs eight walkers on four vCPUs. A `spread` cell marks the arm whose per-pass spread is above 1.5x, so that ratio is a vote between modes. The append lines compare N-way with the sequential fallback head-and-tail takes there. The fold ratios sit at about what N-way's extra walkers would give where the data does not fit cache (the largest fold_light), and below it on the one compute-bound size measured (fold_heavy n = 1048576); which of the two causes it was not separated (`## What was not measured`), and the compute-bound size sits on the region's lower edge at 6 batches from 3 processes.
 
 A boundary note: what each costs on short fibers. Fibers of four morsels and fewer lie outside the region the engine is meant for, so this band says where the parallel arms stop paying and nothing about the engine's intended use. On fold_light fibers of 16 to 1024 records, unpinned, every parallel arm measures more per frame than the engine's sequential path, at every W measured, and the cost does not move with n:
 
@@ -74,7 +74,7 @@ Most of a crew frame's cost here is the wake of a parked worker on another vCPU,
 
 ## Setup
 
-The machine is a KVM guest with 4 vCPUs of an Intel Xeon at 2.10 GHz (family 6 model 207), one thread per core as the guest sees it, 2 MiB of L2 per core, 260 MiB of L3, 15 GB of memory, Linux 6.18.44, cpuidle driver `none`, transparent huge pages on `madvise` (the bench's columns do not ask for them), clocksource `tsc`. How the vCPUs sit on host cores is not visible from the guest. The machine maximum worker count is therefore 4, and W = 8 oversubscribes it two to one.
+The machine is a KVM guest with 4 vCPUs of an Intel Xeon at 2.10 GHz (family 6 model 207), one thread per core as the guest sees it, 2 MiB of L2 per core, 260 MiB of L3, 15 GB of memory, Linux 6.18.44, cpuidle driver `none`, transparent huge pages on `madvise` (the bench's columns do not ask for them), clocksource `tsc`. How the vCPUs sit on host cores is not visible from the guest. The machine maximum worker count is therefore 4, and W = 8 oversubscribes it two to one. Of these, the committed `*.meta.json` files carry only the cpu brand, the OS, the rustc build and the counter frequency; the cache sizes, the model, the memory, the cpuidle driver and the huge-page mode are read from this guest at review time and are not in any committed artifact (ticket 2894d40ab22f).
 
 The build is rustc 1.98.0-nightly (57d06900f 2026-05-27), the release profile at opt-level 3, fat LTO, one codegen unit, `CARGO_INCREMENTAL=0`. Every arm is its own cdylib under `variants/`, loaded by the harness in a worker subprocess of its own for each pass and mode.
 
@@ -119,6 +119,8 @@ Other machines. Every number holds on this guest only, and a bare-metal machine 
 ## Disturbances
 
 One W = 1 run was voided by background builds (the SessionStart `agent-regen` over another repository, and a commit's pre-commit hook) and rerun in full on an idle machine; ticket 7ddf5ef52d08. During the W = 2 run the disk-trim hook freed 1.9 GB around fold_heavy n = 65536; that section's numbers are kept. The W = 4 run was lost to a container restart and rerun in full.
+
+The W = 1, W = 8 and pinned section sets were recorded from a dirty working tree (`git_commit` in their meta files reads `ed2bf53-dirty`, `d11e290-dirty` and `e486b5f-dirty`); W = 2 and W = 4 are clean. `support/`, `variants/` and the engine source are unchanged between each base commit and the tip, so the arms are the same, but what else was dirty in those trees is not recorded. Ticket 2894d40ab22f carries pinning it down.
 
 ## Files
 

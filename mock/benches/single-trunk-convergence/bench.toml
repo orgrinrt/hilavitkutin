@@ -1,10 +1,11 @@
-# Single-trunk convergence: head-and-tail against the N-way ceil slice on one
-# commutative fiber, with the engine's sequential run, the std parallel bar,
-# and the N-way slice on the bench's own crew as the control for machinery.
+# Single-trunk convergence: head-and-tail against the N-way ceil slice on the
+# commutative folds and the order-sensitive append, with the engine's
+# sequential run, the std parallel bar, and the N-way slice on the bench's own
+# crew as the control for machinery.
 #
 # A section is `<workload>_w<W>`, or `<workload>_w<W>_big` for the sizes
 # where one frame takes milliseconds and the budget is cut to fit. `short` is
-# the one-to-four-morsel band of `fold_light`. `W` is the worker count each
+# the 16-to-1024-record band of `fold_light`, four morsels and fewer. `W` is the worker count each
 # arm that takes one runs at; `sequential` and `kernel_seq` ignore it and run
 # in every section as the same-run anchors. The machine this was run on has 4
 # cores, so `W = 4` is its maximum and `W = 8` oversubscribes it.
