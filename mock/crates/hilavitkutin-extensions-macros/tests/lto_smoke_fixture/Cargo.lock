@@ -77,10 +77,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "hilavitkutin-build"
+version = "0.1.0"
+dependencies = [
+ "notko",
+]
+
+[[package]]
 name = "hilavitkutin-extensions"
 version = "0.1.0"
 dependencies = [
  "arvo",
+ "hilavitkutin-build",
  "hilavitkutin-linking",
  "notko",
 ]
@@ -89,6 +97,7 @@ dependencies = [
 name = "hilavitkutin-extensions-macros"
 version = "0.1.0"
 dependencies = [
+ "hilavitkutin-build",
  "proc-macro2",
  "quote",
  "syn",
@@ -100,6 +109,7 @@ version = "0.1.0"
 dependencies = [
  "arvo",
  "arvo-bits",
+ "hilavitkutin-build",
  "libc",
  "notko",
  "windows-sys",
