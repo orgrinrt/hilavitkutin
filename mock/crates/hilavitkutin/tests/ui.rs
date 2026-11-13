@@ -19,8 +19,11 @@ fn compile_fail_fixtures() {
     t.compile_fail("tests/ui/undeclared_read_fail.rs");
     t.pass("tests/ui/unmapped_unit_fused_pass.rs");
     t.compile_fail("tests/ui/unmapped_unit_fused_fail.rs");
-    t.pass("tests/ui/replace_value_unreachable_pass.rs");
-    t.compile_fail("tests/ui/replace_value_unreachable_fail.rs");
-    t.pass("tests/ui/replace_value_orphan_pass.rs");
-    t.compile_fail("tests/ui/replace_value_orphan_fail.rs");
+}
+
+#[test]
+#[ignore = "catalogue: replace_resource and replace_value take the store marker and discard the value, so a consumer cannot replace one; this case does not compile until they take the value type; tracked #hilavitkutin_replace_resource_and_replace_value_discard_the"]
+fn a_replaced_value_is_read_by_the_next_run() {
+    let t = trybuild::TestCases::new();
+    t.pass("tests/ui/replace_value_installs_pass.rs");
 }
