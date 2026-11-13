@@ -1,0 +1,54 @@
+# What the record says about `principles`, part 4.
+
+[[tenet]]
+id = "the_dispatch_determining_traits_are_sealed_with_a_private_supertrait_and_consumers_reach_them_only_through_derive_macros"
+what = "The dispatch-determining traits are all sealed with a private supertrait, and a consumer reaches them only through derive macros, which force exactly one dispatch role per type. Without the seal a consumer could implement two roles on one type at once, leaving the builder input's dispatch ambiguous with an opaque coherence error."
+mechanism = "`RunCfg`, `Resource`, `Column`, `Virtual`, `WorkUnit`, `Kit`, `MemoryProvider`, `ThreadPool`, `Clock` sealed via `mod sealed { pub trait Sealed {} }`; derive macros `#[derive(Resource)]` / `#[derive(RunCfg)]` emit `impl sealed::Sealed`; `BuilderInput::Dispatch` resolution; invariant S2."
+source = "mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:1073-1076, mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:1090-1090"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.plan-algorithm-chain::#s2-sealed-dispatch-determining-traits"]
+quote = '''
+`RunCfg`, `Resource`, `Column`, `Virtual`, `WorkUnit`, `Kit`, `MemoryProvider`, `ThreadPool`, `Clock` are ALL sealed via a private `Sealed` supertrait. Consumers cannot impl these traits for arbitrary types; the sealed pattern (canonical Rust idiom: a private `Sealed` super-trait defined in `mod sealed`) is required because:
+
+1. Without sealing, a consumer could write `impl Resource for LoimuCfg` AND `impl RunCfg for LoimuCfg` simultaneously, producing an ambiguous `BuilderInput::Dispatch` resolution. The trait solver hits a coherence error with an opaque message.
+2. `min_specialization` (rustc #31844) does NOT resolve overlap between two traits-applicable-to-the-same-type cases (only specialization of "more specific" over "less specific"). The pair-impl pattern relies on the type uniquely satisfying ONE dispatch-determining sub-trait at a time.
+---
+The substrate provides a derive macro `#[derive(Resource)]` / `#[derive(RunCfg)]` etc. that emits `impl sealed::Sealed for MyType {}` alongside the sub-trait impl. Consumers cannot impl Sealed by hand (it's `pub(crate)` in `notko`-shaped sealing) so they go through the macro, which forces them to pick exactly one dispatch role per type.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 3 plan algorithm chain, soundness invariant S2, dated 2026-05-10, agent-written; the text does not say whose decision it is"
+standing = "provisional"
+subject = "principles"
+keywords = ["sealed traits", "Sealed supertrait", "derive macro", "dispatch role", "coherence", "S2", "RunCfg", "BuilderInput::Dispatch"]
+
+[[tenet]]
+id = "coherence_safety_of_the_sealed_dispatch_traits_comes_from_the_proc_macro_only_impl_path_and_not_from_minimal_specialization"
+what = "Coherence safety of the sealed dispatch traits comes from the proc-macro-only implementation path, where a consumer type can implement the seal only through derive macros and the macro rejects a double derive. Minimal specialization resolves overlap within one trait, and does not stop the projections of two distinct traits from being computed on the same type."
+mechanism = "`#[derive(Resource)]` / `#[derive(RunCfg)]` rejecting double-derives; `min_specialization`; a `trybuild` fixture added to the Topic 11 test bar proving double-derive rejection; Topic 3 S2 text amended."
+source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:276-276"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#decision-log"]
+quote = '''
+- [x] **(Audit-2 M5, 2026-05-10):** S2's attribution of pair-impl coherence safety to `min_specialization` is incorrect; the actual safety mechanism is the **proc-macro-only impl path** (consumer types can only impl `Sealed` via `#[derive(Resource)]` / `#[derive(RunCfg)]` / etc., and the proc-macro rejects double-derives). `min_specialization` is what resolves *within a single trait* when multiple blanket impls would otherwise overlap; it does NOT prevent two distinct traits' projections from being computed on the same type. Topic 3 S2 text amended (audit follow-up); a `trybuild` fixture is added to Topic 11 test bar that proves double-derive rejection.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 5 adapt subsystem, decision log entry Audit-2 M5 dated 2026-05-10, agent-written; the text does not say whose decision it is"
+standing = "provisional"
+subject = "principles"
+keywords = ["proc-macro-only impl path", "min_specialization", "double derive", "trybuild", "Sealed", "pair-impl coherence", "M5", "S2"]
+rules_out = ["S2's attribution of pair-impl coherence safety to `min_specialization` is incorrect"]
+cites = ["the_dispatch_determining_traits_are_sealed_with_a_private_supertrait_and_consumers_reach_them_only_through_derive_macros"]
+
+[[tenet]]
+id = "engine_prose_and_source_name_the_dispatch_approaches_descriptively_and_the_bench_paper_letters_are_citations_only"
+what = "Engine-side prose and source name the dispatch approaches by descriptive names only. The A, B, C, D and E letters of polka-dots are used only as bench-paper citations."
+mechanism = "Example: \"MonoTuple beats IndirectPerFiber by ~17% on the polka-dots T6 bench\" in place of \"Approach A beats Approach C\"."
+source = "mock/design_rounds/202605101036/202605101036_topic.dispatch-codegen.md:216-216"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.dispatch-codegen::#decision-log"]
+quote = '''
+- [x] **Axis B — DispatchApproach selection: ship `MonoTuple` + `TrunkMega` + `ScheduleMega`.** Three variants by descriptive name. **Topic 3 amendment required:** Topic 3's current `enum DispatchApproach { IndirectPerFiber, TrunkMega, ScheduleMega }` is semantically wrong — `IndirectPerFiber` is polka-dots Approach C (1.17x penalty, superseded per Domain 17 L1654), not Approach A (mono tuple, 1.0x baseline). The intent is to ship A+D+E (mono-tuple baseline + trunk-mega for <10K + schedule-mega for ≥10K), so Topic 3's enum must change `IndirectPerFiber` to `MonoTuple` and update its plan-stage selector to choose `MonoTuple` for tests/baseline reference, `TrunkMega` for <10K, `ScheduleMega` for ≥10K. Approach C kept available only as a BACKLOG entry (re-add if a workload bench surfaces a need). **Vocabulary discipline:** polka-dots A/B/C/D/E letters are bench-paper citations only; engine-side prose and source use descriptive names exclusively (e.g., "MonoTuple beats IndirectPerFiber by ~17% on the polka-dots T6 bench" instead of "Approach A beats Approach C"). Enum marked `#[non_exhaustive]` so future additions don't break consumers.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 4 dispatch codegen, Axis B vocabulary discipline of the decision log dated 2026-05-10, agent-written; the text does not say whose decision it is"
+standing = "provisional"
+subject = "principles"
+keywords = ["vocabulary discipline", "descriptive names", "Approach A", "polka-dots letters", "MonoTuple", "IndirectPerFiber", "bench-paper citations"]
+cites = ["the_first_version_ships_a_mono_tuple_baseline_a_trunk_level_and_a_whole_schedule_dispatch_approach_and_the_indirect_per_fiber_one_waits_in_the_backlog"]

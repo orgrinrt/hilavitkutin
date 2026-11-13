@@ -1,0 +1,135 @@
+# What the record says about `execution`, part 7.
+
+[[tenet]]
+id = "per_trunk_dispatch_is_a_const_range_walk_that_selects_the_members_of_one_trunk_and_each_trunk_is_its_own_monomorphisation"
+what = "Per-trunk isolation is a const-gated walk over the flat unit carrier that runs only the members of one trunk, so that each trunk value monomorphises once and dead-code elimination removes every non-member position, leaving a member-only program equivalent to the flat walk restricted to that trunk. The flat carrier stays flat and the partition lives in const data."
+mechanism = "`trait RunTrunkSel<A, WL, const POS, const TRUNK>` with `{ POS + 1 }` const-generic threading; body gated by whether the carrier position is a member of `TRUNK`, running `RunFiber::run`; `run_one_trunk::<.., const TRUNK>(carrier, bindings, morsel)`; gate from `trunk_of(POS) == TRUNK` or `is_member::<.., PHASE, TRUNK>()`; `WuNil` terminates; sketch 071230 objdump."
+source = "mock/design_rounds/202606080400/202606080100_topic.gate2-ge-const-gated-trunk-dispatch.md:16-19"
+provenance = ["mock::design_rounds::202606080400::202606080100_topic.gate2-ge-const-gated-trunk-dispatch::#canonical-mechanism-proven-to-port"]
+quote = '''
+The flat carrier stays flat; the partition lives in const data (`GROUPING`), and const-eval + DCE is the flattener. Per-trunk isolation via a `POS`-threaded, const-gated walk over the flat `WuVals`:
+
+- `trait RunTrunkSel<A, WL, const POS, const TRUNK>` with `impl for WuCons<H, T> where T: RunTrunkSel<A, TW, { POS + 1 }, TRUNK>` (the `{ POS + 1 }` GCE threading), body: `if const { is this carrier position a member of TRUNK } { RunFiber::run(&WuCons{head, tail: WuNil}, ..) } self.tail.run(..)`. The gate uses the shipped const grouping (`trunk_of(POS) == TRUNK`, or `is_member::<.., PHASE, TRUNK>()` for the phase-scoped form). `WuNil` terminates.
+- `run_one_trunk::<.., const TRUNK>(carrier, bindings, morsel)` is the per-trunk program: monomorphising once per `TRUNK` value, DCE removes every non-member position's dispatch, leaving a member-only, devirt-clean (zero `blr`) program output-equivalent to the flat walk restricted to that trunk. (sketch 071230 objdump-proven; 071330 proved the same driven by the real computed grouping.)
+'''
+origin = "proposed"
+written_by = "design round 202606080400, topic GATE-2 G-e const-gated per-trunk dispatch, dated 2026-06-08, agent-written; the text does not say whose decision it is"
+standing = "provisional"
+subject = "execution"
+keywords = ["RunTrunkSel", "run_one_trunk", "const-gated trunk", "POS + 1", "member-only program", "G-e", "trunk_of", "DCE"]
+
+[[tenet]]
+id = "the_outer_dispatcher_drives_the_shipped_per_trunk_walk_keyed_by_trunk_only_and_phase_order_is_a_runtime_loop"
+what = "The single-core run is driven by an outer dispatcher that walks the carrier and fires the shipped per-trunk walk once per trunk root in its phase's pass, with phase order as a runtime loop and a waist between phases that is a no-op on one core. The per-trunk walk is keyed by trunk only, since a trunk lies wholly within one phase. A new walk beside the shipped one is not built."
+because = "A parallel walk reinvents shipped infrastructure, and dropping the phase from the per-trunk walk's key removes an always-generic-constant-expression const argument."
+mechanism = "`RunGatedTrunk<const TRUNK, Pos>` over `WuCons` / `WuNil` with a Peano `Pos` witness (`Here` / `There<..>`), gate `trunk_of(Pos::INDEX) == TRUNK`; outer `Discover<Full, const POS>` bound `Full: RunGatedTrunk<POS, Here>`, const gate `trunk_of(POS) == POS` and runtime `phase_of(POS) == p`; top `for p in 0..phase_count { carrier.run(carrier, p, ..); waist }`; `RunFiber::run_head`; `Scheduler::run` re-pointed; `run_parallel` untouched; sketches `202606080130` and `202606080200`; round 202606080400."
+source = "mock/design_rounds/202606080400/202606080300_topic.gate2-ge-drive-shipped-rungatedtrunk.md:6-7, mock/design_rounds/202606080400/202606080300_topic.gate2-ge-drive-shipped-rungatedtrunk.md:17-23, mock/design_rounds/202606080400/202606080500_changelist.src.lock.md:11-11"
+provenance = ["mock::design_rounds::202606080400::202606080300_topic.gate2-ge-drive-shipped-rungatedtrunk::#topic-gate-2-g-e-correction-drive-the-shipped-rungatedtrunk-trunk-only-keyed"]
+quote = '''
+**Supersedes the design framing of:** `202606080100_topic.gate2-ge-const-gated-trunk-dispatch.md` (same round; that topic proposed a NEW `RunTrunkSel` + `run_one_trunk` walk, which reinvents shipped infra).
+**Source / oracle:** roadmap r4 `mock/research/202606070700_engine-roadmap-r4-gate2-mechanism.md` (stage G-e). Proven sketches `mock/research/sketches/202606080130_gate2-ge-const-range-dispatcher` (first cut + the const-recursion-non-termination finding) and `202606080200_gate2-ge-outer-drives-rungatedtrunk` (the corrected, decisive proof). Carrier-mechanism mandate [[gate2-carrier-mechanism-mandate]] (op, #672).
+---
+1. **Trunk-only keying.** A trunk lies wholly within one phase, so `RunGatedTrunk`'s `const PHASE` is redundant for membership. Drop it; the gate becomes `trunk_of(Pos::INDEX) == TRUNK` only. This removes the always-GCE `PHASE = phase_of(POS)` const-argument. Phase ORDER is the runtime outer loop, not a const on the walk.
+
+2. **Inner walk (shipped, Peano).** `RunGatedTrunk<const TRUNK, Pos>` over `WuCons` / `WuNil`; the recursion threads `There<Pos>` (a type, no const arithmetic, the idiom that dodges the `{POS+1}` solver overflow at the inner level). Per cell, gate the member const and run it through `RunFiber::run_head`.
+
+3. **Outer dispatcher (new).** `Discover<Full, const POS>` walk over the carrier threading `{POS+1}`, bound `Full: RunGatedTrunk<POS, Here>`. Per cell, const-gate `const { trunk_of(POS) == POS }` (is this a trunk-root) and, inside, the runtime `phase_of(POS) == p` match (fire this trunk only in its phase's pass); dispatch `RunGatedTrunk::<TRUNK = POS, Here>` on the FULL carrier. `POS` reaches the inner `TRUNK` by identity, so there are zero GCE const-arguments.
+
+4. **Top.** Runtime phase loop `for p in 0..phase_count { carrier.run(carrier, p, ..); waist }`. Single-core waist is a no-op; G2-N inserts the real barrier.
+---
+Make the shipped per-trunk walk `RunGatedTrunk` (round 2a) trunk-only keyed (a trunk lies wholly within one phase, so its `const PHASE` is redundant for membership), add the outer all-trunks dispatcher that drives one per-trunk mono per trunk-root in phase order, and re-point single-core `Scheduler::run` to it. The parallel `run_parallel` path is untouched (G2-N re-points it later). Phase order is the dispatcher's runtime phase loop; the per-trunk monos DCE to member-only programs.
+'''
+origin = "proposed"
+written_by = "design round 202606080400, topic GATE-2 G-e correction to drive the shipped RunGatedTrunk, and its source changelist, dated 2026-06-08, agent-written; the text says it supersedes the design framing of the earlier topic of the same round"
+standing = "provisional"
+subject = "execution"
+keywords = ["RunGatedTrunk", "trunk-only keyed", "outer dispatcher", "RunTrunkSel", "phase loop", "Peano Pos", "G-e", "Scheduler::run"]
+rules_out = ["that topic proposed a NEW `RunTrunkSel` + `run_one_trunk` walk, which reinvents shipped infra"]
+cites = ["per_trunk_dispatch_is_a_const_range_walk_that_selects_the_members_of_one_trunk_and_each_trunk_is_its_own_monomorphisation"]
+
+[[tenet]]
+id = "the_core_pinned_walk_filters_trunk_roots_by_core_ownership_once_per_trunk_and_the_runtime_mask_path_is_the_interim_it_replaces"
+what = "As of the round of 2026-06-08, the worker's per-core and per-phase dispatch uses a runtime mask path with an ownership test per unit, which is an interim chosen earlier and not the canonical compiled per-core program. The round re-points worker dispatch onto the compiled per-trunk programs, keeping each trunk its own member-only monomorphisation and selecting at run time the subset a core owns, with the ownership test applied once per trunk root."
+mechanism = "`run_core_phase` computing `core_phase_mask` and walking via `run_gated<M: BitAccess>`; replaced by a core-aware variant of `RunTrunkDispatch::dispatch` (or a `dispatch_core` method) taking runtime `core`, `ncores` and a running within-phase trunk-rank counter; ownership rule `rank % ncores == core`, firing `RunGatedTrunk::<TRUNK = POS, Here>`; `IsRoot::IS`, `PhaseAt::VAL`; single-core is `rank % 1 == 0`."
+source = "mock/design_rounds/202606080700/202606080600_topic.gate2-n-core-pinned-trunk-dispatch.md:12-12, mock/design_rounds/202606080700/202606080600_topic.gate2-n-core-pinned-trunk-dispatch.md:16-18, mock/design_rounds/202606080700/202606080600_topic.gate2-n-core-pinned-trunk-dispatch.md:20-22, mock/design_rounds/202606080700/202606080600_topic.gate2-n-core-pinned-trunk-dispatch.md:24-24"
+provenance = ["mock::design_rounds::202606080700::202606080600_topic.gate2-n-core-pinned-trunk-dispatch::#current-state-truth-of-impl-this-round-s-starting-point"]
+quote = '''
+What is NOT yet done: the worker's per-(core, phase) dispatch (`run_core_phase`) uses the RUNTIME-MASK path. It computes `core_phase_mask` (a runtime `D::AdjRow` of the trunks this core owns this phase) and walks the flat carrier via the shipped `run_gated<M: BitAccess>` (a runtime per-unit ownership branch). That is the R4b-inline interim op chose, not the canonical compiled per-core program. It is output-correct and threaded, but each unit pays a runtime mask-bit test and the walk is one shared monomorphisation, not the per-trunk member-only monos. The `#664` branching / accumulator perf arms stay RED because the runtime-mask per-unit overhead plus per-frame pool/barrier cost dominates; the compiled per-trunk monos (sketch B2's devirt-clean 2.84x) are what move them.
+---
+Re-point the worker dispatch from the runtime-mask `run_gated` path onto the G-e compiled per-trunk monos, keeping every trunk's `RunGatedTrunk::<TRUNK = root>` a separate devirt-clean / DCE'd monomorphisation, while runtime-selecting the subset this core owns.
+
+The G-e outer dispatcher `RunTrunkDispatch` already walks the carrier and, at each const trunk-root whose const phase equals the runtime pass `p`, fires that trunk's mono. G2-N adds a runtime core-ownership filter to that walk:
+---
+- New core-aware entry (a variant of `RunTrunkDispatch::dispatch`, or a `dispatch_core` method): takes runtime `core`, `ncores`, plus a running within-phase trunk-rank counter threaded through the recursion.
+- At each position that is a const trunk-root (`IsRoot::IS`) whose const phase (`PhaseAt::VAL`) equals runtime `p`: it is an in-phase-`p` root. Check `rank % ncores == core` (the shipped ownership rule from `core_phase_mask`: within-phase rank modulo core count). If owned, fire `RunGatedTrunk::<TRUNK = POS, Here>` over the morsel with the dirty mask. Increment `rank` for EVERY in-phase-`p` root (owned or not), so the rank matches `core_phase_mask`'s "count of roots below".
+- The per-trunk mono stays compiled (POS reaches `TRUNK` by identity, zero GCE const-arg, exactly as G-e); only the ownership test is the added runtime branch, applied once per trunk-root (not per unit, unlike the current per-unit `run_gated` mask test).
+---
+`run_core_phase` then drives this core-aware walk per morsel instead of `run_gated` + `core_phase_mask`. The head+tail convergence branch (single-trunk phase, `tphase == 1`) stays as-is (it is the orthogonal record-range split, spec `:770`); only the ordinary trunk-rank-ownership branch is re-pointed. Single-core (`ncores == 1`) is the degenerate case: rank `% 1 == 0 == core 0`, so core 0 fires every trunk = the full per-trunk walk (no special path).
+'''
+origin = "proposed"
+written_by = "design round 202606080700, topic GATE-2 G2-N core-pinned per-trunk dispatch, dated 2026-06-08, agent-written; the text calls the runtime mask path an interim that op chose"
+standing = "provisional"
+subject = "execution"
+keywords = ["run_core_phase", "core_phase_mask", "run_gated", "RunTrunkDispatch", "core ownership", "trunk rank", "G2-N", "compiled per-core program"]
+rules_out = ["That is the R4b-inline interim op chose, not the canonical compiled per-core program."]
+cites = ["n_core_dispatch_walks_the_flat_carrier_gated_by_a_runtime_mask_of_the_trunks_a_core_owns_and_the_const_gated_enumeration_is_superseded", "the_outer_dispatcher_drives_the_shipped_per_trunk_walk_keyed_by_trunk_only_and_phase_order_is_a_runtime_loop"]
+
+[[tenet]]
+id = "the_main_thread_drives_each_phase_of_a_parallel_frame_and_is_itself_the_barrier_between_phases"
+what = "In the first threaded executor, the main thread drives the phases of a frame by publishing each phase and waiting for all workers to finish it, so the main thread is itself the barrier between phases and there is no worker-side sense-reversing barrier. Workers derive the phase from the sequence value."
+mechanism = "`for p in 0..nphases { frame_publish(&me.pool); frame_await_done(&me.pool, ncores) }`; worker loop `frame_await`, `run_core_phase(core, p, ...)`, `frame_done_arrive`, with `p = (last-1) % nphases`; persistent pool, `OsThreadPool::spawn`."
+source = "mock/design_rounds/202606072030/202606072030_topic.gate2-r4c-threaded-run-parallel.md:13-13, mock/design_rounds/202606072030/202606072030_topic.gate2-r4c-threaded-run-parallel.md:21-22, mock/design_rounds/202606072030/202606072030_topic.gate2-r4c-threaded-run-parallel.md:35-37, mock/design_rounds/202606072030/202606072030_topic.gate2-r4c-threaded-run-parallel.md:38-41"
+provenance = ["mock::design_rounds::202606072030::202606072030_topic.gate2-r4c-threaded-run-parallel::#current-state"]
+quote = '''
+thread. All the threading primitives now exist: `OsThreadPool::spawn<F>` (real,
+---
+Replace `run_parallel` with the real persistent-pool threaded executor, the
+proven Pin shape:
+---
+  set `spawned`; then drive phases main-orchestrated: `for p in 0..nphases {
+  frame_publish(&me.pool); frame_await_done(&me.pool, ncores) }`. The main thread
+  IS the inter-phase waist barrier (no worker-side sense-reversing barrier).
+---
+- Free fn `worker_main<...6 generics + Witnesses>(ctx: *const WorkerCtx)`: cast
+  `ctx.sched` to `*const Scheduler<...>`, then `loop { last = frame_await(pool,
+  last); if shutdown { frame_exit_arrive; return }; let p = (last-1) % nphases;
+  run_core_phase(core, p, ...); frame_done_arrive }`. Phase derived from the seq
+'''
+origin = "proposed"
+written_by = "design round 202606072030, topic GATE-2 R4c round B2 threaded run_parallel, dated 2026-06-07, agent-written; the text does not say whose decision it is"
+standing = "provisional"
+subject = "execution"
+keywords = ["run_parallel", "main-orchestrated", "frame_publish", "frame_await_done", "waist barrier", "persistent pool", "worker_main", "R4c"]
+rules_out = ["no worker-side sense-reversing barrier"]
+
+[[tenet]]
+id = "the_waist_barrier_moves_worker_side_as_a_sense_reversing_barrier_so_a_frame_is_one_publish_and_await_round_trip"
+what = "The waist barrier moves worker-side, so that a frame is one publish and await round trip regardless of the number of phases, and workers cross each waist through a sense-reversing barrier, which fixes the reset race of a reusable barrier. Workers stay hot across phases within a frame and synchronise at each waist, as the canonical design has them sequence their own fibers inside a compiled per-core program."
+because = "The deviation ledger set the trigger that if per-phase parking dominates, the canonical worker-side barrier is the escalation, and the expanded bench shows it does."
+mechanism = "New `PoolFrame.barrier_sense: AtomicU32`; `waist_barrier(pool, expected)` in `thread/barrier.rs`: snapshot sense, `phase_arrived.fetch_add(1, AcqRel)`, last arriver resets `phase_arrived` and bumps `barrier_sense`, then `atomic_wake_all`, else `atomic_wait` until the sense changes; `phase_barrier_arrive`/`reset`/`observe` kept; `run_parallel` main side becomes one `frame_publish` and `frame_await_done` per frame; bench `wide_parallel` 2.45x at N=4096 then 0.53x, 0.34x, 0.28x at 64K, 1M, 4M; spec domain 17."
+source = "mock/design_rounds/202606071808/202606071805_topic.gate2-worker-side-waist-barrier.md:10-10, mock/design_rounds/202606071808/202606071805_topic.gate2-worker-side-waist-barrier.md:20-20, mock/design_rounds/202606071808/202606071805_topic.gate2-worker-side-waist-barrier.md:24-24, mock/design_rounds/202606071808/202606071805_topic.gate2-worker-side-waist-barrier.md:28-37"
+provenance = ["mock::design_rounds::202606071808::202606071805_topic.gate2-worker-side-waist-barrier::#current-state"]
+quote = '''
+`Scheduler::run_parallel` is **main-orchestrated** (deviation §4, an agent-call with a stated bench trigger). Per frame the main thread publishes each waist-bounded phase as a separate frame-protocol step and waits every worker done before publishing the next:
+---
+The deviation ledger set the trigger: "if per-phase parking dominates, the canonical worker-side barrier is the escalation." The expanded bench now shows it does. `wide_parallel` (4 column-disjoint heavy trunks) parallel ratios: **2.45x at N=4096**, then 0.53x / 0.34x / 0.28x at 64K / 1M / 4M. The small-N 2.45x is the per-frame barrier cost: two phases (the wide arm is one phase, but multi-phase workloads pay per phase) and the publish/await round-trips dominate a frame that does microseconds of real work. The win is already there at scale; the small-N loss is the main-orchestrated barrier, exactly what §4 predicted.
+---
+Spec domain 17 (`:1601-1633`): each core runs a compiled program that sequences its own fibers and hits phase-sync points internally; "spawn N threads, each runs its compiled program, join when complete. No scheduler loop." The barrier is **worker-side**, inside the per-core program: workers stay hot across phases within a frame and synchronise at each waist via a stack-atomic spin / futex, not a main-thread round trip per phase. Topic 6 axis I specifies the centralised counter (last arriver resets + wakes).
+---
+Move the waist barrier worker-side, so a frame is ONE publish/await round-trip regardless of phase count; workers cross each waist via a **sense-reversing barrier** (the correct fix for the deferred-E3 reset race).
+
+1. **`hilavitkutin-api` `PoolFrame`**: add `pub barrier_sense: AtomicU32` (the generation/sense word the reversing barrier flips each episode). Init `0` at every construction site (the bench `PoolFrame{}` literals, `empty_pool_frame()`, and any test constructors). The existing `phase_arrived` stays as the count.
+
+2. **`hilavitkutin` `thread/barrier.rs`**: add `waist_barrier(pool, expected)` (sense-reversing, futex-backed):
+   - snapshot `let sense = pool.barrier_sense.load(Acquire)`;
+   - `let prior = pool.phase_arrived.fetch_add(1, AcqRel)`;
+   - if `prior + 1 == expected`: `phase_arrived.store(0, Relaxed)` then `barrier_sense.store(sense + 1, Release)` (or `fetch_add(1)`), then `atomic_wake_all(&pool.barrier_sense)`;
+   - else: loop `atomic_wait(&pool.barrier_sense, sense)` until `barrier_sense.load(Acquire) != sense`.
+   This is reusable `nphases - 1` times per frame with no reset race: a fast worker that loops to the next episode waits for the NEXT sense flip, never the stale count. Keep `phase_barrier_arrive`/`reset`/`observe` (the adapt subsystem reads `phase_arrived` via `observe`); `waist_barrier` is the new dispatch-path primitive. (Decide at SRC time whether `waist_barrier` supersedes `phase_barrier_arrive` for dispatch and the old fn stays adapt-only, per no-legacy-shims: if nothing else calls `phase_barrier_arrive`, fold it in.)
+'''
+origin = "proposed"
+written_by = "design round 202606071808, topic GATE-2 worker-side waist barrier (deviation section 4 reconciliation), dated 2026-06-07, agent-written; the text does not say whose decision it is"
+standing = "provisional"
+subject = "execution"
+keywords = ["waist_barrier", "sense-reversing barrier", "barrier_sense", "worker-side barrier", "main-orchestrated", "phase_arrived", "deviation section 4", "wide_parallel"]
+cites = ["the_main_thread_drives_each_phase_of_a_parallel_frame_and_is_itself_the_barrier_between_phases"]

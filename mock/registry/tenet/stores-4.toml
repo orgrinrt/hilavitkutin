@@ -182,3 +182,24 @@ subject = "stores"
 keywords = ["PlanAffecting", "sealed", "open marker", "replace_resource", "BuilderInput", "Replaceable", "A2-3", "DefaultRunCfg"]
 rules_out = ["sealed BuilderInput marker"]
 cites = ["plan_affecting_is_an_open_marker_trait_that_consumers_implement_on_resource_value_types", "as_of_round_202605101036_plan_affecting_is_a_sealed_marker_and_a_resource_without_it_is_swapped_cheaply"]
+
+[[tenet]]
+id = "a_column_value_reports_its_width_from_the_storage_type_through_a_trait_body_default_and_an_empty_blanket_impl_with_no_specialization"
+what = "A column value reports its width as the size of the storage type in bits for every type, through a default constant in the trait body that an empty blanket implementation inherits, with no full specialization and no per-width specialisations for sub-byte types. When bitpacking lands, the storage layer reads sub-byte width from arvo's width traits at the point of consumption."
+mechanism = "Trait-body default const plus an empty blanket impl; `ColumnValue` reports `size_of * 8`; no `default const`, no full `specialization`, no `min_specialization` coverage per arvo width inside `ColumnValue`; the BACKLOG note `ColumnValue specialisation coverage` replaced."
+source = "mock/design_rounds/202606091600/202606091600_changelist.doc.lock.md:7-7, mock/design_rounds/202606091600/202606091600_changelist.doc.lock.md:11-11, mock/design_rounds/202606091600/202606091600_changelist.doc.lock.md:15-15"
+provenance = ["mock::design_rounds::202606091600::202606091600_changelist.doc.lock::#doc-changelist-spec-free-columnvalue"]
+quote = '''
+Rewrites the `ColumnValue` documentation to the spec-free shape this round ships: a trait-body default const plus an empty blanket impl, no `default const`, no full `specialization`, and no sub-byte width specialisations. Records that sub-byte storage width is a future bitpacking concern sourced from arvo's width traits, not a `ColumnValue` specialization behind a forbidden feature.
+---
+The code block changes from the `default const` blanket (described as "via min_specialization", which was itself inaccurate: the shape needed full `specialization`) to the spec-free shape: the byte default lives in the trait body, and an empty blanket impl inherits it. The prose drops "Sub-byte arvo types specialise" and instead states that any `Copy + 'static` type is column-storable with a `size_of * 8` width, and that sub-byte bitpacking width is a future storage-layer concern sourced from arvo's own width-reporting (not a `ColumnValue` specialization). The zero-friction property is unchanged.
+---
+Replaced. The old note promised per-arvo-width `min_specialization` coverage inside `ColumnValue`. The new note records the corrected direction: `ColumnValue` reports `size_of * 8` for every type; when bitpacking lands, the storage layer reads sub-byte width from arvo's width traits at the point of consumption, so no per-width specialisation is added to `ColumnValue`.
+'''
+origin = "proposed"
+written_by = "design round 202606091600, doc changelist for a spec-free ColumnValue, dated 2026-06-09, agent-written; the text does not say whose decision it is"
+standing = "provisional"
+subject = "stores"
+keywords = ["ColumnValue", "BIT_WIDTH", "blanket impl", "specialization", "sub-byte width", "bitpacking", "arvo width traits", "default const"]
+rules_out = ["`default const`", "full `specialization`", "sub-byte width specialisations", "per-arvo-width `min_specialization` coverage inside `ColumnValue`"]
+cites = ["a_column_value_is_the_storage_type_itself_and_there_is_no_pack_or_unpack"]

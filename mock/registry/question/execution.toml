@@ -225,3 +225,26 @@ Row size determines approach (T6 L1507-1517):
 subject = "execution"
 keywords = ["dispatch approach", "indirect per fiber", "trunk mega", "schedule mega", "record count", "ten thousand records", "superseded"]
 related = ["tenet::the_dispatch_form_depends_on_the_record_count_below_or_above_ten_thousand", "tenet::the_dispatch_approach_is_chosen_by_record_count_between_fiber_level_trunk_level_and_whole_schedule_functions", "tenet::the_indirect_per_fiber_approach_is_superseded_by_the_trunk_and_schedule_approaches_for_its_overhead", "tenet::hilavitkutin_is_for_millions_of_simulation_and_crunching_work_data_going_constantly_and_one_to_four_morsels_is_almost_never_its_case"]
+
+[[question]]
+id = "which_dispatch_approach_variants_the_first_version_ships"
+asks = "Does the per-fiber indirect dispatch approach ship in the first version, or does the mono-tuple baseline ship in its place?"
+options = ["Ship `MonoTuple` + `TrunkMega` + `ScheduleMega`; `IndirectPerFiber` is kept available only as a BACKLOG entry (dispatch codegen topic, Axis B).", "`select_approach` picks one of three `DispatchApproach` variants (`IndirectPerFiber`, `TrunkMega`, `ScheduleMega`), and small record counts with many fibers pick `IndirectPerFiber` (select_approach base round).", "Three `DispatchApproach` variants ship in v1: ScheduleMega, TrunkMega, IndirectPerFiber (the design template)."]
+state = "open"
+source = "mock/design_rounds/202605101036/202605101036_topic.dispatch-codegen.md:216-216, mock/design_rounds/202605250600/202605250600_topic.hila-c2-select-approach-base.md:10-10, mock/design_rounds/202605250600/202605250600_topic.hila-c2-select-approach-base.md:25-29, mock/DESIGN.md.tmpl:54-54"
+quote = '''
+- [x] **Axis B — DispatchApproach selection: ship `MonoTuple` + `TrunkMega` + `ScheduleMega`.** Three variants by descriptive name. **Topic 3 amendment required:** Topic 3's current `enum DispatchApproach { IndirectPerFiber, TrunkMega, ScheduleMega }` is semantically wrong — `IndirectPerFiber` is polka-dots Approach C (1.17x penalty, superseded per Domain 17 L1654), not Approach A (mono tuple, 1.0x baseline). The intent is to ship A+D+E (mono-tuple baseline + trunk-mega for <10K + schedule-mega for ≥10K), so Topic 3's enum must change `IndirectPerFiber` to `MonoTuple` and update its plan-stage selector to choose `MonoTuple` for tests/baseline reference, `TrunkMega` for <10K, `ScheduleMega` for ≥10K. Approach C kept available only as a BACKLOG entry (re-add if a workload bench surfaces a need). **Vocabulary discipline:** polka-dots A/B/C/D/E letters are bench-paper citations only; engine-side prose and source use descriptive names exclusively (e.g., "MonoTuple beats IndirectPerFiber by ~17% on the polka-dots T6 bench" instead of "Approach A beats Approach C"). Enum marked `#[non_exhaustive]` so future additions don't break consumers.
+---
+`select_approach` at `mock/crates/hilavitkutin/src/dispatch/mod.rs:38` is a `todo!()` placeholder shipped during the runtime megaround. Signature is documented; body waits on threshold benchmarks per BACKLOG. The function picks one of three `DispatchApproach` variants (`IndirectPerFiber`, `TrunkMega`, `ScheduleMega`) based on `record_count` and `fiber_count`.
+---
+The base body:
+- If `record_count >= 10_000`: return `ScheduleMega`.
+- Otherwise (small record count):
+  - If `fiber_count <= 1`: return `TrunkMega` (single fiber, mega fn fits the working set).
+  - Otherwise: return `IndirectPerFiber` (many fibers, per-fiber indirect call is the lowest-overhead split).
+---
+Sealed `trait DispatchCodegen<Cfg: RunCfg>` with TAIT `type CoreDispatch = impl Fn(...)`. Single shipped impl `StandardCodegen` lowers to closed-form arithmetic, zero `blr`. Three `DispatchApproach` variants ship in v1: ScheduleMega, TrunkMega, IndirectPerFiber.
+'''
+subject = "execution"
+keywords = ["DispatchApproach", "MonoTuple", "IndirectPerFiber", "TrunkMega", "ScheduleMega", "select_approach", "variants that ship"]
+related = ["tenet::the_first_version_ships_a_mono_tuple_baseline_a_trunk_level_and_a_whole_schedule_dispatch_approach_and_the_indirect_per_fiber_one_waits_in_the_backlog", "tenet::the_base_approach_selection_picks_by_record_count_and_fiber_count_and_threshold_tuning_by_benchmark_follows", "tenet::dispatch_code_generation_is_a_sealed_trait_with_one_shipped_implementation_and_three_dispatch_approaches", "tenet::the_indirect_per_fiber_approach_is_superseded_by_the_trunk_and_schedule_approaches_for_its_overhead"]
