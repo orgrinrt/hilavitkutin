@@ -29,7 +29,7 @@ fn main() {
     //       .with(Integrate)
     //       .with(Collide)
     //       .build();
-    //   let _: Outcome<(), ()> = sched.run();
+    //   let _: Outcome<(), AccumRefused> = sched.run();
     //
     // is the Pass-8-wiring target. The Integrate / Collide
     // bodies use ctx.each() / ctx.batch() to traverse the Position

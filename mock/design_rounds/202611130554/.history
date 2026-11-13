@@ -1,0 +1,50 @@
+45e570d chore: lock src changelist 202611130555
+f547e1f feat: let the run config choose refuse or assert on overflow
+f985343 chore: lock doc changelist 202611130554
+8c068b7 docs: let the run config pick refusal or assert on overflow
+d67915d docs: add topic overflow-is-the-consumers-choice
+098c564 chore: close design round 202611130546
+1992878 chore: lock src changelist 202611130547
+2185d71 fix: drop stale `Cfg::Err` and reset claims after review
+b817e22 chore: lock doc changelist 202611130546
+b950d85 docs: state what the `run_fused` reset clears and drop `Cfg::Err`
+6dc8572 docs: add topic overflow-review-pass-two
+6df1ce6 chore: close design round 202611130500
+8956266 chore: lock src changelist 202611130505
+75e1287 fix: keep leading-band appends and reset accumulators in `run_fused`
+038c85f chore: lock doc changelist 202611130500
+cdd88cf docs: correct the overflow designs after review
+9c9420c docs: add topic overflow-review-fixes
+db612ad chore: close design round 202611130402
+cc4d6e7 chore: lock src changelist 202611130408
+b0d16ce feat!: return an over-capacity accumulator append as a value
+82a635d chore: lock doc changelist 202611130402
+0a7672d docs: state the sticky accumulator refusal and the run's output
+7a303c5 docs: open the round that makes an over-capacity append a value
+c2b392d test: make the hilavitkutin suite able to fail
+0928042 research: sketch one kernel's digests on native and wasm32
+b373d70 research: sketch the frame view and the two regimes as types
+cfe40b4 research: sketch kernels that run unchanged under five runners
+4b327c5 fix: make hilavitkutin dev pass its own commit gate
+af823b7 fix: pin the research sketches' arvo deps by rev
+6ee3746 chore: move mockspace config to the repo root, drop its dep
+d14bec3 fix: drop the unlocked duplicate of a closed round's doc changelist
+e3fa3f4 feat: bring hilavitkutin up on arvo `1b2796e9` without a std tier
+2f06ffe chore: land the design rounds and research the recovery branch carried
+1fbb2e9 chore: take the shared tool configs, and ignore a stray sketch lockfile
+a677bfd fix: pin the mock toolchain and take the structural lints from the pack
+220edfb chore: take the shared rustfmt and deny configs
+313d427 Merge pull request #3 from orgrinrt/chore/patch-pass-2026-08
+06c7b41 docs: correct the ctx macro names and the CapabilityId constructor
+288660e docs: drop crates.io and docs.rs badges for an unpublished crate
+3de0b5c docs: sync manifest descriptions and drop their em-dash
+ee536c9 docs: remove tier-1 leakage and a dead test path from MIRI.md
+7bcf666 docs: name the phase configs as the enum spells them
+3ef35d2 docs: describe the builder api the scheduler actually ships
+0df662c chore: remove github actions workflows
+603e663 chore: migrate to the mockspace launcher
+3c5fb09 feat: factor hilavitkutin-sym generic interned-identity core
+fa0cf62 docs: give every r6 leaf an assigned resolution
+c729cb4 docs: re-chart engine roadmap against canon as r6
+fb4c6da feat: add Plannable declaration trait and the HintExt hint slot
+7865e97 feat: invert run dispatch to fiber-outer morsel-inner per plan window

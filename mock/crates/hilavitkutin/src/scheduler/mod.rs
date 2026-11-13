@@ -99,6 +99,7 @@ mod run;
 mod run_fused;
 mod run_parallel;
 mod run_trunks;
+mod verdict;
 mod worker;
 
 mod builder;
@@ -270,6 +271,12 @@ pub struct Scheduler<
     /// after `frame_await_done` (acquire via the done counter) and feeds the
     /// `merge_accums` compaction. Sized by `MAX_CORES * GATE2_MAX_ACCUMS`.
     gate2_accum_live:     [AtomicUsize; MAX_CORES * crate::plan::grouping::GATE2_MAX_ACCUMS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-(core,accum) atomic publish array; tracked: #121
+    /// Per-core accumulator `wanted` counts, published beside
+    /// `gate2_accum_live` under the same ordering: worker `c` stores every
+    /// append its region was asked for (Relaxed) before `frame_done_arrive`,
+    /// and the main thread loads them after `frame_await_done` so the merge can
+    /// carry every refused append onto the shared binding.
+    gate2_accum_wanted:   [AtomicUsize; MAX_CORES * crate::plan::grouping::GATE2_MAX_ACCUMS], // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: per-(core,accum) atomic wanted-publish array; tracked: #121
     /// Engine-internal per-phase duration EMA (domain-22 adapt). The single-core
     /// `dispatch_trunks` loop folds each phase's wall-clock duration here with the
     /// 1/8 EMA. `Cell` interior mutability is sound because only the main thread

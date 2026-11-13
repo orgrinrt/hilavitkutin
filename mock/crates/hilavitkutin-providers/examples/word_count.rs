@@ -31,7 +31,7 @@ fn main() {
     //       .with(Map)
     //       .with(Reduce)
     //       .build();
-    //   let _: Outcome<(), ()> = sched.run();
+    //   let _: Outcome<(), AccumRefused> = sched.run();
     //
     // is the Pass-8-wiring target. The Map and Reduce WorkUnit
     // declarations live in the example app's own scope; here they
