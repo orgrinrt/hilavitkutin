@@ -363,6 +363,7 @@ The output-equivalence contract: a `RunTrunk` walk over `FiberCons[fiber_a, fibe
 origin = "proposed"
 written_by = "design round 202606070048, topic GATE-2 G2-0a RunTrunk over FiberCons, dated 2026-06-07, agent-written; the text does not say whose decision it is"
 standing = "pending"
+superseded_by = ["trunk_isolation_comes_from_a_flat_carrier_walk_gated_by_const_phase_and_trunk_and_the_nested_value_carriers_are_superseded"]
 keywords = ["RunTrunk", "FiberCons", "RunFiber", "nested carrier", "G2-0a", "G2-0c", "trunk nesting", "PhaseCons"]
 
 [[tenet]]
@@ -385,6 +386,7 @@ stamp = 'provisional, 2026-11-13: nothing read in the written history shows it t
 keywords = ["flat carrier", "const gate", "phase_of", "trunk_of", "RunFiber", "nested carrier superseded", "DCE", "member-only program"]
 rejects = ["The value-carrier walks `RunTrunk` / `RunPhase` / `RunPipeline` and the `FiberCons` / `TrunkCons` / `PhaseCons` carriers are superseded by the flat-carrier const-gate for trunk isolation; they are not extended by this arc."]
 related = ["tenet::the_nested_value_carrier_walk_runs_a_trunk_over_a_carrier_of_fibers_and_the_scheduler_run_is_re_pointed_onto_it_in_a_later_step", "tenet::r4_replaces_the_nested_carrier_type_construction_with_const_eval_grouping_and_const_gated_dce"]
+lineage = ["the_nested_value_carrier_walk_runs_a_trunk_over_a_carrier_of_fibers_and_the_scheduler_run_is_re_pointed_onto_it_in_a_later_step:6c03aa428d45b8c8"]
 
 [[tenet]]
 id = "the_single_core_run_walks_the_flat_value_carrier_gated_by_const_phase_and_trunk_so_dead_code_elimination_leaves_one_member_only_program_per_phase_and_trunk"

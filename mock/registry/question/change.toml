@@ -254,4 +254,4 @@ Canon has no swap specification. The shipped `replace_value` marks dirty without
 '''
 subject = "change"
 keywords = ["replace_value", "blob write", "member-by-member", "decomposed drain", "swap semantics", "selector witness", "mark_dirty", "#654"]
-related = ["tenet::as_of_2026_11_12_replace_resource_and_replace_value_discard_the_value_and_the_suite_round_reports_the_swap_install_as_not_reached", "tenet::a_replaceable_swap_installs_the_whole_value_as_one_blob_write_through_the_drain_s_selector_and_the_member_by_member_wording_is_refuted", "tenet::as_of_round_202607193110_a_replaceable_swap_is_a_member_by_member_copy_into_column_slots_and_not_a_blob_write"]
+related = ["tenet::as_of_2026_11_12_replace_resource_and_replace_value_discard_the_value_and_the_suite_round_reports_the_swap_install_as_not_reached", "tenet::a_replaceable_swap_installs_the_whole_value_as_one_blob_write_through_the_drain_s_selector_and_the_member_by_member_wording_is_refuted"]
