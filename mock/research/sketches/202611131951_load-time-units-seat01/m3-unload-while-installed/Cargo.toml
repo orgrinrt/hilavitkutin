@@ -1,0 +1,33 @@
+# Seat 01 reply spike for merged call M3 (round 202611131951): what happens
+# when a library is dropped while a compiled unit still holds its kernel as an
+# occupant, and which shapes keep every later frame sound. Own workspace so the
+# repository build never sees it. Copy mock/Cargo.lock beside this file before
+# building (the repository ignores lockfiles), then build the extension first:
+#   cargo +nightly-2026-05-28 build -p m3-ext
+#   cargo +nightly-2026-05-28 test -p m3-host --test unload -- --test-threads=1 --nocapture
+#   cargo +nightly-2026-05-28 test -p m3-host --test borrow
+#   cargo +nightly-2026-05-28 test -p m3-host --test owns
+# borrow and owns are expected not to compile; their compiler output is the
+# result.
+
+[workspace]
+resolver = "3"
+members = ["ext", "host"]
+
+[workspace.package]
+edition = "2024"
+publish = false
+version = "0.0.0"
+
+[workspace.dependencies]
+hilavitkutin = { path = "../../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../../crates/hilavitkutin-providers" }
+hilavitkutin-linking = { path = "../../../../crates/hilavitkutin-linking" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev", version = "0.0.1", default-features = false, features = ["const", "try_trait_v2"] }
+
+# The pinned arvo crates name notko by its ssh spelling; point it at the https
+# source so the graph holds one notko (as mock/Cargo.toml:73-78 does).
+[patch."ssh://git@github.com/orgrinrt/notko.git"]
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev" }
