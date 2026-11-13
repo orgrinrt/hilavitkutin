@@ -80,3 +80,69 @@ Chosen:
 subject = "stores"
 keywords = ["data-bound", "binding table", "content", "no Rust", "registration", "run-time", "typed", "columns added by content"]
 related = ["tenet::column_type_registration_is_static"]
+
+[[question]]
+id = "whether_the_accumulator_is_a_fourth_store_kind"
+asks = "The founding spec and the api design template say there are three store types; the round that landed accumulators adds a fourth marker beside them and the standalone spec lists four store shapes. Is the accumulator a fourth store kind, or a column under another access?"
+options = ["Three store types, as the founding spec and the api design template say.", "Four, with the accumulator as a distinct marker, as the accumulator round and the standalone spec say."]
+state = "open"
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:491-496, mock/crates/hilavitkutin-api/DESIGN.md.tmpl:138-142, mock/design_rounds/202606041800/202606041800_topic.accumulator-columns.md:16-16, mock/research/pre_seed/202606111800_canonical-spec-standalone.md:162-163"
+quote = '''
+**Three store types, one scheduling mechanism (T5 L198-208):**
+```rust
+pub struct Resource<T>(PhantomData<T>);  // singleton, one value
+pub struct Column<T>(PhantomData<T>);    // collection, N values, morsel-chunked
+pub struct Virtual<T>(PhantomData<T>);   // zero-data, DAG edge only
+```
+---
+## Store types (domain 06)
+
+Three store types, one scheduling mechanism. All of them are views over
+one `ColumnStorage` (see "Unified columnar storage" below); they differ
+in intent and access, not in backing.
+---
+**Kind representation (A1): a distinct `Accum<T>` marker.** Sibling of `Resource<T>` / `Column<T>` / `Virtual<T>`, with its own binding node, selector, projection, and accessor. The alternative (a role or mode of `Column<T>`) collapses two semantically distinct operations (indexed random-write vs ordered append) onto one marker, making the `Contains<...>` membership proof ambiguous (read vs write vs append) and forcing a runtime flag or a forbidden specialization. The engine already has three parallel per-kind markers; `Accum<T>` is the fourth on the same pattern.
+---
+State lives in one of four store shapes. There is nothing else; a pipeline's
+entire mutable and immutable state reduces to these.
+'''
+subject = "stores"
+keywords = ["accumulator", "Accum", "fourth store", "three store types", "four store shapes", "store kind"]
+related = ["tenet::there_are_three_store_types_and_one_scheduling_mechanism", "tenet::an_accumulator_is_a_column_written_by_append_and_a_fourth_store_marker", "tenet::the_standalone_spec_lists_four_store_shapes_with_the_accumulator_among_them"]
+
+[[question]]
+id = "whether_hilavitkutin_s_own_columns_are_double_buffered"
+asks = "The founding round resolves that hilavitkutin has two access modes and that the frozen and live views, the double-buffered view system and the arena are loimu's own layer. An expert memo of the storage model round says hilavitkutin's own columns are double-buffered, frozen and live, for the pass boundary. Does hilavitkutin itself buffer a column across the pass boundary, or does the consumer?"
+options = ["The consumer. Hilavitkutin has read and write and no buffered store; a consumer that wants a frozen read holds it as its own columns and rotates them between passes, as the founding round resolved for loimu.", "Hilavitkutin. A column is double-buffered at the pass boundary by hilavitkutin itself, as the loimu heritage memo says."]
+state = "open"
+source = "mock/design_rounds/202604200055/202603141800_topic.hilavitkutin-core-design.md:643-661, mock/research/202606210600_expert-loimu-heritage-storage-model.md:289-293"
+quote = '''
+**Q6. Access mode granularity — RESOLVED**
+
+Resolved by Q2: two modes only. Read and Write. Write implies Read.
+
+loimu's seven access modes (Pinned, Immediate, MutImmediate, Sample,
+Post, Approx, Defer) control ordering, freshness, and determinism
+within the double-buffered view system. These are loimu-specific
+concerns tied to its temporal prediction, rotation groups, and
+frame generation. polka and saalis need none of this.
+
+hilavitkutin exposes Read and Write. The DAG uses these for edge
+construction. The scheduler uses these for conflict detection. loimu
+maps its seven modes to Read/Write at the hilavitkutin boundary and
+implements the richer semantics in its own layer.
+
+If hilavitkutin later needs a third mode (e.g. ReadExclusive for
+consumers that need guaranteed exclusive read access), it can be
+added without changing the WorkUnit trait — it would be a new store
+wrapper type like `Exclusive<Resource<T>>` in the AccessSet.
+---
+Hilavitkutin's columns are double-buffered (frozen/live) for the pass boundary. The
+resource handle model adds noalias wins. There is no temporal prediction or triple
+buffering in hilavitkutin's design. The workload does not need it: a pipeline
+execution engine does not extrapolate column values between passes -- it computes
+them.
+'''
+subject = "stores"
+keywords = ["double-buffered", "frozen", "live", "pass boundary", "rotation", "frame start", "buffered store"]
+related = ["tenet::loimu_keeps_its_seven_access_modes_and_maps_them_to_read_and_write_at_the_boundary", "tenet::an_expert_memo_says_hilavitkutin_s_columns_are_double_buffered_for_the_pass_boundary", "tenet::loimu_s_layers_stay_in_loimu_and_hilavitkutin_provides_the_foundation", "question::how_a_unit_reads_the_value_a_store_held_at_frame_start"]

@@ -423,3 +423,38 @@ origin = "stated"
 standing = "provisional"
 subject = "units"
 keywords = ["PipelineResult", "Completed", "Failed", "Poisoned", "Pipeline::run", "no result extraction", "partial failure"]
+
+[[tenet]]
+id = "loimu_keeps_its_seven_access_modes_and_maps_them_to_read_and_write_at_the_boundary"
+what = "There are two access modes only, read and write, and write implies read. The seven access modes of loimu control ordering, freshness and determinism within its double-buffered view system and are loimu-specific concerns tied to its temporal prediction, rotation groups and frame generation; polka and saalis need none of this. loimu maps its seven modes to read and write at the hilavitkutin boundary and implements the richer semantics in its own layer. If a third mode is needed later, it can be added as a new store wrapper type in the access set without changing the unit trait."
+mechanism = "loimu's modes: `Pinned`, `Immediate`, `MutImmediate`, `Sample`, `Post`, `Approx`, `Defer`. A later third mode, e.g. `ReadExclusive`, would be a wrapper such as `Exclusive<Resource<T>>` in the `AccessSet`."
+source = "mock/design_rounds/202604200055/202603141800_topic.hilavitkutin-core-design.md:643-661"
+provenance = ["mock::design_rounds::202604200055::202603141800_topic.hilavitkutin-core-design::#key-design-questions"]
+quote = '''
+**Q6. Access mode granularity — RESOLVED**
+
+Resolved by Q2: two modes only. Read and Write. Write implies Read.
+
+loimu's seven access modes (Pinned, Immediate, MutImmediate, Sample,
+Post, Approx, Defer) control ordering, freshness, and determinism
+within the double-buffered view system. These are loimu-specific
+concerns tied to its temporal prediction, rotation groups, and
+frame generation. polka and saalis need none of this.
+
+hilavitkutin exposes Read and Write. The DAG uses these for edge
+construction. The scheduler uses these for conflict detection. loimu
+maps its seven modes to Read/Write at the hilavitkutin boundary and
+implements the richer semantics in its own layer.
+
+If hilavitkutin later needs a third mode (e.g. ReadExclusive for
+consumers that need guaranteed exclusive read access), it can be
+added without changing the WorkUnit trait — it would be a new store
+wrapper type like `Exclusive<Resource<T>>` in the AccessSet.
+'''
+origin = "proposed"
+written_by = "topic T5 of the founding round (hilavitkutin-core-design), question Q6, marked resolved there"
+standing = "provisional"
+subject = "units"
+keywords = ["access mode", "Read", "Write", "Pinned", "Immediate", "frozen snapshot", "double-buffered", "freshness", "loimu", "store wrapper"]
+rules_out = ["loimu's seven access modes in hilavitkutin"]
+related = ["tenet::a_writer_precedes_every_reader_of_what_it_writes"]

@@ -450,3 +450,19 @@ origin = "stated"
 standing = "provisional"
 subject = "execution"
 keywords = ["Apple 128B DMA", "dismissed", "64B alignment", "false sharing", "morsel boundary alignment", "SoC prefetch"]
+
+[[tenet]]
+id = "the_engine_is_one_and_the_core_count_is_configuration"
+what = "There is no separate single-core or single-threaded engine, run or dispatch path. The engine is one thing: the runner is configured with a core count and then adapts by its usual rules, and the same primitives and the same code paths run at one core, two cores or seven. The plan always computes the single best sequence and the parallelised per-core programs it can from all statically available data within the configured core count; at one core that best sequence is serial, as a natural consequence of the same algorithms. Single-core mode is never special-cased against multi-core mode in code, and sequential is a per-phase strategy the plan may select, not a separate engine."
+source = "mock/research/202606061000_canon-amendment-unified-engine.md:7-9"
+provenance = ["mock::research::202606061000_canon-amendment-unified-engine::#the-ruling"]
+quote = '''
+There is no separate "single-core" or "single-threaded" engine, run, or dispatch path. The engine is one thing. You configure the runner with a core count; it then adapts by its usual rules. The same primitives and the same code paths run at 1 core, 2 cores, or 7 cores. The whole plan/algorithm pipeline always computes the single best, most optimal sequence and parallelised per-core programs it can from all statically-available data, within the configured core count. At 1 core that best sequence is serial, as a natural consequence of the same algorithms (the plan assigns every fiber to core 0 in the optimal order; phase sync points degenerate to one arriver; convergence is trivial; the pool has one worker). It is always distinctly the best, most optimal sequence computable from the static data, for whatever core count is configured.
+
+Single-core mode is therefore never special-cased against multi-core mode in code. Both use the identical computations, calculations, and the identical per-core-program dispatch; both strive for the best possible sequence and parallelised core programs within their given config. "Sequential" is a per-phase strategy the plan may select (consolidation spec `:1916-1956`), not a separate engine.
+'''
+origin = "stated"
+standing = "provisional"
+subject = "execution"
+keywords = ["unified engine", "core count", "configuration", "single-core", "no special case", "sequential strategy", "per-core program"]
+rules_out = ["a separate single-core engine or dispatch path"]

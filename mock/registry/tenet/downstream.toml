@@ -33,3 +33,55 @@ origin = "stated"
 standing = "provisional"
 subject = "downstream"
 keywords = ["polka", "saalis", "loimu", "full pipeline", "scheduler abstractions", "per-project scope"]
+
+[[tenet]]
+id = "loimu_double_buffers_record_data_and_its_readers_get_the_frozen_snapshot"
+what = "In loimu, record data in views is double-buffered, frozen and live, by default. A behaviour that reads gets the frozen snapshot and runs in parallel, and a behaviour that writes gets the live buffer exclusively."
+source = "mock/design_rounds/202604200055/202603141800_research.loimu-storage.md:826-828"
+provenance = ["mock::design_rounds::202604200055::202603141800_research.loimu-storage::#double-buffered-access"]
+quote = '''
+Record data in views is double-buffered (frozen + live) by default. Behaviors
+reading `nodes M` get the frozen snapshot (parallel); behaviors writing `nodes M`
+get the live buffer (exclusive).
+'''
+origin = "proposed"
+written_by = "the research note loimu-storage of the founding round, describing loimu"
+standing = "provisional"
+subject = "downstream"
+keywords = ["loimu", "double-buffered", "frozen", "live", "snapshot", "previous pass", "reader", "writer"]
+related = ["tenet::loimu_keeps_its_seven_access_modes_and_maps_them_to_read_and_write_at_the_boundary"]
+
+[[tenet]]
+id = "loimu_s_swap_buffer_is_rated_directly_portable_as_a_double_buffering_primitive"
+what = "The synthesis of the loimu research rates loimu's swap buffer, with its exchange and snapshot modes, as directly portable: a double-buffering primitive for any column data."
+mechanism = "`SwapBuffer` (Exchange + Snapshot modes)."
+source = "mock/design_rounds/202604200055/202603141800_research.loimu-synthesis.md:290-290, mock/design_rounds/202604200055/202603141800_research.loimu-synthesis.md:294-294"
+provenance = ["mock::design_rounds::202604200055::202603141800_research.loimu-synthesis::#7-portability-ratings"]
+quote = '''
+| loimu design element | Rating | Notes |
+---
+| SwapBuffer (Exchange + Snapshot modes) | Directly portable | Double-buffering primitive for any column data. |
+'''
+origin = "proposed"
+written_by = "the research note loimu-synthesis of the founding round, its portability ratings"
+standing = "provisional"
+subject = "downstream"
+keywords = ["SwapBuffer", "Exchange", "Snapshot", "double-buffering", "portable", "loimu", "column data"]
+related = ["tenet::loimu_double_buffers_record_data_and_its_readers_get_the_frozen_snapshot"]
+
+[[tenet]]
+id = "loimu_s_layers_stay_in_loimu_and_hilavitkutin_provides_the_foundation"
+what = "The founding research on loimu's storage says that loimu layers temporal columns, spring dynamics, reel backends, cadence policies, signal arenas and seven access modes on top of the primitives, that those layers stay in loimu, and that hilavitkutin provides the foundation they build on."
+source = "mock/design_rounds/202604200055/202603141800_research.loimu-storage.md:1135-1137"
+provenance = ["mock::design_rounds::202604200055::202603141800_research.loimu-storage::#what-the-unified-store-should-look-like"]
+quote = '''
+loimu layers temporal columns, spring dynamics, reel backends, cadence policies,
+signal arenas, and seven access modes on top of these primitives. Those layers
+stay in loimu. hilavitkutin provides the foundation they build on.
+'''
+origin = "proposed"
+written_by = "the founding-round research note on loimu's storage, 202603141800"
+standing = "provisional"
+subject = "downstream"
+keywords = ["loimu", "temporal columns", "seven access modes", "layers", "foundation", "primitives"]
+related = ["tenet::loimu_keeps_its_seven_access_modes_and_maps_them_to_read_and_write_at_the_boundary", "question::whether_hilavitkutin_s_own_columns_are_double_buffered"]

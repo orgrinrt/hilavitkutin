@@ -132,3 +132,33 @@ Answered in their own words:
 subject = "change"
 keywords = ["changed", "who declares", "writing unit", "differs", "written", "frame-buffered", "in place"]
 related = ["question::what_changed_means_for_a_computed_column"]
+
+[[question]]
+id = "who_says_that_a_store_changed"
+asks = "The founding spec has the engine bump a generation counter on write and compare version stamps to find the stores actually modified; a research note of the founding round leaves phantom-write detection to each consumer; the standalone spec has the consumer mark a store dirty. Who says that a store changed?"
+options = ["The engine alone: a write bumps the counter, and the stamp comparison finds what was actually modified.", "The consumer marks a store dirty, as the standalone spec says."]
+state = "open"
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:861-863, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2141-2144, mock/design_rounds/202604200055/202603141800_research.loimu-dag.md:1021-1025, mock/research/pre_seed/202606111800_canonical-spec-standalone.md:386-388"
+quote = '''
+**Change detection (T3 decisions #57-58, R2 evict/inject):**
+- Per-morsel generation counter — bump on write, skip if unchanged
+- Propagates through DAG — unchanged root skips all transitive dependents
+---
+Parallel arrays (SoA): separate contiguous `[u64; MAX_STORES]` for
+"before" and "current" stamps. Capture before-versions before WU runs,
+compare after. Changed stores = bitmask of actually-modified columns.
+Increment only on completion — no partial writes (domain 08). 2-5 u64
+---
+**Version stamps:** the concept is universal (track whether a resource actually
+changed). hilavitkutin should own the version stamp type and the early cutoff
+algorithm. Phantom-write detection (bitwise comparison for small values, explicit
+marking for large values) is a storage concern that each consumer can implement
+differently.
+---
+incremental one: before each frame, a dirty seed (which stores changed since
+last frame, set by the consumer marking a store dirty or by a resource
+replacement) propagates forward over the per-unit predecessor masks. A unit
+'''
+subject = "change"
+keywords = ["changed", "dirty", "mark dirty", "generation counter", "version stamp", "phantom write", "writing unit", "consumer"]
+related = ["question::which_stores_declare_what_changed_means", "question::what_changed_means_for_a_computed_column", "tenet::the_dirty_seed_is_set_by_the_consumer_marking_a_store_dirty_or_by_a_resource_replacement", "tenet::hilavitkutin_should_own_the_version_stamp_and_early_cutoff_and_phantom_write_detection_is_the_consumer_s", "tenet::change_detection_is_per_morsel_and_skips_what_is_unchanged"]

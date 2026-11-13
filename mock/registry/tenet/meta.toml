@@ -122,3 +122,25 @@ origin = "stated"
 standing = "provisional"
 subject = "meta"
 keywords = ["cadence", "SchedulerMetrics", "On<meta::ScheduleEnd>", "consumer policy", "measurement data", "T5 Q5"]
+
+[[tenet]]
+id = "the_scheduler_writes_the_previous_pass_s_metrics_at_the_start_of_each_pass"
+what = "The scheduler writes its metrics resource at the start of each pass, and what it writes is the previous pass's metrics. The data is always one pass behind, which is consistent, because the current pass is still in progress and cannot report its own metrics. The write happens at pass start, so it is the first thing in the DAG and all readers come after it, and its version stamp increments every pass, so readers always dispatch."
+mechanism = "`Resource<SchedulerMetrics>`; `pass_count` always changes."
+source = "mock/design_rounds/202604200055/202603141800_topic.hilavitkutin-core-design.md:595-598, mock/design_rounds/202604200055/202603141800_topic.hilavitkutin-core-design.md:639-641"
+provenance = ["mock::design_rounds::202604200055::202603141800_topic.hilavitkutin-core-design::#key-design-questions"]
+quote = '''
+The scheduler writes `Resource<SchedulerMetrics>` at the START of
+each pass, containing the PREVIOUS pass's metrics. This is always
+one-pass-behind data, which is consistent and non-paradoxical — the
+current pass is still in progress and can't report its own metrics.
+---
+The write happens at pass start → it's the first thing in the DAG.
+All readers naturally come after. The version stamp increments every
+pass (pass_count always changes), so readers always dispatch.
+'''
+origin = "proposed"
+written_by = "topic T5 of the founding round (hilavitkutin-core-design)"
+standing = "provisional"
+subject = "meta"
+keywords = ["SchedulerMetrics", "previous pass", "one pass behind", "pass start", "metrics resource", "version stamp"]

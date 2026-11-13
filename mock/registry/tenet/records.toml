@@ -188,3 +188,73 @@ standing = "provisional"
 subject = "records"
 keywords = ["co-located arena", "base pointer", "offset immediates", "DSE", "register-to-register", "one cursor", "morsel boundary"]
 cites = ["storage_is_contiguous_and_a_fiber_s_columns_share_one_arena"]
+
+[[tenet]]
+id = "at_ecs_scale_the_consumer_holds_separate_schedules_per_component_set"
+what = "At ECS scale the consumer manages data granularity: what the topic calls archetypes mean separate schedules per component set and not one giant schedule for everything, and pipeline-level batching, several pipeline runs on subsets, handles data at saalis scale. The library does not need to know about archetypes or batching and just runs the schedule it is given, but the design must not assume a single all-encompassing run."
+mechanism = "Design-for note DF4. Multiple `Pipeline::run()` calls on subsets."
+source = "mock/design_rounds/202604200055/202603121800_topic.dispatch-and-optimisation.md:153-159"
+provenance = ["mock::design_rounds::202604200055::202603121800_topic.dispatch-and-optimisation::#design-for-notes-from-scale-analysis-saalis-ecs"]
+quote = '''
+**DF4. Consumer-side batching and archetypes.** At ECS scale, the
+consumer manages data granularity: archetypes mean separate Schedules
+per component set, not one giant Schedule for all entities. Pipeline-
+level batching (multiple Pipeline::run() calls on subsets) handles
+saalis-scale data. The library doesn't need to know about archetypes
+or batching — it just runs the Schedule it's given. But the design
+must not assume a single all-encompassing run.
+'''
+origin = "proposed"
+written_by = "topic T3 of the founding round (dispatch-and-optimisation), design-for note DF4"
+standing = "provisional"
+subject = "records"
+keywords = ["DF4", "archetype", "component set", "separate schedules", "batching", "data granularity", "single run", "record count"]
+
+[[tenet]]
+id = "record_counts_are_known_when_loaders_complete_and_cascade_downstream"
+what = "Record counts are not known until the loaders complete. A downstream fiber, which the topic still calls a chain, computes its morsel ranges just in time, when its dependencies are first satisfied and the lengths of the upstream columns are known. For a fiber whose inputs come from other transform fibers and not from loaders the count cascades: if the upstream one processed N records, the downstream one also processes N, and the count propagates through the graph."
+mechanism = "Morsel ranges are computed from `(0..current_progress).step_by(morsel_size)`; the progress counter provides the current count."
+source = "mock/design_rounds/202604200055/202603121310_topic.memory-layout-and-platform.md:840-845, mock/design_rounds/202604200055/202603121310_topic.memory-layout-and-platform.md:860-863"
+provenance = ["mock::design_rounds::202604200055::202603121310_topic.memory-layout-and-platform::#8-10-data-loading-loaders-as-root-ops"]
+quote = '''
+Row counts are not known until loaders complete. Downstream chains
+compute their morsel ranges just-in-time — when their fence
+dependencies are first satisfied, the upstream column lengths are
+known. This is not a special case: the progress counter naturally
+provides the current row count, and morsel ranges are computed from
+(0..current_progress).step_by(morsel_size).
+---
+For chains whose inputs come from other transform chains (not
+loaders), the row count cascades: if the upstream chain processed
+N rows, the downstream chain also processes N rows. The count
+propagates through the chain graph.
+'''
+origin = "proposed"
+written_by = "topic T2 of the founding round (memory-layout-and-platform), decision 27"
+standing = "provisional"
+subject = "records"
+keywords = ["record count", "row count", "loaders", "just in time", "morsel ranges", "cascade", "progress counter"]
+cites = ["the_engine_does_not_load_data_and_does_not_know_record_counts_ahead"]
+
+[[tenet]]
+id = "the_only_cross_record_surface_is_the_accumulator_append_path"
+what = "The per-record read and write accessors are morsel-relative, and the only surface that crosses records is the accumulator append path. A fiber with no accumulator therefore has every dependency between its units local to a morsel and is dispatched morsel-outer: one morsel runs the fiber's whole unit sequence before the next. A fiber that bears an accumulator stays unit-outer, where a unit completes its record range before the next unit runs, which is the form that is safe across records."
+mechanism = "The nesting is per fiber, chosen by the fiber's `morsel_local` bit."
+source = "mock/crates/hilavitkutin/DESIGN.md.tmpl:324-331"
+provenance = ["mock::crates::hilavitkutin::DESIGN::#dispatch-codegen-domain-17"]
+quote = '''
+The nesting is per-fiber, chosen by the fiber's `morsel_local` bit. An
+accumulator-free fiber dispatches morsel-outer: one morsel runs the fiber's
+whole unit sequence before the next, so its intermediate columns stay
+cache-resident across the units. This is sound because the per-record `read`
+/ `write` accessors are morsel-relative and the only cross-record surface is
+the accumulator append path, so an accumulator-free fiber has every cross-unit
+dependency morsel-local. An accumulator-bearing fiber stays unit-outer (a unit
+completes its record range before the next runs), the cross-record-safe form.
+'''
+origin = "proposed"
+written_by = "the engine design template, from design round 202606051500 (fiber-structured morsel-outer dispatch)"
+standing = "provisional"
+subject = "records"
+keywords = ["cross-record", "morsel-relative", "accumulator append", "morsel-outer", "unit-outer", "morsel_local", "read", "write"]
+related = ["tenet::records_within_a_fiber_are_independent"]

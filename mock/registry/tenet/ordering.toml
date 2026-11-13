@@ -114,3 +114,44 @@ origin = "stated"
 standing = "provisional"
 subject = "ordering"
 keywords = ["determinism", "lineariser", "record order", "deterministic segments", "single-core"]
+
+[[tenet]]
+id = "the_founding_research_orders_two_writers_by_registration_order_or_explicit_priority"
+what = "A research note of the founding round says the scheduler builds an edge from a writer of a resource to each reader of it, and for every pair of units that both write one resource an edge between them, whose direction is determined by registration order or explicit priority."
+source = "mock/design_rounds/202604200055/202603141800_research.scheduler-algorithm-deep-dive.md:77-82"
+provenance = ["mock::design_rounds::202604200055::202603141800_research.scheduler-algorithm-deep-dive::#step-1-build-dag-from-read-write-declarations"]
+quote = '''
+The scheduler extracts these declarations at registration time and builds
+edges: for every pair (A, B) where A writes a resource R and B reads R,
+create an edge A -> B. For every pair (A, B) where both write R, create
+an edge between them (ordering is determined by registration order or
+explicit priority). Virtual columns (zero-sized types like
+`Write<SchemaChanged>`) create DAG edges with no storage backing.
+'''
+origin = "proposed"
+written_by = "the research note scheduler-algorithm-deep-dive of the founding round"
+standing = "provisional"
+subject = "ordering"
+keywords = ["two writers", "registration order", "explicit priority", "write-write", "edge"]
+superseded_by = ["two_writers_of_one_store_are_ordered_by_hint_priority"]
+related = ["question::how_two_writers_of_one_store_are_ordered"]
+
+[[tenet]]
+id = "producer_before_consumer_registration_is_provisional_and_the_ideal_is_auto_ordering"
+what = "The standalone spec says that registering producers before consumers is a provisional constraint. The ideal is that the engine orders units automatically regardless of registration order. Until the recovery of the execution order fully lands, the engine requires the consumer to register producers before consumers and validates it, and a registration that is not topological is a build error. The constraint is to be relaxed when the order-recovery mechanism or the toolchain matures."
+source = "mock/research/pre_seed/202606111800_canonical-spec-standalone.md:603-608"
+provenance = ["mock::research::pre_seed::202606111800_canonical-spec-standalone::#14-the-deliberate-deviations"]
+quote = '''
+- **Producer-before-consumer registration is provisional.** The ideal is that
+  the engine auto-orders units regardless of registration order. Until the
+  RCM execution-order recovery fully lands, the engine requires the consumer
+  to register producers before consumers and validates it (a non-topological
+  registration is a build error). This is a provisional constraint, to be
+  relaxed when the order-recovery mechanism or the toolchain matures.
+'''
+origin = "proposed"
+written_by = "the standalone spec 202606111800, a reading aid with no design authority of its own by addendum A2"
+standing = "provisional"
+subject = "ordering"
+keywords = ["registration order", "producer before consumer", "provisional", "auto-order", "RCM", "build error", "topological"]
+related = ["question::how_two_writers_of_one_store_are_ordered"]
