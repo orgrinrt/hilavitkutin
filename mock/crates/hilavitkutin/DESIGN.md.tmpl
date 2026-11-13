@@ -385,7 +385,8 @@ fused unit runs only the map, and the unit's own body, with its appends, never
 runs. A unit with no per-record map is refused at compile time. `run_fused`
 makes the same per-frame accumulator reset as `run` and `run_parallel`, so its
 verdict is the frame's own and a refusal from an earlier frame does not carry
-into it. The gap is tracked as ticket `0fb716c5a463`; until it closes, an
+into it. At frame start `run_fused` clears the accumulator records and counts a
+previous `run` left, as `run` does. The gap is tracked as ticket `0fb716c5a463`; until it closes, an
 accumulator-writing unit goes through `run`.
 
 Appending past an accumulator's reserved capacity is refused, and the refusal is
