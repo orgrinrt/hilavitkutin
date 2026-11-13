@@ -11,9 +11,11 @@
 //! its own records. Every check runs over two frames, so the per-frame reset of
 //! both counts is held too.
 //!
-//! The truncating mutant (`--features mutant-truncating-append`) drops a refused
-//! append without counting it; the refusal never reaches the output and the
-//! value tests here fail.
+//! The truncating mutant drops a refused append without counting it; the
+//! refusal never reaches the output and the value tests here fail. It builds
+//! only with the check's variable set: `HILAVITKUTIN_MUTANT_CHECK=1 cargo test
+//! -p hilavitkutin --features mutant-truncating-append --test
+//! overflow_is_a_value`.
 //!
 //! Lives under `tests/` so the bare numeric record values do not trip the
 //! source lints.

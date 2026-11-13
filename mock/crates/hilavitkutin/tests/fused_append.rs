@@ -232,7 +232,7 @@ fn run_appends_one_value_per_record_each_frame() {
 }
 
 #[test]
-#[ignore = "catalogue: run_fused runs only the map and never the body of a RecordOp unit that also appends; needs the fused entry to refuse the carrier, or to run the body and reset; tracked #run_fused_does_not_refuse_a_recordop_unit_that_writes_an_acc"]
+#[ignore = "catalogue: run_fused runs only the map and never the body of a RecordOp unit that also appends; needs the fused entry to refuse the carrier, or to run the body; tracked #run_fused_does_not_refuse_a_recordop_unit_that_writes_an_acc"]
 fn run_fused_appends_one_value_per_record_each_frame() {
     let mut scheduler = scheduler!();
     for frame in 0 .. 2 {
