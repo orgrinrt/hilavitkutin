@@ -287,7 +287,7 @@ origin = "proposed"
 written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
 standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
-ratified_from = ["ruled: mock/research/202606210600_resource-storage-model-canonical-addendum.md:39-45", "ruled: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:29-36", "ruled: mock/research/202606210600_storage-bench-findings.md:372-374"]
+ratified_from = ["ruled: mock/research/202606210600_resource-storage-model-canonical-addendum.md:39-45", "ruled: mock/research/202606210600_storage-bench-findings.md:372-374"]
 keywords = ["noalias invariant", "architectural guarantee", "1.28-1.40x", "scalar speedup", "M1", "registers", "morsel loop", "axis D"]
 related = ["tenet::resource_and_column_pointers_must_have_separate_provenance_or_llvm_reloads_resources_every_iteration"]
 
