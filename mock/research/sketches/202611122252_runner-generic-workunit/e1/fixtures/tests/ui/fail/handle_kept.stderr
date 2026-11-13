@@ -1,0 +1,11 @@
+error[E0597]: `h` does not live long enough
+  --> tests/ui/fail/handle_kept.rs:53:23
+   |
+52 |         let h = Cx(i);
+   |             - binding `h` declared here
+53 |         kernel::<Run>(&h, &mut keep);
+   |                       ^^ borrowed value does not live long enough
+54 |     }
+   |     - `h` dropped here while still borrowed
+55 |     let _ = keep;
+   |             ---- borrow later used here

@@ -1,0 +1,11 @@
+[package]
+name = "e1-run-threaded"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+e1-vocab = { workspace = true }
+e1-unit = { workspace = true }
+rg-owed = { workspace = true }
+rg-plumb = { workspace = true }

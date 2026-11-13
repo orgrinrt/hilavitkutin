@@ -1,0 +1,40 @@
+error[E0283]: type annotations needed
+  --> tests/ui/fail/member_twice.rs:13:8
+   |
+13 |     cx.get(Pos)
+   |        ^^^ cannot infer type of the type parameter `P` declared on the method `get`
+   |
+   = note: the type must implement `Place`
+note: required by a bound in `e1_vocab::Ctx::get`
+  --> $WORKSPACE/e1/vocab/src/lib.rs
+   |
+   |     fn get<M: Elem, P: Place>(&self, member: M) -> M::Value
+   |                        ^^^^^ required by this bound in `Ctx::get`
+help: consider specifying the generic arguments
+   |
+13 |     cx.get::<Pos, P>(Pos)
+   |           ++++++++++
+
+error[E0283]: type annotations needed
+  --> tests/ui/fail/member_twice.rs:13:8
+   |
+13 |     cx.get(Pos)
+   |        ^^^ cannot infer type of the type parameter `P` declared on the method `get`
+   |
+   = note: multiple `impl`s satisfying `Cons<Pos, Cons<Pos, e1_vocab::Empty>>: Has<Pos, _>` found in the `rg_owed` crate:
+           - impl<H, M, P, T> Has<M, notko_hlist::position::There<P>> for Cons<H, T>
+             where H: Elem, M: Elem, P: Place, T: Has<M, P>;
+           - impl<M, T> Has<M, notko_hlist::position::Here> for Cons<M, T>
+             where M: Elem, T: Project;
+note: required by a bound in `e1_vocab::Ctx::get`
+  --> $WORKSPACE/e1/vocab/src/lib.rs
+   |
+   |     fn get<M: Elem, P: Place>(&self, member: M) -> M::Value
+   |        --- required by a bound in this associated function
+   |     where
+   |         D::Reads: Has<M, P>;
+   |                   ^^^^^^^^^ required by this bound in `Ctx::get`
+help: consider specifying the generic arguments
+   |
+13 |     cx.get::<Pos, P>(Pos)
+   |           ++++++++++

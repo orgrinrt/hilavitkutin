@@ -1,0 +1,10 @@
+[package]
+name = "rg-stack-probe"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dev-dependencies]
+e2-unit = { workspace = true }
+rg-owed = { workspace = true }
+rg-plumb = { workspace = true }

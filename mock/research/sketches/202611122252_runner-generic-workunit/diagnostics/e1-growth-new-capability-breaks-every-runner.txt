@@ -1,0 +1,25 @@
+== e1-run-ordered
+error[E0046]: not all trait items implemented, missing: `draw`
+  --> e1/run-ordered/src/lib.rs:18:1
+   |
+18 | impl<'a, D: Decl> Ctx<D> for Cx<'a, D> {
+== e1-run-permuted
+error[E0046]: not all trait items implemented, missing: `draw`
+  --> e1/run-permuted/src/lib.rs:37:1
+   |
+37 | impl<'a, D: Decl> Ctx<D> for Cx<'a, D> {
+== e1-run-fused
+error[E0046]: not all trait items implemented, missing: `draw`
+  --> e1/run-fused/src/lib.rs:18:1
+   |
+18 | impl<'a, D: Decl> Ctx<D> for Cx<'a, D> {
+== e1-run-threaded
+error[E0046]: not all trait items implemented, missing: `draw`
+  --> e1/run-threaded/src/lib.rs:17:1
+   |
+17 | impl<'a, D: Decl> Ctx<D> for Cx<'a, D> {
+== e1-run-registry
+error[E0046]: not all trait items implemented, missing: `draw`
+  --> e1/run-registry/src/lib.rs:22:1
+   |
+22 | impl<'a, D: Decl> Ctx<D> for Cx<'a, D> {

@@ -1,0 +1,8 @@
+[package]
+name = "e2-unit"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+e2-vocab = { workspace = true }

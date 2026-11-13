@@ -1,0 +1,8 @@
+[package]
+name = "e1-unit"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+e1-vocab = { workspace = true }
