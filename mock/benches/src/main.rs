@@ -64,18 +64,13 @@ fn main() -> ExitCode {
 
     for (bench_name, section) in &manifest.bench {
         for (size_idx, _size) in section.sizes.iter().enumerate() {
-            let mut config = match manifest.for_size(bench_name, size_idx, &mock_benches_dir) {
+            let config = match manifest.for_size(bench_name, size_idx, &mock_benches_dir) {
                 Ok(c) => c,
                 Err(e) => {
                     eprintln!("error: {e}");
                     return ExitCode::FAILURE;
                 },
             };
-            config.variant_paths = config
-                .variant_paths
-                .into_iter()
-                .map(shape_variant_path)
-                .collect();
             let routine = match routine_for_bench(bench_name, &section.workload, config.n) {
                 Some(r) => r,
                 None => {
@@ -261,18 +256,6 @@ fn routine_for_bench(bench_name: &str, workload: &str, n: usize) -> Option<Routi
     })
 }
 
-/// Turn a variant bare-stem path into the platform dylib path.
-fn shape_variant_path(p: PathBuf) -> PathBuf {
-    let parent = p.parent().map(Path::to_path_buf).unwrap_or_default();
-    let stem = p.file_name().and_then(|s| s.to_str()).unwrap_or("");
-    parent.join(format!(
-        "{}{}{}",
-        std::env::consts::DLL_PREFIX,
-        stem,
-        std::env::consts::DLL_SUFFIX
-    ))
-}
-
 fn run_worker(args: &[String]) -> ExitCode {
     let get = |flag: &str| -> Option<String> {
         let pos = args.iter().position(|a| a == flag)?;
@@ -328,4 +311,88 @@ fn run_worker(args: &[String]) -> ExitCode {
         threaded,
     );
     ExitCode::SUCCESS
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Whether a dylib file name carries the platform prefix and the
+    /// platform suffix exactly once each.
+    fn shaped_once(name: &str) -> Result<(), String> {
+        let prefix = std::env::consts::DLL_PREFIX;
+        let suffix = std::env::consts::DLL_SUFFIX;
+        let inner = name
+            .strip_prefix(prefix)
+            .ok_or_else(|| format!("`{name}` lacks the `{prefix}` prefix"))?
+            .strip_suffix(suffix)
+            .ok_or_else(|| format!("`{name}` lacks the `{suffix}` suffix"))?;
+        if inner.contains(suffix) {
+            return Err(format!("`{name}` carries `{suffix}` twice"));
+        }
+        if !prefix.is_empty() && inner.starts_with(prefix) {
+            return Err(format!("`{name}` carries `{prefix}` twice"));
+        }
+        Ok(())
+    }
+
+    /// The check refuses a name shaped twice, and accepts one shaped
+    /// once.
+    ///
+    /// A check that accepted everything would pass the test below
+    /// while saying nothing, so the refusal is asserted before the
+    /// acceptance is worth anything.
+    #[test]
+    fn the_check_refuses_a_doubly_shaped_name() {
+        let prefix = std::env::consts::DLL_PREFIX;
+        let suffix = std::env::consts::DLL_SUFFIX;
+        let once = format!("{prefix}ema_neon{suffix}");
+        let twice = format!("{prefix}{once}{suffix}");
+
+        shaped_once(&once).expect("a name shaped once is accepted");
+        let err = shaped_once(&twice).expect_err("a name shaped twice is refused");
+        assert!(
+            err.contains("twice"),
+            "the refusal should say the name was shaped twice, got `{err}`"
+        );
+    }
+
+    /// Every resolved variant path carries the platform dylib prefix
+    /// and suffix exactly once.
+    ///
+    /// `BenchManifest::for_size` resolves a bare-stem entry to a full
+    /// dylib path already. A driver that shapes the result again asks
+    /// for `liblibname.so.so`, which no build produces, and the bench
+    /// dies at load with a missing file rather than at config time.
+    /// This repo shipped that bug once.
+    #[test]
+    fn resolved_variant_paths_are_shaped_once() {
+        let dir = std::env::current_dir().expect("readable cwd");
+        let manifest = BenchManifest::load(&dir.join("bench.toml")).expect("the repo's bench.toml");
+
+        let mut checked = 0usize;
+        for (bench_name, section) in &manifest.bench {
+            for (size_idx, _) in section.sizes.iter().enumerate() {
+                let config = manifest
+                    .for_size(bench_name, size_idx, &dir)
+                    .unwrap_or_else(|e| panic!("bench `{bench_name}` size {size_idx}: {e}"));
+                for path in &config.variant_paths {
+                    let name = path
+                        .file_name()
+                        .and_then(|s| s.to_str())
+                        .unwrap_or_else(|| {
+                            panic!("bench `{bench_name}`: variant path has no file name")
+                        });
+                    if let Err(e) = shaped_once(name) {
+                        panic!("bench `{bench_name}` size {size_idx}: {e}");
+                    }
+                    checked += 1;
+                }
+            }
+        }
+        assert!(
+            checked > 0,
+            "the manifest resolved no variant paths, so this test asserted nothing"
+        );
+    }
 }
