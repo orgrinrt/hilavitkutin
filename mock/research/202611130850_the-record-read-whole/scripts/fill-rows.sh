@@ -5,7 +5,8 @@
 # usage: fill-rows.sh <registry toml>...
 #
 # A row is authored with `source = "<path>:<first>-<last>[, ...]"` and without
-# `quote` or `provenance`; a re-run drops the two and writes them again. A path
+# `quote` or `provenance`; a re-run drops the two and writes them again. A row that
+# carries `rev` is left as it is: its quote is its source at that commit. A path
 # led by `<branch>:` is read from that branch (`git show`), every other path
 # from the working tree.
 set -eu
@@ -41,8 +42,10 @@ provenance_of() { # <branch or empty> <path> <first>
 }
 
 fill() {
-  local file=$1 tmp kind="" skipping=0 line src
+  local file=$1 tmp kind="" skipping=0 line src keep=0 pinned
   tmp=$(mktemp)
+  # A row that carries `rev` quotes its source as it stood at that commit, so it is left as it is.
+  pinned=$(awk '/^\[\[/ { id = "" } /^id = / { id = $0 } /^rev = / { print id }' "$file")
   while IFS= read -r line || [ -n "$line" ]; do
     if [ "$skipping" = 1 ]; then
       [ "$line" = "'''" ] && skipping=0
@@ -54,10 +57,17 @@ fill() {
       '[['*) kind=other ;;
     esac
     case $line in
-      "quote = '''") skipping=1; continue ;;
-      'provenance = '*) [ "$kind" = tenet ] && continue ;;
+      '[['*) keep=0 ;;
+      'id = "'*) keep=0; [ -n "$pinned" ] && printf '%s\n' "$pinned" | grep -qxF -- "$line" && keep=1 ;;
     esac
+    if [ "$keep" = 0 ]; then
+      case $line in
+        "quote = '''") skipping=1; continue ;;
+        'provenance = '*) [ "$kind" = tenet ] && continue ;;
+      esac
+    fi
     printf '%s\n' "$line" >> "$tmp"
+    [ "$keep" = 1 ] && continue
     case $line in
       'source = "'*'"')
         src=${line#source = \"}; src=${src%\"}

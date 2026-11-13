@@ -233,8 +233,43 @@ quote = '''
 origin = "proposed"
 written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
 standing = "pending"
+superseded_by = ["the_swap_semantics_item_landed_under_a_provisional_stamp_with_s1_through_s7_not_ratified_and_two_gaps_open_against_the_spec"]
 keywords = ["Replaceable swap", "open question 1", "ratification", "S1 through S7", "Swap-D", "#344", "cost asymmetry", "seed freeze"]
 related = ["tenet::the_maintainer_held_ratification_of_the_swap_spec_until_it_was_implemented_and_benched", "tenet::ratifying_the_swap_spec_replaces_the_seed_chapter_s_open_question_wording_and_closes_the_governance_items_and_the_two_issues"]
+
+[[tenet]]
+id = "the_swap_semantics_item_landed_under_a_provisional_stamp_with_s1_through_s7_not_ratified_and_two_gaps_open_against_the_spec"
+subject = "governance"
+what = "The Replaceable swap semantics item is recorded as the spec implemented and benched on 2026-07-19, with the witnessed blob install, the plan-dirty band trigger and the exclusivity shipped and the test suite green, and the benches confirming the cost asymmetry. It landed under a provisional stamp on the maintainer's word of 2026-11-13, so the implementation ships and S1 through S7 are not ratified. Two gaps stay open against the spec: the plan-dirty bit is keyed by the store position where S2 says the plan-affecting id, and a fused frame neither consumes nor honours the bit. S3 and Swap-D stay gated on #344 inside the spec."
+mechanism = "Round `202607200500`; evidence record `202607201100_swap-semantics-ratification-evidence.md`; S1 witnessed blob install, S2 plan-dirty band trigger, S4 exclusivity, S6 suite, S7 benches; the choice \"Land as provisional\" among ratify and land, land as provisional, ratify with changes and keep holding; Swap-D decides whether the morsel budget's write-collection term absorbs swap traffic."
+source = "mock/research/seed/governance.md:96-112"
+provenance = ["mock::research::seed::governance::#open-questions-blocking-the-freeze"]
+quote = '''
+1. **`Replaceable` swap semantics**: SPEC IMPLEMENTED AND BENCHED
+   (2026-07-19, round `202607200500`; evidence record
+   `202607201100_swap-semantics-ratification-evidence.md`). The S1
+   witnessed blob install, S2 plan-dirty band trigger, and S4
+   exclusivity ship with the S6 suite green; the S7 benches confirm the
+   cost asymmetry (install is the linear memcpy; a value swap pays its
+   cone, a plan swap pays the band, neither leaks). Landed under a
+   provisional stamp on op's word of 2026-11-13, "Land as provisional",
+   chosen among ratify and land, land as provisional, ratify with
+   changes, and keep holding: the implementation ships and S1 through S7
+   are not ratified. Two gaps stay open against the spec (the plan-dirty
+   bit keyed by the store position where S2 says the plan-affecting id;
+   a fused frame that neither consumes nor honours the bit). S3 and
+   Swap-D (the commissioned
+   cold-write-then-stream collection-swap bench, deciding whether the
+   morsel budget's write-collection term absorbs swap traffic) stay
+   #344-gated inside the spec. See [[storage]].
+'''
+origin = "proposed"
+written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21 and to 2026-11-13, agent-written; the text does not name its author"
+standing = "pending"
+stamp = 'provisional, 2026-11-13: the landing under a provisional stamp with S1 through S7 not ratified is his word (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-1305.md:13-41, "Land as provisional"), and the rest is the seed chapter recording the item, which nothing read shows to be his, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md)'
+keywords = ["Replaceable swap", "open question 1", "Land as provisional", "provisional stamp", "S1 through S7", "Swap-D", "#344", "plan-dirty bit", "fused frame"]
+related = ["tenet::the_maintainer_held_ratification_of_the_swap_spec_until_it_was_implemented_and_benched", "tenet::ratifying_the_swap_spec_replaces_the_seed_chapter_s_open_question_wording_and_closes_the_governance_items_and_the_two_issues"]
+
 
 [[tenet]]
 id = "plan_affecting_is_ruled_an_open_marker_trait_and_what_a_plan_affecting_swap_propagates_resolves_inside_the_swap_item"

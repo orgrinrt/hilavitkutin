@@ -3,10 +3,9 @@
 [[tenet]]
 id = "the_arena_column_storage_reserves_64_byte_aligned_blocks_through_the_memory_provider_and_its_release_is_a_no_op"
 subject = "memory"
-what = "Reserving a column allocates its byte count 64-byte aligned through the bound memory provider and records the slot, and a resizing reserve frees the prior block first. The column pointer accessors return the recorded base cast to the scalar type, raw and not a slice, the count reads the slot, release is a no-op because reader-count reclamation is a concern of the columnar engine, and dropping deallocates every live slot through the provider."
-mechanism = "`reserve<T>` allocates `count * size_of::<T>()` bytes 64-byte aligned; `column_ptr` / `column_ptr_mut` return a raw pointer, not a slice, per R6; `count`; `release` no-op; `Drop` deallocates."
-source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:165-171"
-rev = "c5f337a926adeddebc3b343a44d27e40c8a01503"
+what = "Reserving a column allocates its byte count 64-byte aligned through the bound memory provider and records the slot, and a resizing reserve frees the prior block first. The column pointer accessors return the recorded base cast to the scalar type, raw and not a slice, the count reads the slot, release is a no-op because reader-count reclamation is a concern of the columnar engine, and dropping deallocates every live slot through the provider with the same 64-byte alignment, so the free layout matches the reserve layout. Every column is reserved at that alignment because the canonical design requires it, and a free that assumed a narrower one would be undefined behaviour under an allocator that takes the layout."
+mechanism = "`reserve<T>` allocates `count * size_of::<T>()` bytes 64-byte aligned; `column_ptr` / `column_ptr_mut` return a raw pointer, not a slice, per R6; `count`; `release` no-op; `Drop` deallocates, passing `CACHE_LINE_ALIGN` back."
+source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:165-175"
 provenance = ["mock::crates::hilavitkutin-providers::DESIGN::#arenacolumnstorage-m-d"]
 quote = '''
 `reserve<T>` allocates `count * size_of::<T>()` bytes 64-byte aligned
@@ -15,7 +14,11 @@ re-reserve frees the prior block first. `column_ptr` / `column_ptr_mut`
 return the recorded base cast to the scalar type (raw, not a slice, per
 R6). `count` reads the slot. `release` is a no-op (the reader-count
 reclamation is a columnar-engine concern). `Drop` deallocates every
-live slot through the provider.
+live slot through the provider, passing `CACHE_LINE_ALIGN` back so the free
+layout matches the reserve layout. Every column is reserved at that 64-byte
+alignment because the canonical design requires it, and a free that assumed
+anything narrower would be undefined behaviour under a layout-taking
+allocator.
 '''
 origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
