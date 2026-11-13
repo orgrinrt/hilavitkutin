@@ -85,6 +85,7 @@ standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:593-593", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2390-2391"]
 keywords = ["order field", "hints", "superseded"]
+rules_out = ["order field"]
 rejects = ["order field"]
 related = ["tenet::two_writers_of_one_store_are_ordered_by_hint_priority"]
 

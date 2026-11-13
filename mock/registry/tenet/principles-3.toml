@@ -254,6 +254,7 @@ standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["quote: mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:20-32", "quote: mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:13-13"]
 keywords = ["no std tier", "platform tiers", "os tier", "no_os tier"]
+rules_out = ["std tier"]
 related = ["tenet::the_platform_has_three_tiers_no_os_os_and_std"]
 
 [[tenet]]

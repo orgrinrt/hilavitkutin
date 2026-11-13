@@ -52,7 +52,7 @@ tuned in `mockspace.toml` under `[lints.<name>]`.
 | `no_dynamic_dispatch.rs` | ` dyn `, `TypeId`, `std::any::` | HARD_ERROR | error across all gates |
 | `no_runtime_spawn.rs` | `thread::spawn`, `std::thread::`, `tokio::spawn`, `async_std::spawn` | HARD_ERROR | error across all gates |
 | `no_runtime_registration.rs` | `inventory::submit!`, `#[ctor]`, `#[distributed_slice]` | HARD_ERROR | error across all gates |
-| `vocabulary_discipline.rs` | Dead terms: `chain`, `chain_group`, `partition`, `archetype`, `entity`, `row`, `order` in source | ADVISORY | warn/warn/warn |
+| `vocabulary_discipline.rs` | Dead terms: `chain`, `chain_group`, `partition`, `archetype`, `entity`, `row`, `order` in source | ADVISORY | warn/warn/warn <!-- tenet::the_dead_terms_chain_chain_group_partition_archetype_entity_row_and_order_have_named_replacements --> |
 
 ## Config-driven: `forbidden-imports`
 
