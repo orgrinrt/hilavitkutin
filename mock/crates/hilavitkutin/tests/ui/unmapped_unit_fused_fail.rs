@@ -1,7 +1,10 @@
-// A unit that appends to an `Accum<Av>` is run through `run_fused`. The fused
-// entry folds the carrier into one chain and a chain writes no accumulator, so
-// the carrier is refused at compile time. The twin `append_fused_pass.rs`
-// differs only in the entry called: `run` instead of `run_fused`.
+// A unit with no per-record map (it does not implement `RecordOp`) is run
+// through `run_fused`. The fused entry folds the carrier into a chain of
+// `RecordOp` maps, so the carrier is refused at compile time. This shows only
+// that refusal: a unit that implements `RecordOp` and also writes an
+// accumulator is accepted, which `tests/fused_append.rs` records. The twin
+// `unmapped_unit_fused_pass.rs` differs only in the entry called: `run`
+// instead of `run_fused`.
 
 use core::cell::Cell;
 
@@ -27,7 +30,8 @@ unsafe impl Sync for Provider {}
 impl MemoryProviderApi for Provider {
     unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
         let align = align.0.max(1);
-        let aligned = (self.used.get() + align - 1) / align * align;
+        let addr = self.base as usize + self.used.get();
+        let aligned = (addr + align - 1) / align * align - self.base as usize;
         if aligned + len.0 > 8192 {
             return core::ptr::null_mut();
         }
@@ -46,14 +50,14 @@ struct Av(u32);
 type AccW = Cons<Accum<Av>, Empty>;
 
 #[derive(Copy, Clone)]
-struct AppendWu;
+struct LogOnlyWu;
 
-impl BuilderInput for AppendWu {
+impl BuilderInput for LogOnlyWu {
     type Dispatch = UnitDispatch<Self>;
     type Init = Self;
 }
 
-impl WorkUnit<Always> for AppendWu {
+impl WorkUnit<Always> for LogOnlyWu {
     type Ctx<'frame> = EngineCtx<
         'frame,
         Empty,
@@ -88,8 +92,8 @@ fn main() {
     };
     let mut scheduler = Scheduler::builder()
         .with(Accum::<Av>::new())
-        .with(AppendWu)
+        .with(LogOnlyWu)
         .build(store(provider), USize(4))
         .unwrap_or_else(|_| panic!("build should succeed"));
-    let _ = scheduler.run();
+    let _ = scheduler.run_fused();
 }

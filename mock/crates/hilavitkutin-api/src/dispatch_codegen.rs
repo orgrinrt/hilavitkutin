@@ -392,10 +392,7 @@ impl sealed::Sealed for StandardCodegen {}
 /// lands once the defining-use closure body emits in the engine's
 /// `dispatch::standard` Pass 3 follow-ups (run_fiber, wu_fn,
 /// morsel, sync). Topic 4 axis A locks to TAIT; this placeholder
-/// reserves the type-slot until the closure body resolves it. The
-/// `LockFreeDispatch` and `Scheduled` impls below are markers over this
-/// placeholder and prove nothing about a dispatch body yet; ticket
-/// `e3cb3f33eb38` tracks making them follow a real one.
+/// reserves the type-slot until the closure body resolves it.
 impl<Cfg> DispatchCodegen<Cfg> for StandardCodegen
 where
     Cfg: crate::run_cfg::RunCfg,
@@ -403,6 +400,9 @@ where
     type CoreDispatch = ();
 }
 
+// FIXME(e3cb3f33eb38): the two marker impls below are asserted over the `()`
+// placeholder above and prove nothing about a dispatch body yet; they should
+// follow a real one.
 impl LockFreeDispatch for StandardCodegen {}
 
 impl Scheduled for StandardCodegen {}

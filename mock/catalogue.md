@@ -16,3 +16,4 @@ Each `#[ignore = "catalogue: <the gap>; tracked #<id>"]` in this repository name
 - hilavitkutin_catalogue_cold_store_flush_and_open_need_the_mm: cold store flush writes nothing and open reads no manifest; needs the mmap-backed file I/O (was #344)
 - hilavitkutin_catalogue_engine_vs_std_perf_oracles_are_timing: the engine_vs_std perf oracles are timing assertions that only mean something in release; they belong on the bench harness
 - hilavitkutin_catalogue_cold_store_snapshot_copies_nothing_an: cold store snapshot copies nothing; needs the backup mechanism (was #344)
+- run_fused_does_not_refuse_a_recordop_unit_that_writes_an_acc: run_fused runs only the map and never the body of a RecordOp unit that also appends; needs the fused entry to refuse the carrier or run the body

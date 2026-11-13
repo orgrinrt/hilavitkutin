@@ -1,14 +1,14 @@
-error[E0277]: `AppendWu` does not declare a per-record map for fusion
-  --> tests/ui/append_fused_fail.rs:82:13
+error[E0277]: `LogOnlyWu` does not declare a per-record map for fusion
+  --> tests/ui/unmapped_unit_fused_fail.rs:98:13
    |
-82 |     let _ = scheduler.run_fused();
+98 |     let _ = scheduler.run_fused();
    |             ^^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
    |
-help: the trait `RecordOp` is not implemented for `AppendWu`
-  --> tests/ui/append_fused_fail.rs:47:1
+help: the trait `RecordOp` is not implemented for `LogOnlyWu`
+  --> tests/ui/unmapped_unit_fused_fail.rs:53:1
    |
-47 | struct AppendWu;
-   | ^^^^^^^^^^^^^^^
+53 | struct LogOnlyWu;
+   | ^^^^^^^^^^^^^^^^
    = note: Implement `RecordOp` on a WorkUnit that is a pure per-record map (one column in, one column out, no cross-record state) to let the engine fuse a linear chain of such units. Declare `type In`, `type Out`, and `fn apply(&self, x: In) -> Out`. A unit with cross-record state (an accumulator) does not implement `RecordOp`.
 help: the following other types implement trait `FuseCarrier`
   --> src/dispatch/fusion.rs
@@ -24,12 +24,12 @@ help: the following other types implement trait `FuseCarrier`
    | |     WuCons<H2, T>: FuseCarrier,
    | |     <WuCons<H2, T> as FuseCarrier>::Chain: OpChain<In = <H as RecordOp>::Out>,
    | |______________________________________________________________________________^ `WuCons<H, WuCons<H2, T>>`
-   = note: required for `WuCons<AppendWu, WuNil>` to implement `FuseCarrier`
+   = note: required for `WuCons<LogOnlyWu, WuNil>` to implement `FuseCarrier`
 
 error[E0277]: the trait bound `BindingNil: ColSelector<_, _>` is not satisfied
-  --> tests/ui/append_fused_fail.rs:82:23
+  --> tests/ui/unmapped_unit_fused_fail.rs:98:23
    |
-82 |     let _ = scheduler.run_fused();
+98 |     let _ = scheduler.run_fused();
    |                       ^^^^^^^^^ the trait `ColSelector<_, _>` is not implemented for `BindingNil`
    |
    = help: the following other types implement trait `ColSelector<T, Index>`:
@@ -42,7 +42,7 @@ error[E0277]: the trait bound `BindingNil: ColSelector<_, _>` is not satisfied
              `VirtualBinding<U, Tail>` implements `ColSelector<T, There<I>>`
    = note: required for `AccumBinding<Av, BindingNil>` to implement `ColSelector<_, There<_>>`
    = note: required for `AccumBinding<Av, BindingNil>` to implement `ColProject<Cons<Column<_>, hilavitkutin_api::Empty>, Cons<There<_>, hilavitkutin_api::Empty>>`
-   = note: required for `WuCons<ChainWu<OpCons<AppendWu, OpNil<_>>>, WuNil>` to implement `RunFiber<AccumBinding<Av, BindingNil>, Cons<(hilavitkutin_api::Empty, Cons<There<_>, hilavitkutin_api::Empty>, Cons<There<_>, hilavitkutin_api::Empty>, hilavitkutin_api::Empty, hilavitkutin_api::Empty, Here), hilavitkutin_api::Empty>>`
+   = note: required for `WuCons<ChainWu<OpCons<LogOnlyWu, OpNil<_>>>, WuNil>` to implement `RunFiber<AccumBinding<Av, BindingNil>, Cons<(hilavitkutin_api::Empty, Cons<There<_>, hilavitkutin_api::Empty>, Cons<There<_>, hilavitkutin_api::Empty>, hilavitkutin_api::Empty, hilavitkutin_api::Empty, Here), hilavitkutin_api::Empty>>`
 note: required by a bound in `scheduler::run_fused::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::run_fused`
   --> src/scheduler/run_fused.rs
    |

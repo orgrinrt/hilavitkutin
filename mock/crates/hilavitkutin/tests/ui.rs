@@ -17,6 +17,6 @@ fn compile_fail_fixtures() {
     t.compile_fail("tests/ui/unregistered_store_fail.rs");
     t.pass("tests/ui/undeclared_read_pass.rs");
     t.compile_fail("tests/ui/undeclared_read_fail.rs");
-    t.pass("tests/ui/append_fused_pass.rs");
-    t.compile_fail("tests/ui/append_fused_fail.rs");
+    t.pass("tests/ui/unmapped_unit_fused_pass.rs");
+    t.compile_fail("tests/ui/unmapped_unit_fused_fail.rs");
 }

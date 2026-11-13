@@ -25,7 +25,8 @@ unsafe impl Sync for Provider {}
 impl MemoryProviderApi for Provider {
     unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
         let align = align.0.max(1);
-        let aligned = (self.used.get() + align - 1) / align * align;
+        let addr = self.base as usize + self.used.get();
+        let aligned = (addr + align - 1) / align * align - self.base as usize;
         if aligned + len.0 > 4096 {
             return core::ptr::null_mut();
         }

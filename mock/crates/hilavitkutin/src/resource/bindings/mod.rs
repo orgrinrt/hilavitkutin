@@ -481,8 +481,8 @@ where
 /// The schedule-once-reuse model runs one built scheduler across many frames.
 /// An `AccumBinding` holds a `Cell<USize>` live-length the append accessor
 /// advances during a frame; without a per-frame reset the next frame would
-/// append from the prior frame's offset (and saturate once it reaches the
-/// reserved capacity). `Scheduler::run` calls this at frame start so each frame
+/// append from the prior frame's offset (and hit the capacity assert once it
+/// reaches the reserved capacity). `Scheduler::run` calls this at frame start so each frame
 /// appends into a fresh buffer.
 ///
 /// The walk is the bindings-cons-list mirror of `DrainStores`: a no-op at every
@@ -574,7 +574,7 @@ where
                     ptr,
                     len: Cell::new(USize(0)), // lint:allow(no-bare-numeric) reason: zero live-length init on a fresh accumulator; tracked: #345
                     // Capacity equals the reserved record count this round; the
-                    // append accessor saturates at it.
+                    // append accessor asserts against it.
                     cap: record_count,
                     tail,
                 })

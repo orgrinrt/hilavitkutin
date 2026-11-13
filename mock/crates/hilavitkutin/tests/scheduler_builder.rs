@@ -162,6 +162,8 @@ impl Kit for WorkspaceKit {
 // Positive smoke tests.
 // ---------------------------------------------------------------------
 
+// An empty builder with a provider is the no-store base case: a scheduler
+// requires a memory provider, and nothing else.
 #[test]
 fn empty_build() {
     let built = Scheduler::builder().build(store(), USize(0));
@@ -208,14 +210,6 @@ fn mixed_kit_and_raw_build() {
         .with(Resource::new(Interner))
         .with(Column::<FileInfo>::new())
         .build(store(), USize(0));
-    assert!(built.is_ok(), "the builder must accept this registration");
-}
-
-#[test]
-fn scheduler_constructs_via_build() {
-    // A scheduler now requires a memory provider; constructing through
-    // an empty builder with a provider is the no-store base case.
-    let built = Scheduler::builder().build(store(), USize(0));
     assert!(built.is_ok(), "the builder must accept this registration");
 }
 

@@ -12,13 +12,12 @@
 //! This file is a structural sketch with an empty `main`: the unit
 //! bodies and the run wiring are not written. `Scheduler::run`,
 //! `run_fused` and `run_parallel` exist, and `tests/incremental_skip.rs`
-//! in the engine crate shows a unit shape that runs. Ticket
-//! `559df4cb0767` decides whether this becomes a runnable example or is
-//! deleted.
+//! in the engine crate shows a unit shape that runs.
 
 fn main() {
-    // structural sketch of the parallel-columns + per-WU access-set
-    // call-site shape; it runs nothing.
+    // FIXME(559df4cb0767): structural sketch of the parallel-columns +
+    // per-WU access-set call-site shape; it runs nothing. Either it becomes
+    // a runnable example or it is deleted.
     //
     // The end-to-end shape consumers will write here:
     //

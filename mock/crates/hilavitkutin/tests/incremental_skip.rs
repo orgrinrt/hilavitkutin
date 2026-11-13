@@ -96,16 +96,17 @@ unsafe impl Sync for StableProvider {}
 impl MemoryProviderApi for StableProvider {
     unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
         let align = align.0.max(1);
-        let used = self.used.get();
-        let aligned = (used + align - 1) / align * align;
+        // Align the address, not the offset: the base comes from a `Vec<u8>`,
+        // whose own alignment is one, so an aligned offset alone would not give
+        // a `u32` column a four-byte aligned address.
+        let addr = self.base as usize + self.used.get();
+        let aligned = (addr + align - 1) / align * align - self.base as usize;
         if aligned + len.0 > self.cap {
             return core::ptr::null_mut();
         }
         self.used.set(aligned + len.0);
-        // SAFETY: `aligned + len <= cap`, inside the leaked buffer. The base is
-        // from a Vec<u8>, whose alignment is 1, so over-aligned requests would
-        // need padding at the base; the stores here are u32 and u8 only and the
-        // test asserts on the bytes it reads.
+        // SAFETY: `aligned + len <= cap`, inside the leaked buffer, and the
+        // returned address is a multiple of `align`.
         unsafe { self.base.add(aligned) }
     }
 

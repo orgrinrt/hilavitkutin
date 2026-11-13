@@ -1,7 +1,7 @@
 error[E0277]: store `hilavitkutin_api::Empty` does not contain `Column<Cb>`
-  --> tests/ui/undeclared_read_fail.rs:42:50
+  --> tests/ui/undeclared_read_fail.rs:55:50
    |
-42 |             let v = unsafe { ctx.reader().read::<Cb, _>(i) };
+55 |             let v = unsafe { ctx.reader().read::<Cb, _>(i) };
    |                                                  ^^ the trait `Contains<Column<Cb>>` is not implemented for `hilavitkutin_api::Empty`
    |
    = note: Register it with `.add_resource::<T>(initial)`, `.add_column::<T>()`, `.add_virtual::<T>()`, or install a Kit that registers it. If `.build()` reports `overflow evaluating the requirement`, declare `#![recursion_limit = "1024"]` at your crate root.
@@ -24,9 +24,9 @@ note: required by a bound in `hilavitkutin_api::ColumnReaderApi::read`
    |            ^^^^^^^^^^^^^^^^^^^ required by this bound in `ColumnReaderApi::read`
 
 error[E0277]: the trait bound `ColPtrNil: ColSelector<Cb, _>` is not satisfied
-  --> tests/ui/undeclared_read_fail.rs:42:43
+  --> tests/ui/undeclared_read_fail.rs:55:43
    |
-42 |             let v = unsafe { ctx.reader().read::<Cb, _>(i) };
+55 |             let v = unsafe { ctx.reader().read::<Cb, _>(i) };
    |                                           ^^^^ the trait `ColSelector<Cb, _>` is not implemented for `ColPtrNil`
    |
    = help: the following other types implement trait `ColSelector<T, Index>`:
