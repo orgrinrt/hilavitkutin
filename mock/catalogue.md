@@ -12,10 +12,10 @@ Each `#[ignore = "catalogue: <the gap>; tracked #<id>"]` in this repository name
 - hilavitkutin_catalogue_a_min_morsel_that_is_not_a_multiple_o: a MIN_MORSEL that is not a multiple of 4 lets the morsel window land below the floor (was #341)
 - hilavitkutin_catalogue_fiber_plan_idx_records_the_csr_index: fiber_plan_idx records the CSR index when dispatch order reorders fibers; needs a multi-trunk fixture and the accessor (was #341)
 - hilavitkutin_catalogue_seq_and_map_collection_members_are_no: Seq and Map collection members are not wired into resource values (was #344)
-- hilavitkutin_catalogue_trampoline_survival_under_fat_lto_is: trampoline survival under fat LTO is unchecked off unix; needs a symbol reader
 - hilavitkutin_catalogue_cold_store_flush_and_open_need_the_mm: cold store flush writes nothing and open reads no manifest; needs the mmap-backed file I/O (was #344)
 - hilavitkutin_catalogue_engine_vs_std_perf_oracles_are_timing: the engine_vs_std perf oracles are timing assertions that only mean something in release; they belong on the bench harness
 - hilavitkutin_catalogue_cold_store_snapshot_copies_nothing_an: cold store snapshot copies nothing; needs the backup mechanism (was #344)
+- str_const_two_strings_sharing_28_hash_bits_get_one_const_han: two str_const strings that share their low 28 hash bits take one const handle, so the second evicts to the first string's key; needs a collision check at registration or a wider const handle
 - run_fused_does_not_refuse_a_recordop_unit_that_writes_an_acc: run_fused runs only the map and never the body of a RecordOp unit that also appends; needs the fused entry to refuse the carrier, or to run the body
 - run_parallel_refuses_a_multi_append_skew_that_fits_the_reser: run_parallel caps a core's accumulator region at its record slice, so a frame whose appends fit the reservation but put more than one append per record on one slice is refused at more than one worker and accepted at one; needs region caps sized for the per-region worst case
 - hilavitkutin_catalogue_build_returns_a_scheduler_when_the_pl: build returns a scheduler when the plan has more fibers than the descriptor pool holds, and in release the units past the pool never dispatch; needs build to refuse a plan it cannot fully describe (was #340)

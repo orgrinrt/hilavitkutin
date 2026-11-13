@@ -25,7 +25,7 @@ pub const MAX_COLUMNS_PER_TABLE: usize = 64; // lint:allow(no-bare-numeric) lint
 /// Per-column metadata.
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct ColumnMeta {
-    /// Content hash of the column name (28-bit FNV).
+    /// Content hash of the column name (64-bit FNV-1a).
     pub name_hash:   ContentHash,
     /// Bit width reported by the underlying ColumnValue impl.
     pub bit_width:   BitWidth,
@@ -52,7 +52,7 @@ impl Default for ColumnMeta {
 /// first `column_count` entries are valid.
 #[derive(Debug, Clone, Copy)]
 pub struct TableMeta {
-    /// Content hash of the table name (28-bit FNV).
+    /// Content hash of the table name (64-bit FNV-1a).
     pub name_hash:    ContentHash,
     /// Schema version; consumer-defined meaning.
     pub version:      SchemaVersion,

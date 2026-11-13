@@ -1,12 +1,23 @@
 //! Unix backend: raw dlopen / dlsym / dlclose over libc.
 
-use crate::error::LinkError;
-use arvo::USize;
 use core::ffi::{c_char, c_int, c_void};
+
+use arvo::USize;
 use notko::Outcome;
 
-const RTLD_NOW: c_int = 2;
-const RTLD_LOCAL: c_int = 4;
+use crate::error::LinkError;
+
+/// Resolve every symbol at load time. The value is the target libc's, from
+/// the `libc` crate: it is 0 on 32-bit Android where it is 2 elsewhere.
+const RTLD_NOW: c_int = libc::RTLD_NOW;
+
+/// Keep the library's symbols private to the loading scope. The value is the
+/// target libc's, from the `libc` crate, because it is not the same number
+/// everywhere: 4 on Apple, 0 on Linux, 0x200 on NetBSD and QNX. Where the
+/// value 4 is passed outside Apple it is another flag, glibc's `RTLD_NOLOAD`,
+/// which makes `dlopen` return null for any library the process has not
+/// already mapped.
+const RTLD_LOCAL: c_int = libc::RTLD_LOCAL;
 
 unsafe extern "C" {
     fn dlopen(path: *const c_char, flags: c_int) -> *mut c_void;
@@ -14,16 +25,13 @@ unsafe extern "C" {
     fn dlclose(handle: *mut c_void) -> c_int;
 }
 
-pub(crate) fn platform_load(
-    path: &[u8],
-) -> Outcome<*mut c_void, LinkError> {
+pub(crate) fn platform_load(path: &[u8]) -> Outcome<*mut c_void, LinkError> {
     if !is_null_terminated(path) {
         return Outcome::Err(LinkError::PathNotFound);
     }
     // SAFETY: path is non-empty, null-terminated, and passed to a
     // libc function that treats it as a C string.
-    let handle =
-        unsafe { dlopen(path.as_ptr() as *const c_char, RTLD_NOW | RTLD_LOCAL) };
+    let handle = unsafe { dlopen(path.as_ptr() as *const c_char, RTLD_NOW | RTLD_LOCAL) };
     if handle.is_null() {
         return Outcome::Err(LinkError::LoadFailed {
             platform_code: read_errno(),

@@ -1,3 +1,4 @@
+#![feature(const_trait_impl)]
 //! evict_str / inject_str roundtrips for const + runtime handles.
 
 use std::cell::RefCell;
@@ -14,7 +15,7 @@ use hilavitkutin_persistence::{
     evict_str,
     inject_str,
 };
-use hilavitkutin_str::{ArenaInterner, Str, StringInterner, const_fnv1a};
+use hilavitkutin_str::{ArenaInterner, Str, StringInterner, const_fnv1a, str_const};
 use notko::{Maybe, Outcome};
 
 struct VecInterner {
@@ -51,17 +52,40 @@ impl ArenaInterner for VecInterner {
     }
 }
 
+/// The key a string is stored under: the full FNV-1a hash of its bytes.
 fn content_hash(s: &str) -> ContentHash {
-    ContentHash::from_raw(const_fnv1a(s) & (Str::ID_MASK.to_raw() as u64)) // lint:allow(no-bare-numeric) reason: u32 ID_MASK widened to u64 to AND with u64 hash; arvo lacks a Widen counterpart to Narrow; tracked: #290
+    ContentHash::from_raw(const_fnv1a(s))
+}
+
+fn evicted(r: Outcome<ContentHash, PersistenceError>) -> ContentHash {
+    match r {
+        Outcome::Ok(h) => h,
+        Outcome::Err(e) => panic!("evict failed: {e:?}"),
+    }
 }
 
 #[test]
-fn evict_const_is_identity() {
+fn evict_const_hashes_the_string_behind_the_handle() {
+    let interner = StringInterner::new(VecInterner::new());
+    let h = str_const!("persist-const-evict");
+    assert!(h.is_const().0);
+    assert_eq!(
+        evicted(evict_str(h, &interner)),
+        content_hash("persist-const-evict")
+    );
+}
+
+#[test]
+fn evict_a_const_handle_nothing_registered_is_missing() {
+    // A const handle holds 28 bits of a hash and no more. With no string
+    // behind it there is no key to evict it to.
     let interner = StringInterner::new(VecInterner::new());
     let h = Str::__make(Bits::<28>::from_raw(0x0012_3456));
     assert!(h.is_const().0);
-    let evicted = evict_str(h, &interner);
-    assert_eq!(evicted, ContentHash::from_raw(0x0012_3456));
+    match evict_str(h, &interner) {
+        Outcome::Err(e) => assert_eq!(e, PersistenceError::Missing),
+        Outcome::Ok(_) => panic!("a handle with no string behind it has no key"),
+    }
 }
 
 #[test]
@@ -69,8 +93,43 @@ fn evict_runtime_hashes_bytes() {
     let interner = StringInterner::new(VecInterner::new());
     let h = interner.intern("runtime-evict-sample");
     assert!(h.is_runtime().0);
-    let evicted = evict_str(h, &interner);
-    assert_eq!(evicted, content_hash("runtime-evict-sample"));
+    assert_eq!(
+        evicted(evict_str(h, &interner)),
+        content_hash("runtime-evict-sample")
+    );
+}
+
+#[test]
+fn inject_a_const_key_returns_the_const_handle() {
+    let interner = StringInterner::new(VecInterner::new());
+    let h = str_const!("persist-const-inject");
+    let key = evicted(evict_str(h, &interner));
+    let table = StringTable::default();
+    match inject_str(key, &interner, &table) {
+        Outcome::Ok(back) => assert_eq!(back, h),
+        Outcome::Err(_) => panic!("the const table knows this string"),
+    }
+}
+
+#[test]
+fn inject_does_not_take_a_key_sharing_only_28_bits_for_the_const_string() {
+    let interner = StringInterner::new(VecInterner::new());
+    let h = str_const!("persist-const-lookalike");
+    let key = content_hash("persist-const-lookalike");
+    // Same low 28 bits, a different key: the const candidate resolves to a
+    // string that does not hash back to it, so it is not that string.
+    let lookalike = ContentHash::from_raw(const_fnv1a("persist-const-lookalike") ^ (1u64 << 40));
+    assert_ne!(lookalike, key);
+    let table = StringTable::default();
+    match inject_str(lookalike, &interner, &table) {
+        Outcome::Err(e) => assert_eq!(e, PersistenceError::Missing),
+        Outcome::Ok(taken) => {
+            assert_ne!(
+                taken, h,
+                "a key sharing 28 bits must not return the const handle"
+            )
+        },
+    }
 }
 
 #[test]
@@ -118,7 +177,7 @@ fn evict_then_inject_runtime_roundtrips() {
 
     let original_bytes: &'static [u8] = b"roundtrip-string";
     let h = interner.intern("roundtrip-string");
-    let evicted = evict_str(h, &interner);
+    let evicted = evicted(evict_str(h, &interner));
 
     // Build a string-table entry that re-supplies the bytes.
     let entries: &'static [StringTableEntry] = Box::leak(Box::new([StringTableEntry {
@@ -159,5 +218,124 @@ fn string_table_lookup_hits_return_bytes() {
     match table.lookup(ContentHash::from_raw(0xABCD)) {
         Maybe::Is(b) => assert_eq!(b, &payload[..]),
         Maybe::Isnt => panic!("expected hit"),
+    }
+}
+
+/// How many of `keys` repeat an earlier one once reduced to `bits` bits.
+fn collisions_at(bits: u32, keys: &[u64]) -> usize {
+    let mask = if bits >= 64 { u64::MAX } else { (1u64 << bits) - 1 };
+    let mut reduced: Vec<u64> = keys.iter().map(|k| k & mask).collect();
+    reduced.sort_unstable();
+    reduced.windows(2).filter(|w| w[0] == w[1]).count()
+}
+
+/// Catalogue: two registered strings that share their low 28 bits take one
+/// const handle, so the handle of the second evicts to whichever string the
+/// const table holds first and the key on disk is the other string's.
+/// "const-7378" and "const-121144" hash to 0x8129587f57b6fb9a and
+/// 0x5e5c4d2577b6fb9a. The design does not say how this resolves, so the
+/// test states the behaviour a stored key needs, each string under its own
+/// key, and stays red where it runs.
+#[test]
+#[ignore = "catalogue: two registered strings sharing 28 hash bits take one const handle; tracked #str_const_two_strings_sharing_28_hash_bits_get_one_const_han"]
+fn two_registered_strings_sharing_28_bits_evict_to_their_own_keys() {
+    let interner = StringInterner::new(VecInterner::new());
+    let first = str_const!("const-7378");
+    let second = str_const!("const-121144");
+    assert_eq!(
+        evicted(evict_str(first, &interner)),
+        content_hash("const-7378")
+    );
+    assert_eq!(
+        evicted(evict_str(second, &interner)),
+        content_hash("const-121144"),
+        "the second string must be stored under its own key"
+    );
+}
+
+/// The keys `evict_str` hands back for `count` distinct interned strings.
+fn evicted_keys(interner: &StringInterner<VecInterner>, count: usize) -> Vec<u64> {
+    (0 .. count)
+        .map(|i| {
+            let text = format!("string-{i}");
+            let key = evicted(evict_str(interner.intern(&text), interner));
+            assert_eq!(key, content_hash(&text), "evict keys a string by its hash");
+            key.to_raw()
+        })
+        .collect()
+}
+
+/// Ten thousand strings evicted through `evict_str` take ten thousand distinct
+/// keys. The same keys are counted again at 16 bits first, where they collide
+/// by the hundreds, so a count of zero at the stored width is a measurement
+/// and not a counter that cannot see one. A key cut to 28 bits would show up
+/// in the stored count only by luck, which is why the next test searches for
+/// the collision instead of hoping for it.
+#[test]
+fn ten_thousand_strings_evict_to_distinct_keys() {
+    let interner = StringInterner::new(VecInterner::new());
+    let keys = evicted_keys(&interner, 10_000);
+
+    assert!(
+        collisions_at(16, &keys) > 100,
+        "the control: 16 bits must collide heavily, or the counter is blind"
+    );
+    assert_eq!(
+        collisions_at(64, &keys),
+        0,
+        "the stored key is the width the evict path returns"
+    );
+}
+
+/// Two strings that agree on their low 28 bits, found by search. A key cut to
+/// 28 bits keys them the same and returns the wrong string on inject; the full
+/// key tells them apart.
+#[test]
+fn strings_sharing_28_bits_evict_to_different_keys() {
+    let mask = (1u64 << 28) - 1;
+    let mut seen: std::collections::HashMap<u64, String> = std::collections::HashMap::new();
+    let mut pair: Option<(String, String)> = None;
+    for i in 0 .. 2_000_000u64 {
+        let text = format!("probe-{i}");
+        let low = const_fnv1a(&text) & mask;
+        if let Some(earlier) = seen.insert(low, text.clone()) {
+            pair = Some((earlier, text));
+            break;
+        }
+    }
+    let (a, b) = pair.expect("two probes sharing their low 28 bits exist well inside the search");
+
+    let interner = StringInterner::new(VecInterner::new());
+    let ka = evicted(evict_str(interner.intern(&a), &interner)).to_raw();
+    let kb = evicted(evict_str(interner.intern(&b), &interner)).to_raw();
+
+    assert_ne!(a, b);
+    assert_eq!(
+        ka & mask,
+        kb & mask,
+        "the premise: they share their low 28 bits"
+    );
+    assert_ne!(ka, kb, "evict keys them apart at the full width");
+
+    // The same through inject: the key of one resolves to that string.
+    let payload_a: &'static [u8] = Box::leak(a.clone().into_bytes().into_boxed_slice());
+    let entries: &'static [StringTableEntry] = Box::leak(Box::new([StringTableEntry {
+        content_hash: ContentHash::from_raw(ka),
+        bytes_offset: BufferOffset(<USize as Identity<Additive>>::IDENTITY),
+        bytes_len:    BufferLen(USize(payload_a.len())),
+    }]));
+    let table = StringTable {
+        entries,
+        buffer: payload_a,
+    };
+    match inject_str(ContentHash::from_raw(kb), &interner, &table) {
+        Outcome::Ok(h) => {
+            assert_ne!(
+                interner.resolve(h),
+                Maybe::Is(a.as_str()),
+                "the other key must not return the first string"
+            )
+        },
+        Outcome::Err(e) => assert_eq!(e, PersistenceError::Missing),
     }
 }
