@@ -228,7 +228,7 @@ impl<
                     // validated registration order is topological, so
                     // topo_order values are carrier positions and the mask
                     // composes directly with the dirty mask.
-                    // FIXME: rebuilt per (phase, fiber); plan-bake the member
+                    // FIXME(hilavitkutin_7_unmarked_placeholders): rebuilt per (phase, fiber); plan-bake the member
                     // masks (and a fiber-to-const-phase map to skip out-of-phase
                     // fibers' window walks) at build() per schedule-once-reuse;
                     // tracked #340.
