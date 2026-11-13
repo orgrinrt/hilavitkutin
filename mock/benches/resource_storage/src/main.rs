@@ -23,7 +23,7 @@
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use mockspace_bench_core::{routine_bridge, ByteRoutine};
+use mockspace_bench_core::{ByteRoutine, routine_bridge};
 use mockspace_bench_harness::{self as harness, BenchManifest, RoutineSpec, Workload};
 
 fn main() -> ExitCode {
@@ -38,7 +38,7 @@ fn main() -> ExitCode {
         Err(e) => {
             eprintln!("error: {e}");
             return ExitCode::FAILURE;
-        }
+        },
     };
     let dir = std::env::current_dir()
         .expect("readable cwd for variant path resolution")
@@ -52,16 +52,19 @@ fn main() -> ExitCode {
                 Err(e) => {
                     eprintln!("error: {e}");
                     return ExitCode::FAILURE;
-                }
+                },
             };
-            config.variant_paths =
-                config.variant_paths.into_iter().map(shape_variant_path).collect();
+            config.variant_paths = config
+                .variant_paths
+                .into_iter()
+                .map(shape_variant_path)
+                .collect();
             let routine = match routine_for(config.n, &section.workload) {
                 Some(r) => r,
                 None => {
                     eprintln!("error: bench `{bench_name}` unsupported n={}", config.n);
                     return ExitCode::FAILURE;
-                }
+                },
             };
             // Outputs land in the benches root (../), alongside every other
             // bench's csv / json / findings, not in this orchestrator subdir.
@@ -74,7 +77,7 @@ fn main() -> ExitCode {
                     Err(e) => {
                         eprintln!("error: report-only `{csv}`: {e}");
                         return ExitCode::FAILURE;
-                    }
+                    },
                 };
                 let result = mockspace_bench_harness::BenchResult {
                     title: section.title.clone(),
@@ -83,7 +86,8 @@ fn main() -> ExitCode {
                     cache_path: csv.clone(),
                     report_path: report.clone(),
                 };
-                if let Err(e) = harness::write_report_for_routine(&result, &routine, "warm", &report)
+                if let Err(e) =
+                    harness::write_report_for_routine(&result, &routine, "warm", &report)
                 {
                     eprintln!("error: report: {e}");
                     return ExitCode::FAILURE;
@@ -95,13 +99,14 @@ fn main() -> ExitCode {
                     Err(e) => {
                         eprintln!("error: bench `{bench_name}` n={}: {e}", config.n);
                         return ExitCode::FAILURE;
-                    }
+                    },
                 };
                 if let Err(e) = harness::write_csv(&result, &csv) {
                     eprintln!("error: csv: {e}");
                     return ExitCode::FAILURE;
                 }
-                if let Err(e) = harness::write_report_for_routine(&result, &routine, "warm", &report)
+                if let Err(e) =
+                    harness::write_report_for_routine(&result, &routine, "warm", &report)
                 {
                     eprintln!("error: report: {e}");
                     return ExitCode::FAILURE;
@@ -185,7 +190,10 @@ fn routine_for(n: usize, bench: &str) -> Option<RoutineSpec> {
             _ => return None,
         }
     };
-    Some(RoutineSpec { name: bench.to_string(), bridge })
+    Some(RoutineSpec {
+        name: bench.to_string(),
+        bridge,
+    })
 }
 
 fn shape_variant_path(p: PathBuf) -> PathBuf {
@@ -209,7 +217,7 @@ fn run_worker(args: &[String]) -> ExitCode {
         None => {
             eprintln!("worker: missing --worker <path>");
             return ExitCode::FAILURE;
-        }
+        },
     };
     let bench_name = get("--bench-name").unwrap_or_default();
     let seed: u64 = get("--seed").and_then(|s| s.parse().ok()).unwrap_or(0);
@@ -219,8 +227,13 @@ fn run_worker(args: &[String]) -> ExitCode {
     let batch: usize = get("--batch").and_then(|s| s.parse().ok()).unwrap_or(1);
     let n: usize = get("--n").and_then(|s| s.parse().ok()).unwrap_or(1);
     let batch_k: usize = get("--batch-k").and_then(|s| s.parse().ok()).unwrap_or(1);
-    let max_call_us: Option<u64> =
-        get("--max-call-us").and_then(|s| s.parse().ok()).filter(|&v| v > 0);
+    let max_call_us: Option<u64> = get("--max-call-us")
+        .and_then(|s| s.parse().ok())
+        .filter(|&v| v > 0);
+    // Passed by the orchestrator for a section declaring `threaded = true`, and
+    // the worker then leaves its own thread unpinned: a variant's spawned
+    // threads never inherit the pin, so pinning the coordinator alone skews it.
+    let threaded = args.iter().any(|a| a == "--threaded");
 
     // The worker uses the bench-name (= the workload program selected for the
     // section) to pick the same routine the orchestrator built.
@@ -229,12 +242,22 @@ fn run_worker(args: &[String]) -> ExitCode {
         None => {
             eprintln!("worker: unsupported n={n}");
             return ExitCode::FAILURE;
-        }
+        },
     };
     let workload = workload_for(&bench_name);
     harness::run_worker(
-        &routine, &workload, &dylib_path, seed, cooldown_ms, &mode, runs, batch, n, batch_k,
+        &routine,
+        &workload,
+        &dylib_path,
+        seed,
+        cooldown_ms,
+        &mode,
+        runs,
+        batch,
+        n,
+        batch_k,
         max_call_us,
+        threaded,
     );
     ExitCode::SUCCESS
 }

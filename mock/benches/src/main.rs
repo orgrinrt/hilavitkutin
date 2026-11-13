@@ -26,10 +26,9 @@
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use mockspace_bench_core::{routine_bridge, ByteRoutine};
-use mockspace_bench_harness::{self as harness, BenchManifest, RoutineSpec, Workload};
-
 use benches::disasm_5check;
+use mockspace_bench_core::{ByteRoutine, routine_bridge};
+use mockspace_bench_harness::{self as harness, BenchManifest, RoutineSpec, Workload};
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().collect();
@@ -46,7 +45,7 @@ fn main() -> ExitCode {
         Err(e) => {
             eprintln!("error: {e}");
             return ExitCode::FAILURE;
-        }
+        },
     };
 
     let mock_benches_dir = std::env::current_dir()
@@ -70,7 +69,7 @@ fn main() -> ExitCode {
                 Err(e) => {
                     eprintln!("error: {e}");
                     return ExitCode::FAILURE;
-                }
+                },
             };
             config.variant_paths = config
                 .variant_paths
@@ -85,7 +84,7 @@ fn main() -> ExitCode {
                         config.n
                     );
                     return ExitCode::FAILURE;
-                }
+                },
             };
 
             let csv_path = format!("{}_n{}.csv", bench_name, config.n);
@@ -97,7 +96,7 @@ fn main() -> ExitCode {
                     Err(e) => {
                         eprintln!("error: report-only could not load `{csv_path}`: {e}");
                         return ExitCode::FAILURE;
-                    }
+                    },
                 };
                 if samples.is_empty() {
                     eprintln!("error: report-only: no samples in `{csv_path}`");
@@ -123,7 +122,7 @@ fn main() -> ExitCode {
                     Err(e) => {
                         eprintln!("error: bench `{bench_name}` n={}: {e}", config.n);
                         return ExitCode::FAILURE;
-                    }
+                    },
                 };
                 if let Err(e) = harness::write_csv(&result, &csv_path) {
                     eprintln!("error: writing csv: {e}");
@@ -153,7 +152,8 @@ fn main() -> ExitCode {
                     &report_dir,
                 ) {
                     Ok(br) => {
-                        let path = report_dir.join(format!("{}_n{}_5check.md", bench_name, config.n));
+                        let path =
+                            report_dir.join(format!("{}_n{}_5check.md", bench_name, config.n));
                         if br.any_fail() && bench_name.starts_with("dispatch_static") {
                             eprintln!(
                                 "  5-check FAIL (axis-A regression on dispatch_static): {}",
@@ -168,17 +168,19 @@ fn main() -> ExitCode {
                         } else {
                             eprintln!("  5-check PASS: {}", path.display());
                         }
-                    }
+                    },
                     Err(e) => {
                         eprintln!("  5-check skipped: {e}");
-                    }
+                    },
                 }
             }
         }
     }
 
     if axis_a_static_fail {
-        eprintln!("error: at least one dispatch_static 5-check failed; the axis-A LLVM-transparency invariant regressed");
+        eprintln!(
+            "error: at least one dispatch_static 5-check failed; the axis-A LLVM-transparency invariant regressed"
+        );
         return ExitCode::FAILURE;
     }
     ExitCode::SUCCESS
@@ -212,7 +214,19 @@ fn build_workload() -> Workload {
 fn routine_for_bench(bench_name: &str, workload: &str, n: usize) -> Option<RoutineSpec> {
     let may_differ = matches!(
         bench_name,
-        "dispatch_dynamic" | "hash_algos" | "fxpmul_strategy" | "cache_layout" | "iter_patterns" | "ema_formulation" | "modulo_strategy" | "branch_predictability" | "fold_strategy" | "rotate_strategy" | "shift_amount_origin" | "match_arm_count" | "float_width"
+        "dispatch_dynamic"
+            | "hash_algos"
+            | "fxpmul_strategy"
+            | "cache_layout"
+            | "iter_patterns"
+            | "ema_formulation"
+            | "modulo_strategy"
+            | "branch_predictability"
+            | "fold_strategy"
+            | "rotate_strategy"
+            | "shift_amount_origin"
+            | "match_arm_count"
+            | "float_width"
     );
     let bridge = if may_differ {
         match n {
@@ -270,7 +284,7 @@ fn run_worker(args: &[String]) -> ExitCode {
         None => {
             eprintln!("worker: missing --worker <path>");
             return ExitCode::FAILURE;
-        }
+        },
     };
     let bench_name = get("--bench-name").unwrap_or_default();
     let seed: u64 = get("--seed").and_then(|s| s.parse().ok()).unwrap_or(0);
@@ -283,13 +297,18 @@ fn run_worker(args: &[String]) -> ExitCode {
     let max_call_us: Option<u64> = get("--max-call-us")
         .and_then(|s| s.parse().ok())
         .filter(|&v| v > 0);
+    // The orchestrator passes `--threaded` for a bench section that declares
+    // `threaded = true`, and the worker must not pin its own thread then: a
+    // threaded variant's spawned threads never inherit the pin, so pinning the
+    // coordinator alone skews the workload.
+    let threaded = args.iter().any(|a| a == "--threaded");
 
     let routine = match routine_for_bench(&bench_name, &bench_name, n) {
         Some(r) => r,
         None => {
             eprintln!("worker: unsupported n={n} for bench `{bench_name}`");
             return ExitCode::FAILURE;
-        }
+        },
     };
 
     let workload = build_workload();
@@ -306,6 +325,7 @@ fn run_worker(args: &[String]) -> ExitCode {
         n,
         batch_k,
         max_call_us,
+        threaded,
     );
     ExitCode::SUCCESS
 }
