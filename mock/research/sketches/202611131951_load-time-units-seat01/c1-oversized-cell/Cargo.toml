@@ -1,0 +1,19 @@
+# Arm C, the consumer's cell, against the founding record's 16-byte bound.
+# The spec (202603181200_topic.hilavitkutin-design-consolidation.md:448,:460-461)
+# says any Copy + 'static type of at most 16 bytes is column-storable and that
+# the bound is "Enforced at compile time on the blanket impl's where clause".
+# This spike checks whether the trunk refuses a wider cell, and what the
+# engine's morsel window does with one.
+
+[package]
+name = "c1-oversized-cell"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+[dependencies]
+hilavitkutin = { path = "../../../../crates/hilavitkutin" }
+hilavitkutin-api.workspace = true
+hilavitkutin-providers.workspace = true
+arvo.workspace = true
+notko.workspace = true

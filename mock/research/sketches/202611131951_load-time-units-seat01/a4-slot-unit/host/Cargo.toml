@@ -1,0 +1,21 @@
+# The host side of arm A4: a compiled slot unit in the trunk's schedule whose
+# body calls a kernel the extension exports, and a check of whether a name the
+# extension minted resolves in the host. Run `cargo build -p a4-ext` first; the
+# test loads the cdylib from the shared target directory.
+
+[package]
+name = "a4-host"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+[dependencies]
+hilavitkutin = { path = "../../../../../crates/hilavitkutin" }
+hilavitkutin-api.workspace = true
+hilavitkutin-providers.workspace = true
+hilavitkutin-linking = { path = "../../../../../crates/hilavitkutin-linking" }
+hilavitkutin-str = { path = "../../../../../crates/hilavitkutin-str" }
+arvo-bits = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+arvo.workspace = true
+notko.workspace = true
+libc = "0.2"

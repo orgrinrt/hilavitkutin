@@ -1,0 +1,17 @@
+# Seat 01 reply spike for merged call M11 (round 202611131951). Seat 02's
+# option a says a packed column written only through a queue drained at the
+# close "has one writer by construction". This checks that claim against the
+# drain op described in op-answers-25 ("queued up ops that drain vectorised
+# and optimised at the close"): what a packed column needs when the drain
+# itself runs on more than one core. Pure std, no hilavitkutin crate, own
+# workspace. Run: cargo +nightly-2026-05-28 test --release -- --test-threads=1 --nocapture
+
+[workspace]
+
+[package]
+name = "c7-packed-queue-drain"
+edition = "2024"
+publish = false
+version = "0.0.0"
+
+[dependencies]

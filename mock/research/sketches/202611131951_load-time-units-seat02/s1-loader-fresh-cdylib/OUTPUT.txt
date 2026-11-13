@@ -1,0 +1,57 @@
+warning: hilavitkutin-linking@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-extensions@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+    Finished `test` profile [unoptimized] target(s) in 0.02s
+     Running unittests src/lib.rs (/home/user/target/debug/deps/s1_host-7355810131630953)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/fresh.rs (/home/user/target/debug/deps/fresh-75b50f464e0466dd)
+
+running 2 tests
+test a_fresh_extension_loads_through_the_shipped_loader_and_host ... hilavitkutin_linking::Library::load on a fresh library: err LoadFailed { platform_code: 0 }
+hilavitkutin_extensions::ExtensionHost::load on a fresh library: err LinkFailed { cause: LoadFailed { platform_code: 0 } }
+
+thread 'a_fresh_extension_loads_through_the_shipped_loader_and_host' (23757) panicked at tests/fresh.rs:37:5:
+assertion `left == right` failed: the shipped loader cannot open a library it has not already got
+  left: "err LoadFailed { platform_code: 0 }"
+ right: "ok"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test the_flag_the_loader_passes_as_local_is_glibc_noload ... glibc: RTLD_LOCAL=0 RTLD_NOLOAD=4 RTLD_NOW=2 RTLD_GLOBAL=256
+
+thread 'the_flag_the_loader_passes_as_local_is_glibc_noload' (23759) panicked at tests/fresh.rs:53:5:
+assertion `left != right` failed: 4 is RTLD_NOLOAD on this libc, so the loader asks dlopen not to load
+  left: 4
+ right: 4
+FAILED
+
+failures:
+
+failures:
+    a_fresh_extension_loads_through_the_shipped_loader_and_host
+    the_flag_the_loader_passes_as_local_is_glibc_noload
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--test fresh`
+     Running tests/preloaded.rs (/home/user/target/debug/deps/preloaded-610665bee1ceb4e2)
+
+running 1 test
+test the_shipped_loader_opens_a_library_only_once_something_else_has ... raw dlopen with this libc's RTLD_NOW | RTLD_LOCAL: mapped
+hilavitkutin_linking::Library::load once the library is mapped: ok
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests s1_host
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: 1 target failed:
+    `--test fresh`
+
+[exited with code 101]
