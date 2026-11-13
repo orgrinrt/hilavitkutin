@@ -309,11 +309,11 @@ impl<
         // Deviation 9: for the unit-outer accumulator carrier, each worker
         // appended into its own per-core region of the reserved buffer and
         // published its per-accumulator live and `wanted` counts. Forward-compact
-        // those regions into each accumulator's `[0, sum)` prefix and set the
-        // binding's live length, and carry every refused append into its
-        // `wanted`, so downstream readers see the same contiguous prefix
-        // single-core `run()` would produce and a refusal on any core stays a
-        // refusal. The `frame_await_done` Acquire paired with the workers'
+        // those regions after the leading bands' records and set the binding's
+        // live length, and carry every refused append into its `wanted`, so
+        // downstream readers see the leading records and then the cores' in
+        // `run()` order, no accepted record leaves the counts, and a refusal on
+        // any core stays a refusal. The `frame_await_done` Acquire paired with the workers'
         // `frame_done_arrive` Release publishes the counts; load them Relaxed
         // under that happens-before.
         // SAFETY: all workers re-parked; exclusive access to the bindings + arrays.

@@ -24,7 +24,7 @@ use crate::dispatch::fusion::{ChainWu, FuseCarrier};
 use crate::dispatch::morsel::MorselRange;
 use crate::meta::fold_ema;
 use crate::plan::{AccessMask, PlanDims};
-use crate::resource::bindings::{BindingsFor, FirstRefusal};
+use crate::resource::bindings::{BindingsFor, FirstRefusal, ResetAccumulators};
 
 impl<
     Cfg: RunCfg,
@@ -60,6 +60,9 @@ impl<
     /// the call site exactly as `run`'s `Witnesses` is, so `scheduler.run_fused()`
     /// needs no turbofish.
     ///
+    /// Like `run`, it resets every accumulator at frame start and returns the
+    /// frame's verdict.
+    ///
     /// A fusible chain writes no accumulator, so it dispatches morsel-outer (the
     /// runtime morsel loop wraps the whole-chain walk so the intermediates stay
     /// register-resident per morsel); a record-less frame runs the chain once
@@ -69,7 +72,7 @@ impl<
         WuVals: FuseCarrier,
         WuCons<ChainWu<<WuVals as FuseCarrier>::Chain>, WuNil>:
             RunFiber<<Vals as BindingsFor>::Bindings, W2>,
-        <Vals as BindingsFor>::Bindings: FirstRefusal,
+        <Vals as BindingsFor>::Bindings: ResetAccumulators + FirstRefusal,
     {
         let _ = (
             &self.plan_dirty,
@@ -81,6 +84,9 @@ impl<
         // seed flag (the first frame stores its raw duration).
         let frame_start = self.clock.now_ns();
         let ema_seed = Bool(self.first_frame.load(Ordering::Relaxed));
+        // Every frame starts with fresh accumulators and nothing refused, as in
+        // `run`, so the verdict at the close is this frame's own.
+        self.bindings.reset_accumulators();
         let fused = WuCons {
             head: ChainWu::new(self.wu_values.fuse()),
             tail: WuNil,

@@ -62,10 +62,8 @@ pub trait RunCfg:
     /// The run's output. Every run entry returns `Self::Out` built from the
     /// frame's verdict: `Ok(())`, or `Err` with the first accumulator that
     /// refused an append, walked in registration order.
+    /// The error type lives inside `Out`; the trait declares no separate one.
     type Out: From<notko::Outcome<(), AccumRefused>>;
-
-    /// Failure type the run reports.
-    type Err;
 
     /// Cap on resources marked `PlanAffecting`. Drives the dirty-
     /// bitmask width. Default 256 (32-byte bitmask, fits one cache
@@ -153,7 +151,6 @@ impl BuilderInput for DefaultRunCfg {
 }
 
 impl RunCfg for DefaultRunCfg {
-    type Err = AccumRefused;
     type Out = notko::Outcome<(), AccumRefused>;
 }
 

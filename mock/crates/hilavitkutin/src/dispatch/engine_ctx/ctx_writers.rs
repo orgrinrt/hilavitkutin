@@ -136,8 +136,10 @@ where
         // Every append is counted as asked. It is written only while nothing
         // has been refused this frame (`wanted == live`) and the live length is
         // below the reserved capacity; otherwise only `wanted` moves, so the
-        // refusal is sticky and the accepted records are the prefix the frame
-        // asked for first. Invariant: `wanted >= live`, and the accumulator has
+        // refusal is sticky on this binding and the records it accepted are a
+        // prefix of the appends asked through it. Under `run_parallel` each core
+        // appends through its own binding, so that holds per region, not for the
+        // accumulator as a whole. Invariant: `wanted >= live`, and the binding has
         // refused exactly when `wanted > live`. Both cells are written only by
         // the thread that owns this binding for the frame. The run reads the
         // refusal at the close (`FirstRefusal`).

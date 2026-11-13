@@ -16,21 +16,25 @@ use crate::resource::provenance::ColumnPtr;
 ///
 /// Each worker drives the unit-outer accumulator dispatch over its head+tail
 /// record slice `[lo, lo+region_cap)` against a per-core COPY of the bindings:
-/// every `AccumBinding` is offset to `base + lo` with fresh zero live-length and
-/// `wanted` cells and capacity `region_cap` (its slice's worst-case room at one
-/// append per record), while column / resource / virtual nodes copy their
-/// (Copy) pointers unchanged. The per-core bindings then drives the existing
-/// `RunFiber::run` unchanged: disjoint per-core regions plus per-core cells mean
-/// no shared mutable state, so the append path is sound across workers, and a
-/// region refuses past `region_cap` rather than writing into the next core's
-/// region. The merge (`MergeAccums`) compacts the per-core regions afterwards.
+/// every `AccumBinding` is offset past the records the leading bands accepted on
+/// it, to `base + len + lo` clipped to its capacity, with fresh zero live-length
+/// and `wanted` cells and capacity `region_cap` (its slice's worst-case room at
+/// one append per record) clipped to the room left past that offset, while
+/// column / resource / virtual nodes copy their (Copy) pointers unchanged. The
+/// shared binding's `len` is read here and not written: the leading bands set it
+/// before the publish, and nothing writes it until every worker has arrived. The
+/// per-core bindings then drives the existing `RunFiber::run` unchanged:
+/// disjoint per-core regions plus per-core cells mean no shared mutable state,
+/// so the append path is sound across workers, and a region refuses past its cap
+/// rather than writing into the next core's region or over the leading records.
+/// The merge (`MergeAccums`) compacts the per-core regions afterwards.
 ///
 /// The walk returns the SAME bindings type (each node maps to itself), so the
 /// per-core value is a drop-in for `&self.bindings` at the dispatch call.
 pub trait RebaseBindings {
-    /// Build a per-core bindings copy with every accumulator offset to `lo` and
-    /// capped at `region_cap`, fresh live and `wanted` cells, other nodes copied
-    /// as-is.
+    /// Build a per-core bindings copy with every accumulator offset to `lo` past
+    /// its leading records and capped at `region_cap` within its capacity, fresh
+    /// live and `wanted` cells, other nodes copied as-is.
     fn rebase_accums(&self, lo: USize, region_cap: USize) -> Self;
 }
 
@@ -75,22 +79,36 @@ impl<T, Tail: RebaseBindings> RebaseBindings for VirtualBinding<T, Tail> {
     }
 }
 
+/// Where a core's region of an accumulator starts: after the `leading` records
+/// the leading bands accepted, at the core's slice start `lo`, clipped to the
+/// capacity. The rebase and the merge both place a region by this, so they
+/// agree on it.
+#[inline]
+const fn region_start(leading: USize, lo: USize, cap: USize) -> USize {
+    let start = leading.0.saturating_add(lo.0); // lint:allow(no-bare-numeric) reason: region offset past the leading records; tracked: #121
+    USize(if start < cap.0 { start } else { cap.0 })
+}
+
 impl<T, Tail: RebaseBindings> RebaseBindings for AccumBinding<T, Tail> {
     #[inline]
     fn rebase_accums(&self, lo: USize, region_cap: USize) -> Self {
-        // SAFETY: `ptr` is the reserved-buffer base; `lo` is this core's record-
-        // slice start (`lo < total <= reserved capacity`), so `base + lo` lands
-        // inside the reserved allocation. `region_cap` caps appends to the
-        // slice's worst case (one per record); past it the append is refused.
+        // The region starts after the records the leading bands accepted on the
+        // shared binding, and its cap is clipped to what is left of the capacity
+        // past that start, so no region overlaps them or another region.
+        let start = region_start(self.len.get(), lo, self.cap);
+        let cap = USize(region_cap.0.min(self.cap.0 - start.0)); // lint:allow(no-bare-numeric) reason: region cap clipped to the room left, start <= cap; tracked: #121
+        // SAFETY: `ptr` is the reserved-buffer base and `start <= cap`, so
+        // `base + start` lands inside the reserved allocation or one past its
+        // end; a region at the end has cap zero and never writes.
         let offset_ptr = unsafe {
-            ColumnPtr::new_unchecked(self.ptr.as_ptr().add(lo.0)) // lint:allow(no-bare-numeric) reason: element offset into reserved buffer; tracked: #121
+            ColumnPtr::new_unchecked(self.ptr.as_ptr().add(start.0)) // lint:allow(no-bare-numeric) reason: element offset into reserved buffer; tracked: #121
         };
         AccumBinding {
-            ptr:    offset_ptr,
-            len:    Cell::new(USize(0)), // lint:allow(no-bare-numeric) reason: fresh per-core live length; tracked: #121
+            ptr: offset_ptr,
+            len: Cell::new(USize(0)), // lint:allow(no-bare-numeric) reason: fresh per-core live length; tracked: #121
             wanted: Cell::new(USize(0)), // lint:allow(no-bare-numeric) reason: fresh per-core wanted count; tracked: #121
-            cap:    region_cap,
-            tail:   self.tail.rebase_accums(lo, region_cap),
+            cap,
+            tail: self.tail.rebase_accums(lo, region_cap),
         }
     }
 }
@@ -182,23 +200,27 @@ impl<'a> PerCoreCounts<'a> {
 
 /// Merge the per-core accumulator regions into the shared buffer's live prefix.
 ///
-/// After the threaded unit-outer phase, each accumulator's per-core regions sit
-/// at `[lo_c, lo_c + live_c)` of the shared reserved buffer. This walk
-/// forward-compacts them in ascending core order into the shared binding's
-/// `[0, sum live)` prefix and sets the binding live length, so downstream
-/// readers see the same contiguous prefix single-core `run()` would produce
-/// when nothing was refused. `accum_idx` threads the accumulator position
-/// through the walk.
+/// The leading bands appended on the shared binding before the workers ran, so
+/// `[0, len)` holds their records, and each core's region sits at `[s_c, s_c +
+/// live_c)` with `s_c = region_start(len, lo_c, cap)`, the start the rebase gave
+/// it. This walk forward-compacts the regions in ascending core order after the
+/// leading records, into `[len, len + sum live)`, and sets the binding's live
+/// length to that end, so downstream readers see the leading records and then
+/// the cores' in the order single-core `run()` appends them. `accum_idx` threads
+/// the accumulator position through the walk.
 ///
 /// The shared `wanted` becomes the merged live length plus every refused
 /// append: the shared binding's own (`wanted - len` before the merge, from the
-/// leading bands) and each core's `wanted_c - live_c`. So the shared binding has
-/// refused exactly when some append was refused anywhere, and `wanted` is the
-/// total the bodies asked for, whatever the split.
+/// leading bands) and each core's `wanted_c - live_c`, saturating. So no record
+/// any band accepted leaves the counts, the shared binding has refused exactly
+/// when some append was refused anywhere, and `wanted` is the total the bodies
+/// asked for, whatever the split.
 ///
-/// The write cursor never exceeds `lo_c` (`write_pos = sum of prior live_c <=
-/// sum of prior slice sizes = lo_c`), so each `ptr::copy` has `dst <= src` and is
-/// forward-safe; order is preserved because cores own ascending record slices.
+/// The write cursor never exceeds `s_c` (`write_pos = len + sum of prior live_c
+/// <= len + sum of prior slice sizes = len + lo_c`, and a region clipped to the
+/// capacity has no room and nothing to copy), so each `ptr::copy` has `dst <=
+/// src` and is forward-safe; order is preserved because cores own ascending
+/// record slices.
 pub trait MergeAccums {
     /// Forward-compact each accumulator's per-core regions and set its counts.
     fn merge_accums(&self, counts: PerCoreCounts<'_>, accum_idx: &mut USize);
@@ -235,29 +257,33 @@ impl<T, Tail: MergeAccums> MergeAccums for AccumBinding<T, Tail> {
     fn merge_accums(&self, counts: PerCoreCounts<'_>, accum_idx: &mut USize) {
         let a = accum_idx.0; // lint:allow(no-bare-numeric) reason: this accumulator's position; tracked: #121
         let base = self.ptr.as_ptr();
+        // The leading bands' records stay at `[0, leading)`; the regions were
+        // placed after them, and so is the compaction cursor.
+        let leading = self.len.get();
         // Refused appends of the leading bands, on the shared binding itself.
-        let mut refused = self.wanted.get().0 - self.len.get().0; // lint:allow(no-bare-numeric) reason: refused-append tally, wanted >= len by the append rule; tracked: #121
-        let mut write_pos = 0; // lint:allow(no-bare-numeric) reason: compaction cursor; tracked: #121
+        let mut refused = self.wanted.get().0 - leading.0; // lint:allow(no-bare-numeric) reason: refused-append tally, wanted >= len by the append rule; tracked: #121
+        let mut write_pos = leading.0; // lint:allow(no-bare-numeric) reason: compaction cursor; tracked: #121
         let mut c = 0; // lint:allow(no-bare-numeric) reason: core index; tracked: #121
         while c < counts.ncores.0 {
-            let lo = (c * counts.per.0).min(counts.total.0); // lint:allow(no-bare-numeric) reason: core slice start; tracked: #121
+            let lo = USize((c * counts.per.0).min(counts.total.0)); // lint:allow(no-bare-numeric) reason: core slice start; tracked: #121
+            let src = region_start(leading, lo, self.cap).0; // lint:allow(no-bare-numeric) reason: the region start the rebase used; tracked: #121
             let slot = c * counts.stride.0 + a; // lint:allow(no-bare-numeric) reason: per-(core,accum) slot; tracked: #121
             let live_ca = counts.live[slot];
-            refused += counts.wanted[slot].0 - live_ca.0; // lint:allow(no-bare-numeric) reason: refused-append tally, wanted_c >= live_c by the append rule; tracked: #121
-            if live_ca.0 > 0 && lo != write_pos {
-                // SAFETY: `base + lo` and `base + write_pos` are both within the
-                // reserved buffer (`lo, write_pos < total <= capacity`), the two
-                // ranges of `live_ca` elements are in-bounds, and `write_pos <=
-                // lo` makes the forward copy non-destructive of unread source.
+            refused = refused.saturating_add(counts.wanted[slot].0 - live_ca.0); // lint:allow(no-bare-numeric) reason: refused-append tally, wanted_c >= live_c by the append rule; tracked: #121
+            if live_ca.0 > 0 && src != write_pos {
+                // SAFETY: the region `[src, src + live_ca)` lies inside the
+                // reserved buffer (the rebase capped it at the room left past
+                // `src`), `write_pos <= src` (see the trait doc), and the
+                // forward copy never overwrites source it has not read yet.
                 unsafe {
-                    core::ptr::copy(base.add(lo), base.add(write_pos), live_ca.0); // lint:allow(no-bare-numeric) reason: compaction memmove offsets/len; tracked: #121
+                    core::ptr::copy(base.add(src), base.add(write_pos), live_ca.0); // lint:allow(no-bare-numeric) reason: compaction memmove offsets/len; tracked: #121
                 }
             }
             write_pos += live_ca.0; // lint:allow(no-bare-numeric) reason: cursor advance; tracked: #121
             c += 1; // lint:allow(no-bare-numeric) reason: core index step; tracked: #121
         }
         self.len.set(USize(write_pos));
-        self.wanted.set(USize(write_pos + refused)); // lint:allow(no-bare-numeric) reason: merged wanted = merged live + every refused append; tracked: #121
+        self.wanted.set(USize(write_pos.saturating_add(refused))); // lint:allow(no-bare-numeric) reason: merged wanted = merged live + every refused append, saturating like the append; tracked: #121
         accum_idx.0 += 1; // lint:allow(no-bare-numeric) reason: accum position step; tracked: #121
         self.tail.merge_accums(counts, accum_idx);
     }

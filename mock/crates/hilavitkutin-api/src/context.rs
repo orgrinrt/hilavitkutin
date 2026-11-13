@@ -67,11 +67,15 @@ pub trait ResolveAccumAppend<T: ColumnValue, I> {
     /// Append `v` at the accumulator's live offset, or refuse it.
     ///
     /// Every call is counted as asked. The record is written and the live
-    /// length advances only while nothing has been refused this frame and the
-    /// live length is below the reserved capacity; otherwise nothing is
-    /// written, and every later append on the accumulator in the same frame is
-    /// refused too. The run returns the first refusing accumulator as an
-    /// `AccumRefused` through `RunCfg::Out`.
+    /// length advances only while nothing has been refused through this binding
+    /// this frame and the live length is below its capacity; otherwise nothing
+    /// is written, and every later append through the binding in the same frame
+    /// is refused too. On one thread the accumulator is one binding, so the
+    /// records kept are a prefix of the appends asked. Under `run_parallel` each
+    /// core appends through its own binding over its own region, so one core
+    /// can refuse while another still accepts: the records kept depend on the
+    /// worker count, and the `AccumRefused` value does not. The run returns the
+    /// first refusing accumulator as an `AccumRefused` through `RunCfg::Out`.
     ///
     /// # Safety
     ///

@@ -6,9 +6,10 @@
 //! the carrier into a chain of `RecordOp` maps and runs only the maps: the
 //! unit's body, with its appends, never runs, and nothing refuses the carrier
 //! at compile time because `FuseCarrier` bounds a unit on `RecordOp` and `Copy`
-//! and not on its write set. `run_fused` also never makes the per-frame
-//! accumulator reset that `run` and `run_parallel` make, so running the body
-//! alone would be refused once the live length reaches the capacity.
+//! and not on its write set. `run_fused` makes the same per-frame accumulator
+//! reset as `run` and `run_parallel`, so a refusal from an earlier `run` frame
+//! does not carry into a fused frame: the third test refuses through `run` and
+//! then expects `Ok` from `run_fused`.
 //!
 //! The first test holds the behaviour the second is compared against, so the
 //! second cannot fail for the harness's sake. The second asserts the same live
@@ -120,18 +121,91 @@ impl RecordOp for MapAndLogWu {
     }
 }
 
+// Maps `InV` to `OutV` like `MapAndLogWu` and appends two `Log`s per record, so
+// a frame asks twice the reserved capacity and `run` refuses.
+#[derive(Copy, Clone)]
+struct MapAndLogTwiceWu;
+
+impl BuilderInput for MapAndLogTwiceWu {
+    type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
+}
+
+impl WorkUnit<Always> for MapAndLogTwiceWu {
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        ReadIn,
+        WriteBoth,
+        SnapNil,
+        ColPtrCons<InV, ColPtrNil>,
+        ColPtrCons<OutV, ColPtrNil>,
+        AccPtrCons<'frame, Log, AccPtrNil>,
+    >;
+    type Hint = (
+        hilavitkutin_api::hint::Immediate,
+        hilavitkutin_api::hint::Atomic,
+        hilavitkutin_api::hint::Normal,
+    );
+    type Read = ReadIn;
+    type Write = WriteBoth;
+
+    fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
+        ctx.each().run(|i| {
+            // SAFETY: as in `MapAndLogWu`; the second append per record goes
+            // past the reserved capacity and is refused, writing nothing.
+            let v = unsafe { ctx.reader().read::<InV, _>(i) };
+            unsafe { ctx.writer().write::<OutV, _>(i, OutV(v.0 + 1)) };
+            unsafe { ctx.accums().append::<Log, _>(Log(i.0 as u32)) };
+            unsafe { ctx.accums().append::<Log, _>(Log(i.0 as u32)) };
+        });
+    }
+}
+
+impl RecordOp for MapAndLogTwiceWu {
+    type In = InV;
+    type Out = OutV;
+
+    fn apply(&self, x: InV) -> OutV {
+        OutV(x.0 + 1)
+    }
+}
+
 macro_rules! scheduler {
-    () => {{
+    () => {
+        scheduler!(MapAndLogWu)
+    };
+    ($wu:expr) => {{
         let provider = StableProvider::new(16384);
         // `Log` is registered last, so its accumulator is the bindings head.
         Scheduler::builder()
             .with(Column::<InV>::new())
             .with(Column::<OutV>::new())
             .with(Accum::<Log>::new())
-            .with(MapAndLogWu)
+            .with($wu)
             .build(store(provider), USize(RECORDS))
             .unwrap_or_else(|_| panic!("build should succeed"))
     }};
+}
+
+// A frame through `run` that refuses, then a frame through `run_fused`, which
+// runs only the map and appends nothing: the fused frame resets the
+// accumulator and returns its own verdict, `Ok`.
+#[test]
+fn run_fused_after_a_refusing_run_returns_ok() {
+    let mut scheduler = scheduler!(MapAndLogTwiceWu);
+    assert!(
+        matches!(scheduler.run(), Outcome::Err(_)),
+        "two appends per record into a record-count reservation are refused",
+    );
+    assert!(
+        matches!(scheduler.run_fused(), Outcome::Ok(())),
+        "the fused frame appended nothing, so it reports no refusal",
+    );
+    assert_eq!(
+        scheduler.__bindings().__len_cell().get(),
+        USize(0),
+        "the fused frame started from a reset accumulator",
+    );
 }
 
 #[test]

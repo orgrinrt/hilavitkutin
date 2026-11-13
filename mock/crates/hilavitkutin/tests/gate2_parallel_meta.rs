@@ -93,9 +93,8 @@ type MetaCtx<'frame> = EngineCtx<
     MetaRef<'frame>,
 >;
 
-// StartWu: OnMeta<PassStart> (leading band). Counts executions; appends nothing
-// (a leading-band accumulator append is unsupported on the parallel unit-outer
-// path per the round's documented constraint).
+// StartWu: OnMeta<PassStart> (leading band). Counts executions and appends
+// nothing; `leading_band_appends.rs` holds the leading band's appends.
 struct StartWu;
 impl BuilderInput for StartWu {
     type Dispatch = UnitDispatch<Self>;

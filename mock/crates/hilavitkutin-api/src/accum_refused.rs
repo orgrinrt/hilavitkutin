@@ -18,10 +18,11 @@ use notko::lend::Exhausted;
 /// over workers, so the same emitter yields the same value at every worker
 /// count.
 ///
-/// The fields are private and nothing outside the engine's close builds one
-/// with values it did not count: `new` is the one constructor and it records
-/// what it is given, so the value is only as true as its caller, which is the
-/// engine.
+/// The fields are private and `new` builds a value from its two parts. The
+/// engine builds the frame's own at the close from the counts it kept, and a
+/// caller can build one to compare a run's output against. A value claims
+/// nothing beyond its two parts; what makes the run's output true is that the
+/// engine counted it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct AccumRefused {
     accum:     USize,
