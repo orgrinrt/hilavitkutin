@@ -140,8 +140,8 @@ impl WorkUnit<OnMeta<PlanStage>> for PlanWu {
     type Write = AccW;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        // SAFETY: Mark reserved (CAP) and this frame's appends stay in capacity.
-        unsafe { ctx.accums().append::<Mark, _>(Mark(1)) };
+        // Mark reserved (CAP) and this frame's appends stay in capacity.
+        ctx.accums().append::<Mark, _>(Mark(1));
     }
 }
 
@@ -158,8 +158,8 @@ impl WorkUnit<Always> for ConsumerWu {
     type Write = AccW;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        // SAFETY: Mark reserved (CAP) and this frame's appends stay in capacity.
-        unsafe { ctx.accums().append::<Mark, _>(Mark(2)) };
+        // Mark reserved (CAP) and this frame's appends stay in capacity.
+        ctx.accums().append::<Mark, _>(Mark(2));
     }
 }
 
@@ -179,8 +179,8 @@ impl WorkUnit<OnMeta<ScheduleEnd>> for EndWu {
     type Write = AccW;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        // SAFETY: Mark reserved (CAP) and this frame's appends stay in capacity.
-        unsafe { ctx.accums().append::<Mark, _>(Mark(3)) };
+        // Mark reserved (CAP) and this frame's appends stay in capacity.
+        ctx.accums().append::<Mark, _>(Mark(3));
     }
 }
 

@@ -89,14 +89,14 @@ impl WorkUnit<Always> for AppendWu {
             0,
             "live length starts at zero"
         );
-        // SAFETY: `build` reserved the `Accum<Av>` buffer for the record count
+        // `build` reserved the `Accum<Av>` buffer for the record count
         // (>= 3) and the plan proved this unit the exclusive appender; the
         // three appends stay within the reserved capacity. Each append advances
         // the live length, read back through the `len` accessor.
-        unsafe { ctx.accums().append::<Av, _>(Av(100)) };
+        ctx.accums().append::<Av, _>(Av(100));
         assert_eq!(ctx.accums().len::<Av, _>().0, 1, "len advances per append");
-        unsafe { ctx.accums().append::<Av, _>(Av(101)) };
-        unsafe { ctx.accums().append::<Av, _>(Av(102)) };
+        ctx.accums().append::<Av, _>(Av(101));
+        ctx.accums().append::<Av, _>(Av(102));
         assert_eq!(
             ctx.accums().len::<Av, _>().0,
             3,
@@ -140,17 +140,15 @@ impl WorkUnit<Always> for OverAppendWu {
     type Write = AccW;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        // SAFETY: `build` reserved `CAP_SMALL` records; the appender holds the
+        // `build` reserved `CAP_SMALL` records; the appender holds the
         // exclusive slot. Appending past the reserved capacity is refused and
         // writes nothing, so the appends from index `CAP_SMALL` on never reach
         // the buffer.
-        unsafe {
-            ctx.accums().append::<Av, _>(Av(200));
-            ctx.accums().append::<Av, _>(Av(201));
-            ctx.accums().append::<Av, _>(Av(202));
-            ctx.accums().append::<Av, _>(Av(203));
-            ctx.accums().append::<Av, _>(Av(204));
-        }
+        ctx.accums().append::<Av, _>(Av(200));
+        ctx.accums().append::<Av, _>(Av(201));
+        ctx.accums().append::<Av, _>(Av(202));
+        ctx.accums().append::<Av, _>(Av(203));
+        ctx.accums().append::<Av, _>(Av(204));
     }
 }
 

@@ -111,7 +111,7 @@ impl WorkUnit<Always> for SkewWu {
         ctx.each().run(|i| {
             let rec = unsafe { ctx.reader().read::<Inv, _>(i) }.0 as usize;
             for v in asked_by(rec).iter().flatten() {
-                unsafe { ctx.accums().append::<Av, _>(Av(*v)) };
+                ctx.accums().append::<Av, _>(Av(*v));
             }
         });
     }
@@ -364,7 +364,7 @@ impl WorkUnit<Always> for FitsWu {
                 1
             };
             for _ in 0 .. n {
-                unsafe { ctx.accums().append::<Av, _>(Av(rec)) };
+                ctx.accums().append::<Av, _>(Av(rec));
             }
         });
     }

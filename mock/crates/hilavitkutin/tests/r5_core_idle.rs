@@ -500,8 +500,8 @@ impl WorkUnit<Always> for AccumWu {
     type Write = AccW;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        // SAFETY: Mark reserved (RECORDS) with headroom over this frame's appends.
-        unsafe { ctx.accums().append::<Mark, _>(Mark(7)) };
+        // Mark reserved (RECORDS) with headroom over this frame's appends.
+        ctx.accums().append::<Mark, _>(Mark(7));
     }
 }
 

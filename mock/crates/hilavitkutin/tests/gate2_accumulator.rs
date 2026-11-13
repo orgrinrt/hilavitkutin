@@ -127,9 +127,9 @@ impl WorkUnit<Always> for KeepWu {
             // relative index to the absolute column index, in bounds.
             let v = unsafe { ctx.reader().read::<Inv, _>(i) };
             if v.0 % 7 != 0 {
-                // SAFETY: the accumulator reserves N records (>= the kept count),
-                // and the plan proved this unit the exclusive appender.
-                unsafe { ctx.accums().append::<Av, _>(Av(v.0 * 10)) };
+                // The accumulator reserves N records (>= the kept count), and
+                // the plan proved this unit the exclusive appender.
+                ctx.accums().append::<Av, _>(Av(v.0 * 10));
             }
         });
     }

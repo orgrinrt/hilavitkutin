@@ -18,10 +18,12 @@
 // use is `core_program::synthesise_core_programs`, which projects per-core
 // capacities into the unmigrated hilavitkutin-api `CoreProgram`'s `usize`
 // min-const-generic positions via `CoreProgram<{ cap_size(C::CAP) }, ...>`;
-// that const-argument expression keeps the gate live. `adt_const_params` is no
-// longer needed (no `Cap` const-generic params survive in the engine; the
-// remaining const generics are plain `usize` on the api `CoreProgram`).
+// that const-argument expression keeps the gate live.
 #![feature(generic_const_exprs)]
+// adt_const_params (vetted, unstable-features.md): the api's `Reach<C, N>`
+// carries its reach as a `Cap` const parameter, and the engine implements its
+// column walks for that member, which names the parameter.
+#![feature(adt_const_params)]
 // const_trait_impl (vetted WATCH, unstable-features.md): the dispatch-order
 // machinery (`plan::project::MaskProject`, `dispatch::order`) computes the
 // per-unit access masks and the topological dispatch order in a const context,

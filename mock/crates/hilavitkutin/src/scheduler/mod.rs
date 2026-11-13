@@ -15,8 +15,8 @@
 //! retains the registered WorkUnit instances so `build()` can carry
 //! them into the `Scheduler`, where `run()` walks them.
 //!
-//! `.build(memory_provider)` carries `Stores: ContainsAll<Wus::AccumRead>
-//! + ContainsAll<Wus::AccumWrite>`, which proves at compile time that
+//! `.build(memory_provider)` carries `Stores: HoldsAll<Wus::AccumRead>
+//! + HoldsAll<Wus::AccumWrite>`, which proves at compile time that
 //! every registered WU's `Read` and `Write` membership is satisfied by
 //! the registered stores. It walks `Stores` and `store_values` in
 //! lockstep, allocating each `Resource<T>`'s block via the supplied

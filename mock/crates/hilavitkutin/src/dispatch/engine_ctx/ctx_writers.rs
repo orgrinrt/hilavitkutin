@@ -1,15 +1,13 @@
 //! `EngineCtx` writer side: the column writer bridge, the accumulator
 //! append bridge, and the virtual-firer bridge.
 //!
-//! Split out of `dispatch/engine_ctx.rs` (file-size lint). No behaviour
-//! change. Reads `self.write_cols`, `self.write_accums` and
-//! `self.write_virtuals`, `self.epoch`, all still-private `EngineCtx`
-//! fields: this module is a descendant of `dispatch::engine_ctx`, where
-//! the struct is defined, so it reaches them without any visibility
-//! widening.
+//! Reads `self.write_cols`, `self.write_accums`, `self.write_virtuals` and
+//! `self.epoch`, all private `EngineCtx` fields: this module is a
+//! descendant of `dispatch::engine_ctx`, where the struct is defined, so it
+//! reaches them without any visibility widening.
 
 use arvo::USize;
-use hilavitkutin_api::access::{AccessSet, Contains};
+use hilavitkutin_api::access::{AccessSet, Holds};
 use hilavitkutin_api::column_value::ColumnValue;
 use hilavitkutin_api::context::{
     AccumWriterApi,
@@ -19,32 +17,24 @@ use hilavitkutin_api::context::{
     ResolveVirtualFire,
     VirtualFirerApi,
 };
-use hilavitkutin_api::store::{Accum, Column, Virtual};
+use hilavitkutin_api::store::Virtual;
 
-use super::EngineCtx;
-use super::selectors::{AccumSelector, ColSelector, VirtualFire};
+use super::col_select::ColSelector;
+use super::selectors::{AccumSelector, VirtualFire};
+use super::{AccumColPtr, EngineCtx, MetaRank};
 
-// ColumnWriterApi: resolve the column pointer, write at the morsel
-// offset. Same stride simplification as the reader.
+// ColumnWriterApi: `write` is the api's own, and follows the member the unit
+// listed the column under. The context supplies the two bridges below it.
 
 impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP>
     ColumnWriterApi<W> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 {
-    #[inline]
-    unsafe fn write<T: ColumnValue, I>(&self, i: USize, v: T)
-    where
-        W: Contains<Column<T>>,
-        Self: ResolveColumnWrite<T, I>,
-    {
-        // SAFETY: forwarded to the bridge; the caller's obligation (the
-        // engine proved exclusive-writer ownership at plan time) carries
-        // through.
-        unsafe { <Self as ResolveColumnWrite<T, I>>::resolve_write(self, i, v) }
-    }
 }
 
-// ResolveColumnWrite: resolve the `ColumnPtr<T>` through the projected
-// column bundle's `ColSelector<T, I>` witness, write at the morsel offset.
+// ResolveColumnWrite: resolve the plain column of `T` through the projected
+// column bundle's `ColSelector<T, I>` witness, and store or read at the
+// morsel offset. The selector's kind is `Plain`, so a buffered column has no
+// bridge here and is written through the value function alone.
 impl<
     'frame,
     R: AccessSet,
@@ -54,7 +44,7 @@ impl<
     WCols,
     WAccum,
     WVirt,
-    MP,
+    MP: MetaRank,
     T: ColumnValue,
     I,
 > ResolveColumnWrite<T, I> for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
@@ -63,56 +53,94 @@ where
 {
     #[inline]
     unsafe fn resolve_write(&self, i: USize, v: T) {
-        let ptr = <WCols as ColSelector<T, I>>::get(&self.write_cols);
+        let col = <WCols as ColSelector<T, I>>::get(&self.write_cols);
         let idx = USize(self.morsel.start.0 + i.0);
         // B3 treats the column buffer as `[T]`-shaped at stride
         // `size_of::<T>()`; sub-byte bitpacking (using `T::BIT_WIDTH`)
         // is a later round.
-        // SAFETY: the column bundle holds a `ColumnPtr<T>` at the
-        // witnessed index `I` only because `W: Contains<Column<T>>`
-        // placed it there. The engine's plan-time DAG analysis proves
-        // this WU holds the exclusive writer slot for `T` at `idx`; no
-        // concurrent reader or writer aliases it. `&self` (not
-        // `&mut self`) keeps LLVM from reordering the write across fused
-        // WUs. Valid for `'frame`.
-        unsafe { core::ptr::write(ptr.as_ptr().add(idx.0), v) }
+        // SAFETY: the column bundle holds the column at the witnessed index
+        // `I` only because the unit's write list placed it there. The
+        // engine's plan-time DAG analysis proves this WU holds the exclusive
+        // writer slot for `T` at `idx`; no concurrent reader or writer
+        // aliases it. `&self` (not `&mut self`) keeps LLVM from reordering
+        // the write across fused WUs. Valid for `'frame`.
+        unsafe { core::ptr::write(col.write.as_ptr().add(idx.0), v) }
+        // A maintenance unit's write is a change its readers are seeded
+        // from. An ordinary unit's readers follow it by the plan's edges,
+        // and its context compiles no mark.
+        if MP::MAINTAINS.0 {
+            col.mark.set();
+        }
+    }
+
+    #[inline]
+    unsafe fn resolve_held(&self, i: USize) -> T {
+        let col = <WCols as ColSelector<T, I>>::get(&self.write_cols);
+        let idx = USize(self.morsel.start.0 + i.0);
+        // SAFETY: as `resolve_write`; the slot is this unit's to write, so
+        // nothing else writes it while it is read.
+        unsafe { core::ptr::read(col.read.as_ptr().add(idx.0)) }
     }
 }
 
-// AccumWriterApi: resolve the accumulator handle, append at the live offset,
-// advance the live length. The append is a self-relative grow, not a
-// morsel-indexed write: the offset is the accumulator's own live count, not
-// `morsel.start + i`.
+// AccumWriterApi: `append` and `len` are the api's own, over the bridge
+// below. The append is a self-relative grow, not a morsel-indexed write: the
+// offset is the accumulator's own live count, not `morsel.start + i`.
 
 impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP> AccumWriterApi<W>
     for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MP>
 {
-    #[inline]
-    unsafe fn append<T: ColumnValue, I>(&self, v: T)
-    where
-        W: Contains<Accum<T>>,
-        Self: ResolveAccumAppend<T, I>,
-    {
-        // SAFETY: forwarded to the bridge; the caller's obligation (the engine
-        // proved exclusive-appender ownership at plan time, and the live length
-        // is within the reserved capacity) carries through.
-        unsafe { <Self as ResolveAccumAppend<T, I>>::resolve_append(self, v) }
-    }
+}
 
-    #[inline]
-    fn len<T: ColumnValue, I>(&self) -> USize
-    where
-        W: Contains<Accum<T>>,
-        Self: ResolveAccumAppend<T, I>,
-    {
-        <Self as ResolveAccumAppend<T, I>>::resolve_len(self)
+impl<'frame, T: ColumnValue> AccumColPtr<'frame, T> {
+    /// Append `v`, or count the append as refused.
+    ///
+    /// Every append is counted as asked. It is written only while nothing has
+    /// been refused this frame (`wanted == live`) and the live length is below
+    /// the reserved capacity; otherwise only `wanted` moves, so the refusal is
+    /// sticky on this binding and the records it accepted are a prefix of the
+    /// appends asked through it. Under `run_parallel` each core appends
+    /// through its own binding, so that holds per region, not for the
+    /// accumulator as a whole. Invariant: `wanted >= live`, and the binding
+    /// has refused exactly when `wanted > live`. Both cells are written only
+    /// by the thread that owns this binding for the frame. The run reads the
+    /// refusal at the close (`FirstRefusal`).
+    ///
+    /// This branch is the one place the refusal is decided. Keeping an assert
+    /// instead is a strategy read here, nothing else moves.
+    #[inline(always)]
+    pub(super) fn append(&self, v: T) {
+        let live = self.len.get();
+        let wanted = self.wanted.get();
+        if wanted.0 == live.0 && live.0 < self.cap.0 {
+            // B3 treats the capacity buffer as `[T]`-shaped at stride
+            // `size_of::<T>()`; sub-byte bitpacking is a later round.
+            // SAFETY: the handle was projected for a unit whose write list
+            // holds the accumulator. The engine's plan-time DAG analysis
+            // proves this WU holds the exclusive appender slot for `T`; no
+            // concurrent appender aliases it. `live < cap` keeps the write
+            // strictly within the reserved record count, so it lands in the
+            // buffer. Valid for `'frame`.
+            unsafe { core::ptr::write(self.base.as_ptr().add(live.0), v) };
+            self.len.set(USize(live.0 + 1)); // lint:allow(no-bare-numeric) reason: live-length step; tracked: #345
+            self.wanted.set(USize(wanted.0 + 1)); // lint:allow(no-bare-numeric) reason: wanted step, equal to live here; tracked: #345
+        } else {
+            // The truncating mutant drops the refused append without counting
+            // it, which is the defect the overflow suite must catch.
+            #[cfg(not(feature = "mutant-truncating-append"))]
+            self.wanted.set(USize(wanted.0.saturating_add(1))); // lint:allow(no-bare-numeric) reason: wanted step on a refusal, saturating so the count never wraps below live; tracked: #345
+        }
     }
 }
 
 // ResolveAccumAppend: resolve the `AccumColPtr<T>` through the projected
-// accumulator bundle's `AccumSelector<T, I>` witness, write at the live offset,
-// advance the live length through the borrowed `Cell`.
-impl<
+// accumulator bundle's `AccumSelector<T, I>` witness and append through it.
+//
+// SAFETY: `resolve_append` writes `v` at the live length only while that
+// length is below the capacity the accumulator was reserved with, and
+// advances the length by one when it does. Past the capacity it writes
+// nothing and counts the refusal. That is the whole of what the trait asks.
+unsafe impl<
     'frame,
     R: AccessSet,
     W: AccessSet,
@@ -129,43 +157,8 @@ where
     WAccum: AccumSelector<T, I>,
 {
     #[inline]
-    unsafe fn resolve_append(&self, v: T) {
-        let acc = <WAccum as AccumSelector<T, I>>::get(&self.write_accums);
-        let live = acc.len.get();
-        let wanted = acc.wanted.get();
-        // Every append is counted as asked. It is written only while nothing
-        // has been refused this frame (`wanted == live`) and the live length is
-        // below the reserved capacity; otherwise only `wanted` moves, so the
-        // refusal is sticky on this binding and the records it accepted are a
-        // prefix of the appends asked through it. Under `run_parallel` each core
-        // appends through its own binding, so that holds per region, not for the
-        // accumulator as a whole. Invariant: `wanted >= live`, and the binding has
-        // refused exactly when `wanted > live`. Both cells are written only by
-        // the thread that owns this binding for the frame. The run reads the
-        // refusal at the close (`FirstRefusal`).
-        //
-        // This branch is the one place the refusal is decided. Keeping an
-        // assert instead is a strategy read here, nothing else moves.
-        if wanted.0 == live.0 && live.0 < acc.cap.0 {
-            // B3 treats the capacity buffer as `[T]`-shaped at stride
-            // `size_of::<T>()`; sub-byte bitpacking is a later round.
-            // SAFETY: the accumulator bundle holds an `AccumColPtr<T>` at the
-            // witnessed index `I` only because `W: Contains<Accum<T>>` placed it
-            // there. The engine's plan-time DAG analysis proves this WU holds
-            // the exclusive appender slot for `T`; no concurrent appender
-            // aliases it. `live < cap` keeps the write strictly within the
-            // reserved record count, so it lands in the buffer. `&self` (not
-            // `&mut self`) keeps LLVM from reordering the write across fused
-            // WUs. Valid for `'frame`.
-            unsafe { core::ptr::write(acc.base.as_ptr().add(live.0), v) };
-            acc.len.set(USize(live.0 + 1)); // lint:allow(no-bare-numeric) reason: live-length step; tracked: #345
-            acc.wanted.set(USize(wanted.0 + 1)); // lint:allow(no-bare-numeric) reason: wanted step, equal to live here; tracked: #345
-        } else {
-            // The truncating mutant drops the refused append without counting
-            // it, which is the defect the overflow suite must catch.
-            #[cfg(not(feature = "mutant-truncating-append"))]
-            acc.wanted.set(USize(wanted.0.saturating_add(1))); // lint:allow(no-bare-numeric) reason: wanted step on a refusal, saturating so the count never wraps below live; tracked: #345
-        }
+    fn resolve_append(&self, v: T) {
+        <WAccum as AccumSelector<T, I>>::get(&self.write_accums).append(v);
     }
 
     #[inline]
@@ -185,7 +178,7 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, M
     #[inline]
     fn fire<V: 'static, I>(&self)
     where
-        W: Contains<Virtual<V>>,
+        W: Holds<Virtual<V>>,
         Self: ResolveVirtualFire<V, I>,
     {
         <Self as ResolveVirtualFire<V, I>>::resolve_fire(self);

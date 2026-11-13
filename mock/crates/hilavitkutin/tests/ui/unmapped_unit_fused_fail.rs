@@ -4,8 +4,8 @@
 // a chain of `RecordOp` maps, so the carrier is refused at compile time, and
 // that missing implementation is the only error. The twin
 // `unmapped_unit_fused_pass.rs` differs only in the `impl RecordOp` block. The
-// gap in the other direction, an accumulator-writing unit that does implement
-// `RecordOp` and is accepted, is recorded by `tests/fused_append.rs`.
+// refusal in the other direction, a unit that declares its map and also
+// appends, is the pair `appending_unit_fused_{fail,pass}.rs`.
 
 use core::cell::Cell;
 
@@ -55,7 +55,7 @@ impl MemoryProviderApi for Provider {
 #[derive(Copy, Clone)]
 struct Xa(u32);
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 struct Ya(u32);
 
 type ReadX = Cons<Column<Xa>, Empty>;

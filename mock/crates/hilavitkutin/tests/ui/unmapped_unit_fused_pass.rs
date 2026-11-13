@@ -53,7 +53,7 @@ impl MemoryProviderApi for Provider {
 #[derive(Copy, Clone)]
 struct Xa(u32);
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 struct Ya(u32);
 
 type ReadX = Cons<Column<Xa>, Empty>;
@@ -96,11 +96,11 @@ impl WorkUnit<Always> for MapWu {
 }
 
 impl hilavitkutin_api::RecordOp for MapWu {
-    type In = Xa;
-    type Out = Ya;
-
-    fn apply(&self, x: Xa) -> Ya {
-        Ya(x.0)
+    fn apply(
+        &self,
+        read: &hilavitkutin_api::ReadVals<'_, ReadX>,
+    ) -> hilavitkutin_api::WriteVals<WriteY> {
+        hilavitkutin_api::rec![Ya(read.get(Column::<Xa>::new()).0)]
     }
 }
 

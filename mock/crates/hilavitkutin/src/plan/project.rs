@@ -24,7 +24,16 @@ use arvo_tensor::{Capacity, cap_size};
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::column_value::ColumnValue;
 use hilavitkutin_api::footprint::ResourceFootprint;
-use hilavitkutin_api::store::{Accum, Column, Resource, StagedResource, Virtual};
+use hilavitkutin_api::member::Member;
+use hilavitkutin_api::store::{
+    Accum,
+    BufferMode,
+    Buffered,
+    Column,
+    Resource,
+    StagedResource,
+    Virtual,
+};
 use hilavitkutin_api::{HasSchedule, WorkUnit};
 
 use super::inputs::MorselBudget;
@@ -100,10 +109,13 @@ const impl<Stores, CS: Capacity> MaskProject<Stores, Empty, CS> for Empty {
     }
 }
 
-const impl<Stores, M, Tail, I, ITail, CS: Capacity> MaskProject<Stores, Cons<I, ITail>, CS>
+// A member sets the bit of the store it names: a wrapper (`Reach`, `Written`,
+// `Differs`) sets its column's, so a unit listing a column under one meets
+// the units listing it bare at the same bit.
+const impl<Stores, M: Member, Tail, I, ITail, CS: Capacity> MaskProject<Stores, Cons<I, ITail>, CS>
     for Cons<M, Tail>
 where
-    Stores: Locate<M, I>,
+    Stores: Locate<<M as Member>::Store, I>,
     I: WitnessIndex,
     Tail: [const] MaskProject<Stores, ITail, CS>,
 {
@@ -196,6 +208,10 @@ impl<T> StoreAccumKind for Column<T> {
     const IS_ACCUM: Bool = Bool::FALSE;
 }
 
+impl<T, M: BufferMode> StoreAccumKind for Buffered<T, M> {
+    const IS_ACCUM: Bool = Bool::FALSE;
+}
+
 impl<T> StoreAccumKind for Resource<T> {
     const IS_ACCUM: Bool = Bool::FALSE;
 }
@@ -273,6 +289,11 @@ const fn bytes_of_bits(bits: USize) -> USize {
 }
 
 impl<T: ColumnValue> StoreElemBytes for Column<T> {
+    const BYTES: USize = bytes_of_bits(<T as ColumnValue>::BIT_WIDTH);
+}
+// A buffered column's writer stores one record of `T` on the live side, so
+// its share of a morsel's write bytes is a plain column's.
+impl<T: ColumnValue, M: BufferMode> StoreElemBytes for Buffered<T, M> {
     const BYTES: USize = bytes_of_bits(<T as ColumnValue>::BIT_WIDTH);
 }
 // A resource value's L1-morsel contribution is its Seq/Map collection

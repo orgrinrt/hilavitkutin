@@ -109,9 +109,9 @@ impl<const K: usize> WorkUnit<OnMeta<PassStart>> for LeadWu<K> {
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         for _ in 0 .. K {
-            // SAFETY: the leading band runs once per frame on the main thread,
-            // the one appender at that point; a refused append writes nothing.
-            unsafe { ctx.accums().append::<Mark, _>(Mark(7)) };
+            // The leading band runs once per frame on the main thread, the
+            // one appender at that point; a refused append writes nothing.
+            ctx.accums().append::<Mark, _>(Mark(7));
         }
     }
 }
@@ -129,9 +129,9 @@ impl WorkUnit<Always> for ConsumerWu {
     type Write = AccW;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        // SAFETY: each core appends into its own region; past it the append is
+        // Each core appends into its own region; past it the append is
         // refused and writes nothing.
-        unsafe { ctx.accums().append::<Mark, _>(Mark(9)) };
+        ctx.accums().append::<Mark, _>(Mark(9));
     }
 }
 

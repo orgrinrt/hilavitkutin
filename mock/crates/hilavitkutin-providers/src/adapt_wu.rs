@@ -25,20 +25,39 @@ use hilavitkutin_api::access::AccessSet;
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::column_value::ColumnValue;
 use hilavitkutin_api::context::{
-    BatchApi, ColumnReaderApi, ColumnWriterApi, EachApi, HasBatch, HasColumnReader,
-    HasColumnWriter, HasEach, HasReduce, HasResourceProvider, HasVirtualFirer, ReduceApi,
-    ResolveColumnRead, ResolveColumnWrite, ResolveResource, ResolveVirtualFire, ResourceProviderApi,
+    BatchApi,
+    ColumnReaderApi,
+    ColumnWriterApi,
+    EachApi,
+    HasBatch,
+    HasColumnReader,
+    HasColumnWriter,
+    HasEach,
+    HasReduce,
+    HasResourceProvider,
+    HasVirtualFirer,
+    ReduceApi,
+    ResolveColumnRead,
+    ResolveColumnWrite,
+    ResolveResource,
+    ResolveVirtualFire,
+    ResourceProviderApi,
     VirtualFirerApi,
 };
 use hilavitkutin_api::hint::{Adaptive, Important, Steady};
 use hilavitkutin_api::store::{Column, Resource, Virtual};
-use hilavitkutin_api::Contains;
 use hilavitkutin_api::work_unit::{On, WorkUnit};
-use hilavitkutin_api::{AnomalyFired, ScheduleEnd, read, write};
+use hilavitkutin_api::{AnomalyFired, Holds, ScheduleEnd, read, write};
 
 use crate::metrics::{
-    CacheResidencyMetrics, ChangeClassMetrics, CoreIdleTimeMetrics, FiberEmaMetrics,
-    MemoryWatermarkMetrics, PassDurationMetrics, PhaseEmaMetrics, PredictiveParkingMetrics,
+    CacheResidencyMetrics,
+    ChangeClassMetrics,
+    CoreIdleTimeMetrics,
+    FiberEmaMetrics,
+    MemoryWatermarkMetrics,
+    PassDurationMetrics,
+    PhaseEmaMetrics,
+    PredictiveParkingMetrics,
     ThroughputMetrics,
 };
 
@@ -57,11 +76,13 @@ impl Default for AdaptWu {
 }
 
 impl BuilderInput for AdaptWu {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 
 impl WorkUnit<On<ScheduleEnd>> for AdaptWu {
+    type Ctx<'frame> = AdaptCtxUnimplementedStub<'frame>;
+    type Hint = (Steady, Adaptive, Important);
     type Read = read![
         Resource<PassDurationMetrics>,
         Resource<PhaseEmaMetrics>,
@@ -85,8 +106,6 @@ impl WorkUnit<On<ScheduleEnd>> for AdaptWu {
         Resource<CoreIdleTimeMetrics>,
         Virtual<AnomalyFired>,
     ];
-    type Hint = (Steady, Adaptive, Important);
-    type Ctx<'frame> = AdaptCtxUnimplementedStub<'frame>;
 
     fn execute<'frame>(&self, _ctx: &Self::Ctx<'frame>) {
         // Body lands at Pass 6 wiring (Scheduler::run): walk the nine
@@ -113,14 +132,14 @@ impl WorkUnit<On<ScheduleEnd>> for AdaptWu {
 /// Placeholder Ctx for `AdaptWu`. Pre-Pass 6 stub.
 pub struct AdaptCtxUnimplementedStub<'frame> {
     _phantom: PhantomData<&'frame ()>,
-    stub: Stub,
+    stub:     Stub,
 }
 
 impl Default for AdaptCtxUnimplementedStub<'_> {
     fn default() -> Self {
         Self {
             _phantom: PhantomData,
-            stub: Stub,
+            stub:     Stub,
         }
     }
 }
@@ -131,27 +150,20 @@ pub struct Stub;
 impl<R: AccessSet> ColumnReaderApi<R> for Stub {
     unsafe fn read<T: ColumnValue, I>(&self, _i: USize) -> T
     where
-        R: Contains<Column<T>>,
+        R: Holds<Column<T>>,
         Self: ResolveColumnRead<T, I>,
     {
         unimplemented!("AdaptCtxUnimplementedStub is pre-Pass-6 stub; engine Ctx supersedes it")
     }
 }
 
-impl<W: AccessSet> ColumnWriterApi<W> for Stub {
-    unsafe fn write<T: ColumnValue, I>(&self, _i: USize, _v: T)
-    where
-        W: Contains<Column<T>>,
-        Self: ResolveColumnWrite<T, I>,
-    {
-        unimplemented!("AdaptCtxUnimplementedStub is pre-Pass-6 stub; engine Ctx supersedes it")
-    }
-}
+// `write` is the api's own, over the `ResolveColumnWrite` bridge below.
+impl<W: AccessSet> ColumnWriterApi<W> for Stub {}
 
 impl<R: AccessSet> ResourceProviderApi<R> for Stub {
     fn resource<T: 'static, I>(&self) -> &T
     where
-        R: Contains<Resource<T>>,
+        R: Holds<Resource<T>>,
         Self: ResolveResource<T, I>,
     {
         unimplemented!("AdaptCtxUnimplementedStub is pre-Pass-6 stub; engine Ctx supersedes it")
@@ -177,12 +189,16 @@ impl<T: ColumnValue, I> ResolveColumnWrite<T, I> for Stub {
     unsafe fn resolve_write(&self, _i: USize, _v: T) {
         unimplemented!("AdaptCtxUnimplementedStub is pre-Pass-6 stub; engine Ctx supersedes it")
     }
+
+    unsafe fn resolve_held(&self, _i: USize) -> T {
+        unimplemented!("AdaptCtxUnimplementedStub is pre-Pass-6 stub; engine Ctx supersedes it")
+    }
 }
 
 impl<W: AccessSet> VirtualFirerApi<W> for Stub {
     fn fire<V: 'static, I>(&self)
     where
-        W: Contains<Virtual<V>>,
+        W: Holds<Virtual<V>>,
         Self: ResolveVirtualFire<V, I>,
     {
         unimplemented!("AdaptCtxUnimplementedStub is pre-Pass-6 stub; engine Ctx supersedes it")
@@ -226,6 +242,7 @@ impl<R: AccessSet, W: AccessSet> ReduceApi<R, W> for Stub {
 
 impl<'frame, R: AccessSet> HasColumnReader<R> for AdaptCtxUnimplementedStub<'frame> {
     type Provider = Stub;
+
     fn reader(&self) -> &Stub {
         &self.stub
     }
@@ -233,6 +250,7 @@ impl<'frame, R: AccessSet> HasColumnReader<R> for AdaptCtxUnimplementedStub<'fra
 
 impl<'frame, W: AccessSet> HasColumnWriter<W> for AdaptCtxUnimplementedStub<'frame> {
     type Provider = Stub;
+
     fn writer(&self) -> &Stub {
         &self.stub
     }
@@ -240,6 +258,7 @@ impl<'frame, W: AccessSet> HasColumnWriter<W> for AdaptCtxUnimplementedStub<'fra
 
 impl<'frame, R: AccessSet> HasResourceProvider<R> for AdaptCtxUnimplementedStub<'frame> {
     type Provider = Stub;
+
     fn resources(&self) -> &Stub {
         &self.stub
     }
@@ -247,6 +266,7 @@ impl<'frame, R: AccessSet> HasResourceProvider<R> for AdaptCtxUnimplementedStub<
 
 impl<'frame, W: AccessSet> HasVirtualFirer<W> for AdaptCtxUnimplementedStub<'frame> {
     type Provider = Stub;
+
     fn virtuals(&self) -> &Stub {
         &self.stub
     }
@@ -254,6 +274,7 @@ impl<'frame, W: AccessSet> HasVirtualFirer<W> for AdaptCtxUnimplementedStub<'fra
 
 impl<'frame, R: AccessSet, W: AccessSet> HasEach<R, W> for AdaptCtxUnimplementedStub<'frame> {
     type Provider = Stub;
+
     fn each(&self) -> &Stub {
         &self.stub
     }
@@ -261,6 +282,7 @@ impl<'frame, R: AccessSet, W: AccessSet> HasEach<R, W> for AdaptCtxUnimplemented
 
 impl<'frame, R: AccessSet, W: AccessSet> HasBatch<R, W> for AdaptCtxUnimplementedStub<'frame> {
     type Provider = Stub;
+
     fn batch(&self) -> &Stub {
         &self.stub
     }
@@ -268,6 +290,7 @@ impl<'frame, R: AccessSet, W: AccessSet> HasBatch<R, W> for AdaptCtxUnimplemente
 
 impl<'frame, R: AccessSet, W: AccessSet> HasReduce<R, W> for AdaptCtxUnimplementedStub<'frame> {
     type Provider = Stub;
+
     fn reduce(&self) -> &Stub {
         &self.stub
     }

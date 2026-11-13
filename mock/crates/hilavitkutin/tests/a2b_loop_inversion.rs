@@ -286,9 +286,9 @@ impl WorkUnit<Always> for AccWu {
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         DISPATCH_ORDER.with(|o| o.borrow_mut().push(ACC_TAG));
         ctx.each().run(|_i| {
-            // SAFETY: append advances live-length under the reserved capacity
+            // The append advances the live length under the reserved capacity
             // (= record count); the frame reset zeroed it.
-            unsafe { ctx.accums().append::<Ov, _>(Ov(1)) };
+            ctx.accums().append::<Ov, _>(Ov(1));
         });
     }
 }

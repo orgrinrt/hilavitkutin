@@ -8,7 +8,7 @@ use core::marker::PhantomData;
 
 use arvo::USize;
 
-use super::{AccumBinding, BindingNil, ColumnBinding, ResourceBinding, VirtualBinding};
+use super::{AccumBinding, BindingNil, ColKind, ColumnBinding, ResourceBinding, VirtualBinding};
 use crate::resource::provenance::ColumnPtr;
 
 /// Per-core rebase of the bindings for the GATE-2 deviation 9 threaded
@@ -57,12 +57,17 @@ impl<T, Tail: RebaseBindings> RebaseBindings for ResourceBinding<T, Tail> {
     }
 }
 
-impl<T, Tail: RebaseBindings> RebaseBindings for ColumnBinding<T, Tail> {
+impl<T, Tail: RebaseBindings, K: ColKind> RebaseBindings for ColumnBinding<T, Tail, K> {
     #[inline]
     fn rebase_accums(&self, lo: USize, region_cap: USize) -> Self {
+        // The copy points at the same reservations and at the mark of the
+        // binding it was copied from, so a write on this core marks the one
+        // store.
         ColumnBinding {
             ptr:   self.ptr,
+            side:  K::dup_side(&self.side),
             count: self.count,
+            mark:  self.mark.shared(),
             tail:  self.tail.rebase_accums(lo, region_cap),
         }
     }
@@ -164,7 +169,7 @@ impl<T, Tail: CollectAccumCounts> CollectAccumCounts for ResourceBinding<T, Tail
     }
 }
 
-impl<T, Tail: CollectAccumCounts> CollectAccumCounts for ColumnBinding<T, Tail> {
+impl<T, Tail: CollectAccumCounts, K: ColKind> CollectAccumCounts for ColumnBinding<T, Tail, K> {
     #[inline]
     fn collect_accum_counts(&self, live: &mut [USize], wanted: &mut [USize], idx: &mut USize) {
         self.tail.collect_accum_counts(live, wanted, idx);
@@ -262,7 +267,7 @@ impl<T, Tail: MergeAccums> MergeAccums for ResourceBinding<T, Tail> {
     }
 }
 
-impl<T, Tail: MergeAccums> MergeAccums for ColumnBinding<T, Tail> {
+impl<T, Tail: MergeAccums, K: ColKind> MergeAccums for ColumnBinding<T, Tail, K> {
     #[inline]
     fn merge_accums(&self, counts: PerCoreCounts<'_>, accum_idx: &mut USize) {
         self.tail.merge_accums(counts, accum_idx);

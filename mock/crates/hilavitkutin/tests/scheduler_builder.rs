@@ -3,13 +3,13 @@
 //! Round 4 reshape: Kit becomes declarative
 //! (`type Units; type Owned`), `add_kit` is type-level only,
 //! SchedulerBuilder loses cap const generics, `.build()` proves
-//! `Stores: ContainsAll<Wus::AccumRead> + ContainsAll<Wus::AccumWrite>`.
+//! `Stores: HoldsAll<Wus::AccumRead> + HoldsAll<Wus::AccumWrite>`.
 //!
 //! Two layers of tests:
 //!
 //! 1. Smoke tests with `Wus = Empty` exercising store accumulation.
 //! 2. WU-bearing tests with a Stub + TestCtx shim. These exercise
-//!    the load-bearing ContainsAll proof reduction.
+//!    the load-bearing HoldsAll proof reduction.
 //!
 //! The negative case (a unit registered without the resource it reads) is
 //! the compile-fail pair `tests/ui/unregistered_store_{fail,pass}.rs`, run
@@ -29,7 +29,6 @@ use hilavitkutin_api::{
     ColumnValue,
     ColumnWriterApi,
     Cons,
-    Contains,
     Depth,
     EachApi,
     Empty,
@@ -40,6 +39,7 @@ use hilavitkutin_api::{
     HasReduce,
     HasResourceProvider,
     HasVirtualFirer,
+    Holds,
     Immediate,
     Normal,
     ReduceApi,
@@ -222,7 +222,7 @@ struct Stub;
 impl<R: AccessSet> ColumnReaderApi<R> for Stub {
     unsafe fn read<T: ColumnValue, I>(&self, _i: USize) -> T
     where
-        R: Contains<Column<T>>,
+        R: Holds<Column<T>>,
         Self: ResolveColumnRead<T, I>,
     {
         unimplemented!()
@@ -235,23 +235,20 @@ impl<T: ColumnValue, I> ResolveColumnRead<T, I> for Stub {
     }
 }
 
-impl<W: AccessSet> ColumnWriterApi<W> for Stub {
-    unsafe fn write<T: ColumnValue, I>(&self, _i: USize, _v: T)
-    where
-        W: Contains<Column<T>>,
-        Self: ResolveColumnWrite<T, I>,
-    {
-    }
-}
+impl<W: AccessSet> ColumnWriterApi<W> for Stub {}
 
 impl<T: ColumnValue, I> ResolveColumnWrite<T, I> for Stub {
     unsafe fn resolve_write(&self, _i: USize, _v: T) {}
+
+    unsafe fn resolve_held(&self, _i: USize) -> T {
+        unimplemented!()
+    }
 }
 
 impl<R: AccessSet> ResourceProviderApi<R> for Stub {
     fn resource<T: 'static, I>(&self) -> &T
     where
-        R: Contains<Resource<T>>,
+        R: Holds<Resource<T>>,
         Self: ResolveResource<T, I>,
     {
         unimplemented!()
@@ -267,7 +264,7 @@ impl<T: 'static, I> ResolveResource<T, I> for Stub {
 impl<W: AccessSet> VirtualFirerApi<W> for Stub {
     fn fire<V: 'static, I>(&self)
     where
-        W: Contains<Virtual<V>>,
+        W: Holds<Virtual<V>>,
         Self: ResolveVirtualFire<V, I>,
     {
     }
@@ -520,7 +517,7 @@ fn smoke_fifty_wus() {
 
 // ---------------------------------------------------------------------
 // WuSatisfied uncap stress: a single WU with 16 stores in its Read
-// set. Validates the recursive ContainsAll proof handles realistic
+// set. Validates the recursive HoldsAll proof handles realistic
 // store-count depth via the read! macro emitting Cons cells.
 // ---------------------------------------------------------------------
 

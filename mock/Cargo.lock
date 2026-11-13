@@ -213,6 +213,7 @@ dependencies = [
  "hilavitkutin-providers",
  "libc",
  "notko",
+ "notko-hlist",
  "trybuild",
 ]
 

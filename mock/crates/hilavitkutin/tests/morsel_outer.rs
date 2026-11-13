@@ -236,10 +236,10 @@ impl WorkUnit<Always> for AppenderA {
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         DISPATCH_ORDER.with(|o| o.borrow_mut().push(APPENDER_A_TAG));
-        // SAFETY: `build` reserved the `Accum<Av>` buffer for the record count
+        // `build` reserved the `Accum<Av>` buffer for the record count
         // (>= the one append per dispatch) and the plan proved this unit the
         // exclusive appender; the append stays within the reservation.
-        unsafe { ctx.accums().append::<Av, _>(Av(1)) };
+        ctx.accums().append::<Av, _>(Av(1));
     }
 }
 
@@ -271,9 +271,9 @@ impl WorkUnit<Always> for AppenderB {
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         DISPATCH_ORDER.with(|o| o.borrow_mut().push(APPENDER_B_TAG));
-        // SAFETY: as above, for the `Accum<Bv>` buffer this unit exclusively
+        // As above, for the `Accum<Bv>` buffer this unit exclusively
         // appends to.
-        unsafe { ctx.accums().append::<Bv, _>(Bv(1)) };
+        ctx.accums().append::<Bv, _>(Bv(1));
     }
 }
 

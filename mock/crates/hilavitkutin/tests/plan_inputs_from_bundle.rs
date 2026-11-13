@@ -14,14 +14,43 @@
 
 use arvo::{Bool, USize};
 use arvo_tensor::Dim;
-use hilavitkutin::plan::MorselBudget;
-use hilavitkutin::plan::{plan_inputs_from_bundle, AccessMask, PlanInputs};
+use hilavitkutin::plan::{AccessMask, MorselBudget, PlanInputs, plan_inputs_from_bundle};
 use hilavitkutin_api::{
-    AccessSet, Always, Atomic, BatchApi, Column, ColumnReaderApi, ColumnValue, ColumnWriterApi,
-    Cons, Contains, EachApi, Empty, HasBatch, HasColumnReader, HasColumnWriter, HasEach, HasReduce,
-    HasResourceProvider, HasVirtualFirer, Immediate, Normal, BuilderInput, ReduceApi,
-    ResolveColumnRead, ResolveColumnWrite, ResolveResource, ResolveVirtualFire, Resource,
-    ResourceProviderApi, UnitDispatch, Virtual, VirtualFirerApi, WorkUnit, read, write,
+    AccessSet,
+    Always,
+    Atomic,
+    BatchApi,
+    BuilderInput,
+    Column,
+    ColumnReaderApi,
+    ColumnValue,
+    ColumnWriterApi,
+    Cons,
+    EachApi,
+    Empty,
+    HasBatch,
+    HasColumnReader,
+    HasColumnWriter,
+    HasEach,
+    HasReduce,
+    HasResourceProvider,
+    HasVirtualFirer,
+    Holds,
+    Immediate,
+    Normal,
+    ReduceApi,
+    ResolveColumnRead,
+    ResolveColumnWrite,
+    ResolveResource,
+    ResolveVirtualFire,
+    Resource,
+    ResourceProviderApi,
+    UnitDispatch,
+    Virtual,
+    VirtualFirerApi,
+    WorkUnit,
+    read,
+    write,
 };
 
 type MaxUnits = Dim<4>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test unit capacity; Dim<N> array-length root; tracked: #649
@@ -39,7 +68,7 @@ struct Stub;
 impl<R: AccessSet> ColumnReaderApi<R> for Stub {
     unsafe fn read<T: ColumnValue, I>(&self, _i: USize) -> T
     where
-        R: Contains<Column<T>>,
+        R: Holds<Column<T>>,
         Self: ResolveColumnRead<T, I>,
     {
         unimplemented!()
@@ -50,21 +79,18 @@ impl<T: ColumnValue, I> ResolveColumnRead<T, I> for Stub {
         unimplemented!()
     }
 }
-impl<W: AccessSet> ColumnWriterApi<W> for Stub {
-    unsafe fn write<T: ColumnValue, I>(&self, _i: USize, _v: T)
-    where
-        W: Contains<Column<T>>,
-        Self: ResolveColumnWrite<T, I>,
-    {
-    }
-}
+impl<W: AccessSet> ColumnWriterApi<W> for Stub {}
 impl<T: ColumnValue, I> ResolveColumnWrite<T, I> for Stub {
     unsafe fn resolve_write(&self, _i: USize, _v: T) {}
+
+    unsafe fn resolve_held(&self, _i: USize) -> T {
+        unimplemented!()
+    }
 }
 impl<R: AccessSet> ResourceProviderApi<R> for Stub {
     fn resource<T: 'static, I>(&self) -> &T
     where
-        R: Contains<Resource<T>>,
+        R: Holds<Resource<T>>,
         Self: ResolveResource<T, I>,
     {
         unimplemented!()
@@ -78,7 +104,7 @@ impl<T: 'static, I> ResolveResource<T, I> for Stub {
 impl<W: AccessSet> VirtualFirerApi<W> for Stub {
     fn fire<V: 'static, I>(&self)
     where
-        W: Contains<Virtual<V>>,
+        W: Holds<Virtual<V>>,
         Self: ResolveVirtualFire<V, I>,
     {
     }
@@ -115,42 +141,49 @@ struct TestCtx {
 }
 impl<R: AccessSet> HasColumnReader<R> for TestCtx {
     type Provider = Stub;
+
     fn reader(&self) -> &Stub {
         &self.p
     }
 }
 impl<W: AccessSet> HasColumnWriter<W> for TestCtx {
     type Provider = Stub;
+
     fn writer(&self) -> &Stub {
         &self.p
     }
 }
 impl<R: AccessSet> HasResourceProvider<R> for TestCtx {
     type Provider = Stub;
+
     fn resources(&self) -> &Stub {
         &self.p
     }
 }
 impl<W: AccessSet> HasVirtualFirer<W> for TestCtx {
     type Provider = Stub;
+
     fn virtuals(&self) -> &Stub {
         &self.p
     }
 }
 impl<R: AccessSet, W: AccessSet> HasEach<R, W> for TestCtx {
     type Provider = Stub;
+
     fn each(&self) -> &Stub {
         &self.p
     }
 }
 impl<R: AccessSet, W: AccessSet> HasBatch<R, W> for TestCtx {
     type Provider = Stub;
+
     fn batch(&self) -> &Stub {
         &self.p
     }
 }
 impl<R: AccessSet, W: AccessSet> HasReduce<R, W> for TestCtx {
     type Provider = Stub;
+
     fn reduce(&self) -> &Stub {
         &self.p
     }
@@ -173,29 +206,32 @@ type Stores = Cons<Resource<RA>, Cons<Column<CX>, Cons<Column<CY>, Empty>>>;
 // W0 reads RA, writes CX. Not commutative (default).
 struct W0;
 impl BuilderInput for W0 {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for W0 {
+    type Ctx<'frame> = TestCtx;
+    type Hint = (Immediate, Atomic, Normal);
     type Read = read![Resource<RA>];
     type Write = write![Column<CX>];
-    type Hint = (Immediate, Atomic, Normal);
-    type Ctx<'frame> = TestCtx;
+
     fn execute<'frame>(&self, _ctx: &TestCtx) {}
 }
 
 // W1 reads CX (the store W0 writes => dep edge), writes CY. Commutative.
 struct W1;
 impl BuilderInput for W1 {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for W1 {
+    type Ctx<'frame> = TestCtx;
+    type Hint = (Immediate, Atomic, Normal);
     type Read = read![Column<CX>];
     type Write = write![Column<CY>];
-    type Hint = (Immediate, Atomic, Normal);
-    type Ctx<'frame> = TestCtx;
+
     const COMMUTATIVE: Bool = Bool::TRUE;
+
     fn execute<'frame>(&self, _ctx: &TestCtx) {}
 }
 
@@ -212,7 +248,10 @@ fn projects_two_unit_bundle_to_plan_inputs() {
         plan_inputs_from_bundle::<Wus, Stores, _, MaxUnits, MaxStores>(RECORDS, MorselBudget::ZERO);
 
     assert_eq!(inputs.unit_count, USize(2), "two units populated"); // lint:allow(no-bare-numeric) reason: expected count; tracked: #121
-    assert_eq!(inputs.record_count, RECORDS, "record_count threaded through");
+    assert_eq!(
+        inputs.record_count, RECORDS,
+        "record_count threaded through"
+    );
 
     let reads = inputs.reads.as_ref();
     let writes = inputs.writes.as_ref();
@@ -238,7 +277,11 @@ fn projects_two_unit_bundle_to_plan_inputs() {
     assert_eq!(w1.contains(CY_BIT), Bool::TRUE, "W1 writes CY");
     assert_eq!(a1.contains(CX_BIT), Bool::TRUE, "W1 access union has CX");
     assert_eq!(a1.contains(CY_BIT), Bool::TRUE, "W1 access union has CY");
-    assert_eq!(commutative[1], Bool::TRUE, "W1 commutative override applied");
+    assert_eq!(
+        commutative[1],
+        Bool::TRUE,
+        "W1 commutative override applied"
+    );
 
     // Dependency edge: W0 writes CX (bit 1), W1 reads CX (bit 1) => same bit.
     assert_eq!(

@@ -44,34 +44,40 @@ use crate::dispatch::morsel::MorselRange;
 
 mod bundles;
 mod col_accum_project;
+mod col_select;
 mod ctx_construct;
 mod ctx_loops_has;
 mod ctx_meta_resource;
 mod ctx_writers;
 mod lists;
+mod map;
 mod projection;
 mod selectors;
 
 pub use bundles::{AccumBundleOf, ColBundleOf, CtxFor, ResourceBundleOf, VirtBundleOf};
 pub use col_accum_project::{AccumProject, ColProject};
+pub use col_select::{ColMember, ColSelector};
 pub use lists::{
     AccPtrCons,
     AccPtrNil,
+    AccSnap,
     AccumColPtr,
     ColPtrCons,
     ColPtrNil,
+    ColRef,
     MetaNil,
+    MetaRank,
     MetaRef,
     SnapCons,
     SnapNil,
     VirtCons,
     VirtNil,
 };
+pub use map::{ColRead, ColWrite, Gather, Scatter};
 pub use projection::{Project, VirtualProject, project_reads};
 pub use selectors::{
     AccumSelector,
     BuildMetaPtr,
-    ColSelector,
     GateWith,
     MetaPtrFor,
     Selector,

@@ -123,8 +123,8 @@ impl WorkUnit<Always> for ConsumerWu {
     type Write = AccW;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        // SAFETY: Mark reserved (RECORDS) with headroom over this frame's appends.
-        unsafe { ctx.accums().append::<Mark, _>(Mark(9)) };
+        // Mark reserved (RECORDS) with headroom over this frame's appends.
+        ctx.accums().append::<Mark, _>(Mark(9));
     }
 }
 
@@ -146,8 +146,8 @@ impl WorkUnit<OnMeta<ScheduleEnd>> for EmaWu {
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         let ema = ctx.meta::<SchedulerMetrics>().ema_pass_duration_ns.get();
-        // SAFETY: Mark reserved (RECORDS) with headroom over this frame's appends.
-        unsafe { ctx.accums().append::<Mark, _>(Mark(ema.to_raw())) };
+        // Mark reserved (RECORDS) with headroom over this frame's appends.
+        ctx.accums().append::<Mark, _>(Mark(ema.to_raw()));
     }
 }
 

@@ -15,7 +15,7 @@ use core::sync::atomic::{AtomicBool, AtomicUsize};
 use arvo::USize;
 use arvo::strategy::Identity;
 use hilavitkutin_api::ColumnStorage;
-use hilavitkutin_api::access::{AccessSet, ContainsAll, Empty};
+use hilavitkutin_api::access::{AccessSet, Empty, HoldsAll};
 use hilavitkutin_api::builder_input::{BuilderInput, Dispatch};
 use hilavitkutin_api::platform::ClockApi;
 use hilavitkutin_api::run_cfg::{DefaultRunCfg, RunCfg};
@@ -146,18 +146,18 @@ impl<Wus, Stores, Platform, Vals, WuVals, Clk>
 where
     Wus: WorkUnitBundle,
     Stores: AccessSet
-        + ContainsAll<<Wus as WorkUnitBundle>::AccumRead>
-        + ContainsAll<<Wus as WorkUnitBundle>::AccumWrite>
+        + HoldsAll<<Wus as WorkUnitBundle>::AccumRead>
+        + HoldsAll<<Wus as WorkUnitBundle>::AccumWrite>
         + AccumStoresMask<<DefaultPlanDims as PlanDims>::Stores>
         + StoreSizes<<DefaultPlanDims as PlanDims>::Stores>,
     Vals: StoreValues + BindingsFor + DrainStores,
 {
     /// Finalise the builder into a `Scheduler<DefaultRunCfg, Stores, M>`.
     ///
-    /// Carries `Stores: ContainsAll<Wus::AccumRead> +
-    /// ContainsAll<Wus::AccumWrite>` as its where-clause. A registered
-    /// WU referencing an unregistered store produces a compile error
-    /// pointing at the missing store.
+    /// Carries `Stores: HoldsAll<Wus::AccumRead> +
+    /// HoldsAll<Wus::AccumWrite>` as its where-clause. A registered
+    /// WU naming an unregistered store, bare or under a wrapper, produces
+    /// a compile error pointing at the missing store.
     ///
     /// Walks `Stores` and `store_values` in lockstep, reserving each
     /// `Resource<T>`'s one-record column via `storage` and recording its
