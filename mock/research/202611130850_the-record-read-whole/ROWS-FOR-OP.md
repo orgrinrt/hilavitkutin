@@ -1,6 +1,6 @@
 # The rows the written history does not back, or that stand against it
 
-This file lists the 137 rows of the registry that were left as they were when the rest were ratified by default or put on a stamp. Each of them is here for one of two reasons the record itself gives: the source says in words that the content waits on the maintainer or was an agent's own call, or a passage that is his says otherwise on the same point. None of them is ratified and none carries a stamp.
+This file lists the 141 rows of the registry that were left as they were when the rest were ratified by default or put on a stamp. Each of them is here for one of two reasons the record itself gives: the source says in words that the content waits on the maintainer or was an agent's own call, or a passage that is his says otherwise on the same point. None of them is ratified and none carries a stamp.
 
 It follows from his words of 13 November 2026, kept whole in `OP-ANSWERS-18.md` beside this file:
 
@@ -12,7 +12,7 @@ The rows are grouped by what the maintainer would have to say to settle them. Th
 
 ## Part one: rows against a word of his that stands
 
-These 22 rows say something a later ruling, a later answer or the founding text says otherwise, and the record's own order puts his word above the row. The options were written for this file and are the same for each row:
+These 26 rows say something a later ruling, a later answer or the founding text says otherwise, and the record's own order puts his word above the row. The options were written for this file and are the same for each row:
 
 1. The row is demoted and the word of his named in the finding stands.
 2. The row's version is the one he wants, and the word named in the finding is what changes.
@@ -193,6 +193,37 @@ Finding: The row has the second writer of one column refused at bind and rests t
 
 Passages: `mock/research/sketches/202611122242_frame-view-typestate/FINDINGS.md:74-74`, `mock/research/sketches/202611122242_frame-view-typestate/FINDINGS.md:91-91`, `.data/op-responses/202611130726_does-anyone-here-know-what-hilavitkutin-is.md:258-278`, `.data/op-responses/202611130508_the-canon-goes-provisional-and-hilavitkutin-is-revised-in.md:162-185`.
 
+#### `the_lint_allow_escape_hatch_is_for_a_genuinely_unavoidable_boundary_and_always_carries_a_tracked_remediation_task`
+
+A tenet. It says: The lint allow escape hatch exists only for the genuinely unavoidable boundary and always with a tracked remediation task.
+
+Finding: The row's lines are the workspace principles fragment ported into the template, not the seed's, and asked on 2026-09-02 about the tracked line of the lint allow marker, he answered "The upstream needs to remove the tracked line, because we've not landed on any standard there that would be useful." The row keeps the tracked task he said goes.
+
+Passages: `mock/PRINCIPLES.md.tmpl:38-40`, `mock/PRINCIPLES.md.tmpl:186-188`, `mock/research/202611130850_the-record-read-whole/OP-ANSWERS-FRAGMENT.md:62-63`, `.data/op-responses/202609022036_huurre-wayland-lint-allow.md:50-82`.
+
+#### `standard_trait_methods_whose_signatures_the_language_fixes_are_the_escape_hatch_and_everywhere_else_the_rule_stands`
+
+A tenet. It says: The escape hatches are implementations of standard trait methods whose signatures the language fixes, each carrying a lint allow marker with the reason of standard trait parity and a tracked task.
+
+Finding: The same answer of 2026-09-02 stands against the tracked task each marker carries here; the rest of the row, the escape hatch for signatures the language fixes, is not what he answered.
+
+Passages: `mock/PRINCIPLES.md.tmpl:180-184`, `mock/research/202611130850_the-record-read-whole/OP-ANSWERS-FRAGMENT.md:62-63`.
+
+#### `a_concept_that_might_need_extension_is_a_registered_trait_and_enums_are_for_truly_closed_sets_only`
+
+A tenet. It says: If a concept might need extension, it is a trait with registration, or the inventory equivalent of the stack, and not a C-layout enum.
+
+Finding: The founding text says hilavitkutin has no registration attribute and leaves registration to its consumers, and the linking crate's design rejects inventory and every linker-section discovery mechanism. The row, from the ported fragment, names registration and the inventory pattern as the means.
+
+Passages: `mock/PRINCIPLES.md.tmpl:140-145`, `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2105-2107`, `mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:100-100`.
+
+#### `extension_across_an_abi_boundary_is_by_registered_traits_and_c_layout_descriptors_and_never_by_dyn`
+
+A tenet. It says: Where extension across an ABI boundary is required, the means are registered traits and C-layout descriptors, which the text calls the inventory pattern, and not dynamic dispatch.
+
+Finding: As for the row above: the founding text has no registration attribute in hilavitkutin and the plugin host layer is pull-based, so the inventory pattern the row names as the means stands against both.
+
+Passages: `mock/PRINCIPLES.md.tmpl:78-79`, `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2105-2107`, `mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:100-100`.
 
 ## Part two: points the record states two ways
 
