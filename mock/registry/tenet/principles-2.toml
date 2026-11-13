@@ -316,9 +316,7 @@ debt with a linked task id. If the suppression isn't traceable to a
 specific follow-up, the design is wrong, not the rule.
 '''
 origin = "stated"
-standing = "provisional"
-stamped_by = "experts"
-stamp = 'provisional, 2026-11-13: its lines mock/PRINCIPLES.md.tmpl:38-40 were written by 04e1cb9 of 2026-04-20, which tightened the bare-primitive section of the ported shared principles fragment of the workspace, and its lines mock/PRINCIPLES.md.tmpl:186-188 by 8e63891 of 2026-04-20, which ported that fragment, and not by the seed 680a672, and no capture of op speaks of that fragment; op said at mock/research/202611130850_the-record-read-whole/OP-ANSWERS-FRAGMENT.md:62-63, answering the question at mock/research/202611130850_the-record-read-whole/OP-ANSWERS-FRAGMENT.md:31-58, that the tracked line is to be removed upstream because no standard for it has been settled, which stands against the tracked remediation task this row always requires, and the founding spec says nothing of the marker; searched mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2198-2256 and mock/research/202611130850_the-record-read-whole/OP-ANSWERS-FRAGMENT.md:27-63, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
+standing = "held"
 keywords = ["lint:allow", "escape hatch", "tracked task", "remediation", "unavoidable boundary", "skeleton convenience"]
 
 [[tenet]]
@@ -336,9 +334,7 @@ Option<Ordering>`, `fn fmt() -> fmt::Result`). Each one carries
 Everywhere else, the rule stands.
 '''
 origin = "stated"
-standing = "provisional"
-stamped_by = "experts"
-stamp = 'provisional, 2026-11-13: its lines mock/PRINCIPLES.md.tmpl:180-184 were written by 04e1cb9 of 2026-04-20, which tightened the bare-primitive section of the ported shared principles fragment of the workspace, and not by the seed 680a672, and no capture of op speaks of that fragment; the founding spec says nothing of standard trait methods as an escape hatch, and op said at mock/research/202611130850_the-record-read-whole/OP-ANSWERS-FRAGMENT.md:62-63, answering the question at mock/research/202611130850_the-record-read-whole/OP-ANSWERS-FRAGMENT.md:31-58, that the tracked line this row puts on each marker is to be removed upstream because no standard for it has been settled, which bears on row the_lint_allow_escape_hatch_is_for_a_genuinely_unavoidable_boundary_and_always_carries_a_tracked_remediation_task; searched mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2198-2256 and mock/research/202611130850_the-record-read-whole/OP-ANSWERS-FRAGMENT.md:27-63, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md), and asked of the maintainer in ticket `86aa80598714`'
+standing = "held"
 keywords = ["std trait parity", "escape hatch", "Option", "fmt::Result", "lint:allow", "fixed signature"]
 related = ["tenet::the_lint_allow_escape_hatch_is_for_a_genuinely_unavoidable_boundary_and_always_carries_a_tracked_remediation_task"]
 
