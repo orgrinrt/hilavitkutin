@@ -1,0 +1,18 @@
+# The host side of the M3 spike: a compiled host unit whose kernel is an
+# occupant held in an ordinary Resource (seat 02's s6 shape, made Replaceable
+# rather than PlanAffecting), and a host-side installer that owns the library.
+
+[package]
+name = "m3-host"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+[dependencies]
+hilavitkutin.workspace = true
+hilavitkutin-api.workspace = true
+hilavitkutin-providers.workspace = true
+hilavitkutin-linking.workspace = true
+arvo.workspace = true
+notko.workspace = true
+libc = "0.2"
