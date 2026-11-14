@@ -1,0 +1,62 @@
+The threaded provider test against the defect review pass 1 finding 6 names:
+the padding computed once, above the compare-exchange retry loop in
+`StaticBumpMemory::allocate`, so a retried block keeps the padding of the
+cursor it lost to. Disjoint, misaligned.
+
+Mutation: in crates/hilavitkutin-providers/src/memory.rs, the line
+    let pad = self.base.addr().wrapping_add(used).wrapping_neg() & mask;
+moved from the first line inside `loop {` to the line before it.
+
+Run, three times, from mock/:
+    CARGO_TARGET_DIR=/home/user/target cargo test -j 2 -p hilavitkutin-providers --test static_bump_memory concurrent
+
+Each run:
+    thread 'concurrent_callers_get_aligned_disjoint_blocks_inside_the_buffer' panicked at crates/hilavitkutin-providers/tests/static_bump_memory.rs:137:9:
+    test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 4 filtered out
+
+Line 137 is the alignment assert. With the source restored:
+    test result: ok. 5 passed; 0 failed
+
+---
+
+The panic tests against an abort with another cause, review pass 1 finding 7:
+the panicking unit in crates/hilavitkutin/tests/unit_panic_aborts.rs calls
+`std::process::abort()` in place of `panic!("{PANIC_MESSAGE}")`, so the child
+still dies by SIGABRT but prints neither the unit's panic nor the refusal to
+unwind.
+
+Run from mock/:
+    CARGO_TARGET_DIR=/home/user/target cargo test -j 2 -p hilavitkutin --test unit_panic_aborts
+
+    test a_unit_panic_under_run_aborts ... FAILED
+    test a_unit_panic_on_a_worker_aborts_within_the_bound ... FAILED
+    panicked at crates/hilavitkutin/tests/unit_panic_aborts.rs:246:5:
+    the child printed the unit's panic and then the refusal to unwind; it printed:
+
+With the source restored:
+    test result: ok. 2 passed; 0 failed; finished in 0.10s
+
+The wide differential, findings 4 and 5
+=======================================
+
+`CARGO_TARGET_DIR=/home/user/target cargo test -j 2 -p hilavitkutin --test run_parallel_wide_differential -- --include-ignored`, from `mock/`, at 39036b27: 9 passed, 5 failed. The five that fail are the five committed ignored, each at frame 1 (a clean frame) on producer 0:
+
+- record_less::run_runs_exactly_the_cone_of_each_step: Count { frame: 1, unit: 0, got: 1, want: 0 }
+- windowed::run_parallel_runs_each_unit_as_often_as_run_does_at_every_worker_count: got 5, want 0 at 1, 2, 3, 4 and 256 workers (five windows, one owner)
+- unit_outer::run_parallel_runs_each_unit_as_often_as_run_does_at_every_worker_count: got 1, 2, 3, 4 and 255, want 0 at 1, 2, 3, 4 and 256 workers (one run per core with a slice)
+- windowed and unit_outer the_skipping_run_diverges_when_a_mutated_store_is_not_marked: diverged false at every count
+
+A first count model, `run`'s count times the cores with a slice, failed unit_outer at frame 0 (got 1, want 5 at one worker): `run` runs a unit once a window and a core of the unit-outer walk once over its slice, so that model judged the walk's shape and not the skip. The committed model counts a run in a frame where `run` ran the unit at all, and the first red moves to frame 1.
+
+The store check's control, the_comparison_reports_a_runner_that_altered_one_record, reports Bytes { frame: 3, column: 6, record: 0 } at every count, the sink record it altered.
+
+Review pass 2
+=============
+
+The two hand controls above are now tests: `the_block_check_rejects_a_bump_that_aligns_by_offset` in `hilavitkutin-providers/tests/static_bump_memory.rs` and `the_boundary_check_rejects_an_abort_with_no_panic` in `hilavitkutin/tests/unit_panic_aborts.rs`, each green because the check rejects the wrong case.
+
+`a_provider_over_raw_parts_is_dropped_before_its_block_is_freed` passes under `cargo miri test` from `mock/` with `--config 'build.rustc-workspace-wrapper=""'` and `MIRIFLAGS=-Zmiri-ignore-leaks` (the leaked buffers of the other tests), and again with `-Zmiri-tree-borrows`. With the box freed before the provider's block is written, Miri stops: "Undefined Behavior: memory access failed: alloc42907 has been freed, so this pointer is dangling" at the write.
+
+The wide differential with its counts judged against the cone, `--include-ignored`: 7 passed, 6 failed, the six committed ignored. The unit-outer count fails at frame 0 on producer 0 (got 1, 2, 3, 4 and 255 at 1, 2, 3, 4 and 256 workers, want 5, the windows `run` walks); the windowed and record-less counts and the record-less `run` cone at frame 1 on producer 0; the two unmarked-change checks at every count. The accumulator control reports `Bytes { frame: 3, column: 7, record: <kept - 1> }` at every count.
+
+Review pass 3 (F1): the from_raw_parts test is renamed `a_block_from_raw_parts_is_written_and_read_soundly`. `StaticBumpMemory` has no `Drop`, so the drop-before-free order is the caller's promise and no test observes it; the Miri red above is the box freed before the write, a different mutant.

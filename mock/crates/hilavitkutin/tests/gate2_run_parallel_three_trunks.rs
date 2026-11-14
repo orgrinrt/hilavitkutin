@@ -15,7 +15,7 @@ mod producer_c;
 #[path = "run_parallel/producers.rs"]
 mod producers;
 
-use arena::{BumpProvider, HintT, Inv, store};
+use arena::{HintT, Inv, stable_provider, store};
 use arvo::USize;
 use common::TestExecutor;
 use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
@@ -77,7 +77,7 @@ impl WorkUnit<Always> for Combiner3 {
 
 #[test]
 fn run_parallel_three_trunks_two_cores_matches_single_core() {
-    let provider = BumpProvider::<32768>::new();
+    let provider = stable_provider(32768, 0);
     let scheduler = Scheduler::builder()
         .with(Column::<Inv>::start())
         .with(Column::<Av>::start())

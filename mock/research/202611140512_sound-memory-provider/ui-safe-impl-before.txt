@@ -1,0 +1,9 @@
+# at 8e6c8c73, before `MemoryProviderApi` became an unsafe trait, with
+# tests/ui/memory_provider_safe_impl_fail.rs copied in and driven alone
+# (tests/red48.rs: one trybuild compile_fail on that fixture):
+$ cargo test -p hilavitkutin --test red48
+
+test tests/ui/memory_provider_safe_impl_fail.rs ... error
+Expected test case to fail to compile, but it succeeded.
+
+test red ... FAILED

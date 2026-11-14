@@ -1,54 +1,20 @@
 //! The arena, the input column and the hint every `run_parallel` fixture shares.
+//!
+//! The provider is the shared `stable_provider`: the scheduler records where
+//! every store it reserves lives and then moves, so the buffer cannot sit
+//! inline in the provider (`tests/stable_provider/mod.rs`).
 
-use core::cell::{Cell, UnsafeCell};
-use core::mem::MaybeUninit;
+#[path = "../stable_provider/mod.rs"]
+mod stable_provider;
 
-use arvo::{Bool, USize};
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::store::Column;
 use hilavitkutin_providers::ArenaColumnStorage;
+pub use stable_provider::stable_provider;
 
 pub fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
-}
-
-/// A bump allocator over an owned buffer of `N` bytes. It never frees: one
-/// scheduler builds on it once and the test drops both together.
-pub struct BumpProvider<const N: usize> {
-    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
-    used: Cell<usize>,
-}
-
-impl<const N: usize> BumpProvider<N> {
-    pub fn new() -> Self {
-        Self {
-            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
-            used: Cell::new(0),
-        }
-    }
-}
-
-unsafe impl<const N: usize> Send for BumpProvider<N> {}
-unsafe impl<const N: usize> Sync for BumpProvider<N> {}
-
-impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
-    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
-        let base = self.buf.get() as *mut u8;
-        let used = self.used.get();
-        let align = align.0.max(1);
-        let aligned = (used + align - 1) / align * align;
-        if aligned + len.0 > N {
-            return core::ptr::null_mut();
-        }
-        self.used.set(aligned + len.0);
-        // SAFETY: `aligned + len <= N`, in bounds of the owned buffer.
-        unsafe { base.add(aligned) }
-    }
-
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
-
-    unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
 /// The host-populated input every producer reads. A producer reads it rather

@@ -11,11 +11,12 @@
 //! Bundle internals are reached through the engine's hidden `__new`
 //! constructors and the `project_reads` projection helper.
 
-use core::cell::{Cell, UnsafeCell};
-use core::mem::MaybeUninit;
+mod stable_provider;
 
+use core::cell::Cell;
+
+use arvo::USize;
 use arvo::strategy::{Additive, Identity};
-use arvo::{Bool, USize};
 use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapCons, SnapNil};
 use hilavitkutin::dispatch::morsel::MorselRange;
 use hilavitkutin::resource::provenance::ColumnPtr;
@@ -36,6 +37,7 @@ use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::store::{Column, Resource};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
+use stable_provider::stable_provider;
 
 /// Wrap a provider in the default-capacity bindings store (`D = Dim<256>`).
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
@@ -45,42 +47,6 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 // ---------------------------------------------------------------------
 // Stack-backed test memory provider (mirrors resource_bindings.rs).
 // ---------------------------------------------------------------------
-
-struct BumpProvider<const N: usize> {
-    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
-    used: Cell<usize>,
-}
-
-impl<const N: usize> BumpProvider<N> {
-    fn new() -> Self {
-        Self {
-            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
-            used: Cell::new(0),
-        }
-    }
-}
-
-unsafe impl<const N: usize> Send for BumpProvider<N> {}
-unsafe impl<const N: usize> Sync for BumpProvider<N> {}
-
-impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
-    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
-        let base = self.buf.get() as *mut u8;
-        let used = self.used.get();
-        let align = align.0.max(1);
-        let aligned = (used + align - 1) / align * align;
-        if aligned + len.0 > N {
-            return core::ptr::null_mut();
-        }
-        self.used.set(aligned + len.0);
-        // SAFETY: `aligned + len <= N`, in bounds of the owned buffer.
-        unsafe { base.add(aligned) }
-    }
-
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
-
-    unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
-}
 
 // Access-set aliases used across the tests.
 type ReadU32 = Cons<Resource<u32>, Empty>;
@@ -95,7 +61,7 @@ type WriteU16U32 = Cons<Column<u16>, Cons<Column<u32>, Empty>>;
 fn context_resolves_resource() {
     // Build a one-resource bindings, project the Context off it through the
     // public projecting constructor, resolve the value.
-    let provider = BumpProvider::<256>::new();
+    let provider = stable_provider(256, 0);
     let scheduler = Scheduler::builder()
         .with(Resource::new(99u32))
         .build(store(provider), USize(0))
@@ -283,7 +249,7 @@ thread_local! {
 
 #[test]
 fn context_drives_wu_execute() {
-    let provider = BumpProvider::<256>::new();
+    let provider = stable_provider(256, 0);
     let scheduler = Scheduler::builder()
         .with(Resource::new(7u32))
         .build(store(provider), USize(0))

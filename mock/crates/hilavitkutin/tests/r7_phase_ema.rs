@@ -17,14 +17,13 @@
 //! a width-1 chain or shallow fan-in collapses to one phase. Lives under `tests/`
 //! so the bare numeric record values do not trip the src-tree primitive lints.
 
-use core::cell::{Cell, UnsafeCell};
-use core::mem::MaybeUninit;
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use arvo::{Bool, USize};
+use arvo::USize;
 use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 mod common;
+mod stable_provider;
 use common::TestExecutor;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
@@ -41,42 +40,10 @@ use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
+use stable_provider::stable_provider;
 
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
-}
-
-struct BumpProvider<const N: usize> {
-    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
-    used: Cell<usize>,
-}
-impl<const N: usize> BumpProvider<N> {
-    fn new() -> Self {
-        Self {
-            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
-            used: Cell::new(0),
-        }
-    }
-}
-unsafe impl<const N: usize> Send for BumpProvider<N> {}
-unsafe impl<const N: usize> Sync for BumpProvider<N> {}
-impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
-    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
-        let base = self.buf.get() as *mut u8;
-        let used = self.used.get();
-        let align = align.0.max(1);
-        let aligned = (used + align - 1) / align * align;
-        if aligned + len.0 > N {
-            return core::ptr::null_mut();
-        }
-        self.used.set(aligned + len.0);
-        // SAFETY: aligned + len <= N, in bounds of the owned buffer.
-        unsafe { base.add(aligned) }
-    }
-
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
-
-    unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
 /// Strictly increasing counter clock: every `now_ns` returns a larger value, so
@@ -370,7 +337,7 @@ macro_rules! single_phase {
 // --- Measurement: single-core run records each phase's EMA; higher slot zero. ---
 #[test]
 fn multi_phase_records_and_higher_slot_zero() {
-    let provider = BumpProvider::<16384>::new();
+    let provider = stable_provider(16384, 0);
     let mut scheduler = two_waist!(provider, N);
     let r = scheduler.run();
     assert!(matches!(r, Outcome::Ok(())));
@@ -395,7 +362,7 @@ fn multi_phase_records_and_higher_slot_zero() {
 // --- Invariant: run_parallel does not call dispatch_trunks, so phase_ema stays zero. ---
 #[test]
 fn parallel_path_leaves_phase_ema_zero() {
-    let provider = BumpProvider::<16384>::new();
+    let provider = stable_provider(16384, 0);
     let scheduler = two_waist!(provider, N);
     let pool = TestExecutor::new();
     let mut scheduler = core::pin::pin!(scheduler);
@@ -416,7 +383,7 @@ fn multi_morsel_folds_per_frame_total() {
     // `run` folds the per-frame total once. The prior round folded per morsel
     // (the bug this round fixes); this case exercises the multi-morsel path the
     // single-morsel test never reached.
-    let provider = BumpProvider::<65536>::new();
+    let provider = stable_provider(65536, 0);
     let mut scheduler = two_waist!(provider, 600);
     let r = scheduler.run();
     assert!(matches!(r, Outcome::Ok(())));
@@ -441,7 +408,7 @@ fn multi_morsel_folds_per_frame_total() {
 // --- Single-phase carrier touches only slot 0. ---
 #[test]
 fn single_phase_only_slot_zero() {
-    let provider = BumpProvider::<16384>::new();
+    let provider = stable_provider(16384, 0);
     let mut scheduler = single_phase!(provider);
     let r = scheduler.run();
     assert!(matches!(r, Outcome::Ok(())));

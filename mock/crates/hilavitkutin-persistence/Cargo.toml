@@ -20,6 +20,8 @@ notko.workspace = true          # Maybe, Outcome
 # rkyv pulled in by follow-up round; skeleton ships without it.
 
 [dev-dependencies]
+# The static bump memory provider the tests map into.
+hilavitkutin-providers.workspace = true
 # (arvo already declared above under [dependencies])
 
 [features]

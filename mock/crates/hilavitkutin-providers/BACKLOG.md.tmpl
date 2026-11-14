@@ -30,9 +30,10 @@ single-thread path through morsel dispatch may not need it.
 
 ## Future provider modules
 
-ColumnStorage default, Clock default, MemoryProvider default for
-libc/Unix targets. Each lands in its own round when consumer
-demand surfaces. Per task #253 v0 scope: interner-only.
+Clock default, and a memory provider over the operating system's
+pages for libc/Unix targets. Each lands in its own round when
+consumer demand surfaces. The ColumnStorage default (ArenaColumnStorage)
+and the static-buffer memory provider (StaticBumpMemory) have landed.
 
 ## Round 202605101036 follow-ups
 

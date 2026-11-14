@@ -1,21 +1,21 @@
 error[E0599]: the method `build` exists for struct `SchedulerBuilder<Cons<Lift, hilavitkutin_api::Empty>, hilavitkutin_api::Empty, hilavitkutin_api::Empty, DefaultStoreValues, WuCons<Lift, WuNil>>`, but its trait bounds were not satisfied
-   --> tests/ui/unregistered_wrapped_store_fail.rs:104:10
-    |
-102 |       let mut scheduler = Scheduler::builder()
-    |  _________________________-
-103 | |         .with(Lift)
-104 | |         .build(store(provider), USize(RECORDS))
-    | |         -^^^^^ method cannot be called due to unsatisfied trait bounds
-    | |_________|
-    |
-    |
-   ::: /root/.cargo/git/checkouts/notko-f6f26a62b445f4df/8a74dbc/notko-hlist/src/list.rs:20:1
-    |
- 20 |   pub struct Empty;
-    |   ---------------- doesn't satisfy `_: HoldsAll<Cons<Differs<Column<Height>>, Empty>>`, `_: HoldsAll<Cons<Reach<Column<Slot>, Cap(USize(1))>, Empty>>`, `hilavitkutin_api::Empty: Contains<Column<Height>>` or `hilavitkutin_api::Empty: Contains<Column<Slot>>`
-    |
-    = note: the following trait bounds were not satisfied:
-            `hilavitkutin_api::Empty: Contains<Column<Slot>>`
-            which is required by `hilavitkutin_api::Empty: HoldsAll<Cons<Reach<Column<Slot>, Cap(USize(1))>, hilavitkutin_api::Empty>>`
-            `hilavitkutin_api::Empty: Contains<Column<Height>>`
-            which is required by `hilavitkutin_api::Empty: HoldsAll<Cons<Differs<Column<Height>>, hilavitkutin_api::Empty>>`
+  --> tests/ui/unregistered_wrapped_store_fail.rs:77:10
+   |
+75 |       let mut scheduler = Scheduler::builder()
+   |  _________________________-
+76 | |         .with(Lift)
+77 | |         .build(store(provider), USize(RECORDS))
+   | |         -^^^^^ method cannot be called due to unsatisfied trait bounds
+   | |_________|
+   |
+   |
+  ::: /root/.cargo/git/checkouts/notko-f6f26a62b445f4df/8a74dbc/notko-hlist/src/list.rs:20:1
+   |
+20 |   pub struct Empty;
+   |   ---------------- doesn't satisfy `_: HoldsAll<Cons<Differs<Column<Height>>, Empty>>`, `_: HoldsAll<Cons<Reach<Column<Slot>, Cap(USize(1))>, Empty>>`, `hilavitkutin_api::Empty: Contains<Column<Height>>` or `hilavitkutin_api::Empty: Contains<Column<Slot>>`
+   |
+   = note: the following trait bounds were not satisfied:
+           `hilavitkutin_api::Empty: Contains<Column<Slot>>`
+           which is required by `hilavitkutin_api::Empty: HoldsAll<Cons<Reach<Column<Slot>, Cap(USize(1))>, hilavitkutin_api::Empty>>`
+           `hilavitkutin_api::Empty: Contains<Column<Height>>`
+           which is required by `hilavitkutin_api::Empty: HoldsAll<Cons<Differs<Column<Height>>, hilavitkutin_api::Empty>>`

@@ -24,7 +24,10 @@ impl Default for NullMemoryProvider {
     }
 }
 
-impl MemoryProviderApi for NullMemoryProvider {
+// SAFETY: `allocate` refuses every request with null, so there is no block
+// whose alignment, lifetime, overlap or sharing could break a promise of
+// `MemoryProviderApi`, and the provider holds no state to race on.
+unsafe impl MemoryProviderApi for NullMemoryProvider {
     #[rustfmt::skip] // keeps the allow on the signature it governs
     unsafe fn allocate(&self, _len: arvo::USize, _align: arvo::USize) -> *mut u8 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI returns raw pointer by contract; tracked: #72
         core::ptr::null_mut()

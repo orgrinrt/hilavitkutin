@@ -16,8 +16,7 @@
 //! Lives under `tests/` so the bare-numeric fixtures do not trip the src-tree
 //! primitive lints.
 
-use core::cell::{Cell, UnsafeCell};
-use core::mem::MaybeUninit;
+mod stable_provider;
 
 use arvo::{Cap, USize};
 use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
@@ -31,6 +30,7 @@ use hilavitkutin_api::store::{Column, Resource, Seq, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
+use stable_provider::stable_provider;
 
 // Record counts: one morsel's worth, and more than one window's worth.
 const SMALL: usize = 16;
@@ -38,39 +38,6 @@ const LARGE: usize = 4096;
 
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
-}
-
-struct BumpProvider<const N: usize> {
-    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
-    used: Cell<usize>,
-}
-impl<const N: usize> BumpProvider<N> {
-    fn new() -> Self {
-        Self {
-            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
-            used: Cell::new(0),
-        }
-    }
-}
-unsafe impl<const N: usize> Send for BumpProvider<N> {}
-unsafe impl<const N: usize> Sync for BumpProvider<N> {}
-impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
-    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
-        let base = self.buf.get() as *mut u8;
-        let used = self.used.get();
-        let align = align.0.max(1);
-        let aligned = (used + align - 1) / align * align;
-        if aligned + len.0 > N {
-            return core::ptr::null_mut();
-        }
-        self.used.set(aligned + len.0);
-        // SAFETY: aligned + len <= N, in bounds of the owned buffer.
-        unsafe { base.add(aligned) }
-    }
-
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
-
-    unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: arvo::Bool, _write: arvo::Bool) {}
 }
 
 #[derive(Copy, Clone, Default)]
@@ -139,7 +106,7 @@ impl WorkUnit<Always> for Idler {
 fn morsel_window_matches_l1_formula() {
     // 24_576 / (4 column + 8 resource collection) = 2048, inside the clamps,
     // already 4-aligned.
-    let provider = BumpProvider::<16384>::new();
+    let provider = stable_provider(16384, 0);
     let mut s = Scheduler::builder()
         .with(Resource::new(FxRes))
         .with(Column::<Outv>::start())
@@ -172,7 +139,7 @@ fn morsel_window_is_not_the_record_count_partition() {
     // 4096 records with the same 12-byte write sum: the window stays 2048,
     // so the fiber covers the range in ceil(4096 / 2048) = 2 morsels. The
     // placeholder partition would have reported 4096 here.
-    let provider = BumpProvider::<65536>::new();
+    let provider = stable_provider(65536, 0);
     let mut s = Scheduler::builder()
         .with(Resource::new(FxRes))
         .with(Column::<Outv>::start())
@@ -208,7 +175,7 @@ fn morsel_window_is_not_the_record_count_partition() {
 fn no_write_bytes_takes_the_max_window() {
     // A fiber with an empty write sum has nothing constraining its L1 write
     // budget: window = MAX_MORSEL (8192, already 4-aligned).
-    let provider = BumpProvider::<16384>::new();
+    let provider = stable_provider(16384, 0);
     let s = Scheduler::builder()
         .with(Idler)
         .build(store(provider), USize(16))

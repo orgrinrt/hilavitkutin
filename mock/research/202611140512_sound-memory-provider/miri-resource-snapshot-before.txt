@@ -1,0 +1,32 @@
+$ MIRIFLAGS=-Zmiri-ignore-leaks cargo miri test --config 'build.rustc-workspace-wrapper=""' -p hilavitkutin --test resource_snapshot
+# at a85939b6, before the move off the inline provider
+running 3 tests
+test collection_members_live_stream_not_snapshot_copied ... ignored, catalogue: Seq/Map collection members not yet wired into resource values; the live-stream asserts (snapshot copies ptr+len only, elements stream from the column) land with that wiring; tracked #hilavitkutin_catalogue_seq_and_map_collection_members_are_no
+test erased_backcast_roundtrip ... error: Undefined Behavior: memory access failed: alloc42401 has been freed, so this pointer is dangling
+   --> crates/hilavitkutin/tests/resource_snapshot.rs:123:30
+    |
+123 |     let read_back = unsafe { *bindings.__ptr().as_ptr() };
+    |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^ Undefined Behavior occurred here
+    |
+    = help: this indicates a bug in the program: it performed an invalid operation, and caused Undefined Behavior
+    = help: see https://doc.rust-lang.org/nightly/reference/behavior-considered-undefined.html for further information
+help: alloc42401 was allocated here:
+   --> crates/hilavitkutin/src/scheduler/builder.rs:203:12
+help: alloc42401 was deallocated here:
+   --> crates/hilavitkutin/src/scheduler/builder.rs:273:4
+    = note: this is on thread `erased_backcast`
+    = note: stack backtrace:
+            0: erased_backcast_roundtrip
+                at crates/hilavitkutin/tests/resource_snapshot.rs:123:30: 123:56
+            1: erased_backcast_roundtrip::{closure#0}
+                at crates/hilavitkutin/tests/resource_snapshot.rs:111:31: 111:31
+
+note: some details are omitted, run with `MIRIFLAGS=-Zmiri-backtrace=full` for a verbose backtrace
+
+error: aborting due to 1 previous error
+
+error: test failed, to rerun pass `-p hilavitkutin --test resource_snapshot`
+
+Caused by:
+  process didn't exit successfully: `/root/.rustup/toolchains/nightly-2026-05-28-x86_64-unknown-linux-gnu/bin/cargo-miri runner /home/user/target/miri/miri/x86_64-unknown-linux-gnu/debug/deps/resource_snapshot-56d5f095d2d57484` (exit status: 1)
+note: test exited abnormally; to see the full output pass --no-capture to the harness.

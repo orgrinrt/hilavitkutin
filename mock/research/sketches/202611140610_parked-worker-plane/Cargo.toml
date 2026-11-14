@@ -1,0 +1,11 @@
+# Feasibility sketch: which shape of the parked worker survives Miri across
+# the engine's between-frame writes. Own workspace, so the repository's build
+# never sees it. Run with `cargo test`, and under `cargo miri test`.
+
+[workspace]
+
+[package]
+name = "parked-worker-plane"
+version = "0.0.0"
+edition = "2024"
+publish = false

@@ -13,10 +13,11 @@
 //! Lives under `tests/` so the bare numeric payloads do not trip the
 //! src-tree primitive lints.
 
-use core::cell::{Cell, UnsafeCell};
-use core::mem::MaybeUninit;
+mod stable_provider;
 
-use arvo::{Bool, USize};
+use core::cell::Cell;
+
+use arvo::USize;
 use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapCons, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
@@ -34,47 +35,11 @@ use hilavitkutin_api::store::{Column, Resource, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
+use stable_provider::stable_provider;
 
 /// Wrap a provider in the default-capacity arena store (`D = Dim<256>`).
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
-}
-
-// Stack-backed test memory provider (mirrors tests/incremental_skip.rs).
-struct BumpProvider<const N: usize> {
-    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
-    used: Cell<usize>,
-}
-
-impl<const N: usize> BumpProvider<N> {
-    fn new() -> Self {
-        Self {
-            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
-            used: Cell::new(0),
-        }
-    }
-}
-
-unsafe impl<const N: usize> Send for BumpProvider<N> {}
-unsafe impl<const N: usize> Sync for BumpProvider<N> {}
-
-impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
-    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
-        let base = self.buf.get() as *mut u8;
-        let used = self.used.get();
-        let align = align.0.max(1);
-        let aligned = (used + align - 1) / align * align;
-        if aligned + len.0 > N {
-            return core::ptr::null_mut();
-        }
-        self.used.set(aligned + len.0);
-        // SAFETY: `aligned + len <= N`, in bounds of the owned buffer.
-        unsafe { base.add(aligned) }
-    }
-
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
-
-    unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
 const RECORDS: usize = 4;
@@ -147,7 +112,7 @@ impl WorkUnit<Always> for FillWu {
 /// install (or no install) fails the address or value assertion.
 #[test]
 fn swap_installs_in_place_at_the_drained_slot() {
-    let provider = BumpProvider::<32768>::new();
+    let provider = stable_provider(32768, 0);
     let mut scheduler = Scheduler::builder()
         .with(Resource::new(Val(11)))
         .build(store(provider), USize(0))
@@ -175,7 +140,7 @@ fn swap_installs_in_place_at_the_drained_slot() {
 /// S1: two swaps before a frame; the last value wins.
 #[test]
 fn double_swap_before_run_last_value_wins() {
-    let provider = BumpProvider::<32768>::new();
+    let provider = stable_provider(32768, 0);
     let mut scheduler = Scheduler::builder()
         .with(Resource::new(Val(1)))
         .build(store(provider), USize(0))
@@ -250,7 +215,7 @@ impl WorkUnit<Always> for ZstReaderWu {
 #[test]
 fn zst_swap_seeds_its_reader_for_the_next_frame() {
     ZST_READER_RUNS.with(|c| c.set(0));
-    let provider = BumpProvider::<32768>::new();
+    let provider = stable_provider(32768, 0);
     let mut scheduler = Scheduler::builder()
         .with(Resource::new(Zst))
         .with(Column::<ZOut>::start())
@@ -313,7 +278,7 @@ fn zst_swap_seeds_its_reader_for_the_next_frame() {
 /// consumed a `replace_resource` plan-dirty bit.
 #[test]
 fn replace_resource_opens_the_plan_band_replace_value_does_not() {
-    let provider = BumpProvider::<32768>::new();
+    let provider = stable_provider(32768, 0);
     let mut scheduler = Scheduler::builder()
         .with(Resource::new(Val(5)))
         .with(Resource::new(Cfgish(1)))
@@ -377,7 +342,7 @@ fn replace_resource_opens_the_plan_band_replace_value_does_not() {
 /// S2: the plan-affecting swap installs the value, same as S1.
 #[test]
 fn replace_resource_installs_the_value() {
-    let provider = BumpProvider::<32768>::new();
+    let provider = stable_provider(32768, 0);
     let mut scheduler = Scheduler::builder()
         .with(Resource::new(Cfgish(7)))
         .build(store(provider), USize(0))

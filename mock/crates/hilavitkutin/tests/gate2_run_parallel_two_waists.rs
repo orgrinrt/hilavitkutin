@@ -10,7 +10,7 @@
 mod arena;
 mod common;
 
-use arena::{BumpProvider, HintT, Inv, OneIn, store};
+use arena::{HintT, Inv, OneIn, stable_provider, store};
 use arvo::USize;
 use common::TestExecutor;
 use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
@@ -222,7 +222,7 @@ impl WorkUnit<Always> for Sink {
 
 #[test]
 fn run_parallel_threaded_two_waists_reuses_barrier() {
-    let provider = BumpProvider::<32768>::new();
+    let provider = stable_provider(32768, 0);
     let scheduler = Scheduler::builder()
         .with(Column::<Inv>::start())
         .with(Column::<P1v>::start())

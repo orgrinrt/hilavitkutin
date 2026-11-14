@@ -58,7 +58,7 @@ use hilavitkutin_api::{AccumRefused, Assert};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
 use notko::lend::Exhausted;
-use stable_provider::StableProvider;
+use stable_provider::stable_provider;
 
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
@@ -212,7 +212,7 @@ macro_rules! build {
             .with(Accum::<Bv>::new())
             .with(Accum::<Av>::new())
             $(.with($unit))+
-            .$($finish)+(store(StableProvider::new(16384, 0)), USize(N))
+            .$($finish)+(store(stable_provider(16384, 0)), USize(N))
             .unwrap_or_else(|_| panic!("build should succeed"));
         let in_base = scheduler.__bindings().__tail().__tail().__ptr().as_ptr();
         for i in 0 .. N {

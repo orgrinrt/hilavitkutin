@@ -12,7 +12,6 @@
 //! `std::thread`, and the host-side column access in `column_base`.
 
 use core::marker::PhantomData;
-use core::mem::MaybeUninit;
 use core::pin::Pin;
 
 use arvo::USize;
@@ -181,54 +180,69 @@ impl<KN: Kernel, A: Word, B: Word, C: Word, D: Word> WorkUnit<Always> for Join<K
 
 // ----- what the bench supplies that the engine does not -----
 
-/// A heap-backed bump `MemoryProviderApi`: the columns are too big for any
-/// fixed arena, and the engine ships the contract but no heap provider.
-/// The shape `engine_vs_std` uses.
+/// A heap-backed bump `MemoryProviderApi`: the crate's `StaticBumpMemory` over a
+/// heap block this provider owns and frees when it drops. The columns are too
+/// big for a fixed arena, and a bench builds schedulers per size, so the block
+/// is freed rather than leaked.
 pub struct HeapBump {
-    base: *mut u8,
-    cap:  usize,
-    used: core::cell::Cell<usize>,
-    // Owns the block `base` points into. The heap block does not move when the
-    // Box moves into the struct, so `base` stays valid.
-    _buf: Box<[MaybeUninit<u8>]>,
+    inner: core::mem::ManuallyDrop<hilavitkutin_providers::StaticBumpMemory>,
+    block: *mut [core::mem::MaybeUninit<u8>],
 }
 
 impl HeapBump {
     /// A provider over a fresh block of `bytes`.
     pub fn new(bytes: usize) -> Self {
-        let mut buf: Box<[MaybeUninit<u8>]> = vec![MaybeUninit::uninit(); bytes].into_boxed_slice();
-        let base = buf.as_mut_ptr() as *mut u8;
+        let block = Box::into_raw(vec![core::mem::MaybeUninit::uninit(); bytes].into_boxed_slice());
+        // SAFETY: `block` is a fresh allocation of `bytes` bytes nothing else
+        // reaches, and `drop` frees it only after `inner` is dropped, which is
+        // the contract of `from_raw_parts`.
+        let inner = unsafe {
+            hilavitkutin_providers::StaticBumpMemory::from_raw_parts(
+                block.cast(),
+                arvo::USize(bytes),
+            )
+        };
         Self {
-            base,
-            cap: bytes,
-            used: core::cell::Cell::new(0),
-            _buf: buf,
+            inner: core::mem::ManuallyDrop::new(inner),
+            block,
         }
     }
 }
 
-// SAFETY: the provider is only allocated from during `build`, on the building
-// thread; workers read and write columns through pointers it handed out, never
-// through the provider itself.
+impl Drop for HeapBump {
+    fn drop(&mut self) {
+        // SAFETY: `inner` is dropped here and nowhere else, before the block
+        // under it is freed, as `from_raw_parts` asks.
+        unsafe { core::mem::ManuallyDrop::drop(&mut self.inner) };
+        // SAFETY: `block` came from `Box::into_raw` in `new` and is freed once.
+        drop(unsafe { Box::from_raw(self.block) });
+    }
+}
+
+// SAFETY: `block` is owned by this provider alone and freed only in `drop`;
+// every other access goes through `inner`, which is Send and Sync.
 unsafe impl Send for HeapBump {}
+// SAFETY: as above.
 unsafe impl Sync for HeapBump {}
 
-impl MemoryProviderApi for HeapBump {
+// SAFETY: every call goes to `inner`, which keeps the promises of
+// `MemoryProviderApi` over `block`; the block lives, unmoved, until this
+// provider drops, which is the end of every block's life the trait allows.
+unsafe impl MemoryProviderApi for HeapBump {
     unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
-        let used = self.used.get();
-        let align = align.0.max(1);
-        let aligned = used.div_ceil(align) * align;
-        if aligned + len.0 > self.cap {
-            return core::ptr::null_mut();
-        }
-        self.used.set(aligned + len.0);
-        // SAFETY: `aligned + len <= cap`, so the result is inside the block.
-        unsafe { self.base.add(aligned) }
+        // SAFETY: forwarded as received.
+        unsafe { self.inner.allocate(len, align) }
     }
 
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
+    unsafe fn deallocate(&self, ptr: *mut u8, len: USize, align: USize) {
+        // SAFETY: forwarded as received.
+        unsafe { self.inner.deallocate(ptr, len, align) }
+    }
 
-    unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: arvo::Bool, _write: arvo::Bool) {}
+    unsafe fn protect(&self, ptr: *mut u8, len: USize, read: arvo::Bool, write: arvo::Bool) {
+        // SAFETY: forwarded as received.
+        unsafe { self.inner.protect(ptr, len, read, write) }
+    }
 }
 
 /// Bytes the arena needs for the frame's columns at `n` records, with

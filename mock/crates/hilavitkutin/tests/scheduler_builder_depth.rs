@@ -14,7 +14,7 @@ mod arena;
 #[path = "scheduler_builder/shim.rs"]
 mod shim;
 
-use arena::{TestProvider, store};
+use arena::{StaticBumpMemory, stable_provider, store};
 use arvo::USize;
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::footprint::ResourceFootprint;
@@ -38,8 +38,8 @@ use shim::TestCtx;
 
 // The fifty-unit registration needs more plan and meta storage than the
 // default 4096 bytes: with the small arena `build` returns `AllocationFailed`.
-fn store_for_fifty() -> ArenaColumnStorage<TestProvider<65536>> {
-    ArenaColumnStorage::new(TestProvider::<65536>::new())
+fn store_for_fifty() -> ArenaColumnStorage<StaticBumpMemory> {
+    ArenaColumnStorage::new(stable_provider(65536, 0))
 }
 
 // ---------------------------------------------------------------------

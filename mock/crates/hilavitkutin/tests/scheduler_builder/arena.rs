@@ -1,54 +1,19 @@
-//! The stack-backed bump arena the scheduler builder tests build on, and the
-//! default-capacity column store over it.
+//! The arena the scheduler builder tests build on, and the default-capacity
+//! column store over it.
+//!
+//! The provider is the shared `stable_provider`: the scheduler records where
+//! every store it reserves lives and then moves, so the buffer cannot sit
+//! inline in the provider (`tests/stable_provider/mod.rs`).
 
-use arvo::{Bool, USize};
-use hilavitkutin_api::platform::MemoryProviderApi;
+#[path = "../stable_provider/mod.rs"]
+mod stable_provider;
+
 use hilavitkutin_providers::ArenaColumnStorage;
+pub use stable_provider::{StaticBumpMemory, stable_provider};
 
-/// A fixed bump allocator over an owned buffer of `N` bytes.
-pub struct TestProvider<const N: usize> {
-    buf:  core::cell::UnsafeCell<[core::mem::MaybeUninit<u8>; N]>,
-    used: core::cell::Cell<usize>,
-}
-
-impl<const N: usize> TestProvider<N> {
-    pub fn new() -> Self {
-        Self {
-            buf:  core::cell::UnsafeCell::new([const { core::mem::MaybeUninit::uninit() }; N]),
-            used: core::cell::Cell::new(0),
-        }
-    }
-}
-
-unsafe impl<const N: usize> Send for TestProvider<N> {}
-unsafe impl<const N: usize> Sync for TestProvider<N> {}
-
-impl<const N: usize> MemoryProviderApi for TestProvider<N> {
-    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
-        let base = self.buf.get() as *mut u8;
-        let used = self.used.get();
-        let align = align.0.max(1);
-        let aligned = (used + align - 1) / align * align;
-        if aligned + len.0 > N {
-            return core::ptr::null_mut();
-        }
-        self.used.set(aligned + len.0);
-        // SAFETY: in bounds of the owned buffer.
-        unsafe { base.add(aligned) }
-    }
-
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
-
-    unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
-}
-
-fn provider() -> TestProvider<4096> {
-    TestProvider::<4096>::new()
-}
-
-/// The default-capacity arena store over the test provider. The return
-/// type omits `D`, applying the `Dim<256>` default so inference is
-/// anchored at the `build` call sites.
-pub fn store() -> ArenaColumnStorage<TestProvider<4096>> {
-    ArenaColumnStorage::new(provider())
+/// The default-capacity arena store over a 4 KiB provider. The return type
+/// omits `D`, applying the `Dim<256>` default so inference is anchored at the
+/// `build` call sites.
+pub fn store() -> ArenaColumnStorage<StaticBumpMemory> {
+    ArenaColumnStorage::new(stable_provider(4096, 0))
 }

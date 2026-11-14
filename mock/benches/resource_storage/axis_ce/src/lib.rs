@@ -19,39 +19,69 @@ use arvo_tensor::Dim;
 use hilavitkutin_api::{ColumnStorage, MemoryProviderApi, StoreId};
 use hilavitkutin_providers::{ArenaColumnStorage, StorageError};
 
-/// A bump `MemoryProvider` over a fixed heap block, for the capacity test.
+/// A heap-backed bump `MemoryProviderApi`: the crate's `StaticBumpMemory` over a
+/// heap block this provider owns and frees when it drops. The columns are too
+/// big for a fixed arena, and a bench builds schedulers per size, so the block
+/// is freed rather than leaked.
 pub struct TestProvider {
-    buf:  std::cell::UnsafeCell<Vec<u8>>,
-    used: std::cell::Cell<usize>,
+    inner: core::mem::ManuallyDrop<hilavitkutin_providers::StaticBumpMemory>,
+    block: *mut [core::mem::MaybeUninit<u8>],
 }
-// SAFETY: the capacity test is single-threaded; the cells are only touched from
-// one thread. The trait requires Send + Sync, satisfied trivially here.
-unsafe impl Send for TestProvider {}
-unsafe impl Sync for TestProvider {}
+
 impl TestProvider {
+    /// A provider over a fresh block of `bytes`.
     pub fn new(bytes: usize) -> Self {
-        TestProvider {
-            buf:  std::cell::UnsafeCell::new(vec![0u8; bytes]),
-            used: std::cell::Cell::new(0),
+        let block = Box::into_raw(vec![core::mem::MaybeUninit::uninit(); bytes].into_boxed_slice());
+        // SAFETY: `block` is a fresh allocation of `bytes` bytes nothing else
+        // reaches, and `drop` frees it only after `inner` is dropped, which is
+        // the contract of `from_raw_parts`.
+        let inner = unsafe {
+            hilavitkutin_providers::StaticBumpMemory::from_raw_parts(
+                block.cast(),
+                arvo::USize(bytes),
+            )
+        };
+        Self {
+            inner: core::mem::ManuallyDrop::new(inner),
+            block,
         }
     }
 }
-impl MemoryProviderApi for TestProvider {
+
+impl Drop for TestProvider {
+    fn drop(&mut self) {
+        // SAFETY: `inner` is dropped here and nowhere else, before the block
+        // under it is freed, as `from_raw_parts` asks.
+        unsafe { core::mem::ManuallyDrop::drop(&mut self.inner) };
+        // SAFETY: `block` came from `Box::into_raw` in `new` and is freed once.
+        drop(unsafe { Box::from_raw(self.block) });
+    }
+}
+
+// SAFETY: `block` is owned by this provider alone and freed only in `drop`;
+// every other access goes through `inner`, which is Send and Sync.
+unsafe impl Send for TestProvider {}
+// SAFETY: as above.
+unsafe impl Sync for TestProvider {}
+
+// SAFETY: every call goes to `inner`, which keeps the promises of
+// `MemoryProviderApi` over `block`; the block lives, unmoved, until this
+// provider drops, which is the end of every block's life the trait allows.
+unsafe impl MemoryProviderApi for TestProvider {
     unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
-        let a = align.0.max(1);
-        let used = (self.used.get() + a - 1) / a * a;
-        // SAFETY: single-threaded test; buf outlives all returned pointers.
-        let buf = unsafe { &mut *self.buf.get() };
-        if used + len.0 > buf.len() {
-            return core::ptr::null_mut();
-        }
-        self.used.set(used + len.0);
-        buf.as_mut_ptr().add(used)
+        // SAFETY: forwarded as received.
+        unsafe { self.inner.allocate(len, align) }
     }
 
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
+    unsafe fn deallocate(&self, ptr: *mut u8, len: USize, align: USize) {
+        // SAFETY: forwarded as received.
+        unsafe { self.inner.deallocate(ptr, len, align) }
+    }
 
-    unsafe fn protect(&self, _p: *mut u8, _l: USize, _r: arvo::Bool, _w: arvo::Bool) {}
+    unsafe fn protect(&self, ptr: *mut u8, len: USize, read: arvo::Bool, write: arvo::Bool) {
+        // SAFETY: forwarded as received.
+        unsafe { self.inner.protect(ptr, len, read, write) }
+    }
 }
 
 /// Reserve `columns` distinct one-record `u32` columns into a fresh

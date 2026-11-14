@@ -1,0 +1,23 @@
+...
+running 3 tests
+test child_runs_the_panicking_frame ... ok
+test a_unit_panic_on_a_worker_aborts_within_the_bound ... ok
+test a_unit_panic_under_run_aborts ... FAILED
+failures:
+thread 'a_unit_panic_under_run_aborts' (6289) panicked at crates/hilavitkutin/tests/unit_panic_aborts.rs:233:5:
+assertion `left == right` failed: the child ended by ExitStatus(unix_wait_status(25856)), not by abort
+  left: (Some(101), None)
+ right: (None, Some(6))
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: core::panicking::assert_failed_inner
+   3: core::panicking::assert_failed::<(core::option::Option<i32>, core::option::Option<i32>), (core::option::Option<i32>, core::option::Option<i32>)>
+   4: unit_panic_aborts::a_unit_panic_under_run_aborts
+   5: unit_panic_aborts::a_unit_panic_under_run_aborts::{closure#0}
+   6: <unit_panic_aborts::a_unit_panic_under_run_aborts::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+failures:
+    a_unit_panic_under_run_aborts
+test result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s
+error: test failed, to rerun pass `-p hilavitkutin --test unit_panic_aborts`

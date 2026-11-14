@@ -12,51 +12,13 @@
 //! fails when run until the file-backed round lands. The `FIXME(hilavitkutin_persistence_5_unmarked_placeholders):` on each stub
 //! in `src/cold_store.rs` names the same gap.
 
-use core::cell::{Cell, UnsafeCell};
 use core::mem::MaybeUninit;
 
-use arvo::{Bool, USize};
-use hilavitkutin_api::MemoryProviderApi;
+use arvo::USize;
 use hilavitkutin_persistence::{ColdStore, PersistenceContext, PersistenceError};
+use hilavitkutin_providers::StaticBumpMemory;
 use hilavitkutin_str::{ArenaInterner, StringInterner};
 use notko::{Maybe, Outcome};
-
-/// A memory provider handing out slices of one owned buffer, so a
-/// file-backed store has real memory to map into.
-struct BumpMemory<const N: usize> {
-    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
-    used: Cell<usize>,
-}
-
-impl<const N: usize> BumpMemory<N> {
-    fn new() -> Self {
-        Self {
-            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
-            used: Cell::new(0),
-        }
-    }
-}
-
-unsafe impl<const N: usize> Send for BumpMemory<N> {}
-unsafe impl<const N: usize> Sync for BumpMemory<N> {}
-
-impl<const N: usize> MemoryProviderApi for BumpMemory<N> {
-    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
-        let base = self.buf.get() as *mut u8;
-        let align = align.0.max(1);
-        let start = self.used.get().div_ceil(align) * align;
-        if start + len.0 > N {
-            return core::ptr::null_mut();
-        }
-        self.used.set(start + len.0);
-        // SAFETY: `start + len <= N`, inside the owned buffer.
-        unsafe { base.add(start) }
-    }
-
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
-
-    unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
-}
 
 struct NoArena;
 
@@ -70,7 +32,13 @@ impl ArenaInterner for NoArena {
     }
 }
 
-type Memory = BumpMemory<65536>;
+/// The memory a file-backed store maps into: the providers crate's static
+/// bump provider over a leaked buffer, so its blocks outlive every move.
+type Memory = StaticBumpMemory;
+
+fn memory() -> Memory {
+    StaticBumpMemory::new(std::vec![MaybeUninit::uninit(); 65536].leak())
+}
 
 fn open<'a>(
     memory: &'a Memory,
@@ -86,7 +54,7 @@ fn open<'a>(
 
 #[test]
 fn a_fresh_store_has_no_tables() {
-    let memory = Memory::new();
+    let memory = memory();
     let interner = StringInterner::new(NoArena);
     let store = open(&memory, &interner);
     assert_eq!(store.manifest().count.0, USize(0));
@@ -94,7 +62,7 @@ fn a_fresh_store_has_no_tables() {
 
 #[test]
 fn a_fresh_store_has_an_empty_string_table() {
-    let memory = Memory::new();
+    let memory = memory();
     let interner = StringInterner::new(NoArena);
     let store = open(&memory, &interner);
     let table = store.string_table();
@@ -104,7 +72,7 @@ fn a_fresh_store_has_an_empty_string_table() {
 
 #[test]
 fn a_fresh_store_resolves_no_content_hash() {
-    let memory = Memory::new();
+    let memory = memory();
     let interner = StringInterner::new(NoArena);
     let store = open(&memory, &interner);
     for raw in [0u64, 1, 0xDEAD_BEEF, u64::MAX] {
@@ -118,7 +86,7 @@ fn a_fresh_store_resolves_no_content_hash() {
 
 #[test]
 fn a_fresh_store_has_nothing_to_load() {
-    let memory = Memory::new();
+    let memory = memory();
     let interner = StringInterner::new(NoArena);
     let mut store = open(&memory, &interner);
     assert!(matches!(
@@ -129,7 +97,7 @@ fn a_fresh_store_has_nothing_to_load() {
 
 #[test]
 fn a_store_hands_back_the_context_it_was_opened_with() {
-    let memory = Memory::new();
+    let memory = memory();
     let interner = StringInterner::new(NoArena);
     let store = open(&memory, &interner);
     assert!(core::ptr::eq(store.context().memory(), &memory));
@@ -144,7 +112,7 @@ fn a_store_hands_back_the_context_it_was_opened_with() {
 #[test]
 #[ignore = "catalogue: flush writes nothing, so a reopened store finds nothing to load; needs the mmap-backed file I/O; tracked #hilavitkutin_catalogue_cold_store_flush_and_open_need_the_mm"]
 fn a_flushed_store_is_loaded_by_the_next_open() {
-    let memory = Memory::new();
+    let memory = memory();
     let interner = StringInterner::new(NoArena);
     {
         let mut first = open(&memory, &interner);

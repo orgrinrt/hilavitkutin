@@ -4,71 +4,25 @@
 //! records back through the const base, and confirm the count. A second
 //! column of a different scalar width proves slot isolation.
 //!
-//! The test provider is a bump arena with a no-op `deallocate`: it
-//! honors 64-byte alignment on `allocate` and never frees per block, so
-//! `ArenaColumnStorage::Drop` (which calls `deallocate`) has nothing to
-//! release. The two tests on what a free is given wrap it in a provider that
+//! The test provider is the crate's `StaticBumpMemory` over a leaked buffer,
+//! whose `deallocate` does nothing, so `ArenaColumnStorage::Drop` (which calls
+//! `deallocate`) has nothing to release. The two tests on what a free is given wrap it in a provider that
 //! records every block handed out and handed back.
-
-use core::sync::atomic::{AtomicUsize, Ordering};
 
 use arvo::{Bool, USize};
 use hilavitkutin_api::{ColumnStorage, MemoryProviderApi, StoreId};
-use hilavitkutin_providers::{ArenaColumnStorage, StorageError};
+use hilavitkutin_providers::{ArenaColumnStorage, StaticBumpMemory, StorageError};
 use notko::Outcome;
 
-/// Bump-arena `MemoryProvider` for tests: a leaked heap buffer, an
-/// atomic cursor, alignment-respecting `allocate`, no-op `deallocate`.
-struct BumpProvider {
-    base:   *mut u8, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test allocator ABI raw pointer; tracked: #72
-    size:   USize,
-    cursor: AtomicUsize,
-}
-
-// SAFETY: the test drives the provider single-threaded; the raw base
-// pointer is into a leaked buffer that outlives every use.
-unsafe impl Send for BumpProvider {}
-unsafe impl Sync for BumpProvider {}
-
-impl BumpProvider {
-    fn with_bytes(size: USize) -> Self {
-        let buf = vec![0u8; *size].into_boxed_slice();
-        let base = Box::leak(buf).as_mut_ptr();
-        Self {
-            base,
-            size,
-            cursor: AtomicUsize::new(0),
-        }
-    }
-}
-
-impl MemoryProviderApi for BumpProvider {
-    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
-        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer; tracked: #72
-        let len = *len;
-        let align = (*align).max(1);
-        let cur = self.cursor.load(Ordering::Relaxed);
-        let aligned = (cur + align - 1) & !(align - 1);
-        let end = aligned + len;
-        if end > *self.size {
-            return core::ptr::null_mut();
-        }
-        self.cursor.store(end, Ordering::Relaxed);
-        // SAFETY: `aligned` stays within the leaked buffer (end <= size).
-        unsafe { self.base.add(aligned) }
-    }
-
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
-
-    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: bump arena does not free per block; tracked: #72
-
-    unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {} // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test allocator ABI raw pointer; tracked: #72
+/// The crate's static bump provider over a fresh leaked buffer of `bytes`.
+fn bump(bytes: usize) -> StaticBumpMemory {
+    StaticBumpMemory::new(std::vec![core::mem::MaybeUninit::uninit(); bytes].leak())
 }
 
 #[test]
 fn reserve_write_read_roundtrips_and_counts() {
-    let provider = BumpProvider::with_bytes(USize(1 << 16));
-    let mut store: ArenaColumnStorage<BumpProvider> = ArenaColumnStorage::new(provider);
+    let provider = bump(1 << 16);
+    let mut store: ArenaColumnStorage<StaticBumpMemory> = ArenaColumnStorage::new(provider);
 
     let id = StoreId(USize(0));
     let count = USize(5);
@@ -90,8 +44,8 @@ fn reserve_write_read_roundtrips_and_counts() {
 
 #[test]
 fn two_columns_are_isolated() {
-    let provider = BumpProvider::with_bytes(USize(1 << 16));
-    let mut store: ArenaColumnStorage<BumpProvider> = ArenaColumnStorage::new(provider);
+    let provider = bump(1 << 16);
+    let mut store: ArenaColumnStorage<StaticBumpMemory> = ArenaColumnStorage::new(provider);
 
     let a = StoreId(USize(0));
     let b = StoreId(USize(1));
@@ -119,8 +73,8 @@ fn two_columns_are_isolated() {
 
 #[test]
 fn reserve_rejects_byte_length_overflow() {
-    let provider = BumpProvider::with_bytes(USize(1 << 16));
-    let mut store: ArenaColumnStorage<BumpProvider> = ArenaColumnStorage::new(provider);
+    let provider = bump(1 << 16);
+    let mut store: ArenaColumnStorage<StaticBumpMemory> = ArenaColumnStorage::new(provider);
 
     // usize::MAX records of u32 is a byte product of usize::MAX * 4,
     // which overflows usize. The guard must fire before allocation,
@@ -169,11 +123,13 @@ impl Ledger {
 /// tests using it share nothing and need no serialising. It is leaked, as the
 /// arena's buffer is, because a provider outlives any borrow.
 struct RecordingProvider {
-    inner:  BumpProvider,
+    inner:  StaticBumpMemory,
     ledger: &'static Ledger,
 }
 
-impl MemoryProviderApi for RecordingProvider {
+// SAFETY: every block comes from `inner` and goes back to it unchanged, so the
+// promises `StaticBumpMemory` keeps are kept here; the ledger is behind a lock.
+unsafe impl MemoryProviderApi for RecordingProvider {
     unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
         // SAFETY: forwarded as received.
         let ptr = unsafe { self.inner.allocate(len, align) };
@@ -215,7 +171,7 @@ impl MemoryProviderApi for RecordingProvider {
 fn a_second_reserve_frees_the_first_block_as_it_was_reserved() {
     let ledger: &'static Ledger = Box::leak(Box::default());
     let provider = RecordingProvider {
-        inner: BumpProvider::with_bytes(USize(1 << 16)),
+        inner: bump(1 << 16),
         ledger,
     };
     let mut store: ArenaColumnStorage<RecordingProvider> = ArenaColumnStorage::new(provider);
@@ -254,7 +210,7 @@ fn drop_frees_every_live_block_as_it_was_reserved() {
     let ledger: &'static Ledger = Box::leak(Box::default());
     {
         let provider = RecordingProvider {
-            inner: BumpProvider::with_bytes(USize(1 << 16)),
+            inner: bump(1 << 16),
             ledger,
         };
         let mut store: ArenaColumnStorage<RecordingProvider> = ArenaColumnStorage::new(provider);
