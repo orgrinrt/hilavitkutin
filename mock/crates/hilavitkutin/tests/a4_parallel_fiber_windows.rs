@@ -35,7 +35,7 @@ use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{ColumnWriterApi, EachApi, HasColumnWriter, HasEach};
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::{Column, StartsFromDefault};
+use hilavitkutin_api::store::Column;
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
@@ -156,9 +156,11 @@ fn parallel_fibers_window_by_their_own_plan_baked_size() {
     WIDE_CALLS.store(0, Ordering::Relaxed);
 
     let provider = BumpProvider::<131072>::new();
+    // Both columns start at their maximum so an uncovered record is caught rather
+    // than reading as a coincidentally-correct zero.
     let scheduler = Scheduler::builder()
-        .with(Column::<Narrow>::start())
-        .with(Column::<Wide>::start())
+        .with(Column::<Narrow>::start_from(Narrow(u32::MAX)))
+        .with(Column::<Wide>::start_from(Wide(u64::MAX)))
         .with(NarrowWu)
         .with(WideWu)
         .build(store(provider), USize(RECORDS))
@@ -181,18 +183,6 @@ fn parallel_fibers_window_by_their_own_plan_baked_size() {
         RECORDS > w0 && RECORDS > w1,
         "records must exceed both windows to force a split"
     );
-
-    // Poison both columns so an uncovered record is caught rather than reading
-    // as a coincidentally-correct zero. Columns from head: Wide(0), Narrow(1).
-    // SAFETY: both reserved for RECORDS records; the scheduler is alive.
-    let wide_base: *mut Wide = scheduler.__bindings().__ptr().as_ptr();
-    let narrow_base: *mut Narrow = scheduler.__bindings().__tail().__ptr().as_ptr();
-    for i in 0 .. RECORDS {
-        unsafe {
-            *wide_base.add(i) = Wide(u64::MAX);
-            *narrow_base.add(i) = Narrow(u32::MAX);
-        }
-    }
 
     let pool = TestExecutor::new();
     let mut scheduler = core::pin::pin!(scheduler);
@@ -227,7 +217,7 @@ fn parallel_fibers_window_by_their_own_plan_baked_size() {
         "the 8-byte column's fiber walks the narrower window {narrower}"
     );
 
-    // Those morsels cover the whole range: no record still holds the poison.
+    // Those morsels cover the whole range: no record still holds the start value.
     // Coverage is the claim, not the value, because `each()` yields a
     // morsel-RELATIVE index (the writer windows it to absolute), so record 3072
     // legitimately holds 0 when it opens the wide fiber's second morsel. The

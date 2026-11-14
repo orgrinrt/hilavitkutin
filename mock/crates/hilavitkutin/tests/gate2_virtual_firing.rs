@@ -208,19 +208,7 @@ fn on_consumer_runs_iff_its_virtual_fired() {
         .build(store(provider), USize(N))
         .unwrap_or_else(|_| panic!("build should succeed"));
 
-    // Head-chain: RanA (head, last registered), RanB, RanN. Poison all to 0.
-    let a_base = scheduler.__bindings().__ptr().as_ptr() as *mut u32;
-    let b_base = scheduler.__bindings().__tail().__ptr().as_ptr() as *mut u32;
-    let n_base = scheduler.__bindings().__tail().__tail().__ptr().as_ptr() as *mut u32;
-    for i in 0 .. N {
-        // SAFETY: three Ran columns reserved for N records; scheduler alive.
-        unsafe {
-            *a_base.add(i) = 0;
-            *b_base.add(i) = 0;
-            *n_base.add(i) = 0;
-        }
-    }
-
+    // Head-chain: RanA (head, last registered), RanB, RanN. All start at zero.
     let _ = scheduler.run::<_, _>();
 
     let a = scheduler.__bindings().__ptr().as_ptr() as *const u32;

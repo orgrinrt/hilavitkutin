@@ -317,18 +317,13 @@ fn replace_resource_opens_the_plan_band_replace_value_does_not() {
     let mut scheduler = Scheduler::builder()
         .with(Resource::new(Val(5)))
         .with(Resource::new(Cfgish(1)))
-        .with(Column::<Out>::start())
+        .with(Column::<Out>::start_from(Out(u32::MAX)))
         .with(FillWu)
         .build(store(provider), USize(RECORDS))
         .unwrap_or_else(|_| panic!("build should succeed"));
 
-    // Poison the carrier's column, so a record the cold frame did not reach
-    // is caught. Bindings head: the column, registered last.
-    let out_base: *mut Out = scheduler.__bindings().__ptr().as_ptr();
-    for i in 0 .. RECORDS {
-        // SAFETY: the column reserves RECORDS records; the scheduler is alive.
-        unsafe { *out_base.add(i) = Out(u32::MAX) };
-    }
+    // The carrier's column starts at u32::MAX, so a record the cold frame did not
+    // reach is caught.
 
     // Cold first frame: always plan-dirty.
     assert!(matches!(scheduler.run(), Outcome::Ok(())));

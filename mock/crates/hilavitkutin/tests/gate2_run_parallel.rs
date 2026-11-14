@@ -237,17 +237,16 @@ fn run_parallel_threaded_fan_in_is_correct() {
         .with(Column::<Inv>::start())
         .with(Column::<Av>::start())
         .with(Column::<Bv>::start())
-        .with(Column::<Zv>::start())
+        .with(Column::<Zv>::start_from(Zv(u32::MAX)))
         .with(ProducerA)
         .with(ProducerB)
         .with(Combiner)
         .build(store(provider), USize(N))
         .unwrap_or_else(|_| panic!("build should succeed"));
 
-    // Host-populate In[i] = i (absolute) and poison Zv (head column) so an
-    // unwritten record is caught. Columns from head: Zv(0), Bv(1), Av(2), In(3).
-    // SAFETY: both reserved for N records of u32; the scheduler is alive.
-    let zv_base = scheduler.__bindings().__ptr().as_ptr() as *mut u32;
+    // Zv (head column) starts at u32::MAX so an unwritten record is caught.
+    // Host-populate In[i] = i (absolute). Columns from head: Zv(0), Bv(1), Av(2), In(3).
+    // SAFETY: In reserved for N records of u32; the scheduler is alive.
     let in_base = scheduler
         .__bindings()
         .__tail()
@@ -258,7 +257,6 @@ fn run_parallel_threaded_fan_in_is_correct() {
     for i in 0 .. N {
         unsafe {
             *in_base.add(i) = i as u32;
-            *zv_base.add(i) = u32::MAX;
         }
     }
 
@@ -620,7 +618,7 @@ fn run_parallel_three_trunks_two_cores_matches_single_core() {
         .with(Column::<Av>::start())
         .with(Column::<Bv>::start())
         .with(Column::<Cv>::start())
-        .with(Column::<Wv>::start())
+        .with(Column::<Wv>::start_from(Wv(u32::MAX)))
         .with(ProducerA)
         .with(ProducerB)
         .with(ProducerC)
@@ -628,10 +626,9 @@ fn run_parallel_three_trunks_two_cores_matches_single_core() {
         .build(store(provider), USize(N))
         .unwrap_or_else(|_| panic!("build should succeed"));
 
-    // Host-populate In[i] = i and poison Wv (head column). Columns from head:
+    // Wv (head column) starts at u32::MAX. Host-populate In[i] = i. Columns from head:
     // Wv(0), Cv(1), Bv(2), Av(3), In(4).
     // SAFETY: both reserved for N records of u32; the scheduler is alive.
-    let wv_base = scheduler.__bindings().__ptr().as_ptr() as *mut u32;
     let in_base = scheduler
         .__bindings()
         .__tail()
@@ -643,7 +640,6 @@ fn run_parallel_three_trunks_two_cores_matches_single_core() {
     for i in 0 .. N {
         unsafe {
             *in_base.add(i) = i as u32;
-            *wv_base.add(i) = u32::MAX;
         }
     }
 
@@ -681,7 +677,7 @@ fn run_parallel_threaded_two_waists_reuses_barrier() {
         .with(Column::<Mv>::start())
         .with(Column::<Q1v>::start())
         .with(Column::<Q2v>::start())
-        .with(Column::<Sv>::start())
+        .with(Column::<Sv>::start_from(Sv(u32::MAX)))
         .with(P1)
         .with(P2)
         .with(Mid)
@@ -691,10 +687,9 @@ fn run_parallel_threaded_two_waists_reuses_barrier() {
         .build(store(provider), USize(N))
         .unwrap_or_else(|_| panic!("build should succeed"));
 
-    // Host-populate In[i] = i and poison Sv (head column). Columns from head:
+    // Sv (head column) starts at u32::MAX. Host-populate In[i] = i. Columns from head:
     // Sv(0), Q2v(1), Q1v(2), Mv(3), P2v(4), P1v(5), In(6).
     // SAFETY: both reserved for N records of u32; the scheduler is alive.
-    let sv_base = scheduler.__bindings().__ptr().as_ptr() as *mut u32;
     let in_base = scheduler
         .__bindings()
         .__tail()
@@ -708,7 +703,6 @@ fn run_parallel_threaded_two_waists_reuses_barrier() {
     for i in 0 .. N {
         unsafe {
             *in_base.add(i) = i as u32;
-            *sv_base.add(i) = u32::MAX;
         }
     }
 
@@ -745,6 +739,7 @@ fn run_parallel_threaded_two_waists_reuses_barrier() {
 #[derive(Copy, Clone, Default)]
 struct Dv(u32);
 #[derive(Copy, Clone, Default)]
+#[allow(dead_code)] // set as the column start; the test reads it through the binding pointer
 struct Ev(u32);
 
 type ColD = Cons<Column<Dv>, Empty>;
@@ -836,7 +831,7 @@ fn every_producer_runs_when_cores_outnumber_records() {
         .with(Column::<Bv>::start())
         .with(Column::<Cv>::start())
         .with(Column::<Dv>::start())
-        .with(Column::<Ev>::start())
+        .with(Column::<Ev>::start_from(Ev(u32::MAX)))
         .with(ProducerA)
         .with(ProducerB)
         .with(ProducerC)
@@ -847,7 +842,6 @@ fn every_producer_runs_when_cores_outnumber_records() {
 
     // Columns from head: Ev(0), Dv(1), Cv(2), Bv(3), Av(4), In(5).
     // SAFETY: all reserved for N records of u32; the scheduler is alive.
-    let ev_base = scheduler.__bindings().__ptr().as_ptr() as *mut u32;
     let in_base = scheduler
         .__bindings()
         .__tail()
@@ -861,7 +855,6 @@ fn every_producer_runs_when_cores_outnumber_records() {
         // SAFETY: both cover the reserved record.
         unsafe {
             *in_base.add(i) = (i + 1) as u32;
-            *ev_base.add(i) = u32::MAX;
         }
     }
 
@@ -886,7 +879,7 @@ fn every_producer_runs_when_cores_outnumber_records() {
     assert_eq!(dv, 7, "ProducerD did not run");
     assert_eq!(
         ev, 9,
-        "ProducerE did not run: the poison value means no core dispatched it, \
+        "ProducerE did not run: the start value left in place means no core dispatched it, \
          which is what happens if participation and dispatch ownership disagree"
     );
 }

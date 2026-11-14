@@ -274,24 +274,22 @@ fn accumulator_in_a_two_trunk_phase_matches_single_core() {
     let scheduler = Scheduler::builder()
         .with(Accum::<Av>::new())
         .with(Column::<Inv>::start())
-        .with(Column::<Sv>::start())
+        .with(Column::<Sv>::start_from(Sv(u32::MAX)))
         .with(KeepWu)
         .with(SideWu)
         .build(store(provider), USize(N))
         .unwrap_or_else(|_| panic!("build should succeed"));
     {
-        // Bindings head: Sv, then In, then the AccumBinding<Av>.
+        // Bindings head: Sv, then In, then the AccumBinding<Av>. The side column
+        // starts at u32::MAX so a record its unit skipped is seen.
         let b = scheduler.__bindings();
-        let side_base: *mut Sv = b.__ptr().as_ptr();
         let in_base = b.__tail().__ptr().as_ptr() as *mut u32;
         let acc_base = b.__tail().__tail().__ptr().as_ptr() as *mut u32;
         for i in 0 .. N {
-            // SAFETY: all three buffers reserve N records; written once here.
-            // The side column is poisoned so a record its unit skipped is seen.
+            // SAFETY: both buffers reserve N records; written once here.
             unsafe {
                 *in_base.add(i) = i as u32;
                 *acc_base.add(i) = u32::MAX;
-                *side_base.add(i) = Sv(u32::MAX);
             }
         }
     }

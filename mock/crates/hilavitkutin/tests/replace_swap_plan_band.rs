@@ -45,7 +45,7 @@ use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{ColumnWriterApi, EachApi, HasColumnWriter, HasEach};
 use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::run_cfg::PlanStage;
-use hilavitkutin_api::store::{Column, Resource, StartsFromDefault};
+use hilavitkutin_api::store::{Column, Resource};
 use hilavitkutin_api::work_unit::{Always, HasSchedule, OnMeta, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
@@ -188,8 +188,8 @@ macro_rules! build {
         Scheduler::builder()
             .with(Resource::new(Val(5)))
             .with(Resource::new(Cfgish(1)))
-            .with(Column::<Pv>::start())
-            .with(Column::<Av>::start())
+            .with(Column::<Pv>::start_from(Pv(u32::MAX)))
+            .with(Column::<Av>::start_from(Av(u32::MAX)))
             .with(PlanWu)
             .with(ConsumerWu)
             .build(store($provider), USize(RECORDS))
@@ -197,24 +197,7 @@ macro_rules! build {
     };
 }
 
-/// Poison both columns, so a record a frame did not reach is caught on the
-/// consumer's and a record the plan unit's dispatch touched is caught on its
-/// own. Bindings from the head: `Av`, registered last, then `Pv`.
-macro_rules! poison_columns {
-    ($scheduler:expr) => {{
-        let consumer: *mut Av = $scheduler.__bindings().__ptr().as_ptr();
-        let plan: *mut Pv = $scheduler.__bindings().__tail().__ptr().as_ptr();
-        for i in 0 .. RECORDS {
-            // SAFETY: both columns reserve RECORDS records; the scheduler is alive.
-            unsafe {
-                *consumer.add(i) = Av(u32::MAX);
-                *plan.add(i) = Pv(u32::MAX);
-            }
-        }
-    }};
-}
-
-/// Hold the plan unit's column to the poison: the unit declares the write to
+/// Hold the plan unit's column to its start value: the unit declares the write to
 /// be store-anchored and its body writes nothing, so no frame may change it.
 macro_rules! assert_plan_column_untouched {
     ($scheduler:expr, $path:literal) => {{
@@ -253,7 +236,6 @@ fn a_plan_affecting_swap_runs_the_plan_band_and_a_value_swap_does_not() {
     // Single core.
     {
         let mut scheduler = build!(BumpProvider::<32768>::new());
-        poison_columns!(scheduler);
 
         let cold = frame_delta!(scheduler.run());
         assert!(cold > 0, "run: the cold frame runs the plan band");
@@ -293,7 +275,6 @@ fn a_plan_affecting_swap_runs_the_plan_band_and_a_value_swap_does_not() {
         let scheduler = build!(BumpProvider::<32768>::new());
         let pool = TestExecutor::new();
         let mut scheduler = core::pin::pin!(scheduler);
-        poison_columns!(scheduler.as_ref());
 
         let cold = frame_delta!(scheduler.as_mut().run_parallel(&pool));
         assert!(cold > 0, "run_parallel: the cold frame runs the plan band");
