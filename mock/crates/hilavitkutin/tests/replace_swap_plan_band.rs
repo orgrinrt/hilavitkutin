@@ -24,11 +24,10 @@
 
 mod common;
 
-use core::cell::{Cell, UnsafeCell};
-use core::mem::MaybeUninit;
 use core::sync::atomic::{AtomicUsize, Ordering};
 
-use arvo::{Bool, USize};
+mod stable_provider;
+use arvo::USize;
 use common::TestExecutor;
 use hilavitkutin::dispatch::engine_ctx::{
     AccPtrNil,
@@ -49,42 +48,10 @@ use hilavitkutin_api::store::{Column, Resource};
 use hilavitkutin_api::work_unit::{Always, HasSchedule, OnMeta, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
+use stable_provider::stable_provider;
 
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
-}
-
-struct BumpProvider<const N: usize> {
-    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
-    used: Cell<usize>,
-}
-impl<const N: usize> BumpProvider<N> {
-    fn new() -> Self {
-        Self {
-            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
-            used: Cell::new(0),
-        }
-    }
-}
-unsafe impl<const N: usize> Send for BumpProvider<N> {}
-unsafe impl<const N: usize> Sync for BumpProvider<N> {}
-impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
-    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
-        let base = self.buf.get() as *mut u8;
-        let used = self.used.get();
-        let align = align.0.max(1);
-        let aligned = (used + align - 1) / align * align;
-        if aligned + len.0 > N {
-            return core::ptr::null_mut();
-        }
-        self.used.set(aligned + len.0);
-        // SAFETY: aligned + len <= N, in bounds of the owned buffer.
-        unsafe { base.add(aligned) }
-    }
-
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
-
-    unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
 const RECORDS: usize = 8;
@@ -235,7 +202,7 @@ macro_rules! assert_consumer_covered {
 fn a_plan_affecting_swap_runs_the_plan_band_and_a_value_swap_does_not() {
     // Single core.
     {
-        let mut scheduler = build!(BumpProvider::<32768>::new());
+        let mut scheduler = build!(stable_provider(32768, 0));
 
         let cold = frame_delta!(scheduler.run());
         assert!(cold > 0, "run: the cold frame runs the plan band");
@@ -272,7 +239,7 @@ fn a_plan_affecting_swap_runs_the_plan_band_and_a_value_swap_does_not() {
     // Parallel: the decision is consumed on the calling thread and read by
     // each worker's phase loop.
     {
-        let scheduler = build!(BumpProvider::<32768>::new());
+        let scheduler = build!(stable_provider(32768, 0));
         let pool = TestExecutor::new();
         let mut scheduler = core::pin::pin!(scheduler);
 

@@ -39,7 +39,7 @@ use hilavitkutin_api::work_unit::WorkUnit;
 use hilavitkutin_api::{Reach, rec};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::{Maybe, Outcome};
-use stable_provider::StableProvider;
+use stable_provider::{StaticBumpMemory, stable_provider};
 
 const ONE: Cap = arvo_tensor::cap(1);
 const RECORDS: usize = 20_000;
@@ -65,8 +65,8 @@ type CU = <DefaultPlanDims as PlanDims>::Units;
 type CS = <DefaultPlanDims as PlanDims>::Stores;
 type Adj = <DefaultPlanDims as PlanDims>::AdjRow;
 
-fn store() -> ArenaColumnStorage<StableProvider> {
-    ArenaColumnStorage::new(StableProvider::new(1 << 19, 0))
+fn store() -> ArenaColumnStorage<StaticBumpMemory> {
+    ArenaColumnStorage::new(stable_provider(1 << 19, 0))
 }
 
 macro_rules! unit {

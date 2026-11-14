@@ -31,7 +31,7 @@ use hilavitkutin_frozen_authors::{
     record,
 };
 use hilavitkutin_providers::ArenaColumnStorage;
-use stable_provider::StableProvider;
+use stable_provider::{StaticBumpMemory, stable_provider};
 
 /// How many frames a run is held over. Long enough for the plane to overheat
 /// and for the pool to go even, short enough that no sum leaves 32 bits.
@@ -41,8 +41,8 @@ pub const N: usize = RECORDS.0;
 /// What a poisoned live side holds before the first frame.
 pub const POISON: u32 = 0xDEAD;
 
-pub fn store() -> ArenaColumnStorage<StableProvider> {
-    ArenaColumnStorage::new(StableProvider::new(1 << 19, 0))
+pub fn store() -> ArenaColumnStorage<StaticBumpMemory> {
+    ArenaColumnStorage::new(stable_provider(1 << 19, 0))
 }
 
 pub fn num(raw: u32) -> Num {

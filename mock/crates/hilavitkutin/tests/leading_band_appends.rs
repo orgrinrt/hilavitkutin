@@ -18,9 +18,9 @@
 //! Lives under `tests/` so the bare numeric record values do not trip the
 //! src-tree primitive lints.
 
-mod stable_provider;
-
 mod common;
+
+mod stable_provider;
 
 use arvo::USize;
 use common::FixedWorkers;
@@ -46,7 +46,7 @@ use hilavitkutin_api::work_unit::{Always, HasSchedule, OnMeta, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
 use notko::lend::Exhausted;
-use stable_provider::StableProvider;
+use stable_provider::stable_provider;
 
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
@@ -148,7 +148,7 @@ fn check<const K: usize, const W: usize>(expect: Outcome<(), AccumRefused>) {
         .with(Accum::<Mark>::new())
         .with(LeadWu::<K>)
         .with(ConsumerWu)
-        .build(store(StableProvider::new(32768, 0)), USize(RECORDS))
+        .build(store(stable_provider(32768, 0)), USize(RECORDS))
         .unwrap_or_else(|_| panic!("build should succeed"));
     let pool = FixedWorkers::<W>;
     assert_eq!(pool.worker_count().0, W);

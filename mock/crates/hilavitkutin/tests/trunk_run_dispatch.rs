@@ -28,10 +28,9 @@
 //! Lives under `tests/` so the bare numeric record values do not trip the
 //! src-tree primitive lints.
 
-use core::cell::{Cell, UnsafeCell};
-use core::mem::MaybeUninit;
+mod stable_provider;
 
-use arvo::{Bool, USize};
+use arvo::USize;
 use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::dispatch::morsel::MorselRange;
 use hilavitkutin::dispatch::trunk_run::RunTrunk;
@@ -51,45 +50,10 @@ use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
+use stable_provider::stable_provider;
 
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
-}
-
-struct BumpProvider<const N: usize> {
-    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
-    used: Cell<usize>,
-}
-
-impl<const N: usize> BumpProvider<N> {
-    fn new() -> Self {
-        Self {
-            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
-            used: Cell::new(0),
-        }
-    }
-}
-
-unsafe impl<const N: usize> Send for BumpProvider<N> {}
-unsafe impl<const N: usize> Sync for BumpProvider<N> {}
-
-impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
-    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
-        let base = self.buf.get() as *mut u8;
-        let used = self.used.get();
-        let align = align.0.max(1);
-        let aligned = (used + align - 1) / align * align;
-        if aligned + len.0 > N {
-            return core::ptr::null_mut();
-        }
-        self.used.set(aligned + len.0);
-        // SAFETY: `aligned + len <= N`, in bounds of the owned buffer.
-        unsafe { base.add(aligned) }
-    }
-
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
-
-    unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
 const N: usize = 256;
@@ -206,7 +170,7 @@ fn runtrunk_two_fiber_trunk_matches_flat_walk() {
         .with(Column::<InX>::start())
         .with(SX)
         .with(SZ)
-        .build(store(BumpProvider::<32768>::new()), USize(N))
+        .build(store(stable_provider(32768, 0)), USize(N))
         .unwrap_or_else(|_| panic!("flat engine build should succeed"));
     let flat_inx = flat.__bindings().__ptr().as_ptr() as *mut InX;
     for i in 0 .. N {
@@ -230,7 +194,7 @@ fn runtrunk_two_fiber_trunk_matches_flat_walk() {
         .with(Column::<InX>::start())
         .with(SX)
         .with(SZ)
-        .build(store(BumpProvider::<32768>::new()), USize(N))
+        .build(store(stable_provider(32768, 0)), USize(N))
         .unwrap_or_else(|_| panic!("trunk engine build should succeed"));
     let trunk_inx = trunk.__bindings().__ptr().as_ptr() as *mut InX;
     for i in 0 .. N {

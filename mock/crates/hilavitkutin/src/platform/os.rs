@@ -17,8 +17,8 @@ use hilavitkutin_api::platform::{ClockApi, MemoryProviderApi, Nanos};
 ///
 /// Pages come from anonymous private mappings; alignment is page-
 /// aligned by construction, so the requested `align` is honoured
-/// for any power-of-two value up to the page size. Larger
-/// alignments are left for a follow-up round.
+/// for any power-of-two value up to the page size. A larger one, or
+/// one that is not a power of two, is refused with null.
 #[derive(Copy, Clone, Debug)]
 pub struct OsMemoryProvider;
 
@@ -39,9 +39,22 @@ impl Default for OsMemoryProvider {
     }
 }
 
-impl MemoryProviderApi for OsMemoryProvider {
+// SAFETY: the four promises of `MemoryProviderApi`. Each block is a fresh
+// anonymous private mapping, page-aligned, of `len` bytes readable and
+// writable (1), freed only by the `munmap` in `deallocate` and placed by the
+// kernel, not inside the provider, so moving or dropping the provider leaves
+// it where it is (2). The kernel never maps two live mappings over one page
+// (3), and the provider holds no state, so concurrent calls are mmap and munmap
+// on separate ranges (4). An `align` the mapping cannot meet is refused.
+unsafe impl MemoryProviderApi for OsMemoryProvider {
     #[rustfmt::skip] // keeps the allow on the signature it governs
-    unsafe fn allocate(&self, len: USize, _align: USize) -> *mut u8 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer; tracked: #72
+    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer; tracked: #72
+        // SAFETY: sysconf takes no pointer and reads no caller memory.
+        let page = unsafe { libc::sysconf(libc::_SC_PAGESIZE) };
+        let page = USize(page.max(0) as usize); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: sysconf returns a C long at the libc boundary; tracked: #72
+        if !align.0.is_power_of_two() || page.0 == 0 || align.0 > page.0 {
+            return ptr::null_mut();
+        }
         // MAP_ANON | MAP_PRIVATE, PROT_READ | PROT_WRITE.
         // Caller responsibility (per trait contract): null on OOM.
         let addr = unsafe {

@@ -11,12 +11,22 @@
 
 use arvo::{Bool, USize};
 use hilavitkutin::dispatch::engine_ctx::{
-    AccPtrCons, AccPtrNil, ColPtrCons, ColPtrNil, CtxFor, EngineCtx, MetaNil, MetaRef, SnapCons,
-    SnapNil, VirtCons, VirtNil,
+    AccPtrCons,
+    AccPtrNil,
+    ColPtrCons,
+    ColPtrNil,
+    CtxFor,
+    EngineCtx,
+    MetaNil,
+    MetaRef,
+    SnapCons,
+    SnapNil,
+    VirtCons,
+    VirtNil,
 };
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::store::{Accum, Column, Resource, Virtual};
-use hilavitkutin_api::{Always, On, OnMeta, ScheduleEnd};
+use hilavitkutin_api::{On, OnMeta, ScheduleEnd};
 
 // `Tick` is a plain virtual marker for the `On<V>` / write-virtual cases.
 struct Tick;
@@ -71,17 +81,8 @@ type Hand3<'f> = EngineCtx<
 >;
 
 // Case 4: `OnMeta<ScheduleEnd>` keys the meta pointer to `MetaRef<'frame>`.
-type Hand4<'f> = EngineCtx<
-    'f,
-    Empty,
-    Empty,
-    SnapNil,
-    ColPtrNil,
-    ColPtrNil,
-    AccPtrNil,
-    VirtNil,
-    MetaRef<'f>,
->;
+type Hand4<'f> =
+    EngineCtx<'f, Empty, Empty, SnapNil, ColPtrNil, ColPtrNil, AccPtrNil, VirtNil, MetaRef<'f>>;
 
 fn _identity<'f>() {
     assert_same::<CtxFor<'f, R1, W1>, Hand1<'f>>();

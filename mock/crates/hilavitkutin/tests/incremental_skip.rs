@@ -62,12 +62,12 @@ use skip_chain::{
     serial,
     store,
 };
-use stable_provider::StableProvider;
+use stable_provider::stable_provider;
 
 #[test]
 fn incremental_skip_runs_only_the_changed_cone() {
     let s = serial();
-    let provider = StableProvider::new(32768, 0);
+    let provider = stable_provider(32768, 0);
     let mut scheduler = Scheduler::builder()
         .with(Resource::new(InA(100)))
         .with(Resource::new(InC(200)))
@@ -115,7 +115,7 @@ fn incremental_skip_runs_only_the_changed_cone() {
 #[test]
 fn incremental_skip_propagates_two_hops() {
     let s = serial();
-    let provider = StableProvider::new(32768, 0);
+    let provider = stable_provider(32768, 0);
     // Producer -> Consumer -> SecondConsumer is a depth-two RAW sequence
     // (InA -> Ca -> Cb -> Cd); the unrelated unit reads InC -> Cc.
     // Registration is topological (each writer before its reader), which
@@ -161,8 +161,8 @@ fn incremental_skip_propagates_two_hops() {
 #[test]
 fn skipping_run_matches_every_store_dirty_run_at_every_frame() {
     let s = serial();
-    let mut skipping = four_chain_scheduler!(s, StableProvider::new(32768, 0));
-    let mut every = four_chain_scheduler!(s, StableProvider::new(32768, 0));
+    let mut skipping = four_chain_scheduler!(s, stable_provider(32768, 0));
+    let mut every = four_chain_scheduler!(s, stable_provider(32768, 0));
     let skipped = trace!(s, mut: skipping, read: skipping, frame: skipping.run(), every: false);
     let all = trace!(s, mut: every, read: every, frame: every.run(), every: true);
     assert_eq!(
@@ -183,8 +183,8 @@ fn skipping_run_matches_every_store_dirty_run_at_every_frame() {
 #[test]
 fn skipping_run_diverges_when_a_mutated_store_is_not_marked() {
     let s = serial();
-    let mut skipping = four_chain_scheduler!(s, StableProvider::new(32768, 0));
-    let mut every = four_chain_scheduler!(s, StableProvider::new(32768, 0));
+    let mut skipping = four_chain_scheduler!(s, stable_provider(32768, 0));
+    let mut every = four_chain_scheduler!(s, stable_provider(32768, 0));
     assert!(matches!(skipping.run(), Outcome::Ok(())));
     assert!(matches!(every.run(), Outcome::Ok(())));
 

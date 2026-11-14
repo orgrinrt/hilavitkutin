@@ -23,11 +23,11 @@
 //! producers in phase 0, a combiner in phase 1 recording `Av + Bv`, so a frame
 //! that did not run leaves the poisoned output column untouched.
 
-use core::cell::{Cell, UnsafeCell};
-use core::mem::MaybeUninit;
+mod stable_provider;
+
 use core::sync::atomic::{AtomicUsize, Ordering};
 
-use arvo::{Bool, USize};
+use arvo::USize;
 use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin::thread::{MAX_CORES, runnable_worker_count};
@@ -46,6 +46,7 @@ use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
+use stable_provider::stable_provider;
 
 // ---- the clamp itself ------------------------------------------------------
 
@@ -172,7 +173,7 @@ fn an_executor_reporting_one_worker_runs_the_frame_on_one() {
 /// Build the fan-in, run two frames on `pool`, check every record of both,
 /// and return how many closures the pool was handed.
 fn run_fan_in_and_check<const W: usize>(pool: &Reports<W>) -> usize {
-    let provider = BumpProvider::<16384>::new();
+    let provider = stable_provider(16384, 0);
     let scheduler = Scheduler::builder()
         .with(Column::<Inv>::start())
         .with(Column::<Av>::start())
@@ -224,42 +225,6 @@ fn run_fan_in_and_check<const W: usize>(pool: &Reports<W>) -> usize {
 /// The arena store at its default capacity, named so the builder can infer it.
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
-}
-
-struct BumpProvider<const N: usize> {
-    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
-    used: Cell<usize>,
-}
-
-impl<const N: usize> BumpProvider<N> {
-    fn new() -> Self {
-        Self {
-            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
-            used: Cell::new(0),
-        }
-    }
-}
-
-unsafe impl<const N: usize> Send for BumpProvider<N> {}
-unsafe impl<const N: usize> Sync for BumpProvider<N> {}
-
-impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
-    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
-        let base = self.buf.get() as *mut u8;
-        let used = self.used.get();
-        let align = align.0.max(1);
-        let aligned = used.div_ceil(align) * align;
-        if aligned + len.0 > N {
-            return core::ptr::null_mut();
-        }
-        self.used.set(aligned + len.0);
-        // SAFETY: `aligned + len <= N`, in bounds of the owned buffer.
-        unsafe { base.add(aligned) }
-    }
-
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
-
-    unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
 const N: usize = 4;

@@ -20,7 +20,11 @@
 
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::adapt::{
-    ChangeClassAxis, CoreIdleTimeAxis, FiberEmaAxis, PassDurationAxis, PhaseEmaAxis,
+    ChangeClassAxis,
+    CoreIdleTimeAxis,
+    FiberEmaAxis,
+    PassDurationAxis,
+    PhaseEmaAxis,
     PredictiveParkingAxis,
 };
 use hilavitkutin_api::builder_input::BuilderInput;
@@ -36,25 +40,22 @@ impl Default for StandardAdaptKit {
 }
 
 impl BuilderInput for StandardAdaptKit {
-    type Init = Self;
     type Dispatch = KitDispatch<Self>;
+    type Init = Self;
 }
 
 impl Kit for StandardAdaptKit {
-    type Units = Empty;
     type Owned = Cons<
         PassDurationAxis,
         Cons<
             PhaseEmaAxis,
             Cons<
                 FiberEmaAxis,
-                Cons<
-                    ChangeClassAxis,
-                    Cons<PredictiveParkingAxis, Cons<CoreIdleTimeAxis, Empty>>,
-                >,
+                Cons<ChangeClassAxis, Cons<PredictiveParkingAxis, Cons<CoreIdleTimeAxis, Empty>>>,
             >,
         >,
     >;
+    type Units = Empty;
 }
 
 /// Explicitly empty adapt-axis bundle. Topic 5 axis A.
@@ -67,11 +68,11 @@ impl Default for OffAdaptKit {
 }
 
 impl BuilderInput for OffAdaptKit {
-    type Init = Self;
     type Dispatch = KitDispatch<Self>;
+    type Init = Self;
 }
 
 impl Kit for OffAdaptKit {
-    type Units = Empty;
     type Owned = Empty;
+    type Units = Empty;
 }

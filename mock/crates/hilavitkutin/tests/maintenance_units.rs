@@ -46,7 +46,7 @@ use hilavitkutin_api::work_unit::{Always, HasSchedule, OnMeta, WorkUnit};
 use hilavitkutin_api::{Differs, Written, rec};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::{Maybe, Outcome};
-use stable_provider::StableProvider;
+use stable_provider::{StaticBumpMemory, stable_provider};
 
 const RECORDS: usize = 600;
 const SENTINEL: u32 = 0xDEAD;
@@ -69,12 +69,12 @@ struct Change {
 
 type Hints = (Immediate, Atomic, Normal);
 
-fn store() -> ArenaColumnStorage<StableProvider> {
+fn store() -> ArenaColumnStorage<StaticBumpMemory> {
     store_of(1 << 16)
 }
 
-fn store_of(bytes: usize) -> ArenaColumnStorage<StableProvider> {
-    ArenaColumnStorage::new(StableProvider::new(bytes, 0))
+fn store_of(bytes: usize) -> ArenaColumnStorage<StaticBumpMemory> {
+    ArenaColumnStorage::new(stable_provider(bytes, 0))
 }
 
 fn counter() -> &'static AtomicUsize {

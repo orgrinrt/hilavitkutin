@@ -26,7 +26,9 @@ impl BenchExecutor {
     /// The executor reporting `workers` as its worker count. The engine
     /// clamps the count into `1..=MAX_CORES` itself.
     pub const fn with_workers(workers: usize) -> Self {
-        Self { workers }
+        Self {
+            workers,
+        }
     }
 }
 

@@ -341,6 +341,7 @@ dependencies = [
  "arvo-refit",
  "hilavitkutin-api",
  "hilavitkutin-build",
+ "hilavitkutin-providers",
  "hilavitkutin-str",
  "notko",
 ]

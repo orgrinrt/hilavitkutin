@@ -13,8 +13,14 @@ use hilavitkutin_api::store::Resource;
 use hilavitkutin_kit::{Kit, KitDispatch};
 
 use super::{
-    CacheResidencyMetrics, ChangeClassMetrics, CoreIdleTimeMetrics, FiberEmaMetrics,
-    MemoryWatermarkMetrics, PassDurationMetrics, PhaseEmaMetrics, PredictiveParkingMetrics,
+    CacheResidencyMetrics,
+    ChangeClassMetrics,
+    CoreIdleTimeMetrics,
+    FiberEmaMetrics,
+    MemoryWatermarkMetrics,
+    PassDurationMetrics,
+    PhaseEmaMetrics,
+    PredictiveParkingMetrics,
     ThroughputMetrics,
 };
 
@@ -28,12 +34,11 @@ impl Default for MetricsKit {
 }
 
 impl BuilderInput for MetricsKit {
-    type Init = Self;
     type Dispatch = KitDispatch<Self>;
+    type Init = Self;
 }
 
 impl Kit for MetricsKit {
-    type Units = Empty;
     type Owned = Cons<
         Resource<PassDurationMetrics>,
         Cons<
@@ -59,4 +64,5 @@ impl Kit for MetricsKit {
             >,
         >,
     >;
+    type Units = Empty;
 }

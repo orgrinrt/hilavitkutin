@@ -21,11 +21,30 @@ pub type Nanos = UFixed<{ ibits(64) }, { fbits(0) }, Hot>;
 /// track raw pointers sized by `USize`. `protect` toggles page-level
 /// read/write permissions; consumers use it for sealed resource
 /// pages.
+///
+/// # Safety
+///
+/// The engine records the blocks this provider returns and reads and
+/// writes through them from unsafe code after the provider has been
+/// moved, so an implementation promises:
+///
+/// 1. A non-null block from `allocate(len, align)` is aligned to
+///    `align` and valid for reads and writes of `len` bytes.
+/// 2. The block stays valid at the same address until the matching
+///    `deallocate` on this provider, or until the provider is dropped.
+///    Moving the provider moves and frees no block, so a provider that
+///    keeps its memory inline in itself cannot implement this trait.
+/// 3. Two live blocks do not overlap.
+/// 4. All three methods may be called from several threads at once.
+///
+/// Null is always a valid answer from `allocate` and means the block
+/// was refused. The `# Safety` sections on the methods are the
+/// caller's half of the contract.
 #[diagnostic::on_unimplemented(
     message = "`{Self}` does not implement Memory provider contract",
     note = "Provide a platform-specific impl. The engine builds against `MemoryProviderApi` via const generics; supply your own `MemoryProvider` to the scheduler at construction time."
 )]
-pub trait MemoryProviderApi: Send + Sync + 'static {
+pub unsafe trait MemoryProviderApi: Send + Sync + 'static {
     /// Allocate `len` bytes at `align` alignment.
     ///
     /// # Safety

@@ -40,14 +40,14 @@ use skip_chain::{
     model_trace,
     serial,
 };
-use stable_provider::StableProvider;
+use stable_provider::stable_provider;
 
 /// Run the skipping scheduler and the every-store-dirty one through the
 /// history on `run_parallel` over `pool`, returning both traces. A frame
 /// `broken` names has record 0 of `Column<Cd>` altered after it runs, which
 /// is the wrong runner the control test needs; `None` runs the engine as it is.
 fn traces<P: ThreadPoolApi>(s: &Serial, pool: &P, broken: Option<usize>) -> (Trace, Trace) {
-    let skipping = four_chain_scheduler!(s, StableProvider::new(32768, 0));
+    let skipping = four_chain_scheduler!(s, stable_provider(32768, 0));
     let mut skipping = core::pin::pin!(skipping);
     let skipped = trace!(
         s,
@@ -66,7 +66,7 @@ fn traces<P: ThreadPoolApi>(s: &Serial, pool: &P, broken: Option<usize>) -> (Tra
             }
         }
     );
-    let every = four_chain_scheduler!(s, StableProvider::new(32768, 0));
+    let every = four_chain_scheduler!(s, stable_provider(32768, 0));
     let mut every = core::pin::pin!(every);
     let all = trace!(
         s,
@@ -172,9 +172,9 @@ fn skipping_run_parallel_diverges_when_a_mutated_store_is_not_marked() {
 /// Whether a skipping `run_parallel` and an every-store-dirty one differ after
 /// the host changes an input without a mark.
 fn unmarked_change_diverges<P: ThreadPoolApi>(s: &Serial, pool: &P) -> bool {
-    let skipping = four_chain_scheduler!(s, StableProvider::new(32768, 0));
+    let skipping = four_chain_scheduler!(s, stable_provider(32768, 0));
     let mut skipping = core::pin::pin!(skipping);
-    let every = four_chain_scheduler!(s, StableProvider::new(32768, 0));
+    let every = four_chain_scheduler!(s, stable_provider(32768, 0));
     let mut every = core::pin::pin!(every);
     assert!(matches!(
         skipping.as_mut().run_parallel(pool),

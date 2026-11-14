@@ -31,7 +31,7 @@ use hilavitkutin_api::store::Accum;
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
-use stable_provider::StableProvider;
+use stable_provider::stable_provider;
 
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
@@ -89,7 +89,7 @@ impl WorkUnit<Always> for AppendKWu {
 
 #[test]
 fn accum_resets_live_length_each_frame() {
-    let provider = StableProvider::new(8192, 0);
+    let provider = stable_provider(8192, 0);
     let mut scheduler = Scheduler::builder()
         .with(Accum::<Av>::new())
         .with(AppendKWu)

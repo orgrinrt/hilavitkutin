@@ -39,7 +39,7 @@ use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_api::{Reach, rec};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::{Maybe, Outcome};
-use stable_provider::StableProvider;
+use stable_provider::{StaticBumpMemory, stable_provider};
 
 const ONE: Cap = arvo_tensor::cap(1);
 const RECORDS: usize = 20_000;
@@ -51,8 +51,8 @@ struct Height(u32);
 #[derive(Copy, Clone, PartialEq, Debug, Default)]
 struct Seen(u32);
 
-fn store() -> ArenaColumnStorage<StableProvider> {
-    ArenaColumnStorage::new(StableProvider::new(1 << 19, 0))
+fn store() -> ArenaColumnStorage<StaticBumpMemory> {
+    ArenaColumnStorage::new(stable_provider(1 << 19, 0))
 }
 
 // Count: writes one four-byte column and counts its dispatches, one a window.

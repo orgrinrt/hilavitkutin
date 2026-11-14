@@ -39,7 +39,7 @@ use hilavitkutin_api::work_unit::{Always, HasSchedule, OnMeta, WorkUnit};
 use hilavitkutin_api::{Differs, rec};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
-use stable_provider::StableProvider;
+use stable_provider::{StaticBumpMemory, stable_provider};
 
 const RECORDS: usize = 20_000;
 
@@ -74,8 +74,8 @@ struct Zeroed(u32);
 #[derive(Copy, Clone, PartialEq, Debug)]
 struct Seen(u32);
 
-fn store() -> ArenaColumnStorage<StableProvider> {
-    ArenaColumnStorage::new(StableProvider::new(1 << 19, 0xA5))
+fn store() -> ArenaColumnStorage<StaticBumpMemory> {
+    ArenaColumnStorage::new(stable_provider(1 << 19, 0xA5))
 }
 
 /// Read `RECORDS` records at `base` through `raw`.

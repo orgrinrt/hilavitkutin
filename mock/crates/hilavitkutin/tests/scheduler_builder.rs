@@ -15,9 +15,10 @@
 //! the compile-fail pair `tests/ui/unregistered_store_{fail,pass}.rs`, run
 //! by `tests/ui.rs`.
 
-use arvo::{Bool, USize};
+mod stable_provider;
+
+use arvo::USize;
 use hilavitkutin::scheduler::Scheduler;
-use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::{
     AccessSet,
     Always,
@@ -59,62 +60,23 @@ use hilavitkutin_api::{
 };
 use hilavitkutin_kit::{Kit, KitDispatch};
 use hilavitkutin_providers::ArenaColumnStorage;
+use stable_provider::{StaticBumpMemory, stable_provider};
 
-// ---------------------------------------------------------------------
-// Stack-backed test memory provider (a fixed bump allocator).
-// ---------------------------------------------------------------------
-
-struct TestProvider<const N: usize> {
-    buf:  core::cell::UnsafeCell<[core::mem::MaybeUninit<u8>; N]>,
-    used: core::cell::Cell<usize>,
-}
-
-impl<const N: usize> TestProvider<N> {
-    fn new() -> Self {
-        Self {
-            buf:  core::cell::UnsafeCell::new([const { core::mem::MaybeUninit::uninit() }; N]),
-            used: core::cell::Cell::new(0),
-        }
-    }
-}
-
-unsafe impl<const N: usize> Send for TestProvider<N> {}
-unsafe impl<const N: usize> Sync for TestProvider<N> {}
-
-impl<const N: usize> MemoryProviderApi for TestProvider<N> {
-    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
-        let base = self.buf.get() as *mut u8;
-        let used = self.used.get();
-        let align = align.0.max(1);
-        let aligned = (used + align - 1) / align * align;
-        if aligned + len.0 > N {
-            return core::ptr::null_mut();
-        }
-        self.used.set(aligned + len.0);
-        // SAFETY: in bounds of the owned buffer.
-        unsafe { base.add(aligned) }
-    }
-
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
-
-    unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
-}
-
-fn provider() -> TestProvider<4096> {
-    TestProvider::<4096>::new()
+fn provider() -> StaticBumpMemory {
+    stable_provider(4096, 0)
 }
 
 /// The default-capacity arena store over the test provider. The return
 /// type omits `D`, applying the `Dim<256>` default so inference is
 /// anchored at the `build` call sites.
-fn store() -> ArenaColumnStorage<TestProvider<4096>> {
+fn store() -> ArenaColumnStorage<StaticBumpMemory> {
     ArenaColumnStorage::new(provider())
 }
 
 // The fifty-unit registration needs more plan and meta storage than the
 // default 4096 bytes: with the small arena `build` returns `AllocationFailed`.
-fn store_for_fifty() -> ArenaColumnStorage<TestProvider<65536>> {
-    ArenaColumnStorage::new(TestProvider::<65536>::new())
+fn store_for_fifty() -> ArenaColumnStorage<StaticBumpMemory> {
+    ArenaColumnStorage::new(stable_provider(65536, 0))
 }
 
 // ---------------------------------------------------------------------
