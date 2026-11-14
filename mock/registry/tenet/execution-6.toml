@@ -477,9 +477,7 @@ orthogonal within-trunk ordering refinement (later), not needed for the
 trunk-level core mask.
 '''
 origin = "stated"
-standing = "provisional"
-stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: it is his call in full, which its source records with a date as op decision bench-first runtime mask of 2026-06-07 and quotes as his chosen mechanism (mock/design_rounds/202606071109/202606071109_topic.gate2-r4a-core-phase-masks.md:4-4, 13-17), and a later passage replaces it: the correction of 2026-06-08 at mock/research/202606072100_gate2-canonical-deviation-ledger.md:3-3 records the const-gated per-trunk programs as shipped in place of the runtime mask, under the round mock/design_rounds/202606080400/202606080100_topic.gate2-ge-const-gated-trunk-dispatch.md:6-6, which cites a carrier-mechanism mandate of his whose words the repository does not hold (row the_single_core_run_walks_the_flat_value_carrier_gated_by_const_phase_and_trunk_so_dead_code_elimination_leaves_one_member_only_program_per_phase_and_trunk), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+standing = "held"
 keywords = ["runtime mask", "run_gated", "core ownership", "RunGatedTrunk", "bench-first runtime mask", "R4a", "N-core dispatch", "plan::grouping"]
 rejects = ["The const-gated mono ENUMERATION (`run_one_trunk` / `RunGatedTrunk`) is superseded by op's runtime-mask choice"]
 related = ["tenet::the_single_core_run_walks_the_flat_value_carrier_gated_by_const_phase_and_trunk_so_dead_code_elimination_leaves_one_member_only_program_per_phase_and_trunk"]
