@@ -1,12 +1,14 @@
 # `hilavitkutin-providers`
 
-Default Resource-backed providers for the hilavitkutin scheduler.
-Standalone ecosystem crate; consumed by the engine via Kit
-installation or direct `builder.with(...)` wiring, no reverse
-dependency. Ships `InternerKit` (an inline-storage `MemoryArena`
-wrapped by `StringInterner`), the `ArenaColumnStorage` column store,
-`StaticBumpMemory`, a memory provider over a buffer the consumer hands
-it, and the adapt kits `StandardAdaptKit` and `OffAdaptKit` with their
-per-axis metrics resources. A default clock and an operating-system
-memory provider are not in it; the engine's `platform-os` feature
-carries `OsClock` and `OsMemoryProvider`.
+Default implementations of the hilavitkutin-api contracts, for a
+consumer to register on the scheduler builder with `.with(...)`, one
+store at a time or as a Kit. It ships `ArenaColumnStorage`, the arena
+`ColumnStorage` over a consumer's `MemoryProvider`; `StaticBumpMemory`,
+a memory provider over a buffer the consumer hands it; the interner
+(`StringInterner` over an inline `MemoryArena`, and `InternerKit`); the
+adapt unit `AdaptWu` with its EMA helpers and the `StandardAdaptKit` and
+`OffAdaptKit` presets; and the per-axis metrics resources with
+`MetricsKit`. A default clock and an operating-system memory provider
+are not in it; the engine's `platform-os` feature carries `OsClock` and
+`OsMemoryProvider`. Depends on the api, str and kit crates, never on the
+engine.
