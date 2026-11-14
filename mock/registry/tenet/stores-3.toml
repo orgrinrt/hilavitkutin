@@ -1,0 +1,504 @@
+# What the record says about `stores`, part 3.
+
+[[tenet]]
+id = "the_drift_fix_arc_is_the_storage_model_work_and_no_open_storage_model_fork_remains"
+subject = "stores"
+what = "The drift-fix arc is the storage-model work: add the scalar stack snapshot, the live-streamed collection access, the noalias invariant and the erased static-shape addressing on the existing one-record blob. The layout is fully settled by the bench decision of blob, snapshot and live collections together with the maintainer's hybrid call of erased, global-capable addressing, and no open storage-model fork remains."
+mechanism = "Hybrid decision: `202606210600_topic.hybrid-decision.md`."
+source = "mock/research/202606210600_resource-storage-model-canonical-addendum.md:97-101"
+provenance = ["mock::research::202606210600_resource-storage-model-canonical-addendum::#status-of-dependent-work"]
+quote = '''
+- The drift-fix arc (add scalar stack-snapshot + live-streamed collection access + the noalias
+  invariant + erased static-shape addressing on the existing one-record blob) is the storage-model
+  work. The layout is now fully settled: bench-decided (blob + snapshot + live-collections) plus
+  op's hybrid call (erased addressing, global-capable, `202606210600_topic.hybrid-decision.md`).
+  No open storage-model fork remains.
+'''
+origin = "proposed"
+written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: his part is the hybrid call of erased, global-capable addressing, recorded as his decision of 2026-07-02 at mock/design_rounds/202607161000/202606210600_topic.hybrid-decision.md:12-19, and the layout of blob, snapshot and live collections is the bench decision of the row the_value_of_a_resource_is_one_contiguous_record_blob_and_the_per_member_column_decomposition_was_refuted_by_bench; that the drift-fix arc is the storage-model work and that no fork remains is the reading of the agent-written addendum at mock/research/202606210600_resource-storage-model-canonical-addendum.md:97-101, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["drift-fix arc", "storage model", "scalar snapshot", "live-streamed", "noalias", "erased addressing", "hybrid", "settled layout"]
+related = ["tenet::a_resource_value_is_addressed_through_an_erased_static_shape_so_it_can_cross_a_plugin_boundary"]
+
+[[tenet]]
+id = "collection_access_read_and_write_is_the_ptr_len_view_over_the_member_s_collection_column_region_behind_the_erased_descriptor"
+subject = "stores"
+what = "The swap spec answers the open item of the founding spec on the resource collection accessor shape: collection access, on the read side and the write side alike, is the pointer and length view over the member's collection-column region behind the erased descriptor. The concrete consumer-facing API lands with #344, shaped by this clause."
+mechanism = "ptr+len view over the member's collection-column region behind the erased descriptor; API with #344."
+source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:71-75"
+provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s3-collection-members"]
+quote = '''
+underspecified. The same resolution answers the founding spec's open
+"resource collection accessor shape" item: collection access, read side and
+write side alike, is the ptr+len view over the member's collection-column
+region behind the erased descriptor; the concrete consumer-facing API lands
+with #344, shaped by this clause.
+'''
+origin = "proposed"
+written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
+standing = "held"
+keywords = ["collection accessor shape", "ptr+len view", "erased descriptor", "read side", "write side", "#344", "founding spec open item"]
+related = ["tenet::a_resource_value_is_addressed_through_an_erased_static_shape_so_it_can_cross_a_plugin_boundary"]
+
+[[tenet]]
+id = "a_plan_affecting_type_can_never_take_the_replace_value_path_because_of_a_negative_impl_wall"
+subject = "stores"
+what = "The api crate ships a negative implementation that no plan-affecting type is replaceable, behind the negative-impls feature gate, which is in the watch tier and allowed. The plan-affecting trait is dominant: a plan-affecting type can never take the cheap replace-value path, structurally, with the compiler rejecting the consumer's impl at the consumer's impl site, across crates. The evidence is the exclusivity sketch, both arms."
+mechanism = "`impl<T: PlanAffecting> !Replaceable for T` under `#![feature(negative_impls)]` (WATCH tier, allowed; the gate carries the standard vetting comment); E0751 at the consumer's impl site, cross-crate; sketch `202607193310_planaffecting-replaceable-exclusivity`."
+source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:77-84"
+provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s4-trait-relationship-resolved-by-sketch"]
+quote = '''
+## S4: trait relationship (resolved by sketch)
+
+hilavitkutin-api ships `impl<T: PlanAffecting> !Replaceable for T` under
+`#![feature(negative_impls)]` (WATCH tier, allowed; the gate carries the
+standard vetting comment). `PlanAffecting` is dominant: a plan-affecting
+type can never take the cheap `replace_value` path, structurally, with E0751
+at the consumer's impl site, cross-crate. Evidence: the exclusivity sketch,
+both arms. The supertrait alternatives fail on the merits
+'''
+origin = "proposed"
+written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
+standing = "held"
+keywords = ["negative_impls", "PlanAffecting", "Replaceable", "E0751", "exclusivity", "negative impl", "structural wall", "S4"]
+related = ["tenet::plan_affecting_is_an_open_marker_trait_that_consumers_implement_on_resource_value_types"]
+
+[[tenet]]
+id = "the_supertrait_alternatives_to_the_negative_impl_fail_and_a_lint_is_advisory_where_a_structural_wall_exists"
+subject = "stores"
+what = "The supertrait alternatives to the negative-impl wall fail on the merits. Making plan-affecting a subtrait of replaceable reopens the silent-skip hole, and making replaceable a subtrait of plan-affecting routes every app-state swap through the plan band. A lint is advisory where a structural wall exists."
+mechanism = "`PlanAffecting: Replaceable` reopens the silent-skip hole; `Replaceable: PlanAffecting` routes every app-state swap through the plan band."
+source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:84-87"
+provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s4-trait-relationship-resolved-by-sketch"]
+quote = '''
+both arms. The supertrait alternatives fail on the merits
+(`PlanAffecting: Replaceable` reopens the silent-skip hole;
+`Replaceable: PlanAffecting` routes every app-state swap through the plan
+band); a lint is advisory where a structural wall exists.
+'''
+origin = "proposed"
+written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
+standing = "held"
+keywords = ["supertrait", "PlanAffecting", "Replaceable", "silent-skip hole", "plan band", "lint advisory", "structural wall", "S4"]
+rejects = ["PlanAffecting: Replaceable", "Replaceable: PlanAffecting", "a lint in place of the structural wall"]
+related = ["tenet::a_plan_affecting_type_can_never_take_the_replace_value_path_because_of_a_negative_impl_wall"]
+
+[[tenet]]
+id = "each_core_appends_into_its_own_region_of_an_accumulator_and_the_main_thread_merges_the_regions_in_order"
+subject = "stores"
+what = "For an accumulator each core owns an exclusive region of the one reserved buffer and the main thread merges the regions after the workers rejoin, preserving append order. This regioning by core is what the design asks for on the accumulator, and it is a different mechanism from head and tail convergence, which splits input records between two threads."
+mechanism = "Cap = build-time record count (at most one append per record); regions tile `[0, total)` one per core: `per = ceil(total/ncores)`, `lo = (c*per).min(total)`, `hi = (lo+per).min(total)`, cap `hi_c - lo_c`, each with its own live-length cell."
+source = "mock/research/202611130850_the-record-read-whole/RECOVERED.md:61-70"
+provenance = ["mock::research::202611130850_the-record-read-whole::RECOVERED::#mock-crates-hilavitkutin-design-md-tmpl-lines-552-to-561"]
+quote = '''
+regions of the single reserved buffer. The accumulator reserves cap =
+build-time record count (the global at-most-one-append-per-record bound),
+and core c appends into the sub-region at element offset `lo_c`, where the
+regions tile `[0, total)` one per core (`per = ceil(total/ncores)`,
+`lo = (c*per).min(total)`, `hi = (lo+per).min(total)`), with cap `hi_c - lo_c`
+and its own live-length cell. This N-way regioning is what the design asks for
+on the accumulator: each core owns an exclusive region and the main thread
+merges them after the workers rejoin, preserving append order. It is a
+different mechanism from head+tail convergence, which splits input records
+between two threads; they share the ceiling formula and nothing else.
+'''
+origin = "proposed"
+written_by = "engine design template as on the branch recover/unlanded-rounds-and-benches, commit of 2026-08-30, not on dev; the text does not say whose it is"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["accumulator", "per-core region", "merge", "append order", "N-way regioning", "reserved buffer"]
+
+[[tenet]]
+id = "an_append_past_an_accumulator_s_capacity_is_counted_and_never_written_and_the_refusal_is_sticky_for_the_frame"
+subject = "stores"
+what = "Each accumulator binding carries, beside its live length, a count of how many appends the frame asked of it. Every append raises that count. An append writes and raises the live length only when nothing has been refused yet and the live length is below the capacity; otherwise nothing is written. Once one append is refused, every later append on the same binding is refused. No flag is stored apart from the two counts."
+mechanism = "A second cell `wanted` beside `len` on the accumulator binding; write only when `wanted == len` and `len < cap`; refused exactly when `wanted > len`."
+source = "mock/design_rounds/202611130402/202611130400_topic.overflow-is-a-value.md:16-16"
+provenance = ["mock::design_rounds::202611130402::202611130400_topic.overflow-is-a-value::#the-shape"]
+quote = '''
+The sticky refusal is a second count on each accumulator binding beside the live length: how many appends the frame asked of it. Every append bumps it. An append writes and bumps the live length only when nothing has been refused yet (`wanted == len`) and the live length is below the capacity; otherwise it writes nothing and only `wanted` moves. So `wanted >= len` always, and the accumulator has refused this frame exactly when `wanted > len`. That is the sticky state: once one append is refused, every later append on the same binding is refused and the live length does not move, which is the law `notko`'s `Fill` keeps for a lend and the panel stated for the window (L75, N3). No flag is stored apart from the two counts, so there is nothing to keep consistent with them.
+'''
+origin = "proposed"
+written_by = "topic overflow-is-a-value of 2026-11-13, round 202611130402, roadmap step HV1b, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["accumulator", "append", "capacity", "refusal", "sticky", "wanted", "overflow", "AccumRefused"]
+rejects = ["An append past an accumulator's reserved capacity panics"]
+related = ["tenet::an_accumulator_append_saturates_at_the_reserved_capacity_which_equals_the_record_count_at_build"]
+
+[[tenet]]
+id = "the_refusal_of_an_accumulator_is_read_at_the_close_and_is_the_same_value_at_every_worker_count"
+subject = "stores"
+what = "After the last band of the frame the run walks the bindings in registration order and returns the first accumulator that refused, as a value naming its position among the accumulators, how many appends were asked and the reserved capacity. The count asked does not depend on how the records were split, so the refusal of an emitter that asks more than the reserved capacity is the same value at one, two, four and the maximum number of workers."
+mechanism = "`AccumRefused` with the registration position and `notko::Exhausted { wanted, had }`, handed out through the run configuration's output type; on several workers the merge sums the per-core counts."
+source = "mock/design_rounds/202611130402/202611130400_topic.overflow-is-a-value.md:18-20"
+provenance = ["mock::design_rounds::202611130402::202611130400_topic.overflow-is-a-value::#the-shape"]
+quote = '''
+The refusal is read at the close. After the last band of the frame, `run` walks the bindings in registration order and returns the first accumulator whose `wanted > len`, as a value naming its registration position among the accumulators and `notko::Exhausted { wanted, had }`, with `had` the reserved capacity. The value goes out through the run-config's output: `RunCfg::Out` is bound on `From<Outcome<(), AccumRefused>>`, the default config's `Out` is `Outcome<(), AccumRefused>` (the reflexive `From` covers it), and every run entry returns `Cfg::Out::from(verdict)`. `RunCfg` is sealed, so the default config is the only impl and no consumer impl breaks.
+
+`wanted` is the count of appends the frame asked for, so it does not depend on how the records were split. On one core it is every append the bodies made; on `n` workers the merge sums the per-core counts. `had` is the reserved capacity of the shared binding in both. The refusal of an emitter that asks more than the reserved capacity is therefore the same value at 1, 2, 4 and the maximum worker count, which is the proof the roadmap asks for.
+'''
+origin = "proposed"
+written_by = "topic overflow-is-a-value of 2026-11-13, round 202611130402, roadmap step HV1b, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["accumulator", "refusal", "close", "worker count", "registration order", "run output", "Exhausted"]
+related = ["tenet::an_append_past_an_accumulator_s_capacity_is_counted_and_never_written_and_the_refusal_is_sticky_for_the_frame"]
+
+[[tenet]]
+id = "the_consumer_picks_on_the_run_configuration_whether_an_over_capacity_append_is_a_refusal_or_an_assert"
+subject = "stores"
+what = "Asked whether an append past an accumulator's capacity should be a refusal as a value, among a refusal as a value everywhere, the assert staying the default with refusal a provider's opt-in, and configurable by the consumer through a const, generic or trait parameter on the run configuration with refuse as the default, op answered: configurable by the consumer."
+source = "mock/design_rounds/202611130554/202611130600_topic.overflow-is-the-consumers-choice.md:9-9"
+provenance = ["mock::design_rounds::202611130554::202611130600_topic.overflow-is-the-consumers-choice::#op-s-ruling"]
+quote = '''
+Asked through the coordinator whether an append past an accumulator's capacity should be a refusal as a value, with the options [a refusal as a value everywhere | the assert stays the default, refusal is a provider's opt-in | configurable by the consumer: a const, generic or trait parameter on the run configuration picks refuse or assert, default refuse], op answered, verbatim: "Configurable by the consumer".
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: mock/design_rounds/202611130554/202611130600_topic.overflow-is-the-consumers-choice.md:9-9", "quote: mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:232-256"]
+keywords = ["accumulator", "overflow", "configurable by the consumer", "run configuration", "refuse", "assert", "ruling"]
+related = ["tenet::an_append_past_an_accumulator_s_capacity_is_counted_and_never_written_and_the_refusal_is_sticky_for_the_frame"]
+
+[[tenet]]
+id = "the_overflow_choice_is_a_sealed_pair_on_the_run_configuration_and_the_assert_fires_at_the_close_on_the_calling_thread"
+subject = "stores"
+what = "The round that carries op's ruling reads its intent as a pick at compile time on the run configuration, with the refusal as a value the default. It names the choice as a sealed set of two, refuse and assert, which it calls the engine's own fixed vocabulary and not content; each fixes the run's output type. The append path is the same under both: it refuses and counts. The assert fires at the close, on the thread that called the run, after every worker has parked again, so that a panic never hits a worker and stalls the join."
+mechanism = "Sealed `AccumOverflow` with `Refuse` and `Assert`; `RunCfg::Overflow: AccumOverflow<Out = Self::Out>`; `DefaultRunCfg<O: AccumOverflow = Refuse>`; `build_with::<DefaultRunCfg<Assert>, _, _>` takes the assert."
+source = "mock/design_rounds/202611130554/202611130600_topic.overflow-is-the-consumers-choice.md:11-21"
+provenance = ["mock::design_rounds::202611130554::202611130600_topic.overflow-is-the-consumers-choice::#op-s-ruling"]
+quote = '''
+The intent: the consumer picks, at compile time and on the run configuration, whether an over-capacity append comes back as a value or stops the run with a panic, and the refusal as a value is the default.
+
+## Current state
+
+Round 202611130402 built the refusal only. `RunCfg` is sealed, `DefaultRunCfg` is its one impl, and `RunCfg::Out` is `notko::Outcome<(), AccumRefused>` there. Every run entry ends in `frame_verdict`, which builds `Cfg::Out` from the frame's verdict. A consumer picks a configuration by type through `build_with::<Cfg, _, _>`; `build` takes `DefaultRunCfg`.
+
+## Changes proposed
+
+1. A sealed `AccumOverflow` names the choice, with two inhabitants, `Refuse` and `Assert`. Each fixes the run's output type and turns the frame's verdict into it: `Refuse` hands the verdict back as `notko::Outcome<(), AccumRefused>`; `Assert` returns `()` and panics on a refusal, naming the `AccumRefused`. The set is the engine's own fixed vocabulary, two behaviours of one branch, not content.
+2. `RunCfg` gains `type Overflow: AccumOverflow<Out = Self::Out>`, so `Out` differs by the choice and nothing else can set it apart from it. `DefaultRunCfg` becomes `DefaultRunCfg<O: AccumOverflow = Refuse>`, so `build` keeps the refusal and `build_with::<DefaultRunCfg<Assert>, _, _>` takes the assert.
+3. The append path does not change under either choice: it refuses and counts. The assert fires at the close, on the thread that called the run, after every worker has re-parked. `dev` asserted inside the append, so under `run_parallel` the panic hit a worker and the join stalled (fault H2). Asserting at the close keeps op's intent, a run that stops on an over-capacity append, without bringing that stall back, and no write passes the capacity under either choice.
+'''
+origin = "proposed"
+written_by = "topic overflow-is-the-consumers-choice of 2026-11-13, round 202611130554, the working out of op's ruling, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["AccumOverflow", "Refuse", "Assert", "run configuration", "sealed", "close", "calling thread", "typestate"]
+related = ["tenet::the_consumer_picks_on_the_run_configuration_whether_an_over_capacity_append_is_a_refusal_or_an_assert"]
+
+[[tenet]]
+id = "under_the_parallel_run_each_core_s_accumulator_region_starts_after_the_leading_records_and_keeps_its_own_refusal"
+subject = "stores"
+what = "Under the parallel run the region of each accumulator a core appends into starts after the records the leading bands already accepted, clipped to the capacity, and the merge compacts from there, so the leading bands' records survive and count, and a region with no room refuses and does not drop. On one thread the accepted records are a prefix of the appends; under the parallel run each region keeps its own prefix, so the bytes kept depend on the worker count while the refusal value does not."
+source = "mock/design_rounds/202611130500/202611130500_topic.overflow-review-fixes.md:22-23"
+provenance = ["mock::design_rounds::202611130500::202611130500_topic.overflow-review-fixes::#changes-proposed"]
+quote = '''
+2. The per-core region of each accumulator starts after the records the leading bands already accepted: core c appends at `len + lo_c`, clipped to the capacity, and the merge compacts from `len` rather than 0. The leading bands' records survive and count. The last regions lose that much room, which the region-skew gap (ticket 9979e2632a6a) already covers, and a region with no room refuses rather than drops. The merged `wanted` saturates.
+3. The rule for the accepted records is stated per region: on one thread the accepted records are a prefix of the appends; under `run_parallel` each region keeps its own prefix, so the bytes kept depend on the worker count while the `AccumRefused` value does not.
+'''
+origin = "proposed"
+written_by = "topic overflow-review-fixes of 2026-11-13, round 202611130500, review pass one of the overflow round, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["run_parallel", "per-core region", "leading bands", "merge", "prefix", "worker count", "accumulator"]
+related = ["tenet::the_refusal_of_an_accumulator_is_read_at_the_close_and_is_the_same_value_at_every_worker_count"]
+
+[[tenet]]
+id = "a_sketch_of_november_2026_holds_every_lane_of_a_frame_twice_committed_and_staged"
+subject = "stores"
+what = "In a sketch, a lane is declared with its item type and its initial value and as one of two kinds, a frame lane or a landed store. The registry is the list of every lane, and the frame holds the rows of every lane twice, a committed form and a staged form."
+mechanism = "`Lane`, `FrameLane`, `LandedStore`; the registry is a `notko_hlist` list; `Frame<Reg, N>`."
+source = "mock/research/sketches/202611122242_frame-view-typestate/FINDINGS.md:15-15"
+provenance = ["mock::research::sketches::202611122242_frame-view-typestate::FINDINGS::#the-shape"]
+quote = '''
+A lane is a unit struct implementing `Lane` (its item type and initial value) and one of `FrameLane` or `LandedStore`. The registry is a type alias, a `notko_hlist` list of every lane. `Frame<Reg, N>` holds N rows of every lane twice, committed and staged.
+'''
+origin = "proposed"
+written_by = "the findings of the sketch frame-view-typestate, dated 2026-11-12 and 2026-11-13; it calls itself sketch S3 of the roadmap for building kaski's engine on the stack's contracts, job hv-sketch-frame-view, and says hilavitkutin declares no canon it was checked against"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["frame", "lane", "committed", "staged", "double buffer", "frame lane", "landed store", "sketch", "frame view"]
+related = ["tenet::a_writer_precedes_every_reader_of_what_it_writes"]
+
+[[tenet]]
+id = "in_the_frame_view_sketch_a_step_kernel_reads_the_committed_frame_through_a_view_and_writes_through_staged_handles"
+subject = "stores"
+what = "In the same sketch, a step kernel is handed a view of the committed frame for the length of the step, restricted to the list of lanes it reads. The view can be copied and read from every thread and has no write. What the kernel writes goes through one write-only handle per lane of its write list, which has no read and cannot be copied."
+mechanism = "`View<'s, Reg, R>` with `view.get(Lane, row)` bounded on `R: Contains<Lane>`; `StagedLane<'s, X>` with `set(row, value)`, neither `Copy` nor `Clone`; a value kernel returns a tuple of values per row and the runner writes them through the handles."
+source = "mock/research/sketches/202611122242_frame-view-typestate/FINDINGS.md:17-19"
+provenance = ["mock::research::sketches::202611122242_frame-view-typestate::FINDINGS::#the-shape"]
+quote = '''
+`View<'s, Reg, R>` is the committed frame for the step `'s`, restricted to the read list `R`. It is a list of shared slices and a phantom, so it is `Copy`, and `Sync` exactly when every lane's item is, which `Lane::Item` requires. Its one read is `view.get(Lane, row)`, bounded on `R: Contains<Lane>`; it has no write method. `Row` is an opaque brand built only by the engine, with no order and no integer conversion (stamp 7, F's note).
+
+`StagedLane<'s, X>` is one write-only handle: `set(row, value)` and nothing else, neither `Copy` nor `Clone`. A block kernel receives one per member of its write list as a nested tuple and destructures it. A value kernel returns a nested tuple of values per row and the runner writes them through the handles itself.
+'''
+origin = "proposed"
+written_by = "the findings of the sketch frame-view-typestate, dated 2026-11-12 and 2026-11-13; it calls itself sketch S3 of the roadmap for building kaski's engine on the stack's contracts, job hv-sketch-frame-view, and says hilavitkutin declares no canon it was checked against"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["view", "committed frame", "staged handle", "write-only", "read list", "step kernel", "frame start", "sketch"]
+related = ["tenet::a_sketch_of_november_2026_holds_every_lane_of_a_frame_twice_committed_and_staged"]
+
+[[tenet]]
+id = "in_the_frame_view_sketch_a_close_unit_gets_the_landed_stores_after_the_step_lands_and_never_the_view"
+subject = "stores"
+what = "In the same sketch, a close unit is handed, after the step lands, the landed stores it names, which it reads and writes. It has no path to the view of the committed frame."
+mechanism = "`Landed<'c, Reg, S>` with `get`, `set` and `rows`; the view's constructor is private to the engine crate."
+source = "mock/research/sketches/202611122242_frame-view-typestate/FINDINGS.md:21-21"
+provenance = ["mock::research::sketches::202611122242_frame-view-typestate::FINDINGS::#the-shape"]
+quote = '''
+`Landed<'c, Reg, S>` is what a close unit gets after the step lands: `get`, `set` and `rows` on the stores `S` names, which must be landed stores. There is no path from it to a view, and the view's constructor is crate-private.
+'''
+origin = "proposed"
+written_by = "the findings of the sketch frame-view-typestate, dated 2026-11-12 and 2026-11-13; it calls itself sketch S3 of the roadmap for building kaski's engine on the stack's contracts, job hv-sketch-frame-view, and says hilavitkutin declares no canon it was checked against"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["close unit", "landed store", "after the step lands", "view", "frame close", "sketch"]
+related = ["tenet::a_sketch_of_november_2026_holds_every_lane_of_a_frame_twice_committed_and_staged"]
+
+[[tenet]]
+id = "as_first_proposed_each_store_marker_reports_its_element_bytes_for_the_morsel_budget_and_a_virtual_reports_none"
+subject = "stores"
+what = "As first proposed in the first slice of the per-fiber morsel sizing, each store marker contributes an element byte size to a per-store size array that feeds the morsel window formula. The column, resource, accumulator and staged resource markers over a column value give the bit width rounded up to whole bytes, and a virtual gives zero because it holds no record bytes."
+mechanism = "`StoreElemBytes { const BYTES: USize }` with disjoint per-marker impls, `(BIT_WIDTH + 7) / 8` for `Column`/`Resource`/`Accum`/`StagedResource` over `T: ColumnValue` and `USize::ZERO` for `Virtual<T>`; `StoreSizes<CS>` fold over the `Stores` cons-list, a sibling of `AccumStoresMask`; `store_sizes::<Stores, CS>()` entry."
+source = "mock/design_rounds/202606202500/202606202500_topic.a3a-store-size-collection.md:10-11, mock/design_rounds/202606202500/202606202500_topic.a3a-store-size-collection.md:21-26"
+provenance = ["mock::design_rounds::202606202500::202606202500_topic.a3a-store-size-collection::#current-state"]
+quote = '''
+The A3 sketch proved the per-store element-byte-size collection + per-fiber
+write-byte sum. The L1 window formula (A3b) needs the size array. The plan stage
+---
+- `StoreElemBytes { const BYTES: USize }` with disjoint per-marker impls:
+  `Column`/`Resource`/`Accum`/`StagedResource` over `T: ColumnValue` give
+  `(BIT_WIDTH + 7) / 8`; `Virtual<T>` gives `USize::ZERO` (no record bytes).
+- `StoreSizes<CS>` fold over the `Stores` cons-list (sibling of
+  `AccumStoresMask`) writing each store's bytes into a slot.
+- `store_sizes::<Stores, CS>()` entry (sibling of `accum_stores_mask`).
+'''
+origin = "proposed"
+written_by = "topic a3a-store-size-collection of 2026-06-19, round 202606202500, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["StoreElemBytes", "StoreSizes", "store_sizes", "per-store size", "ColumnValue", "BIT_WIDTH", "A3a", "morsel budget"]
+related = ["tenet::the_morsel_size_is_the_l1_budget_divided_by_the_written_bytes_per_record_within_fixed_bounds"]
+
+[[tenet]]
+id = "only_a_column_contributes_per_record_bytes_to_the_morsel_working_set_and_the_other_store_markers_contribute_zero"
+subject = "stores"
+what = "Only a column contributes its element bytes to the per-record morsel working set. A resource and a staged resource are singletons, accumulator fibers dispatch unit-outer with no morsel window, and a virtual is fired, so those four markers contribute zero with no column-value bound, which lets a resource over a value that is not a column value still be sized. The first slice had bounded all four on the column value and broke real carriers."
+mechanism = "`StoreElemBytes` in plan/project.rs: `Column<T: ColumnValue>` gives its element bytes; `Resource`, `StagedResource`, `Accum` and `Virtual` give `USize::ZERO` with no `ColumnValue` bound, so a `Resource<T>` over a non-ColumnValue provider or interner still satisfies `StoreSizes`."
+source = "mock/design_rounds/202606202700/202606202700_changelist.src.lock.md:29-38"
+provenance = ["mock::design_rounds::202606202700::202606202700_changelist.src.lock::#change-refine-storeelembytes-to-per-record-columns-only"]
+quote = '''
+## CHANGE: refine `StoreElemBytes` to per-record columns only
+File: `mock/crates/hilavitkutin/src/plan/project.rs`
+Verification: `grep "impl<T> StoreElemBytes for Resource" mock/crates/hilavitkutin/src/plan/project.rs` (no ColumnValue bound).
+
+Only `Column<T: ColumnValue>` contributes its element bytes to the per-record
+morsel working set. `Resource`/`StagedResource` are singletons, `Accum` fibers
+dispatch unit-outer (no morsel window), `Virtual` is fired: all four contribute
+`USize::ZERO` with NO `ColumnValue` bound, so a `Resource<T>` over a
+non-ColumnValue provider/interner still satisfies `StoreSizes`. (A3a had bounded
+all four on ColumnValue, which broke real carriers; A3b corrects it.)
+'''
+origin = "proposed"
+written_by = "src changelist of round 202606202700 (A3b), agent-written"
+standing = "provisional"
+superseded_by = ["a_resource_and_a_staged_resource_contribute_their_declared_footprint_to_the_morsel_budget_and_an_accumulator_contributes_zero"]
+keywords = ["StoreElemBytes", "per-record columns", "Resource", "StagedResource", "Accum", "Virtual", "ColumnValue bound", "A3b"]
+rejects = ["A3a had bounded all four on ColumnValue"]
+related = ["tenet::as_first_proposed_each_store_marker_reports_its_element_bytes_for_the_morsel_budget_and_a_virtual_reports_none"]
+
+[[tenet]]
+id = "a_resource_and_a_staged_resource_contribute_their_declared_footprint_to_the_morsel_budget_and_an_accumulator_contributes_zero"
+subject = "stores"
+what = "A resource and a staged resource contribute to the morsel budget the first-level cache footprint that their value type declares, the collection footprint, in place of a flat scalar size. An accumulator contributes zero because it dispatches unit-outer, and a column and a virtual are unchanged."
+mechanism = "`StoreElemBytes` arms in plan/project.rs: `Resource<T>` and `StagedResource<T>` require `T: ResourceFootprint` and report `<T as ResourceFootprint>::L1_BYTES`; `Accum<T>` reports `USize::ZERO`; `Column<T>` and `Virtual<T>` unchanged; the R5 footprint model."
+source = "mock/design_rounds/202607161410/202607161400_topic.a3b-l1-morsel-formula.md:51-53, mock/design_rounds/202607161410/202607161400_topic.a3b-l1-morsel-formula.md:62-63, mock/design_rounds/202607161410/202607161420_changelist.src.lock.md:24-29"
+provenance = ["mock::design_rounds::202607161410::202607161400_topic.a3b-l1-morsel-formula::#resolutions-this-round-settles"]
+quote = '''
+4. **`Resource<T>` footprint sourcing and the coherence call.** The fold's
+   `Resource<T>`/`StagedResource<T>` arms read `<T as ResourceFootprint>::L1_BYTES`
+   (the R5-correct collection footprint). A blanket
+---
+5. **`Accum<T>` contributes zero** to the L1 morsel budget (unit-outer dispatch
+   per the re-chart), correcting A3a's scalar-size arm. `Virtual<T>` stays zero.
+---
+## CHANGE: `StoreElemBytes` arms FROM flat scalar sizes TO the R5 footprint model
+File: `mock/crates/hilavitkutin/src/plan/project.rs`
+`Resource<T>` / `StagedResource<T>` arms require `T: ResourceFootprint` and
+report `<T as ResourceFootprint>::L1_BYTES`; the `Accum<T>` arm reports zero
+(unit-outer dispatch); `Column<T>` and `Virtual<T>` are unchanged.
+Verification: `grep -A2 "StoreElemBytes for Resource" mock/crates/hilavitkutin/src/plan/project.rs` shows `L1_BYTES`, and `grep -A4 "StoreElemBytes for Accum" mock/crates/hilavitkutin/src/plan/project.rs` shows `USize::ZERO`.
+'''
+origin = "proposed"
+written_by = "topic a3b-l1-morsel-formula of 2026-07-16, round 202607161410, and its src changelist, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["StoreElemBytes", "ResourceFootprint", "L1_BYTES", "Resource", "StagedResource", "Accum", "R5 footprint", "morsel budget"]
+rejects = ["flat scalar sizes"]
+related = ["tenet::only_a_column_contributes_per_record_bytes_to_the_morsel_working_set_and_the_other_store_markers_contribute_zero", "tenet::per_fiber_morsel_sizing_folds_over_blob_strides_plus_the_collection_bytes_term_and_rides_after_the_drift_fix", "tenet::the_api_macros_crate_is_the_proc_macro_companion_of_the_api_crate_and_derives_a_resource_s_write_collection_footprint"]
+lineage = ["only_a_column_contributes_per_record_bytes_to_the_morsel_working_set_and_the_other_store_markers_contribute_zero:42e2e2fb4a444878"]
+
+[[tenet]]
+id = "a_blanket_footprint_implementation_is_rejected_because_it_conflicts_with_the_derive_and_bare_scalars_get_explicit_zero_footprints"
+subject = "stores"
+what = "A blanket footprint implementation over every column value is rejected, because it would cover every consumer struct and make the derived implementation a coherence conflict. The api instead ships explicit zero-footprint implementations for the bare scalar primitives, so a bare-scalar resource value is the degenerate single-field case and adds nothing to the first-level cache write budget, while consumer struct values use the derive."
+mechanism = "`impl<T: ColumnValue> ResourceFootprint for T` rejected; explicit zero-footprint impls for an unsigned or signed integer, `bool`, `char`, `arvo::USize` and `arvo::Bool` in the api footprint module; consumer structs use `#[derive(ResourceFootprint)]`."
+source = "mock/design_rounds/202607161410/202607161400_topic.a3b-l1-morsel-formula.md:51-60"
+provenance = ["mock::design_rounds::202607161410::202607161400_topic.a3b-l1-morsel-formula::#resolutions-this-round-settles"]
+quote = '''
+4. **`Resource<T>` footprint sourcing and the coherence call.** The fold's
+   `Resource<T>`/`StagedResource<T>` arms read `<T as ResourceFootprint>::L1_BYTES`
+   (the R5-correct collection footprint). A blanket
+   `impl<T: ColumnValue> ResourceFootprint for T` would cover every consumer
+   struct and make the `#[derive(ResourceFootprint)]` impl a coherence conflict,
+   so it is rejected. Instead the api ships explicit zero-footprint impls for the
+   bare scalar primitives (an unsigned/signed integer, `bool`, `char`, plus
+   `arvo::USize` and `arvo::Bool`): a bare-scalar resource value is the
+   degenerate single-`Field` case and contributes nothing to the L1 write
+   budget. Consumer struct values use the derive.
+'''
+origin = "proposed"
+written_by = "topic a3b-l1-morsel-formula of 2026-07-16, round 202607161410, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["ResourceFootprint", "blanket impl", "coherence", "derive", "bare scalar", "zero footprint", "L1 write budget"]
+related = ["tenet::a_resource_and_a_staged_resource_contribute_their_declared_footprint_to_the_morsel_budget_and_an_accumulator_contributes_zero", "tenet::the_api_macros_crate_is_the_proc_macro_companion_of_the_api_crate_and_derives_a_resource_s_write_collection_footprint"]
+
+[[tenet]]
+id = "a_resource_handle_s_members_decompose_into_per_member_shape_bound_columns_in_the_unified_store"
+subject = "stores"
+what = "As first stated in the round of 2026-06-19, a resource is a handle whose field, sequence and map members each decompose into their own column in the unified type-erased columnar store, keyed by shape so that a field type appearing in many resources collapses to one column. The resource record holds only the pointers to those columns, in a separate handle store keyed by resource id with its own pointer provenance, and there is no private value arena. On that statement the one-record blob of the shipped drain was named the drift."
+mechanism = "`DrainStores` (bindings.rs:22) reserved a one-record opaque column per `Resource<T>` behind a single `ResourcePtr<T>`."
+source = "mock/design_rounds/202607161000/202606210600_topic.resource-handle-storage-model.md:10-18, mock/design_rounds/202607161000/202606210600_topic.resource-handle-storage-model.md:41-48"
+provenance = ["mock::design_rounds::202607161000::202606210600_topic.resource-handle-storage-model::#the-realization"]
+quote = '''
+A `Resource<T>` is a **handle**. It does not store its value inline. `T` decomposes
+per-member: each `Field`/`Seq`/`Map` member becomes its own column in the **unified,
+type-erased columnar store**, keyed/shared by **shape** (stride), so a `Field<u32>`
+appearing in many resources collapses to one shape-bound column rather than a
+type-unique column per concrete `T` (type-unique is too wide and explodes the column
+count). The resource record itself holds only the **pointers** (or pointer + index)
+to its members' columns, in a **separate handle store keyed by resource id**, with
+separate pointer provenance from the value columns. The resource has **no private
+value arena**.
+---
+`DrainStores` (bindings.rs:22) reserves a **one-record opaque column per `Resource<T>`**:
+the whole value moved in as a blob behind a single `ResourcePtr<T>`. That is NOT the
+canonical model. Canonical: the members decompose into per-member shape-bound columns,
+and the resource is a handle of their pointers/indices. The blob impl is the drift to
+fix; it is also what manufactured the morsel-size "dissonance" (the heterogeneous
+bare-RunCfg-vs-Resource-vs-Column type-fold). Once every value is a shape-bound column
+with a known stride and the resource is a handle, per-store size is uniform (column
+strides) and the type-fold problem disappears.
+'''
+origin = "proposed"
+written_by = "topic resource-handle-storage-model of 2026-06-19, round 202606210600, agent-written, later reversed by the same round's bench topics"
+standing = "provisional"
+superseded_by = ["a_resource_value_is_a_one_record_blob_and_the_bench_reverses_the_decomposition_to_shape_bound_columns"]
+keywords = ["resource handle", "shape-bound columns", "decompose", "handle store", "DrainStores", "one-record blob", "R5", "unified store"]
+related = ["tenet::a_resource_is_a_handle_and_not_an_inline_value_store_which_is_the_corrected_reading_of_r5"]
+
+[[tenet]]
+id = "a_resource_value_is_a_one_record_blob_and_the_bench_reverses_the_decomposition_to_shape_bound_columns"
+subject = "stores"
+what = "The bench and the experts reverse the decomposition: a resource value is a one-record blob per resource, the handle pointing to a contiguous value, with a stack-local snapshot of the scalar members before the morsel loop and the large sequence and map members streamed live and not copied. The decision first stood provisional pending a second run, and the second run confirmed the first on every axis. The decomposed layout and the shape-bound shared layout are both refuted."
+mechanism = "Bench variants: V2 decomposed per-member columns loses axis B and axis C; V3 shape-bound shared columns lose axis E plus a resize-invalidates-all-sharers hazard; large collection members streamed live beat snapshot-copy about 2.5 times at 64 MiB."
+source = "mock/design_rounds/202607161000/202606210600_topic.bench-decision.md:8-13, mock/design_rounds/202607161000/202606210600_topic.bench-decision.md:17-22, mock/design_rounds/202607161000/202606210600_topic.bench-run2-resolution.md:12-16, mock/design_rounds/202607161000/202606210600_topic.bench-run2-resolution.md:41-52"
+provenance = ["mock::design_rounds::202607161000::202606210600_topic.bench-decision::#status-provisional"]
+quote = '''
+## Status: PROVISIONAL
+
+Op directed a couple of full harness runs before judging. **Only run-1 has completed.**
+This topic records the decision the pressure-test + run-1 point to; it is NOT locked. Run-2
+(confirmation) + a full CSV aggregation (min/median `algo_ns` per section x n x variant) are
+deferred to next week, then the decision locks or revises.
+---
+The earlier addendum (`202606210600_resource-storage-model-canonical-addendum.md`) asserted
+**decompose-to-shape-bound-columns**. The bench + experts **reverse** that. The winner is:
+
+**A one-record blob per resource (the handle points to a contiguous value), with a
+stack-local snapshot of the scalar `Field` members before the morsel loop, and large
+`Seq`/`Map` collection members streamed live (NOT snapshot-copied).**
+---
+## Run-2 confirmed run-1 on every axis
+
+A second full 16-arm pass on the same M1 host, independent of run-1 (the harness `run` path consults no
+dylib cache), 74 minutes, all arms byte-exact-validated. Read on the best-20% (min) low-noise estimator,
+every axis verdict reproduced:
+---
+## Decided by the bench (independent of the requirements call)
+
+- Resource is a handle, not an inline-value store (R5:1689).
+- The per-record value layout is a one-record blob (per-resource contiguous on the arena), NOT decomposed
+  per-member columns (V2: loses axis B and C) and NOT shape-bound shared columns (V3: loses axis E plus the
+  resize-invalidates-all-sharers hazard). This reverses the addendum's original decompose-to-shape-bound.
+- Scalar Field members: stack-snapshot before the morsel loop (wall-clock-neutral on M1, free insurance,
+  mechanism proven in disasm, real where the reload is not L1-cheap).
+- Seq/Map collection members: stream live from the column, never snapshot-copy (~2.5x at 64 MiB). The
+  snapshot copies only the small scalars and the collection ptr+len, not the elements.
+- The noalias invariant is architectural: the handle store never aliases the value columns, and scalars are
+  snapshotted before the loop.
+'''
+origin = "proposed"
+written_by = "topics bench-decision (2026-06-20, run-1, provisional) and bench-run2-resolution (2026-07-02) of round 202606210600, agent-written"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["ratified-elsewhere: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:80-85", "ratified-elsewhere: mock/research/202606210600_resource-storage-model-canonical-addendum.md:4-12"]
+keywords = ["bench decision", "one-record blob", "decompose", "shape-bound", "run-2", "stack snapshot", "live stream", "V1 V2 V3"]
+rejects = ["decompose-to-shape-bound-columns"]
+related = ["tenet::a_resource_handle_s_members_decompose_into_per_member_shape_bound_columns_in_the_unified_store", "tenet::the_value_of_a_resource_is_one_contiguous_record_blob_and_the_per_member_column_decomposition_was_refuted_by_bench"]
+lineage = ["a_resource_handle_s_members_decompose_into_per_member_shape_bound_columns_in_the_unified_store:b0427733ec654f17"]
+
+[[tenet]]
+id = "the_resource_binding_records_an_erased_base_pointer_and_a_static_shape_and_the_typed_pointer_is_backcast_at_projection"
+subject = "stores"
+what = "The design documents state the resource binding recorded at drain as an erased base pointer plus a static shape descriptor, with the typed view recovered by a backcast when a unit's context is projected, in place of a monomorphised typed pointer recorded at drain. In process this is at parity with a monomorphised pointer, and it exists so that a resource value can cross a dynamic-library or wasm extension boundary near-natively. It applies to every resource uniformly, so any resource is extension-visible without a per-resource design change."
+mechanism = "`mock/crates/hilavitkutin/DESIGN.md.tmpl` domain-19 section and builder/drain paragraph; the drain still reserves a one-record column per `Resource<T>` and writes the staged value in; the typed `ResourcePtr<T>` is backcast at projection; zero-sized resources keep the dangling-pointer path."
+source = "mock/design_rounds/202607161000/202607161000_changelist.doc.lock.md:14-19, mock/design_rounds/202607161000/202607161000_changelist.doc.lock.md:38-44, mock/design_rounds/202607161000/202607161000_changelist.doc.lock.md:54-58"
+provenance = ["mock::design_rounds::202607161000::202607161000_changelist.doc.lock::#current-state"]
+quote = '''
+`mock/crates/hilavitkutin/DESIGN.md.tmpl` carries the domain-19 resource-handling
+statement in its pre-bench form: stack-local caching and pointer separation are
+stated, but the addressing is described as a monomorphised `ResourcePtr<T>`
+recorded at drain ("records a `ResourcePtr<T>` derived from the column base
+pointer"), and the collection (`Seq`/`Map`) access discipline and the erased
+static-shape addressing are absent. The round's research artifacts
+---
+   Add the erased static-shape addressing: the binding records an erased base
+   pointer plus a static shape descriptor; the typed view is recovered by a
+   backcast at projection time. In-process this is parity with a monomorphised
+   pointer; it exists so a resource value can cross a dynamic-library or wasm
+   extension boundary near-natively. It applies to every resource uniformly
+   (global-capable), so any resource is extension-visible without a per-resource
+   design change.
+---
+3. **Builder/drain section (`build(storage, record_count)` paragraph).** The
+   drain still reserves a one-record column per `Resource<T>` and writes the
+   staged value in; it now records the erased base plus the value's static shape,
+   from which the typed `ResourcePtr<T>` is backcast at projection. Zero-sized
+   resources keep the dangling-pointer path.
+'''
+origin = "proposed"
+written_by = "doc changelist of 2026-07-16, round 202606210600 (resource storage model), agent-written, folding in the decision of 2026-07-02"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["erased base pointer", "static shape", "ResourcePtr", "backcast", "drain", "projection", "plugin boundary", "domain 19"]
+rejects = ["a monomorphised `ResourcePtr<T>` recorded at drain"]
+related = ["tenet::a_resource_value_is_addressed_through_an_erased_static_shape_so_it_can_cross_a_plugin_boundary", "tenet::the_value_of_a_resource_is_one_contiguous_record_blob_and_the_per_member_column_decomposition_was_refuted_by_bench"]

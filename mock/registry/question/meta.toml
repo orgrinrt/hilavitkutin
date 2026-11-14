@@ -1,0 +1,21 @@
+# The questions whose subject is `meta`, part 1.
+
+[[question]]
+id = "whether_meta_units_stay_on_the_shared_consumer_carrier_or_move_to_a_dedicated_meta_carrier"
+asks = "Whether meta units stay on the shared consumer carrier or move to a dedicated meta carrier, which the text leaves to be decided by sketching both shapes."
+options = ["meta units stay on the shared consumer carrier, with bands hoisted out of the morsel loop on every record-bearing path, once per frame", "meta units move to a dedicated meta carrier with an independent band walk"]
+state = "open"
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:124-131"
+quote = '''
+Whether meta WUs stay on the shared consumer carrier (with bands hoisted out
+of the morsel loop on every record-bearing path, once per frame, single-core
+and parallel alike) or move to a dedicated meta carrier with an independent
+band walk is decided by sketching both shapes far enough to compare
+complexity and codegen. The known warts either shape must cure: per-morsel
+meta execution on record-bearing paths, leading-band accumulator appends
+unsupported on the parallel unit-outer path, and the slice-1b
+clear-on-dispatch semantics (#687).
+'''
+subject = "meta"
+keywords = ["meta carrier", "shared carrier", "dedicated carrier", "band walk", "sketch", "A1-7"]
+related = ["tenet::whether_meta_units_share_the_consumer_carrier_or_get_a_dedicated_carrier_is_decided_by_sketching_both_shapes"]

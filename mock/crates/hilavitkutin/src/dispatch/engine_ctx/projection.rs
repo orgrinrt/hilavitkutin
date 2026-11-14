@@ -146,10 +146,10 @@ impl<A> Project<Empty, Empty> for A {
 // duplicates a plain value; for a collection-bearing value the copy
 // carries the member's pointer-plus-length view only, elements stay in
 // their own column (live-streamed).
-// FIXME: Seq/Map collection members are not yet wired into resource values; the
+// FIXME(hilavitkutin_7_unmarked_placeholders): Seq/Map collection members are not yet wired into resource values; the
 //        live-stream accessor over the snapshot's ptr+len view lands with that
 //        wiring (tracked #344; catalogued test in tests/resource_snapshot.rs).
-// FIXME: resources are read-only through the Context; when a mutable resource
+// FIXME(hilavitkutin_7_unmarked_placeholders): resources are read-only through the Context; when a mutable resource
 //        surface ships, the dispatcher writes mutated snapshots back to
 //        canonical storage after the morsel loop (domain 19 write-back half).
 impl<A, T: ColumnValue, I, RTail, ITail> Project<Cons<Resource<T>, RTail>, Cons<I, ITail>> for A

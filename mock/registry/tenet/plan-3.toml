@@ -1,0 +1,497 @@
+# What the record says about `plan`, part 3.
+
+[[tenet]]
+id = "the_spectral_role_deviation_evidence_favours_canon_s_role_split_of_greedy_fibers_and_spectral_trunks"
+subject = "plan"
+what = "The evidence on the spectral role deviation was delivered on 2026-07-19. Canon forms trunks spectrally while the shipped code forms fibers spectrally within wide blocks. Both the cost and the grouping character favour canon's role split: greedy is linear and fiber-grained, and spectral is two to three orders heavier and trunk-grained. The proposed ruling restores the roles of steps 7 and 8 through a plan-chain corrective round and awaits the maintainer's bless."
+mechanism = "Record `202607201200_spectral-role-bench-evidence.md`; bench `fiber_theory`."
+source = "mock/research/seed/governance.md:120-127"
+provenance = ["mock::research::seed::governance::#open-questions-blocking-the-freeze"]
+quote = '''
+3. **The spectral role deviation** (canon forms trunks spectrally; shipped
+   code forms fibers spectrally within wide blocks): EVIDENCE DELIVERED
+   (2026-07-19, record `202607201200_spectral-role-bench-evidence.md`,
+   bench `fiber_theory`). Both cost and grouping character favour
+   canon's role split (greedy is linear and fiber-grained; spectral is
+   two to three orders heavier and trunk-grained); the proposed ruling
+   restores Step 7/8 roles via a plan-chain corrective round. Awaits the
+   op bless per evidence-then-bless. See [[plan]].
+'''
+origin = "proposed"
+written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
+standing = "held"
+keywords = ["spectral role deviation", "fiber_theory", "greedy", "spectral", "trunk-grained", "fiber-grained", "Step 7", "plan-chain corrective round"]
+related = ["tenet::the_spectral_role_deviation_follows_the_same_evidence_then_bless_standard", "tenet::spectral_bisection_forms_trunks_by_cutting_the_fibers_graph_where_the_shared_data_volume_is_smallest"]
+
+[[tenet]]
+id = "rcm_wins_against_rival_ordering_theories_at_dram_scale_and_order_is_near_neutral_below_it_so_step_5_stands"
+subject = "plan"
+what = "The fork of the RCM order as execution order is resolved by bench on 2026-07-19. RCM wins against rival ordering theories at the DRAM-resident scale the engine targets, where naive registration order loses 1.65 times, and order is near-neutral below that scale, so the wording of step 5 stands. The evidence record supersedes the first record's chain-topology claim."
+mechanism = "Oracle A1-1; evidence record `202607200800_a1-1-ordering-theory-bench-expansion.md`; naive registration order loses 1.65x at DRAM-resident scale."
+source = "mock/research/seed/governance.md:113-119"
+provenance = ["mock::research::seed::governance::#open-questions-blocking-the-freeze"]
+quote = '''
+2. **RCM row order as execution order**: RESOLVED by bench (2026-07-19,
+   oracle A1-1; evidence record
+   `202607200800_a1-1-ordering-theory-bench-expansion.md`, which
+   supersedes the first record's chain-topology claim). RCM wins against
+   rival ordering theories at the DRAM-resident scale the engine targets
+   (naive registration order loses 1.65x there) and order is near-neutral
+   below it; Step 5's wording stands. See [[plan]].
+'''
+origin = "proposed"
+written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["ruled: mock/research/202607200800_a1-1-ordering-theory-bench-expansion.md:82-101", "ruled: mock/research/202606111400_canonical-design-addendum-a1.md:49-57"]
+keywords = ["RCM", "ordering theories", "DRAM-resident", "registration order", "1.65x", "Step 5", "A1-1", "bench resolved"]
+
+[[tenet]]
+id = "light_threshold_is_a_bench_set_tunable_registered_with_the_value_bench_pending_until_the_adapt_phase_strategy_build_opens_its_gate"
+subject = "plan"
+what = "The light threshold is resolved by registration: it is a tunable constant set by bench, whose registry item carries the value bench-pending by design. The oracle is the adaptive-versus-pipe-chase crossover sweep, and the gate of the oracle is the build of the adapt-phase strategy. The value lands as a post-freeze registry amendment when the gate opens."
+mechanism = "`LIGHT_THRESHOLD`; value BENCH-PENDING; record `202607202100_light-threshold-gate-record.md`; oracle: adaptive-versus-pipe-chase crossover sweep."
+source = "mock/research/seed/governance.md:178-183"
+provenance = ["mock::research::seed::governance::#open-questions-blocking-the-freeze"]
+quote = '''
+8. **`LIGHT_THRESHOLD`**: RESOLVED by registration (2026-07-19, record
+   `202607202100_light-threshold-gate-record.md`): a bench-set tunable
+   constant whose registry row carries value BENCH-PENDING by design,
+   the adaptive-versus-pipe-chase crossover sweep as its oracle, and
+   the adapt-phase strategy build as the oracle's gate. The value lands
+   as a post-freeze registry amendment when the gate opens.
+'''
+origin = "proposed"
+written_by = "the seed governance chapter, as of 2026-07-19 with notes to 2026-07-21, agent-written; the text does not name its author"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["LIGHT_THRESHOLD", "BENCH-PENDING", "tunable constant", "crossover sweep", "adaptive", "pipe-chase", "post-freeze amendment", "adapt-phase strategy"]
+
+[[tenet]]
+id = "the_plan_recomputes_on_entry_to_run_when_the_dirty_bit_is_set_and_the_dirty_bit_is_keyed_per_plan_affecting_resource"
+subject = "plan"
+what = "The plan is recomputed on entry to a run when the dirty bit is set, and otherwise the cached plan dispatches directly. The dirty bit is kept per resource that is marked as plan-affecting."
+mechanism = "Recompute on entry to `run()` when the dirty bit is set; the dirty bit is keyed per `PlanAffecting`-bound Resource."
+source = "mock/DESIGN.md.tmpl:44-44"
+provenance = ["mock::DESIGN::#scheduler-run-signature"]
+quote = '''
+Plan recompute fires on entry to `run()` when the dirty bit is set; otherwise the cached plan dispatches directly. The dirty bit is keyed per `PlanAffecting`-bound Resource.
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["plan recompute", "dirty bit", "PlanAffecting", "run", "cached plan", "entry to run"]
+
+[[tenet]]
+id = "the_plan_is_a_twelve_step_chain_inherited_from_prior_art_plus_a_thirteenth_step_that_classifies_the_shape_of_each_fiber"
+subject = "plan"
+what = "The plan is computed by a chain of twelve steps inherited from the polka-dots prior art, composed as free functions, and a thirteenth step that classifies the shape of each fiber into a typed projection consumed by dispatch code generation."
+mechanism = "`build_dag -> topo_sort -> upward_rank -> waist -> RCM -> block-diag -> spectral -> fiber group -> morsel size -> phase config -> column classify -> dirty masks`; step 13 `shape_classification` produces the typed `FiberShape` projection (round 202605101036). Foundations used: `arvo-bitmask` set ops, `arvo-graph` DAG / RCM, `arvo-sparse` CSR DependencyGraph, `arvo-spectral` Fiedler partition, `arvo-comb` cost DP."
+source = "mock/DESIGN.md.tmpl:46-50"
+provenance = ["mock::DESIGN::#plan-algorithm-chain-12-steps-step-13-fibershape-classification"]
+quote = '''
+### Plan algorithm chain (12 steps + step 13 FiberShape classification)
+
+Free-function composition over the 12-step canonical chain inherited from the polka-dots prior art: `build_dag → topo_sort → upward_rank → waist → RCM → block-diag → spectral → fiber group → morsel size → phase config → column classify → dirty masks`. Round 202605101036 adds step 13 `shape_classification` producing the typed `FiberShape` projection consumed by dispatch codegen. The chain's output is a flat `ExecutionPlan`: the phase / trunk / fiber tree flattens CSR-style into plan-wide-sized flat arrays (a `phases` array, a flat `trunks` pool, a flat `fibers` pool), each phase and trunk carrying an offset-and-count range into the next pool. The `PlanDims` dimensions size the flat pools, collapsing the dense per-aggregate nesting that measured 11 MB at the default budget. Unifying these flat columns onto the scheduler's columnar store is the next step in the unified-storage arc.
+
+Each step names its foundations crate dependency: `arvo-bitmask` for set ops, `arvo-graph` for DAG / RCM, `arvo-sparse` for CSR DependencyGraph (bench-locked canonical at all N), `arvo-spectral` for the Fiedler partition step, `arvo-comb` for the cost DP.
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: a passage shows part of it to be his and not the whole of it (mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:90-92; mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1229-1262), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["plan algorithm chain", "12 steps", "FiberShape", "shape_classification", "build_dag", "topo_sort", "RCM", "spectral", "polka-dots"]
+
+[[tenet]]
+id = "the_plan_is_a_flat_csr_style_tree_of_phases_trunks_and_fibers_sized_by_the_plan_dimensions"
+subject = "plan"
+what = "The plan is a flat structure in which the phase, trunk and fiber tree is laid out as plan-wide flat arrays. Each phase and trunk carries an offset and a count into the next pool, and a set of plan dimensions sizes the pools, which replaces a dense per-aggregate nesting that measured 11 MB at the default budget. Moving these flat columns onto the scheduler's columnar store is the next step in the unified-storage arc."
+mechanism = "Flat `ExecutionPlan`: a `phases` array, a flat `trunks` pool, a flat `fibers` pool, offset-and-count ranges; `PlanDims` sizes the pools; the dense nesting measured 11 MB at the default budget."
+source = "mock/DESIGN.md.tmpl:48-48"
+provenance = ["mock::DESIGN::#plan-algorithm-chain-12-steps-step-13-fibershape-classification"]
+quote = '''
+Free-function composition over the 12-step canonical chain inherited from the polka-dots prior art: `build_dag → topo_sort → upward_rank → waist → RCM → block-diag → spectral → fiber group → morsel size → phase config → column classify → dirty masks`. Round 202605101036 adds step 13 `shape_classification` producing the typed `FiberShape` projection consumed by dispatch codegen. The chain's output is a flat `ExecutionPlan`: the phase / trunk / fiber tree flattens CSR-style into plan-wide-sized flat arrays (a `phases` array, a flat `trunks` pool, a flat `fibers` pool), each phase and trunk carrying an offset-and-count range into the next pool. The `PlanDims` dimensions size the flat pools, collapsing the dense per-aggregate nesting that measured 11 MB at the default budget. Unifying these flat columns onto the scheduler's columnar store is the next step in the unified-storage arc.
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["ExecutionPlan", "flat plan", "CSR-style", "PlanDims", "phases array", "trunks pool", "fibers pool", "11 MB", "unified storage"]
+
+[[tenet]]
+id = "the_dependency_graph_is_csr_backed_and_its_three_columnar_arrays_are_fixed_by_bench"
+subject = "plan"
+what = "The dependency graph is backed by the CSR layout at every size, which a bench fixed against a predicted crossover that turned out to be wrong. It is held as three columnar arrays at the engine level."
+mechanism = "`DependencyGraph` CSR (bench `dep_graph_csr_9`; the predicted N=16 crossover was wrong): `row_offsets: [USize; MAX_UNITS + 1]`, `col_indices: [UnitId; MAX_EDGES]`, `edge_kinds: [EdgeKind; MAX_EDGES]`."
+source = "mock/DESIGN.md.tmpl:98-98"
+provenance = ["mock::DESIGN::#plan-caching"]
+quote = '''
+`DependencyGraph` CSR-backed (bench-locked canonical at every N; the predicted N=16 crossover was wrong per the `dep_graph_csr_9` bench). Three columnar arrays at the engine level: `row_offsets: [USize; MAX_UNITS + 1]`, `col_indices: [UnitId; MAX_EDGES]`, `edge_kinds: [EdgeKind; MAX_EDGES]`.
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["DependencyGraph", "CSR", "row_offsets", "col_indices", "edge_kinds", "dep_graph_csr_9", "bench-locked", "MAX_UNITS", "MAX_EDGES"]
+
+[[tenet]]
+id = "the_cached_plan_lives_with_the_scheduler_for_the_pipeline_s_lifetime_and_is_recomputed_only_when_a_plan_affecting_resource_dirties"
+subject = "plan"
+what = "The plan cache lives with the scheduler for the lifetime of the pipeline. The cached plan is reused across frames and recomputed only when a plan-affecting resource becomes dirty."
+mechanism = "A per-`PlanAffecting`-resource dirty bit array; the cached plan is the flat `ExecutionPlan`."
+source = "mock/DESIGN.md.tmpl:100-100"
+provenance = ["mock::DESIGN::#plan-caching"]
+quote = '''
+Per-`PlanAffecting`-resource dirty bit array. Plan cache lives with Scheduler for the pipeline's lifetime: the cached plan is the flat `ExecutionPlan`, reused across frames and recomputed only when a `PlanAffecting` resource dirties. Sequential single-threaded recompute in v1 (parallelisation deferred until consumers ship 256+ WU pipelines). Moving the flat plan columns onto the scheduler's columnar store is the next step in the unified-storage arc.
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["plan cache", "scheduler lifetime", "PlanAffecting", "dirty bit array", "reused across frames", "recompute"]
+related = ["tenet::the_plan_recomputes_on_entry_to_run_when_the_dirty_bit_is_set_and_the_dirty_bit_is_keyed_per_plan_affecting_resource"]
+
+[[tenet]]
+id = "a_resource_is_plan_affecting_only_when_the_consumer_opts_it_in_and_the_number_of_them_is_capped"
+subject = "plan"
+what = "A resource is not plan-affecting by default. A consumer opts a resource in when the shape of its value changes the plan, and the number of plan-affecting resources is capped by a default that the consumer can override."
+mechanism = "`PlanAffecting: BuilderInput + Sealed` marker trait; `RunCfg` itself is an example; `MAX_PLAN_AFFECTING_RESOURCES = 16` default cap, overridden by the const generic on Scheduler."
+source = "mock/DESIGN.md.tmpl:92-92"
+provenance = ["mock::DESIGN::#resource-resolution"]
+quote = '''
+`PlanAffecting: BuilderInput + Sealed` marker trait. Default NOT plan-affecting. Consumers opt in for resources whose value shape changes the plan (e.g., `RunCfg` itself). `MAX_PLAN_AFFECTING_RESOURCES = 16` default cap; consumers override the const generic on Scheduler.
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "held"
+keywords = ["PlanAffecting", "MAX_PLAN_AFFECTING_RESOURCES", "opt in", "RunCfg", "sealed marker", "cap of 16"]
+
+[[tenet]]
+id = "the_usable_first_level_cache_and_the_morsel_bounds_are_consumer_tunable_defaults_on_the_run_configuration"
+subject = "plan"
+what = "The usable first-level cache size and the minimum and maximum morsel size are consumer-tunable defaults on the run configuration, a toolbox and not a policy, tuned by writing the constant like the morsel size constant. Hardware detection of the cache later overrides the source of the default and not the knob."
+mechanism = "`RunCfg::L1_USABLE` default `24_576` (the spec's 32 KB detection fallback times 0.75), `MIN_MORSEL` default `64` (one micro-morsel interval; the spec marks the floor configurable), `MAX_MORSEL` default `8192` (spec-fixed default); consumer-tunable by writing the const, like `MORSEL_SIZE`; `build` threads `DefaultRunCfg`'s values and `build_with::<Cfg>` threads `Cfg`'s."
+source = "mock/design_rounds/202607161410/202607161400_topic.a3b-l1-morsel-formula.md:35-42"
+provenance = ["mock::design_rounds::202607161410::202607161400_topic.a3b-l1-morsel-formula::#resolutions-this-round-settles"]
+quote = '''
+2. **The budget knobs are `RunCfg` consts (toolbox, not policy):**
+   `L1_USABLE` (default `24_576` = the spec's 32 KB detection fallback times
+   0.75), `MIN_MORSEL` (default `64`, one micro-morsel interval; spec marks the
+   floor configurable), `MAX_MORSEL` (default `8192`, spec-fixed default).
+   Consumer-tunable by writing the const, like `MORSEL_SIZE`. Hardware L1
+   detection (domain: platform tiers) later overrides the DEFAULT source, not the
+   knob. `build` threads `DefaultRunCfg`'s values; `build_with::<Cfg>` threads
+   `Cfg`'s.
+'''
+origin = "proposed"
+written_by = "topic a3b-l1-morsel-formula of 2026-07-16, round 202607161410, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["L1_USABLE", "MIN_MORSEL", "MAX_MORSEL", "RunCfg", "consumer-tunable", "toolbox not policer", "24576", "morsel window"]
+related = ["tenet::the_morsel_size_is_the_l1_budget_divided_by_the_written_bytes_per_record_within_fixed_bounds", "tenet::the_minimum_morsel_size_is_configurable_and_not_a_design_decision"]
+
+[[tenet]]
+id = "the_scheduler_scratch_is_sized_by_the_plan_dimension_capacities_and_the_three_fixed_constants_are_deleted_outright"
+subject = "plan"
+what = "The scheduler's scratch fields, the core classification result and the pool frame are sized from the capacities of the plan dimensions, as projections off the dimension type the scheduler already carries. The three fixed constants for the unit, accumulator and core ceilings are deleted outright, with no legacy shims before 1.0, and the compile-time guard on the unit capacity is retired because this is the lift it waited for. A consumer shrinks each of these budgets by one plan-dimension implementation, and the default scheduler stops carrying 256-core scratch for single-core apps."
+mechanism = "`worker_ctxs` as `<D::Cores as Capacity>::Array<WorkerCtx>`; `gate2_phase`/`gate2_trunk` and `phase_ema`/`phase_accum` as `<D::Units as Capacity>::Array<_>`; `gate2_accum_live` as the nested `<D::Cores as Capacity>::Array<<D::AccumsPerCore as Capacity>::Array<AtomicUsize>>` indexed `[core][accum]` (#690); non-`Copy` cells through `Capacity::from_fn`; `classify_cores` returns `C::Array<CoreClass>`; `PoolFrame<'arena, C: Capacity, P: Capacity>` instantiated as `PoolFrame<'static, D::Cores, Dim<1>>`; deleted `GATE2_MAX_UNITS`, `GATE2_MAX_ACCUMS`, `MAX_CORES`; retired `UnitsFitGate2`; the phase axis stays `Dim<1>` and widening it is B2."
+source = "mock/design_rounds/202607200100_topic.b1-cap-lifting-completion.md:12-15, mock/design_rounds/202607200100_topic.b1-cap-lifting-completion.md:29-40, mock/design_rounds/202607200100_topic.b1-cap-lifting-completion.md:42-47"
+provenance = ["mock::design_rounds::202607200100_topic.b1-cap-lifting-completion::#what-is-left-of-the-arc"]
+quote = '''
+The first slice moved `plan_dirty`, the grouping caps, and the `PlanDims` surface onto
+`Capacity` associated types; `PlanDims` already carries `Units`, `Cores`, `AccumsPerCore`,
+`PlanAffecting`. The residual is that the scheduler's scratch fields and two neighbours still
+size themselves by the three fixed constants the trait was built to replace:
+---
+Every field becomes a `Capacity` GAT projection off the `D: PlanDims` the scheduler already
+carries: `<D::Cores as Capacity>::Array<WorkerCtx>`, `<D::Units as Capacity>::Array<USize>`,
+and the publish array as the nested two-dimensional composition
+`<D::Cores as Capacity>::Array<<D::AccumsPerCore as Capacity>::Array<AtomicUsize>>` (a product
+needs a const expression; nesting needs only two projections). `merge_accums` and the worker
+publish sites index `[core][accum]` instead of `core * GATE2_MAX_ACCUMS + accum`; that nested
+interface is #690. Non-`Copy` cells (atomics, `Cell<Nanos>`) initialise through
+`Capacity::from_fn`. `classify_cores` gains a capacity parameter and returns
+`C::Array<CoreClass>` (two callers). `PoolFrame` re-types over capacity axes,
+`PoolFrame<'arena, C: Capacity, P: Capacity>`, fields as projections; the engine instantiates
+`PoolFrame<'static, D::Cores, Dim<1>>`. The phase axis stays `Dim<1>`: widening it to real `P`
+is B2, and the re-typed signature is exactly the shape B2 widens into.
+---
+With no users left, `GATE2_MAX_UNITS`, `GATE2_MAX_ACCUMS`, and `MAX_CORES` are deleted
+outright (pre-1.0, no legacy shims), and the `UnitsFitGate2` build guard is retired: its
+message says "reduce Units or wait for the #690 lift onto Units", and this round is that lift.
+The consumer consequence is the A1-2 goal: a consumer shrinks every one of these budgets by
+one `PlanDims` impl, and the default scheduler stops carrying 256-core scratch for
+single-core apps.
+'''
+origin = "proposed"
+written_by = "topic b1-cap-lifting-completion of 2026-07-20, agent-written, grounded on canon A1-2 and sketch 202606111450 s1"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["cap lifting", "PlanDims", "Capacity", "GATE2_MAX_UNITS", "MAX_CORES", "UnitsFitGate2", "PoolFrame", "#690"]
+rejects = ["the three fixed constants the trait was built to replace"]
+related = ["tenet::a_units_capacity_above_the_fixed_parallel_ceiling_fails_the_build_until_the_ceiling_is_lifted", "tenet::caps_are_defaults_and_never_policy_so_a_sketch_arc_looks_for_cap_lifting_shapes_now", "tenet::container_capacity_lives_at_type_level_and_a_consumer_needing_more_picks_the_bigger_type"]
+
+[[tenet]]
+id = "a_units_capacity_above_the_fixed_parallel_ceiling_fails_the_build_until_the_ceiling_is_lifted"
+subject = "plan"
+what = "As of 2026-06-19, a unit capacity larger than the fixed width of the parallel path's scratch arrays is a compile-time error that names the ceiling and the lift, and not a latent run-time out-of-bounds panic. It costs nothing at run time and leaves the single-core run unaffected. It is the guard half of the lift, and the full lift sizes the scratch by the unit capacity."
+because = "The grouping producer was lifted to size its scratch by the unit capacity while the parallel path's fields stayed 256 wide, which left the precondition that the unit capacity not exceed 256 unenforced."
+mechanism = "`const { assert!(...) }` at the top of `run_parallel`, failing the build per monomorphisation when `cap_size(<D::Units as Capacity>::CAP) > GATE2_MAX_UNITS`; guard half of #690, the full lift sizing `gate2_phase` and `gate2_trunk` onto `D::Units` and removing `GATE2_MAX_UNITS` with the `gate2_accum_live` nesting and `merge_accums` redesign."
+source = "mock/design_rounds/202606191500/202606191500_topic.units-cap-guard.md:9-18, mock/design_rounds/202606191500/202606191500_topic.units-cap-guard.md:22-31"
+provenance = ["mock::design_rounds::202606191500::202606191500_topic.units-cap-guard::#problem"]
+quote = '''
+P0.1c lifted the grouping producer (`masks_of`/`final_phases_of` and the
+`phase_of`/`trunk_of`/`group_n` consumers) to size its scratch by `D::Units`.
+But `run_parallel`'s `gate2_phase` / `gate2_trunk` scheduler fields and its
+first-call precompute locals stayed fixed `[USize; GATE2_MAX_UNITS]` (256).
+`grouping_arrays` writes `phase_out[u]` for `u in 0..group_n()`, and
+`group_n <= Units::CAP`. So a consumer setting `Units` above 256 (with that
+many units) would index past the 256-wide arrays in `run_parallel` (a runtime
+OOB panic). Pre-P0.1c the producer and these consumers shared one 256 ceiling;
+the lift left an unenforced precondition `Units::CAP <= GATE2_MAX_UNITS`.
+Nothing in-tree sets `Units > 256`, so it is latent.
+---
+Add a compile-time `const { assert!(...) }` at the top of `run_parallel` that
+fails the build (per-D monomorphisation) when
+`cap_size(<D::Units as Capacity>::CAP) > GATE2_MAX_UNITS`, turning the latent
+runtime panic into a clear compile error naming the ceiling and the #690 lift.
+Zero runtime cost. Single-core `run` is unaffected (it indexes via
+`ConstCapacity::get`, no 256-wide buffer).
+
+This is the guard half of #690; the full lift (sizing `gate2_phase` /
+`gate2_trunk` onto `D::Units`, removing `GATE2_MAX_UNITS`) lands with the
+`gate2_accum_live` nesting + `merge_accums` redesign in #690.
+'''
+origin = "proposed"
+written_by = "topic units-cap-guard of 2026-06-19, round 202606191500, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["units cap", "compile-time guard", "run_parallel", "GATE2_MAX_UNITS", "#690", "Capacity", "const assert"]
+related = ["tenet::a_documented_fixed_cap_is_acceptable_only_as_the_proven_infeasible_fallback_with_a_tracked_lift_condition", "tenet::caps_are_defaults_and_never_policy_so_a_sketch_arc_looks_for_cap_lifting_shapes_now"]
+
+[[tenet]]
+id = "when_the_cap_lifting_round_lands_the_worker_count_ceiling_becomes_the_scheduler_s_core_capacity_and_the_thread_count_gap_passes_to_it"
+subject = "plan"
+what = "When the cap-lifting round lands, the ceiling the worker-count clamp takes becomes the scheduler's core capacity, and the runnable worker count takes it as a parameter or an associated constant. That is the cap-lifting round's work, since the capacity does not exist yet, and the clamp meanwhile uses the only ceiling there is. The cap-lifting round also inherits the thread-count marked comment, since both change what the same item holds."
+mechanism = "`202607200100_topic.b1-cap-lifting-completion.md` moves the scheduler's fixed arrays onto `PlanDims` capacities and deletes `MAX_CORES`; `runnable_worker_count`; the thread-count `FIXME:`; `gate2_ncores`."
+source = "mock/design_rounds/202609190201/202609190202_changelist.src.lock.md:84-84, mock/design_rounds/202609191001/202609191002_changelist.src.lock.md:53-53"
+provenance = ["mock::design_rounds::202609190201::202609190202_changelist.src.lock::#the-three-topics-left-open-in-design-rounds"]
+quote = '''
+`202607200100_topic.b1-cap-lifting-completion.md` moves the scheduler's fixed arrays onto `PlanDims` capacities and deletes `MAX_CORES`. It touches what this round touched: the clamp above takes `MAX_CORES` as its ceiling, so when B1 lands the ceiling becomes the scheduler's core capacity and `runnable_worker_count` takes it as a parameter or an associated const. That is B1's work, since the capacity does not exist yet; this round clamps against the only ceiling there is.
+---
+The same three the previous round named (B1 cap-lifting, the shared hlist, the launcher migration) stay flat, for the reasons that round's src changelist gives. B1 now also inherits this round's thread-count `FIXME:`, since both change what `gate2_ncores` holds.
+'''
+origin = "proposed"
+written_by = "source changelists of rounds 202609190201 and 202609191001, 2026-09-19, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["B1 cap-lifting", "MAX_CORES", "PlanDims", "core capacity", "runnable_worker_count", "worker-count clamp", "gate2_ncores"]
+related = ["tenet::the_scheduler_scratch_is_sized_by_the_plan_dimension_capacities_and_the_three_fixed_constants_are_deleted_outright", "tenet::the_engine_clamps_the_worker_count_it_runs_on_to_the_ceiling_of_its_per_core_state_and_workers_past_the_ceiling_are_never_handed_a_closure"]
+
+[[tenet]]
+id = "the_per_fiber_unit_and_column_caps_are_derived_from_the_outer_caps_by_division_which_cuts_the_independent_const_generics_from_nine_to_seven"
+subject = "plan"
+what = "The per-fiber unit cap and per-fiber column cap are derived from the outer caps by division rounded up, which brings the independent const generic count of the plan from nine to seven. A hybrid of const-generic outer caps and runtime-checked inner sizes is a deferred alternative, and the first version uses const generics only."
+because = "The outer const generics produce one full monomorphisation per distinct scheduler configuration, which multiplies codegen work for consumers with several scheduler shapes, and the const-generic-only model produces strictly faster code because the inner loop has no runtime bounds check."
+mechanism = "`MAX_UNITS_PER_FIBER = MAX_UNITS / MAX_FIBERS` and `MAX_COLUMNS_PER_FIBER = MAX_COLUMNS / MAX_FIBERS` (rounded up via `Cap`), earlier drafted as `CeilingDiv<MAX_UNITS, MAX_FIBERS>::RESULT`; the nested `Fiber<...>` takes the derived values as const generics computed through `generic_const_exprs`; Topic 3 invariant M9."
+source = "mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:115-115, mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:1017-1017, mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:1019-1024, mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:1026-1028"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.plan-algorithm-chain::#final-executionplan-shape"]
+quote = '''
+    const MAX_UNITS_PER_FIBER:     usize,  // = CeilingDiv<MAX_UNITS, MAX_FIBERS>::RESULT
+---
+The 9 outer const generics on `ExecutionPlan` produce one full monomorphisation per distinct `Scheduler` configuration. For consumers with multiple Scheduler shapes (viola checker + vehje compilation server), this multiplies codegen work.
+---
+Mitigation: derive `MAX_UNITS_PER_FIBER` and `MAX_COLUMNS_PER_FIBER` from outer constants:
+
+```text
+MAX_UNITS_PER_FIBER   = MAX_UNITS / MAX_FIBERS  (rounded up via Cap)
+MAX_COLUMNS_PER_FIBER = MAX_COLUMNS / MAX_FIBERS  (rounded up via Cap)
+```
+---
+Reduces the independent dimension count from 9 to 7 on the outer ExecutionPlan. Nested `Fiber<...>` still takes the derived values as const generics; rustc trait-solver computes them via `generic_const_exprs`.
+
+For runtime-decided sizing (where the consumer would otherwise need a different Scheduler per workload), a future-considered alternative is a hybrid: const-generic outer caps + runtime-checked inner sizes (USize counts validated against const-generic upper bounds). This is a deferred optimisation; v1 uses the const-generic-only model because it produces strictly faster code (no runtime bounds check in the inner loop).
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 3 plan algorithm chain, invariant M9 and the plan shape sketch, dated 2026-05-10, agent-written; the text does not say whose decision it is"
+standing = "held"
+keywords = ["MAX_UNITS_PER_FIBER", "MAX_COLUMNS_PER_FIBER", "CeilingDiv", "const generics", "monomorphisation cost", "M9", "ExecutionPlan", "derived caps"]
+
+[[tenet]]
+id = "the_per_fiber_unit_and_column_caps_are_their_own_const_generics_defaulting_to_the_outer_caps_and_the_division_is_only_a_recommended_heuristic"
+subject = "plan"
+what = "The per-fiber unit cap and per-fiber column cap are each their own const generic, defaulting to the outer cap as the worst case where one fiber holds everything. A ceiling-division derivation is offered as a recommended heuristic for consumers who know their workload distributes uniformly, and is not imposed."
+because = "Heavy spectral clusters can concentrate 80% of units in one fiber, so the division is wrong for realistic workloads."
+mechanism = "`MAX_UNITS_PER_FIBER` default `MAX_UNITS`; `MAX_COLUMNS_PER_FIBER` likewise; `CeilingDiv` provided as a recommended heuristic; audit-2 m3 amending Topic 3 M9."
+source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:285-285"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#decision-log"]
+quote = '''
+- [x] **(Audit-2 m3, 2026-05-10):** Topic 3 M9 derivation `MAX_UNITS_PER_FIBER = CeilingDiv<MAX_UNITS, MAX_FIBERS>::RESULT` is wrong for realistic workloads (heavy spectral clusters can concentrate 80% of units in one fiber). **Locked: `MAX_UNITS_PER_FIBER` becomes its own const generic with default `MAX_UNITS` (worst case: one fiber holds them all).** The substrate provides `CeilingDiv` as a *recommended* heuristic for consumers who know their workload distributes uniformly, but doesn't impose it. Same correction for `MAX_COLUMNS_PER_FIBER`.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 5 adapt subsystem, decision log entry Audit-2 m3 dated 2026-05-10, agent-written; the text does not say whose decision it is"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["MAX_UNITS_PER_FIBER", "MAX_COLUMNS_PER_FIBER", "CeilingDiv", "spectral clusters", "own const generic", "m3", "worst case", "recommended heuristic"]
+rejects = ["Topic 3 M9 derivation `MAX_UNITS_PER_FIBER = CeilingDiv<MAX_UNITS, MAX_FIBERS>::RESULT` is wrong for realistic workloads"]
+related = ["tenet::the_per_fiber_unit_and_column_caps_are_derived_from_the_outer_caps_by_division_which_cuts_the_independent_const_generics_from_nine_to_seven"]
+
+[[tenet]]
+id = "the_execution_plan_mirrors_the_runtime_hierarchy_over_seven_const_generics_and_its_steps_are_free_functions"
+subject = "plan"
+what = "The execution plan mirrors the runtime hierarchy from pipeline down to record, capturing phases, trunks with their components, fibers, per-unit metadata, dirty propagation masks, a column ordering derived by RCM and the per-core projection. Its intermediate analytical artefacts are crate-private and not exposed in the final plan, and its steps are composed as free functions and not as a typestate-threaded builder."
+mechanism = "Hierarchy `pipeline → core → phase ↔ waist → trunk → fiber ↔ branch ↔ bridge → morsel → micro-morsel → record`; `TrunkComponent` enum (Fiber | Branch | Bridge) as peers within a trunk; seven const generics `MAX_UNITS`, `MAX_PHASES`, `MAX_TRUNKS`, `MAX_FIBERS`, `MAX_LANES`, `MAX_COLUMNS`, `MAX_COMPONENTS_PER_TRUNK`; intermediate artefacts under `plan::analysis::*` are `pub(crate)`; `UnitMeta` with rank, depth, cost, fiber, trunk, phase, core, lane-compat, scheduling hint."
+source = "mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:1226-1226"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.plan-algorithm-chain::#decisions-consolidated"]
+quote = '''
+2. **ExecutionPlan shape (B).** Final type mirrors the canonical runtime hierarchy `pipeline → core → phase ↔ waist → trunk → fiber ↔ branch ↔ bridge → morsel → micro-morsel → record`. Captures: phases with pipeline parallelism + progress counter slots, trunks with zero-sync column-disjointness + spectral cluster + core pinning, **TrunkComponent enum (Fiber | Branch | Bridge)** as peers within a trunk, fibers with morsel + micro-morsel sizing + 3D morsel cube data + co-located arena + COMMUTATIVE flag + head+tail convergence slots + dispatch approach selection, UnitMeta with rank/depth/cost/fiber/trunk/phase/core/lane-compat/scheduling-hint, dirty propagation masks, RCM-derived column ordering, per-core projection. Seven const generics: MAX_UNITS, MAX_PHASES, MAX_TRUNKS, MAX_FIBERS, MAX_LANES, MAX_COLUMNS, MAX_COMPONENTS_PER_TRUNK. Intermediate analytical artefacts under `plan::analysis::*` are `pub(crate)`; not exposed in final ExecutionPlan. Steps composed as free functions, not typestate-threaded builder.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 3 plan algorithm chain, consolidated decision 2 on the ExecutionPlan shape, dated 2026-05-10, agent-written; the text does not say whose decision it is"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["ExecutionPlan", "seven const generics", "TrunkComponent", "UnitMeta", "free functions", "plan::analysis", "MAX_COMPONENTS_PER_TRUNK", "runtime hierarchy"]
+related = ["tenet::the_plan_is_a_flat_csr_style_tree_of_phases_trunks_and_fibers_sized_by_the_plan_dimensions"]
+
+[[tenet]]
+id = "the_plan_chain_ships_all_twelve_steps_in_one_round_with_per_algorithm_internals_left_to_follow_up_rounds"
+subject = "plan"
+what = "The round ships the full twelve steps of the plan chain, which matches the polka-dots design intent, in place of a first cut of steps one to four with simple round-robin lane assignment and the sparse-matrix steps deferred. Per-algorithm internals are covered at the granularity of which algorithm the substrate ships, and further refinement lands in per-step follow-up rounds."
+mechanism = "Alternative set against it: steps 1-4 plus simple round-robin lane assignment, with sparse-matrix steps 5-7 deferred until arvo-sparse and arvo-spectral are ready; per-algorithm internals named are the RCM heuristic choice, the spectral eigensolver selection and the fiber-grouping DP threshold; round 202605101036 Axis C."
+source = "mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:603-609, mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:92-92"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.plan-algorithm-chain::#open-follow-ups"]
+quote = '''
+**Question:** does this round (202605101036) ship all 12 steps, or a v0 subset with the rest deferred?
+
+Two camps:
+
+**v0 = steps 1-4 + simple round-robin lane assignment.** Ships a working but unoptimised scheduler. Sparse-matrix steps (5-7) deferred to follow-up rounds when arvo-sparse / arvo-spectral are ready (current state: shipped per arvo Round 4a3 / 4a5, but not benchmarked against scheduler workloads yet). Morsel sizing (9), adaptive configs (10), column classification (11), dirty propagation (12) deferred to per-feature rounds. Pro: smaller landing surface, faster to "scheduler runs end-to-end"; con: pipelines with cache-pressure or heterogeneous costs underperform.
+
+**Full 12 in this round.** The whole chain ships together; subsequent rounds polish per-algorithm internals. Pro: matches the canonical design intent; con: massive surface to land in one round, high risk of one step's design dragging the rest.
+---
+**DECIDED.** Full 12 steps in this round. Per user selection: matches polka-dots design intent; the round's doc CL + src CL covers all 12 algorithms. Per-algorithm internals (RCM heuristic choice, spectral eigensolver selection, fiber-grouping DP threshold) covered in this round at "what algorithm does the substrate ship" granularity; further refinement (alternative algorithms, bench-driven tuning) lands in per-step follow-up rounds in subsequent megarounds.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:90-92"]
+keywords = ["12-step chain", "ship scope", "v0 subset", "Axis C", "per-algorithm internals", "follow-up rounds", "polka-dots design intent"]
+
+[[tenet]]
+id = "the_dependency_graph_is_a_csr_at_every_size_with_no_threshold_because_the_bench_shows_dense_slower_even_at_eight_nodes"
+subject = "plan"
+what = "The dependency graph is backed by compressed sparse rows at every node count, with no threshold below which a dense matrix is used. The bench shows the dense form slower from eight nodes up. A hybrid of dense up to sixteen and compressed sparse rows above measured within noise of pure compressed sparse rows from thirty-two nodes up and slightly faster at 128 and 256 nodes, and the hybrid is dropped for simplicity."
+mechanism = "Bench `mock/benches/dep_graph_csr_9` (2026-05-11), CSR ns/op against dense ns/op: N=8 146 vs 724, N=16 206 vs 1239, N=32 302 vs 2911, N=64 645 vs ~12500, N=128 1225 vs ~41300, N=256 2546 vs ~151000; the predicted crossover at N=16 is wrong; the earlier pending value `CSR_THRESHOLD_N` is not locked."
+source = "mock/design_rounds/202605101036/202605101036_topic.plan-caching.md:21-30, mock/design_rounds/202605101036/202605101036_topic.plan-caching.md:32-34, mock/design_rounds/202605101036/202605101036_topic.plan-caching.md:66-66"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.plan-caching::#axis-b-dependencygraph-backing-csr-vs-dense-bench-locked-csr"]
+quote = '''
+**Locked: CSR canonical at all N, no threshold.** Bench result from `mock/benches/dep_graph_csr_9` (2026-05-11):
+
+| N nodes | CSR ns/op | Dense ns/op | Dense slowdown vs CSR |
+|---|---|---|---|
+| 8 | 146 | 724 | +397% (5x slower) |
+| 16 | 206 | 1239 | +502% (6x slower) |
+| 32 | 302 | 2911 | +862% (10x slower) |
+| 64 | 645 | ~12500 | +1840% (20x slower) |
+| 128 | 1225 | ~41300 | +3270% (34x slower) |
+| 256 | 2546 | ~151000 | +5830% (60x slower) |
+---
+**Predicted crossover N=16 is wrong.** CSR wins even at N=8 because dense O(N²) cell-scan beats CSR's edge-direct iteration's loop overhead only when N is so small the matrix fits trivially in registers, which is essentially never. At realistic DAG densities (3-6 edges/node), CSR's E iterations always beat dense's N² scans.
+
+Hybrid variant (dense for N≤16, CSR else) measured within noise of pure CSR at N≥32, slightly faster at N=128 (-12%) and N=256 (-22%) due to cache effects on the unused col_indices allocation, but pure CSR is the canonical shape for simplicity. The hybrid variant is dropped.
+---
+Pending bench. The bench tests CSR vs dense `DependencyGraph::add_edge` + `iter_successors(u)` at N = 8, 16, 32, 64, 128, 256 with edge density ~2-6 per node. Crossover N is what the bench finds; lock the value into engine code as `CSR_THRESHOLD_N`. Until bench lands, CSR is the working default for all N.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 9 plan caching and dirty detection, Axis B bench-locked, dated 2026-05-11, agent-written; the text does not say whose decision it is"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["DependencyGraph", "CSR", "dense", "CSR_THRESHOLD_N", "bench dep_graph_csr_9", "crossover", "hybrid", "bench-locked"]
+rejects = ["Locked: CSR canonical at all N, no threshold.", "lock the value into engine code as `CSR_THRESHOLD_N`"]
+related = ["tenet::the_plan_is_a_flat_csr_style_tree_of_phases_trunks_and_fibers_sized_by_the_plan_dimensions"]
+
+[[tenet]]
+id = "to_lift_the_hardcoded_caps_the_plan_dimensions_trait_gains_an_accums_per_core_and_a_plan_affecting_capacity_and_no_separate_caps_trait_is_added"
+subject = "plan"
+what = "To make the hardcoded grouping and scheduler caps consumer-tunable, the plan dimensions trait gains a capacity for accumulators per core, replacing the hardcoded accumulator cap, and a plan-affecting capacity, replacing the hardcoded plan-dirty size, and a separate caps trait is not added. The grouping cap migrates onto the existing unit capacity if the in-engine probe shows the grouping scratch compiles under the compounded obligations, and otherwise stays at the documented ceiling of 256 while the other caps lift. Defaults stay as they were, so existing pipelines are byte-identical."
+mechanism = "`PlanDims` gains `AccumsPerCore: Capacity` replacing `GATE2_MAX_ACCUMS = 16` (the per-(core,accum) publish array becomes `Cores::Array<AccumsPerCore::Array<_>>`) and `PlanAffecting: Capacity` replacing `plan_dirty: [_; 256]`; `GATE2_MAX_UNITS = 256` migrates onto `D::Units` conditioned on the P0.1b in-engine trait-solver-overflow probe; sketch `202606111450`, shape s1; defaults 256/16."
+source = "mock/design_rounds/202606191200/202606191200_changelist.doc.lock.md:7-15, mock/design_rounds/202606191200/202606191200_changelist.doc.lock.md:17-22, mock/design_rounds/202606191200/202606191200_changelist.doc.lock.md:25-25"
+provenance = ["mock::design_rounds::202606191200::202606191200_changelist.doc.lock::#doc-cl-plandims-gains-accumspercore-planaffecting-for-cap-lifting"]
+quote = '''
+Extend the documented `PlanDims` trait with two capacity dimensions so the
+hardcoded grouping/scheduler caps become consumer-tunable (the s1 shape from
+sketch `202606111450`, which concluded the lift extends `PlanDims` rather than
+adding a separate trait, since `Units` and `Cores` already exist):
+
+- `AccumsPerCore: Capacity` replaces the hardcoded `GATE2_MAX_ACCUMS = 16`
+  (and feeds the per-(core,accum) publish array as the nested
+  `Cores::Array<AccumsPerCore::Array<_>>` composition).
+- `PlanAffecting: Capacity` replaces the hardcoded `plan_dirty: [_; 256]`.
+---
+The grouping `GATE2_MAX_UNITS = 256` scratch migrates onto the existing
+`D::Units`, conditioned on the round's first src step (the P0.1b in-engine
+trait-solver-overflow probe): if the GAT-projected grouping scratch compiles
+under the real compounded `BundleMasks`/`MaskProject`/`GateWith` obligations,
+`Units` lifts the grouping cap fully; if it overflows, the grouping cap stays
+at the documented 256 ceiling while the other caps still lift. Update the
+---
+lift. Defaults stay 256/16/etc so existing pipelines are byte-identical.
+'''
+origin = "proposed"
+written_by = "design round 202606191200, doc changelist for lifting the engine grouping caps, dated 2026-06-19, agent-written; the text does not say whose decision it is"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["PlanDims", "AccumsPerCore", "PlanAffecting", "Capacity", "cap lifting", "GATE2_MAX_UNITS", "plan_dirty", "no Caps trait"]
+rejects = ["adding a separate trait"]
+related = ["tenet::when_the_grouping_scratch_probe_compiles_a_caps_trait_carries_the_unit_accum_and_plan_dirty_capacities_and_every_hardcoded_cap_site_migrates", "tenet::caps_are_defaults_and_never_policy_so_a_sketch_arc_looks_for_cap_lifting_shapes_now"]
+
+[[tenet]]
+id = "the_flat_execution_plan_ships_first_and_the_store_backed_plan_stays_the_end_state_as_the_explicit_next_round"
+subject = "plan"
+what = "The flat execution plan ships on its own, as the piece that dissolves the overflow and unblocks a parked task. The store-backed plan stays the end state of the arc, unchanged, and is demoted to the engine backlog as the explicit next round; only the round boundary moves."
+mechanism = "End state: `ExecutionPlan` as a `Copy` handle (meta-`StoreId`s plus counts) with the data in the scheduler-owned `ColumnStorage`, and `Scheduler` gaining `CS: ColumnStorage = ArenaColumnStorage<M, Dim<256>>` with an `unsafe impl Send`/`Sync`; bundled in the deprecated changelist with an engine -> `hilavitkutin-providers` dependency for the default store, a 64-byte-aligned test `MemoryProvider` and the scheduler `Send`/`Sync` lifecycle; the flatten dissolves the 11 MB overflow and unblocks #647; the store-backing prose moves to forward-looking notes pointing at `BACKLOG.md`."
+source = "mock/design_rounds/202605302331/202605302331_changelist.doc.lock.md:15-15"
+provenance = ["mock::design_rounds::202605302331::202605302331_changelist.doc.lock::#comparison-to-deprecated-changelist"]
+quote = '''
+Supersedes `202605302330_changelist.doc.deprecated.md`. That CL framed this round as the full store-backed cut: `ExecutionPlan` becomes a `Copy` handle (meta-`StoreId`s plus counts), the data lives in the scheduler-owned `ColumnStorage`, and the `Scheduler` gains `CS: ColumnStorage = ArenaColumnStorage<M, Dim<256>>` with an `unsafe impl Send`/`Sync`. That shape is correct as the arc's end state, but it bundles the load-bearing flatten with cross-crate plumbing (an engine -> `hilavitkutin-providers` dependency for the default store, a 64-byte-aligned test `MemoryProvider`, the scheduler `Send`/`Sync` lifecycle) into one atomic-compile change. This CL stages the arc: it keeps the same end-state design but ships the flatten alone in this round (the piece that dissolves the 11 MB overflow and unblocks #647), and demotes the store-backing to the engine BACKLOG as the explicit next round. The end state is unchanged; only the round boundary moves. The deprecated CL's `## Store-backed execution plan` DESIGN subsection becomes `## Flat execution plan`; the store-backing prose moves to forward-looking notes pointing at `BACKLOG.md`.
+'''
+origin = "proposed"
+written_by = "doc changelist 202605302331 of 2026-05-30 (round 202605302330 store-backed-plan, slice 1: flatten), locked; agent-written round artifact that does not name the maintainer as its author"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["flat execution plan", "store-backed plan", "round boundary", "ColumnStorage", "ExecutionPlan Copy handle", "11 MB overflow", "staging", "backlog"]
+rejects = ["the full store-backed cut"]
+related = ["tenet::the_plan_is_a_flat_csr_style_tree_of_phases_trunks_and_fibers_sized_by_the_plan_dimensions"]
+
+[[tenet]]
+id = "the_accumulator_store_set_is_produced_at_the_store_drain_as_a_flat_bitmask_and_a_fiber_is_morsel_local_when_no_unit_in_it_writes_an_accumulator"
+subject = "plan"
+what = "A fiber is morsel-local exactly when no unit in it writes an accumulator. The set of accumulator stores is produced at the store drain, where the accumulator stores are visible as distinct type-level facts, as a small flat bitmask shaped over the drain's stores, with no allocation and no new trait machinery beyond the existing const-fold pattern."
+mechanism = "`resource/bindings.rs`, where `Sv<Accum<T>, _>` nodes are visible as distinct type-level facts, the same layer `AccumFreeBindings` folds; a `Mask`-shaped bitmask over `D::Stores`; fibers are formed plan-side from store access masks that do not distinguish accumulator stores, while the accumulator distinction is type-level (`AccumBinding`)."
+source = "mock/design_rounds/202606051500/202606051500_changelist.doc.lock.md:11-11, mock/design_rounds/202606051500/202606051500_changelist.doc.lock.md:13-13"
+provenance = ["mock::design_rounds::202606051500::202606051500_changelist.doc.lock::#resolved-design-architect-read-agent-a8dcb4c5"]
+quote = '''
+The fork was the per-fiber morsel-local signal: a fiber is morsel-local iff no unit in it writes an accumulator, but fibers are formed plan-side from store access masks that do not distinguish accumulator stores, while the accumulator distinction is type-level (`AccumBinding`). The read resolved it to **Shape A with the drain as the production site**:
+---
+- The accumulator-`StoreId` set is produced at the store drain (`resource/bindings.rs`, where `Sv<Accum<T>, _>` nodes are visible as distinct type-level facts, the same layer `AccumFreeBindings` folds) as a small flat bitmask (`Mask`-shaped over `D::Stores`), no alloc, no new trait machinery beyond the existing const-fold pattern.
+'''
+origin = "proposed"
+written_by = "doc changelist of round 202606051500 (fiber-structured morsel-outer dispatch), 2026-06-05, locked; agent-written round artifact recording an architect read, which does not name the maintainer as its author"
+standing = "held"
+keywords = ["morsel-local", "accumulator store set", "store drain", "AccumBinding", "flat bitmask", "fiber formation", "Shape A"]

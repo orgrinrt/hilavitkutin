@@ -1,0 +1,237 @@
+# What the record says about `memory`, part 2.
+
+[[tenet]]
+id = "the_arena_column_storage_reserves_64_byte_aligned_blocks_through_the_memory_provider_and_its_release_is_a_no_op"
+subject = "memory"
+what = "Reserving a column allocates its byte count 64-byte aligned through the bound memory provider and records the slot, and a resizing reserve frees the prior block first. The column pointer accessors return the recorded base cast to the scalar type, raw and not a slice, the count reads the slot, release is a no-op because reader-count reclamation is a concern of the columnar engine, and dropping deallocates every live slot through the provider with the same 64-byte alignment, so the free layout matches the reserve layout. Every column is reserved at that alignment because the canonical design requires it, and a free that assumed a narrower one would be undefined behaviour under an allocator that takes the layout."
+mechanism = "`reserve<T>` allocates `count * size_of::<T>()` bytes 64-byte aligned; `column_ptr` / `column_ptr_mut` return a raw pointer, not a slice, per R6; `count`; `release` no-op; `Drop` deallocates, passing `CACHE_LINE_ALIGN` back."
+source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:165-175"
+provenance = ["mock::crates::hilavitkutin-providers::DESIGN::#arenacolumnstorage-m-d"]
+quote = '''
+`reserve<T>` allocates `count * size_of::<T>()` bytes 64-byte aligned
+through the bound `MemoryProvider`, recording the slot; a resizing
+re-reserve frees the prior block first. `column_ptr` / `column_ptr_mut`
+return the recorded base cast to the scalar type (raw, not a slice, per
+R6). `count` reads the slot. `release` is a no-op (the reader-count
+reclamation is a columnar-engine concern). `Drop` deallocates every
+live slot through the provider, passing `CACHE_LINE_ALIGN` back so the free
+layout matches the reserve layout. Every column is reserved at that 64-byte
+alignment because the canonical design requires it, and a free that assumed
+anything narrower would be undefined behaviour under a layout-taking
+allocator.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-providers, agent-written, undated"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["reserve", "column_ptr", "column_ptr_mut", "64-byte aligned", "release no-op", "raw pointer R6", "Drop deallocate", "reader-count reclamation"]
+related = ["tenet::a_column_s_lifetime_is_told_to_the_consumer_as_an_advisory_release"]
+
+[[tenet]]
+id = "the_arena_column_storage_aims_at_correctness_with_a_flat_scan_slot_table_and_one_provider_allocation_per_column_while_the_columnar_engine_matures"
+subject = "memory"
+what = "The arena column storage is for correctness and not for performance: its slot table is a flat scan and each column is a separate provider allocation. The point is a working column storage behind the contract while the columnar engine matures."
+source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:177-179"
+provenance = ["mock::crates::hilavitkutin-providers::DESIGN::#arenacolumnstorage-m-d"]
+quote = '''
+Correctness, not performance: the slot table is a flat scan and each
+column is a separate provider allocation. The point is a working
+`ColumnStorage` behind the contract while the columnar engine matures.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-providers, agent-written, undated"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["ArenaColumnStorage", "correctness not performance", "flat scan", "separate allocation per column", "placeholder", "columnar engine"]
+
+[[tenet]]
+id = "the_memory_arena_has_no_memory_provider_parameter_because_that_needs_allocate_at_builder_time_plumbing_the_engine_lacks"
+subject = "memory"
+what = "The memory arena does not take a memory provider type parameter. An original task description named an arena parameterised over a runtime memory provider, but the crate uses inline storage at the type level instead, since reintroducing the parameter needs allocate-at-builder-time plumbing that the engine does not yet have, which is tracked in the backlog."
+mechanism = "Original 2026-05-01 task description: `MemoryArena<M, BYTES>` with `M: HasMemoryProvider`."
+source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:181-188"
+provenance = ["mock::crates::hilavitkutin-providers::DESIGN::#what-this-crate-deliberately-does-not-ship"]
+quote = '''
+## What this crate deliberately does not ship
+
+- **`M: HasMemoryProvider` parameter on `MemoryArena`.** The
+ original 2026-05-01 task description named `MemoryArena<M, BYTES>`
+ parameterised over a runtime memory provider. The crate uses
+ inline storage at the type level instead. Reintroducing the M
+ parameter needs allocate-at-builder-time plumbing the engine
+ does not yet have. Tracked in BACKLOG.
+'''
+because = "Reintroducing the M parameter needs allocate-at-builder-time plumbing the engine does not yet have."
+origin = "proposed"
+written_by = "the design template of hilavitkutin-providers, agent-written, undated"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["MemoryArena", "HasMemoryProvider", "M parameter", "allocate-at-builder-time", "inline storage", "BACKLOG", "2026-05-01"]
+rejects = ["M: HasMemoryProvider parameter on MemoryArena"]
+
+[[tenet]]
+id = "a_deallocation_is_given_the_same_alignment_as_its_allocation"
+subject = "memory"
+what = "Freeing memory through the memory provider takes the same alignment the matching allocation was given, beside the same pointer and length, and all three are part of the safety contract. A provider whose free path ignores alignment may leave the parameter unread."
+because = "An allocator underneath may need the full layout to free correctly, and nothing at the free site can recover the alignment; column slabs are reserved at 64-byte alignment, so a provider left to guess would free every column with a mismatched layout."
+mechanism = "`deallocate` takes `align` beside `ptr` and `len`; `std::alloc` requires the full layout; a bump arena may not read the parameter."
+source = "mock/research/202611130850_the-record-read-whole/RECOVERED.md:123-133"
+provenance = ["mock::research::202611130850_the-record-read-whole::RECOVERED::#mock-crates-hilavitkutin-api-design-md-tmpl-lines-953-to-963"]
+quote = '''
+`deallocate` takes the same `align` the matching `allocate` was given,
+alongside the same `ptr` and `len`. All three are part of the safety
+contract, not just the first two. An allocator underneath may require the
+full layout to free correctly (`std::alloc` does), and nothing at the free
+site can recover the alignment on its own: the caller is the only party
+that knows it. A provider whose free path ignores alignment, such as a
+bump arena, may simply not read the parameter.
+
+The hazard is concrete rather than theoretical. Column slabs are reserved
+at 64-byte alignment, so a provider left to guess a word would free every
+column with a mismatched layout.
+'''
+origin = "proposed"
+written_by = "api design template as on the branch recover/unlanded-rounds-and-benches, commit of 2026-08-30, not on dev; the text does not say whose it is"
+standing = "held"
+keywords = ["deallocate", "alignment", "MemoryProvider", "safety contract", "64-byte alignment", "layout"]
+
+[[tenet]]
+id = "deallocate_takes_the_alignment_because_every_caller_knows_it_and_a_header_or_a_remembering_provider_were_rejected"
+subject = "memory"
+what = "Of three shapes for supplying the alignment at the free site, storing it in a header beside each allocation, having each provider remember its own allocations, or passing it back in, the contract passes it back in, as the allocator underneath requires the full layout and not just the pointer. A header costs memory on every block and is wrong for a bump or arena provider that has no per-block header, and a remembering provider makes a stateless provider stateful for no reason. Every caller already knows the alignment it asked for, so the information was dropped on the way down and never missing. The safety contract states that pointer, length and alignment all match the prior allocation, and a provider that ignores alignment may leave the parameter unread. The earlier contract carried only the pointer and the length."
+mechanism = "`MemoryProviderApi::deallocate(ptr, len)` becomes `deallocate` taking `align` beside `ptr` and `len`; both `ArenaColumnStorage` free sites have `CACHE_LINE_ALIGN` in scope as a constant; `std::alloc::dealloc` takes the `Layout`."
+source = "mock/design_rounds/202607192010/202607192010_changelist.doc.lock.md:11-16, mock/design_rounds/202607192010/202607192010_changelist.doc.lock.md:31-37, mock/design_rounds/202607192010/202607192010_changelist.doc.lock.md:39-43, mock/design_rounds/202607192010/202607192010_changelist.doc.lock.md:47-50"
+provenance = ["mock::design_rounds::202607192010::202607192010_changelist.doc.lock::#what-the-trace-found"]
+quote = '''
+## What the trace found
+
+`MemoryProviderApi::deallocate(ptr, len)` does not carry the alignment, and its safety comment
+requires only that `ptr` and `len` match a prior `allocate`. Alignment is simply absent from
+the contract, so an implementation over `std::alloc` has nothing to reconstruct the `Layout`
+from and guesses a word.
+---
+## The decision: `deallocate` takes `align`
+
+Three shapes were available. Store the alignment in a header beside each allocation, which
+costs memory on every block and is wrong for a bump or arena provider that has no per-block
+header to put it in. Have each provider remember its own allocations, which makes a stateless
+provider stateful for no reason. Or pass the alignment back in, which is what `std::alloc`
+itself requires: `dealloc` takes the `Layout`, not just the pointer.
+---
+The third is correct, and the reason is that our contract was the outlier. Every caller already
+knows the alignment it asked for: both `ArenaColumnStorage` free sites have `CACHE_LINE_ALIGN`
+in scope as a constant. The information was never missing, only dropped on the way down. Adding
+it to the signature aligns our contract with the allocator underneath rather than inventing a
+mechanism to recover what the caller could have said.
+---
+`MemoryProviderApi::deallocate` is documented as taking `align` alongside `ptr` and `len`, and
+the safety contract states that all three must match the values from the prior `allocate`. The
+prose names why: an implementation over a layout-taking allocator cannot free correctly without
+it, and a provider that ignores alignment (a bump arena) may simply not read the parameter.
+'''
+origin = "proposed"
+written_by = "doc changelist of round 202607192010 (2026-07-19), settling the question its topic reachable-bodies-contradicting-contracts left open, agent-written"
+standing = "held"
+keywords = ["deallocate", "alignment", "MemoryProviderApi", "Layout", "std::alloc", "bump arena", "safety contract", "free site"]
+rejects = ["requires only that `ptr` and `len` match a prior `allocate`"]
+related = ["tenet::a_deallocation_is_given_the_same_alignment_as_its_allocation"]
+
+[[tenet]]
+id = "op_ruled_that_the_consumer_supplies_the_os_thread_executor_and_the_engine_ships_only_the_executor_contract"
+subject = "memory"
+what = "Op ruled on 2026-09-18, choosing among the consumer supplying the executor, a separate crate for the std executor, and both as arms, that the consumer supplies it. The engine ships only the executor contract, a trait, and the OS-thread executor lives in the consumer, or in a crate outside the hilavitkutin family, gated per target and feature. The intent is that no crate of the family spawns threads and that the thread pool contract is the whole of what the engine owns."
+mechanism = "`ThreadPoolApi` is the whole of what the engine owns; applied to `std_tier.rs` and equally to `OsThreadPool` in `platform/os.rs`; the `hilavitkutin-platform-std` crate and both-as-arms options were not chosen. Verbatim record: `mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md`, copied from the workspace capture. Op's answer: \"Consumer supplies it\"."
+source = "mock/design_rounds/202609181402/202609181401_topic.hilavitkutin-on-arvo-dev.md:77-81, mock/design_rounds/202609190201/202609190200_topic.review-fixes-on-arvo-dev.md:11-11, mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:13-13"
+provenance = ["mock::design_rounds::202609181402::202609181401_topic.hilavitkutin-on-arvo-dev::#op-s-rulings-on-the-three-handed-back-conflicts-2026-09-18"]
+quote = '''
+## Op's rulings on the three handed-back conflicts, 2026-09-18
+
+Verbatim record: `.data/op-responses/202609181645_hila-std-tier-persistence.md` in the workspace repository.
+
+The std tier. The option he chose: "hilavitkutin ships only the executor contract (a trait). The OS-thread executor lives in the consumer, or in a crate outside the hilavitkutin* family, gated per target and feature." His answer: "Consumer supplies it". The intent is that no `hilavitkutin*` crate spawns threads; `ThreadPoolApi` is the whole of what the engine owns. Applied to `std_tier.rs` and equally to `OsThreadPool` in `platform/os.rs`, which spawned pthreads under the same tier logic and falls under the same sentence. Tests and the `engine_vs_std` bench define their own executors in test and bench code.
+---
+- On where the code that spawns OS threads lives, choosing among "Consumer supplies it", a separate `hilavitkutin-platform-std` crate, and both as arms: "Consumer supplies it". The engine ships only the executor contract.
+---
+Op, choosing "hilavitkutin ships only the executor contract (a trait). The OS-thread executor lives in the consumer, or in a crate outside the hilavitkutin* family, gated per target and feature.": "Consumer supplies it". The std fallback tier is gone, and the os tier no longer creates pthreads: it ships mmap for `MemoryProvider` and clock_gettime for `Clock`. `ThreadPoolApi` is the whole of the engine's side, and the design says the engine hands the executor one pointer-sized closure per worker, so an executor carries it without allocating.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:20-32"]
+keywords = ["std tier", "executor contract", "consumer supplies it", "ThreadPoolApi", "OsThreadPool", "op's ruling", "2026-09-18", "no thread spawn"]
+rejects = ["The std fallback tier", "the os tier creating pthreads"]
+related = ["tenet::no_crate_spawns_threads_and_the_executor_behind_the_thread_pool_contract_is_the_consumer_s_or_lives_outside_the_family", "tenet::platform_tiers_are_os_and_no_os_only_and_the_std_tier_is_deferred_indefinitely", "tenet::the_os_and_std_tiers_are_mutually_exclusive_and_the_os_tier_gets_the_optimisation_investment"]
+
+[[tenet]]
+id = "tests_and_the_engine_versus_std_bench_define_their_own_executors_in_test_and_bench_code"
+subject = "memory"
+what = "Tests and the engine-versus-std bench define their own executors in test and bench code, since the engine ships only the executor contract."
+mechanism = "The `engine_vs_std` bench."
+source = "mock/design_rounds/202609181402/202609181401_topic.hilavitkutin-on-arvo-dev.md:81-81"
+provenance = ["mock::design_rounds::202609181402::202609181401_topic.hilavitkutin-on-arvo-dev::#op-s-rulings-on-the-three-handed-back-conflicts-2026-09-18"]
+quote = '''
+The std tier. The option he chose: "hilavitkutin ships only the executor contract (a trait). The OS-thread executor lives in the consumer, or in a crate outside the hilavitkutin* family, gated per target and feature." His answer: "Consumer supplies it". The intent is that no `hilavitkutin*` crate spawns threads; `ThreadPoolApi` is the whole of what the engine owns. Applied to `std_tier.rs` and equally to `OsThreadPool` in `platform/os.rs`, which spawned pthreads under the same tier logic and falls under the same sentence. Tests and the `engine_vs_std` bench define their own executors in test and bench code.
+'''
+origin = "proposed"
+written_by = "topic of round 202609181402 'hilavitkutin on arvo's current dev', 2026-09-18, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: the sentence is the round applying his answer at mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:20-32, whose words and options do not name tests or benches, and it was part of the row op_ruled_that_the_consumer_supplies_the_os_thread_executor_and_the_engine_ships_only_the_executor_contract until it was taken out of that ratified row, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["tests", "engine_vs_std", "bench", "executor", "test executor"]
+related = ["tenet::op_ruled_that_the_consumer_supplies_the_os_thread_executor_and_the_engine_ships_only_the_executor_contract"]
+
+[[tenet]]
+id = "the_os_tier_creates_no_threads_and_ships_a_memory_provider_and_a_clock_while_the_engine_hands_the_executor_one_pointer_sized_closure_per_worker"
+subject = "memory"
+what = "The os tier no longer creates threads: it ships a memory provider built on memory mapping and a clock built on the system clock call. The thread pool contract is the whole of the engine's side, and the engine hands the executor one pointer-sized closure per worker, so an executor carries it without allocating."
+mechanism = "mmap for `MemoryProvider`, `clock_gettime` for `Clock`; `ThreadPoolApi`."
+source = "mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:13-13"
+provenance = ["mock::design_rounds::202609181402::202609181402_changelist.doc.lock::#change-the-platform-tiers-lose-the-std-tier-and-no-tier-spawns-threads"]
+quote = '''
+Op, choosing "hilavitkutin ships only the executor contract (a trait). The OS-thread executor lives in the consumer, or in a crate outside the hilavitkutin* family, gated per target and feature.": "Consumer supplies it". The std fallback tier is gone, and the os tier no longer creates pthreads: it ships mmap for `MemoryProvider` and clock_gettime for `Clock`. `ThreadPoolApi` is the whole of the engine's side, and the design says the engine hands the executor one pointer-sized closure per worker, so an executor carries it without allocating.
+'''
+origin = "proposed"
+written_by = "doc changelist of round 202609181402 'hilavitkutin on arvo's current dev', 2026-09-18, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: his part is the answer Consumer supplies it, which the passage quotes and which mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:20-32 holds whole, and which the rows no_crate_spawns_threads_and_the_executor_behind_the_thread_pool_contract_is_the_consumer_s_or_lives_outside_the_family and there_is_no_std_platform_tier hold; that the os tier ships mmap and clock_gettime and that the engine hands the executor one pointer-sized closure per worker is what the changelist mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:13-13 derives from it, in its own words the design says, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["os tier", "mmap", "clock_gettime", "MemoryProvider", "Clock", "pointer-sized closure", "ThreadPoolApi", "no pthreads"]
+related = ["tenet::op_ruled_that_the_consumer_supplies_the_os_thread_executor_and_the_engine_ships_only_the_executor_contract", "tenet::the_os_and_std_tiers_are_mutually_exclusive_and_the_os_tier_gets_the_optimisation_investment"]
+
+[[tenet]]
+id = "column_buffers_are_sized_by_the_per_run_record_count_and_belong_to_the_run_loop_and_not_to_build"
+subject = "memory"
+what = "Resource buffers are sized once at build, as a singleton for the scheduler's lifetime. Column buffers are sized by the record count, which varies per run, so columns are not allocated at build: they belong to the run loop and plan phase, where the per-frame record count is known, and there is no standalone round for columns at build."
+mechanism = "Resource buffers sized once at `build()` (shipped in B2a); the per-frame `record_count` arrives via `RunCfg: HasRecordCount`; B3's column accessors operate on the per-frame column buffers passed into the Context at construction."
+source = "mock/research/sketches/202605290101_ctx-projection-selector.md:57-59"
+provenance = ["mock::research::sketches::202605290101_ctx-projection-selector::#columns-lifetime-reframing-corrects-the-earlier-b2b-at-build-framing"]
+quote = '''
+## Columns lifetime reframing (corrects the earlier "B2b at build()" framing)
+
+Resource buffers are sized once at `build()` (singleton, scheduler lifetime; shipped in B2a). Column buffers are sized by `record_count`, which varies per run (a real pipeline lints N files where N changes per invocation), so columns are NOT allocated at `build()`; they belong to the run-loop / plan phase (C/E) where the per-frame `record_count` (via `RunCfg: HasRecordCount`) is known. There is no standalone "B2b columns at build()" round; column buffer allocation folds into the run-loop. B3's column accessors operate on the per-frame column buffers passed into the Context at construction. B3 is testable now with hand-provided column buffers, independent of the run-loop.
+'''
+origin = "proposed"
+written_by = "sketch ctx-projection-selector (per-WU Context via Selector and Project index witnesses), dated only by its filename 202605290101 as 2026-05-29, reframing the earlier \"B2b at build()\" claim; agent-written"
+standing = "held"
+keywords = ["column buffers", "record_count", "build()", "run loop", "resource buffers", "B2b", "per-frame allocation", "HasRecordCount"]
+rejects = ["B2b columns at build()", "the earlier \"B2b at build()\" framing"]
+related = ["tenet::the_engine_does_not_load_data_and_does_not_know_record_counts_ahead"]
+
+[[tenet]]
+id = "columns_reserve_at_build_to_capacity_with_a_stable_pointer_and_the_per_frame_record_count_is_a_metadata_field"
+subject = "memory"
+what = "Columns reserve at build to capacity, with a stable pointer for the scheduler's lifetime, and the per-frame live record count is a metadata field, with no per-frame allocation. The text records this as a separate decision on reservation timing."
+mechanism = "\"Timing X\"; the `ColumnBinding` Column drain arm stops recording a dangling placeholder and records the real `column_ptr_mut` after a `reserve` sized by the record count."
+source = "mock/research/sketches/202606041631_column-source-dual-selector/FINDINGS.md:36-36"
+provenance = ["mock::research::sketches::202606041631_column-source-dual-selector::FINDINGS::#what-this-unblocks"]
+quote = '''
+Reservation timing (Timing X, separate decision): columns reserve at `build()` to capacity, stable pointer for the scheduler lifetime; per-frame live record count is a metadata field, no per-frame allocation. The `ColumnBinding` Column drain arm stops recording a dangling placeholder and records the real `column_ptr_mut` after a `reserve` sized by the record count.
+'''
+origin = "proposed"
+written_by = "sketch findings column-source-dual-selector of 2026-06-04 (round column-data-plane, unified bindings as resource and column source, Shape A), verdict WORKS; agent-written"
+standing = "held"
+keywords = ["reservation timing", "Timing X", "reserve at build", "stable pointer", "column_ptr_mut", "record count metadata", "ColumnBinding", "per-frame allocation"]
+related = ["tenet::an_accumulator_append_saturates_at_the_reserved_capacity_which_equals_the_record_count_at_build"]

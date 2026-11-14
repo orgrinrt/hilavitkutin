@@ -1,0 +1,13 @@
+[[ticket]]
+id = "placeholders_tagged_fe682c10859c"
+title = "Placeholders tagged fe682c10859c"
+kind = "task"
+what = "Placeholders tagged fe682c10859c in hilavitkutin-api, 1 marker. Filed by `mock owed`; the markers cite this ticket and it closes when none is left.\n\nAn agent is to evaluate each marker below: read the code at its place and the canon (`mock canon find`, `mock canon subject`), then do one of three things. Put a question to the maintainer, with a subject and real options, where the canon is silent and the gap is the maintainer's to settle. Settle the marker, where the code or the canon already answers it. Drop the marker, where it names nothing owed. This task files no question of its own, and the line of each marker is where it stood when the task was filed.\n\nCovers:\n- mock/crates/hilavitkutin-api/src/platform.rs:467: the worker mainloop is not written. It would walk the\n"
+
+[[ticket_move]]
+id = "m20261113144617_owed_dc66"
+ticket = "placeholders_tagged_fe682c10859c"
+to = "backlog"
+by = "owed"
+at = "2026-11-13T14:46:17Z"
+why = "filed by mock owed for 1 marker(s)"

@@ -1,0 +1,505 @@
+# What the record says about `meta`, part 1.
+
+[[tenet]]
+id = "the_scheduler_is_itself_a_pipeline_and_meta_units_run_at_lifecycle_points"
+subject = "meta"
+what = "The scheduler is itself a pipeline: meta work units run at lifecycle points, so the scheduler schedules itself."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2119-2123"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#23-scheduler-builder-and-meta"]
+quote = '''
+**Self-hosting scheduler (T5 §Q9, L716-802):**
+
+The scheduler is itself a pipeline. Meta work units run at lifecycle
+points:
+
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2119-2123"]
+keywords = ["self-hosting scheduler", "meta work units", "lifecycle points", "scheduler is a pipeline", "meta"]
+
+[[tenet]]
+id = "four_meta_virtuals_fire_plan_stage_schedule_ready_pass_start_and_schedule_end"
+subject = "meta"
+what = "There are four meta virtuals: plan stage, fired when the graph changes and the plan is to be recomputed; schedule ready, fired when the plan-stage units complete; pass start, fired at the start of each pass; and schedule end, fired after all consumer work."
+mechanism = "`meta::PlanStage`, `meta::ScheduleReady`, `meta::PassStart`, `meta::ScheduleEnd`."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2124-2128"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#23-scheduler-builder-and-meta"]
+quote = '''
+Meta virtuals:
+- `meta::PlanStage` — fired when DAG changes (recompute plan)
+- `meta::ScheduleReady` — fired when plan-stage units complete
+- `meta::PassStart` — fired at start of each pass
+- `meta::ScheduleEnd` — fired after all consumer work
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2124-2128"]
+keywords = ["meta virtuals", "PlanStage", "ScheduleReady", "PassStart", "ScheduleEnd", "lifecycle"]
+related = ["tenet::a_virtual_is_a_pure_flag_and_carries_no_data"]
+
+[[tenet]]
+id = "four_meta_resources_hold_the_graph_the_plan_the_lane_assignment_and_the_metrics_and_are_restricted_by_a_marker_trait"
+subject = "meta"
+what = "There are four meta resources, the dependency graph, the execution plan with the fiber, trunk and phase assignments, the core assignments, and the scheduler metrics with the EMA timing data. Access to them is restricted through a marker trait."
+mechanism = "`meta::Dag`, `meta::ExecutionPlan`, `meta::LaneAssignment`, `meta::SchedulerMetrics`; restricted via the `MetaAccess` marker trait."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2130-2134"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#23-scheduler-builder-and-meta"]
+quote = '''
+Meta resources (restricted via MetaAccess marker trait):
+- `meta::Dag` — the dependency graph
+- `meta::ExecutionPlan` — fiber/trunk/phase assignments
+- `meta::LaneAssignment` — core assignments
+- `meta::SchedulerMetrics` — EMA timing data (domain 22)
+'''
+origin = "stated"
+standing = "held"
+keywords = ["meta resources", "Dag", "ExecutionPlan", "LaneAssignment", "SchedulerMetrics", "MetaAccess", "marker trait"]
+
+[[tenet]]
+id = "the_irreducible_kernel_is_about_fifty_lines_that_fire_plan_stage_wait_fire_ready_dispatch_and_fire_end"
+subject = "meta"
+what = "The irreducible kernel of the self-hosting scheduler is about 50 lines: fire plan stage, wait for the plan units, fire schedule ready, dispatch the consumer units, and fire schedule end."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2136-2137"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#23-scheduler-builder-and-meta"]
+quote = '''
+The irreducible kernel is ~50 lines: fire PlanStage, wait for plan
+WUs, fire ScheduleReady, dispatch consumer WUs, fire ScheduleEnd.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2136-2137"]
+keywords = ["irreducible kernel", "50 lines", "PlanStage", "ScheduleReady", "ScheduleEnd", "dispatch", "kernel"]
+
+[[tenet]]
+id = "the_scheduler_metrics_resource_carries_pass_count_ema_durations_active_units_stolen_count_and_idle_time_with_a_one_eighth_decay"
+subject = "meta"
+what = "The scheduler metrics resource carries the pass count, the EMA of pass duration, a per-unit EMA, the number of active units, the stolen count and the idle time. The EMA decays by one eighth per update, and a vectorised batch update refreshes all unit EMAs in one pass."
+mechanism = "`pass_count`, `ema_pass_duration_ns`, per-unit EMA, `active_units`, `stolen_count`, `idle_ns`. Decay `(ema * 7 + measured) / 8`. Vectorised batch update: NEON 4×u32 or AVX2 8×u32 (T5 L1054-1066)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2035-2040"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#22-runtime-adaptation"]
+quote = '''
+**EMA metrics (T5 §Q5, L601-637):**
+
+SchedulerMetrics resource: `pass_count`, `ema_pass_duration_ns`,
+per-unit EMA, `active_units`, `stolen_count`, `idle_ns`. Decay:
+`(ema * 7 + measured) / 8`. Vectorized batch update: NEON 4×u32 or
+AVX2 8×u32 for all unit EMAs in one pass (T5 L1054-1066).
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2035-2040"]
+keywords = ["SchedulerMetrics", "EMA", "pass_count", "ema_pass_duration_ns", "stolen_count", "idle_ns", "NEON", "AVX2"]
+
+[[tenet]]
+id = "the_frame_time_prediction_from_the_ema_serves_frame_budgeting_and_progress_bars_through_the_metrics"
+subject = "meta"
+what = "An EMA of pass duration enables frame budgeting in game loops and progress bars in batch pipelines, and the consumer reads it through the scheduler metrics."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2060-2063"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#22-runtime-adaptation"]
+quote = '''
+**Frame time prediction (T3 decision #65):**
+
+EMA of pass duration enables frame budgeting (game loops) and progress
+bars (batch pipelines). Consumer reads via SchedulerMetrics (domain 23).
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2060-2063"]
+keywords = ["frame time prediction", "EMA", "frame budgeting", "progress bars", "SchedulerMetrics", "T3 #65"]
+
+[[tenet]]
+id = "cadence_is_the_consumer_layer_and_the_engine_provides_the_measurements_while_the_consumer_decides_policy"
+subject = "meta"
+what = "Cadence belongs to the consumer layer: the consumer reads the scheduler metrics through a unit that runs on schedule end and implements its own cadence logic. hilavitkutin provides the measurement data and the consumer decides policy."
+mechanism = "`On<meta::ScheduleEnd>` WU reads `SchedulerMetrics`."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1985-1991"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#21-scheduling-strategy"]
+quote = '''
+**Cadence as consumer-layer (T5 §Q5):**
+
+SchedulerMetrics resource: pass_count, ema_pass_duration_ns,
+active_units, stolen_count, idle_ns. EMA 1/8 decay. Consumer reads
+metrics via `On<meta::ScheduleEnd>` WU and implements their own
+cadence logic. hilavitkutin provides measurement data, consumer
+decides policy.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1985-1991"]
+keywords = ["cadence", "SchedulerMetrics", "On<meta::ScheduleEnd>", "consumer policy", "measurement data", "T5 Q5"]
+
+[[tenet]]
+id = "the_scheduler_writes_the_previous_pass_s_metrics_at_the_start_of_each_pass"
+subject = "meta"
+what = "The scheduler writes its metrics resource at the start of each pass, and what it writes is the previous pass's metrics. The data is always one pass behind, which is consistent, because the current pass is still in progress and cannot report its own metrics. The write happens at pass start, so it is the first thing in the DAG and all readers come after it, and its version stamp increments every pass, so readers always dispatch."
+mechanism = "`Resource<SchedulerMetrics>`; `pass_count` always changes."
+source = "mock/design_rounds/202604200055/202603141800_topic.hilavitkutin-core-design.md:595-598, mock/design_rounds/202604200055/202603141800_topic.hilavitkutin-core-design.md:639-641"
+provenance = ["mock::design_rounds::202604200055::202603141800_topic.hilavitkutin-core-design::#key-design-questions"]
+quote = '''
+The scheduler writes `Resource<SchedulerMetrics>` at the START of
+each pass, containing the PREVIOUS pass's metrics. This is always
+one-pass-behind data, which is consistent and non-paradoxical — the
+current pass is still in progress and can't report its own metrics.
+---
+The write happens at pass start → it's the first thing in the DAG.
+All readers naturally come after. The version stamp increments every
+pass (pass_count always changes), so readers always dispatch.
+'''
+origin = "proposed"
+written_by = "topic T5 of the founding round (hilavitkutin-core-design)"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["SchedulerMetrics", "previous pass", "one pass behind", "pass start", "metrics resource", "version stamp"]
+
+[[tenet]]
+id = "whether_meta_units_share_the_consumer_carrier_or_get_a_dedicated_carrier_is_decided_by_sketching_both_shapes"
+subject = "meta"
+what = "Whether meta units stay on the shared consumer carrier, with bands hoisted out of the morsel loop on every record-bearing path, once per frame, or move to a dedicated meta carrier with an independent band walk, is decided by sketching both shapes far enough to compare complexity and codegen. Either shape must cure the known warts: per-morsel meta execution on record-bearing paths, leading-band accumulator appends unsupported on the parallel unit-outer path, and the clear-on-dispatch semantics of slice 1b."
+mechanism = "Task #687 for the slice-1b clear-on-dispatch semantics; single-core and parallel alike."
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:124-131"
+provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#a1-7-the-meta-carrier-question-is-sketch-decided"]
+quote = '''
+Whether meta WUs stay on the shared consumer carrier (with bands hoisted out
+of the morsel loop on every record-bearing path, once per frame, single-core
+and parallel alike) or move to a dedicated meta carrier with an independent
+band walk is decided by sketching both shapes far enough to compare
+complexity and codegen. The known warts either shape must cure: per-morsel
+meta execution on record-bearing paths, leading-band accumulator appends
+unsupported on the parallel unit-outer path, and the slice-1b
+clear-on-dispatch semantics (#687).
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["ruled: mock/research/202606111400_canonical-design-addendum-a1.md:47-47", "ruled: mock/research/202606111400_canonical-design-addendum-a1.md:122-131"]
+keywords = ["meta carrier", "meta WUs", "band walk", "sketch", "morsel loop", "accumulator append", "clear-on-dispatch", "#687"]
+
+[[tenet]]
+id = "engine_owned_mutable_meta_state_lives_in_the_meta_block_scheduler_field_and_is_reached_by_a_compile_time_gated_accessor"
+subject = "meta"
+what = "Engine-owned mutable meta state lives in a scheduler field, because consumer resources are copy and read-only and cannot carry cells. The accessor gated by meta access exists only on a context that bears a meta reference, enforced at compile time."
+mechanism = "`MetaBlock` scheduler field; `MetaAccess`-gated accessor on a `MetaRef`-bearing Ctx; consumer resources are `Copy` read-only."
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:161-164"
+provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#constraint-notes-elevated-to-canon"]
+quote = '''
+5. Engine-owned mutable meta state lives in the `MetaBlock` scheduler field
+   (consumer resources are `Copy` read-only and cannot carry Cells); the
+   `MetaAccess`-gated accessor exists only on a `MetaRef`-bearing Ctx,
+   enforced at compile time.
+'''
+origin = "proposed"
+written_by = "addendum A1 of 2026-06-11, constraint note 5, agent-written, elevated to canon by the addendum"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["MetaBlock", "MetaAccess", "MetaRef", "scheduler field", "Copy resources", "Cell", "compile-time enforcement"]
+
+[[tenet]]
+id = "the_adapt_unit_is_a_meta_unit_that_observes_the_end_of_the_schedule_and_the_consumer_registers_replaces_or_omits_it"
+subject = "meta"
+what = "Adaptation is a meta unit that observes the end of the schedule. A default one ships with the providers crate; the consumer registers it for the default behaviour, ships its own for custom behaviour, or leaves it out."
+mechanism = "`AdaptWu` observing `ScheduleEnd`; default in `hilavitkutin-providers`; registered via `.with(AdaptWu::default())`."
+source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:15-15"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#inputs-from-prior-topics-binding"]
+quote = '''
+- **Topic 1 Axis 5.** Adapt is a meta-WU (`AdaptWu`) observing `ScheduleEnd`. Substrate ships default `AdaptWu` in `hilavitkutin-providers`; consumer registers via `.with(AdaptWu::default())` for substrate behaviour, ships own `AdaptWu` for custom, omits if not wanted. The integration shape is locked. This topic specifies what the WU body does and what metrics structure it reads/writes.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 5 adapt subsystem, decisions dated 2026-05-10; the text does not say whose each decision is"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["AdaptWu", "meta unit", "ScheduleEnd", "adaptation", "providers crate", "opt-in"]
+
+[[tenet]]
+id = "each_adaptation_metric_is_its_own_axis_with_independent_tuning"
+subject = "meta"
+what = "Adaptation was first proposed as four opaque modes; the maintainer reframed it during the topic conversation so that each metric is its own axis with independent tuning, in line with the workspace's multi-axis pattern."
+source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:48-48"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#axis-a-adaptconfig-multi-axis-shape-reframed-2026-05-10"]
+quote = '''
+Originally proposed as four opaque modes (Off / Fast / Standard / Aggressive). User reframed during topic conversation: each metric is its own axis with independent tuning, in line with the workspace's multi-axis design pattern (arvo Strategy markers, WorkUnit Hint).
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:46-48"]
+keywords = ["adapt axes", "multi-axis", "independent tuning", "adapt modes", "reframe"]
+
+[[tenet]]
+id = "the_nine_adapt_axes_ship_as_individual_inputs_and_kits_are_only_recipes_over_them"
+subject = "meta"
+what = "The nine adaptation axes ship as individual builder inputs, each a specialised structure carrying only its own knobs, and there is no composite configuration structure above them. Kits are documented combinations of the axes: a consumer registers axes one by one, registers a kit, or registers a kit and then overrides one axis."
+mechanism = "`PassDurationConfig`, `PhaseEmaConfig`, `FiberEmaConfig`, `ChangeClassConfig`, `CacheResidencyConfig`, `ThroughputConfig`, `PredictiveParkingConfig`, `MemoryWatermarkConfig`, `CoreIdleTimeConfig` in `pub mod adapt`; sealed `AdaptAxis` with `is_enabled()` and `sample_skip()`; `StandardAdaptKit`, `OffAdaptKit`; a later `.with` replaces the slot for that axis."
+source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:265-265"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#decision-log"]
+quote = '''
+- [x] **Axis A. Multi-axis individual BuilderInputs + Kit-recipe presets (REFRAMED twice; final shape).** Nine axes ship as individual `BuilderInput`s in `pub mod adapt`: `PassDurationConfig`, `PhaseEmaConfig`, `FiberEmaConfig`, `ChangeClassConfig`, `CacheResidencyConfig`, `ThroughputConfig`, `PredictiveParkingConfig`, `MemoryWatermarkConfig`, `CoreIdleTimeConfig`. Each is a heterogeneous specialised struct (carries only its meaningful knobs); each impls `BuilderInput<Dispatch = <Self>Dispatch<Self>>` with its own dispatch slot (no collision); each impls sealed `AdaptAxis: Sealed` for the universal `is_enabled() + sample_skip()` accessors; each has `Default` impl (sensible-on baseline per axis) + `Self::off()` const fn (disabled shorthand). **No top-level `AdaptConfig` composite struct** — the user's Kit reframe replaced the struct + const fn presets with: (1) individual axis-configs as the primary surface and (2) Kit recipes (`StandardAdaptKit`, `OffAdaptKit`, optionally domain-specific consumer Kits) as documented combinations. Consumer registers axes individually `.with(my_phase_ema_config)`, or via a Kit `.with(StandardAdaptKit::default())`, or composes `.with(StandardAdaptKit).with(my_fiber_override)` (later `.with` replaces the slot for that axis). Cadence interleaving via per-axis `sample_skip`. Core-idle-time axis included for load-distribution sensitivity, breadcrumb mechanism in Topic 6's parking primitive. **C1 audit finding dissolves:** without a composite `AdaptConfig` struct, there is no `AdaptCfgDispatch<Self>` slot needed; each axis has its own slot via standard `BuilderInput` pattern. The workspace convention applies cleanly without scope-clarification gymnastics. Plan stage reads each axis-config via its accessor; absent registrations use the trivial-ctor default. **Workspace convention dogfooded properly:** individuals primary + Kits as recipes, same shape as Axis F's metrics layer. (Earlier "AdaptConfig as struct + const fn presets" framing retired by this reframe; the C1 audit response that locked `AdaptConfig` as a `BuilderInput` is also retired by the reframe.)
+'''
+origin = "stated"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["adapt axis", "BuilderInput", "StandardAdaptKit", "OffAdaptKit", "no composite AdaptConfig", "sample_skip"]
+related = ["tenet::each_adaptation_metric_is_its_own_axis_with_independent_tuning"]
+
+[[tenet]]
+id = "adapt_metrics_live_in_a_scratch_arena_and_the_adapt_unit_refreshes_a_consumer_readable_snapshot_at_the_end_of_the_schedule"
+subject = "meta"
+what = "The adaptation metrics have a hybrid home: a scratch arena on the hot path, reached directly by the inner loop, and a snapshot resource the consumer can read, which the adapt unit refreshes from the arena at the end of the schedule. The snapshot is small."
+mechanism = "Axis B, option B3. The arena is reached by raw pointer; the snapshot is on the order of MAX_PHASES + MAX_FIBERS + MAX_LANES u64s. The vocabulary section names the raw region `AdaptArena` (not consumer-readable) and the consumer-readable side the per-axis `metrics::*` resources."
+source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:266-266, mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:25-26"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#decision-log"]
+quote = '''
+- [x] **Axis B. AdaptMetrics data plane: B3 hybrid.** Scratch-arena hot path + `Resource<SchedulerMetrics>` snapshot refreshed by AdaptWu at `ScheduleEnd`. Snapshot is small (per-phase + per-fiber + per-core counters, on the order of MAX_PHASES + MAX_FIBERS + MAX_LANES u64s). Inner loop accesses arena directly via raw pointer; consumer reads via standard `Has<SchedulerMetricsProvider>` Ctx bound.
+---
+- **AdaptArena**: the raw scratch-arena memory region (hot per-fiber lines + per-core park slots + cold SoA arena). Plan-stage allocated. Codegen + AdaptWu read/write directly via raw pointer. Not consumer-readable.
+- **`metrics::*` Resources** (per-axis sub-resources from Axis F): `PassDurationMetrics`, `PhaseEmaMetrics`, `FiberEmaMetrics`, `ChangeClassMetrics`, `CacheResidencyMetrics`, `ThroughputMetrics`, `PredictiveParkingMetrics`, `MemoryWatermarkMetrics`, `CoreIdleTimeMetrics`. Consumer-readable. Refreshed from AdaptArena by AdaptWu at `ScheduleEnd`.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 5 adapt subsystem, decisions dated 2026-05-10; the text does not say whose each decision is"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["AdaptArena", "metrics snapshot", "scratch arena", "ScheduleEnd", "B3 hybrid", "consumer-readable"]
+
+[[tenet]]
+id = "inline_metric_slots_are_written_only_by_the_owning_fiber_s_core_and_read_by_the_adapt_unit_only_after_the_phase_barrier"
+subject = "meta"
+what = "The inline metric slots on a fiber's line are written only by the core that owns the fiber and read only after the phase barrier, by the adapt unit at the end of the schedule; no other core reads them mid-pass. A lint enforces that no consumer unit's access set reads an axis's inline metric directly, only the adapt unit's snapshot resource."
+because = "A line that holds both the progress counter, which another core reads, and inline metric slots risks cache-line ping-pong."
+source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:269-269"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#decision-log"]
+quote = '''
+- [x] **(Audit-2 M3, 2026-05-10):** the per-fiber 64B line co-locating progress counter (cross-core read) + inline metric slots (producer-only writes) risks cache-line ping-pong. **Invariant locked:** inline metric slots on each per-fiber line are **write-only by the owning fiber's producer core, read-only-after-phase-barrier by AdaptWu at `ScheduleEnd`**. No other core reads the metrics slots mid-pass. The line is hot on the producer core throughout the fiber's execution (Modified state); the consumer-side `ldar` on the progress counter alone causes a coherence transition only at fiber completion, not during inner-loop morsels. This is the invariant the design relies on; a lint enforces it (no consumer-WU AccessSet may directly read an axis-config's inline-write metric — only the AdaptWu's snapshot Resource).
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 5 adapt subsystem, decisions dated 2026-05-10; the text does not say whose each decision is"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["inline metrics", "producer core", "phase barrier", "cache-line ping-pong", "progress counter", "lint"]
+
+[[tenet]]
+id = "the_adapt_unit_fires_one_anomaly_flag_and_the_metrics_resources_carry_which_anomaly_it_was"
+subject = "meta"
+what = "The adapt unit writes a single fired flag for an anomaly, and the metrics resources carry the detail of each anomaly as fields. A consumer observes the one flag and then queries the metrics resource for the specifics. The earlier shape of one flag type per anomaly is retracted."
+because = "Five flag types are five distinct write slots, and observers serialise behind the adapt unit; that risks an explosion of phases in the graph."
+mechanism = "`Virtual<AnomalyFired>`; for example `metrics::CoreIdleTimeMetrics::imbalance_detected: arvo::Bool`."
+source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:284-284"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#decision-log"]
+quote = '''
+- [x] **(Audit-2 M7, 2026-05-10):** AdaptWu writing five `Virtual<T>` types risks DAG phase-explosion (each Virtual is a distinct write slot, observers serialise behind AdaptWu). **Locked: AdaptWu writes a single `Virtual<AnomalyFired>` flag plus the five anomaly-typed `metrics::*` Resources carry per-anomaly detail.** Consumers observe `Virtual<AnomalyFired>` (single edge from AdaptWu), then query the relevant `metrics::*` Resource for the specifics. This collapses AdaptWu's write side from five Virtuals to one Virtual plus the already-locked `metrics::*` Resources. Per-anomaly Virtual proliferation (the previously locked Axis E shape) is retracted; the five anomaly types now live as fields on the snapshot Resources (e.g., `metrics::CoreIdleTimeMetrics::imbalance_detected: arvo::Bool`).
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 5 adapt subsystem, decisions dated 2026-05-10; the text does not say whose each decision is"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["AnomalyFired", "virtual", "anomaly", "metrics resources", "phase explosion", "audit"]
+rejects = ["Per-anomaly Virtual proliferation (the previously locked Axis E shape) is retracted"]
+
+[[tenet]]
+id = "the_adapt_unit_signals_and_does_not_re_plan"
+subject = "meta"
+what = "The adapt topic does not own the execution of a re-plan. The adapt unit signals, and the plan caching and dirty detection topic owns the observer that triggers the actual re-planning."
+source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:314-314"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#notes"]
+quote = '''
+- Topic 5 does not own re-plan execution. AdaptWu signals `Virtual<ReplanRequested>`; Topic 9 (plan caching + dirty-detection) owns the observer that triggers actual re-planning.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 5 adapt subsystem, decisions dated 2026-05-10; the text does not say whose each decision is"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["re-plan", "adapt unit", "plan caching", "dirty detection", "observer", "signal"]
+
+[[tenet]]
+id = "the_adapt_unit_predicts_the_wait_per_phase_and_the_parking_primitive_only_reads_the_prediction"
+subject = "meta"
+what = "Predictive parking is split into policy and mechanism. The adapt unit computes the predicted wait per phase from history at the end of the schedule and writes it to the parking metrics; the parking primitive reads the prediction and picks spin, spin with backoff, or park by the three-tier rule."
+mechanism = "Axis G, option G1: `predicted_wait_per_phase[PhaseId]` written to `PredictiveParkingMetrics`; the parking contract is `(predicted_wait_ns: arvo::UFixed<...>) -> ParkStrategy`; under 100ns spin, 100ns to 10us spin_loop with backoff, over 10us park."
+source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:308-308"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#decision-log"]
+quote = '''
+- [x] **Axis G. Predictive parking boundary: G1 policy in metrics, mechanism in Topic 6.** Policy/mechanism separation. AdaptWu (Topic 5) computes `predicted_wait_per_phase[PhaseId]: arvo::UFixed<I, F, S>` from history at `ScheduleEnd`, writes to `PredictiveParkingMetrics`. Topic 6's parking primitive reads `predicted_wait_ns: arvo::UFixed<I, F, S>` (a fixed-point nanoseconds duration; exact widths picked by Topic 6 to cover the canonical wait range) and dispatches the three-tier rule (under 100ns spin / 100ns to 10us spin_loop+backoff / over 10us thread::park). Topic 6 contract becomes pure: `(predicted_wait_ns: arvo::UFixed<...>) -> ParkStrategy`. **Type-discipline note:** `USize` is forbidden here per `no-bare-primitives.md` (it names index/length, not duration). The fixed-point duration type is the substrate-canonical shape for time intervals. Reasons: single source of truth for prediction logic; Topic 6 stays narrow; multi-axis-friendly (AdaptWu has access to all metrics; parking primitive does not need to declare AccessSet over them); update-rate separation (predictions cold-path once per pass; parking warm-path many times per pass; G3 would repeat prediction logic on the warm path); consumer-readable predictions (custom Executors share the same predictions); SRP-clean.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 5 adapt subsystem, decisions dated 2026-05-10; the text does not say whose each decision is"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["predictive parking", "predicted wait", "policy and mechanism", "ParkStrategy", "PredictiveParkingMetrics"]
+
+[[tenet]]
+id = "adapt_writes_happen_at_fiber_completion_or_phase_boundaries_and_never_inside_the_inner_record_loop"
+subject = "meta"
+what = "The adapt unit must not break the ASM 6-check invariants: writes to the adaptation metrics happen at fiber completion or at phase boundaries, never inside the inner record loop."
+source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:18-18"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#inputs-from-prior-topics-binding"]
+quote = '''
+- **Topic 4 Axis F.** AdaptWu must not break the ASM 6-check invariants: writes to AdaptMetrics happen at fiber-completion or phase boundaries, never inside the inner record loop.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 5 adapt subsystem, decisions dated 2026-05-10; the text does not say whose each decision is"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["adapt metrics", "inner loop", "fiber completion", "phase boundary", "ASM invariants"]
+
+[[tenet]]
+id = "the_adapt_unit_reads_its_metrics_through_a_snapshot_at_the_end_of_the_schedule_and_mutates_nothing_through_it"
+subject = "meta"
+what = "At the end of the schedule the adapt unit observes the adaptation metrics through a resource snapshot, to derive the predicted waits it writes for the next frame. Through the snapshot it only reads."
+mechanism = "`ResourceSnapshot<AdaptMetrics>`; `fn execute<'phase>(&self, ctx: &Ctx<'phase>)` with the context holding the snapshot."
+source = "mock/design_rounds/202605101036/202605101036_topic.resource-resolution.md:27-27, mock/design_rounds/202605101036/202605101036_topic.resource-resolution.md:78-78"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.resource-resolution::#axis-a-resourcesnapshot-r-v1-semantics"]
+quote = '''
+Use case: AdaptWu at ScheduleEnd phase observes `ResourceSnapshot<AdaptMetrics>` to derive `predicted_wait_ns[]` writes for the next frame. No mutation; pure read.
+---
+- **Amendment 5:** `AdaptMetrics` snapshot at ScheduleEnd is realised via `ResourceSnapshot<AdaptMetrics>` per axis A. AdaptWu's `execute` signature is `fn execute<'phase>(&self, ctx: &Ctx<'phase>) -> ...` with Ctx holding the snapshot.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 8 resource resolution of 2026-05-11, which calls its decisions autonomous trivial calls"
+standing = "held"
+keywords = ["ResourceSnapshot", "AdaptWu", "ScheduleEnd", "predicted wait", "read only"]
+
+[[tenet]]
+id = "the_change_seen_count_metric_is_maintained_identically_on_all_three_run_paths"
+subject = "meta"
+what = "As of 2026-06-20, the count of frames in which a store was dirty is kept on every run path, single-core, parallel and fused alike, so a hook that reads it at the end of the schedule never sees a stuck zero beside live siblings. It was first kept in the single-core fold only, and the design prose carried a single-core qualifier for that, which is removed."
+mechanism = "`change_seen_count`; capture `!store_dirty.get().is_empty().0` before the per-frame reset and increment in the EMA fold when set; paths `run`, `run_parallel`, `run_fused`; read by an `OnMeta<ScheduleEnd>` hook."
+source = "mock/design_rounds/202606200200/202606200200_topic.r3b-parallel-fused.md:9-18, mock/design_rounds/202606200200/202606200200_changelist.doc.lock.md:7-9"
+provenance = ["mock::design_rounds::202606200200::202606200200_topic.r3b-parallel-fused::#change"]
+quote = '''
+PR #144 maintained `change_seen_count` (the change_class numerator) in the
+single-core `run` fold only. `run_parallel` and `run_fused` reset `store_dirty`
+without counting it, so an `OnMeta<ScheduleEnd>` hook reading `change_seen_count`
+under those paths read stuck-at-zero beside the live siblings. This round mirrors
+the single-core capture-and-increment into both folds: capture
+`!store_dirty.get().is_empty().0` before the per-frame reset, increment
+`change_seen_count` in the EMA fold when set. The metric is then consistent across
+all three run paths, so the DESIGN qualifier added in round 202606200100 is
+removed. A parallel-path white-box test (multi-core thread pool, `__mark_store_dirty`)
+asserts the count through the bridge.
+---
+Remove the single-core qualifier: `change_seen_count` is now maintained in all
+three run paths (`run`, `run_parallel`, `run_fused`), so the "do not yet maintain
+it" sentence is dropped and the prose states the metric holds on every path.
+'''
+origin = "proposed"
+written_by = "topic r3b-parallel-fused of 2026-06-20, round 202606200200, and its doc changelist, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["change_seen_count", "run_parallel", "run_fused", "change class", "scheduler metrics", "OnMeta", "store_dirty"]
+rejects = ["the \"do not yet maintain it\" sentence"]
+related = ["tenet::the_scheduler_metrics_resource_carries_pass_count_ema_durations_active_units_stolen_count_and_idle_time_with_a_one_eighth_decay"]
+
+[[tenet]]
+id = "a_phase_s_duration_average_folds_the_phase_total_of_the_frame_once_per_frame_and_not_once_per_morsel"
+subject = "meta"
+what = "The per-phase duration average is the same one-eighth moving average the pass duration uses, seeded on the first frame. It folds how long a phase took in the whole frame, summed across its morsels, once per frame. It is not folded once per phase and morsel, which on a multi-morsel frame would leave the first frame holding the last morsel's duration and decay later frames per morsel."
+mechanism = "`phase_accum: [Cell<Nanos>; GATE2_MAX_UNITS]` beside `phase_ema`; `dispatch_trunks` adds each phase's per-morsel duration into `phase_accum[p]` (saturating) with no seed read; `run` folds `phase_accum[p]` into `phase_ema[p]` once at the pass-duration EMA fold point with the same `ema_seed`, after the morsel loop, then zeroes it."
+source = "mock/design_rounds/202606192345/202606192345_topic.phase-ema-per-frame-fix.md:10-18, mock/design_rounds/202606192345/202606192345_topic.phase-ema-per-frame-fix.md:22-32"
+provenance = ["mock::design_rounds::202606192345::202606192345_topic.phase-ema-per-frame-fix::#current-state"]
+quote = '''
+The per-phase EMA just landed (round 202606192301) folds the phase duration
+into `phase_ema[p]` INSIDE `dispatch_trunks`. But `dispatch_trunks` is called
+once per MORSEL window on the morsel-outer path (the common record-bearing
+case), so the fold runs per (phase, morsel), not per frame. On a multi-morsel
+frame (`total > MORSEL_SIZE`) frame 1 ends holding the last morsel's raw
+duration, and later frames decay 1/8 per morsel, not per frame. The DESIGN says
+"the same 1/8 EMA the pass-duration fold uses, seeded on the first frame", which
+is per-frame semantics the code does not honor when there is more than one
+morsel. The single-morsel N=4 test did not exercise it.
+---
+Make the code match the per-frame DESIGN (the natural reading of "per-phase
+duration EMA": how long phase p took this frame, summed across its morsels).
+
+1. Add a per-frame accumulator field `phase_accum: [Cell<Nanos>;
+   GATE2_MAX_UNITS]` alongside `phase_ema`.
+2. `dispatch_trunks` ADDS each phase's per-morsel duration into `phase_accum[p]`
+   (saturating), instead of folding into `phase_ema`. No seed read there.
+3. `run` folds each phase's per-frame total (`phase_accum[p]`) into
+   `phase_ema[p]` once, at the existing pass-duration EMA fold point (same
+   `ema_seed`, after the morsel loop), then zeroes `phase_accum[p]`. Bounded by
+   the phase count.
+'''
+origin = "proposed"
+written_by = "topic phase-ema-per-frame-fix of 2026-06-19, round 202606192345, a post-review fix to round 202606192301, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["phase_ema", "phase_accum", "per-phase EMA", "dispatch_trunks", "per frame", "one-eighth", "fold_ema", "morsel"]
+rejects = ["the fold runs per (phase, morsel), not per frame"]
+related = ["tenet::the_scheduler_metrics_resource_carries_pass_count_ema_durations_active_units_stolen_count_and_idle_time_with_a_one_eighth_decay"]
+
+[[tenet]]
+id = "per_phase_timing_samples_one_start_and_stop_pair_per_phase_per_frame"
+subject = "meta"
+what = "Per-phase timing is taken per frame: each phase's duration accumulator folds one start and stop pair per phase per frame, where before it folded one per window."
+mechanism = "`phase_accum[p]`; scripted-clock tests that count `now_ns` reads rehab to the new counts."
+source = "mock/design_rounds/202607161810/202607161800_topic.a2b-dispatch-loop-inversion.md:85-87"
+provenance = ["mock::design_rounds::202607161810::202607161800_topic.a2b-dispatch-loop-inversion::#behaviour-deltas-intended-canonical-correcting"]
+quote = '''
+- **Per-phase timing is per frame.** `phase_accum[p]` folds one start/stop
+  pair per phase per frame (previously per window). Scripted-clock tests
+  that count `now_ns` reads rehab to the new counts.
+'''
+origin = "proposed"
+written_by = "topic a2b-dispatch-loop-inversion of 2026-07-16, round 202607161810, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["phase_accum", "per-phase timing", "per frame", "now_ns", "start stop pair", "dispatch loop inversion"]
+related = ["tenet::a_phase_s_duration_average_folds_the_phase_total_of_the_frame_once_per_frame_and_not_once_per_morsel"]
+
+[[tenet]]
+id = "meta_bands_run_once_per_frame_and_not_once_per_morsel_window"
+subject = "meta"
+what = "The meta bands run once per frame and not once per morsel window. The earlier shape ran every dirty meta unit per window on frames with several windows, while the self-hosting kernel design has the bands as per-pass lifecycle hooks."
+mechanism = "Self-hosting kernel design E4: the bands are per-pass lifecycle hooks."
+source = "mock/design_rounds/202607161810/202607161800_topic.a2b-dispatch-loop-inversion.md:77-79"
+provenance = ["mock::design_rounds::202607161810::202607161800_topic.a2b-dispatch-loop-inversion::#behaviour-deltas-intended-canonical-correcting"]
+quote = '''
+- **Meta bands run once per frame**, not once per window. The old shape ran
+  every dirty meta unit per window on multi-window frames; the self-hosting
+  kernel design (E4) has the bands as per-pass lifecycle hooks.
+'''
+origin = "proposed"
+written_by = "topic a2b-dispatch-loop-inversion of 2026-07-16, round 202607161810, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: a passage shows part of it to be his and not the whole of it (mock/research/202606111400_canonical-design-addendum-a1.md:122-131), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["meta bands", "once per frame", "per window", "lifecycle hooks", "self-hosting kernel", "dispatch loop inversion"]
+rejects = ["every dirty meta unit per window on multi-window frames"]
+related = ["tenet::the_scheduler_is_itself_a_pipeline_and_meta_units_run_at_lifecycle_points"]
+
+[[tenet]]
+id = "the_adapt_unit_signals_each_kind_of_anomaly_by_its_own_flag_type_and_no_coarse_replan_flag_exists"
+subject = "meta"
+what = "Each kind of anomaly the adapt unit can signal is its own typed flag. A flag fires only when its own axis threshold comparison fires, there is no coarse flag asking for a replan, and an observer that wants any of several anomalies gets that meaning from the union of access sets."
+because = "It keeps remediation specific to each anomaly, costs nothing when a flag is not fired, and leaves the substrate exposing signals while the consumer interprets them."
+mechanism = "Five typed Virtual marker types: `BalanceAnomaly` (from core_idle_time imbalance), `MemoryPressure` (from memory_watermark), `ThroughputAnomaly` (from throughput_trending), `FiberEMADrift` (from fiber_ema hysteresis), `PhaseEMADrift` (from phase_ema hysteresis); the adapt unit's write side is `AccessSet![Virtual<BalanceAnomaly>, Virtual<MemoryPressure>, Virtual<ThroughputAnomaly>, Virtual<FiberEMADrift>, Virtual<PhaseEMADrift>]`; no `Virtual<ReplanRequested>`."
+source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:306-306"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#decision-log"]
+quote = '''
+- [x] **Axis E. Reorganisation trigger: E2 pure per-anomaly Virtuals.** Substrate ships five typed Virtual marker types: `BalanceAnomaly` (from core_idle_time imbalance), `MemoryPressure` (from memory_watermark), `ThroughputAnomaly` (from throughput_trending), `FiberEMADrift` (from fiber_ema hysteresis), `PhaseEMADrift` (from phase_ema hysteresis). AdaptWu's Write side uses `AccessSet![Virtual<BalanceAnomaly>, Virtual<MemoryPressure>, Virtual<ThroughputAnomaly>, Virtual<FiberEMADrift>, Virtual<PhaseEMADrift>]`. Per-axis threshold-mask comparison fires the relevant Virtuals only. No coarse `Virtual<ReplanRequested>`; observers use AccessSet union for any-of-N semantics. Aligns with hilavitkutin's typed-virtual abstraction (the `Virtual<T>` generic carrier is the substrate's existing single uniform mechanism for fired flags); preserves consumer-driven anomaly-specific remediation (different anomalies → different observer responses); zero-overhead when Virtual not fired; toolbox-not-policer alignment (substrate exposes signals, consumer interprets).
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 5 adapt subsystem, Axis E of the decision log dated 2026-05-10, agent-written; the text does not say whose decision it is"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["anomaly", "Virtual", "BalanceAnomaly", "MemoryPressure", "AccessSet union", "AdaptWu", "Axis E", "no coarse flag"]
+related = ["tenet::anomalies_are_virtual_marker_types_so_that_observers_compose_through_access_set_union"]

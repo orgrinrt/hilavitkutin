@@ -1,0 +1,518 @@
+# The tenets whose subject is `governance`.
+
+[[tenet]]
+id = "the_maintainer_is_wary_of_anything_put_beside_what_hilavitkutin_is"
+subject = "governance"
+what = "The maintainer is wary and uncomfortable where something added to hilavitkutin is out of place, too specialised or too parallel to what hilavitkutin is now, kept apart from what is already in it."
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:21-21"
+provenance = ["mock::research::202611130850_the-record-read-whole::OP-ANSWERS::#said-unprompted-at-05-12"]
+quote = '''
+> I am wary and uncomfortable if that means you are adding something entirely out of place or too specialized or too parallel to what hilavitkutin is now, in there, since you separate it from the current stuff in hila
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:21-21"]
+keywords = ["parallel", "out of place", "specialised", "second vocabulary", "beside", "new crates"]
+related = ["question::how_the_contract_crates_put_beside_the_api_are_handled"]
+
+[[tenet]]
+id = "hilavitkutin_takes_the_registry_the_tools_and_tickets_into_use"
+subject = "governance"
+what = "hilavitkutin starts using the newer mockspace features, the registry and the tools. The canon is written up where it is missing and filled in where it exists, and tickets are taken into use."
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:60-60"
+provenance = ["mock::research::202611130850_the-record-read-whole::OP-ANSWERS::#said-unprompted-at-05-26"]
+quote = '''
+> Also we should start using the newer mockspace features like the registry and tools in both arvo and hilavitkutin. Worth it to start writing up the canon where it is missing and filling in even where it exists, and start using tickets. If tickets aren't upstreamed to mockstream yet as we use them in kaski, approx our shape for now and copy over some of the related tools that aren't upstreamed but useful and needed etc. or rather perhaps upstream the tools in full, the ones that don't depend on kaski specifically, to the mocksoace extra lints for now. I think the mockspace extensions as crates (deps in its toml) already support tools too along with lints, and perhaps also agent stuff too and maybe even registry schemas?
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:60-60"]
+keywords = ["registry", "tools", "canon", "tickets", "mockspace", "upstream"]
+
+[[tenet]]
+id = "the_consolidation_is_the_single_source_of_truth_for_the_current_design"
+subject = "governance"
+what = "The consolidation record is the single source of truth for hilavitkutin's current design state, and it resolves the supersessions and tensions across the earlier topics."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:5-6"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#topic-hilavitkutin-design-consolidation"]
+quote = '''
+**Purpose:** Single source of truth for hilavitkutin's current design
+state. Resolves supersessions and tensions across prior topics.
+'''
+origin = "stated"
+standing = "held"
+keywords = ["single source of truth", "consolidation", "supersession", "tensions", "design state", "source topics"]
+
+[[tenet]]
+id = "the_execution_model_topic_is_provisional_until_confirmed_against_the_other_topics"
+subject = "governance"
+what = "The seventh topic was written from the sixth topic alone, without the full context of the first five topics, so its content is provisional until it is confirmed against the other topics."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:21-22"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#source-topics-chronological"]
+quote = '''
+T7 was written from T6 alone without full context from T1-T5; its
+content is provisional until confirmed against the other topics.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:21-22", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2382-2390"]
+keywords = ["T7", "execution-model", "provisional", "confirmed", "source topics", "T6 bench"]
+
+[[tenet]]
+id = "type_native_stride_supersedes_the_tagged_128_bit_stride_and_the_bench_finding_governs"
+subject = "governance"
+what = "The type-native stride supersedes the earlier 128-bit tagged stride, the universal 128-bit stride and the rule that the stride is the SIMD lane. The benchmark finding that type-native stride outperforms the 128-bit one is now the authoritative text."
+mechanism = "Superseded: T1 decisions #80-81, T2 decision #1, T3 decision #90."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:383-383, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:390-392"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#04-column-memory-layout"]
+quote = '''
+**Resolution R3: type-native stride, no flags byte.**
+---
+**Supersedes:** T1 decisions #80-81 (128-bit tagged stride), T2 decision #1
+(universal 128-bit), T3 decision #90 (stride IS the SIMD lane). The
+T6 bench finding (type-native outperforms 128-bit) is now authoritative.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:383-383", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:390-392"]
+keywords = ["supersedes", "type-native stride", "128-bit", "T6 bench", "R3", "authoritative"]
+
+[[tenet]]
+id = "the_column_value_trait_replaces_the_payload_and_slot_size_system"
+subject = "governance"
+what = "The column value trait with its blanket implementation replaces the payload trait and the sealed slot size system. The rule that stride is the SIMD lane is superseded by R3, and the fifteen-byte constraint is updated to sixteen bytes."
+mechanism = "Replaced: T3 decisions #83-87 (Payload trait, sealed SlotSize, Slot1-15), T3 decision #90, T1 decisions #82-83, the T4 §Q6 `Check<size_of <= 15>` pattern (now <= 16)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:466-471"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#05-column-value-types"]
+quote = '''
+**What this supersedes:**
+- T3 decisions #83-87 (Payload trait, sealed SlotSize, Slot1-15) → replaced
+  by ColumnValue with blanket impl
+- T3 decision #90 (stride IS the SIMD lane) → superseded by R3
+- T1 decisions #82-83 (15-byte constraint) → updated to 16-byte
+- T4 §Q6 `Check<size_of ≤ 15>` pattern → updated to ≤ 16
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:466-471"]
+keywords = ["Payload", "SlotSize", "ColumnValue", "supersedes", "15-byte", "16-byte", "R4"]
+related = ["tenet::each_column_has_its_own_stride_and_a_value_is_at_most_sixteen_bytes"]
+
+[[tenet]]
+id = "column_storage_returns_raw_pointers_and_the_stride_type_is_gone"
+subject = "governance"
+what = "The column storage trait no longer returns slices of a stride type but raw pointers, and the stride type is gone. The principles of the slab column as one implementation are retained."
+mechanism = "Supersedes T2 L806-807 (ColumnStorage returns &[Stride]) and T5 L672-684 §Q7 (SlabColumn as one implementation, principles retained, Stride type gone)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:568-571"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#07-column-storage"]
+quote = '''
+**What this supersedes:**
+- T2 L806-807: ColumnStorage returns &[Stride] → raw pointers instead
+- T5 L672-684 §Q7: SlabColumn as one implementation → principles
+  retained, Stride type gone
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:568-571"]
+keywords = ["ColumnStorage", "SlabColumn", "Stride", "raw pointers", "supersedes", "slices"]
+related = ["tenet::the_consumer_provides_the_backing_memory_of_a_column"]
+
+[[tenet]]
+id = "phases_emerged_from_the_bench_and_replace_the_flat_dag_and_the_older_level_of_detail_names"
+subject = "governance"
+what = "Phases emerged from the benchmark and replace the earlier flat DAG. The old level-of-detail steps chain, chain group and partition are refined to fiber, trunk and phase, while the entry, morsel and pipeline levels are unchanged, and four earlier decisions of the second topic are superseded by a later decision of the third."
+mechanism = "Supersedes: T1 decision #17 (flat DAG, not phased); T3 LOD levels 2-4 (chain, chain group, partition) refined to fiber, trunk, phase; levels 0-1 (entry, morsel) and 5 (pipeline) unchanged; T2 decisions #9, #12, #13, #14 superseded by T3 decision #51."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:803-808"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#11-cache-hierarchy-tiling-and-phase-decomposition"]
+quote = '''
+**What T6 supersedes:**
+- T1 decision #17 "flat DAG, not phased" — phases emerged from bench
+- T3 LOD levels 2-4 (chain → chain group → partition) — refined to
+  fiber → trunk → phase. Levels 0-1 (entry, morsel) and 5 (pipeline)
+  unchanged.
+- T2 decisions #9, #12, #13, #14 — superseded by T3 decision #51
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:803-808"]
+keywords = ["supersedes", "flat DAG", "phases", "LOD levels", "fiber", "trunk", "partition", "T3 decision #51"]
+
+[[tenet]]
+id = "the_earlier_archetype_chain_and_partition_decisions_are_superseded_by_fibers_trunks_and_phases"
+subject = "governance"
+what = "The earlier archetype scheduling hint, the chain partitioning decisions and the tiling model level-of-detail steps are superseded by the fiber, trunk and phase model. The rule that partitions are connected components is subsumed by phase detection via waist analysis, the order field on a unit is replaced by scheduling hint priority, and the greedy fusion algorithm is retained with its vocabulary updated."
+mechanism = "Superseded: T1 §11.4.6 archetype as scheduling hint (dead, subsumed by fibers); T2 decisions #9-13 (by T3 decision #51, refined by T6/T7 register-file-aware limits); T3 decisions #41-51 (LOD levels refined: chain to fiber, chain group to trunk, partition to phase); T3 decision #48 (partitions = connected components, subsumed by phase detection via waist analysis); T6 `order` field on WU (replaced by scheduling hint priority); T7 §1.3 Kahn's + greedy fusion (retained, vocabulary updated)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1190-1200"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#14-fiber-formation"]
+quote = '''
+**What this supersedes:**
+- T1 §11.4.6 "archetype as scheduling hint" → dead, subsumed by fibers
+- T2 decisions #9-13 (chain partitioning, max_cols) → superseded by T3
+  decision #51, further refined by T6/T7 register-file-aware limits
+- T3 decisions #41-51 (tiling model, LOD levels 2-4) → LOD levels
+  refined: "chain" → fiber, "chain group" → trunk, "partition" → phase
+- T3 decision #48 "partitions = connected components" → subsumed by
+  phase detection via waist analysis
+- T6 `order` field on WU → replaced by scheduling hint priority
+- T7 §1.3 "Kahn's + greedy fusion" → algorithm retained, vocabulary
+  updated (chain → fiber)
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1190-1200"]
+keywords = ["supersedes", "archetype", "chain", "partition", "order field", "T3 decision #48", "T7 1.3", "vocabulary"]
+related = ["tenet::scheduling_hints_replace_an_order_field_on_the_unit"]
+
+[[tenet]]
+id = "source_code_lies_and_only_documentation_is_trusted"
+subject = "governance"
+what = "Source code lies, and only documentation is trusted."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2231-2231"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+quote = '''
+- Source code lies — trust only documentation (#59)
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2231-2231"]
+keywords = ["source code lies", "trust documentation", "design principle", "#59", "docs"]
+
+[[tenet]]
+id = "no_rule_exists_without_a_lint_and_no_lint_without_a_test"
+subject = "governance"
+what = "No rule exists without a lint, and no lint without a test."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2232-2232"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+quote = '''
+- No rule without a lint, no lint without a test (#60)
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2232-2232"]
+keywords = ["no rule without a lint", "no lint without a test", "design principle", "#60", "enforcement"]
+
+[[tenet]]
+id = "rules_live_in_the_mockspace_templates"
+subject = "governance"
+what = "Rules live in the mockspace templates."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2233-2233"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+quote = '''
+- Rules live in mockspace templates (#61)
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2233-2233"]
+keywords = ["rules", "mockspace templates", "design principle", "#61"]
+
+[[tenet]]
+id = "ai_tooling_is_used_responsibly_with_a_co_authored_by_line"
+subject = "governance"
+what = "AI tooling is used responsibly, which includes a Co-Authored-By line."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2236-2236"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+quote = '''
+- Responsible AI tooling — Co-Authored-By (#64)
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2236-2236"]
+keywords = ["responsible AI tooling", "Co-Authored-By", "design principle", "#64", "attribution"]
+
+[[tenet]]
+id = "topic_files_are_frozen_once_committed"
+subject = "governance"
+what = "Topic files are frozen once committed."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2237-2237"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+quote = '''
+- Topic files frozen once committed (#65)
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2237-2237"]
+keywords = ["topic files", "frozen", "committed", "design principle", "#65"]
+
+[[tenet]]
+id = "a_superseded_text_is_deprecated_and_never_amended_by_an_addendum"
+subject = "governance"
+what = "Deprecation is used and not an addendum."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2238-2238"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+quote = '''
+- Deprecation not addendum (#66)
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2238-2238"]
+keywords = ["deprecation", "addendum", "design principle", "#66", "supersession"]
+
+[[tenet]]
+id = "the_record_s_precedence_is_the_founding_spec_then_dated_amendments_then_the_reading_aid_then_the_rest"
+subject = "governance"
+what = "The precedence order of the record is: first the consolidation spec, the founding canon; second the amendments that the maintainer ruled or a bench decided, in date order, each modifying canon where it explicitly speaks, where a later ruling wins over an earlier one on the same point and the consolidation spec's wording is the tiebreak where an amendment is silent or ambiguous; third the standalone spec, a commissioned reading aid with no independent design authority, whose conflict with the first two is a transcription defect to be fixed in it; and fourth everything else, roadmaps, audits, expert memos, sketches, the design templates and agent memory, which are intermediate artifacts and never canon."
+source = "mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:27-41"
+provenance = ["mock::research::pre_seed::202607193200_canon-amendment-a2-precedence-and-rulings::#a2-1-document-precedence-traced-ruling"]
+quote = '''
+The precedence order is therefore:
+
+1. The consolidation spec (`202603181200`), the founding canon.
+2. Op-ruled and bench-decided amendments, in date order, each modifying canon where it
+   explicitly speaks: the chain registered in A1, plus the unified-engine amendment
+   (`202606061000`, op explicit ruling 2026-06-06, registered below), plus A1 itself, plus the
+   storage addendum (`202606210600_resource-storage-model-canonical-addendum.md`, bench-decided
+   with op's hybrid call 2026-07-02), plus this addendum, plus later dated rulings. A later
+   ruling wins over an earlier one on the same point. Where an amendment is silent or
+   ambiguous, the consolidation spec's wording is the tiebreak.
+3. The standalone spec: a commissioned reading aid with no independent design authority. Where
+   it conflicts with tiers 1 or 2, the conflict is a transcription defect in the standalone, to
+   be fixed there. Its header is corrected to state this (same commit as this file).
+4. Everything else (roadmaps, audits, expert memos, sketches, DESIGN.md.tmpl, agent memory):
+   intermediate artifacts, never canon.
+'''
+origin = "proposed"
+written_by = "addendum A2 (locked 2026-07-19), section A2-1, a provenance trace the maintainer delegated with the words it quotes"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["precedence", "ladder", "founding canon", "amendments", "date order", "standalone", "reading aid", "intermediate", "never canon"]
+
+[[tenet]]
+id = "the_standalone_spec_s_claim_to_win_conflicts_exceeds_its_commission"
+subject = "governance"
+what = "The standalone spec claims in its header that where it and any older document disagree, it is the design. Addendum A2 traces that this claim exceeds its commission: the commission grants the role of a faithful consolidation that spares the reader cross-reading, and does not grant authority to win conflicts, since any disagreement of a faithful consolidation with its sources is by definition a transcription defect in the consolidation. The standalone also entered the repository unsigned inside a feature squash and never through its own reviewed round."
+source = "mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:15-25"
+provenance = ["mock::research::pre_seed::202607193200_canon-amendment-a2-precedence-and-rulings::#a2-1-document-precedence-traced-ruling"]
+quote = '''
+The standalone spec (`202606111800_canonical-spec-standalone.md`) claims in its header that
+"where this document and any older one disagree, this document is the design." That claim
+exceeds its commission. The commissioning text is A1 "Sequence from here" item 3, op-blessed
+live 2026-06-11: the standalone is written "fully self-contained, readable with no prior
+project knowledge ... superseding the need to cross-read the chain registered above." The
+commission grants the role of a faithful consolidation that spares the reader cross-reading. It
+does not grant conflict-winning authority, and a faithful consolidation cannot legitimately win
+conflicts against its sources: any disagreement with them is by definition a transcription
+defect in the consolidation. Provenance agrees: A1 is op-locked; the standalone entered the
+repo unsigned inside the GATE-2 feature squash (`ff147c1a`, 2026-06-19), never through its own
+reviewed round.
+'''
+origin = "proposed"
+written_by = "addendum A2 (locked 2026-07-19), section A2-1, a provenance trace the maintainer delegated with the words it quotes"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["standalone spec", "commission", "conflict", "transcription defect", "consolidation", "provenance", "squash"]
+
+[[tenet]]
+id = "the_uncorrected_copy_of_the_standalone_spec_says_it_is_the_design_where_it_and_an_older_document_disagree"
+subject = "governance"
+what = "The copy of the standalone spec that stands directly under the research directory says of itself that it supersedes, for the purpose of what the design is, the founding consolidation spec, the chain of design-round amendments and the reconciliation addendum, and that where it and any older document disagree, it is the design."
+source = "mock/research/202606111800_canonical-spec-standalone.md:18-22"
+provenance = ["mock::research::202606111800_canonical-spec-standalone::#about-this-document"]
+quote = '''
+It supersedes, for the purpose of "what is the design," the scattered set of
+prior documents: a founding consolidation spec, a chain of design-round
+amendments, and a recent reconciliation addendum. Where this document and any
+older one disagree, this document is the design. It does not narrate the
+history of how the design was reached; it states the design.
+'''
+origin = "proposed"
+written_by = "the standalone spec 202606111800, the header of the copy under mock/research that addendum A2 did not correct"
+standing = "provisional"
+keywords = ["standalone spec", "supersedes", "header", "this document is the design", "older documents"]
+superseded_by = ["the_record_s_precedence_is_the_founding_spec_then_dated_amendments_then_the_reading_aid_then_the_rest"]
+
+[[tenet]]
+id = "the_standalone_spec_is_a_commissioned_reading_aid_by_its_own_corrected_header"
+subject = "governance"
+what = "The corrected header of the standalone spec says it consolidates the prior documents for reading convenience and that, per addendum A2, it is a commissioned reading aid with no independent design authority: it was commissioned to spare the reader cross-reading the chain and not to override it. Where it and the consolidation spec or a registered amendment disagree, the disagreement is a transcription defect in it, to be fixed there."
+source = "mock/research/pre_seed/202606111800_canonical-spec-standalone.md:18-26"
+provenance = ["mock::research::pre_seed::202606111800_canonical-spec-standalone::#about-this-document"]
+quote = '''
+It consolidates, for reading convenience, the scattered set of prior
+documents: the founding consolidation spec, the chain of design-round
+amendments, and the reconciliation addendum A1. Per addendum A2
+(`202607193200`, ruling A2-1), this document is a commissioned reading aid
+with no independent design authority: it was commissioned by A1 to spare the
+reader cross-reading the chain, not to override it. Where this document and
+the consolidation spec or a registered amendment disagree, the disagreement
+is a transcription defect in this document, to be fixed here. It does not
+narrate the history of how the design was reached; it restates the design.
+'''
+origin = "proposed"
+written_by = "the standalone spec 202606111800, the header of the copy under mock/research/pre_seed as corrected with addendum A2"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: it was ratified from A2-1, the precedence trace at mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:10-41, and from the status line at mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:3-7, which says only that the precedence ruling was delegated to that trace; the corrected header is the conclusion of the trace, and whether the trace is his ruling is asked of him as question hilavitkutin_is_the_a2_1_precedence_trace_your_ruling, unanswered, and until he answers it no passage of A2-1 carries a ratification, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["standalone spec", "reading aid", "no design authority", "transcription defect", "header", "A2-1"]
+related = ["tenet::the_record_s_precedence_is_the_founding_spec_then_dated_amendments_then_the_reading_aid_then_the_rest"]
+
+[[tenet]]
+id = "the_maintainer_delegated_the_precedence_ruling_to_a_provenance_trace_of_the_record"
+subject = "governance"
+what = "The maintainer delegated the ruling on which document ranks over which to a provenance trace of the record, on 2026-07-19, saying that the timestamps and the content were enough to infer it."
+mechanism = "Addendum A2 section A2-1, status locked, with the evidence cited inline."
+source = "mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:4-5, mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:10-14"
+provenance = ["mock::research::pre_seed::202607193200_canon-amendment-a2-precedence-and-rulings::#canonical-design-addendum-a2-precedence-rulings-and-a-citation-correction"]
+quote = '''
+**Status:** locked (op rulings recorded live, 2026-07-19; the precedence ruling op-delegated to
+a provenance trace, evidence cited inline)
+---
+## A2-1: Document precedence (traced ruling)
+
+Op delegated this ruling to a provenance trace of the record (2026-07-19): "Trace the timestamps
+and content, it's all inferrable in context." The trace and its conclusion:
+
+'''
+origin = "stated"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: his words of the delegation are quoted inside A2-1 at mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:12-13 and nowhere else in the repository, and the status line at mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:3-5 records the delegation without them; whether the trace of A2-1 is his ruling is asked of him as question hilavitkutin_is_the_a2_1_precedence_trace_your_ruling, unanswered, and until he answers it no passage of A2-1 carries a ratification, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["precedence", "provenance trace", "delegated", "A2-1", "timestamps", "ruling"]
+related = ["tenet::the_record_s_precedence_is_the_founding_spec_then_dated_amendments_then_the_reading_aid_then_the_rest"]
+
+[[tenet]]
+id = "the_unified_engine_amendment_carries_authority_over_intermediate_artifacts_and_the_standalone_carries_none"
+subject = "governance"
+what = "The precedence order subsumes the informally reported ruling of 2026-07-19 that neither the standalone spec nor the unified-engine amendment blanket-wins, with one refinement the trace grounds: the unified-engine amendment does carry authority over intermediate artifacts, granted by the maintainer in its own status line, while the standalone carries none."
+source = "mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:43-46"
+provenance = ["mock::research::pre_seed::202607193200_canon-amendment-a2-precedence-and-rulings::#a2-1-document-precedence-traced-ruling"]
+quote = '''
+This subsumes the informally reported 2026-07-19 ruling that r7 carried ("neither the
+standalone nor the unified-engine amendment blanket-wins"), with one refinement the trace
+grounds: the unified-engine amendment DOES carry op-granted authority over intermediate
+artifacts (its own status line, op explicit), while the standalone carries none.
+'''
+origin = "proposed"
+written_by = "addendum A2 of 2026-07-19, section A2-1, a provenance trace of the record; the text does not say whether the maintainer ruled this refinement himself"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing of it is his in words: it is the refinement of the A2-1 precedence trace at mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:43-46, a trace he delegated to an agent, and whether that trace is his ruling is asked of him as question hilavitkutin_is_the_a2_1_precedence_trace_your_ruling, unanswered; the authority it names rests on the status line of the unified-engine amendment, which A2-2 at mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:50-51 calls his explicit ruling of 2026-06-06, while that the standalone carries none is the reading of the trace, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["unified-engine amendment", "standalone spec", "blanket-wins", "intermediate artifacts", "r7", "authority", "precedence"]
+related = ["tenet::the_record_s_precedence_is_the_founding_spec_then_dated_amendments_then_the_reading_aid_then_the_rest"]
+
+[[tenet]]
+id = "the_unified_engine_amendment_is_registered_in_the_amendment_chain_by_its_date"
+subject = "governance"
+what = "The unified-engine amendment, a ruling of the maintainer of 2026-06-06, was missing from the amendment-chain registry of addendum A1 despite its canon status. Addendum A2 registers it as part of the chain, positioned by its date, before the rechart."
+mechanism = "`202606061000_canon-amendment-unified-engine.md` is placed before the rechart `202606070100`."
+source = "mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:48-53"
+provenance = ["mock::research::pre_seed::202607193200_canon-amendment-a2-precedence-and-rulings::#a2-2-registry-addition"]
+quote = '''
+## A2-2: Registry addition
+
+The unified-engine amendment (`202606061000_canon-amendment-unified-engine.md`, op explicit
+ruling 2026-06-06) is missing from A1's amendment-chain registry despite its canon status. It
+is hereby registered as part of the chain, positioned by its date (before the rechart
+`202606070100`).
+'''
+origin = "proposed"
+written_by = "addendum A2 of 2026-07-19, section A2-2, a registry addition; the text does not say whether the maintainer ruled it himself"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["amendment chain", "registry", "unified-engine amendment", "A2-2", "rechart", "date order"]
+
+[[tenet]]
+id = "the_gate_2_agent_call_deviations_are_blessed_or_rebuilt_only_on_evidence_put_to_the_maintainer"
+subject = "governance"
+what = "The six deviations the GATE-2 ledger tags as agent calls pending the maintainer's review follow an evidence-then-bless standard. For each one, the canon shape is built or sketched, benched against the shipped shape where the ledger names a bench trigger, and presented to the maintainer with evidence for a ruling to bless it or rebuild it. None is blessed by default and none is rebuilt by default."
+mechanism = "The six entries in `202606072100`: PoolFrame inline plus Pin, main-orchestrated waist barrier, park-immediately with no spin tier, pointer-size spawn plus exit-counter join, discipline-sound raw scheduler aliasing, inline GATE-2 scratch."
+source = "mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:64-71"
+provenance = ["mock::research::pre_seed::202607193200_canon-amendment-a2-precedence-and-rulings::#a2-4-disposition-of-the-gate-2-agent-call-deviations-op-2026-07-19"]
+quote = '''
+## A2-4: Disposition of the GATE-2 agent-call deviations (op, 2026-07-19)
+
+The six ledger entries tagged `[agent-call] pending op review` in `202606072100` (PoolFrame
+inline + Pin, main-orchestrated waist barrier, park-immediately with no spin tier, pointer-size
+spawn + exit-counter join, discipline-sound raw scheduler aliasing, inline GATE-2 scratch)
+follow the evidence-then-bless standard: for each, the canon shape is built or sketched, benched
+against the shipped shape where the ledger names a bench trigger, and presented to op with
+evidence for a bless-or-rebuild ruling. None is blessed by default; none is rebuilt by default.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["ruled: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:64-71"]
+keywords = ["GATE-2", "agent-call", "evidence-then-bless", "deviation", "bless or rebuild", "PoolFrame", "waist barrier", "spin tier"]
+
+[[tenet]]
+id = "the_spectral_role_deviation_follows_the_same_evidence_then_bless_standard"
+subject = "governance"
+what = "The deviation in the role of the spectral step, at the canon's trunk formation step, is governed by the same evidence-then-bless standard as the GATE-2 agent-call deviations, by the maintainer's ruling of 2026-07-19 on it."
+mechanism = "Canon step 7, trunk formation."
+source = "mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:72-73"
+provenance = ["mock::research::pre_seed::202607193200_canon-amendment-a2-precedence-and-rulings::#a2-4-disposition-of-the-gate-2-agent-call-deviations-op-2026-07-19"]
+quote = '''
+The same standard governs the spectral role deviation (canon step 7 trunk formation), per op's
+2026-07-19 ruling on it.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:64-73"]
+keywords = ["spectral", "trunk formation", "canon step 7", "evidence-then-bless", "deviation", "role"]
+related = ["tenet::the_gate_2_agent_call_deviations_are_blessed_or_rebuilt_only_on_evidence_put_to_the_maintainer"]
+
+[[tenet]]
+id = "two_shipped_rounds_cited_an_expert_input_memo_as_if_it_were_the_storage_addendum"
+subject = "governance"
+what = "The D1 install round and the revert round of 2026-07-19 cited the storage addendum for the claim that a swap is a member-by-member copy into column slots and not a blob copy. That sentence is from an expert-panel input memo, which in the same passage states that swap semantics need an explicit spec, and so it is fourth-tier material. The storage addendum decided the opposite layout, one record blob, with per-member decomposition refuted by bench, and never specified swap semantics. Both rounds were grounded on a mis-citation, and the revert round's design sentence, the replace-value placeholder comment and the ignore reason of the catalogued test encode refuted-layout language."
+mechanism = "The sentence is from `202606210600_expert-architect-storage-model.md`; the rounds are the D1 install round and `202607193110`; `Decompose` is scoped to the size fold and to collection ptr+len; the artifacts are the `DESIGN.md.tmpl` sentence, the `replace_value` FIXME and the catalogued test's ignore reason."
+source = "mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:75-86"
+provenance = ["mock::research::pre_seed::202607193200_canon-amendment-a2-precedence-and-rulings::#a2-5-the-202606210600-citation-correction-and-the-commissioned-swap-semantics-round"]
+quote = '''
+## A2-5: The 202606210600 citation correction and the commissioned swap-semantics round
+
+Two shipped rounds (the D1 install round and the 2026-07-19 revert round `202607193110`) cited
+"`202606210600`" for the claim that a `Replaceable` swap is "a member-by-member copy of each
+leaf into its column slot ... not an in-place blob memcpy." That sentence is from
+`202606210600_expert-architect-storage-model.md`, an expert-panel INPUT memo which in the same
+passage states "Swap semantics need explicit spec." It is tier-4 material under A2-1. The
+round's canonical output, the storage addendum, decided the opposite layout (one-record blob;
+per-member decomposition bench-refuted; `Decompose` scoped to size fold and collection
+ptr+len) and never specified swap semantics. Both rounds were therefore grounded on a
+mis-citation; the revert round's DESIGN.md.tmpl sentence, the `replace_value` FIXME, and the
+catalogued test's ignore reason encode refuted-layout language.
+'''
+origin = "proposed"
+written_by = "addendum A2 of 2026-07-19, section A2-5, a citation correction (the finding is the document's own trace; the maintainer's direction that follows it is a separate row)"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["citation correction", "mis-citation", "swap", "expert input memo", "storage addendum", "blob record", "Decompose", "revert round"]
+related = ["tenet::the_swap_of_a_replaceable_resource_is_to_be_specified_by_a_commissioned_round", "tenet::the_record_s_precedence_is_the_founding_spec_then_dated_amendments_then_the_reading_aid_then_the_rest"]
+
+[[tenet]]
+id = "the_rechart_and_r3_correct_the_parallelism_framing_to_core_pinned_column_disjoint_trunks"
+subject = "governance"
+what = "The GATE-2 rechart together with r3 corrects the parallelism framing of r1 and r2 to core-pinned, column-disjoint trunks joined only at waists and bridges, and pins the term compile-time as relative to plan execution."
+mechanism = "rechart `202606070100` + r3 `202606070200`."
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:181-183"
+provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#amendment-chain-registry"]
+quote = '''
+2. GATE-2 rechart (`202606070100`) + r3 (`202606070200`): corrects r1/r2
+   parallelism framing to core-pinned column-disjoint trunks joined only at
+   waists and bridges; pins "compile-time" as relative to plan execution.
+'''
+origin = "proposed"
+written_by = "addendum A1 of 2026-06-11, agent-written reconciliation, status locked with op rulings recorded live"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["rechart", "r3", "core-pinned", "column-disjoint", "trunks", "waists", "bridges", "compile-time"]
+related = ["tenet::the_effective_canon_is_the_consolidation_spec_as_modified_in_order_by_seven_registered_amendments"]

@@ -38,7 +38,7 @@ impl<W: Write> FlagList<'_, W> {
     fn pragma(&mut self, pragma: Pragma) -> core::fmt::Result {
         match pragma {
             Pragma::LoopOptimization => {
-                // FIXME(hilavitkutin_build_build_scripts_find_the_plugins_and_profil): the `-Zllvm-plugins` flag for polka-passes.so waits on the build script finding the plugin.
+                // FIXME(placeholders_tagged_hilavitkutin_build_build_scripts_find): the `-Zllvm-plugins` flag for polka-passes.so waits on the build script finding the plugin.
                 for flag in LOOP_OPTIMIZATION {
                     self.push(format_args!("{flag}"))?;
                 }

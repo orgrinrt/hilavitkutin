@@ -91,7 +91,7 @@ pipeline → core → phase ↔ waist → trunk → fiber ↔ branch ↔ bridge
 is independent; no tabular joins.
 
 Dead terms (do not introduce; the vocabulary lint scans for these):
-`chain`, `chain_group`, `partition`, `archetype`, `entity`, `row`,
+`chain`, `chain_group`, `partition`, `archetype`, `entity`, `row`, <!-- tenet::the_dead_terms_chain_chain_group_partition_archetype_entity_row_and_order_have_named_replacements -->
 `order`. If you need to refer to the engine vocabulary: `chain →
 fiber`, `chain_group → trunk`, `partition → phase`, `archetype →
 fiber`, `entity/row → record`, `order → scheduling hints`.
@@ -146,7 +146,7 @@ commit time.
  assumption is that any extension loads, runs, and drops at
  arbitrary points independent of siblings. Consumer code MUST
  tolerate this; framework code MUST enforce it.
-- Do not use the dead vocabulary terms (`chain`, `chain_group`,
+- Do not use the dead vocabulary terms (`chain`, `chain_group`, <!-- tenet::the_dead_terms_chain_chain_group_partition_archetype_entity_row_and_order_have_named_replacements -->
  `partition`, `archetype`, `entity`, `row`, `order`) for any
  engine-domain concept.
 - Do not let `hilavitkutin-api` depend on `hilavitkutin`. The

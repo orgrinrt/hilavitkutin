@@ -1,0 +1,476 @@
+# What the record says about `change`, part 2.
+
+[[tenet]]
+id = "replace_value_is_the_supported_every_frame_swap_and_costs_one_blob_write_then_the_store_s_dirty_cone"
+subject = "change"
+what = "Replacing a value costs one blob write plus, in the next frame, the dirty cone of the store: the cost is proportional to the size of the value and then to the cone. It is the supported every-frame path."
+mechanism = "O(sizeof(V)) then O(cone)."
+source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:91-92, mock/research/202607200200_replaceable-swap-semantics-spec.md:94-94"
+provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s5-cost-asymmetry-caller-facing-contract"]
+quote = '''
+`replace_value` costs one blob write plus, next frame, the store's dirty
+cone: O(sizeof(V)) then O(cone). `replace_resource` costs one blob write
+---
+band). `replace_value` is the supported every-frame path. `replace_resource`
+'''
+origin = "proposed"
+written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
+standing = "held"
+keywords = ["replace_value", "cost", "blob write", "dirty cone", "every frame", "O(sizeof(V))", "S5"]
+related = ["tenet::a_swap_of_a_resource_value_is_legal_only_between_frames_and_is_observed_from_the_next_run"]
+
+[[tenet]]
+id = "replace_resource_swaps_must_be_rare_relative_to_frame_rate_and_an_every_frame_plan_affecting_swap_is_misuse"
+subject = "change"
+what = "Replacing a resource costs one blob write plus, in the next frame, the entire leading plan band. Such swaps must be rare relative to the frame rate, and an every-frame plan-affecting swap is misuse regardless of correctness."
+mechanism = "O(sizeof(T)) then O(plan band)."
+source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:92-96"
+provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s5-cost-asymmetry-caller-facing-contract"]
+quote = '''
+cone: O(sizeof(V)) then O(cone). `replace_resource` costs one blob write
+plus, next frame, the entire leading plan band: O(sizeof(T)) then O(plan
+band). `replace_value` is the supported every-frame path. `replace_resource`
+swaps must be rare relative to frame rate; an every-frame `PlanAffecting`
+swap is misuse regardless of correctness. The sound path and the fast path
+'''
+origin = "proposed"
+written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
+standing = "held"
+keywords = ["replace_resource", "cost", "plan band", "rare swaps", "misuse", "PlanAffecting", "every frame", "S5"]
+related = ["tenet::replacing_a_plan_affecting_resource_does_the_replace_value_write_and_sets_the_plan_dirty_bit_the_next_run_consumes"]
+
+[[tenet]]
+id = "the_sound_swap_path_and_the_fast_swap_path_coincide_because_there_is_one_candidate_write_shape"
+subject = "change"
+what = "The sound path and the fast path coincide for swaps by structure: once the storage addendum killed per-member decomposition, there was exactly one candidate write shape."
+source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:96-98"
+provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s5-cost-asymmetry-caller-facing-contract"]
+quote = '''
+swap is misuse regardless of correctness. The sound path and the fast path
+coincide here by structure: once the storage addendum killed per-member
+decomposition there was exactly one candidate write shape.
+'''
+origin = "proposed"
+written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
+standing = "held"
+keywords = ["sound path", "fast path", "write shape", "per-member decomposition", "storage addendum", "swap", "S5"]
+related = ["tenet::the_value_of_a_resource_is_one_contiguous_record_blob_and_the_per_member_column_decomposition_was_refuted_by_bench"]
+
+[[tenet]]
+id = "the_catalogued_red_swap_test_maps_to_the_replace_value_clause_and_only_its_ignore_reason_is_refuted"
+subject = "change"
+what = "The catalogued red test of the resource bindings maps to the replace-value clause. Its assertions are already the spec's and only its ignore reason is refuted. The implementing round rewrites the reason to cite the swap spec, and removes the ignore when the install lands."
+mechanism = "`tests/resource_bindings.rs:353`."
+source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:22-22, mock/research/202607200200_replaceable-swap-semantics-spec.md:102-106"
+provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s1-replace-value-mechanism"]
+quote = '''
+## S1: replace_value mechanism
+---
+The catalogued red at `tests/resource_bindings.rs:353` maps to S1; its
+assertions are already the spec's, only its ignore reason is refuted (the
+implementing round rewrites the reason to cite this spec, then removes the
+ignore when the install lands). New tests: blob-address byte-identity across
+a swap; double-swap-before-run, last value wins; ZST swap (dirty set, no
+'''
+origin = "proposed"
+written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
+standing = "held"
+keywords = ["catalogued red", "resource_bindings.rs", "ignore reason", "replace_value", "S1", "implementing round", "swap test"]
+related = ["tenet::the_implementing_round_corrects_three_artifacts_that_carry_the_refuted_member_by_member_swap_language"]
+
+[[tenet]]
+id = "the_swap_spec_names_seven_new_tests_including_double_swap_zst_swap_unread_swap_and_a_compile_fail_double_impl"
+subject = "change"
+what = "The swap spec names new tests: byte-identity of the blob address across a swap; double swap before a run with the last value winning; a swap of a zero-sized type, with dirty set, no byte write and no undefined behaviour; a swap of an unread resource, with dirty set and cleared and no unit re-running; replace-resource causing plan-band entry on a non-first frame, catalogued red until the wiring; a collection swap asserting base-pointer stability and length update, catalogued red on #344; and a compile-fail test that a double impl is rejected with E0751."
+mechanism = "Seven tests, two catalogued red: replace_resource plan-band entry on a non-first frame (until S2 wiring); collection swap (on #344)."
+source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:105-111"
+provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s6-test-surface"]
+quote = '''
+ignore when the install lands). New tests: blob-address byte-identity across
+a swap; double-swap-before-run, last value wins; ZST swap (dirty set, no
+byte write, no UB); swap of an unread resource (dirty set and cleared, no
+unit re-runs); `replace_resource` causes plan-band entry on a non-first
+frame (catalogued red until the S2 wiring); collection swap asserting
+base-pointer stability and length update (catalogued red on #344);
+compile-fail double impl rejected with E0751.
+'''
+origin = "proposed"
+written_by = "the Replaceable swap specification, 2026-07-19, DRAFT pending maintainer ratification, commissioned by A2-5; the text does not name its author"
+standing = "held"
+keywords = ["swap tests", "blob-address identity", "double swap", "ZST swap", "unread resource", "plan band entry", "compile-fail", "E0751"]
+related = ["tenet::the_catalogued_red_swap_test_maps_to_the_replace_value_clause_and_only_its_ignore_reason_is_refuted"]
+
+[[tenet]]
+id = "as_of_2026_07_19_replace_value_ships_as_one_blob_write_through_the_drain_s_selector_witness_plus_the_dirty_mark"
+subject = "change"
+what = "As of 2026-07-19, the ratification evidence memo records that replacing a value ships as installing the whole value as one blob write through the same selector witness the drain wrote through, plus the store-dirty mark, with no other pointer derivation on the swap path."
+mechanism = "`replace_value`; `Selector` witness; store-dirty mark (S1, both changelists locked)."
+source = "mock/research/202607201100_swap-semantics-ratification-evidence.md:10-14"
+provenance = ["mock::research::202607201100_swap-semantics-ratification-evidence::#what-shipped-both-changelists-locked"]
+quote = '''
+## What shipped (both changelists locked)
+
+S1: `replace_value` installs the whole value as one blob write through
+the same `Selector` witness the drain wrote through, plus the
+store-dirty mark; no other pointer derivation exists on the swap path.
+'''
+origin = "proposed"
+written_by = "memo on swap semantics, implementation and bench evidence for ratification, 2026-07-19, round 202607200500 (#697); the text does not name its author"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["replace_value", "one blob write", "Selector witness", "store-dirty mark", "shipped", "S1", "2026-07-19"]
+related = ["tenet::a_swap_of_a_resource_value_is_legal_only_between_frames_and_is_observed_from_the_next_run"]
+
+[[tenet]]
+id = "as_of_2026_07_19_replace_resource_ships_with_a_plan_dirty_bit_keyed_by_the_store_position_witness_and_both_run_paths_enter_the_plan_band"
+subject = "change"
+what = "As of 2026-07-19, the ratification evidence memo records that the plan-affecting marker is unsealed to an open marker on resource value types, and that replacing a resource performs the identical install plus the plan-dirty bit keyed by the store-position witness. The sequential run and the parallel run enter the leading plan band on the first frame or on a consumed bit, and publish the decision for the worker phase loops."
+mechanism = "`PlanAffecting` open marker; `replace_resource`; plan-dirty bit keyed by the store-position witness; `run` and `run_parallel` enter the leading plan band on first frame or a consumed bit (S2)."
+source = "mock/research/202607201100_swap-semantics-ratification-evidence.md:14-19"
+provenance = ["mock::research::202607201100_swap-semantics-ratification-evidence::#what-shipped-both-changelists-locked"]
+quote = '''
+store-dirty mark; no other pointer derivation exists on the swap path.
+S2: `PlanAffecting` unsealed to an open marker on resource value types;
+`replace_resource` performs the identical install plus the plan-dirty
+bit keyed by the store-position witness; `run` and `run_parallel` enter
+the leading plan band on first frame or a consumed bit, publishing the
+decision for the worker phase loops. S4: the crate ships
+'''
+origin = "proposed"
+written_by = "memo on swap semantics, implementation and bench evidence for ratification, 2026-07-19, round 202607200500 (#697); the text does not name its author"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["replace_resource", "PlanAffecting", "plan-dirty bit", "store-position witness", "run_parallel", "leading plan band", "worker phase loops", "S2"]
+related = ["tenet::replacing_a_plan_affecting_resource_does_the_replace_value_write_and_sets_the_plan_dirty_bit_the_next_run_consumes", "tenet::plan_affecting_is_an_open_marker_trait_that_consumers_implement_on_resource_value_types"]
+
+[[tenet]]
+id = "as_of_2026_07_19_the_swap_tests_are_five_the_install_test_unignores_and_the_three_artifacts_state_the_spec"
+subject = "change"
+what = "As of 2026-07-19, the ratification evidence memo records that five tests pin blob-address identity, last swap wins, a swap of a zero-sized type, install through replace-resource, and the band asymmetry; that the previously catalogued install test unignores; and that the three mis-grounded artifacts of addendum A2-5 now state the spec. All 73 engine test targets are green."
+mechanism = "S6: five tests; artifacts: engine DESIGN swap paragraphs, the `replace_value` FIXME, the catalogued ignore reason; 73 engine test targets green."
+source = "mock/research/202607201100_swap-semantics-ratification-evidence.md:21-28"
+provenance = ["mock::research::202607201100_swap-semantics-ratification-evidence::#what-shipped-both-changelists-locked"]
+quote = '''
+(WATCH tier), with an executable `compile_fail,E0751` doctest. S6: five
+tests pin blob-address identity, last-swap-wins, ZST swap, install
+through `replace_resource`, and the band asymmetry; the previously
+catalogued install test unignores. The three A2-5 mis-grounded
+artifacts (engine DESIGN swap paragraphs, the `replace_value` FIXME,
+the catalogued ignore reason) now state the spec. S3 (collection
+element writes) and the Swap-D arm stay gated on #344 by name. All 73
+engine test targets green.
+'''
+origin = "proposed"
+written_by = "memo on swap semantics, implementation and bench evidence for ratification, 2026-07-19, round 202607200500 (#697); the text does not name its author"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["swap tests", "S6", "blob-address identity", "last-swap-wins", "ZST swap", "band asymmetry", "unignores", "73 engine test targets"]
+related = ["tenet::the_swap_d_bench_is_commissioned_with_the_trigger_when_the_344_write_side_lands", "tenet::the_implementing_round_corrects_three_artifacts_that_carry_the_refuted_member_by_member_swap_language"]
+
+[[tenet]]
+id = "as_of_2026_07_19_the_collection_element_writes_of_a_swap_and_the_swap_d_arm_stay_gated_on_344"
+subject = "change"
+what = "As of 2026-07-19, the ratification evidence memo records that the collection element writes of a swap, clause S3, and the Swap-D bench arm stay gated on #344 by name."
+source = "mock/research/202607201100_swap-semantics-ratification-evidence.md:26-27"
+provenance = ["mock::research::202607201100_swap-semantics-ratification-evidence::#what-shipped-both-changelists-locked"]
+quote = '''
+the catalogued ignore reason) now state the spec. S3 (collection
+element writes) and the Swap-D arm stay gated on #344 by name. All 73
+'''
+origin = "proposed"
+written_by = "memo on swap semantics, implementation and bench evidence for ratification, 2026-07-19, round 202607200500 (#697); the text does not name its author"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["S3", "Swap-D", "#344", "collection element writes", "gated", "swap"]
+related = ["tenet::until_the_344_write_side_lands_a_collection_bearing_swap_installs_only_the_scalar_members_and_the_ptr_len_view"]
+
+[[tenet]]
+id = "the_swap_install_is_the_memcpy_it_should_be_scaling_linearly_with_payload_with_the_witness_resolution_compiled_away_at_the_small_end"
+subject = "change"
+what = "The bench of the install cost of a swap, where the timed body is exactly one replace-value call, shows the install to be the memcpy it should be: linear in payload size, with the witness resolution compiled away at the small end. The medians on M1 in one clean run are 2 ns at 64 bytes, 85 ns at 1 KiB and 1.81 us at 64 KiB."
+mechanism = "`swap_cost` bench, harness, one clean run, M1: 64 B 2 ns; 1 KiB 85 ns; 64 KiB 1.81 us (medians)."
+source = "mock/research/202607201100_swap-semantics-ratification-evidence.md:30-41"
+provenance = ["mock::research::202607201100_swap-semantics-ratification-evidence::#bench-evidence-harness-one-clean-run-m1"]
+quote = '''
+## Bench evidence (harness, one clean run, M1)
+
+Install cost (`swap_cost`, timed body is exactly one `replace_value`):
+
+| payload | median |
+|---|---|
+| 64 B | 2 ns |
+| 1 KiB | 85 ns |
+| 64 KiB | 1.81 us |
+
+The install is the memcpy it should be, scaling linearly with payload
+size, with the witness resolution compiled away at the small end.
+'''
+origin = "proposed"
+written_by = "memo on swap semantics, implementation and bench evidence for ratification, 2026-07-19, round 202607200500 (#697); the text does not name its author"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["swap_cost", "install cost", "memcpy", "payload size", "linear", "witness resolution", "M1", "bench"]
+related = ["tenet::replace_value_is_the_supported_every_frame_swap_and_costs_one_blob_write_then_the_store_s_dirty_cone"]
+
+[[tenet]]
+id = "each_swap_path_pays_exactly_its_own_channel_in_the_next_frame_which_confirms_the_cost_asymmetry_structurally"
+subject = "change"
+what = "The bench of the next-frame asymmetry shows that each path pays exactly its own channel and nothing else. The clean-skip baseline is flat and independent of size. The plan swap pays the baseline plus the band, flat and independent of the record count. The value swap pays the baseline plus its dirty cone, scaling linearly with the records the cone touches, and never pays the band. This confirms the cost-asymmetry clause structurally."
+mechanism = "`swap_band` bench, one carrier: a producer-to-consumer cone off the `Replaceable` value, an unrelated chain that skips, an `OnMeta<PlanStage>` unit with a fixed synthetic recompute cost. Medians at 64K / 1M / 8M records: clean skip 9.95 us / 9.38 us / 10.90 us; plan swap 14.03 us / 12.88 us / 14.34 us; value swap 22.23 us / 172.59 us / 2.61 ms."
+source = "mock/research/202607201100_swap-semantics-ratification-evidence.md:43-58"
+provenance = ["mock::research::202607201100_swap-semantics-ratification-evidence::#bench-evidence-harness-one-clean-run-m1"]
+quote = '''
+Next-frame asymmetry (`swap_band`, one carrier: a producer-to-consumer
+cone off the `Replaceable` value, an unrelated chain that skips, an
+`OnMeta<PlanStage>` unit carrying a fixed synthetic recompute cost):
+
+| records | clean skip | plan swap | value swap |
+|---|---|---|---|
+| 64K | 9.95 us | 14.03 us | 22.23 us |
+| 1M | 9.38 us | 12.88 us | 172.59 us |
+| 8M | 10.90 us | 14.34 us | 2.61 ms |
+
+Each path pays exactly its own channel and nothing else, which is the
+S5 asymmetry claim confirmed structurally: the clean-skip baseline is
+flat and size-independent; the plan swap pays baseline plus the band
+(flat, record-count-independent, band cost only); the value swap pays
+baseline plus its dirty cone, scaling linearly with the records the
+cone touches, and never pays the band.
+'''
+origin = "proposed"
+written_by = "memo on swap semantics, implementation and bench evidence for ratification, 2026-07-19, round 202607200500 (#697); the text does not name its author"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["swap_band", "cost asymmetry", "clean skip", "plan swap", "value swap", "dirty cone", "plan band", "record count"]
+related = ["tenet::replace_resource_swaps_must_be_rare_relative_to_frame_rate_and_an_every_frame_plan_affecting_swap_is_misuse", "tenet::replace_value_is_the_supported_every_frame_swap_and_costs_one_blob_write_then_the_store_s_dirty_cone"]
+
+[[tenet]]
+id = "the_swap_band_bench_proves_channel_separation_and_not_the_absolute_cost_of_a_real_plan_recompute"
+subject = "change"
+what = "The band bench proves the separation of the channels, that cone cost scales with data and band cost with plan work and neither leaks into the other, and does not prove the eventual absolute cost of a real recompute. The content of the plan band today is a synthetic stand-in unit, because the adapt-subsystem plan recompute that will fill the band is sequenced later. When the recompute lands, the same bench re-runs unchanged and the plan-swap column absorbs the real number."
+source = "mock/research/202607201100_swap-semantics-ratification-evidence.md:60-66"
+provenance = ["mock::research::202607201100_swap-semantics-ratification-evidence::#bench-evidence-harness-one-clean-run-m1"]
+quote = '''
+One honest caveat on magnitudes: the plan band's content today is the
+synthetic stand-in unit, because the adapt-subsystem plan recompute
+that will fill the band is sequenced later. The bench therefore proves
+the CHANNEL separation (cone cost scales with data, band cost with
+plan work, neither leaks into the other), not the eventual absolute
+cost of a real recompute. When the recompute lands, the same bench
+re-runs unchanged and the plan-swap column absorbs the real number.
+'''
+origin = "proposed"
+written_by = "memo on swap semantics, implementation and bench evidence for ratification, 2026-07-19, round 202607200500 (#697); the text does not name its author"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["channel separation", "synthetic stand-in", "plan recompute", "adapt subsystem", "swap_band", "caveat", "plan-swap column"]
+related = ["tenet::each_swap_path_pays_exactly_its_own_channel_in_the_next_frame_which_confirms_the_cost_asymmetry_structurally"]
+
+[[tenet]]
+id = "a_resource_snapshot_is_a_read_only_typed_view_bounded_to_the_current_phase"
+subject = "change"
+what = "A resource snapshot is a read-only typed view captured at a phase boundary. Its lifetime is bounded by the current phase and it cannot be lifted out of it, and its concrete signature waits for the data plane and is to be reconciled with the current builder input contract."
+mechanism = "`ResourceSnapshot<'phase, R>`; signature lands with the data plane (HILA-RUNTIME-C6), reconciled against the current `BuilderInput` contract."
+source = "mock/DESIGN.md.tmpl:90-90"
+provenance = ["mock::DESIGN::#resource-resolution"]
+quote = '''
+`ResourceSnapshot<'phase, R>` read-only typed view captured at a phase boundary; lifetime bounded to the current phase (no lift-out). Concrete signature lands with the data plane (HILA-RUNTIME-C6), reconciled against the current `BuilderInput` contract.
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "held"
+keywords = ["ResourceSnapshot", "phase boundary", "read-only view", "no lift-out", "BuilderInput", "HILA-RUNTIME-C6", "data plane"]
+
+[[tenet]]
+id = "a_replaceable_swap_installs_the_whole_value_as_one_blob_write_and_marks_the_store_dirty"
+subject = "change"
+what = "Swapping a replaceable resource installs the whole value as one blob write and marks the store dirty, and there is no other pointer derivation on the swap path. The whole-blob install is the specified mechanism, since under the bench-decided layout a resource value is one reserved blob record; the earlier rule of copying leaf by leaf rested on a layout the bench refuted. The collection halves of a swapped value are outside the swap until the collection wiring lands."
+mechanism = "The write goes through the same `Selector` witness the drain and the projection read use. A resource value is one reserved blob record (scalar snapshot plus live-streamed collections); `Seq` and `Map` halves gain per-record element writes only when the collection wiring lands."
+source = "mock/research/202611130850_the-record-read-whole/RECOVERED.md:74-85"
+provenance = ["mock::research::202611130850_the-record-read-whole::RECOVERED::#mock-crates-hilavitkutin-design-md-tmpl-lines-563-to-574"]
+quote = '''
+A `Replaceable` swap installs the whole value as one blob write through the
+same `Selector` witness the drain and the projection read use, plus a
+store-dirty mark; no other pointer derivation exists on the swap path. Under
+the bench-decided storage layout a resource value is one reserved blob record
+(scalar snapshot plus live-streamed collections), so the whole-blob install is
+the specified mechanism, not an excluded shortcut. The earlier per-leaf-copy
+rule was grounded on the refuted pre-bench layout, and the revert of the
+one-line install that followed it was a mis-citation; the witnessed blob write
+is canonical. Collection-bearing values gain per-record element writes for
+their `Seq` and `Map` halves only when the collection wiring lands (tracked by
+the catalogued swap test); until then the collection halves of a swapped value
+are out of the swap's scope by design, not by omission.
+'''
+origin = "proposed"
+written_by = "engine design template as on the branch recover/unlanded-rounds-and-benches, commit of 2026-08-30, not on dev; the text does not say whose it is"
+standing = "held"
+keywords = ["Replaceable", "swap", "blob install", "store-dirty mark", "replace_value", "per-leaf copy", "Selector witness"]
+
+[[tenet]]
+id = "the_adapt_unit_publishes_its_metrics_snapshot_through_two_buffers_and_one_index_it_flips"
+subject = "change"
+what = "The adapt unit publishes its metrics snapshot by a double buffer. The metrics resource holds two buffers and an index that says which is live. At the end of the schedule the adapt unit fills the buffer that is not live and then publishes it with one atomic store of the index; a consumer unit loads the index and reads the buffer it names."
+mechanism = "`MetricsResource<T> { buffer_a, buffer_b, current: AtomicUsize }`; the writer writes the snapshot fields `Relaxed`, then `current.store(next_idx, Release)`; the reader does `current.load(Acquire)`, then `Relaxed` reads. The pattern resolves audit finding M1."
+source = "mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:1176-1176, mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:1181-1198"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.plan-algorithm-chain::#s7-cross-thread-atomic-ordering-protocol-added-2026-05-10-per-audit-2-structural-recommendation"]
+quote = '''
+| AdaptWu→`metrics::*` snapshot publish | AdaptWu (on whatever core runs the meta-WU) | Write all snapshot fields with `Relaxed`; then `current_buffer_idx.store(new_idx, Release)` (double-buffer pattern) | Consumer WU reading `metrics::*` | `current_buffer_idx.load(Acquire)`; then `Relaxed` reads of snapshot fields | `stlr` (idx only) / `ldar` (idx only) | `mov` / `mov` |
+---
+**Double-buffer pattern for AdaptWu snapshot publish (resolves audit M1):**
+
+```rust
+struct MetricsResource<T> {
+    buffer_a: T,
+    buffer_b: T,
+    current: AtomicUsize,  // 0 = a is live, 1 = b is live
+}
+
+// AdaptWu at ScheduleEnd:
+fn execute(&self, ctx: &Self::Ctx) {
+    let mut r = ctx.writer::<MetricsResource<...>>();
+    let next_idx = 1 - r.current.load(Ordering::Relaxed);
+    let next_buf = if next_idx == 0 { &mut r.buffer_a } else { &mut r.buffer_b };
+    // ... fill next_buf from AdaptArena slots (Relaxed reads paired
+    //     with phase-barrier Acquire fence at WU entry) ...
+    r.current.store(next_idx, Ordering::Release);  // single atomic publish
+}
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic plan algorithm chain, section S7 added 2026-05-10 after an audit; the text does not say whose it is"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["double buffer", "flipped index", "snapshot publish", "AdaptWu", "MetricsResource", "current_buffer_idx", "Release", "Acquire"]
+
+[[tenet]]
+id = "a_resource_snapshot_is_a_read_only_view_captured_at_a_phase_barrier_and_it_cannot_outlive_the_phase"
+subject = "change"
+what = "A resource snapshot is a read-only typed view of a resource captured at a named phase boundary, after the wake and before the next phase's morsels begin. While it lives the storage beneath it is not being written, its content is what the resource held when it was captured, and it cannot escape across a phase barrier."
+mechanism = "`ResourceSnapshot<'phase, R>` with `captured_at: PhaseId`; lifetime invariance prevents lifting it out of the phase."
+source = "mock/design_rounds/202605101036/202605101036_topic.resource-resolution.md:12-12, mock/design_rounds/202605101036/202605101036_topic.resource-resolution.md:18-18, mock/design_rounds/202605101036/202605101036_topic.resource-resolution.md:22-25, mock/design_rounds/202605101036/202605101036_topic.resource-resolution.md:29-29"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.resource-resolution::#axis-a-resourcesnapshot-r-v1-semantics"]
+quote = '''
+A `ResourceSnapshot<R: Resource>` is a **read-only typed view** captured at a named phase boundary. Concretely:
+---
+    captured_at: PhaseId,
+---
+Snapshot captures only at phase barrier (after futex-wake, before next phase's morsels begin). Workers that hold a `ResourceSnapshot<R>` are guaranteed:
+- The underlying `R::Owned` storage is not being written during the snapshot's lifetime.
+- The snapshot's content matches what `R::Owned` held at `captured_at`.
+- Snapshot lifetime is bounded by the current phase (cannot escape across phase barriers).
+---
+Lifetime: `ResourceSnapshot<'phase, R>`. Once `'phase` ends (next phase barrier), the snapshot is invalid; lifetime invariance prevents lift-out.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 8 resource resolution of 2026-05-11, which calls its decisions autonomous trivial calls"
+standing = "held"
+keywords = ["ResourceSnapshot", "phase barrier", "read-only view", "phase-bounded", "lifetime", "captured_at"]
+
+[[tenet]]
+id = "the_typed_phase_bounded_view_is_the_one_meaning_of_resource_snapshot_and_its_signature_lands_with_the_data_plane"
+subject = "change"
+what = "The name of the resource snapshot stood for two unrelated ideas: a placeholder stack array meant for caching resources before a morsel loop, and the read-only typed view captured at a phase barrier. The placeholder is deleted outright and the typed view is the surviving meaning. Its concrete signature was stale and is derived again with the data plane; the stack-caching idea is kept and belongs to the dispatch code generation."
+source = "mock/design_rounds/202605282256/202605282256_topic.resource-snapshot-disambiguation.md:10-10, mock/design_rounds/202605282256/202605282256_topic.resource-snapshot-disambiguation.md:12-12, mock/design_rounds/202605282256/202605282256_topic.resource-snapshot-disambiguation.md:14-14, mock/design_rounds/202605282256/202605282256_topic.resource-snapshot-disambiguation.md:30-30"
+provenance = ["mock::design_rounds::202605282256::202605282256_topic.resource-snapshot-disambiguation::#topic-disambiguate-resourcesnapshot-semantics-hila-runtime-b2-335"]
+quote = '''
+The name `ResourceSnapshot` currently denotes two unrelated ideas. The engine crate ships a placeholder `ResourceSnapshot<const N>`: a fixed-size stack array of `Slot` (a `UFixed<64,0>` payload) with a sibling `ResourceCache<'a, R, N>` wrapper and a round-trip test. Its module doc describes a dispatch-time optimization (cache accessed resources to a stack-local array before a morsel loop so LLVM proves the stack does not alias the column buffers, then run the loop with the resources in registers). The locked design (round 202605101036 topic 8 axis A) describes something else entirely under the same name: `ResourceSnapshot<'phase, R>`, a read-only typed view captured at a phase barrier, lifetime-invariant and phase-bounded, observed by `AdaptWu` at `ScheduleEnd` to derive next-frame predictions. One name, two concepts, neither matching the other.
+---
+The placeholder is dead scaffolding. Grep finds no engine call site: only its own definition, the `ResourceCache` wrapper (also unused), the re-exports in `resource/mod.rs`, and one round-trip test. It is not on any dispatch path. Under the pre-1.0 no-legacy-shims rule it is deleted outright, not deprecated.
+---
+The locked design's typed view is the surviving meaning of `ResourceSnapshot`, but its DESIGN signature is stale. `hilavitkutin-api/DESIGN.md.tmpl` documents `ResourceSnapshot<'phase, R: BuilderInput<Dispatch = ResourceDispatch>>` with an `inner: Pin<&'phase R::Owned>` field. Neither `ResourceDispatch` nor `BuilderInput::Owned` exists: the round 202605101036 topic 2 builder reshape replaced per-kind dispatch routers with `StoreDispatch` / `UnitDispatch` / `KitDispatch` / `PlatformDispatch` / `RunCfgDispatch`, and `BuilderInput` carries only `Init` and `Dispatch` associated types. The signature predates the reshape. Its concrete form must be re-derived against the real `BuilderInput` contract, and that re-derivation depends on how a registered store exposes its scheduler-owned storage, which is the Phase B data-plane design. So the typed view ships with the data plane (HILA-RUNTIME-C6), not in this round. This round corrects the DESIGN so it stops presenting a stale signature as a shipping contract.
+---
+3. Record in `hilavitkutin/BACKLOG.md.tmpl` that the dispatch-time stack-caching-of-resources optimization (the idea the placeholder module doc described) belongs to the dispatch codegen (HILA-RUNTIME-C2, Phase D rust-pipe pattern), not a standalone type. The idea is preserved; its home is corrected.
+'''
+origin = "proposed"
+written_by = "design round 202605282256, topic of 2026-05-28 on the two meanings of the resource snapshot; the text does not say whose it is"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["ResourceSnapshot", "placeholder", "stack caching", "typed view", "data plane", "disambiguation"]
+related = ["tenet::a_resource_snapshot_is_a_read_only_view_captured_at_a_phase_barrier_and_it_cannot_outlive_the_phase"]
+
+[[tenet]]
+id = "as_of_round_202605101036_plan_affecting_is_a_sealed_marker_and_a_resource_without_it_is_swapped_cheaply"
+subject = "change"
+what = "In the round of May 2026 the marker that makes a resource plan-affecting is sealed, taken by consumer opt-in or derived by macro. Replacing the value of a resource that carries it sets the dirty bit for a plan recompute; replacing one that does not is a cheap value swap. The default is not plan-affecting."
+mechanism = "`pub trait PlanAffecting: BuilderInput + private::Sealed {}`; replacement through `Scheduler::replace_resource`."
+source = "mock/design_rounds/202605101036/202605101036_topic.resource-resolution.md:33-41"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.resource-resolution::#axis-b-planaffecting-marker-trait"]
+quote = '''
+Sealed marker trait in `hilavitkutin-api`. Implementations are opt-in by consumers OR derived by macro:
+
+```rust
+pub trait PlanAffecting: BuilderInput + private::Sealed {}
+```
+
+When a `BuilderInput` impl carries `PlanAffecting`, replacing its value via `Scheduler::replace_resource` (or the equivalent post-rename method) triggers a plan recompute dirty bit. When it does NOT, replacement is a cheap value swap.
+
+Default: NOT plan-affecting. Consumers opt in for resources whose value shape changes the plan (e.g., the `RunCfg` resource itself — the dispatch routing target). Most app-state resources (column data, intermediate accumulators, diagnostics) are NOT plan-affecting.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 8 resource resolution of 2026-05-11, which calls its decisions autonomous trivial calls"
+standing = "held"
+keywords = ["PlanAffecting", "sealed marker", "replace_resource", "value swap", "plan recompute", "dirty bit"]
+
+[[tenet]]
+id = "a_storage_heritage_note_lists_the_per_morsel_snapshot_buffer_s_double_buffering_as_superseded_by_generation_counters"
+subject = "change"
+what = "A note that puts the storage heritage in order lists what of it is stale or superseded. Among it are temporal storage, as specific to loimu, and the double-buffering of the per-morsel snapshot buffer, as superseded by generation counters."
+source = "mock/research/202605302130_unified-storage-design-archaeology.md:67-67"
+provenance = ["mock::research::202605302130_unified-storage-design-archaeology::#falls-in-nicely-vs-stale"]
+quote = '''
+Stale / superseded: `const N: Cap` / `const N: usize` on storage types (-> `Capacity`); `VersionedStore` threading a const-generic `N` (-> thread `Capacity`); slice-returning `as_slice`/`as_mut_slice` (-> raw pointers, R6); `StoreId` hash identity with `LazyLock` (-> dense plan-time `u16`); `HashMap`-backed `StoreMap` (-> const-array + plan-time index); loimu's dynamic view affinity / hysteresis / restructuring (-> static plan-time co-located fiber arenas); loimu's seven access modes + three fusion tiers (-> Read/Write + commutativity); temporal storage (loimu-specific); per-morsel `SnapshotBuffer` double-buffering (-> generation counters).
+'''
+origin = "proposed"
+written_by = "unified storage design archaeology and synthesis note of 2026-05-30, written for the unified columnar storage task; the text does not say whose it is"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["SnapshotBuffer", "double-buffering", "generation counters", "superseded", "temporal storage", "heritage", "archaeology"]
+related = ["tenet::loimu_double_buffers_record_data_and_its_readers_get_the_frozen_snapshot"]
+
+[[tenet]]
+id = "an_expert_survey_places_the_triple_buffer_temporal_model_in_loimu_s_domain_and_not_in_the_engine"
+subject = "change"
+what = "A survey of alternative storage models says of loimu's storage model that the insight worth taking is to co-locate what units read together, which the engine's own analysis already approximates, and that the triple-buffer temporal model belongs to loimu's domain, for extrapolation in the interface, and not to the engine."
+source = "mock/research/202606210600_expert-alternatives-storage-model.md:172-175"
+provenance = ["mock::research::202606210600_expert-alternatives-storage-model::#e-loimu-s-storagerecord-views-model-as-is"]
+quote = '''
+- **what is worth grafting:** the *affinity insight* (§5 option 4): co-locate members that WUs read
+  together. In hilavitkutin terms that is a build-time decision the existing waist/trunk analysis
+  already approximates (fibers that read the same resources run together). The triple-buffer temporal
+  model is loimu-domain (UI extrapolation), not engine substrate.
+'''
+origin = "proposed"
+written_by = "expert survey of alternative storage models, research deliverable of 2026-06-19 for round 202606210600, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["triple buffer", "temporal model", "loimu domain", "UI extrapolation", "read affinity", "storage model survey"]
+related = ["tenet::loimu_s_layers_stay_in_loimu_and_hilavitkutin_provides_the_foundation"]
+
+[[tenet]]
+id = "as_of_2026_11_12_replace_resource_and_replace_value_discard_the_value_and_the_suite_round_reports_the_swap_install_as_not_reached"
+subject = "change"
+what = "As of 2026-11-12, the suite round records that the replace-resource and replace-value methods discard their argument, that the plan-dirty flag has no setter anywhere in the source, and that deleting the two methods would remove a documented API. Installing the value here would redo what an earlier ruling of op's reverted. Neither installing nor deleting is a change a test-suite round can make alone, so the swap install is reported as not reached, with this reason and a ticket."
+mechanism = "`replace_resource`, `replace_value`; `plan_dirty` has no setter in `src` (`grep -n plan_dirty` shows the field, its initialisers and reads only); documented in `docs/HILAVITKUTIN.md`, `docs/KIT.md` and `README.md`; finding H9; round `202607193100`, round `202606210600`, #654."
+source = "mock/design_rounds/202611122301/202611122258_topic.suite-can-fail.md:8-8, mock/design_rounds/202611122301/202611122258_topic.suite-can-fail.md:18-18"
+provenance = ["mock::design_rounds::202611122301::202611122258_topic.suite-can-fail::#suite-can-fail"]
+quote = '''
+The step is about one property of the engine's suite: a test that cannot fail certifies nothing. The faults in scope are the ways this suite cannot fail today. The negative case of the builder is checked by hand and the comment says so (`tests/scheduler_builder.rs:10-16`). Twelve builder tests end on `.ok();`, so they pass whatever `build` returned. The incremental skip is tested by counting how many units ran and never by comparing what the stores hold against a run that skips nothing. Two replacement methods discard their argument. Several stubs sit behind a property marker, so a bound that names the property is satisfied by a body that does nothing.
+---
+Round `202607193100` removed the install from `replace_value` on op's ruling, because an in-place write of the whole value contradicts the member-by-member swap that `202606210600` requires, and left the install to the decomposed drain (#654). Installing here would redo what that ruling reverted. Deleting the two methods removes a documented API (`docs/HILAVITKUTIN.md`, `docs/KIT.md`, `README.md`), and `plan_dirty` has no setter anywhere in `src` today (`grep -n plan_dirty` shows the field, its initialisers and reads only), so what `replace_resource` is meant to feed does not exist yet either. Neither is a change a test-suite round can make alone, so H9 is reported as not reached, with this reason, and a ticket.
+'''
+origin = "proposed"
+written_by = "topic of round 202611122258 'suite-can-fail', 2026-11-12, phase TOPIC, agent-written"
+standing = "held"
+keywords = ["replace_resource", "replace_value", "plan_dirty", "H9", "swap install", "discarded value", "suite round"]
+related = ["tenet::as_of_2026_06_11_replace_resource_and_replace_value_mark_dirty_without_writing_the_value"]
