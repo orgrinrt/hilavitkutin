@@ -85,13 +85,13 @@ pub unsafe fn write_column<T>(base: *mut T, records: &[u32], wrap: impl Fn(u32) 
     }
 }
 
-/// FNV-1a over `n` u32 records read back through a column's base pointer.
+/// FNV-1a over `n` records read back through a column's base pointer, each
+/// by the u32 `value` reads out of it.
 ///
 /// # Safety
 ///
-/// `base` must point at `n` initialised records of a `repr(transparent)` u32
-/// type, alive for the call.
-pub unsafe fn hash_column<T>(base: *const T, n: usize) -> u64 {
-    // SAFETY: the caller vouches for `n` records of a u32 layout.
-    bench_arm::fnv1a_u32(unsafe { core::slice::from_raw_parts(base as *const u32, n) })
+/// `base` must point at `n` initialised records of `T`, alive for the call.
+pub unsafe fn hash_column<T>(base: *const T, n: usize, value: impl Fn(&T) -> u32) -> u64 {
+    // SAFETY: the caller vouches for `n` initialised records of `T`.
+    bench_arm::fnv1a_by(unsafe { core::slice::from_raw_parts(base, n) }, value)
 }

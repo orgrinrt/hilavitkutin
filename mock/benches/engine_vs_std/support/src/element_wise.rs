@@ -67,7 +67,6 @@ struct Bv(u32);
 struct Cv(u32);
 #[derive(Copy, Clone, PartialEq, Default)]
 #[repr(transparent)]
-#[allow(dead_code)] // written by S4, read back post-run as raw u32 for the hash
 struct Dv(u32);
 
 type One<T> = Cons<Column<T>, Empty>;
@@ -268,7 +267,7 @@ macro_rules! digest {
             .__ptr()
             .as_ptr();
         // SAFETY: Dv holds n records, written by the frame that just ran.
-        unsafe { hash_column(dv, $n) }
+        unsafe { hash_column(dv, $n, |v| v.0) }
     }};
 }
 

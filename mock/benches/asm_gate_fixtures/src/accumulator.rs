@@ -7,7 +7,6 @@ use super::*;
 #[derive(Copy, Clone, Default)]
 struct AInv(u32);
 #[derive(Copy, Clone, Default)]
-#[allow(dead_code)] // appended by the WU, read back post-run as raw u32 for the hash
 struct AAv(u32);
 
 type AccW = Cons<Accum<AAv>, Empty>;
@@ -33,10 +32,9 @@ impl WorkUnit<Always> for AppendChain {
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
-            // SAFETY: In host-populated; append advances live-length under the
-            // reserved capacity (= record count).
+            // SAFETY: In host-populated for the record count.
             let inp = unsafe { ctx.reader().read::<AInv, _>(i) };
-            unsafe { ctx.accums().append::<AAv, _>(AAv(chain(inp.0))) };
+            ctx.accums().append::<AAv, _>(AAv(chain(inp.0)));
         });
     }
 }
@@ -59,8 +57,8 @@ pub extern "C" fn asm_gate_accumulator() -> u64 {
     }
     let _ = sched.run();
     let len = sched.__bindings().__len_cell().get().0;
-    let av_base = sched.__bindings().__ptr().as_ptr() as *const u32;
+    let av_base = sched.__bindings().__ptr().as_ptr();
     // SAFETY: the appender wrote `len` records into the Av buffer; scheduler alive.
     let slice = unsafe { core::slice::from_raw_parts(av_base, len) };
-    black_box(fnv1a_u32(slice))
+    black_box(fnv1a_by(slice, |v| v.0))
 }

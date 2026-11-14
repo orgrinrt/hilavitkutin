@@ -16,4 +16,12 @@ pub mod findings;
 pub mod image;
 
 pub use arm::{Arm, StateArm, call};
-pub use image::{Fnv1a, MAX_CALL_US_FLOOR, TaggedRecords, fnv1a_u32, tagged_bytes, tagged_records};
+pub use image::{
+    Fnv1a,
+    MAX_CALL_US_FLOOR,
+    TaggedRecords,
+    fnv1a_by,
+    fnv1a_u32,
+    tagged_bytes,
+    tagged_records,
+};

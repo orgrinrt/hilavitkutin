@@ -65,7 +65,6 @@ struct Xv(u32);
 struct Yv(u32);
 #[derive(Copy, Clone, Default)]
 #[repr(transparent)]
-#[allow(dead_code)] // written by Z, read back post-run as raw u32 for the hash
 struct Zv(u32);
 
 type One<T> = Cons<Column<T>, Empty>;
@@ -227,7 +226,7 @@ macro_rules! frame {
 macro_rules! digest {
     ($s:expr, $n:expr) => {{
         // SAFETY: Zv holds n records, written by the frame that just ran.
-        unsafe { hash_column($s.__bindings().__ptr().as_ptr(), $n) }
+        unsafe { hash_column($s.__bindings().__ptr().as_ptr(), $n, |v| v.0) }
     }};
 }
 

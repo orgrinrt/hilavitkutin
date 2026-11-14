@@ -13,12 +13,10 @@ struct PIn(u32);
 #[derive(Copy, Clone, Default)]
 struct PMid(u32);
 #[derive(Copy, Clone, Default)]
-#[allow(dead_code)] // written by P2, read back post-run as raw u32 for the hash
 struct POut(u32);
 #[derive(Copy, Clone, Default)]
 struct QIn(u32);
 #[derive(Copy, Clone, Default)]
-#[allow(dead_code)] // written by Q1, read back post-run as raw u32 for the hash
 struct QOut(u32);
 
 #[derive(Copy, Clone)]
@@ -132,7 +130,7 @@ pub extern "C" fn asm_gate_windowed_fibers() -> u64 {
         }
     }
     let _ = sched.run();
-    let qout = sched.__bindings().__tail().__ptr().as_ptr() as *const u32;
+    let qout = sched.__bindings().__tail().__ptr().as_ptr();
     let pout = sched
         .__bindings()
         .__tail()
@@ -140,10 +138,10 @@ pub extern "C" fn asm_gate_windowed_fibers() -> u64 {
         .__tail()
         .__tail()
         .__ptr()
-        .as_ptr() as *const u32;
+        .as_ptr();
     // SAFETY: both output columns hold N written records; scheduler alive.
-    let h1 = unsafe { fnv1a_u32(core::slice::from_raw_parts(pout, N)) };
-    let h2 = unsafe { fnv1a_u32(core::slice::from_raw_parts(qout, N)) };
+    let h1 = unsafe { fnv1a_by(core::slice::from_raw_parts(pout, N), |v| v.0) };
+    let h2 = unsafe { fnv1a_by(core::slice::from_raw_parts(qout, N), |v| v.0) };
     black_box(h1 ^ h2)
 }
 
@@ -194,7 +192,7 @@ pub extern "C" fn asm_gate_parallel_fiber_windows() -> u64 {
     let pool = OutOfLineSpawn::new();
     let mut sched = core::pin::pin!(sched);
     let _ = sched.as_mut().run_parallel(&pool);
-    let qout = sched.as_ref().__bindings().__tail().__ptr().as_ptr() as *const u32;
+    let qout = sched.as_ref().__bindings().__tail().__ptr().as_ptr();
     let pout = sched
         .as_ref()
         .__bindings()
@@ -203,10 +201,10 @@ pub extern "C" fn asm_gate_parallel_fiber_windows() -> u64 {
         .__tail()
         .__tail()
         .__ptr()
-        .as_ptr() as *const u32;
+        .as_ptr();
     // SAFETY: both output columns hold N written records; scheduler alive.
-    let h1 = unsafe { fnv1a_u32(core::slice::from_raw_parts(pout, N)) };
-    let h2 = unsafe { fnv1a_u32(core::slice::from_raw_parts(qout, N)) };
+    let h1 = unsafe { fnv1a_by(core::slice::from_raw_parts(pout, N), |v| v.0) };
+    let h2 = unsafe { fnv1a_by(core::slice::from_raw_parts(qout, N), |v| v.0) };
     black_box(h1 ^ h2)
 }
 

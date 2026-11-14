@@ -41,7 +41,7 @@ pub mod wide_parallel;
 pub mod workload;
 
 pub use arena::*;
-pub use bench_arm::{Fnv1a, TaggedRecords, fnv1a_u32};
+pub use bench_arm::{Fnv1a, TaggedRecords, fnv1a_by, fnv1a_u32};
 pub use crew::Crew;
 pub use expected::*;
 pub use kernel::*;

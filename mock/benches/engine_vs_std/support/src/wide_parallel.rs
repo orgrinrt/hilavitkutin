@@ -77,7 +77,6 @@ macro_rules! def_chain {
         struct $inv(u32);
         #[derive(Copy, Clone, Default)]
         #[repr(transparent)]
-        #[allow(dead_code)] // written by the WU, read back post-run as raw u32 for the hash
         struct $outv(u32);
 
         struct $wu;
@@ -208,10 +207,10 @@ macro_rules! digest {
         // SAFETY: each Out{k} holds n records, written by the frame that just ran.
         unsafe {
             fold([
-                hash_column(out0.__ptr().as_ptr(), $n),
-                hash_column(out1.__ptr().as_ptr(), $n),
-                hash_column(out2.__ptr().as_ptr(), $n),
-                hash_column(out3.__ptr().as_ptr(), $n),
+                hash_column(out0.__ptr().as_ptr(), $n, |v| v.0),
+                hash_column(out1.__ptr().as_ptr(), $n, |v| v.0),
+                hash_column(out2.__ptr().as_ptr(), $n, |v| v.0),
+                hash_column(out3.__ptr().as_ptr(), $n, |v| v.0),
             ])
         }
     }};

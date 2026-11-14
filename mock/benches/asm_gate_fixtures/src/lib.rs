@@ -18,7 +18,7 @@
 use core::hint::black_box;
 
 use arvo::USize;
-use evs_support::{HeapBump, arena_bytes, chain, fnv1a_u32, stage1, stage2, stage3, stage4, store};
+use evs_support::{HeapBump, arena_bytes, chain, fnv1a_by, stage1, stage2, stage3, stage4, store};
 use hilavitkutin::dispatch::engine_ctx::{
     AccPtrCons,
     AccPtrNil,
@@ -67,7 +67,6 @@ struct Bv(u32);
 #[derive(Copy, Clone, PartialEq, Default)]
 struct Cv(u32);
 #[derive(Copy, Clone, PartialEq, Default)]
-#[allow(dead_code)] // written by S4, read back post-run as raw u32 for the hash
 struct Dv(u32);
 
 type One<T> = Cons<Column<T>, Empty>;
@@ -234,9 +233,9 @@ macro_rules! chain_scheduler {
 /// Hash the Dv output column (deepest registered: In -> Av -> Bv -> Cv -> Dv).
 ///
 /// SAFETY: `dv_base` points at N reserved Dv records (repr u32) in a live arena.
-unsafe fn dv_hash(dv_base: *const u32) -> u64 {
+unsafe fn dv_hash(dv_base: *const Dv) -> u64 {
     let slice = unsafe { core::slice::from_raw_parts(dv_base, N) };
-    fnv1a_u32(slice)
+    fnv1a_by(slice, |v| v.0)
 }
 
 // ----- fixture 1: column chain via run() (morsel-outer RAW path) -----
@@ -253,7 +252,7 @@ pub extern "C" fn asm_gate_column_chain() -> u64 {
         .__tail()
         .__tail()
         .__ptr()
-        .as_ptr() as *const u32;
+        .as_ptr();
     black_box(unsafe { dv_hash(dv_base) })
 }
 
@@ -271,7 +270,7 @@ pub extern "C" fn asm_gate_fused_chain() -> u64 {
         .__tail()
         .__tail()
         .__ptr()
-        .as_ptr() as *const u32;
+        .as_ptr();
     black_box(unsafe { dv_hash(dv_base) })
 }
 
@@ -292,7 +291,7 @@ pub extern "C" fn asm_gate_dirty_gated() -> u64 {
         .__tail()
         .__tail()
         .__ptr()
-        .as_ptr() as *const u32;
+        .as_ptr();
     black_box(unsafe { dv_hash(dv_base) })
 }
 

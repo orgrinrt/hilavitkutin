@@ -13,7 +13,6 @@ use super::*;
 #[derive(Copy, Clone, Default)]
 struct RIn(u32);
 #[derive(Copy, Clone, Default)]
-#[allow(dead_code)] // written by the WU, read back post-run as raw u32 for the hash
 struct ROut(u32);
 
 type ResRead = Cons<Resource<u32>, Cons<Column<RIn>, Empty>>;
@@ -67,7 +66,7 @@ pub extern "C" fn asm_gate_resource_snapshot() -> u64 {
         unsafe { *rin.add(i) = i as u32 };
     }
     let _ = sched.run();
-    let rout = sched.__bindings().__tail().__tail().__ptr().as_ptr() as *const u32;
+    let rout = sched.__bindings().__tail().__tail().__ptr().as_ptr();
     // SAFETY: ROut holds N written records; scheduler alive.
-    black_box(unsafe { fnv1a_u32(core::slice::from_raw_parts(rout, N)) })
+    black_box(unsafe { fnv1a_by(core::slice::from_raw_parts(rout, N), |v| v.0) })
 }

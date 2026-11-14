@@ -104,9 +104,17 @@ impl Default for Fnv1a {
 
 /// FNV-1a over the little-endian bytes of a u32 slice.
 pub fn fnv1a_u32(vals: &[u32]) -> u64 {
+    fnv1a_by(vals, |&v| v)
+}
+
+/// FNV-1a over records, each folded in as the u32 `value` reads out of it.
+///
+/// A column's records are read back as their own type and hashed by the
+/// field that holds the value, so the hash names what it reads.
+pub fn fnv1a_by<T>(records: &[T], value: impl Fn(&T) -> u32) -> u64 {
     let mut h = Fnv1a::new();
-    for &v in vals {
-        h.push(v);
+    for r in records {
+        h.push(value(r));
     }
     h.finish()
 }
