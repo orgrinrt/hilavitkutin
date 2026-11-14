@@ -1,12 +1,10 @@
-//! A3-redo-2a: `#[derive(ResourceFootprint)]` sums a resource value type's
+//! `#[derive(ResourceFootprint)]` sums a resource value type's
 //! `Field`/`Seq`/`Map` field footprints (canonical R5).
 //!
 //! A resource of plain `Field` scalars derives to a zero L1-morsel footprint
 //! (register budget); a resource holding `Seq`/`Map` collections derives to their
 //! `N * elem` sum. The derive walks field types syntactically, so the fixtures
 //! need only exist as types (never constructed).
-
-#![allow(dead_code)]
 
 use arvo::Cap;
 use hilavitkutin_api::footprint::ResourceFootprint;
@@ -67,6 +65,12 @@ fn derive_reads_scalar_fields_by_value() {
         b: Field::default(),
     };
     reads_as::<ScalarOnly, ScalarOnly>(&scalar);
+    // The copy carries both fields, and a `Field` marker holds no bytes of its own.
+    let ScalarOnly {
+        a,
+        b,
+    } = ResourceRead::read(&scalar);
+    assert_eq!(core::mem::size_of_val(&a) + core::mem::size_of_val(&b), 0);
 }
 
 #[test]
@@ -81,6 +85,12 @@ fn derive_reads_a_collection_by_reference() {
     assert!(
         core::ptr::eq(read, &res),
         "the read borrows the resource in place"
+    );
+    assert!(
+        core::ptr::eq(&read.scalar, &res.scalar)
+            && core::ptr::eq(&read.seq, &res.seq)
+            && core::ptr::eq(&read.map, &res.map),
+        "every field of the read is the resource's own field"
     );
 }
 
