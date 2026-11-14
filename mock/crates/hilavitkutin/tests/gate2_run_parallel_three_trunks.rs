@@ -101,10 +101,10 @@ fn run_parallel_three_trunks_two_cores_matches_single_core() {
         .__tail()
         .__tail()
         .__ptr()
-        .as_ptr() as *mut u32;
+        .as_ptr();
     for i in 0 .. N {
         unsafe {
-            *in_base.add(i) = i as u32;
+            *in_base.add(i) = Inv(i as u32);
         }
     }
 

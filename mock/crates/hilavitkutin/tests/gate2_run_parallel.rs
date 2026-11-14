@@ -134,10 +134,10 @@ fn run_parallel_threaded_fan_in_is_correct() {
         .__tail()
         .__tail()
         .__ptr()
-        .as_ptr() as *mut u32;
+        .as_ptr();
     for i in 0 .. N {
         unsafe {
-            *in_base.add(i) = i as u32;
+            *in_base.add(i) = Inv(i as u32);
         }
     }
 
@@ -176,16 +176,16 @@ fn run_parallel_spawns_the_pool_once_across_frames() {
         .unwrap_or_else(|_| panic!("build should succeed"));
 
     // Host-populate In[i] = i. Columns from head: Zv(0), Bv(1), Av(2), In(3).
-    // SAFETY: In reserved for N records of u32; the scheduler is alive.
+    // SAFETY: In reserved for N records of Inv; the scheduler is alive.
     let in_base = scheduler
         .__bindings()
         .__tail()
         .__tail()
         .__tail()
         .__ptr()
-        .as_ptr() as *mut u32;
+        .as_ptr();
     for i in 0 .. N {
-        unsafe { *in_base.add(i) = i as u32 };
+        unsafe { *in_base.add(i) = Inv(i as u32) };
     }
 
     let pool = CountingPool {
@@ -199,6 +199,27 @@ fn run_parallel_spawns_the_pool_once_across_frames() {
         matches!(first, Outcome::Ok(())),
         "the first frame completes"
     );
+    let zv_base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const Zv;
+    for i in 0 .. N {
+        // SAFETY: Zv holds N reserved records; the scheduler is alive.
+        let z = unsafe { (*zv_base.add(i)).0 };
+        assert_eq!(z, (i as u32) * 110, "rec {i} after the first frame");
+    }
+
+    // Change the input between the frames: a second frame that never ran would
+    // leave the first frame's `Zv`, which no longer matches.
+    let in_base = scheduler
+        .as_ref()
+        .__bindings()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__ptr()
+        .as_ptr();
+    for i in 0 .. N {
+        // SAFETY: In holds N reserved records and no frame is running.
+        unsafe { *in_base.add(i) = Inv(1000 + i as u32) };
+    }
     let second = scheduler.as_mut().run_parallel(&pool);
     assert!(
         matches!(second, Outcome::Ok(())),
@@ -210,10 +231,13 @@ fn run_parallel_spawns_the_pool_once_across_frames() {
         pool.worker_count().0,
         "the persistent pool spawns worker_count workers once, not per frame"
     );
-    let zv_base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const Zv;
     for i in 0 .. N {
         // SAFETY: Zv holds N reserved records; the scheduler is alive.
         let z = unsafe { (*zv_base.add(i)).0 };
-        assert_eq!(z, (i as u32) * 110, "rec {i} after two frames");
+        assert_eq!(
+            z,
+            (1000 + i as u32) * 110,
+            "rec {i} after the second frame, over the changed input"
+        );
     }
 }

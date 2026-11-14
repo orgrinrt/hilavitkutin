@@ -149,9 +149,9 @@ fn every_producer_runs_when_cores_outnumber_records() {
         .__tail()
         .__tail()
         .__ptr()
-        .as_ptr() as *mut u32;
+        .as_ptr();
     unsafe {
-        *in_base = 1;
+        *in_base = Inv(1);
     }
 
     let pool = TestExecutor::new();

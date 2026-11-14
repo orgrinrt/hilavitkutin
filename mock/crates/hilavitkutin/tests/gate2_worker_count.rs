@@ -193,10 +193,10 @@ fn run_fan_in_and_check<const W: usize>(pool: &Reports<W>) -> usize {
         .__tail()
         .__tail()
         .__ptr()
-        .as_ptr() as *mut u32;
+        .as_ptr();
     for i in 0 .. N {
         unsafe {
-            *in_base.add(i) = i as u32;
+            *in_base.add(i) = Inv(i as u32);
         }
     }
 

@@ -325,9 +325,9 @@ macro_rules! two_waist {
             .__tail()
             .__tail()
             .__ptr()
-            .as_ptr() as *mut u32;
+            .as_ptr();
         for i in 0 .. $n {
-            unsafe { *in_base.add(i) = i as u32 };
+            unsafe { *in_base.add(i) = Inv(i as u32) };
         }
         scheduler
     }};
@@ -359,9 +359,9 @@ macro_rules! single_phase {
             .unwrap_or_else(|_| panic!("build should succeed"));
         // Columns from head: P1v(0), In(1). Populate In = i.
         // SAFETY: In reserved for N records of u32; the scheduler is alive.
-        let in_base = scheduler.__bindings().__tail().__ptr().as_ptr() as *mut u32;
+        let in_base = scheduler.__bindings().__tail().__ptr().as_ptr();
         for i in 0 .. N {
-            unsafe { *in_base.add(i) = i as u32 };
+            unsafe { *in_base.add(i) = Inv(i as u32) };
         }
         scheduler
     }};

@@ -48,6 +48,7 @@ use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::store::{Column, StartsFromDefault, Virtual};
 use hilavitkutin_api::work_unit::{Always, HasSchedule, On, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
+use notko::Outcome;
 
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
@@ -210,7 +211,10 @@ fn on_consumer_runs_iff_its_virtual_fired() {
 
     // Head-chain: RanA (head, last registered), RanB, RanN, then Gate. The
     // Ran columns start at zero, Gate too until the producer writes it.
-    let _ = scheduler.run::<_, _>();
+    assert!(
+        matches!(scheduler.run::<_, _>(), Outcome::Ok(())),
+        "the frame completes with no refusal"
+    );
 
     let a = scheduler.__bindings().__ptr().as_ptr() as *const RanA;
     let b = scheduler.__bindings().__tail().__ptr().as_ptr() as *const RanB;

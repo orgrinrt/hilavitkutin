@@ -14,7 +14,7 @@ use crate::common::TestExecutor;
 
 /// A `TestExecutor` that reports `W` workers whatever the machine has, so a
 /// test can run the same frame at a chosen worker count.
-// lint:allow(no-bare-numeric) reason: used by the tests that pin a worker count, not by every test that shares this module; tracked: #121
+// lint:allow(no-bare-numeric) reason: the worker count is a bare `usize` const-generic parameter; tracked: #121
 #[derive(Copy, Clone, Debug, Default)]
 pub struct FixedWorkers<const W: usize>;
 
