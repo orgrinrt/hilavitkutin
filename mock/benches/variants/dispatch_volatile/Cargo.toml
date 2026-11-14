@@ -11,6 +11,9 @@ name = "dispatch_volatile"
 path = "src/lib.rs"
 crate-type = ["cdylib"]
 
+[dev-dependencies]
+kernel_checks = { path = "../kernel_checks" }
+
 [dependencies]
 mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "a81e1956361a205261b90e5214dde932db4f1913", features = ["std"] }
 mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", rev = "a81e1956361a205261b90e5214dde932db4f1913" }

@@ -153,23 +153,67 @@ baseline for the parallel comparison to multiply.
 ## Perf gate (#664): the standing red oracle
 
 The #660 finding above is prose; the gate turns it into an executable
-definition of "the single-core engine is complete". It lives as `#[ignore]`
-tests in `tests/perf_gate.rs` over the same harness (`src/lib.rs`), asserting
-the engine is no worse than the optimal fused std arm. It is RED until Phase D
-(#340) lands the two load-bearing mechanisms (dispatch devirtualisation and
+definition of "the single-core engine is complete". It was `#[ignore]` tests in
+`tests/perf_gate.rs` with a timing loop of its own, and since 13 November 2026
+it is the bench harness: every workload is a section of `bench.toml`, every arm
+is a variant cdylib validated against the reference digest before it is timed,
+and `engine_vs_std --verdict` holds the medians a run promoted into `results/`
+to the ceilings in `support/src/expected.rs`. It is RED until Phase D (#340)
+lands the two load-bearing mechanisms (dispatch devirtualisation and
 within-fiber stage fusion) and the engine reaches the designed 0.95x to 1.02x
-parity, at which point it goes GREEN and signals Gate-1 (#661) perf-done. Run
-it deliberately:
+parity. Run it deliberately, from a stage:
 
 ```text
-caffeinate -dimsu cargo test --release -- --ignored --test-threads=1
+../stage.sh .
+<stage>/release/engine_vs_std
+<stage>/release/engine_vs_std --verdict
 ```
 
-The tests are ignored by default because they are timing assertions that are
-expected red and need the release profile to be meaningful; auto-running them
-would fail every unrelated `cargo test` and report noise in debug. Every test
-asserts checksum equality first, so a failure is unambiguously "engine slower"
-(the gate working) and never "the two arms diverged" (a broken bench).
+A cell's arms are held to the reference digest by the harness before any
+timing counts, so a red verdict is unambiguously "engine slower" (the gate
+working) and never "the arms diverged" (a broken bench). The comparison also
+runs in `./run-checks.sh`, at a small size, and `../stage.sh` runs those
+checks before it builds anything for timing.
+
+### The first harness run, 14 November 2026
+
+The engine these sections time has no fusing yet and no adaptive trunk, fiber
+and morsel work, so the numbers are a baseline to compare against once those
+exist, and no design call rests on them. The run was staged from commit
+c894a779 with nothing dirty, and every cell's `.build.txt` records that; it
+is the record of what was timed, since the stage was checksummed when it was
+written and verified against that after the last cell. Their `profile:` line
+names the manifest by the clone's absolute path, as `stage.sh` wrote it
+then; the records are kept as written. The harness's own `git_commit` in
+each `.meta.json` reads the clone's head when the cell is written, and that
+moved to 23953983 at 01:34 UTC, while the run timed from 01:33 to 02:00, so
+19 of the 20 cells name it. That commit changes one research note; whether the
+clone's hooks built anything on it is not recorded. `engine_vs_std --verdict`
+over `results/` judged 28 pairs and found 10 red.
+
+On one core, engine over std is red on every accumulator size (7.44x at 4096
+records, then 2.54x, 2.24x and 2.41x, against 1.30), on branching at 4096
+records (5.78x against 2.00) and on element_wise at 65536 records (1.20x
+against 1.10). Branching from 65536 records up, element_wise at the other
+three sizes and wide_parallel at every size are green. Threaded engine over
+threaded std is red on accumulator from 65536 records up (2.37x, 1.72x and
+1.84x against 1.10) and green at 4096 records (0.86x) and on wide_parallel at
+every size. The threaded std arms run on a `Crew` of workers parked between
+frames, as the engine's are; the ceilings in `expected.rs` were measured
+against threads spawned per frame and are kept, so a red on a threaded pair is
+partly the stronger bar. Startup is red on branching (1.84x against 1.10) and
+green on the other three workloads.
+
+Holds for: the sizes 4096, 65536, 1048576 and 4194304 (startup at 4194304
+only), warm mode, release profile with fat LTO, 2 passes of 20 runs of 5-call
+batches per cell and one harness run, the 4-vCPU Xeon KVM guest this
+repository's benches run on, unpinned, with the commit of a research note
+made in the clone while it timed. A cell is one run; how far a small cell
+moves between runs is not measured here.
+
+The sections that follow predate the harness. Their numbers
+were taken with the old loop over an input of `In[i] = i`, and the harness's
+seeded input and per-arm worker processes are not the same measurement.
 
 ### Workload matrix
 

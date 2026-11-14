@@ -19,18 +19,18 @@ impl Kernel for Light {
 }
 
 /// The four-stage multiplicative mix iterated `HEAVY_ROUNDS` times, shared
-/// with `engine_vs_std`, so per-record compute dominates memory traffic.
+/// with `evs-support`, so per-record compute dominates memory traffic.
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Heavy;
 
 impl Kernel for Heavy {
     #[inline(always)]
     fn apply(x: u32) -> u32 {
-        engine_vs_std::heavy(x)
+        evs_support::heavy(x)
     }
 }
 
-/// One pass of the four-stage mix, shared with `engine_vs_std`: a cheap
+/// One pass of the four-stage mix, shared with `evs-support`: a cheap
 /// transform whose output differs per record, for the append workload.
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Mix;
@@ -38,7 +38,7 @@ pub struct Mix;
 impl Kernel for Mix {
     #[inline(always)]
     fn apply(x: u32) -> u32 {
-        engine_vs_std::chain(x)
+        evs_support::chain(x)
     }
 }
 

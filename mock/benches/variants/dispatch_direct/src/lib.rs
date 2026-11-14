@@ -4,13 +4,12 @@
 //! is identical across all five dispatch variants. Only the call shape varies.
 //! Direct: no indirection. LLVM has full visibility, can inline freely.
 
-use mockspace_bench_core::{timed, FfiBenchCall};
+use mockspace_bench_core::{FfiBenchCall, timed};
 use mockspace_bench_macro::bench_variant;
 
-#[inline(never)]
 fn work(chunk: u64, acc: u64) -> u64 {
     // fnv1a-style mix: xor then multiply
-    (acc ^ chunk).wrapping_mul(0x100000001b3)
+    (acc ^ chunk).wrapping_mul(0x100000001B3)
 }
 
 #[bench_variant("dispatch_direct", sizes = [64, 256, 1024, 4096, 16384])]
@@ -27,5 +26,17 @@ fn run_dispatch_direct<const N: usize>(input: &[u8; N], output: &mut [u8; 8]) ->
             }
             output.copy_from_slice(&acc.to_le_bytes());
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn the_arm_does_not_time_a_constant() {
+        assert!(kernel_checks::varies(|input| {
+            let mut out = [0u8; 8];
+            let _ = super::run_dispatch_direct::<256>(input, &mut out);
+            u64::from_le_bytes(out)
+        }));
     }
 }

@@ -1,0 +1,5 @@
+member: mock/benches/engine_vs_std
+commit: c894a779af8a9badd65bdb1a823eb2e2220016c7
+staged: 2026-11-14 01:31 UTC
+profile: release, as /home/user/hilavitkutin/mock/benches/engine_vs_std/Cargo.toml declares it
+dirty: no

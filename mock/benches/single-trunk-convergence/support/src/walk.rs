@@ -12,10 +12,10 @@ use std::cell::UnsafeCell;
 use std::ops::Range;
 
 use arvo::USize;
+use evs_support::Crew;
 use hilavitkutin::resource::ConvergenceBuffer;
 
 use crate::ConvOutput;
-use crate::crew::Crew;
 use crate::engine::Op;
 use crate::kernel::{Kernel, fold_backward, fold_forward};
 use crate::split::{Ceil, Dir, HeadTailMid, Split, ceil_slice, head_tail_range};
@@ -114,6 +114,10 @@ impl Regions for Ceil {
     }
 }
 
+/// No arm the bench times appends under this split: head-and-tail takes the
+/// sequential fallback on the append (`arms::HeadTail`). It is the split
+/// without that fallback, which `tests/correctness.rs` runs to show the
+/// reversed tail the fallback exists to avoid.
 impl Regions for HeadTailMid {
     fn region(&self, core: usize, walkers: usize, n: usize) -> Range<usize> {
         use hilavitkutin_api::dispatch_codegen::RecordRange;

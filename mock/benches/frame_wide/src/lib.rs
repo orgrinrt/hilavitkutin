@@ -155,32 +155,9 @@ pub fn write_findings(
     }
     let md = format!(
         "{FINDINGS_CAVEAT}{}",
-        plain(&harness::generate_report(&ds, &result.title))
+        bench_arm::findings::plain(&harness::generate_report(&ds, &result.title))
     );
     std::fs::write(path, md).map_err(|e| format!("writing {path}: {e}"))
-}
-
-/// Take the harness's editorialising and its emphasis out of a report.
-///
-/// Two things go. The `_Why it matters:_` lines are the harness telling a
-/// reader which way to decide, which is exactly what this member's numbers do
-/// not support, and disclaiming them in the preamble while leaving them in the
-/// body reads worse than either. Bold spans go because the workspace writes no
-/// inline styling in prose a human reads, and a generated body committed to the
-/// repo is prose a human reads.
-///
-/// Everything else is left alone, including the figures and the highlight
-/// headings the bold was wrapped around.
-fn plain(report: &str) -> String {
-    let mut out = String::with_capacity(report.len());
-    for line in report.lines() {
-        if line.trim_start().starts_with("_Why it matters:_") {
-            continue;
-        }
-        out.push_str(&line.replace("**", ""));
-        out.push('\n');
-    }
-    out
 }
 
 /// Whether this process was started as a harness worker.

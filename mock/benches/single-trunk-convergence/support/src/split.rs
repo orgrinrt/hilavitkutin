@@ -173,8 +173,9 @@ impl Split for HeadTailMid {
 ///
 /// The cursor packs the next head block in its high half and one past the
 /// last unclaimed tail block in its low half. A claim is one compare and swap
-/// on it; the walkers meet when the halves cross, and whichever walker sees
-/// that first stores the meeting record.
+/// on it; the walkers meet when the halves cross. No claim moves the cursor
+/// after that, so each walker, once its own claim fails, stores the same
+/// meeting record from it.
 pub struct HeadTailDyn {
     cursor: AtomicU64,
     conv:   Convergence,

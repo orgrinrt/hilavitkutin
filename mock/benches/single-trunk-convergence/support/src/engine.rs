@@ -17,8 +17,8 @@ use core::marker::PhantomData;
 use core::pin::Pin;
 
 use arvo::{Bool, USize};
-use engine_vs_std::executor::BenchExecutor;
-use engine_vs_std::{HeapBump, arena_bytes, store};
+use evs_support::executor::BenchExecutor;
+use evs_support::{HeapBump, arena_bytes, store};
 use hilavitkutin::dispatch::engine_ctx::{
     AccPtrCons,
     AccPtrNil,
