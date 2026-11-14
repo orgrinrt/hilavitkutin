@@ -49,3 +49,12 @@ The wide differential, findings 4 and 5
 A first count model, `run`'s count times the cores with a slice, failed unit_outer at frame 0 (got 1, want 5 at one worker): `run` runs a unit once a window and a core of the unit-outer walk once over its slice, so that model judged the walk's shape and not the skip. The committed model counts a run in a frame where `run` ran the unit at all, and the first red moves to frame 1.
 
 The store check's control, the_comparison_reports_a_runner_that_altered_one_record, reports Bytes { frame: 3, column: 6, record: 0 } at every count, the sink record it altered.
+
+Review pass 2
+=============
+
+The two hand controls above are now tests: `the_block_check_rejects_a_bump_that_aligns_by_offset` in `hilavitkutin-providers/tests/static_bump_memory.rs` and `the_boundary_check_rejects_an_abort_with_no_panic` in `hilavitkutin/tests/unit_panic_aborts.rs`, each green because the check rejects the wrong case.
+
+`a_provider_over_raw_parts_is_dropped_before_its_block_is_freed` passes under `cargo miri test` from `mock/` with `--config 'build.rustc-workspace-wrapper=""'` and `MIRIFLAGS=-Zmiri-ignore-leaks` (the leaked buffers of the other tests), and again with `-Zmiri-tree-borrows`. With the box freed before the provider's block is written, Miri stops: "Undefined Behavior: memory access failed: alloc42907 has been freed, so this pointer is dangling" at the write.
+
+The wide differential with its counts judged against the cone, `--include-ignored`: 7 passed, 6 failed, the six committed ignored. The unit-outer count fails at frame 0 on producer 0 (got 1, 2, 3, 4 and 255 at 1, 2, 3, 4 and 256 workers, want 5, the windows `run` walks); the windowed and record-less counts and the record-less `run` cone at frame 1 on producer 0; the two unmarked-change checks at every count. The accumulator control reports `Bytes { frame: 3, column: 7, record: <kept - 1> }` at every count.

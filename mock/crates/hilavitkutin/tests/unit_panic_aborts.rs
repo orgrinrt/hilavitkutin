@@ -17,7 +17,8 @@
 //! itself alone as a child that runs the frame, and holds the child to dying by
 //! SIGABRT inside a bound, having printed the unit's panic and then the
 //! runtime's refusal to unwind past the boundary. Without the boundary the
-//! child hangs and the bound trips.
+//! child hangs and the bound trips. A child that aborts with no panic is the
+//! control: the check must reject it.
 
 #![cfg(unix)]
 
@@ -168,8 +169,12 @@ impl WorkUnit<Always> for Combiner {
 
 /// The frame through `entry`, in the child. Returns only if the frame returned
 /// over the panicked unit, and then exits with success, which the parent reads
-/// as the boundary missing.
+/// as the boundary missing. The entry `abort` aborts at once with no frame and
+/// no panic, the control of the boundary check.
 fn run_the_panicking_frame(entry: &std::ffi::OsStr) -> ! {
+    if entry == "abort" {
+        std::process::abort();
+    }
     let scheduler = Scheduler::builder()
         .with(Column::<Inv>::start())
         .with(Column::<Av>::start())
@@ -233,20 +238,24 @@ fn frame_in_a_child(test: &str, entry: &str) -> (std::process::ExitStatus, Strin
     }
 }
 
-/// The child died by abort, and the abort was the unit's panic stopped at the
-/// boundary: its message, then the runtime's refusal to unwind past it.
-fn assert_aborted_at_the_boundary(status: std::process::ExitStatus, stderr: &str) {
-    assert_eq!(
-        (status.code(), status.signal()),
-        (None, Some(SIGABRT)),
-        "the child ended by {status:?}, not by abort; it printed:\n{stderr}"
-    );
-    let panicked = stderr.find(PANIC_MESSAGE);
-    let refused = stderr.find(CANNOT_UNWIND);
-    assert!(
-        matches!((panicked, refused), (Some(p), Some(r)) if p < r),
-        "the child printed the unit's panic and then the refusal to unwind; it printed:\n{stderr}"
-    );
+/// Whether the child died by abort and the abort was the unit's panic stopped
+/// at the boundary: its message, then the runtime's refusal to unwind past it.
+/// What it saw instead, when not.
+fn aborted_at_the_boundary(status: std::process::ExitStatus, stderr: &str) -> Result<(), String> {
+    if (status.code(), status.signal()) != (None, Some(SIGABRT)) {
+        return Err(format!(
+            "the child ended by {status:?}, not by abort; it printed:\n{stderr}"
+        ));
+    }
+    match (stderr.find(PANIC_MESSAGE), stderr.find(CANNOT_UNWIND)) {
+        (Some(p), Some(r)) if p < r => Ok(()),
+        _ => {
+            Err(format!(
+                "the child did not print the unit's panic and then the refusal to unwind; it \
+             printed:\n{stderr}"
+            ))
+        },
+    }
 }
 
 #[test]
@@ -255,7 +264,9 @@ fn a_unit_panic_on_a_worker_aborts_within_the_bound() {
         "a_unit_panic_on_a_worker_aborts_within_the_bound",
         "run_parallel",
     );
-    assert_aborted_at_the_boundary(status, &stderr);
+    if let Err(saw) = aborted_at_the_boundary(status, &stderr) {
+        panic!("{saw}");
+    }
 }
 
 /// The same boundary holds on the caller's thread: under `run` the body runs
@@ -263,5 +274,23 @@ fn a_unit_panic_on_a_worker_aborts_within_the_bound() {
 #[test]
 fn a_unit_panic_under_run_aborts() {
     let (status, stderr) = frame_in_a_child("a_unit_panic_under_run_aborts", "run");
-    assert_aborted_at_the_boundary(status, &stderr);
+    if let Err(saw) = aborted_at_the_boundary(status, &stderr) {
+        panic!("{saw}");
+    }
+}
+
+/// The check's control: a child that aborts with no panic dies by the same
+/// signal, and the check must not take it for the boundary.
+#[test]
+fn the_boundary_check_rejects_an_abort_with_no_panic() {
+    let (status, stderr) =
+        frame_in_a_child("the_boundary_check_rejects_an_abort_with_no_panic", "abort");
+    assert_eq!(status.signal(), Some(SIGABRT), "the control child aborts");
+    let verdict = aborted_at_the_boundary(status, &stderr);
+    assert!(
+        verdict
+            .as_ref()
+            .is_err_and(|saw| saw.contains("did not print the unit's panic")),
+        "the check rejects an abort that printed no panic; it said {verdict:?}"
+    );
 }

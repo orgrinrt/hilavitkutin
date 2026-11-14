@@ -3,11 +3,14 @@
 //! A block is aligned by its address, inside the buffer, and apart from every
 //! other block, also when several threads ask at once; it stays where it was
 //! when the provider moves; a request that does not fit, or an alignment that
-//! is not a power of two, is refused with null and takes nothing.
+//! is not a power of two, is refused with null and takes nothing. A provider
+//! built with `from_raw_parts` over a block it does not own is dropped before
+//! the block is freed, the order its caller promises.
 //!
 //! Where a property is judged by a check, the check is shown seeing the break
 //! it is for: the alignment check on the address an offset-aligned bump would
-//! give over the same misaligned buffer, the overlap check on two ranges that
+//! give over the same misaligned buffer, both in the single test and in the
+//! threaded one's checking function, and the overlap check on two ranges that
 //! share bytes.
 
 use core::mem::MaybeUninit;
@@ -99,6 +102,33 @@ fn a_request_that_does_not_fit_is_refused_and_takes_nothing() {
     );
 }
 
+/// The first block that breaks a promise of `MemoryProviderApi` over a buffer
+/// at `lo .. hi`: one not aligned by its address, one reaching outside the
+/// buffer, or two sharing a byte. Each block is `(address, length, alignment)`.
+fn first_broken(blocks: &mut [(usize, usize, usize)], lo: usize, hi: usize) -> Option<String> {
+    for &(addr, len, align) in blocks.iter() {
+        if addr % align != 0 {
+            return Some(format!("block at {addr:#x} is not aligned to {align}"));
+        }
+        if addr < lo || addr + len > hi {
+            return Some(format!(
+                "block at {addr:#x} of {len} bytes is outside the buffer"
+            ));
+        }
+    }
+    blocks.sort_unstable();
+    blocks
+        .windows(2)
+        .find(|pair| pair[0].0 + pair[0].1 > pair[1].0)
+        .map(|pair| format!("{pair:?} overlap"))
+}
+
+/// The requests every caller of the threaded test makes, `EACH` of them for
+/// thread `t`.
+fn requests(t: usize, each: usize) -> impl Iterator<Item = (usize, usize)> {
+    (0 .. each).map(move |k| (1 + (t + k) % 13, 1 << (k % 4)))
+}
+
 #[test]
 fn concurrent_callers_get_aligned_disjoint_blocks_inside_the_buffer() {
     const THREADS: usize = 8;
@@ -116,10 +146,8 @@ fn concurrent_callers_get_aligned_disjoint_blocks_inside_the_buffer() {
             .map(|t| {
                 let m = &m;
                 s.spawn(move || {
-                    (0 .. EACH)
-                        .map(|k| {
-                            let len = 1 + (t + k) % 13;
-                            let align = 1 << (k % 4);
+                    requests(t, EACH)
+                        .map(|(len, align)| {
                             let p = allocate(m, len, align);
                             assert!(!p.is_null());
                             (p.addr(), len, align)
@@ -133,17 +161,34 @@ fn concurrent_callers_get_aligned_disjoint_blocks_inside_the_buffer() {
             .flat_map(|h| h.join().unwrap())
             .collect()
     });
-    for &(addr, len, align) in &all {
-        assert_eq!(addr % align, 0, "block at {addr:#x} is aligned to {align}");
-        assert!(
-            addr >= lo && addr + len <= hi,
-            "block at {addr:#x} of {len} bytes is inside the buffer"
-        );
-    }
-    all.sort_unstable();
-    for pair in all.windows(2) {
-        assert!(pair[0].0 + pair[0].1 <= pair[1].0, "{pair:?} overlap");
-    }
+    assert_eq!(first_broken(&mut all, lo, hi), None);
+}
+
+#[test]
+fn the_block_check_rejects_a_bump_that_aligns_by_offset() {
+    // The same requests over the same skewed buffer, handed out by a bump that
+    // aligns its offset into the buffer rather than the address, the way the
+    // provider did before it was fixed. The check must see it.
+    let buffer = skewed(8 * 200 * 32, 3);
+    let (lo, hi) = (
+        buffer.as_ptr().addr(),
+        buffer.as_ptr().addr() + buffer.len(),
+    );
+    let mut offset: usize = 0;
+    let mut blocks: Vec<(usize, usize, usize)> = (0 .. 8)
+        .flat_map(|t| requests(t, 200))
+        .map(|(len, align)| {
+            offset = offset.next_multiple_of(align);
+            let block = (lo + offset, len, align);
+            offset += len;
+            block
+        })
+        .collect();
+    let broken = first_broken(&mut blocks, lo, hi);
+    assert!(
+        broken.as_deref().is_some_and(|b| b.contains("not aligned")),
+        "the check reports the misaligned block; reported {broken:?}"
+    );
 }
 
 #[test]
@@ -161,4 +206,34 @@ fn a_block_stays_where_it_was_when_the_provider_moves() {
         !overlap((p, 4), (q, 4)),
         "the moved provider keeps its cursor"
     );
+}
+
+#[test]
+fn a_provider_over_raw_parts_is_dropped_before_its_block_is_freed() {
+    // The order a provider over a block it does not own keeps: build it over
+    // the block, use it, drop it, and only then free the block. Run under Miri
+    // as well, which sees a use of the block after the free.
+    const BYTES: usize = 256;
+    let block = Box::into_raw(Box::new([MaybeUninit::<u8>::uninit(); BYTES]));
+    let lo = block.addr();
+    // SAFETY: the box's `BYTES` bytes are valid for reads and writes, nothing
+    // but the provider touches them, and the provider is dropped before the
+    // box is freed below.
+    let m = core::mem::ManuallyDrop::new(unsafe {
+        StaticBumpMemory::from_raw_parts(block.cast(), USize(BYTES))
+    });
+    let p = allocate(&m, 8, 8);
+    assert!(!p.is_null());
+    assert!(
+        p.addr() >= lo && p.addr() + 8 <= lo + BYTES,
+        "the block is inside the box"
+    );
+    // SAFETY: `p` is a live block of 8 bytes aligned to 8.
+    unsafe { p.cast::<u64>().write(0xC0FFEE) };
+    // SAFETY: as above.
+    assert_eq!(unsafe { p.cast::<u64>().read() }, 0xC0FFEE);
+    drop(core::mem::ManuallyDrop::into_inner(m));
+    // SAFETY: `block` came from `Box::into_raw` and the provider over it is
+    // gone.
+    drop(unsafe { Box::from_raw(block) });
 }
