@@ -76,10 +76,8 @@ const RECORDS: usize = 4;
 
 // Resource value newtypes (root inputs). Copy so they store as resources.
 #[derive(Copy, Clone)]
-#[allow(dead_code)]
 struct InA(u32);
 #[derive(Copy, Clone)]
-#[allow(dead_code)]
 struct InC(u32);
 
 // Column value newtypes: a Copy newtype over u32 picks up the blanket
@@ -87,16 +85,12 @@ struct InC(u32);
 // read (the RAW edge that orders the producer before the consumer); the
 // test asserts execution counts, not values.
 #[derive(Copy, Clone, Default)]
-#[allow(dead_code)]
 struct Ca(u32);
 #[derive(Copy, Clone, Default)]
-#[allow(dead_code)]
 struct Cb(u32);
 #[derive(Copy, Clone, Default)]
-#[allow(dead_code)]
 struct Cc(u32);
 #[derive(Copy, Clone, Default)]
-#[allow(dead_code)]
 struct Cd(u32);
 
 type ReadA = Cons<Resource<InA>, Empty>;
@@ -432,19 +426,19 @@ macro_rules! set_inputs {
 macro_rules! snapshot {
     ($sched:expr) => {{
         let b = $sched.__bindings();
-        let ca = b.__tail().__tail().__tail().__ptr().as_ptr() as *const u32;
-        let cb = b.__tail().__tail().__ptr().as_ptr() as *const u32;
-        let cc = b.__tail().__ptr().as_ptr() as *const u32;
-        let cd = b.__ptr().as_ptr() as *const u32;
+        let ca = b.__tail().__tail().__tail().__ptr().as_ptr() as *const Ca;
+        let cb = b.__tail().__tail().__ptr().as_ptr() as *const Cb;
+        let cc = b.__tail().__ptr().as_ptr() as *const Cc;
+        let cd = b.__ptr().as_ptr() as *const Cd;
         let mut out = [[0u32; RECORDS]; 4];
         for i in 0 .. RECORDS {
-            // SAFETY: each column holds RECORDS reserved records of a
-            // Copy newtype over u32; the scheduler (hence storage) is alive.
+            // SAFETY: each column holds RECORDS reserved records of its own
+            // value type; the scheduler (hence storage) is alive.
             unsafe {
-                out[0][i] = *ca.add(i);
-                out[1][i] = *cb.add(i);
-                out[2][i] = *cc.add(i);
-                out[3][i] = *cd.add(i);
+                out[0][i] = (*ca.add(i)).0;
+                out[1][i] = (*cb.add(i)).0;
+                out[2][i] = (*cc.add(i)).0;
+                out[3][i] = (*cd.add(i)).0;
             }
         }
         out

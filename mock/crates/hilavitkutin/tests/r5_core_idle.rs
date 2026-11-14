@@ -94,7 +94,6 @@ struct Av(u32);
 #[derive(Copy, Clone, Default)]
 struct Bv(u32);
 #[derive(Copy, Clone, Default)]
-#[allow(dead_code)] // written by Combiner, never read back (the test reads idle, not Zv)
 struct Zv(u32);
 
 type OneIn = Cons<Column<Inv>, Empty>;
@@ -213,7 +212,6 @@ struct Q1v(u32);
 #[derive(Copy, Clone, Default)]
 struct Q2v(u32);
 #[derive(Copy, Clone, Default)]
-#[allow(dead_code)] // written by Sink, never read back (the test reads idle, not Sv)
 struct Sv(u32);
 
 type ColP1 = Cons<Column<P1v>, Empty>;
@@ -473,6 +471,18 @@ fn single_core_run_no_idle() {
         0,
         "single-core run takes no waist-barrier park, so it records no idle"
     );
+    // The frame itself ran: Zv is the head column, Combiner's Av + Bv at every
+    // record (In = i, so Av = 10 i and Bv = 100 i).
+    let zv = scheduler.__bindings().__ptr().as_ptr() as *const Zv;
+    for i in 0 .. N {
+        // SAFETY: Zv holds N reserved records; the scheduler is alive.
+        let z = unsafe { (*zv.add(i)).0 };
+        assert_eq!(
+            z,
+            (i as u32) * 110,
+            "rec {i}: the fan-in combined both producers"
+        );
+    }
 }
 
 // --- Invariant: an accumulator carrier takes the unit-outer no-barrier path. ---
@@ -524,6 +534,24 @@ fn accum_unit_outer_no_idle() {
         0,
         "an accumulator carrier runs unit-outer with no waist barrier, so it records no idle"
     );
+    // The unit ran and left appends: one per core that walked the carrier, so
+    // between one and the pool's worker count, and each is what the unit made.
+    let view = scheduler.as_ref();
+    let marks = view.__bindings();
+    let live = marks.__len_cell().get().0;
+    let ncores = pool.worker_count().0.max(1);
+    assert!(
+        (1 ..= ncores).contains(&live),
+        "one append per walking core: {live} live of at most {ncores}"
+    );
+    for k in 0 .. live {
+        // SAFETY: the first `live` records were initialised by the appends.
+        let mark = unsafe { (*marks.__ptr().as_ptr().add(k)).0 };
+        assert_eq!(
+            mark, 7,
+            "rec {k}: the appended value is the one the unit made"
+        );
+    }
 }
 
 // --- Measurement: an imbalanced multi-core column pipeline parks a follower. ---
@@ -553,5 +581,15 @@ fn imbalanced_parallel_records_idle() {
             idle, 0,
             "a single worker never parks at a waist, so it records no idle"
         );
+    }
+
+    // The frame ran across the interior waist whatever the worker count: Sv is
+    // the head column, Q1v + Q2v at every record. In = i gives P1v = 2 i and
+    // P2v = 3 i, Mv = 5 i, Q1v = 5 i and Q2v = 10 i, so Sv = 15 i.
+    let sv = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const Sv;
+    for i in 0 .. N {
+        // SAFETY: Sv holds N reserved records; the scheduler is alive.
+        let s = unsafe { (*sv.add(i)).0 };
+        assert_eq!(s, (i as u32) * 15, "rec {i}: the sink saw both Q columns");
     }
 }
