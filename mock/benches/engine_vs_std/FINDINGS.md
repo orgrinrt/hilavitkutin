@@ -175,32 +175,6 @@ working) and never "the arms diverged" (a broken bench). The comparison also
 runs in `./run-checks.sh`, at a small size, and `../stage.sh` runs those
 checks before it builds anything for timing.
 
-### The first harness run, 13 November 2026
-
-The engine these sections time has no fusing yet and no adaptive trunk, fiber
-and morsel work, so the numbers are a baseline to compare against once those
-exist, and no design call rests on them. The verdict judged 28 pairs and found
-15 red; `results/` holds the CSVs and the harness's findings beside them.
-Engine over std on one core is red on every accumulator size (2.36x to 8.38x
-against 1.30) and on branching at 4096 and 65536 records, and green on
-element_wise from 1048576 records up (0.99x and 0.80x) and on wide_parallel at
-every size. Threaded engine over threaded std is red on every accumulator size
-(1.16x to 1.80x against 1.10) and at wide_parallel n = 4096, green on
-wide_parallel from 65536 records up. The threaded std arms run on a `Crew` of
-workers parked between frames, as the engine's are; the ceilings in
-`expected.rs` were measured against threads spawned per frame and are kept, so
-a red on a threaded pair is partly the stronger bar. Startup is red on
-accumulator, branching and wide_parallel (1.30x, 2.61x and 1.14x against 1.10)
-and green on element_wise.
-
-Holds for: the sizes 4096, 65536, 1048576 and 4194304 (startup at 4194304
-only), warm mode, release profile with fat LTO, 2 passes of 20 runs of 5-call
-batches per cell, the 4-vCPU KVM guest this repository's benches run on,
-unpinned. The accumulator section was rerun on its own after a 57-second
-compile overlapped its first cells; at n = 4096 the overlapped run read 15.38x
-on one core where the clean one reads 8.38x, so a single small cell here moves
-with load on the host by far more than its ceiling.
-
 The sections that follow predate the harness. Their numbers
 were taken with the old loop over an input of `In[i] = i`, and the harness's
 seeded input and per-arm worker processes are not the same measurement.

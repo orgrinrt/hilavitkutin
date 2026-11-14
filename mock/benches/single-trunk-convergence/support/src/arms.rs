@@ -21,7 +21,8 @@ use crate::{ConvInput, ConvOutput, data, std_par, walk};
 pub trait Arm: 'static {
     const NAME: &'static str;
     /// How many walkers the arm's fold runs at a worker count of `workers`.
-    /// Every fold is built with it, so a test holds the count to it.
+    /// `tests/walkers.rs` holds it to the walkers a fold runs and the workers
+    /// it parks.
     fn walkers(workers: usize) -> usize;
     fn fold<K: Kernel>(data: Vec<u32>, workers: usize) -> impl FnMut(Op) -> ConvOutput + 'static;
     fn append<K: Kernel>(data: Vec<u32>, workers: usize) -> impl FnMut(Op) -> ConvOutput + 'static;

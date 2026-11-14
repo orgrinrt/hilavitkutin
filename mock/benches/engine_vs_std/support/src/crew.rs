@@ -13,11 +13,13 @@
 //! it costs the engine's pool, and an arm on the crew differs from an engine
 //! arm in the record walk, not in how its threads are woken.
 
+use std::any::Any;
 use std::cell::UnsafeCell;
 use std::marker::PhantomData;
+use std::panic::{AssertUnwindSafe, catch_unwind, resume_unwind};
 use std::ptr::NonNull;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
+use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 
 use arvo::USize;
@@ -62,6 +64,9 @@ struct Shared {
     frame:   PoolFrame<'static, MAX_CORES, 1>,
     job:     UnsafeCell<Job>,
     workers: usize,
+    /// The first panic a worker caught in the frame, raised again on the
+    /// caller once every worker has arrived.
+    panic:   Mutex<Option<Box<dyn Any + Send>>>,
 }
 
 // SAFETY: the frame words are atomics; `progress_slots` is dangling and never
@@ -106,6 +111,7 @@ impl Crew {
                 ctx: std::ptr::null(),
             }),
             workers,
+            panic: Mutex::new(None),
         });
         let handles = (0 .. workers)
             .map(|core| {
@@ -126,6 +132,10 @@ impl Crew {
 
     /// Run one frame: every worker calls `f(core)` once, and this returns
     /// after the last of them has finished.
+    ///
+    /// A worker whose `f` panics still arrives at the frame's barrier, so the
+    /// frame ends, and the first such panic is raised again here, as a scoped
+    /// thread's would be at its join. The crew stays usable after it.
     pub fn frame<F: Fn(usize) + Sync>(&mut self, f: &F) {
         // SAFETY: `&mut self` means no frame is in flight, so every worker is
         // parked in `frame_await` and none reads `job`. `f` outlives the frame:
@@ -138,6 +148,15 @@ impl Crew {
         }
         frame_publish(&self.shared.frame);
         frame_await_done(&self.shared.frame, USize(self.shared.workers), SPIN_BUDGET);
+        let caught = self
+            .shared
+            .panic
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+            .take();
+        if let Some(payload) = caught {
+            resume_unwind(payload);
+        }
     }
 }
 
@@ -211,7 +230,18 @@ fn mainloop(s: &Shared, core: usize) {
         // has arrived at the done barrier below.
         let job = unsafe { *s.job.get() };
         // SAFETY: `Crew::frame` keeps the closure alive through the frame.
-        unsafe { (job.run)(job.ctx, core) };
+        // A panic is caught so this worker still arrives below: unwinding past
+        // the arrival would leave the caller waiting on the barrier forever.
+        // The closure is only borrowed, so nothing it leaves half written is
+        // read after the panic is raised on the caller.
+        let ran = catch_unwind(AssertUnwindSafe(|| unsafe { (job.run)(job.ctx, core) }));
+        if let Err(payload) = ran {
+            let mut slot = s
+                .panic
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+            slot.get_or_insert(payload);
+        }
         frame_done_arrive(&s.frame, expected);
     }
 }

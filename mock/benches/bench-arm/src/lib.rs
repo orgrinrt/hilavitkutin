@@ -12,6 +12,7 @@
 //! crates, as every bench member is.
 
 pub mod arm;
+pub mod findings;
 pub mod image;
 
 pub use arm::{Arm, StateArm, call};

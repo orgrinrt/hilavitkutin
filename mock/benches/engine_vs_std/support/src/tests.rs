@@ -143,21 +143,33 @@ fn an_arm_with_a_stage_dropped_fails_the_comparison() {
 /// `Crew::for_chunks` hands every worker the same range of the input and of
 /// each output, and the ranges cover every record once: the outputs equal a
 /// serial map, at a length that is not a multiple of the workers, at fewer
-/// records than workers, and at none.
+/// records than workers, and at none, for one worker, two, three and as many
+/// as the crew takes.
 #[test]
 fn the_crew_covers_every_record_once_in_its_workers_ranges() {
-    let mut crew = Crew::new(3);
-    for n in [0usize, 2, 3, 10, 1001] {
-        let input: Vec<u32> = (0 .. n as u32).collect();
-        let (mut a, mut b) = (vec![u32::MAX; n], vec![u32::MAX; n]);
-        crew.for_chunks(&input, [&mut a[..], &mut b[..]], &|i, [x, y]| {
-            for (k, &v) in i.iter().enumerate() {
-                x[k] = v * 2;
-                y[k] = v + 7;
-            }
-        });
-        assert_eq!(a, input.iter().map(|v| v * 2).collect::<Vec<_>>(), "n={n}");
-        assert_eq!(b, input.iter().map(|v| v + 7).collect::<Vec<_>>(), "n={n}");
+    for workers in [1, 2, 3, hilavitkutin::thread::MAX_CORES] {
+        let mut crew = Crew::new(workers);
+        assert_eq!(crew.workers(), workers);
+        for n in [0usize, 2, 3, 10, 1001] {
+            let input: Vec<u32> = (0 .. n as u32).collect();
+            let (mut a, mut b) = (vec![u32::MAX; n], vec![u32::MAX; n]);
+            crew.for_chunks(&input, [&mut a[..], &mut b[..]], &|i, [x, y]| {
+                for (k, &v) in i.iter().enumerate() {
+                    x[k] = v * 2;
+                    y[k] = v + 7;
+                }
+            });
+            assert_eq!(
+                a,
+                input.iter().map(|v| v * 2).collect::<Vec<_>>(),
+                "n={n}, workers={workers}"
+            );
+            assert_eq!(
+                b,
+                input.iter().map(|v| v + 7).collect::<Vec<_>>(),
+                "n={n}, workers={workers}"
+            );
+        }
     }
 }
 
@@ -181,4 +193,27 @@ fn a_worker_that_skips_its_range_is_seen() {
         &[u32::MAX; 4],
         "the first worker's range is four records"
     );
+}
+
+/// A worker whose closure panics still ends the frame: the panic is raised
+/// on the caller, as a scoped thread's is at its join, rather than leaving
+/// the caller waiting on a barrier one worker never reaches. The crew runs
+/// the next frame and drops cleanly after it.
+#[test]
+fn a_worker_that_panics_fails_the_frame_instead_of_hanging_it() {
+    let mut crew = Crew::new(3);
+    let caught = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        crew.frame(&|core: usize| {
+            if core == 1 {
+                panic!("worker one fails");
+            }
+        });
+    }));
+    let payload = caught.expect_err("a worker panicked and the frame returned normally");
+    assert_eq!(payload.downcast_ref::<&str>(), Some(&"worker one fails"));
+    let ran = std::sync::atomic::AtomicUsize::new(0);
+    crew.frame(&|_core: usize| {
+        ran.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    });
+    assert_eq!(ran.into_inner(), 3, "the crew runs a frame after the panic");
 }

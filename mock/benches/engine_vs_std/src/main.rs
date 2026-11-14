@@ -10,7 +10,9 @@
 //! directory, and `<that>/release/engine_vs_std` is run from this directory.
 //! `bench.toml` names the arms under `target/`, which this binary points at
 //! its own stage, so the arms timed are the ones staged beside it. The stage is
-//! verified before the run and after it.
+//! verified before the run and after it. Each cell the run promoted then gets
+//! the stage's build record beside it, and its findings lose the harness's
+//! stock verdict lines.
 //!
 //! `--verdict [<results dir>]` runs nothing. It reads the medians a run
 //! promoted into `results/` and holds each cell to the design's ceiling in
@@ -50,6 +52,7 @@ fn main() -> ExitCode {
                 return ExitCode::FAILURE;
             },
         };
+    let started = std::time::SystemTime::now();
     let code = drive(&DriverRegistry {
         build_workload,
         routine_for,
@@ -61,7 +64,50 @@ fn main() -> ExitCode {
         eprintln!("error: {e}\nthe timings of this run are not of the staged build");
         return ExitCode::FAILURE;
     }
+    if let Err(e) = settle(Path::new("results"), started, &stage) {
+        eprintln!("error: {e}");
+        return ExitCode::FAILURE;
+    }
     code
+}
+
+/// What every cell this run promoted gets before it is committed: its
+/// findings without the harness's stock verdict lines and bold
+/// (`bench_arm::findings::plain`), and `<cell>.build.txt` beside them, the
+/// stage's record of the commit the arms were built from and whatever was
+/// dirty against it. A cell is this run's when its findings were written
+/// after the run started; the cells of earlier runs keep their own records.
+fn settle(results: &Path, started: std::time::SystemTime, stage: &Stage) -> Result<(), String> {
+    let record = stage.build_record()?;
+    let read = |dir: &Path| std::fs::read_dir(dir).map_err(|e| format!("{}: {e}", dir.display()));
+    for section in read(results)? {
+        let section = section.map_err(|e| e.to_string())?.path();
+        if !section.is_dir() {
+            continue;
+        }
+        for file in read(&section)? {
+            let path = file.map_err(|e| e.to_string())?.path();
+            let Some(cell) = path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .and_then(|n| n.strip_suffix("_findings.md"))
+            else {
+                continue;
+            };
+            let written = std::fs::metadata(&path)
+                .and_then(|m| m.modified())
+                .map_err(|e| format!("{}: {e}", path.display()))?;
+            if written < started {
+                continue;
+            }
+            let io = |e: std::io::Error| format!("{}: {e}", path.display());
+            let report = std::fs::read_to_string(&path).map_err(io)?;
+            std::fs::write(&path, bench_arm::findings::plain(&report)).map_err(io)?;
+            let build = section.join(format!("{cell}.build.txt"));
+            std::fs::write(&build, &record).map_err(|e| format!("{}: {e}", build.display()))?;
+        }
+    }
+    Ok(())
 }
 
 /// One program of one item, the call itself. Every call here is a whole
@@ -98,4 +144,59 @@ fn routine_for(config: &BenchConfig) -> Option<RoutineSpec> {
         name: config.bench_name.rsplit('/').next()?.to_string(),
         bridge,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A stage holding one driver, as `stage.sh` lays one out, with the
+    /// build record `commit: test`.
+    fn stage_in(dir: &Path) -> Stage {
+        std::fs::create_dir_all(dir.join("release")).unwrap();
+        std::fs::write(dir.join("release/driver"), b"abc").unwrap();
+        std::fs::write(
+            dir.join("binaries.sha256"),
+            "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad  release/driver\n",
+        )
+        .unwrap();
+        std::fs::write(dir.join("build.txt"), "commit: test\n").unwrap();
+        Stage::of_executable(&dir.join("release/driver")).unwrap()
+    }
+
+    /// The cell this run wrote is stripped and gets the stage's record; the
+    /// cell an earlier run wrote keeps its findings as they were and gets no
+    /// record of a build it was not timed on.
+    #[test]
+    fn only_this_runs_cells_are_settled() {
+        let root = std::env::temp_dir().join(format!("evs-settle-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        let stage = stage_in(&root.join("stage"));
+        let section = root.join("results/element_wise");
+        std::fs::create_dir_all(&section).unwrap();
+        let stock = "**Fastest:** x\n_Why it matters:_ switch.\n";
+        std::fs::write(section.join("element_wise_n4096_findings.md"), stock).unwrap();
+        std::thread::sleep(std::time::Duration::from_millis(20));
+        let started = std::time::SystemTime::now();
+        std::thread::sleep(std::time::Duration::from_millis(20));
+        std::fs::write(section.join("element_wise_n65536_findings.md"), stock).unwrap();
+
+        settle(&root.join("results"), started, &stage).unwrap();
+
+        let read = |name: &str| std::fs::read_to_string(section.join(name)).ok();
+        assert_eq!(
+            read("element_wise_n65536_findings.md").as_deref(),
+            Some("Fastest: x\n")
+        );
+        assert_eq!(
+            read("element_wise_n65536.build.txt").as_deref(),
+            Some("commit: test\n")
+        );
+        assert_eq!(
+            read("element_wise_n4096_findings.md").as_deref(),
+            Some(stock)
+        );
+        assert_eq!(read("element_wise_n4096.build.txt"), None);
+        std::fs::remove_dir_all(&root).ok();
+    }
 }

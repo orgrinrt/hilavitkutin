@@ -215,30 +215,11 @@ fn a_double_walked_range_is_caught() {
     assert_eq!(got.count, want.count + 1);
 }
 
-/// The walker count each arm's fold is built with: head-and-tail runs two
-/// walkers at any W from 2 up and one at W = 1, the crew's N-way runs W, the
-/// one-walker arms one. Every fold takes its count from `Arm::walkers`, so
-/// this holds what the bench times, and a head-and-tail at W = 4 compared with
-/// an N-way at W = 4 is two walkers against four.
-#[test]
-fn every_arm_runs_the_walkers_it_claims() {
-    for w in 1 ..= 8 {
-        assert_eq!(HeadTail::walkers(w), w.min(2), "head_tail at W={w}");
-        assert_eq!(
-            HeadTailDynamic::walkers(w),
-            w.min(2),
-            "head_tail_dyn at W={w}"
-        );
-        assert_eq!(KernelNway::walkers(w), w, "kernel_nway at W={w}");
-        assert_eq!(KernelSeq::walkers(w), 1, "kernel_seq at W={w}");
-        assert_eq!(Sequential::walkers(w), 1, "sequential at W={w}");
-    }
-}
-
 /// The floating meeting point with both walkers claiming at once, so the
 /// compare and swap on the shared cursor is contended: every record is still
-/// walked once, and the meeting record lands inside the fiber. The test above
-/// walks core 0 to the end before core 1 starts, which never enters the race.
+/// walked once, and the meeting record lands inside the fiber.
+/// `the_dynamic_meeting_point_covers_every_record_once` walks core 0 to the
+/// end before core 1 starts, which never enters the race.
 ///
 /// The walkers start together behind a barrier, over enough blocks that each
 /// one claims some on most frames. A frame where one walker claimed nothing

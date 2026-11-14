@@ -142,13 +142,17 @@ mod tests {
 
     #[test]
     fn the_digest_is_fnv1a_over_the_bytes() {
-        // FNV-1a of the four bytes 01 00 00 00, worked by hand from the
-        // offset basis and prime.
-        let mut h = FNV_OFFSET;
-        for b in [1u8, 0, 0, 0] {
-            h = (h ^ u64::from(b)).wrapping_mul(FNV_PRIME);
-        }
-        assert_eq!(fnv1a_u32(&[1]), h);
+        // Literals computed outside this crate, so a wrong constant or a
+        // wrong byte order here cannot agree with itself. The empty hash is
+        // the published 64-bit offset basis. The two others were computed by
+        // an independent FNV-1a in shell arithmetic, checked first against
+        // the published digest of "foobar", 0x85944171f73967e8.
+        assert_eq!(fnv1a_u32(&[]), 0xCBF2_9CE4_8422_2325);
+        assert_eq!(
+            fnv1a_u32(&[u32::from_le_bytes(*b"abcd")]),
+            0xFC17_9F83_EE07_24DD
+        );
+        assert_eq!(fnv1a_u32(&[1]), 0xAD2A_CA77_4798_5764);
         assert_ne!(fnv1a_u32(&[1, 2]), fnv1a_u32(&[2, 1]));
     }
 }
