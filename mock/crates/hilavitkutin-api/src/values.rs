@@ -10,7 +10,7 @@
 //! read product is this crate's own, because a value read may borrow (a
 //! resource read by reference, a `Window` on a column) and the shared
 //! crate's product holds `'static` values only.
-// FIXME(e86353ea1157): the read product moves to the shared list crate once its product can hold a borrowed value
+// FIXME(placeholders_tagged_e86353ea1157): the read product moves to the shared list crate once its product can hold a borrowed value
 
 use arvo::{Bool, Cap};
 use notko::Maybe;

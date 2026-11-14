@@ -11,7 +11,7 @@
 
 #![no_std]
 #![allow(incomplete_features)]
-// FIXME(2311ca65fd66): `generic_const_exprs` is not a feature this crate may
+// FIXME(placeholders_tagged_2311ca65fd66): `generic_const_exprs` is not a feature this crate may
 // keep, and it stays enabled for one residual use. The engine's own plan,
 // thread and dispatch arrays are sized by the arvo `Capacity` type and need no
 // const expression. `core_program::synthesise_core_programs` still projects

@@ -46,7 +46,7 @@ pub trait WritesColumn<T: ColumnValue, K>: AccessSet {
 
 #[diagnostic::do_not_recommend]
 impl<T: ColumnValue, Tail: AccessSet> WritesColumn<T, AtBare> for Cons<Column<T>, Tail> {
-    // FIXME(29cdc662ca14): a bare column under the positional write is taken as under `Written`, pending the bench of both
+    // FIXME(placeholders_tagged_29cdc662ca14): a bare column under the positional write is taken as under `Written`, pending the bench of both
     #[inline(always)]
     unsafe fn land<C: ResolveColumnWrite<T, B> + ?Sized, B>(ctx: &C, i: USize, v: T) {
         // SAFETY: the caller's obligation, passed on unchanged.

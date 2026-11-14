@@ -54,7 +54,7 @@ pub fn build_dag<D: PlanDims>(inputs: &PlanInputs<D::Units, D::Stores>) -> Depen
                 // deterministically, the lower input index first, so the
                 // back-direction is never added (two writers cannot form a
                 // spurious cycle).
-                // FIXME(hilavitkutin_orders_two_writers_of_one_store_by_registration): two writers of one store take hint priority first, then the one with more units downstream, and the input index only last; the hint and downstream steps are not built.
+                // FIXME(placeholders_tagged_hilavitkutin_orders_two_writers_of_one): two writers of one store take hint priority first, then the one with more units downstream, and the input index only last; the hint and downstream steps are not built.
                 if s < t && with_the_ranks(ranks[s], ranks[t]).0 && writes[t].overlaps(&writes[s]).0
                 {
                     g.add_edge_kind(USize(s), USize(t), EdgeKind::Write); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct from internal loop counter; tracked: #72

@@ -219,7 +219,7 @@ impl ColKind for Plain {
 
 // `Snapshot`: the first reservation is the live side for good and the second
 // the frozen one. The boundary copies the live side over the frozen.
-// FIXME(8c7cc9768579): the copy is of the whole column, where a mark kept per morsel would let it copy the morsels that changed
+// FIXME(placeholders_tagged_8c7cc9768579): the copy is of the whole column, where a mark kept per morsel would let it copy the morsels that changed
 impl sealed::Sealed for Snapshot {}
 impl ColKind for Snapshot {
     type Marker<T> = Buffered<T, Snapshot>;
