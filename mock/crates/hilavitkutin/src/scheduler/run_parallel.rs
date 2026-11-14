@@ -114,9 +114,9 @@ impl<
                 <D as PlanDims>::AdjRow,
                 0, // lint:allow(no-bare-numeric) reason: const-generic entry position; tracked: #121
             >,
-        WuVals: BundleMasks<Stores, GW, <D as PlanDims>::Stores>,
-        <D as PlanDims>::Units: ConstCapacity,
-        <D as PlanDims>::AdjRow: BitAccess + Identity<Additive>,
+        WuVals: const BundleMasks<Stores, GW, <D as PlanDims>::Stores>,
+        <D as PlanDims>::Units: const ConstCapacity,
+        <D as PlanDims>::AdjRow: const BitAccess + Identity<Additive>,
         <Vals as BindingsFor>::Bindings:
             ResetAccumulators + RebaseBindings + CollectAccumCounts + MergeAccums + FirstRefusal,
         P: ThreadPoolApi,

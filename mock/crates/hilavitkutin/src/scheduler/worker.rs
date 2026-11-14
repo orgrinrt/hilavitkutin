@@ -31,15 +31,24 @@ use crate::plan::grouping::{
     GATE2_MAX_ACCUMS,
     consumer_mask,
     consumer_phase_end,
-    group_n,
     phase_count,
     plan_phase_count,
     pre_consumer_phase_count,
 };
-use crate::plan::reach_cut::{cut_segments, reach_cuts};
+use crate::plan::reach_cut::{CarrierCuts, cut_segments};
 use crate::resource::bindings::{BindingsFor, CollectAccumCounts, RebaseBindings, accum_slice};
 use crate::thread::barrier::waist_barrier;
 use crate::thread::frame::{frame_await, frame_done_arrive, frame_exit_arrive};
+
+/// The cuts of the carrier `Wus` at the plan dimensions `D`.
+type Cuts<Wus, Stores, GW, D> = CarrierCuts<
+    Wus,
+    Stores,
+    GW,
+    <D as PlanDims>::Units,
+    <D as PlanDims>::Stores,
+    <D as PlanDims>::AdjRow,
+>;
 
 /// Persistent-pool worker mainloop (GATE-2 R4c). Spawned once per core at the
 /// first `run_parallel`; parks on the frame `seq` between phases, runs its core's
@@ -68,9 +77,9 @@ pub(super) fn worker_main<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>(
             <D as PlanDims>::AdjRow,
             0, // lint:allow(no-bare-numeric) reason: const-generic entry position; tracked: #121
         >,
-    WuVals: BundleMasks<Stores, GW, <D as PlanDims>::Stores>,
-    <D as PlanDims>::Units: ConstCapacity,
-    <D as PlanDims>::AdjRow: BitAccess + Identity<Additive>,
+    WuVals: const BundleMasks<Stores, GW, <D as PlanDims>::Stores>,
+    <D as PlanDims>::Units: const ConstCapacity,
+    <D as PlanDims>::AdjRow: const BitAccess + Identity<Additive>,
     <Vals as BindingsFor>::Bindings: RebaseBindings + CollectAccumCounts,
 {
     // SAFETY: `ctx` points into the pinned scheduler's `worker_ctxs`, valid until
@@ -177,9 +186,9 @@ fn worker_accum_unit_outer<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>
     D: PlanDims,
     Clk: hilavitkutin_api::platform::ClockApi,
     WuVals: RunFiber<<Vals as BindingsFor>::Bindings, Witnesses>,
-    WuVals: BundleMasks<Stores, GW, <D as PlanDims>::Stores>,
-    <D as PlanDims>::Units: ConstCapacity,
-    <D as PlanDims>::AdjRow: BitAccess + Identity<Additive>,
+    WuVals: const BundleMasks<Stores, GW, <D as PlanDims>::Stores>,
+    <D as PlanDims>::Units: const ConstCapacity,
+    <D as PlanDims>::AdjRow: const BitAccess + Identity<Additive>,
     <Vals as BindingsFor>::Bindings: RebaseBindings + CollectAccumCounts,
 {
     let total0 = total.0; // lint:allow(no-bare-numeric) reason: frame record count; tracked: #121
@@ -206,26 +215,12 @@ fn worker_accum_unit_outer<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>
     // unit and every core meets at a barrier there, so the writer's whole
     // range has landed on every slice before any core starts the reader. The
     // cuts are a fold over the registered units, so a carrier with no such
-    // reader takes the uncut walk below and crosses nothing.
-    let (cuts, cut) = reach_cuts::<
-        WuVals,
-        Stores,
-        GW,
-        <D as PlanDims>::Units,
-        <D as PlanDims>::Stores,
-        <D as PlanDims>::AdjRow,
-    >();
+    // reader takes the uncut walk below and crosses nothing. They are
+    // constants of the carrier's types, evaluated once when those are fixed.
+    let (cuts, cut) = Cuts::<WuVals, Stores, GW, D>::CUTS;
     if cut.0 {
-        let consumers = consumer_mask::<
-            WuVals,
-            Stores,
-            GW,
-            <D as PlanDims>::Units,
-            <D as PlanDims>::Stores,
-            <D as PlanDims>::AdjRow,
-        >();
-        let units =
-            group_n::<WuVals, Stores, GW, <D as PlanDims>::Units, <D as PlanDims>::Stores>();
+        let consumers = Cuts::<WuVals, Stores, GW, D>::CONSUMERS;
+        let units = Cuts::<WuVals, Stores, GW, D>::UNITS;
         // A core that walks nothing still meets the others at every barrier:
         // the barrier counts every core, and the segments are the same on each.
         let per_core = if run_this {

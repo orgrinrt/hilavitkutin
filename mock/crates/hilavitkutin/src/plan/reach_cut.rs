@@ -7,6 +7,8 @@
 //! consumer units in segments instead, cut ahead of each such reader, with a
 //! barrier across the cores between two segments.
 
+use core::marker::PhantomData;
+
 use arvo::strategy::{Additive, Identity};
 use arvo::{Bool, USize};
 use arvo_bitmask::BitAccess;
@@ -15,7 +17,32 @@ use hilavitkutin_api::meta::RANK_CONSUMER;
 
 use super::bundle_masks::BundleMasks;
 use super::edge::reach_behind_a_writer;
+use super::grouping::{consumer_mask, group_n};
 use super::unit_masks::{masks_of, reaches_of};
+
+/// The cuts of one carrier, as constants of its types.
+///
+/// Where the cuts fall depends on the registered units alone. The three
+/// values the segmented walk needs are evaluated once for a carrier, when its
+/// types are fixed, and every core of every pass reads the results.
+pub struct CarrierCuts<Wus, Stores, Witnesses, CU, CS, Adj>(
+    PhantomData<(Wus, Stores, Witnesses, CU, CS, Adj)>,
+);
+
+impl<Wus, Stores, Witnesses, CU, CS, Adj> CarrierCuts<Wus, Stores, Witnesses, CU, CS, Adj>
+where
+    CU: Capacity + const ConstCapacity,
+    CS: Capacity,
+    Wus: const BundleMasks<Stores, Witnesses, CS>,
+    Adj: const BitAccess + Identity<Additive>,
+{
+    /// The mask of the consumer units among the carrier's positions.
+    pub const CONSUMERS: Adj = consumer_mask::<Wus, Stores, Witnesses, CU, CS, Adj>();
+    /// The mask `reach_cuts` gives, and whether any bit of it is set.
+    pub const CUTS: (Adj, Bool) = reach_cuts::<Wus, Stores, Witnesses, CU, CS, Adj>();
+    /// The count of the carrier's units.
+    pub const UNITS: USize = group_n::<Wus, Stores, Witnesses, CU, CS>();
+}
 
 /// Per-carrier-position mask of the consumer units that read a plain column
 /// with a reach behind a writer of it.
