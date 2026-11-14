@@ -1,158 +1,48 @@
 //! D6 ASM-dispatch gate.
 //!
-//! Builds the `asm_gate_fixtures` cdylib in release, then objdumps the emitted
-//! `Scheduler::run` and `Scheduler::run_fused` dispatch monos (the monomorphised
-//! bodies the fixtures force to be codegen'd) and runs the five-check
-//! disassembly checklist (`disasm_5check`) on each. Check 1 (zero indirect call)
-//! is the hard gate: any FAIL exits non-zero, catching the moment a stored
-//! function pointer survives into a dispatch body and devirtualisation is lost.
-//! Checks 2 to 5 (indexed addressing, no inner stack spill, immediate morsel, no
-//! helper call) are reported but do not gate, because they are legitimately
-//! shape-dependent (the accumulator runs full-range with no baked morsel
-//! immediate, column counts vary).
+//! Stages the `asm_gate_fixtures` cdylib in release with `../stage.sh`, then
+//! disassembles every dispatch body it emits and runs the five-check checklist
+//! (`disasm_5check`) on each. Check 1 (zero indirect call through a stored
+//! pointer) is the hard gate: any FAIL exits non-zero, catching the moment a
+//! stored function pointer survives into a dispatch body and devirtualisation
+//! is lost. Checks 2 to 5 (indexed addressing, no stack access, immediate
+//! morsel, no helper call) are reported but do not gate, because they are
+//! legitimately shape-dependent.
 //!
-//! Under fat LTO the dispatch lands in one of two places, so the gate checks
-//! both. A single-caller dispatch mono (`run_fused`, the accumulator `run`)
-//! inlines into its `#[no_mangle]` fixture wrapper, so the wrapper body carries
-//! the dispatch and is a gate target. A multi-caller mono (the column-chain
-//! `run`, called by both the plain and the dirty-gated fixtures) stays
-//! out-of-line as its own symbol, which the wrapper reaches by a direct `bl`; a
-//! regression inside that mono is invisible from the wrapper, so the out-of-line
-//! `Scheduler::run` / `run_fused` monos (found by mangled-name pattern via `nm`)
-//! are gate targets too. The union covers every emitted dispatch body. Direct
-//! `bl`s to the build mono, allocator, and panic paths are expected and do not
-//! trip check 1 (which counts only indirect `blr` / `callq *`).
+//! Under fat LTO a dispatch lands in one of three places, and the gate checks
+//! all of them. A single-caller dispatch inlines into its `#[no_mangle]`
+//! fixture wrapper. A multi-caller `Scheduler::run` or `run_fused` mono stays
+//! out of line as its own symbol, found by its mangled name. The parallel
+//! path's per-core walk (`worker_main`, `run_core_phase`) inlines into the
+//! closure `run_parallel` hands the pool, and std runs that closure inside
+//! `__rust_begin_short_backtrace::<{closure}>`, which is the symbol the worker
+//! body is found by.
 //!
-//! When no disassembler (`objdump` plus `nm`) is present, the gate skips cleanly
-//! with a notice rather than passing silently or failing, so a toolchain without
-//! a disassembler does not produce a spurious gate result.
+//! The gate is only evidence if it can fail, so the fixtures carry a control,
+//! `asm_gate_control_stored_pointer`, which calls through a stored function
+//! pointer. Check 1 has to fail on it, or the run fails as blind. A parallel
+//! fixture with no worker body found fails the run too, since then the
+//! parallel walk went unscanned.
+//!
+//! The report goes to `asm_gate_fixtures/asm_gate_report.md`, which is
+//! committed. It names targets by label rather than by mangled name (the
+//! mangling hashes differ between checkouts) and the dylib by file name, so it
+//! regenerates byte-identical from the same tree and toolchain. `--check`
+//! regenerates it and fails when it differs from the committed one.
+//!
+//! When no disassembler (`objdump` plus `nm`) is present, the gate skips with a
+//! notice rather than passing silently or failing.
 
+use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
 
-use benches::disasm_5check;
+use benches::{disasm, disasm_5check};
 
-fn main() -> ExitCode {
-    // The fixtures crate sits beside this bench package, resolved from the
-    // compile-time manifest dir so the gate runs from any cwd.
-    let benches_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let fixtures_dir = benches_dir.join("asm_gate_fixtures");
-    let manifest = fixtures_dir.join("Cargo.toml");
+/// The report's name inside `asm_gate_fixtures/`.
+const REPORT: &str = "asm_gate_report.md";
 
-    if !tool_present("objdump") || !tool_present("nm") {
-        eprintln!(
-            "asm_gate: skipped, no disassembler (`objdump` and `nm` are both required and at \
-             least one is absent). The gate reports skipped rather than passing silently."
-        );
-        return ExitCode::SUCCESS;
-    }
-
-    eprintln!(
-        "asm_gate: building fixtures (release) at {}",
-        manifest.display()
-    );
-    match Command::new("cargo")
-        .arg("build")
-        .arg("--release")
-        .arg("--manifest-path")
-        .arg(&manifest)
-        .status()
-    {
-        Ok(s) if s.success() => {},
-        Ok(s) => {
-            eprintln!("asm_gate: fixtures build failed ({s})");
-            return ExitCode::FAILURE;
-        },
-        Err(e) => {
-            eprintln!("asm_gate: could not spawn cargo to build fixtures: {e}");
-            return ExitCode::FAILURE;
-        },
-    }
-
-    let dylib = fixtures_dir.join("target").join("release").join(format!(
-        "{}asm_gate_fixtures{}",
-        std::env::consts::DLL_PREFIX,
-        std::env::consts::DLL_SUFFIX
-    ));
-    if !dylib.exists() {
-        eprintln!("asm_gate: fixtures dylib not found at {}", dylib.display());
-        return ExitCode::FAILURE;
-    }
-
-    let targets = match gate_targets(&dylib) {
-        Ok(m) => m,
-        Err(e) => {
-            eprintln!("asm_gate: could not list symbols: {e}");
-            return ExitCode::FAILURE;
-        },
-    };
-    let fixture_count = targets.iter().filter(|t| t.is_fixture).count();
-    if fixture_count == 0 {
-        eprintln!(
-            "asm_gate: found no asm_gate_* fixture symbols in the dylib; the fixtures were not \
-             emitted (build problem)"
-        );
-        return ExitCode::FAILURE;
-    }
-    eprintln!(
-        "asm_gate: checking {} target(s) ({fixture_count} fixture wrapper(s) + {} out-of-line dispatch mono(s))",
-        targets.len(),
-        targets.len() - fixture_count
-    );
-
-    // The fixtures bake N = 256 as the morsel/record immediate where the shape
-    // fixes it as a constant; check 4 looks for it and reports (not gates).
-    let morsel_immediates = [256u64];
-
-    let mut hard_fail = false;
-    let mut checked = 0usize;
-    for target in &targets {
-        let disasm = match objdump_symbol(&dylib, &target.symbol) {
-            Some(d) => d,
-            None => {
-                eprintln!("asm_gate: could not disassemble `{}`", target.label);
-                continue;
-            },
-        };
-        let report =
-            disasm_5check::run_checks_on_disasm(&disasm, &dylib, &target.label, &morsel_immediates);
-        print!("{report}");
-        checked += 1;
-        if let Some(c1) = report.outcomes.first() {
-            if !c1.pass {
-                eprintln!(
-                    "asm_gate: HARD FAIL on `{}`: {} ({})",
-                    target.label, c1.name, c1.detail
-                );
-                hard_fail = true;
-            }
-        }
-    }
-
-    if checked == 0 {
-        eprintln!("asm_gate: no target was disassemblable; treating as failure");
-        return ExitCode::FAILURE;
-    }
-    if hard_fail {
-        eprintln!(
-            "asm_gate: at least one dispatch body reintroduced an indirect call; \
-             single-core dispatch devirtualisation regressed"
-        );
-        return ExitCode::FAILURE;
-    }
-    eprintln!("asm_gate: PASS (zero indirect call in every dispatch body)");
-    ExitCode::SUCCESS
-}
-
-/// One gate target: its exact (nm) symbol name, a short label, and whether it is
-/// a fixture wrapper (vs an out-of-line dispatch mono).
-struct Target {
-    symbol:     String,
-    label:      String,
-    is_fixture: bool,
-}
-
-/// The six fixture-wrapper shape names (without platform symbol prefix).
+/// The fixture wrapper names, without the platform's symbol prefix.
 const FIXTURE_NAMES: [&str; 7] = [
     "asm_gate_column_chain",
     "asm_gate_fused_chain",
@@ -163,81 +53,308 @@ const FIXTURE_NAMES: [&str; 7] = [
     "asm_gate_parallel_fiber_windows",
 ];
 
-/// Collect the gate targets from `nm`: the seven `#[no_mangle]` fixture wrappers
-/// (which carry inlined dispatch for the single-caller shapes) plus any
-/// out-of-line `Scheduler::run` / `run_fused` monos (the multi-caller shapes the
-/// wrappers reach by direct `bl`). The union covers every emitted dispatch body
-/// regardless of where LTO placed it.
+/// The control check 1 must fail on.
+const CONTROL: &str = "asm_gate_control_stored_pointer";
+
+/// The fixture that drives `run_parallel`, whose worker body must be found.
+const PARALLEL: &str = "asm_gate_parallel_fiber_windows";
+
+fn main() -> ExitCode {
+    let check_only = std::env::args().skip(1).any(|a| a == "--check");
+    match run(check_only) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(e) => {
+            eprintln!("asm_gate: {e}");
+            ExitCode::FAILURE
+        },
+    }
+}
+
+fn run(check_only: bool) -> Result<(), String> {
+    let benches_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let fixtures_dir = benches_dir.join("asm_gate_fixtures");
+
+    if !tool_present("objdump") || !tool_present("nm") {
+        eprintln!(
+            "asm_gate: skipped, no disassembler (`objdump` and `nm` are both required and at \
+             least one is absent). The gate reports skipped rather than passing silently."
+        );
+        return Ok(());
+    }
+
+    let stage = std::env::temp_dir().join(format!("asm_gate_stage_{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&stage);
+    let staged = Command::new(benches_dir.join("stage.sh"))
+        .arg(&fixtures_dir)
+        .arg(&stage)
+        .status()
+        .map_err(|e| format!("could not run stage.sh: {e}"))?;
+    if !staged.success() {
+        return Err(format!("staging the fixtures failed ({staged})"));
+    }
+    let dylib = stage.join("release").join(format!(
+        "{}asm_gate_fixtures{}",
+        std::env::consts::DLL_PREFIX,
+        std::env::consts::DLL_SUFFIX
+    ));
+    let result = gate(&dylib, &fixtures_dir, check_only);
+    let _ = std::fs::remove_dir_all(&stage);
+    result
+}
+
+fn gate(dylib: &Path, fixtures_dir: &Path, check_only: bool) -> Result<(), String> {
+    if !dylib.exists() {
+        return Err(format!(
+            "the staged fixtures have no dylib at {}",
+            dylib.display()
+        ));
+    }
+    let targets = gate_targets(dylib)?;
+    if !targets.iter().any(|t| t.kind == Kind::Fixture) {
+        return Err("found no asm_gate_* fixture symbols in the dylib (build problem)".to_string());
+    }
+    if !targets.iter().any(|t| t.kind == Kind::Control) {
+        return Err(format!(
+            "the control `{CONTROL}` is not in the dylib, so the gate cannot show it can fail"
+        ));
+    }
+    let parallel = targets
+        .iter()
+        .any(|t| t.kind == Kind::Fixture && t.label.contains(PARALLEL));
+    if parallel && !targets.iter().any(|t| t.kind == Kind::WorkerBody) {
+        return Err(
+            "no `run_parallel` worker body was found, so the parallel walk would go unscanned; \
+             the gate's symbol pattern no longer matches the build"
+                .to_string(),
+        );
+    }
+
+    // The fixtures bake N = 256 where the shape fixes the record count as a
+    // constant; check 4 looks for it and reports.
+    let morsel_immediates = [256u64];
+    let mut failures = Vec::new();
+    let mut report = header()?;
+    for target in &targets {
+        let text = disasm::disassemble(dylib, &target.symbol)
+            .ok_or_else(|| format!("could not disassemble {}", target.label))?;
+        let checked =
+            disasm_5check::run_checks_on_disasm(&text, dylib, &target.label, &morsel_immediates);
+        let _ = write!(report, "{checked}");
+        let c1 = checked
+            .outcomes
+            .first()
+            .ok_or("the checklist returned no outcomes")?;
+        match (target.kind, c1.pass) {
+            (Kind::Control, true) => failures.push(format!(
+                "check 1 passed the control `{CONTROL}`, which calls through a stored pointer, so it is blind"
+            )),
+            (Kind::Control, false) => {},
+            (_, false) => failures.push(format!("HARD FAIL on {}: {}", target.label, c1.detail)),
+            (_, true) => {},
+        }
+    }
+
+    let path = fixtures_dir.join(REPORT);
+    if check_only {
+        let committed = std::fs::read_to_string(&path)
+            .map_err(|e| format!("reading {}: {e}", path.display()))?;
+        if committed != report {
+            failures.push(format!(
+                "{} differs from this build's report; run `cargo run --release --bin asm_gate` and commit it",
+                path.display()
+            ));
+        }
+    } else {
+        std::fs::write(&path, &report).map_err(|e| format!("writing {}: {e}", path.display()))?;
+        eprintln!("asm_gate: wrote {}", path.display());
+    }
+
+    if !failures.is_empty() {
+        return Err(failures.join("\nasm_gate: "));
+    }
+    eprintln!(
+        "asm_gate: PASS ({} dispatch bodies with zero indirect call through a stored pointer, control refused)",
+        targets.iter().filter(|t| t.kind != Kind::Control).count()
+    );
+    Ok(())
+}
+
+/// The report header: what the targets are and what built them.
+fn header() -> Result<String, String> {
+    let rustc = first_line("rustc", &["-V"])?;
+    let objdump = first_line("objdump", &["--version"])?;
+    let mut h = String::new();
+    let _ = writeln!(h, "# ASM-dispatch gate report");
+    let _ = writeln!(h);
+    let _ = writeln!(
+        h,
+        "Written by `mock/benches/src/bin/asm_gate.rs` from the staged `asm_gate_fixtures` release \
+         build; `asm_gate --check` regenerates it and fails when this file differs. Check 1 gates \
+         every target but the control, which it must fail; checks 2 to 5 are reported only."
+    );
+    let _ = writeln!(h);
+    let _ = writeln!(h, "- target: `{}`", std::env::consts::ARCH);
+    let _ = writeln!(h, "- toolchain: `{rustc}`");
+    let _ = writeln!(h, "- disassembler: `{objdump}`");
+    let _ = writeln!(h);
+    Ok(h)
+}
+
+fn first_line(tool: &str, args: &[&str]) -> Result<String, String> {
+    let out = Command::new(tool)
+        .args(args)
+        .current_dir(concat!(env!("CARGO_MANIFEST_DIR"), "/asm_gate_fixtures"))
+        .output()
+        .map_err(|e| format!("running {tool}: {e}"))?;
+    Ok(String::from_utf8_lossy(&out.stdout)
+        .lines()
+        .next()
+        .unwrap_or("")
+        .trim()
+        .to_string())
+}
+
+/// What a gate target is, in the order the report lists them.
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+enum Kind {
+    Fixture,
+    DispatchMono,
+    WorkerBody,
+    Control,
+}
+
+/// One gate target: its exact symbol, a label stable across checkouts, and its
+/// kind.
+struct Target {
+    symbol: String,
+    label:  String,
+    kind:   Kind,
+}
+
+/// The gate targets, from `nm`: the fixture wrappers and the control, the
+/// out-of-line `Scheduler::run` / `run_fused` monos, and the `run_parallel`
+/// worker bodies.
+///
+/// `nm -n` lists by address in both its mangled and its demangled form, so the
+/// two listings pair line by line. The out-of-line targets are numbered in the
+/// order of their demangled names, which carry no crate hashes, so a label
+/// names the same body in every checkout.
 fn gate_targets(dylib: &Path) -> Result<Vec<Target>, String> {
-    let out = Command::new("nm")
+    let mangled = nm(dylib, false)?;
+    let demangled = nm(dylib, true)?;
+    if mangled.len() != demangled.len() {
+        return Err("nm listed a different number of symbols mangled and demangled".to_string());
+    }
+    let mut targets = Vec::new();
+    let mut inner: Vec<(Kind, String, String)> = Vec::new();
+    for (name, readable) in mangled.iter().zip(&demangled) {
+        let bare = name
+            .strip_prefix('_')
+            .filter(|b| b.starts_with("asm_gate_"))
+            .unwrap_or(name);
+        if let Some(shape) = FIXTURE_NAMES.iter().find(|s| bare == **s) {
+            targets.push(Target {
+                symbol: name.clone(),
+                label:  format!("fixture {shape}"),
+                kind:   Kind::Fixture,
+            });
+        } else if bare == CONTROL {
+            targets.push(Target {
+                symbol: name.clone(),
+                label:  format!("control {CONTROL}"),
+                kind:   Kind::Control,
+            });
+        } else if let Some(kind) = classify(readable) {
+            inner.push((kind, readable.clone(), name.clone()));
+        }
+    }
+    inner.sort();
+    let mut counts = [0usize; 2];
+    for (kind, readable, symbol) in inner {
+        let (slot, what) = match kind {
+            Kind::WorkerBody => (1, "run_parallel worker body"),
+            _ if readable.contains("::run_fused") => (0, "Scheduler::run_fused mono"),
+            _ => (0, "Scheduler::run mono"),
+        };
+        counts[slot] += 1;
+        targets.push(Target {
+            symbol,
+            label: format!("{what} #{}", counts[slot]),
+            kind,
+        });
+    }
+    targets.sort_by_key(|t| t.kind);
+    Ok(targets)
+}
+
+/// Whether a demangled symbol is an out-of-line dispatch body, and which kind.
+///
+/// Read from the demangled name with its generic arguments collapsed, which
+/// carries no crate hashes: `<Scheduler<..>>::run::<..>` reads `@::run::@`.
+fn classify(readable: &str) -> Option<Kind> {
+    const SCHEDULER: &str = "<hilavitkutin::scheduler::Scheduler<";
+    // std runs a spawned closure inside this frame, instantiated over it. The
+    // worker body is the instantiation over `run_parallel`'s own closure; the
+    // ones over std's spawn closures start `std::thread`.
+    const FRAME: &str = "std::sys::backtrace::__rust_begin_short_backtrace::<";
+    if let Some(arg) = readable.strip_prefix(FRAME) {
+        let ours = arg.starts_with(SCHEDULER)
+            && arg.contains(">::run_parallel")
+            && arg.contains("{closure");
+        return ours.then_some(Kind::WorkerBody);
+    }
+    if !readable.starts_with(SCHEDULER) {
+        return None;
+    }
+    matches!(
+        collapse(readable).as_str(),
+        "@::run::@" | "@::run" | "@::run_fused::@" | "@::run_fused"
+    )
+    .then_some(Kind::DispatchMono)
+}
+
+/// `s` with every generic argument list, nested or not, replaced by `@`.
+fn collapse(s: &str) -> String {
+    let mut out = String::new();
+    let mut depth = 0usize;
+    for c in s.chars() {
+        match c {
+            '<' => {
+                if depth == 0 {
+                    out.push('@');
+                }
+                depth += 1;
+            },
+            '>' => depth = depth.saturating_sub(1),
+            _ if depth == 0 => out.push(c),
+            _ => {},
+        }
+    }
+    out
+}
+
+/// The defined text symbols of `dylib` in address order, demangled or not.
+fn nm(dylib: &Path, demangle: bool) -> Result<Vec<String>, String> {
+    let mut cmd = Command::new("nm");
+    cmd.arg("-n").arg("--defined-only");
+    if demangle {
+        cmd.arg("-C");
+    }
+    let out = cmd
         .arg(dylib)
         .output()
         .map_err(|e| format!("spawn nm: {e}"))?;
     if !out.status.success() {
         return Err(format!("nm exited non-zero on {}", dylib.display()));
     }
-    let text = String::from_utf8_lossy(&out.stdout);
-    let mut targets = Vec::new();
-    let mut run_idx = 0usize;
-    let mut fused_idx = 0usize;
-    for line in text.lines() {
-        // nm line: `<addr> <type> <name>`; defined text symbols are `t`/`T`.
-        let name = match line.split_whitespace().last() {
-            Some(n) => n,
-            None => continue,
-        };
-        // Fixture wrappers: `_asm_gate_<shape>` (macho) / `asm_gate_<shape>` (elf).
-        if let Some(shape) = FIXTURE_NAMES
-            .iter()
-            .find(|s| name == **s || name == format!("_{s}"))
-        {
-            targets.push(Target {
-                symbol:     name.to_string(),
-                label:      format!("fixture `{shape}`"),
-                is_fixture: true,
-            });
-            continue;
-        }
-        // Out-of-line dispatch monos.
-        if !name.contains("12hilavitkutin9scheduler") || !name.contains("9Scheduler") {
-            continue;
-        }
-        if name.contains("16SchedulerBuilder") {
-            continue;
-        }
-        if name.contains("9run_fused") {
-            fused_idx += 1;
-            targets.push(Target {
-                symbol:     name.to_string(),
-                label:      format!("Scheduler::run_fused mono #{fused_idx}"),
-                is_fixture: false,
-            });
-        } else if name.contains("3run") {
-            run_idx += 1;
-            targets.push(Target {
-                symbol:     name.to_string(),
-                label:      format!("Scheduler::run mono #{run_idx}"),
-                is_fixture: false,
-            });
-        }
-    }
-    Ok(targets)
-}
-
-/// Disassemble one symbol by its exact name via the `=` form, returning the text
-/// only when a real per-symbol instruction block came back.
-fn objdump_symbol(dylib: &Path, symbol: &str) -> Option<String> {
-    let out = Command::new("objdump")
-        .arg("-d")
-        .arg(format!("--disassemble-symbols={symbol}"))
-        .arg(dylib)
-        .output()
-        .ok()?;
-    if !out.status.success() {
-        return None;
-    }
-    let s = String::from_utf8_lossy(&out.stdout).into_owned();
-    if s.contains(&format!("<{symbol}>:")) { Some(s) } else { None }
+    Ok(String::from_utf8_lossy(&out.stdout)
+        .lines()
+        .filter_map(|l| {
+            let mut f = l.splitn(3, ' ');
+            let (_, kind, name) = (f.next()?, f.next()?, f.next()?);
+            matches!(kind, "t" | "T").then(|| name.to_string())
+        })
+        .collect())
 }
 
 fn tool_present(tool: &str) -> bool {
@@ -248,4 +365,50 @@ fn tool_present(tool: &str) -> bool {
         .status()
         .map(|s| s.success())
         .unwrap_or(false)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Kind, classify, collapse};
+
+    // Names as `nm -C` prints them for the gate build of 13 Nov, cut short
+    // inside the generic arguments where those do not matter.
+    const SCHED: &str =
+        "<hilavitkutin::scheduler::Scheduler<hilavitkutin_api::run_cfg::DefaultRunCfg, W<a::S1>>>";
+
+    #[test]
+    fn generic_arguments_collapse_at_every_depth() {
+        assert_eq!(collapse(&format!("{SCHED}::run::<P<Q>, R>")), "@::run::@");
+        assert_eq!(collapse("a::b"), "a::b");
+    }
+
+    #[test]
+    fn the_worker_body_is_found_and_std_s_spawn_frame_is_not() {
+        let worker = format!(
+            "std::sys::backtrace::__rust_begin_short_backtrace::<{SCHED}::run_parallel<E>::{{closure#0}}, ()>"
+        );
+        let spawn = format!(
+            "std::sys::backtrace::__rust_begin_short_backtrace::<std::thread::lifecycle::spawn_unchecked<{SCHED}::run_parallel<E>::{{closure#0}}, ()>::{{closure#1}}::{{closure#0}}, ()>"
+        );
+        assert_eq!(classify(&worker), Some(Kind::WorkerBody));
+        assert_eq!(classify(&spawn), None);
+    }
+
+    #[test]
+    fn a_run_mono_is_found_and_its_neighbours_are_not() {
+        assert_eq!(
+            classify(&format!("{SCHED}::run::<E>")),
+            Some(Kind::DispatchMono)
+        );
+        assert_eq!(
+            classify(&format!("{SCHED}::run_fused::<E>")),
+            Some(Kind::DispatchMono)
+        );
+        assert_eq!(
+            classify("<hilavitkutin::scheduler::builder::SchedulerBuilder<A>>::build::<B>"),
+            None
+        );
+        assert_eq!(classify(&format!("core::ptr::drop_glue::<{SCHED}>")), None);
+        assert_eq!(classify(&format!("{SCHED}::run_parallel::<E>")), None);
+    }
 }

@@ -7,12 +7,11 @@
 
 use core::ptr;
 
-use mockspace_bench_core::{timed, FfiBenchCall};
+use mockspace_bench_core::{FfiBenchCall, timed};
 use mockspace_bench_macro::bench_variant;
 
-#[inline(never)]
 fn work(chunk: u64, acc: u64) -> u64 {
-    (acc ^ chunk).wrapping_mul(0x100000001b3)
+    (acc ^ chunk).wrapping_mul(0x100000001B3)
 }
 
 static MIX_SLOT: fn(u64, u64) -> u64 = work;
@@ -33,5 +32,17 @@ fn run_dispatch_volatile<const N: usize>(input: &[u8; N], output: &mut [u8; 8]) 
             }
             output.copy_from_slice(&acc.to_le_bytes());
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn the_arm_does_not_time_a_constant() {
+        assert!(kernel_checks::varies(|input| {
+            let mut out = [0u8; 8];
+            let _ = super::run_dispatch_volatile::<256>(input, &mut out);
+            u64::from_le_bytes(out)
+        }));
     }
 }

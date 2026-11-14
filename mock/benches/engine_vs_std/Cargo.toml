@@ -1,4 +1,11 @@
+# The `engine_vs_std` bench member: the engine against optimal std over four
+# workloads, timed by the bench harness. See `bench.toml` for the sections.
+#
+# One workspace for the driver, the support crate and every arm, so they share
+# one lockfile, one release profile and one build of the engine.
 [workspace]
+members = [".", "support", "variants/*"]
+resolver = "2"
 
 [package]
 name = "engine_vs_std"
@@ -6,27 +13,23 @@ version = "0.0.0"
 edition = "2021"
 publish = false
 
-[lib]
-name = "engine_vs_std"
-path = "src/lib.rs"
-
 [[bin]]
 name = "engine_vs_std"
 path = "src/main.rs"
 
-# Macro bench (#660): the single-core hilavitkutin engine running a heavy
-# multi-stage columnar workload vs the same workload hand-written as an
-# optimal fused std loop. Links the real engine (path deps) plus arvo for
-# the primitives the engine API exposes. std is allowed here: this is a
-# standalone bench workspace, outside the no_std/no_alloc mock/ members.
 [dependencies]
-hilavitkutin = { path = "../../crates/hilavitkutin" }
-hilavitkutin-api = { path = "../../crates/hilavitkutin-api" }
-hilavitkutin-providers = { path = "../../crates/hilavitkutin-providers" }
-arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
-notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+evs-support = { path = "support" }
+bench-arm = { path = "../bench-arm" }
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "5a775f3ea7f969a7589ce970e16e55b2ba856f41", features = ["std"] }
+mockspace-bench-harness = { git = "https://github.com/hiisi-digital/mockspace", rev = "5a775f3ea7f969a7589ce970e16e55b2ba856f41", features = ["stage-link"] }
 
 [profile.release]
 opt-level = 3
 lto = "fat"
 codegen-units = 1
+
+# The pinned arvo crates name notko by its `ssh` spelling; the patch points
+# that spelling at the `https` source the engine names, so the graph holds one
+# notko (the same patch as mock/Cargo.toml).
+[patch."ssh://git@github.com/orgrinrt/notko.git"]
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev" }

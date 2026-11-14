@@ -1,0 +1,15 @@
+[workspace]
+
+# `../stage.sh` run end to end on a fixture member: what it copies, what it
+# records, and what a driver started from the stage sees of it. The driver
+# reads its stage through `mockspace_bench_harness::staging`, so this member
+# holds the script's tests and no reader of its own.
+[package]
+name = "bench-stage"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[test]]
+name = "stage_script"
+path = "tests/stage_script.rs"

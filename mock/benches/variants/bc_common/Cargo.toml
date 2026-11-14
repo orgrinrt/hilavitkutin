@@ -1,0 +1,18 @@
+[workspace]
+
+[package]
+name = "bc_common"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# What the bounds_check arms share: the view of the input whose length the
+# compiler cannot see, the reference sum, and the check each arm's kernel runs.
+# The arms (bc_iter, bc_index, bc_unchecked) differ only in how they read a
+# byte.
+[lib]
+name = "bc_common"
+path = "src/lib.rs"
+
+[dependencies]
+kernel_checks = { path = "../kernel_checks" }

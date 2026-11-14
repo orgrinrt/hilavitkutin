@@ -1,0 +1,14 @@
+[workspace]
+
+[package]
+name = "kernel_checks"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# The checks a microkernel arm runs on its own kernel before any timing of it
+# is worth reading: that its result depends on its input. Shared by the
+# bit_count_ops and bounds_check families through their common crates.
+[lib]
+name = "kernel_checks"
+path = "src/lib.rs"

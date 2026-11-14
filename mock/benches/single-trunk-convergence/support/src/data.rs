@@ -17,7 +17,7 @@ pub fn column(seed: u64, n: usize) -> Vec<u32> {
         .collect()
 }
 
-/// FNV-1a over a `u32` sequence, shared with `engine_vs_std`.
+/// FNV-1a over a `u32` sequence, shared with `evs-support`.
 pub fn hash(values: &[u32]) -> u64 {
-    engine_vs_std::fnv1a_u32_slice(values)
+    evs_support::fnv1a_u32(values)
 }

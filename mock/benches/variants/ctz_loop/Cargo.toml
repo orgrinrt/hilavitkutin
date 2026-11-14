@@ -12,6 +12,7 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
+ctz_common = { path = "../ctz_common" }
 mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "a81e1956361a205261b90e5214dde932db4f1913", features = ["std"] }
 mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", rev = "a81e1956361a205261b90e5214dde932db4f1913" }
 
