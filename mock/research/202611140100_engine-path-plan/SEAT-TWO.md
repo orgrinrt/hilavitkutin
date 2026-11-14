@@ -1,4 +1,4 @@
-# Seat report: five open points on hilavitkutin's engine path
+# Seat Two: Five Open Points on the Engine Path
 
 Persona: Frank McSherry. Opus tier. Read-only. No file written, no source, design or registry row touched. Everything I read is cited below. Following the brief, I opened nothing else under the scratchpad.
 

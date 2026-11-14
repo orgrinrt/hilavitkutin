@@ -1,4 +1,4 @@
-# Seat brief: five open points on hilavitkutin's engine path
+# Seat Brief: Five Open Points on Hilavitkutin's Engine Path
 
 You are one of two independent seats. Each answers the same five points alone and neither sees the other's answer. Do not look for another seat's report, and write yours only to the path given at the end of your prompt. You write no source, no design text and no registry row. Read only; the one file you write is your report.
 
