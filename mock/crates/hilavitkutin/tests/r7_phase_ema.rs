@@ -112,7 +112,6 @@ struct Q1v(u32);
 #[derive(Copy, Clone, Default)]
 struct Q2v(u32);
 #[derive(Copy, Clone, Default)]
-#[allow(dead_code)] // written by Sink, never read back (the test reads phase_ema)
 struct Sv(u32);
 
 type OneIn = Cons<Column<Inv>, Empty>;
@@ -334,6 +333,20 @@ macro_rules! two_waist {
     }};
 }
 
+/// Read `Sv` back after a frame of the fan-out/fan-in pipeline. With In = i,
+/// P1v = 2 i and P2v = 3 i, Mv = 5 i, Q1v = 5 i and Q2v = 10 i, so the sink
+/// writes Sv = 15 i at every record. Sv is the head column.
+macro_rules! assert_sink_holds_fifteen_times_the_index {
+    ($scheduler:expr, $n:expr) => {{
+        let sv = $scheduler.__bindings().__ptr().as_ptr() as *const Sv;
+        for i in 0 .. $n {
+            // SAFETY: Sv holds $n reserved records; the scheduler is alive.
+            let s = unsafe { (*sv.add(i)).0 };
+            assert_eq!(s, (i as u32) * 15, "rec {i}: the sink saw both Q columns");
+        }
+    }};
+}
+
 /// Single-phase carrier (one WU, In -> P1v): nphases == 1.
 macro_rules! single_phase {
     ($provider:expr) => {{
@@ -376,6 +389,7 @@ fn multi_phase_records_and_higher_slot_zero() {
         0,
         "a slot past nphases is never written, so it stays zero"
     );
+    assert_sink_holds_fifteen_times_the_index!(scheduler, N);
 }
 
 // --- Invariant: run_parallel does not call dispatch_trunks, so phase_ema stays zero. ---
@@ -421,6 +435,7 @@ fn multi_morsel_folds_per_frame_total() {
         0,
         "slot past nphases stays zero"
     );
+    assert_sink_holds_fifteen_times_the_index!(scheduler, 600);
 }
 
 // --- Single-phase carrier touches only slot 0. ---

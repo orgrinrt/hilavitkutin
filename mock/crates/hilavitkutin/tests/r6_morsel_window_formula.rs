@@ -30,6 +30,11 @@ use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::store::{Column, Resource, Seq, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
+use notko::Outcome;
+
+// Record counts: one morsel's worth, and more than one window's worth.
+const SMALL: usize = 16;
+const LARGE: usize = 4096;
 
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
@@ -135,17 +140,31 @@ fn morsel_window_matches_l1_formula() {
     // 24_576 / (4 column + 8 resource collection) = 2048, inside the clamps,
     // already 4-aligned.
     let provider = BumpProvider::<16384>::new();
-    let s = Scheduler::builder()
+    let mut s = Scheduler::builder()
         .with(Resource::new(FxRes))
         .with(Column::<Outv>::start())
         .with(Producer)
-        .build(store(provider), USize(16))
+        .build(store(provider), USize(SMALL))
         .unwrap_or_else(|_| panic!("build should succeed"));
     assert_eq!(
         s.__fiber_morsel_size(USize(0)).0,
         2048,
         "window = (L1_USABLE / (column stride + resource collection footprint)).clamp & !3"
     );
+
+    // The width of `Outv` is half of what that window is computed from, so the
+    // fixture is shown to run as well as to plan: one frame, then every record
+    // of the written column read back as `Producer` wrote it. The window
+    // exceeds the record count, so one morsel covers the range and its
+    // relative index is the record's own.
+    assert!(matches!(s.run(), Outcome::Ok(())));
+    // Outv is the head column (registered last).
+    let base = s.__bindings().__ptr().as_ptr() as *const Outv;
+    for r in 0 .. SMALL {
+        // SAFETY: the column reserves SMALL records; the scheduler is alive.
+        let v = unsafe { (*base.add(r)).0 };
+        assert_eq!(v, r as u32, "rec {r}: written by the single morsel");
+    }
 }
 
 #[test]
@@ -154,11 +173,11 @@ fn morsel_window_is_not_the_record_count_partition() {
     // so the fiber covers the range in ceil(4096 / 2048) = 2 morsels. The
     // placeholder partition would have reported 4096 here.
     let provider = BumpProvider::<65536>::new();
-    let s = Scheduler::builder()
+    let mut s = Scheduler::builder()
         .with(Resource::new(FxRes))
         .with(Column::<Outv>::start())
         .with(Producer)
-        .build(store(provider), USize(4096))
+        .build(store(provider), USize(LARGE))
         .unwrap_or_else(|_| panic!("build should succeed"));
     let window = s.__fiber_morsel_size(USize(0)).0;
     assert_eq!(
@@ -166,9 +185,23 @@ fn morsel_window_is_not_the_record_count_partition() {
         "the window is budget-derived, independent of record count"
     );
     assert!(
-        window < 4096,
+        window < LARGE,
         "a fiber larger than its window runs multiple morsels"
     );
+
+    // One frame: each of the two morsels wrote its relative index at the
+    // absolute records it covers, so record `r` holds `r % window`.
+    assert!(matches!(s.run(), Outcome::Ok(())));
+    let base = s.__bindings().__ptr().as_ptr() as *const Outv;
+    for r in 0 .. LARGE {
+        // SAFETY: the column reserves LARGE records; the scheduler is alive.
+        let v = unsafe { (*base.add(r)).0 };
+        assert_eq!(
+            v,
+            (r % window) as u32,
+            "rec {r}: written once, by the morsel that covers it"
+        );
+    }
 }
 
 #[test]
