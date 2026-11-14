@@ -284,7 +284,7 @@ impl ThreadPoolApi for BenchExecutor {
 /// of the supported surface". The type-keyed lookup is the engine's own
 /// `ColSelector`, the same one the dispatch uses, so the column is found by
 /// its type rather than by counting cons-cells from the head.
-// FIXME(ef57305fb5f4): replace with the engine's supported host-side column
+// FIXME(placeholders_tagged_ef57305fb5f4): replace with the engine's supported host-side column
 // write and read once it has one.
 fn column_base<T, B, I>(bindings: &B) -> *mut T
 where

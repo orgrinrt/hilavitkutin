@@ -1,0 +1,511 @@
+# What the record says about `execution`, part 1.
+
+[[tenet]]
+id = "the_hierarchy_runs_from_pipeline_down_through_phase_trunk_fiber_and_morsel_to_entry"
+subject = "execution"
+what = "The vocabulary is a hierarchy from the coarsest to the finest level: pipeline, core, phase with waist, trunk, fiber with branch and bridge, morsel, micro-morsel and entry."
+mechanism = "pipeline → core → phase ↔ waist → trunk → fiber ↔ branch ↔ bridge → morsel → micro-morsel → entry (coarsest to finest)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:72-74"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#vocabulary"]
+quote = '''
+**Hierarchy (coarsest → finest):**
+```
+pipeline → core → phase ↔ waist → trunk → fiber ↔ branch ↔ bridge → morsel → micro-morsel → entry
+'''
+origin = "stated"
+standing = "held"
+keywords = ["hierarchy", "pipeline", "core", "phase", "waist", "trunk", "fiber", "branch", "bridge", "morsel", "micro-morsel", "entry"]
+
+[[tenet]]
+id = "an_entry_is_one_record_and_one_operation_at_register_level"
+subject = "execution"
+what = "An entry is one record taken with one operation, at register level, and it is the innermost unit."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:80-80"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#vocabulary"]
+quote = '''
+| **entry** | One record × one op. Register level. The innermost unit. |
+'''
+origin = "stated"
+standing = "held"
+keywords = ["entry", "record", "op", "register level", "innermost unit"]
+
+[[tenet]]
+id = "a_micro_morsel_is_an_inner_tiling_that_is_single_level_by_default_and_activates_at_ecs_scale"
+subject = "execution"
+what = "A micro-morsel is an inner tiling of a morsel over a sub-range of records, used when the peak live data exceeds L1. It is single-level by default and activates at ECS scale, with hundreds of columns per fiber; a single level is sufficient for polka and saalis."
+mechanism = "peak_live = max(op.read ∪ op.write ∪ prev.write) at any Z-slice; the morsel is the L1 scheduling unit (outer loop); micro-morsel when peak_live > L1 (T3 decision #60); two-level morsel is T3 decision #98."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:81-81, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:847-852"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#vocabulary"]
+quote = '''
+| **micro-morsel** | Inner tiling when peak_live > L1. Sub-morsel record range. Single-level by default; activates at ECS scale. |
+---
+**Two-level morsel (T3 decision #98, single-level by default):**
+- Morsel = L1 scheduling unit (outer loop)
+- Micro-morsel = inner tiling when peak_live > L1 (T3 decision #60)
+- peak_live = max(op.read ∪ op.write ∪ prev.write) at any Z-slice
+- Single-level sufficient for polka/saalis. Micro-morsel activates
+  at ECS scale (hundreds of columns per fiber).
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:81-81", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:847-852"]
+keywords = ["micro-morsel", "two-level morsel", "peak_live", "L1", "inner tiling", "ECS scale", "T3 decision #98"]
+
+[[tenet]]
+id = "a_morsel_is_a_three_dimensional_l1_sized_window_into_a_fiber_s_arena"
+subject = "execution"
+what = "A morsel is an L1-sized window into a fiber's co-located arena, spanning records, columns and time, and a fiber has multiple morsels. Its dimensions are records across the columns of the fiber and the temporal axis across frames, with an inner cube of micro-morsel records, the active columns of an op and the op index."
+mechanism = "Outer cube X (records) × Y (columns) × T (temporal across frames); inner cube x (micro-morsel) × y (active cols per op) × z (op index). T3 decisions #52-58."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:82-82, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:854-856"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#vocabulary"]
+quote = '''
+| **morsel** | 3D window into a fiber's co-located arena: records × columns × temporal. L1-sized. Multiple morsels per fiber. |
+---
+**3D morsel cube (T3 decisions #52-58):**
+- X (records) × Y (columns) × T (temporal across frames)
+- Inner cube: x (micro-morsel) × y (active cols per op) × z (op index)
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:82-82", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:854-856"]
+keywords = ["morsel", "3D window", "morsel cube", "records", "columns", "temporal", "L1-sized", "arena"]
+
+[[tenet]]
+id = "morsels_are_pinned_to_cores_across_frames_to_keep_l2_warm"
+subject = "execution"
+what = "A morsel is pinned to a core across frames, so that the L2 cache stays warm."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:858-858"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#12-morsel-model"]
+quote = '''
+- Morsel-to-core affinity pinned across frames (warm L2)
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:858-858"]
+keywords = ["morsel-to-core affinity", "pinned", "frames", "warm L2", "core"]
+
+[[tenet]]
+id = "a_fiber_is_the_unit_of_column_co_location_and_morsel_windowing_and_fusion_is_a_strategy_decision"
+subject = "execution"
+what = "A fiber is the unit of column co-location and morsel windowing. Units in a fiber share columns, and the morsels window into the fiber's co-located arena. Whether the ops are fused into one loop body or run as separate passes over the same morsel is a decision of the execution strategy and not part of what a fiber is."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:83-83, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:944-948"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#vocabulary"]
+quote = '''
+| **fiber** | Unit of column co-location and morsel windowing. WUs within a fiber share columns. Morsels window into the fiber's arena. Execution strategy (fused vs sequential passes) is decided by the codegen, not the fiber definition. Replaces "chain." |
+---
+- **Fiber:** the unit of column co-location and morsel windowing. WUs
+  within a fiber share columns, and morsels window into the fiber's
+  co-located arena. Whether those ops are fused (one loop body) or run
+  as separate passes over the same morsel is an execution strategy
+  decision (domain 17), not a definitional property of the fiber.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:83-83", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:944-948"]
+keywords = ["fiber", "co-location", "morsel windowing", "fused", "separate passes", "execution strategy", "chain"]
+
+[[tenet]]
+id = "a_branch_is_a_side_path_attached_to_a_trunk_and_runs_as_a_chaser_in_the_trunk_s_morsel_scope"
+subject = "execution"
+what = "A branch is a side path attached to a trunk, a peer of a fiber within the trunk. It shares some columns with the trunk and executes as a chaser within the trunk's morsel scope."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:84-84, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:743-744, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:949-949"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#vocabulary"]
+quote = '''
+| **branch** | Side path attached to a trunk. Peer of fiber within a trunk. |
+---
+- **Branch:** side path attached to trunk, shares some columns.
+  Executes as chaser within trunk's morsel scope.
+---
+- **Branch:** side path attached to a trunk (peer of fiber).
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:84-84", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:743-744", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:949-949"]
+keywords = ["branch", "side path", "trunk", "chaser", "morsel scope", "peer of fiber"]
+
+[[tenet]]
+id = "a_bridge_is_a_fan_in_node_that_runs_after_its_parent_trunks_reach_the_required_record_range"
+subject = "execution"
+what = "A bridge is a fan-in node that reads from multiple trunks and is a peer of a fiber. It runs after its parent trunks have reached the required record range."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:85-85, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:745-746, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:950-950"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#vocabulary"]
+quote = '''
+| **bridge** | Fan-in node reading from multiple trunks. Peer of fiber. Runs after parent trunks reach required record range. |
+---
+- **Bridge:** reads from multiple trunks (fan-in). Runs after parent
+  trunks reach required record range.
+---
+- **Bridge:** fan-in node reading from multiple trunks (peer of fiber).
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:85-85", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:745-746", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:950-950"]
+keywords = ["bridge", "fan-in", "multiple trunks", "parent trunks", "record range", "peer of fiber"]
+
+[[tenet]]
+id = "a_trunk_is_a_column_disjoint_maximal_path_within_a_phase_and_trunks_share_no_write_columns"
+subject = "execution"
+what = "A trunk is a column-disjoint maximal path within a phase, the sequential critical path of the phase. It contains fibers, branches and bridges, and trunks share no write columns with each other, so there is no synchronisation between them."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:86-86, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:741-742, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:951-953"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#vocabulary"]
+quote = '''
+| **trunk** | Column-disjoint maximal path within a phase. Contains fibers, branches, bridges. Trunks share NO write columns — zero sync. |
+---
+- **Trunk:** sequential critical path within a phase. Shares NO write
+  columns with other trunks. Zero sync between trunks.
+---
+- **Trunk:** column-disjoint maximal path within a phase. Contains
+  fibers. Trunks share NO write columns with other trunks — zero sync.
+- Fibers, branches, and bridges are peers within a trunk.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:86-86", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:741-742", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:951-953"]
+keywords = ["trunk", "column-disjoint", "maximal path", "critical path", "no shared write columns", "zero sync", "chain group"]
+
+[[tenet]]
+id = "a_waist_is_a_narrow_bottleneck_in_the_dag_that_defines_the_phase_boundaries"
+subject = "execution"
+what = "A waist is a narrow bottleneck in the DAG where the number of concurrent paths drops to a minimum, and it defines the boundaries between phases."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:87-87, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:739-740"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#vocabulary"]
+quote = '''
+| **waist** | Narrow bottleneck in the DAG where concurrent path count drops to minimum. Defines phase boundaries. |
+---
+- **Phase:** wide DAG section between waist points (concurrent path
+  count minimums). Phases execute with pipeline parallelism.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:87-87", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:739-740"]
+keywords = ["waist", "bottleneck", "concurrent path count", "phase boundaries", "DAG", "minimum"]
+
+[[tenet]]
+id = "a_phase_is_a_wide_dag_section_between_waists_with_its_own_execution_strategy"
+subject = "execution"
+what = "A phase is a wide section of the DAG between waists. Phases execute with pipeline parallelism, and each phase has its own execution strategy."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:88-88, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:739-740"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#vocabulary"]
+quote = '''
+| **phase** | Wide DAG section between waists. Phases execute with pipeline parallelism. Each phase has its own execution strategy. |
+---
+- **Phase:** wide DAG section between waist points (concurrent path
+  count minimums). Phases execute with pipeline parallelism.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:88-88", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:739-740"]
+keywords = ["phase", "wide DAG section", "pipeline parallelism", "execution strategy", "waist", "partition"]
+
+[[tenet]]
+id = "a_core_is_a_physical_cpu_core_with_one_pool_thread_and_core_pinned_trunks"
+subject = "execution"
+what = "A core is a physical CPU core used as an execution unit, with one pool thread per physical core and trunks pinned to cores. It is not the Rust core crate. The pipeline is the entire DAG, the coarsest level."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:89-90"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#vocabulary"]
+quote = '''
+| **core** | Physical CPU core used as an execution unit. One pool thread per physical core. Core-pinned trunks. Not the Rust `core` crate. |
+| **pipeline** | The entire DAG. Coarsest level. |
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:89-90"]
+keywords = ["core", "physical core", "pool thread", "core-pinned trunks", "pipeline", "entire DAG"]
+
+[[tenet]]
+id = "ops_sharing_columns_form_a_fiber_and_do_not_run_consecutively_for_cache_reuse"
+subject = "execution"
+what = "The archetype concept is dead and fully subsumed: ops that share columns do not run consecutively for cache reuse, they form a fiber."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:955-957"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#14-fiber-formation"]
+quote = '''
+**What T1's "archetype" became:** dead concept. Ops sharing columns
+don't "run consecutively for cache reuse" — they form a fiber. The
+archetype concept is fully subsumed.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:955-957"]
+keywords = ["archetype", "fiber", "column sharing", "cache reuse", "subsumed", "dead concept"]
+
+[[tenet]]
+id = "write_columns_must_be_in_l1_and_read_only_columns_overflow_to_l2"
+subject = "execution"
+what = "Write columns must be in L1, and read-only columns overflow to L2, where the prefetcher gives about eighty to ninety percent of L1 throughput."
+mechanism = "T3 decision #43; L2 prefetcher ~80-90% L1 throughput."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:760-761"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#11-cache-hierarchy-tiling-and-phase-decomposition"]
+quote = '''
+- Write columns MUST be L1 (T3 decision #43)
+- Read-only columns overflow to L2 (prefetcher ~80-90% L1 throughput)
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:760-761"]
+keywords = ["write columns L1", "read-only L2", "prefetcher", "80-90% throughput", "cache principles", "T3 decision #43"]
+
+[[tenet]]
+id = "a_column_is_classified_by_temperature_and_each_class_has_its_cache_level_and_budget"
+subject = "execution"
+what = "A column is classified by temperature into write-only, read-write, read-only dense, read-only sparse and read-only shared. Each class has its cache level and budget: the written ones are in L1 during a morsel, dense read-only ones are prefetched into L2, sparse read-only ones tolerate L3, and shared read-only ones live in shared L2 or L3."
+mechanism = "Write-only: L1 during morsel, L1 write budget. Read-write: L1 during morsel, L1 write budget. Read-only dense: L2 prefetched, L2 read. Read-only sparse: L3 tolerable, minimal. Read-only shared: shared L2/L3, L2 amortised. T3 decision #50."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:762-763, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1114-1122"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#11-cache-hierarchy-tiling-and-phase-decomposition"]
+quote = '''
+- Column temperature: write-only, read-write, read-only-dense,
+  read-only-sparse, read-only-shared (T3 decision #50)
+---
+**Column temperature (from domain 11):**
+
+| Access pattern | Cache | Budget |
+|---|---|---|
+| Write-only | L1 during morsel | L1 write |
+| Read-write | L1 during morsel | L1 write |
+| Read-only dense | L2 prefetched | L2 read |
+| Read-only sparse | L3 tolerable | Minimal |
+| Read-only shared | Shared L2/L3 | L2 amortised |
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:762-763", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1114-1122"]
+keywords = ["column temperature", "write-only", "read-write", "read-only dense", "read-only sparse", "read-only shared", "T3 decision #50"]
+related = ["tenet::generation_counter_activity_classifies_morsels_by_temperature"]
+
+[[tenet]]
+id = "the_register_file_and_not_the_l1_capacity_is_the_binding_constraint_for_fiber_width"
+subject = "execution"
+what = "The register file, about fourteen registers on aarch64 and ten on x86, is the binding constraint on how wide a fiber can be, and not the L1 capacity."
+mechanism = "~14 aarch64, ~10 x86 usable registers (T6 bench)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:765-766"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#11-cache-hierarchy-tiling-and-phase-decomposition"]
+quote = '''
+- Register file (~14 aarch64, ~10 x86) is binding constraint for
+  fiber width, not L1 capacity (T6 bench)
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:765-766"]
+keywords = ["register file", "binding constraint", "fiber width", "aarch64 14", "x86 10", "register pressure"]
+
+[[tenet]]
+id = "trunks_of_a_multi_trunk_phase_run_in_parallel_on_separate_cores"
+subject = "execution"
+what = "In a phase with several trunks, the trunks run in parallel on separate cores."
+mechanism = "Bench (Game World, 1M agents): phased 0.82x-0.89x vs sequential 1.00x."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:769-769, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:793-799"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#11-cache-hierarchy-tiling-and-phase-decomposition"]
+quote = '''
+- Multi-trunk phases: trunks run in parallel on separate cores
+---
+**Bench results (T6, Game World 1M agents):**
+| strategy | vs seq | notes |
+|---|---|---|
+| sequential | 1.00x | baseline |
+| adaptive | 0.93x | flat chase+steal, barely helps deep pipeline |
+| phased | 0.82x-0.89x | trunk parallelism |
+| phased+convergence | 0.68x | halves serial bottleneck phase |
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:769-769", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:793-799"]
+keywords = ["multi-trunk phases", "trunk parallelism", "separate cores", "phased", "bench", "0.82x"]
+
+[[tenet]]
+id = "a_single_trunk_phase_runs_head_and_tail_convergence_with_two_threads_from_opposite_ends"
+subject = "execution"
+what = "A phase with a single trunk uses head and tail convergence: two threads work from opposite ends for about twice the parallelism. It is skipped for non-commutative resource accumulation."
+mechanism = "Head+tail convergence (2 threads, opposite ends, ~2x parallelism). Bench: phased+convergence 0.68x vs sequential; halves the serial bottleneck phase."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:770-771, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:793-796, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:799-799"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#11-cache-hierarchy-tiling-and-phase-decomposition"]
+quote = '''
+- Single-trunk phases: head+tail convergence (2 threads, opposite
+  ends, ~2x parallelism). Skip for non-commutative resource accumulation.
+---
+**Bench results (T6, Game World 1M agents):**
+| strategy | vs seq | notes |
+|---|---|---|
+| sequential | 1.00x | baseline |
+---
+| phased+convergence | 0.68x | halves serial bottleneck phase |
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:770-771", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:793-796", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:799-799"]
+keywords = ["head+tail convergence", "single-trunk phases", "two threads", "opposite ends", "non-commutative", "0.68x"]
+
+[[tenet]]
+id = "phases_overlap_through_progress_counters_so_the_total_time_is_the_longest_phase_plus_the_fill_latency"
+subject = "execution"
+what = "Phases overlap through atomic progress counters, so the next phase starts when the previous one has produced one morsel. The total time is about the longest phase plus the fill latency, and not the sum of the phases."
+mechanism = "`AtomicUsize` progress counters; phase N+1 starts when N produces one morsel; total time ≈ max(phases) + fill latency."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:772-774"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#11-cache-hierarchy-tiling-and-phase-decomposition"]
+quote = '''
+- Pipelined phases: phases OVERLAP via AtomicUsize progress counters.
+  Phase N+1 starts when N produces one morsel. Total time ≈ max(phases)
+  + fill latency (not sum of phases).
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:772-774"]
+keywords = ["pipelined phases", "AtomicUsize", "progress counters", "overlap", "fill latency", "max(phases)"]
+
+[[tenet]]
+id = "each_trunk_is_pinned_to_a_pool_thread_at_plan_time_and_leftover_threads_take_convergence_branches_and_bridges"
+subject = "execution"
+what = "Each trunk is assigned to a specific pool thread at plan time so that its L1 stays warm. The leftover threads do convergence, then branches, then bridges, in priority order."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:775-777"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#11-cache-hierarchy-tiling-and-phase-decomposition"]
+quote = '''
+- Core-pinned trunks: each trunk assigned to specific pool thread at
+  plan time (warm L1). Leftover threads do convergence → branches →
+  bridges in priority order.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:775-777"]
+keywords = ["core-pinned trunks", "pool thread", "warm L1", "leftover threads", "convergence", "branches", "bridges"]
+
+[[tenet]]
+id = "the_thread_pool_is_pre_allocated_and_wakes_by_spinning_first_and_then_parking"
+subject = "execution"
+what = "The thread pool is pre-allocated and uses a hybrid wake, spinning first and then parking. The pool removes the small-size catastrophe of spawning threads, moving the crossover from about fifty thousand records to about two thousand."
+mechanism = "Hybrid wake (spin 128 → park); crossover ~2K records (pool) vs ~50K; phased-pool 0.68x-0.69x consistent across 2K-1M; phased-conv with spawn is 0.62x at 1M but 15.54x slower at 200 records."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:778-779, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:800-801"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#11-cache-hierarchy-tiling-and-phase-decomposition"]
+quote = '''
+- Pre-allocated thread pool with hybrid wake (spin 128 → park).
+  Pool eliminates small-N catastrophe (crossover ~2K records vs ~50K).
+---
+| phased-pool | 0.68x-0.69x | consistent across all sizes (2K-1M) |
+| phased-conv (spawn) | 0.62x at 1M | but 15.54x SLOWER at 200 records |
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:778-779", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:800-801"]
+keywords = ["pre-allocated thread pool", "hybrid wake", "spin 128", "park", "small-N catastrophe", "crossover", "15.54x"]
+
+[[tenet]]
+id = "shared_read_columns_between_trunks_are_snapshotted_per_trunk_on_arm_or_read_in_aligned_sync_on_x86_numa"
+subject = "execution"
+what = "Read columns shared between trunks are handled in one of two ways. Snapshotting copies them per trunk at the phase transition, which is simpler and has no cross-core contention. Aligned morsel synchronisation copies nothing and works on unified-memory ARM but is complex on x86 NUMA. The recommendation is the snapshot on ARM and aligned synchronisation on x86 NUMA."
+mechanism = "Approach 1 (snapshot-to-local): copy shared columns per trunk at phase transition, 1.6% overhead. Approach 2 (aligned morsel sync): zero copy, both trunks read the same data. Recommendation: approach 1 for ARM, approach 2 for x86 NUMA."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:781-786"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#11-cache-hierarchy-tiling-and-phase-decomposition"]
+quote = '''
+**Shared read columns between trunks (T6 L3635-3670):**
+- Approach 1 (snapshot-to-local): copy shared columns per trunk at
+  phase transition. 1.6% overhead. Simpler, no cross-core contention.
+- Approach 2 (aligned morsel sync): zero copy, both trunks read same
+  data. Works on unified-memory ARM (M1). Complex on NUMA x86.
+- Recommendation: approach 1 for ARM, approach 2 for x86 NUMA.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:781-786"]
+keywords = ["shared read columns", "snapshot-to-local", "aligned morsel sync", "ARM", "x86 NUMA", "1.6% overhead", "T6"]
+
+[[tenet]]
+id = "the_morsel_size_is_the_l1_budget_divided_by_the_written_bytes_per_record_within_fixed_bounds"
+subject = "execution"
+what = "The morsel size is the usable L1 divided by the written bytes per record of the fiber, clamped between a minimum and a maximum and aligned to a multiple of four. It is computed per fiber, and read-only columns and read-only resource collections ride the L2 prefetcher and do not consume the L1 budget."
+mechanism = "`morsel_size = (L1_usable / Σ write_sizes).clamp(MIN_MORSEL, MAX_MORSEL) & !3`; L1_usable = detected_L1 × 0.75; write_sizes = Σ size_of::<T_i>() for write columns + write resource collection sizes (R5); MIN_MORSEL configurable; MAX_MORSEL = 8192; multiple of 4 (cache line alignment at any stride)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:832-843"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#12-morsel-model"]
+quote = '''
+**Morsel sizing formula (with R3 type-native stride, R5 resource model):**
+```
+morsel_size = (L1_usable / Σ write_sizes).clamp(MIN_MORSEL, MAX_MORSEL) & !3
+```
+- L1_usable = detected_L1 × 0.75
+- write_sizes = Σ size_of::<T_i>() for write columns + write resource
+  collection sizes (R5). Read-only columns and read-only resource
+  collections ride L2 prefetcher, don't consume L1 budget.
+- MIN_MORSEL configurable (not a design decision — R3 note)
+- MAX_MORSEL = 8192
+- Align to multiple of 4 (cache line alignment at any stride)
+- Per-fiber morsel size (each fiber has its own)
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:832-843"]
+keywords = ["morsel sizing", "L1_usable", "write_sizes", "MIN_MORSEL", "MAX_MORSEL", "8192", "per-fiber morsel size", "0.75"]
+related = ["tenet::each_column_has_its_own_stride_and_a_value_is_at_most_sixteen_bytes"]
+
+[[tenet]]
+id = "write_resource_collections_count_toward_the_l1_morsel_budget_and_read_only_ones_do_not"
+subject = "execution"
+what = "Write resource collections count toward the L1 morsel budget and read-only resource collections do not, because they ride the L2 prefetcher. This is consistent with the write-only morsel sizing principle, the collection sizes are known statically from the const generic size, and a large collection that wrecks L1 is the consumer's design problem."
+mechanism = "Formula: `L1_usable / (Σ write_column_sizes + Σ write_resource_collection_sizes)`; collection sizes from const generic N."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:549-555"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#07-column-storage"]
+quote = '''
+**Morsel sizing for resource collections:**
+- Write resource collections count toward L1 morsel budget
+- Read-only resource collections do NOT (ride L2 prefetcher)
+- Consistent with write-only morsel sizing principle from R3
+- Formula: `L1_usable / (Σ write_column_sizes + Σ write_resource_collection_sizes)`
+- Collection sizes known statically from const generic N
+- Consumer's design problem if large collections wreck L1
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:549-555"]
+keywords = ["resource collections", "morsel budget", "write-only sizing", "L2 prefetcher", "const generic N", "Seq", "Map"]
+related = ["tenet::a_resource_is_scalars_and_const_sized_collections_only"]
+
+[[tenet]]
+id = "a_unit_is_dispatched_by_morsel_or_by_scalar_depending_on_whether_its_access_set_holds_a_column"
+subject = "execution"
+what = "Whether a unit is dispatched by morsel or as a scalar is inferred from its access set: a column in the read or write set makes it morsel-chunked, and resources or virtuals alone make it scalar."
+mechanism = "`Column<T>` in Read/Write → morsel-chunked; `Resource`/`Virtual` only → scalar (T5 §Q4)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:844-845"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#12-morsel-model"]
+quote = '''
+- Morsel vs scalar dispatch inferred from AccessSet: Column<T> in
+  Read/Write → morsel-chunked, Resource/Virtual only → scalar (T5 §Q4)
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:844-845"]
+keywords = ["morsel dispatch", "scalar dispatch", "AccessSet inference", "Column", "Resource", "Virtual", "T5 Q4"]
+
+[[tenet]]
+id = "the_divisibility_hint_sets_whether_a_unit_runs_all_morsels_at_once_one_at_a_time_or_adaptively"
+subject = "execution"
+what = "The divisibility hint decides how a unit's morsels are run: atomic means all morsels at once, interruptible means one at a time with chances to steal, and adaptive is based on an exponential moving average."
+mechanism = "Divisibility hint: `Atomic` = all morsels at once; `Interruptible` = one at a time with steal opportunities; `Adaptive` = EMA-based (T5 §Q2)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:868-869"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#12-morsel-model"]
+quote = '''
+- Divisibility hint: Atomic=all morsels at once, Interruptible=one
+  at a time with steal opportunities, Adaptive=EMA-based (T5 §Q2)
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:868-869"]
+keywords = ["Divisibility", "Atomic", "Interruptible", "Adaptive", "EMA", "steal", "scheduling hint"]

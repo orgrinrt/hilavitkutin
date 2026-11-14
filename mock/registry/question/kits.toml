@@ -1,0 +1,118 @@
+# The questions whose subject is `kits`, part 1.
+
+[[question]]
+id = "whether_the_kit_crate_has_zero_dependencies_or_depends_on_the_api_crate"
+asks = "The kit design template opens by calling the crate zero-dependency, yet the trait's bounds and the authoring section name core primitives and markers of the api crate. Does the kit crate depend on the api crate?"
+options = ["zero deps (kit template, opening: \"`#![no_std]`, zero deps.\")", "the kit declaration depends on hilavitkutin-api for WorkUnitBundle, StoreBundle, Replaceable and the store markers (kit template: \"Both bounds (`WorkUnitBundle`, `StoreBundle`) are core primitives in `hilavitkutin-api`\")"]
+state = "open"
+source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:3-3, mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:41-45, mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:145-150, mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:215-222"
+quote = '''
+`#![no_std]`, zero deps. Ships exactly one trait, `Kit`. The
+---
+Two associated types only. `Units` is a cons-list of `WorkUnit`
+declarations the Kit ships; `Owned` is a cons-list of store markers
+(`Resource<T>` / `Column<T>` / `Virtual<T>`) the Kit declares as
+its own. Both bounds (`WorkUnitBundle`, `StoreBundle`) are
+core primitives in `hilavitkutin-api`.
+---
+### Kits in crates that cannot import the engine
+
+The Kit declaration is purely a type-level statement; it depends
+only on `hilavitkutin-api` (for `WorkUnitBundle`, `StoreBundle`,
+`Replaceable`, plus the `Resource<T>` / `Column<T>` / `Virtual<T>`
+markers) and on `hilavitkutin-kit` itself (for the `Kit` trait).
+---
+`hilavitkutin-kit` slots between `hilavitkutin-ctx` and the
+engine. The crate carries no other dependencies; the engine
+depends on it for `.add_kit::<K>()`, but the reverse never
+happens. A consumer can author a Kit in a downstream crate that
+depends only on `hilavitkutin-kit` plus the bare api markers
+(`Resource<T>`, `Column<T>`, `Virtual<T>`, `WorkUnitBundle`,
+`StoreBundle`, `Replaceable` from `hilavitkutin-api`) without
+pulling the engine in.
+'''
+subject = "kits"
+keywords = ["zero deps", "hilavitkutin-api dependency", "WorkUnitBundle", "StoreBundle", "Replaceable", "kit crate dependencies", "standalone"]
+related = ["tenet::a_kit_is_a_declarative_bundle_of_the_units_it_ships_and_the_stores_it_owns_that_the_engine_reads_at_compile_time_into_the_builder_typestate", "tenet::the_kit_trait_has_two_associated_types_only_both_cons_lists_bounded_by_core_primitives_of_the_api_crate", "tenet::the_kit_crate_is_a_contract_the_engine_depends_on_and_it_has_no_dependency_on_the_engine"]
+
+[[question]]
+id = "what_the_builder_call_is_that_adds_a_kit_or_a_resource"
+asks = "The workspace design template and the kit design template add a kit with an add-kit call, while the providers design template wires a kit and a resource with the builder's with call. Which builder calls add a kit and a resource?"
+options = ["`.add_kit::<K>()` for a kit and `.resource::<T>(...)` or `builder.add_resource(...)` for a resource (workspace template, kit template)", "`.with(InternerKit::<BYTES, ENTRIES>)` for a kit and `builder.with(Resource::new(...))` for a resource (providers template)"]
+state = "open"
+source = "mock/DESIGN.md.tmpl:21-21, mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:108-110, mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:160-170, mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:24-24, mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:114-121"
+quote = '''
+| `hilavitkutin-kit` | Kit preset trait. Declarative bundle: `type Units` (cons-list of WorkUnits) plus `type Owned` (cons-list of Resources / Columns / Virtuals). Engine reads associated types at compile time on `.add_kit::<K>()`. Standalone (no other hilavitkutin-crate deps). |
+---
+Resource exists in `Stores`. The actual value is supplied at the
+app's call site via `builder.add_resource(default_interner::<...>())`,
+since the api has no `Kit::default_resources()` association
+---
+## Composition
+
+Kits compose by being added in sequence on the SchedulerBuilder:
+
+```rust
+let scheduler = Scheduler::builder()
+.resource::<StringInterner<...>>(default_interner())
+.add_kit::<RunnerKit>()
+.add_kit::<LinterKit>()
+.add_kit::<TracingKit>()
+.build();
+---
+| `InternerKit<BYTES, ENTRIES>` | Kit impl that declares `Resource<StringInterner<MemoryArena<BYTES, ENTRIES>>>` as `Owned`. Pure declaration; no install method. Engine reads `K::Units` and `K::Owned` at compile time on `.with(InternerKit::<BYTES, ENTRIES>)`. |
+---
+Usage on the scheduler:
+
+```rust
+let scheduler = Scheduler::builder()
+.with(Resource::new(default_interner::<4096, 256>()))
+.with(InternerKit::<4096, 256>)
+.build();
+```
+'''
+subject = "kits"
+keywords = ["add_kit", "with", "add_resource", "resource", "builder API", "InternerKit", "SchedulerBuilder", "naming"]
+related = ["tenet::the_kit_crate_declares_a_preset_as_an_associated_type_bundle_the_engine_reads_at_compile_time_on_add_kit", "tenet::kits_compose_by_sequential_add_kit_calls_and_dependency_order_is_the_simplest_discipline_for_the_contains_all_proof", "tenet::the_interner_kit_form_gains_consistency_rather_than_ergonomics_for_a_single_resource_and_pays_off_when_several_stores_are_bundled"]
+
+[[question]]
+id = "whether_the_builder_input_trait_gains_a_method_that_extracts_the_construction_value_from_a_carrier"
+asks = "In the builder value retention round, does the builder input trait gain a method that moves the construction value out of a carrier, or does it stay with its two associated types?"
+options = ["`BuilderInput` gains `into_init(self) -> Self::Init` so `.with` can move the construction value out of the carrier and onto the `Staged` list.", "No method is added to `BuilderInput` (it stays `Init` + `Dispatch`), so none of the 24 existing `impl BuilderInput` sites change."]
+state = "open"
+source = "mock/design_rounds/202605282319/202605282319_topic.builder-value-retention.md:12-12, mock/design_rounds/202605282319/202605282319_topic.builder-value-retention.md:25-25, mock/design_rounds/202605282319/202605282319_changelist.src.lock.md:3-3"
+quote = '''
+B1 makes the value survive. It adds a sealed value-carrying cons-list (`StageList`: `StageEmpty`, `Stage<H, T>`) that holds the actual registered values, distinct from the type-level `AccessSet` cons-list that tracks store identity. `Resource::new(value)` returns a value carrier (`StagedResource<T>`) that impls `BuilderInput<Init = T, Dispatch = StoreDispatch<Resource<T>>>`, so the marker type still routes into `Stores` while the value rides in the carrier. `BuilderInput` gains `into_init(self) -> Self::Init` so `.with` can move the construction value out of the carrier and onto the `Staged` list. The builder reshapes to `SchedulerBuilder<Wus, Stores, Platform, Staged>`, threading the platform accumulator (so a registered `MemoryProvider` is carried) and the staged-value list. Per the pre-1.0 no-legacy-shims rule this is a clean delete-and-replace; consumers that build through inference are unaffected.
+---
+2. `hilavitkutin-api/src/builder_input.rs`: add `StagedResource<T>(T)` with `impl BuilderInput<Init = T, Dispatch = StoreDispatch<Resource<T>>>`; add `fn into_init(self) -> Self::Init` to `BuilderInput` (default `self`; carriers and zero-data markers override).
+---
+Round: 202605282319. Phase: IMPL. Makes the scheduler builder retain each registered value instead of dropping it, by giving `.with` a value-carrying accumulator and having `Resource::new` return a carrier that owns the value. No method is added to `BuilderInput` (it stays `Init` + `Dispatch`), so none of the 24 existing `impl BuilderInput` sites change. The move of retained values into a `MemoryProvider`-allocated arena is the next round (B2).
+'''
+subject = "kits"
+keywords = ["into_init", "BuilderInput", "Init", "Dispatch", "StagedResource", "value retention", "B1", "topic against src changelist"]
+related = ["tenet::the_builder_retains_each_registered_value_in_a_sealed_value_carrying_list_beside_the_type_level_store_list", "tenet::the_value_retention_adds_no_method_to_the_builder_input_trait_and_the_builder_moves_the_registered_input_onto_the_staged_list"]
+
+[[question]]
+id = "what_the_builder_does_about_a_marker_registered_twice_given_that_compile_time_detection_cannot_be_encoded"
+asks = "Compile-time detection of a duplicate marker registration cannot be encoded. The proposal must commit to one of four directions for a marker registered twice. Which does the design take?"
+options = ["Silent shadowing, Bevy-style: two entries of one resource are tolerated in the stores cons-list, membership proofs match the first occurrence, the consumer is responsible for not creating diamonds, documented loudly with a diagnostic hint", "Runtime panic at the engine resource call: the engine maintains a runtime registry of registered markers without using TypeId, possibly by type-name string equality or a sealed enum-of-markers pattern, and panics on a duplicate at one runtime check per registration", "An explicit replace operator on the builder with silent shadowing as the default: a replace operator gated on the stores already containing the marker, matching Bevy's init_resource versus insert_resource distinction", "Drop diamond detection entirely for v0 and track it as a future follow-up when negative_impls matures or a new approach surfaces"]
+state = "open"
+source = "mock/research/sketches/registrable-not-in-202605051200/FINDINGS.md:54-66"
+quote = '''
+## Path forward (recommendations for round 4)
+
+The proposal must commit to ONE of:
+
+1. **Silent shadowing, Bevy-style.** Accept that two `Resource<Foo>` entries in `Stores` cons-list are tolerated; `Contains<Resource<Foo>>` proofs match the first occurrence; consumer is responsible for not creating diamonds. Document loudly. Add `#[diagnostic::on_unimplemented]` hint when consumers hit the related "Resource registered twice but only first is read" debugging surface.
+
+2. **Runtime panic at engine `.resource(t)`.** Engine maintains a runtime registry of registered marker TypeId-equivalents (without using `TypeId`; possibly via `core::any::type_name::<T>()` string equality, or a sealed enum-of-markers pattern). Detect duplicate at registration call; panic. Costs one runtime check per registration; trade for explicit failure mode.
+
+3. **`.replace::<M>(value)` explicit operator** on the builder + silent-shadow as default. Consumer writing `.with(MyResource).with(MyResource)` shadows; consumer writing `.replace::<Resource<Foo>>(new)` explicitly overwrites. The `.replace` operator gates on `Stores: Contains<M>` (must already be present). This is the cleanest design and matches Bevy's `init_resource` vs `insert_resource` distinction.
+
+4. **Drop diamond detection entirely** for v0; track as a future follow-up when `feature(negative_impls)` matures or a new approach surfaces.
+
+The sketch's negative-impl path is dead. Decision point for the user.
+'''
+subject = "kits"
+keywords = ["duplicate registration", "silent shadowing", "replace operator", "runtime panic", "diamond detection", "NotIn", "Bevy init_resource", "builder"]
+related = ["tenet::compile_time_detection_of_a_duplicate_marker_registration_cannot_be_encoded_under_the_workspace_constraints_and_the_first_wins_fallback_promise_is_unsubstantiated"]

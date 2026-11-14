@@ -1,0 +1,266 @@
+# What the record says about `meta`, part 2.
+
+[[tenet]]
+id = "the_plan_stage_reserves_cache_budget_from_the_axes_the_consumer_registered_and_not_from_a_worst_case"
+subject = "meta"
+what = "With no composite adaptation configuration structure, the plan stage reserves its cache budget by walking the axes the consumer actually registered and computing how many are active in a pass from their literal sampling skip values. The reservation follows the consumer's own configuration and is tighter than a worst case where every axis is active."
+because = "The registered values are concrete when the scheduler is built and are not hidden behind a preset enum, so a window analysis over the sampling cadences becomes feasible."
+mechanism = "Per-axis `sample_skip` values read from the registered axis configurations; the LCM-window analysis proposed by the M1 alternative; no preset enum."
+source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:288-288"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#decision-log"]
+quote = '''
+- [x] **(Audit M1 dissolves with the Kit reframe.)** Without a composite `AdaptConfig` struct, presets are not const fns over a single struct; they are Kits over the individual axis-configs. The "M1 budget reservation: literal-skip-presets vs worst-case-all-active" question collapses: each consumer's actual registered set of axis-configs determines the per-axis `sample_skip` values; plan stage walks the registered axes and computes max-active-this-pass from those literal values. **Plan stage uses cadence-aware budget reservation** — the LCM-window analysis the M1 alternative proposed becomes feasible because the registered values are concrete at `.build()` time, not hidden behind a preset enum. No worst-case-all-active needed; the consumer's actual configuration determines the budget. This is strictly tighter than worst-case and was unlocked by the reframe.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 5 adapt subsystem, decision log entry on audit M1 dissolving with the Kit reframe, dated 2026-05-10, agent-written; the text does not say whose decision it is"
+standing = "held"
+keywords = ["cadence-aware budget", "sample_skip", "M1", "LCM window", "AdaptConfig", "Kit reframe", "L1 budget", "worst-case-all-active"]
+related = ["tenet::the_nine_adapt_axes_ship_as_individual_inputs_and_kits_are_only_recipes_over_them"]
+
+[[tenet]]
+id = "the_plan_stage_reserves_cache_budget_as_if_every_enabled_axis_writes_every_pass_and_cadence_skipping_lowers_only_cpu_cost"
+subject = "meta"
+what = "The plan stage reserves its cache budget as if every enabled adaptation axis writes in every pass. Runtime cadence skipping lowers the CPU cost and does not lower the cache reservation."
+because = "A cadence-aware reservation would need per-pass-varying morsel sizes, which contradicts the design's commitment to a static morsel size per fiber."
+mechanism = "`hot_arena_bytes = sizeof(FiberHotSlot) * fibers_in_trunk + sizeof(CoreParkSlot) * MAX_LANES + sum_enabled_axes(active_inline_bytes(axis))`, worst-case and not cadence-tight; the cadence-aware alternative needs `morsel_size_per_pass_modulo: [USize; LCM]`; Topic 3 invariant M10 amended to this formula."
+source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:277-283"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#decision-log"]
+quote = '''
+- [x] **(Audit-2 M6, 2026-05-10):** Topic 3 M10's `axis_writers_active_this_pass(AdaptConfig)` formula vs the conservative worst-case fallback: **picked worst-case-all-active at planning time.** The cadence-aware budget tightness would require per-pass-varying morsel sizes (an array `morsel_size_per_pass_modulo: [USize; LCM]`), which contradicts the design's static-morsel-per-fiber commitment. Conservative is correct: plan stage reserves L1 budget as if every enabled axis writes every pass; runtime cadence-skipping reduces CPU cost, not L1 reservation. Topic 3 M10 amended to reflect the locked formula:
+   ```
+   hot_arena_bytes = sizeof(FiberHotSlot) * fibers_in_trunk
+                   + sizeof(CoreParkSlot) * MAX_LANES
+                   + sum_enabled_axes(active_inline_bytes(axis))  // worst-case, not cadence-tight
+   ```
+   The "cadence-aware budget tightness unlocked by the Kit reframe" claim from the Kit-reframe paragraph is retracted; cadence helps CPU cost only.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 5 adapt subsystem, decision log entry Audit-2 M6 dated 2026-05-10, agent-written; the text does not say whose decision it is"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["worst-case-all-active", "hot_arena_bytes", "M6", "M10", "morsel size", "cadence", "L1 reservation", "static morsel per fiber"]
+rejects = ["The \"cadence-aware budget tightness unlocked by the Kit reframe\" claim from the Kit-reframe paragraph is retracted; cadence helps CPU cost only."]
+related = ["tenet::the_plan_stage_reserves_cache_budget_from_the_axes_the_consumer_registered_and_not_from_a_worst_case"]
+
+[[tenet]]
+id = "each_adaptation_axis_has_its_own_consumer_readable_metrics_resource_and_the_unified_scheduler_metrics_resource_is_retired"
+subject = "meta"
+what = "Each adaptation axis has its own consumer-readable metrics resource, and an optional metrics kit ships the standard combination as a recipe. The unified scheduler metrics resource and the adapt metrics resource type do not ship, and the raw scratch memory region is not a resource. The adapt unit's write side lists only the resources of the registered axes."
+because = "Units reading one metric type do not conflict with units reading another, which lets the plan stage place fibers and trunks more tightly."
+mechanism = "`metrics::{PassDurationMetrics, PhaseEmaMetrics, FiberEmaMetrics, ChangeClassMetrics, CacheResidencyMetrics, ThroughputMetrics, PredictiveParkingMetrics, MemoryWatermarkMetrics, CoreIdleTimeMetrics}`; optional `MetricsKit`; adapt unit write side `AccessSet![metrics::PassDurationMetrics, metrics::FiberEmaMetrics, ...]`; `AdaptArena` is the raw scratch and not a Resource; Axis F choice F2, Axis B lock B3."
+source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:29-29, mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:307-307"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#vocabulary-canonical-post-axis-f-lock"]
+quote = '''
+Earlier draft referenced a unified `Resource<SchedulerMetrics>`. **That shape is retired** by Axis F (F2 chose per-axis sub-resources). Any prose below referencing `SchedulerMetrics` as a singular Resource is stale; the canonical replacement is the per-axis `metrics::*` set. Earlier `Resource<AdaptMetrics<...>>` references (B1 alternative) are also retired by Axis B's B3 lock — `AdaptMetrics` as a Resource type does not ship; `AdaptArena` is the raw scratch (not a Resource).
+---
+- [x] **Axis F. Per-axis sub-resources + Kit recipe.** Each AdaptConfig axis gets its own consumer-readable Resource (`metrics::{PassDurationMetrics, PhaseEmaMetrics, FiberEmaMetrics, ChangeClassMetrics, CacheResidencyMetrics, ThroughputMetrics, PredictiveParkingMetrics, MemoryWatermarkMetrics, CoreIdleTimeMetrics}`). Optional `MetricsKit` ships the standard combination as a recipe (Topic 2 Kit pattern). DAG benefit: per-axis Resources mean WUs reading one metric type don't conflict with WUs reading another, enabling tighter fiber/trunk placement during plan stage. AdaptWu's Write side becomes `AccessSet![metrics::PassDurationMetrics, metrics::FiberEmaMetrics, ...]` (only over the registered axes). **Capacity note (audit M6):** the nine substrate-shipped metrics Resources do NOT consume the consumer's `MAX_COLUMNS` budget; they live on a separate substrate-managed const-generic cap (`MAX_SUBSTRATE_RESOURCES`, sized for the worst-case enabled set). Plan-stage DAG analysis treats them as a separate access-mask region from consumer-registered Resources/Columns. Documented in Topic 3 Axis B alongside the const-generic count. **Consumer Ctx-bound note (audit M7):** consumer reads a per-axis Resource via the canonical `Has<metrics::PassDurationMetrics>` Ctx bound (resource-type-named, not `Has<...Provider>`). The "Provider" suffix vocabulary is reserved for the registration-side trait (Topic 2's `BuilderInput`); accessor traits use the bare resource type. Workspace convention recorded: individuals are primary surface; Kits are documented recipes; no Cfg-as-resource gate.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 5 adapt subsystem, vocabulary note and Axis F of the decision log dated 2026-05-10, agent-written; the text does not say whose decision it is"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["metrics::*", "per-axis sub-resources", "MetricsKit", "SchedulerMetrics", "AdaptMetrics", "AdaptArena", "Axis F", "retired"]
+rejects = ["a unified `Resource<SchedulerMetrics>`", "`AdaptMetrics` as a Resource type"]
+related = ["tenet::each_adaptation_metric_is_its_own_axis_with_independent_tuning", "tenet::the_nine_adapt_axes_ship_as_individual_inputs_and_kits_are_only_recipes_over_them"]
+
+[[tenet]]
+id = "the_nine_substrate_metrics_resources_stay_outside_the_consumer_column_cap_and_form_a_separate_access_mask_region"
+subject = "meta"
+what = "The nine metrics resources the substrate ships do not consume the consumer's column budget. They live under a separate substrate-managed cap sized for the worst-case enabled set, and plan-stage graph analysis treats them as an access-mask region separate from the resources and columns the consumer registers."
+mechanism = "Consumer `MAX_COLUMNS` budget not consumed; separate const-generic cap `MAX_SUBSTRATE_RESOURCES`; documented in Topic 3 Axis B alongside the const-generic count; audit M6."
+source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:307-307"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#decision-log"]
+quote = '''
+- [x] **Axis F. Per-axis sub-resources + Kit recipe.** Each AdaptConfig axis gets its own consumer-readable Resource (`metrics::{PassDurationMetrics, PhaseEmaMetrics, FiberEmaMetrics, ChangeClassMetrics, CacheResidencyMetrics, ThroughputMetrics, PredictiveParkingMetrics, MemoryWatermarkMetrics, CoreIdleTimeMetrics}`). Optional `MetricsKit` ships the standard combination as a recipe (Topic 2 Kit pattern). DAG benefit: per-axis Resources mean WUs reading one metric type don't conflict with WUs reading another, enabling tighter fiber/trunk placement during plan stage. AdaptWu's Write side becomes `AccessSet![metrics::PassDurationMetrics, metrics::FiberEmaMetrics, ...]` (only over the registered axes). **Capacity note (audit M6):** the nine substrate-shipped metrics Resources do NOT consume the consumer's `MAX_COLUMNS` budget; they live on a separate substrate-managed const-generic cap (`MAX_SUBSTRATE_RESOURCES`, sized for the worst-case enabled set). Plan-stage DAG analysis treats them as a separate access-mask region from consumer-registered Resources/Columns. Documented in Topic 3 Axis B alongside the const-generic count. **Consumer Ctx-bound note (audit M7):** consumer reads a per-axis Resource via the canonical `Has<metrics::PassDurationMetrics>` Ctx bound (resource-type-named, not `Has<...Provider>`). The "Provider" suffix vocabulary is reserved for the registration-side trait (Topic 2's `BuilderInput`); accessor traits use the bare resource type. Workspace convention recorded: individuals are primary surface; Kits are documented recipes; no Cfg-as-resource gate.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 5 adapt subsystem, Axis F capacity note (audit M6) dated 2026-05-10, agent-written; the text does not say whose decision it is"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["MAX_SUBSTRATE_RESOURCES", "MAX_COLUMNS", "substrate resources", "access-mask region", "capacity note", "metrics resources"]
+related = ["tenet::each_adaptation_axis_has_its_own_consumer_readable_metrics_resource_and_the_unified_scheduler_metrics_resource_is_retired"]
+
+[[tenet]]
+id = "a_consumer_reads_a_per_axis_metrics_resource_through_a_context_bound_named_by_the_resource_type_and_the_provider_suffix_stays_on_the_registration_side"
+subject = "meta"
+what = "A consumer reads a per-axis metrics resource through a context bound named after the resource type itself. The provider suffix is reserved for the registration-side trait, and accessor traits use the bare resource type."
+mechanism = "`Has<metrics::PassDurationMetrics>` Ctx bound, resource-type-named and not `Has<...Provider>`; \"Provider\" vocabulary reserved for Topic 2's `BuilderInput`; workspace convention recorded: individuals are primary surface, Kits are documented recipes, no Cfg-as-resource gate; audit M7."
+source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:307-307"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#decision-log"]
+quote = '''
+- [x] **Axis F. Per-axis sub-resources + Kit recipe.** Each AdaptConfig axis gets its own consumer-readable Resource (`metrics::{PassDurationMetrics, PhaseEmaMetrics, FiberEmaMetrics, ChangeClassMetrics, CacheResidencyMetrics, ThroughputMetrics, PredictiveParkingMetrics, MemoryWatermarkMetrics, CoreIdleTimeMetrics}`). Optional `MetricsKit` ships the standard combination as a recipe (Topic 2 Kit pattern). DAG benefit: per-axis Resources mean WUs reading one metric type don't conflict with WUs reading another, enabling tighter fiber/trunk placement during plan stage. AdaptWu's Write side becomes `AccessSet![metrics::PassDurationMetrics, metrics::FiberEmaMetrics, ...]` (only over the registered axes). **Capacity note (audit M6):** the nine substrate-shipped metrics Resources do NOT consume the consumer's `MAX_COLUMNS` budget; they live on a separate substrate-managed const-generic cap (`MAX_SUBSTRATE_RESOURCES`, sized for the worst-case enabled set). Plan-stage DAG analysis treats them as a separate access-mask region from consumer-registered Resources/Columns. Documented in Topic 3 Axis B alongside the const-generic count. **Consumer Ctx-bound note (audit M7):** consumer reads a per-axis Resource via the canonical `Has<metrics::PassDurationMetrics>` Ctx bound (resource-type-named, not `Has<...Provider>`). The "Provider" suffix vocabulary is reserved for the registration-side trait (Topic 2's `BuilderInput`); accessor traits use the bare resource type. Workspace convention recorded: individuals are primary surface; Kits are documented recipes; no Cfg-as-resource gate.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 5 adapt subsystem, Axis F consumer Ctx-bound note (audit M7) dated 2026-05-10, agent-written; the text does not say whose decision it is"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["Has<metrics::...>", "Ctx bound", "Provider suffix", "BuilderInput", "accessor trait", "consumer read", "naming"]
+related = ["tenet::each_adaptation_axis_has_its_own_consumer_readable_metrics_resource_and_the_unified_scheduler_metrics_resource_is_retired"]
+
+[[tenet]]
+id = "meta_units_declare_a_distinct_schedule_marker_because_one_marker_cannot_classify_meta_and_consumer_units_without_overlap"
+subject = "meta"
+what = "Meta units declare a schedule marker distinct from the consumer's one, because the lifecycle classification of a meta unit against a consumer unit cannot use a single marker: a blanket implementation and a specific one conflict, a negative bound is not expressible, and full specialization is forbidden. Three disjoint classification implementations then cover every schedule with no overlap, and the lifecycle rank is carried only by the four closed-set meta markers."
+because = "A blanket implementation for the consumer default plus a specific one for the meta marker conflict, a negative bound is not expressible, and full specialization is forbidden by the workspace's unstable-features rule."
+mechanism = "`OnMeta<V>` in place of canonical `On<meta::V>`; `impl Lifecycle for Always`, `impl<V> Lifecycle for On<V>` (`RANK_CONSUMER`), `impl<V: MetaVirtual> Lifecycle for OnMeta<V>` (`<V as MetaVirtual>::RANK`); `MetaVirtual` on `PlanStage` / `ScheduleReady` / `PassStart` / `ScheduleEnd`; E0119; sketch `202606082000_e4-slice2-lifecycle-classify` WORKS; core-design `:720`/`:757`/`:764`."
+source = "mock/design_rounds/202606082100/202606082100_changelist.doc.lock.md:56-65, mock/design_rounds/202606082100/202606082100_changelist.doc.lock.md:67-80"
+provenance = ["mock::design_rounds::202606082100::202606082100_changelist.doc.lock::#forced-surface-deviation-onmeta-v-not-on-meta-v"]
+quote = '''
+## Forced surface deviation: `OnMeta<V>` not `On<meta::V>`
+
+The canonical writes meta work units as `WorkUnit<On<meta::PlanStage>>`
+(core-design `:720`/`:757`/`:764`). The de-risk sketch
+(`202606082000_e4-slice2-lifecycle-classify`) proved that const-time lifecycle
+classification of a meta work unit versus a consumer work unit CANNOT use the
+same `On<V>` marker: a blanket `impl<V> Lifecycle for On<V>` (consumer default)
+plus a specific `impl Lifecycle for On<meta::PlanStage>` (meta) conflict
+(E0119), a negative bound `V: !MetaVirtual` is not expressible, and full
+specialization is forbidden (`unstable-features.md`).
+---
+The escape (proven `WORKS`): meta work units declare a distinct schedule marker
+`OnMeta<V>` (versus consumer `On<V>`). Three disjoint `Lifecycle` impls then
+classify every schedule with no overlap and no specialization:
+
+```rust
+impl Lifecycle for Always                    { const RANK: Rank = RANK_CONSUMER; }
+impl<V> Lifecycle for On<V>                  { const RANK: Rank = RANK_CONSUMER; }
+impl<V: MetaVirtual> Lifecycle for OnMeta<V> { const RANK: Rank = <V as MetaVirtual>::RANK; }
+```
+
+`MetaVirtual` is implemented only on the four closed-set meta markers
+(`PlanStage` / `ScheduleReady` / `PassStart` / `ScheduleEnd`), each carrying a
+const lifecycle rank. A const fold over a mixed carrier yields the correct
+per-unit rank array.
+'''
+origin = "proposed"
+written_by = "design round 202606082100, doc changelist for GATE-2 E4 slice-2 self-hosting meta pipeline, section on a forced surface deviation, dated 2026-06-08, agent-written; the text does not say whose decision it is"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["OnMeta", "On<meta::V>", "Lifecycle", "MetaVirtual", "E0119", "lifecycle rank", "meta work unit", "forced deviation"]
+rejects = ["const-time lifecycle classification of a meta work unit versus a consumer work unit CANNOT use the same `On<V>` marker"]
+related = ["tenet::the_scheduler_is_itself_a_pipeline_and_meta_units_run_at_lifecycle_points"]
+
+[[tenet]]
+id = "the_kernel_fires_real_flags_for_the_meta_virtuals_so_a_consumer_schedule_gate_on_the_end_of_schedule_marker_opens"
+subject = "meta"
+what = "The kernel fires real flags for the meta virtuals at the lifecycle points, so that a consumer unit declaring the ordinary schedule on the end-of-schedule marker has its gate open and can read the scheduler metrics to implement its own cadence policy. The earlier slice only sequenced meta units by lifecycle band order and fired no real flags, the meta gate being constant-open."
+mechanism = "Consumer declares `On<meta::ScheduleEnd>` and reads `SchedulerMetrics`; kernel fires real `Virtual<meta::V>` flags so the consumer's `On<V>` gate (stamp == epoch) opens; slice 2 meta WUs are `OnMeta<V>` in lifecycle band order, and the `OnMeta<V>` gate is const-open."
+source = "mock/design_rounds/202606090400/202606090000_topic.gate2-e4-slice3-consumer-meta-hooks.md:8-16"
+provenance = ["mock::design_rounds::202606090400::202606090000_topic.gate2-e4-slice3-consumer-meta-hooks::#topic-gate-2-e4-slice-3-consumer-meta-hooks-real-meta-firing-metaaccess-schedulermetrics"]
+quote = '''
+Slice 2 made the meta WUs (`OnMeta<V>`) run in lifecycle band order, with the
+plan band skipped on a clean frame. It did NOT fire real `Virtual<meta::V>`
+flags: the band ordering alone sequenced the meta WUs, and the `OnMeta<V>` gate
+is const-open. Slice 3 makes the meta lifecycle observable by CONSUMER work
+units: a consumer declares `On<meta::ScheduleEnd>` (the ordinary consumer
+schedule `On<V>`, slice-1 gate machinery) and reads `SchedulerMetrics` to
+implement its own cadence policy. For that, the kernel must fire REAL
+`Virtual<meta::V>` flags at the lifecycle points, so the consumer's `On<V>` gate
+(stamp == epoch) opens. This is the firing slice 2 deferred.
+'''
+origin = "proposed"
+written_by = "design round 202606090000, topic GATE-2 E4 slice 3 consumer meta hooks, dated 2026-06-08, agent-written; the text does not say whose decision it is"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["meta virtual firing", "On<meta::ScheduleEnd>", "SchedulerMetrics", "lifecycle points", "consumer hook", "OnMeta band", "stamp == epoch", "slice 3"]
+related = ["tenet::meta_units_declare_a_distinct_schedule_marker_because_one_marker_cannot_classify_meta_and_consumer_units_without_overlap", "tenet::the_scheduler_is_itself_a_pipeline_and_meta_units_run_at_lifecycle_points"]
+
+[[tenet]]
+id = "the_scheduler_metrics_were_first_a_consumer_resource_populated_by_a_provided_metrics_unit_with_no_kernel_write"
+subject = "meta"
+what = "In the first slice-3 design, the scheduler metrics are an ordinary consumer resource populated by a provided metrics unit that reads and writes it through the normal resource accessor, with no kernel special-casing. A kernel that wrote the metrics only when registered would need structural membership testing that walls without specialization."
+because = "The overlap of head-is-metrics and head-is-other implementations is an E0119 error, and the witness path requires the resource to be present, so it cannot express absent meaning no-op."
+mechanism = "`SchedulerMetrics` gains `pass_count` as `Cell<USize>`; provided `SchedulerMetricsWu` scheduled `OnMeta<PassStart>` incrementing it through the shared cell; consumer `OnMeta<ScheduleEnd>` hook; `ctx.resource()` accessor; the RAW edge check skips `i == j`; `Selector<SchedulerMetrics, I>`."
+source = "mock/design_rounds/202606090400/202606090200_changelist.doc.deprecated.md:9-13, mock/design_rounds/202606090400/202606090200_changelist.doc.deprecated.md:17-30, mock/design_rounds/202606090400/202606090200_changelist.doc.deprecated.md:36-47"
+provenance = ["mock::design_rounds::202606090400::202606090200_changelist.doc.deprecated::#doc-changelist-gate-2-e4-slice-3a-schedulermetrics-provided-metrics-wu-consumer-hook"]
+quote = '''
+Slice 3a ships the first working consumer meta hook end to end: a consumer reads
+a meta resource (`SchedulerMetrics`) that hilavitkutin populates, via an
+`OnMeta<ScheduleEnd>` work unit, and observes per-pass data. No new firing
+mechanism, no kernel change: it rides slice-2's `OnMeta` band dispatch plus an
+ordinary `Resource<SchedulerMetrics>`.
+---
+- `SchedulerMetrics` (the slice-2 `meta::SchedulerMetrics` marker) gains a
+  `pass_count` field, a `Cell<USize>` mutated through the shared resource
+  reference (the same interior-mutability pattern as the virtual stamp cells).
+  It starts with `pass_count` only; the other canonical fields
+  (`ema_pass_duration_ns`, `active_units`, `stolen_count`, `idle_ns`) land with
+  their data sources (a `Clock` for timing, the engine-to-meta bridge for
+  `active_units`, the parallel path for `stolen_count` / `idle_ns`), not as dead
+  fields now.
+- hilavitkutin ships `SchedulerMetricsWu`, a meta work unit scheduled
+  `OnMeta<PassStart>`, that reads `Resource<SchedulerMetrics>` and increments
+  `pass_count` once per pass through the shared cell. "hilavitkutin provides the
+  measurement data" (`:1989`) is realized as a provided work unit the consumer
+  registers, not auto-magic: a consumer wanting metrics registers
+  `SchedulerMetricsWu` plus their own `OnMeta<ScheduleEnd>` hook.
+---
+## Why no kernel write
+
+A kernel that writes `SchedulerMetrics` only when registered needs a structural
+"write the `ResourceBinding<SchedulerMetrics>` if present else no-op" over the
+bindings, whose head-is-`SchedulerMetrics` vs head-is-other impls overlap
+(E0119), and the witness path (`Selector<SchedulerMetrics, I>`) requires the
+resource be present, so it cannot express "absent -> no-op". Structural
+membership testing walls without specialization. A provided work unit
+side-steps it entirely: the metrics WU reads and writes a normal,
+consumer-registered resource through the existing `ctx.resource()` accessor and
+the cell; the grouping tolerates a unit touching one store (the RAW edge check
+skips `i == j`); no kernel special-casing.
+'''
+origin = "proposed"
+written_by = "design round 202606090400, deprecated doc changelist for GATE-2 E4 slice 3a, dated 2026-06-08, agent-written; the text does not say whose decision it is, and the file is marked deprecated"
+standing = "provisional"
+superseded_by = ["the_scheduler_metrics_are_engine_owned_in_a_meta_block_written_by_the_scheduler_and_read_through_a_meta_access_gated_context_accessor"]
+keywords = ["SchedulerMetrics", "SchedulerMetricsWu", "pass_count", "consumer resource", "no kernel write", "E0119", "OnMeta<PassStart>", "slice 3a"]
+
+[[tenet]]
+id = "the_scheduler_metrics_are_engine_owned_in_a_meta_block_written_by_the_scheduler_and_read_through_a_meta_access_gated_context_accessor"
+subject = "meta"
+what = "Meta state is engine-owned, held in a block on the scheduler and not in a store, because consumer stores are copy and read-only. A meta unit reads it through a context accessor gated on the meta-access marker, which a consumer unit's context does not have, and the engine maintains the pass count per pass for a consumer end-of-schedule hook to read."
+because = "A consumer resource is Copy and read-only after init, so it cannot carry mutable per-pass state, and the resource-backed design hit a hard compile wall."
+mechanism = "`MetaBlock` on the scheduler; `MetaRef`; `meta::<T>()` accessor with `T: MetaAccess` implemented only on the Ctx carrying a `MetaRef`; consumer `MetaNil` Ctx has none; `SchedulerMetrics::pass_count` maintained per pass by `run`; read by an `OnMeta<ScheduleEnd>` hook as `ctx.meta::<SchedulerMetrics>()`; sketch `202606090300` candidate 1 (the bridge); resolution `202606090100` Correction 2."
+source = "mock/design_rounds/202606090400/202606090400_changelist.doc.lock.md:32-40, mock/design_rounds/202606090400/202606090400_changelist.doc.lock.md:44-51, mock/design_rounds/202606090400/202606090400_changelist.doc.lock.md:62-69"
+provenance = ["mock::design_rounds::202606090400::202606090400_changelist.doc.lock::#what-this-round-locks"]
+quote = '''
+- A `meta::<T>()` accessor (`T: MetaAccess`) is implemented ONLY on the Ctx
+  carrying a `MetaRef`. A consumer work unit's `MetaNil` Ctx has no such method,
+  so a consumer cannot reach meta state at compile time. The `MetaAccess`
+  enforcement falls out of the gating for free, no negative bound, no
+  specialization.
+- The single-core `run` increments `SchedulerMetrics::pass_count` once per pass
+  (a direct write to the block field). An `OnMeta<ScheduleEnd>` consumer hook
+  reads it through `ctx.meta::<SchedulerMetrics>()`, in the epilogue band after
+  consumer work (slice-2 band order).
+---
+Replace the engine `DESIGN.md.tmpl` self-hosting section's `MetaAccess`
+follow-up paragraph with the real bridge design: meta state is engine-owned (a
+`MetaBlock` on the scheduler, not a `Store`, because consumer stores are `Copy`
+read-only); an `OnMeta` work unit reads it via a `MetaAccess`-gated Ctx accessor
+that a consumer work unit's Ctx does not have; `SchedulerMetrics::pass_count`
+maintained per pass by the engine, read by a consumer `OnMeta<ScheduleEnd>`
+hook. The section backticks `MetaBlock`, `MetaRef`, `pass_count`; those land in
+source in this round's SRC CL.
+---
+Replaces `202606090200_changelist.doc.deprecated.md` (thin slice-3a). That CL
+described `SchedulerMetrics` as a mutable consumer `Resource<T>` populated by a
+provided `SchedulerMetricsWu`. It was deprecated because that hit a hard compile
+wall (resolution `202606090100` Correction 2): a consumer `Resource<T>` is `Copy`
+and read-only after init, so it cannot carry mutable per-pass state. This CL
+replaces the resource-backed design with the engine-owned `MetaBlock` written by
+the scheduler and read through a `MetaAccess`-gated Ctx accessor (the bridge,
+candidate 1, sketch `202606090300`).
+'''
+origin = "proposed"
+written_by = "design round 202606090400, doc changelist for GATE-2 E4 slice 3 bridge, dated 2026-06-08, agent-written; the text does not say whose decision it is"
+standing = "held"
+keywords = ["MetaBlock", "MetaRef", "MetaAccess", "meta accessor", "SchedulerMetrics", "pass_count", "engine-owned", "bridge"]
+rejects = ["described `SchedulerMetrics` as a mutable consumer `Resource<T>` populated by a provided `SchedulerMetricsWu`"]
+related = ["tenet::engine_owned_mutable_meta_state_lives_in_the_meta_block_scheduler_field_and_is_reached_by_a_compile_time_gated_accessor", "tenet::the_scheduler_metrics_were_first_a_consumer_resource_populated_by_a_provided_metrics_unit_with_no_kernel_write"]
+lineage = ["the_scheduler_metrics_were_first_a_consumer_resource_populated_by_a_provided_metrics_unit_with_no_kernel_write:d9d8a915577481ca"]

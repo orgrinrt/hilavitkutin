@@ -110,7 +110,7 @@ pub fn select_approach(record_count: USize, fiber_count: USize) -> DispatchAppro
 /// allows the engine call chain to compile and execute (returning
 /// a typed-correct, body-empty record) without panic.
 pub fn codegen_fiber<Ctx: 'static, C: Capacity>() -> FiberDispatch<Ctx, C> {
-    // FIXME: returns an empty record; the monomorphised body needs the LLVM-driven codegen in BACKLOG.
+    // FIXME(hilavitkutin_7_unmarked_placeholders): returns an empty record; the monomorphised body needs the LLVM-driven codegen in BACKLOG.
     FiberDispatch::new()
 }
 
@@ -123,7 +123,7 @@ pub fn codegen_fiber<Ctx: 'static, C: Capacity>() -> FiberDispatch<Ctx, C> {
 /// sync per Topic 6 axis E) lands per the same BACKLOG entry as
 /// `codegen_fiber`.
 pub fn codegen_core<Ctx: 'static, C: Capacity>() -> CoreDispatch<Ctx, C> {
-    // FIXME: returns an empty record; the fused per-core pipeline needs the same BACKLOG codegen as `codegen_fiber`.
+    // FIXME(hilavitkutin_7_unmarked_placeholders): returns an empty record; the fused per-core pipeline needs the same BACKLOG codegen as `codegen_fiber`.
     CoreDispatch::new()
 }
 

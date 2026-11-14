@@ -28,11 +28,7 @@ V1 placement is on the struct. An alternative placement on an `impl` block (e.g.
 
 ### LTO smoke runtime callability
 
-The `tests/lto_smoke.rs` test in this crate verifies trampoline symbol survival under `lto = "fat"` via `nm` output. Runtime callability (dlopen the fixture, resolve the descriptor, call `init_fn` via the fn-pointer, assert `ExtensionAbiStatus::Ok`) becomes free once a real consumer extension exercises the descriptor's fn-pointer end-to-end. Symbol survival catches the more likely failure mode; the runtime check is the belt-and-suspenders extension of it.
-
-### LTO smoke on Windows
-
-The current fixture uses `nm` for symbol observation, which does not exist on Windows toolchains. A parallel harness using `dumpbin /SYMBOLS` or the `object` crate would close the cross-platform gap. Deferred until a Windows consumer extension lands.
+The `tests/lto_smoke.rs` test in this crate verifies trampoline survival under `lto = "fat"` by reading the built library's symbols and checking that the descriptor's function pointers are distinct. Runtime callability (dlopen the fixture, resolve the descriptor, call `init_fn` via the fn-pointer, assert `ExtensionAbiStatus::Ok`) becomes free once a real consumer extension exercises the descriptor's fn-pointer end-to-end. Symbol survival catches the more likely failure mode; the runtime check is the belt-and-suspenders extension of it.
 
 ### Darling / procmacro-builder integration
 

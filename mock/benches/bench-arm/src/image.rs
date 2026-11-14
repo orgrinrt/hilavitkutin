@@ -65,7 +65,7 @@ pub fn tagged_bytes<const N: usize>(tag: u32, seed: u64) -> Vec<u8> {
 /// probe that validation runs is killed after ten times this bound, at least
 /// two seconds. Below 400 milliseconds the probe is killed during the
 /// calibration and every arm is skipped as slow, whatever it costs.
-// FIXME(3ec38cb5c7c8): drop the floor once the harness calibrates its counter
+// FIXME(placeholders_tagged_3ec38cb5c7c8): drop the floor once the harness calibrates its counter
 // without a three second sleep per worker, or gives the probe room for it.
 pub const MAX_CALL_US_FLOOR: u64 = 400_000;
 

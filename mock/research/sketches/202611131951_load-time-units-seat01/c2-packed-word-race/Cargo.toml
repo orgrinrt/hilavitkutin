@@ -1,0 +1,14 @@
+# Arm C2, a cell narrower than a byte stored packed (the record's BIT_WIDTH and
+# BitPacked layout, spec :402-404 and :454-456). The trunk rounds a morsel
+# window to a multiple of 4 records (hilavitkutin/src/plan/steps/step9_morsel.rs:75)
+# and splits a per-core region by ceil(total / ncores)
+# (hilavitkutin/src/resource/bindings/per_core.rs:94-117). This spike checks
+# what that rounding does to a 1-bit packed column written from two cores.
+
+[package]
+name = "c2-packed-word-race"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+[dependencies]

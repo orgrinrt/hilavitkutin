@@ -1,0 +1,166 @@
+    Updating git repository `ssh://git@github.com/orgrinrt/arvo.git`
+    Updating git repository `https://github.com/orgrinrt/notko.git`
+    Updating crates.io index
+    Updating git repository `ssh://git@github.com/orgrinrt/notko.git`
+     Locking 37 packages to latest Rust 1.98.0-nightly compatible versions
+   Compiling hilavitkutin-build v0.1.0 (/home/user/.worktrees/hv-ltp-seat02-read/mock/crates/hilavitkutin-build)
+   Compiling hilavitkutin-ctx v0.1.0 (/home/user/.worktrees/hv-ltp-seat02-read/mock/crates/hilavitkutin-ctx)
+   Compiling hilavitkutin-api v0.1.0 (/home/user/.worktrees/hv-ltp-seat02-read/mock/crates/hilavitkutin-api)
+   Compiling hilavitkutin-kit v0.1.0 (/home/user/.worktrees/hv-ltp-seat02-read/mock/crates/hilavitkutin-kit)
+   Compiling hilavitkutin-sym v0.1.0 (/home/user/.worktrees/hv-ltp-seat02-read/mock/crates/hilavitkutin-sym)
+warning: hilavitkutin-sym@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+   Compiling hilavitkutin-str v0.1.0 (/home/user/.worktrees/hv-ltp-seat02-read/mock/crates/hilavitkutin-str)
+warning: hilavitkutin-kit@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-ctx@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-api@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+   Compiling hilavitkutin-providers v0.1.0 (/home/user/.worktrees/hv-ltp-seat02-read/mock/crates/hilavitkutin-providers)
+warning: hilavitkutin-str@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+   Compiling hilavitkutin v0.1.0 (/home/user/.worktrees/hv-ltp-seat02-read/mock/crates/hilavitkutin)
+warning: hilavitkutin-providers@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+   Compiling b2-resize-loses-records v0.0.0 (/home/user/.worktrees/hv-ltp-seat02-read/mock/research/sketches/202611131951_load-time-units-seat01/b2-resize-loses-records)
+warning: struct `AdaptArena` is never constructed
+  --> /home/user/.worktrees/hv-ltp-seat02-read/mock/crates/hilavitkutin/src/adapt/arena.rs:38:19
+   |
+38 | pub(crate) struct AdaptArena<'arena, CF: Capacity, CC: Capacity, CP: Capacity> {
+   |                   ^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: associated function `new` is never used
+  --> /home/user/.worktrees/hv-ltp-seat02-read/mock/crates/hilavitkutin/src/adapt/arena.rs:46:25
+   |
+43 | impl<'arena, CF: Capacity, CC: Capacity, CP: Capacity> AdaptArena<'arena, CF, CC, CP> {
+   | ------------------------------------------------------------------------------------- associated function in this implementation
+...
+46 |     pub(crate) const fn new() -> Self {
+   |                         ^^^
+
+warning: path statement with no effect
+  --> /home/user/.worktrees/hv-ltp-seat02-read/mock/crates/hilavitkutin/src/plan/dirty.rs:50:9
+   |
+50 |         Self::_ASSERT_FITS_IN_USIZE;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(path_statements)]` (part of `#[warn(unused)]`) on by default
+
+warning: path statement with no effect
+   --> /home/user/.worktrees/hv-ltp-seat02-read/mock/crates/hilavitkutin/src/plan/project.rs:176:5
+    |
+176 |     StoreCeiling::<CS>::ASSERT_FITS;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: path statement with no effect
+   --> /home/user/.worktrees/hv-ltp-seat02-read/mock/crates/hilavitkutin/src/plan/project.rs:250:5
+    |
+250 |     StoreCeiling::<CS>::ASSERT_FITS;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: path statement with no effect
+   --> /home/user/.worktrees/hv-ltp-seat02-read/mock/crates/hilavitkutin/src/plan/project.rs:332:5
+    |
+332 |     StoreCeiling::<CS>::ASSERT_FITS;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: path statement with no effect
+   --> /home/user/.worktrees/hv-ltp-seat02-read/mock/crates/hilavitkutin/src/plan/project.rs:357:5
+    |
+357 |     StoreCeiling::<CS>::ASSERT_FITS;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+   Compiling c1-oversized-cell v0.0.0 (/home/user/.worktrees/hv-ltp-seat02-read/mock/research/sketches/202611131951_load-time-units-seat01/c1-oversized-cell)
+warning: `hilavitkutin` (lib) generated 7 warnings
+warning: field `0` is never read
+  --> c1-oversized-cell/tests/oversized.rs:42:15
+   |
+42 | struct BigOut([u64; 512]);
+   |        ------ ^^^^^^^^^^
+   |        |
+   |        field in this struct
+   |
+   = help: consider removing this field
+   = note: `BigOut` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `c1-oversized-cell` (test "oversized") generated 1 warning
+    Finished `test` profile [unoptimized] target(s) in 2.13s
+     Running unittests src/lib.rs (/home/user/target/debug/deps/b2_resize_loses_records-b5ab3e769cb8f036)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/resize.rs (/home/user/target/debug/deps/resize-9498167fd75b1b21)
+
+running 2 tests
+test growth_keeps_the_records_already_written ... 
+thread 'growth_keeps_the_records_already_written' (5074) panicked at b2-resize-loses-records/tests/resize.rs:53:5:
+assertion `left == right` failed: a resize through ColumnStorage::reserve kept none of the records written before it
+  left: [0, 0, 0, 0, 0, 0, 0, 0]
+ right: [1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007]
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: core::panicking::assert_failed_inner
+   3: core::panicking::assert_failed::<alloc::vec::Vec<u64>, alloc::vec::Vec<u64>>
+   4: resize::growth_keeps_the_records_already_written
+   5: resize::growth_keeps_the_records_already_written::{closure#0}
+   6: <resize::growth_keeps_the_records_already_written::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+FAILED
+test growth_moves_the_base_pointer ... ok
+
+failures:
+
+failures:
+    growth_keeps_the_records_already_written
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+error: test failed, to rerun pass `-p b2-resize-loses-records --test resize`
+     Running unittests src/lib.rs (/home/user/target/debug/deps/c1_oversized_cell-006c3d78e786e066)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/oversized.rs (/home/user/target/debug/deps/oversized-844f0150bdd29b1e)
+
+running 2 tests
+test a_4_kib_cell_is_a_column_value ... ok
+test the_morsel_window_of_an_oversized_cell_fits_l1 ... window 64 records, write set 262144 bytes, L1 budget 24576 bytes
+
+thread 'the_morsel_window_of_an_oversized_cell_fits_l1' (5079) panicked at c1-oversized-cell/tests/oversized.rs:100:5:
+a 64-record morsel of a 4 KiB cell writes 262144 bytes against an L1 budget of 24576
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: oversized::the_morsel_window_of_an_oversized_cell_fits_l1
+   3: oversized::the_morsel_window_of_an_oversized_cell_fits_l1::{closure#0}
+   4: <oversized::the_morsel_window_of_an_oversized_cell_fits_l1::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+FAILED
+
+failures:
+
+failures:
+    the_morsel_window_of_an_oversized_cell_fits_l1
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+error: test failed, to rerun pass `-p c1-oversized-cell --test oversized`
+   Doc-tests b2_resize_loses_records
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests c1_oversized_cell
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: 2 targets failed:
+    `-p b2-resize-loses-records --test resize`
+    `-p c1-oversized-cell --test oversized`

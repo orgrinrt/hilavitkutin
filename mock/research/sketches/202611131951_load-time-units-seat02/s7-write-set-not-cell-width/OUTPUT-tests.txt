@@ -1,0 +1,891 @@
+warning: hilavitkutin-ctx@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-api@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-sym@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-kit@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-str@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-providers@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: struct `AdaptArena` is never constructed
+  --> /home/user/.worktrees/hv-ltp-seat02/mock/crates/hilavitkutin/src/adapt/arena.rs:38:19
+   |
+38 | pub(crate) struct AdaptArena<'arena, CF: Capacity, CC: Capacity, CP: Capacity> {
+   |                   ^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: associated function `new` is never used
+  --> /home/user/.worktrees/hv-ltp-seat02/mock/crates/hilavitkutin/src/adapt/arena.rs:46:25
+   |
+43 | impl<'arena, CF: Capacity, CC: Capacity, CP: Capacity> AdaptArena<'arena, CF, CC, CP> {
+   | ------------------------------------------------------------------------------------- associated function in this implementation
+...
+46 |     pub(crate) const fn new() -> Self {
+   |                         ^^^
+
+warning: path statement with no effect
+  --> /home/user/.worktrees/hv-ltp-seat02/mock/crates/hilavitkutin/src/plan/dirty.rs:50:9
+   |
+50 |         Self::_ASSERT_FITS_IN_USIZE;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(path_statements)]` (part of `#[warn(unused)]`) on by default
+
+warning: path statement with no effect
+   --> /home/user/.worktrees/hv-ltp-seat02/mock/crates/hilavitkutin/src/plan/project.rs:176:5
+    |
+176 |     StoreCeiling::<CS>::ASSERT_FITS;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: path statement with no effect
+   --> /home/user/.worktrees/hv-ltp-seat02/mock/crates/hilavitkutin/src/plan/project.rs:250:5
+    |
+250 |     StoreCeiling::<CS>::ASSERT_FITS;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: path statement with no effect
+   --> /home/user/.worktrees/hv-ltp-seat02/mock/crates/hilavitkutin/src/plan/project.rs:332:5
+    |
+332 |     StoreCeiling::<CS>::ASSERT_FITS;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: path statement with no effect
+   --> /home/user/.worktrees/hv-ltp-seat02/mock/crates/hilavitkutin/src/plan/project.rs:357:5
+    |
+357 |     StoreCeiling::<CS>::ASSERT_FITS;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `hilavitkutin` (lib) generated 7 warnings
+warning: field `0` is never read
+  --> tests/window.rs:35:71
+   |
+35 |     ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+   |                                                                       ^^^^^^^^^
+...
+99 | arm!(control_one_16_byte_write_column_fits, UnitControl, 2; K0);
+   | ---------------------------------------------------------------
+   | |                                                           |
+   | |                                                           field in this struct
+   | in this macro invocation
+   |
+   = help: consider removing this field
+   = note: `K0` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+   = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+    | |     --- field in this struct
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R00` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+    | |          --- field in this struct
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R01` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+    | |               --- field in this struct
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R02` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+    | |                    --- field in this struct
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R03` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+    | |                         --- field in this struct
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R04` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+    | |                              --- field in this struct
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R05` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+    | |                                   --- field in this struct
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R06` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+    | |                                        --- field in this struct
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R07` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+    | |                                             --- field in this struct
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R08` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+    | |                                                  --- field in this struct
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R09` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+    | |     --- field in this struct
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R10` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+    | |          --- field in this struct
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R11` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+    | |               --- field in this struct
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R12` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+    | |                    --- field in this struct
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R13` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+    | |                         --- field in this struct
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R14` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+    | |                              --- field in this struct
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R15` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+    | |                                   --- field in this struct
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R16` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+    | |                                        --- field in this struct
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R17` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+    | |                                             --- field in this struct
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R18` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+    | |                                                  --- field in this struct
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R19` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+    | |     --- field in this struct
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R20` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+    | |          --- field in this struct
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R21` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+    | |               --- field in this struct
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R22` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+    | |                    --- field in this struct
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R23` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+    | |                         --- field in this struct
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R24` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+    | |                              --- field in this struct
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R25` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+    | |                                   --- field in this struct
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R26` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+    | |                                        --- field in this struct
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R27` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+    | |                                             --- field in this struct
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R28` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+    | |                                                  --- field in this struct
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________________- in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `R29` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____---_____________________________________________- in this macro invocation
+    |       |
+    |       field in this struct
+    |
+    = help: consider removing this field
+    = note: `R30` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |__________---________________________________________- in this macro invocation
+    |            |
+    |            field in this struct
+    |
+    = help: consider removing this field
+    = note: `R31` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_______________---___________________________________- in this macro invocation
+    |                 |
+    |                 field in this struct
+    |
+    = help: consider removing this field
+    = note: `R32` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |____________________---______________________________- in this macro invocation
+    |                      |
+    |                      field in this struct
+    |
+    = help: consider removing this field
+    = note: `R33` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_________________________---_________________________- in this macro invocation
+    |                           |
+    |                           field in this struct
+    |
+    = help: consider removing this field
+    = note: `R34` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |______________________________---____________________- in this macro invocation
+    |                                |
+    |                                field in this struct
+    |
+    = help: consider removing this field
+    = note: `R35` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |___________________________________---_______________- in this macro invocation
+    |                                     |
+    |                                     field in this struct
+    |
+    = help: consider removing this field
+    = note: `R36` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |________________________________________---__________- in this macro invocation
+    |                                          |
+    |                                          field in this struct
+    |
+    = help: consider removing this field
+    = note: `R37` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |_____________________________________________---_____- in this macro invocation
+    |                                               |
+    |                                               field in this struct
+    |
+    = help: consider removing this field
+    = note: `R38` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |       ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                         ^^^^^^^^^
+...
+101 | / arm!(forty_16_byte_write_columns_each_inside_r3_fit, UnitR3, 2;
+102 | |     R00, R01, R02, R03, R04, R05, R06, R07, R08, R09,
+103 | |     R10, R11, R12, R13, R14, R15, R16, R17, R18, R19,
+104 | |     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
+105 | |     R30, R31, R32, R33, R34, R35, R36, R37, R38, R39);
+    | |__________________________________________________---- in this macro invocation
+    |                                                    |
+    |                                                    field in this struct
+    |
+    = help: consider removing this field
+    = note: `R39` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |     ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                       ^^^^^^^^^
+...
+107 | arm!(two_384_byte_write_columns_each_inside_the_derived_bound_fit, UnitDerived, 48; D0, D1);
+    | -------------------------------------------------------------------------------------------
+    | |                                                                                   |
+    | |                                                                                   field in this struct
+    | in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `D0` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: field `0` is never read
+   --> tests/window.rs:35:71
+    |
+ 35 |     ($w:expr; $($n:ident),*) => { $( #[derive(Copy, Clone)] struct $n([u64; $w]); )* };
+    |                                                                       ^^^^^^^^^
+...
+107 | arm!(two_384_byte_write_columns_each_inside_the_derived_bound_fit, UnitDerived, 48; D0, D1);
+    | -------------------------------------------------------------------------------------------
+    | |                                                                                       |
+    | |                                                                                       field in this struct
+    | in this macro invocation
+    |
+    = help: consider removing this field
+    = note: `D1` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: this warning originates in the macro `cells` which comes from the expansion of the macro `arm` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: `s7-write-set-not-cell-width` (test "window") generated 43 warnings
+    Finished `test` profile [unoptimized] target(s) in 0.02s
+     Running unittests src/lib.rs (/home/user/target/debug/deps/s7_write_set_not_cell_width-b4fef5cdb9b31d09)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/window.rs (/home/user/target/debug/deps/window-5789e5ac93011d15)
+
+running 3 tests
+test control_one_16_byte_write_column_fits ... control_one_16_byte_write_column_fits: widest cell 16 B, write set 16 B a record, window 1536 records (MIN_MORSEL 64), morsel write set 24576 B, L1 budget 24576 B
+ok
+test forty_16_byte_write_columns_each_inside_r3_fit ... forty_16_byte_write_columns_each_inside_r3_fit: widest cell 16 B, write set 640 B a record, window 64 records (MIN_MORSEL 64), morsel write set 40960 B, L1 budget 24576 B
+
+thread 'forty_16_byte_write_columns_each_inside_r3_fit' (3025) panicked at tests/window.rs:101:1:
+forty_16_byte_write_columns_each_inside_r3_fit: every cell is 16 B or less and the morsel still writes 40960 B against 24576 B
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: window::forty_16_byte_write_columns_each_inside_r3_fit
+   3: window::forty_16_byte_write_columns_each_inside_r3_fit::{closure#0}
+   4: <window::forty_16_byte_write_columns_each_inside_r3_fit::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+FAILED
+test two_384_byte_write_columns_each_inside_the_derived_bound_fit ... two_384_byte_write_columns_each_inside_the_derived_bound_fit: widest cell 384 B, write set 768 B a record, window 64 records (MIN_MORSEL 64), morsel write set 49152 B, L1 budget 24576 B
+
+thread 'two_384_byte_write_columns_each_inside_the_derived_bound_fit' (3026) panicked at tests/window.rs:107:1:
+two_384_byte_write_columns_each_inside_the_derived_bound_fit: every cell is 384 B or less and the morsel still writes 49152 B against 24576 B
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: window::two_384_byte_write_columns_each_inside_the_derived_bound_fit
+   3: window::two_384_byte_write_columns_each_inside_the_derived_bound_fit::{closure#0}
+   4: <window::two_384_byte_write_columns_each_inside_the_derived_bound_fit::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+FAILED
+
+failures:
+
+failures:
+    forty_16_byte_write_columns_each_inside_r3_fit
+    two_384_byte_write_columns_each_inside_the_derived_bound_fit
+
+test result: FAILED. 1 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+error: test failed, to rerun pass `--test window`
+   Doc-tests s7_write_set_not_cell_width
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: 1 target failed:
+    `--test window`

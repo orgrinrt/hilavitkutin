@@ -1,0 +1,2 @@
+wasm32: section entries 0; own const name resolves: false
+FAILED: a name declared with str_const! does not resolve in its own wasm image

@@ -1,0 +1,293 @@
+# The questions whose subject is `execution`.
+
+[[question]]
+id = "which_convergence_a_single_trunk_phase_uses"
+asks = "For single-trunk phases: head-and-tail convergence or the N-way record split? The records were reversed back to head-and-tail in July, the N-way path is what runs on the trunk, and the design text carries both. Which is the design?"
+options = [
+    "Head-and-tail, finish the deletion: As r8 and the seed say. The N-way path in `worker.rs` is removed, the head-and-tail types get driven, the design's ceil-slice passages are corrected, a commutativity test is added.",
+    "N-way, retire head-and-tail: The N-way record-order split is the design; the unused head-and-tail types and the seed sentence go.",
+    "Both, chosen at plan time: Two inhabitants the planner picks between per fiber (commutative single-trunk: head-and-tail; ordered appends: N-way forward slices), stated in the contract.",
+    "Measure first: A bench under the harness with both arms on single-trunk workloads; the question returns with the numbers. The code stays as it is meanwhile.",
+]
+state = "answered"
+answer = "Measure first"
+answered = "2026-11-13 06:02: .data/op-responses/202611130602_convergence-is-measured-first.md"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:349-375"
+quote = '''
+#### Convergence
+
+  ```text
+  hilavitkutin, single-trunk phases: head-and-tail convergence or the N-way record split? The records were reversed back to head-and-tail in July (r7, r8, and the seed says 'Never an N-way record or morsel partition'), but the N-way path is what runs on `dev` and your design text carries both. Which is the design?
+  ```
+
+Options offered:
+
+1. Head-and-tail, finish the deletion
+
+   As r8 and the seed say. The N-way path in `worker.rs` is removed, the head-and-tail types get driven, the design's ceil-slice passages are corrected, a commutativity test is added.
+
+2. N-way, retire head-and-tail
+
+   The N-way record-order split is the design; the unused head-and-tail types and the seed sentence go.
+
+3. Both, chosen at plan time
+
+   Two inhabitants the planner picks between per fiber (commutative single-trunk: head-and-tail; ordered appends: N-way forward slices), stated in the contract.
+
+4. Measure first
+
+   A bench under the harness with both arms on single-trunk workloads; the question returns with the numbers. The code stays as it is meanwhile.
+
+Chosen:
+
+- Measure first
+'''
+subject = "execution"
+keywords = ["convergence", "head and tail", "N-way", "record split", "single trunk", "measure", "bench"]
+related = ["question::what_is_done_with_the_supersession_the_roadmap_records_as_an_agent_s_call"]
+
+[[question]]
+id = "what_is_done_with_the_supersession_the_roadmap_records_as_an_agent_s_call"
+asks = "The roadmap's r6 records a supersession as the agent's call rather than the maintainer's: head-and-tail convergence replaced by an N-way record-order partition. No agent can ratify it. What is done with it?"
+options = [
+    "Bring me both designs: A one-page side by side of head-and-tail convergence and the N-way partition, with what each costs and what the code does today, as a question ticket for you. Nothing depends on it meanwhile.",
+    "Reverse it: Head-and-tail convergence is the design again; the N-way partition is recorded as a proposal.",
+    "Ratify it: The N-way record-order partition stands as the design.",
+]
+state = "answered"
+answer = "Bring me both designs"
+answered = "2026-11-13 05:39: .data/op-responses/202611130539_the-canon-walk-and-arvo-is-claimed-then-reworked.md"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:148-170"
+quote = '''
+#### r6 call
+
+  ```text
+  hilavitkutin's roadmap r6 records a supersession as 'the agent's call rather than op's': head-and-tail convergence replaced by an N-way record-order partition. No agent can ratify it. What do you want done with it?
+  ```
+
+Options offered:
+
+1. Bring me both designs
+
+   A one-page side by side of head-and-tail convergence and the N-way partition, with what each costs and what the code does today, as a question ticket for you. Nothing depends on it meanwhile.
+
+2. Reverse it
+
+   Head-and-tail convergence is the design again; the N-way partition is recorded as a proposal.
+
+3. Ratify it
+
+   The N-way record-order partition stands as the design.
+
+Chosen:
+
+- Bring me both designs
+'''
+subject = "execution"
+keywords = ["convergence", "head and tail", "N-way", "partition", "roadmap", "r6", "supersession", "agent's call"]
+related = ["question::which_convergence_a_single_trunk_phase_uses"]
+
+[[question]]
+id = "whether_the_morsel_size_counts_every_fiber_column_or_only_the_written_ones"
+asks = "Does the morsel size formula divide the L1 budget by the sizes of all columns of the fiber, or only by the sizes of the write columns and write resource collections?"
+options = ["L1_usable / (Σ size_of::<T_i>() for fiber columns), as the downstream-changes list of domain 04 puts it", "(L1_usable / Σ write_sizes), where read-only columns and read-only resource collections ride the L2 prefetcher and do not consume the L1 budget, as domain 12 puts it"]
+state = "answered"
+answer = "write_sizes = Σ size_of::<T_i>() for write columns + write resource collection sizes (R5). Read-only columns and read-only resource collections ride L2 prefetcher, don't consume L1 budget."
+answered = "2026-11-13, by default from the written history: mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md"
+answered_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:832-839", "later: mock/research/202606210600_resource-storage-model-canonical-addendum.md:90-94, per_fiber_morsel_sizing_folds_over_blob_strides_plus_the_collection_bytes_term_and_rides_after_the_drift_fix"]
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:407-408, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:832-839"
+quote = '''
+- Morsel formula: `L1_usable / (Σ size_of::<T_i>() for fiber columns)`
+  instead of `L1_usable / (col_count * 16)`
+---
+**Morsel sizing formula (with R3 type-native stride, R5 resource model):**
+```
+morsel_size = (L1_usable / Σ write_sizes).clamp(MIN_MORSEL, MAX_MORSEL) & !3
+```
+- L1_usable = detected_L1 × 0.75
+- write_sizes = Σ size_of::<T_i>() for write columns + write resource
+  collection sizes (R5). Read-only columns and read-only resource
+  collections ride L2 prefetcher, don't consume L1 budget.
+'''
+subject = "execution"
+keywords = ["morsel formula", "L1_usable", "write sizes", "fiber columns", "read-only columns", "R3", "R5"]
+related = ["tenet::the_morsel_size_is_the_l1_budget_divided_by_the_written_bytes_per_record_within_fixed_bounds"]
+
+[[question]]
+id = "which_figure_the_sorting_claim_in_the_distilled_rules_holds_and_which_baseline_the_comparisons_use"
+asks = "The distilled T7 text carries known inconsistencies: which figure holds for the 10.7% sorting claim, and which baseline do the comparisons use?"
+options = ["the sorting claim is 4.8% against compiled", "the sorting claim is 10.7% against write-sized", "baselines differ between sections, 37.4ms in one and 40.4ms in another"]
+state = "open"
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2384-2386"
+quote = '''
+T7 was distilled from T6 only. Known inconsistencies:
+- 10.7% sorting claim: 4.8% vs compiled, 10.7% vs write-sized
+- Baseline differences between sections (37.4ms vs 40.4ms)
+'''
+subject = "execution"
+keywords = ["sorting claim", "10.7%", "4.8%", "baseline", "37.4ms", "40.4ms", "T7 inconsistencies"]
+
+[[question]]
+id = "whether_the_default_wake_is_the_spin_then_park_hybrid_of_the_spec_or_park_immediately_ruled_by_the_wake_bench"
+asks = "Whether the default wake of the thread pool is the spin-then-park hybrid, or park-immediately, which the wake bench ruled for with a spin budget default of zero and the spin-then-park machinery shipping tunable."
+options = ["the spin-then-park hybrid as the default wake", "park-immediately by default, spin-then-park built and tunable with default budget 0, as the wake bench ruled"]
+state = "open"
+source = "mock/research/seed/governance.md:152-164"
+quote = '''
+   relocation round. Deviation 3 (park-immediately): RESOLVED BY BENCH
+   (2026-07-19, round 202607202310 + follow-through 202607202351,
+   record `202607202340_wake-policy-evidence.md`, margins and mechanism
+   corrected by the re-examination `202607210100`, the controlling
+   evidence): the canonical
+   spin-then-park middle tier was built (budget parameter on both
+   frame waits, consumer-tunable `RunCfg::WAKE_SPIN_BUDGET`,
+   budget-sweep equivalence test) and the wake_policy bench ruled for
+   park-immediately, reproducibly: across seven wait policies, three
+   sizes, and three invocations park is never worse and no spin
+   policy is ever better (the round-1 point margins are retired as
+   variance-inflated; the spin iteration is ISB on aarch64 at 9 to
+   20 ns). The default is 0, the machinery ships tunable, and any
+'''
+subject = "execution"
+keywords = ["wake policy", "spin then park", "park-immediately", "spin 128", "WAKE_SPIN_BUDGET", "deviation 3"]
+related = ["tenet::the_thread_pool_is_pre_allocated_and_wakes_by_spinning_first_and_then_parking", "tenet::a_wake_bench_rules_for_park_immediately_with_a_spin_budget_default_of_zero_and_the_machinery_shipping_tunable"]
+
+[[question]]
+id = "whether_the_maintainer_blesses_the_plane_relocation_round_for_deviations_one_five_and_six_and_the_bless_of_deviation_four"
+asks = "Whether the maintainer rules on the GATE-2 deviations that the seed lists as awaiting an evidence-then-bless ruling: the relocation round proposed for deviations 1, 5 and 6, and the blessing of the pointer-size spawn of deviation 4 with a compile-time size check."
+options = ["bless the proposed rulings: the plane relocation round for deviations 1, 5 and 6, and the blessing of deviation 4 with the size check lifted to compile time", "rebuild the deviations to the canon shape"]
+state = "open"
+source = "mock/research/seed/governance.md:131-139, mock/research/seed/governance.md:139-144, mock/research/seed/governance.md:148-152"
+quote = '''
+5. **The six GATE-2 agent-call deviations** each await an
+   evidence-then-bless ruling. See [[execution]]. Deviations 1 and 6
+   (inline `PoolFrame` with `Pin`; inline GATE-2 scratch): EVIDENCE
+   DELIVERED (2026-07-19, record
+   `202607201400_gate2-deviation-1-6-evidence.md`, sketch
+   `202607201300_arena-poolframe` WORKS): the whole-plane arena route is
+   mechanically proven, dissolves the consumer `Pin` and the ~48 KiB
+   single-core dead weight, and the proposed ruling is the relocation
+   round. Deviation 5 (raw aliasing): AUDITED with a CONFIRMED hole
+---
+   round. Deviation 5 (raw aliasing): AUDITED with a CONFIRMED hole
+   (2026-07-19, record `202607201600`): the between-frames `&mut`
+   surface aliases a parked worker's held `&Scheduler`
+   (miscompilation-class, timing-independent), so the plane relocation
+   is soundness-required and deviations 1, 5, and 6 resolve in one
+   round; the finding is catalogued as an ignored test. Deviation 2 (core-ownership mask): EVIDENCE DELIVERED (record
+---
+   armed. Deviation 4 (pointer-size spawn): DESIGN MEMO DELIVERED
+   (record `202607202000`): sound as shipped, contract gap named, the
+   proposed ruling blesses the mechanism, lifts the size check to
+   compile time, and folds inline-storage widening into the plane
+   relocation round. Deviation 3 (park-immediately): RESOLVED BY BENCH
+'''
+subject = "execution"
+keywords = ["GATE-2 deviations", "evidence then bless", "plane relocation", "deviation 4", "deviation 5", "bless or rebuild", "awaiting ruling"]
+related = ["tenet::deviations_one_and_six_are_answered_by_the_whole_plane_arena_route_and_the_proposed_ruling_is_the_relocation_round", "tenet::deviation_five_has_a_confirmed_aliasing_hole_so_the_plane_relocation_is_soundness_required_and_resolves_deviations_one_five_and_six_in_one_round", "tenet::deviation_four_pointer_size_spawn_is_sound_as_shipped_and_the_proposed_ruling_blesses_it_with_a_compile_time_size_check"]
+
+[[question]]
+id = "what_the_engine_does_when_the_executor_reports_no_workers"
+asks = "What the engine does when an executor reports no workers: refuse, run inline on the caller, or hand out one closure."
+options = ["the engine refuses: run_parallel returns an error before publishing a frame, and the frame done-wait is never reached", "the engine runs inline on the caller: the calling thread runs core 0's worker body itself, and the done-wait counts one arrival, its own", "the engine hands out one closure: the done-wait expects one arrival from the executor, and where the executor reported zero because it has no thread to run anything on, the closure never runs and the done-wait never returns"]
+state = "open"
+source = "mock/design_rounds/202609191001/202609191000_topic.second-review-on-arvo-dev.md:23-31, mock/design_rounds/202609191001/202609191001_changelist.doc.lock.md:19-19"
+quote = '''
+The previous round's sentence in the engine design, "at zero the engine still hands the executor one closure", settles a question nobody ratified. Three answers exist and each does something different to the frame's done-wait, `frame_await_done`, which returns once the done counter equals the expected worker count:
+
+If the engine refuses, `run_parallel` returns an error before publishing a frame, and `frame_await_done` is never reached.
+
+If it runs inline on the caller, the calling thread runs core 0's worker body itself, and the done-wait counts one arrival, its own.
+
+If it hands out one closure, the done-wait expects one arrival from the executor. Where the executor reported zero because it has no thread to run anything on, the closure never runs and the done-wait never returns.
+
+The design states the three and marks the question provisional, waiting on op. The code keeps its current behaviour, and its test and the changelist call it provisional.
+---
+The clamp paragraph keeps the ceiling, which follows from the per-core state being sized by `MAX_CORES`. The zero case becomes a provisional paragraph naming refuse, run inline on the caller, and hand out one closure, with what each does to `frame_await_done`, and saying the choice is not decided yet and the code's current behaviour (one closure) is provisional. The choice waits on op; the paragraph renders into the public `docs/HILAVITKUTIN.md`, so it says "not decided yet" and names nobody, and this changelist and the topic carry who decides.
+'''
+subject = "execution"
+keywords = ["zero workers", "executor reports zero", "run_parallel", "frame_await_done", "refuse", "run inline", "one closure", "provisional"]
+related = ["tenet::the_engine_clamps_the_worker_count_it_runs_on_to_the_ceiling_of_its_per_core_state_and_workers_past_the_ceiling_are_never_handed_a_closure"]
+
+[[question]]
+id = "whether_the_indirect_per_fiber_dispatch_stays_for_fewer_than_ten_thousand_records_or_is_superseded"
+asks = "The founding spec names the indirect per-fiber approach, beside the trunk-level one, for fewer than ten thousand records, and its own list of replaced material says the indirect per-fiber approach was superseded by the trunk-level and whole-schedule approaches for its overhead. Which holds for fewer than ten thousand records?"
+options = ["below ten thousand records the dispatch is the indirect per-fiber approach or the trunk-level one (the row-size passage: '<10K records: C or D')", "the indirect per-fiber approach is superseded by the trunk-level and whole-schedule approaches, its 1.17x overhead unacceptable (the list of replaced material: 'Approach C (initially preferred) → superseded by D/E')"]
+state = "open"
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1168-1168, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1558-1560, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1653-1654"
+quote = '''
+- <10K records: IndirectPerFiber or TrunkMega. >10K: ScheduleMega.
+---
+Row size determines approach (T6 L1507-1517):
+- <10K records: C or D (smaller function bodies, better icache — LLVM
+  makes better register allocation for separated functions)
+---
+- T6 Approach C (initially preferred) → superseded by D/E based on
+  bench findings (1.17x overhead unacceptable)
+'''
+subject = "execution"
+keywords = ["dispatch approach", "indirect per fiber", "trunk mega", "schedule mega", "record count", "ten thousand records", "superseded"]
+related = ["tenet::the_dispatch_form_depends_on_the_record_count_below_or_above_ten_thousand", "tenet::the_dispatch_approach_is_chosen_by_record_count_between_fiber_level_trunk_level_and_whole_schedule_functions", "tenet::the_indirect_per_fiber_approach_is_superseded_by_the_trunk_and_schedule_approaches_for_its_overhead", "tenet::hilavitkutin_is_for_millions_of_simulation_and_crunching_work_data_going_constantly_and_one_to_four_morsels_is_almost_never_its_case"]
+
+[[question]]
+id = "which_dispatch_approach_variants_the_first_version_ships"
+asks = "Does the per-fiber indirect dispatch approach ship in the first version, or does the mono-tuple baseline ship in its place?"
+options = ["Ship `MonoTuple` + `TrunkMega` + `ScheduleMega`; `IndirectPerFiber` is kept available only as a BACKLOG entry (dispatch codegen topic, Axis B).", "`select_approach` picks one of three `DispatchApproach` variants (`IndirectPerFiber`, `TrunkMega`, `ScheduleMega`), and small record counts with many fibers pick `IndirectPerFiber` (select_approach base round).", "Three `DispatchApproach` variants ship in v1: ScheduleMega, TrunkMega, IndirectPerFiber (the design template)."]
+state = "open"
+source = "mock/design_rounds/202605101036/202605101036_topic.dispatch-codegen.md:216-216, mock/design_rounds/202605250600/202605250600_topic.hila-c2-select-approach-base.md:10-10, mock/design_rounds/202605250600/202605250600_topic.hila-c2-select-approach-base.md:25-29, mock/DESIGN.md.tmpl:54-54"
+quote = '''
+- [x] **Axis B — DispatchApproach selection: ship `MonoTuple` + `TrunkMega` + `ScheduleMega`.** Three variants by descriptive name. **Topic 3 amendment required:** Topic 3's current `enum DispatchApproach { IndirectPerFiber, TrunkMega, ScheduleMega }` is semantically wrong — `IndirectPerFiber` is polka-dots Approach C (1.17x penalty, superseded per Domain 17 L1654), not Approach A (mono tuple, 1.0x baseline). The intent is to ship A+D+E (mono-tuple baseline + trunk-mega for <10K + schedule-mega for ≥10K), so Topic 3's enum must change `IndirectPerFiber` to `MonoTuple` and update its plan-stage selector to choose `MonoTuple` for tests/baseline reference, `TrunkMega` for <10K, `ScheduleMega` for ≥10K. Approach C kept available only as a BACKLOG entry (re-add if a workload bench surfaces a need). **Vocabulary discipline:** polka-dots A/B/C/D/E letters are bench-paper citations only; engine-side prose and source use descriptive names exclusively (e.g., "MonoTuple beats IndirectPerFiber by ~17% on the polka-dots T6 bench" instead of "Approach A beats Approach C"). Enum marked `#[non_exhaustive]` so future additions don't break consumers.
+---
+`select_approach` at `mock/crates/hilavitkutin/src/dispatch/mod.rs:38` is a `todo!()` placeholder shipped during the runtime megaround. Signature is documented; body waits on threshold benchmarks per BACKLOG. The function picks one of three `DispatchApproach` variants (`IndirectPerFiber`, `TrunkMega`, `ScheduleMega`) based on `record_count` and `fiber_count`.
+---
+The base body:
+- If `record_count >= 10_000`: return `ScheduleMega`.
+- Otherwise (small record count):
+  - If `fiber_count <= 1`: return `TrunkMega` (single fiber, mega fn fits the working set).
+  - Otherwise: return `IndirectPerFiber` (many fibers, per-fiber indirect call is the lowest-overhead split).
+---
+Sealed `trait DispatchCodegen<Cfg: RunCfg>` with TAIT `type CoreDispatch = impl Fn(...)`. Single shipped impl `StandardCodegen` lowers to closed-form arithmetic, zero `blr`. Three `DispatchApproach` variants ship in v1: ScheduleMega, TrunkMega, IndirectPerFiber.
+'''
+subject = "execution"
+keywords = ["DispatchApproach", "MonoTuple", "IndirectPerFiber", "TrunkMega", "ScheduleMega", "select_approach", "variants that ship"]
+related = ["tenet::the_first_version_ships_a_mono_tuple_baseline_a_trunk_level_and_a_whole_schedule_dispatch_approach_and_the_indirect_per_fiber_one_waits_in_the_backlog", "tenet::the_base_approach_selection_picks_by_record_count_and_fiber_count_and_threshold_tuning_by_benchmark_follows", "tenet::dispatch_code_generation_is_a_sealed_trait_with_one_shipped_implementation_and_three_dispatch_approaches", "tenet::the_indirect_per_fiber_approach_is_superseded_by_the_trunk_and_schedule_approaches_for_its_overhead"]
+
+[[question]]
+id = "whether_per_fiber_windowing_re_walks_the_trunk_carrier_per_fiber_or_enters_the_fiber_s_members_directly"
+asks = "Per-fiber windowed dispatch on the flat carrier either re-walks the carrier for every fiber and window or enters a fiber's members directly. Which does the design hold?"
+options = ["A2b should prefer a DIRECT per-fiber entry (walk to the fiber's members once, then loop windows there) over re-walking the full carrier per fiber", "Serving per-fiber locality on a flat carrier costs re-walks, and that cost is inherent rather than incidental; it cannot be folded away inside this mechanism"]
+state = "open"
+source = "mock/research/sketches/202606202100_a2a-per-fiber-morsel-loop/FINDINGS.md:68-73, mock/research/sketches/202607191200_a4-fibercons-nest-wireability/FINDINGS.md:58-72, mock/research/sketches/202607191200_a4-fibercons-nest-wireability/FINDINGS.md:88-92"
+quote = '''
+- **Re-walk cost.** Driving the per-trunk carrier per fiber re-walks the whole carrier
+  once per fiber per window: O(fibers x windows x carrier_len) const-gate evals. The
+  per-record work stays correct and devirt-clean (gate evals are compile-time-folded
+  branches, not per-record cost), but the walk overhead multiplies. A2b should prefer a
+  DIRECT per-fiber entry (walk to the fiber's members once, then loop windows there)
+  over re-walking the full carrier per fiber.
+---
+## The cost finding survives, and is now a measurement rather than a suspicion
+
+Serving per-fiber locality on a flat carrier costs re-walks, and that cost is inherent
+rather than incidental. For a trunk holding F fibers, dispatch is called once per
+(fiber, morsel). Each call walks that trunk's whole unit list, running only the current
+fiber's units; the other fibers' units do not fold away, because `Member::IS` is const
+per **trunk** membership, not per fiber, so they are rejected by a **runtime**
+`dirty.bit(Pos::INDEX)` test (`dispatch/trunk_gate.rs:114-119`). With F fibers of m
+morsels each over U trunk units, that is F x m x U runtime bit tests where the old
+shared-window shape did m x U, for identical executed work.
+
+It cannot be folded away inside this mechanism: fiber membership is a plan output, so no
+const gate can express it. The FIXME at #340 (plan-baked member masks plus a
+fiber-to-phase map) reduces the walks it is possible to skip, not this term.
+
+---
+A4 and A2b stand as shipped; no redo. The `FiberCons` nest, `RunTrunk`, `RunPhase` and
+`RunPipeline` are dead machinery under `no-legacy-shims-pre-1.0` on the same footing as
+the head+tail types, and belong in G2C-0's deletion audit rather than left to read as an
+unfinished feature for the next person who greps for per-fiber dispatch. G2C-M gains the
+walk-overhead arm above.
+'''
+subject = "execution"
+keywords = ["re-walk", "direct per-fiber entry", "per-fiber windows", "A2b", "A4", "walk overhead", "flat carrier"]
+related = ["tenet::per_fiber_windowing_prefers_a_direct_per_fiber_entry_over_re_walking_the_full_carrier_for_each_fiber", "tenet::serving_per_fiber_locality_on_the_flat_carrier_costs_a_walk_per_fiber_per_morsel_that_no_const_gate_removes_and_a_bench_arm_decides_whether_the_locality_pays"]
