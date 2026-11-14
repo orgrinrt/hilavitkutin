@@ -17,9 +17,11 @@
 //!   the consumer-supplied `RunCfg` into the run-config typestate
 //!   slot.
 //!
-//! `Dispatch` declares three GATs (`NextWus<Wus>`, `NextStores<Stores>`,
-//! `NextPlatform<Platform>`). Each router impls all three; routers
-//! that do not affect a given accumulator pass it through unchanged.
+//! `Dispatch<Wus, Stores, Platform>` is parameterised by the three
+//! accumulators and declares one associated type per accumulator
+//! (`NextWus`, `NextStores`, `NextPlatform`). Each router impls all
+//! three; routers that do not affect a given accumulator pass it
+//! through unchanged.
 //!
 //! `ExtensionSurface<T: ?Sized>` is the type-system anchor for an
 //! extension-loaded input bin keyed by trait family. The runtime
@@ -39,8 +41,8 @@ use crate::access::{Concat, Cons, Empty};
 ///
 /// Every type accepted by `SchedulerBuilder::with(value)` impls
 /// `BuilderInput`. The blanket on `SchedulerBuilder` reads
-/// `BuilderInput::Dispatch` and walks the per-kind GATs to compute
-/// the next typestate accumulator. Non-`BuilderInput` values fail
+/// `BuilderInput::Dispatch` and reads its `Dispatch` associated types
+/// to compute the next typestate accumulators. Non-`BuilderInput` values fail
 /// the trait solver at the `.with` call site, surfacing the
 /// `#[diagnostic::on_unimplemented]` message.
 ///
@@ -50,7 +52,7 @@ use crate::access::{Concat, Cons, Empty};
 #[diagnostic::on_unimplemented(
     message = "`{Self}` is not a BuilderInput; pass a registered input value to `SchedulerBuilder::with(...)`",
     label = "not a BuilderInput",
-    note = "Impl one of the dispatch-determining sub-traits on `{Self}`: `Resource` / `Column` / `Virtual` / `WorkUnit` / `Kit` / `MemoryProvider` / `ThreadPool` / `Clock` / `RunCfg`. Pair the sub-trait impl with `impl BuilderInput for {Self} {{ type Dispatch = <the matching dispatch slot>; }}`. Sealed via `mod sealed`; consumers cannot impl `BuilderInput` for types that do not also impl exactly one dispatch-determining sub-trait.",
+    note = "Impl one of the dispatch-determining sub-traits on `{Self}`: `Resource` / `Column` / `Virtual` / `WorkUnit` / `Kit` / `MemoryProvider` / `ThreadPool` / `Clock` / `RunCfg`. Pair the sub-trait impl with `impl BuilderInput for {Self} {{ type Dispatch = <the matching dispatch slot>; }}`. The `Dispatch` slot decides which accumulator the input joins, so it names the router of the one sub-trait the type impls.",
     note = "A column is registered with its start and never by its bare marker: `.with(Column::<T>::start())` or `.with(Column::<T>::start_from(value))`, and the same two on `Buffered<T, M>`. `Column::<T>::new()` names the column in a unit's lists and registers nothing."
 )]
 pub trait BuilderInput: Sized {
@@ -81,11 +83,7 @@ pub trait BuilderInput: Sized {
 ///   registering this input.
 /// - `NextStores`: the next value of the store accumulator.
 /// - `NextPlatform`: the next value of the platform-tuple
-///   accumulator. The current `SchedulerBuilder` is two-parameter
-///   (`SchedulerBuilder<Wus, Stores>`); the `NextPlatform` slot is
-///   forward-compatible with a future `SchedulerBuilder<Wus, Stores,
-///   Platform>` reshape (likely with HILA-RUNTIME-C4) and is
-///   computed at every router impl regardless.
+///   accumulator, the builder's `Platform` parameter.
 ///
 /// The trait is parameterised by the three accumulator types
 /// (`Wus`, `Stores`, `Platform`) instead of using GATs because router
@@ -139,10 +137,6 @@ impl<S, Wus, Stores, Platform> Dispatch<Wus, Stores, Platform> for StoreDispatch
 
 /// Router for platform-kind inputs. Prepends `P` onto the
 /// platform-tuple accumulator; passes WUs and stores through.
-///
-/// The current `SchedulerBuilder<Wus, Stores>` is two-parameter so
-/// the `NextPlatform` slot is unused at the call site. Forward-
-/// compatible with a future three-parameter builder reshape.
 pub struct PlatformDispatch<P>(PhantomData<P>);
 
 impl<P, Wus, Stores, Platform> Dispatch<Wus, Stores, Platform> for PlatformDispatch<P> {
@@ -161,9 +155,8 @@ impl<P, Wus, Stores, Platform> Dispatch<Wus, Stores, Platform> for PlatformDispa
 /// wrapper here is the type-system contract.
 ///
 /// Implements `BuilderInput<Init = ()>` with `Dispatch = StoreDispatch<Self>`.
-/// Construct via `ExtensionSurface::<dyn TraitFamily>::new()` (or
-/// via the dedicated `SchedulerBuilder::extend::<dyn TraitFamily>()`
-/// method, which wraps internally).
+/// Construct via `ExtensionSurface::<dyn TraitFamily>::new()` and
+/// register it with `.with(...)` like any other store.
 ///
 /// The `Extension` prefix names the semantics (the app declares an
 /// extension-loadable surface), and `Surface` names the role inside

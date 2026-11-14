@@ -17,6 +17,7 @@
 //! src-tree primitive lints.
 
 mod common;
+mod fixed_workers;
 mod stable_provider;
 
 use std::thread::sleep;
@@ -25,7 +26,7 @@ use std::time::Duration;
 use arvo::strategy::{Additive, Identity};
 use arvo::{Cap, USize};
 use arvo_bitmask::BitAccess;
-use common::FixedWorkers;
+use fixed_workers::FixedWorkers;
 use hilavitkutin::dispatch::engine_ctx::CtxFor;
 use hilavitkutin::plan::reach_cut::{cut_segments, reach_cuts};
 use hilavitkutin::plan::{DefaultPlanDims, PlanDims};

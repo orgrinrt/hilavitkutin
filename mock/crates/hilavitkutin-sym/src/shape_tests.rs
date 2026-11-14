@@ -192,11 +192,10 @@ fn every_shipped_index_fits_its_origin_bits() {
 /// the id-space arithmetic, and it cannot make two distinct minters
 /// collide, only make two names for one minter.
 ///
-/// Round eleven's liar, which placed origins past the id field, and the
-/// eighth review's, which placed them inside it but overlapping, are both
-/// unwritable now: there is no base or ceiling for a shape to supply.
-/// That is the result of this round, and it is recorded here because a
-/// deleted test otherwise reads as coverage lost rather than as a case that
+/// A shape that placed origins past the id field, and one that placed them
+/// inside it but overlapping, are both unwritable now: there is no base or
+/// ceiling for a shape to supply. That is recorded here because a deleted
+/// test otherwise reads as coverage lost rather than as a case that
 /// stopped existing.
 #[derive(Copy, Clone, Default, Eq, Hash, PartialEq, Debug)]
 struct TwoOriginsOneIndex;
@@ -238,9 +237,8 @@ fn the_collapsing_shape_still_satisfies_every_width_law() {
 /// Disjointness is arithmetic now, not an assertion.
 ///
 /// Derived runs cannot overlap for distinct indices, checked over every
-/// pair a four-bit origin admits. This is the property the two previous
-/// rounds each tried to catch with a law aimed at the construction they had
-/// just found.
+/// pair a four-bit origin admits. This is the property that a law aimed at
+/// one bad construction at a time could only approximate.
 #[test]
 fn derived_runs_never_overlap_for_distinct_indices() {
     let ids = all_minter_ids();

@@ -13,12 +13,12 @@
 #![feature(generic_const_exprs)]
 #![allow(incomplete_features)]
 
-use arvo::{Bits, Hot, USize, Unsigned};
+use arvo::USize;
 use arvo_bitmask::BitAccess;
 use hilavitkutin::dispatch::core_mask::{core_phase_mask, grouping_arrays};
+use hilavitkutin::dispatch::engine_ctx::{Here, There};
 use hilavitkutin::plan::grouping::UnitAccess;
 use hilavitkutin::plan::{DefaultPlanDims, PlanDims};
-use hilavitkutin::dispatch::engine_ctx::{Here, There};
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::store::Column;
 
@@ -46,11 +46,35 @@ const N: USize = USize(6);
 #[test]
 fn two_core_masks_select_the_right_units() {
     // Phase 0 has one trunk (0, rank 0): core 0 owns it, core 1 idle.
-    assert_eq!(bits(core_phase_mask::<Adj>(&PHASE, &TRUNK, N, USize(0), USize(0), USize(2)), 6), [0, 1, 2, 3]);
-    assert_eq!(bits(core_phase_mask::<Adj>(&PHASE, &TRUNK, N, USize(1), USize(0), USize(2)), 6), [] as [usize; 0]);
+    assert_eq!(
+        bits(
+            core_phase_mask::<Adj>(&PHASE, &TRUNK, N, USize(0), USize(0), USize(2)),
+            6
+        ),
+        [0, 1, 2, 3]
+    );
+    assert_eq!(
+        bits(
+            core_phase_mask::<Adj>(&PHASE, &TRUNK, N, USize(1), USize(0), USize(2)),
+            6
+        ),
+        [] as [usize; 0]
+    );
     // Phase 1 has two trunks (4 rank 0 -> core 0, 5 rank 1 -> core 1).
-    assert_eq!(bits(core_phase_mask::<Adj>(&PHASE, &TRUNK, N, USize(0), USize(1), USize(2)), 6), [4]);
-    assert_eq!(bits(core_phase_mask::<Adj>(&PHASE, &TRUNK, N, USize(1), USize(1), USize(2)), 6), [5]);
+    assert_eq!(
+        bits(
+            core_phase_mask::<Adj>(&PHASE, &TRUNK, N, USize(0), USize(1), USize(2)),
+            6
+        ),
+        [4]
+    );
+    assert_eq!(
+        bits(
+            core_phase_mask::<Adj>(&PHASE, &TRUNK, N, USize(1), USize(1), USize(2)),
+            6
+        ),
+        [5]
+    );
 }
 
 #[test]
@@ -62,21 +86,40 @@ fn every_unit_dispatched_exactly_once_across_cores_and_phases() {
     while c < ncores {
         let mut p = 0;
         while p < nphases {
-            for u in bits(core_phase_mask::<Adj>(&PHASE, &TRUNK, N, USize(c), USize(p), USize(ncores)), 6) {
+            for u in bits(
+                core_phase_mask::<Adj>(&PHASE, &TRUNK, N, USize(c), USize(p), USize(ncores)),
+                6,
+            ) {
                 seen[u] += 1;
             }
             p += 1;
         }
         c += 1;
     }
-    assert_eq!(seen, [1, 1, 1, 1, 1, 1], "each unit dispatched exactly once across the per-core programs");
+    assert_eq!(
+        seen,
+        [1, 1, 1, 1, 1, 1],
+        "each unit dispatched exactly once across the per-core programs"
+    );
 }
 
 #[test]
 fn single_core_owns_all_trunks_per_phase() {
     // ncores = 1: every rank % 1 == 0 == core 0, so core 0 runs all of each phase.
-    assert_eq!(bits(core_phase_mask::<Adj>(&PHASE, &TRUNK, N, USize(0), USize(0), USize(1)), 6), [0, 1, 2, 3]);
-    assert_eq!(bits(core_phase_mask::<Adj>(&PHASE, &TRUNK, N, USize(0), USize(1), USize(1)), 6), [4, 5]);
+    assert_eq!(
+        bits(
+            core_phase_mask::<Adj>(&PHASE, &TRUNK, N, USize(0), USize(0), USize(1)),
+            6
+        ),
+        [0, 1, 2, 3]
+    );
+    assert_eq!(
+        bits(
+            core_phase_mask::<Adj>(&PHASE, &TRUNK, N, USize(0), USize(1), USize(1)),
+            6
+        ),
+        [4, 5]
+    );
 }
 
 // --- grouping_arrays over the real R2 const grouping (hourglass fixture) ---
@@ -153,6 +196,14 @@ fn grouping_arrays_reproduces_the_r2_hourglass() {
     let mut trunk = [USize(0); 6];
     let n = grouping_arrays::<Units, Stores, Witnesses, CU, CS, Adj>(&mut phase, &mut trunk);
     assert_eq!(n.0, 6);
-    assert_eq!(phase.map(|p| p.0), [0, 0, 0, 0, 1, 1], "waist-bounded phase");
-    assert_eq!(trunk.map(|t| t.0), [0, 0, 0, 0, 4, 5], "within-phase trunk component-mins");
+    assert_eq!(
+        phase.map(|p| p.0),
+        [0, 0, 0, 0, 1, 1],
+        "waist-bounded phase"
+    );
+    assert_eq!(
+        trunk.map(|t| t.0),
+        [0, 0, 0, 0, 4, 5],
+        "within-phase trunk component-mins"
+    );
 }

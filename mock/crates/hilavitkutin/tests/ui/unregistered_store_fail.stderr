@@ -1,19 +1,23 @@
-error[E0599]: the method `build` exists for struct `SchedulerBuilder<Cons<ReadsInA, hilavitkutin_api::Empty>, hilavitkutin_api::Empty, hilavitkutin_api::Empty, DefaultStoreValues, WuCons<ReadsInA, WuNil>>`, but its trait bounds were not satisfied
-  --> tests/ui/unregistered_store_fail.rs:84:10
-   |
-82 |       let _ = Scheduler::builder()
-   |  _____________-
-83 | |         .with(ReadsInA)
-84 | |         .build(store(provider), USize(0));
-   | |         -^^^^^ method cannot be called due to unsatisfied trait bounds
-   | |_________|
-   |
-   |
-  ::: /root/.cargo/git/checkouts/notko-f6f26a62b445f4df/8a74dbc/notko-hlist/src/list.rs:20:1
-   |
-20 |   pub struct Empty;
-   |   ---------------- doesn't satisfy `_: HoldsAll<Cons<Resource<InA>, Empty>>` or `hilavitkutin_api::Empty: Contains<Resource<InA>>`
-   |
-   = note: the following trait bounds were not satisfied:
-           `hilavitkutin_api::Empty: Contains<Resource<InA>>`
-           which is required by `hilavitkutin_api::Empty: HoldsAll<Cons<Resource<InA>, hilavitkutin_api::Empty>>`
+error[E0599]: the method `build` exists for struct `SchedulerBuilder<Cons<ReadsInA, hilavitkutin_api::Empty>, Cons<Column<Out>, hilavitkutin_api::Empty>, hilavitkutin_api::Empty, Sv<Started<Column<Out>>, DefaultStoreValues>, WuCons<ReadsInA, WuNil>>`, but its trait bounds were not satisfied
+   --> tests/ui/unregistered_store_fail.rs:122:10
+    |
+119 |       let mut scheduler = Scheduler::builder()
+    |  _________________________-
+120 | |         .with(Column::<Out>::start_from(Out(0)))
+121 | |         .with(ReadsInA)
+122 | |         .build(store(provider), USize(RECORDS))
+    | |         -^^^^^ method cannot be called due to unsatisfied trait bounds
+    | |_________|
+    |
+    |
+   ::: /root/.cargo/git/checkouts/notko-f6f26a62b445f4df/8a74dbc/notko-hlist/src/list.rs:20:1
+    |
+ 20 |   pub struct Empty;
+    |   ---------------- doesn't satisfy `hilavitkutin_api::Empty: Contains<Resource<InA>>`
+...
+ 29 |   pub struct Cons<H, T>(core::marker::PhantomData<(H, T)>);
+    |   --------------------- doesn't satisfy `_: HoldsAll<Cons<Resource<InA>, Empty>>`
+    |
+    = note: the following trait bounds were not satisfied:
+            `hilavitkutin_api::Empty: Contains<Resource<InA>>`
+            which is required by `Cons<Column<Out>, hilavitkutin_api::Empty>: HoldsAll<Cons<Resource<InA>, hilavitkutin_api::Empty>>`

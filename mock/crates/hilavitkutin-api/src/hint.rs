@@ -12,12 +12,7 @@
 use arvo::strategy::Hot;
 use arvo::{UFixed, fbits, ibits};
 
-mod hint_sealed {
-    /// Hint-subsystem private seal. Separate from the crate-level
-    /// `sealed::Sealed` to avoid clashing with the tuple impls in
-    /// `access.rs`.
-    pub(crate) trait Sealed {} // lint:allow(undocumented_type) reason: sealing marker trait; semantics live on parent trait docs; tracked: #72
-}
+use crate::sealed;
 
 /// How soon the WU must run. 4 levels fit in 2 bits.
 pub type Urgency = UFixed<{ ibits(2) }, { fbits(0) }, Hot>;
@@ -33,8 +28,7 @@ pub type Significance = UFixed<{ ibits(3) }, { fbits(0) }, Hot>;
     message = "`{Self}` is not an Urgency marker",
     note = "Available markers: `Immediate`, `Steady`, `Relaxed`, `Deferred`. Sealed; consumer-defined markers are not supported."
 )]
-#[allow(private_bounds)]
-pub trait UrgencyValue: hint_sealed::Sealed + 'static {
+pub trait UrgencyValue: sealed::Sealed + 'static {
     /// Discriminant. Higher = higher urgency.
     const VALUE: Urgency;
 }
@@ -44,8 +38,7 @@ pub trait UrgencyValue: hint_sealed::Sealed + 'static {
     message = "`{Self}` is not a Divisibility marker",
     note = "Available markers: `Atomic`, `Adaptive`, `Interruptible`. Sealed; consumer-defined markers are not supported."
 )]
-#[allow(private_bounds)]
-pub trait DivisibilityValue: hint_sealed::Sealed + 'static {
+pub trait DivisibilityValue: sealed::Sealed + 'static {
     /// Discriminant. Higher = more rigid scheduling.
     const VALUE: Divisibility;
 }
@@ -55,8 +48,7 @@ pub trait DivisibilityValue: hint_sealed::Sealed + 'static {
     message = "`{Self}` is not a Significance marker",
     note = "Available markers: `Critical`, `Important`, `Normal`, `Opportunistic`, `Optional`. Sealed; consumer-defined markers are not supported."
 )]
-#[allow(private_bounds)]
-pub trait SignificanceValue: hint_sealed::Sealed + 'static {
+pub trait SignificanceValue: sealed::Sealed + 'static {
     /// Discriminant. Higher = more significant.
     const VALUE: Significance;
 }
@@ -69,13 +61,9 @@ pub trait SignificanceValue: hint_sealed::Sealed + 'static {
     message = "`{Self}` is not a SchedulingHint tuple",
     note = "SchedulingHint is implemented on the tuple `(U: UrgencyValue, D: DivisibilityValue, S: SignificanceValue)`. Use the substrate-provided ZST markers (`Immediate` / `Steady` / `Relaxed` / `Deferred` for U; `Atomic` / `Adaptive` / `Interruptible` for D; `Critical` / `Important` / `Normal` / `Opportunistic` / `Optional` for S)."
 )]
-#[allow(private_bounds)]
-pub trait SchedulingHint: hint_sealed::Sealed + 'static {}
+pub trait SchedulingHint: sealed::Sealed + 'static {}
 
-impl<U: UrgencyValue, D: DivisibilityValue, S: SignificanceValue> hint_sealed::Sealed
-    for (U, D, S)
-{
-}
+impl<U: UrgencyValue, D: DivisibilityValue, S: SignificanceValue> sealed::Sealed for (U, D, S) {}
 impl<U: UrgencyValue, D: DivisibilityValue, S: SignificanceValue> SchedulingHint for (U, D, S) {}
 
 /// A fourth, runner-specific hint dimension.
@@ -96,7 +84,7 @@ pub trait HintExt: 'static {}
 // The 4-tuple arm. A 3-tuple and a 4-tuple are different types, so this
 // cannot overlap the arm above, and the seal still admits only tuple
 // shapes this crate names.
-impl<U: UrgencyValue, D: DivisibilityValue, S: SignificanceValue, X: HintExt> hint_sealed::Sealed
+impl<U: UrgencyValue, D: DivisibilityValue, S: SignificanceValue, X: HintExt> sealed::Sealed
     for (U, D, S, X)
 {
 }
@@ -110,7 +98,7 @@ impl<U: UrgencyValue, D: DivisibilityValue, S: SignificanceValue, X: HintExt> Sc
 /// Run before any scheduled work.
 #[derive(Copy, Clone, Default, Debug)]
 pub struct Immediate;
-impl hint_sealed::Sealed for Immediate {}
+impl sealed::Sealed for Immediate {}
 impl UrgencyValue for Immediate {
     const VALUE: Urgency = Urgency::from_raw(3);
 }
@@ -118,7 +106,7 @@ impl UrgencyValue for Immediate {
 /// Run at the frame's steady cadence.
 #[derive(Copy, Clone, Default, Debug)]
 pub struct Steady;
-impl hint_sealed::Sealed for Steady {}
+impl sealed::Sealed for Steady {}
 impl UrgencyValue for Steady {
     const VALUE: Urgency = Urgency::from_raw(2);
 }
@@ -126,7 +114,7 @@ impl UrgencyValue for Steady {
 /// Run when convenient.
 #[derive(Copy, Clone, Default, Debug)]
 pub struct Relaxed;
-impl hint_sealed::Sealed for Relaxed {}
+impl sealed::Sealed for Relaxed {}
 impl UrgencyValue for Relaxed {
     const VALUE: Urgency = Urgency::from_raw(1);
 }
@@ -134,7 +122,7 @@ impl UrgencyValue for Relaxed {
 /// Run at idle only.
 #[derive(Copy, Clone, Default, Debug)]
 pub struct Deferred;
-impl hint_sealed::Sealed for Deferred {}
+impl sealed::Sealed for Deferred {}
 impl UrgencyValue for Deferred {
     const VALUE: Urgency = Urgency::from_raw(0);
 }
@@ -144,7 +132,7 @@ impl UrgencyValue for Deferred {
 /// Indivisible, must run to completion on one core.
 #[derive(Copy, Clone, Default, Debug)]
 pub struct Atomic;
-impl hint_sealed::Sealed for Atomic {}
+impl sealed::Sealed for Atomic {}
 impl DivisibilityValue for Atomic {
     const VALUE: Divisibility = Divisibility::from_raw(2);
 }
@@ -152,7 +140,7 @@ impl DivisibilityValue for Atomic {
 /// Splittable at morsel boundaries.
 #[derive(Copy, Clone, Default, Debug)]
 pub struct Adaptive;
-impl hint_sealed::Sealed for Adaptive {}
+impl sealed::Sealed for Adaptive {}
 impl DivisibilityValue for Adaptive {
     const VALUE: Divisibility = Divisibility::from_raw(1);
 }
@@ -160,7 +148,7 @@ impl DivisibilityValue for Adaptive {
 /// Pausable mid-morsel.
 #[derive(Copy, Clone, Default, Debug)]
 pub struct Interruptible;
-impl hint_sealed::Sealed for Interruptible {}
+impl sealed::Sealed for Interruptible {}
 impl DivisibilityValue for Interruptible {
     const VALUE: Divisibility = Divisibility::from_raw(0);
 }
@@ -170,7 +158,7 @@ impl DivisibilityValue for Interruptible {
 /// System correctness depends on this WU.
 #[derive(Copy, Clone, Default, Debug)]
 pub struct Critical;
-impl hint_sealed::Sealed for Critical {}
+impl sealed::Sealed for Critical {}
 impl SignificanceValue for Critical {
     const VALUE: Significance = Significance::from_raw(4);
 }
@@ -178,7 +166,7 @@ impl SignificanceValue for Critical {
 /// High-value output; skipping degrades results.
 #[derive(Copy, Clone, Default, Debug)]
 pub struct Important;
-impl hint_sealed::Sealed for Important {}
+impl sealed::Sealed for Important {}
 impl SignificanceValue for Important {
     const VALUE: Significance = Significance::from_raw(3);
 }
@@ -186,7 +174,7 @@ impl SignificanceValue for Important {
 /// Default significance.
 #[derive(Copy, Clone, Default, Debug)]
 pub struct Normal;
-impl hint_sealed::Sealed for Normal {}
+impl sealed::Sealed for Normal {}
 impl SignificanceValue for Normal {
     const VALUE: Significance = Significance::from_raw(2);
 }
@@ -194,7 +182,7 @@ impl SignificanceValue for Normal {
 /// Run when slack permits.
 #[derive(Copy, Clone, Default, Debug)]
 pub struct Opportunistic;
-impl hint_sealed::Sealed for Opportunistic {}
+impl sealed::Sealed for Opportunistic {}
 impl SignificanceValue for Opportunistic {
     const VALUE: Significance = Significance::from_raw(1);
 }
@@ -202,7 +190,7 @@ impl SignificanceValue for Opportunistic {
 /// Drop under pressure.
 #[derive(Copy, Clone, Default, Debug)]
 pub struct Optional;
-impl hint_sealed::Sealed for Optional {}
+impl sealed::Sealed for Optional {}
 impl SignificanceValue for Optional {
     const VALUE: Significance = Significance::from_raw(0);
 }

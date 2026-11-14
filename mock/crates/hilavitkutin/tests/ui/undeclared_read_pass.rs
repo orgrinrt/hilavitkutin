@@ -1,7 +1,7 @@
-// A unit declares `Read = Column<Ca>` and `Write = Column<Cb>` but its body
-// reads `Column<Cb>` through the reader. The context refuses a read of a store
-// the access set does not declare as read. The twin `undeclared_read_pass.rs`
-// differs only in the column named in the `read::<..>` call (`Ca`).
+// A unit declares `Read = Column<Ca>` and `Write = Column<Cb>`, and its body
+// reads `Column<Ca>` through the reader, the store its access set declares as
+// read, so the body type-checks. The twin `undeclared_read_fail.rs` differs
+// only in the column named in the `read::<..>` call (`Cb`), and is refused.
 
 use arvo::USize;
 use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};

@@ -1,109 +1,48 @@
 ---
 skill_name: lint-rules
-skill_description: Guide for hilavitkutin custom lint rules. Use this when adding new lints, fixing lint violations, or when `cargo mock` reports lint errors.
+skill_description: Guide for hilavitkutin lints. Use this when adding a lint, fixing a lint finding, or when `cargo mock` reports one.
 ---
 
 # Lint rules
 
-Three sources contribute lints:
+## Where lints come from
 
-1. **Built-in lints** from the `mockspace_lint_rules` sibling crate:
-   universal quality lints (`no-empty-crate`, `no-todo`, `file-size`,
-   `undocumented-type`, `design-doc-source-mismatch`, etc.) and
-   the non-negotiable design-round state-machine lints
-   (`changelist-required`, `changelist-doc-gate`, `changelist-lock`,
-   `changelist-immutability`).
-2. **Custom lints** in `mock/lints/*.rs`. Each file exports
-   `pub fn lint() -> Box<dyn mockspace::Lint>` (per-crate) or
-   `pub fn cross_lint() -> Box<dyn mockspace::CrossCrateLint>`
-   (cross-crate). Files ending in `_cross.rs` are treated as
-   cross-crate.
-3. **Config-driven** via `mockspace.toml` under
-   `[lints.forbidden-imports]`: a table-based lint that enforces
-   scope → forbidden pairs.
+- Built-in lints ship in the mockspace engine: the quality lints and the five design-round lints (`changelist-required`, `changelist-doc-gate`, `changelist-lock`, `changelist-immutability`, `changelist-seal`), on at `error`.
+- Pack lints come from the `[lint-crates]` packs in `mockspace.toml` (`no-std`, `no-alloc`, `no-dyn-dispatch`, `no-runtime-spawn`, `no-runtime-registration` and the rest). `cargo mock lints` lists every lint, its source and its severity here.
+- Repo lints are `mock/lints/<name>.rs`, one lint a file, compiled into one library with the rest.
+- `forbidden-imports` is configured, not written: `rules = [{ scope, forbidden, reason }]` under `[lints.forbidden-imports]`.
 
-## Severity system
+## The repo lints
 
-Each lint has three gate levels (`commit` / `build` / `push`) set
-in `mockspace.toml`. The lint's `default_severity()` is a fallback
-when a gate is unset.
+| File | Refuses | Default |
+|---|---|---|
+| `engine_spawn_through_gate.rs` | an engine spawn that does not go through `spawn_one_pointer` | HARD_ERROR |
+| `frozen_ledger.rs` | a frozen crate file its ledger does not hold | HARD_ERROR |
+| `frozen_no_feature_gate.rs` | a `#![feature]` in a frozen crate | HARD_ERROR |
+| `frozen_no_outside_source.rs` | a frozen file bringing in a file from outside the ledger | HARD_ERROR |
+| `frozen_no_recursion_limit.rs` | a raised recursion limit in a frozen crate | HARD_ERROR |
+| `no_process_words_in_comments.rs` | a comment naming a round, topic, changelist, megaround, audit or src/doc CL | ADVISORY |
+| `vocabulary_discipline.rs` | a dead vocabulary term in source | ADVISORY |
 
-| Level | Effect |
-|---|---|
-| `error` | Blocks the pipeline |
-| `warn` | Prints a warning, no block |
-| `info` | Informational, no block |
-| `off` | Skipped entirely |
+## Writing one
 
-Run modes:
-- `cargo mock --commit`: commit gate (pre-commit hook uses this)
-- `cargo mock`: build gate (default; CI uses this)
-- `cargo mock --strict`: push gate (pre-push hook uses this)
+- Export one of `pub fn lint() -> Box<dyn CrateLint>` (per crate), `cross_lint()` (every crate at once), `repo_lint()` (paths, no crates) or `message_lint()` (a commit message or forge body).
+- Implement `Lint` (`name`, `description`, `default_severity`, and `per_file`, `markers_decide` where the defaults do not fit) and the kind's trait (`CrateLint::check` for a crate lint).
+- A crate lint that walks `ctx.all_sources()` itself returns `false` from `per_file`; one that reads `ctx.source()` keeps the default and is run per file.
+- Read the tree only through the context: `ctx.source()`, `ctx.all_sources()`, `ctx.tree()`, `ctx.registry()` and `ctx.view()`. Never `std::fs`, `std::process`, `std::env` or a walker; the run replays a lint by what it asked of the view.
+- Return `LintError::with_severity(crate, line, name, message, severity)`, with `e.path` set to the crate-relative file.
+- The message says what is wrong and what to write instead.
+- Shared code and tests sit in a subdirectory, which discovery does not read, pulled in with `#[path = "<dir>/<file>.rs"] mod <name>;`. Copy `frozen/scan.rs` and `scan/code.rs`.
+- Test every refused shape and every look-alike that passes, in `<lint>/tests.rs`. Run a lint through the runner with `mockspace::testkit` (`LintFixture`, `run`) where markers or severity matter.
+- A new lint goes into `mockspace.toml` at its designed severity, and into the table above.
 
-## Hilavitkutin custom lints
+## Configuring
 
-Compiled Rust lints live in `mock/lints/`. Per-gate severity is
-tuned in `mockspace.toml` under `[lints.<name>]`.
+- `[lints.<name>]` takes `commit`, `build`, `push` (`off`, `info`, `warn`, `error`), `include` and `exclude` (crate-relative path globs), and `crates` and `exempt_crates` (crate-name globs, `{prefix}` for the crate prefix).
+- `cargo mock --lint-only --commit`, `--lint-only` and `--lint-only --strict` run the commit, build and push gates.
+- Never lower a gate or add an exempt crate to make work pass. A gate change is the maintainer's.
 
-| Lint file | Enforces | Default | Overridden in mockspace.toml |
-|---|---|---|---|
-| `no_std_enforcer.rs` | `use std::` anywhere in `hilavitkutin*/src/**` | HARD_ERROR | error across all gates |
-| `no_alloc_enforcer.rs` | `use alloc::`, `Vec<`, `String`, `Box<` outside allowed boundaries | HARD_ERROR | error across all gates |
-| `no_dynamic_dispatch.rs` | ` dyn `, `TypeId`, `std::any::` | HARD_ERROR | error across all gates |
-| `no_runtime_spawn.rs` | `thread::spawn`, `std::thread::`, `tokio::spawn`, `async_std::spawn` | HARD_ERROR | error across all gates |
-| `no_runtime_registration.rs` | `inventory::submit!`, `#[ctor]`, `#[distributed_slice]` | HARD_ERROR | error across all gates |
-| `vocabulary_discipline.rs` | Dead terms: `chain`, `chain_group`, `partition`, `archetype`, `entity`, `row`, `order` in source | ADVISORY | warn/warn/warn <!-- tenet::the_dead_terms_chain_chain_group_partition_archetype_entity_row_and_order_have_named_replacements --> |
+## A finding
 
-## Config-driven: `forbidden-imports`
-
-Enforced via `mockspace.toml`: cheaper to add rules here than to
-write Rust. The hilavitkutin layer rules:
-
-- All `hilavitkutin*` crates forbid `std::*, alloc::*` (covered by
-  the Rust lints, but the import-scan catches module paths the
-  token scan might miss).
-- `hilavitkutin-api` forbids `hilavitkutin::*` (api is the contract;
-  engine is one implementation).
-- `hilavitkutin-ctx`, `-persistence`, `-str` forbid each other and
-  forbid `hilavitkutin::*` / `hilavitkutin-api::*` (extensions are
-  standalone).
-
-## Adding a new lint
-
-Rule: any enforceable invariant in `MAIN.md.tmpl`,
-`PRINCIPLES.md.tmpl`, or `rules/*.md.tmpl` must be backed by a lint
-and (where possible) a pre-tool-use hook. "Documented" is not
-"enforced".
-
-1. Add `mock/lints/<name>.rs` implementing `mockspace::Lint`.
-2. Declare `default_severity()`: typically `HARD_ERROR` for
-   structural invariants, `PUSH_GATE` for best-practice, `ADVISORY`
-   for nudges.
-3. Register per-gate severity in `mockspace.toml`.
-4. Exclude proc-macro crates explicitly (`if
-   ctx.is_proc_macro_crate() { return Vec::new(); }`): not
-   applicable to hilavitkutin right now (no proc-macro crates), but
-   keep the habit.
-5. Write tests if the lint logic is non-trivial.
-6. Add the entry to the lint table in this skill.
-7. Consider a matching pre-tool-use hook in
-   `mock/agent/hooks/<name>-guard.sh.tmpl` for belt-and-suspenders.
-
-## Running lints
-
-```bash
-cargo mock --lint-only          # build gate (default)
-cargo mock --lint-only --commit # commit gate (most permissive)
-cargo mock --lint-only --strict # push gate (strictest)
-cargo mock                       # full pipeline: check + lints + docs
-```
-
-## No exceptions policy
-
-If a lint fires, fix the code. Never add `#[allow]` attributes.
-Never add crates to an exempt list without explicit cross-review.
-
-Per-line suppression via `// lint:allow(<name>) -- <reason>` exists
-as an escape hatch. An explained suppression (8+ words after `--`)
-downgrades severity to ADVISORY; unexplained suppressions keep the
-original severity and the lint still blocks.
+- Fix the code. No `#[allow]`, `#[expect]` or `cfg_attr` around one.
+- `// lint:allow(<name>) reason: <why>; tracked: #<id>` keeps one finding of that lint off its line or item, where the lint lets markers decide. `lint-allow-requires-task-id` wants the tracked id.

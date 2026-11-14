@@ -71,7 +71,6 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
-const CAP: usize = 8;
 const RECORDS: usize = 5;
 
 #[derive(Copy, Clone)]
@@ -120,7 +119,7 @@ impl WorkUnit<Always> for ConsumerWu {
     type Write = AccW;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        // Mark reserved (CAP); one append per frame stays in capacity.
+        // Mark reserved (RECORDS); one append per frame stays in capacity.
         ctx.accums().append::<Mark, _>(Mark(9));
     }
 }
@@ -142,7 +141,7 @@ impl WorkUnit<OnMeta<ScheduleEnd>> for EndWu {
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         let rc = ctx.meta::<SchedulerMetrics>().last_record_count.get();
-        // Mark reserved (CAP); one append per frame stays in capacity.
+        // Mark reserved (RECORDS); one append per frame stays in capacity.
         ctx.accums().append::<Mark, _>(Mark(rc.0 as u32));
     }
 }

@@ -1,20 +1,19 @@
-// A consumer of the assert configuration, `DefaultRunCfg<Assert>`, cannot name
-// `AccumRefused` in its run's output: under that choice `run` returns `()` and
-// panics at the close when an accumulator refused, so there is no refusal value
-// to bind. The twin `assert_out_names_no_refusal_pass.rs` differs only by the
-// type the run's output is bound to.
+// A consumer of the assert configuration, `DefaultRunCfg<Assert>`, binds its
+// run's output as `()`: under that choice `run` returns `()` and panics at the
+// close when an accumulator refused. The twin `assert_out_names_no_refusal_fail.rs`
+// binds it as `Outcome<(), AccumRefused>` instead, and is refused.
 use core::cell::Cell;
 
 use arvo::{Bool, USize};
 use hilavitkutin::dispatch::engine_ctx::{ColPtrNil, EngineCtx, SnapCons, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
+use hilavitkutin_api::Assert;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::run_cfg::DefaultRunCfg;
 use hilavitkutin_api::store::Resource;
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
-use hilavitkutin_api::{AccumRefused, Assert};
 use hilavitkutin_providers::ArenaColumnStorage;
 
 struct Provider {

@@ -1,11 +1,11 @@
 //! `MetricsKit`: Kit recipe bundling all nine per-axis metrics
 //! Resources.
 //!
-//! Topic 5 axis F. Consumers register the kit via
-//! `.add_kit(MetricsKit::default())` to wire every axis's metrics
-//! Resource onto the scheduler in one step. Individual axes can also
-//! be wired piecemeal via `.add_resource(...)`; the kit is a
-//! convenience, not the only path.
+//! Consumers register the kit via `.with(MetricsKit::default())` to
+//! wire every axis's metrics Resource onto the scheduler in one step.
+//! Individual axes can also be wired piecemeal via
+//! `.with(Resource::new(...))`; the kit is a convenience, not the only
+//! path.
 
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::BuilderInput;
@@ -13,8 +13,14 @@ use hilavitkutin_api::store::Resource;
 use hilavitkutin_kit::{Kit, KitDispatch};
 
 use super::{
-    CacheResidencyMetrics, ChangeClassMetrics, CoreIdleTimeMetrics, FiberEmaMetrics,
-    MemoryWatermarkMetrics, PassDurationMetrics, PhaseEmaMetrics, PredictiveParkingMetrics,
+    CacheResidencyMetrics,
+    ChangeClassMetrics,
+    CoreIdleTimeMetrics,
+    FiberEmaMetrics,
+    MemoryWatermarkMetrics,
+    PassDurationMetrics,
+    PhaseEmaMetrics,
+    PredictiveParkingMetrics,
     ThroughputMetrics,
 };
 
@@ -28,12 +34,11 @@ impl Default for MetricsKit {
 }
 
 impl BuilderInput for MetricsKit {
-    type Init = Self;
     type Dispatch = KitDispatch<Self>;
+    type Init = Self;
 }
 
 impl Kit for MetricsKit {
-    type Units = Empty;
     type Owned = Cons<
         Resource<PassDurationMetrics>,
         Cons<
@@ -59,4 +64,5 @@ impl Kit for MetricsKit {
             >,
         >,
     >;
+    type Units = Empty;
 }

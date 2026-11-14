@@ -1,10 +1,9 @@
 //! Runtime adaptation (domain 22).
 //!
-//! Per-axis sampling + tuning fires between frames. Topic 5 axis A
-//! splits the legacy `AdaptConfig` into nine independent
-//! `BuilderInput` configs that the consumer registers individually
-//! via `.with(...)`; `StandardAdaptKit` (in hilavitkutin-providers)
-//! bundles the default-on combination.
+//! Per-axis sampling + tuning fires between frames. The surface is
+//! nine independent `BuilderInput` configs that the consumer registers
+//! individually via `.with(...)`; `StandardAdaptKit` (in
+//! hilavitkutin-providers) bundles the default-on combination.
 //!
 //! The nine axes (each re-exported from `hilavitkutin_api::adapt`):
 //!
@@ -17,11 +16,7 @@
 //! - `predictive_parking`: per-phase predicted wait window.
 //! - `memory_watermark`: high-water arena allocation per pass.
 //! - `core_idle_time`: per-core park-time accumulator.
-//!
-//! The `arena` module holds the runtime sidecar storage for axis
-//! measurements (hot lines per fiber, cold SoA per pass).
 
-pub mod arena;
 pub mod cache_residency;
 pub mod change_class;
 pub mod core_idle_time;
@@ -46,5 +41,5 @@ pub use throughput::ThroughputAxis;
 /// Legacy `AdaptMode` alias kept for the strategy module's existing
 /// `PhaseStrategy` use site. New code uses per-axis configs directly;
 /// this alias retires when the strategy module's adapt-feedback loop
-/// migrates to per-axis reads (Pass 7 follow-up).
+/// migrates to per-axis reads.
 pub type AdaptMode = crate::strategy::PhaseStrategy;

@@ -1,13 +1,12 @@
 //! `hilavitkutin-persistence`: `#![no_std]`, no alloc cold-store
 //! bridge for the hilavitkutin ecosystem.
 //!
-//! Skeleton round: wires the type surface described in DESIGN.md
-//! (Manifest, TableMeta, ColumnMeta, PersistenceContext,
-//! StringTable, SieveCache, ColdStore). `evict_str` / `inject_str`
-//! ship as real bit-layout logic on `Str`. Everything touching files
-//! (`ColdStore::flush` / `load` / `snapshot`) is a stub this round;
-//! real rkyv / mmap impls land in a follow-up round once rkyv's
-//! no_std + no_alloc story has been vetted against the
+//! The type surface is Manifest, TableMeta, ColumnMeta,
+//! PersistenceContext, StringTable, SieveCache and ColdStore.
+//! `evict_str` / `inject_str` are real bit-layout logic on `Str`.
+//! Everything touching files (`ColdStore::flush` / `load` /
+//! `snapshot`) is a stub; real rkyv / mmap impls wait on rkyv's
+//! no_std + no_alloc story being vetted against the
 //! `MemoryProviderApi` surface.
 
 #![no_std]
@@ -25,9 +24,15 @@ pub use archive_str::{evict_str, inject_str};
 pub use cold_store::ColdStore;
 pub use context::PersistenceContext;
 pub use error::PersistenceError;
-pub use manifest::{ColumnMeta, Manifest, TableMeta, MAX_COLUMNS_PER_TABLE, MAX_TABLES};
+pub use manifest::{ColumnMeta, MAX_COLUMNS_PER_TABLE, MAX_TABLES, Manifest, TableMeta};
 pub use primitives::{
-    BitWidth, BufferLen, BufferOffset, Cardinality, ColumnCount, EvictionWeight, RowCount,
+    BitWidth,
+    BufferLen,
+    BufferOffset,
+    Cardinality,
+    ColumnCount,
+    EvictionWeight,
+    RowCount,
     SchemaVersion,
 };
 pub use sieve::SieveCache;

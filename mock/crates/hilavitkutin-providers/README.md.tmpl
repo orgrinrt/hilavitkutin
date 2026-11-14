@@ -1,8 +1,10 @@
 # `hilavitkutin-providers`
 
-Default Resource-backed providers for the hilavitkutin scheduler.
-Standalone ecosystem crate; consumed by the engine via Kit
-installation or direct `builder.add_resource(...)` wiring, no reverse
-dependency. Ships `InternerKit` (an inline-storage `MemoryArena`
-wrapped by `StringInterner`). Future modules add ColumnStorage,
-Clock, and Memory defaults as consumer demand surfaces.
+Default implementations of the hilavitkutin-api contracts, for a
+consumer to register on the scheduler builder with `.with(...)`, one
+store at a time or as a Kit. It ships `ArenaColumnStorage`, the arena
+`ColumnStorage` over a consumer's `MemoryProvider`; the interner
+(`StringInterner` over an inline `MemoryArena`, and `InternerKit`); the
+adapt unit `AdaptWu` with its EMA helpers and the `StandardAdaptKit` and
+`OffAdaptKit` presets; and the per-axis metrics resources with
+`MetricsKit`. Depends on the api, str and kit crates, never on the engine.

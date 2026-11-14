@@ -32,6 +32,7 @@ use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
+use notko::Outcome;
 
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
@@ -165,14 +166,17 @@ fn run_drives_two_phase_chain_in_order() {
     // order (consumer before producer) or a range gap surfaces as garbage.
     // SAFETY: In reserved for N records of u32; scheduler alive; each slot
     // written once here before the run.
-    let in_base = scheduler.__bindings().__tail().__tail().__ptr().as_ptr() as *mut u32;
+    let in_base = scheduler.__bindings().__tail().__tail().__ptr().as_ptr();
     for i in 0 .. N {
         unsafe {
-            *in_base.add(i) = i as u32;
+            *in_base.add(i) = Inv(i as u32);
         }
     }
 
-    let _ = scheduler.run::<_, _>();
+    assert!(
+        matches!(scheduler.run::<_, _>(), Outcome::Ok(())),
+        "the frame completes with no refusal"
+    );
 
     // Out[i] = (In[i] + 1) * 10. If the consumer ran before the producer, it
     // would have read the start value in Mid and Out would not match.

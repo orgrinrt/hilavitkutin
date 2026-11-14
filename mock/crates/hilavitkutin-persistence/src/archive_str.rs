@@ -1,8 +1,8 @@
 //! `Str` eviction and injection: pure bit-layout logic.
 //!
 //! The DESIGN describes an `Archive` trait relationship; the real
-//! trait lands with rkyv. This round ships the pure bit-layout halves
-//! as free functions so consumers can evict / inject handles today.
+//! trait lands with rkyv. Until then the pure bit-layout halves are
+//! free functions so consumers can evict / inject handles today.
 //!
 //! A string is stored under its full 64-bit FNV-1a content hash. A const
 //! handle carries only 28 bits of that hash, so it cannot be the key by
@@ -58,9 +58,10 @@ pub fn inject_str<A: ArenaInterner>(
 ) -> Outcome<Str, PersistenceError> {
     let candidate = Str::__make(content_hash.narrow_to::<28>());
     if let Maybe::Is(resolved) = interner.resolve(candidate)
-        && content_hash_of(resolved) == content_hash {
-            return Outcome::Ok(candidate);
-        }
+        && content_hash_of(resolved) == content_hash
+    {
+        return Outcome::Ok(candidate);
+    }
 
     // Runtime path: look up bytes in the string table, intern via
     // the arena, return a runtime handle.

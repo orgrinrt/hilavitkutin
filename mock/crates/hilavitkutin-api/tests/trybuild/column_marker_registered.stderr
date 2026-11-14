@@ -7,7 +7,7 @@ error[E0277]: `Column<Temp>` is not a BuilderInput; pass a registered input valu
    |     required by a bound introduced by this call
    |
    = help: the trait `BuilderInput` is not implemented for `Column<Temp>`
-   = note: Impl one of the dispatch-determining sub-traits on `Column<Temp>`: `Resource` / `Column` / `Virtual` / `WorkUnit` / `Kit` / `MemoryProvider` / `ThreadPool` / `Clock` / `RunCfg`. Pair the sub-trait impl with `impl BuilderInput for Column<Temp> { type Dispatch = <the matching dispatch slot>; }`. Sealed via `mod sealed`; consumers cannot impl `BuilderInput` for types that do not also impl exactly one dispatch-determining sub-trait.
+   = note: Impl one of the dispatch-determining sub-traits on `Column<Temp>`: `Resource` / `Column` / `Virtual` / `WorkUnit` / `Kit` / `MemoryProvider` / `ThreadPool` / `Clock` / `RunCfg`. Pair the sub-trait impl with `impl BuilderInput for Column<Temp> { type Dispatch = <the matching dispatch slot>; }`. The `Dispatch` slot decides which accumulator the input joins, so it names the router of the one sub-trait the type impls.
    = note: A column is registered with its start and never by its bare marker: `.with(Column::<T>::start())` or `.with(Column::<T>::start_from(value))`, and the same two on `Buffered<T, M>`. `Column::<T>::new()` names the column in a unit's lists and registers nothing.
    = help: the following other types implement trait `BuilderInput`:
              Accum<T>

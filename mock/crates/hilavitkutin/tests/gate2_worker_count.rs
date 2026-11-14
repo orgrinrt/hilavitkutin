@@ -185,18 +185,18 @@ fn run_fan_in_and_check<const W: usize>(pool: &Reports<W>) -> usize {
         .unwrap_or_else(|_| panic!("build should succeed"));
 
     // Columns from head: Zv(0), Bv(1), Av(2), In(3).
-    // SAFETY: both reserved for N records of u32; the scheduler is alive.
-    let zv_base = scheduler.__bindings().__ptr().as_ptr() as *mut u32;
+    // SAFETY: both reserved for N records; the scheduler is alive.
+    let zv_base = scheduler.__bindings().__ptr().as_ptr() as *mut Zv;
     let in_base = scheduler
         .__bindings()
         .__tail()
         .__tail()
         .__tail()
         .__ptr()
-        .as_ptr() as *mut u32;
+        .as_ptr();
     for i in 0 .. N {
         unsafe {
-            *in_base.add(i) = i as u32;
+            *in_base.add(i) = Inv(i as u32);
         }
     }
 
@@ -205,14 +205,14 @@ fn run_fan_in_and_check<const W: usize>(pool: &Reports<W>) -> usize {
         for i in 0 .. N {
             // SAFETY: Zv reserved for N records; every worker is parked
             // between frames.
-            unsafe { *zv_base.add(i) = u32::MAX };
+            unsafe { *zv_base.add(i) = Zv(u32::MAX) };
         }
         let result = scheduler.as_mut().run_parallel(pool);
         assert!(matches!(result, Outcome::Ok(())));
-        let zv = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const u32;
+        let zv = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const Zv;
         for i in 0 .. N {
             // SAFETY: Zv holds N reserved records; the scheduler is alive.
-            let z = unsafe { *zv.add(i) };
+            let z = unsafe { (*zv.add(i)).0 };
             assert_eq!(z, (i as u32) * 110, "frame {frame}, record {i}");
         }
     }
@@ -271,7 +271,6 @@ struct Av(u32);
 #[derive(Copy, Clone, Default)]
 struct Bv(u32);
 #[derive(Copy, Clone, Default)]
-#[allow(dead_code)] // written by Combiner, read back post-run as raw u32
 struct Zv(u32);
 
 type OneIn = Cons<Column<Inv>, Empty>;
