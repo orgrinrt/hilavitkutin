@@ -36,8 +36,8 @@ impl BuildConfig {
     /// - `profile` absent or unknown → `Profile::Dev`
     /// - `target_features` absent → `target = Maybe::Isnt`
     ///
-    /// Tier + passes are not yet derivable from these values; the
-    /// wrapper-script round wires them up.
+    /// Tier + passes are not derivable from these values; both stay at
+    /// their defaults.
     pub fn from_cargo(
         profile: Maybe<&str>, // lint:allow(no-bare-string) reason: cargo env values as the build script read them; tracked: #72
         target_features: Maybe<&str>, // lint:allow(no-bare-string) reason: cargo env values as the build script read them; tracked: #72

@@ -4,7 +4,7 @@
 //! Const arrays are the skeleton's chosen representation: they
 //! compile under `#![no_std]` with no alloc, and shape the API that
 //! consumers observe today. Real widening (or a dynamic fallback)
-//! lands with a later round if consumer pressure surfaces it.
+//! is not provided.
 
 use arvo::USize;
 use arvo::strategy::{Additive, Identity};

@@ -43,9 +43,8 @@ pub use throughput::ThroughputMetrics;
 ///   threshold.
 /// - `BuilderInput<Dispatch = StoreDispatch<Self>>` registration.
 ///
-/// Per-axis field expansion (axis-specific anomaly counters,
-/// per-phase / per-fiber breakdown) lands in Pass 7 alongside the
-/// bench-validated EMA path.
+/// There is no per-axis field expansion (axis-specific anomaly
+/// counters, per-phase / per-fiber breakdown) yet.
 #[macro_export]
 macro_rules! metrics_resource {
     ($name:ident, $doc:literal) => {

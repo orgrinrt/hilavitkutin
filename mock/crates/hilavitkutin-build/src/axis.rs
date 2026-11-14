@@ -1,10 +1,9 @@
 //! Three-axis classification for wrapper-script flag selection.
 //!
 //! DESIGN Q4 §RUSTC_WORKSPACE_WRAPPER defines three orthogonal axes
-//! (Target, Tier, Passes). The skeleton ships the enums; the real
-//! flag-set computation (each `(target, tier, passes)` triple mapped
-//! to a concrete rustc invocation) lives in the wrapper-script
-//! generation follow-up round per BACKLOG.
+//! (Target, Tier, Passes). This module holds the enums only; the
+//! mapping from each `(target, tier, passes)` triple to a concrete
+//! rustc invocation is not computed here yet.
 
 /// ISA / feature-set classification. Detected from
 /// `CARGO_CFG_TARGET_FEATURE` at build-script time.

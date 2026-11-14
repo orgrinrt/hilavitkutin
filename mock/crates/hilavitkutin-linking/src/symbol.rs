@@ -106,8 +106,7 @@ impl<'lib, T: 'static> StaticRef<'lib, T> {
 /// v1 implementations cover `extern "C"` function pointer shapes with
 /// zero through eight argument arities. Downstream crates cannot add
 /// new impls. This arity range covers realistic plugin-ABI shapes;
-/// extending it further in a follow-up round is trivial if a concrete
-/// need surfaces.
+/// a wider range is one more macro invocation.
 #[allow(private_bounds)]
 pub trait LibrarySymbol: sealed::Sealed + Copy {}
 

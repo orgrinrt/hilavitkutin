@@ -235,16 +235,16 @@ use core::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicUsize};
 /// avoidance (predicted_wait_ns and idle_accumulator are per-core, so
 /// they land on separate lines per index).
 ///
-/// `shutdown` (axis G): workers Relaxed-load after each morsel; on
+/// `shutdown`: workers Relaxed-load after each morsel; on
 /// `true`, exit mainloop cleanly. Scheduler::Drop sets it then wakes
 /// all parked workers via the platform atomic-wait primitive.
 ///
-/// `phase_arrived` (axis I): centralised atomic counter. Workers Release
+/// `phase_arrived`: centralised atomic counter. Workers Release
 /// fetch_add(1) on phase exit; last arriver wakes all parked workers and
 /// resets the counter. Tree-barrier deferred until 32+ core benches
 /// show measurable cacheline ping-pong (BACKLOG).
 ///
-/// `predicted_wait_ns` (axis J): per-phase atomic slot. AdaptWu writes
+/// `predicted_wait_ns`: per-phase atomic slot. AdaptWu writes
 /// at `ScheduleEnd`; workers Relaxed-load on phase entry to pick the
 /// parking tier (spin / futex / park) per the WakeStrategy thresholds.
 ///

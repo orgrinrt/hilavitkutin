@@ -4,11 +4,11 @@
 //! `profraw` -> `profdata` conversion, BOLT, an LLVM pass plugin,
 //! or a mimalloc crate in Cargo.toml). `REQUIREMENTS` is a static
 //! `&'static [PragmaRequirement]` table so runtime-detection code in
-//! the wrapper-script round can consume it as data.
+//! the wrapper script can consume it as data.
 //!
 //! Pragma-to-pragma ordering constraints (e.g. `Profiling` implies
 //! `Any<(Pgo, Bolt)>`) are NOT modelled here: they belong to the
-//! pragma-resolution stage (follow-up round).
+//! pragma-resolution stage, which does not exist yet.
 
 use crate::pragma::Pragma;
 

@@ -1,22 +1,18 @@
 //! `AdaptWu`: substrate-default adapt meta-WorkUnit.
 //!
-//! Topic 1 axis 5 + Topic 5 axes A/B/E. Observes `Virtual<ScheduleEnd>`
-//! per audit-2 M7, reads the nine per-axis metrics Resources for the
-//! pass-end samples, sets the per-axis anomaly bools on the matching
-//! Resource snapshot, and fires `Virtual<AnomalyFired>` when any axis
-//! crosses its threshold. The fired Virtual gates observer WorkUnits
-//! that react to anomalies in the following pass.
+//! Observes `Virtual<ScheduleEnd>`, reads the nine per-axis metrics
+//! Resources for the pass-end samples, sets the per-axis anomaly bools
+//! on the matching Resource snapshot, and fires `Virtual<AnomalyFired>`
+//! when any axis crosses its threshold. The fired Virtual gates
+//! observer WorkUnits that react to anomalies in the following pass.
 //!
 //! Consumers register the substrate default via
 //! `.with(AdaptWu::default())`; consumers wanting custom adapt logic
 //! ship their own `WorkUnit<On<ScheduleEnd>>` with the same access
 //! shape (or a subset, when only a few axes are used).
 //!
-//! The execute body is wired through `Scheduler::run` (Pass 6 of the
-//! megaround). The Read/Write/Hint declaration in this file freezes
-//! the structural contract that the engine routes against; the body
-//! lands when the executor begins driving meta-WUs at phase
-//! boundaries.
+//! The execute body is empty. The Read/Write/Hint declaration in this
+//! file is the structural contract that the engine routes against.
 
 use core::marker::PhantomData;
 
@@ -61,7 +57,7 @@ use crate::metrics::{
     ThroughputMetrics,
 };
 
-/// Substrate-default adapt meta-WorkUnit. Topic 1 axis 5 + Topic 5.
+/// Substrate-default adapt meta-WorkUnit.
 ///
 /// Observes `Virtual<ScheduleEnd>` and updates per-axis metrics
 /// snapshots at every pass boundary. Anomaly bools live on the
@@ -108,13 +104,11 @@ impl WorkUnit<On<ScheduleEnd>> for AdaptWu {
     ];
 
     fn execute<'frame>(&self, _ctx: &Self::Ctx<'frame>) {
-        // Body lands at Pass 6 wiring (Scheduler::run): walk the nine
-        // metrics Resources, threshold-compare each `last_sample`
+        // Empty today. The body is to walk the
+        // nine metrics Resources, threshold-compare each `last_sample`
         // against per-axis thresholds, set the anomaly bool on every
         // tripped axis, and fire `Virtual<AnomalyFired>` once if any
-        // tripped. The structural shape above freezes the contract;
-        // the executor learns to route the body when meta-WU dispatch
-        // arrives.
+        // tripped.
     }
 }
 
@@ -122,14 +116,13 @@ impl WorkUnit<On<ScheduleEnd>> for AdaptWu {
 // Placeholder Ctx + Stub provider.
 //
 // The WorkUnit trait requires Ctx<'frame> to satisfy seven HasX
-// accessor bounds. Until Pass 6 wires the engine's real Ctx into
+// accessor bounds. Until the engine's real Ctx is wired into
 // meta-WU dispatch, the placeholder + Stub form a trivially-satisfied
-// type that lets the AdaptWu impl typecheck. Pass 6 replaces this
-// with the engine-generated Ctx; consumer code does not see the
-// placeholder.
+// type that lets the AdaptWu impl typecheck. The engine-generated Ctx
+// is to replace this; consumer code does not see the placeholder.
 // ---------------------------------------------------------------------
 
-/// Placeholder Ctx for `AdaptWu`. Pre-Pass 6 stub.
+/// Placeholder Ctx for `AdaptWu`, standing in until the engine's Ctx is wired.
 pub struct AdaptCtxUnimplementedStub<'frame> {
     _phantom: PhantomData<&'frame ()>,
     stub:     Stub,
@@ -170,7 +163,7 @@ impl<R: AccessSet> ResourceProviderApi<R> for Stub {
     }
 }
 
-// Bridge impls: the stub never resolves (pre-Pass-6 placeholder), so the
+// Bridge impls: the stub never resolves (it is a placeholder), so the
 // keyed lookups are blanket-unimplemented. They exist only to satisfy the
 // `Self: Resolve*<T, I>` accessor bounds.
 impl<T: 'static, I> ResolveResource<T, I> for Stub {
