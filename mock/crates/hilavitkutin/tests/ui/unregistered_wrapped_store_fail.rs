@@ -97,9 +97,9 @@ fn main() {
         base,
         used: Cell::new(0),
     };
-    let scheduler = Scheduler::builder()
+    let mut scheduler = Scheduler::builder()
         .with(Lift)
         .build(store(provider), USize(0))
         .unwrap_or_else(|_| panic!("build refused a unit whose wrapped stores are registered"));
-    assert!(matches!(scheduler.run::<(), _>(), notko::Outcome::Ok(())));
+    assert!(matches!(scheduler.run(), notko::Outcome::Ok(())));
 }

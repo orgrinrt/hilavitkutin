@@ -1,8 +1,7 @@
-// A consumer of the assert configuration, `DefaultRunCfg<Assert>`, cannot name
-// `AccumRefused` in its run's output: under that choice `run` returns `()` and
-// panics at the close when an accumulator refused, so there is no refusal value
-// to bind. The twin `assert_out_names_no_refusal_pass.rs` differs only by the
-// type the run's output is bound to.
+// A consumer of the assert configuration, `DefaultRunCfg<Assert>`, binds its
+// run's output as `()`: under that choice `run` returns `()` and panics at the
+// close when an accumulator refused. The twin `assert_out_names_no_refusal_fail.rs`
+// binds it as `Outcome<(), AccumRefused>` instead, and is refused.
 use core::cell::Cell;
 
 use arvo::{Bool, USize};

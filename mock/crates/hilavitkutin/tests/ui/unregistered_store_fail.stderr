@@ -1,10 +1,10 @@
 error[E0599]: the method `build` exists for struct `SchedulerBuilder<Cons<ReadsInA, hilavitkutin_api::Empty>, hilavitkutin_api::Empty, hilavitkutin_api::Empty, DefaultStoreValues, WuCons<ReadsInA, WuNil>>`, but its trait bounds were not satisfied
   --> tests/ui/unregistered_store_fail.rs:84:10
    |
-82 |       let _ = Scheduler::builder()
-   |  _____________-
+82 |       let mut scheduler = Scheduler::builder()
+   |  _________________________-
 83 | |         .with(ReadsInA)
-84 | |         .build(store(provider), USize(0));
+84 | |         .build(store(provider), USize(0))
    | |         -^^^^^ method cannot be called due to unsatisfied trait bounds
    | |_________|
    |
