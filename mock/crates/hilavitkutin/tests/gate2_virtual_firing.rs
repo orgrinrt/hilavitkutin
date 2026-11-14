@@ -45,7 +45,7 @@ use hilavitkutin_api::context::{
     VirtualFirerApi,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::{Column, Virtual};
+use hilavitkutin_api::store::{Column, StartsFromDefault, Virtual};
 use hilavitkutin_api::work_unit::{Always, HasSchedule, On, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 
@@ -93,15 +93,15 @@ const N: usize = 16;
 struct Tick;
 struct Never;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Gate(u32);
 // Distinct sentinel types per consumer so the type-keyed projection resolves
 // each uniquely (three same-typed columns would be ambiguous).
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct RanA(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct RanB(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct RanN(u32);
 
 type WTick = Cons<Virtual<Tick>, Cons<Column<Gate>, Empty>>;
@@ -197,10 +197,10 @@ fn on_consumer_runs_iff_its_virtual_fired() {
     let mut scheduler = Scheduler::builder()
         .with(Virtual::<Tick>::new())
         .with(Virtual::<Never>::new())
-        .with(Column::<Gate>::new())
-        .with(Column::<RanN>::new()) // ConN sentinel
-        .with(Column::<RanB>::new()) // ConB sentinel
-        .with(Column::<RanA>::new()) // ConA sentinel (head of bindings chain)
+        .with(Column::<Gate>::start())
+        .with(Column::<RanN>::start()) // ConN sentinel
+        .with(Column::<RanB>::start()) // ConB sentinel
+        .with(Column::<RanA>::start()) // ConA sentinel (head of bindings chain)
         .with(Producer)
         .with(ConN)
         .with(ConB)
@@ -208,19 +208,7 @@ fn on_consumer_runs_iff_its_virtual_fired() {
         .build(store(provider), USize(N))
         .unwrap_or_else(|_| panic!("build should succeed"));
 
-    // Head-chain: RanA (head, last registered), RanB, RanN. Poison all to 0.
-    let a_base = scheduler.__bindings().__ptr().as_ptr() as *mut u32;
-    let b_base = scheduler.__bindings().__tail().__ptr().as_ptr() as *mut u32;
-    let n_base = scheduler.__bindings().__tail().__tail().__ptr().as_ptr() as *mut u32;
-    for i in 0 .. N {
-        // SAFETY: three Ran columns reserved for N records; scheduler alive.
-        unsafe {
-            *a_base.add(i) = 0;
-            *b_base.add(i) = 0;
-            *n_base.add(i) = 0;
-        }
-    }
-
+    // Head-chain: RanA (head, last registered), RanB, RanN. All start at zero.
     let _ = scheduler.run::<_, _>();
 
     let a = scheduler.__bindings().__ptr().as_ptr() as *const u32;

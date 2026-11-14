@@ -13,9 +13,10 @@
 use core::cell::Cell;
 use core::marker::PhantomData;
 
-use arvo::USize;
+use arvo::{Bool, USize};
 
 use crate::meta::MetaBlock;
+use crate::resource::bindings::{ColKind, MarkPtr, Plain};
 use crate::resource::provenance::ColumnPtr;
 
 // ---------------------------------------------------------------------
@@ -60,23 +61,77 @@ impl<H, Tail> SnapCons<H, Tail> {
 /// Empty column pointer bundle (tail leaf).
 pub struct ColPtrNil;
 
-/// One projected column pointer `head` of type `ColumnPtr<H>`,
-/// followed by the rest, `tail`.
-pub struct ColPtrCons<H, Tail> {
-    pub(crate) head: ColumnPtr<H>,
+/// One column store as a context reaches it.
+///
+/// `read` is the base every read of the pass sees and `write` the base every
+/// write lands on. For a plain column they are the one base; for a buffered
+/// column they are its frozen side and its live side. `mark` is the store's
+/// changed mark and `count` its record count, which bounds a read with a
+/// reach.
+pub struct ColRef<T> {
+    pub(super) read:  ColumnPtr<T>,
+    pub(super) write: ColumnPtr<T>,
+    pub(super) mark:  MarkPtr,
+    pub(super) count: USize,
+}
+
+impl<T> ColRef<T> {
+    /// The base every read of the pass sees. Hidden accessor for a host that
+    /// reaches a column through the bindings: for a plain column it is the
+    /// one base the column has, for a buffered column its frozen side. Not
+    /// part of the supported surface.
+    #[doc(hidden)]
+    #[inline(always)]
+    pub const fn __read(&self) -> ColumnPtr<T> {
+        self.read
+    }
+
+    /// The base every write of the pass lands on: the one base of a plain
+    /// column, the live side of a buffered one. Hidden accessor, as `__read`.
+    /// Not part of the supported surface.
+    #[doc(hidden)]
+    #[inline(always)]
+    pub const fn __write(&self) -> ColumnPtr<T> {
+        self.write
+    }
+}
+
+impl<T> Copy for ColRef<T> {}
+impl<T> Clone for ColRef<T> {
+    #[inline(always)]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+/// One projected column `head` of value type `H` and kind `K`, followed by
+/// the rest, `tail`.
+///
+/// `K` is `Plain` for a `Column<H>` and the buffer mode for a `Buffered<H,
+/// M>`, so the two never answer for each other in a lookup by type.
+pub struct ColPtrCons<H, Tail, K: ColKind = Plain> {
+    pub(crate) head: ColRef<H>,
     pub(crate) tail: Tail,
+    pub(crate) _k:   PhantomData<K>,
 }
 
 impl<H, Tail> ColPtrCons<H, Tail> {
-    /// Construct a column bundle node. Hidden test/run-loop accessor: the
-    /// run-loop builds the column bundle from per-frame buffers; tests
-    /// build it by hand. Not part of the supported surface.
+    /// Construct a plain column bundle node over `count` records at `head`.
+    /// Hidden test accessor: the dispatch builds the column bundle from the
+    /// bindings, and a test may build one by hand. The node's changed mark is
+    /// one nothing reads. Not part of the supported surface.
     #[doc(hidden)]
     #[inline]
-    pub fn __new(head: ColumnPtr<H>, tail: Tail) -> Self {
+    pub fn __new(head: ColumnPtr<H>, count: USize, tail: Tail) -> Self {
         Self {
-            head,
+            head: ColRef {
+                read: head,
+                write: head,
+                mark: MarkPtr::unread(),
+                count,
+            },
             tail,
+            _k: PhantomData,
         }
     }
 }
@@ -169,3 +224,39 @@ pub struct MetaNil;
 /// dispatch frame. The `meta::<T>()` accessor exists only on a Ctx carrying it.
 #[derive(Clone, Copy)]
 pub struct MetaRef<'frame>(pub(super) &'frame MetaBlock);
+
+/// Whether a context is a maintenance unit's, read off its meta pointer.
+///
+/// A maintenance unit's write to a plain column is compared and marked, and
+/// an ordinary unit's is neither. The branch is on this constant, so each
+/// context compiles the one arm it takes.
+pub trait MetaRank {
+    /// `TRUE` on a maintenance unit's context.
+    const MAINTAINS: Bool;
+}
+
+impl MetaRank for MetaNil {
+    const MAINTAINS: Bool = Bool::FALSE;
+}
+
+impl<'frame> MetaRank for MetaRef<'frame> {
+    const MAINTAINS: Bool = Bool::TRUE;
+}
+
+/// What a context holds of an accumulator its unit reads: the base of the
+/// buffer and how many records it held when the context was bound.
+///
+/// It sits in the snapshot bundle beside the resource values. Only a
+/// maintenance unit's context has an accessor that reads it.
+pub struct AccSnap<T> {
+    pub(super) base: ColumnPtr<T>,
+    pub(super) len:  USize,
+}
+
+impl<T> Copy for AccSnap<T> {}
+impl<T> Clone for AccSnap<T> {
+    #[inline(always)]
+    fn clone(&self) -> Self {
+        *self
+    }
+}

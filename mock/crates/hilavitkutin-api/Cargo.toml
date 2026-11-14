@@ -12,7 +12,7 @@ arvo-bitmask.workspace = true
 arvo-tensor.workspace = true
 hilavitkutin-ctx.workspace = true
 notko.workspace = true
-
+notko-hlist.workspace = true
 
 [dev-dependencies]
 trybuild = "1"

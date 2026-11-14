@@ -37,7 +37,7 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::platform::{ClockApi, MemoryProviderApi, Nanos};
-use hilavitkutin_api::store::Column;
+use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
@@ -99,19 +99,19 @@ impl ClockApi for CounterClock {
 
 const N: usize = 4;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Inv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct P1v(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct P2v(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Mv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Q1v(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Q2v(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)] // written by Sink, never read back (the test reads phase_ema)
 struct Sv(u32);
 
@@ -300,13 +300,13 @@ macro_rules! two_waist {
     ($provider:expr, $n:expr) => {{
         let scheduler = Scheduler::builder()
             .clock(CounterClock::new())
-            .with(Column::<Inv>::new())
-            .with(Column::<P1v>::new())
-            .with(Column::<P2v>::new())
-            .with(Column::<Mv>::new())
-            .with(Column::<Q1v>::new())
-            .with(Column::<Q2v>::new())
-            .with(Column::<Sv>::new())
+            .with(Column::<Inv>::start())
+            .with(Column::<P1v>::start())
+            .with(Column::<P2v>::start())
+            .with(Column::<Mv>::start())
+            .with(Column::<Q1v>::start())
+            .with(Column::<Q2v>::start())
+            .with(Column::<Sv>::start())
             .with(P1)
             .with(P2)
             .with(Mid)
@@ -339,8 +339,8 @@ macro_rules! single_phase {
     ($provider:expr) => {{
         let scheduler = Scheduler::builder()
             .clock(CounterClock::new())
-            .with(Column::<Inv>::new())
-            .with(Column::<P1v>::new())
+            .with(Column::<Inv>::start())
+            .with(Column::<P1v>::start())
             .with(P1)
             .build(store($provider), USize(N))
             .unwrap_or_else(|_| panic!("build should succeed"));

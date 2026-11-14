@@ -141,8 +141,8 @@ impl WorkUnit<Always> for ConsumerWu {
     type Write = AccW;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        // SAFETY: Mark reserved (CAP) and this frame's appends stay in capacity.
-        unsafe { ctx.accums().append::<Mark, _>(Mark(9)) };
+        // Mark reserved (CAP) and this frame's appends stay in capacity.
+        ctx.accums().append::<Mark, _>(Mark(9));
     }
 }
 
@@ -165,8 +165,8 @@ impl WorkUnit<OnMeta<ScheduleEnd>> for EndWu {
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         // The bridge: read engine-owned meta state through the gated accessor.
         let pc = ctx.meta::<SchedulerMetrics>().pass_count.get();
-        // SAFETY: Mark reserved (CAP) and this frame's appends stay in capacity.
-        unsafe { ctx.accums().append::<Mark, _>(Mark(pc.0 as u32)) };
+        // Mark reserved (CAP) and this frame's appends stay in capacity.
+        ctx.accums().append::<Mark, _>(Mark(pc.0 as u32));
     }
 }
 

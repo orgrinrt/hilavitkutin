@@ -13,6 +13,10 @@
 //! gets the real `N * elem` budget. `Field` fields are `CollectionBytes`-zero
 //! (register-cached scalars), so summing them is correct and explicit.
 //!
+//! From the same fields the derive writes `ResourceRead`, the form a value
+//! function reads the resource in: by reference where a field is a `Seq` or a
+//! `Map`, and by value otherwise, which asks the value type to be `Copy`.
+//!
 //! The emitted output references `::hilavitkutin_api::*` and `::arvo::*` paths
 //! only. Consumers add `hilavitkutin-api` (and `arvo`) as regular dependencies
 //! alongside this macro crate.
@@ -28,8 +32,10 @@ use syn::{Data, DeriveInput, Type, parse_macro_input};
 /// Derive `ResourceFootprint` for a resource value type.
 ///
 /// Sums the `CollectionBytes` footprint of each `Field`/`Seq`/`Map`-typed field;
-/// other field types contribute nothing. Structs only (named or tuple); deriving
-/// on an enum or union is a compile error.
+/// other field types contribute nothing. Also writes `ResourceRead`: `&Self`
+/// where a field is a `Seq` or a `Map`, and `Self` otherwise, for which the
+/// value type is `Copy`. Structs only (named or tuple); deriving on an enum or
+/// union is a compile error.
 #[proc_macro_derive(ResourceFootprint)]
 pub fn derive_resource_footprint(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -59,25 +65,70 @@ pub fn derive_resource_footprint(input: TokenStream) -> TokenStream {
             quote! { + <#ty as ::hilavitkutin_api::footprint::CollectionBytes>::BYTES.0 }
         });
 
+    // The form a value function reads the resource in, from the same fields:
+    // by reference where a field is a `Seq` or a `Map`, by value otherwise.
+    let read = if data.fields.iter().any(|f| holds_collection(&f.ty)) {
+        quote! {
+            impl #impl_generics ::hilavitkutin_api::values::ResourceRead
+                for #name #ty_generics #where_clause
+            {
+                type Val<'a> = &'a Self where Self: 'a;
+
+                #[inline(always)]
+                fn read<'a>(&'a self) -> &'a Self {
+                    self
+                }
+            }
+        }
+    } else {
+        // Read by value, so the value type is `Copy`. The bound sits on the
+        // impl, and a value type that is not `Copy` is refused there by name.
+        let mut by_value = input.generics.clone();
+        by_value
+            .make_where_clause()
+            .predicates
+            .push(syn::parse_quote!(Self: ::core::marker::Copy + 'static));
+        let (_, _, by_value_where) = by_value.split_for_impl();
+        quote! {
+            impl #impl_generics ::hilavitkutin_api::values::ResourceRead
+                for #name #ty_generics #by_value_where
+            {
+                type Val<'a> = Self where Self: 'a;
+
+                #[inline(always)]
+                fn read<'a>(&'a self) -> Self {
+                    *self
+                }
+            }
+        }
+    };
+
     let expanded = quote! {
         impl #impl_generics ::hilavitkutin_api::footprint::ResourceFootprint
             for #name #ty_generics #where_clause
         {
             const L1_BYTES: ::arvo::USize = ::arvo::USize(0 #(#terms)*);
         }
+
+        #read
     };
     expanded.into()
+}
+
+/// The last segment of the field type's path, as written.
+fn last_segment(ty: &Type) -> Option<String> {
+    let Type::Path(tp) = ty else { return None };
+    tp.path.segments.last().map(|seg| seg.ident.to_string())
 }
 
 /// Whether the field type is one of the R5 resource collection kinds
 /// (`Field`/`Seq`/`Map`), matched by the type path's last segment.
 fn is_collection_field(ty: &Type) -> bool {
-    let Type::Path(tp) = ty else { return false };
-    match tp.path.segments.last() {
-        Some(seg) => {
-            let id = seg.ident.to_string();
-            id == "Field" || id == "Seq" || id == "Map"
-        },
-        None => false,
-    }
+    matches!(last_segment(ty).as_deref(), Some("Field" | "Seq" | "Map"))
+}
+
+/// Whether the field type is a `Seq` or a `Map`, the two kinds that make a
+/// resource one a value function reads by reference.
+fn holds_collection(ty: &Type) -> bool {
+    matches!(last_segment(ty).as_deref(), Some("Seq" | "Map"))
 }

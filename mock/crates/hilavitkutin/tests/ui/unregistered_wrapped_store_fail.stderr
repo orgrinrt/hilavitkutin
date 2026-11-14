@@ -1,0 +1,21 @@
+error[E0599]: the method `build` exists for struct `SchedulerBuilder<Cons<Lift, hilavitkutin_api::Empty>, hilavitkutin_api::Empty, hilavitkutin_api::Empty, DefaultStoreValues, WuCons<Lift, WuNil>>`, but its trait bounds were not satisfied
+   --> tests/ui/unregistered_wrapped_store_fail.rs:102:10
+    |
+100 |       let _ = Scheduler::builder()
+    |  _____________-
+101 | |         .with(Lift)
+102 | |         .build(store(provider), USize(0));
+    | |         -^^^^^ method cannot be called due to unsatisfied trait bounds
+    | |_________|
+    |
+    |
+   ::: /root/.cargo/git/checkouts/notko-f6f26a62b445f4df/8a74dbc/notko-hlist/src/list.rs:20:1
+    |
+ 20 |   pub struct Empty;
+    |   ---------------- doesn't satisfy `_: HoldsAll<Cons<Differs<Column<Height>>, Empty>>`, `_: HoldsAll<Cons<Reach<Column<Slot>, Cap(USize(1))>, Empty>>`, `hilavitkutin_api::Empty: Contains<Column<Height>>` or `hilavitkutin_api::Empty: Contains<Column<Slot>>`
+    |
+    = note: the following trait bounds were not satisfied:
+            `hilavitkutin_api::Empty: Contains<Column<Slot>>`
+            which is required by `hilavitkutin_api::Empty: HoldsAll<Cons<Reach<Column<Slot>, Cap(USize(1))>, hilavitkutin_api::Empty>>`
+            `hilavitkutin_api::Empty: Contains<Column<Height>>`
+            which is required by `hilavitkutin_api::Empty: HoldsAll<Cons<Differs<Column<Height>>, hilavitkutin_api::Empty>>`

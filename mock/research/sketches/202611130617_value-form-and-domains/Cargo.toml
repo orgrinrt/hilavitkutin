@@ -1,0 +1,24 @@
+# Sketch S4: the value form routed by its dispatch router, record domains as a
+# parameter of a column, and neighbour reads over the frame-buffered kind.
+# Its own workspace, so the repository's build never sees it. `api` stands in
+# for the revised parts of hilavitkutin-api, `plumb` for storage both runners
+# share, `engine` for the scheduler, `oracle` for a second runner, `author` for
+# a crate writing units against the api alone, and `check` for the crate that
+# composes them.
+
+[workspace]
+resolver = "3"
+members = ["api", "plumb", "engine", "oracle", "author", "check"]
+
+[workspace.package]
+edition = "2024"
+publish = false
+version = "0.0.0"
+
+[workspace.dependencies]
+notko-hlist = { git = "https://github.com/orgrinrt/notko.git", rev = "8a74dbcda7fbee2d2e57b47474a3b1e6d08650ed" }
+api = { path = "api" }
+plumb = { path = "plumb" }
+engine = { path = "engine" }
+oracle = { path = "oracle" }
+author = { path = "author" }

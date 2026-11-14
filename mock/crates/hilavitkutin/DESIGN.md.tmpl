@@ -38,11 +38,22 @@ complete execution plan:
    per Topic 9 axis B, bench-locked canonical at every N (no threshold).
    It converts to a bidirectional CSR (forward adjacency plus a
    pre-computed transpose) to feed the arvo-sparse structural steps
-   (5-6). RAW edges are order-independent: for any unit pair where one
-   writes a store the other reads, the writer sorts before the reader,
-   regardless of which was registered first. WAW conflicts serialise
-   deterministically by input index (the lower index first). WAR
-   anti-dependencies are a tracked plan-chain follow-up.
+   (5-6). RAW edges are order-independent between units of one
+   lifecycle rank: for any unit pair where one writes a store the other
+   reads, the writer sorts before the reader, regardless of which was
+   registered first. Two units of different rank that share a store
+   take the order of their ranks: an edge that agrees with the ranks is
+   built as any other, and an edge that would run against them is not
+   built, so a close unit that writes a store an ordinary unit reads
+   runs after the reader. A buffered column takes no RAW edge at all:
+   every read of it sees the side the last boundary froze, so a reader
+   and a writer of it run in either sequence or at once, in one rank or
+   across two, and one unit may be both. Its writers conflict as the
+   writers of any store do. WAW conflicts serialise by the api's write-write order: hint
+   priority, then the unit with more units downstream of it over the
+   RAW edges, then input index (the lower index first) as the
+   deterministic fallback. WAR anti-dependencies are a tracked
+   plan-chain follow-up.
 2. Topological sort + node renumbering (arvo-graph). A registration
    whose units form a cyclic data dependency (each reads what another
    writes, transitively back to itself) cannot be linearised; the runner
@@ -81,7 +92,9 @@ complete execution plan:
    walks the union of the fiber's units' write masks against the
    per-store size fold: columns at type-native stride, resource values
    at their `Seq`/`Map` collection footprint (`Field` scalars ride the
-   register budget), accumulators and virtuals zero. A fiber with no
+   register budget), accumulators and virtuals zero. A write through a
+   `Written` member is sized as a write of its column, and a read with
+   a reach adds nothing, the formula being write-only. A fiber with no
    write bytes takes the `MAX_MORSEL` window. Output
    includes `micro_morsel_interval: USize` alongside the window
    per Topic 7 amendment. Default `MICRO_MORSEL_INTERVAL = 64` records.
@@ -106,8 +119,28 @@ Step 12 produces a per-unit predecessor mask keyed by carrier position (the
 position the dispatch walk threads). At `Scheduler::run()` entry the engine
 seeds a dirty set from per-root change signals: a `PlanAffecting` resource
 swapped via `replace_resource`, a non-plan-affecting value swapped via
-`replace_value`, an input the consumer marked changed, or the cold first frame
-after build where every root is dirty. It propagates the seed forward over the
+`replace_value`, an input the consumer marked changed, a store a maintenance
+unit changed, a buffered column the last pass's boundary brought a change
+into, or the cold first frame
+after build where every root is dirty. So far the engine takes a seed from a
+unit's write for maintenance units and for buffered columns alone, where the
+counters are meant to mark every write (see "Left for later" under "The value
+function and the close"). A write of a buffered column is seen by nobody in
+its own pass, whatever the writer's rank, so the boundary that brings it in
+makes the store's readers dirty for the next pass, as `replace_value` does
+for the readers of a swapped value. An ordinary unit that read a store before a
+close unit wrote it has not seen that write, so the write makes the store's
+readers dirty for the next pass. A store a unit on the leading meta bands
+writes is taken as changed in every pass the unit runs, so its readers
+dispatch in that pass, as the readers of the scheduler metrics do. Whether a
+write changed the store is the writing unit's declaration (the api's
+"What counts as changed"): a `Differs` member counts only where a value
+differed, a `Written` member wherever the unit wrote, and a bare member
+takes the first under a value function and the second under a write by
+position. A field that has settled under a comparing unit therefore seeds
+nothing and its readers rest. The compare is made for a maintenance unit's
+writes and for the writes of a buffered column alone, since no other write
+is read for a seed, and the mark is kept per store. It propagates the seed forward over the
 predecessor masks in carrier order (`dirty[j] |= dirty[i]` for every edge
 `i to j`) and skips any unit whose entire predecessor set is clean: a unit whose
 input cone did not change produces identical output whether it runs or not, so
@@ -360,8 +393,10 @@ the checklist names the regressing symbol regardless of whether the slowdown
 surfaced in a particular bench size.
 
 The realized within-fiber fusion for a linear chain is a type-level fold. A
-fiber whose units are each a pure per-record map (the opt-in fusion contract in
-the api crate: read one column, write one column, value to value) and which
+fiber whose units are each a pure per-record map (a `RecordOp` of the api crate
+whose read list is one column and whose write list is one column, value to
+value; a `RecordOp` over longer lists, a wrapper member or another store is
+not folded yet and runs per unit through its own `execute`) and which
 link as a read-after-write chain folds into a single fused unit whose body runs
 the maps as composed monomorphised calls, every intermediate a register local,
 only the chain's final output column stored. The fold is the canonical spec's
@@ -987,7 +1022,8 @@ barrier already orders meta bands across cores; the plan-band skip mirrors the
 single-core dispatch (the leading plan-phase count is precomputed with the
 grouping at the first call, the frame's plan-dirty signal is read under the
 publish/await happens-before, and the worker loop starts past the plan band on
-a clean frame). On the unit-outer path (accumulator-bearing carriers), the meta
+a clean frame; "The value function and the close" below says which core runs a
+meta band there). On the unit-outer path (accumulator-bearing carriers), the meta
 bands run exactly once per frame on a designated core, ordered around the
 per-core record slices by the worker barrier: the designated core dispatches
 the leading meta bands, every core crosses a barrier, the cores run the
@@ -1177,7 +1213,8 @@ bundle, the store access set, the platform tuple). The fourth,
 `StoreValues`, is a value-carrying cons-list aligned with `Stores`:
 `.with` routes each registered value through a `RouterKind` tag on its
 dispatch router and a `Place` view, so store carriers (a
-`StagedResource<T>`, a `Column<T>`, a `Virtual<T>`) are retained on
+`StagedResource<T>`, a `Started<S>` for a column plain or buffered, an
+`Accum<T>`, a `Virtual<T>`) are retained on
 `StoreValues` in registration order. WorkUnit values are retained too,
 on a parallel WorkUnit-value list (the value-carrying unit cons-list the
 run walk consumes): the WorkUnit placement kind appends each registered
@@ -1235,7 +1272,7 @@ it to the plan computation in place of the zero placeholder, and the
 `StoreId` continued past the resource columns, recording the real
 `ColumnPtr<T>` and count in the `ColumnBinding` (no longer a dangling
 placeholder). The `Accum<T>` drain arm reserves a column the same way
-(capacity sized to the record count this round) and records the
+(capacity sized to the frame record count) and records the
 `ColumnPtr<T>` plus a `Cell` live-length in the `AccumBinding`; the
 live-length starts at zero and a WorkUnit advances it by appending during
 the frame, with a later PassEnd drain reading the populated prefix. An
@@ -1263,6 +1300,147 @@ accumulator columns (records appended during the frame, drained at PassEnd
 with the persistence spine) and Kit-contributed units (a Kit hands the
 builder unit types, not instances).
 
+### The value function and the close
+
+The api lets a body be written as a value function, adds the wrapper
+members and the buffered column, and names the close band's work. This
+section says what each asks of the engine and what the engine leaves for
+later. The record count stays the one figure `build` takes.
+
+`map` is the engine's `EachApi` implementation beside `run`, and a unit
+reaches it from `execute` as it reaches `run`. For each position of the
+bound window it gathers the values of the unit's read list from the
+projected columns and resources, calls the function, and scatters what it
+returns: a column value is stored at the position, a present accumulator
+value is appended, a set virtual flag fires. An append from `map` past the
+accumulator's capacity is handled as any append is, by what the run
+configuration says of overflow. The gather and the scatter are type-level
+walks over the lists, so a body written as a value function monomorphises
+into the straight-line loop a positional body does. For a member under
+the `Differs` rule the scatter compares the returned value with the value
+the record holds before it stores, and sets the store's changed mark only
+where the two differ. For a member under `Written` the mark is set when
+the unit wrote. The positional `write` goes through the same member, so
+it stores and marks by the rule the unit declared. For an ordinary unit's
+plain column the scatter makes no compare, since nothing reads that mark
+yet. A `Window` holds the base of the side it reads, the record's index
+and the column's count, and `before` and `after` answer from those.
+
+A column, plain or buffered, comes to the drain as one carrier, a
+`Started<S>` of its marker `S`, and the drain is one for both. The
+marker says the kind of the column through `Kept`, a trait of the
+engine's own over the api's `Starts`: a plain column is one reservation
+of the record count, read and written in place, and a buffered column
+is two reservations of one layout under one store id. All are made at
+plan time and none ever moves. The drain reserves by the kind, takes
+the value the store was registered with out of the carrier and writes
+it to every record of every reservation, so no read of a column reaches
+memory nothing wrote: not a read of a plain column ahead of its writer
+in the first pass, not the compare of a write against the value a
+record holds, and not a read of either side of a buffered one. Both
+sides of a buffered column are written and not the frozen one alone:
+under `Snapshot` the boundary copies the whole live side over the
+frozen one, and under `Exchange` the live side becomes it, so a record
+no unit wrote in the first pass has to hold the start on the live side
+too. The engine has the one path, and which of the api's constructors
+made the value does not reach it. Of a buffered column's two
+reservations one is the frozen side
+and the other the live side, and the dispatch binds both bases into a
+unit's context when it binds the frame's contexts. The gather reads the
+frozen base and the scatter stores at the live base, for a unit of any
+rank. Under `Differs` the scatter compares against the frozen value at
+the record, which is the value every reader of the pass sees, and it
+stores on the live side whether the two differ or not, since the live
+side does not hold the frozen value to begin with. The mark of a
+buffered column is read whatever unit wrote it.
+
+The boundary of a buffered column is the engine's and no unit's. It runs
+after the last unit of the ScheduleEnd band, with the workers parked,
+which is the point between passes where `replace_value` is legal, and it
+is plumbing as the accumulator reset at frame start is. For each buffered
+column whose mark the pass set it makes the live side the frozen one and
+marks the store dirty for the next pass. A buffered column nobody changed
+is not touched. Under `Snapshot` the engine copies the live side over the
+frozen one, the whole column for now. Under `Exchange` it flips an index
+that says which reservation is frozen, and the next binding of the
+contexts reads the index, so no base pointer changes and nothing is
+copied. The side a pass writes under `Exchange` holds the values of two
+passes before, which is why the api reaches a buffered column through
+the value function alone: the function is applied at every record of the
+unit's range, so the live side is whole when the boundary takes it.
+
+Every engine fold that reads a unit's lists (the access masks in
+`plan::grouping`, the bundle folds) reads the store each member stands
+for, so the planner's steps see a wrapper as its store. Two things are
+read from the wrapper itself. A const assertion at `build` refuses a unit
+whose write mask holds a plain column its read list names with a reach.
+The assertion folds the masks at the dimensions `build` computes the plan
+at, which it is handed and does not name for itself. It is the associated
+constant `HOLDS` of `ReachRule`, a public type over the units, the stores
+and the plan dimensions, so a caller that plans at dimensions of its own
+asks the same rule at those, and a bundle with more units than the
+dimensions hold fails the fold where a silent pass would have been.
+And a read-after-write edge into a read with a reach is a phase boundary:
+the writer's whole range lands, on every core, before the reader's phase
+starts. The plan already keeps work that needs all of its input before
+its first output out of a fiber; a read with a reach asks for the wider
+boundary, since the writer's records on other cores are part of that
+input. Neither holds for a buffered column. A reach over one reads the
+frozen side, which no unit of the pass writes, so the unit may write the
+store it reads with a reach and no boundary is asked for.
+
+The boundary holds on every path that hands the record range to more than
+one core. The phase loop of `run_parallel` keeps it by the barrier between
+two phases. A carrier with an accumulator takes the unit-outer path, where
+each core walks the whole carrier over its own slice of the records and no
+phase loop runs, so there the walk is cut ahead of each consumer unit that
+reads with a reach behind a writer: every core finishes the units before
+the cut on its slice and crosses the same barrier the phases use, and only
+then does any core start the reader. Where the cuts fall is a property of
+the registered units and folds at compile time, so a carrier with no such
+reader walks as it did and crosses no barrier.
+
+The close is the ScheduleEnd meta band and needs no walk of its own. What
+the api asks for it is the cross-rank sequence of plan step 1, the close
+band's seed of the next pass's dirty set (under "Incremental skip" above),
+the boundary of the buffered columns after the band's last unit, and the
+accumulator reader on the meta context. The reader walks the
+populated prefix of the accumulator's binding, and after the workers of
+`run_parallel` have joined it walks the per-core regions in core sequence.
+The sequence a close unit meets the values in therefore depends on the
+worker count, as the records an accumulator kept already do, and a close
+unit whose apply does not commute gets a result that depends on it too.
+Accumulators are reset at frame start, so a close unit reads the appends
+of its own pass and a plan-stage unit reads only what the leading meta
+bands appended before it.
+
+A meta band is dispatched once per frame by one core over the whole
+record range, and no consumer unit runs while it does. That holds under
+`run` and on both worker paths of `run_parallel`: on the unit-outer path
+the designated core dispatches the band between the barriers, and on the
+phase-loop path one core runs the band's phases over the whole range
+while the others wait at the waist barrier, so a meta unit does not ride
+the per-core record slices there either. The api's maintenance units
+lean on this for a write at a record named from data. A close unit's
+loop over records is single-core for now.
+
+Left for later, with nothing in an author's unit changing when each is
+lifted. The fused fold takes one-column maps only. A `Window` computes its
+neighbour's position per read. The changed mark is per store where the
+generation counters would carry it per morsel, and within a pass the skip
+stays structural: a successor of a unit that ran is dirty whether or not
+the unit changed anything. An ordinary unit's declaration of what
+counts as changed on a plain column is in its types and is not read yet,
+for the same reason. The `Snapshot` boundary copies the whole live side
+where the marks per morsel would let it copy the morsels that changed.
+Which of the two modes costs less at which column size is not measured.
+An ordinary unit that reads a plain column it writes
+itself is seeded for the next pass by the consumer marking its input, as
+before, and not by its own write, which is short of a counter bumped on
+every write.
+<!-- FIXME(placeholders_tagged_8c7cc9768579): an ordinary unit's write of a plain column seeds nothing, its changed mark is not read, and the snapshot boundary copies whole columns -->
+<!-- FIXME(placeholders_tagged_ecb940c91d26): which buffer mode pays at which column size waits on its bench -->
+
 The builder takes one verb: `.with(value)`. Every type accepted by
 `.with` impls the sealed `Provider` trait declared in
 `hilavitkutin-api`. The trait routes per-kind typestate updates
@@ -1277,7 +1455,7 @@ Scheduler::builder()
     .with(MyThreadPool::new(8))          // platform: threads
     .with(MyClock)                       // platform: clock
     .with(Resource::new(GameState::default())) // store: stateful
-    .with(Column::<Player>::new())       // store: zero-data
+    .with(Column::<Player>::start())     // store: a column and its start
     .with(Virtual::<Tick>::new())        // store: zero-data
     .with(LinkedBin::<dyn LinterApi>::new()) // store: extension bin
     .with(InternerKit)                   // kit: declarative bundle
@@ -1314,9 +1492,11 @@ The single `.with` method routes each registration through
 `P::Dispatch`. A `WorkUnit` provider (kind `WorkUnit`) carries
 `Dispatch = UnitDispatch<Self>`, which appends `Self` onto the
 `Wus` accumulator (registration order becomes the carrier type order).
-A store provider (`Resource<T>`, `Column<T>`,
-`Virtual<T>`, `LinkedBin<T>`) carries `Dispatch = StoreDispatch<Self>`,
-which prepends onto `Stores`. A `Kit` provider carries `Dispatch
+A store provider (`Resource<T>`, a column carried with its start by
+`Started<S>`, `Virtual<T>`, `LinkedBin<T>`) carries
+`Dispatch = StoreDispatch<Self>`, which prepends onto `Stores`. A bare
+`Column<T>` or `Buffered<T, M>` is no provider: it names the column in
+a unit's lists, and `.with` refuses it. A `Kit` provider carries `Dispatch
 = KitDispatch<Self>`, which concats `K::Units` into `Wus` and
 `K::Owned` into `Stores`. A platform provider (memory, thread pool,
 clock) carries `Dispatch = PlatformDispatch<Self>`, which prepends
@@ -1357,9 +1537,9 @@ the `Contains` `#[diagnostic::on_unimplemented]` message:
 
 ```text
 note: store `Empty` does not contain `Resource<Interner>`. Register it with
- `.with(Resource::new(value))`, `.with(Column::<Interner>::new())`,
- `.with(Virtual::<Interner>::new())`, or install a Kit that owns it
- via `.with(MyKit)`.
+ `.with(Resource::new(value))`, `.with(Column::<T>::start())`,
+ `.with(Virtual::<T>::new())`, or install a Kit that owns it via
+ `.with(MyKit)`.
 ```
 
 The error names the missing store directly, by type, on the first
@@ -1386,7 +1566,7 @@ into the bundle and `K::Owned` into the stores via `KitDispatch<K>`
 typestate routing. Order matters for the `ContainsAll` proof at
 `.build()`: a Kit whose WUs read from another Kit's Owned state
 must come after the owning Kit in the builder chain (or after the
-relevant `.with(Resource::new(value))` / `.with(Column::<T>::new())`
+relevant `.with(Resource::new(value))` / `.with(Column::<T>::start())`
 calls).
 
 ### `Scheduler::replace_value` and `Scheduler::replace_resource`
@@ -1443,6 +1623,31 @@ per-fiber status (Completed / Failed / Poisoned).
 
 R2 APIs: evict/dump + inject/import for column persistence.
 hilavitkutin owns generation counters; consumer owns storage.
+
+## What the entries are held to
+
+`run`, `run_parallel` and `run_fused` are three ways through one frame, and
+the frame has one meaning. It is stated outside this crate, by the reference
+runner of `hilavitkutin-conformance`, which is written against the api and
+plans nothing: the units in the sequence they are registered, each over every
+record, every `Always` unit in every frame. Each entry is run on the frozen
+author units beside the reference from one starting state, and after every
+frame the stores of the two are written down as words and compared. The
+comparison lives in the tests of `hilavitkutin-frozen-authors`, since that
+crate is the consumer the engine and the reference both serve.
+
+Three properties of this crate are what that comparison leans on. The
+incremental skip may rest a unit only where its output would have been the
+same, so an entry that skips equals a reference that never does. The merge of
+the per-core accumulator regions gives the appends in the sequence of the
+records, so an accumulator compares value by value at every worker count while
+nothing is refused. And a buffered column is read on its frozen side by every
+unit of a pass, on every core, so what a unit reads there does not depend on
+which core wrote first.
+
+A frame in which an entry and the reference differ is a defect of the entry.
+It stays a failing test until the entry is fixed, and the reference is not
+changed to agree.
 
 ## Platform implementations (domain 02)
 

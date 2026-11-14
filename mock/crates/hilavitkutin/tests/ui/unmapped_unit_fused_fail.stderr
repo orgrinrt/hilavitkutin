@@ -1,4 +1,4 @@
-error[E0277]: `MapWu` does not declare a per-record map for fusion
+error[E0277]: `MapWu` does not name its value function for fusion
    --> tests/ui/unmapped_unit_fused_fail.rs:116:19
     |
 116 |     let outcome = scheduler.run_fused();
@@ -9,19 +9,5 @@ help: the trait `RecordOp` is not implemented for `MapWu`
     |
  65 | struct MapWu;
     | ^^^^^^^^^^^^
-    = note: Implement `RecordOp` on a WorkUnit that is a pure per-record map (one column in, one column out, no cross-record state) to let the engine fuse a linear chain of such units. Declare `type In`, `type Out`, and `fn apply(&self, x: In) -> Out`. A unit with cross-record state (an accumulator) does not implement `RecordOp`.
-help: the following other types implement trait `FuseCarrier`
-   --> src/dispatch/fusion.rs
-    |
-    | / impl<H> FuseCarrier for WuCons<H, WuNil>
-    | | where
-    | |     H: RecordOp + Copy,
-    | |_______________________^ `WuCons<H, WuNil>`
-...
-    | / impl<H, H2, T> FuseCarrier for WuCons<H, WuCons<H2, T>>
-    | | where
-    | |     H: RecordOp + Copy,
-    | |     WuCons<H2, T>: FuseCarrier,
-    | |     <WuCons<H2, T> as FuseCarrier>::Chain: OpChain<In = <H as RecordOp>::Out>,
-    | |______________________________________________________________________________^ `WuCons<H, WuCons<H2, T>>`
-    = note: required for `WuCons<MapWu, WuNil>` to implement `FuseCarrier`
+    = note: Implement `RecordOp` on a WorkUnit whose body is a value function: `fn apply(&self, read: &ReadVals<'_, Self::Read>) -> WriteVals<Self::Write>`, and write `execute` as `ctx.each().map(|r| self.apply(r))`.
+    = note: required for `MapWu` to implement `Link`

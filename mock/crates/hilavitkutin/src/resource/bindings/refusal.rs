@@ -5,7 +5,7 @@ use hilavitkutin_api::AccumRefused;
 use notko::Maybe;
 use notko::lend::Exhausted;
 
-use super::{AccumBinding, BindingNil, ColumnBinding, ResourceBinding, VirtualBinding};
+use super::{AccumBinding, BindingNil, ColKind, ColumnBinding, ResourceBinding, VirtualBinding};
 
 /// Find the first accumulator, in registration order, that refused an append.
 ///
@@ -39,7 +39,7 @@ impl<T, Tail: FirstRefusal> FirstRefusal for ResourceBinding<T, Tail> {
     }
 }
 
-impl<T, Tail: FirstRefusal> FirstRefusal for ColumnBinding<T, Tail> {
+impl<T, Tail: FirstRefusal, K: ColKind> FirstRefusal for ColumnBinding<T, Tail, K> {
     #[inline]
     fn first_refusal(&self, seen: &mut USize) -> Maybe<AccumRefused> {
         self.tail.first_refusal(seen)

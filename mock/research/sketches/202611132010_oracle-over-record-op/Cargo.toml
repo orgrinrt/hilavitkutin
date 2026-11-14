@@ -1,0 +1,33 @@
+# Sketch: a one-thread runner over `RecordOp`, written against the api alone.
+# Its own workspace, so the repository's build never sees it. The lockfile
+# beside it starts as a copy of `mock/Cargo.lock`, so the git dependencies
+# resolve to the revisions the repository builds with.
+
+[workspace]
+
+[package]
+name = "oracle-over-record-op"
+edition = "2024"
+publish = false
+version = "0.0.0"
+
+[lib]
+path = "src/lib.rs"
+
+[features]
+# The control: the oracle reads the live side of a buffered column where it
+# should read the frozen one. `cargo test --features reads-live` must fail.
+reads-live = []
+
+[dependencies]
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+# The author units name the engine's context type, as every unit does today.
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
+arvo-tensor = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
+arvo-hash = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+notko-hlist = { git = "https://github.com/orgrinrt/notko.git", branch = "dev" }
+
+[patch."ssh://git@github.com/orgrinrt/notko.git"]
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev" }

@@ -10,6 +10,7 @@
 use arvo::strategy::{Additive, Identity};
 use arvo::{Bool, USize};
 use arvo_tensor::Capacity;
+use hilavitkutin_api::meta::RANK_CONSUMER;
 
 use super::access::AccessMask;
 
@@ -48,6 +49,14 @@ pub struct PlanInputs<CU: Capacity, CS: Capacity> {
     pub writes:        <CU as Capacity>::Array<AccessMask<CS>>,
     /// Read-only mask per unit.
     pub reads:         <CU as Capacity>::Array<AccessMask<CS>>,
+    /// The stores of `reads` a unit reads at the frozen side: the buffered
+    /// columns. A read of one waits for no writer, so step 1 builds its
+    /// read-after-write edges from `reads` without these. Empty by default,
+    /// which is every read waiting.
+    pub frozen:        <CU as Capacity>::Array<AccessMask<CS>>,
+    /// Lifecycle rank per unit (`meta::RANK_*`). Step 1 builds no edge that
+    /// would run against the ranks. Consumer rank by default.
+    pub ranks:         <CU as Capacity>::Array<USize>,
     /// Commutativity flag per unit (COMMUTATIVE scheduling hint).
     pub commutative:   <CU as Capacity>::Array<Bool>,
     /// Number of units actually populated (0..=unit capacity).
@@ -77,6 +86,8 @@ impl<CU: Capacity, CS: Capacity> PlanInputs<CU, CS> {
             access:        <CU as Capacity>::filled(AccessMask::empty()),
             writes:        <CU as Capacity>::filled(AccessMask::empty()),
             reads:         <CU as Capacity>::filled(AccessMask::empty()),
+            frozen:        <CU as Capacity>::filled(AccessMask::empty()),
+            ranks:         <CU as Capacity>::filled(RANK_CONSUMER),
             commutative:   <CU as Capacity>::filled(Bool::FALSE),
             unit_count:    <USize as Identity<Additive>>::IDENTITY,
             record_count:  <USize as Identity<Additive>>::IDENTITY,
@@ -91,6 +102,7 @@ impl<CU: Capacity, CS: Capacity> Copy for PlanInputs<CU, CS>
 where
     <CU as Capacity>::Array<AccessMask<CS>>: Copy,
     <CU as Capacity>::Array<Bool>: Copy,
+    <CU as Capacity>::Array<USize>: Copy,
     <CS as Capacity>::Array<USize>: Copy,
 {
 }
@@ -99,6 +111,7 @@ impl<CU: Capacity, CS: Capacity> Clone for PlanInputs<CU, CS>
 where
     <CU as Capacity>::Array<AccessMask<CS>>: Copy,
     <CU as Capacity>::Array<Bool>: Copy,
+    <CU as Capacity>::Array<USize>: Copy,
     <CS as Capacity>::Array<USize>: Copy,
 {
     fn clone(&self) -> Self {

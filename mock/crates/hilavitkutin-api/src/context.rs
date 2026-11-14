@@ -1,9 +1,10 @@
 //! Provider API and accessor traits for the WU context.
 //!
-//! Seven API traits cover the surface a WU `execute` body can touch:
-//! column read/write, resource fetch, virtual fire, each/batch/reduce
-//! iteration. Each API trait is access-set-parameterised so call
-//! sites prove membership via `Contains<...>` at compile time.
+//! The API traits cover the surface a WU `execute` body can touch:
+//! column read/write, accumulator append and read, resource fetch,
+//! virtual fire, each/batch/reduce iteration. Each API trait is
+//! access-set-parameterised so call sites prove membership via
+//! `Holds<...>` at compile time.
 //!
 //! The `HasX` accessor traits come from `hilavitkutin-ctx`'s
 //! `provider_generic!` / `provider_generic2!` macros. They do not
@@ -13,9 +14,11 @@
 use arvo::USize;
 use hilavitkutin_ctx::{provider_generic, provider_generic2};
 
-use crate::access::{AccessSet, Contains};
+use crate::access::{AccessSet, Holds};
 use crate::column_value::ColumnValue;
 use crate::store::{Accum, Column, Resource, Virtual};
+use crate::values::{ReadSet, ReadVals, WriteSet, WriteVals};
+use crate::write_at::WriteAt;
 
 // ---------------------------------------------------------------------
 // Keyed-resolution bridge traits.
@@ -54,16 +57,31 @@ pub trait ResolveColumnRead<T: ColumnValue, I> {
 
 /// Resolve a column write of `T` at the inferred bundle index `I`.
 pub trait ResolveColumnWrite<T: ColumnValue, I> {
-    /// Write `v` to the record at index `i` of the projected column `T`.
+    /// Write `v` to the record at index `i` of the projected column `T`, and
+    /// count the store as changed.
     ///
     /// # Safety
     ///
     /// Caller must hold the exclusive writer slot for `T` at `i`.
     unsafe fn resolve_write(&self, i: USize, v: T);
+
+    /// The value the record at index `i` holds, for a member that compares.
+    ///
+    /// # Safety
+    ///
+    /// Caller must hold the exclusive writer slot for `T` at `i`.
+    unsafe fn resolve_held(&self, i: USize) -> T;
 }
 
 /// Resolve an accumulator append of `T` at the inferred bundle index `I`.
-pub trait ResolveAccumAppend<T: ColumnValue, I> {
+///
+/// # Safety
+///
+/// Safe to call and `unsafe` to implement. The implementor holds that the
+/// context a unit is handed reaches one thread at a time, that a runner
+/// splitting a unit over threads gives each thread a binding of its own, and
+/// that each binding is the one appender of its region.
+pub unsafe trait ResolveAccumAppend<T: ColumnValue, I> {
     /// Append `v` at the accumulator's live offset, or refuse it.
     ///
     /// Every call is counted as asked. The record is written and the live
@@ -76,15 +94,36 @@ pub trait ResolveAccumAppend<T: ColumnValue, I> {
     /// can refuse while another still accepts: the records kept depend on the
     /// worker count, and the `AccumRefused` value does not. The run returns the
     /// first refusing accumulator as an `AccumRefused` through `RunCfg::Out`.
-    ///
-    /// # Safety
-    ///
-    /// Caller must hold the exclusive appender slot for `T`. Plan-time DAG
-    /// analysis proves it; the capacity is not a caller obligation.
-    unsafe fn resolve_append(&self, v: T);
+    fn resolve_append(&self, v: T);
 
     /// The current live length of the projected accumulator `T`.
     fn resolve_len(&self) -> USize;
+}
+
+/// Resolve a read of everything appended to accumulator `T` this pass, at
+/// the inferred bundle index `I`.
+///
+/// # Safety
+///
+/// Safe to call and `unsafe` to implement. The implementor holds that the
+/// reader is handed only regions no appender is still writing.
+pub unsafe trait ResolveAccumRead<T: ColumnValue, I> {
+    /// Call `f` once for every value appended so far in this pass.
+    fn resolve_each<F: FnMut(T)>(&self, f: F);
+}
+
+/// Apply a value function over the records of the bound morsel.
+///
+/// The bridge `EachApi::map` resolves through. A runner implements it on
+/// its context for the read and write lists it can gather and store: it
+/// forms the read product at each record, applies `f`, and stores what `f`
+/// returns (a column value at the record, a present accumulator value by an
+/// append, a set virtual by firing it).
+pub trait ResolveMap<R: ReadSet, W: WriteSet> {
+    /// Apply `f` at every record of the morsel and store its results.
+    fn resolve_map<F>(&self, f: F)
+    where
+        F: for<'a> Fn(&ReadVals<'a, R>) -> WriteVals<W>;
 }
 
 /// Resolve the fire for virtual `V` through the projected write-virtual bundle
@@ -116,7 +155,7 @@ pub trait ColumnReaderApi<R: AccessSet> {
     /// DAG analysis proves this; WU bodies should not re-check.
     unsafe fn read<T: ColumnValue, I>(&self, i: USize) -> T
     where
-        R: Contains<Column<T>>,
+        R: Holds<Column<T>>,
         Self: ResolveColumnRead<T, I>;
 }
 
@@ -128,13 +167,24 @@ pub trait ColumnReaderApi<R: AccessSet> {
 pub trait ColumnWriterApi<W: AccessSet> {
     /// Write `v` to the record at index `i` of column `T`.
     ///
+    /// Reaches a column the unit lists bare, under `Written` or under
+    /// `Differs`, and does what the member says: under `Differs` the value is
+    /// compared with the one the record holds, and an equal one is neither
+    /// stored nor counted as a change.
+    ///
     /// # Safety
     ///
-    /// Caller must hold the exclusive writer slot for `T` at `i`.
+    /// Caller must hold the exclusive writer slot for `T` at `i`: `i` is
+    /// below the record count of the window, and the plan gave this unit
+    /// the record.
+    #[inline(always)]
     unsafe fn write<T: ColumnValue, I>(&self, i: USize, v: T)
     where
-        W: Contains<Column<T>>,
-        Self: ResolveColumnWrite<T, I>;
+        (W, Self): WriteAt<T, I, Ctx = Self>,
+    {
+        // SAFETY: the caller's obligation, passed on unchanged.
+        unsafe { <(W, Self) as WriteAt<T, I>>::write_at(self, i, v) }
+    }
 }
 
 /// Append access to accumulators declared in `W`.
@@ -158,19 +208,53 @@ pub trait AccumWriterApi<W: AccessSet> {
     /// per morsel, so a fixed number of appends issued directly in `execute`
     /// repeats per morsel when the record range spans more than one.
     ///
-    /// # Safety
-    ///
-    /// Caller must hold the exclusive appender slot for `T`.
-    unsafe fn append<T: ColumnValue, I>(&self, v: T)
+    /// Safe, and takes no position: an append names no record. It lands at
+    /// the accumulator's own live length, which the plumbing keeps.
+    #[inline(always)]
+    fn append<T: ColumnValue, I>(&self, v: T)
     where
-        W: Contains<Accum<T>>,
-        Self: ResolveAccumAppend<T, I>;
+        W: Holds<Accum<T>>,
+        Self: ResolveAccumAppend<T, I>,
+    {
+        self.resolve_append(v)
+    }
 
-    /// The current live length of accumulator `T`.
+    /// The live length of the binding the body appends to accumulator `T`
+    /// through.
+    #[inline(always)]
     fn len<T: ColumnValue, I>(&self) -> USize
     where
-        W: Contains<Accum<T>>,
-        Self: ResolveAccumAppend<T, I>;
+        W: Holds<Accum<T>>,
+        Self: ResolveAccumAppend<T, I>,
+    {
+        self.resolve_len()
+    }
+}
+
+/// Read access to what the pass appended to the accumulators declared in
+/// `R`.
+///
+/// A runner implements it on the context of a maintenance unit and on no
+/// other, so an ordinary unit's context cannot name it.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` does not provide accumulator-read API for set `{R}`",
+    note = "Only the context of a maintenance unit (one scheduled `OnMeta<V>`) reads what a pass appended. An ordinary unit appends, and a unit at the close reads and applies."
+)]
+pub trait AccumReaderApi<R: AccessSet> {
+    /// Call `f` once for every value appended to accumulator `T` in this
+    /// pass so far.
+    ///
+    /// On one thread the values come in the sequence they were appended.
+    /// After a parallel run they come region by region, one region for each
+    /// core, so their sequence depends on the worker count.
+    #[inline(always)]
+    fn each<T: ColumnValue, I, F: FnMut(T)>(&self, f: F)
+    where
+        R: Holds<Accum<T>>,
+        Self: ResolveAccumRead<T, I>,
+    {
+        self.resolve_each(f)
+    }
 }
 
 /// Shared-resource fetch for resources declared in `R`.
@@ -182,7 +266,7 @@ pub trait ResourceProviderApi<R: AccessSet> {
     /// Borrow the resource value of type `T`.
     fn resource<T: 'static, I>(&self) -> &T
     where
-        R: Contains<Resource<T>>,
+        R: Holds<Resource<T>>,
         Self: ResolveResource<T, I>;
 }
 
@@ -199,7 +283,7 @@ pub trait VirtualFirerApi<W: AccessSet> {
     /// inferred at the call site (`ctx.fire::<V>()` needs no second turbofish).
     fn fire<V: 'static, I>(&self)
     where
-        W: Contains<Virtual<V>>,
+        W: Holds<Virtual<V>>,
         Self: ResolveVirtualFire<V, I>;
 }
 
@@ -217,6 +301,25 @@ pub trait EachApi<R: AccessSet, W: AccessSet> {
     fn run<F>(&self, f: F)
     where
         F: FnMut(USize);
+
+    /// Apply the value function `f` at every record of the morsel.
+    ///
+    /// `f` takes the values of the read list at one record and returns the
+    /// values of the write list at that record. The runner stores what it
+    /// returns: a column value at the record, a present accumulator value by
+    /// an append, a set virtual by firing it. `f` must be a pure function of
+    /// its reads: it may be applied to the records in any sequence and on
+    /// any thread.
+    #[inline(always)]
+    fn map<F>(&self, f: F)
+    where
+        R: ReadSet,
+        W: WriteSet,
+        Self: ResolveMap<R, W>,
+        F: for<'a> Fn(&ReadVals<'a, R>) -> WriteVals<W>,
+    {
+        self.resolve_map(f)
+    }
 }
 
 /// Morsel-slice loop; non-fusible.
@@ -254,6 +357,8 @@ pub trait ReduceApi<R: AccessSet, W: AccessSet> {
 provider_generic!(<R: AccessSet> ColumnReaderApi as HasColumnReader => reader);
 provider_generic!(<W: AccessSet> ColumnWriterApi as HasColumnWriter => writer);
 provider_generic!(<W: AccessSet> AccumWriterApi as HasAccumWriter => accums);
+// Maintenance contexts only.
+provider_generic!(<R: AccessSet> AccumReaderApi as HasAccumReader => appended);
 provider_generic!(<R: AccessSet> ResourceProviderApi as HasResourceProvider => resources);
 provider_generic!(<W: AccessSet> VirtualFirerApi as HasVirtualFirer => virtuals);
 provider_generic2!(<R: AccessSet, W: AccessSet> EachApi as HasEach => each);

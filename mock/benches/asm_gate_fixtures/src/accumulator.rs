@@ -4,9 +4,9 @@ use super::*;
 
 // ----- fixture 3: accumulator appender via run() (unit-outer never-gated path) -----
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct AInv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)] // appended by the WU, read back post-run as raw u32 for the hash
 struct AAv(u32);
 
@@ -46,7 +46,7 @@ impl WorkUnit<Always> for AppendChain {
 pub extern "C" fn asm_gate_accumulator() -> u64 {
     let provider = HeapBump::new(arena_bytes(2, N));
     let mut sched = Scheduler::builder()
-        .with(Column::<AInv>::new())
+        .with(Column::<AInv>::start())
         .with(Accum::<AAv>::new())
         .with(AppendChain)
         .build(store(provider), USize(N))

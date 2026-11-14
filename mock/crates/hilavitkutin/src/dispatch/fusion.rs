@@ -1,7 +1,8 @@
 //! Within-fiber linear fusion (domain 17, the deep-single-fiber rust-pipe).
 //!
 //! A fiber that is a straight read-after-write chain of opt-in per-record maps
-//! (`RecordOp`, the api fusion contract) folds at the type level into one fused
+//! (`RecordOp`, the api fusion contract, over one read `Column` and one write
+//! `Column`, which is a `Link`) folds at the type level into one fused
 //! work unit, `ChainWu`, whose body runs the maps as composed monomorphised
 //! calls with every intermediate held in a register. Dead-store elimination
 //! under fat LTO removes the intermediate-column memory traffic, so only the
@@ -33,13 +34,19 @@ use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::column_value::ColumnValue;
 use hilavitkutin_api::context::{
-    ColumnReaderApi, ColumnWriterApi, EachApi, HasColumnReader, HasColumnWriter, HasEach,
+    ColumnReaderApi,
+    ColumnWriterApi,
+    EachApi,
+    HasColumnReader,
+    HasColumnWriter,
+    HasEach,
 };
 use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
 use hilavitkutin_api::store::Column;
+use hilavitkutin_api::values::{RCons, RNil};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_api::work_unit_values::{WuCons, WuNil};
-use hilavitkutin_api::RecordOp;
+use hilavitkutin_api::{ReadVals, RecordOp};
 
 use crate::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 
@@ -84,6 +91,7 @@ impl<T> Default for OpNil<T> {
 impl<T: ColumnValue> OpChain for OpNil<T> {
     type In = T;
     type Out = T;
+
     #[inline(always)]
     fn run_chain(&self, x: T) -> T {
         x
@@ -100,16 +108,53 @@ pub struct OpCons<H, Tl> {
     pub tail: Tl,
 }
 
+/// A unit the fold takes: one whose value function reads one `Column` and
+/// writes one `Column`.
+///
+/// `step` is the unit's `RecordOp::apply` with the one read value in and the
+/// one written value out, so a chain threads values and builds no product
+/// between two links. Every `RecordOp` over such a pair of lists is a `Link`;
+/// one over longer lists, a wrapper or another store is not, and runs per
+/// unit through its own `execute`.
+pub trait Link {
+    /// The value type of the unit's one read column.
+    type In: ColumnValue;
+    /// The value type of the unit's one write column.
+    type Out: ColumnValue;
+    /// The unit's value function at one record.
+    fn step(&self, x: Self::In) -> Self::Out;
+}
+
+impl<H, A, B> Link for H
+where
+    A: ColumnValue,
+    B: ColumnValue + PartialEq,
+    H: RecordOp<Always> + WorkUnit<Always, Read = One<A>, Write = One<B>>,
+{
+    type In = A;
+    type Out = B;
+
+    #[inline(always)]
+    fn step(&self, x: A) -> B {
+        let read = ReadVals::<One<A>>(RCons {
+            head: x,
+            tail: RNil,
+        });
+        self.apply(&read).0.head
+    }
+}
+
 impl<H, Tl> OpChain for OpCons<H, Tl>
 where
-    H: RecordOp,
-    Tl: OpChain<In = <H as RecordOp>::Out>,
+    H: Link,
+    Tl: OpChain<In = <H as Link>::Out>,
 {
-    type In = <H as RecordOp>::In;
+    type In = <H as Link>::In;
     type Out = <Tl as OpChain>::Out;
+
     #[inline(always)]
     fn run_chain(&self, x: Self::In) -> Self::Out {
-        self.tail.run_chain(self.head.apply(x))
+        self.tail.run_chain(self.head.step(x))
     }
 }
 
@@ -132,25 +177,33 @@ pub trait FuseCarrier {
 
 impl<H> FuseCarrier for WuCons<H, WuNil>
 where
-    H: RecordOp + Copy,
+    H: Link + Copy,
 {
-    type Chain = OpCons<H, OpNil<<H as RecordOp>::Out>>;
+    type Chain = OpCons<H, OpNil<<H as Link>::Out>>;
+
     #[inline(always)]
     fn fuse(&self) -> Self::Chain {
-        OpCons { head: self.head, tail: OpNil::new() }
+        OpCons {
+            head: self.head,
+            tail: OpNil::new(),
+        }
     }
 }
 
 impl<H, H2, T> FuseCarrier for WuCons<H, WuCons<H2, T>>
 where
-    H: RecordOp + Copy,
+    H: Link + Copy,
     WuCons<H2, T>: FuseCarrier,
-    <WuCons<H2, T> as FuseCarrier>::Chain: OpChain<In = <H as RecordOp>::Out>,
+    <WuCons<H2, T> as FuseCarrier>::Chain: OpChain<In = <H as Link>::Out>,
 {
     type Chain = OpCons<H, <WuCons<H2, T> as FuseCarrier>::Chain>;
+
     #[inline(always)]
     fn fuse(&self) -> Self::Chain {
-        OpCons { head: self.head, tail: self.tail.fuse() }
+        OpCons {
+            head: self.head,
+            tail: self.tail.fuse(),
+        }
     }
 }
 
@@ -167,22 +220,21 @@ impl<C> ChainWu<C> {
     /// Wrap a folded chain as a fused work unit.
     #[inline(always)]
     pub fn new(chain: C) -> Self {
-        ChainWu { chain }
+        ChainWu {
+            chain,
+        }
     }
 }
 
 impl<C: Send + Sync + 'static> BuilderInput for ChainWu<C> {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 
 impl<C> WorkUnit<Always> for ChainWu<C>
 where
     C: OpChain + Send + Sync + 'static,
 {
-    type Read = One<<C as OpChain>::In>;
-    type Write = One<<C as OpChain>::Out>;
-    type Hint = (Immediate, Atomic, Normal);
     type Ctx<'frame> = EngineCtx<
         'frame,
         One<<C as OpChain>::In>,
@@ -191,6 +243,10 @@ where
         ColPtrCons<<C as OpChain>::In, ColPtrNil>,
         ColPtrCons<<C as OpChain>::Out, ColPtrNil>,
     >;
+    type Hint = (Immediate, Atomic, Normal);
+    type Read = One<<C as OpChain>::In>;
+    type Write = One<<C as OpChain>::Out>;
+
     #[inline]
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {

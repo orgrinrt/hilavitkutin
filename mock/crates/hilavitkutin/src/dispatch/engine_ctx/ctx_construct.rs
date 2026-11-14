@@ -30,7 +30,7 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, M
     /// run-loop) can assemble the value once the tie is established. Never
     /// make this `pub`: a `pub` bundle-taking constructor would let a
     /// caller pair a non-empty access set with a mismatched bundle,
-    /// satisfying the `Contains` proof while resolving through an
+    /// satisfying the `Holds` proof while resolving through an
     /// unrelated bundle and hitting the nil base-case panic.
     #[inline]
     pub(crate) fn from_projected(

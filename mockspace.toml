@@ -51,6 +51,8 @@ hilavitkutin-sym = "#E6F2E6 | #2D6A2D"
 hilavitkutin-str = "#E6F2E6 | #2D6A2D"
 hilavitkutin-kit = "#E6F2E6 | #2D6A2D"
 hilavitkutin-providers = "#E6F2E6 | #2D6A2D"
+hilavitkutin-conformance = "#F7EEE8 | #8A4B2D"
+hilavitkutin-frozen-authors = "#F7EEE8 | #8A4B2D"
 
 # ---------------------------------------------------------------------------
 # Lint configuration
@@ -124,6 +126,37 @@ commit = "error"
 build = "error"
 push = "error"
 
+# A frozen crate is written as a consumer would write it: no feature gate and
+# no raised recursion limit, each of which would hide what the api makes an
+# author do. A frozen crate also changes only through its ledger: every file
+# of the crate outside `tests/`, its manifest and build script included, has
+# a line with its current hash, and no frozen file compiles in a file from
+# elsewhere by a `path` attribute or an `include!` macro.
+# Repo lints, `mock/lints/`, bound to the frozen authors crate alone.
+[lints.frozen-no-outside-source]
+commit = "error"
+build = "error"
+push = "error"
+crates = ["hilavitkutin-frozen-authors"]
+
+[lints.frozen-no-feature-gate]
+commit = "error"
+build = "error"
+push = "error"
+crates = ["hilavitkutin-frozen-authors"]
+
+[lints.frozen-no-recursion-limit]
+commit = "error"
+build = "error"
+push = "error"
+crates = ["hilavitkutin-frozen-authors"]
+
+[lints.frozen-ledger]
+commit = "error"
+build = "error"
+push = "error"
+crates = ["hilavitkutin-frozen-authors"]
+
 # Advisory: vocabulary terms are common English words; warn everywhere,
 # never block. Author suppresses with `// lint:allow(vocabulary-discipline)`.
 [lints.vocabulary-discipline]
@@ -166,6 +199,12 @@ rules = [
     { scope = "hilavitkutin-extensions", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*, hilavitkutin_str::*, hilavitkutin_build::*", reason = "hilavitkutin-extensions is the contract-bound host layer; depends only on hilavitkutin-linking plus substrate. Must not depend on engine, api, ecosystem, or build-time in its runtime source; its build script takes hilavitkutin-build as a build-dependency" },
     { scope = "hilavitkutin-extensions-macros", forbidden = "hilavitkutin::*, hilavitkutin_api::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*, hilavitkutin_str::*, hilavitkutin_build::*, hilavitkutin_linking::*", reason = "proc-macro crate; emitted output references ::hilavitkutin_extensions::* paths only. No other hilavitkutin-crate references at proc-macro runtime or in emission; the build script takes hilavitkutin-build as a build-dependency" },
     { scope = "hilavitkutin-api-macros", forbidden = "hilavitkutin::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*, hilavitkutin_str::*, hilavitkutin_build::*, hilavitkutin_linking::*, hilavitkutin_extensions::*", reason = "proc-macro crate; emitted output references ::hilavitkutin_api::* paths only. No other hilavitkutin-crate references at proc-macro runtime or in emission; the build script takes hilavitkutin-build as a build-dependency" },
+
+    # What the engine is held to. The instruments are written against the api
+    # and never against the engine they hold; the frozen units are a consumer
+    # and name the api and the engine's context type, nothing else of the stack.
+    { scope = "hilavitkutin-conformance", forbidden = "hilavitkutin::*, hilavitkutin_frozen_authors::*, hilavitkutin_kit::*, hilavitkutin_providers::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*, hilavitkutin_str::*, hilavitkutin_build::*, hilavitkutin_linking::*, hilavitkutin_extensions::*", reason = "hilavitkutin-conformance states what a frame means against hilavitkutin-api alone. A reference written against the engine it holds would share the engine's defects; its tests take the engine as a dev-dependency for the context type a unit names" },
+    { scope = "hilavitkutin-frozen-authors", forbidden = "hilavitkutin_conformance::*, hilavitkutin_kit::*, hilavitkutin_providers::*, hilavitkutin_ctx::*, hilavitkutin_persistence::*, hilavitkutin_str::*, hilavitkutin_build::*, hilavitkutin_linking::*, hilavitkutin_extensions::*", reason = "hilavitkutin-frozen-authors is written as a consumer writes units: against hilavitkutin-api, with the engine's context type. Its hand model names neither, and its tests take the instruments as dev-dependencies" },
 
     # Engine consumes arvo bit contracts via the L2 `arvo-bitmask` surface,
     # never directly from L1 `arvo-bits`. Direct L1 coupling would bypass the

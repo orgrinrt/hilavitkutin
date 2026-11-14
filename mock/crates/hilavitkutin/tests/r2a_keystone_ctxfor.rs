@@ -160,8 +160,8 @@ impl WorkUnit<OnMeta<ScheduleEnd>> for AdaptShapedWu {
         let r7: &R7 = ctx.resources().resource();
         let r8: &R8 = ctx.resources().resource();
         let sum = r0.0 + r1.0 + r2.0 + r3.0 + r4.0 + r5.0 + r6.0 + r7.0 + r8.0;
-        // SAFETY: Mark reserved (CAP) and this frame's single append stays in capacity.
-        unsafe { ctx.accums().append::<Mark, _>(Mark(sum)) };
+        // Mark reserved (CAP) and this frame's single append stays in capacity.
+        ctx.accums().append::<Mark, _>(Mark(sum));
         ctx.virtuals().fire::<Anomaly, _>();
     }
 }
@@ -181,8 +181,8 @@ impl WorkUnit<Always> for ConsumerWu {
     type Write = Cons<Accum<Mark>, Empty>;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        // SAFETY: Mark reserved (CAP); one append per frame stays in capacity.
-        unsafe { ctx.accums().append::<Mark, _>(Mark(9)) };
+        // Mark reserved (CAP); one append per frame stays in capacity.
+        ctx.accums().append::<Mark, _>(Mark(9));
     }
 }
 

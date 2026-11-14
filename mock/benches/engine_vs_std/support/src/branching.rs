@@ -30,7 +30,7 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
-use hilavitkutin_api::store::Column;
+use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 
 use crate::{
@@ -54,16 +54,16 @@ use crate::{
 
 pub const NAME: &str = "branching";
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[repr(transparent)]
 struct Inv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[repr(transparent)]
 struct Xv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[repr(transparent)]
 struct Yv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[repr(transparent)]
 #[allow(dead_code)] // written by Z, read back post-run as raw u32 for the hash
 struct Zv(u32);
@@ -178,10 +178,10 @@ macro_rules! build {
     ($n:expr) => {{
         let n: usize = $n;
         Scheduler::builder()
-            .with(Column::<Inv>::new())
-            .with(Column::<Xv>::new())
-            .with(Column::<Yv>::new())
-            .with(Column::<Zv>::new())
+            .with(Column::<Inv>::start())
+            .with(Column::<Xv>::start())
+            .with(Column::<Yv>::start())
+            .with(Column::<Zv>::start())
             .with(BranchX)
             .with(BranchY)
             .with(JoinZ)

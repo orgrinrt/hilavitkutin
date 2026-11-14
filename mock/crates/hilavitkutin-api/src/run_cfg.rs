@@ -1,20 +1,19 @@
 //! `RunCfg` trait + dispatch routing slot for the consumer-supplied
 //! run-config type.
 //!
-//! Topic 1 axis 2: every consumer registers exactly one `RunCfg`
+//! Every consumer registers exactly one `RunCfg`
 //! type via `.with(MyRunCfg)`. The typestate slot is single-
 //! occupant; a second `.with(OtherRunCfg)` registration fails at
 //! type-check time. The consumer's `RunCfg::Out` associated type
 //! determines `Scheduler::run()`'s return shape via the dispatch-
 //! routing slot.
 //!
-//! Topic 8 axis B: `PlanAffecting` open marker trait declares
+//! `PlanAffecting` is an open marker trait declaring
 //! that replacing a resource's value via `Scheduler::replace_resource`
 //! must dirty the plan-cache. Default: NOT plan-affecting; consumers
 //! opt in.
 //!
-//! Topic 5 audit-2 M7: a single `Virtual<AnomalyFired>` flag replaces
-//! the previously-locked five per-anomaly Virtual markers. Per-
+//! A single `Virtual<AnomalyFired>` flag signals anomalies. Per-
 //! anomaly detail lives on the metrics Resources as bool fields.
 
 use core::marker::PhantomData;
@@ -30,8 +29,7 @@ mod sealed {
 }
 
 /// Required-field accessor: every `RunCfg` impl declares the
-/// pipeline's record count. Topic 1 axis 2 supertrait bound on
-/// `RunCfg`.
+/// pipeline's record count. Supertrait bound on `RunCfg`.
 #[allow(private_bounds)]
 pub trait HasRecordCount: sealed::Sealed {
     fn record_count(&self) -> USize;
@@ -43,15 +41,14 @@ pub trait HasRecordCount: sealed::Sealed {
 /// which it is mutually exclusive (`PlanAffecting` dominant; see the
 /// negative impl at the `Replaceable` declaration). Default: NOT
 /// plan-affecting. Consumers opt in for resources whose value shape
-/// changes the plan (e.g., the `RunCfg` resource itself). Topic 8
-/// axis B; unsealed per the A2-3 ruling.
+/// changes the plan (e.g., the `RunCfg` resource itself). Unsealed.
 pub trait PlanAffecting {}
 
 /// Consumer-supplied run-config trait. Single-slot typestate; one
-/// `RunCfg` impl per Scheduler<Cfg> instantiation. Topic 1 axes
-/// 1+2; Topic 4 axis H (`APPROACH_E_THRESHOLD`); Topic 7 axis C
-/// (`MICRO_MORSEL_INTERVAL`, `MAX_DRIFT_RECORDS`); Topic 8 axis B
-/// (`MAX_PLAN_AFFECTING_RESOURCES`).
+/// `RunCfg` impl per Scheduler<Cfg> instantiation. Carries
+/// `APPROACH_E_THRESHOLD`, `MICRO_MORSEL_INTERVAL`,
+/// `MAX_DRIFT_RECORDS` and `MAX_PLAN_AFFECTING_RESOURCES` among
+/// its tunables.
 ///
 /// Per `arvo-toolbox-not-policer.md`: every assoc const is a
 /// consumer-tunable default on this trait, not a hardcoded
@@ -72,8 +69,7 @@ pub trait RunCfg:
 
     /// Cap on resources marked `PlanAffecting`. Drives the dirty-
     /// bitmask width. Default 256 (32-byte bitmask, fits one cache
-    /// line). Topic 8 axis B; user-bumped from 16 to 256 in the
-    /// 2026-05-11 user-attention resolution. Consumer-tunable
+    /// line). Consumer-tunable
     /// surface; per `arvo-toolbox-not-policer.md`, override by
     /// writing the const explicitly.
     const MAX_PLAN_AFFECTING_RESOURCES: USize = USize(256);
@@ -104,7 +100,7 @@ pub trait RunCfg:
     const MORSEL_SIZE: USize = USize(256);
 
     /// Usable L1 write budget in bytes for the per-fiber morsel-window
-    /// formula (domain 12): `window = (L1_USABLE / sum of write sizes)
+    /// formula: `window = (L1_USABLE / sum of write sizes)
     /// .clamp(MIN_MORSEL, MAX_MORSEL) & !3`. Default `24_576` (the 32 KB
     /// detection-fallback L1 times 0.75). Hardware detection, when the
     /// platform tier ships it, overrides the default SOURCE, not this
@@ -122,16 +118,16 @@ pub trait RunCfg:
     const MAX_MORSEL: USize = USize(8192);
 
     /// Records between micro-morsel inner-loop sync points. Pow2 cap.
-    /// Default 64 (one cache line of f32-shaped data). Topic 7 axis C.
+    /// Default 64 (one cache line of f32-shaped data).
     const MICRO_MORSEL_INTERVAL: USize = USize(64);
 
     /// Max inter-fiber misalignment in records before forced realign.
-    /// Pow2 cap. Default 32 (half a micro-morsel). Topic 7 axis C.
+    /// Pow2 cap. Default 32 (half a micro-morsel).
     const MAX_DRIFT_RECORDS: USize = USize(32);
 
     /// Record count threshold above which the plan picks the
     /// `ScheduleMega` dispatch approach. Bench-validated default
-    /// `10_000` per Domain 17 L1559. Topic 4 axis H.
+    /// `10_000`.
     const APPROACH_E_THRESHOLD: USize = USize(10_000);
 }
 
@@ -190,7 +186,7 @@ impl<O: AccumOverflow> PlanAffecting for DefaultRunCfg<O> {}
 /// Implementation note: the router routes the RunCfg type into the
 /// **store accumulator** so it can be read via `ctx.resource::<C>()`
 /// in WUs. The single-slot typestate enforcement lives on the
-/// builder typestate (Pass 6); this router only carries the type-
+/// builder typestate; this router only carries the type-
 /// level evidence for the slot.
 pub struct RunCfgDispatch<C>(PhantomData<C>);
 
@@ -203,9 +199,8 @@ where
     type NextWus = Wus;
 }
 
-/// Single anomaly Virtual marker. Topic 5 audit-2 M7 lock: replaces
-/// the previously locked five per-anomaly Virtuals. Per-anomaly
-/// detail lives on metrics Resources as bool fields.
+/// Single anomaly Virtual marker. Per-anomaly detail lives on
+/// metrics Resources as bool fields.
 ///
 /// Observer WUs check `Virtual<AnomalyFired>` then query the
 /// relevant `metrics::*` Resource for which anomaly fired.
@@ -231,7 +226,7 @@ pub struct PassStart;
 
 /// Meta-Virtual marker: pass end (post all phases).
 ///
-/// Fired after every phase barrier closes. Topic 5 axis A: this is
+/// Fired after every phase barrier closes. This is
 /// the canonical observation point for `AdaptWu`, which reads per-
 /// axis metrics, sets anomaly bools, and fires `Virtual<AnomalyFired>`
 /// when any axis threshold trips.

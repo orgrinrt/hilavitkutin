@@ -37,7 +37,7 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::Column;
+use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
@@ -88,7 +88,7 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
 const N: usize = 4;
 
 // Column value: a Copy newtype over u32, so the blanket `ColumnValue` applies.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Cv(u32);
 
 type Col = Cons<Column<Cv>, Empty>;
@@ -165,7 +165,7 @@ fn column_round_trips_producer_to_consumer_through_run() {
     // dispatch order matches the registration order here. The consumer reads
     // back what the producer wrote.
     let mut scheduler = Scheduler::builder()
-        .with(Column::<Cv>::new())
+        .with(Column::<Cv>::start())
         .with(ProducerWu)
         .with(ConsumerWu)
         .build(store(provider), USize(N))

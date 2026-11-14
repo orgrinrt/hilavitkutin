@@ -5,14 +5,36 @@ id = "a_pure_per_record_map_may_be_declared_as_an_opt_in_fusion_contract_beside_
 subject = "units"
 what = "A unit that is a pure per-record map, reading one column and writing one column, value to value, with no cross-record state, may additionally declare that map as an opt-in fusion contract: an input type, an output type and an apply function from one to the other. This is orthogonal to the execute contract, does not change execute, and a simple unit never implements it. Its purpose is linear fusion within a fiber: a straight read-after-write sequence of such maps is folded at the type level into a single fused unit whose body keeps every intermediate in a register. A unit that carries cross-record state, an accumulator, does not implement the contract and stays on the ordinary per-unit dispatch path."
 mechanism = "An associated input type, an associated output type and an apply function. The fold is a compile-time composition of concrete monomorphised calls, no function pointers and no dynamic dispatch; dead-store elimination removes the intermediate column traffic. The shipped trait name and signature live in the engine-facing rustdoc."
-source = "mock/crates/hilavitkutin-api/DESIGN.md.tmpl:239-243"
-provenance = ["mock::crates::hilavitkutin-api::DESIGN::#opt-in-per-record-transform-within-fiber-fusion-contract"]
+source = "mock/crates/hilavitkutin-api/DESIGN.md.tmpl:485-511"
+provenance = ["mock::crates::hilavitkutin-api::DESIGN::#the-function-under-a-name-and-fusion"]
 quote = '''
-## Opt-in per-record transform (within-fiber fusion contract)
+### The function under a name, and fusion
 
-A work unit that is a pure per-record map (reads one column, writes one column, value to value, no cross-record state) may additionally declare that map as an opt-in fusion contract: an associated input type, an associated output type, and an apply function from one to the other. This is orthogonal to the execute contract (it does not change execute) and opt-in (a simple work unit never implements it).
+The engine folds units together at compile time, and a fold cannot see
+into a closure built inside `execute`. `RecordOp` is the same function
+under a name on the unit's own type:
 
-Its purpose is within-fiber linear fusion. When a fiber is a straight read-after-write chain of such maps (stage one writes the column stage two reads, and so on), the engine folds the chain at the type level into a single fused work unit whose body keeps every intermediate in a register (dead-store elimination removes the intermediate column traffic), matching a hand-fused loop. The fold is a compile-time composition of concrete monomorphised calls, no function pointers and no dynamic dispatch. A work unit that carries cross-record state (an accumulator) does not implement the contract and stays on the ordinary per-unit dispatch path. The shipped trait name and signature live in the engine-facing rustdoc; this section states the contract shape.
+```rust
+pub trait RecordOp<S = Always>: WorkUnit<S> {
+    fn apply(&self, read: &ReadVals<'_, Self::Read>) -> WriteVals<Self::Write>;
+}
+```
+
+A unit that offers it writes `execute` as
+`ctx.each().map(|r| self.apply(r))`, so the function exists once. The
+trait sits under `WorkUnit` and reads the unit's own lists: it declares
+no stores, no schedule and no hint of its own, and `Plannable` stays the
+one declaration the plan reads.
+
+Within-fiber linear fusion folds a straight read-after-write run of
+units that offer `RecordOp` into one fused unit whose body keeps every
+intermediate in a register (dead-store elimination removes the
+intermediate column traffic), matching a hand-fused loop. The fold is a
+compile-time composition of concrete monomorphised calls, no function
+pointers and no dynamic dispatch. The fold takes a unit
+whose read list is one `Column` and whose write list is one `Column`. A
+`RecordOp` over longer lists, a wrapper member or another store runs per
+unit through its own `execute`.
 '''
 origin = "proposed"
 written_by = "the api design template, section added by design round 202606092000 (within-fiber linear fusion)"

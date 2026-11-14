@@ -79,19 +79,17 @@ impl WorkUnit<Always> for AppendKWu {
     type Write = AccW;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        // SAFETY: `build` reserved `CAP` (>= K) records for `Av` and the plan
-        // proved this unit the exclusive appender; K appends stay within the
+        // `build` reserved `CAP` (>= K) records for `Av` and the plan proved
+        // this unit the exclusive appender; K appends stay within the
         // reserved capacity.
-        unsafe {
-            ctx.accums().append::<Av, _>(Av(700));
-            ctx.accums().append::<Av, _>(Av(701));
-        }
+        ctx.accums().append::<Av, _>(Av(700));
+        ctx.accums().append::<Av, _>(Av(701));
     }
 }
 
 #[test]
 fn accum_resets_live_length_each_frame() {
-    let provider = StableProvider::new(8192);
+    let provider = StableProvider::new(8192, 0);
     let mut scheduler = Scheduler::builder()
         .with(Accum::<Av>::new())
         .with(AppendKWu)

@@ -8,16 +8,16 @@ use super::*;
 // each fiber's own window sequence. The gate asserts the fiber-outer loop
 // reintroduced no indirect call.
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct PIn(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct PMid(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)] // written by P2, read back post-run as raw u32 for the hash
 struct POut(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct QIn(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)] // written by Q1, read back post-run as raw u32 for the hash
 struct QOut(u32);
 
@@ -109,11 +109,11 @@ impl WorkUnit<Always> for Q1 {
 pub extern "C" fn asm_gate_windowed_fibers() -> u64 {
     let provider = HeapBump::new(arena_bytes(5, N));
     let mut sched = Scheduler::builder()
-        .with(Column::<POut>::new())
-        .with(Column::<PMid>::new())
-        .with(Column::<PIn>::new())
-        .with(Column::<QOut>::new())
-        .with(Column::<QIn>::new())
+        .with(Column::<POut>::start())
+        .with(Column::<PMid>::start())
+        .with(Column::<PIn>::start())
+        .with(Column::<QOut>::start())
+        .with(Column::<QIn>::start())
         .with(P1)
         .with(P2)
         .with(Q1)
@@ -169,11 +169,11 @@ pub extern "C" fn asm_gate_windowed_fibers() -> u64 {
 pub extern "C" fn asm_gate_parallel_fiber_windows() -> u64 {
     let provider = HeapBump::new(arena_bytes(5, N));
     let sched = Scheduler::builder()
-        .with(Column::<POut>::new())
-        .with(Column::<PMid>::new())
-        .with(Column::<PIn>::new())
-        .with(Column::<QOut>::new())
-        .with(Column::<QIn>::new())
+        .with(Column::<POut>::start())
+        .with(Column::<PMid>::start())
+        .with(Column::<PIn>::start())
+        .with(Column::<QOut>::start())
+        .with(Column::<QIn>::start())
         .with(P1)
         .with(P2)
         .with(Q1)

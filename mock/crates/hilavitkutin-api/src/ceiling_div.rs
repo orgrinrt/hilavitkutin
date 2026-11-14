@@ -1,6 +1,6 @@
 //! `CeilingDiv<N, D>` helper trait.
 //!
-//! Topic 3 S1 workaround for `generic_const_exprs` / multi-operator-
+//! Workaround for `generic_const_exprs` / multi-operator-
 //! in-array-size bugs (#76560, #96695). Direct forms like
 //! `[T; (A + B - 1) / B]` or `[T; B + 1]` either fail to elaborate
 //! or require nested `where [(); EXPR]:` bounds that themselves
@@ -15,8 +15,7 @@
 //! v1 ships impls covering `N ∈ 1..=1024` and `D ∈ 1..=64`. Consumers
 //! requiring larger caps add impls via the proc-macro
 //! `hilavitkutin_extensions_macros::impl_ceiling_div!` (the proc-
-//! macro lands as part of the same round's apply pass; until then,
-//! consumers hand-impl).
+//! macro is not provided yet; until then, consumers hand-impl).
 
 /// Compile-time ceiling division.
 ///
@@ -35,7 +34,7 @@ pub struct Ceil<const N: usize, const D: usize>;
 
 // Placeholder impls for the common substrate caps. The proc-macro
 // emission expands this set; until the proc-macro lands, hand-write
-// the impls we need. Tracked: round 202605101036 src CL.
+// the impls we need.
 impl<const N: usize, const D: usize> CeilingDiv<N, D> for Ceil<N, D> {
-    const RESULT: usize = (N + D - 1) / D;
+    const RESULT: usize = N.div_ceil(D);
 }

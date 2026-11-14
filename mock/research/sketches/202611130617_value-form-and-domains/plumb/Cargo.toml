@@ -1,0 +1,12 @@
+[package]
+name = "plumb"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+[dependencies]
+api.workspace = true
+
+[features]
+# The mutant: a write to a frame-buffered store lands on the committed side.
+mutant-in-place = []

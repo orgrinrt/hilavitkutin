@@ -19,6 +19,10 @@
 //! size (64 B, 1 KiB, 64 KiB) and returns a closure whose timed body is
 //! exactly one `replace_value` install, so the arm's median is the
 //! witnessed blob write cost at that size.
+//!
+//! `prepare_column_*`, in `column`, builds the column swap carrier: a
+//! producer and a reader over a middle column that is plain, buffered
+//! under `Snapshot` or buffered under `Exchange`.
 
 use std::cell::{RefCell, UnsafeCell};
 use std::mem::MaybeUninit;
@@ -50,10 +54,20 @@ use hilavitkutin_api::context::{
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::run_cfg::PlanStage;
-use hilavitkutin_api::store::{Column, Resource};
+use hilavitkutin_api::store::{Column, Resource, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, HasSchedule, OnMeta, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 pub use rcm_common::{HeapBump, fnv1a_u32_slice};
+
+mod column;
+pub use column::{
+    PreparedColumn,
+    column_checksum,
+    prepare_column_exchange,
+    prepare_column_plain,
+    prepare_column_snapshot,
+    seed_from_input,
+};
 
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
@@ -74,6 +88,13 @@ impl hilavitkutin_api::store::Replaceable for SwapVal {}
 impl hilavitkutin_api::footprint::ResourceFootprint for SwapVal {
     const L1_BYTES: USize = USize(0);
 }
+impl hilavitkutin_api::ResourceRead for SwapVal {
+    type Val<'a> = Self;
+
+    fn read(&self) -> Self {
+        *self
+    }
+}
 
 /// Plan-affecting config input.
 #[derive(Copy, Clone)]
@@ -91,13 +112,13 @@ impl hilavitkutin_api::footprint::ResourceFootprint for OtherIn {
     const L1_BYTES: USize = USize(0);
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct C1(pub u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct C2(pub u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct C3(pub u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct Cp(pub u32);
 
 type ReadV = Cons<Resource<SwapVal>, Empty>;
@@ -259,10 +280,10 @@ pub struct PreparedBand {
 pub fn prepare_band(mode: SwapMode, seed: u64, records: usize) -> PreparedBand {
     let provider = HeapBump::new(8 * records * 4 + 8 * 64 + (1 << 16));
     let sched = Scheduler::builder()
-        .with(Column::<C1>::new())
-        .with(Column::<C2>::new())
-        .with(Column::<C3>::new())
-        .with(Column::<Cp>::new())
+        .with(Column::<C1>::start())
+        .with(Column::<C2>::start())
+        .with(Column::<C3>::start())
+        .with(Column::<Cp>::start())
         .with(Resource::new(SwapVal(seed)))
         .with(Resource::new(SwapCfg(seed ^ 0xA5A5)))
         .with(Resource::new(OtherIn(seed.rotate_left(17))))

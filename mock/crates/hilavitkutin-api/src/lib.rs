@@ -13,14 +13,14 @@
 #![feature(adt_const_params)]
 #![feature(const_ops)]
 #![feature(const_trait_impl)]
-#![feature(marker_trait_attr)]
 #![feature(negative_impls)]
 #![allow(incomplete_features)]
 
 mod sealed {
-    /// Crate-private sealing supertrait. Consumers cannot impl traits
-    /// that use it as a supertrait.
-    pub(crate) trait Sealed {} // lint:allow(undocumented_type) reason: crate-private sealing supertrait; semantics live on mod + parent trait docs; tracked: #72
+    /// The sealing supertrait. Public in a module no path outside the crate
+    /// names, so a consumer cannot implement a trait that has it as a
+    /// supertrait, and a public trait may name it in its bounds.
+    pub trait Sealed {}
 }
 
 pub mod access;
@@ -39,6 +39,7 @@ pub mod footprint;
 pub mod hint;
 pub mod id;
 pub mod macros;
+pub mod member;
 pub mod meta;
 pub mod platform;
 pub mod prelude;
@@ -48,10 +49,12 @@ pub mod sink;
 pub mod storage;
 pub mod store;
 pub mod store_values;
+pub mod values;
 pub mod work_unit;
 pub mod work_unit_values;
+pub mod write_at;
 
-pub use access::{AccessSet, Concat, Cons, Contains, ContainsAll, Empty};
+pub use access::{AccessSet, Concat, Cons, Contains, ContainsAll, Empty, Holds, HoldsAll};
 pub use accum_overflow::{AccumOverflow, Assert, Refuse};
 pub use accum_refused::AccumRefused;
 pub use adapt::{
@@ -81,10 +84,14 @@ pub use ceiling_div::CeilingDiv;
 pub use codec::{DecodeError, Decoder, DecoderExt, Encoder, EncoderExt};
 pub use column_value::ColumnValue;
 pub use context::{
+    AccumReaderApi,
+    AccumWriterApi,
     BatchApi,
     ColumnReaderApi,
     ColumnWriterApi,
     EachApi,
+    HasAccumReader,
+    HasAccumWriter,
     HasBatch,
     HasColumnReader,
     HasColumnWriter,
@@ -93,8 +100,11 @@ pub use context::{
     HasResourceProvider,
     HasVirtualFirer,
     ReduceApi,
+    ResolveAccumAppend,
+    ResolveAccumRead,
     ResolveColumnRead,
     ResolveColumnWrite,
+    ResolveMap,
     ResolveResource,
     ResolveVirtualFire,
     ResourceProviderApi,
@@ -137,6 +147,7 @@ pub use hint::{
     UrgencyValue,
 };
 pub use id::StoreId;
+pub use member::{Differs, Member, Reach, Window, Written};
 pub use meta::{
     Dag,
     ExecutionPlan as MetaExecutionPlan,
@@ -175,13 +186,21 @@ pub use run_cfg::{
 pub use sink::{ByteEmitter, Collector, CountingSink, DiagnosticSink, NullSink, TeeSink};
 pub use storage::{ColumnStorage, Decompose};
 pub use store::{
+    Accum,
+    BufferMode,
+    Buffered,
     Column,
+    Exchange,
     Field,
     Map,
     Replaceable,
     Resource,
     Seq,
+    Snapshot,
     StagedResource,
+    Started,
+    Starts,
+    StartsFromDefault,
     StoreBundle,
     Virtual,
 };
@@ -196,6 +215,16 @@ pub use store_values::{
     UnitKind,
     WorkUnitKind,
 };
+pub use values::{
+    ReadAt,
+    ReadSet,
+    ReadVals,
+    Readable,
+    ResourceRead,
+    Writable,
+    WriteSet,
+    WriteVals,
+};
 pub use work_unit::{
     Always,
     HasSchedule,
@@ -208,3 +237,4 @@ pub use work_unit::{
     WorkUnitBundle,
 };
 pub use work_unit_values::{WuCons, WuNil};
+pub use write_at::{WriteAt, WritesColumn};

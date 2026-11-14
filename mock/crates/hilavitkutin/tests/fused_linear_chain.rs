@@ -24,7 +24,6 @@ use arvo::{Bool, USize};
 use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::resource::ColumnPtr;
 use hilavitkutin::scheduler::Scheduler;
-use hilavitkutin_api::RecordOp;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{
@@ -36,8 +35,9 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::Column;
+use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
+use hilavitkutin_api::{ReadVals, RecordOp, WriteVals, rec};
 use hilavitkutin_providers::ArenaColumnStorage;
 
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
@@ -94,13 +94,15 @@ fn chain(i: u32) -> u32 {
     s3(s2(s1(i)))
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct InV(u32);
-#[derive(Copy, Clone)]
+// A column a value function returns for is compared with the record it
+// holds, so the three written types carry `PartialEq`.
+#[derive(Copy, Clone, PartialEq, Default)]
 struct Av(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Default)]
 struct Bv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Default)]
 struct Cv(u32);
 
 type One<T> = Cons<Column<T>, Empty>;
@@ -140,11 +142,8 @@ impl WorkUnit<Always> for S1 {
     }
 }
 impl RecordOp for S1 {
-    type In = InV;
-    type Out = Av;
-
-    fn apply(&self, x: InV) -> Av {
-        Av(s1(x.0))
+    fn apply(&self, read: &ReadVals<'_, One<InV>>) -> WriteVals<One<Av>> {
+        rec![Av(s1(read.get(Column::<InV>::new()).0))]
     }
 }
 
@@ -179,11 +178,8 @@ impl WorkUnit<Always> for S2 {
     }
 }
 impl RecordOp for S2 {
-    type In = Av;
-    type Out = Bv;
-
-    fn apply(&self, x: Av) -> Bv {
-        Bv(s2(x.0))
+    fn apply(&self, read: &ReadVals<'_, One<Av>>) -> WriteVals<One<Bv>> {
+        rec![Bv(s2(read.get(Column::<Av>::new()).0))]
     }
 }
 
@@ -218,11 +214,8 @@ impl WorkUnit<Always> for S3 {
     }
 }
 impl RecordOp for S3 {
-    type In = Bv;
-    type Out = Cv;
-
-    fn apply(&self, x: Bv) -> Cv {
-        Cv(s3(x.0))
+    fn apply(&self, read: &ReadVals<'_, One<Bv>>) -> WriteVals<One<Cv>> {
+        rec![Cv(s3(read.get(Column::<Bv>::new()).0))]
     }
 }
 
@@ -234,10 +227,10 @@ fn fused_chain_produces_chained_computation() {
     // Units registered S1, S2, S3: the carrier is topological (S1 writes what S2
     // reads, and so on), which `build` requires.
     let mut sched = Scheduler::builder()
-        .with(Column::<Cv>::new())
-        .with(Column::<Bv>::new())
-        .with(Column::<Av>::new())
-        .with(Column::<InV>::new())
+        .with(Column::<Cv>::start())
+        .with(Column::<Bv>::start())
+        .with(Column::<Av>::start())
+        .with(Column::<InV>::start())
         .with(S1)
         .with(S2)
         .with(S3)

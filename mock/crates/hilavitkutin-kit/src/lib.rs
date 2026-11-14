@@ -1,13 +1,13 @@
 //! Kit preset trait for the hilavitkutin scheduler builder.
 //!
-//! Round 4 declarative shape: a Kit names what it owns
+//! Declarative shape: a Kit names what it owns
 //! (`type Owned: StoreBundle`) and what work it contributes
 //! (`type Units: WorkUnitBundle`). The engine's
 //! `SchedulerBuilder::with(my_kit)` reads these at compile time.
 //! No `install` method, no `B` parameter, no `Output`.
 //!
-//! Round 202605091700: `Kit` gains `Provider<Init = Self>` as a
-//! supertrait, unifying the `SchedulerBuilder::with(value)` surface.
+//! `Kit` has `BuilderInput<Init = Self>` as a supertrait, unifying the
+//! `SchedulerBuilder::with(value)` surface.
 //! `KitDispatch<K>` is the matching `Dispatch` router; it concats
 //! `K::Units` into `Wus` and `K::Owned` into `Stores`. Lives in
 //! this crate (not in `hilavitkutin-api`) because referencing
@@ -19,8 +19,8 @@
 
 use core::marker::PhantomData;
 
-use hilavitkutin_api::builder_input::{BuilderInput, Dispatch};
 use hilavitkutin_api::access::Concat;
+use hilavitkutin_api::builder_input::{BuilderInput, Dispatch};
 use hilavitkutin_api::store_values::{RouterKind, UnitKind};
 use hilavitkutin_api::{StoreBundle, WorkUnitBundle};
 
@@ -60,7 +60,7 @@ pub trait Kit: BuilderInput<Init = Self> {
 ///
 /// The GATs carry where-clauses so the compiler verifies
 /// `K::Units: Concat<Wus>` and `K::Owned: Concat<Stores>` at the
-/// `.with(kit)` call site, exactly mirroring the round-4 typestate
+/// `.with(kit)` call site, exactly mirroring the typestate
 /// proof.
 ///
 /// `KitDispatch` lives in this crate (not in `hilavitkutin-api`)
@@ -77,9 +77,9 @@ where
     <K as Kit>::Units: Concat<Wus>,
     <K as Kit>::Owned: Concat<Stores>,
 {
-    type NextWus = <<K as Kit>::Units as Concat<Wus>>::Out;
-    type NextStores = <<K as Kit>::Owned as Concat<Stores>>::Out;
     type NextPlatform = Platform;
+    type NextStores = <<K as Kit>::Owned as Concat<Stores>>::Out;
+    type NextWus = <<K as Kit>::Units as Concat<Wus>>::Out;
 }
 
 // Kit registration routes to `UnitKind`: the kit's owned store values

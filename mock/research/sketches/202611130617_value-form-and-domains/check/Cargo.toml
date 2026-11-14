@@ -1,0 +1,20 @@
+# The crate that composes: it names the engine, the oracle and the author.
+
+[package]
+name = "check"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+[dependencies]
+api.workspace = true
+plumb.workspace = true
+engine.workspace = true
+oracle.workspace = true
+author.workspace = true
+
+[dev-dependencies]
+trybuild = "=1.0.122"
+
+[features]
+mutant-in-place = ["plumb/mutant-in-place"]

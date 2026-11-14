@@ -13,7 +13,6 @@ use core::hint::black_box;
 use arvo::USize;
 use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
-use hilavitkutin_api::RecordOp;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{
@@ -25,8 +24,9 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
-use hilavitkutin_api::store::Column;
+use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
+use hilavitkutin_api::{ReadVals, RecordOp, WriteVals, rec};
 
 use crate::{
     Arm,
@@ -53,19 +53,19 @@ pub const NAME: &str = "element_wise";
 // The host writes the seeded records into In before each frame; WorkUnits
 // transform element-wise and never synthesise a value from the record's global
 // position (each yields morsel-relative indices).
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[repr(transparent)]
 struct Inv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Default)]
 #[repr(transparent)]
 struct Av(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Default)]
 #[repr(transparent)]
 struct Bv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Default)]
 #[repr(transparent)]
 struct Cv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Default)]
 #[repr(transparent)]
 #[allow(dead_code)] // written by S4, read back post-run as raw u32 for the hash
 struct Dv(u32);
@@ -190,35 +190,23 @@ impl WorkUnit<Always> for S4 {
 // four-stage chain into one fused unit (`run_fused`) that keeps Av/Bv/Cv in
 // registers and writes only Dv, the deep-single-fiber rust-pipe.
 impl RecordOp for S1 {
-    type In = Inv;
-    type Out = Av;
-
-    fn apply(&self, x: Inv) -> Av {
-        Av(stage1(x.0))
+    fn apply(&self, read: &ReadVals<'_, One<Inv>>) -> WriteVals<One<Av>> {
+        rec![Av(stage1(read.get(Column::<Inv>::new()).0))]
     }
 }
 impl RecordOp for S2 {
-    type In = Av;
-    type Out = Bv;
-
-    fn apply(&self, x: Av) -> Bv {
-        Bv(stage2(x.0))
+    fn apply(&self, read: &ReadVals<'_, One<Av>>) -> WriteVals<One<Bv>> {
+        rec![Bv(stage2(read.get(Column::<Av>::new()).0))]
     }
 }
 impl RecordOp for S3 {
-    type In = Bv;
-    type Out = Cv;
-
-    fn apply(&self, x: Bv) -> Cv {
-        Cv(stage3(x.0))
+    fn apply(&self, read: &ReadVals<'_, One<Bv>>) -> WriteVals<One<Cv>> {
+        rec![Cv(stage3(read.get(Column::<Bv>::new()).0))]
     }
 }
 impl RecordOp for S4 {
-    type In = Cv;
-    type Out = Dv;
-
-    fn apply(&self, x: Cv) -> Dv {
-        Dv(stage4(x.0))
+    fn apply(&self, read: &ReadVals<'_, One<Cv>>) -> WriteVals<One<Dv>> {
+        rec![Dv(stage4(read.get(Column::<Cv>::new()).0))]
     }
 }
 
@@ -229,11 +217,11 @@ macro_rules! build {
     ($n:expr) => {{
         let n: usize = $n;
         Scheduler::builder()
-            .with(Column::<Dv>::new())
-            .with(Column::<Cv>::new())
-            .with(Column::<Bv>::new())
-            .with(Column::<Av>::new())
-            .with(Column::<Inv>::new())
+            .with(Column::<Dv>::start())
+            .with(Column::<Cv>::start())
+            .with(Column::<Bv>::start())
+            .with(Column::<Av>::start())
+            .with(Column::<Inv>::start())
             .with(S1)
             .with(S2)
             .with(S3)

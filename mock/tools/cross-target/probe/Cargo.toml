@@ -1,0 +1,41 @@
+# The program `mock cross-target` builds for the host and for the target it is
+# asked about. A root of its own: built for wasm it takes the engine's tier
+# without an operating system, which a member of the workspace beside the
+# frozen crate could not, since that crate takes the default tier and cargo
+# would turn both on.
+
+[workspace]
+resolver = "2"
+
+[package]
+name = "cross-target-probe"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[features]
+# The case that has to fail: on wasm the last frame's digest takes one word
+# more. `mock cross-target`'s own tests build with it and want a difference.
+skew = []
+
+[dependencies]
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
+arvo-tensor = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-conformance = { path = "../../../crates/hilavitkutin-conformance" }
+
+# The frozen units name the engine's context type, so the engine comes with
+# them, in the tier the target can carry.
+[target.'cfg(target_family = "wasm")'.dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin", default-features = false, features = ["platform-no-os"] }
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin", default-features = false, features = ["platform-os"] }
+
+# The path crates above take notko from the workspace beside this one, which
+# names it by `https`, and arvo names it by `ssh`. This crate is its own root,
+# so that workspace's patch does not reach it; without this the graph holds two
+# notko.
+[patch."ssh://git@github.com/orgrinrt/notko.git"]
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev" }

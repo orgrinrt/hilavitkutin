@@ -1,0 +1,14 @@
+# A crate writing units. Its only dependency is the api, in the tests too, so a
+# fixture here that names the engine fails to resolve it.
+
+[package]
+name = "author"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+[dependencies]
+api.workspace = true
+
+[dev-dependencies]
+trybuild = "=1.0.122"

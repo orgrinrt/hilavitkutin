@@ -30,7 +30,7 @@ use hilavitkutin_api::context::{
 };
 use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
 use hilavitkutin_api::platform::{MemoryProviderApi, ThreadPoolApi};
-use hilavitkutin_api::store::Column;
+use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 
@@ -73,7 +73,7 @@ pub trait Word: Copy + 'static {
 
 macro_rules! words {
     ($($t:ident),* $(,)?) => {$(
-        #[derive(Copy, Clone)]
+        #[derive(Copy, Clone, Default)]
         #[repr(transparent)]
         pub struct $t(u32);
         impl Word for $t {
@@ -290,7 +290,9 @@ fn column_base<T, B, I>(bindings: &B) -> *mut T
 where
     B: ColSelector<T, I>,
 {
-    <B as ColSelector<T, I>>::get(bindings).as_ptr()
+    // The columns this bench reaches are plain, so the base reads see is the
+    // one base the column has and writes land on it too.
+    <B as ColSelector<T, I>>::get(bindings).__read().as_ptr()
 }
 
 /// Hash `n` records of a column read back through its base pointer.
@@ -389,7 +391,7 @@ macro_rules! engine_arm {
     (@build $n:expr, $parallel:expr, [$($col:ty),+], [$($unit:ty),+ $(,)?]) => {{
         let n: usize = $n;
         let sched = Scheduler::builder()
-            $(.with(Column::<$col>::new()))+
+            $(.with(Column::<$col>::start()))+
             $(.with(<$unit>::new()))+
             .build(store(n), USize(n))
             .unwrap_or_else(|_| panic!("frame_wide: the engine scheduler build failed at n={n}"));

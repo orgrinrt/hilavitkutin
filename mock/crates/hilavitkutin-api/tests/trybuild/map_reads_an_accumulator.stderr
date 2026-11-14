@@ -1,0 +1,12 @@
+error[E0277]: a value function cannot read the list `Cons<Column<Temp>, Cons<Accum<Temp>, hilavitkutin_api::Empty>>`
+  --> tests/trybuild/map_reads_an_accumulator.rs:13:24
+   |
+13 |     a_function_reads::<read![Column<Temp>, Accum<Temp>]>();
+   |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `ReadSet` is not implemented for `Cons<Column<Temp>, Cons<Accum<Temp>, hilavitkutin_api::Empty>>`
+   |
+   = note: Every member of the read list of a unit that calls `map` is `Readable`: a `Column`, a `Buffered`, either under a `Reach`, or a `Resource<T>` whose `T` implements `ResourceRead`.
+note: required by a bound in `a_function_reads`
+  --> tests/trybuild/map_reads_an_accumulator.rs:9:24
+   |
+ 9 | fn a_function_reads<R: ReadSet>() {}
+   |                        ^^^^^^^ required by this bound in `a_function_reads`

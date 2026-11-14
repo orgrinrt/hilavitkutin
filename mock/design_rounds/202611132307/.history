@@ -1,0 +1,50 @@
+89b9794b chore: lock src changelist 202611132324
+1660f787 docs: say which bench crates the source changelist's claim covers
+41e6167a docs: write the source changelist of the column start round
+e220414b docs: say how a column starts and name the conformance crate
+65ba6cb9 refactor: fold a carrier's reach cuts into constants of its types
+57b8006c test: register a seeded column's value as its start
+966e81c3 test: hold a close's compared write to a plain column's start
+219649ee chore: regenerate generated files after merge
+0703fa50 chore: merge the sweep that registers every column with its start
+aac94e6c refactor: register every plain column with its start
+ed0ae511 fix: hold a frozen edit to the trunk's ledger and a whole attribute
+7de9a674 test: hold the frozen lints to a broken attribute and a break's hash
+970c3a43 fix: write a plain column's start to every record at the drain
+7adf0b9e feat: carry a column's start in one `Started<S>` for both kinds
+c3b8d69d chore: lock doc changelist 202611132307
+de7f30b9 docs: give a plain column its start on the buffered one's carrier
+98cdc637 docs: keep review two with the research
+1a219430 Merge remote-tracking branch 'origin/dev' into work/api-revision
+23989117 docs: open the topic on what a plain column starts from
+d2711d87 docs: keep review one and the first-pass reading with the research
+21e11daf chore: close design round 202611132230
+08beef97 chore: lock src changelist 202611132233
+2b50b5be docs: say what a buffered column is registered with
+77d64d10 fix: write a buffered column's start to both of its sides
+559f3933 feat!: register a buffered column with its start value
+5d693514 chore: lock doc changelist 202611132230
+ecd50010 docs: design a buffered column registered with its start value
+192933f6 docs: file the topic of what a buffered column starts from
+d312b4e7 docs: sketch a buffered column's start chosen by its element type
+db9d2094 test: build the cross-target probe one feature set at a time
+fe108a99 chore: close design round 202611132054
+09ed41e6 chore: lock src changelist 202611132103
+9658b105 docs: fill the source changelist of the instruments round
+29c9b779 feat: add the cross-target check as the repository's first tool
+ded46285 feat: add the frozen authors and hold the scheduler to the reference
+7c03dcf2 feat: add the reference runner, the digest and the laws
+4d31368e fix: make the leaf crates green
+57dc2c99 Merge branch 'tmp/frozen-lints' into work/api-revision
+730986e9 chore: open src changelist 202611132103
+2ef76177 chore: lock doc changelist 202611132054
+513a6c3d chore: bind the frozen lints to `hilavitkutin-frozen-authors`
+08c568d5 feat: add the frozen crate lints and share the code scanner
+0763d242 docs: design the conformance crate and the frozen authors
+40399db7 docs: open the instruments round with its topic
+364a7723 chore: close design round 202611132014
+4cd86a2e chore: lock src changelist 202611132016
+dd683701 fix: cut the unit-outer walk at a barrier ahead of a reach read
+1fc04131 test: hold the reach boundary across cores, red on the unit-outer path
+4a17b1f5 chore: lock doc changelist 202611132014
+0025165d docs: say how the unit-outer path keeps the reach boundary

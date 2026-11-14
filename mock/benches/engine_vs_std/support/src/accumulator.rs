@@ -37,7 +37,7 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
-use hilavitkutin_api::store::{Accum, Column};
+use hilavitkutin_api::store::{Accum, Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 
 use crate::executor::BenchExecutor;
@@ -61,10 +61,10 @@ use crate::{
 
 pub const NAME: &str = "accumulator";
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[repr(transparent)]
 struct Inv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[repr(transparent)]
 #[allow(dead_code)] // appended by the WU, read back post-run as raw u32 for the hash
 struct Av(u32);
@@ -112,7 +112,7 @@ macro_rules! build {
     ($n:expr) => {{
         let n: usize = $n;
         Scheduler::builder()
-            .with(Column::<Inv>::new())
+            .with(Column::<Inv>::start())
             .with(Accum::<Av>::new())
             .with(AppendChain)
             .build(store(HeapBump::new(arena_bytes(2, n))), USize(n))

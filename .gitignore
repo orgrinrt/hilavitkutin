@@ -28,6 +28,10 @@ mock/research/sketches/*/libsketch.rmeta
 mock/research/**/Cargo.lock
 mock/benches/variants/**/Cargo.lock
 
+# A bench variant's `target` as a link, where every workspace builds into one
+# shared directory and the variant paths in `bench.toml` are reached through it.
+mock/benches/variants/*/target
+
 # Per-run selective-test record written by `cargo mock test`
 /mock/test-history/
 

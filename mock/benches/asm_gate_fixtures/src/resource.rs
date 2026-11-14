@@ -10,9 +10,9 @@ use super::*;
 // canonical storage. Check 1 gates devirtualisation; checks 2-5 surface the
 // spill/addressing evidence for the promotion.
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct RIn(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)] // written by the WU, read back post-run as raw u32 for the hash
 struct ROut(u32);
 
@@ -54,8 +54,8 @@ impl WorkUnit<Always> for ResMix {
 pub extern "C" fn asm_gate_resource_snapshot() -> u64 {
     let provider = HeapBump::new(arena_bytes(3, N));
     let mut sched = Scheduler::builder()
-        .with(Column::<ROut>::new())
-        .with(Column::<RIn>::new())
+        .with(Column::<ROut>::start())
+        .with(Column::<RIn>::start())
         .with(Resource::new(0x5EED_u32))
         .with(ResMix)
         .build(store(provider), USize(N))

@@ -16,8 +16,8 @@ use hilavitkutin_api::{ColumnStorage, ColumnValue};
 
 use super::Scheduler;
 use crate::dispatch::engine_ctx::Selector;
-use crate::plan::PlanDims;
 use crate::plan::project::{Locate, WitnessIndex};
+use crate::plan::{AccessMask, PlanDims};
 use crate::resource::bindings::BindingsFor;
 
 impl<
@@ -173,14 +173,26 @@ impl<
     /// order: a unit is dirty when directly seeded or any predecessor is
     /// dirty. Positions past the live unit count carry empty masks and stay
     /// clean. The walk over the array length runs the predecessors-before-
-    /// dependents single pass because carrier position equals topological
-    /// order (`build` validated it).
-    pub(super) fn dirty_units(&self) -> D::AdjRow {
+    /// dependents single pass because carrier position is a topological
+    /// order among the consumer units (`build` validated it). An edge between
+    /// two ranks may run against the carrier. The pass does not need it: a
+    /// maintenance unit is never gated by this mask, and what a leading band
+    /// writes reaches its readers through the seed.
+    ///
+    /// The stores the maintenance units of the pass's leading bands write
+    /// join the seed: such a store is taken as changed in every pass its
+    /// writer runs, so its readers dispatch in that pass. `plan_band` says
+    /// whether the pass runs its plan band.
+    pub(super) fn dirty_units(&self, plan_band: arvo::Bool) -> D::AdjRow {
         if self.first_frame.load(Ordering::Relaxed) {
             // Cold frame: every unit dirty, so the first frame after build
             // executes the whole carrier.
             return D::AdjRow::default().bitnot();
         }
+        let seed = self
+            .store_dirty
+            .get()
+            .union(&self.band_writes.seed(plan_band));
         let reads = self.read_masks.as_ref();
         let preds = self.predecessor_masks.as_ref();
         // Bound the seed and propagate passes to the live unit count, not the
@@ -192,7 +204,7 @@ impl<
         let mut dirty = D::AdjRow::default();
         let mut p = 0;
         while p < n {
-            if reads[p].overlaps(&self.store_dirty.get()).0 {
+            if reads[p].overlaps(&seed).0 {
                 dirty = dirty.with_bit_set(arvo::USize(p)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct carrier position; tracked: #72
             }
             p += 1;
@@ -205,5 +217,26 @@ impl<
             p += 1;
         }
         dirty
+    }
+
+    /// The boundary after the close of a pass.
+    ///
+    /// The pass has consumed its change seed. The next one starts from the
+    /// stores the boundary brings a change into: a buffered column a unit
+    /// wrote is swapped in for the next pass's readers, a store a
+    /// maintenance unit changed keeps its place, and both are marked. A store
+    /// no unit marked is left untouched.
+    ///
+    /// # Safety
+    ///
+    /// The last unit of the pass's close has returned and every worker is
+    /// parked, so no context over these bindings or a per-core copy of them
+    /// is alive.
+    pub(super) unsafe fn bring_in_changes(&self) {
+        // SAFETY: the caller's guarantee is the walk's.
+        let changed = unsafe {
+            crate::resource::bindings::BringIn::bring_in(&self.bindings, AccessMask::empty())
+        };
+        self.store_dirty.set(changed);
     }
 }
