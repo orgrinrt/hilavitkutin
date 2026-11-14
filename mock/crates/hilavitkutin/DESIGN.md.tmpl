@@ -1438,8 +1438,8 @@ An ordinary unit that reads a plain column it writes
 itself is seeded for the next pass by the consumer marking its input, as
 before, and not by its own write, which is short of a counter bumped on
 every write.
-<!-- FIXME(8c7cc9768579): an ordinary unit's write of a plain column seeds nothing, its changed mark is not read, and the snapshot boundary copies whole columns -->
-<!-- FIXME(ecb940c91d26): which buffer mode pays at which column size waits on its bench -->
+<!-- FIXME(placeholders_tagged_8c7cc9768579): an ordinary unit's write of a plain column seeds nothing, its changed mark is not read, and the snapshot boundary copies whole columns -->
+<!-- FIXME(placeholders_tagged_ecb940c91d26): which buffer mode pays at which column size waits on its bench -->
 
 The builder takes one verb: `.with(value)`. Every type accepted by
 `.with` impls the sealed `Provider` trait declared in

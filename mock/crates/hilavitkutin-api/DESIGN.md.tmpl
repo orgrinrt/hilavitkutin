@@ -233,13 +233,13 @@ not hold. So `StartsFromDefault` has to be in scope where the default
 tier is called, and the choice is made where `start()` is written, from
 what is known of the type there: a generic caller that knows only
 `T: Default` gets the default.
-<!-- FIXME(df2e4da2d376): a tier ahead of the two, for a type whose all-zeros pattern is a value of it, waits on a trait notko does not have -->
+<!-- FIXME(placeholders_tagged_df2e4da2d376): a tier ahead of the two, for a type whose all-zeros pattern is a value of it, waits on a trait notko does not have -->
 
 The start is one value for the whole store. Data that differs from
 record to record is written by a unit in a pass, as any column is
 written. A column a kit owns is named by its marker in the kit's list
 and has no start there.
-<!-- FIXME(ac91dfb44d6e): a kit names the columns it owns by marker alone, and what such a column starts from is undecided -->
+<!-- FIXME(placeholders_tagged_ac91dfb44d6e): a kit names the columns it owns by marker alone, and what such a column starts from is undecided -->
 
 `Accum<T>` is a marker of its own on the same pattern. It reserves a
 capacity at build, is reset to no values at the top of a frame and grows
@@ -331,7 +331,7 @@ column it holds has that many records. `Column<T>` carries no count and
 no second parameter. An accumulator's capacity is that same count.
 Resources and virtuals hold no record count. A consumer whose record
 sets differ in count builds a scheduler for each set.
-<!-- FIXME(8bcd16133d14): several record sets in one schedule wait on a bench of both forms -->
+<!-- FIXME(placeholders_tagged_8bcd16133d14): several record sets in one schedule wait on a bench of both forms -->
 
 ## LinkedBin
 
@@ -601,7 +601,7 @@ asks `T: PartialEq` of its bare write members, and one whose value type
 has no comparison lists the store under `Written`. A positional `write`
 to a bare `Column<T>` is taken as under `Written`: the store counts as
 changed when `write` was called on it.
-<!-- FIXME(29cdc662ca14): which rule a bare column takes under the positional write waits on a bench of both -->
+<!-- FIXME(placeholders_tagged_29cdc662ca14): which rule a bare column takes under the positional write waits on a bench of both -->
 
 The positional `write` follows the member the column is listed under, so
 a unit that wants its positional writes compared lists the column under
@@ -612,7 +612,7 @@ writes (the engine's DESIGN says where that is), and the engine makes
 the compare only for a write it reads so. The bound is asked of every
 unit all the same, so that a unit's types stay as they are when the
 engine reads more units' writes.
-<!-- FIXME(8c7cc9768579): the engine reads the mark for maintenance units and for buffered columns alone -->
+<!-- FIXME(placeholders_tagged_8c7cc9768579): the engine reads the mark for maintenance units and for buffered columns alone -->
 
 ## Maintenance units and the close
 
@@ -739,10 +739,10 @@ applied at every record of the unit's range in every pass the unit runs,
 so a unit that writes through one is total. `Snapshot` suits a store
 written in part. `Exchange` suits a store stepped whole, where the copy
 would be the cost of the step.
-<!-- FIXME(ecb940c91d26): which mode pays at which size waits on its bench -->
+<!-- FIXME(placeholders_tagged_ecb940c91d26): which mode pays at which size waits on its bench -->
 
 The positional accessors do not reach a buffered column.
-<!-- FIXME(24fa3df63a9d): a read and a write of a buffered column by position are not designed -->
+<!-- FIXME(placeholders_tagged_24fa3df63a9d): a read and a write of a buffered column by position are not designed -->
 
 The other way to keep a change out of sight until the pass is over needs
 no second side. Ordinary units append the changes they mean, and a unit

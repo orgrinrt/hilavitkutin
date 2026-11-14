@@ -99,7 +99,8 @@ runner's lent storage and the scheduler's columns are filled from it.
 the positions, the heat, the alarm counts, the levels, the peaks, the glow,
 the ash, whether `Overheat` fired, the count of crossed values and then the
 values. It takes
-the stores as slices, so the same function records the model, the reference
+the frame as one `record::State`, which holds the stores as slices and the
+flag in that sequence, so the same function records the model, the reference
 runner and the scheduler, and a comparison between any two of them is a
 comparison of what it wrote.
 
