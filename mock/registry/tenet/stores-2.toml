@@ -28,9 +28,7 @@ quote = '''
 - No lost fires
 '''
 origin = "stated"
-standing = "provisional"
-stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (mock/research/202606111400_canonical-design-addendum-a1.md:122-131, row whether_meta_units_share_the_consumer_carrier_or_get_a_dedicated_carrier_is_decided_by_sketching_both_shapes), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+standing = "held"
 keywords = ["clear-on-dispatch", "re-fire", "no lost fires", "consumer bit", "next pass", "resume"]
 related = ["tenet::each_consumer_of_a_virtual_has_its_own_bit_and_a_fire_sets_all_of_them"]
 

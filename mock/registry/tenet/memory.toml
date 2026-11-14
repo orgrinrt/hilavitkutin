@@ -16,9 +16,7 @@ quote = '''
 | `std` | Windows, other | std::alloc | std::thread | std::time::Instant | catch_unwind |
 '''
 origin = "stated"
-standing = "provisional"
-stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:22-32, row platform_tiers_are_os_and_no_os_only_and_the_std_tier_is_deferred_indefinitely), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+standing = "held"
 keywords = ["platform tiers", "no_os", "os", "std", "bare metal", "WASM", "mmap", "catch_unwind"]
 
 [[tenet]]
@@ -31,9 +29,7 @@ quote = '''
 - `os` and `std` mutually exclusive. `os` gets optimisation investment.
 '''
 origin = "stated"
-standing = "provisional"
-stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:22-32, row platform_tiers_are_os_and_no_os_only_and_the_std_tier_is_deferred_indefinitely), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+standing = "held"
 keywords = ["os tier", "std tier", "mutually exclusive", "optimisation investment", "platform"]
 related = ["tenet::the_platform_has_three_tiers_no_os_os_and_std"]
 
@@ -92,9 +88,7 @@ quote = '''
 Each tier ships defaults. Consumer overrides via scheduler builder.
 '''
 origin = "stated"
-standing = "provisional"
-stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:22-32, row the_os_tier_creates_no_threads_and_ships_a_memory_provider_and_a_clock_while_the_engine_hands_the_executor_one_pointer_sized_closure_per_worker), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+standing = "held"
 keywords = ["defaults", "override", "scheduler builder", "platform tier", "consumer"]
 related = ["tenet::the_platform_contracts_are_memory_provider_thread_pool_and_clock_traits_in_the_api_crate"]
 
@@ -196,9 +190,7 @@ Bench evidence (T6 L1660-1669, aarch64):
   x13). Zero resource memory ops in loop. Written back once via `stp`.
 '''
 origin = "stated"
-standing = "provisional"
-stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: its source is his founding text, and a later passage that is his changes the same point (mock/research/202606210600_resource-storage-model-canonical-addendum.md:26-38, row a_seq_or_map_value_is_a_pointer_and_a_length_and_its_elements_are_live_streamed_from_their_column_and_never_copied), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+standing = "held"
 keywords = ["stack-local resource caching", "snapshot", "res_ptr", "register promotion", "write-back", "stp", "fiber dispatcher", "aarch64"]
 related = ["tenet::resource_and_column_pointers_must_have_separate_provenance_or_llvm_reloads_resources_every_iteration"]
 

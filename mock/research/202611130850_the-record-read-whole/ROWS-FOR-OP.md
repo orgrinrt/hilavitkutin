@@ -1,6 +1,6 @@
 # The rows the written history does not back, or that stand against it
 
-This file lists the 141 rows of the registry that were left as they were when the rest were ratified by default or put on a stamp. Each of them is here for one of two reasons the record itself gives: the source says in words that the content waits on the maintainer or was an agent's own call, or a passage that is his says otherwise on the same point. None of them is ratified and none carries a stamp.
+This file lists the 151 rows of the registry that were left as they were when the rest were ratified by default or put on a stamp. Each of them is here for one of two reasons the record itself gives: the source says in words that the content waits on the maintainer or was an agent's own call, or a passage that is his says otherwise on the same point. None of them is ratified and none carries a stamp.
 
 It follows from his words of 13 November 2026, kept whole in `OP-ANSWERS-18.md` beside this file:
 
@@ -12,10 +12,12 @@ The rows are grouped by what the maintainer would have to say to settle them. Th
 
 ## Part one: rows against a word of his that stands
 
-These 26 rows say something a later ruling, a later answer or the founding text says otherwise, and the record's own order puts his word above the row. The options were written for this file and are the same for each row:
+These 36 rows say something a later ruling, a later answer or the founding text says otherwise, and the record's own order puts his word above the row. The options were written for this file and are the same for each row:
 
 1. The row is demoted and the word of his named in the finding stands.
 2. The row's version is the one he wants, and the word named in the finding is what changes.
+
+Ten of them stood on a stamp until 14 November 2026. Each stamp named the later word of his that changes the row, and a row standing against his word is brought to him, never stamped, so those ten are held here with the rest.
 
 #### `waiting_is_parked_in_three_tiers_chosen_from_the_predicted_wait_of_each_phase_with_per_os_atomic_wait_primitives`
 
@@ -224,6 +226,86 @@ A tenet. It says: Where extension across an ABI boundary is required, the means 
 Finding: As for the row above: the founding text has no registration attribute in hilavitkutin and the plugin host layer is pull-based, so the inventory pattern the row names as the means stands against both.
 
 Passages: `mock/PRINCIPLES.md.tmpl:78-79`, `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2105-2107`, `mock/crates/hilavitkutin-linking/DESIGN.md.tmpl:100-100`.
+
+#### `at_run_time_the_engine_spawns_threads_that_run_their_compiled_programs_with_no_scheduler_loop_or_work_queues`
+
+A tenet. It says: At run time N threads are started, each runs its compiled program, and they are joined when complete. There is no scheduler loop, no work queue, and no atomics except at phase sync points.
+
+Finding: Its source is his founding text, and a later passage that is his changes the same point (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:20-32, row the_pool_is_the_consumer_s_executor_and_the_engine_hands_it_its_closures_once_on_the_first_parallel_run).
+
+Passages: `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1615-1617`, `mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:20-32`.
+
+#### `n_core_dispatch_walks_the_flat_carrier_gated_by_a_runtime_mask_of_the_trunks_a_core_owns_and_the_const_gated_enumeration_is_superseded`
+
+A tenet. It says: For N-core dispatch each worker walks the flat unit carrier gated by a runtime mask of the trunks it owns, reusing the existing mask-gated walk, and one worker owning every trunk is the existing single-core walk. The const-gated enumeration of per-trunk monomorphisations is superseded by this choice, while the grouping data that gives each unit its phase and trunk stays on the path.
+
+Finding: It is his call in full, which its source records with a date as op decision bench-first runtime mask of 2026-06-07 and quotes as his chosen mechanism (mock/design_rounds/202606071109/202606071109_topic.gate2-r4a-core-phase-masks.md:4-4, 13-17), and a later passage replaces it: the correction of 2026-06-08 at mock/research/202606072100_gate2-canonical-deviation-ledger.md:3-3 records the const-gated per-trunk programs as shipped in place of the runtime mask, under the round mock/design_rounds/202606080400/202606080100_topic.gate2-ge-const-gated-trunk-dispatch.md:6-6, which cites a carrier-mechanism mandate of his whose words the repository does not hold (row the_single_core_run_walks_the_flat_value_carrier_gated_by_const_phase_and_trunk_so_dead_code_elimination_leaves_one_member_only_program_per_phase_and_trunk).
+
+Passages: `mock/design_rounds/202606071109/202606071109_topic.gate2-r4a-core-phase-masks.md:13-17`, `mock/design_rounds/202606071109/202606071109_topic.gate2-r4a-core-phase-masks.md:4-4`, `mock/design_rounds/202606071109/202606071109_topic.gate2-r4a-core-phase-masks.md:21-29`, `mock/design_rounds/202606071109/202606071109_topic.gate2-r4a-core-phase-masks.md:4-4`, `mock/research/202606072100_gate2-canonical-deviation-ledger.md:3-3`, `mock/design_rounds/202606080400/202606080100_topic.gate2-ge-const-gated-trunk-dispatch.md:6-6`.
+
+#### `the_consolidation_is_the_single_source_of_truth_for_the_current_design`
+
+A tenet. It says: The consolidation record is the single source of truth for hilavitkutin's current design state, and it resolves the supersessions and tensions across the earlier topics.
+
+Finding: Its source is his founding text, and a later passage that is his changes the same point: his explicit ruling of 2026-06-06 at mock/research/202606061000_canon-amendment-unified-engine.md:3-3 gives the unified-engine amendment the same standing as the consolidation spec (row the_unified_engine_amendment_is_canon_with_the_standing_of_the_consolidation_spec_and_wins_over_intermediate_artifacts), so the consolidation is no longer the single source of truth.
+
+Passages: `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:5-6`, `mock/research/202606061000_canon-amendment-unified-engine.md:3-3`.
+
+#### `the_platform_has_three_tiers_no_os_os_and_std`
+
+A tenet. It says: There are three platform tiers: no_os for bare metal and WASM, os as the default for Linux and macOS, and std for Windows and other targets. The tiers differ in who provides memory, threads and clock and in how panics are handled.
+
+Finding: Its source is his founding text, and a later passage that is his changes the same point (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:22-32, row platform_tiers_are_os_and_no_os_only_and_the_std_tier_is_deferred_indefinitely).
+
+Passages: `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:275-280`, `mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:22-32`.
+
+#### `the_os_and_std_tiers_are_mutually_exclusive_and_the_os_tier_gets_the_optimisation_investment`
+
+A tenet. It says: The os tier and the std tier are mutually exclusive, and the os tier gets the optimisation investment.
+
+Finding: Its source is his founding text, and a later passage that is his changes the same point (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:22-32, row platform_tiers_are_os_and_no_os_only_and_the_std_tier_is_deferred_indefinitely).
+
+Passages: `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:282-282`, `mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:22-32`.
+
+#### `each_platform_tier_ships_defaults_and_the_consumer_overrides_them_through_the_scheduler_builder`
+
+A tenet. It says: Each platform tier ships default implementations, and the consumer overrides them through the scheduler builder.
+
+Finding: Its source is his founding text, and a later passage that is his changes the same point (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:22-32, row the_os_tier_creates_no_threads_and_ships_a_memory_provider_and_a_clock_while_the_engine_hands_the_executor_one_pointer_sized_closure_per_worker).
+
+Passages: `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:303-303`, `mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:22-32`.
+
+#### `the_fiber_dispatcher_snapshots_resources_to_a_stack_local_array_before_the_morsel_loop_and_writes_mutable_ones_back_after`
+
+A tenet. It says: Resource data lives in a stack-local region that LLVM can prove does not alias the column pointers. Before the morsel loop the fiber dispatcher snapshots all accessed resources to a stack-local array and redirects the resource pointer to it; LLVM then promotes all resource accesses to registers, leaving zero resource memory operations in the hot loop, and after the loop the mutable resources are written back to the canonical storage.
+
+Finding: Its source is his founding text, and a later passage that is his changes the same point (mock/research/202606210600_resource-storage-model-canonical-addendum.md:26-38, row a_seq_or_map_value_is_a_pointer_and_a_length_and_its_elements_are_live_streamed_from_their_column_and_never_copied).
+
+Passages: `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1703-1706`, `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1714-1730`, `mock/research/202606210600_resource-storage-model-canonical-addendum.md:26-38`.
+
+#### `a_consumer_bit_clears_on_first_dispatch_and_a_refire_during_execution_runs_the_consumer_again_next_pass`
+
+A tenet. It says: A consumer's bit is cleared on its first dispatch and not on resume or completion. A re-fire during execution makes the consumer run again in the next pass, so no fire is lost.
+
+Finding: Its source is his founding text, and a later passage that is his changes the same point (mock/research/202606111400_canonical-design-addendum-a1.md:122-131, row whether_meta_units_share_the_consumer_carrier_or_get_a_dedicated_carrier_is_decided_by_sketching_both_shapes).
+
+Passages: `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:705-707`, `mock/research/202606111400_canonical-design-addendum-a1.md:122-131`.
+
+#### `any_copy_static_type_of_at_most_sixteen_bytes_is_column_storable_through_a_blanket_implementation`
+
+A tenet. It says: Any copyable static type of at most sixteen bytes is storable in a column through a blanket implementation, with no friction for consumers.
+
+Finding: Its source is his founding text, and a later passage that is his changes the same point (mock/research/202606111400_canonical-design-addendum-a1.md:190-194, row the_round_level_amendments_registered_by_a1_are_five_dated_rounds).
+
+Passages: `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:436-439`, `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:448-449`, `mock/research/202606111400_canonical-design-addendum-a1.md:190-194`.
+
+#### `a_specialising_implementation_must_state_its_bit_width_explicitly`
+
+A tenet. It says: The blanket implementation provides a default bit width, specific types specialise to override it, and the trait itself has no default, so a specialising implementation must state the bit width explicitly and the override is visible and intentional.
+
+Finding: Its source is his founding text, and a later passage that is his changes the same point (mock/research/202606111400_canonical-design-addendum-a1.md:190-194, row the_round_level_amendments_registered_by_a1_are_five_dated_rounds).
+
+Passages: `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:441-444`, `mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:450-453`, `mock/research/202606111400_canonical-design-addendum-a1.md:190-194`.
 
 ## Part two: points the record states two ways
 
