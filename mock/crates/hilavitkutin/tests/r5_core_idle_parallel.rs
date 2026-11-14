@@ -8,8 +8,9 @@
 //! park point the core-idle axis measures. This is the same shape the engine's
 //! barrier-reuse test uses; it yields nphases > 1. A strictly increasing
 //! counter clock makes any park record a positive delta, so the assertion is
-//! deterministic, not timing-dependent; it is guarded for single-core hosts
-//! where no follower parks.
+//! deterministic, not timing-dependent. The worker count is pinned with
+//! `FixedWorkers`, so the four-core park and the one-worker no-park are both
+//! checked on every machine.
 //!
 //! The single-core and accumulator cases are in `r5_core_idle.rs` and
 //! `r5_core_idle_accum.rs`; the clock, the store and the input column they
@@ -21,13 +22,14 @@
 #[path = "r5_core_idle/clock.rs"]
 mod clock;
 mod common;
+mod fixed_workers;
 #[path = "r5_core_idle/input.rs"]
 mod input;
 mod stable_provider;
 
 use arvo::USize;
 use clock::{CounterClock, HintT, store};
-use common::TestExecutor;
+use fixed_workers::FixedWorkers;
 use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
@@ -275,34 +277,17 @@ macro_rules! two_waist {
     }};
 }
 
-// --- Measurement: an imbalanced multi-core column pipeline parks a follower. ---
-#[test]
-fn imbalanced_parallel_records_idle() {
+/// Run the two-waist pipeline on `pool`, hold the sink to the values both
+/// waists produce whatever the worker count, and say whether the frame
+/// recorded any idle.
+fn two_waist_frame_idles<P: ThreadPoolApi>(pool: &P) -> bool {
     let provider = StableProvider::new(16384, 0);
     let scheduler = two_waist!(provider);
 
-    let pool = TestExecutor::new();
-    let ncores = pool.worker_count().0.max(1);
     let mut scheduler = core::pin::pin!(scheduler);
-    let r = scheduler.as_mut().run_parallel(&pool);
+    let r = scheduler.as_mut().run_parallel(pool);
     assert!(matches!(r, Outcome::Ok(())));
-
-    let idle = scheduler.__idle_ns().to_raw();
-    if ncores > 1 {
-        // The phase-0 / phase-1 waist parks at least one follower; under the
-        // strictly increasing counter clock that park records a positive delta.
-        assert!(
-            idle > 0,
-            "a multi-core waist crossing parks a follower, which records nonzero idle (ncores={ncores})"
-        );
-    } else {
-        // Single worker: the barrier takes the last-arriver path (expected == 1)
-        // and never parks, so the single-core invariant applies.
-        assert_eq!(
-            idle, 0,
-            "a single worker never parks at a waist, so it records no idle"
-        );
-    }
+    let idled = scheduler.__idle_ns().to_raw() != 0;
 
     // The frame ran across the interior waist whatever the worker count: Sv is
     // the head column, Q1v + Q2v at every record. In = i gives P1v = 2 i and
@@ -313,4 +298,25 @@ fn imbalanced_parallel_records_idle() {
         let s = unsafe { (*sv.add(i)).0 };
         assert_eq!(s, (i as u32) * 15, "rec {i}: the sink saw both Q columns");
     }
+    idled
+}
+
+// --- Measurement: an imbalanced multi-core column pipeline parks a follower. ---
+#[test]
+fn imbalanced_parallel_records_idle() {
+    // The phase-0 / phase-1 waist parks at least one of four followers; under
+    // the strictly increasing counter clock that park records a positive delta.
+    assert!(
+        two_waist_frame_idles(&FixedWorkers::<4>),
+        "a four-core waist crossing parks a follower, which records nonzero idle"
+    );
+}
+
+#[test]
+fn one_worker_records_no_idle_at_a_waist() {
+    // One worker takes the last-arriver path at every barrier and never parks.
+    assert!(
+        !two_waist_frame_idles(&FixedWorkers::<1>),
+        "a single worker never parks at a waist, so it records no idle"
+    );
 }

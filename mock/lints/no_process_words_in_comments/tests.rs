@@ -61,9 +61,49 @@ fn arithmetic_round_passes() {
         "/// the round-trip holds\n",
         "/// rounding error stays under one ulp\n",
         "/// handed out round robin\n",
+        "/// Round a bit count up to whole bytes.\n",
+        "/// this rounds the value to the nearest step\n",
+        "/// round each lane separately\n",
     ] {
         assert!(lines(text).is_empty(), "{text}");
     }
+}
+
+#[test]
+fn a_round_led_by_a_noun_word_is_refused() {
+    for text in [
+        "/// written in this round\n",
+        "/// the earlier rounds kept it\n",
+        "// see the design round\n",
+    ] {
+        assert_eq!(lines(text), vec![1], "{text}");
+    }
+}
+
+#[test]
+fn a_wrapped_multiplication_is_code() {
+    assert!(lines("let y = width\n    * x.round()\n    * last round;\n").is_empty());
+}
+
+#[test]
+fn a_char_literal_quote_does_not_hide_a_trailing_comment() {
+    assert_eq!(lines("let q = '\"'; // added in the last round\n"), vec![1]);
+    assert_eq!(lines("let q = '\\''; // added in the last round\n"), vec![
+        1
+    ]);
+}
+
+#[test]
+fn a_lifetime_is_not_a_char_literal() {
+    assert_eq!(lines("fn f<'a>(x: &'a str) {} // the last round\n"), vec![
+        1
+    ]);
+}
+
+#[test]
+fn a_block_comment_spans_lines_without_a_leading_star() {
+    assert_eq!(lines("/*\n  written in round 4\n*/\nlet x = 1;\n"), vec![2]);
+    assert!(lines("/* closed */\n  * the last round\n").is_empty());
 }
 
 #[test]

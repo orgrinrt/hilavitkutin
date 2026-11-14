@@ -11,8 +11,8 @@ use arvo::USize;
 use super::{AccumBinding, BindingNil, ColKind, ColumnBinding, ResourceBinding, VirtualBinding};
 use crate::resource::provenance::ColumnPtr;
 
-/// Per-core rebase of the bindings for the GATE-2 deviation 9 threaded
-/// accumulator path.
+/// Per-core rebase of the bindings for the threaded unit-outer accumulator
+/// path.
 ///
 /// Each worker drives the unit-outer accumulator dispatch over its
 /// record slice `[lo, lo+region_cap)` against a per-core COPY of the bindings:

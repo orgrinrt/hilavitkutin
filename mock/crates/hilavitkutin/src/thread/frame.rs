@@ -1,4 +1,4 @@
-//! Per-frame wake-word protocol (GATE-2 R4c).
+//! Per-frame wake-word protocol of the persistent pool.
 //!
 //! The persistent pool spawns its workers once and parks them between frames.
 //! This module is the orchestration over `PoolFrame`'s frame words (`seq`,

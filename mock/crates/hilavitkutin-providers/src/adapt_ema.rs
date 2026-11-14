@@ -67,8 +67,8 @@ pub const NORM_1_OVER_8: BlendFactor = BlendFactor::from_raw(0x2000);
 /// multiplies use the Hot UFixed container; final adds saturate at
 /// the upper bound.
 ///
-/// **STUB**: the scalar / NEON / SSE2 arms all delegate to a no-op
-/// fallback, so `dst` is left unchanged. Consumers integrating
+/// The body is a stub: the scalar, NEON and SSE2 arms all delegate to a
+/// no-op fallback, so `dst` is left unchanged. Consumers integrating
 /// against this function today get the structural shape only.
 ///
 /// Cfg-gated SIMD paths short-circuit when the right ISA extension

@@ -72,11 +72,11 @@ impl WorkUnit<Always> for AccumWu {
 /// Run one frame of the accumulator carrier on `pool` and hold it to zero idle
 /// and to one append per core that walks a slice.
 ///
-/// The records tile into slices of `ceil(RECORDS / workers)` in core order, so
-/// core `c` walks a slice exactly when `c * slice < RECORDS`, and that makes
-/// `ceil(RECORDS / slice)` cores walk. Each appends the one value the unit
+/// `walking` is the number of cores that walk a slice, worked out by hand at
+/// the call site rather than by the engine's slicing, so a wrong slice formula
+/// shows as a wrong count. Each walking core appends the one value the unit
 /// makes, and every append fits, so the merged live count is that number.
-fn accum_frame<P: ThreadPoolApi>(pool: &P) {
+fn accum_frame<P: ThreadPoolApi>(pool: &P, walking: usize) {
     let provider = StableProvider::new(16384, 0);
     let scheduler = Scheduler::builder()
         .clock(CounterClock::new())
@@ -95,14 +95,12 @@ fn accum_frame<P: ThreadPoolApi>(pool: &P) {
     );
 
     let workers = pool.worker_count().0;
-    let slice = RECORDS.div_ceil(workers);
-    let walking = RECORDS.div_ceil(slice);
     let view = scheduler.as_ref();
     let marks = view.__bindings();
     let live = marks.__len_cell().get().0;
     assert_eq!(
         live, walking,
-        "{workers} workers over {RECORDS} records walk {walking} slices of {slice}, one append each"
+        "{workers} workers over {RECORDS} records: {walking} cores walk a slice, one append each"
     );
     for k in 0 .. live {
         // SAFETY: the first `live` records were initialised by the appends.
@@ -118,12 +116,12 @@ fn accum_frame<P: ThreadPoolApi>(pool: &P) {
 #[test]
 fn accum_unit_outer_no_idle() {
     // Four workers over 64 records: four slices of 16, and every core walks one.
-    accum_frame(&FixedWorkers::<4>);
+    accum_frame(&FixedWorkers::<4>, 4);
 }
 
 #[test]
 fn accum_unit_outer_no_idle_with_surplus_cores() {
     // Forty workers over 64 records: slices of two, so cores 0 to 31 walk one
     // and the eight after them are handed an empty slice and append nothing.
-    accum_frame(&FixedWorkers::<40>);
+    accum_frame(&FixedWorkers::<40>, 32);
 }
