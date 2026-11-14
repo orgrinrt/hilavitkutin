@@ -270,7 +270,7 @@ pub fn worker_main(args: &[String]) -> ExitCode {
 /// binary (and one level above a test binary, which cargo puts in `deps/`).
 /// The file name the harness resolved is kept, prefix and extension included,
 /// and only the directory is replaced.
-// FIXME(c9d2fc212037): drop once the harness resolves arms in the target
+// FIXME(placeholders_tagged_c9d2fc212037): drop once the harness resolves arms in the target
 // directory cargo built them into.
 pub fn locate_arm(resolved: &Path) -> Result<PathBuf, String> {
     let file = resolved

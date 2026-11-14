@@ -1,0 +1,497 @@
+# What the record says about `identity`, part 2.
+
+[[tenet]]
+id = "the_graph_crate_holds_the_dag_algorithms_for_ordering_ranks_paths_waists_and_renumbering"
+subject = "identity"
+what = "The graph crate holds the DAG algorithms: topological sort with a fixed-size queue, connected components, weighted longest and shortest paths, upward and downward rank, critical path analysis, waist detection and node renumbering that matches the reverse topological order."
+mechanism = "Kahn's topological sort (fixed-size queue + in-degree array); connected components (DFS/BFS on bitmask adjacency); `rank(u) = cost(u) + max(rank(successors(u)))`; waist detection by concurrent path counting in topo order; node renumbering to sequential IDs matching reverse topo order (prefetcher-optimal access)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:207-215"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+quote = '''
+- Topological sort (Kahn's): fixed-size queue + in-degree array
+- Connected components: DFS/BFS on bitmask adjacency
+- Longest/shortest weighted path
+- Upward/downward rank computation: `rank(u) = cost(u) +
+  max(rank(successors(u)))`
+- Critical path analysis
+- Waist detection: concurrent path counting in DAG topo order
+- Node renumbering: sequential IDs matching reverse topo order
+  (prefetcher-optimal access)
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:207-215"]
+keywords = ["arvo-graph", "Kahn's", "topological sort", "connected components", "rank", "critical path", "waist detection", "renumbering"]
+
+[[tenet]]
+id = "the_spectral_crate_holds_laplacian_power_iteration_fiedler_and_bisection"
+subject = "identity"
+what = "The spectral crate holds Laplacian construction from a weighted adjacency, power iteration for eigenvectors, the Fiedler vector, and spectral bisection and k-way partitioning by recursive bisection."
+mechanism = "L = D - W; power iteration; Fiedler vector (second-smallest eigenvalue of the Laplacian); spectral bisection and k-way partitioning (recursive bisection)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:220-223"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+quote = '''
+- Laplacian construction from weighted adjacency: L = D - W
+- Power iteration for eigenvector computation
+- Fiedler vector (second-smallest eigenvalue of Laplacian)
+- Spectral bisection and k-way partitioning (recursive bisection)
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:220-223"]
+keywords = ["arvo-spectral", "Laplacian", "power iteration", "Fiedler vector", "spectral bisection", "k-way partitioning"]
+
+[[tenet]]
+id = "the_combinatorial_crate_holds_matrix_chain_dp_greedy_interval_grouping_and_bin_packing"
+subject = "identity"
+what = "The combinatorial crate holds the matrix chain ordering dynamic program for optimal interval grouping under constraints, the greedy interval grouping that is the fusion walk, and a greedy two-level bin packing."
+mechanism = "Matrix chain ordering DP (cost function + feasibility check + DP recurrence); greedy interval grouping (fusion walk) with a feasibility predicate; two-level greedy bin-packing (e.g. affinity-ordered bit assignment from domain 10)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:229-234"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+quote = '''
+- Matrix chain ordering DP: optimal interval grouping under
+  constraints. Cost function + feasibility check + DP recurrence.
+- Greedy interval grouping (fusion walk): constrained sequential
+  grouping with feasibility predicate.
+- Bin-packing: greedy two-level (e.g. affinity-ordered bit
+  assignment from domain 10).
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:229-234"]
+keywords = ["arvo-comb", "matrix chain DP", "greedy grouping", "fusion walk", "bin-packing", "feasibility predicate"]
+
+[[tenet]]
+id = "hilavitkutin_uses_each_arvo_crate_for_a_named_job_in_the_engine"
+subject = "identity"
+what = "The engine uses arvo numerics for all its internal numerics, the bitmask crate for the access mask, DAG adjacency and virtual flag storage, the graph crate for topological sort, waist detection, rank and components, the sparse crate for the access matrix and its reordering, the spectral crate for trunk formation, and the combinatorial crate for fiber grouping and morsel bin packing."
+mechanism = "arvo (all internal numerics); arvo-bitmask (AccessMask, DAG adjacency, virtual flag storage); arvo-graph (topo sort, waist detection, rank computation, connected components); arvo-sparse (access matrix, RCM, block diagonal, Dulmage-Mendelsohn); arvo-spectral (trunk formation, Fiedler); arvo-comb (fiber grouping DP, morsel bin-pack)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:238-246"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+quote = '''
+- hilavitkutin uses arvo (numerics) for all internal numerics
+- hilavitkutin uses arvo-bitmask for AccessMask, DAG adjacency,
+  virtual flag storage
+- hilavitkutin uses arvo-graph for topo sort, waist detection, rank
+  computation, connected components
+- hilavitkutin uses arvo-sparse for access matrix, RCM, block
+  diagonal, Dulmage-Mendelsohn
+- hilavitkutin uses arvo-spectral for trunk formation (Fiedler)
+- hilavitkutin uses arvo-comb for fiber grouping DP, morsel bin-pack
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:238-246"]
+keywords = ["relationship to hilavitkutin", "arvo-bitmask", "arvo-graph", "arvo-sparse", "arvo-spectral", "arvo-comb", "AccessMask"]
+
+[[tenet]]
+id = "the_analysis_algorithms_are_reusable_primitives_in_the_arvo_crates_and_not_specific_to_hilavitkutin"
+subject = "identity"
+what = "The analysis algorithms are not specific to hilavitkutin: they are reusable mathematical primitives that live in the arvo crates, defined once under the same discipline of no standard library, no allocation, const generics and LLVM optimisation. hilavitkutin consumes them, and so can saalis, loimu or any other project."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1235-1238"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
+quote = '''
+These algorithms are not hilavitkutin-specific. They are reusable
+mathematical primitives that live in arvo crates (domain 01). Define
+once with the same no_std/no_alloc/const-generic/LLVM-optimised
+discipline. hilavitkutin consumes them; so can saalis, loimu, anything.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1235-1238"]
+keywords = ["analysis algorithms", "arvo crates", "reusable primitives", "no_std", "const-generic", "saalis", "loimu"]
+related = ["tenet::arvo_is_a_standalone_no_std_primitive_family_shared_across_projects"]
+
+[[tenet]]
+id = "the_data_structures_of_the_analysis_are_named_phase_map_fiber_plan_and_trunk_plan"
+subject = "identity"
+what = "The earlier data structure names built on partition and chain are replaced by names built on phase, fiber and trunk."
+mechanism = "PartitionMap becomes PhaseMap, ChainPlan becomes FiberPlan, ChainGroupPlan becomes TrunkPlan. T3 used partition and chain group, updated to phase and trunk."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1439-1443"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
+quote = '''
+**What this supersedes:**
+- T3 used "partition" and "chain group" → updated to "phase" and
+  "trunk"
+- T6 data structure names: PartitionMap → PhaseMap, ChainPlan →
+  FiberPlan, ChainGroupPlan → TrunkPlan
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1439-1443"]
+keywords = ["PhaseMap", "FiberPlan", "TrunkPlan", "PartitionMap", "ChainPlan", "ChainGroupPlan", "vocabulary"]
+rules_out = ["PartitionMap", "ChainPlan", "ChainGroupPlan"]
+related = ["tenet::the_dead_terms_chain_chain_group_partition_archetype_entity_row_and_order_have_named_replacements"]
+
+[[tenet]]
+id = "the_consumer_materialises_external_data_into_columns_through_its_own_loader_units_and_manages_storage_lifecycle"
+subject = "identity"
+what = "The consumer materialises external data into the engine's columns before execution, through loader units it defines, provides the memory provider, and manages the storage lifecycle: allocation, growth and eviction via the R2 APIs. The engine accepts whatever columns the consumer provides."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1465-1475"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#16-data-loading"]
+quote = '''
+**Consumer's responsibility:**
+- Provide a MemoryProvider (domain 02 platform traits)
+- Materialise external data into hilavitkutin columns before execution
+- Define loader WorkUnits (`type Read = ()`, `type Write = (Column<A>,
+  ...)`) that bridge from external data to columns
+- Manage storage lifecycle (allocation, growth, eviction via R2 APIs)
+
+**hilavitkutin's responsibility:**
+- Accept whatever columns the consumer provides
+- Build the DAG from WU Read/Write declarations (loaders are root nodes
+  with no read dependencies)
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1465-1475"]
+keywords = ["consumer responsibility", "materialise", "loader units", "MemoryProvider", "storage lifecycle", "evict", "inject"]
+related = ["tenet::the_engine_does_not_load_data_and_does_not_know_record_counts_ahead", "tenet::the_consumer_provides_the_backing_memory_of_a_column"]
+
+[[tenet]]
+id = "the_engine_owns_dag_scheduling_dispatch_morsels_stages_stealing_and_progress_and_not_storage_schema_queries_ui_or_io"
+subject = "identity"
+what = "The engine's scope is DAG scheduling, unit dispatch, morsel chunking, pipeline stages, work-stealing and progress tracking. It does not own column storage, the data model, schema, query planning, the user interface or IO."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2279-2281"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+quote = '''
+- hilavitkutin scope: owns DAG scheduling, WU dispatch, morsel chunking,
+  pipeline stages, work-stealing, progress tracking. Does NOT own column
+  storage, data model, schema, query planning, UI, IO. (T4 L1941-1987)
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2279-2281"]
+keywords = ["scope", "DAG scheduling", "dispatch", "morsel chunking", "does not own", "column storage", "query planning", "IO"]
+
+[[tenet]]
+id = "hilavitkutin_is_a_morsel_driven_pipeline_engine_that_analyses_units_into_phases_trunks_and_fibers_and_runs_them_on_a_pre_allocated_pool"
+subject = "identity"
+what = "Hilavitkutin is a morsel-driven pipeline execution engine. Consumers declare units with typed read and write access sets, and the engine analyses them into phases, trunks and fibers, compiles per-core dispatch programs and runs them on a pre-allocated thread pool."
+mechanism = "`#![no_std]`, no alloc. WorkUnits with typed read/write access sets; per-core dispatch programs."
+source = "mock/DESIGN.md.tmpl:3-6"
+provenance = ["mock::DESIGN::#hilavitkutin-architecture-design"]
+quote = '''
+> Morsel-driven pipeline execution engine. `#![no_std]`, no alloc.
+> Consumers declare WorkUnits with typed read/write access sets; the
+> engine analyses them into phases/trunks/fibers, compiles per-core
+> dispatch programs, runs them on a pre-allocated thread pool.
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding-elsewhere: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1181-1189", "founding-elsewhere: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:778-779", "founding-elsewhere: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1596-1599"]
+keywords = ["morsel-driven", "pipeline engine", "WorkUnit", "access set", "phases trunks fibers", "dispatch programs", "thread pool", "no_std"]
+
+[[tenet]]
+id = "the_api_crate_carries_the_consumer_facing_types_and_traits_and_the_platform_contracts"
+subject = "identity"
+what = "The api crate is the consumer-facing contract surface: the unit and access-set types, the three store types, the context, and the platform contracts for clock, memory provider and thread pool. It also carries the consumer contract surface for interface positions that receive or emit items outside unit execution."
+mechanism = "`hilavitkutin-api`: WorkUnit, AccessSet, Column/Resource/Virtual, Context, Contains, Clock/MemoryProvider/ThreadPool. The consumer contract surface is capability / sink / codec."
+source = "mock/DESIGN.md.tmpl:14-14"
+provenance = ["mock::DESIGN::#crate-layout"]
+quote = '''
+| `hilavitkutin-api` | Consumer-facing types + traits + platform contracts. WorkUnit, AccessSet, Column/Resource/Virtual, Context, Contains, Clock/MemoryProvider/ThreadPool. Consumer contract surface (capability / sink / codec) for API positions that receive or emit items outside WU execution. |
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["hilavitkutin-api", "consumer contract", "platform contracts", "capability", "sink", "codec", "WorkUnit", "AccessSet"]
+related = ["tenet::the_crates_are_the_api_the_engine_the_build_crate_and_the_arvo_family"]
+
+[[tenet]]
+id = "the_api_macros_crate_is_the_proc_macro_companion_of_the_api_crate_and_derives_a_resource_s_write_collection_footprint"
+subject = "identity"
+what = "A proc-macro companion crate of the api crate derives, for a resource value type, the footprint that the engine reads as its write-collection budget in the first-level cache for a morsel."
+mechanism = "`hilavitkutin-api-macros` emits `#[derive(ResourceFootprint)]`, which sums the `Field` / `Seq` / `Map` field footprints of a resource value type; the engine reads the result as its L1-morsel write-collection budget (canonical R5)."
+source = "mock/DESIGN.md.tmpl:15-15"
+provenance = ["mock::DESIGN::#crate-layout"]
+quote = '''
+| `hilavitkutin-api-macros` | Proc-macro companion to `hilavitkutin-api`. Emits `#[derive(ResourceFootprint)]`, which sums a resource value type's `Field`/`Seq`/`Map` field footprints so the engine reads its L1-morsel write-collection budget (canonical R5). |
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["hilavitkutin-api-macros", "ResourceFootprint", "derive", "proc-macro", "write-collection budget", "L1 morsel", "R5"]
+
+[[tenet]]
+id = "the_engine_crate_holds_plan_dispatch_resource_thread_strategy_adapt_and_scheduler"
+subject = "identity"
+what = "The engine crate holds the plan, the dispatch, the resource handling, the threads, the strategy selection, the adaptation and the scheduler."
+mechanism = "`hilavitkutin`: plan, dispatch, resource, thread, strategy, adapt, scheduler."
+source = "mock/DESIGN.md.tmpl:16-16"
+provenance = ["mock::DESIGN::#crate-layout"]
+quote = '''
+| `hilavitkutin` | Engine: plan, dispatch, resource, thread, strategy, adapt, scheduler. |
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["hilavitkutin", "engine crate", "plan", "dispatch", "resource", "thread", "strategy", "adapt", "scheduler"]
+related = ["tenet::the_crates_are_the_api_the_engine_the_build_crate_and_the_arvo_family"]
+
+[[tenet]]
+id = "the_context_framework_is_a_standalone_ecosystem_crate_gated_by_providers"
+subject = "identity"
+what = "The context framework is a standalone ecosystem crate, and what a context gives access to is gated by providers."
+mechanism = "`hilavitkutin-ctx`: provider-gated context framework (ecosystem, standalone)."
+source = "mock/DESIGN.md.tmpl:18-18"
+provenance = ["mock::DESIGN::#crate-layout"]
+quote = '''
+| `hilavitkutin-ctx` | Provider-gated context framework (ecosystem, standalone). |
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["hilavitkutin-ctx", "context framework", "provider-gated", "ecosystem", "standalone"]
+
+[[tenet]]
+id = "the_interned_identity_core_is_a_standalone_ecosystem_crate_and_the_interned_string_system_is_one_domain_of_it"
+subject = "identity"
+what = "The generic interned-identity core is a standalone ecosystem crate holding the identity handle, the domain traits, the interner and the generator. The interned string system is a second standalone ecosystem crate that is one domain of that core."
+mechanism = "`hilavitkutin-sym`: the `Sym` handle, domain traits, `Interner`, `Generator`. `hilavitkutin-str`: interned string system, one domain of `hilavitkutin-sym`."
+source = "mock/DESIGN.md.tmpl:25-26"
+provenance = ["mock::DESIGN::#crate-layout"]
+quote = '''
+| `hilavitkutin-sym` | Generic interned-identity core: the `Sym` handle, domain traits, `Interner`, `Generator` (ecosystem, standalone). `hilavitkutin-str` builds on it. |
+| `hilavitkutin-str` | Interned string system, one domain of `hilavitkutin-sym` (ecosystem, standalone). |
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: a passage shows part of it to be his and not the whole of it (mock/design_rounds/202607241915/202607241915_topic.sym-generic-interned-identity.md:6-12), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["hilavitkutin-sym", "hilavitkutin-str", "Sym", "Interner", "Generator", "interned identity", "string domain", "ecosystem"]
+
+[[tenet]]
+id = "the_ecosystem_crates_are_standalone_and_consumers_opt_into_them"
+subject = "identity"
+what = "The context, persistence, identity core, string, kit and providers crates are standalone ecosystem crates that consumers opt into. The context, persistence, identity core and string crates are pure ecosystem crates that the engine does not depend on."
+mechanism = "hilavitkutin-ctx, -persistence, -sym, -str, -kit, -providers: standalone, opt-in. ctx, persistence, sym, str: the engine does not depend on them."
+source = "mock/DESIGN.md.tmpl:32-32"
+provenance = ["mock::DESIGN::#dependency-graph"]
+quote = '''
+hilavitkutin-ctx, -persistence, -sym, -str, -kit, -providers are standalone ecosystem crates that consumers opt into. ctx, persistence, sym, str are pure ecosystem (engine does not depend on them). hilavitkutin-str depends on hilavitkutin-sym for the identity handle; hilavitkutin-sym itself depends only on the foundations (arvo, notko), sitting below the rest of the ecosystem. kit is a contract crate the engine depends on for its `.add_kit()` method, but it has no reverse dependency on the engine; consumers can author Kits without pulling the engine in. providers ships default Kit impls consumers wire in (interner, future ColumnStorage / Clock / Memory defaults); it consumes api + str + kit + the foundations crates, no reverse dep.
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "held"
+keywords = ["ecosystem crates", "standalone", "opt-in", "engine does not depend", "ctx", "persistence", "sym", "str", "kit", "providers"]
+
+[[tenet]]
+id = "the_string_crate_builds_on_the_identity_core_and_the_identity_core_depends_only_on_the_foundations"
+subject = "identity"
+what = "The string crate depends on the identity core for the identity handle, and the identity core itself depends only on the foundations crates, so it sits below the rest of the ecosystem."
+mechanism = "hilavitkutin-str depends on hilavitkutin-sym; hilavitkutin-sym depends only on arvo and notko."
+source = "mock/DESIGN.md.tmpl:32-32"
+provenance = ["mock::DESIGN::#dependency-graph"]
+quote = '''
+hilavitkutin-ctx, -persistence, -sym, -str, -kit, -providers are standalone ecosystem crates that consumers opt into. ctx, persistence, sym, str are pure ecosystem (engine does not depend on them). hilavitkutin-str depends on hilavitkutin-sym for the identity handle; hilavitkutin-sym itself depends only on the foundations (arvo, notko), sitting below the rest of the ecosystem. kit is a contract crate the engine depends on for its `.add_kit()` method, but it has no reverse dependency on the engine; consumers can author Kits without pulling the engine in. providers ships default Kit impls consumers wire in (interner, future ColumnStorage / Clock / Memory defaults); it consumes api + str + kit + the foundations crates, no reverse dep.
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: a passage shows part of it to be his and not the whole of it (mock/design_rounds/202607241915/202607241915_topic.sym-generic-interned-identity.md:6-12; mock/design_rounds/202607241915/202607241915_topic.sym-generic-interned-identity.md:34-34), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["hilavitkutin-str", "hilavitkutin-sym", "identity handle", "arvo", "notko", "foundations", "dependency direction"]
+
+[[tenet]]
+id = "a_derive_that_emits_api_paths_lives_in_its_own_proc_macro_crate_and_the_extensions_macros_crate_is_not_the_sole_one"
+subject = "identity"
+what = "The derive that reports a resource value type's footprint emits paths into the api crate, which the extensions macro crate is forbidden from referencing, so the derive lives in a new proc-macro crate of its own, beside the api crate. The earlier claim that the extensions macro crate is the sole proc-macro crate, with a second needing a design round, no longer holds: the stack has two proc-macro crates."
+because = "Every resource value type must implement the footprint trait for the sizing arm to be bounded on it, and no blanket default exists without specialization, so a derive is mandatory."
+mechanism = "New crate `hilavitkutin-api-macros` with `[lib] proc-macro = true` shipping `#[derive(ResourceFootprint)]`, emitting `::hilavitkutin_api::footprint::*` paths; `hilavitkutin-extensions-macros` is forbidden from referencing them; the crate count becomes 10 and the proc-macro count 2."
+source = "mock/design_rounds/202606210300/202606210300_topic.api-macros-resourcefootprint-derive.md:10-24, mock/design_rounds/202606210300/202606210300_changelist.doc.lock.md:7-8"
+provenance = ["mock::design_rounds::202606210300::202606210300_topic.api-macros-resourcefootprint-derive::#current-state"]
+quote = '''
+A3-redo-1 shipped `CollectionBytes` + `ResourceFootprint` traits in `hilavitkutin-api`
+(`src/footprint.rs`). To re-bound `StoreElemBytes for Resource<T>` on `ResourceFootprint`
+(A3-redo-3), every resource value type must implement `ResourceFootprint`. No
+no-specialization blanket default exists, so a derive is mandatory.
+
+The cargo rule (`cargo.md`) states `hilavitkutin-extensions-macros` is the sole
+proc-macro crate and a second requires a design round. The `ResourceFootprint`
+derive emits `::hilavitkutin_api::footprint::*` paths, which `hilavitkutin-extensions-macros`
+is forbidden from referencing. So the derive needs a NEW proc-macro crate. This is
+that design round.
+
+## Changes proposed
+
+1. New crate `hilavitkutin-api-macros` (`mock/crates/hilavitkutin-api-macros`): `[lib]
+   proc-macro = true`, deps proc-macro2 + syn + quote. Ships `#[derive(ResourceFootprint)]`.
+---
+Adding the 10th crate (`hilavitkutin-api-macros`, 2nd proc-macro crate) makes the
+"nine crates / sole proc-macro crate" claims stale. Update the authored sources:
+'''
+origin = "proposed"
+written_by = "topic api-macros-resourcefootprint-derive of 2026-06-20, round 202606210300, and its doc changelist, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["hilavitkutin-api-macros", "proc-macro crate", "ResourceFootprint", "derive", "extensions-macros", "sole proc-macro crate", "forbidden imports"]
+rejects = ["sole proc-macro crate"]
+related = ["tenet::the_api_macros_crate_is_the_proc_macro_companion_of_the_api_crate_and_derives_a_resource_s_write_collection_footprint", "tenet::the_extensions_macros_crate_emits_the_descriptor_the_exported_symbol_and_the_capability_trampolines"]
+
+[[tenet]]
+id = "the_identity_handle_is_four_bytes_with_a_four_bit_kind_over_a_twenty_eight_bit_id_and_handles_of_different_kind_are_never_equal"
+subject = "identity"
+what = "The identity handle of the generic interned-identity core is a four-byte handle with a four-bit kind over a twenty-eight-bit id. This reinterprets the four high bits of the current string handle layout, one origin bit plus three reserved, as one kind field, so every bit pattern a string handle holds today is a valid handle. Equality is integer equality over the whole thirty-two bits, so two handles with different kinds are never equal whatever their ids, and that disjointness by kind is the core property the whole design rests on."
+mechanism = "`hilavitkutin-sym` defines `Sym`, a `#[repr(transparent)]` 4-byte handle over a `SymLayout` bitfield with `kind: 4 at 28` and `id: 28 at 0`; a zero-byte-change reinterpretation of the current `Str` layout."
+source = "mock/design_rounds/202607241915/202607241915_topic.sym-generic-interned-identity.md:22-22"
+provenance = ["mock::design_rounds::202607241915::202607241915_topic.sym-generic-interned-identity::#changes-proposed"]
+quote = '''
+The identity handle. `hilavitkutin-sym` defines `Sym`, a 4-byte `#[repr(transparent)]` handle over a `SymLayout` bitfield with `kind: 4 at 28` and `id: 28 at 0`. This reinterprets the current `Str` layout's four high bits (one origin plus three reserved) as one 4-bit `kind` field over the same 28-bit id. It is a zero-byte-change reinterpretation: every bit pattern a `Str` can hold today is a valid `Sym`, and the fields simply gain a unified meaning. `Sym` carries integer-equality identity on its whole 32-bit layout, so two `Sym`s with different `kind` values are never equal whatever their ids. That disjointness by kind is the core property the whole design rests on.
+'''
+origin = "proposed"
+written_by = "topic of round 202607241915, 2026-07-24, phase TOPIC, agent-written; the text does not say this layout is op's ruling"
+standing = "held"
+keywords = ["Sym", "SymLayout", "kind", "id", "four-byte handle", "integer equality", "disjointness by kind", "interned identity"]
+
+[[tenet]]
+id = "the_identity_handle_carries_a_three_bit_domain_tag_and_a_one_bit_domain_private_flag_so_the_string_domain_is_one_kind"
+subject = "identity"
+what = "The identity handle has a three-bit domain tag, a one-bit flag that stays private to the domain and a twenty-eight-bit id, with integer equality across the whole layout, so two handles of differing kind never compare equal. The string domain is then a single kind rather than two, which lets the string interner be a genuine single-kind implementer of the generic interner. Byte-compatibility with the string handle layout is unchanged."
+mechanism = "`Sym`: `#[repr(transparent)]` 4-byte handle over `SymLayout` (an `arvo::bitfield!` over `Bits<32, Hot>`) with `id: 28 at 0`, `kind: 3 at 28`, `flag: 1 at 31`. Accessors `kind()`, `id()`, `flag()`, `to_bits()`; constructors `Sym::new(kind, id)` and `Sym::with_flag(self, bit)`. `StringInterner` is a single-`KIND` `Interner<StrDomain>` implementer. Const is still nibble `0b0000`, runtime `0b1000`, binder `0b0001`."
+source = "mock/design_rounds/202607241915/202607241915_changelist.doc.lock.md:20-20"
+provenance = ["mock::design_rounds::202607241915::202607241915_changelist.doc.lock::#mock-crates-hilavitkutin-sym-design-md-tmpl-create"]
+quote = '''
+- `Sym`: the `#[repr(transparent)]` 4-byte handle over `SymLayout` (an `arvo::bitfield!` over `Bits<32, Hot>`) with `id: 28 at 0`, `kind: 3 at 28`, and `flag: 1 at 31`. Integer-equality identity across the whole layout; two `Sym`s of differing `kind` never compare equal. Accessors `kind()`, `id()`, `flag()`, `to_bits()`; constructors `Sym::new(kind, id)` and `Sym::with_flag(self, bit)`. (Refinement of the topic's "4-bit kind": the domain tag is the 3 reserved bits and the origin stays a 1-bit domain-private flag, so the string domain is a single kind rather than two, which lets `StringInterner` be a genuine single-`KIND` `Interner<StrDomain>` implementer. Byte-compatibility is unchanged: const is still nibble `0b0000`, runtime `0b1000`, binder `0b0001`.)
+'''
+origin = "proposed"
+written_by = "doc changelist of round 202607241915, phase DOC, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["Sym", "SymLayout", "three-bit kind", "flag bit", "string domain", "single kind", "StringInterner", "byte-compatibility"]
+rejects = ["the topic's \"4-bit kind\""]
+related = ["tenet::the_identity_handle_is_four_bytes_with_a_four_bit_kind_over_a_twenty_eight_bit_id_and_handles_of_different_kind_are_never_equal"]
+
+[[tenet]]
+id = "the_identity_core_owns_the_kind_assignment_so_two_domains_cannot_claim_one_kind_and_the_string_kinds_keep_the_values_the_current_layout_produces"
+subject = "identity"
+what = "The identity core owns the convention that assigns kinds and documents it, so two domains cannot claim one kind. The four-bit field gives sixteen kinds. Two are reserved for the string domains at exactly the values the current string layout already produces, const strings at zero and runtime strings at the high-bit pattern, which is mandatory for byte-compatibility. The rest are assignable to other domains, and the first consumer generative domain is recorded in the table. The string-domain kind constants live in the string crate, since they are string-domain facts, and the identity core documents the reservation."
+mechanism = "Const strings `0b0000`, runtime strings `0b1000` (today's origin-plus-reserved patterns), vehje's minted binder `0b0001`; the constants live in `hilavitkutin-str`, `hilavitkutin-sym` documents the reservation."
+source = "mock/design_rounds/202607241915/202607241915_topic.sym-generic-interned-identity.md:28-28"
+provenance = ["mock::design_rounds::202607241915::202607241915_topic.sym-generic-interned-identity::#changes-proposed"]
+quote = '''
+The kind-assignment discipline. `hilavitkutin-sym` owns the kind-assignment convention and documents it, so two domains cannot claim one kind. The four-bit field gives sixteen kinds. Two are reserved for the string domains at exactly the values the current `Str` layout already produces, which is mandatory for byte-compatibility: const strings at `0b0000` and runtime strings at `0b1000` (today's origin-plus-reserved patterns). The remaining values are assignable to other domains; the first consumer generative domain (vehje's minted binder, landing in its own round) is recorded in the table as `0b0001`. The string-domain kind constants themselves live in `hilavitkutin-str`, since they are string-domain facts; `hilavitkutin-sym` documents the reservation.
+'''
+origin = "proposed"
+written_by = "topic of round 202607241915, 2026-07-24, phase TOPIC, agent-written"
+standing = "held"
+keywords = ["kind assignment", "sixteen kinds", "string domain", "STR_CONST", "byte-compatibility", "minted binder", "kind reservation"]
+
+[[tenet]]
+id = "the_kind_assignment_table_is_a_three_bit_tag_with_the_string_domain_told_apart_by_the_flag_bit_and_not_by_tag"
+subject = "identity"
+what = "The kind-assignment table is a documented convention owned by the identity core, so two domains cannot claim one tag, and the tag is three bits. The string domain takes the first value, with const and runtime strings told apart by the flag bit and not by tag, and its constant is defined in the string crate, which is mandatory for byte-compatibility. The second value is recorded as a downstream consumer's minted-binder domain, defined in that consumer's own crate, and the remaining values are free."
+mechanism = "`SymKind`: newtype over `Bits<3, Hot>`; `SymKind::new(raw)`. `0b000` the string domain, `0b001` vehje's minted-binder domain, `0b010` through `0b111` free."
+source = "mock/design_rounds/202607241915/202607241915_changelist.doc.lock.md:21-21"
+provenance = ["mock::design_rounds::202607241915::202607241915_changelist.doc.lock::#mock-crates-hilavitkutin-sym-design-md-tmpl-create"]
+quote = '''
+- `SymKind`: newtype over `Bits<3, Hot>` naming the domain tag. `SymKind::new(raw)`. The kind-assignment table (documented convention, owned here so two domains cannot claim one tag): `0b000` the string domain (const/runtime distinguished by the flag bit, not by tag; the constant defined in `hilavitkutin-str`, mandatory for byte-compatibility), `0b001` recorded as vehje's minted-binder domain (defined in its own crate), `0b010` through `0b111` free.
+'''
+origin = "proposed"
+written_by = "doc changelist of round 202607241915, phase DOC, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["SymKind", "kind assignment table", "three-bit tag", "flag bit", "string domain", "minted binder", "free tags"]
+rejects = ["the const and runtime strings distinguished by tag"]
+related = ["tenet::the_identity_core_owns_the_kind_assignment_so_two_domains_cannot_claim_one_kind_and_the_string_kinds_keep_the_values_the_current_layout_produces"]
+
+[[tenet]]
+id = "a_domain_declares_the_shape_it_belongs_to_so_a_domain_of_one_shape_cannot_hand_its_tag_to_a_producer_of_another"
+subject = "identity"
+what = "A domain declares the shape it belongs to, so a domain of one shape cannot hand its tag to a producer of another shape, and the compiler says so rather than a store discovering it later. The shape is declared and not defaulted."
+because = "Associated type defaults are forbidden in this stack, and the compiler refused it when reached for."
+mechanism = "`Domain` gains `type Shape`; `associated_type_defaults` is forbidden."
+source = "mock/design_rounds/202608090130/202608090130_topic.the-origin-mechanism-round-one-only-named.md:43-47"
+provenance = ["mock::design_rounds::202608090130::202608090130_topic.the-origin-mechanism-round-one-only-named::#what-the-mechanism-is"]
+quote = '''
+**A domain declares its shape.** `Domain` gains `type Shape`, so a domain of one
+shape cannot hand its tag to a producer of another and the compiler says so
+rather than a store discovering it later. Declared rather than defaulted, because
+`associated_type_defaults` is forbidden in this stack and the compiler refused it
+when reached for.
+'''
+origin = "proposed"
+written_by = "topic of round 202608090130 'the origin mechanism round one described and did not build', phase TOPIC, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["Domain", "Shape", "declared not defaulted", "associated_type_defaults", "producer", "tag"]
+
+[[tenet]]
+id = "a_generator_is_built_for_an_origin_and_a_shape_with_no_origin_bits_has_one_origin_and_a_constructor_with_no_argument"
+subject = "identity"
+what = "A generator is constructed for an origin. Under a shape with no origin bits there is exactly one origin and the constructor takes no argument, so the engine's single-minter use is unchanged. Under a shape with origin bits the only constructor available takes the origin, so a collision requires two peers to claim the same origin explicitly."
+mechanism = "`ORIGIN_BITS = 0` means one origin."
+source = "mock/design_rounds/202608082215/202608082215_changelist.src.lock.md:72-76"
+provenance = ["mock::design_rounds::202608082215::202608082215_changelist.src.lock::#change-generator-new-from-a-zero-seeded-constructor-to-an-origin-taking-one"]
+quote = '''
+A generator is constructed for an origin. Under a shape with `ORIGIN_BITS = 0`
+there is exactly one origin, and the constructor for that case takes no argument,
+so the engine's single-minter use is unchanged. Under a shape with origin bits,
+the only constructor available takes the origin, so a collision requires two
+peers to claim the same origin explicitly.
+'''
+origin = "proposed"
+written_by = "source changelist of round 202608082215 'sym peer collision and a generic kind width', phase IMPL, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["Generator", "origin", "single minter", "peer collision", "ORIGIN_BITS", "constructor", "minter"]
+
+[[tenet]]
+id = "the_shape_trait_is_a_const_trait_so_handle_construction_is_const_and_generic_over_every_shape_and_no_per_name_const_shim_stands"
+subject = "identity"
+what = "Making the shape trait itself a const trait gives a const construction path that is generic over every shape. A refused bound on an associated type was one bound spelling and not a wall. The per-name const shim added on the default shape, on the reading that a generic const path was unavailable, is deleted, and the string crate returns to the plain names."
+mechanism = "`pub const trait SymShape` with `type Layout: [const] SymLayoutOps`; `const_trait_impl` is a vetted allowed feature. `[const]` bounds belong on trait impls and on function `where` clauses, not on inherent impl headers: `pub const fn new(..) -> Self where S: [const] SymShape` is accepted, `impl<S: [const] SymShape>` is not. Deleted: `new_const`, `to_bits_const`, `with_flag_const`, `id_const`, `kind_const`, `flag_const`."
+source = "mock/design_rounds/202608090130/202608090130_topic.the-origin-mechanism-round-one-only-named.md:73-80, mock/design_rounds/202608090130/202608090130_topic.the-origin-mechanism-round-one-only-named.md:82-85, mock/design_rounds/202608090130/202608090130_changelist.src.lock.md:64-68"
+provenance = ["mock::design_rounds::202608090130::202608090130_topic.the-origin-mechanism-round-one-only-named::#the-const-traits-correction-which-is-the-more-useful-lesson"]
+quote = '''
+Round one hit `Layout: [const] SymLayoutOps` being refused on an associated type
+bound, concluded const construction was unavailable generically, and shipped a
+`*_const` shim on the default shape.
+
+That was backwards. `const_trait_impl` is a vetted allowed feature, the crate
+already gates on it, and this stack wants const traits wherever they apply. The
+refusal was one bound spelling, not a wall. **Making `SymShape` itself a const
+trait works**, and the const path is then generic over every shape:
+---
+- `pub const trait SymShape` with `type Layout: [const] SymLayoutOps`.
+- `[const]` bounds belong on trait impls and on function `where` clauses, not on
+  inherent impl headers. `pub const fn new(..) -> Self where S: [const] SymShape`
+  is accepted; `impl<S: [const] SymShape>` is not.
+---
+The previous round added `new_const`, `to_bits_const`, `with_flag_const`,
+`id_const`, `kind_const` and `flag_const` on the default shape, on the reading
+that a generic const path was unavailable. Making `SymShape` const gives the
+generic path, so the shim goes and `hilavitkutin-str` returns to the plain
+names.
+'''
+origin = "proposed"
+written_by = "topic and source changelist of round 202608090130 'the origin mechanism round one described and did not build', agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["SymShape", "const trait", "const_trait_impl", "const shim", "new_const", "[const] bound", "generic const path"]
+rejects = ["a `*_const` shim on the default shape"]

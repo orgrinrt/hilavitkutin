@@ -1,0 +1,41 @@
+# The questions whose subject is `identity`, part 1.
+
+[[question]]
+id = "whether_a_shape_should_be_trusted_with_any_id_space_arithmetic_or_the_extension_point_narrows_to_widths_and_an_origin_type"
+asks = "Whether a shape should be trusted with any id-space arithmetic, or whether the extension point should narrow to widths and an origin type with everything numeric derived."
+options = ["a shape keeps some id-space arithmetic, as the open version has it, which five rounds of evidence say keeps reopening the defect it was built alongside", "the extension point narrows to widths and an origin type, with everything numeric derived"]
+state = "open"
+source = "mock/design_rounds/202608101900/202608101900_topic.the-sixth-route-and-what-a-shape-may-still-decide.md:55-62"
+quote = '''
+Whether a shape should be trusted with any id-space arithmetic, or whether the
+extension point should narrow to widths and an origin type with everything
+numeric derived. Five rounds of evidence say the open version keeps reopening the
+defect it was built alongside.
+
+That is a design fork with real cost either way and it goes to op rather than
+being decided here. It does not block this round: the changes above are right
+under either answer.
+'''
+subject = "identity"
+keywords = ["id-space arithmetic", "extension point", "shape trust", "widths", "origin type", "design fork"]
+related = ["tenet::a_shape_supplies_no_base_ceiling_or_counter_projection_and_the_layout_still_supplies_the_projection_so_the_freedom_is_reduced_and_not_eliminated"]
+
+[[question]]
+id = "whether_hilavitkutin_grows_its_own_numeral_mask_graph_sparse_spectral_combinatorial_and_hash_code_or_drops_the_design_steps_those_arvo_crates_serve"
+asks = "Whether moving onto arvo's newer dev revision means hilavitkutin grows its own numeral, mask, graph, sparse, spectral, combinatorial and hash code, or drops the design steps those crates serve."
+options = ["hilavitkutin grows its own numeral, mask, graph, sparse, spectral, combinatorial and hash code, which puts arvo's obligations inside the consumer that stated them", "hilavitkutin drops the design steps those crates serve, which is a redesign of the plan chain"]
+state = "open"
+source = "mock/design_rounds/202609181402/202609181401_topic.hilavitkutin-on-arvo-dev.md:32-37, mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:7-7"
+quote = '''
+So moving onto `65c1634d` is not a migration. It is one of two things, and neither is this round's to decide.
+
+- hilavitkutin grows its own numeral, mask, graph, sparse, spectral, combinatorial and hash code. That puts arvo's obligations inside the consumer that stated them, which contradicts the design sentences above and the layering the forbidden-imports rules encode.
+- hilavitkutin drops the design steps those crates serve, which is a redesign of the plan chain.
+
+The call is handed back. Until arvo delivers those obligations, the last arvo `dev` revision carrying the surface this design names is `1b2796e9`, the first-parent commit immediately before `0d3afdab` deleted the tree. It is on `dev` and already carries `7b3b0909`.
+---
+The move onto `65c1634d` stays handed back; the topic carries the map for it and nothing here decides it. The three design conflicts the topic handed back are settled: op ruled the std tier and persistence on 2026-09-18, and the workspace rule forbidding `extern crate std` settles `hilavitkutin-build`. The design documents change to match, below.
+'''
+subject = "identity"
+keywords = ["arvo", "65c1634d", "handed back", "numeral", "mask", "graph", "plan chain", "obligations"]
+related = ["tenet::arvo_is_a_standalone_no_std_primitive_family_shared_across_projects"]

@@ -41,7 +41,7 @@ const LIGHT_NS_PER_RECORD: u64 = 100;
 /// probe that validation runs is killed after ten times this bound, at least
 /// two seconds. Below 400 milliseconds the probe is killed during the
 /// calibration and every arm is skipped as slow, whatever it costs.
-// FIXME(3ec38cb5c7c8): drop the floor once the harness calibrates its counter
+// FIXME(placeholders_tagged_3ec38cb5c7c8): drop the floor once the harness calibrates its counter
 // without a three second sleep per worker, or gives the probe room for it.
 const MAX_CALL_US_FLOOR: u64 = 400_000;
 

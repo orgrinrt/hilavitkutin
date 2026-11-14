@@ -1,0 +1,36 @@
+# What the record says about `governance`, part 4.
+
+[[tenet]]
+id = "a_locked_changelist_stays_immutable_and_its_drift_from_shipped_source_is_documented_by_a_sketch_and_a_new_round_is_for_a_design_change_only"
+subject = "governance"
+what = "A locked changelist stays as it was at lock time and is not edited. A drift from shipped source is documented by a sketch under the research sketches that names the original changelist by path and the shipped reality by source line. A future round that genuinely supersedes the original, a substantive design change, deprecates it, and a purely wording mismatch with no design change behind it needs a documentation sketch and no rename or new round."
+because = "The mockspace command that deprecates operates on the current round's active changelists and has no path argument and no mechanism for picking a past round's locked changelist to deprecate."
+mechanism = "`cargo mock deprecate` has no path argument and in the TOPIC phase errors with `no changelist to deprecate (TOPIC phase)`; a supersession renames the original to `.deprecated.md` by manual `git mv` and the new round's changelist carries a `## Comparison to deprecated changelist` section."
+source = "mock/research/sketches/202605251500_cl-drift-closure-clarification.md:10-16, mock/research/sketches/202605251500_cl-drift-closure-clarification.md:56-63"
+provenance = ["mock::research::sketches::202605251500_cl-drift-closure-clarification::#what-this-sketch-closes"]
+quote = '''
+The previous two artefacts on #398 (the drift memo and the field-notes sketch) both treated "Option A: deprecate-and-replace via mockspace flow" as the intended reconciliation. Investigating the mockspace CLI source at `~/.cargo/git/checkouts/mockspace-d2db2c8fb6d9e932/0d2f5cf/src/design_round.rs` revealed two clarifying facts.
+
+First, the `cargo mock deprecate` command operates on the *current round's* active CLs, not on arbitrary historical rounds. The implementation at `cmd_deprecate` (lines 143 to 222) matches against `Phase::Doc` / `Phase::Src` / `Phase::Topic` / `Phase::SrcPlan` / `Phase::Done` and dispatches to operations on whatever CL is currently active. There is no path argument; there is no mechanism for picking a specific historical round's CL to deprecate.
+
+Second, the closed round 202605090011 (the one carrying the drift) has both its DOC and SRC CLs locked. The `current_phase` helper computes a phase from file-presence patterns in the design rounds directory; with a closed round and no active CL anywhere else, the phase is `Topic`. The `deprecate` command in `Phase::Topic` errors with `no changelist to deprecate (TOPIC phase)` (line 207 to 209 in the source).
+
+Combined: the cargo mock CLI provides no path for retroactively deprecating a past round's locked CL. The "Option A" framing in PR #85's drift memo was based on a misreading.
+---
+## Future drift discipline
+
+When a future round's source application drifts from its lock-time CL claim, the right pattern (per this investigation and the discipline rule):
+
+1. The original CL stays locked and immutable.
+2. A sketch under `mock/research/sketches/` documents the drift at the time it's discovered, naming the original CL by path and the shipped reality by source line.
+3. If a future round genuinely supersedes the original (substantive design change), that future round's CL carries a `## Comparison to deprecated changelist` section per the deprecation-comparison lint, and the original CL is renamed to `.deprecated.md` via manual `git mv` + the new round's commit. This is the case the cargo mock CLI does NOT automate; it's a manual operation when the design genuinely warrants it.
+4. If the drift is purely a wording mismatch with no design change behind it (as in #398), a documentation sketch is sufficient; no rename or new round is needed.
+'''
+origin = "proposed"
+written_by = "sketch cl-drift-closure-clarification of 2026-05-25 (workspace task #398), outcome WORKS; agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["locked changelist", "immutable", "drift documentation", "retroactive reconciliation", "wording mismatch", "deprecation", "task 398"]
+rejects = ["Option A: deprecate-and-replace via mockspace flow", "The \"Option A\" framing in PR #85's drift memo was based on a misreading"]
+related = ["tenet::a_drifted_locked_changelist_is_reconciled_by_a_new_round_that_deprecates_it_and_carries_a_corrected_replacement"]

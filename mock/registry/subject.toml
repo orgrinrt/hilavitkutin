@@ -1,0 +1,86 @@
+# What the tenets are about. One row per subject, and every tenet names one.
+
+[[subject]]
+id = "identity"
+what = "What hilavitkutin is and is not: its scope, its crates, what it owns and what it leaves to the consumer."
+keywords = ["scope", "engine", "pipeline", "crates", "boundary", "consumer", "what it is"]
+
+[[subject]]
+id = "principles"
+what = "The principles and constraints the engine holds to, each with its reason."
+keywords = ["no_std", "no alloc", "no dyn", "static composition", "typestate", "contracts", "constraint", "ban"]
+
+[[subject]]
+id = "stores"
+what = "The kinds of store a unit reads and writes, what each holds, and how a store is identified and typed."
+keywords = ["column", "resource", "virtual", "store kind", "store id", "column value", "field", "seq", "map", "accumulator"]
+
+[[subject]]
+id = "units"
+what = "Work units: what a unit declares, its access sets, its schedule and hints, and what the engine derives from them."
+keywords = ["workunit", "access set", "read", "write", "context", "hint", "schedule", "registration", "execute"]
+
+[[subject]]
+id = "ordering"
+what = "How units are ordered against each other: reads after writes, two writers of one store, hints, priority and the fallback."
+keywords = ["order", "write-write", "hint", "priority", "tie-break", "determinism", "commutative", "fallback"]
+
+[[subject]]
+id = "execution"
+what = "How a plan runs: phases, trunks, fibers, fusion, morsels, convergence, the pool and the strategies."
+keywords = ["phase", "trunk", "fiber", "branch", "bridge", "fusion", "morsel", "convergence", "head and tail", "thread pool", "strategy", "dispatch"]
+
+[[subject]]
+id = "plan"
+what = "The plan: what it computes from the units and the data, what it fixes, what adapts, and what makes it recompute."
+keywords = ["plan stage", "schedule", "recompute", "access matrix", "morsel size", "adaptation", "static composition"]
+
+[[subject]]
+id = "change"
+what = "Change tracking: generation counters, version stamps, what a write does to them, what is skipped, and what a unit sees of a store written in the same pass."
+keywords = ["generation", "counter", "version stamp", "dirty", "skip", "incremental", "buffer", "frame start", "snapshot", "partial write", "changed"]
+
+[[subject]]
+id = "records"
+what = "Records and their layout: what a record is, record counts, contiguity, arenas, windows and indices."
+keywords = ["record", "record count", "contiguous", "arena", "co-location", "window", "index", "selection", "prototype", "stride"]
+
+[[subject]]
+id = "memory"
+what = "Memory and the providers the consumer hands in: who allocates, what the engine may assume, column lifetime."
+keywords = ["memory provider", "allocation", "backing memory", "release", "lifetime", "clock", "thread pool", "platform"]
+
+[[subject]]
+id = "meta"
+what = "The meta pipeline: the scheduler scheduling itself through its own units, virtuals and resources."
+keywords = ["meta", "self-hosting", "plan stage", "schedule ready", "pass start", "schedule end", "kernel"]
+
+[[subject]]
+id = "persistence"
+what = "Persistence: moving column data out of and into the engine, and what stays the consumer's."
+keywords = ["evict", "inject", "dump", "import", "hot", "cold", "on-disk", "storage"]
+
+[[subject]]
+id = "extensions"
+what = "Extensions and the plugin host layer: loading, descriptors, capabilities, and what the engine never does at run time."
+keywords = ["extension", "plugin", "dlopen", "linking", "descriptor", "capability", "cdylib"]
+
+[[subject]]
+id = "kits"
+what = "Kits: presets of units and stores a consumer composes into an app."
+keywords = ["kit", "preset", "bundle", "builder", "app"]
+
+[[subject]]
+id = "governance"
+what = "How the record itself is governed: which text ranks over which, how a change to the design is made and recorded."
+keywords = ["canon", "ladder", "amendment", "seed", "freeze", "ratify", "evidence", "bench-decided"]
+
+[[subject]]
+id = "downstream"
+what = "The downstream users the record names and what each needs of the engine."
+keywords = ["polka-dots", "saalis", "loimu", "viola", "vehje", "kaski", "consumer", "workload"]
+
+[[subject]]
+id = "future"
+what = "What the record says the engine is meant to become: deferred designs and stated directions."
+keywords = ["deferred", "later", "roadmap", "not day-one", "meant to become"]
