@@ -152,7 +152,7 @@ impl<W: WorkUnit<S>, S> Plannable<S> for W {
 //
 // A heterogeneous WU carrier (mixing `Always` and `On<V>` units) cannot
 // recover a member's schedule from a free `WorkUnit<S>` bound (S is
-// unconstrained, E0207). `Scheduled` names the schedule as an associated
+// unconstrained, E0207). `HasSchedule` names the schedule as an associated
 // type so the engine's dispatch walk can branch on it at compile time;
 // `ScheduleGate` is the marker the engine gates on (the runtime fired-flag
 // read lives engine-side, since the contract crate cannot see the engine's
@@ -202,9 +202,6 @@ impl<V: MetaVirtual> ScheduleGate for OnMeta<V> {}
 /// overlap, so the blanket and the explicit impl cohere (proven by the
 /// 202606081700 sketch). The dispatch carrier bounds members
 /// `W: HasSchedule + WorkUnit<<W as HasSchedule>::Sched>`.
-///
-/// Named `HasSchedule` (not `Scheduled`) because `dispatch_codegen` already
-/// ships an unrelated `Scheduled` trait-alias for `LockFreeDispatch`.
 pub trait HasSchedule {
     /// This WU's schedule: `Always` or `On<V>`.
     type Sched: ScheduleGate;
@@ -230,7 +227,7 @@ use crate::access::{Concat, Cons, Empty};
 /// access sets.
 #[diagnostic::on_unimplemented(
     message = "`{Self}` is not a WorkUnitBundle",
-    note = "WorkUnitBundle is auto-implemented for `Empty` and for `Cons<W, T>` where `W: WorkUnit` and `T: WorkUnitBundle`. Build the bundle through the scheduler builder's `.add_unit::<W>()` calls."
+    note = "WorkUnitBundle is auto-implemented for `Empty` and for `Cons<W, T>` where `W: WorkUnit` and `T: WorkUnitBundle`. Build the bundle by registering each unit on the scheduler builder with `.with(unit)`, or install a Kit whose `Units` declares it."
 )]
 pub trait WorkUnitBundle {
     type AccumRead: AccessSet;

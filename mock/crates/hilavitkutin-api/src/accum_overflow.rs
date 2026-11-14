@@ -12,13 +12,9 @@
 use notko::Outcome;
 
 use crate::accum_refused::AccumRefused;
-
-mod sealed {
-    pub(crate) trait Sealed {}
-}
+use crate::sealed;
 
 /// What a run does with the frame's verdict on accumulator overflow.
-#[allow(private_bounds)]
 pub trait AccumOverflow: sealed::Sealed + 'static {
     /// What a run entry returns under this choice.
     type Out;

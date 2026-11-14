@@ -1,8 +1,8 @@
 //! Runtime string table header + bytes pool.
 //!
 //! Header entries carry a content hash and a slice into the bytes
-//! pool. Lookup is an O(n) linear scan this round; perfect-hash
-//! lookup lands once the hot path is measured.
+//! pool. Lookup is an O(n) linear scan; a perfect-hash lookup is
+//! not provided.
 
 use arvo_hash::ContentHash;
 use notko::Maybe;
@@ -40,9 +40,8 @@ impl StringTable {
         }
     }
 
-    /// Look up bytes for a content hash. O(n) linear scan this
-    /// skeleton round; a perfect-hash lookup lands in the follow-up
-    /// round when the lookup hot path is measured.
+    /// Look up bytes for a content hash. O(n) linear scan; there is
+    /// no perfect-hash lookup.
     #[rustfmt::skip]
     pub fn lookup(&self, content_hash: ContentHash) -> Maybe<&[u8]> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: mmap byte-slice return; u8 is the canonical byte primitive; tracked: #72
         let mut i = 0;

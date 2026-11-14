@@ -86,6 +86,24 @@ thread_local! {
     static OBS_B: RefCell<Vec<u32>> = RefCell::new(Vec::new());
 }
 
+// Reads both columns back after a run and asserts each record against what the
+// test expects its column to hold. Bv is the head binding (registered last), Av
+// one tail down.
+macro_rules! assert_columns {
+    ($scheduler:expr, $av:expr, $bv:expr) => {{
+        let want_av: [u32; N] = $av;
+        let want_bv: [u32; N] = $bv;
+        let av_base = $scheduler.__bindings().__tail().__ptr().as_ptr() as *const Av;
+        let bv_base = $scheduler.__bindings().__ptr().as_ptr() as *const Bv;
+        for i in 0 .. N {
+            // SAFETY: both columns reserve N records; the scheduler is alive.
+            let (av, bv) = unsafe { ((*av_base.add(i)).0, (*bv_base.add(i)).0) };
+            assert_eq!(av, want_av[i], "Av rec {i}");
+            assert_eq!(bv, want_bv[i], "Bv rec {i}");
+        }
+    }};
+}
+
 // WuA: writes Column<Av>, reads nothing -> phase 0, trunk {Av}.
 struct WuA;
 impl BuilderInput for WuA {
@@ -158,6 +176,8 @@ fn run_one_trunk_runs_only_trunk0_member() {
         )
     });
     OBS_B.with(|o| assert!(o.borrow().is_empty(), "WuB (trunk 1) did not run"));
+    // The columns say the same: Av holds what WuA wrote, Bv is untouched.
+    assert_columns!(scheduler, [0, 10, 20, 30], [0, 0, 0, 0]);
 }
 
 #[test]
@@ -182,6 +202,8 @@ fn run_one_trunk_runs_only_trunk1_member() {
         )
     });
     OBS_A.with(|o| assert!(o.borrow().is_empty(), "WuA (trunk 0) did not run"));
+    // The columns say the same: Bv holds what WuB wrote, Av is untouched.
+    assert_columns!(scheduler, [0, 0, 0, 0], [0, 100, 200, 300]);
 }
 
 #[test]
@@ -213,4 +235,5 @@ fn run_all_trunks_runs_every_trunk_once() {
             "WuB (trunk 1) ran once"
         )
     });
+    assert_columns!(scheduler, [0, 10, 20, 30], [0, 100, 200, 300]);
 }

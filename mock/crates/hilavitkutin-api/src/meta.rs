@@ -59,16 +59,13 @@ impl MetaVirtual for ScheduleEnd {
     const RANK: USize = RANK_SCHEDULE_END;
 }
 
-mod sealed {
-    pub(crate) trait Sealed {}
-}
+use crate::sealed;
 
 /// Sealed marker on the four meta resource types.
 ///
 /// Restricts the meta resources to meta work units. The compile-time `Context`
 /// bound that enforces "consumer work units cannot reach the meta resources" is
 /// not provided yet; only the marker and the resource types exist.
-#[allow(private_bounds)]
 pub trait MetaAccess: sealed::Sealed {}
 
 /// Meta resource: the dependency graph the scheduler analyses.

@@ -1,4 +1,4 @@
-//! Per-OS heterogeneous-core detection (Topic 6 axis E).
+//! Per-OS heterogeneous-core detection.
 //!
 //! P-cores take critical-path trunks with larger morsels; E-cores
 //! handle branches / leaves at proportionally smaller widths. The

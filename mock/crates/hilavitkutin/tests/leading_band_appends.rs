@@ -21,9 +21,10 @@
 mod stable_provider;
 
 mod common;
+mod fixed_workers;
 
 use arvo::USize;
-use common::FixedWorkers;
+use fixed_workers::FixedWorkers;
 use hilavitkutin::dispatch::engine_ctx::{
     AccPtrCons,
     AccPtrNil,

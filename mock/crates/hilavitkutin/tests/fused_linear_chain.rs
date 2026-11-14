@@ -39,6 +39,7 @@ use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_api::{ReadVals, RecordOp, WriteVals, rec};
 use hilavitkutin_providers::ArenaColumnStorage;
+use notko::Outcome;
 
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
@@ -246,7 +247,10 @@ fn fused_chain_produces_chained_computation() {
     }
 
     // Fused dispatch: the engine folds [S1, S2, S3] into one ChainWu and walks it.
-    let _ = sched.run_fused();
+    assert!(
+        matches!(sched.run_fused(), Outcome::Ok(())),
+        "the fused frame completes with no refusal"
+    );
 
     // Cv is the deepest registered column (In -> Av -> Bv -> Cv reversed in the
     // prepend order; registered Cv first, so it sits three tails down from In).
@@ -254,12 +258,12 @@ fn fused_chain_produces_chained_computation() {
     // change to column registration order that moves Cv off the third tail makes
     // this line fail to compile, rather than silently reading a different column.
     let cv_ptr: ColumnPtr<Cv> = sched.__bindings().__tail().__tail().__tail().__ptr();
-    let cv_base = cv_ptr.as_ptr() as *const u32;
+    let cv_base = cv_ptr.as_ptr();
     // SAFETY: Cv holds N reserved records; the scheduler (hence storage) is alive.
     let out = unsafe { core::slice::from_raw_parts(cv_base, N) };
     for i in 0 .. N {
         assert_eq!(
-            out[i],
+            out[i].0,
             chain(i as u32),
             "fused chain output at record {i} must equal s3(s2(s1(i)))"
         );

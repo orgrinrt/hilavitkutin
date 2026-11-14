@@ -140,9 +140,8 @@ pub const fn origin_ceiling<S: [const] SymShape>(origin: S::Origin) -> u32 { // 
 
 /// Whether an origin's index is inside the range its shape reserved.
 ///
-/// Public because a shape is an open extension point. The check lived in
-/// this crate's test module for one round, where nothing a consumer wrote could
-/// reach it, while the tests asserted the case was covered. An index at or above
+/// Public because a shape is an open extension point, and nothing a consumer
+/// wrote could reach a check kept in this crate's test module. An index at or above
 /// `2^ORIGIN_BITS` gives a derived run that is disjoint in `u32` and truncates
 /// onto another origin's inside the id field.
 ///
@@ -173,10 +172,10 @@ pub const fn origin_index_in_range<S: [const] SymShape>(origin: S::Origin) -> bo
 /// the type in front of it, and the whole-handle law fails with it, because the
 /// vacated bits then belong to nothing.
 ///
-/// So the route runs declaration, type, round trip, bits that land. Four rounds
-/// each named one link and called the question closed; the previous one counted
-/// widths from mask constants no accessor read, so a layout could forward any
-/// mask at all and everything passed.
+/// So the route runs declaration, type, round trip, bits that land. Any one
+/// link alone leaves a gap. Counting widths from mask constants no accessor
+/// reads is such a link: a layout could forward any mask at all and everything
+/// would pass.
 pub const trait FieldWidth {
     /// The field's width, in bits.
     const WIDTH: USize;

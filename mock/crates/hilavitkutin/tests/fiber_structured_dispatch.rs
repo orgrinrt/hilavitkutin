@@ -81,10 +81,8 @@ const CONSUMER_TAG: u8 = 1;
 const APPENDER_TAG: u8 = 2;
 
 #[derive(Copy, Clone, Default)]
-#[allow(dead_code)]
 struct Cv(u32);
 #[derive(Copy, Clone)]
-#[allow(dead_code)]
 struct Av(u32);
 
 type Col = Cons<Column<Cv>, Empty>;
@@ -230,4 +228,24 @@ fn mixed_plan_dispatches_whole_carrier_flat() {
             observed.as_slice()
         );
     });
+
+    // What the units wrote. The accumulator is the head binding (registered
+    // last among the stores), the column one tail down. The producer's one
+    // call covered the whole range, so each record holds its own index; the
+    // appender's one call left a single append.
+    let acc = scheduler.__bindings();
+    let live = acc.__len_cell().get().0;
+    assert_eq!(live, 1, "the appender appended once per frame");
+    // SAFETY: one live record, initialised by the append.
+    let appended = unsafe { (*acc.__ptr().as_ptr()).0 };
+    assert_eq!(appended, 1, "the appended value is the one the unit made");
+    let cv_base = scheduler.__bindings().__tail().__ptr().as_ptr() as *const Cv;
+    for r in 0 .. RECORDS {
+        // SAFETY: the column reserves RECORDS records; the scheduler is alive.
+        let v = unsafe { (*cv_base.add(r)).0 };
+        assert_eq!(
+            v, r as u32,
+            "column rec {r}: written by the producer's one pass"
+        );
+    }
 }

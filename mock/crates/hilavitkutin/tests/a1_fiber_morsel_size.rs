@@ -33,6 +33,9 @@ use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
+use notko::Outcome;
+
+const RECORDS: usize = 4;
 
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
@@ -113,11 +116,11 @@ impl WorkUnit<Always> for Copyer {
 #[test]
 fn single_fiber_morsel_size_is_plan_per_fiber_value() {
     let provider = BumpProvider::<16384>::new();
-    let s = Scheduler::builder()
+    let mut s = Scheduler::builder()
         .with(Column::<Inv>::start())
         .with(Column::<Outv>::start())
         .with(Copyer)
-        .build(store(provider), USize(4))
+        .build(store(provider), USize(RECORDS))
         .unwrap_or_else(|_| panic!("build should succeed"));
     // One fiber writing one 4-byte column: the A3b window formula gives
     // 24_576 / 4 = 6144 (inside the clamps, 4-aligned). The descriptor must
@@ -127,6 +130,28 @@ fn single_fiber_morsel_size_is_plan_per_fiber_value() {
         6144,
         "FiberDispatch.morsel_size carries plan.morsel_windows[0] (the A3b L1 window)"
     );
+
+    // The width of `Outv` is what the window above is computed from, so the
+    // fixture is shown to run as well as to plan: one frame, then every
+    // record of the written column read back as `Copyer` wrote it. Outv is
+    // the head column (registered last); Inv sits one tail down.
+    let in_base = s.__bindings().__tail().__ptr().as_ptr() as *mut Inv;
+    for i in 0 .. RECORDS {
+        // SAFETY: Inv reserves RECORDS records; the scheduler is alive; each
+        // slot is written once here before the run.
+        unsafe { *in_base.add(i) = Inv(i as u32 + 1) };
+    }
+    assert!(matches!(s.run(), Outcome::Ok(())));
+    let out_base = s.__bindings().__ptr().as_ptr() as *const Outv;
+    for i in 0 .. RECORDS {
+        // SAFETY: Outv reserves RECORDS records; the scheduler is alive.
+        let v = unsafe { (*out_base.add(i)).0 };
+        assert_eq!(
+            v,
+            i as u32 + 1,
+            "rec {i}: the fiber's unit copied In to Outv"
+        );
+    }
 }
 
 // Catalogue: the whole reason `fiber_plan_idx` exists is that the dispatch-order

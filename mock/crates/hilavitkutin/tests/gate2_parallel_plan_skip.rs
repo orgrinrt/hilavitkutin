@@ -85,10 +85,11 @@ const N: usize = 8;
 
 static PLAN_RUNS: AtomicUsize = AtomicUsize::new(0);
 
+// The plan band's column is a bare marker: its unit writes nothing, so no
+// value of it is ever stored and no width of it is asserted.
 #[derive(Copy, Clone, Default)]
-struct Pv(u32);
+struct Pv;
 #[derive(Copy, Clone, Default)]
-#[allow(dead_code)] // written by the consumer, read back post-run as raw u32
 struct Av(u32);
 
 type ColP = Cons<Column<Pv>, Empty>;
@@ -185,4 +186,14 @@ fn worker_phase_loop_skips_plan_band_on_clean_frame() {
         after_frame2, after_frame1,
         "frame 2: the plan band was skipped on the clean frame",
     );
+
+    // The record-bearing unit ran too: Av is the head column (registered
+    // last), and every record holds what the unit wrote in frame 1, which the
+    // clean frame left alone.
+    let base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const Av;
+    for i in 0 .. N {
+        // SAFETY: Av reserves N records; the scheduler is alive.
+        let v = unsafe { (*base.add(i)).0 };
+        assert_eq!(v, 7, "rec {i}: the record-bearing unit wrote its value");
+    }
 }

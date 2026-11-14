@@ -2,9 +2,8 @@
 //!
 //! DESIGN Q2 bans custom cargo features: `compile_error!` guards
 //! are the replacement mechanism when a pragma or consumer needs to
-//! assert a target property. Only `require_isa!` ships this round;
-//! the wrapper-script follow-up adds vendor / arch variants per
-//! BACKLOG.
+//! assert a target property. `require_isa!` is the only guard; there
+//! are no vendor or arch variants.
 
 /// Emit a `compile_error!` stating which `-C target-feature` flag
 /// the consumer needs. The macro always expands to a hard error;

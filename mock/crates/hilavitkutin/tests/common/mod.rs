@@ -51,23 +51,3 @@ impl ThreadPoolApi for TestExecutor {
         USize(std::thread::available_parallelism().map_or(1, |n| n.get()))
     }
 }
-
-/// A `TestExecutor` that reports `W` workers whatever the machine has, so a
-/// test can run the same frame at a chosen worker count.
-#[allow(dead_code)]
-// lint:allow(no-bare-numeric) reason: used by the tests that pin a worker count, not by every test that shares this module; tracked: #121
-#[derive(Copy, Clone, Debug, Default)]
-pub struct FixedWorkers<const W: usize>;
-
-impl<const W: usize> ThreadPoolApi for FixedWorkers<W> {
-    fn spawn<F>(&self, f: F)
-    where
-        F: FnOnce() + Send + 'static,
-    {
-        TestExecutor::new().spawn(f);
-    }
-
-    fn worker_count(&self) -> USize {
-        USize(W)
-    }
-}

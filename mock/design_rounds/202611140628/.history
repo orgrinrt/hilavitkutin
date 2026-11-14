@@ -1,0 +1,50 @@
+1335643a chore: lock src changelist 202611140629
+1242c27d test: hold the core-idle counts by hand and at pinned worker counts
+c9d0439c chore: lock doc changelist 202611140628
+4e51cae9 docs: open the round for the suite claims that hold on any machine
+321a3849 chore: close design round 202611140533
+ca63239d chore: lock src changelist 202611140539
+4a0948a5 Merge remote-tracking branch 'origin/dev' into work/hv-suite-surface
+6d02023f fix: mount the moved worker pin in the frozen harness, mark the stubs
+9d8e9a0a Merge remote-tracking branch 'origin/work/hv-suite-words' into work/hv-suite-surface
+93703a6d Merge branch 'work/hv-suite-examples' into work/hv-suite-surface
+ade63db9 fix: make the hilavitkutin benches measure what they claim
+91b78549 docs: rewrite the lint-rules skill for the lint api that ships
+b9582d71 docs: state src comments in the code's own terms
+d08ad8d4 docs: write the providers crate examples as running programs
+6e9caa27 feat: add a lint for comments that name the process behind the code
+8fb145ec test: make the suite read back what it claims to check
+2ca01659 fix: make the api rustdoc and diagnostics say what ships
+c712d3fb chore: lock doc changelist 202611140533
+57b1dfc4 docs: make the api design and providers readme say what ships
+33c8c2f3 chore: close design round 202611140459
+4aaace16 chore: lock src changelist 202611140459
+993759ec test: drop the dead_code allows in the macros and extensions tests
+3c8b96e9 test: make the builder smokes read back what they register
+7bd732b3 test: let the ui pass twins infer their run witnesses
+acaddd0a Merge remote-tracking branch 'origin/work/hv-suite-reads' into work/hv-suite-surface
+4392de83 test: split the run_parallel suite and make the ui twins observe a run
+14f8b713 test: clear the remaining test warnings without suppression
+e2445e50 test: observe the columns and accumulators the units wrote
+a22fd30b test: read written columns back instead of allowing dead code
+6d096fde chore: open the suite-as-an-instrument round
+f0304be0 docs: plan the engine's one path and its correctness work
+8236de3c feat: revise the hilavitkutin api in place
+b4c70cd0 feat: put the hilavitkutin canon on stamped and held standings
+e99af156 docs: record the load-time units panel and its sketches
+4d31368e fix: make the leaf crates green
+271909e5 feat: build every crate through `hilavitkutin-build`
+44f7de28 bench: add the frame_wide member and the wide bench matrix
+81c5c587 docs: land the record from every unmerged branch
+311a2ae6 feat: install a swapped resource value under a provisional spec
+c4902694 docs: audit hilavitkutin as part of the stack
+49ab3440 feat: land the recovered engine source, tests and bench variants
+ab63d610 bench: measure single trunk convergence against hand written loops
+ada51bb4 chore: port the lints to the one view of the tree
+6e971d1b docs: keep the perf gate section under the corrected findings
+6524900e docs: land the unlanded bench results and their run history
+c42d7074 feat: make an append past capacity a refusal the consumer configures
+27abd8a8 research: sketch a branded index for exclusive column writes
+26e926b6 fix: spell the notko git source by https
+c2b392d1 test: make the hilavitkutin suite able to fail
+0928042a research: sketch one kernel's digests on native and wasm32

@@ -1,4 +1,4 @@
-//! PredictiveParkingMetrics (Topic 5 axis F).
+//! PredictiveParkingMetrics.
 crate::metrics_resource!(
     PredictiveParkingMetrics,
     "Per-phase predicted wait window snapshot."
