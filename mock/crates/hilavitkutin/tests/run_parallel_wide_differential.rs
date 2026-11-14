@@ -12,31 +12,30 @@
 //! and the engine is one at every core count (row
 //! `the_engine_is_one_and_the_core_count_is_configuration`).
 //!
-//! Each build is judged up to four ways. The skipping run holds the
+//! Each build is judged by what it can show. The skipping run holds the
 //! every-store-dirty run's stores, and that run the model's, at 1, 2, 3, 4 and
-//! `MAX_CORES` workers through `FixedWorkers`. `run` runs exactly the cone of
-//! each step, as many times as it ran the unit in the cold frame.
-//! `run_parallel` runs each unit in each frame as often as `run` says it
-//! should: as often as `run` does on the windowed and record-less walks, where
-//! a trunk has one owner walking the same windows, and on the unit-outer walk
-//! once on every core whose slice of the N-way tiling is not empty, in a frame
-//! where `run` ran it at all. And on the builds with records, a change made
-//! without a mark leaves the skipping run behind; a record-less frame leaves
-//! nothing a stale cone could show.
+//! `MAX_CORES` workers through `FixedWorkers`, on the builds with records. `run`
+//! and `run_parallel` each run exactly the cone of each step, a unit of it as
+//! often as `run` ran it in the cold frame: the engine is one at every core
+//! count, and no unit of the fixture declares itself commutative, so no fiber
+//! is split across cores (row `ordering_is_guaranteed_by_construction`, the
+//! spec `:604-607`). And on the builds with records, a change made without a
+//! mark leaves the skipping run behind.
 //!
 //! The accumulator writer is held to its contents, never to the cone: what a
 //! skipped accumulator writer does is asked of op
 //! (`does_a_skipped_accumulator_writer_run_anyway_in_hilavitkutin`), and the
 //! skipping run's accumulator must hold the every-store-dirty run's records,
 //! in order, whatever he answers. The producer sharing its fiber is left out
-//! of the cone with it.
+//! of the counts with it.
 //!
-//! Today the workers ask no dirty mask, so the count and the unmarked-change
-//! checks of `run_parallel` fail and are catalogued under the ticket that
-//! tracks it, and `run` runs a record-less frame whole, so that build's cone
-//! check fails under its own. While the workers skip nothing the store
-//! comparison passes for a trivial reason, so its control is a runner known to
-//! be wrong.
+//! Today the workers ask no dirty mask, the unit-outer walk tiles a carrier
+//! none of whose fibers is commutative, and `run` runs a record-less frame
+//! whole, so the count and unmarked-change checks of `run_parallel` and the
+//! record-less cone check fail and are catalogued under the tickets that track
+//! them. While the workers skip nothing the store comparison passes for a
+//! trivial reason, so its controls are runners known to be wrong, one altering
+//! the sink and one dropping an accumulator record.
 
 #[macro_use]
 mod skip_wide;
@@ -48,6 +47,7 @@ use hilavitkutin_api::platform::ThreadPoolApi;
 use notko::Outcome;
 use skip_wide::{
     ACCUMULATOR,
+    Counts,
     Difference,
     RECORDS,
     ROOTS,
@@ -97,38 +97,58 @@ fn counts_failing<T: PartialEq + Copy>(results: [(usize, T); 5], want: T) -> Vec
         .collect()
 }
 
-/// The cores that walk a unit on the unit-outer walk at `n` workers over
-/// `records` records: those whose slice of the N-way tiling is not empty, each
-/// slice `ceil(records / n)` long (`resource/bindings/per_core.rs:100-123`).
-const fn tiled_cores(records: usize, n: usize) -> u32 {
-    if records == 0 {
-        return 1;
-    }
-    let per = records.div_ceil(n);
-    records.div_ceil(per) as u32
+/// What a runner known to be wrong alters after the frame it names, for the
+/// controls of the store comparison.
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum Alter {
+    /// Record 0 of the sink, one more than the frame wrote.
+    Sink,
+    /// The accumulator's last live record, dropped.
+    LastKept,
 }
 
-/// The traces, checks and controls of one build of the fixture.
+/// Apply an [`Alter`] to a scheduler whose workers are parked.
+macro_rules! alter {
+    ($sched:expr, plain, $alter:expr) => {
+        match $alter {
+            Alter::Sink => alter!(@sink $sched),
+            Alter::LastKept => panic!("a plain build has no accumulator"),
+        }
+    };
+    ($sched:expr, accumulator, $alter:expr) => {
+        match $alter {
+            Alter::Sink => alter!(@sink $sched),
+            Alter::LastKept => {
+                let b = $sched.__bindings();
+                let acc = at!(b; t t t t t t t t t t t t t t);
+                let live = acc.__len_cell().get().0;
+                acc.__len_cell().set(arvo::USize(live - 1));
+            },
+        }
+    };
+    (@sink $sched:expr) => {{
+        let sink = $sched.__bindings().__ptr().as_ptr();
+        // SAFETY: the sink holds its reserved records and every worker is
+        // parked; this is the deliberate corruption.
+        unsafe { (*sink).0 += 1 };
+    }};
+}
+
+/// The traces, checks and controls of one build of the fixture. The units in
+/// `unjudged` are held to nothing by the count checks.
 macro_rules! build_checks {
-    ($name:ident, $kind:ident, $records:expr, parallel: $parallel:expr, unjudged: $unjudged:expr) => {
+    ($name:ident, $kind:ident, $records:expr, unjudged: $unjudged:expr) => {
         mod $name {
             use super::*;
 
-            /// How many times `run_parallel` at `n` workers runs a unit in a
-            /// frame where `run` ran it `base` times.
-            pub fn parallel_count(base: u32, n: usize) -> u32 {
-                let count: fn(u32, usize) -> u32 = $parallel;
-                count(base, n)
-            }
-
             /// The skipping run and the every-store-dirty run through the
-            /// history on `run_parallel` over `pool`. A frame `broken` names
-            /// has record 0 of the sink altered after it runs, the wrong runner
-            /// the control needs.
+            /// history on `run_parallel` over `pool`. The skipping run is
+            /// altered after the frame `broken` names, the wrong runner the
+            /// controls need.
             pub fn traces<P: ThreadPoolApi>(
                 s: &Serial,
                 pool: &P,
-                broken: Option<usize>,
+                broken: Option<(usize, Alter)>,
             ) -> (Trace, Trace) {
                 let skipping = wide_scheduler!(s, $records, $kind);
                 let mut skipping = core::pin::pin!(skipping);
@@ -141,12 +161,10 @@ macro_rules! build_checks {
                     read: skipping.as_ref().get_ref(),
                     frame: {
                         let outcome = skipping.as_mut().run_parallel(pool);
-                        if broken == Some(frame) && $records > 0 {
-                            let sink = skipping.as_ref().get_ref().__bindings().__ptr().as_ptr();
-                            // SAFETY: the sink holds `$records` reserved
-                            // records and every worker is parked; this is the
-                            // deliberate corruption.
-                            unsafe { (*sink).0 += 1 };
+                        if let Some((at, how)) = broken {
+                            if at == frame {
+                                alter!(skipping.as_ref().get_ref(), $kind, how);
+                            }
                         }
                         frame += 1;
                         outcome
@@ -178,12 +196,12 @@ macro_rules! build_checks {
                 )
             }
 
-            /// The first store difference of the skipping run against the
-            /// every-store-dirty run, and of that run against the model.
+            /// The first store difference of the every-store-dirty run against
+            /// the model, and of the skipping run against it.
             pub fn stores_check<P: ThreadPoolApi>(
                 s: &Serial,
                 pool: &P,
-                broken: Option<usize>,
+                broken: Option<(usize, Alter)>,
             ) -> Option<Difference> {
                 let (skipped, all) = traces(s, pool, broken);
                 let model = model_trace($records, stringify!($kind) == "accumulator");
@@ -191,29 +209,37 @@ macro_rules! build_checks {
                     .or_else(|| first_bytes_difference(&bytes_of(&skipped), &bytes_of(&all)))
             }
 
-            /// The first count of the skipping `run_parallel` at `n` workers
-            /// that is not what `run`'s count in that frame says it should be.
-            pub fn count_check<P: ThreadPoolApi>(s: &Serial, pool: &P, n: usize) -> Option<Difference> {
-                let reference = run_trace(s);
-                let (skipped, _) = traces(s, pool, None);
-                first_count_difference(&skipped, &reference, |_, _, base| parallel_count(base, n))
-            }
-
-            /// The first unit `run` runs a different number of times than the
-            /// cone and its cold-frame count say, the unjudged units left out.
-            pub fn cone_check(s: &Serial) -> Option<Difference> {
-                let got = run_trace(s);
+            /// The first unit and frame of `trace` whose count is not the skip
+            /// rule's: a unit in the cone of the step runs as often as in the
+            /// cold frame of `run`, `cold`, and a unit outside it not at all.
+            fn against_the_cone(trace: &Trace, cold: Counts) -> Option<Difference> {
                 let cone = cone_trace();
-                let cold = got[0].counts;
-                first_count_difference(&got, &got, |frame, unit, base| {
+                first_count_difference(trace, trace, |frame, unit, got| {
                     if $unjudged.contains(&unit) {
-                        base
+                        got
                     } else if cone[frame][unit] {
                         cold[unit]
                     } else {
                         0
                     }
                 })
+            }
+
+            /// The first count of `run` the skip rule does not give.
+            pub fn cone_check(s: &Serial) -> Option<Difference> {
+                let got = run_trace(s);
+                against_the_cone(&got, got[0].counts)
+            }
+
+            /// The first count of the skipping `run_parallel` over `pool` the
+            /// skip rule does not give, a unit in the cone running as often as
+            /// `run` runs it cold: the engine is one at every core count, and
+            /// no fiber of the fixture declares itself commutative, so none is
+            /// split across cores.
+            pub fn count_check<P: ThreadPoolApi>(s: &Serial, pool: &P) -> Option<Difference> {
+                let cold = run_trace(s)[0].counts;
+                let (skipped, _) = traces(s, pool, None);
+                against_the_cone(&skipped, cold)
             }
 
             /// Whether a skipping `run_parallel` and an every-store-dirty one
@@ -243,23 +269,13 @@ macro_rules! build_checks {
     };
 }
 
-// A trunk has one owner on the windowed and record-less walks, and the owner
-// walks the windows `run` walks.
-build_checks!(windowed, plain, RECORDS, parallel: |base, _| base, unjudged: [ACCUMULATOR]);
-build_checks!(record_less, plain, 0, parallel: |base, _| base, unjudged: [ACCUMULATOR]);
+build_checks!(windowed, plain, RECORDS, unjudged: [ACCUMULATOR]);
+build_checks!(record_less, plain, 0, unjudged: [ACCUMULATOR]);
 // The producer of `Out<1>` shares the accumulator writer's fiber, so `run`
 // runs it with that fiber in every frame (row
 // `a_mixed_carrier_keeps_incremental_skip_per_fiber_and_accumulator_fibers_always_run_the_whole_range`,
-// provisional), and it is left unjudged with the writer. On the unit-outer walk
-// every core with a slice runs a unit once over it, where `run` runs it once a
-// window.
-build_checks!(
-    unit_outer,
-    accumulator,
-    RECORDS,
-    parallel: |base, n| if base > 0 { tiled_cores(RECORDS, n) } else { 0 },
-    unjudged: [ACCUMULATOR, 1]
-);
+// provisional), and it is left unjudged with the writer.
+build_checks!(unit_outer, accumulator, RECORDS, unjudged: [ACCUMULATOR, 1]);
 
 /// One test of one build, by its short name: `stores`, `cone`, `count` or
 /// `unmarked`, with whatever attributes the build gives it.
@@ -292,16 +308,17 @@ macro_rules! build_test {
     ($name:ident, $(#[$attr:meta])* count) => {
         #[test]
         $(#[$attr])*
-        fn run_parallel_runs_each_unit_as_often_as_run_does_at_every_worker_count() {
+        fn run_parallel_runs_exactly_the_cone_of_each_step_at_every_worker_count() {
             let s = serial();
             let red = counts_failing(
-                at_every_count!(|pool, n| super::super::$name::count_check(&s, &pool, n)),
+                at_every_count!(|pool, _n| super::super::$name::count_check(&s, &pool)),
                 None,
             );
             assert!(
                 red.is_empty(),
-                "run_parallel runs each unit as often as run says it should on its walk, \
-                 at every worker count; not at (workers, first difference) {red:?}"
+                "run_parallel runs each unit of the cone as often as run does in the cold \
+                 frame and no other, at every worker count; not at (workers, first \
+                 difference) {red:?}"
             );
         }
     };
@@ -349,20 +366,25 @@ mod tests {
         unmarked,
     });
 
-    // A record-less frame leaves no record a stale cone could show, so it has
-    // no unmarked-change test. `run` runs it whole whatever the mask says, and
-    // `run_parallel` does the same, so their counts agree today.
+    // A record-less frame has no record, so neither a store comparison nor a
+    // stale cone has anything to show; the build is judged by its counts.
     build_tests!(record_less {
-        stores,
         #[ignore = "catalogue: run runs the record-less frame whole and never asks dirty_units, so it runs units whose inputs are all clean; needs the record-less walk gated on the dirty mask as the windowed one is; tracked #hilavitkutin_run_skips_nothing_on_a_record_less_frame"]
         cone,
+        #[ignore = "catalogue: run_parallel runs every unit every pass and never asks dirty_units, so it runs units whose inputs are all clean; needs the dirty mask published with the frame and gated on by every worker walk; tracked #run_parallel_dispatches_every_unit_each_pass_and_never_asks"]
         count,
     });
 
+    // The accumulator writer puts the carrier on the unit-outer walk, which
+    // tiles the whole carrier across the cores although no fiber of it is
+    // commutative, and at one worker walks a fiber once over the whole range
+    // where `run` walks it once a window (ticket 115,
+    // `hilavitkutin_ships_three_run_entries_where_the_unified_engin`); and it
+    // skips nothing (157).
     build_tests!(unit_outer {
         stores,
         cone,
-        #[ignore = "catalogue: run_parallel runs every unit every pass and never asks dirty_units, so it runs units run skips; needs the dirty mask published with the frame and gated on by every worker walk; tracked #run_parallel_dispatches_every_unit_each_pass_and_never_asks"]
+        #[ignore = "catalogue: run_parallel tiles a carrier none of whose fibers is commutative across every core, where a non-commutative fiber runs on one core, and walks it over a core's whole slice where run walks it once a window, and asks no dirty mask; needs the tiling gated on commutativity, the one frame body, and the mask on the walk; tracked #the_ungated_n_way_record_split_ships_where_its_own_round_del"]
         count,
         #[ignore = "catalogue: run_parallel runs every unit every pass and never asks dirty_units, so an input changed without a mark reaches the skipping run as it reaches the every-store-dirty one; needs the dirty mask published with the frame and gated on by every worker walk; tracked #run_parallel_dispatches_every_unit_each_pass_and_never_asks"]
         unmarked,
@@ -377,7 +399,7 @@ fn the_comparison_reports_a_runner_that_altered_one_record() {
     // units ran.
     let frame = 3;
     let red = counts_failing(
-        at_every_count!(|pool, _n| windowed::stores_check(&s, &pool, Some(frame))),
+        at_every_count!(|pool, _n| windowed::stores_check(&s, &pool, Some((frame, Alter::Sink)))),
         Some(Difference::Bytes {
             frame,
             column: ROOTS,
@@ -388,6 +410,31 @@ fn the_comparison_reports_a_runner_that_altered_one_record() {
         red.is_empty(),
         "the comparison reports the altered record of the sink at every worker count; \
          not at (workers, what it reported) {red:?}"
+    );
+}
+
+#[test]
+fn the_comparison_reports_a_runner_that_dropped_one_accumulator_record() {
+    let s = serial();
+    let frame = 3;
+    // The accumulator is the column past the sink, and a dropped record shows
+    // where the shorter one ends.
+    let kept = model_trace(RECORDS, true)[frame].accum.len();
+    assert!(kept > 0, "the accumulator holds records in frame {frame}");
+    let red = counts_failing(
+        at_every_count!(|pool, _n| {
+            unit_outer::stores_check(&s, &pool, Some((frame, Alter::LastKept)))
+        }),
+        Some(Difference::Bytes {
+            frame,
+            column: ROOTS + 1,
+            record: kept - 1,
+        }),
+    );
+    assert!(
+        red.is_empty(),
+        "the comparison reports the dropped record of the accumulator at every worker \
+         count; not at (workers, what it reported) {red:?}"
     );
 }
 
@@ -404,18 +451,4 @@ fn the_windowed_build_walks_several_windows_over_six_roots() {
         sched.__plan_handle().trunk_count().0 == ROOTS,
         "the six producers are six trunks, the consumer in the first one's"
     );
-}
-
-#[test]
-fn the_unit_outer_tiling_counts_the_cores_with_a_slice() {
-    // 1000 records over 256 cores is 4 records a core, so 250 cores walk it.
-    assert_eq!(tiled_cores(1000, 256), 250);
-    assert_eq!(tiled_cores(1000, 3), 3);
-    assert_eq!(tiled_cores(0, 4), 1);
-    assert_eq!(record_less::parallel_count(1, 4), 1);
-    // The fixture's 13000 records over 256 cores is 51 a core, so 255 cores
-    // walk it and one has none.
-    assert_eq!(tiled_cores(RECORDS, 256), 255);
-    assert_eq!(unit_outer::parallel_count(5, MAX_CORES), 255);
-    assert_eq!(unit_outer::parallel_count(0, MAX_CORES), 0);
 }

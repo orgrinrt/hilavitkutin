@@ -95,14 +95,19 @@ impl<const K: usize> hilavitkutin_api::footprint::ResourceFootprint for In<K> {
     const L1_BYTES: arvo::USize = arvo::USize(0);
 }
 
-/// The output of producer `K`.
+/// The output of producer `K`. Transparent, since the snapshot reads it
+/// through a `u32` pointer.
 #[derive(Copy, Clone, Default)]
+#[repr(transparent)]
 pub struct Out<const K: usize>(pub u32);
-/// The consumer's output.
+/// The consumer's output. Transparent, read as the producers' are.
 #[derive(Copy, Clone, Default)]
+#[repr(transparent)]
 pub struct Sink(pub u32);
-/// The column every producer reads beside its input, written by the host.
+/// The column every producer reads beside its input, written by the host
+/// through a `u32` pointer, so transparent.
 #[derive(Copy, Clone, Default)]
+#[repr(transparent)]
 pub struct Seed(pub u32);
 /// The accumulator's record.
 #[derive(Copy, Clone)]
