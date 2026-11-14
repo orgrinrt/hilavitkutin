@@ -14,7 +14,6 @@
 #![feature(const_ops)]
 #![feature(const_trait_impl)]
 #![feature(negative_impls)]
-#![allow(incomplete_features)]
 
 mod sealed {
     /// The sealing supertrait. Public in a module no path outside the crate

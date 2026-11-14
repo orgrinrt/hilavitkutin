@@ -1,30 +1,34 @@
-//! GATE-2 R4b: inline N-core dispatch parity (`Scheduler::run_parallel`).
+//! `Scheduler::run_parallel` over a fan-in: two column-disjoint producers in
+//! phase 0 (one writes `Column<Av>`, one `Column<Bv>`, so they fall in distinct
+//! trunks), and one combiner in phase 1 that reads both and records `Av + Bv`.
+//! The two RAW edges (`Av` and `Bv`, both producer to combiner) put the combiner
+//! after the waist, in its own phase.
 //!
-//! A fan-in workload: two column-disjoint producers in phase 0 (one writes
-//! `Column<Av>`, one writes `Column<Bv>`, so they fall in distinct trunks), and
-//! one combiner in phase 1 that reads both and records `Av + Bv`. The two RAW
-//! edges (`Av` and `Bv`, both producer -> combiner) put the combiner after the
-//! waist, in its own phase.
+//! `run_parallel` dispatches the waist-bounded phases as per-core trunk
+//! programs: phase 0 splits its two trunks across the cores (round-robin by
+//! within-phase trunk rank), then the waist barrier, then phase 1's single
+//! trunk. The recorded sum is correct (`Av(i*10) + Bv(i*100) = i*110`) only if
+//! both phase-0 trunks were dispatched and the phase-1 unit ran after both. A
+//! dropped trunk or a broken phase order corrupts the sum.
 //!
-//! `run_parallel(USize(2))` dispatches the canonical waist-bounded phases as
-//! per-core trunk programs: phase 0 splits its two trunks across the two cores
-//! (round-robin by within-phase trunk rank), then the waist barrier, then phase
-//! 1's single trunk. The recorded sum is correct (`Av(i*10) + Bv(i*100) =
-//! i*110`) only if both phase-0 trunks were dispatched and the phase-1 unit ran
-//! after both. A dropped trunk or a broken phase order corrupts the sum.
-//!
-//! Red first: `Scheduler::run_parallel` does not exist before this round, so the
-//! file does not compile.
+//! The three-trunk wrap, the two-waist barrier reuse and the participation
+//! guard each have their own fixture, in `gate2_run_parallel_three_trunks.rs`,
+//! `gate2_run_parallel_two_waists.rs` and `gate2_run_parallel_participation.rs`.
+//! The arena and the producers they share live under `tests/run_parallel/`.
 //!
 //! Lives under `tests/` so the bare numeric record values do not trip the
 //! src-tree primitive lints.
 
-use core::cell::{Cell, UnsafeCell};
-use core::mem::MaybeUninit;
 use core::sync::atomic::{AtomicUsize, Ordering};
 
+#[path = "run_parallel/arena.rs"]
+mod arena;
 mod common;
-use arvo::{Bool, USize};
+#[path = "run_parallel/producers.rs"]
+mod producers;
+
+use arena::{BumpProvider, HintT, Inv, store};
+use arvo::USize;
 use common::TestExecutor;
 use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
@@ -38,139 +42,21 @@ use hilavitkutin_api::context::{
     HasColumnWriter,
     HasEach,
 };
-use hilavitkutin_api::platform::{MemoryProviderApi, ThreadPoolApi};
+use hilavitkutin_api::platform::ThreadPoolApi;
 use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
-use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
-
-fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
-    ArenaColumnStorage::new(provider)
-}
-
-struct BumpProvider<const N: usize> {
-    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
-    used: Cell<usize>,
-}
-
-impl<const N: usize> BumpProvider<N> {
-    fn new() -> Self {
-        Self {
-            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
-            used: Cell::new(0),
-        }
-    }
-}
-
-unsafe impl<const N: usize> Send for BumpProvider<N> {}
-unsafe impl<const N: usize> Sync for BumpProvider<N> {}
-
-impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
-    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
-        let base = self.buf.get() as *mut u8;
-        let used = self.used.get();
-        let align = align.0.max(1);
-        let aligned = (used + align - 1) / align * align;
-        if aligned + len.0 > N {
-            return core::ptr::null_mut();
-        }
-        self.used.set(aligned + len.0);
-        // SAFETY: `aligned + len <= N`, in bounds of the owned buffer.
-        unsafe { base.add(aligned) }
-    }
-
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
-
-    unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
-}
+use producers::{Av, Bv, ProducerA, ProducerB};
 
 const N: usize = 4;
 
 #[derive(Copy, Clone, Default)]
-struct Inv(u32);
-#[derive(Copy, Clone, Default)]
-struct Av(u32);
-#[derive(Copy, Clone, Default)]
-struct Bv(u32);
-#[derive(Copy, Clone, Default)]
 struct Zv(u32);
 
-type OneIn = Cons<Column<Inv>, Empty>;
-type ColA = Cons<Column<Av>, Empty>;
-type ColB = Cons<Column<Bv>, Empty>;
 type ColZ = Cons<Column<Zv>, Empty>;
 type ReadAB = Cons<Column<Av>, Cons<Column<Bv>, Empty>>;
 
-// ProducerA: reads In, writes Av = In*10. Reads a host-populated input rather
-// than synthesising from the each() index: that index is morsel-relative, so a
-// source-from-index WU breaks once a phase is split across cores (here the two
-// disjoint producers feed the fan-in, so they share one trunk that head+tail
-// convergence splits). Phase 0.
-struct ProducerA;
-impl BuilderInput for ProducerA {
-    type Dispatch = UnitDispatch<Self>;
-    type Init = Self;
-}
-impl WorkUnit<Always> for ProducerA {
-    type Ctx<'frame> = EngineCtx<
-        'frame,
-        OneIn,
-        ColA,
-        SnapNil,
-        ColPtrCons<Inv, ColPtrNil>,
-        ColPtrCons<Av, ColPtrNil>,
-    >;
-    type Hint = (
-        hilavitkutin_api::hint::Immediate,
-        hilavitkutin_api::hint::Atomic,
-        hilavitkutin_api::hint::Normal,
-    );
-    type Read = OneIn;
-    type Write = ColA;
-
-    fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        ctx.each().run(|i| {
-            // SAFETY: In host-populated for N records; Av reserved + exclusive;
-            // the morsel covers reserved records (reader/writer window to absolute).
-            let inp = unsafe { ctx.reader().read::<Inv, _>(i) };
-            unsafe { ctx.writer().write::<Av, _>(i, Av(inp.0 * 10)) };
-        });
-    }
-}
-
-// ProducerB: reads In, writes Bv = In*100. Store-disjoint from A.
-struct ProducerB;
-impl BuilderInput for ProducerB {
-    type Dispatch = UnitDispatch<Self>;
-    type Init = Self;
-}
-impl WorkUnit<Always> for ProducerB {
-    type Ctx<'frame> = EngineCtx<
-        'frame,
-        OneIn,
-        ColB,
-        SnapNil,
-        ColPtrCons<Inv, ColPtrNil>,
-        ColPtrCons<Bv, ColPtrNil>,
-    >;
-    type Hint = (
-        hilavitkutin_api::hint::Immediate,
-        hilavitkutin_api::hint::Atomic,
-        hilavitkutin_api::hint::Normal,
-    );
-    type Read = OneIn;
-    type Write = ColB;
-
-    fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        ctx.each().run(|i| {
-            // SAFETY: as ProducerA, for Bv.
-            let inp = unsafe { ctx.reader().read::<Inv, _>(i) };
-            unsafe { ctx.writer().write::<Bv, _>(i, Bv(inp.0 * 100)) };
-        });
-    }
-}
-
-// Combiner: reads Av + Bv, records their sum -> phase 1 (after the waist).
+// Combiner: reads Av + Bv, records their sum, so it runs in phase 1 after the waist.
 struct Combiner;
 impl BuilderInput for Combiner {
     type Dispatch = UnitDispatch<Self>;
@@ -185,11 +71,7 @@ impl WorkUnit<Always> for Combiner {
         ColPtrCons<Av, ColPtrCons<Bv, ColPtrNil>>,
         ColPtrCons<Zv, ColPtrNil>,
     >;
-    type Hint = (
-        hilavitkutin_api::hint::Immediate,
-        hilavitkutin_api::hint::Atomic,
-        hilavitkutin_api::hint::Normal,
-    );
+    type Hint = HintT;
     type Read = ReadAB;
     type Write = ColZ;
 
@@ -197,9 +79,9 @@ impl WorkUnit<Always> for Combiner {
         ctx.each().run(|i| {
             // SAFETY: both producers (ordered before this unit by the plan's RAW
             // edges on Av and Bv, and run in an earlier phase) wrote every
-            // record the morsel covers; Zv reserved + exclusive here. Writing a
+            // record the morsel covers; Zv reserved and exclusive here. Writing a
             // column (windowed) rather than a static-by-index is what makes the
-            // combiner correct under head+tail convergence, which splits this
+            // combiner correct under head and tail convergence, which splits this
             // single-trunk phase across cores with non-zero morsel starts.
             let a: Av = unsafe { ctx.reader().read::<Av, _>(i) };
             let b: Bv = unsafe { ctx.reader().read::<Bv, _>(i) };
@@ -286,7 +168,7 @@ fn run_parallel_spawns_the_pool_once_across_frames() {
         .with(Column::<Inv>::start())
         .with(Column::<Av>::start())
         .with(Column::<Bv>::start())
-        .with(Column::<Zv>::start())
+        .with(Column::<Zv>::start_from(Zv(u32::MAX)))
         .with(ProducerA)
         .with(ProducerB)
         .with(Combiner)
@@ -312,8 +194,16 @@ fn run_parallel_spawns_the_pool_once_across_frames() {
     };
     let mut scheduler = core::pin::pin!(scheduler);
     // Two frames: spawn happens once (first call), workers park and are reused.
-    let _ = scheduler.as_mut().run_parallel(&pool);
-    let _ = scheduler.as_mut().run_parallel(&pool);
+    let first = scheduler.as_mut().run_parallel(&pool);
+    assert!(
+        matches!(first, Outcome::Ok(())),
+        "the first frame completes"
+    );
+    let second = scheduler.as_mut().run_parallel(&pool);
+    assert!(
+        matches!(second, Outcome::Ok(())),
+        "the second frame completes on the parked workers"
+    );
 
     assert_eq!(
         pool.spawns.load(Ordering::Relaxed),
@@ -326,556 +216,4 @@ fn run_parallel_spawns_the_pool_once_across_frames() {
         let z = unsafe { (*zv_base.add(i)).0 };
         assert_eq!(z, (i as u32) * 110, "rec {i} after two frames");
     }
-}
-
-// ---- 3-phase double-fan-in fixture: exercises the worker-side sense-reversing
-// waist barrier REUSE within a single frame (two interior waists back-to-back,
-// no frame sync between them, which is exactly the reset race the sense flip
-// fixes). Shape: P1,P2 (phase 0) -> Mid fan-in (waist 1) -> Q1,Q2 fan-out ->
-// Sink fan-in (waist 2). Per record i: P1=2i, P2=3i, Mid=5i, Q1=5i, Q2=10i,
-// Sink=15i.
-
-#[derive(Copy, Clone, Default)]
-struct P1v(u32);
-#[derive(Copy, Clone, Default)]
-struct P2v(u32);
-#[derive(Copy, Clone, Default)]
-struct Mv(u32);
-#[derive(Copy, Clone, Default)]
-struct Q1v(u32);
-#[derive(Copy, Clone, Default)]
-struct Q2v(u32);
-#[derive(Copy, Clone, Default)]
-struct Sv(u32);
-
-type ColP1 = Cons<Column<P1v>, Empty>;
-type ColP2 = Cons<Column<P2v>, Empty>;
-type ColMr = Cons<Column<Mv>, Empty>;
-type ColMw = Cons<Column<Mv>, Empty>;
-type ColQ1 = Cons<Column<Q1v>, Empty>;
-type ColQ2 = Cons<Column<Q2v>, Empty>;
-type ColS = Cons<Column<Sv>, Empty>;
-type ReadP = Cons<Column<P1v>, Cons<Column<P2v>, Empty>>;
-type ReadQ = Cons<Column<Q1v>, Cons<Column<Q2v>, Empty>>;
-
-type HintT = (
-    hilavitkutin_api::hint::Immediate,
-    hilavitkutin_api::hint::Atomic,
-    hilavitkutin_api::hint::Normal,
-);
-
-struct P1;
-impl BuilderInput for P1 {
-    type Dispatch = UnitDispatch<Self>;
-    type Init = Self;
-}
-impl WorkUnit<Always> for P1 {
-    type Ctx<'frame> = EngineCtx<
-        'frame,
-        OneIn,
-        ColP1,
-        SnapNil,
-        ColPtrCons<Inv, ColPtrNil>,
-        ColPtrCons<P1v, ColPtrNil>,
-    >;
-    type Hint = HintT;
-    type Read = OneIn;
-    type Write = ColP1;
-
-    fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        ctx.each().run(|i| {
-            // SAFETY: In host-populated; P1v reserved + exclusive; windowed.
-            let inp = unsafe { ctx.reader().read::<Inv, _>(i) };
-            unsafe { ctx.writer().write::<P1v, _>(i, P1v(inp.0 * 2)) };
-        });
-    }
-}
-
-struct P2;
-impl BuilderInput for P2 {
-    type Dispatch = UnitDispatch<Self>;
-    type Init = Self;
-}
-impl WorkUnit<Always> for P2 {
-    type Ctx<'frame> = EngineCtx<
-        'frame,
-        OneIn,
-        ColP2,
-        SnapNil,
-        ColPtrCons<Inv, ColPtrNil>,
-        ColPtrCons<P2v, ColPtrNil>,
-    >;
-    type Hint = HintT;
-    type Read = OneIn;
-    type Write = ColP2;
-
-    fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        ctx.each().run(|i| {
-            // SAFETY: as P1, for P2v.
-            let inp = unsafe { ctx.reader().read::<Inv, _>(i) };
-            unsafe { ctx.writer().write::<P2v, _>(i, P2v(inp.0 * 3)) };
-        });
-    }
-}
-
-struct Mid;
-impl BuilderInput for Mid {
-    type Dispatch = UnitDispatch<Self>;
-    type Init = Self;
-}
-impl WorkUnit<Always> for Mid {
-    type Ctx<'frame> = EngineCtx<
-        'frame,
-        ReadP,
-        ColMw,
-        SnapNil,
-        ColPtrCons<P1v, ColPtrCons<P2v, ColPtrNil>>,
-        ColPtrCons<Mv, ColPtrNil>,
-    >;
-    type Hint = HintT;
-    type Read = ReadP;
-    type Write = ColMw;
-
-    fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        ctx.each().run(|i| {
-            // SAFETY: both producers ran in the prior phase (RAW edges on P1v/P2v);
-            // Mv reserved + exclusive here.
-            let a: P1v = unsafe { ctx.reader().read::<P1v, _>(i) };
-            let b: P2v = unsafe { ctx.reader().read::<P2v, _>(i) };
-            unsafe { ctx.writer().write::<Mv, _>(i, Mv(a.0 + b.0)) };
-        });
-    }
-}
-
-struct Q1;
-impl BuilderInput for Q1 {
-    type Dispatch = UnitDispatch<Self>;
-    type Init = Self;
-}
-impl WorkUnit<Always> for Q1 {
-    type Ctx<'frame> = EngineCtx<
-        'frame,
-        ColMr,
-        ColQ1,
-        SnapNil,
-        ColPtrCons<Mv, ColPtrNil>,
-        ColPtrCons<Q1v, ColPtrNil>,
-    >;
-    type Hint = HintT;
-    type Read = ColMr;
-    type Write = ColQ1;
-
-    fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        ctx.each().run(|i| {
-            // SAFETY: Mid ran in the prior phase (RAW on Mv); Q1v reserved + exclusive.
-            let m: Mv = unsafe { ctx.reader().read::<Mv, _>(i) };
-            unsafe { ctx.writer().write::<Q1v, _>(i, Q1v(m.0)) };
-        });
-    }
-}
-
-struct Q2;
-impl BuilderInput for Q2 {
-    type Dispatch = UnitDispatch<Self>;
-    type Init = Self;
-}
-impl WorkUnit<Always> for Q2 {
-    type Ctx<'frame> = EngineCtx<
-        'frame,
-        ColMr,
-        ColQ2,
-        SnapNil,
-        ColPtrCons<Mv, ColPtrNil>,
-        ColPtrCons<Q2v, ColPtrNil>,
-    >;
-    type Hint = HintT;
-    type Read = ColMr;
-    type Write = ColQ2;
-
-    fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        ctx.each().run(|i| {
-            // SAFETY: as Q1, doubling Mv into the disjoint Q2v column.
-            let m: Mv = unsafe { ctx.reader().read::<Mv, _>(i) };
-            unsafe { ctx.writer().write::<Q2v, _>(i, Q2v(m.0 * 2)) };
-        });
-    }
-}
-
-struct Sink;
-impl BuilderInput for Sink {
-    type Dispatch = UnitDispatch<Self>;
-    type Init = Self;
-}
-impl WorkUnit<Always> for Sink {
-    type Ctx<'frame> = EngineCtx<
-        'frame,
-        ReadQ,
-        ColS,
-        SnapNil,
-        ColPtrCons<Q1v, ColPtrCons<Q2v, ColPtrNil>>,
-        ColPtrCons<Sv, ColPtrNil>,
-    >;
-    type Hint = HintT;
-    type Read = ReadQ;
-    type Write = ColS;
-
-    fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        ctx.each().run(|i| {
-            // SAFETY: Q1 and Q2 ran in the prior phase (RAW on Q1v/Q2v); Sv
-            // reserved + exclusive. A column write (windowed) is correct under
-            // the head+tail convergence that splits this single-trunk phase.
-            let a: Q1v = unsafe { ctx.reader().read::<Q1v, _>(i) };
-            let b: Q2v = unsafe { ctx.reader().read::<Q2v, _>(i) };
-            unsafe { ctx.writer().write::<Sv, _>(i, Sv(a.0 + b.0)) };
-        });
-    }
-}
-
-// ---- 3-trunk / 2-core fixture: phase 0 holds THREE column-disjoint producers
-// (three trunks). On two cores the round-robin trunk ownership wraps: core 0 owns
-// within-phase ranks 0 and 2, core 1 owns rank 1, so core 0 dispatches two trunks
-// in one phase. This exercises the `rank % ncores` wrap that a one-trunk-per-core
-// fixture cannot. A combiner in phase 1 reads all three. Per record i:
-// Av=10i, Bv=100i, Cv=1000i, Wv=1110i.
-
-#[derive(Copy, Clone, Default)]
-struct Cv(u32);
-#[derive(Copy, Clone, Default)]
-struct Wv(u32);
-
-type ColC = Cons<Column<Cv>, Empty>;
-type ColW = Cons<Column<Wv>, Empty>;
-type ReadABC = Cons<Column<Av>, Cons<Column<Bv>, Cons<Column<Cv>, Empty>>>;
-
-// ProducerC: reads In, writes Cv = In*1000. Store-disjoint from A and B -> a third
-// trunk in phase 0.
-struct ProducerC;
-impl BuilderInput for ProducerC {
-    type Dispatch = UnitDispatch<Self>;
-    type Init = Self;
-}
-impl WorkUnit<Always> for ProducerC {
-    type Ctx<'frame> = EngineCtx<
-        'frame,
-        OneIn,
-        ColC,
-        SnapNil,
-        ColPtrCons<Inv, ColPtrNil>,
-        ColPtrCons<Cv, ColPtrNil>,
-    >;
-    type Hint = HintT;
-    type Read = OneIn;
-    type Write = ColC;
-
-    fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        ctx.each().run(|i| {
-            // SAFETY: In host-populated; Cv reserved + exclusive; windowed.
-            let inp = unsafe { ctx.reader().read::<Inv, _>(i) };
-            unsafe { ctx.writer().write::<Cv, _>(i, Cv(inp.0 * 1000)) };
-        });
-    }
-}
-
-// Combiner3: reads Av + Bv + Cv, records their sum -> phase 1 (after the waist).
-struct Combiner3;
-impl BuilderInput for Combiner3 {
-    type Dispatch = UnitDispatch<Self>;
-    type Init = Self;
-}
-impl WorkUnit<Always> for Combiner3 {
-    type Ctx<'frame> = EngineCtx<
-        'frame,
-        ReadABC,
-        ColW,
-        SnapNil,
-        ColPtrCons<Av, ColPtrCons<Bv, ColPtrCons<Cv, ColPtrNil>>>,
-        ColPtrCons<Wv, ColPtrNil>,
-    >;
-    type Hint = HintT;
-    type Read = ReadABC;
-    type Write = ColW;
-
-    fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        ctx.each().run(|i| {
-            // SAFETY: all three producers ran in phase 0 (RAW edges on Av/Bv/Cv);
-            // Wv reserved + exclusive here.
-            let a: Av = unsafe { ctx.reader().read::<Av, _>(i) };
-            let b: Bv = unsafe { ctx.reader().read::<Bv, _>(i) };
-            let c: Cv = unsafe { ctx.reader().read::<Cv, _>(i) };
-            unsafe { ctx.writer().write::<Wv, _>(i, Wv(a.0 + b.0 + c.0)) };
-        });
-    }
-}
-
-#[test]
-fn run_parallel_three_trunks_two_cores_matches_single_core() {
-    let provider = BumpProvider::<32768>::new();
-    let scheduler = Scheduler::builder()
-        .with(Column::<Inv>::start())
-        .with(Column::<Av>::start())
-        .with(Column::<Bv>::start())
-        .with(Column::<Cv>::start())
-        .with(Column::<Wv>::start_from(Wv(u32::MAX)))
-        .with(ProducerA)
-        .with(ProducerB)
-        .with(ProducerC)
-        .with(Combiner3)
-        .build(store(provider), USize(N))
-        .unwrap_or_else(|_| panic!("build should succeed"));
-
-    // Wv (head column) starts at u32::MAX. Host-populate In[i] = i. Columns from head:
-    // Wv(0), Cv(1), Bv(2), Av(3), In(4).
-    // SAFETY: both reserved for N records of u32; the scheduler is alive.
-    let in_base = scheduler
-        .__bindings()
-        .__tail()
-        .__tail()
-        .__tail()
-        .__tail()
-        .__ptr()
-        .as_ptr() as *mut u32;
-    for i in 0 .. N {
-        unsafe {
-            *in_base.add(i) = i as u32;
-        }
-    }
-
-    // Force two cores so phase 0's three trunks distribute round-robin: core 0
-    // gets ranks 0 and 2, core 1 gets rank 1. A dropped trunk (a rank-wrap bug
-    // where core 0 fails to run its second trunk) corrupts the sum.
-    let pool = TestExecutor::new();
-    let mut scheduler = core::pin::pin!(scheduler);
-    let result = scheduler.as_mut().run_parallel(&pool);
-    assert!(matches!(result, Outcome::Ok(())));
-
-    // Wv = Av(10i) + Bv(100i) + Cv(1000i) = 1110i, correct only if all three
-    // phase-0 trunks were dispatched (including both trunks core 0 owns) and the
-    // phase-1 combiner ran after the waist.
-    let wv_base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const Wv;
-    for i in 0 .. N {
-        // SAFETY: Wv holds N reserved records; the scheduler is alive.
-        let w = unsafe { (*wv_base.add(i)).0 };
-        assert_eq!(
-            w,
-            (i as u32) * 1110,
-            "rec {i}: all three phase-0 trunks dispatched (core 0 ran two) and the \
-             phase-1 combiner ran after the waist"
-        );
-    }
-}
-
-#[test]
-fn run_parallel_threaded_two_waists_reuses_barrier() {
-    let provider = BumpProvider::<32768>::new();
-    let scheduler = Scheduler::builder()
-        .with(Column::<Inv>::start())
-        .with(Column::<P1v>::start())
-        .with(Column::<P2v>::start())
-        .with(Column::<Mv>::start())
-        .with(Column::<Q1v>::start())
-        .with(Column::<Q2v>::start())
-        .with(Column::<Sv>::start_from(Sv(u32::MAX)))
-        .with(P1)
-        .with(P2)
-        .with(Mid)
-        .with(Q1)
-        .with(Q2)
-        .with(Sink)
-        .build(store(provider), USize(N))
-        .unwrap_or_else(|_| panic!("build should succeed"));
-
-    // Sv (head column) starts at u32::MAX. Host-populate In[i] = i. Columns from head:
-    // Sv(0), Q2v(1), Q1v(2), Mv(3), P2v(4), P1v(5), In(6).
-    // SAFETY: both reserved for N records of u32; the scheduler is alive.
-    let in_base = scheduler
-        .__bindings()
-        .__tail()
-        .__tail()
-        .__tail()
-        .__tail()
-        .__tail()
-        .__tail()
-        .__ptr()
-        .as_ptr() as *mut u32;
-    for i in 0 .. N {
-        unsafe {
-            *in_base.add(i) = i as u32;
-        }
-    }
-
-    let pool = TestExecutor::new();
-    let mut scheduler = core::pin::pin!(scheduler);
-    let result = scheduler.as_mut().run_parallel(&pool);
-    assert!(matches!(result, Outcome::Ok(())));
-
-    // Sv = Q1(5i) + Q2(10i) = 15i, correct only if both interior waist barriers
-    // ordered their phases AND the barrier was reused correctly for the second
-    // waist (the sense flip; a stale-count reset would deadlock or corrupt here).
-    let sv_base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const Sv;
-    for i in 0 .. N {
-        // SAFETY: Sv holds N reserved records; the scheduler is alive.
-        let s = unsafe { (*sv_base.add(i)).0 };
-        assert_eq!(
-            s,
-            (i as u32) * 15,
-            "rec {i}: two-waist frame ran P1,P2 -> Mid -> Q1,Q2 -> Sink in phase order \
-             with the worker-side barrier reused across both waists"
-        );
-    }
-}
-
-// ---- five-trunk / four-record fixture: exposes the participation guard.
-//
-// `run_parallel`'s worker entry computes a ceil record slice per core and
-// returns early when that slice is empty (`run_this` at scheduler/mod.rs:966).
-// Trunk ownership is by rank, not by record slice, so on a machine with more
-// cores than records a core can own a trunk and still return before dispatching
-// it. Five column-disjoint producers against four records reaches a core in that
-// range; every other parallel fixture here tops out at three trunks and cannot.
-
-#[derive(Copy, Clone, Default)]
-struct Dv(u32);
-#[derive(Copy, Clone, Default)]
-struct Ev(u32);
-
-type ColD = Cons<Column<Dv>, Empty>;
-type ColE = Cons<Column<Ev>, Empty>;
-
-/// ProducerD: reads In, writes Dv = In*7. A fourth trunk in phase 0.
-struct ProducerD;
-impl BuilderInput for ProducerD {
-    type Dispatch = UnitDispatch<Self>;
-    type Init = Self;
-}
-impl WorkUnit<Always> for ProducerD {
-    type Ctx<'frame> = EngineCtx<
-        'frame,
-        OneIn,
-        ColD,
-        SnapNil,
-        ColPtrCons<Inv, ColPtrNil>,
-        ColPtrCons<Dv, ColPtrNil>,
-    >;
-    type Hint = HintT;
-    type Read = OneIn;
-    type Write = ColD;
-
-    fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        ctx.each().run(|i| {
-            // SAFETY: In host-populated; Dv reserved + exclusive; windowed.
-            let inp = unsafe { ctx.reader().read::<Inv, _>(i) };
-            unsafe { ctx.writer().write::<Dv, _>(i, Dv(inp.0 * 7)) };
-        });
-    }
-}
-
-/// ProducerE: reads In, writes Ev = In*9. A fifth trunk in phase 0, and the one
-/// whose rank lands on a core with an empty record slice.
-struct ProducerE;
-impl BuilderInput for ProducerE {
-    type Dispatch = UnitDispatch<Self>;
-    type Init = Self;
-}
-impl WorkUnit<Always> for ProducerE {
-    type Ctx<'frame> = EngineCtx<
-        'frame,
-        OneIn,
-        ColE,
-        SnapNil,
-        ColPtrCons<Inv, ColPtrNil>,
-        ColPtrCons<Ev, ColPtrNil>,
-    >;
-    type Hint = HintT;
-    type Read = OneIn;
-    type Write = ColE;
-
-    fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        ctx.each().run(|i| {
-            // SAFETY: In host-populated; Ev reserved + exclusive; windowed.
-            let inp = unsafe { ctx.reader().read::<Inv, _>(i) };
-            unsafe { ctx.writer().write::<Ev, _>(i, Ev(inp.0 * 9)) };
-        });
-    }
-}
-
-/// Every producer runs when there are more cores than records.
-///
-/// `run_parallel`'s worker entry gates participation on a per-core ceil record
-/// slice (`run_this`, scheduler/mod.rs:966), so with one record and eight cores
-/// only core 0 enters; the rest return before dispatching. Trunk ownership is by
-/// rank, not by record slice, which raises the question of whether a unit whose
-/// rank maps to a core that opted out runs at all.
-///
-/// It does, and this pins that. The case was written expecting a failure: the
-/// two ownership models disagree about which cores are idle, so a rank owner
-/// with an empty slice looked like it would strand its work. Running it showed
-/// otherwise. A single-trunk phase takes the whole-phase-mask branch, where each
-/// participating core dispatches every unit in the phase rather than only the
-/// trunks it owns, so no unit depends on a core that opted out.
-///
-/// Kept as a regression test rather than deleted. The property it pins is not
-/// obvious from either ownership model alone, it holds today for a reason that
-/// changes when the whole-phase-mask branch is removed (roadmap R1), and it is
-/// exactly what would break silently if participation and dispatch ownership
-/// were changed independently.
-#[test]
-fn every_producer_runs_when_cores_outnumber_records() {
-    let provider = BumpProvider::<32768>::new();
-    let scheduler = Scheduler::builder()
-        .with(Column::<Inv>::start())
-        .with(Column::<Av>::start())
-        .with(Column::<Bv>::start())
-        .with(Column::<Cv>::start())
-        .with(Column::<Dv>::start())
-        .with(Column::<Ev>::start_from(Ev(u32::MAX)))
-        .with(ProducerA)
-        .with(ProducerB)
-        .with(ProducerC)
-        .with(ProducerD)
-        .with(ProducerE)
-        .build(store(provider), USize(1))
-        .unwrap_or_else(|_| panic!("build should succeed"));
-
-    // Columns from head: Ev(0), Dv(1), Cv(2), Bv(3), Av(4), In(5).
-    // SAFETY: all reserved for N records of u32; the scheduler is alive.
-    let in_base = scheduler
-        .__bindings()
-        .__tail()
-        .__tail()
-        .__tail()
-        .__tail()
-        .__tail()
-        .__ptr()
-        .as_ptr() as *mut u32;
-    for i in 0 .. 1 {
-        // SAFETY: both cover the reserved record.
-        unsafe {
-            *in_base.add(i) = (i + 1) as u32;
-        }
-    }
-
-    let pool = TestExecutor::new();
-    let mut scheduler = core::pin::pin!(scheduler);
-    let result = scheduler.as_mut().run_parallel(&pool);
-    assert!(matches!(result, Outcome::Ok(())));
-
-    // Every producer's column, walked from the head binding: Ev, Dv, Cv, Bv, Av.
-    let sched_ref = scheduler.as_ref();
-    let b = sched_ref.__bindings();
-    // SAFETY: each column holds the reserved record; the scheduler is alive.
-    let ev = unsafe { (*(b.__ptr().as_ptr() as *const Ev)).0 };
-    let dv = unsafe { (*(b.__tail().__ptr().as_ptr() as *const Dv)).0 };
-    let cv = unsafe { (*(b.__tail().__tail().__ptr().as_ptr() as *const Cv)).0 };
-    let bv = unsafe { (*(b.__tail().__tail().__tail().__ptr().as_ptr() as *const Bv)).0 };
-    let av = unsafe { (*(b.__tail().__tail().__tail().__tail().__ptr().as_ptr() as *const Av)).0 };
-    // In[0] = 1, so each producer's multiplier is its expected value.
-    assert_eq!(av, 10, "ProducerA did not run");
-    assert_eq!(bv, 100, "ProducerB did not run");
-    assert_eq!(cv, 1000, "ProducerC did not run");
-    assert_eq!(dv, 7, "ProducerD did not run");
-    assert_eq!(
-        ev, 9,
-        "ProducerE did not run: the start value left in place means no core dispatched it, \
-         which is what happens if participation and dispatch ownership disagree"
-    );
 }

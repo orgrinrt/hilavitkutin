@@ -190,10 +190,50 @@ fn no_write_bytes_takes_the_max_window() {
 #[test]
 #[ignore = "catalogue: a MIN_MORSEL that is not a multiple of 4 lets the post-clamp `& !3` land the window below the configured floor (or at 0 for MIN < 4); the intended resolution aligns the floor before clamping so the window never undercuts MIN_MORSEL; tracked #hilavitkutin_catalogue_a_min_morsel_that_is_not_a_multiple_o"]
 fn non_aligned_min_morsel_keeps_the_floor() {
-    unreachable!(
-        "contract: with MIN_MORSEL = 66 and a write sum driving the raw window to the \
-         floor, the emitted window must still be >= 64 (the aligned floor), never 0. \
-         Build a custom RunCfg fixture once the floor-alignment lands. \
-         tracked #hilavitkutin_catalogue_a_min_morsel_that_is_not_a_multiple_o"
-    );
+    // `RunCfg` is sealed, so the budget goes to the plan step directly. One
+    // fiber whose unit writes one 512-byte store: 1024 / 512 = 2, far under
+    // the floor, so the window is the floor. With a floor of 66 the post-clamp
+    // `& !3` gives 64, and with a floor of 3 it gives 0, a window that covers
+    // no record. Either undercuts what the run config asked for.
+    use hilavitkutin::DefaultPlanDims;
+    use hilavitkutin::plan::{
+        AccessMask,
+        FiberGrouping,
+        MorselBudget,
+        PlanDims,
+        PlanInputs,
+        steps,
+    };
+    use hilavitkutin_api::FiberId;
+
+    type Dims = DefaultPlanDims;
+    for floor in [66usize, 3] {
+        let mut inputs: PlanInputs<<Dims as PlanDims>::Units, <Dims as PlanDims>::Stores> =
+            PlanInputs::new();
+        inputs.unit_count = USize(1);
+        inputs.record_count = USize(10_000);
+        inputs.writes.as_mut()[0] = AccessMask::empty().set(USize(0));
+        inputs.store_sizes.as_mut()[0] = USize(512);
+        inputs.morsel_budget = MorselBudget {
+            l1_usable:  USize(1024),
+            min_morsel: USize(floor),
+            max_morsel: USize(512),
+        };
+        let mut fibers: FiberGrouping<Dims> = FiberGrouping::new();
+        fibers.fiber_count = USize(1);
+        fibers.assignment.as_mut()[0] = FiberId::from_index(USize(0));
+
+        let window = steps::compute_fiber_morsel_windows::<Dims>(&inputs, &fibers).as_ref()[0];
+        assert!(
+            window.0 >= floor,
+            "MIN_MORSEL = {floor}: the window {} undercuts the configured floor",
+            window.0
+        );
+        assert_eq!(
+            window.0 % 4,
+            0,
+            "MIN_MORSEL = {floor}: the window {} is not 4-aligned",
+            window.0
+        );
+    }
 }

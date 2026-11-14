@@ -1,6 +1,7 @@
-// A unit reads `Resource<InA>` but the builder never registers it. `build`
-// must refuse: the unit's read set is not contained in the registered stores.
-// The twin `unregistered_store_pass.rs` differs only by the `.with(Resource::new(InA(1)))` line.
+// A unit reads `Resource<InA>` and the builder registers it, so `build` takes
+// the unit and one frame runs. The twin `unregistered_store_fail.rs` differs
+// only by the `.with(Resource::new(InA(1)))` line, which it leaves out, and is
+// refused for it.
 
 use core::cell::Cell;
 
@@ -79,8 +80,10 @@ fn main() {
         base,
         used: Cell::new(0),
     };
-    let _ = Scheduler::builder()
+    let scheduler = Scheduler::builder()
         .with(Resource::new(InA(1)))
         .with(ReadsInA)
-        .build(store(provider), USize(0));
+        .build(store(provider), USize(0))
+        .unwrap_or_else(|_| panic!("build refused a unit whose read set is registered"));
+    assert!(matches!(scheduler.run::<(), _>(), notko::Outcome::Ok(())));
 }

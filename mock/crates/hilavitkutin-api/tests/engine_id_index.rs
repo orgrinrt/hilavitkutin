@@ -7,9 +7,6 @@
 //! container for a width, which is the drift the accessors exist to absorb.
 
 #![no_std]
-#![feature(adt_const_params)]
-#![feature(generic_const_exprs)]
-#![allow(incomplete_features)]
 
 use arvo::USize;
 use hilavitkutin_api::{FiberId, PhaseId, TrunkId, UnitId};

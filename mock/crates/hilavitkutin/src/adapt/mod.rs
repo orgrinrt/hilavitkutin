@@ -17,11 +17,7 @@
 //! - `predictive_parking`: per-phase predicted wait window.
 //! - `memory_watermark`: high-water arena allocation per pass.
 //! - `core_idle_time`: per-core park-time accumulator.
-//!
-//! The `arena` module holds the runtime sidecar storage for axis
-//! measurements (hot lines per fiber, cold SoA per pass).
 
-pub mod arena;
 pub mod cache_residency;
 pub mod change_class;
 pub mod core_idle_time;

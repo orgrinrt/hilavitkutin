@@ -8,13 +8,10 @@
 //! future bitpacking storage layer, not reported by `ColumnValue`. See `#631`.
 
 #![no_std]
-#![feature(adt_const_params)]
-#![feature(generic_const_exprs)]
-#![allow(incomplete_features)]
 
 use arvo::strategy::Hot;
 use arvo::ufixed::UFixed;
-use arvo::{fbits, ibits, USize};
+use arvo::{USize, fbits, ibits};
 use hilavitkutin_api::ColumnValue;
 
 #[test]
@@ -47,17 +44,26 @@ fn blanket_u64() {
 #[test]
 fn sub_byte_one_bit_reports_container_width() {
     type T = UFixed<{ ibits(1) }, { fbits(0) }, Hot>;
-    assert_eq!(<T as ColumnValue>::BIT_WIDTH, USize(core::mem::size_of::<T>() * 8));
+    assert_eq!(
+        <T as ColumnValue>::BIT_WIDTH,
+        USize(core::mem::size_of::<T>() * 8)
+    );
 }
 
 #[test]
 fn sub_byte_two_bit_reports_container_width() {
     type T = UFixed<{ ibits(2) }, { fbits(0) }, Hot>;
-    assert_eq!(<T as ColumnValue>::BIT_WIDTH, USize(core::mem::size_of::<T>() * 8));
+    assert_eq!(
+        <T as ColumnValue>::BIT_WIDTH,
+        USize(core::mem::size_of::<T>() * 8)
+    );
 }
 
 #[test]
 fn sub_byte_four_bit_reports_container_width() {
     type T = UFixed<{ ibits(4) }, { fbits(0) }, Hot>;
-    assert_eq!(<T as ColumnValue>::BIT_WIDTH, USize(core::mem::size_of::<T>() * 8));
+    assert_eq!(
+        <T as ColumnValue>::BIT_WIDTH,
+        USize(core::mem::size_of::<T>() * 8)
+    );
 }

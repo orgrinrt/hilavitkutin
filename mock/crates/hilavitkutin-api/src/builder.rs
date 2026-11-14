@@ -8,10 +8,7 @@ use arvo::USize;
 use arvo::strategy::{Additive, Identity, Multiplicative};
 
 use crate::access::{Cons, Empty};
-
-mod depth_sealed {
-    pub(crate) trait Sealed {}
-}
+use crate::sealed;
 
 /// Total cons-list element count.
 ///
@@ -23,12 +20,11 @@ mod depth_sealed {
 /// deliberately do not impl `Depth`.
 ///
 /// Sealed; consumers cannot impl directly.
-#[allow(private_bounds)]
 #[diagnostic::on_unimplemented(
     message = "`{Self}` does not carry a Depth",
     note = "Depth is sealed and implemented internally by the scheduler builder. If you reach this from consumer code, you have likely named a builder shape that does not exist; check the builder method chain."
 )]
-pub trait Depth: depth_sealed::Sealed {
+pub trait Depth: sealed::Sealed {
     const D: USize;
 }
 
@@ -37,8 +33,8 @@ pub trait Depth: depth_sealed::Sealed {
 // tuple () + (H, R) and HList Empty + Cons<H, R>), all disjoint.
 // ---------------------------------------------------------------------
 
-impl depth_sealed::Sealed for () {}
-impl<H, R: Depth> depth_sealed::Sealed for (H, R) {}
+impl sealed::Sealed for () {}
+impl<H, R: Depth> sealed::Sealed for (H, R) {}
 
 impl Depth for () {
     const D: USize = <USize as Identity<Additive>>::IDENTITY;
@@ -47,8 +43,8 @@ impl<H, R: Depth> Depth for (H, R) {
     const D: USize = R::D + <USize as Identity<Multiplicative>>::IDENTITY;
 }
 
-impl depth_sealed::Sealed for Empty {}
-impl<H, R: Depth> depth_sealed::Sealed for Cons<H, R> {}
+impl sealed::Sealed for Empty {}
+impl<H, R: Depth> sealed::Sealed for Cons<H, R> {}
 
 impl Depth for Empty {
     const D: USize = <USize as Identity<Additive>>::IDENTITY;
