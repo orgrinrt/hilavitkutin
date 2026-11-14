@@ -9,9 +9,10 @@ Ships the interner surface and the default `ColumnStorage` backing
 (`ArenaColumnStorage`) today: an `InternerApi` provider trait,
 `MemoryArena<BYTES, ENTRIES>` inline-storage backing, the
 `InternerKit` preset, and `ArenaColumnStorage<M, D>` (the naive
-arena-backed store the engine wires in via `CS: ColumnStorage`).
-Future rounds add the Clock default and a MemoryProvider default for
-libc/Unix per consumer demand.
+arena-backed store the engine wires in via `CS: ColumnStorage`),
+and `StaticBumpMemory`, the memory provider over a buffer the consumer
+hands it for the life of the program. Future rounds add the Clock
+default and a libc/Unix memory provider per consumer demand.
 
 ## Surface
 
@@ -26,6 +27,7 @@ libc/Unix per consumer demand.
 | `PassDurationMetrics`, `PhaseEMAMetrics`, `FiberEMAMetrics`, `ChangeClassMetrics`, `CacheResidencyMetrics`, `ThroughputTrendingMetrics`, `PredictiveParkingMetrics`, `MemoryWatermarkMetrics`, `CoreIdleTimeMetrics` | Per-axis AdaptMetrics sub-resources (Topic 5 axis F). Each ships individually under `pub mod metrics::*`. Per-axis `pub const DEFAULT_*` named constants per Topic 5 axis C. |
 | `StandardAdaptKit`, `OffAdaptKit` | Convenience Kit recipes bundling the nine axes (Topic 5 axis A). Standard ships all axes with bench-validated defaults; Off ships none (adapt observer disabled). Custom mixes via consumer-authored Kits per the themed-resource-sets-individuals-primary workspace convention. |
 | `ArenaColumnStorage<M, D>` | Naive arena-backed `ColumnStorage` impl: the default backing for the unified columnar store. `M: MemoryProviderApi` is the allocator; `D: Capacity = Dim<256>` caps the distinct-column count. Placeholder shape; the columnar engine replaces it later without touching any `CS: ColumnStorage` consumer. |
+| `StaticBumpMemory` | `MemoryProviderApi` impl bumping through a `&'static mut [MaybeUninit<u8>]` the consumer supplies. Lock-free, `no_std`, never frees. The engine's tests and any consumer without an operating system build on it. |
 
 ### `InternerApi`
 
@@ -178,6 +180,39 @@ Correctness, not performance: the slot table is a flat scan and each
 column is a separate provider allocation. The point is a working
 `ColumnStorage` behind the contract while the columnar engine matures.
 
+### `StaticBumpMemory`
+
+A memory provider over one buffer the consumer hands it, which lives
+for the rest of the program and is the provider's alone.
+
+```rust
+pub struct StaticBumpMemory {
+    // base and capacity of the &'static mut [MaybeUninit<u8>] it was
+    // built over, and an atomic cursor: the offset of the first free byte.
+}
+
+impl StaticBumpMemory {
+    pub const fn new(buffer: &'static mut [MaybeUninit<u8>]) -> Self;
+}
+
+unsafe impl MemoryProviderApi for StaticBumpMemory { /* ... */ }
+```
+
+`allocate(len, align)` rounds the address of the first free byte up to
+`align` (the address, not the offset, so a buffer of any alignment gives
+aligned blocks) and moves the cursor past the block by compare-exchange,
+so callers on several threads get disjoint blocks without a lock. A block
+that would pass the end of the buffer, or an `align` that is not a power
+of two, returns null and leaves the cursor where it was. `deallocate`
+and `protect` do nothing: the buffer is never handed back, and its pages
+are not the provider's to change.
+
+It keeps every promise `MemoryProviderApi` asks of an implementer by
+construction. The buffer is `'static` and borrowed exclusively, so no move
+of the provider moves or frees a block; the compare-exchange keeps live
+blocks apart. A consumer without an operating system builds it over a
+`static` buffer; the engine's tests build it over a leaked one.
+
 ## What this crate deliberately does not ship
 
 - **`M: HasMemoryProvider` parameter on `MemoryArena`.** The
@@ -186,10 +221,11 @@ column is a separate provider allocation. The point is a working
  inline storage at the type level instead. Reintroducing the M
  parameter needs allocate-at-builder-time plumbing the engine
  does not yet have. Tracked in BACKLOG.
-- **Clock / MemoryProvider defaults.** Per crate scope: interner and
- the `ArenaColumnStorage` backing at this stage. The Clock and
- libc/Unix MemoryProvider defaults each land in their own round when
- consumer demand surfaces.
+- **Clock and libc/Unix memory provider defaults.** Per crate scope:
+ interner, the `ArenaColumnStorage` backing and `StaticBumpMemory`
+ at this stage. The Clock default and a memory provider over the
+ operating system's pages each land in their own round when consumer
+ demand surfaces.
 
 ## Cross-references
 

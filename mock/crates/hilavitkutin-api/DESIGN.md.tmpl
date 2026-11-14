@@ -843,6 +843,40 @@ The persistence boundary (`evict` / `inject`, R2) folds onto
 `ColumnStorage` with the resource-resolution / persistence migration; it
 is not part of the core contract here.
 
+### The memory provider is an unsafe trait
+
+`ColumnStorage` records the base the provider hands it and the engine
+reads and writes through that base from unsafe code, after the provider
+has been moved into the store and the store into the scheduler. Nothing
+the engine can check says the base is still there, so the promise is the
+implementer's, and `MemoryProviderApi` is an `unsafe trait`:
+
+```rust
+pub unsafe trait MemoryProviderApi: Send + Sync + 'static {
+    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8;
+    unsafe fn deallocate(&self, ptr: *mut u8, len: USize, align: USize);
+    unsafe fn protect(&self, ptr: *mut u8, len: USize, read: Bool, write: Bool);
+}
+```
+
+An implementation promises four things, and every `unsafe impl` says in
+its safety comment how it keeps them:
+
+1. A non-null block from `allocate(len, align)` is aligned to `align`
+   and valid for reads and writes of `len` bytes.
+2. The block stays valid at the same address until the matching
+   `deallocate` on the same provider, or until the provider is dropped.
+   Moving the provider moves and frees no block, so a provider that
+   keeps its memory inline in itself cannot implement the trait.
+3. Two live blocks do not overlap.
+4. All three methods may be called from several threads at once.
+
+Null is always a valid answer from `allocate` and means the block was
+refused; the caller checks. The `# Safety` section on each method is the
+caller's half of the contract and is unchanged: a block is freed with the
+`len` and `align` it was allocated with, and `protect` covers only pages
+the provider owns.
+
 ## WorkUnit trait (domain 09)
 
 ```rust
