@@ -2,18 +2,18 @@
 
 running 1 test
 error: Undefined Behavior: Data race detected between (1) non-atomic write on thread `today::two_fram` and (2) retag read of type `parked_worker_plane::on_sched::Sched<true>` on thread `unnamed-2` at alloc42492+0x10
-   --> src/on_sched.rs:39:26
+   --> src/on_sched.rs:42:26
     |
- 39 |         let s = unsafe { &*sched };
+ 42 |         let s = unsafe { &*sched };
     |                          ^^^^^^^ (2) just happened here
     |
 help: and (1) occurred earlier here
-   --> src/on_sched.rs:99:21
+   --> src/on_sched.rs:102:21
     |
- 99 | /                     (*me).ctx[c] = Ctx {
-100 | |                         sched: me,
-101 | |                         core:  c,
-102 | |                     };
+102 | /                     (*me).ctx[c] = Ctx {
+103 | |                         sched: me,
+104 | |                         core:  c,
+105 | |                     };
     | |_____________________^
     = help: retags occur on all (re)borrows and as well as when references are copied or moved
     = help: retags permit optimizations that insert speculative reads or writes
@@ -23,16 +23,16 @@ help: and (1) occurred earlier here
     = note: this is on thread `unnamed-2`
     = note: stack backtrace:
             0: parked_worker_plane::on_sched::worker::<true>
-                at src/on_sched.rs:39:26: 39:33
+                at src/on_sched.rs:42:26: 42:33
             1: <parked_worker_plane::on_sched::Sched<true> as parked_worker_plane::Arm>::run_parallel::{closure#0}
-                at src/on_sched.rs:106:25: 106:36
+                at src/on_sched.rs:109:25: 109:36
 note: the last function in that backtrace got called indirectly due to this code
-   --> src/on_sched.rs:104:21
+   --> src/on_sched.rs:107:21
     |
-104 | /                     std::thread::spawn(move || {
-105 | |                         let p = p;
-106 | |                         worker(p.0)
-107 | |                     });
+107 | /                     std::thread::spawn(move || {
+108 | |                         let p = p;
+109 | |                         worker(p.0)
+110 | |                     });
     | |______________________^
 
 note: some details are omitted, run with `MIRIFLAGS=-Zmiri-backtrace=full` for a verbose backtrace
@@ -43,18 +43,18 @@ error: aborting due to 1 previous error
 
 running 1 test
 error: Undefined Behavior: Data race detected between (1) non-atomic write on thread `today::frame_re` and (2) retag read of type `parked_worker_plane::on_sched::Sched<true>` on thread `unnamed-2` at alloc42508+0x10
-   --> src/on_sched.rs:39:26
+   --> src/on_sched.rs:42:26
     |
- 39 |         let s = unsafe { &*sched };
+ 42 |         let s = unsafe { &*sched };
     |                          ^^^^^^^ (2) just happened here
     |
 help: and (1) occurred earlier here
-   --> src/on_sched.rs:99:21
+   --> src/on_sched.rs:102:21
     |
- 99 | /                     (*me).ctx[c] = Ctx {
-100 | |                         sched: me,
-101 | |                         core:  c,
-102 | |                     };
+102 | /                     (*me).ctx[c] = Ctx {
+103 | |                         sched: me,
+104 | |                         core:  c,
+105 | |                     };
     | |_____________________^
     = help: retags occur on all (re)borrows and as well as when references are copied or moved
     = help: retags permit optimizations that insert speculative reads or writes
@@ -64,16 +64,16 @@ help: and (1) occurred earlier here
     = note: this is on thread `unnamed-2`
     = note: stack backtrace:
             0: parked_worker_plane::on_sched::worker::<true>
-                at src/on_sched.rs:39:26: 39:33
+                at src/on_sched.rs:42:26: 42:33
             1: <parked_worker_plane::on_sched::Sched<true> as parked_worker_plane::Arm>::run_parallel::{closure#0}
-                at src/on_sched.rs:106:25: 106:36
+                at src/on_sched.rs:109:25: 109:36
 note: the last function in that backtrace got called indirectly due to this code
-   --> src/on_sched.rs:104:21
+   --> src/on_sched.rs:107:21
     |
-104 | /                     std::thread::spawn(move || {
-105 | |                         let p = p;
-106 | |                         worker(p.0)
-107 | |                     });
+107 | /                     std::thread::spawn(move || {
+108 | |                         let p = p;
+109 | |                         worker(p.0)
+110 | |                     });
     | |______________________^
 
 note: some details are omitted, run with `MIRIFLAGS=-Zmiri-backtrace=full` for a verbose backtrace
@@ -84,18 +84,18 @@ error: aborting due to 1 previous error
 
 running 1 test
 error: Undefined Behavior: Data race detected between (1) non-atomic write on thread `today::frame_re` and (2) retag read of type `parked_worker_plane::on_sched::Sched<true>` on thread `unnamed-2` at alloc42508+0x10
-   --> src/on_sched.rs:39:26
+   --> src/on_sched.rs:42:26
     |
- 39 |         let s = unsafe { &*sched };
+ 42 |         let s = unsafe { &*sched };
     |                          ^^^^^^^ (2) just happened here
     |
 help: and (1) occurred earlier here
-   --> src/on_sched.rs:99:21
+   --> src/on_sched.rs:102:21
     |
- 99 | /                     (*me).ctx[c] = Ctx {
-100 | |                         sched: me,
-101 | |                         core:  c,
-102 | |                     };
+102 | /                     (*me).ctx[c] = Ctx {
+103 | |                         sched: me,
+104 | |                         core:  c,
+105 | |                     };
     | |_____________________^
     = help: retags occur on all (re)borrows and as well as when references are copied or moved
     = help: retags permit optimizations that insert speculative reads or writes
@@ -105,16 +105,16 @@ help: and (1) occurred earlier here
     = note: this is on thread `unnamed-2`
     = note: stack backtrace:
             0: parked_worker_plane::on_sched::worker::<true>
-                at src/on_sched.rs:39:26: 39:33
+                at src/on_sched.rs:42:26: 42:33
             1: <parked_worker_plane::on_sched::Sched<true> as parked_worker_plane::Arm>::run_parallel::{closure#0}
-                at src/on_sched.rs:106:25: 106:36
+                at src/on_sched.rs:109:25: 109:36
 note: the last function in that backtrace got called indirectly due to this code
-   --> src/on_sched.rs:104:21
+   --> src/on_sched.rs:107:21
     |
-104 | /                     std::thread::spawn(move || {
-105 | |                         let p = p;
-106 | |                         worker(p.0)
-107 | |                     });
+107 | /                     std::thread::spawn(move || {
+108 | |                         let p = p;
+109 | |                         worker(p.0)
+110 | |                     });
     | |______________________^
 
 note: some details are omitted, run with `MIRIFLAGS=-Zmiri-backtrace=full` for a verbose backtrace
@@ -170,18 +170,18 @@ test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; fin
 
 running 1 test
 error: Undefined Behavior: Data race detected between (1) non-atomic write on thread `today::two_fram` and (2) retag read of type `parked_worker_plane::on_sched::Sched<true>` on thread `unnamed-2` at alloc42492+0x10
-   --> src/on_sched.rs:39:26
+   --> src/on_sched.rs:42:26
     |
- 39 |         let s = unsafe { &*sched };
+ 42 |         let s = unsafe { &*sched };
     |                          ^^^^^^^ (2) just happened here
     |
 help: and (1) occurred earlier here
-   --> src/on_sched.rs:99:21
+   --> src/on_sched.rs:102:21
     |
- 99 | /                     (*me).ctx[c] = Ctx {
-100 | |                         sched: me,
-101 | |                         core:  c,
-102 | |                     };
+102 | /                     (*me).ctx[c] = Ctx {
+103 | |                         sched: me,
+104 | |                         core:  c,
+105 | |                     };
     | |_____________________^
     = help: retags occur on all (re)borrows and as well as when references are copied or moved
     = help: retags permit optimizations that insert speculative reads or writes
@@ -191,16 +191,16 @@ help: and (1) occurred earlier here
     = note: this is on thread `unnamed-2`
     = note: stack backtrace:
             0: parked_worker_plane::on_sched::worker::<true>
-                at src/on_sched.rs:39:26: 39:33
+                at src/on_sched.rs:42:26: 42:33
             1: <parked_worker_plane::on_sched::Sched<true> as parked_worker_plane::Arm>::run_parallel::{closure#0}
-                at src/on_sched.rs:106:25: 106:36
+                at src/on_sched.rs:109:25: 109:36
 note: the last function in that backtrace got called indirectly due to this code
-   --> src/on_sched.rs:104:21
+   --> src/on_sched.rs:107:21
     |
-104 | /                     std::thread::spawn(move || {
-105 | |                         let p = p;
-106 | |                         worker(p.0)
-107 | |                     });
+107 | /                     std::thread::spawn(move || {
+108 | |                         let p = p;
+109 | |                         worker(p.0)
+110 | |                     });
     | |______________________^
 
 note: some details are omitted, run with `MIRIFLAGS=-Zmiri-backtrace=full` for a verbose backtrace
@@ -211,18 +211,18 @@ error: aborting due to 1 previous error
 
 running 1 test
 error: Undefined Behavior: Data race detected between (1) non-atomic write on thread `today::frame_re` and (2) retag read of type `parked_worker_plane::on_sched::Sched<true>` on thread `unnamed-2` at alloc42508+0x10
-   --> src/on_sched.rs:39:26
+   --> src/on_sched.rs:42:26
     |
- 39 |         let s = unsafe { &*sched };
+ 42 |         let s = unsafe { &*sched };
     |                          ^^^^^^^ (2) just happened here
     |
 help: and (1) occurred earlier here
-   --> src/on_sched.rs:99:21
+   --> src/on_sched.rs:102:21
     |
- 99 | /                     (*me).ctx[c] = Ctx {
-100 | |                         sched: me,
-101 | |                         core:  c,
-102 | |                     };
+102 | /                     (*me).ctx[c] = Ctx {
+103 | |                         sched: me,
+104 | |                         core:  c,
+105 | |                     };
     | |_____________________^
     = help: retags occur on all (re)borrows and as well as when references are copied or moved
     = help: retags permit optimizations that insert speculative reads or writes
@@ -232,16 +232,16 @@ help: and (1) occurred earlier here
     = note: this is on thread `unnamed-2`
     = note: stack backtrace:
             0: parked_worker_plane::on_sched::worker::<true>
-                at src/on_sched.rs:39:26: 39:33
+                at src/on_sched.rs:42:26: 42:33
             1: <parked_worker_plane::on_sched::Sched<true> as parked_worker_plane::Arm>::run_parallel::{closure#0}
-                at src/on_sched.rs:106:25: 106:36
+                at src/on_sched.rs:109:25: 109:36
 note: the last function in that backtrace got called indirectly due to this code
-   --> src/on_sched.rs:104:21
+   --> src/on_sched.rs:107:21
     |
-104 | /                     std::thread::spawn(move || {
-105 | |                         let p = p;
-106 | |                         worker(p.0)
-107 | |                     });
+107 | /                     std::thread::spawn(move || {
+108 | |                         let p = p;
+109 | |                         worker(p.0)
+110 | |                     });
     | |______________________^
 
 note: some details are omitted, run with `MIRIFLAGS=-Zmiri-backtrace=full` for a verbose backtrace
@@ -252,18 +252,18 @@ error: aborting due to 1 previous error
 
 running 1 test
 error: Undefined Behavior: Data race detected between (1) non-atomic write on thread `today::frame_re` and (2) retag read of type `parked_worker_plane::on_sched::Sched<true>` on thread `unnamed-2` at alloc42508+0x10
-   --> src/on_sched.rs:39:26
+   --> src/on_sched.rs:42:26
     |
- 39 |         let s = unsafe { &*sched };
+ 42 |         let s = unsafe { &*sched };
     |                          ^^^^^^^ (2) just happened here
     |
 help: and (1) occurred earlier here
-   --> src/on_sched.rs:99:21
+   --> src/on_sched.rs:102:21
     |
- 99 | /                     (*me).ctx[c] = Ctx {
-100 | |                         sched: me,
-101 | |                         core:  c,
-102 | |                     };
+102 | /                     (*me).ctx[c] = Ctx {
+103 | |                         sched: me,
+104 | |                         core:  c,
+105 | |                     };
     | |_____________________^
     = help: retags occur on all (re)borrows and as well as when references are copied or moved
     = help: retags permit optimizations that insert speculative reads or writes
@@ -273,16 +273,16 @@ help: and (1) occurred earlier here
     = note: this is on thread `unnamed-2`
     = note: stack backtrace:
             0: parked_worker_plane::on_sched::worker::<true>
-                at src/on_sched.rs:39:26: 39:33
+                at src/on_sched.rs:42:26: 42:33
             1: <parked_worker_plane::on_sched::Sched<true> as parked_worker_plane::Arm>::run_parallel::{closure#0}
-                at src/on_sched.rs:106:25: 106:36
+                at src/on_sched.rs:109:25: 109:36
 note: the last function in that backtrace got called indirectly due to this code
-   --> src/on_sched.rs:104:21
+   --> src/on_sched.rs:107:21
     |
-104 | /                     std::thread::spawn(move || {
-105 | |                         let p = p;
-106 | |                         worker(p.0)
-107 | |                     });
+107 | /                     std::thread::spawn(move || {
+108 | |                         let p = p;
+109 | |                         worker(p.0)
+110 | |                     });
     | |______________________^
 
 note: some details are omitted, run with `MIRIFLAGS=-Zmiri-backtrace=full` for a verbose backtrace
@@ -338,36 +338,36 @@ test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; fin
 
 running 1 test
 error: Undefined Behavior: trying to retag from <142293> for SharedReadOnly permission at alloc42492[0x30], but that tag does not exist in the borrow stack for this location
-   --> src/on_sched.rs:47:39
+   --> src/on_sched.rs:50:39
     |
- 47 |             unit_body(range_of(core), &s.bindings, band);
+ 50 |             unit_body(range_of(core), &s.bindings, band);
     |                                       ^^^^^^^^^^^ this error occurs as part of retag at alloc42492[0x30..0x40]
     |
     = help: this indicates a potential bug in the program: it performed an invalid operation, but the Stacked Borrows rules it violated are still experimental
     = help: see https://github.com/rust-lang/unsafe-code-guidelines/blob/master/wip/stacked-borrows.md for further information
 help: <142293> was created by a SharedReadOnly retag at offsets [0x2e..0x76]
-   --> src/on_sched.rs:39:26
+   --> src/on_sched.rs:42:26
     |
- 39 |         let s = unsafe { &*sched };
+ 42 |         let s = unsafe { &*sched };
     |                          ^^^^^^^
 help: <142293> was later invalidated at offsets [0x30..0x40] by a Unique function-entry retag inside this call
-   --> src/on_sched.rs:113:13
+   --> src/on_sched.rs:116:13
     |
-113 |             (*me).bindings.reset();
+116 |             (*me).bindings.reset();
     |             ^^^^^^^^^^^^^^^^^^^^^^
     = note: this is on thread `unnamed-3`
     = note: stack backtrace:
             0: parked_worker_plane::on_sched::worker::<true>
-                at src/on_sched.rs:47:39: 47:50
+                at src/on_sched.rs:50:39: 50:50
             1: <parked_worker_plane::on_sched::Sched<true> as parked_worker_plane::Arm>::run_parallel::{closure#0}
-                at src/on_sched.rs:106:25: 106:36
+                at src/on_sched.rs:109:25: 109:36
 note: the last function in that backtrace got called indirectly due to this code
-   --> src/on_sched.rs:104:21
+   --> src/on_sched.rs:107:21
     |
-104 | /                     std::thread::spawn(move || {
-105 | |                         let p = p;
-106 | |                         worker(p.0)
-107 | |                     });
+107 | /                     std::thread::spawn(move || {
+108 | |                         let p = p;
+109 | |                         worker(p.0)
+110 | |                     });
     | |______________________^
 
 note: some details are omitted, run with `MIRIFLAGS=-Zmiri-backtrace=full` for a verbose backtrace
@@ -379,36 +379,36 @@ error: test failed, to rerun pass `--test drivers`
 
 running 1 test
 error: Undefined Behavior: trying to retag from <139688> for SharedReadOnly permission at alloc42508[0x30], but that tag does not exist in the borrow stack for this location
-   --> src/on_sched.rs:47:39
+   --> src/on_sched.rs:50:39
     |
- 47 |             unit_body(range_of(core), &s.bindings, band);
+ 50 |             unit_body(range_of(core), &s.bindings, band);
     |                                       ^^^^^^^^^^^ this error occurs as part of retag at alloc42508[0x30..0x40]
     |
     = help: this indicates a potential bug in the program: it performed an invalid operation, but the Stacked Borrows rules it violated are still experimental
     = help: see https://github.com/rust-lang/unsafe-code-guidelines/blob/master/wip/stacked-borrows.md for further information
 help: <139688> was created by a SharedReadOnly retag at offsets [0x2e..0x76]
-   --> src/on_sched.rs:39:26
+   --> src/on_sched.rs:42:26
     |
- 39 |         let s = unsafe { &*sched };
+ 42 |         let s = unsafe { &*sched };
     |                          ^^^^^^^
 help: <139688> was later invalidated at offsets [0x30..0x40] by a Unique function-entry retag inside this call
-   --> src/on_sched.rs:113:13
+   --> src/on_sched.rs:116:13
     |
-113 |             (*me).bindings.reset();
+116 |             (*me).bindings.reset();
     |             ^^^^^^^^^^^^^^^^^^^^^^
     = note: this is on thread `unnamed-2`
     = note: stack backtrace:
             0: parked_worker_plane::on_sched::worker::<true>
-                at src/on_sched.rs:47:39: 47:50
+                at src/on_sched.rs:50:39: 50:50
             1: <parked_worker_plane::on_sched::Sched<true> as parked_worker_plane::Arm>::run_parallel::{closure#0}
-                at src/on_sched.rs:106:25: 106:36
+                at src/on_sched.rs:109:25: 109:36
 note: the last function in that backtrace got called indirectly due to this code
-   --> src/on_sched.rs:104:21
+   --> src/on_sched.rs:107:21
     |
-104 | /                     std::thread::spawn(move || {
-105 | |                         let p = p;
-106 | |                         worker(p.0)
-107 | |                     });
+107 | /                     std::thread::spawn(move || {
+108 | |                         let p = p;
+109 | |                         worker(p.0)
+110 | |                     });
     | |______________________^
 
 note: some details are omitted, run with `MIRIFLAGS=-Zmiri-backtrace=full` for a verbose backtrace
@@ -420,36 +420,36 @@ error: test failed, to rerun pass `--test drivers`
 
 running 1 test
 error: Undefined Behavior: trying to retag from <140047> for SharedReadOnly permission at alloc42508[0x30], but that tag does not exist in the borrow stack for this location
-   --> src/on_sched.rs:47:39
+   --> src/on_sched.rs:50:39
     |
- 47 |             unit_body(range_of(core), &s.bindings, band);
+ 50 |             unit_body(range_of(core), &s.bindings, band);
     |                                       ^^^^^^^^^^^ this error occurs as part of retag at alloc42508[0x30..0x40]
     |
     = help: this indicates a potential bug in the program: it performed an invalid operation, but the Stacked Borrows rules it violated are still experimental
     = help: see https://github.com/rust-lang/unsafe-code-guidelines/blob/master/wip/stacked-borrows.md for further information
 help: <140047> was created by a SharedReadOnly retag at offsets [0x2e..0x76]
-   --> src/on_sched.rs:39:26
+   --> src/on_sched.rs:42:26
     |
- 39 |         let s = unsafe { &*sched };
+ 42 |         let s = unsafe { &*sched };
     |                          ^^^^^^^
 help: <140047> was later invalidated at offsets [0x30..0x40] by a Unique function-entry retag inside this call
-   --> src/on_sched.rs:113:13
+   --> src/on_sched.rs:116:13
     |
-113 |             (*me).bindings.reset();
+116 |             (*me).bindings.reset();
     |             ^^^^^^^^^^^^^^^^^^^^^^
     = note: this is on thread `unnamed-2`
     = note: stack backtrace:
             0: parked_worker_plane::on_sched::worker::<true>
-                at src/on_sched.rs:47:39: 47:50
+                at src/on_sched.rs:50:39: 50:50
             1: <parked_worker_plane::on_sched::Sched<true> as parked_worker_plane::Arm>::run_parallel::{closure#0}
-                at src/on_sched.rs:106:25: 106:36
+                at src/on_sched.rs:109:25: 109:36
 note: the last function in that backtrace got called indirectly due to this code
-   --> src/on_sched.rs:104:21
+   --> src/on_sched.rs:107:21
     |
-104 | /                     std::thread::spawn(move || {
-105 | |                         let p = p;
-106 | |                         worker(p.0)
-107 | |                     });
+107 | /                     std::thread::spawn(move || {
+108 | |                         let p = p;
+109 | |                         worker(p.0)
+110 | |                     });
     | |______________________^
 
 note: some details are omitted, run with `MIRIFLAGS=-Zmiri-backtrace=full` for a verbose backtrace
