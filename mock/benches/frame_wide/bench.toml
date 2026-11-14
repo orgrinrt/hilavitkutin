@@ -54,7 +54,7 @@ may_differ = false
 required = true
 threaded = true
 arms = ["fw_engine", "fw_engine_par", "fw_hand", "fw_hand_par", "fw_rust_nostd", "fw_rust_std", "fw_rust_std_par"]
-# FIXME(5f526d071953): only 65536 has been run. The three large sizes are the
+# FIXME(placeholders_tagged_5f526d071953): only 65536 has been run. The three large sizes are the
 # intended region and are configured, but no cell of them has results, so this
 # list advertises more than the tree holds.
 sizes = [65536, 1048576, 4194304, 16777216]

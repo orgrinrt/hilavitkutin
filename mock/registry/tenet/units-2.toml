@@ -1,0 +1,413 @@
+# What the record says about `units`, part 2.
+
+[[tenet]]
+id = "a_pure_per_record_map_may_be_declared_as_an_opt_in_fusion_contract_beside_execute"
+subject = "units"
+what = "A unit that is a pure per-record map, reading one column and writing one column, value to value, with no cross-record state, may additionally declare that map as an opt-in fusion contract: an input type, an output type and an apply function from one to the other. This is orthogonal to the execute contract, does not change execute, and a simple unit never implements it. Its purpose is linear fusion within a fiber: a straight read-after-write sequence of such maps is folded at the type level into a single fused unit whose body keeps every intermediate in a register. A unit that carries cross-record state, an accumulator, does not implement the contract and stays on the ordinary per-unit dispatch path."
+mechanism = "An associated input type, an associated output type and an apply function. The fold is a compile-time composition of concrete monomorphised calls, no function pointers and no dynamic dispatch; dead-store elimination removes the intermediate column traffic. The shipped trait name and signature live in the engine-facing rustdoc."
+source = "mock/crates/hilavitkutin-api/DESIGN.md.tmpl:239-243"
+provenance = ["mock::crates::hilavitkutin-api::DESIGN::#opt-in-per-record-transform-within-fiber-fusion-contract"]
+quote = '''
+## Opt-in per-record transform (within-fiber fusion contract)
+
+A work unit that is a pure per-record map (reads one column, writes one column, value to value, no cross-record state) may additionally declare that map as an opt-in fusion contract: an associated input type, an associated output type, and an apply function from one to the other. This is orthogonal to the execute contract (it does not change execute) and opt-in (a simple work unit never implements it).
+
+Its purpose is within-fiber linear fusion. When a fiber is a straight read-after-write chain of such maps (stage one writes the column stage two reads, and so on), the engine folds the chain at the type level into a single fused work unit whose body keeps every intermediate in a register (dead-store elimination removes the intermediate column traffic), matching a hand-fused loop. The fold is a compile-time composition of concrete monomorphised calls, no function pointers and no dynamic dispatch. A work unit that carries cross-record state (an accumulator) does not implement the contract and stays on the ordinary per-unit dispatch path. The shipped trait name and signature live in the engine-facing rustdoc; this section states the contract shape.
+'''
+origin = "proposed"
+written_by = "the api design template, section added by design round 202606092000 (within-fiber linear fusion)"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["per-record map", "RecordOp", "apply", "fusion contract", "opt-in", "value to value", "execute", "linear fusion", "run_fused"]
+related = ["tenet::records_within_a_fiber_are_independent"]
+
+[[tenet]]
+id = "execute_receives_a_context_and_nothing_else"
+subject = "units"
+what = "The execute body of a unit receives a context and nothing else. It does not receive handles to global storage, does not reach into a registry and holds no long-lived references. Everything it can touch is exactly what its access set declared, projected into the context for the duration of one call."
+mechanism = "`trait WorkUnit<Sched = Always> { type Read: AccessSet; type Write: AccessSet; type Hint; type Ctx<'frame>; fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>); }`"
+source = "mock/research/pre_seed/202606111800_canonical-spec-standalone.md:138-145, mock/research/pre_seed/202606111800_canonical-spec-standalone.md:155-158"
+provenance = ["mock::research::pre_seed::202606111800_canonical-spec-standalone::#3-1-workunit"]
+quote = '''
+```rust
+trait WorkUnit<Sched = Always> {
+    type Read: AccessSet;    // the stores this unit reads
+    type Write: AccessSet;   // the stores this unit writes
+    type Hint;               // scheduling hints (priority, atomicity, ...)
+    type Ctx<'frame>;        // the per-frame context handed to execute
+    fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>);
+}
+---
+`execute` receives a `Context` (see 3.4) and nothing else. It does not
+receive handles to global storage, it does not reach into a registry, it
+holds no long-lived references. Everything it can touch is exactly what its
+access set declared, projected into the context for the duration of one call.
+'''
+origin = "proposed"
+written_by = "the standalone spec 202606111800, a reading aid with no design authority of its own by addendum A2"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: a passage shows part of it to be his and not the whole of it (mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:639-660), so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["execute", "Context", "Ctx", "access set", "nothing else", "WorkUnit", "signature"]
+
+[[tenet]]
+id = "inside_a_fiber_a_unit_is_a_pure_function_from_column_values_to_column_values"
+subject = "units"
+what = "The founding round's api topic describes the processing of one record inside a fiber as the composition of its units, each a pure function that takes column values and produces column values, with the intermediate columns as named wires between stages that need no memory inside the fiber. The closure a unit registers moves from taking references to columns to a pure function of values that returns values, and the flattener wires the returns to the next stage's inputs."
+source = "mock/design_rounds/202604200055/202603151200_topic.hilavitkutin-api-surface.md:1767-1771, mock/design_rounds/202604200055/202603151200_topic.hilavitkutin-api-surface.md:1840-1843"
+provenance = ["mock::design_rounds::202604200055::202603151200_topic.hilavitkutin-api-surface::#chain-internal-columns-are-dead-stores-only-chain-outputs-need-materialization"]
+quote = '''
+Within a chain, processing row n is: `d(c(b(a(input_n))))`. Each WU is
+a pure function that takes column values and produces column values. The
+chain is a composition of these functions. The intermediate "columns"
+are just named wires between stages — they don't need memory backing
+within the chain.
+---
+The WU's `each` closure signature changes from
+`|col_a: &T, col_b: &mut U| { ... }` to a pure function
+`fn(input_a: T, input_b: T) -> (U, V)` that takes values and returns
+values. The flattener wires the returns to the next stage's inputs.
+'''
+origin = "proposed"
+written_by = "the founding-round topic T6 on the api surface, 202603151200"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["pure function", "values in values out", "each closure", "flattener", "fiber", "composition", "value function"]
+related = ["tenet::a_unit_registers_its_ops_through_each_batch_and_reduce_on_the_context", "tenet::a_pure_per_record_map_may_be_declared_as_an_opt_in_fusion_contract_beside_execute", "question::how_a_unit_in_the_value_form_reads_a_resource"]
+
+[[tenet]]
+id = "the_consumer_spelling_of_a_unit_reduces_to_read_write_hint_and_schedule_with_the_engine_context_computed_if_feasible"
+subject = "units"
+what = "The canonical consumer spelling of a unit reduces to its read set, write set, hint and schedule. The full nine-parameter engine context shape is computed by an api-side type function instead of being hand-spelled per unit, if a feasibility sketch proves the type function under the current toolchain. If it walls, the fallback discussion re-opens with the sketch findings, and the derive-macro and keep-explicit alternatives stay on the table only in that event."
+mechanism = "Working name `CtxFor<'frame, R, W, Sched>` replacing the hand-spelled nine-parameter `EngineCtx`; sketch covers GAT normalization and GCE interaction; `BuilderInput` and `HasSchedule` impls stay explicit either way."
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:112-120"
+provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#a1-6-the-consumer-surface-adopts-a-computed-ctx-type-if-feasible"]
+quote = '''
+The canonical consumer spelling of a WorkUnit reduces to `Read`, `Write`,
+`Hint`, and schedule; the full nine-parameter `EngineCtx` shape is computed
+by an api-side type function (working name `CtxFor<'frame, R, W, Sched>`)
+instead of hand-spelled per WU. A feasibility sketch proves or refutes the
+type function under the current toolchain (GAT normalization, GCE
+interaction). If it walls, the fallback discussion re-opens with the sketch
+findings; the derive-macro and keep-explicit alternatives stay on the table
+only in that event. `BuilderInput` and `HasSchedule` impls stay explicit
+either way.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["ruled: mock/research/202606111400_canonical-design-addendum-a1.md:47-47", "ruled: mock/research/202606111400_canonical-design-addendum-a1.md:110-120"]
+keywords = ["CtxFor", "EngineCtx", "computed Ctx", "WorkUnit spelling", "type function", "derive macro", "GAT", "A1-6"]
+
+[[tenet]]
+id = "the_context_of_a_unit_is_a_generic_associated_type_over_a_frame_lifetime_the_scheduler_owns"
+subject = "units"
+what = "The context of a unit is a generic associated type over a frame lifetime owned by the scheduler. The engine instantiates it at dispatch time with the live frame lifetime, so a unit can read borrows into state derived from the pool frame, such as progress slots and predicted-wait readers, without its implementation carrying an explicit lifetime parameter. Dispatch sites use higher-ranked trait bounds."
+mechanism = "`WorkUnit::Ctx` is `type Ctx<'frame>`; borrows into `PoolFrame`-derived state; dispatch sites use HRTB; validated by the lifetime sketch shipped alongside round 202605101036."
+source = "mock/PRINCIPLES.md.tmpl:217-223"
+provenance = ["mock::PRINCIPLES::#monomorphisation-is-the-dispatch"]
+quote = '''
+`WorkUnit::Ctx` is a Generic Associated Type (`type Ctx<'frame>`)
+over a frame lifetime owned by the scheduler. The engine instantiates
+it at dispatch time with the live `'frame`, so the WU can read borrows
+into `PoolFrame`-derived state (progress slots, predicted-wait readers)
+without forcing the consumer's `impl WorkUnit` to carry an explicit
+`<'frame>` parameter. Dispatch sites use HRTB. Validated by the lifetime
+sketch shipped alongside round 202605101036.
+'''
+origin = "stated"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: its source mock/PRINCIPLES.md.tmpl:217-223 was written by the round commit d77e744 of 2026-05-23, the runtime megaround, and not by the seed commit 680a672, so it is the text of that round and not founding, and no passage of his states it, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["WorkUnit::Ctx", "GAT", "frame lifetime", "PoolFrame", "HRTB", "progress slots", "predicted-wait readers", "round 202605101036"]
+related = ["tenet::execute_receives_a_context_and_nothing_else"]
+
+[[tenet]]
+id = "a_unit_over_columns_receives_a_morsel_window_and_a_unit_over_resources_only_runs_once_per_record"
+subject = "units"
+what = "Whether a unit is dispatched per morsel or per record is inferred from the shape of its access set. A unit that works on columns receives a morsel window, and a unit that touches only resources is dispatched per record."
+mechanism = "Column-shaped WUs receive a `Morsel<T>` window; resource-only WUs dispatch per-record."
+source = "mock/DESIGN.md.tmpl:86-86"
+provenance = ["mock::DESIGN::#morsel-loop"]
+quote = '''
+Per-morsel vs per-record WU dispatch inferred from AccessSet shape: column-shaped WUs receive a `Morsel<T>` window; resource-only WUs dispatch per-record.
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding-elsewhere: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:844-845"]
+keywords = ["per-morsel dispatch", "per-record dispatch", "Morsel<T>", "AccessSet shape", "column-shaped", "resource-only", "inferred"]
+
+[[tenet]]
+id = "the_scheduling_hint_stays_sealed_and_gains_one_additive_arm_a_four_tuple_with_an_open_extension_marker"
+subject = "units"
+what = "The scheduling hint stays sealed over the tuple shapes the api names and gains one additive arm, a four-tuple whose fourth member is an open marker that a downstream runner implements to carry one runner-specific dimension. A three-tuple and a four-tuple are different types, so nothing existing changes, and the seal still holds with the extension marker as the one open slot inside the tuples. A runner that declares an extension marker reads its own dimension. No extension markers ship in the crate."
+because = "A runner with a dimension that the triple lacks cannot express it, and unsealing would cost the engine its ability to reason about every hint shape."
+mechanism = "`pub trait HintExt: 'static {}` and `impl<U: UrgencyValue, D: DivisibilityValue, S: SignificanceValue, X: HintExt> SchedulingHint for (U, D, S, X) {}`; `SchedulingHint` sealed at hint.rs:68 for `(U, D, S)` triples."
+source = "mock/design_rounds/202607171807/202607171733_topic.plannable-declaration-split.md:73-89, mock/design_rounds/202607171807/202607171807_changelist.doc.lock.md:44-48"
+provenance = ["mock::design_rounds::202607171807::202607171733_topic.plannable-declaration-split::#the-hint-s-extensibility-settled-in-the-same-round"]
+quote = '''
+## The hint's extensibility, settled in the same round
+
+`SchedulingHint` is sealed (`hint.rs:68`) and implemented only for `(U, D, S)` triples of urgency,
+divisibility, and significance markers. A runner with a dimension the triple lacks cannot express it,
+and unsealing would cost the engine its ability to reason about every hint shape.
+
+The additive fix keeps the seal and adds one arm:
+
+```rust
+pub trait HintExt: 'static {}
+impl<U: UrgencyValue, D: DivisibilityValue, S: SignificanceValue, X: HintExt> SchedulingHint for (U, D, S, X) {}
+```
+
+A 3-tuple and a 4-tuple are different types, so the arms cannot overlap and nothing existing changes.
+The engine keeps reading urgency, divisibility, and significance, and ignores the extension. A runner
+that declares an extension marker reads its own dimension. The seal still holds: `SchedulingHint` is
+implemented only for tuple shapes this crate names, and `HintExt` is the one open slot inside them.
+---
+Where the scheduling hint is described (the three-axis tuple), note that `SchedulingHint` stays
+sealed and gains one additive arm: the 4-tuple `(U, D, S, X: HintExt)`, where `HintExt` is an open
+marker trait a downstream runner implements to carry a fourth, runner-specific dimension. The engine
+reads urgency, divisibility, and significance and ignores the extension. No `HintExt` markers ship
+in this crate.
+'''
+origin = "proposed"
+written_by = "topic plannable-declaration-split of 2026-07-17, round 202607171807, and its doc changelist, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["SchedulingHint", "HintExt", "sealed", "four-tuple", "extension slot", "additive", "urgency divisibility significance"]
+related = ["tenet::the_divisibility_hint_sets_whether_a_unit_runs_all_morsels_at_once_one_at_a_time_or_adaptively"]
+
+[[tenet]]
+id = "a_four_tuple_hint_schedules_as_its_three_axis_prefix_and_reading_a_fourth_dimension_is_a_later_gate_for_the_runner_that_defines_one"
+subject = "units"
+what = "A hint carrying an extension marker schedules as its urgency, divisibility and significance prefix would, and reading a fourth dimension is a later gate for whichever runner defines one. The design makes no claim of present engine behaviour for the extension, because the engine is untouched, the hint has no extraction api, and no extension markers ship."
+source = "mock/design_rounds/202607171807/202607171807_changelist.doc.lock.md:44-48, mock/design_rounds/202607171824/202607171824_changelist.doc.lock.md:8-14, mock/design_rounds/202607171824/202607171824_topic.plannable-post-review-fixes.md:24-29"
+provenance = ["mock::design_rounds::202607171807::202607171807_changelist.doc.lock::#change-document-the-hintext-slot-in-the-hint-prose"]
+quote = '''
+Where the scheduling hint is described (the three-axis tuple), note that `SchedulingHint` stays
+sealed and gains one additive arm: the 4-tuple `(U, D, S, X: HintExt)`, where `HintExt` is an open
+marker trait a downstream runner implements to carry a fourth, runner-specific dimension. The engine
+reads urgency, divisibility, and significance and ignores the extension. No `HintExt` markers ship
+in this crate.
+---
+## CHANGE: soften "the engine reads urgency, divisibility, and significance and ignores the extension"
+
+File: `mock/crates/hilavitkutin-api/DESIGN.md.tmpl`
+The sentence states an engine mechanism that is not implemented (the engine is untouched;
+`SchedulingHint` has no extraction API; no `HintExt` markers ship). Restate as intent: a 4-tuple
+hint schedules as its `(U, D, S)` prefix would, and reading a fourth dimension is a later gate for
+whichever runner defines one. No claim of present engine behaviour.
+---
+3. **"The engine reads the first three axes and ignores the fourth" is stated as present fact.** The
+   engine is untouched, `SchedulingHint` is a bare marker with no extraction API, and no `HintExt`
+   markers ship, so that sentence describes behaviour that is not yet reachable. It appears in both
+   `src/hint.rs` and the api `DESIGN.md.tmpl`. Fix: soften both to state the intent (a 4-tuple
+   schedules as its `(U, D, S)` prefix would) without asserting an engine mechanism that is a later
+   gate.
+'''
+origin = "proposed"
+written_by = "doc changelist of round 202607171824 (2026-07-17) softening a sentence of round 202607171807, with its topic plannable-post-review-fixes, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["HintExt", "four-tuple", "prefix", "engine reads", "softened", "intent", "SchedulingHint", "fourth dimension"]
+rejects = ["the engine reads urgency, divisibility, and significance and ignores the extension"]
+related = ["tenet::the_scheduling_hint_stays_sealed_and_gains_one_additive_arm_a_four_tuple_with_an_open_extension_marker"]
+
+[[tenet]]
+id = "the_hint_extension_round_lands_the_mechanism_with_no_markers_because_no_dimension_beyond_the_three_has_a_consumer"
+subject = "units"
+what = "The round that introduced the runner-agnostic declaration trait lands that trait in full, as the load-bearing prerequisite that a runner which does not use the column-record execution model can implement, and lands only the extension mechanism of the hint, with zero extension markers defined, because no hint dimension beyond urgency, divisibility and significance has a consumer yet. Inventing markers now would be speculative surface with no reader, so the mechanism is ready and the content waits for a real need. The divisibility axis already expresses whether work can be split or paused, which a tiling-capable runner would reach for first, so the extension slot may never gain a marker; it exists so that a genuinely new dimension lands additively and not by unsealing."
+mechanism = "`Plannable<Schedule>` in full; `HintExt` mechanism only, the 4-tuple `(U, D, S, X: HintExt)` arm; zero `HintExt` markers defined."
+source = "mock/design_rounds/202607171807/202607171807_changelist.doc.lock.md:10-24, mock/design_rounds/202607171807/202607171733_topic.plannable-declaration-split.md:73-77"
+provenance = ["mock::design_rounds::202607171807::202607171807_changelist.doc.lock::#scope-decision-recorded-here-the-topic-said-more-this-narrows-it"]
+quote = '''
+## Scope decision recorded here (the topic said more; this narrows it)
+
+The topic proposed landing both `Plannable` and a fully-worked hint extension. This round lands:
+
+1. **`Plannable<Schedule>`** in full. It is the load-bearing prerequisite: a runner-agnostic
+   declaration a non-fiber consumer can implement without the column-record execution model.
+2. **The `HintExt` mechanism only**, not any extension markers. The 4-tuple
+   `(U, D, S, X: HintExt)` arm is added so the seal has one open slot, but zero `HintExt` markers
+   are defined, because no concrete hint dimension beyond urgency/divisibility/significance has a
+   consumer yet. Adding invented markers now would be speculative surface with no reader. The
+   mechanism is proven and ready; the content waits for a real need.
+
+The divisibility axis already expresses "can this work be split or paused", which is the axis a
+tiling-capable runner would first reach for, so the extension slot may never gain a marker. It
+exists so that if a genuinely new dimension appears, it lands additively rather than by unsealing.
+---
+## The hint's extensibility, settled in the same round
+
+`SchedulingHint` is sealed (`hint.rs:68`) and implemented only for `(U, D, S)` triples of urgency,
+divisibility, and significance markers. A runner with a dimension the triple lacks cannot express it,
+and unsealing would cost the engine its ability to reason about every hint shape.
+'''
+origin = "proposed"
+written_by = "doc changelist of round 202607171807 (2026-07-17), a scope decision narrowing its topic plannable-declaration-split, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["Plannable", "HintExt", "scope decision", "no markers", "speculative surface", "divisibility", "unsealing", "runner-agnostic declaration"]
+rejects = ["a fully-worked hint extension"]
+related = ["tenet::the_scheduling_hint_stays_sealed_and_gains_one_additive_arm_a_four_tuple_with_an_open_extension_marker", "tenet::a_unit_declares_its_name_read_set_write_set_hint_commutativity_and_an_execute_function"]
+
+[[tenet]]
+id = "the_builder_appends_each_registered_unit_so_the_carrier_type_order_equals_registration_order_and_build_requires_a_topological_registration"
+subject = "units"
+what = "The builder appends each registered unit to the unit carrier, so the carrier's type order equals the registration order, where it had prepended each one. Building requires the registration order to be a valid topological order of the dependency graph and, when it is not, returns an error that names the engine-computed recommended order."
+because = "The producer-before-consumer registration requirement is a provisional compromise, to be relaxed once the engine applies the cache-optimal order itself."
+mechanism = "`UnitDispatch<W>::NextWus` becomes the append output; `WorkUnitKind::place` appends; recursive `WuAppend<P>` on `WuCons`/`WuNil`; build-time check against the `DependencyGraph` returning a `BuildError` variant; the recommended order is the RCM-row order from `plan.rcm_order` where available, else a plain topological order; store and platform carriers unchanged; roadmap r2 section 8 decision (b)."
+source = "mock/design_rounds/202606061446/202606061446_topic.gate1-dispatch-builder-append.md:12-14, mock/design_rounds/202606061446/202606061446_topic.gate1-dispatch-builder-append.md:20-20, mock/design_rounds/202606061446/202606061446_topic.gate1-dispatch-builder-append.md:22-26"
+provenance = ["mock::design_rounds::202606061446::202606061446_topic.gate1-dispatch-builder-append::#current-state"]
+quote = '''
+The scheduler builder PREPENDS each registered WorkUnit onto the carrier. The type accumulator router `UnitDispatch<W>::NextWus = Cons<W, Wus>` (`hilavitkutin-api/src/builder_input.rs:116`) and the value carrier `impl Place<P> for WorkUnitKind { type NextWus<W> = WuCons<P, W>; fn place(..) }` (`hilavitkutin-api/src/store_values.rs:182-196`) both cons the newly-registered WU onto the front. So the `WuVals` carrier ends up in REVERSE registration order. `Scheduler::run` compensates with the runtime `topo_order` field (computed by `derive_phase_dispatch_order` in `build()`) consumed through the `CollectFiber`/`FiberSlot` indexing path. `build()` runs Kahn cycle-detection on the dependency graph but does NOT check that the registration SEQUENCE is itself a valid topological order; it then discards the `DependencyGraph`.
+
+The design docs describe the prepend: `hilavitkutin/DESIGN.md.tmpl:629` ("the WorkUnit placement kind prepends each registered"), `:730` ("`UnitDispatch<Self>`, which prepends `Self` onto the"), and `hilavitkutin-api/DESIGN.md.tmpl:342` ("`UnitDispatch<Self>`, prepending the WU type onto the `Wus`").
+---
+1. **D1d-a: builder appends.** Flip both router sites from prepend to append so registration order equals the carrier TYPE order. Add a recursive `WuAppend<P>` trait on the `WuCons`/`WuNil` value carrier (`WuNil.append(p) = WuCons{p, WuNil}`; `WuCons{h, t}.append(p) = WuCons{h, t.append(p)}`, type and value in lockstep). `UnitDispatch<W>::NextWus` becomes the append output; `WorkUnitKind::place` appends rather than prepends. The store and platform routers keep prepending (store binding order is not the dispatch carrier; its layout is driven by the plan, not registration order). The crate stays compiling: `CollectFiber` still indexes by position and the plan's `topo_order` field still remaps, so the run path stays correct through this step; `CollectFiber` is deleted in the later D1e step, not here.
+---
+2. **D1d-b: build-time topological-registration validation.** Thread the `DependencyGraph` (currently discarded after planning) to a precondition check in `build()`: the registration sequence must be a valid topological order of the dependency DAG (every WorkUnit registered after all WorkUnits whose writes it reads). Return a `BuildError` variant when it is not. This is a typestate precondition, not a delegation of grouping: the engine still computes phases, trunks, fibers, and morsel sizes; the consumer is only required to list WorkUnits in a valid order, a natural constraint.
+
+3. **D1d-c: recommended-order in the error.** The `BuildError` from D1d-b names the engine-computed recommended order (the RCM-row order from `plan.rcm_order` where available, else a plain topological order), so a consumer hitting the error is told the exact permutation to register in.
+
+The producer-before-consumer registration requirement is a PROVISIONAL compromise (roadmap r2 §8 op decision (b)): it is to be relaxed once the engine auto-applies the cache-optimal order itself. Sketch 202606090300 (§7-6) proved a devirt-free auto-RCM mechanism (a const-position-guarded type-level walk: each WU carries a const RCM position, the walk executes per output slot, zero blr, reorders a scrambled registration to RCM order), so the relaxation has a proven path and is not gated on toolchain maturity. The docs and the `BuildError` note the constraint as provisional and point at the auto-RCM follow-on; they do not present it as permanent.
+'''
+origin = "proposed"
+written_by = "design round 202606061446, topic gate1 dispatch builder append (D1d), dated 2026-06-06, agent-written; the passage cites roadmap r2 section 8 'op decision (b)' for the provisional requirement only"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["builder append", "prepend", "WuAppend", "registration order", "topological order", "BuildError", "recommended order", "UnitDispatch"]
+rejects = ["The scheduler builder PREPENDS each registered WorkUnit onto the carrier."]
+related = ["tenet::producer_before_consumer_registration_is_provisional_and_the_ideal_is_auto_ordering"]
+
+[[tenet]]
+id = "the_access_set_substrate_adopts_the_recursive_list_under_a_marker_trait_as_its_single_shape_and_the_flat_arity_implementations_are_deleted"
+subject = "units"
+what = "The access-set substrate adopts the recursive list shape under a marker trait as its single shape. The change is to delete the flat-arity implementations and rename the existing recursive primitives."
+because = "The recursive shape has no structural arity cap, since two implementations cover any depth; set operations scale as one recursive implementation each; the verbosity of the nested list disappears behind a macro that emits the type alias from a flat list; and the error messages are comparable, more verbose but more informative."
+mechanism = "`Empty` terminator and `Cons<H, T>` with a recursive `Contains<X>`; `#[marker] pub trait Contains<X>` (feature `marker_trait_attr`); a `set!` macro; the flat-arity `Contains` impls cover arities 1 through 12 by macro, and a recursive `(H, R)` Cons-style impl already exists in `access.rs`."
+source = "mock/research/sketches/202605050503_accessset_arity/FINDINGS.md:15-15, mock/research/sketches/202605050503_accessset_arity/FINDINGS.md:110-113, mock/research/sketches/202605050503_accessset_arity/FINDINGS.md:115-116, mock/research/sketches/202605050503_accessset_arity/FINDINGS.md:152-161, mock/research/sketches/202605050503_accessset_arity/FINDINGS.md:163-165"
+provenance = ["mock::research::sketches::202605050503_accessset_arity::FINDINGS::#setup"]
+quote = '''
+- **B. Recursive HList AccessSet.** `Empty` terminator and `Cons<H, T>`. `Contains<X>` is recursive: head match, or tail recurses.
+---
+Adopt **B (recursive HList) with `#[marker]`** for round-4. Reasons:
+
+1. **No structural arity cap.** B's two impls cover any depth, eliminating the band-aid framing of #333.
+2. **Set operations scale cleanly.** Union, intersection, and difference are O(1) impls each (recursive), instead of A's O(N²)-impls-per-operator macro tables.
+---
+4. **User ergonomics gap is mitigatable.** Cons-chain verbosity disappears behind a `set!` or similar macro that emits the type alias from a flat list.
+5. **Error messages are comparable.** B's recursion-chain message is more verbose but more informative; A's "and 22 others" suppression is noisier without being cleaner.
+---
+### Framing correction: v0.1 already ships A + B together
+
+Line 114 also implied a binary "pick A or pick B" choice. The actual state of v0.1's `access.rs` is more nuanced:
+
+- `#[marker] pub trait Contains<X>` is declared at line 32 of `access.rs`.
+- The flat-arity Contains impls cover arities 1 through 12, generated by macro.
+- The recursive `(H, R)` Cons-style impl on `(T, R)` tuple shape lives at line 188.
+- All impls coexist under the `#[marker]` attribute, which lets the trait solver pick whichever resolution applies without coherence overlap.
+
+Round-4's actual change is therefore not "switch from A to B" but **delete the flat-arity impls and rename the existing recursive primitives**. The "candidate A vs candidate B" sketch framing was misleading because v0.1 was already A + B in coexistence with the `#[marker]` attribute in place.
+---
+### What stands
+
+The recommendation B (recursive HList with `#[marker]`) is correct; the typestate substrate adopts B as its single shape. Reasons 1, 2, 4, and 5 from the original recommendation block stand. Reason 3 (code volume) does not: the recursive impl is comparable in size to the flat-arity impls it replaces, not dozens vs. thousands.
+'''
+origin = "proposed"
+written_by = "sketch findings S2 AccessSet arity of 2026-05-05 (round 202605042200), with its post-audit correction section; agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["AccessSet", "recursive HList", "marker trait", "flat-arity impls", "arity cap", "Contains", "round 4", "set! macro"]
+rejects = ["the flat-arity impls"]
+related = ["tenet::an_access_set_is_a_trait_on_tuples_of_stores", "tenet::the_arity_twelve_cap_continues_to_govern_unit_read_and_write_declarations_and_not_the_builder_accumulator"]
+
+[[tenet]]
+id = "the_arity_twelve_cap_continues_to_govern_unit_read_and_write_declarations_and_not_the_builder_accumulator"
+subject = "units"
+what = "The access set needs no extension to higher arities: the arity-twelve cap continues to govern the unit read and write declarations, which are flat tuples, and it does not govern the builder's accumulator, which is a cons-list."
+source = "mock/research/sketches/app-builder-typestate-202605010900/FINDINGS.md:166-178"
+provenance = ["mock::research::sketches::app-builder-typestate-202605010900::FINDINGS::#accessset-arity-ceiling-not-the-binding-constraint"]
+quote = '''
+## AccessSet arity ceiling: not the binding constraint
+
+Topic file flagged the existing `AccessSet` arity-12 cap as a possible concern (accumulator tuples may exceed 12). With the cons-list shape, this is moot: `(H, R)` is always arity-2 at every cons cell, regardless of how many stores have been registered. The cons-list bottoms out at `()` (arity-0 AccessSet impl).
+
+`AccessSet` impl coverage needs to extend to handle the cons cell shape. The single recursive `AccessSet for (T0, T1) where T1: AccessSet` impl plus the arity-0 base case `AccessSet for ()` covers cons-lists at any depth.
+
+Sketch uses arities 0..=4 of the existing flat-tuple `AccessSet` impls (cons cells happen to also be arity-2 tuples, so the existing arity-2 `AccessSet for (T0, T1)` impl satisfies them). The DOC CL can either:
+
+- Keep the existing flat-tuple `AccessSet` impls 0..=12 unchanged (they cover cons cells incidentally because every cons cell is arity 2).
+- Extend the recursion impl on `Contains` as described above.
+- Confirm the depth limit is rustc's recursion limit (default 128, raisable via `#![recursion_limit]`), well above any plausible store count.
+
+No need to extend AccessSet to higher arities. The arity-12 cap continues to govern WU `Read`/`Write` declarations (which are flat tuples), not the builder accumulator (cons-list).
+'''
+origin = "proposed"
+written_by = "sketch findings app-builder type-state (202605010900), body section on the AccessSet arity ceiling, written before its update of 2026-05-01 round 202605011500; agent-written"
+standing = "held"
+keywords = ["arity-12 cap", "AccessSet", "cons-list", "builder accumulator", "flat tuples", "Read and Write declarations", "recursion limit"]
+
+[[tenet]]
+id = "a_unit_s_read_and_write_declarations_are_cons_lists_written_through_macros_and_the_satisfaction_proof_is_recursive_with_no_arity_cap"
+subject = "units"
+what = "The read and write declarations of a unit are written through macros that convert flat-tuple syntax to the cons-list shape, and the satisfaction proof is recursive over the cons-list, with no cap on how many stores a unit declares."
+because = "The original per-arity cap of twelve on the satisfaction trait bites real consumers: one legitimately reads from sixteen or more stores."
+mechanism = "`read!` / `write!` macros; `WuSatisfied<A>` recursive over the cons-list; consumers migrate from `type Read = (Resource<X>, Column<Y>);` to `type Read = read![Resource<X>, Column<Y>];`; verified by `smoke_wu_with_sixteen_stores`, a single unit declaring 16 stores in Read; the consumer is vehje typecheck."
+source = "mock/research/sketches/app-builder-typestate-202605010900/FINDINGS.md:26-30, mock/research/sketches/app-builder-typestate-202605010900/FINDINGS.md:46-46"
+provenance = ["mock::research::sketches::app-builder-typestate-202605010900::FINDINGS::#2-wusatisfied-uncap-via-cons-list-shape"]
+quote = '''
+### 2. WuSatisfied uncap via cons-list shape
+
+The original per-arity 0..=12 cap on `WuSatisfied<A>` bites real consumers (vehje typecheck legitimately reads from 16+ stores: Interner, TypeEnv, ConstEnv, ImportTable, ScopeStack, SealedRegistry, OrphanRules, Definitions, Bodies, Mir, Spans, ResolvedTypes, NameTables, Macros, Diagnostic, Errors).
+
+Fix: ship `read!` / `write!` macros that convert flat-tuple syntax to cons-list shape. `WuSatisfied<A>` becomes recursive over the cons-list, no cap.
+---
+Consumer migrates from `type Read = (Resource<X>, Column<Y>);` to `type Read = read![Resource<X>, Column<Y>];`. Verified by `smoke_wu_with_sixteen_stores` (a single WU declaring 16 stores in Read).
+'''
+origin = "proposed"
+written_by = "sketch findings app-builder type-state (202605010900), update of 2026-05-01 round 202605011500 (final design after third reviewer); agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["WuSatisfied", "read! macro", "write! macro", "cons-list", "arity cap", "16 stores", "vehje", "uncap"]
+rejects = ["The original per-arity 0..=12 cap on `WuSatisfied<A>`"]
+related = ["tenet::the_arity_twelve_cap_continues_to_govern_unit_read_and_write_declarations_and_not_the_builder_accumulator"]
+
+[[tenet]]
+id = "a_declaration_trait_parameterised_by_the_schedule_is_granted_to_every_unit_by_one_blanket_across_all_schedules"
+subject = "units"
+what = "The declaration half of a unit, its reads, writes and hint, is granted by one blanket implementation to every unit under any schedule, because the schedule is a parameter of the declaration trait. No explicit implementation is needed for a unit under a schedule other than the always one, which is strictly more general than the earlier schedule trait, whose blanket pins the always schedule and requires an explicit implementation per unit under an event-type schedule."
+mechanism = "`Plannable<Schedule = Always>` with `impl<W: WorkUnit<S>, S> Plannable<S> for W`; `AdaptWu`, an `impl WorkUnit<On<ScheduleEnd>>`, is accepted at a `T: Plannable<S>` bound; `HasSchedule` (`work_unit.rs:145`) has a blanket that pins `Always`."
+source = "mock/research/sketches/202607171733_plannable-declaration-split/FINDINGS.md:28-34, mock/research/sketches/202607171733_plannable-declaration-split/FINDINGS.md:38-41"
+provenance = ["mock::research::sketches::202607171733_plannable-declaration-split::FINDINGS::#the-shape-that-works-upstream-rs-downstream-rs"]
+quote = '''
+```rust
+pub trait Plannable<Schedule = Always> { type Read: AccessSet; /* Write, Hint */ }
+impl<W: WorkUnit<S>, S> Plannable<S> for W { type Read = <W as WorkUnit<S>>::Read; }
+```
+
+The load-bearing detail is that `Schedule` is a **parameter of `Plannable`**, not only of the bound.
+`S` therefore appears in the impl's trait reference (`Plannable<S>`), which is what constrains it.
+---
+- `AdaptWu`, an `impl WorkUnit<On<ScheduleEnd>>` with no `Plannable` impl of its own, is accepted at
+  a `T: Plannable<S>` bound. The blanket covers non-`Always` schedules, so nothing needs an explicit
+  impl. This is strictly more general than `HasSchedule` (`work_unit.rs:145`), whose blanket pins
+  `Always` and requires an explicit impl per `On<V>` unit.
+'''
+origin = "proposed"
+written_by = "sketch findings plannable-declaration-split of 2026-07-17 (round 202607171733), outcome WORKS; agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["Plannable", "HasSchedule", "blanket impl", "schedule parameter", "On<V>", "AdaptWu", "declaration half", "runner-agnostic"]
+related = ["tenet::the_hint_extension_round_lands_the_mechanism_with_no_markers_because_no_dimension_beyond_the_three_has_a_consumer"]

@@ -1,0 +1,109 @@
+# What the record says about `change`, part 3.
+
+[[tenet]]
+id = "the_plan_dirty_bit_array_is_keyed_by_the_plan_affecting_id_under_a_default_cap_of_sixteen_and_exceeding_it_fails_at_compile_time"
+subject = "change"
+what = "The plan-dirty bit array holds one bit for each plan-affecting input type of a pipeline, keyed by an identifier for each, under a default cap of sixteen. Registering more than the cap fails at compile time with a diagnostic pointing at the cap, and the cap is a const generic on the scheduler that a consumer overrides."
+because = "Realistic consumer counts, a run configuration plus a few stage configurations, are likely under eight, so sixteen leaves headroom."
+mechanism = "`[AtomicBool; MAX_PLAN_AFFECTING_RESOURCES]` keyed by `PlanAffectingId`; default 16; `#[diagnostic::on_unimplemented]` pointing at `MAX_PLAN_AFFECTING_RESOURCES`; override through `Scheduler::<_, _, 32>::builder()`."
+source = "mock/design_rounds/202605101036/202605101036_topic.resource-resolution.md:68-70"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.resource-resolution::#max-plan-affecting-resources-16"]
+quote = '''
+The dirty-bit array is `[AtomicBool; MAX_PLAN_AFFECTING_RESOURCES]` keyed by `PlanAffectingId`. Default cap is 16. This is the count of distinct `PlanAffecting`-bound BuilderInput types per pipeline. Realistic consumer counts (RunCfg + a few stage configs) likely under 8; 16 leaves headroom.
+
+If a consumer registers more than 16 PlanAffecting types, compile-time fails with `#[diagnostic::on_unimplemented]` pointing at `MAX_PLAN_AFFECTING_RESOURCES`. Cap is a const generic on Scheduler; consumers override via `Scheduler::<_, _, 32>::builder()` syntax if needed.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 8 resource resolution, user-attention call marked autonomous and revisitable, dated 2026-05-11, agent-written; the text does not say whose decision it is"
+standing = "held"
+keywords = ["MAX_PLAN_AFFECTING_RESOURCES", "PlanAffectingId", "dirty-bit array", "cap of 16", "on_unimplemented", "const generic override", "Scheduler"]
+related = ["tenet::a_resource_is_plan_affecting_only_when_the_consumer_opts_it_in_and_the_number_of_them_is_capped"]
+
+[[tenet]]
+id = "replacing_a_resource_dirties_the_plan_only_when_it_is_plan_affecting_and_the_interim_unconditional_dirtying_is_retired"
+subject = "change"
+what = "Replacing a resource value sets the plan-dirty state only when the resource carries the plan-affecting marker, checked at the type level through the dispatch routing, and the interim path in which every replacement dirtied the plan unconditionally is retired."
+mechanism = "`replace_resource<R: BuilderInput>` checks for the `PlanAffecting` bound at the type level via `dispatch` routing; Topic 8 axis B; Topic 1 amendment 1."
+source = "mock/design_rounds/202605101036/202605101036_topic.resource-resolution.md:43-43, mock/design_rounds/202605101036/202605101036_topic.resource-resolution.md:74-74"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.resource-resolution::#axis-b-planaffecting-marker-trait"]
+quote = '''
+Topic 1 axis 4 said "interim: replace_resource unconditionally dirties until Topic 8's PlanAffecting marker lands". Topic 8 lands the marker; the conditional dirty path is now wired.
+---
+- **Amendment 1:** Interim "replace_resource unconditionally dirties" path is retired by Topic 8 axis B. `replace_resource<R: BuilderInput>` checks for `PlanAffecting` bound at the type level (via `dispatch` routing); dirties only if PlanAffecting holds.
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 8 resource resolution, Axis B and the Topic 1 amendments, dated 2026-05-11, agent-written; the text does not say whose decision it is"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["replace_resource", "PlanAffecting", "interim path", "unconditionally dirties", "Topic 1 amendment", "dirty bit", "conditional dirty"]
+rejects = ["interim: replace_resource unconditionally dirties until Topic 8's PlanAffecting marker lands"]
+related = ["tenet::as_of_round_202605101036_plan_affecting_is_a_sealed_marker_and_a_resource_without_it_is_swapped_cheaply"]
+
+[[tenet]]
+id = "a_resource_replacement_is_app_only_and_happens_between_build_and_run"
+subject = "change"
+what = "Replacing a resource is done by the application only, and it is called between the build of the scheduler and the run."
+mechanism = "`replace_resource` called between `.build()` and `scheduler.run()`; locked at DESIGN.md.tmpl lines 320-323 (axis A7 of the scheduler run signature topic)."
+source = "mock/design_rounds/202605101036/202605101036_topic.scheduler-run-signature.md:44-46"
+provenance = ["mock::design_rounds::202605101036::202605101036_topic.scheduler-run-signature::#a7-replace-resource-happens-between-build-and-run"]
+quote = '''
+### A7. replace_resource happens between build and run
+
+Locked at DESIGN.md.tmpl lines 320-323. Rule: "replace_resource is app-only. Called between `.build()` and `scheduler.run()`."
+'''
+origin = "proposed"
+written_by = "design round 202605101036, topic 1 scheduler run signature, locked decision A7 quoting the design template, dated 2026-05-10, agent-written; the text does not say whose decision it is"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["replace_resource", "app-only", "between build and run", "A7", ".build()", "scheduler.run()"]
+related = ["tenet::a_swap_of_a_resource_value_is_legal_only_between_frames_and_is_observed_from_the_next_run"]
+
+[[tenet]]
+id = "the_plan_dirty_array_is_sized_by_the_run_configuration_s_plan_affecting_cap_so_an_override_cannot_overrun_it"
+subject = "change"
+what = "The plan-dirty array is sized by the run configuration's plan-affecting cap in place of a hardcoded size of 256, since the hardcode defeats the per-configuration typestate and a consumer that overrides the cap either silently overruns or mismatches with no type-system signal."
+mechanism = "`[AtomicBool; Cfg::MAX_PLAN_AFFECTING_RESOURCES.0]` (the inner `usize` of the `arvo::USize` trait constant) under `feature(generic_const_exprs)`; source had landed `[AtomicBool; 256]` with a `lint:allow(no-bare-numeric)`; the reviewer's recommendation."
+source = "mock/design_rounds/202605232000/202605232000_topic.runtime-megaround-post-review-fixes.md:22-22, mock/design_rounds/202605232000/202605232000_topic.runtime-megaround-post-review-fixes.md:24-24"
+provenance = ["mock::design_rounds::202605232000::202605232000_topic.runtime-megaround-post-review-fixes::#a2-scheduler-plan-dirty-lifts-to-const-generic-via-cfg"]
+quote = '''
+Prior round's src CL Pass 6 specified `[AtomicBool; Cfg::MAX_PLAN_AFFECTING_RESOURCES]`; source landed `[AtomicBool; 256]` hardcoded with a `lint:allow(no-bare-numeric)`. The hardcode defeats the per-Cfg typestate: any consumer overriding `MAX_PLAN_AFFECTING_RESOURCES` either silently overruns or mismatches with no type-system signal.
+---
+This round's src CL lifts the array dimension to `Cfg::MAX_PLAN_AFFECTING_RESOURCES.0` (the inner `usize` extracted from the `arvo::USize` trait constant) under `feature(generic_const_exprs)`. The crate's `lib.rs` gains the feature flag. The reviewer's recommendation here is exact; the implementation matches it.
+'''
+origin = "proposed"
+written_by = "design round 202605232000, topic runtime megaround post-review fixes, locked decision A2, dated 2026-05-23, agent-written; the text does not say whose decision it is"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["plan_dirty", "MAX_PLAN_AFFECTING_RESOURCES", "Cfg", "generic_const_exprs", "per-Cfg typestate", "hardcoded 256", "A2"]
+related = ["tenet::the_plan_dirty_bit_array_is_keyed_by_the_plan_affecting_id_under_a_default_cap_of_sixteen_and_exceeding_it_fails_at_compile_time"]
+
+[[tenet]]
+id = "the_plan_dirty_array_stays_hardcoded_at_256_with_a_documented_deferral_because_rustc_rejects_field_access_on_generic_constants"
+subject = "change"
+what = "The lift of the plan-dirty array to the run configuration's cap is deferred. The array stays hardcoded at 256 with the intended shape documented in the source, because the compiler rejects field access on generic constants, while the run signature and the per-configuration typestate of the scheduler shell stay as locked and only the per-configuration width of the dirty bitmap awaits compiler support."
+mechanism = "`generic_const_exprs` rejects field access on generic constants (\"overly complex generic constant\"), the block-syntax variant reproducing the same error; documented via an extended comment plus lint:allow rationale on the `plan_dirty` field; tracked under `#345`; verified by grep of 'per-Cfg lift awaits rustc generic_const_exprs gaining field-access support'."
+source = "mock/design_rounds/202605232000/202605232000_changelist.src.lock.md:14-19, mock/design_rounds/202605232000/202605232000_changelist.src.lock.md:21-21, mock/design_rounds/202605232000/202605232000_changelist.src.lock.md:37-37"
+provenance = ["mock::design_rounds::202605232000::202605232000_changelist.src.lock::#change-scheduler-plan-dirty-typestate-lift-deferred-per-rustc-generic-const-exprs-limitation"]
+quote = '''
+## CHANGE: `Scheduler::plan_dirty` typestate lift deferred per rustc generic_const_exprs limitation
+
+File: `mock/crates/hilavitkutin/src/scheduler/mod.rs`
+Topic A2 pivot. The reviewer's recommendation to lift `Scheduler::plan_dirty` from `[AtomicBool; 256]` to `[AtomicBool; Cfg::MAX_PLAN_AFFECTING_RESOURCES.0]` runs into a rustc limitation: `generic_const_exprs` rejects field access on generic constants ("overly complex generic constant"). The block-syntax variant reproduces the same error.
+
+The intended shape is documented in source via an extended comment + lint:allow rationale on the `plan_dirty` field. The `Scheduler::run` signature and the per-Cfg typestate of the surrounding `Scheduler<Cfg: RunCfg>` shell remain as the prior round locked them; only the per-Cfg width of the dirty bitmap awaits rustc's feature work, tracked under `#345`.
+---
+Verification: `grep 'per-Cfg lift awaits rustc generic_const_exprs gaining field-access support' mock/crates/hilavitkutin/src/scheduler/mod.rs` returns one match.
+---
+This src CL supersedes `202605232000_changelist.src.deprecated.md`. The earlier draft locked prematurely (source changes had not landed yet) and assumed the `Scheduler::plan_dirty` lift to `Cfg::MAX_PLAN_AFFECTING_RESOURCES.0` would land under `feature(generic_const_exprs)`; current rustc rejects field access on generic constants, so the lift pivots to a documented deferral.
+'''
+origin = "proposed"
+written_by = "design round 202605232000, source changelist for the runtime megaround post-review fixes, phase SRC, dated 2026-05-23, agent-written; the text does not say whose decision it is"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["plan_dirty", "generic_const_exprs", "documented deferral", "256", "field access on generic constants", "#345", "Topic A2 pivot"]
+rejects = ["assumed the `Scheduler::plan_dirty` lift to `Cfg::MAX_PLAN_AFFECTING_RESOURCES.0` would land under `feature(generic_const_exprs)`"]
+related = ["tenet::the_plan_dirty_array_is_sized_by_the_run_configuration_s_plan_affecting_cap_so_an_override_cannot_overrun_it"]

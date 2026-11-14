@@ -1,0 +1,258 @@
+# The questions whose subject is `stores`.
+
+[[question]]
+id = "what_an_append_past_the_capacity_of_an_accumulator_does"
+asks = "hilavitkutin asserts (panics) when a unit appends past an accumulator's capacity. A branch about to land makes that a refusal returned as a value from the run. Is that wanted?"
+options = [
+    "Refusal as a value (Recommended): `run` returns the refusal; no panic path on a worker of a no_std engine that spawns nothing. If someone wants an abort it is the memory provider's property.",
+    "Assert stays the default: The panic stays; a refusal value is something a provider opts into.",
+    "Configurable by the consumer: A const, generic or trait parameter on the run configuration picks refuse or assert, default refuse.",
+]
+state = "answered"
+answer = "Configurable by the consumer"
+answered = "2026-11-13 05:50: .data/op-responses/202611130550_four-calls-that-shape-the-hilavitkutin-api-revision.md"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:234-256"
+quote = '''
+#### Overflow
+
+  ```text
+  hilavitkutin today asserts (panics) when a unit appends past an accumulator's capacity. A branch about to land makes that a refusal returned as a value from `run` (the frame fails closed, nothing is silently dropped, same result at every worker count). Both experts picked the first option. Do you want it?
+  ```
+
+Options offered:
+
+1. Refusal as a value (Recommended)
+
+   `run` returns the refusal; no panic path on a worker of a no_std engine that spawns nothing. If someone wants an abort it is the memory provider's property.
+
+2. Assert stays the default
+
+   The panic stays; a refusal value is something a provider opts into.
+
+3. Configurable by the consumer
+
+   A const, generic or trait parameter on the run configuration picks refuse or assert, default refuse.
+
+Chosen:
+
+- Configurable by the consumer
+'''
+subject = "stores"
+keywords = ["accumulator", "append", "capacity", "overflow", "refusal", "panic", "assert", "configurable"]
+
+[[question]]
+id = "whether_registration_may_be_bound_by_data"
+asks = "A branch added a run-time binding table: content rows say which stored column fills which column of which kernel, so content can add columns with no Rust. hilavitkutin registers by type at compile time. Is the data-bound way wanted in hilavitkutin?"
+options = [
+    "Typed only for now: Registration stays by type as designed. Kaski's content-defined channels are solved above it (lane index inside a typed block column) and a data-bound table is revisited only if that fails.",
+    "Both, typed first: The typed registration stays primary; a data-bound table is a second, opt-in way to register, designed in the api round with the erased shape-described addressing you chose for resources on 2 July as its base.",
+    "Decide in the api round: Leave it open; the round brings a sketch and a bench of both and you pick there.",
+]
+state = "answered"
+answer = "Decide in the api round"
+answered = "2026-11-13 05:32: .data/op-responses/202611130508_the-canon-goes-provisional-and-hilavitkutin-is-revised-in.md"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:96-118"
+quote = '''
+#### Data bind
+
+  ```text
+  The branch added a run-time binding table: content rows say which stored column fills which column of which kernel, so content can add columns with no Rust. Today hilavitkutin registers by type at compile time. Do you want the data-bound way in hilavitkutin?
+  ```
+
+Options offered:
+
+1. Typed only for now
+
+   Registration stays by type as designed. Kaski's content-defined channels are solved above it (lane index inside a typed block column) and a data-bound table is revisited only if that fails.
+
+2. Both, typed first
+
+   The typed registration stays primary; a data-bound table is a second, opt-in way to register, designed in the api round with the erased shape-described addressing you chose for resources on 2 July as its base.
+
+3. Decide in the api round
+
+   Leave it open; the round brings a sketch and a bench of both and you pick there.
+
+Chosen:
+
+- Decide in the api round
+'''
+subject = "stores"
+keywords = ["data-bound", "binding table", "content", "no Rust", "registration", "run-time", "typed", "columns added by content"]
+related = ["tenet::column_type_registration_is_static"]
+
+[[question]]
+id = "whether_the_accumulator_is_a_fourth_store_kind"
+asks = "The founding spec and the api design template say there are three store types; the round that landed accumulators adds a fourth marker beside them and the standalone spec lists four store shapes. Is the accumulator a fourth store kind, or a column under another access?"
+options = ["Three store types, as the founding spec and the api design template say.", "Four, with the accumulator as a distinct marker, as the accumulator round and the standalone spec say."]
+state = "open"
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:491-496, mock/crates/hilavitkutin-api/DESIGN.md.tmpl:138-142, mock/design_rounds/202606041800/202606041800_topic.accumulator-columns.md:16-16, mock/research/pre_seed/202606111800_canonical-spec-standalone.md:162-163"
+quote = '''
+**Three store types, one scheduling mechanism (T5 L198-208):**
+```rust
+pub struct Resource<T>(PhantomData<T>);  // singleton, one value
+pub struct Column<T>(PhantomData<T>);    // collection, N values, morsel-chunked
+pub struct Virtual<T>(PhantomData<T>);   // zero-data, DAG edge only
+```
+---
+## Store types (domain 06)
+
+Three store types, one scheduling mechanism. All of them are views over
+one `ColumnStorage` (see "Unified columnar storage" below); they differ
+in intent and access, not in backing.
+---
+**Kind representation (A1): a distinct `Accum<T>` marker.** Sibling of `Resource<T>` / `Column<T>` / `Virtual<T>`, with its own binding node, selector, projection, and accessor. The alternative (a role or mode of `Column<T>`) collapses two semantically distinct operations (indexed random-write vs ordered append) onto one marker, making the `Contains<...>` membership proof ambiguous (read vs write vs append) and forcing a runtime flag or a forbidden specialization. The engine already has three parallel per-kind markers; `Accum<T>` is the fourth on the same pattern.
+---
+State lives in one of four store shapes. There is nothing else; a pipeline's
+entire mutable and immutable state reduces to these.
+'''
+subject = "stores"
+keywords = ["accumulator", "Accum", "fourth store", "three store types", "four store shapes", "store kind"]
+related = ["tenet::there_are_three_store_types_and_one_scheduling_mechanism", "tenet::an_accumulator_is_a_column_written_by_append_and_a_fourth_store_marker", "tenet::the_standalone_spec_lists_four_store_shapes_with_the_accumulator_among_them"]
+
+[[question]]
+id = "whether_hilavitkutin_s_own_columns_are_double_buffered"
+asks = "The founding round resolves that hilavitkutin has two access modes and that the frozen and live views, the double-buffered view system and the arena are loimu's own layer. An expert memo of the storage model round says hilavitkutin's own columns are double-buffered, frozen and live, for the pass boundary. Does hilavitkutin itself buffer a column across the pass boundary, or does the consumer?"
+options = ["The consumer. Hilavitkutin has read and write and no buffered store; a consumer that wants a frozen read holds it as its own columns and rotates them between passes, as the founding round resolved for loimu.", "Hilavitkutin. A column is double-buffered at the pass boundary by hilavitkutin itself, as the loimu heritage memo says."]
+state = "open"
+source = "mock/design_rounds/202604200055/202603141800_topic.hilavitkutin-core-design.md:643-661, mock/research/202606210600_expert-loimu-heritage-storage-model.md:289-293"
+quote = '''
+**Q6. Access mode granularity — RESOLVED**
+
+Resolved by Q2: two modes only. Read and Write. Write implies Read.
+
+loimu's seven access modes (Pinned, Immediate, MutImmediate, Sample,
+Post, Approx, Defer) control ordering, freshness, and determinism
+within the double-buffered view system. These are loimu-specific
+concerns tied to its temporal prediction, rotation groups, and
+frame generation. polka and saalis need none of this.
+
+hilavitkutin exposes Read and Write. The DAG uses these for edge
+construction. The scheduler uses these for conflict detection. loimu
+maps its seven modes to Read/Write at the hilavitkutin boundary and
+implements the richer semantics in its own layer.
+
+If hilavitkutin later needs a third mode (e.g. ReadExclusive for
+consumers that need guaranteed exclusive read access), it can be
+added without changing the WorkUnit trait — it would be a new store
+wrapper type like `Exclusive<Resource<T>>` in the AccessSet.
+---
+Hilavitkutin's columns are double-buffered (frozen/live) for the pass boundary. The
+resource handle model adds noalias wins. There is no temporal prediction or triple
+buffering in hilavitkutin's design. The workload does not need it: a pipeline
+execution engine does not extrapolate column values between passes -- it computes
+them.
+'''
+subject = "stores"
+keywords = ["double-buffered", "frozen", "live", "pass boundary", "rotation", "frame start", "buffered store"]
+related = ["tenet::loimu_keeps_its_seven_access_modes_and_maps_them_to_read_and_write_at_the_boundary", "tenet::an_expert_memo_says_hilavitkutin_s_columns_are_double_buffered_for_the_pass_boundary", "tenet::loimu_s_layers_stay_in_loimu_and_hilavitkutin_provides_the_foundation", "question::how_a_unit_reads_the_value_a_store_held_at_frame_start"]
+
+[[question]]
+id = "which_shape_the_accumulator_takes_is_left_to_the_api_revision"
+asks = "Is the accumulator a column with an append write, or a fourth store kind beside resource, column and virtual?"
+options = [
+    "A column with an append write: three kinds stand, the accumulator is a column whose write form is append, marked by a wrapper in the access set",
+    "A fourth store kind: resource, column, accumulator, virtual",
+]
+state = "answered"
+answer = "Whichever makes most sense typestate and plumbing wise"
+answered = "2026-11-13 about 10:35 UTC: channel document briefs/fixup/op-answers-13.md, entry 4"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS-13.md:33-39"
+quote = '''
+## 4. Whether the accumulator is a fourth store kind
+
+Options: [a: A column with an append write: three kinds stand, the accumulator is a column whose write form is append, marked by a wrapper in the access set] [b: A fourth store kind: resource, column, accumulator, virtual].
+
+Answer, verbatim: "Whichever makes most sense typestate and plumbing wise"
+
+Reading: no preference between the two as such; the api revision decides by which gives the cleaner typestate and plumbing, and says why. Not returned to him as a question.
+'''
+subject = "stores"
+keywords = ["accumulator", "fourth store kind", "append write", "typestate", "plumbing", "api revision"]
+related = ["question::whether_the_accumulator_is_a_fourth_store_kind"]
+
+[[question]]
+id = "what_the_shape_of_consumer_reads_of_seq_and_map_after_the_pipeline_is"
+asks = "What the shape of the consumer's reads of sequence and map members after the pipeline is. The seed lists the resource collection accessor shape as open, waiting on the storage layout work it depends on."
+options = ["the item waits on the storage layout work it depends on (the seed's open-question statement)", "collection access on both the read side and the write side is the ptr+len view over the member's collection-column region behind the erased descriptor, with the API landing with #344 (the swap spec's answer)"]
+state = "open"
+source = "mock/research/seed/governance.md:128-130"
+quote = '''
+4. **Resource collection accessor shape** (consumer reads of `Seq`/`Map`
+   post-pipeline) waits on the storage layout work it depends on. See
+   [[storage]].
+'''
+subject = "stores"
+keywords = ["collection accessor shape", "Seq", "Map", "post-pipeline reads", "storage layout", "open question 4", "consumer read"]
+related = ["tenet::collection_access_read_and_write_is_the_ptr_len_view_over_the_member_s_collection_column_region_behind_the_erased_descriptor"]
+
+[[question]]
+id = "whether_a_plugin_crossing_resource_is_an_actual_requirement_of_hilavitkutin_s_consumers"
+asks = "Is a plugin-crossing resource, one defined or accessed across a cdylib or wasm boundary, an actual requirement for hilavitkutin's consumers, such as the viola cdylib plugins and future clause extensions?"
+options = [
+    "Yes: adopt the hybrid, with the erased static-shape boundary for exactly those resources at zero measured latency penalty, plus the one-record blob for in-process resources; the sub-question is then whether the erased boundary is per-resource or global",
+    "No: the pure one-record blob is the simpler default and the erased path is not built",
+]
+state = "answered"
+answer = "Go with the hybrid."
+answered = "2026-07-02: mock/design_rounds/202607161000/202606210600_topic.hybrid-decision.md"
+source = "mock/design_rounds/202607161000/202606210600_topic.bench-run2-resolution.md:54-64, mock/design_rounds/202607161000/202606210600_topic.hybrid-decision.md:12-19"
+quote = '''
+## The one open question for op
+
+Is a plugin-crossing resource (a resource defined or accessed across a cdylib/wasm boundary) an actual
+requirement for hilavitkutin's consumers (viola cdylib plugins, future clause extensions)?
+
+- **Yes** -> adopt the hybrid: the erased static-shape boundary (V4/loimu shape) for exactly those
+  resources, at zero measured latency penalty, plus the V1 blob for in-process resources. Sub-question then:
+  is the erased boundary per-resource (only plugin-shared resources go erased) or global?
+- **No** -> the pure V1 blob is the simpler default and the erased path is not built.
+
+The bench established the choice is latency-free either way. It cannot decide the requirement.
+---
+## The decision (op, 2026-07-02)
+
+Go with the **hybrid**. Op's stated reasoning: it is more future-proof, it performs just about the
+same as the pure blob (the bench put V4 within +-1.7% of V1 on every scalar arm across both runs
+and tied on B/C/E), so it carries only upsides. The one thing the bench listed against V4, the
+backcast machinery and type-erasure round-trip burden, is a complexity-versus-simplicity concern,
+and that axis is an anti-axis in this workspace: it is not counted against a design. With the only
+downside ruled out and a future-proofing upside in hand at parity cost, the hybrid wins.
+'''
+subject = "stores"
+keywords = ["plugin-crossing resource", "hybrid", "erased boundary", "cdylib", "wasm", "viola", "requirement", "V1 V4"]
+related = ["tenet::a_resource_value_is_addressed_through_an_erased_static_shape_so_it_can_cross_a_plugin_boundary"]
+
+[[question]]
+id = "whether_the_erased_resource_boundary_is_per_resource_or_global"
+asks = "Is the erased static-shape boundary per-resource, with only the resources that cross a plugin boundary going erased, or global, with every resource using the erased addressing?"
+options = ["Per-resource: only resources that cross a plugin boundary go erased and the rest stay native blobs", "Global: every resource uses the erased static-shape addressing"]
+state = "answered"
+answer = "Global: the erased static-shape addressing is the uniform resource value model and every resource is plugin-capable at parity cost. The call is derived from op's stated criteria and not from an explicit op instruction on the sub-question, and it is cheap to narrow to a per-resource opt-in if op prefers on review."
+answered = "2026-07-02: mock/design_rounds/202607161000/202606210600_topic.hybrid-decision.md"
+source = "mock/design_rounds/202607161000/202606210600_topic.v4-plugin-interop-axis.md:32-40, mock/design_rounds/202607161000/202606210600_topic.hybrid-decision.md:42-46, mock/design_rounds/202607161000/202606210600_topic.hybrid-decision.md:58-61"
+quote = '''
+The decision is NOT simply "blob wins." The likely answer is a **hybrid**:
+- blob + scalar stack-snapshot for builtin / in-process resources (the latency winner, V1);
+- a type-erased static-shape boundary for resources that must cross a plugin/wasm boundary (the
+  extensibility winner, V4 / loimu shape).
+
+Weigh the plugin-interop requirement explicitly with the run-2 numbers + op. Do not lock "blob"
+as if the latency axes settled it. Open question to resolve: do hilavitkutin's target consumers
+(viola plugins, future clause extensions) actually need plugin-crossing resources, and if so, is
+the boundary per-resource (only plugin-shared resources go erased) or global?
+---
+## The per-resource-vs-global sub-question, resolved to global-capable
+
+The v4-plugin-interop topic left open whether the erased boundary is per-resource (only resources
+that cross a plugin boundary go erased, the rest stay native blobs) or global (every resource uses
+the erased addressing). Op's two stated criteria settle it:
+---
+So the erased static-shape addressing is the uniform resource value model: every resource is
+plugin-capable, at parity cost. This is a call derived from op's stated criteria, not from an
+explicit op instruction on the sub-question; it is cheap to narrow to a per-resource opt-in if op
+prefers on review (no code exists yet), but nothing in op's reasoning points that way.
+'''
+subject = "stores"
+keywords = ["per-resource", "global", "erased boundary", "global-capable", "plugin boundary", "hybrid", "opt-in"]
+related = ["tenet::a_resource_value_is_addressed_through_an_erased_static_shape_so_it_can_cross_a_plugin_boundary", "tenet::the_resource_binding_records_an_erased_base_pointer_and_a_static_shape_and_the_typed_pointer_is_backcast_at_projection"]

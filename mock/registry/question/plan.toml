@@ -1,0 +1,96 @@
+# The questions whose subject is `plan`, part 1.
+
+[[question]]
+id = "which_order_the_dispatch_follows_the_rcm_order_of_units_or_the_waist_phase_order"
+asks = "Which order canon keeps for dispatch: the RCM order of units as their execution order, or the shipped waist-phase order. The text registers the fork open with a bench oracle and holds that neither is drift until the bench lands."
+options = ["the spec's Step 5/8 dual-ordering position: RCM row order is the unit execution order", "the shipped waist-phase order"]
+state = "answered"
+answer = "Canon Step 5 stands, on stronger grounds than before: the RCM row order is the execution order, now validated against rival ordering theories rather than against a single scramble, at realistic scale."
+answered = "2026-11-13, by default from the written history: mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md"
+answered_from = ["ruled: mock/research/202606111400_canonical-design-addendum-a1.md:49-57", "ruled: mock/research/202607200800_a1-1-ordering-theory-bench-expansion.md:82-90"]
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:51-57"
+quote = '''
+The spec's Step 5/8 dual-ordering position (RCM row order = WU execution
+order) versus the shipped waist-phase order is resolved by bench, not by
+fiat. Both orders are buildable behind the const grouping mechanism (the
+guarded-walk relaxation proven in r2 section 7-6 carries an arbitrary
+const-side order). A cache-locality bench on wide fan-out DAGs decides which
+wording canon keeps. Until the bench lands, neither order is drift; the fork
+is registered open with a bench oracle.
+'''
+subject = "plan"
+keywords = ["RCM", "waist-phase order", "dispatch order", "bench oracle", "cache locality", "A1-1"]
+related = ["tenet::rcm_wins_against_rival_ordering_theories_at_dram_scale_and_order_is_near_neutral_below_it_so_step_5_stands"]
+
+[[question]]
+id = "whether_the_morsel_term_for_write_resource_collections_absorbs_the_swap_traffic_or_a_separate_budget_line_is_owed"
+asks = "Whether the write-resource-collection-sizes morsel term absorbs the write-then-read traffic of a swap, or a separate budget line is owed. The Swap-D bench is commissioned to decide it, triggered when #344's write side lands."
+options = ["the write_resource_collection_sizes morsel term absorbs the swap's write-then-read traffic", "a separate budget line is owed"]
+state = "open"
+source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:113-120"
+quote = '''
+## S7: bench
+
+Swap-D (cold-write-then-stream; N swept 16/64/256, element sizes 4/16/64
+bytes, baseline versus swap-at-frame-end): commissioned with the trigger
+"when #344's write side lands". It decides whether the
+`write_resource_collection_sizes` morsel term absorbs the swap's
+write-then-read traffic or a separate budget line is owed. No accessor-shape
+arm (one write per swap, between frames; the stakes do not justify one).
+'''
+subject = "plan"
+keywords = ["Swap-D", "morsel term", "write_resource_collection_sizes", "budget line", "#344", "swap traffic"]
+related = ["tenet::the_swap_d_bench_is_commissioned_with_the_trigger_when_the_344_write_side_lands"]
+
+[[question]]
+id = "whether_the_maintainer_blesses_the_proposed_restoration_of_the_canon_s_trunk_and_fiber_roles_for_spectral_and_greedy_grouping"
+asks = "Whether the maintainer blesses the proposed ruling that restores the roles of canon's steps 7 and 8, through a plan-chain corrective round, in place of the shipped code that forms fibers spectrally within wide blocks. The evidence has been delivered and the item awaits his bless under evidence-then-bless."
+options = ["bless the proposed ruling: canon's role split, spectral forms trunks and greedy forms fibers, is restored via a plan-chain corrective round", "keep the shipped code, which forms fibers spectrally within wide blocks"]
+state = "open"
+source = "mock/research/seed/governance.md:120-127"
+quote = '''
+3. **The spectral role deviation** (canon forms trunks spectrally; shipped
+   code forms fibers spectrally within wide blocks): EVIDENCE DELIVERED
+   (2026-07-19, record `202607201200_spectral-role-bench-evidence.md`,
+   bench `fiber_theory`). Both cost and grouping character favour
+   canon's role split (greedy is linear and fiber-grained; spectral is
+   two to three orders heavier and trunk-grained); the proposed ruling
+   restores Step 7/8 roles via a plan-chain corrective round. Awaits the
+   op bless per evidence-then-bless. See [[plan]].
+'''
+subject = "plan"
+keywords = ["spectral role deviation", "fiber_theory", "evidence then bless", "Step 7", "Step 8", "plan-chain corrective round", "greedy", "trunk-grained"]
+related = ["tenet::the_spectral_role_deviation_follows_the_same_evidence_then_bless_standard", "tenet::the_spectral_role_deviation_evidence_favours_canon_s_role_split_of_greedy_fibers_and_spectral_trunks"]
+
+[[question]]
+id = "whether_the_trait_solver_overflow_at_the_grouping_unit_cap_belongs_to_the_cap_size_recursion_or_to_the_compounded_obligation_set"
+asks = "The overflow documented at the grouping unit cap is attributed to a capacity-size array length re-proven through the const-gated walk's recursion in one text, and to the compounded obligation set of the real walk or an older nightly in another. Which holds?"
+options = ["a cap_size(CU::CAP) array-length bound re-proven through the const-gated walk's type-level recursion overflowing the trait solver", "a property of that compounded obligation set (or of an older nightly), not of cap_size-through-recursion as such; UNREPRODUCED-IN-REDUCTION, an in-engine probe is required before relying on either the wall or its absence"]
+state = "open"
+source = "mock/research/sketches/202606111450_cap-lifting-shapes/FINDINGS.md:3-10, mock/research/sketches/202606111450_cap-lifting-shapes/FINDINGS.md:128-139"
+quote = '''
+HYPOTHESIS: the engine's three hardcoded caps (GATE2_MAX_UNITS=256 and
+GATE2_MAX_ACCUMS=16 in plan/grouping.rs, plan_dirty `[AtomicBool; 256]` in
+scheduler/mod.rs, MAX_CORES=256 in thread/class.rs) can be lifted to
+consumer-tunable values on nightly-2026-05-28 (1.98.0-nightly cced03bfd),
+despite the two documented blockers: GCE rejecting FIELD ACCESS in generic
+constants (the `Cfg::MAX_PLAN_AFFECTING_RESOURCES.0` form), and a
+`cap_size(CU::CAP)` array-length bound re-proven through the const-gated
+walk's type-level recursion overflowing the trait solver. Expected: the
+---
+OUTCOME: WORKS, at depth 7 and at depth 64 (a macro-built 64-unit cons
+list), with the generic constant inside the recursive trait's method
+signature and the `[(); ..]:` bound on every cons-cell impl. The documented
+trait-solver overflow did NOT reproduce in this reduced fold on this
+nightly. The reduction carries one bound per recursion step; the real
+const-gated walk compounds BundleMasks (4 type params) with per-unit
+MaskProject witness bounds, GateWith, and the RunFiber where-blocks, so the
+overflow documented at GATE2_MAX_UNITS is a property of that compounded
+obligation set (or of an older nightly), not of cap_size-through-recursion
+as such. Treat the engine-side claim as UNREPRODUCED-IN-REDUCTION: an
+in-engine probe is required before relying on either the wall or its
+absence.
+'''
+subject = "plan"
+keywords = ["trait solver overflow", "cap_size recursion", "GATE2_MAX_UNITS", "unreproduced", "in-engine probe", "cap lifting"]
+related = ["tenet::lifting_the_engine_s_hardcoded_caps_was_documented_as_blocked_by_field_access_in_generic_constants_and_a_trait_solver_overflow_through_the_const_gated_walk", "tenet::the_trait_solver_overflow_documented_at_the_grouping_unit_cap_is_unreproduced_in_a_reduced_fold_and_needs_an_in_engine_probe"]

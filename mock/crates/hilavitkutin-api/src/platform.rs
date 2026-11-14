@@ -464,7 +464,7 @@ impl Executor for HybridExecutor {
         core_id: USize,
         wake_strategy: &WakeStrategy,
     ) -> notko::Outcome<(), ExecutorError> {
-        // FIXME(fe682c10859c): the worker mainloop is not written. It
+        // FIXME(placeholders_tagged_fe682c10859c): the worker mainloop is not written. It
         // would walk the pre-computed CoreProgram, dispatch morsels,
         // hit the phase barriers and observe the shutdown signal,
         // monomorphised per (C, P, CoreProgram) at scheduler-build

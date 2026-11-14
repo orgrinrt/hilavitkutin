@@ -1,0 +1,299 @@
+# The tenets whose subject is `ordering`.
+
+[[tenet]]
+id = "ordering_is_the_data_flow"
+subject = "ordering"
+what = "Ordering is the data flow: the edges of the graph come from where a write of a column meets a read of it, and data access patterns fully capture ordering, with no triggers and no emits."
+mechanism = "DAG edges from Write→Read column overlap."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:589-590, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:594-595"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#08-determinism-and-ordering"]
+quote = '''
+**Ordering IS the data flow (T1 §10.6):**
+- DAG edges from Write→Read column overlap
+---
+- No triggers, no emits — data access patterns fully capture ordering
+  (T1 decisions #17, #25)
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:589-590", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:594-595"]
+keywords = ["dag", "edges", "triggers", "emits", "read after write", "data flow"]
+
+[[tenet]]
+id = "a_writer_precedes_every_reader_of_what_it_writes"
+subject = "ordering"
+what = "A unit that writes a store precedes every unit that reads that store."
+mechanism = "For every pair (i, j), `(write_masks[i] & read_masks[j]) != 0` means unit i must precede unit j: one AND and one compare per pair, giving a bit-matrix DAG."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1273-1276"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
+quote = '''
+DAG edges: for every pair (i, j), `(write_masks[i] & read_masks[j])
+!= 0` → WU i must precede WU j. This is a single AND + compare per
+pair. O(N²) on u64 values. For 50 WUs: 2500 ANDs, ~1µs. The result
+is a bit-matrix DAG: `dag[i] |= 1 << j` where i precedes j.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1273-1276"]
+keywords = ["read after write", "precede", "access matrix", "write mask", "read mask", "edge"]
+
+[[tenet]]
+id = "two_writers_of_one_store_are_ordered_by_hint_priority"
+subject = "ordering"
+what = "Where two units write the same store, the order between them is resolved by scheduling hint priority: Urgency, then Divisibility, then Significance. The tie-break is the unit with the most downstream dependents first, then a deterministic fallback."
+mechanism = "The deterministic fallback is given once as \"type name or similar\" and is otherwise unnamed."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:591-593, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1056-1059, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1278-1281"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#08-determinism-and-ordering"]
+quote = '''
+- Write-write ambiguity resolved by scheduling hint priority (Urgency,
+  Divisibility, Significance). Tie-break: most deps first, then
+  deterministic fallback. Supersedes T6 L2637 `order` field.
+---
+1. Build DAG: write→read edges (arvo-bitmask adjacency). Write-write
+   ambiguity resolved by scheduling hints (Urgency, Divisibility,
+   Significance — domain 09). Higher-priority hint wins. Tie-break:
+   most deps first, then deterministic fallback (type name or similar).
+---
+Write-write to the same store: both WUs have the bit set in their
+write masks. Ordering resolved by scheduling hint priority (domain
+09): compare Urgency, then Divisibility, then Significance. Tie-break:
+most downstream dependents first, then deterministic fallback.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:591-593", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1056-1059", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1278-1281", "later: mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:513-535, how_two_writers_of_one_store_are_ordered"]
+keywords = ["write-write", "two writers", "hint", "urgency", "divisibility", "significance", "tie-break", "dependents", "fallback", "type name"]
+related = ["question::how_two_writers_of_one_store_are_ordered"]
+
+[[tenet]]
+id = "scheduling_hints_replace_an_order_field_on_the_unit"
+subject = "ordering"
+what = "Scheduling hints replace an explicit order field on the unit."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:593-593, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2390-2391"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#08-determinism-and-ordering"]
+quote = '''
+  deterministic fallback. Supersedes T6 L2637 `order` field.
+---
+Vocabulary updated (chain→fiber, row→record). T7's `order` field
+on WU replaced by scheduling hints.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:593-593", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2390-2391"]
+keywords = ["order field", "hints", "superseded"]
+rules_out = ["order field"]
+rejects = ["order field"]
+related = ["tenet::two_writers_of_one_store_are_ordered_by_hint_priority"]
+
+[[tenet]]
+id = "a_unit_declares_whether_it_is_commutative"
+subject = "ordering"
+what = "A work unit declares whether it is commutative, and a fiber is commutative only when all of its units are. A commutative fiber is eligible for front-back processing, multi-core morsel dispatch and deterministic segment assignment; a non-commutative one is processed in a single direction only."
+mechanism = "`COMMUTATIVE: bool` on the WorkUnit."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:597-602"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#08-determinism-and-ordering"]
+quote = '''
+**Commutativity (T3 §tiling model L440-510):**
+- WorkUnit declares `COMMUTATIVE: bool` (T3 decision #45)
+- Commutative fiber = ALL constituent WUs commutative (T3 decision #46)
+- Commutative → eligible for front-back processing, multi-core morsel
+  dispatch, deterministic segment assignment
+- Non-commutative → single-direction processing only
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:597-602"]
+keywords = ["commutative", "commutativity", "front-back", "segment", "single direction"]
+
+[[tenet]]
+id = "ordering_is_guaranteed_by_construction"
+subject = "ordering"
+what = "Ordering is guaranteed by construction: a non-commutative fiber runs on a single core and is trivially ordered, a commutative one runs in deterministic segments that are always in record order, and no lineariser or other ordering mechanism is needed."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:604-607"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#08-determinism-and-ordering"]
+quote = '''
+**Ordering guaranteed by construction (T3 §Q6):**
+- Non-commutative: single-core = trivially ordered (T3 decision #99)
+- Commutative: deterministic segments = always in record order (T3 decision #100)
+- No lineariser needed (unlike Polars). No ordering mechanism needed.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:604-607"]
+keywords = ["determinism", "lineariser", "record order", "deterministic segments", "single-core"]
+
+[[tenet]]
+id = "the_founding_research_orders_two_writers_by_registration_order_or_explicit_priority"
+subject = "ordering"
+what = "A research note of the founding round says the scheduler builds an edge from a writer of a resource to each reader of it, and for every pair of units that both write one resource an edge between them, whose direction is determined by registration order or explicit priority."
+source = "mock/design_rounds/202604200055/202603141800_research.scheduler-algorithm-deep-dive.md:77-82"
+provenance = ["mock::design_rounds::202604200055::202603141800_research.scheduler-algorithm-deep-dive::#step-1-build-dag-from-read-write-declarations"]
+quote = '''
+The scheduler extracts these declarations at registration time and builds
+edges: for every pair (A, B) where A writes a resource R and B reads R,
+create an edge A -> B. For every pair (A, B) where both write R, create
+an edge between them (ordering is determined by registration order or
+explicit priority). Virtual columns (zero-sized types like
+`Write<SchemaChanged>`) create DAG edges with no storage backing.
+'''
+origin = "proposed"
+written_by = "the research note scheduler-algorithm-deep-dive of the founding round"
+standing = "provisional"
+keywords = ["two writers", "registration order", "explicit priority", "write-write", "edge"]
+superseded_by = ["two_writers_of_one_store_are_ordered_by_hint_priority"]
+related = ["question::how_two_writers_of_one_store_are_ordered"]
+
+[[tenet]]
+id = "producer_before_consumer_registration_is_provisional_and_the_ideal_is_auto_ordering"
+subject = "ordering"
+what = "The standalone spec says that registering producers before consumers is a provisional constraint. The ideal is that the engine orders units automatically regardless of registration order. Until the recovery of the execution order fully lands, the engine requires the consumer to register producers before consumers and validates it, and a registration that is not topological is a build error. The constraint is to be relaxed when the order-recovery mechanism or the toolchain matures."
+source = "mock/research/pre_seed/202606111800_canonical-spec-standalone.md:603-608"
+provenance = ["mock::research::pre_seed::202606111800_canonical-spec-standalone::#14-the-deliberate-deviations"]
+quote = '''
+- **Producer-before-consumer registration is provisional.** The ideal is that
+  the engine auto-orders units regardless of registration order. Until the
+  RCM execution-order recovery fully lands, the engine requires the consumer
+  to register producers before consumers and validates it (a non-topological
+  registration is a build error). This is a provisional constraint, to be
+  relaxed when the order-recovery mechanism or the toolchain matures.
+'''
+origin = "proposed"
+written_by = "the standalone spec 202606111800, a reading aid with no design authority of its own by addendum A2"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["ratified-elsewhere: mock/research/202606081500_engine-roadmap-r2.md:89-93"]
+keywords = ["registration order", "producer before consumer", "provisional", "auto-order", "RCM", "build error", "topological"]
+related = ["question::how_two_writers_of_one_store_are_ordered"]
+
+[[tenet]]
+id = "gate_one_takes_registration_as_canonical_with_a_build_time_check_that_it_is_the_plan_s_rcm_reordered_topological_order_and_the_reordering_automation_is_deferred"
+subject = "ordering"
+what = "The compile-time unit sequence is walked in registration order, devirtualised, and the engine requires and validates that registration order is the plan's RCM-reordered topological order, so RCM is the dispatch order and not the arena layout only. The automation of the within-equal-depth reordering, where the engine would reorder the sequence itself, is the codegen flattener's and is deferred until the generic-const-expression soundness migration."
+because = "The compile-time sequence is built in registration order and fixed before any plan runs, while the plan's RCM row order is computed at runtime, so the only ways to make the walk order equal the RCM order are the codegen flattener, which needs the plan algorithms const-evaluable, or registration-is-canonical with validation."
+mechanism = "`RunFiberCol` walk; `group_fibers` (step 8) consumes the RCM row order (currently computed and left unused) to define the canonical fiber and unit sequence; a unit registered before its dependency is a build-time `BuildError`; the flattener (spec domain 17) is gated behind the GCE soundness migration (#628); the Approach-E sketch measured the RCM effect among equal-depth units at a reproducible ~2%."
+source = "mock/research/sketches/202606060730_runfibercol-accumulator-inline/FINDINGS.md:62-80, mock/research/sketches/202606060730_runfibercol-accumulator-inline/FINDINGS.md:82-96"
+provenance = ["mock::research::sketches::202606060730_runfibercol-accumulator-inline::FINDINGS::#the-plan-order-to-compile-time-order-bridge-design-resolution"]
+quote = '''
+The cons-list (`Scheduler::wu_values`) is built at compile time in registration
+order; its type and element order are fixed before any plan runs. The plan's RCM
+row order is computed at runtime by `build_plan`. There are exactly two ways to
+make the compile-time cons-list walk order equal the RCM-reordered topological
+order:
+
+1. The codegen flattener (spec domain 17): const-evaluate the plan and emit the
+   cons-list in RCM order. This is the spec's eventual ideal. It requires the
+   plan algorithms to be const-evaluable, which is `generic_const_exprs` /
+   `generic_const_args` territory, gated behind the GCE soundness migration
+   (#628). Not available for GATE 1.
+
+2. Registration-is-canonical with build-time validation (GATE 1): the cons-list
+   walks in registration order, devirtualized (`RunFiberCol`), and the engine
+   requires/validates that registration order is the plan's RCM-reordered
+   topological order. `group_fibers` (step 8) consumes the RCM row order
+   (currently computed and left unused) to define the canonical fiber/unit
+   sequence; a unit registered before its dependency is a build-time
+   `BuildError` (the topo-validity check the doc CL claim 2 already names).
+---
+GATE 1 takes (2). This honors the canonical spec: RCM IS the dispatch order (the
+plan computes it, `group_fibers` consumes it, the walk realizes it, the order is
+validated against the plan), NOT arena-layout-only. The only deferred piece is
+the AUTOMATION of the within-equal-depth reordering: who physically reorders the
+cons-list when registration order and the plan's RCM order differ among
+independent equal-depth units. At GATE 1 the consumer registers in the order
+(forced for a linear chain, where exactly one topological order exists; a degree
+of freedom only for fan-out, where the Approach-E sketch measured the RCM effect
+at a reproducible ~2%), and the engine validates topo-validity. The engine
+reordering the cons-list ITSELF is the codegen flattener, bounded precisely to
+the GCE gate (#628). This is distinct from the corrected drift ("RCM is
+arena-only; dispatch runs plain topological, RCM untouched"): here RCM is
+consumed by dispatch and defines the required order; what is deferred is the
+reordering automation, not whether RCM touches dispatch. See the workspace rule
+`canonical-design-outranks-intermediate-rounds.md`.
+'''
+origin = "proposed"
+written_by = "sketch findings runfibercol-accumulator-inline (Phase D, task 340), outcome WORKS on nightly-2026-05-28, undated; agent-written"
+standing = "held"
+keywords = ["registration order", "RCM order", "build-time validation", "RunFiberCol", "group_fibers", "codegen flattener", "GATE 1", "equal-depth reordering"]
+related = ["tenet::the_builder_appends_each_registered_unit_so_the_carrier_type_order_equals_registration_order_and_build_requires_a_topological_registration", "tenet::rcm_always_runs_and_reorders_the_units_so_column_sharing_units_are_adjacent_for_fiber_grouping"]
+
+[[tenet]]
+id = "dispatch_runs_in_the_plan_s_rcm_reordered_topological_order_because_the_rcm_row_order_is_the_unit_execution_order"
+subject = "ordering"
+what = "Dispatch runs in the plan's RCM-reordered topological order: RCM's row reordering is the unit execution order, and fiber grouping processes the units in that order. The order stays topological, and among units at the same topological depth RCM picks the order that maximises column reuse between adjacent units. A unit whose dependencies admit no topological order is a build-time error."
+because = "The canonical consolidation spec states that RCM's row reordering is the unit execution order, fed to fiber grouping. The intermediate rounds and a current-code comment drifted from the spec, and the canonical design is authoritative."
+mechanism = "Spec Step 5 (\"RCM reordering -> fiber grouping order + arena layout\") and Step 8 (\"Process WUs in RCM-reordered topo order\"); `group_fibers` (step 8); the walk runs the fiber's unit sequence as a compile-time-known cons-list, which is what devirtualizes; `BuildError`."
+source = "mock/design_rounds/202606051659/202606051659_changelist.doc.lock.md:29-29, mock/design_rounds/202606051659/202606051659_changelist.doc.lock.md:53-53"
+provenance = ["mock::design_rounds::202606051659::202606051659_changelist.doc.lock::#changes-proposed-the-corrected-shape"]
+quote = '''
+2. **Dispatch in the plan's RCM-reordered topological order.** Per the canonical design (consolidation spec Step 5 "RCM reordering -> fiber grouping order + arena layout" and Step 8 "Process WUs in RCM-reordered topo order"), RCM's row reordering is the WU execution order. `group_fibers` (step 8) processes units in that order, so each fiber's unit sequence is in RCM-reordered topological order, and the walk runs that sequence. The order stays topological (every unit after its dependencies), but among units at the same topological depth that a naive topo sort would order arbitrarily, RCM picks the order maximising column reuse between adjacent units. The walk runs the fiber's unit sequence as a compile-time-known cons-list, which is what devirtualizes; a unit whose dependencies admit no topological order is a build-time `BuildError`. (This corrects an earlier framing in this round that had dispatch run in plain registration order with RCM unused. That framing came from intermediate design rounds and a current-code punt comment, both of which strayed from the canonical spec; see the Basis.)
+---
+- Architect read 2 evaluated the order handling and, reasoning from a current-code punt comment (`rcm_order` "is arena layout, not the dispatch order") and the intermediate RCM-wiring and phase-sequential rounds, concluded dispatch should run in plain registration/topological order with RCM unused single-core. That conclusion strayed: the canonical consolidation spec (Step 5 / Step 8) states RCM's row reordering IS the WU execution order, fed to fiber grouping. The intermediate rounds and the current-code comment drifted from the spec; the canonical design is authoritative. Claims 2 and 3 are stated on the canonical position. See the workspace rule `canonical-design-outranks-intermediate-rounds.md`.
+'''
+origin = "proposed"
+written_by = "doc changelist 202606051659 of 2026-06-05 (phase DOC, single-core dispatch codegen), locked; agent-written round artifact that does not name the maintainer as its author"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: op ruled that a bench decides the dispatch order (mock/research/202606111400_canonical-design-addendum-a1.md:49-57), and the bench of 2026-07-20 reports the RCM order this row states (mock/research/202607200800_a1-1-ordering-theory-bench-expansion.md:82-90); no word of his read takes that result as the answer, so the row stands on a stamp under his words "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["RCM", "dispatch order", "topological order", "execution order", "group_fibers", "registration order", "canonical design", "BuildError"]
+rejects = ["dispatch should run in plain registration/topological order with RCM unused single-core", "dispatch run in plain registration order with RCM unused"]
+related = ["tenet::rcm_always_runs_and_reorders_the_units_so_column_sharing_units_are_adjacent_for_fiber_grouping", "tenet::as_of_2026_06_11_rcm_rides_only_the_arena_layout_column"]
+
+[[tenet]]
+id = "how_the_dispatch_order_is_assembled_is_an_implementation_and_bench_choice_for_the_agent_and_not_a_blocking_question_for_op"
+subject = "ordering"
+what = "How the dispatch order is assembled does not matter, as long as it gets done as designed. It is an implementation and bench choice for the agent, verified against the assembly gate, and it is not a blocking question put to op."
+mechanism = "Op's standing ruling recorded as MEMORY LATEST-56; verified against the `disasm_5check` ASM gate."
+source = "mock/research/sketches/202606052130_rcm-order-into-static-body/FINDINGS.md:74-79"
+provenance = ["mock::research::sketches::202606052130_rcm-order-into-static-body::FINDINGS::#the-remaining-fork-where-the-rcm-order-comes-from"]
+quote = '''
+Per op's standing ruling (MEMORY LATEST-56: the mechanism "doesn't matter HOW,
+as long as it gets done as designed" and is an implementation + bench choice for
+the agent, verified against the disasm_5check ASM gate, NOT a blocking op-fork),
+this fork is the agent's to pick and sketch, not surface. Candidate 3 is out: it
+is the rejected "registration is dispatch, RCM deferred" punt. The choice is
+between (1) and (2), both of which keep RCM as the execution order.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: mock/research/sketches/202606052130_rcm-order-into-static-body/FINDINGS.md:74-79"]
+keywords = ["standing ruling", "dispatch order assembly", "agent's choice", "bench choice", "ASM gate", "not a blocking fork", "MEMORY LATEST-56"]
+
+[[tenet]]
+id = "registration_order_as_the_dispatch_order_with_the_rcm_reorder_deferred_is_out_and_both_remaining_candidates_keep_rcm_as_the_execution_order"
+subject = "ordering"
+what = "The candidate that constrains registration order to a valid topological order, validates it at build and walks the flat registration-order list inline, treating the RCM reorder within depth as a separate benched refinement, is out. It under-delivers on RCM being the execution order. The choice between the remaining candidates keeps RCM as the execution order."
+because = "It is the direction the earlier ruling record rejected: it reasons that registration order is the dispatch order and RCM is deferred, which is the current-code punt and not the design."
+mechanism = "Candidate 3 of three: constrain registration order to a valid topological order, validate at build, walk the flat registration-order cons-list inline; the other two keep RCM as the execution order and are the choice between them."
+source = "mock/research/sketches/202606052130_rcm-order-into-static-body/FINDINGS.md:66-72, mock/research/sketches/202606052130_rcm-order-into-static-body/FINDINGS.md:74-79"
+provenance = ["mock::research::sketches::202606052130_rcm-order-into-static-body::FINDINGS::#the-remaining-fork-where-the-rcm-order-comes-from"]
+quote = '''
+3. **Constrain registration order to be a valid topo order, validate at build,
+   walk the flat registration-order cons-list inline; treat the RCM within-depth
+   reorder as a separate (benched) refinement.** Lowest risk, ships devirt now.
+   But this is the direction MEMORY LATEST-56 explicitly REJECTED: it reasons
+   "registration order is the dispatch order, RCM is deferred", which is the
+   current-code punt, not the design. Recording it for completeness; it
+   under-delivers on "RCM is the execution order".
+---
+Per op's standing ruling (MEMORY LATEST-56: the mechanism "doesn't matter HOW,
+as long as it gets done as designed" and is an implementation + bench choice for
+the agent, verified against the disasm_5check ASM gate, NOT a blocking op-fork),
+this fork is the agent's to pick and sketch, not surface. Candidate 3 is out: it
+is the rejected "registration is dispatch, RCM deferred" punt. The choice is
+between (1) and (2), both of which keep RCM as the execution order.
+'''
+origin = "proposed"
+written_by = "sketch findings rcm-order-into-static-body (Phase D, task 340), status WORKS (body) with the order-assembly fork open, undated; agent-written, citing op's standing ruling"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: mock/research/sketches/202606052130_rcm-order-into-static-body/FINDINGS.md:66-72", "quote: mock/research/sketches/202606052130_rcm-order-into-static-body/FINDINGS.md:74-79", "later: mock/research/202606081500_engine-roadmap-r2.md:92-92, producer_before_consumer_registration_is_provisional_and_the_ideal_is_auto_ordering"]
+keywords = ["registration order", "RCM deferred", "punt", "execution order", "candidate 3", "build-time validation", "benched refinement"]
+rejects = ["registration order is the dispatch order, RCM is deferred", "registration is dispatch, RCM deferred"]
+related = ["tenet::dispatch_runs_in_the_plan_s_rcm_reordered_topological_order_because_the_rcm_row_order_is_the_unit_execution_order", "tenet::how_the_dispatch_order_is_assembled_is_an_implementation_and_bench_choice_for_the_agent_and_not_a_blocking_question_for_op"]
