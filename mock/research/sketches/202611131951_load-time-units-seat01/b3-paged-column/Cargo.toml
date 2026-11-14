@@ -1,0 +1,13 @@
+# Arm B, two growth shapes the founding record names and the trunk dropped:
+# the "zero-copy-growth" column backed by reserved address space (api surface
+# topic :663-664, spec :308) and the linked-page fallback (core design topic,
+# domain 07 retained list). Spikes on std and libc, outside the engine.
+
+[package]
+name = "b3-paged-column"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+[dependencies]
+libc = "0.2"

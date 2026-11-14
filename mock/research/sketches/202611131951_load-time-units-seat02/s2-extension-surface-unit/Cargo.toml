@@ -1,0 +1,14 @@
+[workspace]
+
+[package]
+name = "s2-extension-surface-unit"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+path = "src/lib.rs"
+
+[profile.release]
+opt-level = 3
+codegen-units = 1

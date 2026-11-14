@@ -1,0 +1,43 @@
+    Finished `release` profile [optimized] target(s) in 0.02s
+     Running unittests src/lib.rs (/home/user/target/release/deps/c2_packed_word_race-4acba6e5ec6d8797)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/race.rs (/home/user/target/release/deps/race-9afcd2edf5417029)
+
+running 2 tests
+test a_four_aligned_split_of_a_packed_column_loses_no_writes ... split at 68 of 136, 200000 frames: 14977 frames lost a write
+
+thread 'a_four_aligned_split_of_a_packed_column_loses_no_writes' (31202) panicked at c2-packed-word-race/tests/race.rs:18:5:
+assertion `left == right` failed: 14977 of 200000 frames lost a write at a split that is 4-aligned and not word-aligned
+  left: 14977
+ right: 0
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: core::panicking::assert_failed_inner
+   3: core::panicking::assert_failed::<usize, usize>
+   4: <race::a_four_aligned_split_of_a_packed_column_loses_no_writes::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+FAILED
+test a_word_aligned_split_of_a_packed_column_loses_no_writes ... split at 64 of 128, 200000 frames: 0 frames lost a write
+ok
+
+failures:
+
+failures:
+    a_four_aligned_split_of_a_packed_column_loses_no_writes
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.42s
+
+error: test failed, to rerun pass `-p c2-packed-word-race --test race`
+   Doc-tests c2_packed_word_race
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: 1 target failed:
+    `-p c2-packed-word-race --test race`

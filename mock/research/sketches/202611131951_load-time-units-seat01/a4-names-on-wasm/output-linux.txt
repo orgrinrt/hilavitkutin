@@ -1,0 +1,22 @@
+warning: hilavitkutin-sym@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-str@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+    Finished `test` profile [unoptimized] target(s) in 0.03s
+     Running unittests src/lib.rs (/home/user/target/debug/deps/a4_names_on_wasm-3b158f112d07e443)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/linux.rs (/home/user/target/debug/deps/linux-cbad994a1ab14392)
+
+running 1 test
+test control_the_same_image_on_linux_resolves_its_own_const_name ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests a4_names_on_wasm
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
