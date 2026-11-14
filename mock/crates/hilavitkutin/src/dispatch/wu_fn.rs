@@ -53,8 +53,7 @@ pub fn invoke_wu_in_fiber<'frame, W>(
 /// panic strategy. The engine owns no thread and cannot catch, so a body that
 /// unwound on a `run_parallel` worker would end the executor's thread before
 /// the engine's worker reached the frame's done barrier, and the frame would
-/// never return. Under `panic = "abort"` the boundary costs nothing; under
-/// unwinding it is one cold landing pad per inlined call.
+/// never return.
 #[inline(always)]
 extern "C" fn execute_without_unwinding<'frame, W>(
     wu: &W,

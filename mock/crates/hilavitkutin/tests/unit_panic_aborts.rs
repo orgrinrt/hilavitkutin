@@ -13,12 +13,15 @@
 //! The frame is two phases on two workers: two column-disjoint producers in
 //! the first, each its own trunk, and a combiner reading both in the second.
 //! Trunks are owned round-robin by their rank within the phase, so the second
-//! producer, the one that panics, is core 1's. The test re-runs this binary as
-//! a child that runs the frame, and holds the child to dying by SIGABRT inside
-//! a bound. Without the boundary the child hangs and the bound trips.
+//! producer, the one that panics, is core 1's. Each test re-runs this binary on
+//! itself alone as a child that runs the frame, and holds the child to dying by
+//! SIGABRT inside a bound, having printed the unit's panic and then the
+//! runtime's refusal to unwind past the boundary. Without the boundary the
+//! child hangs and the bound trips.
 
 #![cfg(unix)]
 
+use std::io::Read;
 use std::os::unix::process::ExitStatusExt;
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
@@ -45,12 +48,16 @@ use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use stable_provider::stable_provider;
 
-/// Set in the child's environment; the child test runs the frame only then.
+/// Set in the child's environment to the entry the child runs the frame through.
 const CHILD: &str = "HILAVITKUTIN_UNIT_PANIC_CHILD";
 /// Far past a four-record frame, so only a hang trips it.
 const BOUND: Duration = Duration::from_secs(30);
 /// SIGABRT, the signal `abort` raises.
 const SIGABRT: i32 = 6;
+/// What the panicking unit says.
+const PANIC_MESSAGE: &str = "a unit body panicked on a worker";
+/// What the runtime says when a panic reaches a function that cannot unwind.
+const CANNOT_UNWIND: &str = "panic in a function that cannot unwind";
 const N: usize = 4;
 
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
@@ -126,7 +133,7 @@ impl WorkUnit<Always> for ProducerB {
     type Write = ColB;
 
     fn execute<'frame>(&self, _ctx: &Self::Ctx<'frame>) {
-        panic!("a unit body panicked on a worker");
+        panic!("{PANIC_MESSAGE}");
     }
 }
 
@@ -159,13 +166,10 @@ impl WorkUnit<Always> for Combiner {
     }
 }
 
-/// In the child, the frame through the entry the parent names; in the
-/// parent's own run, nothing.
-#[test]
-fn child_runs_the_panicking_frame() {
-    let Some(entry) = std::env::var_os(CHILD) else {
-        return;
-    };
+/// The frame through `entry`, in the child. Returns only if the frame returned
+/// over the panicked unit, and then exits with success, which the parent reads
+/// as the boundary missing.
+fn run_the_panicking_frame(entry: &std::ffi::OsStr) -> ! {
     let scheduler = Scheduler::builder()
         .with(Column::<Inv>::start())
         .with(Column::<Av>::start())
@@ -183,23 +187,42 @@ fn child_runs_the_panicking_frame() {
         let mut scheduler = scheduler;
         let _ = scheduler.run();
     }
-    // Reached only if the frame returned over the panicked unit.
     std::process::exit(0);
 }
 
-/// Run the child through `entry`, and how it ended, killing it past the bound.
-fn run_child(entry: &str) -> std::process::ExitStatus {
+/// How the frame through `entry` ends, run in a child that is this binary
+/// running the test named `test` alone, with its standard error.
+///
+/// In that child the variable naming the entry is set, and this runs the frame
+/// and does not return. In the parent it starts the child, kills it past the
+/// bound, and returns its status and what it printed to standard error.
+fn frame_in_a_child(test: &str, entry: &str) -> (std::process::ExitStatus, String) {
+    if let Some(entry) = std::env::var_os(CHILD) {
+        run_the_panicking_frame(&entry);
+    }
     let mut child = Command::new(std::env::current_exe().expect("the test binary's path"))
-        .args(["--exact", "child_runs_the_panicking_frame", "--nocapture", "--test-threads=1"])
+        .args(["--exact", test, "--nocapture", "--test-threads=1"])
         .env(CHILD, entry)
         .stdout(Stdio::null())
-        .stderr(Stdio::null())
+        .stderr(Stdio::piped())
         .spawn()
         .expect("the child starts");
+    // Read while the child runs: a backtrace can be larger than the pipe holds,
+    // and a child blocked on a full pipe would look like a hung frame.
+    let mut pipe = child
+        .stderr
+        .take()
+        .expect("the child's standard error is piped");
+    let reader = std::thread::spawn(move || {
+        let mut stderr = String::new();
+        let _ = pipe.read_to_string(&mut stderr);
+        stderr
+    });
     let started = Instant::now();
     loop {
         if let Some(status) = child.try_wait().expect("the child can be waited on") {
-            return status;
+            let stderr = reader.join().expect("the reader of standard error ends");
+            return (status, stderr);
         }
         if started.elapsed() > BOUND {
             let _ = child.kill();
@@ -210,24 +233,35 @@ fn run_child(entry: &str) -> std::process::ExitStatus {
     }
 }
 
-#[test]
-fn a_unit_panic_on_a_worker_aborts_within_the_bound() {
-    let status = run_child("run_parallel");
+/// The child died by abort, and the abort was the unit's panic stopped at the
+/// boundary: its message, then the runtime's refusal to unwind past it.
+fn assert_aborted_at_the_boundary(status: std::process::ExitStatus, stderr: &str) {
     assert_eq!(
         (status.code(), status.signal()),
         (None, Some(SIGABRT)),
-        "the child ended by {status:?}, not by abort"
+        "the child ended by {status:?}, not by abort; it printed:\n{stderr}"
     );
+    let panicked = stderr.find(PANIC_MESSAGE);
+    let refused = stderr.find(CANNOT_UNWIND);
+    assert!(
+        matches!((panicked, refused), (Some(p), Some(r)) if p < r),
+        "the child printed the unit's panic and then the refusal to unwind; it printed:\n{stderr}"
+    );
+}
+
+#[test]
+fn a_unit_panic_on_a_worker_aborts_within_the_bound() {
+    let (status, stderr) = frame_in_a_child(
+        "a_unit_panic_on_a_worker_aborts_within_the_bound",
+        "run_parallel",
+    );
+    assert_aborted_at_the_boundary(status, &stderr);
 }
 
 /// The same boundary holds on the caller's thread: under `run` the body runs
 /// there, and a panic aborts rather than unwinding into the caller.
 #[test]
 fn a_unit_panic_under_run_aborts() {
-    let status = run_child("run");
-    assert_eq!(
-        (status.code(), status.signal()),
-        (None, Some(SIGABRT)),
-        "the child ended by {status:?}, not by abort"
-    );
+    let (status, stderr) = frame_in_a_child("a_unit_panic_under_run_aborts", "run");
+    assert_aborted_at_the_boundary(status, &stderr);
 }

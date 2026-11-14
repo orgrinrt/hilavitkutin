@@ -100,11 +100,18 @@ fn a_request_that_does_not_fit_is_refused_and_takes_nothing() {
 }
 
 #[test]
-fn concurrent_callers_get_disjoint_blocks() {
+fn concurrent_callers_get_aligned_disjoint_blocks_inside_the_buffer() {
     const THREADS: usize = 8;
     const EACH: usize = 200;
-    let m = StaticBumpMemory::new(skewed(THREADS * EACH * 32, 0));
-    let mut all: Vec<(usize, usize)> = std::thread::scope(|s| {
+    // Three bytes past a boundary, so a block aligned by its offset in the
+    // buffer is misaligned here and only one aligned by its address passes.
+    let buffer = skewed(THREADS * EACH * 32, 3);
+    let (lo, hi) = (
+        buffer.as_ptr().addr(),
+        buffer.as_ptr().addr() + buffer.len(),
+    );
+    let m = StaticBumpMemory::new(buffer);
+    let mut all: Vec<(usize, usize, usize)> = std::thread::scope(|s| {
         let handles: Vec<_> = (0 .. THREADS)
             .map(|t| {
                 let m = &m;
@@ -112,9 +119,10 @@ fn concurrent_callers_get_disjoint_blocks() {
                     (0 .. EACH)
                         .map(|k| {
                             let len = 1 + (t + k) % 13;
-                            let p = allocate(m, len, 1 << (k % 4));
+                            let align = 1 << (k % 4);
+                            let p = allocate(m, len, align);
                             assert!(!p.is_null());
-                            (p.addr(), len)
+                            (p.addr(), len, align)
                         })
                         .collect::<Vec<_>>()
                 })
@@ -125,6 +133,13 @@ fn concurrent_callers_get_disjoint_blocks() {
             .flat_map(|h| h.join().unwrap())
             .collect()
     });
+    for &(addr, len, align) in &all {
+        assert_eq!(addr % align, 0, "block at {addr:#x} is aligned to {align}");
+        assert!(
+            addr >= lo && addr + len <= hi,
+            "block at {addr:#x} of {len} bytes is inside the buffer"
+        );
+    }
     all.sort_unstable();
     for pair in all.windows(2) {
         assert!(pair[0].0 + pair[0].1 <= pair[1].0, "{pair:?} overlap");

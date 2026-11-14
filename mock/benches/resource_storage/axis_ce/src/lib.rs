@@ -24,7 +24,7 @@ use hilavitkutin_providers::{ArenaColumnStorage, StorageError};
 /// big for a fixed arena, and a bench builds schedulers per size, so the block
 /// is freed rather than leaked.
 pub struct TestProvider {
-    inner: hilavitkutin_providers::StaticBumpMemory,
+    inner: core::mem::ManuallyDrop<hilavitkutin_providers::StaticBumpMemory>,
     block: *mut [core::mem::MaybeUninit<u8>],
 }
 
@@ -32,12 +32,17 @@ impl TestProvider {
     /// A provider over a fresh block of `bytes`.
     pub fn new(bytes: usize) -> Self {
         let block = Box::into_raw(vec![core::mem::MaybeUninit::uninit(); bytes].into_boxed_slice());
-        // SAFETY: `block` is a fresh allocation nothing else reaches. The
-        // slice is borrowed only for the call, `inner` keeps its address, and
-        // `drop` frees it after `inner` and every block it handed out is gone.
-        let inner = hilavitkutin_providers::StaticBumpMemory::new(unsafe { &mut *block });
+        // SAFETY: `block` is a fresh allocation of `bytes` bytes nothing else
+        // reaches, and `drop` frees it only after `inner` is dropped, which is
+        // the contract of `from_raw_parts`.
+        let inner = unsafe {
+            hilavitkutin_providers::StaticBumpMemory::from_raw_parts(
+                block.cast(),
+                arvo::USize(bytes),
+            )
+        };
         Self {
-            inner,
+            inner: core::mem::ManuallyDrop::new(inner),
             block,
         }
     }
@@ -45,6 +50,9 @@ impl TestProvider {
 
 impl Drop for TestProvider {
     fn drop(&mut self) {
+        // SAFETY: `inner` is dropped here and nowhere else, before the block
+        // under it is freed, as `from_raw_parts` asks.
+        unsafe { core::mem::ManuallyDrop::drop(&mut self.inner) };
         // SAFETY: `block` came from `Box::into_raw` in `new` and is freed once.
         drop(unsafe { Box::from_raw(self.block) });
     }

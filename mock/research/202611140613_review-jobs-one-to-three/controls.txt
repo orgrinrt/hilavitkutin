@@ -1,0 +1,37 @@
+The threaded provider test against the defect review pass 1 finding 6 names:
+the padding computed once, above the compare-exchange retry loop in
+`StaticBumpMemory::allocate`, so a retried block keeps the padding of the
+cursor it lost to. Disjoint, misaligned.
+
+Mutation: in crates/hilavitkutin-providers/src/memory.rs, the line
+    let pad = self.base.addr().wrapping_add(used).wrapping_neg() & mask;
+moved from the first line inside `loop {` to the line before it.
+
+Run, three times, from mock/:
+    CARGO_TARGET_DIR=/home/user/target cargo test -j 2 -p hilavitkutin-providers --test static_bump_memory concurrent
+
+Each run:
+    thread 'concurrent_callers_get_aligned_disjoint_blocks_inside_the_buffer' panicked at crates/hilavitkutin-providers/tests/static_bump_memory.rs:137:9:
+    test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 4 filtered out
+
+Line 137 is the alignment assert. With the source restored:
+    test result: ok. 5 passed; 0 failed
+
+---
+
+The panic tests against an abort with another cause, review pass 1 finding 7:
+the panicking unit in crates/hilavitkutin/tests/unit_panic_aborts.rs calls
+`std::process::abort()` in place of `panic!("{PANIC_MESSAGE}")`, so the child
+still dies by SIGABRT but prints neither the unit's panic nor the refusal to
+unwind.
+
+Run from mock/:
+    CARGO_TARGET_DIR=/home/user/target cargo test -j 2 -p hilavitkutin --test unit_panic_aborts
+
+    test a_unit_panic_under_run_aborts ... FAILED
+    test a_unit_panic_on_a_worker_aborts_within_the_bound ... FAILED
+    panicked at crates/hilavitkutin/tests/unit_panic_aborts.rs:246:5:
+    the child printed the unit's panic and then the refusal to unwind; it printed:
+
+With the source restored:
+    test result: ok. 2 passed; 0 failed; finished in 0.10s
