@@ -7,9 +7,9 @@
 //! after checking `Virtual<AnomalyFired>`.
 //!
 //! `MetricsKit` (the next CHANGE in the round) bundles all nine as
-//! a Kit recipe; consumers register the bundle with `.add_kit(
-//! MetricsKit::default())` or pick individual Resources with
-//! `.add_resource(...)`.
+//! a Kit recipe; consumers register the bundle with
+//! `.with(MetricsKit::default())` or pick individual Resources with
+//! `.with(Resource::new(...))`.
 
 pub mod cache_residency;
 pub mod change_class;

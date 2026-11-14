@@ -2,9 +2,9 @@
 //! Resources.
 //!
 //! Topic 5 axis F. Consumers register the kit via
-//! `.add_kit(MetricsKit::default())` to wire every axis's metrics
+//! `.with(MetricsKit::default())` to wire every axis's metrics
 //! Resource onto the scheduler in one step. Individual axes can also
-//! be wired piecemeal via `.add_resource(...)`; the kit is a
+//! be wired piecemeal via `.with(Resource::new(...))`; the kit is a
 //! convenience, not the only path.
 
 use hilavitkutin_api::access::{Cons, Empty};

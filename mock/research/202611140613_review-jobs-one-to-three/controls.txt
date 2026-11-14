@@ -35,3 +35,17 @@ Run from mock/:
 
 With the source restored:
     test result: ok. 2 passed; 0 failed; finished in 0.10s
+
+The wide differential, findings 4 and 5
+=======================================
+
+`CARGO_TARGET_DIR=/home/user/target cargo test -j 2 -p hilavitkutin --test run_parallel_wide_differential -- --include-ignored`, from `mock/`, at 39036b27: 9 passed, 5 failed. The five that fail are the five committed ignored, each at frame 1 (a clean frame) on producer 0:
+
+- record_less::run_runs_exactly_the_cone_of_each_step: Count { frame: 1, unit: 0, got: 1, want: 0 }
+- windowed::run_parallel_runs_each_unit_as_often_as_run_does_at_every_worker_count: got 5, want 0 at 1, 2, 3, 4 and 256 workers (five windows, one owner)
+- unit_outer::run_parallel_runs_each_unit_as_often_as_run_does_at_every_worker_count: got 1, 2, 3, 4 and 255, want 0 at 1, 2, 3, 4 and 256 workers (one run per core with a slice)
+- windowed and unit_outer the_skipping_run_diverges_when_a_mutated_store_is_not_marked: diverged false at every count
+
+A first count model, `run`'s count times the cores with a slice, failed unit_outer at frame 0 (got 1, want 5 at one worker): `run` runs a unit once a window and a core of the unit-outer walk once over its slice, so that model judged the walk's shape and not the skip. The committed model counts a run in a frame where `run` ran the unit at all, and the first red moves to frame 1.
+
+The store check's control, the_comparison_reports_a_runner_that_altered_one_record, reports Bytes { frame: 3, column: 6, record: 0 } at every count, the sink record it altered.
