@@ -1,0 +1,48 @@
+sb today::two_frames: error: Undefined Behavior: Data race detected between (1) non-atomic write and (2) retag read of type `parked_worker_plane::on_sched::Sched<true>` at alloc42492+0x10 src/on_sched.rs:39
+sb today::frame_replace_value_frame: error: Undefined Behavior: Data race detected between (1) non-atomic write and (2) retag read of type `parked_worker_plane::on_sched::Sched<true>` at alloc42508+0x10 src/on_sched.rs:39
+sb today::frame_replace_resource_frame: error: Undefined Behavior: Data race detected between (1) non-atomic write and (2) retag read of type `parked_worker_plane::on_sched::Sched<true>` at alloc42508+0x10 src/on_sched.rs:39
+sb narrow::two_frames: test result: ok 
+sb narrow::frame_replace_value_frame: test result: ok 
+sb narrow::frame_replace_resource_frame: test result: ok 
+sb plane_arm::two_frames: test result: ok 
+sb plane_arm::frame_replace_value_frame: test result: ok 
+sb plane_arm::frame_replace_resource_frame: test result: ok 
+sb program_arm::two_frames: test result: ok 
+sb program_arm::frame_replace_value_frame: test result: ok 
+sb program_arm::frame_replace_resource_frame: test result: ok 
+tb today::two_frames: error: Undefined Behavior: Data race detected between (1) non-atomic write and (2) retag read of type `parked_worker_plane::on_sched::Sched<true>` at alloc42492+0x10 src/on_sched.rs:39
+tb today::frame_replace_value_frame: error: Undefined Behavior: Data race detected between (1) non-atomic write and (2) retag read of type `parked_worker_plane::on_sched::Sched<true>` at alloc42508+0x10 src/on_sched.rs:39
+tb today::frame_replace_resource_frame: error: Undefined Behavior: Data race detected between (1) non-atomic write and (2) retag read of type `parked_worker_plane::on_sched::Sched<true>` at alloc42508+0x10 src/on_sched.rs:39
+tb narrow::two_frames: test result: ok 
+tb narrow::frame_replace_value_frame: test result: ok 
+tb narrow::frame_replace_resource_frame: test result: ok 
+tb plane_arm::two_frames: test result: ok 
+tb plane_arm::frame_replace_value_frame: test result: ok 
+tb plane_arm::frame_replace_resource_frame: test result: ok 
+tb program_arm::two_frames: test result: ok 
+tb program_arm::frame_replace_value_frame: test result: ok 
+tb program_arm::frame_replace_resource_frame: test result: ok 
+sb-norace today::two_frames: error: Undefined Behavior: trying to retag from <142293> for SharedReadOnly permission at alloc42492[0x30], but that tag does not exist in the borrow stack for this location src/on_sched.rs:47
+sb-norace today::frame_replace_value_frame: error: Undefined Behavior: trying to retag from <139688> for SharedReadOnly permission at alloc42508[0x30], but that tag does not exist in the borrow stack for this location src/on_sched.rs:47
+sb-norace today::frame_replace_resource_frame: error: Undefined Behavior: trying to retag from <140047> for SharedReadOnly permission at alloc42508[0x30], but that tag does not exist in the borrow stack for this location src/on_sched.rs:47
+sb-norace narrow::two_frames: test result: ok 
+sb-norace narrow::frame_replace_value_frame: test result: ok 
+sb-norace narrow::frame_replace_resource_frame: test result: ok 
+sb-norace plane_arm::two_frames: test result: ok 
+sb-norace plane_arm::frame_replace_value_frame: test result: ok 
+sb-norace plane_arm::frame_replace_resource_frame: test result: ok 
+sb-norace program_arm::two_frames: test result: ok 
+sb-norace program_arm::frame_replace_value_frame: test result: ok 
+sb-norace program_arm::frame_replace_resource_frame: test result: ok 
+tb-norace today::two_frames: test result: ok 
+tb-norace today::frame_replace_value_frame: test result: ok 
+tb-norace today::frame_replace_resource_frame: test result: ok 
+tb-norace narrow::two_frames: test result: ok 
+tb-norace narrow::frame_replace_value_frame: test result: ok 
+tb-norace narrow::frame_replace_resource_frame: test result: ok 
+tb-norace plane_arm::two_frames: test result: ok 
+tb-norace plane_arm::frame_replace_value_frame: test result: ok 
+tb-norace plane_arm::frame_replace_resource_frame: test result: ok 
+tb-norace program_arm::two_frames: test result: ok 
+tb-norace program_arm::frame_replace_value_frame: test result: ok 
+tb-norace program_arm::frame_replace_resource_frame: test result: ok 
