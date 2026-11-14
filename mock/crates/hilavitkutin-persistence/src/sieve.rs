@@ -1,6 +1,6 @@
 //! SIEVE-style cache with FIFO fallback semantics.
 //!
-//! This round ships FIFO ordering: slots fill head-to-tail; eviction
+//! Ordering is FIFO: slots fill head-to-tail; eviction
 //! advances from `head` and pops the first occupied slot. The
 //! `visited` bit is toggled on `get` so the surface is ready for the
 //! weighted-SIEVE scan that lands with the weighted-eviction tuning

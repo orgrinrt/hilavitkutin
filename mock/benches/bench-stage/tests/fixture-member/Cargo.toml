@@ -1,0 +1,17 @@
+[workspace]
+members = [".", "arm"]
+
+# The smallest member `stage.sh` stages: a driver and one arm cdylib in one
+# workspace, the shape `frame_wide` has.
+[package]
+name = "stage-fixture-driver"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "stage-fixture-driver"
+path = "src/main.rs"
+
+[dependencies]
+mockspace-bench-harness = { git = "https://github.com/hiisi-digital/mockspace", rev = "5a775f3ea7f969a7589ce970e16e55b2ba856f41" }

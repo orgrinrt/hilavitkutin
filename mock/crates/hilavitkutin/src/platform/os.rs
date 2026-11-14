@@ -91,8 +91,8 @@ unsafe impl MemoryProviderApi for OsMemoryProvider {
     }
 
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer; tracked: #72
-        // FIXME(hilavitkutin_7_unmarked_placeholders): no mprotect call yet; the wiring lands with the persistence
-        // mmap-file round, BACKLOG "Memory protection (mprotect)".
+        // FIXME(hilavitkutin_7_unmarked_placeholders): no mprotect call yet; the wiring waits on the persistence
+        // mmap-file support, BACKLOG "Memory protection (mprotect)".
     }
 }
 

@@ -1,6 +1,6 @@
 //! Adapt-axis Kit recipes.
 //!
-//! Topic 5 axis A. `StandardAdaptKit` bundles the default-on
+//! `StandardAdaptKit` bundles the default-on
 //! combination of axes (pass duration + phase EMA + fiber EMA +
 //! change class + predictive parking + core idle time); the three
 //! axes that are NOT in the default-on set (cache residency,
@@ -13,8 +13,8 @@
 //! `.with(...)` call but composes inside Kit chains that opt out a
 //! default-on bundle as a unit.
 //!
-//! Per Topic 5 axis A "individuals primary, Kits as recipes": the
-//! axes are registrable individually via
+//! Individual axes come first and Kits are recipes: the axes are
+//! registrable individually via
 //! `.with(PassDurationAxis::default())`; the kits exist as
 //! ergonomic shortcuts, not as the only path.
 
@@ -30,7 +30,7 @@ use hilavitkutin_api::adapt::{
 use hilavitkutin_api::builder_input::BuilderInput;
 use hilavitkutin_kit::{Kit, KitDispatch};
 
-/// Default-on bundle of adapt axes. Topic 5 axis A.
+/// Default-on bundle of adapt axes.
 pub struct StandardAdaptKit;
 
 impl Default for StandardAdaptKit {
@@ -58,7 +58,7 @@ impl Kit for StandardAdaptKit {
     type Units = Empty;
 }
 
-/// Explicitly empty adapt-axis bundle. Topic 5 axis A.
+/// Explicitly empty adapt-axis bundle.
 pub struct OffAdaptKit;
 
 impl Default for OffAdaptKit {

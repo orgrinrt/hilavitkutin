@@ -11,3 +11,11 @@ to = "backlog"
 by = "owed"
 at = "2026-11-13T14:46:17Z"
 why = "filed by mock owed for 1 marker(s)"
+
+[[ticket_move]]
+id = "m20261114063535_owed_f29d"
+ticket = "placeholders_tagged_e3cb3f33eb38"
+to = "done"
+by = "owed"
+at = "2026-11-14T06:35:35Z"
+why = "no placeholder marker cites it any more"

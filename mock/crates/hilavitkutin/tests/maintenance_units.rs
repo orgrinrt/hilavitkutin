@@ -10,12 +10,13 @@
 //! src-tree primitive lints.
 
 mod common;
+mod fixed_workers;
 mod stable_provider;
 
 use core::sync::atomic::{AtomicUsize, Ordering};
 
 use arvo::USize;
-use common::FixedWorkers;
+use fixed_workers::FixedWorkers;
 use hilavitkutin::dispatch::engine_ctx::{
     AccPtrCons,
     AccPtrNil,

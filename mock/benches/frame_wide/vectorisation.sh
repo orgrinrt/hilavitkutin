@@ -26,16 +26,24 @@
 #   ./vectorisation.sh                      # to stdout
 #   ./vectorisation.sh vectorisation.txt    # to a file, which is what is committed
 #
-# Build the member first, from this directory:
-#   CARGO_INCREMENTAL=0 cargo build --release --workspace
+# The arms are read from a staged directory (`../stage.sh`), never from the
+# shared target directory another worktree can rebuild while this reads it.
+# `BENCH_BIN=<dir>` names one already staged; without it this stages the member
+# itself. The checksums are checked before the first arm and after the last,
+# and the stage's `build.txt` goes into the report.
 
 set -eu
 
 out="${1:--}"
 insn=pmuludq
 
-bin=$(cd "$(dirname "$0")" && cargo metadata --format-version 1 --no-deps \
-    | sed 's/.*"target_directory":"\([^"]*\)".*/\1/')/release
+here=$(cd "$(dirname "$0")" && pwd)
+stage="$here/../stage.sh"
+if [ -z "${BENCH_BIN:-}" ]; then
+    BENCH_BIN=$("$stage" "$here")
+fi
+"$stage" --verify "$BENCH_BIN"
+bin="$BENCH_BIN/release"
 
 report() {
     echo "SSE2 packed multiply ($insn) in the frame body of each arm"
@@ -43,6 +51,8 @@ report() {
     echo "Built release, opt-level 3, lto fat, codegen-units 1, no target-cpu"
     echo "flag, so baseline x86-64: SSE2 is available and AVX2 is not used."
     echo "Produced by ./vectorisation.sh; rerun it to refresh."
+    echo
+    cat "$BENCH_BIN/build.txt"
     echo
     printf '%-16s %-7s %7s %8s\n' arm regime count symbols
     for arm in fw_hand fw_hand_par fw_rust_nostd fw_rust_std fw_rust_std_par \
@@ -96,3 +106,4 @@ if [ "$out" = "-" ]; then
 else
     report > "$out"
 fi
+"$stage" --verify "$BENCH_BIN"

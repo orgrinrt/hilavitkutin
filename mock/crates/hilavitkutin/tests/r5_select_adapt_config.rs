@@ -16,20 +16,11 @@
 mod stable_provider;
 
 use arvo::USize;
-use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
+use hilavitkutin::dispatch::engine_ctx::{ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
-use hilavitkutin_api::access::{Cons, Empty};
+use hilavitkutin_api::access::Empty;
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
-use hilavitkutin_api::context::{
-    ColumnReaderApi,
-    ColumnWriterApi,
-    EachApi,
-    HasColumnReader,
-    HasColumnWriter,
-    HasEach,
-};
 use hilavitkutin_api::platform::{MemoryProviderApi, Nanos};
-use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use stable_provider::stable_provider;
@@ -38,55 +29,33 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
 }
 
-#[derive(Copy, Clone, Default)]
-struct Inv(u32);
-#[derive(Copy, Clone, Default)]
-struct Outv(u32);
-
-type OneIn = Cons<Column<Inv>, Empty>;
-type ColOut = Cons<Column<Outv>, Empty>;
-
-// A trivial one-WU carrier. select_adapt_config reads phase_ema directly (set via
-// the white-box accessor), so the carrier shape is irrelevant; it just gives a
-// built scheduler to call the accessors on.
-struct Copyer;
-impl BuilderInput for Copyer {
+// A trivial one-WU carrier that declares no stores. select_adapt_config reads
+// phase_ema directly (set via the white-box accessor), so the carrier shape is
+// irrelevant and no frame runs; it just gives a built scheduler to call the
+// accessors on.
+struct Idler;
+impl BuilderInput for Idler {
     type Dispatch = UnitDispatch<Self>;
     type Init = Self;
 }
-impl WorkUnit<Always> for Copyer {
-    type Ctx<'frame> = EngineCtx<
-        'frame,
-        OneIn,
-        ColOut,
-        SnapNil,
-        ColPtrCons<Inv, ColPtrNil>,
-        ColPtrCons<Outv, ColPtrNil>,
-    >;
+impl WorkUnit<Always> for Idler {
+    type Ctx<'frame> = EngineCtx<'frame, Empty, Empty, SnapNil, ColPtrNil, ColPtrNil>;
     type Hint = (
         hilavitkutin_api::hint::Immediate,
         hilavitkutin_api::hint::Atomic,
         hilavitkutin_api::hint::Normal,
     );
-    type Read = OneIn;
-    type Write = ColOut;
+    type Read = Empty;
+    type Write = Empty;
 
-    fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        ctx.each().run(|i| {
-            // SAFETY: In host-populated; Outv reserved + exclusive; windowed.
-            let inp = unsafe { ctx.reader().read::<Inv, _>(i) };
-            unsafe { ctx.writer().write::<Outv, _>(i, Outv(inp.0)) };
-        });
-    }
+    fn execute<'frame>(&self, _ctx: &Self::Ctx<'frame>) {}
 }
 
 macro_rules! build {
     () => {{
         let provider = stable_provider(16384, 0);
         Scheduler::builder()
-            .with(Column::<Inv>::start())
-            .with(Column::<Outv>::start())
-            .with(Copyer)
+            .with(Idler)
             .build(store(provider), USize(4))
             .unwrap_or_else(|_| panic!("build should succeed"))
     }};

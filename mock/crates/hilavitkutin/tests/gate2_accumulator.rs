@@ -117,13 +117,13 @@ macro_rules! build_and_seed {
             // Bindings head is `ColumnBinding<Inv>` (In), tail is the
             // `AccumBinding<Av>`.
             let bindings = scheduler.__bindings();
-            let in_base = bindings.__ptr().as_ptr() as *mut u32;
-            let acc_base = bindings.__tail().__ptr().as_ptr() as *mut u32;
+            let in_base = bindings.__ptr().as_ptr();
+            let acc_base = bindings.__tail().__ptr().as_ptr();
             for i in 0 .. N {
-                // SAFETY: both buffers reserve N u32 records; written once here.
+                // SAFETY: both buffers reserve N records; written once here.
                 unsafe {
-                    *in_base.add(i) = i as u32;
-                    *acc_base.add(i) = u32::MAX;
+                    *in_base.add(i) = Inv(i as u32);
+                    *acc_base.add(i) = Av(u32::MAX);
                 }
             }
         }
@@ -249,13 +249,13 @@ fn accumulator_in_a_two_trunk_phase_matches_single_core() {
         // Bindings head: Sv, then In, then the AccumBinding<Av>. The side column
         // starts at u32::MAX so a record its unit skipped is seen.
         let b = scheduler.__bindings();
-        let in_base = b.__tail().__ptr().as_ptr() as *mut u32;
-        let acc_base = b.__tail().__tail().__ptr().as_ptr() as *mut u32;
+        let in_base = b.__tail().__ptr().as_ptr();
+        let acc_base = b.__tail().__tail().__ptr().as_ptr();
         for i in 0 .. N {
             // SAFETY: both buffers reserve N records; written once here.
             unsafe {
-                *in_base.add(i) = i as u32;
-                *acc_base.add(i) = u32::MAX;
+                *in_base.add(i) = Inv(i as u32);
+                *acc_base.add(i) = Av(u32::MAX);
             }
         }
     }

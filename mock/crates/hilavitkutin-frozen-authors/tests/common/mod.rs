@@ -6,11 +6,13 @@
 //! The workers and the memory provider are the engine's own test support,
 //! taken by path so there is one of each.
 
+#[path = "../../../hilavitkutin/tests/common/mod.rs"]
+pub mod common;
+#[path = "../../../hilavitkutin/tests/fixed_workers/mod.rs"]
+pub mod fixed_workers;
 pub mod lend;
 #[path = "../../../hilavitkutin/tests/stable_provider/mod.rs"]
 pub mod stable_provider;
-#[path = "../../../hilavitkutin/tests/common/mod.rs"]
-pub mod workers;
 
 use arvo::Bool;
 use hilavitkutin_conformance::{Verdict, Word};
@@ -385,7 +387,7 @@ macro_rules! drive {
     ($which:ident, $scheduler:ident, $entry:expr, $frames:expr, $poison:expr, $sorted:expr) => {{
         use notko::Outcome;
         use $crate::common::Entry;
-        use $crate::common::workers::FixedWorkers;
+        use $crate::common::fixed_workers::FixedWorkers;
 
         let mut out = Vec::new();
         match $entry {

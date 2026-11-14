@@ -2,7 +2,8 @@
 // and the builder registers neither column. `build` must refuse, and name the
 // stores under the wrappers, since a wrapper is not what is registered.
 // The twin `unregistered_wrapped_store_pass.rs` differs only by the two
-// `.with(Column::<..>::start())` lines.
+// `.with(Column::<..>::start_from(..))` lines, which it carries, and runs the unit to a
+// value read back from `Height`.
 
 use core::mem::MaybeUninit;
 
@@ -18,6 +19,7 @@ use hilavitkutin_api::{Differs, Reach, rec};
 use hilavitkutin_providers::{ArenaColumnStorage, StaticBumpMemory};
 
 const ONE: Cap = arvo_tensor::cap(1);
+const RECORDS: usize = 4;
 
 #[derive(Copy, Clone, PartialEq)]
 struct Slot(u32);
@@ -67,7 +69,19 @@ fn store(provider: StaticBumpMemory) -> ArenaColumnStorage<StaticBumpMemory> {
 
 fn main() {
     let provider = StaticBumpMemory::new(std::vec![MaybeUninit::new(0); 4096].leak());
-    let _ = Scheduler::builder()
+    let mut scheduler = Scheduler::builder()
         .with(Lift)
-        .build(store(provider), USize(0));
+        .build(store(provider), USize(RECORDS))
+        .unwrap_or_else(|_| panic!("build refused a unit whose wrapped stores are registered"));
+    assert!(matches!(scheduler.run(), notko::Outcome::Ok(())));
+    // The column registered last is the bindings head.
+    let height = scheduler.__bindings().__ptr().as_ptr();
+    for i in 0 .. RECORDS {
+        // SAFETY: `Height` holds `RECORDS` reserved records and no pass is running.
+        let got: Height = unsafe { height.add(i).read() };
+        assert_eq!(
+            got.0, 5,
+            "record {i} holds the value read through the wrapper"
+        );
+    }
 }

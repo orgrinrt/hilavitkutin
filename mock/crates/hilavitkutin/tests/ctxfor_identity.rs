@@ -7,8 +7,6 @@
 //! pointer to `MetaNil`, `OnMeta<V>` to `MetaRef<'frame>`). Compiling is the
 //! whole test: the fold traits and the alias are pure type functions.
 
-#![allow(dead_code)]
-
 use arvo::{Bool, USize};
 use hilavitkutin::dispatch::engine_ctx::{
     AccPtrCons,

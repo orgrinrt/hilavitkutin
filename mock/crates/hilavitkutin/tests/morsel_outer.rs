@@ -74,9 +74,9 @@ const CONSUMER_TAG: u8 = 1;
 // Column value: a Copy newtype over u32, so the blanket `ColumnValue` applies.
 // The payload exists only to give the producer something to write and the
 // consumer something to read (the RAW edge that orders them); the test asserts
-// dispatch order, not the value, so the field is intentionally not inspected.
+// dispatch order first, then reads the column back to show the windows covered
+// every record.
 #[derive(Copy, Clone, Default)]
-#[allow(dead_code)]
 struct Cv(u32);
 
 type Col = Cons<Column<Cv>, Empty>;
@@ -189,6 +189,20 @@ fn accumulator_free_pipeline_dispatches_morsel_outer() {
              would be [P, .., P, C, .., C]"
         );
     });
+
+    // The producer wrote its morsel-relative index at the absolute record, so
+    // record `r` holds `r % window`. A gap between morsels, or a window that
+    // did not advance, shows as a wrong value.
+    let base = scheduler.__bindings().__ptr().as_ptr() as *const Cv;
+    for r in 0 .. RECORDS {
+        // SAFETY: the column reserves RECORDS records; the scheduler is alive.
+        let v = unsafe { (*base.add(r)).0 };
+        assert_eq!(
+            v,
+            (r % window) as u32,
+            "rec {r}: written once, by the morsel that covers it"
+        );
+    }
 }
 
 // Accumulator value types. Two distinct accumulators so each appender is the
@@ -196,10 +210,8 @@ fn accumulator_free_pipeline_dispatches_morsel_outer() {
 // in tests/accum_dispatch.rs); registering either makes the pipeline not
 // accumulator-free, which routes dispatch to the unit-outer branch.
 #[derive(Copy, Clone)]
-#[allow(dead_code)]
 struct Av(u32);
 #[derive(Copy, Clone)]
-#[allow(dead_code)]
 struct Bv(u32);
 
 type AccWa = Cons<Accum<Av>, Empty>;
@@ -317,4 +329,15 @@ fn accumulator_pipeline_dispatches_unit_outer() {
              in carrier order; a morsel-outer routing would interleave the tags"
         );
     });
+
+    // Each appender made its one append: Bv is the head binding (registered
+    // last), Av one tail down.
+    let bv = scheduler.__bindings();
+    let av = bv.__tail();
+    assert_eq!(bv.__len_cell().get().0, 1, "appender B appended once");
+    assert_eq!(av.__len_cell().get().0, 1, "appender A appended once");
+    // SAFETY: one live record in each accumulator, initialised by the append.
+    let (b, a) = unsafe { ((*bv.__ptr().as_ptr()).0, (*av.__ptr().as_ptr()).0) };
+    assert_eq!(b, 1, "the appended value of B is the one the unit made");
+    assert_eq!(a, 1, "the appended value of A is the one the unit made");
 }

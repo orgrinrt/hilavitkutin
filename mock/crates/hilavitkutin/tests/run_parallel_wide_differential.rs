@@ -40,8 +40,9 @@
 #[macro_use]
 mod skip_wide;
 mod common;
+mod fixed_workers;
 
-use common::FixedWorkers;
+use fixed_workers::FixedWorkers;
 use hilavitkutin::thread::MAX_CORES;
 use hilavitkutin_api::platform::ThreadPoolApi;
 use notko::Outcome;

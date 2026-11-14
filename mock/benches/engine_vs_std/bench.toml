@@ -1,0 +1,117 @@
+# The engine against optimal std over four workloads (#660, #664). Every arm of
+# a section computes the same digest from the same seeded records, and the
+# harness validates each against the reference computed from the kernels alone
+# before any timing counts.
+#
+# The engine arms measure the engine as it stands, without fusion or the
+# adaptive trunk, fiber and morsel scheduling. They are a baseline to compare
+# against later, and nothing here decides anything about the engine. The
+# ceilings in `support/src/expected.rs` say where the design means each
+# workload to land; `--verdict` holds a run's medians to them.
+#
+# Run from this directory, from a stage:
+#   ../stage.sh .
+#   <stage>/release/engine_vs_std            # every section
+#   <stage>/release/engine_vs_std --verdict  # the ceilings, over results/
+# `./run-checks.sh` first: the build and every arm against the reference.
+
+[timing]
+passes = 2
+runs_per_pass = 20
+batch_size = 5
+harness_runs = 1
+cooldowns_ms = [0]
+validation_seeds = 3
+determinism_check_seeds = 2
+
+[bench.element_wise]
+title = "element_wise, four-stage RAW chain"
+workload = "element_wise"
+master_seed = "0xE5D0_0000_0000_0001"
+may_differ = false
+required = true
+threaded = true
+baseline = "evs_std"
+variants = ["target/release/evs_engine", "target/release/evs_std"]
+sizes = [4096, 65536, 1048576, 4194304]
+
+[bench.branching]
+title = "branching, two transforms joined by a third"
+workload = "branching"
+master_seed = "0xE5D0_0000_0000_0002"
+may_differ = false
+required = true
+threaded = true
+baseline = "evs_std"
+variants = ["target/release/evs_engine", "target/release/evs_std"]
+sizes = [4096, 65536, 1048576, 4194304]
+
+[bench.accumulator]
+title = "accumulator, a transform feeding the append surface"
+workload = "accumulator"
+master_seed = "0xE5D0_0000_0000_0003"
+may_differ = false
+required = true
+threaded = true
+baseline = "evs_std"
+variants = ["target/release/evs_engine", "target/release/evs_engine_par", "target/release/evs_std", "target/release/evs_std_par"]
+sizes = [4096, 65536, 1048576, 4194304]
+
+[bench.wide_parallel]
+title = "wide_parallel, four independent heavy chains"
+workload = "wide_parallel"
+master_seed = "0xE5D0_0000_0000_0004"
+may_differ = false
+required = true
+threaded = true
+baseline = "evs_std"
+variants = ["target/release/evs_engine", "target/release/evs_engine_par", "target/release/evs_std", "target/release/evs_std_par"]
+sizes = [4096, 65536, 1048576, 4194304]
+
+# Startup is judged at the largest size only: below it the plan build is a
+# fixed cost a few `vec!` calls cannot be expected to match, and it amortises
+# across reused frames by design.
+
+[bench.startup_element_wise]
+title = "element_wise, get-ready"
+workload = "element_wise"
+master_seed = "0xE5D0_0000_0001_0001"
+may_differ = false
+required = true
+threaded = true
+baseline = "evs_std_startup"
+variants = ["target/release/evs_engine_startup", "target/release/evs_std_startup"]
+sizes = [4194304]
+
+[bench.startup_branching]
+title = "branching, get-ready"
+workload = "branching"
+master_seed = "0xE5D0_0000_0001_0002"
+may_differ = false
+required = true
+threaded = true
+baseline = "evs_std_startup"
+variants = ["target/release/evs_engine_startup", "target/release/evs_std_startup"]
+sizes = [4194304]
+
+[bench.startup_accumulator]
+title = "accumulator, get-ready"
+workload = "accumulator"
+master_seed = "0xE5D0_0000_0001_0003"
+may_differ = false
+required = true
+threaded = true
+baseline = "evs_std_startup"
+variants = ["target/release/evs_engine_startup", "target/release/evs_std_startup"]
+sizes = [4194304]
+
+[bench.startup_wide_parallel]
+title = "wide_parallel, get-ready"
+workload = "wide_parallel"
+master_seed = "0xE5D0_0000_0001_0004"
+may_differ = false
+required = true
+threaded = true
+baseline = "evs_std_startup"
+variants = ["target/release/evs_engine_startup", "target/release/evs_std_startup"]
+sizes = [4194304]

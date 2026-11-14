@@ -1,8 +1,7 @@
-//! Three-tier parking with predictive-parking plumbing (Topic 6
-//! axes B + J).
+//! Three-tier parking with predictive-parking plumbing.
 //!
-//! Tier selection driven by `predicted_wait_ns` (Topic 5 axis G)
-//! against the `WakeStrategy` thresholds:
+//! Tier selection driven by `predicted_wait_ns` against the
+//! `WakeStrategy` thresholds:
 //!
 //! 1. `< futex_threshold_ns`: spin-only via `core::hint::spin_loop`.
 //!    The default spin budget (`{p,e}_spin_iters`) bounds the
@@ -14,7 +13,7 @@
 //! 3. `>= park_threshold_ns`: park immediately via the same
 //!    atomic-wait primitive; the spin step is skipped.
 //!
-//! AdaptWu (Pass 5) writes per-phase `predicted_wait_ns` at
+//! AdaptWu writes per-phase `predicted_wait_ns` at
 //! `ScheduleEnd`; workers Relaxed-load it on phase entry.
 //!
 //! Predictive-parking plumbing surface:
@@ -150,7 +149,7 @@ mod platform {
 
     // FUTEX op constants. Private syscalls; values stable per Linux
     // ABI.
-    const FUTEX_WAIT_PRIVATE: i32 = 0 | 128; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: kernel ABI constant; tracked: #72
+    const FUTEX_WAIT_PRIVATE: i32 = 128; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: kernel ABI constant; tracked: #72
     const FUTEX_WAKE_PRIVATE: i32 = 1 | 128; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: kernel ABI constant; tracked: #72
     const SYS_FUTEX: libc::c_long = 202; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: kernel ABI constant; tracked: #72
     const WAKE_ALL: i32 = i32::MAX; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: kernel ABI sentinel "wake every waiter"; tracked: #72

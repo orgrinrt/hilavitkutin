@@ -23,14 +23,10 @@ use arvo::{Additive, Identity, USize};
 use crate::access::Cons;
 use crate::accum_overflow::{AccumOverflow, Refuse};
 use crate::builder_input::{BuilderInput, Dispatch};
-
-mod sealed {
-    pub(crate) trait Sealed {}
-}
+use crate::sealed;
 
 /// Required-field accessor: every `RunCfg` impl declares the
 /// pipeline's record count. Supertrait bound on `RunCfg`.
-#[allow(private_bounds)]
 pub trait HasRecordCount: sealed::Sealed {
     fn record_count(&self) -> USize;
 }
@@ -54,7 +50,6 @@ pub trait PlanAffecting {}
 /// consumer-tunable default on this trait, not a hardcoded
 /// substrate constant. Override by writing the const explicitly in
 /// the consumer's `impl RunCfg` block.
-#[allow(private_bounds)]
 pub trait RunCfg:
     sealed::Sealed + BuilderInput<Dispatch = RunCfgDispatch<Self>> + HasRecordCount + Sized + 'static
 {

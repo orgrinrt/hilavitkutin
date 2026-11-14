@@ -7,10 +7,8 @@
 //! reach the same type.
 //!
 //! The mainloop body for the executor monomorphises against the
-//! `CoreProgram` emitted by the dispatch codegen; the body is
-//! finished in Pass 6 (Scheduler::run) alongside the CoreProgram
-//! shape. The verification grep targets for Pass 4 CHANGE 1
-//! resolve against the re-exported name on this module path:
+//! `CoreProgram` emitted by the dispatch codegen. These items
+//! resolve through the re-exported name on this module path:
 //!
 //! - `pub struct HybridExecutor` (re-export form)
 //! - `impl Executor for HybridExecutor` (in the api crate, reachable

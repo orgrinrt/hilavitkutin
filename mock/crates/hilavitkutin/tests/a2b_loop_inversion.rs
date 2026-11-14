@@ -72,10 +72,8 @@ const WIDE_TAG: u8 = 1;
 // Disjoint column values: a 4-byte and an 8-byte record, so the two pipelines
 // land in separate fibers with different L1 windows.
 #[derive(Copy, Clone, Default)]
-#[allow(dead_code)] // written for the record footprint; the test observes call tags
 struct Narrow(u32);
 #[derive(Copy, Clone, Default)]
-#[allow(dead_code)] // written for the record footprint; the test observes call tags
 struct Wide(u64);
 
 type NarrowCol = Cons<Column<Narrow>, Empty>;
@@ -182,18 +180,44 @@ fn fibers_window_by_their_own_plan_baked_size() {
             "fiber 1 runs after fiber 0 completed: {observed:?}"
         );
     });
+
+    // Each unit wrote its morsel-relative index at the absolute record, so
+    // record `r` of a column holds `r % window` for the window of the fiber
+    // that owns it. The narrow column's window is the larger of the two (the
+    // L1 budget divides by the write size), and `Wide` is the head column,
+    // `Narrow` one tail down. A gap or a shared window shows as a wrong value.
+    let narrow_window = w0.max(w1);
+    let wide_window = w0.min(w1);
+    let narrow_base = scheduler.__bindings().__tail().__ptr().as_ptr() as *const Narrow;
+    let wide_base = scheduler.__bindings().__ptr().as_ptr() as *const Wide;
+    for r in 0 .. RECORDS {
+        // SAFETY: both columns reserve RECORDS records; the scheduler is alive.
+        let narrow = unsafe { (*narrow_base.add(r)).0 };
+        let wide = unsafe { (*wide_base.add(r)).0 };
+        assert_eq!(
+            narrow,
+            (r % narrow_window) as u32,
+            "narrow rec {r}: written once, by its own fiber's window"
+        );
+        assert_eq!(
+            wide,
+            (r % wide_window) as u64,
+            "wide rec {r}: written once, by its own fiber's window"
+        );
+    }
 }
 
 // ----- mixed carrier: per-fiber skip -----
+
+// Small enough that each fiber's window covers the whole range.
+const COUNT: usize = 100;
 
 const COL_TAG: u8 = 10;
 const ACC_TAG: u8 = 11;
 
 #[derive(Copy, Clone, Default)]
-#[allow(dead_code)] // written for the record footprint; the test observes call tags
 struct Cm(u32);
 #[derive(Copy, Clone)]
-#[allow(dead_code)] // appended for the side effect; the test observes call tags
 struct Ov(u32);
 
 type CmCol = Cons<Column<Cm>, Empty>;
@@ -266,7 +290,7 @@ fn clean_frame_skips_column_fiber_but_reruns_accumulator_fiber() {
         .with(Accum::<Ov>::new())
         .with(ColWu)
         .with(AccWu)
-        .build(store(provider), USize(100))
+        .build(store(provider), USize(COUNT))
         .unwrap_or_else(|_| panic!("build should succeed"));
 
     // Cold frame: every fiber runs (100 records fit one window per fiber).
@@ -300,6 +324,32 @@ fn clean_frame_skips_column_fiber_but_reruns_accumulator_fiber() {
             "a clean frame skips the clean column fiber and re-runs the accumulator fiber"
         );
     });
+
+    // What the fibers wrote. The accumulator is the head binding (registered
+    // last), the column one tail down. The column keeps the cold frame's
+    // values, since its fiber did not run again; the accumulator holds the
+    // clean frame's appends alone, since its buffer was reset first.
+    let acc = scheduler.__bindings();
+    let live = acc.__len_cell().get().0;
+    assert_eq!(
+        live, COUNT,
+        "the accumulator holds one append per record, not two frames' worth"
+    );
+    let acc_base = acc.__ptr().as_ptr() as *const Ov;
+    for k in 0 .. live {
+        // SAFETY: live records were initialised by the appends.
+        let v = unsafe { (*acc_base.add(k)).0 };
+        assert_eq!(v, 1, "accumulator rec {k} is the append the unit made");
+    }
+    let cm_base = scheduler.__bindings().__tail().__ptr().as_ptr() as *const Cm;
+    for r in 0 .. COUNT {
+        // SAFETY: the column reserves COUNT records; the scheduler is alive.
+        let v = unsafe { (*cm_base.add(r)).0 };
+        assert_eq!(
+            v, r as u32,
+            "column rec {r}: written by the cold frame's one window"
+        );
+    }
 }
 
 #[test]

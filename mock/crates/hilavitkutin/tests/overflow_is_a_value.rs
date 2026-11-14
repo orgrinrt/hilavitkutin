@@ -25,10 +25,11 @@
 //! source lints.
 
 mod common;
+mod fixed_workers;
 mod stable_provider;
 
 use arvo::USize;
-use common::FixedWorkers;
+use fixed_workers::FixedWorkers;
 use hilavitkutin::dispatch::engine_ctx::{
     AccPtrCons,
     AccPtrNil,
@@ -213,10 +214,10 @@ macro_rules! build {
             $(.with($unit))+
             .$($finish)+(store(stable_provider(16384, 0)), USize(N))
             .unwrap_or_else(|_| panic!("build should succeed"));
-        let in_base = scheduler.__bindings().__tail().__tail().__ptr().as_ptr() as *mut u32;
+        let in_base = scheduler.__bindings().__tail().__tail().__ptr().as_ptr();
         for i in 0 .. N {
-            // SAFETY: `Inv` reserves N u32-shaped records; written once here.
-            unsafe { *in_base.add(i) = i as u32 };
+            // SAFETY: `Inv` reserves N records; written once here.
+            unsafe { *in_base.add(i) = Inv(i as u32) };
         }
         scheduler
     }};
@@ -253,18 +254,19 @@ macro_rules! check_frame {
             "{}: the guard keeps its own records",
             $label
         );
-        let av_base = av.__ptr().as_ptr() as *const u32;
-        let bv_base = bv.__ptr().as_ptr() as *const u32;
+        let av_base = av.__ptr().as_ptr() as *const Av;
+        let bv_base = bv.__ptr().as_ptr() as *const Bv;
         assert_eq!(
-            bv_base,
-            av_base.wrapping_add(N),
+            bv_base as *const u8,
+            av_base.wrapping_add(N) as *const u8,
             "{}: the guard is the next region in the arena, so a write past Av lands in it",
             $label
         );
-        // SAFETY: both accumulators reserved N u32-shaped records and the frame
-        // left N live in each; the scheduler is alive and every worker parked.
-        let got_av: [u32; N] = core::array::from_fn(|k| unsafe { *av_base.add(k) });
-        let got_bv: [u32; N] = core::array::from_fn(|k| unsafe { *bv_base.add(k) });
+        // SAFETY: both accumulators reserved N records of their own value type
+        // and the frame left N live in each; the scheduler is alive and every
+        // worker parked.
+        let got_av: [u32; N] = core::array::from_fn(|k| unsafe { (*av_base.add(k)).0 });
+        let got_bv: [u32; N] = core::array::from_fn(|k| unsafe { (*bv_base.add(k)).0 });
         assert_eq!(
             got_av,
             expected_av($workers),
@@ -399,9 +401,9 @@ fn a_skew_that_fits_the_reservation_is_accepted_at_every_worker_count() {
             USize(N),
             "{workers} workers keep every append"
         );
-        let base = av.__ptr().as_ptr() as *const u32;
+        let base = av.__ptr().as_ptr();
         // SAFETY: N records reserved and, on success, N live.
-        let got: [u32; N] = core::array::from_fn(|k| unsafe { *base.add(k) });
+        let got: [u32; N] = core::array::from_fn(|k| unsafe { (*base.add(k)).0 });
         assert_eq!(&got, want, "{workers} workers: the same buffer as run");
     }
     parallel(&FixedWorkers::<1>, &want, 1);

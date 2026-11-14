@@ -4,7 +4,7 @@
 //! to under monomorphisation. A const generic selects the impl; LLVM sees the
 //! concrete type at every call site and can inline through the trait method.
 
-use mockspace_bench_core::{timed, FfiBenchCall};
+use mockspace_bench_core::{FfiBenchCall, timed};
 use mockspace_bench_macro::bench_variant;
 
 mod sealed {
@@ -18,9 +18,8 @@ trait Mixer: sealed::Sealed {
 struct Fnv;
 impl sealed::Sealed for Fnv {}
 impl Mixer for Fnv {
-    #[inline(never)]
     fn mix(chunk: u64, acc: u64) -> u64 {
-        (acc ^ chunk).wrapping_mul(0x100000001b3)
+        (acc ^ chunk).wrapping_mul(0x100000001B3)
     }
 }
 
@@ -43,5 +42,17 @@ fn run_dispatch_trait<const N: usize>(input: &[u8; N], output: &mut [u8; 8]) -> 
             }
             output.copy_from_slice(&acc.to_le_bytes());
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn the_arm_does_not_time_a_constant() {
+        assert!(kernel_checks::varies(|input| {
+            let mut out = [0u8; 8];
+            let _ = super::run_dispatch_trait::<256>(input, &mut out);
+            u64::from_le_bytes(out)
+        }));
     }
 }

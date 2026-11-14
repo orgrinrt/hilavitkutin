@@ -34,8 +34,8 @@ use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 
 use crate::{
+    Arm,
     COLUMNS,
-    FrameArm,
     FrameOut,
     Heavy,
     K_A1,
@@ -319,66 +319,94 @@ unsafe fn hash_column<T: Word>(base: *const T, n: usize) -> u64 {
     fnv1a_u32(unsafe { core::slice::from_raw_parts(base as *const u32, n) })
 }
 
-/// Build one engine arm for one regime.
+/// The frame, spelled once: its columns in registration order, then its units.
 ///
-/// The builder call sequence is written once, in this macro, and expanded once
-/// per kernel. It cannot be a function generic over the kernel: the scheduler's
-/// type is the output of that sequence and `run` carries where-clauses over it,
-/// which a generic body would have to prove for every kernel and cannot name.
-/// Each expansion is concrete, so they discharge there. The state is a tuple
-/// so the scheduler's type is never written down, and `StateArm` erases it.
+/// It hands both lists to a callback, so the engine arm's builder call sequence
+/// and the `Stores` and `Units` types a test reads the plan from expand from
+/// the same spelling. Reorder a column or a unit here and both move together;
+/// a test that names its own copy of the order could not notice.
 ///
-/// The first pipeline's stages come in as a token list rather than written
-/// inline, so the engine negative control is the same builder call sequence
-/// with one `Map` left out of that list and nothing else changed. Stating the
-/// twelve-unit topology twice would defeat the control: a reader could not tell
-/// a deliberate omission from a typo in a second copy.
-macro_rules! engine_arm {
+/// The first pipeline's stages are a token list, so the engine negative
+/// control is the same frame with one `Map` left out of that list and nothing
+/// else changed. Stating the twelve-unit topology twice would defeat the
+/// control: a reader could not tell a deliberate omission from a typo in a
+/// second copy.
+macro_rules! frame {
     // The first pipeline as the frame describes it: three stages, `In` to `A1`
     // to `A2` to `A3`.
-    ($kn:ty, $n:expr, $parallel:expr, full) => {
-        engine_arm!(@build $kn, $n, $parallel, [
-            Map::<$kn, In, A1, K_A1>,
-            Map::<$kn, A1, A2, K_A2>,
-            Map::<$kn, A2, A3, K_A3>,
+    ($then:ident!($($arg:tt)*), $kn:ty, full) => {
+        frame!($then!($($arg)*), $kn, [
+            Map<$kn, In, A1, K_A1>,
+            Map<$kn, A1, A2, K_A2>,
+            Map<$kn, A2, A3, K_A3>,
         ])
     };
     // The same pipeline with the `A1` to `A2` stage left out and `A3` taken
     // from `A1` instead: eleven units where the frame has twelve, and the same
-    // wrong frame `record_without_a2` computes. `Column::<A2>` stays
-    // registered, so the difference from `full` is one `Map` and nothing else.
-    ($kn:ty, $n:expr, $parallel:expr, without_a2) => {
-        engine_arm!(@build $kn, $n, $parallel, [
-            Map::<$kn, In, A1, K_A1>,
-            Map::<$kn, A1, A3, K_A3>,
+    // wrong frame `record_without_a2` computes. `Column<A2>` stays registered,
+    // so the difference from `full` is one `Map` and nothing else.
+    ($then:ident!($($arg:tt)*), $kn:ty, without_a2) => {
+        frame!($then!($($arg)*), $kn, [
+            Map<$kn, In, A1, K_A1>,
+            Map<$kn, A1, A3, K_A3>,
         ])
     };
-    (@build $kn:ty, $n:expr, $parallel:expr, [$($a_stage:ty),+ $(,)?]) => {{
+    ($then:ident!($($arg:tt)*), $kn:ty, [$($a_stage:ty),+ $(,)?]) => {
+        $then!($($arg)* [In, A1, A2, A3, B1, B2, B3, C1, C2, C3, Jn, T1, T2], [
+            $($a_stage,)+
+            Map<$kn, In, B1, K_B1>,
+            Map<$kn, B1, B2, K_B2>,
+            Map<$kn, B2, B3, K_B3>,
+            Map<$kn, In, C1, K_C1>,
+            Map<$kn, C1, C2, K_C2>,
+            Map<$kn, C2, C3, K_C3>,
+            Join<$kn, A3, B3, C3, Jn>,
+            Map<$kn, In, T1, K_T1>,
+            Map<$kn, In, T2, K_T2>,
+        ])
+    };
+}
+
+/// A type list from its elements, head first.
+macro_rules! cons {
+    () => { Empty };
+    ($head:ty $(, $tail:ty)* $(,)?) => { Cons<$head, cons!($($tail),*)> };
+}
+
+/// The store list of a frame: one `Column` per column, in order.
+macro_rules! stores_of {
+    ([$($col:ty),+], [$($unit:ty),+ $(,)?]) => { cons!($(Column<$col>),+) };
+}
+
+/// The unit list of a frame, in order.
+macro_rules! units_of {
+    ([$($col:ty),+], [$($unit:ty),+ $(,)?]) => { cons!($($unit),+) };
+}
+
+/// The frame's stores, in the order the engine arm registers them.
+pub type Stores = frame!(stores_of!(), Heavy, full);
+
+/// The frame's units under kernel `K`, in the order the engine arm registers
+/// them.
+pub type Units<K> = frame!(units_of!(), K, full);
+
+/// Build one engine arm for one regime, from one variant of `frame!`.
+///
+/// The builder call sequence is expanded once per kernel. It cannot be a
+/// function generic over the kernel: the scheduler's type is the output of
+/// that sequence and `run` carries where-clauses over it, which a generic body
+/// would have to prove for every kernel and cannot name. Each expansion is
+/// concrete, so they discharge there. The state is a tuple so the scheduler's
+/// type is never written down, and `StateArm` erases it.
+macro_rules! engine_arm {
+    ($kn:ty, $n:expr, $parallel:expr, $variant:tt) => {
+        frame!(engine_arm!(@build $n, $parallel,), $kn, $variant)
+    };
+    (@build $n:expr, $parallel:expr, [$($col:ty),+], [$($unit:ty),+ $(,)?]) => {{
         let n: usize = $n;
         let sched = Scheduler::builder()
-            .with(Column::<In>::start())
-            .with(Column::<A1>::start())
-            .with(Column::<A2>::start())
-            .with(Column::<A3>::start())
-            .with(Column::<B1>::start())
-            .with(Column::<B2>::start())
-            .with(Column::<B3>::start())
-            .with(Column::<C1>::start())
-            .with(Column::<C2>::start())
-            .with(Column::<C3>::start())
-            .with(Column::<Jn>::start())
-            .with(Column::<T1>::start())
-            .with(Column::<T2>::start())
-            $(.with(<$a_stage>::new()))+
-            .with(Map::<$kn, In, B1, K_B1>::new())
-            .with(Map::<$kn, B1, B2, K_B2>::new())
-            .with(Map::<$kn, B2, B3, K_B3>::new())
-            .with(Map::<$kn, In, C1, K_C1>::new())
-            .with(Map::<$kn, C1, C2, K_C2>::new())
-            .with(Map::<$kn, C2, C3, K_C3>::new())
-            .with(Join::<$kn, A3, B3, C3, Jn>::new())
-            .with(Map::<$kn, In, T1, K_T1>::new())
-            .with(Map::<$kn, In, T2, K_T2>::new())
+            $(.with(Column::<$col>::start()))+
+            $(.with(<$unit>::new()))+
             .build(store(n), USize(n))
             .unwrap_or_else(|_| panic!("frame_wide: the engine scheduler build failed at n={n}"));
         let state = (Box::pin(sched), BenchExecutor, $parallel, n);
@@ -423,12 +451,12 @@ macro_rules! engine_arm {
                     ]
                 }
             },
-        )) as Box<dyn FrameArm>
+        )) as Box<dyn Arm<FrameOut>>
     }};
 }
 
 /// Build the single-core or the parallel engine arm for one regime.
-pub fn build(regime: Regime, n: usize, parallel: bool) -> Box<dyn FrameArm> {
+pub fn build(regime: Regime, n: usize, parallel: bool) -> Box<dyn Arm<FrameOut>> {
     match regime {
         Regime::Heavy => engine_arm!(Heavy, n, parallel, full),
         Regime::Light => engine_arm!(Light, n, parallel, full),
@@ -445,7 +473,7 @@ pub fn build(regime: Regime, n: usize, parallel: bool) -> Box<dyn FrameArm> {
 /// by eye: thirteen `Column` lines and twelve `Map` and `Join` lines whose
 /// correctness is in which type parameter sits in which position. This arm is
 /// that spelling with one unit missing, run through the same validation path.
-pub fn build_without_a2(regime: Regime, n: usize) -> Box<dyn FrameArm> {
+pub fn build_without_a2(regime: Regime, n: usize) -> Box<dyn Arm<FrameOut>> {
     match regime {
         Regime::Heavy => engine_arm!(Heavy, n, false, without_a2),
         Regime::Light => engine_arm!(Light, n, false, without_a2),

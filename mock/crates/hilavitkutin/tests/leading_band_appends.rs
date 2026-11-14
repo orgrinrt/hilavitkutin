@@ -19,11 +19,12 @@
 //! src-tree primitive lints.
 
 mod common;
+mod fixed_workers;
 
 mod stable_provider;
 
 use arvo::USize;
-use common::FixedWorkers;
+use fixed_workers::FixedWorkers;
 use hilavitkutin::dispatch::engine_ctx::{
     AccPtrCons,
     AccPtrNil,

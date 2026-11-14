@@ -5,4 +5,5 @@
 //! ASM-dispatch gate bin (`src/bin/asm_gate.rs`) import one implementation of
 //! the five checks rather than duplicating the aarch64 / x86_64 patterns.
 
+pub mod disasm;
 pub mod disasm_5check;

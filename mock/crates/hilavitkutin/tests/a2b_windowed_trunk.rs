@@ -38,6 +38,8 @@ use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use stable_provider::stable_provider;
 
+const RECORDS: usize = 10;
+
 thread_local! {
     // The number of records iterated in each `execute` call = that morsel's length.
     // `ctx.each()` yields morsel-LOCAL indices (0-based within the morsel), so the
@@ -99,8 +101,16 @@ fn windowed_trunk_dispatches_one_morsel_per_window() {
         .with(Column::<Inv>::start())
         .with(Column::<Outv>::start())
         .with(Windowed)
-        .build(store(provider), USize(10))
+        .build(store(provider), USize(RECORDS))
         .unwrap_or_else(|_| panic!("build should succeed"));
+    // Outv is the head column (registered last); Inv sits one tail down. Inv
+    // holds i + 1 so a record the windows skip keeps Outv's default 0.
+    let in_base = s.__bindings().__tail().__ptr().as_ptr() as *mut Inv;
+    for i in 0 .. RECORDS {
+        // SAFETY: Inv reserves RECORDS records; the scheduler is alive; each
+        // slot is written once here before the run.
+        unsafe { *in_base.add(i) = Inv(i as u32 + 1) };
+    }
     // Window 4 over 10 records: morsels [0,4), [4,8), [8,10); lengths [4, 4, 2].
     s.run_one_trunk_windowed::<_, _, 0>(USize(4));
     MORSEL_LENS.with(|lens| {
@@ -110,4 +120,16 @@ fn windowed_trunk_dispatches_one_morsel_per_window() {
             "run_one_trunk_windowed windows the trunk fiber-outer/morsel-inner: one execute per morsel, lengths [4,4,2] over 10 records"
         );
     });
+    // The three windows together cover every record once, each written at its
+    // absolute index.
+    let out_base = s.__bindings().__ptr().as_ptr() as *const Outv;
+    for i in 0 .. RECORDS {
+        // SAFETY: Outv reserves RECORDS records; the scheduler is alive.
+        let v = unsafe { (*out_base.add(i)).0 };
+        assert_eq!(
+            v,
+            i as u32 + 1,
+            "rec {i}: the windows cover the range, each record written at its absolute index"
+        );
+    }
 }

@@ -18,8 +18,10 @@ use std::thread::ThreadId;
 
 use arvo::USize;
 mod common;
+mod fixed_workers;
 mod stable_provider;
-use common::{FixedWorkers, TestExecutor};
+use common::TestExecutor;
+use fixed_workers::FixedWorkers;
 use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
@@ -111,10 +113,10 @@ fn run_parallel_single_trunk_phase_covers_every_record_once() {
     // In sits one tail down.
     // SAFETY: both columns reserved for N records of u32; the scheduler (hence
     // arena) is alive; each slot is written once here before the run.
-    let in_base = scheduler.__bindings().__tail().__ptr().as_ptr() as *mut u32;
+    let in_base = scheduler.__bindings().__tail().__ptr().as_ptr();
     for i in 0 .. N {
         unsafe {
-            *in_base.add(i) = i as u32;
+            *in_base.add(i) = Inv(i as u32);
         }
     }
 
@@ -155,10 +157,10 @@ fn a_single_trunk_phase_is_walked_from_head_and_tail() {
         .build(store(provider), USize(N))
         .unwrap_or_else(|_| panic!("build should succeed"));
 
-    let in_base = scheduler.__bindings().__tail().__ptr().as_ptr() as *mut u32;
+    let in_base = scheduler.__bindings().__tail().__ptr().as_ptr();
     for i in 0 .. N {
-        // SAFETY: In reserved for N records of u32; the scheduler is alive.
-        unsafe { *in_base.add(i) = i as u32 };
+        // SAFETY: In reserved for N records of Inv; the scheduler is alive.
+        unsafe { *in_base.add(i) = Inv(i as u32) };
     }
 
     let pool = FixedWorkers::<2>;

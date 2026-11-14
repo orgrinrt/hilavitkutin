@@ -47,6 +47,7 @@ use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::store::{Column, StartsFromDefault, Virtual};
 use hilavitkutin_api::work_unit::{Always, HasSchedule, On, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
+use notko::Outcome;
 use stable_provider::stable_provider;
 
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
@@ -175,15 +176,31 @@ fn on_consumer_runs_iff_its_virtual_fired() {
         .build(store(provider), USize(N))
         .unwrap_or_else(|_| panic!("build should succeed"));
 
-    // Head-chain: RanA (head, last registered), RanB, RanN. All start at zero.
-    let _ = scheduler.run::<_, _>();
+    // Head-chain: RanA (head, last registered), RanB, RanN, then Gate. The
+    // Ran columns start at zero, Gate too until the producer writes it.
+    assert!(
+        matches!(scheduler.run::<_, _>(), Outcome::Ok(())),
+        "the frame completes with no refusal"
+    );
 
-    let a = scheduler.__bindings().__ptr().as_ptr() as *const u32;
-    let b = scheduler.__bindings().__tail().__ptr().as_ptr() as *const u32;
-    let n = scheduler.__bindings().__tail().__tail().__ptr().as_ptr() as *const u32;
+    let a = scheduler.__bindings().__ptr().as_ptr() as *const RanA;
+    let b = scheduler.__bindings().__tail().__ptr().as_ptr() as *const RanB;
+    let n = scheduler.__bindings().__tail().__tail().__ptr().as_ptr() as *const RanN;
+    let g = scheduler
+        .__bindings()
+        .__tail()
+        .__tail()
+        .__tail()
+        .__ptr()
+        .as_ptr() as *const Gate;
     for i in 0 .. N {
-        // SAFETY: Ran columns hold N reserved records; scheduler alive.
-        let (va, vb, vn) = unsafe { (*a.add(i), *b.add(i), *n.add(i)) };
+        // SAFETY: Ran columns and Gate hold N reserved records; scheduler alive.
+        let (va, vb, vn, vg) =
+            unsafe { ((*a.add(i)).0, (*b.add(i)).0, (*n.add(i)).0, (*g.add(i)).0) };
+        assert_eq!(
+            vg, 1,
+            "rec {i}: the producer wrote Gate, the edge the consumers read"
+        );
         assert_eq!(va, 1, "rec {i}: On<Tick> consumer A ran (Tick fired)");
         assert_eq!(
             vb, 1,

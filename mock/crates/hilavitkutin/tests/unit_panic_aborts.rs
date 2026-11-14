@@ -28,9 +28,10 @@ use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 
 mod common;
+mod fixed_workers;
 mod stable_provider;
 use arvo::USize;
-use common::FixedWorkers;
+use fixed_workers::FixedWorkers;
 use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};

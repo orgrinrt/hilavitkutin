@@ -14,12 +14,18 @@
 #![feature(const_ops)]
 #![feature(const_trait_impl)]
 #![feature(negative_impls)]
-#![allow(incomplete_features)]
 
 mod sealed {
     /// The sealing supertrait. Public in a module no path outside the crate
     /// names, so a consumer cannot implement a trait that has it as a
     /// supertrait, and a public trait may name it in its bounds.
+    ///
+    /// Every sealed trait of the crate shares this one seal, so a blanket
+    /// impl of it covers them all: the tuple impls in `hint.rs` and
+    /// `builder.rs` seal every tuple of those arities for every trait that
+    /// takes the seal, and a later tuple impl of the same arity collides
+    /// with them. A trait that must seal tuples on its own terms needs a
+    /// seal of its own.
     pub trait Sealed {}
 }
 
@@ -115,11 +121,9 @@ pub use dispatch_codegen::{
     DispatchCodegen,
     FiberId,
     FiberShape,
-    LockFreeDispatch,
     PhaseEntry,
     PhaseId,
     RecordRange,
-    Scheduled,
     SyncRole,
     TrunkId,
     UnitId,

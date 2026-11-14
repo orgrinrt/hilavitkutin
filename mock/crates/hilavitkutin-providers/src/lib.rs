@@ -1,19 +1,18 @@
 //! `hilavitkutin-providers`: default Resource-backed providers
 //! for the hilavitkutin scheduler.
 //!
-//! Standalone ecosystem crate. Consumed by the engine via Kit
-//! installation or via direct `builder.with(...)` wiring. No
-//! reverse dep on the engine.
+//! Standalone ecosystem crate. A consumer registers what it ships on
+//! the scheduler builder with `.with(...)`, one store at a time or as
+//! a Kit. No reverse dep on the engine.
 //!
-//! Ships the interner surface: [`InternerApi`], [`HasInterner`],
+//! The interner surface is [`InternerApi`], [`HasInterner`],
 //! [`MemoryArena`], the [`default_interner`] constructor, and the
-//! [`InternerKit`] Kit preset that registers the default interner as
-//! a `Resource<...>` on the scheduler builder through `with`. Beside
-//! it, the [`ArenaColumnStorage`] column store, the
-//! [`StaticBumpMemory`] memory provider, and the adapt kits
-//! [`StandardAdaptKit`] and [`OffAdaptKit`] with the per-axis metrics
-//! resources of [`metrics`]. The default clock and the
-//! operating-system memory provider are the engine's, under its
+//! [`InternerKit`] Kit preset that declares the default interner as a
+//! `Resource<...>` it owns. Beside it, the [`ArenaColumnStorage`]
+//! column store, the [`StaticBumpMemory`] memory provider, and the
+//! adapt kits [`StandardAdaptKit`] and [`OffAdaptKit`] with the
+//! per-axis metrics resources of [`metrics`]. The default clock and
+//! the operating-system memory provider are the engine's, under its
 //! `platform-os` feature.
 
 #![no_std]

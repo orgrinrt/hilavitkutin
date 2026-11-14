@@ -2,7 +2,7 @@
 // `AccumRefused` in its run's output: under that choice `run` returns `()` and
 // panics at the close when an accumulator refused, so there is no refusal value
 // to bind. The twin `assert_out_names_no_refusal_pass.rs` differs only by the
-// type the run's output is bound to.
+// type the run's output is bound to, and the `AccumRefused` import that type needs.
 use core::mem::MaybeUninit;
 
 use arvo::USize;

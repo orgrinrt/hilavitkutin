@@ -1,0 +1,19 @@
+[workspace]
+
+# What every bench member whose arms run over a column of u32 records shares:
+# the input image the harness hands a variant, the FNV-1a digest the arms are
+# compared by, and the per-process arm that is built on the first call and
+# reused, so a scheduler is built outside the timed region. `frame_wide` and
+# `engine_vs_std` both build their arms on it.
+[package]
+name = "bench-arm"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "bench_arm"
+path = "src/lib.rs"
+
+[dependencies]
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "5a775f3ea7f969a7589ce970e16e55b2ba856f41", features = ["std"] }

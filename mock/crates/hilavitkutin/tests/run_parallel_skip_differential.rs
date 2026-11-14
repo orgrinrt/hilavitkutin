@@ -26,9 +26,10 @@
 #[macro_use]
 mod skip_chain;
 mod common;
+mod fixed_workers;
 mod stable_provider;
 
-use common::FixedWorkers;
+use fixed_workers::FixedWorkers;
 use hilavitkutin::thread::MAX_CORES;
 use hilavitkutin_api::platform::ThreadPoolApi;
 use notko::Outcome;

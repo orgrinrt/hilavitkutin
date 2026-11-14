@@ -32,10 +32,7 @@ use arvo::{Bool, USize};
 
 use crate::access::Cons;
 use crate::builder_input::{BuilderInput, Dispatch};
-
-mod sealed {
-    pub(crate) trait Sealed {}
-}
+use crate::sealed;
 
 /// Sealed adapt-axis trait.
 ///
@@ -45,7 +42,6 @@ mod sealed {
 /// two methods are the runtime-observable knobs: `is_enabled()`
 /// gates whether the axis runs at all, `sample_skip()` rate-limits
 /// how often the axis's measurement fires.
-#[allow(private_bounds)]
 pub trait AdaptAxis: sealed::Sealed {
     /// Is this axis enabled? `Bool::TRUE` runs the axis on every
     /// `ScheduleEnd`; `Bool::FALSE` skips the axis entirely.

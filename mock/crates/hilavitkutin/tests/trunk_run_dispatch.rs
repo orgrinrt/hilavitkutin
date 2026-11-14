@@ -178,8 +178,8 @@ fn runtrunk_two_fiber_trunk_matches_flat_walk() {
         unsafe { *flat_inx.add(i) = InX(i as u32) };
     }
     assert!(matches!(flat.run(), notko::Outcome::Ok(())));
-    let flat_ax = flat.__bindings().__tail().__ptr().as_ptr() as *const u32;
-    let flat_cz = flat.__bindings().__tail().__tail().__ptr().as_ptr() as *const u32;
+    let flat_ax = flat.__bindings().__tail().__ptr().as_ptr() as *const AX;
+    let flat_cz = flat.__bindings().__tail().__tail().__ptr().as_ptr() as *const CZ;
     // SAFETY: AX, CZ each reserved for N records; storage alive; written every record.
     let flat_ax = unsafe { core::slice::from_raw_parts(flat_ax, N) };
     let flat_cz = unsafe { core::slice::from_raw_parts(flat_cz, N) };
@@ -219,21 +219,21 @@ fn runtrunk_two_fiber_trunk_matches_flat_walk() {
         &trunk_carrier,
         MorselRange::new(USize(0), USize(N)),
     );
-    let trunk_ax = trunk.__bindings().__tail().__ptr().as_ptr() as *const u32;
-    let trunk_cz = trunk.__bindings().__tail().__tail().__ptr().as_ptr() as *const u32;
+    let trunk_ax = trunk.__bindings().__tail().__ptr().as_ptr() as *const AX;
+    let trunk_cz = trunk.__bindings().__tail().__tail().__ptr().as_ptr() as *const CZ;
     // SAFETY: AX, CZ each reserved for N records; storage alive; written every record.
     let trunk_ax = unsafe { core::slice::from_raw_parts(trunk_ax, N) };
     let trunk_cz = unsafe { core::slice::from_raw_parts(trunk_cz, N) };
 
     for i in 0 .. N {
-        assert_eq!(flat_ax[i], fx(i as u32), "flat AX[{i}]");
-        assert_eq!(flat_cz[i], fz(fx(i as u32)), "flat CZ[{i}]");
+        assert_eq!(flat_ax[i].0, fx(i as u32), "flat AX[{i}]");
+        assert_eq!(flat_cz[i].0, fz(fx(i as u32)), "flat CZ[{i}]");
         assert_eq!(
-            trunk_ax[i], flat_ax[i],
+            trunk_ax[i].0, flat_ax[i].0,
             "RunTrunk AX[{i}] must match the flat walk (output-equivalence)"
         );
         assert_eq!(
-            trunk_cz[i], flat_cz[i],
+            trunk_cz[i].0, flat_cz[i].0,
             "RunTrunk CZ[{i}] must match the flat walk (output-equivalence)"
         );
     }

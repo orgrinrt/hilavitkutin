@@ -29,7 +29,12 @@ use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_api::store::{Column, Resource, Seq, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
+use notko::Outcome;
 use stable_provider::stable_provider;
+
+// Record counts: one morsel's worth, and more than one window's worth.
+const SMALL: usize = 16;
+const LARGE: usize = 4096;
 
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
@@ -102,17 +107,31 @@ fn morsel_window_matches_l1_formula() {
     // 24_576 / (4 column + 8 resource collection) = 2048, inside the clamps,
     // already 4-aligned.
     let provider = stable_provider(16384, 0);
-    let s = Scheduler::builder()
+    let mut s = Scheduler::builder()
         .with(Resource::new(FxRes))
         .with(Column::<Outv>::start())
         .with(Producer)
-        .build(store(provider), USize(16))
+        .build(store(provider), USize(SMALL))
         .unwrap_or_else(|_| panic!("build should succeed"));
     assert_eq!(
         s.__fiber_morsel_size(USize(0)).0,
         2048,
         "window = (L1_USABLE / (column stride + resource collection footprint)).clamp & !3"
     );
+
+    // The width of `Outv` is half of what that window is computed from, so the
+    // fixture is shown to run as well as to plan: one frame, then every record
+    // of the written column read back as `Producer` wrote it. The window
+    // exceeds the record count, so one morsel covers the range and its
+    // relative index is the record's own.
+    assert!(matches!(s.run(), Outcome::Ok(())));
+    // Outv is the head column (registered last).
+    let base = s.__bindings().__ptr().as_ptr() as *const Outv;
+    for r in 0 .. SMALL {
+        // SAFETY: the column reserves SMALL records; the scheduler is alive.
+        let v = unsafe { (*base.add(r)).0 };
+        assert_eq!(v, r as u32, "rec {r}: written by the single morsel");
+    }
 }
 
 #[test]
@@ -121,11 +140,11 @@ fn morsel_window_is_not_the_record_count_partition() {
     // so the fiber covers the range in ceil(4096 / 2048) = 2 morsels. The
     // placeholder partition would have reported 4096 here.
     let provider = stable_provider(65536, 0);
-    let s = Scheduler::builder()
+    let mut s = Scheduler::builder()
         .with(Resource::new(FxRes))
         .with(Column::<Outv>::start())
         .with(Producer)
-        .build(store(provider), USize(4096))
+        .build(store(provider), USize(LARGE))
         .unwrap_or_else(|_| panic!("build should succeed"));
     let window = s.__fiber_morsel_size(USize(0)).0;
     assert_eq!(
@@ -133,9 +152,23 @@ fn morsel_window_is_not_the_record_count_partition() {
         "the window is budget-derived, independent of record count"
     );
     assert!(
-        window < 4096,
+        window < LARGE,
         "a fiber larger than its window runs multiple morsels"
     );
+
+    // One frame: each of the two morsels wrote its relative index at the
+    // absolute records it covers, so record `r` holds `r % window`.
+    assert!(matches!(s.run(), Outcome::Ok(())));
+    let base = s.__bindings().__ptr().as_ptr() as *const Outv;
+    for r in 0 .. LARGE {
+        // SAFETY: the column reserves LARGE records; the scheduler is alive.
+        let v = unsafe { (*base.add(r)).0 };
+        assert_eq!(
+            v,
+            (r % window) as u32,
+            "rec {r}: written once, by the morsel that covers it"
+        );
+    }
 }
 
 #[test]
@@ -157,10 +190,50 @@ fn no_write_bytes_takes_the_max_window() {
 #[test]
 #[ignore = "catalogue: a MIN_MORSEL that is not a multiple of 4 lets the post-clamp `& !3` land the window below the configured floor (or at 0 for MIN < 4); the intended resolution aligns the floor before clamping so the window never undercuts MIN_MORSEL; tracked #hilavitkutin_catalogue_a_min_morsel_that_is_not_a_multiple_o"]
 fn non_aligned_min_morsel_keeps_the_floor() {
-    unreachable!(
-        "contract: with MIN_MORSEL = 66 and a write sum driving the raw window to the \
-         floor, the emitted window must still be >= 64 (the aligned floor), never 0. \
-         Build a custom RunCfg fixture once the floor-alignment lands. \
-         tracked #hilavitkutin_catalogue_a_min_morsel_that_is_not_a_multiple_o"
-    );
+    // `RunCfg` is sealed, so the budget goes to the plan step directly. One
+    // fiber whose unit writes one 512-byte store: 1024 / 512 = 2, far under
+    // the floor, so the window is the floor. With a floor of 66 the post-clamp
+    // `& !3` gives 64, and with a floor of 3 it gives 0, a window that covers
+    // no record. Either undercuts what the run config asked for.
+    use hilavitkutin::DefaultPlanDims;
+    use hilavitkutin::plan::{
+        AccessMask,
+        FiberGrouping,
+        MorselBudget,
+        PlanDims,
+        PlanInputs,
+        steps,
+    };
+    use hilavitkutin_api::FiberId;
+
+    type Dims = DefaultPlanDims;
+    for floor in [66usize, 3] {
+        let mut inputs: PlanInputs<<Dims as PlanDims>::Units, <Dims as PlanDims>::Stores> =
+            PlanInputs::new();
+        inputs.unit_count = USize(1);
+        inputs.record_count = USize(10_000);
+        inputs.writes.as_mut()[0] = AccessMask::empty().set(USize(0));
+        inputs.store_sizes.as_mut()[0] = USize(512);
+        inputs.morsel_budget = MorselBudget {
+            l1_usable:  USize(1024),
+            min_morsel: USize(floor),
+            max_morsel: USize(512),
+        };
+        let mut fibers: FiberGrouping<Dims> = FiberGrouping::new();
+        fibers.fiber_count = USize(1);
+        fibers.assignment.as_mut()[0] = FiberId::from_index(USize(0));
+
+        let window = steps::compute_fiber_morsel_windows::<Dims>(&inputs, &fibers).as_ref()[0];
+        assert!(
+            window.0 >= floor,
+            "MIN_MORSEL = {floor}: the window {} undercuts the configured floor",
+            window.0
+        );
+        assert_eq!(
+            window.0 % 4,
+            0,
+            "MIN_MORSEL = {floor}: the window {} is not 4-aligned",
+            window.0
+        );
+    }
 }
