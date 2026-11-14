@@ -41,6 +41,30 @@ fn code_lines(text: &str) -> impl Iterator<Item = (usize, String)> + '_ {
         .map(move |(idx, raw)| (idx + 1, code::code_of(raw, &mut in_block_comment)))
 }
 
+/// Whether `text` holds `word` as a whole word: no identifier character
+/// straight before it or straight after.
+pub(crate) fn has_word(text: &str, word: &str) -> bool {
+    text.match_indices(word).any(|(at, _)| {
+        let before = text[.. at].chars().next_back();
+        let after = text[at + word.len() ..].chars().next();
+        !before.is_some_and(is_ident_char) && !after.is_some_and(is_ident_char)
+    })
+}
+
+/// Each line of `text` whose code holds one of `words` as a whole word, with
+/// the first of them it holds.
+pub(crate) fn words<const N: usize>(
+    text: &str,
+    words: [&'static str; N],
+) -> Vec<(usize, &'static str)> {
+    code_lines(text)
+        .filter_map(|(line, code)| {
+            let word = words.into_iter().find(|word| has_word(&code, word))?;
+            Some((line, word))
+        })
+        .collect()
+}
+
 /// Each attribute of `text`, inner and outer, from its `#` to the bracket
 /// that closes it, with the 1-based line its `#` is on.
 ///

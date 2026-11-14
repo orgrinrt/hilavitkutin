@@ -50,7 +50,8 @@ use crate::access::{Concat, Cons, Empty};
 #[diagnostic::on_unimplemented(
     message = "`{Self}` is not a BuilderInput; pass a registered input value to `SchedulerBuilder::with(...)`",
     label = "not a BuilderInput",
-    note = "Impl one of the dispatch-determining sub-traits on `{Self}`: `Resource` / `Column` / `Virtual` / `WorkUnit` / `Kit` / `MemoryProvider` / `ThreadPool` / `Clock` / `RunCfg`. Pair the sub-trait impl with `impl BuilderInput for {Self} {{ type Dispatch = <the matching dispatch slot>; }}`. Sealed via `mod sealed`; consumers cannot impl `BuilderInput` for types that do not also impl exactly one dispatch-determining sub-trait."
+    note = "Impl one of the dispatch-determining sub-traits on `{Self}`: `Resource` / `Column` / `Virtual` / `WorkUnit` / `Kit` / `MemoryProvider` / `ThreadPool` / `Clock` / `RunCfg`. Pair the sub-trait impl with `impl BuilderInput for {Self} {{ type Dispatch = <the matching dispatch slot>; }}`. Sealed via `mod sealed`; consumers cannot impl `BuilderInput` for types that do not also impl exactly one dispatch-determining sub-trait.",
+    note = "A column is registered with its start and never by its bare marker: `.with(Column::<T>::start())` or `.with(Column::<T>::start_from(value))`, and the same two on `Buffered<T, M>`. `Column::<T>::new()` names the column in a unit's lists and registers nothing."
 )]
 pub trait BuilderInput: Sized {
     /// Construction-time value type. Each impl declares it: `Self` for

@@ -125,8 +125,15 @@ push = "error"
 # no raised recursion limit, each of which would hide what the api makes an
 # author do. A frozen crate also changes only through its ledger: every file
 # of the crate outside `tests/`, its manifest and build script included, has
-# a line with its current hash.
+# a line with its current hash, and no frozen file compiles in a file from
+# elsewhere by a `path` attribute or an `include!` macro.
 # Repo lints, `mock/lints/`, bound to the frozen authors crate alone.
+[lints.frozen-no-outside-source]
+commit = "error"
+build = "error"
+push = "error"
+crates = ["hilavitkutin-frozen-authors"]
+
 [lints.frozen-no-feature-gate]
 commit = "error"
 build = "error"

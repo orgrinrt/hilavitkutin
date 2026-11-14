@@ -8,6 +8,7 @@ error[E0277]: `Buffered<Temp>` is not a BuilderInput; pass a registered input va
    |
    = help: the trait `BuilderInput` is not implemented for `Buffered<Temp>`
    = note: Impl one of the dispatch-determining sub-traits on `Buffered<Temp>`: `Resource` / `Column` / `Virtual` / `WorkUnit` / `Kit` / `MemoryProvider` / `ThreadPool` / `Clock` / `RunCfg`. Pair the sub-trait impl with `impl BuilderInput for Buffered<Temp> { type Dispatch = <the matching dispatch slot>; }`. Sealed via `mod sealed`; consumers cannot impl `BuilderInput` for types that do not also impl exactly one dispatch-determining sub-trait.
+   = note: A column is registered with its start and never by its bare marker: `.with(Column::<T>::start())` or `.with(Column::<T>::start_from(value))`, and the same two on `Buffered<T, M>`. `Column::<T>::new()` names the column in a unit's lists and registers nothing.
    = help: the following other types implement trait `BuilderInput`:
              Accum<T>
              CacheResidencyAxis
