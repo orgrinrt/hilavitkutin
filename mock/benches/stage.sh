@@ -45,7 +45,7 @@ $changed"
 fi
 
 member="${1:?usage: stage.sh <member-dir> [<out-dir>]}"
-member=$(cd "$member" && pwd)
+member=$(cd "$member" && pwd -P)
 [ -f "$member/Cargo.toml" ] || die "$member has no Cargo.toml"
 
 # The member's own checks run before anything of it is built for timing. Each

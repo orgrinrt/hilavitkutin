@@ -181,11 +181,13 @@ The engine these sections time has no fusing yet and no adaptive trunk, fiber
 and morsel work, so the numbers are a baseline to compare against once those
 exist, and no design call rests on them. The run was staged from commit
 c894a779 with nothing dirty, and every cell's `.build.txt` records that; it
-is the record of what was timed, since the stage was checksummed before the
-first cell and after the last. The harness's own `git_commit` in each
-`.meta.json` reads the clone's head when the cell is written, and that moved
-to 23953983 at 01:34 UTC, while the run timed from 01:33 to 02:00, so 19 of
-the 20 cells name it. That commit changes one research note; whether the
+is the record of what was timed, since the stage was checksummed when it was
+written and verified against that after the last cell. Their `profile:` line
+names the manifest by the clone's absolute path, as `stage.sh` wrote it
+then; the records are kept as written. The harness's own `git_commit` in
+each `.meta.json` reads the clone's head when the cell is written, and that
+moved to 23953983 at 01:34 UTC, while the run timed from 01:33 to 02:00, so
+19 of the 20 cells name it. That commit changes one research note; whether the
 clone's hooks built anything on it is not recorded. `engine_vs_std --verdict`
 over `results/` judged 28 pairs and found 10 red.
 

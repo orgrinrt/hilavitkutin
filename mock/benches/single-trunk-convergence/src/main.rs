@@ -54,6 +54,7 @@ fn main() -> ExitCode {
     // `_link` holds `target` on the staged build until the run ends, and
     // removes it then, so the next plain build writes a target of its own.
     let staged = StagedBuild::of_current_exe().and_then(|s| {
+        s.verify()?;
         let link = s.link_into(Path::new("target"))?;
         Ok((s, link))
     });

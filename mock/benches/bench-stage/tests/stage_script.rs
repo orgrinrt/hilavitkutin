@@ -76,6 +76,39 @@ fn the_stage_holds_the_driver_and_the_arm_and_nothing_else() {
     std::fs::remove_dir_all(&out).ok();
 }
 
+/// `stage.sh --verify`, which the shell runs of `frame_wide` call between
+/// cells, is silent on a stage as it was written and names the file that
+/// changed when an arm is replaced after staging.
+#[test]
+fn the_script_verifies_a_stage_and_names_an_arm_replaced_after_it() {
+    let out = std::env::temp_dir().join(format!("stage-script-verify-{}", std::process::id()));
+    stage_into(&out);
+    let verify = || {
+        Command::new(stage_script())
+            .arg("--verify")
+            .arg(&out)
+            .output()
+            .unwrap()
+    };
+    let intact = verify();
+    assert!(
+        intact.status.success() && intact.stderr.is_empty(),
+        "an intact stage failed --verify: {}",
+        String::from_utf8_lossy(&intact.stderr)
+    );
+    let arm = format!(
+        "{}stage_fixture_arm{}",
+        std::env::consts::DLL_PREFIX,
+        std::env::consts::DLL_SUFFIX
+    );
+    std::fs::write(out.join("release").join(&arm), b"rebuilt elsewhere").unwrap();
+    let changed = verify();
+    let err = String::from_utf8_lossy(&changed.stderr);
+    assert!(!changed.status.success(), "a replaced arm passed --verify");
+    assert!(err.contains(&arm), "--verify does not name the arm: {err}");
+    std::fs::remove_dir_all(&out).ok();
+}
+
 /// The negative control for the stage itself: an arm replaced after staging
 /// makes the staged driver's own check fail.
 #[test]
