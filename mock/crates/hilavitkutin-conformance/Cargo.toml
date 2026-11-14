@@ -3,8 +3,9 @@ name = "hilavitkutin-conformance"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "The reference runner, the digest and the laws a runner of hilavitkutin work units is held to. no_std, no alloc."
+description = "The reference runner, the digest and the laws a runner of hilavitkutin work units is held to."
 repository.workspace = true
+readme = "README.md"
 
 [dependencies]
 hilavitkutin-api.workspace = true

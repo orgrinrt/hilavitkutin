@@ -214,7 +214,9 @@ that has neither there is no `start()`, the call does not compile, and
 is there for every element type, so a type with a start of its own can
 still be started from another value. The marker alone is not registered:
 `.with(Column::<T>::new())` and `.with(Buffered::<T>::new())` do not
-compile, since the marker says nothing of what the first pass reads.
+compile, since the marker says nothing of what the first pass reads. The
+error says so: the note on `BuilderInput` names `start()` and
+`start_from(value)` as the two ways a column is registered.
 
 The constructor is ahead of the default for what each is. A type that
 implements `HasTrivialCtor` beside `Default` has said what it is made as
