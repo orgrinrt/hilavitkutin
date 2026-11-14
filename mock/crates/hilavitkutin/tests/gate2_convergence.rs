@@ -20,7 +20,9 @@ use std::thread::ThreadId;
 
 use arvo::{Bool, USize};
 mod common;
-use common::{FixedWorkers, TestExecutor};
+mod fixed_workers;
+use common::TestExecutor;
+use fixed_workers::FixedWorkers;
 use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};

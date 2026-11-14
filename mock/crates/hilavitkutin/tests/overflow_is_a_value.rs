@@ -25,10 +25,11 @@
 //! source lints.
 
 mod common;
+mod fixed_workers;
 mod stable_provider;
 
 use arvo::USize;
-use common::FixedWorkers;
+use fixed_workers::FixedWorkers;
 use hilavitkutin::dispatch::engine_ctx::{
     AccPtrCons,
     AccPtrNil,
@@ -253,18 +254,19 @@ macro_rules! check_frame {
             "{}: the guard keeps its own records",
             $label
         );
-        let av_base = av.__ptr().as_ptr() as *const u32;
-        let bv_base = bv.__ptr().as_ptr() as *const u32;
+        let av_base = av.__ptr().as_ptr() as *const Av;
+        let bv_base = bv.__ptr().as_ptr() as *const Bv;
         assert_eq!(
-            bv_base,
-            av_base.wrapping_add(N),
+            bv_base as *const u8,
+            av_base.wrapping_add(N) as *const u8,
             "{}: the guard is the next region in the arena, so a write past Av lands in it",
             $label
         );
-        // SAFETY: both accumulators reserved N u32-shaped records and the frame
-        // left N live in each; the scheduler is alive and every worker parked.
-        let got_av: [u32; N] = core::array::from_fn(|k| unsafe { *av_base.add(k) });
-        let got_bv: [u32; N] = core::array::from_fn(|k| unsafe { *bv_base.add(k) });
+        // SAFETY: both accumulators reserved N records of their own value type
+        // and the frame left N live in each; the scheduler is alive and every
+        // worker parked.
+        let got_av: [u32; N] = core::array::from_fn(|k| unsafe { (*av_base.add(k)).0 });
+        let got_bv: [u32; N] = core::array::from_fn(|k| unsafe { (*bv_base.add(k)).0 });
         assert_eq!(
             got_av,
             expected_av($workers),
