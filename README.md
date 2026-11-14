@@ -24,11 +24,11 @@ One registration method covers the surface. `.with(input)` accepts anything impl
 
 ```rust
 use hilavitkutin::scheduler::Scheduler;
-use hilavitkutin_api::column::Column;
+use hilavitkutin_api::store::Column;
 
 let scheduler = Scheduler::builder()
-    .with(Column::<Inv>::new())
-    .with(Column::<Outv>::new())
+    .with(Column::<Inv>::start())
+    .with(Column::<Outv>::start())
     .with(Copyer)
     .build(store(provider), USize(4))
     .unwrap_or_else(|_| panic!("build should succeed"));
@@ -48,7 +48,9 @@ Once `.build()` returns, the resulting `Scheduler` is the runtime handle. Its ty
 
 An accumulator append past its reserved capacity is never written. What the run does about it is picked on the run config at compile time. By default the run returns the refusal as a value, an `Outcome<(), AccumRefused>` naming the first accumulator that ran out and how many appends it was asked for against its capacity. A run built with `build_with::<DefaultRunCfg<Assert>, _, _>` returns `()` instead and panics at the end of the frame when an accumulator refused, on the thread that called the run.
 
-A `Buffered<T>` is a column kept in two sides. Every read of it sees the frozen side and every write lands on the live one, so a unit can read the records around its own and write the same store in one pass, and what one pass wrote is what every unit reads in the next. The engine brings the live side over when the pass is done and only for a store the pass changed, by a copy under the default `Snapshot` mode or by turning the two sides under `Exchange`, which is right only where every writer writes every record. The store is registered with the value every record of both sides starts from, and that value is what the first pass reads. `Buffered::<T>::start()` takes it from the element type, its trivial constructor where it has one and its `Default` where it has none, and `Buffered::<T>::start_from(value)` takes the one given. A type with neither has no `start()`, so the explicit value is the only way to register it.
+A column is registered with the value every record of it starts from, and that value is what the first pass reads from a record nothing has written yet. `Column::<T>::start()` takes it from the element type, its trivial constructor where it has one and its `Default` where it has none, and `Column::<T>::start_from(value)` takes the one given. A type with neither has no `start()`, so the explicit value is the only way to register it, and the bare marker `Column::<T>::new()` names a column in an access set and registers nothing.
+
+A `Buffered<T>` is a column kept in two sides. Every read of it sees the frozen side and every write lands on the live one, so a unit can read the records around its own and write the same store in one pass, and what one pass wrote is what every unit reads in the next. The engine brings the live side over when the pass is done and only for a store the pass changed, by a copy under the default `Snapshot` mode or by turning the two sides under `Exchange`, which is right only where every writer writes every record. It is registered the same way, with `Buffered::<T>::start()` or `Buffered::<T>::start_from(value)`, and both of its sides start from that value.
 
 `Scheduler::replace_resource::<T>` and `Scheduler::replace_value::<T>` install a new value between two frames and mark its store changed for the next one. Both are provisional, which is listed under Status.
 
@@ -168,7 +170,7 @@ fn main() {
 
 Three standalone crates round out the ecosystem. `hilavitkutin-persistence` is the generic hot/cold storage bridge: rkyv-archived cold store on disk, SIEVE eviction over the hot store, content-hash translation for `Str` values across the persistence boundary so handles stay session-specific while disk identity stays stable. `hilavitkutin-str` is the interned string system: `Str` is `#[repr(transparent)]` over a 32-bit packed bitfield (one bit distinguishes const from runtime origin, 28 bits hold the id), const handles content-hash via FNV-1a at compile time and register through linker sections, runtime handles get sequential ids from a host-supplied `ArenaInterner` impl.
 
-`hilavitkutin-providers` ships default Kit implementations on top of the api primitives. v0 is the `InternerKit<BYTES, ENTRIES>` plus a `default_interner()` constructor backed by an inline `MemoryArena<BYTES, ENTRIES>`; future modules add default ColumnStorage, Clock, and MemoryProvider as consumer demand surfaces. Each of the three crates is independently usable and none depend on the engine; the engine reaches for them only when registered via `.add_kit::<K>()` or direct `.add_resource(_)` / `.add_column()` calls on the scheduler builder.
+`hilavitkutin-providers` ships default Kit implementations on top of the api primitives. v0 is the `InternerKit<BYTES, ENTRIES>` plus a `default_interner()` constructor backed by an inline `MemoryArena<BYTES, ENTRIES>`; future modules add default ColumnStorage, Clock, and MemoryProvider as consumer demand surfaces. Each of the three crates is independently usable and none depend on the engine; the engine reaches for them only when they are registered on the scheduler builder with `.with(...)`.
 
 ```rust
 use hilavitkutin_persistence::ColdStore;
@@ -192,11 +194,13 @@ MIRI under strict-provenance and tree-borrows; see [`MIRI.md`](./MIRI.md)
 at the repo root for the canonical flag invocation and the test
 files that exercise the atomic-ordering paths.
 
+`hilavitkutin-conformance` says what a frame means apart from the engine. Its `Oracle` is a one-thread reference runner written against `hilavitkutin-api` alone, its `Fold` digests what a run left behind, and its laws are functions over recorded runs, each shipped with the broken runs it has to refuse. The engine's `run`, `run_parallel` and `run_fused` are held to that reference by a set of work units written the way a consumer writes them, kept in an unpublished crate of the workspace whose files change only with a recorded break.
+
 ## Status
 
 Design is mature across the engine, the plugin-host layer, and the standalone ecosystem crates; implementation status varies per crate. The plugin-host layer (linking + extensions + extensions-macros) is implemented. The api crate and the standalone ecosystem extensions (ctx, str, persistence, providers) are partially implemented. The engine's runtime modules ship and the engine's tests run them: the plan analysis chain, the adapt subsystem, the thread pool, the morsel loop and resource resolution. Plan caching, the lowered core dispatch, the default worker executor (it returns without running a program) and the two calls that replace a resource's value between frames are not final. hilavitkutin-build runs as a build-dependency stub today; full wrapper script generation and config schema are not there yet.
 
-Public names may change; renames ship cleanly without deprecation aliases. Several pieces gate on unstable rustc features: `const_trait_impl`, `adt_const_params`, `generic_const_exprs`, `marker_trait_attr` for the trait solver work, plus `-Z config-include` for the build crate.
+Public names may change; renames ship cleanly without deprecation aliases. Several pieces gate on unstable rustc features: `const_trait_impl`, `adt_const_params` and `marker_trait_attr` for the trait solver work, plus `-Z config-include` for the build crate. The engine also still enables `generic_const_exprs` for one leftover const expression in the per-core program types, and that gate goes away with it.
 
 ## Support
 
