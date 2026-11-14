@@ -56,6 +56,13 @@ fn the_stage_holds_the_driver_and_the_arm_and_nothing_else() {
     let record = std::fs::read_to_string(out.join("build.txt")).unwrap();
     assert!(record.contains("commit: "), "{record}");
     assert!(record.contains("dirty"), "{record}");
+    // The record is committed beside the results, so it names the member by
+    // its path in the repository and never by where one clone sits.
+    let repo = here().join("../../..").canonicalize().unwrap();
+    assert!(
+        !record.contains(repo.to_str().unwrap()),
+        "the build record names the clone's own path: {record}"
+    );
 
     let seen = Command::new(out.join("release/stage-fixture-driver"))
         .output()

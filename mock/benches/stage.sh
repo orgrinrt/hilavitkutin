@@ -100,7 +100,7 @@ repo=$(git -C "$member" rev-parse --show-toplevel)
     echo "member: ${member#"$repo"/}"
     echo "commit: $(git -C "$repo" rev-parse HEAD)"
     echo "staged: $(date -u '+%Y-%m-%d %H:%M UTC')"
-    echo "profile: release, as $member/Cargo.toml declares it"
+    echo "profile: release, as ${member#"$repo"/}/Cargo.toml declares it"
     dirty=$(git -C "$repo" status --porcelain)
     if [ -n "$dirty" ]; then
         echo "dirty, against that commit:"

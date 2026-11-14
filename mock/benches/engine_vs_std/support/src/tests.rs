@@ -199,8 +199,23 @@ fn a_worker_that_skips_its_range_is_seen() {
 /// on the caller, as a scoped thread's is at its join, rather than leaving
 /// the caller waiting on a barrier one worker never reaches. The crew runs
 /// the next frame and drops cleanly after it.
+///
+/// The frames run on a thread of their own and the test waits a bounded
+/// time for them, so a crew that hangs on the panic fails the test rather
+/// than hanging the suite.
 #[test]
 fn a_worker_that_panics_fails_the_frame_instead_of_hanging_it() {
+    let (done, finished) = std::sync::mpsc::channel();
+    std::thread::spawn(move || {
+        frames_after_a_panic();
+        let _ = done.send(());
+    });
+    finished
+        .recv_timeout(std::time::Duration::from_secs(10))
+        .expect("the frame hung on a worker's panic, or the frames after it failed");
+}
+
+fn frames_after_a_panic() {
     let mut crew = Crew::new(3);
     let caught = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         crew.frame(&|core: usize| {
