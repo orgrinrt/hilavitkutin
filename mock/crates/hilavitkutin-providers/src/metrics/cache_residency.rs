@@ -1,4 +1,4 @@
-//! CacheResidencyMetrics (Topic 5 axis F).
+//! CacheResidencyMetrics.
 crate::metrics_resource!(
     CacheResidencyMetrics,
     "Per-column hit / miss ratio snapshot."

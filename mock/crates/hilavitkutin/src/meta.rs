@@ -1,6 +1,6 @@
-//! Engine-owned meta state (E4 slice 3, the engine-to-meta bridge).
+//! Engine-owned meta state, the engine-to-meta bridge.
 //!
-//! The self-hosting meta pipeline (T5 §Q9) needs mutable per-pass state the
+//! The self-hosting meta pipeline needs mutable per-pass state the
 //! scheduler maintains and an `OnMeta` work unit reads. That state cannot ride a
 //! consumer `Resource<T>`: a consumer resource is `Copy` and read-only after
 //! init (the arena drain requires `Copy`, and work units read it via `&T`), so
@@ -12,7 +12,7 @@
 //!
 //! `MetaField` is the type-keyed projection from the block to one meta resource,
 //! the meta analogue of the store `Selector`. The Ctx accessor resolves
-//! `meta::<T>()` through it. Only `SchedulerMetrics` is wired this round (its
+//! `meta::<T>()` through it. Only `SchedulerMetrics` is wired today (its
 //! `pass_count`); the other meta resources (`Dag`, `ExecutionPlan`,
 //! `LaneAssignment`) carry their data in the plan structures and join the block
 //! with their data sources.

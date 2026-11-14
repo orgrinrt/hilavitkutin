@@ -45,7 +45,7 @@ pub fn frame_await<'arena, const C: usize, const P: usize>(
     last_seen: USize,
     spin_budget: USize,
 ) -> USize {
-    // Bounded middle-tier pre-roll (Topic 6 axis K): re-load and
+    // Bounded middle-tier pre-roll: re-load and
     // re-check up to the budget before the first park. Each iteration
     // observes the word, so a bump during the spin returns without
     // ever sleeping; the eventual park keeps the load-check-wait

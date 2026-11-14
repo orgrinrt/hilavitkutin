@@ -53,8 +53,8 @@
 //! | `LoopFusion` | Experimental; fuse adjacent loops. |
 //! | `MimallocAllocator` | Advisory mimalloc recommendation. |
 //!
-//! The generated config file `Cargo.toml`-shaped overrides (Profiles
-//! etc.) are deferred to a follow-up round per `BACKLOG`.
+//! The generated config file carries no `Cargo.toml`-shaped overrides
+//! (Profiles etc.).
 
 #![no_std]
 #![deny(unsafe_op_in_unsafe_fn)]

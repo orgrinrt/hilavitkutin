@@ -1,10 +1,10 @@
 //! ColdStore: file-backed cold store handle.
 //!
-//! Skeleton round: `open` returns a default Manifest + empty
+//! A skeleton: `open` returns a default Manifest + empty
 //! StringTable. `flush` / `snapshot` are no-op `Ok(())`. `load`
-//! returns `PersistenceError::Missing`. Real mmap / rkyv impls land
-//! in a follow-up round once rkyv's no_std + no_alloc story has been
-//! vetted against `MemoryProviderApi`.
+//! returns `PersistenceError::Missing`. There is no mmap or rkyv
+//! implementation yet; one waits on rkyv's no_std + no_alloc story
+//! being vetted against `MemoryProviderApi`.
 
 use hilavitkutin_api::MemoryProviderApi;
 use hilavitkutin_str::ArenaInterner;
@@ -25,11 +25,11 @@ pub struct ColdStore<'a, M: MemoryProviderApi, A: ArenaInterner> {
 impl<'a, M: MemoryProviderApi, A: ArenaInterner> ColdStore<'a, M, A> {
     /// Open a cold store from the given context.
     ///
-    /// Skeleton: returns a default-Manifest instance with an empty
-    /// StringTable. Follow-up round mmap-loads `manifest.rkyv` +
+    /// Returns a default-Manifest instance with an empty StringTable.
+    /// It does not yet mmap-load `manifest.rkyv` +
     /// `strings/runtime.rkyv` via `ctx.memory()`.
     pub fn open(ctx: PersistenceContext<'a, M, A>) -> Outcome<Self, PersistenceError> {
-        // FIXME(hilavitkutin_persistence_5_unmarked_placeholders): reads no manifest; the file-backed round maps `manifest.rkyv` and `strings/runtime.rkyv` through `ctx.memory()` (BACKLOG, mmap-backed file I/O).
+        // FIXME(hilavitkutin_persistence_5_unmarked_placeholders): reads no manifest; the file-backed open maps `manifest.rkyv` and `strings/runtime.rkyv` through `ctx.memory()` (BACKLOG, mmap-backed file I/O).
         Outcome::Ok(Self {
             context:      ctx,
             manifest:     Manifest::new(),
@@ -54,8 +54,8 @@ impl<'a, M: MemoryProviderApi, A: ArenaInterner> ColdStore<'a, M, A> {
 
     /// Flush dirty data to disk.
     ///
-    /// Skeleton: no-op. Follow-up round serialises dirty tables via
-    /// rkyv and writes through `MemoryProvider`.
+    /// A no-op today. It does not yet serialise dirty tables via rkyv
+    /// and write through `MemoryProvider`.
     pub fn flush(&mut self) -> Outcome<(), PersistenceError> {
         // FIXME(hilavitkutin_persistence_5_unmarked_placeholders): writes nothing and reports success; a flushed store's data is not yet what a later `load` finds (BACKLOG, mmap-backed file I/O).
         Outcome::Ok(())
@@ -63,8 +63,8 @@ impl<'a, M: MemoryProviderApi, A: ArenaInterner> ColdStore<'a, M, A> {
 
     /// Load a table from disk into the hot store.
     ///
-    /// Skeleton: returns `Missing`. Follow-up round mmaps the table
-    /// file and hands the archived view off to the consumer.
+    /// Returns `Missing` today. It does not yet mmap the table file
+    /// and hand the archived view off to the consumer.
     pub fn load(&mut self) -> Outcome<(), PersistenceError> {
         // FIXME(hilavitkutin_persistence_5_unmarked_placeholders): reports `Missing` whatever was flushed; the real load maps the table file (BACKLOG, mmap-backed file I/O).
         Outcome::Err(PersistenceError::Missing)
@@ -72,8 +72,8 @@ impl<'a, M: MemoryProviderApi, A: ArenaInterner> ColdStore<'a, M, A> {
 
     /// Snapshot the cold store for backup.
     ///
-    /// Skeleton: no-op. Follow-up round enumerates files in the data
-    /// directory and atomically copies them to the target path.
+    /// A no-op today. It does not yet enumerate files in the data
+    /// directory and atomically copy them to the target path.
     pub fn snapshot(&self) -> Outcome<(), PersistenceError> {
         // FIXME(hilavitkutin_persistence_5_unmarked_placeholders): copies nothing and reports success (BACKLOG, backup / snapshot mechanism).
         Outcome::Ok(())

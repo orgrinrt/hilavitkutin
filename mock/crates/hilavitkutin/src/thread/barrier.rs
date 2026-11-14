@@ -1,4 +1,4 @@
-//! Phase-barrier counter (Topic 6 axis I).
+//! Phase-barrier counter.
 //!
 //! Centralised counter shape: workers `fetch_add(1)` against
 //! `PoolFrame.phase_arrived` with Release on phase exit. Last
@@ -22,7 +22,7 @@ use super::parking::{atomic_wait, atomic_wake_all};
 /// workers have arrived, then releases all; reusable across the many waists of
 /// one frame with no reset race.
 ///
-/// The reversing design (spec Topic 6 axis I, the deferred-E3 fix): a worker
+/// The sense-reversing design: a worker
 /// snapshots `barrier_sense` on entry, then `fetch_add`s `phase_arrived`. The
 /// last arriver (`prior + 1 == expected`) resets `phase_arrived` to zero and
 /// bumps `barrier_sense` (Release), then futex-wakes everyone; followers park on
