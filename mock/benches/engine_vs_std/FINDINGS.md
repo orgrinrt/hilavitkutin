@@ -175,6 +175,34 @@ working) and never "the arms diverged" (a broken bench). The comparison also
 runs in `./run-checks.sh`, at a small size, and `../stage.sh` runs those
 checks before it builds anything for timing.
 
+### The first harness run, 14 November 2026
+
+The engine these sections time has no fusing yet and no adaptive trunk, fiber
+and morsel work, so the numbers are a baseline to compare against once those
+exist, and no design call rests on them. The run was staged from commit
+c894a779 with nothing dirty, which every cell's `.build.txt` records, and
+`engine_vs_std --verdict` over `results/` judged 28 pairs and found 10 red.
+
+On one core, engine over std is red on every accumulator size (7.44x at 4096
+records, then 2.54x, 2.24x and 2.41x, against 1.30), on branching at 4096
+records (5.78x against 2.00) and on element_wise at 65536 records (1.20x
+against 1.10). Branching from 65536 records up, element_wise at the other
+three sizes and wide_parallel at every size are green. Threaded engine over
+threaded std is red on accumulator from 65536 records up (2.37x, 1.72x and
+1.84x against 1.10) and green at 4096 records (0.86x) and on wide_parallel at
+every size. The threaded std arms run on a `Crew` of workers parked between
+frames, as the engine's are; the ceilings in `expected.rs` were measured
+against threads spawned per frame and are kept, so a red on a threaded pair is
+partly the stronger bar. Startup is red on branching (1.84x against 1.10) and
+green on the other three workloads.
+
+Holds for: the sizes 4096, 65536, 1048576 and 4194304 (startup at 4194304
+only), warm mode, release profile with fat LTO, 2 passes of 20 runs of 5-call
+batches per cell and one harness run, the 4-vCPU Xeon KVM guest this
+repository's benches run on, unpinned, with no other build on the machine
+while it timed. A cell is one run; how far a small cell moves between runs is
+not measured here.
+
 The sections that follow predate the harness. Their numbers
 were taken with the old loop over an input of `In[i] = i`, and the harness's
 seeded input and per-arm worker processes are not the same measurement.
