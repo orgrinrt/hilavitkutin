@@ -136,9 +136,50 @@ macro_rules! alter {
 }
 
 /// The traces, checks and controls of one build of the fixture. The units in
-/// `unjudged` are held to nothing by the count checks.
+/// `unjudged` are held to nothing by the count checks, and `also` names which
+/// of the stores check and the unmarked-change check the build has, so a build
+/// that cannot fail them generates neither.
 macro_rules! build_checks {
-    ($name:ident, $kind:ident, $records:expr, unjudged: $unjudged:expr) => {
+    (@stores, $kind:ident, $records:expr) => {
+            /// The first store difference of the every-store-dirty run against
+            /// the model, and of the skipping run against it.
+            pub fn stores_check<P: ThreadPoolApi>(
+                s: &Serial,
+                pool: &P,
+                broken: Option<(usize, Alter)>,
+            ) -> Option<Difference> {
+                let (skipped, all) = traces(s, pool, broken);
+                let model = model_trace($records, stringify!($kind) == "accumulator");
+                first_bytes_difference(&bytes_of(&all), &model)
+                    .or_else(|| first_bytes_difference(&bytes_of(&skipped), &bytes_of(&all)))
+            }
+    };
+    (@unmarked, $kind:ident, $records:expr) => {
+            /// Whether a skipping `run_parallel` and an every-store-dirty one
+            /// differ after the host changes every input without a mark.
+            pub fn unmarked_change_diverges<P: ThreadPoolApi>(s: &Serial, pool: &P) -> bool {
+                let skipping = wide_scheduler!(s, $records, $kind);
+                let mut skipping = core::pin::pin!(skipping);
+                let every = wide_scheduler!(s, $records, $kind);
+                let mut every = core::pin::pin!(every);
+                assert!(matches!(skipping.as_mut().run_parallel(pool), Outcome::Ok(())));
+                assert!(matches!(every.as_mut().run_parallel(pool), Outcome::Ok(())));
+                let changed = [7, 8, 9, 10, 11, 12];
+                // SAFETY: neither scheduler is moved out of its pin, and every
+                // worker is parked while the host writes through it.
+                let parked = unsafe { skipping.as_mut().get_unchecked_mut() };
+                set_inputs!(parked, changed);
+                // SAFETY: as above.
+                let parked = unsafe { every.as_mut().get_unchecked_mut() };
+                set_inputs!(parked, changed);
+                mark_every_store!(parked);
+                assert!(matches!(skipping.as_mut().run_parallel(pool), Outcome::Ok(())));
+                assert!(matches!(every.as_mut().run_parallel(pool), Outcome::Ok(())));
+                snapshot!(skipping.as_ref().get_ref(), $records, $kind)
+                    != snapshot!(every.as_ref().get_ref(), $records, $kind)
+            }
+    };
+    ($name:ident, $kind:ident, $records:expr, unjudged: $unjudged:expr, also: [$($also:ident),*]) => {
         mod $name {
             use super::*;
 
@@ -197,19 +238,6 @@ macro_rules! build_checks {
                 )
             }
 
-            /// The first store difference of the every-store-dirty run against
-            /// the model, and of the skipping run against it.
-            pub fn stores_check<P: ThreadPoolApi>(
-                s: &Serial,
-                pool: &P,
-                broken: Option<(usize, Alter)>,
-            ) -> Option<Difference> {
-                let (skipped, all) = traces(s, pool, broken);
-                let model = model_trace($records, stringify!($kind) == "accumulator");
-                first_bytes_difference(&bytes_of(&all), &model)
-                    .or_else(|| first_bytes_difference(&bytes_of(&skipped), &bytes_of(&all)))
-            }
-
             /// The first unit and frame of `trace` whose count is not the skip
             /// rule's: a unit in the cone of the step runs as often as in the
             /// cold frame of `run`, `cold`, and a unit outside it not at all.
@@ -243,40 +271,18 @@ macro_rules! build_checks {
                 against_the_cone(&skipped, cold)
             }
 
-            /// Whether a skipping `run_parallel` and an every-store-dirty one
-            /// differ after the host changes every input without a mark.
-            pub fn unmarked_change_diverges<P: ThreadPoolApi>(s: &Serial, pool: &P) -> bool {
-                let skipping = wide_scheduler!(s, $records, $kind);
-                let mut skipping = core::pin::pin!(skipping);
-                let every = wide_scheduler!(s, $records, $kind);
-                let mut every = core::pin::pin!(every);
-                assert!(matches!(skipping.as_mut().run_parallel(pool), Outcome::Ok(())));
-                assert!(matches!(every.as_mut().run_parallel(pool), Outcome::Ok(())));
-                let changed = [7, 8, 9, 10, 11, 12];
-                // SAFETY: neither scheduler is moved out of its pin, and every
-                // worker is parked while the host writes through it.
-                let parked = unsafe { skipping.as_mut().get_unchecked_mut() };
-                set_inputs!(parked, changed);
-                // SAFETY: as above.
-                let parked = unsafe { every.as_mut().get_unchecked_mut() };
-                set_inputs!(parked, changed);
-                mark_every_store!(parked);
-                assert!(matches!(skipping.as_mut().run_parallel(pool), Outcome::Ok(())));
-                assert!(matches!(every.as_mut().run_parallel(pool), Outcome::Ok(())));
-                snapshot!(skipping.as_ref().get_ref(), $records, $kind)
-                    != snapshot!(every.as_ref().get_ref(), $records, $kind)
-            }
+            $( build_checks!(@$also, $kind, $records); )*
         }
     };
 }
 
-build_checks!(windowed, plain, RECORDS, unjudged: [ACCUMULATOR]);
-build_checks!(record_less, plain, 0, unjudged: [ACCUMULATOR]);
+build_checks!(windowed, plain, RECORDS, unjudged: [ACCUMULATOR], also: [stores, unmarked]);
+build_checks!(record_less, plain, 0, unjudged: [ACCUMULATOR], also: []);
 // The producer of `Out<1>` shares the accumulator writer's fiber, so `run`
 // runs it with that fiber in every frame (row
 // `a_mixed_carrier_keeps_incremental_skip_per_fiber_and_accumulator_fibers_always_run_the_whole_range`,
 // provisional), and it is left unjudged with the writer.
-build_checks!(unit_outer, accumulator, RECORDS, unjudged: [ACCUMULATOR, 1]);
+build_checks!(unit_outer, accumulator, RECORDS, unjudged: [ACCUMULATOR, 1], also: [stores, unmarked]);
 
 /// One test of one build, by its short name: `stores`, `cone`, `count` or
 /// `unmarked`, with whatever attributes the build gives it.

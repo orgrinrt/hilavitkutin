@@ -209,10 +209,12 @@ fn a_block_stays_where_it_was_when_the_provider_moves() {
 }
 
 #[test]
-fn a_provider_over_raw_parts_is_dropped_before_its_block_is_freed() {
-    // The order a provider over a block it does not own keeps: build it over
-    // the block, use it, drop it, and only then free the block. Run under Miri
-    // as well, which sees a use of the block after the free.
+fn a_block_from_raw_parts_is_written_and_read_soundly() {
+    // A provider over a block it does not own hands out blocks inside it that
+    // can be written and read, which Miri checks under both borrow models. The
+    // order of the provider's drop and the block's free is the caller's promise
+    // to `from_raw_parts`; `StaticBumpMemory` has no `Drop`, so nothing here can
+    // observe it, and the test keeps the order the benches keep.
     const BYTES: usize = 256;
     let block = Box::into_raw(Box::new([MaybeUninit::<u8>::uninit(); BYTES]));
     let lo = block.addr();
