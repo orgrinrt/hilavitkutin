@@ -2,7 +2,7 @@
 //! reads what a staged driver sees of itself.
 
 fn main() {
-    match bench_stage::Stage::of_current_exe() {
+    match mockspace_bench_harness::staging::StagedBuild::of_current_exe() {
         Ok(stage) => {
             match stage.verify() {
                 Ok(()) => println!("staged {}", stage.dir().display()),

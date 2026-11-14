@@ -26,9 +26,9 @@
 use std::path::Path;
 use std::process::ExitCode;
 
-use bench_stage::Stage;
 use mockspace_bench_core::{byte_routine_dispatch, routine_bridge};
 use mockspace_bench_harness::driver::{DriverRegistry, drive};
+use mockspace_bench_harness::staging::StagedBuild;
 use mockspace_bench_harness::{self as harness, BenchConfig, RoutineSpec, Workload};
 use stc_support::workload::{APPEND, FOLD_HEAVY, FOLD_LIGHT, by_name};
 use stc_support::{Conv, input_bytes};
@@ -51,14 +51,19 @@ fn main() -> ExitCode {
             },
         };
     }
-    let stage =
-        match Stage::of_current_exe().and_then(|s| s.link_into(Path::new("target")).map(|()| s)) {
-            Ok(stage) => stage,
-            Err(e) => {
-                eprintln!("error: {e}");
-                return ExitCode::FAILURE;
-            },
-        };
+    // `_link` holds `target` on the staged build until the run ends, and
+    // removes it then, so the next plain build writes a target of its own.
+    let staged = StagedBuild::of_current_exe().and_then(|s| {
+        let link = s.link_into(Path::new("target"))?;
+        Ok((s, link))
+    });
+    let (stage, _link) = match staged {
+        Ok(staged) => staged,
+        Err(e) => {
+            eprintln!("error: {e}");
+            return ExitCode::FAILURE;
+        },
+    };
     let code = drive(&DriverRegistry {
         build_workload,
         routine_for,

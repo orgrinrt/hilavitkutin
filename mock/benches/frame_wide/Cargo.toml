@@ -47,9 +47,8 @@ path = "tests/unstaged_driver.rs"
 [dependencies]
 frame-wide-support = { path = "support/frame-wide-support" }
 bench-arm = { path = "../bench-arm" }
-bench-stage = { path = "../bench-stage" }
-mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "f42844c7f7f8be9c54dd96b9a975a6c7da3fea5e", features = ["std"] }
-mockspace-bench-harness = { git = "https://github.com/hiisi-digital/mockspace", rev = "f42844c7f7f8be9c54dd96b9a975a6c7da3fea5e" }
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "5a775f3ea7f969a7589ce970e16e55b2ba856f41", features = ["std"] }
+mockspace-bench-harness = { git = "https://github.com/hiisi-digital/mockspace", rev = "5a775f3ea7f969a7589ce970e16e55b2ba856f41" }
 
 # `engine_grouping` reaches the engine's grouping directly. The arms reach it
 # only through `frame-wide-support`, so these are test-only.

@@ -23,10 +23,10 @@
 use std::path::Path;
 use std::process::ExitCode;
 
-use bench_stage::Stage;
 use evs_support::{Evs, Workload};
 use mockspace_bench_core::{byte_routine_dispatch, routine_bridge};
 use mockspace_bench_harness::driver::{DriverRegistry, drive};
+use mockspace_bench_harness::staging::StagedBuild;
 use mockspace_bench_harness::{self as harness, BenchConfig, RoutineSpec, Workload as Program};
 
 mod verdict;
@@ -44,14 +44,19 @@ fn main() -> ExitCode {
             },
         };
     }
-    let stage =
-        match Stage::of_current_exe().and_then(|s| s.link_into(Path::new("target")).map(|()| s)) {
-            Ok(stage) => stage,
-            Err(e) => {
-                eprintln!("error: {e}");
-                return ExitCode::FAILURE;
-            },
-        };
+    // `_link` holds `target` on the staged build until the run ends, and
+    // removes it then, so the next plain build writes a target of its own.
+    let staged = StagedBuild::of_current_exe().and_then(|s| {
+        let link = s.link_into(Path::new("target"))?;
+        Ok((s, link))
+    });
+    let (stage, _link) = match staged {
+        Ok(staged) => staged,
+        Err(e) => {
+            eprintln!("error: {e}");
+            return ExitCode::FAILURE;
+        },
+    };
     let started = std::time::SystemTime::now();
     let code = drive(&DriverRegistry {
         build_workload,
@@ -77,8 +82,12 @@ fn main() -> ExitCode {
 /// stage's record of the commit the arms were built from and whatever was
 /// dirty against it. A cell is this run's when its findings were written
 /// after the run started; the cells of earlier runs keep their own records.
-fn settle(results: &Path, started: std::time::SystemTime, stage: &Stage) -> Result<(), String> {
-    let record = stage.build_record()?;
+fn settle(
+    results: &Path,
+    started: std::time::SystemTime,
+    stage: &StagedBuild,
+) -> Result<(), String> {
+    let record = stage.build_record().map_err(|e| e.to_string())?;
     let read = |dir: &Path| std::fs::read_dir(dir).map_err(|e| format!("{}: {e}", dir.display()));
     for section in read(results)? {
         let section = section.map_err(|e| e.to_string())?.path();
@@ -152,7 +161,7 @@ mod tests {
 
     /// A stage holding one driver, as `stage.sh` lays one out, with the
     /// build record `commit: test`.
-    fn stage_in(dir: &Path) -> Stage {
+    fn stage_in(dir: &Path) -> StagedBuild {
         std::fs::create_dir_all(dir.join("release")).unwrap();
         std::fs::write(dir.join("release/driver"), b"abc").unwrap();
         std::fs::write(
@@ -161,7 +170,7 @@ mod tests {
         )
         .unwrap();
         std::fs::write(dir.join("build.txt"), "commit: test\n").unwrap();
-        Stage::of_executable(&dir.join("release/driver")).unwrap()
+        StagedBuild::of_executable(&dir.join("release/driver")).unwrap()
     }
 
     /// The cell this run wrote is stripped and gets the stage's record; the

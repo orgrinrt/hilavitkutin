@@ -20,9 +20,8 @@ path = "src/main.rs"
 
 [dependencies]
 stc-support = { path = "support" }
-bench-stage = { path = "../bench-stage" }
-mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "f42844c7f7f8be9c54dd96b9a975a6c7da3fea5e", features = ["std"] }
-mockspace-bench-harness = { git = "https://github.com/hiisi-digital/mockspace", rev = "f42844c7f7f8be9c54dd96b9a975a6c7da3fea5e" }
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "5a775f3ea7f969a7589ce970e16e55b2ba856f41", features = ["std"] }
+mockspace-bench-harness = { git = "https://github.com/hiisi-digital/mockspace", rev = "5a775f3ea7f969a7589ce970e16e55b2ba856f41", features = ["stage-link"] }
 
 # The pinned arvo crates name notko by its `ssh` spelling; the patch points
 # that spelling at the `https` source the engine names, so the graph holds one

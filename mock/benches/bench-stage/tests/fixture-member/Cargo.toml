@@ -14,4 +14,4 @@ name = "stage-fixture-driver"
 path = "src/main.rs"
 
 [dependencies]
-bench-stage = { path = "../.." }
+mockspace-bench-harness = { git = "https://github.com/hiisi-digital/mockspace", rev = "5a775f3ea7f969a7589ce970e16e55b2ba856f41" }

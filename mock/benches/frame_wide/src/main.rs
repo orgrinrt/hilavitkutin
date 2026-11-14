@@ -26,7 +26,6 @@
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use bench_stage::Stage;
 use frame_wide::{
     is_worker,
     locate_arm,
@@ -36,6 +35,7 @@ use frame_wide::{
     workload_for,
     write_findings,
 };
+use mockspace_bench_harness::staging::StagedBuild;
 use mockspace_bench_harness::{self as harness, BenchManifest, BenchResult, EnvMeta};
 
 fn main() -> ExitCode {
@@ -71,8 +71,8 @@ fn drive(args: &[String]) -> Result<(), String> {
     let stage = if report_only {
         None
     } else {
-        let stage = Stage::of_current_exe()?;
-        stage.verify()?;
+        let stage = StagedBuild::of_current_exe().map_err(|e| e.to_string())?;
+        stage.verify().map_err(|e| e.to_string())?;
         eprintln!("  staged at {}", stage.dir().display());
         Some(stage)
     };
@@ -112,7 +112,7 @@ fn run_cell(
     bench: &str,
     idx: usize,
     member_dir: &Path,
-    stage: Option<&Stage>,
+    stage: Option<&StagedBuild>,
 ) -> Result<(), String> {
     let report_only = stage.is_none();
     let mut config = manifest
@@ -195,7 +195,7 @@ fn run_cell(
     write_findings(&result, &routine, "warm", &findings)?;
     let build = format!("{bench}_n{n}.build.txt");
     if let Some(stage) = stage {
-        std::fs::write(&build, stage.build_record()?)
+        std::fs::write(&build, stage.build_record().map_err(|e| e.to_string())?)
             .map_err(|e| format!("cannot write {build}: {e}"))?;
     }
     eprintln!("  wrote {csv}, {findings} and {build}");
