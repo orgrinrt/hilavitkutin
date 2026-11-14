@@ -1,0 +1,50 @@
+4aaace16 chore: lock src changelist 202611140459
+993759ec test: drop the dead_code allows in the macros and extensions tests
+3c8b96e9 test: make the builder smokes read back what they register
+7bd732b3 test: let the ui pass twins infer their run witnesses
+acaddd0a Merge remote-tracking branch 'origin/work/hv-suite-reads' into work/hv-suite-surface
+4392de83 test: split the run_parallel suite and make the ui twins observe a run
+14f8b713 test: clear the remaining test warnings without suppression
+e2445e50 test: observe the columns and accumulators the units wrote
+a22fd30b test: read written columns back instead of allowing dead code
+6d096fde chore: open the suite-as-an-instrument round
+f0304be0 docs: plan the engine's one path and its correctness work
+8236de3c feat: revise the hilavitkutin api in place
+b4c70cd0 feat: put the hilavitkutin canon on stamped and held standings
+e99af156 docs: record the load-time units panel and its sketches
+4d31368e fix: make the leaf crates green
+271909e5 feat: build every crate through `hilavitkutin-build`
+44f7de28 bench: add the frame_wide member and the wide bench matrix
+81c5c587 docs: land the record from every unmerged branch
+311a2ae6 feat: install a swapped resource value under a provisional spec
+c4902694 docs: audit hilavitkutin as part of the stack
+49ab3440 feat: land the recovered engine source, tests and bench variants
+ab63d610 bench: measure single trunk convergence against hand written loops
+ada51bb4 chore: port the lints to the one view of the tree
+6e971d1b docs: keep the perf gate section under the corrected findings
+6524900e docs: land the unlanded bench results and their run history
+c42d7074 feat: make an append past capacity a refusal the consumer configures
+27abd8a8 research: sketch a branded index for exclusive column writes
+26e926b6 fix: spell the notko git source by https
+c2b392d1 test: make the hilavitkutin suite able to fail
+0928042a research: sketch one kernel's digests on native and wasm32
+b373d702 research: sketch the frame view and the two regimes as types
+cfe40b43 research: sketch kernels that run unchanged under five runners
+4b327c57 fix: make hilavitkutin dev pass its own commit gate
+af823b76 fix: pin the research sketches' arvo deps by rev
+6ee3746d chore: move mockspace config to the repo root, drop its dep
+d14bec3c fix: drop the unlocked duplicate of a closed round's doc changelist
+e3fa3f4a feat: bring hilavitkutin up on arvo `1b2796e9` without a std tier
+2f06ffe6 chore: land the design rounds and research the recovery branch carried
+1fbb2e9e chore: take the shared tool configs, and ignore a stray sketch lockfile
+a677bfd5 fix: pin the mock toolchain and take the structural lints from the pack
+220edfbc chore: take the shared rustfmt and deny configs
+313d427a Merge pull request #3 from orgrinrt/chore/patch-pass-2026-08
+06c7b414 docs: correct the ctx macro names and the CapabilityId constructor
+288660e3 docs: drop crates.io and docs.rs badges for an unpublished crate
+3de0b5c1 docs: sync manifest descriptions and drop their em-dash
+ee536c92 docs: remove tier-1 leakage and a dead test path from MIRI.md
+7bcf6668 docs: name the phase configs as the enum spells them
+3ef35d2e docs: describe the builder api the scheduler actually ships
+0df662cf chore: remove github actions workflows
+603e663a chore: migrate to the mockspace launcher
