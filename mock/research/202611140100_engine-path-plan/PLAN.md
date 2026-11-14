@@ -44,7 +44,7 @@ The api revision changes this in four places that the build inherits. `dirty_uni
 
 ## The one path
 
-Five points were open. On each, both seats reached the same answer without seeing the other's. Their reports are `SEAT-ONE.md` and `SEAT-TWO.md` beside this file and their brief is `SEAT-BRIEF.md`. The sampled citations of the first report were opened and hold (`mock/Cargo.toml` sets no `panic`, `worker.rs:102` parks on `&s.pool`, `plan/grouping.rs:289-298` builds trunks by union-find, the spec `:1130-1137`, `:1306-1317`, `:1394-1396`). The rest of what the seats cite is theirs and is marked so where this plan leans on it.
+Five points were open at the first writing, and a sixth is below. On each of the five, both seats reached the same answer without seeing the other's. Their reports are `SEAT-ONE.md` and `SEAT-TWO.md` beside this file and their brief is `SEAT-BRIEF.md`. The sampled citations of the first report were opened and hold (`mock/Cargo.toml` sets no `panic`, `worker.rs:102` parks on `&s.pool`, `plan/grouping.rs:289-298` builds trunks by union-find, the spec `:1130-1137`, `:1306-1317`, `:1394-1396`). The rest of what the seats cite is theirs and is marked so where this plan leans on it.
 
 ### One frame body
 
@@ -104,7 +104,19 @@ The frame after a plan-affecting swap opens on the plan band whatever its fibers
 
 What an accumulator fiber does under the mask neither seat settled. A skipped unit must leave what it would have written, and an accumulator is reset every frame, so either its writer always runs or a skipped writer's appends are kept across the reset. The code does the first (`run.rs:242-253`), a provisional row says the first (`a_mixed_carrier_keeps_incremental_skip_per_fiber_and_accumulator_fibers_always_run_the_whole_range`), and the build keeps it. What the body owes either way is the same accumulator contents whether a unit ran or rested, and the differential asserts that.
 
-Keeping it is this plan's own call on a provisional row, and no stamp. The registry leaves the accumulator's shape open (`which_shape_the_accumulator_takes_is_left_to_the_api_revision`, by the first seat's reading), and the call changes no behaviour, so nothing is asked of op for it here.
+Keeping it is this plan's own call on a provisional row, and no stamp.
+
+### Commutativity gates the accumulator tiling
+
+A sixth point was left by the first writing as this plan's own reading. It went to two opus seats one after the other, the second blind to the first, on a brief of its own (`SEAT-BRIEF-COMMUTATIVITY.md`; reports `SEAT-THREE.md` and `SEAT-FIVE.md`). A third read, on sonnet and blind to both, is kept beside them as `SEAT-FOUR.md` and carries no weight of its own.
+
+Both opus seats found the canon settles it, and no stamp is needed. `ordering_is_guaranteed_by_construction` (ratified, the spec `:604-607`) says "a non-commutative fiber runs on a single core", and `a_fiber_is_commutative_only_if_all_its_units_are_and_resource_accumulation_uses_per_thread_accumulators_merged_after` (ratified, `:1171-1176`) gives multi-core morsel dispatch to commutative fibers only. The engine design says the same of the accumulator (`mock/crates/hilavitkutin/DESIGN.md.tmpl:646-648`, "Non-commutative accumulation keeps the sequential single-core fallback"). The provisional row `each_core_appends_into_its_own_region_of_an_accumulator_and_the_main_thread_merges_the_regions_in_order` describes the regioning and is silent on the gate, so it is read under the ratified two.
+
+The gate is per fiber, on every unit of it and not only the one that appends, at every worker count. Since the tiling walks the whole carrier on each core (`scheduler/worker.rs:107-124`, the record range taken from `accum_slice` at `:191` and passed at `:232`, `:247`), a carrier is tiled only when every fiber it holds is commutative. Today nothing reads the flag: `COMMUTATIVE` defaults to false (`hilavitkutin-api/src/work_unit.rs:84`), is copied at `plan/mod.rs:423`, and the tiling is chosen by `carrier_unit_outer` on `morsel_local` alone (`scheduler/run_parallel.rs:467-478`).
+
+Both seats refuted the in-order merge as making the split invisible. Each core's live length starts at zero (`resource/bindings/per_core.rs:135`) and a unit can read it (`dispatch/engine_ctx/ctx_writers.rs:172-174`), so a unit that appends its accumulator's length gives a different buffer under the tiling. The seats name it as the case that must fail. Neither ran it.
+
+What the seats did not settle is timing, and they read it differently: whether op's "Measure first" on single-trunk convergence ("The code stays as it is meanwhile", registry question `which_convergence_a_single_trunk_phase_uses`) holds the gate back. One reads his words as not reaching the accumulator path, the other holds the repair until he says. It is asked of him as `does_measure_first_hold_the_accumulator_tiling_s_commutativi`. Job 9 lands the failing test either way and the gate when he answers. The registry leaves the accumulator's shape open (`which_shape_the_accumulator_takes_is_left_to_the_api_revision`, by the first seat's reading), and the call changes no behaviour, so nothing is asked of op for it here.
 
 ## What is already settled, and what is held
 
@@ -208,7 +220,9 @@ Ticket 59 reads as done on `dev`: `tests/leading_band_appends.rs` (landed with `
 
 Ticket 58: a core's region is capped at its record slice, so a skew that fits the reservation is refused at more than one worker. The check is the ignored test `a_skew_that_fits_the_reservation_is_accepted_at_every_worker_count` (`tests/overflow_is_a_value.rs:377`) un-ignored and green, and it is the case that fails today.
 
-Ticket 116, restated: the tiling reads commutativity. This is this plan's own reading and no seat checked it: the spec's sentence is about head and tail (`:1171-1176`) and the api revision calls the accumulator tiling a different mechanism (`DESIGN.md.tmpl:602-608` there), while its design also says non-commutative accumulation keeps one core (`:682-683` there). It is asked of op as the question ticket titled "does the accumulator tiling read commutativity in hilavitkutin", and the job's design round takes his answer or, failing one, two seats before source moves. The case that must fail: a carrier whose accumulator-writing unit declares itself non-commutative, asserted to take one core at 2 and 4 workers.
+Ticket 116, restated: the tiling reads commutativity, as the canon has it (the section above). The cases that must fail, committed first, each at `FixedWorkers` of 2, 4 and `MAX_CORES` and never the host's count: a carrier whose unit leaves `COMMUTATIVE` at its default and appends its accumulator's `len()` per kept record, asserted byte-equal to `run` and run by one thread; and a carrier whose units all declare it, asserted still tiled. The first fails today. The existing `run_parallel_accumulator_matches_single_core` (`tests/gate2_accumulator.rs:182-221`) cannot see the point, since its one appender depends on its own record alone and its executor takes the host's worker count. The gate lands when op answers `does_measure_first_hold_the_accumulator_tiling_s_commutativi`; until then the first case is committed ignored under that ticket.
+
+The same job owes the resource half. A tiled carrier hands every core the same resource binding (`rebase_accums` returns the erased pointer unchanged, `resource/bindings/per_core.rs:48-54`), where `each_convergence_thread_accumulates_into_its_own_stack_local_resource_and_non_commutative_accumulation_runs_sequentially` (ratified, the spec `:1750-1763`) gives each thread its own accumulator and a combine after. This is read from the code by the sonnet seat and not run (`hilavitkutin_a_tiled_accumulator_carrier_shares_one_resource`). Its case, first, under Miri: a resource-writing unit on an accumulator carrier at 2 workers.
 
 ### 10. The plan cache and the plan handle
 
@@ -246,9 +260,15 @@ The stub's own doc names the intrinsic as what it is to become (`intrinsics/mod.
 
 ## Tickets filed or bumped from this work
 
-The ids are in the report that goes with the branch. They cover: the four stamps and the caller question, as question tickets to op; trunk formation by union-find where the spec decomposes; `waist_detect` counting level width; `run_parallel` never calling `select_adapt_config`; `run_fused` windowing by the configuration's morsel size; the aliasing test that is an empty stub on an unlanded branch; ticket 116's stale lines; and the canon tools being absent from `dev`.
+All of them are rows of the workspace agenda (`.shared/scripts/life/tickets-hilavitkutin.toml` in clause-dev), each keyed as below.
 
-The question tickets to op: `one_frame_body_for_hilavitkutin_and_the_fused_entry_retired`, `a_unit_panic_aborts_behind_a_no_unwind_boundary_in_hilavitku`, `bless_the_scheduler_plane_relocation_that_closes_the_worker`, `does_the_thread_calling_run_parallel_run_core_0_s_body`, and the one titled "a terminal fan-in closes no phase and trunks follow the spec's decomposition". The task tickets: `hilavitkutin_forms_a_trunk_as_a_write_conflict_component_whe`, `arvo_waist_detect_counts_the_width_of_a_level_where_hilavitk`, `run_parallel_never_calls_select_adapt_config_or_folds_the_pe`, `cargo_mock_canon_already_said_and_unearth_do_not_exist_on_hi`.
+The question tickets to op: `one_frame_body_for_hilavitkutin_and_the_fused_entry_retired`, `a_unit_panic_aborts_behind_a_no_unwind_boundary_in_hilavitku`, `bless_the_scheduler_plane_relocation_that_closes_the_worker`, `does_the_thread_calling_run_parallel_run_core_0_s_body`, `a_terminal_fan_in_closes_no_phase_and_trunks_follow_the_spec`, and `does_the_accumulator_tiling_read_commutativity_in_hilavitkut`.
+
+The task tickets: `hilavitkutin_forms_a_trunk_as_a_write_conflict_component_whe` (trunk formation by union-find where the spec decomposes), `arvo_waist_detect_counts_the_width_of_a_level_where_hilavitk`, `run_parallel_never_calls_select_adapt_config_or_folds_the_pe`, `hilavitkutin_run_fused_windows_by_the_run_configuration_s_mo`, `the_aliasing_test_the_deviation_5_audit_cites_is_an_assertio`, `hilavitkutin_triage_ticket_116_cites_a_branch_dev_no_longer`, `hilavitkutin_engine_design_keeps_fiber_failure_poisons_depen` (job 3 states the split of a poisoned fiber from an aborting panic), `hilavitkutin_phases_are_full_barriers_where_the_ratified_ove`, `hilavitkutin_ignored_head_and_tail_test_targets_a_walk_the_c`, `hilavitkutin_n_way_single_trunk_branch_deleted_the_day_op_sa`, `hilavitkutin_a_tiled_accumulator_carrier_shares_one_resource` and `hilavitkutin_api_revision_design_accepts_close_results_that` (for the api lane).
+
+The question added by this writing: `does_measure_first_hold_the_accumulator_tiling_s_commutativi`. `does_the_accumulator_tiling_read_commutativity_in_hilavitkut` is bumped with the seats' answer, that the ratified rows settle it.
+
+`cargo_mock_canon_already_said_and_unearth_do_not_exist_on_hi` was filed by the first writing and is bumped as fixed by `b4c70cd0`, for the coordinator to close.
 
 ## What a review of this note found
 
