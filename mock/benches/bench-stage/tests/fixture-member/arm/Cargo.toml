@@ -1,0 +1,10 @@
+[package]
+name = "stage-fixture-arm"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "stage_fixture_arm"
+path = "src/lib.rs"
+crate-type = ["cdylib"]

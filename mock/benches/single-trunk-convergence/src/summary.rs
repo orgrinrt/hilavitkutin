@@ -51,7 +51,16 @@ struct Stats {
     batches: usize,
 }
 
+/// How far apart the highest and the lowest per-pass median may be before a
+/// group is flagged: the bracket FINDINGS.md held its ranges to by hand.
+const SPREAD_LIMIT: f64 = 1.5;
+
 impl Stats {
+    /// Whether the per-pass medians differ by more than `SPREAD_LIMIT`.
+    fn wide_spread(&self) -> bool {
+        self.pass_hi > self.pass_lo * SPREAD_LIMIT
+    }
+
     fn of(batches: &[(String, f64)]) -> Self {
         let mut xs: Vec<f64> = batches.iter().map(|(_, x)| *x).collect();
         xs.sort_by(f64::total_cmp);
@@ -97,7 +106,7 @@ pub fn run(dir: &Path) -> Result<PathBuf, String> {
     }
     let mut out = String::from(
         "workload,workers,section,n,mode,arm,median_ns,p25_ns,p75_ns,min_ns,pass_lo_ns,\
-         pass_hi_ns,batches,vs_sequential,vs_kernel_seq\n",
+         pass_hi_ns,batches,vs_sequential,vs_kernel_seq,wide_spread\n",
     );
     // One markdown table per workload and mode, a line per (W, n).
     let mut tables: BTreeMap<(String, &str), String> = BTreeMap::new();
@@ -128,10 +137,11 @@ pub fn run(dir: &Path) -> Result<PathBuf, String> {
                         Some((_, s)) => {
                             write!(
                                 table,
-                                " {} [{}, {}] |",
+                                " {} [{}, {}]{} |",
                                 human(s.median),
                                 human(s.pass_lo),
-                                human(s.pass_hi)
+                                human(s.pass_hi),
+                                if s.wide_spread() { " spread" } else { "" }
                             )
                         },
                         None => write!(table, " |"),
@@ -147,7 +157,7 @@ pub fn run(dir: &Path) -> Result<PathBuf, String> {
                 };
                 writeln!(
                     out,
-                    "{workload},{workers},{section},{n},{mode},{arm},{:.1},{:.1},{:.1},{:.1},{:.1},{:.1},{},{},{}",
+                    "{workload},{workers},{section},{n},{mode},{arm},{:.1},{:.1},{:.1},{:.1},{:.1},{:.1},{},{},{},{}",
                     s.median,
                     s.p25,
                     s.p75,
@@ -157,6 +167,7 @@ pub fn run(dir: &Path) -> Result<PathBuf, String> {
                     s.batches,
                     ratio(seq),
                     ratio(kseq),
+                    s.wide_spread(),
                 )
                 .expect("writing to a String");
             }
@@ -176,7 +187,9 @@ pub fn run(dir: &Path) -> Result<PathBuf, String> {
          beside this file. Each cell is the median time of one call over every batch of every \
          pass, then in brackets the lowest and the highest of the per-pass medians. Every pass \
          runs an arm in a worker subprocess of its own, so the bracket is the spread between \
-         processes.\n",
+         processes. A cell marked `spread` has its highest per-pass median more than \
+         1.5x its lowest (`wide_spread` in `summary.csv`); with a \
+         pass per process, its median is a vote between modes rather than a figure.\n",
     );
     for table in tables.values() {
         md.push_str(table);
@@ -276,4 +289,25 @@ fn read(
             .push((f[pass].to_string(), ns));
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Batches from three passes, a pass's batches all equal to its median.
+    fn passes(medians: [f64; 3]) -> Vec<(String, f64)> {
+        medians
+            .iter()
+            .enumerate()
+            .flat_map(|(p, &m)| (0 .. 4).map(move |_| (format!("{}", p + 1), m)))
+            .collect()
+    }
+
+    #[test]
+    fn a_group_whose_passes_differ_past_the_limit_is_flagged() {
+        assert!(Stats::of(&passes([100.0, 120.0, 151.0])).wide_spread());
+        assert!(!Stats::of(&passes([100.0, 120.0, 150.0])).wide_spread());
+        assert!(!Stats::of(&passes([100.0, 100.0, 100.0])).wide_spread());
+    }
 }

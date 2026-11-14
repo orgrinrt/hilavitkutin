@@ -4,12 +4,11 @@
 //! a direct call. Tests whether `const FN: fn(...) = some_fn;` patterns
 //! preserve the inlining path.
 
-use mockspace_bench_core::{timed, FfiBenchCall};
+use mockspace_bench_core::{FfiBenchCall, timed};
 use mockspace_bench_macro::bench_variant;
 
-#[inline(never)]
 fn work(chunk: u64, acc: u64) -> u64 {
-    (acc ^ chunk).wrapping_mul(0x100000001b3)
+    (acc ^ chunk).wrapping_mul(0x100000001B3)
 }
 
 const MIX: fn(u64, u64) -> u64 = work;
@@ -28,5 +27,17 @@ fn run_dispatch_const_ptr<const N: usize>(input: &[u8; N], output: &mut [u8; 8])
             }
             output.copy_from_slice(&acc.to_le_bytes());
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn the_arm_does_not_time_a_constant() {
+        assert!(kernel_checks::varies(|input| {
+            let mut out = [0u8; 8];
+            let _ = super::run_dispatch_const_ptr::<256>(input, &mut out);
+            u64::from_le_bytes(out)
+        }));
     }
 }

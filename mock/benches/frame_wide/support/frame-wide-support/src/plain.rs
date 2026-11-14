@@ -9,19 +9,20 @@
 //! region; that is `rust_nostd`. The collected column shape is the same twelve
 //! passes written the way most std code is, `map` and `collect` into fresh
 //! vectors every frame; `rust_std` runs it over all records and `rust_std_par`
-//! over one chunk of records per thread.
+//! over one chunk of records per worker.
 //!
-//! Both chunked arms take their chunk length from `Outs`, which reads the core
-//! budget once when the arm is built. The engine arm spawns its pool once and
-//! pays nothing per frame for it, so a `std::thread::available_parallelism`
-//! call inside the frame closure would be a cost one side of the comparison
-//! carries and the other does not. On Linux that call reads the cgroup files
-//! before `sched_getaffinity`, which is not free.
+//! Both chunked arms run on a `Crew` built with the arm: its workers are
+//! spawned once and parked between frames on the engine pool's own frame
+//! protocol, as the engine arm's are, and the core budget is read once there.
+//! Threads spawned and joined inside every timed frame, as these arms first
+//! did, are a cost one side of the comparison carries and the other does not.
+
+use evs_support::Crew;
 
 use crate::engine::threads;
 use crate::{
+    Arm,
     ArmKind,
-    FrameArm,
     FrameOut,
     Heavy,
     K_A1,
@@ -46,24 +47,21 @@ use crate::{
 };
 
 /// The input buffer and the three output columns, which every plain arm
-/// keeps between calls, plus the chunk length the threaded arms split on.
+/// keeps between calls.
 struct Outs {
-    inp:   Vec<u32>,
-    j:     Vec<u32>,
-    t1:    Vec<u32>,
-    t2:    Vec<u32>,
-    /// Records per thread, read once here rather than once per frame.
-    chunk: usize,
+    inp: Vec<u32>,
+    j:   Vec<u32>,
+    t1:  Vec<u32>,
+    t2:  Vec<u32>,
 }
 
 impl Outs {
     fn new(n: usize) -> Self {
         Self {
-            inp:   vec![0; n],
-            j:     vec![0; n],
-            t1:    vec![0; n],
-            t2:    vec![0; n],
-            chunk: n.div_ceil(threads()).max(1),
+            inp: vec![0; n],
+            j:   vec![0; n],
+            t1:  vec![0; n],
+            t2:  vec![0; n],
         }
     }
 
@@ -105,20 +103,13 @@ fn fused_range<R: Fn(u32) -> (u32, u32, u32)>(
     }
 }
 
-/// The fused frame split into one contiguous chunk of records per thread.
-fn fused_par<R: Fn(u32) -> (u32, u32, u32) + Copy + Send>(rec: R, o: &mut Outs) {
-    let chunk = o.chunk;
-    std::thread::scope(|sc| {
-        for (((inp, j), t1), t2) in o
-            .inp
-            .chunks(chunk)
-            .zip(o.j.chunks_mut(chunk))
-            .zip(o.t1.chunks_mut(chunk))
-            .zip(o.t2.chunks_mut(chunk))
-        {
-            sc.spawn(move || fused_range(rec, inp, j, t1, t2));
-        }
-    });
+/// The fused frame split into one contiguous chunk of records per worker.
+fn fused_par<R: Fn(u32) -> (u32, u32, u32) + Copy + Sync>(rec: R, o: &mut Outs, crew: &mut Crew) {
+    crew.for_chunks(
+        &o.inp,
+        [&mut o.j[..], &mut o.t1[..], &mut o.t2[..]],
+        &|inp, [j, t1, t2]| fused_range(rec, inp, j, t1, t2),
+    );
 }
 
 // ----- the preallocated column shape -----
@@ -208,7 +199,7 @@ fn columns_collected<KN: Kernel>(inp: &[u32]) -> [Vec<u32>; 3] {
     [j, collect::<KN>(inp, K_T1), collect::<KN>(inp, K_T2)]
 }
 
-/// The collected shape over one chunk of records per thread, each thread
+/// The collected shape over one chunk of records per worker, each worker
 /// writing its own chunk of the three output columns.
 ///
 /// The copy out of the collected vectors stays, because collecting into fresh
@@ -216,32 +207,25 @@ fn columns_collected<KN: Kernel>(inp: &[u32]) -> [Vec<u32>; 3] {
 /// holding three new vectors and moves them into place, and a chunked form has
 /// nothing to move into, since the outputs are one allocation each. What
 /// changed is where the copy runs. It was serial on the calling thread after
-/// every chunk had been joined; it now runs on the thread that produced the
+/// every chunk had been joined; it now runs on the worker that produced the
 /// chunk, as `fused_par` writes its own chunk, so the one piece of per-chunk
 /// work the arm cannot shed is spread like the rest of it.
-fn columns_collected_par<KN: Kernel>(o: &mut Outs) {
-    let chunk = o.chunk;
-    std::thread::scope(|sc| {
-        for (((inp, j), t1), t2) in o
-            .inp
-            .chunks(chunk)
-            .zip(o.j.chunks_mut(chunk))
-            .zip(o.t1.chunks_mut(chunk))
-            .zip(o.t2.chunks_mut(chunk))
-        {
-            sc.spawn(move || {
-                let [pj, pt1, pt2] = columns_collected::<KN>(inp);
-                j.copy_from_slice(&pj);
-                t1.copy_from_slice(&pt1);
-                t2.copy_from_slice(&pt2);
-            });
-        }
-    });
+fn columns_collected_par<KN: Kernel>(o: &mut Outs, crew: &mut Crew) {
+    crew.for_chunks(
+        &o.inp,
+        [&mut o.j[..], &mut o.t1[..], &mut o.t2[..]],
+        &|inp, [j, t1, t2]| {
+            let [pj, pt1, pt2] = columns_collected::<KN>(inp);
+            j.copy_from_slice(&pj);
+            t1.copy_from_slice(&pt1);
+            t2.copy_from_slice(&pt2);
+        },
+    );
 }
 
 // ----- the arms -----
 
-fn build_for<KN: Kernel + Send>(kind: ArmKind, n: usize) -> Box<dyn FrameArm> {
+fn build_for<KN: Kernel + Send>(kind: ArmKind, n: usize) -> Box<dyn Arm<FrameOut>> {
     let load = |s: &mut Outs, r: &[u32]| s.load(r);
     let digest = |s: &mut Outs| s.digest();
     match kind {
@@ -255,10 +239,10 @@ fn build_for<KN: Kernel + Send>(kind: ArmKind, n: usize) -> Box<dyn FrameArm> {
         },
         ArmKind::HandPar => {
             Box::new(StateArm::new(
-                Outs::new(n),
-                load,
-                |o: &mut Outs| fused_par(record::<KN>, o),
-                digest,
+                (Outs::new(n), Crew::new(threads())),
+                |s: &mut (Outs, Crew), r: &[u32]| s.0.load(r),
+                |s: &mut (Outs, Crew)| fused_par(record::<KN>, &mut s.0, &mut s.1),
+                |s: &mut (Outs, Crew)| s.0.digest(),
             ))
         },
         ArmKind::DropStage => {
@@ -300,10 +284,10 @@ fn build_for<KN: Kernel + Send>(kind: ArmKind, n: usize) -> Box<dyn FrameArm> {
         },
         ArmKind::RustStdPar => {
             Box::new(StateArm::new(
-                Outs::new(n),
-                load,
-                |o: &mut Outs| columns_collected_par::<KN>(o),
-                digest,
+                (Outs::new(n), Crew::new(threads())),
+                |s: &mut (Outs, Crew), r: &[u32]| s.0.load(r),
+                |s: &mut (Outs, Crew)| columns_collected_par::<KN>(&mut s.0, &mut s.1),
+                |s: &mut (Outs, Crew)| s.0.digest(),
             ))
         },
         ArmKind::Engine | ArmKind::EnginePar | ArmKind::EngineDropStage => {
@@ -313,7 +297,7 @@ fn build_for<KN: Kernel + Send>(kind: ArmKind, n: usize) -> Box<dyn FrameArm> {
 }
 
 /// Build one plain arm for one regime.
-pub fn build(kind: ArmKind, regime: Regime, n: usize) -> Box<dyn FrameArm> {
+pub fn build(kind: ArmKind, regime: Regime, n: usize) -> Box<dyn Arm<FrameOut>> {
     match regime {
         Regime::Heavy => build_for::<Heavy>(kind, n),
         Regime::Light => build_for::<Light>(kind, n),

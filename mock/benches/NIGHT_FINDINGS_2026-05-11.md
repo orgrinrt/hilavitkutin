@@ -30,12 +30,12 @@ grouped by what they tell the design:
 ### Findings that confirmed no consumer punishment
 
 - **`inline_strategy`**: under release+fat-LTO, LLVM auto-inlines small leaf fns into hot loops reliably. Defensive `#[inline]` is cheap insurance not load-bearing. `inline_never` penalty is 17.6% at N=256, shrinks to noise at N≥4096.
-- **`bounds_check`**: LLVM elides safe indexing over const-sized `[u8; N]` arrays completely. Substrate guidance: do NOT teach consumers to reach for `unsafe` in WorkUnit bodies; `column[i]` is the empirically optimal shape.
+- **`bounds_check`**: retired 2026-11-13, measured nothing. The claim was that LLVM elides safe indexing over const-sized `[u8; N]` arrays completely. All three arms indexed a `&[u8; N]` with `0..N`, which the compiler proves in bounds in every arm, and ran a serial FNV multiply chain that would hide a one-cycle check anyway; no disassembly was committed. The arms now read a slice whose length the compiler cannot see and sum with independent adds (`variants/bc_common`), and await a timing run. Whether `column[i]` costs anything in a WorkUnit body is open until then.
 - **`branch_predictability`** + **`minmax_strategy`** + **`branch_pattern`**: branchful and branchless inner-loop code converge on aarch64 because CSEL is the natural lowering for "select one of two values based on comparison". Predicate / TotalOrd / branch shape choices are type-level intent, not codegen win.
 - **`load_alignment`**: aligned ptr-cast, `read_unaligned`, and `u64::from_le_bytes` all converge on aarch64. Per-fiber cache-line invariant matters for write coherence and false-sharing avoidance, NOT for read-path throughput.
 - **`atomic_vs_plain`**: SeqCst is free in single-thread non-contended code. Topic 3 M3 per-fiber AdaptMetrics as `AtomicU64+Relaxed` costs essentially zero in the hot path under the cache-line invariant.
 - **`iter_patterns`**: gather access is 1.8-2.5x slower than sequential, validating Column<T> contiguous-access design and the workspace no-ref-into-storage rule. The cost of holding refs into scheduler storage across morsel boundaries is real — refs degrade into gather access.
-- **`bit_count_ops`**: ctz on aarch64 (RBIT+CLZ) is below timer resolution at all N; arvo BitAccess::trailing_zeros canonical-intrinsic lowering is empirically optimal.
+- **`bit_count_ops`**: retired 2026-11-13, measured a constant. Every arm counted `(v | 1).trailing_zeros()`, which is zero for every word, so the 0 ns medians are of nothing and say nothing about the intrinsic. The same input hid that `ctz_debruijn`'s table did not belong to its magic (it counted `1 << 42` as 50). The arms now share one loop and are checked against `u64::trailing_zeros` and for input dependence (`variants/ctz_common`), and await a timing run.
 
 ### Bench-level decisions parked for follow-up
 
@@ -63,12 +63,26 @@ These benches all run on Apple Silicon. Several findings depend on aarch64-speci
 | 128 | 1225 | ~41300 | 33.7x slower |
 | 256 | 2546 | ~151000 | 59.3x slower |
 
+Corrected 2026-11-13: the dense times include a fixed 64 KB zeroing on every
+call, which the dense arm did inside the timed region whatever the node count,
+so the slowdowns above overstate dense most at the small sizes. Dense still
+loses at every size, as the gap is far wider than that cost at the large ones;
+the exact ratios wait for the rerun of the corrected arms.
+
 The predicted N=16 crossover was wrong. Dense O(N²) cell-scan loses to CSR's
 O(E) edge-direct iteration even at N=8 because the branch-check on each cell
 costs more than the edge traversal saves.
 
-Hybrid variant (dense for N≤16, CSR else) measured within noise of pure CSR.
-Pure CSR is the canonical shape; hybrid retired.
+Hybrid variant (dense for N≤16, CSR else). Corrected 2026-11-13: this line
+used to say the hybrid measured within noise of pure CSR, and the committed
+findings say otherwise. At N=8 and N=16, where the hybrid takes the dense path,
+it costs what dense costs, +408% and +548% over CSR on the function-under-test
+rows of `dep_graph_csr_9_n8_findings.md` and `_n16_findings.md`. From N=32 up it
+takes the CSR path and lands between +13% and -28% of the CSR arm running that
+same path, which is a spread between two copies of one code path and so the
+noise of this bench at those sizes, not a difference. Pure CSR is the canonical
+shape, and the hybrid is retired because its dense half loses at the sizes it
+was meant for.
 
 ## Popcount strategy (`popcount_strategy`) — prior design
 
@@ -445,6 +459,8 @@ Caveats:
 
 ## Bounds-check elision (`bounds_check`) — morsel-loop safe-Rust validation
 
+Corrected 2026-11-13: this section measured nothing about bounds checks, and its findings below are retired. Indexing a `&[u8; N]` with `0..N` is provably in bounds, so all three arms compiled to the same loop for a reason unrelated to elision of a check that could fail, and each per-byte step was a dependent multiply, which would hide a one-cycle compare even where one stayed. "Within noise" here is three copies of one loop. The arms now read through `bc_common::opaque` and sum with independent adds; the next timing run replaces this table.
+
 Three loop-shape strategies for a per-byte FNV1a inner loop over a `&[u8; N]` const-sized input:
 
 - `bc_iter`: `for &byte in input.iter()`. Iterator-protocol; no bounds checks structurally.
@@ -566,6 +582,8 @@ Caveats:
 - The load_store elision is by-design LLVM behavior under Rust's single-thread observability rules. Multi-thread access to the same atomic with these orderings would not be elided.
 
 ## Bit-count operations (`bit_count_ops`) — ctz cost validation (inconclusive)
+
+Corrected 2026-11-13: this section measured a constant, and its findings below are retired. Every arm counted `(v | 1).trailing_zeros()`, which is zero for every word, so the compiler was free to fold the count and the ties at timer resolution are the cost of nothing. The inference that the intrinsic is fast enough rests on that and does not hold. The same input hid a wrong table in `ctz_debruijn`. The arms now count the word itself, share their loop in `ctz_common` and are checked there; the next timing run replaces this table.
 
 Three trailing-zero-count strategies over N/8 u64 words:
 

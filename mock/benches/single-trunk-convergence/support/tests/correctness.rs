@@ -214,3 +214,61 @@ fn a_double_walked_range_is_caught() {
     assert_ne!(got, want);
     assert_eq!(got.count, want.count + 1);
 }
+
+/// The floating meeting point with both walkers claiming at once, so the
+/// compare and swap on the shared cursor is contended: every record is still
+/// walked once, and the meeting record lands inside the fiber.
+/// `the_dynamic_meeting_point_covers_every_record_once` walks core 0 to the
+/// end before core 1 starts, which never enters the race.
+///
+/// The walkers start together behind a barrier, over enough blocks that each
+/// one claims some on most frames. A frame where one walker claimed nothing
+/// proves no race, so the test also asserts that both claimed blocks on some
+/// frame; without it a host that ran the threads one after another would pass.
+#[test]
+fn the_dynamic_meeting_point_holds_under_contended_claims() {
+    use std::sync::Barrier;
+    use std::sync::atomic::{AtomicU8, AtomicUsize, Ordering};
+
+    let n = morsel() * 512 + 37;
+    let split = HeadTailDyn::new();
+    let covered: Vec<AtomicU8> = (0 .. n).map(|_| AtomicU8::new(0)).collect();
+    let mut both_claimed = 0usize;
+    for frame in 0 .. 64 {
+        split.begin(n);
+        covered.iter().for_each(|c| c.store(0, Ordering::Relaxed));
+        let claims = [AtomicUsize::new(0), AtomicUsize::new(0)];
+        let start = Barrier::new(2);
+        std::thread::scope(|sc| {
+            for core in 0 .. 2 {
+                let (split, covered, claims, start) = (&split, &covered, &claims, &start);
+                sc.spawn(move || {
+                    start.wait();
+                    split.walk(core, 2, n, &mut |r, _| {
+                        claims[core].fetch_add(1, Ordering::Relaxed);
+                        for i in r {
+                            covered[i].fetch_add(1, Ordering::Relaxed);
+                        }
+                    });
+                });
+            }
+        });
+        let bad = covered.iter().position(|c| c.load(Ordering::Relaxed) != 1);
+        assert!(
+            bad.is_none(),
+            "frame {frame}: record {bad:?} covered other than once"
+        );
+        assert!(
+            split.meeting() <= n,
+            "frame {frame}: meeting record {} past the fiber",
+            split.meeting()
+        );
+        if claims.iter().all(|c| c.load(Ordering::Relaxed) > 0) {
+            both_claimed += 1;
+        }
+    }
+    assert!(
+        both_claimed > 0,
+        "no frame had both walkers claiming, so the race was never run"
+    );
+}

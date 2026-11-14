@@ -13,10 +13,12 @@
 //! builder, which writes the workload id and `W` into the input each arm
 //! reads.
 //!
-//! Run it from this directory after `cargo build --release --workspace`. The
-//! arms build into the shared target directory; `bench.toml` names them
-//! under `target/`, which this binary links to the directory it was itself
-//! built into when the link is missing.
+//! A run starts from a stage: `../stage.sh .` builds the member and prints a
+//! directory, and `<that>/release/single-trunk-convergence` is run from this
+//! directory. `bench.toml` names the arms under `target/`, which this binary
+//! points at its own stage, so the arms timed are the ones staged beside it
+//! and never what another worktree last built into the shared target
+//! directory. The stage is verified before the run and after it.
 //!
 //! `--summary [<results dir>]` folds the promoted CSVs into
 //! `<results dir>/summary.csv` instead of running anything (see `summary`).
@@ -26,6 +28,7 @@ use std::process::ExitCode;
 
 use mockspace_bench_core::{byte_routine_dispatch, routine_bridge};
 use mockspace_bench_harness::driver::{DriverRegistry, drive};
+use mockspace_bench_harness::staging::StagedBuild;
 use mockspace_bench_harness::{self as harness, BenchConfig, RoutineSpec, Workload};
 use stc_support::workload::{APPEND, FOLD_HEAVY, FOLD_LIGHT, by_name};
 use stc_support::{Conv, input_bytes};
@@ -48,34 +51,32 @@ fn main() -> ExitCode {
             },
         };
     }
-    if let Err(e) = link_target() {
-        eprintln!("error: {e}");
-        return ExitCode::FAILURE;
-    }
-    drive(&DriverRegistry {
+    // `_link` holds `target` on the staged build until the run ends, and
+    // removes it then, so the next plain build writes a target of its own.
+    let staged = StagedBuild::of_current_exe().and_then(|s| {
+        s.verify()?;
+        let link = s.link_into(Path::new("target"))?;
+        Ok((s, link))
+    });
+    let (stage, _link) = match staged {
+        Ok(staged) => staged,
+        Err(e) => {
+            eprintln!("error: {e}");
+            return ExitCode::FAILURE;
+        },
+    };
+    let code = drive(&DriverRegistry {
         build_workload,
         routine_for,
         // Every section resolves through `routine_for`; the byte fallback is
         // never reached.
         byte_dispatch: byte_routine_dispatch!(out = 16, sizes = [16]),
-    })
-}
-
-/// Point `./target` at the build directory this binary sits in, the shared
-/// one the arms built into, when nothing is there yet.
-fn link_target() -> Result<(), String> {
-    let link = Path::new("target");
-    if link.symlink_metadata().is_ok() {
-        return Ok(());
+    });
+    if let Err(e) = stage.verify() {
+        eprintln!("error: {e}\nthe timings of this run are not of the staged build");
+        return ExitCode::FAILURE;
     }
-    let exe = std::env::current_exe().map_err(|e| format!("locating this binary: {e}"))?;
-    // <target>/release/single-trunk-convergence
-    let target = exe
-        .parent()
-        .and_then(Path::parent)
-        .ok_or_else(|| format!("{} has no build directory above it", exe.display()))?;
-    std::os::unix::fs::symlink(target, link)
-        .map_err(|e| format!("linking ./target to {}: {e}", target.display()))
+    code
 }
 
 /// The program around the measured call: the light surrounding work of the

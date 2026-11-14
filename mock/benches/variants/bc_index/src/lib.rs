@@ -1,26 +1,37 @@
-//! Variant: explicit `input[i]` indexed loop.
+//! Variant: `bytes[i]` for `i` in `0 .. N`, safe indexing the compiler cannot prove in bounds.
 //!
-//! Safe Rust indexing in a `0..N` range. LLVM should recognise that
-//! `i < N` is the loop condition and elide the per-element bounds
-//! check. If the elision fails, this variant pays an extra compare +
-//! conditional-branch per iteration.
-//!
-//! Models the consumer-WorkUnit pattern where the morsel index is an
-//! integer carried by the loop, not an iterator.
+//! Reads the input through `bc_common::opaque`, whose length the compiler
+//! cannot see, and sums its bytes with independent adds (see `bc_common`).
 
-use mockspace_bench_core::{timed, FfiBenchCall};
+use bc_common::opaque;
+use mockspace_bench_core::{FfiBenchCall, timed};
 use mockspace_bench_macro::bench_variant;
+
+/// The byte sum, read the way this arm reads.
+#[inline(always)]
+fn kernel<const N: usize>(input: &[u8; N]) -> u64 {
+    let bytes = opaque(input);
+    let mut acc: u64 = 0;
+    for i in 0 .. N {
+        acc += u64::from(bytes[i]);
+    }
+    acc
+}
 
 #[bench_variant("bc_index", sizes = [256, 1024, 4096, 16384])]
 fn run_bc_index<const N: usize>(input: &[u8; N], output: &mut [u8; 8]) -> FfiBenchCall {
     timed! {
         run {
-            let mut acc: u64 = 0xcbf29ce484222325;
-            for i in 0..N {
-                let byte = input[i];
-                acc = (acc ^ (byte as u64)).wrapping_mul(0x100000001b3);
-            }
+            let acc = kernel(input);
             output.copy_from_slice(&acc.to_le_bytes());
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn the_kernel_sums_its_input() {
+        bc_common::check(super::kernel).unwrap();
     }
 }

@@ -40,8 +40,11 @@
 # sample is not enough to tell an arm that uses two cores from one that was
 # measured next to a busy neighbour.
 #
-# Build the member first, from this directory:
-#   CARGO_INCREMENTAL=0 cargo build --release --workspace
+# The binaries come from a staged directory (`../stage.sh`), never from the
+# shared target directory, which another worktree can rebuild under a fifteen
+# minute sweep. `BENCH_BIN=<dir>` names one already staged; without it this
+# stages the member itself. The checksums are checked before the first reading
+# and after the last, and `all` writes the stage's `build.txt` into its header.
 
 set -eu
 
@@ -57,8 +60,13 @@ default_window=15
 arms="fw_hand fw_hand_par fw_rust_nostd fw_rust_std fw_rust_std_par \
       fw_engine fw_engine_par"
 
-bin=$(cd "$(dirname "$0")" && cargo metadata --format-version 1 --no-deps \
-    | sed 's/.*"target_directory":"\([^"]*\)".*/\1/')/release
+here=$(cd "$(dirname "$0")" && pwd)
+stage="$here/../stage.sh"
+if [ -z "${BENCH_BIN:-}" ]; then
+    BENCH_BIN=$("$stage" "$here")
+fi
+"$stage" --verify "$BENCH_BIN"
+bin="$BENCH_BIN/release"
 driver="$bin/frame_wide"
 
 pid=
@@ -69,8 +77,7 @@ trap 'kill "$pid" 2>/dev/null || true' EXIT INT TERM
 require_built() {
     for f in "$@"; do
         if [ ! -f "$f" ]; then
-            echo "occupancy: $f is not built. Run:" >&2
-            echo "  CARGO_INCREMENTAL=0 cargo build --release --workspace" >&2
+            echo "occupancy: $f is not in the stage $BENCH_BIN" >&2
             exit 1
         fi
     done
@@ -131,6 +138,8 @@ sweep_all() {
     echo "#"
     echo "# Built: release, opt-level 3, fat LTO, one codegen unit."
     echo "# Measured: $(date -u '+%Y-%m-%d %H:%M UTC') on $(nproc) cores."
+    echo "#"
+    sed 's/^/# /' "$BENCH_BIN/build.txt"
     echo
 
     printf '%-16s %-18s %-24s %s\n' arm regime readings median
@@ -147,6 +156,7 @@ sweep_all() {
                 "$a" "frame_wide/$regime" "$(echo $readings)" "$median"
         done
     done
+    "$stage" --verify "$BENCH_BIN"
 }
 
 if [ "${1:-}" = all ]; then
@@ -167,4 +177,5 @@ window="${4:-$default_window}"
 
 require_built "$driver" "$bin/lib$arm.so"
 cores=$(cores_of "$arm" "$sweep" "$n" "$window")
+"$stage" --verify "$BENCH_BIN"
 printf '%-18s %-18s n=%-8s %s cores\n' "$arm" "$sweep" "$n" "$cores"

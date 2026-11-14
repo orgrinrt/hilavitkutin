@@ -23,7 +23,6 @@
 
 pub mod arms;
 pub mod cache;
-pub mod crew;
 pub mod data;
 pub mod engine;
 pub mod kernel;

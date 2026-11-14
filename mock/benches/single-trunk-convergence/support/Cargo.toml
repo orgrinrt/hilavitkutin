@@ -9,8 +9,8 @@ publish = false
 # under variants/ is a one-line cdylib over this crate, so the arms differ only
 # in what they measure.
 [dependencies]
-engine_vs_std = { path = "../../engine_vs_std" }
+evs-support = { path = "../../engine_vs_std/support" }
 hilavitkutin = { path = "../../../crates/hilavitkutin" }
 hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
 arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
-mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "f42844c7f7f8be9c54dd96b9a975a6c7da3fea5e", features = ["std"] }
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "5a775f3ea7f969a7589ce970e16e55b2ba856f41", features = ["std"] }
