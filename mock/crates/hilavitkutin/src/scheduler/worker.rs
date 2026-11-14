@@ -57,7 +57,12 @@ type Cuts<Wus, Stores, GW, D> = CarrierCuts<
 /// turbofish at the spawn site supplies the types). Phase is derived from the seq
 /// value: the main thread publishes one phase per `seq` bump, so
 /// `phase = (seq - 1) % nphases`.
-pub(super) fn worker_main<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>(
+///
+/// `extern "C"`, so an unwind out of the worker's own code between units aborts
+/// the process rather than ending the executor's thread short of the done
+/// barrier, which would leave the frame waiting for good. A unit body is
+/// stopped earlier, at `invoke_wu_in_fiber`.
+pub(super) extern "C" fn worker_main<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>(
     ctx: *const WorkerCtx,
 ) where
     Cfg: RunCfg,
