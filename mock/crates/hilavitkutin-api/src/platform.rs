@@ -399,19 +399,16 @@ impl Default for WakeStrategy {
 /// Sealed executor trait.
 ///
 /// The engine ships exactly one default impl `HybridExecutor` in
-/// `hilavitkutin::thread`. Sealed via the api crate's private
-/// `Sealed` supertrait so consumer impls of `Executor` cannot bypass
-/// the cross-thread atomic-ordering protocol.
+/// `hilavitkutin::thread`. It takes the crate's one seal,
+/// `sealed::Sealed`, a public trait in a private module, so consumer
+/// impls of `Executor` cannot bypass the cross-thread atomic-ordering
+/// protocol.
 ///
 /// Per-worker mainloop entry: `run(pool, core_id, wake_strategy)`
 /// walks the pre-computed `CoreProgram`, dispatching morsels, hitting
 /// phase barriers, and observing the shutdown signal between morsels.
 /// Returns `Outcome<(), ExecutorError>`; cleanly-shut workers return
 /// `Outcome::Ok(())`.
-// Sealed trait: `Sealed` is deliberately `pub(crate)` so only this crate's own
-// types implement `Executor`. The `private_bounds` lint flags the private
-// supertrait on a public trait; that visibility gap is the seal working as
-// designed, not a leak (external crates cannot name or implement `Sealed`).
 pub trait Executor: crate::sealed::Sealed {
     /// Per-worker mainloop. Spawned once per core at
     /// `ThreadPool::build()` time; runs until `pool.shutdown` is set.

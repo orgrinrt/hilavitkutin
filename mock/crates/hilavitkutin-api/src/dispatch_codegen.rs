@@ -1,7 +1,6 @@
 //! `DispatchCodegen<Cfg>` trait + TAIT `CoreDispatch` + sealed
-//! `FiberShape` marker family + `LockFreeDispatch` / `Scheduled`
-//! marker traits + `CoreProgram` / `PhaseEntry` / `RecordRange` /
-//! `SyncRole` data shapes.
+//! `FiberShape` marker family + `CoreProgram` / `PhaseEntry` /
+//! `RecordRange` / `SyncRole` data shapes.
 //!
 //! `DispatchCodegen` is the trait the engine implements (single
 //! shipped impl `StandardCodegen` in `hilavitkutin::dispatch::standard`)
@@ -15,12 +14,6 @@
 //! emits at build time. Each unique fiber-shape (WU sequence)
 //! across the plan gets one impl; LLVM monomorphises per shape.
 //! Consumers cannot impl FiberShape; impls are codegen artefacts.
-//!
-//! `LockFreeDispatch` is the sealed marker codegen output carries
-//! to prove "this dispatch path uses zero CAS / zero RMW in the
-//! inner loop". `Scheduled` is the trait-alias unified API
-//! constraint that bundles `LockFreeDispatch` with
-//! the other constraints `Scheduler::run` requires.
 
 use core::marker::PhantomData;
 
@@ -363,8 +356,7 @@ pub trait DispatchCodegen<Cfg>: sealed::Sealed {
 }
 
 /// The single shipped `DispatchCodegen` implementer. Both the marker type AND its trait
-/// impls (`DispatchCodegen<Cfg>`, `LockFreeDispatch`, `Scheduled`)
-/// live in the api crate because the seal is api-internal and
+/// impl `DispatchCodegen<Cfg>` live in the api crate because the seal is api-internal and
 /// because trait impls follow the orphan rule (trait OR impl-target
 /// must be local). Engine-side emit code consumes the marker via
 /// `hilavitkutin::dispatch::standard`.
@@ -388,24 +380,6 @@ where
 {
     type CoreDispatch = ();
 }
-
-// FIXME(placeholders_tagged_e3cb3f33eb38): the two marker impls below are asserted over the `()`
-// placeholder above and prove nothing about a dispatch body yet; they should
-// follow a real one.
-impl LockFreeDispatch for StandardCodegen {}
-
-impl Scheduled for StandardCodegen {}
-
-/// Sealed marker: codegen output uses zero CAS / zero RMW in the
-/// inner loop. Blanket-impl on
-/// the engine's `StandardCodegen` output type.
-pub trait LockFreeDispatch: sealed::Sealed {}
-
-/// Unified API constraint: `Scheduled` is the bound
-/// `Scheduler::run` requires. Bundles `LockFreeDispatch` with future
-/// extension; consumers that name dispatch types in their API surface
-/// use `Scheduled` to keep the bound stable.
-pub trait Scheduled: LockFreeDispatch {}
 
 /// Sealed marker family: per-fiber-shape monomorphisation key.
 /// Codegen emits one impl per unique fiber shape encountered in the plan; consumers cannot

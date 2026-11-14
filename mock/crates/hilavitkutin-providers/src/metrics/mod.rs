@@ -1,4 +1,4 @@
-//! Per-axis metrics Resources (Topic 5 axis F).
+//! Per-axis metrics Resources.
 //!
 //! Each axis from `hilavitkutin_api::adapt` has a matching Resource
 //! that carries its runtime snapshot: per-axis measurements plus
@@ -6,10 +6,9 @@
 //! WorkUnits read these Resources via `ctx.resource::<XMetrics>()`
 //! after checking `Virtual<AnomalyFired>`.
 //!
-//! `MetricsKit` (the next CHANGE in the round) bundles all nine as
-//! a Kit recipe; consumers register the bundle with `.add_kit(
-//! MetricsKit::default())` or pick individual Resources with
-//! `.add_resource(...)`.
+//! `MetricsKit` bundles all nine as a Kit recipe; consumers register
+//! the bundle with `.with(MetricsKit::default())` or pick individual
+//! Resources with `.with(Resource::new(...))`.
 
 pub mod cache_residency;
 pub mod change_class;

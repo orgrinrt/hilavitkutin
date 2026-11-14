@@ -501,10 +501,10 @@ impl<K, V, const N: Cap> Default for Map<K, V, N> {
 //
 // StoreBundle marks Cons-list bundles of store markers (Resource /
 // Column / Virtual / Field / Seq / Map / mixed). Used by Kit's
-// 'type Owned' bound; the engine's add_kit reads K::Owned at compile
-// time.
+// 'type Owned' bound; the builder's `.with(kit)` reads K::Owned at
+// compile time.
 //
-// Replaceable opts a store-typed value into Scheduler::replace_resource
+// Replaceable opts a store-typed value into Scheduler::replace_value
 // override semantics. Apps impl Replaceable per-type to opt their
 // Resources into override semantics; non-opt-in types stay locked.
 // Single substrate-enforced annotation on Owned types.
