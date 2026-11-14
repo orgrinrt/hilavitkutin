@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794690403	266650fb	ema_formulation_n1024	ema_form_float	1024	warm	2237.1	2237.1	2237.9
+1794690403	266650fb	ema_formulation_n1024	ema_form_intshift	1024	warm	1292.1	1292.1	1304.4
+1794690403	266650fb	ema_formulation_n1024	ema_form_q32	1024	warm	1931.7	1931.7	1978.8

@@ -7,29 +7,30 @@ Baseline: **cs_plain**
 
 Baseline for all deltas below: **cs_plain**. (Deltas are paired `variant - baseline` medians; `*` marks a CI that excludes zero.)
 
-### cs_plain dominates: 14% faster than the next best (cs_exch)
+### cs_exch dominates: 41% faster than the next best (cs_plain)
 
-cs_plain (10.16 ms) leads cs_exch (11.54 ms) by 14%, a clear separation rather than a photo finish. CV 5.4%.
+cs_exch (2.25 ms) leads cs_plain (3.18 ms) by 41%, a clear separation rather than a photo finish. CV 3.8%.
 
 _Why it matters:_ A dominant, well-separated winner is a safe default pick for this workload shape.
 
-### No variant beats the baseline (cs_plain)
+### cs_exch beats baseline by 29% (significant)
 
-The baseline cs_plain is the fastest (10.16 ms median); no rival improves on it (all deltas are >= 0).
+cs_exch is -910.41 us (29%) faster than baseline cs_plain, with a CI that excludes zero.
 
-_Why it matters:_ When nothing beats the baseline, the current choice stands; the contenders cost speed for whatever else they buy.
+_Why it matters:_ A large, significant improvement over the current baseline is a concrete reason to switch.
 
-### Two tiers: {cs_plain, cs_exch} vs {cs_snap_twin, cs_snap} (35% apart)
+### Two tiers: {cs_exch} vs {cs_plain, cs_snap_twin, cs_snap} (41% apart)
 
-The field splits into a fast tier {cs_plain, cs_exch} and a slow tier {cs_snap_twin, cs_snap} with a 35% jump between them - a qualitative difference, not a gradient.
+The field splits into a fast tier {cs_exch} and a slow tier {cs_plain, cs_snap_twin, cs_snap} with a 41% jump between them - a qualitative difference, not a gradient.
 
 _Why it matters:_ A tier split usually reflects a mechanism boundary (branchless vs branch, cached vs not); the tier, not the exact rank, is the finding.
 
 ## Key findings
 
-- **Baseline (cs_plain) is the fastest** at 10160316.4 ns median
-- 3 variants significantly slower than baseline
-- Spread: 1.60x (fastest 10160316.4 ns, slowest 16219785.4 ns)
+- **Fastest: cs_exch** at 2250381.2 ns median (-29.2% vs baseline)
+- 1 variant significantly faster than baseline
+- 2 variants significantly slower than baseline
+- Spread: 1.46x (fastest 2250381.2 ns, slowest 3286956.2 ns)
 
 ## Methodology
 
@@ -42,192 +43,192 @@ _Why it matters:_ A tier split usually reflects a mechanism boundary (branchless
 | Harness runs | 2 |
 | Cooldown schedule | 0ms |
 | Master seed | 0x51c3510700000004 |
-| Counter frequency | 2100370818 Hz |
+| Counter frequency | 24000000 Hz |
 | Drift correction | none |
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| cs_exch | 11499610ns | 11547592ns | 10704788ns | 11272414ns | 12237814ns | +12.07% |
-| cs_plain | 10261541ns | 10169122ns | 9570841ns | 10071955ns | 10891269ns | base |
-| cs_snap | 16030503ns | 16228382ns | 14336826ns | 15965079ns | 16975476ns | +56.22% |
-| cs_snap_twin | 15673634ns | 15613386ns | 13485460ns | 15327118ns | 17287495ns | +52.74% |
+| cs_exch | 2281089ns | 2255460ns | 2184958ns | 2244956ns | 2383353ns | -28.47% |
+| cs_plain | 3188833ns | 3183194ns | 3107890ns | 3169076ns | 3258940ns | base |
+| cs_snap | 3290314ns | 3292081ns | 3158269ns | 3273289ns | 3381874ns | +3.18% |
+| cs_snap_twin | 3265635ns | 3263769ns | 3173512ns | 3241929ns | 3347257ns | +2.41% |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| cs_exch | 11490749ns | 10696789ns | 12227675ns | +12.08% | 0.001 |
-| cs_plain | 10252483ns | 9562156ns | 10881403ns | base | 0.001 |
-| cs_snap | 16018415ns | 14329126ns | 16955939ns | +56.24% | 0.001 |
-| cs_snap_twin | 15664945ns | 13477718ns | 17278747ns | +52.79% | 0.001 |
+| cs_exch | 2275778ns | 2179267ns | 2378041ns | -28.49% | 0.004 |
+| cs_plain | 3182258ns | 3101410ns | 3252753ns | base | 0.003 |
+| cs_snap | 3284705ns | 3152561ns | 3376089ns | +3.22% | 0.002 |
+| cs_snap_twin | 3259838ns | 3166938ns | 3341551ns | +2.44% | 0.003 |
 
 ## Performance model
 
-- Peak throughput: **0.001 Gops/s** (cs_plain; best 20% batches)
+- Peak throughput: **0.004 Gops/s** (cs_exch; best 20% batches)
 - Ops per call: 8192
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| cs_exch | 0.001 | 82.9% |
-| cs_plain | 0.001 | 94.1% |
-| cs_snap | 0.001 | 59.0% |
-| cs_snap_twin | 0.001 | 61.3% |
+| cs_exch | 0.004 | 96.8% |
+| cs_plain | 0.003 | 68.6% |
+| cs_snap | 0.002 | 66.3% |
+| cs_snap_twin | 0.003 | 66.9% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| cs_exch | 11499610ns | 11499610ns | +12.07% |
-| cs_plain | 10261541ns | 10261541ns | base |
-| cs_snap | 16030503ns | 16030503ns | +56.22% |
-| cs_snap_twin | 15673634ns | 15673634ns | +52.74% |
+| cs_exch | 2281089ns | 2281089ns | -28.47% |
+| cs_plain | 3188833ns | 3188833ns | base |
+| cs_snap | 3290314ns | 3290314ns | +3.18% |
+| cs_snap_twin | 3265635ns | 3265635ns | +2.41% |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| cs_plain | 10160316ns | base | --- | [9893878, 10385698] | --- | --- | --- | --- |
-| cs_exch | 11538794ns | +1268633.8ns (+12.5%) | [+760570, +1796229]ns | [10923919, 11698775] | YES | 0.0000 | 0.0000 | 0 |
-| cs_snap | 16219785ns | +5763980.1ns (+56.7%) | [+5160116, +6383294]ns | [15543544, 16529067] | YES | 0.0000 | 0.0000 | 0 |
-| cs_snap_twin | 15605200ns | +5228395.6ns (+51.5%) | [+4694427, +6023217]ns | [14610512, 16465263] | YES | 0.0000 | 0.0000 | 0 |
+| cs_plain | 3176573ns | base | --- | [3140348, 3202935] | --- | --- | --- | --- |
+| cs_exch | 2250381ns | -910408.4ns (-28.7%) | [-955648, -825879]ns | [2220925, 2306365] | YES | 0.0000 | 0.0000 | 0 |
+| cs_snap | 3286956ns | +88475.1ns (+2.8%) | [+34425, +118579]ns | [3243598, 3319288] | YES | 0.0002 | 0.0001 | 0 |
+| cs_snap_twin | 3258512ns | +86139.5ns (+2.7%) | [+14271, +147967]ns | [3196002, 3307377] | YES | 0.0309 | 0.0309 | 0 |
 
 ## Per-pass consistency (nonstop algo, Δ vs baseline)
 
 | Run | Pass | cs_plain | cs_exch | cs_snap | cs_snap_twin |
 |---|---|---|---|---|---|
-| 1 | 1 | 10147576ns | +6.3% | +64.9% | +72.4% |
-| 1 | 2 | 10184665ns | +8.6% | +62.7% | +50.7% |
-| 1 | 3 | 11201935ns | +7.8% | +44.2% | +47.5% |
-| 2 | 1 | 10149891ns | +7.7% | +62.4% | +52.1% |
-| 2 | 2 | 9650660ns | +20.0% | +45.7% | +53.2% |
-| 2 | 3 | 9746635ns | +18.0% | +55.8% | +47.7% |
+| 1 | 1 | 3103633ns | -26.3% | +8.2% | +3.2% |
+| 1 | 2 | 3141083ns | -27.8% | +3.0% | +6.2% |
+| 1 | 3 | 3191608ns | -29.5% | +2.8% | +3.5% |
+| 2 | 1 | 3130400ns | -28.1% | +0.6% | +4.1% |
+| 2 | 2 | 3238750ns | -31.4% | +2.5% | +1.4% |
+| 2 | 3 | 3204408ns | -31.8% | +2.0% | -0.8% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| cs_exch | -0.348 | moderate- |
-| cs_plain | 0.145 | ok |
-| cs_snap | 0.201 | moderate+ |
-| cs_snap_twin | 0.040 | ok |
+| cs_exch | 0.356 | moderate+ |
+| cs_plain | 0.009 | ok |
+| cs_snap | -0.415 | moderate- |
+| cs_snap_twin | -0.177 | ok |
 
 **Consistency summary:**
 
-- **cs_exch**: won 0/6, lost 6/6
+- **cs_exch**: won 6/6, lost 0/6
 - **cs_snap**: won 0/6, lost 6/6
-- **cs_snap_twin**: won 0/6, lost 6/6
+- **cs_snap_twin**: won 1/6, lost 5/6
 
 ## Bridge overhead per variant
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| cs_exch | 38582683.7ns | 11490749.4ns | 335.8% | HIGH |
-| cs_plain | 41767920.0ns | 10252482.8ns | 407.4% | HIGH |
-| cs_snap | 42150193.6ns | 16018414.7ns | 263.1% | HIGH |
-| cs_snap_twin | 41351660.6ns | 15664944.8ns | 264.0% | HIGH |
+| cs_exch | 44705134.7ns | 2275777.8ns | 1964.4% | HIGH |
+| cs_plain | 44880677.5ns | 3182258.1ns | 1410.3% | HIGH |
+| cs_snap | 44741025.9ns | 3284705.3ns | 1362.1% | HIGH |
+| cs_snap_twin | 44708803.0ns | 3259838.0ns | 1371.5% | HIGH |
 
 ## Distribution (algo ns)
 
 ```
-cs_exch (n=18, range 10696788.7-12227674.9 ns)
-  10696788.7 |########################################
-  10773333.0 |####################
-  10849877.4 |####################
-  10926421.7 |####################
-  11002966.0 |####################
-  11079510.3 |
-  11156054.6 |
-  11232598.9 |
-  11309143.2 |####################
-  11385687.5 |
-  11462231.8 |####################
-  11538776.1 |########################################
-  11615320.5 |########################################
-  11691864.8 |####################
-  11768409.1 |
-  11844953.4 |
-  11921497.7 |
-  11998042.0 |
-  12074586.3 |####################
-  12151130.6 |####################
-  (1 below, 2 above range)
-
-cs_plain (n=18, range 9562155.6-10881403.4 ns)
-  9562155.6 |
-  9628118.0 |##########################
-  9694080.4 |#############
-  9760042.8 |#############
-  9826005.2 |
-  9891967.6 |
-  9957929.9 |#############
-  10023892.3 |
-  10089854.7 |########################################
-  10155817.1 |##########################
-  10221779.5 |#############
-  10287741.9 |#############
-  10353704.3 |
-  10419666.7 |#############
-  10485629.1 |
-  10551591.5 |
-  10617553.9 |
-  10683516.2 |
-  10749478.6 |
-  10815441.0 |#############
+cs_exch (n=18, range 2179266.7-2378041.0 ns)
+  2179266.7 |########################################
+  2189205.4 |
+  2199144.1 |####################
+  2209082.8 |
+  2219021.6 |########################################
+  2228960.3 |
+  2238899.0 |########################################
+  2248837.7 |########################################
+  2258776.4 |########################################
+  2268715.1 |
+  2278653.8 |####################
+  2288592.6 |
+  2298531.3 |
+  2308470.0 |
+  2318408.7 |####################
+  2328347.4 |
+  2338286.1 |####################
+  2348224.8 |
+  2358163.6 |
+  2368102.3 |
   (1 below, 3 above range)
 
-cs_snap (n=18, range 14329126.0-16955939.3 ns)
-  14329126.0 |
-  14460466.6 |
-  14591807.3 |
-  14723148.0 |
-  14854488.6 |
-  14985829.3 |########################################
-  15117170.0 |####################
-  15248510.6 |
-  15379851.3 |
-  15511192.0 |
-  15642532.7 |
-  15773873.3 |####################
-  15905214.0 |####################
-  16036554.7 |########################################
-  16167895.3 |####################
-  16299236.0 |####################
-  16430576.7 |########################################
-  16561917.3 |####################
-  16693258.0 |########################################
-  16824598.7 |
-  (2 below, 2 above range)
+cs_plain (n=18, range 3101409.7-3252753.5 ns)
+  3101409.7 |#############
+  3108976.9 |
+  3116544.1 |#############
+  3124111.3 |#############
+  3131678.5 |
+  3139245.7 |########################################
+  3146812.9 |
+  3154380.0 |
+  3161947.2 |
+  3169514.4 |##########################
+  3177081.6 |#############
+  3184648.8 |##########################
+  3192216.0 |
+  3199783.2 |##########################
+  3207350.3 |
+  3214917.5 |
+  3222484.7 |
+  3230051.9 |
+  3237619.1 |#############
+  3245186.3 |#############
+  (1 below, 2 above range)
 
-cs_snap_twin (n=18, range 13477718.0-17278746.9 ns)
-  13477718.0 |
-  13667769.5 |
-  13857820.9 |####################
-  14047872.4 |
-  14237923.8 |####################
-  14427975.2 |####################
-  14618026.7 |####################
-  14808078.1 |
-  14998129.6 |
-  15188181.0 |####################
-  15378232.5 |########################################
-  15568283.9 |
-  15758335.3 |########################################
-  15948386.8 |
-  16138438.2 |
-  16328489.7 |########################################
-  16518541.1 |####################
-  16708592.6 |
-  16898644.0 |
-  17088695.4 |
-  (2 below, 4 above range)
+cs_snap (n=18, range 3152561.1-3376088.9 ns)
+  3152561.1 |
+  3163737.5 |
+  3174913.9 |#############
+  3186090.3 |#############
+  3197266.7 |
+  3208443.0 |
+  3219619.4 |
+  3230795.8 |#############
+  3241972.2 |#############
+  3253148.6 |
+  3264325.0 |#############
+  3275501.4 |#############
+  3286677.8 |########################################
+  3297854.2 |
+  3309030.6 |##########################
+  3320207.0 |#############
+  3331383.3 |
+  3342559.7 |#############
+  3353736.1 |##########################
+  3364912.5 |
+  (2 below, 1 above range)
+
+cs_snap_twin (n=18, range 3166937.5-3341550.7 ns)
+  3166937.5 |#############
+  3175668.2 |##########################
+  3184398.8 |#############
+  3193129.5 |#############
+  3201860.1 |#############
+  3210590.8 |
+  3219321.5 |
+  3228052.1 |
+  3236782.8 |
+  3245513.4 |
+  3254244.1 |########################################
+  3262974.8 |
+  3271705.4 |
+  3280436.1 |#############
+  3289166.7 |#############
+  3297897.4 |#############
+  3306628.1 |#############
+  3315358.7 |
+  3324089.4 |
+  3332820.0 |#############
+  (1 below, 3 above range)
 
 ```
 
 ## Diagnostics
 
-- **cs_exch**: bridge=332.4% of algo (FFI overhead may distort results)
-- **cs_plain**: bridge=416.3% of algo (FFI overhead may distort results)
-- **cs_snap**: bridge=262.8% of algo (FFI overhead may distort results)
-- **cs_snap_twin**: bridge=270.8% of algo (FFI overhead may distort results)
+- **cs_exch**: bridge=1985.0% of algo (FFI overhead may distort results)
+- **cs_plain**: bridge=1410.7% of algo (FFI overhead may distort results)
+- **cs_snap**: bridge=1360.2% of algo (FFI overhead may distort results)
+- **cs_snap_twin**: bridge=1371.3% of algo (FFI overhead may distort results)

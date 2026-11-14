@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794690062	266650fb	bounds_check_n4096	bc_index	4096	warm	103.1	103.1	105.0
+1794690062	266650fb	bounds_check_n4096	bc_iter	4096	warm	103.8	103.8	105.8
+1794690062	266650fb	bounds_check_n4096	bc_unchecked	4096	warm	149.6	149.6	152.1

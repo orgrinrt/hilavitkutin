@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794698715	266650fb	shift_amount_origin_n256	shr_const	256	warm	0.8	0.8	1.2
+1794698715	266650fb	shift_amount_origin_n256	shr_loop_invariant	256	warm	2.5	2.5	2.5
+1794698715	266650fb	shift_amount_origin_n256	shr_per_iter	256	warm	7.1	7.1	7.5
