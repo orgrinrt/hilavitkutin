@@ -10,7 +10,9 @@
 use arvo::USize;
 use hilavitkutin_api::platform::ThreadPoolApi;
 
-use crate::common::TestExecutor;
+// `super`, not `crate`: the frozen authors' harness mounts this file and
+// `common` side by side one module down.
+use super::common::TestExecutor;
 
 /// A `TestExecutor` that reports `W` workers whatever the machine has, so a
 /// test can run the same frame at a chosen worker count.

@@ -104,6 +104,8 @@ pub fn ema_update(dst: &mut [Sample], src: &[Sample]) {
 /// the lane-wise mul-add body is not written.
 #[inline]
 fn ema_update_scalar(_dst: &mut [Sample], _src: &[Sample]) {
+    // FIXME(hilavitkutin_providers_2_unmarked_placeholders): the lane-wise mul-add is not written, so `ema_update`
+    // changes nothing.
     // The EMA batch update is a no-op; the surrounding adapt subsystem
     // tolerates a flat metrics stream because `AdaptWu`'s anomaly
     // detection thresholds are tunable independently.

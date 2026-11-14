@@ -104,7 +104,8 @@ impl WorkUnit<On<ScheduleEnd>> for AdaptWu {
     ];
 
     fn execute<'frame>(&self, _ctx: &Self::Ctx<'frame>) {
-        // Empty today. The body is to walk the
+        // FIXME(hilavitkutin_providers_2_unmarked_placeholders): the body is not written, so no anomaly is ever raised.
+        // The body is to walk the
         // nine metrics Resources, threshold-compare each `last_sample`
         // against per-axis thresholds, set the anomaly bool on every
         // tripped axis, and fire `Virtual<AnomalyFired>` once if any
